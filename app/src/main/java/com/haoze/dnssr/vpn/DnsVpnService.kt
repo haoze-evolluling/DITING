@@ -496,7 +496,7 @@ class DnsVpnService : VpnService() {
             resolvers.size > 1 -> localizedText(this, "已连接") + " · " +
                 localizedText(this, activeResolutionMode.displayName) +
                 " " + localizedText(this, "${resolvers.size} 个服务商")
-            resolvers.isNotEmpty() -> localizedText(this, "已连接") + " · ${resolvers.first().provider.name}"
+            resolvers.isNotEmpty() -> localizedText(this, "已连接") + " · " + localizedText(this, resolvers.first().provider.name)
             else -> localizedText(this, "已连接")
         }
         val proxyConfig = AppSettings.getOutboundProxyConfig(this)

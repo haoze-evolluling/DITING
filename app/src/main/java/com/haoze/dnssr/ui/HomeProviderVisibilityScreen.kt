@@ -96,7 +96,7 @@ fun HomeProviderVisibilityScreen(
                         protocolProviders.forEach { provider ->
                             surfaceItems += {
                                 SettingsCheckboxItem(
-                                    title = provider.name,
+                                    title = localizedText(provider.name),
                                     subtitle = provider.endpointLabel(),
                                     checked = visibility.isVisible(provider),
                                     onCheckedChange = { checked ->

@@ -48,6 +48,8 @@ private fun translateEnglish(text: String, context: Context): String {
         text == "启用智能选择或最快响应并产生真实 DNS 查询后，这里会显示各策略的表现。" -> "Strategy performance appears here after smart selection or fastest response generates real DNS queries."
         text == "排除后，应用将使用系统 DNS，不参与本应用的过滤、缓存、日志和统计。" -> "Excluded apps use the system DNS and do not participate in this app's filtering, caching, logging, or statistics."
         text == "感谢每一位为谛听提出建议、帮助测试的共建者！名单按用户名称的字母顺序排列，中文名称按拼音排序。" -> "Thanks to every DNSSR co-builder who contributed suggestions and testing help. The list is sorted alphabetically by username, with Chinese names sorted by pinyin."
+        text == "阿里云" -> "Alibaba Cloud"
+        text == "腾讯云 DNSPod" -> "Tencent Cloud DNSPod"
         text == "仅影响阿里云和 DNSPod 的内置服务；四种解析模式中已选择的对应预设服务会同步切换协议。" -> "Only built-in Alibaba Cloud and DNSPod services are affected; the corresponding preset providers selected in all four resolution modes switch protocol together."
         text.startsWith("原始 TTL ") -> text
             .replace("原始 TTL ", "Original TTL ")

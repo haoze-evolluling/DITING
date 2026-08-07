@@ -218,7 +218,7 @@ private fun WinnerStatsItem(
 ) {
     val strategy = RaceModeStrategy.fromStorageValue(item.strategy)
     SettingsItem(
-        title = provider?.name ?: item.providerName,
+        title = localizedText(provider?.name ?: item.providerName),
         subtitle = localizedText(strategy.displayName) + " · " + localizedText("平均胜出耗时 ${formatMs(item.avgWinnerElapsedMs)}")
     ) {
         ProviderStatsTrailing(
@@ -234,7 +234,7 @@ private fun SmartSelectionItem(
     provider: DnsProvider?
 ) {
     SettingsItem(
-        title = provider?.name ?: item.providerName,
+        title = localizedText(provider?.name ?: item.providerName),
         subtitle = localizedText("首选命中 ${formatPercent(item.selectedSuccessRate)} · 平均首选耗时 ${formatMs(item.avgSelectedElapsedMs)}")
     ) {
         ProviderStatsTrailing(

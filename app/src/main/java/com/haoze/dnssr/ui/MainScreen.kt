@@ -550,7 +550,7 @@ private fun MainContent(
         }
         val selectedIndex = displayProviders.indexOfFirst { it.id == selectedProvider?.id }
             .coerceAtLeast(0)
-        val raceDisplayValue = localizedText(raceProviderSummary(raceProviders.map { it.name }))
+        val raceDisplayValue = localizedText(raceProviderSummary(raceProviders.map { localizedText(it.name) }))
         var showProviderDialog by remember { mutableStateOf(false) }
 
         Column(
@@ -585,7 +585,7 @@ private fun MainContent(
                     } else {
                         Box(modifier = Modifier.fillMaxWidth()) {
                             OutlinedTextField(
-                                value = displayProviders.getOrNull(selectedIndex)?.name ?: "",
+                                value = displayProviders.getOrNull(selectedIndex)?.let { localizedText(it.name) } ?: "",
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text(localizedText("解析服务")) },
@@ -953,7 +953,7 @@ private fun ProviderDropdownText(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = provider.name,
+            text = localizedText(provider.name),
             style = MaterialTheme.typography.bodyLarge
         )
         Spacer(modifier = Modifier.weight(1f))

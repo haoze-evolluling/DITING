@@ -174,7 +174,7 @@ fun RaceModeLatencySettingsScreen(
                             content = visibleProviders.map { provider ->
                                 {
                                     SettingsCheckboxItem(
-                                        title = provider.name,
+                                        title = localizedText(provider.name),
                                         subtitle = provider.endpointLabel(),
                                         checked = provider.id in selectedIds,
                                         onCheckedChange = { viewModel.toggleLatencyTestProvider(provider.id) }

@@ -216,7 +216,7 @@ fun ResolutionModeHomeScreen(
                 SettingsNavigationGroup(
                     items = DnsResolutionMode.entries.map { itemMode ->
                         val summary = when (itemMode) {
-                            DnsResolutionMode.SINGLE -> providers.firstOrNull { it.id == singleId }?.name ?: "未配置"
+                            DnsResolutionMode.SINGLE -> providers.firstOrNull { it.id == singleId }?.let { localizedText(it.name) } ?: "未配置"
                             DnsResolutionMode.SMART_PREDICTION -> "${smartIds.size} 个服务商"
                             DnsResolutionMode.PARALLEL_RACE -> "${parallelIds.size} 个服务商"
                             DnsResolutionMode.PRIMARY_BACKUP -> "${backupIds.size} 个服务商"
@@ -406,9 +406,9 @@ fun ResolutionModeConfigScreen(
                     content = providers.filter { it.protocol == protocol }.map { provider ->
                         {
                             if (mode == DnsResolutionMode.SINGLE) {
-                                SettingsRadioItem(provider.name, provider.id == singleId, { handleProviderSelection(provider) }, subtitle = provider.endpointLabel())
+                                SettingsRadioItem(localizedText(provider.name), provider.id == singleId, { handleProviderSelection(provider) }, subtitle = provider.endpointLabel())
                             } else {
-                                SettingsCheckboxItem(provider.name, provider.id in selected, { handleProviderSelection(provider) }, subtitle = provider.endpointLabel())
+                                SettingsCheckboxItem(localizedText(provider.name), provider.id in selected, { handleProviderSelection(provider) }, subtitle = provider.endpointLabel())
                             }
                         }
                     }
@@ -637,7 +637,7 @@ private fun PrimaryBackupOrderGroup(
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text(
-                        text = provider.name,
+                        text = localizedText(provider.name),
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f),
                         maxLines = 1,

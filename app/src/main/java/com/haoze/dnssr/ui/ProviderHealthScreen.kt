@@ -131,7 +131,7 @@ private fun ProviderHealthItem(row: ProviderHealthRow) {
             "样本 ${health.attempts} · 更新 $updatedAt")
     }
     SettingsItem(
-        title = row.provider.name,
+        title = localizedText(row.provider.name),
         subtitle = subtitle
     ) {
         Row(
