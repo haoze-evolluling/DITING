@@ -63,8 +63,8 @@ fun BlockResponseSettingsScreen(
                 content = BlockResponseMode.values().map { mode ->
                     {
                         SettingsRadioItem(
-                            title = mode.displayName,
-                            subtitle = responseSubtitle(mode),
+                            title = localizedText(mode.displayName),
+                            subtitle = localizedText(responseSubtitle(mode)),
                             selected = responseMode == mode,
                             onClick = {
                                 if (responseMode != mode) {

@@ -19,6 +19,15 @@ private fun translateEnglish(text: String, context: Context): String {
     if (resourceId != 0) return context.getString(resourceId)
 
     return when {
+        text == "同意并继续" -> "Agree and continue"
+        text == "不同意并退出" -> "Decline and exit"
+        text == "Go 隧道用于在本机 VPN 中接管 TCP、UDP、DNS 和 HTTP(S) 流量，使谛听能识别应用连接。" -> "The Go tunnel takes over TCP, UDP, DNS, and HTTP(S) traffic in the local VPN so that DNSSR can identify app connections."
+        text == "当前触发功能：" -> "Triggered features:"
+        text == "启用期间，智能选择和最快响应解析模式不可用，只能使用单一服务或依次尝试模式。" -> "While enabled, smart selection and fastest-response modes are unavailable; use single-provider or primary-backup mode instead."
+        text == "有效缓存" -> "Valid cache entries"
+        text == "白名单规则" -> "Allowlist rules"
+        text.contains(" 次；第 N+1 次开始升级") -> text.replace(" 次；第 N+1 次开始升级", " attempts; escalation starts at N+1")
+        text.contains(" 秒；首次升级起固定计时") -> text.replace(" 秒；首次升级起固定计时", " seconds; timing starts at the first escalation")
         text == "缓存命中的 DNS 请求不会触发实际竞速，因此不计入这里的统计。" -> "DNS requests served from cache do not trigger an actual race and are excluded from these statistics."
         text == "移除已缓存的解析结果，下次访问会重新查询" -> "Remove cached resolution results; the next visit will query again"
         text == "清除智能选择的健康样本，让它重新按默认权重分配流量" -> "Clear smart-selection health samples and redistribute traffic using default weights"
@@ -151,6 +160,10 @@ private fun translateEnglish(text: String, context: Context): String {
         text == "竞速胜出" -> "Race winners"
         text.startsWith("平均胜出耗时 ") -> text.replace("平均胜出耗时 ", "Average winning latency ")
         text.contains(" · 成功 ") -> text.replace(" · 成功 ", " · Success ")
+            .replace(" · 平均 ", " · Average ")
+            .replace(" · 备用 ", " · Fallback ")
+            .replace(" · 权重 ", " · Weight ")
+            .replace(" · 样本 ", " · Samples ")
         text.contains(" · 占全部请求 ") -> text.replace(" · 占全部请求 ", " · Share of all requests ")
         text == "重点请求概览" -> "Priority request overview"
         text == "仅汇总 DNS 与 HTTPS 的拦截、错误和旁路记录。" -> "Only blocked, failed, and bypassed DNS and HTTPS records are summarized."
@@ -1321,6 +1334,10 @@ private fun translateEnglish(text: String, context: Context): String {
         text.startsWith("当前共有 ") -> text.replace("当前共有 ", "There are ").replace(" 条屏蔽规则", " blocked rules").replace(" 条白名单规则", " allowlist rules").replace(" 条 IPv4/IPv6 覆写规则", " IPv4/IPv6 override rules")
         text.startsWith("当前筛选下") -> text.replace("当前筛选下", "No records for the current filter")
         text.startsWith("成功 ") -> text.replace("成功 ", "Success ")
+            .replace(" · 平均 ", " · Average ")
+            .replace(" · 备用 ", " · Fallback ")
+            .replace(" · 兜底 ", " · Fallback ")
+            .replace(" · 样本 ", " · Samples ")
         text.startsWith("安装 ") -> text.replace("安装 ", "Install ")
         text.startsWith("下载 ") -> text.replace("下载 ", "Download ")
         text.startsWith("全部 ") && text.endsWith(" 服务") -> text.removePrefix("全部 ").removeSuffix(" 服务") + " services"
@@ -1331,6 +1348,7 @@ private fun translateEnglish(text: String, context: Context): String {
             .replace("DNS 缓存", "DNS cache")
             .replace("全部规则", "all rules")
         text.startsWith("删除 ") -> text.replace("删除 ", "Delete ")
+        text.endsWith(" 条规则") -> text.removeSuffix(" 条规则") + " rules"
         text.endsWith(" 个") -> text.removeSuffix(" 个")
         text.endsWith(" 条") -> text.removeSuffix(" 条")
         else -> text

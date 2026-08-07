@@ -493,9 +493,11 @@ class DnsVpnService : VpnService() {
 
     private fun buildForegroundNotification(): Notification {
         val defaultNotificationText = when {
-            resolvers.size > 1 -> "已连接 · ${activeResolutionMode.displayName}（${resolvers.size} 个服务商）"
-            resolvers.isNotEmpty() -> "已连接 · ${resolvers.first().provider.name}"
-            else -> "已连接"
+            resolvers.size > 1 -> localizedText(this, "已连接") + " · " +
+                localizedText(this, activeResolutionMode.displayName) +
+                " " + localizedText(this, "${resolvers.size} 个服务商")
+            resolvers.isNotEmpty() -> localizedText(this, "已连接") + " · ${resolvers.first().provider.name}"
+            else -> localizedText(this, "已连接")
         }
         val proxyConfig = AppSettings.getOutboundProxyConfig(this)
         val proxyStatus = AppSettings.getOutboundProxyStatus(this)

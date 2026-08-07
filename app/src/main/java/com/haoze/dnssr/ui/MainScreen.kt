@@ -287,14 +287,15 @@ fun MainScreen(
             title = { Text(localizedText("Go 隧道已启用")) },
             text = {
                 Text(
-                    "Go 隧道用于在本机 VPN 中接管 TCP、UDP、DNS 和 HTTP(S) 流量，使谛听能识别应用连接。\n\n" +
-                        "当前触发功能：\n" + goTunnelReasons.joinToString("\n") { "• ${it.displayName}" } +
-                        "\n\n启用期间，智能选择和最快响应解析模式不可用，只能使用单一服务或依次尝试模式。"
+                    localizedText(context, "Go 隧道用于在本机 VPN 中接管 TCP、UDP、DNS 和 HTTP(S) 流量，使谛听能识别应用连接。") +
+                        "\n\n" + localizedText(context, "当前触发功能：") + "\n" +
+                        goTunnelReasons.joinToString("\n") { "• ${localizedText(context, it.displayName)}" } +
+                        "\n\n" + localizedText(context, "启用期间，智能选择和最快响应解析模式不可用，只能使用单一服务或依次尝试模式。")
                 )
             },
             confirmButton = {
                 TextButton(onClick = { showGoTunnelInfo = false }) {
-                    Text(localizedText("知道了"))
+                    Text(localizedText(context, "知道了"))
                 }
             }
         )

@@ -111,7 +111,7 @@ private fun RaceStatsContent(
                 SettingsGroupTitle(localizedText("统计"))
                 SettingsSurfaceGroup(content = listOf {
                     SettingsItem(
-                        title = if (loading) "正在加载" else "暂无竞速数据",
+                        title = localizedText(if (loading) "正在加载" else "暂无竞速数据"),
                         subtitle = localizedText("启用智能选择或最快响应并产生真实 DNS 查询后，这里会显示各策略的表现。")
                     )
                 })
@@ -216,9 +216,10 @@ private fun WinnerStatsItem(
     item: RaceWinnerStats,
     provider: DnsProvider?
 ) {
+    val strategy = RaceModeStrategy.fromStorageValue(item.strategy)
     SettingsItem(
         title = provider?.name ?: item.providerName,
-        subtitle = localizedText("${RaceModeStrategy.fromStorageValue(item.strategy).displayName} · 平均胜出耗时 ${formatMs(item.avgWinnerElapsedMs)}")
+        subtitle = localizedText(strategy.displayName) + " · " + localizedText("平均胜出耗时 ${formatMs(item.avgWinnerElapsedMs)}")
     ) {
         ProviderStatsTrailing(
             protocol = provider?.protocol,

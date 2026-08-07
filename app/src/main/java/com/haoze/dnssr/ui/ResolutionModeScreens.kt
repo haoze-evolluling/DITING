@@ -149,13 +149,14 @@ fun ResolutionModeHomeScreen(
             title = { Text(localizedText("Go 隧道已启用")) },
             text = {
                 Text(
-                    localizedText("Go 隧道用于在本机 VPN 中接管 TCP、UDP、DNS 和 HTTP(S) 流量，使谛听能识别应用连接。\n\n" +
-                        "当前触发功能：\n" + reasons.joinToString("\n") { "• ${it.displayName}" } +
-                        "\n\n启用期间，智能选择和最快响应解析模式不可用，只能使用单一服务或依次尝试模式。")
+                    localizedText(context, "Go 隧道用于在本机 VPN 中接管 TCP、UDP、DNS 和 HTTP(S) 流量，使谛听能识别应用连接。") +
+                        "\n\n" + localizedText(context, "当前触发功能：") + "\n" +
+                        reasons.joinToString("\n") { "• ${localizedText(context, it.displayName)}" } +
+                        "\n\n" + localizedText(context, "启用期间，智能选择和最快响应解析模式不可用，只能使用单一服务或依次尝试模式。")
                 )
             },
             confirmButton = {
-                TextButton(onClick = { showGoTunnelInfo = false }) { Text(localizedText("知道了")) }
+                TextButton(onClick = { showGoTunnelInfo = false }) { Text(localizedText(context, "知道了")) }
             }
         )
     }
@@ -190,7 +191,7 @@ fun ResolutionModeHomeScreen(
                     items = listOf(
                         SettingsNavigationItemData(
                         title = localizedText("解析模式"),
-                        subtitle = subtitleFor(mode),
+                        subtitle = localizedText(subtitleFor(mode)),
                         value = localizedText(mode.displayName),
                         onClick = { showModeDialog = true }
                         )
@@ -204,7 +205,7 @@ fun ResolutionModeHomeScreen(
                         SettingsNavigationItemData(
                         title = localizedText("内置服务协议"),
                         subtitle = localizedText("仅切换阿里云和 DNSPod 内置服务的 DNS、DoT 或 DoH 协议，并同步四种模式中的对应预设服务"),
-                        value = presetDnsService.displayName,
+                        value = localizedText(presetDnsService.displayName),
                         onClick = { showPresetDnsServiceDialog = true }
                         )
                     )
@@ -221,9 +222,9 @@ fun ResolutionModeHomeScreen(
                             DnsResolutionMode.PRIMARY_BACKUP -> "${backupIds.size} 个服务商"
                         }
                         SettingsNavigationItemData(
-                            title = itemMode.displayName,
-                            subtitle = subtitleFor(itemMode),
-                            value = summary,
+                            title = localizedText(itemMode.displayName),
+                            subtitle = localizedText(subtitleFor(itemMode)),
+                            value = localizedText(summary),
                             enabled = viewModel.isModeEnabled(itemMode),
                             onClick = { onOpenMode(itemMode) }
                         )
@@ -257,7 +258,7 @@ private fun PresetDnsServicePickerDialog(
                     content = PresetDnsService.entries.map { service ->
                         {
                             SettingsItem(
-                                title = service.displayName,
+                                title = localizedText(service.displayName),
                                 onClick = { onSelect(service) }
                             ) {
                                 if (selectedService == service) {
@@ -298,8 +299,8 @@ private fun ResolutionModePickerDialog(
                         {
                             val enabled = !goTunnelRequired || mode == DnsResolutionMode.SINGLE || mode == DnsResolutionMode.PRIMARY_BACKUP
                             SettingsItem(
-                                title = mode.displayName,
-                                subtitle = subtitleFor(mode),
+                                title = localizedText(mode.displayName),
+                                subtitle = localizedText(subtitleFor(mode)),
                                 enabled = enabled,
                                 onClick = { onSelect(mode) }
                             ) {
@@ -363,7 +364,7 @@ fun ResolutionModeConfigScreen(
         }
     }
 
-    SettingsScaffold(title = mode.displayName, onBack = onBack) { padding ->
+    SettingsScaffold(title = localizedText(mode.displayName), onBack = onBack) { padding ->
         if (loading) return@SettingsScaffold SettingsLoadingContent(Modifier.padding(padding))
         LazyColumn(
             state = listState,
@@ -392,12 +393,12 @@ fun ResolutionModeConfigScreen(
             }
             item {
                 SettingsGroupTitle(
-                    when (mode) {
+                    localizedText(when (mode) {
                         DnsResolutionMode.SINGLE -> "查询服务"
                         DnsResolutionMode.SMART_PREDICTION -> "候选服务"
                         DnsResolutionMode.PARALLEL_RACE -> "同时查询的服务"
                         DnsResolutionMode.PRIMARY_BACKUP -> "依次尝试的服务"
-                    }
+                    })
                 )
             }
             item {
@@ -413,7 +414,7 @@ fun ResolutionModeConfigScreen(
                     }
                 )
             }
-            item { SettingsInfoText(descriptionFor(mode, selected.size)) }
+            item { SettingsInfoText(localizedText(descriptionFor(mode, selected.size))) }
             if (mode == DnsResolutionMode.PRIMARY_BACKUP && backupIds.isNotEmpty()) {
                 item { SettingsGroupTitle(localizedText("查询顺序")) }
                 item {
