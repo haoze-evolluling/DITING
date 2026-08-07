@@ -755,8 +755,8 @@ private fun translateEnglish(text: String, context: Context): String {
             .replace("依次尝试", "Primary and backup")
         text == "谛听 服务" -> "DNSSR service"
         text == "谛听 监控" -> "DNSSR monitor"
-        text == "谛听万象，明察清浊" -> "Ting watches every detail and keeps resolution clear"
-        text == "收耳静眠，归于无声" -> "Ting rests quietly in silence"
+        text == "谛听万象，明察清浊" -> "The readiness is all."
+        text == "收耳静眠，归于无声" -> "The rest is silence."
         text == "连接失败" -> "Connection failed"
         text == "正在连接出站代理" -> "Connecting to outbound proxy"
         text.startsWith("已连接 · ") -> text.replace("已连接 · ", "Connected · ")
