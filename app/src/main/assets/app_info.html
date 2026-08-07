@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>谛听</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fffbfe;
+      --surface: #fffbfe;
+      --surface-variant: #e7e0ec;
+      --text: #1d1b20;
+      --muted: #49454f;
+      --primary: #6750a4;
+      --secondary: #006c4c;
+      --tertiary: #815600;
+      --outline: #79747e;
+      --primary-rgb: 103, 80, 164;
+      --secondary-rgb: 0, 108, 76;
+      --tertiary-rgb: 129, 86, 0;
+      --line: rgba(29, 27, 32, 0.14);
+      --panel: rgba(255, 255, 255, 0.86);
+      --panel-soft: rgba(255, 255, 255, 0.58);
+      --accent-cyan: #007c91;
+      --accent-green: #087f5b;
+      --accent-amber: #9b6500;
+      --shadow: rgba(29, 27, 32, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar {
+      display: none;
+    }
+
+    html { background: var(--bg); }
+
+    body {
+      min-width: 0;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body::before {
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      content: "";
+      opacity: 0.36;
+      pointer-events: none;
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, black, transparent 76%);
+    }
+
+    a { color: inherit; }
+
+    .page {
+      width: min(1040px, 100%);
+      margin: 0 auto;
+      padding: 0 14px calc(28px + env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      position: sticky;
+      top: calc(8px + env(safe-area-inset-top));
+      z-index: 5;
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 42px;
+      align-items: center;
+      min-height: 56px;
+      margin: calc(8px + env(safe-area-inset-top)) 0 16px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 12px 30px var(--shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      color: var(--text);
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .icon-button:active { background: rgba(var(--primary-rgb), 0.12); }
+
+    .back-mark {
+      width: 11px;
+      height: 11px;
+      border-bottom: 2px solid currentColor;
+      border-left: 2px solid currentColor;
+      transform: rotate(45deg);
+    }
+
+    .topbar-copy { min-width: 0; text-align: center; }
+    .topbar-copy h1 { margin: 0; font-size: 17px; line-height: 1.2; }
+    .topbar-copy p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 0 5px rgba(var(--secondary-rgb), 0.14);
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 22px;
+      overflow: hidden;
+      padding: 22px;
+      border: 1px solid rgba(var(--primary-rgb), 0.3);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 18px 44px var(--shadow);
+    }
+
+    .hero-copy { position: relative; z-index: 1; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .eyebrow::before { content: "//"; color: var(--accent-cyan); }
+
+    .hero h2 {
+      max-width: 580px;
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.05;
+    }
+
+    .hero h2 span { color: var(--primary); }
+
+    .hero-description {
+      max-width: 620px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .badge {
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .network {
+      position: relative;
+      min-height: 205px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .network-diagram { display: block; width: 100%; height: 100%; min-height: 205px; }
+    .route {
+      fill: none;
+      stroke: var(--outline);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-dasharray: 5 7;
+      animation: route-flow 1.8s linear infinite;
+    }
+    .route-upstream { stroke: var(--accent-green); animation-delay: -0.9s; }
+    .node-ring { fill: var(--surface); stroke-width: 1.5; }
+    .node-device { stroke: var(--primary); }
+    .node-tunnel { stroke: var(--accent-cyan); }
+    .node-upstream { stroke: var(--accent-green); }
+    .node-pulse {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    .node-core-device { fill: var(--primary); }
+    .node-core-tunnel { fill: var(--accent-cyan); animation-delay: -0.8s; }
+    .node-core-upstream { fill: var(--accent-green); animation-delay: -1.6s; }
+    .node-label {
+      fill: var(--muted);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      text-anchor: middle;
+    }
+
+    .section { margin-top: 28px; }
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .section-heading h2 { margin: 0; font-size: 20px; line-height: 1.2; }
+    .section-index { color: var(--primary); font-size: 12px; font-weight: 800; }
+
+    .capability-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .capability {
+      min-height: 142px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel);
+      box-shadow: 0 10px 22px var(--shadow);
+    }
+    .capability-mark { display: block; color: var(--primary); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 18px; font-weight: 800; }
+    .capability h3 { margin: 16px 0 6px; font-size: 15px; }
+    .capability p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    .detail-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .detail-panel {
+      padding: 18px;
+      border-top: 2px solid var(--primary);
+      background: var(--panel);
+      box-shadow: 0 10px 24px var(--shadow);
+    }
+    .detail-panel:nth-child(2) { border-top-color: var(--accent-green); }
+    .detail-panel:nth-child(3) { border-top-color: var(--accent-amber); }
+    .detail-panel h3 { margin: 0 0 10px; font-size: 16px; }
+    .detail-panel p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+
+    .project {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 14px 32px var(--shadow);
+    }
+    .project-meta { min-width: 0; }
+    .project-kicker { margin: 0; color: var(--accent-cyan); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; font-weight: 700; }
+    .project h2 { margin: 8px 0 4px; font-size: 20px; }
+    .project p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .repository-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 48px;
+      padding: 10px 12px;
+      border: 1px solid rgba(var(--primary-rgb), 0.38);
+      border-radius: 6px;
+      color: var(--text);
+      text-decoration: none;
+      background: rgba(var(--primary-rgb), 0.08);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .repository-link:active { background: rgba(var(--primary-rgb), 0.18); }
+    .repository-copy { min-width: 0; }
+    .repository-copy strong { display: block; font-size: 14px; }
+    .repository-copy small { display: block; overflow: hidden; margin-top: 3px; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .external-mark { color: var(--primary); font-size: 20px; font-weight: 700; }
+
+    .footer { padding: 26px 0 4px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    @keyframes pulse { 50% { transform: scale(1.65); opacity: 0.25; } }
+    @keyframes route-flow { to { stroke-dashoffset: -24; } }
+
+    @media (min-width: 680px) {
+      .page { padding-right: 22px; padding-left: 22px; }
+      .hero { grid-template-columns: minmax(0, 1fr) 300px; align-items: center; padding: 28px; }
+      .network { min-height: 235px; }
+      .capability-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .detail-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .project { grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr); align-items: center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <a class="icon-button" href="dnssr://back" aria-label="返回"><span class="back-mark"></span></a>
+      <div class="topbar-copy"><h1 id="pageTitle">应用信息</h1><p>谛听 // LOCAL RESOLVER</p></div>
+      <div class="icon-button" aria-label="服务状态"><span class="status-dot"></span></div>
+    </header>
+
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <p class="eyebrow">LOCAL DNS CONTROL PLANE</p>
+        <h2 id="heroTitle"><span>谛听</span> 本地解析控制台</h2>
+        <p class="hero-description">在 Android 设备本机管理 DNS 查询路径，让解析策略、缓存、规则与上游连接处于可控状态。</p>
+        <div class="badges"><span class="badge">版本 <b id="version">--</b></span><span class="badge">Android VpnService</span><span class="badge">本地优先</span></div>
+      </div>
+      <div class="network" aria-label="设备、VPN 和 DNS 上游的连接示意">
+        <svg class="network-diagram" viewBox="0 0 300 205" role="img" aria-labelledby="networkTitle networkDescription">
+          <title id="networkTitle">DNS 查询路径</title>
+          <desc id="networkDescription">设备通过本地 DNS 隧道连接到上游服务</desc>
+          <line class="route" x1="66" y1="94" x2="130" y2="58"></line>
+          <line class="route route-upstream" x1="167" y1="63" x2="237" y2="129"></line>
+          <circle class="node-ring node-device" cx="46" cy="105" r="23"></circle>
+          <circle class="node-pulse node-core-device" cx="46" cy="105" r="5"></circle>
+          <text class="node-label" x="46" y="145">DEVICE</text>
+          <circle class="node-ring node-tunnel" cx="150" cy="47" r="23"></circle>
+          <circle class="node-pulse node-core-tunnel" cx="150" cy="47" r="5"></circle>
+          <text class="node-label" x="150" y="87">DNS TUNNEL</text>
+          <circle class="node-ring node-upstream" cx="254" cy="145" r="23"></circle>
+          <circle class="node-pulse node-core-upstream" cx="254" cy="145" r="5"></circle>
+          <text class="node-label" x="254" y="185">UPSTREAM</text>
+        </svg>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="capabilitiesTitle">
+      <div class="section-heading"><h2 id="capabilitiesTitle">核心能力</h2><span class="section-index">01 / CAPABILITIES</span></div>
+      <div class="capability-grid">
+        <article class="capability"><span class="capability-mark">[01]</span><h3>加密上游</h3><p>支持 DNS、DoH 与 DoT，并可管理自定义服务商。</p></article>
+        <article class="capability"><span class="capability-mark">[02]</span><h3>规则与缓存</h3><p>以缓存、屏蔽规则、白名单和订阅规则减少重复请求与干扰。</p></article>
+        <article class="capability"><span class="capability-mark">[03]</span><h3>可观测性</h3><p>通过请求日志、竞速统计、服务商健康和 Bootstrap 数据追踪状态。</p></article>
+        <article class="capability"><span class="capability-mark">[04]</span><h3>独立引导</h3><p>支持 Bootstrap IP，降低解析加密上游域名时对系统 DNS 的依赖。</p></article>
+        <article class="capability"><span class="capability-mark">[05]</span><h3>配置流转</h3><p>支持自定义服务、规则订阅的导入导出与自动更新。</p></article>
+        <article class="capability"><span class="capability-mark">[06]</span><h3>快捷控制</h3><p>提供系统快捷设置磁贴，方便快速启停 DNS 本地通道。</p></article>
+        <article class="capability"><span class="capability-mark">[07]</span><h3>应用管控</h3><p>按应用排除 VPN 或阻止联网，灵活控制每个应用的网络访问。</p></article>
+        <article class="capability"><span class="capability-mark">[08]</span><h3>HTTPS 流量检查</h3><p>按应用检查 HTTP(S) 请求并应用域名和 URL 规则，需安装 HTTPS 检查根证书。</p></article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="architectureTitle">
+      <div class="section-heading"><h2 id="architectureTitle">运行边界</h2><span class="section-index">02 / ARCHITECTURE</span></div>
+      <div class="detail-grid">
+        <article class="detail-panel"><h3>默认仅处理 DNS</h3><p>默认通过 Android VpnService 建立仅处理 DNS 的本地通道；启用 HTTPS 流量检查或禁止联网后，Go 隧道使用 Go 用户态网络栈接管 TCP、UDP、DNS 和 HTTP(S) 流量。</p></article>
+        <article class="detail-panel"><h3>实际解析表现</h3><p>解析速度、稳定性和可用性取决于网络环境、所选上游和本机规则。</p></article>
+        <article class="detail-panel"><h3>隐私与本地存储</h3><p>缓存、日志、规则与配置保存在设备本机。上游仍会收到必要查询；仅 DoH、DoT 加密到上游的 DNS 传输。</p></article>
+      </div>
+    </section>
+
+    <section class="section project" aria-labelledby="projectTitle">
+      <div class="project-meta"><p class="project-kicker">MAINTAINED BY</p><h2 id="projectTitle">haoze-evolluling</h2><p>一位集美大学人工智能系大三学子</p></div>
+      <a class="repository-link" href="dnssr://repository"><span class="repository-copy"><strong>开源项目仓库</strong><small id="repositoryUrl">github.com/haoze-evolluling/DNSSR</small></span><span class="external-mark" aria-hidden="true">↗</span></a>
+    </section>
+
+    <footer class="footer">谛听 / RESOLUTION UNDER YOUR CONTROL</footer>
+  </main>
+  <script>
+    function $(id) { return document.getElementById(id); }
+    function setVar(name, value) { if (value) document.documentElement.style.setProperty(name, value); }
+    function isDarkColor(value) {
+      const match = String(value || "").match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+      if (!match) return false;
+      const r = parseInt(match[1], 16) / 255;
+      const g = parseInt(match[2], 16) / 255;
+      const b = parseInt(match[3], 16) / 255;
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.45;
+    }
+    function setTheme(theme) {
+      if (!theme) return;
+      const dark = isDarkColor(theme.background);
+      setVar("--bg", theme.background);
+      setVar("--surface", theme.surface);
+      setVar("--surface-variant", theme.surfaceVariant);
+      setVar("--text", theme.onSurface || theme.onBackground);
+      setVar("--muted", theme.onSurfaceVariant);
+      setVar("--primary", theme.primary);
+      setVar("--secondary", theme.secondary);
+      setVar("--tertiary", theme.tertiary);
+      setVar("--outline", theme.outline);
+      setVar("--primary-rgb", theme.primaryRgb);
+      setVar("--secondary-rgb", theme.secondaryRgb);
+      setVar("--tertiary-rgb", theme.tertiaryRgb);
+      setVar("--line", dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.14)");
+      setVar("--panel", dark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.88)");
+      setVar("--panel-soft", dark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.62)");
+      setVar("--accent-cyan", dark ? "#57d7e9" : "#007c91");
+      setVar("--accent-green", dark ? "#65d7a8" : "#087f5b");
+      setVar("--accent-amber", dark ? "#f1bd65" : "#9b6500");
+      setVar("--shadow", dark ? "rgba(0,0,0,0.34)" : "rgba(29,27,32,0.14)");
+    }
+    function render(data) {
+      if (!data) return;
+      $("pageTitle").textContent = data.title || "应用信息";
+      $("version").textContent = data.version || "--";
+      $("repositoryUrl").textContent = data.repositoryUrl || "";
+    }
+    window.DNSSR = { setTheme, render };
+  </script>
+</body>
+</html>

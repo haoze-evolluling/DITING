@@ -1,0 +1,16 @@
+*.iml
+.cxx
+.codebase-memory
+.DS_Store
+.externalNativeBuild
+.gradle
+/.agents
+/.codex
+/.idea
+/.kotlin
+/.vscode
+/blockads-android-main
+/build
+/captures
+/local.properties
+local.properties
