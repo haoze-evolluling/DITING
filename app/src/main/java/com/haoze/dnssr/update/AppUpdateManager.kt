@@ -2,6 +2,9 @@ package com.haoze.dnssr.update
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.content.FileProvider
 import com.haoze.dnssr.BuildConfig
 import com.haoze.dnssr.ui.AppSettings
@@ -11,9 +14,11 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 data class AppUpdateInfo(
     val version: String,
@@ -47,8 +52,15 @@ data class AppUpdateUiState(
 
 class AppUpdateManager(
     private val context: Context,
-    private val httpClient: OkHttpClient = OkHttpClient(),
+    httpClient: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .callTimeout(2, TimeUnit.MINUTES)
+        .build(),
 ) {
+    private val httpClient = httpClient.newBuilder()
+        .callTimeout(2, TimeUnit.MINUTES)
+        .build()
     private val updateDirectory = File(context.filesDir, UPDATE_DIRECTORY)
 
     suspend fun checkForUpdate(): AppUpdateInfo? = withContext(Dispatchers.IO) {
@@ -77,6 +89,9 @@ class AppUpdateManager(
         finalFile.delete()
         temporaryFile.delete()
         try {
+            if (!isAllowedDownloadUrl(update.downloadUrl)) {
+                error("更新地址不受信任")
+            }
             val request = Request.Builder()
                 .url(update.downloadUrl)
                 .header("User-Agent", "DNSSR-Android")
@@ -85,6 +100,9 @@ class AppUpdateManager(
                 if (!response.isSuccessful) error("下载更新失败：服务器返回 ${response.code}")
                 val body = response.body ?: error("下载更新失败：响应内容为空")
                 val totalBytes = body.contentLength().takeIf { it > 0L } ?: -1L
+                if (totalBytes > MAX_APK_BYTES) {
+                    error("更新包超过大小限制")
+                }
                 var downloadedBytes = 0L
                 var lastReportedBytes = -1L
                 fun reportProgress(force: Boolean = false) {
@@ -103,12 +121,19 @@ class AppUpdateManager(
                             if (read < 0) break
                             output.write(buffer, 0, read)
                             downloadedBytes += read
+                            if (downloadedBytes > MAX_APK_BYTES) {
+                                error("更新包超过大小限制")
+                            }
                             reportProgress()
                         }
                     }
                 }
                 reportProgress(force = true)
                 if (!temporaryFile.renameTo(finalFile)) error("下载更新失败：无法保存安装包")
+                if (!isValidDownloadedApk(finalFile, update.version)) {
+                    finalFile.delete()
+                    error("更新包校验失败")
+                }
                 AppSettings.rememberAppUpdateDownload(context, finalFile.absolutePath, update.version)
                 AppUpdateDownloadState(
                     version = update.version,
@@ -135,7 +160,8 @@ class AppUpdateManager(
         if (localPath.isBlank() || AppSettings.getAppUpdateDownloadVersion(context) != update.version) {
             return@withContext AppUpdateDownloadState(version = update.version)
         }
-        if (!File(localPath).isFile || File(localPath).length() <= 0L) {
+        val localFile = File(localPath)
+        if (!isValidDownloadedApk(localFile, update.version)) {
             AppSettings.clearAppUpdateDownload(context)
             return@withContext AppUpdateDownloadState(version = update.version)
         }
@@ -143,8 +169,8 @@ class AppUpdateManager(
             version = update.version,
             localPath = localPath,
             status = AppUpdateDownloadStatus.Downloaded,
-            downloadedBytes = File(localPath).length(),
-            totalBytes = File(localPath).length(),
+            downloadedBytes = localFile.length(),
+            totalBytes = localFile.length(),
         )
     }
 
@@ -153,7 +179,7 @@ class AppUpdateManager(
             val path = AppSettings.getAppUpdateDownloadPath(context)
             check(path.isNotBlank() && AppSettings.getAppUpdateDownloadVersion(context) == update.version)
             val apkFile = File(path)
-            check(apkFile.isFile && apkFile.length() > 0L)
+            check(isValidDownloadedApk(apkFile, update.version))
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apkFile)
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, "application/vnd.android.package-archive")
@@ -163,10 +189,53 @@ class AppUpdateManager(
         }.isSuccess
     }
 
+    private fun isAllowedDownloadUrl(value: String): Boolean {
+        val url = value.toHttpUrlOrNull() ?: return false
+        return url.scheme == "https" && url.host == "github.com"
+    }
+
+    private fun isValidDownloadedApk(file: File, expectedVersion: String): Boolean {
+        if (!file.isFile || file.length() <= 0L || file.length() > MAX_APK_BYTES) return false
+        val packageManager = context.packageManager
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            PackageManager.GET_SIGNING_CERTIFICATES
+        } else {
+            @Suppress("DEPRECATION")
+            PackageManager.GET_SIGNATURES
+        }
+        val installed = runCatching {
+            packageManager.getPackageInfo(context.packageName, flags)
+        }.getOrNull() ?: return false
+        val archive = packageManager.getPackageArchiveInfo(file.absolutePath, flags) ?: return false
+        if (archive.packageName != context.packageName || !sameVersion(archive.versionName, expectedVersion)) {
+            return false
+        }
+        val installedCertificates = signingCertificates(installed)
+        val archiveCertificates = signingCertificates(archive)
+        return installedCertificates.isNotEmpty() &&
+            installedCertificates.size == archiveCertificates.size &&
+            archiveCertificates.all { archiveCertificate ->
+                installedCertificates.any { installedCertificate ->
+                    archiveCertificate.contentEquals(installedCertificate)
+                }
+            }
+    }
+
+    private fun signingCertificates(packageInfo: PackageInfo): List<ByteArray> {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return packageInfo.signingInfo?.apkContentsSigners
+                ?.map { it.toByteArray() }
+                .orEmpty()
+        }
+        @Suppress("DEPRECATION")
+        return packageInfo.signatures?.map { it.toByteArray() }.orEmpty()
+    }
+
     private companion object {
         const val UPDATE_DIRECTORY = "app-update"
         const val RELEASE_URL = "https://api.github.com/repos/haoze-evolluling/DITING/releases/latest"
         const val PROGRESS_UPDATE_BYTES = 256L * 1024L
+        const val MAX_APK_BYTES = 100L * 1024L * 1024L
     }
 }
 
@@ -193,19 +262,28 @@ internal fun parseLatestRelease(payload: String, currentVersion: String): AppUpd
 }
 
 internal fun isNewerVersion(remote: String, current: String): Boolean {
-    fun components(value: String): List<Int>? {
-        val normalized = value.trim().removePrefix("v").substringBefore('-')
-        if (normalized.isBlank()) return null
-        return normalized.split('.').map { part -> part.toIntOrNull() ?: return null }
-    }
-
-    val remoteParts = components(remote) ?: return false
-    val currentParts = components(current) ?: return false
+    val remoteParts = parseVersionComponents(remote) ?: return false
+    val currentParts = parseVersionComponents(current) ?: return false
     val length = maxOf(remoteParts.size, currentParts.size)
     repeat(length) { index ->
         val difference = remoteParts.getOrElse(index) { 0 }.compareTo(currentParts.getOrElse(index) { 0 })
         if (difference != 0) return difference > 0
     }
     return false
+}
+
+private fun sameVersion(left: String?, right: String): Boolean {
+    val leftParts = parseVersionComponents(left.orEmpty()) ?: return false
+    val rightParts = parseVersionComponents(right) ?: return false
+    val length = maxOf(leftParts.size, rightParts.size)
+    return (0 until length).all { index ->
+        leftParts.getOrElse(index) { 0 } == rightParts.getOrElse(index) { 0 }
+    }
+}
+
+private fun parseVersionComponents(value: String): List<Int>? {
+    val normalized = value.trim().removePrefix("v").substringBefore('-')
+    if (normalized.isBlank()) return null
+    return normalized.split('.').map { part -> part.toIntOrNull() ?: return null }
 }
 

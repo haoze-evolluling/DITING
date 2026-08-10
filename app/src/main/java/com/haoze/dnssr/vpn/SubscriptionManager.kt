@@ -15,12 +15,17 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody
 import java.io.BufferedReader
+import java.io.FilterInputStream
 import java.io.IOException
+import java.io.InputStream
 import java.io.Reader
 import java.net.URLEncoder
 import java.net.URI
@@ -70,6 +75,32 @@ private data class InitialImportResult(
     val lastModified: String?
 )
 
+private class LimitedInputStream(
+    input: InputStream,
+    private val limit: Long,
+) : FilterInputStream(input) {
+    private var bytesRead = 0L
+
+    override fun read(): Int {
+        val value = super.read()
+        if (value >= 0) checkLimit(1)
+        return value
+    }
+
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+        if (length == 0) return 0
+        val allowed = minOf(length.toLong(), limit - bytesRead + 1L).coerceAtLeast(1L).toInt()
+        val count = super.read(buffer, offset, allowed)
+        if (count > 0) checkLimit(count.toLong())
+        return count
+    }
+
+    private fun checkLimit(read: Long) {
+        bytesRead += read
+        if (bytesRead > limit) throw IOException("订阅内容超过大小限制")
+    }
+}
+
 /**
  * 规则订阅管理器。
  *
@@ -87,6 +118,10 @@ class SubscriptionManager(
     companion object {
         private const val TAG = "SubscriptionManager"
         private const val CHUNK_SIZE = 500
+        private const val MAX_SUBSCRIPTION_URL_LENGTH = 4_096
+        private const val MAX_SUBSCRIPTION_BYTES = 32L * 1024L * 1024L
+        private const val MAX_RULE_LINE_CHARS = 64 * 1024
+        private const val MAX_IMPORTED_RULES = 500_000
         private val MIRROR_PLACEHOLDERS = setOf(
             "{url}", "{urlEncoded}", "{scheme}", "{host}", "{path}", "{pathAndQuery}"
         )
@@ -95,6 +130,7 @@ class SubscriptionManager(
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
+        .callTimeout(2, TimeUnit.MINUTES)
         .build()
 
     private val _importing = MutableStateFlow(false)
@@ -121,7 +157,7 @@ class SubscriptionManager(
     ): Result<SubscriptionEntity> = withContext(Dispatchers.IO) {
         if (_importing.value) return@withContext Result.failure(IllegalStateException("正在导入中"))
         val trimmedUrl = url.trim()
-        if (!trimmedUrl.startsWith("https://") && !trimmedUrl.startsWith("http://")) {
+        if (!isValidSubscriptionUrl(trimmedUrl)) {
             return@withContext Result.failure(IllegalArgumentException("订阅链接必须使用 HTTP 或 HTTPS"))
         }
         if (subscriptionDao.byUrlAndScope(trimmedUrl, scope.storageValue) != null) {
@@ -204,7 +240,7 @@ class SubscriptionManager(
             if (trimmedName.isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("订阅名称不能为空"))
             }
-            if (!trimmedUrl.startsWith("https://") && !trimmedUrl.startsWith("http://")) {
+            if (!isValidSubscriptionUrl(trimmedUrl)) {
                 return@withContext Result.failure(IllegalArgumentException("订阅链接必须使用 HTTP 或 HTTPS"))
             }
             if (subscriptionDao.byUrlAndScope(trimmedUrl, scope.storageValue) != null) {
@@ -330,7 +366,7 @@ class SubscriptionManager(
             if (trimmedName.isEmpty() || trimmedUrl.isEmpty()) {
                 return@withContext Result.failure(IllegalArgumentException("Subscription name and URL are required"))
             }
-            if (!trimmedUrl.startsWith("https://") && !trimmedUrl.startsWith("http://")) {
+            if (!isValidSubscriptionUrl(trimmedUrl)) {
                 return@withContext Result.failure(IllegalArgumentException("Subscription URL must use HTTP or HTTPS"))
             }
             if (_importing.value) {
@@ -598,7 +634,7 @@ class SubscriptionManager(
         return client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw httpFailure(response)
             val body = response.body ?: throw SubscriptionUpdateException("订阅响应为空", retryable = false)
-            val summary = body.charStream().buffered().use { reader ->
+            val summary = limitedReader(body).use { reader ->
                 streamRules(reader, subscription.kind, sourceTag(subscriptionId), enabled)
             }
             lastImportSummary = summary
@@ -636,20 +672,26 @@ class SubscriptionManager(
             allowBatch.clear()
         }
 
-        reader.useLines { lines ->
-            lines.forEach { line ->
-                val parsed = AdGuardRuleParser.parseCategorizedLine(line)
-                invalid += parsed.invalidCount
-                unsupported += parsed.unsupportedCount
-                parsedRules += parsed.blockRules.size + parsed.allowRules.size
-                for (rule in parsed.blockRules) {
-                    blockBatch += rule
-                    if (blockBatch.size == CHUNK_SIZE) flushBlock()
-                }
-                for (rule in parsed.allowRules) {
-                    allowBatch += rule
-                    if (allowBatch.size == CHUNK_SIZE) flushAllow()
-                }
+        while (true) {
+            currentCoroutineContext().ensureActive()
+            val line = reader.readLine() ?: break
+            if (line.length > MAX_RULE_LINE_CHARS) {
+                throw SubscriptionUpdateException("订阅规则行超过长度限制", retryable = false)
+            }
+            val parsed = AdGuardRuleParser.parseCategorizedLine(line)
+            invalid += parsed.invalidCount
+            unsupported += parsed.unsupportedCount
+            parsedRules += parsed.blockRules.size + parsed.allowRules.size
+            if (parsedRules > MAX_IMPORTED_RULES) {
+                throw SubscriptionUpdateException("订阅规则数量超过限制", retryable = false)
+            }
+            for (rule in parsed.blockRules) {
+                blockBatch += rule
+                if (blockBatch.size == CHUNK_SIZE) flushBlock()
+            }
+            for (rule in parsed.allowRules) {
+                allowBatch += rule
+                if (allowBatch.size == CHUNK_SIZE) flushAllow()
             }
         }
         flushBlock()
@@ -687,13 +729,19 @@ class SubscriptionManager(
             inserted += rewriteRuleManager.addRules(batch, source, enabled, CHUNK_SIZE)
             batch.clear()
         }
-        reader.useLines { lines ->
-            lines.forEach { line ->
-                for (rule in AdGuardRuleParser.parseHostsRewriteLine(line)) {
-                    batch += rule
-                    parsed++
-                    if (batch.size == CHUNK_SIZE) flush()
+        while (true) {
+            currentCoroutineContext().ensureActive()
+            val line = reader.readLine() ?: break
+            if (line.length > MAX_RULE_LINE_CHARS) {
+                throw SubscriptionUpdateException("订阅规则行超过长度限制", retryable = false)
+            }
+            for (rule in AdGuardRuleParser.parseHostsRewriteLine(line)) {
+                batch += rule
+                parsed++
+                if (parsed > MAX_IMPORTED_RULES) {
+                    throw SubscriptionUpdateException("订阅规则数量超过限制", retryable = false)
                 }
+                if (batch.size == CHUNK_SIZE) flush()
             }
         }
         flush()
@@ -745,7 +793,7 @@ class SubscriptionManager(
             if (!response.isSuccessful) throw httpFailure(response)
             val body = response.body ?: throw SubscriptionUpdateException("订阅响应为空", retryable = false)
             StreamingDownloadResult.Content(
-                body.charStream().buffered().use { reader ->
+                limitedReader(body).use { reader ->
                     streamRules(reader, subscription.kind, stagingSource, enabled)
                 },
                 response.header("ETag"),
@@ -805,7 +853,20 @@ class SubscriptionManager(
         require(result.startsWith("https://") || result.startsWith("http://")) {
             "镜像模板生成的地址必须使用 HTTP 或 HTTPS"
         }
+        require(isValidSubscriptionUrl(result)) { "镜像模板生成的地址无效" }
         return result
+    }
+
+    private fun limitedReader(body: ResponseBody): BufferedReader =
+        LimitedInputStream(body.byteStream(), MAX_SUBSCRIPTION_BYTES).bufferedReader(Charsets.UTF_8)
+
+    private fun isValidSubscriptionUrl(value: String): Boolean {
+        if (value.length > MAX_SUBSCRIPTION_URL_LENGTH) return false
+        val uri = runCatching { URI(value) }.getOrNull() ?: return false
+        return uri.scheme?.lowercase() in setOf("http", "https") &&
+            !uri.host.isNullOrBlank() &&
+            uri.userInfo == null &&
+            uri.fragment == null
     }
 
     private fun httpFailure(response: Response): SubscriptionUpdateException {
