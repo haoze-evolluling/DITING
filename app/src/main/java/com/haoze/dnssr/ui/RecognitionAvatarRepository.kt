@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 
 private const val AVATAR_DIRECTORY = "recognition_avatars"
 private const val AVATAR_BASE_URL =
-    "https://raw.githubusercontent.com/haoze-evolluling/DNSSR/main/avatars/"
+    "https://raw.githubusercontent.com/haoze-evolluling/DITING/main/avatars/"
 private const val MAX_AVATAR_BYTES = 1_024 * 1_024L
 
 sealed interface RecognitionAvatarState {

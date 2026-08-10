@@ -27,7 +27,7 @@ import com.haoze.dnssr.ui.components.SettingsGroup
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsScaffold
 
-private const val SPONSOR_README_URL = "https://github.com/haoze-evolluling/DNSSR#readme"
+private const val SPONSOR_README_URL = "https://github.com/haoze-evolluling/DITING#%E8%B5%9E%E5%8A%A9"
 
 @Composable
 fun SponsorScreen(

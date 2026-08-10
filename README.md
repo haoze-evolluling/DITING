@@ -2,7 +2,7 @@
 
 谛听（DNSSR）是一款 Android 本地 DNS 解析与域名过滤工具。默认模式通过 Android `VpnService` 建立仅处理 DNS 的本地通道；用户也可以为明确选择的应用启用 HTTPS 流量检查，或按应用阻止联网。所有处理均在设备本地完成。
 
-项目仓库：https://github.com/haoze-evolluling/DNSSR
+项目仓库：https://github.com/haoze-evolluling/DITING
 
 ## 功能
 

@@ -59,7 +59,7 @@ import com.haoze.dnssr.ui.components.SettingsCornerShape
 import com.haoze.dnssr.vpn.DnsVpnService
 import kotlin.math.sqrt
 
-private const val PROJECT_REPOSITORY_URL = "https://github.com/haoze-evolluling/DNSSR"
+private const val PROJECT_REPOSITORY_URL = "https://github.com/haoze-evolluling/DITING"
 
 private data class AboutCapability(
     val title: String,

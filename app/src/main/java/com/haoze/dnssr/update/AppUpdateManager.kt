@@ -165,7 +165,7 @@ class AppUpdateManager(
 
     private companion object {
         const val UPDATE_DIRECTORY = "app-update"
-        const val RELEASE_URL = "https://api.github.com/repos/haoze-evolluling/DNSSR/releases/latest"
+        const val RELEASE_URL = "https://api.github.com/repos/haoze-evolluling/DITING/releases/latest"
         const val PROGRESS_UPDATE_BYTES = 256L * 1024L
     }
 }
