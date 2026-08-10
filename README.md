@@ -72,4 +72,4 @@ app/build/outputs/apk/debug/app-debug.apk
 ## 作者与许可证
 
 - 作者：haoze-evolluling（集美大学人工智能系大三学生）
-- 本项目按 GNU GPL-3.0 发布；迁入的 Go 隧道版权与来源说明见 `NOTICE`。
+- 本项目按 GNU GPL-3.0 发布
