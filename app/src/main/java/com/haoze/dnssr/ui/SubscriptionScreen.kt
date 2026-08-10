@@ -198,7 +198,9 @@ fun SubscriptionScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                        text = localizedText("点击右上角 + 添加 AdGuard DNS 规则地址"),
+                        text = localizedText(
+                            "点击右上角 + 添加 ${if (ruleScope == com.haoze.dnssr.data.entity.RuleScope.DNS) "DNS" else "HTTPS"} 域名规则地址"
+                        ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -231,7 +233,7 @@ fun SubscriptionScreen(
 
             item {
                 SettingsInfoText(
-                    text = localizedText("依据 AdGuard DNS 语法自动分类黑白名单。支持 BOM、行尾注释、hosts 多域名和 IDN 域名。"),
+                    text = localizedText("依据 AdGuard 域名规则语法自动分类黑白名单。支持 BOM、行尾注释、hosts 多域名和 IDN 域名。"),
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -241,6 +243,7 @@ fun SubscriptionScreen(
     if (showAddChoiceDialog) {
         AddSubscriptionChoiceDialog(
             onDismiss = { showAddChoiceDialog = false },
+            ruleScope = ruleScope,
             onAddRemote = {
                 pendingKind = SubscriptionKind.BLOCK
                 showAddChoiceDialog = false
@@ -263,6 +266,7 @@ fun SubscriptionScreen(
     if (showAddDialog) {
         AddSubscriptionDialog(
             onDismiss = { showAddDialog = false },
+            ruleScope = ruleScope,
             mirrorTemplates = mirrorTemplates,
             groups = subscriptionGroups,
             onConfirm = { url, name, mirrorTemplate, mirrorFallback, groupId, newGroupName ->
@@ -684,6 +688,7 @@ private fun SubscriptionActionDialog(
 @Composable
 private fun AddSubscriptionDialog(
     onDismiss: () -> Unit,
+    ruleScope: com.haoze.dnssr.data.entity.RuleScope,
     mirrorTemplates: List<MirrorTemplateEntity>,
     groups: List<SubscriptionGroupEntity>,
     onConfirm: (url: String, name: String, mirrorTemplate: String?, mirrorFallback: Boolean, groupId: Long?, newGroupName: String?) -> Unit
@@ -704,7 +709,13 @@ private fun AddSubscriptionDialog(
         text = {
             Column {
                 Text(
-                    text = localizedText("输入 AdGuard DNS 规则订阅地址，导入时会自动区分黑名单和白名单规则。"),
+                    text = localizedText(
+                        if (ruleScope == com.haoze.dnssr.data.entity.RuleScope.DNS) {
+                            "输入 AdGuard DNS 域名规则订阅地址，导入时会自动区分黑名单和白名单规则。"
+                        } else {
+                            "输入 HTTPS 域名规则订阅地址，导入时会自动区分黑名单和白名单规则；URL 路径规则请单独添加。"
+                        }
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -768,17 +779,19 @@ private fun AddSubscriptionDialog(
 @Composable
 private fun AddSubscriptionChoiceDialog(
     onDismiss: () -> Unit,
+    ruleScope: com.haoze.dnssr.data.entity.RuleScope,
     onAddRemote: () -> Unit,
     onImportFromDns: (() -> Unit)?,
     onAddRewriteRemote: () -> Unit
 ) {
+    val scopeLabel = if (ruleScope == com.haoze.dnssr.data.entity.RuleScope.DNS) "DNS" else "HTTPS"
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("添加规则订阅")) },
         text = {
             Column {
                 Text(
-                    text = localizedText("DNS 过滤规则"),
+                    text = localizedText("$scopeLabel 域名过滤规则"),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
@@ -789,7 +802,7 @@ private fun AddSubscriptionChoiceDialog(
                     content = buildList {
                         add {
                             SettingsItem(
-                                title = localizedText("网络 DNS 过滤订阅"),
+                                title = localizedText("网络 $scopeLabel 域名规则订阅"),
                                 leadingIcon = Icons.Default.CloudDownload,
                                 onClick = onAddRemote
                             )
