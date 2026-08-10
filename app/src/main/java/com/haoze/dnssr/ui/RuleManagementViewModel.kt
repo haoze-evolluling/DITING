@@ -156,10 +156,13 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
     }
 
     fun addRewriteRule(domain: String, targetType: String, targetValue: String, onResult: (String) -> Unit) {
+        val scope = ruleScope
         viewModelScope.launch(Dispatchers.IO) {
             val success = rewriteRuleManager().addRule(domain, targetType, targetValue)
             if (success) {
-                RuntimeDnsSettingsRefresher.refreshIfRunning(getApplication(), "rewrite_rule_added")
+                RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                    getApplication(), false, false, true, scope
+                )
             }
             withContext(Dispatchers.Main) {
                 onResult(if (success) "已添加覆写域名" else "域名、目标格式无效、规则冲突或已存在")

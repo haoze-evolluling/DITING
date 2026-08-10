@@ -105,6 +105,7 @@ class DnsVpnService : VpnService() {
     private lateinit var blockListManager: BlockListManager
     private lateinit var allowListManager: AllowListManager
     private lateinit var rewriteRuleManager: RewriteRuleManager
+    private lateinit var httpsRewriteRuleManager: RewriteRuleManager
     private lateinit var domainPolicy: DomainPolicy
     private lateinit var goUrlRuleManager: GoUrlRuleManager
     private lateinit var dnsLogger: DnsLogger
@@ -150,6 +151,7 @@ class DnsVpnService : VpnService() {
         blockListManager = BlockListManager(db.blockRuleDao(), ruleIndexDirectory)
         allowListManager = AllowListManager(db.allowRuleDao(), ruleIndexDirectory)
         rewriteRuleManager = RewriteRuleManager(db.rewriteRuleDao(), ruleIndexDirectory)
+        httpsRewriteRuleManager = RewriteRuleManager(db.rewriteRuleDao(), ruleIndexDirectory, RuleScope.HTTPS)
         domainPolicy = DomainPolicy(allowListManager, blockListManager)
         goUrlRuleManager = GoUrlRuleManager(db.goUrlRuleDao())
         dnsLogger = DnsLogger(db.dnsLogDao(), logRetentionDays, serviceScope) { activeDnsLogMode }
@@ -169,6 +171,7 @@ class DnsVpnService : VpnService() {
         serviceScope.launch { blockListManager.refreshCache() }
         serviceScope.launch { allowListManager.refreshCache() }
         serviceScope.launch { rewriteRuleManager.refreshCache() }
+        serviceScope.launch { httpsRewriteRuleManager.refreshCache() }
         serviceScope.launch {
             DnsCacheController.register(dnsCache)
             dnsCache.warmUp()
@@ -322,7 +325,7 @@ class DnsVpnService : VpnService() {
                 appAllowlistPackages = appAllowlistPackages,
                 appAllowlistDomains = appAllowlistDomains,
                 dnsPolicy = domainPolicy,
-                rewriteRuleManager = rewriteRuleManager,
+                cnameRewriteRuleManager = httpsRewriteRuleManager,
                 goUrlRuleManager = goUrlRuleManager,
                 dnsLogger = dnsLogger,
                 httpRequestLogger = httpRequestLogger,
@@ -678,7 +681,7 @@ class DnsVpnService : VpnService() {
             refreshMutex.withLock {
                 val blockManager = blockListManager
                 val allowManager = allowListManager
-                val rewriteManager = rewriteRuleManager
+                val rewriteManager = if (scope == RuleScope.HTTPS) httpsRewriteRuleManager else rewriteRuleManager
                 if (refreshBlock) runCatching { blockManager.refreshCache() }
                     .onFailure { Log.w(TAG, "Failed to refresh block list cache", it) }
                 if (refreshAllow) runCatching { allowManager.refreshCache() }
@@ -742,6 +745,7 @@ class DnsVpnService : VpnService() {
     override fun onDestroy() {
         if (::floatingLogOverlay.isInitialized) floatingLogOverlay.destroy()
         rewriteRuleManager.close()
+        httpsRewriteRuleManager.close()
         isServiceAlive = false
         setRunningFlag(this, false)
         readJob?.cancel()

@@ -42,7 +42,7 @@ class GoInspectionTunnel(
     private val appAllowlistPackages: Set<String>,
     private val appAllowlistDomains: Set<String>,
     private val dnsPolicy: DomainPolicy,
-    private val rewriteRuleManager: RewriteRuleManager,
+    private val cnameRewriteRuleManager: RewriteRuleManager,
     private val goUrlRuleManager: GoUrlRuleManager,
     private val dnsLogger: DnsLogger,
     private val httpRequestLogger: HttpRequestLogger,
@@ -82,7 +82,7 @@ class GoInspectionTunnel(
 
     fun updateCnameRewriteRules() {
         if (!inspectionEnabled) return
-        engine.setRewriteRules(JSONObject(rewriteRuleManager.cnameRedirects()).toString())
+        engine.setRewriteRules(JSONObject(cnameRewriteRuleManager.cnameRedirects()).toString())
     }
 
     fun updateRequestRules() {

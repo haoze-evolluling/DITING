@@ -111,9 +111,8 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
                 GoUrlRuleManager(goUrlRuleDao).delete(id)
                 RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
             } else if (ruleKind == ManagedRuleKind.REWRITE) {
-                val rebuildSubscriptionIndex = rewriteRuleDao.hasSubscriptionSource(id)
                 rewriteRuleManager.deleteRule(id)
-                refreshRewriteRules(context, rebuildSubscriptionIndex)
+                refreshRewriteRules(context)
             } else if (ruleKind == ManagedRuleKind.ALLOW) {
                 val rebuildSubscriptionIndex = allowRuleDao.hasSubscriptionSource(id)
                 allowListManager.deleteRule(id)?.let {
@@ -147,9 +146,8 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
                 GoUrlRuleManager(goUrlRuleDao).setEnabled(id, enabled)
                 RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
             } else if (ruleKind == ManagedRuleKind.REWRITE) {
-                val rebuildSubscriptionIndex = rewriteRuleDao.hasSubscriptionSource(id)
                 rewriteRuleManager.toggleRule(id, enabled)
-                refreshRewriteRules(context, rebuildSubscriptionIndex)
+                refreshRewriteRules(context)
             } else if (ruleKind == ManagedRuleKind.ALLOW) {
                 val rebuildSubscriptionIndex = allowRuleDao.hasSubscriptionSource(id)
                 allowListManager.toggleRule(id, enabled)?.let {
@@ -173,12 +171,8 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private fun refreshRewriteRules(context: Application, rebuildSubscriptionIndex: Boolean) {
-        if (rebuildSubscriptionIndex) {
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, false, false, true, RuleScope.DNS)
-        } else {
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "rewrite_rule_changed")
-        }
+    private fun refreshRewriteRules(context: Application) {
+        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, false, false, true, ruleScope)
     }
 
     private suspend fun loadRules(query: String, limit: Int, offset: Int): List<RuleListItem> {

@@ -24,8 +24,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsInfoText
-import com.haoze.dnssr.ui.components.SettingsNavigationGroup
-import com.haoze.dnssr.ui.components.SettingsNavigationItemData
+import com.haoze.dnssr.ui.components.SettingsNavigationItem
 import com.haoze.dnssr.ui.components.SettingsRadioItem
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
@@ -81,22 +80,22 @@ fun BlockResponseSettingsScreen(
 
             SettingsGroupTitle(localizedText("动态策略"))
             SettingsSurfaceGroup(
-                content = listOf {
-                    SettingsSwitchItem(
-                        title = localizedText("启用动态策略"),
-                        subtitle = localizedText("同一域名的所有记录类型合并计数"),
-                        checked = dynamicConfig.enabled,
-                        onCheckedChange = { saveDynamicConfig(dynamicConfig.copy(enabled = it)) }
-                    )
-                }
-            )
-            SettingsNavigationGroup(
-                items = listOf(
-                    SettingsNavigationItemData(
-                    title = localizedText("动态参数"),
-                    subtitle = localizedText("${dynamicConfig.requestThreshold} 次 / ${dynamicConfig.windowSeconds} 秒 / 保持 ${dynamicConfig.nxDomainDurationSeconds} 秒"),
-                    onClick = { showParameterDialog = true }
-                    )
+                content = listOf(
+                    {
+                        SettingsSwitchItem(
+                            title = localizedText("启用动态策略"),
+                            subtitle = localizedText("同一域名的所有记录类型合并计数"),
+                            checked = dynamicConfig.enabled,
+                            onCheckedChange = { saveDynamicConfig(dynamicConfig.copy(enabled = it)) }
+                        )
+                    },
+                    {
+                        SettingsNavigationItem(
+                            title = localizedText("动态参数"),
+                            subtitle = localizedText("${dynamicConfig.requestThreshold} 次 / ${dynamicConfig.windowSeconds} 秒 / 保持 ${dynamicConfig.nxDomainDurationSeconds} 秒"),
+                            onClick = { showParameterDialog = true }
+                        )
+                    }
                 )
             )
             SettingsInfoText(localizedText("正常客户端会缓存 NODATA 响应。动态策略主要用于持续重试或忽略负缓存的请求。"))

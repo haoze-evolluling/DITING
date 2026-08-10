@@ -155,7 +155,7 @@ fun RuleManagementScreen(
         ) {
             item {
                 SettingsInfoText(
-                    text = localizedText(if (addressOnly) "仅在 HTTPS 流量检查可解密的 HTTP(S) 请求中生效。当前共有 $urlRuleCount 条 URL 屏蔽规则和 $urlAllowRuleCount 条 URL 放行规则，放行规则可覆盖屏蔽规则。" else "当前共有 $ruleCount 条屏蔽规则，$allowRuleCount 条白名单规则，$rewriteRuleCount 条 IPv4/IPv6 覆写规则。覆写规则优先于黑白名单，DNS 与 HTTPS 检查共用这套域名策略。"),
+                    text = localizedText(if (addressOnly) "仅在 HTTPS 流量检查可解密的 HTTP(S) 请求中生效。当前共有 $urlRuleCount 条 URL 屏蔽规则、$urlAllowRuleCount 条 URL 放行规则和 $rewriteRuleCount 条 CNAME 覆写规则，放行规则可覆盖屏蔽规则。" else "当前共有 $ruleCount 条屏蔽规则，$allowRuleCount 条白名单规则，$rewriteRuleCount 条 IPv4/IPv6 覆写规则。覆写规则优先于黑白名单，DNS 与 HTTPS 检查共用这套域名策略。"),
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -190,6 +190,27 @@ fun RuleManagementScreen(
                         SettingsNavigationItemData(title = localizedText("添加放行 URL"), subtitle = localizedText("如 https://example.com/allowed，可覆盖域名屏蔽"), onClick = { newUrlRule = ""; showAddUrlAllowRuleDialog = true }),
                         SettingsNavigationItemData(title = localizedText("URL 屏蔽规则"), subtitle = localizedText("查看、启用、停用或删除 URL 屏蔽规则"), value = localizedText("$urlRuleCount 条"), onClick = onNavigateToUrlRuleList),
                         SettingsNavigationItemData(title = localizedText("URL 放行规则"), subtitle = localizedText("查看、启用、停用或删除 URL 放行规则"), value = localizedText("$urlAllowRuleCount 条"), onClick = onNavigateToUrlAllowRuleList)
+                    )
+                )
+            }
+
+            if (addressOnly) item {
+                SettingsGroupTitle(localizedText("CNAME 覆写"))
+            }
+            if (addressOnly) item {
+                SettingsNavigationGroup(
+                    items = listOf(
+                        SettingsNavigationItemData(
+                            title = localizedText("添加 CNAME 覆写"),
+                            subtitle = localizedText("将域名覆写为指定的 CNAME 域名"),
+                            onClick = ::openAddRewriteRuleDialog
+                        ),
+                        SettingsNavigationItemData(
+                            title = localizedText("CNAME 覆写规则"),
+                            subtitle = localizedText("查看、启用、停用或删除 CNAME 覆写规则"),
+                            value = localizedText("$rewriteRuleCount 条"),
+                            onClick = onNavigateToRewriteRuleList
+                        )
                     )
                 )
             }
@@ -305,7 +326,7 @@ fun RuleManagementScreen(
                     items = listOf(
                         SettingsNavigationItemData(
                             title = localizedText("清理全部地址规则"),
-                            subtitle = localizedText("清除全部 URL 屏蔽和放行规则，不影响域名规则"),
+                            subtitle = localizedText("清除全部 URL 屏蔽、放行和 CNAME 覆写规则，不影响域名规则"),
                             onClick = { showClearAllRulesDialog = true }
                         )
                     )
@@ -317,7 +338,7 @@ fun RuleManagementScreen(
     if (showClearAllRulesDialog) {
         ConfirmDialog(
             title = localizedText(if (addressOnly) "删除全部地址规则" else "删除全部域名规则"),
-            text = localizedText(if (addressOnly) "确定要删除全部地址规则吗？URL 屏蔽和放行规则都会被移除，域名规则不受影响。" else "确定要删除全部域名规则吗？域名屏蔽、白名单、IPv4/IPv6 覆写规则及对应订阅都会被移除，地址规则不受影响。"),
+            text = localizedText(if (addressOnly) "确定要删除全部地址规则吗？URL 屏蔽、放行和 CNAME 覆写规则都会被移除，域名规则不受影响。" else "确定要删除全部域名规则吗？域名屏蔽、白名单、IPv4/IPv6 覆写规则及对应订阅都会被移除，地址规则不受影响。"),
             onConfirm = {
                 showClearAllRulesDialog = false
                 scope.launch(Dispatchers.IO) {
