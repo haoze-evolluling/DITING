@@ -486,13 +486,19 @@ object AppSettings {
 
     fun getOutboundProxyConfig(context: Context): OutboundProxyConfig {
         val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val enabled = preferences.getBoolean(KEY_OUTBOUND_PROXY_ENABLED, false)
+        val username = decryptProxySecret(preferences.getString(KEY_OUTBOUND_PROXY_USERNAME, null))
+        val password = decryptProxySecret(preferences.getString(KEY_OUTBOUND_PROXY_PASSWORD, null))
+        if (enabled && (username.failed || password.failed)) {
+            setOutboundProxyStatus(context, "error", "代理凭据无法恢复，请重新输入")
+        }
         return OutboundProxyConfig(
-            enabled = preferences.getBoolean(KEY_OUTBOUND_PROXY_ENABLED, false),
+            enabled = enabled,
             protocol = OutboundProxyProtocol.fromStorageValue(preferences.getString(KEY_OUTBOUND_PROXY_PROTOCOL, null)),
             host = preferences.getString(KEY_OUTBOUND_PROXY_HOST, "127.0.0.1") ?: "127.0.0.1",
             port = preferences.getInt(KEY_OUTBOUND_PROXY_PORT, 7890),
-            username = decryptProxySecret(preferences.getString(KEY_OUTBOUND_PROXY_USERNAME, null)),
-            password = decryptProxySecret(preferences.getString(KEY_OUTBOUND_PROXY_PASSWORD, null)),
+            username = username.value,
+            password = password.value,
             proxyAppPackage = preferences.getString(KEY_OUTBOUND_PROXY_APP, "").orEmpty()
         )
     }
@@ -547,15 +553,23 @@ object AppSettings {
         }.getOrDefault("")
     }
 
-    private fun decryptProxySecret(value: String?): String {
-        if (value.isNullOrEmpty()) return ""
+    private data class DecryptedProxySecret(
+        val value: String,
+        val failed: Boolean
+    )
+
+    private fun decryptProxySecret(value: String?): DecryptedProxySecret {
+        if (value.isNullOrEmpty()) return DecryptedProxySecret("", failed = false)
         return runCatching {
             val payload = Base64.decode(value, Base64.NO_WRAP)
             val iv = payload.copyOfRange(0, 12)
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.DECRYPT_MODE, proxySecretKey(), GCMParameterSpec(128, iv))
             String(cipher.doFinal(payload.copyOfRange(12, payload.size)), Charsets.UTF_8)
-        }.getOrDefault("")
+        }.fold(
+            onSuccess = { DecryptedProxySecret(it, failed = false) },
+            onFailure = { DecryptedProxySecret("", failed = true) }
+        )
     }
 
     fun isHttpInspectionAppPackagesInitialized(context: Context): Boolean {
