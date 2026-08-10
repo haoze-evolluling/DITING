@@ -380,15 +380,9 @@ class RuleOperationWorker(
         var unsupported = 0
         var processed = 0
 
-        val lines = reader.readLines()
-        val total = lines.sumOf { line ->
-            val parsedLine = AdGuardRuleParser.parseCategorizedLine(line)
-            parsedLine.blockRules.size + parsedLine.allowRules.size
-        }
-
         suspend fun reportProgress() {
-            setProgressAsync(progressData(type, -1, processed, total))
-            notifyProgress(titleFor(type), processed, total)
+            setProgressAsync(progressData(type, -1, processed, 0))
+            notifyProgress(titleFor(type), processed, 0)
         }
         suspend fun flushBlock() {
             if (blockBatch.isEmpty()) return
@@ -407,19 +401,20 @@ class RuleOperationWorker(
             reportProgress()
         }
 
-        lines.forEach { line ->
-                val categorized = AdGuardRuleParser.parseCategorizedLine(line)
-                invalid += categorized.invalidCount
-                unsupported += categorized.unsupportedCount
-                parsed += categorized.blockRules.size + categorized.allowRules.size
-                categorized.blockRules.forEach { rule ->
-                    blockBatch += rule
-                    if (blockBatch.size == IMPORT_CHUNK_SIZE) flushBlock()
-                }
-                categorized.allowRules.forEach { rule ->
-                    allowBatch += rule
-                    if (allowBatch.size == IMPORT_CHUNK_SIZE) flushAllow()
-                }
+        while (true) {
+            val line = reader.readLine() ?: break
+            val categorized = AdGuardRuleParser.parseCategorizedLine(line)
+            invalid += categorized.invalidCount
+            unsupported += categorized.unsupportedCount
+            parsed += categorized.blockRules.size + categorized.allowRules.size
+            categorized.blockRules.forEach { rule ->
+                blockBatch += rule
+                if (blockBatch.size == IMPORT_CHUNK_SIZE) flushBlock()
+            }
+            categorized.allowRules.forEach { rule ->
+                allowBatch += rule
+                if (allowBatch.size == IMPORT_CHUNK_SIZE) flushAllow()
+            }
         }
         flushBlock()
         flushAllow()
@@ -442,8 +437,6 @@ class RuleOperationWorker(
         var inserted = 0
         var parsed = 0
         var processed = 0
-        val lines = reader.readLines()
-        val total = lines.sumOf { AdGuardRuleParser.parseHostsRewriteLine(it).size }
         suspend fun flush() {
             if (batch.isEmpty()) return
             val insertedBatch = rewriteManager.addRules(batch, LOCAL_HOSTS_SOURCE, true, IMPORT_CHUNK_SIZE)
@@ -451,14 +444,15 @@ class RuleOperationWorker(
             processed += insertedBatch
             parsed += batch.size
             batch.clear()
-            setProgressAsync(progressData(type, -1, processed, total))
-            notifyProgress(titleFor(type), processed, total)
+            setProgressAsync(progressData(type, -1, processed, 0))
+            notifyProgress(titleFor(type), processed, 0)
         }
-        lines.forEach { line ->
-                AdGuardRuleParser.parseHostsRewriteLine(line).forEach { rule ->
-                    batch += rule
-                    if (batch.size == IMPORT_CHUNK_SIZE) flush()
-                }
+        while (true) {
+            val line = reader.readLine() ?: break
+            AdGuardRuleParser.parseHostsRewriteLine(line).forEach { rule ->
+                batch += rule
+                if (batch.size == IMPORT_CHUNK_SIZE) flush()
+            }
         }
         flush()
         require(parsed > 0) { "文件中没有可导入的真实 IP hosts 规则" }

@@ -42,15 +42,16 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         return SubscriptionManager(
             database,
             database.subscriptionDao(),
-            BlockListManager(database.blockRuleDao(), scope = ruleScope),
-            AllowListManager(database.allowRuleDao(), scope = ruleScope),
-            com.haoze.dnssr.vpn.RewriteRuleManager(database.rewriteRuleDao(), java.io.File(app.filesDir, "rule-index"), ruleScope),
+            BlockListManager(database.blockRuleDao(), scope = ruleScope, reloadCacheAfterChanges = false),
+            AllowListManager(database.allowRuleDao(), scope = ruleScope, reloadCacheAfterChanges = false),
+            com.haoze.dnssr.vpn.RewriteRuleManager(database.rewriteRuleDao(), java.io.File(app.filesDir, "rule-index"), ruleScope, reloadCacheAfterChanges = false),
             ruleScope
         )
     }
 
     private val _subscriptions = MutableStateFlow<List<SubscriptionEntity>>(emptyList())
     val subscriptions: StateFlow<List<SubscriptionEntity>> = _subscriptions.asStateFlow()
+    private var deletingSubscriptionIds = emptySet<Long>()
     private val _pendingSubscriptions = MutableStateFlow<List<SubscriptionEntity>>(emptyList())
     val pendingSubscriptions: StateFlow<List<SubscriptionEntity>> = _pendingSubscriptions.asStateFlow()
     private var subscriptionsJob: Job? = null
@@ -95,7 +96,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             AppDatabase.getInstance(getApplication<Application>()).subscriptionDao()
                 .observeByScope(scope.storageValue)
                 .collect { subscriptions ->
-                    _subscriptions.value = subscriptions
+                    _subscriptions.value = subscriptions.filterNot { it.id in deletingSubscriptionIds }
                 }
         }
         if (scope == RuleScope.HTTPS) loadDnsImportCandidates()
@@ -274,9 +275,9 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         return SubscriptionManager(
             database,
             database.subscriptionDao(),
-            BlockListManager(database.blockRuleDao(), scope = scope),
-            AllowListManager(database.allowRuleDao(), scope = scope),
-            com.haoze.dnssr.vpn.RewriteRuleManager(database.rewriteRuleDao(), java.io.File(app.filesDir, "rule-index"), scope),
+            BlockListManager(database.blockRuleDao(), scope = scope, reloadCacheAfterChanges = false),
+            AllowListManager(database.allowRuleDao(), scope = scope, reloadCacheAfterChanges = false),
+            com.haoze.dnssr.vpn.RewriteRuleManager(database.rewriteRuleDao(), java.io.File(app.filesDir, "rule-index"), scope, reloadCacheAfterChanges = false),
             scope
         )
     }
@@ -361,29 +362,32 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     }
 
     fun deleteSubscription(id: Long) {
+        viewModelScope.launch {
+            deletingSubscriptionIds += id
+            _subscriptions.value = _subscriptions.value.filterNot { it.id == id }
             _operationMessage.value = getApplication<Application>().getString(R.string.subscription_deleting)
-        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val subscription = AppDatabase.getInstance(getApplication<Application>()).subscriptionDao().byId(id)
-                subscriptionManager().deleteSubscription(id)
-                val isRewrite = subscription?.kind == com.haoze.dnssr.data.entity.SubscriptionKind.REWRITE
-                refreshSubscriptionRuleIndexes(
-                    isRewrite,
-                    RuleScope.fromStorage(subscription?.scope.orEmpty())
-                )
-                loadSubscriptionsIntoState()
-                withContext(Dispatchers.Main) {
-            _message.value = getApplication<Application>().getString(R.string.subscription_deleted)
+                withContext(Dispatchers.IO) {
+                    val subscription = AppDatabase.getInstance(getApplication<Application>()).subscriptionDao().byId(id)
+                    subscriptionManager().deleteSubscription(id)
+                    val isRewrite = subscription?.kind == com.haoze.dnssr.data.entity.SubscriptionKind.REWRITE
+                    refreshSubscriptionRuleIndexes(
+                        isRewrite,
+                        RuleScope.fromStorage(subscription?.scope.orEmpty())
+                    )
                 }
+                _message.value = getApplication<Application>().getString(R.string.subscription_deleted)
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-            val context = getApplication<Application>()
-            _message.value = context.getString(
-                R.string.subscription_delete_failed,
-                localizedText(context, e.message ?: "")
-            )
+                withContext(Dispatchers.IO) {
+                    loadSubscriptionsIntoState()
                 }
+                val context = getApplication<Application>()
+                _message.value = context.getString(
+                    R.string.subscription_delete_failed,
+                    localizedText(context, e.message ?: "")
+                )
             } finally {
+                deletingSubscriptionIds -= id
                 _operationMessage.value = null
             }
         }
