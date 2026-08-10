@@ -77,8 +77,8 @@ fun RuleImportScreen(
         documentLauncher.launch(arrayOf("text/plain", "text/*", "application/octet-stream"))
     }
 
-    fun selectHttpsBackup() {
-        selectedAction = viewModel::restoreHttpsBackup
+    fun selectAddressBackup() {
+        selectedAction = viewModel::restoreAddressBackup
         documentLauncher.launch(arrayOf("application/json", "text/json", "text/plain", "application/octet-stream"))
     }
 
@@ -98,7 +98,7 @@ fun RuleImportScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
-            SettingsGroupTitle(localizedText("DNS"))
+            SettingsGroupTitle(localizedText("域名规则"))
             SettingsSurfaceGroup(content = listOf(
                 {
                     SettingsItem(
@@ -119,24 +119,15 @@ fun RuleImportScreen(
                     )
                 }
             ))
-            SettingsGroupTitle(localizedText("HTTPS"))
+            SettingsGroupTitle(localizedText("地址规则"))
             SettingsSurfaceGroup(content = listOf(
                 {
                     SettingsItem(
-                        title = localizedText("导入 HTTPS 过滤订阅文件"),
-                        subtitle = localizedText("创建不可更新的本地 HTTPS 过滤订阅"),
+                        title = localizedText("导入地址规则备份 JSON"),
+                        subtitle = localizedText("恢复 URL 屏蔽和放行规则，不创建订阅"),
                         leadingIcon = Icons.Default.FolderOpen,
                         enabled = !importing,
-                        onClick = { selectLocalSubscription("导入 HTTPS 过滤订阅", SubscriptionKind.BLOCK, RuleScope.HTTPS) }
-                    )
-                },
-                {
-                    SettingsItem(
-                        title = localizedText("导入 HTTPS 规则备份 JSON"),
-                        subtitle = localizedText("恢复为手动规则，不创建订阅"),
-                        leadingIcon = Icons.Default.FolderOpen,
-                        enabled = !importing,
-                        onClick = ::selectHttpsBackup
+                        onClick = ::selectAddressBackup
                     )
                 }
             ))

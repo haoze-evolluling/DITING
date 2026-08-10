@@ -42,7 +42,6 @@ class GoInspectionTunnel(
     private val appAllowlistPackages: Set<String>,
     private val appAllowlistDomains: Set<String>,
     private val dnsPolicy: DomainPolicy,
-    private val httpsPolicy: DomainPolicy,
     private val rewriteRuleManager: RewriteRuleManager,
     private val goUrlRuleManager: GoUrlRuleManager,
     private val dnsLogger: DnsLogger,
@@ -133,14 +132,13 @@ class GoInspectionTunnel(
             engine.setRewriteRules("")
             engine.setRequestRules("")
         }
-        val activePolicy = if (inspectionEnabled) httpsPolicy else dnsPolicy
         engine.setDomainChecker(object : DomainChecker {
-            override fun isBlocked(domain: String): Boolean = activePolicy.evaluate(domain) is DomainDecision.Block
+            override fun isBlocked(domain: String): Boolean = dnsPolicy.evaluate(domain) is DomainDecision.Block
 
             override fun getBlockReason(domain: String): String =
-                (activePolicy.evaluate(domain) as? DomainDecision.Block)?.matchedRule.orEmpty()
+                (dnsPolicy.evaluate(domain) as? DomainDecision.Block)?.matchedRule.orEmpty()
 
-            override fun hasCustomRule(domain: String): Long = when (val decision = activePolicy.evaluate(domain)) {
+            override fun hasCustomRule(domain: String): Long = when (val decision = dnsPolicy.evaluate(domain)) {
                 is DomainDecision.Block -> 1L
                 is DomainDecision.Allow -> if (decision.matchedRule != null) 0L else -1L
             }
@@ -239,8 +237,7 @@ class GoInspectionTunnel(
 
     private fun resolveBlockSubscriptionId(authority: String): Long? {
         if (authority.isBlank()) return null
-        val policy = if (inspectionEnabled) httpsPolicy else dnsPolicy
-        val source = (policy.evaluate(authority) as? DomainDecision.Block)?.source ?: return null
+        val source = (dnsPolicy.evaluate(authority) as? DomainDecision.Block)?.source ?: return null
         return source.subscriptionIdOrNull()
     }
     private fun HttpsDnsConfigSnapshot.toJson(): String = JSONObject()

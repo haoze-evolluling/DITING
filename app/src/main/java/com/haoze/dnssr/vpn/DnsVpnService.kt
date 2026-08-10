@@ -106,11 +106,7 @@ class DnsVpnService : VpnService() {
     private lateinit var allowListManager: AllowListManager
     private lateinit var rewriteRuleManager: RewriteRuleManager
     private lateinit var domainPolicy: DomainPolicy
-    private lateinit var httpsBlockListManager: BlockListManager
-    private lateinit var httpsAllowListManager: AllowListManager
-    private lateinit var httpsRewriteRuleManager: RewriteRuleManager
     private lateinit var goUrlRuleManager: GoUrlRuleManager
-    private lateinit var httpsDomainPolicy: DomainPolicy
     private lateinit var dnsLogger: DnsLogger
     private lateinit var httpRequestLogger: HttpRequestLogger
     private lateinit var raceLogger: RaceLogger
@@ -155,11 +151,7 @@ class DnsVpnService : VpnService() {
         allowListManager = AllowListManager(db.allowRuleDao(), ruleIndexDirectory)
         rewriteRuleManager = RewriteRuleManager(db.rewriteRuleDao(), ruleIndexDirectory)
         domainPolicy = DomainPolicy(allowListManager, blockListManager)
-        httpsBlockListManager = BlockListManager(db.blockRuleDao(), File(ruleIndexDirectory, "https"), RuleScope.HTTPS)
-        httpsAllowListManager = AllowListManager(db.allowRuleDao(), File(ruleIndexDirectory, "https"), RuleScope.HTTPS)
-        httpsRewriteRuleManager = RewriteRuleManager(db.rewriteRuleDao(), File(ruleIndexDirectory, "https"), RuleScope.HTTPS)
         goUrlRuleManager = GoUrlRuleManager(db.goUrlRuleDao())
-        httpsDomainPolicy = DomainPolicy(httpsAllowListManager, httpsBlockListManager)
         dnsLogger = DnsLogger(db.dnsLogDao(), logRetentionDays, serviceScope) { activeDnsLogMode }
         httpRequestLogger = HttpRequestLogger(db.httpRequestLogDao(), logRetentionDays, serviceScope) { activeDnsLogMode }
         raceLogger = RaceLogger(db.raceLogDao(), logRetentionDays, serviceScope)
@@ -177,9 +169,6 @@ class DnsVpnService : VpnService() {
         serviceScope.launch { blockListManager.refreshCache() }
         serviceScope.launch { allowListManager.refreshCache() }
         serviceScope.launch { rewriteRuleManager.refreshCache() }
-        serviceScope.launch { httpsBlockListManager.refreshCache() }
-        serviceScope.launch { httpsAllowListManager.refreshCache() }
-        serviceScope.launch { httpsRewriteRuleManager.refreshCache() }
         serviceScope.launch {
             DnsCacheController.register(dnsCache)
             dnsCache.warmUp()
@@ -216,7 +205,6 @@ class DnsVpnService : VpnService() {
                     intent.getStringExtra(EXTRA_RULE_SCOPE).orEmpty()
                 )
             )
-            ACTION_SYNC_HTTPS_MANUAL_REWRITE_RULES -> syncHttpsManualRewriteRules()
             ACTION_SYNC_HTTPS_REQUEST_RULES -> syncHttpsRequestRules()
             else -> startVpn(intent)
         }
@@ -334,8 +322,7 @@ class DnsVpnService : VpnService() {
                 appAllowlistPackages = appAllowlistPackages,
                 appAllowlistDomains = appAllowlistDomains,
                 dnsPolicy = domainPolicy,
-                httpsPolicy = httpsDomainPolicy,
-                rewriteRuleManager = httpsRewriteRuleManager,
+                rewriteRuleManager = rewriteRuleManager,
                 goUrlRuleManager = goUrlRuleManager,
                 dnsLogger = dnsLogger,
                 httpRequestLogger = httpRequestLogger,
@@ -672,11 +659,9 @@ class DnsVpnService : VpnService() {
                     }.also { pendingRuleSyncs.clear() }
                 }
                 refreshMutex.withLock {
-                    pending.forEach { (ruleScope, rulesByType) ->
-                        val blockManager = if (ruleScope == RuleScope.HTTPS) httpsBlockListManager else blockListManager
-                        val allowManager = if (ruleScope == RuleScope.HTTPS) httpsAllowListManager else allowListManager
-                        rulesByType[RULE_TYPE_BLOCK].orEmpty().forEach { blockManager.syncCachedPattern(it) }
-                        rulesByType[RULE_TYPE_ALLOW].orEmpty().forEach { allowManager.syncCachedPattern(it) }
+                    pending.forEach { (_, rulesByType) ->
+                        rulesByType[RULE_TYPE_BLOCK].orEmpty().forEach { blockListManager.syncCachedPattern(it) }
+                        rulesByType[RULE_TYPE_ALLOW].orEmpty().forEach { allowListManager.syncCachedPattern(it) }
                     }
                 }
             }
@@ -691,21 +676,9 @@ class DnsVpnService : VpnService() {
     ) {
         serviceScope.launch {
             refreshMutex.withLock {
-                val blockManager = if (scope == com.haoze.dnssr.data.entity.RuleScope.HTTPS) {
-                    httpsBlockListManager
-                } else {
-                    blockListManager
-                }
-                val allowManager = if (scope == com.haoze.dnssr.data.entity.RuleScope.HTTPS) {
-                    httpsAllowListManager
-                } else {
-                    allowListManager
-                }
-                val rewriteManager = if (scope == com.haoze.dnssr.data.entity.RuleScope.HTTPS) {
-                    httpsRewriteRuleManager
-                } else {
-                    rewriteRuleManager
-                }
+                val blockManager = blockListManager
+                val allowManager = allowListManager
+                val rewriteManager = rewriteRuleManager
                 if (refreshBlock) runCatching { blockManager.refreshCache() }
                     .onFailure { Log.w(TAG, "Failed to refresh block list cache", it) }
                 if (refreshAllow) runCatching { allowManager.refreshCache() }
@@ -713,16 +686,6 @@ class DnsVpnService : VpnService() {
                 if (refreshRewrite) runCatching { rewriteManager.refreshCache() }
                     .onSuccess { goInspectionTunnel?.updateRewriteRules() }
                     .onFailure { Log.w(TAG, "Failed to refresh rewrite rule cache", it) }
-            }
-        }
-    }
-
-    private fun syncHttpsManualRewriteRules() {
-        serviceScope.launch {
-            refreshMutex.withLock {
-                runCatching { httpsRewriteRuleManager.refreshCache(rebuildSubscriptionIndex = false) }
-                    .onSuccess { goInspectionTunnel?.updateCnameRewriteRules() }
-                    .onFailure { Log.w(TAG, "Failed to refresh manual HTTPS rewrite rules", it) }
             }
         }
     }
@@ -1467,7 +1430,6 @@ class DnsVpnService : VpnService() {
         private const val ACTION_FLOATING_LOG_APP_STATE = "com.haoze.dnssr.FLOATING_LOG_APP_STATE"
         private const val ACTION_SYNC_RULE = "com.haoze.dnssr.SYNC_RULE"
         private const val ACTION_REFRESH_RULE_INDEXES = "com.haoze.dnssr.REFRESH_RULE_INDEXES"
-        private const val ACTION_SYNC_HTTPS_MANUAL_REWRITE_RULES = "com.haoze.dnssr.SYNC_HTTPS_MANUAL_REWRITE_RULES"
         private const val ACTION_SYNC_HTTPS_REQUEST_RULES = "com.haoze.dnssr.SYNC_HTTPS_REQUEST_RULES"
         const val ACTION_VPN_STATUS_CHANGED = "com.haoze.dnssr.VPN_STATUS_CHANGED"
         const val EXTRA_VPN_RUNNING = "vpn_running"
@@ -1568,9 +1530,6 @@ class DnsVpnService : VpnService() {
             .putExtra(EXTRA_REFRESH_ALLOW, refreshAllow)
             .putExtra(EXTRA_REFRESH_REWRITE, refreshRewrite)
             .putExtra(EXTRA_RULE_SCOPE, scope.storageValue)
-
-        fun syncHttpsManualRewriteRulesIntent(context: android.content.Context): Intent =
-            Intent(context, DnsVpnService::class.java).setAction(ACTION_SYNC_HTTPS_MANUAL_REWRITE_RULES)
 
         fun syncHttpsRequestRulesIntent(context: android.content.Context): Intent =
             Intent(context, DnsVpnService::class.java).setAction(ACTION_SYNC_HTTPS_REQUEST_RULES)

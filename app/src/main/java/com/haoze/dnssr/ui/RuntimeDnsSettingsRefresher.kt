@@ -52,34 +52,6 @@ object RuntimeDnsSettingsRefresher {
         }
     }
 
-    fun refreshHttpsRuleIndexesIfRunning(context: Context, refreshBlock: Boolean, refreshAllow: Boolean, refreshRewrite: Boolean) {
-        val appContext = context.applicationContext
-        if (!DnsVpnService.isRunning(appContext)) return
-        runCatching {
-            appContext.startService(
-                DnsVpnService.refreshRuleIndexesIntent(
-                    appContext,
-                    refreshBlock,
-                    refreshAllow,
-                    refreshRewrite,
-                    RuleScope.HTTPS
-                )
-            )
-        }.onFailure { error ->
-            Log.w(TAG, "Failed to request HTTPS rule index refresh", error)
-        }
-    }
-
-    fun syncHttpsManualRewriteRulesIfRunning(context: Context) {
-        val appContext = context.applicationContext
-        if (!DnsVpnService.isRunning(appContext)) return
-        runCatching {
-            appContext.startService(DnsVpnService.syncHttpsManualRewriteRulesIntent(appContext))
-        }.onFailure { error ->
-            Log.w(TAG, "Failed to sync manual HTTPS rewrite rules", error)
-        }
-    }
-
     fun syncHttpsRequestRulesIfRunning(context: Context) {
         val appContext = context.applicationContext
         if (!DnsVpnService.isRunning(appContext)) return

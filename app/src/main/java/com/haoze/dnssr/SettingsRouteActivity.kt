@@ -317,17 +317,21 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         when (route) {
             Routes.SETTINGS -> SettingsScreen(onBack, onNavigate)
             Routes.LANGUAGE_SETTINGS -> LanguageSettingsScreen(::finishSettings, ::applyLanguage)
-            Routes.RULE_MANAGEMENT -> DomainRuleHomeScreen(onBack, { onNavigate(Routes.DNS_RULE_MANAGEMENT) }, { onNavigate(Routes.HTTPS_RULE_MANAGEMENT) })
-            Routes.DNS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleManagementScreen(onBack, RuleScope.DNS, "传统 DNS 过滤", { onNavigate(Routes.RULE_LIST) }, { onNavigate(Routes.ALLOW_RULE_LIST) }, { onNavigate(Routes.REWRITE_RULE_LIST) }, onBack, onBack, { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, { onNavigate(Routes.MIRROR_TEMPLATES) }, { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onRuntimeDnsSettingsChanged) }
-            Routes.HTTPS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleManagementScreen(onBack, RuleScope.HTTPS, "HTTPS 域名规则", { onNavigate(Routes.HTTPS_RULE_LIST) }, { onNavigate(Routes.HTTPS_ALLOW_RULE_LIST) }, { onNavigate(Routes.HTTPS_REWRITE_RULE_LIST) }, { onNavigate(Routes.HTTPS_URL_RULE_LIST) }, { onNavigate(Routes.HTTPS_URL_ALLOW_RULE_LIST) }, { onNavigate(Routes.HTTPS_SUBSCRIPTION_MANAGEMENT) }, { onNavigate(Routes.MIRROR_TEMPLATES) }, { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onBack, onRuntimeDnsSettingsChanged) }
+            Routes.RULE_MANAGEMENT -> DomainRuleHomeScreen(onBack, { onNavigate(Routes.DOMAIN_RULE_MANAGEMENT) }, { onNavigate(Routes.ADDRESS_RULE_MANAGEMENT) })
+            Routes.DOMAIN_RULE_MANAGEMENT,
+            Routes.DNS_RULE_MANAGEMENT,
+            Routes.HTTPS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleManagementScreen(onBack, RuleScope.DNS, "域名规则", { onNavigate(Routes.RULE_LIST) }, { onNavigate(Routes.ALLOW_RULE_LIST) }, { onNavigate(Routes.REWRITE_RULE_LIST) }, onBack, onBack, { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, { onNavigate(Routes.MIRROR_TEMPLATES) }, { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onRuntimeDnsSettingsChanged) }
+            Routes.ADDRESS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleManagementScreen(onBack, RuleScope.DNS, "地址规则", onNavigateToRuleList = onBack, onNavigateToAllowRuleList = onBack, onNavigateToRewriteRuleList = onBack, onNavigateToUrlRuleList = { onNavigate(Routes.ADDRESS_RULE_LIST) }, onNavigateToUrlAllowRuleList = { onNavigate(Routes.ADDRESS_ALLOW_RULE_LIST) }, onNavigateToSubscription = onBack, onNavigateToMirrorTemplates = onBack, onNavigateToAutoUpdateInterval = onBack, onNavigateToBlockResponseSettings = onBack, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged, addressOnly = true) }
              Routes.RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.BLOCK, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
              Routes.ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.ALLOW, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
              Routes.REWRITE_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.REWRITE, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-             Routes.HTTPS_RULE_LIST -> RuleListScreen(onBack, ruleScope = ruleScope ?: RuleScope.HTTPS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-             Routes.HTTPS_ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.ALLOW, ruleScope = ruleScope ?: RuleScope.HTTPS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-             Routes.HTTPS_REWRITE_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.REWRITE, ruleScope = ruleScope ?: RuleScope.HTTPS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-             Routes.HTTPS_URL_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.URL_BLOCK, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-             Routes.HTTPS_URL_ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.URL_ALLOW, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
+             Routes.HTTPS_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.BLOCK, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
+             Routes.HTTPS_ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.ALLOW, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
+             Routes.HTTPS_REWRITE_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.REWRITE, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
+             Routes.ADDRESS_RULE_LIST,
+             Routes.HTTPS_URL_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.URL_BLOCK, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
+             Routes.ADDRESS_ALLOW_RULE_LIST,
+             Routes.HTTPS_URL_ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.URL_ALLOW, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
             Routes.EXCLUDED_APPS -> SettingsGuideHost(SettingsGuides.EXCLUDED_APPS) { ExcludedAppsScreen(onBack) }
             Routes.OUTBOUND_PROXY_SETTINGS -> OutboundProxySettingsScreen(
                 onBack = onBack,
@@ -368,7 +372,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.HTTP_INSPECTION_APPS -> HttpInspectionAppsScreen(onBack)
             Routes.HTTP_REQUEST_LOGS -> HttpRequestLogScreen(onBack)
             Routes.SUBSCRIPTION_MANAGEMENT -> SubscriptionScreen(onBack, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-            Routes.HTTPS_SUBSCRIPTION_MANAGEMENT -> SubscriptionScreen(onBack, RuleScope.HTTPS, onRuntimeDnsSettingsChanged)
+            Routes.HTTPS_SUBSCRIPTION_MANAGEMENT -> SubscriptionScreen(onBack, RuleScope.DNS, onRuntimeDnsSettingsChanged)
             Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL -> SubscriptionAutoUpdateIntervalScreen(onBack)
             Routes.ABOUT -> AboutScreen(onBack, "应用信息")
             Routes.APP_UPDATE -> AppUpdateScreen(appUpdateState, onBack, onCheckForAppUpdate, onDownloadAppUpdate, onJoinQqGroup, startupUpdateCheckDisabled, onStartupUpdateCheckDisabledChange)

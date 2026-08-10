@@ -33,7 +33,6 @@ import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.haoze.dnssr.data.entity.RuleScope
 
 @Composable
 fun RuleExportScreen(
@@ -46,7 +45,7 @@ fun RuleExportScreen(
     val exportProgress by viewModel.ruleExportProgress.collectAsState()
     val exportProgressText by viewModel.ruleExportProgressText.collectAsState()
     val message by viewModel.message.collectAsState()
-    var exportRequest by remember { mutableStateOf(RuleExportRequest(RuleExportType.ALL, RuleScope.DNS)) }
+    var exportRequest by remember { mutableStateOf(RuleExportRequest(RuleExportType.ALL, RuleExportCategory.DOMAIN)) }
     val textExportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/plain")
     ) { uri -> uri?.let { viewModel.exportRules(it, exportRequest) } }
@@ -57,8 +56,8 @@ fun RuleExportScreen(
     fun export(request: RuleExportRequest) {
         exportRequest = request
         val date = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-        val fileName = "谛听-${request.fileNameSuffix}-$date.${if (request.scope == RuleScope.DNS) "txt" else "json"}"
-        if (request.scope == RuleScope.DNS) textExportLauncher.launch(fileName) else jsonExportLauncher.launch(fileName)
+        val fileName = "谛听-${request.fileNameSuffix}-$date.${if (request.category == RuleExportCategory.DOMAIN) "txt" else "json"}"
+        if (request.category == RuleExportCategory.DOMAIN) textExportLauncher.launch(fileName) else jsonExportLauncher.launch(fileName)
     }
 
     LaunchedEffect(message) {
@@ -74,27 +73,26 @@ fun RuleExportScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SettingsInfoText(
-                text = localizedText("仅导出当前生效的规则。DNS 使用可订阅的 TXT，HTTPS 使用可完整恢复的备份 JSON。"),
+                text = localizedText("按域名规则和地址规则分别导出当前生效内容。域名规则使用可订阅的 TXT，地址规则使用可恢复的 JSON 备份。"),
                 modifier = Modifier.padding(top = 8.dp)
             )
-            SettingsGroupTitle(localizedText("DNS 规则"))
-            RuleExportGroup(RuleScope.DNS, operation, exportRequest, exportProgress, exportProgressText, ::export)
-            SettingsGroupTitle(localizedText("HTTPS 规则"))
-            RuleExportGroup(RuleScope.HTTPS, operation, exportRequest, exportProgress, exportProgressText, ::export)
+            SettingsGroupTitle(localizedText("域名规则"))
+            RuleExportGroup(RuleExportCategory.DOMAIN, operation, exportRequest, exportProgress, exportProgressText, ::export)
+            SettingsGroupTitle(localizedText("地址规则"))
+            RuleExportGroup(RuleExportCategory.ADDRESS, operation, exportRequest, exportProgress, exportProgressText, ::export)
         }
     }
 }
 
 @Composable
 private fun RuleExportGroup(
-    scope: RuleScope,
+    category: RuleExportCategory,
     operation: ConfigTransferOperation,
     selectedRequest: RuleExportRequest,
     exportProgress: Float,
     exportProgressText: String,
     onExport: (RuleExportRequest) -> Unit
 ) {
-    val isDns = scope == RuleScope.DNS
     val items = listOf(
         RuleExportType.SUBSCRIPTIONS to "导出所有订阅导入的当前生效规则",
         RuleExportType.MANUAL to "导出所有手动添加的当前生效规则",
@@ -104,11 +102,11 @@ private fun RuleExportGroup(
         content = items.map { (type, subtitle) ->
             {
                 RuleExportItem(
-                    title = localizedText("导出${if (isDns) " DNS" else " HTTPS"}${type.displayName}"),
-                    subtitle = localizedText(if (isDns) subtitle else "$subtitle，保存为可恢复的 JSON 备份"),
-                    request = RuleExportRequest(type, scope),
+                    title = localizedText("导出${category.displayName}${type.displayName}"),
+                    subtitle = localizedText(if (category == RuleExportCategory.DOMAIN) subtitle else "$subtitle，保存为可恢复的 JSON 备份"),
+                    request = RuleExportRequest(type, category),
                     operation = operation,
-                    isSelected = selectedRequest == RuleExportRequest(type, scope),
+                    isSelected = selectedRequest == RuleExportRequest(type, category),
                     exportProgress = exportProgress,
                     exportProgressText = exportProgressText,
                     onExport = onExport

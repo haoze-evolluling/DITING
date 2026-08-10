@@ -12,9 +12,9 @@ import com.haoze.dnssr.vpn.SubscriptionManager
 import com.haoze.dnssr.vpn.RewriteRuleManager
 import org.json.JSONArray
 import org.json.JSONObject
-import com.haoze.dnssr.vpn.HttpsRuleBackupCodec
-import com.haoze.dnssr.vpn.HttpsRuleBackupSource
-import com.haoze.dnssr.vpn.HttpsRuleBackupTransfer
+import com.haoze.dnssr.vpn.AddressRuleBackupCodec
+import com.haoze.dnssr.vpn.AddressRuleBackupSource
+import com.haoze.dnssr.vpn.AddressRuleBackupTransfer
 
 data class ConfigExportSelection(
     val providers: Boolean,
@@ -51,11 +51,16 @@ enum class RuleExportType(
     ALL("all", "全部规则")
 }
 
+enum class RuleExportCategory(val storageValue: String, val displayName: String) {
+    DOMAIN("domain", "域名规则"),
+    ADDRESS("address", "地址规则")
+}
+
 data class RuleExportRequest(
     val type: RuleExportType,
-    val scope: RuleScope
+    val category: RuleExportCategory
 ) {
-    val fileNameSuffix: String get() = "${scope.storageValue}-${type.fileNameSuffix}"
+    val fileNameSuffix: String get() = "${category.storageValue}-${type.fileNameSuffix}"
 }
 
 class ConfigTransferManager(private val context: Context) {
@@ -104,11 +109,11 @@ class ConfigTransferManager(private val context: Context) {
                 }
             })
             root.put("subscriptions", JSONArray().apply {
-                database.subscriptionDao().allRemote().forEach { subscription ->
+                database.subscriptionDao().allRemote().filter { it.scope == RuleScope.DNS.storageValue }.forEach { subscription ->
                     put(JSONObject()
                         .put("name", subscription.name)
                         .put("url", subscription.url)
-                        .put("scope", subscription.scope)
+                        .put("scope", RuleScope.DNS.storageValue)
                         .put("groupName", groups.firstOrNull { it.id == subscription.groupId }?.name))
                 }
             })
@@ -136,30 +141,27 @@ class ConfigTransferManager(private val context: Context) {
         request: RuleExportRequest,
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ): RuleExportResult {
-        if (request.scope == RuleScope.HTTPS) {
-            onProgress(0f, "正在读取 HTTPS 规则")
+        if (request.category == RuleExportCategory.ADDRESS) {
+            onProgress(0f, "正在读取地址规则")
             val source = when (request.type) {
-                RuleExportType.SUBSCRIPTIONS -> HttpsRuleBackupSource.SUBSCRIPTIONS
-                RuleExportType.MANUAL -> HttpsRuleBackupSource.MANUAL
-                RuleExportType.ALL -> HttpsRuleBackupSource.ALL
+                RuleExportType.SUBSCRIPTIONS -> AddressRuleBackupSource.SUBSCRIPTIONS
+                RuleExportType.MANUAL -> AddressRuleBackupSource.MANUAL
+                RuleExportType.ALL -> AddressRuleBackupSource.ALL
             }
-            val backup = HttpsRuleBackupTransfer.export(database, source)
-            onProgress(0.6f, "正在生成 HTTPS 备份")
+            val backup = AddressRuleBackupTransfer.export(database, source)
+            onProgress(0.6f, "正在生成地址规则备份")
             return RuleExportResult(
-                content = HttpsRuleBackupCodec.encode(backup),
+                content = AddressRuleBackupCodec.encode(backup),
                 blockRuleCount = backup.blockRules.size,
-                allowRuleCount = backup.allowRules.size,
-                rewriteRuleCount = backup.rewriteRules.size,
-                urlBlockRuleCount = backup.urlBlockRules.size,
-                urlAllowRuleCount = backup.urlAllowRules.size
+                allowRuleCount = backup.allowRules.size
             ).also { onProgress(0.6f, "正在写入文件") }
         }
         onProgress(0f, "正在读取白名单规则")
         val allowRules = when (request.type) {
-            RuleExportType.SUBSCRIPTIONS -> database.allowRuleDao().enabledSubscriptionRules(request.scope.storageValue)
-            RuleExportType.MANUAL -> database.allowRuleDao().enabledCustomRules(request.scope.storageValue)
-            RuleExportType.ALL -> database.allowRuleDao().enabledSubscriptionRules(request.scope.storageValue) +
-                database.allowRuleDao().enabledCustomRules(request.scope.storageValue)
+            RuleExportType.SUBSCRIPTIONS -> database.allowRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue)
+            RuleExportType.MANUAL -> database.allowRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
+            RuleExportType.ALL -> database.allowRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue) +
+                database.allowRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
         }
         val allowPatterns = allowRules
             .map { it.pattern }
@@ -167,10 +169,10 @@ class ConfigTransferManager(private val context: Context) {
             .mapTo(sortedSetOf()) { it.pattern }
         onProgress(0.2f, "正在读取拦截规则")
         val blockRules = when (request.type) {
-            RuleExportType.SUBSCRIPTIONS -> database.blockRuleDao().enabledSubscriptionRules(request.scope.storageValue)
-            RuleExportType.MANUAL -> database.blockRuleDao().enabledCustomRules(request.scope.storageValue)
-            RuleExportType.ALL -> database.blockRuleDao().enabledSubscriptionRules(request.scope.storageValue) +
-                database.blockRuleDao().enabledCustomRules(request.scope.storageValue)
+            RuleExportType.SUBSCRIPTIONS -> database.blockRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue)
+            RuleExportType.MANUAL -> database.blockRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
+            RuleExportType.ALL -> database.blockRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue) +
+                database.blockRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
         }
         val blockPatterns = blockRules
             .filter { it.important || it.pattern !in allowPatterns }
@@ -407,8 +409,7 @@ class ConfigTransferManager(private val context: Context) {
                 throw IllegalArgumentException("配置中包含无效的订阅链接")
             }
             val scope = when (val value = obj.optString("scope", RuleScope.DNS.storageValue)) {
-                RuleScope.DNS.storageValue -> RuleScope.DNS
-                RuleScope.HTTPS.storageValue -> RuleScope.HTTPS
+                RuleScope.DNS.storageValue, RuleScope.HTTPS.storageValue -> RuleScope.DNS
                 else -> throw IllegalArgumentException("配置中包含不支持的订阅作用域：$value")
             }
             ImportedSubscription(obj.requiredString("name"), url, scope, obj.optString("groupName", "").trim().takeIf { it.isNotEmpty() })

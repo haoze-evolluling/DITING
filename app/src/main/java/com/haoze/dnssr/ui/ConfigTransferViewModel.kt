@@ -69,7 +69,7 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
                     _ruleExportProgressText.value = "正在写入文件"
                 }
             }
-            "${request.scope.name} ${request.type.displayName}已导出：${result.summary()}"
+            "${request.category.displayName}${request.type.displayName}已导出：${result.summary()}"
         }
     }
 

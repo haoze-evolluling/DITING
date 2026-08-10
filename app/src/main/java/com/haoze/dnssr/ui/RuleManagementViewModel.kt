@@ -29,6 +29,7 @@ import java.io.IOException
 class RuleManagementViewModel(application: Application) : AndroidViewModel(application) {
 
     private var ruleScope = RuleScope.DNS
+    private var addressOnly = false
     private fun blockListManager() = BlockListManager(AppDatabase.getInstance(getApplication()).blockRuleDao(), scope = ruleScope)
     private fun allowListManager() = AllowListManager(AppDatabase.getInstance(getApplication()).allowRuleDao(), scope = ruleScope)
     private fun rewriteRuleManager() = RewriteRuleManager(AppDatabase.getInstance(getApplication<Application>()).rewriteRuleDao(), java.io.File(getApplication<Application>().filesDir, "rule-index"), ruleScope)
@@ -49,9 +50,10 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
 
     private var activated = false
 
-    fun activate(scope: RuleScope) {
-        if (ruleScope != scope) activated = false
+    fun activate(scope: RuleScope, addressOnly: Boolean = false) {
+        if (ruleScope != scope || this.addressOnly != addressOnly) activated = false
         ruleScope = scope
+        this.addressOnly = addressOnly
         if (!activated) {
             activated = true
             loadRuleCount()
@@ -69,10 +71,10 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
                 java.io.File(getApplication<Application>().filesDir, "rule-index"),
                 scope
             ).count()
-            val urlCount = if (scope == RuleScope.HTTPS) goUrlRuleManager().count(GoUrlRuleKind.BLOCK) else 0
-            val urlAllowCount = if (scope == RuleScope.HTTPS) goUrlRuleManager().count(GoUrlRuleKind.ALLOW) else 0
+            val urlCount = if (addressOnly) goUrlRuleManager().count(GoUrlRuleKind.BLOCK) else 0
+            val urlAllowCount = if (addressOnly) goUrlRuleManager().count(GoUrlRuleKind.ALLOW) else 0
             withContext(Dispatchers.Main) {
-                if (ruleScope != scope) return@withContext
+                if (ruleScope != scope || this@RuleManagementViewModel.addressOnly != addressOnly) return@withContext
                 _ruleCount.value = count
                 _allowRuleCount.value = allowCount
                 _rewriteRuleCount.value = rewriteCount
@@ -157,11 +159,7 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch(Dispatchers.IO) {
             val success = rewriteRuleManager().addRule(domain, targetType, targetValue)
             if (success) {
-                if (ruleScope == RuleScope.HTTPS) {
-                    RuntimeDnsSettingsRefresher.syncHttpsManualRewriteRulesIfRunning(getApplication())
-                } else {
-                    RuntimeDnsSettingsRefresher.refreshIfRunning(getApplication(), "rewrite_rule_added")
-                }
+                RuntimeDnsSettingsRefresher.refreshIfRunning(getApplication(), "rewrite_rule_added")
             }
             withContext(Dispatchers.Main) {
                 onResult(if (success) "已添加覆写域名" else "域名、目标格式无效、规则冲突或已存在")

@@ -170,7 +170,7 @@ fun RequestLogScreen(onBack: () -> Unit, onRuntimeDnsSettingsChanged: () -> Unit
                     RequestLogCard(item) {
                         item.domain?.let { domain ->
                             pendingDomain = domain
-                            pendingRuleScope = if (item.source == RequestSource.HTTPS) RuleScope.HTTPS else RuleScope.DNS
+                            pendingRuleScope = RuleScope.DNS
                         }
                     }
                 }

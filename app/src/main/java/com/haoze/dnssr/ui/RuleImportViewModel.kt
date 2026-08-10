@@ -45,14 +45,14 @@ class RuleImportViewModel(application: Application) : AndroidViewModel(applicati
         )
     }
 
-    fun restoreHttpsBackup(uri: Uri) {
+    fun restoreAddressBackup(uri: Uri) {
         persistReadPermission(uri)
         enqueue(
             RuleOperationScheduler.enqueue(
                 getApplication(),
-                RuleOperationType.IMPORT_HTTPS_RULE_BACKUP,
+                RuleOperationType.IMPORT_ADDRESS_RULE_BACKUP,
                 uri = uri,
-                scope = RuleScope.HTTPS.storageValue
+                scope = RuleScope.DNS.storageValue
             ).id
         )
     }
@@ -93,7 +93,7 @@ class RuleImportViewModel(application: Application) : AndroidViewModel(applicati
             }
             isActive && type in setOf(
                 RuleOperationType.ADD_LOCAL_SUBSCRIPTION,
-                RuleOperationType.IMPORT_HTTPS_RULE_BACKUP
+                RuleOperationType.IMPORT_ADDRESS_RULE_BACKUP
             )
         }
         _importing.value = active != null

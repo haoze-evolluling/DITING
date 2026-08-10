@@ -133,8 +133,8 @@ fun MainScreen(
     onNavigateToBlockedApps: () -> Unit,
     onNavigateToAppAllowlist: () -> Unit,
     onNavigateToAppearanceSettings: () -> Unit,
-    onNavigateToDnsRuleManagement: () -> Unit,
-    onNavigateToHttpsRuleManagement: () -> Unit,
+    onNavigateToDomainRuleManagement: () -> Unit,
+    onNavigateToAddressRuleManagement: () -> Unit,
     onNavigateToHttpInspection: () -> Unit,
     onNavigateToLogRetentionSettings: () -> Unit,
     onNavigateToRaceModeLatency: () -> Unit,
@@ -264,8 +264,8 @@ fun MainScreen(
                     onNavigateToBlockedApps = onNavigateToBlockedApps,
                     onNavigateToAppAllowlist = onNavigateToAppAllowlist,
                     onNavigateToAppearanceSettings = onNavigateToAppearanceSettings,
-                    onNavigateToDnsRuleManagement = onNavigateToDnsRuleManagement,
-                    onNavigateToHttpsRuleManagement = onNavigateToHttpsRuleManagement,
+                    onNavigateToDomainRuleManagement = onNavigateToDomainRuleManagement,
+                    onNavigateToAddressRuleManagement = onNavigateToAddressRuleManagement,
                     onNavigateToHttpInspection = onNavigateToHttpInspection,
                     onNavigateToLogs = onNavigateToLogs,
                     onNavigateToSettings = onNavigateToSettings,
@@ -320,8 +320,8 @@ private fun FeatureHubScreen(
     onNavigateToBlockedApps: () -> Unit,
     onNavigateToAppAllowlist: () -> Unit,
     onNavigateToAppearanceSettings: () -> Unit,
-    onNavigateToDnsRuleManagement: () -> Unit,
-    onNavigateToHttpsRuleManagement: () -> Unit,
+    onNavigateToDomainRuleManagement: () -> Unit,
+    onNavigateToAddressRuleManagement: () -> Unit,
     onNavigateToHttpInspection: () -> Unit,
     onNavigateToLogs: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -351,8 +351,8 @@ private fun FeatureHubScreen(
             listOf(
                 FeatureHubItem(stringResource(R.string.feature_hub_https_inspection), Icons.Filled.Policy, onNavigateToHttpInspection),
                 FeatureHubItem(stringResource(R.string.feature_hub_speed_test), Icons.Filled.Speed, onNavigateToRaceModeLatency),
-                FeatureHubItem(stringResource(R.string.feature_hub_https_rules), Icons.Filled.Policy, onNavigateToHttpsRuleManagement),
-                FeatureHubItem(stringResource(R.string.feature_hub_dns_rules), Icons.AutoMirrored.Filled.Rule, onNavigateToDnsRuleManagement)
+                FeatureHubItem(stringResource(R.string.feature_hub_domain_rules), Icons.AutoMirrored.Filled.Rule, onNavigateToDomainRuleManagement),
+                FeatureHubItem(stringResource(R.string.feature_hub_address_rules), Icons.Filled.Policy, onNavigateToAddressRuleManagement)
             )
         ),
         FeatureHubCategory(

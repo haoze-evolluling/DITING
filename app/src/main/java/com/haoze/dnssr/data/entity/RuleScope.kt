@@ -1,6 +1,6 @@
 package com.haoze.dnssr.data.entity
 
-/** Rules are deliberately isolated between the ordinary DNS and Go tunnel paths. */
+/** DNS is the canonical domain-rule scope; HTTPS remains only for database/route compatibility. */
 enum class RuleScope(val storageValue: String) {
     DNS("dns"),
     HTTPS("https");

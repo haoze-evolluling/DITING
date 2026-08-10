@@ -61,6 +61,7 @@ fun RuleManagementScreen(
     onNavigateToAutoUpdateInterval: () -> Unit,
     onNavigateToBlockResponseSettings: () -> Unit,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
+    addressOnly: Boolean = false,
     viewModel: RuleManagementViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -126,8 +127,8 @@ fun RuleManagementScreen(
         addRewriteRuleError = null
     }
 
-    NavigationSettledEffect(ruleScope) {
-        viewModel.activate(ruleScope)
+    NavigationSettledEffect(ruleScope to addressOnly) {
+        viewModel.activate(ruleScope, addressOnly)
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -154,15 +155,15 @@ fun RuleManagementScreen(
         ) {
             item {
                 SettingsInfoText(
-                    text = localizedText(if (ruleScope == RuleScope.DNS) "当前共有 $ruleCount 条屏蔽规则，$allowRuleCount 条白名单规则，$rewriteRuleCount 条 IPv4/IPv6 覆写规则。覆写规则优先于黑白名单。" else "仅在 HTTPS 流量检查可解密的 HTTP(S) 请求中生效。域名规则 $ruleCount/$allowRuleCount 条，URL 屏蔽/放行规则 $urlRuleCount/$urlAllowRuleCount 条，CNAME 覆写 $rewriteRuleCount 条。"),
+                    text = localizedText(if (addressOnly) "仅在 HTTPS 流量检查可解密的 HTTP(S) 请求中生效。当前共有 $urlRuleCount 条 URL 屏蔽规则和 $urlAllowRuleCount 条 URL 放行规则，放行规则可覆盖屏蔽规则。" else "当前共有 $ruleCount 条屏蔽规则，$allowRuleCount 条白名单规则，$rewriteRuleCount 条 IPv4/IPv6 覆写规则。覆写规则优先于黑白名单，DNS 与 HTTPS 检查共用这套域名策略。"),
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
 
-            if (ruleScope == RuleScope.DNS) item {
+            if (!addressOnly) item {
                 SettingsGroupTitle(localizedText("拦截策略"))
             }
-            if (ruleScope == RuleScope.DNS) item {
+            if (!addressOnly) item {
                 val dynamicConfig = AppSettings.getDynamicBlockResponseConfig(context)
                 SettingsNavigationGroup(
                     items = listOf(
@@ -179,10 +180,10 @@ fun RuleManagementScreen(
                 )
             }
 
-            if (ruleScope == RuleScope.HTTPS) item {
+            if (addressOnly) item {
                 SettingsGroupTitle(localizedText("URL 请求规则"))
             }
-            if (ruleScope == RuleScope.HTTPS) item {
+            if (addressOnly) item {
                 SettingsNavigationGroup(
                     items = listOf(
                         SettingsNavigationItemData(title = localizedText("添加屏蔽 URL"), subtitle = localizedText("如 https://example.com/js，匹配该路径前缀"), onClick = { newUrlRule = ""; showAddUrlRuleDialog = true }),
@@ -193,10 +194,10 @@ fun RuleManagementScreen(
                 )
             }
 
-            item {
+            if (!addressOnly) item {
                 SettingsGroupTitle(localizedText("域名屏蔽与放行"))
             }
-            item {
+            if (!addressOnly) item {
                 SettingsNavigationGroup(
                     items = listOf(
                         SettingsNavigationItemData(
@@ -225,19 +226,19 @@ fun RuleManagementScreen(
                 )
             }
 
-            item {
-                SettingsGroupTitle(localizedText(if (ruleScope == RuleScope.DNS) "域名覆写" else "CNAME 覆写"))
+            if (!addressOnly) item {
+                SettingsGroupTitle(localizedText("域名覆写"))
             }
-            item {
+            if (!addressOnly) item {
                 SettingsNavigationGroup(
                     items = listOf(
                         SettingsNavigationItemData(
                         title = localizedText("添加覆写域名"),
-                        subtitle = localizedText(if (ruleScope == RuleScope.DNS) "将域名覆写为 IPv4 或 IPv6" else "将域名覆写为 CNAME"),
+                        subtitle = localizedText("将域名覆写为 IPv4 或 IPv6"),
                         onClick = ::openAddRewriteRuleDialog
                         ),
                         SettingsNavigationItemData(
-                        title = localizedText(if (ruleScope == RuleScope.DNS) "IPv4/IPv6 覆写规则" else "CNAME 覆写规则"),
+                        title = localizedText("IPv4/IPv6 覆写规则"),
                         subtitle = localizedText("查看、启用、停用或删除当前范围的覆写规则"),
                         value = localizedText("$rewriteRuleCount 条"),
                         onClick = onNavigateToRewriteRuleList
@@ -256,15 +257,15 @@ fun RuleManagementScreen(
                 }
             }
 
-            item {
+            if (!addressOnly) item {
                 SettingsGroupTitle(localizedText("订阅与更新"))
             }
-            item {
+            if (!addressOnly) item {
                 SettingsNavigationGroup(
                     items = listOf(
                         SettingsNavigationItemData(
                         title = localizedText("规则订阅"),
-                        subtitle = localizedText(if (ruleScope == RuleScope.DNS) "管理 DNS 域名规则与 IPv4/IPv6 覆写订阅" else "管理 HTTPS 域名、URL 与 CNAME 覆写订阅"),
+                        subtitle = localizedText("管理域名规则与 IPv4/IPv6 覆写订阅"),
                         onClick = onNavigateToSubscription
                         ),
                         SettingsNavigationItemData(
@@ -284,16 +285,28 @@ fun RuleManagementScreen(
                 )
             }
 
-            item {
+            if (!addressOnly) item {
                 SettingsGroupTitle(localizedText("维护工具"))
             }
-            item {
+            if (!addressOnly) item {
                 SettingsNavigationGroup(
                     items = listOf(
                         SettingsNavigationItemData(
-                        title = localizedText(if (ruleScope == RuleScope.DNS) "清理全部 DNS 规则" else "清理全部 HTTPS 规则"),
-                        subtitle = localizedText(if (ruleScope == RuleScope.DNS) "清除当前 DNS 规则后可重新导入，不影响 Go 隧道规则" else "清除当前 HTTPS 规则后可重新导入，不影响传统 DNS 规则"),
+                        title = localizedText("清理全部域名规则"),
+                        subtitle = localizedText("清除全部域名屏蔽、放行、覆写规则及对应订阅，不影响地址规则"),
                         onClick = { showClearAllRulesDialog = true }
+                        )
+                    )
+                )
+            }
+            if (addressOnly) item {
+                SettingsGroupTitle(localizedText("维护工具"))
+                SettingsNavigationGroup(
+                    items = listOf(
+                        SettingsNavigationItemData(
+                            title = localizedText("清理全部地址规则"),
+                            subtitle = localizedText("清除全部 URL 屏蔽和放行规则，不影响域名规则"),
+                            onClick = { showClearAllRulesDialog = true }
                         )
                     )
                 )
@@ -303,16 +316,16 @@ fun RuleManagementScreen(
 
     if (showClearAllRulesDialog) {
         ConfirmDialog(
-            title = localizedText(if (ruleScope == RuleScope.DNS) "删除全部 DNS 规则" else "删除全部 HTTPS 规则"),
-            text = localizedText(if (ruleScope == RuleScope.DNS) "确定要删除全部 DNS 规则吗？手动添加和订阅导入的域名屏蔽、白名单及 IPv4/IPv6 覆写规则都会被移除。Go 隧道规则不受影响。" else "确定要删除全部 HTTPS 规则吗？手动添加和订阅导入的域名、URL、白名单和覆写规则都会被移除。传统 DNS 规则不受影响。"),
+            title = localizedText(if (addressOnly) "删除全部地址规则" else "删除全部域名规则"),
+            text = localizedText(if (addressOnly) "确定要删除全部地址规则吗？URL 屏蔽和放行规则都会被移除，域名规则不受影响。" else "确定要删除全部域名规则吗？域名屏蔽、白名单、IPv4/IPv6 覆写规则及对应订阅都会被移除，地址规则不受影响。"),
             onConfirm = {
                 showClearAllRulesDialog = false
                 scope.launch(Dispatchers.IO) {
-                    clearAllRules(context, ruleScope)
+                    if (addressOnly) clearAllAddressRules(context) else clearAllDomainRules(context)
                     withContext(Dispatchers.Main) {
                         viewModel.loadRuleCount()
                         onRuntimeDnsSettingsChanged()
-                        Toast.makeText(context, localizedText(context, "已删除当前范围的全部规则"), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, localizedText(context, if (addressOnly) "已删除全部地址规则" else "已删除全部域名规则"), Toast.LENGTH_SHORT).show()
                     }
                 }
             },

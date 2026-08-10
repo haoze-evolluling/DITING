@@ -425,11 +425,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
     private fun refreshSubscriptionRuleIndexes(isRewrite: Boolean, scope: RuleScope) {
         val context = getApplication<Application>()
-        if (scope == RuleScope.HTTPS) {
-            RuntimeDnsSettingsRefresher.refreshHttpsRuleIndexesIfRunning(context, !isRewrite, !isRewrite, isRewrite)
-        } else {
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, !isRewrite, !isRewrite, isRewrite)
-        }
+        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, !isRewrite, !isRewrite, isRewrite, RuleScope.DNS)
     }
 
     private fun enqueueAndObserve(workId: java.util.UUID, pendingSubscriptionId: Long? = null) {
@@ -461,7 +457,6 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         val subscriptionOperation = type in setOf(
             RuleOperationType.ADD_SUBSCRIPTION,
             RuleOperationType.ADD_LOCAL_SUBSCRIPTION,
-            RuleOperationType.IMPORT_HTTPS_RULE_BACKUP,
             RuleOperationType.EDIT_SUBSCRIPTION,
             RuleOperationType.UPDATE_SUBSCRIPTION,
             RuleOperationType.UPDATE_ALL_SUBSCRIPTIONS

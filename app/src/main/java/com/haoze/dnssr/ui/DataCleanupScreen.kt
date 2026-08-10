@@ -90,8 +90,8 @@ fun DataCleanupScreen(
 
             SettingsGroupTitle(localizedText("用户数据"))
             SettingsSurfaceGroup(content = listOf(
-                { SettingsTextItem(localizedText("删除全部 DNS 规则"), subtitle = localizedText("清除 DNS 的域名屏蔽、白名单和覆写规则"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.DNS_RULES }) },
-                { SettingsTextItem(localizedText("删除全部 HTTPS 过滤规则"), subtitle = localizedText("清除 Go 隧道的域名、URL、白名单和覆写规则"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.GO_TUNNEL_RULES }) },
+                { SettingsTextItem(localizedText("删除全部域名规则"), subtitle = localizedText("清除域名屏蔽、白名单、覆写规则及对应订阅"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.DOMAIN_RULES }) },
+                { SettingsTextItem(localizedText("删除全部地址规则"), subtitle = localizedText("清除 URL 屏蔽和放行规则"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.ADDRESS_RULES }) },
                 { SettingsTextItem(localizedText("重置所有新手引导"), subtitle = localizedText("让所有首次进入说明再次显示"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.SETTINGS_GUIDES }) }
             ))
         }
@@ -125,18 +125,18 @@ fun DataCleanupScreen(
                                 .plus(AppSettings.loadBootstrapIpEntries(context).map { it.id })
                             BootstrapHealthStore.reset(context, bootstrapIpIds)
                         }
-                        CleanupAction.DNS_RULES -> {
-                            clearAllRules(context, RuleScope.DNS)
+                        CleanupAction.DOMAIN_RULES -> {
+                            clearAllDomainRules(context)
                         }
-                        CleanupAction.GO_TUNNEL_RULES -> {
-                            clearAllRules(context, RuleScope.HTTPS)
+                        CleanupAction.ADDRESS_RULES -> {
+                            clearAllAddressRules(context)
                         }
                         CleanupAction.SETTINGS_GUIDES -> {
                             AppSettings.resetAllSettingsGuides(context)
                         }
                     }
                     withContext(Dispatchers.Main) {
-                        if (action == CleanupAction.DNS_RULES || action == CleanupAction.GO_TUNNEL_RULES) {
+                        if (action == CleanupAction.DOMAIN_RULES || action == CleanupAction.ADDRESS_RULES) {
                             onRuntimeDnsSettingsChanged()
                         }
                         pendingAction = null
@@ -153,13 +153,20 @@ fun DataCleanupScreen(
     }
 }
 
-suspend fun clearAllRules(context: Context, scope: RuleScope) {
+suspend fun clearAllDomainRules(context: Context) {
     val database = AppDatabase.getInstance(context)
-    BlockListManager(database.blockRuleDao(), scope = scope).clearAll()
-    AllowListManager(database.allowRuleDao(), scope = scope).clearAll()
-    RewriteRuleManager(database.rewriteRuleDao(), java.io.File(context.filesDir, "rule-index"), scope).clearAll()
-    if (scope == RuleScope.HTTPS) GoUrlRuleManager(database.goUrlRuleDao()).clearAll()
-    database.subscriptionDao().resetAfterRuleCleanup(scope.storageValue)
+    BlockListManager(database.blockRuleDao(), scope = RuleScope.DNS).clearAll()
+    AllowListManager(database.allowRuleDao(), scope = RuleScope.DNS).clearAll()
+    RewriteRuleManager(database.rewriteRuleDao(), java.io.File(context.filesDir, "rule-index"), RuleScope.DNS).clearAll()
+    database.subscriptionDao().resetAfterRuleCleanup(RuleScope.DNS.storageValue)
+}
+
+suspend fun clearAllAddressRules(context: Context) {
+    GoUrlRuleManager(AppDatabase.getInstance(context).goUrlRuleDao()).clearAll()
+}
+
+suspend fun clearAllRules(context: Context, scope: RuleScope) {
+    if (scope == RuleScope.HTTPS) clearAllAddressRules(context) else clearAllDomainRules(context)
 }
 
 private enum class CleanupAction(
@@ -170,8 +177,8 @@ private enum class CleanupAction(
     LOG("删除请求日志", "确定要删除所有 DNS、HTTP 请求日志、竞速统计和 Bootstrap DNS 解析统计吗？"),
     PROVIDER_WEIGHT("恢复竞速模式默认权重", "确定要清除所有服务商健康样本并恢复竞速模式默认权重吗？"),
     BOOTSTRAP_WEIGHT("恢复 Bootstrap IP 默认权重", "确定要清除 Bootstrap DNS 解析健康样本并恢复默认权重吗？"),
-    DNS_RULES("删除全部 DNS 规则", "确定要删除全部 DNS 规则吗？域名屏蔽、白名单和覆写规则都会被移除。"),
-    GO_TUNNEL_RULES("删除全部 HTTPS 过滤规则", "确定要删除全部 HTTPS 过滤规则吗？域名、URL、白名单和覆写规则都会被移除。"),
+    DOMAIN_RULES("删除全部域名规则", "确定要删除全部域名规则吗？域名屏蔽、白名单、覆写规则及对应订阅都会被移除。"),
+    ADDRESS_RULES("删除全部地址规则", "确定要删除全部地址规则吗？URL 屏蔽和放行规则都会被移除。"),
     SETTINGS_GUIDES("重置所有新手引导", "确定要重置所有应用设置新手引导和首次使用协议吗？这不会删除任何配置、规则、缓存、日志或证书。操作完成后应用将退出；下次打开时需要重新同意使用协议，所有新手引导也会再次显示。")
 }
 

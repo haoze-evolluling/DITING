@@ -174,12 +174,8 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
     }
 
     private fun refreshRewriteRules(context: Application, rebuildSubscriptionIndex: Boolean) {
-        if (ruleScope == RuleScope.HTTPS) {
-            if (rebuildSubscriptionIndex) {
-                RuntimeDnsSettingsRefresher.refreshHttpsRuleIndexesIfRunning(context, false, false, true)
-            } else {
-                RuntimeDnsSettingsRefresher.syncHttpsManualRewriteRulesIfRunning(context)
-            }
+        if (rebuildSubscriptionIndex) {
+            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, false, false, true, RuleScope.DNS)
         } else {
             RuntimeDnsSettingsRefresher.refreshIfRunning(context, "rewrite_rule_changed")
         }

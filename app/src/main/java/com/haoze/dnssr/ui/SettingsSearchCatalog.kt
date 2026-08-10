@@ -110,7 +110,7 @@ internal object SettingsSearchCatalog {
         option("导出配置", "将勾选内容保存为 JSON 配置文件", "数据管理", "设置配置", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport),
         option("导入配置", "合并配置并跳过本机已有项目", "数据管理", "设置配置", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport),
         nestedPage("规则导出", "将当前生效规则导出为 TXT 文件", "数据管理", "导入与导出", Routes.RULE_EXPORT, Icons.Filled.ImportExport, "订阅文件"),
-        nestedPage("规则导入", "从本地文件导入 DNS、hosts 和 HTTPS 规则", "数据管理", "导入与导出", Routes.RULE_IMPORT, Icons.Filled.ImportExport, "订阅文件", "hosts", "HTTPS", "备份"),
+        nestedPage("规则导入", "从本地文件导入域名和地址规则", "数据管理", "导入与导出", Routes.RULE_IMPORT, Icons.Filled.ImportExport, "订阅文件", "hosts", "地址", "备份"),
         page("数据清理", "删除缓存、日志或域名规则", "数据管理", Routes.DATA_CLEANUP, Icons.Filled.DeleteSweep, "清空数据"),
         option("删除请求日志", "清除 DNS 和 HTTP 的历史请求记录", "数据管理", "数据清理", Routes.DATA_CLEANUP, Icons.Filled.DeleteSweep),
         option("删除 DNS 缓存", "移除已缓存的解析结果", "数据管理", "数据清理", Routes.DATA_CLEANUP, Icons.Filled.DeleteSweep),
@@ -141,7 +141,7 @@ object ScreenDestinations {
     val dataCleanup = main(Routes.DATA_CLEANUP, "数据清理", "删除缓存、日志或域名规则", Icons.Filled.DeleteSweep, SettingsSection.DATA)
     val configImportExport = child(Routes.CONFIG_IMPORT_EXPORT, "设置配置", "选择配置内容并导入或导出", Icons.Filled.ImportExport, configTransfer)
     val ruleExport = child(Routes.RULE_EXPORT, "规则导出", "将当前生效规则导出为 TXT 文件", Icons.Filled.ImportExport, configTransfer)
-    val ruleImport = child(Routes.RULE_IMPORT, "规则导入", "从本地文件导入 DNS、hosts 和 HTTPS 规则", Icons.Filled.ImportExport, configTransfer)
+    val ruleImport = child(Routes.RULE_IMPORT, "规则导入", "从本地文件导入域名和地址规则", Icons.Filled.ImportExport, configTransfer)
     val resolutionSingle = child(Routes.RESOLUTION_SINGLE, "单一服务", "选择一个 DNS 服务商进行查询", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val resolutionSmart = child(Routes.RESOLUTION_SMART, "智能选择", "配置候选服务，按近期成功率和延迟优先选择", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val resolutionParallel = child(Routes.RESOLUTION_PARALLEL, "最快响应", "配置同时查询并采用最先成功结果的服务", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)

@@ -19,8 +19,8 @@
     <string name="feature_hub_policies_rules">策略与规则</string>
     <string name="feature_hub_https_inspection">HTTPS 流量检查</string>
     <string name="feature_hub_speed_test">查询测速</string>
-    <string name="feature_hub_https_rules">HTTPS 域名规则</string>
-    <string name="feature_hub_dns_rules">DNS 域名规则</string>
+    <string name="feature_hub_domain_rules">域名规则</string>
+    <string name="feature_hub_address_rules">地址规则</string>
     <string name="feature_hub_interface_management">界面与管理</string>
     <string name="feature_hub_appearance">外观调整</string>
     <string name="feature_hub_service_display">服务显示</string>
@@ -193,7 +193,7 @@
     <string name="operation_update_all_subscriptions">正在更新所有规则订阅</string>
     <string name="operation_import_rules">正在导入规则</string>
     <string name="operation_import_hosts_rules">正在导入 hosts 规则</string>
-    <string name="operation_restore_https_rules">正在恢复 HTTPS 规则备份</string>
+    <string name="operation_restore_address_rules">正在恢复地址规则备份</string>
     <string name="operation_add_block_rule">正在添加屏蔽规则</string>
     <string name="operation_add_allow_rule">正在添加白名单规则</string>
     <string name="vpn_disconnected">未连接</string>

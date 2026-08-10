@@ -50,7 +50,7 @@ fun ConfigTransferScreen(
                     ),
                     SettingsNavigationItemData(
                     title = localizedText("规则导入"),
-                    subtitle = localizedText("从本地文件导入 DNS、hosts 和 HTTPS 规则"),
+                    subtitle = localizedText("从本地文件导入域名和地址规则"),
                     onClick = onNavigateToRuleImport
                     )
                 )

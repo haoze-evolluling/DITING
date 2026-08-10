@@ -54,7 +54,7 @@ import com.haoze.dnssr.data.dao.GoUrlRuleDao
         ,RewriteRuleEntity::class, RewriteRuleSourceEntity::class, MirrorTemplateEntity::class,
         GoUrlRuleEntity::class, GoUrlRuleSourceEntity::class
     ],
-    version = 28,
+    version = 29,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -101,7 +101,8 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_24_25,
                         MIGRATION_25_26,
                         MIGRATION_26_27,
-                        MIGRATION_27_28
+                        MIGRATION_27_28,
+                        MIGRATION_28_29
                     )
                     .fallbackToDestructiveMigration(true)
                     .build().also { INSTANCE = it }
@@ -379,6 +380,19 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_subscription_group_name` ON `subscription_group` (`name`)")
                 db.execSQL("ALTER TABLE `subscription` ADD COLUMN `groupId` INTEGER")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_subscription_groupId` ON `subscription` (`groupId`)")
+            }
+        }
+        private val MIGRATION_28_29 = object : Migration(28, 29) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // DNS is the canonical domain-rule scope. Discard the old HTTPS
+                // domain rules and subscriptions; URL rules live in their own table.
+                listOf("block_rule_source", "allow_rule_source", "rewrite_rule_source").forEach {
+                    db.execSQL("DELETE FROM `$it` WHERE scope = 'https'")
+                }
+                listOf("block_rule", "allow_rule", "rewrite_rule").forEach {
+                    db.execSQL("DELETE FROM `$it` WHERE scope = 'https'")
+                }
+                db.execSQL("DELETE FROM `subscription` WHERE scope = 'https'")
             }
         }
     }

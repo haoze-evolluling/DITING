@@ -46,7 +46,7 @@ enum class RuleOperationType {
     UPDATE_ALL_SUBSCRIPTIONS,
     IMPORT_RULES,
     IMPORT_HOSTS_RULES,
-    IMPORT_HTTPS_RULE_BACKUP,
+    IMPORT_ADDRESS_RULE_BACKUP,
     ADD_BLOCK_RULE,
     ADD_ALLOW_RULE
 }
@@ -190,14 +190,14 @@ class RuleOperationWorker(
                 RuleOperationType.IMPORT_HOSTS_RULES -> RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
                     applicationContext, false, false, true
                 )
-                RuleOperationType.IMPORT_HTTPS_RULE_BACKUP -> {
-                    RuntimeDnsSettingsRefresher.refreshHttpsRuleIndexesIfRunning(applicationContext, true, true, true)
+                RuleOperationType.IMPORT_ADDRESS_RULE_BACKUP -> {
+                    RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(applicationContext)
                 }
                 RuleOperationType.ADD_SUBSCRIPTION,
                 RuleOperationType.ADD_LOCAL_SUBSCRIPTION -> {
                     val isRewrite = inputData.getString(RuleOperationScheduler.KEY_KIND) == com.haoze.dnssr.data.entity.SubscriptionKind.REWRITE
                     if (ruleScope == com.haoze.dnssr.data.entity.RuleScope.HTTPS) {
-                        RuntimeDnsSettingsRefresher.refreshHttpsRuleIndexesIfRunning(applicationContext, !isRewrite, !isRewrite, isRewrite)
+                        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(applicationContext, !isRewrite, !isRewrite, isRewrite)
                     } else {
                         RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(applicationContext, !isRewrite, !isRewrite, isRewrite)
                     }
@@ -206,14 +206,14 @@ class RuleOperationWorker(
                 RuleOperationType.UPDATE_SUBSCRIPTION -> {
                     val isRewrite = database.subscriptionDao().byId(subscriptionId)?.kind == com.haoze.dnssr.data.entity.SubscriptionKind.REWRITE
                     if (ruleScope == com.haoze.dnssr.data.entity.RuleScope.HTTPS) {
-                        RuntimeDnsSettingsRefresher.refreshHttpsRuleIndexesIfRunning(applicationContext, !isRewrite, !isRewrite, isRewrite)
+                        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(applicationContext, !isRewrite, !isRewrite, isRewrite)
                     } else {
                         RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(applicationContext, !isRewrite, !isRewrite, isRewrite)
                     }
                 }
                 RuleOperationType.UPDATE_ALL_SUBSCRIPTIONS -> {
                     if (ruleScope == com.haoze.dnssr.data.entity.RuleScope.HTTPS) {
-                        RuntimeDnsSettingsRefresher.refreshHttpsRuleIndexesIfRunning(applicationContext, true, true, true)
+                        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(applicationContext, true, true, true)
                     } else {
                         RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(applicationContext, true, true, true)
                     }
@@ -321,19 +321,13 @@ class RuleOperationWorker(
                 "hosts 导入完成：新增 ${summary.rewriteCount} 条，跳过 ${summary.duplicateCount} 条"
             }
         }
-        RuleOperationType.IMPORT_HTTPS_RULE_BACKUP -> {
-            require(
-                inputData.getString(RuleOperationScheduler.KEY_SCOPE) ==
-                    com.haoze.dnssr.data.entity.RuleScope.HTTPS.storageValue
-            ) { "HTTPS 规则备份只能在 HTTPS 过滤中导入" }
-            val backup = HttpsRuleBackupCodec.decode(readUri(requiredUri()))
-            HttpsRuleBackupTransfer.restore(
+        RuleOperationType.IMPORT_ADDRESS_RULE_BACKUP -> {
+            val backup = AddressRuleBackupCodec.decode(readUri(requiredUri()))
+            val (block, allow) = AddressRuleBackupTransfer.restore(
                 backup,
-                blockManager,
-                allowManager,
-                rewriteManager,
                 GoUrlRuleManager(AppDatabase.getInstance(applicationContext).goUrlRuleDao())
-            ).message()
+            )
+            "恢复完成：URL 屏蔽 $block 条，URL 放行 $allow 条，跳过 ${backup.totalCount - block - allow} 条"
         }
         RuleOperationType.ADD_BLOCK_RULE -> {
             check(blockManager.addRule(inputData.getString(RuleOperationScheduler.KEY_PATTERN).orEmpty())) {
@@ -470,7 +464,7 @@ class RuleOperationWorker(
         RuleOperationType.UPDATE_ALL_SUBSCRIPTIONS -> applicationContext.getString(R.string.operation_update_all_subscriptions)
         RuleOperationType.IMPORT_RULES -> applicationContext.getString(R.string.operation_import_rules)
         RuleOperationType.IMPORT_HOSTS_RULES -> applicationContext.getString(R.string.operation_import_hosts_rules)
-        RuleOperationType.IMPORT_HTTPS_RULE_BACKUP -> applicationContext.getString(R.string.operation_restore_https_rules)
+        RuleOperationType.IMPORT_ADDRESS_RULE_BACKUP -> applicationContext.getString(R.string.operation_restore_address_rules)
         RuleOperationType.ADD_BLOCK_RULE -> applicationContext.getString(R.string.operation_add_block_rule)
         RuleOperationType.ADD_ALLOW_RULE -> applicationContext.getString(R.string.operation_add_allow_rule)
     }

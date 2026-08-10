@@ -20,8 +20,8 @@
     <string name="feature_hub_policies_rules">Policies and rules</string>
     <string name="feature_hub_https_inspection">HTTPS traffic inspection</string>
     <string name="feature_hub_speed_test">Speed test</string>
-    <string name="feature_hub_https_rules">HTTPS domain rules</string>
-    <string name="feature_hub_dns_rules">DNS domain rules</string>
+    <string name="feature_hub_domain_rules">Domain rules</string>
+    <string name="feature_hub_address_rules">Address rules</string>
     <string name="feature_hub_interface_management">Interface and management</string>
     <string name="feature_hub_appearance">Appearance</string>
     <string name="feature_hub_service_display">Service display</string>
@@ -194,7 +194,7 @@
     <string name="operation_update_all_subscriptions">Updating all rule subscriptions</string>
     <string name="operation_import_rules">Importing rules</string>
     <string name="operation_import_hosts_rules">Importing hosts rules</string>
-    <string name="operation_restore_https_rules">Restoring HTTPS rule backup</string>
+    <string name="operation_restore_address_rules">Restoring address rule backup</string>
     <string name="operation_add_block_rule">Adding blocked rules</string>
     <string name="operation_add_allow_rule">Adding allowed rules</string>
     <string name="vpn_disconnected">Disconnected</string>
