@@ -21,7 +21,8 @@ fun LogHomeScreen(
     onNavigateToDnsCache: () -> Unit,
     onNavigateToRaceStats: () -> Unit,
     onNavigateToBootstrapStats: () -> Unit,
-    onNavigateToSubscriptionInterceptionStats: () -> Unit
+    onNavigateToSubscriptionInterceptionStats: () -> Unit,
+    onNavigateToAppInterceptionStats: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -63,6 +64,11 @@ fun LogHomeScreen(
                     title = localizedText("规则拦截"),
                     subtitle = localizedText("查看各订阅拦截请求的次数和占比"),
                     onClick = onNavigateToSubscriptionInterceptionStats
+                    ),
+                    SettingsNavigationItemData(
+                    title = localizedText("应用拦截统计"),
+                    subtitle = localizedText("按应用查看 HTTP(S) 请求、拦截次数和拦截率"),
+                    onClick = onNavigateToAppInterceptionStats
                     )
                 )
             )

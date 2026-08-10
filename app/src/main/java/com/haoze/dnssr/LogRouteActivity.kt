@@ -80,6 +80,9 @@ class LogRouteActivity : AppLocalizedActivity() {
         val onNavigateToSubscriptionInterceptionStats = {
             onNavigate(Routes.SUBSCRIPTION_INTERCEPTION_STATS)
         }
+        val onNavigateToAppInterceptionStats = {
+            onNavigate(Routes.APP_INTERCEPTION_STATS)
+        }
 
         when (route) {
             Routes.LOGS -> LogHomeScreen(
@@ -88,7 +91,8 @@ class LogRouteActivity : AppLocalizedActivity() {
                 onNavigateToDnsCache = onNavigateToDnsCache,
                 onNavigateToRaceStats = onNavigateToRaceStats,
                 onNavigateToBootstrapStats = onNavigateToBootstrapStats,
-                onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats
+                onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats,
+                onNavigateToAppInterceptionStats = onNavigateToAppInterceptionStats
             )
             Routes.DNS_LOGS -> RequestLogScreen(
                 onBack = onBack,
@@ -98,6 +102,7 @@ class LogRouteActivity : AppLocalizedActivity() {
             Routes.RACE_STATS -> RaceStatsScreen(onBack = onBack)
             Routes.BOOTSTRAP_STATS -> BootstrapStatsScreen(onBack = onBack)
             Routes.SUBSCRIPTION_INTERCEPTION_STATS -> SubscriptionInterceptionStatsScreen(onBack = onBack)
+            Routes.APP_INTERCEPTION_STATS -> AppInterceptionStatsScreen(onBack = onBack)
             Routes.PROVIDER_HEALTH -> ProviderHealthScreen(onBack = onBack)
             else -> ModernLogDashboardScreen(
                 onBack = onBack,
@@ -105,7 +110,8 @@ class LogRouteActivity : AppLocalizedActivity() {
                 onNavigateToDnsCache = onNavigateToDnsCache,
                 onNavigateToRaceStats = onNavigateToRaceStats,
                 onNavigateToBootstrapStats = onNavigateToBootstrapStats,
-                onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats
+                onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats,
+                onNavigateToAppInterceptionStats = onNavigateToAppInterceptionStats
             )
         }
     }

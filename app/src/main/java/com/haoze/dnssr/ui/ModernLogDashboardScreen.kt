@@ -74,6 +74,7 @@ fun ModernLogDashboardScreen(
     onNavigateToRaceStats: () -> Unit,
     onNavigateToBootstrapStats: () -> Unit,
     onNavigateToSubscriptionInterceptionStats: () -> Unit,
+    onNavigateToAppInterceptionStats: () -> Unit,
     viewModel: ModernLogDashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -131,10 +132,17 @@ fun ModernLogDashboardScreen(
                         onNavigateToDnsCache = onNavigateToDnsCache,
                         onNavigateToRaceStats = onNavigateToRaceStats,
                         onNavigateToBootstrapStats = onNavigateToBootstrapStats,
-                        onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats
+                        onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats,
+                        onNavigateToAppInterceptionStats = onNavigateToAppInterceptionStats
                     )
-                    DnsLogMode.BLOCKED_AND_ERRORS -> FilteredModeDashboard(state = uiState)
-                    DnsLogMode.OFF -> OffModeDashboard(state = uiState)
+                    DnsLogMode.BLOCKED_AND_ERRORS -> FilteredModeDashboard(
+                        state = uiState,
+                        onNavigateToAppInterceptionStats = onNavigateToAppInterceptionStats
+                    )
+                    DnsLogMode.OFF -> OffModeDashboard(
+                        state = uiState,
+                        onNavigateToAppInterceptionStats = onNavigateToAppInterceptionStats
+                    )
                 }
             }
         }
@@ -209,7 +217,8 @@ private fun AllModeDashboard(
     onNavigateToDnsCache: () -> Unit,
     onNavigateToRaceStats: () -> Unit,
     onNavigateToBootstrapStats: () -> Unit,
-    onNavigateToSubscriptionInterceptionStats: () -> Unit
+    onNavigateToSubscriptionInterceptionStats: () -> Unit,
+    onNavigateToAppInterceptionStats: () -> Unit
 ) {
     val stats = state.dailyStats
     val race = state.race
@@ -428,11 +437,15 @@ private fun AllModeDashboard(
                 }
             }
         }
+        item { AppInterceptionNavigationCard(onNavigateToAppInterceptionStats) }
     }
 }
 
 @Composable
-private fun FilteredModeDashboard(state: ModernLogDashboardUiState) {
+private fun FilteredModeDashboard(
+    state: ModernLogDashboardUiState,
+    onNavigateToAppInterceptionStats: () -> Unit
+) {
     val stats = state.dailyStats
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -512,11 +525,15 @@ private fun FilteredModeDashboard(state: ModernLogDashboardUiState) {
                 SimpleKvRow(label = localizedText("有效缓存"), value = formatCount(state.cacheEntries.size))
             }
         }
+        item { AppInterceptionNavigationCard(onNavigateToAppInterceptionStats) }
     }
 }
 
 @Composable
-private fun OffModeDashboard(state: ModernLogDashboardUiState) {
+private fun OffModeDashboard(
+    state: ModernLogDashboardUiState,
+    onNavigateToAppInterceptionStats: () -> Unit
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 28.dp),
@@ -570,6 +587,23 @@ private fun OffModeDashboard(state: ModernLogDashboardUiState) {
                 SimpleKvRow(label = localizedText("Bootstrap 尝试"), value = formatCount(state.bootstrap.attempts))
             }
         }
+        item { AppInterceptionNavigationCard(onNavigateToAppInterceptionStats) }
+    }
+}
+
+@Composable
+private fun AppInterceptionNavigationCard(onNavigate: () -> Unit) {
+    DashboardCard {
+        SectionTitle(
+            title = localizedText("应用拦截"),
+            trailing = {
+                PillLink(
+                    text = localizedText("查看"),
+                    onClick = onNavigate
+                )
+            }
+        )
+        EmptyText(localizedText("按应用汇总 HTTP(S) 请求、拦截次数和拦截率。"))
     }
 }
 

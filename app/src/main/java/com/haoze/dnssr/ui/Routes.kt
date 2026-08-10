@@ -11,6 +11,7 @@ object Routes {
     const val RACE_STATS = "race_stats"
     const val BOOTSTRAP_STATS = "bootstrap_stats"
     const val SUBSCRIPTION_INTERCEPTION_STATS = "subscription_interception_stats"
+    const val APP_INTERCEPTION_STATS = "app_interception_stats"
     const val MIRROR_TEMPLATES = "mirror_templates"
     const val MIRROR_FORMAT_GUIDE = "mirror_format_guide"
     const val PROVIDER_HEALTH = "provider_health"

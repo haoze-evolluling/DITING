@@ -17,6 +17,12 @@ enum class SubscriptionInterceptionStatsRange(val displayName: String) {
     ALL("全部")
 }
 
+enum class AppInterceptionStatsRange(val displayName: String) {
+    TODAY("今日"),
+    SEVEN_DAYS("近 7 天"),
+    ALL("全部")
+}
+
 data class SubscriptionInterceptionStats(
     val totalRequests: Int,
     val hitsBySubscriptionId: Map<Long, Int>
