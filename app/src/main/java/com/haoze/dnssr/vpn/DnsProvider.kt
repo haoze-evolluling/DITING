@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.haoze.dnssr.ui.AppSettings
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URI
 import java.util.UUID
 
 enum class DnsProtocol(val label: String) {
@@ -356,17 +357,23 @@ data class DnsProvider(
 
         fun isValidDohUrl(url: String): Boolean {
             val trimmed = url.trim()
-            return trimmed.isNotBlank() && trimmed.startsWith("https://", ignoreCase = true)
+            val uri = runCatching { URI(trimmed) }.getOrNull() ?: return false
+            return trimmed.length <= MAX_DOH_URL_LENGTH &&
+                uri.scheme.equals("https", ignoreCase = true) &&
+                !uri.host.isNullOrBlank() &&
+                uri.userInfo == null &&
+                uri.fragment == null &&
+                uri.port in -1..65535
         }
 
         fun isValidDotHost(host: String): Boolean {
             val trimmed = host.trim()
-            return trimmed.isNotBlank() && !isIpLiteral(trimmed) && trimmed.contains(".")
+            return isValidHostname(trimmed, allowIpLiteral = false)
         }
 
         fun isValidDnsHost(host: String): Boolean {
             val trimmed = host.trim()
-            return trimmed.isNotBlank() && (isIpLiteral(trimmed) || trimmed.contains("."))
+            return isValidHostname(trimmed, allowIpLiteral = true)
         }
 
         fun isValidDotPort(port: Int): Boolean {
@@ -402,7 +409,22 @@ data class DnsProvider(
             return false
         }
 
+        private fun isValidHostname(value: String, allowIpLiteral: Boolean): Boolean {
+            if (value.isBlank() || value.length > MAX_HOST_LENGTH || value.any(Char::isWhitespace)) return false
+            if (isIpLiteral(value)) return allowIpLiteral
+            val normalized = value.removeSuffix(".")
+            if (!normalized.contains('.') || normalized.startsWith('.') || normalized.endsWith('.') || normalized.contains("..")) {
+                return false
+            }
+            return normalized.split('.').all { label ->
+                label.length in 1..63 && HOST_LABEL_REGEX.matches(label)
+            }
+        }
+
         private const val LEGACY_DOH3_PROTOCOL = "DOH3"
+        private const val MAX_DOH_URL_LENGTH = 2_048
+        private const val MAX_HOST_LENGTH = 253
+        private val HOST_LABEL_REGEX = Regex("^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
         const val GOOGLE_DOH_PROVIDER_ID = "preset_google_doh"
         val LEGACY_DOH3_PRESET_IDS = setOf(
             "preset_alidns_doh3",

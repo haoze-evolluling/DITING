@@ -15,6 +15,10 @@ import org.json.JSONObject
 import com.haoze.dnssr.vpn.AddressRuleBackupCodec
 import com.haoze.dnssr.vpn.AddressRuleBackupSource
 import com.haoze.dnssr.vpn.AddressRuleBackupTransfer
+import java.net.URI
+import com.haoze.dnssr.vpn.HttpsRuleBackupCodec
+import com.haoze.dnssr.vpn.HttpsRuleBackupSource
+import com.haoze.dnssr.vpn.HttpsRuleBackupTransfer
 
 data class ConfigExportSelection(
     val providers: Boolean,
@@ -405,7 +409,7 @@ class ConfigTransferManager(private val context: Context) {
         }
         val subscriptions = root.optionalArray("subscriptions").mapObjects { obj ->
             val url = obj.requiredString("url")
-            if (!url.startsWith("https://") && !url.startsWith("http://")) {
+            if (!isValidSubscriptionUrl(url)) {
                 throw IllegalArgumentException("配置中包含无效的订阅链接")
             }
             val scope = when (val value = obj.optString("scope", RuleScope.DNS.storageValue)) {
@@ -446,10 +450,24 @@ class ConfigTransferManager(private val context: Context) {
     private fun JSONObject.requiredString(key: String): String = optString(key, "").trim()
         .takeIf { it.isNotEmpty() } ?: throw IllegalArgumentException("配置缺少 $key")
 
-    private fun JSONObject.optionalArray(key: String): JSONArray = when {
-        !has(key) -> JSONArray()
-        optJSONArray(key) != null -> getJSONArray(key)
+    private fun isValidSubscriptionUrl(value: String): Boolean {
+        if (value.length > MAX_SUBSCRIPTION_URL_LENGTH) return false
+        val uri = runCatching { URI(value) }.getOrNull() ?: return false
+        return uri.scheme?.lowercase() in setOf("http", "https") &&
+            !uri.host.isNullOrBlank() &&
+            uri.userInfo == null &&
+            uri.fragment == null
+    }
+
+    private fun JSONObject.optionalArray(key: String): JSONArray {
+        val array = when {
+            !has(key) -> JSONArray()
+            optJSONArray(key) != null -> getJSONArray(key)
         else -> throw IllegalArgumentException("配置字段 $key 格式错误")
+    }
+
+        require(array.length() <= MAX_CONFIG_ITEMS) { "配置列表超过数量限制" }
+        return array
     }
 
     private fun <T> JSONArray.mapObjects(transform: (JSONObject) -> T): List<T> = buildList {
@@ -494,6 +512,8 @@ class ConfigTransferManager(private val context: Context) {
 
     companion object {
         private const val FORMAT_VERSION = 7
+        private const val MAX_SUBSCRIPTION_URL_LENGTH = 4_096
+        private const val MAX_CONFIG_ITEMS = 100_000
         private val SUPPORTED_FORMAT_VERSIONS = setOf(1, 2, 3, 4, 5, 6, FORMAT_VERSION)
     }
 }
