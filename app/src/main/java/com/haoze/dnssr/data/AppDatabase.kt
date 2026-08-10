@@ -392,6 +392,41 @@ abstract class AppDatabase : RoomDatabase() {
                     db.execSQL("DELETE FROM `$it` WHERE scope = 'https'")
                 }
                 db.execSQL("DELETE FROM `subscription` WHERE scope = 'https'")
+                db.execSQL(
+                    "CREATE TABLE `subscription_new` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`url` TEXT NOT NULL, `name` TEXT NOT NULL, " +
+                        "`sourceType` TEXT NOT NULL, `kind` TEXT NOT NULL, " +
+                        "`enabled` INTEGER NOT NULL, `ruleCount` INTEGER NOT NULL, " +
+                        "`lastUpdated` INTEGER NOT NULL, `addedAt` INTEGER NOT NULL, " +
+                        "`importState` TEXT NOT NULL, `importError` TEXT, " +
+                        "`httpEtag` TEXT, `httpLastModified` TEXT, `ruleSetHash` TEXT, " +
+                        "`lastAttemptAt` INTEGER NOT NULL, `consecutiveFailureCount` INTEGER NOT NULL, " +
+                        "`mirrorTemplate` TEXT, `mirrorFallback` INTEGER NOT NULL, " +
+                        "`scope` TEXT NOT NULL, `groupId` INTEGER, " +
+                        "FOREIGN KEY(`groupId`) REFERENCES `subscription_group`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE SET NULL)"
+                )
+                db.execSQL(
+                    "INSERT INTO `subscription_new` (" +
+                        "`id`, `url`, `name`, `sourceType`, `kind`, `enabled`, `ruleCount`, " +
+                        "`lastUpdated`, `addedAt`, `importState`, `importError`, `httpEtag`, " +
+                        "`httpLastModified`, `ruleSetHash`, `lastAttemptAt`, `consecutiveFailureCount`, " +
+                        "`mirrorTemplate`, `mirrorFallback`, `scope`, `groupId`) " +
+                        "SELECT `id`, `url`, `name`, `sourceType`, `kind`, `enabled`, `ruleCount`, " +
+                        "`lastUpdated`, `addedAt`, `importState`, `importError`, `httpEtag`, " +
+                        "`httpLastModified`, `ruleSetHash`, `lastAttemptAt`, `consecutiveFailureCount`, " +
+                        "`mirrorTemplate`, `mirrorFallback`, `scope`, " +
+                        "CASE WHEN `groupId` IN (SELECT `id` FROM `subscription_group`) " +
+                        "THEN `groupId` ELSE NULL END FROM `subscription`"
+                )
+                db.execSQL("DROP TABLE `subscription`")
+                db.execSQL("ALTER TABLE `subscription_new` RENAME TO `subscription`")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX `index_subscription_url_scope` " +
+                        "ON `subscription` (`url`, `scope`)"
+                )
+                db.execSQL("CREATE INDEX `index_subscription_groupId` ON `subscription` (`groupId`)")
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.haoze.dnssr.data.entity
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
@@ -9,7 +10,15 @@ import androidx.room.PrimaryKey
  */
 @Entity(
     tableName = "subscription",
-    indices = [Index(value = ["url", "scope"], unique = true), Index(value = ["groupId"])]
+    indices = [Index(value = ["url", "scope"], unique = true), Index(value = ["groupId"])],
+    foreignKeys = [
+        ForeignKey(
+            entity = SubscriptionGroupEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["groupId"],
+            onDelete = ForeignKey.SET_NULL
+        )
+    ]
 )
 data class SubscriptionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
