@@ -1,34 +1,49 @@
 package com.haoze.dnssr.ui
 
-import androidx.compose.foundation.Image
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.haoze.dnssr.R
 import com.haoze.dnssr.ui.components.SettingsGroup
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsScaffold
+
+private const val SPONSOR_README_URL = "https://github.com/haoze-evolluling/DNSSR#readme"
 
 @Composable
 fun SponsorScreen(
     onBack: () -> Unit,
     title: String = "赞助"
 ) {
+    val context = LocalContext.current
+    val openReadme: () -> Unit = {
+        runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SPONSOR_README_URL)))
+        }.onFailure {
+            Toast.makeText(context, localizedText(context, "无法打开链接"), Toast.LENGTH_SHORT).show()
+        }
+        Unit
+    }
+
     SettingsScaffold(
         title = localizedText(title),
         onBack = onBack
@@ -54,26 +69,35 @@ fun SponsorScreen(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+            SettingsGroup {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = openReadme)
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    PaymentQrCode(
-                        drawableRes = R.drawable.alipay_code,
-                        label = localizedText("支付宝付款码"),
-                        modifier = Modifier.weight(1f)
-                    )
-                    PaymentQrCode(
-                        drawableRes = R.drawable.wechatpay_code,
-                        label = localizedText("微信付款码"),
-                        modifier = Modifier.weight(1f)
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = localizedText("在 GitHub 查看 README 中的赞助方式"),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = SPONSOR_README_URL.removePrefix("https://"),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = localizedText("打开 GitHub README"),
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
-                Text(
-                text = localizedText("付款时请备注您的网名或希望展示的名称，方便将您的名字加入赞助者名单。"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             SettingsGroupTitle(localizedText("你的每一笔支持都会用于"))
@@ -107,34 +131,6 @@ fun SponsorScreen(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp)
             )
         }
-    }
-}
-
-@Composable
-private fun PaymentQrCode(
-    drawableRes: Int,
-    label: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Image(
-            painter = painterResource(drawableRes),
-            contentDescription = label,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Medium
-        )
     }
 }
 

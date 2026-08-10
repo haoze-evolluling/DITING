@@ -57,6 +57,18 @@ app/build/outputs/apk/debug/app-debug.apk
 - OkHttp
 - Navigation Compose、Paging 与 WorkManager
 
+## 赞助
+
+如果这个项目帮助到了你，欢迎通过下面的付款码支持项目。付款时请备注您的网名或希望展示的名称，方便将您的名字加入赞助者名单。
+
+支付宝付款码：
+
+![支付宝付款码](docs/alipay_code.png)
+
+微信付款码：
+
+![微信付款码](docs/wechatpay_code.png)
+
 ## 作者与许可证
 
 - 作者：haoze-evolluling（集美大学人工智能系大三学生）
