@@ -18,10 +18,22 @@ class RequestLogRepository(
     private val httpDao: HttpRequestLogDao
 ) {
     suspend fun load(limit: Int): RequestLogBatch = coroutineScope {
-        val dns = async { dnsDao.queryList(androidx.sqlite.db.SimpleSQLiteQuery("SELECT * FROM dns_log ORDER BY timestamp DESC LIMIT $limit")) }
-        val http = async { httpDao.recent(limit) }
+        val safeLimit = limit.coerceIn(1, MAX_PAGE_SIZE)
+        val dns = async {
+            dnsDao.queryList(
+                androidx.sqlite.db.SimpleSQLiteQuery(
+                    "SELECT * FROM dns_log ORDER BY timestamp DESC LIMIT ?",
+                    arrayOf(safeLimit)
+                )
+            )
+        }
+        val http = async { httpDao.recent(safeLimit) }
         val dnsRows = dns.await()
         val httpRows = http.await()
-        RequestLogBatch(dnsRows, httpRows, dnsRows.size >= limit || httpRows.size >= limit)
+        RequestLogBatch(dnsRows, httpRows, dnsRows.size >= safeLimit || httpRows.size >= safeLimit)
+    }
+
+    private companion object {
+        const val MAX_PAGE_SIZE = 500
     }
 }

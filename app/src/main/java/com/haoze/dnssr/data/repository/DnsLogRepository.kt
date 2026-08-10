@@ -24,6 +24,7 @@ class DnsLogRepository(
 
     companion object {
         const val PAGE_SIZE = 50
+        private const val MAX_EXPORT_LOGS = 100_000
         private const val SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000L
     }
 
@@ -39,7 +40,8 @@ class DnsLogRepository(
         val args = mutableListOf<Any>()
         val sql = StringBuilder("SELECT * FROM dns_log WHERE 1=1")
         appendFilter(sql, args, params)
-        sql.append(" ORDER BY timestamp DESC")
+        sql.append(" ORDER BY timestamp DESC LIMIT ?")
+        args += MAX_EXPORT_LOGS
         return dao.queryList(SimpleSQLiteQuery(sql.toString(), args.toTypedArray()))
     }
 
