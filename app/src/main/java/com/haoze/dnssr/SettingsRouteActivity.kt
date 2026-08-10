@@ -341,10 +341,10 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.OUTBOUND_PROXY_APP_SELECTION -> OutboundProxyAppsScreen(onBack, ::finishOutboundProxyAppSelection)
             Routes.BLOCK_RESPONSE_SETTINGS -> BlockResponseSettingsScreen(onBack, onRuntimeDnsSettingsChanged)
              Routes.DATA_CLEANUP -> SettingsGuideHost(SettingsGuides.DATA_CLEANUP) { DataCleanupScreen(onBack, requestedTitle ?: ScreenDestinations.dataCleanup.title, onRuntimeDnsSettingsChanged, onExitApp) }
-            Routes.CONFIG_TRANSFER -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, ScreenDestinations.configTransfer.title, { onNavigate(Routes.CONFIG_IMPORT_EXPORT) }, { onNavigate(Routes.RULE_EXPORT) }, { onNavigate(Routes.RULE_IMPORT) }) }
-            Routes.CONFIG_IMPORT_EXPORT -> ConfigImportExportScreen(onBack, ScreenDestinations.configImportExport.title)
-            Routes.RULE_EXPORT -> RuleExportScreen(onBack, ScreenDestinations.ruleExport.title)
-            Routes.RULE_IMPORT -> RuleImportScreen(onBack, ScreenDestinations.ruleImport.title)
+            Routes.CONFIG_TRANSFER -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "数据管理", { onNavigate(Routes.CONFIG_IMPORT_EXPORT) }, { onNavigate(Routes.RULE_EXPORT) }, { onNavigate(Routes.RULE_IMPORT) }) }
+            Routes.CONFIG_IMPORT_EXPORT -> ConfigImportExportScreen(onBack, "设置配置")
+            Routes.RULE_EXPORT -> RuleExportScreen(onBack, "规则导出")
+            Routes.RULE_IMPORT -> RuleImportScreen(onBack, "规则导入")
             Routes.PROVIDER_MANAGEMENT -> SettingsGuideHost(SettingsGuides.PROVIDER_MANAGEMENT) { ProviderManagementScreen(onBack, ScreenDestinations.providerManagement.title) }
             Routes.HOME_PROVIDER_VISIBILITY -> SettingsGuideHost(SettingsGuides.SERVICE_DISPLAY) { HomeProviderVisibilityScreen(onBack, "服务显示") }
             Routes.BLOCKED_APPS -> SettingsGuideHost(SettingsGuides.BLOCKED_APPS) { BlockedAppsSettingsScreen(onBack, { onNavigate(Routes.BLOCKED_APPS_SELECTION) }) }

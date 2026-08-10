@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,12 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.haoze.dnssr.ui.components.SettingsDivider
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsInfoText
+import com.haoze.dnssr.ui.components.SettingsNavigationGroup
+import com.haoze.dnssr.ui.components.SettingsNavigationItemData
 import com.haoze.dnssr.ui.components.SettingsScaffold
-import com.haoze.dnssr.ui.components.SettingsTextItem
-import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -45,19 +46,19 @@ fun RuleExportScreen(
     val exportProgress by viewModel.ruleExportProgress.collectAsState()
     val exportProgressText by viewModel.ruleExportProgressText.collectAsState()
     val message by viewModel.message.collectAsState()
-    var exportRequest by remember { mutableStateOf(RuleExportRequest(RuleExportType.ALL, RuleExportCategory.DOMAIN)) }
+    var exportCategory by remember { mutableStateOf(RuleExportCategory.DOMAIN) }
     val textExportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/plain")
-    ) { uri -> uri?.let { viewModel.exportRules(it, exportRequest) } }
+    ) { uri -> uri?.let { viewModel.exportRules(it, exportCategory) } }
     val jsonExportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
-    ) { uri -> uri?.let { viewModel.exportRules(it, exportRequest) } }
+    ) { uri -> uri?.let { viewModel.exportRules(it, exportCategory) } }
 
-    fun export(request: RuleExportRequest) {
-        exportRequest = request
+    fun export(category: RuleExportCategory) {
+        exportCategory = category
         val date = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-        val fileName = "谛听-${request.fileNameSuffix}-$date.${if (request.category == RuleExportCategory.DOMAIN) "txt" else "json"}"
-        if (request.category == RuleExportCategory.DOMAIN) textExportLauncher.launch(fileName) else jsonExportLauncher.launch(fileName)
+        val fileName = "谛听-${category.storageValue}-$date.${if (category == RuleExportCategory.DOMAIN) "txt" else "json"}"
+        if (category == RuleExportCategory.DOMAIN) textExportLauncher.launch(fileName) else jsonExportLauncher.launch(fileName)
     }
 
     LaunchedEffect(message) {
@@ -73,80 +74,56 @@ fun RuleExportScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SettingsInfoText(
-                text = localizedText("按域名规则和地址规则分别导出当前生效内容。域名规则使用可订阅的 TXT，地址规则使用可恢复的 JSON 备份。"),
+                text = localizedText("域名规则导出当前所有已生效的过滤和放行规则，可作为本地订阅重新导入；地址规则导出手动 URL 规则的 JSON 备份。"),
                 modifier = Modifier.padding(top = 8.dp)
             )
-            SettingsGroupTitle(localizedText("域名规则"))
-            RuleExportGroup(RuleExportCategory.DOMAIN, operation, exportRequest, exportProgress, exportProgressText, ::export)
-            SettingsGroupTitle(localizedText("地址规则"))
-            RuleExportGroup(RuleExportCategory.ADDRESS, operation, exportRequest, exportProgress, exportProgressText, ::export)
+            SettingsGroupTitle(localizedText("域名规则 · TXT 订阅文件"))
+            SettingsNavigationGroup(
+                items = listOf(
+                    SettingsNavigationItemData(
+                        title = localizedText("导出当前生效域名规则"),
+                        subtitle = localizedText("保存为 TXT 订阅文件，可通过“导入域名规则 TXT 文件”重新导入"),
+                        leadingIcon = Icons.Filled.FileDownload,
+                        enabled = operation == ConfigTransferOperation.IDLE,
+                        onClick = { export(RuleExportCategory.DOMAIN) }
+                    )
+                )
+            )
+            ExportProgress(operation, exportCategory, RuleExportCategory.DOMAIN, exportProgress, exportProgressText)
+            SettingsGroupTitle(localizedText("地址规则 · JSON 备份文件"))
+            SettingsNavigationGroup(
+                items = listOf(
+                    SettingsNavigationItemData(
+                        title = localizedText("导出地址规则备份"),
+                        subtitle = localizedText("保存手动添加的 URL 屏蔽和放行规则，可完整导入恢复"),
+                        leadingIcon = Icons.Filled.FileDownload,
+                        enabled = operation == ConfigTransferOperation.IDLE,
+                        onClick = { export(RuleExportCategory.ADDRESS) }
+                    )
+                )
+            )
+            ExportProgress(operation, exportCategory, RuleExportCategory.ADDRESS, exportProgress, exportProgressText)
         }
     }
 }
 
 @Composable
-private fun RuleExportGroup(
+private fun ExportProgress(
+    operation: ConfigTransferOperation,
+    exportCategory: RuleExportCategory,
     category: RuleExportCategory,
-    operation: ConfigTransferOperation,
-    selectedRequest: RuleExportRequest,
     exportProgress: Float,
-    exportProgressText: String,
-    onExport: (RuleExportRequest) -> Unit
+    exportProgressText: String
 ) {
-    val items = listOf(
-        RuleExportType.SUBSCRIPTIONS to "导出所有订阅导入的当前生效规则",
-        RuleExportType.MANUAL to "导出所有手动添加的当前生效规则",
-        RuleExportType.ALL to "合并订阅导入与手动添加的当前生效规则"
+    if (operation != ConfigTransferOperation.EXPORTING || exportCategory != category) return
+    LinearProgressIndicator(
+        progress = { exportProgress },
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
     )
-    SettingsSurfaceGroup(
-        content = items.map { (type, subtitle) ->
-            {
-                RuleExportItem(
-                    title = localizedText("导出${category.displayName}${type.displayName}"),
-                    subtitle = localizedText(if (category == RuleExportCategory.DOMAIN) subtitle else "$subtitle，保存为可恢复的 JSON 备份"),
-                    request = RuleExportRequest(type, category),
-                    operation = operation,
-                    isSelected = selectedRequest == RuleExportRequest(type, category),
-                    exportProgress = exportProgress,
-                    exportProgressText = exportProgressText,
-                    onExport = onExport
-                )
-            }
-        }
-    )
-}
-
-@Composable
-private fun RuleExportItem(
-    title: String,
-    subtitle: String,
-    request: RuleExportRequest,
-    operation: ConfigTransferOperation,
-    isSelected: Boolean,
-    exportProgress: Float,
-    exportProgressText: String,
-    onExport: (RuleExportRequest) -> Unit
-) {
-    SettingsTextItem(
-        title = title,
-        subtitle = subtitle,
-        subtitleContent = {
-            if (operation == ConfigTransferOperation.EXPORTING && isSelected) {
-                LinearProgressIndicator(
-                    progress = { exportProgress },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                )
-                Text(
-                    text = localizedText(exportProgressText),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 6.dp)
-                )
-            }
-        },
-        enabled = operation == ConfigTransferOperation.IDLE,
-        onClick = { onExport(request) }
+    Text(
+        text = localizedText(exportProgressText),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 24.dp)
     )
 }

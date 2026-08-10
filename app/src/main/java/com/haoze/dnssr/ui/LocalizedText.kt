@@ -113,12 +113,33 @@ private fun translateEnglish(text: String, context: Context): String {
         text == "本地订阅文件导入后无法更新，可在规则订阅中重命名、启用、禁用或删除。" -> "Imported local subscription files cannot be updated. Rename, enable, disable, or delete them under Rule subscriptions."
         text == "DNS 规则" -> "DNS rules"
         text == "HTTPS 规则" -> "HTTPS rules"
+        text == "数据管理" -> "Data management"
+        text == "规则数据" -> "Rule data"
+        text == "域名规则导出当前所有已生效的过滤和放行规则，可作为本地订阅重新导入；地址规则导出手动 URL 规则的 JSON 备份。" -> "Domain rules export all active blocking and allow rules for re-import as a local subscription. Address rules export a JSON backup of manually added URL rules."
+        text == "导出当前生效域名规则" -> "Export active domain rules"
+        text == "保存为 TXT 订阅文件，可通过“导入域名规则 TXT 文件”重新导入" -> "Saved as a TXT subscription file and can be re-imported with Import domain rules TXT file."
+        text == "导出地址规则备份" -> "Export address rule backup"
+        text == "保存手动添加的 URL 屏蔽和放行规则，可完整导入恢复" -> "Saves manually added URL blocking and allow rules for complete re-import."
+        text == "导入域名规则 TXT 文件" -> "Import domain rules TXT file"
+        text == "导入导出的域名规则或外部过滤规则，创建不可更新的本地订阅" -> "Import exported domain rules or external filtering rules as a non-updatable local subscription."
+        text == "外部 hosts 文件" -> "External hosts file"
+        text == "导入外部 hosts 覆写文件" -> "Import external hosts override file"
+        text == "仅导入包含真实 IP 地址的 hosts 规则，创建不可更新的本地覆写订阅" -> "Imports only hosts rules with real IP addresses as a non-updatable local override subscription."
+        text == "域名规则 TXT 和 hosts 文件导入后均为不可更新的本地订阅；地址规则备份会恢复为手动 URL 规则。" -> "Imported domain TXT and hosts files become non-updatable local subscriptions. Address rule backups restore as manual URL rules."
+        text == "域名规则 · TXT 订阅文件" -> "Domain rules · TXT subscription file"
+        text == "地址规则 · JSON 备份文件" -> "Address rules · JSON backup file"
+        text == "选择规则类型后导出当前生效内容。域名规则导出为可订阅的 TXT，地址规则导出为可恢复的 JSON 备份。" -> "Choose a rule type to export currently active content. Domain rules are exported as subscribable TXT, while address rules are exported as a restorable JSON backup."
+        text.startsWith("导出订阅规则") -> text.replace("导出订阅规则", "Export subscription rules")
+        text.startsWith("导出手动添加规则") -> text.replace("导出手动添加规则", "Export manually added rules")
+        text.startsWith("导出全部规则") -> text.replace("导出全部规则", "Export all rules")
         text == "仅导出当前生效的规则。DNS 使用可订阅的 TXT，HTTPS 使用可完整恢复的备份 JSON。" -> "Only currently active rules are exported. DNS uses subscribable TXT, while HTTPS uses a fully restorable backup JSON."
         text.startsWith("导出 DNS ") -> text.replace("导出 DNS ", "Export DNS ").replace("订阅规则", "subscription rules").replace("手动添加规则", "manually added rules").replace("全部规则", "all rules")
         text.startsWith("导出 HTTPS ") -> text.replace("导出 HTTPS ", "Export HTTPS ").replace("订阅规则", "subscription rules").replace("手动添加规则", "manually added rules").replace("全部规则", "all rules")
-        text.startsWith("导出所有订阅导入的当前生效规则") -> text.replace("导出所有订阅导入的当前生效规则", "Export all currently active subscription-imported rules")
-        text.startsWith("导出所有手动添加的当前生效规则") -> text.replace("导出所有手动添加的当前生效规则", "Export all currently active manually added rules")
-        text.startsWith("合并订阅导入与手动添加的当前生效规则") -> text.replace("合并订阅导入与手动添加的当前生效规则", "Combine currently active subscription-imported and manually added rules")
+        text.startsWith("导出所有订阅导入的当前生效规则") -> text.replace("导出所有订阅导入的当前生效规则", "Export all currently active subscription-imported rules").replace("，保存为TXT 订阅文件", ", saved as a TXT subscription file").replace("，保存为可恢复的 JSON 备份", ", saved as a restorable JSON backup")
+        text.startsWith("导出所有手动添加的当前生效规则") -> text.replace("导出所有手动添加的当前生效规则", "Export all currently active manually added rules").replace("，保存为TXT 订阅文件", ", saved as a TXT subscription file").replace("，保存为可恢复的 JSON 备份", ", saved as a restorable JSON backup")
+        text.startsWith("合并订阅导入与手动添加的当前生效规则") -> text.replace("合并订阅导入与手动添加的当前生效规则", "Combine currently active subscription-imported and manually added rules").replace("，保存为TXT 订阅文件", ", saved as a TXT subscription file").replace("，保存为可恢复的 JSON 备份", ", saved as a restorable JSON backup")
+        text.contains("保存为TXT 订阅文件") -> text.replace("保存为TXT 订阅文件", "saved as a TXT subscription file")
+        text.contains("保存为可恢复的 JSON 备份") -> text.replace("保存为可恢复的 JSON 备份", "saved as a restorable JSON backup")
         text == "导出 CSV" -> "Export CSV"
         text == "选择状态" -> "Choose status"
         text == "请求正常放行，未命中拦截规则" -> "Request passed normally without matching a blocking rule"

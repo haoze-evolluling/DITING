@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.ImportExport
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.PowerSettingsNew
@@ -144,6 +145,7 @@ fun MainScreen(
     onNavigateToSponsorList: () -> Unit,
     onNavigateToCoBuilderList: () -> Unit,
     onNavigateToAppUpdate: () -> Unit,
+    onNavigateToDataManagement: () -> Unit,
     viewModel: MainViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -276,7 +278,8 @@ fun MainScreen(
                     onNavigateToSponsor = onNavigateToSponsor,
                     onNavigateToSponsorList = onNavigateToSponsorList,
                     onNavigateToCoBuilderList = onNavigateToCoBuilderList,
-                    onNavigateToAppUpdate = onNavigateToAppUpdate
+                    onNavigateToAppUpdate = onNavigateToAppUpdate,
+                    onNavigateToDataManagement = onNavigateToDataManagement
                 )
             }
         }
@@ -332,7 +335,8 @@ private fun FeatureHubScreen(
     onNavigateToSponsor: () -> Unit,
     onNavigateToSponsorList: () -> Unit,
     onNavigateToCoBuilderList: () -> Unit,
-    onNavigateToAppUpdate: () -> Unit
+    onNavigateToAppUpdate: () -> Unit,
+    onNavigateToDataManagement: () -> Unit
 ) {
     val context = LocalContext.current
     var showLogLongPressHint by remember {
@@ -377,6 +381,7 @@ private fun FeatureHubScreen(
             stringResource(R.string.feature_hub_about_app),
             listOf(
                 FeatureHubItem(stringResource(R.string.feature_hub_app_info), Icons.Filled.Info, onNavigateToAbout),
+                FeatureHubItem(stringResource(R.string.feature_hub_data_management), Icons.Filled.ImportExport, onNavigateToDataManagement),
                 FeatureHubItem(stringResource(R.string.feature_hub_sponsor), Icons.Filled.Favorite, onNavigateToSponsor),
                 FeatureHubItem(stringResource(R.string.feature_hub_sponsor_list), Icons.Filled.WorkspacePremium, onNavigateToSponsorList),
                 FeatureHubItem(stringResource(R.string.feature_hub_contributors), Icons.Filled.Groups, onNavigateToCoBuilderList),

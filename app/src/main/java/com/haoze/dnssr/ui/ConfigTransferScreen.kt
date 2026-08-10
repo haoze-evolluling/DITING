@@ -17,7 +17,7 @@ import com.haoze.dnssr.ui.components.SettingsScaffold
 @Composable
 fun ConfigTransferScreen(
     onBack: () -> Unit,
-    title: String = "导入与导出",
+    title: String = "数据管理",
     onNavigateToConfigImportExport: () -> Unit,
     onNavigateToRuleExport: () -> Unit,
     onNavigateToRuleImport: () -> Unit
@@ -30,7 +30,7 @@ fun ConfigTransferScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            SettingsGroupTitle(localizedText("配置"))
+            SettingsGroupTitle(localizedText("设置配置"))
             SettingsNavigationGroup(
                 items = listOf(
                     SettingsNavigationItemData(
@@ -40,7 +40,7 @@ fun ConfigTransferScreen(
                     )
                 )
             )
-            SettingsGroupTitle(localizedText("规则"))
+            SettingsGroupTitle(localizedText("规则数据"))
             SettingsNavigationGroup(
                 items = listOf(
                     SettingsNavigationItemData(

@@ -29,6 +29,7 @@
     <string name="feature_hub_other_settings">Other settings</string>
     <string name="feature_hub_about_app">About DNSSR</string>
     <string name="feature_hub_app_info">App information</string>
+    <string name="feature_hub_data_management">Data management</string>
     <string name="feature_hub_sponsor">Sponsor</string>
     <string name="feature_hub_sponsor_list">Sponsor list</string>
     <string name="feature_hub_contributors">Contributors</string>

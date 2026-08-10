@@ -7,7 +7,6 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.FlipToBack
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.ImportExport
 import androidx.compose.material.icons.filled.Policy
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Storage
@@ -101,16 +100,6 @@ internal object SettingsSearchCatalog {
         option("通知常驻", "VPN 未运行时在通知栏常驻提醒", "运行行为", "前后台行为", Routes.FOREGROUND_BACKGROUND_SETTINGS, Icons.Filled.FlipToBack),
         option("忽略电池优化", "前往系统电池优化设置", "运行行为", "前后台行为", Routes.FOREGROUND_BACKGROUND_SETTINGS, Icons.Filled.FlipToBack, "后台运行"),
         page("排除应用", "指定使用系统 DNS 的应用", "运行行为", Routes.EXCLUDED_APPS, Icons.Filled.Apps, "应用列表", "系统 DNS"),
-        page("导入与导出", "备份或恢复自定义服务与规则订阅", "数据管理", Routes.CONFIG_TRANSFER, Icons.Filled.ImportExport, "备份", "恢复"),
-        nestedPage("设置配置", "选择配置内容并导入或导出", "数据管理", "导入与导出", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport, "JSON"),
-        option("自定义 DNS 服务商", "导入或导出名称、协议和解析地址", "数据管理", "设置配置", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport),
-        option("自定义 Bootstrap IP", "导入或导出名称、IP 和启用状态", "数据管理", "设置配置", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport),
-        option("网络规则订阅", "导入或导出订阅名称和链接", "数据管理", "设置配置", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport),
-        option("排除应用", "导入或导出使用系统 DNS 的应用包名", "数据管理", "设置配置", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport),
-        option("导出配置", "将勾选内容保存为 JSON 配置文件", "数据管理", "设置配置", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport),
-        option("导入配置", "合并配置并跳过本机已有项目", "数据管理", "设置配置", Routes.CONFIG_IMPORT_EXPORT, Icons.Filled.ImportExport),
-        nestedPage("规则导出", "将当前生效规则导出为 TXT 文件", "数据管理", "导入与导出", Routes.RULE_EXPORT, Icons.Filled.ImportExport, "订阅文件"),
-        nestedPage("规则导入", "从本地文件导入域名和地址规则", "数据管理", "导入与导出", Routes.RULE_IMPORT, Icons.Filled.ImportExport, "订阅文件", "hosts", "地址", "备份"),
         page("数据清理", "删除缓存、日志或域名规则", "数据管理", Routes.DATA_CLEANUP, Icons.Filled.DeleteSweep, "清空数据"),
         option("删除请求日志", "清除 DNS 和 HTTP 的历史请求记录", "数据管理", "数据清理", Routes.DATA_CLEANUP, Icons.Filled.DeleteSweep),
         option("删除 DNS 缓存", "移除已缓存的解析结果", "数据管理", "数据清理", Routes.DATA_CLEANUP, Icons.Filled.DeleteSweep),
@@ -137,19 +126,14 @@ object ScreenDestinations {
     val excludedApps = main(Routes.EXCLUDED_APPS, "排除应用", "指定使用系统 DNS 的应用", Icons.Filled.Apps, SettingsSection.BEHAVIOR)
     val outboundProxy = main(Routes.OUTBOUND_PROXY_SETTINGS, "出站代理", "将过滤后的流量转发到本地 SOCKS5 或 HTTP 代理", Icons.Filled.Lan, SettingsSection.BEHAVIOR, "Clash", "SOCKS5", "HTTP CONNECT")
     val languageSettings = main(Routes.LANGUAGE_SETTINGS, "语言设置", "选择应用界面语言", Icons.Filled.Public, SettingsSection.DATA, "中文", "English", "系统语言")
-    val configTransfer = main(Routes.CONFIG_TRANSFER, "导入与导出", "备份或恢复自定义服务与规则订阅", Icons.Filled.ImportExport, SettingsSection.DATA)
     val dataCleanup = main(Routes.DATA_CLEANUP, "数据清理", "删除缓存、日志或域名规则", Icons.Filled.DeleteSweep, SettingsSection.DATA)
-    val configImportExport = child(Routes.CONFIG_IMPORT_EXPORT, "设置配置", "选择配置内容并导入或导出", Icons.Filled.ImportExport, configTransfer)
-    val ruleExport = child(Routes.RULE_EXPORT, "规则导出", "将当前生效规则导出为 TXT 文件", Icons.Filled.ImportExport, configTransfer)
-    val ruleImport = child(Routes.RULE_IMPORT, "规则导入", "从本地文件导入域名和地址规则", Icons.Filled.ImportExport, configTransfer)
     val resolutionSingle = child(Routes.RESOLUTION_SINGLE, "单一服务", "选择一个 DNS 服务商进行查询", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val resolutionSmart = child(Routes.RESOLUTION_SMART, "智能选择", "配置候选服务，按近期成功率和延迟优先选择", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val resolutionParallel = child(Routes.RESOLUTION_PARALLEL, "最快响应", "配置同时查询并采用最先成功结果的服务", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val resolutionBackup = child(Routes.RESOLUTION_BACKUP, "依次尝试", "配置失败后依次尝试的服务顺序", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val all = listOf(providerManagement, bootstrapSettings, cacheSettings, raceModeProviders, logRetentionSettings,
         foregroundBackgroundSettings, excludedApps, outboundProxy, languageSettings,
-        configTransfer, dataCleanup, configImportExport,
-        ruleExport, ruleImport, resolutionSingle, resolutionSmart, resolutionParallel, resolutionBackup)
+        dataCleanup, resolutionSingle, resolutionSmart, resolutionParallel, resolutionBackup)
     val mainEntries = all.filter { it.mainSection != null }
         .sortedWith(compareBy({ it.mainSection!!.order }, { all.indexOf(it) }))
     private val byRoute = all.associateBy { it.route }

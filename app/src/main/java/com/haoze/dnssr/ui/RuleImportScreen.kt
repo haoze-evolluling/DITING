@@ -35,9 +35,9 @@ import com.haoze.dnssr.ui.components.AppAlertDialog
 import com.haoze.dnssr.ui.components.SettingsCornerShape
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsInfoText
-import com.haoze.dnssr.ui.components.SettingsItem
+import com.haoze.dnssr.ui.components.SettingsNavigationGroup
+import com.haoze.dnssr.ui.components.SettingsNavigationItemData
 import com.haoze.dnssr.ui.components.SettingsScaffold
-import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import kotlinx.coroutines.delay
 
 private data class LocalImportRequest(
@@ -98,41 +98,44 @@ fun RuleImportScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
-            SettingsGroupTitle(localizedText("域名规则"))
-            SettingsSurfaceGroup(content = listOf(
-                {
-                    SettingsItem(
-                        title = localizedText("导入 DNS 过滤订阅文件"),
-                        subtitle = localizedText("创建不可更新的本地 DNS 过滤订阅"),
+            SettingsGroupTitle(localizedText("域名规则 · TXT 订阅文件"))
+            SettingsNavigationGroup(
+                items = listOf(
+                    SettingsNavigationItemData(
+                        title = localizedText("导入域名规则 TXT 文件"),
+                        subtitle = localizedText("导入导出的域名规则或外部过滤规则，创建不可更新的本地订阅"),
                         leadingIcon = Icons.Default.FolderOpen,
                         enabled = !importing,
-                        onClick = { selectLocalSubscription("导入 DNS 过滤订阅", SubscriptionKind.BLOCK, RuleScope.DNS) }
+                        onClick = { selectLocalSubscription("导入域名规则 TXT", SubscriptionKind.BLOCK, RuleScope.DNS) }
                     )
-                },
-                {
-                    SettingsItem(
-                        title = localizedText("导入 hosts 覆写订阅文件"),
-                        subtitle = localizedText("创建不可更新的本地 hosts 覆写订阅"),
+                )
+            )
+            SettingsGroupTitle(localizedText("外部 hosts 文件"))
+            SettingsNavigationGroup(
+                items = listOf(
+                    SettingsNavigationItemData(
+                        title = localizedText("导入外部 hosts 覆写文件"),
+                        subtitle = localizedText("仅导入包含真实 IP 地址的 hosts 规则，创建不可更新的本地覆写订阅"),
                         leadingIcon = Icons.Default.FolderOpen,
                         enabled = !importing,
-                        onClick = { selectLocalSubscription("导入 hosts 覆写订阅", SubscriptionKind.REWRITE, RuleScope.DNS) }
+                        onClick = { selectLocalSubscription("导入外部 hosts 覆写", SubscriptionKind.REWRITE, RuleScope.DNS) }
                     )
-                }
-            ))
+                )
+            )
             SettingsGroupTitle(localizedText("地址规则"))
-            SettingsSurfaceGroup(content = listOf(
-                {
-                    SettingsItem(
+            SettingsNavigationGroup(
+                items = listOf(
+                    SettingsNavigationItemData(
                         title = localizedText("导入地址规则备份 JSON"),
                         subtitle = localizedText("恢复 URL 屏蔽和放行规则，不创建订阅"),
                         leadingIcon = Icons.Default.FolderOpen,
                         enabled = !importing,
                         onClick = ::selectAddressBackup
                     )
-                }
-            ))
+                )
+            )
             SettingsInfoText(
-                text = localizedText("本地订阅文件导入后无法更新，可在规则订阅中重命名、启用、禁用或删除。"),
+                text = localizedText("域名规则 TXT 和 hosts 文件导入后均为不可更新的本地订阅；地址规则备份会恢复为手动 URL 规则。"),
                 modifier = Modifier.padding(top = 8.dp)
             )
         }

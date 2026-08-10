@@ -28,6 +28,7 @@
     <string name="feature_hub_other_settings">其他设置</string>
     <string name="feature_hub_about_app">关于谛听</string>
     <string name="feature_hub_app_info">应用信息</string>
+    <string name="feature_hub_data_management">数据管理</string>
     <string name="feature_hub_sponsor">赞助</string>
     <string name="feature_hub_sponsor_list">赞助者名单</string>
     <string name="feature_hub_contributors">共建者名单</string>

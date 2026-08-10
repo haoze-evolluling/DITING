@@ -192,7 +192,8 @@ class MainActivity : AppLocalizedActivity() {
                                 onNavigateToSponsor = { launchSettings(Routes.SPONSOR) },
                                 onNavigateToSponsorList = { launchSettings(Routes.SPONSOR_LIST) },
                                 onNavigateToCoBuilderList = { launchSettings(Routes.CO_BUILDER_LIST) },
-                                onNavigateToAppUpdate = { launchSettings(Routes.APP_UPDATE) }
+                                onNavigateToAppUpdate = { launchSettings(Routes.APP_UPDATE) },
+                                onNavigateToDataManagement = { launchSettings(Routes.CONFIG_TRANSFER) }
                             )
                         } else {
                             InitialAgreementDialog(

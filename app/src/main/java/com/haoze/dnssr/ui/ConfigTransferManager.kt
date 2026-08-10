@@ -42,25 +42,9 @@ data class ConfigImportProgress(
     val currentItem: String
 )
 
-enum class RuleExportType(
-    val fileNameSuffix: String,
-    val displayName: String
-) {
-    SUBSCRIPTIONS("subscriptions", "订阅规则"),
-    MANUAL("manual", "手动添加规则"),
-    ALL("all", "全部规则")
-}
-
 enum class RuleExportCategory(val storageValue: String, val displayName: String) {
     DOMAIN("domain", "域名规则"),
     ADDRESS("address", "地址规则")
-}
-
-data class RuleExportRequest(
-    val type: RuleExportType,
-    val category: RuleExportCategory
-) {
-    val fileNameSuffix: String get() = "${category.storageValue}-${type.fileNameSuffix}"
 }
 
 class ConfigTransferManager(private val context: Context) {
@@ -138,17 +122,12 @@ class ConfigTransferManager(private val context: Context) {
     }
 
     suspend fun exportRules(
-        request: RuleExportRequest,
+        category: RuleExportCategory,
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ): RuleExportResult {
-        if (request.category == RuleExportCategory.ADDRESS) {
+        if (category == RuleExportCategory.ADDRESS) {
             onProgress(0f, "正在读取地址规则")
-            val source = when (request.type) {
-                RuleExportType.SUBSCRIPTIONS -> AddressRuleBackupSource.SUBSCRIPTIONS
-                RuleExportType.MANUAL -> AddressRuleBackupSource.MANUAL
-                RuleExportType.ALL -> AddressRuleBackupSource.ALL
-            }
-            val backup = AddressRuleBackupTransfer.export(database, source)
+            val backup = AddressRuleBackupTransfer.export(database, AddressRuleBackupSource.MANUAL)
             onProgress(0.6f, "正在生成地址规则备份")
             return RuleExportResult(
                 content = AddressRuleBackupCodec.encode(backup),
@@ -157,23 +136,15 @@ class ConfigTransferManager(private val context: Context) {
             ).also { onProgress(0.6f, "正在写入文件") }
         }
         onProgress(0f, "正在读取白名单规则")
-        val allowRules = when (request.type) {
-            RuleExportType.SUBSCRIPTIONS -> database.allowRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue)
-            RuleExportType.MANUAL -> database.allowRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
-            RuleExportType.ALL -> database.allowRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue) +
-                database.allowRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
-        }
+        val allowRules = database.allowRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue) +
+            database.allowRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
         val allowPatterns = allowRules
             .map { it.pattern }
             .mapNotNull(AdGuardRuleParser::parseAllowLine)
             .mapTo(sortedSetOf()) { it.pattern }
         onProgress(0.2f, "正在读取拦截规则")
-        val blockRules = when (request.type) {
-            RuleExportType.SUBSCRIPTIONS -> database.blockRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue)
-            RuleExportType.MANUAL -> database.blockRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
-            RuleExportType.ALL -> database.blockRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue) +
-                database.blockRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
-        }
+        val blockRules = database.blockRuleDao().enabledSubscriptionRules(RuleScope.DNS.storageValue) +
+            database.blockRuleDao().enabledCustomRules(RuleScope.DNS.storageValue)
         val blockPatterns = blockRules
             .filter { it.important || it.pattern !in allowPatterns }
             .mapTo(sortedSetOf()) { rule -> if (rule.important) "||${rule.pattern}^${'$'}important" else "||${rule.pattern}^" }

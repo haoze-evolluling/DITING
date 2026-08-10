@@ -47,7 +47,7 @@ fun SettingsScreen(onBack: () -> Unit, onNavigateToRoute: (String) -> Unit) {
                     containerColor = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.background
                 ),
-                title = { Text(stringResource(R.string.app_settings)) },
+                title = { Text(stringResource(R.string.other_settings)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
