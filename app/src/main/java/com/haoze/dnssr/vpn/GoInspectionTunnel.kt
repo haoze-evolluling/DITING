@@ -6,10 +6,12 @@ import android.os.Build
 import android.os.Process
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import com.haoze.dnssr.ui.DnsResolutionMode
 import com.haoze.dnssr.ui.OutboundProxyConfig
 import tunnel.AppUidResolver
@@ -53,15 +55,23 @@ class GoInspectionTunnel(
     private val engine = Engine()
     private var startJob: Job? = null
 
-    fun start(tunFileDescriptor: Int): Boolean = runCatching {
-        configureEngine(selectedPackages)
-        startJob = scope.launch(Dispatchers.IO) {
-            engine.startFull(tunFileDescriptor.toLong(), SocketProtector { fd ->
-                vpnService.protect(fd.toInt())
-            })
+    suspend fun start(tunFileDescriptor: Int): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val requestRules = if (inspectionEnabled) goUrlRuleManager.jsonSnapshot() else ""
+            configureEngine(selectedPackages, requestRules)
+            startJob = scope.launch(Dispatchers.IO) {
+                engine.startFull(tunFileDescriptor.toLong(), SocketProtector { fd ->
+                    vpnService.protect(fd.toInt())
+                })
+            }
+            true
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Throwable) {
+            Log.e(TAG, "Unable to start Go inspection tunnel", error)
+            false
         }
-        true
-    }.onFailure { Log.e(TAG, "Unable to start Go inspection tunnel", it) }.getOrDefault(false)
+    }
 
     fun stop() {
         startJob?.cancel()
@@ -112,7 +122,7 @@ class GoInspectionTunnel(
         )
     }
 
-    private fun configureEngine(selectedPackages: Set<String>) {
+    private fun configureEngine(selectedPackages: Set<String>, requestRules: String) {
 		val outboundError = engine.configureOutboundProxy(outboundProxyConfig.toNativeJson())
 		require(outboundError.isBlank()) { outboundError }
 		engine.setOutboundProxyStatusCallback(object : OutboundProxyStatusCallback {
@@ -127,7 +137,8 @@ class GoInspectionTunnel(
             dnsConfig.dynamicBlockResponseConfig
         )
         if (inspectionEnabled) {
-            updateRewriteRules()
+            updateCnameRewriteRules()
+            engine.setRequestRules(requestRules)
         } else {
             engine.setRewriteRules("")
             engine.setRequestRules("")

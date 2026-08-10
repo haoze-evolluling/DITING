@@ -82,6 +82,7 @@ class DnsVpnService : VpnService() {
     private val refreshMutex = Mutex()
     private var vpnInterface: ParcelFileDescriptor? = null
     private var readJob: Job? = null
+    private var vpnStartJob: Job? = null
     private var inspectionFallbackActive = false
     private var goInspectionTunnel: GoInspectionTunnel? = null
     @Volatile
@@ -222,12 +223,15 @@ class DnsVpnService : VpnService() {
                 )
             )
             ACTION_SYNC_HTTPS_REQUEST_RULES -> syncHttpsRequestRules()
-            else -> startVpn(intent)
+            else -> {
+                vpnStartJob?.cancel()
+                vpnStartJob = serviceScope.launch { startVpn(intent) }
+            }
         }
-        return START_STICKY
+        return if (intent?.action == null) START_STICKY else START_NOT_STICKY
     }
 
-    private fun startVpn(intent: Intent?) {
+    private suspend fun startVpn(intent: Intent?) {
         if (vpnInterface != null) {
             sendStatusBroadcast(true)
             return
@@ -375,10 +379,9 @@ class DnsVpnService : VpnService() {
     }
 
     /** HTTPS MITM must never start from stale preferences after the system CA is removed. */
-    private fun isHttpsInspectionCertificateInstalled(): Boolean {
-        val installed = runBlocking(Dispatchers.IO) {
-            runCatching { GoInspectionCaManager.isInstalled(this@DnsVpnService) }.getOrDefault(false)
-        }
+    private suspend fun isHttpsInspectionCertificateInstalled(): Boolean {
+        val installed = runCatching { GoInspectionCaManager.isInstalled(this@DnsVpnService) }
+            .getOrDefault(false)
         AppSettings.setHttpsInspectionReady(this, installed)
         if (!installed) {
             AppSettings.setHttpInspectionEnabled(this, false)
@@ -568,7 +571,7 @@ class DnsVpnService : VpnService() {
         }
     }
 
-    private fun restartVpnLocked() {
+    private suspend fun restartVpnLocked() {
         inspectionFallbackActive = false
         readJob?.cancel()
         readJob = null
@@ -727,6 +730,8 @@ class DnsVpnService : VpnService() {
 
     private fun stopVpn() {
         wasStopped = true
+        vpnStartJob?.cancel()
+        vpnStartJob = null
         if (::floatingLogOverlay.isInitialized) floatingLogOverlay.setVpnRunning(false)
         setRunningFlag(this, false)
         readJob?.cancel()
@@ -756,6 +761,8 @@ class DnsVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        vpnStartJob?.cancel()
+        vpnStartJob = null
         if (::floatingLogOverlay.isInitialized) floatingLogOverlay.destroy()
         rewriteRuleManager.close()
         isServiceAlive = false
