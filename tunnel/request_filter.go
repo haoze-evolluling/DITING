@@ -47,9 +47,9 @@ func (e *Engine) requestFilterDecision(scheme, host, path string) (blocked bool,
 	}
 	if path == "" { path = "/" }
 	url := strings.ToLower(scheme + "://" + host + path)
-	e.mu.Lock()
+	e.mu.RLock()
 	rules := append([]requestRule(nil), e.requestRules...)
-	e.mu.Unlock()
+	e.mu.RUnlock()
 	bestLen := -1
 	bestAllow := false
 	bestPattern := ""

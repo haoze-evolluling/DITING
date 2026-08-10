@@ -118,7 +118,7 @@ type Engine struct {
 	adBlooms  []*BloomFilter
 	secBlooms []*BloomFilter
 
-	mu      sync.Mutex
+	mu      sync.RWMutex
 	running bool
 	tunFile *os.File
 
@@ -147,6 +147,7 @@ type Engine struct {
 	// ad-blocking still applies. Toggled from the UI via SetFilterHttp3.
 	quicDrop atomic.Bool
 	blockEncryptedDNS atomic.Bool
+	allowPublicDNSFallback atomic.Bool
 	blockedUIDsMu     sync.RWMutex
 	blockedUIDs       map[int]struct{}
 	appAllowlist      appAllowlist
@@ -426,6 +427,13 @@ func (e *Engine) SetDNS(protocol, primary, fallback, dohURL string) {
 	if e.resolver != nil {
 		e.resolver.Configure(ParseProtocol(protocol), primary, fallback, dohURL)
 	}
+}
+
+// SetPublicDNSFallback controls whether MITM hostname resolution may bypass
+// the configured DNS providers. It is disabled by default to preserve the
+// user's DNS privacy and policy settings.
+func (e *Engine) SetPublicDNSFallback(enabled bool) {
+	e.allowPublicDNSFallback.Store(enabled)
 }
 
 // SetBlockResponseType sets how blocked domains are responded to.
@@ -873,12 +881,11 @@ func (e *Engine) serveDNS(w dns.ResponseWriter, r *dns.Msg, appOverride string, 
 	}
 
 	// 2. Fast Native Go Tries (Security then Ads)
-	e.mu.Lock()
+	e.mu.RLock()
 	secBlooms := e.secBlooms
 	secTries := e.secTries
 	adBlooms := e.adBlooms
 	adTries := e.adTries
-	e.mu.Unlock()
 
 	var matchedIDs []string
 
@@ -908,6 +915,7 @@ func (e *Engine) serveDNS(w dns.ResponseWriter, r *dns.Msg, appOverride string, 
 		}
 	}
 
+	e.mu.RUnlock()
 	if len(matchedIDs) > 0 {
 		e.standaloneBlock(w, r, strings.Join(matchedIDs, ","), appName, startTime)
 		return
@@ -930,9 +938,9 @@ func (e *Engine) serveDNS(w dns.ResponseWriter, r *dns.Msg, appOverride string, 
 // lookupIP resolves a domain to an IP address using the Engine's internal resolver.
 // It is used by the MITM proxy to bypass Android's problematic system DNS resolver
 // when the app itself is excluded from the VPN.
-// Uses the full Resolve() pipeline (DoH/DoT/DoQ/Plain + fallback) so it works
-// regardless of the user's chosen DNS protocol. If the configured upstream is
-// unreachable (transport failure), falls back to direct UDP queries against
+// Uses the full Resolve() pipeline (DoH/DoT/DoQ/Plain + configured fallback)
+// so it respects the user's chosen DNS policy. Public UDP fallback is opt-in;
+// when enabled, it falls back to direct UDP queries against
 // well-known public resolvers so browser passthrough still works when the
 // user's DNS provider is temporarily down. A successful DNS response with
 // no A record (NXDOMAIN / empty answer) is NOT retried — that's treated as
@@ -959,14 +967,15 @@ func (e *Engine) lookupIP(domain string) (net.IP, error) {
 	// Use the full Resolve() pipeline (primary + fallback, respects DoH/DoT/DoQ)
 	resp, err := resolver.Resolve(rawQuery)
 	if err != nil {
-		// Primary + configured fallback both failed at the transport
-		// level. Try unfiltered public DNS over plain UDP so the MITM
-		// proxy doesn't have to fall through to Go's system resolver
-		// (which is unreliable on Android for VPN-excluded processes).
-		for _, server := range []string{"1.1.1.1:53", "8.8.8.8:53"} {
-			if ip, fbErr := resolver.ResolveARecord(domain, server); fbErr == nil && ip != nil {
-				logf("lookupIP: %s resolved via public fallback %s (primary err: %v)", domain, server, err)
-				return ip, nil
+		// Primary + configured fallback both failed at the transport level.
+		// Public UDP fallback is intentionally opt-in because it bypasses the
+		// configured DNS policy.
+		if e.allowPublicDNSFallback.Load() {
+			for _, server := range []string{"1.1.1.1:53", "8.8.8.8:53"} {
+				if ip, fbErr := resolver.ResolveARecord(domain, server); fbErr == nil && ip != nil {
+					logf("lookupIP: %s resolved via public fallback %s (primary err: %v)", domain, server, err)
+					return ip, nil
+				}
 			}
 		}
 		return nil, fmt.Errorf("resolve %s: %w", domain, err)
@@ -1763,15 +1772,15 @@ func (e *Engine) handleDNSQuery(queryInfo *DNSQueryInfo) {
 	//
 	// This eliminates trie traversal for ~90%+ of clean queries.
 
-	// Snapshot tries under lock to avoid use-after-free when Stop() closes them.
-	e.mu.Lock()
+	// Keep the read lock while traversing mmap-backed filters. Writers close
+	// and unmap the old filters under the corresponding write lock.
+	e.mu.RLock()
 	secBlooms := e.secBlooms
 	secTries := e.secTries
 	secTrieIDs := e.secTrieIDs
 	adBlooms := e.adBlooms
 	adTries := e.adTries
 	adTrieIDs := e.adTrieIDs
-	e.mu.Unlock()
 
 	// Collect ALL matching filter IDs so every filter gets attribution in statistics
 	var matchedIDs []string
@@ -1812,6 +1821,7 @@ func (e *Engine) handleDNSQuery(queryInfo *DNSQueryInfo) {
 		}
 	}
 
+	e.mu.RUnlock()
 	if len(matchedIDs) > 0 {
 		e.handleBlockedDomain(queryInfo, strings.Join(matchedIDs, ","), appName, startTime)
 		return
@@ -2082,9 +2092,9 @@ func (e *Engine) SetImportantTries(pathsCsv string) {
 }
 
 func (e *Engine) hasImportantMatch(domain string) bool {
-	e.mu.Lock()
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 	tries := e.importantTries
-	e.mu.Unlock()
 	for _, trie := range tries { if trie != nil && trie.ContainsOrParent(domain) { return true } }
 	return false
 }
