@@ -118,7 +118,7 @@ class SubscriptionAutoUpdateWorker(
         val notifier = RuleUpdateNotifier(applicationContext, AUTO_UPDATE_PROGRESS_NOTIFICATION_ID)
         var currentName = ""
         var currentIndex = 0
-        setForeground(notifier.foregroundInfo(localizedText(applicationContext, "正在自动更新规则订阅")))
+        setForeground(notifier.foregroundInfo(localizedText(applicationContext, "正在自动更新规则订阅"), total = subscriptions.size))
         var changed = false
         var aborted = false
             val ran = SubscriptionUpdateCoordinator.runAutomatic { shouldStop ->
@@ -131,13 +131,24 @@ class SubscriptionAutoUpdateWorker(
                     }
                     currentName = subscription.name
                     currentIndex = index + 1
-                    setProgress(automaticProgressData(subscription.id, -1, 0))
+                    setProgress(automaticProgressData(subscription.id, currentIndex, subscriptions.size))
                     notifier.showProgress(
                         localizedText(applicationContext, "正在自动更新规则订阅"),
-                        progressDetail(applicationContext, currentName, currentIndex, subscriptions.size)
+                        progressDetail(applicationContext, currentName, currentIndex, subscriptions.size),
+                        currentIndex,
+                        subscriptions.size
                     )
-                    val outcome = subscriptionManagerFor(applicationContext, database, subscription.scope)
-                        .updateSubscription(subscription.id)
+                    val manager = subscriptionManagerFor(applicationContext, database, subscription.scope)
+                    manager.progressReporter = { current, total ->
+                        setProgress(automaticProgressData(subscription.id, current, total))
+                        notifier.showProgress(
+                            localizedText(applicationContext, "正在自动更新规则订阅"),
+                            "$currentName：$current / $total",
+                            current,
+                            total
+                        )
+                    }
+                    val outcome = manager.updateSubscription(subscription.id)
                     changed = recordOutcome(batchDao, batchId, subscription.id, outcome) || changed
                 }
                 if (shouldStop()) aborted = true
@@ -171,7 +182,7 @@ class SubscriptionAutoUpdateRetryWorker(
         val notifier = RuleUpdateNotifier(applicationContext, AUTO_UPDATE_RETRY_PROGRESS_NOTIFICATION_ID)
         var currentName = ""
         var currentIndex = 0
-        setForeground(notifier.foregroundInfo(localizedText(applicationContext, "正在重试自动更新规则订阅")))
+        setForeground(notifier.foregroundInfo(localizedText(applicationContext, "正在重试自动更新规则订阅"), total = pendingItems.size))
         var changed = false
         var aborted = false
             val ran = SubscriptionUpdateCoordinator.runAutomatic { shouldStop ->
@@ -189,13 +200,24 @@ class SubscriptionAutoUpdateRetryWorker(
                     }
                     currentName = subscription.name
                     currentIndex = index + 1
-                    setProgress(automaticProgressData(subscription.id, -1, 0))
+                    setProgress(automaticProgressData(subscription.id, currentIndex, pendingItems.size))
                     notifier.showProgress(
                         localizedText(applicationContext, "正在重试自动更新规则订阅"),
-                        progressDetail(applicationContext, currentName, currentIndex, pendingItems.size)
+                        progressDetail(applicationContext, currentName, currentIndex, pendingItems.size),
+                        currentIndex,
+                        pendingItems.size
                     )
-                    val outcome = subscriptionManagerFor(applicationContext, database, subscription.scope)
-                        .updateSubscription(item.subscriptionId)
+                    val manager = subscriptionManagerFor(applicationContext, database, subscription.scope)
+                    manager.progressReporter = { current, total ->
+                        setProgress(automaticProgressData(item.subscriptionId, current, total))
+                        notifier.showProgress(
+                            localizedText(applicationContext, "正在重试自动更新规则订阅"),
+                            "$currentName：$current / $total",
+                            current,
+                            total
+                        )
+                    }
+                    val outcome = manager.updateSubscription(item.subscriptionId)
                     val finalOutcome = if (
                         outcome is SubscriptionUpdateOutcome.Failed &&
                         outcome.retryable &&

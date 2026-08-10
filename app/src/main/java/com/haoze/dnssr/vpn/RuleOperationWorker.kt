@@ -158,8 +158,14 @@ class RuleOperationWorker(
             RewriteRuleManager(database.rewriteRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false),
             ruleScope
         )
-        val rewriteManager = RewriteRuleManager(database.rewriteRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
         var activeSubscriptionId = subscriptionId
+        subscriptionManager.progressReporter = { current, total ->
+            if (type != RuleOperationType.UPDATE_ALL_SUBSCRIPTIONS) {
+                setProgressAsync(progressData(type, activeSubscriptionId, current, total))
+                notifyProgress(title, current, total)
+            }
+        }
+        val rewriteManager = RewriteRuleManager(database.rewriteRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
         val subscriptionIdJob = launch {
             subscriptionManager.importingSubscriptionId.collect { id ->
                 if (id != null) {
@@ -297,7 +303,10 @@ class RuleOperationWorker(
             var unchanged = 0
             var failed = 0
             var totalRules = 0
-            subscriptionManager.remoteSubscriptions().forEach { subscription ->
+            val subscriptions = subscriptionManager.remoteSubscriptions()
+            subscriptions.forEachIndexed { index, subscription ->
+                setProgressAsync(progressData(type, subscription.id, index, subscriptions.size))
+                notifyProgress(titleFor(type), index, subscriptions.size)
                 when (val outcome = subscriptionManager.updateSubscription(subscription.id)) {
                     is SubscriptionUpdateOutcome.Updated -> {
                         updated++
@@ -306,6 +315,8 @@ class RuleOperationWorker(
                     is SubscriptionUpdateOutcome.NotModified -> unchanged++
                     is SubscriptionUpdateOutcome.Failed -> failed++
                 }
+                setProgressAsync(progressData(type, subscription.id, index + 1, subscriptions.size))
+                notifyProgress(titleFor(type), index + 1, subscriptions.size)
             }
             "检查完成：更新 $updated 个，已是最新 $unchanged 个，失败 $failed 个，共导入 $totalRules 条规则"
         }
@@ -369,27 +380,34 @@ class RuleOperationWorker(
         var unsupported = 0
         var processed = 0
 
+        val lines = reader.readLines()
+        val total = lines.sumOf { line ->
+            val parsedLine = AdGuardRuleParser.parseCategorizedLine(line)
+            parsedLine.blockRules.size + parsedLine.allowRules.size
+        }
+
         suspend fun reportProgress() {
-            setProgressAsync(progressData(type, -1, processed, 0))
-            notifyProgress(titleFor(type), processed, 0)
+            setProgressAsync(progressData(type, -1, processed, total))
+            notifyProgress(titleFor(type), processed, total)
         }
         suspend fun flushBlock() {
             if (blockBatch.isEmpty()) return
-            insertedBlock += blockManager.addRulesBatch(blockBatch, LOCAL_IMPORT_SOURCE, IMPORT_CHUNK_SIZE)
-            processed += blockBatch.size
+            val inserted = blockManager.addRulesBatch(blockBatch, LOCAL_IMPORT_SOURCE, IMPORT_CHUNK_SIZE)
+            insertedBlock += inserted
+            processed += inserted
             blockBatch.clear()
             reportProgress()
         }
         suspend fun flushAllow() {
             if (allowBatch.isEmpty()) return
-            insertedAllow += allowManager.addRulesBatch(allowBatch, LOCAL_IMPORT_SOURCE, IMPORT_CHUNK_SIZE)
-            processed += allowBatch.size
+            val inserted = allowManager.addRulesBatch(allowBatch, LOCAL_IMPORT_SOURCE, IMPORT_CHUNK_SIZE)
+            insertedAllow += inserted
+            processed += inserted
             allowBatch.clear()
             reportProgress()
         }
 
-        reader.useLines { lines ->
-            lines.forEach { line ->
+        lines.forEach { line ->
                 val categorized = AdGuardRuleParser.parseCategorizedLine(line)
                 invalid += categorized.invalidCount
                 unsupported += categorized.unsupportedCount
@@ -402,7 +420,6 @@ class RuleOperationWorker(
                     allowBatch += rule
                     if (allowBatch.size == IMPORT_CHUNK_SIZE) flushAllow()
                 }
-            }
         }
         flushBlock()
         flushAllow()
@@ -424,21 +441,24 @@ class RuleOperationWorker(
         val batch = ArrayList<RewriteRule>(IMPORT_CHUNK_SIZE)
         var inserted = 0
         var parsed = 0
+        var processed = 0
+        val lines = reader.readLines()
+        val total = lines.sumOf { AdGuardRuleParser.parseHostsRewriteLine(it).size }
         suspend fun flush() {
             if (batch.isEmpty()) return
-            inserted += rewriteManager.addRules(batch, LOCAL_HOSTS_SOURCE, true, IMPORT_CHUNK_SIZE)
+            val insertedBatch = rewriteManager.addRules(batch, LOCAL_HOSTS_SOURCE, true, IMPORT_CHUNK_SIZE)
+            inserted += insertedBatch
+            processed += insertedBatch
             parsed += batch.size
             batch.clear()
-            setProgressAsync(progressData(type, -1, parsed, 0))
-            notifyProgress(titleFor(type), parsed, 0)
+            setProgressAsync(progressData(type, -1, processed, total))
+            notifyProgress(titleFor(type), processed, total)
         }
-        reader.useLines { lines ->
-            lines.forEach { line ->
+        lines.forEach { line ->
                 AdGuardRuleParser.parseHostsRewriteLine(line).forEach { rule ->
                     batch += rule
                     if (batch.size == IMPORT_CHUNK_SIZE) flush()
                 }
-            }
         }
         flush()
         require(parsed > 0) { "文件中没有可导入的真实 IP hosts 规则" }
@@ -529,6 +549,6 @@ class RuleOperationWorker(
         const val LOCAL_IMPORT_SOURCE = "local_import"
         const val LOCAL_HOSTS_SOURCE = "local_hosts"
         const val COMPLETION_ID_MASK = 0x40000000
-        const val IMPORT_CHUNK_SIZE = 500
+        const val IMPORT_CHUNK_SIZE = 1000
     }
 }

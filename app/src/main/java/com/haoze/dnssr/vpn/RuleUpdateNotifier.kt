@@ -30,24 +30,26 @@ internal class RuleUpdateNotifier(
 
     fun foregroundInfo(
         title: String,
-        detail: String = context.getString(R.string.operation_preparing)
+        detail: String = context.getString(R.string.operation_preparing),
+        current: Int = 0,
+        total: Int = 0
     ) = ForegroundInfo(
         progressNotificationId,
-        buildProgress(title, detail),
+        buildProgress(title, detail, current, total),
         ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
     )
 
-    fun showProgress(title: String, detail: String) {
-        manager.notify(progressNotificationId, buildProgress(title, detail))
+    fun showProgress(title: String, detail: String, current: Int = 0, total: Int = 0) {
+        manager.notify(progressNotificationId, buildProgress(title, detail, current, total))
     }
 
-    private fun buildProgress(title: String, detail: String) =
+    private fun buildProgress(title: String, detail: String, current: Int, total: Int) =
         NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.dns_svgrepo_com)
             .setContentTitle(localizedText(context, title))
             .setContentText(localizedText(context, detail))
             .setStyle(NotificationCompat.BigTextStyle().bigText(localizedText(context, detail)))
-            .setProgress(0, 0, true)
+            .setProgress(total.coerceAtLeast(0), current.coerceIn(0, total.coerceAtLeast(0)), total <= 0)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(mainPendingIntent())

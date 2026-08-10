@@ -98,6 +98,7 @@ fun SubscriptionScreen(
     val allSubscriptions by viewModel.allSubscriptions.collectAsStateWithLifecycle(initialValue = emptyList())
     val importing by viewModel.importing.collectAsStateWithLifecycle()
     val importingSubscriptionId by viewModel.importingSubscriptionId.collectAsStateWithLifecycle()
+    val subscriptionProgress by viewModel.progress.collectAsStateWithLifecycle()
     val operationMessage by viewModel.operationMessage.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val busy = importing || operationMessage != null
@@ -212,7 +213,7 @@ fun SubscriptionScreen(
                         }
                         SettingsGroupTitle(selectedGroup?.name ?: localizedText("未分组"))
                         if (selectedSubscriptions.isNotEmpty()) {
-                            SubscriptionItems(selectedSubscriptions, busy, importingSubscriptionId,
+                        SubscriptionItems(selectedSubscriptions, busy, importingSubscriptionId, subscriptionProgress,
                                 onShowUrl = { if (it.sourceType == SubscriptionSourceType.REMOTE) showUrlDialog = it },
                                 onShowActions = { showActionDialog = it })
                         } else {
@@ -428,7 +429,8 @@ private fun SubscriptionItem(
     onShowUrl: () -> Unit,
     onShowActions: () -> Unit,
     actionsEnabled: Boolean,
-    isUpdating: Boolean
+    isUpdating: Boolean,
+    progress: SubscriptionProgress?
 ) {
     Column(
         modifier = Modifier
@@ -525,14 +527,20 @@ private fun SubscriptionItem(
             )
         }
         if (isUpdating || subscription.importState == SubscriptionImportState.IMPORTING) {
+            val total = progress?.total ?: 0
+            val current = (progress?.current ?: -1).coerceAtLeast(0)
+            val fraction = if (total > 0) (current.toFloat() / total).coerceIn(0f, 1f) else 0f
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = localizedText("正在下载并更新规则..."),
+                text = localizedText(
+                    if (total > 0) "正在下载并更新规则... $current / $total（${(fraction * 100).toInt()}%）"
+                    else "正在下载并更新规则..."
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
         }
         if (subscription.importState == SubscriptionImportState.FAILED) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -604,6 +612,7 @@ private fun SubscriptionItems(
     subscriptions: List<SubscriptionEntity>,
     busy: Boolean,
     importingSubscriptionId: Long?,
+    progress: SubscriptionProgress,
     onShowUrl: (SubscriptionEntity) -> Unit,
     onShowActions: (SubscriptionEntity) -> Unit
 ) {
@@ -615,7 +624,8 @@ private fun SubscriptionItems(
                     { onShowUrl(sub) },
                     { onShowActions(sub) },
                     !busy,
-                    importingSubscriptionId == sub.id
+                    importingSubscriptionId == sub.id,
+                    progress.takeIf { importingSubscriptionId == sub.id }
                 )
             }
         }

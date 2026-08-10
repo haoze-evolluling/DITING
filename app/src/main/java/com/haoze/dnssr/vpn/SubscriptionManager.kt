@@ -22,6 +22,7 @@ import okhttp3.Response
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.Reader
+import java.io.StringReader
 import java.net.URLEncoder
 import java.net.URI
 import java.util.concurrent.TimeUnit
@@ -86,7 +87,7 @@ class SubscriptionManager(
 ) {
     companion object {
         private const val TAG = "SubscriptionManager"
-        private const val CHUNK_SIZE = 500
+        private const val CHUNK_SIZE = 1000
         private val MIRROR_PLACEHOLDERS = setOf(
             "{url}", "{urlEncoded}", "{scheme}", "{host}", "{path}", "{pathAndQuery}"
         )
@@ -105,6 +106,16 @@ class SubscriptionManager(
 
     @Volatile
     private var lastImportSummary: RuleImportSummary? = null
+
+    @Volatile
+    var progressReporter: (suspend (current: Int, total: Int) -> Unit)? = null
+
+    @Volatile
+    private var progressTotalHint: Int = 0
+
+    private suspend fun reportProgress(current: Int) {
+        progressReporter?.invoke(current, maxOf(current, progressTotalHint))
+    }
 
     fun latestImportSummary(): RuleImportSummary? = lastImportSummary
 
@@ -594,13 +605,17 @@ class SubscriptionManager(
         enabled: Boolean,
         requestUrl: String
     ): InitialImportResult {
+        progressTotalHint = subscription.ruleCount
         val request = Request.Builder().url(requestUrl).build()
         return client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw httpFailure(response)
             val body = response.body ?: throw SubscriptionUpdateException("订阅响应为空", retryable = false)
-            val summary = body.charStream().buffered().use { reader ->
+            val content = body.string()
+            progressTotalHint = countRules(content, subscription.kind)
+            val summary = StringReader(content).buffered().use { reader ->
                 streamRules(reader, subscription.kind, sourceTag(subscriptionId), enabled)
             }
+            reportProgress(summary.importedCount)
             lastImportSummary = summary
             InitialImportResult(
                 ruleCount = summary.importedCount,
@@ -623,17 +638,24 @@ class SubscriptionManager(
         var parsedRules = 0
         var invalid = 0
         var unsupported = 0
+        var processed = 0
 
         suspend fun flushBlock() {
             if (blockBatch.isEmpty()) return
-            insertedBlock += blockListManager.addRulesBatch(blockBatch, source, CHUNK_SIZE, enabled)
+            val inserted = blockListManager.addRulesBatch(blockBatch, source, CHUNK_SIZE, enabled)
+            insertedBlock += inserted
+            processed += inserted
             blockBatch.clear()
+            reportProgress(processed)
         }
 
         suspend fun flushAllow() {
             if (allowBatch.isEmpty()) return
-            insertedAllow += allowListManager.addRulesBatch(allowBatch, source, CHUNK_SIZE, enabled)
+            val inserted = allowListManager.addRulesBatch(allowBatch, source, CHUNK_SIZE, enabled)
+            insertedAllow += inserted
+            processed += inserted
             allowBatch.clear()
+            reportProgress(processed)
         }
 
         reader.useLines { lines ->
@@ -682,10 +704,14 @@ class SubscriptionManager(
         val batch = ArrayList<RewriteRule>(CHUNK_SIZE)
         var inserted = 0
         var parsed = 0
+        var processed = 0
         suspend fun flush() {
             if (batch.isEmpty()) return
-            inserted += rewriteRuleManager.addRules(batch, source, enabled, CHUNK_SIZE)
+            val insertedBatch = rewriteRuleManager.addRules(batch, source, enabled, CHUNK_SIZE)
+            inserted += insertedBatch
+            processed += insertedBatch
             batch.clear()
+            reportProgress(processed)
         }
         reader.useLines { lines ->
             lines.forEach { line ->
@@ -729,6 +755,7 @@ class SubscriptionManager(
         requestUrl: String,
         useValidators: Boolean
     ): StreamingDownloadResult {
+        progressTotalHint = subscription.ruleCount
         val request = Request.Builder().url(requestUrl).apply {
             if (useValidators) {
                 subscription.httpEtag?.let { header("If-None-Match", it) }
@@ -744,13 +771,26 @@ class SubscriptionManager(
             }
             if (!response.isSuccessful) throw httpFailure(response)
             val body = response.body ?: throw SubscriptionUpdateException("订阅响应为空", retryable = false)
+            val content = body.string()
+            progressTotalHint = countRules(content, subscription.kind)
+            val summary = StringReader(content).buffered().use { reader ->
+                streamRules(reader, subscription.kind, stagingSource, enabled)
+            }
+            reportProgress(summary.importedCount)
             StreamingDownloadResult.Content(
-                body.charStream().buffered().use { reader ->
-                    streamRules(reader, subscription.kind, stagingSource, enabled)
-                },
+                summary,
                 response.header("ETag"),
                 response.header("Last-Modified")
             )
+        }
+    }
+
+    private fun countRules(content: String, kind: String): Int = content.lineSequence().sumOf { line ->
+        if (kind == SubscriptionKind.REWRITE) {
+            AdGuardRuleParser.parseHostsRewriteLine(line).size
+        } else {
+            val parsed = AdGuardRuleParser.parseCategorizedLine(line)
+            parsed.blockRules.size + parsed.allowRules.size
         }
     }
 

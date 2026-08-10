@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+data class SubscriptionProgress(val current: Int = -1, val total: Int = 0)
+
 class SubscriptionViewModel(application: Application) : AndroidViewModel(application) {
 
     private var ruleScope = RuleScope.DNS
@@ -72,6 +74,8 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
     private val _operationMessage = MutableStateFlow<String?>(null)
     val operationMessage: StateFlow<String?> = _operationMessage.asStateFlow()
+    private val _progress = MutableStateFlow(SubscriptionProgress())
+    val progress: StateFlow<SubscriptionProgress> = _progress.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -465,6 +469,12 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         val id = active?.progress?.getLong(RuleOperationScheduler.KEY_SUBSCRIPTION_ID, -1) ?: -1
         _importingSubscriptionId.value = id.takeIf { it >= 0 }
         _updatingSubscriptionId.value = _importingSubscriptionId.value
+        _progress.value = active?.progress?.let {
+            SubscriptionProgress(
+                it.getInt(RuleOperationScheduler.KEY_CURRENT, -1),
+                it.getInt(RuleOperationScheduler.KEY_TOTAL, 0)
+            )
+        } ?: SubscriptionProgress()
         _operationMessage.value = if (type == RuleOperationType.UPDATE_ALL_SUBSCRIPTIONS) {
             "正在更新所有规则订阅..."
         } else null
