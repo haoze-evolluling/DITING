@@ -57,8 +57,8 @@ fun RuleExportScreen(
     fun export(category: RuleExportCategory) {
         exportCategory = category
         val date = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-        val fileName = "谛听-${category.storageValue}-$date.${if (category == RuleExportCategory.DOMAIN) "txt" else "json"}"
-        if (category == RuleExportCategory.DOMAIN) textExportLauncher.launch(fileName) else jsonExportLauncher.launch(fileName)
+        val fileName = "谛听-${category.storageValue}-$date.${if (category == RuleExportCategory.ADDRESS) "json" else "txt"}"
+        if (category == RuleExportCategory.ADDRESS) jsonExportLauncher.launch(fileName) else textExportLauncher.launch(fileName)
     }
 
     LaunchedEffect(message) {
@@ -74,7 +74,7 @@ fun RuleExportScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             SettingsInfoText(
-                text = localizedText("域名规则导出当前所有已生效的过滤和放行规则，可作为本地订阅重新导入；地址规则导出手动 URL 规则的 JSON 备份。"),
+                text = localizedText("域名规则 TXT 用于 DNS 过滤和白名单；hosts TXT 用于 IP 覆写；地址 JSON 用于 URL 屏蔽和放行规则备份。"),
                 modifier = Modifier.padding(top = 8.dp)
             )
             SettingsGroupTitle(localizedText("域名规则 · TXT 订阅文件"))
@@ -82,7 +82,7 @@ fun RuleExportScreen(
                 items = listOf(
                     SettingsNavigationItemData(
                         title = localizedText("导出当前生效域名规则"),
-                        subtitle = localizedText("保存为 TXT 订阅文件，可通过“导入域名规则 TXT 文件”重新导入"),
+                        subtitle = localizedText("导出当前已启用的 DNS 过滤和白名单规则，可重新导入为本地订阅"),
                         leadingIcon = Icons.Filled.FileDownload,
                         enabled = operation == ConfigTransferOperation.IDLE,
                         onClick = { export(RuleExportCategory.DOMAIN) }
@@ -90,12 +90,25 @@ fun RuleExportScreen(
                 )
             )
             ExportProgress(operation, exportCategory, RuleExportCategory.DOMAIN, exportProgress, exportProgressText)
+            SettingsGroupTitle(localizedText("hosts 覆写规则 · TXT 文件"))
+            SettingsNavigationGroup(
+                items = listOf(
+                    SettingsNavigationItemData(
+                        title = localizedText("导出当前生效 hosts 覆写规则"),
+                        subtitle = localizedText("导出当前已启用的 IP 覆写规则，可通过 hosts 导入入口恢复"),
+                        leadingIcon = Icons.Filled.FileDownload,
+                        enabled = operation == ConfigTransferOperation.IDLE,
+                        onClick = { export(RuleExportCategory.HOSTS) }
+                    )
+                )
+            )
+            ExportProgress(operation, exportCategory, RuleExportCategory.HOSTS, exportProgress, exportProgressText)
             SettingsGroupTitle(localizedText("地址规则 · JSON 备份文件"))
             SettingsNavigationGroup(
                 items = listOf(
                     SettingsNavigationItemData(
                         title = localizedText("导出地址规则备份"),
-                        subtitle = localizedText("保存手动添加的 URL 屏蔽和放行规则，可完整导入恢复"),
+                        subtitle = localizedText("备份手动添加的 URL 屏蔽和放行规则，可导入恢复"),
                         leadingIcon = Icons.Filled.FileDownload,
                         enabled = operation == ConfigTransferOperation.IDLE,
                         onClick = { export(RuleExportCategory.ADDRESS) }

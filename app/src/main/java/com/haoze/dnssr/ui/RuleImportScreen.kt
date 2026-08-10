@@ -102,11 +102,11 @@ fun RuleImportScreen(
             SettingsNavigationGroup(
                 items = listOf(
                     SettingsNavigationItemData(
-                        title = localizedText("导入域名规则 TXT 文件"),
-                        subtitle = localizedText("导入导出的域名规则或外部过滤规则，创建不可更新的本地订阅"),
+                        title = localizedText("导入 DNS 过滤和白名单 TXT"),
+                        subtitle = localizedText("导入 DNS 过滤规则和白名单，创建不可更新的本地订阅"),
                         leadingIcon = Icons.Default.FolderOpen,
                         enabled = !importing,
-                        onClick = { selectLocalSubscription("导入域名规则 TXT", SubscriptionKind.BLOCK, RuleScope.DNS) }
+                        onClick = { selectLocalSubscription("导入 DNS 过滤和白名单 TXT", SubscriptionKind.BLOCK, RuleScope.DNS) }
                     )
                 )
             )
@@ -114,11 +114,11 @@ fun RuleImportScreen(
             SettingsNavigationGroup(
                 items = listOf(
                     SettingsNavigationItemData(
-                        title = localizedText("导入外部 hosts 覆写文件"),
-                        subtitle = localizedText("仅导入包含真实 IP 地址的 hosts 规则，创建不可更新的本地覆写订阅"),
+                        title = localizedText("导入 hosts 覆写 TXT"),
+                        subtitle = localizedText("导入 IP 地址映射规则，创建不可更新的本地覆写订阅"),
                         leadingIcon = Icons.Default.FolderOpen,
                         enabled = !importing,
-                        onClick = { selectLocalSubscription("导入外部 hosts 覆写", SubscriptionKind.REWRITE, RuleScope.DNS) }
+                        onClick = { selectLocalSubscription("导入 hosts 覆写 TXT", SubscriptionKind.REWRITE, RuleScope.DNS) }
                     )
                 )
             )
@@ -126,8 +126,8 @@ fun RuleImportScreen(
             SettingsNavigationGroup(
                 items = listOf(
                     SettingsNavigationItemData(
-                        title = localizedText("导入地址规则备份 JSON"),
-                        subtitle = localizedText("恢复 URL 屏蔽和放行规则，不创建订阅"),
+                        title = localizedText("导入地址规则 JSON 备份"),
+                        subtitle = localizedText("恢复手动添加的 URL 屏蔽和放行规则，不创建订阅"),
                         leadingIcon = Icons.Default.FolderOpen,
                         enabled = !importing,
                         onClick = ::selectAddressBackup
@@ -135,7 +135,7 @@ fun RuleImportScreen(
                 )
             )
             SettingsInfoText(
-                text = localizedText("域名规则 TXT 和 hosts 文件导入后均为不可更新的本地订阅；地址规则备份会恢复为手动 URL 规则。"),
+                text = localizedText("DNS 规则和 hosts 规则导入后均为不可更新的本地订阅；地址 JSON 备份会恢复为手动 URL 规则。"),
                 modifier = Modifier.padding(top = 8.dp)
             )
         }

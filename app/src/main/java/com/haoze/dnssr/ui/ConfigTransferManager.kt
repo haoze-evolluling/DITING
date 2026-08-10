@@ -3,6 +3,7 @@ package com.haoze.dnssr.ui
 import android.content.Context
 import com.haoze.dnssr.data.AppDatabase
 import com.haoze.dnssr.data.entity.RuleScope
+import com.haoze.dnssr.data.entity.RewriteTargetType
 import com.haoze.dnssr.vpn.AllowListManager
 import com.haoze.dnssr.vpn.AdGuardRuleParser
 import com.haoze.dnssr.vpn.BlockListManager
@@ -44,6 +45,7 @@ data class ConfigImportProgress(
 
 enum class RuleExportCategory(val storageValue: String, val displayName: String) {
     DOMAIN("domain", "域名规则"),
+    HOSTS("hosts", "hosts 覆写规则"),
     ADDRESS("address", "地址规则")
 }
 
@@ -125,6 +127,20 @@ class ConfigTransferManager(private val context: Context) {
         category: RuleExportCategory,
         onProgress: (Float, String) -> Unit = { _, _ -> }
     ): RuleExportResult {
+        if (category == RuleExportCategory.HOSTS) {
+            onProgress(0f, "正在读取 hosts 覆写规则")
+            val rules = database.rewriteRuleDao().enabledRules(RuleScope.DNS.storageValue)
+                .filter { it.targetType == RewriteTargetType.IPV4 || it.targetType == RewriteTargetType.IPV6 }
+                .distinctBy { "${it.targetValue} ${it.pattern}" }
+                .sortedWith(compareBy({ it.targetValue }, { it.pattern }))
+            onProgress(0.4f, "正在生成 hosts 文件")
+            val content = buildString {
+                appendLine("# 谛听 hosts rewrite export")
+                rules.forEach { rule -> appendLine("${rule.targetValue} ${rule.pattern}") }
+            }
+            onProgress(0.6f, "正在写入文件")
+            return RuleExportResult(content, 0, 0, rewriteRuleCount = rules.size, hostsExport = true)
+        }
         if (category == RuleExportCategory.ADDRESS) {
             onProgress(0f, "正在读取地址规则")
             val backup = AddressRuleBackupTransfer.export(database, AddressRuleBackupSource.MANUAL)
@@ -474,12 +490,16 @@ data class RuleExportResult(
     val blockRuleCount: Int,
     val allowRuleCount: Int,
     val rewriteRuleCount: Int = 0,
+    val hostsExport: Boolean = false,
     val urlBlockRuleCount: Int = 0,
     val urlAllowRuleCount: Int = 0
 ) {
     fun summary(): String = buildString {
-        append("屏蔽 $blockRuleCount 条，放行 $allowRuleCount 条")
-        if (rewriteRuleCount > 0) append("，CNAME $rewriteRuleCount 条")
+        if (hostsExport) {
+            append("hosts 覆写 $rewriteRuleCount 条")
+        } else {
+            append("屏蔽 $blockRuleCount 条，放行 $allowRuleCount 条")
+        }
         if (urlBlockRuleCount > 0 || urlAllowRuleCount > 0) {
             append("，URL 屏蔽 $urlBlockRuleCount 条，URL 放行 $urlAllowRuleCount 条")
         }
