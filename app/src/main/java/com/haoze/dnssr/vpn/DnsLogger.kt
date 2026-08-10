@@ -90,7 +90,13 @@ class DnsLogger(
         if (pending.isEmpty()) return
         val batch = pending.toList()
         pending.clear()
-        dao.insertAll(batch)
+        try {
+            dao.insertAll(batch)
+        } catch (error: Throwable) {
+            pending.addAll(0, batch)
+            scheduleFlush()
+            throw error
+        }
         maybePrune()
     }
 

@@ -67,6 +67,10 @@ class HttpRequestLogger(
         }
     }
 
+    suspend fun prune() {
+        dao.deleteBefore(System.currentTimeMillis() - retentionDays * DAY_MS)
+    }
+
     private fun scheduleFlush() {
         scheduledFlush = flushScope?.launch {
             delay(FLUSH_INTERVAL_MS)
@@ -81,8 +85,13 @@ class HttpRequestLogger(
         if (pending.isEmpty()) return
         scheduledFlush?.cancel()
         scheduledFlush = null
-        dao.insertAll(pending.toList())
-        pending.clear()
+        try {
+            dao.insertAll(pending.toList())
+            pending.clear()
+        } catch (error: Throwable) {
+            scheduleFlush()
+            throw error
+        }
         val now = System.currentTimeMillis()
         if (now - lastPruneTime >= PRUNE_INTERVAL_MS) {
             lastPruneTime = now

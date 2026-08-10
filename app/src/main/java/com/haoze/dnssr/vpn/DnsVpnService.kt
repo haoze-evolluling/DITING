@@ -173,6 +173,22 @@ class DnsVpnService : VpnService() {
             DnsCacheController.register(dnsCache)
             dnsCache.warmUp()
         }
+        serviceScope.launch {
+            pruneLogTables()
+            while (isActive) {
+                delay(LOG_PRUNE_INTERVAL_MS)
+                pruneLogTables()
+            }
+        }
+    }
+
+    private suspend fun pruneLogTables() {
+        runCatching {
+            dnsLogger.prune()
+            httpRequestLogger.prune()
+        }.onFailure { error ->
+            Log.w(TAG, "Failed to prune request logs", error)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -1420,6 +1436,7 @@ class DnsVpnService : VpnService() {
 
     companion object {
         private const val TAG = "DnsVpnService"
+        private const val LOG_PRUNE_INTERVAL_MS = 60 * 60 * 1000L
         private const val ACTION_STOP = "com.haoze.dnssr.STOP_VPN"
         private const val ACTION_REFRESH_APP_EXCLUSIONS = "com.haoze.dnssr.REFRESH_APP_EXCLUSIONS"
         private const val ACTION_REFRESH_APP_ALLOWLIST = "com.haoze.dnssr.REFRESH_APP_ALLOWLIST"
