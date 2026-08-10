@@ -79,7 +79,17 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
             val context = getApplication<Application>()
             val content = context.contentResolver.openInputStream(uri)?.bufferedReader().use { reader ->
                 requireNotNull(reader) { "无法读取配置文件" }
-                reader.readText()
+                val contentBuilder = StringBuilder()
+                val buffer = CharArray(8 * 1024)
+                while (true) {
+                    val read = reader.read(buffer)
+                    if (read < 0) break
+                    if (contentBuilder.length + read > MAX_IMPORT_CHARS) {
+                        throw IllegalArgumentException("配置文件超过大小限制")
+                    }
+                    contentBuilder.append(buffer, 0, read)
+                }
+                contentBuilder.toString()
             }
             val result = manager.import(content) { progress ->
                 _importProgress.value = progress
@@ -124,5 +134,6 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
 
     private companion object {
         const val MIN_IMPORT_DURATION_MILLIS = 3_000L
+        const val MAX_IMPORT_CHARS = 4 * 1024 * 1024
     }
 }
