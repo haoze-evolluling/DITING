@@ -185,6 +185,8 @@ class DnsVpnService : VpnService() {
 
     private suspend fun pruneLogTables() {
         runCatching {
+            dnsLogger.flush()
+            httpRequestLogger.flush()
             dnsLogger.prune()
             httpRequestLogger.prune()
         }.onFailure { error ->
