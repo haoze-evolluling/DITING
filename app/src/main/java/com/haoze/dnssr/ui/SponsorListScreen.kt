@@ -45,7 +45,7 @@ fun SponsorListScreen(
             .onFailure { error ->
                 Toast.makeText(
                     context,
-                    localizedText(context, "名单更新失败：${error.message ?: \"未知错误\"}"),
+                    localizedText(context, "名单更新失败：${error.message ?: "未知错误"}"),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -66,7 +66,7 @@ fun SponsorListScreen(
                         }.getOrElse { error ->
                             Toast.makeText(
                                 context,
-                                localizedText(context, "名单更新失败：${error.message ?: \"未知错误\"}"),
+                                localizedText(context, "名单更新失败：${error.message ?: "未知错误"}"),
                                 Toast.LENGTH_SHORT
                             ).show()
                             return@launch
