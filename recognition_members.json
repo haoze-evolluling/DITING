@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "sponsors": [
+    { "name": "alone", "avatarFileName": "alone_avatar.jpg" },
+    { "name": "睿上源", "avatarFileName": "ruishangyuan_avatar.jpg" },
+    { "name": "理塘丁真", "avatarFileName": "litangdingzhen_avatar.jpg" },
+    { "name": "天涯浮客", "avatarFileName": "tianyafuke_avatar.jpg" },
+    { "name": "AceTaffy1883", "avatarFileName": "acetaffy1883_avatar.jpg" },
+    { "name": "心疼头头哥", "avatarFileName": "xintengtoutouge_avatar.jpg" },
+    { "name": "恐龙复生", "avatarFileName": "konglongfusheng_avatar.jpg" },
+    { "name": "xo人头马", "avatarFileName": "xorentouma_avatar.jpg" },
+    { "name": "过江龙傲天", "avatarFileName": "guojianglongaotian_avatar.jpg" },
+    { "name": "狸", "avatarFileName": "li_avatar.jpg" },
+    { "name": "lucasyr", "avatarFileName": "lucasyr_avatar.jpg" }
+  ],
+  "coBuilders": [
+    { "name": "AceTaffy1883", "avatarFileName": "acetaffy1883_avatar.jpg" },
+    { "name": "alone", "avatarFileName": "alone_avatar.jpg" },
+    { "name": "恐龙复生", "avatarFileName": "konglongfusheng_avatar.jpg" },
+    { "name": "乐野", "avatarFileName": "leye_avatar.jpg" },
+    { "name": "理塘丁真", "avatarFileName": "litangdingzhen_avatar.jpg" },
+    { "name": "睿上源", "avatarFileName": "ruishangyuan_avatar.jpg" },
+    { "name": "天涯浮客", "avatarFileName": "tianyafuke_avatar.jpg" },
+    { "name": "妄炁", "avatarFileName": "wangqi_avatar.jpg" },
+    { "name": "widiOA", "avatarFileName": "widioa_avatar.jpg" },
+    { "name": "心疼头头哥", "avatarFileName": "xintengtoutouge_avatar.jpg" },
+    { "name": "遇屿", "avatarFileName": "yuyu_avatar.jpg" }
+  ]
+}

@@ -12,71 +12,18 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.haoze.dnssr.ui.components.SettingsInfoText
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import kotlinx.coroutines.launch
-
-private val CO_BUILDERS = listOf(
-    RecognitionMember(
-        name = "AceTaffy1883",
-        avatarFileName = "acetaffy1883_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "alone",
-        avatarFileName = "alone_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "恐龙复生",
-        avatarFileName = "konglongfusheng_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "乐野",
-        avatarFileName = "leye_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "理塘丁真",
-        avatarFileName = "litangdingzhen_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "睿上源",
-        avatarFileName = "ruishangyuan_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "天涯浮客",
-        avatarFileName = "tianyafuke_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "妄炁",
-        avatarFileName = "wangqi_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "widiOA",
-        avatarFileName = "widioa_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "心疼头头哥",
-        avatarFileName = "xintengtoutouge_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    ),
-    RecognitionMember(
-        name = "遇屿",
-        avatarFileName = "yuyu_avatar.jpg",
-        acknowledgement = "感谢为谛听提出建议与帮助测试"
-    )
-)
 
 @Composable
 fun CoBuilderListScreen(
@@ -85,7 +32,15 @@ fun CoBuilderListScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val avatarLoader = rememberRecognitionAvatarLoader(CO_BUILDERS)
+    var configuration by remember { mutableStateOf<RecognitionMembersConfiguration?>(null) }
+    val coBuilders = configuration?.coBuilders.orEmpty()
+    val avatarLoader = rememberRecognitionAvatarLoader(coBuilders)
+    LaunchedEffect(context.applicationContext) {
+        configuration = RecognitionMembersRepository.loadCached(context.applicationContext)
+        runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
+            .getOrNull()
+            ?.let { configuration = it }
+    }
     SettingsScaffold(
         title = title,
         onBack = onBack,
@@ -94,6 +49,8 @@ fun CoBuilderListScreen(
                 enabled = !avatarLoader.isRefreshing,
                 onClick = {
                     scope.launch {
+                        runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
+                            .getOrNull()?.let { configuration = it }
                         val result = avatarLoader.retryMissingOrFailed()
                         val message = when {
                             result.refreshedCount == 0 && result.failedCount == 0 -> "头像均已缓存，无需刷新"
@@ -123,7 +80,7 @@ fun CoBuilderListScreen(
                 modifier = Modifier.padding(top = 8.dp)
             )
             RecognitionList(
-                members = CO_BUILDERS,
+                members = coBuilders,
                 emptyText = "暂时还没有共建者，期待在这里写下你的名字。",
                 avatarStates = avatarLoader.states
             )

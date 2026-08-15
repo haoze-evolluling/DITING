@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,64 +26,6 @@ import com.haoze.dnssr.ui.components.SettingsInfoText
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import kotlinx.coroutines.launch
 
-private val SPONSORS = listOf(
-    RecognitionMember(
-        name = "alone",
-        avatarFileName = "alone_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "睿上源",
-        avatarFileName = "ruishangyuan_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "理塘丁真",
-        avatarFileName = "litangdingzhen_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "天涯浮客",
-        avatarFileName = "tianyafuke_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "AceTaffy1883",
-        avatarFileName = "acetaffy1883_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "心疼头头哥",
-        avatarFileName = "xintengtoutouge_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "恐龙复生",
-        avatarFileName = "konglongfusheng_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "xo人头马",
-        avatarFileName = "xorentouma_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "过江龙傲天",
-        avatarFileName = "guojianglongaotian_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "狸",
-        avatarFileName = "li_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    ),
-    RecognitionMember(
-        name = "lucasyr",
-        avatarFileName = "lucasyr_avatar.jpg",
-        acknowledgement = "感谢您对谛听项目的赞助支持"
-    )
-)
-
 @Composable
 fun SponsorListScreen(
     onBack: () -> Unit,
@@ -90,9 +33,18 @@ fun SponsorListScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val avatarLoader = rememberRecognitionAvatarLoader(SPONSORS)
+    var configuration by remember { mutableStateOf<RecognitionMembersConfiguration?>(null) }
+    val sponsors = configuration?.sponsors.orEmpty()
+    val avatarLoader = rememberRecognitionAvatarLoader(sponsors)
     var newestFirst by remember { mutableStateOf(false) }
-    val displayedSponsors = if (newestFirst) SPONSORS.asReversed() else SPONSORS
+    val displayedSponsors = if (newestFirst) sponsors.asReversed() else sponsors
+
+    LaunchedEffect(context.applicationContext) {
+        configuration = RecognitionMembersRepository.loadCached(context.applicationContext)
+        runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
+            .getOrNull()
+            ?.let { configuration = it }
+    }
 
     SettingsScaffold(
         title = localizedText(title),
@@ -102,6 +54,8 @@ fun SponsorListScreen(
                 enabled = !avatarLoader.isRefreshing,
                 onClick = {
                     scope.launch {
+                        runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
+                            .getOrNull()?.let { configuration = it }
                         val result = avatarLoader.retryMissingOrFailed()
                         val message = when {
                             result.refreshedCount == 0 && result.failedCount == 0 -> "头像均已缓存，无需刷新"
