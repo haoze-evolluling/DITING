@@ -1,5 +1,10 @@
 package com.haoze.dnssr.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,8 +52,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.haoze.dnssr.data.AppDatabase
 import com.haoze.dnssr.data.entity.HttpRequestLogEntity
+import com.haoze.dnssr.data.entity.RuleScope
 import com.haoze.dnssr.ui.components.SettingsDivider
 import com.haoze.dnssr.ui.components.SettingsCornerShape
+import com.haoze.dnssr.vpn.AllowListManager
+import com.haoze.dnssr.vpn.BlockListManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -70,6 +82,7 @@ private data class HttpLogFilterOption(
 @Composable
 fun HttpRequestLogScreen(onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val database = remember(context) { AppDatabase.getInstance(context) }
     var loadLimit by remember { mutableStateOf(50) }
     val logs by remember(context, loadLimit) {
         AppDatabase.getInstance(context).httpRequestLogDao().observeRecent(loadLimit)
@@ -77,6 +90,8 @@ fun HttpRequestLogScreen(onBack: () -> Unit) {
     var selectedFilter by remember { mutableStateOf(HttpLogFilter.ALL) }
     var showExplanation by remember { mutableStateOf(false) }
     var initialScrollDone by remember { mutableStateOf(false) }
+    var pendingDomain by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
     val filteredLogs = remember(logs, selectedFilter) {
         logs.filter { log ->
             when (selectedFilter) {
@@ -143,7 +158,7 @@ fun HttpRequestLogScreen(onBack: () -> Unit) {
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(filteredLogs, key = { it.id }) { log ->
-                        HttpRequestLogCard(log)
+                        HttpRequestLogCard(log) { log.authority?.let { pendingDomain = it } }
                     }
                 }
             }
@@ -165,6 +180,42 @@ fun HttpRequestLogScreen(onBack: () -> Unit) {
             },
             confirmButton = {
                 TextButton(onClick = { showExplanation = false }) { Text(localizedText("知道了")) }
+            }
+        )
+    }
+    pendingDomain?.let { domain ->
+        DomainActionDialog(
+            domain = domain,
+            dismiss = { pendingDomain = null },
+            copy = {
+                (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                    .setPrimaryClip(ClipData.newPlainText("domain", domain))
+                pendingDomain = null
+            },
+            add = { allow ->
+                scope.launch(Dispatchers.IO) {
+                    val success = if (allow) {
+                        AllowListManager(database.allowRuleDao(), scope = RuleScope.DNS).addRule(domain)
+                    } else {
+                        BlockListManager(database.blockRuleDao(), scope = RuleScope.DNS).addRule(domain)
+                    }
+                    withContext(Dispatchers.Main) {
+                        if (success) {
+                            RuntimeDnsSettingsRefresher.syncRuleIfRunning(
+                                context,
+                                if (allow) "allow" else "block",
+                                domain,
+                                RuleScope.DNS
+                            )
+                        }
+                        Toast.makeText(
+                            context,
+                            localizedText(context, if (success) "已添加规则" else "规则格式无效"),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        pendingDomain = null
+                    }
+                }
             }
         )
     }
@@ -215,13 +266,13 @@ private fun EmptyHttpLogMessage(message: String = "暂无请求记录") {
 }
 
 @Composable
-private fun HttpRequestLogCard(log: HttpRequestLogEntity) {
+private fun HttpRequestLogCard(log: HttpRequestLogEntity, onLongClick: () -> Unit) {
     val timeFormatter = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
     val formattedTime = remember(log.timestamp) { timeFormatter.format(Date(log.timestamp)) }
     val outcome = httpOutcomePresentation(log.outcome)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().combinedClickable(onClick = {}, onLongClick = onLongClick),
         shape = SettingsCornerShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)

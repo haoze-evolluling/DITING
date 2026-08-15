@@ -209,7 +209,7 @@ fun RequestLogScreen(onBack: () -> Unit, onRuntimeDnsSettingsChanged: () -> Unit
         )
     }
     pendingDomain?.let { domain ->
-        RequestDomainDialog(domain, { pendingDomain = null }, {
+        DomainActionDialog(domain, { pendingDomain = null }, {
             (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("domain", domain)); pendingDomain = null
         }, { allow ->
             val ruleScope = pendingRuleScope
@@ -264,7 +264,7 @@ private fun RequestLogCard(item: RequestLogItem, onLongClick: () -> Unit) {
 }
 
 @Composable
-private fun RequestDomainDialog(domain: String, dismiss: () -> Unit, copy: () -> Unit, add: (Boolean) -> Unit) {
+fun DomainActionDialog(domain: String, dismiss: () -> Unit, copy: () -> Unit, add: (Boolean) -> Unit) {
     AlertDialog(onDismissRequest = dismiss, title = { Text(localizedText("处理域名")) }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(domain); SettingsOutlinedActionButton(copy, Modifier.fillMaxWidth()) { Text(localizedText("复制域名")) }; SettingsOutlinedActionButton({ add(true) }, Modifier.fillMaxWidth()) { Text(localizedText("加入白名单规则")) }; SettingsOutlinedActionButton({ add(false) }, Modifier.fillMaxWidth()) { Text(localizedText("加入屏蔽规则")) }
     } }, confirmButton = { TextButton(dismiss) { Text(localizedText("取消")) } })
