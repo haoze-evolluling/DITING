@@ -75,6 +75,11 @@ private val SPONSORS = listOf(
         name = "狸",
         avatarFileName = "li_avatar.jpg",
         acknowledgement = "感谢您对谛听项目的赞助支持"
+    ),
+    RecognitionMember(
+        name = "lucasyr",
+        avatarFileName = "lucasyr_avatar.jpg",
+        acknowledgement = "感谢您对谛听项目的赞助支持"
     )
 )
 
