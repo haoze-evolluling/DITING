@@ -2,6 +2,7 @@ package com.haoze.dnssr.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,10 +35,13 @@ fun CoBuilderListScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var configuration by remember { mutableStateOf<RecognitionMembersConfiguration?>(null) }
+    var isConfigurationLoading by remember { mutableStateOf(true) }
     val coBuilders = configuration?.coBuilders.orEmpty()
     val avatarLoader = rememberRecognitionAvatarLoader(coBuilders)
     LaunchedEffect(context.applicationContext) {
-        configuration = RecognitionMembersRepository.loadCached(context.applicationContext)
+        val cachedConfiguration = RecognitionMembersRepository.loadCached(context.applicationContext)
+        configuration = cachedConfiguration
+        if (cachedConfiguration != null) isConfigurationLoading = false
         runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
             .onFailure { error ->
                 Toast.makeText(
@@ -47,6 +52,7 @@ fun CoBuilderListScreen(
             }
             .getOrNull()
             ?.let { configuration = it }
+        isConfigurationLoading = false
     }
     SettingsScaffold(
         title = title,
@@ -103,11 +109,15 @@ fun CoBuilderListScreen(
                 text = localizedText("感谢每一位为谛听提出建议、帮助测试的共建者！名单按用户名称的字母顺序排列，中文名称按拼音排序。"),
                 modifier = Modifier.padding(top = 8.dp)
             )
-            RecognitionList(
-                members = coBuilders,
-                emptyText = "暂时还没有共建者，期待在这里写下你的名字。",
-                avatarStates = avatarLoader.states
-            )
+            if (isConfigurationLoading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            } else {
+                RecognitionList(
+                    members = coBuilders,
+                    emptyText = "暂时还没有共建者，期待在这里写下你的名字。",
+                    avatarStates = avatarLoader.states
+                )
+            }
         }
     }
 }

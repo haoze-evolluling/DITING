@@ -11,7 +11,8 @@
     { "name": "xo人头马", "avatarFileName": "xorentouma_avatar.jpg" },
     { "name": "过江龙傲天", "avatarFileName": "guojianglongaotian_avatar.jpg" },
     { "name": "狸", "avatarFileName": "li_avatar.jpg" },
-    { "name": "lucasyr", "avatarFileName": "lucasyr_avatar.jpg" }
+    { "name": "lucasyr", "avatarFileName": "lucasyr_avatar.jpg" },
+    { "name": "轻" }
   ],
   "coBuilders": [
     { "name": "AceTaffy1883", "avatarFileName": "acetaffy1883_avatar.jpg" },

@@ -2,6 +2,7 @@ package com.haoze.dnssr.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,13 +36,16 @@ fun SponsorListScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var configuration by remember { mutableStateOf<RecognitionMembersConfiguration?>(null) }
+    var isConfigurationLoading by remember { mutableStateOf(true) }
     val sponsors = configuration?.sponsors.orEmpty()
     val avatarLoader = rememberRecognitionAvatarLoader(sponsors)
     var newestFirst by remember { mutableStateOf(false) }
     val displayedSponsors = if (newestFirst) sponsors.asReversed() else sponsors
 
     LaunchedEffect(context.applicationContext) {
-        configuration = RecognitionMembersRepository.loadCached(context.applicationContext)
+        val cachedConfiguration = RecognitionMembersRepository.loadCached(context.applicationContext)
+        configuration = cachedConfiguration
+        if (cachedConfiguration != null) isConfigurationLoading = false
         runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
             .onFailure { error ->
                 Toast.makeText(
@@ -51,6 +56,7 @@ fun SponsorListScreen(
             }
             .getOrNull()
             ?.let { configuration = it }
+        isConfigurationLoading = false
     }
 
     SettingsScaffold(
@@ -121,11 +127,15 @@ fun SponsorListScreen(
                 text = localizedText("感谢每一位支持谛听项目的朋友！名单默认按赞助时间由早到晚排列，可通过右上角按钮切换为由晚到早；与赞助金额无关，每一份支持都同样珍贵。"),
                 modifier = Modifier.padding(top = 8.dp)
             )
-            RecognitionList(
-                members = displayedSponsors,
-                emptyText = localizedText("暂时还没有赞助者，期待在这里写下你的名字。"),
-                avatarStates = avatarLoader.states
-            )
+            if (isConfigurationLoading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            } else {
+                RecognitionList(
+                    members = displayedSponsors,
+                    emptyText = localizedText("暂时还没有赞助者，期待在这里写下你的名字。"),
+                    avatarStates = avatarLoader.states
+                )
+            }
         }
     }
 }

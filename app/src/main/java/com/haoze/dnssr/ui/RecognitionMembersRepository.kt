@@ -33,9 +33,9 @@ object RecognitionMembersRepository {
         .build()
     private val refreshMutex = Mutex()
 
-    suspend fun loadCached(context: Context): RecognitionMembersConfiguration =
+    suspend fun loadCached(context: Context): RecognitionMembersConfiguration? =
         withContext(Dispatchers.IO) {
-            readConfiguration(cacheFile(context)) ?: RecognitionMembersConfiguration(emptyList(), emptyList())
+            readConfiguration(cacheFile(context))
         }
 
     /** Returns a configuration only when the server provided a changed, valid document. */
@@ -91,9 +91,14 @@ object RecognitionMembersRepository {
         List(members.length()) { index ->
             val member = members.getJSONObject(index)
             val name = member.getString("name").trim()
-            val avatarFileName = member.getString("avatarFileName")
+            val avatarFileName = member.optString("avatarFileName")
+                .trim()
+                .ifEmpty { DEFAULT_RECOGNITION_AVATAR_FILE_NAME }
             require(name.isNotEmpty()) { "成员名称不能为空" }
-            require(avatarFileName.matches(avatarFileNamePattern)) { "头像文件名无效" }
+            require(
+                avatarFileName == DEFAULT_RECOGNITION_AVATAR_FILE_NAME ||
+                    avatarFileName.matches(avatarFileNamePattern)
+            ) { "头像文件名无效" }
             RecognitionMember(
                 name = name,
                 acknowledgement = acknowledgement,
