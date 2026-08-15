@@ -94,7 +94,11 @@ object RecognitionMembersRepository {
             val avatarFileName = member.getString("avatarFileName")
             require(name.isNotEmpty()) { "成员名称不能为空" }
             require(avatarFileName.matches(avatarFileNamePattern)) { "头像文件名无效" }
-            RecognitionMember(name, avatarFileName, acknowledgement)
+            RecognitionMember(
+                name = name,
+                acknowledgement = acknowledgement,
+                avatarFileName = avatarFileName
+            )
         }
 
     private fun cacheFile(context: Context): File = File(context.filesDir, CACHE_FILE_NAME)

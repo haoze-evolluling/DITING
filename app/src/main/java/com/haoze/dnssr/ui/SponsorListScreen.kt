@@ -42,6 +42,13 @@ fun SponsorListScreen(
     LaunchedEffect(context.applicationContext) {
         configuration = RecognitionMembersRepository.loadCached(context.applicationContext)
         runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
+            .onFailure { error ->
+                Toast.makeText(
+                    context,
+                    localizedText(context, "名单更新失败：${error.message ?: \"未知错误\"}"),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
             .getOrNull()
             ?.let { configuration = it }
     }
@@ -54,8 +61,25 @@ fun SponsorListScreen(
                 enabled = !avatarLoader.isRefreshing,
                 onClick = {
                     scope.launch {
-                        runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
-                            .getOrNull()?.let { configuration = it }
+                        val refreshedConfiguration = runCatching {
+                            RecognitionMembersRepository.refresh(context.applicationContext)
+                        }.getOrElse { error ->
+                            Toast.makeText(
+                                context,
+                                localizedText(context, "名单更新失败：${error.message ?: \"未知错误\"}"),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@launch
+                        }
+                        if (refreshedConfiguration != null) {
+                            configuration = refreshedConfiguration
+                            Toast.makeText(
+                                context,
+                                localizedText(context, "名单已更新，正在加载头像"),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@launch
+                        }
                         val result = avatarLoader.retryMissingOrFailed()
                         val message = when {
                             result.refreshedCount == 0 && result.failedCount == 0 -> "头像均已缓存，无需刷新"
