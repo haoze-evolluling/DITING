@@ -84,20 +84,18 @@ object RecognitionMembersRepository {
 
     private fun validateUniqueMembers(members: List<RecognitionMember>) {
         require(members.map(RecognitionMember::name).toSet().size == members.size) { "名单存在重复成员" }
-        require(members.map(RecognitionMember::avatarFileName).toSet().size == members.size) { "名单存在重复头像" }
+        val remoteAvatarFileNames = members.mapNotNull(RecognitionMember::avatarFileName)
+        require(remoteAvatarFileNames.toSet().size == remoteAvatarFileNames.size) { "名单存在重复头像" }
     }
 
     private fun parseMembers(members: JSONArray, acknowledgement: String): List<RecognitionMember> =
         List(members.length()) { index ->
             val member = members.getJSONObject(index)
             val name = member.getString("name").trim()
-            val avatarFileName = member.optString("avatarFileName")
-                .trim()
-                .ifEmpty { DEFAULT_RECOGNITION_AVATAR_FILE_NAME }
+            val avatarFileName = member.optString("avatarFileName").trim().takeIf(String::isNotEmpty)
             require(name.isNotEmpty()) { "成员名称不能为空" }
             require(
-                avatarFileName == DEFAULT_RECOGNITION_AVATAR_FILE_NAME ||
-                    avatarFileName.matches(avatarFileNamePattern)
+                avatarFileName == null || avatarFileName.matches(avatarFileNamePattern)
             ) { "头像文件名无效" }
             RecognitionMember(
                 name = name,

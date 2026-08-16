@@ -17,7 +17,7 @@ class RecognitionAvatarLoader internal constructor(
     private val context: Context,
     members: List<RecognitionMember>
 ) {
-    private val avatarFileNames = members.map { it.avatarFileName }.distinct()
+    private val avatarFileNames = members.mapNotNull { it.avatarFileName }.distinct()
     private val mutableStates = mutableStateMapOf<String, RecognitionAvatarState>()
     val states: Map<String, RecognitionAvatarState> get() = mutableStates
 

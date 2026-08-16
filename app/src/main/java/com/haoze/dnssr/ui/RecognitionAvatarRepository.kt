@@ -15,7 +15,6 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 private const val AVATAR_DIRECTORY = "recognition_avatars"
-const val DEFAULT_RECOGNITION_AVATAR_FILE_NAME = "default_avatar.png"
 private const val AVATAR_BASE_URL =
     "https://raw.githubusercontent.com/haoze-evolluling/DITING/main/avatars/"
 private const val MAX_AVATAR_BYTES = 1_024 * 1_024L
@@ -111,10 +110,7 @@ object RecognitionAvatarRepository {
     }
 
     private fun validateAvatarFileName(avatarFileName: String) {
-        require(
-            avatarFileName == DEFAULT_RECOGNITION_AVATAR_FILE_NAME ||
-                avatarFileName.matches(Regex("[a-z0-9_]+_avatar\\.jpg"))
-        ) {
+        require(avatarFileName.matches(Regex("[a-z0-9_]+_avatar\\.jpg"))) {
             "头像文件名无效"
         }
     }

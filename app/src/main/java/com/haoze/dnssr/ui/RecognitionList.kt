@@ -23,14 +23,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.haoze.dnssr.R
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 
 data class RecognitionMember(
     val name: String,
     val acknowledgement: String,
-    val avatarFileName: String
+    val avatarFileName: String?
 )
 
 @Composable
@@ -54,7 +56,7 @@ fun RecognitionList(
         } else {
             members.map { member ->
                 {
-                    RecognitionListItem(member, avatarStates[member.avatarFileName])
+                    RecognitionListItem(member, member.avatarFileName?.let(avatarStates::get))
                 }
             }
         }
@@ -67,7 +69,8 @@ private fun RecognitionListItem(member: RecognitionMember, avatarState: Recognit
     val avatar = remember(avatarFile) {
         avatarFile?.let { BitmapFactory.decodeFile(it.absolutePath)?.asImageBitmap() }
     }
-    val hasAvatar = avatar != null
+    val usesDefaultAvatar = member.avatarFileName == null
+    val hasAvatar = usesDefaultAvatar || avatar != null
     val textStart by animateDpAsState(
         targetValue = if (hasAvatar) 60.dp else 0.dp,
         animationSpec = tween(durationMillis = 220),
@@ -86,15 +89,26 @@ private fun RecognitionListItem(member: RecognitionMember, avatarState: Recognit
                 enter = fadeIn(animationSpec = tween(durationMillis = 160, delayMillis = 220)),
                 exit = fadeOut(animationSpec = tween(durationMillis = 100))
             ) {
-                avatar?.let {
+                if (usesDefaultAvatar) {
                     Image(
-                        bitmap = it,
+                        painter = painterResource(R.drawable.default_avatar),
                         contentDescription = localizedText("${member.name}的头像"),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(48.dp)
                             .clip(CircleShape)
                     )
+                } else {
+                    avatar?.let {
+                        Image(
+                            bitmap = it,
+                            contentDescription = localizedText("${member.name}的头像"),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                        )
+                    }
                 }
             }
         }
