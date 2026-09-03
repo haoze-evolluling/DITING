@@ -101,13 +101,15 @@ fun HttpInspectionAppsScreen(onBack: () -> Unit) {
         title = localizedText("选择检查应用"),
         onBack = handleBackAndSave,
         actions = {
-            val loadedPackageNames = loadedApps.mapTo(mutableSetOf()) { it.packageName }
             AppListOverflowMenu(
                 filter = filter,
                 sort = sort,
-                onSelectAll = { selectedPackages = selectedPackages + loadedPackageNames },
+                onSelectAll = { selectedPackages = selectedPackages + visibleApps.mapTo(mutableSetOf()) { it.packageName } },
                 onClear = { selectedPackages = emptySet() },
-                onInvert = { selectedPackages = selectedPackages - loadedPackageNames + (loadedPackageNames - selectedPackages) },
+                onInvert = {
+                    val visiblePackageNames = visibleApps.mapTo(mutableSetOf()) { it.packageName }
+                    selectedPackages = selectedPackages - visiblePackageNames + (visiblePackageNames - selectedPackages)
+                },
                 onFilterChange = { filter = it; AppSettings.setHttpInspectionAppsFilter(context, it.name) },
                 onSortChange = { sort = it; AppSettings.setHttpInspectionAppsSort(context, it.name) }
             )

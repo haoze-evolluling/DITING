@@ -125,13 +125,15 @@ fun ExcludedAppsScreen(onBack: () -> Unit) {
         title = localizedText("排除应用"),
         onBack = handleBackAndSave,
         actions = {
-            val loadedPackageNames = loadedApps.mapTo(mutableSetOf()) { it.packageName }
             AppListOverflowMenu(
                 filter = filter,
                 sort = sort,
-                onSelectAll = { selectedPackages = selectedPackages + loadedPackageNames },
+                onSelectAll = { selectedPackages = selectedPackages + visibleApps.mapTo(mutableSetOf()) { it.packageName } },
                 onClear = { selectedPackages = emptySet() },
-                onInvert = { selectedPackages = selectedPackages - loadedPackageNames + (loadedPackageNames - selectedPackages) },
+                onInvert = {
+                    val visiblePackageNames = visibleApps.mapTo(mutableSetOf()) { it.packageName }
+                    selectedPackages = selectedPackages - visiblePackageNames + (visiblePackageNames - selectedPackages)
+                },
                 onFilterChange = {
                     filter = it
                     AppSettings.setExcludedAppsFilter(context, it.name)

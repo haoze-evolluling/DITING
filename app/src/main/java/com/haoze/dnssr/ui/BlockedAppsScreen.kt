@@ -139,13 +139,15 @@ fun BlockedAppsScreen(onBack: () -> Unit) {
         title = localizedText("禁止联网应用"),
         onBack = handleBackAndSave,
         actions = {
-            val selectablePackageNames = selectableApps.mapTo(mutableSetOf()) { it.packageName }
             AppListOverflowMenu(
                 filter = filter,
                 sort = sort,
-                onSelectAll = { selectedPackages = selectedPackages + selectablePackageNames },
+                onSelectAll = { selectedPackages = selectedPackages + visibleApps.mapTo(mutableSetOf()) { it.packageName } },
                 onClear = { selectedPackages = emptySet() },
-                onInvert = { selectedPackages = selectedPackages - selectablePackageNames + (selectablePackageNames - selectedPackages) },
+                onInvert = {
+                    val visiblePackageNames = visibleApps.mapTo(mutableSetOf()) { it.packageName }
+                    selectedPackages = selectedPackages - visiblePackageNames + (visiblePackageNames - selectedPackages)
+                },
                 onFilterChange = {
                     filter = it
                     AppSettings.setBlockedAppsFilter(context, it.name)
