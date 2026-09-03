@@ -371,76 +371,17 @@ class RuleOperationWorker(
         rewriteManager: RewriteRuleManager,
         type: RuleOperationType
     ): RuleImportSummary {
-        val blockBatch = ArrayList<AdGuardRuleParser.ParsedRule>(IMPORT_CHUNK_SIZE)
-        val allowBatch = ArrayList<AdGuardRuleParser.ParsedRule>(IMPORT_CHUNK_SIZE)
-        val rewriteBatch = ArrayList<RewriteRule>(IMPORT_CHUNK_SIZE)
-        var insertedBlock = 0
-        var insertedAllow = 0
-        var insertedRewrite = 0
-        var parsed = 0
-        var invalid = 0
-        var unsupported = 0
-        var processed = 0
-
-        suspend fun reportProgress() {
-            setProgressAsync(progressData(type, -1, processed, 0))
-            notifyProgress(titleFor(type), processed, 0)
-        }
-        suspend fun flushBlock() {
-            if (blockBatch.isEmpty()) return
-            val inserted = blockManager.addRulesBatch(blockBatch, LOCAL_IMPORT_SOURCE, IMPORT_CHUNK_SIZE)
-            insertedBlock += inserted
-            processed += inserted
-            blockBatch.clear()
-            reportProgress()
-        }
-        suspend fun flushAllow() {
-            if (allowBatch.isEmpty()) return
-            val inserted = allowManager.addRulesBatch(allowBatch, LOCAL_IMPORT_SOURCE, IMPORT_CHUNK_SIZE)
-            insertedAllow += inserted
-            processed += inserted
-            allowBatch.clear()
-            reportProgress()
-        }
-        suspend fun flushRewrite() {
-            if (rewriteBatch.isEmpty()) return
-            val inserted = rewriteManager.addRules(rewriteBatch, LOCAL_IMPORT_SOURCE, true, IMPORT_CHUNK_SIZE)
-            insertedRewrite += inserted
-            processed += inserted
-            rewriteBatch.clear()
-            reportProgress()
-        }
-
-        while (true) {
-            val line = reader.readLine() ?: break
-            val categorized = AdGuardRuleParser.parseCategorizedLine(line)
-            invalid += categorized.invalidCount
-            unsupported += categorized.unsupportedCount
-            parsed += categorized.blockRules.size + categorized.allowRules.size + categorized.rewriteRules.size
-            categorized.blockRules.forEach { rule ->
-                blockBatch += rule
-                if (blockBatch.size == IMPORT_CHUNK_SIZE) flushBlock()
-            }
-            categorized.allowRules.forEach { rule ->
-                allowBatch += rule
-                if (allowBatch.size == IMPORT_CHUNK_SIZE) flushAllow()
-            }
-            categorized.rewriteRules.forEach { rule ->
-                rewriteBatch += rule
-                if (rewriteBatch.size == IMPORT_CHUNK_SIZE) flushRewrite()
-            }
-        }
-        flushBlock()
-        flushAllow()
-        flushRewrite()
-        require(parsed > 0) { "文件中没有可导入的有效规则" }
-        return RuleImportSummary(
-            blockCount = insertedBlock,
-            allowCount = insertedAllow,
-            rewriteCount = insertedRewrite,
-            duplicateCount = (parsed - insertedBlock - insertedAllow - insertedRewrite).coerceAtLeast(0),
-            invalidCount = invalid,
-            unsupportedCount = unsupported
+        val importer = CategorizedRuleStreamImporter(blockManager, allowManager, rewriteManager, IMPORT_CHUNK_SIZE)
+        return importer.import(
+            reader = reader,
+            source = LOCAL_IMPORT_SOURCE,
+            enabled = true,
+            refreshCache = true,
+            onProgress = { processed ->
+                setProgressAsync(progressData(type, -1, processed, 0))
+                notifyProgress(titleFor(type), processed, 0)
+            },
+            onEmpty = { throw IllegalArgumentException("文件中没有可导入的有效规则") }
         )
     }
 

@@ -1,6 +1,7 @@
 package com.haoze.dnssr.vpn
 
 import android.util.Log
+import com.haoze.dnssr.util.forEachKeysetPage
 import com.haoze.dnssr.data.dao.AllowRuleDao
 import com.haoze.dnssr.data.entity.RuleScope
 import java.io.File
@@ -252,19 +253,10 @@ class AllowRuleCache(private val indexFile: File? = null) {
         val domain = qname.lowercase().trimEnd('.')
         if (domain.isEmpty() || packageName.isEmpty()) return null
 
-        customAppBuckets[packageName]?.let { bucket ->
-            findInSet(domain, bucket.importantExactRules)?.let { return it }
-            findInWildcards(domain, bucket.importantWildcardRules)?.let { return it }
-            findInSet(domain, bucket.exactRules)?.let { return it }
-            findInWildcards(domain, bucket.wildcardRules)?.let { return it }
-        }
-
-        subscriptionAppBuckets[packageName]?.let { bucket ->
-            findInSet(domain, bucket.importantExactRules)?.let { return it }
-            findInWildcards(domain, bucket.importantWildcardRules)?.let { return it }
-            findInSet(domain, bucket.exactRules)?.let { return it }
-            findInWildcards(domain, bucket.wildcardRules)?.let { return it }
-        }
+        findInAppBucket(customAppBuckets, packageName, domain, important = true)?.let { return it }
+        findInAppBucket(customAppBuckets, packageName, domain, important = false)?.let { return it }
+        findInAppBucket(subscriptionAppBuckets, packageName, domain, important = true)?.let { return it }
+        findInAppBucket(subscriptionAppBuckets, packageName, domain, important = false)?.let { return it }
 
         return null
     }
@@ -276,57 +268,26 @@ class AllowRuleCache(private val indexFile: File? = null) {
         val domain = qname.lowercase().trimEnd('.')
         if (domain.isEmpty()) return null
 
-        for (rule in invertedCustomRules) {
-            if (packageName == null || packageName !in rule.excludedApps) {
-                if (rule.wildcard != null && rule.wildcard.matches(domain)) {
-                    return rule.pattern
-                } else if (rule.wildcard == null && matchesDomainOrSuffix(domain, rule.pattern)) {
-                    return rule.pattern
-                }
-            }
-        }
+        findInInvertedRules(invertedCustomRules, domain, important = null, packageName)?.let { return it }
 
         findInSet(domain, importantCustomRules)?.let { return it }
         findInWildcards(domain, importantCustomWildcards)?.let { return it }
         findInSet(domain, customRules)?.let { return it }
         findInWildcards(domain, customWildcards)?.let { return it }
 
-        for (rule in invertedSubscriptionRules) {
-            if (packageName == null || packageName !in rule.excludedApps) {
-                if (rule.wildcard != null && rule.wildcard.matches(domain)) {
-                    return rule.pattern
-                } else if (rule.wildcard == null && matchesDomainOrSuffix(domain, rule.pattern)) {
-                    return rule.pattern
-                }
-            }
-        }
+        findInInvertedRules(invertedSubscriptionRules, domain, important = null, packageName)?.let { return it }
 
-        return findSubscriptionExactMatch(domain, importantSubscriptionIndex, importantSubscriptionFallback)
-            ?: findInWildcards(domain, importantSubscriptionWildcards)
-            ?: findSubscriptionExactMatch(domain, subscriptionIndex, subscriptionFallback)
-            ?: findInWildcards(domain, subscriptionWildcards)
+        return findSubscriptionTail(domain, important = true)
+            ?: findSubscriptionTail(domain, important = false)
     }
 
     fun findCustomMatch(qname: String, packageName: String? = null): String? {
         val domain = qname.lowercase().trimEnd('.')
         if (domain.isEmpty()) return null
 
-        if (packageName != null) {
-            customAppBuckets[packageName]?.let { bucket ->
-                findInSet(domain, bucket.exactRules)?.let { return it }
-                findInWildcards(domain, bucket.wildcardRules)?.let { return it }
-            }
-        }
+        findInAppBucket(customAppBuckets, packageName, domain, important = false)?.let { return it }
 
-        for (rule in invertedCustomRules) {
-            if (!rule.important && (packageName == null || packageName !in rule.excludedApps)) {
-                if (rule.wildcard != null && rule.wildcard.matches(domain)) {
-                    return rule.pattern
-                } else if (rule.wildcard == null && matchesDomainOrSuffix(domain, rule.pattern)) {
-                    return rule.pattern
-                }
-            }
-        }
+        findInInvertedRules(invertedCustomRules, domain, important = false, packageName)?.let { return it }
 
         return findInSet(domain, customRules) ?: findInWildcards(domain, customWildcards)
     }
@@ -335,22 +296,9 @@ class AllowRuleCache(private val indexFile: File? = null) {
         val domain = qname.lowercase().trimEnd('.')
         if (domain.isEmpty()) return null
 
-        if (packageName != null) {
-            customAppBuckets[packageName]?.let { bucket ->
-                findInSet(domain, bucket.importantExactRules)?.let { return it }
-                findInWildcards(domain, bucket.importantWildcardRules)?.let { return it }
-            }
-        }
+        findInAppBucket(customAppBuckets, packageName, domain, important = true)?.let { return it }
 
-        for (rule in invertedCustomRules) {
-            if (rule.important && (packageName == null || packageName !in rule.excludedApps)) {
-                if (rule.wildcard != null && rule.wildcard.matches(domain)) {
-                    return rule.pattern
-                } else if (rule.wildcard == null && matchesDomainOrSuffix(domain, rule.pattern)) {
-                    return rule.pattern
-                }
-            }
-        }
+        findInInvertedRules(invertedCustomRules, domain, important = true, packageName)?.let { return it }
 
         return findInSet(domain, importantCustomRules) ?: findInWildcards(domain, importantCustomWildcards)
     }
@@ -359,40 +307,48 @@ class AllowRuleCache(private val indexFile: File? = null) {
         val domain = qname.lowercase().trimEnd('.')
         if (domain.isEmpty()) return null
 
-        if (packageName != null) {
-            subscriptionAppBuckets[packageName]?.let { bucket ->
-                findInSet(domain, bucket.exactRules)?.let { return it }
-                findInWildcards(domain, bucket.wildcardRules)?.let { return it }
-            }
-        }
+        findInAppBucket(subscriptionAppBuckets, packageName, domain, important = false)?.let { return it }
 
-        for (rule in invertedSubscriptionRules) {
-            if (!rule.important && (packageName == null || packageName !in rule.excludedApps)) {
-                if (rule.wildcard != null && rule.wildcard.matches(domain)) {
-                    return rule.pattern
-                } else if (rule.wildcard == null && matchesDomainOrSuffix(domain, rule.pattern)) {
-                    return rule.pattern
-                }
-            }
-        }
+        findInInvertedRules(invertedSubscriptionRules, domain, important = false, packageName)?.let { return it }
 
-        return findSubscriptionExactMatch(domain, subscriptionIndex, subscriptionFallback)
-            ?: findInWildcards(domain, subscriptionWildcards)
+        return findSubscriptionTail(domain, important = false)
     }
 
     fun findImportantSubscriptionMatch(qname: String, packageName: String? = null): String? {
         val domain = qname.lowercase().trimEnd('.')
         if (domain.isEmpty()) return null
 
-        if (packageName != null) {
-            subscriptionAppBuckets[packageName]?.let { bucket ->
-                findInSet(domain, bucket.importantExactRules)?.let { return it }
-                findInWildcards(domain, bucket.importantWildcardRules)?.let { return it }
-            }
-        }
+        findInAppBucket(subscriptionAppBuckets, packageName, domain, important = true)?.let { return it }
 
-        for (rule in invertedSubscriptionRules) {
-            if (rule.important && (packageName == null || packageName !in rule.excludedApps)) {
+        findInInvertedRules(invertedSubscriptionRules, domain, important = true, packageName)?.let { return it }
+
+        return findSubscriptionTail(domain, important = true)
+    }
+
+    /** 在指定应用的规则桶内按 精确→通配符 顺序匹配。 */
+    private fun findInAppBucket(
+        buckets: Map<String, AllowAppRuleBucket>,
+        packageName: String?,
+        domain: String,
+        important: Boolean
+    ): String? {
+        val bucket = packageName?.let { buckets[it] } ?: return null
+        val exact = if (important) bucket.importantExactRules else bucket.exactRules
+        val wildcards = if (important) bucket.importantWildcardRules else bucket.wildcardRules
+        return findInSet(domain, exact) ?: findInWildcards(domain, wildcards)
+    }
+
+    /** 匹配倒排规则（排除应用名单）；[important] 为 null 时不区分重要/常规。 */
+    private fun findInInvertedRules(
+        rules: List<InvertedAllowRule>,
+        domain: String,
+        important: Boolean?,
+        packageName: String?
+    ): String? {
+        for (rule in rules) {
+            if ((important == null || rule.important == important) &&
+                (packageName == null || packageName !in rule.excludedApps)
+            ) {
                 if (rule.wildcard != null && rule.wildcard.matches(domain)) {
                     return rule.pattern
                 } else if (rule.wildcard == null && matchesDomainOrSuffix(domain, rule.pattern)) {
@@ -400,9 +356,18 @@ class AllowRuleCache(private val indexFile: File? = null) {
                 }
             }
         }
+        return null
+    }
 
-        return findSubscriptionExactMatch(domain, importantSubscriptionIndex, importantSubscriptionFallback)
-            ?: findInWildcards(domain, importantSubscriptionWildcards)
+    /** 订阅 mmap 索引优先、内存 fallback 兜底的精确匹配 + 通配符兜底。 */
+    private fun findSubscriptionTail(domain: String, important: Boolean): String? {
+        return if (important) {
+            findSubscriptionExactMatch(domain, importantSubscriptionIndex, importantSubscriptionFallback)
+                ?: findInWildcards(domain, importantSubscriptionWildcards)
+        } else {
+            findSubscriptionExactMatch(domain, subscriptionIndex, subscriptionFallback)
+                ?: findInWildcards(domain, subscriptionWildcards)
+        }
     }
 
     private fun findSubscriptionExactMatch(
@@ -659,15 +624,12 @@ private class MutableAllowAppBucket {
 
 private suspend fun AllowRuleDao.forEachSubscriptionRulePage(
     consume: (com.haoze.dnssr.data.dao.EnabledBlockRule) -> Unit
-) {
-    var lastId = 0L
-    while (true) {
-        val page = enabledSubscriptionRulesPageKeyset(ALLOW_INDEX_PAGE_SIZE, lastId)
-        if (page.isEmpty()) return
-        page.forEach { consume(it.toEnabledBlockRule()) }
-        lastId = page.last().id
-    }
-}
+) = forEachKeysetPage(
+    ALLOW_INDEX_PAGE_SIZE,
+    { lastId, limit -> enabledSubscriptionRulesPageKeyset(limit, lastId) },
+    { it.id },
+    { consume(it.toEnabledBlockRule()) }
+)
 
 private const val TAG = "AllowRuleCache"
 private const val ALLOW_INDEX_PAGE_SIZE = 2_000

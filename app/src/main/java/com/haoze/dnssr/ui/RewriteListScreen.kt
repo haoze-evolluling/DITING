@@ -12,24 +12,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AltRoute
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -47,15 +40,13 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,11 +56,18 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.dnssr.data.entity.RewriteTargetType
+import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.dnssr.ui.components.RuleConfirmDialog
+import com.haoze.dnssr.ui.components.RuleFilterChipRow
+import com.haoze.dnssr.ui.components.RuleListCountHeader
+import com.haoze.dnssr.ui.components.RuleListEmptyState
+import com.haoze.dnssr.ui.components.RuleListPaginationBar
+import com.haoze.dnssr.ui.components.RuleSearchField
+import com.haoze.dnssr.ui.components.RuleStatsCard
+import com.haoze.dnssr.ui.components.RuleTagChip
 import com.haoze.dnssr.ui.components.SettingsCornerShape
-import com.haoze.dnssr.ui.components.SettingsDivider
 import com.haoze.dnssr.ui.components.SettingsItemSpacing
 import com.haoze.dnssr.ui.components.SettingsScaffold
-import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import com.haoze.dnssr.ui.components.SettingsSurfaceItem
 import kotlinx.coroutines.launch
 
@@ -95,7 +93,6 @@ fun RewriteListScreen(
     var editingItem by remember { mutableStateOf<RewriteListItem?>(null) }
     var itemToDelete by remember { mutableStateOf<RewriteListItem?>(null) }
     var showClearUserDialog by remember { mutableStateOf(false) }
-    var showPageJumpDialog by remember { mutableStateOf(false) }
     var showTopMenu by remember { mutableStateOf(false) }
 
     var addDomain by remember { mutableStateOf("") }
@@ -107,9 +104,6 @@ fun RewriteListScreen(
     var editTargetType by remember { mutableStateOf(RewriteTargetType.IPV4) }
     var editTargetValue by remember { mutableStateOf("") }
     var editError by remember { mutableStateOf<String?>(null) }
-
-    var pageInput by remember { mutableStateOf("") }
-    var pageInputError by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(lifecycleOwner) {
         viewModel.activate()
@@ -189,80 +183,31 @@ fun RewriteListScreen(
                             .padding(bottom = 6.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedTextField(
+                        RuleSearchField(
                             value = searchQuery,
                             onValueChange = viewModel::setSearchQuery,
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text(localizedText("搜索域名或目标地址...")) },
-                            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                                        Icon(Icons.Filled.Close, contentDescription = localizedText("清除"))
-                                    }
-                                }
-                            },
-                            singleLine = true,
-                            shape = RoundedCornerShape(28.dp)
+                            placeholder = localizedText("搜索域名或目标地址...")
                         )
 
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(vertical = 2.dp)
-                        ) {
-                            items(RewriteListFilter.entries) { f ->
-                                FilterChip(
-                                    selected = filter == f,
-                                    onClick = { viewModel.setFilter(f) },
-                                    label = { Text(localizedText(f.labelResName)) },
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                            }
-                        }
+                        RuleFilterChipRow(
+                            filters = RewriteListFilter.entries,
+                            selectedFilter = filter,
+                            onSelect = viewModel::setFilter,
+                            labelKeyOf = { it.labelResName }
+                        )
                     }
                 }
 
                 // 3. 列表标题与总数
                 item(key = "list_header") {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = localizedText("规则列表"),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = localizedText("共 $totalCount 条"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    RuleListCountHeader(totalCount = totalCount)
                 }
 
                 // 4. 规则列表项
                 if (items.isEmpty()) {
                     item(key = "empty_state") {
-                        SettingsSurfaceGroup(
-                            groupContentPadding = PaddingValues.Zero,
-                            content = listOf {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(32.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = localizedText(if (searchQuery.isEmpty()) "暂无覆写规则" else "未找到匹配的规则"),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
+                        RuleListEmptyState(
+                            message = localizedText(if (searchQuery.isEmpty()) "暂无覆写规则" else "未找到匹配的规则")
                         )
                     }
                 } else {
@@ -310,62 +255,11 @@ fun RewriteListScreen(
             }
 
             // 悬浮分页控件
-            if (totalPages > 1) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(28.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        tonalElevation = 2.dp,
-                        shadowElevation = 4.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = { if (currentPage > 1) viewModel.loadPage(currentPage - 1) },
-                                enabled = currentPage > 1
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                    contentDescription = localizedText("上一页")
-                                )
-                            }
-
-                            TextButton(
-                                onClick = {
-                                    pageInput = currentPage.toString()
-                                    pageInputError = null
-                                    showPageJumpDialog = true
-                                },
-                                shape = SettingsCornerShape
-                            ) {
-                                Text(
-                                    text = "$currentPage / $totalPages",
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-
-                            IconButton(
-                                onClick = { if (currentPage < totalPages) viewModel.loadPage(currentPage + 1) },
-                                enabled = currentPage < totalPages
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = localizedText("下一页")
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            RuleListPaginationBar(
+                currentPage = currentPage,
+                totalPages = totalPages,
+                onLoadPage = viewModel::loadPage
+            )
 
             FloatingActionButton(
                 onClick = {
@@ -581,187 +475,49 @@ fun RewriteListScreen(
 
     // 删除单条确认弹窗
     itemToDelete?.let { item ->
-        AlertDialog(
-            onDismissRequest = { itemToDelete = null },
-            title = { Text(localizedText("删除覆写规则")) },
-            text = {
-                val message = "确定要删除覆写规则「${item.pattern} -> ${item.targetValue}」吗？"
-                Text(localizedText(message))
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteRule(item)
-                    itemToDelete = null
-                    Toast.makeText(context, localizedText(context, "已删除"), Toast.LENGTH_SHORT).show()
-                    onRuntimeDnsSettingsChanged()
-                }) {
-                    Text(localizedText("删除"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { itemToDelete = null }) {
-                    Text(localizedText("取消"))
-                }
+        RuleConfirmDialog(
+            title = localizedText("删除覆写规则"),
+            message = localizedText("确定要删除覆写规则「${item.pattern} -> ${item.targetValue}」吗？"),
+            confirmText = localizedText("删除"),
+            onDismiss = { itemToDelete = null },
+            onConfirm = {
+                viewModel.deleteRule(item)
+                Toast.makeText(context, localizedText(context, "已删除"), Toast.LENGTH_SHORT).show()
+                onRuntimeDnsSettingsChanged()
             }
         )
     }
 
     // 清空自定义覆写确认弹窗
     if (showClearUserDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearUserDialog = false },
-            title = { Text(localizedText("清空自定义覆写")) },
-            text = {
-                Text(localizedText("确定要清空所有由您添加的自定义覆写规则吗？规则订阅等内容不受影响。"))
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.clearUserRules()
-                    showClearUserDialog = false
-                    Toast.makeText(context, localizedText(context, "已清空自定义覆写"), Toast.LENGTH_SHORT).show()
-                    onRuntimeDnsSettingsChanged()
-                }) {
-                    Text(localizedText("确认清空"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearUserDialog = false }) {
-                    Text(localizedText("取消"))
-                }
+        RuleConfirmDialog(
+            title = localizedText("清空自定义覆写"),
+            message = localizedText("确定要清空所有由您添加的自定义覆写规则吗？规则订阅等内容不受影响。"),
+            confirmText = localizedText("确认清空"),
+            onDismiss = { showClearUserDialog = false },
+            onConfirm = {
+                viewModel.clearUserRules()
+                Toast.makeText(context, localizedText(context, "已清空自定义覆写"), Toast.LENGTH_SHORT).show()
+                onRuntimeDnsSettingsChanged()
             }
         )
     }
 
-    // 分页跳转弹窗
-    if (showPageJumpDialog) {
-        AlertDialog(
-            onDismissRequest = { showPageJumpDialog = false },
-            title = { Text(localizedText("跳转到页面")) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(localizedText("请输入 1 到 $totalPages 之间的页码"))
-                    OutlinedTextField(
-                        value = pageInput,
-                        onValueChange = {
-                            pageInput = it.filter(Char::isDigit)
-                            pageInputError = null
-                        },
-                        label = { Text(localizedText("页码")) },
-                        singleLine = true,
-                        isError = pageInputError != null,
-                        supportingText = pageInputError?.let { msg -> { Text(msg) } },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        shape = SettingsCornerShape
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val page = pageInput.toIntOrNull()
-                    if (page == null || page !in 1..totalPages) {
-                        pageInputError = localizedText(context, "请输入 1 到 $totalPages 之间的页码")
-                    } else {
-                        viewModel.loadPage(page)
-                        showPageJumpDialog = false
-                    }
-                }) {
-                    Text(localizedText("跳转"))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showPageJumpDialog = false }) {
-                    Text(localizedText("取消"))
-                }
-            }
-        )
-    }
 }
 
 @Composable
 private fun RewriteListStatsCard(stats: RewriteListStats) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = SettingsCornerShape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    RuleStatsCard(
+        icon = Icons.Filled.AltRoute,
+        title = localizedText("覆写统计与状态"),
+        activeBadgeText = localizedText("生效中: ${stats.totalActive} 条"),
+        stats = listOf(
+            "IPv4 覆写" to stats.ipv4Count.toString(),
+            "IPv6 覆写" to stats.ipv6Count.toString(),
+            "CNAME 覆写" to stats.cnameCount.toString(),
+            "用户自定义" to "${stats.userEnabled}/${stats.userTotal}"
         )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.AltRoute,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = localizedText("覆写统计与状态"),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = localizedText("生效中: ${stats.totalActive} 条"),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            SettingsDivider()
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                RewriteStatItem(label = "IPv4 覆写", value = stats.ipv4Count.toString())
-                RewriteStatItem(label = "IPv6 覆写", value = stats.ipv6Count.toString())
-                RewriteStatItem(label = "CNAME 覆写", value = stats.cnameCount.toString())
-                RewriteStatItem(label = "用户自定义", value = "${stats.userEnabled}/${stats.userTotal}")
-            }
-        }
-    }
-}
-
-@Composable
-private fun RewriteStatItem(label: String, value: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = localizedText(label),
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
 }
 
 @Composable
@@ -817,32 +573,20 @@ private fun RewriteListItemRow(
             ) {
                 // 来源标签
                 if (item.isUserRule) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = localizedText("自定义"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = localizedText("自定义"),
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
                 if (item.isSubscription) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            text = item.subscriptionName?.let { localizedText(it) } ?: localizedText("规则订阅"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = item.subscriptionName?.let { localizedText(it) } ?: localizedText("规则订阅"),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 // 目标类型标签

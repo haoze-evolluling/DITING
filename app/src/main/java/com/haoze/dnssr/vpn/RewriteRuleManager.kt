@@ -1,6 +1,7 @@
 package com.haoze.dnssr.vpn
 
 import android.util.Log
+import com.haoze.dnssr.util.forEachKeysetPage
 import com.haoze.dnssr.data.dao.RewriteRuleDao
 import com.haoze.dnssr.data.entity.RewriteRuleEntity
 import com.haoze.dnssr.data.entity.RewriteTargetType
@@ -238,14 +239,11 @@ private fun String.isSubscriptionSource(): Boolean = startsWith("sub_")
 
 private suspend fun RewriteRuleDao.forEachSubscriptionRulePage(
     consume: (com.haoze.dnssr.data.dao.EnabledRewriteRule) -> Unit
-) {
-    var lastId = 0L
-    while (true) {
-        val page = enabledSubscriptionRulesPageKeyset(REWRITE_INDEX_PAGE_SIZE, lastId)
-        if (page.isEmpty()) return
-        page.forEach { consume(it.toEnabledRewriteRule()) }
-        lastId = page.last().id
-    }
-}
+) = forEachKeysetPage(
+    REWRITE_INDEX_PAGE_SIZE,
+    { lastId, limit -> enabledSubscriptionRulesPageKeyset(limit, lastId) },
+    { it.id },
+    { consume(it.toEnabledRewriteRule()) }
+)
 
 private const val REWRITE_INDEX_PAGE_SIZE = 2_000

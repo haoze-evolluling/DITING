@@ -171,92 +171,71 @@ fun AllModeDashboard(
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("缓存热点"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToDnsCache) }
-                )
-                if (state.cacheEntries.isEmpty()) {
-                    EmptyText(localizedText("暂无有效缓存"))
-                } else {
-                    state.cacheEntries.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        CacheEntryRow(item)
-                    }
-                }
+            DashboardListCard(
+                title = localizedText("缓存热点"),
+                emptyText = localizedText("暂无有效缓存"),
+                rowCount = state.cacheEntries.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToDnsCache) }
+            ) { index ->
+                CacheEntryRow(state.cacheEntries[index])
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("竞速胜出"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToRaceStats) }
+            DashboardListCard(
+                title = localizedText("竞速胜出"),
+                emptyText = localizedText("暂无竞速数据"),
+                rowCount = race.winners.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToRaceStats) }
+            ) { index ->
+                val item = race.winners[index]
+                DashboardListRow(
+                    title = item.name,
+                    subtitle = localizedText("平均胜出耗时 ${formatMs(item.avgElapsedMs)}"),
+                    tag = localizedText("${formatCount(item.wins)} 次"),
+                    tagColor = MaterialTheme.colorScheme.secondary
                 )
-                if (race.winners.isEmpty()) {
-                    EmptyText(localizedText("暂无竞速数据"))
-                } else {
-                    race.winners.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        DashboardListRow(
-                            title = item.name,
-                            subtitle = localizedText("平均胜出耗时 ${formatMs(item.avgElapsedMs)}"),
-                            tag = localizedText("${formatCount(item.wins)} 次"),
-                            tagColor = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                }
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("Bootstrap DNS"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToBootstrapStats) }
+            DashboardListCard(
+                title = localizedText("Bootstrap DNS"),
+                emptyText = localizedText("暂无 Bootstrap 数据"),
+                rowCount = bootstrap.ips.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToBootstrapStats) }
+            ) { index ->
+                val item = bootstrap.ips[index]
+                DashboardListRow(
+                    title = item.name,
+                    subtitle = localizedText("${item.ip} · 成功 ${formatPercent(item.successRate)} · ${formatMs(item.avgElapsedMs)}"),
+                    tag = localizedText("${formatCount(item.attempts)} 次"),
+                    tagColor = MaterialTheme.colorScheme.primary
                 )
-                if (bootstrap.ips.isEmpty()) {
-                    EmptyText(localizedText("暂无 Bootstrap 数据"))
-                } else {
-                    bootstrap.ips.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        DashboardListRow(
-                            title = item.name,
-                            subtitle = localizedText("${item.ip} · 成功 ${formatPercent(item.successRate)} · ${formatMs(item.avgElapsedMs)}"),
-                            tag = localizedText("${formatCount(item.attempts)} 次"),
-                            tagColor = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("规则拦截"),
-                    trailing = {
-                        PillLink(
-                            text = localizedText("详情"),
-                            onClick = onNavigateToSubscriptionInterceptionStats
-                        )
-                    }
-                )
-                if (state.subscriptions.items.isEmpty()) {
-                    EmptyText(localizedText("暂无规则拦截数据"))
-                } else {
-                    state.subscriptions.items.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        val status = localizedText(when {
-                            item.deleted -> "已删除"
-                            item.enabled -> "已启用"
-                            else -> "已禁用"
-                        })
-                        DashboardListRow(
-                            title = item.name,
-                            subtitle = localizedText("$status · 占全部请求 ${formatPercent(item.rate)}"),
-                            tag = localizedText("${formatCount(item.hits)} 次"),
-                            tagColor = MaterialTheme.colorScheme.error
-                        )
-                    }
+            DashboardListCard(
+                title = localizedText("规则拦截"),
+                emptyText = localizedText("暂无规则拦截数据"),
+                rowCount = state.subscriptions.items.size,
+                trailing = {
+                    PillLink(
+                        text = localizedText("详情"),
+                        onClick = onNavigateToSubscriptionInterceptionStats
+                    )
                 }
+            ) { index ->
+                val item = state.subscriptions.items[index]
+                val status = localizedText(when {
+                    item.deleted -> "已删除"
+                    item.enabled -> "已启用"
+                    else -> "已禁用"
+                })
+                DashboardListRow(
+                    title = item.name,
+                    subtitle = localizedText("$status · 占全部请求 ${formatPercent(item.rate)}"),
+                    tag = localizedText("${formatCount(item.hits)} 次"),
+                    tagColor = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -399,92 +378,71 @@ fun FilteredModeDashboard(
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("缓存热点"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToDnsCache) }
-                )
-                if (state.cacheEntries.isEmpty()) {
-                    EmptyText(localizedText("暂无有效缓存"))
-                } else {
-                    state.cacheEntries.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        CacheEntryRow(item)
-                    }
-                }
+            DashboardListCard(
+                title = localizedText("缓存热点"),
+                emptyText = localizedText("暂无有效缓存"),
+                rowCount = state.cacheEntries.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToDnsCache) }
+            ) { index ->
+                CacheEntryRow(state.cacheEntries[index])
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("竞速胜出"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToRaceStats) }
+            DashboardListCard(
+                title = localizedText("竞速胜出"),
+                emptyText = localizedText("暂无竞速数据"),
+                rowCount = race.winners.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToRaceStats) }
+            ) { index ->
+                val item = race.winners[index]
+                DashboardListRow(
+                    title = item.name,
+                    subtitle = localizedText("平均胜出耗时 ${formatMs(item.avgElapsedMs)}"),
+                    tag = localizedText("${formatCount(item.wins)} 次"),
+                    tagColor = MaterialTheme.colorScheme.secondary
                 )
-                if (race.winners.isEmpty()) {
-                    EmptyText(localizedText("暂无竞速数据"))
-                } else {
-                    race.winners.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        DashboardListRow(
-                            title = item.name,
-                            subtitle = localizedText("平均胜出耗时 ${formatMs(item.avgElapsedMs)}"),
-                            tag = localizedText("${formatCount(item.wins)} 次"),
-                            tagColor = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                }
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("Bootstrap DNS"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToBootstrapStats) }
+            DashboardListCard(
+                title = localizedText("Bootstrap DNS"),
+                emptyText = localizedText("暂无 Bootstrap 数据"),
+                rowCount = bootstrap.ips.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToBootstrapStats) }
+            ) { index ->
+                val item = bootstrap.ips[index]
+                DashboardListRow(
+                    title = item.name,
+                    subtitle = localizedText("${item.ip} · 成功 ${formatPercent(item.successRate)} · ${formatMs(item.avgElapsedMs)}"),
+                    tag = localizedText("${formatCount(item.attempts)} 次"),
+                    tagColor = MaterialTheme.colorScheme.primary
                 )
-                if (bootstrap.ips.isEmpty()) {
-                    EmptyText(localizedText("暂无 Bootstrap 数据"))
-                } else {
-                    bootstrap.ips.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        DashboardListRow(
-                            title = item.name,
-                            subtitle = localizedText("${item.ip} · 成功 ${formatPercent(item.successRate)} · ${formatMs(item.avgElapsedMs)}"),
-                            tag = localizedText("${formatCount(item.attempts)} 次"),
-                            tagColor = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("规则拦截"),
-                    trailing = {
-                        PillLink(
-                            text = localizedText("详情"),
-                            onClick = onNavigateToSubscriptionInterceptionStats
-                        )
-                    }
-                )
-                if (state.subscriptions.items.isEmpty()) {
-                    EmptyText(localizedText("暂无规则拦截数据"))
-                } else {
-                    state.subscriptions.items.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        val status = localizedText(when {
-                            item.deleted -> "已删除"
-                            item.enabled -> "已启用"
-                            else -> "已禁用"
-                        })
-                        DashboardListRow(
-                            title = item.name,
-                            subtitle = localizedText("$status · 占全部请求 ${formatPercent(item.rate)}"),
-                            tag = localizedText("${formatCount(item.hits)} 次"),
-                            tagColor = MaterialTheme.colorScheme.error
-                        )
-                    }
+            DashboardListCard(
+                title = localizedText("规则拦截"),
+                emptyText = localizedText("暂无规则拦截数据"),
+                rowCount = state.subscriptions.items.size,
+                trailing = {
+                    PillLink(
+                        text = localizedText("详情"),
+                        onClick = onNavigateToSubscriptionInterceptionStats
+                    )
                 }
+            ) { index ->
+                val item = state.subscriptions.items[index]
+                val status = localizedText(when {
+                    item.deleted -> "已删除"
+                    item.enabled -> "已启用"
+                    else -> "已禁用"
+                })
+                DashboardListRow(
+                    title = item.name,
+                    subtitle = localizedText("$status · 占全部请求 ${formatPercent(item.rate)}"),
+                    tag = localizedText("${formatCount(item.hits)} 次"),
+                    tagColor = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -589,61 +547,45 @@ fun OffModeDashboard(
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("缓存热点"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToDnsCache) }
-                )
-                if (state.cacheEntries.isEmpty()) {
-                    EmptyText(localizedText("暂无有效缓存"))
-                } else {
-                    state.cacheEntries.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        CacheEntryRow(item)
-                    }
-                }
+            DashboardListCard(
+                title = localizedText("缓存热点"),
+                emptyText = localizedText("暂无有效缓存"),
+                rowCount = state.cacheEntries.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToDnsCache) }
+            ) { index ->
+                CacheEntryRow(state.cacheEntries[index])
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("竞速胜出"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToRaceStats) }
+            DashboardListCard(
+                title = localizedText("竞速胜出"),
+                emptyText = localizedText("暂无竞速数据"),
+                rowCount = race.winners.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToRaceStats) }
+            ) { index ->
+                val item = race.winners[index]
+                DashboardListRow(
+                    title = item.name,
+                    subtitle = localizedText("平均胜出耗时 ${formatMs(item.avgElapsedMs)}"),
+                    tag = localizedText("${formatCount(item.wins)} 次"),
+                    tagColor = MaterialTheme.colorScheme.secondary
                 )
-                if (race.winners.isEmpty()) {
-                    EmptyText(localizedText("暂无竞速数据"))
-                } else {
-                    race.winners.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        DashboardListRow(
-                            title = item.name,
-                            subtitle = localizedText("平均胜出耗时 ${formatMs(item.avgElapsedMs)}"),
-                            tag = localizedText("${formatCount(item.wins)} 次"),
-                            tagColor = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                }
             }
         }
         item {
-            DashboardCard {
-                SectionTitle(
-                    title = localizedText("Bootstrap DNS"),
-                    trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToBootstrapStats) }
+            DashboardListCard(
+                title = localizedText("Bootstrap DNS"),
+                emptyText = localizedText("暂无 Bootstrap 数据"),
+                rowCount = bootstrap.ips.size,
+                trailing = { PillLink(text = localizedText("详情"), onClick = onNavigateToBootstrapStats) }
+            ) { index ->
+                val item = bootstrap.ips[index]
+                DashboardListRow(
+                    title = item.name,
+                    subtitle = localizedText("${item.ip} · 成功 ${formatPercent(item.successRate)} · ${formatMs(item.avgElapsedMs)}"),
+                    tag = localizedText("${formatCount(item.attempts)} 次"),
+                    tagColor = MaterialTheme.colorScheme.primary
                 )
-                if (bootstrap.ips.isEmpty()) {
-                    EmptyText(localizedText("暂无 Bootstrap 数据"))
-                } else {
-                    bootstrap.ips.forEachIndexed { index, item ->
-                        if (index > 0) ListDivider()
-                        DashboardListRow(
-                            title = item.name,
-                            subtitle = localizedText("${item.ip} · 成功 ${formatPercent(item.successRate)} · ${formatMs(item.avgElapsedMs)}"),
-                            tag = localizedText("${formatCount(item.attempts)} 次"),
-                            tagColor = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
             }
         }
     }

@@ -12,17 +12,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,21 +26,20 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.haoze.dnssr.ui.components.SettingsCornerShape
+import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.dnssr.ui.components.RuleListPaginationBar
+import com.haoze.dnssr.ui.components.RuleTagChip
 import com.haoze.dnssr.ui.components.SettingsDivider
 import com.haoze.dnssr.ui.components.SettingsItemSpacing
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
@@ -71,63 +64,11 @@ fun RuleListScreen(
     val sourceFilter by viewModel.sourceFilter.collectAsStateWithLifecycle()
     val sourceSubscriptions by viewModel.sourceSubscriptions.collectAsStateWithLifecycle()
     val availableAppScopes by viewModel.availableAppScopes.collectAsStateWithLifecycle()
-    var showPageJumpDialog by remember { mutableStateOf(false) }
     var showSourceMenu by remember { mutableStateOf(false) }
-    var pageInput by remember { mutableStateOf("") }
-    var pageInputError by remember { mutableStateOf<String?>(null) }
-    val pageRangeError = localizedText("请输入 1 到 $totalPages 之间的页码")
 
     NavigationSettledEffect(ruleKind to ruleScope) {
         viewModel.setRuleKind(ruleKind, ruleScope)
         viewModel.activate()
-    }
-
-    if (showPageJumpDialog) {
-        AlertDialog(
-            onDismissRequest = { showPageJumpDialog = false },
-            title = { Text(localizedText("跳转到页面")) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(localizedText("请输入 1 到 $totalPages 之间的页码"))
-                    OutlinedTextField(
-                        value = pageInput,
-                        onValueChange = {
-                            pageInput = it.filter(Char::isDigit)
-                            pageInputError = null
-                        },
-                        label = { Text(localizedText("页码")) },
-                        singleLine = true,
-                        isError = pageInputError != null,
-                        supportingText = pageInputError?.let { message -> { Text(message) } },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        shape = SettingsCornerShape
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val page = pageInput.toIntOrNull()
-                        if (page == null || page !in 1..totalPages) {
-                            pageInputError = pageRangeError
-                        } else {
-                            viewModel.loadPage(page)
-                            showPageJumpDialog = false
-                        }
-                    }
-                ) {
-                    Text(localizedText("跳转"))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showPageJumpDialog = false }) {
-                    Text(localizedText("取消"))
-                }
-            }
-        )
     }
 
     SettingsScaffold(
@@ -204,64 +145,12 @@ fun RuleListScreen(
             }
 
             // 悬浮分页控件
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(28.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    tonalElevation = 2.dp,
-                    shadowElevation = 4.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = {
-                                if (currentPage > 1) viewModel.loadPage(currentPage - 1)
-                            },
-                            enabled = currentPage > 1
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = localizedText("上一页")
-                            )
-                        }
-
-                        TextButton(
-                            onClick = {
-                                pageInput = currentPage.toString()
-                                pageInputError = null
-                                showPageJumpDialog = true
-                            },
-                            shape = SettingsCornerShape
-                        ) {
-                            Text(
-                                text = "$currentPage / $totalPages",
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
-
-                        IconButton(
-                            onClick = {
-                                if (currentPage < totalPages) viewModel.loadPage(currentPage + 1)
-                            },
-                            enabled = currentPage < totalPages
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = localizedText("下一页")
-                            )
-                        }
-                    }
-                }
-            }
+            RuleListPaginationBar(
+                currentPage = currentPage,
+                totalPages = totalPages,
+                onLoadPage = viewModel::loadPage,
+                alwaysShow = true
+            )
         }
     }
 
@@ -376,30 +265,18 @@ private fun RuleRowContent(
                     modifier = Modifier.weight(1f, fill = false)
                 )
                 if (rule.important) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.errorContainer
-                    ) {
-                        Text(
-                            text = "重要",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = "重要",
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
                 }
                 if (rule.isWildcard) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            text = "通配符",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = "通配符",
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
                 }
             }
 

@@ -14,7 +14,7 @@ import com.haoze.dnssr.data.dao.HttpRequestLogDao
 import com.haoze.dnssr.vpn.HttpRequestOutcome
 import com.haoze.dnssr.data.entity.DnsLogEntity
 import com.haoze.dnssr.vpn.LogResult
-import com.haoze.dnssr.util.dayStartMillis
+import com.haoze.dnssr.util.statsRangeStartMillis
 import com.haoze.dnssr.ui.DnsLogMode
 
 class DnsLogRepository(
@@ -24,7 +24,6 @@ class DnsLogRepository(
 
     companion object {
         const val PAGE_SIZE = 50
-        private const val SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000L
     }
 
     fun logsPagingSource(params: LogQueryParams): PagingSource<Int, DnsLogEntity> {
@@ -89,11 +88,7 @@ class DnsLogRepository(
     suspend fun subscriptionInterceptionStats(
         range: SubscriptionInterceptionStatsRange
     ): SubscriptionInterceptionStats {
-        val since = when (range) {
-            SubscriptionInterceptionStatsRange.TODAY -> dayStartMillis()
-            SubscriptionInterceptionStatsRange.SEVEN_DAYS -> System.currentTimeMillis() - SEVEN_DAYS_MS
-            SubscriptionInterceptionStatsRange.ALL -> 0L
-        }
+        val since = statsRangeStartMillis(range)
         val dnsTotal = dao.countSince(since)
         val httpsTotal = httpRequestLogDao?.countSince(since) ?: 0
         val hits = mutableMapOf<Long, Int>()

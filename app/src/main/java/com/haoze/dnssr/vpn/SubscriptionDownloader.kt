@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 
 internal class SubscriptionDownloader(
     private val subscriptionDao: SubscriptionDao,
-    private val ruleStreamer: SubscriptionRuleStreamer,
+    private val ruleStreamer: CategorizedRuleStreamImporter,
     private val ruleStorage: SubscriptionRuleStorage,
     private val client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -78,7 +78,12 @@ internal class SubscriptionDownloader(
             val content = body.string()
             progressTotalHint = SubscriptionUrlHelper.countRules(content)
             val summary = StringReader(content).buffered().use { reader ->
-                ruleStreamer.streamRules(reader, ruleStorage.sourceTag(subscriptionId), enabled) { processed ->
+                ruleStreamer.import(
+                    reader,
+                    ruleStorage.sourceTag(subscriptionId),
+                    enabled,
+                    onEmpty = { throw SubscriptionUpdateException("订阅中没有可导入的有效规则", retryable = false) }
+                ) { processed ->
                     onProgressUpdate?.invoke(processed, maxOf(processed, progressTotalHint))
                 }
             }
@@ -145,7 +150,12 @@ internal class SubscriptionDownloader(
             val content = body.string()
             progressTotalHint = SubscriptionUrlHelper.countRules(content)
             val summary = StringReader(content).buffered().use { reader ->
-                ruleStreamer.streamRules(reader, stagingSource, enabled) { processed ->
+                ruleStreamer.import(
+                    reader,
+                    stagingSource,
+                    enabled,
+                    onEmpty = { throw SubscriptionUpdateException("订阅中没有可导入的有效规则", retryable = false) }
+                ) { processed ->
                     onProgressUpdate?.invoke(processed, maxOf(processed, progressTotalHint))
                 }
             }

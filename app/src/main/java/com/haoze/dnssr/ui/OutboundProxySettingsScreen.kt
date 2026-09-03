@@ -44,6 +44,7 @@ import com.haoze.dnssr.ui.components.SettingsActionButton
 import com.haoze.dnssr.ui.components.SettingsCornerShape
 import com.haoze.dnssr.ui.components.SettingsInfoText
 import com.haoze.dnssr.ui.components.SettingsItem
+import com.haoze.dnssr.ui.components.SettingsSwitchItem
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceItem
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
@@ -114,16 +115,12 @@ fun OutboundProxySettingsScreen(
         ) {
             SettingsSurfaceGroup(content = listOf(
                 {
-                    SettingsItem(
-            title = localizedText("启用出站代理功能"),
+                    SettingsSwitchItem(
+                        title = localizedText("启用出站代理功能"),
                         subtitle = statusText,
-                        onClick = { setProxyEnabled(!draft.enabled) }
-                    ) {
-                        Switch(
-                            checked = draft.enabled,
-                            onCheckedChange = ::setProxyEnabled
-                        )
-                    }
+                        checked = draft.enabled,
+                        onCheckedChange = ::setProxyEnabled
+                    )
                 },
                 {
                     SettingsItem(

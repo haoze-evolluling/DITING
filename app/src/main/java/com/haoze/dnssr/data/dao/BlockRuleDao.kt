@@ -162,24 +162,6 @@ interface BlockRuleDao {
     suspend fun all(): List<BlockRuleEntity>
 
     @Query(
-        "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
-            "r.appScope AS appScope, r.appInverted AS appInverted, r.isWildcard AS isWildcard FROM block_rule r " +
-            "JOIN block_rule_source s ON s.ruleId = r.id " +
-            "WHERE r.enabled = 1 AND s.enabled = 1 " +
-            "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard"
-    )
-    suspend fun enabledRules(): List<EnabledBlockRule>
-
-    @Query(
-        "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
-            "r.appScope AS appScope, r.appInverted AS appInverted, r.isWildcard AS isWildcard FROM block_rule r " +
-            "JOIN block_rule_source s ON s.ruleId = r.id " +
-            "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source LIKE 'sub_%' " +
-            "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard"
-    )
-    suspend fun enabledSubscriptionRules(): List<EnabledBlockRule>
-
-    @Query(
         "SELECT r.id AS id, r.pattern, MIN(s.source) AS source, r.important AS important, " +
             "r.appScope AS appScope, r.appInverted AS appInverted, r.isWildcard AS isWildcard FROM block_rule r " +
             "JOIN block_rule_source s ON s.ruleId = r.id " +
@@ -192,20 +174,6 @@ interface BlockRuleDao {
         limit: Int,
         lastId: Long
     ): List<EnabledBlockRuleKeyset>
-
-    @Query(
-        "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
-            "r.appScope AS appScope, r.appInverted AS appInverted, r.isWildcard AS isWildcard FROM block_rule r " +
-            "JOIN block_rule_source s ON s.ruleId = r.id " +
-            "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source LIKE 'sub_%' " +
-            "AND r.important = :important GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard " +
-            "ORDER BY r.id LIMIT :limit OFFSET :offset"
-    )
-    suspend fun enabledSubscriptionRulesPage(
-        important: Boolean,
-        limit: Int,
-        offset: Int
-    ): List<EnabledBlockRule>
 
     @Query(
         "SELECT r.pattern, 'useradd' AS source, r.important AS important, " +

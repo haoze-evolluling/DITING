@@ -7,6 +7,7 @@ import android.net.TrafficStats
 import android.os.PowerManager
 import android.util.Log
 import com.haoze.dnssr.data.AppDatabase
+import com.haoze.dnssr.util.currentDayString
 import com.haoze.dnssr.data.dao.AppTrafficDeltaItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,9 +25,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -780,6 +778,4 @@ object TrafficStatsManager {
         return appList
     }
 
-    private fun currentDayString(): String =
-        SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 }

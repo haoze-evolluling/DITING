@@ -482,6 +482,29 @@ fun EmptyText(text: String) {
     )
 }
 
+/** 带「标题 + 详情链接 + 空状态/行列表」结构的仪表盘列表卡片，三种日志模式共用。 */
+@Composable
+fun DashboardListCard(
+    title: String,
+    emptyText: String,
+    rowCount: Int,
+    modifier: Modifier = Modifier,
+    trailing: (@Composable () -> Unit)? = null,
+    rowContent: @Composable (Int) -> Unit
+) {
+    DashboardCard(modifier = modifier) {
+        SectionTitle(title = title, trailing = trailing)
+        if (rowCount == 0) {
+            EmptyText(emptyText)
+        } else {
+            for (index in 0 until rowCount) {
+                if (index > 0) ListDivider()
+                rowContent(index)
+            }
+        }
+    }
+}
+
 @Composable
 fun ErrorBanner(message: String) {
     Text(

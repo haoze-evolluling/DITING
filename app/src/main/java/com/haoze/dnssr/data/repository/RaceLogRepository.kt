@@ -7,12 +7,12 @@ import com.haoze.dnssr.data.RaceWinnerStats
 import com.haoze.dnssr.data.SmartSelectionStats
 import com.haoze.dnssr.data.dao.RaceLogDao
 import com.haoze.dnssr.ui.RaceModeStrategy
-import com.haoze.dnssr.util.dayStartMillis
+import com.haoze.dnssr.util.statsRangeStartMillis
 
 class RaceLogRepository(private val dao: RaceLogDao) {
 
     suspend fun stats(range: RaceStatsRange): RaceStats {
-        val since = sinceMillis(range)
+        val since = statsRangeStartMillis(range)
         return RaceStats(
             strategyStats = dao.strategyStats(since).map { row ->
                 RaceStrategyStats(
@@ -51,19 +51,8 @@ class RaceLogRepository(private val dao: RaceLogDao) {
         )
     }
 
-    private fun sinceMillis(range: RaceStatsRange): Long {
-        return when (range) {
-            RaceStatsRange.TODAY -> dayStartMillis()
-            RaceStatsRange.SEVEN_DAYS -> System.currentTimeMillis() - SEVEN_DAYS_MS
-            RaceStatsRange.ALL -> 0L
-        }
-    }
-
     private fun strategyDisplayName(strategy: String): String {
         return RaceModeStrategy.fromStorageValue(strategy).displayName
     }
 
-    private companion object {
-        private const val SEVEN_DAYS_MS = 7L * 24L * 60L * 60L * 1000L
-    }
 }

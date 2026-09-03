@@ -2,7 +2,11 @@ package com.haoze.dnssr.vpn
 
 import java.io.BufferedReader
 
-internal class SubscriptionRuleStreamer(
+/**
+ * 分类规则（block/allow/rewrite）的流式导入器，订阅导入与本地文件导入共用：
+ * 逐行解析、满 [chunkSize] 落库、回报已导入进度，最后汇总 [RuleImportSummary]。
+ */
+internal class CategorizedRuleStreamImporter(
     private val blockListManager: BlockListManager,
     private val allowListManager: AllowListManager,
     private val rewriteRuleManager: RewriteRuleManager,
@@ -12,10 +16,15 @@ internal class SubscriptionRuleStreamer(
         const val CHUNK_SIZE = 1000
     }
 
-    suspend fun streamRules(
+    /**
+     * [onEmpty] 在没有任何可导入的有效规则时调用，由调用方决定抛出的异常。
+     */
+    suspend fun import(
         reader: BufferedReader,
         source: String,
         enabled: Boolean,
+        refreshCache: Boolean = false,
+        onEmpty: () -> Nothing,
         onProgress: (suspend (processed: Int) -> Unit)? = null
     ): RuleImportSummary {
         val blockBatch = ArrayList<AdGuardRuleParser.ParsedRule>(chunkSize)
@@ -31,7 +40,7 @@ internal class SubscriptionRuleStreamer(
 
         suspend fun flushBlock() {
             if (blockBatch.isEmpty()) return
-            val inserted = blockListManager.addRulesBatch(blockBatch, source, chunkSize, enabled, refreshCache = false)
+            val inserted = blockListManager.addRulesBatch(blockBatch, source, chunkSize, enabled, refreshCache)
             insertedBlock += inserted
             processed += inserted
             blockBatch.clear()
@@ -40,7 +49,7 @@ internal class SubscriptionRuleStreamer(
 
         suspend fun flushAllow() {
             if (allowBatch.isEmpty()) return
-            val inserted = allowListManager.addRulesBatch(allowBatch, source, chunkSize, enabled, refreshCache = false)
+            val inserted = allowListManager.addRulesBatch(allowBatch, source, chunkSize, enabled, refreshCache)
             insertedAllow += inserted
             processed += inserted
             allowBatch.clear()
@@ -49,7 +58,7 @@ internal class SubscriptionRuleStreamer(
 
         suspend fun flushRewrite() {
             if (rewriteBatch.isEmpty()) return
-            val inserted = rewriteRuleManager.addRules(rewriteBatch, source, enabled, chunkSize, refreshCache = false)
+            val inserted = rewriteRuleManager.addRules(rewriteBatch, source, enabled, chunkSize, refreshCache)
             insertedRewrite += inserted
             processed += inserted
             rewriteBatch.clear()
@@ -80,9 +89,7 @@ internal class SubscriptionRuleStreamer(
         flushAllow()
         flushRewrite()
 
-        if (parsedRules == 0) {
-            throw SubscriptionUpdateException("订阅中没有可导入的有效规则", retryable = false)
-        }
+        if (parsedRules == 0) onEmpty()
         val totalInserted = insertedBlock + insertedAllow + insertedRewrite
         return RuleImportSummary(
             blockCount = insertedBlock,

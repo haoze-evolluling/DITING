@@ -42,7 +42,7 @@ class SubscriptionManager(
         rewriteRuleManager
     )
 
-    private val ruleStreamer = SubscriptionRuleStreamer(
+    private val ruleStreamer = CategorizedRuleStreamImporter(
         blockListManager,
         allowListManager,
         rewriteRuleManager
@@ -235,7 +235,12 @@ class SubscriptionManager(
             _importingSubscriptionId.value = id
 
             val summary = contentLoader().buffered().use { reader ->
-                ruleStreamer.streamRules(reader, ruleStorage.sourceTag(id), enabled = true) { processed ->
+                ruleStreamer.import(
+                    reader,
+                    ruleStorage.sourceTag(id),
+                    enabled = true,
+                    onEmpty = { throw SubscriptionUpdateException("订阅中没有可导入的有效规则", retryable = false) }
+                ) { processed ->
                     progressReporter?.invoke(processed, processed)
                 }
             }

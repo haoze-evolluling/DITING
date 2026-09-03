@@ -262,13 +262,7 @@ class RewriteListViewModel(application: Application) : AndroidViewModel(applicat
 
         val success = rewriteRuleManager.addRule(trimmedDomain, targetType, trimmedValue)
         if (success) {
-            val context = getApplication<Application>()
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                context, refreshBlock = false, refreshAllow = false, refreshRewrite = true, RuleScope.DNS
-            )
-            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
-            loadStats()
-            loadPage(1)
+            refreshAfterMutation(loadFirstPage = true)
             Result.success("已添加覆写规则")
         } else {
             Result.failure(IllegalArgumentException("域名、目标格式无效或存在规则冲突"))
@@ -292,13 +286,7 @@ class RewriteListViewModel(application: Application) : AndroidViewModel(applicat
 
         val success = rewriteRuleManager.editRule(item.id, trimmedDomain, newTargetType, trimmedValue)
         if (success) {
-            val context = getApplication<Application>()
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                context, refreshBlock = false, refreshAllow = false, refreshRewrite = true, RuleScope.DNS
-            )
-            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
-            loadStats()
-            loadPage(_currentPage.value)
+            refreshAfterMutation()
             Result.success("已保存修改")
         } else {
             Result.failure(IllegalArgumentException("修改失败：格式无效或存在规则冲突"))
@@ -308,39 +296,32 @@ class RewriteListViewModel(application: Application) : AndroidViewModel(applicat
     fun deleteRule(item: RewriteListItem) {
         viewModelScope.launch(Dispatchers.IO) {
             rewriteRuleManager.deleteRule(item.id)
-            val context = getApplication<Application>()
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                context, refreshBlock = false, refreshAllow = false, refreshRewrite = true, RuleScope.DNS
-            )
-            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
-            loadStats()
-            loadPage(_currentPage.value)
+            refreshAfterMutation()
         }
     }
 
     fun toggleRule(item: RewriteListItem, enabled: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             rewriteRuleManager.toggleRule(item.id, enabled)
-            val context = getApplication<Application>()
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                context, refreshBlock = false, refreshAllow = false, refreshRewrite = true, RuleScope.DNS
-            )
-            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
-            loadStats()
-            loadPage(_currentPage.value)
+            refreshAfterMutation()
         }
     }
 
     fun clearUserRules() {
         viewModelScope.launch(Dispatchers.IO) {
             rewriteRuleManager.clearUserRules()
-            val context = getApplication<Application>()
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                context, refreshBlock = false, refreshAllow = false, refreshRewrite = true, RuleScope.DNS
-            )
-            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
-            loadStats()
-            loadPage(1)
+            refreshAfterMutation(loadFirstPage = true)
         }
+    }
+
+    /** 规则变更后的统一刷新：同步运行中的索引与 HTTPS 规则，并重载统计与当前页。 */
+    private suspend fun refreshAfterMutation(loadFirstPage: Boolean = false) {
+        val context = getApplication<Application>()
+        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+            context, refreshBlock = false, refreshAllow = false, refreshRewrite = true, RuleScope.DNS
+        )
+        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+        loadStats()
+        if (loadFirstPage) loadPage(1) else loadPage(_currentPage.value)
     }
 }

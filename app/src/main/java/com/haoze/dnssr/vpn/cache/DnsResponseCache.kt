@@ -37,9 +37,6 @@ class DnsResponseCache(
     }
     private val inFlightMutex = Mutex()
     private val inFlight = HashMap<String, Deferred<ByteArray>>()
-    private val pendingHitMutex = Mutex()
-    private val pendingHits = HashMap<String, PendingHit>()
-    private var pendingHitFlushJob: Job? = null
     private val pendingWriteMutex = Mutex()
     private val pendingWrites = LinkedHashMap<String, DnsCacheEntity>()
     private var pendingWriteFlushJob: Job? = null
@@ -120,7 +117,6 @@ class DnsResponseCache(
     suspend fun clear() {
         clearMemory()
         clearPendingWrites()
-        clearPendingHits()
         dao.clearAll()
     }
 
@@ -333,13 +329,6 @@ class DnsResponseCache(
         shardFor(key).recordHit(key, now)
     }
 
-    suspend fun flushPendingHits() {
-        flushPendingWrites()
-    }
-
-    private suspend fun clearPendingHits() {
-    }
-
     private fun shouldDeleteUnavailable(entry: DnsCacheEntry, now: Long): Boolean {
         val currentPolicy = policy
         if (!currentPolicy.staleFallbackEnabled) return true
@@ -417,13 +406,7 @@ class DnsResponseCache(
         private val EMPTY_INT_ARRAY = IntArray(0)
         private const val DEFAULT_MAX_ENTRIES = 2048
         private const val DEFAULT_SHARD_COUNT = 16
-        private const val HIT_FLUSH_DELAY_MS = 15_000L
         private const val WRITE_FLUSH_DELAY_MS = 30_000L
         private const val WRITE_BATCH_SIZE = 200
     }
 }
-
-private data class PendingHit(
-    val count: Int,
-    val lastHitAt: Long
-)

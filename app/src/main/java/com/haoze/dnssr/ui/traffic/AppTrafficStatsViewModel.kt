@@ -18,10 +18,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
+import com.haoze.dnssr.util.dayStringAt
 import java.util.Calendar
-import java.util.Date
-import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
 
@@ -423,6 +421,5 @@ class AppTrafficStatsViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
-    private fun formatDate(timestamp: Long): String =
-        SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(timestamp))
+    private fun formatDate(timestamp: Long): String = dayStringAt(timestamp)
 }

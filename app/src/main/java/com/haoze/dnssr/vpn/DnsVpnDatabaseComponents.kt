@@ -111,7 +111,6 @@ class DnsVpnDatabaseComponents {
     suspend fun flushLoggers(context: Context) {
         if (::dnsCache.isInitialized) {
             dnsCache.flushPendingWrites()
-            dnsCache.flushPendingHits()
         }
         if (::dnsLogger.isInitialized) {
             dnsLogger.flush()

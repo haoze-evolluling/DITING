@@ -1,5 +1,6 @@
 package com.haoze.dnssr.vpn
 
+import com.haoze.dnssr.util.dayStringAt
 import com.haoze.dnssr.data.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +43,7 @@ object LogMaintenance {
     suspend fun pruneExpiredLogs(database: AppDatabase, retentionDays: Int) {
         if (retentionDays <= 0) return
         val cutoff = System.currentTimeMillis() - retentionDays * DAY_MS
-        val cutoffDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date(cutoff))
+        val cutoffDate = dayStringAt(cutoff)
         withContext(Dispatchers.IO) {
             runCatching { database.dnsLogDao().deleteBefore(cutoff) }
             runCatching { database.httpRequestLogDao().deleteBefore(cutoff) }

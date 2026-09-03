@@ -6,23 +6,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -30,12 +21,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Warning
-import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,18 +35,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,8 +53,16 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.dnssr.ui.components.RuleConfirmDialog
+import com.haoze.dnssr.ui.components.RuleFilterChipRow
+import com.haoze.dnssr.ui.components.RuleListCountHeader
+import com.haoze.dnssr.ui.components.RuleListEmptyState
+import com.haoze.dnssr.ui.components.RuleListPaginationBar
+import com.haoze.dnssr.ui.components.RuleSearchField
+import com.haoze.dnssr.ui.components.RuleStatsCard
+import com.haoze.dnssr.ui.components.RuleTagChip
 import com.haoze.dnssr.ui.components.SettingsCornerShape
-import com.haoze.dnssr.ui.components.SettingsDivider
 import com.haoze.dnssr.ui.components.SettingsItemSpacing
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
@@ -101,7 +95,6 @@ fun WhitelistScreen(
     var itemToDelete by remember { mutableStateOf<WhitelistItem?>(null) }
     var showResetDefaultsDialog by remember { mutableStateOf(false) }
     var showClearUserDialog by remember { mutableStateOf(false) }
-    var showPageJumpDialog by remember { mutableStateOf(false) }
     var showTopMenu by remember { mutableStateOf(false) }
 
     var addInput by remember { mutableStateOf("") }
@@ -113,9 +106,6 @@ fun WhitelistScreen(
     var editAppScope by remember { mutableStateOf("") }
     var editImportant by remember { mutableStateOf(false) }
     var editError by remember { mutableStateOf<String?>(null) }
-
-    var pageInput by remember { mutableStateOf("") }
-    var pageInputError by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(lifecycleOwner) {
         viewModel.activate()
@@ -240,80 +230,31 @@ fun WhitelistScreen(
                             .padding(bottom = 6.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedTextField(
+                        RuleSearchField(
                             value = searchQuery,
                             onValueChange = viewModel::setSearchQuery,
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text(localizedText("搜索域名、URL 或分组...")) },
-                            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = { viewModel.setSearchQuery("") }) {
-                                        Icon(Icons.Filled.Close, contentDescription = localizedText("清除"))
-                                    }
-                                }
-                            },
-                            singleLine = true,
-                            shape = RoundedCornerShape(28.dp)
+                            placeholder = localizedText("搜索域名、URL 或分组...")
                         )
 
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            contentPadding = PaddingValues(vertical = 2.dp)
-                        ) {
-                            items(WhitelistFilter.entries) { f ->
-                                FilterChip(
-                                    selected = filter == f,
-                                    onClick = { viewModel.setFilter(f) },
-                                    label = { Text(localizedText(f.labelResName)) },
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                            }
-                        }
+                        RuleFilterChipRow(
+                            filters = WhitelistFilter.entries,
+                            selectedFilter = filter,
+                            onSelect = viewModel::setFilter,
+                            labelKeyOf = { it.labelResName }
+                        )
                     }
                 }
 
                 // 4. 列表标题与总数
                 item(key = "list_header") {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = localizedText("规则列表"),
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = localizedText("共 $totalCount 条"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    RuleListCountHeader(totalCount = totalCount)
                 }
 
                 // 5. 规则列表项
                 if (items.isEmpty()) {
                     item(key = "empty_state") {
-                        SettingsSurfaceGroup(
-                            groupContentPadding = PaddingValues.Zero,
-                            content = listOf {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(32.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = localizedText(if (searchQuery.isEmpty()) "暂无白名单规则" else "未找到匹配的规则"),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
+                        RuleListEmptyState(
+                            message = localizedText(if (searchQuery.isEmpty()) "暂无白名单规则" else "未找到匹配的规则")
                         )
                     }
                 } else {
@@ -371,62 +312,11 @@ fun WhitelistScreen(
             }
 
             // 悬浮分页控件
-            if (totalPages > 1) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(28.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        tonalElevation = 2.dp,
-                        shadowElevation = 4.dp
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(
-                                onClick = { if (currentPage > 1) viewModel.loadPage(currentPage - 1) },
-                                enabled = currentPage > 1
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                    contentDescription = localizedText("上一页")
-                                )
-                            }
-
-                            TextButton(
-                                onClick = {
-                                    pageInput = currentPage.toString()
-                                    pageInputError = null
-                                    showPageJumpDialog = true
-                                },
-                                shape = SettingsCornerShape
-                            ) {
-                                Text(
-                                    text = "$currentPage / $totalPages",
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-
-                            IconButton(
-                                onClick = { if (currentPage < totalPages) viewModel.loadPage(currentPage + 1) },
-                                enabled = currentPage < totalPages
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = localizedText("下一页")
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            RuleListPaginationBar(
+                currentPage = currentPage,
+                totalPages = totalPages,
+                onLoadPage = viewModel::loadPage
+            )
 
             FloatingActionButton(
                 onClick = {
@@ -601,132 +491,53 @@ fun WhitelistScreen(
 
     // 删除单条确认弹窗
     itemToDelete?.let { item ->
-        AlertDialog(
-            onDismissRequest = { itemToDelete = null },
-            title = { Text(localizedText("删除白名单规则")) },
-            text = {
-                val deletePrompt = if (item.isPreset) {
-                    localizedText("确定要删除默认预设白名单规则「${item.pattern}」吗？若网络异常可通过右上角菜单重置恢复。")
-                } else if (item.isSubscription) {
-                    localizedText("确定要删除白名单规则「${item.pattern}」吗？")
-                } else {
-                    localizedText("确定要删除自定义白名单规则「${item.pattern}」吗？")
-                }
-                Text(deletePrompt)
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteRule(item)
-                    itemToDelete = null
-                    Toast.makeText(context, localizedText(context, "已删除"), Toast.LENGTH_SHORT).show()
-                    onRuntimeDnsSettingsChanged()
-                }) {
-                    Text(localizedText("删除"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { itemToDelete = null }) {
-                    Text(localizedText("取消"))
-                }
+        val deletePrompt = if (item.isPreset) {
+            localizedText("确定要删除默认预设白名单规则「${item.pattern}」吗？若网络异常可通过右上角菜单重置恢复。")
+        } else if (item.isSubscription) {
+            localizedText("确定要删除白名单规则「${item.pattern}」吗？")
+        } else {
+            localizedText("确定要删除自定义白名单规则「${item.pattern}」吗？")
+        }
+        RuleConfirmDialog(
+            title = localizedText("删除白名单规则"),
+            message = deletePrompt,
+            confirmText = localizedText("删除"),
+            onDismiss = { itemToDelete = null },
+            onConfirm = {
+                viewModel.deleteRule(item)
+                Toast.makeText(context, localizedText(context, "已删除"), Toast.LENGTH_SHORT).show()
+                onRuntimeDnsSettingsChanged()
             }
         )
     }
 
     // 重置默认白名单确认弹窗
     if (showResetDefaultsDialog) {
-        AlertDialog(
-            onDismissRequest = { showResetDefaultsDialog = false },
-            title = { Text(localizedText("重置默认白名单")) },
-            text = {
-                Text(localizedText("确定要将软件预设的默认白名单重置为初始状态吗？此操作不会影响您自己添加的自定义白名单。"))
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.resetPresetWhitelist()
-                    showResetDefaultsDialog = false
-                    Toast.makeText(context, localizedText(context, "默认白名单已重置恢复"), Toast.LENGTH_SHORT).show()
-                    onRuntimeDnsSettingsChanged()
-                }) {
-                    Text(localizedText("确认重置"))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showResetDefaultsDialog = false }) {
-                    Text(localizedText("取消"))
-                }
+        RuleConfirmDialog(
+            title = localizedText("重置默认白名单"),
+            message = localizedText("确定要将软件预设的默认白名单重置为初始状态吗？此操作不会影响您自己添加的自定义白名单。"),
+            confirmText = localizedText("确认重置"),
+            destructive = false,
+            onDismiss = { showResetDefaultsDialog = false },
+            onConfirm = {
+                viewModel.resetPresetWhitelist()
+                Toast.makeText(context, localizedText(context, "默认白名单已重置恢复"), Toast.LENGTH_SHORT).show()
+                onRuntimeDnsSettingsChanged()
             }
         )
     }
 
     // 清空自定义白名单确认弹窗
     if (showClearUserDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearUserDialog = false },
-            title = { Text(localizedText("清空自定义白名单")) },
-            text = {
-                Text(localizedText("确定要清空所有由您添加的自定义白名单规则吗？软件预设的默认白名单将予以保留。"))
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.clearUserWhitelist()
-                    showClearUserDialog = false
-                    Toast.makeText(context, localizedText(context, "已清空自定义白名单"), Toast.LENGTH_SHORT).show()
-                    onRuntimeDnsSettingsChanged()
-                }) {
-                    Text(localizedText("确认清空"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearUserDialog = false }) {
-                    Text(localizedText("取消"))
-                }
-            }
-        )
-    }
-
-    // 分页跳转弹窗
-    if (showPageJumpDialog) {
-        AlertDialog(
-            onDismissRequest = { showPageJumpDialog = false },
-            title = { Text(localizedText("跳转到页面")) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(localizedText("请输入 1 到 $totalPages 之间的页码"))
-                    OutlinedTextField(
-                        value = pageInput,
-                        onValueChange = {
-                            pageInput = it.filter(Char::isDigit)
-                            pageInputError = null
-                        },
-                        label = { Text(localizedText("页码")) },
-                        singleLine = true,
-                        isError = pageInputError != null,
-                        supportingText = pageInputError?.let { msg -> { Text(msg) } },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        shape = SettingsCornerShape
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val page = pageInput.toIntOrNull()
-                    if (page == null || page !in 1..totalPages) {
-                        pageInputError = localizedText(context, "请输入 1 到 $totalPages 之间的页码")
-                    } else {
-                        viewModel.loadPage(page)
-                        showPageJumpDialog = false
-                    }
-                }) {
-                    Text(localizedText("跳转"))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showPageJumpDialog = false }) {
-                    Text(localizedText("取消"))
-                }
+        RuleConfirmDialog(
+            title = localizedText("清空自定义白名单"),
+            message = localizedText("确定要清空所有由您添加的自定义白名单规则吗？软件预设的默认白名单将予以保留。"),
+            confirmText = localizedText("确认清空"),
+            onDismiss = { showClearUserDialog = false },
+            onConfirm = {
+                viewModel.clearUserWhitelist()
+                Toast.makeText(context, localizedText(context, "已清空自定义白名单"), Toast.LENGTH_SHORT).show()
+                onRuntimeDnsSettingsChanged()
             }
         )
     }
@@ -734,86 +545,17 @@ fun WhitelistScreen(
 
 @Composable
 private fun WhitelistStatsCard(stats: WhitelistStats) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = SettingsCornerShape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    RuleStatsCard(
+        icon = Icons.Filled.Security,
+        title = localizedText("放行统计与状态"),
+        activeBadgeText = localizedText("生效中: ${stats.totalActive} 条"),
+        stats = listOf(
+            "放行域名数" to stats.totalDomains.toString(),
+            "默认预设" to "${stats.presetEnabled}/${stats.presetTotal}",
+            "用户自定义" to "${stats.userEnabled}/${stats.userTotal}",
+            "放行 URL" to stats.urlAllowCount.toString()
         )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Security,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Text(
-                        text = localizedText("放行统计与状态"),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = localizedText("生效中: ${stats.totalActive} 条"),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-
-            SettingsDivider()
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                StatItem(label = "放行域名数", value = stats.totalDomains.toString())
-                StatItem(label = "默认预设", value = "${stats.presetEnabled}/${stats.presetTotal}")
-                StatItem(label = "用户自定义", value = "${stats.userEnabled}/${stats.userTotal}")
-                StatItem(label = "放行 URL", value = stats.urlAllowCount.toString())
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatItem(label: String, value: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = localizedText(label),
-            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
 }
 
 @Composable
@@ -864,125 +606,77 @@ private fun WhitelistItemRow(
             ) {
                 // 来源标签
                 if (item.isPreset) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
-                    ) {
-                        Text(
-                            text = localizedText("默认预设"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = localizedText("默认预设"),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
                 }
                 if (item.isUserRule && !item.isPreset) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    ) {
-                        Text(
-                            text = localizedText("自定义"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = localizedText("自定义"),
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
                 if (item.isSubscription) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            text = item.subscriptionName?.let { localizedText(it) } ?: localizedText("规则订阅"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = item.subscriptionName?.let { localizedText(it) } ?: localizedText("规则订阅"),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 // 类型标签 (URL 放行)
                 if (item.type == WhitelistType.URL) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer
-                    ) {
-                        Text(
-                            text = "URL",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = "URL",
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
                 }
 
                 // 重要规则标签
                 if (item.important) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.errorContainer
-                    ) {
-                        Text(
-                            text = localizedText("重要"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = localizedText("重要"),
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
                 }
 
                 // 通配符标签
                 if (item.isWildcard) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            text = localizedText("通配符"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = localizedText("通配符"),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
                 }
 
                 // 应用作用域标签
                 item.appScope?.takeIf { it.isNotBlank() }?.let { app ->
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer
-                    ) {
-                        val label = (if (item.appInverted) "~" else "") + app
-                        Text(
-                            text = "App: $label",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    val label = (if (item.appInverted) "~" else "") + app
+                    RuleTagChip(
+                        text = "App: $label",
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 // 分组标签
                 item.groupName?.takeIf { it.isNotBlank() }?.let { group ->
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant
-                    ) {
-                        Text(
-                            text = group,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = group,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
 
