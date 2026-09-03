@@ -59,13 +59,6 @@ object AppSettings {
     fun setHomeSentences(context: Context, running: String, stopped: String) =
         AppearanceSettingsStore.setHomeSentences(context, running, stopped)
 
-    @Deprecated("Liquid glass bottom bar has been removed")
-    fun isLiquidGlassBottomBarEnabled(context: Context): Boolean =
-        AppearanceSettingsStore.isLiquidGlassBottomBarEnabled(context)
-    @Deprecated("Liquid glass bottom bar has been removed")
-    fun setLiquidGlassBottomBarEnabled(context: Context, enabled: Boolean) =
-        AppearanceSettingsStore.setLiquidGlassBottomBarEnabled(context, enabled)
-
     fun isCustomBackgroundEnabled(context: Context): Boolean = AppearanceSettingsStore.isCustomBackgroundEnabled(context)
     fun getCustomBackgroundUri(context: Context): String? = AppearanceSettingsStore.getCustomBackgroundUri(context)
     fun getCustomBackgroundUris(context: Context): List<String> = AppearanceSettingsStore.getCustomBackgroundUris(context)

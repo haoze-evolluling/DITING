@@ -6,9 +6,7 @@ import com.haoze.dnssr.ui.theme.ThemeColorStyle
 import org.json.JSONArray
 
 object AppearanceSettingsStore {
-    const val KEY_LIQUID_GLASS_BOTTOM_BAR_ENABLED = "liquid_glass_bottom_bar_enabled"
     const val DEFAULT_HOME_COMPONENT_OPACITY = 1f
-    private const val DEFAULT_LIQUID_GLASS_BOTTOM_BAR_ENABLED = true
 
     private const val KEY_APP_THEME_MODE = "app_theme_mode"
     private const val KEY_THEME_COLOR_STYLE = "theme_color_style"
@@ -181,9 +179,4 @@ object AppearanceSettingsStore {
             .apply()
     }
 
-    @Deprecated("Liquid glass bottom bar has been removed")
-    fun isLiquidGlassBottomBarEnabled(context: Context): Boolean = false
-
-    @Deprecated("Liquid glass bottom bar has been removed")
-    fun setLiquidGlassBottomBarEnabled(context: Context, enabled: Boolean) {}
 }

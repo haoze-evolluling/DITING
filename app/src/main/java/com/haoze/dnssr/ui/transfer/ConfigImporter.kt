@@ -698,7 +698,6 @@ class ConfigImporter(private val context: Context) {
             if (app.homeSentenceRunning != null && app.homeSentenceStopped != null) {
                 AppSettings.setHomeSentences(context, app.homeSentenceRunning, app.homeSentenceStopped)
             }
-            app.liquidGlassBottomBarEnabled?.let { AppSettings.setLiquidGlassBottomBarEnabled(context, it) }
             appearanceUpdated = true
             val detail = "外观与主题个性化"
             updatedSettingsDetails.add(detail)

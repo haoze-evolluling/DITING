@@ -126,8 +126,7 @@ data class ImportedAppearance(
     val homePoemOpacity: Float? = null,
     val homeDnsDetailOpacity: Float? = null,
     val homeSentenceRunning: String? = null,
-    val homeSentenceStopped: String? = null,
-    val liquidGlassBottomBarEnabled: Boolean? = null
+    val homeSentenceStopped: String? = null
 )
 
 data class ImportedSystemSettings(
