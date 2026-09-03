@@ -128,6 +128,7 @@ class GoInspectionTunnel(
         updateCnameRewriteRules()
         updateRequestRules()
         updatePassthroughRules()
+        engine.setFilterDNS(!inspectionEnabled || !AppSettings.isAddressRulesEnabled(vpnService))
         pushRuleSnapshot()
     }
 
@@ -244,7 +245,7 @@ class GoInspectionTunnel(
                 }
         })
         // URL rules require decrypted HTTP. Otherwise preserve the normal DNS filter path.
-        engine.setFilterDNS(!inspectionEnabled)
+        engine.setFilterDNS(!inspectionEnabled || !AppSettings.isAddressRulesEnabled(vpnService))
         pushRuleSnapshot()
         engine.setBatchLogCallback(object : BatchLogCallback {
             override fun onDNSQueryBatch(jsonLogs: String) {

@@ -34,16 +34,28 @@ class DnsVpnRuleSyncManager {
             pendingRuleSyncs
                 .getOrPut(ruleType) { linkedSetOf() }
                 .add(pattern)
-            ruleSyncJob?.cancel()
+            if (ruleSyncJob?.isActive == true) {
+                return
+            }
             ruleSyncJob = scope.launch {
-                val pending = synchronized(pendingRuleSyncs) {
-                    pendingRuleSyncs.mapValues { it.value.toSet() }
-                        .also { pendingRuleSyncs.clear() }
-                }
-                refreshMutex.withLock {
-                    pending[RULE_TYPE_BLOCK].orEmpty().forEach { blockListManager.syncCachedPattern(it) }
-                    pending[RULE_TYPE_ALLOW].orEmpty().forEach { allowListManager.syncCachedPattern(it) }
-                    goInspectionTunnel?.pushRuleSnapshot()
+                while (true) {
+                    val pending = synchronized(pendingRuleSyncs) {
+                        if (pendingRuleSyncs.isEmpty() || pendingRuleSyncs.values.all { it.isEmpty() }) {
+                            ruleSyncJob = null
+                            return@launch
+                        }
+                        pendingRuleSyncs.mapValues { it.value.toSet() }
+                            .also { pendingRuleSyncs.clear() }
+                    }
+                    runCatching {
+                        refreshMutex.withLock {
+                            pending[RULE_TYPE_BLOCK].orEmpty().forEach { blockListManager.syncCachedPattern(it) }
+                            pending[RULE_TYPE_ALLOW].orEmpty().forEach { allowListManager.syncCachedPattern(it) }
+                            goInspectionTunnel?.pushRuleSnapshot()
+                        }
+                    }.onFailure { error ->
+                        Log.w(TAG, "Failed to apply rule sync batch", error)
+                    }
                 }
             }
         }

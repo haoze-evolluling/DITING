@@ -42,6 +42,12 @@ class DnsVpnDatabaseComponents {
     lateinit var bootstrapHealthEngine: BootstrapHealthEngine
         private set
 
+    @Volatile
+    var onRulesReloaded: (() -> Unit)? = null
+    @Volatile
+    var rulesInitializationJob: kotlinx.coroutines.Job? = null
+        private set
+
     private lateinit var bootstrapHealthListener: BootstrapHealthStoreListener
 
     /**
@@ -83,9 +89,16 @@ class DnsVpnDatabaseComponents {
         LogMaintenance.start(scope, db) { activeLogRetentionDays() }
 
         // 启动时全量加载规则到内存缓存与预热 DNS 缓存
-        scope.launch { blockListManager.refreshCache() }
-        scope.launch { allowListManager.refreshCache() }
-        scope.launch { rewriteRuleManager.refreshCache() }
+        rulesInitializationJob = scope.launch {
+            val j1 = launch { runCatching { blockListManager.refreshCache() } }
+            val j2 = launch { runCatching { allowListManager.refreshCache() } }
+            val j3 = launch { runCatching { rewriteRuleManager.refreshCache() } }
+            j1.join()
+            j2.join()
+            j3.join()
+            domainPolicy.invalidateCache()
+            onRulesReloaded?.invoke()
+        }
         scope.launch {
             DnsCacheController.register(dnsCache) { onClearGoDnsCache() }
             dnsCache.warmUp()

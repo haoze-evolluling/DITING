@@ -177,6 +177,7 @@ class AllowListManager(
     suspend fun enabledPatterns(): List<String> = dao.enabledPatterns()
 
     suspend fun syncCachedPattern(pattern: String) {
+        cache.reloadCustomRules(dao)
         val normalized = pattern.lowercase().trimEnd('.')
         cache.syncPattern(normalized, dao.enabledRuleByPattern(normalized)?.source)
         onCacheChanged?.invoke()

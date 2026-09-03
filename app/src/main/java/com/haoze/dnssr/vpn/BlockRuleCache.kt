@@ -566,6 +566,56 @@ class BlockRuleCache(private val indexFile: File? = null) {
         }
     }
 
+    suspend fun reloadCustomRules(dao: BlockRuleDao) {
+        val customRuleEntries = dao.enabledCustomRules()
+
+        val custom = HashMap<String, String>()
+        val importantCustom = HashMap<String, String>()
+        val customWc = mutableListOf<Pair<AdGuardRuleParser.WildcardPattern, String>>()
+        val importantCustomWc = mutableListOf<Pair<AdGuardRuleParser.WildcardPattern, String>>()
+        val customBucketsMap = HashMap<String, MutableAppBucket>()
+        val customInvertedList = mutableListOf<InvertedBlockRule>()
+
+        for (entry in customRuleEntries) {
+            val isWc = entry.isWildcard || entry.pattern.contains('*')
+            val wcPattern = if (isWc) AdGuardRuleParser.WildcardPattern(entry.pattern) else null
+
+            if (entry.appInverted && !entry.appScope.isNullOrEmpty()) {
+                val excluded = entry.appScope.split('|').map { it.trim().lowercase() }.filter { it.isNotEmpty() }.toSet()
+                customInvertedList.add(InvertedBlockRule(entry.pattern, entry.source, entry.important, excluded, wcPattern))
+            } else if (!entry.appScope.isNullOrEmpty()) {
+                val pkgs = entry.appScope.split('|').map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+                for (pkg in pkgs) {
+                    val bucket = customBucketsMap.getOrPut(pkg) { MutableAppBucket() }
+                    if (isWc && wcPattern != null) {
+                        if (entry.important) bucket.importantWildcards.add(wcPattern to entry.source)
+                        else bucket.wildcards.add(wcPattern to entry.source)
+                    } else {
+                        if (entry.important) bucket.importantExact[entry.pattern] = entry.source
+                        else bucket.exact[entry.pattern] = entry.source
+                    }
+                }
+            } else {
+                if (isWc && wcPattern != null) {
+                    if (entry.important) importantCustomWc.add(wcPattern to entry.source)
+                    else customWc.add(wcPattern to entry.source)
+                } else {
+                    if (entry.important) importantCustom[entry.pattern] = entry.source
+                    else custom[entry.pattern] = entry.source
+                }
+            }
+        }
+
+        synchronized(this) {
+            customRules = custom
+            importantCustomRules = importantCustom
+            customWildcards = customWc
+            importantCustomWildcards = importantCustomWc
+            customAppBuckets = customBucketsMap.mapValues { it.value.toImmutable() }
+            invertedCustomRules = customInvertedList
+        }
+    }
+
     fun syncCustomPattern(
         pattern: String,
         source: String?,

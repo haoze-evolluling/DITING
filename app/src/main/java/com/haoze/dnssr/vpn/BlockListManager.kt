@@ -207,6 +207,7 @@ class BlockListManager(
     suspend fun countBySource(source: String): Int = dao.countBySource(source)
 
     suspend fun syncCachedPattern(pattern: String) {
+        cache.reloadCustomRules(dao)
         val normalized = pattern.lowercase().trimEnd('.')
         cache.syncCustomPattern(
             normalized,

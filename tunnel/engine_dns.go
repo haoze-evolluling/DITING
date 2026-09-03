@@ -42,6 +42,17 @@ func (e *Engine) handleDNSQuery(queryInfo *DNSQueryInfo) {
 			[]byte(queryInfo.DestIP),
 			int(queryInfo.DestPort),
 		)
+	} else if uidr, appUidr := e.uidResolver, e.appUidResolver; uidr != nil && appUidr != nil {
+		uid := uidr.ResolveUID(
+			ProtocolUDP,
+			queryInfo.SourceIP.String(),
+			int(queryInfo.SourcePort),
+			queryInfo.DestIP.String(),
+			int(queryInfo.DestPort),
+		)
+		if uid != UIDUnknown {
+			appName = appUidr.PackageForUid(uid)
+		}
 	}
 
 	// Apply literal-IP hosts rewrites in the userspace DNS path used by HTTPS

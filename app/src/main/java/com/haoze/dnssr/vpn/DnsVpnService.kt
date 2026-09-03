@@ -147,6 +147,14 @@ class DnsVpnService : VpnService() {
             onBootstrapHealthReset = { tunnelManager.goInspectionTunnel?.resetBootstrapStats() },
             onClearGoDnsCache = { tunnelManager.goInspectionTunnel?.clearDnsCache() }
         )
+        dbComponents.onRulesReloaded = {
+            if (tunnelManager.vpnInterface != null) {
+                tunnelManager.goInspectionTunnel?.let { tunnel ->
+                    tunnel.updateRewriteRules()
+                    tunnel.pushRuleSnapshot()
+                }
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -312,6 +320,13 @@ class DnsVpnService : VpnService() {
         floatingLogOverlay.setVpnRunning(true)
         VpnMonitorManager.onVpnStarted(this)
         DnsVpnStatusNotifier.sendStatusBroadcast(this, true)
+
+        serviceScope.launch {
+            dbComponents.rulesInitializationJob?.join()
+            if (tunnelManager.vpnInterface != null) {
+                tunnelManager.goInspectionTunnel?.pushRuleSnapshot()
+            }
+        }
     }
 
     private fun refreshRuntimeConfig(reason: String) {
