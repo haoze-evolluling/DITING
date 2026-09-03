@@ -22,8 +22,7 @@ fun AppearanceSettingsScreen(
     onNavigateToHomeComponentOpacity: () -> Unit,
     onNavigateToHomeSentence: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
-    onNavigateToCustomBackground: () -> Unit,
-    onNavigateToServiceLightEffect: () -> Unit
+    onNavigateToCustomBackground: () -> Unit
 ) {
     val context = LocalContext.current
     val mode = AppSettings.getAppThemeMode(context)
@@ -85,11 +84,6 @@ fun AppearanceSettingsScreen(
                             title = localizedText("软件背景"),
                             subtitle = localizedText("选取手机图片作为应用背景"),
                             onClick = onNavigateToCustomBackground
-                        ),
-                        SettingsNavigationItemData(
-                            title = localizedText("服务动态光影"),
-                            subtitle = localizedText("设置服务启动和关闭时的动态光影效果"),
-                            onClick = onNavigateToServiceLightEffect
                         )
                     )
                 )

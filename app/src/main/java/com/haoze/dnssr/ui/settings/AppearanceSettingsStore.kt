@@ -1,16 +1,13 @@
 package com.haoze.dnssr.ui.settings
 
 import android.content.Context
-import android.os.Build
 import com.haoze.dnssr.ui.AppThemeMode
 import com.haoze.dnssr.ui.theme.ThemeColorStyle
 import org.json.JSONArray
 
 object AppearanceSettingsStore {
-    const val KEY_SERVICE_LIGHT_EFFECT_ENABLED = "service_light_effect_enabled"
     const val KEY_LIQUID_GLASS_BOTTOM_BAR_ENABLED = "liquid_glass_bottom_bar_enabled"
     const val DEFAULT_HOME_COMPONENT_OPACITY = 1f
-    private const val DEFAULT_SERVICE_LIGHT_EFFECT_ENABLED = true
     private const val DEFAULT_LIQUID_GLASS_BOTTOM_BAR_ENABLED = true
 
     private const val KEY_APP_THEME_MODE = "app_theme_mode"
@@ -119,23 +116,6 @@ object AppearanceSettingsStore {
             .apply()
     }
 
-    fun isServiceLightEffectEnabled(context: Context): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            return false
-        }
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_SERVICE_LIGHT_EFFECT_ENABLED, DEFAULT_SERVICE_LIGHT_EFFECT_ENABLED)
-    }
-
-    fun setServiceLightEffectEnabled(context: Context, enabled: Boolean) {
-        val supportedEnabled = enabled && !isCustomBackgroundEnabled(context) &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_SERVICE_LIGHT_EFFECT_ENABLED, supportedEnabled)
-            .apply()
-    }
-
     fun isCustomBackgroundEnabled(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getBoolean(KEY_CUSTOM_BACKGROUND_ENABLED, false) &&
@@ -191,9 +171,6 @@ object AppearanceSettingsStore {
             .edit()
             .putBoolean(KEY_CUSTOM_BACKGROUND_ENABLED, actualEnabled)
             .putString(KEY_CUSTOM_BACKGROUND_URI, normalizedUri)
-            .apply {
-                if (actualEnabled) putBoolean(KEY_SERVICE_LIGHT_EFFECT_ENABLED, false)
-            }
             .apply()
     }
 

@@ -24,7 +24,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -33,7 +32,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.haoze.dnssr.ui.effect.ServiceLightEffect
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,20 +70,15 @@ fun MainScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val message by viewModel.message.collectAsStateWithLifecycle()
-    var serviceLightEffectEnabled by remember {
-        mutableStateOf(AppSettings.isServiceLightEffectEnabled(context))
-    }
     var showDataResetNotice by remember {
         mutableStateOf(AppSettings.isDataResetNoticePending(context))
     }
-    var powerButtonCenter by remember { mutableStateOf(Offset.Zero) }
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
     val coroutineScope = rememberCoroutineScope()
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                serviceLightEffectEnabled = AppSettings.isServiceLightEffectEnabled(context)
                 showDataResetNotice = AppSettings.isDataResetNoticePending(context)
             }
         }
@@ -109,14 +102,9 @@ fun MainScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        ServiceLightEffect(
-            visible = serviceLightEffectEnabled && uiState.isRunning,
-            revealOrigin = powerButtonCenter,
-            modifier = Modifier.fillMaxSize()
-        )
-        Scaffold(
-            containerColor = Color.Transparent,
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -142,7 +130,6 @@ fun MainScreen(
                         MainContent(
                             uiState = uiState,
                             onToggle = { onToggle(uiState.isRunning) },
-                            onPowerButtonCenterChanged = { powerButtonCenter = it },
                             onNavigateToProviderManagement = onNavigateToProviderManagement,
                             onNavigateToHomeProviderVisibility = onNavigateToHomeProviderVisibility,
                             onNavigateToRaceModeSettings = onNavigateToRaceModeSettings,
@@ -203,5 +190,4 @@ fun MainScreen(
                 )
             }
         }
-    }
 }

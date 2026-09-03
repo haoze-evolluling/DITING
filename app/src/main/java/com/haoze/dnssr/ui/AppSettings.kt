@@ -32,7 +32,6 @@ object AppSettings {
     const val KEY_BOOTSTRAP_CUSTOM_JSON = BootstrapDnsSettingsStore.KEY_BOOTSTRAP_CUSTOM_JSON
     const val KEY_HIDE_FROM_RECENTS_ENABLED = SystemSettingsStore.KEY_HIDE_FROM_RECENTS_ENABLED
     const val KEY_BYPASS_LAN_ENABLED = SystemSettingsStore.KEY_BYPASS_LAN_ENABLED
-    const val KEY_SERVICE_LIGHT_EFFECT_ENABLED = AppearanceSettingsStore.KEY_SERVICE_LIGHT_EFFECT_ENABLED
     const val DEFAULT_BYPASS_LAN_ENABLED = SystemSettingsStore.DEFAULT_BYPASS_LAN_ENABLED
     const val DEFAULT_HOME_COMPONENT_OPACITY = AppearanceSettingsStore.DEFAULT_HOME_COMPONENT_OPACITY
 
@@ -59,10 +58,6 @@ object AppSettings {
     fun getHomeSentenceStopped(context: Context): String = AppearanceSettingsStore.getHomeSentenceStopped(context)
     fun setHomeSentences(context: Context, running: String, stopped: String) =
         AppearanceSettingsStore.setHomeSentences(context, running, stopped)
-
-    fun isServiceLightEffectEnabled(context: Context): Boolean = AppearanceSettingsStore.isServiceLightEffectEnabled(context)
-    fun setServiceLightEffectEnabled(context: Context, enabled: Boolean) =
-        AppearanceSettingsStore.setServiceLightEffectEnabled(context, enabled)
 
     @Deprecated("Liquid glass bottom bar has been removed")
     fun isLiquidGlassBottomBarEnabled(context: Context): Boolean =

@@ -298,7 +298,6 @@ class ConfigExporter(private val context: Context) {
                 put("homeDnsDetailOpacity", AppSettings.getHomeDnsDetailOpacity(context))
                 put("homeSentenceRunning", AppSettings.getHomeSentenceRunning(context))
                 put("homeSentenceStopped", AppSettings.getHomeSentenceStopped(context))
-                put("serviceLightEffectEnabled", AppSettings.isServiceLightEffectEnabled(context))
                 put("liquidGlassBottomBarEnabled", AppSettings.isLiquidGlassBottomBarEnabled(context))
             })
         }

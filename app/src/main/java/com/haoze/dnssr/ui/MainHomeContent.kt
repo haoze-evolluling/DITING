@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -52,7 +51,6 @@ import com.haoze.dnssr.vpn.DnsProvider
 internal fun MainContent(
     uiState: MainUiState,
     onToggle: () -> Unit,
-    onPowerButtonCenterChanged: (Offset) -> Unit,
     onNavigateToProviderManagement: () -> Unit,
     onNavigateToHomeProviderVisibility: () -> Unit,
     onNavigateToRaceModeSettings: () -> Unit,
@@ -122,7 +120,6 @@ internal fun MainContent(
                 isBusy = uiState.isBusy,
                 enabled = !uiState.isBusy && selectedProvider != null &&
                     (resolutionMode == DnsResolutionMode.SINGLE || raceProviderIds.size >= 2),
-                onCenterChanged = onPowerButtonCenterChanged,
                 onToggle = onToggle
             )
         }

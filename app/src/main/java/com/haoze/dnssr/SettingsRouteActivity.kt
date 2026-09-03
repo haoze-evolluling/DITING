@@ -374,14 +374,13 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL -> SubscriptionAutoUpdateIntervalScreen(onBack)
             Routes.ABOUT -> AboutScreen(onBack, "应用信息")
             Routes.APP_UPDATE -> AppUpdateScreen(appUpdateState, onBack, onCheckForAppUpdate, onDownloadAppUpdate, onJoinQqGroup, startupUpdateCheckDisabled, onStartupUpdateCheckDisabledChange)
-            Routes.APPEARANCE_SETTINGS -> SettingsGuideHost(SettingsGuides.APPEARANCE) { AppearanceSettingsScreen(onBack, "外观设置", { onNavigate(Routes.DAY_NIGHT_MODE) }, { onNavigate(Routes.THEME_COLOR_SETTINGS) }, { onNavigate(Routes.HOME_COMPONENT_OPACITY) }, { onNavigate(Routes.HOME_SENTENCE_SETTINGS) }, { onNavigate(Routes.NOTIFICATION_SETTINGS) }, { onNavigate(Routes.CUSTOM_BACKGROUND_SETTINGS) }, { onNavigate(Routes.SERVICE_LIGHT_EFFECT_SETTINGS) }) }
+            Routes.APPEARANCE_SETTINGS -> SettingsGuideHost(SettingsGuides.APPEARANCE) { AppearanceSettingsScreen(onBack, "外观设置", { onNavigate(Routes.DAY_NIGHT_MODE) }, { onNavigate(Routes.THEME_COLOR_SETTINGS) }, { onNavigate(Routes.HOME_COMPONENT_OPACITY) }, { onNavigate(Routes.HOME_SENTENCE_SETTINGS) }, { onNavigate(Routes.NOTIFICATION_SETTINGS) }, { onNavigate(Routes.CUSTOM_BACKGROUND_SETTINGS) }) }
             Routes.DAY_NIGHT_MODE -> DayNightModeScreen(onBack, "日夜模式", onThemeModeChanged)
             Routes.THEME_COLOR_SETTINGS -> ThemeColorSettingsScreen(onBack, "主题色配置", onThemeColorStyleChanged)
             Routes.HOME_COMPONENT_OPACITY -> HomeComponentOpacityScreen(onBack, "首页透明度")
             Routes.HOME_SENTENCE_SETTINGS -> HomeSentenceSettingsScreen(onBack, "首页句子")
             Routes.NOTIFICATION_SETTINGS -> NotificationSettingsScreen(onBack, "通知设置")
             Routes.CUSTOM_BACKGROUND_SETTINGS -> CustomBackgroundSettingsScreen(onBack, "软件背景", onCustomBackgroundChanged)
-            Routes.SERVICE_LIGHT_EFFECT_SETTINGS -> ServiceLightEffectSettingsScreen(onBack, "服务动态光影")
             Routes.MIRROR_TEMPLATES -> MirrorTemplateScreen(
                 onBack = onBack,
                 onNavigateToFormatGuide = { onNavigate(Routes.MIRROR_FORMAT_GUIDE) }

@@ -85,7 +85,6 @@ internal fun translateAboutAndUpdateExact(text: String): String? = when (text) {
     "更新包下载失败，请重试。" -> "Update package download failed. Try again."
     "无法开始下载更新。" -> "Unable to start the update download."
     "需要 Android 13 或更高版本" -> "Android 13 or later is required"
-    "光影效果代码来源于开源项目:" -> "The light-effect code comes from the open-source project:"
     "修改后，已使用此模板的订阅不会被自动更新。" -> "Subscriptions already using this template will not be updated automatically after changes."
     "已更新镜像站模板" -> "Mirror template updated"
     "正在下载并更新规则..." -> "Downloading and updating rules..."
@@ -139,6 +138,5 @@ internal fun translateAboutAndUpdatePattern(text: String): String? = when {
     text.startsWith("更新成功，共导入 ") -> text.replace("更新成功，共导入 ", "Update successful; imported ").replace(" 条规则", " rules")
     text.startsWith("检查完成：") -> text.removePrefix("检查完成：").replace("更新", "updated ").replace("个，已是最新", ", up to date ").replace("个，失败", ", failed ").replace("个，共导入", ", imported ").replace("条规则", " rules")
     text.startsWith("发现 ") && text.endsWith(" 新版本。") -> text.replace("发现 ", "New version available: ").replace(" 新版本。", ".")
-    text.startsWith("光影效果代码来源于开源项目:\n") -> "The light-effect code comes from the open-source project:\n" + text.substringAfter(":\n")
     else -> null
 }

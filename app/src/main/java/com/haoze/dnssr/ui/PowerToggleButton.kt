@@ -18,10 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -29,7 +26,6 @@ internal fun PowerToggleButton(
     isRunning: Boolean,
     isBusy: Boolean,
     enabled: Boolean,
-    onCenterChanged: (Offset) -> Unit,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -95,9 +91,6 @@ internal fun PowerToggleButton(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .size(156.dp)
-            .onGloballyPositioned { coordinates ->
-                onCenterChanged(coordinates.boundsInRoot().center)
-            }
             .alpha(buttonAlpha)
     ) {
         Box(

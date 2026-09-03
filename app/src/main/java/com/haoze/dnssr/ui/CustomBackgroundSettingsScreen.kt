@@ -3,7 +3,6 @@ package com.haoze.dnssr.ui
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -44,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
 import com.haoze.dnssr.ui.components.SettingsCornerShape
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
-import com.haoze.dnssr.ui.components.SettingsInfoText
 import com.haoze.dnssr.ui.components.SettingsItem
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
@@ -63,7 +61,6 @@ fun CustomBackgroundSettingsScreen(
     var selectedUri by remember { mutableStateOf(AppSettings.getCustomBackgroundUri(context)) }
     var wallpaperUris by remember { mutableStateOf(AppSettings.getCustomBackgroundUris(context)) }
     var pendingDeletionUri by remember { mutableStateOf<String?>(null) }
-    var pendingBackgroundChange by remember { mutableStateOf<PendingBackgroundChange?>(null) }
 
     fun refreshBackgroundState() {
         enabled = AppSettings.isCustomBackgroundEnabled(context)
@@ -71,26 +68,10 @@ fun CustomBackgroundSettingsScreen(
         wallpaperUris = AppSettings.getCustomBackgroundUris(context)
     }
 
-    fun applyBackgroundChange(change: PendingBackgroundChange, enableServiceLightEffect: Boolean = false) {
-        AppSettings.setCustomBackground(context, change.enabled, change.uri)
-        if (enableServiceLightEffect) {
-            AppSettings.setServiceLightEffectEnabled(context, true)
-        }
+    fun applyBackgroundChange(enabled: Boolean, uri: String?) {
+        AppSettings.setCustomBackground(context, enabled, uri)
         refreshBackgroundState()
         onBackgroundChanged()
-    }
-
-    fun requestBackgroundChange(requestedEnabled: Boolean, uri: String?) {
-        val change = PendingBackgroundChange(requestedEnabled, uri)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            applyBackgroundChange(change)
-        } else if (requestedEnabled && !enabled) {
-            pendingBackgroundChange = change
-        } else if (!requestedEnabled && enabled) {
-            pendingBackgroundChange = change
-        } else {
-            applyBackgroundChange(change)
-        }
     }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { selected ->
@@ -99,7 +80,7 @@ fun CustomBackgroundSettingsScreen(
                 context.contentResolver.takePersistableUriPermission(selected, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             AppSettings.addCustomBackgroundUri(context, selected.toString())
-            requestBackgroundChange(requestedEnabled = true, uri = selected.toString())
+            applyBackgroundChange(enabled = true, uri = selected.toString())
         }
     }
 
@@ -115,11 +96,11 @@ fun CustomBackgroundSettingsScreen(
                     {
                         SettingsSwitchItem(
                             title = localizedText("启用软件背景"),
-                            subtitle = localizedText(if (selectedUri == null) "请先添加一张图片" else "启用后服务动态光影将自动关闭"),
+                            subtitle = if (selectedUri == null) localizedText("请先添加一张图片") else null,
                             checked = enabled,
                             enabled = selectedUri != null,
                             onCheckedChange = {
-                                requestBackgroundChange(requestedEnabled = it, uri = selectedUri)
+                                applyBackgroundChange(enabled = it, uri = selectedUri)
                             }
                         )
                     },
@@ -130,7 +111,6 @@ fun CustomBackgroundSettingsScreen(
                     }
                 ))
             }
-            item { SettingsInfoText(localizedText("软件背景与服务动态光影不可同时启用。")) }
             if (wallpaperUris.isNotEmpty()) {
                 item { SettingsGroupTitle(localizedText("已添加壁纸")) }
                 val chunkedUris = wallpaperUris.chunked(3)
@@ -149,7 +129,7 @@ fun CustomBackgroundSettingsScreen(
                                 uri = uri,
                                 selected = uri == selectedUri,
                                 onClick = {
-                                    requestBackgroundChange(requestedEnabled = true, uri = uri)
+                                    applyBackgroundChange(enabled = true, uri = uri)
                                 },
                                 onLongClick = { pendingDeletionUri = uri }
                             )
@@ -181,47 +161,8 @@ fun CustomBackgroundSettingsScreen(
             )
         }
 
-        pendingBackgroundChange?.let { change ->
-            val enablingBackground = change.enabled
-            AlertDialog(
-                onDismissRequest = { pendingBackgroundChange = null },
-                title = {
-                    Text(localizedText(if (enablingBackground) "开启软件背景" else "关闭软件背景"))
-                },
-                text = {
-                    Text(
-                        localizedText(if (enablingBackground) {
-                            "开启软件背景会关闭服务动态光影。是否继续？"
-                        } else {
-                            "关闭软件背景后，是否开启服务动态光影？"
-                        })
-                    )
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        applyBackgroundChange(change, enableServiceLightEffect = !enablingBackground)
-                        pendingBackgroundChange = null
-                    }) {
-                        Text(localizedText(if (enablingBackground) "继续开启" else "开启"))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        if (!enablingBackground) applyBackgroundChange(change)
-                        pendingBackgroundChange = null
-                    }) {
-                        Text(localizedText(if (enablingBackground) "取消" else "不开启"))
-                    }
-                }
-            )
-        }
     }
 }
-
-private data class PendingBackgroundChange(
-    val enabled: Boolean,
-    val uri: String?
-)
 
 @Composable
 private fun WallpaperThumbnail(

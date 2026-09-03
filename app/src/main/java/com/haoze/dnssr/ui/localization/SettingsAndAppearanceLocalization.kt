@@ -1,7 +1,7 @@
 package com.haoze.dnssr.ui.localization
 
 /**
- * 应用设置、日夜模式、主题色、透明度、壁纸背景、动态光影、出站代理及数据清理本地化词条。
+ * 应用设置、日夜模式、主题色、透明度、壁纸背景、出站代理及数据清理本地化词条。
  */
 internal fun translateSettingsAndAppearanceExact(text: String): String? = when (text) {
     "清除全部流量记录？" -> "Clear all traffic records?"
@@ -25,12 +25,10 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "分别设置 DNS 服务开启和关闭时的通知栏文案" -> "Set separate notification text for when the DNS service is enabled and disabled"
     "通知栏显示实时速率" -> "Show real-time speed in notification"
     "软件背景" -> "App background"
-    "设置服务启动和关闭时的动态光影效果" -> "Configure animation when the service starts and stops"
     "旧版图标" -> "Legacy icon"
     "旧版日志页面" -> "Legacy log page"
     "使用旧版图标" -> "Use legacy icon"
     "使用旧版日志页面" -> "Use legacy log page"
-    "启用服务动态光影" -> "Enable service animation"
     "启用软件背景" -> "Enable app background"
     "已添加壁纸" -> "Added wallpapers"
     "主题色" -> "Accent color"
@@ -41,14 +39,8 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "代理应用" -> "Proxy app"
     "选择代理应用" -> "Choose proxy app"
     "正在连接出站代理" -> "Connecting to outbound proxy"
-    "服务动态光影" -> "Service animation"
-    "软件背景已启用，服务动态光影不可同时使用" -> "The app background is enabled; service animation cannot be used at the same time"
-    "启动和关闭服务时，光影从电源按钮向整个页面展开或收回" -> "When the service starts or stops, the light effect expands from the power button across the page or retracts"
-    "启用后服务动态光影将自动关闭" -> "Enabling this automatically disables service animation"
     "开启软件背景" -> "Enable app background"
     "关闭软件背景" -> "Disable app background"
-    "开启软件背景会关闭服务动态光影。是否继续？" -> "Enabling the app background will disable service animation. Continue?"
-    "关闭软件背景后，是否开启服务动态光影？" -> "After disabling the app background, enable service animation?"
     "使用系统壁纸的动态取色" -> "Use dynamic colors from the system wallpaper"
     "浅色模式" -> "Light mode"
     "深色模式" -> "Dark mode"
@@ -106,13 +98,11 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "加载失败" -> "Load failed"
     "两项内容均可留空；留空后对应状态下首页不显示句子。" -> "Both fields can be left empty; the home page will not show a sentence in that state."
     "两项内容均可留空；留空后对应通知栏会使用默认状态文案。" -> "Both fields can be left empty; the notification will use the default status text in that case."
-    "软件背景与服务动态光影不可同时启用。" -> "The app background and service animation cannot be enabled at the same time."
     else -> null
 }
 
 internal fun translateSettingsAndAppearancePattern(text: String): String? = when {
     text.startsWith("出站代理不可用 · ") -> text.replace("出站代理不可用 · ", "Outbound proxy unavailable · ")
-    text.startsWith("软件背景与服务动态光影不可同时启用") -> "The app background and service animation cannot be enabled at the same time."
     text.startsWith("关闭“通知常驻”") -> "Disabling persistent notifications only stops monitoring reminders while the VPN is not running. The required foreground-service notification remains visible while the VPN is running."
     else -> null
 }

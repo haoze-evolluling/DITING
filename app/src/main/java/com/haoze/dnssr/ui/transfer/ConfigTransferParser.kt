@@ -309,7 +309,6 @@ object ConfigTransferParser {
                 homeDnsDetailOpacity = if (obj.has("homeDnsDetailOpacity")) obj.optDouble("homeDnsDetailOpacity").toFloat() else null,
                 homeSentenceRunning = obj.optString("homeSentenceRunning", "").takeIf { it.isNotEmpty() },
                 homeSentenceStopped = obj.optString("homeSentenceStopped", "").takeIf { it.isNotEmpty() },
-                serviceLightEffectEnabled = if (obj.has("serviceLightEffectEnabled")) obj.optBoolean("serviceLightEffectEnabled") else null,
                 liquidGlassBottomBarEnabled = if (obj.has("liquidGlassBottomBarEnabled")) obj.optBoolean("liquidGlassBottomBarEnabled") else null
             )
         }
