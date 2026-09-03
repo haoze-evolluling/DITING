@@ -64,8 +64,10 @@ object AppSettings {
     fun setServiceLightEffectEnabled(context: Context, enabled: Boolean) =
         AppearanceSettingsStore.setServiceLightEffectEnabled(context, enabled)
 
+    @Deprecated("Liquid glass bottom bar has been removed")
     fun isLiquidGlassBottomBarEnabled(context: Context): Boolean =
         AppearanceSettingsStore.isLiquidGlassBottomBarEnabled(context)
+    @Deprecated("Liquid glass bottom bar has been removed")
     fun setLiquidGlassBottomBarEnabled(context: Context, enabled: Boolean) =
         AppearanceSettingsStore.setLiquidGlassBottomBarEnabled(context, enabled)
 

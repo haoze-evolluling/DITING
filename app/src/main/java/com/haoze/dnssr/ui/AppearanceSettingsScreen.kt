@@ -23,8 +23,7 @@ fun AppearanceSettingsScreen(
     onNavigateToHomeSentence: () -> Unit,
     onNavigateToNotificationSettings: () -> Unit,
     onNavigateToCustomBackground: () -> Unit,
-    onNavigateToServiceLightEffect: () -> Unit,
-    onNavigateToLiquidGlass: () -> Unit
+    onNavigateToServiceLightEffect: () -> Unit
 ) {
     val context = LocalContext.current
     val mode = AppSettings.getAppThemeMode(context)
@@ -91,11 +90,6 @@ fun AppearanceSettingsScreen(
                             title = localizedText("服务动态光影"),
                             subtitle = localizedText("设置服务启动和关闭时的动态光影效果"),
                             onClick = onNavigateToServiceLightEffect
-                        ),
-                        SettingsNavigationItemData(
-                            title = localizedText("液态流体效果"),
-                            subtitle = localizedText("设置悬浮底栏等组件的液态流体与磨砂折射效果"),
-                            onClick = onNavigateToLiquidGlass
                         )
                     )
                 )

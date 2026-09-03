@@ -204,15 +204,9 @@ object AppearanceSettingsStore {
             .apply()
     }
 
-    fun isLiquidGlassBottomBarEnabled(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_LIQUID_GLASS_BOTTOM_BAR_ENABLED, DEFAULT_LIQUID_GLASS_BOTTOM_BAR_ENABLED)
-    }
+    @Deprecated("Liquid glass bottom bar has been removed")
+    fun isLiquidGlassBottomBarEnabled(context: Context): Boolean = false
 
-    fun setLiquidGlassBottomBarEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_LIQUID_GLASS_BOTTOM_BAR_ENABLED, enabled)
-            .apply()
-    }
+    @Deprecated("Liquid glass bottom bar has been removed")
+    fun setLiquidGlassBottomBarEnabled(context: Context, enabled: Boolean) {}
 }

@@ -75,9 +75,6 @@ fun MainScreen(
     var serviceLightEffectEnabled by remember {
         mutableStateOf(AppSettings.isServiceLightEffectEnabled(context))
     }
-    var liquidGlassBottomBarEnabled by remember {
-        mutableStateOf(AppSettings.isLiquidGlassBottomBarEnabled(context))
-    }
     var showDataResetNotice by remember {
         mutableStateOf(AppSettings.isDataResetNoticePending(context))
     }
@@ -89,7 +86,6 @@ fun MainScreen(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 serviceLightEffectEnabled = AppSettings.isServiceLightEffectEnabled(context)
-                liquidGlassBottomBarEnabled = AppSettings.isLiquidGlassBottomBarEnabled(context)
                 showDataResetNotice = AppSettings.isDataResetNoticePending(context)
             }
         }
@@ -203,7 +199,6 @@ fun MainScreen(
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
                         .padding(bottom = 16.dp),
-                    isGlassEnabled = liquidGlassBottomBarEnabled,
                     pagerProgress = { pagerState.currentPage + pagerState.currentPageOffsetFraction }
                 )
             }
