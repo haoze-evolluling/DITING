@@ -245,6 +245,9 @@ object AppSettings {
     fun isBypassLanEnabled(context: Context): Boolean = SystemSettingsStore.isBypassLanEnabled(context)
     fun setBypassLanEnabled(context: Context, enabled: Boolean) =
         SystemSettingsStore.setBypassLanEnabled(context, enabled)
+    fun getIpv6Mode(context: Context): Ipv6Mode = SystemSettingsStore.getIpv6Mode(context)
+    fun setIpv6Mode(context: Context, mode: Ipv6Mode) =
+        SystemSettingsStore.setIpv6Mode(context, mode)
 
     // 白名单设置
     fun isAllowEditDefaultWhitelist(context: Context): Boolean = AppRulesSettingsStore.isAllowEditDefaultWhitelist(context)

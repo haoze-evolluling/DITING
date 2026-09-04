@@ -2,12 +2,15 @@ package com.haoze.dnssr.ui.settings
 
 import android.content.Context
 import com.haoze.dnssr.ui.DnsLogMode
+import com.haoze.dnssr.ui.Ipv6Mode
 
 object SystemSettingsStore {
     const val KEY_LOG_RETENTION_DAYS = "log_retention_days"
     const val KEY_HIDE_FROM_RECENTS_ENABLED = "hide_from_recents_enabled"
     const val KEY_BYPASS_LAN_ENABLED = "bypass_lan_enabled"
     const val DEFAULT_BYPASS_LAN_ENABLED = true
+    const val KEY_IPV6_MODE = "ipv6_mode"
+    val DEFAULT_IPV6_MODE = Ipv6Mode.AUTO
 
     private const val KEY_DNS_LOG_MODE = "dns_log_mode"
     private const val KEY_FLOATING_LOG_ENABLED = "floating_log_enabled"
@@ -233,6 +236,19 @@ object SystemSettingsStore {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_BYPASS_LAN_ENABLED, enabled)
+            .apply()
+    }
+
+    fun getIpv6Mode(context: Context): Ipv6Mode {
+        val value = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_IPV6_MODE, DEFAULT_IPV6_MODE.storageValue)
+        return Ipv6Mode.fromStorageValue(value)
+    }
+
+    fun setIpv6Mode(context: Context, mode: Ipv6Mode) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_IPV6_MODE, mode.storageValue)
             .apply()
     }
 }

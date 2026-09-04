@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"context"
+	"encoding/binary"
 	"io"
 	"net"
 	"os"
@@ -304,6 +305,11 @@ func newFullPassthroughTcpHandler(engine *Engine, uidr UIDResolver, protectFn fu
 		if engine.isUIDBlocked(uid) || !engine.appAllowlistConnectionAllowed(uid, flow.serverIP) {
 			return
 		}
+		// DNS over TCP (port 53) → answer locally (adblock + resolve).
+		if flow.serverPort == 53 {
+			handleDNSOverTCP(conn, engine, uid)
+			return
+		}
 		engine.logConnection(flow, ProtocolTCP)
 		clientConn := engine.trafficTracker.WrapClientConn(conn, uid)
 		relayDirectFromFlow(clientConn, flow, engine, protectFn)
@@ -420,3 +426,80 @@ func (w *udpDNSResponseWriter) Close() error   { return nil }
 func (w *udpDNSResponseWriter) TsigStatus() error { return nil }
 func (w *udpDNSResponseWriter) TsigTimersOnly(bool) {}
 func (w *udpDNSResponseWriter) Hijack()             {}
+
+const dnsTCPIdleTimeout = 15 * time.Second
+
+// handleDNSOverTCP reads DNS query messages with 2-byte prefix off a stack TCP flow,
+// runs each through engine.serveDNS, and writes the 2-byte prefixed response back to
+// the app.
+func handleDNSOverTCP(conn adapter.TCPConn, engine *Engine, uid int) {
+	defer conn.Close()
+	appName := engine.appNameForFlow(tcpFlowID(conn), ProtocolTCP)
+	lenBuf := make([]byte, 2)
+	for {
+		_ = conn.SetReadDeadline(time.Now().Add(dnsTCPIdleTimeout))
+		if _, err := io.ReadFull(conn, lenBuf); err != nil {
+			return
+		}
+		msgLen := binary.BigEndian.Uint16(lenBuf)
+		if msgLen == 0 {
+			continue
+		}
+		buf := make([]byte, msgLen)
+		if _, err := io.ReadFull(conn, buf); err != nil {
+			return
+		}
+		if engine.trafficTracker != nil {
+			engine.trafficTracker.RecordTx(uid, int64(2+int(msgLen)))
+		}
+		req := new(dns.Msg)
+		if err := req.Unpack(buf); err != nil {
+			continue
+		}
+		engine.serveDNS(&tcpDNSResponseWriter{conn: conn, engine: engine, uid: uid}, req, appName, uid)
+	}
+}
+
+// tcpDNSResponseWriter adapts a stack TCP flow to dns.ResponseWriter.
+type tcpDNSResponseWriter struct {
+	conn   adapter.TCPConn
+	engine *Engine
+	uid    int
+}
+
+func (w *tcpDNSResponseWriter) LocalAddr() net.Addr  { return w.conn.LocalAddr() }
+func (w *tcpDNSResponseWriter) RemoteAddr() net.Addr { return w.conn.RemoteAddr() }
+
+func (w *tcpDNSResponseWriter) WriteMsg(m *dns.Msg) error {
+	packed, err := m.Pack()
+	if err != nil {
+		return err
+	}
+	return w.writeBytes(packed)
+}
+
+func (w *tcpDNSResponseWriter) Write(b []byte) (int, error) {
+	err := w.writeBytes(b)
+	if err != nil {
+		return 0, err
+	}
+	return len(b), nil
+}
+
+func (w *tcpDNSResponseWriter) writeBytes(b []byte) error {
+	lenBuf := make([]byte, 2)
+	binary.BigEndian.PutUint16(lenBuf, uint16(len(b)))
+	total := append(lenBuf, b...)
+	if w.engine != nil && w.engine.trafficTracker != nil && len(total) > 0 {
+		w.engine.trafficTracker.RecordRx(w.uid, int64(len(total)))
+	}
+	_ = w.conn.SetWriteDeadline(time.Now().Add(dnsTCPIdleTimeout))
+	_, err := w.conn.Write(total)
+	return err
+}
+
+func (w *tcpDNSResponseWriter) Close() error        { return nil }
+func (w *tcpDNSResponseWriter) TsigStatus() error    { return nil }
+func (w *tcpDNSResponseWriter) TsigTimersOnly(bool)  {}
+func (w *tcpDNSResponseWriter) Hijack()              {}
+

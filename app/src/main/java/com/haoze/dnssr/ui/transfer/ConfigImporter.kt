@@ -15,6 +15,7 @@ import com.haoze.dnssr.ui.ConfigImportProgress
 import com.haoze.dnssr.ui.ConfigImportResult
 import com.haoze.dnssr.ui.DnsLogMode
 import com.haoze.dnssr.ui.HomeProviderVisibility
+import com.haoze.dnssr.ui.Ipv6Mode
 import com.haoze.dnssr.ui.OutboundProxyConfig
 import com.haoze.dnssr.ui.OutboundProxyProtocol
 import com.haoze.dnssr.ui.RuntimeDnsSettingsRefresher
@@ -708,6 +709,7 @@ class ConfigImporter(private val context: Context) {
         if (config.systemSettings != null) {
             val sys = config.systemSettings
             sys.bypassLanEnabled?.let { AppSettings.setBypassLanEnabled(context, it) }
+            sys.ipv6Mode?.let { AppSettings.setIpv6Mode(context, Ipv6Mode.fromStorageValue(it)) }
             sys.hideFromRecentsEnabled?.let { AppSettings.setHideFromRecentsEnabled(context, it) }
             sys.logRetentionDays?.let { AppSettings.setLogRetentionDays(context, it) }
             sys.dnsLogMode?.let { AppSettings.setDnsLogMode(context, DnsLogMode.fromStorageValue(it)) }

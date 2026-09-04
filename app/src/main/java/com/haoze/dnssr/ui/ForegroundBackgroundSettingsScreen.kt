@@ -23,6 +23,7 @@ import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsInfoText
 import com.haoze.dnssr.ui.components.SettingsNavigationGroup
 import com.haoze.dnssr.ui.components.SettingsNavigationItemData
+import com.haoze.dnssr.ui.components.SettingsRadioItem
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import com.haoze.dnssr.ui.components.SettingsSwitchItem
@@ -41,8 +42,16 @@ fun ForegroundBackgroundSettingsScreen(
     var bypassLanEnabled by remember {
         mutableStateOf(AppSettings.isBypassLanEnabled(context))
     }
+    var ipv6Mode by remember {
+        mutableStateOf(AppSettings.getIpv6Mode(context))
+    }
     var batteryOptimizationIgnored by remember(context) {
         mutableStateOf(isBatteryOptimizationIgnored(context))
+    }
+
+    fun saveIpv6Mode(mode: Ipv6Mode) {
+        ipv6Mode = mode
+        AppSettings.setIpv6Mode(context, mode)
     }
 
     fun saveHideFromRecents(enabled: Boolean) {
@@ -98,6 +107,34 @@ fun ForegroundBackgroundSettingsScreen(
                 }
             ))
             SettingsInfoText(localizedText("若日常使用快传、LocalSend、投屏或访问局域网设备，建议保持开启。修改后重新开启服务生效。"))
+            SettingsGroupTitle(localizedText("IPv6 流量接管"))
+            SettingsSurfaceGroup(content = listOf(
+                {
+                    SettingsRadioItem(
+                        title = localizedText("自动探测（推荐）"),
+                        subtitle = localizedText("根据物理网络是否具备公网 IPv6 地址及有效网关路由自动决策；在纯 IPv4 网络下自动关闭 IPv6 虚拟网卡，避免产生连接黑洞"),
+                        selected = ipv6Mode == Ipv6Mode.AUTO,
+                        onClick = { saveIpv6Mode(Ipv6Mode.AUTO) }
+                    )
+                },
+                {
+                    SettingsRadioItem(
+                        title = localizedText("始终开启"),
+                        subtitle = localizedText("虚拟网卡始终配置全局 IPv6 地址与路由"),
+                        selected = ipv6Mode == Ipv6Mode.ENABLED,
+                        onClick = { saveIpv6Mode(Ipv6Mode.ENABLED) }
+                    )
+                },
+                {
+                    SettingsRadioItem(
+                        title = localizedText("始终禁用"),
+                        subtitle = localizedText("仅配置 IPv4 虚拟网卡，强制所有双栈网站走 IPv4 隧道"),
+                        selected = ipv6Mode == Ipv6Mode.DISABLED,
+                        onClick = { saveIpv6Mode(Ipv6Mode.DISABLED) }
+                    )
+                }
+            ))
+            SettingsInfoText(localizedText("若在无 IPv6 的 Wi-Fi 下出现豆包、抖音等网站无法打开，请保持“自动探测”或设为“始终禁用”。修改后重新开启服务生效。"))
             SettingsGroupTitle(localizedText("电池"))
             SettingsNavigationGroup(
                 items = listOf(

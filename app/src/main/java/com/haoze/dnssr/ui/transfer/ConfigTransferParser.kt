@@ -315,6 +315,7 @@ object ConfigTransferParser {
         val systemSettings = root.optJSONObject("systemSettings")?.let { obj ->
             ImportedSystemSettings(
                 bypassLanEnabled = if (obj.has("bypassLanEnabled")) obj.optBoolean("bypassLanEnabled") else null,
+                ipv6Mode = obj.optString("ipv6Mode", "").takeIf { it.isNotEmpty() },
                 hideFromRecentsEnabled = if (obj.has("hideFromRecentsEnabled")) obj.optBoolean("hideFromRecentsEnabled") else null,
                 logRetentionDays = if (obj.has("logRetentionDays")) obj.optInt("logRetentionDays") else null,
                 dnsLogMode = obj.optString("dnsLogMode", "").takeIf { it.isNotEmpty() },

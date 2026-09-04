@@ -304,6 +304,7 @@ class ConfigExporter(private val context: Context) {
         if (selection.systemSettings) {
             root.put("systemSettings", JSONObject().apply {
                 put("bypassLanEnabled", AppSettings.isBypassLanEnabled(context))
+                put("ipv6Mode", AppSettings.getIpv6Mode(context).storageValue)
                 put("hideFromRecentsEnabled", AppSettings.isHideFromRecentsEnabled(context))
                 put("logRetentionDays", AppSettings.logRetentionDays(context))
                 put("dnsLogMode", AppSettings.getDnsLogMode(context).storageValue)

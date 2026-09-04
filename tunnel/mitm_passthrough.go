@@ -51,6 +51,20 @@ func dialUpstream(flow flowID, hostname string, blocker adBlockChecker, protectF
 // long-lived flows live as long as apps need — a former 3-minute hard
 // deadline killed YouTube playback mid-stream as ERR_CONNECTION_ABORTED.
 func relayDirectFromFlow(clientConn net.Conn, flow flowID, blocker adBlockChecker, protectFn func(fd int) bool) {
+	// If destination is IPv6 and port 443 (HTTPS), peek TLS ClientHello to extract SNI.
+	// This enables dialUpstream to fall back to IPv4 if the direct IPv6 dial fails (e.g. on pure IPv4 network).
+	if flow.serverIP.To4() == nil && flow.serverPort == 443 {
+		peeked, peekedReader, err := peekFlow(clientConn, peekSize, peekTimeout)
+		if err == nil && len(peeked) > 0 {
+			sni := ""
+			if len(peeked) >= 3 && peeked[0] == 0x16 && peeked[1] == 0x03 {
+				sni = parseClientHelloSNI(peeked)
+			}
+			relayDirectPeeked(clientConn, peekedReader, flow, sni, blocker, protectFn)
+			return
+		}
+	}
+
 	remote, err := dialUpstream(flow, "", blocker, protectFn)
 	if err != nil {
 		return

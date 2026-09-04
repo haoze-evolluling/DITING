@@ -25,6 +25,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import com.haoze.dnssr.ui.Ipv6Mode
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -113,6 +121,82 @@ class DnsVpnService : VpnService() {
         if (!screenStateReceiverRegistered) return
         screenStateReceiverRegistered = false
         runCatching { unregisterReceiver(screenStateReceiver) }
+    }
+
+    private var physicalNetworkCallback: ConnectivityManager.NetworkCallback? = null
+    private var networkChangeDebounceJob: Job? = null
+
+    private fun registerPhysicalNetworkCallback() {
+        if (physicalNetworkCallback != null) return
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return
+        val request = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+            .addTransportType(NetworkCapabilities.TRANSPORT_ETHERNET)
+            .build()
+
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                scheduleIpv6AdaptationCheck("network_available")
+            }
+
+            override fun onLost(network: Network) {
+                scheduleIpv6AdaptationCheck("network_lost")
+            }
+
+            override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) {
+                scheduleIpv6AdaptationCheck("link_properties_changed")
+            }
+
+            override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
+                scheduleIpv6AdaptationCheck("capabilities_changed")
+            }
+        }
+
+        runCatching {
+            cm.registerNetworkCallback(request, callback)
+            physicalNetworkCallback = callback
+            Log.d(TAG, "Registered physical network callback for dynamic IPv6 adaptation")
+        }.onFailure {
+            Log.w(TAG, "Failed to register physical network callback", it)
+        }
+    }
+
+    private fun unregisterPhysicalNetworkCallback() {
+        networkChangeDebounceJob?.cancel()
+        networkChangeDebounceJob = null
+        val callback = physicalNetworkCallback ?: return
+        physicalNetworkCallback = null
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return
+        runCatching { cm.unregisterNetworkCallback(callback) }
+            .onFailure { Log.w(TAG, "Failed to unregister physical network callback", it) }
+    }
+
+    private fun scheduleIpv6AdaptationCheck(reason: String) {
+        if (tunnelManager.vpnInterface == null) return
+        if (AppSettings.getIpv6Mode(this) != Ipv6Mode.AUTO) return
+
+        networkChangeDebounceJob?.cancel()
+        networkChangeDebounceJob = serviceScope.launch {
+            delay(1500)
+            if (tunnelManager.vpnInterface == null) return@launch
+            if (AppSettings.getIpv6Mode(this@DnsVpnService) != Ipv6Mode.AUTO) return@launch
+
+            val physicalIpv6Support = tunnelManager.hasPhysicalIpv6Support(this@DnsVpnService)
+            val currentIpv6Active = tunnelManager.isIpv6Active
+
+            if (physicalIpv6Support != currentIpv6Active) {
+                Log.i(
+                    TAG,
+                    "Dynamic IPv6 adaptation triggered by $reason: physicalIpv6Support=$physicalIpv6Support, currentIpv6Active=$currentIpv6Active. Reconnecting VPN."
+                )
+                refreshMutex.withLock {
+                    if (tunnelManager.vpnInterface != null) {
+                        restartVpnLocked()
+                    }
+                }
+            }
+        }
     }
 
     internal fun onOutboundProxyStatus(state: String, message: String) {
@@ -265,7 +349,8 @@ class DnsVpnService : VpnService() {
             vpnService = this,
             excludedPackages = AppSettings.getExcludedAppPackages(this),
             proxyPackage = proxyPackage,
-            bypassLan = AppSettings.isBypassLanEnabled(this)
+            bypassLan = AppSettings.isBypassLanEnabled(this),
+            ipv6Mode = AppSettings.getIpv6Mode(this)
         ) ?: run {
             Log.e(TAG, "Failed to establish VPN")
             PermissionDisclosureSettings.updateVpnGrant(this, false)
@@ -320,6 +405,7 @@ class DnsVpnService : VpnService() {
         floatingLogOverlay.setVpnRunning(true)
         VpnMonitorManager.onVpnStarted(this)
         DnsVpnStatusNotifier.sendStatusBroadcast(this, true)
+        registerPhysicalNetworkCallback()
 
         serviceScope.launch {
             dbComponents.rulesInitializationJob?.join()
@@ -477,6 +563,7 @@ class DnsVpnService : VpnService() {
         if (::speedMonitor.isInitialized) speedMonitor.stop()
         if (::floatingLogOverlay.isInitialized) floatingLogOverlay.setVpnRunning(false)
         unregisterScreenStateReceiver()
+        unregisterPhysicalNetworkCallback()
         DnsVpnStatusNotifier.setRunningFlag(this, false)
         tunnelManager.disconnectVpnInterface()
         DnsVpnStatusNotifier.sendStatusBroadcast(this, false)
@@ -501,6 +588,7 @@ class DnsVpnService : VpnService() {
         if (::speedMonitor.isInitialized) speedMonitor.stop()
         if (::floatingLogOverlay.isInitialized) floatingLogOverlay.destroy()
         unregisterScreenStateReceiver()
+        unregisterPhysicalNetworkCallback()
         dbComponents.close()
         isServiceAlive = false
         DnsVpnStatusNotifier.setRunningFlag(this, false)

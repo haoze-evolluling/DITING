@@ -90,6 +90,12 @@ func newMitmTcpHandler(
 			return
 		}
 
+		// DNS over TCP (port 53) → answer locally (adblock + resolve).
+		if flow.serverPort == 53 && eng != nil {
+			handleDNSOverTCP(conn, eng, uid)
+			return
+		}
+
 		// Gate 0 — never MITM private / loopback destinations. These
 		// are local services (LAN printers, router admin pages) that
 		// often have self-signed certs or none at all.

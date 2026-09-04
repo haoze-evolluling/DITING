@@ -131,6 +131,7 @@ data class ImportedAppearance(
 
 data class ImportedSystemSettings(
     val bypassLanEnabled: Boolean? = null,
+    val ipv6Mode: String? = null,
     val hideFromRecentsEnabled: Boolean? = null,
     val logRetentionDays: Int? = null,
     val dnsLogMode: String? = null,

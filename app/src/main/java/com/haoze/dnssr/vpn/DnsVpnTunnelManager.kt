@@ -1,6 +1,9 @@
 package com.haoze.dnssr.vpn
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.system.OsConstants
@@ -8,11 +11,13 @@ import android.util.Log
 import com.haoze.dnssr.R
 import com.haoze.dnssr.ui.AppSettings
 import com.haoze.dnssr.ui.DnsResolutionMode
+import com.haoze.dnssr.ui.Ipv6Mode
 import com.haoze.dnssr.ui.OutboundProxyConfig
 import com.haoze.dnssr.vpn.cache.DnsCachePolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import java.net.Inet6Address
 
 /**
  * 负责 TUN 虚拟网卡创建、Go 用户态隧道生命周期管理及 CA 证书就绪状态检查。
@@ -25,6 +30,10 @@ class DnsVpnTunnelManager {
         private set
     @Volatile
     var activeInspectionPackages: Set<String> = emptySet()
+        private set
+
+    @Volatile
+    var isIpv6Active: Boolean = false
         private set
 
     /**
@@ -42,24 +51,104 @@ class DnsVpnTunnelManager {
     }
 
     /**
+     * 探测当前底层物理网络（排除 VPN 本身）是否具备有效的公网 IPv6 地址与网关路由。
+     */
+    fun hasPhysicalIpv6Support(context: Context): Boolean {
+        return runCatching {
+            val cm = context.getSystemService(ConnectivityManager::class.java) ?: return false
+            val activeNetwork = cm.activeNetwork
+            val candidateNetworks = mutableListOf<Network>()
+
+            fun isPhysicalNetwork(network: Network): Boolean {
+                val caps = cm.getNetworkCapabilities(network) ?: return false
+                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return false
+                return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+            }
+
+            if (activeNetwork != null && isPhysicalNetwork(activeNetwork)) {
+                candidateNetworks.add(activeNetwork)
+            }
+
+            cm.allNetworks.forEach { network ->
+                if (network != activeNetwork && isPhysicalNetwork(network)) {
+                    val caps = cm.getNetworkCapabilities(network)
+                    if (caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
+                        candidateNetworks.add(network)
+                    }
+                }
+            }
+
+            if (candidateNetworks.isEmpty()) {
+                cm.allNetworks.forEach { network ->
+                    if (isPhysicalNetwork(network)) {
+                        candidateNetworks.add(network)
+                    }
+                }
+            }
+
+            candidateNetworks.any { network ->
+                val lp = cm.getLinkProperties(network) ?: return@any false
+                val iface = lp.interfaceName.orEmpty().lowercase()
+                if (iface.startsWith("tun") || iface.startsWith("vpn")) {
+                    return@any false
+                }
+
+                val hasGlobalIpv6 = lp.linkAddresses.any { linkAddr ->
+                    val addr = linkAddr.address
+                    if (addr !is Inet6Address) return@any false
+                    val firstByte = addr.address[0].toInt() and 0xff
+                    // 严格要求全球单播地址 2000::/3 (首字节 0x20..0x3f)
+                    // 彻底排除 ULA (fc00::/7 即 fd00::/8), Link-Local (fe80::/10), Loopback (::1), Multicast 等
+                    (firstByte in 0x20..0x3f) &&
+                        !addr.isAnyLocalAddress &&
+                        !addr.isLinkLocalAddress &&
+                        !addr.isLoopbackAddress &&
+                        !addr.isMulticastAddress
+                }
+                if (!hasGlobalIpv6) return@any false
+
+                val hasIpv6Route = lp.routes.any { route ->
+                    val destAddr = route.destination?.address
+                    (destAddr is Inet6Address && route.isDefaultRoute) ||
+                        (destAddr is Inet6Address && route.hasGateway())
+                }
+                hasIpv6Route
+            }
+        }.getOrDefault(false)
+    }
+
+    /**
      * 构建并建立 [VpnService] TUN 虚拟网卡接口。
      */
     fun establishVpnInterface(
         vpnService: VpnService,
         excludedPackages: Set<String>,
         proxyPackage: String?,
-        bypassLan: Boolean = true
+        bypassLan: Boolean = true,
+        ipv6Mode: Ipv6Mode = Ipv6Mode.AUTO
     ): ParcelFileDescriptor? {
+        val enableIpv6 = when (ipv6Mode) {
+            Ipv6Mode.ENABLED -> true
+            Ipv6Mode.DISABLED -> false
+            Ipv6Mode.AUTO -> hasPhysicalIpv6Support(vpnService)
+        }
+        Log.i(TAG, "establishVpnInterface: ipv6Mode=$ipv6Mode, enableIpv6=$enableIpv6, bypassLan=$bypassLan")
+
         val builder = vpnService.Builder()
             .setSession(vpnService.getString(R.string.app_name))
             .addAddress(VPN_ADDRESS_V4, 30)
-            .addAddress(VPN_ADDRESS_V6, 128)
             .addDnsServer(DNS_SERVER_V4)
-            .addDnsServer(DNS_SERVER_V6)
             .allowFamily(OsConstants.AF_INET)
-            .allowFamily(OsConstants.AF_INET6)
             .setMtu(1500)
             .setBlocking(true)
+
+        if (enableIpv6) {
+            builder.addAddress(VPN_ADDRESS_V6, 64)
+            builder.addDnsServer(DNS_SERVER_V6)
+            builder.allowFamily(OsConstants.AF_INET6)
+        }
 
         if (bypassLan) {
             IPV4_BYPASS_LAN_ROUTES.forEach { (address, prefixLength) ->
@@ -69,14 +158,23 @@ class DnsVpnTunnelManager {
                     Log.w(TAG, "addRoute failed for $address/$prefixLength", e)
                 }
             }
-            try {
-                builder.addRoute("2000::", 3)
-            } catch (e: Exception) {
-                Log.w(TAG, "addRoute failed for 2000::/3", e)
+            if (enableIpv6) {
+                try {
+                    builder.addRoute("2000::", 3)
+                } catch (e: Exception) {
+                    Log.w(TAG, "addRoute failed for 2000::/3", e)
+                }
+                try {
+                    builder.addRoute(DNS_SERVER_V6, 128)
+                } catch (e: Exception) {
+                    Log.w(TAG, "addRoute failed for $DNS_SERVER_V6/128", e)
+                }
             }
         } else {
             builder.addRoute("0.0.0.0", 0)
-            builder.addRoute("::", 0)
+            if (enableIpv6) {
+                builder.addRoute("::", 0)
+            }
         }
 
         val allExcluded = excludedPackages + vpnService.packageName + listOfNotNull(proxyPackage)
@@ -90,6 +188,7 @@ class DnsVpnTunnelManager {
 
         val pfd = builder.establish()
         vpnInterface = pfd
+        isIpv6Active = if (pfd != null) enableIpv6 else false
         return pfd
     }
 
@@ -176,6 +275,7 @@ class DnsVpnTunnelManager {
         } catch (_: Exception) {
         }
         vpnInterface = null
+        isIpv6Active = false
     }
 
     companion object {
