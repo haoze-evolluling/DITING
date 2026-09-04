@@ -53,6 +53,7 @@ class DnsVpnTunnelManager {
     /**
      * 探测当前底层物理网络（排除 VPN 本身）是否具备有效的公网 IPv6 地址与网关路由。
      */
+    @Suppress("DEPRECATION")
     fun hasPhysicalIpv6Support(context: Context): Boolean {
         return runCatching {
             val cm = context.getSystemService(ConnectivityManager::class.java) ?: return false
