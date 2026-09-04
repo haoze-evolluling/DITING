@@ -39,7 +39,7 @@ fun SponsorScreen(
         runCatching {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(SPONSOR_README_URL)))
         }.onFailure {
-            Toast.makeText(context, localizedText(context, "无法打开链接"), Toast.LENGTH_SHORT).show()
+            context.showToast("无法打开链接", Toast.LENGTH_SHORT)
         }
         Unit
     }

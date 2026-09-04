@@ -5,6 +5,7 @@ import android.graphics.PixelFormat
 import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
+import com.haoze.dnssr.ui.showToast
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
@@ -119,7 +120,7 @@ class FloatingLogOverlayController(context: Context) {
             root = null
             ball = null
             windowParams = null
-            Toast.makeText(appContext, localizedText(appContext, "悬浮窗日志启动失败"), Toast.LENGTH_SHORT).show()
+            appContext.showToast("悬浮窗日志启动失败", Toast.LENGTH_SHORT)
         }
     }
 
@@ -196,7 +197,7 @@ class FloatingLogOverlayController(context: Context) {
         panelSize = (panelSize + 1) % 3
         AppSettings.setFloatingLogPanelSize(appContext, panelSize)
         applyPanelSize()
-        Toast.makeText(appContext, localizedText(appContext, "悬浮窗：${panelSizeName()}"), Toast.LENGTH_SHORT).show()
+        appContext.showToast("悬浮窗：${panelSizeName()}", Toast.LENGTH_SHORT)
     }
 
     private fun applyPanelSize() {

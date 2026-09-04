@@ -7,7 +7,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.haoze.dnssr.data.entity.AllowRuleEntity
 import com.haoze.dnssr.data.entity.AllowRuleSourceEntity
-import com.haoze.dnssr.data.dao.EnabledBlockRule
+import com.haoze.dnssr.data.dao.EnabledRule
 
 data class AllowRuleIdentity(
     val id: Long,
@@ -142,7 +142,7 @@ interface AllowRuleDao {
             "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard " +
             "ORDER BY r.id LIMIT :limit"
     )
-    suspend fun enabledSubscriptionRulesPageKeyset(limit: Int, lastId: Long): List<EnabledBlockRuleKeyset>
+    suspend fun enabledSubscriptionRulesPageKeyset(limit: Int, lastId: Long): List<EnabledRuleKeyset>
 
     @Query(
         "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
@@ -152,7 +152,7 @@ interface AllowRuleDao {
             "AND (r.isWildcard = 1 OR r.pattern LIKE '%*%' OR r.appScope IS NOT NULL OR r.appInverted = 1) " +
             "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard"
     )
-    suspend fun enabledSpecialSubscriptionRules(): List<EnabledBlockRule>
+    suspend fun enabledSpecialSubscriptionRules(): List<EnabledRule>
 
     @Query(
         "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
@@ -161,7 +161,7 @@ interface AllowRuleDao {
             "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source NOT LIKE 'sub_%' " +
             "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard"
     )
-    suspend fun enabledCustomRules(): List<EnabledBlockRule>
+    suspend fun enabledCustomRules(): List<EnabledRule>
 
     @Query(
         "SELECT DISTINCT r.pattern FROM allow_rule r JOIN allow_rule_source s ON s.ruleId = r.id " +
@@ -203,7 +203,7 @@ interface AllowRuleDao {
         pattern: String,
         appScope: String? = null,
         appInverted: Boolean = false
-    ): EnabledBlockRule?
+    ): EnabledRule?
 
     @Query(
         "SELECT r.id, r.pattern, r.rawLine, r.addedAt, " +

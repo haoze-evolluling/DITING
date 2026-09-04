@@ -1,5 +1,8 @@
 package com.haoze.dnssr.ui
 
+import com.haoze.dnssr.util.formatMs
+import com.haoze.dnssr.util.formatPercent
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -180,13 +183,7 @@ private fun BootstrapIpStatsItem(item: BootstrapIpStats) {
     }
 }
 
-private fun formatPercent(value: Double): String {
-    return String.format(Locale.getDefault(), "%.1f%%", value * 100.0)
-}
 
-private fun formatMs(value: Double): String {
-    return "${value.toInt()} ms"
-}
 
 private fun formatWeight(value: Double): String {
     return String.format(Locale.getDefault(), "%.2f", value)

@@ -1,5 +1,6 @@
 package com.haoze.dnssr
 
+import com.haoze.dnssr.ui.showToast
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -14,19 +15,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.lifecycle.lifecycleScope
 import com.haoze.dnssr.data.entity.RuleScope
 import com.haoze.dnssr.ui.*
 import com.haoze.dnssr.ui.traffic.AppTrafficStatsScreen
 import com.haoze.dnssr.ui.theme.ThemeColorStyle
-import com.haoze.dnssr.update.AppUpdateDownloadStatus
-import com.haoze.dnssr.update.AppUpdateDownloadState
-import com.haoze.dnssr.update.AppUpdateManager
-import com.haoze.dnssr.update.AppUpdateNotifier
+import com.haoze.dnssr.update.AppUpdateHost
 import com.haoze.dnssr.update.AppUpdateUiState
 import com.haoze.dnssr.vpn.DnsVpnService
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class SettingsRouteActivity : AppLocalizedActivity() {
@@ -48,12 +43,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
     private var childLaunchInProgress = false
     private var routeRefreshVersion by mutableStateOf(0)
     private var outboundProxyAppSelectionResult by mutableStateOf<Pair<Boolean, String?>?>(null)
-    private var appUpdateState by mutableStateOf(AppUpdateUiState())
-    private var dismissedUpdateVersion by mutableStateOf("")
-    private var appUpdateDownloadJob: Job? = null
-    private var appUpdateDownloadGeneration = 0L
-    private val appUpdateManager by lazy { AppUpdateManager(applicationContext) }
-    private val appUpdateNotifier by lazy { AppUpdateNotifier(applicationContext) }
+    private val appUpdateHost = AppUpdateHost(this)
 
     private val childActivityLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -110,9 +100,9 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                         recordBackgroundChanged()
                     },
                     onExitApp = ::finishAndRemoveTask,
-                    appUpdateState = appUpdateState,
-                    onCheckForAppUpdate = ::checkForAppUpdate,
-                    onDownloadAppUpdate = ::downloadAppUpdate,
+                    appUpdateState = appUpdateHost.state,
+                    onCheckForAppUpdate = { appUpdateHost.checkForUpdate(manual = true) },
+                    onDownloadAppUpdate = { appUpdateHost.downloadUpdate() },
                     onJoinQqGroup = ::joinQqGroup,
                     startupUpdateCheckDisabled = AppSettings.isStartupUpdateCheckDisabled(this),
                     onStartupUpdateCheckDisabledChange = {
@@ -120,13 +110,13 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     }
                 )
                 if (route == Routes.APP_UPDATE) {
-                    appUpdateState.availableUpdate?.let { update ->
-                        if (dismissedUpdateVersion != update.version) {
+                    appUpdateHost.state.availableUpdate?.let { update ->
+                        if (appUpdateHost.dismissedVersion != update.version) {
                             AppUpdateDialog(
                                 update = update,
-                                downloadState = appUpdateState.downloadState,
-                                onDismiss = { dismissedUpdateVersion = update.version },
-                                onDownload = ::downloadAppUpdate,
+                                downloadState = appUpdateHost.state.downloadState,
+                                onDismiss = { appUpdateHost.dismissedVersion = update.version },
+                                onDownload = { appUpdateHost.downloadUpdate() },
                             )
                         }
                     }
@@ -215,27 +205,6 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         RecentsPrivacyController.apply(this, hideFromRecents)
     }
 
-    private fun checkForAppUpdate() {
-        if (appUpdateState.checking) return
-        dismissedUpdateVersion = ""
-        appUpdateState = appUpdateState.copy(checking = true, error = "", message = "正在检查 GitHub Release")
-        lifecycleScope.launch {
-            try {
-                val update = appUpdateManager.checkForUpdate()
-                val downloadState = update?.let { appUpdateManager.refreshDownloadState(it) }
-                appUpdateState = AppUpdateUiState(
-                    availableUpdate = update,
-                    downloadState = downloadState ?: appUpdateState.downloadState,
-                    message = if (update == null) "当前已是最新版本。" else "发现 ${update.version} 新版本。"
-                )
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Throwable) {
-                appUpdateState = appUpdateState.copy(checking = false, error = error.message ?: "检查更新失败。")
-            }
-        }
-    }
-
     private fun joinQqGroup() {
         try {
             startActivity(
@@ -245,51 +214,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 ),
             )
         } catch (_: Exception) {
-            Toast.makeText(this, localizedText(this, "未检测到 QQ，请搜索群号 1090225658 加入。"), Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun downloadAppUpdate() {
-        val update = appUpdateState.availableUpdate ?: return
-        val status = appUpdateState.downloadState.status.takeIf { appUpdateState.downloadState.version == update.version }
-        if (status == AppUpdateDownloadStatus.Downloading) return
-        if (status == AppUpdateDownloadStatus.Downloaded) {
-            if (!appUpdateManager.installDownloadedUpdate(update)) {
-                appUpdateState = appUpdateState.copy(downloadState = AppUpdateDownloadState(version = update.version), error = "安装包不存在或无法打开，请重新下载。")
-            }
-            return
-        }
-        appUpdateDownloadJob?.cancel()
-        appUpdateNotifier.clear()
-        val generation = ++appUpdateDownloadGeneration
-        appUpdateDownloadJob = lifecycleScope.launch {
-            try {
-                appUpdateState = appUpdateState.copy(downloadState = AppUpdateDownloadState(version = update.version, status = AppUpdateDownloadStatus.Downloading), error = "")
-                appUpdateNotifier.showProgress(update, 0L, -1L)
-                val downloadState = appUpdateManager.download(update) { downloadedBytes, totalBytes ->
-                    runOnUiThread {
-                        if (generation == appUpdateDownloadGeneration) {
-                            appUpdateState = appUpdateState.copy(
-                                downloadState = AppUpdateDownloadState(
-                                    version = update.version,
-                                    status = AppUpdateDownloadStatus.Downloading,
-                                    downloadedBytes = downloadedBytes,
-                                    totalBytes = totalBytes
-                                )
-                            )
-                            appUpdateNotifier.showProgress(update, downloadedBytes, totalBytes)
-                        }
-                    }
-                }
-                if (generation != appUpdateDownloadGeneration) return@launch
-                appUpdateState = appUpdateState.copy(downloadState = downloadState, error = if (downloadState.status == AppUpdateDownloadStatus.Failed) "更新包下载失败，请重试。" else "")
-                if (downloadState.status == AppUpdateDownloadStatus.Downloaded) appUpdateNotifier.showCompleted(update) else appUpdateNotifier.clear()
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Throwable) {
-                appUpdateNotifier.clear()
-                appUpdateState = appUpdateState.copy(error = error.message ?: "无法开始下载更新。")
-            }
+            this.showToast("未检测到 QQ，请搜索群号 1090225658 加入。", Toast.LENGTH_LONG)
         }
     }
 

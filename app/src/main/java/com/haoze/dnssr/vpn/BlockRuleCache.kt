@@ -182,7 +182,7 @@ class BlockRuleCache(private val indexFile: File? = null) {
         val subBucketsMap = HashMap<String, MutableAppBucket>()
         val subInvertedList = mutableListOf<InvertedBlockRule>()
 
-        fun processSubscriptionRule(entry: com.haoze.dnssr.data.dao.EnabledBlockRule) {
+        fun processSubscriptionRule(entry: com.haoze.dnssr.data.dao.EnabledRule) {
             val isWc = entry.isWildcard || entry.pattern.contains('*')
             val wcPattern = if (isWc) AdGuardRuleParser.WildcardPattern(entry.pattern) else null
 
@@ -419,47 +419,21 @@ class BlockRuleCache(private val indexFile: File? = null) {
         } else {
             subscriptions[pattern]
         }
-        sourceFor(domain)?.let { source -> return BlockRuleMatch(domain, source) }
-        var subscriptionPos = domain.indexOf('.')
-        while (subscriptionPos >= 0 && subscriptionPos < domain.length - 1) {
-            val suffix = domain.substring(subscriptionPos + 1)
-            sourceFor(suffix)?.let { source -> return BlockRuleMatch(suffix, source) }
-            subscriptionPos = domain.indexOf('.', subscriptionPos + 1)
+        return firstDomainSuffixHit(domain) { suffix ->
+            sourceFor(suffix)?.let { source -> BlockRuleMatch(suffix, source) }
         }
-        return null
     }
 
-    private fun findInMap(domain: String, rules: Map<String, String>): BlockRuleMatch? {
-        rules[domain]?.let { source ->
-            return BlockRuleMatch(pattern = domain, source = source)
+    private fun findInMap(domain: String, rules: Map<String, String>): BlockRuleMatch? =
+        firstDomainSuffixHit(domain) { suffix ->
+            rules[suffix]?.let { source -> BlockRuleMatch(pattern = suffix, source = source) }
         }
-        var pos = domain.indexOf('.')
-        while (pos >= 0 && pos < domain.length - 1) {
-            val suffix = domain.substring(pos + 1)
-            rules[suffix]?.let { source ->
-                return BlockRuleMatch(pattern = suffix, source = source)
-            }
-            pos = domain.indexOf('.', pos + 1)
-        }
-        return null
-    }
 
     private fun findInWildcards(
         domain: String,
         wildcards: List<Pair<AdGuardRuleParser.WildcardPattern, String>>
-    ): BlockRuleMatch? {
-        for ((wp, source) in wildcards) {
-            if (wp.matches(domain)) {
-                return BlockRuleMatch(wp.pattern, source)
-            }
-        }
-        return null
-    }
-
-    private fun matchesDomainOrSuffix(domain: String, pattern: String): Boolean {
-        if (domain == pattern) return true
-        return domain.endsWith(".$pattern")
-    }
+    ): BlockRuleMatch? =
+        findWildcardHit(domain, wildcards) { it.first }?.let { (wp, source) -> BlockRuleMatch(wp.pattern, source) }
 
     fun addPattern(pattern: String, source: String) {
         synchronized(this) {
@@ -740,12 +714,12 @@ private class MutableAppBucket {
 
 private suspend fun BlockRuleDao.forEachSubscriptionRulePage(
     important: Boolean,
-    consume: (com.haoze.dnssr.data.dao.EnabledBlockRule) -> Unit
+    consume: (com.haoze.dnssr.data.dao.EnabledRule) -> Unit
 ) = forEachKeysetPage(
     INDEX_PAGE_SIZE,
     { lastId, limit -> enabledSubscriptionRulesPageKeyset(important, limit, lastId) },
     { it.id },
-    { consume(it.toEnabledBlockRule()) }
+    { consume(it.toEnabledRule()) }
 )
 
 private const val TAG = "BlockRuleCache"

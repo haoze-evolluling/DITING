@@ -48,11 +48,7 @@ fun SponsorListScreen(
         if (cachedConfiguration != null) isConfigurationLoading = false
         runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
             .onFailure { error ->
-                Toast.makeText(
-                    context,
-                    localizedText(context, "名单更新失败：${error.message ?: "未知错误"}"),
-                    Toast.LENGTH_SHORT
-                ).show()
+                context.showToast("名单更新失败：${error.message ?: "未知错误"}")
             }
             .getOrNull()
             ?.let { configuration = it }
@@ -70,20 +66,12 @@ fun SponsorListScreen(
                         val refreshedConfiguration = runCatching {
                             RecognitionMembersRepository.refresh(context.applicationContext)
                         }.getOrElse { error ->
-                            Toast.makeText(
-                                context,
-                                localizedText(context, "名单更新失败：${error.message ?: "未知错误"}"),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            context.showToast("名单更新失败：${error.message ?: "未知错误"}")
                             return@launch
                         }
                         if (refreshedConfiguration != null) {
                             configuration = refreshedConfiguration
-                            Toast.makeText(
-                                context,
-                                localizedText(context, "名单已更新，正在加载头像"),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            context.showToast("名单已更新，正在加载头像")
                             return@launch
                         }
                         val result = avatarLoader.retryMissingOrFailed()
@@ -92,7 +80,7 @@ fun SponsorListScreen(
                             result.failedCount == 0 -> "已刷新 ${result.refreshedCount} 个头像"
                             else -> "已刷新 ${result.refreshedCount} 个头像，${result.failedCount} 个头像仍未加载"
                         }
-                        Toast.makeText(context, localizedText(context, message), Toast.LENGTH_SHORT).show()
+                        context.showToast(message, Toast.LENGTH_SHORT)
                     }
                 }
             ) {
@@ -104,11 +92,7 @@ fun SponsorListScreen(
             }
             IconButton(onClick = {
                 newestFirst = !newestFirst
-                Toast.makeText(
-                    context,
-                    localizedText(context, if (newestFirst) "当前按赞助时间由晚到早排列" else "当前按赞助时间由早到晚排列"),
-                    Toast.LENGTH_SHORT
-                ).show()
+                context.showToast(if (newestFirst) "当前按赞助时间由晚到早排列" else "当前按赞助时间由早到晚排列")
             }) {
                 Icon(
                     imageVector = Icons.Default.SwapVert,

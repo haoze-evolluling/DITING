@@ -194,13 +194,13 @@ fun OutboundProxySettingsScreen(
                     val savedConfig = draft.copy(port = portText.toIntOrNull() ?: 0)
                     val error = if (savedConfig.enabled) savedConfig.validationError(context) else null
                     if (error != null) {
-                        Toast.makeText(context, localizedText(context, error), Toast.LENGTH_LONG).show()
+                        context.showToast(error, Toast.LENGTH_LONG)
                     } else {
                         draft = savedConfig
                         AppSettings.setOutboundProxyConfig(context, savedConfig)
                         AppSettings.setOutboundProxyStatus(context, if (savedConfig.enabled) "connecting" else "disabled", "")
                         RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
-                        Toast.makeText(context, localizedText(context, "出站代理设置已保存"), Toast.LENGTH_SHORT).show()
+                        context.showToast("出站代理设置已保存", Toast.LENGTH_SHORT)
                     }
                 },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
@@ -218,9 +218,6 @@ fun OutboundProxyAppsScreen(onBack: () -> Unit, onSave: (String) -> Unit) {
     val context = LocalContext.current
     val initialPackage = remember { AppSettings.getOutboundProxyConfig(context).proxyAppPackage }
     var selectedPackage by remember { mutableStateOf(initialPackage) }
-    var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf(AppListFilter.USER) }
-    var sort by remember { mutableStateOf(AppListSort.LABEL_ASC) }
     val access = rememberAppListAccessState { loadInstalledApps(context) }
     AppListDisclosureDialog(access)
     val apps = access.apps
@@ -235,102 +232,20 @@ fun OutboundProxyAppsScreen(onBack: () -> Unit, onSave: (String) -> Unit) {
         }
     }
 
-    var debouncedQuery by remember { mutableStateOf("") }
-    var visibleApps by remember { mutableStateOf(emptyList<InstalledApp>()) }
-    LaunchedEffect(query) { delay(250); debouncedQuery = query }
-    LaunchedEffect(apps, filter, sort, debouncedQuery, selectedPackage) {
-        val normalized = debouncedQuery.trim().lowercase(Locale.ROOT)
-        visibleApps = withContext(Dispatchers.Default) {
-            apps.filter { app ->
-                (filter == AppListFilter.ALL ||
-                    filter == AppListFilter.USER && !app.isSystem ||
-                    filter == AppListFilter.SYSTEM && app.isSystem ||
-                    filter == AppListFilter.SELECTED && app.packageName == selectedPackage) &&
-                    (normalized.isEmpty() || app.normalizedLabel.contains(normalized) || app.normalizedPackageName.contains(normalized))
-            }.sortedWith(sort.comparator)
-        }
-    }
-
-    val handleBackAndSave = {
-        if (selectedPackage != initialPackage) {
-            onSave(selectedPackage)
-        }
-        onBack()
-    }
-
-    BackHandler {
-        handleBackAndSave()
-    }
-
-    SettingsScaffold(
+    AppPickerScreen(
         title = localizedText("选择代理应用"),
-        onBack = handleBackAndSave,
-        actions = {
-            AppListOverflowMenu(
-                filter = filter,
-                sort = sort,
-                onSelectAll = {},
-                onClear = { selectedPackage = "" },
-                onInvert = {},
-                onFilterChange = { filter = it },
-                onSortChange = { sort = it },
-                showSelectionActions = false
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                SettingsInfoText(
-                    localizedText("选择提供本地代理端口的应用。代理应用本身会绕过 DNSSR。"),
-                    Modifier.padding(top = 8.dp)
-                )
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    label = { Text(localizedText("搜索应用或包名")) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(28.dp)
-                )
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(bottom = 80.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    itemsIndexed(visibleApps, key = { _, app -> app.packageName }) { index, app ->
-                        SettingsSurfaceItem(index = index, itemCount = visibleApps.size, modifier = Modifier.padding(horizontal = 16.dp)) {
-                            InstalledAppRadioItem(
-                                app = app,
-                                selected = app.packageName == selectedPackage,
-                                onSelected = { selectedPackage = app.packageName }
-                            )
-                        }
-                    }
-                }
-            }
-
-            FloatingActionButton(
-                onClick = {
-                    onSave(selectedPackage)
-                    onBack()
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(Icons.Filled.Save, contentDescription = localizedText("保存"))
-            }
-        }
-    }
+        infoText = localizedText("选择提供本地代理端口的应用。代理应用本身会绕过 DNSSR。"),
+        apps = apps,
+        selectedPackages = if (selectedPackage.isEmpty()) emptySet() else setOf(selectedPackage),
+        onSelectedPackagesChange = { selectedPackage = it.firstOrNull() ?: "" },
+        initialFilter = AppListFilter.USER,
+        initialSort = AppListSort.LABEL_ASC,
+        onFilterChanged = {},
+        onSortChanged = {},
+        showSelectionActions = false,
+        isDirty = selectedPackage != initialPackage,
+        onSave = { onSave(selectedPackage) },
+        onBack = onBack,
+        singleSelect = true
+    )
 }

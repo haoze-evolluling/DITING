@@ -8,34 +8,6 @@ import androidx.room.Transaction
 import com.haoze.dnssr.data.entity.BlockRuleEntity
 import com.haoze.dnssr.data.entity.BlockRuleSourceEntity
 
-data class EnabledBlockRule(
-    val pattern: String,
-    val source: String,
-    val important: Boolean = false,
-    val appScope: String? = null,
-    val appInverted: Boolean = false,
-    val isWildcard: Boolean = false
-)
-
-data class EnabledBlockRuleKeyset(
-    val id: Long,
-    val pattern: String,
-    val source: String,
-    val important: Boolean = false,
-    val appScope: String? = null,
-    val appInverted: Boolean = false,
-    val isWildcard: Boolean = false
-) {
-    fun toEnabledBlockRule(): EnabledBlockRule = EnabledBlockRule(
-        pattern = pattern,
-        source = source,
-        important = important,
-        appScope = appScope,
-        appInverted = appInverted,
-        isWildcard = isWildcard
-    )
-}
-
 data class BlockRuleIdentity(
     val id: Long,
     val pattern: String,
@@ -173,7 +145,7 @@ interface BlockRuleDao {
         important: Boolean,
         limit: Int,
         lastId: Long
-    ): List<EnabledBlockRuleKeyset>
+    ): List<EnabledRuleKeyset>
 
     @Query(
         "SELECT r.pattern, 'useradd' AS source, r.important AS important, " +
@@ -182,7 +154,7 @@ interface BlockRuleDao {
             "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source = 'useradd' " +
             "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard"
     )
-    suspend fun enabledCustomRules(): List<EnabledBlockRule>
+    suspend fun enabledCustomRules(): List<EnabledRule>
 
     @Query(
         "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
@@ -192,7 +164,7 @@ interface BlockRuleDao {
             "AND (r.isWildcard = 1 OR r.pattern LIKE '%*%' OR r.appScope IS NOT NULL OR r.appInverted = 1) " +
             "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard"
     )
-    suspend fun enabledSpecialSubscriptionRules(): List<EnabledBlockRule>
+    suspend fun enabledSpecialSubscriptionRules(): List<EnabledRule>
 
     @Query(
         "SELECT DISTINCT r.pattern FROM block_rule r JOIN block_rule_source s ON s.ruleId = r.id " +
@@ -229,7 +201,7 @@ interface BlockRuleDao {
         important: Boolean,
         appScope: String? = null,
         appInverted: Boolean = false
-    ): EnabledBlockRule?
+    ): EnabledRule?
 
     @Query(
         "SELECT r.id, r.pattern, r.rawLine, r.addedAt, " +

@@ -1,8 +1,5 @@
 package com.haoze.dnssr.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -109,7 +106,7 @@ fun RequestLogScreen(onBack: () -> Unit, onRuntimeDnsSettingsChanged: () -> Unit
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
         if (uri != null) scope.launch {
             val result = runCatching { withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(requestCsv(visibleItems)) } ?: error("无法打开导出文件") } }
-            Toast.makeText(context, localizedText(context, if (result.isSuccess) "日志已导出" else "导出失败"), Toast.LENGTH_SHORT).show()
+            context.showToast(if (result.isSuccess) "日志已导出" else "导出失败", Toast.LENGTH_SHORT)
         }
     }
 
@@ -213,7 +210,7 @@ fun RequestLogScreen(onBack: () -> Unit, onRuntimeDnsSettingsChanged: () -> Unit
     }
     pendingDomain?.let { domain ->
         DomainActionDialog(domain, { pendingDomain = null }, {
-            (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("domain", domain)); pendingDomain = null
+            context.copyToClipboard("domain", domain); pendingDomain = null
         }, { allow ->
             val ruleScope = pendingRuleScope
             scope.launch(Dispatchers.IO) {
@@ -224,7 +221,7 @@ fun RequestLogScreen(onBack: () -> Unit, onRuntimeDnsSettingsChanged: () -> Unit
                 }
                 withContext(Dispatchers.Main) {
                     if (success) RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, if (allow) "allow" else "block", domain, ruleScope)
-                    Toast.makeText(context, localizedText(context, if (success) "已添加规则" else "规则格式无效"), Toast.LENGTH_SHORT).show()
+                    context.showToast(if (success) "已添加规则" else "规则格式无效", Toast.LENGTH_SHORT)
                     pendingDomain = null
                 }
             }

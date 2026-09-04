@@ -1,5 +1,7 @@
 package com.haoze.dnssr.ui
 
+import com.haoze.dnssr.util.formatPercent
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,7 +32,6 @@ import com.haoze.dnssr.ui.components.SettingsInfoText
 import com.haoze.dnssr.ui.components.SettingsItem
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
-import java.util.Locale
 
 @Composable
 fun SubscriptionInterceptionStatsScreen(
@@ -129,16 +130,13 @@ private fun SubscriptionInterceptionItem(item: SubscriptionInterceptionStatItem)
     })
     SettingsItem(
         title = item.name,
-            subtitle = localizedText("$state | 拦截 ${item.hits} 次 | ${formatInterceptionPercent(item.rate)}")
+            subtitle = localizedText("$state | 拦截 ${item.hits} 次 | ${formatPercent(item.rate)}")
     ) {
         Text(
-            text = formatInterceptionPercent(item.rate),
+            text = formatPercent(item.rate),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
-private fun formatInterceptionPercent(value: Double): String {
-    return String.format(Locale.getDefault(), "%.1f%%", value * 100.0)
-}

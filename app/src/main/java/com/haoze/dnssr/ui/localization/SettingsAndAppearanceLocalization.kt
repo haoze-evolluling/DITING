@@ -75,15 +75,9 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "跟随 DNS TTL" -> "Follow DNS TTL"
     "限制最长缓存时间" -> "Cap maximum TTL"
     "固定缓存时间" -> "Fixed TTL"
-    "单一服务" -> "Single provider"
-    "智能选择" -> "Smart selection"
-    "最快响应" -> "Fastest response"
-    "依次尝试" -> "Sequential attempts"
     "跟随系统" -> "Follow system"
     // 服务商名称
-    "阿里云" -> "Aliyun"
     "腾讯云" -> "Tencent Cloud"
-    "腾讯云 DNSPod" -> "Tencent Cloud DNSPod"
     "字节跳动" -> "ByteDance"
     "自定义" -> "Custom"
     // 前后台与其他

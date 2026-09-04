@@ -1,5 +1,7 @@
 package com.haoze.dnssr.ui.traffic
 
+import com.haoze.dnssr.util.formatBytes
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

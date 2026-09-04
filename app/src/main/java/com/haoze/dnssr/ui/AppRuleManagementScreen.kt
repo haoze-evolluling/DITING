@@ -63,6 +63,9 @@ import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.haoze.dnssr.data.entity.AllowRuleEntity
 import com.haoze.dnssr.data.entity.BlockRuleEntity
 import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.dnssr.ui.components.RuleConfirmDialog
+import com.haoze.dnssr.ui.components.RuleSearchField
+import com.haoze.dnssr.ui.components.RuleTagChip
 import com.haoze.dnssr.ui.components.SettingsCornerShape
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsInfoText
@@ -109,7 +112,7 @@ internal fun AppRuleManagementScreen(
             onBack = { viewModel.selectApp(null) },
             onAddAllowlistDomain = { domain ->
                 viewModel.addAllowlistDomain(domain) { msg, _ ->
-                    Toast.makeText(context, localizedText(context, msg), Toast.LENGTH_SHORT).show()
+                    context.showToast(msg, Toast.LENGTH_SHORT)
                 }
             },
             onRemoveAllowlistDomain = { domain ->
@@ -117,16 +120,16 @@ internal fun AppRuleManagementScreen(
             },
             onClearAllowlistDomains = {
                 viewModel.clearAllowlistDomainsForSelectedApp()
-                Toast.makeText(context, localizedText(context, "已清空该应用放行域名"), Toast.LENGTH_SHORT).show()
+                context.showToast("已清空该应用放行域名", Toast.LENGTH_SHORT)
             },
             onToggleFullBlock = { enabled ->
                 viewModel.toggleFullBlockTemplate(enabled) { msg ->
-                    Toast.makeText(context, localizedText(context, msg), Toast.LENGTH_SHORT).show()
+                    context.showToast(msg, Toast.LENGTH_SHORT)
                 }
             },
             onAddRule = { pattern, isAllow, important, isWildcard ->
                 viewModel.addAppRule(pattern, isAllow, important, isWildcard) { msg ->
-                    Toast.makeText(context, localizedText(context, msg), Toast.LENGTH_SHORT).show()
+                    context.showToast(msg, Toast.LENGTH_SHORT)
                 }
             },
             onToggleRule = { id, isAllow, enabled -> viewModel.toggleRule(id, isAllow, enabled) },
@@ -151,15 +154,10 @@ internal fun AppRuleManagementScreen(
     }
 
     var query by remember { mutableStateOf("") }
-    var debouncedQuery by remember { mutableStateOf("") }
+    val debouncedQuery = rememberDebouncedValue(query)
     var filter by remember { mutableStateOf(AppListFilter.ALL) }
     var sort by remember { mutableStateOf(AppListSort.LABEL_ASC) }
     var visibleApps by remember { mutableStateOf(emptyList<InstalledApp>()) }
-
-    LaunchedEffect(query) {
-        delay(250)
-        debouncedQuery = query
-    }
 
     LaunchedEffect(loadedApps, filter, sort, debouncedQuery, appRuleCounts, appAllowlistMap) {
         val normalized = debouncedQuery.trim().lowercase(Locale.ROOT)
@@ -239,23 +237,11 @@ internal fun AppRuleManagementScreen(
             )
 
             // 搜索框
-            OutlinedTextField(
+            RuleSearchField(
                 value = query,
                 onValueChange = { query = it },
-                placeholder = { Text(localizedText("搜索应用或包名")) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { query = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = localizedText("清除"))
-                        }
-                    }
-                },
-                shape = RoundedCornerShape(28.dp),
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                placeholder = localizedText("搜索应用或包名"),
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             // 应用列表区
@@ -314,26 +300,15 @@ internal fun AppRuleManagementScreen(
     }
 
     if (showClearAllAllowlistDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearAllAllowlistDialog = false },
-            title = { Text(localizedText("清空全部放行规则？")) },
-            text = { Text(localizedText("此操作将清空所有已配置的单应用域名放行规则，清空后各应用将恢复全部放行状态。")) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearAllAllowlistRules()
-                        showClearAllAllowlistDialog = false
-                        Toast.makeText(context, localizedText(context, "已清空放行规则"), Toast.LENGTH_SHORT).show()
-                    }
-                ) {
-                    Text(localizedText("清空"), color = MaterialTheme.colorScheme.error)
-                }
+        RuleConfirmDialog(
+            title = localizedText("清空全部放行规则？"),
+            message = localizedText("此操作将清空所有已配置的单应用域名放行规则，清空后各应用将恢复全部放行状态。"),
+            confirmText = localizedText("清空"),
+            onConfirm = {
+                viewModel.clearAllAllowlistRules()
+                context.showToast("已清空放行规则", Toast.LENGTH_SHORT)
             },
-            dismissButton = {
-                TextButton(onClick = { showClearAllAllowlistDialog = false }) {
-                    Text(localizedText("取消"))
-                }
-            }
+            onDismiss = { showClearAllAllowlistDialog = false }
         )
     }
 }
@@ -831,27 +806,12 @@ private fun SingleAppRulePanel(
 
     // 开启全外联拦截的风险确认弹窗
     if (showFullBlockConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showFullBlockConfirmDialog = false },
-            title = { Text(localizedText("开启全外联拦截？")) },
-            text = {
-                Text(localizedText("开启后该应用的所有常规网络连接都将被阻断，仅白名单域名可通行。若未添加放行白名单，可能导致应用无法使用。"))
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onToggleFullBlock(true)
-                        showFullBlockConfirmDialog = false
-                    }
-                ) {
-                    Text(localizedText("确定开启"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showFullBlockConfirmDialog = false }) {
-                    Text(localizedText("取消"))
-                }
-            }
+        RuleConfirmDialog(
+            title = localizedText("开启全外联拦截？"),
+            message = localizedText("开启后该应用的所有常规网络连接都将被阻断，仅白名单域名可通行。若未添加放行白名单，可能导致应用无法使用。"),
+            confirmText = localizedText("确定开启"),
+            onConfirm = { onToggleFullBlock(true) },
+            onDismiss = { showFullBlockConfirmDialog = false }
         )
     }
 
@@ -922,25 +882,12 @@ private fun SingleAppRulePanel(
 
     // 清空放行域名确认弹窗
     if (showClearAllowlistConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearAllowlistConfirmDialog = false },
-            title = { Text(localizedText("清空放行域名？")) },
-            text = { Text(localizedText("此操作将移除该应用配置的所有网络层放行域名。")) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onClearAllowlistDomains()
-                        showClearAllowlistConfirmDialog = false
-                    }
-                ) {
-                    Text(localizedText("清空"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearAllowlistConfirmDialog = false }) {
-                    Text(localizedText("取消"))
-                }
-            }
+        RuleConfirmDialog(
+            title = localizedText("清空放行域名？"),
+            message = localizedText("此操作将移除该应用配置的所有网络层放行域名。"),
+            confirmText = localizedText("清空"),
+            onConfirm = { onClearAllowlistDomains() },
+            onDismiss = { showClearAllowlistConfirmDialog = false }
         )
     }
 
@@ -1072,30 +1019,18 @@ private fun RuleEntityRow(
                     modifier = Modifier.weight(1f, fill = false)
                 )
                 if (important) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.errorContainer
-                    ) {
-                        Text(
-                            text = localizedText("重要"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = localizedText("重要"),
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
                 }
                 if (isWildcard) {
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer
-                    ) {
-                        Text(
-                            text = localizedText("通配符"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    RuleTagChip(
+                        text = localizedText("通配符"),
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
                 }
             }
             if (rawLine != pattern) {

@@ -72,7 +72,6 @@ internal fun translateLogsAndStatsExact(text: String): String? = when (text) {
     "重新开启日志后，仪表盘将从新产生的请求开始统计。当前各类解析服务与缓存热点均正常工作。" -> "After logging is re-enabled, the dashboard will count new requests. Resolution services and cache hotspots continue to operate normally."
     "累计缓存命中" -> "Total cache hits"
     "并发竞速请求" -> "Race requests"
-    "Bootstrap 尝试" -> "Bootstrap attempts"
     "解析效能概况" -> "Resolution performance"
     "实时统计" -> "Live stats"
     // 重点请求仪表盘
@@ -91,9 +90,6 @@ internal fun translateLogsAndStatsExact(text: String): String? = when (text) {
     "显示所有请求记录" -> "Show all request records"
     "近 7 天" -> "Last 7 days"
     "7 天" -> "7 days"
-    "请求正常放行，未命中拦截规则" -> "Request passed normally; no blocking rules matched"
-    "请求命中了覆写规则，并返回覆写后的结果" -> "Request matched a rewrite rule and returned the rewritten result"
-    "请求命中了过滤规则并被拦截" -> "Request matched a filtering rule and was blocked"
     // 流量归属说明弹窗
     "💡 真实流量关系等式" -> "💡 True traffic accounting equation"
     "系统统计 谛听 (50 GB) = 哔哩哔哩 (30 GB) + 抖音 (15 GB) + 微信 (5 GB)" -> "System stats: DNSSR (50 GB) = Bilibili (30 GB) + Douyin (15 GB) + WeChat (5 GB)"

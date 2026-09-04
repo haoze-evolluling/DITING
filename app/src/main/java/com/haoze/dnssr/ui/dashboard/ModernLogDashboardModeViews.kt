@@ -1,5 +1,7 @@
 package com.haoze.dnssr.ui.dashboard
 
+import com.haoze.dnssr.util.formatMs
+import com.haoze.dnssr.util.formatPercent
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

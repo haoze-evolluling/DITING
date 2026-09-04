@@ -1,7 +1,7 @@
 package com.haoze.dnssr.vpn
 
 import android.util.Log
-import com.haoze.dnssr.data.dao.EnabledBlockRule
+import com.haoze.dnssr.data.dao.EnabledRule
 import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -125,7 +125,7 @@ internal class MappedSubscriptionRuleIndex private constructor(
 
         suspend fun compileAndLoad(
             target: File,
-            forEachRule: suspend ((EnabledBlockRule) -> Unit) -> Unit
+            forEachRule: suspend ((EnabledRule) -> Unit) -> Unit
         ): MappedSubscriptionRuleIndex? {
             target.parentFile?.mkdirs()
             val temp = File(target.parentFile, "${target.name}.${System.nanoTime()}.tmp")
@@ -196,7 +196,7 @@ internal class MappedSubscriptionRuleIndex private constructor(
 
         private suspend fun compile(
             target: File,
-            forEachRule: suspend ((EnabledBlockRule) -> Unit) -> Unit
+            forEachRule: suspend ((EnabledRule) -> Unit) -> Unit
         ): Boolean {
             val root = BuildNode()
             val sources = TreeSet<String>()

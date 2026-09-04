@@ -1,5 +1,9 @@
 package com.haoze.dnssr.ui.traffic
 
+import com.haoze.dnssr.util.formatBytes
+import com.haoze.dnssr.util.formatDurationClock
+import com.haoze.dnssr.util.formatSpeed
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -139,7 +143,7 @@ internal fun TrafficGaugeCard(uiState: AppTrafficStatsUiState) {
                         color = colors.onSurfaceVariant
                     )
                     if (uiState.selectedTimeRange == TrafficTimeRange.SESSION && uiState.sessionStartTimeMs > 0L) {
-                        val sessionDuration = formatDuration(System.currentTimeMillis() - uiState.sessionStartTimeMs)
+                        val sessionDuration = formatDurationClock(System.currentTimeMillis() - uiState.sessionStartTimeMs)
                         Text(
                             text = localizedText("已连接: ") + sessionDuration,
                             style = MaterialTheme.typography.labelSmall,

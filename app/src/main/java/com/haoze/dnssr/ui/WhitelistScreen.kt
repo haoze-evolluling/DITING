@@ -55,6 +55,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
 import com.haoze.dnssr.ui.components.RuleConfirmDialog
+import com.haoze.dnssr.ui.components.RuleItemActionsMenu
+import com.haoze.dnssr.ui.components.masterDisabledMessage
 import com.haoze.dnssr.ui.components.RuleFilterChipRow
 import com.haoze.dnssr.ui.components.RuleListCountHeader
 import com.haoze.dnssr.ui.components.RuleListEmptyState
@@ -205,7 +207,7 @@ fun WhitelistScreen(
                                             showRiskWarningDialog = true
                                         } else {
                                             viewModel.setAllowEditDefault(false)
-                                            Toast.makeText(context, localizedText(context, "已恢复默认白名单只读保护"), Toast.LENGTH_SHORT).show()
+                                            context.showToast("已恢复默认白名单只读保护", Toast.LENGTH_SHORT)
                                         }
                                     }
                                 )
@@ -268,20 +270,12 @@ fun WhitelistScreen(
                                 allowEditDefault = allowEditDefault,
                                 onToggle = { enabled ->
                                     if (!item.masterEnabled) {
-                                        val message = if (item.type == WhitelistType.DOMAIN) {
-                                            "请先在规则控制中开启【启用域名规则】"
-                                        } else if (!AppSettings.isAddressRulesEnabled(context)) {
-                                            "请先在规则控制中开启【启用地址规则】"
-                                        } else if (!AppSettings.isHttpsInspectionReady(context)) {
-                                            "请先安装并验证 CA 根证书"
-                                        } else if (!AppSettings.isHttpInspectionEnabled(context)) {
-                                            "请先在 HTTPS 流量检查中开启检查"
-                                        } else {
-                                            "请先在 HTTPS 流量检查中选择目标应用"
-                                        }
-                                        Toast.makeText(context, localizedText(context, message), Toast.LENGTH_SHORT).show()
+                                        context.showToast(
+                                            masterDisabledMessage(context, item.type == WhitelistType.DOMAIN),
+                                            Toast.LENGTH_SHORT
+                                        )
                                     } else if (item.isPreset && !allowEditDefault) {
-                                        Toast.makeText(context, localizedText(context, "请先开启【允许编辑默认白名单】开关"), Toast.LENGTH_SHORT).show()
+                                        context.showToast("请先开启【允许编辑默认白名单】开关", Toast.LENGTH_SHORT)
                                     } else {
                                         viewModel.toggleRule(item, enabled)
                                         onRuntimeDnsSettingsChanged()
@@ -289,7 +283,7 @@ fun WhitelistScreen(
                                 },
                                 onEdit = {
                                     if (item.isPreset && !allowEditDefault) {
-                                        Toast.makeText(context, localizedText(context, "请先开启【允许编辑默认白名单】开关"), Toast.LENGTH_SHORT).show()
+                                        context.showToast("请先开启【允许编辑默认白名单】开关", Toast.LENGTH_SHORT)
                                     } else {
                                         editingItem = item
                                         editInput = item.rawLine
@@ -300,7 +294,7 @@ fun WhitelistScreen(
                                 },
                                 onDelete = {
                                     if (item.isPreset && !allowEditDefault) {
-                                        Toast.makeText(context, localizedText(context, "请先开启【允许编辑默认白名单】开关"), Toast.LENGTH_SHORT).show()
+                                        context.showToast("请先开启【允许编辑默认白名单】开关", Toast.LENGTH_SHORT)
                                     } else {
                                         itemToDelete = item
                                     }
@@ -353,7 +347,7 @@ fun WhitelistScreen(
                     onClick = {
                         viewModel.setAllowEditDefault(true)
                         showRiskWarningDialog = false
-                        Toast.makeText(context, localizedText(context, "已开启默认白名单编辑权限"), Toast.LENGTH_SHORT).show()
+                        context.showToast("已开启默认白名单编辑权限", Toast.LENGTH_SHORT)
                     }
                 ) {
                     Text(localizedText("确定开启"), color = MaterialTheme.colorScheme.error)
@@ -410,7 +404,7 @@ fun WhitelistScreen(
                             important = addImportant
                         )
                         result.onSuccess { msg ->
-                            Toast.makeText(context, localizedText(context, msg), Toast.LENGTH_SHORT).show()
+                            context.showToast(msg, Toast.LENGTH_SHORT)
                             showAddDialog = false
                             onRuntimeDnsSettingsChanged()
                         }.onFailure { err ->
@@ -470,7 +464,7 @@ fun WhitelistScreen(
                             newImportant = editImportant
                         )
                         result.onSuccess { msg ->
-                            Toast.makeText(context, localizedText(context, msg), Toast.LENGTH_SHORT).show()
+                            context.showToast(msg, Toast.LENGTH_SHORT)
                             editingItem = null
                             onRuntimeDnsSettingsChanged()
                         }.onFailure { err ->
@@ -505,7 +499,7 @@ fun WhitelistScreen(
             onDismiss = { itemToDelete = null },
             onConfirm = {
                 viewModel.deleteRule(item)
-                Toast.makeText(context, localizedText(context, "已删除"), Toast.LENGTH_SHORT).show()
+                context.showToast("已删除", Toast.LENGTH_SHORT)
                 onRuntimeDnsSettingsChanged()
             }
         )
@@ -521,7 +515,7 @@ fun WhitelistScreen(
             onDismiss = { showResetDefaultsDialog = false },
             onConfirm = {
                 viewModel.resetPresetWhitelist()
-                Toast.makeText(context, localizedText(context, "默认白名单已重置恢复"), Toast.LENGTH_SHORT).show()
+                context.showToast("默认白名单已重置恢复", Toast.LENGTH_SHORT)
                 onRuntimeDnsSettingsChanged()
             }
         )
@@ -536,7 +530,7 @@ fun WhitelistScreen(
             onDismiss = { showClearUserDialog = false },
             onConfirm = {
                 viewModel.clearUserWhitelist()
-                Toast.makeText(context, localizedText(context, "已清空自定义白名单"), Toast.LENGTH_SHORT).show()
+                context.showToast("已清空自定义白名单", Toast.LENGTH_SHORT)
                 onRuntimeDnsSettingsChanged()
             }
         )
@@ -568,7 +562,6 @@ private fun WhitelistItemRow(
 ) {
     val context = LocalContext.current
     val isReadOnly = item.isPreset && !allowEditDefault
-    var showItemMenu by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -703,43 +696,12 @@ private fun WhitelistItemRow(
                 modifier = Modifier.alpha(if (isReadOnly || !item.masterEnabled) 0.5f else 1f)
             )
 
-            Box {
-                IconButton(
-                    onClick = {
-                        if (!isReadOnly) showItemMenu = true
-                        else Toast.makeText(context, localizedText(context, "请先开启【允许编辑默认白名单】开关"), Toast.LENGTH_SHORT).show()
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = localizedText("更多操作"),
-                        tint = if (isReadOnly) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = showItemMenu,
-                    onDismissRequest = { showItemMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(localizedText("编辑")) },
-                        leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
-                        onClick = {
-                            showItemMenu = false
-                            onEdit()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(localizedText("删除"), color = MaterialTheme.colorScheme.error) },
-                        leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                        onClick = {
-                            showItemMenu = false
-                            onDelete()
-                        }
-                    )
-                }
-            }
+            RuleItemActionsMenu(
+                onEdit = onEdit,
+                onDelete = onDelete,
+                enabled = !isReadOnly,
+                onDisabledClick = { context.showToast("请先开启【允许编辑默认白名单】开关", Toast.LENGTH_SHORT) }
+            )
         }
     }
 }

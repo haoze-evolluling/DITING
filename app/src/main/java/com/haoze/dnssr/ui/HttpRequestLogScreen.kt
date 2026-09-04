@@ -1,8 +1,5 @@
 package com.haoze.dnssr.ui
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
@@ -185,8 +182,7 @@ fun HttpRequestLogScreen(onBack: () -> Unit) {
             domain = domain,
             dismiss = { pendingDomain = null },
             copy = {
-                (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
-                    .setPrimaryClip(ClipData.newPlainText("domain", domain))
+                context.copyToClipboard("domain", domain)
                 pendingDomain = null
             },
             add = { allow ->
@@ -205,11 +201,7 @@ fun HttpRequestLogScreen(onBack: () -> Unit) {
                                 RuleScope.DNS
                             )
                         }
-                        Toast.makeText(
-                            context,
-                            localizedText(context, if (success) "已添加规则" else "规则格式无效"),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        context.showToast(if (success) "已添加规则" else "规则格式无效")
                         pendingDomain = null
                     }
                 }

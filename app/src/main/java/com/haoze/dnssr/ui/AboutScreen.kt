@@ -101,7 +101,7 @@ fun AboutScreen(
         runCatching {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PROJECT_REPOSITORY_URL)))
         }.onFailure {
-            Toast.makeText(context, localizedText(context, "无法打开链接"), Toast.LENGTH_SHORT).show()
+            context.showToast("无法打开链接", Toast.LENGTH_SHORT)
         }
         Unit
     }

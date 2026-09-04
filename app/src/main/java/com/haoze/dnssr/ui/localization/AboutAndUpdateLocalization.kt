@@ -32,7 +32,6 @@ internal fun translateAboutAndUpdateExact(text: String): String? = when (text) {
     "正在检查 GitHub Release" -> "Checking GitHub Releases"
     "检查 GitHub Release 中的最新版本" -> "Check GitHub Releases for the latest version"
     "更新规则" -> "Update rules"
-    "订阅与更新" -> "Subscriptions and updates"
     "设置规则订阅的自动更新开关和频率" -> "Configure automatic update and frequency for rule subscriptions"
     "更新失败" -> "Update failed"
     "自定义更新时间" -> "Custom update interval"

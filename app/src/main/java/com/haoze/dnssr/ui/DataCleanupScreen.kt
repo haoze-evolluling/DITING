@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.dnssr.ui.components.RuleConfirmDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -135,7 +135,7 @@ fun DataCleanupScreen(
                         if (action == CleanupAction.SETTINGS_GUIDES) {
                             onExitApp()
                         } else {
-                            Toast.makeText(context, localizedText(context, "已${action.title}"), Toast.LENGTH_SHORT).show()
+                            context.showToast("已${action.title}", Toast.LENGTH_SHORT)
                         }
                     }
                 }
@@ -180,15 +180,12 @@ fun ConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(localizedText(title)) },
-        text = { Text(localizedText(text)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text(localizedText("确定")) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(localizedText("取消")) }
-        }
+    RuleConfirmDialog(
+        title = localizedText(title),
+        message = localizedText(text),
+        confirmText = localizedText("确定"),
+        onConfirm = onConfirm,
+        onDismiss = onDismiss,
+        destructive = false
     )
 }

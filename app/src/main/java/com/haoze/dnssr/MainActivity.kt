@@ -41,18 +41,12 @@ import com.haoze.dnssr.notification.AppNotificationChannels
 import com.haoze.dnssr.notification.NotificationPermissionHelper
 import com.haoze.dnssr.notification.VpnMonitorManager
 import com.haoze.dnssr.ui.AppUpdateDialog
+import com.haoze.dnssr.update.AppUpdateHost
 import com.haoze.dnssr.ui.localizedText
-import com.haoze.dnssr.update.AppUpdateDownloadStatus
-import com.haoze.dnssr.update.AppUpdateDownloadState
-import com.haoze.dnssr.update.AppUpdateManager
-import com.haoze.dnssr.update.AppUpdateNotifier
-import com.haoze.dnssr.update.AppUpdateUiState
 import com.haoze.dnssr.vpn.DnsVpnService
 import com.haoze.dnssr.vpn.SubscriptionAutoUpdateScheduler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -66,15 +60,10 @@ class MainActivity : AppLocalizedActivity() {
     private var languageModeAtCreate = AppLanguageMode.SYSTEM
 
     private var permissionDisclosure by mutableStateOf<PermissionDisclosure?>(null)
-    private var appUpdateState by mutableStateOf(AppUpdateUiState())
-    private var dismissedUpdateVersion by mutableStateOf("")
+    private val appUpdateHost = AppUpdateHost(this)
     private var acceptedExperienceInitialized = false
-    private var appUpdateDownloadJob: Job? = null
-    private var appUpdateDownloadGeneration = 0L
     private var startupUpdateCheckDisabled by mutableStateOf(true)
     private var settingsLaunchInProgress = false
-    private val appUpdateManager by lazy { AppUpdateManager(applicationContext) }
-    private val appUpdateNotifier by lazy { AppUpdateNotifier(applicationContext) }
 
     private val vpnPrepareLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -215,13 +204,13 @@ class MainActivity : AppLocalizedActivity() {
                                 onDismiss = { dismissPermissionRequest(disclosure) }
                             )
                         }
-                        appUpdateState.availableUpdate?.let { update ->
-                            if (dismissedUpdateVersion != update.version) {
+                        appUpdateHost.state.availableUpdate?.let { update ->
+                            if (appUpdateHost.dismissedVersion != update.version) {
                                 AppUpdateDialog(
                                     update = update,
-                                    downloadState = appUpdateState.downloadState,
-                                    onDismiss = { dismissedUpdateVersion = update.version },
-                                    onDownload = ::downloadAppUpdate,
+                                    downloadState = appUpdateHost.state.downloadState,
+                                    onDismiss = { appUpdateHost.dismissedVersion = update.version },
+                                    onDownload = { appUpdateHost.downloadUpdate() },
                                 )
                             }
                         }
@@ -238,7 +227,7 @@ class MainActivity : AppLocalizedActivity() {
         AppNotificationChannels.createAllChannels(this)
         SubscriptionAutoUpdateScheduler.sync(this)
         if (!AppSettings.isStartupUpdateCheckDisabled(this)) {
-            checkForAppUpdate(manual = false)
+            appUpdateHost.checkForUpdate(manual = false)
         }
         lifecycleScope.launch {
             delay(DATABASE_WARMUP_DELAY_MS)
@@ -285,127 +274,18 @@ class MainActivity : AppLocalizedActivity() {
         applyRecentsPrivacySetting()
         mainViewModel.refreshStatus()
         VpnMonitorManager.sync(this)
-        refreshAppUpdateDownloadState()
+        appUpdateHost.refreshDownloadState()
     }
 
     override fun onStop() {
         DnsVpnService.updateFloatingLogAppState(this, false)
-        if (appUpdateState.downloadState.status == AppUpdateDownloadStatus.Downloading) {
-            appUpdateDownloadGeneration++
-            appUpdateDownloadJob?.cancel()
-            appUpdateDownloadJob = null
-            appUpdateNotifier.clear()
-            appUpdateState = appUpdateState.copy(
-                downloadState = AppUpdateDownloadState(version = appUpdateState.downloadState.version)
-            )
-        }
+        appUpdateHost.cancelActiveDownload()
         super.onStop()
-    }
-
-    private fun checkForAppUpdate(manual: Boolean) {
-        if (appUpdateState.checking) return
-        if (manual) dismissedUpdateVersion = ""
-        appUpdateState = appUpdateState.copy(
-            checking = true,
-            error = "",
-            message = if (manual) "正在检查 GitHub Release" else appUpdateState.message,
-        )
-        lifecycleScope.launch {
-            try {
-                val update = appUpdateManager.checkForUpdate()
-                val downloadState = update?.let { appUpdateManager.refreshDownloadState(it) }
-                appUpdateState = AppUpdateUiState(
-                    availableUpdate = update,
-                    downloadState = downloadState ?: appUpdateState.downloadState,
-                    message = if (update == null) "当前已是最新版本。" else "发现 ${update.version} 新版本。",
-                )
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Throwable) {
-                appUpdateState = appUpdateState.copy(
-                    checking = false,
-                    error = if (manual) error.message ?: "检查更新失败。" else "",
-                    message = if (manual) "" else appUpdateState.message,
-                )
-            }
-        }
-    }
-
-    private fun downloadAppUpdate() {
-        val update = appUpdateState.availableUpdate ?: return
-        val status = appUpdateState.downloadState.status.takeIf { appUpdateState.downloadState.version == update.version }
-        if (status == AppUpdateDownloadStatus.Downloading) return
-        if (status == AppUpdateDownloadStatus.Downloaded) {
-            if (!appUpdateManager.installDownloadedUpdate(update)) {
-                appUpdateState = appUpdateState.copy(
-                    downloadState = AppUpdateDownloadState(version = update.version),
-                    error = "安装包不存在或无法打开，请重新下载。",
-                )
-            }
-            return
-        }
-        appUpdateDownloadJob?.cancel()
-        appUpdateNotifier.clear()
-        val generation = ++appUpdateDownloadGeneration
-        appUpdateDownloadJob = lifecycleScope.launch {
-            try {
-                appUpdateState = appUpdateState.copy(
-                    downloadState = AppUpdateDownloadState(
-                        version = update.version,
-                        status = AppUpdateDownloadStatus.Downloading,
-                    ),
-                    error = "",
-                )
-                appUpdateNotifier.showProgress(update, 0L, -1L)
-                val downloadState = appUpdateManager.download(update) { downloadedBytes, totalBytes ->
-                    runOnUiThread {
-                        if (
-                            generation == appUpdateDownloadGeneration &&
-                            appUpdateState.downloadState.status == AppUpdateDownloadStatus.Downloading
-                        ) {
-                            appUpdateState = appUpdateState.copy(
-                                downloadState = AppUpdateDownloadState(
-                                    version = update.version,
-                                    status = AppUpdateDownloadStatus.Downloading,
-                                    downloadedBytes = downloadedBytes,
-                                    totalBytes = totalBytes,
-                                )
-                            )
-                            appUpdateNotifier.showProgress(update, downloadedBytes, totalBytes)
-                        }
-                    }
-                }
-                if (generation != appUpdateDownloadGeneration) return@launch
-                appUpdateState = appUpdateState.copy(
-                    downloadState = downloadState,
-                    error = if (downloadState.status == AppUpdateDownloadStatus.Failed) "更新包下载失败，请重试。" else "",
-                    message = if (downloadState.status == AppUpdateDownloadStatus.Downloaded) "下载完成，请点击安装。" else appUpdateState.message,
-                )
-                if (downloadState.status == AppUpdateDownloadStatus.Downloaded) {
-                    appUpdateNotifier.showCompleted(update)
-                } else {
-                    appUpdateNotifier.clear()
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Throwable) {
-                appUpdateNotifier.clear()
-                appUpdateState = appUpdateState.copy(error = error.message ?: "无法开始下载更新。")
-            }
-        }
     }
 
     private fun updateStartupUpdateCheckPreference(disabled: Boolean) {
         AppSettings.setStartupUpdateCheckDisabled(this, disabled)
         startupUpdateCheckDisabled = disabled
-    }
-
-    private fun refreshAppUpdateDownloadState() {
-        val update = appUpdateState.availableUpdate ?: return
-        lifecycleScope.launch {
-            runCatching { appUpdateManager.refreshDownloadState(update) }
-                .onSuccess { downloadState -> appUpdateState = appUpdateState.copy(downloadState = downloadState) }
-        }
     }
 
     private fun applyRecentsPrivacySetting() {

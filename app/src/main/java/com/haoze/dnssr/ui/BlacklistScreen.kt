@@ -56,6 +56,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
 import com.haoze.dnssr.ui.components.RuleConfirmDialog
+import com.haoze.dnssr.ui.components.RuleItemActionsMenu
+import com.haoze.dnssr.ui.components.masterDisabledMessage
 import com.haoze.dnssr.ui.components.RuleFilterChipRow
 import com.haoze.dnssr.ui.components.RuleListCountHeader
 import com.haoze.dnssr.ui.components.RuleListEmptyState
@@ -218,18 +220,10 @@ fun BlacklistScreen(
                                 item = item,
                                 onToggle = { enabled ->
                                     if (!item.masterEnabled) {
-                                        val message = if (item.type == BlacklistType.DOMAIN) {
-                                            "请先在规则控制中开启【启用域名规则】"
-                                        } else if (!AppSettings.isAddressRulesEnabled(context)) {
-                                            "请先在规则控制中开启【启用地址规则】"
-                                        } else if (!AppSettings.isHttpsInspectionReady(context)) {
-                                            "请先安装并验证 CA 根证书"
-                                        } else if (!AppSettings.isHttpInspectionEnabled(context)) {
-                                            "请先在 HTTPS 流量检查中开启检查"
-                                        } else {
-                                            "请先在 HTTPS 流量检查中选择目标应用"
-                                        }
-                                        Toast.makeText(context, localizedText(context, message), Toast.LENGTH_SHORT).show()
+                                        context.showToast(
+                                            masterDisabledMessage(context, item.type == BlacklistType.DOMAIN),
+                                            Toast.LENGTH_SHORT
+                                        )
                                     } else {
                                         viewModel.toggleRule(item, enabled)
                                         onRuntimeDnsSettingsChanged()
@@ -320,7 +314,7 @@ fun BlacklistScreen(
                             important = addImportant
                         )
                         result.onSuccess { msg ->
-                            Toast.makeText(context, localizedText(context, msg), Toast.LENGTH_SHORT).show()
+                            context.showToast(msg, Toast.LENGTH_SHORT)
                             showAddDialog = false
                             onRuntimeDnsSettingsChanged()
                         }.onFailure { err ->
@@ -380,7 +374,7 @@ fun BlacklistScreen(
                             newImportant = editImportant
                         )
                         result.onSuccess { msg ->
-                            Toast.makeText(context, localizedText(context, msg), Toast.LENGTH_SHORT).show()
+                            context.showToast(msg, Toast.LENGTH_SHORT)
                             editingItem = null
                             onRuntimeDnsSettingsChanged()
                         }.onFailure { err ->
@@ -413,7 +407,7 @@ fun BlacklistScreen(
             onDismiss = { itemToDelete = null },
             onConfirm = {
                 viewModel.deleteRule(item)
-                Toast.makeText(context, localizedText(context, "已删除"), Toast.LENGTH_SHORT).show()
+                context.showToast("已删除", Toast.LENGTH_SHORT)
                 onRuntimeDnsSettingsChanged()
             }
         )
@@ -428,7 +422,7 @@ fun BlacklistScreen(
             onDismiss = { showClearUserDialog = false },
             onConfirm = {
                 viewModel.clearUserBlacklist()
-                Toast.makeText(context, localizedText(context, "已清空自定义黑名单"), Toast.LENGTH_SHORT).show()
+                context.showToast("已清空自定义黑名单", Toast.LENGTH_SHORT)
                 onRuntimeDnsSettingsChanged()
             }
         )
@@ -457,7 +451,6 @@ private fun BlacklistItemRow(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    var showItemMenu by remember { mutableStateOf(false) }
 
     Row(
         modifier = Modifier
@@ -540,20 +533,14 @@ private fun BlacklistItemRow(
 
                 // 应用作用域标签
                 item.appScope?.takeIf { it.isNotBlank() }?.let { app ->
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer
-                    ) {
-                        val label = (if (item.appInverted) "~" else "") + app
-                        Text(
-                            text = "App: $label",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
-                        )
-                    }
+                    val label = (if (item.appInverted) "~" else "") + app
+                    RuleTagChip(
+                        text = "App: $label",
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 // 分组标签
@@ -591,37 +578,10 @@ private fun BlacklistItemRow(
                 modifier = Modifier.alpha(if (!item.masterEnabled) 0.5f else 1f)
             )
 
-            Box {
-                IconButton(onClick = { showItemMenu = true }) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = localizedText("更多操作"),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = showItemMenu,
-                    onDismissRequest = { showItemMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(localizedText("编辑")) },
-                        leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
-                        onClick = {
-                            showItemMenu = false
-                            onEdit()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(localizedText("删除"), color = MaterialTheme.colorScheme.error) },
-                        leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                        onClick = {
-                            showItemMenu = false
-                            onDelete()
-                        }
-                    )
-                }
-            }
+            RuleItemActionsMenu(
+                onEdit = onEdit,
+                onDelete = onDelete
+            )
         }
     }
 }

@@ -110,7 +110,7 @@ fun CaCertificateManagement(onNavigateToGuide: () -> Unit) {
             }
             result.fold(
                 onSuccess = {
-                    Toast.makeText(context, localizedText(context, "CA 文件已保存，请在系统设置中手动安装"), Toast.LENGTH_LONG).show()
+                    context.showToast("CA 文件已保存，请在系统设置中手动安装", Toast.LENGTH_LONG)
                     runCatching { securitySettingsLauncher.launch(Intent(Settings.ACTION_SECURITY_SETTINGS)) }
                         .onFailure {
                             caBusy = false
@@ -119,11 +119,7 @@ fun CaCertificateManagement(onNavigateToGuide: () -> Unit) {
                 },
                 onFailure = { error ->
                     caBusy = false
-                    Toast.makeText(
-                        context,
-                        localizedText(context, "导出根证书失败：${error.message ?: "未知错误"}"),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    context.showToast("导出根证书失败：${error.message ?: "未知错误"}")
                 }
             )
         }
@@ -244,11 +240,7 @@ fun CaCertificateManagement(onNavigateToGuide: () -> Unit) {
                             caFingerprint = fingerprint
                             applyCertificateReadiness(false)
                         }
-                        Toast.makeText(
-                            context,
-                            localizedText(context, if (result.isSuccess) "根证书已重新生成" else "重新生成根证书失败"),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        context.showToast(if (result.isSuccess) "根证书已重新生成" else "重新生成根证书失败")
                     }
                 }) { Text(localizedText("重新生成")) }
             },

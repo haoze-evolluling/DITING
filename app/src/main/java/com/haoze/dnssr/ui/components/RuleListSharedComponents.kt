@@ -1,5 +1,6 @@
 package com.haoze.dnssr.ui.components
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,9 +17,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.BoxScope
+import com.haoze.dnssr.ui.AppSettings
 import com.haoze.dnssr.ui.localizedText
 
 /**
@@ -414,4 +421,62 @@ fun RuleConfirmDialog(
             }
         }
     )
+}
+
+/** 规则行的"更多操作"下拉菜单（编辑 + 删除）。[enabled] 为 false 时点击触发 [onDisabledClick] 并降低图标不透明度。 */
+@Composable
+fun RuleItemActionsMenu(
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    enabled: Boolean = true,
+    onDisabledClick: () -> Unit = {}
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { if (enabled) expanded = true else onDisabledClick() }) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = localizedText("更多操作"),
+                tint = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant
+                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text(localizedText("编辑")) },
+                leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    onEdit()
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(localizedText("删除"), color = MaterialTheme.colorScheme.error) },
+                leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                onClick = {
+                    expanded = false
+                    onDelete()
+                }
+            )
+        }
+    }
+}
+
+/** 总开关未开启时，按规则类型与当前设置给出应先开启哪一项的提示文案。 */
+fun masterDisabledMessage(context: Context, isDomainType: Boolean): String {
+    return if (isDomainType) {
+        "请先在规则控制中开启【启用域名规则】"
+    } else if (!AppSettings.isAddressRulesEnabled(context)) {
+        "请先在规则控制中开启【启用地址规则】"
+    } else if (!AppSettings.isHttpsInspectionReady(context)) {
+        "请先安装并验证 CA 根证书"
+    } else if (!AppSettings.isHttpInspectionEnabled(context)) {
+        "请先在 HTTPS 流量检查中开启检查"
+    } else {
+        "请先在 HTTPS 流量检查中选择目标应用"
+    }
 }

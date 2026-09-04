@@ -1,5 +1,8 @@
 package com.haoze.dnssr.ui.traffic
 
+import com.haoze.dnssr.util.formatBytes
+import com.haoze.dnssr.util.formatSpeed
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable

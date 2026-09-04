@@ -62,7 +62,7 @@ fun LogRetentionSettingsScreen(
                 } else {
                     floatingLogEnabled = false
                     AppSettings.setFloatingLogEnabled(context, false)
-                    Toast.makeText(context, localizedText(context, "未授予悬浮窗权限，悬浮窗日志未开启"), Toast.LENGTH_SHORT).show()
+                    context.showToast("未授予悬浮窗权限，悬浮窗日志未开启", Toast.LENGTH_SHORT)
                 }
             }
         }
@@ -92,7 +92,7 @@ fun LogRetentionSettingsScreen(
                 )
             }.onFailure {
                 waitingForOverlayPermission = false
-                Toast.makeText(context, localizedText(context, "无法打开悬浮窗权限设置"), Toast.LENGTH_SHORT).show()
+                context.showToast("无法打开悬浮窗权限设置", Toast.LENGTH_SHORT)
             }
         }
     }

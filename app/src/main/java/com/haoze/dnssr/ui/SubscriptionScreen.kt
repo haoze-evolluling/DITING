@@ -98,7 +98,7 @@ fun SubscriptionScreen(
 
     message?.let { resultMessage ->
         androidx.compose.runtime.LaunchedEffect(resultMessage) {
-            Toast.makeText(context, localizedText(context, resultMessage), Toast.LENGTH_LONG).show()
+            context.showToast(resultMessage, Toast.LENGTH_LONG)
             kotlinx.coroutines.delay(3000)
             viewModel.clearMessage()
         }

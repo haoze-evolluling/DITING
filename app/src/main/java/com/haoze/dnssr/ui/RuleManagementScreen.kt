@@ -257,7 +257,7 @@ fun RuleManagementScreen(
                     withContext(Dispatchers.Main) {
                         viewModel.loadRuleCount()
                         onRuntimeDnsSettingsChanged()
-                        Toast.makeText(context, localizedText(context, if (addressOnly) "已删除全部地址规则" else "已删除全部域名规则"), Toast.LENGTH_SHORT).show()
+                        context.showToast(if (addressOnly) "已删除全部地址规则" else "已删除全部域名规则", Toast.LENGTH_SHORT)
                     }
                 }
             },

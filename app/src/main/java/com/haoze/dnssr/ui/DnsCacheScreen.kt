@@ -1,6 +1,6 @@
 package com.haoze.dnssr.ui
 
-import com.haoze.dnssr.ui.dashboard.formatDuration
+import com.haoze.dnssr.util.formatDuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

@@ -44,11 +44,7 @@ fun CoBuilderListScreen(
         if (cachedConfiguration != null) isConfigurationLoading = false
         runCatching { RecognitionMembersRepository.refresh(context.applicationContext) }
             .onFailure { error ->
-                Toast.makeText(
-                    context,
-                    localizedText(context, "名单更新失败：${error.message ?: "未知错误"}"),
-                    Toast.LENGTH_SHORT
-                ).show()
+                context.showToast("名单更新失败：${error.message ?: "未知错误"}")
             }
             .getOrNull()
             ?.let { configuration = it }
@@ -65,20 +61,12 @@ fun CoBuilderListScreen(
                         val refreshedConfiguration = runCatching {
                             RecognitionMembersRepository.refresh(context.applicationContext)
                         }.getOrElse { error ->
-                            Toast.makeText(
-                                context,
-                                localizedText(context, "名单更新失败：${error.message ?: "未知错误"}"),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            context.showToast("名单更新失败：${error.message ?: "未知错误"}")
                             return@launch
                         }
                         if (refreshedConfiguration != null) {
                             configuration = refreshedConfiguration
-                            Toast.makeText(
-                                context,
-                                localizedText(context, "名单已更新，正在加载头像"),
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            context.showToast("名单已更新，正在加载头像")
                             return@launch
                         }
                         val result = avatarLoader.retryMissingOrFailed()
@@ -87,7 +75,7 @@ fun CoBuilderListScreen(
                             result.failedCount == 0 -> "已刷新 ${result.refreshedCount} 个头像"
                             else -> "已刷新 ${result.refreshedCount} 个头像，${result.failedCount} 个头像仍未加载"
                         }
-                        Toast.makeText(context, localizedText(context, message), Toast.LENGTH_SHORT).show()
+                        context.showToast(message, Toast.LENGTH_SHORT)
                     }
                 }
             ) {

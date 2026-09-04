@@ -218,11 +218,51 @@ internal fun InstalledAppCheckboxItem(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    InstalledAppItem(
+        app = app,
+        modifier = modifier,
+        onClick = { onCheckedChange(!checked) }
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            modifier = Modifier.padding(start = 12.dp)
+        )
+    }
+}
+
+@Composable
+internal fun InstalledAppRadioItem(
+    app: InstalledApp,
+    selected: Boolean,
+    onSelected: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    InstalledAppItem(
+        app = app,
+        modifier = modifier,
+        onClick = onSelected
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onSelected,
+            modifier = Modifier.padding(start = 12.dp)
+        )
+    }
+}
+
+@Composable
+private fun InstalledAppItem(
+    app: InstalledApp,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    trailing: @Composable () -> Unit
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = 68.dp)
-            .clickable { onCheckedChange(!checked) }
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -264,63 +304,7 @@ internal fun InstalledAppCheckboxItem(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            modifier = Modifier.padding(start = 12.dp)
-        )
-    }
-}
-
-@Composable
-internal fun InstalledAppRadioItem(
-    app: InstalledApp,
-    selected: Boolean,
-    onSelected: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 68.dp)
-            .clickable(onClick = onSelected)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(AppIconShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-            contentAlignment = Alignment.Center
-        ) {
-            app.icon?.let { icon ->
-                Image(
-                    painter = rememberDrawablePainter(drawable = icon),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize().scale(1.06f)
-                )
-            } ?: Icon(
-                imageVector = Icons.Default.Android,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(28.dp)
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f).padding(start = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(app.label, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                app.packageName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        RadioButton(selected = selected, onClick = onSelected, modifier = Modifier.padding(start = 12.dp))
+        trailing()
     }
 }
 

@@ -1,5 +1,7 @@
 package com.haoze.dnssr.ui
 
+import com.haoze.dnssr.util.formatPercent
+
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -60,7 +62,7 @@ fun BootstrapSettingsScreen(
     }
 
     message?.let { msg ->
-        Toast.makeText(context, localizedText(context, msg), Toast.LENGTH_SHORT).show()
+        context.showToast(msg, Toast.LENGTH_SHORT)
         viewModel.clearMessage()
     }
 
@@ -239,6 +241,3 @@ private fun bootstrapEntrySubtitle(entry: BootstrapIpEntry, health: BootstrapHea
     return localizedText("${entry.ip} · 权重 ${String.format(Locale.getDefault(), "%.2f", weight)}$latency · 样本 $samples · $status")
 }
 
-private fun formatPercent(value: Double): String {
-    return String.format(Locale.getDefault(), "%.1f%%", value * 100.0)
-}

@@ -16,11 +16,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -39,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
 import com.haoze.dnssr.ui.components.RuleListPaginationBar
+import com.haoze.dnssr.ui.components.RuleSearchField
 import com.haoze.dnssr.ui.components.RuleTagChip
 import com.haoze.dnssr.ui.components.SettingsDivider
 import com.haoze.dnssr.ui.components.SettingsItemSpacing
@@ -91,20 +90,11 @@ fun RuleListScreen(
                 .padding(innerPadding)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                OutlinedTextField(
+                RuleSearchField(
                     value = searchQuery,
                     onValueChange = viewModel::onSearchQueryChange,
-                    placeholder = { Text(localizedText(if (ruleKind.isUrlRule) "搜索 URL 规则" else "搜索域名或规则")) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null
-                        )
-                    },
-                    shape = RoundedCornerShape(28.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                    placeholder = localizedText(if (ruleKind.isUrlRule) "搜索 URL 规则" else "搜索域名或规则"),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
 
                 Text(

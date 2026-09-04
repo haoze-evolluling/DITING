@@ -88,7 +88,7 @@ fun MainScreen(
 
     LaunchedEffect(message) {
         message?.let {
-            Toast.makeText(context, localizedText(context, it), Toast.LENGTH_SHORT).show()
+            context.showToast(it, Toast.LENGTH_SHORT)
             viewModel.clearMessage()
         }
     }

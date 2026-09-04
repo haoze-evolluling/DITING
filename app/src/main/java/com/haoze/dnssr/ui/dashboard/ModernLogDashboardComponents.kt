@@ -1,5 +1,8 @@
 package com.haoze.dnssr.ui.dashboard
 
+import com.haoze.dnssr.util.formatBytes
+import com.haoze.dnssr.util.formatDuration
+import com.haoze.dnssr.util.formatSpeed
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -551,7 +554,7 @@ fun TrafficMonitorDashboardCard(onClick: () -> Unit) {
                     color = colors.onSurfaceVariant
                 )
                 Text(
-                    text = formatTrafficBytes(trafficSnapshot.todayTotalBytes),
+                    text = formatBytes(trafficSnapshot.todayTotalBytes),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.primary
@@ -564,7 +567,7 @@ fun TrafficMonitorDashboardCard(onClick: () -> Unit) {
                     color = colors.onSurfaceVariant
                 )
                 Text(
-                    text = "↓ ${formatTrafficSpeed(trafficSnapshot.totalRxSpeedBps)}  ↑ ${formatTrafficSpeed(trafficSnapshot.totalTxSpeedBps)}",
+                    text = "↓ ${formatSpeed(trafficSnapshot.totalRxSpeedBps)}  ↑ ${formatSpeed(trafficSnapshot.totalTxSpeedBps)}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold
                 )

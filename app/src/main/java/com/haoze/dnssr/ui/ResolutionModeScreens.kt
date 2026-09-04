@@ -112,7 +112,7 @@ fun ResolutionModeHomeScreen(
     var showModeDialog by remember { mutableStateOf(false) }
     var showPresetDnsServiceDialog by remember { mutableStateOf(false) }
     NavigationSettledEffect { viewModel.activate() }
-    LaunchedEffect(message) { message?.let { Toast.makeText(context, localizedText(context, it), Toast.LENGTH_SHORT).show(); viewModel.clearMessage() } }
+    LaunchedEffect(message) { message?.let { context.showToast(it, Toast.LENGTH_SHORT); viewModel.clearMessage() } }
 
     if (showModeDialog) {
         ResolutionModePickerDialog(

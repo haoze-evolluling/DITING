@@ -4,7 +4,6 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import android.content.ClipData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -138,7 +136,7 @@ fun ConfigTransferScreen(
 
     LaunchedEffect(configMessage) {
         configMessage?.let {
-            Toast.makeText(context, localizedText(context, it), Toast.LENGTH_LONG).show()
+            context.showToast(it, Toast.LENGTH_LONG)
             configViewModel.clearMessage()
         }
     }
@@ -567,9 +565,9 @@ private fun ConfigImportDialog(
                                     logs.forEach { appendLine(localizedText(context, it)) }
                                 }
                                 coroutineScope.launch {
-                                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("report", reportText)))
+                                    context.copyToClipboard("report", reportText)
                                 }
-                                Toast.makeText(context, localizedText(context, "已复制明细日志"), Toast.LENGTH_SHORT).show()
+                                context.showToast("已复制明细日志", Toast.LENGTH_SHORT)
                             }
                         ) {
                             Text(localizedText("复制明细"))

@@ -1,5 +1,8 @@
 package com.haoze.dnssr.ui
 
+import com.haoze.dnssr.util.formatMs
+import com.haoze.dnssr.util.formatPercent
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,7 +43,6 @@ import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import com.haoze.dnssr.ui.components.DnsProtocolBadge
 import com.haoze.dnssr.vpn.DnsProtocol
 import com.haoze.dnssr.vpn.DnsProvider
-import java.util.Locale
 
 @Composable
 fun RaceStatsScreen(
@@ -265,12 +267,6 @@ private fun ProviderStatsTrailing(
     }
 }
 
-private fun formatPercent(value: Double): String {
-    return String.format(Locale.getDefault(), "%.1f%%", value * 100.0)
-}
 
-private fun formatMs(value: Double): String {
-    return "${value.toInt()} ms"
-}
 
 private const val MAX_PROVIDER_ROWS = 10
