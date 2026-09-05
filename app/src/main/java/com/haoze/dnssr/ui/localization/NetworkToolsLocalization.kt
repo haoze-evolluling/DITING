@@ -67,10 +67,31 @@ internal fun translateNetworkToolsExact(text: String): String? = when (text) {
     "通过递增 TTL 逐跳探测到达目标的路径，展示每一跳路由地址与响应时延。" -> "Traces the path to the target hop by hop with increasing TTL, showing each router's address and response latency."
     "向指定 DNS 服务器查询域名的 A / AAAA 记录，展示解析 IP、TTL 与记录明细。" -> "Queries A / AAAA records from the chosen DNS server and shows resolved IPs, TTL, and record details."
     "结果只反映执行时刻的网络状态；部分目标会限制 ICMP 响应或 DNS 查询。" -> "Results reflect the network state at the time of execution; some targets limit ICMP or DNS responses."
+    "复制" -> "Copy"
+    "已复制到剪贴板" -> "Copied to clipboard"
+    "展开网络详情" -> "Show network details"
+    "收起网络详情" -> "Hide network details"
+    "VPN 已连接" -> "VPN connected"
+    "协议" -> "Protocol"
+    "最快" -> "Fastest"
+    "最小" -> "Min"
+    "平均" -> "Avg"
+    "最大" -> "Max"
+    "抖动" -> "Jitter"
+    "逐包明细" -> "Per-reply details"
+    "Ping 完成" -> "Ping finished"
+    "Ping 失败" -> "Ping failed"
+    "查询成功" -> "Lookup succeeded"
+    "追踪完成" -> "Traceroute finished"
+    "追踪失败" -> "Traceroute failed"
     else -> null
 }
 
 internal fun translateNetworkToolsPattern(text: String): String? = when {
+    text.startsWith("成功率 ") -> text.replace("成功率 ", "Success rate ")
+    text.startsWith("样本 ") -> text.replace("样本 ", "Samples ")
+    text.startsWith("全部失败（") && text.endsWith(" 次）") ->
+        text.replace("全部失败（", "Failed all ").replace(" 次）", " attempts")
     text.startsWith("发送 ") && text.contains("丢包率 ") -> text
         .replace("发送 ", "Sent ")
         .replace(" · 接收 ", " · Received ")
