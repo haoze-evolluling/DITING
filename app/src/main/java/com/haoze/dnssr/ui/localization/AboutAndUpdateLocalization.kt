@@ -35,6 +35,8 @@ internal fun translateAboutAndUpdateExact(text: String): String? = when (text) {
     "设置规则订阅的自动更新开关和频率" -> "Configure automatic update and frequency for rule subscriptions"
     "更新失败" -> "Update failed"
     "自定义更新时间" -> "Custom update interval"
+    "更新频率" -> "Update frequency"
+    "更新间隔" -> "Update interval"
     "本地订阅导入后无法更新。" -> "Local subscriptions cannot be updated after import."
     "仅会自动更新已开启的分组中的网络订阅。" -> "Only subscriptions in enabled groups are updated automatically."
     "自动更新设置" -> "Automatic update settings"
