@@ -57,6 +57,7 @@ import com.haoze.dnssr.ui.components.SettingsCornerShape
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsInfoText
 import com.haoze.dnssr.ui.components.SettingsScaffold
+import com.haoze.dnssr.ui.components.SettingsSectionSpacing
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import com.haoze.dnssr.ui.components.SettingsTextItem
 import java.text.SimpleDateFormat
@@ -147,7 +148,7 @@ fun ConfigTransferScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(SettingsSectionSpacing)
         ) {
             BackupMigrationDashboard(stats = stats)
 
@@ -351,7 +352,7 @@ private fun ConfigImportDialog(
         )
     ) {
         Card(
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             modifier = Modifier
                 .fillMaxWidth(0.92f)

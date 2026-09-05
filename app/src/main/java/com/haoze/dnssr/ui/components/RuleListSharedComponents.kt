@@ -101,8 +101,7 @@ fun <T> RuleFilterChipRow(
             FilterChip(
                 selected = selectedFilter == f,
                 onClick = { onSelect(f) },
-                label = { Text(localizedText(labelKeyOf(f))) },
-                shape = RoundedCornerShape(16.dp)
+                label = { Text(localizedText(labelKeyOf(f))) }
             )
         }
     }
