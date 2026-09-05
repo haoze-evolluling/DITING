@@ -22,6 +22,17 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Troubleshoot
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.rememberCoroutineScope
+import com.haoze.dnssr.crash.CrashLogManager
+import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
 import com.haoze.dnssr.ui.components.SettingsGroup
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsInfoText
@@ -29,9 +40,16 @@ import com.haoze.dnssr.ui.components.SettingsRadioItem
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import com.haoze.dnssr.ui.components.SettingsSwitchItem
+import com.haoze.dnssr.ui.components.SettingsTextItem
 import com.haoze.dnssr.vpn.DnsVpnService
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private val logRetentionOptions = listOf(1, 7, 30)
 
@@ -48,7 +66,33 @@ fun LogRetentionSettingsScreen(
     var logMode by remember { mutableStateOf(AppSettings.getDnsLogMode(context)) }
     var floatingLogEnabled by remember { mutableStateOf(AppSettings.isFloatingLogEnabled(context)) }
     var waitingForOverlayPermission by remember { mutableStateOf(false) }
+    var crashLogCount by remember { mutableIntStateOf(CrashLogManager.getCrashLogCount(context)) }
+    var showClearConfirmDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val crashExportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val result = runCatching {
+                    withContext(Dispatchers.IO) {
+                        val content = CrashLogManager.generateExportContent(context)
+                        if (content.isEmpty()) error("当前无崩溃日志内容")
+                        context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(content) }
+                            ?: error("无法打开导出文件")
+                    }
+                }
+                if (result.isSuccess) {
+                    CrashLogManager.markManuallyExported(context)
+                    context.showToast("崩溃日志已导出", Toast.LENGTH_SHORT)
+                } else {
+                    context.showToast("导出失败：${result.exceptionOrNull()?.message ?: ""}", Toast.LENGTH_SHORT)
+                }
+            }
+        }
+    }
 
     DisposableEffect(lifecycleOwner, waitingForOverlayPermission) {
         if (!waitingForOverlayPermission) return@DisposableEffect onDispose { }
@@ -162,6 +206,68 @@ fun LogRetentionSettingsScreen(
             )
             SettingsInfoText(localizedText("超过所选时间的 DNS 请求日志会自动删除，用于控制本地日志占用。"))
             }
+
+            SettingsGroupTitle(localizedText("崩溃日志"))
+            SettingsSurfaceGroup(
+                content = buildList {
+                    add {
+                        SettingsTextItem(
+                            title = localizedText("导出崩溃日志"),
+                            subtitle = localizedText(
+                                if (crashLogCount > 0) "已记录 $crashLogCount 份崩溃日志，点击导出文件"
+                                else "当前无崩溃记录"
+                            ),
+                            leadingIcon = Icons.Filled.Troubleshoot,
+                            enabled = crashLogCount > 0,
+                            onClick = {
+                                if (crashLogCount <= 0) {
+                                    context.showToast("当前暂无崩溃日志", Toast.LENGTH_SHORT)
+                                } else {
+                                    val date = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                                    crashExportLauncher.launch("DNSSR-crash-$date.txt")
+                                }
+                            }
+                        )
+                    }
+                    if (crashLogCount > 0) {
+                        add {
+                            SettingsTextItem(
+                                title = localizedText("清空崩溃日志"),
+                                subtitle = localizedText("删除本地所有已记录的崩溃文件"),
+                                leadingIcon = Icons.Filled.Delete,
+                                textColor = MaterialTheme.colorScheme.error,
+                                onClick = { showClearConfirmDialog = true }
+                            )
+                        }
+                    }
+                }
+            )
+            SettingsInfoText(localizedText("发生未捕获异常时自动保存诊断信息与关键日志，仅保存在设备本地，导出后可反馈给开发者。"))
         }
+    }
+
+    if (showClearConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearConfirmDialog = false },
+            title = { Text(localizedText("清空崩溃日志")) },
+            text = { Text(localizedText("确认清空所有已保存的崩溃日志吗？")) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showClearConfirmDialog = false
+                        CrashLogManager.clearCrashLogs(context)
+                        crashLogCount = 0
+                        context.showToast("已清空崩溃日志", Toast.LENGTH_SHORT)
+                    }
+                ) {
+                    Text(localizedText("确定"), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearConfirmDialog = false }) {
+                    Text(localizedText("取消"))
+                }
+            }
+        )
     }
 }

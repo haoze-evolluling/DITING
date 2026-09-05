@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
+import com.haoze.dnssr.ui.showToast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -130,6 +132,9 @@ class MainActivity : AppLocalizedActivity() {
         applyRecentsPrivacySetting()
         LauncherIconManager.applyPreferredIcon(this)
         startupUpdateCheckDisabled = AppSettings.isStartupUpdateCheckDisabled(this)
+        if (com.haoze.dnssr.crash.CrashLogManager.consumePendingAutoExportNotice(this)) {
+            showToast("软件连续异常退出，崩溃日志已自动备份至系统“下载”目录", Toast.LENGTH_LONG)
+        }
         setContent {
             var initialAgreementAccepted by remember {
                 mutableStateOf(AppSettings.isInitialAgreementAccepted(this))

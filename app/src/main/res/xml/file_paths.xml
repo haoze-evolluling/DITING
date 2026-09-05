@@ -3,4 +3,7 @@
     <files-path
         name="app_update"
         path="app-update/" />
+    <files-path
+        name="crash_logs"
+        path="crash_logs/" />
 </paths>

@@ -41,6 +41,10 @@ internal fun translateDynamicPattern(text: String): String? = when {
     text.startsWith("已选择 ") && text.endsWith(" 个服务") -> text.removePrefix("已选择 ").removeSuffix(" 个服务") + " services selected"
     text.endsWith(" 小时") && text.startsWith("每 ") -> "Every " + text.removePrefix("每 ").removeSuffix(" 小时") + " hours"
     text.startsWith("保留 ") && text.endsWith(" 天") -> text.removePrefix("保留 ").removeSuffix(" 天") + " days"
+    text.startsWith("已记录 ") && text.endsWith(" 份崩溃日志，点击导出文件") -> {
+        val count = text.removePrefix("已记录 ").removeSuffix(" 份崩溃日志，点击导出文件")
+        "$count crash log(s) recorded, tap to export"
+    }
     text.contains(" 次 / ") && text.contains(" 秒 / 保持 ") -> text.replace(" 次 / ", " requests / ").replace(" 秒 / 保持 ", " seconds / hold ").replace(" 秒", " seconds")
     text.contains(" · ") && text.endsWith(" 后过期") -> text.replace(" 小时", " hours").replace(" 分钟", " minutes").replace(" 秒", " seconds").replace(" 后过期", " until expiration")
     text.endsWith(" 小时") -> text.removeSuffix(" 小时") + " hours"

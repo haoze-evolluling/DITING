@@ -8,6 +8,7 @@ import android.net.VpnService
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
+import com.haoze.dnssr.crash.CrashBreadcrumbs
 import com.haoze.dnssr.data.entity.RuleScope
 import com.haoze.dnssr.notification.AppNotificationChannels
 import com.haoze.dnssr.notification.NotificationSettingsStore
@@ -310,6 +311,7 @@ class DnsVpnService : VpnService() {
         DnsVpnStatusNotifier.setRunningFlag(this, true)
 
         activeResolutionMode = AppSettings.getDnsResolutionMode(this)
+        CrashBreadcrumbs.record("VPN", "VPN starting, mode=${activeResolutionMode.name}")
         val providers = DnsVpnProviderResolver.resolveDnsProviders(this, intent)
         activeProviders = providers
 
@@ -559,6 +561,7 @@ class DnsVpnService : VpnService() {
     }
 
     private fun stopVpn() {
+        CrashBreadcrumbs.record("VPN", "stopVpn() called")
         wasStopped = true
         if (::speedMonitor.isInitialized) speedMonitor.stop()
         if (::floatingLogOverlay.isInitialized) floatingLogOverlay.setVpnRunning(false)
@@ -585,6 +588,7 @@ class DnsVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        CrashBreadcrumbs.record("VPN", "DnsVpnService onDestroy()")
         if (::speedMonitor.isInitialized) speedMonitor.stop()
         if (::floatingLogOverlay.isInitialized) floatingLogOverlay.destroy()
         unregisterScreenStateReceiver()
