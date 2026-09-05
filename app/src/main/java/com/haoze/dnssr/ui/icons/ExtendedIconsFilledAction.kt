@@ -341,3 +341,65 @@ public val Icons.Filled.Troubleshoot: ImageVector
     }
 
 private var _troubleshoot: ImageVector? = null
+
+public val Icons.Filled.Tune: ImageVector
+    get() {
+        if (_tune != null) {
+            return _tune!!
+        }
+        _tune = materialIcon(name = "Filled.Tune") {
+            materialPath {
+                moveTo(3.0f, 17.0f)
+                verticalLineToRelative(2.0f)
+                horizontalLineToRelative(6.0f)
+                verticalLineToRelative(-2.0f)
+                horizontalLineTo(3.0f)
+                close()
+                moveTo(3.0f, 5.0f)
+                verticalLineToRelative(2.0f)
+                horizontalLineToRelative(10.0f)
+                verticalLineTo(5.0f)
+                horizontalLineTo(3.0f)
+                close()
+                moveTo(13.0f, 21.0f)
+                verticalLineToRelative(-2.0f)
+                horizontalLineToRelative(8.0f)
+                verticalLineToRelative(-2.0f)
+                horizontalLineToRelative(-8.0f)
+                verticalLineToRelative(-2.0f)
+                horizontalLineToRelative(-2.0f)
+                verticalLineToRelative(6.0f)
+                horizontalLineToRelative(2.0f)
+                close()
+                moveTo(7.0f, 9.0f)
+                verticalLineToRelative(2.0f)
+                horizontalLineTo(3.0f)
+                verticalLineToRelative(2.0f)
+                horizontalLineToRelative(4.0f)
+                verticalLineToRelative(2.0f)
+                horizontalLineToRelative(2.0f)
+                verticalLineTo(9.0f)
+                horizontalLineTo(7.0f)
+                close()
+                moveTo(21.0f, 13.0f)
+                verticalLineToRelative(-2.0f)
+                horizontalLineTo(11.0f)
+                verticalLineToRelative(2.0f)
+                horizontalLineToRelative(10.0f)
+                close()
+                moveTo(15.0f, 9.0f)
+                horizontalLineToRelative(2.0f)
+                verticalLineTo(7.0f)
+                horizontalLineToRelative(4.0f)
+                verticalLineTo(5.0f)
+                horizontalLineToRelative(-4.0f)
+                verticalLineTo(3.0f)
+                horizontalLineToRelative(-2.0f)
+                verticalLineToRelative(6.0f)
+                close()
+            }
+        }
+        return _tune!!
+    }
+
+private var _tune: ImageVector? = null

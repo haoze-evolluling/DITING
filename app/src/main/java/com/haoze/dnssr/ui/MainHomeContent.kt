@@ -216,6 +216,7 @@ internal fun MainContent(
             ProviderSelectionDialog(
                 visible = showProviderDialog && resolutionMode == DnsResolutionMode.SINGLE,
                 providers = displayProviders,
+                selectedProvider = selectedProvider,
                 onDismissRequest = { showProviderDialog = false },
                 onProviderSelected = { provider ->
                     showProviderDialog = false
