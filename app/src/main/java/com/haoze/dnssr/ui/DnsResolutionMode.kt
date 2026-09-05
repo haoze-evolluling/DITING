@@ -1,5 +1,12 @@
 package com.haoze.dnssr.ui
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.AltRoute
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.ui.graphics.vector.ImageVector
+
 enum class DnsResolutionMode(
     val storageValue: String,
     val displayName: String
@@ -13,4 +20,12 @@ enum class DnsResolutionMode(
         fun fromStorageValue(value: String?): DnsResolutionMode? =
             entries.firstOrNull { it.storageValue == value }
     }
+}
+
+/** 模式对应的表达性图标，用于 Hero 卡片、模式卡片与选择对话框。 */
+internal fun DnsResolutionMode.iconVector(): ImageVector = when (this) {
+    DnsResolutionMode.SINGLE -> Icons.Filled.Dns
+    DnsResolutionMode.SMART_PREDICTION -> Icons.Filled.Lightbulb
+    DnsResolutionMode.PARALLEL_RACE -> Icons.Filled.Speed
+    DnsResolutionMode.PRIMARY_BACKUP -> Icons.AutoMirrored.Filled.AltRoute
 }

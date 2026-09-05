@@ -144,11 +144,21 @@ internal fun MainContent(
         val filteredProviders = providers.filter(homeProviderVisibility::isVisible)
         val manageProviderName = localizedText("管理服务...")
         val providerVisibilityName = localizedText("服务显示...")
+        val manageProviderEntry =
+            DnsProvider(id = MANAGE_PROVIDER_ID, name = manageProviderName, isPreset = true)
+        val providerVisibilityEntry =
+            DnsProvider(id = PROVIDER_VISIBILITY_ID, name = providerVisibilityName, isPreset = true)
         val displayProviders = buildList {
             selectedProvider?.takeIf { selected -> filteredProviders.none { it.id == selected.id } }?.let(::add)
             addAll(filteredProviders)
-            add(DnsProvider(id = MANAGE_PROVIDER_ID, name = manageProviderName, isPreset = true))
-            add(DnsProvider(id = PROVIDER_VISIBILITY_ID, name = providerVisibilityName, isPreset = true))
+            add(manageProviderEntry)
+            add(providerVisibilityEntry)
+        }
+        val modeDisplayProviders = buildList {
+            raceProviders.filter { race -> filteredProviders.none { it.id == race.id } }.let(::addAll)
+            addAll(filteredProviders)
+            add(manageProviderEntry)
+            add(providerVisibilityEntry)
         }
         val selectedIndex = displayProviders.indexOfFirst { it.id == selectedProvider?.id }
             .coerceAtLeast(0)
@@ -173,18 +183,31 @@ internal fun MainContent(
                     label = "RaceModeProviderContent"
                 ) { enabled ->
                     if (enabled) {
-                        OutlinedTextField(
-                            value = raceDisplayValue,
-                            onValueChange = {},
-                            readOnly = true,
-                            enabled = true,
-                            singleLine = true,
-                            label = { Text(localizedText("解析服务（") + localizedText(resolutionMode.displayName) + "）") },
-                            shape = SettingsCornerShape,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToRaceModeSettings() }
-                        )
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = raceDisplayValue,
+                                onValueChange = {},
+                                readOnly = true,
+                                enabled = true,
+                                singleLine = true,
+                                label = { Text(localizedText("解析服务（") + localizedText(resolutionMode.displayName) + "）") },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                        contentDescription = localizedText("选择解析服务")
+                                    )
+                                },
+                                shape = SettingsCornerShape,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .clickable(onClickLabel = localizedText("选择解析服务")) {
+                                        showProviderDialog = true
+                                    }
+                            )
+                        }
                     } else {
                         Box(modifier = Modifier.fillMaxWidth()) {
                             OutlinedTextField(
@@ -224,6 +247,24 @@ internal fun MainContent(
                         MANAGE_PROVIDER_ID -> onNavigateToProviderManagement()
                         PROVIDER_VISIBILITY_ID -> onNavigateToHomeProviderVisibility()
                         else -> viewModel.selectProvider(provider.id)
+                    }
+                }
+            )
+
+            ModeProviderSelectionDialog(
+                visible = showProviderDialog && resolutionMode != DnsResolutionMode.SINGLE,
+                mode = resolutionMode,
+                providers = modeDisplayProviders,
+                selectedIds = raceProviderIds,
+                onDismissRequest = { showProviderDialog = false },
+                onProviderToggled = { provider ->
+                    viewModel.toggleModeProvider(resolutionMode, provider.id)
+                },
+                onActionSelected = { provider ->
+                    showProviderDialog = false
+                    when (provider.id) {
+                        MANAGE_PROVIDER_ID -> onNavigateToProviderManagement()
+                        PROVIDER_VISIBILITY_ID -> onNavigateToHomeProviderVisibility()
                     }
                 }
             )

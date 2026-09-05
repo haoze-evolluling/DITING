@@ -95,6 +95,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshRuntimeConfigIfRunning("main_provider_changed")
     }
 
+    /** 首页多选弹窗切换非单一模式的参与服务，与模式配置页共用同一份持久化数据。 */
+    fun toggleModeProvider(mode: DnsResolutionMode, id: String) {
+        if (mode == DnsResolutionMode.SINGLE) return
+        val context = getApplication<Application>()
+        val current = _raceProviderIds.value
+        when (mode) {
+            DnsResolutionMode.SINGLE -> return
+            DnsResolutionMode.SMART_PREDICTION -> {
+                val updated = current.toMutableSet().apply { if (!remove(id)) add(id) }
+                AppSettings.setSmartPredictionProviderIds(context, updated)
+                _raceProviderIds.value = updated
+            }
+            DnsResolutionMode.PARALLEL_RACE -> {
+                val updated = current.toMutableSet().apply { if (!remove(id)) add(id) }
+                AppSettings.setParallelRaceProviderIds(context, updated)
+                _raceProviderIds.value = updated
+            }
+            DnsResolutionMode.PRIMARY_BACKUP -> {
+                val updated = current.toMutableList().apply { if (!remove(id)) add(id) }
+                AppSettings.setPrimaryBackupProviderIds(context, updated)
+                _raceProviderIds.value = updated.toSet()
+            }
+        }
+        if (_resolutionMode.value == mode) {
+            refreshRuntimeConfigIfRunning("resolution_mode_providers_changed")
+        }
+    }
+
     fun restartVpnAfterSettingsChange() {
         refreshRuntimeConfigIfRunning("settings_changed")
     }

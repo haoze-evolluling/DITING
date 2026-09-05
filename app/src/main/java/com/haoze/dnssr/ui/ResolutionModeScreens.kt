@@ -29,13 +29,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.AltRoute
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Speed
 import com.haoze.dnssr.ui.components.AppAlertDialog as AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -62,7 +58,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -101,14 +96,6 @@ import kotlinx.coroutines.launch
 
 /** 解析模式页的 Hero 卡片圆角，与设置分组外圈圆角保持一致。 */
 private val ResolutionModeHeroShape = RoundedCornerShape(28.dp)
-
-/** 模式对应的表达性图标，用于 Hero 卡片、模式卡片与选择对话框。 */
-private fun DnsResolutionMode.iconVector(): ImageVector = when (this) {
-    DnsResolutionMode.SINGLE -> Icons.Filled.Dns
-    DnsResolutionMode.SMART_PREDICTION -> Icons.Filled.Lightbulb
-    DnsResolutionMode.PARALLEL_RACE -> Icons.Filled.Speed
-    DnsResolutionMode.PRIMARY_BACKUP -> Icons.AutoMirrored.Filled.AltRoute
-}
 
 @Composable
 fun ResolutionModeHomeScreen(

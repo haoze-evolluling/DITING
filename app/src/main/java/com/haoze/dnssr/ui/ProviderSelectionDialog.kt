@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
@@ -70,7 +71,9 @@ internal fun raceProviderSummary(providerNames: List<String>): String {
 private val ProviderDialogCornerShape = RoundedCornerShape(28.dp)
 
 /** 列表行圆角，与设置分组内条目保持一致。 */
-private val ProviderDialogRowShape = RoundedCornerShape(12.dp)
+private val ProviderDialogRowCorner = 12.dp
+
+private val ProviderDialogRowShape = RoundedCornerShape(ProviderDialogRowCorner)
 
 @Composable
 internal fun ProviderSelectionDialog(
@@ -79,6 +82,63 @@ internal fun ProviderSelectionDialog(
     selectedProvider: DnsProvider?,
     onDismissRequest: () -> Unit,
     onProviderSelected: (DnsProvider) -> Unit
+) {
+    ProviderDialog(
+        visible = visible,
+        icon = Icons.Filled.Dns,
+        title = localizedText("解析服务"),
+        subtitle = selectedProvider?.let { localizedText("当前使用：") + localizedText(it.name) }
+            ?: localizedText("选择一个服务进行查询"),
+        providers = providers,
+        isProviderSelected = { provider -> provider.id == selectedProvider?.id },
+        onProviderClick = onProviderSelected,
+        onActionClick = onProviderSelected,
+        onDismissRequest = onDismissRequest
+    )
+}
+
+/** 非单一模式的多选弹窗：勾选/取消参与当前模式的服务，与模式配置页的选择集合同步。 */
+@Composable
+internal fun ModeProviderSelectionDialog(
+    visible: Boolean,
+    mode: DnsResolutionMode,
+    providers: List<DnsProvider>,
+    selectedIds: Set<String>,
+    onDismissRequest: () -> Unit,
+    onProviderToggled: (DnsProvider) -> Unit,
+    onActionSelected: (DnsProvider) -> Unit
+) {
+    val selectableProviders = providers.filter {
+        it.id != MANAGE_PROVIDER_ID && it.id != PROVIDER_VISIBILITY_ID
+    }
+    val selectedNames = selectableProviders
+        .filter { it.id in selectedIds }
+        .map { localizedText(it.name) }
+    ProviderDialog(
+        visible = visible,
+        icon = mode.iconVector(),
+        title = localizedText("解析服务"),
+        subtitle = localizedText(mode.displayName) + " · " +
+            localizedText(raceProviderSummary(selectedNames)),
+        providers = providers,
+        isProviderSelected = { provider -> provider.id in selectedIds },
+        onProviderClick = onProviderToggled,
+        onActionClick = onActionSelected,
+        onDismissRequest = onDismissRequest
+    )
+}
+
+@Composable
+private fun ProviderDialog(
+    visible: Boolean,
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    providers: List<DnsProvider>,
+    isProviderSelected: (DnsProvider) -> Boolean,
+    onProviderClick: (DnsProvider) -> Unit,
+    onActionClick: (DnsProvider) -> Unit,
+    onDismissRequest: () -> Unit
 ) {
     val dialogVisibility = remember { MutableTransitionState(false) }
     dialogVisibility.targetState = visible
@@ -122,7 +182,9 @@ internal fun ProviderSelectionDialog(
 
                     Column(modifier = Modifier.fillMaxWidth()) {
                         ProviderDialogTitleRow(
-                            selectedProvider = selectedProvider,
+                            icon = icon,
+                            title = title,
+                            subtitle = subtitle,
                             onDismissRequest = onDismissRequest
                         )
                         Column(
@@ -134,8 +196,8 @@ internal fun ProviderSelectionDialog(
                             regularProviders.forEach { provider ->
                                 ProviderOptionRow(
                                     provider = provider,
-                                    isSelected = provider.id == selectedProvider?.id,
-                                    onClick = { onProviderSelected(provider) }
+                                    isSelected = isProviderSelected(provider),
+                                    onClick = { onProviderClick(provider) }
                                 )
                             }
                         }
@@ -155,7 +217,7 @@ internal fun ProviderSelectionDialog(
                                         label = localizedText(provider.name),
                                         icon = Icons.Filled.Tune,
                                         contentDescription = localizedText("管理服务"),
-                                        onClick = { onProviderSelected(provider) },
+                                        onClick = { onActionClick(provider) },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -164,7 +226,7 @@ internal fun ProviderSelectionDialog(
                                         label = localizedText(provider.name),
                                         icon = Icons.Filled.Visibility,
                                         contentDescription = localizedText("设置服务显示"),
-                                        onClick = { onProviderSelected(provider) },
+                                        onClick = { onActionClick(provider) },
                                         modifier = Modifier.weight(1f)
                                     )
                                 }
@@ -180,7 +242,9 @@ internal fun ProviderSelectionDialog(
 /** 头部：primaryContainer 圆形图标 + 标题与当前服务副标题 + 关闭按钮。 */
 @Composable
 private fun ProviderDialogTitleRow(
-    selectedProvider: DnsProvider?,
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
     onDismissRequest: () -> Unit
 ) {
     Row(
@@ -197,7 +261,7 @@ private fun ProviderDialogTitleRow(
         ) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = Icons.Filled.Dns,
+                    imageVector = icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(22.dp)
@@ -209,13 +273,12 @@ private fun ProviderDialogTitleRow(
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             Text(
-                text = localizedText("解析服务"),
+                text = title,
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = selectedProvider?.let { localizedText("当前使用：") + localizedText(it.name) }
-                    ?: localizedText("选择一个服务进行查询"),
+                text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
