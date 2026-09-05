@@ -95,6 +95,9 @@ internal fun translateDnsResolutionExact(text: String): String? = when (text) {
     "已恢复竞速模式默认权重" -> "Race-mode default weights restored"
     "已恢复 Bootstrap IP 默认权重" -> "Bootstrap IP default weights restored"
     "仅切换阿里云和 DNSPod 内置服务的 DNS、DoT 或 DoH 协议，并同步四种模式中的对应预设服务" -> "Only switches the DNS, DoT, or DoH protocol of the built-in Aliyun and DNSPod services, and syncs the matching preset services across the four modes"
+    "已就绪" -> "Ready"
+    "待配置" -> "Needs setup"
+    "暂无此协议的服务商" -> "No providers for this protocol"
     else -> null
 }
 
