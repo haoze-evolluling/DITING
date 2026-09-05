@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -124,7 +123,7 @@ internal fun AppTrafficRankItem(
                         Text(
                             text = "↓ " + formatSpeed(item.currentRxSpeedBps),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF4CAF50),
+                            color = colors.primary,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
@@ -154,7 +153,7 @@ internal fun AppTrafficRankItem(
                     Text(
                         text = "↑ " + formatSpeed(item.currentTxSpeedBps),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF2196F3)
+                        color = colors.tertiary
                     )
                 }
             }

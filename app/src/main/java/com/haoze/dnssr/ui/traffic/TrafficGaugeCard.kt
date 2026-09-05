@@ -29,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,7 +83,7 @@ internal fun TrafficGaugeCard(uiState: AppTrafficStatsUiState) {
                         Icon(
                             imageVector = Icons.Default.ArrowDownward,
                             contentDescription = null,
-                            tint = Color(0xFF4CAF50),
+                            tint = colors.primary,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
@@ -100,7 +99,7 @@ internal fun TrafficGaugeCard(uiState: AppTrafficStatsUiState) {
                         Icon(
                             imageVector = Icons.Default.ArrowUpward,
                             contentDescription = null,
-                            tint = Color(0xFF2196F3),
+                            tint = colors.tertiary,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
