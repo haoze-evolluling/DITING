@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Rule
+import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,19 +44,19 @@ fun DomainRuleHomeScreen(
                         SettingsNavigationItemData(
                             title = localizedText("域名规则"),
                             subtitle = localizedText(if (domainRulesEnabled) "统一管理拦截策略及订阅规则，DNS 与 HTTPS 检查共用" else "已禁用 · 统一管理拦截策略及订阅规则"),
-                            leadingIcon = Icons.AutoMirrored.Filled.Rule,
+                            leadingIcon = Icons.Filled.Language,
                             onClick = onDomain
                         ),
                         SettingsNavigationItemData(
                             title = localizedText("应用独立规则"),
                             subtitle = localizedText("针对特定应用配置网络域名放行、专属黑白名单或默认全拦截模式"),
-                            leadingIcon = Icons.AutoMirrored.Filled.Rule,
+                            leadingIcon = Icons.Filled.Android,
                             onClick = onAppRule
                         ),
                         SettingsNavigationItemData(
                             title = localizedText("地址规则"),
                             subtitle = localizedText(addressSubtitle),
-                            leadingIcon = Icons.AutoMirrored.Filled.Rule,
+                            leadingIcon = Icons.Filled.Link,
                             onClick = onAddress
                         )
                     )
