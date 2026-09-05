@@ -44,6 +44,7 @@ object Routes {
     const val HOME_PROVIDER_VISIBILITY = "home_provider_visibility"
     const val BOOTSTRAP_SETTINGS = "bootstrap_settings"
     const val RACE_MODE_LATENCY = "race_mode_latency"
+    const val NETWORK_TOOLS = "network_tools"
     const val RACE_MODE_PROVIDERS = "race_mode_providers"
     const val RESOLUTION_SINGLE = "resolution_single"
     const val RESOLUTION_SMART = "resolution_smart"

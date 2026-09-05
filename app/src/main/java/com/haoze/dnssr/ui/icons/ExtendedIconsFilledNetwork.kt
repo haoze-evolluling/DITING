@@ -88,6 +88,34 @@ public val Icons.Filled.Dns: ImageVector
 
 private var _dns: ImageVector? = null
 
+public val Icons.Filled.NetworkCheck: ImageVector
+    get() {
+        if (_networkCheck != null) {
+            return _networkCheck!!
+        }
+        _networkCheck = materialIcon(name = "Filled.NetworkCheck") {
+            materialPath {
+                moveTo(12.0f, 2.0f)
+                curveTo(6.48f, 2.0f, 2.0f, 6.48f, 2.0f, 12.0f)
+                reflectiveCurveToRelative(4.48f, 10.0f, 10.0f, 10.0f)
+                reflectiveCurveToRelative(10.0f, -4.48f, 10.0f, -10.0f)
+                reflectiveCurveTo(17.52f, 2.0f, 12.0f, 2.0f)
+                close()
+                moveTo(10.0f, 17.0f)
+                lineToRelative(-5.0f, -5.0f)
+                lineToRelative(1.41f, -1.41f)
+                lineTo(10.0f, 14.17f)
+                lineToRelative(7.59f, -7.59f)
+                lineTo(19.0f, 8.0f)
+                lineToRelative(-9.0f, 9.0f)
+                close()
+            }
+        }
+        return _networkCheck!!
+    }
+
+private var _networkCheck: ImageVector? = null
+
 public val Icons.Filled.Lan: ImageVector
     get() {
         if (_lan != null) {

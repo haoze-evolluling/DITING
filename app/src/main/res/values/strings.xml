@@ -24,6 +24,7 @@
     <string name="feature_hub_advanced_tools">高级与诊断</string>
     <string name="feature_hub_https_inspection">HTTPS 流量检查</string>
     <string name="feature_hub_speed_test">查询测速</string>
+    <string name="feature_hub_network_tools">网络调试工具</string>
     <string name="feature_hub_interface_management">界面与管理</string>
     <string name="feature_hub_appearance">外观调整</string>
     <string name="feature_hub_service_display">服务显示</string>

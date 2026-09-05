@@ -40,6 +40,10 @@ private fun englishGuide(guide: SettingsGuide): SettingsGuide = when (guide.id) 
         title = "Speed test",
         message = "The speed test sends real queries for the chosen domain to selected DNS providers and compares their resolution time on the current network.\n\nResults are affected by network conditions, cache state, the target domain, and provider load, so one result does not represent long-term performance. Test a stable, frequently used domain several times before drawing conclusions.\n\nThe test only helps choose providers; it does not change the enabled providers or resolution policy automatically."
     )
+    "network_tools" -> guide.copy(
+        title = "Network diagnostics",
+        message = "Network diagnostics offers two tools: a ping test and a DNS lookup.\n\nThe ping test sends ICMP probes to a custom IP or domain and reports latency, packet loss, and TTL. The DNS lookup queries A / AAAA records from the current network's or a custom DNS server and shows resolved IPs, record details such as CNAME, TTL, and the response status.\n\nBoth tools run directly on this device and do not go through the DITING VPN. Results reflect the network state at the moment of execution; some targets limit ICMP or DNS responses, so try different targets or networks when a result looks abnormal."
+    )
     "cache" -> guide.copy(
         title = "Cache settings",
         message = "DNS cache stores recent resolution results and reuses them during their validity period, reducing repeated requests and improving access speed. You can adjust cache capacity, expiration, and fallback behavior.\n\nA larger cache or longer retention can improve the hit rate but may delay address changes. Aggressive cleanup increases queries and battery use.\n\nExisting entries may remain after a configuration change. Open Data cleanup when you need to clear them manually."
@@ -103,6 +107,7 @@ object SettingsGuides {
     val PROVIDER_MANAGEMENT = SettingsGuide("provider_management", "服务商管理", "服务商决定谛听实际通过哪些上游 DNS 完成域名查询。你可以在这里添加、编辑、启用、停用或调整 DoH、DoT 等服务的顺序，并为不同服务填写地址与连接参数。\n\n启用多个可靠服务通常能提高可用性，但错误的地址、协议或证书配置可能导致解析失败。\n\n修改后建议回到首页观察服务状态，并通过查询测速确认当前网络下的连接效果。")
     val BOOTSTRAP = SettingsGuide("bootstrap", "Bootstrap 设置", "Bootstrap DNS 用于在连接加密 DNS 服务商之前，先解析该服务商自身的域名，从而避免解析过程形成循环依赖。你可以配置全局 Bootstrap 地址以及相关权重策略。\n\n若填写的服务器不可访问、响应过慢或返回错误结果，依赖域名连接的 DoH、DoT 服务可能无法正常工作。\n\n没有明确需求时建议保留可靠的默认配置，修改后应结合服务状态和实际解析结果进行确认。")
     val LATENCY_TEST = SettingsGuide("latency_test", "查询测速", "查询测速会使用你指定的测试域名，向选中的 DNS 服务商发起真实查询，并比较各服务商在当前网络环境中的解析耗时。\n\n测试结果会受到网络波动、缓存状态、目标域名和服务商负载影响，因此单次结果不代表长期表现。建议使用经常访问且稳定的域名，多执行几次后综合判断。\n\n测速只用于辅助选择服务商，不会自动替你修改当前启用状态或解析策略。")
+    val NETWORK_TOOLS = SettingsGuide("network_tools", "网络调试工具", "网络调试提供 Ping 测试与 DNS 解析查询两类诊断工具。\n\nPing 测试向自定义 IP 或域名发送 ICMP 探测，输出时延、丢包率与 TTL；DNS 解析查询向当前网络或自定义 DNS 服务器查询域名的 A / AAAA 记录，展示解析 IP、CNAME 等记录明细、TTL 与响应状态。\n\n两类工具都在设备本机直接执行，不经过谛听 VPN；结果只反映执行时刻的网络状态，部分目标会限制 ICMP 响应或 DNS 查询，结果异常时可更换目标或网络再次验证。")
     val CACHE = SettingsGuide("cache", "缓存设置", "DNS 缓存会保存近期的解析结果，在有效期内复用响应，从而减少重复网络请求并提升访问速度。你可以在这里调整缓存容量、有效期以及相关容错行为。\n\n更大的缓存或更长的保留时间能够提高命中率，但也可能让地址变更较慢生效；过于激进的清理则会增加查询次数和耗电。\n\n修改配置后已有缓存可能仍然存在，需要时可前往数据清理页面手动清除。")
     val RESOLUTION_MODE = SettingsGuide("resolution_mode", "解析模式", "解析模式决定一次 DNS 请求如何选择和调度已启用的服务商。\n\n单一服务仅查询一个服务商。智能选择会根据近期成功率和延迟优先选择服务，失败或超时时自动兜底。最快响应会同时查询所有选中服务，采用最先成功的结果。依次尝试会按设置顺序查询，前一个失败后切换下一个服务。\n\n智能选择、最快响应和依次尝试至少需要选择两个服务商；依次尝试可拖动调整查询顺序。修改模式不会删除服务商配置。")
     val LOG_MODE = SettingsGuide("log_mode", "日志模式", "日志模式决定谛听会记录哪些 DNS 请求以及保留多少排查信息。较完整的日志有助于确认请求来自哪个应用、命中了什么规则、由哪个服务商响应，但也会占用更多存储空间，并在本机留下更多访问记录。\n\n首页功能菜单中的“日志”卡片支持长按，可直接打开日志模式设置。\n\n若只关注运行状态，可以选择较精简的记录范围；需要定位规则或解析问题时再临时提高详细程度。\n\n日志只保存在设备本地，可随时通过数据清理页面删除。")

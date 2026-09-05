@@ -39,6 +39,7 @@ object LocalizationEngine {
     internal fun translateExact(text: String): String? {
         return translateHomeAndOverviewExact(text)
             ?: translateDnsResolutionExact(text)
+            ?: translateNetworkToolsExact(text)
             ?: translateRulesAndSubscriptionExact(text)
             ?: translateHttpInspectionExact(text)
             ?: translateAppManagementExact(text)
@@ -51,6 +52,7 @@ object LocalizationEngine {
     private fun translatePatterns(text: String): String? {
         return translateHomeAndOverviewPattern(text)
             ?: translateDnsResolutionPattern(text)
+            ?: translateNetworkToolsPattern(text)
             ?: translateRulesAndSubscriptionPattern(text)
             ?: translateHttpInspectionPattern(text)
             ?: translateAppManagementPattern(text)

@@ -25,6 +25,7 @@
     <string name="feature_hub_advanced_tools">Advanced &amp; Diagnostics</string>
     <string name="feature_hub_https_inspection">HTTPS traffic inspection</string>
     <string name="feature_hub_speed_test">Speed test</string>
+    <string name="feature_hub_network_tools">Network diagnostics</string>
     <string name="feature_hub_interface_management">Interface and management</string>
     <string name="feature_hub_appearance">Appearance</string>
     <string name="feature_hub_service_display">Service display</string>

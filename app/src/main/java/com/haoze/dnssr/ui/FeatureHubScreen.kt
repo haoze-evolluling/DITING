@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.ImportExport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.NetworkCheck
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
@@ -99,6 +100,7 @@ internal fun FeatureHubScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToLogRetentionSettings: () -> Unit,
     onNavigateToRaceModeLatency: () -> Unit,
+    onNavigateToNetworkTools: () -> Unit,
     onNavigateToHomeProviderVisibility: () -> Unit,
     onNavigateToAbout: () -> Unit,
     onNavigateToSponsor: () -> Unit,
@@ -142,7 +144,8 @@ internal fun FeatureHubScreen(
             stringResource(R.string.feature_hub_advanced_tools),
             listOf(
                 FeatureHubItem(stringResource(R.string.feature_hub_https_inspection), Icons.Filled.Troubleshoot, onNavigateToHttpInspection),
-                FeatureHubItem(stringResource(R.string.feature_hub_speed_test), Icons.Filled.Speed, onNavigateToRaceModeLatency)
+                FeatureHubItem(stringResource(R.string.feature_hub_speed_test), Icons.Filled.Speed, onNavigateToRaceModeLatency),
+                FeatureHubItem(stringResource(R.string.feature_hub_network_tools), Icons.Filled.NetworkCheck, onNavigateToNetworkTools)
             )
         ),
         FeatureHubCategory(
