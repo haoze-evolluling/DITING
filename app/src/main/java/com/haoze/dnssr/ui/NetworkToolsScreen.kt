@@ -308,7 +308,7 @@ private fun NetworkAddressRow(label: String, value: String) {
             IconButton(onClick = {
                 context.copyToClipboard(label, value)
                 context.showToast(localizedText(context, "已复制到剪贴板"))
-            }, modifier = Modifier.size(32.dp)) {
+            }) {
                 Icon(
                     imageVector = Icons.Filled.ContentCopy,
                     contentDescription = localizedText("复制"),

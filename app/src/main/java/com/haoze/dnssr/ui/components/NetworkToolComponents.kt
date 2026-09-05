@@ -277,7 +277,7 @@ fun NetworkToolCopyValueRow(
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
-        IconButton(onClick = onCopy, modifier = Modifier.size(32.dp)) {
+        IconButton(onClick = onCopy) {
             Icon(
                 imageVector = Icons.Filled.ContentCopy,
                 contentDescription = localizedText(copyLabel),

@@ -278,10 +278,7 @@ private fun ProviderListItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 onEdit?.let { onEditClick ->
-                    IconButton(
-                        onClick = onEditClick,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+                    IconButton(onClick = onEditClick) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                 contentDescription = localizedText("编辑")
@@ -289,10 +286,7 @@ private fun ProviderListItem(
                     }
                 }
                 onDelete?.let { onDeleteClick ->
-                    IconButton(
-                        onClick = onDeleteClick,
-                        modifier = Modifier.size(40.dp)
-                    ) {
+                    IconButton(onClick = onDeleteClick) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                 contentDescription = localizedText("删除")

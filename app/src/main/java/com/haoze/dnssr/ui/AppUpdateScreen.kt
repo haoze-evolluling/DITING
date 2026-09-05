@@ -92,7 +92,7 @@ fun AppUpdateScreen(
                     text = localizedText(state.error),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 32.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
         }

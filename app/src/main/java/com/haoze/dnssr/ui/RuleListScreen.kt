@@ -111,7 +111,7 @@ fun RuleListScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 92.dp),
+                    contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
                 ) {
                     itemsIndexed(rules, key = { _, rule -> rule.id }) { index, rule ->
