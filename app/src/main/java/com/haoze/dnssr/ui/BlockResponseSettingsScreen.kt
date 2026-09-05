@@ -203,9 +203,7 @@ private fun DynamicParameterField(
             imeAction = ImeAction.Done
         ),
         shape = SettingsCornerShape,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = Modifier.fillMaxWidth()
     )
 }
 

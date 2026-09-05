@@ -579,13 +579,13 @@ private fun SingleAppRulePanel(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 4.dp),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = SettingsCornerShape,
                         color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 12.dp),
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
@@ -667,8 +667,7 @@ private fun SingleAppRulePanel(
                                 )
                             }
                             IconButton(
-                                onClick = { onRemoveAllowlistDomain(domain) },
-                                modifier = Modifier.size(36.dp)
+                                onClick = { onRemoveAllowlistDomain(domain) }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
@@ -1047,10 +1046,7 @@ private fun RuleEntityRow(
             checked = enabled,
             onCheckedChange = onToggle
         )
-        IconButton(
-            onClick = onDelete,
-            modifier = Modifier.size(36.dp)
-        ) {
+        IconButton(onClick = onDelete) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = localizedText("删除"),
