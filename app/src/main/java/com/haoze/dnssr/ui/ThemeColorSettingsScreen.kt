@@ -1,6 +1,7 @@
 package com.haoze.dnssr.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -35,6 +36,11 @@ fun ThemeColorSettingsScreen(
 ) {
     val context = LocalContext.current
     var selectedStyle by remember { mutableStateOf(AppSettings.getThemeColorStyle(context)) }
+    val darkTheme = when (AppSettings.getAppThemeMode(context)) {
+        AppThemeMode.SYSTEM -> isSystemInDarkTheme()
+        AppThemeMode.LIGHT -> false
+        AppThemeMode.DARK -> true
+    }
 
     SettingsScaffold(title = localizedText(title), onBack = onBack) { innerPadding ->
         LazyColumn(
@@ -60,7 +66,7 @@ fun ThemeColorSettingsScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(28.dp)
-                                        .background(style.lightPrimary, CircleShape),
+                                        .background(if (darkTheme) style.darkPrimary else style.lightPrimary, CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (selectedStyle == style) {

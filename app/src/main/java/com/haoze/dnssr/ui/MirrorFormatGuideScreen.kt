@@ -151,7 +151,7 @@ fun MirrorFormatGuideScreen(onBack: () -> Unit) {
             mirrorFormatMarkdown
         }
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp)
+            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
             markdown.lines().filter(String::isNotBlank).forEach { MirrorMarkdownLine(it) }
         }
