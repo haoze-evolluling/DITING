@@ -193,10 +193,16 @@ private fun ProviderDialog(
                                 .verticalScroll(rememberScrollState())
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            regularProviders.forEach { provider ->
+                            regularProviders.forEachIndexed { index, provider ->
                                 ProviderOptionRow(
                                     provider = provider,
                                     isSelected = isProviderSelected(provider),
+                                    rowShape = providerRowShape(
+                                        regularProviders = regularProviders,
+                                        index = index,
+                                        isSelected = isProviderSelected(provider),
+                                        isProviderSelected = isProviderSelected
+                                    ),
                                     onClick = { onProviderClick(provider) }
                                 )
                             }
@@ -295,24 +301,47 @@ private fun ProviderDialogTitleRow(
     }
 }
 
+/**
+ * 计算列表行的圆角：连续选中的相邻行合并为一个色块，接缝处取直角，
+ * 只保留整组首尾的圆角，让多选结果呈现为一张分组卡片。
+ */
+private fun providerRowShape(
+    regularProviders: List<DnsProvider>,
+    index: Int,
+    isSelected: Boolean,
+    isProviderSelected: (DnsProvider) -> Boolean
+): Shape {
+    if (!isSelected) return ProviderDialogRowShape
+    val joinedAbove = index > 0 && isProviderSelected(regularProviders[index - 1])
+    val joinedBelow = index < regularProviders.lastIndex && isProviderSelected(regularProviders[index + 1])
+    if (!joinedAbove && !joinedBelow) return ProviderDialogRowShape
+    return RoundedCornerShape(
+        topStart = if (joinedAbove) 0.dp else ProviderDialogRowCorner,
+        topEnd = if (joinedAbove) 0.dp else ProviderDialogRowCorner,
+        bottomStart = if (joinedBelow) 0.dp else ProviderDialogRowCorner,
+        bottomEnd = if (joinedBelow) 0.dp else ProviderDialogRowCorner
+    )
+}
+
 /** 服务商条目：选中时用 secondaryContainer 色调与对勾标识当前查询服务。 */
 @Composable
 private fun ProviderOptionRow(
     provider: DnsProvider,
     isSelected: Boolean,
+    rowShape: Shape,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(ProviderDialogRowShape)
+            .clip(rowShape)
             .background(
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.secondaryContainer
                 } else {
                     Color.Transparent
                 },
-                shape = ProviderDialogRowShape
+                shape = rowShape
             )
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 12.dp),
