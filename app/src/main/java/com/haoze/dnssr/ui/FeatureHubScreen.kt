@@ -26,7 +26,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Rule
-import androidx.compose.material.icons.filled.AltRoute
+import androidx.compose.material.icons.automirrored.filled.AltRoute
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Block
@@ -126,7 +126,7 @@ internal fun FeatureHubScreen(
                 FeatureHubItem(stringResource(R.string.feature_hub_rule_control), Icons.AutoMirrored.Filled.Rule, onNavigateToRuleControl),
                 FeatureHubItem(stringResource(R.string.feature_hub_blacklist), Icons.Filled.Block, onNavigateToBlacklist),
                 FeatureHubItem(stringResource(R.string.feature_hub_whitelist), Icons.Filled.VerifiedUser, onNavigateToWhitelist),
-                FeatureHubItem(stringResource(R.string.feature_hub_rewrite_list), Icons.Filled.AltRoute, onNavigateToRewriteList)
+                FeatureHubItem(stringResource(R.string.feature_hub_rewrite_list), Icons.AutoMirrored.Filled.AltRoute, onNavigateToRewriteList)
             )
         ),
         FeatureHubCategory(

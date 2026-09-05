@@ -176,7 +176,7 @@ object CrashCollector {
 
         // 4. Crashing Thread
         appendSection(sb, "CRASHING THREAD") {
-            append("ID               : ").append(thread.id).append("\n")
+            append("ID               : ").append(threadIdOf(thread)).append("\n")
             append("Name             : ").append(thread.name).append("\n")
             append("Priority         : ").append(thread.priority).append("\n")
             append("State            : ").append(thread.state).append("\n")
@@ -212,8 +212,8 @@ object CrashCollector {
             val allTraces = Thread.getAllStackTraces()
             append("Total Active Threads: ").append(allTraces.size).append("\n\n")
             for ((t, stack) in allTraces) {
-                val isCrashing = t.id == thread.id
-                append("Thread #").append(t.id).append(" \"").append(t.name).append("\"")
+                val isCrashing = threadIdOf(t) == threadIdOf(thread)
+                append("Thread #").append(threadIdOf(t)).append(" \"").append(t.name).append("\"")
                 if (isCrashing) append(" [CRASHING THREAD]")
                 append("\n  State: ").append(t.state)
                     .append(", Priority: ").append(t.priority)
@@ -345,6 +345,15 @@ object CrashCollector {
         }
         return list
     }
+
+    // threadId() 仅在 API 35+ 提供，低版本仍需读取已废弃但未被移除的 id
+    private fun threadIdOf(thread: Thread): Long =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            thread.threadId()
+        } else {
+            @Suppress("DEPRECATION")
+            thread.id
+        }
 
     private fun getProcessName(context: Context): String {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

@@ -17,7 +17,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AltRoute
+import androidx.compose.material.icons.automirrored.filled.AltRoute
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
@@ -501,7 +501,7 @@ fun RewriteListScreen(
 @Composable
 private fun RewriteListStatsCard(stats: RewriteListStats) {
     RuleStatsCard(
-        icon = Icons.Filled.AltRoute,
+        icon = Icons.AutoMirrored.Filled.AltRoute,
         title = localizedText("覆写统计与状态"),
         activeBadgeText = localizedText("生效中: ${stats.totalActive} 条"),
         stats = listOf(

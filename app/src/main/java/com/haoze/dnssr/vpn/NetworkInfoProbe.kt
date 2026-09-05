@@ -30,6 +30,8 @@ object NetworkInfoProbe {
         return runCatching { probe(cm) }.getOrNull()
     }
 
+    // allNetworks 自 API 31 废弃，无同步枚举替代；此处为一次性快照探测，与 DnsVpnTunnelManager 的处理方式保持一致
+    @Suppress("DEPRECATION")
     private fun probe(cm: ConnectivityManager): NetworkSnapshot? {
         val isVpnActive = cm.allNetworks.any { network ->
             cm.getNetworkCapabilities(network)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
