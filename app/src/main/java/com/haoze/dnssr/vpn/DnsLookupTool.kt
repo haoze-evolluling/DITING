@@ -6,7 +6,7 @@ import java.net.Inet6Address
 import java.net.InetAddress
 
 /**
- * DNS 解析查询工具（网络调试工具）。
+ * DNS 解析查询工具（网络诊断）。
  *
  * 向指定 DNS 服务器发送一次标准 A/AAAA 查询并完整解析应答记录，
  * 展示解析 IP、CNAME/NS 等记录、TTL 与响应状态。不依赖 VpnService，

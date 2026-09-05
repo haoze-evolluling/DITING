@@ -276,8 +276,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.APP_ALLOWLIST -> SettingsGuideHost(SettingsGuides.APP_ALLOWLIST) { AppRuleManagementScreen(onBack) }
             Routes.APP_ALLOWLIST_SELECTION -> AppRuleManagementScreen(onBack)
             Routes.BOOTSTRAP_SETTINGS -> SettingsGuideHost(SettingsGuides.BOOTSTRAP) { BootstrapSettingsScreen(onBack, "Bootstrap 设置") }
-            Routes.RACE_MODE_LATENCY -> SettingsGuideHost(SettingsGuides.LATENCY_TEST) { RaceModeLatencySettingsScreen(onBack, "查询测速") }
-            Routes.NETWORK_TOOLS -> SettingsGuideHost(SettingsGuides.NETWORK_TOOLS) { NetworkToolsScreen(onBack, "网络调试工具") }
+            Routes.NETWORK_TOOLS -> SettingsGuideHost(SettingsGuides.NETWORK_TOOLS) { NetworkToolsScreen(onBack, "网络诊断") }
             Routes.RACE_MODE_PROVIDERS -> SettingsGuideHost(SettingsGuides.RESOLUTION_MODE) {
                 ResolutionModeHomeScreen(
                     onBack = onBack,

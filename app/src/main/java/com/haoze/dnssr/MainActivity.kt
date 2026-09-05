@@ -177,7 +177,6 @@ class MainActivity : AppLocalizedActivity() {
                                 onNavigateToAppRules = { launchSettings(Routes.APP_RULE_MANAGEMENT) },
                                 onNavigateToHttpInspection = { launchSettings(Routes.HTTP_INSPECTION_SETTINGS) },
                                 onNavigateToLogRetentionSettings = { launchSettings(Routes.LOG_RETENTION_SETTINGS) },
-                                onNavigateToRaceModeLatency = { launchSettings(Routes.RACE_MODE_LATENCY) },
                                 onNavigateToNetworkTools = { launchSettings(Routes.NETWORK_TOOLS) },
                                 onNavigateToHomeProviderVisibilityFromFeatureHub = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
                                 onNavigateToAbout = { launchSettings(Routes.ABOUT) },

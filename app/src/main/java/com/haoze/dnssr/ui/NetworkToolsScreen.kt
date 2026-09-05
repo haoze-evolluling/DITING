@@ -36,28 +36,23 @@ import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import com.haoze.dnssr.vpn.DnsLookupTool
 import com.haoze.dnssr.vpn.NetworkPingTool
 import com.haoze.dnssr.vpn.NetworkSnapshot
+import com.haoze.dnssr.vpn.NetworkTraceRouteTool
 import java.util.Locale
 import kotlin.math.roundToInt
 
+/**
+ * 统一的网络诊断模块：集中提供 DNS 查询测速、Ping 测试、DNS 解析查询与路由追踪。
+ */
 @Composable
 fun NetworkToolsScreen(
     onBack: () -> Unit,
-    title: String = "网络调试工具",
-    viewModel: NetworkToolsViewModel = viewModel()
+    title: String = "网络诊断",
+    viewModel: NetworkToolsViewModel = viewModel(),
+    speedTestViewModel: RaceModeSettingsViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val toolMode by viewModel.toolMode.collectAsStateWithLifecycle()
     val networkSnapshot by viewModel.networkSnapshot.collectAsStateWithLifecycle()
-    val pingTarget by viewModel.pingTarget.collectAsStateWithLifecycle()
-    val pingCount by viewModel.pingCount.collectAsStateWithLifecycle()
-    val isPinging by viewModel.isPinging.collectAsStateWithLifecycle()
-    val pingResult by viewModel.pingResult.collectAsStateWithLifecycle()
-    val dnsHost by viewModel.dnsHost.collectAsStateWithLifecycle()
-    val dnsRecordType by viewModel.dnsRecordType.collectAsStateWithLifecycle()
-    val dnsServerMode by viewModel.dnsServerMode.collectAsStateWithLifecycle()
-    val customDnsServer by viewModel.customDnsServer.collectAsStateWithLifecycle()
-    val isDnsLookingUp by viewModel.isDnsLookingUp.collectAsStateWithLifecycle()
-    val dnsResult by viewModel.dnsResult.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
 
     LaunchedEffect(message) {
@@ -97,167 +92,11 @@ fun NetworkToolsScreen(
                 NetworkInfoGroup(networkSnapshot)
             }
 
-            if (toolMode == NetworkToolMode.PING) {
-                item {
-                    SettingsGroupTitle(localizedText("Ping 测试"))
-                }
-                item {
-                    SettingsSurfaceGroup(
-                        content = listOf {
-                            OutlinedTextField(
-                                value = pingTarget,
-                                onValueChange = viewModel::setPingTarget,
-                                label = { Text(localizedText("输入 IP 或域名")) },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Uri,
-                                    imeAction = ImeAction.Done
-                                ),
-                                shape = SettingsCornerShape,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                            )
-                        }
-                    )
-                }
-                item {
-                    SettingsInfoText(localizedText("通过 ICMP 测量目标 IP 或域名的连通性，输出时延、丢包率与 TTL 等信息。"))
-                }
-                item {
-                    SettingsGroupTitle(localizedText("Ping 次数"))
-                }
-                item {
-                    val countOptions = listOf(4, 10)
-                    ToggleRow(
-                        options = countOptions.map { "$it 次" },
-                        selectedIndex = countOptions.indexOf(pingCount).coerceAtLeast(0),
-                        onSelect = { index -> viewModel.setPingCount(countOptions[index]) },
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-                item {
-                    SettingsGroupTitle(localizedText("测试结果"))
-                }
-                item {
-                    SettingsSurfaceGroup(
-                        content = listOf {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                SettingsActionButton(
-                                    onClick = viewModel::runPing,
-                                    enabled = !isPinging,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(text = localizedText(if (isPinging) "Ping 中..." else "开始 Ping"))
-                                }
-                                pingResult?.let { result ->
-                                    PingResultContent(result)
-                                }
-                            }
-                        }
-                    )
-                }
-            } else {
-                item {
-                    SettingsGroupTitle(localizedText("DNS 解析查询"))
-                }
-                item {
-                    SettingsSurfaceGroup(
-                        content = listOf {
-                            OutlinedTextField(
-                                value = dnsHost,
-                                onValueChange = viewModel::setDnsHost,
-                                label = { Text(localizedText("输入要解析的域名")) },
-                                keyboardOptions = KeyboardOptions(
-                                    keyboardType = KeyboardType.Uri,
-                                    imeAction = ImeAction.Done
-                                ),
-                                shape = SettingsCornerShape,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                            )
-                        }
-                    )
-                }
-                item {
-                    SettingsInfoText(localizedText("向指定 DNS 服务器查询域名的 A / AAAA 记录，展示解析 IP、TTL 与记录明细。"))
-                }
-                item {
-                    SettingsGroupTitle(localizedText("记录类型"))
-                }
-                item {
-                    val types = DnsLookupTool.RecordType.entries.toList()
-                    ToggleRow(
-                        options = types.map { it.label },
-                        selectedIndex = types.indexOf(dnsRecordType).coerceAtLeast(0),
-                        onSelect = { index -> viewModel.setDnsRecordType(types[index]) },
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-                item {
-                    SettingsGroupTitle(localizedText("DNS 服务器"))
-                }
-                item {
-                    val modes = DnsServerMode.entries.toList()
-                    ToggleRow(
-                        options = modes.map { it.label },
-                        selectedIndex = modes.indexOf(dnsServerMode).coerceAtLeast(0),
-                        onSelect = { index -> viewModel.setDnsServerMode(modes[index]) },
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-                if (dnsServerMode == DnsServerMode.CUSTOM) {
-                    item {
-                        SettingsSurfaceGroup(
-                            content = listOf {
-                                OutlinedTextField(
-                                    value = customDnsServer,
-                                    onValueChange = viewModel::setCustomDnsServer,
-                                    label = { Text(localizedText("自定义 DNS 服务器 IP")) },
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Uri,
-                                        imeAction = ImeAction.Done
-                                    ),
-                                    shape = SettingsCornerShape,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                                )
-                            }
-                        )
-                    }
-                }
-                item {
-                    SettingsGroupTitle(localizedText("解析结果"))
-                }
-                item {
-                    SettingsSurfaceGroup(
-                        content = listOf {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                SettingsActionButton(
-                                    onClick = viewModel::runDnsLookup,
-                                    enabled = !isDnsLookingUp,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(text = localizedText(if (isDnsLookingUp) "查询中..." else "开始查询"))
-                                }
-                                dnsResult?.let { result ->
-                                    DnsResultContent(result)
-                                }
-                            }
-                        }
-                    )
-                }
+            when (toolMode) {
+                NetworkToolMode.SPEED_TEST -> item { SpeedTestSection(speedTestViewModel) }
+                NetworkToolMode.PING -> item { PingSection(viewModel) }
+                NetworkToolMode.DNS_LOOKUP -> item { DnsLookupSection(viewModel) }
+                NetworkToolMode.TRACEROUTE -> item { TracerouteSection(viewModel) }
             }
 
             item {
@@ -336,6 +175,296 @@ private fun NetworkInfoGroup(snapshot: NetworkSnapshot?) {
             }
         )
     )
+}
+
+@Composable
+private fun PingSection(viewModel: NetworkToolsViewModel) {
+    val pingTarget by viewModel.pingTarget.collectAsStateWithLifecycle()
+    val pingCount by viewModel.pingCount.collectAsStateWithLifecycle()
+    val isPinging by viewModel.isPinging.collectAsStateWithLifecycle()
+    val pingResult by viewModel.pingResult.collectAsStateWithLifecycle()
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SettingsGroupTitle(localizedText("Ping 测试"))
+        SettingsSurfaceGroup(
+            content = listOf {
+                OutlinedTextField(
+                    value = pingTarget,
+                    onValueChange = viewModel::setPingTarget,
+                    label = { Text(localizedText("输入 IP 或域名")) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Uri,
+                        imeAction = ImeAction.Done
+                    ),
+                    shape = SettingsCornerShape,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
+        )
+        SettingsInfoText(localizedText("通过 ICMP 测量目标 IP 或域名的连通性，输出时延、丢包率与 TTL 等信息。"))
+        SettingsGroupTitle(localizedText("Ping 次数"))
+        val countOptions = listOf(4, 10)
+        ToggleRow(
+            options = countOptions.map { "$it 次" },
+            selectedIndex = countOptions.indexOf(pingCount).coerceAtLeast(0),
+            onSelect = { index -> viewModel.setPingCount(countOptions[index]) },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        SettingsGroupTitle(localizedText("测试结果"))
+        SettingsSurfaceGroup(
+            content = listOf {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    SettingsActionButton(
+                        onClick = viewModel::runPing,
+                        enabled = !isPinging,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = localizedText(if (isPinging) "Ping 中..." else "开始 Ping"))
+                    }
+                    pingResult?.let { result ->
+                        PingResultContent(result)
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun DnsLookupSection(viewModel: NetworkToolsViewModel) {
+    val dnsHost by viewModel.dnsHost.collectAsStateWithLifecycle()
+    val dnsRecordType by viewModel.dnsRecordType.collectAsStateWithLifecycle()
+    val dnsServerMode by viewModel.dnsServerMode.collectAsStateWithLifecycle()
+    val customDnsServer by viewModel.customDnsServer.collectAsStateWithLifecycle()
+    val isDnsLookingUp by viewModel.isDnsLookingUp.collectAsStateWithLifecycle()
+    val dnsResult by viewModel.dnsResult.collectAsStateWithLifecycle()
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SettingsGroupTitle(localizedText("DNS 解析查询"))
+        SettingsSurfaceGroup(
+            content = listOf {
+                OutlinedTextField(
+                    value = dnsHost,
+                    onValueChange = viewModel::setDnsHost,
+                    label = { Text(localizedText("输入要解析的域名")) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Uri,
+                        imeAction = ImeAction.Done
+                    ),
+                    shape = SettingsCornerShape,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
+        )
+        SettingsInfoText(localizedText("向指定 DNS 服务器查询域名的 A / AAAA 记录，展示解析 IP、TTL 与记录明细。"))
+        SettingsGroupTitle(localizedText("记录类型"))
+        val types = DnsLookupTool.RecordType.entries.toList()
+        ToggleRow(
+            options = types.map { it.label },
+            selectedIndex = types.indexOf(dnsRecordType).coerceAtLeast(0),
+            onSelect = { index -> viewModel.setDnsRecordType(types[index]) },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        SettingsGroupTitle(localizedText("DNS 服务器"))
+        val modes = DnsServerMode.entries.toList()
+        ToggleRow(
+            options = modes.map { it.label },
+            selectedIndex = modes.indexOf(dnsServerMode).coerceAtLeast(0),
+            onSelect = { index -> viewModel.setDnsServerMode(modes[index]) },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        if (dnsServerMode == DnsServerMode.CUSTOM) {
+            SettingsSurfaceGroup(
+                content = listOf {
+                    OutlinedTextField(
+                        value = customDnsServer,
+                        onValueChange = viewModel::setCustomDnsServer,
+                        label = { Text(localizedText("自定义 DNS 服务器 IP")) },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Uri,
+                            imeAction = ImeAction.Done
+                        ),
+                        shape = SettingsCornerShape,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    )
+                }
+            )
+        }
+        SettingsGroupTitle(localizedText("解析结果"))
+        SettingsSurfaceGroup(
+            content = listOf {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    SettingsActionButton(
+                        onClick = viewModel::runDnsLookup,
+                        enabled = !isDnsLookingUp,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = localizedText(if (isDnsLookingUp) "查询中..." else "开始查询"))
+                    }
+                    dnsResult?.let { result ->
+                        DnsResultContent(result)
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun TracerouteSection(viewModel: NetworkToolsViewModel) {
+    val traceTarget by viewModel.traceTarget.collectAsStateWithLifecycle()
+    val traceMaxHops by viewModel.traceMaxHops.collectAsStateWithLifecycle()
+    val isTracing by viewModel.isTracing.collectAsStateWithLifecycle()
+    val traceHops by viewModel.traceHops.collectAsStateWithLifecycle()
+    val traceResult by viewModel.traceResult.collectAsStateWithLifecycle()
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SettingsGroupTitle(localizedText("路由追踪"))
+        SettingsSurfaceGroup(
+            content = listOf {
+                OutlinedTextField(
+                    value = traceTarget,
+                    onValueChange = viewModel::setTraceTarget,
+                    label = { Text(localizedText("输入 IP 或域名")) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Uri,
+                        imeAction = ImeAction.Done
+                    ),
+                    shape = SettingsCornerShape,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                )
+            }
+        )
+        SettingsInfoText(localizedText("通过递增 TTL 逐跳探测到达目标的路径，展示每一跳路由地址与响应时延。"))
+        SettingsGroupTitle(localizedText("最大跳数"))
+        val hopOptions = listOf(15, 30)
+        ToggleRow(
+            options = hopOptions.map { "$it 跳" },
+            selectedIndex = hopOptions.indexOf(traceMaxHops).coerceAtLeast(0),
+            onSelect = { index -> viewModel.setTraceMaxHops(hopOptions[index]) },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        SettingsGroupTitle(localizedText("测试结果"))
+        SettingsSurfaceGroup(
+            content = listOf {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    SettingsActionButton(
+                        onClick = viewModel::runTraceRoute,
+                        enabled = !isTracing,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = localizedText(if (isTracing) "追踪中..." else "开始追踪"))
+                    }
+                    traceResult?.let { result ->
+                        TraceSummaryContent(result)
+                    }
+                    val hops = if (isTracing) traceHops else (traceResult?.hops ?: traceHops)
+                    hops.forEach { hop ->
+                        TraceHopRow(hop)
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun TraceSummaryContent(result: NetworkTraceRouteTool.Progress) {
+    val statusColor = if (result.success) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.error
+    }
+    result.resolvedAddress?.let { address ->
+        val target = listOfNotNull(address, result.addressFamily).joinToString(" · ")
+        ResultInfoRow(label = localizedText("目标地址"), value = localizedText("解析到 $target"))
+    }
+    result.message?.let { message ->
+        Text(
+            text = localizedText(message),
+            style = MaterialTheme.typography.bodySmall,
+            color = statusColor
+        )
+    }
+}
+
+@Composable
+private fun TraceHopRow(hop: NetworkTraceRouteTool.Hop) {
+    val color = when {
+        hop.isDestination -> MaterialTheme.colorScheme.primary
+        hop.responded -> MaterialTheme.colorScheme.onSurface
+        else -> MaterialTheme.colorScheme.error
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "#${hop.index}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (hop.responded && hop.address != null) {
+            Text(
+                text = buildString {
+                    append(hop.address)
+                    if (hop.isDestination) {
+                        append(" · ")
+                        append(localizedText("目标"))
+                    }
+                    hop.elapsedMs?.let { elapsed ->
+                        append(" · ")
+                        append(formatMsValue(elapsed))
+                    }
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = color,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f)
+            )
+        } else {
+            Text(
+                text = localizedText(hop.error ?: "超时或无响应"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.End,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
 }
 
 @Composable

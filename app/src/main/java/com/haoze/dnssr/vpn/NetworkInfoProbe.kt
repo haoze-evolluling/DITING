@@ -8,7 +8,7 @@ import java.net.Inet4Address
 import java.net.Inet6Address
 
 /**
- * 当前网络信息快照，供网络调试工具展示与 DNS 查询选取系统 DNS 服务器。
+ * 当前网络信息快照，供网络诊断展示与 DNS 查询选取系统 DNS 服务器。
  *
  * 物理网络判定与 DnsVpnTunnelManager.hasPhysicalIpv6Support 保持一致：
  * 忽略 VPN transport 与 tun 接口，优先使用默认活动网络，必要时回退枚举所有物理网络。

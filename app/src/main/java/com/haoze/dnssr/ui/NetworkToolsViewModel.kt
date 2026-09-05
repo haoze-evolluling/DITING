@@ -8,6 +8,7 @@ import com.haoze.dnssr.vpn.DnsProvider
 import com.haoze.dnssr.vpn.NetworkInfoProbe
 import com.haoze.dnssr.vpn.NetworkPingTool
 import com.haoze.dnssr.vpn.NetworkSnapshot
+import com.haoze.dnssr.vpn.NetworkTraceRouteTool
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,8 +18,10 @@ import kotlinx.coroutines.withContext
 import java.net.InetAddress
 
 enum class NetworkToolMode(val label: String) {
+    SPEED_TEST("测速"),
     PING("Ping 测试"),
-    DNS_LOOKUP("DNS 解析")
+    DNS_LOOKUP("DNS 解析"),
+    TRACEROUTE("路由追踪")
 }
 
 enum class DnsServerMode(val label: String) {
@@ -63,6 +66,21 @@ class NetworkToolsViewModel(application: Application) : AndroidViewModel(applica
 
     private val _dnsResult = MutableStateFlow<DnsLookupTool.Result?>(null)
     val dnsResult: StateFlow<DnsLookupTool.Result?> = _dnsResult.asStateFlow()
+
+    private val _traceTarget = MutableStateFlow("")
+    val traceTarget: StateFlow<String> = _traceTarget.asStateFlow()
+
+    private val _traceMaxHops = MutableStateFlow(DEFAULT_MAX_HOPS)
+    val traceMaxHops: StateFlow<Int> = _traceMaxHops.asStateFlow()
+
+    private val _isTracing = MutableStateFlow(false)
+    val isTracing: StateFlow<Boolean> = _isTracing.asStateFlow()
+
+    private val _traceHops = MutableStateFlow<List<NetworkTraceRouteTool.Hop>>(emptyList())
+    val traceHops: StateFlow<List<NetworkTraceRouteTool.Hop>> = _traceHops.asStateFlow()
+
+    private val _traceResult = MutableStateFlow<NetworkTraceRouteTool.Progress?>(null)
+    val traceResult: StateFlow<NetworkTraceRouteTool.Progress?> = _traceResult.asStateFlow()
 
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message.asStateFlow()
@@ -109,6 +127,14 @@ class NetworkToolsViewModel(application: Application) : AndroidViewModel(applica
 
     fun setCustomDnsServer(server: String) {
         _customDnsServer.value = server.filter { !it.isWhitespace() }
+    }
+
+    fun setTraceTarget(target: String) {
+        _traceTarget.value = target
+    }
+
+    fun setTraceMaxHops(hops: Int) {
+        _traceMaxHops.value = hops
     }
 
     fun runPing() {
@@ -177,11 +203,35 @@ class NetworkToolsViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun runTraceRoute() {
+        val target = _traceTarget.value.trim()
+        if (target.isEmpty()) {
+            _message.value = "请输入追踪目标"
+            return
+        }
+        if (_isTracing.value) return
+        val maxHops = _traceMaxHops.value
+
+        viewModelScope.launch {
+            _isTracing.value = true
+            _traceHops.value = emptyList()
+            _traceResult.value = null
+            val result = NetworkTraceRouteTool.trace(target, maxHops) { hop ->
+                withContext(Dispatchers.Main) {
+                    _traceHops.value = _traceHops.value + hop
+                }
+            }
+            _traceResult.value = result
+            _isTracing.value = false
+        }
+    }
+
     fun clearMessage() {
         _message.value = null
     }
 
     private companion object {
         const val DEFAULT_PING_COUNT = 4
+        const val DEFAULT_MAX_HOPS = 15
     }
 }

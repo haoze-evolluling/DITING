@@ -11,7 +11,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * ICMP Ping 测试器（网络调试工具）。
+ * ICMP Ping 测试器（网络诊断）。
  *
  * 优先调用系统 ping / ping6 二进制获取标准 ICMP 测量结果（时延、丢包率、TTL），
  * 系统二进制不可用时回退为 InetAddress.isReachable 的近似测量。

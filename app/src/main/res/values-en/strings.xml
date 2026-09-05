@@ -24,7 +24,6 @@
     <string name="feature_hub_rule_control">Rule Control</string>
     <string name="feature_hub_advanced_tools">Advanced &amp; Diagnostics</string>
     <string name="feature_hub_https_inspection">HTTPS traffic inspection</string>
-    <string name="feature_hub_speed_test">Speed test</string>
     <string name="feature_hub_network_tools">Network diagnostics</string>
     <string name="feature_hub_interface_management">Interface and management</string>
     <string name="feature_hub_appearance">Appearance</string>
@@ -49,7 +48,6 @@
     <string name="localized_text_2080096466">Blocked apps</string>
     <string name="localized_text_10106932">Policies and rules</string>
     <string name="localized_text_1137633656">HTTPS traffic inspection</string>
-    <string name="localized_text_827668881">Speed test</string>
     <string name="localized_text_1315646568">HTTPS domain rules</string>
     <string name="localized_text_1855541786">DNS domain rules</string>
     <string name="localized_text_1158548547">Interface and management</string>

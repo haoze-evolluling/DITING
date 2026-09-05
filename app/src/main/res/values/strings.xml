@@ -23,8 +23,7 @@
     <string name="feature_hub_rule_control">规则控制</string>
     <string name="feature_hub_advanced_tools">高级与诊断</string>
     <string name="feature_hub_https_inspection">HTTPS 流量检查</string>
-    <string name="feature_hub_speed_test">查询测速</string>
-    <string name="feature_hub_network_tools">网络调试工具</string>
+    <string name="feature_hub_network_tools">网络诊断</string>
     <string name="feature_hub_interface_management">界面与管理</string>
     <string name="feature_hub_appearance">外观调整</string>
     <string name="feature_hub_service_display">服务显示</string>
@@ -48,7 +47,6 @@
     <string name="localized_text_2080096466">禁止联网应用</string>
     <string name="localized_text_10106932">策略与规则</string>
     <string name="localized_text_1137633656">HTTPS 流量检查</string>
-    <string name="localized_text_827668881">查询测速</string>
     <string name="localized_text_1315646568">HTTPS 域名规则</string>
     <string name="localized_text_1855541786">DNS 域名规则</string>
     <string name="localized_text_1158548547">界面与管理</string>
