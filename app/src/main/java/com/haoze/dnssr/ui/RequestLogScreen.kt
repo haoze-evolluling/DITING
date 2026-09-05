@@ -159,7 +159,7 @@ fun RequestLogScreen(onBack: () -> Unit, onRuntimeDnsSettingsChanged: () -> Unit
         Column(Modifier.fillMaxSize().padding(padding)) {
             RequestFilterRow(RequestSource.entries, source, { it.label }, viewModel::setSource)
             SettingsDivider()
-            if (visibleItems.isEmpty() && !state.loading) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(localizedText("当前筛选下暂无请求日志"), color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            if (visibleItems.isEmpty() && !state.loading) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(localizedText("当前筛选下暂无请求日志"), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             else LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)) {
                 itemsIndexed(visibleItems, key = { _, it -> it.key }) { index, item ->
                     SettingsSurfaceItem(

@@ -55,7 +55,7 @@ fun SponsorScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
@@ -76,7 +76,7 @@ fun SponsorScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(onClick = openReadme)
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                            .padding(horizontal = 24.dp, vertical = 14.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -134,7 +134,7 @@ fun SponsorScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp)
             )
         }
     }
@@ -145,7 +145,7 @@ private fun SponsorList(items: List<String>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 24.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items.forEach { item ->
