@@ -29,9 +29,11 @@ func extractQueryInfo(rawQuery []byte) (string, uint16) {
 	return strings.TrimSuffix(strings.ToLower(msg.Question[0].Name), "."), msg.Question[0].Qtype
 }
 
-func (r *Resolver) resolveConfigured(rawQuery []byte, mode string, providers []*configuredProvider) ([]byte, error) {
+func (r *Resolver) resolveConfigured(rawQuery []byte, snapshot *resolverSnapshot) ([]byte, error) {
 	queryName, queryType := extractQueryInfo(rawQuery)
 	startTime := time.Now()
+	mode := snapshot.mode
+	providers := snapshot.providers
 
 	switch mode {
 	case "single":
@@ -39,9 +41,9 @@ func (r *Resolver) resolveConfigured(rawQuery []byte, mode string, providers []*
 	case "primary_backup":
 		return r.resolvePrimaryBackup(rawQuery, queryName, queryType, startTime, providers)
 	case "parallel_race", "race":
-		return r.resolveParallelRace(rawQuery, queryName, queryType, startTime, providers)
+		return r.resolveParallelRace(rawQuery, queryName, queryType, startTime, snapshot)
 	case "smart_prediction", "prediction":
-		return r.resolveSmartPrediction(rawQuery, queryName, queryType, startTime, providers)
+		return r.resolveSmartPrediction(rawQuery, queryName, queryType, startTime, snapshot)
 	default:
 		return r.resolveSingle(rawQuery, queryName, queryType, startTime, providers)
 	}
@@ -101,7 +103,8 @@ type providerRaceResult struct {
 	err      error
 }
 
-func (r *Resolver) resolveParallelRace(rawQuery []byte, queryName string, queryType uint16, startTime time.Time, providers []*configuredProvider) ([]byte, error) {
+func (r *Resolver) resolveParallelRace(rawQuery []byte, queryName string, queryType uint16, startTime time.Time, snapshot *resolverSnapshot) ([]byte, error) {
+	providers := snapshot.providers
 	n := len(providers)
 	if n == 0 {
 		return nil, fmt.Errorf("no providers available")
@@ -114,8 +117,14 @@ func (r *Resolver) resolveParallelRace(rawQuery []byte, queryName string, queryT
 	defer cancel()
 
 	resultCh := make(chan providerRaceResult, n)
+	spawned := 0
 	for _, p := range providers {
+		if !snapshot.acquire() {
+			continue
+		}
+		spawned++
 		go func(prov *configuredProvider) {
+			defer snapshot.release()
 			resp, elapsed, err := r.queryConfiguredProvider(ctx, prov, rawQuery)
 			resultCh <- providerRaceResult{
 				provider: prov,
@@ -126,15 +135,19 @@ func (r *Resolver) resolveParallelRace(rawQuery []byte, queryName string, queryT
 		}(p)
 	}
 
+	if spawned == 0 {
+		return nil, fmt.Errorf("snapshot retired: no race providers could be acquired")
+	}
+
 	var lastErr error
 	completed := 0
-	for completed < n {
+	for completed < spawned {
 		res := <-resultCh
 		completed++
 		if res.err == nil && res.response != nil {
 			cancel()
 			totalElapsed := time.Since(startTime).Milliseconds()
-			r.notifyRaceLog(queryName, queryType, "parallel_race", n, true, totalElapsed, "", 0, res.provider.id, res.elapsed.Milliseconds(), false, false, "")
+			r.notifyRaceLog(queryName, queryType, "parallel_race", spawned, true, totalElapsed, "", 0, res.provider.id, res.elapsed.Milliseconds(), false, false, "")
 			return res.response, nil
 		}
 		lastErr = res.err
@@ -145,7 +158,7 @@ func (r *Resolver) resolveParallelRace(rawQuery []byte, queryName string, queryT
 	if lastErr != nil {
 		errMsg = lastErr.Error()
 	}
-	r.notifyRaceLog(queryName, queryType, "parallel_race", n, false, totalElapsed, "", 0, "", 0, false, false, errMsg)
+	r.notifyRaceLog(queryName, queryType, "parallel_race", spawned, false, totalElapsed, "", 0, "", 0, false, false, errMsg)
 	return nil, lastErr
 }
 
@@ -157,7 +170,8 @@ type predResult struct {
 	isBackup bool
 }
 
-func (r *Resolver) resolveSmartPrediction(rawQuery []byte, queryName string, queryType uint16, startTime time.Time, providers []*configuredProvider) ([]byte, error) {
+func (r *Resolver) resolveSmartPrediction(rawQuery []byte, queryName string, queryType uint16, startTime time.Time, snapshot *resolverSnapshot) ([]byte, error) {
+	providers := snapshot.providers
 	n := len(providers)
 	if n == 0 {
 		return nil, fmt.Errorf("no providers available")
@@ -187,7 +201,11 @@ func (r *Resolver) resolveSmartPrediction(rawQuery []byte, queryName string, que
 
 	resultCh := make(chan predResult, n)
 
+	if !snapshot.acquire() {
+		return nil, fmt.Errorf("snapshot retired: primary provider could not be acquired")
+	}
 	go func() {
+		defer snapshot.release()
 		resp, elapsed, err := r.queryConfiguredProvider(ctx, primary, rawQuery)
 		resultCh <- predResult{
 			provider: primary,
@@ -205,6 +223,7 @@ func (r *Resolver) resolveSmartPrediction(rawQuery []byte, queryName string, que
 	var winner *predResult
 	var lastErr error
 	completed := 0
+	expected := 1
 
 	triggerBackups := func() {
 		if fallbackTriggered {
@@ -212,7 +231,12 @@ func (r *Resolver) resolveSmartPrediction(rawQuery []byte, queryName string, que
 		}
 		fallbackTriggered = true
 		for _, b := range rest {
+			if !snapshot.acquire() {
+				continue
+			}
+			expected++
 			go func(prov *configuredProvider) {
+				defer snapshot.release()
 				resp, elapsed, err := r.queryConfiguredProvider(ctx, prov, rawQuery)
 				resultCh <- predResult{
 					provider: prov,
@@ -233,7 +257,8 @@ func (r *Resolver) resolveSmartPrediction(rawQuery []byte, queryName string, que
 		case res := <-resultCh:
 			completed++
 			if res.err == nil && res.response != nil {
-				winner = &res
+				resCopy := res
+				winner = &resCopy
 				cancel()
 				goto DONE
 			}
@@ -242,7 +267,7 @@ func (r *Resolver) resolveSmartPrediction(rawQuery []byte, queryName string, que
 				backupTimer.Stop()
 				triggerBackups()
 			}
-			if fallbackTriggered && completed >= n {
+			if fallbackTriggered && completed >= expected {
 				goto DONE
 			} else if !fallbackTriggered && completed >= 1 {
 				// Primary failed and triggered backups, wait for backups
@@ -298,23 +323,30 @@ DONE:
 	return nil, lastErr
 }
 
-func (r *Resolver) queryConfiguredProvider(ctx context.Context, provider *configuredProvider, rawQuery []byte) ([]byte, time.Duration, error) {
+func (r *Resolver) queryConfiguredProvider(ctx context.Context, provider *configuredProvider, rawQuery []byte) (resp []byte, elapsed time.Duration, err error) {
 	start := time.Now()
-	var response []byte
-	var err error
+	defer func() {
+		if rec := recover(); rec != nil {
+			err = fmt.Errorf("provider %s panicked: %v", provider.id, rec)
+			if provider.stats != nil {
+				provider.stats.RecordFailure()
+			}
+		}
+	}()
+
 	if provider.resolver != nil {
-		response, err = provider.resolver.queryWithContext(ctx, rawQuery, provider.protocol, provider.server, provider.dohURL)
+		resp, err = provider.resolver.queryWithContext(ctx, rawQuery, provider.protocol, provider.server, provider.dohURL)
 	} else {
 		err = fmt.Errorf("provider resolver is nil")
 	}
-	elapsed := time.Since(start)
+	elapsed = time.Since(start)
 	if err != nil {
 		if provider.stats != nil {
 			provider.stats.RecordFailure()
 		}
 		return nil, elapsed, err
 	}
-	if err := validateDNSResponse(rawQuery, response); err != nil {
+	if err := validateDNSResponse(rawQuery, resp); err != nil {
 		if provider.stats != nil {
 			provider.stats.RecordFailure()
 		}
@@ -323,7 +355,7 @@ func (r *Resolver) queryConfiguredProvider(ctx context.Context, provider *config
 	if provider.stats != nil {
 		provider.stats.RecordSuccess(elapsed)
 	}
-	return response, elapsed, nil
+	return resp, elapsed, nil
 }
 
 func validateDNSResponse(rawQuery, rawResponse []byte) error {

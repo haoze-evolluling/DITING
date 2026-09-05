@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/miekg/dns"
@@ -66,6 +67,8 @@ type Resolver struct {
 	// DoT connection pool (reusable)
 	dotMu    sync.Mutex
 	dotConns map[string][]*dotConnEntry
+
+	closed atomic.Bool
 
 	bootstrap *bootstrapResolver
 
@@ -306,7 +309,7 @@ func (r *Resolver) Resolve(rawQuery []byte) ([]byte, error) {
 	r.mu.RUnlock()
 	if acquiredSnapshot {
 		defer snapshot.release()
-		return r.resolveConfigured(rawQuery, snapshot.mode, snapshot.providers)
+		return r.resolveConfigured(rawQuery, snapshot)
 	}
 
 	resp, err := r.query(rawQuery, protocol, primary, dohURL)
@@ -377,6 +380,9 @@ func (r *Resolver) ResolveARecord(domain, dnsServer string) (net.IP, error) {
 
 // Shutdown cleans up resolver resources.
 func (r *Resolver) Shutdown() {
+	if !r.closed.CompareAndSwap(false, true) {
+		return
+	}
 	r.mu.Lock()
 	snapshot := r.providerSnapshot
 	r.providerSnapshot = nil

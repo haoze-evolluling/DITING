@@ -7,6 +7,7 @@ import android.os.SystemClock
 import com.haoze.dnssr.crash.CrashBreadcrumbs
 import com.haoze.dnssr.crash.CrashCollector
 import com.haoze.dnssr.crash.CrashHandler
+import com.haoze.dnssr.crash.CrashLogManager
 
 /**
  * 谛听应用入口 Application，负责全局基础设施（如崩溃捕获与生命周期追踪）的初始化。
@@ -24,6 +25,11 @@ class DnssrApp : Application() {
         // 注册全局异常崩溃捕获
         CrashHandler.install(this)
         CrashBreadcrumbs.record("APP", "Application.onCreate() initialized")
+
+        // 异步检查并提取上次可能发生的未捕获 Native 崩溃（Android 11+）
+        Thread({
+            CrashLogManager.checkAndCollectNativeCrashes(this)
+        }, "NativeCrashCollector").start()
 
         // 监听并追踪 Activity 生命周期，更新运行状态与记录面包屑
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {

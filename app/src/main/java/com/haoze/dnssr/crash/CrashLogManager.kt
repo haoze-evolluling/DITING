@@ -28,6 +28,7 @@ object CrashLogManager {
     private const val KEY_LAST_CRASH_TIME = "last_crash_time"
     private const val KEY_LAST_AUTO_EXPORT_TIME = "last_auto_export_time"
     private const val KEY_PENDING_AUTO_EXPORT_NOTICE = "pending_auto_export_notice"
+    private const val KEY_LAST_RECORDED_NATIVE_EXIT_TIME = "last_recorded_native_exit_time"
 
     private const val CONSECUTIVE_THRESHOLD = 3
     private const val CONSECUTIVE_EXPIRY_MS = 24 * 60 * 60 * 1000L // 24小时内视作连续崩溃统计区间
@@ -224,6 +225,75 @@ object CrashLogManager {
     }
 
     /**
+     * 检查系统进程历史退出记录（Android 11+ / API 30+），检测是否存在未被 JVM 拦截的 Native 崩溃（REASON_CRASH_NATIVE），
+     * 若存在且尚未记录，则提取 Tombstone / Trace 生成标准崩溃日志并落盘。
+     */
+    fun checkAndCollectNativeCrashes(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+
+        runCatching {
+            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager ?: return
+            val exitInfos = am.getHistoricalProcessExitReasons(context.packageName, 0, 10)
+            if (exitInfos.isEmpty()) return
+
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val lastRecordedTime = prefs.getLong(KEY_LAST_RECORDED_NATIVE_EXIT_TIME, 0L)
+
+            // 按时间从旧到新排序，确保崩溃日志生成的时间顺序正确
+            val nativeCrashes = exitInfos
+                .filter { it.reason == android.app.ApplicationExitInfo.REASON_CRASH_NATIVE && it.timestamp > lastRecordedTime }
+                .sortedBy { it.timestamp }
+
+            if (nativeCrashes.isEmpty()) return
+
+            var maxTimestamp = lastRecordedTime
+            for (exitInfo in nativeCrashes) {
+                val trace = runCatching {
+                    exitInfo.traceInputStream?.use { stream ->
+                        val reader = stream.bufferedReader(Charsets.UTF_8)
+                        val sb = StringBuilder()
+                        var totalChars = 0
+                        val maxChars = 512 * 1024 // 限制读取上限为 512KB，防止超大墓碑占满内存
+                        val buffer = CharArray(4096)
+                        var read: Int
+                        while (reader.read(buffer).also { read = it } != -1) {
+                            if (totalChars + read > maxChars) {
+                                sb.append(buffer, 0, maxChars - totalChars)
+                                sb.append("\n...(Tombstone trace truncated)...\n")
+                                break
+                            }
+                            sb.append(buffer, 0, read)
+                            totalChars += read
+                        }
+                        sb.toString()
+                    }
+                }.getOrNull().orEmpty()
+
+                val report = CrashCollector.collectNativeCrashReport(
+                    context = context,
+                    exitInfo = exitInfo,
+                    tombstoneTrace = trace
+                )
+
+                val file = saveCrashReport(context, report)
+                Log.i(TAG, "Recorded historical native crash (pid=${exitInfo.pid}, time=${exitInfo.timestamp}) to: ${file?.absolutePath}")
+
+                onCrashOccurred(context)
+
+                if (exitInfo.timestamp > maxTimestamp) {
+                    maxTimestamp = exitInfo.timestamp
+                }
+            }
+
+            if (maxTimestamp > lastRecordedTime) {
+                prefs.edit().putLong(KEY_LAST_RECORDED_NATIVE_EXIT_TIME, maxTimestamp).apply()
+            }
+        }.onFailure { e ->
+            Log.w(TAG, "Failed to check historical process exit reasons for native crash", e)
+        }
+    }
+
+    /**
      * 清空所有已保存的崩溃日志。
      */
     fun clearCrashLogs(context: Context): Boolean {
@@ -232,6 +302,7 @@ object CrashLogManager {
                 .putInt(KEY_CONSECUTIVE_CRASH_COUNT, 0)
                 .putBoolean(KEY_HAS_MANUALLY_EXPORTED, false)
                 .putBoolean(KEY_PENDING_AUTO_EXPORT_NOTICE, false)
+                .putLong(KEY_LAST_RECORDED_NATIVE_EXIT_TIME, System.currentTimeMillis())
                 .apply()
         }
         return runCatching {

@@ -33,10 +33,14 @@ func (e *Engine) SetDomainChecker(checker DomainChecker) {
 // ApplyRuleSnapshot updates the Go-side policy engine rules from a JSON snapshot.
 // Returns an error message string, or empty string on success.
 func (e *Engine) ApplyRuleSnapshot(jsonSnapshot string) string {
+	e.mu.Lock()
 	if e.policyEngine == nil {
 		e.policyEngine = newPolicyEngine()
 	}
-	if err := e.policyEngine.applySnapshot(jsonSnapshot); err != nil {
+	pe := e.policyEngine
+	e.mu.Unlock()
+
+	if err := pe.applySnapshot(jsonSnapshot); err != nil {
 		logf("ApplyRuleSnapshot error: %v", err)
 		return err.Error()
 	}

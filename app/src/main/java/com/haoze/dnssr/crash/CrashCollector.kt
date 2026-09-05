@@ -249,6 +249,85 @@ object CrashCollector {
         return sb.toString()
     }
 
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.R)
+    fun collectNativeCrashReport(
+        context: Context,
+        exitInfo: android.app.ApplicationExitInfo,
+        tombstoneTrace: String
+    ): String {
+        val crashTimestamp = exitInfo.timestamp
+        val localFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault())
+        val utcFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS 'UTC'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+
+        val sb = StringBuilder(8192)
+        sb.append("================================================================================\n")
+        sb.append("                       DNSSR NATIVE CRASH REPORT\n")
+        sb.append("================================================================================\n\n")
+
+        sb.append("Timestamp (Local): ").append(localFormat.format(Date(crashTimestamp))).append("\n")
+        sb.append("Timestamp (UTC)  : ").append(utcFormat.format(Date(crashTimestamp))).append("\n")
+        sb.append("Epoch Millis     : ").append(crashTimestamp).append("\n\n")
+
+        // 1. Application Information
+        appendSection(sb, "APPLICATION INFORMATION") {
+            val pm = context.packageManager
+            val packageInfo: PackageInfo? = runCatching { pm.getPackageInfo(context.packageName, 0) }.getOrNull()
+            val appName = runCatching { context.applicationInfo.loadLabel(pm).toString() }.getOrDefault("DNSSR")
+            val versionCode = packageInfo?.let { PackageInfoCompat.getLongVersionCode(it) } ?: -1L
+            val versionName = packageInfo?.versionName ?: "Unknown"
+
+            append("App Name         : ").append(appName).append("\n")
+            append("Package Name     : ").append(context.packageName).append("\n")
+            append("Version Name     : ").append(versionName).append("\n")
+            append("Version Code     : ").append(versionCode).append("\n")
+            append("Build Type       : ").append(if (BuildConfig.DEBUG) "DEBUG" else "RELEASE").append("\n")
+            append("Target SDK       : ").append(context.applicationInfo.targetSdkVersion).append("\n")
+            append("Min SDK          : ").append(context.applicationInfo.minSdkVersion).append("\n")
+            append("Process Name     : ").append(exitInfo.processName).append("\n")
+            append("Process ID (PID) : ").append(exitInfo.pid).append("\n")
+            append("Real UID         : ").append(exitInfo.realUid).append("\n")
+            append("Package UID      : ").append(exitInfo.packageUid).append("\n")
+            append("Importance       : ").append(exitInfo.importance).append("\n")
+            append("Exit Status Code : ").append(exitInfo.status).append("\n")
+            append("Exit Reason      : ").append("REASON_CRASH_NATIVE (${exitInfo.reason})\n")
+            append("Description      : ").append(exitInfo.description ?: "(None)").append("\n")
+        }
+
+        // 2. Device & OS Info
+        appendSection(sb, "DEVICE & OPERATING SYSTEM") {
+            append("Manufacturer     : ").append(Build.MANUFACTURER).append("\n")
+            append("Brand            : ").append(Build.BRAND).append("\n")
+            append("Model            : ").append(Build.MODEL).append("\n")
+            append("Product          : ").append(Build.PRODUCT).append("\n")
+            append("Device           : ").append(Build.DEVICE).append("\n")
+            append("Board            : ").append(Build.BOARD).append("\n")
+            append("Hardware         : ").append(Build.HARDWARE).append("\n")
+            append("Android Version  : ").append(Build.VERSION.RELEASE)
+                .append(" (API ").append(Build.VERSION.SDK_INT).append(")\n")
+            append("Security Patch   : ").append(Build.VERSION.SECURITY_PATCH).append("\n")
+            append("Supported ABIs   : ").append(Build.SUPPORTED_ABIS.joinToString(", ")).append("\n")
+            append("Fingerprint      : ").append(Build.FINGERPRINT).append("\n")
+        }
+
+        // 3. Tombstone & Native Trace
+        appendSection(sb, "NATIVE CRASH TOMBSTONE & TRACE") {
+            if (tombstoneTrace.isNotBlank()) {
+                append(tombstoneTrace.trimEnd()).append("\n")
+            } else {
+                append("(No tombstone trace captured by system)\n")
+            }
+        }
+
+        sb.append("================================================================================\n")
+        sb.append("                             END OF REPORT\n")
+        sb.append("================================================================================\n")
+
+        return sb.toString()
+    }
+
+
     private inline fun appendSection(sb: StringBuilder, title: String, block: StringBuilder.() -> Unit) {
         sb.append("--------------------------------------------------------------------------------\n")
         sb.append("  ").append(title).append("\n")

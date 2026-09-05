@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"sync/atomic"
 	"time"
 )
 
@@ -22,9 +23,13 @@ type dotConnEntry struct {
 	conn     net.Conn
 	tlsConn  *tls.Conn
 	lastUsed time.Time
+	closed   atomic.Bool
 }
 
 func (e *dotConnEntry) close() {
+	if e == nil || !e.closed.CompareAndSwap(false, true) {
+		return
+	}
 	if e.tlsConn != nil {
 		_ = e.tlsConn.Close()
 	}
@@ -34,7 +39,7 @@ func (e *dotConnEntry) close() {
 }
 
 func (e *dotConnEntry) isAlive() bool {
-	if e.conn == nil || e.tlsConn == nil {
+	if e == nil || e.closed.Load() || e.conn == nil || e.tlsConn == nil {
 		return false
 	}
 	_ = e.conn.SetReadDeadline(time.Now())
@@ -67,8 +72,14 @@ func (r *Resolver) closeDoTConns() {
 }
 
 func (r *Resolver) popIdleDoTConn(targetServer string) *dotConnEntry {
+	if r == nil || r.closed.Load() {
+		return nil
+	}
 	r.dotMu.Lock()
 	defer r.dotMu.Unlock()
+	if r.closed.Load() || r.dotConns == nil {
+		return nil
+	}
 
 	conns := r.dotConns[targetServer]
 	for len(conns) > 0 {
@@ -77,7 +88,7 @@ func (r *Resolver) popIdleDoTConn(targetServer string) *dotConnEntry {
 		conns = conns[:lastIdx]
 		r.dotConns[targetServer] = conns
 
-		if time.Since(c.lastUsed) <= dotIdleTimeout && c.isAlive() {
+		if !c.closed.Load() && time.Since(c.lastUsed) <= dotIdleTimeout && c.isAlive() {
 			return c
 		}
 		c.close()
@@ -86,8 +97,19 @@ func (r *Resolver) popIdleDoTConn(targetServer string) *dotConnEntry {
 }
 
 func (r *Resolver) putIdleDoTConn(targetServer string, c *dotConnEntry) {
+	if c == nil {
+		return
+	}
+	if r == nil || r.closed.Load() || c.closed.Load() {
+		c.close()
+		return
+	}
 	r.dotMu.Lock()
 	defer r.dotMu.Unlock()
+	if r.closed.Load() || r.dotConns == nil {
+		c.close()
+		return
+	}
 
 	conns := r.dotConns[targetServer]
 	if len(conns) < dotMaxIdleConnsPerHost {
@@ -177,10 +199,13 @@ func (r *Resolver) queryDoTContext(ctx context.Context, rawQuery []byte, server 
 		resp, err = r.executeDoTQuery(probeCtx, entry, rawQuery)
 		probeCancel()
 
-		if err != nil {
-			// Stale connection failed; close it and prepare to dial fresh
+		if err != nil || ctx.Err() != nil {
+			// Stale connection failed or context cancelled; close it and prepare to dial fresh
 			entry.close()
 			entry = nil
+			if ctx.Err() != nil {
+				return nil, ctx.Err()
+			}
 		}
 	}
 
@@ -190,6 +215,13 @@ func (r *Resolver) queryDoTContext(ctx context.Context, rawQuery []byte, server 
 			return nil, err
 		}
 		resp, err = r.executeDoTQuery(ctx, entry, rawQuery)
+	}
+
+	if ctx.Err() != nil {
+		if entry != nil {
+			entry.close()
+		}
+		return nil, ctx.Err()
 	}
 
 	if err != nil {
@@ -205,6 +237,9 @@ func (r *Resolver) queryDoTContext(ctx context.Context, rawQuery []byte, server 
 }
 
 func (r *Resolver) executeDoTQuery(ctx context.Context, entry *dotConnEntry, rawQuery []byte) ([]byte, error) {
+	if entry == nil || entry.closed.Load() || entry.tlsConn == nil {
+		return nil, fmt.Errorf("DoT connection is closed or nil")
+	}
 	deadline, ok := ctx.Deadline()
 	if !ok || deadline.After(time.Now().Add(queryTimeoutDoT)) {
 		deadline = time.Now().Add(queryTimeoutDoT)
