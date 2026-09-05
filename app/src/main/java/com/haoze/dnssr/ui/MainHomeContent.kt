@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -99,7 +100,8 @@ internal fun MainContent(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp)
-            .padding(bottom = 88.dp),
+            .navigationBarsPadding()
+            .padding(bottom = 104.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -155,6 +157,7 @@ internal fun MainContent(
 
         Column(
             modifier = Modifier
+                .weight(1f, fill = false)
                 .fillMaxWidth()
                 .animateContentSize(animationSpec = tween(180))
         ) {
@@ -225,7 +228,12 @@ internal fun MainContent(
             )
 
             if (resolutionMode != DnsResolutionMode.SINGLE) {
-                ProviderEndpointList(providers = raceProviders, modifier = Modifier.alpha(dnsDetailOpacity))
+                ProviderEndpointList(
+                    providers = raceProviders,
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .alpha(dnsDetailOpacity)
+                )
             } else {
                 selectedProvider?.let { provider ->
                     Text(

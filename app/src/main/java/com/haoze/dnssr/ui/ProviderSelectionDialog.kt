@@ -147,6 +147,7 @@ internal fun ProviderEndpointList(providers: List<DnsProvider>, modifier: Modifi
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(top = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
