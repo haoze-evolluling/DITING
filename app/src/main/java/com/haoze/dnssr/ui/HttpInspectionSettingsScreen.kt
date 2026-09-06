@@ -48,6 +48,7 @@ fun HttpInspectionSettingsScreen(
             AppSettings.isHttpInspectionEnabled(context) && httpsReady
         )
     }
+    var addressRulesEnabled by remember { mutableStateOf(AppSettings.isAddressRulesEnabled(context)) }
     var filterHttp3 by remember { mutableStateOf(AppSettings.isHttp3InspectionEnabled(context)) }
     var blockEncryptedDns by remember { mutableStateOf(AppSettings.isEncryptedDnsBlockingEnabled(context)) }
     var pendingLinkage by remember { mutableStateOf<DomainRulesLinkageKind?>(null) }
@@ -60,6 +61,7 @@ fun HttpInspectionSettingsScreen(
             }
             httpsReady = ready
             enabled = AppSettings.isHttpInspectionEnabled(context) && ready
+            addressRulesEnabled = AppSettings.isAddressRulesEnabled(context)
             filterHttp3 = AppSettings.isHttp3InspectionEnabled(context)
             blockEncryptedDns = AppSettings.isEncryptedDnsBlockingEnabled(context)
         }
@@ -142,6 +144,30 @@ fun HttpInspectionSettingsScreen(
                                 "未安装或未验证，点击配置"
                             }),
                             onClick = onNavigateToCaCertificateSettings
+                        )
+                    }
+                )
+            )
+            SettingsGroupTitle(localizedText("解密内容过滤"))
+            SettingsSurfaceGroup(
+                content = listOf(
+                    {
+                        val addressSubtitle = when {
+                            !httpsReady -> "需先安装并验证 CA 根证书"
+                            !enabled -> "需先启用 HTTPS 检查"
+                            !addressRulesEnabled -> "已暂停 · 解密请求直接放行，不应用 URL 规则及 CNAME 重定向"
+                            else -> "开启解密流量下的 URL 屏蔽、放行及 CNAME 重定向"
+                        }
+                        SettingsSwitchItem(
+                            title = localizedText("启用 URL 规则与重定向"),
+                            subtitle = localizedText(addressSubtitle),
+                            checked = addressRulesEnabled && enabled && httpsReady,
+                            enabled = protocolControlsEnabled,
+                            onCheckedChange = { checked ->
+                                addressRulesEnabled = checked
+                                AppSettings.setAddressRulesEnabled(context, checked)
+                                RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+                            }
                         )
                     }
                 )

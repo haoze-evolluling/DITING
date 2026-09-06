@@ -166,7 +166,7 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
         val source = filter.source
         val appScopeFilter = filter.appScope
         val domainRulesEnabled = AppSettings.isDomainRulesEnabled(getApplication())
-        val addressRulesEnabled = AppSettings.isAddressRulesEnabled(getApplication())
+        val addressRulesOperational = AppSettings.isAddressRulesFullyOperational(getApplication())
 
         return if (ruleKind.isUrlRule) {
             val rules = goUrlRuleDao.byKind(ruleKind.goUrlRuleKind!!)
@@ -179,8 +179,8 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
                     pattern = it.pattern,
                     rawLine = it.rawLine,
                     enabled = it.enabled,
-                    masterEnabled = addressRulesEnabled,
-                    effectiveEnabled = it.enabled && addressRulesEnabled
+                    masterEnabled = addressRulesOperational,
+                    effectiveEnabled = it.enabled && addressRulesOperational
                 )
             }
         } else if (ruleKind == ManagedRuleKind.REWRITE) {
@@ -191,7 +191,7 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
             }
             rules.map {
                 val isCname = it.targetType == com.haoze.dnssr.data.entity.RewriteTargetType.CNAME
-                val master = if (isCname) addressRulesEnabled else domainRulesEnabled
+                val master = if (isCname) addressRulesOperational else domainRulesEnabled
                 RuleListItem(
                     id = it.id,
                     pattern = it.pattern,

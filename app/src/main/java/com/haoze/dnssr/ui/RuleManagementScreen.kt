@@ -132,14 +132,14 @@ fun RuleManagementScreen(
                 SettingsSurfaceGroup(
                     content = listOf {
                         val addressSubtitle = when {
-                            !addressRulesEnabled -> "已禁用所有地址规则功能，HTTP(S) 请求将直接放行"
-                            !httpsReady -> "已开启（未就绪 · 需先安装并验证 CA 根证书）"
-                            !httpInspectionEnabled -> "已开启（未就绪 · 需在 HTTPS 流量检查中开启检查）"
-                            inspectionAppsCount == 0 -> "已开启（未就绪 · 需在 HTTPS 流量检查中选择目标应用）"
+                            !httpsReady -> "未就绪 · 需先安装并验证 CA 根证书"
+                            !httpInspectionEnabled -> "未就绪 · 需在 HTTPS 流量检查中开启检查"
+                            inspectionAppsCount == 0 -> "未就绪 · 需在 HTTPS 流量检查中选择目标应用"
+                            !addressRulesEnabled -> "已暂停 · 未启用 URL 规则与重定向"
                             else -> "开启 HTTPS 流量解密下的 URL 屏蔽、放行及 CNAME 覆写"
                         }
                         SettingsSwitchItem(
-                            title = localizedText("启用地址规则"),
+                            title = localizedText("启用 URL 规则与重定向"),
                             subtitle = localizedText(addressSubtitle),
                             checked = addressRulesEnabled,
                             onCheckedChange = { checked ->

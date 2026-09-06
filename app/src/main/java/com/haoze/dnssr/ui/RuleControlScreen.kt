@@ -27,6 +27,7 @@ import com.haoze.dnssr.ui.components.SettingsNavigationGroup
 import com.haoze.dnssr.ui.components.SettingsNavigationItemData
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
+import com.haoze.dnssr.ui.components.SettingsNavigationItem
 import com.haoze.dnssr.ui.components.SettingsSwitchItem
 import com.haoze.dnssr.vpn.SubscriptionAutoUpdateSettings
 
@@ -38,6 +39,7 @@ fun RuleControlScreen(
     onNavigateToSubscription: () -> Unit,
     onNavigateToAutoUpdateInterval: () -> Unit,
     onNavigateToMirrorTemplates: () -> Unit,
+    onNavigateToHttpInspection: () -> Unit = {},
     onRuntimeDnsSettingsChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -90,7 +92,7 @@ fun RuleControlScreen(
         ) {
             item {
                 SettingsInfoText(
-                    text = localizedText("统一管理域名过滤、地址过滤及规则覆写的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。"),
+                    text = localizedText("统一管理域名过滤、URL 规则及规则覆写的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。"),
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -105,8 +107,8 @@ fun RuleControlScreen(
                             SettingsSwitchItem(
                                 title = localizedText("启用域名规则"),
                                 subtitle = localizedText(
-                                    if (domainRulesEnabled) "开启 DNS 域名屏蔽、白名单放行及 IPv4/IPv6 覆写"
-                                    else "已禁用所有域名规则功能，查询将直接放行"
+                                    if (domainRulesEnabled) "开启 DNS 阶段域名屏蔽、白名单放行及 IPv4/IPv6 覆写"
+                                    else "已禁用 DNS 域名过滤，查询将直接放行"
                                 ),
                                 checked = domainRulesEnabled,
                                 onCheckedChange = { checked ->
@@ -123,23 +125,19 @@ fun RuleControlScreen(
                             )
                         },
                         {
-                            val addressSubtitle = when {
-                                !addressRulesEnabled -> "已禁用所有地址规则功能，HTTP(S) 请求将直接放行"
-                                !httpsReady -> "已开启（未就绪 · 需先安装并验证 CA 根证书）"
-                                !httpInspectionEnabled -> "已开启（未就绪 · 需在 HTTPS 流量检查中开启检查）"
-                                inspectionAppsCount == 0 -> "已开启（未就绪 · 需在 HTTPS 流量检查中选择目标应用）"
-                                else -> "开启 HTTPS 流量解密下的 URL 屏蔽、放行及 CNAME 覆写"
+                            val isAddressOperational = AppSettings.isAddressRulesFullyOperational(context)
+                            val urlRuleSubtitle = when {
+                                !httpsReady -> "未就绪 · 需先安装并验证 CA 根证书"
+                                !httpInspectionEnabled -> "未就绪 · 需在 HTTPS 流量检查中开启"
+                                inspectionAppsCount == 0 -> "未就绪 · 需在 HTTPS 流量检查中选择目标应用"
+                                !addressRulesEnabled -> "已暂停 · 未启用解密 URL 过滤与重定向"
+                                else -> "运行中 · 解密流量匹配 URL 屏蔽、放行及重定向"
                             }
-                            SettingsSwitchItem(
-                                title = localizedText("启用地址规则"),
-                                subtitle = localizedText(addressSubtitle),
-                                checked = addressRulesEnabled,
-                                onCheckedChange = { checked ->
-                                    addressRulesEnabled = checked
-                                    AppSettings.setAddressRulesEnabled(context, checked)
-                                    RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
-                                    onRuntimeDnsSettingsChanged()
-                                }
+                            SettingsNavigationItem(
+                                title = localizedText("URL 规则与内容过滤"),
+                                subtitle = localizedText(urlRuleSubtitle),
+                                value = localizedText(if (isAddressOperational) "运行中" else "未就绪"),
+                                onClick = onNavigateToHttpInspection
                             )
                         }
                     )

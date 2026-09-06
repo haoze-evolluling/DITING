@@ -469,14 +469,16 @@ fun RuleItemActionsMenu(
 fun masterDisabledMessage(context: Context, isDomainType: Boolean): String {
     return if (isDomainType) {
         "请先在规则控制中开启【启用域名规则】"
-    } else if (!AppSettings.isAddressRulesEnabled(context)) {
-        "请先在规则控制中开启【启用地址规则】"
     } else if (!AppSettings.isHttpsInspectionReady(context)) {
         "请先安装并验证 CA 根证书"
     } else if (!AppSettings.isHttpInspectionEnabled(context)) {
         "请先在 HTTPS 流量检查中开启检查"
-    } else {
+    } else if (AppSettings.getHttpInspectionAppPackages(context).isEmpty()) {
         "请先在 HTTPS 流量检查中选择目标应用"
+    } else if (!AppSettings.isAddressRulesEnabled(context)) {
+        "请先在 HTTPS 流量检查中开启【启用 URL 规则与重定向】"
+    } else {
+        "URL 规则当前未就绪"
     }
 }
 
@@ -505,8 +507,8 @@ fun DomainRulesInspectionLinkageDialog(
         title = {
             Text(
                 localizedText(
-                    if (kind == DomainRulesLinkageKind.ENABLE_BOTH) "HTTPS 检查需与域名规则同时开启"
-                    else "无法单独关闭域名规则"
+                    if (kind == DomainRulesLinkageKind.ENABLE_BOTH) "需同时开启域名规则"
+                    else "确认同时关闭 HTTPS 检查？"
                 )
             )
         },
@@ -514,18 +516,18 @@ fun DomainRulesInspectionLinkageDialog(
             Text(
                 localizedText(
                     if (kind == DomainRulesLinkageKind.ENABLE_BOTH) {
-                        "HTTPS 检查与 DNS 域名过滤联动运行。开启 HTTPS 检查将同时打开【启用域名规则】总开关，" +
+                        "HTTPS 流量检查基于 DNS 域名过滤基础之上运行。开启 HTTPS 检查将同时开启【启用域名规则】，" +
                             "确保域名级屏蔽与白名单规则在检测期间持续生效。"
                     } else {
-                        "域名规则过滤与 HTTPS 检查联动运行，检查开启期间无法单独关闭域名规则。" +
-                            "如需关闭，HTTPS 检查将一并关闭。"
+                        "HTTPS 流量检查运行在 DNS 域名过滤基础之上。关闭域名规则后，" +
+                            "依赖它的 HTTPS 检查也将同步暂停。"
                     }
                 )
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(localizedText(if (kind == DomainRulesLinkageKind.ENABLE_BOTH) "同时开启" else "同时关闭两者"))
+                Text(localizedText(if (kind == DomainRulesLinkageKind.ENABLE_BOTH) "同时开启" else "确认关闭"))
             }
         },
         dismissButton = {

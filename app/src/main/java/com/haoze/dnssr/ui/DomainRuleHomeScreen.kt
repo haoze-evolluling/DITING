@@ -35,9 +35,9 @@ fun DomainRuleHomeScreen(
             item {
                 SettingsGroupTitle(localizedText("规则类型"))
                 val addressSubtitle = when {
-                    !addressRulesEnabled -> "已禁用 · 管理 HTTPS 检查的地址规则总开关"
-                    !isAddressOperational -> "未就绪 · 需配置 CA 证书与 HTTPS 流量检查"
-                    else -> "管理 HTTPS 检查的地址规则总开关"
+                    !isAddressOperational -> "未就绪 · 需在 HTTPS 流量检查中配置证书与目标应用"
+                    !addressRulesEnabled -> "已暂停 · 未启用 URL 规则与重定向"
+                    else -> "管理 HTTPS 检查的 URL 规则与重定向"
                 }
                 SettingsNavigationGroup(
                     items = listOf(
@@ -54,7 +54,7 @@ fun DomainRuleHomeScreen(
                             onClick = onAppRule
                         ),
                         SettingsNavigationItemData(
-                            title = localizedText("地址规则"),
+                            title = localizedText("URL 规则"),
                             subtitle = localizedText(addressSubtitle),
                             leadingIcon = Icons.Filled.Link,
                             onClick = onAddress
