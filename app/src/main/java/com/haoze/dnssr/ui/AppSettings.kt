@@ -105,6 +105,8 @@ object AppSettings {
     fun checkAndUpdateHttpsInspectionReady(context: Context): Boolean = AppRulesSettingsStore.checkAndUpdateHttpsInspectionReady(context)
     fun isHttp3InspectionEnabled(context: Context): Boolean = AppRulesSettingsStore.isHttp3InspectionEnabled(context)
     fun setHttp3InspectionEnabled(context: Context, enabled: Boolean) = AppRulesSettingsStore.setHttp3InspectionEnabled(context, enabled)
+    fun getHttpsBypassRules(context: Context): Set<String> = AppRulesSettingsStore.getHttpsBypassRules(context)
+    fun setHttpsBypassRules(context: Context, rules: Set<String>) = AppRulesSettingsStore.setHttpsBypassRules(context, rules)
 
     // 出站代理配置
     fun getOutboundProxyConfig(context: Context): OutboundProxyConfig = OutboundProxySettingsStore.getOutboundProxyConfig(context)

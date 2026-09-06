@@ -133,9 +133,11 @@ class GoInspectionTunnel(
 
     fun updatePassthroughRules() {
         runCatching {
-            val patterns = runBlocking { allowListManager.enabledPatterns() }
-            engine.setExtraPassthroughSuffixes(patterns.joinToString("\n"))
-        }
+            val presetRules = DefaultWhitelistSeeder.parseAssetWhitelist(context).map { it.first }
+            val customBypassRules = AppSettings.getHttpsBypassRules(context)
+            val combined = (presetRules + customBypassRules).filter { it.isNotBlank() }
+            engine.setExtraPassthroughSuffixes(combined.joinToString("\n"))
+        }.onFailure { Log.w(TAG, "Failed to update HTTPS bypass rules", it) }
     }
 
     fun updateCnameRewriteRules() {

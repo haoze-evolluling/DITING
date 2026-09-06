@@ -23,6 +23,7 @@ object AppRulesSettingsStore {
     private const val KEY_HTTP_INSPECTION_APPS_SORT = "http_inspection_apps_sort"
     private const val KEY_HTTPS_INSPECTION_READY = "https_inspection_ready"
     private const val KEY_HTTPS_INSPECTION_CA_BACKEND = "https_inspection_ca_backend"
+    private const val KEY_HTTPS_BYPASS_RULES = "https_bypass_rules"
     private const val KEY_HTTP3_INSPECTION_ENABLED = "http3_inspection_enabled"
     private const val KEY_ENCRYPTED_DNS_BLOCKING_ENABLED = "encrypted_dns_blocking_enabled"
     private const val KEY_DOMAIN_RULES_ENABLED = "domain_rules_enabled"
@@ -240,6 +241,21 @@ object AppRulesSettingsStore {
     fun setHttpInspectionAppsFilter(context: Context, filter: String) = setAppListPreference(context, KEY_HTTP_INSPECTION_APPS_FILTER, filter)
     fun getHttpInspectionAppsSort(context: Context) = getAppListPreference(context, KEY_HTTP_INSPECTION_APPS_SORT, "LABEL_ASC")
     fun setHttpInspectionAppsSort(context: Context, sort: String) = setAppListPreference(context, KEY_HTTP_INSPECTION_APPS_SORT, sort)
+
+    fun getHttpsBypassRules(context: Context): Set<String> {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getStringSet(KEY_HTTPS_BYPASS_RULES, emptySet())
+            .orEmpty()
+            .filter { it.isNotBlank() }
+            .toSet()
+    }
+
+    fun setHttpsBypassRules(context: Context, rules: Set<String>) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putStringSet(KEY_HTTPS_BYPASS_RULES, rules.filter { it.isNotBlank() }.toSet())
+            .apply()
+    }
 
     fun isHttpsInspectionReady(context: Context): Boolean =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
