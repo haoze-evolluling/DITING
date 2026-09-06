@@ -479,3 +479,59 @@ fun masterDisabledMessage(context: Context, isDomainType: Boolean): String {
         "请先在 HTTPS 流量检查中选择目标应用"
     }
 }
+
+/** 域名规则与 HTTPS 检查联动确认的类型。 */
+enum class DomainRulesLinkageKind {
+    /** 准备开启 HTTPS 检查，但域名规则未启用：确认后同时启用两者。 */
+    ENABLE_BOTH,
+
+    /** 准备关闭域名规则，但 HTTPS 检查仍在启用：确认后同时关闭两者。 */
+    DISABLE_BOTH
+}
+
+/**
+ * 域名规则与 HTTPS 检查强制联动的确认弹窗：
+ * 开启 HTTPS 检查需同时启用域名规则，关闭域名规则需同时关闭 HTTPS 检查，
+ * 避免出现检测在 DNS 域名过滤关闭的情况下单独运行的配置。
+ */
+@Composable
+fun DomainRulesInspectionLinkageDialog(
+    kind: DomainRulesLinkageKind,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AppAlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                localizedText(
+                    if (kind == DomainRulesLinkageKind.ENABLE_BOTH) "HTTPS 检查需与域名规则同时开启"
+                    else "无法单独关闭域名规则"
+                )
+            )
+        },
+        text = {
+            Text(
+                localizedText(
+                    if (kind == DomainRulesLinkageKind.ENABLE_BOTH) {
+                        "HTTPS 检查与 DNS 域名过滤联动运行。开启 HTTPS 检查将同时打开【启用域名规则】总开关，" +
+                            "确保域名级屏蔽与白名单规则在检测期间持续生效。"
+                    } else {
+                        "域名规则过滤与 HTTPS 检查联动运行，检查开启期间无法单独关闭域名规则。" +
+                            "如需关闭，HTTPS 检查将一并关闭。"
+                    }
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(localizedText(if (kind == DomainRulesLinkageKind.ENABLE_BOTH) "同时开启" else "同时关闭两者"))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(localizedText("取消"))
+            }
+        }
+    )
+}

@@ -77,8 +77,10 @@ func (e *Engine) handleDNSQuery(queryInfo *DNSQueryInfo) {
 		}
 	}
 
-	// Go tunnel URL rules are evaluated only after HTTP decryption. Do not
-	// preempt them by blocking their DNS lookup.
+	// Engine-level capability switch: when disabled, DNS queries skip all
+	// domain-rule evaluation and go straight to forwarding. The Kotlin side
+	// keeps DNS filtering enabled at all times, including while HTTPS
+	// inspection is active.
 	if !e.filterDNS.Load() {
 		e.handleForward(queryInfo, appName, startTime)
 		return

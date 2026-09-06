@@ -19,6 +19,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.haoze.dnssr.data.AppDatabase
+import com.haoze.dnssr.ui.components.DomainRulesInspectionLinkageDialog
+import com.haoze.dnssr.ui.components.DomainRulesLinkageKind
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsInfoText
 import com.haoze.dnssr.ui.components.SettingsNavigationGroup
@@ -52,6 +54,7 @@ fun RuleControlScreen(
     var inspectionAppsCount by remember { mutableIntStateOf(AppSettings.getHttpInspectionAppPackages(context).size) }
     var autoUpdateEnabled by remember { mutableStateOf(SubscriptionAutoUpdateSettings.isEnabled(context)) }
     var intervalHours by remember { mutableIntStateOf(SubscriptionAutoUpdateSettings.intervalHours(context)) }
+    var pendingLinkage by remember { mutableStateOf<DomainRulesLinkageKind?>(null) }
 
     fun refreshState() {
         domainRulesEnabled = AppSettings.isDomainRulesEnabled(context)
@@ -107,10 +110,15 @@ fun RuleControlScreen(
                                 ),
                                 checked = domainRulesEnabled,
                                 onCheckedChange = { checked ->
-                                    domainRulesEnabled = checked
-                                    AppSettings.setDomainRulesEnabled(context, checked)
-                                    RuntimeDnsSettingsRefresher.refreshIfRunning(context, "domain_rules_switch")
-                                    onRuntimeDnsSettingsChanged()
+                                    if (!checked && httpInspectionEnabled) {
+                                        // 联动约束：HTTPS 检查启用期间无法单独关闭域名规则
+                                        pendingLinkage = DomainRulesLinkageKind.DISABLE_BOTH
+                                    } else {
+                                        domainRulesEnabled = checked
+                                        AppSettings.setDomainRulesEnabled(context, checked)
+                                        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "domain_rules_switch")
+                                        onRuntimeDnsSettingsChanged()
+                                    }
                                 }
                             )
                         },
@@ -191,5 +199,23 @@ fun RuleControlScreen(
                 )
             }
         }
+    }
+
+    pendingLinkage?.let { kind ->
+        DomainRulesInspectionLinkageDialog(
+            kind = kind,
+            onConfirm = {
+                pendingLinkage = null
+                // 联动关闭：HTTPS 检查与域名规则一并关闭，并同步两组运行时刷新
+                AppSettings.setHttpInspectionEnabled(context, false)
+                httpInspectionEnabled = false
+                domainRulesEnabled = false
+                AppSettings.setDomainRulesEnabled(context, false)
+                RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+                RuntimeDnsSettingsRefresher.refreshIfRunning(context, "domain_rules_switch")
+                onRuntimeDnsSettingsChanged()
+            },
+            onDismiss = { pendingLinkage = null }
+        )
     }
 }

@@ -256,6 +256,9 @@ object AppSettings {
     fun isDefaultWhitelistInitialized(context: Context): Boolean = AppRulesSettingsStore.isDefaultWhitelistInitialized(context)
     fun setDefaultWhitelistInitialized(context: Context, initialized: Boolean) =
         AppRulesSettingsStore.setDefaultWhitelistInitialized(context, initialized)
+    fun getDefaultWhitelistSeededVersion(context: Context): Long = AppRulesSettingsStore.getDefaultWhitelistSeededVersion(context)
+    fun setDefaultWhitelistSeededVersion(context: Context, versionCode: Long) =
+        AppRulesSettingsStore.setDefaultWhitelistSeededVersion(context, versionCode)
 
     // 单应用域名放行（原应用白名单）
     fun getAppAllowlistRuleMap(context: Context): Map<String, Set<String>> = AppRulesSettingsStore.getAppAllowlistRuleMap(context)

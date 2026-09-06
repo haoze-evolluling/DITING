@@ -2,9 +2,11 @@ package com.haoze.dnssr.vpn
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.pm.PackageInfoCompat
 import com.haoze.dnssr.data.AppDatabase
 import com.haoze.dnssr.data.entity.AllowRuleEntity
 import com.haoze.dnssr.ui.AppSettings
+import com.haoze.dnssr.ui.RuntimeDnsSettingsRefresher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -17,14 +19,39 @@ object DefaultWhitelistSeeder {
 
     /**
      * Ensures preset default whitelist is initialized in the database.
+     *
+     * 以应用版本号为门控：每个版本仅在首次启动时灌入/重置一次预设白名单，
+     * 同一版本内后续启动不再重复重置，避免覆盖用户此后的自定义修改。
+     * 重置只清理 source=preset 的行，用户自建规则（useradd 等）不受影响。
      */
     suspend fun ensureInitialized(context: Context, database: AppDatabase) = withContext(Dispatchers.IO) {
-        if (!AppSettings.isDefaultWhitelistInitialized(context)) {
-            Log.i(TAG, "Initializing default preset whitelist...")
-            seed(context, database, forceReset = false)
-            AppSettings.setDefaultWhitelistInitialized(context, true)
+        val currentVersion = currentVersionCode(context)
+        if (AppSettings.isDefaultWhitelistInitialized(context) &&
+            AppSettings.getDefaultWhitelistSeededVersion(context) == currentVersion
+        ) {
+            return@withContext
         }
+        if (AppSettings.isDefaultWhitelistInitialized(context)) {
+            Log.i(TAG, "App version changed to $currentVersion, resetting preset whitelist once...")
+        } else {
+            Log.i(TAG, "Initializing default preset whitelist...")
+        }
+        seed(context, database, forceReset = true)
+        AppSettings.setDefaultWhitelistInitialized(context, true)
+        AppSettings.setDefaultWhitelistSeededVersion(context, currentVersion)
+        // 升级重置可能发生在 VPN 运行期间：让服务端白名单缓存与 Go 放行快照同步更新
+        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+            context.applicationContext,
+            refreshBlock = false,
+            refreshAllow = true,
+            refreshRewrite = false
+        )
     }
+
+    private fun currentVersionCode(context: Context): Long = runCatching {
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        PackageInfoCompat.getLongVersionCode(packageInfo)
+    }.getOrDefault(-1L)
 
     /**
      * Seeds or resets preset whitelist from assets/https_passthrough.txt.

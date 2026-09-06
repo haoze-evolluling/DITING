@@ -638,6 +638,13 @@ class ConfigImporter(private val context: Context) {
             updatedSettingsDetails.add(detail)
             logs.add("设置 $detail")
         }
+        // 联动约束：导入的配置若出现 HTTPS 检查开启而域名规则关闭的组合，强制拉齐为同时启用
+        if (AppSettings.isHttpInspectionEnabled(context) && !AppSettings.isDomainRulesEnabled(context)) {
+            AppSettings.setDomainRulesEnabled(context, true)
+            val detail = "域名规则开关 -> 已启用（与 HTTPS 检查联动）"
+            updatedSettingsDetails.add(detail)
+            logs.add("设置 $detail")
+        }
         if (config.addressRulesEnabled != null && AppSettings.isAddressRulesEnabled(context) != config.addressRulesEnabled) {
             AppSettings.setAddressRulesEnabled(context, config.addressRulesEnabled)
             val detail = "地址规则开关 -> ${if (config.addressRulesEnabled) "已启用" else "已禁用"}"

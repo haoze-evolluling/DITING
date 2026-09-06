@@ -128,7 +128,6 @@ class GoInspectionTunnel(
         updateCnameRewriteRules()
         updateRequestRules()
         updatePassthroughRules()
-        engine.setFilterDNS(!inspectionEnabled || !AppSettings.isAddressRulesEnabled(vpnService))
         pushRuleSnapshot()
     }
 
@@ -244,8 +243,10 @@ class GoInspectionTunnel(
                     is DomainDecision.Allow -> if (decision.matchedRule != null) 0L else -1L
                 }
         })
-        // URL rules require decrypted HTTP. Otherwise preserve the normal DNS filter path.
-        engine.setFilterDNS(!inspectionEnabled || !AppSettings.isAddressRulesEnabled(vpnService))
+        // DNS 过滤与 HTTPS 检测强制联动：检测运行期间域名级规则（订阅/自定义屏蔽与白名单）
+        // 必须保持生效，HTTPS 检测不得在 DNS 过滤关闭的情况下单独运行；
+        // 解密后的 HTTP 流量在 DNS 过滤结果之上再做 URL 级规则匹配。
+        engine.setFilterDNS(true)
         pushRuleSnapshot()
         engine.setBatchLogCallback(object : BatchLogCallback {
             override fun onDNSQueryBatch(jsonLogs: String) {

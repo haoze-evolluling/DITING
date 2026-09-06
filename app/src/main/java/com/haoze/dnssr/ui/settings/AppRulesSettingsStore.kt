@@ -34,6 +34,7 @@ object AppRulesSettingsStore {
     private const val KEY_DYNAMIC_BLOCK_NXDOMAIN_DURATION_SECONDS = "dynamic_block_nxdomain_duration_seconds"
     private const val KEY_ALLOW_EDIT_DEFAULT_WHITELIST = "allow_edit_default_whitelist"
     private const val KEY_DEFAULT_WHITELIST_INITIALIZED = "default_whitelist_initialized"
+    private const val KEY_DEFAULT_WHITELIST_SEEDED_VERSION = "default_whitelist_seeded_version"
 
     private const val GO_CA_BACKEND = "go-v1"
     private val DEFAULT_BLOCK_RESPONSE_MODE = BlockResponseMode.NXDOMAIN
@@ -406,6 +407,18 @@ object AppRulesSettingsStore {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_DEFAULT_WHITELIST_INITIALIZED, initialized)
+            .apply()
+    }
+
+    /** 记录上次灌入/重置预设白名单时的应用版本号；0 表示从未记录（旧版本升级而来）。 */
+    fun getDefaultWhitelistSeededVersion(context: Context): Long =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getLong(KEY_DEFAULT_WHITELIST_SEEDED_VERSION, 0L)
+
+    fun setDefaultWhitelistSeededVersion(context: Context, versionCode: Long) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putLong(KEY_DEFAULT_WHITELIST_SEEDED_VERSION, versionCode)
             .apply()
     }
 

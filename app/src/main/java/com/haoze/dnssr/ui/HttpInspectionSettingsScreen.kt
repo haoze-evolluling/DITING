@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.haoze.dnssr.ui.components.DomainRulesInspectionLinkageDialog
+import com.haoze.dnssr.ui.components.DomainRulesLinkageKind
 import com.haoze.dnssr.ui.components.SettingsGroupTitle
 import com.haoze.dnssr.ui.components.SettingsNavigationItem
 import com.haoze.dnssr.ui.components.SettingsScaffold
@@ -48,6 +50,7 @@ fun HttpInspectionSettingsScreen(
     }
     var filterHttp3 by remember { mutableStateOf(AppSettings.isHttp3InspectionEnabled(context)) }
     var blockEncryptedDns by remember { mutableStateOf(AppSettings.isEncryptedDnsBlockingEnabled(context)) }
+    var pendingLinkage by remember { mutableStateOf<DomainRulesLinkageKind?>(null) }
     val scrollState = rememberScrollState()
 
     fun refreshState() {
@@ -107,9 +110,14 @@ fun HttpInspectionSettingsScreen(
                             checked = enabled && httpsReady,
                             enabled = httpsControlsEnabled,
                             onCheckedChange = { checked ->
-                                enabled = checked
-                                AppSettings.setHttpInspectionEnabled(context, checked)
-                                RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+                                if (checked && !AppSettings.isDomainRulesEnabled(context)) {
+                                    // 联动约束：域名规则未启用时开启检查，需确认同时启用
+                                    pendingLinkage = DomainRulesLinkageKind.ENABLE_BOTH
+                                } else {
+                                    enabled = checked
+                                    AppSettings.setHttpInspectionEnabled(context, checked)
+                                    RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+                                }
                             }
                         )
                     },
@@ -185,5 +193,21 @@ fun HttpInspectionSettingsScreen(
                 )
             )
         }
+    }
+
+    pendingLinkage?.let { kind ->
+        DomainRulesInspectionLinkageDialog(
+            kind = kind,
+            onConfirm = {
+                pendingLinkage = null
+                // 联动开启：先启用域名规则总开关并刷新运行时快照，再开启 HTTPS 检查
+                AppSettings.setDomainRulesEnabled(context, true)
+                enabled = true
+                AppSettings.setHttpInspectionEnabled(context, true)
+                RuntimeDnsSettingsRefresher.refreshIfRunning(context, "https_inspection_linkage")
+                RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+            },
+            onDismiss = { pendingLinkage = null }
+        )
     }
 }
