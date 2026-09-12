@@ -26,6 +26,7 @@ import com.haoze.dnssr.ui.components.SettingsItem
 import com.haoze.dnssr.ui.components.SettingsScaffold
 import com.haoze.dnssr.ui.components.SettingsSurfaceGroup
 import com.haoze.dnssr.ui.theme.ThemeColorStyle
+import com.haoze.dnssr.ui.theme.swatchColor
 import com.haoze.dnssr.vpn.DnsVpnService
 
 @Composable
@@ -66,7 +67,7 @@ fun ThemeColorSettingsScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(28.dp)
-                                        .background(if (darkTheme) style.darkPrimary else style.lightPrimary, CircleShape),
+                                        .background(style.swatchColor(darkTheme), CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (selectedStyle == style) {

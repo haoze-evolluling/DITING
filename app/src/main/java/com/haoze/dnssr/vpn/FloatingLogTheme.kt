@@ -58,7 +58,7 @@ object FloatingLogTheme {
             val colorRes = if (isDark) android.R.color.system_accent1_200 else android.R.color.system_accent1_600
             runCatching { return context.getColor(colorRes) }
         }
-        return if (isDark) colorStyle.darkPrimary.toArgb() else colorStyle.lightPrimary.toArgb()
+        return colorStyle.palette(isDark).primary.toArgb()
     }
 
     fun getTertiaryColor(context: Context, isDark: Boolean, colorStyle: ThemeColorStyle): Int {
@@ -66,7 +66,7 @@ object FloatingLogTheme {
             val colorRes = if (isDark) android.R.color.system_accent3_200 else android.R.color.system_accent3_600
             runCatching { return context.getColor(colorRes) }
         }
-        return if (isDark) colorStyle.darkTertiary.toArgb() else colorStyle.lightTertiary.toArgb()
+        return colorStyle.palette(isDark).tertiary.toArgb()
     }
 
     fun getPalette(context: Context): OverlayThemePalette {
