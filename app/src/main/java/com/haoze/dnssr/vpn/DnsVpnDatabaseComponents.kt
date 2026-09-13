@@ -1,0 +1,165 @@
+package com.haoze.dnssr.vpn
+
+import android.content.Context
+import com.haoze.dnssr.data.AppDatabase
+import com.haoze.dnssr.ui.DnsLogMode
+import com.haoze.dnssr.vpn.cache.DnsCacheController
+import com.haoze.dnssr.vpn.cache.DnsCachePolicy
+import com.haoze.dnssr.vpn.cache.DnsResponseCache
+import com.haoze.dnssr.vpn.traffic.TrafficStatsManager
+import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+
+/**
+ * Central holder for the database, rule managers, loggers, and cache
+ * components the VPN runtime depends on.
+ */
+class DnsVpnDatabaseComponents {
+
+    lateinit var dnsCache: DnsResponseCache
+        private set
+    lateinit var uidPackageCache: UidPackageCache
+        private set
+    lateinit var blockListManager: BlockListManager
+        private set
+    lateinit var allowListManager: AllowListManager
+        private set
+    lateinit var rewriteRuleManager: RewriteRuleManager
+        private set
+    lateinit var domainPolicy: DomainPolicy
+        private set
+    lateinit var goUrlRuleManager: GoUrlRuleManager
+        private set
+    lateinit var dnsLogger: DnsLogger
+        private set
+    lateinit var httpRequestLogger: HttpRequestLogger
+        private set
+    lateinit var raceLogger: RaceLogger
+        private set
+    lateinit var bootstrapLogger: BootstrapLogger
+        private set
+    lateinit var bootstrapHealthEngine: BootstrapHealthEngine
+        private set
+
+    @Volatile
+    var onRulesReloaded: (() -> Unit)? = null
+    @Volatile
+    var rulesInitializationJob: kotlinx.coroutines.Job? = null
+        private set
+
+    private lateinit var bootstrapHealthListener: BootstrapHealthStoreListener
+
+    /**
+     * Initializes the components and registers listeners.
+     */
+    fun initialize(
+        context: Context,
+        scope: CoroutineScope,
+        activeDnsCachePolicy: DnsCachePolicy,
+        activeDnsLogMode: () -> DnsLogMode,
+        activeLogRetentionDays: () -> Int,
+        isDomainRulesEnabled: () -> Boolean,
+        onBootstrapHealthReset: () -> Unit,
+        onClearGoDnsCache: () -> Unit
+    ) {
+        val db = AppDatabase.getInstance(context)
+        uidPackageCache = UidPackageCache(context)
+        dnsCache = DnsResponseCache(db.dnsCacheDao(), activeDnsCachePolicy, scope)
+        val ruleIndexDirectory = File(context.filesDir, "rule-index")
+        blockListManager = BlockListManager(db.blockRuleDao(), ruleIndexDirectory)
+        allowListManager = AllowListManager(db.allowRuleDao(), ruleIndexDirectory)
+        rewriteRuleManager = RewriteRuleManager(db.rewriteRuleDao(), ruleIndexDirectory)
+        domainPolicy = DomainPolicy(allowListManager, blockListManager) { isDomainRulesEnabled() }
+        blockListManager.onCacheChanged = { domainPolicy.invalidateCache() }
+        allowListManager.onCacheChanged = { domainPolicy.invalidateCache() }
+        goUrlRuleManager = GoUrlRuleManager(db.goUrlRuleDao())
+        dnsLogger = DnsLogger(db.dnsLogDao(), flushScope = scope) { activeDnsLogMode() }
+        httpRequestLogger = HttpRequestLogger(db.httpRequestLogDao(), flushScope = scope) { activeDnsLogMode() }
+        raceLogger = RaceLogger(db.raceLogDao(), flushScope = scope)
+        bootstrapHealthEngine = BootstrapHealthEngine(context, scope)
+        bootstrapLogger = BootstrapLogger(db.bootstrapLogDao(), flushScope = scope)
+        com.haoze.dnssr.data.repository.RequestLogRepository.activeFlusher = {
+            if (::dnsLogger.isInitialized) dnsLogger.flush()
+            if (::httpRequestLogger.isInitialized) httpRequestLogger.flush()
+        }
+
+        bootstrapHealthListener = object : BootstrapHealthStoreListener {
+            override fun onBootstrapHealthReset(ipIds: Set<String>) {
+                onBootstrapHealthReset()
+            }
+        }
+        BootstrapHealthStore.registerListener(bootstrapHealthListener)
+        LogMaintenance.start(scope, db) { activeLogRetentionDays() }
+
+        // Fully load rules into the in-memory caches at startup and warm the DNS cache
+        rulesInitializationJob = scope.launch {
+            val j1 = launch { runCatching { blockListManager.refreshCache() } }
+            val j2 = launch { runCatching { allowListManager.refreshCache() } }
+            val j3 = launch { runCatching { rewriteRuleManager.refreshCache() } }
+            j1.join()
+            j2.join()
+            j3.join()
+            domainPolicy.invalidateCache()
+            onRulesReloaded?.invoke()
+        }
+        scope.launch {
+            DnsCacheController.register(dnsCache) { onClearGoDnsCache() }
+            dnsCache.warmUp()
+        }
+    }
+
+    /**
+     * Asynchronously flushes all logs, caches, and statistics.
+     */
+    suspend fun flushLoggers(context: Context) {
+        if (::dnsCache.isInitialized) {
+            dnsCache.flushPendingWrites()
+        }
+        if (::dnsLogger.isInitialized) {
+            dnsLogger.flush()
+        }
+        if (::httpRequestLogger.isInitialized) {
+            httpRequestLogger.flush()
+        }
+        if (::raceLogger.isInitialized) {
+            raceLogger.flush()
+        }
+        if (::bootstrapLogger.isInitialized) {
+            bootstrapLogger.flush()
+        }
+        if (::bootstrapHealthEngine.isInitialized) {
+            bootstrapHealthEngine.flush(commit = true)
+        }
+        TrafficStatsManager.flush(context)
+    }
+
+    /**
+     * Blocking flush of all logs, caches, and statistics.
+     */
+    fun flushLoggersBlocking(context: Context) {
+        runBlocking {
+            flushLoggers(context)
+        }
+    }
+
+    /**
+     * Releases resources and unregisters listeners.
+     */
+    fun close() {
+        if (::rewriteRuleManager.isInitialized) {
+            rewriteRuleManager.close()
+        }
+        if (::dnsCache.isInitialized) {
+            runBlocking { DnsCacheController.unregister(dnsCache) }
+        }
+        if (::bootstrapHealthEngine.isInitialized) {
+            bootstrapHealthEngine.close()
+        }
+        if (::bootstrapHealthListener.isInitialized) {
+            BootstrapHealthStore.unregisterListener(bootstrapHealthListener)
+        }
+        com.haoze.dnssr.data.repository.RequestLogRepository.activeFlusher = null
+    }
+}

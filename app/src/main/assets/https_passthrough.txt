@@ -1,0 +1,33 @@
+# DITING (DNSSR) preset passthrough list
+#
+# Domains in this file are neither blocked by DNS rules nor inspected by
+# the optional HTTPS inspection — they pass through untouched so the
+# device's core infrastructure keeps working even when aggressive block
+# rules are enabled.
+#
+# One DNS suffix per line; the consumer matches against the host and any
+# subdomain, so a parent entry already covers all of its subdomains.
+#
+# Keep this list minimal: only domains whose breakage would break the
+# device or the app itself for virtually every user. Region-specific,
+# vendor-specific, or app-specific needs (banking, messaging, streaming,
+# social, games, etc.) belong to user-added rules, not this preset.
+#
+# The Google / Android core entries below cover the Play Store and Play
+# services, account sign-in, push (mtalk.google.com) and system static
+# assets — breaking these breaks basic device functionality.
+#
+# Format:  bare domain, no leading dot, no trailing slash
+# Comment: lines starting with # or // are ignored
+#
+# Each comment line that is not a reserved prefix becomes the group name
+# shown in the whitelist UI, so category headers (─── style) must be the
+# last comment line before their domains. When adding a domain, include
+# a brief reason in the block above.
+
+# ─── Google / Android 平台核心 ────────────────────────────────────────
+android.com
+google.com
+googleapis.com
+googleusercontent.com
+gstatic.com
