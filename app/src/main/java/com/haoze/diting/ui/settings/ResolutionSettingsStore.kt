@@ -117,17 +117,12 @@ object ResolutionSettingsStore {
 
     private fun getModeProviderIds(context: Context, key: String): Set<String> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val json = prefs.getString(key, null)
-        if (json == null) {
-            val migrated = getRaceProviderIds(context)
-            setModeProviderIds(context, key, migrated)
-            return migrated
-        }
+        val json = prefs.getString(key, null) ?: return DEFAULT_RACE_PROVIDER_IDS
         return try {
             val array = JSONArray(json)
             buildSet { for (index in 0 until array.length()) add(array.getString(index)) }
         } catch (_: Exception) {
-            emptySet()
+            DEFAULT_RACE_PROVIDER_IDS
         }
     }
 
@@ -153,14 +148,14 @@ object ResolutionSettingsStore {
     fun getPrimaryBackupProviderIds(context: Context): List<String> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val json = prefs.getString(KEY_PRIMARY_BACKUP_PROVIDER_IDS, null)
-            ?: return getRaceProviderIds(context).toList()
+            ?: return DEFAULT_RACE_PROVIDER_IDS.toList()
         return try {
             val array = JSONArray(json)
             buildList {
                 for (index in 0 until array.length()) add(array.getString(index))
             }.distinct()
         } catch (_: Exception) {
-            getRaceProviderIds(context).toList()
+            DEFAULT_RACE_PROVIDER_IDS.toList()
         }
     }
 

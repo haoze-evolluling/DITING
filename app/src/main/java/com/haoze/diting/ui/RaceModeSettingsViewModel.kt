@@ -41,9 +41,6 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
     private val _healthByProvider = MutableStateFlow<Map<String, ProviderHealthSnapshot>>(emptyMap())
     val healthByProvider: StateFlow<Map<String, ProviderHealthSnapshot>> = _healthByProvider.asStateFlow()
 
-    private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
-    val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
-
     private val _latencyTestSelectedIds = MutableStateFlow<Set<String>>(emptySet())
     val latencyTestSelectedIds: StateFlow<Set<String>> = _latencyTestSelectedIds.asStateFlow()
 
@@ -95,7 +92,6 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
             ProviderHealthEngine.flushActive(commit = true)
             val all = DnsProvider.loadRuntimeProviders(context)
             val health = ProviderHealthStore.loadAll(context)
-            val ids = DnsProvider.loadRaceProviderIds(context)
             val latencyIds = DnsProvider.loadLatencyTestProviderIds(context)
             val domain = ResolutionSettingsStore.getRaceTestDomain(context)
             val resolutionMode = ResolutionSettingsStore.getDnsResolutionMode(context)
@@ -107,7 +103,6 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
             withContext(Dispatchers.Main) {
                 _providers.value = all
                 _healthByProvider.value = health
-                _selectedIds.value = ids
                 _latencyTestSelectedIds.value = latencyIds
                 _resolutionMode.value = resolutionMode
                 _presetDnsService.value = presetDnsService
@@ -118,25 +113,6 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
                 _testDomain.value = domain
                 _results.value = emptyList()
                 _initialLoading.value = false
-            }
-        }
-    }
-
-    fun toggleProvider(id: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val context = getApplication<Application>()
-            val updated = _selectedIds.value.toMutableSet().apply {
-                if (contains(id)) remove(id) else add(id)
-            }
-            DnsProvider.saveRaceProviderIds(context, updated)
-            val ordered = _primaryBackupIds.value.toMutableList().apply {
-                if (id in updated && id !in this) add(id) else if (id !in updated) remove(id)
-            }
-            ResolutionSettingsStore.setPrimaryBackupProviderIds(context, ordered)
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "race_providers_changed")
-            withContext(Dispatchers.Main) {
-                _selectedIds.value = updated
-                _primaryBackupIds.value = ordered
             }
         }
     }
@@ -303,22 +279,6 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
             withContext(Dispatchers.Main) {
                 _results.value = testResults
                 _isTesting.value = false
-            }
-        }
-    }
-
-    fun resetSelectedProviderWeights() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val context = getApplication<Application>()
-            val providerIds = _selectedIds.value.ifEmpty {
-                _providers.value.map { it.id }.toSet()
-            }
-            ProviderHealthStore.reset(context, providerIds)
-            ProviderHealthEngine.flushActive(commit = true)
-            val health = ProviderHealthStore.loadAll(context)
-            withContext(Dispatchers.Main) {
-                _healthByProvider.value = health
-        _message.value = getApplication<Application>().getString(R.string.health_weights_reset)
             }
         }
     }

@@ -33,6 +33,7 @@ import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
+import com.haoze.diting.ui.settings.ResolutionSettingsStore
 import com.haoze.diting.vpn.DnsProvider
 import com.haoze.diting.vpn.ProviderHealthEngine
 import com.haoze.diting.vpn.ProviderHealthSnapshot
@@ -61,10 +62,10 @@ fun ProviderHealthScreen(
         ProviderHealthEngine.flushActive(commit = true)
         val providers = DnsProvider.loadRuntimeProviders(context)
         val healthByProvider = ProviderHealthStore.loadAll(context)
-        val raceProviderIds = DnsProvider.loadRaceProviderIds(context)
+        val smartPredictionProviderIds = ResolutionSettingsStore.getSmartPredictionProviderIds(context)
         val normalizedWeights = ProviderHealthStore.normalizeWeightsToPercent(
             providers
-                .filter { it.id in raceProviderIds }
+                .filter { it.id in smartPredictionProviderIds }
                 .map { provider ->
                     provider.id to (healthByProvider[provider.id]?.predictionWeight ?: 1.0)
                 }

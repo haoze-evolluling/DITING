@@ -60,8 +60,6 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     val pendingSubscriptions: StateFlow<List<SubscriptionEntity>> = _pendingSubscriptions.asStateFlow()
     private var subscriptionsJob: Job? = null
     private var nextPendingSubscriptionId = -1L
-    private val _dnsImportCandidates = MutableStateFlow<List<SubscriptionEntity>>(emptyList())
-    val dnsImportCandidates: StateFlow<List<SubscriptionEntity>> = _dnsImportCandidates.asStateFlow()
     val mirrorTemplates = AppDatabase.getInstance(application).mirrorTemplateDao().observeAll()
     val subscriptionGroups = AppDatabase.getInstance(application).subscriptionGroupDao().observeAll()
     val allSubscriptions = AppDatabase.getInstance(application).subscriptionDao().observeAll()
@@ -104,7 +102,6 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                     updateRuleBreakdowns(subscriptions)
                 }
         }
-        if (scope == RuleScope.HTTPS) loadDnsImportCandidates()
     }
 
     fun loadSubscriptions() {
@@ -351,27 +348,6 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         )
     }
 
-    fun importDnsSubscriptions(ids: Set<Long>) {
-        if (ruleScope != RuleScope.HTTPS || ids.isEmpty()) return
-        viewModelScope.launch(Dispatchers.IO) {
-            val candidates = _dnsImportCandidates.value.filter { it.id in ids }
-            candidates.forEach { subscription ->
-                enqueueAndObserve(
-                    RuleOperationScheduler.enqueue(
-                        getApplication(),
-                        RuleOperationType.ADD_SUBSCRIPTION,
-                        url = subscription.url,
-                        name = subscription.name,
-                        kind = subscription.kind,
-                        mirrorTemplate = subscription.mirrorTemplate,
-                        mirrorFallback = subscription.mirrorFallback,
-                        scope = RuleScope.HTTPS.storageValue
-                    ).id
-                )
-            }
-        }
-    }
-
     fun deleteSubscription(id: Long) {
         viewModelScope.launch {
             deletingSubscriptionIds += id
@@ -530,19 +506,6 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         }
         withContext(Dispatchers.Main) {
             _ruleBreakdowns.value = map
-        }
-    }
-
-    private fun loadDnsImportCandidates() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val candidates = AppDatabase.getInstance(getApplication<Application>()).subscriptionDao()
-                .all()
-                .filter {
-                    it.sourceType == com.haoze.diting.data.entity.SubscriptionSourceType.REMOTE
-                }
-            withContext(Dispatchers.Main) {
-                _dnsImportCandidates.value = candidates
-            }
         }
     }
 }

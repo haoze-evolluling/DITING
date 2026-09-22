@@ -27,7 +27,6 @@ import java.io.File
 internal object RuleIndexLayout {
 
     private const val ROOT_DIR_NAME = "rule-index"
-    private const val HTTPS_DIR_NAME = "https"
     private const val DOMAIN_DIR_NAME = "domain"
     private const val HOSTS_DIR_NAME = "hosts"
 
@@ -39,19 +38,14 @@ internal object RuleIndexLayout {
 
     // ---------------------------------------------------------------- scopes
 
-    /** Files root holding every scope's index artifacts. */
+    /** Files root holding rule index artifacts. */
     fun rootDirectory(filesDir: File): File = File(filesDir, ROOT_DIR_NAME)
 
-    /**
-     * Directory holding one scope's artifacts. DNS owns the root itself so a
-     * fresh install never needs an extra directory level.
-     */
-    fun scopeDirectory(filesDir: File, scope: RuleScope): File =
-        if (scope == RuleScope.HTTPS) File(rootDirectory(filesDir), HTTPS_DIR_NAME) else rootDirectory(filesDir)
+    /** Directory holding one scope's artifacts. */
+    fun scopeDirectory(filesDir: File, scope: RuleScope = RuleScope.DNS): File = rootDirectory(filesDir)
 
     /** Every scope directory that may hold artifacts. */
-    fun allScopeDirectories(filesDir: File): List<File> =
-        listOf(scopeDirectory(filesDir, RuleScope.DNS), scopeDirectory(filesDir, RuleScope.HTTPS))
+    fun allScopeDirectories(filesDir: File): List<File> = listOf(rootDirectory(filesDir))
 
     // ------------------------------------------------------------- artifacts
 

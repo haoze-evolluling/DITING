@@ -117,7 +117,6 @@ internal fun translateDynamicPattern(text: String): String? = when {
     text.startsWith("单应用域名放行：") -> text.replace("单应用域名放行：", "Per-app domain allowlist: ")
     text.startsWith("应用白名单域名：") -> text.replace("应用白名单域名：", "App allowlist domain: ")
     text.startsWith("操作失败：") -> text.replace("操作失败：", "Operation failed: ").replace("未知错误", "Unknown error")
-    text.startsWith("不支持旧版本配置文件") -> "Legacy configuration versions are not supported. Please re-export the latest configuration on the original device."
     text.startsWith("配置缺少 ") -> text.replace("配置缺少 ", "The configuration is missing ")
     text.startsWith("配置字段 ") && text.endsWith(" 格式错误") -> text.removeSuffix(" 格式错误").removePrefix("配置字段 ") + " has an invalid format"
     text.startsWith("备份缺少 ") -> text.replace("备份缺少 ", "The backup is missing ")

@@ -73,7 +73,6 @@ class ConfigExporter(private val context: Context) {
                 put("hiddenProviderRefs", serializeProviderIds(homeVisibility.hiddenProviderIds))
                 put("visibleProviderRefs", serializeProviderIds(homeVisibility.visibleProviderIds))
             })
-            root.put("raceProviderRefs", serializeProviderIds(ResolutionSettingsStore.getRaceProviderIds(context)))
             root.put("smartPredictionProviderRefs", serializeProviderIds(ResolutionSettingsStore.getSmartPredictionProviderIds(context)))
             root.put("parallelRaceProviderRefs", serializeProviderIds(ResolutionSettingsStore.getParallelRaceProviderIds(context)))
             root.put("primaryBackupProviderRefs", JSONArray().apply {

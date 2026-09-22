@@ -62,7 +62,6 @@ fun SubscriptionScreen(
     val context = LocalContext.current
     val subscriptions by viewModel.subscriptions.collectAsStateWithLifecycle()
     val pendingSubscriptions by viewModel.pendingSubscriptions.collectAsStateWithLifecycle()
-    val dnsImportCandidates by viewModel.dnsImportCandidates.collectAsStateWithLifecycle()
     val mirrorTemplates by viewModel.mirrorTemplates.collectAsStateWithLifecycle(initialValue = emptyList())
     val subscriptionGroups by viewModel.subscriptionGroups.collectAsStateWithLifecycle(initialValue = emptyList())
     val allSubscriptions by viewModel.allSubscriptions.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -85,8 +84,6 @@ fun SubscriptionScreen(
         }
     }
 
-    var showAddChoiceDialog by remember { mutableStateOf(false) }
-    var showDnsImportDialog by remember { mutableStateOf(false) }
     var showActionDialog by remember { mutableStateOf<SubscriptionEntity?>(null) }
     var showDeleteDialog by remember { mutableStateOf<SubscriptionEntity?>(null) }
     var showUrlDialog by remember { mutableStateOf<SubscriptionEntity?>(null) }
@@ -128,13 +125,7 @@ fun SubscriptionScreen(
             IconButton(onClick = viewModel::updateAllSubscriptions, enabled = displayedSubscriptions.isNotEmpty() && !busy) {
                 Icon(Icons.Default.Refresh, contentDescription = localizedText("更新所有订阅"))
             }
-            IconButton(onClick = {
-                if (ruleScope == com.haoze.diting.data.entity.RuleScope.HTTPS) {
-                    showAddChoiceDialog = true
-                } else {
-                    openAddSubscription()
-                }
-            }, enabled = !busy) {
+            IconButton(onClick = ::openAddSubscription, enabled = !busy) {
                 Icon(Icons.Default.Add, contentDescription = localizedText("添加规则订阅"))
             }
         },
@@ -236,34 +227,6 @@ fun SubscriptionScreen(
                 )
             }
         }
-    }
-
-    if (showAddChoiceDialog) {
-        AddSubscriptionChoiceDialog(
-            onDismiss = { showAddChoiceDialog = false },
-            onAddRemote = {
-                showAddChoiceDialog = false
-                openAddSubscription()
-            },
-            onImportFromDns = if (ruleScope == com.haoze.diting.data.entity.RuleScope.HTTPS) {
-                {
-                    showAddChoiceDialog = false
-                    showDnsImportDialog = true
-                }
-            } else null
-        )
-    }
-
-    if (showDnsImportDialog) {
-        DnsSubscriptionImportDialog(
-            candidates = dnsImportCandidates,
-            existingUrls = displayedSubscriptions.mapTo(HashSet()) { it.url },
-            onDismiss = { showDnsImportDialog = false },
-            onConfirm = { ids ->
-                viewModel.importDnsSubscriptions(ids)
-                showDnsImportDialog = false
-            }
-        )
     }
 
     showUrlDialog?.let { sub ->

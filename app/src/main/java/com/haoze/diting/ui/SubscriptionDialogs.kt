@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
-import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PowerSettingsNew
@@ -30,7 +28,6 @@ import com.haoze.diting.data.entity.SubscriptionGroupEntity
 import com.haoze.diting.data.entity.SubscriptionKind
 import com.haoze.diting.data.entity.SubscriptionSourceType
 import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
-import com.haoze.diting.ui.components.SettingsCheckboxItem
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsDivider
 import com.haoze.diting.ui.components.SettingsItem
@@ -91,105 +88,6 @@ internal fun SubscriptionActionDialog(
             TextButton(onClick = onDismiss) {
                 Text(localizedText("取消"))
             }
-        }
-    )
-}
-
-@Composable
-internal fun AddSubscriptionChoiceDialog(
-    onDismiss: () -> Unit,
-    onAddRemote: () -> Unit,
-    onImportFromDns: (() -> Unit)?
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(localizedText("添加规则订阅")) },
-        text = {
-            Column {
-                SettingsSurfaceGroup(
-                    groupContentPadding = PaddingValues.Zero,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    content = buildList {
-                        add {
-                            SettingsItem(
-                                title = localizedText("添加网络规则订阅"),
-                                subtitle = localizedText("支持 AdGuard、hosts 及复合网络规则订阅链接"),
-                                leadingIcon = Icons.Default.CloudDownload,
-                                onClick = onAddRemote
-                            )
-                        }
-                        if (onImportFromDns != null) {
-                            add {
-                                SettingsItem(
-                                    title = localizedText("复制 DNS 订阅导入"),
-                                    subtitle = localizedText("从 DNS 范围复制已有网络订阅"),
-                                    leadingIcon = Icons.AutoMirrored.Filled.PlaylistAdd,
-                                    onClick = onImportFromDns
-                                )
-                            }
-                        }
-                    }
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(localizedText("取消")) }
-        }
-    )
-}
-
-@Composable
-internal fun DnsSubscriptionImportDialog(
-    candidates: List<SubscriptionEntity>,
-    existingUrls: Set<String>,
-    onDismiss: () -> Unit,
-    onConfirm: (Set<Long>) -> Unit
-) {
-    var selectedIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(localizedText("复制 DNS 订阅导入")) },
-        text = {
-            Column {
-                Text(
-                    text = localizedText("复制 DNS 的网络过滤订阅到 HTTPS，之后两边可独立维护。"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 12.dp)
-                )
-                if (candidates.isEmpty()) {
-                    Text(
-                        text = localizedText("暂无可导入的 DNS 网络过滤订阅"),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 12.dp)
-                    )
-                } else {
-                    candidates.forEachIndexed { index, subscription ->
-                        val alreadyImported = subscription.url in existingUrls
-                        SettingsCheckboxItem(
-                            title = subscription.name,
-                            subtitle = if (alreadyImported) localizedText("已导入 HTTPS") else subscription.url,
-                            checked = subscription.id in selectedIds,
-                            enabled = !alreadyImported,
-                            contentPadding = PaddingValues(vertical = 12.dp),
-                            onCheckedChange = { checked ->
-                                selectedIds = if (checked) selectedIds + subscription.id else selectedIds - subscription.id
-                            }
-                        )
-                        if (index < candidates.lastIndex) SettingsDivider()
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(selectedIds) }, enabled = selectedIds.isNotEmpty()) {
-                Text(localizedText("导入规则"))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(localizedText("取消")) }
         }
     )
 }
