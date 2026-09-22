@@ -1,0 +1,73 @@
+# ====================================================================
+# Android & Gradle Build Outputs
+# ====================================================================
+build/
+.gradle/
+.kotlin/
+.cxx/
+.externalNativeBuild/
+captures/
+*.apk
+*.ap_
+*.aab
+
+# Backup & generated library files (merged from app/libs/.gitignore)
+*.aar.bak
+*.bak
+
+# ====================================================================
+# Local Configuration & SDK
+# ====================================================================
+local.properties
+
+# ====================================================================
+# IDEs, Editors & Developer Tools
+# ====================================================================
+# IntelliJ IDEA / Android Studio
+*.iml
+.idea/
+
+# VS Code
+.vscode/
+
+# AI Coding Assistants & Environments
+.workbuddy/
+.workbuddy-ai/
+.trae/
+.zcode/
+.codebase-memory/
+.agents/
+.codex/
+
+# ====================================================================
+# Keystores & Signing Credentials
+# ====================================================================
+*.keystore
+*.jks
+*.p12
+keystore/
+DITING-keystore/
+secrets/
+keystore.properties
+signing.properties
+
+# ====================================================================
+# Python (merged from scripts/.gitignore)
+# ====================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ====================================================================
+# OS & System Files
+# ====================================================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ====================================================================
+# Temporary Files
+# ====================================================================
+.tmp/
+*.tmp
