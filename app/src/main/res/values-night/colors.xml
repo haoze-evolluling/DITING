@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="diting_window_background">#FF1C1B1F</color>
+    <color name="app_startup_background">#FF1C1B1F</color>
     <color name="ic_launcher_foreground">#FF5CB67B</color>
     <color name="ic_launcher_background">#FF1C1B1F</color>
+    <color name="splash_card_stroke">#25FFFFFF</color>
 </resources>

@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <style name="Theme.DITING.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/app_startup_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.DITING</item>
+    </style>
+
     <style name="Theme.DITING" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/diting_window_background</item>
     </style>

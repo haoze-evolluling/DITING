@@ -54,8 +54,8 @@ android {
         applicationId = "com.haoze.diting"
         minSdk = 29
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 6
+        versionName = "1.0.5"
         ndk {
             abiFilters += "arm64-v8a"
         }
@@ -147,6 +147,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.okhttp)
     implementation(libs.androidx.room.runtime)

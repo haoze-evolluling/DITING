@@ -2,4 +2,5 @@
 <resources>
     <color name="ic_launcher_foreground">@android:color/system_neutral2_700</color>
     <color name="ic_launcher_background">@android:color/system_accent1_100</color>
+    <color name="splash_card_stroke">#1F000000</color>
 </resources>
