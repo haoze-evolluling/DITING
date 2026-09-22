@@ -159,11 +159,13 @@ class MainActivity : AppLocalizedActivity() {
                 if (mainThemeRefreshRequested) {
                     themeMode = AppearanceSettingsStore.getAppThemeMode(this@MainActivity)
                     colorStyle = AppearanceSettingsStore.getThemeColorStyle(this@MainActivity)
+                    com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this@MainActivity)
                     mainThemeRefreshRequested = false
                 }
                 if (backgroundRefreshRequested) {
                     backgroundEnabled = AppearanceSettingsStore.isCustomBackgroundEnabled(this@MainActivity)
                     backgroundUri = AppearanceSettingsStore.getCustomBackgroundUri(this@MainActivity)
+                    com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this@MainActivity)
                     backgroundRefreshRequested = false
                 }
             }

@@ -96,6 +96,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     },
                     onThemeModeChanged = { mode ->
                         themeMode = mode
+                        com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this@SettingsRouteActivity)
                         recordThemeChanged()
                     },
                     onThemeColorStyleChanged = { style ->
@@ -105,6 +106,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     onCustomBackgroundChanged = {
                         backgroundEnabled = AppearanceSettingsStore.isCustomBackgroundEnabled(this@SettingsRouteActivity)
                         backgroundUri = AppearanceSettingsStore.getCustomBackgroundUri(this@SettingsRouteActivity)
+                        com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this@SettingsRouteActivity)
                         recordBackgroundChanged()
                     },
                     onExitApp = ::finishAndRemoveTask,

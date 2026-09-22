@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import com.haoze.diting.ui.AppLanguageManager
+import com.haoze.diting.ui.background.CustomBackgroundManager
 import com.haoze.diting.util.DeviceScreenHelper
 
 abstract class AppLocalizedActivity : ComponentActivity() {
@@ -14,7 +15,14 @@ abstract class AppLocalizedActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         applyOrientationPolicy()
+        CustomBackgroundManager.ensureLoaded(this)
+        CustomBackgroundManager.applyWindowBackground(this)
         super.onCreate(savedInstanceState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        CustomBackgroundManager.applyWindowBackground(this)
     }
 
     /**

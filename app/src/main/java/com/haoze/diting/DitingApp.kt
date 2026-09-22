@@ -8,6 +8,7 @@ import com.haoze.diting.crash.CrashBreadcrumbs
 import com.haoze.diting.crash.CrashCollector
 import com.haoze.diting.crash.CrashHandler
 import com.haoze.diting.crash.CrashLogManager
+import com.haoze.diting.ui.background.CustomBackgroundManager
 import com.haoze.diting.vpn.RuleIndexLayout
 import com.haoze.diting.vpn.SubscriptionAutoUpdateScheduler
 
@@ -35,6 +36,10 @@ class DitingApp : Application() {
         CrashHandler.install(this)
         CrashBreadcrumbs.record("APP", "Application.onCreate() initialized")
 
+        // Preload and ensure custom background image is loaded in memory synchronously on cold start
+        // so the home screen displays seamlessly without white flash.
+        CustomBackgroundManager.ensureLoaded(this)
+
         // Asynchronously check for and extract any uncaught native crash from the
         // previous run (Android 11+).
         Thread({
@@ -49,6 +54,10 @@ class DitingApp : Application() {
         // Track activity lifecycles to keep the foreground state current and to
         // record crash breadcrumbs.
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+                CustomBackgroundManager.applyWindowBackground(activity)
+            }
+
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 CrashBreadcrumbs.record("LIFECYCLE", "${activity.javaClass.simpleName} created")
             }
@@ -87,5 +96,10 @@ class DitingApp : Application() {
                 CrashBreadcrumbs.record("LIFECYCLE", "${activity.javaClass.simpleName} destroyed")
             }
         })
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        CustomBackgroundManager.onTrimMemory(level)
     }
 }

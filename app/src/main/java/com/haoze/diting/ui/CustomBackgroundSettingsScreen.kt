@@ -71,6 +71,7 @@ fun CustomBackgroundSettingsScreen(
 
     fun applyBackgroundChange(enabled: Boolean, uri: String?) {
         AppearanceSettingsStore.setCustomBackground(context, enabled, uri)
+        com.haoze.diting.ui.background.CustomBackgroundManager.onBackgroundSettingsChanged(context, enabled, uri)
         refreshBackgroundState()
         onBackgroundChanged()
     }
@@ -151,6 +152,9 @@ fun CustomBackgroundSettingsScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         AppearanceSettingsStore.removeCustomBackgroundUri(context, uri)
+                        val currentEnabled = AppearanceSettingsStore.isCustomBackgroundEnabled(context)
+                        val currentUri = AppearanceSettingsStore.getCustomBackgroundUri(context)
+                        com.haoze.diting.ui.background.CustomBackgroundManager.onBackgroundSettingsChanged(context, currentEnabled, currentUri)
                         pendingDeletionUri = null
                         refreshBackgroundState()
                         onBackgroundChanged()
@@ -177,14 +181,11 @@ private fun WallpaperThumbnail(
     val configuration = LocalConfiguration.current
     val screenAspectRatio = configuration.screenWidthDp.toFloat() /
         configuration.screenHeightDp.coerceAtLeast(1).toFloat()
-    val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(initialValue = null, uri) {
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                context.contentResolver.openInputStream(Uri.parse(uri)).use { stream ->
-                    BitmapFactory.decodeStream(stream)?.asImageBitmap()
-                }
-            }.getOrNull()
-        }
+    val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(
+        initialValue = com.haoze.diting.ui.background.CustomBackgroundManager.getCachedImageBitmap(uri),
+        uri
+    ) {
+        value = com.haoze.diting.ui.background.CustomBackgroundManager.getOrLoadThumbnail(context, uri)
     }
 
     Box(
