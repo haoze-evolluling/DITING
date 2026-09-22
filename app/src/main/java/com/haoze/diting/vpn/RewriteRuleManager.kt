@@ -223,7 +223,6 @@ class RewriteRuleManager(
             // Only this type's artifacts: clearing rewrite rules must never
             // invalidate the block / allow indexes sharing the same directory.
             runCatching { RuleIndexLayout.hostsIndex(directory).delete() }
-            runCatching { RuleIndexLayout.legacyHostsFiles(directory).forEach { it.delete() } }
         }
     }
 

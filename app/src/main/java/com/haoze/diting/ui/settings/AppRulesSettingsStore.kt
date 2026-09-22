@@ -12,9 +12,7 @@ object AppRulesSettingsStore {
     private const val KEY_BLOCKED_APPS_ENABLED = "blocked_apps_enabled"
     private const val KEY_BLOCKED_APPS_FILTER = "blocked_apps_filter"
     private const val KEY_BLOCKED_APPS_SORT = "blocked_apps_sort"
-    private const val KEY_APP_ALLOWLIST_PACKAGES = "app_allowlist_packages"
     private const val KEY_APP_ALLOWLIST_ENABLED = "app_allowlist_enabled"
-    private const val KEY_APP_ALLOWLIST_DOMAINS = "app_allowlist_domains"
     private const val KEY_APP_ALLOWLIST_FILTER = "app_allowlist_filter"
     private const val KEY_APP_ALLOWLIST_SORT = "app_allowlist_sort"
     private const val KEY_HTTP_INSPECTION_ENABLED = "http_inspection_enabled"
@@ -108,14 +106,6 @@ object AppRulesSettingsStore {
 
     fun getAppAllowlistRuleMap(context: Context): Map<String, Set<String>> {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        // Directly remove and reset legacy configuration for this feature
-        if (prefs.contains(KEY_APP_ALLOWLIST_DOMAINS) || prefs.contains(KEY_APP_ALLOWLIST_PACKAGES)) {
-            prefs.edit()
-                .remove(KEY_APP_ALLOWLIST_DOMAINS)
-                .remove(KEY_APP_ALLOWLIST_PACKAGES)
-                .remove(KEY_APP_ALLOWLIST_ENABLED)
-                .apply()
-        }
         val jsonStr = prefs.getString(KEY_APP_ALLOWLIST_RULES_JSON, null) ?: return emptyMap()
         val result = mutableMapOf<String, Set<String>>()
         try {

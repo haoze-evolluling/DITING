@@ -102,8 +102,6 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "分别设置 DNS 服务开启和关闭时的通知栏文案" -> "Set separate notification text for when the DNS service is enabled and disabled"
     "通知栏显示实时速率" -> "Show real-time speed in notification"
     "软件背景" -> "App background"
-    "旧版日志页面" -> "Legacy log page"
-    "使用旧版日志页面" -> "Use legacy log page"
     "启用软件背景" -> "Enable app background"
     "已添加壁纸" -> "Added wallpapers"
     "主题色" -> "Accent color"

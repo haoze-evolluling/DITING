@@ -41,13 +41,6 @@ class DitingApp : Application() {
             CrashLogManager.checkAndCollectNativeCrashes(this)
         }, "NativeCrashCollector").start()
 
-        // Move rule index artifacts left over from the pre-type-split layout into
-        // the current layout. Renames only, so an upgrade keeps its compiled
-        // indexes; off the main thread because it touches the filesystem.
-        Thread({
-            runCatching { RuleIndexLayout.migrateLegacyLayout(filesDir) }
-        }, "RuleIndexLayoutMigration").start()
-
         // Reconcile periodic rule subscription auto-update schedule on app startup.
         Thread({
             runCatching { SubscriptionAutoUpdateScheduler.sync(this) }

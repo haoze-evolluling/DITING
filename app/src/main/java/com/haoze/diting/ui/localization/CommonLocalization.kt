@@ -313,7 +313,6 @@ internal fun translateCommonExact(text: String): String? = when (text) {
     "无法读取所选文件" -> "Unable to read the selected file"
     "安装包不存在或无法打开，请重新下载。" -> "The package does not exist or cannot be opened. Download it again."
     "下载完成，请点击安装。" -> "Download complete. Tap Install."
-    "传统 DNS 过滤" -> "Traditional DNS filtering"
     "服务显示" -> "Provider visibility"
     "请先添加一张图片" -> "Add an image first"
     "继续开启" -> "Keep enabled"

@@ -13,9 +13,6 @@ object StartupSelfCheck {
     private const val KEY_CUSTOM_BACKGROUND_URIS = "custom_background_uris"
     private const val KEY_CUSTOM_BACKGROUND_ENABLED = "custom_background_enabled"
     private const val KEY_OUTBOUND_PROXY_PORT = "outbound_proxy_port"
-    private const val KEY_HTTP_INSPECTION_RESET_OPT_IN_V1 = "http_inspection_reset_opt_in_v1"
-    private const val KEY_HTTP_INSPECTION_APP_PACKAGES = "http_inspection_app_packages"
-    private const val KEY_HTTP_INSPECTION_ENABLED = "http_inspection_enabled"
 
     /**
      * Runs a lightweight configuration self-check with fallbacks at app startup, cleaning up obsolete keys and corrupted
@@ -68,29 +65,6 @@ object StartupSelfCheck {
         val proxyPort = prefs.getInt(KEY_OUTBOUND_PROXY_PORT, 7890)
         if (proxyPort !in 1..65535) {
             editor.putInt(KEY_OUTBOUND_PROXY_PORT, 7890)
-            hasChanges = true
-        }
-
-        // 6. Clean up any leftover obsolete keys
-        val legacyKeys = listOf(
-            "legacy_icon_enabled",
-            "legacy_log_page_enabled",
-            "race_mode_enabled",
-            "race_mode_strategy",
-            "http_inspection_apps_initialized"
-        )
-        for (legacyKey in legacyKeys) {
-            if (prefs.contains(legacyKey)) {
-                editor.remove(legacyKey)
-                hasChanges = true
-            }
-        }
-
-        // 7. Upgrade migration from older versions: reset the selected apps to none selected in one shot, and turn off HTTPS traffic inspection
-        if (!prefs.getBoolean(KEY_HTTP_INSPECTION_RESET_OPT_IN_V1, false)) {
-            editor.putStringSet(KEY_HTTP_INSPECTION_APP_PACKAGES, emptySet())
-            editor.putBoolean(KEY_HTTP_INSPECTION_ENABLED, false)
-            editor.putBoolean(KEY_HTTP_INSPECTION_RESET_OPT_IN_V1, true)
             hasChanges = true
         }
 

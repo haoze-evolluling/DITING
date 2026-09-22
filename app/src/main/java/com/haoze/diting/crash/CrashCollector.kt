@@ -383,15 +383,9 @@ object CrashCollector {
         }
 
     private fun getProcessName(context: Context): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        return runCatching {
             android.app.Application.getProcessName()
-        } else {
-            runCatching {
-                val pid = Process.myPid()
-                val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-                am?.runningAppProcesses?.firstOrNull { it.pid == pid }?.processName
-            }.getOrNull() ?: context.packageName
-        }
+        }.getOrNull() ?: context.packageName
     }
 
     private fun formatDuration(millis: Long): String {
@@ -417,11 +411,7 @@ object CrashCollector {
                 arrayOf("logcat", "-d", "-v", "time", "-t", "60")
             )
             // Wait up to 1 second
-            val finished = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                process.waitFor(1000, TimeUnit.MILLISECONDS)
-            } else {
-                true
-            }
+            val finished = process.waitFor(1000, TimeUnit.MILLISECONDS)
             if (!finished) {
                 process.destroy()
                 return@runCatching "(Logcat read timed out)"

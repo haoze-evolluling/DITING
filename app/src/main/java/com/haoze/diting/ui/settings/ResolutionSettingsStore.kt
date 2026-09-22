@@ -9,11 +9,9 @@ import com.haoze.diting.vpn.DnsProtocol
 import org.json.JSONArray
 
 object ResolutionSettingsStore {
-    const val KEY_RACE_MODE_ENABLED = "race_mode_enabled"
     const val KEY_RACE_PROVIDER_IDS = "race_provider_ids"
     const val KEY_RACE_TEST_DOMAIN = "race_test_domain"
     const val KEY_LATENCY_TEST_PROVIDER_IDS = "latency_test_provider_ids"
-    const val KEY_RACE_MODE_STRATEGY = "race_mode_strategy"
 
     internal const val KEY_DNS_RESOLUTION_MODE = "dns_resolution_mode"
     internal const val KEY_PRESET_DNS_SERVICE = "preset_dns_service"
