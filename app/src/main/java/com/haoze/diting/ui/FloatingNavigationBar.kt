@@ -460,8 +460,8 @@ fun FloatingNavigationBar(
                                     pagerCatchUpDeadlineNano =
                                         System.nanoTime() + PAGER_CATCH_UP_TIMEOUT_NANO
                                 }
-                                onPageSelected(index)
                             }
+                            onPageSelected(index)
                         }
                     )
                 }

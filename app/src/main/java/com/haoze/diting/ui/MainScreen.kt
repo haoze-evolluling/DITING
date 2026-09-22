@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -113,6 +114,7 @@ fun MainScreen(
     val coroutineScope = rememberCoroutineScope()
     val pageAlpha = remember { Animatable(1f) }
     var pageSwitchJob by remember { mutableStateOf<Job?>(null) }
+    var logDashboardRefreshTrigger by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(bottomBarRefreshRequested) {
         if (bottomBarRefreshRequested) {
@@ -267,7 +269,9 @@ fun MainScreen(
                         onNavigateToSubscriptionInterceptionStats = { onNavigateToLogRoute(Routes.SUBSCRIPTION_INTERCEPTION_STATS) },
                         onNavigateToTrafficStats = onNavigateToTrafficStats,
                         showBackIcon = false,
-                        contentBottomPadding = 108.dp
+                        contentBottomPadding = 108.dp,
+                        isActive = pagerState.currentPage == page,
+                        refreshTrigger = logDashboardRefreshTrigger
                     )
                 }
                 BottomBarDestination.APP_TRAFFIC_STATS -> {
@@ -322,6 +326,10 @@ fun MainScreen(
                             } finally {
                                 pageAlpha.snapTo(1f)
                             }
+                        }
+                    } else {
+                        if (bottomBarItems.getOrNull(targetPage) == BottomBarDestination.LOG_DASHBOARD) {
+                            logDashboardRefreshTrigger++
                         }
                     }
                 },

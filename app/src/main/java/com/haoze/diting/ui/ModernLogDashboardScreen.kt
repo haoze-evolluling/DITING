@@ -20,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +30,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.diting.ui.components.SettingsScaffold
@@ -48,15 +52,32 @@ fun ModernLogDashboardScreen(
     onNavigateToTrafficStats: (() -> Unit)? = null,
     viewModel: ModernLogDashboardViewModel = viewModel(),
     showBackIcon: Boolean = true,
-    contentBottomPadding: androidx.compose.ui.unit.Dp = 0.dp
+    contentBottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    isActive: Boolean = true,
+    refreshTrigger: Long = 0L
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = MaterialTheme.colorScheme
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var showAgentAnalysis by remember { mutableStateOf(false) }
 
-    LaunchedEffect(viewModel) {
-        viewModel.refresh()
+    LaunchedEffect(isActive, refreshTrigger) {
+        if (isActive) {
+            viewModel.refresh(force = refreshTrigger > 0L)
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, isActive) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && isActive) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     val subtitle = remember(uiState.logMode, uiState.generatedAt, uiState.hasData) {
@@ -107,7 +128,7 @@ fun ModernLogDashboardScreen(
                     tint = colors.primary
                 )
             }
-            IconButton(onClick = viewModel::refresh) {
+            IconButton(onClick = { viewModel.refresh(force = true) }) {
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = localizedText("刷新")

@@ -18,6 +18,7 @@ import com.haoze.diting.ui.settings.SystemSettingsStore
 import com.haoze.diting.util.dayStartMillis
 import com.haoze.diting.vpn.LogResult
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -120,13 +121,23 @@ class ModernLogDashboardViewModel(application: Application) : AndroidViewModel(a
     private val _uiState = MutableStateFlow(ModernLogDashboardUiState())
     val uiState: StateFlow<ModernLogDashboardUiState> = _uiState.asStateFlow()
 
-    fun refresh() {
-        viewModelScope.launch(Dispatchers.IO) {
+    private var refreshJob: Job? = null
+    private var lastRefreshTimeMs: Long = 0L
+
+    fun refresh(force: Boolean = false) {
+        val now = System.currentTimeMillis()
+        if (!force && now - lastRefreshTimeMs < 500L) {
+            return
+        }
+        lastRefreshTimeMs = now
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = _uiState.value.copy(loading = true, error = null)
             val result = runCatching { buildDashboardState() }
             _uiState.value = result.fold(
                 onSuccess = { it },
                 onFailure = { error ->
+                    lastRefreshTimeMs = 0L
                     _uiState.value.copy(
                         loading = false,
                         hasData = _uiState.value.hasData,
