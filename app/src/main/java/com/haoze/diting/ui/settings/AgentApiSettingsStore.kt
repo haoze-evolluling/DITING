@@ -256,6 +256,9 @@ object AgentApiSettingsStore {
     const val KEY_AGENT_TEMPERATURE = "agent_api_temperature"
     const val KEY_AGENT_SYSTEM_PROMPT = "agent_api_system_prompt"
 
+    const val KEY_AI_PROVIDERS = "agent_ai_providers_json"
+    const val KEY_ACTIVE_PROVIDER_ID = "agent_ai_active_provider_id"
+
     fun getAgentApiConfig(context: Context): AgentApiConfig {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val storedModel = prefs.getString(KEY_AGENT_MODEL, null)
@@ -282,4 +285,98 @@ object AgentApiSettingsStore {
             .putString(KEY_AGENT_SYSTEM_PROMPT, config.systemPrompt.trim())
             .apply()
     }
+
+    fun getProviders(context: Context): List<AiProvider> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val raw = prefs.getString(KEY_AI_PROVIDERS, null)
+        if (raw == null) {
+            // 首次启动，进行无损迁移或预设初始化
+            return performInitialMigration(context)
+        }
+        return decodeAiProviders(raw)
+    }
+
+    fun saveProviders(context: Context, providers: List<AiProvider>) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_AI_PROVIDERS, encodeAiProviders(providers)).apply()
+        // 同步当前活跃厂商信息到 AgentApiConfig
+        val activeId = getActiveProviderId(context)
+        val activeProvider = providers.find { it.id == activeId } ?: providers.firstOrNull()
+        if (activeProvider != null) {
+            syncProviderToConfig(context, activeProvider)
+        }
+    }
+
+    fun getActiveProviderId(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(KEY_ACTIVE_PROVIDER_ID, "").orEmpty()
+    }
+
+    fun setActiveProviderId(context: Context, id: String) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_ACTIVE_PROVIDER_ID, id).apply()
+        val providers = getProviders(context)
+        val activeProvider = providers.find { it.id == id }
+        if (activeProvider != null) {
+            syncProviderToConfig(context, activeProvider)
+        }
+    }
+
+    fun getActiveProvider(context: Context): AiProvider? {
+        val providers = getProviders(context)
+        val activeId = getActiveProviderId(context)
+        return providers.find { it.id == activeId } ?: providers.firstOrNull()
+    }
+
+    fun revealApiKey(provider: AiProvider): String {
+        return if (provider.apiKey.isBlank()) "" else com.haoze.diting.util.KeyObfuscator.open(provider.apiKey)
+    }
+
+    fun sealApiKey(plainKey: String): String {
+        return if (plainKey.isBlank()) "" else com.haoze.diting.util.KeyObfuscator.seal(plainKey.trim())
+    }
+
+    private fun syncProviderToConfig(context: Context, provider: AiProvider) {
+        val currentConfig = getAgentApiConfig(context)
+        val plainKey = revealApiKey(provider)
+        val updatedConfig = currentConfig.copy(
+            baseUrl = provider.baseUrl.trim(),
+            apiKey = plainKey.trim(),
+            model = provider.modelName.trim()
+        )
+        setAgentApiConfig(context, updatedConfig)
+    }
+
+    private fun performInitialMigration(context: Context): List<AiProvider> {
+        val currentConfig = getAgentApiConfig(context)
+        val initialProviders = mutableListOf<AiProvider>()
+
+        if (currentConfig.apiKey.isNotBlank() || currentConfig.baseUrl != AgentApiConfig.DEFAULT_BASE_URL) {
+            val migratedProvider = AiProvider(
+                id = "migrated_default",
+                name = "已配置厂商",
+                baseUrl = currentConfig.baseUrl,
+                apiKey = com.haoze.diting.util.KeyObfuscator.seal(currentConfig.apiKey),
+                modelName = currentConfig.model,
+                presetId = ""
+            )
+            initialProviders.add(migratedProvider)
+            saveProviders(context, initialProviders)
+            setActiveProviderId(context, migratedProvider.id)
+        } else {
+            val defaultPreset = AiProvider(
+                id = "preset_deepseek",
+                name = "DeepSeek",
+                baseUrl = "https://api.deepseek.com",
+                apiKey = "",
+                modelName = "deepseek-chat",
+                presetId = "deepseek"
+            )
+            initialProviders.add(defaultPreset)
+            saveProviders(context, initialProviders)
+            setActiveProviderId(context, defaultPreset.id)
+        }
+        return initialProviders
+    }
 }
+

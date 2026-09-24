@@ -1,6 +1,8 @@
 package com.haoze.diting
 
+import com.haoze.diting.ui.settings.AiProviderManageScreen
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
+
 import com.haoze.diting.ui.settings.SystemSettingsStore
 import com.haoze.diting.ui.showToast
 import android.content.Intent
@@ -286,8 +288,9 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.OUTBOUND_PROXY_APP_SELECTION -> OutboundProxyAppsScreen(onBack, ::finishOutboundProxyAppSelection)
             Routes.BLOCK_RESPONSE_SETTINGS -> BlockResponseSettingsScreen(onBack, onRuntimeDnsSettingsChanged)
             Routes.AGENT_API_SETTINGS -> AgentApiSettingsScreen(onBack, onNavigate = onNavigate)
-            Routes.AGENT_API_CREDENTIALS -> AgentApiCredentialsScreen(onBack)
-            Routes.AGENT_API_PRESETS -> AgentApiPresetsScreen(onBack)
+            Routes.AI_PROVIDER_MANAGEMENT,
+            Routes.AGENT_API_CREDENTIALS,
+            Routes.AGENT_API_PRESETS -> AiProviderManageScreen(onBack)
             Routes.AGENT_API_PARAMS -> AgentApiParamsScreen(onBack)
             Routes.DATA_CLEANUP -> SettingsGuideHost(SettingsGuides.DATA_CLEANUP) { DataCleanupScreen(onBack, requestedTitle ?: ScreenDestinations.dataCleanup.title, onRuntimeDnsSettingsChanged, onExitApp) }
             Routes.CONFIG_TRANSFER -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "备份与迁移") }

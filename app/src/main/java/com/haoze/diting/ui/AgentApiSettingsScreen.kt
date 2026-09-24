@@ -36,10 +36,11 @@ import com.haoze.diting.ui.components.AppAlertDialog
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.settings.AgentApiConfig
-import com.haoze.diting.ui.settings.AgentApiPresetStore
 import com.haoze.diting.ui.settings.AgentApiSettingsStore
+import com.haoze.diting.ui.settings.AiProvider
 
 enum class AgentApiSubPage {
+    PROVIDERS,
     CREDENTIALS,
     PRESETS,
     PARAMS
@@ -62,11 +63,11 @@ fun AgentApiSettingsScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var config by remember { mutableStateOf(AgentApiSettingsStore.getAgentApiConfig(context)) }
-    var presets by remember { mutableStateOf(AgentApiPresetStore.getOrderedPresets(context)) }
+    var activeProvider by remember { mutableStateOf(AgentApiSettingsStore.getActiveProvider(context)) }
 
     fun refreshState() {
         config = AgentApiSettingsStore.getAgentApiConfig(context)
-        presets = AgentApiPresetStore.getOrderedPresets(context)
+        activeProvider = AgentApiSettingsStore.getActiveProvider(context)
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -83,8 +84,9 @@ fun AgentApiSettingsScreen(
 
     LaunchedEffect(initialSubPage) {
         when (initialSubPage) {
-            AgentApiSubPage.CREDENTIALS -> onNavigate(Routes.AGENT_API_CREDENTIALS)
-            AgentApiSubPage.PRESETS -> onNavigate(Routes.AGENT_API_PRESETS)
+            AgentApiSubPage.PROVIDERS,
+            AgentApiSubPage.CREDENTIALS,
+            AgentApiSubPage.PRESETS -> onNavigate(Routes.AI_PROVIDER_MANAGEMENT)
             AgentApiSubPage.PARAMS -> onNavigate(Routes.AGENT_API_PARAMS)
             null -> Unit
         }
@@ -96,12 +98,7 @@ fun AgentApiSettingsScreen(
     fun updateConfig(newConfig: AgentApiConfig) {
         config = newConfig
         AgentApiSettingsStore.setAgentApiConfig(context, newConfig)
-        presets = AgentApiPresetStore.getOrderedPresets(context)
-    }
-
-    val activePreset = presets.firstOrNull {
-        it.baseUrl.equals(config.baseUrl, ignoreCase = true) &&
-                it.model.equals(config.model, ignoreCase = true)
+        activeProvider = AgentApiSettingsStore.getActiveProvider(context)
     }
 
     SettingsScaffold(title = localizedText(title), onBack = onBack) { innerPadding ->
@@ -116,7 +113,7 @@ fun AgentApiSettingsScreen(
             item {
                 AgentApiStatusCard(
                     config = config,
-                    activePreset = activePreset,
+                    activeProvider = activeProvider,
                     onEnabledChange = { enabled ->
                         updateConfig(config.copy(enabled = enabled))
                     }
@@ -127,11 +124,11 @@ fun AgentApiSettingsScreen(
             item { SettingsGroupTitle(localizedText("详细设置")) }
             item {
                 AgentApiNavigationGroup(
-                    onNavigateToCredentials = { onNavigate(Routes.AGENT_API_CREDENTIALS) },
-                    onNavigateToPresets = { onNavigate(Routes.AGENT_API_PRESETS) },
+                    onNavigateToProviders = { onNavigate(Routes.AI_PROVIDER_MANAGEMENT) },
                     onNavigateToParams = { onNavigate(Routes.AGENT_API_PARAMS) }
                 )
             }
+
 
             // 3. Live Playground
             item { SettingsGroupTitle(localizedText("功能测试")) }
@@ -205,7 +202,7 @@ fun AgentApiSettingsScreen(
         target = activeAnalysisTarget,
         onDismiss = { activeAnalysisTarget = null },
         onNavigateToSettings = {
-            onNavigate(Routes.AGENT_API_CREDENTIALS)
+            onNavigate(Routes.AI_PROVIDER_MANAGEMENT)
         }
     )
 }

@@ -50,7 +50,7 @@ import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.settings.AgentApiConfig
-import com.haoze.diting.ui.settings.ModelPreset
+import com.haoze.diting.ui.settings.AiProvider
 
 /**
  * Main overview and status card on the Agent API hub page.
@@ -58,7 +58,7 @@ import com.haoze.diting.ui.settings.ModelPreset
 @Composable
 internal fun AgentApiStatusCard(
     config: AgentApiConfig,
-    activePreset: ModelPreset?,
+    activeProvider: AiProvider?,
     onEnabledChange: (Boolean) -> Unit
 ) {
     SettingsSurfaceGroup(
@@ -99,13 +99,17 @@ internal fun AgentApiStatusCard(
                         ) {
                             Column(modifier = Modifier.padding(10.dp)) {
                                 Text(
-                                    text = localizedText("当前模型"),
+                                    text = localizedText("当前厂商与模型"),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = activePreset?.name ?: config.model,
+                                    text = if (activeProvider != null) {
+                                        "${activeProvider.name} (${activeProvider.modelName.ifBlank { config.model }})"
+                                    } else {
+                                        config.model
+                                    },
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1
@@ -149,26 +153,17 @@ internal fun AgentApiStatusCard(
  */
 @Composable
 internal fun AgentApiNavigationGroup(
-    onNavigateToCredentials: () -> Unit,
-    onNavigateToPresets: () -> Unit,
+    onNavigateToProviders: () -> Unit,
     onNavigateToParams: () -> Unit
 ) {
     SettingsSurfaceGroup(
         content = listOf(
             {
                 SettingsNavigationRow(
-                    icon = Icons.Filled.Key,
-                    title = localizedText("接口与密钥"),
-                    subtitle = localizedText("配置服务地址 Base URL、API Key 与连通性测试"),
-                    onClick = onNavigateToCredentials
-                )
-            },
-            {
-                SettingsNavigationRow(
                     icon = Icons.Filled.Layers,
-                    title = localizedText("模型与预设"),
-                    subtitle = localizedText("管理模型预设模板，支持在线拉取模型列表"),
-                    onClick = onNavigateToPresets
+                    title = localizedText("AI 厂商管理"),
+                    subtitle = localizedText("管理服务厂商、在线拉取模型与配置密钥"),
+                    onClick = onNavigateToProviders
                 )
             },
             {
@@ -182,6 +177,7 @@ internal fun AgentApiNavigationGroup(
         )
     )
 }
+
 
 @Composable
 private fun SettingsNavigationRow(
