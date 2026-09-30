@@ -28,21 +28,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -59,9 +53,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.haoze.diting.R
 import com.haoze.diting.ui.components.SettingsCornerShape
+import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.localizedText
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkModeSelectionScreen(
     isFirstLaunch: Boolean,
@@ -69,42 +63,48 @@ fun WorkModeSelectionScreen(
     onBack: () -> Unit = {},
     onModeSelected: (AppWorkMode) -> Unit
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = Color.Transparent,
-        topBar = {
-            if (!isFirstLaunch) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = localizedText("模式切换"),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = localizedText("返回")
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Transparent
-                    )
-                )
-            }
+    if (isFirstLaunch) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent
+        ) { innerPadding ->
+            WorkModeSelectionContent(
+                isFirstLaunch = true,
+                currentMode = currentMode,
+                onModeSelected = onModeSelected,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .statusBarsPadding()
+            )
         }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .navigationBarsPadding(),
-            contentAlignment = Alignment.Center
-        ) {
+    } else {
+        SettingsScaffold(
+            title = "模式切换",
+            onBack = onBack
+        ) { innerPadding ->
+            WorkModeSelectionContent(
+                isFirstLaunch = false,
+                currentMode = currentMode,
+                onModeSelected = onModeSelected,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
+    }
+}
+
+@Composable
+private fun WorkModeSelectionContent(
+    isFirstLaunch: Boolean,
+    currentMode: AppWorkMode,
+    onModeSelected: (AppWorkMode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .navigationBarsPadding(),
+        contentAlignment = Alignment.Center
+    ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -177,7 +177,6 @@ fun WorkModeSelectionScreen(
             }
         }
     }
-}
 
 @Composable
 private fun WorkModeCard(
