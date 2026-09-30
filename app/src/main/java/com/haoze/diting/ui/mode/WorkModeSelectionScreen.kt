@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -51,10 +52,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.haoze.diting.R
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.localizedText
 
@@ -114,19 +117,15 @@ fun WorkModeSelectionScreen(
                     modifier = Modifier.widthIn(max = 560.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Top Illustration / Decorative Emblem
+                    // Top Illustration / Decorative Emblem (软件启动遮罩图标与超椭圆样式)
                     Box(
-                        modifier = Modifier
-                            .size(92.dp)
-                            .clip(RoundedCornerShape(28.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        modifier = Modifier.size(92.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Layers,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(48.dp)
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_splash_logo),
+                            contentDescription = localizedText("谛听 · DITING"),
+                            modifier = Modifier.size(184.dp)
                         )
                     }
 
