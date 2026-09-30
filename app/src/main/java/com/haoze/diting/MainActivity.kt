@@ -51,6 +51,10 @@ import com.haoze.diting.notification.AppNotificationChannels
 import com.haoze.diting.notification.NotificationPermissionHelper
 import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.AppUpdateDialog
+import com.haoze.diting.ui.mode.AppWorkMode
+import com.haoze.diting.ui.mode.DnsModePlaceholderScreen
+import com.haoze.diting.ui.mode.WorkModeSelectionScreen
+import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.update.AppUpdateHost
 import com.haoze.diting.ui.localizedText
 import com.haoze.diting.vpn.DnsVpnService
@@ -118,12 +122,16 @@ class MainActivity : AppLocalizedActivity() {
             if (data.getBooleanExtra(SettingsRouteActivity.EXTRA_BOTTOM_BAR_CHANGED, false)) {
                 bottomBarRefreshRequested = true
             }
+            if (data.getBooleanExtra(SettingsRouteActivity.EXTRA_WORK_MODE_CHANGED, false)) {
+                workModeRefreshRequested = true
+            }
         }
     }
 
     private var mainThemeRefreshRequested by mutableStateOf(false)
     private var backgroundRefreshRequested by mutableStateOf(false)
     private var bottomBarRefreshRequested by mutableStateOf(false)
+    private var workModeRefreshRequested by mutableStateOf(false)
 
     private fun launchSettings(route: String) {
         if (settingsLaunchInProgress) return
@@ -153,11 +161,17 @@ class MainActivity : AppLocalizedActivity() {
             var initialAgreementAccepted by remember {
                 mutableStateOf(SystemSettingsStore.isInitialAgreementAccepted(this))
             }
+            var currentWorkMode by remember {
+                mutableStateOf(WorkModeStore.getAppWorkMode(this))
+            }
+            var hasSelectedWorkMode by remember {
+                mutableStateOf(WorkModeStore.hasSelectedWorkMode(this))
+            }
             var themeMode by remember { mutableStateOf(AppearanceSettingsStore.getAppThemeMode(this)) }
             var colorStyle by remember { mutableStateOf(AppearanceSettingsStore.getThemeColorStyle(this)) }
             var backgroundEnabled by remember { mutableStateOf(AppearanceSettingsStore.isCustomBackgroundEnabled(this)) }
             var backgroundUri by remember { mutableStateOf(AppearanceSettingsStore.getCustomBackgroundUri(this)) }
-            LaunchedEffect(mainThemeRefreshRequested, backgroundRefreshRequested) {
+            LaunchedEffect(mainThemeRefreshRequested, backgroundRefreshRequested, workModeRefreshRequested) {
                 if (mainThemeRefreshRequested) {
                     themeMode = AppearanceSettingsStore.getAppThemeMode(this@MainActivity)
                     colorStyle = AppearanceSettingsStore.getThemeColorStyle(this@MainActivity)
@@ -170,6 +184,16 @@ class MainActivity : AppLocalizedActivity() {
                     com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this@MainActivity)
                     backgroundRefreshRequested = false
                 }
+                if (workModeRefreshRequested) {
+                    currentWorkMode = WorkModeStore.getAppWorkMode(this@MainActivity)
+                    hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this@MainActivity)
+                    if (currentWorkMode == AppWorkMode.DNS) {
+                        stopVpnService()
+                    } else {
+                        initializeAcceptedExperience()
+                    }
+                    workModeRefreshRequested = false
+                }
             }
             AppThemeSurface(
                 themeMode = themeMode,
@@ -178,7 +202,48 @@ class MainActivity : AppLocalizedActivity() {
                 backgroundUri = backgroundUri,
                 modifier = Modifier.fillMaxSize()
             ) {
-                        if (initialAgreementAccepted) {
+                        if (!initialAgreementAccepted) {
+                            InitialAgreementDialog(
+                                onAccept = {
+                                    SystemSettingsStore.setInitialAgreementAccepted(this@MainActivity)
+                                    initialAgreementAccepted = true
+                                    if (WorkModeStore.hasSelectedWorkMode(this@MainActivity) &&
+                                        WorkModeStore.getAppWorkMode(this@MainActivity) == AppWorkMode.NORMAL
+                                    ) {
+                                        initializeAcceptedExperience()
+                                    }
+                                },
+                                onDecline = ::declineInitialAgreement
+                            )
+                        } else if (!hasSelectedWorkMode) {
+                            WorkModeSelectionScreen(
+                                isFirstLaunch = true,
+                                currentMode = currentWorkMode,
+                                onModeSelected = { selectedMode ->
+                                    WorkModeStore.setAppWorkMode(this@MainActivity, selectedMode)
+                                    WorkModeStore.setWorkModeSelected(this@MainActivity, true)
+                                    currentWorkMode = selectedMode
+                                    hasSelectedWorkMode = true
+                                    if (selectedMode == AppWorkMode.NORMAL) {
+                                        initializeAcceptedExperience()
+                                    } else {
+                                        stopVpnService()
+                                    }
+                                }
+                            )
+                        } else if (currentWorkMode == AppWorkMode.DNS) {
+                            DnsModePlaceholderScreen(
+                                onBack = null,
+                                onSwitchToNormalMode = {
+                                    WorkModeStore.setAppWorkMode(this@MainActivity, AppWorkMode.NORMAL)
+                                    currentWorkMode = AppWorkMode.NORMAL
+                                    initializeAcceptedExperience()
+                                },
+                                onSelectMode = {
+                                    launchSettings(Routes.WORK_MODE_SELECTION)
+                                }
+                            )
+                        } else {
                             MainScreen(
                                 onToggle = { isRunning -> onToggleVpn(isRunning) },
                                 onNavigateToSettings = { launchSettings(Routes.SETTINGS) },
@@ -216,15 +281,6 @@ class MainActivity : AppLocalizedActivity() {
                                 bottomBarRefreshRequested = bottomBarRefreshRequested,
                                 onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false }
                             )
-                        } else {
-                            InitialAgreementDialog(
-                                onAccept = {
-                                    SystemSettingsStore.setInitialAgreementAccepted(this@MainActivity)
-                                    initialAgreementAccepted = true
-                                    initializeAcceptedExperience()
-                                },
-                                onDecline = ::declineInitialAgreement
-                            )
                         }
                         permissionDisclosure?.let { disclosure ->
                             PermissionDisclosureDialog(
@@ -245,7 +301,10 @@ class MainActivity : AppLocalizedActivity() {
                         }
             }
         }
-        if (SystemSettingsStore.isInitialAgreementAccepted(this)) {
+        if (SystemSettingsStore.isInitialAgreementAccepted(this) &&
+            WorkModeStore.hasSelectedWorkMode(this) &&
+            WorkModeStore.getAppWorkMode(this) == AppWorkMode.NORMAL
+        ) {
             initializeAcceptedExperience()
         }
     }

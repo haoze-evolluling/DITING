@@ -80,5 +80,7 @@ object Routes {
     const val AGENT_API_PRESETS = "agent_api_presets"
     const val AGENT_API_PARAMS = "agent_api_params"
     const val OPTIONAL_FEATURES = "optional_features"
+    const val WORK_MODE_SELECTION = "work_mode_selection"
+    const val DNS_MODE_PLACEHOLDER = "dns_mode_placeholder"
 }
 

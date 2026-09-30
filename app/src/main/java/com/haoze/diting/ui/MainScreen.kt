@@ -254,7 +254,8 @@ fun MainScreen(
                                 onNavigateToOutboundProxy = onNavigateToOutboundProxy,
                                 onNavigateToRaceModeSettings = onNavigateToRaceModeSettings,
                                 onNavigateToDataCleanup = onNavigateToDataCleanup,
-                                onNavigateToAgentApiSettings = onNavigateToAgentApiSettings
+                                onNavigateToAgentApiSettings = onNavigateToAgentApiSettings,
+                                onNavigateToWorkModeSelection = { onNavigateToSettingsRoute(Routes.WORK_MODE_SELECTION) }
                             )
                         }
                     }

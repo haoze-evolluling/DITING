@@ -22,6 +22,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.ui.*
+import com.haoze.diting.ui.mode.AppWorkMode
+import com.haoze.diting.ui.mode.DnsModePlaceholderScreen
+import com.haoze.diting.ui.mode.WorkModeSelectionScreen
+import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.traffic.AppTrafficStatsScreen
 import com.haoze.diting.ui.theme.ThemeColorStyle
 import com.haoze.diting.update.AppUpdateHost
@@ -189,6 +193,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         if (data.getBooleanExtra(EXTRA_THEME_CHANGED, false)) recordThemeChanged()
         if (data.getBooleanExtra(EXTRA_BACKGROUND_CHANGED, false)) recordBackgroundChanged()
         if (data.getBooleanExtra(EXTRA_BOTTOM_BAR_CHANGED, false)) recordBottomBarChanged()
+        if (data.getBooleanExtra(EXTRA_WORK_MODE_CHANGED, false)) recordWorkModeChanged()
         if (data.hasExtra(EXTRA_HIDE_FROM_RECENTS)) {
             recordHideFromRecentsChanged(data.getBooleanExtra(EXTRA_HIDE_FROM_RECENTS, false))
         }
@@ -196,6 +201,11 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             outboundProxyAppSelectionResult = true to data.getStringExtra(EXTRA_OUTBOUND_PROXY_APP_PACKAGE)
         }
         routeRefreshVersion++
+    }
+
+    private fun recordWorkModeChanged() {
+        resultData.putExtra(EXTRA_WORK_MODE_CHANGED, true)
+        setResult(RESULT_OK, resultData)
     }
 
     private fun recordRuntimeDnsChanged() {
@@ -375,6 +385,31 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.CO_BUILDER_LIST -> CoBuilderListScreen(onBack, "共建者名单")
             Routes.APP_TRAFFIC_STATS -> AppTrafficStatsScreen(onBack)
             Routes.OPTIONAL_FEATURES -> OptionalFeaturesScreen(onBack)
+            Routes.WORK_MODE_SELECTION -> WorkModeSelectionScreen(
+                isFirstLaunch = false,
+                currentMode = WorkModeStore.getAppWorkMode(this),
+                onBack = onBack,
+                onModeSelected = { selectedMode ->
+                    WorkModeStore.setAppWorkMode(this, selectedMode)
+                    recordWorkModeChanged()
+                    if (selectedMode == AppWorkMode.DNS) {
+                        onNavigate(Routes.DNS_MODE_PLACEHOLDER)
+                    } else {
+                        onBack()
+                    }
+                }
+            )
+            Routes.DNS_MODE_PLACEHOLDER -> DnsModePlaceholderScreen(
+                onBack = onBack,
+                onSwitchToNormalMode = {
+                    WorkModeStore.setAppWorkMode(this, AppWorkMode.NORMAL)
+                    recordWorkModeChanged()
+                    onBack()
+                },
+                onSelectMode = {
+                    onNavigate(Routes.WORK_MODE_SELECTION)
+                }
+            )
             else -> SettingsScreen(onBack, onNavigate)
         }
     }
@@ -383,6 +418,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         const val EXTRA_ROUTE = "settings_route"
         const val EXTRA_REQUEST_SOURCE = "settings_request_source"
         const val EXTRA_RUNTIME_DNS_CHANGED = "settings_runtime_dns_changed"
+        const val EXTRA_WORK_MODE_CHANGED = "settings_work_mode_changed"
         const val EXTRA_HIDE_FROM_RECENTS = "settings_hide_from_recents"
         const val EXTRA_THEME_CHANGED = "settings_theme_changed"
         const val EXTRA_BACKGROUND_CHANGED = "settings_background_changed"
