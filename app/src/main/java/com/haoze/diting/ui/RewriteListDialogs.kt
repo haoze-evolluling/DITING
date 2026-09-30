@@ -11,7 +11,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.data.entity.RewriteTargetType
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.RuleConfirmDialog
 import com.haoze.diting.ui.components.SettingsCornerShape
 import kotlinx.coroutines.launch
@@ -40,7 +40,7 @@ internal fun RewriteAddDialog(
     var targetValue by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("添加覆写规则")) },
         text = {
@@ -110,24 +110,23 @@ internal fun RewriteAddDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                scope.launch {
-                    val result = onConfirm(domain, targetType, targetValue)
-                    result.onSuccess { msg ->
-                        context.showToast(msg, Toast.LENGTH_SHORT)
-                        onDismiss()
-                    }.onFailure { err ->
-                        error = err.message ?: localizedText(context, "添加失败")
+            AppDialogButton(
+                label = "添加",
+                onClick = {
+                    scope.launch {
+                        val result = onConfirm(domain, targetType, targetValue)
+                        result.onSuccess { msg ->
+                            context.showToast(msg, Toast.LENGTH_SHORT)
+                            onDismiss()
+                        }.onFailure { err ->
+                            error = err.message ?: localizedText(context, "添加失败")
+                        }
                     }
                 }
-            }) {
-                Text(localizedText("添加"))
-            }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }
@@ -145,7 +144,7 @@ internal fun RewriteEditDialog(
     var targetValue by remember { mutableStateOf(item.targetValue) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("编辑覆写规则")) },
         text = {
@@ -209,24 +208,23 @@ internal fun RewriteEditDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                scope.launch {
-                    val result = onConfirm(domain, targetType, targetValue)
-                    result.onSuccess { msg ->
-                        context.showToast(msg, Toast.LENGTH_SHORT)
-                        onDismiss()
-                    }.onFailure { err ->
-                        error = err.message ?: localizedText(context, "修改失败")
+            AppDialogButton(
+                label = "保存",
+                onClick = {
+                    scope.launch {
+                        val result = onConfirm(domain, targetType, targetValue)
+                        result.onSuccess { msg ->
+                            context.showToast(msg, Toast.LENGTH_SHORT)
+                            onDismiss()
+                        }.onFailure { err ->
+                            error = err.message ?: localizedText(context, "修改失败")
+                        }
                     }
                 }
-            }) {
-                Text(localizedText("保存"))
-            }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }

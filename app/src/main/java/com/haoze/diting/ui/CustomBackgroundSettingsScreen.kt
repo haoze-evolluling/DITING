@@ -40,7 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsItem
@@ -145,23 +145,20 @@ fun CustomBackgroundSettingsScreen(
         }
 
         pendingDeletionUri?.let { uri ->
-            AlertDialog(
+            AppConfirmDialog(
                 onDismissRequest = { pendingDeletionUri = null },
-                title = { Text(localizedText("删除壁纸")) },
-                text = { Text(localizedText("确定删除这张已添加的壁纸吗？")) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        AppearanceSettingsStore.removeCustomBackgroundUri(context, uri)
-                        val currentEnabled = AppearanceSettingsStore.isCustomBackgroundEnabled(context)
-                        val currentUri = AppearanceSettingsStore.getCustomBackgroundUri(context)
-                        com.haoze.diting.ui.background.CustomBackgroundManager.onBackgroundSettingsChanged(context, currentEnabled, currentUri)
-                        pendingDeletionUri = null
-                        refreshBackgroundState()
-                        onBackgroundChanged()
-                    }) { Text(localizedText("删除")) }
-                },
-                dismissButton = {
-                    TextButton(onClick = { pendingDeletionUri = null }) { Text(localizedText("取消")) }
+                title = "删除壁纸",
+                message = "确定删除这张已添加的壁纸吗？",
+                confirmLabel = "删除",
+                destructive = true,
+                onConfirm = {
+                    AppearanceSettingsStore.removeCustomBackgroundUri(context, uri)
+                    val currentEnabled = AppearanceSettingsStore.isCustomBackgroundEnabled(context)
+                    val currentUri = AppearanceSettingsStore.getCustomBackgroundUri(context)
+                    com.haoze.diting.ui.background.CustomBackgroundManager.onBackgroundSettingsChanged(context, currentEnabled, currentUri)
+                    pendingDeletionUri = null
+                    refreshBackgroundState()
+                    onBackgroundChanged()
                 }
             )
         }

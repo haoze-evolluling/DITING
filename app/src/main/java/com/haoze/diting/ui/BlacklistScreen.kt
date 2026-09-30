@@ -33,7 +33,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
@@ -54,7 +53,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.RuleConfirmDialog
 import com.haoze.diting.ui.components.RuleItemActionsMenu
 import com.haoze.diting.ui.components.masterDisabledMessage
@@ -273,7 +273,7 @@ fun BlacklistScreen(
 
     // Add rule dialog
     if (showAddDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showAddDialog = false },
             title = { Text(localizedText("添加黑名单规则")) },
             text = {
@@ -306,36 +306,35 @@ fun BlacklistScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    scope.launch {
-                        val result = viewModel.addRule(
-                            input = addInput,
-                            appScope = addAppScope.trim().takeIf { it.isNotEmpty() },
-                            important = addImportant
-                        )
-                        result.onSuccess { msg ->
-                            context.showToast(msg, Toast.LENGTH_SHORT)
-                            showAddDialog = false
-                            onRuntimeDnsSettingsChanged()
-                        }.onFailure { err ->
-                            addError = err.message ?: localizedText(context, "添加失败")
+                AppDialogButton(
+                    label = "添加",
+                    onClick = {
+                        scope.launch {
+                            val result = viewModel.addRule(
+                                input = addInput,
+                                appScope = addAppScope.trim().takeIf { it.isNotEmpty() },
+                                important = addImportant
+                            )
+                            result.onSuccess { msg ->
+                                context.showToast(msg, Toast.LENGTH_SHORT)
+                                showAddDialog = false
+                                onRuntimeDnsSettingsChanged()
+                            }.onFailure { err ->
+                                addError = err.message ?: localizedText(context, "添加失败")
+                            }
                         }
                     }
-                }) {
-                    Text(localizedText("添加"))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) {
-                    Text(localizedText("取消"))
-                }
+                AppDialogButton(label = "取消", onClick = { showAddDialog = false })
             }
         )
     }
 
     // Edit rule dialog
     editingItem?.let { item ->
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { editingItem = null },
             title = { Text(localizedText("编辑黑名单规则")) },
             text = {
@@ -365,30 +364,29 @@ fun BlacklistScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    scope.launch {
-                        val result = viewModel.editRule(
-                            item = item,
-                            newPattern = editInput,
-                            newAppScope = editAppScope.trim().takeIf { it.isNotEmpty() },
-                            newImportant = editImportant
-                        )
-                        result.onSuccess { msg ->
-                            context.showToast(msg, Toast.LENGTH_SHORT)
-                            editingItem = null
-                            onRuntimeDnsSettingsChanged()
-                        }.onFailure { err ->
-                            editError = err.message ?: localizedText(context, "修改失败")
+                AppDialogButton(
+                    label = "保存",
+                    onClick = {
+                        scope.launch {
+                            val result = viewModel.editRule(
+                                item = item,
+                                newPattern = editInput,
+                                newAppScope = editAppScope.trim().takeIf { it.isNotEmpty() },
+                                newImportant = editImportant
+                            )
+                            result.onSuccess { msg ->
+                                context.showToast(msg, Toast.LENGTH_SHORT)
+                                editingItem = null
+                                onRuntimeDnsSettingsChanged()
+                            }.onFailure { err ->
+                                editError = err.message ?: localizedText(context, "修改失败")
+                            }
                         }
                     }
-                }) {
-                    Text(localizedText("保存"))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { editingItem = null }) {
-                    Text(localizedText("取消"))
-                }
+                AppDialogButton(label = "取消", onClick = { editingItem = null })
             }
         )
     }

@@ -8,10 +8,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -151,7 +152,7 @@ private fun DynamicParametersDialog(
         }
     }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("动态参数")) },
         text = {
@@ -174,14 +175,14 @@ private fun DynamicParametersDialog(
                     supportingText = localizedText("${DynamicBlockResponseConfig.MIN_NXDOMAIN_DURATION_SECONDS}-${DynamicBlockResponseConfig.MAX_NXDOMAIN_DURATION_SECONDS} 秒；首次升级起固定计时"),
                     onValueChange = { durationText = it; error = null }
                 )
-                error?.let { Text(localizedText(it)) }
+                error?.let { Text(localizedText(it), color = MaterialTheme.colorScheme.error) }
             }
         },
         confirmButton = {
-            TextButton(onClick = ::save) { Text(localizedText("保存")) }
+            AppDialogButton(label = "保存", onClick = ::save)
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(localizedText("取消")) }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }

@@ -14,13 +14,14 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -128,7 +129,7 @@ fun MirrorTemplateScreen(
     }
 
     selectedTemplate?.let { template ->
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { selectedTemplate = null },
             title = { Text(template.name) },
             text = {
@@ -161,9 +162,10 @@ fun MirrorTemplateScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = { selectedTemplate = null }) {
-                    Text(localizedText("取消"))
-                }
+                AppDialogButton(
+                    label = "取消",
+                    onClick = { selectedTemplate = null }
+                )
             }
         )
     }
@@ -178,17 +180,16 @@ fun MirrorTemplateScreen(
     }
 
     pendingDeletion?.let { template ->
-        AlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { pendingDeletion = null },
-            title = { Text(localizedText("删除镜像站模板")) },
-            text = { Text(localizedText("确定要删除“${template.name}”吗？已使用此模板的订阅不会被修改。")) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteMirrorTemplate(template)
-                    pendingDeletion = null
-                }) { Text(localizedText("删除"), color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = { TextButton(onClick = { pendingDeletion = null }) { Text(localizedText("取消")) } }
+            title = "删除镜像站模板",
+            message = "确定要删除“${template.name}”吗？已使用此模板的订阅不会被修改。",
+            confirmLabel = "删除",
+            destructive = true,
+            onConfirm = {
+                viewModel.deleteMirrorTemplate(template)
+                pendingDeletion = null
+            }
         )
     }
 }
@@ -206,7 +207,7 @@ private fun MirrorTemplateDialog(
     var error by remember { mutableStateOf<String?>(null) }
     var submitting by remember { mutableStateOf(false) }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = { if (!submitting) onDismiss() },
         title = { Text(localizedText(if (isEditing) "编辑镜像站模板" else "添加镜像站模板")) },
         text = {
@@ -256,7 +257,8 @@ private fun MirrorTemplateDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            AppDialogButton(
+                label = if (submitting) if (isEditing) "保存中..." else "添加中..." else if (isEditing) "保存" else "添加",
                 enabled = !submitting && name.isNotBlank() && address.isNotBlank(),
                 onClick = {
                     submitting = true
@@ -265,8 +267,14 @@ private fun MirrorTemplateDialog(
                         if (message == "已添加镜像站模板" || message == "已更新镜像站模板") onSaved() else error = message
                     }
                 }
-            ) { Text(localizedText(if (submitting) if (isEditing) "保存中..." else "添加中..." else if (isEditing) "保存" else "添加")) }
+            )
         },
-        dismissButton = { TextButton(onClick = onDismiss, enabled = !submitting) { Text(localizedText("取消")) } }
+        dismissButton = {
+            AppDialogButton(
+                label = "取消",
+                enabled = !submitting,
+                onClick = onDismiss
+            )
+        }
     )
 }

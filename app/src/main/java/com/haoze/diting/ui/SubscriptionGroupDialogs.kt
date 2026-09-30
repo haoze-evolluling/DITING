@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,7 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.haoze.diting.data.entity.SubscriptionGroupEntity
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsDivider
 import com.haoze.diting.ui.components.SettingsItem
@@ -29,7 +29,7 @@ internal fun SubscriptionGroupActionDialog(
     onDissolve: () -> Unit,
     onDeleteSubscriptions: () -> Unit
 ) {
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(group.name) },
         text = {
@@ -41,7 +41,7 @@ internal fun SubscriptionGroupActionDialog(
                 SettingsItem(localizedText("删除本组全部订阅"), leadingIcon = Icons.Default.Delete, titleColor = MaterialTheme.colorScheme.error, onClick = onDeleteSubscriptions)
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(localizedText("取消")) } }
+        confirmButton = { AppDialogButton(label = "取消", onClick = onDismiss) }
     )
 }
 
@@ -52,7 +52,7 @@ internal fun RenameGroupDialog(
     onConfirm: (String) -> Unit
 ) {
     var name by remember(group.id) { mutableStateOf(group.name) }
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("重命名分组")) },
         text = {
@@ -66,17 +66,14 @@ internal fun RenameGroupDialog(
             )
         },
         confirmButton = {
-            TextButton(
-                onClick = { onConfirm(name.trim()) },
-                enabled = name.isNotBlank()
-            ) {
-                Text(localizedText("保存"))
-            }
+            AppDialogButton(
+                label = "保存",
+                enabled = name.isNotBlank(),
+                onClick = { onConfirm(name.trim()) }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }

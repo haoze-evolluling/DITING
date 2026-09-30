@@ -9,7 +9,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +17,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.RuleConfirmDialog
 import com.haoze.diting.ui.components.SettingsCornerShape
 import kotlinx.coroutines.launch
@@ -28,25 +29,15 @@ internal fun WhitelistRiskWarningDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    AlertDialog(
+    AppConfirmDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-        title = { Text(localizedText("风险提示")) },
-        text = {
-            Text(
-                localizedText("修改软件预设白名单可能造成不可预料的影响，例如网络异常或网络连接中断。\n\n如非排查特定网络问题，建议保持默认设置。确定要开启编辑权限吗？")
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(localizedText("确定开启"), color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
-        }
+        title = "风险提示",
+        message = "修改软件预设白名单可能造成不可预料的影响，例如网络异常或网络连接中断。\n\n如非排查特定网络问题，建议保持默认设置。确定要开启编辑权限吗？",
+        confirmLabel = "确定开启",
+        cancelLabel = "取消",
+        destructive = true,
+        onConfirm = onConfirm
     )
 }
 
@@ -62,7 +53,7 @@ internal fun WhitelistAddDialog(
     var important by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("添加白名单规则")) },
         text = {
@@ -95,28 +86,27 @@ internal fun WhitelistAddDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                scope.launch {
-                    val result = onConfirm(
-                        input,
-                        appScope.trim().takeIf { it.isNotEmpty() },
-                        important
-                    )
-                    result.onSuccess { msg ->
-                        context.showToast(msg, Toast.LENGTH_SHORT)
-                        onDismiss()
-                    }.onFailure { err ->
-                        error = err.message ?: localizedText(context, "添加失败")
+            AppDialogButton(
+                label = "添加",
+                onClick = {
+                    scope.launch {
+                        val result = onConfirm(
+                            input,
+                            appScope.trim().takeIf { it.isNotEmpty() },
+                            important
+                        )
+                        result.onSuccess { msg ->
+                            context.showToast(msg, Toast.LENGTH_SHORT)
+                            onDismiss()
+                        }.onFailure { err ->
+                            error = err.message ?: localizedText(context, "添加失败")
+                        }
                     }
                 }
-            }) {
-                Text(localizedText("添加"))
-            }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }
@@ -134,7 +124,7 @@ internal fun WhitelistEditDialog(
     var important by remember(item) { mutableStateOf(item.important) }
     var error by remember(item) { mutableStateOf<String?>(null) }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText(if (item.isPreset) "编辑默认预设规则" else "编辑白名单规则")) },
         text = {
@@ -164,28 +154,27 @@ internal fun WhitelistEditDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                scope.launch {
-                    val result = onConfirm(
-                        input,
-                        appScope.trim().takeIf { it.isNotEmpty() },
-                        important
-                    )
-                    result.onSuccess { msg ->
-                        context.showToast(msg, Toast.LENGTH_SHORT)
-                        onDismiss()
-                    }.onFailure { err ->
-                        error = err.message ?: localizedText(context, "修改失败")
+            AppDialogButton(
+                label = "保存",
+                onClick = {
+                    scope.launch {
+                        val result = onConfirm(
+                            input,
+                            appScope.trim().takeIf { it.isNotEmpty() },
+                            important
+                        )
+                        result.onSuccess { msg ->
+                            context.showToast(msg, Toast.LENGTH_SHORT)
+                            onDismiss()
+                        }.onFailure { err ->
+                            error = err.message ?: localizedText(context, "修改失败")
+                        }
                     }
                 }
-            }) {
-                Text(localizedText("保存"))
-            }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }

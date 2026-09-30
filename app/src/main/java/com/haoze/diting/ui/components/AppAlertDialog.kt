@@ -6,6 +6,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,6 +18,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import com.haoze.diting.ui.localizedText
 
 @Composable
 fun AppAlertDialog(
@@ -75,16 +80,16 @@ fun AppDialogButton(
     destructive: Boolean = false,
     enabled: Boolean = true
 ) {
-    androidx.compose.material3.TextButton(
+    TextButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-            contentColor = if (destructive) androidx.compose.material3.MaterialTheme.colorScheme.error
-            else androidx.compose.material3.MaterialTheme.colorScheme.primary
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = if (destructive) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.primary
         )
     ) {
-        androidx.compose.material3.Text(label)
+        Text(localizedText(label))
     }
 }
 
@@ -99,14 +104,16 @@ fun AppConfirmDialog(
     message: String? = null,
     cancelLabel: String? = "取消",
     destructive: Boolean = false,
-    confirmEnabled: Boolean = true
+    confirmEnabled: Boolean = true,
+    icon: @Composable (() -> Unit)? = null
 ) {
     AppAlertDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
-        title = { androidx.compose.material3.Text(title) },
+        icon = icon,
+        title = { Text(localizedText(title)) },
         text = message?.let { msg ->
-            { androidx.compose.material3.Text(msg, style = androidx.compose.material3.MaterialTheme.typography.bodyMedium) }
+            { Text(localizedText(msg), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         },
         confirmButton = {
             AppDialogButton(

@@ -14,7 +14,9 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -200,24 +202,15 @@ fun ProviderManagementScreen(
     }
 
     providerToDelete?.let { provider ->
-        AlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { providerToDelete = null },
-            title = { Text(localizedText("删除 DNS 服务商")) },
-            text = { Text(localizedText("确定删除“${provider.name}”吗？删除后无法再作为解析服务使用。")) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteProvider(provider.id)
-                        providerToDelete = null
-                    }
-                ) {
-                    Text(localizedText("删除"))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { providerToDelete = null }) {
-                    Text(localizedText("取消"))
-                }
+            title = "删除 DNS 服务商",
+            message = "确定删除“${provider.name}”吗？删除后无法再作为解析服务使用。",
+            confirmLabel = "删除",
+            destructive = true,
+            onConfirm = {
+                viewModel.deleteProvider(provider.id)
+                providerToDelete = null
             }
         )
     }
@@ -319,7 +312,7 @@ private fun ProviderEditDialog(
     val addressInvalid = !isProviderAddressValid(protocol, url, host)
     val showCurrentAddressError = showAddressError && addressInvalid
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
@@ -398,7 +391,9 @@ private fun ProviderEditDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            AppDialogButton(
+                label = "保存",
+                enabled = canSave || addressInvalid,
                 onClick = {
                     if (canSave) {
                         onConfirm(name, protocol, url, host, port)
@@ -406,21 +401,10 @@ private fun ProviderEditDialog(
                         showAddressError = true
                     }
                 }
-            ) {
-                Text(
-                    text = localizedText("保存"),
-                    color = if (canSave) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                    }
-                )
-            }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }

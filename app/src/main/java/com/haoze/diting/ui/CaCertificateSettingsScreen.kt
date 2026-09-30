@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,7 +23,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsItem
@@ -184,16 +185,16 @@ fun CaCertificateManagement(onNavigateToGuide: () -> Unit) {
     })
 
     if (showCaDetails) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showCaDetails = false },
             title = { Text(localizedText("CA 证书指纹")) },
             text = { Text(localizedText(caFingerprint?.let { "SHA-256 指纹：\n$it" } ?: "正在读取证书指纹…")) },
-            confirmButton = { TextButton(onClick = { showCaDetails = false }) { Text(localizedText("关闭")) } }
+            confirmButton = { AppDialogButton(label = "关闭", onClick = { showCaDetails = false }) }
         )
     }
 
     if (showInstallConfirmation) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showInstallConfirmation = false },
             title = { Text(localizedText("验证根证书")) },
             text = {
@@ -205,7 +206,7 @@ fun CaCertificateManagement(onNavigateToGuide: () -> Unit) {
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
+                AppDialogButton(label = "重新验证", onClick = {
                     scope.launch {
                         val ready = withContext(Dispatchers.IO) {
                             runCatching { GoInspectionCaManager.isInstalled(context) }.getOrDefault(false)
@@ -213,38 +214,37 @@ fun CaCertificateManagement(onNavigateToGuide: () -> Unit) {
                         applyCertificateReadiness(ready)
                         showInstallConfirmation = !ready
                     }
-                }) { Text(localizedText("重新验证")) }
+                })
             },
-            dismissButton = { TextButton(onClick = { showInstallConfirmation = false }) { Text(localizedText("稍后完成")) } }
+            dismissButton = { AppDialogButton(label = "稍后完成", onClick = { showInstallConfirmation = false }) }
         )
     }
 
     if (showResetConfirmation) {
-        AlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { showResetConfirmation = false },
-            title = { Text(localizedText("重新生成根证书")) },
-            text = { Text(localizedText("重新生成将销毁当前 CA 私钥并生成全新证书。系统中已安装的旧证书需手动在系统设置中移除，新证书安装并验证后方可继续检查流量。")) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showResetConfirmation = false
-                    caBusy = true
-                    scope.launch {
-                        val result = withContext(Dispatchers.IO) {
-                            runCatching {
-                                GoInspectionCaManager.reset(context)
-                                GoInspectionCaManager.fingerprintSha256(context)
-                            }
+            title = "重新生成根证书",
+            message = "重新生成将销毁当前 CA 私钥并生成全新证书。系统中已安装的旧证书需手动在系统设置中移除，新证书安装并验证后方可继续检查流量。",
+            confirmLabel = "重新生成",
+            destructive = true,
+            onConfirm = {
+                showResetConfirmation = false
+                caBusy = true
+                scope.launch {
+                    val result = withContext(Dispatchers.IO) {
+                        runCatching {
+                            GoInspectionCaManager.reset(context)
+                            GoInspectionCaManager.fingerprintSha256(context)
                         }
-                        caBusy = false
-                        result.onSuccess { fingerprint ->
-                            caFingerprint = fingerprint
-                            applyCertificateReadiness(false)
-                        }
-                        context.showToast(if (result.isSuccess) "根证书已重新生成" else "重新生成根证书失败")
                     }
-                }) { Text(localizedText("重新生成")) }
-            },
-            dismissButton = { TextButton(onClick = { showResetConfirmation = false }) { Text(localizedText("取消")) } }
+                    caBusy = false
+                    result.onSuccess { fingerprint ->
+                        caFingerprint = fingerprint
+                        applyCertificateReadiness(false)
+                    }
+                    context.showToast(if (result.isSuccess) "根证书已重新生成" else "重新生成根证书失败")
+                }
+            }
         )
     }
 }

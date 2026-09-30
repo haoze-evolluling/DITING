@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +26,8 @@ import com.haoze.diting.data.entity.SubscriptionEntity
 import com.haoze.diting.data.entity.SubscriptionGroupEntity
 import com.haoze.diting.data.entity.SubscriptionKind
 import com.haoze.diting.data.entity.SubscriptionSourceType
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsDivider
 import com.haoze.diting.ui.components.SettingsItem
@@ -42,7 +42,7 @@ internal fun SubscriptionActionDialog(
     onEdit: () -> Unit,
     onToggleEnabled: () -> Unit
 ) {
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(subscription.name) },
         text = {
@@ -85,9 +85,7 @@ internal fun SubscriptionActionDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }
@@ -110,7 +108,7 @@ internal fun EditSubscriptionDialog(
     var groupExpanded by remember(subscription.id) { mutableStateOf(false) }
     var mirrorExpanded by remember(subscription.id) { mutableStateOf(false) }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("编辑规则订阅")) },
         text = {
@@ -156,20 +154,17 @@ internal fun EditSubscriptionDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            AppDialogButton(
+                label = "保存",
+                enabled = url.trim().isNotEmpty() && name.trim().isNotEmpty() &&
+                    (!useMirror || validMirrorTemplate(mirrorTemplate)),
                 onClick = {
                     onConfirm(url.trim(), name.trim(), mirrorTemplate.trim().takeIf { useMirror }, mirrorFallback, groupId, newGroupName.trim().takeIf { it.isNotEmpty() })
-                },
-                enabled = url.trim().isNotEmpty() && name.trim().isNotEmpty() &&
-                    (!useMirror || validMirrorTemplate(mirrorTemplate))
-            ) {
-                Text(localizedText("保存"))
-            }
+                }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }
@@ -181,7 +176,7 @@ internal fun RenameSubscriptionDialog(
     onConfirm: (String) -> Unit
 ) {
     var name by remember(subscription.id) { mutableStateOf(subscription.name) }
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("重命名规则订阅")) },
         text = {
@@ -197,10 +192,14 @@ internal fun RenameSubscriptionDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(name.trim()) }, enabled = name.isNotBlank()) { Text(localizedText("保存")) }
+            AppDialogButton(
+                label = "保存",
+                enabled = name.isNotBlank(),
+                onClick = { onConfirm(name.trim()) }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(localizedText("取消")) }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }

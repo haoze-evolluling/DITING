@@ -18,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,7 +34,9 @@ import com.haoze.diting.data.entity.SubscriptionEntity
 import com.haoze.diting.data.entity.SubscriptionGroupEntity
 import com.haoze.diting.data.entity.SubscriptionKind
 import com.haoze.diting.data.entity.SubscriptionSourceType
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsScaffold
@@ -230,7 +231,7 @@ fun SubscriptionScreen(
     }
 
     showUrlDialog?.let { sub ->
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showUrlDialog = null },
             title = { Text(localizedText("订阅地址")) },
             text = {
@@ -245,9 +246,7 @@ fun SubscriptionScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showUrlDialog = null }) {
-                    Text(localizedText("关闭"))
-                }
+                AppDialogButton(label = "关闭", onClick = { showUrlDialog = null })
             }
         )
     }
@@ -304,26 +303,15 @@ fun SubscriptionScreen(
     }
 
     showDeleteDialog?.let { sub ->
-        AlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { showDeleteDialog = null },
-            title = { Text(localizedText("删除规则订阅")) },
-            text = {
-                Column {
-                    Text(localizedText("确定删除「${sub.name}」及其导入的所有规则吗？"))
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteSubscription(sub.id)
-                    showDeleteDialog = null
-                }) {
-                    Text(localizedText("删除"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = null }) {
-                    Text(localizedText("取消"))
-                }
+            title = "删除规则订阅",
+            message = "确定删除「${sub.name}」及其导入的所有规则吗？",
+            confirmLabel = "删除",
+            destructive = true,
+            onConfirm = {
+                viewModel.deleteSubscription(sub.id)
+                showDeleteDialog = null
             }
         )
     }
@@ -343,22 +331,30 @@ fun SubscriptionScreen(
         })
     }
     showDeleteGroupDialog?.let { group ->
-        AlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { showDeleteGroupDialog = null },
-            title = { Text(localizedText("解散分组")) },
-            text = { Text(localizedText("解散「${group.name}」后，组内订阅将移至未分组，不会删除订阅及规则。")) },
-            confirmButton = { TextButton(onClick = { viewModel.deleteGroup(group.id); showDeleteGroupDialog = null }) { Text(localizedText("解散"), color = MaterialTheme.colorScheme.error) } },
-            dismissButton = { TextButton(onClick = { showDeleteGroupDialog = null }) { Text(localizedText("取消")) } }
+            title = "解散分组",
+            message = "解散「${group.name}」后，组内订阅将移至未分组，不会删除订阅及规则。",
+            confirmLabel = "解散",
+            destructive = true,
+            onConfirm = {
+                viewModel.deleteGroup(group.id)
+                showDeleteGroupDialog = null
+            }
         )
     }
     showDeleteGroupSubscriptionsDialog?.let { group ->
         val members = allSubscriptions.filter { it.groupId == group.id }
-        AlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { showDeleteGroupSubscriptionsDialog = null },
-            title = { Text(localizedText("删除分组订阅")) },
-            text = { Text(localizedText("确定删除「${group.name}」中的全部 ${members.size} 个订阅及其规则吗？")) },
-            confirmButton = { TextButton(onClick = { viewModel.deleteGroupSubscriptions(group.id); showDeleteGroupSubscriptionsDialog = null }) { Text(localizedText("删除"), color = MaterialTheme.colorScheme.error) } },
-            dismissButton = { TextButton(onClick = { showDeleteGroupSubscriptionsDialog = null }) { Text(localizedText("取消")) } }
+            title = "删除分组订阅",
+            message = "确定删除「${group.name}」中的全部 ${members.size} 个订阅及其规则吗？",
+            confirmLabel = "删除",
+            destructive = true,
+            onConfirm = {
+                viewModel.deleteGroupSubscriptions(group.id)
+                showDeleteGroupSubscriptionsDialog = null
+            }
         )
     }
 }

@@ -34,7 +34,8 @@ import androidx.compose.material.icons.filled.Search
 import com.haoze.diting.SettingsRouteActivity
 import com.haoze.diting.ui.agent.AgentAnalysisSheet
 import com.haoze.diting.ui.agent.AnalysisTarget
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceItem
@@ -251,7 +252,7 @@ fun RequestLogScreen(
         }
     }
     if (showStatusDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showStatusDialog = false },
             title = { Text(localizedText("筛选请求状态")) },
             text = {
@@ -277,7 +278,7 @@ fun RequestLogScreen(
                     }
                 )
             },
-            confirmButton = { TextButton(onClick = { showStatusDialog = false }) { Text(localizedText("取消")) } }
+            confirmButton = { AppDialogButton(label = "取消", onClick = { showStatusDialog = false }) }
         )
     }
     pendingDomain?.let { domain ->
@@ -367,7 +368,7 @@ fun DomainActionDialog(
     add: (Boolean) -> Unit,
     analyze: (() -> Unit)? = null
 ) {
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = dismiss,
         title = { Text(localizedText("处理域名")) },
         text = {
@@ -394,7 +395,7 @@ fun DomainActionDialog(
                 SettingsOutlinedActionButton({ add(false) }, Modifier.fillMaxWidth()) { Text(localizedText("加入屏蔽规则")) }
             }
         },
-        confirmButton = { TextButton(dismiss) { Text(localizedText("取消")) } }
+        confirmButton = { AppDialogButton(label = "取消", onClick = dismiss) }
     )
 }
 

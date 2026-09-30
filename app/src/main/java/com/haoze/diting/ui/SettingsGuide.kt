@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -184,7 +184,7 @@ fun SettingsGuideHost(
             }
         }
 
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = {},
             title = { Text(activeGuide.title) },
             text = {
@@ -212,28 +212,24 @@ fun SettingsGuideHost(
             },
             dismissButton = if (currentStep == 2) {
                 {
-                    TextButton(onClick = { currentStep = 1 }) {
-                        Text(localizedText("上一步"))
-                    }
+                    AppDialogButton(label = "上一步", onClick = { currentStep = 1 })
                 }
             } else null,
             confirmButton = {
                 if (hasNextStep) {
-                    TextButton(
+                    AppDialogButton(
+                        label = "下一步",
                         onClick = { currentStep = 2 }
-                    ) {
-                        Text(localizedText("下一步"))
-                    }
+                    )
                 } else {
-                    TextButton(
+                    AppDialogButton(
+                        label = if (activeGuide.acknowledgement == null) "我知道了" else "确认并继续",
                         onClick = {
                             SystemSettingsStore.acknowledgeSettingsGuide(context, guide.id)
                             showGuide = false
                         },
                         enabled = activeGuide.acknowledgement == null || acknowledged
-                    ) {
-                        Text(localizedText(if (activeGuide.acknowledgement == null) "我知道了" else "确认并继续"))
-                    }
+                    )
                 }
             }
         )

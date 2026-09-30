@@ -8,10 +8,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -181,7 +181,7 @@ fun SubscriptionAutoUpdateIntervalScreen(onBack: () -> Unit) {
     }
 
     if (showCustomDialog) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = ::closeCustomDialog,
             title = { Text(localizedText("自定义更新时间")) },
             text = {
@@ -204,7 +204,8 @@ fun SubscriptionAutoUpdateIntervalScreen(onBack: () -> Unit) {
                 )
             },
             confirmButton = {
-                TextButton(
+                AppDialogButton(
+                    label = "确定",
                     onClick = {
                         val hours = customHours.trim().toIntOrNull()
                         if (
@@ -217,14 +218,13 @@ fun SubscriptionAutoUpdateIntervalScreen(onBack: () -> Unit) {
                             closeCustomDialog()
                         }
                     }
-                ) {
-                    Text(localizedText("确定"))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = ::closeCustomDialog) {
-                    Text(localizedText("取消"))
-                }
+                AppDialogButton(
+                    label = "取消",
+                    onClick = ::closeCustomDialog
+                )
             }
         )
     }

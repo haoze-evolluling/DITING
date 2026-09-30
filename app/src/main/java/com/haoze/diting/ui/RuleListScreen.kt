@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +34,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.RuleListPaginationBar
 import com.haoze.diting.ui.components.RuleSearchField
 import com.haoze.diting.ui.components.RuleTagChip
@@ -145,7 +145,7 @@ fun RuleListScreen(
     }
 
     if (showSourceMenu) {
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = { showSourceMenu = false },
             title = { Text(localizedText("筛选规则来源")) },
             text = {
@@ -201,7 +201,7 @@ fun RuleListScreen(
                 )
             },
             confirmButton = {
-                TextButton(onClick = { showSourceMenu = false }) { Text(localizedText("取消")) }
+                AppDialogButton(label = "取消", onClick = { showSourceMenu = false })
             }
         )
     }

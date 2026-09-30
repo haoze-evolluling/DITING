@@ -250,22 +250,24 @@ fun BoxScope.RuleListPaginationBar(
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    val page = pageInput.toIntOrNull()
-                    if (page == null || page !in 1..totalPages) {
-                        pageInputError = localizedText(context, "请输入 1 到 $totalPages 之间的页码")
-                    } else {
-                        onLoadPage(page)
-                        showPageJumpDialog = false
+                AppDialogButton(
+                    label = "跳转",
+                    onClick = {
+                        val page = pageInput.toIntOrNull()
+                        if (page == null || page !in 1..totalPages) {
+                            pageInputError = localizedText(context, "请输入 1 到 $totalPages 之间的页码")
+                        } else {
+                            onLoadPage(page)
+                            showPageJumpDialog = false
+                        }
                     }
-                }) {
-                    Text(localizedText("跳转"))
-                }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showPageJumpDialog = false }) {
-                    Text(localizedText("取消"))
-                }
+                AppDialogButton(
+                    label = "取消",
+                    onClick = { showPageJumpDialog = false }
+                )
             }
         )
     }
@@ -399,26 +401,16 @@ fun RuleConfirmDialog(
     onDismiss: () -> Unit,
     destructive: Boolean = true
 ) {
-    AppAlertDialog(
+    AppConfirmDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(message) },
-        confirmButton = {
-            TextButton(onClick = {
-                onConfirm()
-                onDismiss()
-            }) {
-                Text(
-                    confirmText,
-                    color = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                )
-            }
+        title = title,
+        message = message,
+        confirmLabel = confirmText,
+        onConfirm = {
+            onConfirm()
+            onDismiss()
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
-        }
+        destructive = destructive
     )
 }
 
@@ -502,38 +494,20 @@ fun DomainRulesInspectionLinkageDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    AppAlertDialog(
+    val isEnable = kind == DomainRulesLinkageKind.ENABLE_BOTH
+    AppConfirmDialog(
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                localizedText(
-                    if (kind == DomainRulesLinkageKind.ENABLE_BOTH) "需同时开启域名规则"
-                    else "确认同时关闭 HTTPS 检查？"
-                )
-            )
+        title = if (isEnable) "需同时开启域名规则" else "确认同时关闭 HTTPS 检查？",
+        message = if (isEnable) {
+            "HTTPS 流量检查基于 DNS 域名过滤基础之上运行。开启 HTTPS 检查将同时开启【启用域名规则】，确保域名级屏蔽与白名单规则在检测期间持续生效。"
+        } else {
+            "HTTPS 流量检查运行在 DNS 域名过滤基础之上。关闭域名规则后，依赖它的 HTTPS 检查也将同步暂停。"
         },
-        text = {
-            Text(
-                localizedText(
-                    if (kind == DomainRulesLinkageKind.ENABLE_BOTH) {
-                        "HTTPS 流量检查基于 DNS 域名过滤基础之上运行。开启 HTTPS 检查将同时开启【启用域名规则】，" +
-                            "确保域名级屏蔽与白名单规则在检测期间持续生效。"
-                    } else {
-                        "HTTPS 流量检查运行在 DNS 域名过滤基础之上。关闭域名规则后，" +
-                            "依赖它的 HTTPS 检查也将同步暂停。"
-                    }
-                )
-            )
+        confirmLabel = if (isEnable) "同时开启" else "确认关闭",
+        onConfirm = {
+            onConfirm()
+            onDismiss()
         },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(localizedText(if (kind == DomainRulesLinkageKind.ENABLE_BOTH) "同时开启" else "确认关闭"))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
-        }
+        destructive = !isEnable
     )
 }

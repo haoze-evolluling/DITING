@@ -24,7 +24,6 @@ import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +40,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.localizedText
 
@@ -205,24 +204,15 @@ fun AppTrafficStatsScreen(
     }
 
     if (showClearConfirmDialog) {
-        AppAlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { showClearConfirmDialog = false },
-            title = { Text(localizedText("清除全部流量记录？")) },
-            text = { Text(localizedText("此操作将清空所有已持久化的应用历史流量统计，清除后无法恢复。")) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.clearHistory()
-                        showClearConfirmDialog = false
-                    }
-                ) {
-                    Text(localizedText("清除"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearConfirmDialog = false }) {
-                    Text(localizedText("取消"))
-                }
+            title = "清除全部流量记录？",
+            message = "此操作将清空所有已持久化的应用历史流量统计，清除后无法恢复。",
+            confirmLabel = "清除",
+            destructive = true,
+            onConfirm = {
+                viewModel.clearHistory()
+                showClearConfirmDialog = false
             }
         )
     }

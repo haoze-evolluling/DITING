@@ -29,10 +29,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Troubleshoot
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.rememberCoroutineScope
 import com.haoze.diting.crash.CrashLogManager
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsRadioItem
@@ -247,26 +246,17 @@ fun LogRetentionSettingsScreen(
     }
 
     if (showClearConfirmDialog) {
-        AlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { showClearConfirmDialog = false },
-            title = { Text(localizedText("清空崩溃日志")) },
-            text = { Text(localizedText("确认清空所有已保存的崩溃日志吗？")) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showClearConfirmDialog = false
-                        CrashLogManager.clearCrashLogs(context)
-                        crashLogCount = 0
-                        context.showToast("已清空崩溃日志", Toast.LENGTH_SHORT)
-                    }
-                ) {
-                    Text(localizedText("确定"), color = MaterialTheme.colorScheme.error)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearConfirmDialog = false }) {
-                    Text(localizedText("取消"))
-                }
+            title = "清空崩溃日志",
+            message = "确认清空所有已保存的崩溃日志吗？",
+            confirmLabel = "确定",
+            destructive = true,
+            onConfirm = {
+                showClearConfirmDialog = false
+                CrashLogManager.clearCrashLogs(context)
+                crashLogCount = 0
+                context.showToast("已清空崩溃日志", Toast.LENGTH_SHORT)
             }
         )
     }

@@ -12,7 +12,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,7 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.ui.InstalledApp
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.RuleConfirmDialog
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.localizedText
@@ -89,7 +89,7 @@ internal fun AddAllowlistDomainDialog(
         }
     }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(localizedText("添加放行域名")) },
         text = {
@@ -122,14 +122,10 @@ internal fun AddAllowlistDomainDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { submit() }) {
-                Text(localizedText("确定"))
-            }
+            AppDialogButton(label = "确定", onClick = { submit() })
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }
@@ -156,7 +152,7 @@ internal fun AddDnsRuleDialog(
         }
     }
 
-    AlertDialog(
+    AppAlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(localizedText(if (isAllow) "添加应用专属白名单" else "添加应用专属拦截规则"))
@@ -214,14 +210,10 @@ internal fun AddDnsRuleDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { submit() }) {
-                Text(localizedText("确定"))
-            }
+            AppDialogButton(label = "确定", onClick = { submit() })
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(localizedText("取消"))
-            }
+            AppDialogButton(label = "取消", onClick = onDismiss)
         }
     )
 }

@@ -17,13 +17,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.haoze.diting.ui.components.AppAlertDialog as AlertDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.CheckCircle
@@ -106,7 +107,7 @@ internal fun AppListOverflowMenu(
             AppListSubmenu.SORT -> "排序方式"
             null -> "应用列表操作"
         }
-        AlertDialog(
+        AppAlertDialog(
             onDismissRequest = {
                 expanded = false
                 submenu = null
@@ -176,11 +177,12 @@ internal fun AppListOverflowMenu(
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    if (submenu == null) expanded = false else submenu = null
-                }) {
-        Text(localizedText(if (submenu == null) "取消" else "返回"))
-                }
+                AppDialogButton(
+                    label = if (submenu == null) "取消" else "返回",
+                    onClick = {
+                        if (submenu == null) expanded = false else submenu = null
+                    }
+                )
             }
         )
     }
@@ -393,18 +395,13 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
 @Composable
 internal fun AppListDisclosureDialog(state: AppListAccessState<*>) {
     if (!state.showDisclosure) return
-    AlertDialog(
+    AppConfirmDialog(
         onDismissRequest = state.dismissDisclosure,
-        title = { Text(localizedText("应用列表访问")) },
-        text = {
-            Text(localizedText("为了让你选择需要排除或进行 HTTP(S) 检查的应用，谛听需要读取设备上的应用列表。不会读取应用数据，也不会上传应用列表。"))
-        },
-        confirmButton = {
-            TextButton(onClick = state.allowAccess) { Text(localizedText("继续")) }
-        },
-        dismissButton = {
-            TextButton(onClick = state.dismissDisclosure) { Text(localizedText("暂不允许")) }
-        }
+        title = "应用列表访问",
+        message = "为了让你选择需要排除或进行 HTTP(S) 检查的应用，谛听需要读取设备上的应用列表。不会读取应用数据，也不会上传应用列表。",
+        confirmLabel = "继续",
+        cancelLabel = "暂不允许",
+        onConfirm = state.allowAccess
     )
 }
 
