@@ -10,12 +10,19 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.net.wifi.WifiManager
+import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.haoze.diting.R
 import com.haoze.diting.dnsmode.DnsMainActivity
 
 class DnsModeService : Service() {
+
+    private var dnsServerEngine: DnsServerEngine? = null
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -32,16 +39,17 @@ class DnsModeService : Service() {
             }
             ACTION_REFRESH -> {
                 refreshNotification()
+                refreshDnsEngine()
                 return START_STICKY
             }
             ACTION_START -> {
                 startForegroundServiceInternal()
-                DnsModeManager.onServiceStarted()
+                startDnsEngine()
             }
             null -> {
                 if (DnsModePreferences.isServiceActive(this)) {
                     startForegroundServiceInternal()
-                    DnsModeManager.onServiceStarted()
+                    startDnsEngine()
                 } else {
                     stopSelf()
                     return START_NOT_STICKY
@@ -52,9 +60,82 @@ class DnsModeService : Service() {
     }
 
     override fun onDestroy() {
+        stopDnsEngine()
+        releaseLocks()
         DnsModePreferences.setServiceActive(this, false)
         DnsModeManager.onServiceStopped()
         super.onDestroy()
+    }
+
+    private fun startDnsEngine() {
+        acquireLocks()
+        val config = DnsModeManager.config.value
+        val upstream = DnsModeManager.getActiveUpstream()
+
+        dnsServerEngine?.stop()
+        val engine = DnsServerEngine(
+            config = config,
+            upstream = upstream,
+            onQueryProcessed = { cacheHit, blocked, latencyMs ->
+                DnsModeManager.recordQuery(cacheHit = cacheHit, blocked = blocked, latencyMs = latencyMs)
+            }
+        )
+
+        if (engine.start()) {
+            dnsServerEngine = engine
+            DnsModeManager.onServiceStarted()
+            Log.i(TAG, "DnsModeService successfully started DNS server on port ${config.localListenPort}")
+        } else {
+            Log.e(TAG, "DnsModeService failed to start DNS server on port ${config.localListenPort}")
+            DnsModeManager.onServiceError()
+            stopSelf()
+        }
+    }
+
+    private fun refreshDnsEngine() {
+        val config = DnsModeManager.config.value
+        val upstream = DnsModeManager.getActiveUpstream()
+        dnsServerEngine?.updateConfig(config, upstream)
+    }
+
+    private fun stopDnsEngine() {
+        dnsServerEngine?.stop()
+        dnsServerEngine = null
+    }
+
+    private fun acquireLocks() {
+        runCatching {
+            if (wakeLock == null) {
+                val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+                wakeLock = powerManager?.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK,
+                    "Diting:DnsModeWakeLock"
+                )?.apply {
+                    setReferenceCounted(false)
+                    acquire()
+                }
+            }
+            if (wifiLock == null) {
+                val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+                @Suppress("DEPRECATION")
+                wifiLock = wifiManager?.createWifiLock(
+                    WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                    "Diting:DnsModeWifiLock"
+                )?.apply {
+                    setReferenceCounted(false)
+                    acquire()
+                }
+            }
+        }.onFailure { Log.w(TAG, "Failed to acquire power/wifi locks", it) }
+    }
+
+    private fun releaseLocks() {
+        runCatching {
+            wakeLock?.let { if (it.isHeld) it.release() }
+            wakeLock = null
+            wifiLock?.let { if (it.isHeld) it.release() }
+            wifiLock = null
+        }.onFailure { Log.w(TAG, "Failed to release power/wifi locks", it) }
     }
 
     private fun startForegroundServiceInternal() {
@@ -136,6 +217,7 @@ class DnsModeService : Service() {
     }
 
     companion object {
+        private const val TAG = "DnsModeService"
         private const val CHANNEL_ID = "channel_dns_mode"
         private const val NOTIFICATION_ID = 2002
 

@@ -97,7 +97,7 @@ data class DnsUpstreamServer(
 
 data class DnsModeConfig(
     val selectedUpstreamId: String = "alidns",
-    val localListenPort: Int = 5353,
+    val localListenPort: Int = 1053,
     val cacheEnabled: Boolean = true,
     val cacheTtlSeconds: Int = 300,
     val adBlockEnabled: Boolean = false,

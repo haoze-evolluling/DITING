@@ -16,6 +16,8 @@ import com.haoze.diting.AppLocalizedActivity
 import com.haoze.diting.MainActivity
 import com.haoze.diting.SettingsRouteActivity
 import com.haoze.diting.dnsmode.backend.DnsModeManager
+import com.haoze.diting.dnsmode.backend.DnsModePreferences
+import com.haoze.diting.dnsmode.model.DnsServiceStatus
 import com.haoze.diting.dnsmode.ui.DnsMainScreen
 import com.haoze.diting.dnsmode.viewmodel.DnsMainViewModel
 import com.haoze.diting.ui.AppLanguageManager
@@ -74,11 +76,24 @@ class DnsMainActivity : AppLocalizedActivity() {
         applyRecentsPrivacySetting()
         appearanceRefreshVersion++
         com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this)
+
+        if (DnsModePreferences.isServiceActive(this) && DnsModeManager.status.value == DnsServiceStatus.STOPPED) {
+            DnsModeManager.startService(this)
+        }
+        handleActionIntent(intent)
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleActionIntent(intent)
+    }
+
+    private fun handleActionIntent(intent: Intent?) {
+        when (intent?.action) {
+            ACTION_START_SERVICE -> DnsModeManager.startService(this)
+            ACTION_STOP_SERVICE -> DnsModeManager.stopService(this)
+        }
     }
 
     private fun applyRecentsPrivacySetting() {
@@ -104,6 +119,9 @@ class DnsMainActivity : AppLocalizedActivity() {
     }
 
     companion object {
+        const val ACTION_START_SERVICE = "com.haoze.diting.dnsmode.ACTION_START"
+        const val ACTION_STOP_SERVICE = "com.haoze.diting.dnsmode.ACTION_STOP"
+
         fun createIntent(context: Context): Intent {
             return Intent(context, DnsMainActivity::class.java)
         }

@@ -21,9 +21,11 @@ object DnsModePreferences {
 
     fun loadConfig(context: Context): DnsModeConfig {
         val prefs = getPrefs(context)
+        val rawPort = prefs.getInt(KEY_LOCAL_PORT, 1053)
+        val port = if (rawPort == 5353 || rawPort == 5354) 1053 else rawPort
         return DnsModeConfig(
             selectedUpstreamId = prefs.getString(KEY_SELECTED_UPSTREAM, "alidns") ?: "alidns",
-            localListenPort = prefs.getInt(KEY_LOCAL_PORT, 5353),
+            localListenPort = port,
             cacheEnabled = prefs.getBoolean(KEY_CACHE_ENABLED, true),
             cacheTtlSeconds = prefs.getInt(KEY_CACHE_TTL, 300),
             adBlockEnabled = prefs.getBoolean(KEY_AD_BLOCK_ENABLED, false),

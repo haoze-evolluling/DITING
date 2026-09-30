@@ -116,11 +116,21 @@ class DnsModeTest {
     fun `DnsModeConfig default values are reasonable`() {
         val config = DnsModeConfig()
         assertEquals("alidns", config.selectedUpstreamId)
-        assertEquals(5353, config.localListenPort)
+        assertEquals(1053, config.localListenPort)
         assertTrue(config.cacheEnabled)
         assertEquals(300, config.cacheTtlSeconds)
         assertFalse(config.adBlockEnabled)
         assertTrue(config.logQueries)
+    }
+
+    @Test
+    fun `DnsServerEngine starts and stops cleanly`() {
+        val config = DnsModeConfig(localListenPort = 15354)
+        val upstream = DnsUpstreamServer.PRESETS.first()
+        val engine = com.haoze.diting.dnsmode.backend.DnsServerEngine(config, upstream)
+        val started = engine.start()
+        assertTrue(started)
+        engine.stop()
     }
 
     @Test
