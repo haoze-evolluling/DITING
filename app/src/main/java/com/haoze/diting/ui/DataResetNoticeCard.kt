@@ -58,7 +58,10 @@ internal fun DataResetNoticeCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onDismiss) {
+                TextButton(
+                    onClick = onDismiss,
+                    shape = SettingsCornerShape
+                ) {
                     Text(
                         text = localizedText("知道了"),
                         color = MaterialTheme.colorScheme.primary

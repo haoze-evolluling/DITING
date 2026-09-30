@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -44,21 +44,18 @@ fun AppUpdateDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            AppDialogButton(
+                label = when (status) {
+                    AppUpdateDownloadStatus.Downloading -> "下载中"
+                    AppUpdateDownloadStatus.Downloaded -> "安装"
+                    AppUpdateDownloadStatus.Failed -> "重新下载"
+                    AppUpdateDownloadStatus.Idle -> "下载更新"
+                },
                 onClick = onDownload,
                 enabled = status != AppUpdateDownloadStatus.Downloading,
-            ) {
-                Text(
-                    localizedText(when (status) {
-                        AppUpdateDownloadStatus.Downloading -> "下载中"
-                        AppUpdateDownloadStatus.Downloaded -> "安装"
-                        AppUpdateDownloadStatus.Failed -> "重新下载"
-                        AppUpdateDownloadStatus.Idle -> "下载更新"
-                    }),
-                )
-            }
+            )
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(localizedText("稍后")) } },
+        dismissButton = { AppDialogButton(label = "稍后", onClick = onDismiss) },
     )
 }
 

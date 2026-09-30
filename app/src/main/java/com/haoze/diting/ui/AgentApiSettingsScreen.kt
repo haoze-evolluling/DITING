@@ -14,9 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -32,8 +30,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.haoze.diting.ui.agent.AgentAnalysisSheet
 import com.haoze.diting.ui.agent.AnalysisTarget
-import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsGroupTitle
+import com.haoze.diting.ui.components.SettingsOutlinedActionButton
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.settings.AgentApiConfig
 import com.haoze.diting.ui.settings.AgentApiSettingsStore
@@ -151,7 +150,7 @@ fun AgentApiSettingsScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
                 ) {
-                    OutlinedButton(
+                    SettingsOutlinedActionButton(
                         onClick = { showResetDialog = true },
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -173,26 +172,17 @@ fun AgentApiSettingsScreen(
 
     // Reset confirmation dialog
     if (showResetDialog) {
-        AppAlertDialog(
+        AppConfirmDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text(localizedText("恢复默认配置？")) },
-            text = { Text(localizedText("此操作将把所有 AI 分析参数、API Key 与系统提示词恢复为默认设置。")) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val defaultConfig = AgentApiConfig()
-                        updateConfig(defaultConfig)
-                        showResetDialog = false
-                        Toast.makeText(context, "已恢复出厂配置", Toast.LENGTH_SHORT).show()
-                    }
-                ) {
-                    Text(localizedText("确认恢复"))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) {
-                    Text(localizedText("取消"))
-                }
+            title = "恢复默认配置？",
+            message = "此操作将把所有 AI 分析参数、API Key 与系统提示词恢复为默认设置。",
+            confirmLabel = "确认恢复",
+            destructive = true,
+            onConfirm = {
+                val defaultConfig = AgentApiConfig()
+                updateConfig(defaultConfig)
+                showResetDialog = false
+                Toast.makeText(context, "已恢复出厂配置", Toast.LENGTH_SHORT).show()
             }
         )
     }

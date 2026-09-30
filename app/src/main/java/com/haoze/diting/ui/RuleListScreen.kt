@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.diting.ui.components.AppAlertDialog
 import com.haoze.diting.ui.components.AppDialogButton
+import com.haoze.diting.ui.components.RuleListEmptyState
 import com.haoze.diting.ui.components.RuleListPaginationBar
 import com.haoze.diting.ui.components.RuleSearchField
 import com.haoze.diting.ui.components.RuleTagChip
@@ -106,29 +107,36 @@ fun RuleListScreen(
 
                 SettingsDivider()
 
-                // Reserve bottom scroll space for the floating pagination control.
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 96.dp),
-                    verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
-                ) {
-                    itemsIndexed(rules, key = { _, rule -> rule.id }) { index, rule ->
-                        SettingsSurfaceItem(
-                            index = index,
-                            itemCount = rules.size
-                        ) {
-                            RuleRowContent(
-                                rule = rule,
-                                onToggle = { 
-                                    if (rule.masterEnabled) {
-                                        viewModel.toggleRule(rule.id, it)
-                                        onRuntimeDnsSettingsChanged()
-                                    }
-                                },
-                                onDelete = { viewModel.deleteRule(rule.id) }
-                            )
+                if (rules.isEmpty()) {
+                    RuleListEmptyState(
+                        message = if (searchQuery.isNotEmpty()) localizedText("未找到匹配的规则")
+                        else localizedText("暂无规则")
+                    )
+                } else {
+                    // Reserve bottom scroll space for the floating pagination control.
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 96.dp),
+                        verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
+                    ) {
+                        itemsIndexed(rules, key = { _, rule -> rule.id }) { index, rule ->
+                            SettingsSurfaceItem(
+                                index = index,
+                                itemCount = rules.size
+                            ) {
+                                RuleRowContent(
+                                    rule = rule,
+                                    onToggle = { 
+                                        if (rule.masterEnabled) {
+                                            viewModel.toggleRule(rule.id, it)
+                                            onRuntimeDnsSettingsChanged()
+                                        }
+                                    },
+                                    onDelete = { viewModel.deleteRule(rule.id) }
+                                )
+                            }
                         }
                     }
                 }
@@ -271,20 +279,14 @@ private fun RuleRowContent(
             }
 
             if (!rule.appScope.isNullOrEmpty()) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = MaterialTheme.colorScheme.tertiaryContainer
-                ) {
-                    val label = (if (rule.appInverted) "~" else "") + rule.appScope
-                    Text(
-                        text = "App: $label",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
+                val label = (if (rule.appInverted) "~" else "") + rule.appScope
+                RuleTagChip(
+                    text = "App: $label",
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
 
             rule.targetType?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }

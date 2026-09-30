@@ -8,10 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.haoze.diting.ui.components.RuleConfirmDialog
+import com.haoze.diting.ui.components.AppConfirmDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -182,12 +181,15 @@ fun ConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    RuleConfirmDialog(
-        title = localizedText(title),
-        message = localizedText(text),
-        confirmText = localizedText("确定"),
-        onConfirm = onConfirm,
-        onDismiss = onDismiss,
-        destructive = false
+    AppConfirmDialog(
+        onDismissRequest = onDismiss,
+        title = title,
+        message = text,
+        confirmLabel = "确定",
+        onConfirm = {
+            onConfirm()
+            onDismiss()
+        },
+        destructive = true
     )
 }

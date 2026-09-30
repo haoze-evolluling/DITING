@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.ui.components.SettingsCheckboxItem
+import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsScaffold
@@ -48,7 +49,8 @@ fun OptionalFeaturesScreen(
                         allFeatures.map { it.key }.toSet()
                     }
                     OptionalFeaturesStore.setVisibleFeatures(context, nextFeatures)
-                }
+                },
+                shape = SettingsCornerShape
             ) {
                 Text(
                     text = localizedText(if (allSelected) "取消全选" else "全选")

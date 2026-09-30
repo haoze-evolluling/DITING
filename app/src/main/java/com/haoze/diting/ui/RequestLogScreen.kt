@@ -36,10 +36,11 @@ import com.haoze.diting.ui.agent.AgentAnalysisSheet
 import com.haoze.diting.ui.agent.AnalysisTarget
 import com.haoze.diting.ui.components.AppAlertDialog
 import com.haoze.diting.ui.components.AppDialogButton
+import com.haoze.diting.ui.components.RuleFilterChipRow
+import com.haoze.diting.ui.components.RuleTagChip
 import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceItem
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -329,9 +330,13 @@ fun RequestLogScreen(
 
 @Composable
 private fun <T> RequestFilterRow(values: List<T>, selected: T, label: (T) -> String, select: (T) -> Unit) {
-    Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        values.forEach { value -> TextButton(onClick = { select(value) }, shape = SettingsCornerShape, colors = ButtonDefaults.textButtonColors(containerColor = if (value == selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)) { Text(localizedText(label(value))) } }
-    }
+    RuleFilterChipRow(
+        filters = values,
+        selectedFilter = selected,
+        onSelect = select,
+        labelKeyOf = label,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    )
 }
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
@@ -353,7 +358,11 @@ private fun RequestLogCard(item: RequestLogItem, onLongClick: () -> Unit) {
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(item.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-            Surface(shape = RoundedCornerShape(4.dp), color = color.copy(alpha = .12f)) { Text(localizedText(item.status.label), color = color, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)) }
+            RuleTagChip(
+                text = localizedText(item.status.label),
+                containerColor = color.copy(alpha = .12f),
+                contentColor = color
+            )
         }
         Text(localizedText(item.subtitle), style = MaterialTheme.typography.bodySmall)
         item.detail?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }

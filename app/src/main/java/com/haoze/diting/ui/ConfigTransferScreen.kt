@@ -32,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,10 +49,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.SettingsCheckboxItem
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsGroupTitle
@@ -183,7 +185,8 @@ fun ConfigTransferScreen(
                         appearance = target
                         systemSettings = target
                     },
-                    enabled = !isBusy
+                    enabled = !isBusy,
+                    shape = SettingsCornerShape
                 ) {
                     Text(
                         text = localizedText(if (allSelected) "全不选" else "全选"),
@@ -343,65 +346,53 @@ private fun ConfigImportDialog(
         scrollState.animateScrollTo(scrollState.maxValue)
     }
 
-    Dialog(
+    AppAlertDialog(
         onDismissRequest = { if (isFinished) onDismiss() else onCancel() },
         properties = DialogProperties(
             dismissOnBackPress = true,
-            dismissOnClickOutside = isFinished,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Card(
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .padding(vertical = 24.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp)
+            dismissOnClickOutside = isFinished
+        ),
+        scrollable = false,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Text(
+                    text = localizedText("导入应用配置"),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Surface(
+                    shape = CircleShape,
+                    color = when {
+                        error != null -> MaterialTheme.colorScheme.errorContainer
+                        isFinished -> MaterialTheme.colorScheme.primaryContainer
+                        else -> MaterialTheme.colorScheme.secondaryContainer
+                    }
                 ) {
                     Text(
-                        text = localizedText("导入应用配置"),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    androidx.compose.material3.Surface(
-                        shape = CircleShape,
+                        text = localizedText(
+                            when {
+                                error != null -> "导入失败"
+                                isFinished -> "导入完成"
+                                else -> "正在导入"
+                            }
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
                         color = when {
-                            error != null -> MaterialTheme.colorScheme.errorContainer
-                            isFinished -> MaterialTheme.colorScheme.primaryContainer
-                            else -> MaterialTheme.colorScheme.secondaryContainer
-                        }
-                    ) {
-                        Text(
-                            text = localizedText(
-                                when {
-                                    error != null -> "导入失败"
-                                    isFinished -> "导入完成"
-                                    else -> "正在导入"
-                                }
-                            ),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = when {
-                                error != null -> MaterialTheme.colorScheme.onErrorContainer
-                                isFinished -> MaterialTheme.colorScheme.onPrimaryContainer
-                                else -> MaterialTheme.colorScheme.onSecondaryContainer
-                            },
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                        )
-                    }
+                            error != null -> MaterialTheme.colorScheme.onErrorContainer
+                            isFinished -> MaterialTheme.colorScheme.onPrimaryContainer
+                            else -> MaterialTheme.colorScheme.onSecondaryContainer
+                        },
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+            }
+        },
+        text = {
+            Column {
                 if (progress.total > 0) {
                     val progressFraction = if (isFinished) 1f else (progress.processed.toFloat() / progress.total.coerceAtLeast(1))
                     LinearProgressIndicator(
@@ -428,15 +419,14 @@ private fun ConfigImportDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 160.dp, max = 340.dp)
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(SettingsCornerShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
                         .padding(14.dp)
                         .verticalScroll(scrollState)
@@ -534,63 +524,54 @@ private fun ConfigImportDialog(
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (isFinished) {
-                        TextButton(
-                            onClick = {
-                                val reportText = buildString {
-                                    appendLine(localizedText(context, "=== 谛听应用配置导入明细 ==="))
-                                    if (result != null) {
-                                        appendLine(localizedText(context, "汇总：新增 ${result.added} 项，跳过 ${result.skipped} 项，失败 ${result.failed} 项"))
-                                        if (result.addedDetails.isNotEmpty()) {
-                                            appendLine(localizedText(context, "\n【新增项目】:"))
-                                            result.addedDetails.forEach { appendLine("  + " + localizedText(context, it)) }
-                                        }
-                                        if (result.skippedDetails.isNotEmpty()) {
-                                            appendLine(localizedText(context, "\n【跳过项目】:"))
-                                            result.skippedDetails.forEach { appendLine("  - " + localizedText(context, it)) }
-                                        }
-                                        if (result.updatedSettingsDetails.isNotEmpty()) {
-                                            appendLine(localizedText(context, "\n【更新全局设置】:"))
-                                            result.updatedSettingsDetails.forEach { appendLine("  * " + localizedText(context, it)) }
-                                        }
-                                    }
-                                    appendLine(localizedText(context, "\n=== 执行日志 ==="))
-                                    logs.forEach { appendLine(localizedText(context, it)) }
+            }
+        },
+        confirmButton = {
+            if (isFinished) {
+                AppDialogButton(label = "完成", onClick = onDismiss)
+            } else {
+                Text(
+                    text = localizedText("正在处理，请稍候..."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        dismissButton = {
+            if (isFinished) {
+                AppDialogButton(
+                    label = "复制明细",
+                    onClick = {
+                        val reportText = buildString {
+                            appendLine(localizedText(context, "=== 谛听应用配置导入明细 ==="))
+                            if (result != null) {
+                                appendLine(localizedText(context, "汇总：新增 ${result.added} 项，跳过 ${result.skipped} 项，失败 ${result.failed} 项"))
+                                if (result.addedDetails.isNotEmpty()) {
+                                    appendLine(localizedText(context, "\n【新增项目】:"))
+                                    result.addedDetails.forEach { appendLine("  + " + localizedText(context, it)) }
                                 }
-                                coroutineScope.launch {
-                                    context.copyToClipboard("report", reportText)
+                                if (result.skippedDetails.isNotEmpty()) {
+                                    appendLine(localizedText(context, "\n【跳过项目】:"))
+                                    result.skippedDetails.forEach { appendLine("  - " + localizedText(context, it)) }
                                 }
-                                context.showToast("已复制明细日志", Toast.LENGTH_SHORT)
+                                if (result.updatedSettingsDetails.isNotEmpty()) {
+                                    appendLine(localizedText(context, "\n【更新全局设置】:"))
+                                    result.updatedSettingsDetails.forEach { appendLine("  * " + localizedText(context, it)) }
+                                }
                             }
-                        ) {
-                            Text(localizedText("复制明细"))
+                            appendLine(localizedText(context, "\n=== 执行日志 ==="))
+                            logs.forEach { appendLine(localizedText(context, it)) }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(onClick = onDismiss) {
-                            Text(localizedText("完成"))
+                        coroutineScope.launch {
+                            context.copyToClipboard("report", reportText)
                         }
-                    } else {
-                        Text(
-                            text = localizedText("正在处理，请稍候..."),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        TextButton(onClick = onCancel) {
-                            Text(localizedText("取消"))
-                        }
+                        context.showToast("已复制明细日志", Toast.LENGTH_SHORT)
                     }
-                }
+                )
+            } else {
+                AppDialogButton(label = "取消", onClick = onCancel)
             }
         }
-    }
+    )
 }
 

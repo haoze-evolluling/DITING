@@ -10,13 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +25,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.haoze.diting.ui.components.RuleListEmptyState
+import com.haoze.diting.ui.components.RuleSearchField
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceItem
@@ -131,46 +131,46 @@ internal fun AppPickerScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 )
                 headerContent()
-                OutlinedTextField(
+                RuleSearchField(
                     value = query,
                     onValueChange = { query = it },
-                    label = { Text(localizedText("搜索应用或包名")) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(28.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                    placeholder = localizedText("搜索应用或包名"),
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentPadding = PaddingValues(bottom = 80.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    itemsIndexed(visibleApps, key = { _, app -> app.packageName }) { index, app ->
-                        SettingsSurfaceItem(
-                            index = index,
-                            itemCount = visibleApps.size,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        ) {
-                            if (singleSelect) {
-                                InstalledAppRadioItem(
-                                    app = app,
-                                    selected = app.packageName in selectedPackages,
-                                    onSelected = { onSelectedPackagesChange(setOf(app.packageName)) }
-                                )
-                            } else {
-                                InstalledAppCheckboxItem(
-                                    app = app,
-                                    checked = app.packageName in selectedPackages,
-                                    onCheckedChange = { checked ->
-                                        onSelectedPackagesChange(
-                                            if (checked) selectedPackages + app.packageName
-                                            else selectedPackages - app.packageName
-                                        )
-                                    }
-                                )
+                if (visibleApps.isEmpty()) {
+                    RuleListEmptyState(message = localizedText(if (query.isNotEmpty()) "未找到匹配应用" else "暂无应用"))
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(bottom = 80.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        itemsIndexed(visibleApps, key = { _, app -> app.packageName }) { index, app ->
+                            SettingsSurfaceItem(
+                                index = index,
+                                itemCount = visibleApps.size,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            ) {
+                                if (singleSelect) {
+                                    InstalledAppRadioItem(
+                                        app = app,
+                                        selected = app.packageName in selectedPackages,
+                                        onSelected = { onSelectedPackagesChange(setOf(app.packageName)) }
+                                    )
+                                } else {
+                                    InstalledAppCheckboxItem(
+                                        app = app,
+                                        checked = app.packageName in selectedPackages,
+                                        onCheckedChange = { checked ->
+                                            onSelectedPackagesChange(
+                                                if (checked) selectedPackages + app.packageName
+                                                else selectedPackages - app.packageName
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

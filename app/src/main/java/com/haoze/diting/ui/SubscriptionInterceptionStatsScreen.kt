@@ -10,24 +10,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.diting.data.SubscriptionInterceptionStatsRange
+import com.haoze.diting.ui.components.RuleFilterChipRow
 import com.haoze.diting.ui.components.SettingsGroupTitle
-import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsScaffold
@@ -102,23 +99,13 @@ private fun SubscriptionInterceptionRangeSelector(
     selected: SubscriptionInterceptionStatsRange,
     onRangeClick: (SubscriptionInterceptionStatsRange) -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        SubscriptionInterceptionStatsRange.entries.forEach { range ->
-            val selectedColor = MaterialTheme.colorScheme.primary
-            TextButton(
-                onClick = { onRangeClick(range) },
-                shape = SettingsCornerShape,
-                colors = ButtonDefaults.textButtonColors(
-                    containerColor = if (range == selected) selectedColor.copy(alpha = 0.12f) else Color.Transparent,
-                    contentColor = if (range == selected) selectedColor else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            ) { Text(localizedText(range.displayName)) }
-        }
-    }
+    RuleFilterChipRow(
+        filters = SubscriptionInterceptionStatsRange.entries,
+        selectedFilter = selected,
+        onSelect = onRangeClick,
+        labelKeyOf = { it.displayName },
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+    )
 }
 
 @Composable
