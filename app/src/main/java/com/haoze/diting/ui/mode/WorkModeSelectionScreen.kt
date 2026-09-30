@@ -118,16 +118,11 @@ fun WorkModeSelectionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Top Illustration / Decorative Emblem (软件启动遮罩图标与超椭圆样式)
-                    Box(
-                        modifier = Modifier.size(92.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_splash_logo),
-                            contentDescription = localizedText("谛听 · DITING"),
-                            modifier = Modifier.size(184.dp)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_splash_squircle_logo),
+                        contentDescription = localizedText("谛听 · DITING"),
+                        modifier = Modifier.size(92.dp)
+                    )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
