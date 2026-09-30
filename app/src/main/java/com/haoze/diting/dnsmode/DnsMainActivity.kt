@@ -29,17 +29,19 @@ import com.haoze.diting.ui.settings.AppearanceSettingsStore
 class DnsMainActivity : AppLocalizedActivity() {
     private var languageModeAtCreate = AppLanguageMode.SYSTEM
     private val viewModel: DnsMainViewModel by viewModels()
+    private var appearanceRefreshVersion by mutableStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         languageModeAtCreate = AppLanguageManager.getMode(this)
         enableEdgeToEdge()
+        applyRecentsPrivacySetting()
 
         setContent {
-            val themeMode by remember { mutableStateOf(AppearanceSettingsStore.getAppThemeMode(this)) }
-            val colorStyle by remember { mutableStateOf(AppearanceSettingsStore.getThemeColorStyle(this)) }
-            val backgroundEnabled by remember { mutableStateOf(AppearanceSettingsStore.isCustomBackgroundEnabled(this)) }
-            val backgroundUri by remember { mutableStateOf(AppearanceSettingsStore.getCustomBackgroundUri(this)) }
+            val themeMode = remember(appearanceRefreshVersion) { AppearanceSettingsStore.getAppThemeMode(this) }
+            val colorStyle = remember(appearanceRefreshVersion) { AppearanceSettingsStore.getThemeColorStyle(this) }
+            val backgroundEnabled = remember(appearanceRefreshVersion) { AppearanceSettingsStore.isCustomBackgroundEnabled(this) }
+            val backgroundUri = remember(appearanceRefreshVersion) { AppearanceSettingsStore.getCustomBackgroundUri(this) }
 
             AppThemeSurface(
                 themeMode = themeMode,
@@ -59,12 +61,31 @@ class DnsMainActivity : AppLocalizedActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (WorkModeStore.getAppWorkMode(this) != AppWorkMode.DNS) {
+            switchToNormalMode()
+            return
+        }
         val currentLanguageMode = AppLanguageManager.getMode(this)
         if (currentLanguageMode != languageModeAtCreate) {
             languageModeAtCreate = currentLanguageMode
             recreate()
             return
         }
+        applyRecentsPrivacySetting()
+        appearanceRefreshVersion++
+        com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
+    private fun applyRecentsPrivacySetting() {
+        com.haoze.diting.ui.RecentsPrivacyController.apply(
+            this,
+            com.haoze.diting.ui.settings.SystemSettingsStore.isHideFromRecentsEnabled(this)
+        )
     }
 
     private fun switchToNormalMode() {

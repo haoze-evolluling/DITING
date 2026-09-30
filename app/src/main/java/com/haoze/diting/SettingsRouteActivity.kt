@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.dnsmode.DnsMainActivity
+import com.haoze.diting.dnsmode.backend.DnsModeManager
 import com.haoze.diting.ui.*
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeSelectionScreen
@@ -390,10 +391,21 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 currentMode = WorkModeStore.getAppWorkMode(this),
                 onBack = onBack,
                 onModeSelected = { selectedMode ->
+                    val previousMode = WorkModeStore.getAppWorkMode(this)
                     WorkModeStore.setAppWorkMode(this, selectedMode)
                     recordWorkModeChanged()
                     if (selectedMode == AppWorkMode.DNS) {
+                        try {
+                            startService(DnsVpnService.stopIntent(this))
+                        } catch (_: Exception) {}
                         val intent = DnsMainActivity.createIntent(this).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                        startActivity(intent)
+                        finish()
+                    } else if (previousMode == AppWorkMode.DNS) {
+                        DnsModeManager.stopService(this)
+                        val intent = Intent(this, MainActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         }
                         startActivity(intent)
@@ -404,6 +416,9 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 }
             )
             Routes.DNS_MODE_PLACEHOLDER -> {
+                try {
+                    startService(DnsVpnService.stopIntent(this))
+                } catch (_: Exception) {}
                 val intent = DnsMainActivity.createIntent(this).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }

@@ -30,30 +30,55 @@ class DnsModeService : Service() {
                 stopSelf()
                 return START_NOT_STICKY
             }
-            ACTION_START, null -> {
+            ACTION_REFRESH -> {
+                refreshNotification()
+                return START_STICKY
+            }
+            ACTION_START -> {
                 startForegroundServiceInternal()
                 DnsModeManager.onServiceStarted()
+            }
+            null -> {
+                if (DnsModePreferences.isServiceActive(this)) {
+                    startForegroundServiceInternal()
+                    DnsModeManager.onServiceStarted()
+                } else {
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
             }
         }
         return START_STICKY
     }
 
     override fun onDestroy() {
+        DnsModePreferences.setServiceActive(this, false)
         DnsModeManager.onServiceStopped()
         super.onDestroy()
     }
 
     private fun startForegroundServiceInternal() {
         val notification = buildForegroundNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        }.onFailure {
+            runCatching {
+                startForeground(NOTIFICATION_ID, notification)
+            }
         }
+    }
+
+    private fun refreshNotification() {
+        val manager = getSystemService(NotificationManager::class.java) ?: return
+        manager.notify(NOTIFICATION_ID, buildForegroundNotification())
     }
 
     private fun buildForegroundNotification(): Notification {
@@ -116,6 +141,7 @@ class DnsModeService : Service() {
 
         const val ACTION_START = "com.haoze.diting.dnsmode.START"
         const val ACTION_STOP = "com.haoze.diting.dnsmode.STOP"
+        const val ACTION_REFRESH = "com.haoze.diting.dnsmode.REFRESH"
 
         fun startIntent(context: Context): Intent {
             return Intent(context, DnsModeService::class.java).apply {
@@ -126,6 +152,12 @@ class DnsModeService : Service() {
         fun stopIntent(context: Context): Intent {
             return Intent(context, DnsModeService::class.java).apply {
                 action = ACTION_STOP
+            }
+        }
+
+        fun refreshIntent(context: Context): Intent {
+            return Intent(context, DnsModeService::class.java).apply {
+                action = ACTION_REFRESH
             }
         }
     }

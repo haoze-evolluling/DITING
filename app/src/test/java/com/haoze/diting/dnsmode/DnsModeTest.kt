@@ -125,5 +125,28 @@ class DnsModeTest {
     fun `DnsModeService intent actions are defined`() {
         assertEquals("com.haoze.diting.dnsmode.START", DnsModeService.ACTION_START)
         assertEquals("com.haoze.diting.dnsmode.STOP", DnsModeService.ACTION_STOP)
+        assertEquals("com.haoze.diting.dnsmode.REFRESH", DnsModeService.ACTION_REFRESH)
+    }
+
+    @Test
+    fun `getActiveUpstream falls back gracefully when id is unknown`() {
+        // Unknown id should fall back to first preset
+        val upstream = DnsModeManager.getActiveUpstream()
+        assertNotNull(upstream)
+        assertEquals("alidns", upstream.id)
+    }
+
+    @Test
+    fun `DNS mode UI strings are properly localized`() {
+        assertEquals("DITING · DNS Mode", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("谛听 · DNS模式"))
+        assertEquals("DNS Mode", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("DNS 模式"))
+        assertEquals("Overview", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("概览"))
+        assertEquals("Upstream Servers", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("上游服务器"))
+        assertEquals("Mode Settings", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("模式设置"))
+        assertEquals("DNS Proxy Running", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("DNS 代理运行中"))
+        assertEquals("Total Queries", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("总解析量"))
+        assertEquals("Cache Hits", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("缓存命中"))
+        assertEquals("Avg Latency", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("平均时延"))
+        assertEquals("Preset Public Upstream DNS", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("预设公共上游 DNS"))
     }
 }

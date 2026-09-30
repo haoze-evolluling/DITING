@@ -47,24 +47,35 @@ object DnsModeManager {
     }
 
     fun startService(context: Context) {
-        if (_status.value.isRunning) return
+        if (_status.value == DnsServiceStatus.RUNNING || _status.value == DnsServiceStatus.STARTING) return
         _status.value = DnsServiceStatus.STARTING
         DnsModePreferences.setServiceActive(context, true)
-        ContextCompat.startForegroundService(context, DnsModeService.startIntent(context))
+        try {
+            ContextCompat.startForegroundService(context, DnsModeService.startIntent(context))
+        } catch (e: Exception) {
+            _status.value = DnsServiceStatus.ERROR
+            DnsModePreferences.setServiceActive(context, false)
+        }
     }
 
     fun stopService(context: Context) {
-        if (_status.value == DnsServiceStatus.STOPPED) return
+        if (_status.value == DnsServiceStatus.STOPPED || _status.value == DnsServiceStatus.STOPPING) return
         _status.value = DnsServiceStatus.STOPPING
         DnsModePreferences.setServiceActive(context, false)
-        context.startService(DnsModeService.stopIntent(context))
+        try {
+            context.startService(DnsModeService.stopIntent(context))
+        } catch (e: Exception) {
+            _status.value = DnsServiceStatus.STOPPED
+        }
     }
 
     fun toggleService(context: Context) {
-        if (_status.value.isRunning) {
-            stopService(context)
-        } else {
-            startService(context)
+        when (_status.value) {
+            DnsServiceStatus.RUNNING -> stopService(context)
+            DnsServiceStatus.STOPPED, DnsServiceStatus.ERROR -> startService(context)
+            DnsServiceStatus.STARTING, DnsServiceStatus.STOPPING -> {
+                // Ignore clicks during transitional states to prevent duplicate intents
+            }
         }
     }
 
@@ -87,6 +98,11 @@ object DnsModeManager {
         val updated = _config.value.copy(selectedUpstreamId = serverId)
         _config.value = updated
         DnsModePreferences.saveConfig(context, updated)
+        if (_status.value.isRunning) {
+            try {
+                context.startService(DnsModeService.refreshIntent(context))
+            } catch (_: Exception) {}
+        }
     }
 
     fun updateConfig(context: Context, newConfig: DnsModeConfig) {
