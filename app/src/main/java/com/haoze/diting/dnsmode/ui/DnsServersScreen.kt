@@ -1,38 +1,24 @@
 package com.haoze.diting.dnsmode.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.Dns
-import androidx.compose.material.icons.outlined.RadioButtonUnchecked
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
-import com.haoze.diting.ui.components.SettingsCornerShape
+import com.haoze.diting.ui.components.SettingsGroupTitle
+import com.haoze.diting.ui.components.SettingsInfoText
+import com.haoze.diting.ui.components.SettingsItem
+import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.localizedText
 
 @Composable
@@ -40,117 +26,69 @@ fun DnsServersScreen(
     upstreams: List<DnsUpstreamServer>,
     selectedUpstreamId: String,
     onSelectUpstream: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentBottomPadding: Dp = 108.dp
 ) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    val selectedUpstream = upstreams.find { it.id == selectedUpstreamId }
+
+    Column(
+        modifier = modifier.fillMaxSize()
     ) {
-        item {
-            Text(
-                text = localizedText("预设公共上游 DNS"),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 4.dp, bottom = 4.dp, top = 4.dp)
+        selectedUpstream?.let {
+            SettingsInfoText(
+                text = localizedText("当前用于解析 DNS：(${it.protocol.label})") + " " + localizedText(it.name),
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
 
-        items(upstreams, key = { it.id }) { server ->
-            val isSelected = server.id == selectedUpstreamId
-            DnsServerItemCard(
-                server = server,
-                isSelected = isSelected,
-                onClick = { onSelectUpstream(server.id) }
-            )
-        }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = contentBottomPadding),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                SettingsGroupTitle(localizedText("预设公共上游 DNS"))
+            }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
+            item {
+                SettingsSurfaceGroup(
+                    content = upstreams.map { server ->
+                        {
+                            DnsUpstreamListItem(
+                                server = server,
+                                selected = server.id == selectedUpstreamId,
+                                onSelect = {
+                                    if (server.id != selectedUpstreamId) {
+                                        onSelectUpstream(server.id)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun DnsServerItemCard(
+private fun DnsUpstreamListItem(
     server: DnsUpstreamServer,
-    isSelected: Boolean,
-    onClick: () -> Unit
+    selected: Boolean,
+    onSelect: () -> Unit
 ) {
-    Card(
-        shape = SettingsCornerShape,
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            }
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
+    SettingsItem(
+        title = localizedText(server.name),
+        subtitle = server.endpointLabel(),
+        onClick = onSelect
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        if (selected) {
             Icon(
-                imageVector = if (isSelected) Icons.Filled.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
-                contentDescription = null,
-                tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                modifier = Modifier.size(24.dp)
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = localizedText("已选中"),
+                tint = MaterialTheme.colorScheme.primary
             )
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = server.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainerHighest
-                    ) {
-                        Text(
-                            text = server.protocol.label,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = server.address,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                if (server.description.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = server.description,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        fontSize = 11.sp
-                    )
-                }
-            }
         }
     }
 }
+

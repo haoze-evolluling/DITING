@@ -111,7 +111,7 @@ private const val PAGER_CATCH_UP_TIMEOUT_NANO = 800_000_000L
 fun FloatingNavigationBar(
     selectedPage: Int,
     onPageSelected: (Int) -> Unit,
-    items: List<BottomBarDestination>,
+    items: List<FloatingBottomBarTabItem>,
     modifier: Modifier = Modifier,
     pagerProgress: (() -> Float)? = null,
     isGlassEnabled: Boolean = true,

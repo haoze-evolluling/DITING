@@ -11,15 +11,23 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import org.json.JSONArray
 
 /**
+ * Common contract for items rendered in [FloatingNavigationBar].
+ */
+interface FloatingBottomBarTabItem {
+    val tabLabel: String
+    val icon: ImageVector
+}
+
+/**
  * Available destinations that can be placed on the floating bottom navigation bar.
  */
 enum class BottomBarDestination(
     val id: String,
     val title: String,
-    val tabLabel: String,
+    override val tabLabel: String,
     val description: String,
-    val icon: ImageVector
-) {
+    override val icon: ImageVector
+) : FloatingBottomBarTabItem {
     HOME(
         id = "home",
         title = "谛听",

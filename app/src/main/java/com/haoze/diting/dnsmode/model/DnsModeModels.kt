@@ -26,6 +26,13 @@ data class DnsUpstreamServer(
     val description: String = "",
     val isCustom: Boolean = false
 ) {
+    fun endpointLabel(): String {
+        return when (protocol) {
+            DnsModeProtocol.DOH -> "[${protocol.label}] $address"
+            else -> "[${protocol.label}] $address:$port"
+        }
+    }
+
     companion object {
         val PRESETS = listOf(
             DnsUpstreamServer(

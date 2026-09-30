@@ -48,6 +48,7 @@ class DnsModeTest {
         assertEquals("223.5.5.5", alidns?.address)
         assertEquals(53, alidns?.port)
         assertEquals(DnsModeProtocol.UDP, alidns?.protocol)
+        assertEquals("[UDP] 223.5.5.5:53", alidns?.endpointLabel())
 
         val cloudflare = presets.firstOrNull { it.id == "cloudflare" }
         assertNotNull(cloudflare)
@@ -56,6 +57,7 @@ class DnsModeTest {
         val dohServer = presets.firstOrNull { it.protocol == DnsModeProtocol.DOH }
         assertNotNull(dohServer)
         assertTrue(dohServer?.address?.startsWith("https://") == true)
+        assertEquals("[DoH] ${dohServer?.address}", dohServer?.endpointLabel())
     }
 
     @Test
