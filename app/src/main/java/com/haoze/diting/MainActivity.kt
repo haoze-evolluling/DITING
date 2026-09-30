@@ -46,8 +46,8 @@ import com.haoze.diting.notification.AppNotificationChannels
 import com.haoze.diting.notification.NotificationPermissionHelper
 import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.AppUpdateDialog
+import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.ui.mode.AppWorkMode
-import com.haoze.diting.ui.mode.DnsModePlaceholderScreen
 import com.haoze.diting.ui.mode.WorkModeSelectionScreen
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.update.AppUpdateHost
@@ -149,6 +149,14 @@ class MainActivity : AppLocalizedActivity() {
         enableEdgeToEdge()
         AppSettings.performStartupSelfCheck(this)
         applyRecentsPrivacySetting()
+        if (SystemSettingsStore.isInitialAgreementAccepted(this) &&
+            WorkModeStore.hasSelectedWorkMode(this) &&
+            WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS
+        ) {
+            startActivity(DnsMainActivity.createIntent(this))
+            finish()
+            return
+        }
         if (com.haoze.diting.crash.CrashLogManager.consumePendingAutoExportNotice(this)) {
             showToast("软件连续异常退出，崩溃日志已自动备份至系统“下载”目录", Toast.LENGTH_LONG)
         }
@@ -184,6 +192,9 @@ class MainActivity : AppLocalizedActivity() {
                     hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this@MainActivity)
                     if (currentWorkMode == AppWorkMode.DNS) {
                         stopVpnService()
+                        startActivity(DnsMainActivity.createIntent(this@MainActivity))
+                        finish()
+                        return@LaunchedEffect
                     } else {
                         initializeAcceptedExperience()
                     }
@@ -217,25 +228,15 @@ class MainActivity : AppLocalizedActivity() {
                                 onModeSelected = { selectedMode ->
                                     WorkModeStore.setAppWorkMode(this@MainActivity, selectedMode)
                                     WorkModeStore.setWorkModeSelected(this@MainActivity, true)
-                                    currentWorkMode = selectedMode
-                                    hasSelectedWorkMode = true
-                                    if (selectedMode == AppWorkMode.NORMAL) {
-                                        initializeAcceptedExperience()
-                                    } else {
+                                    if (selectedMode == AppWorkMode.DNS) {
                                         stopVpnService()
+                                        startActivity(DnsMainActivity.createIntent(this@MainActivity))
+                                        finish()
+                                    } else {
+                                        currentWorkMode = selectedMode
+                                        hasSelectedWorkMode = true
+                                        initializeAcceptedExperience()
                                     }
-                                }
-                            )
-                        } else if (currentWorkMode == AppWorkMode.DNS) {
-                            DnsModePlaceholderScreen(
-                                onBack = null,
-                                onSwitchToNormalMode = {
-                                    WorkModeStore.setAppWorkMode(this@MainActivity, AppWorkMode.NORMAL)
-                                    currentWorkMode = AppWorkMode.NORMAL
-                                    initializeAcceptedExperience()
-                                },
-                                onSelectMode = {
-                                    launchSettings(Routes.WORK_MODE_SELECTION)
                                 }
                             )
                         } else {

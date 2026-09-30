@@ -21,9 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
 import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.entity.RuleScope
+import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.ui.*
 import com.haoze.diting.ui.mode.AppWorkMode
-import com.haoze.diting.ui.mode.DnsModePlaceholderScreen
 import com.haoze.diting.ui.mode.WorkModeSelectionScreen
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.traffic.AppTrafficStatsScreen
@@ -393,23 +393,23 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     WorkModeStore.setAppWorkMode(this, selectedMode)
                     recordWorkModeChanged()
                     if (selectedMode == AppWorkMode.DNS) {
-                        onNavigate(Routes.DNS_MODE_PLACEHOLDER)
+                        val intent = DnsMainActivity.createIntent(this).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                        startActivity(intent)
+                        finish()
                     } else {
                         onBack()
                     }
                 }
             )
-            Routes.DNS_MODE_PLACEHOLDER -> DnsModePlaceholderScreen(
-                onBack = onBack,
-                onSwitchToNormalMode = {
-                    WorkModeStore.setAppWorkMode(this, AppWorkMode.NORMAL)
-                    recordWorkModeChanged()
-                    onBack()
-                },
-                onSelectMode = {
-                    onNavigate(Routes.WORK_MODE_SELECTION)
+            Routes.DNS_MODE_PLACEHOLDER -> {
+                val intent = DnsMainActivity.createIntent(this).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }
-            )
+                startActivity(intent)
+                finish()
+            }
             else -> SettingsScreen(onBack, onNavigate)
         }
     }
