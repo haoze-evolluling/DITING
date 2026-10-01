@@ -1,5 +1,6 @@
 package com.haoze.diting.ui.mode
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -7,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,11 +33,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.haoze.diting.R
 import com.haoze.diting.ui.localizedText
 
@@ -108,9 +113,9 @@ fun WorkModeCard(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val elevation by animateDpAsState(
-        targetValue = if (isPressed) 6.dp else 0.dp,
+        targetValue = if (isPressed) 10.dp else 0.dp,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
+            dampingRatio = Spring.DampingRatioLowBouncy,
             stiffness = Spring.StiffnessMedium
         ),
         label = "mode_card_elevation"
@@ -119,11 +124,32 @@ fun WorkModeCard(
     val isNormal = mode == AppWorkMode.NORMAL
     val modeAccent = if (isNormal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
 
-    val containerColor = if (isSelected) {
+    val isDark = isSystemInDarkTheme()
+    val shadowAmbientColor = if (isDark) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+    } else {
+        Color.Black.copy(alpha = 0.16f)
+    }
+    val shadowSpotColor = if (isDark) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.40f)
+    } else {
+        Color.Black.copy(alpha = 0.28f)
+    }
+
+    val baseContainerColor = if (isSelected) {
         MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     }
+    val containerColor by animateColorAsState(
+        targetValue = if (isPressed) {
+            MaterialTheme.colorScheme.surfaceContainerHighest
+        } else {
+            baseContainerColor
+        },
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "mode_card_container"
+    )
 
     val topRadius = if (index == 0) 28.dp else 4.dp
     val bottomRadius = if (index == itemCount - 1) 28.dp else 4.dp
@@ -137,17 +163,25 @@ fun WorkModeCard(
     Card(
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation),
-        modifier = modifier.fillMaxWidth()
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .zIndex(if (isPressed) 1f else 0f)
+            .shadow(
+                elevation = elevation,
+                shape = cardShape,
+                ambientColor = shadowAmbientColor,
+                spotColor = shadowSpotColor
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onClick
-                )
                 .padding(horizontal = 20.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
