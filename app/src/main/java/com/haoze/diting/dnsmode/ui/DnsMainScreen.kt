@@ -21,10 +21,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,11 +37,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.haoze.diting.dnsmode.model.DnsUpstreamServer
+import com.haoze.diting.dnsmode.model.DnsModeProtocol
 import com.haoze.diting.dnsmode.ui.navigation.DnsNavTab
 import com.haoze.diting.dnsmode.viewmodel.DnsMainViewModel
 import com.haoze.diting.ui.FloatingNavigationBar
 import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.localizedText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -65,8 +66,7 @@ fun DnsMainScreen(
     var showResetStatsConfirmDialog by remember { mutableStateOf(false) }
     var showPortEditDialog by remember { mutableStateOf(false) }
     var showAddUpstreamDialog by remember { mutableStateOf(false) }
-    var editingUpstream by remember { mutableStateOf<DnsUpstreamServer?>(null) }
-    var pendingDeleteUpstreamId by remember { mutableStateOf<String?>(null) }
+    var selectedDnsProtocol by remember { mutableStateOf(DnsModeProtocol.UDP) }
 
     val navigateToPage: (Int) -> Unit = { targetPage ->
         if (pagerState.currentPage != targetPage) {
@@ -114,6 +114,15 @@ fun DnsMainScreen(
                         )
                     },
                     actions = {
+                        if (currentTab == DnsNavTab.SERVERS) {
+                            TextButton(
+                                onClick = { showAddUpstreamDialog = true },
+                                shape = SettingsCornerShape
+                            ) {
+                                Text(localizedText("新增"))
+                            }
+                        }
+
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = MaterialTheme.colorScheme.tertiaryContainer,
@@ -166,9 +175,17 @@ fun DnsMainScreen(
                     DnsNavTab.SERVERS -> DnsServersScreen(
                         upstreams = uiState.upstreams,
                         selectedUpstreamId = uiState.config.selectedUpstreamId,
+                        activeUpstream = uiState.activeUpstream,
                         onSelectUpstream = viewModel::selectUpstream,
-                        onAddUpstream = { showAddUpstreamDialog = true },
-                        onEditUpstream = { editingUpstream = it },
+                        onAddUpstream = { name, protocol, address, port ->
+                            viewModel.addCustomUpstream(name, protocol, address, port)
+                        },
+                        onUpdateUpstream = viewModel::updateCustomUpstream,
+                        onDeleteUpstream = viewModel::removeCustomUpstream,
+                        selectedProtocol = selectedDnsProtocol,
+                        onSelectProtocol = { selectedDnsProtocol = it },
+                        showAddDialog = showAddUpstreamDialog,
+                        onDismissAddDialog = { showAddUpstreamDialog = false },
                         contentBottomPadding = 108.dp
                     )
                     DnsNavTab.SETTINGS -> DnsSettingsScreen(
@@ -241,50 +258,4 @@ fun DnsMainScreen(
             }
         )
     }
-
-    if (showAddUpstreamDialog) {
-        DnsUpstreamEditDialog(
-            title = "添加自定义上游",
-            initial = null,
-            onDismiss = { showAddUpstreamDialog = false },
-            onSave = { name, protocol, address, port ->
-                viewModel.addCustomUpstream(name, protocol, address, port)
-                showAddUpstreamDialog = false
-            }
-        )
-    }
-
-    editingUpstream?.let { server ->
-        DnsUpstreamEditDialog(
-            title = "编辑自定义上游",
-            initial = server,
-            onDismiss = { editingUpstream = null },
-            onSave = { name, protocol, address, port ->
-                viewModel.updateCustomUpstream(
-                    server.copy(name = name, protocol = protocol, address = address, port = port)
-                )
-                editingUpstream = null
-            },
-            onDelete = {
-                pendingDeleteUpstreamId = server.id
-                editingUpstream = null
-            }
-        )
-    }
-
-    if (pendingDeleteUpstreamId != null) {
-        AppConfirmDialog(
-            onDismissRequest = { pendingDeleteUpstreamId = null },
-            title = localizedText("删除自定义上游"),
-            message = localizedText("删除后相关解析将回退到默认上游。确认删除吗？"),
-            confirmLabel = localizedText("确认删除"),
-            cancelLabel = localizedText("取消"),
-            destructive = true,
-            onConfirm = {
-                pendingDeleteUpstreamId?.let { viewModel.removeCustomUpstream(it) }
-                pendingDeleteUpstreamId = null
-            }
-        )
-    }
 }
-

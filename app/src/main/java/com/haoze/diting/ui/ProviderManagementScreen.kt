@@ -1,49 +1,21 @@
 package com.haoze.diting.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ErrorOutline
-import com.haoze.diting.ui.components.AppAlertDialog
-import com.haoze.diting.ui.components.AppConfirmDialog
-import com.haoze.diting.ui.components.AppDialogButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.ProviderEditDialog
+import com.haoze.diting.ui.components.ProviderManagementListContent
 import com.haoze.diting.ui.components.SettingsCornerShape
-import com.haoze.diting.ui.components.SettingsGroupTitle
-import com.haoze.diting.ui.components.SettingsInfoText
-import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsLoadingContent
-import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.vpn.DnsProtocol
 import com.haoze.diting.vpn.DnsProvider
@@ -54,7 +26,6 @@ fun ProviderManagementScreen(
     title: String = "服务商管理",
     viewModel: ProviderManagementViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val providers by viewModel.providers.collectAsStateWithLifecycle()
     val selectedId by viewModel.selectedId.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
@@ -74,7 +45,7 @@ fun ProviderManagementScreen(
         viewModel.activate()
     }
 
-    message?.let { msg ->
+    message?.let {
         viewModel.clearMessage()
     }
 
@@ -92,76 +63,29 @@ fun ProviderManagementScreen(
         if (initialLoading) {
             SettingsLoadingContent(modifier = Modifier.padding(innerPadding))
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                selectedProvider?.let {
-                    SettingsInfoText(
-                        text = localizedText("当前用于解析 DNS：(${it.protocol.label})") + " " + localizedText(it.name),
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    item {
-                        ProtocolToggleRow(
-                            selectedProtocol = selectedProtocol,
-                            onSelect = { selectedProtocol = it },
-                            modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
-                        )
-                    }
-                    item {
-            SettingsGroupTitle(localizedText("内置 DNS 服务商"))
-                    }
-                    item {
-                        val presetProviders = providers.filter {
-                            it.isPreset && it.protocol == selectedProtocol
-                        }
-                        SettingsSurfaceGroup(
-                            content = presetProviders.map { provider ->
-                                {
-                                    ProviderListItem(
-                                        provider = provider,
-                                        selected = provider.id == selectedId,
-                                        onSelect = { handleProviderSelection(provider) }
-                                    )
-                                }
-                            }
-                        )
-                    }
-
-                    item {
-            SettingsGroupTitle(localizedText("自定义 DNS 服务商"))
-                    }
-                    item {
-                        val userProviders = providers.filter {
-                            it.isUserProvider() && it.protocol == selectedProtocol
-                        }
-                        if (userProviders.isEmpty()) {
-                SettingsInfoText(localizedText("暂无 ${selectedProtocol.label} 自定义服务商。点击右上角“新增”添加自己的 DNS 服务。"))
-                        } else {
-                            SettingsSurfaceGroup(
-                                content = userProviders.map { provider ->
-                                    {
-                                        ProviderListItem(
-                                            provider = provider,
-                                            selected = provider.id == selectedId,
-                                            onSelect = { handleProviderSelection(provider) },
-                                            onEdit = { showEditDialog = provider },
-                                            onDelete = { providerToDelete = provider }
-                                        )
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-            }
+            ProviderManagementListContent(
+                activeItemText = selectedProvider?.let {
+                    localizedText("当前用于解析 DNS：(${it.protocol.label})") + " " + localizedText(it.name)
+                },
+                selectedProtocol = selectedProtocol,
+                protocols = DnsProtocol.MANAGED_PROTOCOLS,
+                protocolLabel = { it.label },
+                onSelectProtocol = { selectedProtocol = it },
+                presetItems = providers.filter {
+                    it.isPreset && it.protocol == selectedProtocol
+                },
+                customItems = providers.filter {
+                    it.isUserProvider() && it.protocol == selectedProtocol
+                },
+                selectedItemId = selectedId,
+                itemId = { it.id },
+                itemTitle = { it.name },
+                itemSubtitle = { it.endpointLabel() },
+                onSelectItem = ::handleProviderSelection,
+                onEditItem = { showEditDialog = it },
+                onDeleteItem = { providerToDelete = it },
+                modifier = Modifier.padding(innerPadding)
+            )
         }
     }
 
@@ -170,6 +94,12 @@ fun ProviderManagementScreen(
             title = localizedText("新增 DNS 服务商"),
             initialName = "",
             initialProtocol = selectedProtocol,
+            protocols = DnsProtocol.MANAGED_PROTOCOLS,
+            protocolLabel = { it.label },
+            isUrlBasedProtocol = { it == DnsProtocol.DOH },
+            defaultPortForProtocol = {
+                if (it == DnsProtocol.DOT) DnsProvider.DEFAULT_DOT_PORT else DnsProvider.DEFAULT_DNS_PORT
+            },
             initialUrl = "",
             initialHost = "",
             initialPort = when (selectedProtocol) {
@@ -181,6 +111,12 @@ fun ProviderManagementScreen(
                 viewModel.addProvider(name, protocol, url, host, port)
                 selectedProtocol = protocol
                 showAddDialog = false
+            },
+            validateInput = { name, protocol, url, host, port ->
+                isProviderInputValid(name, protocol, url, host, port)
+            },
+            validateAddress = { protocol, url, host ->
+                isProviderAddressValid(protocol, url, host)
             }
         )
     }
@@ -190,6 +126,12 @@ fun ProviderManagementScreen(
             title = localizedText("编辑 DNS 服务商"),
             initialName = provider.name,
             initialProtocol = provider.protocol,
+            protocols = DnsProtocol.MANAGED_PROTOCOLS,
+            protocolLabel = { it.label },
+            isUrlBasedProtocol = { it == DnsProtocol.DOH },
+            defaultPortForProtocol = {
+                if (it == DnsProtocol.DOT) DnsProvider.DEFAULT_DOT_PORT else DnsProvider.DEFAULT_DNS_PORT
+            },
             initialUrl = provider.url,
             initialHost = provider.host,
             initialPort = provider.port.toString(),
@@ -197,6 +139,12 @@ fun ProviderManagementScreen(
             onConfirm = { name, protocol, url, host, port ->
                 viewModel.updateProvider(provider, name, protocol, url, host, port)
                 showEditDialog = null
+            },
+            validateInput = { name, protocol, url, host, port ->
+                isProviderInputValid(name, protocol, url, host, port)
+            },
+            validateAddress = { protocol, url, host ->
+                isProviderAddressValid(protocol, url, host)
             }
         )
     }
@@ -212,219 +160,6 @@ fun ProviderManagementScreen(
                 viewModel.deleteProvider(provider.id)
                 providerToDelete = null
             }
-        )
-    }
-
-}
-
-@Composable
-private fun ProtocolToggleRow(
-    selectedProtocol: DnsProtocol,
-    onSelect: (DnsProtocol) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        DnsProtocol.MANAGED_PROTOCOLS.forEach { option ->
-            FilterChip(
-                selected = selectedProtocol == option,
-                onClick = { onSelect(option) },
-                label = {
-                    Text(
-                        text = option.label,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                },
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProviderListItem(
-    provider: DnsProvider,
-    selected: Boolean,
-    onSelect: () -> Unit,
-    onEdit: (() -> Unit)? = null,
-    onDelete: (() -> Unit)? = null
-) {
-    SettingsItem(
-        title = localizedText(provider.name),
-        subtitle = provider.endpointLabel(),
-        onClick = onSelect
-    ) {
-        if (selected) {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-        contentDescription = localizedText("已选中"),
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-        if (onEdit != null || onDelete != null) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                onEdit?.let { onEditClick ->
-                    IconButton(onClick = onEditClick) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                contentDescription = localizedText("编辑")
-                        )
-                    }
-                }
-                onDelete?.let { onDeleteClick ->
-                    IconButton(onClick = onDeleteClick) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                contentDescription = localizedText("删除")
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProviderEditDialog(
-    title: String,
-    initialName: String,
-    initialProtocol: DnsProtocol,
-    initialUrl: String,
-    initialHost: String,
-    initialPort: String,
-    onDismiss: () -> Unit,
-    onConfirm: (name: String, protocol: DnsProtocol, url: String, host: String, port: String) -> Unit
-) {
-    var name by remember { mutableStateOf(initialName) }
-    var protocol by remember { mutableStateOf(initialProtocol) }
-    var url by remember { mutableStateOf(initialUrl) }
-    var host by remember { mutableStateOf(initialHost) }
-    var port by remember { mutableStateOf(initialPort) }
-    var showAddressError by remember { mutableStateOf(false) }
-    val canSave = isProviderInputValid(name, protocol, url, host, port)
-    val addressInvalid = !isProviderAddressValid(protocol, url, host)
-    val showCurrentAddressError = showAddressError && addressInvalid
-
-    AppAlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(localizedText("服务商名称")) },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    shape = SettingsCornerShape,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                ProtocolToggleRow(
-                    selectedProtocol = protocol,
-                    onSelect = {
-                        protocol = it
-                        if (it == DnsProtocol.DNS) {
-                            port = DnsProvider.DEFAULT_DNS_PORT.toString()
-                        } else if (it == DnsProtocol.DOT) {
-                            port = DnsProvider.DEFAULT_DOT_PORT.toString()
-                        }
-                        showAddressError = false
-                    }
-                )
-                if (protocol == DnsProtocol.DOH) {
-                    OutlinedTextField(
-                        value = url,
-                        onValueChange = {
-                            url = it
-                            showAddressError = false
-                        },
-                        label = { Text(localizedText("${protocol.label} 解析地址")) },
-                placeholder = { Text(localizedText("https://example.com")) },
-                        isError = showCurrentAddressError,
-                        supportingText = {
-                            if (showCurrentAddressError) {
-                                AddressErrorText()
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        shape = SettingsCornerShape,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    OutlinedTextField(
-                        value = host,
-                        onValueChange = {
-                            host = it
-                            showAddressError = false
-                        },
-                        label = { Text(localizedText("${protocol.label} 服务器地址")) },
-                        placeholder = {
-                            Text(localizedText(if (protocol == DnsProtocol.DNS) "1.1.1.1 或 example.com" else "example.com"))
-                        },
-                        isError = showCurrentAddressError,
-                        supportingText = {
-                            if (showCurrentAddressError) {
-                                AddressErrorText()
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        shape = SettingsCornerShape,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = port,
-                        onValueChange = { port = it.filter { char -> char.isDigit() } },
-                        label = { Text(localizedText("${protocol.label} 端口")) },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        shape = SettingsCornerShape,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            AppDialogButton(
-                label = "保存",
-                enabled = canSave || addressInvalid,
-                onClick = {
-                    if (canSave) {
-                        onConfirm(name, protocol, url, host, port)
-                    } else if (addressInvalid) {
-                        showAddressError = true
-                    }
-                }
-            )
-        },
-        dismissButton = {
-            AppDialogButton(label = "取消", onClick = onDismiss)
-        }
-    )
-}
-
-@Composable
-private fun AddressErrorText() {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.ErrorOutline,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(14.dp)
-        )
-        Text(
-            text = localizedText("当前的地址并不符合要求"),
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall
         )
     }
 }
