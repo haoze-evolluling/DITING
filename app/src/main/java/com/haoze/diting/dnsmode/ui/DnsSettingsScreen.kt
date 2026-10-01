@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.outlined.Lan
@@ -40,7 +39,6 @@ fun DnsSettingsScreen(
     onUpdateConfig: (DnsModeConfig) -> Unit,
     onResetStats: () -> Unit,
     onEditListenPort: () -> Unit,
-    onSwitchToNormalMode: () -> Unit,
     onSelectMode: () -> Unit,
     modifier: Modifier = Modifier,
     contentBottomPadding: Dp = 108.dp
@@ -182,24 +180,14 @@ fun DnsSettingsScreen(
 
         item {
             SettingsSurfaceGroup(
-                content = listOf(
-                    {
-                        SettingsNavigationItem(
-                            title = localizedText("切换为普通模式"),
-                            subtitle = localizedText("启用完整分流、黑白名单与应用网络管控"),
-                            leadingIcon = Icons.Default.SwapHoriz,
-                            onClick = onSwitchToNormalMode
-                        )
-                    },
-                    {
-                        SettingsNavigationItem(
-                            title = localizedText("重新选择工作模式"),
-                            subtitle = localizedText("浏览所有工作模式详情并重新选择"),
-                            leadingIcon = Icons.Default.Tune,
-                            onClick = onSelectMode
-                        )
-                    }
-                )
+                content = listOf {
+                    SettingsNavigationItem(
+                        title = localizedText("重新选择工作模式"),
+                        subtitle = localizedText("浏览所有工作模式详情并重新选择"),
+                        leadingIcon = Icons.Default.Tune,
+                        onClick = onSelectMode
+                    )
+                }
             )
         }
     }

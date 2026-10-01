@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -34,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.haoze.diting.dnsmode.model.DnsModeProtocol
@@ -123,20 +120,6 @@ fun DnsMainScreen(
                             }
                         }
 
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = MaterialTheme.colorScheme.tertiaryContainer,
-                            modifier = Modifier.padding(end = 4.dp)
-                        ) {
-                            Text(
-                                text = localizedText("DNS 模式"),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-
                         IconButton(onClick = { showSwitchConfirmDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.SwapHoriz,
@@ -195,7 +178,6 @@ fun DnsMainScreen(
                         onUpdateConfig = viewModel::updateConfig,
                         onResetStats = { showResetStatsConfirmDialog = true },
                         onEditListenPort = { showPortEditDialog = true },
-                        onSwitchToNormalMode = { showSwitchConfirmDialog = true },
                         onSelectMode = onSelectMode,
                         contentBottomPadding = 108.dp
                     )
