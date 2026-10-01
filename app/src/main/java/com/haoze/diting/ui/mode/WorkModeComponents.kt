@@ -1,14 +1,8 @@
 package com.haoze.diting.ui.mode
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,18 +23,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.haoze.diting.R
 import com.haoze.diting.ui.localizedText
 
@@ -111,45 +101,15 @@ fun WorkModeCard(
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val elevation by animateDpAsState(
-        targetValue = if (isPressed) 10.dp else 0.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "mode_card_elevation"
-    )
 
     val isNormal = mode == AppWorkMode.NORMAL
     val modeAccent = if (isNormal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
 
-    val isDark = isSystemInDarkTheme()
-    val shadowAmbientColor = if (isDark) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
-    } else {
-        Color.Black.copy(alpha = 0.16f)
-    }
-    val shadowSpotColor = if (isDark) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.40f)
-    } else {
-        Color.Black.copy(alpha = 0.28f)
-    }
-
-    val baseContainerColor = if (isSelected) {
+    val containerColor = if (isSelected) {
         MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     }
-    val containerColor by animateColorAsState(
-        targetValue = if (isPressed) {
-            MaterialTheme.colorScheme.surfaceContainerHighest
-        } else {
-            baseContainerColor
-        },
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
-        label = "mode_card_container"
-    )
 
     val topRadius = if (index == 0) 28.dp else 4.dp
     val bottomRadius = if (index == itemCount - 1) 28.dp else 4.dp
@@ -166,13 +126,6 @@ fun WorkModeCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier
             .fillMaxWidth()
-            .zIndex(if (isPressed) 1f else 0f)
-            .shadow(
-                elevation = elevation,
-                shape = cardShape,
-                ambientColor = shadowAmbientColor,
-                spotColor = shadowSpotColor
-            )
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
