@@ -27,6 +27,8 @@ import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.dnsmode.backend.DnsModeManager
 import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.*
+import com.haoze.diting.ui.batch.BatchAddRulesScreen
+import com.haoze.diting.ui.batch.BatchRuleTarget
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeSelectionScreen
 import com.haoze.diting.ui.mode.WorkModeStore
@@ -58,6 +60,10 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         }
     private val requestedTitle: String?
         get() = intent.getStringExtra(EXTRA_TITLE)
+    private val requestedBatchRuleTarget: BatchRuleTarget?
+        get() = intent.getStringExtra(EXTRA_BATCH_RULE_TARGET)?.let { value ->
+            runCatching { BatchRuleTarget.valueOf(value) }.getOrNull()
+        }
 
     private var resultData = Intent()
     private var languageModeAtCreate = AppLanguageMode.SYSTEM
@@ -177,11 +183,21 @@ class SettingsRouteActivity : AppLocalizedActivity() {
     private fun openRoute(
         nextRoute: String,
         requestSource: RequestSource? = null,
-        ruleScope: RuleScope? = requestedRuleScope
+        ruleScope: RuleScope? = requestedRuleScope,
+        batchTarget: BatchRuleTarget? = null
     ) {
         if (childLaunchInProgress || (nextRoute == route && requestSource == requestedRequestSource)) return
         childLaunchInProgress = true
-        childActivityLauncher.launch(createIntent(this, nextRoute, ruleScope = ruleScope, requestSource = requestSource))
+        childActivityLauncher.launch(
+            createIntent(
+                this,
+                nextRoute,
+                ruleScope = ruleScope,
+                requestSource = requestSource,
+                dataset = requestedRuleDataset,
+                batchTarget = batchTarget
+            )
+        )
     }
 
     private fun finishSettings() {
@@ -289,9 +305,30 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
             Routes.RULE_CONTROL -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
             Routes.APP_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.APP_ALLOWLIST) { AppRuleManagementScreen(onBack) }
-            Routes.WHITELIST_MANAGEMENT -> WhitelistScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
-            Routes.BLACKLIST_MANAGEMENT -> BlacklistScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
-            Routes.REWRITELIST_MANAGEMENT -> RewriteListScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
+            Routes.WHITELIST_MANAGEMENT -> WhitelistScreen(
+                onBack,
+                onRuntimeDnsSettingsChanged,
+                onNavigateToBatchAdd = { openRoute(Routes.BATCH_ADD_RULES, batchTarget = BatchRuleTarget.WHITELIST) },
+                dataset = ruleDataset
+            )
+            Routes.BLACKLIST_MANAGEMENT -> BlacklistScreen(
+                onBack,
+                onRuntimeDnsSettingsChanged,
+                onNavigateToBatchAdd = { openRoute(Routes.BATCH_ADD_RULES, batchTarget = BatchRuleTarget.BLACKLIST) },
+                dataset = ruleDataset
+            )
+            Routes.REWRITELIST_MANAGEMENT -> RewriteListScreen(
+                onBack,
+                onRuntimeDnsSettingsChanged,
+                onNavigateToBatchAdd = { openRoute(Routes.BATCH_ADD_RULES, batchTarget = BatchRuleTarget.REWRITE) },
+                dataset = ruleDataset
+            )
+            Routes.BATCH_ADD_RULES -> BatchAddRulesScreen(
+                target = requestedBatchRuleTarget ?: BatchRuleTarget.BLACKLIST,
+                dataset = ruleDataset,
+                onBack = onBack,
+                onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+            )
             Routes.DOMAIN_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
             Routes.ADDRESS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
             Routes.RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.BLOCK, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged, dataset = ruleDataset)
@@ -448,6 +485,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         const val EXTRA_BOTTOM_BAR_CHANGED = "settings_bottom_bar_changed"
         const val EXTRA_OUTBOUND_PROXY_APP_SELECTED = "settings_outbound_proxy_app_selected"
         const val EXTRA_OUTBOUND_PROXY_APP_PACKAGE = "settings_outbound_proxy_app_package"
+        const val EXTRA_BATCH_RULE_TARGET = "settings_batch_rule_target"
 
         fun createIntent(
             context: android.content.Context,
@@ -456,7 +494,8 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             ruleKind: ManagedRuleKind? = null,
             title: String? = null,
             requestSource: RequestSource? = null,
-            dataset: RuleDataset? = null
+            dataset: RuleDataset? = null,
+            batchTarget: BatchRuleTarget? = null
         ): Intent = Intent(context, SettingsRouteActivity::class.java)
             .putExtra(EXTRA_ROUTE, route)
             .apply {
@@ -465,6 +504,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 title?.let { putExtra(EXTRA_TITLE, it) }
                 requestSource?.let { putExtra(EXTRA_REQUEST_SOURCE, it.name) }
                 dataset?.let { putExtra(EXTRA_RULE_DATASET, it.name) }
+                batchTarget?.let { putExtra(EXTRA_BATCH_RULE_TARGET, it.name) }
             }
 
         const val EXTRA_RULE_SCOPE = "settings_rule_scope"

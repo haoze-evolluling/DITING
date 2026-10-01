@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -57,6 +58,7 @@ import com.haoze.diting.ui.components.masterDisabledMessage
 fun WhitelistScreen(
     onBack: () -> Unit,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
+    onNavigateToBatchAdd: () -> Unit = {},
     dataset: RuleDataset = RuleDataset.NORMAL
 ) {
     val app = LocalContext.current.applicationContext as Application
@@ -114,6 +116,14 @@ fun WhitelistScreen(
                     onClick = {
                         showTopMenu = false
                         showAddDialog = true
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(localizedText("批量添加规则")) },
+                    leadingIcon = { Icon(Icons.Filled.PlaylistAdd, contentDescription = null) },
+                    onClick = {
+                        showTopMenu = false
+                        onNavigateToBatchAdd()
                     }
                 )
                 if (dataset == RuleDataset.NORMAL) {
@@ -320,6 +330,7 @@ fun WhitelistScreen(
     if (showAddDialog) {
         WhitelistAddDialog(
             onDismiss = { showAddDialog = false },
+            onBatchAdd = onNavigateToBatchAdd,
             onConfirm = { input, appScope, important ->
                 val result = viewModel.addRule(
                     input = input,

@@ -3,9 +3,6 @@ package com.haoze.diting.ui
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -17,34 +14,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.components.AppAlertDialog
-import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.RuleConfirmDialog
 import com.haoze.diting.ui.components.SettingsCornerShape
 import kotlinx.coroutines.launch
 
 @Composable
-internal fun WhitelistRiskWarningDialog(
+internal fun BlacklistAddDialog(
+    dataset: RuleDataset,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    AppConfirmDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-        title = "风险提示",
-        message = "修改软件预设白名单可能造成不可预料的影响，例如网络异常或网络连接中断。\n\n如非排查特定网络问题，建议保持默认设置。确定要开启编辑权限吗？",
-        confirmLabel = "确定开启",
-        cancelLabel = "取消",
-        destructive = true,
-        onConfirm = onConfirm
-    )
-}
-
-@Composable
-internal fun WhitelistAddDialog(
-    onDismiss: () -> Unit,
-    onBatchAdd: () -> Unit = {},
+    onBatchAdd: () -> Unit,
     onConfirm: suspend (input: String, appScope: String?, important: Boolean) -> Result<String>
 ) {
     val context = LocalContext.current
@@ -56,11 +37,14 @@ internal fun WhitelistAddDialog(
 
     AppAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(localizedText("添加白名单规则")) },
+        title = { Text(localizedText("添加黑名单规则")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = localizedText("支持域名（如 example.com、*.google.com）、AdGuard 白名单（@@||example.com^）或 URL 放行前缀（https://example.com/api）。"),
+                    text = localizedText(
+                        if (dataset == RuleDataset.NORMAL) "支持域名（如 example.com、*.google.com）、AdGuard 规则（||example.com^）或 URL 屏蔽前缀（https://example.com/api）。"
+                        else "支持域名（如 example.com、*.google.com）或 AdGuard 规则（||example.com^）。"
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -122,8 +106,8 @@ internal fun WhitelistAddDialog(
 }
 
 @Composable
-internal fun WhitelistEditDialog(
-    item: WhitelistItem,
+internal fun BlacklistEditDialog(
+    item: BlacklistItem,
     onDismiss: () -> Unit,
     onConfirm: suspend (newPattern: String, newAppScope: String?, newImportant: Boolean) -> Result<String>
 ) {
@@ -136,7 +120,7 @@ internal fun WhitelistEditDialog(
 
     AppAlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(localizedText(if (item.isPreset) "编辑默认预设规则" else "编辑白名单规则")) },
+        title = { Text(localizedText("编辑黑名单规则")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
@@ -151,7 +135,7 @@ internal fun WhitelistEditDialog(
                     supportingText = error?.let { msg -> { Text(msg) } },
                     shape = SettingsCornerShape
                 )
-                if (item.type == WhitelistType.DOMAIN) {
+                if (item.type == BlacklistType.DOMAIN) {
                     OutlinedTextField(
                         value = appScope,
                         onValueChange = { appScope = it },
@@ -190,21 +174,19 @@ internal fun WhitelistEditDialog(
 }
 
 @Composable
-internal fun WhitelistDeleteConfirmDialog(
-    item: WhitelistItem,
+internal fun BlacklistDeleteConfirmDialog(
+    item: BlacklistItem,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    val deletePrompt = if (item.isPreset) {
-        localizedText("确定要删除默认预设白名单规则「${item.pattern}」吗？若网络异常可通过右上角菜单重置恢复。")
-    } else if (item.isSubscription) {
-        localizedText("确定要删除白名单规则「${item.pattern}」吗？")
+    val message = if (item.isUserRule && !item.isSubscription) {
+        "确定要删除自定义黑名单规则「${item.pattern}」吗？"
     } else {
-        localizedText("确定要删除自定义白名单规则「${item.pattern}」吗？")
+        "确定要删除黑名单规则「${item.pattern}」吗？"
     }
     RuleConfirmDialog(
-        title = localizedText("删除白名单规则"),
-        message = deletePrompt,
+        title = localizedText("删除黑名单规则"),
+        message = localizedText(message),
         confirmText = localizedText("删除"),
         onDismiss = onDismiss,
         onConfirm = onConfirm
@@ -212,28 +194,13 @@ internal fun WhitelistDeleteConfirmDialog(
 }
 
 @Composable
-internal fun WhitelistResetDefaultsConfirmDialog(
+internal fun BlacklistClearUserConfirmDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
     RuleConfirmDialog(
-        title = localizedText("重置默认白名单"),
-        message = localizedText("确定要将软件预设的默认白名单重置为初始状态吗？此操作不会影响您自己添加的自定义白名单。"),
-        confirmText = localizedText("确认重置"),
-        destructive = false,
-        onDismiss = onDismiss,
-        onConfirm = onConfirm
-    )
-}
-
-@Composable
-internal fun WhitelistClearUserConfirmDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    RuleConfirmDialog(
-        title = localizedText("清空自定义白名单"),
-        message = localizedText("确定要清空所有由您添加的自定义白名单规则吗？软件预设的默认白名单将予以保留。"),
+        title = localizedText("清空自定义黑名单"),
+        message = localizedText("确定要清空所有由您添加的自定义黑名单规则吗？规则订阅等内容不受影响。"),
         confirmText = localizedText("确认清空"),
         onDismiss = onDismiss,
         onConfirm = onConfirm

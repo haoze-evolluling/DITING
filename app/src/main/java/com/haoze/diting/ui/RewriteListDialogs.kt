@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun RewriteAddDialog(
     onDismiss: () -> Unit,
+    onBatchAdd: () -> Unit = {},
     onConfirm: suspend (domain: String, targetType: String, targetValue: String) -> Result<String>
 ) {
     val context = LocalContext.current
@@ -127,6 +128,15 @@ internal fun RewriteAddDialog(
         },
         dismissButton = {
             AppDialogButton(label = "取消", onClick = onDismiss)
+        },
+        neutralButton = {
+            AppDialogButton(
+                label = "批量添加",
+                onClick = {
+                    onDismiss()
+                    onBatchAdd()
+                }
+            )
         }
     )
 }

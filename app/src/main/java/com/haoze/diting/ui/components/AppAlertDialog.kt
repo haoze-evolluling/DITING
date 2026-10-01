@@ -1,6 +1,9 @@
 package com.haoze.diting.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -26,6 +30,7 @@ fun AppAlertDialog(
     confirmButton: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     dismissButton: @Composable (() -> Unit)? = null,
+    neutralButton: @Composable (() -> Unit)? = null,
     icon: @Composable (() -> Unit)? = null,
     title: @Composable (() -> Unit)? = null,
     text: @Composable (() -> Unit)? = null,
@@ -51,13 +56,37 @@ fun AppAlertDialog(
         }
     }
 
+    val effectiveConfirmButton: @Composable () -> Unit = {
+        if (neutralButton != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(contentAlignment = Alignment.CenterStart) {
+                    neutralButton()
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    dismissButton?.invoke()
+                    confirmButton()
+                }
+            }
+        } else {
+            confirmButton()
+        }
+    }
+    val effectiveDismissButton: (@Composable () -> Unit)? = if (neutralButton != null) null else dismissButton
+
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        confirmButton = confirmButton,
+        confirmButton = effectiveConfirmButton,
         modifier = Modifier
             .heightIn(max = maxHeight)
             .then(modifier),
-        dismissButton = dismissButton,
+        dismissButton = effectiveDismissButton,
         icon = icon,
         title = title,
         text = scrollableText,

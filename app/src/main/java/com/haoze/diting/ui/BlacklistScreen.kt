@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -79,6 +80,7 @@ import kotlinx.coroutines.launch
 fun BlacklistScreen(
     onBack: () -> Unit,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
+    onNavigateToBatchAdd: () -> Unit = {},
     dataset: RuleDataset = RuleDataset.NORMAL
 ) {
     val app = LocalContext.current.applicationContext as Application
@@ -103,16 +105,6 @@ fun BlacklistScreen(
     var itemToDelete by remember { mutableStateOf<BlacklistItem?>(null) }
     var showClearUserDialog by remember { mutableStateOf(false) }
     var showTopMenu by remember { mutableStateOf(false) }
-
-    var addInput by remember { mutableStateOf("") }
-    var addAppScope by remember { mutableStateOf("") }
-    var addImportant by remember { mutableStateOf(false) }
-    var addError by remember { mutableStateOf<String?>(null) }
-
-    var editInput by remember { mutableStateOf("") }
-    var editAppScope by remember { mutableStateOf("") }
-    var editImportant by remember { mutableStateOf(false) }
-    var editError by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(lifecycleOwner) {
         viewModel.activate()
@@ -143,11 +135,15 @@ fun BlacklistScreen(
                     leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) },
                     onClick = {
                         showTopMenu = false
-                        addInput = ""
-                        addAppScope = ""
-                        addImportant = false
-                        addError = null
                         showAddDialog = true
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(localizedText("批量添加规则")) },
+                    leadingIcon = { Icon(Icons.Filled.PlaylistAdd, contentDescription = null) },
+                    onClick = {
+                        showTopMenu = false
+                        onNavigateToBatchAdd()
                     }
                 )
                 DropdownMenuItem(
@@ -240,10 +236,6 @@ fun BlacklistScreen(
                                 },
                                 onEdit = {
                                     editingItem = item
-                                    editInput = item.rawLine
-                                    editAppScope = item.appScope.orEmpty()
-                                    editImportant = item.important
-                                    editError = null
                                 },
                                 onDelete = {
                                     itemToDelete = item
@@ -263,10 +255,6 @@ fun BlacklistScreen(
 
             FloatingActionButton(
                 onClick = {
-                    addInput = ""
-                    addAppScope = ""
-                    addImportant = false
-                    addError = null
                     showAddDialog = true
                 },
                 modifier = Modifier
@@ -282,138 +270,44 @@ fun BlacklistScreen(
 
     // Add rule dialog
     if (showAddDialog) {
-        AppAlertDialog(
-            onDismissRequest = { showAddDialog = false },
-            title = { Text(localizedText("添加黑名单规则")) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = localizedText(
-                            if (dataset == RuleDataset.NORMAL) "支持域名（如 example.com、*.google.com）、AdGuard 规则（||example.com^）或 URL 屏蔽前缀（https://example.com/api）。"
-                            else "支持域名（如 example.com、*.google.com）或 AdGuard 规则（||example.com^）。"
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    OutlinedTextField(
-                        value = addInput,
-                        onValueChange = {
-                            addInput = it
-                            addError = null
-                        },
-                        label = { Text(localizedText("规则内容")) },
-                        singleLine = true,
-                        isError = addError != null,
-                        supportingText = addError?.let { msg -> { Text(msg) } },
-                        shape = SettingsCornerShape
-                    )
-                    OutlinedTextField(
-                        value = addAppScope,
-                        onValueChange = { addAppScope = it },
-                        label = { Text(localizedText("指定应用包名 (可选)")) },
-                        placeholder = { Text("com.example.app") },
-                        singleLine = true,
-                        shape = SettingsCornerShape
-                    )
+        BlacklistAddDialog(
+            dataset = dataset,
+            onDismiss = { showAddDialog = false },
+            onBatchAdd = onNavigateToBatchAdd,
+            onConfirm = { input, appScope, important ->
+                val result = viewModel.addRule(input, appScope, important = important)
+                if (result.isSuccess) {
+                    onRuntimeDnsSettingsChanged()
                 }
-            },
-            confirmButton = {
-                AppDialogButton(
-                    label = "添加",
-                    onClick = {
-                        scope.launch {
-                            val result = viewModel.addRule(
-                                input = addInput,
-                                appScope = addAppScope.trim().takeIf { it.isNotEmpty() },
-                                important = addImportant
-                            )
-                            result.onSuccess { msg ->
-                                context.showToast(msg, Toast.LENGTH_SHORT)
-                                showAddDialog = false
-                                onRuntimeDnsSettingsChanged()
-                            }.onFailure { err ->
-                                addError = err.message ?: localizedText(context, "添加失败")
-                            }
-                        }
-                    }
-                )
-            },
-            dismissButton = {
-                AppDialogButton(label = "取消", onClick = { showAddDialog = false })
+                result
             }
         )
     }
 
     // Edit rule dialog
     editingItem?.let { item ->
-        AppAlertDialog(
-            onDismissRequest = { editingItem = null },
-            title = { Text(localizedText("编辑黑名单规则")) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(
-                        value = editInput,
-                        onValueChange = {
-                            editInput = it
-                            editError = null
-                        },
-                        label = { Text(localizedText("规则内容")) },
-                        singleLine = true,
-                        isError = editError != null,
-                        supportingText = editError?.let { msg -> { Text(msg) } },
-                        shape = SettingsCornerShape
-                    )
-                    if (item.type == BlacklistType.DOMAIN) {
-                        OutlinedTextField(
-                            value = editAppScope,
-                            onValueChange = { editAppScope = it },
-                            label = { Text(localizedText("指定应用包名 (可选)")) },
-                            placeholder = { Text("com.example.app") },
-                            singleLine = true,
-                            shape = SettingsCornerShape
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                AppDialogButton(
-                    label = "保存",
-                    onClick = {
-                        scope.launch {
-                            val result = viewModel.editRule(
-                                item = item,
-                                newPattern = editInput,
-                                newAppScope = editAppScope.trim().takeIf { it.isNotEmpty() },
-                                newImportant = editImportant
-                            )
-                            result.onSuccess { msg ->
-                                context.showToast(msg, Toast.LENGTH_SHORT)
-                                editingItem = null
-                                onRuntimeDnsSettingsChanged()
-                            }.onFailure { err ->
-                                editError = err.message ?: localizedText(context, "修改失败")
-                            }
-                        }
-                    }
+        BlacklistEditDialog(
+            item = item,
+            onDismiss = { editingItem = null },
+            onConfirm = { newPattern, newAppScope, newImportant ->
+                val result = viewModel.editRule(
+                    item = item,
+                    newPattern = newPattern,
+                    newAppScope = newAppScope,
+                    newImportant = newImportant
                 )
-            },
-            dismissButton = {
-                AppDialogButton(label = "取消", onClick = { editingItem = null })
+                if (result.isSuccess) {
+                    onRuntimeDnsSettingsChanged()
+                }
+                result
             }
         )
     }
 
     // Delete single rule confirmation dialog
     itemToDelete?.let { item ->
-        val message = if (item.isUserRule && !item.isSubscription) {
-            "确定要删除自定义黑名单规则「${item.pattern}」吗？"
-        } else {
-            "确定要删除黑名单规则「${item.pattern}」吗？"
-        }
-        RuleConfirmDialog(
-            title = localizedText("删除黑名单规则"),
-            message = localizedText(message),
-            confirmText = localizedText("删除"),
+        BlacklistDeleteConfirmDialog(
+            item = item,
             onDismiss = { itemToDelete = null },
             onConfirm = {
                 viewModel.deleteRule(item)
@@ -425,10 +319,7 @@ fun BlacklistScreen(
 
     // Clear custom blocklist confirmation dialog
     if (showClearUserDialog) {
-        RuleConfirmDialog(
-            title = localizedText("清空自定义黑名单"),
-            message = localizedText("确定要清空所有由您添加的自定义黑名单规则吗？规则订阅等内容不受影响。"),
-            confirmText = localizedText("确认清空"),
+        BlacklistClearUserConfirmDialog(
             onDismiss = { showClearUserDialog = false },
             onConfirm = {
                 viewModel.clearUserBlacklist()
@@ -437,7 +328,6 @@ fun BlacklistScreen(
             }
         )
     }
-
 }
 
 @Composable

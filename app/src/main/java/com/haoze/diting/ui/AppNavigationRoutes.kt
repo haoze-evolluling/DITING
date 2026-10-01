@@ -22,6 +22,7 @@ object Routes {
     const val WHITELIST_MANAGEMENT = "whitelist_management"
     const val BLACKLIST_MANAGEMENT = "blacklist_management"
     const val REWRITELIST_MANAGEMENT = "rewritelist_management"
+    const val BATCH_ADD_RULES = "batch_add_rules"
     const val RULE_LIST = "rule_list"
     const val ALLOW_RULE_LIST = "allow_rule_list"
     const val REWRITE_RULE_LIST = "rewrite_rule_list"

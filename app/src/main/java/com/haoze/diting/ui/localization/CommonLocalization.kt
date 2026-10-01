@@ -469,6 +469,32 @@ internal fun translateCommonExact(text: String): String? = when (text) {
     "已保存，下次启动 DNS VPN 时生效" -> "Saved; takes effect the next time the DNS VPN starts"
     // Miscellaneous feedback
     // Rule tags and switch states
-    "反选排除此应用 (~\$app)" -> "Inverse match to exclude this app (~\$app)"
+    // Batch rule addition
+    "批量添加规则" -> "Batch add rules"
+    "批量添加" -> "Batch add"
+    "批量添加黑名单规则" -> "Batch add blacklist rules"
+    "批量添加白名单规则" -> "Batch add whitelist rules"
+    "批量添加覆写规则" -> "Batch add rewrite rules"
+    "规则校验结果" -> "Rule validation result"
+    "有效" -> "Valid"
+    "重复" -> "Duplicate"
+    "无效" -> "Invalid"
+    "收起异常规则明细" -> "Collapse invalid rules detail"
+    "查看异常规则明细" -> "View invalid rules detail"
+    "返回修改" -> "Back to edit"
+    "未识别到任何有效的新增规则，请修改后重试。" -> "No valid rules detected. Please edit and try again."
+    "请先输入或粘贴规则" -> "Please enter or paste rules first"
+    "剪贴板为空" -> "Clipboard is empty"
+    "已粘贴" -> "Pasted"
+    "已清空" -> "Cleared"
+    "粘贴" -> "Paste"
+    "校验中..." -> "Validating..."
+    "正在解析..." -> "Parsing..."
+    "输入中已存在相同规则" -> "Duplicate rule found in input"
+    "黑名单中已存在该规则" -> "Rule already exists in blacklist"
+    "白名单中已存在该规则" -> "Rule already exists in whitelist"
+    "覆写名单中已存在该规则" -> "Rule already exists in rewrite list"
+    "域名规则格式无效" -> "Invalid domain rule format"
+    "URL 格式无效" -> "Invalid URL format"
     else -> null
 }

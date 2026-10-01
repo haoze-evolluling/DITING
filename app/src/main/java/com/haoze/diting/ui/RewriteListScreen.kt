@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -55,6 +56,7 @@ import com.haoze.diting.ui.components.masterDisabledMessage
 fun RewriteListScreen(
     onBack: () -> Unit,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
+    onNavigateToBatchAdd: () -> Unit = {},
     dataset: RuleDataset = RuleDataset.NORMAL
 ) {
     val app = LocalContext.current.applicationContext as Application
@@ -109,6 +111,14 @@ fun RewriteListScreen(
                     onClick = {
                         showTopMenu = false
                         showAddDialog = true
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(localizedText("批量添加规则")) },
+                    leadingIcon = { Icon(Icons.Filled.PlaylistAdd, contentDescription = null) },
+                    onClick = {
+                        showTopMenu = false
+                        onNavigateToBatchAdd()
                     }
                 )
                 DropdownMenuItem(
@@ -237,6 +247,7 @@ fun RewriteListScreen(
     if (showAddDialog) {
         RewriteAddDialog(
             onDismiss = { showAddDialog = false },
+            onBatchAdd = onNavigateToBatchAdd,
             onConfirm = { domain, targetType, targetValue ->
                 val result = viewModel.addRule(
                     domain = domain,
