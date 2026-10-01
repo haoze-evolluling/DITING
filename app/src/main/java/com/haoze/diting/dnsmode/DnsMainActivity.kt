@@ -1,10 +1,13 @@
 package com.haoze.diting.dnsmode
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -20,6 +23,7 @@ import com.haoze.diting.dnsmode.backend.DnsModePreferences
 import com.haoze.diting.dnsmode.model.DnsServiceStatus
 import com.haoze.diting.dnsmode.ui.DnsMainScreen
 import com.haoze.diting.dnsmode.viewmodel.DnsMainViewModel
+import com.haoze.diting.notification.NotificationPermissionHelper
 import com.haoze.diting.ui.AppLanguageManager
 import com.haoze.diting.ui.AppLanguageMode
 import com.haoze.diting.ui.AppThemeSurface
@@ -33,11 +37,16 @@ class DnsMainActivity : AppLocalizedActivity() {
     private val viewModel: DnsMainViewModel by viewModels()
     private var appearanceRefreshVersion by mutableStateOf(0)
 
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         languageModeAtCreate = AppLanguageManager.getMode(this)
         enableEdgeToEdge()
         applyRecentsPrivacySetting()
+        requestNotificationPermissionIfNeeded()
 
         setContent {
             val themeMode = remember(appearanceRefreshVersion) { AppearanceSettingsStore.getAppThemeMode(this) }
@@ -93,6 +102,14 @@ class DnsMainActivity : AppLocalizedActivity() {
         when (intent?.action) {
             ACTION_START_SERVICE -> DnsModeManager.startService(this)
             ACTION_STOP_SERVICE -> DnsModeManager.stopService(this)
+        }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            !NotificationPermissionHelper.hasPermission(this)
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 

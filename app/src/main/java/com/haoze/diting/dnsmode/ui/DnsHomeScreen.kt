@@ -33,6 +33,7 @@ import com.haoze.diting.ui.localizedText
 @Composable
 fun DnsHomeScreen(
     status: DnsServiceStatus,
+    errorReason: String?,
     activeUpstream: DnsUpstreamServer,
     stats: DnsModeStats,
     onToggleService: () -> Unit,
@@ -80,6 +81,18 @@ fun DnsHomeScreen(
                         .fillMaxWidth()
                         .padding(top = 12.dp)
                 )
+
+                if (status == DnsServiceStatus.ERROR && errorReason != null) {
+                    Text(
+                        text = localizedText(errorReason),
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                    )
+                }
             }
         }
 
@@ -108,7 +121,7 @@ fun DnsHomeScreen(
             SettingsSurfaceGroup(
                 content = listOf(
                     {
-                        SettingsItem(title = localizedText("总解析量")) {
+                        SettingsItem(title = localizedText("总查询量")) {
                             Text(
                                 text = stats.queryCount.toString(),
                                 style = MaterialTheme.typography.bodyMedium,
@@ -147,7 +160,7 @@ fun DnsHomeScreen(
                 content = listOf(
                     {
                         SettingsNavigationItem(
-                            title = localizedText("切换回普通模式"),
+                            title = localizedText("切换为普通模式"),
                             subtitle = localizedText("启用完整分流、黑白名单与应用网络管控"),
                             leadingIcon = Icons.Default.SwapHoriz,
                             onClick = onSwitchToNormalMode
@@ -155,7 +168,7 @@ fun DnsHomeScreen(
                     },
                     {
                         SettingsNavigationItem(
-                            title = localizedText("重新选择模式"),
+                            title = localizedText("重新选择工作模式"),
                             subtitle = localizedText("浏览所有工作模式详情并重新选择"),
                             leadingIcon = Icons.Default.Tune,
                             onClick = onSelectMode
@@ -167,7 +180,7 @@ fun DnsHomeScreen(
 
         item {
             SettingsInfoText(
-                text = localizedText("当前处于纯 DNS 模式，与普通模式（完整网络分流）在代码与运行时完全解耦。本模式专注于轻量、低功耗的上游 DNS 解析与域名防护。")
+                text = localizedText("DNS 模式在本机提供局域网 DNS 解析服务，将其他设备的 DNS 指向本机即可使用；本机应用的查询不会自动经过该服务。")
             )
         }
     }

@@ -56,7 +56,7 @@ fun DnsSettingsScreen(
                     {
                         SettingsSwitchItem(
                             title = localizedText("恶意域名过滤"),
-                            subtitle = localizedText("基于 DNS 模式规则库阻断恶意和跟踪域名"),
+                            subtitle = localizedText("与普通模式共用屏蔽规则，命中后按拦截策略返回"),
                             checked = config.adBlockEnabled,
                             onCheckedChange = { onUpdateConfig(config.copy(adBlockEnabled = it)) }
                         )
@@ -86,7 +86,7 @@ fun DnsSettingsScreen(
                 content = listOf {
                     SettingsNavigationItem(
                         title = localizedText("重置运行统计"),
-                        subtitle = localizedText("清空当前会话的解析量与时延数据"),
+                        subtitle = localizedText("清空当前会话的全部统计数据"),
                         leadingIcon = Icons.Default.DeleteSweep,
                         onClick = onResetStats
                     )
@@ -111,7 +111,7 @@ fun DnsSettingsScreen(
                     },
                     {
                         SettingsNavigationItem(
-                            title = localizedText("工作模式选择"),
+                            title = localizedText("重新选择工作模式"),
                             subtitle = localizedText("浏览所有工作模式详情并重新选择"),
                             leadingIcon = Icons.Default.Tune,
                             onClick = onSelectMode

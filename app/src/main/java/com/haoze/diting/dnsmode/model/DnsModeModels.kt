@@ -90,6 +90,22 @@ data class DnsUpstreamServer(
                 port = 443,
                 protocol = DnsModeProtocol.DOH,
                 description = "Cloudflare 1.1.1.1 加密 DNS 查询"
+            ),
+            DnsUpstreamServer(
+                id = "alidns_dot",
+                name = "阿里 DNS (DoT)",
+                address = "dns.alidns.com",
+                port = 853,
+                protocol = DnsModeProtocol.DOT,
+                description = "基于 TLS 的加密 DNS 解析"
+            ),
+            DnsUpstreamServer(
+                id = "cloudflare_dot",
+                name = "Cloudflare (DoT)",
+                address = "one.one.one.one",
+                port = 853,
+                protocol = DnsModeProtocol.DOT,
+                description = "Cloudflare 1.1.1.1 加密 DNS 查询"
             )
         )
     }

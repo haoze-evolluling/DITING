@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.haoze.diting.dnsmode.ui.navigation.DnsNavTab
 import com.haoze.diting.dnsmode.viewmodel.DnsMainViewModel
 import com.haoze.diting.ui.FloatingNavigationBar
@@ -51,7 +52,7 @@ fun DnsMainScreen(
     onSwitchToNormalMode: () -> Unit,
     onSelectMode: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val tabs = remember { DnsNavTab.entries }
     val pagerState = rememberPagerState(initialPage = 0) { tabs.size }
     val coroutineScope = rememberCoroutineScope()
@@ -122,7 +123,7 @@ fun DnsMainScreen(
                         IconButton(onClick = { showSwitchConfirmDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.SwapHoriz,
-                                contentDescription = localizedText("切换到普通模式"),
+                                contentDescription = localizedText("切换为普通模式"),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -147,6 +148,7 @@ fun DnsMainScreen(
                 when (tabs.getOrNull(page)) {
                     DnsNavTab.HOME -> DnsHomeScreen(
                         status = uiState.status,
+                        errorReason = uiState.errorReason,
                         activeUpstream = uiState.activeUpstream,
                         stats = uiState.stats,
                         onToggleService = viewModel::toggleService,
@@ -193,8 +195,8 @@ fun DnsMainScreen(
     if (showSwitchConfirmDialog) {
         AppConfirmDialog(
             onDismissRequest = { showSwitchConfirmDialog = false },
-            title = localizedText("切换到普通模式"),
-            message = localizedText("切换后将启动普通工作模式，具备完整的规则过滤、HTTPS 检查与全量网络代理功能。确认切换吗？"),
+            title = localizedText("切换为普通模式"),
+            message = localizedText("切换后将停止 DNS 代理并进入普通模式。完整分流、黑白名单与应用管控等能力可在普通模式中按需开启。确认切换吗？"),
             confirmLabel = localizedText("确认切换"),
             cancelLabel = localizedText("取消"),
             onConfirm = {

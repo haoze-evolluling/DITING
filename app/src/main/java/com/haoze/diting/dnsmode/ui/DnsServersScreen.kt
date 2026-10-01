@@ -36,7 +36,7 @@ fun DnsServersScreen(
     ) {
         selectedUpstream?.let {
             SettingsInfoText(
-                text = localizedText("当前用于解析 DNS：(${it.protocol.label})") + " " + localizedText(it.name),
+                text = localizedText("当前用于解析 DNS：") + " " + localizedText(it.name),
                 modifier = Modifier.padding(top = 8.dp)
             )
         }

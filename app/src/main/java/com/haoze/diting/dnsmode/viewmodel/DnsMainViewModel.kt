@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 
 data class DnsModeUiState(
     val status: DnsServiceStatus = DnsServiceStatus.STOPPED,
+    val errorReason: String? = null,
     val config: DnsModeConfig = DnsModeConfig(),
     val stats: DnsModeStats = DnsModeStats(),
     val upstreams: List<DnsUpstreamServer> = DnsUpstreamServer.PRESETS,
@@ -28,21 +29,24 @@ class DnsMainViewModel(application: Application) : AndroidViewModel(application)
     }
 
     val status: StateFlow<DnsServiceStatus> = DnsModeManager.status
+    val errorReason: StateFlow<String?> = DnsModeManager.errorReason
     val config: StateFlow<DnsModeConfig> = DnsModeManager.config
     val stats: StateFlow<DnsModeStats> = DnsModeManager.stats
     val upstreams: StateFlow<List<DnsUpstreamServer>> = DnsModeManager.upstreams
 
     val uiState: StateFlow<DnsModeUiState> = combine(
         status,
+        errorReason,
         config,
         stats,
         upstreams
-    ) { currentStatus, currentConfig, currentStats, currentUpstreams ->
+    ) { currentStatus, currentErrorReason, currentConfig, currentStats, currentUpstreams ->
         val active = currentUpstreams.firstOrNull { it.id == currentConfig.selectedUpstreamId }
             ?: currentUpstreams.firstOrNull()
             ?: DnsUpstreamServer.PRESETS.first()
         DnsModeUiState(
             status = currentStatus,
+            errorReason = currentErrorReason,
             config = currentConfig,
             stats = currentStats,
             upstreams = currentUpstreams,

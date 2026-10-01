@@ -105,7 +105,7 @@ class DnsModeService : Service() {
             Log.i(TAG, "DnsModeService successfully started DNS server on port ${config.localListenPort}")
         } else {
             Log.e(TAG, "DnsModeService failed to start DNS server on port ${config.localListenPort}")
-            DnsModeManager.onServiceError("DNS 服务启动失败，端口 ${config.localListenPort} 可能被占用")
+            DnsModeManager.onServiceError("DNS 服务启动失败，监听端口可能被占用")
             stopSelf()
         }
     }

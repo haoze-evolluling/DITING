@@ -58,6 +58,11 @@ class DnsModeTest {
         assertNotNull(dohServer)
         assertTrue(dohServer?.address?.startsWith("https://") == true)
         assertEquals("[DoH] ${dohServer?.address}", dohServer?.endpointLabel())
+
+        val dotServer = presets.firstOrNull { it.protocol == DnsModeProtocol.DOT }
+        assertNotNull(dotServer)
+        assertEquals(853, dotServer?.port)
+        assertEquals("[DoT] ${dotServer?.address}:${dotServer?.port}", dotServer?.endpointLabel())
     }
 
     @Test
@@ -117,11 +122,11 @@ class DnsModeTest {
 
     @Test
     fun `ERROR status survives service destroy notification`() {
-        DnsModeManager.onServiceError("DNS 服务启动失败，端口 1053 可能被占用")
+        DnsModeManager.onServiceError("DNS 服务启动失败，监听端口可能被占用")
         // onDestroy always fires onServiceStopped; it must not mask the error state
         DnsModeManager.onServiceStopped()
         assertEquals(DnsServiceStatus.ERROR, DnsModeManager.status.value)
-        assertEquals("DNS 服务启动失败，端口 1053 可能被占用", DnsModeManager.errorReason.value)
+        assertEquals("DNS 服务启动失败，监听端口可能被占用", DnsModeManager.errorReason.value)
 
         DnsModeManager.onServiceStarted()
         assertEquals(DnsServiceStatus.RUNNING, DnsModeManager.status.value)
@@ -198,9 +203,15 @@ class DnsModeTest {
         assertEquals("Upstream Servers", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("上游服务器"))
         assertEquals("Mode Settings", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("模式设置"))
         assertEquals("DNS Proxy Running", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("DNS 代理运行中"))
-        assertEquals("Total Queries", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("总解析量"))
+        assertEquals("Total Queries", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("总查询量"))
         assertEquals("Cache Hits", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("缓存命中"))
         assertEquals("Avg Latency", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("平均时延"))
         assertEquals("Preset Public Upstream DNS", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("预设公共上游 DNS"))
+        assertEquals("Switch to Normal Mode", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("切换为普通模式"))
+        assertEquals("Re-select Work Mode", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("重新选择工作模式"))
+        assertEquals(
+            "Failed to start DNS service. The listen port may already be in use",
+            com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("DNS 服务启动失败，监听端口可能被占用")
+        )
     }
 }

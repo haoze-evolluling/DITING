@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -114,11 +115,19 @@ internal fun PowerToggleButton(
             ),
             modifier = Modifier.size(buttonSize)
         ) {
-            Icon(
-                imageVector = Icons.Default.PowerSettingsNew,
-                contentDescription = localizedText(description),
-                modifier = Modifier.size(42.dp)
-            )
+            if (isBusy) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(42.dp),
+                    color = contentColor,
+                    strokeWidth = 4.dp
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.PowerSettingsNew,
+                    contentDescription = localizedText(description),
+                    modifier = Modifier.size(42.dp)
+                )
+            }
         }
     }
 }
