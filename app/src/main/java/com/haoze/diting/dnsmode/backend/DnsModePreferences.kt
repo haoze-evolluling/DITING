@@ -3,6 +3,10 @@ package com.haoze.diting.dnsmode.backend
 import android.content.Context
 import android.content.SharedPreferences
 import com.haoze.diting.dnsmode.model.DnsModeConfig
+import com.haoze.diting.dnsmode.model.DnsModeProtocol
+import com.haoze.diting.dnsmode.model.DnsUpstreamServer
+import org.json.JSONArray
+import org.json.JSONObject
 
 object DnsModePreferences {
     private const val PREFS_NAME = "diting_dns_mode_prefs"
@@ -15,6 +19,7 @@ object DnsModePreferences {
     private const val KEY_LOG_QUERIES = "log_queries"
     private const val KEY_LOG_QUERIES_MIGRATED = "log_queries_default_off"
     private const val KEY_SERVICE_ACTIVE = "service_active"
+    private const val KEY_CUSTOM_UPSTREAMS = "custom_upstreams"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -54,27 +59,60 @@ object DnsModePreferences {
             .apply()
     }
 
-    fun setSelectedUpstreamId(context: Context, upstreamId: String) {
-        getPrefs(context).edit().putString(KEY_SELECTED_UPSTREAM, upstreamId).apply()
-    }
-
-    fun setLocalListenPort(context: Context, port: Int) {
-        getPrefs(context).edit().putInt(KEY_LOCAL_PORT, port).apply()
-    }
-
-    fun setCacheEnabled(context: Context, enabled: Boolean) {
-        getPrefs(context).edit().putBoolean(KEY_CACHE_ENABLED, enabled).apply()
-    }
-
-    fun setAdBlockEnabled(context: Context, enabled: Boolean) {
-        getPrefs(context).edit().putBoolean(KEY_AD_BLOCK_ENABLED, enabled).apply()
-    }
-
     fun setServiceActive(context: Context, active: Boolean) {
         getPrefs(context).edit().putBoolean(KEY_SERVICE_ACTIVE, active).apply()
     }
 
     fun isServiceActive(context: Context): Boolean {
         return getPrefs(context).getBoolean(KEY_SERVICE_ACTIVE, false)
+    }
+
+    fun loadCustomUpstreams(context: Context): List<DnsUpstreamServer> {
+        return deserializeUpstreams(getPrefs(context).getString(KEY_CUSTOM_UPSTREAMS, null))
+    }
+
+    fun saveCustomUpstreams(context: Context, servers: List<DnsUpstreamServer>) {
+        getPrefs(context).edit()
+            .putString(KEY_CUSTOM_UPSTREAMS, serializeUpstreams(servers))
+            .apply()
+    }
+
+    fun serializeUpstreams(servers: List<DnsUpstreamServer>): String {
+        val array = JSONArray()
+        servers.forEach { server ->
+            array.put(
+                JSONObject()
+                    .put("id", server.id)
+                    .put("name", server.name)
+                    .put("address", server.address)
+                    .put("port", server.port)
+                    .put("protocol", server.protocol.name)
+            )
+        }
+        return array.toString()
+    }
+
+    fun deserializeUpstreams(json: String?): List<DnsUpstreamServer> {
+        if (json.isNullOrBlank()) return emptyList()
+        return runCatching {
+            val array = JSONArray(json)
+            (0 until array.length()).mapNotNull { index ->
+                val item = array.optJSONObject(index) ?: return@mapNotNull null
+                val id = item.optString("id")
+                val name = item.optString("name")
+                val address = item.optString("address")
+                if (id.isBlank() || name.isBlank() || address.isBlank()) return@mapNotNull null
+                DnsUpstreamServer(
+                    id = id,
+                    name = name,
+                    address = address,
+                    port = item.optInt("port", 53),
+                    protocol = runCatching {
+                        DnsModeProtocol.valueOf(item.optString("protocol"))
+                    }.getOrDefault(DnsModeProtocol.UDP),
+                    isCustom = true
+                )
+            }
+        }.getOrDefault(emptyList())
     }
 }

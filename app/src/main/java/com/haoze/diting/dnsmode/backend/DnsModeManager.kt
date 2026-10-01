@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.haoze.diting.dnsmode.model.DnsModeConfig
+import com.haoze.diting.dnsmode.model.DnsModeProtocol
 import com.haoze.diting.dnsmode.model.DnsModeStats
 import com.haoze.diting.dnsmode.model.DnsServiceStatus
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 object DnsModeManager {
     private const val TAG = "DnsModeManager"
@@ -39,6 +41,8 @@ object DnsModeManager {
     private val _upstreams = MutableStateFlow(DnsUpstreamServer.PRESETS)
     val upstreams: StateFlow<List<DnsUpstreamServer>> = _upstreams.asStateFlow()
 
+    private var customUpstreams: List<DnsUpstreamServer> = emptyList()
+
     private var initialized = false
 
     fun initialize(context: Context) {
@@ -46,6 +50,8 @@ object DnsModeManager {
         initialized = true
         val loadedConfig = DnsModePreferences.loadConfig(context)
         _config.value = loadedConfig
+        customUpstreams = DnsModePreferences.loadCustomUpstreams(context)
+        _upstreams.value = DnsUpstreamServer.PRESETS + customUpstreams
     }
 
     fun getActiveUpstream(): DnsUpstreamServer {
@@ -69,10 +75,14 @@ object DnsModeManager {
     fun stopService(context: Context) {
         if (_status.value == DnsServiceStatus.STOPPED || _status.value == DnsServiceStatus.STOPPING) return
         _status.value = DnsServiceStatus.STOPPING
-        DnsModePreferences.setServiceActive(context, false)
         try {
             context.startService(DnsModeService.stopIntent(context))
+            // Only clear the flag once the stop intent was actually queued;
+            // otherwise a failed send would leave the service running while
+            // persisted state claims it is stopped.
+            DnsModePreferences.setServiceActive(context, false)
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to send stop intent to DnsModeService", e)
             _status.value = DnsServiceStatus.ERROR
             _errorReason.value = "DNS 服务停止失败，请重试"
         }
@@ -89,8 +99,14 @@ object DnsModeManager {
     }
 
     fun onServiceStarted() {
+        // Idempotent resync: a duplicate ACTION_START while already RUNNING
+        // must not wipe the stats of the ongoing run.
+        val resync = _status.value == DnsServiceStatus.RUNNING
         _status.value = DnsServiceStatus.RUNNING
         _errorReason.value = null
+        if (!resync) {
+            _stats.value = DnsModeStats()
+        }
         startStatsTicker()
     }
 
@@ -115,6 +131,47 @@ object DnsModeManager {
         refreshEngineIfRunning(context)
     }
 
+    fun addCustomUpstream(
+        context: Context,
+        name: String,
+        protocol: DnsModeProtocol,
+        address: String,
+        port: Int
+    ): DnsUpstreamServer {
+        val server = DnsUpstreamServer(
+            id = "custom_" + UUID.randomUUID().toString(),
+            name = name.trim(),
+            address = address.trim(),
+            port = port,
+            protocol = protocol,
+            isCustom = true
+        )
+        customUpstreams = customUpstreams + server
+        _upstreams.value = DnsUpstreamServer.PRESETS + customUpstreams
+        DnsModePreferences.saveCustomUpstreams(context, customUpstreams)
+        return server
+    }
+
+    fun updateCustomUpstream(context: Context, server: DnsUpstreamServer) {
+        if (!server.isCustom) return
+        customUpstreams = customUpstreams.map { if (it.id == server.id) server else it }
+        _upstreams.value = DnsUpstreamServer.PRESETS + customUpstreams
+        DnsModePreferences.saveCustomUpstreams(context, customUpstreams)
+        if (_config.value.selectedUpstreamId == server.id) {
+            refreshEngineIfRunning(context)
+        }
+    }
+
+    fun removeCustomUpstream(context: Context, serverId: String) {
+        customUpstreams = customUpstreams.filterNot { it.id == serverId }
+        _upstreams.value = DnsUpstreamServer.PRESETS + customUpstreams
+        DnsModePreferences.saveCustomUpstreams(context, customUpstreams)
+        // Deleting the selected custom server falls back to the first preset.
+        if (_config.value.selectedUpstreamId == serverId) {
+            selectUpstream(context, DnsUpstreamServer.PRESETS.first().id)
+        }
+    }
+
     fun updateConfig(context: Context, newConfig: DnsModeConfig) {
         _config.value = newConfig
         DnsModePreferences.saveConfig(context, newConfig)
@@ -134,16 +191,21 @@ object DnsModeManager {
         _stats.value = DnsModeStats()
     }
 
-    fun recordQuery(cacheHit: Boolean, blocked: Boolean, latencyMs: Long) {
+    fun recordQuery(cacheHit: Boolean, blocked: Boolean, failed: Boolean, latencyMs: Long) {
         _stats.update { current ->
             val newCount = current.queryCount + 1
-            val newTotal = current.latencyTotalMs + latencyMs
+            val newFailed = if (failed) current.failedCount + 1 else current.failedCount
+            // SERVFAIL timeouts (up to 10s) would dominate the average, so the
+            // reported latency only covers queries that produced an answer.
+            val newTotal = if (failed) current.latencyTotalMs else current.latencyTotalMs + latencyMs
+            val resolvedCount = (newCount - newFailed).coerceAtLeast(1L)
             current.copy(
                 queryCount = newCount,
                 cacheHitCount = if (cacheHit) current.cacheHitCount + 1 else current.cacheHitCount,
                 blockedCount = if (blocked) current.blockedCount + 1 else current.blockedCount,
+                failedCount = newFailed,
                 latencyTotalMs = newTotal,
-                latencyMs = newTotal / newCount
+                latencyMs = newTotal / resolvedCount
             )
         }
     }
@@ -153,8 +215,9 @@ object DnsModeManager {
         statsJob = scope.launch {
             while (isActive) {
                 delay(1000L)
-                val current = _stats.value
-                _stats.value = current.copy(uptimeSeconds = current.uptimeSeconds + 1)
+                // Atomic update: a read-then-write here would clobber counts
+                // recorded by recordQuery between the two steps.
+                _stats.update { it.copy(uptimeSeconds = it.uptimeSeconds + 1) }
             }
         }
     }

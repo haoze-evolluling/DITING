@@ -3,6 +3,9 @@ package com.haoze.diting.ui
 import android.content.Context
 import android.util.Log
 import com.haoze.diting.data.entity.RuleScope
+import com.haoze.diting.dnsmode.backend.DnsModeService
+import com.haoze.diting.ui.mode.AppWorkMode
+import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.vpn.DnsVpnService
 
 object RuntimeDnsSettingsRefresher {
@@ -17,6 +20,7 @@ object RuntimeDnsSettingsRefresher {
         }.onFailure { error ->
             Log.w(TAG, "Failed to request DNS runtime config refresh", error)
         }
+        pingDnsModeFilterReload(appContext, "Failed to request DNS mode filter reload")
     }
 
     fun syncRuleIfRunning(
@@ -32,6 +36,7 @@ object RuntimeDnsSettingsRefresher {
         }.onFailure { error ->
             Log.w(TAG, "Failed to request incremental rule cache sync", error)
         }
+        pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule sync")
     }
 
     fun refreshRuleIndexesIfRunning(
@@ -50,6 +55,7 @@ object RuntimeDnsSettingsRefresher {
         }.onFailure { error ->
             Log.w(TAG, "Failed to request rule index refresh", error)
         }
+        pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule index refresh")
     }
 
     fun syncHttpsRequestRulesIfRunning(context: Context) {
@@ -81,6 +87,19 @@ object RuntimeDnsSettingsRefresher {
             appContext.startService(DnsVpnService.refreshAppAllowlistIntent(appContext))
         }.onFailure { error ->
             Log.w(TAG, "Failed to refresh application allowlist", error)
+        }
+    }
+
+    /**
+     * DNS mode shares the normal mode's rule base; when rules change while its
+     * service is running, trigger a full in-memory reload via ACTION_REFRESH.
+     */
+    private fun pingDnsModeFilterReload(appContext: Context, logMessage: String) {
+        if (WorkModeStore.getAppWorkMode(appContext) != AppWorkMode.DNS) return
+        runCatching {
+            appContext.startService(DnsModeService.refreshIntent(appContext))
+        }.onFailure { error ->
+            Log.w(TAG, logMessage, error)
         }
     }
 }

@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.haoze.diting.dnsmode.model.DnsUpstreamServer
 import com.haoze.diting.dnsmode.ui.navigation.DnsNavTab
 import com.haoze.diting.dnsmode.viewmodel.DnsMainViewModel
 import com.haoze.diting.ui.FloatingNavigationBar
@@ -49,6 +50,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun DnsMainScreen(
     viewModel: DnsMainViewModel,
+    batteryOptimizationIgnored: Boolean,
+    onRequestIgnoreBatteryOptimization: () -> Unit,
     onSwitchToNormalMode: () -> Unit,
     onSelectMode: () -> Unit
 ) {
@@ -59,6 +62,10 @@ fun DnsMainScreen(
     val pageAlpha = remember { Animatable(1f) }
     var pageSwitchJob by remember { mutableStateOf<Job?>(null) }
     var showSwitchConfirmDialog by remember { mutableStateOf(false) }
+    var showResetStatsConfirmDialog by remember { mutableStateOf(false) }
+    var showAddUpstreamDialog by remember { mutableStateOf(false) }
+    var editingUpstream by remember { mutableStateOf<DnsUpstreamServer?>(null) }
+    var pendingDeleteUpstreamId by remember { mutableStateOf<String?>(null) }
 
     val navigateToPage: (Int) -> Unit = { targetPage ->
         if (pagerState.currentPage != targetPage) {
@@ -99,7 +106,7 @@ fun DnsMainScreen(
                     title = {
                         Text(
                             text = if (currentTab == DnsNavTab.HOME) {
-                                localizedText("谛听 · DNS模式")
+                                localizedText("谛听 · DNS 模式")
                             } else {
                                 localizedText(currentTab.title)
                             }
@@ -161,12 +168,16 @@ fun DnsMainScreen(
                         upstreams = uiState.upstreams,
                         selectedUpstreamId = uiState.config.selectedUpstreamId,
                         onSelectUpstream = viewModel::selectUpstream,
+                        onAddUpstream = { showAddUpstreamDialog = true },
+                        onEditUpstream = { editingUpstream = it },
                         contentBottomPadding = 108.dp
                     )
                     DnsNavTab.SETTINGS -> DnsSettingsScreen(
                         config = uiState.config,
+                        batteryOptimizationIgnored = batteryOptimizationIgnored,
+                        onRequestIgnoreBatteryOptimization = onRequestIgnoreBatteryOptimization,
                         onUpdateConfig = viewModel::updateConfig,
-                        onResetStats = viewModel::resetStats,
+                        onResetStats = { showResetStatsConfirmDialog = true },
                         onSwitchToNormalMode = { showSwitchConfirmDialog = true },
                         onSelectMode = onSelectMode,
                         contentBottomPadding = 108.dp
@@ -196,12 +207,71 @@ fun DnsMainScreen(
         AppConfirmDialog(
             onDismissRequest = { showSwitchConfirmDialog = false },
             title = localizedText("切换为普通模式"),
-            message = localizedText("切换后将停止 DNS 代理并进入普通模式。完整分流、黑白名单与应用管控等能力可在普通模式中按需开启。确认切换吗？"),
+            message = localizedText("切换后将停止 DNS 服务并退出 DNS 模式。完整分流、黑白名单与应用管控等能力可在普通模式中按需开启。确认切换吗？"),
             confirmLabel = localizedText("确认切换"),
             cancelLabel = localizedText("取消"),
             onConfirm = {
                 showSwitchConfirmDialog = false
                 onSwitchToNormalMode()
+            }
+        )
+    }
+
+    if (showResetStatsConfirmDialog) {
+        AppConfirmDialog(
+            onDismissRequest = { showResetStatsConfirmDialog = false },
+            title = localizedText("重置运行统计"),
+            message = localizedText("将清空本次运行的全部统计数据，确认继续吗？"),
+            confirmLabel = localizedText("确认重置"),
+            cancelLabel = localizedText("取消"),
+            onConfirm = {
+                showResetStatsConfirmDialog = false
+                viewModel.resetStats()
+            }
+        )
+    }
+
+    if (showAddUpstreamDialog) {
+        DnsUpstreamEditDialog(
+            title = "添加自定义上游",
+            initial = null,
+            onDismiss = { showAddUpstreamDialog = false },
+            onSave = { name, protocol, address, port ->
+                viewModel.addCustomUpstream(name, protocol, address, port)
+                showAddUpstreamDialog = false
+            }
+        )
+    }
+
+    editingUpstream?.let { server ->
+        DnsUpstreamEditDialog(
+            title = "编辑自定义上游",
+            initial = server,
+            onDismiss = { editingUpstream = null },
+            onSave = { name, protocol, address, port ->
+                viewModel.updateCustomUpstream(
+                    server.copy(name = name, protocol = protocol, address = address, port = port)
+                )
+                editingUpstream = null
+            },
+            onDelete = {
+                pendingDeleteUpstreamId = server.id
+                editingUpstream = null
+            }
+        )
+    }
+
+    if (pendingDeleteUpstreamId != null) {
+        AppConfirmDialog(
+            onDismissRequest = { pendingDeleteUpstreamId = null },
+            title = localizedText("删除自定义上游"),
+            message = localizedText("删除后相关解析将回退到默认上游。确认删除吗？"),
+            confirmLabel = localizedText("确认删除"),
+            cancelLabel = localizedText("取消"),
+            destructive = true,
+            onConfirm = {
+                pendingDeleteUpstreamId?.let { viewModel.removeCustomUpstream(it) }
+                pendingDeleteUpstreamId = null
             }
         )
     }

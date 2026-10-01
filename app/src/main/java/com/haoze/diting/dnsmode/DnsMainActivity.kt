@@ -1,10 +1,13 @@
 package com.haoze.diting.dnsmode
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,6 +39,7 @@ class DnsMainActivity : AppLocalizedActivity() {
     private var languageModeAtCreate = AppLanguageMode.SYSTEM
     private val viewModel: DnsMainViewModel by viewModels()
     private var appearanceRefreshVersion by mutableStateOf(0)
+    private var batteryOptimizationIgnored by mutableStateOf(false)
 
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -63,6 +67,8 @@ class DnsMainActivity : AppLocalizedActivity() {
             ) {
                 DnsMainScreen(
                     viewModel = viewModel,
+                    batteryOptimizationIgnored = batteryOptimizationIgnored,
+                    onRequestIgnoreBatteryOptimization = ::requestIgnoreBatteryOptimization,
                     onSwitchToNormalMode = ::switchToNormalMode,
                     onSelectMode = ::openModeSelection
                 )
@@ -84,24 +90,11 @@ class DnsMainActivity : AppLocalizedActivity() {
         }
         applyRecentsPrivacySetting()
         appearanceRefreshVersion++
+        batteryOptimizationIgnored = isBatteryOptimizationIgnored(this)
         com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this)
 
         if (DnsModePreferences.isServiceActive(this) && DnsModeManager.status.value == DnsServiceStatus.STOPPED) {
             DnsModeManager.startService(this)
-        }
-        handleActionIntent(intent)
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleActionIntent(intent)
-    }
-
-    private fun handleActionIntent(intent: Intent?) {
-        when (intent?.action) {
-            ACTION_START_SERVICE -> DnsModeManager.startService(this)
-            ACTION_STOP_SERVICE -> DnsModeManager.stopService(this)
         }
     }
 
@@ -110,6 +103,27 @@ class DnsMainActivity : AppLocalizedActivity() {
             !NotificationPermissionHelper.hasPermission(this)
         ) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    private fun isBatteryOptimizationIgnored(context: Context): Boolean {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+        return powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
+    }
+
+    private fun requestIgnoreBatteryOptimization() {
+        // The DNS service holds an unbounded wake lock, so aggressive battery
+        // optimizations can kill the LAN resolver; guide the user to the
+        // system whitelist.
+        val requestIntent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+            data = android.net.Uri.parse("package:$packageName")
+        }
+        try {
+            startActivity(requestIntent)
+        } catch (_: ActivityNotFoundException) {
+            runCatching {
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            }
         }
     }
 
@@ -136,9 +150,6 @@ class DnsMainActivity : AppLocalizedActivity() {
     }
 
     companion object {
-        const val ACTION_START_SERVICE = "com.haoze.diting.dnsmode.ACTION_START"
-        const val ACTION_STOP_SERVICE = "com.haoze.diting.dnsmode.ACTION_STOP"
-
         fun createIntent(context: Context): Intent {
             return Intent(context, DnsMainActivity::class.java)
         }

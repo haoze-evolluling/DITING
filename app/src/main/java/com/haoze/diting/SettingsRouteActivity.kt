@@ -8,6 +8,7 @@ import com.haoze.diting.ui.showToast
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -23,6 +24,7 @@ import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.dnsmode.backend.DnsModeManager
+import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.*
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeSelectionScreen
@@ -397,7 +399,11 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     if (selectedMode == AppWorkMode.DNS) {
                         try {
                             startService(DnsVpnService.stopIntent(this))
-                        } catch (_: Exception) {}
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to stop VPN service when switching to DNS mode", e)
+                        }
+                        // Keep the persistent monitor from outliving the VPN.
+                        VpnMonitorManager.stop(this)
                         val intent = DnsMainActivity.createIntent(this).apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         }
@@ -415,21 +421,12 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     }
                 }
             )
-            Routes.DNS_MODE_PLACEHOLDER -> {
-                try {
-                    startService(DnsVpnService.stopIntent(this))
-                } catch (_: Exception) {}
-                val intent = DnsMainActivity.createIntent(this).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                }
-                startActivity(intent)
-                finish()
-            }
             else -> SettingsScreen(onBack, onNavigate)
         }
     }
 
     companion object {
+        private const val TAG = "SettingsRoute"
         const val EXTRA_ROUTE = "settings_route"
         const val EXTRA_REQUEST_SOURCE = "settings_request_source"
         const val EXTRA_RUNTIME_DNS_CHANGED = "settings_runtime_dns_changed"

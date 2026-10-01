@@ -28,7 +28,10 @@ internal fun PowerToggleButton(
     isBusy: Boolean,
     enabled: Boolean,
     onToggle: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    busyLabel: String = "连接中",
+    runningLabel: String = "断开",
+    stoppedLabel: String = "开启"
 ) {
     val glowColor by animateColorAsState(
         targetValue = if (isRunning) {
@@ -83,9 +86,9 @@ internal fun PowerToggleButton(
     )
     val buttonAlpha = if (enabled) 1f else 0.5f
     val description = when {
-        isBusy -> "连接中"
-        isRunning -> "断开"
-        else -> "开启"
+        isBusy -> busyLabel
+        isRunning -> runningLabel
+        else -> stoppedLabel
     }
 
     Box(

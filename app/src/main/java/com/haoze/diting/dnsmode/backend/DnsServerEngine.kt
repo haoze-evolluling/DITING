@@ -39,7 +39,7 @@ import javax.net.ssl.SSLSocketFactory
 class DnsServerEngine(
     @Volatile private var config: DnsModeConfig,
     @Volatile private var upstream: DnsUpstreamServer,
-    private val onQueryProcessed: ((cacheHit: Boolean, blocked: Boolean, latencyMs: Long) -> Unit)? = null,
+    private val onQueryProcessed: ((cacheHit: Boolean, blocked: Boolean, failed: Boolean, latencyMs: Long) -> Unit)? = null,
     private val queryFilter: DnsQueryFilter? = null
 ) {
     private var scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -114,20 +114,22 @@ class DnsServerEngine(
         safeLogI(TAG, "DNS server stopped")
     }
 
+    /**
+     * Applies a config/upstream change. Returns whether the engine is running
+     * afterwards; a failed port-change restart surfaces as false so the caller
+     * can stop the service instead of reporting RUNNING with a dead engine.
+     */
     @Synchronized
-    fun updateConfig(newConfig: DnsModeConfig, newUpstream: DnsUpstreamServer) {
+    fun updateConfig(newConfig: DnsModeConfig, newUpstream: DnsUpstreamServer): Boolean {
         val portChanged = newConfig.localListenPort != config.localListenPort
         config = newConfig
         upstream = newUpstream
         if (portChanged && isRunning) {
             safeLogI(TAG, "Port changed to ${newConfig.localListenPort}, restarting DNS server")
             stop()
-            start()
+            return start()
         }
-    }
-
-    fun clearCache() {
-        synchronized(cache) { cache.clear() }
+        return isRunning
     }
 
     private fun startUdpListener(channel: java.nio.channels.DatagramChannel) {
@@ -230,7 +232,7 @@ class DnsServerEngine(
             if (currentConfig.logQueries) {
                 safeLogI(TAG, "Blocked: ${question.name} (type ${question.type})")
             }
-            onQueryProcessed?.invoke(false, true, elapsed)
+            onQueryProcessed?.invoke(false, true, false, elapsed)
             return DnsMessageUtils.buildBlockedResponse(query, filter.blockResponseMode)
         }
 
@@ -251,7 +253,7 @@ class DnsServerEngine(
                         if (currentConfig.logQueries) {
                             safeLogI(TAG, "Cache HIT: ${question.name} (type ${question.type}) in ${elapsed}ms")
                         }
-                        onQueryProcessed?.invoke(true, false, elapsed)
+                        onQueryProcessed?.invoke(true, false, false, elapsed)
                         return finalResponse
                     }
                 }
@@ -282,12 +284,12 @@ class DnsServerEngine(
             if (currentConfig.logQueries) {
                 safeLogI(TAG, "Resolved: ${question.name} via ${upstream.name} in ${elapsed}ms")
             }
-            onQueryProcessed?.invoke(false, false, elapsed)
+            onQueryProcessed?.invoke(false, false, false, elapsed)
             finalResponse
         } catch (e: Exception) {
             safeLogW(TAG, "Upstream DNS query failed for ${question.name}: ${e.message}")
             val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
-            onQueryProcessed?.invoke(false, false, elapsed)
+            onQueryProcessed?.invoke(false, false, true, elapsed)
             // SERVFAIL tells the client the failure is transient; REFUSED would
             // be read as a definitive policy answer and suppress retries.
             DnsMessageUtils.buildServfailResponse(query)

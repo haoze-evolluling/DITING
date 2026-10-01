@@ -18,12 +18,12 @@ import androidx.core.content.ContextCompat
 import com.haoze.diting.R
 import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.ui.localizedText
+import com.haoze.diting.vpn.DitingTileService
 
 class DnsModeService : Service() {
 
     private var dnsServerEngine: DnsServerEngine? = null
     private var queryFilter: DnsQueryFilter? = null
-    private var filterLoaded = false
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -54,6 +54,9 @@ class DnsModeService : Service() {
                 if (dnsServerEngine?.isEngineRunning == true) {
                     // Service was already running (e.g. START_STICKY restart); rebuilding
                     // the engine would drop the cache and briefly release the port.
+                    // Resync the manager status anyway, or a manager left in STARTING
+                    // (e.g. after a failed stop) would disable the power button forever.
+                    DnsModeManager.onServiceStarted()
                     return START_STICKY
                 }
                 startDnsEngine()
@@ -78,6 +81,7 @@ class DnsModeService : Service() {
         releaseLocks()
         DnsModePreferences.setServiceActive(this, false)
         DnsModeManager.onServiceStopped()
+        DitingTileService.requestTileUpdate(this)
         super.onDestroy()
     }
 
@@ -93,8 +97,13 @@ class DnsModeService : Service() {
         val engine = DnsServerEngine(
             config = config,
             upstream = upstream,
-            onQueryProcessed = { cacheHit, blocked, latencyMs ->
-                DnsModeManager.recordQuery(cacheHit = cacheHit, blocked = blocked, latencyMs = latencyMs)
+            onQueryProcessed = { cacheHit, blocked, failed, latencyMs ->
+                DnsModeManager.recordQuery(
+                    cacheHit = cacheHit,
+                    blocked = blocked,
+                    failed = failed,
+                    latencyMs = latencyMs
+                )
             },
             queryFilter = queryFilter
         )
@@ -103,6 +112,7 @@ class DnsModeService : Service() {
             dnsServerEngine = engine
             DnsModeManager.onServiceStarted()
             ensureFilterLoaded()
+            DitingTileService.requestTileUpdate(this)
             Log.i(TAG, "DnsModeService successfully started DNS server on port ${config.localListenPort}")
         } else {
             Log.e(TAG, "DnsModeService failed to start DNS server on port ${config.localListenPort}")
@@ -112,20 +122,24 @@ class DnsModeService : Service() {
     }
 
     private fun refreshDnsEngine() {
+        val engine = dnsServerEngine ?: return
         val config = DnsModeManager.config.value
         val upstream = DnsModeManager.getActiveUpstream()
-        dnsServerEngine?.updateConfig(config, upstream)
+        if (!engine.updateConfig(config, upstream)) {
+            Log.e(TAG, "DNS engine stopped during config refresh (port change restart likely failed)")
+            DnsModeManager.onServiceError("DNS 服务更新失败，监听端口可能被占用")
+            stopSelf()
+        }
     }
 
     /**
-     * Loads the rule base once per service lifetime (lazily, on first start or
-     * first refresh with filtering enabled). Rule edits made afterwards in
-     * normal mode apply on the next service start.
+     * Reloads the rule base on every start and every config refresh, so rule
+     * edits made in normal mode apply on the next refresh instead of waiting
+     * for a service restart.
      */
     private fun ensureFilterLoaded() {
         val filter = queryFilter ?: return
-        if (filterLoaded || !DnsModeManager.config.value.adBlockEnabled) return
-        filterLoaded = true
+        if (!DnsModeManager.config.value.adBlockEnabled) return
         filter.reloadAsync()
     }
 
@@ -239,10 +253,10 @@ class DnsModeService : Service() {
             val manager = getSystemService(NotificationManager::class.java) ?: return
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                localizedText(this, "DNS 模式服务"),
+                localizedText(this, "DNS 模式"),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = localizedText(this@DnsModeService, "显示 DNS 独立代理模式的运行状态")
+                description = localizedText(this@DnsModeService, "显示 DNS 模式的运行状态")
                 setShowBadge(false)
             }
             manager.createNotificationChannel(channel)

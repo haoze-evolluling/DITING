@@ -29,6 +29,7 @@ import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsNavigationItem
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.localizedText
+import com.haoze.diting.util.formatDuration
 
 @Composable
 fun DnsHomeScreen(
@@ -45,13 +46,14 @@ fun DnsHomeScreen(
 ) {
     val isBusy = status == DnsServiceStatus.STARTING || status == DnsServiceStatus.STOPPING
     val statusText = when (status) {
-        DnsServiceStatus.RUNNING -> localizedText("DNS 代理运行中")
+        DnsServiceStatus.RUNNING -> localizedText("DNS 模式运行中")
         DnsServiceStatus.STARTING -> localizedText("正在启动服务...")
         DnsServiceStatus.STOPPING -> localizedText("正在停止服务...")
         DnsServiceStatus.ERROR -> localizedText("服务异常")
-        DnsServiceStatus.STOPPED -> localizedText("DNS 代理已停止")
+        DnsServiceStatus.STOPPED -> localizedText("DNS 模式已停止")
     }
     val latencyText = if (status.isRunning) "${stats.latencyMs} ms" else "--"
+    val uptimeText = if (status.isRunning) formatDuration(stats.uptimeSeconds) else "--"
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -69,7 +71,10 @@ fun DnsHomeScreen(
                     isRunning = status.isRunning,
                     isBusy = isBusy,
                     enabled = !isBusy,
-                    onToggle = onToggleService
+                    onToggle = onToggleService,
+                    busyLabel = "启动中",
+                    runningLabel = "停止",
+                    stoppedLabel = "开启"
                 )
 
                 Text(
@@ -139,9 +144,27 @@ fun DnsHomeScreen(
                         }
                     },
                     {
+                        SettingsItem(title = localizedText("已拦截")) {
+                            Text(
+                                text = stats.blockedCount.toString(),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    {
                         SettingsItem(title = localizedText("平均时延")) {
                             Text(
                                 text = latencyText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    {
+                        SettingsItem(title = localizedText("运行时长")) {
+                            Text(
+                                text = uptimeText,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

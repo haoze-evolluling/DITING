@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.haoze.diting.dnsmode.backend.DnsModeManager
 import com.haoze.diting.dnsmode.model.DnsModeConfig
+import com.haoze.diting.dnsmode.model.DnsModeProtocol
 import com.haoze.diting.dnsmode.model.DnsModeStats
 import com.haoze.diting.dnsmode.model.DnsServiceStatus
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
@@ -64,6 +65,23 @@ class DnsMainViewModel(application: Application) : AndroidViewModel(application)
 
     fun selectUpstream(serverId: String) {
         DnsModeManager.selectUpstream(getApplication(), serverId)
+    }
+
+    fun addCustomUpstream(
+        name: String,
+        protocol: DnsModeProtocol,
+        address: String,
+        port: Int
+    ): DnsUpstreamServer {
+        return DnsModeManager.addCustomUpstream(getApplication(), name, protocol, address, port)
+    }
+
+    fun updateCustomUpstream(server: DnsUpstreamServer) {
+        DnsModeManager.updateCustomUpstream(getApplication(), server)
+    }
+
+    fun removeCustomUpstream(serverId: String) {
+        DnsModeManager.removeCustomUpstream(getApplication(), serverId)
     }
 
     fun updateConfig(newConfig: DnsModeConfig) {

@@ -124,6 +124,7 @@ data class DnsModeStats(
     val queryCount: Long = 0L,
     val cacheHitCount: Long = 0L,
     val blockedCount: Long = 0L,
+    val failedCount: Long = 0L,
     val latencyMs: Long = 0L,
     val latencyTotalMs: Long = 0L,
     val uptimeSeconds: Long = 0L

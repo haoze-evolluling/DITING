@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BatterySaver
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
@@ -26,6 +27,8 @@ import com.haoze.diting.ui.localizedText
 @Composable
 fun DnsSettingsScreen(
     config: DnsModeConfig,
+    batteryOptimizationIgnored: Boolean,
+    onRequestIgnoreBatteryOptimization: () -> Unit,
     onUpdateConfig: (DnsModeConfig) -> Unit,
     onResetStats: () -> Unit,
     onSwitchToNormalMode: () -> Unit,
@@ -86,9 +89,31 @@ fun DnsSettingsScreen(
                 content = listOf {
                     SettingsNavigationItem(
                         title = localizedText("重置运行统计"),
-                        subtitle = localizedText("清空当前会话的全部统计数据"),
+                        subtitle = localizedText("清空本次运行的统计数据"),
                         leadingIcon = Icons.Default.DeleteSweep,
                         onClick = onResetStats
+                    )
+                }
+            )
+        }
+
+        item {
+            SettingsGroupTitle(localizedText("后台稳定性"))
+        }
+
+        item {
+            SettingsSurfaceGroup(
+                content = listOf {
+                    SettingsNavigationItem(
+                        title = localizedText("忽略电池优化"),
+                        subtitle = if (batteryOptimizationIgnored) {
+                            localizedText("已忽略电池优化")
+                        } else {
+                            localizedText("保持 DNS 服务在后台稳定运行")
+                        },
+                        leadingIcon = Icons.Default.BatterySaver,
+                        enabled = !batteryOptimizationIgnored,
+                        onClick = onRequestIgnoreBatteryOptimization
                     )
                 }
             )

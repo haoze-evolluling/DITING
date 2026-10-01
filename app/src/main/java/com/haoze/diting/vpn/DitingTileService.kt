@@ -13,7 +13,10 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.haoze.diting.MainActivity
 import com.haoze.diting.R
+import com.haoze.diting.dnsmode.backend.DnsModeManager
 import com.haoze.diting.ui.localizedText
+import com.haoze.diting.ui.mode.AppWorkMode
+import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.settings.SystemSettingsStore
 
 /**
@@ -36,6 +39,31 @@ class DitingTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
+        // Not running: check whether the initial agreement has been accepted
+        if (!SystemSettingsStore.isInitialAgreementAccepted(this)) {
+            openMainActivity(requestVpn = true)
+            return
+        }
+
+        // The tile always drives the service of the currently selected work
+        // mode; ignoring the mode would start the VPN while DNS mode is active.
+        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS) {
+            toggleDnsService()
+        } else {
+            toggleVpnService()
+        }
+    }
+
+    private fun toggleDnsService() {
+        if (DnsModeManager.status.value.isRunning) {
+            DnsModeManager.stopService(this)
+        } else {
+            DnsModeManager.startService(this)
+        }
+        updateTileState()
+    }
+
+    private fun toggleVpnService() {
         val isRunning = DnsVpnService.isRunning(this)
         if (isRunning) {
             // Running: disconnect
@@ -45,12 +73,6 @@ class DitingTileService : TileService() {
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to stop VPN from tile", e)
             }
-            return
-        }
-
-        // Not running: check whether the initial agreement has been accepted
-        if (!SystemSettingsStore.isInitialAgreementAccepted(this)) {
-            openMainActivity(requestVpn = true)
             return
         }
 
@@ -105,7 +127,7 @@ class DitingTileService : TileService() {
         }
     }
 
-    private fun updateTileState(running: Boolean = DnsVpnService.isRunning(this)) {
+    private fun updateTileState(running: Boolean = isCurrentModeServiceRunning()) {
         val tile = qsTile ?: return
         tile.state = if (running) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.label = getString(R.string.quick_settings_tile_label)
@@ -119,6 +141,14 @@ class DitingTileService : TileService() {
             tile.updateTile()
         }.onFailure { e ->
             Log.w(TAG, "Failed to call qsTile.updateTile()", e)
+        }
+    }
+
+    private fun isCurrentModeServiceRunning(): Boolean {
+        return if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS) {
+            DnsModeManager.status.value.isRunning
+        } else {
+            DnsVpnService.isRunning(this)
         }
     }
 

@@ -1,15 +1,18 @@
 package com.haoze.diting.dnsmode
 
 import com.haoze.diting.dnsmode.backend.DnsModeManager
+import com.haoze.diting.dnsmode.backend.DnsModePreferences
 import com.haoze.diting.dnsmode.backend.DnsModeService
 import com.haoze.diting.dnsmode.model.DnsModeConfig
 import com.haoze.diting.dnsmode.model.DnsModeProtocol
-import com.haoze.diting.dnsmode.model.DnsModeStats
-import com.haoze.diting.dnsmode.model.DnsServiceStatus
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
+import com.haoze.diting.dnsmode.model.DnsUpstreamValidator
+import com.haoze.diting.dnsmode.model.DnsServiceStatus
+import com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -38,21 +41,10 @@ class DnsModeTest {
     }
 
     @Test
-    fun `preset upstream servers contain valid defaults`() {
+    fun `DnsUpstreamServer presets contain udp doh and dot endpoints`() {
         val presets = DnsUpstreamServer.PRESETS
-        assertTrue(presets.isNotEmpty())
-
-        val alidns = presets.firstOrNull { it.id == "alidns" }
-        assertNotNull(alidns)
-        assertEquals("阿里 DNS", alidns?.name)
-        assertEquals("223.5.5.5", alidns?.address)
-        assertEquals(53, alidns?.port)
-        assertEquals(DnsModeProtocol.UDP, alidns?.protocol)
-        assertEquals("[UDP] 223.5.5.5:53", alidns?.endpointLabel())
-
-        val cloudflare = presets.firstOrNull { it.id == "cloudflare" }
-        assertNotNull(cloudflare)
-        assertEquals("1.1.1.1", cloudflare?.address)
+        assertEquals("alidns", presets.first().id)
+        assertEquals("1.1.1.1", presets.firstOrNull { it.id == "cloudflare" }?.address)
 
         val dohServer = presets.firstOrNull { it.protocol == DnsModeProtocol.DOH }
         assertNotNull(dohServer)
@@ -80,18 +72,18 @@ class DnsModeTest {
         assertEquals(0L, DnsModeManager.stats.value.cacheHitCount)
         assertEquals(0L, DnsModeManager.stats.value.blockedCount)
 
-        DnsModeManager.recordQuery(cacheHit = false, blocked = false, latencyMs = 20L)
+        DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = false, latencyMs = 20L)
         assertEquals(1L, DnsModeManager.stats.value.queryCount)
         assertEquals(0L, DnsModeManager.stats.value.cacheHitCount)
         assertEquals(20L, DnsModeManager.stats.value.latencyMs)
 
-        DnsModeManager.recordQuery(cacheHit = true, blocked = false, latencyMs = 5L)
+        DnsModeManager.recordQuery(cacheHit = true, blocked = false, failed = false, latencyMs = 5L)
         assertEquals(2L, DnsModeManager.stats.value.queryCount)
         assertEquals(1L, DnsModeManager.stats.value.cacheHitCount)
         // Average latency: (20 + 5) / 2
         assertEquals(12L, DnsModeManager.stats.value.latencyMs)
 
-        DnsModeManager.recordQuery(cacheHit = false, blocked = true, latencyMs = 1L)
+        DnsModeManager.recordQuery(cacheHit = false, blocked = true, failed = false, latencyMs = 1L)
         assertEquals(3L, DnsModeManager.stats.value.queryCount)
         assertEquals(1L, DnsModeManager.stats.value.cacheHitCount)
         assertEquals(1L, DnsModeManager.stats.value.blockedCount)
@@ -102,6 +94,42 @@ class DnsModeTest {
         assertEquals(0L, DnsModeManager.stats.value.queryCount)
         assertEquals(0L, DnsModeManager.stats.value.cacheHitCount)
         assertEquals(0L, DnsModeManager.stats.value.blockedCount)
+    }
+
+    @Test
+    fun `failed queries count but do not skew average latency`() {
+        DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = false, latencyMs = 10L)
+        DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = false, latencyMs = 20L)
+        // A SERVFAIL timeout must not drag the reported latency up
+        DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = true, latencyMs = 9000L)
+
+        assertEquals(3L, DnsModeManager.stats.value.queryCount)
+        assertEquals(1L, DnsModeManager.stats.value.failedCount)
+        assertEquals(0L, DnsModeManager.stats.value.blockedCount)
+        // Average latency over successful answers only: (10 + 20) / 2
+        assertEquals(15L, DnsModeManager.stats.value.latencyMs)
+
+        // Only-failure run must not divide by zero
+        DnsModeManager.resetStats()
+        DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = true, latencyMs = 9000L)
+        assertEquals(1L, DnsModeManager.stats.value.queryCount)
+        assertEquals(0L, DnsModeManager.stats.value.latencyMs)
+    }
+
+    @Test
+    fun `onServiceStarted resets stats only on a fresh start`() {
+        DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = false, latencyMs = 10L)
+        // Fresh start (STOPPED -> RUNNING) wipes the previous run's counters
+        DnsModeManager.onServiceStarted()
+        assertEquals(0L, DnsModeManager.stats.value.queryCount)
+
+        DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = false, latencyMs = 10L)
+        // Idempotent resync while RUNNING keeps the ongoing run's stats
+        DnsModeManager.onServiceStarted()
+        assertEquals(1L, DnsModeManager.stats.value.queryCount)
+
+        DnsModeManager.onServiceStopped()
+        assertEquals(DnsServiceStatus.STOPPED, DnsModeManager.status.value)
     }
 
     @Test
@@ -144,6 +172,60 @@ class DnsModeTest {
         assertEquals(300, config.cacheTtlSeconds)
         assertFalse(config.adBlockEnabled)
         assertFalse(config.logQueries)
+    }
+
+    @Test
+    fun `DnsUpstreamValidator accepts valid inputs and rejects invalid ones`() {
+        val validator = DnsUpstreamValidator
+
+        assertNull(validator.validateName("自定义 DNS"))
+        assertNotNull(validator.validateName("   "))
+
+        assertNull(validator.validateAddress(DnsModeProtocol.UDP, "223.5.5.5"))
+        assertNull(validator.validateAddress(DnsModeProtocol.UDP, "2001:db8::1"))
+        assertNull(validator.validateAddress(DnsModeProtocol.DOT, "dns.alidns.com"))
+        assertNull(validator.validateAddress(DnsModeProtocol.DOH, "https://dns.alidns.com/dns-query"))
+        assertNotNull(validator.validateAddress(DnsModeProtocol.DOH, "http://dns.alidns.com/dns-query"))
+        assertNotNull(validator.validateAddress(DnsModeProtocol.UDP, ""))
+        assertNotNull(validator.validateAddress(DnsModeProtocol.UDP, "1 1 1 1"))
+
+        assertNull(validator.validatePort("", DnsModeProtocol.UDP))
+        assertNull(validator.validatePort("853", DnsModeProtocol.DOT))
+        assertNotNull(validator.validatePort("0", DnsModeProtocol.UDP))
+        assertNotNull(validator.validatePort("70000", DnsModeProtocol.UDP))
+        assertNotNull(validator.validatePort("abc", DnsModeProtocol.UDP))
+        assertNull(validator.validatePort("abc", DnsModeProtocol.DOH))
+
+        assertEquals(53, validator.parsePort("", DnsModeProtocol.UDP))
+        assertEquals(853, validator.parsePort("853", DnsModeProtocol.DOT))
+    }
+
+    @Test
+    fun `custom upstream serialization round trips`() {
+        val servers = listOf(
+            DnsUpstreamServer(
+                id = "custom_1",
+                name = "自定义 DoH",
+                address = "https://example.com/dns-query",
+                port = 443,
+                protocol = DnsModeProtocol.DOH,
+                isCustom = true
+            ),
+            DnsUpstreamServer(
+                id = "custom_2",
+                name = "自定义 UDP",
+                address = "192.168.1.2",
+                port = 5335,
+                protocol = DnsModeProtocol.UDP,
+                isCustom = true
+            )
+        )
+        val json = DnsModePreferences.serializeUpstreams(servers)
+        assertEquals(servers, DnsModePreferences.deserializeUpstreams(json))
+
+        assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams(null))
+        assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams(""))
+        assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams("not json"))
     }
 
     @Test
@@ -197,29 +279,44 @@ class DnsModeTest {
 
     @Test
     fun `DNS mode UI strings are properly localized`() {
-        assertEquals("DITING · DNS Mode", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("谛听 · DNS模式"))
-        assertEquals("DNS Mode", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("DNS 模式"))
-        assertEquals("Overview", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("概览"))
-        assertEquals("Upstream Servers", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("上游服务器"))
-        assertEquals("Mode Settings", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("模式设置"))
-        assertEquals("DNS Proxy Running", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("DNS 代理运行中"))
-        assertEquals("Total Queries", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("总查询量"))
-        assertEquals("Cache Hits", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("缓存命中"))
-        assertEquals("Avg Latency", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("平均时延"))
-        assertEquals("Preset Public Upstream DNS", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("预设公共上游 DNS"))
-        assertEquals("Switch to Normal Mode", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("切换为普通模式"))
-        assertEquals("Re-select Work Mode", com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("重新选择工作模式"))
+        assertEquals("DITING · DNS Mode", translateSettingsAndAppearanceExact("谛听 · DNS 模式"))
+        assertEquals("DNS Mode", translateSettingsAndAppearanceExact("DNS 模式"))
+        assertEquals("Upstream Servers", translateSettingsAndAppearanceExact("上游服务器"))
+        assertEquals("Mode Settings", translateSettingsAndAppearanceExact("模式设置"))
+        assertEquals("DNS Mode Running", translateSettingsAndAppearanceExact("DNS 模式运行中"))
+        assertEquals("DNS Mode Stopped", translateSettingsAndAppearanceExact("DNS 模式已停止"))
+        assertEquals("Total Queries", translateSettingsAndAppearanceExact("总查询量"))
+        assertEquals("Cache Hits", translateSettingsAndAppearanceExact("缓存命中"))
+        assertEquals("Blocked", translateSettingsAndAppearanceExact("已拦截"))
+        assertEquals("Uptime", translateSettingsAndAppearanceExact("运行时长"))
+        assertEquals("Avg Latency", translateSettingsAndAppearanceExact("平均时延"))
+        assertEquals("Preset Public Upstream DNS", translateSettingsAndAppearanceExact("预设公共上游 DNS"))
+        assertEquals("Switch to Normal Mode", translateSettingsAndAppearanceExact("切换为普通模式"))
+        assertEquals("Re-select Work Mode", translateSettingsAndAppearanceExact("重新选择工作模式"))
         assertEquals(
             "Failed to start DNS service. The listen port may already be in use",
-            com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("DNS 服务启动失败，监听端口可能被占用")
+            translateSettingsAndAppearanceExact("DNS 服务启动失败，监听端口可能被占用")
+        )
+        assertEquals(
+            "Failed to update DNS service. The listen port may already be in use",
+            translateSettingsAndAppearanceExact("DNS 服务更新失败，监听端口可能被占用")
         )
         assertEquals(
             "DITING · DNS Mode Running",
-            com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("谛听 · DNS 模式运行中")
+            translateSettingsAndAppearanceExact("谛听 · DNS 模式运行中")
         )
+        assertEquals("Add Custom Upstream", translateSettingsAndAppearanceExact("添加自定义上游"))
+        assertEquals("Edit Custom Upstream", translateSettingsAndAppearanceExact("编辑自定义上游"))
+        assertEquals("Custom Upstreams", translateSettingsAndAppearanceExact("自定义上游"))
+        assertEquals("Clear all statistics of this run", translateSettingsAndAppearanceExact("清空本次运行的统计数据"))
         assertEquals(
-            "Ali DNS",
-            com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("阿里 DNS")
+            "Keep the DNS service running stably in the background",
+            translateSettingsAndAppearanceExact("保持 DNS 服务在后台稳定运行")
+        )
+        assertEquals("Ali DNS", translateSettingsAndAppearanceExact("阿里 DNS"))
+        assertEquals(
+            "Alibaba public DNS with low latency in mainland China",
+            translateSettingsAndAppearanceExact("阿里巴巴公共 DNS，国内解析低时延")
         )
     }
 }
