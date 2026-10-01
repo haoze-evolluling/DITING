@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,8 +37,6 @@ fun DnsHomeScreen(
     stats: DnsModeStats,
     onToggleService: () -> Unit,
     onNavigateToServers: () -> Unit,
-    onSwitchToNormalMode: () -> Unit,
-    onSelectMode: () -> Unit,
     modifier: Modifier = Modifier,
     contentBottomPadding: Dp = 108.dp
 ) {
@@ -169,33 +165,6 @@ fun DnsHomeScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    }
-                )
-            )
-        }
-
-        item {
-            SettingsGroupTitle(localizedText("模式管理"))
-        }
-
-        item {
-            SettingsSurfaceGroup(
-                content = listOf(
-                    {
-                        SettingsNavigationItem(
-                            title = localizedText("切换为普通模式"),
-                            subtitle = localizedText("启用完整分流、黑白名单与应用网络管控"),
-                            leadingIcon = Icons.Default.SwapHoriz,
-                            onClick = onSwitchToNormalMode
-                        )
-                    },
-                    {
-                        SettingsNavigationItem(
-                            title = localizedText("重新选择工作模式"),
-                            subtitle = localizedText("浏览所有工作模式详情并重新选择"),
-                            leadingIcon = Icons.Default.Tune,
-                            onClick = onSelectMode
-                        )
                     }
                 )
             )

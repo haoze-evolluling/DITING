@@ -160,8 +160,6 @@ fun DnsMainScreen(
                         stats = uiState.stats,
                         onToggleService = viewModel::toggleService,
                         onNavigateToServers = { navigateToPage(DnsNavTab.SERVERS.ordinal) },
-                        onSwitchToNormalMode = { showSwitchConfirmDialog = true },
-                        onSelectMode = onSelectMode,
                         contentBottomPadding = 108.dp
                     )
                     DnsNavTab.SERVERS -> DnsServersScreen(
