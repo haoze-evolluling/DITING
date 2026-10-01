@@ -3,6 +3,7 @@ package com.haoze.diting.dnsmode
 import com.haoze.diting.dnsmode.backend.DnsModeManager
 import com.haoze.diting.dnsmode.backend.DnsModePreferences
 import com.haoze.diting.dnsmode.backend.DnsModeService
+import com.haoze.diting.dnsmode.model.DnsListenPortValidator
 import com.haoze.diting.dnsmode.model.DnsModeConfig
 import com.haoze.diting.dnsmode.model.DnsModeProtocol
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
@@ -278,6 +279,23 @@ class DnsModeTest {
     }
 
     @Test
+    fun `DnsListenPortValidator accepts editable range and rejects others`() {
+        assertNull(DnsListenPortValidator.validate("1053"))
+        assertNull(DnsListenPortValidator.validate("5353"))
+        assertNull(DnsListenPortValidator.validate("65535"))
+        assertNull(DnsListenPortValidator.validate("1024"))
+
+        assertNotNull(DnsListenPortValidator.validate("abc"))
+        assertNotNull(DnsListenPortValidator.validate(""))
+        assertNotNull(DnsListenPortValidator.validate("53"))
+        assertNotNull(DnsListenPortValidator.validate("1023"))
+        assertNotNull(DnsListenPortValidator.validate("65536"))
+
+        assertEquals(1053, DnsListenPortValidator.DEFAULT_PORT)
+        assertEquals(1053, DnsListenPortValidator.parse("1053"))
+    }
+
+    @Test
     fun `DNS mode UI strings are properly localized`() {
         assertEquals("DITING · DNS Mode", translateSettingsAndAppearanceExact("谛听 · DNS 模式"))
         assertEquals("DNS Mode", translateSettingsAndAppearanceExact("DNS 模式"))
@@ -314,6 +332,14 @@ class DnsModeTest {
             translateSettingsAndAppearanceExact("保持 DNS 服务在后台稳定运行")
         )
         assertEquals("Ali DNS", translateSettingsAndAppearanceExact("阿里 DNS"))
+        assertEquals(
+            "Port the DNS service listens on locally; defaults to 1053",
+            translateSettingsAndAppearanceExact("DNS 服务在本机监听的端口，默认 1053")
+        )
+        assertEquals(
+            "Range 1024-65535, default 1053",
+            translateSettingsAndAppearanceExact("范围 1024-65535，默认 1053")
+        )
         assertEquals(
             "Alibaba public DNS with low latency in mainland China",
             translateSettingsAndAppearanceExact("阿里巴巴公共 DNS，国内解析低时延")

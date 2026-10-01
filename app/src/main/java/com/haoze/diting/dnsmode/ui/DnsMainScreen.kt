@@ -63,6 +63,7 @@ fun DnsMainScreen(
     var pageSwitchJob by remember { mutableStateOf<Job?>(null) }
     var showSwitchConfirmDialog by remember { mutableStateOf(false) }
     var showResetStatsConfirmDialog by remember { mutableStateOf(false) }
+    var showPortEditDialog by remember { mutableStateOf(false) }
     var showAddUpstreamDialog by remember { mutableStateOf(false) }
     var editingUpstream by remember { mutableStateOf<DnsUpstreamServer?>(null) }
     var pendingDeleteUpstreamId by remember { mutableStateOf<String?>(null) }
@@ -176,6 +177,7 @@ fun DnsMainScreen(
                         onRequestIgnoreBatteryOptimization = onRequestIgnoreBatteryOptimization,
                         onUpdateConfig = viewModel::updateConfig,
                         onResetStats = { showResetStatsConfirmDialog = true },
+                        onEditListenPort = { showPortEditDialog = true },
                         onSwitchToNormalMode = { showSwitchConfirmDialog = true },
                         onSelectMode = onSelectMode,
                         contentBottomPadding = 108.dp
@@ -225,6 +227,17 @@ fun DnsMainScreen(
             onConfirm = {
                 showResetStatsConfirmDialog = false
                 viewModel.resetStats()
+            }
+        )
+    }
+
+    if (showPortEditDialog) {
+        DnsPortEditDialog(
+            initialPort = uiState.config.localListenPort,
+            onDismiss = { showPortEditDialog = false },
+            onSave = { port ->
+                viewModel.updateConfig(uiState.config.copy(localListenPort = port))
+                showPortEditDialog = false
             }
         )
     }

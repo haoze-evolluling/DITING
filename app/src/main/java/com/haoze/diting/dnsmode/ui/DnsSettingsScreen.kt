@@ -31,6 +31,7 @@ fun DnsSettingsScreen(
     onRequestIgnoreBatteryOptimization: () -> Unit,
     onUpdateConfig: (DnsModeConfig) -> Unit,
     onResetStats: () -> Unit,
+    onEditListenPort: () -> Unit,
     onSwitchToNormalMode: () -> Unit,
     onSelectMode: () -> Unit,
     modifier: Modifier = Modifier,
@@ -67,7 +68,9 @@ fun DnsSettingsScreen(
                     {
                         SettingsItem(
                             title = localizedText("本地监听端口"),
-                            leadingIcon = Icons.Outlined.Lan
+                            subtitle = localizedText("DNS 服务在本机监听的端口，默认 1053"),
+                            leadingIcon = Icons.Outlined.Lan,
+                            onClick = onEditListenPort
                         ) {
                             Text(
                                 text = "${config.localListenPort}",
