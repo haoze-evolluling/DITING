@@ -40,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -117,12 +116,13 @@ fun FloatingNavigationBar(
     isGlassEnabled: Boolean = true,
 ) {
     val isInDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val isGlassActive = isGlassEnabled && !isInDark
     val pillShape = remember { CircleShape }
-    val accentColor = MaterialTheme.colorScheme.primary
+    val accentColor = MaterialTheme.colorScheme.onPrimaryContainer
     val tabContentColor = MaterialTheme.colorScheme.onSurfaceVariant
     val surfaceContainer = MaterialTheme.colorScheme.surfaceContainer
-    val containerColor = if (isGlassEnabled) {
-        if (isInDark) surfaceContainer.copy(alpha = 0.52f) else surfaceContainer.copy(alpha = 0.58f)
+    val containerColor = if (isGlassActive) {
+        surfaceContainer.copy(alpha = 0.58f)
     } else {
         surfaceContainer
     }
@@ -215,7 +215,7 @@ fun FloatingNavigationBar(
     }
 
     // One tilt sensor feeds both highlights; it lives only while glass mode renders this bar.
-    val deviceTilt = rememberDeviceTilt(enabled = isGlassEnabled)
+    val deviceTilt = rememberDeviceTilt(enabled = isGlassActive)
     val baseHighlight = rememberGravityRotatedHighlight(IosIndicatorSpecular, extraDegrees = -45f, tiltState = deviceTilt)
     val pillHighlight = rememberGravityRotatedHighlight(IosIndicatorSpecular, extraDegrees = 90f, tiltState = deviceTilt)
 
@@ -231,14 +231,14 @@ fun FloatingNavigationBar(
                 .fillMaxSize()
                 .graphicsLayer { translationX = panelOffset }
                 .then(
-                    if (isGlassEnabled) {
+                    if (isGlassActive) {
                         Modifier
                             .dropShadow(
                                 shape = pillShape,
                                 shadow = Shadow(
                                     radius = 10.dp,
                                     color = Color.Black,
-                                    alpha = if (isInDark) 0.25f else 0.12f,
+                                    alpha = 0.12f,
                                 ),
                             )
                             .clip(pillShape)
@@ -251,15 +251,16 @@ fun FloatingNavigationBar(
                             .then(interactiveHighlight.modifier)
                     } else {
                         Modifier
-                            .shadow(
-                                elevation = 6.dp,
+                            .dropShadow(
                                 shape = pillShape,
-                                ambientColor = Color.Black.copy(alpha = 0.12f),
-                                spotColor = Color.Black.copy(alpha = 0.18f)
+                                shadow = Shadow(
+                                    radius = 10.dp,
+                                    color = Color.Black,
+                                    alpha = if (isInDark) 0.25f else 0.12f,
+                                ),
                             )
                             .clip(pillShape)
                             .background(containerColor, pillShape)
-                            .then(interactiveHighlight.modifier)
                     }
                 )
         )
@@ -361,7 +362,7 @@ fun FloatingNavigationBar(
             // 2a. Sliding pill indicator
             if (tabWidthPx > 0f) {
                 val tabWidthDp = with(density) { tabWidthPx.toDp() }
-                if (isGlassEnabled) {
+                if (isGlassActive) {
                     Box(
                         Modifier
                             .padding(start = 4.dp)
@@ -379,9 +380,7 @@ fun FloatingNavigationBar(
                             .width(tabWidthDp)
                             .clip(pillShape)
                             .background(
-                                MaterialTheme.colorScheme.primaryContainer.copy(
-                                    alpha = if (!isInDark) 0.68f else 0.75f
-                                ),
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.68f),
                                 pillShape
                             )
                             .drawSpecularHighlight(
@@ -405,7 +404,7 @@ fun FloatingNavigationBar(
                                 .background(
                                     Brush.verticalGradient(
                                         colors = listOf(
-                                            Color.White.copy(alpha = if (isInDark) 0.22f else 0.35f),
+                                            Color.White.copy(alpha = 0.35f),
                                             Color.Transparent
                                         ),
                                         startY = 0f,
@@ -450,7 +449,7 @@ fun FloatingNavigationBar(
                         pressProgress = { dampedDragAnimation.pressProgress },
                         icon = destination.icon,
                         label = localizedText(destination.tabLabel),
-                        accentColor = if (isGlassEnabled) MaterialTheme.colorScheme.onPrimaryContainer else accentColor,
+                        accentColor = accentColor,
                         contentColor = tabContentColor,
                         onSelect = {
                             if (selectedPage != index) {
