@@ -27,8 +27,8 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
@@ -39,7 +39,8 @@ import javax.net.ssl.SSLSocketFactory
 class DnsServerEngine(
     @Volatile private var config: DnsModeConfig,
     @Volatile private var upstream: DnsUpstreamServer,
-    private val onQueryProcessed: ((cacheHit: Boolean, blocked: Boolean, latencyMs: Long) -> Unit)? = null
+    private val onQueryProcessed: ((cacheHit: Boolean, blocked: Boolean, latencyMs: Long) -> Unit)? = null,
+    private val queryFilter: DnsQueryFilter? = null
 ) {
     private var scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var udpChannel: java.nio.channels.DatagramChannel? = null
@@ -50,7 +51,13 @@ class DnsServerEngine(
 
     val isEngineRunning: Boolean get() = isRunning
 
-    private val cache = ConcurrentHashMap<String, CacheEntry>()
+    // Access-ordered LRU: hits reinsert the entry, evicting the least recently
+    // used one once MAX_CACHE_ENTRIES is reached. All access must hold the lock.
+    private val cache = object : LinkedHashMap<String, CacheEntry>(CACHE_INITIAL_CAPACITY, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, CacheEntry>): Boolean {
+            return size > MAX_CACHE_ENTRIES
+        }
+    }
 
     private val dohClient = OkHttpClient.Builder()
         .connectTimeout(5, TimeUnit.SECONDS)
@@ -59,7 +66,8 @@ class DnsServerEngine(
 
     private data class CacheEntry(
         val response: ByteArray,
-        val expireAtEpochMs: Long
+        val insertedAtEpochMs: Long,
+        val ttlSeconds: Long
     )
 
     @Synchronized
@@ -102,7 +110,7 @@ class DnsServerEngine(
         runCatching { tcpServerSocket?.close() }
         tcpServerSocket = null
         scope.cancel()
-        cache.clear()
+        synchronized(cache) { cache.clear() }
         safeLogI(TAG, "DNS server stopped")
     }
 
@@ -119,7 +127,7 @@ class DnsServerEngine(
     }
 
     fun clearCache() {
-        cache.clear()
+        synchronized(cache) { cache.clear() }
     }
 
     private fun startUdpListener(channel: java.nio.channels.DatagramChannel) {
@@ -134,14 +142,18 @@ class DnsServerEngine(
                     val queryBytes = ByteArray(buffer.remaining())
                     buffer.get(queryBytes)
 
-                    safeLogI(TAG, "Received UDP query (${queryBytes.size} bytes) from $clientAddress")
+                    if (config.logQueries) {
+                        safeLogI(TAG, "Received UDP query (${queryBytes.size} bytes) from $clientAddress")
+                    }
 
                     launch {
                         val responseBytes = processQuery(queryBytes)
                         if (responseBytes != null && channel.isOpen) {
                             runCatching {
                                 channel.send(java.nio.ByteBuffer.wrap(responseBytes), clientAddress)
-                                safeLogI(TAG, "Sent UDP reply (${responseBytes.size} bytes) to $clientAddress")
+                                if (config.logQueries) {
+                                    safeLogI(TAG, "Sent UDP reply (${responseBytes.size} bytes) to $clientAddress")
+                                }
                             }.onFailure { safeLogW(TAG, "Failed to send UDP reply to $clientAddress", it) }
                         }
                     }
@@ -209,24 +221,47 @@ class DnsServerEngine(
             ?: return DnsMessageUtils.buildBlockedResponse(query, BlockResponseMode.REFUSED)
 
         val currentConfig = config
-        val cacheKey = "${question.name}|${question.type}"
+
+        // Malicious-domain filtering shares the normal mode's rule base; blocked
+        // answers are policy decisions, so they are never cached.
+        val filter = queryFilter
+        if (currentConfig.adBlockEnabled && filter != null && filter.isBlocked(question.name)) {
+            val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
+            if (currentConfig.logQueries) {
+                safeLogI(TAG, "Blocked: ${question.name} (type ${question.type})")
+            }
+            onQueryProcessed?.invoke(false, true, elapsed)
+            return DnsMessageUtils.buildBlockedResponse(query, filter.blockResponseMode)
+        }
+
+        // QCLASS and the DNSSEC OK bit are part of the answer's identity; a
+        // cached entry for one combination must not be served to another.
+        val cacheKey = "${question.name}|${question.type}|${question.qclass}|${question.dnssecOk}"
 
         if (currentConfig.cacheEnabled) {
-            val cached = cache[cacheKey]
+            val cached: CacheEntry? = synchronized(cache) { cache[cacheKey] }
             if (cached != null) {
-                if (System.currentTimeMillis() < cached.expireAtEpochMs) {
-                    val patched = DnsMessageUtils.withTransactionId(cached.response, query)
-                    val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
-                    safeLogI(TAG, "Cache HIT: ${question.name} (type ${question.type}) in ${elapsed}ms")
-                    onQueryProcessed?.invoke(true, false, elapsed)
-                    return patched
-                } else {
-                    cache.remove(cacheKey)
+                val now = System.currentTimeMillis()
+                val cachedSeconds = ((now - cached.insertedAtEpochMs) / 1000L).toInt()
+                if (cachedSeconds < cached.ttlSeconds) {
+                    val patched = DnsMessageUtils.patchResponseTtl(cached.response, cachedSeconds)
+                    if (patched != null) {
+                        val finalResponse = DnsMessageUtils.withTransactionId(patched, query)
+                        val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
+                        if (currentConfig.logQueries) {
+                            safeLogI(TAG, "Cache HIT: ${question.name} (type ${question.type}) in ${elapsed}ms")
+                        }
+                        onQueryProcessed?.invoke(true, false, elapsed)
+                        return finalResponse
+                    }
                 }
+                synchronized(cache) { cache.remove(cacheKey) }
             }
         }
 
-        safeLogI(TAG, "Resolving: ${question.name} (type ${question.type}) via ${upstream.name} (${upstream.address})")
+        if (currentConfig.logQueries) {
+            safeLogI(TAG, "Resolving: ${question.name} (type ${question.type}) via ${upstream.name} (${upstream.address})")
+        }
         return try {
             val upstreamResponse = queryUpstream(query)
             val finalResponse = DnsMessageUtils.withTransactionId(upstreamResponse, query)
@@ -239,18 +274,23 @@ class DnsServerEngine(
                 } else {
                     currentConfig.cacheTtlSeconds.toLong()
                 }
-                val expireAt = System.currentTimeMillis() + effectiveTtl * 1000L
-                cache[cacheKey] = CacheEntry(finalResponse, expireAt)
+                synchronized(cache) {
+                    cache[cacheKey] = CacheEntry(finalResponse, System.currentTimeMillis(), effectiveTtl)
+                }
             }
 
-            safeLogI(TAG, "Resolved: ${question.name} via ${upstream.name} in ${elapsed}ms")
+            if (currentConfig.logQueries) {
+                safeLogI(TAG, "Resolved: ${question.name} via ${upstream.name} in ${elapsed}ms")
+            }
             onQueryProcessed?.invoke(false, false, elapsed)
             finalResponse
         } catch (e: Exception) {
             safeLogW(TAG, "Upstream DNS query failed for ${question.name}: ${e.message}")
             val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
             onQueryProcessed?.invoke(false, false, elapsed)
-            DnsMessageUtils.buildBlockedResponse(query, BlockResponseMode.REFUSED)
+            // SERVFAIL tells the client the failure is transient; REFUSED would
+            // be read as a definitive policy answer and suppress retries.
+            DnsMessageUtils.buildServfailResponse(query)
         }
     }
 
@@ -276,14 +316,23 @@ class DnsServerEngine(
     }
 
     private fun queryTcpOrDot(address: String, port: Int, isTls: Boolean, query: ByteArray): ByteArray {
+        // Created unconnected so the connect below has an explicit timeout; a
+        // bare createSocket(address, port) blocks until the system default
+        // connect timeout elapses.
         val socket = if (isTls) {
-            SSLSocketFactory.getDefault().createSocket(address, port) as SSLSocket
-        } else {
-            Socket().apply {
-                connect(InetSocketAddress(address, port), 5000)
+            (SSLSocketFactory.getDefault().createSocket() as SSLSocket).apply {
+                val params = sslParameters
+                params.endpointIdentificationAlgorithm = "HTTPS"
+                params.serverNames = listOf(SNIHostName(address))
+                sslParameters = params
             }
+        } else {
+            Socket()
         }
         socket.use { s ->
+            s.tcpNoDelay = true
+            s.connect(InetSocketAddress(address, port), CONNECT_TIMEOUT_MS)
+            if (isTls) (s as SSLSocket).startHandshake()
             s.soTimeout = 5000
             val output = BufferedOutputStream(s.outputStream)
             output.write((query.size ushr 8) and 0xFF)
@@ -328,6 +377,9 @@ class DnsServerEngine(
 
     companion object {
         private const val TAG = "DnsServerEngine"
+        private const val CONNECT_TIMEOUT_MS = 5000
+        private const val CACHE_INITIAL_CAPACITY = 256
+        private const val MAX_CACHE_ENTRIES = 4096
 
         private fun safeLogI(tag: String, msg: String) {
             runCatching { Log.i(tag, msg) }

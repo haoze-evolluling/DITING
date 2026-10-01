@@ -101,7 +101,7 @@ data class DnsModeConfig(
     val cacheEnabled: Boolean = true,
     val cacheTtlSeconds: Int = 300,
     val adBlockEnabled: Boolean = false,
-    val logQueries: Boolean = true
+    val logQueries: Boolean = false
 )
 
 data class DnsModeStats(

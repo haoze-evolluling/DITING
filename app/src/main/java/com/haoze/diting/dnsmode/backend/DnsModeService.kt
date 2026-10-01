@@ -21,6 +21,8 @@ import com.haoze.diting.dnsmode.DnsMainActivity
 class DnsModeService : Service() {
 
     private var dnsServerEngine: DnsServerEngine? = null
+    private var queryFilter: DnsQueryFilter? = null
+    private var filterLoaded = false
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
 
@@ -43,6 +45,7 @@ class DnsModeService : Service() {
             ACTION_REFRESH -> {
                 refreshNotification()
                 refreshDnsEngine()
+                ensureFilterLoaded()
                 return START_STICKY
             }
             ACTION_START -> {
@@ -81,6 +84,9 @@ class DnsModeService : Service() {
         acquireLocks()
         val config = DnsModeManager.config.value
         val upstream = DnsModeManager.getActiveUpstream()
+        if (queryFilter == null) {
+            queryFilter = DnsQueryFilter(this)
+        }
 
         dnsServerEngine?.stop()
         val engine = DnsServerEngine(
@@ -88,12 +94,14 @@ class DnsModeService : Service() {
             upstream = upstream,
             onQueryProcessed = { cacheHit, blocked, latencyMs ->
                 DnsModeManager.recordQuery(cacheHit = cacheHit, blocked = blocked, latencyMs = latencyMs)
-            }
+            },
+            queryFilter = queryFilter
         )
 
         if (engine.start()) {
             dnsServerEngine = engine
             DnsModeManager.onServiceStarted()
+            ensureFilterLoaded()
             Log.i(TAG, "DnsModeService successfully started DNS server on port ${config.localListenPort}")
         } else {
             Log.e(TAG, "DnsModeService failed to start DNS server on port ${config.localListenPort}")
@@ -106,6 +114,18 @@ class DnsModeService : Service() {
         val config = DnsModeManager.config.value
         val upstream = DnsModeManager.getActiveUpstream()
         dnsServerEngine?.updateConfig(config, upstream)
+    }
+
+    /**
+     * Loads the rule base once per service lifetime (lazily, on first start or
+     * first refresh with filtering enabled). Rule edits made afterwards in
+     * normal mode apply on the next service start.
+     */
+    private fun ensureFilterLoaded() {
+        val filter = queryFilter ?: return
+        if (filterLoaded || !DnsModeManager.config.value.adBlockEnabled) return
+        filterLoaded = true
+        filter.reloadAsync()
     }
 
     private fun stopDnsEngine() {

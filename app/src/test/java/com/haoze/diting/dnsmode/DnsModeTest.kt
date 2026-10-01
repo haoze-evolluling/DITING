@@ -138,7 +138,7 @@ class DnsModeTest {
         assertTrue(config.cacheEnabled)
         assertEquals(300, config.cacheTtlSeconds)
         assertFalse(config.adBlockEnabled)
-        assertTrue(config.logQueries)
+        assertFalse(config.logQueries)
     }
 
     @Test
@@ -149,6 +149,30 @@ class DnsModeTest {
         val started = engine.start()
         assertTrue(started)
         engine.stop()
+    }
+
+    @Test
+    fun `DnsServerEngine answers SERVFAIL when upstream is unreachable`() {
+        val config = DnsModeConfig(localListenPort = 15355, cacheEnabled = false)
+        // Nothing listens on port 1; the query must fail into a SERVFAIL
+        // response (rcode 2), not a policy REFUSED (rcode 5).
+        val upstream = DnsUpstreamServer(
+            id = "unreachable",
+            name = "Unreachable",
+            address = "127.0.0.1",
+            port = 1,
+            protocol = DnsModeProtocol.UDP
+        )
+        val engine = com.haoze.diting.dnsmode.backend.DnsServerEngine(config, upstream)
+        assertTrue(engine.start())
+        try {
+            val query = com.haoze.diting.vpn.DnsMessageUtils.buildQuery("example.com", 1)
+            val response = engine.processQuery(query)
+            assertNotNull(response)
+            assertEquals(2, com.haoze.diting.vpn.DnsMessageUtils.responseCode(response!!))
+        } finally {
+            engine.stop()
+        }
     }
 
     @Test

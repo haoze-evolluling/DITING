@@ -13,6 +13,7 @@ object DnsModePreferences {
     private const val KEY_CACHE_TTL = "cache_ttl_seconds"
     private const val KEY_AD_BLOCK_ENABLED = "ad_block_enabled"
     private const val KEY_LOG_QUERIES = "log_queries"
+    private const val KEY_LOG_QUERIES_MIGRATED = "log_queries_default_off"
     private const val KEY_SERVICE_ACTIVE = "service_active"
 
     private fun getPrefs(context: Context): SharedPreferences {
@@ -23,13 +24,22 @@ object DnsModePreferences {
         val prefs = getPrefs(context)
         val rawPort = prefs.getInt(KEY_LOCAL_PORT, 1053)
         val port = if (rawPort == 5353 || rawPort == 5354) 1053 else rawPort
+        // logQueries was never user-editable and used to default to true, so any
+        // stored true came from the old default rather than a choice: flip it to
+        // the new privacy-preserving default once.
+        if (!prefs.getBoolean(KEY_LOG_QUERIES_MIGRATED, false)) {
+            prefs.edit()
+                .putBoolean(KEY_LOG_QUERIES, false)
+                .putBoolean(KEY_LOG_QUERIES_MIGRATED, true)
+                .apply()
+        }
         return DnsModeConfig(
             selectedUpstreamId = prefs.getString(KEY_SELECTED_UPSTREAM, "alidns") ?: "alidns",
             localListenPort = port,
             cacheEnabled = prefs.getBoolean(KEY_CACHE_ENABLED, true),
             cacheTtlSeconds = prefs.getInt(KEY_CACHE_TTL, 300),
             adBlockEnabled = prefs.getBoolean(KEY_AD_BLOCK_ENABLED, false),
-            logQueries = prefs.getBoolean(KEY_LOG_QUERIES, true)
+            logQueries = prefs.getBoolean(KEY_LOG_QUERIES, false)
         )
     }
 

@@ -147,6 +147,15 @@ object DnsMessageUtils {
         }
     }
 
+    /**
+     * Builds a minimal SERVFAIL (rcode 2) response, signaling a transient
+     * resolver failure so clients may retry — unlike REFUSED, which clients
+     * treat as a definitive policy answer.
+     */
+    fun buildServfailResponse(query: ByteArray): ByteArray {
+        return buildErrorResponse(query, RCODE_SERVFAIL)
+    }
+
     private fun buildZeroAddressResponse(query: ByteArray): ByteArray {
         val question = extractQuestion(query)
             ?: return buildErrorResponse(query, RCODE_SERVFAIL)
