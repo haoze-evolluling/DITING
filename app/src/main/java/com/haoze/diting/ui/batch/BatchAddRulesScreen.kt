@@ -1,6 +1,7 @@
 package com.haoze.diting.ui.batch
 
 import android.widget.Toast
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,14 +46,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.haoze.diting.data.RuleDataset
@@ -93,10 +102,11 @@ fun BatchAddRulesScreen(
                 onClick = {
                     val clipText = clipboardManager.getText()?.text
                     if (!clipText.isNullOrEmpty()) {
+                        val normalized = clipText.replace("\r\n", "\n").replace('\r', '\n')
                         inputText = if (inputText.isEmpty()) {
-                            clipText
+                            normalized
                         } else {
-                            "$inputText\n$clipText"
+                            "$inputText\n$normalized"
                         }
                         context.showToast(localizedText(context, "已粘贴"), Toast.LENGTH_SHORT)
                     } else {
@@ -126,6 +136,7 @@ fun BatchAddRulesScreen(
         ) {
             // IDE Editor Container
             val scrollState = rememberScrollState()
+            val density = LocalDensity.current
             val textStyle = TextStyle(
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
@@ -137,17 +148,24 @@ fun BatchAddRulesScreen(
                 fontFamily = FontFamily.Monospace,
                 fontSize = 13.sp,
                 lineHeight = 22.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                textAlign = TextAlign.End,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
             )
 
-            val lineNumbersText = remember(lineCount) {
-                (1..lineCount).joinToString("\n")
+            var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+            val textMeasurer = rememberTextMeasurer()
+            val singleDigitLayout = remember(gutterStyle, textMeasurer) {
+                textMeasurer.measure("0", gutterStyle)
             }
-            val gutterWidth = remember(lineCount) {
-                val digits = lineCount.toString().length
-                maxOf(36.dp, (digits * 9 + 20).dp)
+            val digitWidth = singleDigitLayout.size.width
+            val digitBaseline = singleDigitLayout.firstBaseline
+
+            val digits = remember(lineCount) {
+                maxOf(2, lineCount.toString().length)
+            }
+            val gutterWidth = remember(digits, digitWidth, density) {
+                val charWidthDp = with(density) { digitWidth.toDp() }
+                maxOf(36.dp, charWidthDp * digits + 18.dp)
             }
 
             Surface(
@@ -159,68 +177,122 @@ fun BatchAddRulesScreen(
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
                 color = MaterialTheme.colorScheme.surface
             ) {
-                Row(
+                CodeEditorLayout(
                     modifier = Modifier
                         .fillMaxSize()
-                        .height(IntrinsicSize.Min)
-                        .verticalScroll(scrollState)
-                ) {
-                    // Line number gutter
-                    Box(
-                        modifier = Modifier
-                            .width(gutterWidth)
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
-                            .padding(vertical = 12.dp, horizontal = 6.dp)
-                    ) {
-                        Text(
-                            text = lineNumbersText,
-                            style = gutterStyle,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                        .verticalScroll(scrollState),
+                    gutterWidth = gutterWidth,
+                    gutter = {
+                        val gutterBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+                        val topPaddingPx = with(density) { 12.dp.toPx() }
+                        val rightPaddingPx = with(density) { 8.dp.toPx() }
 
-                    // Divider between line numbers and code
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.outlineVariant)
-                    )
+                        Canvas(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    focusRequester.requestFocus()
+                                }
+                        ) {
+                            drawRect(color = gutterBg)
 
-                    // Text Editor Area
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                focusRequester.requestFocus()
-                            }
-                            .padding(vertical = 12.dp, horizontal = 10.dp)
-                    ) {
-                        if (inputText.isEmpty()) {
-                            Text(
-                                text = getPlaceholderForTarget(target, dataset),
-                                style = textStyle.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            val layout = textLayoutResult
+                            if (layout == null || inputText.isEmpty()) {
+                                val y = topPaddingPx
+                                val x = size.width - rightPaddingPx - digitWidth
+                                drawText(
+                                    textMeasurer = textMeasurer,
+                                    text = "1",
+                                    topLeft = Offset(x, y),
+                                    style = gutterStyle
                                 )
-                            )
-                        }
+                                return@Canvas
+                            }
 
-                        BasicTextField(
-                            value = inputText,
-                            onValueChange = { inputText = it },
-                            textStyle = textStyle,
-                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            val scrollY = scrollState.value
+                            val viewportHeight = scrollState.viewportSize
+                            val visibleTop = scrollY.toFloat() - 100f
+                            val visibleBottom = (scrollY + viewportHeight).toFloat() + 100f
+                            val shouldCull = viewportHeight > 0
+
+                            var currentLogicalLine = 1
+                            val totalVisualLines = layout.lineCount
+
+                            for (lineIndex in 0 until totalVisualLines) {
+                                val lineStartOffset = layout.getLineStart(lineIndex)
+                                val isNewLogicalLine = lineIndex == 0 ||
+                                        (lineStartOffset > 0 && inputText[lineStartOffset - 1] == '\n')
+
+                                if (isNewLogicalLine) {
+                                    val ruleNum = currentLogicalLine++
+                                    val lineTop = topPaddingPx + layout.getLineTop(lineIndex)
+                                    val lineBottom = topPaddingPx + layout.getLineBottom(lineIndex)
+
+                                    if (shouldCull) {
+                                        if (lineBottom < visibleTop) continue
+                                        if (lineTop > visibleBottom) break
+                                    }
+
+                                    val lineBaseline = topPaddingPx + layout.getLineBaseline(lineIndex)
+                                    val numStr = ruleNum.toString()
+                                    val numWidth = numStr.length * digitWidth
+                                    val x = size.width - rightPaddingPx - numWidth
+                                    val y = lineBaseline - digitBaseline
+
+                                    drawText(
+                                        textMeasurer = textMeasurer,
+                                        text = numStr,
+                                        topLeft = Offset(x, y),
+                                        style = gutterStyle
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    divider = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        )
+                    },
+                    editor = {
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .focusRequester(focusRequester)
-                        )
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    focusRequester.requestFocus()
+                                }
+                                .padding(vertical = 12.dp, horizontal = 10.dp)
+                        ) {
+                            if (inputText.isEmpty()) {
+                                Text(
+                                    text = getPlaceholderForTarget(target, dataset),
+                                    style = textStyle.copy(
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                    )
+                                )
+                            }
+
+                            BasicTextField(
+                                value = inputText,
+                                onValueChange = { inputText = it },
+                                onTextLayout = { textLayoutResult = it },
+                                textStyle = textStyle,
+                                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(focusRequester)
+                            )
+                        }
                     }
-                }
+                )
             }
 
             // Bottom control bar
@@ -315,3 +387,51 @@ private fun getPlaceholderForTarget(target: BatchRuleTarget, dataset: RuleDatase
         "# 支持每行一条覆写规则，示例：\nexample.com 1.2.3.4\n192.168.1.1 router.local\napi.server.com -> 10.0.0.1\nalias.com -> cname.target.com\n||test.com^\$dnsrewrite=1.1.1.1\n\n# 支持以 # 或 ! 开头的注释行"
     }
 }
+
+@Composable
+private fun CodeEditorLayout(
+    modifier: Modifier = Modifier,
+    gutterWidth: Dp,
+    gutter: @Composable () -> Unit,
+    divider: @Composable () -> Unit,
+    editor: @Composable () -> Unit
+) {
+    Layout(
+        content = {
+            gutter()
+            divider()
+            editor()
+        },
+        modifier = modifier
+    ) { measurables, constraints ->
+        val gutterWidthPx = gutterWidth.roundToPx()
+        val dividerWidthPx = 1.dp.roundToPx()
+        val editorWidthPx = (constraints.maxWidth - gutterWidthPx - dividerWidthPx).coerceAtLeast(0)
+
+        val editorPlaceable = measurables[2].measure(
+            constraints.copy(
+                minWidth = editorWidthPx,
+                maxWidth = editorWidthPx,
+                minHeight = constraints.minHeight,
+                maxHeight = Constraints.Infinity
+            )
+        )
+
+        val totalHeight = maxOf(constraints.minHeight, editorPlaceable.height)
+
+        val gutterPlaceable = measurables[0].measure(
+            Constraints.fixed(gutterWidthPx, totalHeight)
+        )
+
+        val dividerPlaceable = measurables[1].measure(
+            Constraints.fixed(dividerWidthPx, totalHeight)
+        )
+
+        layout(constraints.maxWidth, totalHeight) {
+            gutterPlaceable.placeRelative(0, 0)
+            dividerPlaceable.placeRelative(gutterWidthPx, 0)
+            editorPlaceable.placeRelative(gutterWidthPx + dividerWidthPx, 0)
+        }
+    }
+}
+
