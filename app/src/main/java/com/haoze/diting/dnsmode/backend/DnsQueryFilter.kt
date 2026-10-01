@@ -82,4 +82,19 @@ class DnsQueryFilter(context: Context) {
         if (!loaded.get()) return false
         return domainPolicy.evaluate(domain, packageName = null) is DomainDecision.Block
     }
+
+    val policy: DomainPolicy get() = domainPolicy
+
+    fun buildRuleSnapshotJson(): String = domainPolicy.buildRuleSnapshotJson(null)
+
+    fun buildRewriteRulesJson(): String {
+        val merged = org.json.JSONObject()
+        rewriteRuleManager.ipRewrites().forEach { (domain, targets) ->
+            merged.put(domain, org.json.JSONArray(targets))
+        }
+        rewriteRuleManager.cnameRedirects().forEach { (domain, target) ->
+            if (!merged.has(domain)) merged.put(domain, target)
+        }
+        return merged.toString()
+    }
 }

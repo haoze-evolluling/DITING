@@ -16,10 +16,22 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 
 class DnsModeTest {
+
+    companion object {
+        private val isNativeAvailable: Boolean by lazy {
+            try {
+                tunnel.Engine()
+                true
+            } catch (_: Throwable) {
+                false
+            }
+        }
+    }
 
     @Before
     fun setUp() {
@@ -232,6 +244,7 @@ class DnsModeTest {
 
     @Test
     fun `DnsServerEngine starts and stops cleanly`() {
+        assumeTrue("Skipping native Go engine test on host JVM without gojni", isNativeAvailable)
         val config = DnsModeConfig(localListenPort = 15354)
         val upstream = DnsUpstreamServer.PRESETS.first()
         val engine = com.haoze.diting.dnsmode.backend.DnsServerEngine(config, upstream)
@@ -242,6 +255,7 @@ class DnsModeTest {
 
     @Test
     fun `DnsServerEngine answers SERVFAIL when upstream is unreachable`() {
+        assumeTrue("Skipping native Go engine test on host JVM without gojni", isNativeAvailable)
         val config = DnsModeConfig(localListenPort = 15355, cacheEnabled = false)
         // Nothing listens on port 1; the query must fail into a SERVFAIL
         // response (rcode 2), not a policy REFUSED (rcode 5).

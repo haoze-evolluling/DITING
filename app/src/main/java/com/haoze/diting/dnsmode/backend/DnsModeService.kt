@@ -20,8 +20,15 @@ import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.ui.localizedText
 import com.haoze.diting.vpn.DitingTileService
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+
 class DnsModeService : Service() {
 
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var dnsServerEngine: DnsServerEngine? = null
     private var queryFilter: DnsQueryFilter? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -79,6 +86,7 @@ class DnsModeService : Service() {
     override fun onDestroy() {
         stopDnsEngine()
         releaseLocks()
+        serviceScope.cancel()
         DnsModePreferences.setServiceActive(this, false)
         DnsModeManager.onServiceStopped()
         DitingTileService.requestTileUpdate(this)
@@ -129,6 +137,8 @@ class DnsModeService : Service() {
             Log.e(TAG, "DNS engine stopped during config refresh (port change restart likely failed)")
             DnsModeManager.onServiceError("DNS 服务更新失败，监听端口可能被占用")
             stopSelf()
+        } else {
+            engine.syncRules()
         }
     }
 
@@ -141,7 +151,10 @@ class DnsModeService : Service() {
      */
     private fun ensureFilterLoaded() {
         val filter = queryFilter ?: return
-        filter.reloadAsync()
+        serviceScope.launch {
+            filter.reloadSync()
+            dnsServerEngine?.syncRules()
+        }
     }
 
     private fun stopDnsEngine() {
