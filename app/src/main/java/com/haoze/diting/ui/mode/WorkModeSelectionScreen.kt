@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,10 +14,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,18 +24,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.haoze.diting.ui.components.AppConfirmDialog
-import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.localizedText
 
-/**
- * Modernized Work Mode Selection & Switching screen.
- * Handles both first-launch onboarding and settings-based mode switching flows.
- */
 @Composable
 fun WorkModeSelectionScreen(
     isFirstLaunch: Boolean,
@@ -52,7 +41,8 @@ fun WorkModeSelectionScreen(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent
         ) { innerPadding ->
-            FirstLaunchWorkModeContent(
+            WorkModeSelectionContent(
+                isFirstLaunch = true,
                 currentMode = currentMode,
                 onModeSelected = onModeSelected,
                 modifier = Modifier
@@ -65,7 +55,8 @@ fun WorkModeSelectionScreen(
             title = "模式切换",
             onBack = onBack
         ) { innerPadding ->
-            SettingsWorkModeContent(
+            WorkModeSelectionContent(
+                isFirstLaunch = false,
                 currentMode = currentMode,
                 onModeSelected = onModeSelected,
                 modifier = Modifier.padding(innerPadding)
@@ -74,11 +65,9 @@ fun WorkModeSelectionScreen(
     }
 }
 
-/**
- * Settings context content: Displays the active profile hero, mode options, and capability comparison.
- */
 @Composable
-private fun SettingsWorkModeContent(
+private fun WorkModeSelectionContent(
+    isFirstLaunch: Boolean,
     currentMode: AppWorkMode,
     onModeSelected: (AppWorkMode) -> Unit,
     modifier: Modifier = Modifier
@@ -106,117 +95,49 @@ private fun SettingsWorkModeContent(
         modifier = modifier
             .fillMaxSize()
             .navigationBarsPadding(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = 600.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Active Mode Hero Card
-            WorkModeCurrentStatusHero(currentMode = currentMode)
-
-            Text(
-                text = localizedText("可选工作模式"),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = 4.dp, start = 2.dp)
-            )
-
-            // Mode Option Cards
-            AppWorkMode.entries.forEach { mode ->
-                val isCurrent = mode == currentMode
-                WorkModeCard(
-                    mode = mode,
-                    isSelected = isCurrent,
-                    onClick = {
-                        if (isCurrent) {
-                            Toast.makeText(
-                                context,
-                                alreadyInModeText,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        } else {
-                            pendingSwitchMode = mode
-                        }
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Technical Capability Comparison Section
-            WorkModeComparisonSection()
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-/**
- * First-launch onboarding content: Introduces the two modes and allows clear initial selection.
- */
-@Composable
-private fun FirstLaunchWorkModeContent(
-    currentMode: AppWorkMode,
-    onModeSelected: (AppWorkMode) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var selectedCandidate by remember { mutableStateOf(currentMode) }
-
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .navigationBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 580.dp)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 24.dp),
+                .padding(horizontal = 24.dp, vertical = if (isFirstLaunch) 32.dp else 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Center
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(18.dp)
+                modifier = Modifier.widthIn(max = 560.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                WorkModeOnboardingHero()
+                // Top Logo and Chinese + English Title
+                WorkModeHeader()
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
-                AppWorkMode.entries.forEach { mode ->
-                    WorkModeCard(
-                        mode = mode,
-                        isSelected = mode == selectedCandidate,
-                        onClick = { selectedCandidate = mode }
-                    )
+                // Mode Cards List
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    AppWorkMode.entries.forEach { mode ->
+                        val isSelected = !isFirstLaunch && mode == currentMode
+                        WorkModeCard(
+                            mode = mode,
+                            isSelected = isSelected,
+                            onClick = {
+                                if (isFirstLaunch) {
+                                    onModeSelected(mode)
+                                } else if (isSelected) {
+                                    Toast.makeText(context, alreadyInModeText, Toast.LENGTH_SHORT).show()
+                                } else {
+                                    pendingSwitchMode = mode
+                                }
+                            }
+                        )
+                    }
                 }
 
-                WorkModeComparisonSection()
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { onModeSelected(selectedCandidate) },
-                shape = SettingsCornerShape,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text(
-                    text = localizedText("以此模式开启体验"),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
