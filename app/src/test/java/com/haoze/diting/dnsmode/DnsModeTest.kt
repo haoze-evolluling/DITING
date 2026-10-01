@@ -213,5 +213,13 @@ class DnsModeTest {
             "Failed to start DNS service. The listen port may already be in use",
             com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("DNS 服务启动失败，监听端口可能被占用")
         )
+        assertEquals(
+            "DITING · DNS Mode Running",
+            com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("谛听 · DNS 模式运行中")
+        )
+        assertEquals(
+            "Ali DNS",
+            com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact("阿里 DNS")
+        )
     }
 }

@@ -25,8 +25,8 @@ enum class AppWorkMode(
         storageValue = "dns",
         title = "DNS模式",
         summary = "轻量级纯 DNS 代理与解析加速，专注于低功耗防护",
-        badgeText = "施工中",
-        isAvailable = false,
+        badgeText = "轻量",
+        isAvailable = true,
         icon = Icons.Outlined.Dns
     );
 

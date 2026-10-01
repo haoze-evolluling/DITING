@@ -60,6 +60,7 @@ DITING is a local DNS resolution optimization and network traffic filtering tool
 
 - **Default mode (DNS-Only)**: routes only DNS query traffic; regular app data and TCP/UDP transfers are never proxied — lightweight and power-efficient.
 - **Advanced mode (Go userspace network stack)**: when HTTPS inspection, network blocking, or app whitelist access is enabled, the Go tunnel takes over the relevant traffic for precise handling; all other unconfigured apps are forwarded unchanged.
+- **Standalone DNS mode**: selectable from the work mode picker. It serves lightweight DNS resolution on port 1053 (UDP/TCP) for LAN devices whose DNS points at this device (queries from this device itself do not go through it), with UDP/TCP/DoH/DoT upstreams, a local response cache, and optional reuse of the normal mode's block/allow rules to answer matching domains with the configured block response. This mode is fully decoupled from normal mode and never establishes a VPN tunnel.
 - **Privacy guarantee**: all DNS caches, rule libraries, logs, and configuration data are stored entirely on the device — no data uploads, no telemetry.
 
 ***

@@ -17,6 +17,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.haoze.diting.R
 import com.haoze.diting.dnsmode.DnsMainActivity
+import com.haoze.diting.ui.localizedText
 
 class DnsModeService : Service() {
 
@@ -214,18 +215,20 @@ class DnsModeService : Service() {
         )
 
         val activeUpstream = DnsModeManager.getActiveUpstream()
-        val contentText = "当前上游: ${activeUpstream.name} (${activeUpstream.address})"
+        val contentText = localizedText(this, "当前上游") + ": " +
+            localizedText(this, activeUpstream.name) +
+            " (${activeUpstream.address})"
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.dns_svgrepo_com)
-            .setContentTitle("谛听 · DNS 模式运行中")
+            .setContentTitle(localizedText(this, "谛听 · DNS 模式运行中"))
             .setContentText(contentText)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(openPendingIntent)
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "停止",
+                localizedText(this, "停止"),
                 stopPendingIntent
             )
             .build()
@@ -236,10 +239,10 @@ class DnsModeService : Service() {
             val manager = getSystemService(NotificationManager::class.java) ?: return
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "DNS 模式服务",
+                localizedText(this, "DNS 模式服务"),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "显示 DNS 独立代理模式的运行状态"
+                description = localizedText(this@DnsModeService, "显示 DNS 独立代理模式的运行状态")
                 setShowBadge(false)
             }
             manager.createNotificationChannel(channel)

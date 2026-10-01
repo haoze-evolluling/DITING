@@ -3,7 +3,6 @@ package com.haoze.diting.ui
 import com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact
 import com.haoze.diting.ui.mode.AppWorkMode
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -20,9 +19,11 @@ class WorkModeTest {
     @Test
     fun `AppWorkMode availability states are correct`() {
         assertTrue(AppWorkMode.NORMAL.isAvailable)
-        assertFalse(AppWorkMode.DNS.isAvailable)
+        assertTrue(AppWorkMode.DNS.isAvailable)
         assertEquals("普通模式", AppWorkMode.NORMAL.title)
         assertEquals("DNS模式", AppWorkMode.DNS.title)
+        assertEquals("推荐", AppWorkMode.NORMAL.badgeText)
+        assertEquals("轻量", AppWorkMode.DNS.badgeText)
     }
 
     @Test
@@ -32,10 +33,10 @@ class WorkModeTest {
         assertEquals("Mode Switch", translateSettingsAndAppearanceExact("模式切换"))
         assertEquals("Operating Mode", translateSettingsAndAppearanceExact("运行模式"))
         assertEquals("Select Operating Mode", translateSettingsAndAppearanceExact("选择工作模式"))
-        assertEquals("Under Construction", translateSettingsAndAppearanceExact("施工中"))
         assertEquals("Recommended", translateSettingsAndAppearanceExact("推荐"))
-        assertEquals("Switch to Normal Mode", translateSettingsAndAppearanceExact("切换回普通模式"))
-        assertEquals("Re-select Mode", translateSettingsAndAppearanceExact("重新选择模式"))
+        assertEquals("Lightweight", translateSettingsAndAppearanceExact("轻量"))
+        assertEquals("Switch to Normal Mode", translateSettingsAndAppearanceExact("切换为普通模式"))
+        assertEquals("Re-select Work Mode", translateSettingsAndAppearanceExact("重新选择工作模式"))
         assertEquals("DNS Mode Under Construction", translateSettingsAndAppearanceExact("DNS 模式正在施工中"))
     }
 }

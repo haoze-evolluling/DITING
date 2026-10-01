@@ -245,6 +245,17 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "显示 DNS 独立代理模式的运行状态" -> "Show running status of decoupled DNS proxy mode"
     "停止" -> "Stop"
     "当前上游" -> "Active Upstream"
+    "谛听 · DNS 模式运行中" -> "DITING · DNS Mode Running"
+    "轻量" -> "Lightweight"
+    "阿里 DNS" -> "Ali DNS"
+    "腾讯 DNSPod" -> "Tencent DNSPod"
+    "Cloudflare DNS" -> "Cloudflare DNS"
+    "Google Public DNS" -> "Google Public DNS"
+    "Quad9 DNS" -> "Quad9 DNS"
+    "阿里 DNS (DoH)" -> "Ali DNS (DoH)"
+    "Cloudflare (DoH)" -> "Cloudflare (DoH)"
+    "阿里 DNS (DoT)" -> "Ali DNS (DoT)"
+    "Cloudflare (DoT)" -> "Cloudflare (DoT)"
     else -> null
 }
 
