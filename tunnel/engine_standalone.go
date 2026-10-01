@@ -441,11 +441,30 @@ func (e *Engine) StartStandalone(port int) error {
 	addr4 := fmt.Sprintf("0.0.0.0:%d", port)
 	addr6 := fmt.Sprintf("[::]:%d", port)
 
-	udpServer := &dns.Server{Addr: addr4, Net: "udp", Handler: dns.HandlerFunc(e.ServeDNS)}
-	tcpServer := &dns.Server{Addr: addr4, Net: "tcp", Handler: dns.HandlerFunc(e.ServeDNS)}
+	udpConn4, err := net.ListenPacket("udp4", addr4)
+	if err != nil {
+		return fmt.Errorf("IPv4 UDP Server failed to bind %s: %w", addr4, err)
+	}
+	tcpListener4, err := net.Listen("tcp4", addr4)
+	if err != nil {
+		_ = udpConn4.Close()
+		return fmt.Errorf("IPv4 TCP Server failed to bind %s: %w", addr4, err)
+	}
 
-	udpServer6 := &dns.Server{Addr: addr6, Net: "udp6", Handler: dns.HandlerFunc(e.ServeDNS)}
-	tcpServer6 := &dns.Server{Addr: addr6, Net: "tcp6", Handler: dns.HandlerFunc(e.ServeDNS)}
+	udpServer := &dns.Server{PacketConn: udpConn4, Handler: dns.HandlerFunc(e.ServeDNS)}
+	tcpServer := &dns.Server{Listener: tcpListener4, Handler: dns.HandlerFunc(e.ServeDNS)}
+
+	var udpServer6, tcpServer6 *dns.Server
+	if udpConn6, err := net.ListenPacket("udp6", addr6); err == nil {
+		udpServer6 = &dns.Server{PacketConn: udpConn6, Handler: dns.HandlerFunc(e.ServeDNS)}
+	} else {
+		logf("Standalone UDP IPv6 not available: %v", err)
+	}
+	if tcpListener6, err := net.Listen("tcp6", addr6); err == nil {
+		tcpServer6 = &dns.Server{Listener: tcpListener6, Handler: dns.HandlerFunc(e.ServeDNS)}
+	} else {
+		logf("Standalone TCP IPv6 not available: %v", err)
+	}
 
 	e.mu.Lock()
 	e.standaloneUdp = udpServer
@@ -454,38 +473,29 @@ func (e *Engine) StartStandalone(port int) error {
 	e.standaloneTcp6 = tcpServer6
 	e.mu.Unlock()
 
-	errChan := make(chan error, 4)
-
 	go func() {
-		if err := udpServer.ListenAndServe(); err != nil {
+		if err := udpServer.ActivateAndServe(); err != nil {
 			logf("Standalone UDP IPv4 stopped: %v", err)
-			errChan <- err
 		}
 	}()
 	go func() {
-		if err := tcpServer.ListenAndServe(); err != nil {
+		if err := tcpServer.ActivateAndServe(); err != nil {
 			logf("Standalone TCP IPv4 stopped: %v", err)
-			errChan <- err
 		}
 	}()
-	go func() {
-		if err := udpServer6.ListenAndServe(); err != nil {
-			logf("Standalone UDP IPv6 stopped: %v", err)
-
-		}
-	}()
-	go func() {
-		if err := tcpServer6.ListenAndServe(); err != nil {
-			logf("Standalone TCP IPv6 stopped: %v", err)
-		}
-	}()
-
-	time.Sleep(100 * time.Millisecond)
-
-	select {
-	case err := <-errChan:
-		return fmt.Errorf("IPv4 Server failed to start: %v", err)
-	default:
+	if udpServer6 != nil {
+		go func() {
+			if err := udpServer6.ActivateAndServe(); err != nil {
+				logf("Standalone UDP IPv6 stopped: %v", err)
+			}
+		}()
+	}
+	if tcpServer6 != nil {
+		go func() {
+			if err := tcpServer6.ActivateAndServe(); err != nil {
+				logf("Standalone TCP IPv6 stopped: %v", err)
+			}
+		}()
 	}
 
 	logf("Engine started in STANDALONE mode on %s and %s", addr4, addr6)
