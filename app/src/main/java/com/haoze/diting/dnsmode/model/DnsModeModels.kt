@@ -9,12 +9,7 @@ enum class DnsModeProtocol(val label: String, val defaultPort: Int) {
         val MANAGED_PROTOCOLS = listOf(DNS, DOH, DOT)
 
         fun fromStorage(value: String?): DnsModeProtocol {
-            return when (value?.uppercase()) {
-                "DNS", "UDP", "TCP", "PLAIN" -> DNS
-                "DOH" -> DOH
-                "DOT" -> DOT
-                else -> DNS
-            }
+            return entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: DNS
         }
     }
 }

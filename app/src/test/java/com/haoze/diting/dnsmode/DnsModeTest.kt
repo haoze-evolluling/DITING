@@ -50,11 +50,11 @@ class DnsModeTest {
         assertEquals("DoT", DnsModeProtocol.DOT.label)
         assertEquals(853, DnsModeProtocol.DOT.defaultPort)
 
-        assertEquals(DnsModeProtocol.DNS, DnsModeProtocol.fromStorage("UDP"))
-        assertEquals(DnsModeProtocol.DNS, DnsModeProtocol.fromStorage("TCP"))
         assertEquals(DnsModeProtocol.DNS, DnsModeProtocol.fromStorage("DNS"))
+        assertEquals(DnsModeProtocol.DNS, DnsModeProtocol.fromStorage("dns"))
         assertEquals(DnsModeProtocol.DOH, DnsModeProtocol.fromStorage("DOH"))
         assertEquals(DnsModeProtocol.DOT, DnsModeProtocol.fromStorage("DOT"))
+        assertEquals(DnsModeProtocol.DNS, DnsModeProtocol.fromStorage("UNKNOWN"))
     }
 
     @Test
@@ -245,11 +245,6 @@ class DnsModeTest {
         assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams(null))
         assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams(""))
         assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams("not json"))
-
-        val legacyJson = """[{"id":"c1","name":"Legacy UDP","address":"1.2.3.4","port":53,"protocol":"UDP"}]"""
-        val legacyParsed = DnsModePreferences.deserializeUpstreams(legacyJson)
-        assertEquals(1, legacyParsed.size)
-        assertEquals(DnsModeProtocol.DNS, legacyParsed[0].protocol)
     }
 
     @Test
