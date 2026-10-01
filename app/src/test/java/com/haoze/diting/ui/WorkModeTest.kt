@@ -37,5 +37,12 @@ class WorkModeTest {
         assertEquals("Lightweight", translateSettingsAndAppearanceExact("轻量"))
         assertEquals("Switch to Normal Mode", translateSettingsAndAppearanceExact("切换为普通模式"))
         assertEquals("Re-select Work Mode", translateSettingsAndAppearanceExact("重新选择工作模式"))
+        assertEquals("Current Running Mode", translateSettingsAndAppearanceExact("当前运行模式"))
+        assertEquals("Currently Active", translateSettingsAndAppearanceExact("当前生效中"))
+        assertEquals("Active", translateSettingsAndAppearanceExact("运行中"))
+        assertEquals("Mode Capability Comparison", translateSettingsAndAppearanceExact("模式特性对比"))
+        assertEquals("Confirm Mode Switch", translateSettingsAndAppearanceExact("确认切换运行模式"))
+        assertEquals("Already in this mode", translateSettingsAndAppearanceExact("当前已处于该模式"))
+        assertEquals("Get Started with this Mode", translateSettingsAndAppearanceExact("以此模式开启体验"))
     }
 }
