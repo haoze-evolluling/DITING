@@ -48,7 +48,6 @@ import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.Troubleshoot
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Visibility
@@ -122,8 +121,7 @@ internal fun FeatureHubScreen(
     onNavigateToOutboundProxy: () -> Unit,
     onNavigateToRaceModeSettings: () -> Unit,
     onNavigateToDataCleanup: () -> Unit,
-    onNavigateToAgentApiSettings: () -> Unit,
-    onNavigateToWorkModeSelection: () -> Unit = {}
+    onNavigateToAgentApiSettings: () -> Unit
 ) {
     val context = LocalContext.current
     var showLogLongPressHint by remember {
@@ -197,7 +195,6 @@ internal fun FeatureHubScreen(
                     if (OptionalFeature.SERVICE_DISPLAY.key in visibleFeatures) {
                         add(FeatureHubItem(context.getString(R.string.feature_hub_service_display), Icons.Filled.Visibility, onNavigateToHomeProviderVisibility))
                     }
-                    add(FeatureHubItem(localizedText(context, "运行模式"), Icons.Filled.Tune, onNavigateToWorkModeSelection))
                     add(FeatureHubItem(context.getString(R.string.feature_hub_optional_features), Icons.Filled.Extension, onNavigateToOptionalFeatures))
                     add(
                         FeatureHubItem(

@@ -13,8 +13,8 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class SettingsSection(val title: String, val order: Int) {
-    PERFORMANCE("性能优化", 0), BEHAVIOR("运行行为", 1),
-    APPEARANCE("外观", 2), DATA("数据管理", 3), OTHER("其他设置", 4)
+    WORK_MODE("运行模式", 0), PERFORMANCE("性能优化", 1),
+    BEHAVIOR("运行行为", 2), APPEARANCE("外观", 3), DATA("数据管理", 4), OTHER("其他设置", 5)
 }
 
 data class SettingsDestination(
@@ -36,7 +36,7 @@ object ScreenDestinations {
     val raceModeProviders = main(Routes.RACE_MODE_PROVIDERS, "解析模式", "选择单一服务、智能选择、最快响应或依次尝试策略", Icons.AutoMirrored.Filled.AltRoute, SettingsSection.PERFORMANCE)
     val logRetentionSettings = main(Routes.LOG_RETENTION_SETTINGS, "日志模式", "选择 DNS 请求日志的记录范围", Icons.Filled.History, SettingsSection.PERFORMANCE)
     val foregroundBackgroundSettings = main(Routes.FOREGROUND_BACKGROUND_SETTINGS, "前后台行为", "后台隐藏、通知常驻、绕过局域网", Icons.Filled.FlipToBack, SettingsSection.BEHAVIOR)
-    val workModeSelection = main(Routes.WORK_MODE_SELECTION, "运行模式", "切换普通模式或 DNS 模式", Icons.Filled.Tune, SettingsSection.BEHAVIOR)
+    val workModeSelection = main(Routes.WORK_MODE_SELECTION, "运行模式", "切换普通模式或 DNS 模式", Icons.Filled.Tune, SettingsSection.WORK_MODE)
     val outboundProxy = main(Routes.OUTBOUND_PROXY_SETTINGS, "出站代理", "将过滤后的流量转发到本地 SOCKS5 或 HTTP 代理", Icons.Filled.Lan, SettingsSection.BEHAVIOR)
     val languageSettings = main(Routes.LANGUAGE_SETTINGS, "语言设置", "选择应用界面语言", Icons.Filled.Public, SettingsSection.DATA)
     val dataCleanup = main(Routes.DATA_CLEANUP, "数据清理", "删除缓存、日志或域名规则", Icons.Filled.DeleteSweep, SettingsSection.DATA)
