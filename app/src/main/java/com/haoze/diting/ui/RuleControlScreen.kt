@@ -113,8 +113,8 @@ fun RuleControlScreen(
             }
             item {
                 SettingsSurfaceGroup(
-                    content = listOf(
-                        {
+                    content = buildList {
+                        add {
                             SettingsSwitchItem(
                                 title = localizedText(if (dataset == RuleDataset.NORMAL) "启用域名规则" else "启用域名过滤"),
                                 subtitle = localizedText(
@@ -139,9 +139,9 @@ fun RuleControlScreen(
                                     }
                                 }
                             )
-                        },
-                        {
-                            if (dataset == RuleDataset.NORMAL) {
+                        }
+                        if (dataset == RuleDataset.NORMAL) {
+                            add {
                                 val isAddressOperational = settings.isAddressRulesOperational(context)
                                 val urlRuleSubtitle = when {
                                     !httpsReady -> "未就绪 · 需先安装并验证 CA 根证书"
@@ -158,7 +158,7 @@ fun RuleControlScreen(
                                 )
                             }
                         }
-                    )
+                    }
                 )
             }
 
