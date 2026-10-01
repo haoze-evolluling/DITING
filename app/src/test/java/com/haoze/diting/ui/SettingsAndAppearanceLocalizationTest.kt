@@ -33,4 +33,15 @@ class SettingsAndAppearanceLocalizationTest {
         val composite3 = "代理不可用 · 代理认证失败"
         assertEquals("Proxy unavailable · Proxy authentication failed", translateSettingsAndAppearancePattern(composite3))
     }
+
+    @Test
+    fun `hidden features translation matches expected strings`() {
+        assertEquals("Hidden features", translateSettingsAndAppearanceExact("隐藏功能"))
+        assertEquals("Hidden features list", translateSettingsAndAppearanceExact("隐藏功能列表"))
+        assertEquals("Show all", translateSettingsAndAppearanceExact("恢复全部显示"))
+        assertEquals("Shown in Feature Hub", translateSettingsAndAppearanceExact("在功能中心显示"))
+        assertEquals("Hidden from Feature Hub", translateSettingsAndAppearanceExact("已在功能中心隐藏"))
+        assertEquals("Interface and settings", translateSettingsAndAppearanceExact("界面与设置"))
+        assertEquals("Data & maintenance", translateSettingsAndAppearanceExact("数据与维护"))
+    }
 }

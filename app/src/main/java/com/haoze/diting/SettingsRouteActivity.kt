@@ -398,6 +398,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.CO_BUILDER_LIST -> CoBuilderListScreen(onBack, "共建者名单")
             Routes.APP_TRAFFIC_STATS -> AppTrafficStatsScreen(onBack)
             Routes.OPTIONAL_FEATURES -> OptionalFeaturesScreen(onBack)
+            Routes.HIDDEN_FEATURES -> HiddenFeaturesScreen(onBack)
             Routes.WORK_MODE_SELECTION -> WorkModeSelectionScreen(
                 isFirstLaunch = false,
                 currentMode = WorkModeStore.getAppWorkMode(this),
