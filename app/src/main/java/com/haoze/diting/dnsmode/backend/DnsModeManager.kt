@@ -1,6 +1,7 @@
 package com.haoze.diting.dnsmode.backend
 
 import android.content.Context
+import android.util.Log
 import androidx.core.content.ContextCompat
 import com.haoze.diting.dnsmode.model.DnsModeConfig
 import com.haoze.diting.dnsmode.model.DnsModeStats
@@ -13,15 +14,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 object DnsModeManager {
+    private const val TAG = "DnsModeManager"
+
     private val scope = CoroutineScope(Dispatchers.Default)
     private var statsJob: Job? = null
 
     private val _status = MutableStateFlow(DnsServiceStatus.STOPPED)
     val status: StateFlow<DnsServiceStatus> = _status.asStateFlow()
+
+    private val _errorReason = MutableStateFlow<String?>(null)
+    val errorReason: StateFlow<String?> = _errorReason.asStateFlow()
 
     private val _config = MutableStateFlow(DnsModeConfig())
     val config: StateFlow<DnsModeConfig> = _config.asStateFlow()
@@ -54,6 +61,7 @@ object DnsModeManager {
             ContextCompat.startForegroundService(context, DnsModeService.startIntent(context))
         } catch (e: Exception) {
             _status.value = DnsServiceStatus.ERROR
+            _errorReason.value = "DNS 服务启动失败"
             DnsModePreferences.setServiceActive(context, false)
         }
     }
@@ -65,7 +73,8 @@ object DnsModeManager {
         try {
             context.startService(DnsModeService.stopIntent(context))
         } catch (e: Exception) {
-            _status.value = DnsServiceStatus.STOPPED
+            _status.value = DnsServiceStatus.ERROR
+            _errorReason.value = "DNS 服务停止失败，请重试"
         }
     }
 
@@ -81,16 +90,21 @@ object DnsModeManager {
 
     fun onServiceStarted() {
         _status.value = DnsServiceStatus.RUNNING
+        _errorReason.value = null
         startStatsTicker()
     }
 
     fun onServiceStopped() {
-        _status.value = DnsServiceStatus.STOPPED
+        // Keep ERROR visible when startup failed; onDestroy must not mask it with STOPPED.
+        if (_status.value != DnsServiceStatus.ERROR) {
+            _status.value = DnsServiceStatus.STOPPED
+        }
         stopStatsTicker()
     }
 
-    fun onServiceError() {
+    fun onServiceError(reason: String? = null) {
         _status.value = DnsServiceStatus.ERROR
+        _errorReason.value = reason
         stopStatsTicker()
     }
 
@@ -98,30 +112,40 @@ object DnsModeManager {
         val updated = _config.value.copy(selectedUpstreamId = serverId)
         _config.value = updated
         DnsModePreferences.saveConfig(context, updated)
-        if (_status.value.isRunning) {
-            try {
-                context.startService(DnsModeService.refreshIntent(context))
-            } catch (_: Exception) {}
-        }
+        refreshEngineIfRunning(context)
     }
 
     fun updateConfig(context: Context, newConfig: DnsModeConfig) {
         _config.value = newConfig
         DnsModePreferences.saveConfig(context, newConfig)
+        refreshEngineIfRunning(context)
+    }
+
+    private fun refreshEngineIfRunning(context: Context) {
+        if (!_status.value.isRunning) return
+        try {
+            context.startService(DnsModeService.refreshIntent(context))
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to deliver config refresh to DnsModeService", e)
+        }
     }
 
     fun resetStats() {
         _stats.value = DnsModeStats()
     }
 
-    fun recordQuery(cacheHit: Boolean = false, blocked: Boolean = false, latencyMs: Long = 12L) {
-        val current = _stats.value
-        _stats.value = current.copy(
-            queryCount = current.queryCount + 1,
-            cacheHitCount = if (cacheHit) current.cacheHitCount + 1 else current.cacheHitCount,
-            blockedCount = if (blocked) current.blockedCount + 1 else current.blockedCount,
-            latencyMs = latencyMs
-        )
+    fun recordQuery(cacheHit: Boolean, blocked: Boolean, latencyMs: Long) {
+        _stats.update { current ->
+            val newCount = current.queryCount + 1
+            val newTotal = current.latencyTotalMs + latencyMs
+            current.copy(
+                queryCount = newCount,
+                cacheHitCount = if (cacheHit) current.cacheHitCount + 1 else current.cacheHitCount,
+                blockedCount = if (blocked) current.blockedCount + 1 else current.blockedCount,
+                latencyTotalMs = newTotal,
+                latencyMs = newTotal / newCount
+            )
+        }
     }
 
     private fun startStatsTicker() {

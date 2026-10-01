@@ -48,6 +48,8 @@ class DnsServerEngine(
     @Volatile
     private var isRunning: Boolean = false
 
+    val isEngineRunning: Boolean get() = isRunning
+
     private val cache = ConcurrentHashMap<String, CacheEntry>()
 
     private val dohClient = OkHttpClient.Builder()

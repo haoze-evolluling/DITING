@@ -83,12 +83,15 @@ class DnsModeTest {
         DnsModeManager.recordQuery(cacheHit = true, blocked = false, latencyMs = 5L)
         assertEquals(2L, DnsModeManager.stats.value.queryCount)
         assertEquals(1L, DnsModeManager.stats.value.cacheHitCount)
-        assertEquals(5L, DnsModeManager.stats.value.latencyMs)
+        // Average latency: (20 + 5) / 2
+        assertEquals(12L, DnsModeManager.stats.value.latencyMs)
 
         DnsModeManager.recordQuery(cacheHit = false, blocked = true, latencyMs = 1L)
         assertEquals(3L, DnsModeManager.stats.value.queryCount)
         assertEquals(1L, DnsModeManager.stats.value.cacheHitCount)
         assertEquals(1L, DnsModeManager.stats.value.blockedCount)
+        // Average latency: (20 + 5 + 1) / 3
+        assertEquals(8L, DnsModeManager.stats.value.latencyMs)
 
         DnsModeManager.resetStats()
         assertEquals(0L, DnsModeManager.stats.value.queryCount)
@@ -108,8 +111,23 @@ class DnsModeTest {
         assertEquals(DnsServiceStatus.STOPPED, DnsModeManager.status.value)
         assertFalse(DnsModeManager.status.value.isRunning)
 
-        DnsModeManager.onServiceError()
+        DnsModeManager.onServiceError("DNS 服务启动失败")
         assertEquals(DnsServiceStatus.ERROR, DnsModeManager.status.value)
+    }
+
+    @Test
+    fun `ERROR status survives service destroy notification`() {
+        DnsModeManager.onServiceError("DNS 服务启动失败，端口 1053 可能被占用")
+        // onDestroy always fires onServiceStopped; it must not mask the error state
+        DnsModeManager.onServiceStopped()
+        assertEquals(DnsServiceStatus.ERROR, DnsModeManager.status.value)
+        assertEquals("DNS 服务启动失败，端口 1053 可能被占用", DnsModeManager.errorReason.value)
+
+        DnsModeManager.onServiceStarted()
+        assertEquals(DnsServiceStatus.RUNNING, DnsModeManager.status.value)
+        assertEquals(null, DnsModeManager.errorReason.value)
+        DnsModeManager.onServiceStopped()
+        assertEquals(DnsServiceStatus.STOPPED, DnsModeManager.status.value)
     }
 
     @Test

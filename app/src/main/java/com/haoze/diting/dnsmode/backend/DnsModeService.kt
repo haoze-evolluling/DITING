@@ -28,6 +28,9 @@ class DnsModeService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        // START_STICKY may restart this service in a fresh process without any Activity;
+        // load persisted config here so the engine never runs on defaults.
+        DnsModeManager.initialize(this)
         createNotificationChannel()
     }
 
@@ -44,12 +47,19 @@ class DnsModeService : Service() {
             }
             ACTION_START -> {
                 startForegroundServiceInternal()
+                if (dnsServerEngine?.isEngineRunning == true) {
+                    // Service was already running (e.g. START_STICKY restart); rebuilding
+                    // the engine would drop the cache and briefly release the port.
+                    return START_STICKY
+                }
                 startDnsEngine()
             }
             null -> {
                 if (DnsModePreferences.isServiceActive(this)) {
                     startForegroundServiceInternal()
-                    startDnsEngine()
+                    if (dnsServerEngine?.isEngineRunning != true) {
+                        startDnsEngine()
+                    }
                 } else {
                     stopSelf()
                     return START_NOT_STICKY
@@ -87,7 +97,7 @@ class DnsModeService : Service() {
             Log.i(TAG, "DnsModeService successfully started DNS server on port ${config.localListenPort}")
         } else {
             Log.e(TAG, "DnsModeService failed to start DNS server on port ${config.localListenPort}")
-            DnsModeManager.onServiceError()
+            DnsModeManager.onServiceError("DNS 服务启动失败，端口 ${config.localListenPort} 可能被占用")
             stopSelf()
         }
     }
