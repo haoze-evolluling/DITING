@@ -325,6 +325,18 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "基于 HTTPS 的加密 DNS 解析" -> "Encrypted DNS resolution over HTTPS"
     "Cloudflare 1.1.1.1 加密 DNS 查询" -> "Encrypted DNS queries via Cloudflare 1.1.1.1"
     "基于 TLS 的加密 DNS 解析" -> "Encrypted DNS resolution over TLS"
+    "360 安全 DNS，提供基础安全防护" -> "360 Secure DNS providing basic security protection"
+    "北京联盛 OneDNS，拦截恶意网站" -> "Beijing Liansheng OneDNS, blocking malicious websites"
+    "阿里巴巴公共 DNS，基于 HTTPS 的加密解析" -> "Alibaba public DNS, encrypted resolution over HTTPS"
+    "腾讯云公共解析，基于 HTTPS 的加密解析" -> "Tencent Cloud public resolution, encrypted resolution over HTTPS"
+    "360 安全 DNS，基于 HTTPS 的加密解析" -> "360 Secure DNS, encrypted resolution over HTTPS"
+    "OneDNS 安全解析，基于 HTTPS 的加密解析" -> "OneDNS secure resolution, encrypted resolution over HTTPS"
+    "Google 公共 DNS，基于 HTTPS 的加密解析" -> "Google public DNS, encrypted resolution over HTTPS"
+    "阿里巴巴公共 DNS，基于 TLS 的加密解析" -> "Alibaba public DNS, encrypted resolution over TLS"
+    "腾讯云公共解析，基于 TLS 的加密解析" -> "Tencent Cloud public resolution, encrypted resolution over TLS"
+    "360 安全 DNS，基于 TLS 的加密解析" -> "360 Secure DNS, encrypted resolution over TLS"
+    "OneDNS 安全解析，基于 TLS 的加密解析" -> "OneDNS secure resolution, encrypted resolution over TLS"
+    "Google 公共 DNS，基于 TLS 的加密解析" -> "Google public DNS, encrypted resolution over TLS"
     else -> null
 }
 

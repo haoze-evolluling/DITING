@@ -27,7 +27,7 @@ object DnsUpstreamValidator {
         }
         return when (protocol) {
             DnsModeProtocol.DOH -> validateDohUrl(trimmed)
-            DnsModeProtocol.UDP, DnsModeProtocol.TCP, DnsModeProtocol.DOT -> validateHost(trimmed)
+            DnsModeProtocol.DNS, DnsModeProtocol.DOT -> validateHost(trimmed)
         }
     }
 

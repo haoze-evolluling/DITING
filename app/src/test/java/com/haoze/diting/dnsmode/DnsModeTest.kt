@@ -41,24 +41,29 @@ class DnsModeTest {
 
     @Test
     fun `DnsModeProtocol has correct properties and default ports`() {
-        assertEquals("UDP", DnsModeProtocol.UDP.label)
-        assertEquals(53, DnsModeProtocol.UDP.defaultPort)
-
-        assertEquals("TCP", DnsModeProtocol.TCP.label)
-        assertEquals(53, DnsModeProtocol.TCP.defaultPort)
+        assertEquals("DNS", DnsModeProtocol.DNS.label)
+        assertEquals(53, DnsModeProtocol.DNS.defaultPort)
 
         assertEquals("DoH", DnsModeProtocol.DOH.label)
         assertEquals(443, DnsModeProtocol.DOH.defaultPort)
 
         assertEquals("DoT", DnsModeProtocol.DOT.label)
         assertEquals(853, DnsModeProtocol.DOT.defaultPort)
+
+        assertEquals(DnsModeProtocol.DNS, DnsModeProtocol.fromStorage("UDP"))
+        assertEquals(DnsModeProtocol.DNS, DnsModeProtocol.fromStorage("TCP"))
+        assertEquals(DnsModeProtocol.DNS, DnsModeProtocol.fromStorage("DNS"))
+        assertEquals(DnsModeProtocol.DOH, DnsModeProtocol.fromStorage("DOH"))
+        assertEquals(DnsModeProtocol.DOT, DnsModeProtocol.fromStorage("DOT"))
     }
 
     @Test
-    fun `DnsUpstreamServer presets contain udp doh and dot endpoints`() {
+    fun `DnsUpstreamServer presets contain dns doh and dot endpoints`() {
         val presets = DnsUpstreamServer.PRESETS
-        assertEquals("alidns", presets.first().id)
-        assertEquals("1.1.1.1", presets.firstOrNull { it.id == "cloudflare" }?.address)
+        assertEquals(18, presets.size)
+        assertEquals("preset_alidns_dns", presets.first().id)
+        assertEquals("阿里云", presets.first().name)
+        assertEquals("1.1.1.1", presets.firstOrNull { it.id == "preset_cloudflare_dns" }?.address)
 
         val dohServer = presets.firstOrNull { it.protocol == DnsModeProtocol.DOH }
         assertNotNull(dohServer)
@@ -180,7 +185,7 @@ class DnsModeTest {
     @Test
     fun `DnsModeConfig default values are reasonable`() {
         val config = DnsModeConfig()
-        assertEquals("alidns", config.selectedUpstreamId)
+        assertEquals("preset_alidns_dns", config.selectedUpstreamId)
         assertEquals(1053, config.localListenPort)
         assertTrue(config.cacheEnabled)
         assertEquals(300, config.cacheTtlSeconds)
@@ -195,22 +200,22 @@ class DnsModeTest {
         assertNull(validator.validateName("自定义 DNS"))
         assertNotNull(validator.validateName("   "))
 
-        assertNull(validator.validateAddress(DnsModeProtocol.UDP, "223.5.5.5"))
-        assertNull(validator.validateAddress(DnsModeProtocol.UDP, "2001:db8::1"))
+        assertNull(validator.validateAddress(DnsModeProtocol.DNS, "223.5.5.5"))
+        assertNull(validator.validateAddress(DnsModeProtocol.DNS, "2001:db8::1"))
         assertNull(validator.validateAddress(DnsModeProtocol.DOT, "dns.alidns.com"))
         assertNull(validator.validateAddress(DnsModeProtocol.DOH, "https://dns.alidns.com/dns-query"))
         assertNotNull(validator.validateAddress(DnsModeProtocol.DOH, "http://dns.alidns.com/dns-query"))
-        assertNotNull(validator.validateAddress(DnsModeProtocol.UDP, ""))
-        assertNotNull(validator.validateAddress(DnsModeProtocol.UDP, "1 1 1 1"))
+        assertNotNull(validator.validateAddress(DnsModeProtocol.DNS, ""))
+        assertNotNull(validator.validateAddress(DnsModeProtocol.DNS, "1 1 1 1"))
 
-        assertNull(validator.validatePort("", DnsModeProtocol.UDP))
+        assertNull(validator.validatePort("", DnsModeProtocol.DNS))
         assertNull(validator.validatePort("853", DnsModeProtocol.DOT))
-        assertNotNull(validator.validatePort("0", DnsModeProtocol.UDP))
-        assertNotNull(validator.validatePort("70000", DnsModeProtocol.UDP))
-        assertNotNull(validator.validatePort("abc", DnsModeProtocol.UDP))
+        assertNotNull(validator.validatePort("0", DnsModeProtocol.DNS))
+        assertNotNull(validator.validatePort("70000", DnsModeProtocol.DNS))
+        assertNotNull(validator.validatePort("abc", DnsModeProtocol.DNS))
         assertNull(validator.validatePort("abc", DnsModeProtocol.DOH))
 
-        assertEquals(53, validator.parsePort("", DnsModeProtocol.UDP))
+        assertEquals(53, validator.parsePort("", DnsModeProtocol.DNS))
         assertEquals(853, validator.parsePort("853", DnsModeProtocol.DOT))
     }
 
@@ -227,10 +232,10 @@ class DnsModeTest {
             ),
             DnsUpstreamServer(
                 id = "custom_2",
-                name = "自定义 UDP",
+                name = "自定义 DNS",
                 address = "192.168.1.2",
                 port = 5335,
-                protocol = DnsModeProtocol.UDP,
+                protocol = DnsModeProtocol.DNS,
                 isCustom = true
             )
         )
@@ -240,6 +245,11 @@ class DnsModeTest {
         assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams(null))
         assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams(""))
         assertEquals(emptyList<DnsUpstreamServer>(), DnsModePreferences.deserializeUpstreams("not json"))
+
+        val legacyJson = """[{"id":"c1","name":"Legacy UDP","address":"1.2.3.4","port":53,"protocol":"UDP"}]"""
+        val legacyParsed = DnsModePreferences.deserializeUpstreams(legacyJson)
+        assertEquals(1, legacyParsed.size)
+        assertEquals(DnsModeProtocol.DNS, legacyParsed[0].protocol)
     }
 
     @Test
@@ -264,7 +274,7 @@ class DnsModeTest {
             name = "Unreachable",
             address = "127.0.0.1",
             port = 1,
-            protocol = DnsModeProtocol.UDP
+            protocol = DnsModeProtocol.DNS
         )
         val engine = com.haoze.diting.dnsmode.backend.DnsServerEngine(config, upstream)
         assertTrue(engine.start())
@@ -290,7 +300,7 @@ class DnsModeTest {
         // Unknown id should fall back to first preset
         val upstream = DnsModeManager.getActiveUpstream()
         assertNotNull(upstream)
-        assertEquals("alidns", upstream.id)
+        assertEquals("preset_alidns_dns", upstream.id)
     }
 
     @Test

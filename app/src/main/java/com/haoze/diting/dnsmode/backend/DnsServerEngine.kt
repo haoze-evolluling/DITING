@@ -181,12 +181,12 @@ class DnsServerEngine(
                 put(JSONObject().apply {
                     put("id", upstream.id)
                     put("protocol", when (upstream.protocol) {
-                        DnsModeProtocol.UDP, DnsModeProtocol.TCP -> "PLAIN"
+                        DnsModeProtocol.DNS -> "PLAIN"
                         DnsModeProtocol.DOH -> "DOH"
                         DnsModeProtocol.DOT -> "DOT"
                     })
                     put("server", when (upstream.protocol) {
-                        DnsModeProtocol.UDP, DnsModeProtocol.TCP, DnsModeProtocol.DOT -> {
+                        DnsModeProtocol.DNS, DnsModeProtocol.DOT -> {
                             val addr = upstream.address
                             val p = upstream.port
                             if (addr.contains(':') && !addr.startsWith('[')) "[$addr]:$p" else "$addr:$p"

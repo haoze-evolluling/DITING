@@ -63,7 +63,7 @@ fun DnsMainScreen(
     var showResetStatsConfirmDialog by remember { mutableStateOf(false) }
     var showPortEditDialog by remember { mutableStateOf(false) }
     var showAddUpstreamDialog by remember { mutableStateOf(false) }
-    var selectedDnsProtocol by remember { mutableStateOf(DnsModeProtocol.UDP) }
+    var selectedDnsProtocol by remember { mutableStateOf(DnsModeProtocol.DNS) }
 
     val navigateToPage: (Int) -> Unit = { targetPage ->
         if (pagerState.currentPage != targetPage) {

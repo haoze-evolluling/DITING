@@ -1,10 +1,22 @@
 package com.haoze.diting.dnsmode.model
 
 enum class DnsModeProtocol(val label: String, val defaultPort: Int) {
-    UDP("UDP", 53),
-    TCP("TCP", 53),
+    DNS("DNS", 53),
     DOH("DoH", 443),
     DOT("DoT", 853);
+
+    companion object {
+        val MANAGED_PROTOCOLS = listOf(DNS, DOH, DOT)
+
+        fun fromStorage(value: String?): DnsModeProtocol {
+            return when (value?.uppercase()) {
+                "DNS", "UDP", "TCP", "PLAIN" -> DNS
+                "DOH" -> DOH
+                "DOT" -> DOT
+                else -> DNS
+            }
+        }
+    }
 }
 
 enum class DnsServiceStatus {
@@ -22,7 +34,7 @@ data class DnsUpstreamServer(
     val name: String,
     val address: String,
     val port: Int = 53,
-    val protocol: DnsModeProtocol = DnsModeProtocol.UDP,
+    val protocol: DnsModeProtocol = DnsModeProtocol.DNS,
     val description: String = "",
     val isCustom: Boolean = false
 ) {
@@ -36,83 +48,155 @@ data class DnsUpstreamServer(
     companion object {
         val PRESETS = listOf(
             DnsUpstreamServer(
-                id = "alidns",
-                name = "阿里 DNS",
+                id = "preset_alidns_dns",
+                name = "阿里云",
                 address = "223.5.5.5",
                 port = 53,
-                protocol = DnsModeProtocol.UDP,
+                protocol = DnsModeProtocol.DNS,
                 description = "阿里巴巴公共 DNS，国内解析低时延"
             ),
             DnsUpstreamServer(
-                id = "dnspod",
-                name = "腾讯 DNSPod",
+                id = "preset_dnspod_dns",
+                name = "腾讯云 DNSPod",
                 address = "119.29.29.29",
                 port = 53,
-                protocol = DnsModeProtocol.UDP,
+                protocol = DnsModeProtocol.DNS,
                 description = "腾讯云公共解析，节点覆盖广"
             ),
             DnsUpstreamServer(
-                id = "cloudflare",
-                name = "Cloudflare DNS",
+                id = "preset_360_dns",
+                name = "360",
+                address = "101.226.4.6",
+                port = 53,
+                protocol = DnsModeProtocol.DNS,
+                description = "360 安全 DNS，提供基础安全防护"
+            ),
+            DnsUpstreamServer(
+                id = "preset_onedns_dns",
+                name = "OneDNS",
+                address = "117.50.10.10",
+                port = 53,
+                protocol = DnsModeProtocol.DNS,
+                description = "北京联盛 OneDNS，拦截恶意网站"
+            ),
+            DnsUpstreamServer(
+                id = "preset_cloudflare_dns",
+                name = "Cloudflare",
                 address = "1.1.1.1",
                 port = 53,
-                protocol = DnsModeProtocol.UDP,
+                protocol = DnsModeProtocol.DNS,
                 description = "全球快速且隐私友好的 DNS 服务"
             ),
             DnsUpstreamServer(
-                id = "google",
-                name = "Google Public DNS",
+                id = "preset_google_dns",
+                name = "Google",
                 address = "8.8.8.8",
                 port = 53,
-                protocol = DnsModeProtocol.UDP,
+                protocol = DnsModeProtocol.DNS,
                 description = "Google 全球公共 DNS 解析服务"
             ),
             DnsUpstreamServer(
-                id = "quad9",
-                name = "Quad9 DNS",
-                address = "9.9.9.9",
-                port = 53,
-                protocol = DnsModeProtocol.UDP,
-                description = "内置恶意域名安全拦截与隐私保护"
-            ),
-            DnsUpstreamServer(
-                id = "alidns_doh",
-                name = "阿里 DNS (DoH)",
+                id = "preset_alidns_doh",
+                name = "阿里云",
                 address = "https://dns.alidns.com/dns-query",
                 port = 443,
                 protocol = DnsModeProtocol.DOH,
-                description = "基于 HTTPS 的加密 DNS 解析"
+                description = "阿里巴巴公共 DNS，基于 HTTPS 的加密解析"
             ),
             DnsUpstreamServer(
-                id = "cloudflare_doh",
-                name = "Cloudflare (DoH)",
+                id = "preset_dnspod_doh",
+                name = "腾讯云 DNSPod",
+                address = "https://doh.pub/dns-query",
+                port = 443,
+                protocol = DnsModeProtocol.DOH,
+                description = "腾讯云公共解析，基于 HTTPS 的加密解析"
+            ),
+            DnsUpstreamServer(
+                id = "preset_360_doh",
+                name = "360",
+                address = "https://doh.360.cn/dns-query",
+                port = 443,
+                protocol = DnsModeProtocol.DOH,
+                description = "360 安全 DNS，基于 HTTPS 的加密解析"
+            ),
+            DnsUpstreamServer(
+                id = "preset_onedns_doh",
+                name = "OneDNS",
+                address = "https://doh.onedns.net/dns-query",
+                port = 443,
+                protocol = DnsModeProtocol.DOH,
+                description = "OneDNS 安全解析，基于 HTTPS 的加密解析"
+            ),
+            DnsUpstreamServer(
+                id = "preset_cloudflare_doh",
+                name = "Cloudflare",
                 address = "https://cloudflare-dns.com/dns-query",
                 port = 443,
                 protocol = DnsModeProtocol.DOH,
                 description = "Cloudflare 1.1.1.1 加密 DNS 查询"
             ),
             DnsUpstreamServer(
-                id = "alidns_dot",
-                name = "阿里 DNS (DoT)",
+                id = "preset_google_doh",
+                name = "Google",
+                address = "https://dns.google/dns-query",
+                port = 443,
+                protocol = DnsModeProtocol.DOH,
+                description = "Google 公共 DNS，基于 HTTPS 的加密解析"
+            ),
+            DnsUpstreamServer(
+                id = "preset_alidns_dot",
+                name = "阿里云",
                 address = "dns.alidns.com",
                 port = 853,
                 protocol = DnsModeProtocol.DOT,
-                description = "基于 TLS 的加密 DNS 解析"
+                description = "阿里巴巴公共 DNS，基于 TLS 的加密解析"
             ),
             DnsUpstreamServer(
-                id = "cloudflare_dot",
-                name = "Cloudflare (DoT)",
+                id = "preset_dnspod_dot",
+                name = "腾讯云 DNSPod",
+                address = "dot.pub",
+                port = 853,
+                protocol = DnsModeProtocol.DOT,
+                description = "腾讯云公共解析，基于 TLS 的加密解析"
+            ),
+            DnsUpstreamServer(
+                id = "preset_360_dot",
+                name = "360",
+                address = "dot.360.cn",
+                port = 853,
+                protocol = DnsModeProtocol.DOT,
+                description = "360 安全 DNS，基于 TLS 的加密解析"
+            ),
+            DnsUpstreamServer(
+                id = "preset_onedns_dot",
+                name = "OneDNS",
+                address = "dot.onedns.net",
+                port = 853,
+                protocol = DnsModeProtocol.DOT,
+                description = "OneDNS 安全解析，基于 TLS 的加密解析"
+            ),
+            DnsUpstreamServer(
+                id = "preset_cloudflare_dot",
+                name = "Cloudflare",
                 address = "one.one.one.one",
                 port = 853,
                 protocol = DnsModeProtocol.DOT,
                 description = "Cloudflare 1.1.1.1 加密 DNS 查询"
+            ),
+            DnsUpstreamServer(
+                id = "preset_google_dot",
+                name = "Google",
+                address = "dns.google",
+                port = 853,
+                protocol = DnsModeProtocol.DOT,
+                description = "Google 公共 DNS，基于 TLS 的加密解析"
             )
         )
     }
 }
 
 data class DnsModeConfig(
-    val selectedUpstreamId: String = "alidns",
+    val selectedUpstreamId: String = "preset_alidns_dns",
     val localListenPort: Int = 1053,
     val cacheEnabled: Boolean = true,
     val cacheTtlSeconds: Int = 300,

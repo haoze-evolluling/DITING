@@ -38,8 +38,20 @@ object DnsModePreferences {
                 .putBoolean(KEY_LOG_QUERIES_MIGRATED, true)
                 .apply()
         }
+        val rawSelectedId = prefs.getString(KEY_SELECTED_UPSTREAM, "preset_alidns_dns") ?: "preset_alidns_dns"
+        val selectedId = when (rawSelectedId) {
+            "alidns" -> "preset_alidns_dns"
+            "dnspod" -> "preset_dnspod_dns"
+            "cloudflare" -> "preset_cloudflare_dns"
+            "google" -> "preset_google_dns"
+            "alidns_doh" -> "preset_alidns_doh"
+            "cloudflare_doh" -> "preset_cloudflare_doh"
+            "alidns_dot" -> "preset_alidns_dot"
+            "cloudflare_dot" -> "preset_cloudflare_dot"
+            else -> rawSelectedId
+        }
         return DnsModeConfig(
-            selectedUpstreamId = prefs.getString(KEY_SELECTED_UPSTREAM, "alidns") ?: "alidns",
+            selectedUpstreamId = selectedId,
             localListenPort = port,
             cacheEnabled = prefs.getBoolean(KEY_CACHE_ENABLED, true),
             cacheTtlSeconds = prefs.getInt(KEY_CACHE_TTL, 300),
@@ -108,8 +120,8 @@ object DnsModePreferences {
                     address = address,
                     port = item.optInt("port", 53),
                     protocol = runCatching {
-                        DnsModeProtocol.valueOf(item.optString("protocol"))
-                    }.getOrDefault(DnsModeProtocol.UDP),
+                        DnsModeProtocol.fromStorage(item.optString("protocol"))
+                    }.getOrDefault(DnsModeProtocol.DNS),
                     isCustom = true
                 )
             }
