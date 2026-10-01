@@ -95,13 +95,16 @@ fun WorkModeHeader(
 }
 
 /**
- * Mode card styled consistently with the cards in Mode Settings (模式设置).
- * Uses surfaceVariant container, smooth rounded corners, leading icon, and trailing status indicator.
+ * Mode card styled with stacked gap-divided cards (缝隙分割式堆叠卡片).
+ * Uses asymmetrical rounded corners depending on its position in the group (28.dp for outer edges, 4.dp for inner gap edges),
+ * surfaceVariant container, leading icon, and trailing status indicator.
  */
 @Composable
 fun WorkModeCard(
     mode: AppWorkMode,
     isSelected: Boolean,
+    index: Int = 0,
+    itemCount: Int = 1,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -131,7 +134,14 @@ fun WorkModeCard(
         BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
     }
 
-    val cardShape = RoundedCornerShape(20.dp)
+    val topRadius = if (index == 0) 28.dp else 4.dp
+    val bottomRadius = if (index == itemCount - 1) 28.dp else 4.dp
+    val cardShape = RoundedCornerShape(
+        topStart = topRadius,
+        topEnd = topRadius,
+        bottomStart = bottomRadius,
+        bottomEnd = bottomRadius
+    )
 
     Card(
         shape = cardShape,

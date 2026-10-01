@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.localizedText
 
@@ -114,16 +115,19 @@ private fun WorkModeSelectionContent(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Mode Cards List
+                // Mode Cards List (Stacked Gap-Divided Cards)
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
                 ) {
-                    AppWorkMode.entries.forEach { mode ->
+                    val modes = AppWorkMode.entries
+                    modes.forEachIndexed { index, mode ->
                         val isSelected = !isFirstLaunch && mode == currentMode
                         WorkModeCard(
                             mode = mode,
                             isSelected = isSelected,
+                            index = index,
+                            itemCount = modes.size,
                             onClick = {
                                 if (isFirstLaunch) {
                                     onModeSelected(mode)
