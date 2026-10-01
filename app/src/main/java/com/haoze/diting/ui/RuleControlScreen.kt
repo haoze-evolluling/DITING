@@ -18,7 +18,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.ui.components.DomainRulesInspectionLinkageDialog
 import com.haoze.diting.ui.components.DomainRulesLinkageKind
 import com.haoze.diting.ui.components.SettingsGroupTitle
@@ -30,6 +31,7 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsNavigationItem
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.settings.AppRulesSettingsStore
+import com.haoze.diting.ui.settings.RuleSettingsAccess
 import com.haoze.diting.vpn.SubscriptionAutoUpdateSettings
 
 @Composable
@@ -41,32 +43,34 @@ fun RuleControlScreen(
     onNavigateToAutoUpdateInterval: () -> Unit,
     onNavigateToMirrorTemplates: () -> Unit,
     onNavigateToHttpInspection: () -> Unit = {},
+    dataset: RuleDataset = RuleDataset.NORMAL,
     onRuntimeDnsSettingsChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val db = AppDatabase.getInstance(context)
+    val settings = RuleSettingsAccess(dataset)
+    val dataSources = RuleDatabases.forDataset(context, dataset)
 
-    val subscriptions by db.subscriptionDao().observeAll().collectAsStateWithLifecycle(initialValue = emptyList())
-    val mirrorTemplates by db.mirrorTemplateDao().observeAll().collectAsStateWithLifecycle(initialValue = emptyList())
+    val subscriptions by dataSources.subscriptionDao().observeAll().collectAsStateWithLifecycle(initialValue = emptyList())
+    val mirrorTemplates by dataSources.mirrorTemplateDao().observeAll().collectAsStateWithLifecycle(initialValue = emptyList())
 
-    var domainRulesEnabled by remember { mutableStateOf(AppRulesSettingsStore.isDomainRulesEnabled(context)) }
-    var addressRulesEnabled by remember { mutableStateOf(AppRulesSettingsStore.isAddressRulesEnabled(context)) }
-    var httpsReady by remember { mutableStateOf(AppRulesSettingsStore.isHttpsInspectionReady(context)) }
-    var httpInspectionEnabled by remember { mutableStateOf(AppRulesSettingsStore.isHttpInspectionEnabled(context)) }
-    var inspectionAppsCount by remember { mutableIntStateOf(AppRulesSettingsStore.getHttpInspectionAppPackages(context).size) }
-    var autoUpdateEnabled by remember { mutableStateOf(SubscriptionAutoUpdateSettings.isEnabled(context)) }
-    var intervalHours by remember { mutableIntStateOf(SubscriptionAutoUpdateSettings.intervalHours(context)) }
+    var domainRulesEnabled by remember { mutableStateOf(settings.isMasterEnabled(context)) }
+    var addressRulesEnabled by remember { mutableStateOf(settings.isAddressRulesOperational(context)) }
+    var httpsReady by remember { mutableStateOf(dataset == RuleDataset.NORMAL && AppRulesSettingsStore.isHttpsInspectionReady(context)) }
+    var httpInspectionEnabled by remember { mutableStateOf(dataset == RuleDataset.NORMAL && AppRulesSettingsStore.isHttpInspectionEnabled(context)) }
+    var inspectionAppsCount by remember { mutableIntStateOf(if (dataset == RuleDataset.NORMAL) AppRulesSettingsStore.getHttpInspectionAppPackages(context).size else 0) }
+    var autoUpdateEnabled by remember { mutableStateOf(settings.autoUpdateEnabled(context)) }
+    var intervalHours by remember { mutableIntStateOf(settings.autoUpdateIntervalHours(context)) }
     var pendingLinkage by remember { mutableStateOf<DomainRulesLinkageKind?>(null) }
 
     fun refreshState() {
-        domainRulesEnabled = AppRulesSettingsStore.isDomainRulesEnabled(context)
-        addressRulesEnabled = AppRulesSettingsStore.isAddressRulesEnabled(context)
-        httpsReady = AppRulesSettingsStore.isHttpsInspectionReady(context)
-        httpInspectionEnabled = AppRulesSettingsStore.isHttpInspectionEnabled(context)
-        inspectionAppsCount = AppRulesSettingsStore.getHttpInspectionAppPackages(context).size
-        autoUpdateEnabled = SubscriptionAutoUpdateSettings.isEnabled(context)
-        intervalHours = SubscriptionAutoUpdateSettings.intervalHours(context)
+        domainRulesEnabled = settings.isMasterEnabled(context)
+        addressRulesEnabled = settings.isAddressRulesOperational(context)
+        httpsReady = dataset == RuleDataset.NORMAL && AppRulesSettingsStore.isHttpsInspectionReady(context)
+        httpInspectionEnabled = dataset == RuleDataset.NORMAL && AppRulesSettingsStore.isHttpInspectionEnabled(context)
+        inspectionAppsCount = if (dataset == RuleDataset.NORMAL) AppRulesSettingsStore.getHttpInspectionAppPackages(context).size else 0
+        autoUpdateEnabled = settings.autoUpdateEnabled(context)
+        intervalHours = settings.autoUpdateIntervalHours(context)
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -93,7 +97,13 @@ fun RuleControlScreen(
         ) {
             item {
                 SettingsInfoText(
-                    text = localizedText("统一管理域名过滤、URL 规则及规则覆写的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。"),
+                    text = localizedText(
+                        if (dataset == RuleDataset.NORMAL) {
+                            "统一管理域名过滤、URL 规则及规则覆写的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。"
+                        } else {
+                            "统一管理 DNS 模式恶意域名过滤的总控开关、拦截策略与在线规则订阅。黑名单、白名单与 Hosts 覆写可在模式设置中独立管理，规则库与普通模式完全隔离。"
+                        }
+                    ),
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
@@ -106,40 +116,47 @@ fun RuleControlScreen(
                     content = listOf(
                         {
                             SettingsSwitchItem(
-                                title = localizedText("启用域名规则"),
+                                title = localizedText(if (dataset == RuleDataset.NORMAL) "启用域名规则" else "启用域名过滤"),
                                 subtitle = localizedText(
-                                    if (domainRulesEnabled) "开启 DNS 阶段域名屏蔽、白名单放行及 IPv4/IPv6 覆写"
-                                    else "已禁用 DNS 域名过滤，查询将直接放行"
+                                    if (dataset == RuleDataset.NORMAL) {
+                                        if (domainRulesEnabled) "开启 DNS 阶段域名屏蔽、白名单放行及 IPv4/IPv6 覆写"
+                                        else "已禁用 DNS 域名过滤，查询将直接放行"
+                                    } else {
+                                        if (domainRulesEnabled) "开启恶意域名拦截与白名单放行"
+                                        else "已关闭恶意域名过滤，查询将直接放行"
+                                    }
                                 ),
                                 checked = domainRulesEnabled,
                                 onCheckedChange = { checked ->
-                                    if (!checked && httpInspectionEnabled) {
+                                    if (!checked && dataset == RuleDataset.NORMAL && httpInspectionEnabled) {
                                         // Coupling constraint: domain rules cannot be disabled alone while HTTPS inspection is enabled
                                         pendingLinkage = DomainRulesLinkageKind.DISABLE_BOTH
                                     } else {
                                         domainRulesEnabled = checked
-                                        AppRulesSettingsStore.setDomainRulesEnabled(context, checked)
-                                        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "domain_rules_switch")
+                                        settings.setMasterEnabled(context, checked)
+                                        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "domain_rules_switch", dataset)
                                         onRuntimeDnsSettingsChanged()
                                     }
                                 }
                             )
                         },
                         {
-                            val isAddressOperational = AppRulesSettingsStore.isAddressRulesFullyOperational(context)
-                            val urlRuleSubtitle = when {
-                                !httpsReady -> "未就绪 · 需先安装并验证 CA 根证书"
-                                !httpInspectionEnabled -> "未就绪 · 需在 HTTPS 流量检查中开启"
-                                inspectionAppsCount == 0 -> "未就绪 · 需在 HTTPS 流量检查中选择目标应用"
-                                !addressRulesEnabled -> "已暂停 · 未启用解密 URL 过滤与重定向"
-                                else -> "运行中 · 解密流量匹配 URL 屏蔽、放行及重定向"
+                            if (dataset == RuleDataset.NORMAL) {
+                                val isAddressOperational = settings.isAddressRulesOperational(context)
+                                val urlRuleSubtitle = when {
+                                    !httpsReady -> "未就绪 · 需先安装并验证 CA 根证书"
+                                    !httpInspectionEnabled -> "未就绪 · 需在 HTTPS 流量检查中开启"
+                                    inspectionAppsCount == 0 -> "未就绪 · 需在 HTTPS 流量检查中选择目标应用"
+                                    !addressRulesEnabled -> "已暂停 · 未启用解密 URL 过滤与重定向"
+                                    else -> "运行中 · 解密流量匹配 URL 屏蔽、放行及重定向"
+                                }
+                                SettingsNavigationItem(
+                                    title = localizedText("URL 规则与内容过滤"),
+                                    subtitle = localizedText(urlRuleSubtitle),
+                                    value = localizedText(if (isAddressOperational) "运行中" else "未就绪"),
+                                    onClick = onNavigateToHttpInspection
+                                )
                             }
-                            SettingsNavigationItem(
-                                title = localizedText("URL 规则与内容过滤"),
-                                subtitle = localizedText(urlRuleSubtitle),
-                                value = localizedText(if (isAddressOperational) "运行中" else "未就绪"),
-                                onClick = onNavigateToHttpInspection
-                            )
                         }
                     )
                 )
@@ -149,7 +166,7 @@ fun RuleControlScreen(
                 SettingsGroupTitle(localizedText("拦截策略"))
             }
             item {
-                val dynamicConfig = AppRulesSettingsStore.getDynamicBlockResponseConfig(context)
+                val dynamicConfig = settings.dynamicBlockResponseConfig(context)
                 SettingsNavigationGroup(
                     items = listOf(
                         SettingsNavigationItemData(
@@ -157,7 +174,7 @@ fun RuleControlScreen(
                             subtitle = localizedText(if (dynamicConfig.enabled) {
                                 "动态策略：先 NODATA，高频请求后 NXDOMAIN"
                             } else {
-                                localizedText("当前：${localizedText(AppRulesSettingsStore.getBlockResponseMode(context).displayName)}")
+                                localizedText("当前：${localizedText(settings.blockResponseMode(context).displayName)}")
                             }),
                             onClick = onNavigateToBlockResponseSettings
                         )
@@ -209,9 +226,9 @@ fun RuleControlScreen(
                 AppRulesSettingsStore.setHttpInspectionEnabled(context, false)
                 httpInspectionEnabled = false
                 domainRulesEnabled = false
-                AppRulesSettingsStore.setDomainRulesEnabled(context, false)
+                settings.setMasterEnabled(context, false)
                 RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
-                RuntimeDnsSettingsRefresher.refreshIfRunning(context, "domain_rules_switch")
+                RuntimeDnsSettingsRefresher.refreshIfRunning(context, "domain_rules_switch", dataset)
                 onRuntimeDnsSettingsChanged()
             },
             onDismiss = { pendingLinkage = null }

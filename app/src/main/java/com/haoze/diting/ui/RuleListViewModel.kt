@@ -3,11 +3,12 @@ package com.haoze.diting.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.data.entity.SubscriptionEntity
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.data.entity.GoUrlRuleKind
-import com.haoze.diting.ui.settings.AppRulesSettingsStore
+import com.haoze.diting.ui.settings.RuleSettingsAccess
 import com.haoze.diting.vpn.AllowListManager
 import com.haoze.diting.vpn.BlockListManager
 import com.haoze.diting.vpn.RewriteRuleManager
@@ -19,9 +20,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class RuleListViewModel(application: Application) : AndroidViewModel(application) {
+class RuleListViewModel(
+    application: Application,
+    private val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
+    private val settings = RuleSettingsAccess(dataset)
+    private val db = RuleDatabases.forDataset(application, dataset)
     private val blockRuleDao = db.blockRuleDao()
     private val allowRuleDao = db.allowRuleDao()
     private val subscriptionDao = db.subscriptionDao()
@@ -115,17 +120,19 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
             val blockListManager = BlockListManager(blockRuleDao, scope = ruleScope)
             if (ruleKind.isUrlRule) {
                 GoUrlRuleManager(goUrlRuleDao).delete(id)
-                RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+                if (dataset == RuleDataset.NORMAL) {
+                    RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+                }
             } else if (ruleKind == ManagedRuleKind.REWRITE) {
                 rewriteRuleManager.deleteRule(id)
                 refreshRewriteRules(context)
             } else if (ruleKind == ManagedRuleKind.ALLOW) {
                 allowListManager.deleteRule(id)?.let {
-                    RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, "allow", it, ruleScope)
+                    RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, "allow", it, ruleScope, dataset)
                 }
             } else {
                 blockListManager.deleteRule(id)?.let {
-                    RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, "block", it, ruleScope)
+                    RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, "block", it, ruleScope, dataset)
                 }
             }
             loadAvailableAppScopes()
@@ -141,17 +148,19 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
             val blockListManager = BlockListManager(blockRuleDao, scope = ruleScope)
             if (ruleKind.isUrlRule) {
                 GoUrlRuleManager(goUrlRuleDao).setEnabled(id, enabled)
-                RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+                if (dataset == RuleDataset.NORMAL) {
+                    RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+                }
             } else if (ruleKind == ManagedRuleKind.REWRITE) {
                 rewriteRuleManager.toggleRule(id, enabled)
                 refreshRewriteRules(context)
             } else if (ruleKind == ManagedRuleKind.ALLOW) {
                 allowListManager.toggleRule(id, enabled)?.let {
-                    RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, "allow", it, ruleScope)
+                    RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, "allow", it, ruleScope, dataset)
                 }
             } else {
                 blockListManager.toggleRule(id, enabled)?.let {
-                    RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, "block", it, ruleScope)
+                    RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, "block", it, ruleScope, dataset)
                 }
             }
             loadPage(_currentPage.value)
@@ -159,15 +168,15 @@ class RuleListViewModel(application: Application) : AndroidViewModel(application
     }
 
     private fun refreshRewriteRules(context: Application) {
-        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, false, false, true, ruleScope)
+        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, false, false, true, ruleScope, dataset)
     }
 
     private suspend fun loadRules(query: String, limit: Int, offset: Int): List<RuleListItem> {
         val filter = _sourceFilter.value
         val source = filter.source
         val appScopeFilter = filter.appScope
-        val domainRulesEnabled = AppRulesSettingsStore.isDomainRulesEnabled(getApplication())
-        val addressRulesOperational = AppRulesSettingsStore.isAddressRulesFullyOperational(getApplication())
+        val domainRulesEnabled = settings.isMasterEnabled(getApplication())
+        val addressRulesOperational = settings.isAddressRulesOperational(getApplication())
 
         return if (ruleKind.isUrlRule) {
             val rules = goUrlRuleDao.byKind(ruleKind.goUrlRuleKind!!)

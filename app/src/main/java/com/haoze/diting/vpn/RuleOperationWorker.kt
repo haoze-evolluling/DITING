@@ -65,6 +65,7 @@ object RuleOperationScheduler {
     const val KEY_MIRROR_FALLBACK = "mirror_fallback"
     const val KEY_SCOPE = "scope"
     const val KEY_GROUP_ID = "group_id"
+    const val KEY_DATASET = "dataset"
 
     private const val UNIQUE_WORK_NAME = "manual_rule_operation_queue"
 
@@ -80,7 +81,8 @@ object RuleOperationScheduler {
         mirrorTemplate: String? = null,
         mirrorFallback: Boolean = true,
         groupId: Long = -1,
-        scope: String = com.haoze.diting.data.entity.RuleScope.DNS.storageValue
+        scope: String = com.haoze.diting.data.entity.RuleScope.DNS.storageValue,
+        dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
     ): OneTimeWorkRequest {
         val input = Data.Builder()
             .putString(KEY_TYPE, type.name)
@@ -94,6 +96,7 @@ object RuleOperationScheduler {
             .putBoolean(KEY_MIRROR_FALLBACK, mirrorFallback)
             .putLong(KEY_GROUP_ID, groupId)
             .putString(KEY_SCOPE, scope)
+            .putString(KEY_DATASET, dataset.name)
             .build()
         val builder = OneTimeWorkRequestBuilder<RuleOperationWorker>()
             .setInputData(input)
@@ -138,17 +141,29 @@ class RuleOperationWorker(
         setForeground(createForegroundInfo(title, -1, 0))
         setProgress(progressData(type, subscriptionId, -1, 0))
 
-        val database = AppDatabase.getInstance(applicationContext)
+        val dataset = runCatching {
+            com.haoze.diting.data.RuleDataset.valueOf(
+                inputData.getString(RuleOperationScheduler.KEY_DATASET).orEmpty()
+            )
+        }.getOrDefault(com.haoze.diting.data.RuleDataset.NORMAL)
+        val dataSources = com.haoze.diting.data.RuleDatabases.forDataset(applicationContext, dataset)
+        val database = com.haoze.diting.data.RuleDatabases.forDatasetDb(applicationContext, dataset)
         val ruleScope = com.haoze.diting.data.entity.RuleScope.fromStorage(
             inputData.getString(RuleOperationScheduler.KEY_SCOPE).orEmpty()
         )
-        val ruleIndexDirectory = RuleIndexLayout.scopeDirectory(applicationContext.filesDir, ruleScope)
-        val blockManager = BlockListManager(database.blockRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
-        val allowManager = AllowListManager(database.allowRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
-        val rewriteManager = RewriteRuleManager(database.rewriteRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
+        // The DNS dataset keeps pure in-memory caches; the mmap index files
+        // under rule-index/ are owned by the VPN mode.
+        val ruleIndexDirectory = if (dataset == com.haoze.diting.data.RuleDataset.DNS_MODE) {
+            null
+        } else {
+            RuleIndexLayout.scopeDirectory(applicationContext.filesDir, ruleScope)
+        }
+        val blockManager = BlockListManager(dataSources.blockRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
+        val allowManager = AllowListManager(dataSources.allowRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
+        val rewriteManager = RewriteRuleManager(dataSources.rewriteRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
         val subscriptionManager = SubscriptionManager(
             database,
-            database.subscriptionDao(),
+            dataSources.subscriptionDao(),
             blockManager,
             allowManager,
             rewriteManager,
@@ -173,7 +188,7 @@ class RuleOperationWorker(
 
         try {
             val result = SubscriptionUpdateCoordinator.runManual {
-                SubscriptionImportRecovery.recoverInterruptedImports(database)
+                SubscriptionImportRecovery.recoverInterruptedImports(database, dataSources)
                 execute(type, subscriptionId, blockManager, allowManager, rewriteManager, subscriptionManager)
             }
             val message = result.message
@@ -182,13 +197,15 @@ class RuleOperationWorker(
                     applicationContext,
                     "block",
                     AdGuardRuleParser.parseLine(inputData.getString(RuleOperationScheduler.KEY_PATTERN).orEmpty())?.pattern.orEmpty(),
-                    ruleScope
+                    ruleScope,
+                    dataset
                 )
                 RuleOperationType.ADD_ALLOW_RULE -> RuntimeDnsSettingsRefresher.syncRuleIfRunning(
                     applicationContext,
                     "allow",
                     AdGuardRuleParser.parseAllowLine(inputData.getString(RuleOperationScheduler.KEY_PATTERN).orEmpty())?.pattern.orEmpty(),
-                    ruleScope
+                    ruleScope,
+                    dataset
                 )
                 RuleOperationType.IMPORT_ADDRESS_RULE_BACKUP -> {
                     RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(applicationContext)
@@ -209,9 +226,12 @@ class RuleOperationWorker(
                             refreshBlock = true,
                             refreshAllow = true,
                             refreshRewrite = true,
-                            scope = ruleScope
+                            scope = ruleScope,
+                            dataset = dataset
                         )
-                        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(applicationContext)
+                        if (dataset == com.haoze.diting.data.RuleDataset.NORMAL) {
+                            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(applicationContext)
+                        }
                     }
                 }
             }

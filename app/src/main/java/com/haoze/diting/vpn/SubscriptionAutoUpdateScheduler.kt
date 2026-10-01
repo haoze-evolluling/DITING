@@ -59,18 +59,32 @@ object SubscriptionAutoUpdateScheduler {
     const val WORK_TAG = "subscription_auto_update_work"
     private const val WORK_NAME = "subscription_auto_update"
     private const val RETRY_WORK_NAME = "subscription_auto_update_retry"
+    private const val DNS_WORK_NAME = "subscription_auto_update_dns"
+    private const val DNS_RETRY_WORK_NAME = "subscription_auto_update_dns_retry"
 
+    /** Reconciles the periodic work of every dataset with its own settings. */
     fun sync(context: Context) {
+        sync(context, com.haoze.diting.data.RuleDataset.NORMAL)
+        sync(context, com.haoze.diting.data.RuleDataset.DNS_MODE)
+    }
+
+    fun sync(context: Context, dataset: com.haoze.diting.data.RuleDataset) {
         val appContext = context.applicationContext
         val manager = WorkManager.getInstance(appContext)
-        if (!SubscriptionAutoUpdateSettings.isEnabled(appContext)) {
-            manager.cancelUniqueWork(WORK_NAME)
-            manager.cancelUniqueWork(RETRY_WORK_NAME)
+        val workName = workNameFor(dataset)
+        val retryWorkName = retryWorkNameFor(dataset)
+        val settings = com.haoze.diting.ui.settings.RuleSettingsAccess(dataset)
+        if (!settings.autoUpdateEnabled(appContext)) {
+            manager.cancelUniqueWork(workName)
+            manager.cancelUniqueWork(retryWorkName)
             return
         }
-        val hours = SubscriptionAutoUpdateSettings.intervalHours(appContext)
+        val hours = settings.autoUpdateIntervalHours(appContext)
         val request = PeriodicWorkRequestBuilder<SubscriptionAutoUpdateWorker>(hours.toLong(), TimeUnit.HOURS)
             .addTag(WORK_TAG)
+            .setInputData(
+                workDataOf(RuleOperationScheduler.KEY_DATASET to dataset.name)
+            )
             .setConstraints(
                 Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -78,14 +92,23 @@ object SubscriptionAutoUpdateScheduler {
             )
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .build()
-        manager.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
+        manager.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
-    fun scheduleRetry(context: Context, batchId: String) {
+    fun scheduleRetry(
+        context: Context,
+        batchId: String,
+        dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
+    ) {
         val appContext = context.applicationContext
         val request = OneTimeWorkRequestBuilder<SubscriptionAutoUpdateRetryWorker>()
             .addTag(WORK_TAG)
-            .setInputData(workDataOf(SubscriptionAutoUpdateRetryWorker.KEY_BATCH_ID to batchId))
+            .setInputData(
+                workDataOf(
+                    SubscriptionAutoUpdateRetryWorker.KEY_BATCH_ID to batchId,
+                    RuleOperationScheduler.KEY_DATASET to dataset.name
+                )
+            )
             .setInitialDelay(30, TimeUnit.SECONDS)
             .setConstraints(
                 Constraints.Builder()
@@ -95,10 +118,20 @@ object SubscriptionAutoUpdateScheduler {
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .build()
         WorkManager.getInstance(appContext).enqueueUniqueWork(
-            RETRY_WORK_NAME,
+            retryWorkNameFor(dataset),
             ExistingWorkPolicy.REPLACE,
             request
         )
+    }
+
+    private fun workNameFor(dataset: com.haoze.diting.data.RuleDataset): String = when (dataset) {
+        com.haoze.diting.data.RuleDataset.NORMAL -> WORK_NAME
+        com.haoze.diting.data.RuleDataset.DNS_MODE -> DNS_WORK_NAME
+    }
+
+    private fun retryWorkNameFor(dataset: com.haoze.diting.data.RuleDataset): String = when (dataset) {
+        com.haoze.diting.data.RuleDataset.NORMAL -> RETRY_WORK_NAME
+        com.haoze.diting.data.RuleDataset.DNS_MODE -> DNS_RETRY_WORK_NAME
     }
 }
 
@@ -107,8 +140,13 @@ class SubscriptionAutoUpdateWorker(
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = coroutineScope {
+        val dataset = runCatching {
+            com.haoze.diting.data.RuleDataset.valueOf(
+                inputData.getString(RuleOperationScheduler.KEY_DATASET).orEmpty()
+            )
+        }.getOrDefault(com.haoze.diting.data.RuleDataset.NORMAL)
         try {
-            when (val result = SubscriptionAutoUpdateEngine.executePeriodic(applicationContext) { progress ->
+            when (val result = SubscriptionAutoUpdateEngine.executePeriodic(applicationContext, dataset) { progress ->
                 setProgress(progress)
             }) {
                 is SubscriptionAutoUpdateEngine.ExecutionResult.Completed -> {
@@ -141,9 +179,15 @@ class SubscriptionAutoUpdateRetryWorker(
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result = coroutineScope {
         val batchId = inputData.getString(KEY_BATCH_ID) ?: return@coroutineScope Result.success()
+        val dataset = runCatching {
+            com.haoze.diting.data.RuleDataset.valueOf(
+                inputData.getString(RuleOperationScheduler.KEY_DATASET).orEmpty()
+            )
+        }.getOrDefault(com.haoze.diting.data.RuleDataset.NORMAL)
         try {
             when (val result = SubscriptionAutoUpdateEngine.executeRetry(
                 applicationContext,
+                dataset,
                 batchId,
                 runAttemptCount
             ) { progress ->

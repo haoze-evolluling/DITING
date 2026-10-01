@@ -6,7 +6,8 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.data.entity.MirrorTemplateEntity
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.vpn.RuleOperationScheduler
@@ -19,15 +20,23 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class RuleManagementViewModel(application: Application) : AndroidViewModel(application) {
+class RuleManagementViewModel(
+    application: Application,
+    private val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
 
     private var ruleScope = RuleScope.DNS
     private var addressOnly = false
-    private fun rewriteRuleManager() = RewriteRuleManager(AppDatabase.getInstance(getApplication<Application>()).rewriteRuleDao(), java.io.File(getApplication<Application>().filesDir, "rule-index"), ruleScope)
+    private fun rewriteRuleManager() = RewriteRuleManager(
+        RuleDatabases.forDataset(getApplication<Application>(), dataset).rewriteRuleDao(),
+        // The DNS dataset keeps pure in-memory caches; rule-index/ belongs to VPN mode.
+        if (dataset == RuleDataset.NORMAL) java.io.File(getApplication<Application>().filesDir, "rule-index") else null,
+        ruleScope
+    )
 
     private val _rewriteRuleCount = MutableStateFlow(0)
     val rewriteRuleCount: StateFlow<Int> = _rewriteRuleCount.asStateFlow()
-    val mirrorTemplates = AppDatabase.getInstance(application).mirrorTemplateDao().observeAll()
+    val mirrorTemplates = RuleDatabases.forDataset(application, dataset).mirrorTemplateDao().observeAll()
 
     private var activated = false
 
@@ -44,10 +53,9 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
     fun loadRuleCount() {
         val scope = ruleScope
         viewModelScope.launch(Dispatchers.IO) {
-            val database = AppDatabase.getInstance(getApplication<Application>())
             val rewriteCount = RewriteRuleManager(
-                database.rewriteRuleDao(),
-                java.io.File(getApplication<Application>().filesDir, "rule-index"),
+                RuleDatabases.forDataset(getApplication<Application>(), dataset).rewriteRuleDao(),
+                if (dataset == RuleDataset.NORMAL) java.io.File(getApplication<Application>().filesDir, "rule-index") else null,
                 scope
             ).count()
             withContext(Dispatchers.Main) {
@@ -89,7 +97,7 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
             val success = rewriteRuleManager().addRule(domain, targetType, targetValue)
             if (success) {
                 RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                    getApplication(), false, false, true, scope
+                    getApplication(), false, false, true, scope, dataset
                 )
             }
             withContext(Dispatchers.Main) {
@@ -103,7 +111,7 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching {
                 validateMirrorTemplate(name, template)
-                AppDatabase.getInstance(getApplication<Application>()).mirrorTemplateDao().insert(
+                RuleDatabases.forDataset(getApplication<Application>(), dataset).mirrorTemplateDao().insert(
                     MirrorTemplateEntity(name = name.trim(), template = template.trim())
                 )
             }
@@ -121,7 +129,7 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
         viewModelScope.launch(Dispatchers.IO) {
             val result = runCatching {
                 validateMirrorTemplate(name, address)
-                AppDatabase.getInstance(getApplication<Application>()).mirrorTemplateDao().update(
+                RuleDatabases.forDataset(getApplication<Application>(), dataset).mirrorTemplateDao().update(
                     template.copy(name = name.trim(), template = address.trim())
                 )
             }
@@ -137,7 +145,7 @@ class RuleManagementViewModel(application: Application) : AndroidViewModel(appli
 
     fun deleteMirrorTemplate(template: MirrorTemplateEntity) {
         viewModelScope.launch(Dispatchers.IO) {
-            AppDatabase.getInstance(getApplication<Application>()).mirrorTemplateDao().delete(template)
+            RuleDatabases.forDataset(getApplication<Application>(), dataset).mirrorTemplateDao().delete(template)
         }
     }
 

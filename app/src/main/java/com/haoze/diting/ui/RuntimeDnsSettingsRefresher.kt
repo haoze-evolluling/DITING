@@ -3,6 +3,7 @@ package com.haoze.diting.ui
 import android.content.Context
 import android.util.Log
 import com.haoze.diting.data.entity.RuleScope
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.dnsmode.backend.DnsModeService
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
@@ -11,8 +12,16 @@ import com.haoze.diting.vpn.DnsVpnService
 object RuntimeDnsSettingsRefresher {
     private const val TAG = "RuntimeDnsRefresh"
 
-    fun refreshIfRunning(context: Context, reason: String = "settings_changed") {
+    fun refreshIfRunning(
+        context: Context,
+        reason: String = "settings_changed",
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) {
         val appContext = context.applicationContext
+        if (dataset == RuleDataset.DNS_MODE) {
+            pingDnsModeFilterReload(appContext, "Failed to request DNS mode filter reload")
+            return
+        }
         if (!DnsVpnService.isRunning(appContext)) return
 
         runCatching {
@@ -20,23 +29,26 @@ object RuntimeDnsSettingsRefresher {
         }.onFailure { error ->
             Log.w(TAG, "Failed to request DNS runtime config refresh", error)
         }
-        pingDnsModeFilterReload(appContext, "Failed to request DNS mode filter reload")
     }
 
     fun syncRuleIfRunning(
         context: Context,
         ruleType: String,
         pattern: String,
-        scope: RuleScope = RuleScope.DNS
+        scope: RuleScope = RuleScope.DNS,
+        dataset: RuleDataset = RuleDataset.NORMAL
     ) {
         val appContext = context.applicationContext
+        if (dataset == RuleDataset.DNS_MODE) {
+            pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule sync")
+            return
+        }
         if (!DnsVpnService.isRunning(appContext)) return
         runCatching {
             appContext.startService(DnsVpnService.syncRuleIntent(appContext, ruleType, pattern, scope))
         }.onFailure { error ->
             Log.w(TAG, "Failed to request incremental rule cache sync", error)
         }
-        pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule sync")
     }
 
     fun refreshRuleIndexesIfRunning(
@@ -44,9 +56,14 @@ object RuntimeDnsSettingsRefresher {
         refreshBlock: Boolean,
         refreshAllow: Boolean,
         refreshRewrite: Boolean,
-        scope: RuleScope = RuleScope.DNS
+        scope: RuleScope = RuleScope.DNS,
+        dataset: RuleDataset = RuleDataset.NORMAL
     ) {
         val appContext = context.applicationContext
+        if (dataset == RuleDataset.DNS_MODE) {
+            pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule index refresh")
+            return
+        }
         if (!DnsVpnService.isRunning(appContext)) return
         runCatching {
             appContext.startService(
@@ -55,7 +72,6 @@ object RuntimeDnsSettingsRefresher {
         }.onFailure { error ->
             Log.w(TAG, "Failed to request rule index refresh", error)
         }
-        pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule index refresh")
     }
 
     fun syncHttpsRequestRulesIfRunning(context: Context) {
@@ -91,8 +107,9 @@ object RuntimeDnsSettingsRefresher {
     }
 
     /**
-     * DNS mode shares the normal mode's rule base; when rules change while its
-     * service is running, trigger a full in-memory reload via ACTION_REFRESH.
+     * Rule datasets are fully isolated, so a DNS dataset change reloads the DNS
+     * mode filter (full in-memory reload via ACTION_REFRESH) while a normal
+     * dataset change only ever touches the VPN service.
      */
     private fun pingDnsModeFilterReload(appContext: Context, logMessage: String) {
         if (WorkModeStore.getAppWorkMode(appContext) != AppWorkMode.DNS) return

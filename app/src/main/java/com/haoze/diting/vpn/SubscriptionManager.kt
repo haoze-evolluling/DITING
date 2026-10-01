@@ -1,7 +1,7 @@
 package com.haoze.diting.vpn
 
 import android.util.Log
-import com.haoze.diting.data.AppDatabase
+import androidx.room.RoomDatabase
 import com.haoze.diting.data.dao.SubscriptionDao
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.data.entity.SubscriptionEntity
@@ -24,7 +24,7 @@ import java.io.Reader
  * Uses chunked batch imports to keep large rule lists from janking the UI.
  */
 class SubscriptionManager(
-    private val database: AppDatabase,
+    private val database: RoomDatabase,
     private val subscriptionDao: SubscriptionDao,
     private val blockListManager: BlockListManager,
     private val allowListManager: AllowListManager,

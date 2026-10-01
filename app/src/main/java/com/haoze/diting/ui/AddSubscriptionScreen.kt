@@ -20,7 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.data.entity.SubscriptionKind
 import com.haoze.diting.ui.components.SettingsActionButton
@@ -40,8 +45,13 @@ fun AddSubscriptionScreen(
     ruleScope: RuleScope = RuleScope.DNS,
     initialKind: String = SubscriptionKind.DOMAIN,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
-    viewModel: SubscriptionViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
+    val app = LocalContext.current.applicationContext as Application
+    val viewModel: SubscriptionViewModel = viewModel(
+        key = "add_subscription_${dataset.name}",
+        factory = viewModelFactory { initializer { SubscriptionViewModel(app, dataset) } }
+    )
     NavigationSettledEffect(ruleScope) {
         viewModel.activate(ruleScope)
     }

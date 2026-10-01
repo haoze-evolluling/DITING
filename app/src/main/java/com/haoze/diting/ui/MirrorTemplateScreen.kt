@@ -30,7 +30,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.MirrorTemplateEntity
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsGroupTitle
@@ -55,8 +60,13 @@ private val mirrorTemplatePlaceholders = listOf(
 fun MirrorTemplateScreen(
     onBack: () -> Unit,
     onNavigateToFormatGuide: () -> Unit,
-    viewModel: RuleManagementViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
+    val app = LocalContext.current.applicationContext as Application
+    val viewModel: RuleManagementViewModel = viewModel(
+        key = "mirror_${dataset.name}",
+        factory = viewModelFactory { initializer { RuleManagementViewModel(app, dataset) } }
+    )
     val templates by viewModel.mirrorTemplates.collectAsStateWithLifecycle(initialValue = emptyList())
     var showAddDialog by remember { mutableStateOf(false) }
     var editingTemplate by remember { mutableStateOf<MirrorTemplateEntity?>(null) }

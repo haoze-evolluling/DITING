@@ -3,12 +3,13 @@ package com.haoze.diting.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.data.entity.BlockRuleEntity
 import com.haoze.diting.data.entity.GoUrlRuleEntity
 import com.haoze.diting.data.entity.GoUrlRuleKind
 import com.haoze.diting.data.entity.RuleScope
-import com.haoze.diting.ui.settings.AppRulesSettingsStore
+import com.haoze.diting.ui.settings.RuleSettingsAccess
 import com.haoze.diting.vpn.AdGuardRuleParser
 import com.haoze.diting.vpn.BlockListManager
 import com.haoze.diting.vpn.GoUrlRuleManager
@@ -59,9 +60,13 @@ data class BlacklistStats(
     val totalActive: Int = 0
 )
 
-class BlacklistViewModel(application: Application) : AndroidViewModel(application) {
+class BlacklistViewModel(
+    application: Application,
+    private val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
+    private val settings = RuleSettingsAccess(dataset)
+    private val db = RuleDatabases.forDataset(application, dataset)
     private val blockRuleDao = db.blockRuleDao()
     private val goUrlRuleDao = db.goUrlRuleDao()
     private val subscriptionDao = db.subscriptionDao()
@@ -120,8 +125,8 @@ class BlacklistViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun loadStats() {
         viewModelScope.launch(Dispatchers.IO) {
-            val domainRulesEnabled = AppRulesSettingsStore.isDomainRulesEnabled(getApplication())
-            val addressRulesOperational = AppRulesSettingsStore.isAddressRulesFullyOperational(getApplication())
+            val domainRulesEnabled = settings.isMasterEnabled(getApplication())
+            val addressRulesOperational = settings.isAddressRulesOperational(getApplication())
 
             val totalDomains = if (domainRulesEnabled) blockRuleDao.enabledPatternsCount() else 0
             val userTotal = blockRuleDao.userRulesCount()
@@ -144,8 +149,8 @@ class BlacklistViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch(Dispatchers.IO) {
             val query = _searchQuery.value.trim()
             val currentFilter = _filter.value
-            val domainRulesEnabled = AppRulesSettingsStore.isDomainRulesEnabled(getApplication())
-            val addressRulesOperational = AppRulesSettingsStore.isAddressRulesFullyOperational(getApplication())
+            val domainRulesEnabled = settings.isMasterEnabled(getApplication())
+            val addressRulesOperational = settings.isAddressRulesOperational(getApplication())
 
             // 1. Collect applicable URL block rules (URL rule entries are few, so filter in memory)
             val allUrlEntities = when (currentFilter) {
@@ -282,7 +287,8 @@ class BlacklistViewModel(application: Application) : AndroidViewModel(applicatio
                         getApplication(),
                         "block",
                         it,
-                        RuleScope.DNS
+                        RuleScope.DNS,
+                        dataset = dataset
                     )
                 }
             } else {
@@ -301,7 +307,8 @@ class BlacklistViewModel(application: Application) : AndroidViewModel(applicatio
                         getApplication(),
                         "block",
                         it,
-                        RuleScope.DNS
+                        RuleScope.DNS,
+                        dataset = dataset
                     )
                 }
             } else {
@@ -328,6 +335,9 @@ class BlacklistViewModel(application: Application) : AndroidViewModel(applicatio
                 raw.startsWith("||https://", ignoreCase = true)
 
         if (isHttpUrl) {
+            if (dataset == RuleDataset.DNS_MODE) {
+                return@withContext Result.failure(IllegalArgumentException("URL 规则仅普通模式支持"))
+            }
             val line = if (raw.startsWith("||")) raw.removePrefix("||") else raw
             val success = goUrlRuleManager.addRule(line)
             if (success) {
@@ -439,12 +449,16 @@ class BlacklistViewModel(application: Application) : AndroidViewModel(applicatio
             refreshBlock = true,
             refreshAllow = false,
             refreshRewrite = false,
-            scope = RuleScope.DNS
+            scope = RuleScope.DNS,
+            dataset = dataset
         )
     }
 
     private fun syncUrlRules() {
-        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(getApplication())
+        // URL rules only matter to the VPN mode's traffic inspection.
+        if (dataset == RuleDataset.NORMAL) {
+            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(getApplication())
+        }
     }
 
     private fun BlockRuleEntity.toItem(

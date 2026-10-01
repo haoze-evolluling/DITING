@@ -35,7 +35,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.Application
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RewriteTargetType
 import com.haoze.diting.ui.components.RuleFilterChipRow
 import com.haoze.diting.ui.components.RuleListCountHeader
@@ -51,8 +55,13 @@ import com.haoze.diting.ui.components.masterDisabledMessage
 fun RewriteListScreen(
     onBack: () -> Unit,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
-    viewModel: RewriteListViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
+    val app = LocalContext.current.applicationContext as Application
+    val viewModel: RewriteListViewModel = viewModel(
+        key = "rewrite_${dataset.name}",
+        factory = viewModelFactory { initializer { RewriteListViewModel(app, dataset) } }
+    )
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 

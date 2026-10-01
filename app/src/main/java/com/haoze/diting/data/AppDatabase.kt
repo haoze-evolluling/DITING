@@ -63,20 +63,20 @@ import com.haoze.diting.ui.settings.SystemSettingsStore
     version = 1,
     exportSchema = false
 )
-abstract class AppDatabase : RoomDatabase() {
+abstract class AppDatabase : RoomDatabase(), RuleDataSources {
     abstract fun dnsCacheDao(): DnsCacheDao
     abstract fun dnsLogDao(): DnsLogDao
     abstract fun httpRequestLogDao(): HttpRequestLogDao
     abstract fun raceLogDao(): RaceLogDao
     abstract fun bootstrapLogDao(): BootstrapLogDao
-    abstract fun blockRuleDao(): BlockRuleDao
-    abstract fun allowRuleDao(): AllowRuleDao
-    abstract fun subscriptionDao(): SubscriptionDao
-    abstract fun subscriptionGroupDao(): SubscriptionGroupDao
-    abstract fun subscriptionAutoUpdateDao(): SubscriptionAutoUpdateDao
-    abstract fun mirrorTemplateDao(): MirrorTemplateDao
-    abstract fun rewriteRuleDao(): RewriteRuleDao
-    abstract fun goUrlRuleDao(): GoUrlRuleDao
+    abstract override fun blockRuleDao(): BlockRuleDao
+    abstract override fun allowRuleDao(): AllowRuleDao
+    abstract override fun subscriptionDao(): SubscriptionDao
+    abstract override fun subscriptionGroupDao(): SubscriptionGroupDao
+    abstract override fun subscriptionAutoUpdateDao(): SubscriptionAutoUpdateDao
+    abstract override fun mirrorTemplateDao(): MirrorTemplateDao
+    abstract override fun rewriteRuleDao(): RewriteRuleDao
+    abstract override fun goUrlRuleDao(): GoUrlRuleDao
     abstract fun appTrafficDao(): AppTrafficDao
 
     companion object {

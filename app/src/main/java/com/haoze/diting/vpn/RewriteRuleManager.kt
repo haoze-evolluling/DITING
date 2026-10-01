@@ -98,6 +98,20 @@ class RewriteRuleManager(
             if (ips.isNotEmpty()) put(pattern, ips)
         }
     }
+    /**
+     * Exact-match lookup of enabled rewrite answers for one query domain,
+     * merging the mmap subscription index (when present), the in-memory
+     * subscription fallback map, and manual rules.
+     */
+    fun answersFor(domain: String): Set<RewriteAnswer> = buildSet {
+        val key = domain.removeSuffix(".").lowercase()
+        subscriptionIndex?.let { index -> addAll(index.find(key)) }
+        if (subscriptionIndex == null) {
+            subscriptionFallbackRules[key]?.let { addAll(it) }
+        }
+        manualRules[key]?.let { addAll(it) }
+    }
+
     suspend fun addRule(domain: String, targetType: String, targetValue: String): Boolean {
         if (targetType !in setOf(RewriteTargetType.IPV4, RewriteTargetType.IPV6, RewriteTargetType.CNAME)) return false
         val normalized = AdGuardRuleParser.normalizeDomainForRewrite(domain) ?: return false

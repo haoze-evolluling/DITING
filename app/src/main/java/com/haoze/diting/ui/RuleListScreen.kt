@@ -33,7 +33,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.components.AppAlertDialog
 import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.RuleListEmptyState
@@ -54,8 +59,13 @@ fun RuleListScreen(
     ruleKind: ManagedRuleKind = ManagedRuleKind.BLOCK,
     ruleScope: RuleScope = RuleScope.DNS,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
-    viewModel: RuleListViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
+    val app = LocalContext.current.applicationContext as Application
+    val viewModel: RuleListViewModel = viewModel(
+        key = "rule_list_${dataset.name}",
+        factory = viewModelFactory { initializer { RuleListViewModel(app, dataset) } }
+    )
     val rules by viewModel.rules.collectAsStateWithLifecycle()
     val currentPage by viewModel.currentPage.collectAsStateWithLifecycle()
     val totalPages by viewModel.totalPages.collectAsStateWithLifecycle()

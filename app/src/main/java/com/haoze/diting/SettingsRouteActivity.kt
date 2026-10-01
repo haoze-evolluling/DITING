@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
 import com.haoze.diting.data.RequestSource
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.dnsmode.backend.DnsModeManager
@@ -47,6 +48,10 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         get() = intent.getStringExtra(EXTRA_RULE_KIND)?.let { value ->
             runCatching { ManagedRuleKind.valueOf(value) }.getOrNull()
         }
+    private val requestedRuleDataset: RuleDataset
+        get() = intent.getStringExtra(EXTRA_RULE_DATASET)?.let { value ->
+            runCatching { RuleDataset.valueOf(value) }.getOrNull()
+        } ?: RuleDataset.NORMAL
     private val requestedRequestSource: RequestSource?
         get() = intent.getStringExtra(EXTRA_REQUEST_SOURCE)?.let { value ->
             runCatching { RequestSource.valueOf(value) }.getOrNull()
@@ -90,6 +95,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     route = route,
                     ruleScope = requestedRuleScope,
                     ruleKind = requestedRuleKind,
+                    ruleDataset = requestedRuleDataset,
                     requestedTitle = requestedTitle,
                     outboundProxyAppSelectionResult = outboundProxyAppSelectionResult,
                     onBack = ::finishSettings,
@@ -258,6 +264,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         route: String,
         ruleScope: RuleScope?,
         ruleKind: ManagedRuleKind?,
+        ruleDataset: RuleDataset,
         requestedTitle: String?,
         outboundProxyAppSelectionResult: Pair<Boolean, String?>?,
         onBack: () -> Unit,
@@ -279,19 +286,19 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         when (route) {
             Routes.SETTINGS -> SettingsScreen(onBack, onNavigate)
             Routes.LANGUAGE_SETTINGS -> LanguageSettingsScreen(::finishSettings, ::applyLanguage)
-            Routes.RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
-            Routes.RULE_CONTROL -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
+            Routes.RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
+            Routes.RULE_CONTROL -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
             Routes.APP_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.APP_ALLOWLIST) { AppRuleManagementScreen(onBack) }
-            Routes.WHITELIST_MANAGEMENT -> WhitelistScreen(onBack, onRuntimeDnsSettingsChanged)
-            Routes.BLACKLIST_MANAGEMENT -> BlacklistScreen(onBack, onRuntimeDnsSettingsChanged)
-            Routes.REWRITELIST_MANAGEMENT -> RewriteListScreen(onBack, onRuntimeDnsSettingsChanged)
-            Routes.DOMAIN_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
-            Routes.ADDRESS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
-            Routes.RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.BLOCK, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-            Routes.ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.ALLOW, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-            Routes.REWRITE_RULE_LIST -> RewriteListScreen(onBack, onRuntimeDnsSettingsChanged)
-            Routes.ADDRESS_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.URL_BLOCK, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
-            Routes.ADDRESS_ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.URL_ALLOW, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged)
+            Routes.WHITELIST_MANAGEMENT -> WhitelistScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
+            Routes.BLACKLIST_MANAGEMENT -> BlacklistScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
+            Routes.REWRITELIST_MANAGEMENT -> RewriteListScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
+            Routes.DOMAIN_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
+            Routes.ADDRESS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
+            Routes.RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.BLOCK, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged, dataset = ruleDataset)
+            Routes.ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.ALLOW, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged, dataset = ruleDataset)
+            Routes.REWRITE_RULE_LIST -> RewriteListScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
+            Routes.ADDRESS_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.URL_BLOCK, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged, dataset = ruleDataset)
+            Routes.ADDRESS_ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ManagedRuleKind.URL_ALLOW, ruleScope = RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged, dataset = ruleDataset)
             Routes.EXCLUDED_APPS -> SettingsGuideHost(SettingsGuides.EXCLUDED_APPS) { ExcludedAppsScreen(onBack) }
             Routes.OUTBOUND_PROXY_SETTINGS -> OutboundProxySettingsScreen(
                 onBack = onBack,
@@ -299,7 +306,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 selectedAppOverride = outboundProxyAppSelectionResult
             )
             Routes.OUTBOUND_PROXY_APP_SELECTION -> OutboundProxyAppsScreen(onBack, ::finishOutboundProxyAppSelection)
-            Routes.BLOCK_RESPONSE_SETTINGS -> BlockResponseSettingsScreen(onBack, onRuntimeDnsSettingsChanged)
+            Routes.BLOCK_RESPONSE_SETTINGS -> BlockResponseSettingsScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
             Routes.AGENT_API_SETTINGS -> AgentApiSettingsScreen(onBack, onNavigate = onNavigate)
             Routes.AI_PROVIDER_MANAGEMENT,
             Routes.AGENT_API_CREDENTIALS,
@@ -345,13 +352,15 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 onBack = onBack,
                 ruleScope = ruleScope ?: RuleScope.DNS,
                 onNavigateToAddSubscription = { onNavigate(Routes.ADD_SUBSCRIPTION) },
-                onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+                onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged,
+                dataset = ruleDataset
             )
-            Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL -> SubscriptionAutoUpdateIntervalScreen(onBack)
+            Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL -> SubscriptionAutoUpdateIntervalScreen(onBack, dataset = ruleDataset)
             Routes.ADD_SUBSCRIPTION -> AddSubscriptionScreen(
                 onBack = onBack,
                 ruleScope = ruleScope ?: RuleScope.DNS,
-                onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+                onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged,
+                dataset = ruleDataset
             )
             Routes.ABOUT -> AboutScreen(onBack, "应用信息")
             Routes.APP_UPDATE -> AppUpdateScreen(appUpdateState, onBack, onCheckForAppUpdate, onDownloadAppUpdate, onJoinQqGroup, startupUpdateCheckDisabled, onStartupUpdateCheckDisabledChange)
@@ -380,7 +389,8 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.CUSTOM_BACKGROUND_SETTINGS -> CustomBackgroundSettingsScreen(onBack, "软件背景", onCustomBackgroundChanged)
             Routes.MIRROR_TEMPLATES -> MirrorTemplateScreen(
                 onBack = onBack,
-                onNavigateToFormatGuide = { onNavigate(Routes.MIRROR_FORMAT_GUIDE) }
+                onNavigateToFormatGuide = { onNavigate(Routes.MIRROR_FORMAT_GUIDE) },
+                dataset = ruleDataset
             )
             Routes.MIRROR_FORMAT_GUIDE -> MirrorFormatGuideScreen(onBack)
             Routes.SPONSOR -> SponsorScreen(onBack, "赞助")
@@ -444,7 +454,8 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             ruleScope: RuleScope? = null,
             ruleKind: ManagedRuleKind? = null,
             title: String? = null,
-            requestSource: RequestSource? = null
+            requestSource: RequestSource? = null,
+            dataset: RuleDataset? = null
         ): Intent = Intent(context, SettingsRouteActivity::class.java)
             .putExtra(EXTRA_ROUTE, route)
             .apply {
@@ -452,10 +463,12 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 ruleKind?.let { putExtra(EXTRA_RULE_KIND, it.name) }
                 title?.let { putExtra(EXTRA_TITLE, it) }
                 requestSource?.let { putExtra(EXTRA_REQUEST_SOURCE, it.name) }
+                dataset?.let { putExtra(EXTRA_RULE_DATASET, it.name) }
             }
 
         const val EXTRA_RULE_SCOPE = "settings_rule_scope"
         const val EXTRA_RULE_KIND = "settings_rule_kind"
+        const val EXTRA_RULE_DATASET = "settings_rule_dataset"
         const val EXTRA_TITLE = "settings_title"
     }
 }

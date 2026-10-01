@@ -134,12 +134,13 @@ class DnsModeService : Service() {
 
     /**
      * Reloads the rule base on every start and every config refresh, so rule
-     * edits made in normal mode apply on the next refresh instead of waiting
-     * for a service restart.
+     * edits made in the DNS mode rule screens apply on the next refresh
+     * instead of waiting for a service restart. Rewrite (hosts) answers work
+     * regardless of the filtering master switch, so rules load unconditionally;
+     * blocking itself is gated in the engine.
      */
     private fun ensureFilterLoaded() {
         val filter = queryFilter ?: return
-        if (!DnsModeManager.config.value.adBlockEnabled) return
         filter.reloadAsync()
     }
 

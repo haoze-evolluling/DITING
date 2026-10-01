@@ -4,12 +4,15 @@ import android.content.Context
 import android.util.Log
 import androidx.work.Data
 import androidx.work.workDataOf
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataSources
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.dao.SubscriptionAutoUpdateDao
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.data.entity.SubscriptionAutoUpdateItemEntity
 import com.haoze.diting.data.entity.SubscriptionAutoUpdateItemStatus
 import com.haoze.diting.ui.RuntimeDnsSettingsRefresher
+import com.haoze.diting.ui.settings.RuleSettingsAccess
 import java.util.UUID
 
 /**
@@ -37,17 +40,19 @@ object SubscriptionAutoUpdateEngine {
      */
     suspend fun executePeriodic(
         context: Context,
+        dataset: RuleDataset = RuleDataset.NORMAL,
         onProgress: suspend (Data) -> Unit
     ): ExecutionResult {
         val appContext = context.applicationContext
-        if (!SubscriptionAutoUpdateSettings.isEnabled(appContext)) {
+        if (!RuleSettingsAccess(dataset).autoUpdateEnabled(appContext)) {
             Log.i(TAG, "Automatic update is disabled in settings; skipping periodic execution")
             return ExecutionResult.Completed(hasPendingRetry = false, hasChanges = false)
         }
 
-        val database = AppDatabase.getInstance(appContext)
-        val batchDao = database.subscriptionAutoUpdateDao()
-        val subscriptions = database.subscriptionDao().allAutoUpdatableRemote()
+        val dataSources = RuleDatabases.forDataset(appContext, dataset)
+        val database = RuleDatabases.forDatasetDb(appContext, dataset)
+        val batchDao = dataSources.subscriptionAutoUpdateDao()
+        val subscriptions = dataSources.subscriptionDao().allAutoUpdatableRemote()
 
         if (subscriptions.isEmpty()) {
             Log.i(TAG, "No auto-updatable remote subscriptions found")
@@ -58,10 +63,10 @@ object SubscriptionAutoUpdateEngine {
         var changed = false
         var aborted = false
 
-        val managers = createManagers(appContext, database)
+        val managers = createManagers(appContext, dataset)
 
         val ran = SubscriptionUpdateCoordinator.runAutomatic { shouldStop ->
-            SubscriptionImportRecovery.recoverInterruptedImports(database)
+            SubscriptionImportRecovery.recoverInterruptedImports(database, dataSources)
 
             for ((index, subscription) in subscriptions.withIndex()) {
                 if (shouldStop()) {
@@ -98,17 +103,17 @@ object SubscriptionAutoUpdateEngine {
         }
 
         if (changed) {
-            rebuildCachesAndNotifyRuntime(appContext, managers)
+            rebuildCachesAndNotifyRuntime(appContext, dataset, managers)
         }
 
         val pendingRetries = batchDao.byStatus(batchId, SubscriptionAutoUpdateItemStatus.PENDING_RETRY)
         return if (pendingRetries.isNotEmpty()) {
             Log.i(TAG, "Batch $batchId has ${pendingRetries.size} items pending retry; scheduling retry worker")
-            SubscriptionAutoUpdateScheduler.scheduleRetry(appContext, batchId)
+            SubscriptionAutoUpdateScheduler.scheduleRetry(appContext, batchId, dataset)
             ExecutionResult.Completed(hasPendingRetry = true, hasChanges = changed)
         } else {
             finishBatch(appContext, batchDao, batchId)
-            ExecutionResult.Completed(hasPendingRetry = false, hasChanges = changed)
+            ExecutionResult.Completed(hasPendingRetry = false, hasChanges = false)
         }
     }
 
@@ -117,13 +122,15 @@ object SubscriptionAutoUpdateEngine {
      */
     suspend fun executeRetry(
         context: Context,
+        dataset: RuleDataset,
         batchId: String,
         runAttemptCount: Int,
         onProgress: suspend (Data) -> Unit
     ): ExecutionResult {
         val appContext = context.applicationContext
-        val database = AppDatabase.getInstance(appContext)
-        val batchDao = database.subscriptionAutoUpdateDao()
+        val dataSources = RuleDatabases.forDataset(appContext, dataset)
+        val database = RuleDatabases.forDatasetDb(appContext, dataset)
+        val batchDao = dataSources.subscriptionAutoUpdateDao()
         val pendingItems = batchDao.byStatus(batchId, SubscriptionAutoUpdateItemStatus.PENDING_RETRY)
 
         if (pendingItems.isEmpty()) {
@@ -134,10 +141,10 @@ object SubscriptionAutoUpdateEngine {
 
         var changed = false
         var aborted = false
-        val managers = createManagers(appContext, database)
+        val managers = createManagers(appContext, dataset)
 
         val ran = SubscriptionUpdateCoordinator.runAutomatic { shouldStop ->
-            SubscriptionImportRecovery.recoverInterruptedImports(database)
+            SubscriptionImportRecovery.recoverInterruptedImports(database, dataSources)
 
             for ((index, item) in pendingItems.withIndex()) {
                 if (shouldStop()) {
@@ -145,14 +152,14 @@ object SubscriptionAutoUpdateEngine {
                     break
                 }
 
-                val subscription = database.subscriptionDao().byId(item.subscriptionId)
+                val subscription = dataSources.subscriptionDao().byId(item.subscriptionId)
                 // If subscription was deleted, disabled, or belongs to a group with auto-update disabled, drop it.
                 if (subscription == null || !subscription.enabled) {
                     batchDao.deleteItem(batchId, item.subscriptionId)
                     continue
                 }
                 if (subscription.groupId != null &&
-                    database.subscriptionGroupDao().byId(subscription.groupId)?.autoUpdateEnabled != true
+                    dataSources.subscriptionGroupDao().byId(subscription.groupId)?.autoUpdateEnabled != true
                 ) {
                     batchDao.deleteItem(batchId, item.subscriptionId)
                     continue
@@ -195,7 +202,7 @@ object SubscriptionAutoUpdateEngine {
         }
 
         if (changed) {
-            rebuildCachesAndNotifyRuntime(appContext, managers)
+            rebuildCachesAndNotifyRuntime(appContext, dataset, managers)
         }
 
         val remainingRetries = batchDao.byStatus(batchId, SubscriptionAutoUpdateItemStatus.PENDING_RETRY)
@@ -214,7 +221,11 @@ object SubscriptionAutoUpdateEngine {
         RuleOperationScheduler.KEY_TOTAL to total
     )
 
-    private suspend fun rebuildCachesAndNotifyRuntime(context: Context, managers: AutoUpdateManagers) {
+    private suspend fun rebuildCachesAndNotifyRuntime(
+        context: Context,
+        dataset: RuleDataset,
+        managers: AutoUpdateManagers
+    ) {
         runCatching { managers.blockManager.refreshCache(forceRebuild = true) }
             .onFailure { Log.w(TAG, "Failed to force rebuild block cache", it) }
         runCatching { managers.allowManager.refreshCache(forceRebuild = true) }
@@ -227,9 +238,12 @@ object SubscriptionAutoUpdateEngine {
             refreshBlock = true,
             refreshAllow = true,
             refreshRewrite = true,
-            scope = RuleScope.DNS
+            scope = RuleScope.DNS,
+            dataset = dataset
         )
-        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+        if (dataset == RuleDataset.NORMAL) {
+            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+        }
     }
 
     suspend fun recordOutcome(
@@ -288,16 +302,24 @@ object SubscriptionAutoUpdateEngine {
 
     private fun createManagers(
         context: Context,
-        database: AppDatabase,
+        dataset: RuleDataset,
         scope: RuleScope = RuleScope.DNS
     ): AutoUpdateManagers {
-        val ruleIndexDirectory = RuleIndexLayout.scopeDirectory(context.filesDir, scope)
-        val blockManager = BlockListManager(database.blockRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
-        val allowManager = AllowListManager(database.allowRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
-        val rewriteManager = RewriteRuleManager(database.rewriteRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
+        val dataSources = RuleDatabases.forDataset(context, dataset)
+        val database = RuleDatabases.forDatasetDb(context, dataset)
+        // The DNS dataset keeps pure in-memory caches; the mmap index files
+        // under rule-index/ are owned by the VPN mode.
+        val ruleIndexDirectory = if (dataset == RuleDataset.DNS_MODE) {
+            null
+        } else {
+            RuleIndexLayout.scopeDirectory(context.filesDir, scope)
+        }
+        val blockManager = BlockListManager(dataSources.blockRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
+        val allowManager = AllowListManager(dataSources.allowRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
+        val rewriteManager = RewriteRuleManager(dataSources.rewriteRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
         val subscriptionManager = SubscriptionManager(
             database,
-            database.subscriptionDao(),
+            dataSources.subscriptionDao(),
             blockManager,
             allowManager,
             rewriteManager,

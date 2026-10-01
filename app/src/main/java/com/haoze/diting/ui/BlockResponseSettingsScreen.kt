@@ -31,24 +31,27 @@ import com.haoze.diting.ui.components.SettingsRadioItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
-import com.haoze.diting.ui.settings.AppRulesSettingsStore
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.ui.settings.RuleSettingsAccess
 import com.haoze.diting.vpn.BlockResponseMode
 import com.haoze.diting.vpn.DynamicBlockResponseConfig
 
 @Composable
 fun BlockResponseSettingsScreen(
     onBack: () -> Unit,
-    onRuntimeDnsSettingsChanged: () -> Unit = {}
+    onRuntimeDnsSettingsChanged: () -> Unit = {},
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
     val context = LocalContext.current
+    val settings = RuleSettingsAccess(dataset)
     val scrollState = rememberScrollState()
-    var responseMode by remember { mutableStateOf(AppRulesSettingsStore.getBlockResponseMode(context)) }
-    var dynamicConfig by remember { mutableStateOf(AppRulesSettingsStore.getDynamicBlockResponseConfig(context)) }
+    var responseMode by remember { mutableStateOf(settings.blockResponseMode(context)) }
+    var dynamicConfig by remember { mutableStateOf(settings.dynamicBlockResponseConfig(context)) }
     var showParameterDialog by remember { mutableStateOf(false) }
 
     fun saveDynamicConfig(next: DynamicBlockResponseConfig) {
         dynamicConfig = next
-        AppRulesSettingsStore.setDynamicBlockResponseConfig(context, next)
+        settings.setDynamicBlockResponseConfig(context, next)
         onRuntimeDnsSettingsChanged()
     }
 
@@ -71,7 +74,7 @@ fun BlockResponseSettingsScreen(
                             onClick = {
                                 if (responseMode != mode) {
                                     responseMode = mode
-                                    AppRulesSettingsStore.setBlockResponseMode(context, mode)
+                                    settings.setBlockResponseMode(context, mode)
                                     onRuntimeDnsSettingsChanged()
                                 }
                             }

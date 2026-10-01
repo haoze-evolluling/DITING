@@ -29,7 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.Application
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.SubscriptionEntity
 import com.haoze.diting.data.entity.SubscriptionGroupEntity
 import com.haoze.diting.data.entity.SubscriptionKind
@@ -48,8 +52,13 @@ fun SubscriptionScreen(
     ruleScope: com.haoze.diting.data.entity.RuleScope = com.haoze.diting.data.entity.RuleScope.DNS,
     onNavigateToAddSubscription: (() -> Unit)? = null,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
-    viewModel: SubscriptionViewModel = viewModel()
+    dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
 ) {
+    val app = LocalContext.current.applicationContext as Application
+    val viewModel: SubscriptionViewModel = viewModel(
+        key = "subscription_${dataset.name}",
+        factory = viewModelFactory { initializer { SubscriptionViewModel(app, dataset) } }
+    )
     var showInlineAddScreen by remember { mutableStateOf(false) }
     if (showInlineAddScreen) {
         AddSubscriptionScreen(

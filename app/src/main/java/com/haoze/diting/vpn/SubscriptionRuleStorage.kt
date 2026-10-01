@@ -1,7 +1,7 @@
 package com.haoze.diting.vpn
 
 import androidx.room.withTransaction
-import com.haoze.diting.data.AppDatabase
+import androidx.room.RoomDatabase
 import com.haoze.diting.data.dao.SubscriptionDao
 import com.haoze.diting.data.entity.SubscriptionEntity
 import com.haoze.diting.data.entity.SubscriptionImportState
@@ -20,7 +20,7 @@ import kotlinx.coroutines.withContext
  * an in-flight update, so they are always cleared across all tables.
  */
 internal class SubscriptionRuleStorage(
-    private val database: AppDatabase,
+    private val database: RoomDatabase,
     private val subscriptionDao: SubscriptionDao,
     private val blockListManager: BlockListManager,
     private val allowListManager: AllowListManager,

@@ -36,7 +36,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.Application
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.components.RuleFilterChipRow
 import com.haoze.diting.ui.components.RuleListCountHeader
 import com.haoze.diting.ui.components.RuleListEmptyState
@@ -53,8 +57,13 @@ import com.haoze.diting.ui.components.masterDisabledMessage
 fun WhitelistScreen(
     onBack: () -> Unit,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
-    viewModel: WhitelistViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
+    val app = LocalContext.current.applicationContext as Application
+    val viewModel: WhitelistViewModel = viewModel(
+        key = "whitelist_${dataset.name}",
+        factory = viewModelFactory { initializer { WhitelistViewModel(app, dataset) } }
+    )
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -107,14 +116,16 @@ fun WhitelistScreen(
                         showAddDialog = true
                     }
                 )
-                DropdownMenuItem(
-                    text = { Text(localizedText("重置默认白名单")) },
-                    leadingIcon = { Icon(Icons.Filled.Refresh, contentDescription = null) },
-                    onClick = {
-                        showTopMenu = false
-                        showResetDefaultsDialog = true
-                    }
-                )
+                if (dataset == RuleDataset.NORMAL) {
+                    DropdownMenuItem(
+                        text = { Text(localizedText("重置默认白名单")) },
+                        leadingIcon = { Icon(Icons.Filled.Refresh, contentDescription = null) },
+                        onClick = {
+                            showTopMenu = false
+                            showResetDefaultsDialog = true
+                        }
+                    )
+                }
                 DropdownMenuItem(
                     text = { Text(localizedText("清空自定义白名单")) },
                     leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null) },
@@ -138,11 +149,12 @@ fun WhitelistScreen(
             ) {
                 // 1. Top stats panel
                 item(key = "stats_card") {
-                    WhitelistStatsCard(stats = stats)
+                    WhitelistStatsCard(stats = stats, dataset = dataset)
                 }
 
-                // 2. Master switch controlling whether the default whitelist is editable
-                item(key = "protection_title") {
+                // 2. Master switch controlling whether the default whitelist is editable.
+                // The DNS dataset has no preset whitelist, so the section is hidden.
+                if (dataset == RuleDataset.NORMAL) item(key = "protection_title") {
                     Text(
                         text = localizedText("预设规则保护"),
                         style = MaterialTheme.typography.titleSmall,
@@ -150,7 +162,7 @@ fun WhitelistScreen(
                         modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp)
                     )
                 }
-                item(key = "protection_switch") {
+                if (dataset == RuleDataset.NORMAL) item(key = "protection_switch") {
                     val subtitleText = if (allowEditDefault) {
                         localizedText("已开启编辑权限：可修改、停用或删除软件预设的默认白名单")
                     } else {
@@ -201,7 +213,14 @@ fun WhitelistScreen(
                         )
 
                         RuleFilterChipRow(
-                            filters = WhitelistFilter.entries,
+                            filters = if (dataset == RuleDataset.NORMAL) {
+                                WhitelistFilter.entries
+                            } else {
+                                // URL rules and presets are VPN mode capabilities.
+                                WhitelistFilter.entries.filterNot {
+                                    it == WhitelistFilter.URL || it == WhitelistFilter.PRESET
+                                }
+                            },
                             selectedFilter = filter,
                             onSelect = viewModel::setFilter,
                             labelKeyOf = { it.labelResName }

@@ -6,6 +6,7 @@ import com.haoze.diting.dnsmode.model.DnsModeProtocol
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
 import com.haoze.diting.vpn.BlockResponseMode
 import com.haoze.diting.vpn.DnsMessageUtils
+import com.haoze.diting.vpn.DnsRewriteMessage
 import com.haoze.diting.vpn.PlainDnsTransport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -224,8 +225,8 @@ class DnsServerEngine(
 
         val currentConfig = config
 
-        // Malicious-domain filtering shares the normal mode's rule base; blocked
-        // answers are policy decisions, so they are never cached.
+        // Malicious-domain filtering uses the DNS mode's isolated rule database;
+        // blocked answers are policy decisions, so they are never cached.
         val filter = queryFilter
         if (currentConfig.adBlockEnabled && filter != null && filter.isBlocked(question.name)) {
             val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
@@ -234,6 +235,24 @@ class DnsServerEngine(
             }
             onQueryProcessed?.invoke(false, true, false, elapsed)
             return DnsMessageUtils.buildBlockedResponse(query, filter.blockResponseMode)
+        }
+
+        // Hosts / rewrite answers are resolution features and stay active
+        // regardless of the filtering master switch; like block responses they
+        // are computed per query and never cached.
+        if (filter != null) {
+            val rewriteAnswers = filter.rewriteAnswersFor(question.name)
+            val rewriteResponse = if (rewriteAnswers.isEmpty()) null else {
+                DnsRewriteMessage.buildResponse(query, rewriteAnswers)
+            }
+            if (rewriteResponse != null) {
+                val elapsed = (System.currentTimeMillis() - startTime).coerceAtLeast(1L)
+                if (currentConfig.logQueries) {
+                    safeLogI(TAG, "Rewrite: ${question.name} (type ${question.type})")
+                }
+                onQueryProcessed?.invoke(false, false, false, elapsed)
+                return rewriteResponse
+            }
         }
 
         // QCLASS and the DNSSEC OK bit are part of the answer's identity; a

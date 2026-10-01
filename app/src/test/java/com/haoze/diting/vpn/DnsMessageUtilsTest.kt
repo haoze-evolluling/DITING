@@ -54,4 +54,45 @@ class DnsMessageUtilsTest {
         val response = byteArrayOf(0x12, 0x34, 0x82.toByte(), 0x00) + ByteArray(8)
         assertTrue(DnsMessageUtils.isTruncatedResponse(response))
     }
+
+    @Test
+    fun rewriteResponsesAnswerIpAndCnameTargets() {
+        val queryA = DnsMessageUtils.buildQuery("hosts.example", DnsMessageUtils.TYPE_A, 0x3001)
+        val respA = DnsRewriteMessage.buildResponse(
+            queryA,
+            setOf(RewriteAnswer("IPv4", "1.2.3.4"))
+        )
+        assertEquals(0x3001, DnsMessageUtils.transactionId(respA!!))
+        assertEquals(0, DnsMessageUtils.responseCode(respA))
+        assertEquals("1.2.3.4", DnsMessageUtils.extractAddressRecords(respA).single().hostAddress)
+
+        val queryAaaa = DnsMessageUtils.buildQuery("hosts.example", DnsMessageUtils.TYPE_AAAA, 0x3002)
+        val respAaaa = DnsRewriteMessage.buildResponse(
+            queryAaaa,
+            setOf(RewriteAnswer("IPv6", "::1"))
+        )
+        val address = DnsMessageUtils.extractAddressRecords(respAaaa!!).single()
+        assertTrue(address.address.size == 16)
+        assertTrue(address.address.dropLast(1).all { it == 0.toByte() })
+        assertEquals(1.toByte(), address.address.last())
+    }
+
+    @Test
+    fun rewriteResponseReturnsNullWhenNoTargetFits() {
+        // A query with only a CNAME target: no IP answer fits.
+        val queryA = DnsMessageUtils.buildQuery("hosts.example", DnsMessageUtils.TYPE_A, 0x3003)
+        assertEquals(
+            null,
+            DnsRewriteMessage.buildResponse(queryA, setOf(RewriteAnswer("CNAME", "alias.example")))
+        )
+        // Malformed query yields no rewrite response.
+        assertEquals(
+            null,
+            DnsRewriteMessage.buildResponse(byteArrayOf(0x12, 0x34), setOf(RewriteAnswer("IPv4", "1.2.3.4")))
+        )
+        assertEquals(
+            null,
+            DnsRewriteMessage.buildResponse(queryA, emptySet())
+        )
+    }
 }

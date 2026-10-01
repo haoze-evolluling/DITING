@@ -1,9 +1,10 @@
 package com.haoze.diting.dnsmode.backend
 
 import android.content.Context
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.DnsRulesDatabase
 import com.haoze.diting.data.entity.RuleScope
-import com.haoze.diting.ui.settings.AppRulesSettingsStore
+import com.haoze.diting.vpn.RewriteAnswer
+import com.haoze.diting.vpn.RewriteRuleManager
 import com.haoze.diting.vpn.AllowListManager
 import com.haoze.diting.vpn.BlockListManager
 import com.haoze.diting.vpn.BlockResponseMode
@@ -16,9 +17,11 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * DNS mode query filter backed by the same rule database the normal (VPN)
- * mode uses, so both modes share one rule set and one decision matrix
- * ($important block > allow > regular block > default allow).
+ * DNS mode query filter backed by the dedicated DNS mode rule database, so
+ * its rules are fully isolated from the normal (VPN) mode's data. Decision
+ * matrix: $important block > allow > regular block > default allow; hosts /
+ * rewrite answers are exposed separately and are independent of the
+ * filtering master switch.
  *
  * Deliberately runs without the mmap rule indexes (indexDirectory = null):
  * those files are owned by the VPN mode, so DNS mode keeps a pure in-memory
@@ -31,14 +34,21 @@ class DnsQueryFilter(context: Context) {
     private val loaded = AtomicBoolean(false)
 
     private val blockListManager = BlockListManager(
-        AppDatabase.getInstance(appContext).blockRuleDao(),
+        DnsRulesDatabase.getInstance(appContext).blockRuleDao(),
         indexDirectory = null,
         scope = RuleScope.DNS,
         reloadCacheAfterChanges = false
     )
 
     private val allowListManager = AllowListManager(
-        AppDatabase.getInstance(appContext).allowRuleDao(),
+        DnsRulesDatabase.getInstance(appContext).allowRuleDao(),
+        indexDirectory = null,
+        scope = RuleScope.DNS,
+        reloadCacheAfterChanges = false
+    )
+
+    private val rewriteRuleManager = RewriteRuleManager(
+        DnsRulesDatabase.getInstance(appContext).rewriteRuleDao(),
         indexDirectory = null,
         scope = RuleScope.DNS,
         reloadCacheAfterChanges = false
@@ -58,10 +68,15 @@ class DnsQueryFilter(context: Context) {
     suspend fun reloadSync() {
         blockListManager.refreshCache()
         allowListManager.refreshCache()
-        blockResponseMode = AppRulesSettingsStore.getBlockResponseMode(appContext)
+        rewriteRuleManager.refreshCache()
+        blockResponseMode = DnsRuleSettings.blockResponseMode(appContext)
         domainPolicy.invalidateCache()
         loaded.set(true)
     }
+
+    /** Rewrite (hosts) answers for one domain; empty when rules are not loaded yet. */
+    fun rewriteAnswersFor(domain: String): Set<RewriteAnswer> =
+        if (loaded.get()) rewriteRuleManager.answersFor(domain) else emptySet()
 
     fun isBlocked(domain: String): Boolean {
         if (!loaded.get()) return false

@@ -6,17 +6,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatterySaver
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.haoze.diting.SettingsRouteActivity
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.dnsmode.model.DnsModeConfig
+import com.haoze.diting.ui.Routes
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsNavigationItem
@@ -37,6 +45,14 @@ fun DnsSettingsScreen(
     modifier: Modifier = Modifier,
     contentBottomPadding: Dp = 108.dp
 ) {
+    val context = LocalContext.current
+
+    fun openRuleRoute(route: String) {
+        context.startActivity(
+            SettingsRouteActivity.createIntent(context, route, dataset = RuleDataset.DNS_MODE)
+        )
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = contentBottomPadding),
@@ -58,11 +74,14 @@ fun DnsSettingsScreen(
                         )
                     },
                     {
-                        SettingsSwitchItem(
+                        SettingsNavigationItem(
                             title = localizedText("恶意域名过滤"),
-                            subtitle = localizedText("与普通模式共用屏蔽规则，命中后按拦截策略返回"),
-                            checked = config.adBlockEnabled,
-                            onCheckedChange = { onUpdateConfig(config.copy(adBlockEnabled = it)) }
+                            subtitle = localizedText(
+                                if (config.adBlockEnabled) "已开启 · 命中规则按拦截策略返回"
+                                else "已关闭 · 使用独立的过滤规则库"
+                            ),
+                            leadingIcon = Icons.Default.Security,
+                            onClick = { openRuleRoute(Routes.RULE_CONTROL) }
                         )
                     },
                     {
@@ -78,6 +97,41 @@ fun DnsSettingsScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    }
+                )
+            )
+        }
+
+        item {
+            SettingsGroupTitle(localizedText("规则管理"))
+        }
+
+        item {
+            SettingsSurfaceGroup(
+                content = listOf(
+                    {
+                        SettingsNavigationItem(
+                            title = localizedText("黑名单"),
+                            subtitle = localizedText("管理域名屏蔽规则，独立规则库"),
+                            leadingIcon = Icons.Default.Block,
+                            onClick = { openRuleRoute(Routes.BLACKLIST_MANAGEMENT) }
+                        )
+                    },
+                    {
+                        SettingsNavigationItem(
+                            title = localizedText("白名单"),
+                            subtitle = localizedText("管理域名放行规则，独立规则库"),
+                            leadingIcon = Icons.Default.VerifiedUser,
+                            onClick = { openRuleRoute(Routes.WHITELIST_MANAGEMENT) }
+                        )
+                    },
+                    {
+                        SettingsNavigationItem(
+                            title = localizedText("Hosts 覆写"),
+                            subtitle = localizedText("将指定域名解析到配置的 IP 或 CNAME"),
+                            leadingIcon = Icons.Default.Dns,
+                            onClick = { openRuleRoute(Routes.REWRITELIST_MANAGEMENT) }
+                        )
                     }
                 )
             )

@@ -3,11 +3,12 @@ package com.haoze.diting.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.data.entity.RewriteRuleEntity
 import com.haoze.diting.data.entity.RewriteTargetType
 import com.haoze.diting.data.entity.RuleScope
-import com.haoze.diting.ui.settings.AppRulesSettingsStore
+import com.haoze.diting.ui.settings.RuleSettingsAccess
 import com.haoze.diting.vpn.RewriteRuleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,14 +53,19 @@ data class RewriteListStats(
     val subscriptionCount: Int = 0
 )
 
-class RewriteListViewModel(application: Application) : AndroidViewModel(application) {
+class RewriteListViewModel(
+    application: Application,
+    private val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
+    private val settings = RuleSettingsAccess(dataset)
+    private val db = RuleDatabases.forDataset(application, dataset)
     private val rewriteRuleDao = db.rewriteRuleDao()
     private val subscriptionDao = db.subscriptionDao()
+    // The DNS dataset keeps pure in-memory caches; rule-index/ belongs to VPN mode.
     private val rewriteRuleManager = RewriteRuleManager(
         rewriteRuleDao,
-        File(application.filesDir, "rule-index"),
+        if (dataset == RuleDataset.NORMAL) File(application.filesDir, "rule-index") else null,
         RuleScope.DNS
     )
 
@@ -115,8 +121,8 @@ class RewriteListViewModel(application: Application) : AndroidViewModel(applicat
 
     fun loadStats() {
         viewModelScope.launch(Dispatchers.IO) {
-            val domainRulesEnabled = AppRulesSettingsStore.isDomainRulesEnabled(getApplication())
-            val addressRulesOperational = AppRulesSettingsStore.isAddressRulesFullyOperational(getApplication())
+            val domainRulesEnabled = settings.isMasterEnabled(getApplication())
+            val addressRulesOperational = settings.isAddressRulesOperational(getApplication())
 
             val ipv4Total = rewriteRuleDao.countByTargetType(RewriteTargetType.IPV4)
             val ipv6Total = rewriteRuleDao.countByTargetType(RewriteTargetType.IPV6)
@@ -149,8 +155,8 @@ class RewriteListViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch(Dispatchers.IO) {
             val query = _searchQuery.value.trim()
             val currentFilter = _filter.value
-            val domainRulesEnabled = AppRulesSettingsStore.isDomainRulesEnabled(getApplication())
-            val addressRulesOperational = AppRulesSettingsStore.isAddressRulesFullyOperational(getApplication())
+            val domainRulesEnabled = settings.isMasterEnabled(getApplication())
+            val addressRulesOperational = settings.isAddressRulesOperational(getApplication())
 
             val total = when (currentFilter) {
                 RewriteListFilter.ALL -> {
@@ -319,9 +325,12 @@ class RewriteListViewModel(application: Application) : AndroidViewModel(applicat
     private suspend fun refreshAfterMutation(loadFirstPage: Boolean = false) {
         val context = getApplication<Application>()
         RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-            context, refreshBlock = false, refreshAllow = false, refreshRewrite = true, RuleScope.DNS
+            context, refreshBlock = false, refreshAllow = false, refreshRewrite = true,
+            scope = RuleScope.DNS, dataset = dataset
         )
-        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+        if (dataset == RuleDataset.NORMAL) {
+            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+        }
         loadStats()
         if (loadFirstPage) loadPage(1) else loadPage(_currentPage.value)
     }

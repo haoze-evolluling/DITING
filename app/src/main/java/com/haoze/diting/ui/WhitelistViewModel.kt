@@ -4,11 +4,13 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.data.entity.AllowRuleEntity
 import com.haoze.diting.data.entity.GoUrlRuleEntity
 import com.haoze.diting.data.entity.GoUrlRuleKind
 import com.haoze.diting.data.entity.RuleScope
-import com.haoze.diting.ui.settings.AppRulesSettingsStore
+import com.haoze.diting.ui.settings.RuleSettingsAccess
 import com.haoze.diting.vpn.AdGuardRuleParser
 import com.haoze.diting.vpn.AllowListManager
 import com.haoze.diting.vpn.DefaultWhitelistSeeder
@@ -66,9 +68,13 @@ data class WhitelistStats(
     val totalActive: Int = 0
 )
 
-class WhitelistViewModel(application: Application) : AndroidViewModel(application) {
+class WhitelistViewModel(
+    application: Application,
+    private val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
 
-    private val db = AppDatabase.getInstance(application)
+    private val settings = RuleSettingsAccess(dataset)
+    private val db = RuleDatabases.forDataset(application, dataset)
     private val allowRuleDao = db.allowRuleDao()
     private val goUrlRuleDao = db.goUrlRuleDao()
     private val subscriptionDao = db.subscriptionDao()
@@ -98,7 +104,7 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
     private val _filter = MutableStateFlow(WhitelistFilter.ALL)
     val filter: StateFlow<WhitelistFilter> = _filter.asStateFlow()
 
-    private val _allowEditDefault = MutableStateFlow(AppRulesSettingsStore.isAllowEditDefaultWhitelist(application))
+    private val _allowEditDefault = MutableStateFlow(settings.isAllowEditDefaultWhitelist(application))
     val allowEditDefault: StateFlow<Boolean> = _allowEditDefault.asStateFlow()
 
     private var activated = false
@@ -107,7 +113,10 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
         if (!activated) {
             activated = true
             viewModelScope.launch(Dispatchers.IO) {
-                DefaultWhitelistSeeder.ensureInitialized(getApplication(), db)
+                // The DNS dataset has no preset whitelist and starts empty.
+                if (dataset == RuleDataset.NORMAL) {
+                    DefaultWhitelistSeeder.ensureInitialized(getApplication(), AppDatabase.getInstance(getApplication()))
+                }
                 refreshAll()
             }
         } else {
@@ -117,7 +126,7 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun setAllowEditDefault(enabled: Boolean) {
         _allowEditDefault.value = enabled
-        AppRulesSettingsStore.setAllowEditDefaultWhitelist(getApplication(), enabled)
+        settings.setAllowEditDefaultWhitelist(getApplication(), enabled)
     }
 
     fun setFilter(newFilter: WhitelistFilter) {
@@ -138,8 +147,8 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun loadStats() {
         viewModelScope.launch(Dispatchers.IO) {
-            val domainRulesEnabled = AppRulesSettingsStore.isDomainRulesEnabled(getApplication())
-            val addressRulesOperational = AppRulesSettingsStore.isAddressRulesFullyOperational(getApplication())
+            val domainRulesEnabled = settings.isMasterEnabled(getApplication())
+            val addressRulesOperational = settings.isAddressRulesOperational(getApplication())
 
             val totalDomains = if (domainRulesEnabled) allowRuleDao.enabledPatternsCount() else 0
             val presetTotal = allowRuleDao.countBySource(DefaultWhitelistSeeder.SOURCE_PRESET)
@@ -170,8 +179,8 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch(Dispatchers.IO) {
             val query = _searchQuery.value.trim().lowercase()
             val currentFilter = _filter.value
-            val domainRulesEnabled = AppRulesSettingsStore.isDomainRulesEnabled(getApplication())
-            val addressRulesOperational = AppRulesSettingsStore.isAddressRulesFullyOperational(getApplication())
+            val domainRulesEnabled = settings.isMasterEnabled(getApplication())
+            val addressRulesOperational = settings.isAddressRulesOperational(getApplication())
 
             val domainEntities = when (currentFilter) {
                 WhitelistFilter.ALL, WhitelistFilter.DOMAIN -> {
@@ -294,7 +303,8 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
                         getApplication(),
                         "allow",
                         it,
-                        RuleScope.DNS
+                        RuleScope.DNS,
+                        dataset = dataset
                     )
                 }
             } else {
@@ -313,7 +323,8 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
                         getApplication(),
                         "allow",
                         it,
-                        RuleScope.DNS
+                        RuleScope.DNS,
+                        dataset = dataset
                     )
                 }
             } else {
@@ -340,6 +351,9 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
                 raw.startsWith("@@https://", ignoreCase = true)
 
         if (isHttpUrl) {
+            if (dataset == RuleDataset.DNS_MODE) {
+                return@withContext Result.failure(IllegalArgumentException("URL 规则仅普通模式支持"))
+            }
             val line = if (raw.startsWith("@@")) raw else "@@$raw"
             val success = goUrlRuleManager.addRule(line)
             if (success) {
@@ -438,7 +452,10 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun resetPresetWhitelist() {
         viewModelScope.launch(Dispatchers.IO) {
-            DefaultWhitelistSeeder.seed(getApplication(), db, forceReset = true)
+            // The DNS dataset has no preset whitelist to reset.
+            if (dataset == RuleDataset.NORMAL) {
+                DefaultWhitelistSeeder.seed(getApplication(), AppDatabase.getInstance(getApplication()), forceReset = true)
+            }
             syncDnsAndPassthrough()
             refreshAll()
         }
@@ -460,12 +477,16 @@ class WhitelistViewModel(application: Application) : AndroidViewModel(applicatio
             refreshBlock = false,
             refreshAllow = true,
             refreshRewrite = false,
-            scope = RuleScope.DNS
+            scope = RuleScope.DNS,
+            dataset = dataset
         )
     }
 
     private fun syncUrlRules() {
-        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(getApplication())
+        // URL rules only matter to the VPN mode's traffic inspection.
+        if (dataset == RuleDataset.NORMAL) {
+            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(getApplication())
+        }
     }
 
     private fun AllowRuleEntity.toItem(

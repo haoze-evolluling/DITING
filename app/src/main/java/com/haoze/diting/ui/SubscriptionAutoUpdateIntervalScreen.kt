@@ -24,7 +24,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.ui.settings.RuleSettingsAccess
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
@@ -39,17 +41,21 @@ import com.haoze.diting.vpn.SubscriptionAutoUpdateSettings
 import kotlinx.coroutines.launch
 
 @Composable
-fun SubscriptionAutoUpdateIntervalScreen(onBack: () -> Unit) {
+fun SubscriptionAutoUpdateIntervalScreen(
+    onBack: () -> Unit,
+    dataset: RuleDataset = RuleDataset.NORMAL
+) {
     val context = LocalContext.current
-    val groups by AppDatabase.getInstance(context).subscriptionGroupDao()
+    val settings = RuleSettingsAccess(dataset)
+    val groups by RuleDatabases.forDataset(context, dataset).subscriptionGroupDao()
         .observeAll()
         .collectAsStateWithLifecycle(initialValue = emptyList())
     val coroutineScope = rememberCoroutineScope()
     var intervalHours by remember {
-        mutableIntStateOf(SubscriptionAutoUpdateSettings.intervalHours(context))
+        mutableIntStateOf(settings.autoUpdateIntervalHours(context))
     }
     var autoUpdateEnabled by remember {
-        mutableStateOf(SubscriptionAutoUpdateSettings.isEnabled(context))
+        mutableStateOf(settings.autoUpdateEnabled(context))
     }
     var showCustomDialog by remember { mutableStateOf(false) }
     var customHours by remember { mutableStateOf("") }
@@ -61,12 +67,12 @@ fun SubscriptionAutoUpdateIntervalScreen(onBack: () -> Unit) {
 
     fun saveInterval(hours: Int) {
         intervalHours = hours
-        SubscriptionAutoUpdateSettings.save(
+        settings.saveAutoUpdate(
             context,
-            SubscriptionAutoUpdateSettings.isEnabled(context),
+            settings.autoUpdateEnabled(context),
             hours
         )
-        SubscriptionAutoUpdateScheduler.sync(context)
+        SubscriptionAutoUpdateScheduler.sync(context, dataset)
     }
 
     fun openCustomDialog() {
@@ -97,8 +103,8 @@ fun SubscriptionAutoUpdateIntervalScreen(onBack: () -> Unit) {
                             checked = autoUpdateEnabled,
                             onCheckedChange = { enabled ->
                                 autoUpdateEnabled = enabled
-                                SubscriptionAutoUpdateSettings.save(context, enabled, intervalHours)
-                                SubscriptionAutoUpdateScheduler.sync(context)
+                                settings.saveAutoUpdate(context, enabled, intervalHours)
+                                SubscriptionAutoUpdateScheduler.sync(context, dataset)
                             }
                         )
                     }
@@ -162,7 +168,7 @@ fun SubscriptionAutoUpdateIntervalScreen(onBack: () -> Unit) {
                                     enabled = autoUpdateControlsEnabled,
                                     onCheckedChange = { enabled ->
                                         coroutineScope.launch {
-                                            AppDatabase.getInstance(context).subscriptionGroupDao()
+                                            RuleDatabases.forDataset(context, dataset).subscriptionGroupDao()
                                                 .setAutoUpdateEnabled(group.id, enabled)
                                         }
                                     }

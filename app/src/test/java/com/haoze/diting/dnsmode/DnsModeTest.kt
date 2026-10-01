@@ -9,6 +9,7 @@ import com.haoze.diting.dnsmode.model.DnsModeProtocol
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
 import com.haoze.diting.dnsmode.model.DnsUpstreamValidator
 import com.haoze.diting.dnsmode.model.DnsServiceStatus
+import com.haoze.diting.ui.localization.translateRulesAndSubscriptionExact
 import com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -339,6 +340,18 @@ class DnsModeTest {
         assertEquals(
             "Range 1024-65535, default 1053",
             translateSettingsAndAppearanceExact("范围 1024-65535，默认 1053")
+        )
+        // DNS mode isolated rule management strings
+        assertEquals("Enable domain filtering", translateRulesAndSubscriptionExact("启用域名过滤"))
+        assertEquals(
+            "Enable malicious domain blocking and allowlist pass-through",
+            translateRulesAndSubscriptionExact("开启恶意域名拦截与白名单放行")
+        )
+        assertEquals("Rule Management", translateRulesAndSubscriptionExact("规则管理"))
+        assertEquals("Hosts Rewrites", translateRulesAndSubscriptionExact("Hosts 覆写"))
+        assertEquals(
+            "URL rules are only supported in normal mode",
+            translateRulesAndSubscriptionExact("URL 规则仅普通模式支持")
         )
         assertEquals(
             "Alibaba public DNS with low latency in mainland China",

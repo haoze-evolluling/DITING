@@ -52,7 +52,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.app.Application
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.components.AppAlertDialog
 import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.components.RuleConfirmDialog
@@ -75,8 +79,13 @@ import kotlinx.coroutines.launch
 fun BlacklistScreen(
     onBack: () -> Unit,
     onRuntimeDnsSettingsChanged: () -> Unit = {},
-    viewModel: BlacklistViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
+    val app = LocalContext.current.applicationContext as Application
+    val viewModel: BlacklistViewModel = viewModel(
+        key = "blacklist_${dataset.name}",
+        factory = viewModelFactory { initializer { BlacklistViewModel(app, dataset) } }
+    )
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -164,7 +173,7 @@ fun BlacklistScreen(
             ) {
                 // 1. Top stats panel
                 item(key = "stats_card") {
-                    BlacklistStatsCard(stats = stats)
+                    BlacklistStatsCard(stats = stats, dataset = dataset)
                 }
 
                 // 2. Search and filter bar
@@ -190,7 +199,7 @@ fun BlacklistScreen(
                         )
 
                         RuleFilterChipRow(
-                            filters = BlacklistFilter.entries,
+                            filters = BlacklistFilter.entries.filterNot { dataset != RuleDataset.NORMAL && it == BlacklistFilter.URL },
                             selectedFilter = filter,
                             onSelect = viewModel::setFilter,
                             labelKeyOf = { it.labelResName }
@@ -279,7 +288,10 @@ fun BlacklistScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = localizedText("支持域名（如 example.com、*.google.com）、AdGuard 规则（||example.com^）或 URL 屏蔽前缀（https://example.com/api）。"),
+                        text = localizedText(
+                            if (dataset == RuleDataset.NORMAL) "支持域名（如 example.com、*.google.com）、AdGuard 规则（||example.com^）或 URL 屏蔽前缀（https://example.com/api）。"
+                            else "支持域名（如 example.com、*.google.com）或 AdGuard 规则（||example.com^）。"
+                        ),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -429,16 +441,16 @@ fun BlacklistScreen(
 }
 
 @Composable
-private fun BlacklistStatsCard(stats: BlacklistStats) {
+private fun BlacklistStatsCard(stats: BlacklistStats, dataset: RuleDataset) {
     RuleStatsCard(
         icon = Icons.Filled.Block,
         title = localizedText("拦截统计与状态"),
         activeBadgeText = localizedText("生效中: ${stats.totalActive} 条"),
-        stats = listOf(
-            "拦截域名数" to stats.totalDomains.toString(),
-            "用户自定义" to "${stats.userEnabled}/${stats.userTotal}",
-            "屏蔽 URL" to stats.urlBlockCount.toString()
-        )
+        stats = buildList {
+            add("拦截域名数" to stats.totalDomains.toString())
+            add("用户自定义" to "${stats.userEnabled}/${stats.userTotal}")
+            if (dataset == RuleDataset.NORMAL) add("屏蔽 URL" to stats.urlBlockCount.toString())
+        }
     )
 }
 

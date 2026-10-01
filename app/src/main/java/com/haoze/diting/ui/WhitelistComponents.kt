@@ -20,21 +20,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.ui.components.RuleItemActionsMenu
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.components.RuleStatsCard
 import com.haoze.diting.ui.components.RuleTagChip
 
 @Composable
-internal fun WhitelistStatsCard(stats: WhitelistStats) {
+internal fun WhitelistStatsCard(stats: WhitelistStats, dataset: RuleDataset) {
     RuleStatsCard(
         icon = Icons.Filled.Security,
         title = localizedText("放行统计与状态"),
         activeBadgeText = localizedText("生效中: ${stats.totalActive} 条"),
-        stats = listOf(
-            "放行域名数" to stats.totalDomains.toString(),
-            "默认预设" to "${stats.presetEnabled}/${stats.presetTotal}",
-            "用户自定义" to "${stats.userEnabled}/${stats.userTotal}",
-            "放行 URL" to stats.urlAllowCount.toString()
-        )
+        stats = if (dataset == RuleDataset.NORMAL) {
+            listOf(
+                "放行域名数" to stats.totalDomains.toString(),
+                "默认预设" to "${stats.presetEnabled}/${stats.presetTotal}",
+                "用户自定义" to "${stats.userEnabled}/${stats.userTotal}",
+                "放行 URL" to stats.urlAllowCount.toString()
+            )
+        } else {
+            // The DNS dataset has no presets and no URL rules.
+            listOf(
+                "放行域名数" to stats.totalDomains.toString(),
+                "用户自定义" to "${stats.userEnabled}/${stats.userTotal}"
+            )
+        }
     )
 }
 

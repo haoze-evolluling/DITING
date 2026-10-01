@@ -7,7 +7,8 @@ import com.haoze.diting.R
 import androidx.room.withTransaction
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.data.entity.SubscriptionEntity
 import com.haoze.diting.data.entity.SubscriptionGroupEntity
 import com.haoze.diting.data.entity.MirrorTemplateEntity
@@ -34,21 +35,17 @@ import kotlinx.coroutines.withContext
 data class SubscriptionProgress(val current: Int = -1, val total: Int = 0)
 data class SubscriptionRuleBreakdown(val blockCount: Int = 0, val allowCount: Int = 0, val rewriteCount: Int = 0)
 
-class SubscriptionViewModel(application: Application) : AndroidViewModel(application) {
+class SubscriptionViewModel(
+    application: Application,
+    private val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
+
+    private val dataSources = RuleDatabases.forDataset(application, dataset)
 
     private var ruleScope = RuleScope.DNS
     private fun subscriptionManager(): SubscriptionManager {
         val app = getApplication<Application>()
-        val database = AppDatabase.getInstance(app)
-        return SubscriptionManager(
-            database,
-            database.subscriptionDao(),
-            BlockListManager(database.blockRuleDao(), scope = ruleScope, reloadCacheAfterChanges = false),
-            AllowListManager(database.allowRuleDao(), scope = ruleScope, reloadCacheAfterChanges = false),
-            com.haoze.diting.vpn.RewriteRuleManager(database.rewriteRuleDao(), java.io.File(app.filesDir, "rule-index"), ruleScope, reloadCacheAfterChanges = false),
-            ruleScope,
-            app.cacheDir
-        )
+        return subscriptionManagerFor(ruleScope, dataSources, app)
     }
 
     private val _subscriptions = MutableStateFlow<List<SubscriptionEntity>>(emptyList())
@@ -60,9 +57,9 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     val pendingSubscriptions: StateFlow<List<SubscriptionEntity>> = _pendingSubscriptions.asStateFlow()
     private var subscriptionsJob: Job? = null
     private var nextPendingSubscriptionId = -1L
-    val mirrorTemplates = AppDatabase.getInstance(application).mirrorTemplateDao().observeAll()
-    val subscriptionGroups = AppDatabase.getInstance(application).subscriptionGroupDao().observeAll()
-    val allSubscriptions = AppDatabase.getInstance(application).subscriptionDao().observeAll()
+    val mirrorTemplates = dataSources.mirrorTemplateDao().observeAll()
+    val subscriptionGroups = dataSources.subscriptionGroupDao().observeAll()
+    val allSubscriptions = dataSources.subscriptionDao().observeAll()
 
     private val _importing = MutableStateFlow(false)
     val importing: StateFlow<Boolean> = _importing.asStateFlow()
@@ -95,7 +92,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         ruleScope = scope
         subscriptionsJob?.cancel()
         subscriptionsJob = viewModelScope.launch {
-            AppDatabase.getInstance(getApplication<Application>()).subscriptionDao()
+            dataSources.subscriptionDao()
                 .observeAll()
                 .collect { subscriptions ->
                     _subscriptions.value = subscriptions.filterNot { it.id in deletingSubscriptionIds }
@@ -157,7 +154,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             RuleOperationScheduler.enqueue(
                 getApplication(), RuleOperationType.ADD_SUBSCRIPTION, url = url, name = name, kind = kind,
                 mirrorTemplate = mirrorTemplate, mirrorFallback = mirrorFallback, groupId = groupId ?: -1,
-                scope = ruleScope.storageValue
+                scope = ruleScope.storageValue, dataset = dataset
             ).id,
             pendingSubscription.id
         )
@@ -205,7 +202,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
                     getApplication(), RuleOperationType.EDIT_SUBSCRIPTION,
                     subscriptionId = id, url = url, name = name,
                     mirrorTemplate = mirrorTemplate, mirrorFallback = mirrorFallback, groupId = resolvedGroupId ?: -1,
-                    scope = ruleScope.storageValue
+                    scope = ruleScope.storageValue, dataset = dataset
                 ).id
             )
         }
@@ -235,10 +232,9 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
     fun deleteGroup(id: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            val database = AppDatabase.getInstance(getApplication<Application>())
-            database.withTransaction {
-                database.subscriptionDao().clearGroup(id)
-                database.subscriptionGroupDao().deleteById(id)
+            RuleDatabases.forDatasetDb(getApplication<Application>(), dataset).withTransaction {
+                dataSources.subscriptionDao().clearGroup(id)
+                dataSources.subscriptionGroupDao().deleteById(id)
             }
             withContext(Dispatchers.Main) { _message.value = getApplication<Application>().getString(R.string.subscription_group_deleted) }
         }
@@ -248,8 +244,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             _operationMessage.value = getApplication<Application>().getString(R.string.subscription_group_deleting)
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val database = AppDatabase.getInstance(getApplication<Application>())
-                val subscriptions = database.subscriptionDao().byGroupId(groupId)
+                val subscriptions = dataSources.subscriptionDao().byGroupId(groupId)
                 val scope = RuleScope.DNS
                 var hasRewrite = false
                 subscriptions.forEach { subscription ->
@@ -278,13 +273,22 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
     private fun subscriptionManagerFor(scope: RuleScope): SubscriptionManager {
         val app = getApplication<Application>()
-        val database = AppDatabase.getInstance(app)
+        return subscriptionManagerFor(scope, RuleDatabases.forDataset(app, dataset), app)
+    }
+
+    private fun subscriptionManagerFor(
+        scope: RuleScope,
+        sources: com.haoze.diting.data.RuleDataSources,
+        app: Application
+    ): SubscriptionManager {
+        // The DNS dataset keeps pure in-memory caches; rule-index/ belongs to VPN mode.
+        val indexDirectory = if (dataset == RuleDataset.NORMAL) java.io.File(app.filesDir, "rule-index") else null
         return SubscriptionManager(
-            database,
-            database.subscriptionDao(),
-            BlockListManager(database.blockRuleDao(), scope = scope, reloadCacheAfterChanges = false),
-            AllowListManager(database.allowRuleDao(), scope = scope, reloadCacheAfterChanges = false),
-            com.haoze.diting.vpn.RewriteRuleManager(database.rewriteRuleDao(), java.io.File(app.filesDir, "rule-index"), scope, reloadCacheAfterChanges = false),
+            RuleDatabases.forDatasetDb(app, dataset),
+            sources.subscriptionDao(),
+            BlockListManager(sources.blockRuleDao(), scope = scope, reloadCacheAfterChanges = false),
+            AllowListManager(sources.allowRuleDao(), scope = scope, reloadCacheAfterChanges = false),
+            com.haoze.diting.vpn.RewriteRuleManager(sources.rewriteRuleDao(), indexDirectory, scope, reloadCacheAfterChanges = false),
             scope,
             app.cacheDir
         )
@@ -298,7 +302,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     private suspend fun createGroupInternal(name: String, autoUpdateEnabled: Boolean): Result<SubscriptionGroupEntity> {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return Result.failure(IllegalArgumentException("分组名称不能为空"))
-        val dao = AppDatabase.getInstance(getApplication<Application>()).subscriptionGroupDao()
+        val dao = dataSources.subscriptionGroupDao()
         if (dao.byName(trimmed) != null) return Result.failure(IllegalArgumentException("分组名称已存在"))
         return runCatching {
             SubscriptionGroupEntity(id = dao.insert(SubscriptionGroupEntity(name = trimmed, autoUpdateEnabled = autoUpdateEnabled)), name = trimmed, autoUpdateEnabled = autoUpdateEnabled)
@@ -307,7 +311,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
     private fun updateGroup(id: Long, name: String? = null, autoUpdateEnabled: Boolean? = null) {
         viewModelScope.launch(Dispatchers.IO) {
-            val dao = AppDatabase.getInstance(getApplication<Application>()).subscriptionGroupDao()
+            val dao = dataSources.subscriptionGroupDao()
             try {
                 if (name != null) {
                     val trimmed = name.trim()
@@ -334,7 +338,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         enqueueAndObserve(
             RuleOperationScheduler.enqueue(
                 getApplication(), RuleOperationType.UPDATE_SUBSCRIPTION, subscriptionId = id,
-                scope = ruleScope.storageValue
+                scope = ruleScope.storageValue, dataset = dataset
             ).id
         )
     }
@@ -343,7 +347,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         enqueueAndObserve(
             RuleOperationScheduler.enqueue(
                 getApplication(), RuleOperationType.UPDATE_ALL_SUBSCRIPTIONS,
-                scope = ruleScope.storageValue
+                scope = ruleScope.storageValue, dataset = dataset
             ).id
         )
     }
@@ -355,7 +359,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
             _operationMessage.value = getApplication<Application>().getString(R.string.subscription_deleting)
             try {
                 withContext(Dispatchers.IO) {
-                    val subscription = AppDatabase.getInstance(getApplication<Application>()).subscriptionDao().byId(id)
+                    val subscription = dataSources.subscriptionDao().byId(id)
                     subscriptionManager().deleteSubscription(id)
                     val isRewrite = com.haoze.diting.data.entity.SubscriptionKind.isHosts(subscription?.kind)
                     refreshSubscriptionRuleIndexes(
@@ -388,7 +392,7 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
         }
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val subscription = AppDatabase.getInstance(getApplication<Application>()).subscriptionDao().byId(id)
+                val subscription = dataSources.subscriptionDao().byId(id)
                 val result = subscriptionManager().setSubscriptionEnabled(id, enabled)
                 if (result.isSuccess) {
                     val isRewrite = com.haoze.diting.data.entity.SubscriptionKind.isHosts(subscription?.kind)
@@ -420,15 +424,20 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
 
     private fun refreshSubscriptionRuleIndexes(isRewrite: Boolean, scope: RuleScope) {
         val context = getApplication<Application>()
-        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, refreshBlock = true, refreshAllow = true, refreshRewrite = true, scope = scope)
-        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(context, refreshBlock = true, refreshAllow = true, refreshRewrite = true, scope = scope, dataset = dataset)
+        if (dataset == RuleDataset.NORMAL) {
+            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+        }
         if (!com.haoze.diting.vpn.DnsVpnService.isRunning(context)) {
             viewModelScope.launch(Dispatchers.IO) {
-                val database = AppDatabase.getInstance(context)
-                val ruleIndexDirectory = com.haoze.diting.vpn.RuleIndexLayout.scopeDirectory(context.filesDir, scope)
-                val blockManager = BlockListManager(database.blockRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
-                val allowManager = AllowListManager(database.allowRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
-                val rewriteManager = com.haoze.diting.vpn.RewriteRuleManager(database.rewriteRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
+                val sources = RuleDatabases.forDataset(context, dataset)
+                // The DNS dataset keeps pure in-memory caches; rule-index/ belongs to VPN mode.
+                val ruleIndexDirectory = if (dataset == RuleDataset.NORMAL) {
+                    com.haoze.diting.vpn.RuleIndexLayout.scopeDirectory(context.filesDir, scope)
+                } else null
+                val blockManager = BlockListManager(sources.blockRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
+                val allowManager = AllowListManager(sources.allowRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
+                val rewriteManager = com.haoze.diting.vpn.RewriteRuleManager(sources.rewriteRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
                 runCatching { blockManager.refreshCache(forceRebuild = true) }
                 runCatching { allowManager.refreshCache(forceRebuild = true) }
                 runCatching { rewriteManager.refreshCache(rebuildSubscriptionIndex = true) }
@@ -493,10 +502,9 @@ class SubscriptionViewModel(application: Application) : AndroidViewModel(applica
     }
 
     private suspend fun updateRuleBreakdowns(subscriptions: List<SubscriptionEntity>) {
-        val database = AppDatabase.getInstance(getApplication<Application>())
-        val blockDao = database.blockRuleDao()
-        val allowDao = database.allowRuleDao()
-        val rewriteDao = database.rewriteRuleDao()
+        val blockDao = dataSources.blockRuleDao()
+        val allowDao = dataSources.allowRuleDao()
+        val rewriteDao = dataSources.rewriteRuleDao()
         val map = subscriptions.associate { sub ->
             val source = "sub_${sub.id}"
             val blockCount = blockDao.countBySourceForList(source)
