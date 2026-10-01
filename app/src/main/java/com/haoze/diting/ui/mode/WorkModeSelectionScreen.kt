@@ -14,11 +14,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,7 +30,6 @@ import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.localizedText
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkModeSelectionScreen(
     isFirstLaunch: Boolean,
@@ -41,33 +37,31 @@ fun WorkModeSelectionScreen(
     onBack: () -> Unit = {},
     onModeSelected: (AppWorkMode) -> Unit
 ) {
-    CompositionLocalProvider(LocalRippleConfiguration provides null) {
-        if (isFirstLaunch) {
-            Scaffold(
-                modifier = Modifier.fillMaxSize(),
-                containerColor = Color.Transparent
-            ) { innerPadding ->
-                WorkModeSelectionContent(
-                    isFirstLaunch = true,
-                    currentMode = currentMode,
-                    onModeSelected = onModeSelected,
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .statusBarsPadding()
-                )
-            }
-        } else {
-            SettingsScaffold(
-                title = "模式切换",
-                onBack = onBack
-            ) { innerPadding ->
-                WorkModeSelectionContent(
-                    isFirstLaunch = false,
-                    currentMode = currentMode,
-                    onModeSelected = onModeSelected,
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
+    if (isFirstLaunch) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent
+        ) { innerPadding ->
+            WorkModeSelectionContent(
+                isFirstLaunch = true,
+                currentMode = currentMode,
+                onModeSelected = onModeSelected,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .statusBarsPadding()
+            )
+        }
+    } else {
+        SettingsScaffold(
+            title = "模式切换",
+            onBack = onBack
+        ) { innerPadding ->
+            WorkModeSelectionContent(
+                isFirstLaunch = false,
+                currentMode = currentMode,
+                onModeSelected = onModeSelected,
+                modifier = Modifier.padding(innerPadding)
+            )
         }
     }
 }

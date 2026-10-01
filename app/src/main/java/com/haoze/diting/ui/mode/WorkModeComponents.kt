@@ -1,8 +1,6 @@
 package com.haoze.diting.ui.mode
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -100,8 +97,6 @@ fun WorkModeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-
     val isNormal = mode == AppWorkMode.NORMAL
     val modeAccent = if (isNormal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
 
@@ -121,16 +116,11 @@ fun WorkModeCard(
     )
 
     Card(
+        onClick = onClick,
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
