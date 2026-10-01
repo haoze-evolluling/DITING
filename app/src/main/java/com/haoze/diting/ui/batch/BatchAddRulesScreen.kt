@@ -49,7 +49,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
@@ -79,7 +79,7 @@ fun BatchAddRulesScreen(
     onRuntimeDnsSettingsChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
     val db = remember(dataset) { RuleDatabases.forDataset(context, dataset) }
 
@@ -100,17 +100,23 @@ fun BatchAddRulesScreen(
         actions = {
             IconButton(
                 onClick = {
-                    val clipText = clipboardManager.getText()?.text
-                    if (!clipText.isNullOrEmpty()) {
-                        val normalized = clipText.replace("\r\n", "\n").replace('\r', '\n')
-                        inputText = if (inputText.isEmpty()) {
-                            normalized
+                    scope.launch {
+                        val clipEntry = clipboard.getClipEntry()
+                        val clipData = clipEntry?.clipData
+                        val clipText = if (clipData != null && clipData.itemCount > 0) {
+                            clipData.getItemAt(0)?.coerceToText(context)?.toString()
+                        } else null
+                        if (!clipText.isNullOrEmpty()) {
+                            val normalized = clipText.replace("\r\n", "\n").replace('\r', '\n')
+                            inputText = if (inputText.isEmpty()) {
+                                normalized
+                            } else {
+                                "$inputText\n$normalized"
+                            }
+                            context.showToast(localizedText(context, "已粘贴"), Toast.LENGTH_SHORT)
                         } else {
-                            "$inputText\n$normalized"
+                            context.showToast(localizedText(context, "剪贴板为空"), Toast.LENGTH_SHORT)
                         }
-                        context.showToast(localizedText(context, "已粘贴"), Toast.LENGTH_SHORT)
-                    } else {
-                        context.showToast(localizedText(context, "剪贴板为空"), Toast.LENGTH_SHORT)
                     }
                 }
             ) {

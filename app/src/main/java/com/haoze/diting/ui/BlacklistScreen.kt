@@ -20,7 +20,7 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -140,7 +140,7 @@ fun BlacklistScreen(
                 )
                 DropdownMenuItem(
                     text = { Text(localizedText("批量添加规则")) },
-                    leadingIcon = { Icon(Icons.Filled.PlaylistAdd, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = null) },
                     onClick = {
                         showTopMenu = false
                         onNavigateToBatchAdd()

@@ -14,7 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
@@ -115,7 +115,7 @@ fun RewriteListScreen(
                 )
                 DropdownMenuItem(
                     text = { Text(localizedText("批量添加规则")) },
-                    leadingIcon = { Icon(Icons.Filled.PlaylistAdd, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = null) },
                     onClick = {
                         showTopMenu = false
                         onNavigateToBatchAdd()
