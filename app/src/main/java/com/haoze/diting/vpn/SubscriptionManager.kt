@@ -212,6 +212,7 @@ class SubscriptionManager(
         sourceRef: String,
         name: String,
         kind: String = SubscriptionKind.DOMAIN,
+        groupId: Long? = null,
         contentLoader: () -> Reader
     ): Result<SubscriptionEntity> = withContext(Dispatchers.IO) {
         if (_importing.value) return@withContext Result.failure(IllegalStateException("正在导入中"))
@@ -239,7 +240,8 @@ class SubscriptionManager(
                 ruleCount = 0,
                 lastUpdated = 0,
                 addedAt = System.currentTimeMillis(),
-                importState = SubscriptionImportState.IMPORTING
+                importState = SubscriptionImportState.IMPORTING,
+                groupId = groupId
             )
             val id = subscriptionDao.insert(subscription)
             saved = subscription.copy(id = id)

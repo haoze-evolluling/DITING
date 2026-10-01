@@ -286,9 +286,10 @@ class RuleOperationWorker(
         RuleOperationType.ADD_LOCAL_SUBSCRIPTION -> {
             val uri = requiredUri()
             val result = subscriptionManager.addLocalSubscription(
-                uri.toString(),
-                inputData.getString(RuleOperationScheduler.KEY_NAME).orEmpty(),
-                inputData.getString(RuleOperationScheduler.KEY_KIND) ?: SubscriptionKind.DOMAIN
+                sourceRef = uri.toString(),
+                name = inputData.getString(RuleOperationScheduler.KEY_NAME).orEmpty(),
+                kind = inputData.getString(RuleOperationScheduler.KEY_KIND) ?: SubscriptionKind.DOMAIN,
+                groupId = inputData.getLong(RuleOperationScheduler.KEY_GROUP_ID, -1).takeIf { it >= 0 }
             ) { openUriReader(uri) }
             result.getOrThrow()
             OperationExecutionResult(subscriptionManager.latestImportSummary()?.displayMessage("导入成功") ?: "导入成功")

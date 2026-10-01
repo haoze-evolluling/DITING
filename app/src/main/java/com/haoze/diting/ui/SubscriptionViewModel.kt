@@ -1,6 +1,8 @@
 package com.haoze.diting.ui
 
 import android.app.Application
+import android.content.Intent
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.haoze.diting.R
@@ -154,6 +156,61 @@ class SubscriptionViewModel(
             RuleOperationScheduler.enqueue(
                 getApplication(), RuleOperationType.ADD_SUBSCRIPTION, url = url, name = name, kind = kind,
                 mirrorTemplate = mirrorTemplate, mirrorFallback = mirrorFallback, groupId = groupId ?: -1,
+                scope = ruleScope.storageValue, dataset = dataset
+            ).id,
+            pendingSubscription.id
+        )
+    }
+
+    fun addLocalSubscription(
+        uri: Uri,
+        name: String,
+        kind: String = com.haoze.diting.data.entity.SubscriptionKind.DOMAIN,
+        groupId: Long? = null,
+        newGroupName: String? = null
+    ) {
+        runCatching {
+            getApplication<Application>().contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            val resolvedGroupId = resolveGroupId(groupId, newGroupName).getOrElse {
+                withContext(Dispatchers.Main) {
+                    val context = getApplication<Application>()
+                    _message.value = context.getString(
+                        R.string.subscription_group_create_failed,
+                        localizedText(context, it.message ?: "")
+                    )
+                }
+                return@launch
+            }
+            addLocalSubscriptionInternal(uri, name, kind, resolvedGroupId)
+        }
+    }
+
+    private fun addLocalSubscriptionInternal(
+        uri: Uri,
+        name: String,
+        kind: String,
+        groupId: Long?
+    ) {
+        val trimmedName = name.trim().takeIf { it.isNotEmpty() } ?: uri.lastPathSegment ?: "Local Rules"
+        val pendingSubscription = SubscriptionEntity(
+            id = nextPendingSubscriptionId--,
+            url = uri.toString(),
+            name = trimmedName,
+            sourceType = com.haoze.diting.data.entity.SubscriptionSourceType.LOCAL,
+            kind = kind,
+            importState = com.haoze.diting.data.entity.SubscriptionImportState.IMPORTING,
+            groupId = groupId
+        )
+        _pendingSubscriptions.value = _pendingSubscriptions.value + pendingSubscription
+        enqueueAndObserve(
+            RuleOperationScheduler.enqueue(
+                getApplication(), RuleOperationType.ADD_LOCAL_SUBSCRIPTION, uri = uri, name = trimmedName, kind = kind,
+                groupId = groupId ?: -1,
                 scope = ruleScope.storageValue, dataset = dataset
             ).id,
             pendingSubscription.id
