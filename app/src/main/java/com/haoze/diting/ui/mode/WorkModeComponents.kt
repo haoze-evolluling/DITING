@@ -85,7 +85,7 @@ fun WorkModeHeader(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = localizedText("请根据您的使用场景选择运行模式，后续可随时在设置中切换"),
+            text = localizedText("请根据您的使用场景选择运行模式"),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

@@ -189,7 +189,7 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "运行模式" -> "Operating Mode"
     "选择工作模式" -> "Select Operating Mode"
     "切换普通模式或 DNS 模式" -> "Switch between Normal mode and DNS mode"
-    "请根据您的使用场景选择运行模式，后续可随时在设置中切换" -> "Choose an operating mode based on your usage; you can change it anytime in settings"
+    "请根据您的使用场景选择运行模式" -> "Choose an operating mode based on your usage"
     "普通模式" -> "Normal Mode"
     "包含全量域名解析、黑白名单过滤、HTTPS 检查与网络管控能力" -> "Comprehensive domain resolution, allowlist/blocklist filtering, HTTPS inspection, and network controls"
     "轻量级纯 DNS 代理与解析加速，专注于低功耗防护" -> "Lightweight pure DNS proxy and resolution acceleration, focused on low-power protection"
