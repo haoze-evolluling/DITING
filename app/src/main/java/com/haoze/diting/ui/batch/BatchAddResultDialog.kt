@@ -3,12 +3,13 @@ package com.haoze.diting.ui.batch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -22,7 +23,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,36 +62,12 @@ fun BatchAddResultDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Metric cards row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    MetricBadge(
-                        label = "有效",
-                        count = summary.validCount,
-                        icon = Icons.Filled.CheckCircle,
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.weight(1f)
-                    )
-                    MetricBadge(
-                        label = "重复",
-                        count = summary.duplicateCount,
-                        icon = Icons.Filled.Warning,
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.weight(1f)
-                    )
-                    MetricBadge(
-                        label = "无效",
-                        count = summary.invalidCount,
-                        icon = Icons.Filled.Error,
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+                // Unified validation summary band
+                ValidationSummaryBand(
+                    validCount = summary.validCount,
+                    duplicateCount = summary.duplicateCount,
+                    invalidCount = summary.invalidCount
+                )
 
                 if (summary.ignoredCount > 0) {
                     Text(
@@ -196,43 +175,98 @@ fun BatchAddResultDialog(
 }
 
 @Composable
-private fun MetricBadge(
+private fun ValidationSummaryBand(
+    validCount: Int,
+    duplicateCount: Int,
+    invalidCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = SettingsCornerShape,
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp, horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ValidationMetricColumn(
+                label = "有效",
+                count = validCount,
+                icon = Icons.Filled.CheckCircle,
+                activeColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.weight(1f)
+            )
+            VerticalDivider(
+                modifier = Modifier.height(28.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+            ValidationMetricColumn(
+                label = "重复",
+                count = duplicateCount,
+                icon = Icons.Filled.Warning,
+                activeColor = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.weight(1f)
+            )
+            VerticalDivider(
+                modifier = Modifier.height(28.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+            ValidationMetricColumn(
+                label = "无效",
+                count = invalidCount,
+                icon = Icons.Filled.Error,
+                activeColor = MaterialTheme.colorScheme.error,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ValidationMetricColumn(
     label: String,
     count: Int,
     icon: ImageVector,
-    containerColor: Color,
-    contentColor: Color,
+    activeColor: Color,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(containerColor)
-            .padding(vertical = 8.dp, horizontal = 6.dp),
-        contentAlignment = Alignment.Center
+    val hasCount = count > 0
+    val contentColor = if (hasCount) activeColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+    val labelColor = if (hasCount) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.padding(1.dp))
-                Text(
-                    text = localizedText(label),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = contentColor
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(15.dp)
+            )
             Text(
-                text = "$count",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
+                text = localizedText(label),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = labelColor
             )
         }
+        Text(
+            text = "$count",
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+            fontWeight = FontWeight.Bold,
+            color = contentColor
+        )
     }
 }
 
