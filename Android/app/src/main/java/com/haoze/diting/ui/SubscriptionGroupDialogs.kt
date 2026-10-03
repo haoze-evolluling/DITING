@@ -1,0 +1,79 @@
+package com.haoze.diting.ui
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import com.haoze.diting.data.entity.SubscriptionGroupEntity
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
+import com.haoze.diting.ui.components.SettingsCornerShape
+import com.haoze.diting.ui.components.SettingsDivider
+import com.haoze.diting.ui.components.SettingsItem
+
+@Composable
+internal fun SubscriptionGroupActionDialog(
+    group: SubscriptionGroupEntity,
+    onDismiss: () -> Unit,
+    onRename: () -> Unit,
+    onDissolve: () -> Unit,
+    onDeleteSubscriptions: () -> Unit
+) {
+    AppAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(group.name) },
+        text = {
+            Column {
+                SettingsItem(localizedText("重命名分组"), leadingIcon = Icons.Default.Edit, onClick = onRename)
+                SettingsDivider()
+                SettingsItem(localizedText("解散分组"), leadingIcon = Icons.Default.Delete, onClick = onDissolve)
+                SettingsDivider()
+                SettingsItem(localizedText("删除本组全部订阅"), leadingIcon = Icons.Default.Delete, titleColor = MaterialTheme.colorScheme.error, onClick = onDeleteSubscriptions)
+            }
+        },
+        confirmButton = { AppDialogButton(label = "取消", onClick = onDismiss) }
+    )
+}
+
+@Composable
+internal fun RenameGroupDialog(
+    group: SubscriptionGroupEntity,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var name by remember(group.id) { mutableStateOf(group.name) }
+    AppAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(localizedText("重命名分组")) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text(localizedText("分组名称")) },
+                singleLine = true,
+                shape = SettingsCornerShape,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            AppDialogButton(
+                label = "保存",
+                enabled = name.isNotBlank(),
+                onClick = { onConfirm(name.trim()) }
+            )
+        },
+        dismissButton = {
+            AppDialogButton(label = "取消", onClick = onDismiss)
+        }
+    )
+}

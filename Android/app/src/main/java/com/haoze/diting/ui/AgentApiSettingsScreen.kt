@@ -1,0 +1,198 @@
+package com.haoze.diting.ui
+
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.haoze.diting.ui.agent.AgentAnalysisSheet
+import com.haoze.diting.ui.agent.AnalysisTarget
+import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.SettingsGroupTitle
+import com.haoze.diting.ui.components.SettingsOutlinedActionButton
+import com.haoze.diting.ui.components.SettingsScaffold
+import com.haoze.diting.ui.settings.AgentApiConfig
+import com.haoze.diting.ui.settings.AgentApiSettingsStore
+import com.haoze.diting.ui.settings.AiProvider
+
+enum class AgentApiSubPage {
+    PROVIDERS,
+    CREDENTIALS,
+    PRESETS,
+    PARAMS
+}
+
+/**
+ * Agent API Settings Hub Screen.
+ * Provides service authorization, status overview, categorized secondary sub-pages,
+ * and live testing playground.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AgentApiSettingsScreen(
+    onBack: () -> Unit,
+    title: String = "AI 分析",
+    onNavigate: (String) -> Unit = {},
+    initialSubPage: AgentApiSubPage? = null
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    var config by remember { mutableStateOf(AgentApiSettingsStore.getAgentApiConfig(context)) }
+    var activeProvider by remember { mutableStateOf(AgentApiSettingsStore.getActiveProvider(context)) }
+
+    fun refreshState() {
+        config = AgentApiSettingsStore.getAgentApiConfig(context)
+        activeProvider = AgentApiSettingsStore.getActiveProvider(context)
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    LaunchedEffect(initialSubPage) {
+        when (initialSubPage) {
+            AgentApiSubPage.PROVIDERS,
+            AgentApiSubPage.CREDENTIALS,
+            AgentApiSubPage.PRESETS -> onNavigate(Routes.AI_PROVIDER_MANAGEMENT)
+            AgentApiSubPage.PARAMS -> onNavigate(Routes.AGENT_API_PARAMS)
+            null -> Unit
+        }
+    }
+
+    var showResetDialog by remember { mutableStateOf(false) }
+    var activeAnalysisTarget by remember { mutableStateOf<AnalysisTarget?>(null) }
+
+    fun updateConfig(newConfig: AgentApiConfig) {
+        config = newConfig
+        AgentApiSettingsStore.setAgentApiConfig(context, newConfig)
+        activeProvider = AgentApiSettingsStore.getActiveProvider(context)
+    }
+
+    SettingsScaffold(title = localizedText(title), onBack = onBack) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // 1. Service Master Switch & Status Overview
+            item { SettingsGroupTitle(localizedText("服务状态")) }
+            item {
+                AgentApiStatusCard(
+                    config = config,
+                    activeProvider = activeProvider,
+                    onEnabledChange = { enabled ->
+                        updateConfig(config.copy(enabled = enabled))
+                    }
+                )
+            }
+
+            // 2. Secondary Settings Navigation Group
+            item { SettingsGroupTitle(localizedText("详细设置")) }
+            item {
+                AgentApiNavigationGroup(
+                    onNavigateToProviders = { onNavigate(Routes.AI_PROVIDER_MANAGEMENT) },
+                    onNavigateToParams = { onNavigate(Routes.AGENT_API_PARAMS) }
+                )
+            }
+
+
+            // 3. Live Playground
+            item { SettingsGroupTitle(localizedText("功能测试")) }
+            item {
+                AgentApiPlaygroundCard(
+                    onAnalyzeDomain = { domain ->
+                        activeAnalysisTarget = AnalysisTarget.Domain(domain)
+                    },
+                    onAnalyzeTraffic = {
+                        activeAnalysisTarget = AnalysisTarget.RecentTraffic()
+                    }
+                )
+            }
+
+            // 4. Reset & Maintenance
+            item { SettingsGroupTitle(localizedText("重置设置")) }
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    SettingsOutlinedActionButton(
+                        onClick = { showResetDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Filled.Refresh, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(localizedText("恢复出厂默认配置"))
+                    }
+                }
+            }
+
+            // 5. Informational notice
+            item {
+                AgentApiNoticeSection()
+            }
+
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+        }
+    }
+
+    // Reset confirmation dialog
+    if (showResetDialog) {
+        AppConfirmDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = "恢复默认配置？",
+            message = "此操作将把所有 AI 分析参数、API Key 与系统提示词恢复为默认设置。",
+            confirmLabel = "确认恢复",
+            destructive = true,
+            onConfirm = {
+                val defaultConfig = AgentApiConfig()
+                updateConfig(defaultConfig)
+                showResetDialog = false
+                Toast.makeText(context, "已恢复出厂配置", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    // Agent Analysis Sheet for live playground
+    AgentAnalysisSheet(
+        target = activeAnalysisTarget,
+        onDismiss = { activeAnalysisTarget = null },
+        onNavigateToSettings = {
+            onNavigate(Routes.AI_PROVIDER_MANAGEMENT)
+        }
+    )
+}

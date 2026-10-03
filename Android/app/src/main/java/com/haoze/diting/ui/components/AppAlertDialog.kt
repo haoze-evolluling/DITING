@@ -1,0 +1,160 @@
+package com.haoze.diting.ui.components
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import com.haoze.diting.ui.localizedText
+
+@Composable
+fun AppAlertDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    dismissButton: @Composable (() -> Unit)? = null,
+    neutralButton: @Composable (() -> Unit)? = null,
+    icon: @Composable (() -> Unit)? = null,
+    title: @Composable (() -> Unit)? = null,
+    text: @Composable (() -> Unit)? = null,
+    shape: Shape = AlertDialogDefaults.shape,
+    containerColor: Color = AlertDialogDefaults.containerColor,
+    iconContentColor: Color = AlertDialogDefaults.iconContentColor,
+    titleContentColor: Color = AlertDialogDefaults.titleContentColor,
+    textContentColor: Color = AlertDialogDefaults.textContentColor,
+    tonalElevation: Dp = AlertDialogDefaults.TonalElevation,
+    properties: DialogProperties = DialogProperties(),
+    scrollable: Boolean = true
+) {
+    val maxHeight = LocalConfiguration.current.screenHeightDp.dp * 0.8f
+    val scrollableText: (@Composable () -> Unit)? = text?.let { content ->
+        {
+            if (scrollable) {
+                Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    content()
+                }
+            } else {
+                content()
+            }
+        }
+    }
+
+    val effectiveConfirmButton: @Composable () -> Unit = {
+        if (neutralButton != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(contentAlignment = Alignment.CenterStart) {
+                    neutralButton()
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    dismissButton?.invoke()
+                    confirmButton()
+                }
+            }
+        } else {
+            confirmButton()
+        }
+    }
+    val effectiveDismissButton: (@Composable () -> Unit)? = if (neutralButton != null) null else dismissButton
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = effectiveConfirmButton,
+        modifier = Modifier
+            .heightIn(max = maxHeight)
+            .then(modifier),
+        dismissButton = effectiveDismissButton,
+        icon = icon,
+        title = title,
+        text = scrollableText,
+        shape = shape,
+        containerColor = containerColor,
+        iconContentColor = iconContentColor,
+        titleContentColor = titleContentColor,
+        textContentColor = textContentColor,
+        tonalElevation = tonalElevation,
+        properties = properties
+    )
+}
+
+/** 对话框底部动作按钮：统一文字按钮样式，支持破坏性操作标红。 */
+@Composable
+fun AppDialogButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    destructive: Boolean = false,
+    enabled: Boolean = true
+) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = if (destructive) MaterialTheme.colorScheme.error
+            else MaterialTheme.colorScheme.primary
+        )
+    ) {
+        Text(localizedText(label))
+    }
+}
+
+/** 统一确认提示框：标题 + 正文 + 取消与确认按钮。 */
+@Composable
+fun AppConfirmDialog(
+    onDismissRequest: () -> Unit,
+    title: String,
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier,
+    message: String? = null,
+    cancelLabel: String? = "取消",
+    destructive: Boolean = false,
+    confirmEnabled: Boolean = true,
+    icon: @Composable (() -> Unit)? = null
+) {
+    AppAlertDialog(
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        icon = icon,
+        title = { Text(localizedText(title)) },
+        text = message?.let { msg ->
+            { Text(localizedText(msg), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        },
+        confirmButton = {
+            AppDialogButton(
+                label = confirmLabel,
+                onClick = onConfirm,
+                destructive = destructive,
+                enabled = confirmEnabled
+            )
+        },
+        dismissButton = cancelLabel?.let { label ->
+            { AppDialogButton(label, onDismissRequest) }
+        }
+    )
+}
+

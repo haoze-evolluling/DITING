@@ -1,0 +1,86 @@
+package com.haoze.diting.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+/**
+ * 暮霞粉预设主题 (Pink) 的完整 Material 3 明/暗色板，
+ * 由 Google 官方 material-color-utilities 从种子色按 Tonal Spot 方案生成。
+ */
+
+internal val PINK_LIGHT = M3ColorPalette(
+    primary = Color(0xFF8C4A60),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFFFD9E2),
+    onPrimaryContainer = Color(0xFF703349),
+    secondary = Color(0xFF74565F),
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFFFD9E2),
+    onSecondaryContainer = Color(0xFF5A3F47),
+    tertiary = Color(0xFF7C5635),
+    onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFFFDCC2),
+    onTertiaryContainer = Color(0xFF623F20),
+    error = Color(0xFFBA1A1A),
+    onError = Color(0xFFFFFFFF),
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF93000A),
+    background = Color(0xFFFFF8F8),
+    onBackground = Color(0xFF22191C),
+    surface = Color(0xFFFFF8F8),
+    onSurface = Color(0xFF22191C),
+    surfaceVariant = Color(0xFFF2DDE2),
+    onSurfaceVariant = Color(0xFF514347),
+    outline = Color(0xFF837377),
+    outlineVariant = Color(0xFFD5C2C6),
+    scrim = Color(0xFF000000),
+    inverseSurface = Color(0xFF372E30),
+    inverseOnSurface = Color(0xFFFDEDEF),
+    inversePrimary = Color(0xFFFFB0C8),
+    surfaceDim = Color(0xFFE6D6D9),
+    surfaceBright = Color(0xFFFFF8F8),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFFFF0F2),
+    surfaceContainer = Color(0xFFFAEAED),
+    surfaceContainerHigh = Color(0xFFF5E4E7),
+    surfaceContainerHighest = Color(0xFFEFDFE1),
+    surfaceTint = Color(0xFF8C4A60)
+)
+
+internal val PINK_DARK = M3ColorPalette(
+    primary = Color(0xFFFFB0C8),
+    onPrimary = Color(0xFF541D32),
+    primaryContainer = Color(0xFF703349),
+    onPrimaryContainer = Color(0xFFFFD9E2),
+    secondary = Color(0xFFE2BDC6),
+    onSecondary = Color(0xFF422931),
+    secondaryContainer = Color(0xFF5A3F47),
+    onSecondaryContainer = Color(0xFFFFD9E2),
+    tertiary = Color(0xFFEFBD94),
+    onTertiary = Color(0xFF48290C),
+    tertiaryContainer = Color(0xFF623F20),
+    onTertiaryContainer = Color(0xFFFFDCC2),
+    error = Color(0xFFFFB4AB),
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF191113),
+    onBackground = Color(0xFFEFDFE1),
+    surface = Color(0xFF191113),
+    onSurface = Color(0xFFEFDFE1),
+    surfaceVariant = Color(0xFF514347),
+    onSurfaceVariant = Color(0xFFD5C2C6),
+    outline = Color(0xFF9E8C90),
+    outlineVariant = Color(0xFF514347),
+    scrim = Color(0xFF000000),
+    inverseSurface = Color(0xFFEFDFE1),
+    inverseOnSurface = Color(0xFF372E30),
+    inversePrimary = Color(0xFF8C4A60),
+    surfaceDim = Color(0xFF191113),
+    surfaceBright = Color(0xFF413739),
+    surfaceContainerLowest = Color(0xFF140C0E),
+    surfaceContainerLow = Color(0xFF22191C),
+    surfaceContainer = Color(0xFF261D20),
+    surfaceContainerHigh = Color(0xFF31282A),
+    surfaceContainerHighest = Color(0xFF3C3235),
+    surfaceTint = Color(0xFFFFB0C8)
+)
