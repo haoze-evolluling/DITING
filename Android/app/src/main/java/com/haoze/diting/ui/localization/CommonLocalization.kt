@@ -41,6 +41,8 @@ internal fun translateCommonExact(text: String): String? = when (text) {
     "导出的配置文件可能包含个人自定义 DNS 节点与规则配置；本地导入的规则文件将作为不可自动更新的本地订阅保存在本机。" -> "Exported configurations may contain personal custom DNS endpoints and rules. Imported local rule files are saved as non-updatable subscriptions."
     "导出 CSV" -> "Export CSV"
     "选择状态" -> "Choose status"
+    "状态筛选" -> "Filter status"
+    "更多选项" -> "More options"
     "请求解析或处理失败" -> "Request resolution or processing failed"
     "未取得 authority" -> "Authority unavailable"
     "管理服务..." -> "Manage providers..."

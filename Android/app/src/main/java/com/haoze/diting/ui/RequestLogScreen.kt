@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import com.haoze.diting.SettingsRouteActivity
@@ -73,10 +74,9 @@ import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.vpn.AllowListManager
 import com.haoze.diting.vpn.BlockListManager
 import com.haoze.diting.vpn.LogResult
+import com.haoze.diting.ui.components.cascade.CascadeDropdownMenu
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsDivider
-import com.haoze.diting.ui.components.SettingsItem
-import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsOutlinedActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -124,7 +124,7 @@ fun RequestLogScreen(
     val searching = state.searching
     var pendingDomain by remember { mutableStateOf<String?>(null) }
     var pendingRuleScope by remember { mutableStateOf(RuleScope.DNS) }
-    var showStatusDialog by remember { mutableStateOf(false) }
+    var showTopMenu by remember { mutableStateOf(false) }
     var activeAnalysisTarget by remember { mutableStateOf<AnalysisTarget?>(null) }
     val scope = rememberCoroutineScope()
 
@@ -177,32 +177,87 @@ fun RequestLogScreen(
                     Icon(Icons.Default.Close, localizedText("关闭搜索"))
                 }
             } else {
-                IconButton(onClick = { viewModel.setSearching(true) }) { Icon(Icons.Default.Search, localizedText("搜索")) }
-                IconButton(onClick = { exportLauncher.launch("diting-request-logs-${System.currentTimeMillis()}.csv") }) { Icon(Icons.Default.FileDownload, localizedText("导出 CSV")) }
-                IconButton(onClick = { showStatusDialog = true }) {
-                    Icon(
-                        Icons.Default.FilterList,
-                        localizedText("选择状态"),
-                        tint = if (status != RequestStatus.ALL) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                    )
+                IconButton(onClick = { showTopMenu = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = localizedText("更多选项"))
                 }
-                IconButton(onClick = { activeAnalysisTarget = AnalysisTarget.RecentTraffic(source) }) {
-                    Icon(
-                        Icons.Default.AutoAwesome,
-                        contentDescription = localizedText("AI 流量分析"),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                IconButton(
-                    onClick = {
-                        viewModel.refresh()
-                        scope.launch {
-                            listState.scrollToItem(0)
-                        }
-                    },
-                    enabled = !state.loading
+                CascadeDropdownMenu(
+                    expanded = showTopMenu,
+                    onDismissRequest = { showTopMenu = false }
                 ) {
-                    Icon(Icons.Default.Refresh, localizedText("刷新"))
+                    DropdownMenuItem(
+                        text = { Text(localizedText("刷新")) },
+                        leadingIcon = { Icon(Icons.Default.Refresh, contentDescription = null) },
+                        enabled = !state.loading,
+                        onClick = {
+                            showTopMenu = false
+                            viewModel.refresh()
+                            scope.launch {
+                                listState.scrollToItem(0)
+                            }
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(localizedText("搜索")) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        onClick = {
+                            showTopMenu = false
+                            viewModel.setSearching(true)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(localizedText("状态筛选")) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.FilterList,
+                                contentDescription = null,
+                                tint = if (status != RequestStatus.ALL) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        },
+                        childrenHeader = { DropdownMenuHeader(text = { Text(localizedText("筛选请求状态")) }) },
+                        children = {
+                            RequestStatus.entries.forEach { option ->
+                                DropdownMenuItem(
+                                    text = { Text(localizedText(option.label)) },
+                                    trailingIcon = {
+                                        if (status == option) {
+                                            Icon(
+                                                Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        viewModel.setStatus(option)
+                                        showTopMenu = false
+                                    }
+                                )
+                            }
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(localizedText("导出 CSV")) },
+                        leadingIcon = { Icon(Icons.Default.FileDownload, contentDescription = null) },
+                        onClick = {
+                            showTopMenu = false
+                            exportLauncher.launch("diting-request-logs-${System.currentTimeMillis()}.csv")
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(localizedText("AI 流量分析")) },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        onClick = {
+                            showTopMenu = false
+                            activeAnalysisTarget = AnalysisTarget.RecentTraffic(source)
+                        }
+                    )
                 }
             }
         }
@@ -251,36 +306,6 @@ fun RequestLogScreen(
                 }
             }
         }
-    }
-    if (showStatusDialog) {
-        AppAlertDialog(
-            onDismissRequest = { showStatusDialog = false },
-            title = { Text(localizedText("筛选请求状态")) },
-            text = {
-                SettingsSurfaceGroup(
-                    groupContentPadding = PaddingValues.Zero,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    content = RequestStatus.entries.map { option ->
-                        {
-                            SettingsItem(
-                                title = localizedText(option.label),
-                                subtitle = localizedText(option.explanation),
-                                onClick = { viewModel.setStatus(option); showStatusDialog = false }
-                            ) {
-                                if (status == option) {
-                                    Icon(
-                                        Icons.Default.CheckCircle,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                        }
-                    }
-                )
-            },
-            confirmButton = { AppDialogButton(label = "取消", onClick = { showStatusDialog = false }) }
-        )
     }
     pendingDomain?.let { domain ->
         DomainActionDialog(
