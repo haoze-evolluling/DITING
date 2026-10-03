@@ -59,8 +59,8 @@ android {
         applicationId = "com.haoze.diting"
         minSdk = 29
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.1.3"
+        versionCode = 12
+        versionName = "1.1.5"
         ndk {
             abiFilters += "arm64-v8a"
         }
