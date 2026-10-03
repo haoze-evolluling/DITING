@@ -1,0 +1,172 @@
+package com.haoze.diting.ui.components.cascade.internal
+
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.rememberTransition
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+
+private const val InTransitionDuration = 300
+private const val OutTransitionDuration = 300
+
+@Composable
+internal fun AnimateEntryExit(
+    modifier: Modifier = Modifier,
+    expandedStates: MutableTransitionState<Boolean>,
+    transformOriginState: State<TransformOrigin>,
+    shadowElevation: Dp,
+    shape: Shape,
+    content: @Composable () -> Unit
+) {
+    val isExpandedTransition = rememberTransition(expandedStates, label = "CascadeDropdownMenu")
+    val scale by isExpandedTransition.animateFloat(
+        transitionSpec = {
+            tween(if (false isTransitioningTo true) InTransitionDuration else OutTransitionDuration)
+        },
+        label = "scale",
+        targetValueByState = { if (it) 1f else 0f }
+    )
+    val alpha by isExpandedTransition.animateFloat(
+        transitionSpec = {
+            tween(if (false isTransitioningTo true) InTransitionDuration else OutTransitionDuration)
+        },
+        label = "alpha",
+        targetValueByState = { if (it) 1f else 0f }
+    )
+    val reveal by isExpandedTransition.animateFloat(
+        transitionSpec = {
+            tween((if (false isTransitioningTo true) InTransitionDuration * 1.2 else OutTransitionDuration * 0.8).toInt())
+        },
+        label = "clip",
+        targetValueByState = { if (it) 1f else 0.25f }
+    )
+
+    val clippingShape = remember(reveal, shape) {
+        object : Shape {
+            override fun createOutline(
+                size: Size,
+                layoutDirection: LayoutDirection,
+                density: Density
+            ): Outline {
+                val outline = shape.createOutline(
+                    size = size,
+                    layoutDirection = layoutDirection,
+                    density = density
+                )
+                return when (outline) {
+                    is Outline.Generic,
+                    is Outline.Rectangle -> {
+                        Outline.Rectangle(createRevealingRect(size))
+                    }
+                    is Outline.Rounded -> {
+                        Outline.Rounded(
+                            RoundRect(
+                                rect = createRevealingRect(size),
+                                topLeft = outline.roundRect.topLeftCornerRadius,
+                                topRight = outline.roundRect.topRightCornerRadius,
+                                bottomRight = outline.roundRect.bottomRightCornerRadius,
+                                bottomLeft = outline.roundRect.bottomLeftCornerRadius,
+                            )
+                        )
+                    }
+                }
+            }
+
+            private fun createRevealingRect(size: Size): Rect {
+                return if (transformOriginState.value.pivotFractionY > 0.5f) {
+                    Rect(
+                        left = 0f,
+                        top = 0f + size.height * (1f - reveal),
+                        right = size.width,
+                        bottom = size.height
+                    )
+                } else {
+                    Rect(Offset.Zero, size = size.copy(height = size.height * reveal))
+                }
+            }
+        }
+    }
+
+    Box(
+        modifier.scale(scale, transformOrigin = transformOriginState.value)
+    ) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .thenIf(alpha < 1f) { clipDifference(clippingShape) }
+                .shadow(
+                    elevation = shadowElevation,
+                    shape = clippingShape,
+                    clip = false,
+                    ambientColor = Color.Black.copy(alpha = alpha),
+                    spotColor = Color.Black.copy(alpha = alpha),
+                )
+        )
+
+        Box(
+            Modifier
+                .alpha(alpha)
+                .clip(clippingShape)
+        ) {
+            content()
+        }
+    }
+}
+
+private fun Modifier.clipDifference(shape: Shape): Modifier = composed {
+    val path = remember { Path() }
+    drawWithCache {
+        path.asAndroidPath().rewind()
+        path.addOutline(
+            shape.createOutline(
+                size = size,
+                layoutDirection = layoutDirection,
+                density = this
+            )
+        )
+        onDrawWithContent {
+            clipPath(path, ClipOp.Difference) {
+                this@onDrawWithContent.drawContent()
+            }
+        }
+    }
+}
+
+@Stable
+private fun Modifier.scale(scale: Float, transformOrigin: TransformOrigin): Modifier {
+    return if (scale != 1f) {
+        graphicsLayer(
+            scaleX = scale,
+            scaleY = scale,
+            transformOrigin = transformOrigin
+        )
+    } else this
+}

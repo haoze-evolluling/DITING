@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.haoze.diting.ui.components.AppAlertDialog
 import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.AppDialogButton
+import com.haoze.diting.ui.components.cascade.CascadeDropdownMenu
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -95,100 +96,93 @@ internal fun AppListOverflowMenu(
     showSelectionActions: Boolean = true
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var submenu by remember { mutableStateOf<AppListSubmenu?>(null) }
 
-    IconButton(onClick = { expanded = true }) {
-    Icon(Icons.Default.MoreVert, contentDescription = localizedText("应用列表菜单"))
-    }
-
-    if (expanded) {
-        val title = when (submenu) {
-            AppListSubmenu.FILTER -> "过滤应用"
-            AppListSubmenu.SORT -> "排序方式"
-            null -> "应用列表操作"
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.Default.MoreVert, contentDescription = localizedText("应用列表菜单"))
         }
-        AppAlertDialog(
-            onDismissRequest = {
-                expanded = false
-                submenu = null
-            },
-            title = { Text(localizedText(title)) },
-            text = {
-                Column {
-                    when (submenu) {
-                        null -> {
-                            SettingsSurfaceGroup(
-                                groupContentPadding = PaddingValues.Zero,
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                content = buildList {
-                                    if (showSelectionActions) {
-                                        add { SettingsItem(title = localizedText("全选"), onClick = { onSelectAll(); expanded = false }) }
-                                        add { SettingsItem(title = localizedText("清除"), onClick = { onClear(); expanded = false }) }
-                                        add { SettingsItem(title = localizedText("反选"), onClick = { onInvert(); expanded = false }) }
-                                    }
-                                    add {
-                                        SettingsItem(title = localizedText("过滤"), onClick = { submenu = AppListSubmenu.FILTER }) {
-                                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
-                                        }
-                                    }
-                                    add {
-                                        SettingsItem(title = localizedText("排序"), onClick = { submenu = AppListSubmenu.SORT }) {
-                                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
-                                        }
-                                    }
+
+        CascadeDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            fixedWidth = 200.dp
+        ) {
+            if (showSelectionActions) {
+                DropdownMenuItem(
+                    text = { Text(localizedText("全选")) },
+                    onClick = {
+                        onSelectAll()
+                        expanded = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(localizedText("清除")) },
+                    onClick = {
+                        onClear()
+                        expanded = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(localizedText("反选")) },
+                    onClick = {
+                        onInvert()
+                        expanded = false
+                    }
+                )
+            }
+            DropdownMenuItem(
+                text = { Text(localizedText("过滤")) },
+                childrenHeader = { DropdownMenuHeader(text = { Text(localizedText("过滤应用")) }) },
+                children = {
+                    AppListFilter.entries.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(localizedText(option.label)) },
+                            trailingIcon = {
+                                if (filter == option) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
                                 }
-                            )
-                        }
-                        AppListSubmenu.FILTER -> SettingsSurfaceGroup(
-                            groupContentPadding = PaddingValues.Zero,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            content = AppListFilter.entries.map { option ->
-                                {
-                                    SettingsItem(title = localizedText(option.label), onClick = {
-                                        onFilterChange(option)
-                                        expanded = false
-                                        submenu = null
-                                    }) {
-                                        if (filter == option) {
-                                            Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
-                                        }
-                                    }
-                                }
-                            }
-                        )
-                        AppListSubmenu.SORT -> SettingsSurfaceGroup(
-                            groupContentPadding = PaddingValues.Zero,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            content = AppListSort.entries.map { option ->
-                                {
-                                    SettingsItem(title = localizedText(option.label), onClick = {
-                                        onSortChange(option)
-                                        expanded = false
-                                        submenu = null
-                                    }) {
-                                        if (sort == option) {
-                                            Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
-                                        }
-                                    }
-                                }
+                            },
+                            onClick = {
+                                onFilterChange(option)
+                                expanded = false
                             }
                         )
                     }
                 }
-            },
-            confirmButton = {
-                AppDialogButton(
-                    label = if (submenu == null) "取消" else "返回",
-                    onClick = {
-                        if (submenu == null) expanded = false else submenu = null
+            )
+            DropdownMenuItem(
+                text = { Text(localizedText("排序")) },
+                childrenHeader = { DropdownMenuHeader(text = { Text(localizedText("排序方式")) }) },
+                children = {
+                    AppListSort.entries.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(localizedText(option.label)) },
+                            trailingIcon = {
+                                if (sort == option) {
+                                    Icon(
+                                        Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            },
+                            onClick = {
+                                onSortChange(option)
+                                expanded = false
+                            }
+                        )
                     }
-                )
-            }
-        )
+                }
+            )
+        }
     }
 }
-
-private enum class AppListSubmenu { FILTER, SORT }
 
 private val AppIconShape = RoundedCornerShape(14.dp)
 

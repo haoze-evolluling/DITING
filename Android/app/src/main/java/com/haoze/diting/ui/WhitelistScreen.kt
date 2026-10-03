@@ -16,7 +16,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.DropdownMenu
+import com.haoze.diting.ui.components.cascade.CascadeDropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -106,7 +106,7 @@ fun WhitelistScreen(
             IconButton(onClick = { showTopMenu = true }) {
                 Icon(Icons.Filled.MoreVert, contentDescription = localizedText("更多选项"))
             }
-            DropdownMenu(
+            CascadeDropdownMenu(
                 expanded = showTopMenu,
                 onDismissRequest = { showTopMenu = false }
             ) {

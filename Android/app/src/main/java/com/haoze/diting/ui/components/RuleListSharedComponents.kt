@@ -23,7 +23,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
+import com.haoze.diting.ui.components.cascade.CascadeDropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -433,9 +433,10 @@ fun RuleItemActionsMenu(
             )
         }
 
-        DropdownMenu(
+        CascadeDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            fixedWidth = 160.dp
         ) {
             DropdownMenuItem(
                 text = { Text(localizedText("编辑")) },

@@ -23,7 +23,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
+import com.haoze.diting.ui.components.cascade.CascadeDropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -126,7 +126,7 @@ fun BlacklistScreen(
             IconButton(onClick = { showTopMenu = true }) {
                 Icon(Icons.Filled.MoreVert, contentDescription = localizedText("更多选项"))
             }
-            DropdownMenu(
+            CascadeDropdownMenu(
                 expanded = showTopMenu,
                 onDismissRequest = { showTopMenu = false }
             ) {

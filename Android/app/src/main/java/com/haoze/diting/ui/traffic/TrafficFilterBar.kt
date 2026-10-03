@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material3.DropdownMenu
+import com.haoze.diting.ui.components.cascade.CascadeDropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -71,7 +71,7 @@ internal fun TrafficFilterBar(
                     )
                 )
 
-                DropdownMenu(
+                CascadeDropdownMenu(
                     expanded = sortMenuExpanded,
                     onDismissRequest = { sortMenuExpanded = false }
                 ) {
