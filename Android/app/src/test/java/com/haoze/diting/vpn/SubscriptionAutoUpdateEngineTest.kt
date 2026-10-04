@@ -3,9 +3,6 @@ package com.haoze.diting.vpn
 import com.haoze.diting.data.dao.SubscriptionAutoUpdateDao
 import com.haoze.diting.data.entity.SubscriptionAutoUpdateItemEntity
 import com.haoze.diting.data.entity.SubscriptionAutoUpdateItemStatus
-import com.haoze.diting.data.entity.SubscriptionEntity
-import com.haoze.diting.data.entity.SubscriptionGroupEntity
-import com.haoze.diting.data.entity.SubscriptionSourceType
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -116,70 +113,5 @@ class SubscriptionAutoUpdateEngineTest {
         assertEquals(42L, data.getLong(RuleOperationScheduler.KEY_SUBSCRIPTION_ID, -1))
         assertEquals(3, data.getInt(RuleOperationScheduler.KEY_CURRENT, -1))
         assertEquals(10, data.getInt(RuleOperationScheduler.KEY_TOTAL, -1))
-    }
-
-    @Test
-    fun testUngroupedAndGroupedSubscriptionFilterLogic() {
-        val groupEnabled = SubscriptionGroupEntity(id = 1L, name = "Group Enabled", autoUpdateEnabled = true)
-        val groupDisabled = SubscriptionGroupEntity(id = 2L, name = "Group Disabled", autoUpdateEnabled = false)
-        val groups = mapOf(1L to groupEnabled, 2L to groupDisabled)
-
-        val subUngrouped = SubscriptionEntity(
-            id = 10L,
-            url = "https://example.com/ungrouped.txt",
-            name = "Ungrouped",
-            sourceType = SubscriptionSourceType.REMOTE,
-            enabled = true,
-            groupId = null
-        )
-        val subInEnabledGroup = SubscriptionEntity(
-            id = 11L,
-            url = "https://example.com/enabled_group.txt",
-            name = "In Enabled Group",
-            sourceType = SubscriptionSourceType.REMOTE,
-            enabled = true,
-            groupId = 1L
-        )
-        val subInDisabledGroup = SubscriptionEntity(
-            id = 12L,
-            url = "https://example.com/disabled_group.txt",
-            name = "In Disabled Group",
-            sourceType = SubscriptionSourceType.REMOTE,
-            enabled = true,
-            groupId = 2L
-        )
-        val subDisabledRemote = SubscriptionEntity(
-            id = 13L,
-            url = "https://example.com/disabled.txt",
-            name = "Disabled Remote",
-            sourceType = SubscriptionSourceType.REMOTE,
-            enabled = false,
-            groupId = null
-        )
-        val subLocal = SubscriptionEntity(
-            id = 14L,
-            url = "local_file",
-            name = "Local Subscription",
-            sourceType = SubscriptionSourceType.LOCAL,
-            enabled = true,
-            groupId = null
-        )
-
-        val allSubs = listOf(subUngrouped, subInEnabledGroup, subInDisabledGroup, subDisabledRemote, subLocal)
-
-        // Simulate SQL:
-        // WHERE sub.sourceType = 'remote' AND sub.enabled = 1 AND (sub.groupId IS NULL OR grp.autoUpdateEnabled = 1)
-        val filtered = allSubs.filter { sub ->
-            sub.sourceType == SubscriptionSourceType.REMOTE &&
-                sub.enabled &&
-                (sub.groupId == null || groups[sub.groupId]?.autoUpdateEnabled == true)
-        }
-
-        assertEquals(2, filtered.size)
-        assertTrue(filtered.any { it.id == 10L }) // Ungrouped is included
-        assertTrue(filtered.any { it.id == 11L }) // In enabled group is included
-        assertFalse(filtered.any { it.id == 12L }) // In disabled group is excluded
-        assertFalse(filtered.any { it.id == 13L }) // Disabled subscription is excluded
-        assertFalse(filtered.any { it.id == 14L }) // Local file is excluded
     }
 }

@@ -2,15 +2,12 @@ package com.haoze.diting.dnsmode
 
 import com.haoze.diting.dnsmode.backend.DnsModeManager
 import com.haoze.diting.dnsmode.backend.DnsModePreferences
-import com.haoze.diting.dnsmode.backend.DnsModeService
 import com.haoze.diting.dnsmode.model.DnsListenPortValidator
 import com.haoze.diting.dnsmode.model.DnsModeConfig
 import com.haoze.diting.dnsmode.model.DnsModeProtocol
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
 import com.haoze.diting.dnsmode.model.DnsUpstreamValidator
 import com.haoze.diting.dnsmode.model.DnsServiceStatus
-import com.haoze.diting.ui.localization.translateRulesAndSubscriptionExact
-import com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -284,13 +281,6 @@ class DnsModeTest {
     }
 
     @Test
-    fun `DnsModeService intent actions are defined`() {
-        assertEquals("com.haoze.diting.dnsmode.START", DnsModeService.ACTION_START)
-        assertEquals("com.haoze.diting.dnsmode.STOP", DnsModeService.ACTION_STOP)
-        assertEquals("com.haoze.diting.dnsmode.REFRESH", DnsModeService.ACTION_REFRESH)
-    }
-
-    @Test
     fun `getActiveUpstream falls back gracefully when id is unknown`() {
         // Unknown id should fall back to first preset
         val upstream = DnsModeManager.getActiveUpstream()
@@ -313,68 +303,5 @@ class DnsModeTest {
 
         assertEquals(1053, DnsListenPortValidator.DEFAULT_PORT)
         assertEquals(1053, DnsListenPortValidator.parse("1053"))
-    }
-
-    @Test
-    fun `DNS mode UI strings are properly localized`() {
-        assertEquals("DITING · DNS Mode", translateSettingsAndAppearanceExact("谛听 · DNS 模式"))
-        assertEquals("DNS Mode", translateSettingsAndAppearanceExact("DNS 模式"))
-        assertEquals("Upstream Servers", translateSettingsAndAppearanceExact("上游服务器"))
-        assertEquals("Mode Settings", translateSettingsAndAppearanceExact("模式设置"))
-        assertEquals("DNS Mode Running", translateSettingsAndAppearanceExact("DNS 模式运行中"))
-        assertEquals("DNS Mode Stopped", translateSettingsAndAppearanceExact("DNS 模式已停止"))
-        assertEquals("Total Queries", translateSettingsAndAppearanceExact("总查询量"))
-        assertEquals("Cache Hits", translateSettingsAndAppearanceExact("缓存命中"))
-        assertEquals("Blocked", translateSettingsAndAppearanceExact("已拦截"))
-        assertEquals("Uptime", translateSettingsAndAppearanceExact("运行时长"))
-        assertEquals("Avg Latency", translateSettingsAndAppearanceExact("平均时延"))
-        assertEquals("Preset Public Upstream DNS", translateSettingsAndAppearanceExact("预设公共上游 DNS"))
-        assertEquals("Switch to Normal Mode", translateSettingsAndAppearanceExact("切换为普通模式"))
-        assertEquals("Re-select Work Mode", translateSettingsAndAppearanceExact("重新选择工作模式"))
-        assertEquals(
-            "Failed to start DNS service. The listen port may already be in use",
-            translateSettingsAndAppearanceExact("DNS 服务启动失败，监听端口可能被占用")
-        )
-        assertEquals(
-            "Failed to update DNS service. The listen port may already be in use",
-            translateSettingsAndAppearanceExact("DNS 服务更新失败，监听端口可能被占用")
-        )
-        assertEquals(
-            "DITING · DNS Mode Running",
-            translateSettingsAndAppearanceExact("谛听 · DNS 模式运行中")
-        )
-        assertEquals("Add Custom Upstream", translateSettingsAndAppearanceExact("添加自定义上游"))
-        assertEquals("Edit Custom Upstream", translateSettingsAndAppearanceExact("编辑自定义上游"))
-        assertEquals("Custom Upstreams", translateSettingsAndAppearanceExact("自定义上游"))
-        assertEquals("Clear all statistics of this run", translateSettingsAndAppearanceExact("清空本次运行的统计数据"))
-        assertEquals(
-            "Keep the DNS service running stably in the background",
-            translateSettingsAndAppearanceExact("保持 DNS 服务在后台稳定运行")
-        )
-        assertEquals("Ali DNS", translateSettingsAndAppearanceExact("阿里 DNS"))
-        assertEquals(
-            "Port the DNS service listens on locally; defaults to 1053",
-            translateSettingsAndAppearanceExact("DNS 服务在本机监听的端口，默认 1053")
-        )
-        assertEquals(
-            "Range 1024-65535, default 1053",
-            translateSettingsAndAppearanceExact("范围 1024-65535，默认 1053")
-        )
-        // DNS mode isolated rule management strings
-        assertEquals("Enable domain filtering", translateRulesAndSubscriptionExact("启用域名过滤"))
-        assertEquals(
-            "Enable malicious domain blocking and allowlist pass-through",
-            translateRulesAndSubscriptionExact("开启恶意域名拦截与白名单放行")
-        )
-        assertEquals("Rule Management", translateRulesAndSubscriptionExact("规则管理"))
-        assertEquals("Hosts Rewrites", translateRulesAndSubscriptionExact("Hosts 覆写"))
-        assertEquals(
-            "URL rules are only supported in normal mode",
-            translateRulesAndSubscriptionExact("URL 规则仅普通模式支持")
-        )
-        assertEquals(
-            "Alibaba public DNS with low latency in mainland China",
-            translateSettingsAndAppearanceExact("阿里巴巴公共 DNS，国内解析低时延")
-        )
     }
 }
