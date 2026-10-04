@@ -1,5 +1,6 @@
 package com.haoze.diting.ui
 
+import com.haoze.diting.ui.localization.LocalizationEngine
 import com.haoze.diting.ui.localization.translateSettingsAndAppearanceExact
 import com.haoze.diting.ui.localization.translateSettingsAndAppearancePattern
 import org.junit.Assert.assertEquals
@@ -44,4 +45,30 @@ class SettingsAndAppearanceLocalizationTest {
         assertEquals("Interface and settings", translateSettingsAndAppearanceExact("界面与设置"))
         assertEquals("Data & maintenance", translateSettingsAndAppearanceExact("数据与维护"))
     }
+
+    @Test
+    fun `data cleanup translation matches expected strings`() {
+        assertEquals("Data cleanup", LocalizationEngine.translateExact("数据清理"))
+        assertEquals("Runtime data", LocalizationEngine.translateExact("运行数据"))
+        assertEquals("Weight data", LocalizationEngine.translateExact("权重数据"))
+        assertEquals("Rules and subscriptions", LocalizationEngine.translateExact("规则与订阅"))
+        assertEquals("Storage and security", LocalizationEngine.translateExact("存储与安全"))
+        assertEquals("Guides and reset", LocalizationEngine.translateExact("引导与重置"))
+
+        assertEquals("Delete request logs", LocalizationEngine.translateExact("删除请求日志"))
+        assertEquals("Delete traffic statistics", LocalizationEngine.translateExact("删除流量统计"))
+        assertEquals("Delete crash logs", LocalizationEngine.translateExact("删除崩溃日志"))
+        assertEquals("Delete DNS cache", LocalizationEngine.translateExact("删除 DNS 缓存"))
+        assertEquals("Restore default DNS weights", LocalizationEngine.translateExact("恢复 DNS 默认权重"))
+        assertEquals("Restore Bootstrap weights", LocalizationEngine.translateExact("恢复 Bootstrap 权重"))
+        assertEquals("Delete all domain rules", LocalizationEngine.translateExact("删除全部域名规则"))
+        assertEquals("Delete all address rules", LocalizationEngine.translateExact("删除全部地址规则"))
+        assertEquals("Delete all rule subscriptions", LocalizationEngine.translateExact("删除全部规则订阅"))
+        assertEquals("Reset HTTPS inspection certificate", LocalizationEngine.translateExact("重置 HTTPS 抓包证书"))
+        assertEquals("Clear downloads and temporary cache", LocalizationEngine.translateExact("清理下载与临时缓存"))
+        assertEquals("Clear custom background cache", LocalizationEngine.translateExact("清除自定义背景缓存"))
+        assertEquals("Reset all onboarding guides", LocalizationEngine.translateExact("重置所有新手引导"))
+        assertEquals("Clear all local data", LocalizationEngine.translateExact("清理全部本地数据"))
+    }
 }
+

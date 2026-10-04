@@ -85,4 +85,17 @@ interface CosmeticRuleDao {
         deleteUserAllowSources()
         deleteOrphans()
     }
+
+    @Query("DELETE FROM cosmetic_rule_source")
+    suspend fun clearAllSources()
+
+    @Query("DELETE FROM cosmetic_rule_source WHERE source GLOB 'sub_*'")
+    suspend fun deleteSubscriptionSources()
+
+    @Transaction
+    suspend fun clearSubscriptionRules() {
+        deleteSubscriptionSources()
+        deleteOrphans()
+    }
 }
+

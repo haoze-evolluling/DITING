@@ -54,17 +54,22 @@ object LogMaintenance {
         }
     }
 
+    @Volatile
+    var activeComponentsClearBuffers: (suspend () -> Unit)? = null
+
     /**
      * Clears all 4 log types in one operation.
      */
     suspend fun clearAllLogs(database: AppDatabase) {
         withContext(Dispatchers.IO) {
+            runCatching { activeComponentsClearBuffers?.invoke() }
             runCatching { database.dnsLogDao().clearAll() }
             runCatching { database.httpRequestLogDao().clearAll() }
             runCatching { database.raceLogDao().clearAll() }
             runCatching { database.bootstrapLogDao().clearAll() }
         }
     }
+
 
     /**
      * Clears all app traffic history and in-memory statistics state.

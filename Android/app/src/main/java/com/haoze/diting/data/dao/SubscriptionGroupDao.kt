@@ -36,4 +36,8 @@ interface SubscriptionGroupDao {
 
     @Query("DELETE FROM subscription_group WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM subscription_group")
+    suspend fun clearAll()
 }
+

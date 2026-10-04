@@ -165,6 +165,15 @@ object ProviderHealthStore {
         notifyListeners.forEach { it.onProviderHealthReset(providerIds) }
     }
 
+    fun clearAll(context: Context) {
+        val notifyListeners = synchronized(this) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            prefs.edit().remove(KEY_PROVIDER_HEALTH_JSON).apply()
+            listeners.toList()
+        }
+        notifyListeners.forEach { it.onProviderHealthCleared() }
+    }
+
     @Synchronized
     fun registerListener(listener: ProviderHealthStoreListener) {
         listeners.add(listener)
@@ -193,4 +202,6 @@ object ProviderHealthStore {
 
 interface ProviderHealthStoreListener {
     fun onProviderHealthReset(providerIds: Set<String>)
+    fun onProviderHealthCleared() {}
 }
+

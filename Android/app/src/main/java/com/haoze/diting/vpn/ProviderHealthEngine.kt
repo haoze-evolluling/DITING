@@ -112,6 +112,13 @@ class ProviderHealthEngine(
         flush(commit = true)
     }
 
+    @Synchronized
+    override fun onProviderHealthCleared() {
+        cancelScheduledFlush()
+        healthByProvider.clear()
+        dirty = false
+    }
+
     private fun markDirty() {
         dirty = true
         if (scheduledFlushJob?.isActive == true) return

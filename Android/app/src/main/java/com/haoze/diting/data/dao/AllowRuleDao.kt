@@ -430,4 +430,14 @@ interface AllowRuleDao {
             "WHERE s.source = :source AND (r.pattern LIKE :query OR r.rawLine LIKE :query)"
     )
     suspend fun searchCountBySource(source: String, query: String): Int
+
+    @Query("DELETE FROM allow_rule_source WHERE source LIKE 'sub_%'")
+    suspend fun deleteSubscriptionSources()
+
+    @Transaction
+    suspend fun clearSubscriptionRules() {
+        deleteSubscriptionSources()
+        deleteOrphans()
+    }
 }
+

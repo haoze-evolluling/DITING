@@ -96,4 +96,38 @@ interface RewriteRuleDao {
         }
     }
     @Query("UPDATE rewrite_rule_source SET enabled=:enabled WHERE source=:source") suspend fun setEnabledBySource(source: String, enabled: Boolean)
+
+    @Query("DELETE FROM rewrite_rule WHERE targetType = :targetType")
+    suspend fun deleteByTargetType(targetType: String)
+
+    @Query("DELETE FROM rewrite_rule WHERE targetType IN (:targetTypes)")
+    suspend fun deleteByTargetTypes(targetTypes: List<String>)
+
+    @Query("DELETE FROM rewrite_rule_source WHERE ruleId IN (SELECT id FROM rewrite_rule WHERE targetType = :targetType)")
+    suspend fun deleteSourcesByTargetType(targetType: String)
+
+    @Query("DELETE FROM rewrite_rule_source WHERE ruleId IN (SELECT id FROM rewrite_rule WHERE targetType IN (:targetTypes))")
+    suspend fun deleteSourcesByTargetTypes(targetTypes: List<String>)
+
+    @Transaction
+    suspend fun clearByTargetType(targetType: String) {
+        deleteSourcesByTargetType(targetType)
+        deleteByTargetType(targetType)
+    }
+
+    @Transaction
+    suspend fun clearByTargetTypes(targetTypes: List<String>) {
+        deleteSourcesByTargetTypes(targetTypes)
+        deleteByTargetTypes(targetTypes)
+    }
+
+    @Query("DELETE FROM rewrite_rule_source WHERE source GLOB 'sub_*'")
+    suspend fun deleteSubscriptionSources()
+
+    @Transaction
+    suspend fun clearSubscriptionRules() {
+        deleteSubscriptionSources()
+        deleteOrphans()
+    }
 }
+

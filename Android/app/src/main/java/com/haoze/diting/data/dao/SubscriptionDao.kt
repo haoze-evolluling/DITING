@@ -125,4 +125,11 @@ interface SubscriptionDao {
 
     @Query("DELETE FROM subscription WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("DELETE FROM subscription WHERE kind = :kind")
+    suspend fun deleteByKind(kind: String)
+
+    @Query("DELETE FROM subscription")
+    suspend fun clearAll()
 }
+

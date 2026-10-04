@@ -150,6 +150,13 @@ class BootstrapHealthEngine(
         flush(commit = true)
     }
 
+    @Synchronized
+    override fun onBootstrapHealthCleared() {
+        cancelScheduledFlush()
+        healthByIp.clear()
+        dirty = false
+    }
+
     private fun markDirty() {
         dirty = true
         if (scheduledFlushJob?.isActive == true) return

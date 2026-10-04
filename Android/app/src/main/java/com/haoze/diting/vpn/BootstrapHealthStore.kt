@@ -127,6 +127,15 @@ object BootstrapHealthStore {
         reset(context, setOf(ipId))
     }
 
+    fun clearAll(context: Context) {
+        val notifyListeners = synchronized(this) {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            prefs.edit().remove(KEY_BOOTSTRAP_HEALTH_JSON).apply()
+            listeners.toList()
+        }
+        notifyListeners.forEach { it.onBootstrapHealthCleared() }
+    }
+
     @Synchronized
     fun registerListener(listener: BootstrapHealthStoreListener) {
         listeners.add(listener)
@@ -148,4 +157,6 @@ object BootstrapHealthStore {
 
 interface BootstrapHealthStoreListener {
     fun onBootstrapHealthReset(ipIds: Set<String>)
+    fun onBootstrapHealthCleared() {}
 }
+

@@ -88,6 +88,12 @@ class DnsVpnDatabaseComponents {
             if (::dnsLogger.isInitialized) dnsLogger.flush()
             if (::httpRequestLogger.isInitialized) httpRequestLogger.flush()
         }
+        LogMaintenance.activeComponentsClearBuffers = {
+            if (::dnsLogger.isInitialized) dnsLogger.clearAll()
+            if (::httpRequestLogger.isInitialized) httpRequestLogger.clearAll()
+            if (::raceLogger.isInitialized) raceLogger.clearAll()
+            if (::bootstrapLogger.isInitialized) bootstrapLogger.clearAll()
+        }
 
         bootstrapHealthListener = object : BootstrapHealthStoreListener {
             override fun onBootstrapHealthReset(ipIds: Set<String>) {
@@ -165,5 +171,7 @@ class DnsVpnDatabaseComponents {
             BootstrapHealthStore.unregisterListener(bootstrapHealthListener)
         }
         com.haoze.diting.data.repository.RequestLogRepository.activeFlusher = null
+        LogMaintenance.activeComponentsClearBuffers = null
     }
 }
+

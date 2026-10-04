@@ -323,6 +323,7 @@ class DesktopAdRuleFileTest {
             override suspend fun promoteSource(oldSource: String, newSource: String) {}
             override suspend fun setSourceEnabledBySource(source: String, enabled: Boolean) {}
             override suspend fun clearAll() {}
+            override suspend fun deleteSubscriptionSources() {}
         }
 
         val fakeCosmeticDao = object : CosmeticRuleDao {
@@ -347,6 +348,8 @@ class DesktopAdRuleFileTest {
             override suspend fun promoteSource(oldSource: String, newSource: String) {}
             override suspend fun setSourceEnabledBySource(source: String, enabled: Boolean) {}
             override suspend fun clearAll() {}
+            override suspend fun clearAllSources() {}
+            override suspend fun deleteSubscriptionSources() {}
             override suspend fun deleteSourcesByRuleId(ruleId: Long) {}
             override suspend fun sourcesForRuleIds(ruleIds: List<Long>): List<CosmeticRuleSourceEntity> = emptyList()
             override suspend fun blockRules(): List<CosmeticRuleEntity> = insertedCosmeticRules.filter { !it.rawLine.contains("#@#") }
