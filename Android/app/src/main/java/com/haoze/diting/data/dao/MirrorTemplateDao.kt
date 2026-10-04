@@ -21,4 +21,6 @@ interface MirrorTemplateDao {
     suspend fun all(): List<MirrorTemplateEntity>
     @Query("SELECT * FROM mirror_template WHERE name = :name LIMIT 1")
     suspend fun byName(name: String): MirrorTemplateEntity?
+    @Query("DELETE FROM mirror_template")
+    suspend fun clearAll()
 }

@@ -41,8 +41,10 @@ interface GoUrlRuleDao {
     @Transaction suspend fun deleteByKindAndSource(kind: String, source: String) { deleteSourcesByKindAndSource(kind, source); deleteOrphans() }
     @Query("UPDATE go_url_rule_source SET source=:newSource WHERE source=:oldSource") suspend fun promoteSource(oldSource: String, newSource: String)
     @Query("UPDATE go_url_rule_source SET enabled=:enabled WHERE source=:source") suspend fun setSourceEnabledBySource(source: String, enabled: Boolean)
-    @Query("DELETE FROM go_url_rule") suspend fun clearAll()
-    @Query("DELETE FROM go_url_rule_source WHERE source GLOB 'sub_*'") suspend fun deleteSubscriptionSources()
+    @Query("DELETE FROM go_url_rule_source") suspend fun clearAllSources()
+    @Query("DELETE FROM go_url_rule") suspend fun clearAllRules()
+    @Transaction suspend fun clearAll() { clearAllSources(); clearAllRules() }
+    @Query("DELETE FROM go_url_rule_source WHERE source GLOB 'sub_*' OR source GLOB 'staging_sub_*'") suspend fun deleteSubscriptionSources()
     @Transaction suspend fun clearSubscriptionRules() { deleteSubscriptionSources(); deleteOrphans() }
 }
 

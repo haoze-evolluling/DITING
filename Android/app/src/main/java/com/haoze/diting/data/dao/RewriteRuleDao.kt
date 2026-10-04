@@ -74,7 +74,9 @@ interface RewriteRuleDao {
     @Query("UPDATE rewrite_rule_source SET enabled=:enabled WHERE ruleId=:ruleId") suspend fun setSourceEnabledByRuleId(ruleId: Long, enabled: Boolean)
     @Query("SELECT EXISTS(SELECT 1 FROM rewrite_rule_source WHERE ruleId=:id AND source GLOB 'sub_*')") suspend fun hasSubscriptionSource(id: Long): Boolean
     @Query("DELETE FROM rewrite_rule WHERE id=:id") suspend fun deleteById(id: Long)
-    @Query("DELETE FROM rewrite_rule") suspend fun clearAll()
+    @Query("DELETE FROM rewrite_rule_source") suspend fun clearAllSources()
+    @Query("DELETE FROM rewrite_rule") suspend fun clearAllRules()
+    @Transaction suspend fun clearAll() { clearAllSources(); clearAllRules() }
     @Query("DELETE FROM rewrite_rule_source WHERE source=:source") suspend fun deleteSource(source: String)
     @Query("UPDATE rewrite_rule_source SET source=:targetSource WHERE source=:source") suspend fun moveSource(source: String, targetSource: String)
     @Query("DELETE FROM rewrite_rule WHERE NOT EXISTS (SELECT 1 FROM rewrite_rule_source s WHERE s.ruleId=rewrite_rule.id)") suspend fun deleteOrphans()
@@ -121,7 +123,7 @@ interface RewriteRuleDao {
         deleteByTargetTypes(targetTypes)
     }
 
-    @Query("DELETE FROM rewrite_rule_source WHERE source GLOB 'sub_*'")
+    @Query("DELETE FROM rewrite_rule_source WHERE source GLOB 'sub_*' OR source GLOB 'staging_sub_*'")
     suspend fun deleteSubscriptionSources()
 
     @Transaction

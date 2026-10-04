@@ -64,6 +64,8 @@ class SettingsAndAppearanceLocalizationTest {
         assertEquals("Delete all domain rules", LocalizationEngine.translateExact("删除全部域名规则"))
         assertEquals("Delete all address rules", LocalizationEngine.translateExact("删除全部地址规则"))
         assertEquals("Delete all rule subscriptions", LocalizationEngine.translateExact("删除全部规则订阅"))
+        assertEquals("Reset app control lists", LocalizationEngine.translateExact("重置应用控制名单"))
+        assertEquals("Reset outbound proxy configuration", LocalizationEngine.translateExact("重置出站代理配置"))
         assertEquals("Reset HTTPS inspection certificate", LocalizationEngine.translateExact("重置 HTTPS 抓包证书"))
         assertEquals("Clear downloads and temporary cache", LocalizationEngine.translateExact("清理下载与临时缓存"))
         assertEquals("Clear custom background cache", LocalizationEngine.translateExact("清除自定义背景缓存"))

@@ -65,6 +65,24 @@ object OutboundProxySettingsStore {
         }
     }
 
+    fun resetOutboundProxy(context: Context) {
+        synchronized(this) {
+            cachedConfig = OutboundProxyConfig()
+            currentStatus = null
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+                .remove(KEY_OUTBOUND_PROXY_ENABLED)
+                .remove(KEY_OUTBOUND_PROXY_PROTOCOL)
+                .remove(KEY_OUTBOUND_PROXY_HOST)
+                .remove(KEY_OUTBOUND_PROXY_PORT)
+                .remove(KEY_OUTBOUND_PROXY_USERNAME)
+                .remove(KEY_OUTBOUND_PROXY_PASSWORD)
+                .remove(KEY_OUTBOUND_PROXY_APP)
+                .remove(KEY_OUTBOUND_PROXY_STATUS)
+                .remove(KEY_OUTBOUND_PROXY_STATUS_MESSAGE)
+                .apply()
+        }
+    }
+
     fun isOutboundProxyEnabled(context: Context): Boolean {
         cachedConfig?.let { return it.enabled }
         val preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

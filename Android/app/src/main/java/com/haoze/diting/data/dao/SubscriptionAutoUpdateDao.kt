@@ -23,6 +23,9 @@ interface SubscriptionAutoUpdateDao {
     @Query("DELETE FROM subscription_auto_update_item WHERE batchId = :batchId AND subscriptionId = :subscriptionId")
     suspend fun deleteItem(batchId: String, subscriptionId: Long)
 
+    @Query("DELETE FROM subscription_auto_update_item WHERE subscriptionId NOT IN (SELECT id FROM subscription)")
+    suspend fun deleteOrphans()
+
     @Query("DELETE FROM subscription_auto_update_item")
     suspend fun clear()
 }

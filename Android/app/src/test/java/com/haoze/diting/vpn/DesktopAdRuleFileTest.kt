@@ -323,6 +323,8 @@ class DesktopAdRuleFileTest {
             override suspend fun promoteSource(oldSource: String, newSource: String) {}
             override suspend fun setSourceEnabledBySource(source: String, enabled: Boolean) {}
             override suspend fun clearAll() {}
+            override suspend fun clearAllSources() {}
+            override suspend fun clearAllRules() {}
             override suspend fun deleteSubscriptionSources() {}
         }
 

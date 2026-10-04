@@ -422,6 +422,29 @@ object AppRulesSettingsStore {
             .apply()
     }
 
+    fun resetAppControlRules(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_EXCLUDED_APP_PACKAGES)
+            .remove(KEY_EXCLUDED_APPS_FILTER)
+            .remove(KEY_EXCLUDED_APPS_SORT)
+            .remove(KEY_BLOCKED_APP_PACKAGES)
+            .remove(KEY_BLOCKED_APPS_ENABLED)
+            .remove(KEY_BLOCKED_APPS_FILTER)
+            .remove(KEY_BLOCKED_APPS_SORT)
+            .remove(KEY_APP_ALLOWLIST_RULES_JSON)
+            .remove(KEY_APP_ALLOWLIST_ENABLED)
+            .remove(KEY_APP_ALLOWLIST_FILTER)
+            .remove(KEY_APP_ALLOWLIST_SORT)
+            .remove(KEY_HTTP_INSPECTION_APP_PACKAGES)
+            .remove(KEY_HTTP_INSPECTION_ENABLED)
+            .remove(KEY_HTTP_INSPECTION_APPS_FILTER)
+            .remove(KEY_HTTP_INSPECTION_APPS_SORT)
+            .remove(KEY_HTTPS_BYPASS_RULES)
+            .remove(KEY_HTTP3_INSPECTION_ENABLED)
+            .apply()
+    }
+
     private fun getAppListPreference(context: Context, key: String, default: String): String =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(key, default) ?: default
 
@@ -429,3 +452,4 @@ object AppRulesSettingsStore {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(key, value).apply()
     }
 }
+

@@ -45,13 +45,15 @@ class DataCleanupManagerTest {
         val rewriteDao = createProxy(RewriteRuleDao::class.java, calls)
         val cosmeticDao = createProxy(CosmeticRuleDao::class.java, calls)
         val subscriptionDao = createProxy(SubscriptionDao::class.java, calls)
+        val subscriptionAutoUpdateDao = createProxy(SubscriptionAutoUpdateDao::class.java, calls)
 
         DataCleanupManager.clearDomainRulesData(
             blockDao = blockDao,
             allowDao = allowDao,
             rewriteDao = rewriteDao,
             cosmeticDao = cosmeticDao,
-            subscriptionDao = subscriptionDao
+            subscriptionDao = subscriptionDao,
+            subscriptionAutoUpdateDao = subscriptionAutoUpdateDao
         )
 
         assertTrue(calls.contains("BlockRuleDao.clearAll()"))
@@ -60,6 +62,7 @@ class DataCleanupManagerTest {
         assertTrue(calls.contains("CosmeticRuleDao.clearAll()"))
         assertTrue(calls.contains("CosmeticRuleDao.clearAllSources()"))
         assertTrue(calls.contains("SubscriptionDao.deleteByKind(${SubscriptionKind.DOMAIN})"))
+        assertTrue(calls.contains("SubscriptionAutoUpdateDao.deleteOrphans()"))
     }
 
     @Test

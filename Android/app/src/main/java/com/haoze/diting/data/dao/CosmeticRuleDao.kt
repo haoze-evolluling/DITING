@@ -89,7 +89,7 @@ interface CosmeticRuleDao {
     @Query("DELETE FROM cosmetic_rule_source")
     suspend fun clearAllSources()
 
-    @Query("DELETE FROM cosmetic_rule_source WHERE source GLOB 'sub_*'")
+    @Query("DELETE FROM cosmetic_rule_source WHERE source GLOB 'sub_*' OR source GLOB 'staging_sub_*'")
     suspend fun deleteSubscriptionSources()
 
     @Transaction

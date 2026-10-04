@@ -17,10 +17,14 @@ import com.haoze.diting.data.entity.RewriteTargetType
 import com.haoze.diting.data.entity.SubscriptionKind
 import com.haoze.diting.ui.RuntimeDnsSettingsRefresher
 import com.haoze.diting.ui.background.CustomBackgroundManager
+import com.haoze.diting.ui.settings.AppRulesSettingsStore
+import com.haoze.diting.ui.settings.OutboundProxySettingsStore
 import com.haoze.diting.ui.settings.SystemSettingsStore
 import com.haoze.diting.vpn.AllowListManager
+import com.haoze.diting.vpn.BlockListManager
 import com.haoze.diting.vpn.BootstrapHealthStore
 import com.haoze.diting.vpn.DefaultWhitelistSeeder
+import com.haoze.diting.vpn.RuleIndexLayout
 import com.haoze.diting.vpn.GoInspectionCaManager
 import com.haoze.diting.vpn.LogMaintenance
 import com.haoze.diting.vpn.ProviderHealthStore
@@ -102,7 +106,8 @@ object DataCleanupManager {
             normalDb.allowRuleDao(),
             normalDb.rewriteRuleDao(),
             normalDb.cosmeticRuleDao(),
-            normalDb.subscriptionDao()
+            normalDb.subscriptionDao(),
+            normalDb.subscriptionAutoUpdateDao()
         )
         DefaultWhitelistSeeder.seed(context, normalDb, forceReset = true)
 
@@ -112,18 +117,19 @@ object DataCleanupManager {
             dnsDb.allowRuleDao(),
             dnsDb.rewriteRuleDao(),
             dnsDb.cosmeticRuleDao(),
-            dnsDb.subscriptionDao()
+            dnsDb.subscriptionDao(),
+            dnsDb.subscriptionAutoUpdateDao()
         )
 
         // 3. 磁盘索引重建
         val ruleIndexDir = File(context.filesDir, "rule-index")
         File(ruleIndexDir, "domain").deleteRecursively()
+        RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
         runCatching {
             AllowListManager(normalDb.allowRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
+            BlockListManager(normalDb.blockRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
+            RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
         }
-
-        val dnsModeRuleIndexDir = File(context.filesDir, "dns-mode-rule-index")
-        File(dnsModeRuleIndexDir, "domain").deleteRecursively()
 
         // 4. 同步运行时服务
         RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
@@ -141,7 +147,8 @@ object DataCleanupManager {
         allowDao: AllowRuleDao,
         rewriteDao: RewriteRuleDao,
         cosmeticDao: CosmeticRuleDao,
-        subscriptionDao: SubscriptionDao
+        subscriptionDao: SubscriptionDao,
+        subscriptionAutoUpdateDao: SubscriptionAutoUpdateDao? = null
     ) {
         blockDao.clearAll()
         allowDao.clearAll()
@@ -149,6 +156,7 @@ object DataCleanupManager {
         cosmeticDao.clearAll()
         cosmeticDao.clearAllSources()
         subscriptionDao.deleteByKind(SubscriptionKind.DOMAIN)
+        subscriptionAutoUpdateDao?.deleteOrphans()
     }
 
     /**
@@ -166,6 +174,7 @@ object DataCleanupManager {
 
         // 3. 刷新 hosts 覆写索引
         val ruleIndexDir = File(context.filesDir, "rule-index")
+        RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
         runCatching {
             RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
         }
@@ -223,7 +232,9 @@ object DataCleanupManager {
 
         // 3. 索引刷新与缓存同步
         val ruleIndexDir = File(context.filesDir, "rule-index")
+        RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
         runCatching {
+            BlockListManager(normalDb.blockRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
             AllowListManager(normalDb.allowRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
             RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
         }
@@ -261,10 +272,35 @@ object DataCleanupManager {
     }
 
     /**
-     * 重置 HTTPS 抓包本地自签名根证书与私钥。
+     * 重置 HTTPS 抓包本地自签名根证书与私钥，并同步抓包就绪状态。
      */
     fun resetCaCertificate(context: Context) {
         GoInspectionCaManager.reset(context)
+        AppRulesSettingsStore.setHttpsInspectionReady(context, false)
+        val wasEnabled = AppRulesSettingsStore.isHttpInspectionEnabled(context)
+        AppRulesSettingsStore.setHttpInspectionEnabled(context, false)
+        if (wasEnabled) {
+            RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+        }
+    }
+
+    /**
+     * 重置所有应用控制名单（分应用排除、禁止联网应用、应用独立白名单及 HTTP/HTTPS 抓包应用配置）。
+     */
+    fun resetAppRules(context: Context) {
+        AppRulesSettingsStore.resetAppControlRules(context)
+        RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+        RuntimeDnsSettingsRefresher.refreshAppAllowlistIfRunning(context)
+        RuntimeDnsSettingsRefresher.refreshIfRunning(context)
+    }
+
+    /**
+     * 重置出站代理配置，恢复默认关闭与直接连接。
+     */
+    fun resetOutboundProxy(context: Context) {
+        OutboundProxySettingsStore.resetOutboundProxy(context)
+        RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+        RuntimeDnsSettingsRefresher.refreshIfRunning(context)
     }
 
     /**
@@ -275,8 +311,9 @@ object DataCleanupManager {
         deleteDirectoryContents(File(context.filesDir, "updates"))
         SystemSettingsStore.clearAppUpdateDownload(context)
 
-        // 2. 临时缓存
+        // 2. 内部与外部临时缓存
         deleteDirectoryContents(context.cacheDir)
+        deleteDirectoryContents(context.externalCacheDir)
     }
 
     internal fun deleteDirectoryContents(dir: File?) {
@@ -311,7 +348,7 @@ object DataCleanupManager {
     }
 
     /**
-     * 一键全面清理：按序清理所有运行日志、流量统计、崩溃记录、DNS 缓存、权重、规则、订阅、证书与缓存。
+     * 一键全面清理：按序清理所有运行日志、流量统计、崩溃记录、DNS 缓存、权重、规则、订阅、应用控制、出站代理、证书与缓存。
      */
     suspend fun clearAllLocalData(context: Context) = withContext(Dispatchers.IO) {
         clearRequestLogs(context)
@@ -323,9 +360,22 @@ object DataCleanupManager {
         clearAllDomainRules(context)
         clearAllAddressRules(context)
         clearAllSubscriptions(context)
+        resetAppRules(context)
+        resetOutboundProxy(context)
         resetCaCertificate(context)
         clearDownloadAndTempCache(context)
         clearCustomBackground(context)
         resetSettingsGuides(context)
+
+        // 清理镜像模板
+        val normalDb = AppDatabase.getInstance(context)
+        val dnsDb = DnsRulesDatabase.getInstance(context)
+        normalDb.mirrorTemplateDao().clearAll()
+        dnsDb.mirrorTemplateDao().clearAll()
+
+        // 清理头像与识别库缓存
+        deleteDirectoryContents(File(context.filesDir, "avatars"))
+        deleteDirectoryContents(File(context.cacheDir, "recognition"))
+        context.getSharedPreferences("diting_recognition_members", Context.MODE_PRIVATE).edit().clear().apply()
     }
 }

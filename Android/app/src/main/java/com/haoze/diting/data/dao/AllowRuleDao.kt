@@ -298,8 +298,17 @@ interface AllowRuleDao {
     @Query("UPDATE allow_rule_source SET enabled = :enabled WHERE source = :source")
     suspend fun setEnabledBySource(source: String, enabled: Boolean)
 
+    @Query("DELETE FROM allow_rule_source")
+    suspend fun clearAllSources()
+
     @Query("DELETE FROM allow_rule")
-    suspend fun clearAll()
+    suspend fun clearAllRules()
+
+    @Transaction
+    suspend fun clearAll() {
+        clearAllSources()
+        clearAllRules()
+    }
 
     @Query(
         "SELECT r.id, r.pattern, r.rawLine, r.addedAt, " +
@@ -431,7 +440,7 @@ interface AllowRuleDao {
     )
     suspend fun searchCountBySource(source: String, query: String): Int
 
-    @Query("DELETE FROM allow_rule_source WHERE source LIKE 'sub_%'")
+    @Query("DELETE FROM allow_rule_source WHERE source LIKE 'sub_%' OR source LIKE 'staging_sub_%'")
     suspend fun deleteSubscriptionSources()
 
     @Transaction

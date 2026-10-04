@@ -75,11 +75,13 @@ fun DataCleanupScreen(
             SettingsSurfaceGroup(content = listOf(
                 { SettingsTextItem(localizedText("删除全部域名规则"), subtitle = localizedText("清除域名屏蔽、白名单、IPv4/IPv6 覆写及对应订阅，恢复预设白名单"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.DOMAIN_RULES }) },
                 { SettingsTextItem(localizedText("删除全部地址规则"), subtitle = localizedText("清除 URL 屏蔽、放行和 CNAME 覆写规则，不影响域名规则"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.ADDRESS_RULES }) },
-                { SettingsTextItem(localizedText("删除全部规则订阅"), subtitle = localizedText("清除所有网络与本地规则订阅、订阅分组及自动更新任务"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.SUBSCRIPTIONS }) }
+                { SettingsTextItem(localizedText("删除全部规则订阅"), subtitle = localizedText("清除所有网络与本地规则订阅、订阅分组及自动更新任务"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.SUBSCRIPTIONS }) },
+                { SettingsTextItem(localizedText("重置应用控制名单"), subtitle = localizedText("清空分应用排除、禁止联网应用、应用白名单及抓包名单"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.APP_RULES }) }
             ))
 
             SettingsGroupTitle(localizedText("存储与安全"))
             SettingsSurfaceGroup(content = listOf(
+                { SettingsTextItem(localizedText("重置出站代理配置"), subtitle = localizedText("清空出站代理协议、服务器与鉴权信息，恢复直连"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.OUTBOUND_PROXY }) },
                 { SettingsTextItem(localizedText("重置 HTTPS 抓包证书"), subtitle = localizedText("清除本地生成的 MITM CA 根证书与私钥"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.CA_CERTIFICATE }) },
                 { SettingsTextItem(localizedText("清理下载与临时缓存"), subtitle = localizedText("删除更新安装包、下载临时文件及应用临时缓存"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.DOWNLOAD_CACHE }) },
                 { SettingsTextItem(localizedText("清除自定义背景缓存"), subtitle = localizedText("清除已配置的自定义壁纸图片缓存及路径记录，恢复默认背景"), textColor = MaterialTheme.colorScheme.error, onClick = { pendingAction = CleanupAction.CUSTOM_BACKGROUND }) }
@@ -109,6 +111,8 @@ fun DataCleanupScreen(
                         CleanupAction.DOMAIN_RULES -> DataCleanupManager.clearAllDomainRules(context)
                         CleanupAction.ADDRESS_RULES -> DataCleanupManager.clearAllAddressRules(context)
                         CleanupAction.SUBSCRIPTIONS -> DataCleanupManager.clearAllSubscriptions(context)
+                        CleanupAction.APP_RULES -> DataCleanupManager.resetAppRules(context)
+                        CleanupAction.OUTBOUND_PROXY -> DataCleanupManager.resetOutboundProxy(context)
                         CleanupAction.CA_CERTIFICATE -> DataCleanupManager.resetCaCertificate(context)
                         CleanupAction.DOWNLOAD_CACHE -> DataCleanupManager.clearDownloadAndTempCache(context)
                         CleanupAction.CUSTOM_BACKGROUND -> DataCleanupManager.clearCustomBackground(context)
@@ -119,7 +123,9 @@ fun DataCleanupScreen(
                         when (action) {
                             CleanupAction.DOMAIN_RULES,
                             CleanupAction.ADDRESS_RULES,
-                            CleanupAction.SUBSCRIPTIONS -> {
+                            CleanupAction.SUBSCRIPTIONS,
+                            CleanupAction.APP_RULES,
+                            CleanupAction.OUTBOUND_PROXY -> {
                                 onRuntimeDnsSettingsChanged()
                                 context.showToast("已${action.title}", Toast.LENGTH_SHORT)
                             }
@@ -179,6 +185,14 @@ private enum class CleanupAction(
     SUBSCRIPTIONS(
         "删除全部规则订阅",
         "确定要删除所有规则订阅吗？所有订阅链接、分组与订阅导入的规则都会被移除，手动添加的规则不受影响。"
+    ),
+    APP_RULES(
+        "重置应用控制名单",
+        "确定要重置所有应用控制名单吗？分应用代理排除、禁止联网应用、应用独立白名单以及 HTTP/HTTPS 抓包应用配置都将被清空并恢复默认。"
+    ),
+    OUTBOUND_PROXY(
+        "重置出站代理配置",
+        "确定要重置出站代理配置吗？出站代理将被禁用，服务器地址、端口及账号密码将被清除。"
     ),
     CA_CERTIFICATE(
         "重置 HTTPS 抓包证书",

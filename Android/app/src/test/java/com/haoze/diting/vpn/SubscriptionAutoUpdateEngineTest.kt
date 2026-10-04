@@ -39,6 +39,10 @@ class SubscriptionAutoUpdateEngineTest {
         override suspend fun clear() {
             items.clear()
         }
+
+        override suspend fun deleteOrphans() {
+            items.clear()
+        }
     }
 
     @Test
