@@ -249,7 +249,7 @@ class DnsModeService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.dns_svgrepo_com)
-            .setContentTitle(localizedText(this, "谛听 · DNS 模式运行中"))
+            .setContentTitle(localizedText(this, "谛听 · DNS 服务器模式运行中"))
             .setContentText(contentText)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -267,10 +267,10 @@ class DnsModeService : Service() {
             val manager = getSystemService(NotificationManager::class.java) ?: return
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                localizedText(this, "DNS 模式"),
+                localizedText(this, "DNS 服务器模式"),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = localizedText(this@DnsModeService, "显示 DNS 模式的运行状态")
+                description = localizedText(this@DnsModeService, "显示 DNS 服务器模式的运行状态")
                 setShowBadge(false)
             }
             manager.createNotificationChannel(channel)

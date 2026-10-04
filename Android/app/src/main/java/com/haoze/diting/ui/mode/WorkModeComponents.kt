@@ -180,9 +180,9 @@ fun WorkModeCard(
 
                 Text(
                     text = localizedText(mode.summary),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 19.sp
+                    lineHeight = 16.sp
                 )
             }
 

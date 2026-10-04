@@ -425,7 +425,7 @@ fun BatchAddRulesScreen(
 private fun getUnifiedPlaceholder(dataset: RuleDataset): String = if (dataset == RuleDataset.NORMAL) {
     "# 支持混合粘贴多种规则，系统将自动识别类型：\n# 1. 黑名单：||ad.com^ 或 0.0.0.0 tracker.com 或 bad.com 或 https://example.com/ad\n# 2. 白名单：@@||trusted.com^ 或 @@safe.org 或 @@https://example.com/api\n# 3. 覆写规则：example.com 1.2.3.4 或 api.com -> 10.0.0.1 或 alias.com -> cname.com\n# 4. 支持以 # 或 ! 开头的注释行"
 } else {
-    "# 支持混合粘贴多种规则（DNS 模式）：\n# 1. 黑名单：||ad.com^ 或 0.0.0.0 tracker.com 或 bad.com\n# 2. 白名单：@@||trusted.com^ 或 @@safe.org\n# 3. 覆写规则：example.com 1.2.3.4 或 api.com -> 10.0.0.1 或 alias.com -> cname.com\n# 4. 支持以 # 或 ! 开头的注释行"
+    "# 支持混合粘贴多种规则（DNS 服务器模式）：\n# 1. 黑名单：||ad.com^ 或 0.0.0.0 tracker.com 或 bad.com\n# 2. 白名单：@@||trusted.com^ 或 @@safe.org\n# 3. 覆写规则：example.com 1.2.3.4 或 api.com -> 10.0.0.1 或 alias.com -> cname.com\n# 4. 支持以 # 或 ! 开头的注释行"
 }
 
 @Composable
