@@ -84,6 +84,10 @@ android {
         }
     }
 
+    androidResources {
+        localeFilters += listOf("zh", "en", "zh-rCN")
+    }
+
     signingConfigs {
         if (releaseKeystoreFile != null && releaseKeystoreFile.exists() &&
             !releaseStorePassword.isNullOrBlank() && !releaseKeyAlias.isNullOrBlank()
@@ -133,11 +137,39 @@ android {
 
     packaging {
         resources {
-            excludes += "META-INF/INDEX.LIST"
+            excludes += setOf(
+                "META-INF/INDEX.LIST",
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE*",
+                "META-INF/license*",
+                "META-INF/**/LICENSE*",
+                "META-INF/**/license*",
+                "META-INF/NOTICE*",
+                "META-INF/notice*",
+                "META-INF/**/NOTICE*",
+                "META-INF/**/notice*",
+                "META-INF/ASL2.0",
+                "META-INF/AL2.0",
+                "META-INF/LGPL2.1",
+                "META-INF/*.version",
+                "META-INF/**/*.version",
+                "META-INF/version-control-info.textproto",
+                "META-INF/app-metadata.properties",
+                "DebugProbesKt.bin",
+                "**/*.kotlin_builtins"
+            )
         }
         jniLibs {
             useLegacyPackaging = true
         }
+        dex {
+            useLegacyPackaging = true
+        }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 

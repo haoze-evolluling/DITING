@@ -1,6 +1,3 @@
-# 基础保留规则
--keepattributes Signature, InnerClasses, EnclosingMethod, *Annotation*
-
 # Room 实体类（保险起见，避免被 R8 误删）
 -keep class com.haoze.diting.data.entity.** { *; }
 
@@ -8,21 +5,9 @@
 -keepclassmembers class com.haoze.diting.vpn.DnsProvider { *; }
 -keepclassmembers class com.haoze.diting.vpn.DnsProtocol { *; }
 
-# Netty supports these JVM logging backends optionally. They are deliberately
-# absent from the Android APK, where Netty falls back to its available logger.
--dontwarn org.apache.log4j.Level
--dontwarn org.apache.log4j.Logger
--dontwarn org.apache.log4j.Priority
--dontwarn org.apache.logging.log4j.LogManager
--dontwarn org.apache.logging.log4j.Logger
--dontwarn org.apache.logging.log4j.message.MessageFactory
--dontwarn org.apache.logging.log4j.spi.ExtendedLogger
--dontwarn org.apache.logging.log4j.spi.ExtendedLoggerWrapper
--dontwarn org.slf4j.ILoggerFactory
--dontwarn org.slf4j.Logger
--dontwarn org.slf4j.LoggerFactory
--dontwarn org.slf4j.Marker
--dontwarn org.slf4j.helpers.FormattingTuple
--dontwarn org.slf4j.helpers.MessageFormatter
--dontwarn org.slf4j.helpers.NOPLoggerFactory
--dontwarn org.slf4j.spi.LocationAwareLogger
+# 优化 Release 日志：移除冗余的 Verbose / Debug 日志调用，减少无用字符串常量和字节码
+-assumenosideeffects class android.util.Log {
+    public static boolean isLoggable(java.lang.String, int);
+    public static int v(...);
+    public static int d(...);
+}
