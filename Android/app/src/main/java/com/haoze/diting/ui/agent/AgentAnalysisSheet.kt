@@ -73,6 +73,7 @@ import com.haoze.diting.ui.localizedText
 import com.haoze.diting.ui.settings.AgentApiClient
 import com.haoze.diting.ui.settings.AgentApiSettingsStore
 import com.haoze.diting.ui.RuntimeDnsSettingsRefresher
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.AllowListManager
 import com.haoze.diting.vpn.BlockListManager
 import kotlinx.coroutines.Dispatchers
@@ -237,7 +238,7 @@ internal fun AgentAnalysisSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .padding(horizontal = SettingsCardMargin, vertical = 8.dp)
             .heightIn(max = 680.dp)
     ) {
         // Header

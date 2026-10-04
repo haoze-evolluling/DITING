@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.ui.components.RuleListEmptyState
 import com.haoze.diting.ui.components.RuleSearchField
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceItem
@@ -135,10 +136,13 @@ internal fun AppPickerScreen(
                     value = query,
                     onValueChange = { query = it },
                     placeholder = localizedText("搜索应用或包名"),
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = SettingsCardMargin)
                 )
                 if (visibleApps.isEmpty()) {
-                    RuleListEmptyState(message = localizedText(if (query.isNotEmpty()) "未找到匹配应用" else "暂无应用"))
+                    RuleListEmptyState(
+                        message = localizedText(if (query.isNotEmpty()) "未找到匹配应用" else "暂无应用"),
+                        modifier = Modifier.padding(horizontal = SettingsCardMargin)
+                    )
                 } else {
                     LazyColumn(
                         modifier = Modifier
@@ -151,7 +155,7 @@ internal fun AppPickerScreen(
                             SettingsSurfaceItem(
                                 index = index,
                                 itemCount = visibleApps.size,
-                                modifier = Modifier.padding(horizontal = 16.dp)
+                                modifier = Modifier.padding(horizontal = SettingsCardMargin)
                             ) {
                                 if (singleSelect) {
                                     InstalledAppRadioItem(

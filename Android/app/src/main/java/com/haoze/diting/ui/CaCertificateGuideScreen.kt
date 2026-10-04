@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.haoze.diting.ui.components.SettingsScaffold
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 private val caCertificateGuideMarkdown = """
 Android（安卓）系统中，安装和卸载CA证书（通常用于网络调试、公司内网访问或特定安全软件）的步骤因系统版本和手机厂商（如华为、小米、OPPO、VIVO等）的定制界面而略有不同，但核心逻辑是一致的。
@@ -134,7 +135,7 @@ fun CaCertificateGuideScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 16.dp)
+                .padding(horizontal = SettingsCardMargin, vertical = 16.dp)
         ) {
             markdown.lines().filter(String::isNotBlank).forEach { line ->
                 MarkdownLine(line)

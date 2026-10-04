@@ -47,6 +47,7 @@ import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceItem
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.settings.OutboundProxySettingsStore
 import com.haoze.diting.vpn.DnsVpnService
 import kotlinx.coroutines.Dispatchers
@@ -131,7 +132,7 @@ fun OutboundProxySettingsScreen(
             ))
 
             Column(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                Modifier.fillMaxWidth().padding(horizontal = SettingsCardMargin),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -202,7 +203,7 @@ fun OutboundProxySettingsScreen(
                         context.showToast("出站代理设置已保存", Toast.LENGTH_SHORT)
                     }
                 },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = SettingsCardMargin)
             ) {
                 Icon(Icons.Default.Save, contentDescription = null)
                 Text(localizedText("保存"), Modifier.padding(start = 8.dp))

@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.ui.components.SettingsScaffold
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.localizedText
 import com.haoze.diting.ui.showToast
 import kotlinx.coroutines.launch
@@ -145,7 +146,7 @@ fun BatchAddRulesScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                    .padding(horizontal = SettingsCardMargin, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -210,7 +211,7 @@ fun BatchAddRulesScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 8.dp)
+                    .padding(start = SettingsCardMargin, end = SettingsCardMargin, top = 6.dp, bottom = 8.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
                 color = MaterialTheme.colorScheme.surface
@@ -341,7 +342,7 @@ fun BatchAddRulesScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                        .padding(horizontal = SettingsCardMargin, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {

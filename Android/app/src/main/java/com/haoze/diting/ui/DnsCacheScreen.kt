@@ -61,6 +61,7 @@ import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceItem
+import com.haoze.diting.ui.components.SettingsCardMargin
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -161,7 +162,7 @@ fun DnsCacheScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(SettingsCardMargin),
                 verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
             ) {
                 items(

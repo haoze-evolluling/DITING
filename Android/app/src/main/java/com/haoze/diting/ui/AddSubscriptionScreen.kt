@@ -50,6 +50,7 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSectionSpacing
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 @Composable
 fun AddSubscriptionScreen(
@@ -419,7 +420,7 @@ fun AddSubscriptionScreen(
                     enabled = canImport,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = SettingsCardMargin)
                 ) {
                     Text(localizedText("导入规则"))
                 }

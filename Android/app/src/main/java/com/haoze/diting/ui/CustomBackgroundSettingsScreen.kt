@@ -47,6 +47,7 @@ import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -121,7 +122,7 @@ fun CustomBackgroundSettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
+                            .padding(horizontal = SettingsCardMargin)
                             .padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {

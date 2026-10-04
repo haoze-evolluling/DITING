@@ -38,6 +38,7 @@ import com.haoze.diting.ui.components.SettingsLoadingContent
 import com.haoze.diting.ui.components.SettingsRadioItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.DnsProtocol
 import com.haoze.diting.vpn.DnsProvider
 
@@ -115,7 +116,7 @@ fun ResolutionModeConfigScreen(
                     SingleChoiceSegmentedButtonRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
+                            .padding(horizontal = SettingsCardMargin)
                     ) {
                         availableProtocols.forEachIndexed { index, p ->
                             SegmentedButton(
@@ -180,7 +181,7 @@ private fun ModeSummaryCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = SettingsCardMargin),
         shape = ResolutionModeHeroShape,
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
@@ -232,7 +233,7 @@ private fun EmptyProviderCard() {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = SettingsCardMargin),
         shape = ResolutionModeHeroShape,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {

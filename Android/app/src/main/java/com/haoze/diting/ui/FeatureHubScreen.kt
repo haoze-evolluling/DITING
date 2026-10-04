@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.haoze.diting.R
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.settings.HiddenFeature
 import com.haoze.diting.ui.settings.HiddenFeaturesStore
@@ -288,7 +289,7 @@ internal fun FeatureHubScreen(
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 24.dp, top = 20.dp, end = 24.dp, bottom = 108.dp),
+        contentPadding = PaddingValues(start = SettingsCardMargin, top = 20.dp, end = SettingsCardMargin, bottom = 108.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {

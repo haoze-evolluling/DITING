@@ -41,6 +41,7 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSurfaceItem
 import com.haoze.diting.ui.components.SettingsSwitchItem
+import com.haoze.diting.ui.components.SettingsCardMargin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -205,7 +206,7 @@ internal fun AppRuleManagementScreen(
                 value = query,
                 onValueChange = { query = it },
                 placeholder = localizedText("搜索应用或包名"),
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = SettingsCardMargin)
             )
 
             // App list area
@@ -248,7 +249,7 @@ internal fun AppRuleManagementScreen(
                         SettingsSurfaceItem(
                             index = index,
                             itemCount = visibleApps.size,
-                            modifier = Modifier.padding(horizontal = 16.dp)
+                            modifier = Modifier.padding(horizontal = SettingsCardMargin)
                         ) {
                             UnifiedAppItemRow(
                                 app = app,

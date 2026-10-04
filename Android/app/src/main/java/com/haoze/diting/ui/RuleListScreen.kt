@@ -45,6 +45,7 @@ import com.haoze.diting.ui.components.RuleListEmptyState
 import com.haoze.diting.ui.components.RuleListPaginationBar
 import com.haoze.diting.ui.components.RuleSearchField
 import com.haoze.diting.ui.components.RuleTagChip
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.components.SettingsDivider
 import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
@@ -105,14 +106,14 @@ fun RuleListScreen(
                     value = searchQuery,
                     onValueChange = viewModel::onSearchQueryChange,
                     placeholder = localizedText(if (ruleKind.isUrlRule) "搜索 URL 规则" else "搜索域名或规则"),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = SettingsCardMargin, vertical = 8.dp)
                 )
 
                 Text(
                     text = localizedText("共 $totalCount 条${ruleKind.countLabel}"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(start = SettingsCardMargin, end = SettingsCardMargin, bottom = 4.dp)
                 )
 
                 SettingsDivider()
@@ -120,7 +121,8 @@ fun RuleListScreen(
                 if (rules.isEmpty()) {
                     RuleListEmptyState(
                         message = if (searchQuery.isNotEmpty()) localizedText("未找到匹配的规则")
-                        else localizedText("暂无规则")
+                        else localizedText("暂无规则"),
+                        modifier = Modifier.padding(horizontal = SettingsCardMargin)
                     )
                 } else {
                     // Reserve bottom scroll space for the floating pagination control.
@@ -128,7 +130,7 @@ fun RuleListScreen(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth(),
-                        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 96.dp),
+                        contentPadding = PaddingValues(start = SettingsCardMargin, top = 12.dp, end = SettingsCardMargin, bottom = 96.dp),
                         verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
                     ) {
                         itemsIndexed(rules, key = { _, rule -> rule.id }) { index, rule ->

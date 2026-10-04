@@ -58,6 +58,7 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsSectionSpacing
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.DnsVpnService
 import kotlin.math.sqrt
 
@@ -126,9 +127,9 @@ fun AboutScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
             contentPadding = PaddingValues(
-                start = 16.dp,
+                start = SettingsCardMargin,
                 top = 0.dp,
-                end = 16.dp,
+                end = SettingsCardMargin,
                 bottom = 28.dp
             ),
             verticalArrangement = Arrangement.spacedBy(SettingsSectionSpacing)

@@ -131,6 +131,12 @@ private val DefaultSettingsItemContentPadding = PaddingValues(horizontal = 24.dp
 val SettingsSectionSpacing = 12.dp
 val SettingsItemSpacing = 2.dp
 
+/**
+ * Horizontal margin between card containers and the screen edges, shared by every
+ * page so cards line up in a consistent inset-grouped layout.
+ */
+val SettingsCardMargin = 16.dp
+
 data class SettingsNavigationItemData(
     val title: String,
     val subtitle: String? = null,
@@ -149,7 +155,7 @@ data class SettingsNavigationItemData(
 fun SettingsSurfaceGroup(
     content: List<@Composable () -> Unit>,
     modifier: Modifier = Modifier,
-    groupContentPadding: PaddingValues = PaddingValues(horizontal = 16.dp),
+    groupContentPadding: PaddingValues = PaddingValues(horizontal = SettingsCardMargin),
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
 ) {
     if (content.isEmpty()) return

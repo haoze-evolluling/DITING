@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.ui.ModernLogDashboardUiState
 import com.haoze.diting.ui.localizedText
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 @Composable
 fun AllModeDashboard(
@@ -48,7 +49,7 @@ fun AllModeDashboard(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 28.dp + contentBottomPadding),
+        contentPadding = PaddingValues(start = SettingsCardMargin, top = 12.dp, end = SettingsCardMargin, bottom = 28.dp + contentBottomPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -264,7 +265,7 @@ fun FilteredModeDashboard(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 28.dp + contentBottomPadding),
+        contentPadding = PaddingValues(start = SettingsCardMargin, top = 12.dp, end = SettingsCardMargin, bottom = 28.dp + contentBottomPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -468,7 +469,7 @@ fun OffModeDashboard(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 28.dp + contentBottomPadding),
+        contentPadding = PaddingValues(start = SettingsCardMargin, top = 12.dp, end = SettingsCardMargin, bottom = 28.dp + contentBottomPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {

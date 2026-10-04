@@ -44,6 +44,7 @@ import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsOutlinedActionButton
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.settings.AgentApiConfig
 import com.haoze.diting.ui.settings.AgentApiSettingsStore
 import java.util.Locale
@@ -235,7 +236,7 @@ fun AgentApiParamsScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(horizontal = SettingsCardMargin, vertical = 8.dp)
                 ) {
                     SettingsOutlinedActionButton(
                         onClick = {

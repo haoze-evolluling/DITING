@@ -33,6 +33,7 @@ import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
+import com.haoze.diting.ui.components.SettingsCardMargin
 import java.util.Locale
 
 @Composable
@@ -132,7 +133,7 @@ private fun BootstrapRangeSelector(
         selectedFilter = selected,
         onSelect = onRangeClick,
         labelKeyOf = { it.displayName },
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+        modifier = Modifier.padding(horizontal = SettingsCardMargin, vertical = 6.dp)
     )
 }
 

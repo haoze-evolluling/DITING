@@ -45,6 +45,7 @@ import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsLoadingContent
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.DnsLatencyTester
 import com.haoze.diting.vpn.DnsProtocol
 import com.haoze.diting.vpn.DnsProvider
@@ -183,7 +184,7 @@ internal fun SpeedTestSection(
                 idleLabel = "测试查询耗时",
                 enabled = selectedIds.isNotEmpty(),
                 onClick = { viewModel.runLatencyTest() },
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = SettingsCardMargin)
             )
         }
 

@@ -47,6 +47,7 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSurfaceItem
 import com.haoze.diting.ui.components.SettingsItemSpacing
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 @Composable
 fun ResolutionModeHomeScreen(
@@ -111,7 +112,7 @@ fun ResolutionModeHomeScreen(
             item { SettingsGroupTitle(localizedText("模式配置")) }
             item {
                 Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    modifier = Modifier.padding(horizontal = SettingsCardMargin),
                     verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
                 ) {
                     DnsResolutionMode.entries.forEachIndexed { index, itemMode ->
@@ -147,7 +148,7 @@ private fun CurrentModeCard(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = SettingsCardMargin),
         shape = ResolutionModeHeroShape,
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
@@ -206,7 +207,7 @@ private fun PresetProtocolSelector(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = SettingsCardMargin),
         shape = ResolutionModeHeroShape,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     ) {

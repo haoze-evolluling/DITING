@@ -30,6 +30,7 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.formatLossPercent
 import com.haoze.diting.ui.components.formatMsValue
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.NetworkPingTool
 
 /**
@@ -96,7 +97,7 @@ internal fun PingSection(
                 runningLabel = "Ping 中...",
                 idleLabel = "开始 Ping",
                 onClick = viewModel::runPing,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = SettingsCardMargin)
             )
         }
         val currentPingResult = pingResult

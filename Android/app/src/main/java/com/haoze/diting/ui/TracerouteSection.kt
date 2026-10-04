@@ -37,6 +37,7 @@ import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.formatMsValue
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.NetworkTraceRouteTool
 
 /**
@@ -107,7 +108,7 @@ internal fun TracerouteSection(
                 runningLabel = "追踪中...",
                 idleLabel = "开始追踪",
                 onClick = viewModel::runTraceRoute,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = SettingsCardMargin)
             )
         }
         if (traceResult != null || traceHops.isNotEmpty()) {

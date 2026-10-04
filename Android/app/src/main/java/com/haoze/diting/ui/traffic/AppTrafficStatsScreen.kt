@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsScaffold
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.localizedText
 
 @Composable
@@ -127,7 +128,7 @@ fun AppTrafficStatsScreen(
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp + contentBottomPadding),
+                contentPadding = PaddingValues(start = SettingsCardMargin, end = SettingsCardMargin, top = 12.dp, bottom = 32.dp + contentBottomPadding),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item(key = "speed_gauge") {

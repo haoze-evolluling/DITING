@@ -304,7 +304,7 @@ fun <T, P> ProviderManagementListContent(
                     selectedProtocol = selectedProtocol,
                     onSelect = onSelectProtocol,
                     protocolLabel = protocolLabel,
-                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
+                    modifier = Modifier.padding(start = SettingsCardMargin, top = 16.dp, end = 16.dp)
                 )
             }
             item {

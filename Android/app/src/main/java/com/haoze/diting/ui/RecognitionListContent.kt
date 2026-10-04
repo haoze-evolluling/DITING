@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.R
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 data class RecognitionMember(
     val name: String,
@@ -50,7 +51,7 @@ fun RecognitionList(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 20.dp)
+                        .padding(horizontal = SettingsCardMargin, vertical = 20.dp)
                 )
             }
         } else {

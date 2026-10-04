@@ -78,6 +78,7 @@ import com.haoze.diting.ui.components.cascade.CascadeDropdownMenu
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsDivider
 import com.haoze.diting.ui.components.SettingsOutlinedActionButton
+import com.haoze.diting.ui.components.SettingsCardMargin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -286,7 +287,7 @@ fun RequestLogScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(SettingsCardMargin),
                     verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
                 ) {
                     itemsIndexed(visibleItems, key = { _, it -> it.key }) { index, item ->
@@ -360,7 +361,7 @@ private fun <T> RequestFilterRow(values: List<T>, selected: T, label: (T) -> Str
         selectedFilter = selected,
         onSelect = select,
         labelKeyOf = label,
-        modifier = Modifier.padding(horizontal = 16.dp)
+        modifier = Modifier.padding(horizontal = SettingsCardMargin)
     )
 }
 

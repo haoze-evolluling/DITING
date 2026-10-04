@@ -53,6 +53,7 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSurfaceItem
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.masterDisabledMessage
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 @Composable
 fun WhitelistScreen(
@@ -154,7 +155,7 @@ fun WhitelistScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
+                contentPadding = PaddingValues(start = SettingsCardMargin, end = SettingsCardMargin, top = 12.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
             ) {
                 // 1. Top stats panel

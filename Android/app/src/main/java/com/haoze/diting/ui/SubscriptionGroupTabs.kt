@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.data.entity.SubscriptionGroupEntity
 import com.haoze.diting.ui.components.SettingsCornerShape
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 @Composable
 internal fun SubscriptionGroupTabs(
@@ -33,7 +34,7 @@ internal fun SubscriptionGroupTabs(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = SettingsCardMargin, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         SubscriptionGroupTab(localizedText("未分组"), selectedGroupId == null, { onGroupSelected(null) })

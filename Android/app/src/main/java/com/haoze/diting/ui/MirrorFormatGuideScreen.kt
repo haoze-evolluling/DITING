@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.haoze.diting.ui.components.SettingsScaffold
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 private val mirrorFormatMarkdown = """
 镜像站模板会把原始订阅地址嵌入镜像服务地址。添加模板时，请先确认镜像服务要求的写法，再选择合适的占位符。
@@ -151,7 +152,7 @@ fun MirrorFormatGuideScreen(onBack: () -> Unit) {
             mirrorFormatMarkdown
         }
         Column(
-            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 16.dp)
+            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = SettingsCardMargin, vertical = 16.dp)
         ) {
             markdown.lines().filter(String::isNotBlank).forEach { MirrorMarkdownLine(it) }
         }

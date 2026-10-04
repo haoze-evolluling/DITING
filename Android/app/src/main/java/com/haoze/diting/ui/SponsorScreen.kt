@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 private const val SPONSOR_README_URL = "https://github.com/haoze-evolluling/DITING#sponsorship"
 
@@ -55,7 +56,7 @@ fun SponsorScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+                modifier = Modifier.padding(horizontal = SettingsCardMargin, vertical = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
@@ -134,7 +135,7 @@ fun SponsorScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp)
+                modifier = Modifier.padding(horizontal = SettingsCardMargin, vertical = 24.dp)
             )
         }
     }

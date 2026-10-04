@@ -29,6 +29,7 @@ import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.DnsLookupTool
 
 /**
@@ -131,7 +132,7 @@ internal fun DnsLookupSection(
                 runningLabel = "查询中...",
                 idleLabel = "开始查询",
                 onClick = viewModel::runDnsLookup,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = SettingsCardMargin)
             )
         }
         val currentDnsResult = dnsResult

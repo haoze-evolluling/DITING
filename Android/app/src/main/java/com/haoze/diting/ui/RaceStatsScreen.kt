@@ -38,6 +38,7 @@ import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.DnsProtocolBadge
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.DnsProtocol
 import com.haoze.diting.vpn.DnsProvider
 
@@ -171,7 +172,7 @@ private fun RangeSelector(
         selectedFilter = selected,
         onSelect = onRangeClick,
         labelKeyOf = { it.displayName },
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+        modifier = Modifier.padding(horizontal = SettingsCardMargin, vertical = 6.dp)
     )
 }
 

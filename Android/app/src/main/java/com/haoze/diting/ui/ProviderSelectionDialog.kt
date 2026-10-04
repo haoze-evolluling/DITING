@@ -59,6 +59,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import com.haoze.diting.ui.components.DnsProtocolBadge
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.DnsProvider
 
 internal const val MANAGE_PROVIDER_ID = "__manage__"
@@ -169,7 +170,7 @@ private fun ProviderDialog(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp)
+                        .padding(horizontal = SettingsCardMargin)
                         .heightIn(max = maxDialogHeight),
                     shape = ProviderDialogCornerShape,
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,

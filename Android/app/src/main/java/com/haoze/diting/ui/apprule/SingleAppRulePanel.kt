@@ -48,6 +48,7 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSurfaceItem
 import com.haoze.diting.ui.components.SettingsSwitchItem
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.localizedText
 
 @Composable
@@ -161,7 +162,7 @@ internal fun SingleAppRulePanel(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                            .padding(horizontal = SettingsCardMargin, vertical = 4.dp),
                         shape = SettingsCornerShape,
                         color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f)
                     ) {
@@ -221,7 +222,7 @@ internal fun SingleAppRulePanel(
                     SettingsSurfaceItem(
                         index = index,
                         itemCount = allowlistDomains.size + 1,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = SettingsCardMargin)
                     ) {
                         Row(
                             modifier = Modifier
@@ -263,7 +264,7 @@ internal fun SingleAppRulePanel(
                     SettingsSurfaceItem(
                         index = allowlistDomains.size,
                         itemCount = allowlistDomains.size + 1,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = SettingsCardMargin)
                     ) {
                         Row(
                             modifier = Modifier
@@ -317,7 +318,7 @@ internal fun SingleAppRulePanel(
                     SettingsSurfaceItem(
                         index = index,
                         itemCount = allowRules.size,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = SettingsCardMargin)
                     ) {
                         RuleEntityRow(
                             item = rule,
@@ -361,7 +362,7 @@ internal fun SingleAppRulePanel(
                     SettingsSurfaceItem(
                         index = index,
                         itemCount = blockRules.size,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = SettingsCardMargin)
                     ) {
                         RuleEntityRow(
                             item = rule,

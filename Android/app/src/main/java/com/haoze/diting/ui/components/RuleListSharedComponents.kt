@@ -130,8 +130,9 @@ fun RuleListCountHeader(totalCount: Int) {
 }
 
 @Composable
-fun RuleListEmptyState(message: String) {
+fun RuleListEmptyState(message: String, modifier: Modifier = Modifier) {
     SettingsSurfaceGroup(
+        modifier = modifier,
         groupContentPadding = PaddingValues.Zero,
         content = listOf {
             Box(
@@ -172,7 +173,7 @@ fun BoxScope.RuleListPaginationBar(
             modifier = modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = SettingsCardMargin, vertical = 12.dp),
             contentAlignment = Alignment.Center
         ) {
             Surface(

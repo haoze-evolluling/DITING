@@ -62,6 +62,7 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSectionSpacing
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsTextItem
+import com.haoze.diting.ui.components.SettingsCardMargin
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -287,7 +288,7 @@ private fun BackupMigrationDashboard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = SettingsCardMargin, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(

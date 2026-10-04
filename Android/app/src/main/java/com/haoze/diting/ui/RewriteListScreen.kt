@@ -51,6 +51,7 @@ import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceItem
 import com.haoze.diting.ui.components.masterDisabledMessage
+import com.haoze.diting.ui.components.SettingsCardMargin
 
 @Composable
 fun RewriteListScreen(
@@ -139,7 +140,7 @@ fun RewriteListScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 96.dp),
+                contentPadding = PaddingValues(start = SettingsCardMargin, end = SettingsCardMargin, top = 12.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(SettingsItemSpacing)
             ) {
                 // 1. Top stats panel

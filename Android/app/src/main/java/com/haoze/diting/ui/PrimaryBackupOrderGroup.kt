@@ -58,6 +58,7 @@ import androidx.compose.ui.zIndex
 import com.haoze.diting.ui.components.DnsProtocolBadge
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsDivider
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.vpn.DnsProvider
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -185,7 +186,7 @@ internal fun PrimaryBackupOrderGroup(
     Box(
         Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = SettingsCardMargin)
             .height(itemHeight * orderedIds.size - dividerHeight)
     ) {
         Surface(

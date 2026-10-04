@@ -45,6 +45,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
 import com.haoze.diting.vpn.DnsProvider
@@ -102,7 +103,7 @@ internal fun MainContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = SettingsCardMargin)
             .navigationBarsPadding()
             .padding(bottom = 104.dp),
         verticalArrangement = Arrangement.Center,
