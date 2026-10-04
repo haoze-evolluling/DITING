@@ -73,7 +73,7 @@ fun DnsSettingsScreen(
                     },
                     {
                         SettingsNavigationItem(
-                            title = localizedText("恶意域名过滤"),
+                            title = localizedText("规则控制"),
                             subtitle = localizedText(
                                 if (config.adBlockEnabled) "已开启 · 命中规则按拦截策略返回"
                                 else "已关闭 · 使用独立的过滤规则库"
