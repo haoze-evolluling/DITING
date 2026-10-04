@@ -20,7 +20,7 @@ class WorkModeTest {
         assertTrue(AppWorkMode.NORMAL.isAvailable)
         assertTrue(AppWorkMode.DNS.isAvailable)
         assertEquals("普通模式", AppWorkMode.NORMAL.title)
-        assertEquals("DNS 服务器模式", AppWorkMode.DNS.title)
+        assertEquals("服务器模式", AppWorkMode.DNS.title)
         assertEquals("推荐", AppWorkMode.NORMAL.badgeText)
         assertEquals("轻量", AppWorkMode.DNS.badgeText)
     }

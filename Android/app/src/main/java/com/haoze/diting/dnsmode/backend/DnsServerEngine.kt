@@ -68,6 +68,7 @@ class DnsServerEngine(
         val upstreamChanged = newUpstream != upstream
         val filteringChanged = newConfig.adBlockEnabled != config.adBlockEnabled
         val cacheChanged = newConfig.cacheEnabled != config.cacheEnabled ||
+            newConfig.cachePreset != config.cachePreset ||
             newConfig.cacheTtlSeconds != config.cacheTtlSeconds
 
         config = newConfig
@@ -165,17 +166,18 @@ class DnsServerEngine(
         val json = JSONObject().apply {
             put("mode", "single")
             put("blockResponse", queryFilter?.blockResponseMode?.name ?: "NXDOMAIN")
+            val cachePolicy = config.cachePreset.toPolicy(enabled = config.cacheEnabled)
             put("cache", JSONObject().apply {
-                put("enabled", config.cacheEnabled)
-                put("mode", "RFC_COMPLIANT")
-                put("maxTtlSeconds", config.cacheTtlSeconds)
-                put("fixedTtlSeconds", config.cacheTtlSeconds)
-                put("minTtlEnabled", false)
-                put("minTtlSeconds", 0)
-                put("staleFallbackEnabled", true)
-                put("staleFallbackSeconds", 86400)
-                put("negativeTtlEnabled", true)
-                put("negativeTtlSeconds", 30)
+                put("enabled", cachePolicy.enabled)
+                put("mode", cachePolicy.mode.storageValue)
+                put("maxTtlSeconds", cachePolicy.maxTtlSeconds)
+                put("fixedTtlSeconds", cachePolicy.fixedTtlSeconds)
+                put("minTtlEnabled", cachePolicy.minTtlEnabled)
+                put("minTtlSeconds", cachePolicy.minTtlSeconds)
+                put("staleFallbackEnabled", cachePolicy.staleFallbackEnabled)
+                put("staleFallbackSeconds", cachePolicy.staleFallbackSeconds)
+                put("negativeTtlEnabled", cachePolicy.negativeTtlEnabled)
+                put("negativeTtlSeconds", cachePolicy.negativeTtlSeconds)
             })
             put("providers", JSONArray().apply {
                 put(JSONObject().apply {

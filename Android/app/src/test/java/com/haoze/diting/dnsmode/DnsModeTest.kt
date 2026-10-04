@@ -133,19 +133,22 @@ class DnsModeTest {
     }
 
     @Test
-    fun `onServiceStarted resets stats only on a fresh start`() {
+    fun `onServiceStarted preserves accumulated stats across service starts`() {
         DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = false, latencyMs = 10L)
-        // Fresh start (STOPPED -> RUNNING) wipes the previous run's counters
-        DnsModeManager.onServiceStarted()
-        assertEquals(0L, DnsModeManager.stats.value.queryCount)
-
-        DnsModeManager.recordQuery(cacheHit = false, blocked = false, failed = false, latencyMs = 10L)
-        // Idempotent resync while RUNNING keeps the ongoing run's stats
+        // Starting service keeps accumulated counters
         DnsModeManager.onServiceStarted()
         assertEquals(1L, DnsModeManager.stats.value.queryCount)
 
+        DnsModeManager.recordQuery(cacheHit = true, blocked = false, failed = false, latencyMs = 10L)
+        assertEquals(2L, DnsModeManager.stats.value.queryCount)
+
         DnsModeManager.onServiceStopped()
         assertEquals(DnsServiceStatus.STOPPED, DnsModeManager.status.value)
+        assertEquals(2L, DnsModeManager.stats.value.queryCount)
+
+        // Starting service again preserves counters
+        DnsModeManager.onServiceStarted()
+        assertEquals(2L, DnsModeManager.stats.value.queryCount)
     }
 
     @Test
@@ -185,6 +188,7 @@ class DnsModeTest {
         assertEquals("preset_alidns_dns", config.selectedUpstreamId)
         assertEquals(1053, config.localListenPort)
         assertTrue(config.cacheEnabled)
+        assertEquals(com.haoze.diting.vpn.cache.DnsCachePreset.BALANCED, config.cachePreset)
         assertEquals(300, config.cacheTtlSeconds)
         assertFalse(config.adBlockEnabled)
         assertFalse(config.logQueries)
@@ -303,5 +307,32 @@ class DnsModeTest {
 
         assertEquals(1053, DnsListenPortValidator.DEFAULT_PORT)
         assertEquals(1053, DnsListenPortValidator.parse("1053"))
+    }
+
+    @Test
+    fun `multi-tier cache presets map to coherent policies`() {
+        val configBalanced = DnsModeConfig(cachePreset = com.haoze.diting.vpn.cache.DnsCachePreset.BALANCED)
+        val policyBalanced = configBalanced.cachePreset.toPolicy(configBalanced.cacheEnabled)
+        assertTrue(policyBalanced.enabled)
+        assertEquals(3600L, policyBalanced.maxTtlSeconds)
+        assertTrue(policyBalanced.minTtlEnabled)
+
+        val configConservative = DnsModeConfig(cachePreset = com.haoze.diting.vpn.cache.DnsCachePreset.CONSERVATIVE)
+        val policyConservative = configConservative.cachePreset.toPolicy(configConservative.cacheEnabled)
+        assertFalse(policyConservative.minTtlEnabled)
+
+        val configHighHit = DnsModeConfig(cachePreset = com.haoze.diting.vpn.cache.DnsCachePreset.HIGH_HIT_RATE)
+        val policyHighHit = configHighHit.cachePreset.toPolicy(configHighHit.cacheEnabled)
+        assertEquals(21_600L, policyHighHit.maxTtlSeconds)
+    }
+
+    @Test
+    fun `resetStats clears in-memory stats`() {
+        DnsModeManager.recordQuery(cacheHit = true, blocked = true, failed = false, latencyMs = 25L)
+        assertTrue(DnsModeManager.stats.value.queryCount > 0)
+        DnsModeManager.resetStats(null)
+        assertEquals(0L, DnsModeManager.stats.value.queryCount)
+        assertEquals(0L, DnsModeManager.stats.value.cacheHitCount)
+        assertEquals(0L, DnsModeManager.stats.value.blockedCount)
     }
 }

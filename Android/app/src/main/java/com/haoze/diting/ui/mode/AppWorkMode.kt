@@ -23,7 +23,7 @@ enum class AppWorkMode(
     ),
     DNS(
         storageValue = "dns",
-        title = "DNS 服务器模式",
+        title = "服务器模式",
         summary = "轻量级纯 DNS 代理与解析加速，专注于低功耗防护",
         badgeText = "轻量",
         isAvailable = true,

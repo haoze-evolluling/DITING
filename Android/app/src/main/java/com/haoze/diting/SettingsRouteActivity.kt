@@ -372,7 +372,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.RESOLUTION_SMART -> ResolutionModeConfigScreen(DnsResolutionMode.SMART_PREDICTION, onBack)
             Routes.RESOLUTION_PARALLEL -> ResolutionModeConfigScreen(DnsResolutionMode.PARALLEL_RACE, onBack)
             Routes.RESOLUTION_BACKUP -> ResolutionModeConfigScreen(DnsResolutionMode.PRIMARY_BACKUP, onBack)
-            Routes.CACHE_SETTINGS -> SettingsGuideHost(SettingsGuides.CACHE) { CacheSettingsScreen(onBack, ScreenDestinations.cacheSettings.title, onRuntimeDnsSettingsChanged) }
+            Routes.CACHE_SETTINGS -> SettingsGuideHost(SettingsGuides.CACHE) { CacheSettingsScreen(onBack, ScreenDestinations.cacheSettings.title, onRuntimeDnsSettingsChanged, dataset = requestedRuleDataset) }
             Routes.LOG_RETENTION_SETTINGS -> SettingsGuideHost(SettingsGuides.LOG_MODE) { LogRetentionSettingsScreen(onBack, onRuntimeDnsSettingsChanged, ScreenDestinations.logRetentionSettings.title) }
             Routes.FOREGROUND_BACKGROUND_SETTINGS -> SettingsGuideHost(SettingsGuides.FOREGROUND_BACKGROUND) { ForegroundBackgroundSettingsScreen(onBack, ScreenDestinations.foregroundBackgroundSettings.title, onHideFromRecentsChanged) }
             Routes.HTTP_INSPECTION_SETTINGS -> SettingsGuideHost(SettingsGuides.HTTP_INSPECTION) { HttpInspectionSettingsScreen(onBack, { onNavigateWithSource(Routes.DNS_LOGS, RequestSource.HTTPS) }, { onNavigate(Routes.HTTP_INSPECTION_APPS) }, { onNavigate(Routes.CA_CERTIFICATE_SETTINGS) }) }

@@ -8,7 +8,7 @@ internal fun translateRulesAndSubscriptionExact(text: String): String? = when (t
     "启用域名过滤" -> "Enable domain filtering"
     "开启恶意域名拦截与白名单放行" -> "Enable malicious domain blocking and allowlist pass-through"
     "已关闭恶意域名过滤，查询将直接放行" -> "Malicious domain filtering is off; queries will be passed directly"
-    "统一管理 DNS 服务器模式恶意域名过滤的总控开关、拦截策略与在线规则订阅。黑名单、白名单与 Hosts 覆写可在模式设置中独立管理，规则库与普通模式完全隔离。" -> "Centrally manage the master switch, blocking policies, and subscriptions of DNS server mode malicious domain filtering. Blacklist, whitelist, and hosts rewrites can be managed independently in mode settings; the rule database is fully isolated from normal mode."
+    "统一管理服务器模式恶意域名过滤的总控开关、拦截策略与在线规则订阅。黑名单、白名单与 Hosts 覆写可在模式设置中独立管理，规则库与普通模式完全隔离。" -> "Centrally manage the master switch, blocking policies, and subscriptions of server mode malicious domain filtering. Blacklist, whitelist, and hosts rewrites can be managed independently in mode settings; the rule database is fully isolated from normal mode."
     "规则管理" -> "Rule Management"
     "Hosts 覆写" -> "Hosts Rewrites"
     "管理域名屏蔽规则，独立规则库" -> "Manage domain block rules in an isolated rule database"

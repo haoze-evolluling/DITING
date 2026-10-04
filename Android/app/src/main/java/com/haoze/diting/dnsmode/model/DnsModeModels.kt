@@ -1,5 +1,7 @@
 package com.haoze.diting.dnsmode.model
 
+import com.haoze.diting.vpn.cache.DnsCachePreset
+
 enum class DnsModeProtocol(val label: String, val defaultPort: Int) {
     DNS("DNS", 53),
     DOH("DoH", 443),
@@ -194,6 +196,7 @@ data class DnsModeConfig(
     val selectedUpstreamId: String = "preset_alidns_dns",
     val localListenPort: Int = 1053,
     val cacheEnabled: Boolean = true,
+    val cachePreset: DnsCachePreset = DnsCachePreset.BALANCED,
     val cacheTtlSeconds: Int = 300,
     val adBlockEnabled: Boolean = false,
     val logQueries: Boolean = false

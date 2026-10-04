@@ -89,6 +89,6 @@ class DnsMainViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun resetStats() {
-        DnsModeManager.resetStats()
+        DnsModeManager.resetStats(getApplication())
     }
 }

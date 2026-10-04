@@ -111,7 +111,7 @@ object DataCleanupManager {
         )
         DefaultWhitelistSeeder.seed(context, normalDb, forceReset = true)
 
-        // 2. DnsRulesDatabase（DNS 服务器模式）
+        // 2. DnsRulesDatabase（服务器模式）
         clearDomainRulesData(
             dnsDb.blockRuleDao(),
             dnsDb.allowRuleDao(),

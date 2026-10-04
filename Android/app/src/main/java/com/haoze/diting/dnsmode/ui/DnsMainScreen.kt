@@ -104,7 +104,7 @@ fun DnsMainScreen(
                     title = {
                         Text(
                             text = if (currentTab == DnsNavTab.HOME) {
-                                localizedText("谛听 · DNS 服务器模式")
+                                localizedText("谛听 · 服务器模式")
                             } else {
                                 localizedText(currentTab.title)
                             }
@@ -206,7 +206,7 @@ fun DnsMainScreen(
         AppConfirmDialog(
             onDismissRequest = { showSwitchConfirmDialog = false },
             title = localizedText("切换为普通模式"),
-            message = localizedText("切换后将停止 DNS 服务并退出 DNS 服务器模式。完整分流、黑白名单与应用管控等能力可在普通模式中按需开启。确认切换吗？"),
+            message = localizedText("切换后将停止 DNS 服务并退出服务器模式。完整分流、黑白名单与应用管控等能力可在普通模式中按需开启。确认切换吗？"),
             confirmLabel = localizedText("确认切换"),
             cancelLabel = localizedText("取消"),
             onConfirm = {

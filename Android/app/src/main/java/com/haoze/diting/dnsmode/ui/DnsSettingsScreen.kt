@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.outlined.Lan
@@ -18,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.SettingsRouteActivity
@@ -64,11 +66,15 @@ fun DnsSettingsScreen(
             SettingsSurfaceGroup(
                 content = listOf(
                     {
-                        SettingsSwitchItem(
-                            title = localizedText("DNS 缓存"),
-                            subtitle = localizedText("启用本地 DNS 记录缓存，加速重复域名查询"),
-                            checked = config.cacheEnabled,
-                            onCheckedChange = { onUpdateConfig(config.copy(cacheEnabled = it)) }
+                        SettingsNavigationItem(
+                            title = localizedText("缓存设置"),
+                            subtitle = if (config.cacheEnabled) {
+                                stringResource(config.cachePreset.displayName) + "：" + stringResource(config.cachePreset.summary)
+                            } else {
+                                localizedText("已关闭 · 每次解析都请求上游 DNS")
+                            },
+                            leadingIcon = Icons.Filled.Storage,
+                            onClick = { openRuleRoute(Routes.CACHE_SETTINGS) }
                         )
                     },
                     {

@@ -42,16 +42,22 @@ object DnsModeManager {
     val upstreams: StateFlow<List<DnsUpstreamServer>> = _upstreams.asStateFlow()
 
     private var customUpstreams: List<DnsUpstreamServer> = emptyList()
-
+    private var appContext: Context? = null
     private var initialized = false
 
     fun initialize(context: Context) {
+        appContext = context.applicationContext
         if (initialized) return
         initialized = true
         val loadedConfig = DnsModePreferences.loadConfig(context)
         _config.value = loadedConfig
+        _stats.value = DnsModePreferences.loadStats(context)
         customUpstreams = DnsModePreferences.loadCustomUpstreams(context)
         _upstreams.value = DnsUpstreamServer.PRESETS + customUpstreams
+        if (DnsModeService.isServiceAlive) {
+            _status.value = DnsServiceStatus.RUNNING
+            startStatsTicker()
+        }
     }
 
     fun getActiveUpstream(): DnsUpstreamServer {
@@ -73,6 +79,7 @@ object DnsModeManager {
     }
 
     fun stopService(context: Context) {
+        flushStats(context)
         if (_status.value == DnsServiceStatus.STOPPED || _status.value == DnsServiceStatus.STOPPING) return
         _status.value = DnsServiceStatus.STOPPING
         try {
@@ -99,14 +106,8 @@ object DnsModeManager {
     }
 
     fun onServiceStarted() {
-        // Idempotent resync: a duplicate ACTION_START while already RUNNING
-        // must not wipe the stats of the ongoing run.
-        val resync = _status.value == DnsServiceStatus.RUNNING
         _status.value = DnsServiceStatus.RUNNING
         _errorReason.value = null
-        if (!resync) {
-            _stats.value = DnsModeStats()
-        }
         startStatsTicker()
     }
 
@@ -116,12 +117,14 @@ object DnsModeManager {
             _status.value = DnsServiceStatus.STOPPED
         }
         stopStatsTicker()
+        flushStats()
     }
 
     fun onServiceError(reason: String? = null) {
         _status.value = DnsServiceStatus.ERROR
         _errorReason.value = reason
         stopStatsTicker()
+        flushStats()
     }
 
     fun selectUpstream(context: Context, serverId: String) {
@@ -187,8 +190,17 @@ object DnsModeManager {
         }
     }
 
-    fun resetStats() {
+    fun resetStats(context: Context? = appContext) {
         _stats.value = DnsModeStats()
+        val targetContext = context ?: appContext
+        if (targetContext != null) {
+            DnsModePreferences.clearStats(targetContext)
+        }
+    }
+
+    fun flushStats(context: Context? = null) {
+        val targetContext = context ?: appContext ?: return
+        DnsModePreferences.saveStats(targetContext, _stats.value)
     }
 
     fun recordQuery(cacheHit: Boolean, blocked: Boolean, failed: Boolean, latencyMs: Long) {
@@ -213,11 +225,16 @@ object DnsModeManager {
     private fun startStatsTicker() {
         statsJob?.cancel()
         statsJob = scope.launch {
+            var ticks = 0
             while (isActive) {
                 delay(1000L)
                 // Atomic update: a read-then-write here would clobber counts
                 // recorded by recordQuery between the two steps.
                 _stats.update { it.copy(uptimeSeconds = it.uptimeSeconds + 1) }
+                ticks++
+                if (ticks % 5 == 0) {
+                    flushStats()
+                }
             }
         }
     }

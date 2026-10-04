@@ -42,11 +42,11 @@ fun DnsHomeScreen(
 ) {
     val isBusy = status == DnsServiceStatus.STARTING || status == DnsServiceStatus.STOPPING
     val statusText = when (status) {
-        DnsServiceStatus.RUNNING -> localizedText("DNS 服务器模式运行中")
+        DnsServiceStatus.RUNNING -> localizedText("服务器模式运行中")
         DnsServiceStatus.STARTING -> localizedText("正在启动服务...")
         DnsServiceStatus.STOPPING -> localizedText("正在停止服务...")
         DnsServiceStatus.ERROR -> localizedText("服务异常")
-        DnsServiceStatus.STOPPED -> localizedText("DNS 服务器模式已停止")
+        DnsServiceStatus.STOPPED -> localizedText("服务器模式已停止")
     }
     val latencyText = if (status.isRunning) "${stats.latencyMs} ms" else "--"
     val uptimeText = if (status.isRunning) formatDuration(stats.uptimeSeconds) else "--"
@@ -172,7 +172,7 @@ fun DnsHomeScreen(
 
         item {
             SettingsInfoText(
-                text = localizedText("DNS 服务器模式在本机提供局域网 DNS 解析服务，将其他设备的 DNS 指向本机即可使用；本机应用的查询不会自动经过该服务。")
+                text = localizedText("服务器模式在本机提供局域网 DNS 解析服务，将其他设备的 DNS 指向本机即可使用；本机应用的查询不会自动经过该服务。")
             )
         }
     }

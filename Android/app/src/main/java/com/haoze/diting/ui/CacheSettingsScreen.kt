@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.dnsmode.backend.DnsModeManager
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsRadioItem
@@ -31,23 +33,45 @@ import com.haoze.diting.vpn.cache.DnsCachePreset
 fun CacheSettingsScreen(
     onBack: () -> Unit,
     title: String = "缓存设置",
-    onRuntimeDnsSettingsChanged: () -> Unit = {}
+    onRuntimeDnsSettingsChanged: () -> Unit = {},
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    var enabled by remember { mutableStateOf(DnsCacheSettingsStore.isCacheEnabled(context)) }
-    var preset by remember { mutableStateOf(DnsCacheSettingsStore.getDnsCachePreset(context)) }
+    val isDnsMode = dataset == RuleDataset.DNS_MODE
+    var enabled by remember {
+        mutableStateOf(
+            if (isDnsMode) DnsModeManager.config.value.cacheEnabled
+            else DnsCacheSettingsStore.isCacheEnabled(context)
+        )
+    }
+    var preset by remember {
+        mutableStateOf(
+            if (isDnsMode) DnsModeManager.config.value.cachePreset
+            else DnsCacheSettingsStore.getDnsCachePreset(context)
+        )
+    }
 
     fun saveEnabled(next: Boolean) {
         enabled = next
-        DnsCacheSettingsStore.setDnsCachePolicy(context, preset.toPolicy(enabled = next))
-        onRuntimeDnsSettingsChanged()
+        if (isDnsMode) {
+            val current = DnsModeManager.config.value
+            DnsModeManager.updateConfig(context, current.copy(cacheEnabled = next, cachePreset = preset))
+        } else {
+            DnsCacheSettingsStore.setDnsCachePolicy(context, preset.toPolicy(enabled = next))
+            onRuntimeDnsSettingsChanged()
+        }
     }
 
     fun savePreset(next: DnsCachePreset) {
         preset = next
-        DnsCacheSettingsStore.setDnsCachePolicy(context, next.toPolicy(enabled = enabled))
-        onRuntimeDnsSettingsChanged()
+        if (isDnsMode) {
+            val current = DnsModeManager.config.value
+            DnsModeManager.updateConfig(context, current.copy(cacheEnabled = enabled, cachePreset = next))
+        } else {
+            DnsCacheSettingsStore.setDnsCachePolicy(context, next.toPolicy(enabled = enabled))
+            onRuntimeDnsSettingsChanged()
+        }
     }
 
     SettingsScaffold(

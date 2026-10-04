@@ -38,6 +38,7 @@ class DnsModeService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        isServiceAlive = true
         // START_STICKY may restart this service in a fresh process without any Activity;
         // load persisted config here so the engine never runs on defaults.
         DnsModeManager.initialize(this)
@@ -47,6 +48,7 @@ class DnsModeService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> {
+                DnsModePreferences.setServiceActive(this, false)
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -84,10 +86,11 @@ class DnsModeService : Service() {
     }
 
     override fun onDestroy() {
+        isServiceAlive = false
         stopDnsEngine()
         releaseLocks()
         serviceScope.cancel()
-        DnsModePreferences.setServiceActive(this, false)
+        DnsModeManager.flushStats(this)
         DnsModeManager.onServiceStopped()
         DitingTileService.requestTileUpdate(this)
         super.onDestroy()
@@ -125,6 +128,7 @@ class DnsModeService : Service() {
         } else {
             Log.e(TAG, "DnsModeService failed to start DNS server on port ${config.localListenPort}")
             DnsModeManager.onServiceError("DNS 服务启动失败，监听端口可能被占用")
+            DnsModePreferences.setServiceActive(this, false)
             stopSelf()
         }
     }
@@ -249,7 +253,7 @@ class DnsModeService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.dns_svgrepo_com)
-            .setContentTitle(localizedText(this, "谛听 · DNS 服务器模式运行中"))
+            .setContentTitle(localizedText(this, "谛听 · 服务器模式运行中"))
             .setContentText(contentText)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -267,10 +271,10 @@ class DnsModeService : Service() {
             val manager = getSystemService(NotificationManager::class.java) ?: return
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                localizedText(this, "DNS 服务器模式"),
+                localizedText(this, "服务器模式"),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = localizedText(this@DnsModeService, "显示 DNS 服务器模式的运行状态")
+                description = localizedText(this@DnsModeService, "显示服务器模式的运行状态")
                 setShowBadge(false)
             }
             manager.createNotificationChannel(channel)
@@ -281,6 +285,10 @@ class DnsModeService : Service() {
         private const val TAG = "DnsModeService"
         private const val CHANNEL_ID = "channel_dns_mode"
         private const val NOTIFICATION_ID = 2002
+
+        @Volatile
+        var isServiceAlive: Boolean = false
+            internal set
 
         const val ACTION_START = "com.haoze.diting.dnsmode.START"
         const val ACTION_STOP = "com.haoze.diting.dnsmode.STOP"

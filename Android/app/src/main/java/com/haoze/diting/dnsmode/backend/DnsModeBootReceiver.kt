@@ -9,7 +9,7 @@ import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
 
 /**
- * Restores the LAN DNS server after a reboot when the user left the DNS mode
+ * Restores the LAN DNS server after a reboot when the user left the server mode
  * service running, so LAN devices can keep resolving without re-opening the app.
  */
 class DnsModeBootReceiver : BroadcastReceiver() {
@@ -20,7 +20,7 @@ class DnsModeBootReceiver : BroadcastReceiver() {
         if (!DnsModePreferences.isServiceActive(context)) return
         runCatching {
             ContextCompat.startForegroundService(context, DnsModeService.startIntent(context))
-        }.onFailure { Log.w(TAG, "Failed to restart DNS mode service after boot", it) }
+        }.onFailure { Log.w(TAG, "Failed to restart server mode service after boot", it) }
     }
 
     companion object {
