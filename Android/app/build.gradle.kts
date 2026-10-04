@@ -7,6 +7,21 @@ plugins {
     id("com.google.devtools.ksp") version "2.3.10"
 }
 
+// ==============================================================================
+// 1. 应用版本配置 (App Version Configuration)
+// ==============================================================================
+// 应用内部版本号（整数，用于系统版本对比及应用升级判断）
+val appVersionCode = 12
+
+// 应用展示版本号（对外版本名称，供界面展示及说明使用）
+val appVersionName = "1.1.5"
+
+// 应用产物显示版本号（用于 APK 输出重命名等归档标识）
+val apkVersionName = appVersionName
+
+// ==============================================================================
+// 2. 签名密钥与构建参数解析 (Signing Properties & Keystore Resolution)
+// ==============================================================================
 val keystorePropertiesFile: File? = listOf(
     rootProject.file("DITING-keystore/keystore.properties"),
     rootProject.file("keystore/keystore.properties"),
@@ -47,6 +62,9 @@ val releaseKeystoreFile: File? = releaseStoreFilePath?.let { path ->
 
 val signDebugWithRelease = project.findProperty("signDebugWithRelease") in listOf("true", "1", "")
 
+// ==============================================================================
+// 3. Android 构建与编译配置 (Android Configuration)
+// ==============================================================================
 android {
     namespace = "com.haoze.diting"
     compileSdk {
@@ -59,8 +77,8 @@ android {
         applicationId = "com.haoze.diting"
         minSdk = 29
         targetSdk = 36
-        versionCode = 12
-        versionName = "1.1.5"
+        versionCode = appVersionCode
+        versionName = appVersionName
         ndk {
             abiFilters += "arm64-v8a"
         }
@@ -102,14 +120,17 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         buildConfig = true
         compose = true
     }
+
     packaging {
         resources {
             excludes += "META-INF/INDEX.LIST"
@@ -120,8 +141,9 @@ android {
     }
 }
 
-val apkVersionName = android.defaultConfig.versionName ?: "unknown"
-
+// ==============================================================================
+// 4. 构建产物归档与命名任务 (Artifact Archiving Tasks)
+// ==============================================================================
 listOf("debug", "release").forEach { buildType ->
     val capitalizedBuildType = buildType.replaceFirstChar { it.uppercase() }
     val apkOutputDirectory = layout.buildDirectory.dir("outputs/apk/$buildType")
@@ -142,28 +164,41 @@ listOf("debug", "release").forEach { buildType ->
     }
 }
 
+// ==============================================================================
+// 5. 依赖项配置 (Dependencies)
+// ==============================================================================
 dependencies {
     // GPL-3.0 userspace TCP/IP stack used by the opt-in HTTPS inspection mode.
     implementation(files("libs/tunnel.aar"))
+
+    // Jetpack Compose 相关依赖
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
+    // AndroidX 核心库与架构组件
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.okhttp)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.work.runtime.ktx)
+
+    // 本地持久化 (Room)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // 网络与三方组件
+    implementation(libs.okhttp)
     implementation(libs.accompanist.drawablepainter)
+
+    // 单元测试
     testImplementation(libs.junit)
     testImplementation(libs.json)
 }
