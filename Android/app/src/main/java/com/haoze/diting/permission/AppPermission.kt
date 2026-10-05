@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.VpnKey
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.haoze.diting.notification.NotificationPermissionHelper
+import com.haoze.diting.ui.PermissionDisclosureSettings
 import com.haoze.diting.ui.mode.AppWorkMode
 
 /**
@@ -71,7 +72,7 @@ enum class AppPermission(
             VPN -> VpnService.prepare(context) == null
             NOTIFICATION -> NotificationPermissionHelper.hasPermission(context)
             BATTERY_OPTIMIZATION -> isBatteryOptimizationIgnored(context)
-            PACKAGE_QUERY -> true // 运行时在 Android 11+ 通过声明与解释，查询失败时再降级
+            PACKAGE_QUERY -> PermissionDisclosureSettings.isAppListExplained(context)
             SYSTEM_ALERT_WINDOW -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 Settings.canDrawOverlays(context)
             } else {
@@ -91,7 +92,7 @@ enum class AppPermission(
             VPN -> if (mode == AppWorkMode.DNS) PermissionLevel.OPTIONAL else PermissionLevel.REQUIRED
             NOTIFICATION -> PermissionLevel.REQUIRED
             BATTERY_OPTIMIZATION -> PermissionLevel.RECOMMENDED
-            PACKAGE_QUERY -> if (mode == AppWorkMode.NORMAL) PermissionLevel.OPTIONAL else PermissionLevel.OPTIONAL
+            PACKAGE_QUERY -> if (mode == AppWorkMode.NORMAL) PermissionLevel.RECOMMENDED else PermissionLevel.OPTIONAL
             SYSTEM_ALERT_WINDOW -> PermissionLevel.OPTIONAL
         }
     }
@@ -132,7 +133,13 @@ enum class AppPermission(
                     Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
                 } else null
             }
-            PACKAGE_QUERY -> null
+            PACKAGE_QUERY -> {
+                if (PermissionDisclosureSettings.isAppListExplained(context)) {
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                    }
+                } else null
+            }
         }
     }
 

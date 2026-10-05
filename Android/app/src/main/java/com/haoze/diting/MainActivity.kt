@@ -169,6 +169,8 @@ class MainActivity : AppLocalizedActivity() {
             val targetModeStr = intent.getStringExtra(EXTRA_TARGET_WORK_MODE)
             val targetMode = targetModeStr?.let { runCatching { AppWorkMode.valueOf(it) }.getOrNull() }
                 ?: WorkModeStore.getAppWorkMode(this)
+            intent.removeExtra(EXTRA_WORK_MODE_CHANGED)
+            intent.removeExtra(EXTRA_TARGET_WORK_MODE)
             switchWorkMode(targetMode)
         }
     }
@@ -413,10 +415,12 @@ class MainActivity : AppLocalizedActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleWorkModeChangeIntent(intent)
+        hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this)
+        currentWorkMode = WorkModeStore.getAppWorkMode(this)
         if (SystemSettingsStore.isInitialAgreementAccepted(this)) {
             handleAutoStartIfNeeded(intent)
         }
-        handleWorkModeChangeIntent(intent)
     }
 
     override fun onStart() {
@@ -432,6 +436,8 @@ class MainActivity : AppLocalizedActivity() {
             recreate()
             return
         }
+        hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this)
+        currentWorkMode = WorkModeStore.getAppWorkMode(this)
         applyRecentsPrivacySetting()
         if (currentWorkMode == AppWorkMode.DNS) {
             // DNS mode lifecycle and status are managed inside DnsModeHost
@@ -456,7 +462,7 @@ class MainActivity : AppLocalizedActivity() {
     }
 
     private fun applyRecentsPrivacySetting() {
-        applyRecentsPrivacy(SystemSettingsStore.isHideFromRecentsEnabled(this))
+        RecentsPrivacyController.apply(this, SystemSettingsStore.isHideFromRecentsEnabled(this))
     }
 
     private fun applyRecentsPrivacy(hideFromRecents: Boolean) {
@@ -465,8 +471,11 @@ class MainActivity : AppLocalizedActivity() {
 
     private fun handleAutoStartIfNeeded(intent: Intent?) {
         if (intent?.getBooleanExtra(EXTRA_AUTO_START_VPN, false) != true) return
-        // Consume the extra so auto-start is not triggered again.
-        setIntent(intent.replaceExtras(null))
+        intent.removeExtra(EXTRA_AUTO_START_VPN)
+        if (currentWorkMode == AppWorkMode.DNS) {
+            com.haoze.diting.dnsmode.backend.DnsModeManager.startService(this)
+            return
+        }
         val isRunning = com.haoze.diting.express.ExpressModeLauncher.isCurrentModeRunning(this)
         if (!isRunning) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermissionHelper.hasPermission(this)) {

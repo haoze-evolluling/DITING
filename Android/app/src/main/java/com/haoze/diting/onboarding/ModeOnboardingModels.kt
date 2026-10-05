@@ -79,6 +79,7 @@ object ModeOnboardingRegistry {
                 permissions = listOf(
                     AppPermission.VPN,
                     AppPermission.NOTIFICATION,
+                    AppPermission.PACKAGE_QUERY,
                     AppPermission.BATTERY_OPTIMIZATION
                 ),
                 step3Title = "快速上手指南",
