@@ -37,18 +37,25 @@ object SubscriptionAutoUpdateSettings {
     const val MIN_INTERVAL_HOURS = 1
     const val MAX_INTERVAL_HOURS = 168
 
-    fun isEnabled(context: Context): Boolean = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        .getBoolean(KEY_ENABLED, false)
+    private fun prefs(context: Context, dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL) =
+        context.getSharedPreferences(dataset.prefsName(), Context.MODE_PRIVATE)
 
-    fun intervalHours(context: Context): Int {
-        val value = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getInt(KEY_INTERVAL, DEFAULT_INTERVAL_HOURS)
+    fun isEnabled(context: Context, dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL): Boolean =
+        prefs(context, dataset).getBoolean(KEY_ENABLED, false)
+
+    fun intervalHours(context: Context, dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL): Int {
+        val value = prefs(context, dataset).getInt(KEY_INTERVAL, DEFAULT_INTERVAL_HOURS)
         return value.takeIf { it in MIN_INTERVAL_HOURS..MAX_INTERVAL_HOURS } ?: DEFAULT_INTERVAL_HOURS
     }
 
-    fun save(context: Context, enabled: Boolean, intervalHours: Int) {
+    fun save(
+        context: Context,
+        enabled: Boolean,
+        intervalHours: Int,
+        dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
+    ) {
         require(intervalHours in MIN_INTERVAL_HOURS..MAX_INTERVAL_HOURS)
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+        prefs(context, dataset).edit()
             .putBoolean(KEY_ENABLED, enabled)
             .putInt(KEY_INTERVAL, intervalHours)
             .apply()
@@ -59,12 +66,15 @@ object SubscriptionAutoUpdateScheduler {
     const val WORK_TAG = "subscription_auto_update_work"
     private const val WORK_NAME = "subscription_auto_update"
     private const val RETRY_WORK_NAME = "subscription_auto_update_retry"
+    private const val EXPRESS_WORK_NAME = "subscription_auto_update_express"
+    private const val EXPRESS_RETRY_WORK_NAME = "subscription_auto_update_express_retry"
     private const val DNS_WORK_NAME = "subscription_auto_update_dns"
     private const val DNS_RETRY_WORK_NAME = "subscription_auto_update_dns_retry"
 
     /** Reconciles the periodic work of every dataset with its own settings. */
     fun sync(context: Context) {
         sync(context, com.haoze.diting.data.RuleDataset.NORMAL)
+        sync(context, com.haoze.diting.data.RuleDataset.EXPRESS)
         sync(context, com.haoze.diting.data.RuleDataset.DNS_MODE)
     }
 
@@ -126,11 +136,13 @@ object SubscriptionAutoUpdateScheduler {
 
     private fun workNameFor(dataset: com.haoze.diting.data.RuleDataset): String = when (dataset) {
         com.haoze.diting.data.RuleDataset.NORMAL -> WORK_NAME
+        com.haoze.diting.data.RuleDataset.EXPRESS -> EXPRESS_WORK_NAME
         com.haoze.diting.data.RuleDataset.DNS_MODE -> DNS_WORK_NAME
     }
 
     private fun retryWorkNameFor(dataset: com.haoze.diting.data.RuleDataset): String = when (dataset) {
         com.haoze.diting.data.RuleDataset.NORMAL -> RETRY_WORK_NAME
+        com.haoze.diting.data.RuleDataset.EXPRESS -> EXPRESS_RETRY_WORK_NAME
         com.haoze.diting.data.RuleDataset.DNS_MODE -> DNS_RETRY_WORK_NAME
     }
 }

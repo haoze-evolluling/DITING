@@ -1,6 +1,8 @@
 package com.haoze.diting.express.ui
 
+import android.app.Application
 import android.widget.Toast
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.showToast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -73,7 +75,13 @@ import java.util.Locale
 fun ExpressConfigTransferScreen(
     onBack: () -> Unit,
     title: String = "备份与迁移",
-    configViewModel: ConfigTransferViewModel = viewModel()
+    configViewModel: ConfigTransferViewModel = viewModel(
+        key = "ExpressConfigTransferViewModel",
+        factory = ConfigTransferViewModel.factory(
+            LocalContext.current.applicationContext as Application,
+            RuleDataset.EXPRESS
+        )
+    )
 ) {
     val context = LocalContext.current
 

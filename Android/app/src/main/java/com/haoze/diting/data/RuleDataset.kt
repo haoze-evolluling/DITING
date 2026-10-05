@@ -18,7 +18,24 @@ import com.haoze.diting.data.dao.SubscriptionGroupDao
  */
 enum class RuleDataset {
     NORMAL,
-    DNS_MODE
+    EXPRESS,
+    DNS_MODE;
+
+    fun prefsName(): String = when (this) {
+        NORMAL -> "dns_vpn_prefs"
+        EXPRESS -> "diting_express_prefs"
+        DNS_MODE -> "diting_dns_mode_prefs"
+    }
+}
+
+/**
+ * Shared runtime DAO surface for DNS cache, query logs, and latency/race logs.
+ */
+interface DnsRuntimeDataSources {
+    fun dnsCacheDao(): com.haoze.diting.data.dao.DnsCacheDao
+    fun dnsLogDao(): com.haoze.diting.data.dao.DnsLogDao
+    fun raceLogDao(): com.haoze.diting.data.dao.RaceLogDao
+    fun bootstrapLogDao(): com.haoze.diting.data.dao.BootstrapLogDao
 }
 
 

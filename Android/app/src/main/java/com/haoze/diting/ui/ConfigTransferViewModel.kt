@@ -4,6 +4,8 @@ import android.app.Application
 import android.net.Uri
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.haoze.diting.ui.settings.AppRulesSettingsStore
 import kotlinx.coroutines.CancellationException
@@ -15,7 +17,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataSources
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.transfer.ConfigExporter
 import com.haoze.diting.ui.transfer.ConfigImporter
 import com.haoze.diting.ui.transfer.ConfigTransferParser
@@ -28,10 +32,13 @@ enum class ConfigTransferOperation {
     IMPORTING
 }
 
-class ConfigTransferViewModel(application: Application) : AndroidViewModel(application) {
-    private val exporter by lazy { ConfigExporter(application) }
-    private val importer by lazy { ConfigImporter(application) }
-    private val database by lazy { AppDatabase.getInstance(application) }
+class ConfigTransferViewModel @JvmOverloads constructor(
+    application: Application,
+    val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
+    private val exporter by lazy { ConfigExporter(application, dataset) }
+    private val importer by lazy { ConfigImporter(application, dataset) }
+    private val database: RuleDataSources by lazy { RuleDatabases.forDataset(application, dataset) }
 
     private val _operation = MutableStateFlow(ConfigTransferOperation.IDLE)
     val operation: StateFlow<ConfigTransferOperation> = _operation.asStateFlow()
@@ -67,7 +74,7 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
     fun export(uri: Uri, selection: ConfigExportSelection) {
         runOperation(ConfigTransferOperation.EXPORTING) {
             val context = getApplication<Application>()
-            val effectiveSelection = if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+            val effectiveSelection = if (dataset == RuleDataset.EXPRESS) {
                 com.haoze.diting.express.config.ExpressConfigAdapter.sanitizeExportSelection(selection)
             } else {
                 selection
@@ -114,7 +121,7 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
                     reader.readText()
                 }
                 val rawConfig = ConfigTransferParser.parseAndValidate(content)
-                val config = if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+                val config = if (dataset == RuleDataset.EXPRESS) {
                     com.haoze.diting.express.config.ExpressConfigAdapter.sanitizeImportConfig(rawConfig, context)
                 } else {
                     rawConfig
@@ -128,13 +135,15 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
                         }
                     }
                 }
-                if (result.excludedAppsUpdated || result.blockedAppsUpdated || result.httpInspectionUpdated || result.outboundProxyUpdated) {
-                    RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+                if (dataset == RuleDataset.NORMAL) {
+                    if (result.excludedAppsUpdated || result.blockedAppsUpdated || result.httpInspectionUpdated || result.outboundProxyUpdated) {
+                        RuntimeDnsSettingsRefresher.refreshAppExclusionsIfRunning(context)
+                    }
+                    if (result.appAllowlistUpdated) {
+                        RuntimeDnsSettingsRefresher.refreshAppAllowlistIfRunning(context)
+                    }
                 }
-                if (result.appAllowlistUpdated) {
-                    RuntimeDnsSettingsRefresher.refreshAppAllowlistIfRunning(context)
-                }
-                RuntimeDnsSettingsRefresher.refreshIfRunning(context, "configuration_imported")
+                RuntimeDnsSettingsRefresher.refreshIfRunning(context, "configuration_imported", dataset = dataset)
                 withContext(Dispatchers.Main) {
                     _importResult.value = result
                     _isImportFinished.value = true
@@ -163,7 +172,7 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
     fun loadStats() {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            val providersCount = DnsProvider.loadUserProviders(context).size
+            val providersCount = DnsProvider.loadUserProviders(context, dataset).size
             val subscriptionsCount = try {
                 database.subscriptionDao().allRemote().size
             } catch (e: Exception) {
@@ -173,19 +182,23 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
                 val block = database.blockRuleDao().bySource("useradd").size
                 val allow = database.allowRuleDao().bySource("useradd").size
                 val rewrite = database.rewriteRuleDao().rulesBySource("useradd").size
-                val address = database.goUrlRuleDao().rulesBySource(GoUrlRuleManager.USER_SOURCE).size
+                val address = if (dataset == RuleDataset.EXPRESS) 0 else database.goUrlRuleDao().rulesBySource(GoUrlRuleManager.USER_SOURCE).size
                 block + allow + rewrite + address
             } catch (e: Exception) {
                 0
             }
-            val managedAppsCount = try {
-                val excluded = AppRulesSettingsStore.getExcludedAppPackages(context)
-                val blocked = AppRulesSettingsStore.getBlockedAppPackages(context)
-                val allowlist = AppRulesSettingsStore.getAppAllowlistRuleMap(context)
-                val inspection = AppRulesSettingsStore.getHttpInspectionAppPackages(context)
-                (excluded + blocked + allowlist.keys + inspection).distinct().size
-            } catch (e: Exception) {
+            val managedAppsCount = if (dataset == RuleDataset.EXPRESS) {
                 0
+            } else {
+                try {
+                    val excluded = AppRulesSettingsStore.getExcludedAppPackages(context)
+                    val blocked = AppRulesSettingsStore.getBlockedAppPackages(context)
+                    val allowlist = AppRulesSettingsStore.getAppAllowlistRuleMap(context)
+                    val inspection = AppRulesSettingsStore.getHttpInspectionAppPackages(context)
+                    (excluded + blocked + allowlist.keys + inspection).distinct().size
+                } catch (e: Exception) {
+                    0
+                }
             }
             _stats.value = ConfigDashboardStats(
                 customProvidersCount = providersCount,
@@ -226,6 +239,18 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
             withContext(Dispatchers.Main) {
                 _message.value = message
                 _operation.value = ConfigTransferOperation.IDLE
+            }
+        }
+    }
+
+    companion object {
+        fun factory(
+            application: Application,
+            dataset: RuleDataset = RuleDataset.NORMAL
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ConfigTransferViewModel(application, dataset) as T
             }
         }
     }

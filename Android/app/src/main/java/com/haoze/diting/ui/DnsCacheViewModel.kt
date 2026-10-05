@@ -7,8 +7,11 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.haoze.diting.data.AppDatabase
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.haoze.diting.data.DnsCacheQueryParams
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.DnsCacheEntity
 import com.haoze.diting.data.repository.DnsCacheRepository
 import kotlinx.coroutines.Dispatchers
@@ -26,8 +29,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-class DnsCacheViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = DnsCacheRepository(AppDatabase.getInstance(application).dnsCacheDao())
+class DnsCacheViewModel @JvmOverloads constructor(
+    application: Application,
+    dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
+    private val repository = DnsCacheRepository(
+        RuleDatabases.runtimeForDataset(application, dataset).dnsCacheDao()
+    )
     private val _activated = MutableStateFlow(false)
     private val _params = MutableStateFlow(DnsCacheQueryParams("", System.currentTimeMillis()))
     private val _nowMillis = MutableStateFlow(System.currentTimeMillis())
@@ -69,6 +77,18 @@ class DnsCacheViewModel(application: Application) : AndroidViewModel(application
             repository.deleteExpired(now)
             _nowMillis.value = now
             _params.update { it.copy(asOfMillis = now) }
+        }
+    }
+
+    companion object {
+        fun factory(
+            application: Application,
+            dataset: RuleDataset = RuleDataset.NORMAL
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return DnsCacheViewModel(application, dataset) as T
+            }
         }
     }
 }

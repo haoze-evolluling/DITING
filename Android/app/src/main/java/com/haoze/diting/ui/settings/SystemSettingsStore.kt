@@ -1,6 +1,7 @@
 package com.haoze.diting.ui.settings
 
 import android.content.Context
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.DnsLogMode
 import com.haoze.diting.ui.Ipv6Mode
 
@@ -30,14 +31,14 @@ object SystemSettingsStore {
     private const val DEFAULT_TRAFFIC_STATS_RETENTION_DAYS = 30
     private const val DEFAULT_HIDE_FROM_RECENTS_ENABLED = false
 
-    fun getDnsLogMode(context: Context): DnsLogMode {
-        val value = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getDnsLogMode(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): DnsLogMode {
+        val value = datasetPrefs(context, dataset)
             .getString(KEY_DNS_LOG_MODE, null)
         return DnsLogMode.fromStorageValue(value)
     }
 
-    fun setDnsLogMode(context: Context, mode: DnsLogMode) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setDnsLogMode(context: Context, mode: DnsLogMode, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_DNS_LOG_MODE, mode.storageValue)
             .apply()
@@ -239,14 +240,14 @@ object SystemSettingsStore {
             .apply()
     }
 
-    fun getIpv6Mode(context: Context): Ipv6Mode {
-        val value = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getIpv6Mode(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Ipv6Mode {
+        val value = datasetPrefs(context, dataset)
             .getString(KEY_IPV6_MODE, DEFAULT_IPV6_MODE.storageValue)
         return Ipv6Mode.fromStorageValue(value)
     }
 
-    fun setIpv6Mode(context: Context, mode: Ipv6Mode) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setIpv6Mode(context: Context, mode: Ipv6Mode, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_IPV6_MODE, mode.storageValue)
             .apply()

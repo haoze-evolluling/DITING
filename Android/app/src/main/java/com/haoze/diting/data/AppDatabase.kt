@@ -98,12 +98,12 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     version = 2,
     exportSchema = false
 )
-abstract class AppDatabase : RoomDatabase(), RuleDataSources {
-    abstract fun dnsCacheDao(): DnsCacheDao
-    abstract fun dnsLogDao(): DnsLogDao
+abstract class AppDatabase : RoomDatabase(), RuleDataSources, DnsRuntimeDataSources {
+    abstract override fun dnsCacheDao(): DnsCacheDao
+    abstract override fun dnsLogDao(): DnsLogDao
     abstract fun httpRequestLogDao(): HttpRequestLogDao
-    abstract fun raceLogDao(): RaceLogDao
-    abstract fun bootstrapLogDao(): BootstrapLogDao
+    abstract override fun raceLogDao(): RaceLogDao
+    abstract override fun bootstrapLogDao(): BootstrapLogDao
     abstract override fun blockRuleDao(): BlockRuleDao
     abstract override fun allowRuleDao(): AllowRuleDao
     abstract override fun subscriptionDao(): SubscriptionDao

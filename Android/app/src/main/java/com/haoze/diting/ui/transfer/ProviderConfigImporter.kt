@@ -13,7 +13,7 @@ internal class ProviderConfigImporter(private val session: ImportSessionContext)
     private val context get() = session.context
 
     fun importProvidersAndResolution(config: TransferConfig) {
-        val existingUserProviders = DnsProvider.loadUserProviders(context)
+        val existingUserProviders = DnsProvider.loadUserProviders(context, session.dataset)
         val existingProviderKeys = existingUserProviders.map(::providerKey).toMutableSet()
         val providerKeyToIdMap = mutableMapOf<String, String>()
         existingUserProviders.forEach { provider ->
@@ -30,7 +30,7 @@ internal class ProviderConfigImporter(private val session: ImportSessionContext)
                 session.complete(item, "跳过 $detail (已存在)")
             } else {
                 val created = DnsProvider.addUserProvider(
-                    context, provider.name, provider.protocol, provider.url, provider.host, provider.port
+                    context, provider.name, provider.protocol, provider.url, provider.host, provider.port, session.dataset
                 )
                 providerKeyToIdMap[key] = created.id
                 session.added++
@@ -41,7 +41,7 @@ internal class ProviderConfigImporter(private val session: ImportSessionContext)
         }
 
         // Restore provider selection & resolution mode if present
-        val allRuntimeProviders = DnsProvider.loadRuntimeProviders(context)
+        val allRuntimeProviders = DnsProvider.loadRuntimeProviders(context, session.dataset)
         fun resolveProviderRef(ref: ImportedProviderRef): String? {
             if (ref.isPreset) {
                 return DnsProvider.PRESETS.firstOrNull { it.id == ref.id || (it.name == ref.name && it.protocol == ref.protocol) }?.id
@@ -56,20 +56,20 @@ internal class ProviderConfigImporter(private val session: ImportSessionContext)
 
         config.selectedProvider?.let { ref ->
             resolveProviderRef(ref)?.let { resolvedId ->
-                DnsProvider.saveSelected(context, resolvedId)
+                DnsProvider.saveSelected(context, resolvedId, session.dataset)
                 val detail = "首选 DNS 服务商 -> ${ref.name}"
                 session.addUpdatedSetting(detail, "设置 $detail")
             }
         }
         config.resolutionMode?.let { mode ->
-            ResolutionSettingsStore.setDnsResolutionMode(context, mode)
+            ResolutionSettingsStore.setDnsResolutionMode(context, mode, session.dataset)
             val detail = "DNS 解析模式 -> ${mode.displayName}"
             session.addUpdatedSetting(detail, "设置 $detail")
         }
         if (config.raceProviderRefs.isNotEmpty()) {
             val resolvedIds = config.raceProviderRefs.mapNotNull(::resolveProviderRef).toSet()
             if (resolvedIds.isNotEmpty()) {
-                ResolutionSettingsStore.setRaceProviderIds(context, resolvedIds)
+                ResolutionSettingsStore.setRaceProviderIds(context, resolvedIds, session.dataset)
                 val detail = "抢答模式 DNS 节点 (${resolvedIds.size} 个)"
                 session.addUpdatedSetting(detail, "更新 $detail")
             }
@@ -77,7 +77,7 @@ internal class ProviderConfigImporter(private val session: ImportSessionContext)
         if (config.smartPredictionProviderRefs.isNotEmpty()) {
             val resolvedIds = config.smartPredictionProviderRefs.mapNotNull(::resolveProviderRef).toSet()
             if (resolvedIds.isNotEmpty()) {
-                ResolutionSettingsStore.setSmartPredictionProviderIds(context, resolvedIds)
+                ResolutionSettingsStore.setSmartPredictionProviderIds(context, resolvedIds, session.dataset)
                 val detail = "智能预测 DNS 节点 (${resolvedIds.size} 个)"
                 session.addUpdatedSetting(detail, "更新 $detail")
             }
@@ -85,7 +85,7 @@ internal class ProviderConfigImporter(private val session: ImportSessionContext)
         if (config.parallelRaceProviderRefs.isNotEmpty()) {
             val resolvedIds = config.parallelRaceProviderRefs.mapNotNull(::resolveProviderRef).toSet()
             if (resolvedIds.isNotEmpty()) {
-                ResolutionSettingsStore.setParallelRaceProviderIds(context, resolvedIds)
+                ResolutionSettingsStore.setParallelRaceProviderIds(context, resolvedIds, session.dataset)
                 val detail = "并行抢答 DNS 节点 (${resolvedIds.size} 个)"
                 session.addUpdatedSetting(detail, "更新 $detail")
             }
@@ -93,13 +93,13 @@ internal class ProviderConfigImporter(private val session: ImportSessionContext)
         if (config.primaryBackupProviderRefs.isNotEmpty()) {
             val resolvedIds = config.primaryBackupProviderRefs.mapNotNull(::resolveProviderRef)
             if (resolvedIds.isNotEmpty()) {
-                ResolutionSettingsStore.setPrimaryBackupProviderIds(context, resolvedIds)
+                ResolutionSettingsStore.setPrimaryBackupProviderIds(context, resolvedIds, session.dataset)
                 val detail = "主备模式 DNS 节点 (${resolvedIds.size} 个)"
                 session.addUpdatedSetting(detail, "更新 $detail")
             }
         }
         config.presetDnsService?.let { service ->
-            ResolutionSettingsStore.setPresetDnsService(context, service)
+            ResolutionSettingsStore.setPresetDnsService(context, service, session.dataset)
             val detail = "预置 DNS 服务 -> ${service.displayName}"
             session.addUpdatedSetting(detail, "设置 $detail")
         }
@@ -112,13 +112,14 @@ internal class ProviderConfigImporter(private val session: ImportSessionContext)
                     visibleProtocols = visibility.visibleProtocols,
                     hiddenProviderIds = hiddenIds,
                     visibleProviderIds = visibleIds
-                )
+                ),
+                session.dataset
             )
             val detail = "首页服务商卡片可见性设置"
             session.addUpdatedSetting(detail, "更新 $detail")
         }
         config.raceTestDomain?.takeIf { it.isNotBlank() }?.let { domain ->
-            ResolutionSettingsStore.setRaceTestDomain(context, domain)
+            ResolutionSettingsStore.setRaceTestDomain(context, domain, session.dataset)
             val detail = "抢答测速域名 -> $domain"
             session.addUpdatedSetting(detail, "设置 $detail")
         }

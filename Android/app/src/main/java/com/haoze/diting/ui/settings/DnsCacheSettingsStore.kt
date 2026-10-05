@@ -1,6 +1,7 @@
 package com.haoze.diting.ui.settings
 
 import android.content.Context
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.vpn.cache.DnsCacheMode
 import com.haoze.diting.vpn.cache.DnsCachePolicy
 import com.haoze.diting.vpn.cache.DnsCachePreset
@@ -24,19 +25,19 @@ object DnsCacheSettingsStore {
     private const val DEFAULT_CACHE_MIN_TTL_SECONDS = 60L
     private const val DEFAULT_CACHE_STALE_FALLBACK_SECONDS = 300L
 
-    fun isCacheEnabled(context: Context): Boolean {
-        return getDnsCachePolicy(context).enabled
+    fun isCacheEnabled(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Boolean {
+        return getDnsCachePolicy(context, dataset).enabled
     }
 
-    fun setCacheEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setCacheEnabled(context: Context, enabled: Boolean, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putBoolean(KEY_DNS_CACHE_ENABLED, enabled)
             .apply()
     }
 
-    fun getDnsCachePolicy(context: Context): DnsCachePolicy {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getDnsCachePolicy(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): DnsCachePolicy {
+        val prefs = datasetPrefs(context, dataset)
         return DnsCachePolicy(
             enabled = prefs.getBoolean(KEY_DNS_CACHE_ENABLED, DEFAULT_CACHE_ENABLED),
             mode = DnsCacheMode.fromStorageValue(
@@ -57,23 +58,28 @@ object DnsCacheSettingsStore {
         )
     }
 
-    fun getDnsCachePreset(context: Context): DnsCachePreset {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getDnsCachePreset(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): DnsCachePreset {
+        val prefs = datasetPrefs(context, dataset)
         return DnsCachePreset.fromStorageValue(prefs.getString(KEY_DNS_CACHE_PRESET, null))
-            ?: DnsCachePreset.fromPolicy(getDnsCachePolicy(context))
+            ?: DnsCachePreset.fromPolicy(getDnsCachePolicy(context, dataset))
     }
 
-    fun setDnsCachePreset(context: Context, preset: DnsCachePreset) {
-        val enabled = getDnsCachePolicy(context).enabled
-        setDnsCachePolicy(context, preset.toPolicy(enabled = enabled), preset)
+    fun setDnsCachePreset(context: Context, preset: DnsCachePreset, dataset: RuleDataset = RuleDataset.NORMAL) {
+        val enabled = getDnsCachePolicy(context, dataset).enabled
+        setDnsCachePolicy(context, preset.toPolicy(enabled = enabled), preset, dataset)
     }
 
-    fun setDnsCachePolicy(context: Context, policy: DnsCachePolicy) {
-        setDnsCachePolicy(context, policy, DnsCachePreset.fromPolicy(policy))
+    fun setDnsCachePolicy(context: Context, policy: DnsCachePolicy, dataset: RuleDataset = RuleDataset.NORMAL) {
+        setDnsCachePolicy(context, policy, DnsCachePreset.fromPolicy(policy), dataset)
     }
 
-    private fun setDnsCachePolicy(context: Context, policy: DnsCachePolicy, preset: DnsCachePreset) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private fun setDnsCachePolicy(
+        context: Context,
+        policy: DnsCachePolicy,
+        preset: DnsCachePreset,
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) {
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_DNS_CACHE_PRESET, preset.storageValue)
             .putBoolean(KEY_DNS_CACHE_ENABLED, policy.enabled)

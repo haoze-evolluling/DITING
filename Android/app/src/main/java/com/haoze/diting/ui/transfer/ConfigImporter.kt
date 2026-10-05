@@ -1,7 +1,9 @@
 package com.haoze.diting.ui.transfer
 
 import android.content.Context
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataSources
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.ui.ConfigImportProgress
 import com.haoze.diting.ui.ConfigImportResult
@@ -10,8 +12,11 @@ import com.haoze.diting.ui.RuntimeDnsSettingsRefresher
 /**
  * Orchestrates importing configuration data across providers, networks, rules, app rules, and preferences.
  */
-class ConfigImporter(private val context: Context) {
-    private val database = AppDatabase.getInstance(context)
+class ConfigImporter(
+    private val context: Context,
+    private val dataset: RuleDataset = RuleDataset.NORMAL
+) {
+    private val database: RuleDataSources = RuleDatabases.forDataset(context, dataset)
 
     suspend fun import(
         config: TransferConfig,
@@ -32,6 +37,7 @@ class ConfigImporter(private val context: Context) {
             context = context,
             database = database,
             total = total,
+            dataset = dataset,
             onProgress = onProgress
         )
 
@@ -51,9 +57,16 @@ class ConfigImporter(private val context: Context) {
 
         if (session.customRulesAdded > 0) {
             RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                context, refreshBlock = true, refreshAllow = true, refreshRewrite = true, scope = RuleScope.DNS
+                context,
+                refreshBlock = true,
+                refreshAllow = true,
+                refreshRewrite = true,
+                scope = RuleScope.DNS,
+                dataset = dataset
             )
-            RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+            if (dataset == RuleDataset.NORMAL) {
+                RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+            }
             session.addLog("已同步更新运行时规则索引")
         }
 

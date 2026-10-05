@@ -9,7 +9,8 @@ import android.os.ParcelFileDescriptor
 import android.system.OsConstants
 import android.util.Log
 import com.haoze.diting.R
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.ExpressRulesDatabase
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.dao.DnsCacheDao
 import com.haoze.diting.data.entity.DnsCacheEntity
 import com.haoze.diting.express.engine.ExpressDnsEngine
@@ -34,6 +35,7 @@ import com.haoze.diting.vpn.DomainPolicy
 import com.haoze.diting.vpn.LogResult
 import com.haoze.diting.vpn.RaceLogger
 import com.haoze.diting.express.cache.ExpressRoomDnsCache
+import com.haoze.diting.vpn.RuleIndexLayout
 import com.haoze.diting.vpn.cache.DnsCachePolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -233,8 +235,8 @@ class ExpressTunnelManager {
             stop()
         }
 
-        val db = AppDatabase.getInstance(service)
-        val ruleIndexDirectory = File(service.filesDir, "rule-index")
+        val db = ExpressRulesDatabase.getInstance(service)
+        val ruleIndexDirectory = RuleIndexLayout.rootDirectory(service.filesDir, RuleDataset.EXPRESS)
         blockListManager = BlockListManager(db.blockRuleDao(), ruleIndexDirectory)
         allowListManager = AllowListManager(db.allowRuleDao(), ruleIndexDirectory)
         domainPolicy = DomainPolicy(allowListManager, blockListManager) { domainRulesEnabledProvider() }

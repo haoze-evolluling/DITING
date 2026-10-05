@@ -23,18 +23,18 @@ internal class PreferenceConfigImporter(private val session: ImportSessionContex
     private val context get() = session.context
 
     fun importPreferences(config: TransferConfig) {
-        if (config.domainRulesEnabled != null && AppRulesSettingsStore.isDomainRulesEnabled(context) != config.domainRulesEnabled) {
-            AppRulesSettingsStore.setDomainRulesEnabled(context, config.domainRulesEnabled)
+        if (config.domainRulesEnabled != null && AppRulesSettingsStore.isDomainRulesEnabled(context, session.dataset) != config.domainRulesEnabled) {
+            AppRulesSettingsStore.setDomainRulesEnabled(context, config.domainRulesEnabled, session.dataset)
             val detail = "域名规则开关 -> ${if (config.domainRulesEnabled) "已启用" else "已禁用"}"
             session.addUpdatedSetting(detail, "设置 $detail")
         }
         // Linkage constraint: if an imported config has HTTPS inspection on while domain rules are off, force-align to both enabled
-        if (AppRulesSettingsStore.isHttpInspectionEnabled(context) && !AppRulesSettingsStore.isDomainRulesEnabled(context)) {
-            AppRulesSettingsStore.setDomainRulesEnabled(context, true)
+        if (session.dataset != com.haoze.diting.data.RuleDataset.EXPRESS && AppRulesSettingsStore.isHttpInspectionEnabled(context) && !AppRulesSettingsStore.isDomainRulesEnabled(context, session.dataset)) {
+            AppRulesSettingsStore.setDomainRulesEnabled(context, true, session.dataset)
             val detail = "域名规则开关 -> 已启用（与 HTTPS 检查联动）"
             session.addUpdatedSetting(detail, "设置 $detail")
         }
-        if (config.addressRulesEnabled != null && AppRulesSettingsStore.isAddressRulesEnabled(context) != config.addressRulesEnabled) {
+        if (session.dataset != com.haoze.diting.data.RuleDataset.EXPRESS && config.addressRulesEnabled != null && AppRulesSettingsStore.isAddressRulesEnabled(context) != config.addressRulesEnabled) {
             AppRulesSettingsStore.setAddressRulesEnabled(context, config.addressRulesEnabled)
             val detail = "地址规则开关 -> ${if (config.addressRulesEnabled) "已启用" else "已禁用"}"
             session.addUpdatedSetting(detail, "设置 $detail")
@@ -45,7 +45,7 @@ internal class PreferenceConfigImporter(private val session: ImportSessionContex
             session.addUpdatedSetting(detail, "设置 $detail")
         }
         if (config.blockResponseMode != null) {
-            AppRulesSettingsStore.setBlockResponseMode(context, config.blockResponseMode)
+            AppRulesSettingsStore.setBlockResponseMode(context, config.blockResponseMode, session.dataset)
             val detail = "拦截响应策略 -> ${config.blockResponseMode.storageValue}"
             session.addUpdatedSetting(detail, "设置 $detail")
         }
@@ -58,19 +58,20 @@ internal class PreferenceConfigImporter(private val session: ImportSessionContex
                     requestThreshold = dyn.requestThreshold,
                     windowSeconds = dyn.windowSeconds,
                     nxDomainDurationSeconds = dyn.nxDomainDurationSeconds
-                )
+                ),
+                session.dataset
             )
             val detail = "动态拦截响应配置 -> ${if (dyn.enabled) "已启用" else "已禁用"}"
             session.addUpdatedSetting(detail, "设置 $detail")
         }
         if (config.allowEditDefaultWhitelist != null) {
-            AppRulesSettingsStore.setAllowEditDefaultWhitelist(context, config.allowEditDefaultWhitelist)
+            AppRulesSettingsStore.setAllowEditDefaultWhitelist(context, config.allowEditDefaultWhitelist, session.dataset)
             val detail = "允许编辑默认白名单 -> ${if (config.allowEditDefaultWhitelist) "是" else "否"}"
             session.addUpdatedSetting(detail, "设置 $detail")
         }
         if (config.subscriptionAutoUpdate != null) {
             val auto = config.subscriptionAutoUpdate
-            SubscriptionAutoUpdateSettings.save(context, auto.enabled, auto.intervalHours)
+            SubscriptionAutoUpdateSettings.save(context, auto.enabled, auto.intervalHours, session.dataset)
             SubscriptionAutoUpdateScheduler.sync(context)
             val detail = "规则订阅自动更新 -> ${if (auto.enabled) "每 ${auto.intervalHours} 小时" else "已禁用"}"
             session.addUpdatedSetting(detail, "设置 $detail")
@@ -98,10 +99,10 @@ internal class PreferenceConfigImporter(private val session: ImportSessionContex
         if (config.systemSettings != null) {
             val sys = config.systemSettings
             sys.bypassLanEnabled?.let { SystemSettingsStore.setBypassLanEnabled(context, it) }
-            sys.ipv6Mode?.let { SystemSettingsStore.setIpv6Mode(context, Ipv6Mode.fromStorageValue(it)) }
+            sys.ipv6Mode?.let { SystemSettingsStore.setIpv6Mode(context, Ipv6Mode.fromStorageValue(it), session.dataset) }
             sys.hideFromRecentsEnabled?.let { SystemSettingsStore.setHideFromRecentsEnabled(context, it) }
             sys.logRetentionDays?.let { SystemSettingsStore.setLogRetentionDays(context, it) }
-            sys.dnsLogMode?.let { SystemSettingsStore.setDnsLogMode(context, DnsLogMode.fromStorageValue(it)) }
+            sys.dnsLogMode?.let { SystemSettingsStore.setDnsLogMode(context, DnsLogMode.fromStorageValue(it), session.dataset) }
             sys.floatingLogEnabled?.let { SystemSettingsStore.setFloatingLogEnabled(context, it) }
             sys.floatingLogPanelSize?.let { SystemSettingsStore.setFloatingLogPanelSize(context, it) }
             sys.appTrafficStatsEnabled?.let { SystemSettingsStore.setAppTrafficStatsEnabled(context, it) }

@@ -39,13 +39,24 @@ internal object RuleIndexLayout {
     // ---------------------------------------------------------------- scopes
 
     /** Files root holding rule index artifacts. */
-    fun rootDirectory(filesDir: File): File = File(filesDir, ROOT_DIR_NAME)
+    fun rootDirectory(filesDir: File, dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL): File = when (dataset) {
+        com.haoze.diting.data.RuleDataset.NORMAL -> File(filesDir, ROOT_DIR_NAME)
+        com.haoze.diting.data.RuleDataset.EXPRESS -> File(File(filesDir, ROOT_DIR_NAME), "express")
+        com.haoze.diting.data.RuleDataset.DNS_MODE -> File(filesDir, ROOT_DIR_NAME)
+    }
 
     /** Directory holding one scope's artifacts. */
-    fun scopeDirectory(filesDir: File, scope: RuleScope = RuleScope.DNS): File = rootDirectory(filesDir)
+    fun scopeDirectory(
+        filesDir: File,
+        scope: RuleScope = RuleScope.DNS,
+        dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
+    ): File = rootDirectory(filesDir, dataset)
 
     /** Every scope directory that may hold artifacts. */
-    fun allScopeDirectories(filesDir: File): List<File> = listOf(rootDirectory(filesDir))
+    fun allScopeDirectories(
+        filesDir: File,
+        dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
+    ): List<File> = listOf(rootDirectory(filesDir, dataset))
 
     // ------------------------------------------------------------- artifacts
 

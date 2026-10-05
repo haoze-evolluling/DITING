@@ -21,10 +21,12 @@ internal class RuleConfigImporter(private val session: ImportSessionContext) {
 
     private val context get() = session.context
     private val database get() = session.database
-    private val ruleIndexDir by lazy { File(context.filesDir, "rule-index") }
+    private val ruleIndexDir by lazy {
+        com.haoze.diting.vpn.RuleIndexLayout.rootDirectory(context.filesDir, session.dataset)
+    }
 
     private fun subscriptionManager(scope: RuleScope = RuleScope.DNS) = SubscriptionManager(
-        database,
+        database as androidx.room.RoomDatabase,
         database.subscriptionDao(),
         BlockListManager(database.blockRuleDao(), ruleIndexDir, scope = scope, reloadCacheAfterChanges = false),
         AllowListManager(database.allowRuleDao(), ruleIndexDir, scope = scope, reloadCacheAfterChanges = false),

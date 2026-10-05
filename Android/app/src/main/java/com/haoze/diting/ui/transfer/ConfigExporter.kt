@@ -1,7 +1,9 @@
 package com.haoze.diting.ui.transfer
 
 import android.content.Context
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataSources
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RewriteTargetType
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.notification.NotificationSettingsStore
@@ -20,8 +22,11 @@ import com.haoze.diting.vpn.SubscriptionAutoUpdateSettings
 import org.json.JSONArray
 import org.json.JSONObject
 
-class ConfigExporter(private val context: Context) {
-    private val database = AppDatabase.getInstance(context)
+class ConfigExporter(
+    private val context: Context,
+    private val dataset: RuleDataset = RuleDataset.NORMAL
+) {
+    private val database: RuleDataSources = RuleDatabases.forDataset(context, dataset)
 
     suspend fun export(selection: ConfigExportSelection): String {
         val root = JSONObject()
@@ -29,7 +34,7 @@ class ConfigExporter(private val context: Context) {
             .put("exportedAt", System.currentTimeMillis())
 
         if (selection.providers) {
-            val userProviders = DnsProvider.loadUserProviders(context)
+            val userProviders = DnsProvider.loadUserProviders(context, dataset)
             root.put("providers", JSONArray().apply {
                 userProviders.forEach { provider ->
                     put(JSONObject()
@@ -40,18 +45,18 @@ class ConfigExporter(private val context: Context) {
                         .put("port", provider.port))
                 }
             })
-            val selected = DnsProvider.loadSelected(context)
+            val selected = DnsProvider.loadSelected(context, dataset)
             root.put("selectedProvider", JSONObject().apply {
                 put("id", selected.id)
                 put("name", selected.name)
                 put("protocol", selected.protocol.name)
                 put("isPreset", selected.isPreset)
             })
-            root.put("resolutionMode", ResolutionSettingsStore.getDnsResolutionMode(context).storageValue)
-            root.put("presetDnsService", ResolutionSettingsStore.getPresetDnsService(context).name)
-            root.put("raceTestDomain", ResolutionSettingsStore.getRaceTestDomain(context))
+            root.put("resolutionMode", ResolutionSettingsStore.getDnsResolutionMode(context, dataset).storageValue)
+            root.put("presetDnsService", ResolutionSettingsStore.getPresetDnsService(context, dataset).name)
+            root.put("raceTestDomain", ResolutionSettingsStore.getRaceTestDomain(context, dataset))
 
-            val allRuntime = DnsProvider.loadRuntimeProviders(context)
+            val allRuntime = DnsProvider.loadRuntimeProviders(context, dataset)
             fun serializeProviderIds(ids: Set<String>): JSONArray = JSONArray().apply {
                 ids.forEach { id ->
                     val provider = allRuntime.firstOrNull { it.id == id }
@@ -65,7 +70,7 @@ class ConfigExporter(private val context: Context) {
                     }
                 }
             }
-            val homeVisibility = ResolutionSettingsStore.getHomeProviderVisibility(context)
+            val homeVisibility = ResolutionSettingsStore.getHomeProviderVisibility(context, dataset)
             root.put("homeProviderVisibility", JSONObject().apply {
                 put("visibleProtocols", JSONArray().apply {
                     homeVisibility.visibleProtocols.forEach { put(it.name) }
@@ -107,8 +112,8 @@ class ConfigExporter(private val context: Context) {
         }
 
         if (selection.dnsCache) {
-            val cachePolicy = DnsCacheSettingsStore.getDnsCachePolicy(context)
-            val cachePreset = DnsCacheSettingsStore.getDnsCachePreset(context)
+            val cachePolicy = DnsCacheSettingsStore.getDnsCachePolicy(context, dataset)
+            val cachePreset = DnsCacheSettingsStore.getDnsCachePreset(context, dataset)
             root.put("dnsCache", JSONObject().apply {
                 put("enabled", cachePolicy.enabled)
                 put("preset", cachePreset.storageValue)
@@ -122,7 +127,7 @@ class ConfigExporter(private val context: Context) {
             })
         }
 
-        if (selection.outboundProxy) {
+        if (selection.outboundProxy && dataset != RuleDataset.EXPRESS) {
             val proxyConfig = OutboundProxySettingsStore.getOutboundProxyConfig(context)
             root.put("outboundProxy", JSONObject().apply {
                 put("enabled", proxyConfig.enabled)
@@ -136,12 +141,14 @@ class ConfigExporter(private val context: Context) {
         }
 
         if (selection.subscriptions) {
-            root.put("domainRulesEnabled", AppRulesSettingsStore.isDomainRulesEnabled(context))
-            root.put("addressRulesEnabled", AppRulesSettingsStore.isAddressRulesEnabled(context))
+            root.put("domainRulesEnabled", AppRulesSettingsStore.isDomainRulesEnabled(context, dataset))
+            if (dataset != RuleDataset.EXPRESS) {
+                root.put("addressRulesEnabled", AppRulesSettingsStore.isAddressRulesEnabled(context))
+            }
             root.put("encryptedDnsBlockingEnabled", AppRulesSettingsStore.isEncryptedDnsBlockingEnabled(context))
-            root.put("blockResponseMode", AppRulesSettingsStore.getBlockResponseMode(context).storageValue)
+            root.put("blockResponseMode", AppRulesSettingsStore.getBlockResponseMode(context, dataset).storageValue)
 
-            val dynConfig = AppRulesSettingsStore.getDynamicBlockResponseConfig(context)
+            val dynConfig = AppRulesSettingsStore.getDynamicBlockResponseConfig(context, dataset)
             root.put("dynamicBlockResponse", JSONObject().apply {
                 put("enabled", dynConfig.enabled)
                 put("requestThreshold", dynConfig.requestThreshold)
@@ -149,11 +156,11 @@ class ConfigExporter(private val context: Context) {
                 put("nxDomainDurationSeconds", dynConfig.nxDomainDurationSeconds)
             })
 
-            root.put("allowEditDefaultWhitelist", AppRulesSettingsStore.isAllowEditDefaultWhitelist(context))
+            root.put("allowEditDefaultWhitelist", AppRulesSettingsStore.isAllowEditDefaultWhitelist(context, dataset))
 
             root.put("subscriptionAutoUpdate", JSONObject().apply {
-                put("enabled", SubscriptionAutoUpdateSettings.isEnabled(context))
-                put("intervalHours", SubscriptionAutoUpdateSettings.intervalHours(context))
+                put("enabled", SubscriptionAutoUpdateSettings.isEnabled(context, dataset))
+                put("intervalHours", SubscriptionAutoUpdateSettings.intervalHours(context, dataset))
             })
 
             val mirrorTemplates = database.mirrorTemplateDao().all()
@@ -309,10 +316,10 @@ class ConfigExporter(private val context: Context) {
         if (selection.systemSettings) {
             root.put("systemSettings", JSONObject().apply {
                 put("bypassLanEnabled", SystemSettingsStore.isBypassLanEnabled(context))
-                put("ipv6Mode", SystemSettingsStore.getIpv6Mode(context).storageValue)
+                put("ipv6Mode", SystemSettingsStore.getIpv6Mode(context, dataset).storageValue)
                 put("hideFromRecentsEnabled", SystemSettingsStore.isHideFromRecentsEnabled(context))
                 put("logRetentionDays", SystemSettingsStore.logRetentionDays(context))
-                put("dnsLogMode", SystemSettingsStore.getDnsLogMode(context).storageValue)
+                put("dnsLogMode", SystemSettingsStore.getDnsLogMode(context, dataset).storageValue)
                 put("floatingLogEnabled", SystemSettingsStore.isFloatingLogEnabled(context))
                 put("floatingLogPanelSize", SystemSettingsStore.getFloatingLogPanelSize(context))
                 put("appTrafficStatsEnabled", SystemSettingsStore.isAppTrafficStatsEnabled(context))

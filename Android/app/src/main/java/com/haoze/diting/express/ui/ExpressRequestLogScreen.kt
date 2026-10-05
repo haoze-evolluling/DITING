@@ -45,9 +45,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.ExpressRulesDatabase
 import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.RequestStatus
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.ui.DomainActionDialog
 import com.haoze.diting.ui.RequestLogItem
@@ -83,12 +84,13 @@ fun ExpressRequestLogScreen(
     onRuntimeDnsSettingsChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val database = remember(context) { AppDatabase.getInstance(context) }
+    val database = remember(context) { ExpressRulesDatabase.getInstance(context) }
     val viewModel: RequestLogViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
         key = "ExpressRequestLogViewModel",
         factory = RequestLogViewModel.factory(
             context.applicationContext as Application,
-            RequestSource.DNS
+            RequestSource.DNS,
+            RuleDataset.EXPRESS
         )
     )
 
@@ -306,7 +308,13 @@ fun ExpressRequestLogScreen(
                     }
                     withContext(Dispatchers.Main) {
                         if (success) {
-                            RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, if (allow) "allow" else "block", domain, ruleScope)
+                            RuntimeDnsSettingsRefresher.syncRuleIfRunning(
+                                context,
+                                if (allow) "allow" else "block",
+                                domain,
+                                ruleScope,
+                                RuleDataset.EXPRESS
+                            )
                             onRuntimeDnsSettingsChanged()
                         }
                         context.showToast(if (success) "已添加规则" else "规则格式无效", Toast.LENGTH_SHORT)

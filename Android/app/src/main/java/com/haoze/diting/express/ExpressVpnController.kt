@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import androidx.core.content.ContextCompat
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.ExpressRulesDatabase
 import com.haoze.diting.vpn.DnsProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -110,7 +110,7 @@ object ExpressVpnController {
 
     fun clearCache(context: Context) {
         controllerScope.launch {
-            val dao = AppDatabase.getInstance(context).dnsCacheDao()
+            val dao = ExpressRulesDatabase.getInstance(context).dnsCacheDao()
             dao.clearAll()
             if (isRunning(context)) {
                 runCatching { context.startService(ExpressVpnIntents.clearCacheIntent(context)) }

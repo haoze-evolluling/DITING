@@ -4,6 +4,7 @@ import android.content.Context
 import com.haoze.diting.crash.CrashLogManager
 import com.haoze.diting.data.AppDatabase
 import com.haoze.diting.data.DnsRulesDatabase
+import com.haoze.diting.data.ExpressRulesDatabase
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.dao.AllowRuleDao
 import com.haoze.diting.data.dao.BlockRuleDao
@@ -45,9 +46,17 @@ object DataCleanupManager {
      */
     suspend fun clearRequestLogs(
         context: Context,
-        database: AppDatabase = AppDatabase.getInstance(context)
+        database: AppDatabase = AppDatabase.getInstance(context),
+        dataset: RuleDataset = RuleDataset.NORMAL
     ) = withContext(Dispatchers.IO) {
-        LogMaintenance.clearAllLogs(database)
+        if (dataset == RuleDataset.EXPRESS) {
+            val expressDb = ExpressRulesDatabase.getInstance(context)
+            expressDb.dnsLogDao().clearAll()
+            expressDb.raceLogDao().clearAll()
+            expressDb.bootstrapLogDao().clearAll()
+        } else {
+            LogMaintenance.clearAllLogs(database)
+        }
     }
 
     /**
@@ -73,11 +82,18 @@ object DataCleanupManager {
      */
     suspend fun clearDnsCache(
         context: Context,
-        database: AppDatabase = AppDatabase.getInstance(context)
+        database: AppDatabase = AppDatabase.getInstance(context),
+        dataset: RuleDataset = RuleDataset.NORMAL
     ) = withContext(Dispatchers.IO) {
-        DnsCacheController.clearAll(database.dnsCacheDao())
-        if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+        if (dataset == RuleDataset.EXPRESS) {
+            val expressDb = ExpressRulesDatabase.getInstance(context)
+            expressDb.dnsCacheDao().clearAll()
             com.haoze.diting.express.ExpressSettingsRefresher.clearCacheIfRunning(context)
+        } else {
+            DnsCacheController.clearAll(database.dnsCacheDao())
+            if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+                com.haoze.diting.express.ExpressSettingsRefresher.clearCacheIfRunning(context)
+            }
         }
     }
 
@@ -99,7 +115,38 @@ object DataCleanupManager {
      * 清理全部域名规则（黑名单、白名单、IPv4/IPv6 覆写、修饰规则及对应域名订阅），
      * 重新注入预设默认白名单，并同步刷新磁盘索引与运行中引擎。
      */
-    suspend fun clearAllDomainRules(context: Context) = withContext(Dispatchers.IO) {
+    suspend fun clearAllDomainRules(
+        context: Context,
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) = withContext(Dispatchers.IO) {
+        if (dataset == RuleDataset.EXPRESS) {
+            val expressDb = ExpressRulesDatabase.getInstance(context)
+            clearDomainRulesData(
+                expressDb.blockRuleDao(),
+                expressDb.allowRuleDao(),
+                expressDb.rewriteRuleDao(),
+                expressDb.cosmeticRuleDao(),
+                expressDb.subscriptionDao(),
+                expressDb.subscriptionAutoUpdateDao()
+            )
+            com.haoze.diting.express.ExpressDefaultsSeeder.seedDefaults(context, forceReset = true)
+            val expressIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.EXPRESS)
+            File(expressIndexDir, "domain").deleteRecursively()
+            RuleIndexLayout.hostsIndex(expressIndexDir).delete()
+            runCatching {
+                AllowListManager(expressDb.allowRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
+                BlockListManager(expressDb.blockRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
+                RewriteRuleManager(expressDb.rewriteRuleDao(), expressIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+            }
+            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                context,
+                refreshBlock = true,
+                refreshAllow = true,
+                refreshRewrite = true,
+                dataset = RuleDataset.EXPRESS
+            )
+            return@withContext
+        }
         val normalDb = AppDatabase.getInstance(context)
         val dnsDb = DnsRulesDatabase.getInstance(context)
 
@@ -205,7 +252,38 @@ object DataCleanupManager {
     /**
      * 清理所有规则订阅（网络订阅、本地订阅、分组配置、自动更新任务队列以及由订阅引入的所有规则）。
      */
-    suspend fun clearAllSubscriptions(context: Context) = withContext(Dispatchers.IO) {
+    suspend fun clearAllSubscriptions(
+        context: Context,
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) = withContext(Dispatchers.IO) {
+        if (dataset == RuleDataset.EXPRESS) {
+            val expressDb = ExpressRulesDatabase.getInstance(context)
+            clearSubscriptionsData(
+                expressDb.subscriptionDao(),
+                expressDb.subscriptionGroupDao(),
+                expressDb.subscriptionAutoUpdateDao(),
+                expressDb.blockRuleDao(),
+                expressDb.allowRuleDao(),
+                expressDb.rewriteRuleDao(),
+                expressDb.goUrlRuleDao(),
+                expressDb.cosmeticRuleDao()
+            )
+            val expressIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.EXPRESS)
+            RuleIndexLayout.hostsIndex(expressIndexDir).delete()
+            runCatching {
+                BlockListManager(expressDb.blockRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
+                AllowListManager(expressDb.allowRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
+                RewriteRuleManager(expressDb.rewriteRuleDao(), expressIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+            }
+            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                context,
+                refreshBlock = true,
+                refreshAllow = true,
+                refreshRewrite = true,
+                dataset = RuleDataset.EXPRESS
+            )
+            return@withContext
+        }
         val normalDb = AppDatabase.getInstance(context)
         val dnsDb = DnsRulesDatabase.getInstance(context)
 
@@ -353,7 +431,47 @@ object DataCleanupManager {
     /**
      * 一键全面清理：按序清理所有运行日志、流量统计、崩溃记录、DNS 缓存、权重、规则、订阅、应用控制、出站代理、证书与缓存。
      */
-    suspend fun clearAllLocalData(context: Context) = withContext(Dispatchers.IO) {
+    suspend fun clearAllLocalData(
+        context: Context,
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) = withContext(Dispatchers.IO) {
+        if (dataset == RuleDataset.EXPRESS) {
+            clearRequestLogs(context, dataset = RuleDataset.EXPRESS)
+            clearDnsCache(context, dataset = RuleDataset.EXPRESS)
+            clearCrashLogs(context)
+            resetProviderWeights(context)
+            resetBootstrapWeights(context)
+            val expressDb = ExpressRulesDatabase.getInstance(context)
+            clearDomainRulesData(
+                expressDb.blockRuleDao(),
+                expressDb.allowRuleDao(),
+                expressDb.rewriteRuleDao(),
+                expressDb.cosmeticRuleDao(),
+                expressDb.subscriptionDao(),
+                expressDb.subscriptionAutoUpdateDao()
+            )
+            clearAddressRulesData(expressDb.goUrlRuleDao(), expressDb.rewriteRuleDao())
+            clearSubscriptionsData(
+                expressDb.subscriptionDao(),
+                expressDb.subscriptionGroupDao(),
+                expressDb.subscriptionAutoUpdateDao(),
+                expressDb.blockRuleDao(),
+                expressDb.allowRuleDao(),
+                expressDb.rewriteRuleDao(),
+                expressDb.goUrlRuleDao(),
+                expressDb.cosmeticRuleDao()
+            )
+            expressDb.mirrorTemplateDao().clearAll()
+            val expressIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.EXPRESS)
+            expressIndexDir.deleteRecursively()
+            clearDownloadAndTempCache(context)
+            clearCustomBackground(context)
+            resetSettingsGuides(context)
+            context.getSharedPreferences(RuleDataset.EXPRESS.prefsName(), Context.MODE_PRIVATE).edit().clear().apply()
+            com.haoze.diting.express.ExpressDefaultsSeeder.seedDefaults(context, forceReset = true)
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, reason = "factory_reset", dataset = RuleDataset.EXPRESS)
+            return@withContext
+        }
         clearRequestLogs(context)
         clearTrafficStats(context)
         clearCrashLogs(context)

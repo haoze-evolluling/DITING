@@ -60,6 +60,7 @@ object ExpressModeLauncher {
 
         AppNotificationChannels.createAllChannels(appContext)
         com.haoze.diting.express.notification.ExpressNotificationBuilder.ensureChannel(appContext)
+        kotlinx.coroutines.runBlocking { ExpressDefaultsSeeder.ensureInitialized(appContext) }
         ExpressVpnController.initialize(appContext)
         VpnMonitorManager.sync(appContext)
 
@@ -120,6 +121,7 @@ object ExpressModeLauncher {
      * Starts the Express VPN service.
      */
     fun start(context: Context, provider: DnsProvider? = null) {
+        kotlinx.coroutines.runBlocking { ExpressDefaultsSeeder.ensureInitialized(context.applicationContext) }
         ExpressVpnController.start(context, provider)
     }
 

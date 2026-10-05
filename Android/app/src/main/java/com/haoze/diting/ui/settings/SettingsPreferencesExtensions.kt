@@ -1,8 +1,15 @@
 package com.haoze.diting.ui.settings
 
+import android.content.Context
+import android.content.SharedPreferences
+import com.haoze.diting.data.RuleDataset
 import org.json.JSONArray
 
 internal const val PREFS_NAME = "dns_vpn_prefs"
+
+internal fun datasetPrefs(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): SharedPreferences {
+    return context.getSharedPreferences(dataset.prefsName(), Context.MODE_PRIVATE)
+}
 
 internal fun readStringSet(json: String?): Set<String>? {
     if (json == null) return null

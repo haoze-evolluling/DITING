@@ -85,7 +85,7 @@ object ExpressConfigAdapter {
      */
     suspend fun exportConfig(context: Context, selection: ConfigExportSelection): String {
         val safeSelection = sanitizeExportSelection(selection)
-        val exporter = ConfigExporter(context)
+        val exporter = ConfigExporter(context, com.haoze.diting.data.RuleDataset.EXPRESS)
         return exporter.export(safeSelection)
     }
 
@@ -99,7 +99,7 @@ object ExpressConfigAdapter {
     ): ConfigImportResult {
         val parsed = ConfigTransferParser.parseAndValidate(content)
         val sanitized = sanitizeImportConfig(parsed, context)
-        val importer = ConfigImporter(context)
+        val importer = ConfigImporter(context, com.haoze.diting.data.RuleDataset.EXPRESS)
         return importer.import(sanitized, onProgress)
     }
 }

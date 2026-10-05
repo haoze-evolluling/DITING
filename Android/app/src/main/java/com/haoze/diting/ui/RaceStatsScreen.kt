@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.app.Application
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +31,7 @@ import com.haoze.diting.data.RaceStats
 import com.haoze.diting.data.RaceStatsRange
 import com.haoze.diting.data.RaceStrategyStats
 import com.haoze.diting.data.RaceWinnerStats
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.SmartSelectionStats
 import com.haoze.diting.ui.components.RuleFilterChipRow
 import com.haoze.diting.ui.components.SettingsGroupTitle
@@ -45,8 +47,13 @@ import com.haoze.diting.vpn.DnsProvider
 @Composable
 fun RaceStatsScreen(
     onBack: () -> Unit,
-    viewModel: RaceStatsViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
+    val context = LocalContext.current
+    val viewModel: RaceStatsViewModel = viewModel(
+        key = "RaceStatsViewModel_$dataset",
+        factory = RaceStatsViewModel.factory(context.applicationContext as Application, dataset)
+    )
     val range by viewModel.range.collectAsStateWithLifecycle()
     val stats by viewModel.stats.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()

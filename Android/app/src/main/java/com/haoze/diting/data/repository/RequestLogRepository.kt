@@ -18,7 +18,7 @@ data class RequestLogBatch(
 
 class RequestLogRepository(
     private val dnsDao: DnsLogDao,
-    private val httpDao: HttpRequestLogDao,
+    private val httpDao: HttpRequestLogDao? = null,
     private val onFlushRequested: (suspend () -> Unit)? = null
 ) {
     companion object {
@@ -76,7 +76,8 @@ class RequestLogRepository(
         }
 
         val http = async {
-            if (source == RequestSource.DNS) {
+            val dao = httpDao
+            if (source == RequestSource.DNS || dao == null) {
                 emptyList()
             } else {
                 val sql = StringBuilder("SELECT * FROM http_request_log WHERE 1=1")
@@ -110,7 +111,7 @@ class RequestLogRepository(
                 }
 
                 sql.append(" ORDER BY timestamp DESC LIMIT $limit")
-                httpDao.queryList(SimpleSQLiteQuery(sql.toString(), args.toTypedArray()))
+                dao.queryList(SimpleSQLiteQuery(sql.toString(), args.toTypedArray()))
             }
         }
 

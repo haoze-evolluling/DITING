@@ -1,7 +1,8 @@
 package com.haoze.diting.ui.transfer
 
 import android.content.Context
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataSources
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.ConfigImportProgress
 import com.haoze.diting.ui.ConfigImportResult
 
@@ -10,8 +11,9 @@ import com.haoze.diting.ui.ConfigImportResult
  */
 internal class ImportSessionContext(
     val context: Context,
-    val database: AppDatabase,
+    val database: RuleDataSources,
     val total: Int,
+    val dataset: RuleDataset = RuleDataset.NORMAL,
     private val onProgress: (ConfigImportProgress) -> Unit
 ) {
     var added: Int = 0

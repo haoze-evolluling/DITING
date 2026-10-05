@@ -20,8 +20,10 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import android.app.Application
 import com.haoze.diting.SettingsRouteActivity
-import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.ui.Routes
 import com.haoze.diting.ui.agent.AgentAnalysisSheet
@@ -71,15 +73,22 @@ import kotlinx.coroutines.delay
 private val cacheTimeFormatter = SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault())
 @Composable
 fun DnsCacheScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
-    val viewModel: DnsCacheViewModel = viewModel()
+    val context = LocalContext.current
+    val viewModel: DnsCacheViewModel = viewModel(
+        key = "DnsCacheViewModel_$dataset",
+        factory = DnsCacheViewModel.factory(
+            context.applicationContext as Application,
+            dataset
+        )
+    )
     val params by viewModel.params.collectAsStateWithLifecycle()
     val nowMillis by viewModel.nowMillis.collectAsStateWithLifecycle()
     val entries = viewModel.entries.collectAsLazyPagingItems()
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val database = remember(context) { AppDatabase.getInstance(context) }
+    val database = remember(context, dataset) { RuleDatabases.forDataset(context, dataset) }
     var isSearchActive by remember { mutableStateOf(false) }
     var activeAnalysisTarget by remember { mutableStateOf<AnalysisTarget?>(null) }
     var pendingDomain by remember { mutableStateOf<String?>(null) }
@@ -230,7 +239,13 @@ fun DnsCacheScreen(
                     }
                     withContext(Dispatchers.Main) {
                         if (success) {
-                            RuntimeDnsSettingsRefresher.syncRuleIfRunning(context, if (allow) "allow" else "block", domain, RuleScope.DNS)
+                            RuntimeDnsSettingsRefresher.syncRuleIfRunning(
+                                context,
+                                if (allow) "allow" else "block",
+                                domain,
+                                RuleScope.DNS,
+                                dataset
+                            )
                             entries.refresh()
                         }
                         context.showToast(if (success) "已添加规则" else "规则格式无效", Toast.LENGTH_SHORT)

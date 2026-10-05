@@ -122,12 +122,20 @@ abstract class DnsRulesDatabase : RoomDatabase(), RuleDataSources {
 object RuleDatabases {
     fun forDataset(context: Context, dataset: RuleDataset): RuleDataSources = when (dataset) {
         RuleDataset.NORMAL -> AppDatabase.getInstance(context)
+        RuleDataset.EXPRESS -> ExpressRulesDatabase.getInstance(context)
         RuleDataset.DNS_MODE -> DnsRulesDatabase.getInstance(context)
     }
 
     /** Same singleton as [forDataset], typed for Room transactions. */
     fun forDatasetDb(context: Context, dataset: RuleDataset): RoomDatabase = when (dataset) {
         RuleDataset.NORMAL -> AppDatabase.getInstance(context)
+        RuleDataset.EXPRESS -> ExpressRulesDatabase.getInstance(context)
         RuleDataset.DNS_MODE -> DnsRulesDatabase.getInstance(context)
+    }
+
+    fun runtimeForDataset(context: Context, dataset: RuleDataset): DnsRuntimeDataSources = when (dataset) {
+        RuleDataset.NORMAL -> AppDatabase.getInstance(context)
+        RuleDataset.EXPRESS -> ExpressRulesDatabase.getInstance(context)
+        RuleDataset.DNS_MODE -> AppDatabase.getInstance(context)
     }
 }

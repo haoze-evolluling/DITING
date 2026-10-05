@@ -12,6 +12,9 @@ internal class AppRuleConfigImporter(private val session: ImportSessionContext) 
     private val context get() = session.context
 
     fun importAppRules(config: TransferConfig) {
+        if (session.dataset == com.haoze.diting.data.RuleDataset.EXPRESS) {
+            return
+        }
         // App lists - preserve packages across devices without dropping uninstalled ones
         if (config.excludedApps.isNotEmpty()) {
             val validPackages = config.excludedApps.filter { it.isNotBlank() && !it.contains(" ") }.toSet()

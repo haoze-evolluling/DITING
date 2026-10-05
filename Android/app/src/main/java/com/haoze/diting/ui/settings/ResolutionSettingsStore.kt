@@ -1,6 +1,7 @@
 package com.haoze.diting.ui.settings
 
 import android.content.Context
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.DEFAULT_HOME_VISIBLE_PROTOCOLS
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.HomeProviderVisibility
@@ -29,8 +30,8 @@ object ResolutionSettingsStore {
     private val DEFAULT_LATENCY_TEST_PROVIDER_IDS = emptySet<String>()
     private const val DEFAULT_RACE_TEST_DOMAIN = "mihoyo.com"
 
-    fun getRaceProviderIds(context: Context): Set<String> {
-        val json = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getRaceProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Set<String> {
+        val json = datasetPrefs(context, dataset)
             .getString(KEY_RACE_PROVIDER_IDS, null) ?: return DEFAULT_RACE_PROVIDER_IDS
         return try {
             val array = JSONArray(json)
@@ -44,22 +45,22 @@ object ResolutionSettingsStore {
         }
     }
 
-    fun hasRaceProviderIds(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun hasRaceProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Boolean {
+        return datasetPrefs(context, dataset)
             .contains(KEY_RACE_PROVIDER_IDS)
     }
 
-    fun setRaceProviderIds(context: Context, ids: Set<String>) {
+    fun setRaceProviderIds(context: Context, ids: Set<String>, dataset: RuleDataset = RuleDataset.NORMAL) {
         val array = JSONArray()
         ids.forEach { array.put(it) }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_RACE_PROVIDER_IDS, array.toString())
             .apply()
     }
 
-    fun getLatencyTestProviderIds(context: Context): Set<String> {
-        val json = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getLatencyTestProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Set<String> {
+        val json = datasetPrefs(context, dataset)
             .getString(KEY_LATENCY_TEST_PROVIDER_IDS, null) ?: return DEFAULT_LATENCY_TEST_PROVIDER_IDS
         return try {
             val array = JSONArray(json)
@@ -73,50 +74,50 @@ object ResolutionSettingsStore {
         }
     }
 
-    fun hasLatencyTestProviderIds(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun hasLatencyTestProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Boolean {
+        return datasetPrefs(context, dataset)
             .contains(KEY_LATENCY_TEST_PROVIDER_IDS)
     }
 
-    fun setLatencyTestProviderIds(context: Context, ids: Set<String>) {
+    fun setLatencyTestProviderIds(context: Context, ids: Set<String>, dataset: RuleDataset = RuleDataset.NORMAL) {
         val array = JSONArray()
         ids.forEach { array.put(it) }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_LATENCY_TEST_PROVIDER_IDS, array.toString())
             .apply()
     }
 
-    fun getRaceTestDomain(context: Context): String {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getRaceTestDomain(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): String {
+        return datasetPrefs(context, dataset)
             .getString(KEY_RACE_TEST_DOMAIN, DEFAULT_RACE_TEST_DOMAIN)
             ?.takeIf { it.isNotBlank() }
             ?: DEFAULT_RACE_TEST_DOMAIN
     }
 
-    fun setRaceTestDomain(context: Context, domain: String) {
+    fun setRaceTestDomain(context: Context, domain: String, dataset: RuleDataset = RuleDataset.NORMAL) {
         val trimmed = domain.trim()
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_RACE_TEST_DOMAIN, trimmed.takeIf { it.isNotBlank() } ?: DEFAULT_RACE_TEST_DOMAIN)
             .apply()
     }
 
-    fun getDnsResolutionMode(context: Context): DnsResolutionMode {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getDnsResolutionMode(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): DnsResolutionMode {
+        val prefs = datasetPrefs(context, dataset)
         return DnsResolutionMode.fromStorageValue(prefs.getString(KEY_DNS_RESOLUTION_MODE, null))
             ?: DnsResolutionMode.SINGLE
     }
 
-    fun setDnsResolutionMode(context: Context, mode: DnsResolutionMode) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setDnsResolutionMode(context: Context, mode: DnsResolutionMode, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_DNS_RESOLUTION_MODE, mode.storageValue)
             .apply()
     }
 
-    private fun getModeProviderIds(context: Context, key: String): Set<String> {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private fun getModeProviderIds(context: Context, key: String, dataset: RuleDataset = RuleDataset.NORMAL): Set<String> {
+        val prefs = datasetPrefs(context, dataset)
         val json = prefs.getString(key, null) ?: return DEFAULT_RACE_PROVIDER_IDS
         return try {
             val array = JSONArray(json)
@@ -126,27 +127,27 @@ object ResolutionSettingsStore {
         }
     }
 
-    private fun setModeProviderIds(context: Context, key: String, ids: Set<String>) {
+    private fun setModeProviderIds(context: Context, key: String, ids: Set<String>, dataset: RuleDataset = RuleDataset.NORMAL) {
         val array = JSONArray()
         ids.forEach(array::put)
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+        datasetPrefs(context, dataset).edit()
             .putString(key, array.toString()).apply()
     }
 
-    fun getSmartPredictionProviderIds(context: Context): Set<String> =
-        getModeProviderIds(context, KEY_SMART_PREDICTION_PROVIDER_IDS)
+    fun getSmartPredictionProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Set<String> =
+        getModeProviderIds(context, KEY_SMART_PREDICTION_PROVIDER_IDS, dataset)
 
-    fun setSmartPredictionProviderIds(context: Context, ids: Set<String>) =
-        setModeProviderIds(context, KEY_SMART_PREDICTION_PROVIDER_IDS, ids)
+    fun setSmartPredictionProviderIds(context: Context, ids: Set<String>, dataset: RuleDataset = RuleDataset.NORMAL) =
+        setModeProviderIds(context, KEY_SMART_PREDICTION_PROVIDER_IDS, ids, dataset)
 
-    fun getParallelRaceProviderIds(context: Context): Set<String> =
-        getModeProviderIds(context, KEY_PARALLEL_RACE_PROVIDER_IDS)
+    fun getParallelRaceProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Set<String> =
+        getModeProviderIds(context, KEY_PARALLEL_RACE_PROVIDER_IDS, dataset)
 
-    fun setParallelRaceProviderIds(context: Context, ids: Set<String>) =
-        setModeProviderIds(context, KEY_PARALLEL_RACE_PROVIDER_IDS, ids)
+    fun setParallelRaceProviderIds(context: Context, ids: Set<String>, dataset: RuleDataset = RuleDataset.NORMAL) =
+        setModeProviderIds(context, KEY_PARALLEL_RACE_PROVIDER_IDS, ids, dataset)
 
-    fun getPrimaryBackupProviderIds(context: Context): List<String> {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getPrimaryBackupProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): List<String> {
+        val prefs = datasetPrefs(context, dataset)
         val json = prefs.getString(KEY_PRIMARY_BACKUP_PROVIDER_IDS, null)
             ?: return DEFAULT_RACE_PROVIDER_IDS.toList()
         return try {
@@ -159,23 +160,23 @@ object ResolutionSettingsStore {
         }
     }
 
-    fun setPrimaryBackupProviderIds(context: Context, ids: List<String>) {
+    fun setPrimaryBackupProviderIds(context: Context, ids: List<String>, dataset: RuleDataset = RuleDataset.NORMAL) {
         val array = JSONArray()
         ids.distinct().forEach(array::put)
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_PRIMARY_BACKUP_PROVIDER_IDS, array.toString())
             .apply()
     }
 
-    fun removeProviderFromResolutionModes(context: Context, id: String) {
-        setSmartPredictionProviderIds(context, getSmartPredictionProviderIds(context) - id)
-        setParallelRaceProviderIds(context, getParallelRaceProviderIds(context) - id)
-        setPrimaryBackupProviderIds(context, getPrimaryBackupProviderIds(context) - id)
+    fun removeProviderFromResolutionModes(context: Context, id: String, dataset: RuleDataset = RuleDataset.NORMAL) {
+        setSmartPredictionProviderIds(context, getSmartPredictionProviderIds(context, dataset) - id, dataset)
+        setParallelRaceProviderIds(context, getParallelRaceProviderIds(context, dataset) - id, dataset)
+        setPrimaryBackupProviderIds(context, getPrimaryBackupProviderIds(context, dataset) - id, dataset)
     }
 
-    fun getHomeProviderVisibility(context: Context): HomeProviderVisibility {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getHomeProviderVisibility(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): HomeProviderVisibility {
+        val prefs = datasetPrefs(context, dataset)
         return HomeProviderVisibility(
             visibleProtocols = readStringSet(prefs.getString(KEY_HOME_VISIBLE_PROTOCOLS, null))
                 ?.mapNotNull { value -> DnsProtocol.entries.firstOrNull { it.name == value } }
@@ -186,8 +187,12 @@ object ResolutionSettingsStore {
         )
     }
 
-    fun setHomeProviderVisibility(context: Context, visibility: HomeProviderVisibility) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setHomeProviderVisibility(
+        context: Context,
+        visibility: HomeProviderVisibility,
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) {
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_HOME_VISIBLE_PROTOCOLS, writeStringSet(visibility.visibleProtocols.map { it.name }.toSet()))
             .putString(KEY_HOME_HIDDEN_PROVIDER_IDS, writeStringSet(visibility.hiddenProviderIds))
@@ -195,14 +200,14 @@ object ResolutionSettingsStore {
             .apply()
     }
 
-    fun getPresetDnsService(context: Context): PresetDnsService {
-        val value = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getPresetDnsService(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): PresetDnsService {
+        val value = datasetPrefs(context, dataset)
             .getString(KEY_PRESET_DNS_SERVICE, null)
         return PresetDnsService.fromStorageValue(value)
     }
 
-    fun setPresetDnsService(context: Context, service: PresetDnsService) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setPresetDnsService(context: Context, service: PresetDnsService, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_PRESET_DNS_SERVICE, service.name)
             .apply()

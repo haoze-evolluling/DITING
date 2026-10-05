@@ -18,20 +18,21 @@ object RuntimeDnsSettingsRefresher {
         dataset: RuleDataset = RuleDataset.NORMAL
     ) {
         val appContext = context.applicationContext
-        if (dataset == RuleDataset.DNS_MODE) {
-            pingDnsModeFilterReload(appContext, "Failed to request DNS mode filter reload")
-            return
-        }
-        if (WorkModeStore.getAppWorkMode(appContext) == AppWorkMode.EXPRESS) {
-            com.haoze.diting.express.ExpressSettingsRefresher.refreshIfRunning(appContext, reason)
-            return
-        }
-        if (!DnsVpnService.isRunning(appContext)) return
-
-        runCatching {
-            appContext.startService(DnsVpnService.refreshRuntimeConfigIntent(appContext, reason))
-        }.onFailure { error ->
-            Log.w(TAG, "Failed to request DNS runtime config refresh", error)
+        when (dataset) {
+            RuleDataset.DNS_MODE -> {
+                pingDnsModeFilterReload(appContext, "Failed to request DNS mode filter reload")
+            }
+            RuleDataset.EXPRESS -> {
+                com.haoze.diting.express.ExpressSettingsRefresher.refreshIfRunning(appContext, reason)
+            }
+            RuleDataset.NORMAL -> {
+                if (!DnsVpnService.isRunning(appContext)) return
+                runCatching {
+                    appContext.startService(DnsVpnService.refreshRuntimeConfigIntent(appContext, reason))
+                }.onFailure { error ->
+                    Log.w(TAG, "Failed to request DNS runtime config refresh", error)
+                }
+            }
         }
     }
 
@@ -43,19 +44,21 @@ object RuntimeDnsSettingsRefresher {
         dataset: RuleDataset = RuleDataset.NORMAL
     ) {
         val appContext = context.applicationContext
-        if (dataset == RuleDataset.DNS_MODE) {
-            pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule sync")
-            return
-        }
-        if (WorkModeStore.getAppWorkMode(appContext) == AppWorkMode.EXPRESS) {
-            com.haoze.diting.express.ExpressSettingsRefresher.syncRulesIfRunning(appContext)
-            return
-        }
-        if (!DnsVpnService.isRunning(appContext)) return
-        runCatching {
-            appContext.startService(DnsVpnService.syncRuleIntent(appContext, ruleType, pattern, scope))
-        }.onFailure { error ->
-            Log.w(TAG, "Failed to request incremental rule cache sync", error)
+        when (dataset) {
+            RuleDataset.DNS_MODE -> {
+                pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule sync")
+            }
+            RuleDataset.EXPRESS -> {
+                com.haoze.diting.express.ExpressSettingsRefresher.syncRulesIfRunning(appContext)
+            }
+            RuleDataset.NORMAL -> {
+                if (!DnsVpnService.isRunning(appContext)) return
+                runCatching {
+                    appContext.startService(DnsVpnService.syncRuleIntent(appContext, ruleType, pattern, scope))
+                }.onFailure { error ->
+                    Log.w(TAG, "Failed to request incremental rule cache sync", error)
+                }
+            }
         }
     }
 
@@ -68,21 +71,23 @@ object RuntimeDnsSettingsRefresher {
         dataset: RuleDataset = RuleDataset.NORMAL
     ) {
         val appContext = context.applicationContext
-        if (dataset == RuleDataset.DNS_MODE) {
-            pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule index refresh")
-            return
-        }
-        if (WorkModeStore.getAppWorkMode(appContext) == AppWorkMode.EXPRESS) {
-            com.haoze.diting.express.ExpressSettingsRefresher.syncRulesIfRunning(appContext)
-            return
-        }
-        if (!DnsVpnService.isRunning(appContext)) return
-        runCatching {
-            appContext.startService(
-                DnsVpnService.refreshRuleIndexesIntent(appContext, refreshBlock, refreshAllow, refreshRewrite, scope)
-            )
-        }.onFailure { error ->
-            Log.w(TAG, "Failed to request rule index refresh", error)
+        when (dataset) {
+            RuleDataset.DNS_MODE -> {
+                pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule index refresh")
+            }
+            RuleDataset.EXPRESS -> {
+                com.haoze.diting.express.ExpressSettingsRefresher.syncRulesIfRunning(appContext)
+            }
+            RuleDataset.NORMAL -> {
+                if (!DnsVpnService.isRunning(appContext)) return
+                runCatching {
+                    appContext.startService(
+                        DnsVpnService.refreshRuleIndexesIntent(appContext, refreshBlock, refreshAllow, refreshRewrite, scope)
+                    )
+                }.onFailure { error ->
+                    Log.w(TAG, "Failed to request rule index refresh", error)
+                }
+            }
         }
     }
 

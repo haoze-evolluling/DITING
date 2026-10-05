@@ -2,6 +2,7 @@ package com.haoze.diting.vpn
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
 import org.json.JSONArray
 import org.json.JSONObject
@@ -193,28 +194,28 @@ data class DnsProvider(
             )
         )
 
-        private fun prefs(context: Context): SharedPreferences {
-            return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        private fun prefs(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): SharedPreferences {
+            return context.getSharedPreferences(dataset.prefsName(), Context.MODE_PRIVATE)
         }
 
-        fun loadAll(context: Context): List<DnsProvider> {
-            return PRESETS + loadUserProviders(context).filter { it.protocol in DnsProtocol.MANAGED_PROTOCOLS }
+        fun loadAll(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): List<DnsProvider> {
+            return PRESETS + loadUserProviders(context, dataset).filter { it.protocol in DnsProtocol.MANAGED_PROTOCOLS }
         }
 
-        fun loadRuntimeProviders(context: Context): List<DnsProvider> {
-            return loadAll(context)
+        fun loadRuntimeProviders(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): List<DnsProvider> {
+            return loadAll(context, dataset)
         }
 
-        fun loadSelected(context: Context): DnsProvider {
-            val all = loadRuntimeProviders(context)
-            val selectedId = prefs(context).getString(KEY_SELECTED_PROVIDER_ID, null)
+        fun loadSelected(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): DnsProvider {
+            val all = loadRuntimeProviders(context, dataset)
+            val selectedId = prefs(context, dataset).getString(KEY_SELECTED_PROVIDER_ID, null)
             return all.find { it.id == selectedId }
                 ?: all.find { it.id == DEFAULT_SELECTED_PROVIDER_ID }
                 ?: PRESETS.first()
         }
 
-        fun saveSelected(context: Context, id: String) {
-            prefs(context).edit().putString(KEY_SELECTED_PROVIDER_ID, id).apply()
+        fun saveSelected(context: Context, id: String, dataset: RuleDataset = RuleDataset.NORMAL) {
+            prefs(context, dataset).edit().putString(KEY_SELECTED_PROVIDER_ID, id).apply()
         }
 
         fun presetIdForProtocol(id: String, protocol: DnsProtocol): String? {
@@ -225,30 +226,30 @@ data class DnsProvider(
             }?.id
         }
 
-        fun loadRaceProviderIds(context: Context): Set<String> {
-            val all = loadRuntimeProviders(context)
+        fun loadRaceProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Set<String> {
+            val all = loadRuntimeProviders(context, dataset)
             val allIds = all.map { it.id }.toSet()
-            val ids = ResolutionSettingsStore.getRaceProviderIds(context).toMutableSet()
+            val ids = ResolutionSettingsStore.getRaceProviderIds(context, dataset).toMutableSet()
             return ids.filter { it in allIds }.toSet()
         }
 
-        fun saveRaceProviderIds(context: Context, ids: Set<String>) {
-            ResolutionSettingsStore.setRaceProviderIds(context, ids)
+        fun saveRaceProviderIds(context: Context, ids: Set<String>, dataset: RuleDataset = RuleDataset.NORMAL) {
+            ResolutionSettingsStore.setRaceProviderIds(context, ids, dataset)
         }
 
-        fun loadLatencyTestProviderIds(context: Context): Set<String> {
-            val all = loadRuntimeProviders(context)
+        fun loadLatencyTestProviderIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Set<String> {
+            val all = loadRuntimeProviders(context, dataset)
             val allIds = all.map { it.id }.toSet()
-            val ids = ResolutionSettingsStore.getLatencyTestProviderIds(context).toMutableSet()
+            val ids = ResolutionSettingsStore.getLatencyTestProviderIds(context, dataset).toMutableSet()
             return ids.filter { it in allIds }.toSet()
         }
 
-        fun saveLatencyTestProviderIds(context: Context, ids: Set<String>) {
-            ResolutionSettingsStore.setLatencyTestProviderIds(context, ids)
+        fun saveLatencyTestProviderIds(context: Context, ids: Set<String>, dataset: RuleDataset = RuleDataset.NORMAL) {
+            ResolutionSettingsStore.setLatencyTestProviderIds(context, ids, dataset)
         }
 
-        fun loadUserProviders(context: Context): List<DnsProvider> {
-            val json = prefs(context).getString(KEY_USER_PROVIDERS_JSON, null) ?: return emptyList()
+        fun loadUserProviders(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): List<DnsProvider> {
+            val json = prefs(context, dataset).getString(KEY_USER_PROVIDERS_JSON, null) ?: return emptyList()
             return try {
                 val array = JSONArray(json)
                 val providers = buildList {
@@ -263,7 +264,7 @@ data class DnsProvider(
             }
         }
 
-        fun saveUserProviders(context: Context, providers: List<DnsProvider>) {
+        fun saveUserProviders(context: Context, providers: List<DnsProvider>, dataset: RuleDataset = RuleDataset.NORMAL) {
             val array = JSONArray()
             providers.forEach { provider ->
                 array.put(
@@ -277,7 +278,7 @@ data class DnsProvider(
                     }
                 )
             }
-            prefs(context).edit()
+            prefs(context, dataset).edit()
                 .putString(KEY_USER_PROVIDERS_JSON, array.toString())
                 .apply()
         }
@@ -288,7 +289,8 @@ data class DnsProvider(
             protocol: DnsProtocol,
             url: String,
             host: String,
-            port: Int
+            port: Int,
+            dataset: RuleDataset = RuleDataset.NORMAL
         ): DnsProvider {
             val provider = DnsProvider(
                 id = UUID.randomUUID().toString(),
@@ -299,35 +301,35 @@ data class DnsProvider(
                 port = port,
                 isPreset = false
             )
-            val updated = loadUserProviders(context) + provider
-            saveUserProviders(context, updated)
+            val updated = loadUserProviders(context, dataset) + provider
+            saveUserProviders(context, updated, dataset)
             return provider
         }
 
-        fun updateUserProvider(context: Context, provider: DnsProvider) {
-            val updated = loadUserProviders(context).map {
+        fun updateUserProvider(context: Context, provider: DnsProvider, dataset: RuleDataset = RuleDataset.NORMAL) {
+            val updated = loadUserProviders(context, dataset).map {
                 if (it.id == provider.id) provider else it
             }
-            saveUserProviders(context, updated)
+            saveUserProviders(context, updated, dataset)
         }
 
-        fun deleteUserProvider(context: Context, id: String) {
-            val prefs = prefs(context)
-            val updated = loadUserProviders(context).filter { it.id != id }
-            saveUserProviders(context, updated)
-            if (prefs.getString(KEY_SELECTED_PROVIDER_ID, null) == id) {
-                saveSelected(context, DEFAULT_SELECTED_PROVIDER_ID)
+        fun deleteUserProvider(context: Context, id: String, dataset: RuleDataset = RuleDataset.NORMAL) {
+            val p = prefs(context, dataset)
+            val updated = loadUserProviders(context, dataset).filter { it.id != id }
+            saveUserProviders(context, updated, dataset)
+            if (p.getString(KEY_SELECTED_PROVIDER_ID, null) == id) {
+                saveSelected(context, DEFAULT_SELECTED_PROVIDER_ID, dataset)
             }
-            val raceIds = ResolutionSettingsStore.getRaceProviderIds(context).toMutableSet()
+            val raceIds = ResolutionSettingsStore.getRaceProviderIds(context, dataset).toMutableSet()
             if (raceIds.remove(id)) {
-                ResolutionSettingsStore.setRaceProviderIds(context, raceIds)
+                ResolutionSettingsStore.setRaceProviderIds(context, raceIds, dataset)
             }
-            val primaryBackupIds = ResolutionSettingsStore.getPrimaryBackupProviderIds(context).filterNot { it == id }
-            ResolutionSettingsStore.setPrimaryBackupProviderIds(context, primaryBackupIds)
-            ResolutionSettingsStore.removeProviderFromResolutionModes(context, id)
-            val latencyIds = ResolutionSettingsStore.getLatencyTestProviderIds(context).toMutableSet()
+            val primaryBackupIds = ResolutionSettingsStore.getPrimaryBackupProviderIds(context, dataset).filterNot { it == id }
+            ResolutionSettingsStore.setPrimaryBackupProviderIds(context, primaryBackupIds, dataset)
+            ResolutionSettingsStore.removeProviderFromResolutionModes(context, id, dataset)
+            val latencyIds = ResolutionSettingsStore.getLatencyTestProviderIds(context, dataset).toMutableSet()
             if (latencyIds.remove(id)) {
-                ResolutionSettingsStore.setLatencyTestProviderIds(context, latencyIds)
+                ResolutionSettingsStore.setLatencyTestProviderIds(context, latencyIds, dataset)
             }
             ProviderHealthStore.remove(context, id)
         }

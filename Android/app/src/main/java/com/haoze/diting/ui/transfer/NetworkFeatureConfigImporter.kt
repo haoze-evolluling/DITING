@@ -58,13 +58,13 @@ internal class NetworkFeatureConfigImporter(private val session: ImportSessionCo
 
         if (config.dnsCache != null) {
             val cache = config.dnsCache
-            DnsCacheSettingsStore.setCacheEnabled(context, cache.enabled)
+            DnsCacheSettingsStore.setCacheEnabled(context, cache.enabled, session.dataset)
             cache.preset?.let { presetVal ->
                 DnsCachePreset.fromStorageValue(presetVal)?.let { preset ->
-                    DnsCacheSettingsStore.setDnsCachePreset(context, preset)
+                    DnsCacheSettingsStore.setDnsCachePreset(context, preset, session.dataset)
                 }
             }
-            val currentPolicy = DnsCacheSettingsStore.getDnsCachePolicy(context)
+            val currentPolicy = DnsCacheSettingsStore.getDnsCachePolicy(context, session.dataset)
             val updatedPolicy = currentPolicy.copy(
                 enabled = cache.enabled,
                 mode = cache.mode?.let { DnsCacheMode.fromStorageValue(it) } ?: currentPolicy.mode,
@@ -75,14 +75,14 @@ internal class NetworkFeatureConfigImporter(private val session: ImportSessionCo
                 staleFallbackEnabled = cache.staleFallbackEnabled ?: currentPolicy.staleFallbackEnabled,
                 staleFallbackSeconds = cache.staleFallbackSeconds ?: currentPolicy.staleFallbackSeconds
             )
-            DnsCacheSettingsStore.setDnsCachePolicy(context, updatedPolicy)
+            DnsCacheSettingsStore.setDnsCachePolicy(context, updatedPolicy, session.dataset)
             session.dnsCacheUpdated = true
             val detail = "DNS 缓存策略"
             session.addUpdatedSetting(detail, "更新 $detail")
             session.complete("DNS 缓存配置", "已应用 DNS 缓存策略")
         }
 
-        if (config.outboundProxy != null) {
+        if (config.outboundProxy != null && session.dataset != com.haoze.diting.data.RuleDataset.EXPRESS) {
             val proxy = config.outboundProxy
             OutboundProxySettingsStore.setOutboundProxyConfig(
                 context,

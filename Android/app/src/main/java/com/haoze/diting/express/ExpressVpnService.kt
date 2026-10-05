@@ -7,6 +7,7 @@ import android.net.VpnService
 import android.os.Build
 import android.util.Log
 import com.haoze.diting.crash.CrashBreadcrumbs
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.express.notification.ExpressNotificationBuilder
 import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.DnsResolutionMode
@@ -49,6 +50,7 @@ class ExpressVpnService : VpnService() {
         activeService = this
         floatingLogOverlay = FloatingLogOverlayController(this)
         ExpressNotificationBuilder.ensureChannel(this)
+        kotlinx.coroutines.runBlocking { ExpressDefaultsSeeder.ensureInitialized(this@ExpressVpnService) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -76,7 +78,7 @@ class ExpressVpnService : VpnService() {
             return
         }
         startIntent = intent
-        activeResolutionMode = ResolutionSettingsStore.getDnsResolutionMode(this)
+        activeResolutionMode = ResolutionSettingsStore.getDnsResolutionMode(this, RuleDataset.EXPRESS)
         activeProviders = resolveActiveProviders(intent)
 
         CrashBreadcrumbs.record("ExpressVPN", "Starting Express VPN, mode=${activeResolutionMode.name}")
@@ -84,7 +86,7 @@ class ExpressVpnService : VpnService() {
         // Bring service to foreground immediately to fulfill Android 8.0+ system requirement
         updateForegroundNotification()
 
-        val ipv6Mode = SystemSettingsStore.getIpv6Mode(this)
+        val ipv6Mode = SystemSettingsStore.getIpv6Mode(this, RuleDataset.EXPRESS)
         val pfd = tunnelManager.establishVpnInterface(this, ipv6Mode) ?: run {
             Log.e(TAG, "Failed to establish VPN interface")
             PermissionDisclosureSettings.updateVpnGrant(this, false)
@@ -100,10 +102,10 @@ class ExpressVpnService : VpnService() {
             scope = serviceScope,
             providersProvider = { activeProviders },
             resolutionModeProvider = { activeResolutionMode },
-            blockResponseModeProvider = { AppRulesSettingsStore.getBlockResponseMode(this) },
-            domainRulesEnabledProvider = { AppRulesSettingsStore.isDomainRulesEnabled(this) },
-            cachePolicyProvider = { DnsCacheSettingsStore.getDnsCachePolicy(this) },
-            dnsLogModeProvider = { SystemSettingsStore.getDnsLogMode(this) }
+            blockResponseModeProvider = { AppRulesSettingsStore.getBlockResponseMode(this, RuleDataset.EXPRESS) },
+            domainRulesEnabledProvider = { AppRulesSettingsStore.isDomainRulesEnabled(this, RuleDataset.EXPRESS) },
+            cachePolicyProvider = { DnsCacheSettingsStore.getDnsCachePolicy(this, RuleDataset.EXPRESS) },
+            dnsLogModeProvider = { SystemSettingsStore.getDnsLogMode(this, RuleDataset.EXPRESS) }
         )
         if (!started) {
             Log.e(TAG, "Failed to start Express tunnel data plane")
@@ -149,7 +151,7 @@ class ExpressVpnService : VpnService() {
     }
 
     private fun refreshConfig(intent: Intent?) {
-        activeResolutionMode = ResolutionSettingsStore.getDnsResolutionMode(this)
+        activeResolutionMode = ResolutionSettingsStore.getDnsResolutionMode(this, RuleDataset.EXPRESS)
         activeProviders = resolveActiveProviders(intent)
         updateForegroundNotification()
     }
@@ -230,26 +232,26 @@ class ExpressVpnService : VpnService() {
                 )
             }
         }
-        val mode = ResolutionSettingsStore.getDnsResolutionMode(this)
+        val mode = ResolutionSettingsStore.getDnsResolutionMode(this, RuleDataset.EXPRESS)
         when (mode) {
             DnsResolutionMode.SINGLE -> Unit
             DnsResolutionMode.SMART_PREDICTION,
             DnsResolutionMode.PARALLEL_RACE -> {
                 val ids = if (mode == DnsResolutionMode.SMART_PREDICTION) {
-                    ResolutionSettingsStore.getSmartPredictionProviderIds(this)
+                    ResolutionSettingsStore.getSmartPredictionProviderIds(this, RuleDataset.EXPRESS)
                 } else {
-                    ResolutionSettingsStore.getParallelRaceProviderIds(this)
+                    ResolutionSettingsStore.getParallelRaceProviderIds(this, RuleDataset.EXPRESS)
                 }
-                val raceProviders = DnsProvider.loadRuntimeProviders(this).filter { it.id in ids }
+                val raceProviders = DnsProvider.loadRuntimeProviders(this, RuleDataset.EXPRESS).filter { it.id in ids }
                 if (raceProviders.size >= 2) return raceProviders
             }
             DnsResolutionMode.PRIMARY_BACKUP -> {
-                val byId = DnsProvider.loadRuntimeProviders(this).associateBy { it.id }
-                val ordered = ResolutionSettingsStore.getPrimaryBackupProviderIds(this).mapNotNull(byId::get)
+                val byId = DnsProvider.loadRuntimeProviders(this, RuleDataset.EXPRESS).associateBy { it.id }
+                val ordered = ResolutionSettingsStore.getPrimaryBackupProviderIds(this, RuleDataset.EXPRESS).mapNotNull(byId::get)
                 if (ordered.size >= 2) return ordered
             }
         }
-        return listOf(DnsProvider.loadSelected(this))
+        return listOf(DnsProvider.loadSelected(this, RuleDataset.EXPRESS))
     }
 
     companion object {

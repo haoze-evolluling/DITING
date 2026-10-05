@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.cleanup.DataCleanupManager
 import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsGroupTitle
@@ -191,17 +192,17 @@ fun ExpressDataCleanupScreen(
             onConfirm = {
                 scope.launch(Dispatchers.IO) {
                     when (action) {
-                        ExpressCleanupAction.LOG -> DataCleanupManager.clearRequestLogs(context)
+                        ExpressCleanupAction.LOG -> DataCleanupManager.clearRequestLogs(context, dataset = RuleDataset.EXPRESS)
                         ExpressCleanupAction.CRASH -> DataCleanupManager.clearCrashLogs(context)
-                        ExpressCleanupAction.CACHE -> DataCleanupManager.clearDnsCache(context)
+                        ExpressCleanupAction.CACHE -> DataCleanupManager.clearDnsCache(context, dataset = RuleDataset.EXPRESS)
                         ExpressCleanupAction.PROVIDER_WEIGHT -> DataCleanupManager.resetProviderWeights(context)
                         ExpressCleanupAction.BOOTSTRAP_WEIGHT -> DataCleanupManager.resetBootstrapWeights(context)
-                        ExpressCleanupAction.DOMAIN_RULES -> DataCleanupManager.clearAllDomainRules(context)
-                        ExpressCleanupAction.SUBSCRIPTIONS -> DataCleanupManager.clearAllSubscriptions(context)
+                        ExpressCleanupAction.DOMAIN_RULES -> DataCleanupManager.clearAllDomainRules(context, dataset = RuleDataset.EXPRESS)
+                        ExpressCleanupAction.SUBSCRIPTIONS -> DataCleanupManager.clearAllSubscriptions(context, dataset = RuleDataset.EXPRESS)
                         ExpressCleanupAction.DOWNLOAD_CACHE -> DataCleanupManager.clearDownloadAndTempCache(context)
                         ExpressCleanupAction.CUSTOM_BACKGROUND -> DataCleanupManager.clearCustomBackground(context)
                         ExpressCleanupAction.SETTINGS_GUIDES -> DataCleanupManager.resetSettingsGuides(context)
-                        ExpressCleanupAction.ALL_DATA -> DataCleanupManager.clearAllLocalData(context)
+                        ExpressCleanupAction.ALL_DATA -> DataCleanupManager.clearAllLocalData(context, dataset = RuleDataset.EXPRESS)
                     }
                     withContext(Dispatchers.Main) {
                         when (action) {

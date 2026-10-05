@@ -1,6 +1,7 @@
 package com.haoze.diting.ui.settings
 
 import android.content.Context
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.vpn.BlockResponseMode
 import com.haoze.diting.vpn.DynamicBlockResponseConfig
 
@@ -297,21 +298,21 @@ object AppRulesSettingsStore {
             .apply()
     }
 
-    fun getBlockResponseMode(context: Context): BlockResponseMode {
-        val value = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getBlockResponseMode(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): BlockResponseMode {
+        val value = datasetPrefs(context, dataset)
             .getString(KEY_BLOCK_RESPONSE_MODE, DEFAULT_BLOCK_RESPONSE_MODE.storageValue)
         return BlockResponseMode.fromStorageValue(value)
     }
 
-    fun setBlockResponseMode(context: Context, mode: BlockResponseMode) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setBlockResponseMode(context: Context, mode: BlockResponseMode, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_BLOCK_RESPONSE_MODE, mode.storageValue)
             .apply()
     }
 
-    fun getDynamicBlockResponseConfig(context: Context): DynamicBlockResponseConfig {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getDynamicBlockResponseConfig(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): DynamicBlockResponseConfig {
+        val prefs = datasetPrefs(context, dataset)
         return DynamicBlockResponseConfig(
             enabled = prefs.getBoolean(KEY_DYNAMIC_BLOCK_RESPONSE_ENABLED, false),
             requestThreshold = prefs.getInt(
@@ -338,8 +339,12 @@ object AppRulesSettingsStore {
         )
     }
 
-    fun setDynamicBlockResponseConfig(context: Context, config: DynamicBlockResponseConfig) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setDynamicBlockResponseConfig(
+        context: Context,
+        config: DynamicBlockResponseConfig,
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) {
+        datasetPrefs(context, dataset)
             .edit()
             .putBoolean(KEY_DYNAMIC_BLOCK_RESPONSE_ENABLED, config.enabled)
             .putInt(
@@ -366,12 +371,12 @@ object AppRulesSettingsStore {
             .apply()
     }
 
-    fun isDomainRulesEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun isDomainRulesEnabled(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Boolean =
+        datasetPrefs(context, dataset)
             .getBoolean(KEY_DOMAIN_RULES_ENABLED, true)
 
-    fun setDomainRulesEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setDomainRulesEnabled(context: Context, enabled: Boolean, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putBoolean(KEY_DOMAIN_RULES_ENABLED, enabled)
             .apply()
@@ -388,35 +393,35 @@ object AppRulesSettingsStore {
             .apply()
     }
 
-    fun isAllowEditDefaultWhitelist(context: Context): Boolean =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun isAllowEditDefaultWhitelist(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Boolean =
+        datasetPrefs(context, dataset)
             .getBoolean(KEY_ALLOW_EDIT_DEFAULT_WHITELIST, false)
 
-    fun setAllowEditDefaultWhitelist(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setAllowEditDefaultWhitelist(context: Context, enabled: Boolean, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putBoolean(KEY_ALLOW_EDIT_DEFAULT_WHITELIST, enabled)
             .apply()
     }
 
-    fun isDefaultWhitelistInitialized(context: Context): Boolean =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun isDefaultWhitelistInitialized(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Boolean =
+        datasetPrefs(context, dataset)
             .getBoolean(KEY_DEFAULT_WHITELIST_INITIALIZED, false)
 
-    fun setDefaultWhitelistInitialized(context: Context, initialized: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setDefaultWhitelistInitialized(context: Context, initialized: Boolean, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putBoolean(KEY_DEFAULT_WHITELIST_INITIALIZED, initialized)
             .apply()
     }
 
     /** Version code recorded the last time the preset whitelist was seeded/reset; 0 means never recorded (upgraded from an older version). */
-    fun getDefaultWhitelistSeededVersion(context: Context): Long =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getDefaultWhitelistSeededVersion(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Long =
+        datasetPrefs(context, dataset)
             .getLong(KEY_DEFAULT_WHITELIST_SEEDED_VERSION, 0L)
 
-    fun setDefaultWhitelistSeededVersion(context: Context, versionCode: Long) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setDefaultWhitelistSeededVersion(context: Context, versionCode: Long, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putLong(KEY_DEFAULT_WHITELIST_SEEDED_VERSION, versionCode)
             .apply()

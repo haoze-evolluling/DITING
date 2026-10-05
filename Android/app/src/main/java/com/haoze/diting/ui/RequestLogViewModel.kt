@@ -6,8 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.ExpressRulesDatabase
 import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.RequestStatus
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.repository.RequestLogRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,12 +32,20 @@ data class RequestLogUiState(
 
 class RequestLogViewModel @JvmOverloads constructor(
     application: Application,
-    initialSource: RequestSource = RequestSource.ALL
+    initialSource: RequestSource = RequestSource.ALL,
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) : AndroidViewModel(application) {
-    private val repository = RequestLogRepository(
-        AppDatabase.getInstance(application).dnsLogDao(),
-        AppDatabase.getInstance(application).httpRequestLogDao()
-    )
+    private val repository = if (dataset == RuleDataset.EXPRESS) {
+        RequestLogRepository(
+            ExpressRulesDatabase.getInstance(application).dnsLogDao(),
+            null
+        )
+    } else {
+        RequestLogRepository(
+            AppDatabase.getInstance(application).dnsLogDao(),
+            AppDatabase.getInstance(application).httpRequestLogDao()
+        )
+    }
     private val _state = MutableStateFlow(RequestLogUiState(source = initialSource))
     val state: StateFlow<RequestLogUiState> = _state.asStateFlow()
     private var limit = 50
@@ -122,11 +132,12 @@ class RequestLogViewModel @JvmOverloads constructor(
     companion object {
         fun factory(
             application: Application,
-            initialSource: RequestSource = RequestSource.ALL
+            initialSource: RequestSource = RequestSource.ALL,
+            dataset: RuleDataset = RuleDataset.NORMAL
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return RequestLogViewModel(application, initialSource) as T
+                return RequestLogViewModel(application, initialSource, dataset) as T
             }
         }
     }

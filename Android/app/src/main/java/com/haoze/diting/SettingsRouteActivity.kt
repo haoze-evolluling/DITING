@@ -54,7 +54,11 @@ class SettingsRouteActivity : AppLocalizedActivity() {
     private val requestedRuleDataset: RuleDataset
         get() = intent.getStringExtra(EXTRA_RULE_DATASET)?.let { value ->
             runCatching { RuleDataset.valueOf(value) }.getOrNull()
-        } ?: RuleDataset.NORMAL
+        } ?: if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+            RuleDataset.EXPRESS
+        } else {
+            RuleDataset.NORMAL
+        }
     private val requestedRequestSource: RequestSource?
         get() = intent.getStringExtra(EXTRA_REQUEST_SOURCE)?.let { value ->
             runCatching { RequestSource.valueOf(value) }.getOrNull()

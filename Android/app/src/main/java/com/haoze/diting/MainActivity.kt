@@ -32,6 +32,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.AppSettings
 import com.haoze.diting.ui.AppLanguageManager
 import com.haoze.diting.ui.AppLanguageMode
@@ -127,18 +128,18 @@ class MainActivity : AppLocalizedActivity() {
     private var bottomBarRefreshRequested by mutableStateOf(false)
     private var workModeRefreshRequested by mutableStateOf(false)
 
-    private fun launchSettings(route: String) {
+    private fun launchSettings(route: String, dataset: RuleDataset? = null) {
         if (settingsLaunchInProgress) return
         settingsLaunchInProgress = true
-        settingsLauncher.launch(SettingsRouteActivity.createIntent(this, route))
+        settingsLauncher.launch(SettingsRouteActivity.createIntent(this, route, dataset = dataset))
     }
 
-    private fun launchLogs() {
-        startActivity(LogRouteActivity.createIntent(this, Routes.LOG_DASHBOARD))
+    private fun launchLogs(dataset: RuleDataset? = null) {
+        startActivity(LogRouteActivity.createIntent(this, Routes.LOG_DASHBOARD, dataset = dataset))
     }
 
-    private fun launchLogRoute(route: String) {
-        startActivity(LogRouteActivity.createIntent(this, route))
+    private fun launchLogRoute(route: String, dataset: RuleDataset? = null) {
+        startActivity(LogRouteActivity.createIntent(this, route, dataset = dataset))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -251,29 +252,29 @@ class MainActivity : AppLocalizedActivity() {
                         } else if (currentWorkMode == AppWorkMode.EXPRESS) {
                             com.haoze.diting.express.ui.ExpressMainScreen(
                                 onToggle = { isRunning -> onToggleVpn(isRunning) },
-                                onNavigateToSettings = { launchSettings(Routes.SETTINGS) },
-                                onNavigateToLogs = ::launchLogs,
-                                onNavigateToProviderManagement = { launchSettings(Routes.PROVIDER_MANAGEMENT) },
-                                onNavigateToBootstrapSettings = { launchSettings(Routes.BOOTSTRAP_SETTINGS) },
-                                onNavigateToHomeProviderVisibility = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
-                                onNavigateToRaceModeSettings = { launchSettings(Routes.RACE_MODE_PROVIDERS) },
+                                onNavigateToSettings = { launchSettings(Routes.SETTINGS, RuleDataset.EXPRESS) },
+                                onNavigateToLogs = { launchLogs(RuleDataset.EXPRESS) },
+                                onNavigateToProviderManagement = { launchSettings(Routes.PROVIDER_MANAGEMENT, RuleDataset.EXPRESS) },
+                                onNavigateToBootstrapSettings = { launchSettings(Routes.BOOTSTRAP_SETTINGS, RuleDataset.EXPRESS) },
+                                onNavigateToHomeProviderVisibility = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY, RuleDataset.EXPRESS) },
+                                onNavigateToRaceModeSettings = { launchSettings(Routes.RACE_MODE_PROVIDERS, RuleDataset.EXPRESS) },
                                 onNavigateToAppearanceSettings = { launchSettings(Routes.APPEARANCE_SETTINGS) },
-                                onNavigateToRuleControl = { launchSettings(Routes.RULE_CONTROL) },
-                                onNavigateToBlacklist = { launchSettings(Routes.BLACKLIST_MANAGEMENT) },
-                                onNavigateToWhitelist = { launchSettings(Routes.WHITELIST_MANAGEMENT) },
-                                onNavigateToLogRetentionSettings = { launchSettings(Routes.LOG_RETENTION_SETTINGS) },
-                                onNavigateToHomeProviderVisibilityFromFeatureHub = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
+                                onNavigateToRuleControl = { launchSettings(Routes.RULE_CONTROL, RuleDataset.EXPRESS) },
+                                onNavigateToBlacklist = { launchSettings(Routes.BLACKLIST_MANAGEMENT, RuleDataset.EXPRESS) },
+                                onNavigateToWhitelist = { launchSettings(Routes.WHITELIST_MANAGEMENT, RuleDataset.EXPRESS) },
+                                onNavigateToLogRetentionSettings = { launchSettings(Routes.LOG_RETENTION_SETTINGS, RuleDataset.EXPRESS) },
+                                onNavigateToHomeProviderVisibilityFromFeatureHub = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY, RuleDataset.EXPRESS) },
                                 onNavigateToAbout = { launchSettings(Routes.ABOUT) },
                                 onNavigateToSponsor = { launchSettings(Routes.SPONSOR) },
                                 onNavigateToSponsorList = { launchSettings(Routes.SPONSOR_LIST) },
                                 onNavigateToCoBuilderList = { launchSettings(Routes.CO_BUILDER_LIST) },
                                 onNavigateToAppUpdate = { launchSettings(Routes.APP_UPDATE) },
-                                onNavigateToDataManagement = { launchSettings(Routes.CONFIG_TRANSFER) },
+                                onNavigateToDataManagement = { launchSettings(Routes.CONFIG_TRANSFER, RuleDataset.EXPRESS) },
                                 onNavigateToHiddenFeatures = { launchSettings(Routes.HIDDEN_FEATURES) },
-                                onNavigateToCacheSettings = { launchSettings(Routes.CACHE_SETTINGS) },
-                                onNavigateToDataCleanup = { launchSettings(Routes.DATA_CLEANUP) },
-                                onNavigateToLogRoute = ::launchLogRoute,
-                                onNavigateToSettingsRoute = ::launchSettings,
+                                onNavigateToCacheSettings = { launchSettings(Routes.CACHE_SETTINGS, RuleDataset.EXPRESS) },
+                                onNavigateToDataCleanup = { launchSettings(Routes.DATA_CLEANUP, RuleDataset.EXPRESS) },
+                                onNavigateToLogRoute = { r -> launchLogRoute(r, RuleDataset.EXPRESS) },
+                                onNavigateToSettingsRoute = { r -> launchSettings(r, RuleDataset.EXPRESS) },
                                 bottomBarRefreshRequested = bottomBarRefreshRequested,
                                 onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false },
                                 viewModel = mainViewModel

@@ -2,10 +2,13 @@ package com.haoze.diting.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.haoze.diting.data.AppDatabase
 import com.haoze.diting.data.RaceStats
 import com.haoze.diting.data.RaceStatsRange
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.repository.RaceLogRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,9 +16,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class RaceStatsViewModel(application: Application) : AndroidViewModel(application) {
+class RaceStatsViewModel @JvmOverloads constructor(
+    application: Application,
+    dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
 
-    private val repository = RaceLogRepository(AppDatabase.getInstance(application).raceLogDao())
+    private val repository = RaceLogRepository(
+        RuleDatabases.runtimeForDataset(application, dataset).raceLogDao()
+    )
 
     private val _range = MutableStateFlow(RaceStatsRange.TODAY)
     val range: StateFlow<RaceStatsRange> = _range.asStateFlow()
@@ -41,6 +49,18 @@ class RaceStatsViewModel(application: Application) : AndroidViewModel(applicatio
             _loading.value = true
             _stats.value = repository.stats(_range.value)
             _loading.value = false
+        }
+    }
+
+    companion object {
+        fun factory(
+            application: Application,
+            dataset: RuleDataset = RuleDataset.NORMAL
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return RaceStatsViewModel(application, dataset) as T
+            }
         }
     }
 }

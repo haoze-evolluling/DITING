@@ -23,10 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
 import com.haoze.diting.data.BootstrapIpStats
 import com.haoze.diting.data.BootstrapOverallStats
 import com.haoze.diting.data.BootstrapStats
 import com.haoze.diting.data.BootstrapStatsRange
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.components.RuleFilterChipRow
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
@@ -39,8 +42,13 @@ import java.util.Locale
 @Composable
 fun BootstrapStatsScreen(
     onBack: () -> Unit,
-    viewModel: BootstrapStatsViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
+    val context = LocalContext.current
+    val viewModel: BootstrapStatsViewModel = viewModel(
+        key = "BootstrapStatsViewModel_$dataset",
+        factory = BootstrapStatsViewModel.factory(context.applicationContext as Application, dataset)
+    )
     val range by viewModel.range.collectAsStateWithLifecycle()
     val stats by viewModel.stats.collectAsStateWithLifecycle()
     val loading by viewModel.loading.collectAsStateWithLifecycle()
