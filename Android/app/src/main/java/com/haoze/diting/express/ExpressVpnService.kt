@@ -80,11 +80,15 @@ class ExpressVpnService : VpnService() {
 
         CrashBreadcrumbs.record("ExpressVPN", "Starting Express VPN, mode=${activeResolutionMode.name}")
 
+        // Bring service to foreground immediately to fulfill Android 8.0+ system requirement
+        updateForegroundNotification()
+
         val ipv6Mode = SystemSettingsStore.getIpv6Mode(this)
         val pfd = tunnelManager.establishVpnInterface(this, ipv6Mode) ?: run {
             Log.e(TAG, "Failed to establish VPN interface")
             PermissionDisclosureSettings.updateVpnGrant(this, false)
             ExpressVpnController.onServiceStateChanged(this, false)
+            stopForegroundCompat()
             stopSelf()
             return
         }
@@ -103,6 +107,7 @@ class ExpressVpnService : VpnService() {
         if (!started) {
             Log.e(TAG, "Failed to start Express tunnel data plane")
             ExpressVpnController.onServiceStateChanged(this, false)
+            stopForegroundCompat()
             stopSelf()
             return
         }
@@ -119,20 +124,20 @@ class ExpressVpnService : VpnService() {
             activeResolutionMode
         )
         runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    startForeground(
-                        ExpressNotificationBuilder.NOTIFICATION_ID_EXPRESS_VPN,
-                        notification,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                    )
-                } else {
-                    startForeground(
-                        ExpressNotificationBuilder.NOTIFICATION_ID_EXPRESS_VPN,
-                        notification
-                    )
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    ExpressNotificationBuilder.NOTIFICATION_ID_EXPRESS_VPN,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                )
             } else {
+                startForeground(
+                    ExpressNotificationBuilder.NOTIFICATION_ID_EXPRESS_VPN,
+                    notification
+                )
+            }
+        }.onFailure {
+            runCatching {
                 startForeground(
                     ExpressNotificationBuilder.NOTIFICATION_ID_EXPRESS_VPN,
                     notification
@@ -147,18 +152,24 @@ class ExpressVpnService : VpnService() {
         updateForegroundNotification()
     }
 
+    private fun stopForegroundCompat() {
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
+        }
+    }
+
     private fun stopVpn() {
         CrashBreadcrumbs.record("ExpressVPN", "stopVpn called")
         wasStopped = true
         if (::floatingLogOverlay.isInitialized) floatingLogOverlay.setVpnRunning(false)
         ExpressVpnController.onServiceStateChanged(this, false)
         tunnelManager.stop()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
+        stopForegroundCompat()
         stopSelf()
     }
 

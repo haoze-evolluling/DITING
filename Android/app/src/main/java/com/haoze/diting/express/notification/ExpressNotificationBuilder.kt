@@ -98,23 +98,29 @@ object ExpressNotificationBuilder {
         return builder.build()
     }
 
-    private fun buildDefaultStatusText(
-        context: Context,
+    internal fun formatStatusText(
         activeProviders: List<DnsProvider>,
-        activeResolutionMode: DnsResolutionMode
+        activeResolutionMode: DnsResolutionMode,
+        translator: (String) -> String = { it }
     ): String {
-        val prefix = localizedText(context, "极速模式运行中")
+        val prefix = translator("极速模式运行中")
         return when {
             activeProviders.size > 1 -> {
-                val mode = localizedText(context, activeResolutionMode.displayName)
-                val count = localizedText(context, "${activeProviders.size} 个服务商")
+                val mode = translator(activeResolutionMode.displayName)
+                val count = translator("${activeProviders.size} 个服务商")
                 "$prefix · [$mode] $count"
             }
             activeProviders.isNotEmpty() -> {
-                val name = localizedText(context, activeProviders.first().name)
+                val name = translator(activeProviders.first().name)
                 "$prefix · $name"
             }
             else -> prefix
         }
     }
+
+    internal fun buildDefaultStatusText(
+        context: Context,
+        activeProviders: List<DnsProvider>,
+        activeResolutionMode: DnsResolutionMode
+    ): String = formatStatusText(activeProviders, activeResolutionMode) { localizedText(context, it) }
 }

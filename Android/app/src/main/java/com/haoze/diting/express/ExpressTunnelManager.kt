@@ -33,10 +33,12 @@ import com.haoze.diting.vpn.DomainDecision
 import com.haoze.diting.vpn.DomainPolicy
 import com.haoze.diting.vpn.LogResult
 import com.haoze.diting.vpn.RaceLogger
+import com.haoze.diting.express.cache.ExpressRoomDnsCache
 import com.haoze.diting.vpn.cache.DnsCachePolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -53,6 +55,8 @@ import java.net.InetAddress
  * and high-performance packet dispatch loop for Express Mode.
  */
 class ExpressTunnelManager {
+
+    typealias ExpressRoomDnsCache = com.haoze.diting.express.cache.ExpressRoomDnsCache
 
     companion object {
         private const val TAG = "ExpressTunnelManager"
@@ -79,6 +83,8 @@ class ExpressTunnelManager {
     private var outputStream: FileOutputStream? = null
     private var tunThread: Thread? = null
     private var retransmitJob: Job? = null
+    private var tcpWorkerJob: Job? = null
+    private val tcpChannel = Channel<ExpressPacketCodec.ParsedPacket.DnsTcpPacket>(Channel.UNLIMITED)
 
     private lateinit var blockListManager: BlockListManager
     private lateinit var allowListManager: AllowListManager
@@ -91,113 +97,6 @@ class ExpressTunnelManager {
     private lateinit var bootstrapSelector: BootstrapSelector
     private lateinit var engine: ExpressDnsEngine
     private lateinit var tcpHandler: ExpressTcpDnsHandler
-
-    /**
-     * Cache adapter backed by Room DnsCacheDao and in-memory LruCache.
-     */
-    class ExpressRoomDnsCache(
-        private val dao: DnsCacheDao,
-        private val cachePolicyProvider: () -> DnsCachePolicy
-    ) : ExpressDnsEngine.ExpressDnsCache {
-        private class SimpleLruCache<K, V>(private val maxEntries: Int) {
-            private val map = object : LinkedHashMap<K, V>(maxEntries, 0.75f, true) {
-                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean {
-                    return size > maxEntries
-                }
-            }
-
-            @Synchronized
-            fun get(key: K): V? = map[key]
-
-            @Synchronized
-            fun put(key: K, value: V) {
-                map[key] = value
-            }
-
-            @Synchronized
-            fun remove(key: K): V? = map.remove(key)
-
-            @Synchronized
-            fun clear() {
-                map.clear()
-            }
-        }
-
-        private val memoryCache = SimpleLruCache<String, Pair<Long, ByteArray>>(500)
-
-        fun clearMemory() {
-            memoryCache.clear()
-        }
-
-        override suspend fun get(
-            question: ExpressDnsMessageUtils.DnsQuestion,
-            requestQuery: ByteArray
-        ): ByteArray? {
-            val policy = cachePolicyProvider()
-            if (!policy.enabled) return null
-            val normalizedName = question.name.lowercase().trimEnd('.')
-            val key = "$normalizedName#${question.type}#${question.qclass}"
-            val now = System.currentTimeMillis()
-
-            val mem = memoryCache.get(key)
-            if (mem != null) {
-                val (expiresAt, response) = mem
-                if (expiresAt > now) {
-                    val remainingTtl = ((expiresAt - now) / 1000L).coerceAtLeast(1L)
-                    val patched = ExpressPacketCodec.overwriteDnsPayloadTtl(response, remainingTtl)
-                    if (patched != null) return patched
-                } else {
-                    memoryCache.remove(key)
-                }
-            }
-
-            val entity = dao.get(key) ?: return null
-            if (entity.expiresAt <= now) {
-                dao.delete(key)
-                return null
-            }
-            val remainingTtl = ((entity.expiresAt - now) / 1000L).coerceAtLeast(1L)
-            val patched = ExpressPacketCodec.overwriteDnsPayloadTtl(entity.response, remainingTtl)
-            if (patched != null) {
-                memoryCache.put(key, entity.expiresAt to entity.response)
-                dao.recordHit(key, now)
-                return patched
-            }
-            return null
-        }
-
-        override suspend fun put(
-            question: ExpressDnsMessageUtils.DnsQuestion,
-            response: ByteArray
-        ) {
-            val policy = cachePolicyProvider()
-            if (!policy.enabled) return
-            val normalizedName = question.name.lowercase().trimEnd('.')
-            val key = "$normalizedName#${question.type}#${question.qclass}"
-            val minTtl = ExpressPacketCodec.extractMinDnsTtl(response) ?: 300L
-            val effectiveTtl = policy.effectiveTtlSeconds(minTtl)
-            if (effectiveTtl <= 0L) return
-
-            val now = System.currentTimeMillis()
-            val expiresAt = now + effectiveTtl * 1000L
-            memoryCache.put(key, expiresAt to response)
-            val entity = DnsCacheEntity(
-                key = key,
-                queryName = normalizedName,
-                queryType = question.type,
-                queryClass = question.qclass,
-                createdAt = now,
-                expiresAt = expiresAt,
-                lastHitAt = null,
-                hitCount = 0,
-                originalTtlSeconds = minTtl,
-                ttlOffsets = "",
-                response = response.copyOf(),
-                responseSize = response.size
-            )
-            dao.insert(entity)
-        }
-    }
 
     /**
      * Probes whether the underlying physical network has a valid public IPv6 address and gateway route.
@@ -330,6 +229,10 @@ class ExpressTunnelManager {
         cachePolicyProvider: () -> DnsCachePolicy,
         dnsLogModeProvider: () -> DnsLogMode
     ): Boolean {
+        if (isRunning) {
+            stop()
+        }
+
         val db = AppDatabase.getInstance(service)
         val ruleIndexDirectory = File(service.filesDir, "rule-index")
         blockListManager = BlockListManager(db.blockRuleDao(), ruleIndexDirectory)
@@ -415,6 +318,20 @@ class ExpressTunnelManager {
         outputStream = outStream
         isRunning = true
 
+        tcpWorkerJob = scope.launch(Dispatchers.IO) {
+            for (parsed in tcpChannel) {
+                if (!isRunning) break
+                try {
+                    val tcpResponses = tcpHandler.handlePacket(parsed)
+                    for (resp in tcpResponses) {
+                        writePacket(resp)
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error handling DNS TCP packet", e)
+                }
+            }
+        }
+
         retransmitJob = scope.launch(Dispatchers.IO) {
             while (isActive && isRunning) {
                 delay(500)
@@ -457,16 +374,7 @@ class ExpressTunnelManager {
                         }
                     }
                     is ExpressPacketCodec.ParsedPacket.DnsTcpPacket -> {
-                        scope.launch(Dispatchers.IO) {
-                            try {
-                                val tcpResponses = tcpHandler.handlePacket(parsed)
-                                for (resp in tcpResponses) {
-                                    writePacket(resp)
-                                }
-                            } catch (e: Exception) {
-                                Log.w(TAG, "Error handling DNS TCP packet", e)
-                            }
-                        }
+                        tcpChannel.trySend(parsed)
                     }
                     is ExpressPacketCodec.ParsedPacket.NonDnsTcpPacket -> {
                         val rst = ExpressPacketCodec.buildTcpReset(
@@ -537,6 +445,9 @@ class ExpressTunnelManager {
         isRunning = false
         retransmitJob?.cancel()
         retransmitJob = null
+        tcpWorkerJob?.cancel()
+        tcpWorkerJob = null
+        while (tcpChannel.tryReceive().isSuccess) {}
         try {
             inputStream?.close()
         } catch (_: Exception) {}

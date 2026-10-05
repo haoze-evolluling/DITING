@@ -66,22 +66,26 @@ object ExpressVpnController {
     fun isRunning(context: Context): Boolean {
         val persisted = getPersistedRunning(context)
         val alive = ExpressVpnService.isServiceAlive
+        val running = persisted && alive
         if (persisted && !alive) {
             setPersistedRunning(context, false)
-            _isRunning.value = false
-            return false
         }
-        return persisted && alive
+        _isRunning.value = running
+        return running
     }
 
     fun start(context: Context, provider: DnsProvider? = null) {
         val intent = ExpressVpnIntents.startIntent(context, provider)
-        ContextCompat.startForegroundService(context, intent)
+        runCatching { ContextCompat.startForegroundService(context, intent) }
     }
 
     fun stop(context: Context) {
+        if (!ExpressVpnService.isServiceAlive) {
+            onServiceStateChanged(context, false)
+            return
+        }
         val intent = ExpressVpnIntents.stopIntent(context)
-        context.startService(intent)
+        runCatching { context.startService(intent) }
     }
 
     fun toggle(context: Context, provider: DnsProvider? = null) {
@@ -94,13 +98,13 @@ object ExpressVpnController {
 
     fun refreshConfig(context: Context, reason: String = "runtime_config") {
         if (isRunning(context)) {
-            context.startService(ExpressVpnIntents.refreshConfigIntent(context, reason))
+            runCatching { context.startService(ExpressVpnIntents.refreshConfigIntent(context, reason)) }
         }
     }
 
     fun syncRules(context: Context) {
         if (isRunning(context)) {
-            context.startService(ExpressVpnIntents.syncRulesIntent(context))
+            runCatching { context.startService(ExpressVpnIntents.syncRulesIntent(context)) }
         }
     }
 
@@ -109,20 +113,20 @@ object ExpressVpnController {
             val dao = AppDatabase.getInstance(context).dnsCacheDao()
             dao.clearAll()
             if (isRunning(context)) {
-                context.startService(ExpressVpnIntents.clearCacheIntent(context))
+                runCatching { context.startService(ExpressVpnIntents.clearCacheIntent(context)) }
             }
         }
     }
 
     fun refreshFloatingLogOverlay(context: Context) {
         if (isRunning(context)) {
-            context.startService(ExpressVpnIntents.refreshFloatingLogIntent(context))
+            runCatching { context.startService(ExpressVpnIntents.refreshFloatingLogIntent(context)) }
         }
     }
 
     fun updateFloatingLogAppState(context: Context, foreground: Boolean) {
         if (isRunning(context)) {
-            context.startService(ExpressVpnIntents.floatingLogAppStateIntent(context, foreground))
+            runCatching { context.startService(ExpressVpnIntents.floatingLogAppStateIntent(context, foreground)) }
         }
     }
 

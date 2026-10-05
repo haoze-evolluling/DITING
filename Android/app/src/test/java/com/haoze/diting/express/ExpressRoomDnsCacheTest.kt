@@ -3,12 +3,18 @@ package com.haoze.diting.express
 import androidx.sqlite.db.SupportSQLiteQuery
 import com.haoze.diting.data.dao.DnsCacheDao
 import com.haoze.diting.data.entity.DnsCacheEntity
+import com.haoze.diting.express.cache.ExpressRoomDnsCache
 import com.haoze.diting.express.engine.ExpressDnsMessageUtils
 import com.haoze.diting.vpn.cache.DnsCachePolicy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.concurrent.ConcurrentHashMap
 
@@ -66,7 +72,7 @@ class ExpressRoomDnsCacheTest {
     fun testCachePutAndGetHit() = runBlocking {
         val fakeDao = FakeDnsCacheDao()
         val policy = DnsCachePolicy(enabled = true, minTtlSeconds = 60, maxTtlSeconds = 600)
-        val cache = ExpressTunnelManager.ExpressRoomDnsCache(fakeDao) { policy }
+        val cache = ExpressRoomDnsCache(fakeDao) { policy }
 
         val query = ExpressDnsMessageUtils.buildQuery("example.com", ExpressDnsMessageUtils.TYPE_A)
         val question = ExpressDnsMessageUtils.extractQuestion(query)!!
@@ -84,7 +90,7 @@ class ExpressRoomDnsCacheTest {
     fun testCacheDisabledPolicy() = runBlocking {
         val fakeDao = FakeDnsCacheDao()
         val disabledPolicy = DnsCachePolicy(enabled = false)
-        val cache = ExpressTunnelManager.ExpressRoomDnsCache(fakeDao) { disabledPolicy }
+        val cache = ExpressRoomDnsCache(fakeDao) { disabledPolicy }
 
         val query = ExpressDnsMessageUtils.buildQuery("example.com", ExpressDnsMessageUtils.TYPE_A)
         val question = ExpressDnsMessageUtils.extractQuestion(query)!!
@@ -101,7 +107,7 @@ class ExpressRoomDnsCacheTest {
     fun testCacheExpiredEntity() = runBlocking {
         val fakeDao = FakeDnsCacheDao()
         val policy = DnsCachePolicy(enabled = true)
-        val cache = ExpressTunnelManager.ExpressRoomDnsCache(fakeDao) { policy }
+        val cache = ExpressRoomDnsCache(fakeDao) { policy }
 
         val query = ExpressDnsMessageUtils.buildQuery("expired.com", ExpressDnsMessageUtils.TYPE_A)
         val question = ExpressDnsMessageUtils.extractQuestion(query)!!
@@ -125,5 +131,82 @@ class ExpressRoomDnsCacheTest {
         val cachedResponse = cache.get(question, query)
         assertNull(cachedResponse)
         assertNull(fakeDao.get("expired.com#1#1"))
+    }
+
+    @Test
+    fun testTtlOffsetsPopulatedInEntity() = runBlocking {
+        val fakeDao = FakeDnsCacheDao()
+        val policy = DnsCachePolicy(enabled = true)
+        val cache = ExpressRoomDnsCache(fakeDao) { policy }
+
+        val query = ExpressDnsMessageUtils.buildQuery("with-ttl.com", ExpressDnsMessageUtils.TYPE_A)
+        val question = ExpressDnsMessageUtils.extractQuestion(query)!!
+        val answer = ExpressDnsMessageUtils.buildZeroAddressResponse(query)
+
+        cache.put(question, answer)
+        val entity = fakeDao.get("with-ttl.com#1#1")
+        assertNotNull(entity)
+        assertTrue("ttlOffsets should be populated", entity!!.ttlOffsets.isNotBlank())
+    }
+
+    @Test
+    fun testMemoryCacheDefensiveCopy() = runBlocking {
+        val fakeDao = FakeDnsCacheDao()
+        val policy = DnsCachePolicy(enabled = true)
+        val cache = ExpressRoomDnsCache(fakeDao) { policy }
+
+        val query = ExpressDnsMessageUtils.buildQuery("defensive.com", ExpressDnsMessageUtils.TYPE_A)
+        val question = ExpressDnsMessageUtils.extractQuestion(query)!!
+        val answer = ExpressDnsMessageUtils.buildZeroAddressResponse(query)
+        val originalFirstByte = answer[0]
+
+        cache.put(question, answer)
+
+        // Mutate original array
+        answer[0] = (answer[0].toInt() xor 0xFF).toByte()
+
+        val cached = cache.get(question, query)
+        assertNotNull(cached)
+        assertEquals(originalFirstByte, cached!![0])
+    }
+
+    @Test
+    fun testClearMemoryCache() = runBlocking {
+        val fakeDao = FakeDnsCacheDao()
+        val policy = DnsCachePolicy(enabled = true)
+        val cache = ExpressRoomDnsCache(fakeDao) { policy }
+
+        val query = ExpressDnsMessageUtils.buildQuery("clearmem.com", ExpressDnsMessageUtils.TYPE_A)
+        val question = ExpressDnsMessageUtils.extractQuestion(query)!!
+        val answer = ExpressDnsMessageUtils.buildZeroAddressResponse(query)
+
+        cache.put(question, answer)
+        cache.clearMemory()
+
+        // Room entity remains and provides fallback
+        val cached = cache.get(question, query)
+        assertNotNull(cached)
+        assertEquals(1, fakeDao.hitCount)
+    }
+
+    @Test
+    fun testConcurrentPutAndGet() = runBlocking {
+        val fakeDao = FakeDnsCacheDao()
+        val policy = DnsCachePolicy(enabled = true, minTtlSeconds = 60, maxTtlSeconds = 600)
+        val cache = ExpressRoomDnsCache(fakeDao) { policy }
+
+        val jobs = (1..20).map { i ->
+            async(Dispatchers.IO) {
+                val domain = "domain$i.com"
+                val query = ExpressDnsMessageUtils.buildQuery(domain, ExpressDnsMessageUtils.TYPE_A)
+                val question = ExpressDnsMessageUtils.extractQuestion(query)!!
+                val answer = ExpressDnsMessageUtils.buildZeroAddressResponse(query)
+                cache.put(question, answer)
+                val retrieved = cache.get(question, query)
+                assertNotNull(retrieved)
+            }
+        }
+        jobs.awaitAll()
+        assertEquals(20, fakeDao.storage.size)
     }
 }
