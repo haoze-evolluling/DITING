@@ -119,6 +119,14 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".onboarding.ModeOnboardingActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.DITING"
+            android:launchMode="standard"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".LogRouteActivity"
             android:exported="false"
             android:label="@string/app_name"

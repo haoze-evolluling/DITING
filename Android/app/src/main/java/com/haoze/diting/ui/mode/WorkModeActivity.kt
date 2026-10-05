@@ -73,7 +73,13 @@ class WorkModeActivity : AppLocalizedActivity() {
                     },
                     onTransitionFinished = {
                         val modeToReturn = selectedTargetMode ?: WorkModeStore.getAppWorkMode(this)
-                        returnToMainActivity(modeToReturn)
+                        if (isFirstLaunch || !com.haoze.diting.permission.ModePermissionStore.isOnboardingCompleted(this, modeToReturn)) {
+                            com.haoze.diting.onboarding.ModeOnboardingActivity.start(this, modeToReturn, isFirstLaunch = isFirstLaunch)
+                            finish()
+                            overrideFadeTransition()
+                        } else {
+                            returnToMainActivity(modeToReturn)
+                        }
                     },
                     modifier = Modifier.fillMaxSize()
                 )

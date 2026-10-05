@@ -46,6 +46,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.haoze.diting.express.ExpressVpnController
+import com.haoze.diting.notification.NotificationPermissionHelper
+import com.haoze.diting.permission.AppPermission
+import com.haoze.diting.permission.ModeReadinessBanner
+import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.DataResetNoticeCard
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.MANAGE_PROVIDER_ID
@@ -125,6 +129,24 @@ internal fun ExpressHomeContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        ModeReadinessBanner(
+            mode = AppWorkMode.EXPRESS,
+            onFixPermission = { perm ->
+                when (perm) {
+                    AppPermission.VPN -> onToggle(isRunning)
+                    AppPermission.NOTIFICATION -> NotificationPermissionHelper.openNotificationSettings(context)
+                    AppPermission.BATTERY_OPTIMIZATION -> {
+                        val intent = perm.createRequestIntent(context)
+                        if (intent != null) {
+                            runCatching { context.startActivity(intent) }
+                        }
+                    }
+                    else -> {}
+                }
+            },
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
         AnimatedVisibility(
             visible = showDataResetNotice,
             enter = fadeIn(animationSpec = tween(180)) + scaleIn(initialScale = 0.95f),

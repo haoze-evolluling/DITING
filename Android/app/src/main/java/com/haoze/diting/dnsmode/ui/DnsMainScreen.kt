@@ -162,6 +162,7 @@ fun DnsMainScreen(
                         stats = uiState.stats,
                         onToggleService = viewModel::toggleService,
                         onNavigateToServers = { navigateToPage(DnsNavTab.SERVERS.ordinal) },
+                        onRequestIgnoreBatteryOptimization = onRequestIgnoreBatteryOptimization,
                         contentBottomPadding = 108.dp
                     )
                     DnsNavTab.SERVERS -> DnsServersScreen(

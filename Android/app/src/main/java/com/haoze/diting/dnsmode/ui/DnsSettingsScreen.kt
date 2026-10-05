@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material3.MaterialTheme
@@ -186,14 +187,26 @@ fun DnsSettingsScreen(
 
         item {
             SettingsSurfaceGroup(
-                content = listOf {
-                    SettingsNavigationItem(
-                        title = localizedText("重新选择工作模式"),
-                        subtitle = localizedText("浏览所有工作模式详情并重新选择"),
-                        leadingIcon = Icons.Default.Tune,
-                        onClick = onSelectMode
-                    )
-                }
+                content = listOf(
+                    {
+                        SettingsNavigationItem(
+                            title = localizedText("使用指南与新手引导"),
+                            subtitle = localizedText("查看服务器模式架构原理、局域网配置与就绪指引"),
+                            leadingIcon = Icons.AutoMirrored.Outlined.HelpOutline,
+                            onClick = {
+                                com.haoze.diting.onboarding.ModeOnboardingActivity.start(context, com.haoze.diting.ui.mode.AppWorkMode.DNS)
+                            }
+                        )
+                    },
+                    {
+                        SettingsNavigationItem(
+                            title = localizedText("重新选择工作模式"),
+                            subtitle = localizedText("浏览所有工作模式详情并重新选择"),
+                            leadingIcon = Icons.Default.Tune,
+                            onClick = onSelectMode
+                        )
+                    }
+                )
             )
         }
     }

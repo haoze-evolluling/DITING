@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VerifiedUser
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -208,10 +209,19 @@ internal fun ExpressFeatureHubScreen(
                 }
             ),
 
-            // 5. 关于软件 (4 项)
+            // 5. 关于软件 (5 项)
             ExpressFeatureHubCategory(
                 context.getString(R.string.feature_hub_about_app),
                 buildList {
+                    add(
+                        ExpressFeatureHubItem(
+                            title = "使用指南与向导",
+                            icon = Icons.AutoMirrored.Outlined.HelpOutline,
+                            onClick = {
+                                com.haoze.diting.onboarding.ModeOnboardingActivity.start(context, com.haoze.diting.ui.mode.AppWorkMode.EXPRESS)
+                            }
+                        )
+                    )
                     if (isVisible(HiddenFeature.APP_INFO)) {
                         add(ExpressFeatureHubItem(context.getString(R.string.feature_hub_app_info), Icons.Filled.Info, onNavigateToAbout))
                     }
