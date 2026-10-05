@@ -134,6 +134,7 @@ object ExpressVpnController {
         setPersistedRunning(context, running)
         _isRunning.value = running
         context.sendBroadcast(ExpressVpnIntents.statusBroadcastIntent(context, running))
+        com.haoze.diting.vpn.DitingTileService.requestTileUpdate(context)
     }
 
     private fun getPersistedRunning(context: Context): Boolean =

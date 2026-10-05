@@ -22,9 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.haoze.diting.express.ui.ExpressWorkModeCard
 import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.components.SettingsItemSpacing
@@ -124,21 +126,46 @@ private fun WorkModeSelectionContent(
                     val modes = AppWorkMode.entries
                     modes.forEachIndexed { index, mode ->
                         val isSelected = !isFirstLaunch && mode == currentMode
-                        WorkModeCard(
-                            mode = mode,
-                            isSelected = isSelected,
-                            index = index,
-                            itemCount = modes.size,
-                            onClick = {
-                                if (isFirstLaunch) {
-                                    onModeSelected(mode)
-                                } else if (isSelected) {
-                                    Toast.makeText(context, alreadyInModeText, Toast.LENGTH_SHORT).show()
-                                } else {
-                                    pendingSwitchMode = mode
+                        if (mode == AppWorkMode.EXPRESS) {
+                            ExpressWorkModeCard(
+                                isSelected = isSelected,
+                                index = index,
+                                itemCount = modes.size,
+                                onClick = {
+                                    if (isFirstLaunch) {
+                                        onModeSelected(mode)
+                                    } else if (isSelected) {
+                                        Toast.makeText(context, alreadyInModeText, Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        pendingSwitchMode = mode
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        } else {
+                            val isSupported = mode.isSupportedOnCurrentDevice()
+                            WorkModeCard(
+                                mode = mode,
+                                isSelected = isSelected,
+                                index = index,
+                                itemCount = modes.size,
+                                onClick = {
+                                    if (!isSupported) {
+                                        Toast.makeText(
+                                            context,
+                                            localizedText(context, "${mode.title}仅支持 Android 10 (API 29) 及以上系统"),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else if (isFirstLaunch) {
+                                        onModeSelected(mode)
+                                    } else if (isSelected) {
+                                        Toast.makeText(context, alreadyInModeText, Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        pendingSwitchMode = mode
+                                    }
+                                },
+                                modifier = if (!isSupported) Modifier.alpha(0.45f) else Modifier
+                            )
+                        }
                     }
                 }
 

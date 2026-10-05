@@ -47,10 +47,10 @@ class DitingTileService : TileService() {
 
         // The tile always drives the service of the currently selected work
         // mode; ignoring the mode would start the VPN while DNS mode is active.
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS) {
-            toggleDnsService()
-        } else {
-            toggleVpnService()
+        when (WorkModeStore.getAppWorkMode(this)) {
+            AppWorkMode.DNS -> toggleDnsService()
+            AppWorkMode.EXPRESS -> toggleExpressVpnService()
+            AppWorkMode.NORMAL -> toggleVpnService()
         }
     }
 
@@ -90,6 +90,23 @@ class DitingTileService : TileService() {
         } else {
             // The system consent dialog is needed; collapse the tile and open
             // MainActivity to guide the user
+            openMainActivity(requestVpn = true)
+        }
+    }
+
+    private fun toggleExpressVpnService() {
+        val isRunning = com.haoze.diting.express.ExpressVpnController.isRunning(this)
+        if (isRunning) {
+            com.haoze.diting.express.ExpressVpnController.stop(this)
+            updateTileState(running = false)
+            return
+        }
+
+        val prepareIntent = VpnService.prepare(this)
+        if (prepareIntent == null) {
+            com.haoze.diting.express.ExpressVpnController.start(this)
+            updateTileState(running = true)
+        } else {
             openMainActivity(requestVpn = true)
         }
     }
@@ -145,10 +162,10 @@ class DitingTileService : TileService() {
     }
 
     private fun isCurrentModeServiceRunning(): Boolean {
-        return if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS) {
-            DnsModeManager.status.value.isRunning
-        } else {
-            DnsVpnService.isRunning(this)
+        return when (WorkModeStore.getAppWorkMode(this)) {
+            AppWorkMode.DNS -> DnsModeManager.status.value.isRunning
+            AppWorkMode.EXPRESS -> com.haoze.diting.express.ExpressVpnController.isRunning(this)
+            AppWorkMode.NORMAL -> DnsVpnService.isRunning(this)
         }
     }
 

@@ -22,6 +22,10 @@ object RuntimeDnsSettingsRefresher {
             pingDnsModeFilterReload(appContext, "Failed to request DNS mode filter reload")
             return
         }
+        if (WorkModeStore.getAppWorkMode(appContext) == AppWorkMode.EXPRESS) {
+            com.haoze.diting.express.ExpressSettingsRefresher.refreshIfRunning(appContext, reason)
+            return
+        }
         if (!DnsVpnService.isRunning(appContext)) return
 
         runCatching {
@@ -43,6 +47,10 @@ object RuntimeDnsSettingsRefresher {
             pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule sync")
             return
         }
+        if (WorkModeStore.getAppWorkMode(appContext) == AppWorkMode.EXPRESS) {
+            com.haoze.diting.express.ExpressSettingsRefresher.syncRulesIfRunning(appContext)
+            return
+        }
         if (!DnsVpnService.isRunning(appContext)) return
         runCatching {
             appContext.startService(DnsVpnService.syncRuleIntent(appContext, ruleType, pattern, scope))
@@ -62,6 +70,10 @@ object RuntimeDnsSettingsRefresher {
         val appContext = context.applicationContext
         if (dataset == RuleDataset.DNS_MODE) {
             pingDnsModeFilterReload(appContext, "Failed to request DNS mode rule index refresh")
+            return
+        }
+        if (WorkModeStore.getAppWorkMode(appContext) == AppWorkMode.EXPRESS) {
+            com.haoze.diting.express.ExpressSettingsRefresher.syncRulesIfRunning(appContext)
             return
         }
         if (!DnsVpnService.isRunning(appContext)) return

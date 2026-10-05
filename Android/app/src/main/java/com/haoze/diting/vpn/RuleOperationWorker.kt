@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.Uri
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.BackoffPolicy
@@ -500,11 +501,21 @@ class RuleOperationWorker(
         RuleOperationType.ADD_ALLOW_RULE -> applicationContext.getString(R.string.operation_add_allow_rule)
     }
 
-    private fun createForegroundInfo(title: String, current: Int, total: Int) = ForegroundInfo(
-        notificationId,
-        buildNotification(title, current, total, ongoing = true),
-        ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-    )
+    private fun createForegroundInfo(title: String, current: Int, total: Int): ForegroundInfo {
+        val notification = buildNotification(title, current, total, ongoing = true)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(
+                notificationId,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        } else {
+            ForegroundInfo(
+                notificationId,
+                notification
+            )
+        }
+    }
 
     private fun notifyProgress(title: String, current: Int, total: Int) {
         notificationManager.notify(notificationId, buildNotification(title, current, total, ongoing = true))
@@ -543,10 +554,12 @@ class RuleOperationWorker(
     )
 
     private fun createNotificationChannel() {
-        val manager = applicationContext.getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, applicationContext.getString(R.string.rule_update_channel), NotificationManager.IMPORTANCE_LOW)
-        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = applicationContext.getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, applicationContext.getString(R.string.rule_update_channel), NotificationManager.IMPORTANCE_LOW)
+            )
+        }
     }
 
     private companion object {

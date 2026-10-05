@@ -444,7 +444,12 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     val previousMode = WorkModeStore.getAppWorkMode(this)
                     WorkModeStore.setAppWorkMode(this, selectedMode)
                     recordWorkModeChanged()
-                    if (selectedMode == AppWorkMode.DNS) {
+                    if (selectedMode == AppWorkMode.EXPRESS) {
+                        com.haoze.diting.express.ExpressModeLauncher.handleRouteModeSelected(this, previousMode) { onBack() }
+                    } else if (selectedMode == AppWorkMode.DNS) {
+                        if (previousMode == AppWorkMode.EXPRESS) {
+                            com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
+                        }
                         try {
                             startService(DnsVpnService.stopIntent(this))
                         } catch (e: Exception) {
@@ -465,6 +470,9 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                         startActivity(intent)
                         finish()
                     } else {
+                        if (previousMode == AppWorkMode.EXPRESS) {
+                            com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
+                        }
                         onBack()
                     }
                 }

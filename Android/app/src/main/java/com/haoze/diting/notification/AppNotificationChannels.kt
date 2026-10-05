@@ -3,6 +3,7 @@ package com.haoze.diting.notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import com.haoze.diting.R
 import com.haoze.diting.ui.localizedText
 
@@ -22,6 +23,9 @@ object AppNotificationChannels {
      * Creates or updates all notification channels.
      */
     fun createAllChannels(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return
+        }
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
 
         // 1. VPN foreground service notification channel
