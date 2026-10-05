@@ -157,14 +157,6 @@ class MainActivity : AppLocalizedActivity() {
         enableEdgeToEdge()
         AppSettings.performStartupSelfCheck(this)
         applyRecentsPrivacySetting()
-        if (SystemSettingsStore.isInitialAgreementAccepted(this) &&
-            WorkModeStore.hasSelectedWorkMode(this) &&
-            WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS
-        ) {
-            startActivity(DnsMainActivity.createIntent(this))
-            finish()
-            return
-        }
         if (com.haoze.diting.crash.CrashLogManager.consumePendingAutoExportNotice(this)) {
             showToast("软件连续异常退出，崩溃日志已自动备份至系统“下载”目录", Toast.LENGTH_LONG)
         }
@@ -200,9 +192,6 @@ class MainActivity : AppLocalizedActivity() {
                     hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this@MainActivity)
                     if (currentWorkMode == AppWorkMode.DNS) {
                         stopVpnService()
-                        startActivity(DnsMainActivity.createIntent(this@MainActivity))
-                        finish()
-                        return@LaunchedEffect
                     } else if (currentWorkMode == AppWorkMode.EXPRESS) {
                         initializeAcceptedExperience()
                         com.haoze.diting.express.ExpressModeLauncher.handleWorkModeSwitch(this@MainActivity, currentWorkMode)
@@ -251,9 +240,8 @@ class MainActivity : AppLocalizedActivity() {
                                             WorkModeStore.setWorkModeSelected(this@MainActivity, true)
                                             if (selectedMode == AppWorkMode.DNS) {
                                                 stopVpnService()
-                                                startActivity(DnsMainActivity.createIntent(this@MainActivity))
-                                                disableWindowTransitions()
-                                                finish()
+                                                currentWorkMode = selectedMode
+                                                hasSelectedWorkMode = true
                                             } else if (selectedMode == AppWorkMode.EXPRESS) {
                                                 com.haoze.diting.express.ExpressModeLauncher.handleModeSelected(this@MainActivity, selectedMode) {
                                                     currentWorkMode = selectedMode
@@ -296,6 +284,19 @@ class MainActivity : AppLocalizedActivity() {
                                         bottomBarRefreshRequested = bottomBarRefreshRequested,
                                         onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false },
                                         viewModel = mainViewModel
+                                    )
+                                } else if (mode == AppWorkMode.DNS) {
+                                    com.haoze.diting.dnsmode.ui.DnsModeHost(
+                                        onSwitchToNormalMode = {
+                                            com.haoze.diting.dnsmode.backend.DnsModeManager.stopService(this@MainActivity)
+                                            WorkModeStore.setAppWorkMode(this@MainActivity, AppWorkMode.NORMAL)
+                                            currentWorkMode = AppWorkMode.NORMAL
+                                            initializeAcceptedExperience()
+                                        },
+                                        onSelectMode = {
+                                            launchSettings(Routes.WORK_MODE_SELECTION)
+                                        },
+                                        modifier = Modifier.fillMaxSize()
                                     )
                                 } else {
                                     MainScreen(
@@ -419,7 +420,9 @@ class MainActivity : AppLocalizedActivity() {
             return
         }
         applyRecentsPrivacySetting()
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS) {
+            // DNS mode lifecycle and status are managed inside DnsModeHost
+        } else if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
             val isRunning = com.haoze.diting.express.ExpressVpnController.isRunning(this)
             val legacyIntent = Intent(DnsVpnService.ACTION_VPN_STATUS_CHANGED).apply {
                 `package` = packageName
@@ -462,6 +465,9 @@ class MainActivity : AppLocalizedActivity() {
     }
 
     private fun onToggleVpn(isRunning: Boolean) {
+        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS) {
+            return
+        }
         if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
             com.haoze.diting.express.ExpressModeLauncher.toggle(this, ::prepareVpn)
             return

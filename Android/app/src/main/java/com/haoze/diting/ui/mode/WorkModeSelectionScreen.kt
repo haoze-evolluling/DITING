@@ -38,7 +38,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.express.ui.ExpressWorkModeCard
-import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsScaffold
@@ -105,7 +104,7 @@ fun WorkModeSelectionScreen(
                                         targetValue = 1f,
                                         animationSpec = tween(
                                             durationMillis = TRANSITION_DURATION_MS,
-                                            easing = FastOutSlowInEasing
+                                            easing = MaterialEmphasizedDecelerate
                                         )
                                     )
                                     onModeSelected(mode)
@@ -138,7 +137,7 @@ fun WorkModeSelectionScreen(
                                         targetValue = 1f,
                                         animationSpec = tween(
                                             durationMillis = TRANSITION_DURATION_MS,
-                                            easing = FastOutSlowInEasing
+                                            easing = MaterialEmphasizedDecelerate
                                         )
                                     )
                                     onModeSelected(mode)
@@ -187,22 +186,6 @@ private fun WorkModeSelectionContent(
 ) {
     val context = LocalContext.current
     val alreadyInModeText = localizedText("当前已处于该模式")
-    var pendingSwitchMode by remember { mutableStateOf<AppWorkMode?>(null) }
-
-    if (pendingSwitchMode != null) {
-        val targetMode = pendingSwitchMode!!
-        AppConfirmDialog(
-            onDismissRequest = { pendingSwitchMode = null },
-            title = localizedText("确认切换运行模式"),
-            message = localizedText("切换模式将重启网络服务并进入对应主界面，您的规则与配置均安全保留。确认切换吗？"),
-            confirmLabel = localizedText("确认切换"),
-            cancelLabel = localizedText("取消"),
-            onConfirm = {
-                pendingSwitchMode = null
-                onTriggerTransition(targetMode)
-            }
-        )
-    }
 
     Box(
         modifier = modifier
@@ -259,12 +242,10 @@ private fun WorkModeSelectionContent(
                                 itemCount = modes.size,
                                 onClick = {
                                     if (isTransitioning) return@ExpressWorkModeCard
-                                    if (isFirstLaunch) {
-                                        onTriggerTransition(mode)
-                                    } else if (isSelected) {
+                                    if (isSelected) {
                                         Toast.makeText(context, alreadyInModeText, Toast.LENGTH_SHORT).show()
                                     } else {
-                                        pendingSwitchMode = mode
+                                        onTriggerTransition(mode)
                                     }
                                 },
                                 modifier = cardPositionModifier
@@ -284,12 +265,10 @@ private fun WorkModeSelectionContent(
                                             localizedText(context, "${mode.title}仅支持 Android 10 (API 29) 及以上系统"),
                                             Toast.LENGTH_SHORT
                                         ).show()
-                                    } else if (isFirstLaunch) {
-                                        onTriggerTransition(mode)
                                     } else if (isSelected) {
                                         Toast.makeText(context, alreadyInModeText, Toast.LENGTH_SHORT).show()
                                     } else {
-                                        pendingSwitchMode = mode
+                                        onTriggerTransition(mode)
                                     }
                                 },
                                 modifier = cardPositionModifier.then(

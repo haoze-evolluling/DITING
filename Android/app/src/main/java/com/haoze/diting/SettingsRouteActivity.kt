@@ -497,38 +497,23 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     WorkModeStore.setAppWorkMode(this, selectedMode)
                     recordWorkModeChanged()
                     if (selectedMode == AppWorkMode.EXPRESS) {
-                        com.haoze.diting.express.ExpressModeLauncher.handleRouteModeSelected(this, previousMode) {
+                        com.haoze.diting.express.ExpressModeLauncher.switchToExpress(this, previousMode) {
                             disableWindowTransitions()
                             onBack()
                         }
-                    } else if (selectedMode == AppWorkMode.DNS) {
-                        if (previousMode == AppWorkMode.EXPRESS) {
-                            com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
-                        }
-                        try {
-                            startService(DnsVpnService.stopIntent(this))
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Failed to stop VPN service when switching to DNS mode", e)
-                        }
-                        // Keep the persistent monitor from outliving the VPN.
-                        VpnMonitorManager.stop(this)
-                        val intent = DnsMainActivity.createIntent(this).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        }
-                        startActivity(intent)
-                        disableWindowTransitions()
-                        finish()
-                    } else if (previousMode == AppWorkMode.DNS) {
-                        DnsModeManager.stopService(this)
-                        val intent = Intent(this, MainActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        }
-                        startActivity(intent)
-                        disableWindowTransitions()
-                        finish()
                     } else {
                         if (previousMode == AppWorkMode.EXPRESS) {
                             com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
+                        } else if (previousMode == AppWorkMode.DNS) {
+                            DnsModeManager.stopService(this)
+                        }
+                        if (selectedMode == AppWorkMode.DNS) {
+                            try {
+                                startService(DnsVpnService.stopIntent(this))
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Failed to stop VPN service when switching to DNS mode", e)
+                            }
+                            VpnMonitorManager.stop(this)
                         }
                         disableWindowTransitions()
                         onBack()

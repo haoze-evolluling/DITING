@@ -35,9 +35,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
 import com.haoze.diting.ui.localizedText
 import kotlin.math.roundToInt
-import kotlin.math.sin
+
+/**
+ * Material 3 Emphasized Decelerate non-linear easing curve.
+ */
+val MaterialEmphasizedDecelerate: Easing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
 
 /**
  * Bounds and corner radii of a mode card prior to expansion.
@@ -93,11 +99,10 @@ fun WorkModeExpansionOverlay(
     // 2. Corner radius: Constant default card curvature (28dp on all 4 corners)
     val cardShape = RoundedCornerShape(28.dp)
 
-    // 3. Color & elevation morphing
+    // 3. Color morphing (no shadow on card edges)
     val startContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val targetContainerColor = MaterialTheme.colorScheme.surface
     val currentColor = lerp(startContainerColor, targetContainerColor, progress)
-    val elevationDp = (8f * sin(progress * Math.PI.toFloat())).coerceAtLeast(0f).dp
 
     // 4. Content crossfade values (phased progression over 1000ms)
     val cardContentAlpha = (1f - progress / 0.35f).coerceIn(0f, 1f)
@@ -117,7 +122,7 @@ fun WorkModeExpansionOverlay(
         Surface(
             shape = cardShape,
             color = currentColor,
-            shadowElevation = elevationDp,
+            shadowElevation = 0.dp,
             modifier = Modifier.fillMaxSize()
         ) {
             Box(
