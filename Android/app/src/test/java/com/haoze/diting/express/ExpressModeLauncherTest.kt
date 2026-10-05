@@ -41,11 +41,18 @@ class ExpressModeLauncherTest {
     }
 
     @Test
-    fun `ExpressEnvironmentChecker does not throw exception`() {
-        // Under JVM unit testing, Build.VERSION.SDK_INT is 0
-        // This validates no linkage / classloader issues occur when invoking the checker
-        val supported = ExpressEnvironmentChecker.isSupported()
-        // SDK_INT is 0 in standard JVM, so minApiLevel 24 will evaluate to false
-        assertEquals(false, supported)
+    fun `ExpressEnvironmentChecker and AppWorkMode isSupportedOnCurrentDevice evaluate consistently`() {
+        val supportedChecker = ExpressEnvironmentChecker.isSupported()
+        val supportedMode = AppWorkMode.EXPRESS.isSupportedOnCurrentDevice()
+        assertEquals(false, supportedChecker)
+        assertEquals(false, supportedMode)
+        assertEquals(false, AppWorkMode.NORMAL.isSupportedOnCurrentDevice())
+        assertEquals(false, AppWorkMode.DNS.isSupportedOnCurrentDevice())
+    }
+
+    @Test
+    fun `ExpressVpnIntents action mappings are valid`() {
+        assertEquals("com.haoze.diting.express.REFRESH_FLOATING_LOG", ExpressVpnIntents.ACTION_REFRESH_FLOATING_LOG)
+        assertEquals("com.haoze.diting.express.FLOATING_LOG_APP_STATE", ExpressVpnIntents.ACTION_FLOATING_LOG_APP_STATE)
     }
 }

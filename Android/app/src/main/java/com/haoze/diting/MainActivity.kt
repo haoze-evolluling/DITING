@@ -196,6 +196,7 @@ class MainActivity : AppLocalizedActivity() {
                         finish()
                         return@LaunchedEffect
                     } else if (currentWorkMode == AppWorkMode.EXPRESS) {
+                        initializeAcceptedExperience()
                         com.haoze.diting.express.ExpressModeLauncher.handleWorkModeSwitch(this@MainActivity, currentWorkMode)
                     } else {
                         initializeAcceptedExperience()
@@ -216,9 +217,8 @@ class MainActivity : AppLocalizedActivity() {
                                     SystemSettingsStore.setInitialAgreementAccepted(this@MainActivity)
                                     initialAgreementAccepted = true
                                     if (WorkModeStore.hasSelectedWorkMode(this@MainActivity)) {
-                                        if (WorkModeStore.getAppWorkMode(this@MainActivity) == AppWorkMode.NORMAL) {
-                                            initializeAcceptedExperience()
-                                        } else if (WorkModeStore.getAppWorkMode(this@MainActivity) == AppWorkMode.EXPRESS) {
+                                        initializeAcceptedExperience()
+                                        if (WorkModeStore.getAppWorkMode(this@MainActivity) == AppWorkMode.EXPRESS) {
                                             com.haoze.diting.express.ExpressModeLauncher.switchToExpress(this@MainActivity, AppWorkMode.EXPRESS)
                                         }
                                     }
@@ -240,6 +240,7 @@ class MainActivity : AppLocalizedActivity() {
                                         com.haoze.diting.express.ExpressModeLauncher.handleModeSelected(this@MainActivity, selectedMode) {
                                             currentWorkMode = selectedMode
                                             hasSelectedWorkMode = true
+                                            initializeAcceptedExperience()
                                         }
                                     } else {
                                         currentWorkMode = selectedMode
@@ -310,9 +311,8 @@ class MainActivity : AppLocalizedActivity() {
         if (SystemSettingsStore.isInitialAgreementAccepted(this) &&
             WorkModeStore.hasSelectedWorkMode(this)
         ) {
-            if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.NORMAL) {
-                initializeAcceptedExperience()
-            } else if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+            initializeAcceptedExperience()
+            if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
                 com.haoze.diting.express.ExpressModeLauncher.switchToExpress(this, AppWorkMode.EXPRESS)
             }
         }
@@ -337,7 +337,9 @@ class MainActivity : AppLocalizedActivity() {
             }
         }
         handleAutoStartIfNeeded(intent)
-        VpnMonitorManager.sync(this)
+        if (WorkModeStore.getAppWorkMode(this) != AppWorkMode.EXPRESS) {
+            VpnMonitorManager.sync(this)
+        }
     }
 
     private fun declineInitialAgreement() {
@@ -357,11 +359,7 @@ class MainActivity : AppLocalizedActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
-            com.haoze.diting.express.ExpressVpnController.updateFloatingLogAppState(this, true)
-        } else {
-            DnsVpnService.updateFloatingLogAppState(this, true)
-        }
+        com.haoze.diting.express.ExpressModeLauncher.updateFloatingLogAppState(this, true)
     }
 
     override fun onResume() {
@@ -373,19 +371,22 @@ class MainActivity : AppLocalizedActivity() {
             return
         }
         applyRecentsPrivacySetting()
-        mainViewModel.refreshStatus()
-        if (WorkModeStore.getAppWorkMode(this) != AppWorkMode.EXPRESS) {
+        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+            val isRunning = com.haoze.diting.express.ExpressVpnController.isRunning(this)
+            val legacyIntent = Intent(DnsVpnService.ACTION_VPN_STATUS_CHANGED).apply {
+                `package` = packageName
+                putExtra(DnsVpnService.EXTRA_VPN_RUNNING, isRunning)
+            }
+            sendBroadcast(legacyIntent)
+        } else {
+            mainViewModel.refreshStatus()
             VpnMonitorManager.sync(this)
         }
         appUpdateHost.refreshDownloadState()
     }
 
     override fun onStop() {
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
-            com.haoze.diting.express.ExpressVpnController.updateFloatingLogAppState(this, false)
-        } else {
-            DnsVpnService.updateFloatingLogAppState(this, false)
-        }
+        com.haoze.diting.express.ExpressModeLauncher.updateFloatingLogAppState(this, false)
         appUpdateHost.cancelActiveDownload()
         super.onStop()
     }
@@ -402,13 +403,12 @@ class MainActivity : AppLocalizedActivity() {
         if (intent?.getBooleanExtra(EXTRA_AUTO_START_VPN, false) != true) return
         // Consume the extra so auto-start is not triggered again.
         setIntent(intent.replaceExtras(null))
-        mainViewModel.refreshStatus { isRunning ->
-            if (!isRunning) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermissionHelper.hasPermission(this)) {
-                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                } else {
-                    prepareVpn()
-                }
+        val isRunning = com.haoze.diting.express.ExpressModeLauncher.isCurrentModeRunning(this)
+        if (!isRunning) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermissionHelper.hasPermission(this)) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                prepareVpn()
             }
         }
     }

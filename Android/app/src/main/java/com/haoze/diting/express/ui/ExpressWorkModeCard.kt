@@ -38,17 +38,7 @@ import com.haoze.diting.ui.mode.AppWorkMode
  * Ensures the runtime is at least Android 7+ (API 24) and running on a 64-bit architecture.
  */
 object ExpressEnvironmentChecker {
-    fun isSupported(): Boolean {
-        val apiSupported = Build.VERSION.SDK_INT >= AppWorkMode.EXPRESS.minApiLevel
-        val is64Bit = runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                Process.is64Bit()
-            } else {
-                Build.SUPPORTED_64_BIT_ABIS?.isNotEmpty() == true
-            }
-        }.getOrDefault(false)
-        return apiSupported && is64Bit
-    }
+    fun isSupported(): Boolean = AppWorkMode.EXPRESS.isSupportedOnCurrentDevice()
 }
 
 /**

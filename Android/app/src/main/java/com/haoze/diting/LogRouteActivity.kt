@@ -54,7 +54,7 @@ class LogRouteActivity : AppLocalizedActivity() {
 
     override fun onStart() {
         super.onStart()
-        DnsVpnService.updateFloatingLogAppState(this, true)
+        com.haoze.diting.express.ExpressModeLauncher.updateFloatingLogAppState(this, true)
     }
 
     override fun onResume() {
@@ -63,7 +63,7 @@ class LogRouteActivity : AppLocalizedActivity() {
     }
 
     override fun onStop() {
-        DnsVpnService.updateFloatingLogAppState(this, false)
+        com.haoze.diting.express.ExpressModeLauncher.updateFloatingLogAppState(this, false)
         super.onStop()
     }
 

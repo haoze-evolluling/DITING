@@ -134,6 +134,11 @@ object ExpressVpnController {
         setPersistedRunning(context, running)
         _isRunning.value = running
         context.sendBroadcast(ExpressVpnIntents.statusBroadcastIntent(context, running))
+        val legacyIntent = Intent(com.haoze.diting.vpn.DnsVpnService.ACTION_VPN_STATUS_CHANGED).apply {
+            `package` = context.packageName
+            putExtra(com.haoze.diting.vpn.DnsVpnService.EXTRA_VPN_RUNNING, running)
+        }
+        context.sendBroadcast(legacyIntent)
         com.haoze.diting.vpn.DitingTileService.requestTileUpdate(context)
     }
 

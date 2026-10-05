@@ -1,6 +1,7 @@
 package com.haoze.diting.ui.mode
 
 import android.os.Build
+import android.os.Process
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Dns
@@ -44,8 +45,20 @@ enum class AppWorkMode(
         icon = Icons.Outlined.Bolt
     );
 
-    fun isSupportedOnCurrentDevice(): Boolean =
-        Build.VERSION.SDK_INT >= minApiLevel
+    fun isSupportedOnCurrentDevice(): Boolean {
+        if (Build.VERSION.SDK_INT < minApiLevel) return false
+        if (this == EXPRESS) {
+            val is64Bit = runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Process.is64Bit()
+                } else {
+                    Build.SUPPORTED_64_BIT_ABIS?.isNotEmpty() == true
+                }
+            }.getOrDefault(false)
+            if (!is64Bit) return false
+        }
+        return true
+    }
 
     companion object {
         fun fromStorageValue(value: String?): AppWorkMode =

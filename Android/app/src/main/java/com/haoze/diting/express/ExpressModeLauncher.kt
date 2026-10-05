@@ -59,6 +59,7 @@ object ExpressModeLauncher {
         WorkModeStore.setWorkModeSelected(appContext, true)
 
         AppNotificationChannels.createAllChannels(appContext)
+        com.haoze.diting.express.notification.ExpressNotificationBuilder.ensureChannel(appContext)
         ExpressVpnController.initialize(appContext)
 
         onComplete?.invoke()
@@ -144,6 +145,28 @@ object ExpressModeLauncher {
             } else {
                 onRequestVpnPermission?.invoke()
             }
+        }
+    }
+
+    /**
+     * Dispatches floating log foreground/background state to the active mode service.
+     */
+    fun updateFloatingLogAppState(context: Context, foreground: Boolean) {
+        if (WorkModeStore.getAppWorkMode(context) == AppWorkMode.EXPRESS) {
+            ExpressVpnController.updateFloatingLogAppState(context, foreground)
+        } else {
+            DnsVpnService.updateFloatingLogAppState(context, foreground)
+        }
+    }
+
+    /**
+     * Checks whether the service for the current mode is running.
+     */
+    fun isCurrentModeRunning(context: Context): Boolean {
+        return if (WorkModeStore.getAppWorkMode(context) == AppWorkMode.EXPRESS) {
+            ExpressVpnController.isRunning(context)
+        } else {
+            DnsVpnService.isRunning(context)
         }
     }
 }
