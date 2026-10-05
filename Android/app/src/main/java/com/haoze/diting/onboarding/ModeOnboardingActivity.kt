@@ -26,8 +26,6 @@ import com.haoze.diting.permission.AppPermission
 import com.haoze.diting.permission.ModePermissionStore
 import com.haoze.diting.ui.AppThemeSurface
 import com.haoze.diting.ui.PermissionDisclosureSettings
-import com.haoze.diting.ui.components.AppConfirmDialog
-import com.haoze.diting.ui.localizedText
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.mode.overrideFadeTransition
@@ -51,7 +49,6 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         get() = intent.getBooleanExtra(EXTRA_FIRST_LAUNCH, false)
 
     private val permissionStates = mutableStateMapOf<AppPermission, Boolean>()
-    private var showAppListDisclosure by mutableStateOf(false)
 
     private val vpnLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -108,22 +105,6 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-
-                if (showAppListDisclosure) {
-                    AppConfirmDialog(
-                        onDismissRequest = { showAppListDisclosure = false },
-                        title = localizedText("应用列表访问"),
-                        message = localizedText("为了让你选择需要排除、添加白名单或进行流量检查的应用，谛听需要在本地读取设备上已安装的应用列表。谛听承诺仅在本地安全读取，不会读取应用私有数据，也不会上传应用列表。"),
-                        confirmLabel = localizedText("允许"),
-                        cancelLabel = localizedText("暂不允许"),
-                        onConfirm = {
-                            PermissionDisclosureSettings.setAppListExplained(this@ModeOnboardingActivity, true)
-                            PermissionDisclosureSettings.markAppListAvailable(this@ModeOnboardingActivity)
-                            showAppListDisclosure = false
-                            refreshPermissionStates()
-                        }
-                    )
-                }
             }
         }
     }
@@ -176,16 +157,9 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
                 }
             }
             AppPermission.PACKAGE_QUERY -> {
-                if (!PermissionDisclosureSettings.isAppListExplained(this)) {
-                    showAppListDisclosure = true
-                } else {
-                    val intent = permission.createRequestIntent(this)
-                    if (intent != null) {
-                        try {
-                            genericSettingsLauncher.launch(intent)
-                        } catch (_: ActivityNotFoundException) {}
-                    }
-                }
+                PermissionDisclosureSettings.setAppListExplained(this, true)
+                PermissionDisclosureSettings.markAppListAvailable(this)
+                refreshPermissionStates()
             }
         }
     }
