@@ -16,8 +16,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.unit.dp
 import com.haoze.diting.ui.components.AppConfirmDialog
 import androidx.compose.material3.Text
@@ -64,13 +66,6 @@ import com.haoze.diting.ui.InitialAgreementDialog
 import com.haoze.diting.ui.PermissionDisclosure
 import com.haoze.diting.ui.PermissionDisclosureDialog
 import com.haoze.diting.ui.mode.disableWindowTransitions
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 
 private const val DATABASE_WARMUP_DELAY_MS = 500L
 
@@ -170,10 +165,45 @@ class MainActivity : AppLocalizedActivity() {
             var hasSelectedWorkMode by remember {
                 mutableStateOf(WorkModeStore.hasSelectedWorkMode(this))
             }
+            var isSelectingWorkMode by remember {
+                mutableStateOf(false)
+            }
+            var resetToHomeTrigger by remember {
+                mutableLongStateOf(0L)
+            }
             var themeMode by remember { mutableStateOf(AppearanceSettingsStore.getAppThemeMode(this)) }
             var colorStyle by remember { mutableStateOf(AppearanceSettingsStore.getThemeColorStyle(this)) }
             var backgroundEnabled by remember { mutableStateOf(AppearanceSettingsStore.isCustomBackgroundEnabled(this)) }
             var backgroundUri by remember { mutableStateOf(AppearanceSettingsStore.getCustomBackgroundUri(this)) }
+
+            fun switchWorkMode(selectedMode: AppWorkMode) {
+                val previousMode = currentWorkMode
+                WorkModeStore.setAppWorkMode(this@MainActivity, selectedMode)
+                WorkModeStore.setWorkModeSelected(this@MainActivity, true)
+                hasSelectedWorkMode = true
+                resetToHomeTrigger = System.currentTimeMillis()
+
+                if (previousMode == AppWorkMode.DNS && selectedMode != AppWorkMode.DNS) {
+                    com.haoze.diting.dnsmode.backend.DnsModeManager.stopService(this@MainActivity)
+                } else if (previousMode == AppWorkMode.EXPRESS && selectedMode != AppWorkMode.EXPRESS) {
+                    com.haoze.diting.express.ExpressModeLauncher.stopExpress(this@MainActivity)
+                }
+
+                if (selectedMode == AppWorkMode.DNS) {
+                    stopVpnService()
+                    VpnMonitorManager.stop(this@MainActivity)
+                    currentWorkMode = selectedMode
+                } else if (selectedMode == AppWorkMode.EXPRESS) {
+                    com.haoze.diting.express.ExpressModeLauncher.handleModeSelected(this@MainActivity, selectedMode) {
+                        currentWorkMode = selectedMode
+                        initializeAcceptedExperience()
+                    }
+                } else {
+                    currentWorkMode = selectedMode
+                    initializeAcceptedExperience()
+                }
+            }
+
             LaunchedEffect(mainThemeRefreshRequested, backgroundRefreshRequested, workModeRefreshRequested) {
                 if (mainThemeRefreshRequested) {
                     themeMode = AppearanceSettingsStore.getAppThemeMode(this@MainActivity)
@@ -188,16 +218,8 @@ class MainActivity : AppLocalizedActivity() {
                     backgroundRefreshRequested = false
                 }
                 if (workModeRefreshRequested) {
-                    currentWorkMode = WorkModeStore.getAppWorkMode(this@MainActivity)
-                    hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this@MainActivity)
-                    if (currentWorkMode == AppWorkMode.DNS) {
-                        stopVpnService()
-                    } else if (currentWorkMode == AppWorkMode.EXPRESS) {
-                        initializeAcceptedExperience()
-                        com.haoze.diting.express.ExpressModeLauncher.handleWorkModeSwitch(this@MainActivity, currentWorkMode)
-                    } else {
-                        initializeAcceptedExperience()
-                    }
+                    val targetMode = WorkModeStore.getAppWorkMode(this@MainActivity)
+                    switchWorkMode(targetMode)
                     workModeRefreshRequested = false
                 }
             }
@@ -208,6 +230,10 @@ class MainActivity : AppLocalizedActivity() {
                 backgroundUri = backgroundUri,
                 modifier = Modifier.fillMaxSize()
             ) {
+                        BackHandler(enabled = isSelectingWorkMode) {
+                            isSelectingWorkMode = false
+                        }
+
                         if (!initialAgreementAccepted) {
                             InitialAgreementDialog(
                                 onAccept = {
@@ -223,119 +249,109 @@ class MainActivity : AppLocalizedActivity() {
                                 onDecline = ::declineInitialAgreement
                             )
                         } else {
-                            AnimatedContent(
-                                targetState = Pair(hasSelectedWorkMode, currentWorkMode),
-                                transitionSpec = {
-                                    fadeIn(animationSpec = tween(220, easing = LinearOutSlowInEasing)) togetherWith
-                                        fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing))
-                                },
-                                label = "MainModeContent"
-                            ) { (selected, mode) ->
-                                if (!selected) {
-                                    WorkModeSelectionScreen(
-                                        isFirstLaunch = true,
-                                        currentMode = mode,
-                                        onModeSelected = { selectedMode ->
-                                            WorkModeStore.setAppWorkMode(this@MainActivity, selectedMode)
-                                            WorkModeStore.setWorkModeSelected(this@MainActivity, true)
-                                            if (selectedMode == AppWorkMode.DNS) {
-                                                stopVpnService()
-                                                currentWorkMode = selectedMode
-                                                hasSelectedWorkMode = true
-                                            } else if (selectedMode == AppWorkMode.EXPRESS) {
-                                                com.haoze.diting.express.ExpressModeLauncher.handleModeSelected(this@MainActivity, selectedMode) {
-                                                    currentWorkMode = selectedMode
-                                                    hasSelectedWorkMode = true
-                                                    initializeAcceptedExperience()
-                                                }
-                                            } else {
-                                                currentWorkMode = selectedMode
-                                                hasSelectedWorkMode = true
-                                                initializeAcceptedExperience()
-                                            }
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                if (hasSelectedWorkMode) {
+                                    when (currentWorkMode) {
+                                        AppWorkMode.EXPRESS -> {
+                                            com.haoze.diting.express.ui.ExpressMainScreen(
+                                                onToggle = { isRunning -> onToggleVpn(isRunning) },
+                                                onNavigateToSettings = { launchSettings(Routes.SETTINGS, RuleDataset.EXPRESS) },
+                                                onNavigateToLogs = { launchLogs(RuleDataset.EXPRESS) },
+                                                onNavigateToProviderManagement = { launchSettings(Routes.PROVIDER_MANAGEMENT, RuleDataset.EXPRESS) },
+                                                onNavigateToBootstrapSettings = { launchSettings(Routes.BOOTSTRAP_SETTINGS, RuleDataset.EXPRESS) },
+                                                onNavigateToHomeProviderVisibility = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY, RuleDataset.EXPRESS) },
+                                                onNavigateToRaceModeSettings = { launchSettings(Routes.RACE_MODE_PROVIDERS, RuleDataset.EXPRESS) },
+                                                onNavigateToAppearanceSettings = { launchSettings(Routes.APPEARANCE_SETTINGS) },
+                                                onNavigateToRuleControl = { launchSettings(Routes.RULE_CONTROL, RuleDataset.EXPRESS) },
+                                                onNavigateToBlacklist = { launchSettings(Routes.BLACKLIST_MANAGEMENT, RuleDataset.EXPRESS) },
+                                                onNavigateToWhitelist = { launchSettings(Routes.WHITELIST_MANAGEMENT, RuleDataset.EXPRESS) },
+                                                onNavigateToLogRetentionSettings = { launchSettings(Routes.LOG_RETENTION_SETTINGS, RuleDataset.EXPRESS) },
+                                                onNavigateToHomeProviderVisibilityFromFeatureHub = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY, RuleDataset.EXPRESS) },
+                                                onNavigateToAbout = { launchSettings(Routes.ABOUT) },
+                                                onNavigateToSponsor = { launchSettings(Routes.SPONSOR) },
+                                                onNavigateToSponsorList = { launchSettings(Routes.SPONSOR_LIST) },
+                                                onNavigateToCoBuilderList = { launchSettings(Routes.CO_BUILDER_LIST) },
+                                                onNavigateToAppUpdate = { launchSettings(Routes.APP_UPDATE) },
+                                                onNavigateToDataManagement = { launchSettings(Routes.CONFIG_TRANSFER, RuleDataset.EXPRESS) },
+                                                onNavigateToHiddenFeatures = { launchSettings(Routes.HIDDEN_FEATURES) },
+                                                onNavigateToCacheSettings = { launchSettings(Routes.CACHE_SETTINGS, RuleDataset.EXPRESS) },
+                                                onNavigateToDataCleanup = { launchSettings(Routes.DATA_CLEANUP, RuleDataset.EXPRESS) },
+                                                onNavigateToLogRoute = { r -> launchLogRoute(r, RuleDataset.EXPRESS) },
+                                                onNavigateToSettingsRoute = { r -> launchSettings(r, RuleDataset.EXPRESS) },
+                                                onNavigateToModeSelection = { isSelectingWorkMode = true },
+                                                resetToHomeTrigger = resetToHomeTrigger,
+                                                bottomBarRefreshRequested = bottomBarRefreshRequested,
+                                                onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false },
+                                                viewModel = mainViewModel
+                                            )
                                         }
-                                    )
-                                } else if (mode == AppWorkMode.EXPRESS) {
-                                    com.haoze.diting.express.ui.ExpressMainScreen(
-                                        onToggle = { isRunning -> onToggleVpn(isRunning) },
-                                        onNavigateToSettings = { launchSettings(Routes.SETTINGS, RuleDataset.EXPRESS) },
-                                        onNavigateToLogs = { launchLogs(RuleDataset.EXPRESS) },
-                                        onNavigateToProviderManagement = { launchSettings(Routes.PROVIDER_MANAGEMENT, RuleDataset.EXPRESS) },
-                                        onNavigateToBootstrapSettings = { launchSettings(Routes.BOOTSTRAP_SETTINGS, RuleDataset.EXPRESS) },
-                                        onNavigateToHomeProviderVisibility = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY, RuleDataset.EXPRESS) },
-                                        onNavigateToRaceModeSettings = { launchSettings(Routes.RACE_MODE_PROVIDERS, RuleDataset.EXPRESS) },
-                                        onNavigateToAppearanceSettings = { launchSettings(Routes.APPEARANCE_SETTINGS) },
-                                        onNavigateToRuleControl = { launchSettings(Routes.RULE_CONTROL, RuleDataset.EXPRESS) },
-                                        onNavigateToBlacklist = { launchSettings(Routes.BLACKLIST_MANAGEMENT, RuleDataset.EXPRESS) },
-                                        onNavigateToWhitelist = { launchSettings(Routes.WHITELIST_MANAGEMENT, RuleDataset.EXPRESS) },
-                                        onNavigateToLogRetentionSettings = { launchSettings(Routes.LOG_RETENTION_SETTINGS, RuleDataset.EXPRESS) },
-                                        onNavigateToHomeProviderVisibilityFromFeatureHub = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY, RuleDataset.EXPRESS) },
-                                        onNavigateToAbout = { launchSettings(Routes.ABOUT) },
-                                        onNavigateToSponsor = { launchSettings(Routes.SPONSOR) },
-                                        onNavigateToSponsorList = { launchSettings(Routes.SPONSOR_LIST) },
-                                        onNavigateToCoBuilderList = { launchSettings(Routes.CO_BUILDER_LIST) },
-                                        onNavigateToAppUpdate = { launchSettings(Routes.APP_UPDATE) },
-                                        onNavigateToDataManagement = { launchSettings(Routes.CONFIG_TRANSFER, RuleDataset.EXPRESS) },
-                                        onNavigateToHiddenFeatures = { launchSettings(Routes.HIDDEN_FEATURES) },
-                                        onNavigateToCacheSettings = { launchSettings(Routes.CACHE_SETTINGS, RuleDataset.EXPRESS) },
-                                        onNavigateToDataCleanup = { launchSettings(Routes.DATA_CLEANUP, RuleDataset.EXPRESS) },
-                                        onNavigateToLogRoute = { r -> launchLogRoute(r, RuleDataset.EXPRESS) },
-                                        onNavigateToSettingsRoute = { r -> launchSettings(r, RuleDataset.EXPRESS) },
-                                        bottomBarRefreshRequested = bottomBarRefreshRequested,
-                                        onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false },
-                                        viewModel = mainViewModel
-                                    )
-                                } else if (mode == AppWorkMode.DNS) {
-                                    com.haoze.diting.dnsmode.ui.DnsModeHost(
-                                        onSwitchToNormalMode = {
-                                            com.haoze.diting.dnsmode.backend.DnsModeManager.stopService(this@MainActivity)
-                                            WorkModeStore.setAppWorkMode(this@MainActivity, AppWorkMode.NORMAL)
-                                            currentWorkMode = AppWorkMode.NORMAL
-                                            initializeAcceptedExperience()
+                                        AppWorkMode.DNS -> {
+                                            com.haoze.diting.dnsmode.ui.DnsModeHost(
+                                                onSelectMode = { isSelectingWorkMode = true },
+                                                resetToHomeTrigger = resetToHomeTrigger,
+                                                onSwitchToNormalMode = {
+                                                    switchWorkMode(AppWorkMode.NORMAL)
+                                                },
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        }
+                                        else -> {
+                                            MainScreen(
+                                                onToggle = { isRunning -> onToggleVpn(isRunning) },
+                                                onNavigateToSettings = { launchSettings(Routes.SETTINGS) },
+                                                onNavigateToLogs = ::launchLogs,
+                                                onNavigateToProviderManagement = { launchSettings(Routes.PROVIDER_MANAGEMENT) },
+                                                onNavigateToBootstrapSettings = { launchSettings(Routes.BOOTSTRAP_SETTINGS) },
+                                                onNavigateToHomeProviderVisibility = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
+                                                onNavigateToRaceModeSettings = { launchSettings(Routes.RACE_MODE_PROVIDERS) },
+                                                onNavigateToBlockedApps = { launchSettings(Routes.BLOCKED_APPS) },
+                                                onNavigateToAppAllowlist = { launchSettings(Routes.APP_ALLOWLIST) },
+                                                onNavigateToExcludedApps = { launchSettings(Routes.EXCLUDED_APPS) },
+                                                onNavigateToAppearanceSettings = { launchSettings(Routes.APPEARANCE_SETTINGS) },
+                                                onNavigateToRuleControl = { launchSettings(Routes.RULE_CONTROL) },
+                                                onNavigateToBlacklist = { launchSettings(Routes.BLACKLIST_MANAGEMENT) },
+                                                onNavigateToWhitelist = { launchSettings(Routes.WHITELIST_MANAGEMENT) },
+                                                onNavigateToRewriteList = { launchSettings(Routes.REWRITELIST_MANAGEMENT) },
+                                                onNavigateToAppRules = { launchSettings(Routes.APP_RULE_MANAGEMENT) },
+                                                onNavigateToHttpInspection = { launchSettings(Routes.HTTP_INSPECTION_SETTINGS) },
+                                                onNavigateToLogRetentionSettings = { launchSettings(Routes.LOG_RETENTION_SETTINGS) },
+                                                onNavigateToNetworkTools = { launchSettings(Routes.NETWORK_TOOLS) },
+                                                onNavigateToHomeProviderVisibilityFromFeatureHub = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
+                                                onNavigateToAbout = { launchSettings(Routes.ABOUT) },
+                                                onNavigateToSponsor = { launchSettings(Routes.SPONSOR) },
+                                                onNavigateToSponsorList = { launchSettings(Routes.SPONSOR_LIST) },
+                                                onNavigateToCoBuilderList = { launchSettings(Routes.CO_BUILDER_LIST) },
+                                                onNavigateToAppUpdate = { launchSettings(Routes.APP_UPDATE) },
+                                                onNavigateToDataManagement = { launchSettings(Routes.CONFIG_TRANSFER) },
+                                                onNavigateToTrafficStats = { launchSettings(Routes.APP_TRAFFIC_STATS) },
+                                                onNavigateToHiddenFeatures = { launchSettings(Routes.HIDDEN_FEATURES) },
+                                                onNavigateToCacheSettings = { launchSettings(Routes.CACHE_SETTINGS) },
+                                                onNavigateToOutboundProxy = { launchSettings(Routes.OUTBOUND_PROXY_SETTINGS) },
+                                                onNavigateToDataCleanup = { launchSettings(Routes.DATA_CLEANUP) },
+                                                onNavigateToAgentApiSettings = { launchSettings(Routes.AGENT_API_SETTINGS) },
+                                                onNavigateToLogRoute = ::launchLogRoute,
+                                                onNavigateToSettingsRoute = ::launchSettings,
+                                                onNavigateToModeSelection = { isSelectingWorkMode = true },
+                                                resetToHomeTrigger = resetToHomeTrigger,
+                                                bottomBarRefreshRequested = bottomBarRefreshRequested,
+                                                onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false }
+                                            )
+                                        }
+                                    }
+                                }
+
+                                if (!hasSelectedWorkMode || isSelectingWorkMode) {
+                                    WorkModeSelectionScreen(
+                                        isFirstLaunch = !hasSelectedWorkMode,
+                                        currentMode = currentWorkMode,
+                                        onBack = { isSelectingWorkMode = false },
+                                        onModeSelected = { selectedMode ->
+                                            switchWorkMode(selectedMode)
                                         },
-                                        onSelectMode = {
-                                            launchSettings(Routes.WORK_MODE_SELECTION)
+                                        onTransitionFinished = {
+                                            isSelectingWorkMode = false
                                         },
                                         modifier = Modifier.fillMaxSize()
-                                    )
-                                } else {
-                                    MainScreen(
-                                        onToggle = { isRunning -> onToggleVpn(isRunning) },
-                                        onNavigateToSettings = { launchSettings(Routes.SETTINGS) },
-                                        onNavigateToLogs = ::launchLogs,
-                                        onNavigateToProviderManagement = { launchSettings(Routes.PROVIDER_MANAGEMENT) },
-                                        onNavigateToBootstrapSettings = { launchSettings(Routes.BOOTSTRAP_SETTINGS) },
-                                        onNavigateToHomeProviderVisibility = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
-                                        onNavigateToRaceModeSettings = { launchSettings(Routes.RACE_MODE_PROVIDERS) },
-                                        onNavigateToBlockedApps = { launchSettings(Routes.BLOCKED_APPS) },
-                                        onNavigateToAppAllowlist = { launchSettings(Routes.APP_ALLOWLIST) },
-                                        onNavigateToExcludedApps = { launchSettings(Routes.EXCLUDED_APPS) },
-                                        onNavigateToAppearanceSettings = { launchSettings(Routes.APPEARANCE_SETTINGS) },
-                                        onNavigateToRuleControl = { launchSettings(Routes.RULE_CONTROL) },
-                                        onNavigateToBlacklist = { launchSettings(Routes.BLACKLIST_MANAGEMENT) },
-                                        onNavigateToWhitelist = { launchSettings(Routes.WHITELIST_MANAGEMENT) },
-                                        onNavigateToRewriteList = { launchSettings(Routes.REWRITELIST_MANAGEMENT) },
-                                        onNavigateToAppRules = { launchSettings(Routes.APP_RULE_MANAGEMENT) },
-                                        onNavigateToHttpInspection = { launchSettings(Routes.HTTP_INSPECTION_SETTINGS) },
-                                        onNavigateToLogRetentionSettings = { launchSettings(Routes.LOG_RETENTION_SETTINGS) },
-                                        onNavigateToNetworkTools = { launchSettings(Routes.NETWORK_TOOLS) },
-                                        onNavigateToHomeProviderVisibilityFromFeatureHub = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
-                                        onNavigateToAbout = { launchSettings(Routes.ABOUT) },
-                                        onNavigateToSponsor = { launchSettings(Routes.SPONSOR) },
-                                        onNavigateToSponsorList = { launchSettings(Routes.SPONSOR_LIST) },
-                                        onNavigateToCoBuilderList = { launchSettings(Routes.CO_BUILDER_LIST) },
-                                        onNavigateToAppUpdate = { launchSettings(Routes.APP_UPDATE) },
-                                        onNavigateToDataManagement = { launchSettings(Routes.CONFIG_TRANSFER) },
-                                        onNavigateToTrafficStats = { launchSettings(Routes.APP_TRAFFIC_STATS) },
-                                        onNavigateToHiddenFeatures = { launchSettings(Routes.HIDDEN_FEATURES) },
-                                        onNavigateToCacheSettings = { launchSettings(Routes.CACHE_SETTINGS) },
-                                        onNavigateToOutboundProxy = { launchSettings(Routes.OUTBOUND_PROXY_SETTINGS) },
-                                        onNavigateToDataCleanup = { launchSettings(Routes.DATA_CLEANUP) },
-                                        onNavigateToAgentApiSettings = { launchSettings(Routes.AGENT_API_SETTINGS) },
-                                        onNavigateToLogRoute = ::launchLogRoute,
-                                        onNavigateToSettingsRoute = ::launchSettings,
-                                        bottomBarRefreshRequested = bottomBarRefreshRequested,
-                                        onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false }
                                     )
                                 }
                             }

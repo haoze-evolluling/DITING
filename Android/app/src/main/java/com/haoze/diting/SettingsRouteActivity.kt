@@ -497,10 +497,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     WorkModeStore.setAppWorkMode(this, selectedMode)
                     recordWorkModeChanged()
                     if (selectedMode == AppWorkMode.EXPRESS) {
-                        com.haoze.diting.express.ExpressModeLauncher.switchToExpress(this, previousMode) {
-                            disableWindowTransitions()
-                            onBack()
-                        }
+                        com.haoze.diting.express.ExpressModeLauncher.switchToExpress(this, previousMode)
                     } else {
                         if (previousMode == AppWorkMode.EXPRESS) {
                             com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
@@ -515,9 +512,11 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                             }
                             VpnMonitorManager.stop(this)
                         }
-                        disableWindowTransitions()
-                        onBack()
                     }
+                },
+                onTransitionFinished = {
+                    disableWindowTransitions()
+                    finish()
                 }
             )
             else -> SettingsScreen(onBack, onNavigate)

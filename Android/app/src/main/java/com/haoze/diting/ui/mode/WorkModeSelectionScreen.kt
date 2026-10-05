@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,16 +46,20 @@ import com.haoze.diting.ui.localizedText
 import kotlinx.coroutines.launch
 
 private const val TRANSITION_DURATION_MS = 1000
+private const val FADE_OUT_DURATION_MS = 280
 
 @Composable
 fun WorkModeSelectionScreen(
     isFirstLaunch: Boolean,
     currentMode: AppWorkMode = AppWorkMode.NORMAL,
     onBack: () -> Unit = {},
-    onModeSelected: (AppWorkMode) -> Unit
+    onModeSelected: (AppWorkMode) -> Unit,
+    onTransitionFinished: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     var transitioningMode by remember { mutableStateOf<AppWorkMode?>(null) }
     val transitionAnim = remember { Animatable(0f) }
+    val overlayAlphaAnim = remember { Animatable(1f) }
     val coroutineScope = rememberCoroutineScope()
     var rootCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
@@ -64,9 +69,39 @@ fun WorkModeSelectionScreen(
         // Prevent back navigation while the transition animation is active
     }
 
+    val triggerTransition: (AppWorkMode) -> Unit = { mode ->
+        if (transitioningMode == null) {
+            transitioningMode = mode
+            coroutineScope.launch {
+                // 1. Expand card to full screen
+                transitionAnim.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(
+                        durationMillis = TRANSITION_DURATION_MS,
+                        easing = MaterialEmphasizedDecelerate
+                    )
+                )
+                // 2. Card has fully covered screen; notify host to switch mode
+                onModeSelected(mode)
+                // 3. Fade out the overlay to smoothly reveal the target mode home page
+                overlayAlphaAnim.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(
+                        durationMillis = FADE_OUT_DURATION_MS,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+                // 4. Clean up transition state
+                transitioningMode = null
+                onTransitionFinished()
+            }
+        }
+    }
+
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
+            .graphicsLayer { alpha = overlayAlphaAnim.value }
             .onGloballyPositioned { coords ->
                 rootCoordinates = coords
                 rootSize = coords.size
@@ -86,7 +121,7 @@ fun WorkModeSelectionScreen(
             if (isFirstLaunch) {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = Color.Transparent
+                    containerColor = MaterialTheme.colorScheme.background
                 ) { innerPadding ->
                     WorkModeSelectionContent(
                         isFirstLaunch = true,
@@ -96,21 +131,7 @@ fun WorkModeSelectionScreen(
                             cardBounds[mode] = bounds
                         },
                         rootCoordinates = rootCoordinates,
-                        onTriggerTransition = { mode ->
-                            if (transitioningMode == null) {
-                                transitioningMode = mode
-                                coroutineScope.launch {
-                                    transitionAnim.animateTo(
-                                        targetValue = 1f,
-                                        animationSpec = tween(
-                                            durationMillis = TRANSITION_DURATION_MS,
-                                            easing = MaterialEmphasizedDecelerate
-                                        )
-                                    )
-                                    onModeSelected(mode)
-                                }
-                            }
-                        },
+                        onTriggerTransition = triggerTransition,
                         modifier = Modifier
                             .padding(innerPadding)
                             .statusBarsPadding()
@@ -119,7 +140,8 @@ fun WorkModeSelectionScreen(
             } else {
                 SettingsScaffold(
                     title = "模式切换",
-                    onBack = onBack
+                    onBack = onBack,
+                    containerColor = MaterialTheme.colorScheme.background
                 ) { innerPadding ->
                     WorkModeSelectionContent(
                         isFirstLaunch = false,
@@ -129,21 +151,7 @@ fun WorkModeSelectionScreen(
                             cardBounds[mode] = bounds
                         },
                         rootCoordinates = rootCoordinates,
-                        onTriggerTransition = { mode ->
-                            if (transitioningMode == null) {
-                                transitioningMode = mode
-                                coroutineScope.launch {
-                                    transitionAnim.animateTo(
-                                        targetValue = 1f,
-                                        animationSpec = tween(
-                                            durationMillis = TRANSITION_DURATION_MS,
-                                            easing = MaterialEmphasizedDecelerate
-                                        )
-                                    )
-                                    onModeSelected(mode)
-                                }
-                            }
-                        },
+                        onTriggerTransition = triggerTransition,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -185,7 +193,6 @@ private fun WorkModeSelectionContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val alreadyInModeText = localizedText("当前已处于该模式")
 
     Box(
         modifier = modifier
@@ -242,11 +249,7 @@ private fun WorkModeSelectionContent(
                                 itemCount = modes.size,
                                 onClick = {
                                     if (isTransitioning) return@ExpressWorkModeCard
-                                    if (isSelected) {
-                                        Toast.makeText(context, alreadyInModeText, Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        onTriggerTransition(mode)
-                                    }
+                                    onTriggerTransition(mode)
                                 },
                                 modifier = cardPositionModifier
                             )
@@ -265,8 +268,6 @@ private fun WorkModeSelectionContent(
                                             localizedText(context, "${mode.title}仅支持 Android 10 (API 29) 及以上系统"),
                                             Toast.LENGTH_SHORT
                                         ).show()
-                                    } else if (isSelected) {
-                                        Toast.makeText(context, alreadyInModeText, Toast.LENGTH_SHORT).show()
                                     } else {
                                         onTriggerTransition(mode)
                                     }

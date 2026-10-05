@@ -28,9 +28,10 @@ import com.haoze.diting.dnsmode.viewmodel.DnsMainViewModel
  */
 @Composable
 fun DnsModeHost(
-    onSwitchToNormalMode: () -> Unit,
     onSelectMode: () -> Unit,
+    resetToHomeTrigger: Long = 0L,
     modifier: Modifier = Modifier,
+    onSwitchToNormalMode: () -> Unit = {},
     viewModel: DnsMainViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -63,7 +64,8 @@ fun DnsModeHost(
             requestIgnoreBatteryOptimization(context)
         },
         onSwitchToNormalMode = onSwitchToNormalMode,
-        onSelectMode = onSelectMode
+        onSelectMode = onSelectMode,
+        resetToHomeTrigger = resetToHomeTrigger
     )
 }
 

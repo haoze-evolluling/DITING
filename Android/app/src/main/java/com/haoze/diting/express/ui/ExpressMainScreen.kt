@@ -44,6 +44,11 @@ import com.haoze.diting.ui.localizedText
 import com.haoze.diting.ui.settings.SystemSettingsStore
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 
 /**
  * Main container screen for Express Mode.
@@ -78,6 +83,8 @@ fun ExpressMainScreen(
     onNavigateToDataCleanup: () -> Unit = {},
     onNavigateToLogRoute: (String) -> Unit = { onNavigateToLogs() },
     onNavigateToSettingsRoute: (String) -> Unit = { onNavigateToSettings() },
+    onNavigateToModeSelection: () -> Unit = {},
+    resetToHomeTrigger: Long = 0L,
     bottomBarRefreshRequested: Boolean = false,
     onBottomBarRefreshConsumed: () -> Unit = {},
     viewModel: MainViewModel = viewModel()
@@ -100,6 +107,12 @@ fun ExpressMainScreen(
         if (bottomBarRefreshRequested) {
             bottomBarItems = ExpressBottomBarDestination.getDestinations(context)
             onBottomBarRefreshConsumed()
+        }
+    }
+
+    LaunchedEffect(resetToHomeTrigger) {
+        if (resetToHomeTrigger > 0L && pagerState.currentPage != 0) {
+            pagerState.scrollToPage(0)
         }
     }
 
@@ -147,6 +160,15 @@ fun ExpressMainScreen(
                                 ),
                                 title = {
                                     Text(localizedText("谛听") + " · " + localizedText("极速"))
+                                },
+                                actions = {
+                                    IconButton(onClick = onNavigateToModeSelection) {
+                                        Icon(
+                                            imageVector = Icons.Default.SwapHoriz,
+                                            contentDescription = localizedText("模式切换"),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
                                 }
                             )
                         }

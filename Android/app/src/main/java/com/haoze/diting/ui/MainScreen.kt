@@ -58,7 +58,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.IconButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,6 +100,8 @@ fun MainScreen(
     onNavigateToAgentApiSettings: () -> Unit = {},
     onNavigateToLogRoute: (String) -> Unit = { onNavigateToLogs() },
     onNavigateToSettingsRoute: (String) -> Unit = { onNavigateToSettings() },
+    onNavigateToModeSelection: () -> Unit = {},
+    resetToHomeTrigger: Long = 0L,
     bottomBarRefreshRequested: Boolean = false,
     onBottomBarRefreshConsumed: () -> Unit = {},
     viewModel: MainViewModel = viewModel()
@@ -122,6 +126,12 @@ fun MainScreen(
         if (bottomBarRefreshRequested) {
             bottomBarItems = AppearanceSettingsStore.getBottomBarDestinations(context)
             onBottomBarRefreshConsumed()
+        }
+    }
+
+    LaunchedEffect(resetToHomeTrigger) {
+        if (resetToHomeTrigger > 0L && pagerState.currentPage != 0) {
+            pagerState.scrollToPage(0)
         }
     }
 
@@ -181,6 +191,15 @@ fun MainScreen(
                                 ),
                                 title = {
                                     Text(localizedText("谛听"))
+                                },
+                                actions = {
+                                    IconButton(onClick = onNavigateToModeSelection) {
+                                        Icon(
+                                            imageVector = Icons.Default.SwapHoriz,
+                                            contentDescription = localizedText("模式切换"),
+                                            tint = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
                                 }
                             )
                         }

@@ -23,6 +23,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,8 +51,9 @@ fun DnsMainScreen(
     viewModel: DnsMainViewModel,
     batteryOptimizationIgnored: Boolean,
     onRequestIgnoreBatteryOptimization: () -> Unit,
-    onSwitchToNormalMode: () -> Unit,
-    onSelectMode: () -> Unit
+    onSwitchToNormalMode: () -> Unit = {},
+    onSelectMode: () -> Unit,
+    resetToHomeTrigger: Long = 0L
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val tabs = remember { DnsNavTab.entries }
@@ -59,11 +61,16 @@ fun DnsMainScreen(
     val coroutineScope = rememberCoroutineScope()
     val pageAlpha = remember { Animatable(1f) }
     var pageSwitchJob by remember { mutableStateOf<Job?>(null) }
-    var showSwitchConfirmDialog by remember { mutableStateOf(false) }
     var showResetStatsConfirmDialog by remember { mutableStateOf(false) }
     var showPortEditDialog by remember { mutableStateOf(false) }
     var showAddUpstreamDialog by remember { mutableStateOf(false) }
     var selectedDnsProtocol by remember { mutableStateOf(DnsModeProtocol.DNS) }
+
+    LaunchedEffect(resetToHomeTrigger) {
+        if (resetToHomeTrigger > 0L && pagerState.currentPage != 0) {
+            pagerState.scrollToPage(0)
+        }
+    }
 
     val navigateToPage: (Int) -> Unit = { targetPage ->
         if (pagerState.currentPage != targetPage) {
@@ -120,12 +127,14 @@ fun DnsMainScreen(
                             }
                         }
 
-                        IconButton(onClick = { showSwitchConfirmDialog = true }) {
-                            Icon(
-                                imageVector = Icons.Default.SwapHoriz,
-                                contentDescription = localizedText("切换为普通模式"),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
+                        if (currentTab == DnsNavTab.HOME) {
+                            IconButton(onClick = onSelectMode) {
+                                Icon(
+                                    imageVector = Icons.Default.SwapHoriz,
+                                    contentDescription = localizedText("模式切换"),
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -200,20 +209,6 @@ fun DnsMainScreen(
                 pagerProgress = { pagerState.currentPage + pagerState.currentPageOffsetFraction }
             )
         }
-    }
-
-    if (showSwitchConfirmDialog) {
-        AppConfirmDialog(
-            onDismissRequest = { showSwitchConfirmDialog = false },
-            title = localizedText("切换为普通模式"),
-            message = localizedText("切换后将停止 DNS 服务并退出服务器模式。完整分流、黑白名单与应用管控等能力可在普通模式中按需开启。确认切换吗？"),
-            confirmLabel = localizedText("确认切换"),
-            cancelLabel = localizedText("取消"),
-            onConfirm = {
-                showSwitchConfirmDialog = false
-                onSwitchToNormalMode()
-            }
-        )
     }
 
     if (showResetStatsConfirmDialog) {
