@@ -68,6 +68,30 @@ fun Activity.disableWindowTransitions() {
 }
 
 /**
+ * Applies a smooth window crossfade animation when closing this activity.
+ */
+fun Activity.overrideFadeTransition() {
+    if (Build.VERSION.SDK_INT >= 34) {
+        overrideActivityTransition(Activity.OVERRIDE_TRANSITION_CLOSE, android.R.anim.fade_in, android.R.anim.fade_out)
+    } else {
+        @Suppress("DEPRECATION")
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+    }
+}
+
+/**
+ * Applies a smooth window crossfade animation when opening this activity.
+ */
+fun Activity.overrideOpenFadeTransition() {
+    if (Build.VERSION.SDK_INT >= 34) {
+        overrideActivityTransition(Activity.OVERRIDE_TRANSITION_OPEN, android.R.anim.fade_in, android.R.anim.fade_out)
+    } else {
+        @Suppress("DEPRECATION")
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+    }
+}
+
+/**
  * Overlay component that seamlessly expands a mode card to full screen with Material 3 morphing.
  */
 @Composable

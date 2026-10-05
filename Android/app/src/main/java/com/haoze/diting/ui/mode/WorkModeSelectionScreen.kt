@@ -46,7 +46,6 @@ import com.haoze.diting.ui.localizedText
 import kotlinx.coroutines.launch
 
 private const val TRANSITION_DURATION_MS = 1000
-private const val FADE_OUT_DURATION_MS = 280
 
 @Composable
 fun WorkModeSelectionScreen(
@@ -59,7 +58,6 @@ fun WorkModeSelectionScreen(
 ) {
     var transitioningMode by remember { mutableStateOf<AppWorkMode?>(null) }
     val transitionAnim = remember { Animatable(0f) }
-    val overlayAlphaAnim = remember { Animatable(1f) }
     val coroutineScope = rememberCoroutineScope()
     var rootCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
@@ -83,16 +81,7 @@ fun WorkModeSelectionScreen(
                 )
                 // 2. Card has fully covered screen; notify host to switch mode
                 onModeSelected(mode)
-                // 3. Fade out the overlay to smoothly reveal the target mode home page
-                overlayAlphaAnim.animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(
-                        durationMillis = FADE_OUT_DURATION_MS,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-                // 4. Clean up transition state
-                transitioningMode = null
+                // 3. Notify host activity to crossfade to MainActivity while keeping card expanded
                 onTransitionFinished()
             }
         }
@@ -101,7 +90,6 @@ fun WorkModeSelectionScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .graphicsLayer { alpha = overlayAlphaAnim.value }
             .onGloballyPositioned { coords ->
                 rootCoordinates = coords
                 rootSize = coords.size

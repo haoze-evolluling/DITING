@@ -31,7 +31,7 @@ import com.haoze.diting.ui.*
 import com.haoze.diting.ui.batch.BatchAddRulesScreen
 import com.haoze.diting.ui.batch.BatchRuleTarget
 import com.haoze.diting.ui.mode.AppWorkMode
-import com.haoze.diting.ui.mode.WorkModeSelectionScreen
+import com.haoze.diting.ui.mode.WorkModeActivity
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.mode.disableWindowTransitions
 import com.haoze.diting.ui.traffic.AppTrafficStatsScreen
@@ -87,6 +87,11 @@ class SettingsRouteActivity : AppLocalizedActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (route == Routes.WORK_MODE_SELECTION) {
+            WorkModeActivity.start(this, isFirstLaunch = false)
+            finish()
+            return
+        }
         languageModeAtCreate = AppLanguageManager.getMode(this)
         enableEdgeToEdge()
         setResult(RESULT_OK, resultData)
@@ -192,6 +197,10 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         ruleScope: RuleScope? = requestedRuleScope,
         batchTarget: BatchRuleTarget? = null
     ) {
+        if (nextRoute == Routes.WORK_MODE_SELECTION) {
+            WorkModeActivity.start(this, isFirstLaunch = false)
+            return
+        }
         if (childLaunchInProgress || (nextRoute == route && requestSource == requestedRequestSource)) return
         childLaunchInProgress = true
         childActivityLauncher.launch(
@@ -488,37 +497,10 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.APP_TRAFFIC_STATS -> AppTrafficStatsScreen(onBack)
             Routes.OPTIONAL_FEATURES,
             Routes.HIDDEN_FEATURES -> if (isExpress) ExpressHiddenFeaturesScreen(onBack) else HiddenFeaturesScreen(onBack)
-            Routes.WORK_MODE_SELECTION -> WorkModeSelectionScreen(
-                isFirstLaunch = false,
-                currentMode = WorkModeStore.getAppWorkMode(this),
-                onBack = onBack,
-                onModeSelected = { selectedMode ->
-                    val previousMode = WorkModeStore.getAppWorkMode(this)
-                    WorkModeStore.setAppWorkMode(this, selectedMode)
-                    recordWorkModeChanged()
-                    if (selectedMode == AppWorkMode.EXPRESS) {
-                        com.haoze.diting.express.ExpressModeLauncher.switchToExpress(this, previousMode)
-                    } else {
-                        if (previousMode == AppWorkMode.EXPRESS) {
-                            com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
-                        } else if (previousMode == AppWorkMode.DNS) {
-                            DnsModeManager.stopService(this)
-                        }
-                        if (selectedMode == AppWorkMode.DNS) {
-                            try {
-                                startService(DnsVpnService.stopIntent(this))
-                            } catch (e: Exception) {
-                                Log.w(TAG, "Failed to stop VPN service when switching to DNS mode", e)
-                            }
-                            VpnMonitorManager.stop(this)
-                        }
-                    }
-                },
-                onTransitionFinished = {
-                    disableWindowTransitions()
-                    finish()
-                }
-            )
+            Routes.WORK_MODE_SELECTION -> {
+                WorkModeActivity.start(this, isFirstLaunch = false)
+                finish()
+            }
             else -> SettingsScreen(onBack, onNavigate)
         }
     }

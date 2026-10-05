@@ -51,7 +51,7 @@ import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.AppUpdateDialog
 import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.ui.mode.AppWorkMode
-import com.haoze.diting.ui.mode.WorkModeSelectionScreen
+import com.haoze.diting.ui.mode.WorkModeActivity
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.update.AppUpdateHost
 import com.haoze.diting.ui.localizedText
@@ -130,6 +130,16 @@ class MainActivity : AppLocalizedActivity() {
     private var backgroundRefreshRequested by mutableStateOf(false)
     private var bottomBarRefreshRequested by mutableStateOf(false)
     private var workModeRefreshRequested by mutableStateOf(false)
+    private var pendingWorkModeSwitch by mutableStateOf<AppWorkMode?>(null)
+
+    private fun handleWorkModeChangeIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_WORK_MODE_CHANGED, false) == true) {
+            val targetModeStr = intent.getStringExtra(EXTRA_TARGET_WORK_MODE)
+            val targetMode = targetModeStr?.let { runCatching { AppWorkMode.valueOf(it) }.getOrNull() }
+                ?: WorkModeStore.getAppWorkMode(this)
+            pendingWorkModeSwitch = targetMode
+        }
+    }
 
     private fun launchSettings(route: String, dataset: RuleDataset? = null) {
         if (settingsLaunchInProgress) return
@@ -155,6 +165,10 @@ class MainActivity : AppLocalizedActivity() {
         if (com.haoze.diting.crash.CrashLogManager.consumePendingAutoExportNotice(this)) {
             showToast("软件连续异常退出，崩溃日志已自动备份至系统“下载”目录", Toast.LENGTH_LONG)
         }
+        handleWorkModeChangeIntent(intent)
+        if (SystemSettingsStore.isInitialAgreementAccepted(this) && !WorkModeStore.hasSelectedWorkMode(this)) {
+            WorkModeActivity.start(this, isFirstLaunch = true)
+        }
         setContent {
             var initialAgreementAccepted by remember {
                 mutableStateOf(SystemSettingsStore.isInitialAgreementAccepted(this))
@@ -164,9 +178,6 @@ class MainActivity : AppLocalizedActivity() {
             }
             var hasSelectedWorkMode by remember {
                 mutableStateOf(WorkModeStore.hasSelectedWorkMode(this))
-            }
-            var isSelectingWorkMode by remember {
-                mutableStateOf(false)
             }
             var resetToHomeTrigger by remember {
                 mutableLongStateOf(0L)
@@ -204,7 +215,7 @@ class MainActivity : AppLocalizedActivity() {
                 }
             }
 
-            LaunchedEffect(mainThemeRefreshRequested, backgroundRefreshRequested, workModeRefreshRequested) {
+            LaunchedEffect(mainThemeRefreshRequested, backgroundRefreshRequested, workModeRefreshRequested, pendingWorkModeSwitch) {
                 if (mainThemeRefreshRequested) {
                     themeMode = AppearanceSettingsStore.getAppThemeMode(this@MainActivity)
                     colorStyle = AppearanceSettingsStore.getThemeColorStyle(this@MainActivity)
@@ -222,6 +233,10 @@ class MainActivity : AppLocalizedActivity() {
                     switchWorkMode(targetMode)
                     workModeRefreshRequested = false
                 }
+                pendingWorkModeSwitch?.let { targetMode ->
+                    switchWorkMode(targetMode)
+                    pendingWorkModeSwitch = null
+                }
             }
             AppThemeSurface(
                 themeMode = themeMode,
@@ -230,9 +245,6 @@ class MainActivity : AppLocalizedActivity() {
                 backgroundUri = backgroundUri,
                 modifier = Modifier.fillMaxSize()
             ) {
-                        BackHandler(enabled = isSelectingWorkMode) {
-                            isSelectingWorkMode = false
-                        }
 
                         if (!initialAgreementAccepted) {
                             InitialAgreementDialog(
@@ -244,6 +256,8 @@ class MainActivity : AppLocalizedActivity() {
                                         if (WorkModeStore.getAppWorkMode(this@MainActivity) == AppWorkMode.EXPRESS) {
                                             com.haoze.diting.express.ExpressModeLauncher.switchToExpress(this@MainActivity, AppWorkMode.EXPRESS)
                                         }
+                                    } else {
+                                        WorkModeActivity.start(this@MainActivity, isFirstLaunch = true)
                                     }
                                 },
                                 onDecline = ::declineInitialAgreement
@@ -278,7 +292,7 @@ class MainActivity : AppLocalizedActivity() {
                                                 onNavigateToDataCleanup = { launchSettings(Routes.DATA_CLEANUP, RuleDataset.EXPRESS) },
                                                 onNavigateToLogRoute = { r -> launchLogRoute(r, RuleDataset.EXPRESS) },
                                                 onNavigateToSettingsRoute = { r -> launchSettings(r, RuleDataset.EXPRESS) },
-                                                onNavigateToModeSelection = { isSelectingWorkMode = true },
+                                                onNavigateToModeSelection = { WorkModeActivity.start(this@MainActivity, isFirstLaunch = false) },
                                                 resetToHomeTrigger = resetToHomeTrigger,
                                                 bottomBarRefreshRequested = bottomBarRefreshRequested,
                                                 onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false },
@@ -287,7 +301,7 @@ class MainActivity : AppLocalizedActivity() {
                                         }
                                         AppWorkMode.DNS -> {
                                             com.haoze.diting.dnsmode.ui.DnsModeHost(
-                                                onSelectMode = { isSelectingWorkMode = true },
+                                                onSelectMode = { WorkModeActivity.start(this@MainActivity, isFirstLaunch = false) },
                                                 resetToHomeTrigger = resetToHomeTrigger,
                                                 onSwitchToNormalMode = {
                                                     switchWorkMode(AppWorkMode.NORMAL)
@@ -331,28 +345,13 @@ class MainActivity : AppLocalizedActivity() {
                                                 onNavigateToAgentApiSettings = { launchSettings(Routes.AGENT_API_SETTINGS) },
                                                 onNavigateToLogRoute = ::launchLogRoute,
                                                 onNavigateToSettingsRoute = ::launchSettings,
-                                                onNavigateToModeSelection = { isSelectingWorkMode = true },
+                                                onNavigateToModeSelection = { WorkModeActivity.start(this@MainActivity, isFirstLaunch = false) },
                                                 resetToHomeTrigger = resetToHomeTrigger,
                                                 bottomBarRefreshRequested = bottomBarRefreshRequested,
                                                 onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false }
                                             )
                                         }
                                     }
-                                }
-
-                                if (!hasSelectedWorkMode || isSelectingWorkMode) {
-                                    WorkModeSelectionScreen(
-                                        isFirstLaunch = !hasSelectedWorkMode,
-                                        currentMode = currentWorkMode,
-                                        onBack = { isSelectingWorkMode = false },
-                                        onModeSelected = { selectedMode ->
-                                            switchWorkMode(selectedMode)
-                                        },
-                                        onTransitionFinished = {
-                                            isSelectingWorkMode = false
-                                        },
-                                        modifier = Modifier.fillMaxSize()
-                                    )
                                 }
                             }
                         }
@@ -420,6 +419,7 @@ class MainActivity : AppLocalizedActivity() {
         if (SystemSettingsStore.isInitialAgreementAccepted(this)) {
             handleAutoStartIfNeeded(intent)
         }
+        handleWorkModeChangeIntent(intent)
     }
 
     override fun onStart() {
@@ -558,6 +558,8 @@ class MainActivity : AppLocalizedActivity() {
 
     companion object {
         const val EXTRA_AUTO_START_VPN = "auto_start_vpn"
+        const val EXTRA_WORK_MODE_CHANGED = "main_work_mode_changed"
+        const val EXTRA_TARGET_WORK_MODE = "main_target_work_mode"
     }
 }
 
