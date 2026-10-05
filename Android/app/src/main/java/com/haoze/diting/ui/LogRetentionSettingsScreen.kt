@@ -56,13 +56,14 @@ private val logRetentionOptions = listOf(1, 7, 30)
 fun LogRetentionSettingsScreen(
     onBack: () -> Unit,
     onRuntimeDnsSettingsChanged: () -> Unit,
-    title: String = "日志模式"
+    title: String = "日志模式",
+    dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     var logRetention by remember { mutableIntStateOf(SystemSettingsStore.logRetentionDays(context)) }
-    var logMode by remember { mutableStateOf(SystemSettingsStore.getDnsLogMode(context)) }
+    var logMode by remember { mutableStateOf(SystemSettingsStore.getDnsLogMode(context, dataset)) }
     var floatingLogEnabled by remember { mutableStateOf(SystemSettingsStore.isFloatingLogEnabled(context)) }
     var waitingForOverlayPermission by remember { mutableStateOf(false) }
     var crashLogCount by remember { mutableIntStateOf(CrashLogManager.getCrashLogCount(context)) }
@@ -101,7 +102,11 @@ fun LogRetentionSettingsScreen(
                 if (Settings.canDrawOverlays(context)) {
                     floatingLogEnabled = true
                     SystemSettingsStore.setFloatingLogEnabled(context, true)
-                    DnsVpnService.refreshFloatingLogOverlay(context)
+                    if (dataset == com.haoze.diting.data.RuleDataset.EXPRESS) {
+                        com.haoze.diting.express.ExpressVpnController.refreshFloatingLogOverlay(context)
+                    } else {
+                        DnsVpnService.refreshFloatingLogOverlay(context)
+                    }
                 } else {
                     floatingLogEnabled = false
                     SystemSettingsStore.setFloatingLogEnabled(context, false)
@@ -117,13 +122,21 @@ fun LogRetentionSettingsScreen(
         if (!enabled) {
             floatingLogEnabled = false
             SystemSettingsStore.setFloatingLogEnabled(context, false)
-            DnsVpnService.refreshFloatingLogOverlay(context)
+            if (dataset == com.haoze.diting.data.RuleDataset.EXPRESS) {
+                com.haoze.diting.express.ExpressVpnController.refreshFloatingLogOverlay(context)
+            } else {
+                DnsVpnService.refreshFloatingLogOverlay(context)
+            }
             return
         }
         if (Settings.canDrawOverlays(context)) {
             floatingLogEnabled = true
             SystemSettingsStore.setFloatingLogEnabled(context, true)
-            DnsVpnService.refreshFloatingLogOverlay(context)
+            if (dataset == com.haoze.diting.data.RuleDataset.EXPRESS) {
+                com.haoze.diting.express.ExpressVpnController.refreshFloatingLogOverlay(context)
+            } else {
+                DnsVpnService.refreshFloatingLogOverlay(context)
+            }
         } else {
             waitingForOverlayPermission = true
             runCatching {
@@ -166,7 +179,7 @@ fun LogRetentionSettingsScreen(
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 20.dp),
                             onClick = {
                                 logMode = mode
-                                SystemSettingsStore.setDnsLogMode(context, mode)
+                                SystemSettingsStore.setDnsLogMode(context, mode, dataset)
                                 onRuntimeDnsSettingsChanged()
                             }
                         )

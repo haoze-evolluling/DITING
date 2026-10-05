@@ -78,10 +78,10 @@ class ConfigExporter(
                 put("hiddenProviderRefs", serializeProviderIds(homeVisibility.hiddenProviderIds))
                 put("visibleProviderRefs", serializeProviderIds(homeVisibility.visibleProviderIds))
             })
-            root.put("smartPredictionProviderRefs", serializeProviderIds(ResolutionSettingsStore.getSmartPredictionProviderIds(context)))
-            root.put("parallelRaceProviderRefs", serializeProviderIds(ResolutionSettingsStore.getParallelRaceProviderIds(context)))
+            root.put("smartPredictionProviderRefs", serializeProviderIds(ResolutionSettingsStore.getSmartPredictionProviderIds(context, dataset)))
+            root.put("parallelRaceProviderRefs", serializeProviderIds(ResolutionSettingsStore.getParallelRaceProviderIds(context, dataset)))
             root.put("primaryBackupProviderRefs", JSONArray().apply {
-                ResolutionSettingsStore.getPrimaryBackupProviderIds(context).forEach { id ->
+                ResolutionSettingsStore.getPrimaryBackupProviderIds(context, dataset).forEach { id ->
                     val provider = allRuntime.firstOrNull { it.id == id }
                     if (provider != null) {
                         put(JSONObject().apply {
@@ -93,13 +93,13 @@ class ConfigExporter(
                     }
                 }
             })
-            root.put("latencyTestProviderRefs", serializeProviderIds(ResolutionSettingsStore.getLatencyTestProviderIds(context)))
+            root.put("latencyTestProviderRefs", serializeProviderIds(ResolutionSettingsStore.getLatencyTestProviderIds(context, dataset)))
         }
 
         if (selection.bootstrapIps) {
-            root.put("bootstrapEnabled", BootstrapDnsSettingsStore.isBootstrapEnabled(context))
+            root.put("bootstrapEnabled", BootstrapDnsSettingsStore.isBootstrapEnabled(context, dataset))
             root.put("bootstrapIps", JSONArray().apply {
-                BootstrapDnsSettingsStore.loadBootstrapIpEntries(context).filterNot { it.isPreset }.forEach { entry ->
+                BootstrapDnsSettingsStore.loadBootstrapIpEntries(context, dataset).filterNot { it.isPreset }.forEach { entry ->
                     put(JSONObject()
                         .put("name", entry.name)
                         .put("ip", entry.ip)
@@ -107,7 +107,7 @@ class ConfigExporter(
                 }
             })
             root.put("bootstrapPresetIds", JSONArray().apply {
-                BootstrapDnsSettingsStore.loadBootstrapIpEntries(context).filter { it.isPreset && it.enabled }.forEach { put(it.id) }
+                BootstrapDnsSettingsStore.loadBootstrapIpEntries(context, dataset).filter { it.isPreset && it.enabled }.forEach { put(it.id) }
             })
         }
 

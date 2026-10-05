@@ -24,10 +24,29 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
-class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(application) {
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.haoze.diting.data.RuleDataset
+import com.haoze.diting.data.RuleDatabases
+
+class RaceModeSettingsViewModel(
+    application: Application,
+    val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
+
+    class Factory(
+        private val application: Application,
+        private val dataset: RuleDataset = RuleDataset.NORMAL
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return RaceModeSettingsViewModel(application, dataset) as T
+        }
+    }
+
     private val bootstrapHealthEngine = BootstrapHealthEngine(application, viewModelScope)
     private val bootstrapLogger = BootstrapLogger(
-        AppDatabase.getInstance(application).bootstrapLogDao()
+        RuleDatabases.runtimeForDataset(application, dataset).bootstrapLogDao()
     )
     private val bootstrapSelector = BootstrapSelector(
         context = application,
@@ -90,16 +109,16 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
             ProviderHealthEngine.flushActive(commit = true)
-            val all = DnsProvider.loadRuntimeProviders(context)
+            val all = DnsProvider.loadRuntimeProviders(context, dataset)
             val health = ProviderHealthStore.loadAll(context)
-            val latencyIds = DnsProvider.loadLatencyTestProviderIds(context)
-            val domain = ResolutionSettingsStore.getRaceTestDomain(context)
-            val resolutionMode = ResolutionSettingsStore.getDnsResolutionMode(context)
-            val presetDnsService = ResolutionSettingsStore.getPresetDnsService(context)
-            val primaryBackupIds = ResolutionSettingsStore.getPrimaryBackupProviderIds(context)
+            val latencyIds = DnsProvider.loadLatencyTestProviderIds(context, dataset)
+            val domain = ResolutionSettingsStore.getRaceTestDomain(context, dataset)
+            val resolutionMode = ResolutionSettingsStore.getDnsResolutionMode(context, dataset)
+            val presetDnsService = ResolutionSettingsStore.getPresetDnsService(context, dataset)
+            val primaryBackupIds = ResolutionSettingsStore.getPrimaryBackupProviderIds(context, dataset)
                 .filter { id -> all.any { it.id == id } }
-            val smartIds = ResolutionSettingsStore.getSmartPredictionProviderIds(context).filterTo(mutableSetOf()) { id -> all.any { it.id == id } }
-            val parallelIds = ResolutionSettingsStore.getParallelRaceProviderIds(context).filterTo(mutableSetOf()) { id -> all.any { it.id == id } }
+            val smartIds = ResolutionSettingsStore.getSmartPredictionProviderIds(context, dataset).filterTo(mutableSetOf()) { id -> all.any { it.id == id } }
+            val parallelIds = ResolutionSettingsStore.getParallelRaceProviderIds(context, dataset).filterTo(mutableSetOf()) { id -> all.any { it.id == id } }
             withContext(Dispatchers.Main) {
                 _providers.value = all
                 _healthByProvider.value = health
@@ -109,7 +128,7 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
                 _primaryBackupIds.value = primaryBackupIds
                 _smartPredictionIds.value = smartIds
                 _parallelRaceIds.value = parallelIds
-                _singleProviderId.value = DnsProvider.loadSelected(context).id
+                _singleProviderId.value = DnsProvider.loadSelected(context, dataset).id
                 _testDomain.value = domain
                 _results.value = emptyList()
                 _initialLoading.value = false
@@ -123,7 +142,7 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
             val updated = _latencyTestSelectedIds.value.toMutableSet().apply {
                 if (contains(id)) remove(id) else add(id)
             }
-            DnsProvider.saveLatencyTestProviderIds(context, updated)
+            DnsProvider.saveLatencyTestProviderIds(context, updated, dataset)
             withContext(Dispatchers.Main) {
                 _latencyTestSelectedIds.value = updated
             }
@@ -138,9 +157,9 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
             return false
         }
         val context = getApplication<Application>()
-        ResolutionSettingsStore.setDnsResolutionMode(context, mode)
+        ResolutionSettingsStore.setDnsResolutionMode(context, mode, dataset)
         _resolutionMode.value = mode
-        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "resolution_mode_changed")
+        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "resolution_mode_changed", dataset = dataset)
         _message.value = getApplication<Application>().getString(
             R.string.resolution_mode_changed,
             localizedText(getApplication<Application>(), mode.displayName)
@@ -160,9 +179,9 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
     fun selectSingleProvider(id: String) {
         if (_providers.value.none { it.id == id }) return
         val context = getApplication<Application>()
-        DnsProvider.saveSelected(context, id)
+        DnsProvider.saveSelected(context, id, dataset)
         _singleProviderId.value = id
-        if (_resolutionMode.value == DnsResolutionMode.SINGLE) RuntimeDnsSettingsRefresher.refreshIfRunning(context, "single_provider_changed")
+        if (_resolutionMode.value == DnsResolutionMode.SINGLE) RuntimeDnsSettingsRefresher.refreshIfRunning(context, "single_provider_changed", dataset = dataset)
     }
 
     fun toggleModeProvider(mode: DnsResolutionMode, id: String) {
@@ -170,22 +189,22 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
         when (mode) {
             DnsResolutionMode.SMART_PREDICTION -> {
                 val updated = toggle(_smartPredictionIds.value, id)
-                ResolutionSettingsStore.setSmartPredictionProviderIds(context, updated)
+                ResolutionSettingsStore.setSmartPredictionProviderIds(context, updated, dataset)
                 _smartPredictionIds.value = updated
             }
             DnsResolutionMode.PARALLEL_RACE -> {
                 val updated = toggle(_parallelRaceIds.value, id)
-                ResolutionSettingsStore.setParallelRaceProviderIds(context, updated)
+                ResolutionSettingsStore.setParallelRaceProviderIds(context, updated, dataset)
                 _parallelRaceIds.value = updated
             }
             DnsResolutionMode.PRIMARY_BACKUP -> {
                 val updated = _primaryBackupIds.value.toMutableList().apply { if (!remove(id)) add(id) }
-                ResolutionSettingsStore.setPrimaryBackupProviderIds(context, updated)
+                ResolutionSettingsStore.setPrimaryBackupProviderIds(context, updated, dataset)
                 _primaryBackupIds.value = updated
             }
             DnsResolutionMode.SINGLE -> return
         }
-        if (_resolutionMode.value == mode) RuntimeDnsSettingsRefresher.refreshIfRunning(context, "resolution_mode_providers_changed")
+        if (_resolutionMode.value == mode) RuntimeDnsSettingsRefresher.refreshIfRunning(context, "resolution_mode_providers_changed", dataset = dataset)
     }
 
     private fun toggle(ids: Set<String>, id: String): Set<String> = ids.toMutableSet().apply {
@@ -208,21 +227,21 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
         }
         fun remap(id: String): String = DnsProvider.presetIdForProtocol(id, targetProtocol) ?: id
 
-        DnsProvider.saveSelected(context, remap(_singleProviderId.value))
+        DnsProvider.saveSelected(context, remap(_singleProviderId.value), dataset)
         val smartIds = _smartPredictionIds.value.mapTo(linkedSetOf(), ::remap)
-        ResolutionSettingsStore.setSmartPredictionProviderIds(context, smartIds)
+        ResolutionSettingsStore.setSmartPredictionProviderIds(context, smartIds, dataset)
         val parallelIds = _parallelRaceIds.value.mapTo(linkedSetOf(), ::remap)
-        ResolutionSettingsStore.setParallelRaceProviderIds(context, parallelIds)
+        ResolutionSettingsStore.setParallelRaceProviderIds(context, parallelIds, dataset)
         val primaryBackupIds = _primaryBackupIds.value.map(::remap).distinct()
-        ResolutionSettingsStore.setPrimaryBackupProviderIds(context, primaryBackupIds)
-        ResolutionSettingsStore.setPresetDnsService(context, service)
+        ResolutionSettingsStore.setPrimaryBackupProviderIds(context, primaryBackupIds, dataset)
+        ResolutionSettingsStore.setPresetDnsService(context, service, dataset)
 
         _singleProviderId.value = remap(_singleProviderId.value)
         _smartPredictionIds.value = smartIds
         _parallelRaceIds.value = parallelIds
         _primaryBackupIds.value = primaryBackupIds
         _presetDnsService.value = service
-        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "preset_dns_service_changed")
+        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "preset_dns_service_changed", dataset = dataset)
     }
 
     fun reorderPrimaryBackupProvider(id: String, targetIndex: Int) {
@@ -231,23 +250,23 @@ class RaceModeSettingsViewModel(application: Application) : AndroidViewModel(app
         if (from < 0 || targetIndex !in current.indices || from == targetIndex) return
         current.add(targetIndex, current.removeAt(from))
         val context = getApplication<Application>()
-        ResolutionSettingsStore.setPrimaryBackupProviderIds(context, current)
+        ResolutionSettingsStore.setPrimaryBackupProviderIds(context, current, dataset)
         _primaryBackupIds.value = current
-        if (_resolutionMode.value == DnsResolutionMode.PRIMARY_BACKUP) RuntimeDnsSettingsRefresher.refreshIfRunning(context, "primary_backup_order_changed")
+        if (_resolutionMode.value == DnsResolutionMode.PRIMARY_BACKUP) RuntimeDnsSettingsRefresher.refreshIfRunning(context, "primary_backup_order_changed", dataset = dataset)
     }
 
     fun setTestDomain(domain: String) {
         _testDomain.value = domain
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            ResolutionSettingsStore.setRaceTestDomain(context, domain)
+            ResolutionSettingsStore.setRaceTestDomain(context, domain, dataset)
         }
     }
 
     fun runLatencyTest() {
         val context = getApplication<Application>()
         val domain = _testDomain.value.trim().takeIf { it.isNotEmpty() }
-            ?: ResolutionSettingsStore.getRaceTestDomain(context)
+            ?: ResolutionSettingsStore.getRaceTestDomain(context, dataset)
         val selected = _providers.value.filter { it.id in _latencyTestSelectedIds.value }
         if (selected.isEmpty()) {
             _message.value = getApplication<Application>().getString(R.string.select_latency_test_providers)

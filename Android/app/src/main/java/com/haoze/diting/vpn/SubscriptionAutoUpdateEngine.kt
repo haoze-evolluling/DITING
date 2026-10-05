@@ -312,7 +312,7 @@ object SubscriptionAutoUpdateEngine {
         val ruleIndexDirectory = if (dataset == RuleDataset.DNS_MODE) {
             null
         } else {
-            RuleIndexLayout.scopeDirectory(context.filesDir, scope)
+            RuleIndexLayout.scopeDirectory(context.filesDir, scope, dataset)
         }
         val blockManager = BlockListManager(dataSources.blockRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
         val allowManager = AllowListManager(dataSources.allowRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)

@@ -31,10 +31,17 @@ import kotlin.math.abs
  * Owns the floating overlay window used to inspect recent DNS and HTTPS requests.
  * Manages overlay lifecycle, window manager parameters, touch dragging, and refresh loops.
  */
-class FloatingLogOverlayController(context: Context) {
+class FloatingLogOverlayController(
+    context: Context,
+    private val dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
+) {
     private val appContext = context.applicationContext
     private val windowManager = appContext.getSystemService(WindowManager::class.java)
-    private val repository = AppDatabase.getInstance(appContext).let { database ->
+    private val repository = if (dataset == com.haoze.diting.data.RuleDataset.EXPRESS) {
+        val expressDb = com.haoze.diting.data.ExpressRulesDatabase.getInstance(appContext)
+        RequestLogRepository(expressDb.dnsLogDao(), null)
+    } else {
+        val database = AppDatabase.getInstance(appContext)
         RequestLogRepository(database.dnsLogDao(), database.httpRequestLogDao())
     }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)

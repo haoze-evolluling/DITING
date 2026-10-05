@@ -224,7 +224,7 @@ internal class RuleConfigImporter(private val session: ImportSessionContext) {
             if (skippedCount > 0) session.skippedDetails.add("自定义复写 CNAME 规则 ($skippedCount 条已存在)")
         }
 
-        if (config.customAddressRules.isNotEmpty()) {
+        if (config.customAddressRules.isNotEmpty() && session.dataset != com.haoze.diting.data.RuleDataset.EXPRESS) {
             var urlInserted = 0
             config.customAddressRules.forEach { rule ->
                 val line = if (rule.rawLine.isNotBlank()) rule.rawLine else if (rule.kind.equals("allow", true)) "@@${rule.pattern}" else rule.pattern

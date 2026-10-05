@@ -33,4 +33,26 @@ class ExpressDataIsolationTest {
         assertNotEquals(normalDir.absolutePath, expressDir.absolutePath)
         assertTrue(expressDir.absolutePath.endsWith("express"))
     }
+
+    @Test
+    fun testScopeDirectoryIsolation() {
+        val baseDir = File("/test/files")
+        val normalScopeDir = RuleIndexLayout.scopeDirectory(baseDir, com.haoze.diting.data.entity.RuleScope.DNS, RuleDataset.NORMAL)
+        val expressScopeDir = RuleIndexLayout.scopeDirectory(baseDir, com.haoze.diting.data.entity.RuleScope.DNS, RuleDataset.EXPRESS)
+
+        assertEquals(File(baseDir, "rule-index"), normalScopeDir)
+        assertEquals(File(baseDir, "rule-index/express"), expressScopeDir)
+
+        assertNotEquals(normalScopeDir.absolutePath, expressScopeDir.absolutePath)
+        assertTrue(expressScopeDir.absolutePath.contains("express"))
+    }
+
+    @Test
+    fun testRuleDatasetValues() {
+        val datasets = RuleDataset.entries
+        assertEquals(3, datasets.size)
+        assertTrue(datasets.contains(RuleDataset.NORMAL))
+        assertTrue(datasets.contains(RuleDataset.EXPRESS))
+        assertTrue(datasets.contains(RuleDataset.DNS_MODE))
+    }
 }

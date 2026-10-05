@@ -383,7 +383,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 if (isExpress) {
                     ExpressDataCleanupScreen(onBack, cleanupTitle, onRuntimeDnsSettingsChanged, onExitApp)
                 } else {
-                    DataCleanupScreen(onBack, cleanupTitle, onRuntimeDnsSettingsChanged, onExitApp)
+                    DataCleanupScreen(onBack, cleanupTitle, onRuntimeDnsSettingsChanged, onExitApp, dataset = ruleDataset)
                 }
             }
             Routes.CONFIG_TRANSFER,
@@ -392,26 +392,23 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.RULE_IMPORT -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) {
                 if (isExpress) ExpressConfigTransferScreen(onBack, "备份与迁移") else ConfigTransferScreen(onBack, "备份与迁移")
             }
-            Routes.PROVIDER_MANAGEMENT -> SettingsGuideHost(SettingsGuides.PROVIDER_MANAGEMENT) { ProviderManagementScreen(onBack, "服务商管理") }
-            Routes.HOME_PROVIDER_VISIBILITY -> SettingsGuideHost(SettingsGuides.SERVICE_DISPLAY) { HomeProviderVisibilityScreen(onBack, "服务显示") }
+            Routes.PROVIDER_MANAGEMENT -> SettingsGuideHost(SettingsGuides.PROVIDER_MANAGEMENT) { ProviderManagementScreen(onBack, "服务商管理", dataset = ruleDataset) }
+            Routes.HOME_PROVIDER_VISIBILITY -> SettingsGuideHost(SettingsGuides.SERVICE_DISPLAY) { HomeProviderVisibilityScreen(onBack, "服务显示", dataset = ruleDataset) }
             Routes.BLOCKED_APPS,
             Routes.BLOCKED_APPS_SELECTION -> SettingsGuideHost(SettingsGuides.BLOCKED_APPS) { BlockedAppsScreen(onBack) }
             Routes.APP_ALLOWLIST,
             Routes.APP_ALLOWLIST_SELECTION -> SettingsGuideHost(SettingsGuides.APP_ALLOWLIST) { AppRuleManagementScreen(onBack) }
-            Routes.BOOTSTRAP_SETTINGS -> SettingsGuideHost(SettingsGuides.BOOTSTRAP) { BootstrapSettingsScreen(onBack, "Bootstrap 设置") }
+            Routes.BOOTSTRAP_SETTINGS -> SettingsGuideHost(SettingsGuides.BOOTSTRAP) { BootstrapSettingsScreen(onBack, "Bootstrap 设置", dataset = ruleDataset) }
             Routes.NETWORK_TOOLS -> SettingsGuideHost(SettingsGuides.NETWORK_TOOLS) { NetworkToolsScreen(onBack, "网络诊断") }
             Routes.RACE_MODE_PROVIDERS -> SettingsGuideHost(SettingsGuides.RESOLUTION_MODE) {
-                ResolutionModeHomeScreen(
-                    onBack = onBack,
-                    onOpenMode = { mode -> onNavigate(mode.route) }
-                )
+                ResolutionModeHomeScreen(onBack = onBack, onOpenMode = { mode -> onNavigate(mode.route) }, dataset = ruleDataset)
             }
-            Routes.RESOLUTION_SINGLE -> ResolutionModeConfigScreen(DnsResolutionMode.SINGLE, onBack)
-            Routes.RESOLUTION_SMART -> ResolutionModeConfigScreen(DnsResolutionMode.SMART_PREDICTION, onBack)
-            Routes.RESOLUTION_PARALLEL -> ResolutionModeConfigScreen(DnsResolutionMode.PARALLEL_RACE, onBack)
-            Routes.RESOLUTION_BACKUP -> ResolutionModeConfigScreen(DnsResolutionMode.PRIMARY_BACKUP, onBack)
+            Routes.RESOLUTION_SINGLE -> ResolutionModeConfigScreen(DnsResolutionMode.SINGLE, onBack, dataset = ruleDataset)
+            Routes.RESOLUTION_SMART -> ResolutionModeConfigScreen(DnsResolutionMode.SMART_PREDICTION, onBack, dataset = ruleDataset)
+            Routes.RESOLUTION_PARALLEL -> ResolutionModeConfigScreen(DnsResolutionMode.PARALLEL_RACE, onBack, dataset = ruleDataset)
+            Routes.RESOLUTION_BACKUP -> ResolutionModeConfigScreen(DnsResolutionMode.PRIMARY_BACKUP, onBack, dataset = ruleDataset)
             Routes.CACHE_SETTINGS -> SettingsGuideHost(SettingsGuides.CACHE) { CacheSettingsScreen(onBack, ScreenDestinations.cacheSettings.title, onRuntimeDnsSettingsChanged, dataset = requestedRuleDataset) }
-            Routes.LOG_RETENTION_SETTINGS -> SettingsGuideHost(SettingsGuides.LOG_MODE) { LogRetentionSettingsScreen(onBack, onRuntimeDnsSettingsChanged, ScreenDestinations.logRetentionSettings.title) }
+            Routes.LOG_RETENTION_SETTINGS -> SettingsGuideHost(SettingsGuides.LOG_MODE) { LogRetentionSettingsScreen(onBack, onRuntimeDnsSettingsChanged, ScreenDestinations.logRetentionSettings.title, dataset = ruleDataset) }
             Routes.FOREGROUND_BACKGROUND_SETTINGS -> SettingsGuideHost(SettingsGuides.FOREGROUND_BACKGROUND) {
                 if (isExpress) {
                     ExpressForegroundBackgroundSettingsScreen(onBack, ScreenDestinations.foregroundBackgroundSettings.title, onHideFromRecentsChanged)

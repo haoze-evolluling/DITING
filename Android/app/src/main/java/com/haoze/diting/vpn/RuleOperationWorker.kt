@@ -157,7 +157,7 @@ class RuleOperationWorker(
         val ruleIndexDirectory = if (dataset == com.haoze.diting.data.RuleDataset.DNS_MODE) {
             null
         } else {
-            RuleIndexLayout.scopeDirectory(applicationContext.filesDir, ruleScope)
+            RuleIndexLayout.scopeDirectory(applicationContext.filesDir, ruleScope, dataset)
         }
         val blockManager = BlockListManager(dataSources.blockRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)
         val allowManager = AllowListManager(dataSources.allowRuleDao(), ruleIndexDirectory, ruleScope, reloadCacheAfterChanges = false)

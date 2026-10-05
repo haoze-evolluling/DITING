@@ -53,7 +53,13 @@ import com.haoze.diting.ui.components.SettingsCardMargin
 fun ResolutionModeHomeScreen(
     onBack: () -> Unit,
     onOpenMode: (DnsResolutionMode) -> Unit,
-    viewModel: RaceModeSettingsViewModel = viewModel()
+    dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL,
+    viewModel: RaceModeSettingsViewModel = viewModel(
+        factory = RaceModeSettingsViewModel.Factory(
+            LocalContext.current.applicationContext as android.app.Application,
+            dataset
+        )
+    )
 ) {
     val mode by viewModel.resolutionMode.collectAsStateWithLifecycle()
     val providers by viewModel.providers.collectAsStateWithLifecycle()

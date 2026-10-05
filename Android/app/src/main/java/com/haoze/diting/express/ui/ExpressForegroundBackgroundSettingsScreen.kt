@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.Ipv6Mode
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
@@ -50,7 +51,7 @@ fun ExpressForegroundBackgroundSettingsScreen(
         mutableStateOf(SystemSettingsStore.isHideFromRecentsEnabled(context))
     }
     var ipv6Mode by remember {
-        mutableStateOf(SystemSettingsStore.getIpv6Mode(context))
+        mutableStateOf(SystemSettingsStore.getIpv6Mode(context, RuleDataset.EXPRESS))
     }
     var batteryOptimizationIgnored by remember(context) {
         mutableStateOf(isBatteryOptimizationIgnored(context))
@@ -58,7 +59,7 @@ fun ExpressForegroundBackgroundSettingsScreen(
 
     fun saveIpv6Mode(mode: Ipv6Mode) {
         ipv6Mode = mode
-        SystemSettingsStore.setIpv6Mode(context, mode)
+        SystemSettingsStore.setIpv6Mode(context, mode, RuleDataset.EXPRESS)
     }
 
     fun saveHideFromRecents(enabled: Boolean) {

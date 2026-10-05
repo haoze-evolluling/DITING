@@ -13,7 +13,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class ProviderManagementViewModel(application: Application) : AndroidViewModel(application) {
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.haoze.diting.data.RuleDataset
+
+class ProviderManagementViewModel(
+    application: Application,
+    val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
+
+    class Factory(
+        private val application: Application,
+        private val dataset: RuleDataset = RuleDataset.NORMAL
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return ProviderManagementViewModel(application, dataset) as T
+        }
+    }
 
     private val _providers = MutableStateFlow<List<DnsProvider>>(emptyList())
     val providers: StateFlow<List<DnsProvider>> = _providers.asStateFlow()
@@ -39,8 +56,8 @@ class ProviderManagementViewModel(application: Application) : AndroidViewModel(a
     fun load() {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            val all = DnsProvider.loadAll(context)
-            val selected = DnsProvider.loadSelected(context)
+            val all = DnsProvider.loadAll(context, dataset)
+            val selected = DnsProvider.loadSelected(context, dataset)
             withContext(Dispatchers.Main) {
                 _providers.value = all
                 _selectedId.value = selected.id
@@ -52,8 +69,8 @@ class ProviderManagementViewModel(application: Application) : AndroidViewModel(a
     fun select(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            DnsProvider.saveSelected(context, id)
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "provider_selected")
+            DnsProvider.saveSelected(context, id, dataset)
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "provider_selected", dataset = dataset)
             withContext(Dispatchers.Main) {
                 _selectedId.value = id
             }
@@ -77,9 +94,10 @@ class ProviderManagementViewModel(application: Application) : AndroidViewModel(a
                 protocol,
                 url.trim(),
                 host.trim(),
-                port
+                port,
+                dataset
             )
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "provider_added")
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "provider_added", dataset = dataset)
             withContext(Dispatchers.Main) {
                 _message.value = context.getString(R.string.provider_added)
             }
@@ -106,8 +124,8 @@ class ProviderManagementViewModel(application: Application) : AndroidViewModel(a
                 host = host.trim(),
                 port = port
             )
-            DnsProvider.updateUserProvider(context, updated)
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "provider_updated")
+            DnsProvider.updateUserProvider(context, updated, dataset)
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "provider_updated", dataset = dataset)
             withContext(Dispatchers.Main) {
                 _message.value = context.getString(R.string.provider_updated)
             }
@@ -118,8 +136,8 @@ class ProviderManagementViewModel(application: Application) : AndroidViewModel(a
     fun deleteProvider(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            DnsProvider.deleteUserProvider(context, id)
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "provider_deleted")
+            DnsProvider.deleteUserProvider(context, id, dataset)
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "provider_deleted", dataset = dataset)
             withContext(Dispatchers.Main) {
                 _message.value = context.getString(R.string.provider_deleted)
             }

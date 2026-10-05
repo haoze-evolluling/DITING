@@ -1,6 +1,7 @@
 package com.haoze.diting.ui.settings
 
 import android.content.Context
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.vpn.BootstrapIpDefaults
 import com.haoze.diting.vpn.BootstrapIpEntry
 import com.haoze.diting.vpn.BootstrapIpValidator
@@ -20,46 +21,46 @@ object BootstrapDnsSettingsStore {
         "preset_alidns"
     )
 
-    fun isBootstrapEnabled(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun isBootstrapEnabled(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Boolean {
+        return datasetPrefs(context, dataset)
             .getBoolean(KEY_BOOTSTRAP_ENABLED, DEFAULT_BOOTSTRAP_ENABLED)
     }
 
-    fun setBootstrapEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setBootstrapEnabled(context: Context, enabled: Boolean, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putBoolean(KEY_BOOTSTRAP_ENABLED, enabled)
             .apply()
     }
 
-    fun loadBootstrapIpEntries(context: Context): List<BootstrapIpEntry> {
-        val selectedPresetIds = getBootstrapPresetIds(context)
+    fun loadBootstrapIpEntries(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): List<BootstrapIpEntry> {
+        val selectedPresetIds = getBootstrapPresetIds(context, dataset)
         val presets = BootstrapIpDefaults.PRESETS.map { entry ->
             entry.copy(enabled = entry.id in selectedPresetIds)
         }
-        return presets + getCustomBootstrapIpEntries(context)
+        return presets + getCustomBootstrapIpEntries(context, dataset)
     }
 
-    fun loadEnabledBootstrapIpEntries(context: Context): List<BootstrapIpEntry> {
-        if (!isBootstrapEnabled(context)) return emptyList()
-        return loadBootstrapIpEntries(context).filter { it.enabled }
+    fun loadEnabledBootstrapIpEntries(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): List<BootstrapIpEntry> {
+        if (!isBootstrapEnabled(context, dataset)) return emptyList()
+        return loadBootstrapIpEntries(context, dataset).filter { it.enabled }
     }
 
-    fun setBootstrapIpEnabled(context: Context, id: String, enabled: Boolean) {
+    fun setBootstrapIpEnabled(context: Context, id: String, enabled: Boolean, dataset: RuleDataset = RuleDataset.NORMAL) {
         val presetIds = BootstrapIpDefaults.PRESETS.map { it.id }.toSet()
         if (id in presetIds) {
-            val selected = getBootstrapPresetIds(context).toMutableSet()
+            val selected = getBootstrapPresetIds(context, dataset).toMutableSet()
             if (enabled) selected.add(id) else selected.remove(id)
-            setBootstrapPresetIds(context, selected)
+            setBootstrapPresetIds(context, selected, dataset)
             return
         }
-        val updated = getCustomBootstrapIpEntries(context).map { entry ->
+        val updated = getCustomBootstrapIpEntries(context, dataset).map { entry ->
             if (entry.id == id) entry.copy(enabled = enabled) else entry
         }
-        saveCustomBootstrapIpEntries(context, updated)
+        saveCustomBootstrapIpEntries(context, updated, dataset)
     }
 
-    fun addCustomBootstrapIp(context: Context, name: String, ip: String): BootstrapIpEntry? {
+    fun addCustomBootstrapIp(context: Context, name: String, ip: String, dataset: RuleDataset = RuleDataset.NORMAL): BootstrapIpEntry? {
         val trimmedIp = ip.trim()
         if (!BootstrapIpValidator.isValidIp(trimmedIp)) return null
         val entry = BootstrapIpEntry(
@@ -69,14 +70,15 @@ object BootstrapDnsSettingsStore {
             isPreset = false,
             enabled = true
         )
-        saveCustomBootstrapIpEntries(context, getCustomBootstrapIpEntries(context) + entry)
+        saveCustomBootstrapIpEntries(context, getCustomBootstrapIpEntries(context, dataset) + entry, dataset)
         return entry
     }
 
-    fun deleteCustomBootstrapIp(context: Context, id: String) {
+    fun deleteCustomBootstrapIp(context: Context, id: String, dataset: RuleDataset = RuleDataset.NORMAL) {
         saveCustomBootstrapIpEntries(
             context,
-            getCustomBootstrapIpEntries(context).filter { it.id != id }
+            getCustomBootstrapIpEntries(context, dataset).filter { it.id != id },
+            dataset
         )
     }
 
@@ -84,8 +86,8 @@ object BootstrapDnsSettingsStore {
         return BootstrapIpValidator.isValidIp(ip)
     }
 
-    fun getBootstrapPresetIds(context: Context): Set<String> {
-        val json = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun getBootstrapPresetIds(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Set<String> {
+        val json = datasetPrefs(context, dataset)
             .getString(KEY_BOOTSTRAP_PRESET_IDS, null)
             ?: return DEFAULT_BOOTSTRAP_PRESET_IDS
         return try {
@@ -100,18 +102,18 @@ object BootstrapDnsSettingsStore {
         }
     }
 
-    fun setBootstrapPresetIds(context: Context, ids: Set<String>) {
+    fun setBootstrapPresetIds(context: Context, ids: Set<String>, dataset: RuleDataset = RuleDataset.NORMAL) {
         val validIds = BootstrapIpDefaults.PRESETS.map { it.id }.toSet()
         val array = JSONArray()
         ids.filter { it in validIds }.forEach { array.put(it) }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_BOOTSTRAP_PRESET_IDS, array.toString())
             .apply()
     }
 
-    private fun getCustomBootstrapIpEntries(context: Context): List<BootstrapIpEntry> {
-        val json = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private fun getCustomBootstrapIpEntries(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): List<BootstrapIpEntry> {
+        val json = datasetPrefs(context, dataset)
             .getString(KEY_BOOTSTRAP_CUSTOM_JSON, null)
             ?: return emptyList()
         return try {
@@ -137,7 +139,11 @@ object BootstrapDnsSettingsStore {
         }
     }
 
-    private fun saveCustomBootstrapIpEntries(context: Context, entries: List<BootstrapIpEntry>) {
+    private fun saveCustomBootstrapIpEntries(
+        context: Context,
+        entries: List<BootstrapIpEntry>,
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) {
         val array = JSONArray()
         entries.filter { !it.isPreset && BootstrapIpValidator.isValidIp(it.ip) }.forEach { entry ->
             array.put(
@@ -149,7 +155,7 @@ object BootstrapDnsSettingsStore {
                 }
             )
         }
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        datasetPrefs(context, dataset)
             .edit()
             .putString(KEY_BOOTSTRAP_CUSTOM_JSON, array.toString())
             .apply()

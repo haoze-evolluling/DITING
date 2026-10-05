@@ -2,7 +2,10 @@ package com.haoze.diting.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.settings.BootstrapDnsSettingsStore
 import com.haoze.diting.vpn.BootstrapHealthEngine
 import com.haoze.diting.vpn.BootstrapHealthSnapshot
@@ -16,7 +19,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class BootstrapSettingsViewModel(application: Application) : AndroidViewModel(application) {
+class BootstrapSettingsViewModel(
+    application: Application,
+    val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
+
+    class Factory(
+        private val application: Application,
+        private val dataset: RuleDataset = RuleDataset.NORMAL
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return BootstrapSettingsViewModel(application, dataset) as T
+        }
+    }
+
     private val _enabled = MutableStateFlow(true)
     val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
 
@@ -42,8 +59,8 @@ class BootstrapSettingsViewModel(application: Application) : AndroidViewModel(ap
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
             BootstrapHealthEngine.flushActive(commit = true)
-            val enabled = BootstrapDnsSettingsStore.isBootstrapEnabled(context)
-            val entries = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context)
+            val enabled = BootstrapDnsSettingsStore.isBootstrapEnabled(context, dataset)
+            val entries = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context, dataset)
             val health = BootstrapHealthStore.loadAll(context)
             withContext(Dispatchers.Main) {
                 _enabled.value = enabled
@@ -55,17 +72,17 @@ class BootstrapSettingsViewModel(application: Application) : AndroidViewModel(ap
 
     fun setEnabled(enabled: Boolean) {
         val context = getApplication<Application>()
-        BootstrapDnsSettingsStore.setBootstrapEnabled(context, enabled)
-        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "bootstrap_toggled")
+        BootstrapDnsSettingsStore.setBootstrapEnabled(context, enabled, dataset)
+        RuntimeDnsSettingsRefresher.refreshIfRunning(context, "bootstrap_toggled", dataset = dataset)
         _enabled.value = enabled
     }
 
     fun setEntryEnabled(id: String, enabled: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            BootstrapDnsSettingsStore.setBootstrapIpEnabled(context, id, enabled)
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "bootstrap_ip_toggled")
-            val entries = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context)
+            BootstrapDnsSettingsStore.setBootstrapIpEnabled(context, id, enabled, dataset)
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "bootstrap_ip_toggled", dataset = dataset)
+            val entries = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context, dataset)
             withContext(Dispatchers.Main) {
                 _entries.value = entries
             }
@@ -79,9 +96,9 @@ class BootstrapSettingsViewModel(application: Application) : AndroidViewModel(ap
         }
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            BootstrapDnsSettingsStore.addCustomBootstrapIp(context, name, ip)
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "bootstrap_ip_added")
-            val entries = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context)
+            BootstrapDnsSettingsStore.addCustomBootstrapIp(context, name, ip, dataset)
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "bootstrap_ip_added", dataset = dataset)
+            val entries = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context, dataset)
             withContext(Dispatchers.Main) {
                 _entries.value = entries
                 _message.value = context.getString(R.string.bootstrap_ip_added)
@@ -93,10 +110,10 @@ class BootstrapSettingsViewModel(application: Application) : AndroidViewModel(ap
     fun deleteCustom(id: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            BootstrapDnsSettingsStore.deleteCustomBootstrapIp(context, id)
+            BootstrapDnsSettingsStore.deleteCustomBootstrapIp(context, id, dataset)
             BootstrapHealthStore.remove(context, id)
-            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "bootstrap_ip_deleted")
-            val entries = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context)
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, "bootstrap_ip_deleted", dataset = dataset)
+            val entries = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context, dataset)
             val health = BootstrapHealthStore.loadAll(context)
             withContext(Dispatchers.Main) {
                 _entries.value = entries

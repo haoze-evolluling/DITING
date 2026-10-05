@@ -17,12 +17,12 @@ internal class NetworkFeatureConfigImporter(private val session: ImportSessionCo
 
     fun importNetworkFeatures(config: TransferConfig) {
         if (config.bootstrapEnabled != null) {
-            BootstrapDnsSettingsStore.setBootstrapEnabled(context, config.bootstrapEnabled)
+            BootstrapDnsSettingsStore.setBootstrapEnabled(context, config.bootstrapEnabled, session.dataset)
             val detail = "Bootstrap IP 引导 -> ${if (config.bootstrapEnabled) "已启用" else "已禁用"}"
             session.addUpdatedSetting(detail, "设置 $detail")
         }
 
-        val existingIps = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context)
+        val existingIps = BootstrapDnsSettingsStore.loadBootstrapIpEntries(context, session.dataset)
             .filterNot { it.isPreset }.map { it.ip.lowercase() }.toMutableSet()
         config.bootstrapIps.forEach { entry ->
             val item = "Bootstrap IP：${entry.name}"
@@ -32,13 +32,13 @@ internal class NetworkFeatureConfigImporter(private val session: ImportSessionCo
                 session.skippedDetails.add(detail)
                 session.complete(item, "跳过 $detail (已存在)")
             } else {
-                val saved = BootstrapDnsSettingsStore.addCustomBootstrapIp(context, entry.name, entry.ip)
+                val saved = BootstrapDnsSettingsStore.addCustomBootstrapIp(context, entry.name, entry.ip, session.dataset)
                 if (saved == null) {
                     session.failed++
                     session.failedDetails.add(detail)
                     session.complete(item, "添加 $detail 失败")
                 } else {
-                    BootstrapDnsSettingsStore.setBootstrapIpEnabled(context, saved.id, entry.enabled)
+                    BootstrapDnsSettingsStore.setBootstrapIpEnabled(context, saved.id, entry.enabled, session.dataset)
                     session.added++
                     session.addedDetails.add(detail)
                     session.complete(item, "新增 $detail")
@@ -47,9 +47,9 @@ internal class NetworkFeatureConfigImporter(private val session: ImportSessionCo
         }
 
         if (config.bootstrapPresetIds != null) {
-            val validPresets = BootstrapDnsSettingsStore.getBootstrapPresetIds(context)
+            val validPresets = BootstrapDnsSettingsStore.getBootstrapPresetIds(context, session.dataset)
             if (validPresets != config.bootstrapPresetIds) {
-                BootstrapDnsSettingsStore.setBootstrapPresetIds(context, config.bootstrapPresetIds)
+                BootstrapDnsSettingsStore.setBootstrapPresetIds(context, config.bootstrapPresetIds, session.dataset)
                 val detail = "预置 Bootstrap 节点状态"
                 session.addUpdatedSetting(detail, "更新 $detail")
             }

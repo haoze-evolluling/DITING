@@ -24,7 +24,13 @@ import com.haoze.diting.vpn.DnsProvider
 fun ProviderManagementScreen(
     onBack: () -> Unit,
     title: String = "服务商管理",
-    viewModel: ProviderManagementViewModel = viewModel()
+    dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL,
+    viewModel: ProviderManagementViewModel = viewModel(
+        factory = ProviderManagementViewModel.Factory(
+            androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application,
+            dataset
+        )
+    )
 ) {
     val providers by viewModel.providers.collectAsStateWithLifecycle()
     val selectedId by viewModel.selectedId.collectAsStateWithLifecycle()

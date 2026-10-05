@@ -49,7 +49,13 @@ import java.util.Locale
 fun BootstrapSettingsScreen(
     onBack: () -> Unit,
     title: String = "Bootstrap 设置",
-    viewModel: BootstrapSettingsViewModel = viewModel()
+    dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL,
+    viewModel: BootstrapSettingsViewModel = viewModel(
+        factory = BootstrapSettingsViewModel.Factory(
+            LocalContext.current.applicationContext as android.app.Application,
+            dataset
+        )
+    )
 ) {
     val context = LocalContext.current
     val enabled by viewModel.enabled.collectAsStateWithLifecycle()

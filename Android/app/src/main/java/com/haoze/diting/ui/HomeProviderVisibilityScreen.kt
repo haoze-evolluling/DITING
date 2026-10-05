@@ -33,11 +33,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import com.haoze.diting.data.RuleDataset
+
 @Composable
 fun HomeProviderVisibilityScreen(
     onBack: () -> Unit,
     title: String,
-    viewModel: HomeProviderVisibilityViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL,
+    viewModel: HomeProviderVisibilityViewModel = viewModel(
+        factory = HomeProviderVisibilityViewModel.Factory(
+            androidx.compose.ui.platform.LocalContext.current.applicationContext as Application,
+            dataset
+        )
+    )
 ) {
     val providers by viewModel.providers.collectAsStateWithLifecycle()
     val visibility by viewModel.visibility.collectAsStateWithLifecycle()
@@ -116,7 +124,21 @@ fun HomeProviderVisibilityScreen(
     }
 }
 
-class HomeProviderVisibilityViewModel(application: Application) : AndroidViewModel(application) {
+class HomeProviderVisibilityViewModel(
+    application: Application,
+    val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
+
+    class Factory(
+        private val application: Application,
+        private val dataset: RuleDataset = RuleDataset.NORMAL
+    ) : androidx.lifecycle.ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+            return HomeProviderVisibilityViewModel(application, dataset) as T
+        }
+    }
+
     private val _providers = MutableStateFlow<List<DnsProvider>>(emptyList())
     val providers: StateFlow<List<DnsProvider>> = _providers.asStateFlow()
 
@@ -133,8 +155,8 @@ class HomeProviderVisibilityViewModel(application: Application) : AndroidViewMod
         activated = true
         viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>()
-            val providers = DnsProvider.loadRuntimeProviders(context)
-            val visibility = ResolutionSettingsStore.getHomeProviderVisibility(context)
+            val providers = DnsProvider.loadRuntimeProviders(context, dataset)
+            val visibility = ResolutionSettingsStore.getHomeProviderVisibility(context, dataset)
             withContext(Dispatchers.Main) {
                 _providers.value = providers
                 _visibility.value = visibility
@@ -183,7 +205,7 @@ class HomeProviderVisibilityViewModel(application: Application) : AndroidViewMod
         val updated = transform(_visibility.value)
         _visibility.value = updated
         viewModelScope.launch(Dispatchers.IO) {
-            ResolutionSettingsStore.setHomeProviderVisibility(getApplication(), updated)
+            ResolutionSettingsStore.setHomeProviderVisibility(getApplication(), updated, dataset)
         }
     }
 }

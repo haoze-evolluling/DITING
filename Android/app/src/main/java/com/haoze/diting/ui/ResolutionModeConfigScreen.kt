@@ -46,7 +46,13 @@ import com.haoze.diting.vpn.DnsProvider
 fun ResolutionModeConfigScreen(
     mode: DnsResolutionMode,
     onBack: () -> Unit,
-    viewModel: RaceModeSettingsViewModel = viewModel()
+    dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL,
+    viewModel: RaceModeSettingsViewModel = viewModel(
+        factory = RaceModeSettingsViewModel.Factory(
+            LocalContext.current.applicationContext as android.app.Application,
+            dataset
+        )
+    )
 ) {
     val providers by viewModel.providers.collectAsStateWithLifecycle()
     val context = LocalContext.current

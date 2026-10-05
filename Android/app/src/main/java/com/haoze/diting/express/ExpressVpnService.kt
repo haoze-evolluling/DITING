@@ -48,7 +48,7 @@ class ExpressVpnService : VpnService() {
         super.onCreate()
         isServiceAlive = true
         activeService = this
-        floatingLogOverlay = FloatingLogOverlayController(this)
+        floatingLogOverlay = FloatingLogOverlayController(this, RuleDataset.EXPRESS)
         ExpressNotificationBuilder.ensureChannel(this)
         kotlinx.coroutines.runBlocking { ExpressDefaultsSeeder.ensureInitialized(this@ExpressVpnService) }
     }

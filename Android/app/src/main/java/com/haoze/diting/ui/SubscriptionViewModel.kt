@@ -338,8 +338,7 @@ class SubscriptionViewModel(
         sources: com.haoze.diting.data.RuleDataSources,
         app: Application
     ): SubscriptionManager {
-        // The DNS dataset keeps pure in-memory caches; rule-index/ belongs to VPN mode.
-        val indexDirectory = if (dataset == RuleDataset.NORMAL) java.io.File(app.filesDir, "rule-index") else null
+        val indexDirectory = if (dataset == RuleDataset.DNS_MODE) null else com.haoze.diting.vpn.RuleIndexLayout.rootDirectory(app.filesDir, dataset)
         return SubscriptionManager(
             RuleDatabases.forDatasetDb(app, dataset),
             sources.subscriptionDao(),
@@ -488,10 +487,7 @@ class SubscriptionViewModel(
         if (!com.haoze.diting.vpn.DnsVpnService.isRunning(context)) {
             viewModelScope.launch(Dispatchers.IO) {
                 val sources = RuleDatabases.forDataset(context, dataset)
-                // The DNS dataset keeps pure in-memory caches; rule-index/ belongs to VPN mode.
-                val ruleIndexDirectory = if (dataset == RuleDataset.NORMAL) {
-                    com.haoze.diting.vpn.RuleIndexLayout.scopeDirectory(context.filesDir, scope)
-                } else null
+                val ruleIndexDirectory = if (dataset == RuleDataset.DNS_MODE) null else com.haoze.diting.vpn.RuleIndexLayout.scopeDirectory(context.filesDir, scope, dataset)
                 val blockManager = BlockListManager(sources.blockRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
                 val allowManager = AllowListManager(sources.allowRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
                 val rewriteManager = com.haoze.diting.vpn.RewriteRuleManager(sources.rewriteRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)

@@ -33,7 +33,8 @@ fun DataCleanupScreen(
     onBack: () -> Unit,
     title: String = "数据清理",
     onRuntimeDnsSettingsChanged: () -> Unit = {},
-    onExitApp: () -> Unit = {}
+    onExitApp: () -> Unit = {},
+    dataset: com.haoze.diting.data.RuleDataset = com.haoze.diting.data.RuleDataset.NORMAL
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -102,22 +103,22 @@ fun DataCleanupScreen(
             onConfirm = {
                 scope.launch(Dispatchers.IO) {
                     when (action) {
-                        CleanupAction.LOG -> DataCleanupManager.clearRequestLogs(context)
+                        CleanupAction.LOG -> DataCleanupManager.clearRequestLogs(context, dataset = dataset)
                         CleanupAction.TRAFFIC -> DataCleanupManager.clearTrafficStats(context)
                         CleanupAction.CRASH -> DataCleanupManager.clearCrashLogs(context)
-                        CleanupAction.CACHE -> DataCleanupManager.clearDnsCache(context)
+                        CleanupAction.CACHE -> DataCleanupManager.clearDnsCache(context, dataset = dataset)
                         CleanupAction.PROVIDER_WEIGHT -> DataCleanupManager.resetProviderWeights(context)
                         CleanupAction.BOOTSTRAP_WEIGHT -> DataCleanupManager.resetBootstrapWeights(context)
-                        CleanupAction.DOMAIN_RULES -> DataCleanupManager.clearAllDomainRules(context)
-                        CleanupAction.ADDRESS_RULES -> DataCleanupManager.clearAllAddressRules(context)
-                        CleanupAction.SUBSCRIPTIONS -> DataCleanupManager.clearAllSubscriptions(context)
+                        CleanupAction.DOMAIN_RULES -> DataCleanupManager.clearAllDomainRules(context, dataset = dataset)
+                        CleanupAction.ADDRESS_RULES -> DataCleanupManager.clearAllAddressRules(context, dataset = dataset)
+                        CleanupAction.SUBSCRIPTIONS -> DataCleanupManager.clearAllSubscriptions(context, dataset = dataset)
                         CleanupAction.APP_RULES -> DataCleanupManager.resetAppRules(context)
                         CleanupAction.OUTBOUND_PROXY -> DataCleanupManager.resetOutboundProxy(context)
                         CleanupAction.CA_CERTIFICATE -> DataCleanupManager.resetCaCertificate(context)
                         CleanupAction.DOWNLOAD_CACHE -> DataCleanupManager.clearDownloadAndTempCache(context)
                         CleanupAction.CUSTOM_BACKGROUND -> DataCleanupManager.clearCustomBackground(context)
                         CleanupAction.SETTINGS_GUIDES -> DataCleanupManager.resetSettingsGuides(context)
-                        CleanupAction.ALL_DATA -> DataCleanupManager.clearAllLocalData(context)
+                        CleanupAction.ALL_DATA -> DataCleanupManager.clearAllLocalData(context, dataset = dataset)
                     }
                     withContext(Dispatchers.Main) {
                         when (action) {

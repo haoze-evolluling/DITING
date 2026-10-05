@@ -91,9 +91,7 @@ object DataCleanupManager {
             com.haoze.diting.express.ExpressSettingsRefresher.clearCacheIfRunning(context)
         } else {
             DnsCacheController.clearAll(database.dnsCacheDao())
-            if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
-                com.haoze.diting.express.ExpressSettingsRefresher.clearCacheIfRunning(context)
-            }
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, dataset = dataset)
         }
     }
 
@@ -119,77 +117,77 @@ object DataCleanupManager {
         context: Context,
         dataset: RuleDataset = RuleDataset.NORMAL
     ) = withContext(Dispatchers.IO) {
-        if (dataset == RuleDataset.EXPRESS) {
-            val expressDb = ExpressRulesDatabase.getInstance(context)
-            clearDomainRulesData(
-                expressDb.blockRuleDao(),
-                expressDb.allowRuleDao(),
-                expressDb.rewriteRuleDao(),
-                expressDb.cosmeticRuleDao(),
-                expressDb.subscriptionDao(),
-                expressDb.subscriptionAutoUpdateDao()
-            )
-            com.haoze.diting.express.ExpressDefaultsSeeder.seedDefaults(context, forceReset = true)
-            val expressIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.EXPRESS)
-            File(expressIndexDir, "domain").deleteRecursively()
-            RuleIndexLayout.hostsIndex(expressIndexDir).delete()
-            runCatching {
-                AllowListManager(expressDb.allowRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
-                BlockListManager(expressDb.blockRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
-                RewriteRuleManager(expressDb.rewriteRuleDao(), expressIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+        when (dataset) {
+            RuleDataset.EXPRESS -> {
+                val expressDb = ExpressRulesDatabase.getInstance(context)
+                clearDomainRulesData(
+                    expressDb.blockRuleDao(),
+                    expressDb.allowRuleDao(),
+                    expressDb.rewriteRuleDao(),
+                    expressDb.cosmeticRuleDao(),
+                    expressDb.subscriptionDao(),
+                    expressDb.subscriptionAutoUpdateDao()
+                )
+                com.haoze.diting.express.ExpressDefaultsSeeder.seedDefaults(context, forceReset = true)
+                val expressIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.EXPRESS)
+                File(expressIndexDir, "domain").deleteRecursively()
+                RuleIndexLayout.hostsIndex(expressIndexDir).delete()
+                runCatching {
+                    AllowListManager(expressDb.allowRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
+                    BlockListManager(expressDb.blockRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
+                    RewriteRuleManager(expressDb.rewriteRuleDao(), expressIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+                }
+                RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                    context,
+                    refreshBlock = true,
+                    refreshAllow = true,
+                    refreshRewrite = true,
+                    dataset = RuleDataset.EXPRESS
+                )
             }
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                context,
-                refreshBlock = true,
-                refreshAllow = true,
-                refreshRewrite = true,
-                dataset = RuleDataset.EXPRESS
-            )
-            return@withContext
+            RuleDataset.DNS_MODE -> {
+                val dnsDb = DnsRulesDatabase.getInstance(context)
+                clearDomainRulesData(
+                    dnsDb.blockRuleDao(),
+                    dnsDb.allowRuleDao(),
+                    dnsDb.rewriteRuleDao(),
+                    dnsDb.cosmeticRuleDao(),
+                    dnsDb.subscriptionDao(),
+                    dnsDb.subscriptionAutoUpdateDao()
+                )
+                val dnsIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.DNS_MODE)
+                File(dnsIndexDir, "domain").deleteRecursively()
+                RuleIndexLayout.hostsIndex(dnsIndexDir).delete()
+                RuntimeDnsSettingsRefresher.refreshIfRunning(context, dataset = RuleDataset.DNS_MODE)
+            }
+            RuleDataset.NORMAL -> {
+                val normalDb = AppDatabase.getInstance(context)
+                clearDomainRulesData(
+                    normalDb.blockRuleDao(),
+                    normalDb.allowRuleDao(),
+                    normalDb.rewriteRuleDao(),
+                    normalDb.cosmeticRuleDao(),
+                    normalDb.subscriptionDao(),
+                    normalDb.subscriptionAutoUpdateDao()
+                )
+                DefaultWhitelistSeeder.seed(context, normalDb, forceReset = true)
+                val ruleIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.NORMAL)
+                File(ruleIndexDir, "domain").deleteRecursively()
+                RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
+                runCatching {
+                    AllowListManager(normalDb.allowRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
+                    BlockListManager(normalDb.blockRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
+                    RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+                }
+                RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                    context,
+                    refreshBlock = true,
+                    refreshAllow = true,
+                    refreshRewrite = true,
+                    dataset = RuleDataset.NORMAL
+                )
+            }
         }
-        val normalDb = AppDatabase.getInstance(context)
-        val dnsDb = DnsRulesDatabase.getInstance(context)
-
-        // 1. AppDatabase（VPN 模式）
-        clearDomainRulesData(
-            normalDb.blockRuleDao(),
-            normalDb.allowRuleDao(),
-            normalDb.rewriteRuleDao(),
-            normalDb.cosmeticRuleDao(),
-            normalDb.subscriptionDao(),
-            normalDb.subscriptionAutoUpdateDao()
-        )
-        DefaultWhitelistSeeder.seed(context, normalDb, forceReset = true)
-
-        // 2. DnsRulesDatabase（服务器模式）
-        clearDomainRulesData(
-            dnsDb.blockRuleDao(),
-            dnsDb.allowRuleDao(),
-            dnsDb.rewriteRuleDao(),
-            dnsDb.cosmeticRuleDao(),
-            dnsDb.subscriptionDao(),
-            dnsDb.subscriptionAutoUpdateDao()
-        )
-
-        // 3. 磁盘索引重建
-        val ruleIndexDir = File(context.filesDir, "rule-index")
-        File(ruleIndexDir, "domain").deleteRecursively()
-        RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
-        runCatching {
-            AllowListManager(normalDb.allowRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
-            BlockListManager(normalDb.blockRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
-            RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
-        }
-
-        // 4. 同步运行时服务
-        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-            context,
-            refreshBlock = true,
-            refreshAllow = true,
-            refreshRewrite = true,
-            dataset = RuleDataset.NORMAL
-        )
-        RuntimeDnsSettingsRefresher.refreshIfRunning(context, dataset = RuleDataset.DNS_MODE)
     }
 
     internal suspend fun clearDomainRulesData(
@@ -212,33 +210,52 @@ object DataCleanupManager {
     /**
      * 清理全部地址规则（URL 屏蔽、URL 放行及 CNAME 覆写规则），不干扰域名黑白名单与域名订阅。
      */
-    suspend fun clearAllAddressRules(context: Context) = withContext(Dispatchers.IO) {
-        val normalDb = AppDatabase.getInstance(context)
-        val dnsDb = DnsRulesDatabase.getInstance(context)
-
-        // 1. AppDatabase
-        clearAddressRulesData(normalDb.goUrlRuleDao(), normalDb.rewriteRuleDao())
-
-        // 2. DnsRulesDatabase
-        clearAddressRulesData(dnsDb.goUrlRuleDao(), dnsDb.rewriteRuleDao())
-
-        // 3. 刷新 hosts 覆写索引
-        val ruleIndexDir = File(context.filesDir, "rule-index")
-        RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
-        runCatching {
-            RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+    suspend fun clearAllAddressRules(
+        context: Context,
+        dataset: RuleDataset = RuleDataset.NORMAL
+    ) = withContext(Dispatchers.IO) {
+        when (dataset) {
+            RuleDataset.EXPRESS -> {
+                val expressDb = ExpressRulesDatabase.getInstance(context)
+                clearAddressRulesData(expressDb.goUrlRuleDao(), expressDb.rewriteRuleDao())
+                val expressIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.EXPRESS)
+                RuleIndexLayout.hostsIndex(expressIndexDir).delete()
+                runCatching {
+                    RewriteRuleManager(expressDb.rewriteRuleDao(), expressIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+                }
+                RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                    context,
+                    refreshBlock = false,
+                    refreshAllow = false,
+                    refreshRewrite = true,
+                    dataset = RuleDataset.EXPRESS
+                )
+            }
+            RuleDataset.DNS_MODE -> {
+                val dnsDb = DnsRulesDatabase.getInstance(context)
+                clearAddressRulesData(dnsDb.goUrlRuleDao(), dnsDb.rewriteRuleDao())
+                val dnsIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.DNS_MODE)
+                RuleIndexLayout.hostsIndex(dnsIndexDir).delete()
+                RuntimeDnsSettingsRefresher.refreshIfRunning(context, dataset = RuleDataset.DNS_MODE)
+            }
+            RuleDataset.NORMAL -> {
+                val normalDb = AppDatabase.getInstance(context)
+                clearAddressRulesData(normalDb.goUrlRuleDao(), normalDb.rewriteRuleDao())
+                val ruleIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.NORMAL)
+                RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
+                runCatching {
+                    RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+                }
+                RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+                RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                    context,
+                    refreshBlock = false,
+                    refreshAllow = false,
+                    refreshRewrite = true,
+                    dataset = RuleDataset.NORMAL
+                )
+            }
         }
-
-        // 4. 同步运行时引擎
-        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
-        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-            context,
-            refreshBlock = false,
-            refreshAllow = false,
-            refreshRewrite = true,
-            dataset = RuleDataset.NORMAL
-        )
-        RuntimeDnsSettingsRefresher.refreshIfRunning(context, dataset = RuleDataset.DNS_MODE)
     }
 
     internal suspend fun clearAddressRulesData(
@@ -256,80 +273,79 @@ object DataCleanupManager {
         context: Context,
         dataset: RuleDataset = RuleDataset.NORMAL
     ) = withContext(Dispatchers.IO) {
-        if (dataset == RuleDataset.EXPRESS) {
-            val expressDb = ExpressRulesDatabase.getInstance(context)
-            clearSubscriptionsData(
-                expressDb.subscriptionDao(),
-                expressDb.subscriptionGroupDao(),
-                expressDb.subscriptionAutoUpdateDao(),
-                expressDb.blockRuleDao(),
-                expressDb.allowRuleDao(),
-                expressDb.rewriteRuleDao(),
-                expressDb.goUrlRuleDao(),
-                expressDb.cosmeticRuleDao()
-            )
-            val expressIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.EXPRESS)
-            RuleIndexLayout.hostsIndex(expressIndexDir).delete()
-            runCatching {
-                BlockListManager(expressDb.blockRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
-                AllowListManager(expressDb.allowRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
-                RewriteRuleManager(expressDb.rewriteRuleDao(), expressIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+        when (dataset) {
+            RuleDataset.EXPRESS -> {
+                val expressDb = ExpressRulesDatabase.getInstance(context)
+                clearSubscriptionsData(
+                    expressDb.subscriptionDao(),
+                    expressDb.subscriptionGroupDao(),
+                    expressDb.subscriptionAutoUpdateDao(),
+                    expressDb.blockRuleDao(),
+                    expressDb.allowRuleDao(),
+                    expressDb.rewriteRuleDao(),
+                    expressDb.goUrlRuleDao(),
+                    expressDb.cosmeticRuleDao()
+                )
+                val expressIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.EXPRESS)
+                RuleIndexLayout.hostsIndex(expressIndexDir).delete()
+                runCatching {
+                    BlockListManager(expressDb.blockRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
+                    AllowListManager(expressDb.allowRuleDao(), expressIndexDir).refreshCache(forceRebuild = true)
+                    RewriteRuleManager(expressDb.rewriteRuleDao(), expressIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+                }
+                RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                    context,
+                    refreshBlock = true,
+                    refreshAllow = true,
+                    refreshRewrite = true,
+                    dataset = RuleDataset.EXPRESS
+                )
             }
-            RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-                context,
-                refreshBlock = true,
-                refreshAllow = true,
-                refreshRewrite = true,
-                dataset = RuleDataset.EXPRESS
-            )
-            return@withContext
+            RuleDataset.DNS_MODE -> {
+                val dnsDb = DnsRulesDatabase.getInstance(context)
+                clearSubscriptionsData(
+                    dnsDb.subscriptionDao(),
+                    dnsDb.subscriptionGroupDao(),
+                    dnsDb.subscriptionAutoUpdateDao(),
+                    dnsDb.blockRuleDao(),
+                    dnsDb.allowRuleDao(),
+                    dnsDb.rewriteRuleDao(),
+                    dnsDb.goUrlRuleDao(),
+                    dnsDb.cosmeticRuleDao()
+                )
+                val dnsIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.DNS_MODE)
+                RuleIndexLayout.hostsIndex(dnsIndexDir).delete()
+                RuntimeDnsSettingsRefresher.refreshIfRunning(context, dataset = RuleDataset.DNS_MODE)
+            }
+            RuleDataset.NORMAL -> {
+                val normalDb = AppDatabase.getInstance(context)
+                clearSubscriptionsData(
+                    normalDb.subscriptionDao(),
+                    normalDb.subscriptionGroupDao(),
+                    normalDb.subscriptionAutoUpdateDao(),
+                    normalDb.blockRuleDao(),
+                    normalDb.allowRuleDao(),
+                    normalDb.rewriteRuleDao(),
+                    normalDb.goUrlRuleDao(),
+                    normalDb.cosmeticRuleDao()
+                )
+                val ruleIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.NORMAL)
+                RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
+                runCatching {
+                    BlockListManager(normalDb.blockRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
+                    AllowListManager(normalDb.allowRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
+                    RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
+                }
+                RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
+                    context,
+                    refreshBlock = true,
+                    refreshAllow = true,
+                    refreshRewrite = true,
+                    dataset = RuleDataset.NORMAL
+                )
+                RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
+            }
         }
-        val normalDb = AppDatabase.getInstance(context)
-        val dnsDb = DnsRulesDatabase.getInstance(context)
-
-        // 1. AppDatabase
-        clearSubscriptionsData(
-            normalDb.subscriptionDao(),
-            normalDb.subscriptionGroupDao(),
-            normalDb.subscriptionAutoUpdateDao(),
-            normalDb.blockRuleDao(),
-            normalDb.allowRuleDao(),
-            normalDb.rewriteRuleDao(),
-            normalDb.goUrlRuleDao(),
-            normalDb.cosmeticRuleDao()
-        )
-
-        // 2. DnsRulesDatabase
-        clearSubscriptionsData(
-            dnsDb.subscriptionDao(),
-            dnsDb.subscriptionGroupDao(),
-            dnsDb.subscriptionAutoUpdateDao(),
-            dnsDb.blockRuleDao(),
-            dnsDb.allowRuleDao(),
-            dnsDb.rewriteRuleDao(),
-            dnsDb.goUrlRuleDao(),
-            dnsDb.cosmeticRuleDao()
-        )
-
-        // 3. 索引刷新与缓存同步
-        val ruleIndexDir = File(context.filesDir, "rule-index")
-        RuleIndexLayout.hostsIndex(ruleIndexDir).delete()
-        runCatching {
-            BlockListManager(normalDb.blockRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
-            AllowListManager(normalDb.allowRuleDao(), ruleIndexDir).refreshCache(forceRebuild = true)
-            RewriteRuleManager(normalDb.rewriteRuleDao(), ruleIndexDir).refreshCache(rebuildSubscriptionIndex = true)
-        }
-
-        // 4. 同步运行时服务
-        RuntimeDnsSettingsRefresher.refreshRuleIndexesIfRunning(
-            context,
-            refreshBlock = true,
-            refreshAllow = true,
-            refreshRewrite = true,
-            dataset = RuleDataset.NORMAL
-        )
-        RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
-        RuntimeDnsSettingsRefresher.refreshIfRunning(context, dataset = RuleDataset.DNS_MODE)
     }
 
     internal suspend fun clearSubscriptionsData(
@@ -472,15 +488,44 @@ object DataCleanupManager {
             RuntimeDnsSettingsRefresher.refreshIfRunning(context, reason = "factory_reset", dataset = RuleDataset.EXPRESS)
             return@withContext
         }
-        clearRequestLogs(context)
+        if (dataset == RuleDataset.DNS_MODE) {
+            val dnsDb = DnsRulesDatabase.getInstance(context)
+            clearDomainRulesData(
+                dnsDb.blockRuleDao(),
+                dnsDb.allowRuleDao(),
+                dnsDb.rewriteRuleDao(),
+                dnsDb.cosmeticRuleDao(),
+                dnsDb.subscriptionDao(),
+                dnsDb.subscriptionAutoUpdateDao()
+            )
+            clearAddressRulesData(dnsDb.goUrlRuleDao(), dnsDb.rewriteRuleDao())
+            clearSubscriptionsData(
+                dnsDb.subscriptionDao(),
+                dnsDb.subscriptionGroupDao(),
+                dnsDb.subscriptionAutoUpdateDao(),
+                dnsDb.blockRuleDao(),
+                dnsDb.allowRuleDao(),
+                dnsDb.rewriteRuleDao(),
+                dnsDb.goUrlRuleDao(),
+                dnsDb.cosmeticRuleDao()
+            )
+            dnsDb.mirrorTemplateDao().clearAll()
+            val dnsIndexDir = RuleIndexLayout.rootDirectory(context.filesDir, RuleDataset.DNS_MODE)
+            File(dnsIndexDir, "domain").deleteRecursively()
+            RuleIndexLayout.hostsIndex(dnsIndexDir).delete()
+            context.getSharedPreferences(RuleDataset.DNS_MODE.prefsName(), Context.MODE_PRIVATE).edit().clear().apply()
+            RuntimeDnsSettingsRefresher.refreshIfRunning(context, reason = "factory_reset", dataset = RuleDataset.DNS_MODE)
+            return@withContext
+        }
+        clearRequestLogs(context, dataset = RuleDataset.NORMAL)
         clearTrafficStats(context)
         clearCrashLogs(context)
-        clearDnsCache(context)
+        clearDnsCache(context, dataset = RuleDataset.NORMAL)
         resetProviderWeights(context)
         resetBootstrapWeights(context)
-        clearAllDomainRules(context)
-        clearAllAddressRules(context)
-        clearAllSubscriptions(context)
+        clearAllDomainRules(context, dataset = RuleDataset.NORMAL)
+        clearAllAddressRules(context, dataset = RuleDataset.NORMAL)
+        clearAllSubscriptions(context, dataset = RuleDataset.NORMAL)
         resetAppRules(context)
         resetOutboundProxy(context)
         resetCaCertificate(context)
@@ -488,11 +533,9 @@ object DataCleanupManager {
         clearCustomBackground(context)
         resetSettingsGuides(context)
 
-        // 清理镜像模板
+        // 清理镜像模板（仅限 Normal 库）
         val normalDb = AppDatabase.getInstance(context)
-        val dnsDb = DnsRulesDatabase.getInstance(context)
         normalDb.mirrorTemplateDao().clearAll()
-        dnsDb.mirrorTemplateDao().clearAll()
 
         // 清理头像与识别库缓存
         deleteDirectoryContents(File(context.filesDir, "avatars"))
