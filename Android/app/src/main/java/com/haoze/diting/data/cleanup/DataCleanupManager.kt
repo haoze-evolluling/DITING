@@ -76,6 +76,9 @@ object DataCleanupManager {
         database: AppDatabase = AppDatabase.getInstance(context)
     ) = withContext(Dispatchers.IO) {
         DnsCacheController.clearAll(database.dnsCacheDao())
+        if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+            com.haoze.diting.express.ExpressSettingsRefresher.clearCacheIfRunning(context)
+        }
     }
 
     /**

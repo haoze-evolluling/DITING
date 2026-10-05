@@ -384,6 +384,13 @@ internal fun translateSettingsAndAppearanceExact(text: String): String? = when (
     "确定要删除下载的更新安装包和临时缓存文件吗？" -> "Delete downloaded update APK packages and temporary cache files?"
     "确定要清除自定义壁纸缓存并恢复默认外观背景吗？" -> "Clear custom wallpaper cache and restore default appearance background?"
     "确定要执行全面数据清理吗？将依次清理所有日志、流量统计、崩溃记录、DNS 缓存、服务商权重、域名及地址规则、规则订阅、临时缓存及抓包证书。所有自定义配置与规则将被清空，新手引导也将重置，操作完成后应用将退出。" -> "Execute full data cleanup? This will sequentially clean all logs, traffic stats, crash reports, DNS cache, provider weights, domain and address rules, subscriptions, temporary cache, and CA certificate. All custom rules and settings will be reset, onboarding will reset, and the app will exit."
+    "清除 DNS 请求日志、竞速统计及 Bootstrap 解析日志" -> "Clear DNS request logs, race statistics, and Bootstrap resolution logs"
+    "确定要删除所有 DNS 请求日志、竞速统计和 Bootstrap DNS 解析统计吗？" -> "Delete all DNS request logs, race statistics, and Bootstrap resolution statistics?"
+    "清除域名屏蔽、白名单及对应订阅，恢复预设白名单" -> "Clear domain block, allow rules, and subscriptions; restore default preset whitelist"
+    "确定要删除全部域名规则吗？域名屏蔽、白名单及对应订阅都会被移除。" -> "Delete all domain rules? Domain block, allow rules, and subscriptions will be removed."
+    "深度清空所有日志、缓存、规则、订阅与配置，应用将退出" -> "Completely clear all logs, caches, rules, subscriptions, and config; app will exit"
+    "确定要执行全面数据清理吗？将依次清理所有日志、崩溃记录、DNS 缓存、服务商权重、域名规则、规则订阅及临时缓存。所有自定义配置与规则将被清空，新手引导也将重置，操作完成后应用将退出。" -> "Execute full data cleanup? This will sequentially clean all logs, crash reports, DNS cache, provider weights, domain rules, subscriptions, and temporary cache. All custom rules and settings will be reset, onboarding will reset, and the app will exit."
+    "确定要重置所有应用设置新手引导和首次使用协议吗？这不会删除任何配置、规则、缓存或日志。操作完成后应用将退出；下次打开时需要重新同意使用协议，所有新手引导也会再次显示。" -> "Reset all app introductory guides and user agreement? This will not delete any configurations, rules, caches, or logs. The app will exit after this operation; you will need to accept the agreement again on next launch, and introductory guides will be shown again."
     else -> null
 }
 

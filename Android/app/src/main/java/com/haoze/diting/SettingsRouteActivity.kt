@@ -349,7 +349,18 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.AGENT_API_CREDENTIALS,
             Routes.AGENT_API_PRESETS -> AiProviderManageScreen(onBack)
             Routes.AGENT_API_PARAMS -> AgentApiParamsScreen(onBack)
-            Routes.DATA_CLEANUP -> SettingsGuideHost(SettingsGuides.DATA_CLEANUP) { DataCleanupScreen(onBack, requestedTitle ?: ScreenDestinations.dataCleanup.title, onRuntimeDnsSettingsChanged, onExitApp) }
+            Routes.DATA_CLEANUP -> SettingsGuideHost(SettingsGuides.DATA_CLEANUP) {
+                if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+                    com.haoze.diting.express.ui.ExpressDataCleanupScreen(
+                        onBack = onBack,
+                        title = requestedTitle ?: ScreenDestinations.dataCleanup.title,
+                        onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged,
+                        onExitApp = onExitApp
+                    )
+                } else {
+                    DataCleanupScreen(onBack, requestedTitle ?: ScreenDestinations.dataCleanup.title, onRuntimeDnsSettingsChanged, onExitApp)
+                }
+            }
             Routes.CONFIG_TRANSFER -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "备份与迁移") }
             Routes.CONFIG_IMPORT_EXPORT -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "备份与迁移") }
             Routes.RULE_EXPORT -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "备份与迁移") }
@@ -443,8 +454,14 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.SPONSOR_LIST -> SponsorListScreen(onBack, "赞助者名单")
             Routes.CO_BUILDER_LIST -> CoBuilderListScreen(onBack, "共建者名单")
             Routes.APP_TRAFFIC_STATS -> AppTrafficStatsScreen(onBack)
-            Routes.OPTIONAL_FEATURES -> OptionalFeaturesScreen(onBack)
-            Routes.HIDDEN_FEATURES -> HiddenFeaturesScreen(onBack)
+            Routes.OPTIONAL_FEATURES,
+            Routes.HIDDEN_FEATURES -> {
+                if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+                    com.haoze.diting.express.ui.ExpressHiddenFeaturesScreen(onBack)
+                } else {
+                    HiddenFeaturesScreen(onBack)
+                }
+            }
             Routes.WORK_MODE_SELECTION -> WorkModeSelectionScreen(
                 isFirstLaunch = false,
                 currentMode = WorkModeStore.getAppWorkMode(this),
