@@ -89,13 +89,23 @@ class LogRouteActivity : AppLocalizedActivity() {
         }
         val onNavigateToTrafficStats = { onNavigate(Routes.APP_TRAFFIC_STATS) }
 
+        val isExpressMode = com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(this) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS
         when (route) {
             Routes.DNS_LOGS,
-            Routes.HTTP_REQUEST_LOGS -> RequestLogScreen(
-                onBack = onBack,
-                initialSource = requestedRequestSource ?: if (route == Routes.HTTP_REQUEST_LOGS) RequestSource.HTTPS else RequestSource.ALL,
-                onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
-            )
+            Routes.HTTP_REQUEST_LOGS -> {
+                if (isExpressMode) {
+                    com.haoze.diting.express.ui.ExpressRequestLogScreen(
+                        onBack = onBack,
+                        onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+                    )
+                } else {
+                    RequestLogScreen(
+                        onBack = onBack,
+                        initialSource = requestedRequestSource ?: if (route == Routes.HTTP_REQUEST_LOGS) RequestSource.HTTPS else RequestSource.ALL,
+                        onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+                    )
+                }
+            }
             Routes.DNS_CACHE -> DnsCacheScreen(onBack = onBack)
             Routes.RACE_STATS -> RaceStatsScreen(onBack = onBack)
             Routes.BOOTSTRAP_STATS -> BootstrapStatsScreen(onBack = onBack)
@@ -109,7 +119,7 @@ class LogRouteActivity : AppLocalizedActivity() {
                 onNavigateToRaceStats = onNavigateToRaceStats,
                 onNavigateToBootstrapStats = onNavigateToBootstrapStats,
                 onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats,
-                onNavigateToTrafficStats = onNavigateToTrafficStats
+                onNavigateToTrafficStats = if (isExpressMode) null else onNavigateToTrafficStats
             )
         }
     }

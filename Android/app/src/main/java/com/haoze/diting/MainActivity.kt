@@ -249,6 +249,36 @@ class MainActivity : AppLocalizedActivity() {
                                     }
                                 }
                             )
+                        } else if (currentWorkMode == AppWorkMode.EXPRESS) {
+                            com.haoze.diting.express.ui.ExpressMainScreen(
+                                onToggle = { isRunning -> onToggleVpn(isRunning) },
+                                onNavigateToSettings = { launchSettings(Routes.SETTINGS) },
+                                onNavigateToLogs = ::launchLogs,
+                                onNavigateToProviderManagement = { launchSettings(Routes.PROVIDER_MANAGEMENT) },
+                                onNavigateToBootstrapSettings = { launchSettings(Routes.BOOTSTRAP_SETTINGS) },
+                                onNavigateToHomeProviderVisibility = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
+                                onNavigateToRaceModeSettings = { launchSettings(Routes.RACE_MODE_PROVIDERS) },
+                                onNavigateToAppearanceSettings = { launchSettings(Routes.APPEARANCE_SETTINGS) },
+                                onNavigateToRuleControl = { launchSettings(Routes.RULE_CONTROL) },
+                                onNavigateToBlacklist = { launchSettings(Routes.BLACKLIST_MANAGEMENT) },
+                                onNavigateToWhitelist = { launchSettings(Routes.WHITELIST_MANAGEMENT) },
+                                onNavigateToLogRetentionSettings = { launchSettings(Routes.LOG_RETENTION_SETTINGS) },
+                                onNavigateToHomeProviderVisibilityFromFeatureHub = { launchSettings(Routes.HOME_PROVIDER_VISIBILITY) },
+                                onNavigateToAbout = { launchSettings(Routes.ABOUT) },
+                                onNavigateToSponsor = { launchSettings(Routes.SPONSOR) },
+                                onNavigateToSponsorList = { launchSettings(Routes.SPONSOR_LIST) },
+                                onNavigateToCoBuilderList = { launchSettings(Routes.CO_BUILDER_LIST) },
+                                onNavigateToAppUpdate = { launchSettings(Routes.APP_UPDATE) },
+                                onNavigateToDataManagement = { launchSettings(Routes.CONFIG_TRANSFER) },
+                                onNavigateToHiddenFeatures = { launchSettings(Routes.HIDDEN_FEATURES) },
+                                onNavigateToCacheSettings = { launchSettings(Routes.CACHE_SETTINGS) },
+                                onNavigateToDataCleanup = { launchSettings(Routes.DATA_CLEANUP) },
+                                onNavigateToLogRoute = ::launchLogRoute,
+                                onNavigateToSettingsRoute = ::launchSettings,
+                                bottomBarRefreshRequested = bottomBarRefreshRequested,
+                                onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false },
+                                viewModel = mainViewModel
+                            )
                         } else {
                             MainScreen(
                                 onToggle = { isRunning -> onToggleVpn(isRunning) },
