@@ -13,6 +13,10 @@ import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.vpn.DnsProvider
 import com.haoze.diting.vpn.DnsVpnService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Dedicated launcher and lifecycle bridge for Express Mode.
@@ -60,11 +64,15 @@ object ExpressModeLauncher {
 
         AppNotificationChannels.createAllChannels(appContext)
         com.haoze.diting.express.notification.ExpressNotificationBuilder.ensureChannel(appContext)
-        kotlinx.coroutines.runBlocking { ExpressDefaultsSeeder.ensureInitialized(appContext) }
-        ExpressVpnController.initialize(appContext)
-        VpnMonitorManager.sync(appContext)
 
-        onComplete?.invoke()
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            ExpressDefaultsSeeder.ensureInitialized(appContext)
+            ExpressVpnController.initialize(appContext)
+            VpnMonitorManager.sync(appContext)
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                onComplete?.invoke()
+            }
+        }
     }
 
     /**
@@ -83,8 +91,9 @@ object ExpressModeLauncher {
         selectedMode: AppWorkMode,
         onSelected: () -> Unit
     ) {
-        switchToExpress(activity, WorkModeStore.getAppWorkMode(activity))
-        onSelected()
+        switchToExpress(activity, WorkModeStore.getAppWorkMode(activity)) {
+            onSelected()
+        }
     }
 
     /**
@@ -105,15 +114,16 @@ object ExpressModeLauncher {
         previousMode: AppWorkMode,
         onBack: () -> Unit
     ) {
-        switchToExpress(activity, previousMode)
-        if (previousMode == AppWorkMode.DNS) {
-            val intent = Intent(activity, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        switchToExpress(activity, previousMode) {
+            if (previousMode == AppWorkMode.DNS) {
+                val intent = Intent(activity, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                }
+                activity.startActivity(intent)
+                activity.finish()
+            } else {
+                onBack()
             }
-            activity.startActivity(intent)
-            activity.finish()
-        } else {
-            onBack()
         }
     }
 
@@ -121,7 +131,9 @@ object ExpressModeLauncher {
      * Starts the Express VPN service.
      */
     fun start(context: Context, provider: DnsProvider? = null) {
-        kotlinx.coroutines.runBlocking { ExpressDefaultsSeeder.ensureInitialized(context.applicationContext) }
+        if (!ExpressDefaultsSeeder.isInitialized(context.applicationContext)) {
+            kotlinx.coroutines.runBlocking { ExpressDefaultsSeeder.ensureInitialized(context.applicationContext) }
+        }
         ExpressVpnController.start(context, provider)
     }
 

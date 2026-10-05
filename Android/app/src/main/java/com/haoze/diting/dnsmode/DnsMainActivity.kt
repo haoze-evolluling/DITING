@@ -35,6 +35,8 @@ import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
 
+import com.haoze.diting.ui.mode.disableWindowTransitions
+
 class DnsMainActivity : AppLocalizedActivity() {
     private var languageModeAtCreate = AppLanguageMode.SYSTEM
     private val viewModel: DnsMainViewModel by viewModels()
@@ -47,6 +49,7 @@ class DnsMainActivity : AppLocalizedActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        disableWindowTransitions()
         languageModeAtCreate = AppLanguageManager.getMode(this)
         enableEdgeToEdge()
         applyRecentsPrivacySetting()
@@ -141,6 +144,7 @@ class DnsMainActivity : AppLocalizedActivity() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         startActivity(intent)
+        disableWindowTransitions()
         finish()
     }
 

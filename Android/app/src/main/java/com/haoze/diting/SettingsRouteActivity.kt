@@ -33,6 +33,7 @@ import com.haoze.diting.ui.batch.BatchRuleTarget
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeSelectionScreen
 import com.haoze.diting.ui.mode.WorkModeStore
+import com.haoze.diting.ui.mode.disableWindowTransitions
 import com.haoze.diting.ui.traffic.AppTrafficStatsScreen
 import com.haoze.diting.ui.theme.ThemeColorStyle
 import com.haoze.diting.update.AppUpdateHost
@@ -496,7 +497,10 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     WorkModeStore.setAppWorkMode(this, selectedMode)
                     recordWorkModeChanged()
                     if (selectedMode == AppWorkMode.EXPRESS) {
-                        com.haoze.diting.express.ExpressModeLauncher.handleRouteModeSelected(this, previousMode) { onBack() }
+                        com.haoze.diting.express.ExpressModeLauncher.handleRouteModeSelected(this, previousMode) {
+                            disableWindowTransitions()
+                            onBack()
+                        }
                     } else if (selectedMode == AppWorkMode.DNS) {
                         if (previousMode == AppWorkMode.EXPRESS) {
                             com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
@@ -512,6 +516,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         }
                         startActivity(intent)
+                        disableWindowTransitions()
                         finish()
                     } else if (previousMode == AppWorkMode.DNS) {
                         DnsModeManager.stopService(this)
@@ -519,11 +524,13 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         }
                         startActivity(intent)
+                        disableWindowTransitions()
                         finish()
                     } else {
                         if (previousMode == AppWorkMode.EXPRESS) {
                             com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
                         }
+                        disableWindowTransitions()
                         onBack()
                     }
                 }
