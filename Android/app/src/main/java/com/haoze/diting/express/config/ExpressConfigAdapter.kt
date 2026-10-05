@@ -4,6 +4,7 @@ import android.content.Context
 import com.haoze.diting.ui.ConfigExportSelection
 import com.haoze.diting.ui.ConfigImportProgress
 import com.haoze.diting.ui.ConfigImportResult
+import com.haoze.diting.ui.settings.AppRulesSettingsStore
 import com.haoze.diting.ui.transfer.ConfigExporter
 import com.haoze.diting.ui.transfer.ConfigImporter
 import com.haoze.diting.ui.transfer.ConfigTransferParser
@@ -15,6 +16,7 @@ import com.haoze.diting.ui.transfer.TransferConfig
  * Express Mode operates exclusively on DNS 窄路由 and physically omits:
  * - Outbound Proxy (出站代理)
  * - Domain/CNAME Rewrite Rules (覆写规则)
+ * - URL Path / Address Rules (URL 路径规则)
  * - Excluded Apps (排除应用)
  * - Blocked Apps (禁止联网应用)
  * - App Allowlist (应用放行名单)
@@ -34,6 +36,7 @@ object ExpressConfigAdapter {
             outboundProxy = false,
             customRewriteDomainRules = false,
             customRewriteCnameRules = false,
+            customAddressRules = false,
             excludedApps = false,
             blockedApps = false,
             appAllowlist = false,
@@ -45,7 +48,7 @@ object ExpressConfigAdapter {
      * Sanitizes parsed configuration before import so that full-tunnel settings
      * are stripped and never written to local storage.
      */
-    fun sanitizeImportConfig(config: TransferConfig): TransferConfig {
+    fun sanitizeImportConfig(config: TransferConfig, context: Context? = null): TransferConfig {
         val sanitizedSystemSettings = config.systemSettings?.copy(
             bypassLanEnabled = null,
             appTrafficStatsEnabled = null,
@@ -54,14 +57,23 @@ object ExpressConfigAdapter {
             trafficSpeedEnabled = null
         )
 
+        // To avoid mutating the user's existing blocked apps preference in local storage
+        // when AppRuleConfigImporter checks `isBlockedAppsEnabled(context) != config.blockedAppsEnabled`,
+        // keep blockedAppsEnabled aligned with the existing local state if context is available.
+        val safeBlockedAppsEnabled = context?.let {
+            AppRulesSettingsStore.isBlockedAppsEnabled(it)
+        } ?: config.blockedAppsEnabled
+
         return config.copy(
             outboundProxy = null,
             httpInspection = null,
             customRewriteDomainRules = emptyList(),
             customRewriteCnameRules = emptyList(),
+            customAddressRules = emptyList(),
+            addressRulesEnabled = null,
             excludedApps = emptySet(),
             blockedApps = emptySet(),
-            blockedAppsEnabled = false,
+            blockedAppsEnabled = safeBlockedAppsEnabled,
             appAllowlistRules = emptyMap(),
             appAllowlistEnabled = false,
             systemSettings = sanitizedSystemSettings
@@ -86,7 +98,7 @@ object ExpressConfigAdapter {
         onProgress: (ConfigImportProgress) -> Unit = {}
     ): ConfigImportResult {
         val parsed = ConfigTransferParser.parseAndValidate(content)
-        val sanitized = sanitizeImportConfig(parsed)
+        val sanitized = sanitizeImportConfig(parsed, context)
         val importer = ConfigImporter(context)
         return importer.import(sanitized, onProgress)
     }

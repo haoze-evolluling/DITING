@@ -112,15 +112,28 @@ class LogRouteActivity : AppLocalizedActivity() {
             Routes.SUBSCRIPTION_INTERCEPTION_STATS -> SubscriptionInterceptionStatsScreen(onBack = onBack)
             Routes.PROVIDER_HEALTH -> ProviderHealthScreen(onBack = onBack)
             Routes.APP_TRAFFIC_STATS -> com.haoze.diting.ui.traffic.AppTrafficStatsScreen(onBack = onBack)
-            else -> ModernLogDashboardScreen(
-                onBack = onBack,
-                onNavigateToDnsLogs = onNavigateToDnsLogs,
-                onNavigateToDnsCache = onNavigateToDnsCache,
-                onNavigateToRaceStats = onNavigateToRaceStats,
-                onNavigateToBootstrapStats = onNavigateToBootstrapStats,
-                onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats,
-                onNavigateToTrafficStats = if (isExpressMode) null else onNavigateToTrafficStats
-            )
+            else -> {
+                if (isExpressMode) {
+                    com.haoze.diting.express.ui.ExpressLogDashboardScreen(
+                        onBack = onBack,
+                        onNavigateToDnsLogs = onNavigateToDnsLogs,
+                        onNavigateToDnsCache = onNavigateToDnsCache,
+                        onNavigateToRaceStats = onNavigateToRaceStats,
+                        onNavigateToBootstrapStats = onNavigateToBootstrapStats,
+                        onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats
+                    )
+                } else {
+                    ModernLogDashboardScreen(
+                        onBack = onBack,
+                        onNavigateToDnsLogs = onNavigateToDnsLogs,
+                        onNavigateToDnsCache = onNavigateToDnsCache,
+                        onNavigateToRaceStats = onNavigateToRaceStats,
+                        onNavigateToBootstrapStats = onNavigateToBootstrapStats,
+                        onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats,
+                        onNavigateToTrafficStats = onNavigateToTrafficStats
+                    )
+                }
+            }
         }
     }
 

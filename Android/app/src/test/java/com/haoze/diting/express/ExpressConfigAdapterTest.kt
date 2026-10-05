@@ -5,6 +5,7 @@ import com.haoze.diting.ui.ConfigExportSelection
 import com.haoze.diting.ui.transfer.ImportedCustomBlockRule
 import com.haoze.diting.ui.transfer.ImportedCustomAllowRule
 import com.haoze.diting.ui.transfer.ImportedCustomRewriteRule
+import com.haoze.diting.ui.transfer.ImportedCustomUrlRule
 import com.haoze.diting.ui.transfer.ImportedHttpInspection
 import com.haoze.diting.ui.transfer.ImportedOutboundProxy
 import com.haoze.diting.ui.transfer.ImportedSystemSettings
@@ -18,7 +19,7 @@ import org.junit.Test
 class ExpressConfigAdapterTest {
 
     @Test
-    fun `sanitizeExportSelection clears full tunnel features`() {
+    fun `sanitizeExportSelection clears full tunnel features including custom address rules`() {
         val original = ConfigExportSelection(
             providers = true,
             bootstrapIps = true,
@@ -45,7 +46,6 @@ class ExpressConfigAdapterTest {
         assertTrue(sanitized.dnsCache)
         assertTrue(sanitized.subscriptions)
         assertTrue(sanitized.customDomainRules)
-        assertTrue(sanitized.customAddressRules)
         assertTrue(sanitized.appearance)
         assertTrue(sanitized.systemSettings)
 
@@ -53,6 +53,7 @@ class ExpressConfigAdapterTest {
         assertFalse(sanitized.outboundProxy)
         assertFalse(sanitized.customRewriteDomainRules)
         assertFalse(sanitized.customRewriteCnameRules)
+        assertFalse(sanitized.customAddressRules)
         assertFalse(sanitized.excludedApps)
         assertFalse(sanitized.blockedApps)
         assertFalse(sanitized.appAllowlist)
@@ -86,7 +87,7 @@ class ExpressConfigAdapterTest {
             customAllowRules = listOf(ImportedCustomAllowRule("work.com", false, null, false, "@@||work.com^")),
             customRewriteDomainRules = listOf(ImportedCustomRewriteRule("a.com", "A", "1.1.1.1", "|a.com\$dnsrewrite=1.1.1.1")),
             customRewriteCnameRules = listOf(ImportedCustomRewriteRule("c.com", "CNAME", "d.com", "|c.com\$dnsrewrite=d.com")),
-            customAddressRules = emptyList(),
+            customAddressRules = listOf(ImportedCustomUrlRule("bad-path", "block", "bad-path", true)),
             excludedApps = setOf("com.example.app1"),
             blockedApps = setOf("com.example.app2"),
             blockedAppsEnabled = true,
@@ -122,9 +123,10 @@ class ExpressConfigAdapterTest {
         assertNull(sanitized.httpInspection)
         assertTrue(sanitized.customRewriteDomainRules.isEmpty())
         assertTrue(sanitized.customRewriteCnameRules.isEmpty())
+        assertTrue(sanitized.customAddressRules.isEmpty())
+        assertNull(sanitized.addressRulesEnabled)
         assertEquals(emptySet<String>(), sanitized.excludedApps)
         assertEquals(emptySet<String>(), sanitized.blockedApps)
-        assertFalse(sanitized.blockedAppsEnabled)
         assertEquals(emptyMap<String, Set<String>>(), sanitized.appAllowlistRules)
         assertFalse(sanitized.appAllowlistEnabled)
         assertNull(sanitized.systemSettings?.bypassLanEnabled)

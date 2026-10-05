@@ -380,11 +380,20 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.CA_CERTIFICATE_SETTINGS -> CaCertificateSettingsScreen(onBack, { onNavigate(Routes.CA_CERTIFICATE_GUIDE) })
             Routes.HTTP_INSPECTION_APPS -> HttpInspectionAppsScreen(onBack)
             Routes.DNS_LOGS,
-            Routes.HTTP_REQUEST_LOGS -> RequestLogScreen(
-                onBack = onBack,
-                initialSource = requestedRequestSource ?: if (route == Routes.HTTP_REQUEST_LOGS) RequestSource.HTTPS else RequestSource.ALL,
-                onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
-            )
+            Routes.HTTP_REQUEST_LOGS -> {
+                if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+                    com.haoze.diting.express.ui.ExpressRequestLogScreen(
+                        onBack = onBack,
+                        onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+                    )
+                } else {
+                    RequestLogScreen(
+                        onBack = onBack,
+                        initialSource = requestedRequestSource ?: if (route == Routes.HTTP_REQUEST_LOGS) RequestSource.HTTPS else RequestSource.ALL,
+                        onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+                    )
+                }
+            }
             Routes.SUBSCRIPTION_MANAGEMENT -> SubscriptionScreen(
                 onBack = onBack,
                 ruleScope = ruleScope ?: RuleScope.DNS,

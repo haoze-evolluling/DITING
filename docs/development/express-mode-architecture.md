@@ -115,6 +115,7 @@ DITING 支持三种独立工作模式：
 - `ExpressMainScreen` 与 `ExpressHomeContent`：保留电源启停、DNS 服务商切换、解析模式选择卡片；移除了依赖全隧道的局域网绕过开关与实时网速卡片。
 - `ExpressFeatureHubScreen`：基于网格布局紧凑排列，**物理移除 9 项不支持的高级功能**，不保留任何不可用入口或动态灰显门控。
 - `ExpressNavigation`：定义极速模式专属底栏目的地（`HOME`、`FEATURE_HUB`、`LOG_DASHBOARD`、`SETTINGS`），自动过滤全隧道专属 Tab。
+- `ExpressLogDashboardScreen`：极速模式专属日志仪表盘，物理剔除右上角 AI 网络分析入口（`AgentAnalysisSheet`）与应用流量统计入口，仅呈现核心 DNS 统计与刷新。
 - `ExpressRequestLogScreen`：纯净 DNS 日志查看器，物理剔除 HTTPS 流量标签页与 AI 流量分析操作。
 
 ### 6.2 功能取舍矩阵
@@ -141,8 +142,8 @@ DITING 支持三种独立工作模式：
 
 为避免极速模式用户导出配置时混入不支持的脏配置，以及导入全量备份时污染本地存储：
 
-- **导出纯净化**：`ExpressConfigAdapter.sanitizeExportSelection()` 强制关闭 9 项全隧道功能的导出开关。
-- **导入无害化**：`ExpressConfigAdapter.sanitizeImportConfig()` 在解析导入文件时，物理剥离并清空出站代理、HTTPS 检查、应用放行黑白名单及流量统计配置，保障极速模式下的配置导入安全可靠。
+- **导出纯净化**：`ExpressConfigAdapter.sanitizeExportSelection()` 强制关闭 9 项全隧道功能与 URL 路径规则（`customAddressRules`）的导出开关。
+- **导入无害化**：`ExpressConfigAdapter.sanitizeImportConfig()` 在解析导入文件时，物理剥离并清空出站代理、HTTPS 检查、URL 路径规则、应用放行黑白名单及流量统计配置；并对齐本地已有状态，不触碰被移除功能（如禁止联网应用开关 `blockedAppsEnabled` 与地址规则 `addressRulesEnabled`）的本地存储，保障极速模式下的配置导入安全可靠。
 
 ---
 

@@ -38,7 +38,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.haoze.diting.express.ExpressVpnController
 import com.haoze.diting.ui.FloatingNavigationBar
 import com.haoze.diting.ui.MainViewModel
-import com.haoze.diting.ui.ModernLogDashboardScreen
 import com.haoze.diting.ui.Routes
 import com.haoze.diting.ui.SettingsScreen
 import com.haoze.diting.ui.localizedText
@@ -219,14 +218,13 @@ fun ExpressMainScreen(
                     }
                 }
                 ExpressBottomBarDestination.LOG_DASHBOARD -> {
-                    ModernLogDashboardScreen(
+                    ExpressLogDashboardScreen(
                         onBack = {},
                         onNavigateToDnsLogs = { onNavigateToLogRoute(Routes.DNS_LOGS) },
                         onNavigateToDnsCache = { onNavigateToLogRoute(Routes.DNS_CACHE) },
                         onNavigateToRaceStats = { onNavigateToLogRoute(Routes.RACE_STATS) },
                         onNavigateToBootstrapStats = { onNavigateToLogRoute(Routes.BOOTSTRAP_STATS) },
                         onNavigateToSubscriptionInterceptionStats = { onNavigateToLogRoute(Routes.SUBSCRIPTION_INTERCEPTION_STATS) },
-                        onNavigateToTrafficStats = null,
                         showBackIcon = false,
                         contentBottomPadding = 108.dp,
                         isActive = pagerState.currentPage == page,

@@ -115,7 +115,7 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
                 }
                 val rawConfig = ConfigTransferParser.parseAndValidate(content)
                 val config = if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
-                    com.haoze.diting.express.config.ExpressConfigAdapter.sanitizeImportConfig(rawConfig)
+                    com.haoze.diting.express.config.ExpressConfigAdapter.sanitizeImportConfig(rawConfig, context)
                 } else {
                     rawConfig
                 }
