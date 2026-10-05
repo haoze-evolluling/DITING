@@ -83,5 +83,6 @@ object Routes {
     const val OPTIONAL_FEATURES = "optional_features"
     const val HIDDEN_FEATURES = "hidden_features"
     const val WORK_MODE_SELECTION = "work_mode_selection"
+    const val USAGE_WIZARD = "usage_wizard"
 }
 

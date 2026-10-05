@@ -2,6 +2,7 @@ package com.haoze.diting.ui
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.AltRoute
+import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.FlipToBack
 import androidx.compose.material.icons.filled.History
@@ -41,11 +42,12 @@ object ScreenDestinations {
     val languageSettings = main(Routes.LANGUAGE_SETTINGS, "语言设置", "选择应用界面语言", Icons.Filled.Public, SettingsSection.DATA)
     val dataCleanup = main(Routes.DATA_CLEANUP, "数据清理", "删除缓存、日志或域名规则", Icons.Filled.DeleteSweep, SettingsSection.DATA)
     val agentApiSettings = main(Routes.AGENT_API_SETTINGS, "AI 分析", "配置大语言模型接口与密钥，用于域名和网络流量分析", Icons.Filled.SmartToy, SettingsSection.OTHER)
+    val usageWizard = main(Routes.USAGE_WIZARD, "使用向导", "查看当前工作模式的架构原理、权限配置与上手指引", Icons.AutoMirrored.Outlined.HelpOutline, SettingsSection.OTHER)
     val resolutionSingle = child(Routes.RESOLUTION_SINGLE, "单一服务", "选择一个 DNS 服务商进行查询", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val resolutionSmart = child(Routes.RESOLUTION_SMART, "智能选择", "配置候选服务，按近期成功率和延迟优先选择", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val resolutionParallel = child(Routes.RESOLUTION_PARALLEL, "最快响应", "配置同时查询并采用最先成功结果的服务", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
     val resolutionBackup = child(Routes.RESOLUTION_BACKUP, "依次尝试", "配置失败后依次尝试的服务顺序", Icons.AutoMirrored.Filled.AltRoute, raceModeProviders)
-    val all = listOf(cacheSettings, logRetentionSettings, foregroundBackgroundSettings, workModeSelection, languageSettings)
+    val all = listOf(cacheSettings, logRetentionSettings, foregroundBackgroundSettings, workModeSelection, languageSettings, usageWizard)
     val mainEntries = all.filter { it.mainSection != null }
         .sortedWith(compareBy({ it.mainSection!!.order }, { all.indexOf(it) }))
     private val byRoute = all.associateBy { it.route }

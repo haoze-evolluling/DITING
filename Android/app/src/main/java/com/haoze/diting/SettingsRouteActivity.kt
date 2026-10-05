@@ -92,6 +92,11 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             finish()
             return
         }
+        if (route == Routes.USAGE_WIZARD) {
+            com.haoze.diting.onboarding.ModeOnboardingActivity.start(this, WorkModeStore.getAppWorkMode(this), isFirstLaunch = false)
+            finish()
+            return
+        }
         languageModeAtCreate = AppLanguageManager.getMode(this)
         enableEdgeToEdge()
         setResult(RESULT_OK, resultData)
@@ -199,6 +204,10 @@ class SettingsRouteActivity : AppLocalizedActivity() {
     ) {
         if (nextRoute == Routes.WORK_MODE_SELECTION) {
             WorkModeActivity.start(this, isFirstLaunch = false)
+            return
+        }
+        if (nextRoute == Routes.USAGE_WIZARD) {
+            com.haoze.diting.onboarding.ModeOnboardingActivity.start(this, WorkModeStore.getAppWorkMode(this), isFirstLaunch = false)
             return
         }
         if (childLaunchInProgress || (nextRoute == route && requestSource == requestedRequestSource)) return
@@ -499,6 +508,10 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.HIDDEN_FEATURES -> if (isExpress) ExpressHiddenFeaturesScreen(onBack) else HiddenFeaturesScreen(onBack)
             Routes.WORK_MODE_SELECTION -> {
                 WorkModeActivity.start(this, isFirstLaunch = false)
+                finish()
+            }
+            Routes.USAGE_WIZARD -> {
+                com.haoze.diting.onboarding.ModeOnboardingActivity.start(this, WorkModeStore.getAppWorkMode(this), isFirstLaunch = false)
                 finish()
             }
             else -> SettingsScreen(onBack, onNavigate)

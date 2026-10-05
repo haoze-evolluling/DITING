@@ -190,7 +190,7 @@ fun DnsSettingsScreen(
                 content = listOf(
                     {
                         SettingsNavigationItem(
-                            title = localizedText("使用指南与新手引导"),
+                            title = localizedText("使用向导"),
                             subtitle = localizedText("查看服务器模式架构原理、局域网配置与就绪指引"),
                             leadingIcon = Icons.AutoMirrored.Outlined.HelpOutline,
                             onClick = {

@@ -4,6 +4,9 @@ package com.haoze.diting.ui.localization
  * Localization entries for app settings, day/night mode, theme colors, transparency, wallpaper background, outbound proxy, and data cleanup.
  */
 internal fun translateSettingsAndAppearanceExact(text: String): String? = when (text) {
+    "使用向导" -> "Usage Wizard"
+    "查看当前工作模式的架构原理、权限配置与上手指引" -> "View architectural principles, permissions, and onboarding guide for current mode"
+    "查看服务器模式架构原理、局域网配置与就绪指引" -> "View server mode architecture, LAN configuration, and readiness guide"
     "底栏自定义" -> "Bottom bar customization"
     "自定义底栏按钮与显示顺序（2～4个）" -> "Customize bottom bar buttons and display order (2–4)"
     "底栏效果预览" -> "Bottom bar preview"

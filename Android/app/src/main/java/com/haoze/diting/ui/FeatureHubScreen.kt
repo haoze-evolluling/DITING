@@ -47,7 +47,6 @@ import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.WifiOff
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -262,19 +261,10 @@ internal fun FeatureHubScreen(
                 }
             ),
 
-            // 7. 关于软件 (5 项)
+            // 7. 关于软件 (4 项)
             FeatureHubCategory(
                 context.getString(R.string.feature_hub_about_app),
                 buildList {
-                    add(
-                        FeatureHubItem(
-                            title = "使用指南与向导",
-                            icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                            onClick = {
-                                com.haoze.diting.onboarding.ModeOnboardingActivity.start(context, com.haoze.diting.ui.mode.AppWorkMode.NORMAL)
-                            }
-                        )
-                    )
                     if (isVisible(HiddenFeature.APP_INFO)) {
                         add(FeatureHubItem(context.getString(R.string.feature_hub_app_info), Icons.Filled.Info, onNavigateToAbout))
                     }
