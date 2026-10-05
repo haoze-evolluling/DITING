@@ -55,4 +55,11 @@ class ExpressDataIsolationTest {
         assertTrue(datasets.contains(RuleDataset.EXPRESS))
         assertTrue(datasets.contains(RuleDataset.DNS_MODE))
     }
+
+    @Test
+    fun testDefaultResolutionModeAlignment() {
+        assertEquals("single", com.haoze.diting.ui.DnsResolutionMode.SINGLE.storageValue)
+        assertEquals(com.haoze.diting.ui.DnsResolutionMode.SINGLE, com.haoze.diting.ui.DnsResolutionMode.fromStorageValue("single"))
+        assertEquals(com.haoze.diting.ui.DnsResolutionMode.SINGLE, com.haoze.diting.ui.DnsResolutionMode.fromStorageValue(null) ?: com.haoze.diting.ui.DnsResolutionMode.SINGLE)
+    }
 }

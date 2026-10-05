@@ -64,7 +64,7 @@ object ExpressDefaultsSeeder {
         // 1. Factory preferences
         AppRulesSettingsStore.setDomainRulesEnabled(appContext, true, RuleDataset.EXPRESS)
         AppRulesSettingsStore.setBlockResponseMode(appContext, BlockResponseMode.NXDOMAIN, RuleDataset.EXPRESS)
-        ResolutionSettingsStore.setDnsResolutionMode(appContext, DnsResolutionMode.PRIMARY_BACKUP, RuleDataset.EXPRESS)
+        ResolutionSettingsStore.setDnsResolutionMode(appContext, DnsResolutionMode.SINGLE, RuleDataset.EXPRESS)
         DnsCacheSettingsStore.setCacheEnabled(appContext, true, RuleDataset.EXPRESS)
         SystemSettingsStore.setDnsLogMode(appContext, DnsLogMode.ALL, RuleDataset.EXPRESS)
         SystemSettingsStore.setIpv6Mode(appContext, Ipv6Mode.AUTO, RuleDataset.EXPRESS)
