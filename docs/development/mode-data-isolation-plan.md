@@ -1,261 +1,290 @@
-# 三模式数据隔离实施方案
+# 三模式完全数据隔离实施方案
 
-> 状态：方案评审稿
-> 关联文档：`docs/development/express-mode-architecture.md`、`docs/development/express-mode-plan.md`
-> 前置排查：普通/极速/服务器三模式的规则数据互通情况已结合代码与存储层逐一核实，结论直接体现在本方案第 2、3 节。
+> 状态：方案定稿稿（全新独立模式规范）  
+> 关联文档：`docs/development/Archive/express-mode-architecture.md`、`docs/development/Archive/express-mode-plan.md`  
+> 核心原则：三模式物理级完全隔离；极速模式作为全新独立模式，零继承、零复用已有模式用户数据，按统一出厂预设独立初始化与闭环维护。
+
+---
 
 ## 1. 背景与目标
 
-应用现有三种工作模式（`AppWorkMode`，`Android/app/src/main/java/com/haoze/diting/ui/mode/AppWorkMode.kt:11`）：
+应用现已演进出三种并行的工作模式（`AppWorkMode`，定义于 `Android/app/src/main/java/com/haoze/diting/ui/mode/AppWorkMode.kt:11`）：
 
-| 模式 | 枚举值 | 实现方式 | 运行时入口 |
-| --- | --- | --- | --- |
-| 普通模式 | `NORMAL` | Kotlin UI + Go 隧道引擎（`Android/tunnel`） | `DnsVpnService` |
-| 服务器模式 | `DNS` | Kotlin UI + Go standalone DNS 引擎 | `DnsModeService` |
-| 极速模式 | `EXPRESS` | 纯 Kotlin（无 Go 依赖） | `ExpressVpnService` |
+| 模式 | 枚举值 | 核心技术栈 | 运行时入口 | 定位与特性 |
+| --- | --- | --- | --- | --- |
+| 普通模式 | `NORMAL` | Kotlin UI + Go 隧道内核（gVisor netstack） | `DnsVpnService` | 全功能网络管控：全隧道接管、HTTPS 解密检查、应用级联网控制、出站代理与实时流量统计 |
+| 服务器模式 | `DNS` | Kotlin UI + Go 独立 DNS 引擎（0.0.0.0:1053） | `DnsModeService` | 局域网独立 DNS 服务器，为局域网路由器、PC 与移动终端提供解析服务 |
+| 极速模式 | `EXPRESS` | 纯 Kotlin 原生实现（无 Go 依赖、轻量窄路由 TUN） | `ExpressVpnService` | 轻量极低功耗：下潜支持至 Android 7.0，仅劫持 DNS 流量，专注于核心 DNS 加速与过滤 |
 
-当前三种模式的数据边界不完整：服务器模式拥有独立规则库，但**普通模式与极速模式共用同一套规则数据库、规则索引文件与大量设置项**，且部分清理操作会跨模式波及。
+### 现存问题
+当前系统的数据边界不完整：服务器模式拥有独立规则库，但**普通模式与极速模式在底层共用同一套规则数据库、规则索引文件以及大量设置项**。这导致：
+1. 极速模式会直接读写普通模式的数据与配置，无法针对极速模式独立调优；
+2. 清理操作跨模式相互波及（例如在极速模式下清理规则会连带清空普通模式与服务器模式的规则库）；
+3. 共享索引文件在模式切换时存在并发读写风险。
 
-本方案目标：
+### 本方案目标
+1. **物理级数据完全隔离**：为三种模式各自建立并维护完全独立的规则库、运行时表、规则索引文件、DNS 缓存、运行日志与专属偏好设置。
+2. **全新独立模式设计（零继承）**：极速模式作为全新独立环境，**绝不从普通模式或其它模式中继承、复用或复制任何用户已有数据（无种子迁移、无旧键回退、无升级弹窗打扰）**。
+3. **统一出厂基准**：极速模式首次进入时按需初始化，加载与出厂默认规范一致的基础预设（系统预置白名单、预置 DNS 服务商、出厂默认设置），用户数据全空白起步。
+4. **功能闭环自治**：配置导入导出智能安全裁剪，单项清理与模式内一键重置严格限制在当前模式数据边界之内。
 
-1. 为三种模式各自建立并维护完全独立的规则数据、订阅、规则索引、DNS 缓存、运行日志与模式相关设置。
-2. 明确"全局层"数据（应用外观、语言等）保持共享，不纳入隔离范围。
-3. 给出既有用户数据的迁移与兼容策略，保证升级后普通模式零感知、极速模式规则无缝延续。
-4. 消除现有跨模式清理、配置导入导出的波及问题。
+---
 
-## 2. 现状结论（排查衔接）
+## 2. 现状数据耦合诊断清单
 
-上一轮排查已确认的核心事实，是本方案的出发点：
+经全面代码排查，当前普通模式与极速模式的核心耦合点如下：
 
-1. **普通 ⇄ 极速完全互通**：极速模式引擎启动时直接打开普通模式数据库 `diting_database`（`ExpressTunnelManager.kt:236`），共用同一 `rule-index` 索引目录（`ExpressTunnelManager.kt:237`）；极速模式所有规则页面（规则控制/黑名单/白名单/订阅）均以默认 `RuleDataset.NORMAL` 数据集打开（`SettingsRouteActivity.kt:54-57`、`ExpressRuleControlScreen.kt:50`、`MainActivity.kt:130-134`）。
-2. **服务器模式已隔离**：拥有独立规则库 `diting_dns_rules`（`DnsRulesDatabase.kt:100`），且刻意不使用磁盘规则索引——`DnsQueryFilter` 以 `indexDirectory = null` 构建纯内存缓存，注释明确"索引文件归 VPN 模式所有"（`DnsQueryFilter.kt:25-53`）。
-3. **"快速索引"为普通/极速共用**：Kotlin 侧 `MappedSubscriptionRuleIndex`（自研 DTRI 格式：mmap + 域名树 + Bloom 过滤器，`MappedSubscriptionRuleIndex.kt:19`）由两模式共用；普通模式额外把索引文件路径推给 Go 引擎 `policySnapshot` 复读（`GoTunnelRuleManager.kt:33`、`tunnel/policy_snapshot.go:113-124`、`tunnel/policy_dtri_reader.go`）。
-4. **规则订阅普通 ⇄ 极速共通**：订阅记录同表，自动更新共用同一个 WorkManager 任务（NORMAL 数据集分支，`SubscriptionAutoUpdateScheduler.kt:127-135`）。
+### 2.1 规则与运行时数据库（Room）
+- **文件共用**：极速模式启动时直接打开普通模式数据库 `diting_database`（`ExpressTunnelManager.kt:236`）。
+- **规则表共用**：黑白名单（`block_rule`/`allow_rule`）、重写（`rewrite_rule`）、订阅（`subscription` 等）完全同表混用。
+- **运行时表混淆**：DNS 缓存（`dns_cache`）、解析日志（`dns_log`）、竞速与 Bootstrap 日志（`race_log`/`bootstrap_log`）两模式混写同表，导致请求日志界面数据交叉。
 
-## 3. 现状数据耦合清单
+### 2.2 规则索引文件（DTRI）
+- **路径共用**：统一硬编码写入 `filesDir/rule-index/`（`RuleIndexLayout.kt:27-48`）。
+- **并发窗口**：普通模式写入并推给 Go 引擎复读，极速模式使用纯 Kotlin mmap 读取；模式切换瞬间存在交叉读写风险。
 
-### 3.1 规则数据库（Room）
+### 2.3 偏好存储（SharedPreferences）
+- 普通模式与极速模式共享超级偏好文件 `dns_vpn_prefs`：
+  - `AppRulesSettingsStore`（域名规则开关、拦截响应模式、动态拦截配置等）；
+  - `ResolutionSettingsStore`（解析模式、主备服务商选定）；
+  - `DnsProvider`（已配置 DNS 服务商列表与当前选中项）；
+  - `DnsCacheSettingsStore`（DNS 缓存策略）；
+  - `SubscriptionAutoUpdateSettings`（订阅自动更新周期与开关）；
+  - `SystemSettingsStore` 中的 DNS 日志模式与 IPv6 模式。
+- 一个模式下的配置修改会隐式改变另一模式的网络行为。
 
-| 数据 | 普通模式 | 极速模式 | 服务器模式 |
-| --- | --- | --- | --- |
-| 规则库文件 | `diting_database`（`AppDatabase.kt:127`） | **同左，共用** | `diting_dns_rules`（独立） |
-| block/allow/rewrite/cosmetic/go_url 规则及 source 表 | 共用 | 共用 | 独立 |
-| subscription / subscription_group / subscription_auto_update_item | 共用 | 共用 | 独立 |
-| mirror_template | 共用 | 共用 | 独立 |
+### 2.4 跨模式波及副作用
+- **清理操作全量抹除**：`DataCleanupManager.kt` 中的 `clearAllDomainRules` / `clearAllSubscriptions` 同时清空 `AppDatabase` 和 `DnsRulesDatabase`。在极速模式点击清理，普通模式和服务器模式的规则被一并清空。
+- **配置导入导出越界**：极速模式导出/导入底层仍直连 `AppDatabase`，跨模式备份混淆。
 
-### 3.2 运行时数据表
+---
 
-| 数据 | 普通模式 | 极速模式 | 服务器模式 |
-| --- | --- | --- | --- |
-| `dns_cache`（DNS 响应缓存） | 使用 | **共用同表**（`ExpressTunnelManager.kt:244`） | 未接入 |
-| `dns_log`（解析日志） | 使用 | **共用同表**（`ExpressTunnelManager.kt:245`；`ExpressRequestLogScreen.kt:86` 直读） | 未接入（走 Go 引擎 LogCallback） |
-| `race_log` / `bootstrap_log` | 使用 | **共用同表**（`ExpressTunnelManager.kt:246-247`） | 未接入 |
-| `http_request_log` / `app_traffic_daily` | 专属（HTTPS 检查/流量统计） | 不使用 | 不使用 |
+## 3. 目标隔离架构与数据分层
 
-### 3.3 规则索引文件（DTRI）
+系统划分为**全局配置层**与**模式独立沙箱层**：
 
-| 项 | 说明 |
-| --- | --- |
-| 路径 | `filesDir/rule-index/`，布局由 `RuleIndexLayout` 统一定义（`RuleIndexLayout.kt:27-48`） |
-| 普通模式 | 写入并 mmap 读取；同时把 `.trie` 路径推给 Go 引擎复读 |
-| 极速模式 | **与普通模式共写同一批文件**（`ExpressTunnelManager.kt:237`） |
-| 服务器模式 | 不使用（纯内存，`DnsQueryFilter.kt:30-53`） |
-| 现存风险 | 模式切换瞬间存在两套引擎先后读写同一索引文件的并发窗口；`RuleOperationWorker.kt:156` 注释已意识到"索引文件归 VPN 模式所有"，但极速模式并未遵守该约定 |
+```mermaid
+graph TD
+    subgraph Global [全局共享层 (不隔离)]
+        G1[当前工作模式 WorkModeStore]
+        G2[应用外观 / 主题 / 语言]
+        G3[应用升级检测 / 隐私协议 / 引导标记]
+    end
 
-### 3.4 SharedPreferences
+    subgraph ModeSandboxes [模式独立沙箱层 (完全物理隔离)]
+        subgraph NormalMode [普通模式 NORMAL]
+            NDB[(diting_database)]
+            NPref[(dns_vpn_prefs)]
+            NIdx[rule-index/]
+            NEngine[DnsVpnService / Go]
+        end
 
-`dns_vpn_prefs` 是一个被十余个 Store 共用的"超级偏好文件"（`ui/settings/SettingsPreferencesExtensions.kt:5`），普通与极速模式读写其中同一批 key：
+        subgraph ExpressMode [极速模式 EXPRESS]
+            EDB[(diting_express)]
+            EPref[(diting_express_prefs)]
+            EIdx[rule-index/express/]
+            EEngine[ExpressVpnService / Kotlin]
+        end
 
-| Store / 使用者 | 内容 | 耦合判定 |
+        subgraph DnsMode [服务器模式 DNS]
+            DDB[(diting_dns_rules)]
+            DPref[(diting_dns_mode_prefs)]
+            DIdx[纯内存 / 无磁盘索引]
+            DEngine[DnsModeService / Go]
+        end
+    end
+```
+
+### 3.1 分层存储矩阵
+
+| 模式 | 规则与运行时数据库 | 偏好配置文件 (SharedPreferences) | 规则索引文件目录 | 运行时引擎 |
+| --- | --- | --- | --- | --- |
+| **普通模式** | `diting_database`<br>(含 HTTPS 日志与流量统计) | `dns_vpn_prefs` | `filesDir/rule-index/` | `DnsVpnService` (Go) |
+| **极速模式** | `diting_express`<br>(规则表 + 4 项运行时表) | `diting_express_prefs`<br>(独立文件，原生键名) | `filesDir/rule-index/express/` | `ExpressVpnService` (Kotlin) |
+| **服务器模式** | `diting_dns_rules`<br>(维持独立规则库) | `diting_dns_mode_prefs` | *无 (纯内存)* | `DnsModeService` (Go) |
+
+### 3.2 极速模式专有库（`diting_express`）实体定义
+- **规则实体**：复用现有类，包含 `BlockRuleEntity`、`AllowRuleEntity`、`RewriteRuleEntity`、`SubscriptionEntity`、`SubscriptionGroupEntity`、`SubscriptionAutoUpdateItemEntity`、`MirrorTemplateEntity` 及其对应的 Source 表。
+- **运行时实体**：独立包含 `DnsCacheEntity`、`DnsLogEntity`、`RaceLogEntity`、`BootstrapLogEntity` 及其 DAO。
+- **排除实体**：物理排除 `HttpRequestLogEntity`（HTTPS 检查日志）与 `AppTrafficDailyEntity`（流量统计），极速模式轻量 TUN 引擎不支持且不需要这两类数据。
+
+---
+
+## 4. 关键设计决策
+
+### D1：`RuleDataset` 核心三元化
+`RuleDataset` 扩展为三元枚举（`NORMAL` / `EXPRESS` / `DNS_MODE`），作为贯穿数据层、存储层与调度层的唯一路由标识：
+- `RuleDatabases.forDataset(context, dataset)`：新增 `EXPRESS -> ExpressRulesDatabase.getInstance(context)`；
+- `RuleIndexLayout.rootDirectory(filesDir, dataset)`：为 EXPRESS 分配 `rule-index/express/`；
+- 所有 WorkManager 调度（`RuleOperationWorker`、`SubscriptionAutoUpdateScheduler`）依据传入的 `dataset` 精准分发执行。
+
+### D2：偏好配置采用 SharedPreferences 独立文件隔离
+彻底放弃单文件内键名前缀混存的方案，为极速模式建立专属文件 `diting_express_prefs`：
+- **物理隔离**：各 Store（`AppRulesSettingsStore`、`ResolutionSettingsStore`、`DnsCacheSettingsStore`、`DnsProvider` 等）通过接收 `RuleDataset` 参数，底层自动切换 `context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)`；
+- **键名原生纯净**：无需拼接 `ds_express_` 前缀，保持原始直观的 Key（如 `domain_rules_enabled`、`selected_provider_id`），杜绝键名污染与解析负担；
+- **清理与重置彻底**：模式重置可直接清除专属偏好文件，无误伤其它模式配置的风险。
+
+### D3：按需初始化替代种子数据迁移（零继承）
+彻底剔除原方案中的“种子迁移（从普通模式复制已有数据）”设计：
+- **零继承**：用户进入极速模式时，绝不读取、不复制、不继承普通模式的已有自定义规则、订阅源、自定义 DNS 与历史日志；
+- **按需触发**：仅在用户首次切换到极速模式（或以极速模式冷启动）时，检查极速模式出厂状态。若未初始化，执行出厂预设播种并构建初始索引；
+- **零启动损耗**：从未激活极速模式的用户设备上，不会生成任何极速模式磁盘文件，避免无谓 I/O。
+
+### D4：运行时分发纯数据集驱动
+重构 `RuntimeDnsSettingsRefresher`，彻底移除依据全局“当前 UI 模式（WorkModeStore）”分发刷新的设计缺陷，完全由调用方携带的 `RuleDataset` 决定：
+- `NORMAL` → 仅在 `DnsVpnService` 运行时刷新 Go 内核；
+- `EXPRESS` → 仅在 `ExpressVpnService` 运行时刷新 Kotlin 引擎；
+- `DNS_MODE` → 仅在 `DnsModeService` 运行时刷新 Standalone DNS 引擎。
+
+### D5：配置导入导出智能安全裁剪
+针对极速模式设计专属导入导出逻辑：
+- **导出**：在极速模式下仅导出极速模式自身的数据库与配置项；
+- **导入**：当用户在极速模式下导入完整配置备份（如从普通模式导出的配置文件）时，自动执行**智能安全裁剪**——仅提取极速模式支持的域名规则、订阅源与 DNS 服务商设置，安全忽略 CA 证书、出站代理、应用黑白名单等普通模式专属配置，防止脏数据注入。
+
+### D6：数据清理与出厂重置模式级闭环
+- `DataCleanupManager` 的所有单项清理方法（清理域名规则、清理订阅、清理 DNS 缓存、清理请求日志）均引入 `dataset: RuleDataset` 参数：
+  - 极速模式下的清理操作仅清空 `diting_express` 对应表、重建 `rule-index/express/` 索引，并仅刷新极速模式引擎；
+  - 绝不连带修改 `AppDatabase` 或 `DnsRulesDatabase`。
+- **模式内出厂重置**：极速模式设置中的“恢复默认/重置”仅重置 `diting_express` 和 `diting_express_prefs` 并重新播种出厂预设，绝不影响普通模式。
+
+---
+
+## 5. 极速模式出厂预设初始化规范
+
+当极速模式被首次激活（或执行模式内恢复出厂重置）时，按如下规范建立全新的数据环境：
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 用户 / 系统
+    participant Launcher as ExpressModeLauncher
+    participant Seeder as ExpressDefaultsSeeder
+    participant DB as diting_express
+    participant Prefs as diting_express_prefs
+    participant Indexer as MappedSubscriptionRuleIndex
+
+    User->>Launcher: 首次切换 / 启动极速模式
+    Launcher->>Seeder: ensureInitialized(context)
+    alt 已完成初始化
+        Seeder-->>Launcher: 快速返回已就绪
+    else 首次未初始化
+        Seeder->>Prefs: 写入出厂默认配置 (解析模式/缓存开关/拦截策略等)
+        Seeder->>DB: 播种出厂预置白名单 (preset_whitelist, source="preset")
+        Seeder->>Prefs: 写入默认预置 DNS 服务商 (选中 preset_alidns_dns)
+        Seeder->>Indexer: 在 rule-index/express/ 构建初始 .trie 索引文件
+        Seeder->>Prefs: 标记 express_initialized = true
+        Seeder-->>Launcher: 初始化完毕
+    end
+    Launcher->>Launcher: 启动 ExpressVpnService (加载独立环境)
+```
+
+### 5.1 出厂预设明细
+
+1. **预置白名单播种**：
+   - 数据源：`assets/preset_whitelist.txt`；
+   - 写入目标：`diting_express` 的 `allow_rule` 与 `allow_rule_source`（source = `"preset"`）；
+   - 自定义规则状态：用户黑名单（`block_rule`）、用户白名单（source = `"useradd"`）、重写规则（`rewrite_rule`）均为空（0 条）。
+2. **预设 DNS 服务商配置**：
+   - 写入系统内置的优质公共服务商（阿里云、腾讯云 DNSPod、360、OneDNS、Cloudflare、Google 等）；
+   - 默认选中项：阿里云 DNS（`preset_alidns_dns`）；
+   - 自定义服务商列表：空。
+3. **出厂偏好默认值（`diting_express_prefs`）**：
+   - `domain_rules_enabled`：`true`（域名规则总开关默认开启）；
+   - `block_response_mode`：`NXDOMAIN` 或 `REFUSED`（与普通模式出厂一致）；
+   - `resolution_mode`：主备模式（`PRIMARY_BACKUP`）；
+   - `dns_cache_enabled`：`true`（默认开启 DNS 缓存）；
+   - `dns_log_mode`：`SUMMARY`（默认简要日志）；
+   - `subscription_auto_update_enabled`：`true`（默认开启自动更新，间隔 24 小时）；
+   - `ipv6_mode`：`AUTO`。
+4. **规则订阅与镜像模板**：
+   - 订阅源列表：空（0 条，由用户后续自主添加）；
+   - 镜像模板列表：空。
+5. **运行时日志与缓存**：
+   - `dns_cache`、`dns_log`、`race_log`、`bootstrap_log`：全空起步，自然积累。
+
+---
+
+## 6. 实施计划
+
+实施计划分为四个清晰解耦的阶段，每阶段均具备独立的编译运行与自测验证能力。
+
+### Phase 1：数据层与配置层物理隔离基础设施
+
+- [ ] **扩展数据集枚举**：`RuleDataset` 增加 `EXPRESS` 枚举值；`RuleDatabases` 适配三元实例解析。
+- [ ] **创建极速模式独立数据库**：新增 `ExpressRulesDatabase.kt`（数据库文件名为 `diting_express`），包含规则表与 4 个运行时表，排除 HTTPS 日志与流量统计实体。
+- [ ] **规则索引目录分域**：改造 `RuleIndexLayout`，增加 `dataset` 路由：`rootDirectory(filesDir, dataset)`，极速模式指向 `rule-index/express/`。
+- [ ] **偏好设置 Store 支持数据集路由**：
+  - 改造 `AppRulesSettingsStore`、`ResolutionSettingsStore`、`DnsCacheSettingsStore`、`DnsProvider`、`SubscriptionAutoUpdateSettings` 等模式相关 Store；
+  - 增加 `dataset: RuleDataset = RuleDataset.NORMAL` 参数；
+  - 极速模式路由读取独立偏好文件 `diting_express_prefs`，普通模式维持 `dns_vpn_prefs`。
+- **阶段验收**：
+  - 项目编译通过；
+  - 单元测试验证：针对 `EXPRESS` 数据集读写 SharedPreferences 与 SQLite，与 `NORMAL` 互不干扰。
+
+### Phase 2：出厂预设播种与运行时引擎对接
+
+- [ ] **实现极速模式出厂预设播种器**：
+  - 新建/扩展 `ExpressDefaultsSeeder`，实现 `ensureInitialized`；
+  - 按规范完成 `preset_whitelist` 播种、默认 DNS 服务商预置及出厂偏好写入；
+  - 生成 `rule-index/express/` 初始 trie 索引。
+- [ ] **按需接入初始化流程**：在 `ExpressModeLauncher.switchToExpress` 与极速模式服务入口中挂载按需初始化检查。
+- [ ] **极速引擎存储切换**：
+  - 将 `ExpressTunnelManager.kt` 中硬编码的 `AppDatabase.getInstance` 与 `rule-index` 切换为 `ExpressRulesDatabase.getInstance` 与 `rule-index/express/`；
+  - 运行时缓存与日志写入切换至独立库。
+- [ ] **调度与刷新服务三元化**：
+  - `RuntimeDnsSettingsRefresher` 改造为数据集驱动分发；
+  - `SubscriptionAutoUpdateScheduler` 新增 `subscription_auto_update_express` 独立 WorkManager 定时任务。
+- **阶段验收**：
+  - 首次启动极速模式，自动生成 `diting_express`、`diting_express_prefs` 与 `rule-index/express/*.trie`；
+  - 极速模式正常拦截与放行，运行时日志仅记录于 `diting_express`。
+
+### Phase 3：UI 链路完全分流、导入导出裁剪与数据清理闭环
+
+- [ ] **UI 路由全链路绑定 EXPRESS**：
+  - `SettingsRouteActivity`、`LogRouteActivity`、`ExpressMainScreen`、`ExpressRuleControlScreen` 等相关页面与 ViewModel，显式传入 `RuleDataset.EXPRESS`。
+- [ ] **数据清理模式级闭环**：
+  - 改造 `DataCleanupManager`，所有清理函数均要求传入 `RuleDataset`；
+  - 极速模式清理页面仅操作 `diting_express` 与 `rule-index/express/`，刷新仅通知 `ExpressVpnService`，彻底杜绝跨模式连带误删；
+  - 极速模式下“一键清理/恢复出厂”仅重置自身并重新播种出厂预设。
+- [ ] **配置导入导出智能安全裁剪**：
+  - `ConfigExporter` 与 `ConfigImporter` 接入数据集参数；
+  - 极速模式导入外部备份文件时，自动过滤丢弃普通模式专有特性（CA/出站代理/应用管控），仅导入通用域名规则与 DNS 配置。
+- **阶段验收**：
+  - 在极速模式下清空规则/订阅，核实普通模式和服务器模式数据安然无恙；
+  - 导入包含全功能配置的备份文件，极速模式平稳降级接入，无报错与脏数据。
+
+### Phase 4：全链路回归与代码规范审查
+
+- [ ] **代码规范审查**：
+  - 验证所有新增与修改的代码文件行数均不超过 600 行；
+  - 检索 `com.haoze.diting.express` 包下对 `AppDatabase.getInstance` 与 `dns_vpn_prefs` 的引用，确保命中数为 0。
+- [ ] **全功能独立性回归矩阵**：
+  - 普通模式新增规则/订阅 → 极速模式无变化；
+  - 极速模式新增规则/订阅 → 普通模式无变化；
+  - 三模式各自执行规则订阅自动更新，日志与更新状态互不串门；
+  - 三模式分别查看解析日志与 DNS 缓存，各显其域。
+
+---
+
+## 7. 风险评估与应对策略
+
+| 潜在风险 | 影响程度 | 应对策略 |
 | --- | --- | --- |
-| `AppRulesSettingsStore` | 域名规则总开关、拦截响应模式、动态拦截配置、地址规则开关、HTTPS 检查等 | 普通/极速共用，**需按模式隔离** |
-| `SubscriptionAutoUpdateSettings`（`SubscriptionAutoUpdateScheduler.kt:32`） | 订阅自动更新开关与间隔 | 普通/极速共用，**需按模式隔离** |
-| `ResolutionSettingsStore` | 解析模式、竞速/主备服务商选择 | 普通/极速共用，**需按模式隔离** |
-| `DnsCacheSettingsStore` | DNS 缓存策略 | 普通/极速共用，**需按模式隔离** |
-| `DnsProvider`（`DnsProvider.kt:50`） | 用户服务商列表与选中项 | 普通/极速共用，**需按模式隔离** |
-| `ProviderHealthStore` / `BootstrapHealthStore` | 服务商与 Bootstrap 健康权重 | 普通/极速共用，**需按模式隔离** |
-| `BootstrapDnsSettingsStore` | Bootstrap DNS 配置 | 普通/极速共用，**需按模式隔离** |
-| `SystemSettingsStore` | IPv6 模式、日志模式、通知监控等混合集合 | 部分 key 需隔离（逐 key 盘点，见 Phase 1） |
-| `AppLanguageManager` / `HiddenFeaturesStore` / `AppearanceSettingsStore` 等 | 语言、隐藏功能、外观 | 全局，保留共享 |
-| `WorkModeStore`（`diting_settings`） | 当前工作模式 | 全局，保留共享 |
-| `DnsModePreferences` / `DnsRuleSettings`（`diting_dns_mode_prefs`） | 服务器模式专属 | 已隔离，维持现状 |
-| `ExpressVpnController`（`express_vpn_prefs`） | 极速模式运行状态 | 已隔离，维持现状 |
+| **旧代码隐式直连 `AppDatabase`** | 高 | 在 Phase 1 完成后，利用静态脚本全工程扫描 `AppDatabase.getInstance`，对所有调用点强制进行模式归属标注，极速路径命中直接编译报错或断言拦截。 |
+| **极速模式冷启动出厂初始化耗时** | 中 | 初始化仅需从 assets 读取几百行文本并插入本地 SQLite，耗时约 50~100ms；在协程中异步完成，构建初始索引并有超时保护，保障启动流畅。 |
+| **独立偏好文件遗漏个别 Key** | 低 | 建立严格的 Key 审计清单，所有在极速模式 UI 展示的开关项逐一核对其在 `diting_express_prefs` 中的读写路径。 |
+| **跨模式导入配置文件字段不兼容** | 中 | `ConfigImporter` 针对极速模式使用白名单策略进行字段反序列化，未识别的普通模式字段直接忽略，不抛出异常。 |
 
-### 3.5 运行时与调度耦合
+---
 
-| 位置 | 现状 | 问题 |
-| --- | --- | --- |
-| `RuntimeDnsSettingsRefresher.kt:15-87` | 按"当前工作模式"（`WorkModeStore.getAppWorkMode`）分发刷新 | 分发依据是 UI 所处模式而非数据归属；隔离后须改为纯数据集驱动 |
-| `RuleOperationWorker.kt:52,145-157` | 已按 `RuleDataset` 分道（NORMAL/DNS_MODE），索引目录按数据集判定 | 需扩展第三数据集 |
-| `SubscriptionAutoUpdateScheduler.kt:58-135` | NORMAL 与 DNS_MODE 两套 WorkManager 任务名 | 极速搭 NORMAL 的车；需新增 EXPRESS 任务名 |
-| `SubscriptionAutoUpdateEngine.kt:224`（`rebuildCachesAndNotifyRuntime`） | 更新后重建共享索引并按工作模式通知运行引擎 | 需按数据集重建各自索引 |
-| `DataCleanupManager.kt:102-146,208-255,356-383` | 清理函数同时清空 `AppDatabase` 与 `DnsRulesDatabase` 两库 | **跨库波及** |
-| `ConfigExporter.kt:24` / `ConfigImporter.kt:14` | 硬编码 `AppDatabase` | 极速导入导出虽经 `ExpressConfigAdapter` 裁剪，底层仍读写普通模式存储 |
-| `CosmeticRuleManager.kt:25-28`、`DefaultWhitelistSeeder.kt:30` | 单例/播种均绑定 `AppDatabase` | 需标注归属：两者均为普通模式专属能力 |
+## 8. 代码级验收指标
 
-### 3.6 已确认的用户可见耦合副作用
-
-1. **极速模式清理波及全部模式**：`ExpressDataCleanupScreen.kt:194-204` 直调 `DataCleanupManager.clearAllDomainRules` / `clearAllSubscriptions`，这两个函数会同时清空普通模式与服务器模式的规则库（`DataCleanupManager.kt:102-146,208-255`）。用户在极速模式"清理域名规则"，普通模式和服务器模式的黑白名单、订阅会一并被删除。
-2. **普通模式清理波及极速模式**：同理，普通模式清理后极速模式的规则与订阅同时消失。
-3. **模式切换的隐式数据跟随**：由于普通/极速共用数据与设置，用户在一个模式下修改总开关、解析模式、服务商后，另一模式行为随之改变，无法分别调优。
-4. **清理 DNS 缓存按当前模式判断**（`DataCleanupManager.kt:79-81`）：仅清理共享缓存表并按当前模式刷新引擎，无法只清某一个模式的缓存。
-
-## 4. 隔离目标架构
-
-### 4.1 分层原则
-
-| 层 | 内容 | 策略 |
-| --- | --- | --- |
-| 全局层 | 工作模式选择（`WorkModeStore`）、外观/主题/背景、语言、通知偏好、隐藏功能、引导与协议状态、隐私授权、崩溃状态、应用更新包 | 保持共享，不纳入隔离 |
-| 模式层 | 规则库（黑白名单/覆写/URL/修饰/订阅/镜像模板）、规则索引文件、DNS 响应缓存、解析/竞速/Bootstrap 日志、规则开关与拦截策略、解析模式与服务商配置、健康权重、订阅自动更新配置 | 每模式独立存储，互不可见 |
-
-### 4.2 目标存储布局
-
-| 模式 | 规则与运行时库 | 规则索引目录 | 模式设置 |
-| --- | --- | --- | --- |
-| 普通模式 | `diting_database`（原库原位，含 `http_request_log`、`app_traffic_daily`） | `filesDir/rule-index/`（原目录原位，避免重建） | `dns_vpn_prefs` 中 `ds_normal_` 前缀 key |
-| 极速模式 | **新建** `diting_express`（规则表 + `dns_cache`/`dns_log`/`race_log`/`bootstrap_log`） | `filesDir/rule-index/express/` | `dns_vpn_prefs` 中 `ds_express_` 前缀 key |
-| 服务器模式 | `diting_dns_rules`（维持现状） | 不使用（维持纯内存） | `diting_dns_mode_prefs`（维持现状） |
-
-极速模式新库复用现有 Entity/DAO 类（与 `DnsRulesDatabase` 复用方式一致，`RuleDataSources` 接口不变），并追加四个运行时表实体（直接复用 `DnsCacheEntity`/`DnsLogEntity`/`RaceLogEntity`/`BootstrapLogEntity` 与对应 DAO）。`go_url_rule`/`cosmetic_rule` 表仅建表满足 `RuleDataSources` 接口，极速模式物理上不使用（无 HTTPS 检查/内容过滤），种子迁移亦不复制。
-
-## 5. 关键设计决策
-
-### D1：`RuleDataset` 三元化（改动主轴）
-
-`RuleDataset` 增加 `EXPRESS` 枚举值（`data/RuleDataset.kt:19`）。所有按 `NORMAL`/`DNS_MODE` 二元分支的代码统一改为三元分发：
-
-- `RuleDatabases.forDataset`（`DnsRulesDatabase.kt:122-133`）：`EXPRESS -> ExpressRulesDatabase.getInstance(context)`。
-- `RuleSettingsAccess`（`ui/settings/RuleSettingsAccess.kt:18`）：新增 `EXPRESS` 分支，读取 `ds_express_` 前缀 key。
-- `RuleOperationScheduler` / `RuleOperationWorker` / `SubscriptionAutoUpdateScheduler`：输入数据集从调用方传入（极速 UI 固定传 EXPRESS），新增任务名 `subscription_auto_update_express`（含 retry）。
-- `DitingApp.kt:51` 的 `SubscriptionAutoUpdateScheduler.sync` 改为同步三个数据集。
-
-### D2：极速模式独立数据库
-
-新建 `data/ExpressRulesDatabase.kt`，文件名 `diting_express`，version 1，`exportSchema = false`。实体与 DAO 全部复用现有类，新增四个运行时表。单例模式与现有两库一致。
-
-### D3：模式相关 prefs 作用域化
-
-不拆分 prefs 文件，而是引入统一的 key 前缀包装（改动面最小、可灰度）：
-
-- 新增 `ModeScopedPrefs` 工具：`fun key(dataset: RuleDataset, raw: String) = "${dataset.prefix}$raw"`（前缀：`ds_normal_` / `ds_express_`；服务器模式继续走 `diting_dns_mode_prefs`，不参与）。
-- 第 3.4 节标记"需按模式隔离"的 Store 内部改为经 `ModeScopedPrefs` 读写；`RuleSettingsAccess` / 各 ViewModel 已持有 dataset 参数，逐层传递即可。
-- 普通 key 读取兼容：读取 `ds_normal_x` 前不存在时回退读旧 key `x`（一次性迁移见第 6 节，回退仅作为迁移失败兜底）。
-- 全局 Store（外观/语言/隐藏功能/引导等）不改。
-
-### D4：规则索引目录按数据集分域
-
-`RuleIndexLayout` 增加数据集维度：`rootDirectory(filesDir, dataset)`——NORMAL 返回原 `rule-index/`（历史索引继续有效，无需重建），EXPRESS 返回 `rule-index/express/`。调用点同步改造：`ExpressTunnelManager.kt:237`、`DataCleanupManager`（3 处索引重建）、`RuleOperationWorker.kt:157`、`DnsVpnTunnelManager`（普通模式不变）。服务器模式维持 `indexDirectory = null`。
-
-### D5：运行时分发改为数据集驱动
-
-`RuntimeDnsSettingsRefresher` 删除"按当前 WorkMode 判断"的分支（`RuntimeDnsSettingsRefresher.kt:25-28,50-53,75-78`），改为：
-
-- `NORMAL` → 刷新 `DnsVpnService`（若运行）
-- `EXPRESS` → 刷新 `ExpressVpnService`（若运行，`ExpressSettingsRefresher` 保留为内部实现）
-- `DNS_MODE` → 刷新 `DnsModeService`（维持现状）
-
-`WorkModeStore` 仅用于决定"当前 UI 编辑哪个数据集"：极速 UI（`ExpressMainScreen`/`ExpressRuleControlScreen`/`ExpressFeatureHubScreen` 链路）固定传 `RuleDataset.EXPRESS`；`SettingsRouteActivity` 的 express 分支（`SettingsRouteActivity.kt:311-320`）与 `MainActivity.kt:261-283` 的极速导航全部改传 EXPRESS 数据集。
-
-### D6：配置导入导出按数据集路由
-
-- `ConfigExporter` / `ConfigImporter` 构造函数增加 `dataset` 参数，替换硬编码的 `AppDatabase.getInstance`。
-- 导出 JSON 增加元数据字段 `"dataset": "normal" | "express" | "dns"`。
-- `ExpressConfigAdapter` 改为以 EXPRESS 数据集操作；导入时按当前模式数据集写入，跨模式导入文件按第 4.1 节分层原则裁剪（全隧道项仅在普通模式数据集落地）。
-
-### D7：数据清理按数据集收敛
-
-- `DataCleanupManager` 所有清理函数增加 `dataset` 参数：只清目标数据集的库、索引、prefs key 与缓存，并只刷新对应运行引擎。
-- `ExpressDataCleanupScreen.kt:194-204` 全部改传 `RuleDataset.EXPRESS`，消除第 3.6 节问题 1。
-- `clearAllLocalData`（一键全面清理）保留"遍历三个数据集分别清理"的语义，属于用户明确的全局操作。
-- `resetCaCertificate` / `resetAppRules` / `resetOutboundProxy` 标注为普通模式专属入口，从极速清理界面移除（当前已未展示，代码层同步收敛）。
-
-### D8：Go 引擎规则面不动
-
-普通模式（DTRI 路径推送 + mmap 复读）与服务器模式（无索引快照）与 Go 侧交互协议均不变；极速模式无 Go 引擎。`Android/tunnel` 本方案零改动。隔离完成后，普通与极速共写 `rule-index` 的并发窗口（第 3.3 节现存风险）自然消除。
-
-## 6. 数据迁移与兼容
-
-### 6.1 迁移范围
-
-| 数据 | 策略 |
-| --- | --- |
-| 普通模式规则/订阅/设置/索引 | **原位不动**，普通模式用户零感知 |
-| 极速模式规则/订阅 | 一次性种子复制：`diting_database` → `diting_express` 的 block/allow/rewrite 规则及 source 表、subscription、subscription_group、subscription_auto_update_item、mirror_template |
-| 极速模式设置 | 一次性种子复制 `dns_vpn_prefs` 中模式相关 key（规则开关、拦截响应、解析模式、服务商列表与选中项、缓存策略、Bootstrap 配置、订阅自动更新）→ `ds_express_` 前缀 |
-| 规则索引 | 不复制文件；种子完成后对 `rule-index/express/` 执行 `refreshCache(forceRebuild = true)` 重建（DTRI 是纯派生数据，`RuleIndexLayout.kt:24-26` 注释明确可随时重建） |
-| 运行时数据（dns_cache、三类日志） | 不迁移，各模式升级后自然重新积累 |
-| HTTPS 检查/CA、出站代理、应用管控、流量统计 | 不迁移（极速模式物理不支持） |
-| 服务器模式 | 维持"从空开始、无迁移"的既有设计（`DnsRulesDatabase.kt:32-34`） |
-
-### 6.2 迁移触发与流程
-
-1. 版本标记：`diting_settings`（`WorkModeStore` 同文件）写入 `express_dataset_seeded_version`。
-2. 触发时机：`DitingApp` 启动后台协程静默执行（优先于用户进入极速模式），不阻塞启动；若用户在种子完成前立即开启极速模式，`ExpressTunnelManager` 现有的 3 秒预热超时（`ExpressTunnelManager.kt:256-268`）按空规则启动，种子完成后通过 `ACTION_SYNC_RULES` 补齐。
-3. 种子过程与引擎写入互斥：三模式服务本身互斥运行，种子仅在极速引擎未运行时执行复制；失败则下次启动重试，成功才写版本标记。
-4. `fallbackToDestructiveMigration(true)` 对新库无影响（从 version 1 起步）；`diting_database` 结构无任何变更，不触发迁移路径。
-
-### 6.3 兼容与回退
-
-- 降级场景（如回退安装旧版本）：旧版本继续读写 `diting_database` 与旧 key，数据完整保留，仅极速模式新增的数据不回读——可接受。
-- 普通 prefs key 读取回退（D3）仅在种子失败时兜底，种子成功后可移除回退逻辑（预留一个版本周期）。
-- 订阅自动更新拆分后，NORMAL 与 EXPRESS 两个 Worker 各自下载订阅，网络流量增加属隔离的预期代价，在发版说明中告知。
-
-## 7. 实施计划
-
-按四个阶段推进，每阶段独立可编译、可提交、可回退。
-
-### Phase 1：数据层地基
-
-- [ ] `RuleDataset` 增加 `EXPRESS`；`RuleDatabases` 三元化。
-- [ ] 新建 `ExpressRulesDatabase`（规则表 + 4 运行时表）。
-- [ ] `RuleIndexLayout` 增加数据集维度，`rootDirectory(filesDir, dataset)`。
-- [ ] `ModeScopedPrefs` 工具与 `RuleSettingsAccess` 三元化。
-- 验收：编译通过；`grep -rn "RuleDataset.NORMAL" com/haoze/diting/express/` 无新增引用；三库可同时实例化。
-
-### Phase 2：运行时与调度
-
-- [ ] `ExpressTunnelManager` 切换至 `ExpressRulesDatabase` 与 `rule-index/express/`（`ExpressTunnelManager.kt:236-247`）。
-- [ ] `RuntimeDnsSettingsRefresher` 改数据集驱动（D5）。
-- [ ] `RuleOperationWorker`、`SubscriptionAutoUpdateScheduler`/`Engine`、`DitingApp.sync` 三元化；新增 express 订阅自动更新任务名。
-- [ ] `ExpressVpnService` 的 `ACTION_SYNC_RULES` 链路验证（`ExpressVpnService.kt:58`）。
-- 验收：极速模式运行时读写仅触碰 `diting_express` 与 `rule-index/express/`；普通模式行为与升级前一致。
-
-### Phase 3：UI 入口与配套功能
-
-- [ ] 极速 UI 全链路传 `RuleDataset.EXPRESS`（`MainActivity.kt:261-283`、`SettingsRouteActivity.kt:311-320` 及 express 各 Screen）。
-- [ ] `ConfigExporter`/`ConfigImporter` 数据集参数化；`ExpressConfigAdapter` 切 EXPRESS（D6）。
-- [ ] `DataCleanupManager` 数据集参数化；`ExpressDataCleanupScreen` 改传 EXPRESS（D7，修复第 3.6 节问题 1/2/4）。
-- [ ] `CosmeticRuleManager`、`DefaultWhitelistSeeder` 标注普通模式专属并断言数据集。
-- 验收：极速模式清理/导入导出不再波及其它模式；普通模式清理不再影响极速数据。
-
-### Phase 4：迁移与回归
-
-- [ ] 实现第 6 节种子迁移（表复制 + prefs key 复制 + 版本标记 + 索引重建）。
-- [ ] 回归清单：
-  - 升级安装 → 首次进入极速模式，规则/订阅/解析配置与升级前一致；
-  - 普通模式增删规则 → 极速模式不受影响，反之亦然；
-  - 三模式分别清理规则/订阅/缓存，互不波及；
-  - 订阅自动更新在三模式下各自按配置执行、互不干扰；
-  - 极速模式配置导出 → 卸载重装 → 导入还原；
-  - `AppDatabase.getInstance` 全量调用点审查（见第 9 节）。
-
-## 8. 风险与对策
-
-| 风险 | 对策 |
-| --- | --- |
-| `AppDatabase` 直引用遗漏（隐藏的极速读取路径） | Phase 1 前全量盘点 `grep -rn "AppDatabase.getInstance"`，逐点标注归属（normal-only / dataset-aware / 全局）；验收时极速链路直连数必须为 0 |
-| prefs key 盘点不全导致两模式仍读同一 key | 以 Store 为单位逐 key 审查（第 3.4 节清单为基础），`SystemSettingsStore` 等混合 Store 单独出 key 分层表 |
-| 种子迁移与用户快速操作竞态 | 种子仅在极速引擎未运行时执行；未完成时极速按空规则启动 + 完成后补同步（6.2 节） |
-| 订阅双份下载流量翻倍 | 属隔离预期代价，发版说明告知；后续可评估共享下载缓存的优化项（不在本期） |
-| `SystemSettingsStore` 中部分 key 语义本应全局（如隐藏引导） | 逐 key 判定，宁可保留共享也不误隔离造成"设置丢失"观感 |
-| 新库 `fallbackToDestructiveMigration` 误伤 | 新库 version 1 起步无迁移路径；后续升版本时再评估移除 destructive |
-
-## 9. 验收清单（代码级）
-
-1. `grep -rn "AppDatabase.getInstance" --include=*.kt`：express 包内零命中；其余命中点均有归属标注。
-2. `grep -rn "RuleDataset.NORMAL" com/haoze/diting/express/`：零命中。
-3. `grep -rn "\"rule-index\"" --include=*.kt`：仅 `RuleIndexLayout` 与普通模式调用点命中。
-4. 三库文件并存：`databases/diting_database`、`databases/diting_dns_rules`、`databases/diting_express`。
-5. `filesDir/rule-index/express/` 存在 4 个 `.trie` 产物（block/block.important/allow/allow.important）。
-6. 第 7 节 Phase 4 回归清单全部通过。
+1. **零残留引用**：
+   - `grep -rn "AppDatabase.getInstance" Android/app/src/main/java/com/haoze/diting/express/` 结果为 0。
+   - `grep -rn "dns_vpn_prefs" Android/app/src/main/java/com/haoze/diting/express/` 结果为 0。
+2. **物理文件并存规范**：
+   - 数据库目录：`databases/diting_database`、`databases/diting_express`、`databases/diting_dns_rules` 彼此独立并存。
+   - 偏好目录：`shared_prefs/dns_vpn_prefs.xml`、`shared_prefs/diting_express_prefs.xml`、`shared_prefs/diting_dns_mode_prefs.xml` 彼此独立并存。
+   - 索引目录：`files/rule-index/` 与 `files/rule-index/express/` 彼此独立并存。
+3. **零跨模式连带影响**：
+   - 极速模式下执行“清理全部规则与订阅”，普通模式与服务器模式中的任何数据表记录数均保持完全不变。
