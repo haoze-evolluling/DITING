@@ -34,10 +34,10 @@ class ExpressLogModeAndDataIsolationTest {
         assertEquals(DnsLogMode.BLOCKED_AND_ERRORS, DnsLogMode.fromStorageValue("blocked_and_errors"))
         assertEquals(DnsLogMode.OFF, DnsLogMode.fromStorageValue("off"))
 
-        // Unset or invalid values should fall back to OFF
-        assertEquals(DnsLogMode.OFF, DnsLogMode.fromStorageValue(null))
-        assertEquals(DnsLogMode.OFF, DnsLogMode.fromStorageValue(""))
-        assertEquals(DnsLogMode.OFF, DnsLogMode.fromStorageValue("INVALID_MODE"))
+        // Unset or invalid values should fall back to ALL
+        assertEquals(DnsLogMode.ALL, DnsLogMode.fromStorageValue(null))
+        assertEquals(DnsLogMode.ALL, DnsLogMode.fromStorageValue(""))
+        assertEquals(DnsLogMode.ALL, DnsLogMode.fromStorageValue("INVALID_MODE"))
     }
 
     @Test

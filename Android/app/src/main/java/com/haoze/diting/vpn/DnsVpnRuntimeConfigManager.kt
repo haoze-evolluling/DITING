@@ -39,7 +39,7 @@ class DnsVpnRuntimeConfigManager(
     lateinit var activeDnsCachePolicy: DnsCachePolicy
 
     @Volatile
-    var activeDnsLogMode: DnsLogMode = DnsLogMode.OFF
+    var activeDnsLogMode: DnsLogMode = DnsLogMode.ALL
 
     @Volatile
     var activeLogRetentionDays: Int = 7

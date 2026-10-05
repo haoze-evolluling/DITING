@@ -7,6 +7,6 @@ enum class DnsLogMode(val storageValue: String, val displayName: String) {
 
     companion object {
         fun fromStorageValue(value: String?): DnsLogMode =
-            entries.firstOrNull { it.storageValue == value } ?: OFF
+            entries.firstOrNull { it.storageValue == value } ?: ALL
     }
 }
