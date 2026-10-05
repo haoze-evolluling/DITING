@@ -45,7 +45,7 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.localizedText
 import kotlinx.coroutines.launch
 
-private const val TRANSITION_DURATION_MS = 380
+private const val TRANSITION_DURATION_MS = 1000
 
 @Composable
 fun WorkModeSelectionScreen(

@@ -90,15 +90,8 @@ fun WorkModeExpansionOverlay(
     val widthDp = with(density) { currentWidth.toDp() }
     val heightDp = with(density) { currentHeight.toDp() }
 
-    // 2. Corner radius morphing (from card radii to 0dp)
-    val currentTopRadius = lerp(startBounds.topRadius, 0.dp, progress)
-    val currentBottomRadius = lerp(startBounds.bottomRadius, 0.dp, progress)
-    val cardShape = RoundedCornerShape(
-        topStart = currentTopRadius,
-        topEnd = currentTopRadius,
-        bottomStart = currentBottomRadius,
-        bottomEnd = currentBottomRadius
-    )
+    // 2. Corner radius: Constant default card curvature (28dp on all 4 corners)
+    val cardShape = RoundedCornerShape(28.dp)
 
     // 3. Color & elevation morphing
     val startContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -106,9 +99,9 @@ fun WorkModeExpansionOverlay(
     val currentColor = lerp(startContainerColor, targetContainerColor, progress)
     val elevationDp = (8f * sin(progress * Math.PI.toFloat())).coerceAtLeast(0f).dp
 
-    // 4. Content crossfade values
-    val cardContentAlpha = (1f - progress * 2.4f).coerceIn(0f, 1f)
-    val revealAlpha = ((progress - 0.35f) / 0.65f).coerceIn(0f, 1f)
+    // 4. Content crossfade values (phased progression over 1000ms)
+    val cardContentAlpha = (1f - progress / 0.35f).coerceIn(0f, 1f)
+    val revealAlpha = ((progress - 0.35f) / 0.45f).coerceIn(0f, 1f)
 
     val modeAccent = when (mode) {
         AppWorkMode.NORMAL -> MaterialTheme.colorScheme.primary
