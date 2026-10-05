@@ -121,7 +121,7 @@ class MainActivity : AppLocalizedActivity() {
                 bottomBarRefreshRequested = true
             }
             if (data.getBooleanExtra(SettingsRouteActivity.EXTRA_WORK_MODE_CHANGED, false)) {
-                workModeRefreshRequested = true
+                switchWorkMode(WorkModeStore.getAppWorkMode(this@MainActivity))
             }
         }
     }
@@ -129,15 +129,42 @@ class MainActivity : AppLocalizedActivity() {
     private var mainThemeRefreshRequested by mutableStateOf(false)
     private var backgroundRefreshRequested by mutableStateOf(false)
     private var bottomBarRefreshRequested by mutableStateOf(false)
-    private var workModeRefreshRequested by mutableStateOf(false)
-    private var pendingWorkModeSwitch by mutableStateOf<AppWorkMode?>(null)
+    private var currentWorkMode by mutableStateOf(AppWorkMode.NORMAL)
+    private var hasSelectedWorkMode by mutableStateOf(false)
+    private var resetToHomeTrigger by mutableLongStateOf(0L)
+
+    private fun switchWorkMode(selectedMode: AppWorkMode) {
+        val previousMode = currentWorkMode
+        WorkModeStore.setAppWorkMode(this, selectedMode)
+        WorkModeStore.setWorkModeSelected(this, true)
+        hasSelectedWorkMode = true
+        currentWorkMode = selectedMode
+        resetToHomeTrigger = System.currentTimeMillis()
+
+        if (previousMode == AppWorkMode.DNS && selectedMode != AppWorkMode.DNS) {
+            com.haoze.diting.dnsmode.backend.DnsModeManager.stopService(this)
+        } else if (previousMode == AppWorkMode.EXPRESS && selectedMode != AppWorkMode.EXPRESS) {
+            com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
+        }
+
+        if (selectedMode == AppWorkMode.DNS) {
+            stopVpnService()
+            VpnMonitorManager.stop(this)
+        } else if (selectedMode == AppWorkMode.EXPRESS) {
+            com.haoze.diting.express.ExpressModeLauncher.handleModeSelected(this, selectedMode) {
+                initializeAcceptedExperience()
+            }
+        } else {
+            initializeAcceptedExperience()
+        }
+    }
 
     private fun handleWorkModeChangeIntent(intent: Intent?) {
         if (intent?.getBooleanExtra(EXTRA_WORK_MODE_CHANGED, false) == true) {
             val targetModeStr = intent.getStringExtra(EXTRA_TARGET_WORK_MODE)
             val targetMode = targetModeStr?.let { runCatching { AppWorkMode.valueOf(it) }.getOrNull() }
                 ?: WorkModeStore.getAppWorkMode(this)
-            pendingWorkModeSwitch = targetMode
+            switchWorkMode(targetMode)
         }
     }
 
@@ -165,57 +192,22 @@ class MainActivity : AppLocalizedActivity() {
         if (com.haoze.diting.crash.CrashLogManager.consumePendingAutoExportNotice(this)) {
             showToast("软件连续异常退出，崩溃日志已自动备份至系统“下载”目录", Toast.LENGTH_LONG)
         }
+        currentWorkMode = WorkModeStore.getAppWorkMode(this)
+        hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this)
         handleWorkModeChangeIntent(intent)
-        if (SystemSettingsStore.isInitialAgreementAccepted(this) && !WorkModeStore.hasSelectedWorkMode(this)) {
+        if (SystemSettingsStore.isInitialAgreementAccepted(this) && !hasSelectedWorkMode) {
             WorkModeActivity.start(this, isFirstLaunch = true)
         }
         setContent {
             var initialAgreementAccepted by remember {
                 mutableStateOf(SystemSettingsStore.isInitialAgreementAccepted(this))
             }
-            var currentWorkMode by remember {
-                mutableStateOf(WorkModeStore.getAppWorkMode(this))
-            }
-            var hasSelectedWorkMode by remember {
-                mutableStateOf(WorkModeStore.hasSelectedWorkMode(this))
-            }
-            var resetToHomeTrigger by remember {
-                mutableLongStateOf(0L)
-            }
             var themeMode by remember { mutableStateOf(AppearanceSettingsStore.getAppThemeMode(this)) }
             var colorStyle by remember { mutableStateOf(AppearanceSettingsStore.getThemeColorStyle(this)) }
             var backgroundEnabled by remember { mutableStateOf(AppearanceSettingsStore.isCustomBackgroundEnabled(this)) }
             var backgroundUri by remember { mutableStateOf(AppearanceSettingsStore.getCustomBackgroundUri(this)) }
 
-            fun switchWorkMode(selectedMode: AppWorkMode) {
-                val previousMode = currentWorkMode
-                WorkModeStore.setAppWorkMode(this@MainActivity, selectedMode)
-                WorkModeStore.setWorkModeSelected(this@MainActivity, true)
-                hasSelectedWorkMode = true
-                resetToHomeTrigger = System.currentTimeMillis()
-
-                if (previousMode == AppWorkMode.DNS && selectedMode != AppWorkMode.DNS) {
-                    com.haoze.diting.dnsmode.backend.DnsModeManager.stopService(this@MainActivity)
-                } else if (previousMode == AppWorkMode.EXPRESS && selectedMode != AppWorkMode.EXPRESS) {
-                    com.haoze.diting.express.ExpressModeLauncher.stopExpress(this@MainActivity)
-                }
-
-                if (selectedMode == AppWorkMode.DNS) {
-                    stopVpnService()
-                    VpnMonitorManager.stop(this@MainActivity)
-                    currentWorkMode = selectedMode
-                } else if (selectedMode == AppWorkMode.EXPRESS) {
-                    com.haoze.diting.express.ExpressModeLauncher.handleModeSelected(this@MainActivity, selectedMode) {
-                        currentWorkMode = selectedMode
-                        initializeAcceptedExperience()
-                    }
-                } else {
-                    currentWorkMode = selectedMode
-                    initializeAcceptedExperience()
-                }
-            }
-
-            LaunchedEffect(mainThemeRefreshRequested, backgroundRefreshRequested, workModeRefreshRequested, pendingWorkModeSwitch) {
+            LaunchedEffect(mainThemeRefreshRequested, backgroundRefreshRequested) {
                 if (mainThemeRefreshRequested) {
                     themeMode = AppearanceSettingsStore.getAppThemeMode(this@MainActivity)
                     colorStyle = AppearanceSettingsStore.getThemeColorStyle(this@MainActivity)
@@ -227,15 +219,6 @@ class MainActivity : AppLocalizedActivity() {
                     backgroundUri = AppearanceSettingsStore.getCustomBackgroundUri(this@MainActivity)
                     com.haoze.diting.ui.background.CustomBackgroundManager.applyWindowBackground(this@MainActivity)
                     backgroundRefreshRequested = false
-                }
-                if (workModeRefreshRequested) {
-                    val targetMode = WorkModeStore.getAppWorkMode(this@MainActivity)
-                    switchWorkMode(targetMode)
-                    workModeRefreshRequested = false
-                }
-                pendingWorkModeSwitch?.let { targetMode ->
-                    switchWorkMode(targetMode)
-                    pendingWorkModeSwitch = null
                 }
             }
             AppThemeSurface(
@@ -436,9 +419,9 @@ class MainActivity : AppLocalizedActivity() {
             return
         }
         applyRecentsPrivacySetting()
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS) {
+        if (currentWorkMode == AppWorkMode.DNS) {
             // DNS mode lifecycle and status are managed inside DnsModeHost
-        } else if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+        } else if (currentWorkMode == AppWorkMode.EXPRESS) {
             val isRunning = com.haoze.diting.express.ExpressVpnController.isRunning(this)
             val legacyIntent = Intent(DnsVpnService.ACTION_VPN_STATUS_CHANGED).apply {
                 `package` = packageName
@@ -481,10 +464,10 @@ class MainActivity : AppLocalizedActivity() {
     }
 
     private fun onToggleVpn(isRunning: Boolean) {
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS) {
+        if (currentWorkMode == AppWorkMode.DNS) {
             return
         }
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+        if (currentWorkMode == AppWorkMode.EXPRESS) {
             com.haoze.diting.express.ExpressModeLauncher.toggle(this, ::prepareVpn)
             return
         }
@@ -540,7 +523,7 @@ class MainActivity : AppLocalizedActivity() {
     }
 
     private fun startVpnService() {
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+        if (currentWorkMode == AppWorkMode.EXPRESS) {
             com.haoze.diting.express.ExpressModeLauncher.start(this)
             return
         }
@@ -549,7 +532,7 @@ class MainActivity : AppLocalizedActivity() {
     }
 
     private fun stopVpnService() {
-        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+        if (currentWorkMode == AppWorkMode.EXPRESS) {
             com.haoze.diting.express.ExpressModeLauncher.stop(this)
             return
         }
