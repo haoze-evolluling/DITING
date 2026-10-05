@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.components.DnsProtocolBadge
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
@@ -52,17 +53,18 @@ private data class ProviderHealthRow(
 
 @Composable
 fun ProviderHealthScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    dataset: RuleDataset = RuleDataset.NORMAL
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    var rows by remember { mutableStateOf(emptyList<ProviderHealthRow>()) }
+    var rows by remember(dataset) { mutableStateOf(emptyList<ProviderHealthRow>()) }
 
     fun reloadRows() {
         ProviderHealthEngine.flushActive(commit = true)
-        val providers = DnsProvider.loadRuntimeProviders(context)
+        val providers = DnsProvider.loadRuntimeProviders(context, dataset)
         val healthByProvider = ProviderHealthStore.loadAll(context)
-        val smartPredictionProviderIds = ResolutionSettingsStore.getSmartPredictionProviderIds(context)
+        val smartPredictionProviderIds = ResolutionSettingsStore.getSmartPredictionProviderIds(context, dataset)
         val normalizedWeights = ProviderHealthStore.normalizeWeightsToPercent(
             providers
                 .filter { it.id in smartPredictionProviderIds }

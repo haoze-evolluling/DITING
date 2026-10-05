@@ -318,7 +318,7 @@ class ConfigExporter(
                 put("bypassLanEnabled", SystemSettingsStore.isBypassLanEnabled(context))
                 put("ipv6Mode", SystemSettingsStore.getIpv6Mode(context, dataset).storageValue)
                 put("hideFromRecentsEnabled", SystemSettingsStore.isHideFromRecentsEnabled(context))
-                put("logRetentionDays", SystemSettingsStore.logRetentionDays(context))
+                put("logRetentionDays", SystemSettingsStore.logRetentionDays(context, dataset))
                 put("dnsLogMode", SystemSettingsStore.getDnsLogMode(context, dataset).storageValue)
                 put("floatingLogEnabled", SystemSettingsStore.isFloatingLogEnabled(context))
                 put("floatingLogPanelSize", SystemSettingsStore.getFloatingLogPanelSize(context))

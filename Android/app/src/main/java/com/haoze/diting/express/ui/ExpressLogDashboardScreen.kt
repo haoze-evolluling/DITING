@@ -28,6 +28,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.DnsLogMode
 import com.haoze.diting.ui.ModernLogDashboardViewModel
 import com.haoze.diting.ui.components.SettingsScaffold
@@ -51,7 +54,14 @@ fun ExpressLogDashboardScreen(
     onNavigateToRaceStats: () -> Unit,
     onNavigateToBootstrapStats: () -> Unit,
     onNavigateToSubscriptionInterceptionStats: () -> Unit,
-    viewModel: ModernLogDashboardViewModel = viewModel(),
+    dataset: RuleDataset = RuleDataset.EXPRESS,
+    viewModel: ModernLogDashboardViewModel = viewModel(
+        key = "ExpressLogDashboardViewModel_${dataset.name}",
+        factory = ModernLogDashboardViewModel.factory(
+            LocalContext.current.applicationContext as Application,
+            dataset
+        )
+    ),
     showBackIcon: Boolean = true,
     contentBottomPadding: Dp = 0.dp,
     isActive: Boolean = true,

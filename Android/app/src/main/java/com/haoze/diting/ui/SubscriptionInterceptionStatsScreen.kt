@@ -20,8 +20,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.SubscriptionInterceptionStatsRange
 import com.haoze.diting.ui.components.RuleFilterChipRow
 import com.haoze.diting.ui.components.SettingsGroupTitle
@@ -34,7 +37,14 @@ import com.haoze.diting.ui.components.SettingsCardMargin
 @Composable
 fun SubscriptionInterceptionStatsScreen(
     onBack: () -> Unit,
-    viewModel: SubscriptionInterceptionStatsViewModel = viewModel()
+    dataset: RuleDataset = RuleDataset.NORMAL,
+    viewModel: SubscriptionInterceptionStatsViewModel = viewModel(
+        key = "SubscriptionInterceptionStatsViewModel_${dataset.name}",
+        factory = SubscriptionInterceptionStatsViewModel.factory(
+            LocalContext.current.applicationContext as Application,
+            dataset
+        )
+    )
 ) {
     val range by viewModel.range.collectAsStateWithLifecycle()
     val totalRequests by viewModel.totalRequests.collectAsStateWithLifecycle()

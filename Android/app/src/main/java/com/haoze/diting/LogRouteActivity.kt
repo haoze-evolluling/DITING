@@ -55,7 +55,7 @@ class LogRouteActivity : AppLocalizedActivity() {
                     onBack = ::finish,
                     onNavigate = ::openRoute,
                     onRuntimeDnsSettingsChanged = {
-                        RuntimeDnsSettingsRefresher.refreshIfRunning(this@LogRouteActivity)
+                        RuntimeDnsSettingsRefresher.refreshIfRunning(this@LogRouteActivity, dataset = dataset)
                     }
                 )
             }
@@ -119,8 +119,8 @@ class LogRouteActivity : AppLocalizedActivity() {
             Routes.DNS_CACHE -> DnsCacheScreen(onBack = onBack, dataset = dataset)
             Routes.RACE_STATS -> RaceStatsScreen(onBack = onBack, dataset = dataset)
             Routes.BOOTSTRAP_STATS -> BootstrapStatsScreen(onBack = onBack, dataset = dataset)
-            Routes.SUBSCRIPTION_INTERCEPTION_STATS -> SubscriptionInterceptionStatsScreen(onBack = onBack)
-            Routes.PROVIDER_HEALTH -> ProviderHealthScreen(onBack = onBack)
+            Routes.SUBSCRIPTION_INTERCEPTION_STATS -> SubscriptionInterceptionStatsScreen(onBack = onBack, dataset = dataset)
+            Routes.PROVIDER_HEALTH -> ProviderHealthScreen(onBack = onBack, dataset = dataset)
             Routes.APP_TRAFFIC_STATS -> com.haoze.diting.ui.traffic.AppTrafficStatsScreen(onBack = onBack)
             else -> {
                 if (isExpressMode) {
@@ -130,7 +130,8 @@ class LogRouteActivity : AppLocalizedActivity() {
                         onNavigateToDnsCache = onNavigateToDnsCache,
                         onNavigateToRaceStats = onNavigateToRaceStats,
                         onNavigateToBootstrapStats = onNavigateToBootstrapStats,
-                        onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats
+                        onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats,
+                        dataset = dataset
                     )
                 } else {
                     ModernLogDashboardScreen(
@@ -140,7 +141,8 @@ class LogRouteActivity : AppLocalizedActivity() {
                         onNavigateToRaceStats = onNavigateToRaceStats,
                         onNavigateToBootstrapStats = onNavigateToBootstrapStats,
                         onNavigateToSubscriptionInterceptionStats = onNavigateToSubscriptionInterceptionStats,
-                        onNavigateToTrafficStats = onNavigateToTrafficStats
+                        onNavigateToTrafficStats = onNavigateToTrafficStats,
+                        dataset = dataset
                     )
                 }
             }

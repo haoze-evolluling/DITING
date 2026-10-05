@@ -1,5 +1,6 @@
 package com.haoze.diting.ui
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.haoze.diting.SettingsRouteActivity
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.agent.AgentAnalysisSheet
 import com.haoze.diting.ui.agent.AnalysisTarget
 import androidx.compose.material3.CircularProgressIndicator
@@ -50,7 +52,14 @@ fun ModernLogDashboardScreen(
     onNavigateToBootstrapStats: () -> Unit,
     onNavigateToSubscriptionInterceptionStats: () -> Unit,
     onNavigateToTrafficStats: (() -> Unit)? = null,
-    viewModel: ModernLogDashboardViewModel = viewModel(),
+    dataset: RuleDataset = RuleDataset.NORMAL,
+    viewModel: ModernLogDashboardViewModel = viewModel(
+        key = "ModernLogDashboardViewModel_${dataset.name}",
+        factory = ModernLogDashboardViewModel.factory(
+            LocalContext.current.applicationContext as Application,
+            dataset
+        )
+    ),
     showBackIcon: Boolean = true,
     contentBottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     isActive: Boolean = true,

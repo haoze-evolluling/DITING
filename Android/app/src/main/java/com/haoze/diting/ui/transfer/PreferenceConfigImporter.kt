@@ -101,7 +101,7 @@ internal class PreferenceConfigImporter(private val session: ImportSessionContex
             sys.bypassLanEnabled?.let { SystemSettingsStore.setBypassLanEnabled(context, it) }
             sys.ipv6Mode?.let { SystemSettingsStore.setIpv6Mode(context, Ipv6Mode.fromStorageValue(it), session.dataset) }
             sys.hideFromRecentsEnabled?.let { SystemSettingsStore.setHideFromRecentsEnabled(context, it) }
-            sys.logRetentionDays?.let { SystemSettingsStore.setLogRetentionDays(context, it) }
+            sys.logRetentionDays?.let { SystemSettingsStore.setLogRetentionDays(context, it, session.dataset) }
             sys.dnsLogMode?.let { SystemSettingsStore.setDnsLogMode(context, DnsLogMode.fromStorageValue(it), session.dataset) }
             sys.floatingLogEnabled?.let { SystemSettingsStore.setFloatingLogEnabled(context, it) }
             sys.floatingLogPanelSize?.let { SystemSettingsStore.setFloatingLogPanelSize(context, it) }

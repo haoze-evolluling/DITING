@@ -2,8 +2,12 @@ package com.haoze.diting.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.SubscriptionInterceptionStatsRange
 import com.haoze.diting.data.repository.DnsLogRepository
 import kotlinx.coroutines.Dispatchers
@@ -22,10 +26,19 @@ data class SubscriptionInterceptionStatItem(
     val rate: Double
 )
 
-class SubscriptionInterceptionStatsViewModel(application: Application) : AndroidViewModel(application) {
+class SubscriptionInterceptionStatsViewModel(
+    application: Application,
+    val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
 
-    private val database = AppDatabase.getInstance(application)
-    private val repository = DnsLogRepository(database.dnsLogDao(), database.httpRequestLogDao())
+    private val isNormal = dataset == RuleDataset.NORMAL
+    private val database = RuleDatabases.forDataset(application, dataset)
+    private val runtimeDb = RuleDatabases.runtimeForDataset(application, dataset)
+    private val normalDatabase = if (isNormal) AppDatabase.getInstance(application) else null
+    private val repository = DnsLogRepository(
+        runtimeDb.dnsLogDao(),
+        if (isNormal) normalDatabase?.httpRequestLogDao() else null
+    )
 
     private val _range = MutableStateFlow(SubscriptionInterceptionStatsRange.TODAY)
     val range: StateFlow<SubscriptionInterceptionStatsRange> = _range.asStateFlow()
@@ -71,6 +84,18 @@ class SubscriptionInterceptionStatsViewModel(application: Application) : Android
                 }
             } finally {
                 _loading.value = false
+            }
+        }
+    }
+
+    companion object {
+        fun factory(
+            application: Application,
+            dataset: RuleDataset = RuleDataset.NORMAL
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return SubscriptionInterceptionStatsViewModel(application, dataset) as T
             }
         }
     }

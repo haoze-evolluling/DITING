@@ -2,8 +2,12 @@ package com.haoze.diting.ui
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.haoze.diting.data.AppDatabase
+import com.haoze.diting.data.RuleDatabases
+import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.BootstrapStatsRange
 import com.haoze.diting.data.RaceStatsRange
 import com.haoze.diting.data.SubscriptionInterceptionStatsRange
@@ -111,12 +115,21 @@ data class ModernLogDashboardUiState(
     val subscriptions: DashboardSubscriptionSummary = DashboardSubscriptionSummary()
 )
 
-class ModernLogDashboardViewModel(application: Application) : AndroidViewModel(application) {
-    private val database = AppDatabase.getInstance(application)
-    private val dnsLogRepository = DnsLogRepository(database.dnsLogDao(), database.httpRequestLogDao())
-    private val dnsCacheRepository = DnsCacheRepository(database.dnsCacheDao())
-    private val raceLogRepository = RaceLogRepository(database.raceLogDao())
-    private val bootstrapLogRepository = BootstrapLogRepository(application, database.bootstrapLogDao())
+class ModernLogDashboardViewModel @JvmOverloads constructor(
+    application: Application,
+    val dataset: RuleDataset = RuleDataset.NORMAL
+) : AndroidViewModel(application) {
+    private val runtimeSources = RuleDatabases.runtimeForDataset(application, dataset)
+    private val ruleSources = RuleDatabases.forDataset(application, dataset)
+    private val isNormal = dataset == RuleDataset.NORMAL
+    private val normalDatabase = if (isNormal) AppDatabase.getInstance(application) else null
+    private val dnsLogRepository = DnsLogRepository(
+        runtimeSources.dnsLogDao(),
+        if (isNormal) normalDatabase?.httpRequestLogDao() else null
+    )
+    private val dnsCacheRepository = DnsCacheRepository(runtimeSources.dnsCacheDao())
+    private val raceLogRepository = RaceLogRepository(runtimeSources.raceLogDao())
+    private val bootstrapLogRepository = BootstrapLogRepository(application, runtimeSources.bootstrapLogDao())
 
     private val _uiState = MutableStateFlow(ModernLogDashboardUiState())
     val uiState: StateFlow<ModernLogDashboardUiState> = _uiState.asStateFlow()
@@ -151,22 +164,23 @@ class ModernLogDashboardViewModel(application: Application) : AndroidViewModel(a
 
     private suspend fun buildDashboardState(): ModernLogDashboardUiState {
         val now = System.currentTimeMillis()
-        val logMode = SystemSettingsStore.getDnsLogMode(getApplication())
+        val logMode = SystemSettingsStore.getDnsLogMode(getApplication(), dataset)
         val storedDailyStats = if (logMode == DnsLogMode.OFF) null else dnsLogRepository.dailyStats(dayStartMillis())
         val dailyStats = storedDailyStats?.let {
             if (logMode == DnsLogMode.BLOCKED_AND_ERRORS) it.copy(passed = 0, cached = 0) else it
         }
         val recentLogs = dnsLogRepository.recentLogs(RECENT_LOG_LIMIT, logMode)
-        val recentHttpLogs = if (logMode == DnsLogMode.OFF) {
+        val recentHttpLogs = if (!isNormal || logMode == DnsLogMode.OFF) {
             emptyList()
         } else {
-            database.httpRequestLogDao().recent(RECENT_LOG_LIMIT)
-                .filter { logMode == DnsLogMode.ALL || normalizeHttpOutcome(it.outcome) != "passed" }
+            normalDatabase?.httpRequestLogDao()?.recent(RECENT_LOG_LIMIT)
+                ?.filter { logMode == DnsLogMode.ALL || normalizeHttpOutcome(it.outcome) != "passed" }
+                .orEmpty()
         }
-        val httpStats = if (logMode == DnsLogMode.OFF) {
+        val httpStats = if (!isNormal || logMode == DnsLogMode.OFF) {
             emptyList()
         } else {
-            database.httpRequestLogDao().dailyStats(dayStartMillis())
+            normalDatabase?.httpRequestLogDao()?.dailyStats(dayStartMillis()).orEmpty()
         }
         var httpPassed = 0
         var httpBlocked = 0
@@ -194,7 +208,7 @@ class ModernLogDashboardViewModel(application: Application) : AndroidViewModel(a
         val subscriptions = if (logMode == DnsLogMode.OFF) {
             emptyList()
         } else {
-            database.subscriptionDao().all()
+            ruleSources.subscriptionDao().all()
         }
         val subscriptionsById = subscriptions.associateBy { it.id }
         val subscriptionItems = (subscriptionsById.keys + subscriptionStats?.hitsBySubscriptionId.orEmpty().keys)
@@ -388,7 +402,17 @@ class ModernLogDashboardViewModel(application: Application) : AndroidViewModel(a
         return if (totalWeight == 0) 0.0 else weightedTotal / totalWeight
     }
 
-    private companion object {
+    companion object {
+        fun factory(
+            application: Application,
+            dataset: RuleDataset = RuleDataset.NORMAL
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return ModernLogDashboardViewModel(application, dataset) as T
+            }
+        }
+
         private const val RECENT_LOG_LIMIT = 5
         private const val RECENT_CACHE_LIMIT = 5
         private const val SUBSCRIPTION_LIST_LIMIT = 5

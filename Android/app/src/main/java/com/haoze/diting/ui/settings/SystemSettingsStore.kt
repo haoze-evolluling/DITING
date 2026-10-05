@@ -44,13 +44,13 @@ object SystemSettingsStore {
             .apply()
     }
 
-    fun logRetentionDays(context: Context): Int {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun logRetentionDays(context: Context, dataset: RuleDataset = RuleDataset.NORMAL): Int {
+        return datasetPrefs(context, dataset)
             .getInt(KEY_LOG_RETENTION_DAYS, DEFAULT_LOG_RETENTION_DAYS)
     }
 
-    fun setLogRetentionDays(context: Context, days: Int) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    fun setLogRetentionDays(context: Context, days: Int, dataset: RuleDataset = RuleDataset.NORMAL) {
+        datasetPrefs(context, dataset)
             .edit()
             .putInt(KEY_LOG_RETENTION_DAYS, days.coerceIn(1, 30))
             .apply()

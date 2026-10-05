@@ -113,7 +113,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     onNavigate = ::openRoute,
                     onNavigateWithSource = ::openRoute,
                     onRuntimeDnsSettingsChanged = {
-                        RuntimeDnsSettingsRefresher.refreshIfRunning(this@SettingsRouteActivity)
+                        RuntimeDnsSettingsRefresher.refreshIfRunning(this@SettingsRouteActivity, dataset = requestedRuleDataset)
                         recordRuntimeDnsChanged()
                     },
                     onHideFromRecentsChanged = { hide ->

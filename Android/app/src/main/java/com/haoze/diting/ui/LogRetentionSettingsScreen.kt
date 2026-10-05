@@ -62,8 +62,8 @@ fun LogRetentionSettingsScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
-    var logRetention by remember { mutableIntStateOf(SystemSettingsStore.logRetentionDays(context)) }
-    var logMode by remember { mutableStateOf(SystemSettingsStore.getDnsLogMode(context, dataset)) }
+    var logRetention by remember(dataset) { mutableIntStateOf(SystemSettingsStore.logRetentionDays(context, dataset)) }
+    var logMode by remember(dataset) { mutableStateOf(SystemSettingsStore.getDnsLogMode(context, dataset)) }
     var floatingLogEnabled by remember { mutableStateOf(SystemSettingsStore.isFloatingLogEnabled(context)) }
     var waitingForOverlayPermission by remember { mutableStateOf(false) }
     var crashLogCount by remember { mutableIntStateOf(CrashLogManager.getCrashLogCount(context)) }
@@ -210,7 +210,7 @@ fun LogRetentionSettingsScreen(
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 20.dp),
                             onClick = {
                                 logRetention = days
-                                SystemSettingsStore.setLogRetentionDays(context, days)
+                                SystemSettingsStore.setLogRetentionDays(context, days, dataset)
                             }
                         )
                     }
