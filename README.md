@@ -53,12 +53,24 @@
 
 ***
 
+## 工作模式与支持矩阵
+
+谛听提供三种完全独立的工作模式，满足不同设备环境与性能偏好：
+
+| 工作模式 | 最低系统要求 | 核心引擎与网络栈 | 核心特性与定位 |
+|---|---|---|---|
+| ⚡ **极速模式** (Express) | **Android 7.0+ (API 24)**<br>`arm64-v8a` | **纯 Kotlin 原生实现**<br>轻量窄路由 TUN + Kotlin 引擎 | **纯净轻量，极低功耗**。零 Go 内核依赖，窄路由仅捕获 DNS 流量（UDP/TCP 53）与公共 DNS 劫持，其余流量直连物理网络；提供核心 DNS 解析加速、4 种调度策略、规则过滤、多档缓存与日志。最低支持 Android 7 老旧设备。 |
+| 🛡️ **普通模式** (Normal) | **Android 10.0+ (API 29)**<br>`arm64-v8a` | **Go 用户态网络栈**<br>(gVisor netstack + AAR) | **全功能网络管控**。全隧道接管，支持细粒度应用级分流（排除/禁止联网/白名单）、HTTPS 流量解密检查、出站 SOCKS5/HTTP 代理联动、实时应用流量统计与状态栏网速。 |
+| 🏠 **服务器模式** (Server) | **Android 10.0+ (API 29)**<br>`arm64-v8a` | **Go 独立 DNS 服务**<br>(监听 `0.0.0.0:1053`) | **局域网 DNS 服务器**。供外部路由器、PC 与电视等设备接入解析，共享本地规则与缓存，完全本地解耦且不占用 VPN 槽位。 |
+
+***
+
 ## 运行架构与安全边界
 
 - **Android 端架构**：
-  - **默认模式（DNS-Only）**：仅路由 DNS 查询端口（53）流量，不代理普通应用数据及 TCP/UDP 传输，轻量低耗。
-  - **高级模式（Go 用户态网络栈）**：当启用 HTTPS 检查、禁止联网或应用白名单访问时，Go 隧道接管相关网络流量进行精确处理；其他未配置应用直接原样转发。
-  - **独立服务器模式**：监听 `0.0.0.0:1053`，供局域网外部设备接入。
+  - **极速模式（窄路由）**：仅路由 DNS 虚拟地址与公共 DNS 劫持列表，非 53 端口 TCP 快速回写 RST 拒绝，不经过用户态 TCP/IP 协议栈，天然极低功耗。
+  - **普通模式（全隧道）**：由 Go 用户态网络栈（gVisor netstack）接管配置应用的网络流量，支持深度的应用分流与可选 HTTPS 流量检查。
+  - **服务器模式（局域网）**：直接监听 `0.0.0.0:1053`，供局域网外部设备接入。
 - **隐私保障**：全本地运行，无云端账户体系，无上报遥测，所有缓存、规则库与配置数据完整保存在设备本地。
 
 ***
@@ -68,11 +80,11 @@
 ```
 DITING/
 ├── Android/         # Android 客户端完整工程（应用层、UI、Room 数据库、Go 隧道 AAR）
-│   ├── app/         # Android 主程序源码与依赖配置
+│   ├── app/         # Android 主程序源码与依赖配置（含 express 极速模式独立模块）
 │   ├── tunnel/      # Go 用户态网络栈与 DNS 引擎源码（编译为 tunnel.aar）
 │   └── build_apk.bat# Android 交互式构建与安装脚本
 ├── docs/            # 设计规范、开发指南与技术文档
-│   ├── development/ # 工程维护文档（构建记录、证书规范、语法参考等）
+│   ├── development/ # 工程维护文档（构建记录、证书规范、极速模式架构、语法参考等）
 │   └── assets/      # 静态资源与赞助二维码
 └── scripts/         # 项目维护与辅助脚本
 ```
@@ -84,7 +96,9 @@ DITING/
 ### 📱 Android 客户端
 
 #### 运行与构建要求
-- 运行系统：Android 10 及以上（API 级别 29+）
+- 运行系统：
+  - **极速模式**：Android 7.0 及以上（API 级别 24+）
+  - **普通模式 / 服务器模式**：Android 10 及以上（API 级别 29+）
 - 设备架构：`arm64-v8a`
 - 构建环境：JDK 11 或更高版本（推荐使用 Android Studio 自带 JBR）、Android SDK
 
@@ -121,6 +135,7 @@ Windows 下亦可在 `Android/` 目录下运行交互式辅助脚本 `build_apk.
 项目技术规范与开发维护文档归档于 `docs/development/` 目录：
 
 - [Go AAR 构建记录](docs/development/aar-build-notes.md) — Android 端 Go 隧道 AAR（`tunnel.aar`）的编译环境、构建参数与产物验证方法。
+- [极速模式架构设计与技术规范](docs/development/express-mode-architecture.md) — 极速模式（Express Mode）“独立新文件、零污染旧代码”架构设计、DNS 专用窄路由数据面、DNS 劫持清单与取舍说明。
 - [Android 签名证书管理与发布签名规范](docs/development/android-signing-certificate-management.md) — 4096 位 Android 正式发布签名证书技术规格、指纹与打包流程。
 - [AdGuard 规则修饰符语法参考](docs/development/adguard-rule-modifier-syntax-reference.md) — AdGuard 规则语法与 `$modifier` 规范整理，包含规则引擎适配说明。
 - [云控贡献者名单维护说明](docs/development/recognition-members.md) — 赞助者与共建者名单的云控机制、配置 JSON 格式与头像维护流程。

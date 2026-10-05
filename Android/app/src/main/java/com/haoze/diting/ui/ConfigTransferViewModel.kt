@@ -67,7 +67,12 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
     fun export(uri: Uri, selection: ConfigExportSelection) {
         runOperation(ConfigTransferOperation.EXPORTING) {
             val context = getApplication<Application>()
-            val content = exporter.export(selection)
+            val effectiveSelection = if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+                com.haoze.diting.express.config.ExpressConfigAdapter.sanitizeExportSelection(selection)
+            } else {
+                selection
+            }
+            val content = exporter.export(effectiveSelection)
             context.contentResolver.openOutputStream(uri, "wt")?.bufferedWriter().use { writer ->
                 requireNotNull(writer) { "无法打开导出文件" }
                 writer.write(content)
@@ -108,7 +113,12 @@ class ConfigTransferViewModel(application: Application) : AndroidViewModel(appli
                     requireNotNull(reader) { "无法读取配置文件" }
                     reader.readText()
                 }
-                val config = ConfigTransferParser.parseAndValidate(content)
+                val rawConfig = ConfigTransferParser.parseAndValidate(content)
+                val config = if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+                    com.haoze.diting.express.config.ExpressConfigAdapter.sanitizeImportConfig(rawConfig)
+                } else {
+                    rawConfig
+                }
                 val result = importer.import(config) { progress ->
                     _importProgress.value = progress
                     progress.log?.let { logText ->
