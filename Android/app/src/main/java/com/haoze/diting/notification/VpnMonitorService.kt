@@ -1,6 +1,7 @@
 package com.haoze.diting.notification
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
@@ -9,8 +10,8 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.haoze.diting.MainActivity
 import com.haoze.diting.R
-import com.haoze.diting.ui.localizedText
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.ui.mode.AppWorkMode
+import com.haoze.diting.ui.mode.WorkModeStore
 
 /**
  * Foreground monitor service that keeps a persistent notification with a
@@ -31,9 +32,10 @@ class VpnMonitorService : Service() {
         }
 
         // Validate the enable setting, notification permission, and VPN state
-        if (!NotificationSettingsStore.isPersistentNotificationEnabled(this) ||
+        if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.DNS ||
+            !NotificationSettingsStore.isPersistentNotificationEnabled(this) ||
             !NotificationPermissionHelper.hasPermission(this) ||
-            DnsVpnService.isRunning(this)
+            VpnMonitorManager.isVpnRunning(this)
         ) {
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -49,6 +51,15 @@ class VpnMonitorService : Service() {
         }
 
         return START_STICKY
+    }
+
+    override fun onDestroy() {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        runCatching {
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.cancel(NOTIFICATION_ID_VPN_MONITOR)
+        }
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

@@ -8,6 +8,7 @@ import android.os.Build
 import android.util.Log
 import com.haoze.diting.crash.CrashBreadcrumbs
 import com.haoze.diting.express.notification.ExpressNotificationBuilder
+import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.PermissionDisclosureSettings
 import com.haoze.diting.ui.settings.AppRulesSettingsStore
@@ -114,6 +115,7 @@ class ExpressVpnService : VpnService() {
 
         updateForegroundNotification()
         floatingLogOverlay.setVpnRunning(true)
+        VpnMonitorManager.onVpnStarted(this)
         ExpressVpnController.onServiceStateChanged(this, true)
     }
 
@@ -170,6 +172,7 @@ class ExpressVpnService : VpnService() {
         ExpressVpnController.onServiceStateChanged(this, false)
         tunnelManager.stop()
         stopForegroundCompat()
+        VpnMonitorManager.onVpnStopped(this)
         stopSelf()
     }
 
@@ -189,6 +192,9 @@ class ExpressVpnService : VpnService() {
         ExpressVpnController.onServiceStateChanged(this, false)
         tunnelManager.stop()
         serviceScope.cancel()
+        if (!wasStopped) {
+            VpnMonitorManager.onVpnStopped(this)
+        }
         super.onDestroy()
     }
 

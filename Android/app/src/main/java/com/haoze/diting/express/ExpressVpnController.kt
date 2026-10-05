@@ -133,6 +133,11 @@ object ExpressVpnController {
     internal fun onServiceStateChanged(context: Context, running: Boolean) {
         setPersistedRunning(context, running)
         _isRunning.value = running
+        if (running) {
+            com.haoze.diting.notification.VpnMonitorManager.onVpnStarted(context)
+        } else {
+            com.haoze.diting.notification.VpnMonitorManager.onVpnStopped(context)
+        }
         context.sendBroadcast(ExpressVpnIntents.statusBroadcastIntent(context, running))
         val legacyIntent = Intent(com.haoze.diting.vpn.DnsVpnService.ACTION_VPN_STATUS_CHANGED).apply {
             `package` = context.packageName

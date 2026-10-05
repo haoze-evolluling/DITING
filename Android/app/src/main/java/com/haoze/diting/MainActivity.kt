@@ -89,7 +89,6 @@ class MainActivity : AppLocalizedActivity() {
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
-        VpnMonitorManager.sync(this)
         prepareVpn()
     }
 
@@ -367,9 +366,7 @@ class MainActivity : AppLocalizedActivity() {
             }
         }
         handleAutoStartIfNeeded(intent)
-        if (WorkModeStore.getAppWorkMode(this) != AppWorkMode.EXPRESS) {
-            VpnMonitorManager.sync(this)
-        }
+        VpnMonitorManager.sync(this)
     }
 
     private fun declineInitialAgreement() {
@@ -410,8 +407,8 @@ class MainActivity : AppLocalizedActivity() {
             sendBroadcast(legacyIntent)
         } else {
             mainViewModel.refreshStatus()
-            VpnMonitorManager.sync(this)
         }
+        VpnMonitorManager.sync(this)
         appUpdateHost.refreshDownloadState()
     }
 

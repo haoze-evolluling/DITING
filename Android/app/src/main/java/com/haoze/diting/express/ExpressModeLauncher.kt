@@ -48,7 +48,7 @@ object ExpressModeLauncher {
             Log.w(TAG, "Failed to stop legacy DnsModeService", e)
         }
 
-        // Discontinue persistent disconnected monitor for Express Mode
+        // Reset persistent monitor during mode switch
         runCatching {
             VpnMonitorManager.stop(appContext)
         }.onFailure { e ->
@@ -61,6 +61,7 @@ object ExpressModeLauncher {
         AppNotificationChannels.createAllChannels(appContext)
         com.haoze.diting.express.notification.ExpressNotificationBuilder.ensureChannel(appContext)
         ExpressVpnController.initialize(appContext)
+        VpnMonitorManager.sync(appContext)
 
         onComplete?.invoke()
     }
