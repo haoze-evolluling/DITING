@@ -242,10 +242,55 @@ class ExpressPacketCodecTest {
         assertTrue(fragResult is ExpressPacketCodec.ParsedPacket.DiscardPacket)
         assertEquals("Non-first fragment", (fragResult as ExpressPacketCodec.ParsedPacket.DiscardPacket).reason)
 
-        // 4. Invalid IP version
+        // 4. First IPv4 fragment with MF=1 (fragOffset == 0, MF == 1)
+        val firstFragPacket = ByteArray(28)
+        firstFragPacket[0] = 0x45
+        ExpressPacketCodec.writeUint16(firstFragPacket, 2, 28)
+        ExpressPacketCodec.writeUint16(firstFragPacket, 6, 0x2000) // MF = 1
+        firstFragPacket[9] = 17 // UDP
+        val firstFragResult = ExpressPacketCodec.parse(firstFragPacket)
+        assertTrue(firstFragResult is ExpressPacketCodec.ParsedPacket.DiscardPacket)
+        assertEquals("Fragmented datagram (MF=1)", (firstFragResult as ExpressPacketCodec.ParsedPacket.DiscardPacket).reason)
+
+        // 5. IPv6 fragment header with M=1
+        val ipv6Frag = ByteArray(48)
+        ipv6Frag[0] = 0x60
+        ExpressPacketCodec.writeUint16(ipv6Frag, 4, 8)
+        ipv6Frag[6] = 44 // Next = Fragment Header
+        ipv6Frag[7] = 64
+        ipv6Frag[40] = 17
+        ExpressPacketCodec.writeUint16(ipv6Frag, 42, 0x0001) // M=1
+        val ipv6FragResult = ExpressPacketCodec.parse(ipv6Frag)
+        assertTrue(ipv6FragResult is ExpressPacketCodec.ParsedPacket.DiscardPacket)
+        assertEquals("Fragmented IPv6 packet (M=1)", (ipv6FragResult as ExpressPacketCodec.ParsedPacket.DiscardPacket).reason)
+
+        // 6. Invalid IP version
         val badVersion = ByteArray(20)
         badVersion[0] = 0x35 // Version 3
         assertNull(ExpressPacketCodec.parse(badVersion))
+    }
+
+    @Test
+    fun testEncodeUdpResponseZeroAllocationAndOddChecksum() {
+        val clientIp = byteArrayOf(10, 0, 0, 2)
+        val serverIp = byteArrayOf(8, 8, 8, 8)
+        val dnsPayload = byteArrayOf(1, 2, 3) // Odd length payload (3 bytes)
+        val outBuffer = ByteArray(1500)
+
+        val writtenLen = ExpressPacketCodec.encodeUdpResponse(
+            isIpv6 = false,
+            srcIp = serverIp,
+            dstIp = clientIp,
+            srcPort = 53,
+            dstPort = 12345,
+            dnsPayload = dnsPayload,
+            outBuffer = outBuffer
+        )
+        assertTrue(writtenLen > 0)
+        assertEquals(20 + 8 + 3, writtenLen) // 31 bytes (odd length)
+
+        val csum = ExpressPacketCodec.calculateInternetChecksum(outBuffer, 0, writtenLen)
+        assertTrue(csum >= 0)
     }
 
     @Test

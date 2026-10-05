@@ -122,12 +122,24 @@ class ExpressDnsEngine(
         stats.upstreamQueries.incrementAndGet()
         val providers = activeProvidersProvider()
         val mode = resolutionModeProvider()
-        val response = upstreamDispatcher.dispatch(mode, providers, query, question)
+        val response = try {
+            if (providers.isEmpty()) {
+                throw java.io.IOException("No active upstream DNS providers configured")
+            }
+            upstreamDispatcher.dispatch(mode, providers, query, question)
+        } catch (e: Exception) {
+            val elapsedMs = (System.nanoTime() - startNs) / 1_000_000
+            stats.totalQueries.incrementAndGet()
+            stats.totalLatencyMs.addAndGet(elapsedMs)
+            dnsLogger?.logQuery(domain, queryType, blocked = false, reason = "upstream_failure: ${e.message}", cached = false, latencyMs = elapsedMs, providerName = null)
+            return ExpressDnsMessageUtils.buildServfailResponse(query)
+        }
+
         val elapsedMs = (System.nanoTime() - startNs) / 1_000_000
         stats.totalQueries.incrementAndGet()
         stats.totalLatencyMs.addAndGet(elapsedMs)
 
-        if (ExpressDnsMessageUtils.isSuccessResponse(response)) {
+        if (ExpressDnsMessageUtils.isSuccessResponse(response) && !ExpressDnsMessageUtils.isTruncatedResponse(response)) {
             cache?.put(question, response)
         }
 

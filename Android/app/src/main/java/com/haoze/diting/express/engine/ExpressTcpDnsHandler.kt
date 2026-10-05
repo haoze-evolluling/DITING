@@ -97,42 +97,73 @@ class ExpressTcpDnsHandler(
             return listOf(synAck)
         }
 
-        val conn = connections[key] ?: return emptyList()
+        val conn = connections[key] ?: run {
+            if ((packet.flags and 0x04) != 0) return emptyList()
+            val rst = ExpressPacketCodec.buildTcpReset(
+                isIpv6 = packet.isIpv6,
+                srcIp = packet.srcIp,
+                dstIp = packet.dstIp,
+                srcPort = packet.srcPort,
+                dstPort = packet.dstPort,
+                seqNumber = packet.seqNumber,
+                ackNumber = packet.ackNumber,
+                flags = packet.flags,
+                payloadLength = packet.payload.size
+            )
+            return if (rst != null) listOf(rst) else emptyList()
+        }
         conn.lastActiveTimeMs = System.currentTimeMillis()
         if (conn.state == TcpState.SYN_RECEIVED) {
             conn.state = TcpState.ESTABLISHED
         }
 
-        // Acknowledge unacked segments if client ACK covers them
+        // Acknowledge unacked segments if client ACK covers them (with 32-bit wrap handling)
         if ((packet.flags and 0x10) != 0) {
             val clientAck = packet.ackNumber
-            conn.unackedSegments.removeAll { (it.seq + it.len) and 0xFFFF_FFFFL <= clientAck }
+            synchronized(conn.unackedSegments) {
+                conn.unackedSegments.removeAll { seg ->
+                    val segEnd = (seg.seq + seg.len) and 0xFFFF_FFFFL
+                    (clientAck - segEnd).toInt() >= 0
+                }
+            }
         }
-
-        // Handle FIN
-        if ((packet.flags and 0x01) != 0) {
-            conn.remoteSeq = (packet.seqNumber + packet.payload.size + 1) and 0xFFFF_FFFFL
-            conn.state = TcpState.CLOSED
-            connections.remove(key)
-            val finAck = buildPacket(
-                conn = conn,
-                flags = 0x11, // FIN | ACK
-                seq = conn.localSeq,
-                ack = conn.remoteSeq,
-                payload = ByteArray(0)
-            )
-            return listOf(finAck)
-        }
-
-        // Handle TCP payload
-        if (packet.payload.isEmpty()) {
-            return emptyList()
-        }
-
-        conn.remoteSeq = (packet.seqNumber + packet.payload.size) and 0xFFFF_FFFFL
-        conn.rxBuffer.write(packet.payload)
 
         val responses = mutableListOf<ByteArray>()
+
+        // Handle TCP payload (checking for duplicate / retransmitted segments)
+        if (packet.payload.isNotEmpty()) {
+            val segEnd = (packet.seqNumber + packet.payload.size) and 0xFFFF_FFFFL
+            val diff = (segEnd - conn.remoteSeq).toInt()
+            if (diff <= 0) {
+                // Duplicate / retransmitted payload already processed; send ACK without corrupting rxBuffer
+                val ackPacket = buildPacket(
+                    conn = conn,
+                    flags = 0x10, // ACK
+                    seq = conn.localSeq,
+                    ack = conn.remoteSeq,
+                    payload = ByteArray(0)
+                )
+                responses.add(ackPacket)
+            } else {
+                val offset = (conn.remoteSeq - packet.seqNumber).toInt()
+                if (offset in 0 until packet.payload.size) {
+                    val newBytes = packet.payload.copyOfRange(offset, packet.payload.size)
+                    conn.remoteSeq = segEnd
+                    conn.rxBuffer.write(newBytes)
+                } else if (offset < 0) {
+                    // Out-of-order gap; ask for expected remoteSeq
+                    val ackPacket = buildPacket(
+                        conn = conn,
+                        flags = 0x10,
+                        seq = conn.localSeq,
+                        ack = conn.remoteSeq,
+                        payload = ByteArray(0)
+                    )
+                    responses.add(ackPacket)
+                }
+            }
+        }
+
         var bufferBytes = conn.rxBuffer.toByteArray()
 
         while (true) {
@@ -171,14 +202,16 @@ class ExpressTcpDnsHandler(
                         payload = chunk
                     )
 
-                    conn.unackedSegments.add(
-                        SentSegment(
-                            packet = segmentPacket,
-                            seq = conn.localSeq,
-                            len = chunkSize,
-                            sendTimeMs = System.currentTimeMillis()
+                    synchronized(conn.unackedSegments) {
+                        conn.unackedSegments.add(
+                            SentSegment(
+                                packet = segmentPacket,
+                                seq = conn.localSeq,
+                                len = chunkSize,
+                                sendTimeMs = System.currentTimeMillis()
+                            )
                         )
-                    )
+                    }
                     conn.localSeq = (conn.localSeq + chunkSize) and 0xFFFF_FFFFL
                     responses.add(segmentPacket)
                     offset += chunkSize
@@ -186,6 +219,23 @@ class ExpressTcpDnsHandler(
             } else {
                 break
             }
+        }
+
+        // Handle FIN (after payload processing so data sent with FIN is not discarded)
+        if ((packet.flags and 0x01) != 0) {
+            conn.remoteSeq = (conn.remoteSeq + 1) and 0xFFFF_FFFFL
+            conn.state = TcpState.CLOSED
+            connections.remove(key)
+            val finAck = buildPacket(
+                conn = conn,
+                flags = 0x11, // FIN | ACK
+                seq = conn.localSeq,
+                ack = conn.remoteSeq,
+                payload = ByteArray(0)
+            )
+            conn.localSeq = (conn.localSeq + 1) and 0xFFFF_FFFFL
+            responses.add(finAck)
+            return responses
         }
 
         // If no data response generated yet, send immediate ACK for received payload
@@ -206,16 +256,18 @@ class ExpressTcpDnsHandler(
     fun checkRetransmissions(nowMs: Long = System.currentTimeMillis()): List<ByteArray> {
         val toResend = mutableListOf<ByteArray>()
         connections.values.forEach { conn ->
-            val it = conn.unackedSegments.iterator()
-            while (it.hasNext()) {
-                val seg = it.next()
-                if (nowMs - seg.sendTimeMs >= RETRANSMIT_TIMEOUT_MS) {
-                    if (seg.retries >= MAX_RETRANSMITS) {
-                        it.remove()
-                    } else {
-                        seg.retries++
-                        seg.sendTimeMs = nowMs
-                        toResend.add(seg.packet)
+            synchronized(conn.unackedSegments) {
+                val it = conn.unackedSegments.iterator()
+                while (it.hasNext()) {
+                    val seg = it.next()
+                    if (nowMs - seg.sendTimeMs >= RETRANSMIT_TIMEOUT_MS) {
+                        if (seg.retries >= MAX_RETRANSMITS) {
+                            it.remove()
+                        } else {
+                            seg.retries++
+                            seg.sendTimeMs = nowMs
+                            toResend.add(seg.packet)
+                        }
                     }
                 }
             }
@@ -277,57 +329,17 @@ class ExpressTcpDnsHandler(
             System.arraycopy(payload, 0, packet, tcpOffset + tcpHeaderLen, payload.size)
         }
 
-        val tcpChecksum = computeTcpChecksum(
+        val tcpChecksum = ExpressPacketCodec.computeL4Checksum(
             isIpv6 = isIpv6,
             srcIp = conn.serverRawIp,
             dstIp = conn.clientRawIp,
+            protocol = ExpressPacketCodec.PROTOCOL_TCP,
             l4Length = tcpHeaderLen + payload.size,
             packet = packet,
             l4Offset = tcpOffset
         )
         ExpressPacketCodec.writeUint16(packet, tcpOffset + 16, tcpChecksum)
         return packet
-    }
-
-    private fun computeTcpChecksum(
-        isIpv6: Boolean,
-        srcIp: ByteArray,
-        dstIp: ByteArray,
-        l4Length: Int,
-        packet: ByteArray,
-        l4Offset: Int
-    ): Int {
-        var sum = 0L
-        val ipLen = if (isIpv6) 16 else 4
-        for (i in 0 until ipLen step 2) {
-            sum += ((srcIp[i].toInt() and 0xFF) shl 8) or (srcIp[i + 1].toInt() and 0xFF)
-            sum += ((dstIp[i].toInt() and 0xFF) shl 8) or (dstIp[i + 1].toInt() and 0xFF)
-        }
-
-        if (!isIpv6) {
-            sum += ExpressPacketCodec.PROTOCOL_TCP
-            sum += l4Length
-        } else {
-            sum += (l4Length ushr 16) and 0xFFFF
-            sum += l4Length and 0xFFFF
-            sum += ExpressPacketCodec.PROTOCOL_TCP
-        }
-
-        var i = l4Offset
-        val end = l4Offset + l4Length
-        while (i + 1 < end) {
-            sum += ((packet[i].toInt() and 0xFF) shl 8) or (packet[i + 1].toInt() and 0xFF)
-            i += 2
-        }
-        if (i < end) {
-            sum += (packet[i].toInt() and 0xFF) shl 8
-        }
-
-        while (sum > 0xFFFFL) {
-            sum = (sum ushr 16) + (sum and 0xFFFFL)
-        }
-        val res = (sum.inv() and 0xFFFFL).toInt()
-        return if (res == 0) 0xFFFF else res
     }
 
     private fun formatIp(ip: ByteArray): String {

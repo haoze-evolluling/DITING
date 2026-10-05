@@ -164,4 +164,104 @@ class ExpressTcpDnsHandlerTest {
         val resp = handler.handlePacket(rstPacket)
         assertTrue(resp.isEmpty())
     }
+
+    @Test
+    fun testPacketForNonExistentConnectionReturnsRst() = runBlocking {
+        val engine = createTestEngine()
+        val handler = ExpressTcpDnsHandler(engine)
+
+        // Incoming ACK packet for unknown connection
+        val orphanAck = ExpressPacketCodec.ParsedPacket.DnsTcpPacket(
+            isIpv6 = false,
+            srcIp = clientIp,
+            dstIp = serverIp,
+            srcPort = clientPort,
+            dstPort = serverPort,
+            seqNumber = 12345L,
+            ackNumber = 67890L,
+            flags = 0x10, // ACK
+            window = 65535,
+            payload = ByteArray(0)
+        )
+
+        val responses = handler.handlePacket(orphanAck)
+        assertEquals(1, responses.size)
+        val rstPacket = responses[0]
+        val parsed = ExpressPacketCodec.parse(rstPacket) as ExpressPacketCodec.ParsedPacket.NonDnsTcpPacket
+        assertEquals(0x04, parsed.flags) // RST
+        assertEquals(67890L, parsed.seqNumber)
+    }
+
+    @Test
+    fun testDuplicatePayloadDoesNotCorruptBuffer() = runBlocking {
+        val engine = createTestEngine()
+        val handler = ExpressTcpDnsHandler(engine)
+
+        // 1. Handshake SYN
+        val syn = ExpressPacketCodec.ParsedPacket.DnsTcpPacket(
+            isIpv6 = false, srcIp = clientIp, dstIp = serverIp,
+            srcPort = clientPort, dstPort = serverPort,
+            seqNumber = 1000L, ackNumber = 0L, flags = 0x02, window = 65535, payload = ByteArray(0)
+        )
+        val synAck = handler.handlePacket(syn)[0]
+        val serverSeq = (ExpressPacketCodec.parse(synAck) as ExpressPacketCodec.ParsedPacket.NonDnsTcpPacket).seqNumber
+
+        // 2. Client sends query
+        val query = ExpressDnsMessageUtils.buildQuery("dup.test", ExpressDnsMessageUtils.TYPE_A, 0x5555)
+        val framed = ByteArray(2 + query.size).apply {
+            this[0] = (query.size ushr 8).toByte()
+            this[1] = (query.size and 0xFF).toByte()
+            System.arraycopy(query, 0, this, 2, query.size)
+        }
+        val dataPacket = ExpressPacketCodec.ParsedPacket.DnsTcpPacket(
+            isIpv6 = false, srcIp = clientIp, dstIp = serverIp,
+            srcPort = clientPort, dstPort = serverPort,
+            seqNumber = 1001L, ackNumber = serverSeq + 1, flags = 0x18, window = 65535, payload = framed
+        )
+        val resp1 = handler.handlePacket(dataPacket)
+        assertEquals(1, resp1.size) // DNS answer returned
+
+        // 3. Client retransmits identical packet (duplicate)
+        val resp2 = handler.handlePacket(dataPacket)
+        assertEquals(1, resp2.size)
+        val ackOnly = ExpressPacketCodec.parse(resp2[0]) as ExpressPacketCodec.ParsedPacket.NonDnsTcpPacket
+        assertEquals(0x10, ackOnly.flags) // Immediate ACK, not re-executing query
+        assertEquals(1001L + framed.size, ackOnly.ackNumber)
+    }
+
+    @Test
+    fun testFinWithPayloadProcessesPayloadAndAcksFin() = runBlocking {
+        val engine = createTestEngine()
+        val handler = ExpressTcpDnsHandler(engine)
+
+        // Handshake SYN
+        val syn = ExpressPacketCodec.ParsedPacket.DnsTcpPacket(
+            isIpv6 = false, srcIp = clientIp, dstIp = serverIp,
+            srcPort = clientPort, dstPort = serverPort,
+            seqNumber = 5000L, ackNumber = 0L, flags = 0x02, window = 65535, payload = ByteArray(0)
+        )
+        val synAck = handler.handlePacket(syn)[0]
+        val serverSeq = (ExpressPacketCodec.parse(synAck) as ExpressPacketCodec.ParsedPacket.NonDnsTcpPacket).seqNumber
+
+        // Client sends query with PSH | ACK | FIN (0x19)
+        val query = ExpressDnsMessageUtils.buildQuery("fin.test", ExpressDnsMessageUtils.TYPE_A, 0x6666)
+        val framed = ByteArray(2 + query.size).apply {
+            this[0] = (query.size ushr 8).toByte()
+            this[1] = (query.size and 0xFF).toByte()
+            System.arraycopy(query, 0, this, 2, query.size)
+        }
+        val dataWithFin = ExpressPacketCodec.ParsedPacket.DnsTcpPacket(
+            isIpv6 = false, srcIp = clientIp, dstIp = serverIp,
+            srcPort = clientPort, dstPort = serverPort,
+            seqNumber = 5001L, ackNumber = serverSeq + 1, flags = 0x19, window = 65535, payload = framed
+        )
+
+        val responses = handler.handlePacket(dataWithFin)
+        // Should contain DNS data response AND FIN-ACK
+        assertEquals(2, responses.size)
+        val dnsResp = ExpressPacketCodec.parse(responses[0]) as ExpressPacketCodec.ParsedPacket.NonDnsTcpPacket
+        assertEquals(0x18, dnsResp.flags) // PSH | ACK for data
+        val finAck = ExpressPacketCodec.parse(responses[1]) as ExpressPacketCodec.ParsedPacket.NonDnsTcpPacket
+        assertEquals(0x11, finAck.flags) // FIN | ACK
+    }
 }

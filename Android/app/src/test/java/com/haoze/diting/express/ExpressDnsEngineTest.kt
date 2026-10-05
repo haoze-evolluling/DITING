@@ -146,4 +146,52 @@ class ExpressDnsEngineTest {
         assertEquals(1, engine.stats.cacheHits.get())
         assertEquals(0x2222, ExpressDnsMessageUtils.transactionId(resp2))
     }
+
+    @Test
+    fun testUpstreamFailureReturnsServfail() = runBlocking {
+        var loggedReason: String? = null
+        val dispatcher = ExpressUpstreamDispatcher(
+            transportInvoker = { _, _, _, _ ->
+                throw java.io.IOException("Network unreachable")
+            }
+        )
+
+        val engine = ExpressDnsEngine(
+            upstreamDispatcher = dispatcher,
+            activeProvidersProvider = { listOf(provider1) },
+            dnsLogger = { _, _, _, reason, _, _, _ ->
+                loggedReason = reason
+            }
+        )
+
+        val query = ExpressDnsMessageUtils.buildQuery("failed.upstream.com", ExpressDnsMessageUtils.TYPE_A, 0x4444)
+        val resp = engine.resolve(query)
+        assertEquals(ExpressDnsMessageUtils.RCODE_SERVFAIL, ExpressDnsMessageUtils.responseCode(resp))
+        assertEquals(0x4444, ExpressDnsMessageUtils.transactionId(resp))
+        assertEquals(1, engine.stats.totalQueries.get())
+        assertTrue(loggedReason?.contains("Network unreachable") == true)
+    }
+
+    @Test
+    fun testTruncatedResponseNotCached() = runBlocking {
+        val cache = FakeCache()
+        val dispatcher = ExpressUpstreamDispatcher(
+            transportInvoker = { _, query, _, _ ->
+                val base = ExpressDnsMessageUtils.buildBlockedResponse(query, BlockResponseMode.ZERO_ADDRESS)
+                base[2] = (base[2].toInt() or 0x02).toByte() // Set TC flag (Truncated)
+                base
+            }
+        )
+
+        val engine = ExpressDnsEngine(
+            upstreamDispatcher = dispatcher,
+            cache = cache,
+            activeProvidersProvider = { listOf(provider1) }
+        )
+
+        val q = ExpressDnsMessageUtils.buildQuery("truncated.com", ExpressDnsMessageUtils.TYPE_A)
+        val resp = engine.resolve(q)
+        assertTrue(ExpressDnsMessageUtils.isTruncatedResponse(resp))
+        assertTrue(cache.map.isEmpty())
+    }
 }

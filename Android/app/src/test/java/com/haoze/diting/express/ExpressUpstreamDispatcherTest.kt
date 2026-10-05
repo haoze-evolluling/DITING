@@ -94,4 +94,45 @@ class ExpressUpstreamDispatcherTest {
         val resp = dispatcher.dispatch(DnsResolutionMode.SMART_PREDICTION, listOf(providerA), query)
         assertNotNull(resp)
     }
+
+    @Test
+    fun testPrimaryBackupFailoverOnServfail() = runBlocking {
+        val attempts = mutableListOf<String>()
+        val dispatcher = ExpressUpstreamDispatcher(
+            transportInvoker = { p, query, _, _ ->
+                attempts.add(p.id)
+                if (p.id == "pA") {
+                    ExpressDnsMessageUtils.buildServfailResponse(query)
+                } else {
+                    ExpressDnsMessageUtils.buildBlockedResponse(query, BlockResponseMode.ZERO_ADDRESS)
+                }
+            }
+        )
+
+        val query = ExpressDnsMessageUtils.buildQuery("servfail-failover.test", ExpressDnsMessageUtils.TYPE_A)
+        val resp = dispatcher.dispatch(DnsResolutionMode.PRIMARY_BACKUP, listOf(providerA, providerB), query)
+        assertNotNull(resp)
+        assertEquals(ExpressDnsMessageUtils.RCODE_NOERROR, ExpressDnsMessageUtils.responseCode(resp))
+        assertEquals(listOf("pA", "pB"), attempts)
+    }
+
+    @Test
+    fun testParallelRaceIgnoresFastServfail() = runBlocking {
+        val dispatcher = ExpressUpstreamDispatcher(
+            transportInvoker = { p, query, _, _ ->
+                if (p.id == "pA") {
+                    delay(10)
+                    ExpressDnsMessageUtils.buildServfailResponse(query)
+                } else {
+                    delay(50)
+                    ExpressDnsMessageUtils.buildBlockedResponse(query, BlockResponseMode.ZERO_ADDRESS)
+                }
+            }
+        )
+
+        val query = ExpressDnsMessageUtils.buildQuery("race-servfail.test", ExpressDnsMessageUtils.TYPE_A)
+        val resp = dispatcher.dispatch(DnsResolutionMode.PARALLEL_RACE, listOf(providerA, providerB), query)
+        assertNotNull(resp)
+        assertEquals(ExpressDnsMessageUtils.RCODE_NOERROR, ExpressDnsMessageUtils.responseCode(resp))
+    }
 }

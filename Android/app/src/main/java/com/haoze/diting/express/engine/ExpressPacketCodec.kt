@@ -34,69 +34,33 @@ object ExpressPacketCodec {
 
     sealed class ParsedPacket {
         data class DnsUdpQuery(
-            val isIpv6: Boolean,
-            val srcIp: ByteArray,
-            val dstIp: ByteArray,
-            val srcPort: Int,
-            val dstPort: Int,
-            val dnsPayload: ByteArray
+            val isIpv6: Boolean, val srcIp: ByteArray, val dstIp: ByteArray,
+            val srcPort: Int, val dstPort: Int, val dnsPayload: ByteArray
         ) : ParsedPacket() {
-            override fun equals(other: Any?): Boolean = this === other || (other is DnsUdpQuery &&
-                    isIpv6 == other.isIpv6 && srcIp.contentEquals(other.srcIp) &&
-                    dstIp.contentEquals(other.dstIp) && srcPort == other.srcPort &&
-                    dstPort == other.dstPort && dnsPayload.contentEquals(other.dnsPayload))
-
+            override fun equals(other: Any?): Boolean = this === other || (other is DnsUdpQuery && isIpv6 == other.isIpv6 && srcIp.contentEquals(other.srcIp) && dstIp.contentEquals(other.dstIp) && srcPort == other.srcPort && dstPort == other.dstPort && dnsPayload.contentEquals(other.dnsPayload))
             override fun hashCode(): Int = 31 * (31 * srcIp.contentHashCode() + dstIp.contentHashCode()) + dnsPayload.contentHashCode()
         }
 
         data class DnsTcpPacket(
-            val isIpv6: Boolean,
-            val srcIp: ByteArray,
-            val dstIp: ByteArray,
-            val srcPort: Int,
-            val dstPort: Int,
-            val seqNumber: Long,
-            val ackNumber: Long,
-            val flags: Int,
-            val window: Int,
-            val payload: ByteArray
+            val isIpv6: Boolean, val srcIp: ByteArray, val dstIp: ByteArray,
+            val srcPort: Int, val dstPort: Int, val seqNumber: Long,
+            val ackNumber: Long, val flags: Int, val window: Int, val payload: ByteArray
         ) : ParsedPacket() {
-            override fun equals(other: Any?): Boolean = this === other || (other is DnsTcpPacket &&
-                    isIpv6 == other.isIpv6 && srcIp.contentEquals(other.srcIp) &&
-                    dstIp.contentEquals(other.dstIp) && srcPort == other.srcPort &&
-                    dstPort == other.dstPort && seqNumber == other.seqNumber &&
-                    ackNumber == other.ackNumber && flags == other.flags &&
-                    window == other.window && payload.contentEquals(other.payload))
-
+            override fun equals(other: Any?): Boolean = this === other || (other is DnsTcpPacket && isIpv6 == other.isIpv6 && srcIp.contentEquals(other.srcIp) && dstIp.contentEquals(other.dstIp) && srcPort == other.srcPort && dstPort == other.dstPort && seqNumber == other.seqNumber && ackNumber == other.ackNumber && flags == other.flags && window == other.window && payload.contentEquals(other.payload))
             override fun hashCode(): Int = 31 * (31 * srcIp.contentHashCode() + dstIp.contentHashCode()) + payload.contentHashCode()
         }
 
         data class NonDnsTcpPacket(
-            val isIpv6: Boolean,
-            val srcIp: ByteArray,
-            val dstIp: ByteArray,
-            val srcPort: Int,
-            val dstPort: Int,
-            val seqNumber: Long,
-            val ackNumber: Long,
-            val flags: Int,
-            val window: Int,
-            val payloadLength: Int
+            val isIpv6: Boolean, val srcIp: ByteArray, val dstIp: ByteArray,
+            val srcPort: Int, val dstPort: Int, val seqNumber: Long,
+            val ackNumber: Long, val flags: Int, val window: Int, val payloadLength: Int
         ) : ParsedPacket() {
-            override fun equals(other: Any?): Boolean = this === other || (other is NonDnsTcpPacket &&
-                    isIpv6 == other.isIpv6 && srcIp.contentEquals(other.srcIp) &&
-                    dstIp.contentEquals(other.dstIp) && srcPort == other.srcPort &&
-                    dstPort == other.dstPort && seqNumber == other.seqNumber &&
-                    ackNumber == other.ackNumber && flags == other.flags &&
-                    window == other.window && payloadLength == other.payloadLength)
-
+            override fun equals(other: Any?): Boolean = this === other || (other is NonDnsTcpPacket && isIpv6 == other.isIpv6 && srcIp.contentEquals(other.srcIp) && dstIp.contentEquals(other.dstIp) && srcPort == other.srcPort && dstPort == other.dstPort && seqNumber == other.seqNumber && ackNumber == other.ackNumber && flags == other.flags && window == other.window && payloadLength == other.payloadLength)
             override fun hashCode(): Int = 31 * (31 * srcIp.contentHashCode() + dstIp.contentHashCode()) + payloadLength
         }
 
         data class DiscardPacket(
-            val isIpv6: Boolean,
-            val protocol: Int,
-            val reason: String
+            val isIpv6: Boolean, val protocol: Int, val reason: String
         ) : ParsedPacket()
     }
 
@@ -119,8 +83,10 @@ object ExpressPacketCodec {
 
         val fragField = readUint16(packet, offset + 6)
         val fragOffset = fragField and 0x1FFF
-        if (fragOffset != 0) {
-            return ParsedPacket.DiscardPacket(false, packet[offset + 9].toInt() and 0xFF, "Non-first fragment")
+        val moreFragments = (fragField and 0x2000) != 0
+        if (fragOffset != 0 || moreFragments) {
+            val reason = if (fragOffset != 0) "Non-first fragment" else "Fragmented datagram (MF=1)"
+            return ParsedPacket.DiscardPacket(false, packet[offset + 9].toInt() and 0xFF, reason)
         }
 
         val protocol = packet[offset + 9].toInt() and 0xFF
@@ -155,8 +121,10 @@ object ExpressPacketCodec {
                     if (currentOffset + 8 > endOffset) return null
                     val fragOffsetFlags = readUint16(packet, currentOffset + 2)
                     val fragOffset = (fragOffsetFlags and 0xFFF8) ushr 3
-                    if (fragOffset != 0) {
-                        return ParsedPacket.DiscardPacket(true, 44, "Non-first IPv6 fragment")
+                    val mFlag = (fragOffsetFlags and 0x0001) != 0
+                    if (fragOffset != 0 || mFlag) {
+                        val reason = if (fragOffset != 0) "Non-first IPv6 fragment" else "Fragmented IPv6 packet (M=1)"
+                        return ParsedPacket.DiscardPacket(true, 44, reason)
                     }
                     currentHeader = packet[currentOffset].toInt() and 0xFF
                     currentOffset += 8
@@ -230,39 +198,50 @@ object ExpressPacketCodec {
     /**
      * Builds an RFC 793 TCP RST packet in response to a non-53 TCP packet entering TUN.
      */
-    fun buildTcpReset(incoming: ParsedPacket.NonDnsTcpPacket, outBuffer: ByteArray? = null): ByteArray? {
-        if ((incoming.flags and TCP_FLAG_RST) != 0) return null
+    fun buildTcpReset(
+        isIpv6: Boolean,
+        srcIp: ByteArray,
+        dstIp: ByteArray,
+        srcPort: Int,
+        dstPort: Int,
+        seqNumber: Long,
+        ackNumber: Long,
+        flags: Int,
+        payloadLength: Int = 0,
+        outBuffer: ByteArray? = null
+    ): ByteArray? {
+        if ((flags and TCP_FLAG_RST) != 0) return null
 
-        val hasAck = (incoming.flags and TCP_FLAG_ACK) != 0
+        val hasAck = (flags and TCP_FLAG_ACK) != 0
         val respSeq: Long
         val respAck: Long
         val respFlags: Int
 
         if (hasAck) {
-            respSeq = incoming.ackNumber
+            respSeq = ackNumber
             respAck = 0L
             respFlags = TCP_FLAG_RST
         } else {
             respSeq = 0L
-            val synCount = if ((incoming.flags and TCP_FLAG_SYN) != 0) 1 else 0
-            val finCount = if ((incoming.flags and TCP_FLAG_FIN) != 0) 1 else 0
-            respAck = (incoming.seqNumber + incoming.payloadLength + synCount + finCount) and 0xFFFF_FFFFL
+            val synCount = if ((flags and TCP_FLAG_SYN) != 0) 1 else 0
+            val finCount = if ((flags and TCP_FLAG_FIN) != 0) 1 else 0
+            respAck = (seqNumber + payloadLength + synCount + finCount) and 0xFFFF_FFFFL
             respFlags = TCP_FLAG_RST or TCP_FLAG_ACK
         }
 
-        val ipHeaderLen = if (incoming.isIpv6) IPV6_HEADER_LEN else IPV4_MIN_HEADER_LEN
+        val ipHeaderLen = if (isIpv6) IPV6_HEADER_LEN else IPV4_MIN_HEADER_LEN
         val totalLen = ipHeaderLen + TCP_MIN_HEADER_LEN
         val buffer = if (outBuffer != null && outBuffer.size >= totalLen) outBuffer else ByteArray(totalLen)
 
-        if (!incoming.isIpv6) {
-            encodeIPv4Header(buffer, totalLen, PROTOCOL_TCP, srcIp = incoming.dstIp, dstIp = incoming.srcIp, id = nextIpId())
+        if (!isIpv6) {
+            encodeIPv4Header(buffer, totalLen, PROTOCOL_TCP, srcIp = dstIp, dstIp = srcIp, id = nextIpId())
         } else {
-            encodeIPv6Header(buffer, TCP_MIN_HEADER_LEN, PROTOCOL_TCP, srcIp = incoming.dstIp, dstIp = incoming.srcIp)
+            encodeIPv6Header(buffer, TCP_MIN_HEADER_LEN, PROTOCOL_TCP, srcIp = dstIp, dstIp = srcIp)
         }
 
         val tcpOffset = ipHeaderLen
-        writeUint16(buffer, tcpOffset, incoming.dstPort)
-        writeUint16(buffer, tcpOffset + 2, incoming.srcPort)
+        writeUint16(buffer, tcpOffset, dstPort)
+        writeUint16(buffer, tcpOffset + 2, srcPort)
         writeUint32(buffer, tcpOffset + 4, respSeq)
         writeUint32(buffer, tcpOffset + 8, respAck)
         buffer[tcpOffset + 12] = (5 shl 4).toByte() // 20 bytes
@@ -272,9 +251,9 @@ object ExpressPacketCodec {
         writeUint16(buffer, tcpOffset + 18, 0) // Urgent pointer
 
         val tcpChecksum = computeL4Checksum(
-            isIpv6 = incoming.isIpv6,
-            srcIp = incoming.dstIp,
-            dstIp = incoming.srcIp,
+            isIpv6 = isIpv6,
+            srcIp = dstIp,
+            dstIp = srcIp,
             protocol = PROTOCOL_TCP,
             l4Length = TCP_MIN_HEADER_LEN,
             packet = buffer,
@@ -283,6 +262,70 @@ object ExpressPacketCodec {
         writeUint16(buffer, tcpOffset + 16, tcpChecksum)
 
         return if (buffer === outBuffer && buffer.size == totalLen) buffer else buffer.copyOf(totalLen)
+    }
+
+    fun buildTcpReset(incoming: ParsedPacket.NonDnsTcpPacket, outBuffer: ByteArray? = null): ByteArray? =
+        buildTcpReset(
+            isIpv6 = incoming.isIpv6,
+            srcIp = incoming.srcIp,
+            dstIp = incoming.dstIp,
+            srcPort = incoming.srcPort,
+            dstPort = incoming.dstPort,
+            seqNumber = incoming.seqNumber,
+            ackNumber = incoming.ackNumber,
+            flags = incoming.flags,
+            payloadLength = incoming.payloadLength,
+            outBuffer = outBuffer
+        )
+
+    /**
+     * Encodes an IP + UDP response packet into [outBuffer] at [outOffset] without allocations.
+     * Returns the total packet length written, or -1 if [outBuffer] is too small.
+     */
+    fun encodeUdpResponse(
+        isIpv6: Boolean,
+        srcIp: ByteArray,
+        dstIp: ByteArray,
+        srcPort: Int,
+        dstPort: Int,
+        dnsPayload: ByteArray,
+        payloadOffset: Int = 0,
+        payloadLen: Int = dnsPayload.size - payloadOffset,
+        ipId: Int = nextIpId(),
+        ttl: Int = 64,
+        outBuffer: ByteArray,
+        outOffset: Int = 0
+    ): Int {
+        val ipHeaderLen = if (isIpv6) IPV6_HEADER_LEN else IPV4_MIN_HEADER_LEN
+        val udpTotalLen = UDP_HEADER_LEN + payloadLen
+        val totalLen = ipHeaderLen + udpTotalLen
+        if (outBuffer.size < outOffset + totalLen) return -1
+
+        if (!isIpv6) {
+            encodeIPv4Header(outBuffer, totalLen, PROTOCOL_UDP, srcIp = srcIp, dstIp = dstIp, id = ipId, ttl = ttl, offset = outOffset)
+        } else {
+            encodeIPv6Header(outBuffer, udpTotalLen, PROTOCOL_UDP, srcIp = srcIp, dstIp = dstIp, hopLimit = ttl, offset = outOffset)
+        }
+
+        val udpOffset = outOffset + ipHeaderLen
+        writeUint16(outBuffer, udpOffset, srcPort)
+        writeUint16(outBuffer, udpOffset + 2, dstPort)
+        writeUint16(outBuffer, udpOffset + 4, udpTotalLen)
+        writeUint16(outBuffer, udpOffset + 6, 0) // Checksum placeholder
+
+        System.arraycopy(dnsPayload, payloadOffset, outBuffer, udpOffset + UDP_HEADER_LEN, payloadLen)
+
+        val udpChecksum = computeL4Checksum(
+            isIpv6 = isIpv6,
+            srcIp = srcIp,
+            dstIp = dstIp,
+            protocol = PROTOCOL_UDP,
+            l4Length = udpTotalLen,
+            packet = outBuffer,
+            l4Offset = udpOffset
+        )
+        writeUint16(outBuffer, udpOffset + 6, udpChecksum)
+        return totalLen
     }
 
     /**
@@ -302,79 +345,44 @@ object ExpressPacketCodec {
         outBuffer: ByteArray? = null
     ): ByteArray {
         val ipHeaderLen = if (isIpv6) IPV6_HEADER_LEN else IPV4_MIN_HEADER_LEN
-        val udpTotalLen = UDP_HEADER_LEN + payloadLen
-        val totalLen = ipHeaderLen + udpTotalLen
+        val totalLen = ipHeaderLen + UDP_HEADER_LEN + payloadLen
         val buffer = if (outBuffer != null && outBuffer.size >= totalLen) outBuffer else ByteArray(totalLen)
-
-        if (!isIpv6) {
-            encodeIPv4Header(buffer, totalLen, PROTOCOL_UDP, srcIp = srcIp, dstIp = dstIp, id = ipId, ttl = ttl)
-        } else {
-            encodeIPv6Header(buffer, udpTotalLen, PROTOCOL_UDP, srcIp = srcIp, dstIp = dstIp, hopLimit = ttl)
-        }
-
-        val udpOffset = ipHeaderLen
-        writeUint16(buffer, udpOffset, srcPort)
-        writeUint16(buffer, udpOffset + 2, dstPort)
-        writeUint16(buffer, udpOffset + 4, udpTotalLen)
-        writeUint16(buffer, udpOffset + 6, 0) // Checksum placeholder
-
-        System.arraycopy(dnsPayload, payloadOffset, buffer, udpOffset + UDP_HEADER_LEN, payloadLen)
-
-        val udpChecksum = computeL4Checksum(
-            isIpv6 = isIpv6,
-            srcIp = srcIp,
-            dstIp = dstIp,
-            protocol = PROTOCOL_UDP,
-            l4Length = udpTotalLen,
-            packet = buffer,
-            l4Offset = udpOffset
-        )
-        writeUint16(buffer, udpOffset + 6, udpChecksum)
-
+        encodeUdpResponse(isIpv6, srcIp, dstIp, srcPort, dstPort, dnsPayload, payloadOffset, payloadLen, ipId, ttl, buffer, 0)
         return if (buffer === outBuffer && buffer.size == totalLen) buffer else buffer.copyOf(totalLen)
     }
 
     private fun encodeIPv4Header(
-        buffer: ByteArray,
-        totalLen: Int,
-        protocol: Int,
-        srcIp: ByteArray,
-        dstIp: ByteArray,
-        id: Int,
-        ttl: Int = 64
+        buffer: ByteArray, totalLen: Int, protocol: Int,
+        srcIp: ByteArray, dstIp: ByteArray, id: Int, ttl: Int = 64, offset: Int = 0
     ) {
-        buffer[0] = 0x45.toByte() // Version 4, IHL 5
-        buffer[1] = 0x00.toByte() // ToS
-        writeUint16(buffer, 2, totalLen)
-        writeUint16(buffer, 4, id)
-        writeUint16(buffer, 6, 0x4000) // DF bit set
-        buffer[8] = ttl.toByte()
-        buffer[9] = protocol.toByte()
-        writeUint16(buffer, 10, 0) // Checksum placeholder
-        System.arraycopy(srcIp, 0, buffer, 12, 4)
-        System.arraycopy(dstIp, 0, buffer, 16, 4)
+        buffer[offset] = 0x45.toByte() // Version 4, IHL 5
+        buffer[offset + 1] = 0x00.toByte() // ToS
+        writeUint16(buffer, offset + 2, totalLen)
+        writeUint16(buffer, offset + 4, id)
+        writeUint16(buffer, offset + 6, 0x4000) // DF bit set
+        buffer[offset + 8] = ttl.toByte()
+        buffer[offset + 9] = protocol.toByte()
+        writeUint16(buffer, offset + 10, 0) // Checksum placeholder
+        System.arraycopy(srcIp, 0, buffer, offset + 12, 4)
+        System.arraycopy(dstIp, 0, buffer, offset + 16, 4)
 
-        val csum = calculateInternetChecksum(buffer, 0, IPV4_MIN_HEADER_LEN)
-        writeUint16(buffer, 10, csum)
+        val csum = calculateInternetChecksum(buffer, offset, IPV4_MIN_HEADER_LEN)
+        writeUint16(buffer, offset + 10, csum)
     }
 
     private fun encodeIPv6Header(
-        buffer: ByteArray,
-        payloadLen: Int,
-        nextHeader: Int,
-        srcIp: ByteArray,
-        dstIp: ByteArray,
-        hopLimit: Int = 64
+        buffer: ByteArray, payloadLen: Int, nextHeader: Int,
+        srcIp: ByteArray, dstIp: ByteArray, hopLimit: Int = 64, offset: Int = 0
     ) {
-        buffer[0] = 0x60.toByte()
-        buffer[1] = 0x00.toByte()
-        buffer[2] = 0x00.toByte()
-        buffer[3] = 0x00.toByte()
-        writeUint16(buffer, 4, payloadLen)
-        buffer[6] = nextHeader.toByte()
-        buffer[7] = hopLimit.toByte()
-        System.arraycopy(srcIp, 0, buffer, 8, 16)
-        System.arraycopy(dstIp, 0, buffer, 24, 16)
+        buffer[offset] = 0x60.toByte()
+        buffer[offset + 1] = 0x00.toByte()
+        buffer[offset + 2] = 0x00.toByte()
+        buffer[offset + 3] = 0x00.toByte()
+        writeUint16(buffer, offset + 4, payloadLen)
+        buffer[offset + 6] = nextHeader.toByte()
+        buffer[offset + 7] = hopLimit.toByte()
+        System.arraycopy(srcIp, 0, buffer, offset + 8, 16)
+        System.arraycopy(dstIp, 0, buffer, offset + 24, 16)
     }
 
     fun calculateInternetChecksum(data: ByteArray, offset: Int, length: Int): Int {
@@ -394,7 +402,7 @@ object ExpressPacketCodec {
         return (sum.inv() and 0xFFFFL).toInt()
     }
 
-    private fun computeL4Checksum(
+    fun computeL4Checksum(
         isIpv6: Boolean,
         srcIp: ByteArray,
         dstIp: ByteArray,

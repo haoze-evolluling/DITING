@@ -23,6 +23,7 @@ import java.io.IOException
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.Socket
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -147,7 +148,7 @@ class ExpressUpstreamDispatcher(
     ): ByteArray = coroutineScope {
         val winnerResult = CompletableDeferred<Pair<DnsProvider, ByteArray>>()
         val failureCount = AtomicInteger(0)
-        val jobs = mutableListOf<Job>()
+        val jobs = CopyOnWriteArrayList<Job>()
         val startNs = System.nanoTime()
 
         providers.forEach { provider ->

@@ -242,8 +242,11 @@ object ExpressDnsMessageUtils {
 
     fun isSuccessResponse(response: ByteArray): Boolean = responseCode(response) == RCODE_NOERROR
 
-    fun isUsableUpstreamResponse(response: ByteArray, query: ByteArray): Boolean =
-        isDnsResponse(response) && transactionId(response) == transactionId(query)
+    fun isUsableUpstreamResponse(response: ByteArray, query: ByteArray): Boolean {
+        if (!isDnsResponse(response) || transactionId(response) != transactionId(query)) return false
+        val code = responseCode(response) ?: return false
+        return code == RCODE_NOERROR || code == RCODE_NXDOMAIN
+    }
 
     fun isDnsResponse(response: ByteArray): Boolean {
         if (response.size < HEADER_LEN) return false
@@ -449,9 +452,10 @@ object ExpressDnsMessageUtils {
 
     private fun hasDnssecOk(query: ByteArray, questionEnd: Int): Boolean {
         var offset = questionEnd
+        val anCount = readShort(query, 6)
         val nsCount = readShort(query, 8)
         val arCount = readShort(query, 10)
-        repeat(nsCount) {
+        repeat(anCount + nsCount) {
             offset = skipName(query, offset)
             if (offset < 0 || offset + 10 > query.size) return false
             val rdLength = readShort(query, offset + 8)
