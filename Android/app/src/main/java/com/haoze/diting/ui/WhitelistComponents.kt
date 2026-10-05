@@ -26,11 +26,13 @@ import com.haoze.diting.ui.components.RuleTagChip
 
 @Composable
 internal fun WhitelistStatsCard(stats: WhitelistStats, dataset: RuleDataset) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val isExpress = com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS
     RuleStatsCard(
         icon = Icons.Filled.Security,
         title = localizedText("放行统计与状态"),
         activeBadgeText = localizedText("生效中: ${stats.totalActive} 条"),
-        stats = if (dataset == RuleDataset.NORMAL) {
+        stats = if (dataset == RuleDataset.NORMAL && !isExpress) {
             buildList {
                 add("放行域名数" to stats.totalDomains.toString())
                 add("默认预设" to "${stats.presetEnabled}/${stats.presetTotal}")
@@ -40,6 +42,12 @@ internal fun WhitelistStatsCard(stats: WhitelistStats, dataset: RuleDataset) {
                     add("元素放行" to stats.cosmeticCount.toString())
                 }
             }
+        } else if (dataset == RuleDataset.NORMAL && isExpress) {
+            listOf(
+                "放行域名数" to stats.totalDomains.toString(),
+                "默认预设" to "${stats.presetEnabled}/${stats.presetTotal}",
+                "用户自定义" to "${stats.userEnabled}/${stats.userTotal}"
+            )
         } else {
             // The DNS dataset has no presets and no URL rules.
             listOf(

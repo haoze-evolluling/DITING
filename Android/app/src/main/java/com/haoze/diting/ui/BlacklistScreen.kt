@@ -189,15 +189,17 @@ fun BlacklistScreen(
                             .padding(bottom = 6.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        val isExpress = com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS
+                        val supportsAdvancedRules = dataset == RuleDataset.NORMAL && !isExpress
                         RuleSearchField(
                             value = searchQuery,
                             onValueChange = viewModel::setSearchQuery,
-                            placeholder = localizedText("搜索域名、URL、元素或分组...")
+                            placeholder = localizedText(if (supportsAdvancedRules) "搜索域名、URL、元素或分组..." else "搜索域名或分组...")
                         )
 
                         RuleFilterChipRow(
                             filters = BlacklistFilter.entries.filterNot {
-                                dataset != RuleDataset.NORMAL && (it == BlacklistFilter.URL || it == BlacklistFilter.COSMETIC)
+                                !supportsAdvancedRules && (it == BlacklistFilter.URL || it == BlacklistFilter.COSMETIC)
                             },
                             selectedFilter = filter,
                             onSelect = viewModel::setFilter,
@@ -342,7 +344,8 @@ private fun BlacklistStatsCard(stats: BlacklistStats, dataset: RuleDataset) {
         stats = buildList {
             add("拦截域名数" to stats.totalDomains.toString())
             add("用户自定义" to "${stats.userEnabled}/${stats.userTotal}")
-            if (dataset == RuleDataset.NORMAL) {
+            val isExpress = com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(androidx.compose.ui.platform.LocalContext.current) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS
+            if (dataset == RuleDataset.NORMAL && !isExpress) {
                 add("屏蔽 URL" to stats.urlBlockCount.toString())
                 if (stats.cosmeticCount > 0) {
                     add("元素隐藏" to stats.cosmeticCount.toString())

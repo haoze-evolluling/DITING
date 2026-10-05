@@ -217,19 +217,21 @@ fun WhitelistScreen(
                             .padding(bottom = 6.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        val isExpress = com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS
+                        val supportsAdvancedRules = dataset == RuleDataset.NORMAL && !isExpress
                         RuleSearchField(
                             value = searchQuery,
                             onValueChange = viewModel::setSearchQuery,
-                            placeholder = localizedText("搜索域名、URL、元素或分组...")
+                            placeholder = localizedText(if (supportsAdvancedRules) "搜索域名、URL、元素或分组..." else "搜索域名或分组...")
                         )
 
                         RuleFilterChipRow(
-                            filters = if (dataset == RuleDataset.NORMAL) {
+                            filters = if (supportsAdvancedRules) {
                                 WhitelistFilter.entries
                             } else {
                                 // URL rules, cosmetic rules, and presets are VPN mode capabilities.
                                 WhitelistFilter.entries.filterNot {
-                                    it == WhitelistFilter.URL || it == WhitelistFilter.PRESET || it == WhitelistFilter.COSMETIC
+                                    it == WhitelistFilter.URL || (dataset != RuleDataset.NORMAL && it == WhitelistFilter.PRESET) || it == WhitelistFilter.COSMETIC
                                 }
                             },
                             selectedFilter = filter,

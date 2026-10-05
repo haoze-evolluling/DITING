@@ -42,8 +42,11 @@ internal fun BlacklistAddDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = localizedText(
-                        if (dataset == RuleDataset.NORMAL) "支持域名（如 example.com）、AdGuard 规则（||example.com^）、URL 屏蔽前缀或元素隐藏规则（如 com.app##.ad）。"
-                        else "支持域名（如 example.com、*.google.com）或 AdGuard 规则（||example.com^）。"
+                        if (dataset == RuleDataset.NORMAL && com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) != com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+                            "支持域名（如 example.com）、AdGuard 规则（||example.com^）、URL 屏蔽前缀或元素隐藏规则（如 com.app##.ad）。"
+                        } else {
+                            "支持域名（如 example.com、*.google.com）或 AdGuard 规则（||example.com^）。"
+                        }
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

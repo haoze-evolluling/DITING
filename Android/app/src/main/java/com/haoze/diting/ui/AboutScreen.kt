@@ -35,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,12 +65,12 @@ import kotlin.math.sqrt
 
 private const val PROJECT_REPOSITORY_URL = "https://github.com/haoze-evolluling/DITING"
 
-private data class AboutCapability(
+internal data class AboutCapability(
     val title: String,
     val description: String
 )
 
-private val aboutCapabilities = listOf(
+internal val aboutCapabilities = listOf(
     AboutCapability("加密上游", "支持 DNS、DoH 与 DoT，并可管理自定义服务商。"),
     AboutCapability("规则与缓存", "以缓存、屏蔽规则、白名单和订阅规则减少重复请求与干扰。"),
     AboutCapability("可观测性", "通过请求日志、竞速统计、服务商健康和 Bootstrap 数据追踪状态。"),
@@ -80,11 +81,31 @@ private val aboutCapabilities = listOf(
     AboutCapability("HTTPS 流量检查", "按应用检查 HTTP(S) 请求并应用域名和 URL 规则，需安装 HTTPS 检查根证书。")
 )
 
-private val aboutBoundaries = listOf(
+internal val aboutBoundaries = listOf(
     "默认仅处理 DNS" to "默认通过 Android VpnService 建立仅处理 DNS 的本地通道；启用 HTTPS 流量检查或禁止联网后，Go 隧道使用 Go 用户态网络栈接管 TCP、UDP、DNS 和 HTTP(S) 流量。",
     "实际解析表现" to "解析速度、稳定性和可用性取决于网络环境、所选上游和本机规则。",
     "隐私与本地存储" to "缓存、日志、规则与配置保存在设备本机。上游仍会收到必要查询；仅 DoH、DoT 加密到上游的 DNS 传输。"
 )
+
+internal fun getAboutCapabilities(isExpress: Boolean): List<AboutCapability> {
+    return if (isExpress) {
+        aboutCapabilities.filterNot { it.title == "应用管控" || it.title == "HTTPS 流量检查" }
+    } else {
+        aboutCapabilities
+    }
+}
+
+internal fun getAboutBoundaries(isExpress: Boolean): List<Pair<String, String>> {
+    return if (isExpress) {
+        listOf(
+            "极速原生 DNS 窄路由" to "通过纯 Kotlin 原生轻量窄路由接管 UDP/TCP 53 端口 DNS 请求；设备常规应用数据直连物理网络，不经过 VPN 协议栈，实现零性能损耗与极低功耗。",
+            "实际解析表现" to "解析速度、稳定性和可用性取决于网络环境、所选上游和本机规则。",
+            "隐私与本地存储" to "缓存、日志、规则与配置保存在设备本机。上游仍会收到必要查询；仅 DoH、DoT 加密到上游的 DNS 传输。"
+        )
+    } else {
+        aboutBoundaries
+    }
+}
 
 @Composable
 fun AboutScreen(
@@ -106,6 +127,10 @@ fun AboutScreen(
         }
         Unit
     }
+
+    val isExpress = com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS
+    val capabilities = remember(isExpress) { getAboutCapabilities(isExpress) }
+    val boundaries = remember(isExpress) { getAboutBoundaries(isExpress) }
 
     SettingsScaffold(
         title = title,
@@ -141,13 +166,13 @@ fun AboutScreen(
                 SettingsGroupTitle(localizedText("核心能力"))
             }
             item {
-                CapabilityGrid()
+                CapabilityGrid(capabilities)
             }
             item {
                 SettingsGroupTitle(localizedText("运行边界"))
             }
             item {
-                BoundaryGrid()
+                BoundaryGrid(boundaries)
             }
             item {
                 ProjectCard(onOpenRepository = openRepository)
@@ -168,6 +193,11 @@ fun AboutScreen(
 
 @Composable
 private fun rememberDnsServiceRunning(context: Context): Boolean {
+    val isExpress = com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS
+    if (isExpress) {
+        val running by com.haoze.diting.express.ExpressVpnController.isRunning.collectAsState()
+        return running
+    }
     var isRunning by remember(context) { mutableStateOf(DnsVpnService.isRunning(context)) }
     DisposableEffect(context) {
         val receiver = object : BroadcastReceiver() {
@@ -317,11 +347,11 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawNodeConnection(
 }
 
 @Composable
-private fun CapabilityGrid() {
+private fun CapabilityGrid(capabilities: List<AboutCapability>) {
     BoxWithConstraints {
         val columns = if (maxWidth >= 680.dp) 3 else 2
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            aboutCapabilities.chunked(columns).forEachIndexed { rowIndex, row ->
+            capabilities.chunked(columns).forEachIndexed { rowIndex, row ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -355,18 +385,18 @@ private fun CapabilityCard(capability: AboutCapability, index: Int, modifier: Mo
 }
 
 @Composable
-private fun BoundaryGrid() {
+private fun BoundaryGrid(boundaries: List<Pair<String, String>>) {
     BoxWithConstraints {
         val horizontal = maxWidth >= 680.dp
         if (horizontal) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                aboutBoundaries.forEachIndexed { index, (title, description) ->
+                boundaries.forEachIndexed { index, (title, description) ->
                     BoundaryCard(title, description, index, Modifier.weight(1f))
                 }
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                aboutBoundaries.forEachIndexed { index, (title, description) ->
+                boundaries.forEachIndexed { index, (title, description) ->
                     BoundaryCard(title, description, index, Modifier.fillMaxWidth())
                 }
             }

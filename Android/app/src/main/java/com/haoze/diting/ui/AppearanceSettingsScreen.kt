@@ -89,7 +89,13 @@ fun AppearanceSettingsScreen(
                         ),
                         SettingsNavigationItemData(
                             title = localizedText("通知栏设置"),
-                            subtitle = localizedText("分别设置 DNS 服务开启和关闭时的通知文案与网速显示"),
+                            subtitle = localizedText(
+                                if (com.haoze.diting.ui.mode.WorkModeStore.getAppWorkMode(context) == com.haoze.diting.ui.mode.AppWorkMode.EXPRESS) {
+                                    "分别设置 DNS 服务开启和关闭时的通知文案"
+                                } else {
+                                    "分别设置 DNS 服务开启和关闭时的通知文案与网速显示"
+                                }
+                            ),
                             onClick = onNavigateToNotificationSettings
                         )
                     )

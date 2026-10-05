@@ -25,6 +25,7 @@ import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.dnsmode.DnsMainActivity
 import com.haoze.diting.dnsmode.backend.DnsModeManager
+import com.haoze.diting.express.ui.*
 import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.*
 import com.haoze.diting.ui.batch.BatchAddRulesScreen
@@ -299,11 +300,37 @@ class SettingsRouteActivity : AppLocalizedActivity() {
         startupUpdateCheckDisabled: Boolean,
         onStartupUpdateCheckDisabledChange: (Boolean) -> Unit
     ) {
+        val isExpress = WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS
         when (route) {
             Routes.SETTINGS -> SettingsScreen(onBack, onNavigate)
             Routes.LANGUAGE_SETTINGS -> LanguageSettingsScreen(::finishSettings, ::applyLanguage)
-            Routes.RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
-            Routes.RULE_CONTROL -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
+            Routes.RULE_MANAGEMENT,
+            Routes.RULE_CONTROL,
+            Routes.DOMAIN_RULE_MANAGEMENT,
+            Routes.ADDRESS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) {
+                if (isExpress) {
+                    ExpressRuleControlScreen(
+                        onBack = onBack,
+                        onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) },
+                        onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) },
+                        onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) },
+                        onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) },
+                        dataset = ruleDataset,
+                        onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+                    )
+                } else {
+                    RuleControlScreen(
+                        onBack = onBack,
+                        onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) },
+                        onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) },
+                        onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) },
+                        onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) },
+                        onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) },
+                        dataset = ruleDataset,
+                        onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
+                    )
+                }
+            }
             Routes.APP_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.APP_ALLOWLIST) { AppRuleManagementScreen(onBack) }
             Routes.WHITELIST_MANAGEMENT -> WhitelistScreen(
                 onBack,
@@ -329,8 +356,6 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                 onBack = onBack,
                 onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
             )
-            Routes.DOMAIN_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
-            Routes.ADDRESS_RULE_MANAGEMENT -> SettingsGuideHost(SettingsGuides.DOMAIN_RULES) { RuleControlScreen(onBack, onNavigateToBlockResponseSettings = { onNavigate(Routes.BLOCK_RESPONSE_SETTINGS) }, onNavigateToSubscription = { onNavigate(Routes.SUBSCRIPTION_MANAGEMENT) }, onNavigateToAutoUpdateInterval = { onNavigate(Routes.SUBSCRIPTION_AUTO_UPDATE_INTERVAL) }, onNavigateToMirrorTemplates = { onNavigate(Routes.MIRROR_TEMPLATES) }, onNavigateToHttpInspection = { onNavigate(Routes.HTTP_INSPECTION_SETTINGS) }, dataset = ruleDataset, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged) }
             Routes.RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.BLOCK, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged, dataset = ruleDataset)
             Routes.ALLOW_RULE_LIST -> RuleListScreen(onBack, ruleKind = ruleKind ?: ManagedRuleKind.ALLOW, ruleScope = ruleScope ?: RuleScope.DNS, onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged, dataset = ruleDataset)
             Routes.REWRITE_RULE_LIST -> RewriteListScreen(onBack, onRuntimeDnsSettingsChanged, dataset = ruleDataset)
@@ -350,27 +375,25 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.AGENT_API_PRESETS -> AiProviderManageScreen(onBack)
             Routes.AGENT_API_PARAMS -> AgentApiParamsScreen(onBack)
             Routes.DATA_CLEANUP -> SettingsGuideHost(SettingsGuides.DATA_CLEANUP) {
-                if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
-                    com.haoze.diting.express.ui.ExpressDataCleanupScreen(
-                        onBack = onBack,
-                        title = requestedTitle ?: ScreenDestinations.dataCleanup.title,
-                        onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged,
-                        onExitApp = onExitApp
-                    )
+                val cleanupTitle = requestedTitle ?: ScreenDestinations.dataCleanup.title
+                if (isExpress) {
+                    ExpressDataCleanupScreen(onBack, cleanupTitle, onRuntimeDnsSettingsChanged, onExitApp)
                 } else {
-                    DataCleanupScreen(onBack, requestedTitle ?: ScreenDestinations.dataCleanup.title, onRuntimeDnsSettingsChanged, onExitApp)
+                    DataCleanupScreen(onBack, cleanupTitle, onRuntimeDnsSettingsChanged, onExitApp)
                 }
             }
-            Routes.CONFIG_TRANSFER -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "备份与迁移") }
-            Routes.CONFIG_IMPORT_EXPORT -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "备份与迁移") }
-            Routes.RULE_EXPORT -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "备份与迁移") }
-            Routes.RULE_IMPORT -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) { ConfigTransferScreen(onBack, "备份与迁移") }
+            Routes.CONFIG_TRANSFER,
+            Routes.CONFIG_IMPORT_EXPORT,
+            Routes.RULE_EXPORT,
+            Routes.RULE_IMPORT -> SettingsGuideHost(SettingsGuides.CONFIG_TRANSFER) {
+                if (isExpress) ExpressConfigTransferScreen(onBack, "备份与迁移") else ConfigTransferScreen(onBack, "备份与迁移")
+            }
             Routes.PROVIDER_MANAGEMENT -> SettingsGuideHost(SettingsGuides.PROVIDER_MANAGEMENT) { ProviderManagementScreen(onBack, "服务商管理") }
             Routes.HOME_PROVIDER_VISIBILITY -> SettingsGuideHost(SettingsGuides.SERVICE_DISPLAY) { HomeProviderVisibilityScreen(onBack, "服务显示") }
-            Routes.BLOCKED_APPS -> SettingsGuideHost(SettingsGuides.BLOCKED_APPS) { BlockedAppsScreen(onBack) }
-            Routes.BLOCKED_APPS_SELECTION -> BlockedAppsScreen(onBack)
-            Routes.APP_ALLOWLIST -> SettingsGuideHost(SettingsGuides.APP_ALLOWLIST) { AppRuleManagementScreen(onBack) }
-            Routes.APP_ALLOWLIST_SELECTION -> AppRuleManagementScreen(onBack)
+            Routes.BLOCKED_APPS,
+            Routes.BLOCKED_APPS_SELECTION -> SettingsGuideHost(SettingsGuides.BLOCKED_APPS) { BlockedAppsScreen(onBack) }
+            Routes.APP_ALLOWLIST,
+            Routes.APP_ALLOWLIST_SELECTION -> SettingsGuideHost(SettingsGuides.APP_ALLOWLIST) { AppRuleManagementScreen(onBack) }
             Routes.BOOTSTRAP_SETTINGS -> SettingsGuideHost(SettingsGuides.BOOTSTRAP) { BootstrapSettingsScreen(onBack, "Bootstrap 设置") }
             Routes.NETWORK_TOOLS -> SettingsGuideHost(SettingsGuides.NETWORK_TOOLS) { NetworkToolsScreen(onBack, "网络诊断") }
             Routes.RACE_MODE_PROVIDERS -> SettingsGuideHost(SettingsGuides.RESOLUTION_MODE) {
@@ -385,14 +408,20 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.RESOLUTION_BACKUP -> ResolutionModeConfigScreen(DnsResolutionMode.PRIMARY_BACKUP, onBack)
             Routes.CACHE_SETTINGS -> SettingsGuideHost(SettingsGuides.CACHE) { CacheSettingsScreen(onBack, ScreenDestinations.cacheSettings.title, onRuntimeDnsSettingsChanged, dataset = requestedRuleDataset) }
             Routes.LOG_RETENTION_SETTINGS -> SettingsGuideHost(SettingsGuides.LOG_MODE) { LogRetentionSettingsScreen(onBack, onRuntimeDnsSettingsChanged, ScreenDestinations.logRetentionSettings.title) }
-            Routes.FOREGROUND_BACKGROUND_SETTINGS -> SettingsGuideHost(SettingsGuides.FOREGROUND_BACKGROUND) { ForegroundBackgroundSettingsScreen(onBack, ScreenDestinations.foregroundBackgroundSettings.title, onHideFromRecentsChanged) }
+            Routes.FOREGROUND_BACKGROUND_SETTINGS -> SettingsGuideHost(SettingsGuides.FOREGROUND_BACKGROUND) {
+                if (isExpress) {
+                    ExpressForegroundBackgroundSettingsScreen(onBack, ScreenDestinations.foregroundBackgroundSettings.title, onHideFromRecentsChanged)
+                } else {
+                    ForegroundBackgroundSettingsScreen(onBack, ScreenDestinations.foregroundBackgroundSettings.title, onHideFromRecentsChanged)
+                }
+            }
             Routes.HTTP_INSPECTION_SETTINGS -> SettingsGuideHost(SettingsGuides.HTTP_INSPECTION) { HttpInspectionSettingsScreen(onBack, { onNavigateWithSource(Routes.DNS_LOGS, RequestSource.HTTPS) }, { onNavigate(Routes.HTTP_INSPECTION_APPS) }, { onNavigate(Routes.CA_CERTIFICATE_SETTINGS) }) }
             Routes.CA_CERTIFICATE_GUIDE -> CaCertificateGuideScreen(onBack)
             Routes.CA_CERTIFICATE_SETTINGS -> CaCertificateSettingsScreen(onBack, { onNavigate(Routes.CA_CERTIFICATE_GUIDE) })
             Routes.HTTP_INSPECTION_APPS -> HttpInspectionAppsScreen(onBack)
             Routes.DNS_LOGS,
             Routes.HTTP_REQUEST_LOGS -> {
-                if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
+                if (isExpress) {
                     com.haoze.diting.express.ui.ExpressRequestLogScreen(
                         onBack = onBack,
                         onRuntimeDnsSettingsChanged = onRuntimeDnsSettingsChanged
@@ -434,15 +463,16 @@ class SettingsRouteActivity : AppLocalizedActivity() {
                     onNavigateToBottomBarCustomization = { onNavigate(Routes.BOTTOM_BAR_CUSTOMIZATION) }
                 )
             }
-            Routes.BOTTOM_BAR_CUSTOMIZATION -> BottomBarCustomizationScreen(
-                onBack = onBack,
-                onBottomBarChanged = ::recordBottomBarChanged
-            )
+            Routes.BOTTOM_BAR_CUSTOMIZATION -> if (isExpress) {
+                ExpressBottomBarCustomizationScreen(onBack, ::recordBottomBarChanged)
+            } else {
+                BottomBarCustomizationScreen(onBack, ::recordBottomBarChanged)
+            }
             Routes.DAY_NIGHT_MODE -> DayNightModeScreen(onBack, "日夜模式", onThemeModeChanged)
             Routes.THEME_COLOR_SETTINGS -> ThemeColorSettingsScreen(onBack, "主题色配置", onThemeColorStyleChanged)
             Routes.HOME_COMPONENT_OPACITY -> HomeComponentOpacityScreen(onBack, "首页透明度")
             Routes.HOME_SENTENCE_SETTINGS -> HomeSentenceSettingsScreen(onBack, "首页句子")
-            Routes.NOTIFICATION_SETTINGS -> NotificationSettingsScreen(onBack, "通知设置")
+            Routes.NOTIFICATION_SETTINGS -> if (isExpress) ExpressNotificationSettingsScreen(onBack, "通知设置") else NotificationSettingsScreen(onBack, "通知设置")
             Routes.CUSTOM_BACKGROUND_SETTINGS -> CustomBackgroundSettingsScreen(onBack, "软件背景", onCustomBackgroundChanged)
             Routes.MIRROR_TEMPLATES -> MirrorTemplateScreen(
                 onBack = onBack,
@@ -455,13 +485,7 @@ class SettingsRouteActivity : AppLocalizedActivity() {
             Routes.CO_BUILDER_LIST -> CoBuilderListScreen(onBack, "共建者名单")
             Routes.APP_TRAFFIC_STATS -> AppTrafficStatsScreen(onBack)
             Routes.OPTIONAL_FEATURES,
-            Routes.HIDDEN_FEATURES -> {
-                if (WorkModeStore.getAppWorkMode(this) == AppWorkMode.EXPRESS) {
-                    com.haoze.diting.express.ui.ExpressHiddenFeaturesScreen(onBack)
-                } else {
-                    HiddenFeaturesScreen(onBack)
-                }
-            }
+            Routes.HIDDEN_FEATURES -> if (isExpress) ExpressHiddenFeaturesScreen(onBack) else HiddenFeaturesScreen(onBack)
             Routes.WORK_MODE_SELECTION -> WorkModeSelectionScreen(
                 isFirstLaunch = false,
                 currentMode = WorkModeStore.getAppWorkMode(this),
