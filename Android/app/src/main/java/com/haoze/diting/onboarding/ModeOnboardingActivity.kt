@@ -20,8 +20,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
 import com.haoze.diting.AppLocalizedActivity
 import com.haoze.diting.MainActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.haoze.diting.permission.AppPermission
 import com.haoze.diting.permission.ModePermissionStore
 import com.haoze.diting.ui.AppThemeSurface
@@ -66,6 +70,12 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) {
         refreshPermissionStates()
+    }
+
+    private val appListPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { _ ->
+        triggerAppListProbeAndRefresh()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,6 +130,18 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         }
     }
 
+    private fun triggerAppListProbeAndRefresh() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val isAccessible = AppPermission.isAppListAccessible(this@ModeOnboardingActivity)
+            withContext(Dispatchers.Main) {
+                if (isAccessible) {
+                    PermissionDisclosureSettings.markAppListAvailable(this@ModeOnboardingActivity)
+                }
+                refreshPermissionStates()
+            }
+        }
+    }
+
     private fun requestAppPermission(permission: AppPermission) {
         when (permission) {
             AppPermission.VPN -> {
@@ -157,9 +179,22 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
                 }
             }
             AppPermission.PACKAGE_QUERY -> {
+                val alreadyExplained = PermissionDisclosureSettings.isAppListExplained(this)
                 PermissionDisclosureSettings.setAppListExplained(this, true)
-                PermissionDisclosureSettings.markAppListAvailable(this)
-                refreshPermissionStates()
+                if (alreadyExplained && !AppPermission.isAppListAccessible(this)) {
+                    val intent = permission.createRequestIntent(this)
+                    if (intent != null) {
+                        try {
+                            genericSettingsLauncher.launch(intent)
+                            return
+                        } catch (_: ActivityNotFoundException) {}
+                    }
+                }
+                try {
+                    appListPermissionLauncher.launch("com.android.permission.GET_INSTALLED_APPS")
+                } catch (_: Exception) {
+                    triggerAppListProbeAndRefresh()
+                }
             }
         }
     }

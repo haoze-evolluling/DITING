@@ -72,7 +72,7 @@ enum class AppPermission(
             VPN -> VpnService.prepare(context) == null
             NOTIFICATION -> NotificationPermissionHelper.hasPermission(context)
             BATTERY_OPTIMIZATION -> isBatteryOptimizationIgnored(context)
-            PACKAGE_QUERY -> PermissionDisclosureSettings.isAppListExplained(context)
+            PACKAGE_QUERY -> isAppListAccessible(context)
             SYSTEM_ALERT_WINDOW -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 Settings.canDrawOverlays(context)
             } else {
@@ -134,11 +134,9 @@ enum class AppPermission(
                 } else null
             }
             PACKAGE_QUERY -> {
-                if (PermissionDisclosureSettings.isAppListExplained(context)) {
-                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = Uri.parse("package:${context.packageName}")
-                    }
-                } else null
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
             }
         }
     }
@@ -147,6 +145,15 @@ enum class AppPermission(
         fun isBatteryOptimizationIgnored(context: Context): Boolean {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
             return powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
+        }
+
+        fun isAppListAccessible(context: Context): Boolean {
+            if (!PermissionDisclosureSettings.isAppListExplained(context)) return false
+            return runCatching {
+                val pm = context.packageManager
+                val apps = pm.getInstalledApplications(0)
+                apps.size > 1 || (apps.isNotEmpty() && apps.any { it.packageName != context.packageName })
+            }.getOrDefault(false)
         }
     }
 }
