@@ -12,18 +12,17 @@ import (
 )
 
 func findAvailableLocalPort(t *testing.T) string {
-	for attempt := 0; attempt < 10; attempt++ {
-		l, err := net.Listen("tcp", "127.0.0.1:0")
+	for attempt := 0; attempt < 50; attempt++ {
+		pc, err := net.ListenPacket("udp", "127.0.0.1:0")
 		if err != nil {
 			continue
 		}
-		addr := l.Addr().String()
-		_ = l.Close()
+		addr := pc.LocalAddr().String()
+		_ = pc.Close()
 
-		// 检查 UDP 也可以绑定该端口
-		pc, err := net.ListenPacket("udp", addr)
+		l, err := net.Listen("tcp", addr)
 		if err == nil {
-			_ = pc.Close()
+			_ = l.Close()
 			return addr
 		}
 	}

@@ -235,15 +235,25 @@ func TestBootstrap_CNAMEChaining(t *testing.T) {
 }
 
 func TestBootstrap_TruncatedFallbackTCP(t *testing.T) {
-	tcpListener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatalf("listen mock tcp failed: %v", err)
-	}
-	addr := tcpListener.Addr().String()
+	var tcpListener net.Listener
+	var udpConn net.PacketConn
+	var err error
+	var addr string
 
-	udpConn, err := net.ListenPacket("udp", addr)
-	if err != nil {
-		t.Fatalf("listen mock udp failed: %v", err)
+	for attempt := 0; attempt < 50; attempt++ {
+		udpConn, err = net.ListenPacket("udp", "127.0.0.1:0")
+		if err != nil {
+			continue
+		}
+		addr = udpConn.LocalAddr().String()
+		tcpListener, err = net.Listen("tcp", addr)
+		if err == nil {
+			break
+		}
+		_ = udpConn.Close()
+	}
+	if udpConn == nil || tcpListener == nil {
+		t.Fatalf("listen mock dual server failed: %v", err)
 	}
 
 	udpSrv := &dns.Server{

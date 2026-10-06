@@ -103,6 +103,27 @@ func (s *ProviderStats) Score() time.Duration {
 	return score
 }
 
+// Snapshot 获取统计指标当前快照
+func (s *ProviderStats) Snapshot() (sampleCount int64, failureCount int, ewmaRTT time.Duration, score time.Duration) {
+	if s == nil {
+		return 0, 0, defaultStatsEWMA, defaultStatsEWMA
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	sc := s.ewmaRTT
+	if s.failureCount > 0 {
+		penalty := time.Duration(s.failureCount) * 100 * time.Millisecond
+		if penalty > 5*time.Second {
+			penalty = 5 * time.Second
+		}
+		if !s.lastFailure.IsZero() && time.Since(s.lastFailure) > 30*time.Second {
+			penalty /= 2
+		}
+		sc += penalty
+	}
+	return s.sampleCount, s.failureCount, s.ewmaRTT, sc
+}
+
 // ConfiguredProvider 包装已配置的上游信息与状态
 type ConfiguredProvider struct {
 	ID       string

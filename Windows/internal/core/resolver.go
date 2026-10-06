@@ -210,3 +210,44 @@ func (r *CoreResolver) Shutdown() error {
 	}
 	return dotErr
 }
+
+// UpstreamStatSnapshot 记录单个上游节点的统计状态快照
+type UpstreamStatSnapshot struct {
+	ID           string
+	Protocol     DNSProtocol
+	Server       string
+	URL          string
+	SuccessCount uint64
+	FailureCount uint64
+	AvgLatencyMs float64
+	ScoreMs      float64
+	IsHealthy    bool
+}
+
+// GetProviderStats 返回当前配置上游的运行统计指标
+func (r *CoreResolver) GetProviderStats() []UpstreamStatSnapshot {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	res := make([]UpstreamStatSnapshot, 0, len(r.providers))
+	for _, p := range r.providers {
+		sampleCount, failureCount, ewmaRTT, score := p.Stats.Snapshot()
+		succ := uint64(0)
+		if sampleCount > 0 {
+			succ = uint64(sampleCount)
+		}
+		fail := uint64(failureCount)
+		res = append(res, UpstreamStatSnapshot{
+			ID:           p.ID,
+			Protocol:     p.Protocol,
+			Server:       p.Server,
+			URL:          p.URL,
+			SuccessCount: succ,
+			FailureCount: fail,
+			AvgLatencyMs: float64(ewmaRTT.Nanoseconds()) / 1e6,
+			ScoreMs:      float64(score.Nanoseconds()) / 1e6,
+			IsHealthy:    failureCount < 3,
+		})
+	}
+	return res
+}
