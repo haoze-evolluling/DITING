@@ -159,7 +159,7 @@ class ExpressDnsEngineTest {
         val engine = ExpressDnsEngine(
             upstreamDispatcher = dispatcher,
             activeProvidersProvider = { listOf(provider1) },
-            dnsLogger = { _, _, _, reason, _, _, _ ->
+            dnsLogger = { _, _, _, reason, _, _, _, _ ->
                 loggedReason = reason
             }
         )
@@ -194,4 +194,43 @@ class ExpressDnsEngineTest {
         assertTrue(ExpressDnsMessageUtils.isTruncatedResponse(resp))
         assertTrue(cache.map.isEmpty())
     }
+
+    @Test
+    fun testRuleEvaluationBlockingPassesSubscriptionId() = runBlocking {
+        var loggedBlocked: Boolean? = null
+        var loggedSubscriptionId: Long? = null
+        val dispatcher = ExpressUpstreamDispatcher(
+            transportInvoker = { _, query, _, _ ->
+                ExpressDnsMessageUtils.buildBlockedResponse(query, BlockResponseMode.ZERO_ADDRESS)
+            }
+        )
+
+        val engine = ExpressDnsEngine(
+            upstreamDispatcher = dispatcher,
+            ruleEvaluator = { domain, _ ->
+                if (domain == "ad.example.com") {
+                    ExpressDnsEngine.RuleEvaluation(
+                        blocked = true,
+                        reason = "||ad.example.com^",
+                        blockSubscriptionId = 42L
+                    )
+                } else {
+                    ExpressDnsEngine.RuleEvaluation(blocked = false)
+                }
+            },
+            blockResponseModeProvider = { BlockResponseMode.NXDOMAIN },
+            activeProvidersProvider = { listOf(provider1) },
+            dnsLogger = { _, _, blocked, _, _, _, _, blockSubId ->
+                loggedBlocked = blocked
+                loggedSubscriptionId = blockSubId
+            }
+        )
+
+        val query = ExpressDnsMessageUtils.buildQuery("ad.example.com", ExpressDnsMessageUtils.TYPE_A)
+        val resp = engine.resolve(query)
+        assertEquals(ExpressDnsMessageUtils.RCODE_NXDOMAIN, ExpressDnsMessageUtils.responseCode(resp))
+        assertEquals(true, loggedBlocked)
+        assertEquals(42L, loggedSubscriptionId)
+    }
 }
+

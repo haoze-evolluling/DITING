@@ -30,7 +30,8 @@ class ExpressDnsEngine(
 
     data class RuleEvaluation(
         val blocked: Boolean,
-        val reason: String? = null
+        val reason: String? = null,
+        val blockSubscriptionId: Long? = null
     )
 
     fun interface ExpressRuleEvaluator {
@@ -50,7 +51,8 @@ class ExpressDnsEngine(
             reason: String?,
             cached: Boolean,
             latencyMs: Long,
-            providerName: String?
+            providerName: String?,
+            blockSubscriptionId: Long?
         )
     }
 
@@ -84,7 +86,7 @@ class ExpressDnsEngine(
             stats.totalQueries.incrementAndGet()
             stats.blockedQueries.incrementAndGet()
             stats.totalLatencyMs.addAndGet(elapsedMs)
-            dnsLogger?.logQuery(domain, queryType, blocked = true, reason = "ddr_mitigation", cached = false, latencyMs = elapsedMs, providerName = null)
+            dnsLogger?.logQuery(domain, queryType, blocked = true, reason = "ddr_mitigation", cached = false, latencyMs = elapsedMs, providerName = null, blockSubscriptionId = null)
             return ExpressDnsMessageUtils.buildNegativeResponse(query, ExpressDnsMessageUtils.RCODE_NXDOMAIN)
         }
 
@@ -99,7 +101,16 @@ class ExpressDnsEngine(
                 stats.totalLatencyMs.addAndGet(elapsedMs)
                 val blockMode = blockResponseModeProvider()
                 val blockResp = ExpressDnsMessageUtils.buildBlockedResponse(query, blockMode)
-                dnsLogger?.logQuery(domain, queryType, blocked = true, reason = evaluation.reason ?: "blocked", cached = false, latencyMs = elapsedMs, providerName = null)
+                dnsLogger?.logQuery(
+                    domain = domain,
+                    queryType = queryType,
+                    blocked = true,
+                    reason = evaluation.reason ?: "blocked",
+                    cached = false,
+                    latencyMs = elapsedMs,
+                    providerName = null,
+                    blockSubscriptionId = evaluation.blockSubscriptionId
+                )
                 return blockResp
             }
         }
@@ -113,7 +124,7 @@ class ExpressDnsEngine(
                 stats.cacheHits.incrementAndGet()
                 stats.totalLatencyMs.addAndGet(elapsedMs)
                 val patched = ExpressDnsMessageUtils.withTransactionId(cachedResponse, query)
-                dnsLogger?.logQuery(domain, queryType, blocked = false, reason = null, cached = true, latencyMs = elapsedMs, providerName = "cache")
+                dnsLogger?.logQuery(domain, queryType, blocked = false, reason = null, cached = true, latencyMs = elapsedMs, providerName = "cache", blockSubscriptionId = null)
                 return patched
             }
         }
@@ -131,7 +142,7 @@ class ExpressDnsEngine(
             val elapsedMs = (System.nanoTime() - startNs) / 1_000_000
             stats.totalQueries.incrementAndGet()
             stats.totalLatencyMs.addAndGet(elapsedMs)
-            dnsLogger?.logQuery(domain, queryType, blocked = false, reason = "upstream_failure: ${e.message}", cached = false, latencyMs = elapsedMs, providerName = null)
+            dnsLogger?.logQuery(domain, queryType, blocked = false, reason = "upstream_failure: ${e.message}", cached = false, latencyMs = elapsedMs, providerName = null, blockSubscriptionId = null)
             return ExpressDnsMessageUtils.buildServfailResponse(query)
         }
 
@@ -143,7 +154,7 @@ class ExpressDnsEngine(
             cache?.put(question, response)
         }
 
-        dnsLogger?.logQuery(domain, queryType, blocked = false, reason = null, cached = false, latencyMs = elapsedMs, providerName = providers.firstOrNull()?.name)
+        dnsLogger?.logQuery(domain, queryType, blocked = false, reason = null, cached = false, latencyMs = elapsedMs, providerName = providers.firstOrNull()?.name, blockSubscriptionId = null)
         return response
     }
 }

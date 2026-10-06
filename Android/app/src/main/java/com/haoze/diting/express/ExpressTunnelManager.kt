@@ -34,8 +34,9 @@ import com.haoze.diting.vpn.DomainDecision
 import com.haoze.diting.vpn.DomainPolicy
 import com.haoze.diting.vpn.LogResult
 import com.haoze.diting.vpn.RaceLogger
-import com.haoze.diting.express.cache.ExpressRoomDnsCache
 import com.haoze.diting.vpn.RuleIndexLayout
+import com.haoze.diting.vpn.subscriptionIdOrNull
+import com.haoze.diting.express.cache.ExpressRoomDnsCache
 import com.haoze.diting.vpn.cache.DnsCachePolicy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -284,8 +285,15 @@ class ExpressTunnelManager {
             ruleEvaluator = { domain, _ ->
                 val decision = domainPolicy.evaluate(domain, null)
                 when (decision) {
-                    is DomainDecision.Block -> ExpressDnsEngine.RuleEvaluation(blocked = true, reason = decision.matchedRule)
-                    is DomainDecision.Allow -> ExpressDnsEngine.RuleEvaluation(blocked = false, reason = decision.matchedRule)
+                    is DomainDecision.Block -> ExpressDnsEngine.RuleEvaluation(
+                        blocked = true,
+                        reason = decision.matchedRule,
+                        blockSubscriptionId = decision.source.subscriptionIdOrNull()
+                    )
+                    is DomainDecision.Allow -> ExpressDnsEngine.RuleEvaluation(
+                        blocked = false,
+                        reason = decision.matchedRule
+                    )
                 }
             },
             cache = expressCache,
@@ -293,7 +301,7 @@ class ExpressTunnelManager {
             blockResponseModeProvider = blockResponseModeProvider,
             activeProvidersProvider = providersProvider,
             resolutionModeProvider = resolutionModeProvider,
-            dnsLogger = { domain, queryType, blocked, reason, cached, latencyMs, providerName ->
+            dnsLogger = { domain, queryType, blocked, reason, cached, latencyMs, providerName, blockSubscriptionId ->
                 val logResult = when {
                     blocked -> LogResult.BLOCKED
                     reason != null && reason.startsWith("upstream_failure") -> LogResult.ERROR
@@ -306,7 +314,8 @@ class ExpressTunnelManager {
                         queryType = queryType,
                         result = logResult,
                         message = msg,
-                        cached = cached
+                        cached = cached,
+                        blockSubscriptionId = blockSubscriptionId
                     )
                 }
             }
