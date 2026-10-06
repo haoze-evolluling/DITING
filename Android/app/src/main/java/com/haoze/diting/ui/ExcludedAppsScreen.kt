@@ -21,19 +21,19 @@ fun ExcludedAppsScreen(onBack: () -> Unit) {
     val appListAccess = rememberAppListAccessState { loadInstalledApps(context) }
     AppListDisclosureDialog(appListAccess)
 
-    val loadedApps = appListAccess.apps
-    if (loadedApps == null) {
-        SettingsScaffold(title = localizedText("排除应用"), onBack = onBack) { innerPadding ->
-            AppListLoadingContent(Modifier.padding(innerPadding))
-        }
-        return
-    }
     if (appListAccess.unavailable) {
         SettingsScaffold(title = localizedText("排除应用"), onBack = onBack) { innerPadding ->
             AppListUnavailableContent(
                 modifier = Modifier.padding(innerPadding),
                 onRetry = appListAccess.retry
             )
+        }
+        return
+    }
+    val loadedApps = appListAccess.apps
+    if (loadedApps == null) {
+        SettingsScaffold(title = localizedText("排除应用"), onBack = onBack) { innerPadding ->
+            AppListLoadingContent(Modifier.padding(innerPadding))
         }
         return
     }

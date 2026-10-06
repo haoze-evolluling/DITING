@@ -62,5 +62,30 @@ class AppListPermissionTest {
             "Please grant Installed Apps permission in app settings",
             translateCommonExact("请在权限管理中允许“读取已安装应用列表”")
         )
+        assertEquals(
+            "Allow access",
+            translateCommonExact("允许访问")
+        )
+    }
+
+    @Test
+    fun testAppManagementLocalizationForAppList() {
+        val dialogMessage = "为了让你选择需要排除或进行 HTTP(S) 检查的应用，谛听需要读取设备上的应用列表。不会读取应用数据，也不会上传应用列表。"
+        assertEquals(
+            "DITING needs access to the installed app list so you can choose apps to exclude or inspect for HTTP(S) traffic. It does not read app data or upload the app list.",
+            com.haoze.diting.ui.localization.translateAppManagementExact(dialogMessage)
+        )
+
+        val unavailableNotice = "需要应用列表访问权限才能选择应用。未授权不会影响其他功能。"
+        assertEquals(
+            "App-list access is required to choose apps. Denying it does not affect other features.",
+            com.haoze.diting.ui.localization.translateAppManagementExact(unavailableNotice)
+        )
+    }
+
+    @Test
+    fun testAppListPermissionCacheInvalidation() {
+        // 验证清空缓存方法正常执行且不抛异常
+        AppListPermissionHelper.invalidateCache()
     }
 }

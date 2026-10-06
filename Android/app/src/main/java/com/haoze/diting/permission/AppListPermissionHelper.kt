@@ -25,17 +25,29 @@ object AppListPermissionHelper {
     const val PERMISSION_GET_INSTALLED_APPS = "com.android.permission.GET_INSTALLED_APPS"
     private const val PREFS_NAME = "permission_disclosures"
     private const val KEY_APP_LIST_EXPLAINED = "app_list_explained"
-    private const val KEY_RUNTIME_REQUEST_ATTEMPTED = "app_list_runtime_request_attempted"
+
+    @Volatile
+    private var cachedCanQuery: Boolean? = null
+    @Volatile
+    private var lastQueryTimestamp: Long = 0L
+    private const val CACHE_TTL_MS = 1500L
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     /**
+     * 清空应用查询探测的内存缓存，强制下次检测时重新探测。
+     */
+    fun invalidateCache() {
+        cachedCanQuery = null
+        lastQueryTimestamp = 0L
+    }
+
+    /**
      * 判断当前是否具备读取已安装应用列表的权限。
      *
-     * 1. 优先检查系统运行时权限 com.android.permission.GET_INSTALLED_APPS 是否已获授予。
-     * 2. 若未明确获得运行时授权，则进行安全的应用列表探测，验证是否能实际读取到其他已安装应用。
-     *    （适用于 AOSP/Pixel、Android 10 及以下等未将该权限列为运行时危险权限的系统）
+     * 1. 优先检查系统运行时权限 com.android.permission.GET_INSTALLED_APPS 是否已获授予（针对 MIUI/HyperOS、ColorOS 等定制系统）。
+     * 2. 若未通过运行时权限判定，则进行安全的原生包管理器探测（适用于原生 Android / AOSP / Pixel）。
      */
     fun isGranted(context: Context): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -52,9 +64,16 @@ object AppListPermissionHelper {
 
     /**
      * 实际探测是否能通过 PackageManager 读取到除本应用以外的已安装应用。
+     * 内部使用短时内存缓存，避免在主线程 UI 重组时反复触发昂贵的 Binder IPC。
      */
     fun canQueryInstalledApps(context: Context): Boolean {
-        return try {
+        val now = System.currentTimeMillis()
+        val cached = cachedCanQuery
+        if (cached != null && (now - lastQueryTimestamp) < CACHE_TTL_MS) {
+            return cached
+        }
+
+        val result = try {
             val pm = context.packageManager
             val apps = pm.getInstalledApplications(0)
             apps.any { it.packageName != context.packageName }
@@ -63,6 +82,10 @@ object AppListPermissionHelper {
         } catch (_: Exception) {
             false
         }
+
+        cachedCanQuery = result
+        lastQueryTimestamp = now
+        return result
     }
 
     /**
@@ -77,27 +100,6 @@ object AppListPermissionHelper {
      */
     fun setDisclosureAccepted(context: Context, accepted: Boolean) {
         prefs(context).edit().putBoolean(KEY_APP_LIST_EXPLAINED, accepted).apply()
-    }
-
-    /**
-     * 判断是否已尝试过调起系统运行时权限弹窗。
-     */
-    fun hasAttemptedRuntimeRequest(context: Context): Boolean {
-        return prefs(context).getBoolean(KEY_RUNTIME_REQUEST_ATTEMPTED, false)
-    }
-
-    /**
-     * 记录已尝试调起系统运行时权限弹窗。
-     */
-    fun recordRuntimeRequestAttempted(context: Context) {
-        prefs(context).edit().putBoolean(KEY_RUNTIME_REQUEST_ATTEMPTED, true).apply()
-    }
-
-    /**
-     * 重置运行时权限尝试标记。
-     */
-    fun resetRuntimeRequestAttempted(context: Context) {
-        prefs(context).edit().remove(KEY_RUNTIME_REQUEST_ATTEMPTED).apply()
     }
 
     /**
@@ -133,29 +135,27 @@ object AppListPermissionHelper {
     /**
      * 触发统一的授权请求流程。
      *
-     * - 若尚未尝试过运行时授权弹窗，或系统允许展示授权理由（未勾选“不再询问”），则优先调起系统弹窗。
-     * - 若无法通过弹窗调起或已被永久拒绝，则引导跳转系统应用设置页。
+     * 1. 自动同步确认前置隐私披露。
+     * 2. 若未要求降级至设置且提供了有效 launcher，尝试拉起系统运行时弹窗。
+     * 3. 若系统弹窗无法拉起或指定降级，则引导用户跳转应用设置页。
      */
     fun requestPermission(
         activity: Activity?,
         launcher: ActivityResultLauncher<String>?,
-        context: Context
+        context: Context,
+        fallbackToSettings: Boolean = false
     ) {
+        setDisclosureAccepted(context, true)
+        invalidateCache()
+
         if (isGranted(context)) return
 
-        if (launcher != null) {
-            val hasAttempted = hasAttemptedRuntimeRequest(context)
-            val canShowRationale = activity != null &&
-                ActivityCompat.shouldShowRequestPermissionRationale(activity, PERMISSION_GET_INSTALLED_APPS)
-
-            if (!hasAttempted || canShowRationale) {
-                recordRuntimeRequestAttempted(context)
-                try {
-                    launcher.launch(PERMISSION_GET_INSTALLED_APPS)
-                    return
-                } catch (_: Exception) {
-                    // 系统不支持该权限弹窗调起，继续降级到设置页
-                }
+        if (!fallbackToSettings && launcher != null) {
+            try {
+                launcher.launch(PERMISSION_GET_INSTALLED_APPS)
+                return
+            } catch (_: Exception) {
+                // 系统不支持该权限弹窗调起，继续降级到设置页
             }
         }
 

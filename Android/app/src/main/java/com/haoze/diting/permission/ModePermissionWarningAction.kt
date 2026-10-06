@@ -51,9 +51,12 @@ fun ModePermissionWarningAction(
     }
     var showDialog by remember { mutableStateOf(false) }
 
+    var appListRequestAttempted by remember { mutableStateOf(false) }
+
     DisposableEffect(lifecycleOwner, mode) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
+                AppListPermissionHelper.invalidateCache()
                 readinessState = ModeReadinessEvaluator.evaluate(context, mode)
             }
         }
@@ -88,6 +91,8 @@ fun ModePermissionWarningAction(
     val appListLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { _ ->
+        AppListPermissionHelper.invalidateCache()
+        appListRequestAttempted = true
         readinessState = ModeReadinessEvaluator.evaluate(context, mode)
     }
 
@@ -124,8 +129,9 @@ fun ModePermissionWarningAction(
             AppPermission.PACKAGE_QUERY -> {
                 AppListPermissionHelper.requestPermission(
                     activity = context as? Activity,
-                    launcher = appListLauncher,
-                    context = context
+                    launcher = if (appListRequestAttempted) null else appListLauncher,
+                    context = context,
+                    fallbackToSettings = appListRequestAttempted
                 )
             }
             else -> {

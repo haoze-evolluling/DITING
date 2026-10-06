@@ -73,9 +73,13 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         refreshPermissionStates()
     }
 
+    private var appListRequestAttempted = false
+
     private val appListPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { _ ->
+        AppListPermissionHelper.invalidateCache()
+        appListRequestAttempted = true
         refreshPermissionStates()
     }
 
@@ -127,6 +131,7 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
 
     override fun onResume() {
         super.onResume()
+        AppListPermissionHelper.invalidateCache()
         refreshPermissionStates()
     }
 
@@ -175,8 +180,9 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
             AppPermission.PACKAGE_QUERY -> {
                 AppListPermissionHelper.requestPermission(
                     activity = this,
-                    launcher = appListPermissionLauncher,
-                    context = this
+                    launcher = if (appListRequestAttempted) null else appListPermissionLauncher,
+                    context = this,
+                    fallbackToSettings = appListRequestAttempted
                 )
             }
         }

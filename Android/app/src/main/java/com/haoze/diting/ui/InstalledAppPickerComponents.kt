@@ -191,24 +191,28 @@ internal fun AppListOverflowMenu(
 private val AppIconShape = RoundedCornerShape(14.dp)
 
 internal suspend fun loadInstalledApps(context: Context): List<InstalledApp> = withContext(Dispatchers.IO) {
-    val packageManager = context.packageManager
-    @Suppress("DEPRECATION")
-    packageManager.getInstalledApplications(0)
-        .asSequence()
-        .filter { it.packageName != context.packageName }
-        .map { info ->
-            val label = info.loadLabel(packageManager).toString()
-            InstalledApp(
-                label = label,
-                packageName = info.packageName,
-                icon = runCatching { info.loadIcon(packageManager) }.getOrNull(),
-                isSystem = info.flags and ApplicationInfo.FLAG_SYSTEM != 0,
-                normalizedLabel = label.lowercase(Locale.ROOT),
-                normalizedPackageName = info.packageName.lowercase(Locale.ROOT)
-            )
-        }
-        .sortedWith(compareBy<InstalledApp> { it.normalizedLabel }.thenBy { it.packageName })
-        .toList()
+    try {
+        val packageManager = context.packageManager
+        @Suppress("DEPRECATION")
+        packageManager.getInstalledApplications(0)
+            .asSequence()
+            .filter { it.packageName != context.packageName }
+            .map { info ->
+                val label = runCatching { info.loadLabel(packageManager).toString() }.getOrDefault(info.packageName)
+                InstalledApp(
+                    label = label,
+                    packageName = info.packageName,
+                    icon = runCatching { info.loadIcon(packageManager) }.getOrNull(),
+                    isSystem = info.flags and ApplicationInfo.FLAG_SYSTEM != 0,
+                    normalizedLabel = label.lowercase(Locale.ROOT),
+                    normalizedPackageName = info.packageName.lowercase(Locale.ROOT)
+                )
+            }
+            .sortedWith(compareBy<InstalledApp> { it.normalizedLabel }.thenBy { it.packageName })
+            .toList()
+    } catch (_: Exception) {
+        emptyList()
+    }
 }
 
 @Composable
@@ -322,23 +326,35 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
     val context = LocalContext.current
     val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
-    var apps by remember { mutableStateOf<List<T>?>(null) }
-    var unavailable by remember { mutableStateOf(false) }
+    val initialGranted = remember { AppListPermissionHelper.isGranted(context) }
+    val initialDisclosureAccepted = remember { AppListPermissionHelper.isDisclosureAccepted(context) }
+
+    var unavailable by remember {
+        mutableStateOf(!initialGranted && initialDisclosureAccepted)
+    }
     var showDisclosure by remember {
-        mutableStateOf(!AppListPermissionHelper.isGranted(context) && !AppListPermissionHelper.isDisclosureAccepted(context))
+        mutableStateOf(!initialGranted && !initialDisclosureAccepted)
+    }
+    var apps by remember {
+        mutableStateOf<List<T>?>(if (!initialGranted) emptyList() else null)
     }
     var loadGeneration by remember { mutableIntStateOf(0) }
+    var runtimeRequestAttempted by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGrantedResult ->
+        AppListPermissionHelper.invalidateCache()
+        runtimeRequestAttempted = true
         val actuallyGranted = isGrantedResult || AppListPermissionHelper.isGranted(context)
         if (actuallyGranted) {
             unavailable = false
             showDisclosure = false
+            apps = null
             loadGeneration++
         } else {
             unavailable = true
+            apps = emptyList()
             showDisclosure = false
         }
     }
@@ -361,7 +377,11 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
         }
 
         unavailable = false
-        val loaded = loader()
+        val loaded = try {
+            loader()
+        } catch (_: Exception) {
+            emptyList()
+        }
         if (loaded.isNotEmpty()) {
             apps = loaded
             unavailable = false
@@ -379,12 +399,14 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
+                AppListPermissionHelper.invalidateCache()
                 val granted = AppListPermissionHelper.isGranted(context)
                 val currentApps = apps
                 if (granted) {
                     if (unavailable || currentApps.isNullOrEmpty()) {
                         unavailable = false
                         showDisclosure = false
+                        apps = null
                         loadGeneration++
                     }
                 } else {
@@ -409,7 +431,12 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
             if (AppListPermissionHelper.isGranted(context)) {
                 requestLoad()
             } else {
-                AppListPermissionHelper.requestPermission(activity, permissionLauncher, context)
+                AppListPermissionHelper.requestPermission(
+                    activity = activity,
+                    launcher = permissionLauncher,
+                    context = context,
+                    fallbackToSettings = runtimeRequestAttempted
+                )
             }
         },
         dismissDisclosure = {
@@ -423,7 +450,12 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
             if (AppListPermissionHelper.isGranted(context)) {
                 requestLoad()
             } else {
-                AppListPermissionHelper.requestPermission(activity, permissionLauncher, context)
+                AppListPermissionHelper.requestPermission(
+                    activity = activity,
+                    launcher = if (runtimeRequestAttempted) null else permissionLauncher,
+                    context = context,
+                    fallbackToSettings = runtimeRequestAttempted
+                )
             }
         }
     )

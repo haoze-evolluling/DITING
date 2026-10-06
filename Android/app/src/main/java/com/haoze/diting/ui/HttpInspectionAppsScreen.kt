@@ -20,16 +20,16 @@ fun HttpInspectionAppsScreen(onBack: () -> Unit) {
     val appListAccess = rememberAppListAccessState { loadInstalledApps(context) }
     AppListDisclosureDialog(appListAccess)
 
+    if (appListAccess.unavailable) {
+        SettingsScaffold(title = localizedText("选择检查应用"), onBack = onBack) { innerPadding ->
+            AppListUnavailableContent(Modifier.padding(innerPadding), appListAccess.retry)
+        }
+        return
+    }
     val loadedApps = appListAccess.apps
     if (loadedApps == null) {
         SettingsScaffold(title = localizedText("选择检查应用"), onBack = onBack) { innerPadding ->
             AppListLoadingContent(Modifier.padding(innerPadding))
-        }
-        return
-    }
-    if (appListAccess.unavailable) {
-        SettingsScaffold(title = localizedText("选择检查应用"), onBack = onBack) { innerPadding ->
-            AppListUnavailableContent(Modifier.padding(innerPadding), appListAccess.retry)
         }
         return
     }
