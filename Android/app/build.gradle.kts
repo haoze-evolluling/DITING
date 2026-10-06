@@ -14,7 +14,7 @@ plugins {
 val appVersionCode = 21
 
 // 应用展示版本号（对外版本名称，供界面展示及说明使用）
-val appVersionName = "1.2.6"
+val appVersionName = "1.2.7"
 
 // 应用产物显示版本号（用于 APK 输出重命名等归档标识）
 val apkVersionName = appVersionName
