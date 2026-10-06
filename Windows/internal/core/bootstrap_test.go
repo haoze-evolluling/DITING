@@ -199,3 +199,94 @@ func TestBootstrapResolveAAAA(t *testing.T) {
 		t.Fatalf("expected IPv6 address 2400:3200::1, got %s", ip)
 	}
 }
+
+func TestBootstrap_CNAMEChaining(t *testing.T) {
+	srv, addr := startMockDNSServer(t, func(w dns.ResponseWriter, r *dns.Msg) {
+		m := new(dns.Msg)
+		m.SetReply(r)
+		if len(r.Question) > 0 {
+			q := r.Question[0]
+			if q.Name == "cname.example.com." && q.Qtype == dns.TypeA {
+				rr, _ := dns.NewRR("cname.example.com. 300 IN CNAME target.example.com.")
+				m.Answer = append(m.Answer, rr)
+			} else if q.Name == "target.example.com." && q.Qtype == dns.TypeA {
+				rr, _ := dns.NewRR("target.example.com. 300 IN A 1.2.3.4")
+				m.Answer = append(m.Answer, rr)
+			}
+		}
+		_ = w.WriteMsg(m)
+	})
+	defer srv.Shutdown()
+
+	br := NewBootstrapResolver(BootstrapConfig{
+		Enabled: true,
+		Servers: []BootstrapServer{
+			{ID: "cname-srv", Name: "CNAME Server", Address: addr},
+		},
+	})
+
+	ip, err := br.ResolveHost(context.Background(), "cname.example.com")
+	if err != nil {
+		t.Fatalf("expected successful resolution of CNAME chain: %v", err)
+	}
+	if ip != "1.2.3.4" {
+		t.Fatalf("expected resolved IP 1.2.3.4, got %s", ip)
+	}
+}
+
+func TestBootstrap_TruncatedFallbackTCP(t *testing.T) {
+	tcpListener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen mock tcp failed: %v", err)
+	}
+	addr := tcpListener.Addr().String()
+
+	udpConn, err := net.ListenPacket("udp", addr)
+	if err != nil {
+		t.Fatalf("listen mock udp failed: %v", err)
+	}
+
+	udpSrv := &dns.Server{
+		PacketConn: udpConn,
+		Handler: dns.HandlerFunc(func(w dns.ResponseWriter, r *dns.Msg) {
+			m := new(dns.Msg)
+			m.SetReply(r)
+			m.Truncated = true
+			_ = w.WriteMsg(m)
+		}),
+	}
+	tcpSrv := &dns.Server{
+		Listener: tcpListener,
+		Handler: dns.HandlerFunc(func(w dns.ResponseWriter, r *dns.Msg) {
+			m := new(dns.Msg)
+			m.SetReply(r)
+			if len(r.Question) > 0 && r.Question[0].Qtype == dns.TypeA {
+				rr, _ := dns.NewRR(fmt.Sprintf("%s 300 IN A 9.8.7.6", r.Question[0].Name))
+				m.Answer = append(m.Answer, rr)
+			}
+			_ = w.WriteMsg(m)
+		}),
+	}
+
+	go func() { _ = udpSrv.ActivateAndServe() }()
+	go func() { _ = tcpSrv.ActivateAndServe() }()
+	defer func() {
+		_ = udpSrv.Shutdown()
+		_ = tcpSrv.Shutdown()
+	}()
+
+	br := NewBootstrapResolver(BootstrapConfig{
+		Enabled: true,
+		Servers: []BootstrapServer{
+			{ID: "tc-srv", Name: "TC Server", Address: addr},
+		},
+	})
+
+	ip, err := br.ResolveHost(context.Background(), "truncated.example.com")
+	if err != nil {
+		t.Fatalf("expected successful resolution via TCP fallback: %v", err)
+	}
+	if ip != "9.8.7.6" {
+		t.Fatalf("expected resolved IP 9.8.7.6, got %s", ip)
+	}
+}

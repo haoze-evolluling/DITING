@@ -221,3 +221,58 @@ func TestProviderStats_Score(t *testing.T) {
 		t.Fatalf("expected failures reset after success")
 	}
 }
+
+func TestValidateDNSResponse_DoH_ZeroID(t *testing.T) {
+	rawQuery := makeTestDNSQuery("doh-zero.test.com")
+	validResp := makeTestDNSResponse(rawQuery, dns.RcodeSuccess, "1.2.3.4")
+
+	// Upstream DoH responds with ID = 0 per RFC 8484
+	var zeroIDMsg dns.Msg
+	_ = zeroIDMsg.Unpack(validResp)
+	zeroIDMsg.Id = 0
+	zeroIDBytes, _ := zeroIDMsg.Pack()
+
+	if err := ValidateDNSResponse(rawQuery, zeroIDBytes); err != nil {
+		t.Fatalf("expected DoH response with ID 0 to be accepted, got: %v", err)
+	}
+}
+
+func TestScheduler_ParallelRace_ContextCanceledNoPenalty(t *testing.T) {
+	pFast := &ConfiguredProvider{
+		ID:       "fast",
+		Protocol: ProtocolPlain,
+		Stats:    NewProviderStats(),
+	}
+	pSlow := &ConfiguredProvider{
+		ID:       "slow",
+		Protocol: ProtocolPlain,
+		Stats:    NewProviderStats(),
+	}
+
+	rawQuery := makeTestDNSQuery("race-penalty.test.com")
+	fastResp := makeTestDNSResponse(rawQuery, dns.RcodeSuccess, "1.1.1.1")
+
+	sched := NewScheduler(func(ctx context.Context, p *ConfiguredProvider, q []byte) ([]byte, error) {
+		if p.ID == "fast" {
+			return fastResp, nil
+		}
+		// 慢速 provider 等待 context cancel
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(500 * time.Millisecond):
+			return fastResp, nil
+		}
+	})
+
+	resp, err := sched.Resolve(context.Background(), ModeParallelRace, []*ConfiguredProvider{pFast, pSlow}, rawQuery)
+	if err != nil || resp == nil {
+		t.Fatalf("expected race to succeed: %v", err)
+	}
+
+	time.Sleep(20 * time.Millisecond) // 等待慢速协程退出并处理结果
+
+	if pSlow.Stats.failureCount != 0 {
+		t.Fatalf("expected canceled provider to not have failure recorded, got: %d", pSlow.Stats.failureCount)
+	}
+}

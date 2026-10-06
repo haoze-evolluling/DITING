@@ -109,7 +109,7 @@ func (p *PlainResolver) queryUDP(ctx context.Context, rawQuery []byte, targetSer
 		return nil, fmt.Errorf("udp write: %w", err)
 	}
 
-	buf := make([]byte, 4096)
+	buf := make([]byte, dns.MaxMsgSize)
 	n, err := conn.Read(buf)
 	if err != nil {
 		if ctx.Err() != nil {

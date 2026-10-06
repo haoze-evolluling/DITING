@@ -38,6 +38,8 @@ type Server struct {
 	activeQueries sync.WaitGroup
 	started       atomic.Bool
 	closed        atomic.Bool
+	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 // NewServer 创建 DNS 监听服务
@@ -136,6 +138,9 @@ func (s *Server) Start() error {
 	s.servers = servers
 	s.started.Store(true)
 	s.closed.Store(false)
+	ctx, cancel := context.WithCancel(context.Background())
+	s.ctx = ctx
+	s.cancel = cancel
 
 	// 异步激活每个 listener
 	for _, srv := range servers {
@@ -149,6 +154,9 @@ func (s *Server) Start() error {
 
 // ServeDNS 处理单次 DNS 协议请求
 func (s *Server) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	if r == nil {
+		return
+	}
 	if s.closed.Load() {
 		dns.HandleFailed(w, r)
 		return
@@ -162,7 +170,18 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		protocol = "tcp"
 	}
 
-	dnsCtx := NewDNSContext(context.Background(), r, w.RemoteAddr(), protocol)
+	timeout := s.config.ReadTimeout + s.config.WriteTimeout
+	if timeout <= 0 {
+		timeout = 5 * time.Second
+	}
+	baseCtx := s.ctx
+	if baseCtx == nil {
+		baseCtx = context.Background()
+	}
+	queryCtx, queryCancel := context.WithTimeout(baseCtx, timeout)
+	defer queryCancel()
+
+	dnsCtx := NewDNSContext(queryCtx, r, w.RemoteAddr(), protocol)
 
 	if s.pipeline != nil {
 		_ = s.pipeline.Execute(dnsCtx)
@@ -170,6 +189,16 @@ func (s *Server) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 
 	if dnsCtx.Resp != nil {
 		dnsCtx.Resp.Id = r.Id
+		if protocol == "udp" {
+			maxSize := dns.MinMsgSize
+			if opt := r.IsEdns0(); opt != nil {
+				maxSize = int(opt.UDPSize())
+			}
+			if maxSize < dns.MinMsgSize {
+				maxSize = dns.MinMsgSize
+			}
+			dnsCtx.Resp.Truncate(maxSize)
+		}
 		_ = w.WriteMsg(dnsCtx.Resp)
 	} else {
 		dns.HandleFailed(w, r)
@@ -184,6 +213,11 @@ func (s *Server) Shutdown() error {
 		return nil
 	}
 	s.closed.Store(true)
+	s.started.Store(false)
+	if s.cancel != nil {
+		s.cancel()
+		s.cancel = nil
+	}
 	servers := s.servers
 	s.servers = nil
 	s.mu.Unlock()
@@ -211,6 +245,12 @@ func (s *Server) cleanupServers(servers []*dns.Server) {
 	for _, srv := range servers {
 		if srv != nil {
 			_ = srv.Shutdown()
+			if srv.PacketConn != nil {
+				_ = srv.PacketConn.Close()
+			}
+			if srv.Listener != nil {
+				_ = srv.Listener.Close()
+			}
 		}
 	}
 }

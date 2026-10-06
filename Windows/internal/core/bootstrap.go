@@ -437,52 +437,46 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 }
 
 func queryBootstrapDNS(ctx context.Context, serverAddr, host string) (string, error) {
+	return queryBootstrapDNSRecursive(ctx, serverAddr, host, 0)
+}
+
+func queryBootstrapDNSRecursive(ctx context.Context, serverAddr, host string, depth int) (string, error) {
+	if depth > 3 {
+		return "", fmt.Errorf("bootstrap cname loop limit exceeded for %s", host)
+	}
+
 	addr := serverAddr
 	if _, _, err := net.SplitHostPort(addr); err != nil {
 		addr = net.JoinHostPort(addr, "53")
 	}
 
-	queryCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel()
-
-	dialer := &net.Dialer{Timeout: 3 * time.Second}
-	conn, err := dialer.DialContext(queryCtx, "udp", addr)
-	if err != nil {
-		return "", fmt.Errorf("dial bootstrap %s: %w", addr, err)
-	}
-	defer conn.Close()
-
-	if deadline, ok := queryCtx.Deadline(); ok {
-		_ = conn.SetDeadline(deadline)
+	client := &dns.Client{
+		Net:     "udp",
+		Timeout: 3 * time.Second,
+		UDPSize: dns.MaxMsgSize,
 	}
 
 	// 优先查询 A 记录
 	msg := new(dns.Msg)
 	msg.SetQuestion(dns.Fqdn(host), dns.TypeA)
 	msg.RecursionDesired = true
-	rawQuery, err := msg.Pack()
-	if err != nil {
-		return "", fmt.Errorf("pack DNS query: %w", err)
+	msg.Id = dns.Id()
+
+	resp, _, err := client.ExchangeContext(ctx, msg, addr)
+	if err == nil && resp != nil && resp.Truncated {
+		tcpClient := &dns.Client{Net: "tcp", Timeout: 3 * time.Second}
+		resp, _, err = tcpClient.ExchangeContext(ctx, msg, addr)
 	}
 
-	if _, err := conn.Write(rawQuery); err != nil {
-		return "", fmt.Errorf("write query to %s: %w", addr, err)
-	}
-
-	buf := make([]byte, 2048)
-	n, err := conn.Read(buf)
-	if err != nil {
-		return "", fmt.Errorf("read response from %s: %w", addr, err)
-	}
-
-	var resp dns.Msg
-	if err := resp.Unpack(buf[:n]); err != nil {
-		return "", fmt.Errorf("unpack DNS response: %w", err)
-	}
-
-	for _, rr := range resp.Answer {
-		if a, ok := rr.(*dns.A); ok && a.A != nil {
-			return a.A.String(), nil
+	var cnameTarget string
+	if err == nil && resp != nil {
+		for _, rr := range resp.Answer {
+			if a, ok := rr.(*dns.A); ok && a.A != nil {
+				return a.A.String(), nil
+			}
+			if cn, ok := rr.(*dns.CNAME); ok && cn.Target != "" && cnameTarget == "" {
+				cnameTarget = strings.TrimSuffix(cn.Target, ".")
+			}
 		}
 	}
 
@@ -490,22 +484,31 @@ func queryBootstrapDNS(ctx context.Context, serverAddr, host string) (string, er
 	msgAAAA := new(dns.Msg)
 	msgAAAA.SetQuestion(dns.Fqdn(host), dns.TypeAAAA)
 	msgAAAA.RecursionDesired = true
-	rawQueryAAAA, errAAAA := msgAAAA.Pack()
-	if errAAAA == nil {
-		if _, err := conn.Write(rawQueryAAAA); err == nil {
-			nAAAA, errRead := conn.Read(buf)
-			if errRead == nil {
-				var respAAAA dns.Msg
-				if err := respAAAA.Unpack(buf[:nAAAA]); err == nil {
-					for _, rr := range respAAAA.Answer {
-						if aaaa, ok := rr.(*dns.AAAA); ok && aaaa.AAAA != nil {
-							return aaaa.AAAA.String(), nil
-						}
-					}
-				}
+	msgAAAA.Id = dns.Id()
+
+	respAAAA, _, errAAAA := client.ExchangeContext(ctx, msgAAAA, addr)
+	if errAAAA == nil && respAAAA != nil && respAAAA.Truncated {
+		tcpClient := &dns.Client{Net: "tcp", Timeout: 3 * time.Second}
+		respAAAA, _, errAAAA = tcpClient.ExchangeContext(ctx, msgAAAA, addr)
+	}
+
+	if errAAAA == nil && respAAAA != nil {
+		for _, rr := range respAAAA.Answer {
+			if aaaa, ok := rr.(*dns.AAAA); ok && aaaa.AAAA != nil {
+				return aaaa.AAAA.String(), nil
+			}
+			if cn, ok := rr.(*dns.CNAME); ok && cn.Target != "" && cnameTarget == "" {
+				cnameTarget = strings.TrimSuffix(cn.Target, ".")
 			}
 		}
 	}
 
+	if cnameTarget != "" && !strings.EqualFold(cnameTarget, host) {
+		return queryBootstrapDNSRecursive(ctx, serverAddr, cnameTarget, depth+1)
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("query bootstrap %s for %s: %w", addr, host, err)
+	}
 	return "", fmt.Errorf("no A/AAAA record for %s from %s", host, addr)
 }

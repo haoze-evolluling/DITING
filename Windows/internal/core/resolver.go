@@ -132,6 +132,15 @@ func (r *CoreResolver) Configure(cfg ResolverConfig) error {
 	r.providers = providers
 	if r.bootstrap != nil {
 		r.bootstrap.UpdateConfig(cfg.Bootstrap)
+		if r.doh != nil {
+			r.doh.SetBootstrap(r.bootstrap)
+		}
+		if r.dot != nil {
+			r.dot.SetBootstrap(r.bootstrap)
+		}
+		if r.plain != nil {
+			r.plain.SetBootstrap(r.bootstrap)
+		}
 	}
 
 	return nil

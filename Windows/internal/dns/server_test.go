@@ -248,3 +248,96 @@ func TestServer_EndToEndRealResolution(t *testing.T) {
 	}
 	t.Logf("Successfully resolved www.bing.com AAAA record via Server pipeline: %d answers", len(respAAAA.Answer))
 }
+
+func TestServer_RestartAfterShutdown(t *testing.T) {
+	addr := findAvailableLocalPort(t)
+	pipeline := NewPipeline()
+	srv := NewServer(ServerConfig{
+		UDPAddresses: []string{addr},
+		TCPAddresses: []string{addr},
+	}, pipeline)
+
+	if err := srv.Start(); err != nil {
+		t.Fatalf("first start failed: %v", err)
+	}
+	if err := srv.Shutdown(); err != nil {
+		t.Fatalf("shutdown failed: %v", err)
+	}
+
+	// 验证 Shutdown 后可以重新 Start
+	if err := srv.Start(); err != nil {
+		t.Fatalf("restart after shutdown failed: %v", err)
+	}
+	_ = srv.Shutdown()
+}
+
+func TestServer_ServeDNS_NilRequest(t *testing.T) {
+	srv := NewServer(ServerConfig{}, nil)
+	w := &dummyResponseWriter{remoteAddr: &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 12345}}
+	defer func() {
+		if rec := recover(); rec != nil {
+			t.Fatalf("ServeDNS panicked on nil request: %v", rec)
+		}
+	}()
+	srv.ServeDNS(w, nil)
+}
+
+func TestServer_UDPResponseTruncation(t *testing.T) {
+	addr := findAvailableLocalPort(t)
+
+	// Resolver 返回一个包含很多记录的大响应 (> 512 字节)
+	bigRes := &mockResolver{
+		exchangeFunc: func(ctx context.Context, req *miekgdns.Msg) (*miekgdns.Msg, error) {
+			resp := new(miekgdns.Msg)
+			resp.SetReply(req)
+			for i := 0; i < 30; i++ {
+				rr, _ := miekgdns.NewRR(fmt.Sprintf("%s 300 IN TXT \"very long text record to exceed udp standard buffer length %d\"", req.Question[0].Name, i))
+				resp.Answer = append(resp.Answer, rr)
+			}
+			return resp, nil
+		},
+	}
+
+	pipeline := NewPipeline(NewForwardMiddleware(bigRes))
+	srv := NewServer(ServerConfig{
+		UDPAddresses: []string{addr},
+		TCPAddresses: []string{addr},
+	}, pipeline)
+
+	if err := srv.Start(); err != nil {
+		t.Fatalf("server start failed: %v", err)
+	}
+	defer func() { _ = srv.Shutdown() }()
+
+	time.Sleep(50 * time.Millisecond)
+
+	// 1. 普通 UDP 客户端（无 EDNS0，限制 512 字节），应被自动截断并置位 TC=1
+	client := &miekgdns.Client{Net: "udp", Timeout: 2 * time.Second}
+	req := new(miekgdns.Msg)
+	req.SetQuestion("large.example.com.", miekgdns.TypeTXT)
+	req.Id = 9876
+
+	resp, _, err := client.Exchange(req, addr)
+	if err != nil {
+		t.Fatalf("exchange failed: %v", err)
+	}
+
+	if !resp.Truncated {
+		t.Fatalf("expected response to be truncated with TC=1 for large UDP response without EDNS0")
+	}
+
+	// 2. 带 EDNS0 的 UDP 客户端（UDPSize = 4096），不应被截断
+	clientEDNS := &miekgdns.Client{Net: "udp", Timeout: 2 * time.Second, UDPSize: 4096}
+	reqEDNS := new(miekgdns.Msg)
+	reqEDNS.SetQuestion("large.example.com.", miekgdns.TypeTXT)
+	reqEDNS.Id = 9877
+	reqEDNS.SetEdns0(4096, false)
+
+	respEDNS, _, err := clientEDNS.Exchange(reqEDNS, addr)
+	if err != nil {
+		t.Fatalf("edns exchange failed: %v", err)
+	}
+	if respEDNS.Truncated {
+		t.Fatalf("expected EDNS response to not be truncated within 4096 limit")
+	}
+}

@@ -27,11 +27,10 @@ type program struct {
 }
 
 func (p *program) Start(s service.Service) error {
-	go p.run()
-	return nil
+	return p.start()
 }
 
-func (p *program) run() {
+func (p *program) start() error {
 	cfg := core.ResolverConfig{
 		Mode: core.ModePrimaryBackup,
 		Providers: []core.ProviderConfig{
@@ -49,8 +48,7 @@ func (p *program) run() {
 
 	res, err := core.NewResolver(cfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "初始化 DNS 内核失败: %v\n", err)
-		return
+		return fmt.Errorf("初始化 DNS 内核失败: %w", err)
 	}
 	p.resolver = res
 
@@ -84,10 +82,10 @@ func (p *program) run() {
 	p.server = srv
 
 	if err := srv.Start(); err != nil {
-		fmt.Fprintf(os.Stderr, "启动 DNS 双栈监听失败: %v\n", err)
-		return
+		return fmt.Errorf("启动 DNS 双栈监听失败: %w", err)
 	}
 	fmt.Printf("谛听 DNS 监听器已启动: %v (UDP/TCP)\n", serverCfg.UDPAddresses)
+	return nil
 }
 
 func (p *program) Stop(s service.Service) error {
@@ -114,8 +112,8 @@ func main() {
 	listenPort := flag.Int("port", 53, "DNS 服务监听端口 (默认 53)")
 	flag.Parse()
 
-	// 若显式请求版本或未传任何参数且未指定运行模式，打印版本信息（确保 Phase 0 验证顺利）
-	if *showVersion || (len(os.Args) == 1 && *serviceAction == "" && !*runConsole) {
+	// 若显式请求版本或在交互式控制台下未传任何参数且未指定运行模式，打印版本信息（确保 Phase 0 验证顺利）
+	if *showVersion || (service.Interactive() && len(os.Args) == 1 && *serviceAction == "" && !*runConsole) {
 		printVersion()
 		return
 	}

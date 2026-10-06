@@ -196,3 +196,46 @@ func TestPlainResolver_TimeoutContext(t *testing.T) {
 		t.Fatalf("expected timeout error, got nil")
 	}
 }
+
+func TestPlainResolver_LargeUDPPacket(t *testing.T) {
+	pc, err := net.ListenPacket("udp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen udp failed: %v", err)
+	}
+	defer pc.Close()
+
+	go func() {
+		buf := make([]byte, 512)
+		for {
+			n, addr, err := pc.ReadFrom(buf)
+			if err != nil {
+				return
+			}
+			var req dns.Msg
+			if err := req.Unpack(buf[:n]); err != nil {
+				continue
+			}
+			resp := new(dns.Msg)
+			resp.SetReply(&req)
+			for i := 0; i < 50; i++ {
+				rr, _ := dns.NewRR(fmt.Sprintf("%s 300 IN TXT \"very long text record exceeding 4k buffer length %d\"", req.Question[0].Name, i))
+				resp.Answer = append(resp.Answer, rr)
+			}
+			respBytes, _ := resp.Pack()
+			_, _ = pc.WriteTo(respBytes, addr)
+		}
+	}()
+
+	plain := NewPlainResolver(nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	rawQuery := makeTestDNSQuery("large-udp.example.com")
+	resp, err := plain.Exchange(ctx, rawQuery, pc.LocalAddr().String())
+	if err != nil {
+		t.Fatalf("plain Exchange with large UDP packet (>4KB) failed: %v", err)
+	}
+	if len(resp) <= 4096 {
+		t.Fatalf("expected response length > 4096, got %d", len(resp))
+	}
+}

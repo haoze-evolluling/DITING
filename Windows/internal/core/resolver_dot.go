@@ -43,13 +43,10 @@ func (e *dotConnEntry) isAlive() bool {
 	if e == nil || e.closed.Load() || e.conn == nil || e.tlsConn == nil {
 		return false
 	}
-	_ = e.conn.SetReadDeadline(time.Now())
+	_ = e.tlsConn.SetReadDeadline(time.Now())
 	var b [1]byte
-	n, err := e.conn.Read(b[:])
-	_ = e.conn.SetReadDeadline(time.Time{})
-	if err == nil && n > 0 {
-		return false
-	}
+	_, err := e.tlsConn.Read(b[:])
+	_ = e.tlsConn.SetReadDeadline(time.Time{})
 	if err != nil {
 		var netErr net.Error
 		if errors.As(err, &netErr) && netErr.Timeout() {
@@ -57,7 +54,7 @@ func (e *dotConnEntry) isAlive() bool {
 		}
 		return false
 	}
-	return true
+	return false
 }
 
 // DoTResolver 实现基于 DNS-over-TLS (RFC 7858) 的连接复用解析器

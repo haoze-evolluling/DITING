@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -218,7 +219,7 @@ func (s *Scheduler) queryWithValidation(ctx context.Context, p *ConfiguredProvid
 	elapsed := time.Since(start)
 
 	if err != nil {
-		if p.Stats != nil {
+		if p.Stats != nil && !errors.Is(err, context.Canceled) {
 			p.Stats.RecordFailure()
 		}
 		return nil, err
@@ -250,7 +251,7 @@ func ValidateDNSResponse(rawQuery, rawResponse []byte) error {
 	if err := response.Unpack(rawResponse); err != nil {
 		return fmt.Errorf("invalid response packet: %w", err)
 	}
-	if !response.Response || response.Id != query.Id {
+	if !response.Response || (response.Id != query.Id && response.Id != 0) {
 		return fmt.Errorf("response ID mismatch (query: %d, resp: %d)", query.Id, response.Id)
 	}
 	if len(response.Question) != len(query.Question) {
