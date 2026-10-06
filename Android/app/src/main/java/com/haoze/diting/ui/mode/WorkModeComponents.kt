@@ -20,6 +20,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.alpha
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -97,8 +100,14 @@ fun WorkModeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val isSupported = mode.isSupportedOnCurrentDevice()
     val isNormal = mode == AppWorkMode.NORMAL
-    val modeAccent = if (isNormal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
+    val modeAccent = when (mode) {
+        AppWorkMode.NORMAL -> MaterialTheme.colorScheme.primary
+        AppWorkMode.EXPRESS -> MaterialTheme.colorScheme.secondary
+        AppWorkMode.DNS -> MaterialTheme.colorScheme.tertiary
+    }
 
     val containerColor = if (isSelected) {
         MaterialTheme.colorScheme.surfaceContainerHigh
@@ -116,11 +125,24 @@ fun WorkModeCard(
     )
 
     Card(
-        onClick = onClick,
+        onClick = {
+            if (!isSupported) {
+                val message = if (mode == AppWorkMode.EXPRESS) {
+                    "极速模式仅支持 64 位设备且需 Android 7+ (API 24) 及以上系统"
+                } else {
+                    "${mode.title}仅支持 Android 10 (API 29) 及以上系统"
+                }
+                Toast.makeText(context, localizedText(context, message), Toast.LENGTH_SHORT).show()
+            } else {
+                onClick()
+            }
+        },
         shape = cardShape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (!isSupported) Modifier.alpha(0.45f) else Modifier)
     ) {
         Row(
             modifier = Modifier

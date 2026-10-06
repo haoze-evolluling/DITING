@@ -15,7 +15,8 @@ import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
 import com.haoze.diting.core.dns.DnsProvider
-import com.haoze.diting.normal.DnsVpnService
+import com.haoze.diting.core.VpnStateRegistry
+import com.haoze.diting.core.WorkModeLifecycleRegistry
 import com.haoze.diting.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -84,8 +85,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val statusReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                DnsVpnService.ACTION_VPN_STATUS_CHANGED -> {
-                    val running = intent.getBooleanExtra(DnsVpnService.EXTRA_VPN_RUNNING, false)
+                VpnStateRegistry.ACTION_VPN_STATUS_CHANGED -> {
+                    val running = intent.getBooleanExtra(VpnStateRegistry.EXTRA_VPN_RUNNING, false)
                     _uiState.value = _uiState.value.copy(isRunning = running, isBusy = false)
                 }
                 ExpressVpnIntents.ACTION_STATUS_CHANGED -> {
@@ -99,7 +100,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     init {
         refreshStatus()
         loadProviders()
-        val filter = IntentFilter(DnsVpnService.ACTION_VPN_STATUS_CHANGED).apply {
+        val filter = IntentFilter(VpnStateRegistry.ACTION_VPN_STATUS_CHANGED).apply {
             addAction(ExpressVpnIntents.ACTION_STATUS_CHANGED)
         }
         ContextCompat.registerReceiver(
@@ -124,8 +125,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val isAlive = if (isExpress) {
             ExpressVpnController.isRunning(context)
         } else {
-            val alive = DnsVpnService.isRunning(context)
-            DnsVpnService.setRunningFlag(context, alive)
+            val alive = VpnStateRegistry.isNormalRunning(context)
+            VpnStateRegistry.setNormalRunningFlag(context, alive)
             alive
         }
         _uiState.value = _uiState.value.copy(isRunning = isAlive, isBusy = false)
@@ -215,12 +216,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(isBusy = true)
 
         if (currentlyRunning) {
-            context.startService(DnsVpnService.stopIntent(context))
+            WorkModeLifecycleRegistry.stopNormalMode(context)
         } else {
-            androidx.core.content.ContextCompat.startForegroundService(
-                context,
-                DnsVpnService.startIntent(context)
-            )
+            WorkModeLifecycleRegistry.startNormalMode(context)
             viewModelScope.launch {
                 delay(3000)
                 refreshStatus()

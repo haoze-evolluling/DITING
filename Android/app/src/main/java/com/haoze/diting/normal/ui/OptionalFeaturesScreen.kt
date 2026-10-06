@@ -1,6 +1,5 @@
-package com.haoze.diting.ui
+package com.haoze.diting.normal.ui
 
-import com.haoze.diting.normal.ui.HiddenFeaturesScreen
 import androidx.compose.runtime.Composable
 
 /**

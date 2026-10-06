@@ -1,6 +1,6 @@
 package com.haoze.diting.express
 
-import com.haoze.diting.express.engine.ExpressDnsMessageUtils
+import com.haoze.diting.express.dns.ExpressDnsMessageUtils
 import com.haoze.diting.core.rule.BlockResponseMode
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals

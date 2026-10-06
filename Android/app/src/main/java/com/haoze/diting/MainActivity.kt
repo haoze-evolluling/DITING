@@ -453,9 +453,9 @@ class MainActivity : AppLocalizedActivity() {
             // DNS mode lifecycle and status are managed inside DnsModeHost
         } else if (currentWorkMode == AppWorkMode.EXPRESS) {
             val isRunning = com.haoze.diting.express.ExpressVpnController.isRunning(this)
-            val legacyIntent = Intent(DnsVpnService.ACTION_VPN_STATUS_CHANGED).apply {
+            val legacyIntent = Intent(com.haoze.diting.core.VpnStateRegistry.ACTION_VPN_STATUS_CHANGED).apply {
                 `package` = packageName
-                putExtra(DnsVpnService.EXTRA_VPN_RUNNING, isRunning)
+                putExtra(com.haoze.diting.core.VpnStateRegistry.EXTRA_VPN_RUNNING, isRunning)
             }
             sendBroadcast(legacyIntent)
         } else {

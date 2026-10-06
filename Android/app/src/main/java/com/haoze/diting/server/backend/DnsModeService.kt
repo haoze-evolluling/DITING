@@ -16,9 +16,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.haoze.diting.R
+import com.haoze.diting.core.tile.QuickSettingsTileUpdater
 import com.haoze.diting.server.DnsMainActivity
 import com.haoze.diting.ui.localizedText
-import com.haoze.diting.tile.DitingTileService
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +92,7 @@ class DnsModeService : Service() {
         serviceScope.cancel()
         DnsModeManager.flushStats(this)
         DnsModeManager.onServiceStopped()
-        DitingTileService.requestTileUpdate(this)
+        QuickSettingsTileUpdater.requestTileUpdate(this)
         super.onDestroy()
     }
 
@@ -123,7 +123,7 @@ class DnsModeService : Service() {
             dnsServerEngine = engine
             DnsModeManager.onServiceStarted()
             ensureFilterLoaded()
-            DitingTileService.requestTileUpdate(this)
+            QuickSettingsTileUpdater.requestTileUpdate(this)
             Log.i(TAG, "DnsModeService successfully started DNS server on port ${config.localListenPort}")
         } else {
             Log.e(TAG, "DnsModeService failed to start DNS server on port ${config.localListenPort}")

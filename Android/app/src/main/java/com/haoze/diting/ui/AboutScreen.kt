@@ -60,7 +60,7 @@ import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsSectionSpacing
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.normal.DnsVpnService
+import com.haoze.diting.core.VpnStateRegistry
 import kotlin.math.sqrt
 
 private const val PROJECT_REPOSITORY_URL = "https://github.com/haoze-evolluling/DITING"
@@ -198,19 +198,19 @@ private fun rememberDnsServiceRunning(context: Context): Boolean {
         val running by com.haoze.diting.express.ExpressVpnController.isRunning.collectAsState()
         return running
     }
-    var isRunning by remember(context) { mutableStateOf(DnsVpnService.isRunning(context)) }
+    var isRunning by remember(context) { mutableStateOf(VpnStateRegistry.isNormalRunning(context)) }
     DisposableEffect(context) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(receiverContext: Context?, intent: Intent?) {
-                if (intent?.action == DnsVpnService.ACTION_VPN_STATUS_CHANGED) {
-                    isRunning = intent.getBooleanExtra(DnsVpnService.EXTRA_VPN_RUNNING, false)
+                if (intent?.action == VpnStateRegistry.ACTION_VPN_STATUS_CHANGED) {
+                    isRunning = intent.getBooleanExtra(VpnStateRegistry.EXTRA_VPN_RUNNING, false)
                 }
             }
         }
         ContextCompat.registerReceiver(
             context,
             receiver,
-            IntentFilter(DnsVpnService.ACTION_VPN_STATUS_CHANGED),
+            IntentFilter(VpnStateRegistry.ACTION_VPN_STATUS_CHANGED),
             ContextCompat.RECEIVER_NOT_EXPORTED
         )
         onDispose { context.unregisterReceiver(receiver) }

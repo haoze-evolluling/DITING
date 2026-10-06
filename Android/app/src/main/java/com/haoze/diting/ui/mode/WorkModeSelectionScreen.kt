@@ -1,6 +1,5 @@
 package com.haoze.diting.ui.mode
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -29,7 +28,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -38,7 +36,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.haoze.diting.express.ui.ExpressWorkModeCard
 import com.haoze.diting.ui.components.SettingsCardMargin
 import com.haoze.diting.ui.components.SettingsItemSpacing
 import com.haoze.diting.ui.components.SettingsScaffold
@@ -230,41 +227,17 @@ private fun WorkModeSelectionContent(
                             }
                         }
 
-                        if (mode == AppWorkMode.EXPRESS) {
-                            ExpressWorkModeCard(
-                                isSelected = isSelected,
-                                index = index,
-                                itemCount = modes.size,
-                                onClick = {
-                                    if (isTransitioning) return@ExpressWorkModeCard
-                                    onTriggerTransition(mode)
-                                },
-                                modifier = cardPositionModifier
-                            )
-                        } else {
-                            val isSupported = mode.isSupportedOnCurrentDevice()
-                            WorkModeCard(
-                                mode = mode,
-                                isSelected = isSelected,
-                                index = index,
-                                itemCount = modes.size,
-                                onClick = {
-                                    if (isTransitioning) return@WorkModeCard
-                                    if (!isSupported) {
-                                        Toast.makeText(
-                                            context,
-                                            localizedText(context, "${mode.title}仅支持 Android 10 (API 29) 及以上系统"),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    } else {
-                                        onTriggerTransition(mode)
-                                    }
-                                },
-                                modifier = cardPositionModifier.then(
-                                    if (!isSupported) Modifier.alpha(0.45f) else Modifier
-                                )
-                            )
-                        }
+                        WorkModeCard(
+                            mode = mode,
+                            isSelected = isSelected,
+                            index = index,
+                            itemCount = modes.size,
+                            onClick = {
+                                if (isTransitioning) return@WorkModeCard
+                                onTriggerTransition(mode)
+                            },
+                            modifier = cardPositionModifier
+                        )
                     }
                 }
 

@@ -3,6 +3,7 @@ package com.haoze.diting.express.engine
 import com.haoze.diting.express.transport.ExpressDohTransport
 import com.haoze.diting.express.transport.ExpressDotTransport
 import com.haoze.diting.express.transport.ExpressPlainDnsTransport
+import com.haoze.diting.express.dns.ExpressDnsMessageUtils
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.RaceModeStrategy
 import com.haoze.diting.core.dns.DNS_UPSTREAM_TIMEOUT_MS

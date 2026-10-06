@@ -401,6 +401,7 @@ class DnsVpnService : VpnService() {
             WorkModeLifecycleRegistry.updateNormalFloatingLogAppState = { ctx, fg ->
                 updateFloatingLogAppState(ctx, fg)
             }
+            VpnStateRegistry.setNormalRunningFlag = { ctx, r -> setRunningFlag(ctx, r) }
         }
 
         fun startIntent(

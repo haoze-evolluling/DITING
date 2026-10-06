@@ -177,14 +177,7 @@ class DitingTileService : TileService() {
          * Asks the system to refresh the quick settings tile state.
          */
         fun requestTileUpdate(context: Context) {
-            runCatching {
-                TileService.requestListeningState(
-                    context.applicationContext,
-                    ComponentName(context.applicationContext, DitingTileService::class.java)
-                )
-            }.onFailure { e ->
-                Log.w(TAG, "Failed to request tile listening state", e)
-            }
+            com.haoze.diting.core.tile.QuickSettingsTileUpdater.requestTileUpdate(context)
         }
     }
 }

@@ -17,7 +17,7 @@ import com.haoze.diting.data.dao.SubscriptionDao
 import com.haoze.diting.data.dao.SubscriptionGroupDao
 import com.haoze.diting.data.entity.RewriteTargetType
 import com.haoze.diting.data.entity.SubscriptionKind
-import com.haoze.diting.ui.RuntimeDnsSettingsRefresher
+import com.haoze.diting.core.rule.RuntimeDnsSettingsRefresher
 import com.haoze.diting.ui.background.CustomBackgroundManager
 import com.haoze.diting.ui.settings.AppRulesSettingsStore
 import com.haoze.diting.ui.settings.OutboundProxySettingsStore

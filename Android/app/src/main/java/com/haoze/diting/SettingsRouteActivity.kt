@@ -40,7 +40,6 @@ import com.haoze.diting.normal.ui.AppTrafficStatsScreen
 import com.haoze.diting.ui.theme.ThemeColorStyle
 import com.haoze.diting.update.AppUpdateHost
 import com.haoze.diting.update.AppUpdateUiState
-import com.haoze.diting.normal.DnsVpnService
 import kotlinx.coroutines.launch
 
 class SettingsRouteActivity : AppLocalizedActivity() {

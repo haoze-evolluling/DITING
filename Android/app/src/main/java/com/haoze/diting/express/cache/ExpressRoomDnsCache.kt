@@ -3,7 +3,7 @@ package com.haoze.diting.express.cache
 import com.haoze.diting.data.dao.DnsCacheDao
 import com.haoze.diting.data.entity.DnsCacheEntity
 import com.haoze.diting.express.engine.ExpressDnsEngine
-import com.haoze.diting.express.engine.ExpressDnsMessageUtils
+import com.haoze.diting.express.dns.ExpressDnsMessageUtils
 import com.haoze.diting.express.engine.ExpressPacketCodec
 import com.haoze.diting.core.cache.DnsCachePolicy
 

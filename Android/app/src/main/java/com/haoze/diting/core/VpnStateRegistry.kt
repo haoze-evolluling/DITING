@@ -20,4 +20,15 @@ object VpnStateRegistry {
 
     fun isAnyVpnRunning(context: Context): Boolean =
         isNormalRunning(context) || isExpressRunning(context)
+
+    @Volatile
+    var setNormalRunningFlag: (Context, Boolean) -> Unit = { ctx, r ->
+        ctx.getSharedPreferences("dns_vpn_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("vpn_running", r)
+            .apply()
+    }
+
+    const val ACTION_VPN_STATUS_CHANGED = "com.haoze.diting.VPN_STATUS_CHANGED"
+    const val EXTRA_VPN_RUNNING = "vpn_running"
 }

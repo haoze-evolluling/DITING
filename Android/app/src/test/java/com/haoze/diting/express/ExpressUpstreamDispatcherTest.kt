@@ -1,6 +1,6 @@
 package com.haoze.diting.express
 
-import com.haoze.diting.express.engine.ExpressDnsMessageUtils
+import com.haoze.diting.express.dns.ExpressDnsMessageUtils
 import com.haoze.diting.express.engine.ExpressUpstreamDispatcher
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.core.rule.BlockResponseMode

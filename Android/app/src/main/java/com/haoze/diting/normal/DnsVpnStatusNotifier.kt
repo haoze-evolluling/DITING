@@ -1,6 +1,6 @@
 package com.haoze.diting.normal
 
-import com.haoze.diting.tile.DitingTileService
+import com.haoze.diting.core.tile.QuickSettingsTileUpdater
 import android.content.Context
 import android.content.Intent
 
@@ -21,7 +21,7 @@ object DnsVpnStatusNotifier {
             putExtra(DnsVpnService.EXTRA_VPN_RUNNING, running)
             `package` = context.packageName
         })
-        DitingTileService.requestTileUpdate(context)
+        QuickSettingsTileUpdater.requestTileUpdate(context)
     }
 
 

@@ -4,7 +4,7 @@ import androidx.sqlite.db.SupportSQLiteQuery
 import com.haoze.diting.data.dao.DnsCacheDao
 import com.haoze.diting.data.entity.DnsCacheEntity
 import com.haoze.diting.express.cache.ExpressRoomDnsCache
-import com.haoze.diting.express.engine.ExpressDnsMessageUtils
+import com.haoze.diting.express.dns.ExpressDnsMessageUtils
 import com.haoze.diting.core.cache.DnsCachePolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

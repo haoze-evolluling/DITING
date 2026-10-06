@@ -14,7 +14,6 @@ import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.*
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
-import com.haoze.diting.normal.DnsVpnService
 
 class LogRouteActivity : AppLocalizedActivity() {
     private var childLaunchInProgress = false

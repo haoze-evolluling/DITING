@@ -14,7 +14,7 @@ import android.os.Process
 import android.os.SystemClock
 import androidx.core.content.pm.PackageInfoCompat
 import com.haoze.diting.BuildConfig
-import com.haoze.diting.normal.DnsVpnService
+import com.haoze.diting.core.VpnStateRegistry
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat
@@ -76,7 +76,7 @@ object CrashCollector {
             append("App Uptime       : ").append(formatDuration(SystemClock.elapsedRealtime() - appStartElapsedRealtime)).append("\n")
             append("App Lifecycle    : ").append(if (isForeground) "Foreground" else "Background").append("\n")
             append("Top Activity     : ").append(topActivityName ?: "(None)").append("\n")
-            val vpnRunning = runCatching { DnsVpnService.isRunning(context) }.getOrDefault(false)
+            val vpnRunning = runCatching { VpnStateRegistry.isAnyVpnRunning(context) }.getOrDefault(false)
             append("VPN Active       : ").append(vpnRunning).append("\n")
         }
 

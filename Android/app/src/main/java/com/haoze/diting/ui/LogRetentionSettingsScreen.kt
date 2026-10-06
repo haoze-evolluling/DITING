@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.rememberCoroutineScope
 import com.haoze.diting.crash.CrashLogManager
+import com.haoze.diting.core.WorkModeLifecycleRegistry
 import com.haoze.diting.ui.components.AppConfirmDialog
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
@@ -40,7 +41,6 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.SettingsTextItem
 import com.haoze.diting.ui.settings.SystemSettingsStore
-import com.haoze.diting.normal.DnsVpnService
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.Dispatchers
@@ -102,11 +102,7 @@ fun LogRetentionSettingsScreen(
                 if (Settings.canDrawOverlays(context)) {
                     floatingLogEnabled = true
                     SystemSettingsStore.setFloatingLogEnabled(context, true)
-                    if (dataset == com.haoze.diting.data.RuleDataset.EXPRESS) {
-                        com.haoze.diting.express.ExpressVpnController.refreshFloatingLogOverlay(context)
-                    } else {
-                        DnsVpnService.refreshFloatingLogOverlay(context)
-                    }
+                    WorkModeLifecycleRegistry.refreshFloatingLogOverlay(context)
                 } else {
                     floatingLogEnabled = false
                     SystemSettingsStore.setFloatingLogEnabled(context, false)
@@ -122,21 +118,13 @@ fun LogRetentionSettingsScreen(
         if (!enabled) {
             floatingLogEnabled = false
             SystemSettingsStore.setFloatingLogEnabled(context, false)
-            if (dataset == com.haoze.diting.data.RuleDataset.EXPRESS) {
-                com.haoze.diting.express.ExpressVpnController.refreshFloatingLogOverlay(context)
-            } else {
-                DnsVpnService.refreshFloatingLogOverlay(context)
-            }
+            WorkModeLifecycleRegistry.refreshFloatingLogOverlay(context)
             return
         }
         if (Settings.canDrawOverlays(context)) {
             floatingLogEnabled = true
             SystemSettingsStore.setFloatingLogEnabled(context, true)
-            if (dataset == com.haoze.diting.data.RuleDataset.EXPRESS) {
-                com.haoze.diting.express.ExpressVpnController.refreshFloatingLogOverlay(context)
-            } else {
-                DnsVpnService.refreshFloatingLogOverlay(context)
-            }
+            WorkModeLifecycleRegistry.refreshFloatingLogOverlay(context)
         } else {
             waitingForOverlayPermission = true
             runCatching {

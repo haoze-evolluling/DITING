@@ -150,12 +150,12 @@ object ExpressVpnController {
             com.haoze.diting.notification.VpnMonitorManager.onVpnStopped(context)
         }
         context.sendBroadcast(ExpressVpnIntents.statusBroadcastIntent(context, running))
-        val legacyIntent = Intent("com.haoze.diting.vpn.ACTION_VPN_STATUS_CHANGED").apply {
+        val legacyIntent = Intent(VpnStateRegistry.ACTION_VPN_STATUS_CHANGED).apply {
             `package` = context.packageName
-            putExtra("vpn_running", running)
+            putExtra(VpnStateRegistry.EXTRA_VPN_RUNNING, running)
         }
         context.sendBroadcast(legacyIntent)
-        com.haoze.diting.tile.DitingTileService.requestTileUpdate(context)
+        com.haoze.diting.core.tile.QuickSettingsTileUpdater.requestTileUpdate(context)
     }
 
     private fun getPersistedRunning(context: Context): Boolean =

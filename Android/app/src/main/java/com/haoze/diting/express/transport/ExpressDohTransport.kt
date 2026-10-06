@@ -1,7 +1,7 @@
 package com.haoze.diting.express.transport
 
 import com.haoze.diting.core.dns.DnsLatencyTester
-import com.haoze.diting.express.engine.ExpressDnsMessageUtils
+import com.haoze.diting.express.dns.ExpressDnsMessageUtils
 import com.haoze.diting.core.dns.DNS_UPSTREAM_TIMEOUT_MS
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.Call

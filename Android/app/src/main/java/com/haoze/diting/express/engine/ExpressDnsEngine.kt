@@ -3,6 +3,7 @@ package com.haoze.diting.express.engine
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.core.rule.BlockResponseMode
 import com.haoze.diting.core.dns.DnsProvider
+import com.haoze.diting.express.dns.ExpressDnsMessageUtils
 import java.util.concurrent.atomic.AtomicLong
 
 /**

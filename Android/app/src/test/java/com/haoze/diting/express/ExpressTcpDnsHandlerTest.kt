@@ -1,7 +1,7 @@
 package com.haoze.diting.express
 
 import com.haoze.diting.express.engine.ExpressDnsEngine
-import com.haoze.diting.express.engine.ExpressDnsMessageUtils
+import com.haoze.diting.express.dns.ExpressDnsMessageUtils
 import com.haoze.diting.express.engine.ExpressPacketCodec
 import com.haoze.diting.express.engine.ExpressTcpDnsHandler
 import com.haoze.diting.express.engine.ExpressUpstreamDispatcher

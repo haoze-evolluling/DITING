@@ -28,7 +28,7 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
 import com.haoze.diting.ui.theme.ThemeColorStyle
 import com.haoze.diting.ui.theme.swatchColor
-import com.haoze.diting.normal.DnsVpnService
+import com.haoze.diting.core.WorkModeLifecycleRegistry
 
 @Composable
 fun ThemeColorSettingsScreen(
@@ -61,7 +61,7 @@ fun ThemeColorSettingsScreen(
                                 onClick = {
                                     selectedStyle = style
                                     AppearanceSettingsStore.setThemeColorStyle(context, style)
-                                    DnsVpnService.refreshFloatingLogOverlay(context)
+                                    WorkModeLifecycleRegistry.refreshFloatingLogOverlay(context)
                                     onThemeColorStyleChanged(style)
                                 }
                             ) {
