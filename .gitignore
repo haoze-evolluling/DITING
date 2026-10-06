@@ -1,7 +1,11 @@
 # ====================================================================
 # Android & Gradle Build Outputs
-# ====================================================================
-build/
+/build/
+Android/**/build/
+Windows/build/bin/
+Windows/frontend/dist/
+Windows/frontend/node_modules/
+Windows/frontend/package.json.md5
 .gradle/
 .kotlin/
 .cxx/
