@@ -1,5 +1,6 @@
 package com.haoze.diting.ui
 
+import android.app.Application
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -70,7 +71,11 @@ fun NetworkToolsScreen(
     onBack: () -> Unit = {},
     title: String = "网络诊断",
     viewModel: NetworkToolsViewModel = viewModel(),
-    speedTestViewModel: RaceModeSettingsViewModel = viewModel(),
+    speedTestViewModel: RaceModeSettingsViewModel = viewModel(
+        factory = RaceModeSettingsViewModel.Factory(
+            LocalContext.current.applicationContext as Application
+        )
+    ),
     showBackIcon: Boolean = true,
     contentBottomPadding: androidx.compose.ui.unit.Dp = 0.dp
 ) {

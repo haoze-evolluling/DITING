@@ -29,7 +29,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.RuleDatabases
 
-class RaceModeSettingsViewModel(
+class RaceModeSettingsViewModel @JvmOverloads constructor(
     application: Application,
     val dataset: RuleDataset = RuleDataset.NORMAL
 ) : AndroidViewModel(application) {
