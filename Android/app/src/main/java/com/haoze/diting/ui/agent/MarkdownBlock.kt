@@ -14,6 +14,22 @@ internal sealed interface MarkdownBlock {
     data class Table(val headers: List<String>, val rows: List<List<String>>) : MarkdownBlock
 }
 
+private val HR_REGEX = Regex("""^(?:-{3,}|\*{3,}|_{3,})$""")
+private val HEADING_REGEX = Regex("""^(#{1,6})\s+(.+)$""")
+private val BULLET_REGEX = Regex("""^(\s*)([-*+])\s+(.+)$""")
+private val NUMBERED_REGEX = Regex("""^(\s*)(\d+)\.\s+(.+)$""")
+private val TABLE_SEPARATOR_CELL_REGEX = Regex("""^:?-+:?$""")
+
+private fun isTableStart(lines: List<String>, index: Int): Boolean {
+    if (index + 1 >= lines.size) return false
+    val current = lines[index].trim()
+    val next = lines[index + 1].trim()
+    if (!current.startsWith("|") || !current.endsWith("|")) return false
+    if (!next.startsWith("|") || !next.endsWith("|")) return false
+    val cells = next.split("|").filter { it.isNotBlank() }
+    return cells.isNotEmpty() && cells.all { it.trim().matches(TABLE_SEPARATOR_CELL_REGEX) }
+}
+
 /**
  * Splits raw Markdown text into a list of structured [MarkdownBlock] items.
  */
@@ -49,14 +65,14 @@ internal fun parseMarkdownBlocks(rawText: String): List<MarkdownBlock> {
         }
 
         // 3. Horizontal Rule (---, ***, ___)
-        if (trimmed.matches(Regex("""^(?:-{3,}|\*{3,}|_{3,})$"""))) {
+        if (trimmed.matches(HR_REGEX)) {
             blocks.add(MarkdownBlock.Divider)
             i++
             continue
         }
 
         // 4. Headings (# to ######)
-        val headingMatch = Regex("""^(#{1,6})\s+(.+)$""").matchEntire(trimmed)
+        val headingMatch = HEADING_REGEX.matchEntire(trimmed)
         if (headingMatch != null) {
             val level = headingMatch.groupValues[1].length
             val headingText = headingMatch.groupValues[2].trim()
@@ -76,33 +92,26 @@ internal fun parseMarkdownBlocks(rawText: String): List<MarkdownBlock> {
             continue
         }
 
-        // 6. Tables: check if current line contains '|' and next line is a separator like |---|---|
-        if (trimmed.startsWith("|") && trimmed.endsWith("|") && i + 1 < n) {
-            val nextTrimmed = lines[i + 1].trim()
-            val isTableSeparator = nextTrimmed.startsWith("|") &&
-                    nextTrimmed.split("|").filter { it.isNotBlank() }.all { cell ->
-                        cell.trim().matches(Regex("""^:?-+:?$"""))
-                    }
-            if (isTableSeparator) {
-                val headerCells = trimmed.split("|")
+        // 6. Tables: check if current line starts a valid table
+        if (isTableStart(lines, i)) {
+            val headerCells = trimmed.split("|")
+                .map { it.trim() }
+                .filterIndexed { idx, _ -> idx > 0 && idx < trimmed.split("|").lastIndex }
+            i += 2 // skip header and separator line
+            val rows = mutableListOf<List<String>>()
+            while (i < n && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+                val rowCells = lines[i].trim().split("|")
                     .map { it.trim() }
-                    .filterIndexed { idx, _ -> idx > 0 && idx < trimmed.split("|").lastIndex }
-                i += 2 // skip header and separator line
-                val rows = mutableListOf<List<String>>()
-                while (i < n && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
-                    val rowCells = lines[i].trim().split("|")
-                        .map { it.trim() }
-                        .filterIndexed { idx, _ -> idx > 0 && idx < lines[i].trim().split("|").lastIndex }
-                    rows.add(rowCells)
-                    i++
-                }
-                blocks.add(MarkdownBlock.Table(headerCells, rows))
-                continue
+                    .filterIndexed { idx, _ -> idx > 0 && idx < lines[i].trim().split("|").lastIndex }
+                rows.add(rowCells)
+                i++
             }
+            blocks.add(MarkdownBlock.Table(headerCells, rows))
+            continue
         }
 
         // 7. Unordered list item: - item, * item, + item (with optional leading indentation)
-        val bulletMatch = Regex("""^(\s*)([-*+])\s+(.+)$""").find(line)
+        val bulletMatch = BULLET_REGEX.find(line)
         if (bulletMatch != null) {
             val indentSpaces = bulletMatch.groupValues[1].length
             val indent = (indentSpaces / 2).coerceIn(0, 4)
@@ -113,7 +122,7 @@ internal fun parseMarkdownBlocks(rawText: String): List<MarkdownBlock> {
         }
 
         // 8. Ordered list item: 1. item, 2. item
-        val numMatch = Regex("""^(\s*)(\d+)\.\s+(.+)$""").find(line)
+        val numMatch = NUMBERED_REGEX.find(line)
         if (numMatch != null) {
             val num = numMatch.groupValues[2]
             val content = numMatch.groupValues[3].trim()
@@ -129,18 +138,21 @@ internal fun parseMarkdownBlocks(rawText: String): List<MarkdownBlock> {
             val curTrimmed = curLine.trim()
             if (curTrimmed.isEmpty()) break
             if (curTrimmed.startsWith("```") || curTrimmed.startsWith("~~~")) break
-            if (curTrimmed.matches(Regex("""^(?:-{3,}|\*{3,}|_{3,})$"""))) break
-            if (Regex("""^(#{1,6})\s+(.+)$""").matches(curTrimmed)) break
+            if (curTrimmed.matches(HR_REGEX)) break
+            if (HEADING_REGEX.matches(curTrimmed)) break
             if (curTrimmed.startsWith(">")) break
-            if (Regex("""^(\s*)([-*+])\s+(.+)$""").matches(curLine)) break
-            if (Regex("""^(\s*)(\d+)\.\s+(.+)$""").matches(curLine)) break
-            if (curTrimmed.startsWith("|") && curTrimmed.endsWith("|")) break
+            if (BULLET_REGEX.matches(curLine)) break
+            if (NUMBERED_REGEX.matches(curLine)) break
+            if (isTableStart(lines, i)) break
 
             paragraphLines.add(curTrimmed)
             i++
         }
         if (paragraphLines.isNotEmpty()) {
             blocks.add(MarkdownBlock.Paragraph(paragraphLines.joinToString("\n")))
+        } else {
+            // Defensive safeguard against unexpected non-advancing loops
+            i++
         }
     }
     return blocks

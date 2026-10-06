@@ -39,8 +39,30 @@ internal fun buildMarkdownAnnotatedString(
     tertiaryColor: Color = MaterialTheme.colorScheme.tertiary
 ): AnnotatedString {
     return remember(source, baseColor, primaryColor, codeBackgroundColor, errorColor, tertiaryColor) {
-        buildAnnotatedString {
-            var cursor = 0
+        formatMarkdownAnnotatedString(
+            source = source,
+            baseColor = baseColor,
+            primaryColor = primaryColor,
+            codeBackgroundColor = codeBackgroundColor,
+            errorColor = errorColor,
+            tertiaryColor = tertiaryColor
+        )
+    }
+}
+
+/**
+ * Pure function formatting inline Markdown spans into [AnnotatedString].
+ */
+internal fun formatMarkdownAnnotatedString(
+    source: String,
+    baseColor: Color,
+    primaryColor: Color,
+    codeBackgroundColor: Color,
+    errorColor: Color,
+    tertiaryColor: Color
+): AnnotatedString {
+    return buildAnnotatedString {
+        var cursor = 0
             INLINE_TOKEN_REGEX.findAll(source).forEach { match ->
                 val start = match.range.first
                 val end = match.range.last + 1
@@ -135,7 +157,6 @@ internal fun buildMarkdownAnnotatedString(
             }
         }
     }
-}
 
 /**
  * Resolves highlighting colors for cybersecurity evaluation keywords in reports.

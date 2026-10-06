@@ -1,8 +1,7 @@
 package com.haoze.diting.ui.agent
 
-import android.content.ClipboardManager
-import android.content.Context
-import android.widget.Toast
+import com.haoze.diting.ui.copyToClipboard
+import com.haoze.diting.ui.showToast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -295,7 +294,7 @@ internal fun AgentAnalysisResultContent(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = appliedActionText,
+                            text = localizedText(appliedActionText),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -354,11 +353,8 @@ internal fun AgentAnalysisBottomBar(
         ) {
             OutlinedButton(
                 onClick = {
-                    val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    cm.setPrimaryClip(
-                        android.content.ClipData.newPlainText("AgentAnalysis", analysisContent)
-                    )
-                    Toast.makeText(context, "分析结果已复制到剪贴板", Toast.LENGTH_SHORT).show()
+                    context.copyToClipboard("AgentAnalysis", analysisContent)
+                    context.showToast("分析结果已复制到剪贴板")
                 },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp)
