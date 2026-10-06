@@ -537,10 +537,7 @@ class MainActivity : AppLocalizedActivity() {
                 }
             }
             PermissionDisclosure.BATTERY_OPTIMIZATION -> {
-                val intent = com.haoze.diting.permission.AppPermission.BATTERY_OPTIMIZATION.createRequestIntent(this)
-                if (intent != null) {
-                    runCatching { startActivity(intent) }
-                }
+                com.haoze.diting.permission.BatteryOptimizationHelper.requestPermission(this)
             }
         }
     }
@@ -556,7 +553,9 @@ class MainActivity : AppLocalizedActivity() {
                 // User declined notification disclosure; proceed without notifications
                 prepareVpn()
             }
-            PermissionDisclosure.BATTERY_OPTIMIZATION -> {}
+            PermissionDisclosure.BATTERY_OPTIMIZATION -> {
+                com.haoze.diting.permission.BatteryOptimizationHelper.setDismissed(this, true)
+            }
         }
     }
 

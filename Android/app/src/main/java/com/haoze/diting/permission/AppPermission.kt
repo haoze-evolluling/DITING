@@ -122,11 +122,7 @@ enum class AppPermission(
                     }
                 } else null
             }
-            BATTERY_OPTIMIZATION -> {
-                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = Uri.parse("package:${context.packageName}")
-                }
-            }
+            BATTERY_OPTIMIZATION -> BatteryOptimizationHelper.createRequestIntent(context)
             SYSTEM_ALERT_WINDOW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
@@ -140,8 +136,7 @@ enum class AppPermission(
 
     companion object {
         fun isBatteryOptimizationIgnored(context: Context): Boolean {
-            val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-            return powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
+            return BatteryOptimizationHelper.isGranted(context)
         }
 
         fun isAppListAccessible(context: Context): Boolean {

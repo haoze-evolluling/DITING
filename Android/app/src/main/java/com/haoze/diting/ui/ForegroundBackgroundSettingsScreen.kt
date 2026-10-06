@@ -1,10 +1,6 @@
 package com.haoze.diting.ui
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
-import android.os.PowerManager
-import android.provider.Settings
+import com.haoze.diting.permission.BatteryOptimizationHelper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,9 +42,7 @@ fun ForegroundBackgroundSettingsScreen(
     var ipv6Mode by remember {
         mutableStateOf(SystemSettingsStore.getIpv6Mode(context))
     }
-    var batteryOptimizationIgnored by remember(context) {
-        mutableStateOf(isBatteryOptimizationIgnored(context))
-    }
+    val batteryState = BatteryOptimizationHelper.rememberBatteryOptimizationState()
 
     fun saveIpv6Mode(mode: Ipv6Mode) {
         ipv6Mode = mode
@@ -64,14 +58,6 @@ fun ForegroundBackgroundSettingsScreen(
     fun saveBypassLan(enabled: Boolean) {
         bypassLanEnabled = enabled
         SystemSettingsStore.setBypassLanEnabled(context, enabled)
-    }
-
-    fun handleBatteryOptimizationClick() {
-        val ignored = isBatteryOptimizationIgnored(context)
-        batteryOptimizationIgnored = ignored
-        if (!ignored) {
-            requestIgnoreBatteryOptimization(context)
-        }
     }
 
     SettingsScaffold(
@@ -141,33 +127,17 @@ fun ForegroundBackgroundSettingsScreen(
                 items = listOf(
                     SettingsNavigationItemData(
                         title = localizedText("忽略电池优化"),
-                        subtitle = if (batteryOptimizationIgnored) {
+                        subtitle = if (batteryState.isIgnored) {
                             localizedText("已忽略电池优化")
                         } else {
                             localizedText("允许应用在后台稳定运行")
                         },
-                        value = if (batteryOptimizationIgnored) localizedText("已忽略") else null,
-                        enabled = !batteryOptimizationIgnored,
-                        onClick = ::handleBatteryOptimizationClick
+                        value = if (batteryState.isIgnored) localizedText("已忽略") else null,
+                        enabled = !batteryState.isIgnored,
+                        onClick = batteryState.requestIgnore
                     )
                 )
             )
         }
-    }
-}
-
-private fun isBatteryOptimizationIgnored(context: Context): Boolean {
-    val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-    return powerManager.isIgnoringBatteryOptimizations(context.packageName)
-}
-
-private fun requestIgnoreBatteryOptimization(context: Context) {
-    val requestIntent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-        data = android.net.Uri.parse("package:${context.packageName}")
-    }
-    try {
-        context.startActivity(requestIntent)
-    } catch (_: ActivityNotFoundException) {
-        context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
     }
 }

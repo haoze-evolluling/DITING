@@ -26,9 +26,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.material3.Text
 import com.haoze.diting.notification.NotificationPermissionHelper
 import com.haoze.diting.ui.PermissionDisclosureSettings
-import com.haoze.diting.ui.components.AppConfirmDialog
+import com.haoze.diting.ui.components.AppAlertDialog
+import com.haoze.diting.ui.components.AppDialogButton
 import com.haoze.diting.ui.localizedText
 import com.haoze.diting.ui.mode.AppWorkMode
 
@@ -57,6 +59,7 @@ fun ModePermissionWarningAction(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 AppListPermissionHelper.invalidateCache()
+                BatteryOptimizationHelper.invalidateCache()
                 readinessState = ModeReadinessEvaluator.evaluate(context, mode)
             }
         }
@@ -88,6 +91,13 @@ fun ModePermissionWarningAction(
         readinessState = ModeReadinessEvaluator.evaluate(context, mode)
     }
 
+    val batteryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        BatteryOptimizationHelper.invalidateCache()
+        readinessState = ModeReadinessEvaluator.evaluate(context, mode)
+    }
+
     val appListLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { _ ->
@@ -115,16 +125,14 @@ fun ModePermissionWarningAction(
                 }
             }
             AppPermission.BATTERY_OPTIMIZATION -> {
-                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = Uri.parse("package:${context.packageName}")
-                }
-                try {
-                    context.startActivity(intent)
-                } catch (_: ActivityNotFoundException) {
-                    runCatching {
-                        context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                BatteryOptimizationHelper.requestPermission(
+                    context = context,
+                    launcher = batteryLauncher,
+                    onAlreadyGranted = {
+                        BatteryOptimizationHelper.invalidateCache()
+                        readinessState = ModeReadinessEvaluator.evaluate(context, mode)
                     }
-                }
+                )
             }
             AppPermission.PACKAGE_QUERY -> {
                 AppListPermissionHelper.requestPermission(
@@ -144,6 +152,7 @@ fun ModePermissionWarningAction(
     }
 
     if (primaryMissing != null) {
+        val isRecommended = primaryMissing.getLevel(mode) != PermissionLevel.REQUIRED
         IconButton(
             onClick = { showDialog = true },
             modifier = modifier
@@ -151,7 +160,7 @@ fun ModePermissionWarningAction(
             Icon(
                 imageVector = Icons.Filled.Warning,
                 contentDescription = localizedText("未授予权限警告"),
-                tint = MaterialTheme.colorScheme.error
+                tint = if (isRecommended) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
             )
         }
 
@@ -166,23 +175,51 @@ fun ModePermissionWarningAction(
             }
             val dialogMessage = "没有授予这个权限。$explanation"
 
-            AppConfirmDialog(
+            AppAlertDialog(
                 onDismissRequest = { showDialog = false },
-                title = dialogTitle,
-                message = dialogMessage,
-                confirmLabel = "授予",
-                cancelLabel = "取消",
                 icon = {
                     Icon(
                         imageVector = Icons.Filled.Warning,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.error
+                        tint = if (isRecommended) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error
                     )
                 },
-                onConfirm = {
-                    showDialog = false
-                    requestPermission(primaryMissing)
-                }
+                title = { Text(localizedText(dialogTitle)) },
+                text = {
+                    Text(
+                        localizedText(dialogMessage),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    AppDialogButton(
+                        label = "授予",
+                        onClick = {
+                            showDialog = false
+                            requestPermission(primaryMissing)
+                        }
+                    )
+                },
+                dismissButton = {
+                    AppDialogButton(
+                        label = "取消",
+                        onClick = { showDialog = false }
+                    )
+                },
+                neutralButton = if (isRecommended) {
+                    {
+                        AppDialogButton(
+                            label = "不再提示",
+                            onClick = {
+                                ModePermissionStore.setRecommendationDismissed(context, primaryMissing, true)
+                                BatteryOptimizationHelper.invalidateCache()
+                                readinessState = ModeReadinessEvaluator.evaluate(context, mode)
+                                showDialog = false
+                            }
+                        )
+                    }
+                } else null
             )
         }
     }

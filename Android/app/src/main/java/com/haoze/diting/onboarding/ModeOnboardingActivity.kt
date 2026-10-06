@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.haoze.diting.permission.AppListPermissionHelper
 import com.haoze.diting.permission.AppPermission
+import com.haoze.diting.permission.BatteryOptimizationHelper
 import com.haoze.diting.permission.ModePermissionStore
 import com.haoze.diting.ui.AppThemeSurface
 import com.haoze.diting.ui.mode.AppWorkMode
@@ -132,6 +133,7 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
     override fun onResume() {
         super.onResume()
         AppListPermissionHelper.invalidateCache()
+        BatteryOptimizationHelper.invalidateCache()
         refreshPermissionStates()
     }
 
@@ -162,14 +164,11 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
                 }
             }
             AppPermission.BATTERY_OPTIMIZATION -> {
-                val intent = permission.createRequestIntent(this)
-                if (intent != null) {
-                    try {
-                        genericSettingsLauncher.launch(intent)
-                    } catch (_: ActivityNotFoundException) {
-                        genericSettingsLauncher.launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-                    }
-                }
+                BatteryOptimizationHelper.requestPermission(
+                    context = this,
+                    launcher = genericSettingsLauncher,
+                    onAlreadyGranted = ::refreshPermissionStates
+                )
             }
             AppPermission.SYSTEM_ALERT_WINDOW -> {
                 val intent = permission.createRequestIntent(this)

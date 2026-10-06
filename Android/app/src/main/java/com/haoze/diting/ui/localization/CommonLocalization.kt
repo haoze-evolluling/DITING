@@ -532,6 +532,7 @@ internal fun translateCommonExact(text: String): String? = when (text) {
     "应用列表访问未授予" -> "Installed apps permission not granted"
     "没有授予这个权限。用于选择需要排除、禁止联网或进行 HTTPS 检查的应用，仅在本地读取。" -> "This permission is not granted. Used locally to select apps to exclude, block, or inspect."
     "请在权限管理中允许“读取已安装应用列表”" -> "Please grant Installed Apps permission in app settings"
+    "不再提示" -> "Don't show again"
     else -> null
 }
 

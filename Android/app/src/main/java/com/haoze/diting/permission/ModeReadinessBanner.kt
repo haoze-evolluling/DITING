@@ -66,6 +66,8 @@ fun ModeReadinessBanner(
     DisposableEffect(lifecycleOwner, mode, refreshTrigger) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
+                AppListPermissionHelper.invalidateCache()
+                BatteryOptimizationHelper.invalidateCache()
                 readinessState = ModeReadinessEvaluator.evaluate(context, mode)
             }
         }
