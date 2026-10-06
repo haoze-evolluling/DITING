@@ -241,7 +241,7 @@ Windows/
 - **前置依赖**：阶段零完成。
 - **验收标准**：
   - 单元测试覆盖率 $\ge 80\%$。
-  - 使用 `nslookup www.bing.com 127.0.0.1` 能成功接收请求、转发至上游并正确获得 A/AAAA 响应。
+  - 使用 Python 测试脚本（`python scripts/test_dns.py www.bing.com 127.0.0.1` 或 `python scripts/test_dns.py --verify`）向本地服务发送真实 DNS 请求，能成功接收请求、转发至上游并正确获得 A/AAAA 响应（避开 Windows 自带 nslookup 存在 PTR 反向解析超时、端口参数失效及本地回环兼容缺陷的问题）。
 
 ---
 
