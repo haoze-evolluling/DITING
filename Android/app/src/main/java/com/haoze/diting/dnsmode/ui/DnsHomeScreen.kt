@@ -21,9 +21,6 @@ import androidx.compose.ui.platform.LocalContext
 import com.haoze.diting.dnsmode.model.DnsModeStats
 import com.haoze.diting.dnsmode.model.DnsServiceStatus
 import com.haoze.diting.dnsmode.model.DnsUpstreamServer
-import com.haoze.diting.notification.NotificationPermissionHelper
-import com.haoze.diting.permission.AppPermission
-import com.haoze.diting.permission.ModeReadinessBanner
 import com.haoze.diting.ui.PowerToggleButton
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
@@ -31,7 +28,6 @@ import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsNavigationItem
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.localizedText
-import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.util.formatDuration
 import com.haoze.diting.vpn.NetworkInfoProbe
 
@@ -64,20 +60,6 @@ fun DnsHomeScreen(
         contentPadding = PaddingValues(bottom = contentBottomPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            ModeReadinessBanner(
-                mode = AppWorkMode.DNS,
-                onFixPermission = { perm ->
-                    when (perm) {
-                        AppPermission.NOTIFICATION -> NotificationPermissionHelper.openNotificationSettings(context)
-                        AppPermission.BATTERY_OPTIMIZATION -> onRequestIgnoreBatteryOptimization()
-                        else -> {}
-                    }
-                },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
-        }
-
         item {
             Column(
                 modifier = Modifier

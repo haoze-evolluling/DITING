@@ -49,6 +49,8 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.haoze.diting.permission.ModePermissionWarningAction
+import com.haoze.diting.ui.mode.AppWorkMode
 
 /**
  * Main container screen for Express Mode.
@@ -162,6 +164,7 @@ fun ExpressMainScreen(
                                     Text(localizedText("谛听") + " · " + localizedText("极速"))
                                 },
                                 actions = {
+                                    ModePermissionWarningAction(mode = AppWorkMode.EXPRESS)
                                     IconButton(onClick = onNavigateToModeSelection) {
                                         Icon(
                                             imageVector = Icons.Default.SwapHoriz,

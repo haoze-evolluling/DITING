@@ -520,6 +520,15 @@ internal fun translateCommonExact(text: String): String? = when (text) {
     "该元素放行规则已存在" -> "Element unhide rule already exists"
     "该规则为放行规则，请在白名单中添加" -> "This is an allow rule; please add it in the whitelist"
     "该规则为拦截规则，请在黑名单中添加" -> "This is a block rule; please add it in the blocklist"
+    "授予" -> "Grant"
+    "未授予权限警告" -> "Permission warning"
+    "VPN 连接权限未授予" -> "VPN permission not granted"
+    "通知权限未授予" -> "Notification permission not granted"
+    "忽略电池优化未授予" -> "Battery optimization not granted"
+    "没有授予这个权限。当前普通模式需要建立本地 VPN 通道接管与解析 DNS。" -> "This permission is not granted. Normal mode requires establishing a local VPN tunnel to manage and resolve DNS."
+    "没有授予这个权限。当前极速模式需要建立本地 VPN 通道接管与解析 DNS。" -> "This permission is not granted. Express mode requires establishing a local VPN tunnel to manage and resolve DNS."
+    "没有授予这个权限。需要前台通知权限以维持服务正常运行并显示当前状态。" -> "This permission is not granted. Foreground notification permission is required to keep the service running and display current status."
+    "没有授予这个权限。建议将谛听加入电池优化白名单，防止后台守护进程被系统强制回收。" -> "This permission is not granted. It is recommended to add DITING to the battery optimization whitelist to prevent background daemon termination."
     else -> null
 }
 

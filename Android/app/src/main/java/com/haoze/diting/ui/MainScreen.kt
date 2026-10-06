@@ -61,6 +61,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.IconButton
+import com.haoze.diting.permission.ModePermissionWarningAction
+import com.haoze.diting.ui.mode.AppWorkMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -193,6 +195,7 @@ fun MainScreen(
                                     Text(localizedText("谛听"))
                                 },
                                 actions = {
+                                    ModePermissionWarningAction(mode = AppWorkMode.NORMAL)
                                     IconButton(onClick = onNavigateToModeSelection) {
                                         Icon(
                                             imageVector = Icons.Default.SwapHoriz,

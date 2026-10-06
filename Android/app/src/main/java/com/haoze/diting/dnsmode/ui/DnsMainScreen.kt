@@ -22,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import com.haoze.diting.permission.ModePermissionWarningAction
+import com.haoze.diting.ui.mode.AppWorkMode
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -128,6 +130,7 @@ fun DnsMainScreen(
                         }
 
                         if (currentTab == DnsNavTab.HOME) {
+                            ModePermissionWarningAction(mode = AppWorkMode.DNS)
                             IconButton(onClick = onSelectMode) {
                                 Icon(
                                     imageVector = Icons.Default.SwapHoriz,
