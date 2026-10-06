@@ -529,6 +529,9 @@ internal fun translateCommonExact(text: String): String? = when (text) {
     "没有授予这个权限。当前极速模式需要建立本地 VPN 通道接管与解析 DNS。" -> "This permission is not granted. Express mode requires establishing a local VPN tunnel to manage and resolve DNS."
     "没有授予这个权限。需要前台通知权限以维持服务正常运行并显示当前状态。" -> "This permission is not granted. Foreground notification permission is required to keep the service running and display current status."
     "没有授予这个权限。建议将谛听加入电池优化白名单，防止后台守护进程被系统强制回收。" -> "This permission is not granted. It is recommended to add DITING to the battery optimization whitelist to prevent background daemon termination."
+    "应用列表访问未授予" -> "Installed apps permission not granted"
+    "没有授予这个权限。用于选择需要排除、禁止联网或进行 HTTPS 检查的应用，仅在本地读取。" -> "This permission is not granted. Used locally to select apps to exclude, block, or inspect."
+    "请在权限管理中允许“读取已安装应用列表”" -> "Please grant Installed Apps permission in app settings"
     else -> null
 }
 

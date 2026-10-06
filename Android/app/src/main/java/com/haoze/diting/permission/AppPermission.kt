@@ -18,7 +18,6 @@ import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.VpnKey
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.haoze.diting.notification.NotificationPermissionHelper
-import com.haoze.diting.ui.PermissionDisclosureSettings
 import com.haoze.diting.ui.mode.AppWorkMode
 
 /**
@@ -72,7 +71,7 @@ enum class AppPermission(
             VPN -> VpnService.prepare(context) == null
             NOTIFICATION -> NotificationPermissionHelper.hasPermission(context)
             BATTERY_OPTIMIZATION -> isBatteryOptimizationIgnored(context)
-            PACKAGE_QUERY -> PermissionDisclosureSettings.wasAppListAvailable(context)
+            PACKAGE_QUERY -> AppListPermissionHelper.isGranted(context)
             SYSTEM_ALERT_WINDOW -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 Settings.canDrawOverlays(context)
             } else {
@@ -134,9 +133,7 @@ enum class AppPermission(
                 } else null
             }
             PACKAGE_QUERY -> {
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.parse("package:${context.packageName}")
-                }
+                AppListPermissionHelper.createSettingsIntent(context)
             }
         }
     }
@@ -148,12 +145,7 @@ enum class AppPermission(
         }
 
         fun isAppListAccessible(context: Context): Boolean {
-            if (!PermissionDisclosureSettings.isAppListExplained(context)) return false
-            return runCatching {
-                val pm = context.packageManager
-                val apps = pm.getInstalledApplications(0)
-                apps.size > 1 || (apps.isNotEmpty() && apps.any { it.packageName != context.packageName })
-            }.getOrDefault(false)
+            return AppListPermissionHelper.isGranted(context)
         }
     }
 }

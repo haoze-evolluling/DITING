@@ -26,10 +26,10 @@ import com.haoze.diting.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.haoze.diting.permission.AppListPermissionHelper
 import com.haoze.diting.permission.AppPermission
 import com.haoze.diting.permission.ModePermissionStore
 import com.haoze.diting.ui.AppThemeSurface
-import com.haoze.diting.ui.PermissionDisclosureSettings
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.mode.overrideFadeTransition
@@ -71,25 +71,18 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) {
         refreshPermissionStates()
-        triggerAppListProbeAndRefresh()
     }
 
     private val appListPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { _ ->
-        triggerAppListProbeAndRefresh()
+        refreshPermissionStates()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         refreshPermissionStates()
-
-        if (PermissionDisclosureSettings.isAppListExplained(this) &&
-            !PermissionDisclosureSettings.wasAppListAvailable(this)
-        ) {
-            triggerAppListProbeAndRefresh()
-        }
 
         lifecycleScope.launch(Dispatchers.IO) {
             val ips = NetworkInfoProbe.probe(this@ModeOnboardingActivity)?.ipv4Addresses ?: emptyList()
@@ -143,18 +136,6 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         }
     }
 
-    private fun triggerAppListProbeAndRefresh() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            val isAccessible = AppPermission.isAppListAccessible(this@ModeOnboardingActivity)
-            withContext(Dispatchers.Main) {
-                if (isAccessible) {
-                    PermissionDisclosureSettings.markAppListAvailable(this@ModeOnboardingActivity)
-                }
-                refreshPermissionStates()
-            }
-        }
-    }
-
     private fun requestAppPermission(permission: AppPermission) {
         when (permission) {
             AppPermission.VPN -> {
@@ -192,22 +173,11 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
                 }
             }
             AppPermission.PACKAGE_QUERY -> {
-                val alreadyExplained = PermissionDisclosureSettings.isAppListExplained(this)
-                PermissionDisclosureSettings.setAppListExplained(this, true)
-                if (alreadyExplained && !PermissionDisclosureSettings.wasAppListAvailable(this)) {
-                    val intent = permission.createRequestIntent(this)
-                    if (intent != null) {
-                        try {
-                            genericSettingsLauncher.launch(intent)
-                            return
-                        } catch (_: ActivityNotFoundException) {}
-                    }
-                }
-                try {
-                    appListPermissionLauncher.launch("com.android.permission.GET_INSTALLED_APPS")
-                } catch (_: Exception) {
-                    triggerAppListProbeAndRefresh()
-                }
+                AppListPermissionHelper.requestPermission(
+                    activity = this,
+                    launcher = appListPermissionLauncher,
+                    context = this
+                )
             }
         }
     }

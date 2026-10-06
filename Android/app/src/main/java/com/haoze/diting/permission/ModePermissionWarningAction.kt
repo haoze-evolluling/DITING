@@ -64,7 +64,7 @@ fun ModePermissionWarningAction(
     }
 
     val missingPermissions = remember(readinessState) {
-        readinessState.missingRequired + readinessState.missingRecommended
+        readinessState.missingRequired + readinessState.getActiveRecommended(context)
     }
     val primaryMissing = missingPermissions.firstOrNull()
 
@@ -82,6 +82,12 @@ fun ModePermissionWarningAction(
     ) { result ->
         val granted = result.resultCode == Activity.RESULT_OK
         PermissionDisclosureSettings.updateVpnGrant(context, granted)
+        readinessState = ModeReadinessEvaluator.evaluate(context, mode)
+    }
+
+    val appListLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { _ ->
         readinessState = ModeReadinessEvaluator.evaluate(context, mode)
     }
 
@@ -115,6 +121,13 @@ fun ModePermissionWarningAction(
                     }
                 }
             }
+            AppPermission.PACKAGE_QUERY -> {
+                AppListPermissionHelper.requestPermission(
+                    activity = context as? Activity,
+                    launcher = appListLauncher,
+                    context = context
+                )
+            }
             else -> {
                 val intent = permission.createRequestIntent(context)
                 if (intent != null) {
@@ -142,6 +155,7 @@ fun ModePermissionWarningAction(
                 AppPermission.VPN -> "当前${mode.title}需要建立本地 VPN 通道接管与解析 DNS。"
                 AppPermission.NOTIFICATION -> "需要前台通知权限以维持服务正常运行并显示当前状态。"
                 AppPermission.BATTERY_OPTIMIZATION -> "建议将谛听加入电池优化白名单，防止后台守护进程被系统强制回收。"
+                AppPermission.PACKAGE_QUERY -> "用于选择需要排除、禁止联网或进行 HTTPS 检查的应用，仅在本地读取。"
                 else -> primaryMissing.summary
             }
             val dialogMessage = "没有授予这个权限。$explanation"

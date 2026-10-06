@@ -49,6 +49,13 @@ object ModeReadinessEvaluator {
             missingRec.add(AppPermission.BATTERY_OPTIMIZATION)
         }
 
+        // 功能推荐检查：应用列表访问权限 (仅普通模式涉及应用级分流、排除与检查)
+        if (mode == AppWorkMode.NORMAL) {
+            if (!AppPermission.PACKAGE_QUERY.isGranted(context)) {
+                missingRec.add(AppPermission.PACKAGE_QUERY)
+            }
+        }
+
         return ModeReadinessState(
             mode = mode,
             missingRequired = missingReq,

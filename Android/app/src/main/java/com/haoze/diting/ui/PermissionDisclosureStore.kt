@@ -13,17 +13,17 @@ object PermissionDisclosureSettings {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun isAppListExplained(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_APP_LIST_EXPLAINED, false)
+        com.haoze.diting.permission.AppListPermissionHelper.isDisclosureAccepted(context)
 
     fun setAppListExplained(context: Context, explained: Boolean) {
-        prefs(context).edit().putBoolean(KEY_APP_LIST_EXPLAINED, explained).apply()
+        com.haoze.diting.permission.AppListPermissionHelper.setDisclosureAccepted(context, explained)
     }
 
     fun wasAppListAvailable(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_APP_LIST_EVER_AVAILABLE, false)
+        com.haoze.diting.permission.AppListPermissionHelper.isGranted(context)
 
     fun markAppListAvailable(context: Context) {
-        prefs(context).edit().putBoolean(KEY_APP_LIST_EVER_AVAILABLE, true).apply()
+        // AppListPermissionHelper manages live detection dynamically
     }
 
     fun isVpnExplained(context: Context): Boolean =

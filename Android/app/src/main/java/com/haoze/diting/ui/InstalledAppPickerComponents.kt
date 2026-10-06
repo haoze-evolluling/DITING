@@ -1,8 +1,12 @@
 package com.haoze.diting.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.graphics.drawable.Drawable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.haoze.diting.permission.AppListPermissionHelper
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -316,17 +320,30 @@ internal data class AppListAccessState<T>(
 @Composable
 internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppListAccessState<T> {
     val context = LocalContext.current
+    val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
     var apps by remember { mutableStateOf<List<T>?>(null) }
     var unavailable by remember { mutableStateOf(false) }
     var showDisclosure by remember {
-        mutableStateOf(!PermissionDisclosureSettings.isAppListExplained(context))
+        mutableStateOf(!AppListPermissionHelper.isGranted(context) && !AppListPermissionHelper.isDisclosureAccepted(context))
     }
     var loadGeneration by remember { mutableIntStateOf(0) }
-    var awaitingSystemResult by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGrantedResult ->
+        val actuallyGranted = isGrantedResult || AppListPermissionHelper.isGranted(context)
+        if (actuallyGranted) {
+            unavailable = false
+            showDisclosure = false
+            loadGeneration++
+        } else {
+            unavailable = true
+            showDisclosure = false
+        }
+    }
 
     fun requestLoad() {
-        awaitingSystemResult = true
         unavailable = false
         apps = null
         loadGeneration++
@@ -334,28 +351,48 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
 
     LaunchedEffect(loadGeneration, showDisclosure) {
         if (showDisclosure) return@LaunchedEffect
-        awaitingSystemResult = true
+
+        if (!AppListPermissionHelper.isGranted(context)) {
+            if (AppListPermissionHelper.isDisclosureAccepted(context)) {
+                unavailable = true
+                apps = emptyList()
+            }
+            return@LaunchedEffect
+        }
+
+        unavailable = false
         val loaded = loader()
         if (loaded.isNotEmpty()) {
-            awaitingSystemResult = false
-            PermissionDisclosureSettings.markAppListAvailable(context)
             apps = loaded
             unavailable = false
         } else {
-            apps = emptyList()
-            unavailable = true
-            if (PermissionDisclosureSettings.wasAppListAvailable(context)) {
-                PermissionDisclosureSettings.setAppListExplained(context, false)
-                showDisclosure = true
+            if (!AppListPermissionHelper.isGranted(context)) {
+                apps = emptyList()
+                unavailable = true
+            } else {
+                apps = loaded
+                unavailable = false
             }
         }
     }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME && awaitingSystemResult) {
-                awaitingSystemResult = false
-                loadGeneration++
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val granted = AppListPermissionHelper.isGranted(context)
+                val currentApps = apps
+                if (granted) {
+                    if (unavailable || currentApps.isNullOrEmpty()) {
+                        unavailable = false
+                        showDisclosure = false
+                        loadGeneration++
+                    }
+                } else {
+                    if (!currentApps.isNullOrEmpty()) {
+                        apps = emptyList()
+                        unavailable = true
+                    }
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -367,9 +404,13 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
         unavailable = unavailable,
         showDisclosure = showDisclosure,
         allowAccess = {
-            PermissionDisclosureSettings.setAppListExplained(context, true)
+            AppListPermissionHelper.setDisclosureAccepted(context, true)
             showDisclosure = false
-            requestLoad()
+            if (AppListPermissionHelper.isGranted(context)) {
+                requestLoad()
+            } else {
+                AppListPermissionHelper.requestPermission(activity, permissionLauncher, context)
+            }
         },
         dismissDisclosure = {
             showDisclosure = false
@@ -377,10 +418,12 @@ internal fun <T> rememberAppListAccessState(loader: suspend () -> List<T>): AppL
             apps = emptyList()
         },
         retry = {
-            if (PermissionDisclosureSettings.isAppListExplained(context)) {
+            AppListPermissionHelper.setDisclosureAccepted(context, true)
+            showDisclosure = false
+            if (AppListPermissionHelper.isGranted(context)) {
                 requestLoad()
             } else {
-                showDisclosure = true
+                AppListPermissionHelper.requestPermission(activity, permissionLauncher, context)
             }
         }
     )
