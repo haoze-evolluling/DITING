@@ -81,6 +81,34 @@ func TestParsePortCheckJSON_Clean(t *testing.T) {
 	}
 }
 
+func TestParsePortCheckJSON_SelfProcess(t *testing.T) {
+	jsonSample := `{
+		"Listeners": [
+			{
+				"Protocol": "UDP",
+				"LocalAddress": "127.0.0.1:53",
+				"PID": 1234,
+				"ProcessName": "diting-service.exe"
+			}
+		],
+		"ICS": null
+	}`
+
+	conflicts, hasICS, diag := parsePortCheckJSON(jsonSample, false, 1234)
+	if hasICS {
+		t.Fatalf("expected hasICS = false")
+	}
+	if len(conflicts) != 1 {
+		t.Fatalf("expected 1 conflict entry")
+	}
+	if !conflicts[0].IsSelf {
+		t.Errorf("expected conflict to be flagged as IsSelf")
+	}
+	if !strings.Contains(diag, "谛听 (DITING) 核心服务监听中") {
+		t.Errorf("expected diagnosis to acknowledge DITING self service: %s", diag)
+	}
+}
+
 func TestWindowsPortChecker_LiveCheck(t *testing.T) {
 	checker := NewPortChecker(nil)
 	res, err := checker.CheckPort53(context.Background())

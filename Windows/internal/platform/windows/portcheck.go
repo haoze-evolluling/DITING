@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"strings"
 )
 
@@ -17,6 +18,7 @@ type PortConflict struct {
 	ProcessName  string `json:"processName"`  // 占用进程名称
 	ServiceName  string `json:"serviceName,omitempty"`
 	IsICS        bool   `json:"isICS"`     // 是否为 Windows ICS (SharedAccess) 网络共享服务
+	IsSelf       bool   `json:"isSelf"`    // 是否为谛听服务自身占用的端口
 	Diagnosis    string `json:"diagnosis"` // 针对性诊断与处置建议
 }
 
@@ -110,7 +112,18 @@ func (c *WindowsPortChecker) CheckPort53(ctx context.Context) (*PortCheckResult,
 		}, nil
 	}
 
-	conflicts, hasICS, diag := parsePortCheckJSON(out, available)
+	conflicts, hasICS, diag := parsePortCheckJSON(out, available, os.Getpid())
+	hasOtherConflict := false
+	for _, conf := range conflicts {
+		if !conf.IsSelf {
+			hasOtherConflict = true
+			break
+		}
+	}
+	if !hasOtherConflict && !hasICS {
+		available = true
+	}
+
 	return &PortCheckResult{
 		Available:  available,
 		Conflicts:  conflicts,
@@ -137,7 +150,12 @@ func testTCPBind(addr string) bool {
 	return true
 }
 
-func parsePortCheckJSON(out string, available bool) ([]PortConflict, bool, string) {
+func parsePortCheckJSON(out string, available bool, selfPIDs ...int) ([]PortConflict, bool, string) {
+	selfPID := 0
+	if len(selfPIDs) > 0 {
+		selfPID = selfPIDs[0]
+	}
+
 	var res portScriptResult
 	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &res); err != nil {
 		return nil, false, "解析系统端口诊断信息失败: " + err.Error()
@@ -162,11 +180,18 @@ func parsePortCheckJSON(out string, available bool) ([]PortConflict, bool, strin
 
 	conflicts := make([]PortConflict, 0, len(rawList))
 	var diagLines []string
+	hasSelfListener := false
 
 	for _, item := range rawList {
-		isICS := hasICS && (item.PID == icsPID || strings.Contains(strings.ToLower(item.ProcessName), "svchost") && hasICS)
+		isSelf := (selfPID > 0 && item.PID == selfPID)
+		if isSelf {
+			hasSelfListener = true
+		}
+		isICS := !isSelf && hasICS && (item.PID == icsPID || strings.Contains(strings.ToLower(item.ProcessName), "svchost") && hasICS)
 		diagnosis := ""
-		if isICS {
+		if isSelf {
+			diagnosis = fmt.Sprintf("进程 PID %d (%s) 为谛听 (DITING) 服务自身正在监听 %s (%s)。", item.PID, item.ProcessName, item.LocalAddress, item.Protocol)
+		} else if isICS {
 			diagnosis = fmt.Sprintf("检测到 Windows 网络连接共享服务 (SharedAccess / ICS) 正在运行 (PID: %d)。ICS 会在 0.0.0.0:53 上占用 UDP，可能阻碍或干扰 DNS 本地代理。建议在服务管理器 (services.msc) 中将 'Internet Connection Sharing (ICS)' 服务停止并设置为禁用，或在管理员终端执行 'sc stop SharedAccess'。", item.PID)
 			diagLines = append(diagLines, diagnosis)
 		} else {
@@ -182,11 +207,15 @@ func parsePortCheckJSON(out string, available bool) ([]PortConflict, bool, strin
 			ProcessName:  item.ProcessName,
 			ServiceName:  ternary(isICS, "SharedAccess", ""),
 			IsICS:        isICS,
+			IsSelf:       isSelf,
 			Diagnosis:    diagnosis,
 		})
 	}
 
 	if len(diagLines) == 0 {
+		if hasSelfListener {
+			return conflicts, hasICS, "127.0.0.1:53 当前由谛听 (DITING) 核心服务监听中，无外部端口冲突。"
+		}
 		if available {
 			return conflicts, hasICS, "53 端口空闲且可用，无端口冲突。"
 		}

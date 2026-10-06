@@ -118,6 +118,9 @@ func TestWindowsDNSManager_StaticAdapterRestore(t *testing.T) {
 	if !strings.Contains(batContent, "8.8.4.4 index=2") {
 		t.Errorf("expected secondary DNS in bat script, got: %s", batContent)
 	}
+	if !strings.Contains(batContent, "static 2001:4860:4860::8888 primary") {
+		t.Errorf("expected static IPv6 2001:4860:4860::8888 in bat script, got: %s", batContent)
+	}
 
 	if err := mgr.Restore(context.Background()); err != nil {
 		t.Fatalf("Restore failed: %v", err)

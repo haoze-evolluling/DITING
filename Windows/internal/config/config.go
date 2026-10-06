@@ -1,6 +1,8 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/haoze-evolluling/diting/windows/internal/core"
@@ -12,6 +14,49 @@ type DNSConfig struct {
 	TCPAddresses []string      `json:"tcpAddresses"`
 	ReadTimeout  time.Duration `json:"readTimeout"`
 	WriteTimeout time.Duration `json:"writeTimeout"`
+}
+
+// UnmarshalJSON 支持字符串 (如 "5s") 与数字纳秒对 time.Duration 的反序列化
+func (c *DNSConfig) UnmarshalJSON(data []byte) error {
+	type Alias DNSConfig
+	aux := &struct {
+		ReadTimeout  any `json:"readTimeout"`
+		WriteTimeout any `json:"writeTimeout"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	if aux.ReadTimeout != nil {
+		d, err := parseDurationValue(aux.ReadTimeout)
+		if err != nil {
+			return fmt.Errorf("解析 readTimeout 失败: %w", err)
+		}
+		c.ReadTimeout = d
+	}
+	if aux.WriteTimeout != nil {
+		d, err := parseDurationValue(aux.WriteTimeout)
+		if err != nil {
+			return fmt.Errorf("解析 writeTimeout 失败: %w", err)
+		}
+		c.WriteTimeout = d
+	}
+	return nil
+}
+
+func parseDurationValue(v any) (time.Duration, error) {
+	switch val := v.(type) {
+	case string:
+		return time.ParseDuration(val)
+	case float64:
+		return time.Duration(val), nil
+	case int64:
+		return time.Duration(val), nil
+	default:
+		return 0, fmt.Errorf("不支持的 duration 类型: %T", v)
+	}
 }
 
 // IPCConfig 本地特权服务 IPC 接口配置

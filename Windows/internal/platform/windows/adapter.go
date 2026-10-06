@@ -121,6 +121,8 @@ Get-NetAdapter | ForEach-Object {
     $v6dns = @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 23 }).ServerAddresses);
     $reg = Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue;
     $v4dhcp = if ($reg) { ($reg.EnableDHCP -eq 1) -and ([string]::IsNullOrWhiteSpace($reg.NameServer)) } else { $true };
+    $reg6 = Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue;
+    $v6dhcp = if ($reg6) { [string]::IsNullOrWhiteSpace($reg6.NameServer) } else { $true };
     [PSCustomObject]@{
         ID = $a.InterfaceGuid;
         Name = $a.Name;
@@ -129,7 +131,7 @@ Get-NetAdapter | ForEach-Object {
         Status = [string]$a.Status;
         Gateway = [string]$gw;
         IPv4DHCP = [bool]$v4dhcp;
-        IPv6DHCP = [bool]$true;
+        IPv6DHCP = [bool]$v6dhcp;
         IPv4DNS = $v4dns;
         IPv6DNS = $v6dns;
         Virtual = [bool]$a.Virtual;

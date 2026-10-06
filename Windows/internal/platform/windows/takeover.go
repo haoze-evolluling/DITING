@@ -141,15 +141,15 @@ func (m *WindowsDNSManager) Takeover(ctx context.Context, adapters []AdapterInfo
 
 // applyTakeoverOnAdapter 在指定网卡上设置 IPv4 为 127.0.0.1，IPv6 为 ::1
 func (m *WindowsDNSManager) applyTakeoverOnAdapter(ctx context.Context, a AdapterState) error {
-	// 使用 netsh / PowerShell 设置 IPv4
+	// 优先使用 PowerShell 同时配置双栈接管地址
 	cmdV4 := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("127.0.0.1","%s")`, a.Index, "::1")
 	out, err := m.executor.RunPowerShell(ctx, cmdV4)
 	if err != nil {
-		// 回退使用 netsh 尝试分别设置 IPv4 与 IPv6
-		_, errV4 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", "127.0.0.1", "primary")
-		_, errV6 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", "::1", "primary")
-		if errV4 != nil && errV6 != nil {
-			return fmt.Errorf("PowerShell 设置失败 (%s), netsh 设置 IPv4/IPv6 亦失败: %v / %v", out, errV4, errV6)
+		// 回退使用 netsh 尝试分别设置 IPv4 与 IPv6 (带 validate=no 避免网络探测挂起)
+		_, errV4 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", "127.0.0.1", "primary", "validate=no")
+		_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", "::1", "primary", "validate=no")
+		if errV4 != nil {
+			return fmt.Errorf("PowerShell 设置失败 (%s), netsh 设置 IPv4 亦失败: %w", out, errV4)
 		}
 	}
 	return nil
@@ -192,48 +192,79 @@ func (m *WindowsDNSManager) RestoreAdapters(ctx context.Context, adapters []Adap
 func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterState) error {
 	var errs []string
 
-	// 还原 IPv4
-	if a.IPv4DHCP || len(a.IPv4DNS) == 0 {
-		// 恢复为 DHCP
+	v4IsDHCP := a.IPv4DHCP || len(a.IPv4DNS) == 0
+	v6IsDHCP := a.IPv6DHCP || len(a.IPv6DNS) == 0
+
+	// 1. 若双栈全为 DHCP，一次性通过 ResetServerAddresses 还原
+	if v4IsDHCP && v6IsDHCP {
 		_, err := m.executor.RunPowerShell(ctx, fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ResetServerAddresses`, a.Index))
 		if err != nil {
-			_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
-			if errNetsh != nil {
-				errs = append(errs, fmt.Sprintf("恢复 IPv4 DHCP 失败: %v", errNetsh))
+			_, errV4 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
+			_, errV6 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
+			if errV4 != nil {
+				errs = append(errs, fmt.Sprintf("netsh 恢复 IPv4 DHCP 失败: %v", errV4))
+			}
+			if errV6 != nil {
+				errs = append(errs, fmt.Sprintf("netsh 恢复 IPv6 DHCP 失败: %v", errV6))
 			}
 		}
+		if len(errs) > 0 {
+			return fmt.Errorf("还原网卡 [%s] 存在错误: %s", a.Name, strings.Join(errs, "; "))
+		}
+		return nil
+	}
+
+	// 2. 若双栈全为静态配置，优先尝试一次性 PowerShell 还原全部 DNS 地址
+	if !v4IsDHCP && !v6IsDHCP {
+		allServers := append([]string{}, a.IPv4DNS...)
+		allServers = append(allServers, a.IPv6DNS...)
+		joined := strings.Join(allServers, `","`)
+		psCmd := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("%s")`, a.Index, joined)
+		_, err := m.executor.RunPowerShell(ctx, psCmd)
+		if err == nil {
+			return nil
+		}
+	}
+
+	// 3. 独立分别处理 IPv4 还原
+	if v4IsDHCP {
+		_, err := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("恢复 IPv4 DHCP 失败: %v", err))
+		}
 	} else {
-		// 恢复静态 IPv4 DNS
 		servers := strings.Join(a.IPv4DNS, `","`)
 		psCmd := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("%s")`, a.Index, servers)
 		_, err := m.executor.RunPowerShell(ctx, psCmd)
 		if err != nil {
-			// 回退 netsh 逐条配置
 			for i, dnsIP := range a.IPv4DNS {
 				if i == 0 {
-					_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", dnsIP, "primary")
+					_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", dnsIP, "primary", "validate=no")
 					if errNetsh != nil {
 						errs = append(errs, fmt.Sprintf("netsh 设置静态 IPv4 首选 DNS 失败: %v", errNetsh))
 					}
 				} else {
-					_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "add", "dnsservers", fmt.Sprintf("name=%s", a.Name), dnsIP, fmt.Sprintf("index=%d", i+1))
+					_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "add", "dnsservers", fmt.Sprintf("name=%s", a.Name), dnsIP, fmt.Sprintf("index=%d", i+1), "validate=no")
 				}
 			}
 		}
 	}
 
-	// 还原 IPv6
-	if a.IPv6DHCP || len(a.IPv6DNS) == 0 {
-		_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
+	// 4. 独立分别处理 IPv6 还原
+	if v6IsDHCP {
+		_, err := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("恢复 IPv6 DHCP 失败: %v", err))
+		}
 	} else {
 		for i, dnsIP := range a.IPv6DNS {
 			if i == 0 {
-				_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", dnsIP, "primary")
+				_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", dnsIP, "primary", "validate=no")
 				if errNetsh != nil {
 					errs = append(errs, fmt.Sprintf("netsh 设置静态 IPv6 首选 DNS 失败: %v", errNetsh))
 				}
 			} else {
-				_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "add", "dnsservers", fmt.Sprintf("name=%s", a.Name), dnsIP, fmt.Sprintf("index=%d", i+1))
+				_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "add", "dnsservers", fmt.Sprintf("name=%s", a.Name), dnsIP, fmt.Sprintf("index=%d", i+1), "validate=no")
 			}
 		}
 	}
@@ -268,9 +299,9 @@ func GenerateRestoreScript(adapters []AdapterState, outputPath string) error {
 		} else {
 			for i, dnsIP := range a.IPv4DNS {
 				if i == 0 {
-					sb.WriteString(fmt.Sprintf("netsh interface ipv4 set dnsservers name=\"%s\" static %s primary\r\n", a.Name, dnsIP))
+					sb.WriteString(fmt.Sprintf("netsh interface ipv4 set dnsservers name=\"%s\" static %s primary validate=no\r\n", a.Name, dnsIP))
 				} else {
-					sb.WriteString(fmt.Sprintf("netsh interface ipv4 add dnsservers name=\"%s\" %s index=%d\r\n", a.Name, dnsIP, i+1))
+					sb.WriteString(fmt.Sprintf("netsh interface ipv4 add dnsservers name=\"%s\" %s index=%d validate=no\r\n", a.Name, dnsIP, i+1))
 				}
 			}
 		}
@@ -280,9 +311,9 @@ func GenerateRestoreScript(adapters []AdapterState, outputPath string) error {
 		} else {
 			for i, dnsIP := range a.IPv6DNS {
 				if i == 0 {
-					sb.WriteString(fmt.Sprintf("netsh interface ipv6 set dnsservers name=\"%s\" static %s primary\r\n", a.Name, dnsIP))
+					sb.WriteString(fmt.Sprintf("netsh interface ipv6 set dnsservers name=\"%s\" static %s primary validate=no\r\n", a.Name, dnsIP))
 				} else {
-					sb.WriteString(fmt.Sprintf("netsh interface ipv6 add dnsservers name=\"%s\" %s index=%d\r\n", a.Name, dnsIP, i+1))
+					sb.WriteString(fmt.Sprintf("netsh interface ipv6 add dnsservers name=\"%s\" %s index=%d validate=no\r\n", a.Name, dnsIP, i+1))
 				}
 			}
 		}

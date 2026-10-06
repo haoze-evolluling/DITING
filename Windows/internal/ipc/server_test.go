@@ -99,6 +99,19 @@ func (m *mockController) CheckPortConflicts(ctx context.Context) (*windows.PortC
 	}, nil
 }
 
+func (m *mockController) GetAdapters(ctx context.Context) ([]windows.AdapterInfo, error) {
+	return []windows.AdapterInfo{
+		{
+			ID:         "{GUID-TEST}",
+			Name:       "WLAN",
+			Index:      8,
+			Status:     "Up",
+			Gateway:    "192.168.1.1",
+			IsPhysical: true,
+		},
+	}, nil
+}
+
 func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 	mockCtrl := &mockController{}
 	token := "test-secret-token"
@@ -168,7 +181,13 @@ func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 		t.Fatalf("CheckPortConflicts failed: err=%v, portRes=%+v", err, portRes)
 	}
 
-	// 6. 测试 WebSocket 事件订阅
+	// 6. 测试 GetAdapters
+	adapters, err := client.GetAdapters(ctx)
+	if err != nil || len(adapters) != 1 || adapters[0].Name != "WLAN" {
+		t.Fatalf("GetAdapters failed: err=%v, adapters=%+v", err, adapters)
+	}
+
+	// 7. 测试 WebSocket 事件订阅
 	eventsCh, unsub, err := client.SubscribeEvents(ctx)
 	if err != nil {
 		t.Fatalf("SubscribeEvents failed: %v", err)

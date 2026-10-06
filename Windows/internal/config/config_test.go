@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -46,5 +47,33 @@ func TestSaveAndLoadConfig(t *testing.T) {
 	}
 	if reloaded.DNS.ReadTimeout != 10*time.Second {
 		t.Errorf("ReadTimeout mismatch: %v", reloaded.DNS.ReadTimeout)
+	}
+}
+
+func TestConfig_StringDuration(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.json")
+
+	rawJSON := `{
+		"dns": {
+			"readTimeout": "3s",
+			"writeTimeout": "2500ms"
+		}
+	}`
+
+	if err := os.WriteFile(cfgPath, []byte(rawJSON), 0644); err != nil {
+		t.Fatalf("write config failed: %v", err)
+	}
+
+	cfg, err := LoadConfig(cfgPath)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+
+	if cfg.DNS.ReadTimeout != 3*time.Second {
+		t.Errorf("expected ReadTimeout 3s, got %v", cfg.DNS.ReadTimeout)
+	}
+	if cfg.DNS.WriteTimeout != 2500*time.Millisecond {
+		t.Errorf("expected WriteTimeout 2500ms, got %v", cfg.DNS.WriteTimeout)
 	}
 }

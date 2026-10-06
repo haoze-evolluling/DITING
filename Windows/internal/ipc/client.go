@@ -108,6 +108,18 @@ func (c *Client) CheckPortConflicts(ctx context.Context) (*windows.PortCheckResu
 	return resp.Data, nil
 }
 
+// GetAdapters 枚举系统所有网卡详情
+func (c *Client) GetAdapters(ctx context.Context) ([]windows.AdapterInfo, error) {
+	var resp Response[[]windows.AdapterInfo]
+	if err := c.doRequest(ctx, http.MethodGet, "/api/v1/adapters", nil, &resp); err != nil {
+		return nil, err
+	}
+	if !resp.Success {
+		return nil, fmt.Errorf("获取网卡列表失败: %s", resp.Error)
+	}
+	return resp.Data, nil
+}
+
 // HealthCheck 健康探针检测
 func (c *Client) HealthCheck(ctx context.Context) error {
 	var resp Response[string]

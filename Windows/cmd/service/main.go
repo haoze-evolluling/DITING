@@ -230,6 +230,16 @@ func (p *program) StopDNS(ctx context.Context) error {
 		return nil
 	}
 
+	// 关键保护：若当前处于系统 DNS 接管状态，必须先安全还原网卡，防止系统网络彻底断连
+	if p.takeoverMgr != nil && p.takeoverMgr.IsTakeoverActive() {
+		log.Println("[DNS] 停止 DNS 监听前检测到接管生效中，自动先还原系统 DNS 接管...")
+		if err := p.takeoverMgr.Restore(ctx); err != nil {
+			log.Printf("[DNS警告] 自动还原系统 DNS 接管失败: %v\n", err)
+		} else if p.ipcServer != nil {
+			p.ipcServer.Broadcast(ipc.Event{Type: "takeover", Timestamp: time.Now().UnixMilli(), Data: "disabled"})
+		}
+	}
+
 	if p.server != nil {
 		_ = p.server.Shutdown()
 		p.server = nil
@@ -241,6 +251,17 @@ func (p *program) StopDNS(ctx context.Context) error {
 
 // EnableTakeover 实现 ServiceController 接口
 func (p *program) EnableTakeover(ctx context.Context) error {
+	p.mu.Lock()
+	dnsRun := p.dnsRunning
+	p.mu.Unlock()
+
+	if !dnsRun {
+		log.Println("[接管] DNS 服务未处于运行状态，自动先启动本地 DNS 监听器...")
+		if err := p.StartDNS(ctx); err != nil {
+			return fmt.Errorf("接管前启动 DNS 监听器失败: %w", err)
+		}
+	}
+
 	adapters, err := p.adapterScan.GetActivePhysicalAdapters(ctx)
 	if err != nil {
 		return fmt.Errorf("枚举活动物理网卡失败: %w", err)
@@ -263,6 +284,14 @@ func (p *program) DisableTakeover(ctx context.Context) error {
 	}
 	log.Println("[接管] 已成功还原物理网卡 DNS 设置")
 	return nil
+}
+
+// GetAdapters 实现 ServiceController 接口
+func (p *program) GetAdapters(ctx context.Context) ([]windows.AdapterInfo, error) {
+	if p.adapterScan == nil {
+		p.adapterScan = windows.NewAdapterScanner(windows.NewDefaultExecutor())
+	}
+	return p.adapterScan.ScanAll(ctx)
 }
 
 // GetStatus 实现 ServiceController 接口
@@ -349,9 +378,15 @@ func printVersion() {
 	fmt.Println("DNS engine: miekg/dns | Platform: Windows | IPC: HTTP/WebSocket")
 }
 
-func executeEmergencyRestore() {
+func executeEmergencyRestore(customConfigPath string) {
 	fmt.Println("[谛听] 正在执行独立离线 DNS 紧急恢复...")
-	store := windows.NewFileStateStore("")
+	statePath := ""
+	if customConfigPath != "" {
+		if cfg, err := config.LoadConfig(customConfigPath); err == nil {
+			statePath = cfg.Takeover.StateFilePath
+		}
+	}
+	store := windows.NewFileStateStore(statePath)
 	exec := windows.NewDefaultExecutor()
 	mgr := windows.NewDNSManager(exec, store, Version)
 	healed, err := store.CheckAndSelfHeal(context.Background(), mgr)
@@ -383,7 +418,7 @@ func executePortDiagnostics() {
 	if len(res.Conflicts) > 0 {
 		fmt.Println("现存 53 端口监听实体:")
 		for i, c := range res.Conflicts {
-			fmt.Printf("  [%d] %s %s (PID: %d, 进程: %s, ICS: %v)\n", i+1, c.Protocol, c.LocalAddress, c.PID, c.ProcessName, c.IsICS)
+			fmt.Printf("  [%d] %s %s (PID: %d, 进程: %s, ICS: %v, 自身: %v)\n", i+1, c.Protocol, c.LocalAddress, c.PID, c.ProcessName, c.IsICS, c.IsSelf)
 		}
 	}
 }
@@ -412,7 +447,7 @@ func main() {
 	}
 
 	if *emergencyRestore {
-		executeEmergencyRestore()
+		executeEmergencyRestore(*configPath)
 		return
 	}
 
@@ -425,6 +460,15 @@ func main() {
 	if *configPath != "" {
 		absPath, _ := filepath.Abs(*configPath)
 		svcConfig.Arguments = append(svcConfig.Arguments, "-config", absPath)
+	}
+	if *listenPort > 0 {
+		svcConfig.Arguments = append(svcConfig.Arguments, "-port", fmt.Sprintf("%d", *listenPort))
+	}
+	if *ipcAddr != "" {
+		svcConfig.Arguments = append(svcConfig.Arguments, "-ipc-addr", *ipcAddr)
+	}
+	if *token != "" {
+		svcConfig.Arguments = append(svcConfig.Arguments, "-token", *token)
 	}
 
 	prg := &program{

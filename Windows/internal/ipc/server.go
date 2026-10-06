@@ -22,6 +22,7 @@ type ServiceController interface {
 	DisableTakeover(ctx context.Context) error
 	GetStatus(ctx context.Context) (*StatusResponse, error)
 	CheckPortConflicts(ctx context.Context) (*windows.PortCheckResult, error)
+	GetAdapters(ctx context.Context) ([]windows.AdapterInfo, error)
 }
 
 var upgrader = websocket.Upgrader{
@@ -92,6 +93,7 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/v1/takeover/enable", s.withAuth(s.handleTakeoverEnable))
 	mux.HandleFunc("/api/v1/takeover/disable", s.withAuth(s.handleTakeoverDisable))
 	mux.HandleFunc("/api/v1/status", s.withAuth(s.handleStatus))
+	mux.HandleFunc("/api/v1/adapters", s.withAuth(s.handleAdapters))
 	mux.HandleFunc("/api/v1/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/portcheck", s.withAuth(s.handlePortCheck))
 	mux.HandleFunc("/api/v1/health", s.handleHealth)
@@ -180,7 +182,10 @@ func (s *Server) runHub() {
 				default:
 					// 客户端发送过慢，关闭并注销
 					go func(c *wsClient) {
-						s.unregister <- c
+						select {
+						case s.unregister <- c:
+						case <-s.stopCh:
+						}
 					}(client)
 				}
 			}
@@ -301,6 +306,19 @@ func (s *Server) handlePortCheck(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, Response[*windows.PortCheckResult]{Success: true, Data: result})
 }
 
+func (s *Server) handleAdapters(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, Response[any]{Success: false, Error: "method not allowed"})
+		return
+	}
+	adapters, err := s.controller.GetAdapters(r.Context())
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, Response[[]windows.AdapterInfo]{Success: true, Data: adapters})
+}
+
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, Response[string]{Success: true, Data: "ok"})
 }
@@ -320,7 +338,13 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		conn: conn,
 		send: make(chan Event, 64),
 	}
-	s.register <- client
+
+	select {
+	case s.register <- client:
+	case <-s.stopCh:
+		_ = conn.Close()
+		return
+	}
 
 	go s.writePump(client)
 	go s.readPump(client)
@@ -328,7 +352,10 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) readPump(c *wsClient) {
 	defer func() {
-		s.unregister <- c
+		select {
+		case s.unregister <- c:
+		case <-s.stopCh:
+		}
 	}()
 	c.conn.SetReadLimit(512)
 	_ = c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
