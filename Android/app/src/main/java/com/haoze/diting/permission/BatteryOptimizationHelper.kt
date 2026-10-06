@@ -30,8 +30,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
  */
 object BatteryOptimizationHelper {
 
-    private const val CACHE_TTL_MS = 1500L
-
     @Volatile
     private var cachedIsIgnored: Boolean? = null
 
@@ -50,29 +48,31 @@ object BatteryOptimizationHelper {
      * 判断当前应用是否已处于系统“忽略电池优化”（白名单）状态。
      *
      * 1. Android 6.0 (API 23) 以下设备无 Doze 电池优化机制，恒定返回 true。
-     * 2. 具备短时内存缓存，避免在 Compose 高频重组或渲染时频繁发起 Binder IPC。
-     * 3. 安全获取 PowerManager 服务并捕获异常，杜绝由于系统服务缺失或异常导致的崩溃。
+     * 2. 安全获取 PowerManager 服务并捕获异常，杜绝由于系统服务缺失或异常导致的崩溃。
+     * 3. 默认执行实时系统查询；当 forceRefresh 为 false 时仅对极高频重复调用提供 200ms 防抖。
      */
-    fun isGranted(context: Context): Boolean {
+    fun isGranted(context: Context, forceRefresh: Boolean = true): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             return true
         }
 
-        val now = System.currentTimeMillis()
-        val cached = cachedIsIgnored
-        if (cached != null && (now - lastQueryTimestamp) < CACHE_TTL_MS) {
-            return cached
+        if (!forceRefresh) {
+            val now = System.currentTimeMillis()
+            val cached = cachedIsIgnored
+            if (cached != null && (now - lastQueryTimestamp) < 200L) {
+                return cached
+            }
         }
 
         val result = try {
-            val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+            val powerManager = context.applicationContext.getSystemService(Context.POWER_SERVICE) as? PowerManager
             powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
         } catch (_: Exception) {
             false
         }
 
         cachedIsIgnored = result
-        lastQueryTimestamp = now
+        lastQueryTimestamp = System.currentTimeMillis()
         return result
     }
 
@@ -139,7 +139,8 @@ object BatteryOptimizationHelper {
         val settingsIntent = createSettingsIntent()
         val appSettingsIntent = createAppSettingsIntent(context)
 
-        if (context !is Activity) {
+        // 仅在无 Launcher 且 Context 为非 Activity 时附加 NEW_TASK，避免 Launcher 结果接收异常
+        if (context !is Activity && launcher == null) {
             requestIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             appSettingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -193,6 +194,7 @@ object BatteryOptimizationHelper {
     /**
      * Compose 级统一电池优化状态监听。
      * 自动随 Lifecycle ON_RESUME 与 Launcher 返回刷新最新状态，保证实时双向同步。
+     * 支持在授权成功后触发 onGranted 回调以继续当前挂起操作，并具备防重复触发保护。
      */
     @Composable
     fun rememberBatteryOptimizationState(
@@ -205,11 +207,12 @@ object BatteryOptimizationHelper {
             mutableStateOf(isGranted(context))
         }
 
-        fun refresh() {
+        fun refresh(triggerContinuation: Boolean = false) {
             invalidateCache()
+            val wasIgnored = isIgnored
             val current = isGranted(context)
             isIgnored = current
-            if (current) {
+            if (current && (!wasIgnored || triggerContinuation)) {
                 onGranted?.invoke()
             }
         }
@@ -217,13 +220,13 @@ object BatteryOptimizationHelper {
         val launcher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartActivityForResult()
         ) {
-            refresh()
+            refresh(triggerContinuation = true)
         }
 
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_RESUME) {
-                    refresh()
+                    refresh(triggerContinuation = false)
                 }
             }
             lifecycleOwner.lifecycle.addObserver(observer)
@@ -240,11 +243,15 @@ object BatteryOptimizationHelper {
                         requestPermission(
                             context = context,
                             launcher = launcher,
-                            onAlreadyGranted = ::refresh
+                            onAlreadyGranted = {
+                                refresh(triggerContinuation = true)
+                            }
                         )
+                    } else {
+                        onGranted?.invoke()
                     }
                 },
-                refresh = ::refresh
+                refresh = { refresh(triggerContinuation = false) }
             )
         }
     }

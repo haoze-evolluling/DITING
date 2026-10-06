@@ -71,6 +71,7 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
     private val genericSettingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
+        BatteryOptimizationHelper.invalidateCache()
         refreshPermissionStates()
     }
 

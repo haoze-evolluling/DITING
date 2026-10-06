@@ -85,6 +85,13 @@ class MainActivity : AppLocalizedActivity() {
         prepareVpn()
     }
 
+    private val batteryOptimizationLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        com.haoze.diting.permission.BatteryOptimizationHelper.invalidateCache()
+        prepareVpn()
+    }
+
     private val mainViewModel: MainViewModel by viewModels()
 
     private val settingsLauncher = registerForActivityResult(
@@ -435,6 +442,7 @@ class MainActivity : AppLocalizedActivity() {
             recreate()
             return
         }
+        com.haoze.diting.permission.BatteryOptimizationHelper.invalidateCache()
         hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this)
         currentWorkMode = WorkModeStore.getAppWorkMode(this)
         applyRecentsPrivacySetting()
@@ -460,13 +468,11 @@ class MainActivity : AppLocalizedActivity() {
         super.onStop()
     }
 
-    private fun applyRecentsPrivacySetting() {
+    private fun applyRecentsPrivacySetting() =
         RecentsPrivacyController.apply(this, SystemSettingsStore.isHideFromRecentsEnabled(this))
-    }
 
-    private fun applyRecentsPrivacy(hideFromRecents: Boolean) {
+    private fun applyRecentsPrivacy(hideFromRecents: Boolean) =
         RecentsPrivacyController.apply(this, hideFromRecents)
-    }
 
     private fun handleAutoStartIfNeeded(intent: Intent?) {
         if (intent?.getBooleanExtra(EXTRA_AUTO_START_VPN, false) != true) return
@@ -475,8 +481,7 @@ class MainActivity : AppLocalizedActivity() {
             com.haoze.diting.dnsmode.backend.DnsModeManager.startService(this)
             return
         }
-        val isRunning = com.haoze.diting.express.ExpressModeLauncher.isCurrentModeRunning(this)
-        if (!isRunning) {
+        if (!com.haoze.diting.express.ExpressModeLauncher.isCurrentModeRunning(this)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermissionHelper.hasPermission(this)) {
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
@@ -486,21 +491,17 @@ class MainActivity : AppLocalizedActivity() {
     }
 
     private fun onToggleVpn(isRunning: Boolean) {
-        if (currentWorkMode == AppWorkMode.DNS) {
-            return
-        }
+        if (currentWorkMode == AppWorkMode.DNS) return
         if (currentWorkMode == AppWorkMode.EXPRESS) {
             com.haoze.diting.express.ExpressModeLauncher.toggle(this, ::prepareVpn)
             return
         }
         if (isRunning) {
             stopVpnService()
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermissionHelper.hasPermission(this)) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         } else {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !NotificationPermissionHelper.hasPermission(this)) {
-                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                prepareVpn()
-            }
+            prepareVpn()
         }
     }
 
@@ -537,7 +538,11 @@ class MainActivity : AppLocalizedActivity() {
                 }
             }
             PermissionDisclosure.BATTERY_OPTIMIZATION -> {
-                com.haoze.diting.permission.BatteryOptimizationHelper.requestPermission(this)
+                com.haoze.diting.permission.BatteryOptimizationHelper.requestPermission(
+                    context = this,
+                    launcher = batteryOptimizationLauncher,
+                    onAlreadyGranted = { prepareVpn() }
+                )
             }
         }
     }
@@ -555,6 +560,7 @@ class MainActivity : AppLocalizedActivity() {
             }
             PermissionDisclosure.BATTERY_OPTIMIZATION -> {
                 com.haoze.diting.permission.BatteryOptimizationHelper.setDismissed(this, true)
+                prepareVpn()
             }
         }
     }
@@ -562,18 +568,17 @@ class MainActivity : AppLocalizedActivity() {
     private fun startVpnService() {
         if (currentWorkMode == AppWorkMode.EXPRESS) {
             com.haoze.diting.express.ExpressModeLauncher.start(this)
-            return
+        } else {
+            ContextCompat.startForegroundService(this, DnsVpnService.startIntent(this))
         }
-        // DnsVpnService reads the selected provider (or race list) on its own.
-        ContextCompat.startForegroundService(this, DnsVpnService.startIntent(this))
     }
 
     private fun stopVpnService() {
         if (currentWorkMode == AppWorkMode.EXPRESS) {
             com.haoze.diting.express.ExpressModeLauncher.stop(this)
-            return
+        } else {
+            startService(DnsVpnService.stopIntent(this))
         }
-        startService(DnsVpnService.stopIntent(this))
     }
 
     companion object {

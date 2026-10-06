@@ -52,6 +52,7 @@ fun ModePermissionWarningAction(
         mutableStateOf(ModeReadinessEvaluator.evaluate(context, mode))
     }
     var showDialog by remember { mutableStateOf(false) }
+    var refreshTrigger by remember { mutableStateOf(0) }
 
     var appListRequestAttempted by remember { mutableStateOf(false) }
 
@@ -60,6 +61,7 @@ fun ModePermissionWarningAction(
             if (event == Lifecycle.Event.ON_RESUME) {
                 AppListPermissionHelper.invalidateCache()
                 BatteryOptimizationHelper.invalidateCache()
+                refreshTrigger++
                 readinessState = ModeReadinessEvaluator.evaluate(context, mode)
             }
         }
@@ -69,7 +71,7 @@ fun ModePermissionWarningAction(
         }
     }
 
-    val missingPermissions = remember(readinessState) {
+    val missingPermissions = remember(readinessState, refreshTrigger) {
         readinessState.missingRequired + readinessState.getActiveRecommended(context)
     }
     val primaryMissing = missingPermissions.firstOrNull()
@@ -80,6 +82,7 @@ fun ModePermissionWarningAction(
         if (!isGranted && !NotificationPermissionHelper.hasPermission(context)) {
             NotificationPermissionHelper.openNotificationSettings(context)
         }
+        refreshTrigger++
         readinessState = ModeReadinessEvaluator.evaluate(context, mode)
     }
 
@@ -88,6 +91,7 @@ fun ModePermissionWarningAction(
     ) { result ->
         val granted = result.resultCode == Activity.RESULT_OK
         PermissionDisclosureSettings.updateVpnGrant(context, granted)
+        refreshTrigger++
         readinessState = ModeReadinessEvaluator.evaluate(context, mode)
     }
 
@@ -95,6 +99,7 @@ fun ModePermissionWarningAction(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { _ ->
         BatteryOptimizationHelper.invalidateCache()
+        refreshTrigger++
         readinessState = ModeReadinessEvaluator.evaluate(context, mode)
     }
 
@@ -103,6 +108,7 @@ fun ModePermissionWarningAction(
     ) { _ ->
         AppListPermissionHelper.invalidateCache()
         appListRequestAttempted = true
+        refreshTrigger++
         readinessState = ModeReadinessEvaluator.evaluate(context, mode)
     }
 
@@ -121,6 +127,7 @@ fun ModePermissionWarningAction(
                     vpnLauncher.launch(intent)
                 } else {
                     PermissionDisclosureSettings.updateVpnGrant(context, true)
+                    refreshTrigger++
                     readinessState = ModeReadinessEvaluator.evaluate(context, mode)
                 }
             }
@@ -130,6 +137,7 @@ fun ModePermissionWarningAction(
                     launcher = batteryLauncher,
                     onAlreadyGranted = {
                         BatteryOptimizationHelper.invalidateCache()
+                        refreshTrigger++
                         readinessState = ModeReadinessEvaluator.evaluate(context, mode)
                     }
                 )
@@ -214,6 +222,7 @@ fun ModePermissionWarningAction(
                             onClick = {
                                 ModePermissionStore.setRecommendationDismissed(context, primaryMissing, true)
                                 BatteryOptimizationHelper.invalidateCache()
+                                refreshTrigger++
                                 readinessState = ModeReadinessEvaluator.evaluate(context, mode)
                                 showDialog = false
                             }

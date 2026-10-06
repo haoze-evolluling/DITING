@@ -174,6 +174,7 @@ fun DnsSettingsScreen(
                             localizedText("保持 DNS 服务在后台稳定运行")
                         },
                         leadingIcon = Icons.Default.BatterySaver,
+                        value = if (batteryOptimizationIgnored) localizedText("已忽略") else null,
                         enabled = !batteryOptimizationIgnored,
                         onClick = onRequestIgnoreBatteryOptimization
                     )
