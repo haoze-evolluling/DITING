@@ -5,10 +5,10 @@ import com.haoze.diting.express.transport.ExpressDotTransport
 import com.haoze.diting.express.transport.ExpressPlainDnsTransport
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.RaceModeStrategy
-import com.haoze.diting.vpn.DNS_UPSTREAM_TIMEOUT_MS
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
-import com.haoze.diting.vpn.RaceLogger
+import com.haoze.diting.core.dns.DNS_UPSTREAM_TIMEOUT_MS
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
+import com.haoze.diting.core.log.RaceLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

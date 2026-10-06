@@ -59,7 +59,7 @@ import com.haoze.diting.ui.components.DnsProtocolBadge
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsDivider
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProvider
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch

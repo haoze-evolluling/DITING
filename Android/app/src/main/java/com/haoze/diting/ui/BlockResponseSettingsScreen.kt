@@ -33,8 +33,8 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.settings.RuleSettingsAccess
-import com.haoze.diting.vpn.BlockResponseMode
-import com.haoze.diting.vpn.DynamicBlockResponseConfig
+import com.haoze.diting.core.rule.BlockResponseMode
+import com.haoze.diting.core.rule.DynamicBlockResponseConfig
 
 @Composable
 fun BlockResponseSettingsScreen(

@@ -11,9 +11,9 @@ import com.haoze.diting.data.SubscriptionInterceptionStatsRange
 import com.haoze.diting.data.dao.DailyStatRow
 import com.haoze.diting.data.dao.DnsLogDao
 import com.haoze.diting.data.dao.HttpRequestLogDao
-import com.haoze.diting.vpn.HttpRequestOutcome
+import com.haoze.diting.core.log.HttpRequestOutcome
 import com.haoze.diting.data.entity.DnsLogEntity
-import com.haoze.diting.vpn.LogResult
+import com.haoze.diting.core.log.LogResult
 import com.haoze.diting.util.statsRangeStartMillis
 import com.haoze.diting.ui.DnsLogMode
 

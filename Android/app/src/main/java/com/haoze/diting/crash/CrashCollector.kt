@@ -14,7 +14,7 @@ import android.os.Process
 import android.os.SystemClock
 import androidx.core.content.pm.PackageInfoCompat
 import com.haoze.diting.BuildConfig
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.normal.DnsVpnService
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.text.SimpleDateFormat

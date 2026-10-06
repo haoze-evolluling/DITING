@@ -1,5 +1,6 @@
 package com.haoze.diting.notification
 
+import com.haoze.diting.normal.notification.VpnNotificationBuilder
 import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.express.notification.ExpressNotificationBuilder
 import org.junit.Assert.assertEquals

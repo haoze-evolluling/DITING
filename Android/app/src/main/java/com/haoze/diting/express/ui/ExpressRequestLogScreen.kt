@@ -63,8 +63,8 @@ import com.haoze.diting.ui.components.cascade.CascadeDropdownMenu
 import com.haoze.diting.ui.copyToClipboard
 import com.haoze.diting.ui.localizedText
 import com.haoze.diting.ui.showToast
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

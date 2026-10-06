@@ -40,7 +40,7 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.SettingsTextItem
 import com.haoze.diting.ui.settings.SystemSettingsStore
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.normal.DnsVpnService
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.Dispatchers

@@ -1,7 +1,7 @@
 package com.haoze.diting.ui.transfer
 
 import com.haoze.diting.ui.settings.AppRulesSettingsStore
-import com.haoze.diting.vpn.AdGuardRuleParser
+import com.haoze.diting.core.rule.AdGuardRuleParser
 
 /**
  * Handles importing app exclusion, blocked apps, per-app domain allowlists,

@@ -12,12 +12,12 @@ import com.haoze.diting.data.entity.RewriteRuleEntity
 import com.haoze.diting.data.entity.RewriteTargetType
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.ui.RuntimeDnsSettingsRefresher
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
-import com.haoze.diting.vpn.CosmeticRuleManager
-import com.haoze.diting.vpn.DefaultWhitelistSeeder
-import com.haoze.diting.vpn.GoUrlRuleManager
-import com.haoze.diting.vpn.RewriteRuleManager
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
+import com.haoze.diting.core.rule.CosmeticRuleManager
+import com.haoze.diting.core.rule.DefaultWhitelistSeeder
+import com.haoze.diting.core.rule.GoUrlRuleManager
+import com.haoze.diting.core.rule.RewriteRuleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

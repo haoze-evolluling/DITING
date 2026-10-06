@@ -1,5 +1,8 @@
 package com.haoze.diting.ui
 
+import com.haoze.diting.core.rule.RewriteRuleManager
+import com.haoze.diting.core.rule.RuleIndexLayout
+import com.haoze.diting.core.VpnStateRegistry
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
@@ -15,14 +18,14 @@ import com.haoze.diting.data.entity.SubscriptionEntity
 import com.haoze.diting.data.entity.SubscriptionGroupEntity
 import com.haoze.diting.data.entity.MirrorTemplateEntity
 import com.haoze.diting.data.entity.RuleScope
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
-import com.haoze.diting.vpn.SubscriptionManager
-import com.haoze.diting.vpn.SubscriptionAutoUpdateScheduler
-import com.haoze.diting.vpn.RuleOperationScheduler
-import com.haoze.diting.vpn.RuleOperationType
-import com.haoze.diting.vpn.SubscriptionUpdateCoordinator
-import com.haoze.diting.vpn.SubscriptionUpdateOutcome
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
+import com.haoze.diting.core.rule.SubscriptionManager
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateScheduler
+import com.haoze.diting.core.rule.RuleOperationScheduler
+import com.haoze.diting.core.rule.RuleOperationType
+import com.haoze.diting.core.rule.SubscriptionUpdateCoordinator
+import com.haoze.diting.core.rule.SubscriptionUpdateOutcome
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -338,13 +341,13 @@ class SubscriptionViewModel(
         sources: com.haoze.diting.data.RuleDataSources,
         app: Application
     ): SubscriptionManager {
-        val indexDirectory = if (dataset == RuleDataset.DNS_MODE) null else com.haoze.diting.vpn.RuleIndexLayout.rootDirectory(app.filesDir, dataset)
+        val indexDirectory = if (dataset == RuleDataset.DNS_MODE) null else com.haoze.diting.core.rule.RuleIndexLayout.rootDirectory(app.filesDir, dataset)
         return SubscriptionManager(
             RuleDatabases.forDatasetDb(app, dataset),
             sources.subscriptionDao(),
             BlockListManager(sources.blockRuleDao(), scope = scope, reloadCacheAfterChanges = false),
             AllowListManager(sources.allowRuleDao(), scope = scope, reloadCacheAfterChanges = false),
-            com.haoze.diting.vpn.RewriteRuleManager(sources.rewriteRuleDao(), indexDirectory, scope, reloadCacheAfterChanges = false),
+            com.haoze.diting.core.rule.RewriteRuleManager(sources.rewriteRuleDao(), indexDirectory, scope, reloadCacheAfterChanges = false),
             scope,
             app.cacheDir
         )
@@ -484,13 +487,13 @@ class SubscriptionViewModel(
         if (dataset == RuleDataset.NORMAL) {
             RuntimeDnsSettingsRefresher.syncHttpsRequestRulesIfRunning(context)
         }
-        if (!com.haoze.diting.vpn.DnsVpnService.isRunning(context)) {
+        if (!VpnStateRegistry.isNormalRunning(context)) {
             viewModelScope.launch(Dispatchers.IO) {
                 val sources = RuleDatabases.forDataset(context, dataset)
-                val ruleIndexDirectory = if (dataset == RuleDataset.DNS_MODE) null else com.haoze.diting.vpn.RuleIndexLayout.scopeDirectory(context.filesDir, scope, dataset)
+                val ruleIndexDirectory = if (dataset == RuleDataset.DNS_MODE) null else com.haoze.diting.core.rule.RuleIndexLayout.scopeDirectory(context.filesDir, scope, dataset)
                 val blockManager = BlockListManager(sources.blockRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
                 val allowManager = AllowListManager(sources.allowRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
-                val rewriteManager = com.haoze.diting.vpn.RewriteRuleManager(sources.rewriteRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
+                val rewriteManager = com.haoze.diting.core.rule.RewriteRuleManager(sources.rewriteRuleDao(), ruleIndexDirectory, scope, reloadCacheAfterChanges = false)
                 runCatching { blockManager.refreshCache(forceRebuild = true) }
                 runCatching { allowManager.refreshCache(forceRebuild = true) }
                 runCatching { rewriteManager.refreshCache(rebuildSubscriptionIndex = true) }

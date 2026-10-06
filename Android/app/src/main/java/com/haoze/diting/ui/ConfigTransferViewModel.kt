@@ -23,8 +23,8 @@ import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.transfer.ConfigExporter
 import com.haoze.diting.ui.transfer.ConfigImporter
 import com.haoze.diting.ui.transfer.ConfigTransferParser
-import com.haoze.diting.vpn.DnsProvider
-import com.haoze.diting.vpn.GoUrlRuleManager
+import com.haoze.diting.core.dns.DnsProvider
+import com.haoze.diting.core.rule.GoUrlRuleManager
 
 enum class ConfigTransferOperation {
     IDLE,

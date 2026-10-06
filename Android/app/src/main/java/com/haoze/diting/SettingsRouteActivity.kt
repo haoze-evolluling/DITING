@@ -1,5 +1,7 @@
 package com.haoze.diting
 
+import com.haoze.diting.normal.ui.*
+
 import com.haoze.diting.ui.settings.AiProviderManageScreen
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
 
@@ -23,8 +25,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RuleScope
-import com.haoze.diting.dnsmode.DnsMainActivity
-import com.haoze.diting.dnsmode.backend.DnsModeManager
+import com.haoze.diting.server.DnsMainActivity
+import com.haoze.diting.server.backend.DnsModeManager
 import com.haoze.diting.express.ui.*
 import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.*
@@ -34,11 +36,11 @@ import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeActivity
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.mode.disableWindowTransitions
-import com.haoze.diting.ui.traffic.AppTrafficStatsScreen
+import com.haoze.diting.normal.ui.AppTrafficStatsScreen
 import com.haoze.diting.ui.theme.ThemeColorStyle
 import com.haoze.diting.update.AppUpdateHost
 import com.haoze.diting.update.AppUpdateUiState
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.normal.DnsVpnService
 import kotlinx.coroutines.launch
 
 class SettingsRouteActivity : AppLocalizedActivity() {

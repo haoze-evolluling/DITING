@@ -1,16 +1,17 @@
 package com.haoze.diting.ui.transfer
 
+import com.haoze.diting.core.rule.RuleIndexLayout
 import com.haoze.diting.data.entity.MirrorTemplateEntity
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.data.entity.SubscriptionGroupEntity
 import com.haoze.diting.data.entity.SubscriptionKind
-import com.haoze.diting.vpn.AdGuardRuleParser
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
-import com.haoze.diting.vpn.GoUrlRuleManager
-import com.haoze.diting.vpn.RewriteRule
-import com.haoze.diting.vpn.RewriteRuleManager
-import com.haoze.diting.vpn.SubscriptionManager
+import com.haoze.diting.core.rule.AdGuardRuleParser
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
+import com.haoze.diting.core.rule.GoUrlRuleManager
+import com.haoze.diting.core.rule.RewriteRule
+import com.haoze.diting.core.rule.RewriteRuleManager
+import com.haoze.diting.core.rule.SubscriptionManager
 import java.io.File
 
 /**
@@ -22,7 +23,7 @@ internal class RuleConfigImporter(private val session: ImportSessionContext) {
     private val context get() = session.context
     private val database get() = session.database
     private val ruleIndexDir by lazy {
-        com.haoze.diting.vpn.RuleIndexLayout.rootDirectory(context.filesDir, session.dataset)
+        com.haoze.diting.core.rule.RuleIndexLayout.rootDirectory(context.filesDir, session.dataset)
     }
 
     private fun subscriptionManager(scope: RuleScope = RuleScope.DNS) = SubscriptionManager(

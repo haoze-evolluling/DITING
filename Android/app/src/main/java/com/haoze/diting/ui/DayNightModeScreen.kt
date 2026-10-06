@@ -17,7 +17,7 @@ import com.haoze.diting.ui.components.SettingsRadioItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.normal.DnsVpnService
 
 @Composable
 fun DayNightModeScreen(

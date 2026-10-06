@@ -6,7 +6,7 @@ import com.haoze.diting.ui.DEFAULT_HOME_VISIBLE_PROTOCOLS
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.HomeProviderVisibility
 import com.haoze.diting.ui.PresetDnsService
-import com.haoze.diting.vpn.DnsProtocol
+import com.haoze.diting.core.dns.DnsProtocol
 import org.json.JSONArray
 
 object ResolutionSettingsStore {

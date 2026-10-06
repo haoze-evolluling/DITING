@@ -5,7 +5,7 @@ import com.haoze.diting.data.dao.DnsCacheDao
 import com.haoze.diting.data.entity.DnsCacheEntity
 import com.haoze.diting.express.cache.ExpressRoomDnsCache
 import com.haoze.diting.express.engine.ExpressDnsMessageUtils
-import com.haoze.diting.vpn.cache.DnsCachePolicy
+import com.haoze.diting.core.cache.DnsCachePolicy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

@@ -7,9 +7,9 @@ import com.haoze.diting.ui.DEFAULT_HOME_VISIBLE_PROTOCOLS
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.PresetDnsService
 import com.haoze.diting.ui.settings.BootstrapDnsSettingsStore
-import com.haoze.diting.vpn.BlockResponseMode
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.rule.BlockResponseMode
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
 import org.json.JSONArray
 import org.json.JSONObject
 

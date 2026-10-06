@@ -16,10 +16,9 @@ import com.haoze.diting.ui.settings.AppRulesSettingsStore
 import com.haoze.diting.ui.settings.DnsCacheSettingsStore
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
 import com.haoze.diting.ui.settings.SystemSettingsStore
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
-import com.haoze.diting.vpn.DnsVpnProviderResolver
-import com.haoze.diting.vpn.FloatingLogOverlayController
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
+import com.haoze.diting.ui.floating.FloatingLogOverlayController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -207,7 +206,7 @@ class ExpressVpnService : VpnService() {
             val name = intent.getStringExtra(ExpressVpnIntents.EXTRA_DNS_NAME)?.takeIf { it.isNotBlank() } ?: "自定义"
             return listOf(
                 DnsProvider(
-                    id = DnsVpnProviderResolver.runtimeCustomProviderId(url),
+                    id = DnsProvider.runtimeCustomProviderId(url),
                     name = name,
                     protocol = DnsProtocol.DOH,
                     url = url,
@@ -222,7 +221,7 @@ class ExpressVpnService : VpnService() {
                 val name = intent.getStringExtra(ExpressVpnIntents.EXTRA_DNS_NAME)?.takeIf { it.isNotBlank() } ?: "自定义"
                 return listOf(
                     DnsProvider(
-                        id = DnsVpnProviderResolver.runtimeCustomProviderId("$host:$port"),
+                        id = DnsProvider.runtimeCustomProviderId("$host:$port"),
                         name = name,
                         protocol = protocol,
                         host = host,

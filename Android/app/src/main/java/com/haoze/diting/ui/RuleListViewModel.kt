@@ -9,10 +9,10 @@ import com.haoze.diting.data.entity.SubscriptionEntity
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.data.entity.GoUrlRuleKind
 import com.haoze.diting.ui.settings.RuleSettingsAccess
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
-import com.haoze.diting.vpn.RewriteRuleManager
-import com.haoze.diting.vpn.GoUrlRuleManager
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
+import com.haoze.diting.core.rule.RewriteRuleManager
+import com.haoze.diting.core.rule.GoUrlRuleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

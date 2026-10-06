@@ -1,6 +1,7 @@
 package com.haoze.diting.express.engine
 
-import com.haoze.diting.vpn.BlockResponseMode
+import com.haoze.diting.core.dns.DnsMessageUtils
+import com.haoze.diting.core.rule.BlockResponseMode
 import java.net.InetAddress
 
 /**

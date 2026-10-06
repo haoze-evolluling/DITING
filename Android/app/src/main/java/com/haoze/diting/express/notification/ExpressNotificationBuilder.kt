@@ -13,7 +13,7 @@ import com.haoze.diting.R
 import com.haoze.diting.notification.NotificationSettingsStore
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.localizedText
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProvider
 
 /**
  * Builds foreground service notifications dedicated to Express Mode VPN.

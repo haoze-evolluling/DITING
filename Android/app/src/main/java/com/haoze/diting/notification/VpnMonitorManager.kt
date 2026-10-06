@@ -4,11 +4,9 @@ import android.app.NotificationManager
 import android.content.Context
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.haoze.diting.express.ExpressVpnController
-import com.haoze.diting.express.ExpressVpnService
+import com.haoze.diting.core.VpnStateRegistry
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
-import com.haoze.diting.vpn.DnsVpnService
 
 /**
  * Safely schedules [VpnMonitorService] start/stop across the app lifecycle.
@@ -22,9 +20,7 @@ object VpnMonitorManager {
      */
     fun isVpnRunning(context: Context): Boolean {
         val appContext = context.applicationContext
-        return DnsVpnService.isRunning(appContext) ||
-            ExpressVpnController.isRunning(appContext) ||
-            ExpressVpnService.isServiceAlive
+        return VpnStateRegistry.isAnyVpnRunning(appContext)
     }
 
     /**

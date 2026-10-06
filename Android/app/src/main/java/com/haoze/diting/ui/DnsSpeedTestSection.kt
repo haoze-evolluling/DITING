@@ -46,9 +46,9 @@ import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsLoadingContent
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.vpn.DnsLatencyTester
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsLatencyTester
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
 
 private fun availableProtocols(providers: List<DnsProvider>): List<DnsProtocol> {
     val present = providers.map { it.protocol }.toSet()

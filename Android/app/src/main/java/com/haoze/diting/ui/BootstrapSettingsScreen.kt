@@ -41,8 +41,8 @@ import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
-import com.haoze.diting.vpn.BootstrapHealthSnapshot
-import com.haoze.diting.vpn.BootstrapIpEntry
+import com.haoze.diting.core.diagnostic.BootstrapHealthSnapshot
+import com.haoze.diting.core.diagnostic.BootstrapIpEntry
 import java.util.Locale
 
 @Composable

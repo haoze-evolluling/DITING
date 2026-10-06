@@ -5,8 +5,8 @@ import com.haoze.diting.ui.OutboundProxyProtocol
 import com.haoze.diting.ui.settings.BootstrapDnsSettingsStore
 import com.haoze.diting.ui.settings.DnsCacheSettingsStore
 import com.haoze.diting.ui.settings.OutboundProxySettingsStore
-import com.haoze.diting.vpn.cache.DnsCacheMode
-import com.haoze.diting.vpn.cache.DnsCachePreset
+import com.haoze.diting.core.cache.DnsCacheMode
+import com.haoze.diting.core.cache.DnsCachePreset
 
 /**
  * Handles importing Bootstrap DNS, DNS cache policies, and Outbound Proxy configurations.

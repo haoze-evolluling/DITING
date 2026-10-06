@@ -28,8 +28,8 @@ import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.ui.Routes
 import com.haoze.diting.ui.agent.AgentAnalysisSheet
 import com.haoze.diting.ui.agent.AnalysisTarget
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

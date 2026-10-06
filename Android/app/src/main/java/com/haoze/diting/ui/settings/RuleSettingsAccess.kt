@@ -2,12 +2,12 @@ package com.haoze.diting.ui.settings
 
 import android.content.Context
 import com.haoze.diting.data.RuleDataset
-import com.haoze.diting.dnsmode.backend.DnsModeManager
-import com.haoze.diting.dnsmode.backend.DnsModePreferences
-import com.haoze.diting.dnsmode.backend.DnsRuleSettings
-import com.haoze.diting.vpn.BlockResponseMode
-import com.haoze.diting.vpn.DynamicBlockResponseConfig
-import com.haoze.diting.vpn.SubscriptionAutoUpdateSettings
+import com.haoze.diting.server.backend.DnsModeManager
+import com.haoze.diting.server.backend.DnsModePreferences
+import com.haoze.diting.server.backend.DnsRuleSettings
+import com.haoze.diting.core.rule.BlockResponseMode
+import com.haoze.diting.core.rule.DynamicBlockResponseConfig
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateSettings
 
 /**
  * Dispatches rule-management settings reads/writes by dataset. NORMAL delegates

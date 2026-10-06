@@ -56,7 +56,7 @@ import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
-import com.haoze.diting.vpn.NetworkSnapshot
+import com.haoze.diting.core.diagnostic.NetworkSnapshot
 import kotlinx.coroutines.launch
 
 /**

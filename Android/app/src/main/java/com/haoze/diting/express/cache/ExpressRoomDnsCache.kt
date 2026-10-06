@@ -5,7 +5,7 @@ import com.haoze.diting.data.entity.DnsCacheEntity
 import com.haoze.diting.express.engine.ExpressDnsEngine
 import com.haoze.diting.express.engine.ExpressDnsMessageUtils
 import com.haoze.diting.express.engine.ExpressPacketCodec
-import com.haoze.diting.vpn.cache.DnsCachePolicy
+import com.haoze.diting.core.cache.DnsCachePolicy
 
 /**
  * Cache adapter backed by Room [DnsCacheDao] and in-memory [SimpleLruCache].

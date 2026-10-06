@@ -30,7 +30,7 @@ import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.vpn.DnsLookupTool
+import com.haoze.diting.core.dns.DnsLookupTool
 
 /**
  * DNS lookup section: domain, record type, and server configuration ->

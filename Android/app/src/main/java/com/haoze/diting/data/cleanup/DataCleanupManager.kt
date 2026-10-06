@@ -1,4 +1,5 @@
 package com.haoze.diting.data.cleanup
+import com.haoze.diting.core.cert.GoInspectionCaManager
 
 import android.content.Context
 import com.haoze.diting.crash.CrashLogManager
@@ -21,17 +22,16 @@ import com.haoze.diting.ui.background.CustomBackgroundManager
 import com.haoze.diting.ui.settings.AppRulesSettingsStore
 import com.haoze.diting.ui.settings.OutboundProxySettingsStore
 import com.haoze.diting.ui.settings.SystemSettingsStore
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
-import com.haoze.diting.vpn.BootstrapHealthStore
-import com.haoze.diting.vpn.DefaultWhitelistSeeder
-import com.haoze.diting.vpn.RuleIndexLayout
-import com.haoze.diting.vpn.GoInspectionCaManager
-import com.haoze.diting.vpn.LogMaintenance
-import com.haoze.diting.vpn.ProviderHealthStore
-import com.haoze.diting.vpn.RewriteRuleManager
-import com.haoze.diting.vpn.cache.DnsCacheController
-import com.haoze.diting.vpn.traffic.TrafficStatsManager
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
+import com.haoze.diting.core.diagnostic.BootstrapHealthStore
+import com.haoze.diting.core.rule.DefaultWhitelistSeeder
+import com.haoze.diting.core.rule.RuleIndexLayout
+import com.haoze.diting.core.log.LogMaintenance
+import com.haoze.diting.core.diagnostic.ProviderHealthStore
+import com.haoze.diting.core.rule.RewriteRuleManager
+import com.haoze.diting.core.cache.DnsCacheController
+import com.haoze.diting.core.traffic.TrafficStatsManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

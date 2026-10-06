@@ -24,8 +24,8 @@ import com.haoze.diting.ui.components.SettingsLoadingContent
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

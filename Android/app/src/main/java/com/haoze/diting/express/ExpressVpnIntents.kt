@@ -2,8 +2,8 @@ package com.haoze.diting.express
 
 import android.content.Context
 import android.content.Intent
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
 
 /**
  * Dedicated Intent actions and factory methods for Express Mode VPN.

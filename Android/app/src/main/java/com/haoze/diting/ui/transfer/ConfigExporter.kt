@@ -16,9 +16,9 @@ import com.haoze.diting.ui.settings.DnsCacheSettingsStore
 import com.haoze.diting.ui.settings.OutboundProxySettingsStore
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
 import com.haoze.diting.ui.settings.SystemSettingsStore
-import com.haoze.diting.vpn.DnsProvider
-import com.haoze.diting.vpn.GoUrlRuleManager
-import com.haoze.diting.vpn.SubscriptionAutoUpdateSettings
+import com.haoze.diting.core.dns.DnsProvider
+import com.haoze.diting.core.rule.GoUrlRuleManager
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateSettings
 import org.json.JSONArray
 import org.json.JSONObject
 

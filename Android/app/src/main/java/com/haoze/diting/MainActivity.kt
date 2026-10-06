@@ -1,5 +1,8 @@
 package com.haoze.diting
 
+import com.haoze.diting.core.rule.DefaultWhitelistSeeder
+import com.haoze.diting.normal.ui.*
+
 import android.Manifest
 import android.content.Intent
 import android.net.VpnService
@@ -43,8 +46,8 @@ import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeActivity
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.update.AppUpdateHost
-import com.haoze.diting.vpn.DnsVpnService
-import com.haoze.diting.vpn.SubscriptionAutoUpdateScheduler
+import com.haoze.diting.normal.DnsVpnService
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -52,7 +55,7 @@ import kotlinx.coroutines.withContext
 
 import com.haoze.diting.ui.AppUpdateDialog
 import com.haoze.diting.ui.InitialAgreementDialog
-import com.haoze.diting.ui.MainScreen
+import com.haoze.diting.normal.ui.MainScreen
 import com.haoze.diting.ui.PermissionDisclosure
 import com.haoze.diting.ui.PermissionDisclosureDialog
 
@@ -138,7 +141,7 @@ class MainActivity : AppLocalizedActivity() {
         resetToHomeTrigger = System.currentTimeMillis()
 
         if (previousMode == AppWorkMode.DNS && selectedMode != AppWorkMode.DNS) {
-            com.haoze.diting.dnsmode.backend.DnsModeManager.stopService(this)
+            com.haoze.diting.server.backend.DnsModeManager.stopService(this)
         } else if (previousMode == AppWorkMode.EXPRESS && selectedMode != AppWorkMode.EXPRESS) {
             com.haoze.diting.express.ExpressModeLauncher.stopExpress(this)
         }
@@ -305,7 +308,7 @@ class MainActivity : AppLocalizedActivity() {
                                             )
                                         }
                                         AppWorkMode.DNS -> {
-                                            com.haoze.diting.dnsmode.ui.DnsModeHost(
+                                            com.haoze.diting.server.ui.DnsModeHost(
                                                 onSelectMode = { WorkModeActivity.start(this@MainActivity, isFirstLaunch = false) },
                                                 resetToHomeTrigger = resetToHomeTrigger,
                                                 onSwitchToNormalMode = {
@@ -403,7 +406,7 @@ class MainActivity : AppLocalizedActivity() {
                 runCatching {
                     val db = AppDatabase.getInstance(applicationContext)
                     db.openHelper.writableDatabase
-                    com.haoze.diting.vpn.DefaultWhitelistSeeder.ensureInitialized(applicationContext, db)
+                    com.haoze.diting.core.rule.DefaultWhitelistSeeder.ensureInitialized(applicationContext, db)
                 }
             }
         }
@@ -478,7 +481,7 @@ class MainActivity : AppLocalizedActivity() {
         if (intent?.getBooleanExtra(EXTRA_AUTO_START_VPN, false) != true) return
         intent.removeExtra(EXTRA_AUTO_START_VPN)
         if (currentWorkMode == AppWorkMode.DNS) {
-            com.haoze.diting.dnsmode.backend.DnsModeManager.startService(this)
+            com.haoze.diting.server.backend.DnsModeManager.startService(this)
             return
         }
         if (!com.haoze.diting.express.ExpressModeLauncher.isCurrentModeRunning(this)) {

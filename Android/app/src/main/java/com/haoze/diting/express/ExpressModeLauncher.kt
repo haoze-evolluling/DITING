@@ -6,13 +6,12 @@ import android.content.Intent
 import android.net.VpnService
 import android.util.Log
 import com.haoze.diting.MainActivity
-import com.haoze.diting.dnsmode.backend.DnsModeManager
+import com.haoze.diting.core.WorkModeLifecycleRegistry
 import com.haoze.diting.notification.AppNotificationChannels
 import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
-import com.haoze.diting.vpn.DnsProvider
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.core.dns.DnsProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -38,18 +37,11 @@ object ExpressModeLauncher {
     ) {
         val appContext = context.applicationContext
 
-        // Stop legacy Go VPN service if running
+        // Stop other mode services if running
         runCatching {
-            appContext.startService(DnsVpnService.stopIntent(appContext))
+            WorkModeLifecycleRegistry.stopOtherModes(appContext, AppWorkMode.EXPRESS)
         }.onFailure { e ->
-            Log.w(TAG, "Failed to stop legacy DnsVpnService", e)
-        }
-
-        // Stop legacy Server/DNS mode service if running
-        runCatching {
-            DnsModeManager.stopService(appContext)
-        }.onFailure { e ->
-            Log.w(TAG, "Failed to stop legacy DnsModeService", e)
+            Log.w(TAG, "Failed to stop other modes", e)
         }
 
         // Reset persistent monitor during mode switch
@@ -170,7 +162,7 @@ object ExpressModeLauncher {
         if (WorkModeStore.getAppWorkMode(context) == AppWorkMode.EXPRESS) {
             ExpressVpnController.updateFloatingLogAppState(context, foreground)
         } else {
-            DnsVpnService.updateFloatingLogAppState(context, foreground)
+            WorkModeLifecycleRegistry.updateNormalFloatingLogAppState(context, foreground)
         }
     }
 
@@ -181,7 +173,7 @@ object ExpressModeLauncher {
         return if (WorkModeStore.getAppWorkMode(context) == AppWorkMode.EXPRESS) {
             ExpressVpnController.isRunning(context)
         } else {
-            DnsVpnService.isRunning(context)
+            com.haoze.diting.core.VpnStateRegistry.isNormalRunning(context)
         }
     }
 }

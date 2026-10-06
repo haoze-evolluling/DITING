@@ -12,11 +12,11 @@ import com.haoze.diting.data.entity.GoUrlRuleEntity
 import com.haoze.diting.data.entity.GoUrlRuleKind
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.ui.settings.RuleSettingsAccess
-import com.haoze.diting.vpn.AdGuardRuleParser
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.CosmeticRuleManager
-import com.haoze.diting.vpn.DefaultWhitelistSeeder
-import com.haoze.diting.vpn.GoUrlRuleManager
+import com.haoze.diting.core.rule.AdGuardRuleParser
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.CosmeticRuleManager
+import com.haoze.diting.core.rule.DefaultWhitelistSeeder
+import com.haoze.diting.core.rule.GoUrlRuleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

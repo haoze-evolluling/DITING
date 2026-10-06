@@ -74,8 +74,8 @@ import com.haoze.diting.ui.settings.AgentApiClient
 import com.haoze.diting.ui.settings.AgentApiSettingsStore
 import com.haoze.diting.ui.RuntimeDnsSettingsRefresher
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

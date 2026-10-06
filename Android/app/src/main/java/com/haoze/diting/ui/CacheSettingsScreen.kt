@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.haoze.diting.data.RuleDataset
-import com.haoze.diting.dnsmode.backend.DnsModeManager
+import com.haoze.diting.server.backend.DnsModeManager
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsInfoText
 import com.haoze.diting.ui.components.SettingsRadioItem
@@ -27,7 +27,7 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.settings.DnsCacheSettingsStore
-import com.haoze.diting.vpn.cache.DnsCachePreset
+import com.haoze.diting.core.cache.DnsCachePreset
 
 @Composable
 fun CacheSettingsScreen(

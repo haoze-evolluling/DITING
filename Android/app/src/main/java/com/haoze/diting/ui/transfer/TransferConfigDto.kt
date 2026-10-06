@@ -4,8 +4,8 @@ import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.data.entity.SubscriptionKind
 import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.ui.PresetDnsService
-import com.haoze.diting.vpn.BlockResponseMode
-import com.haoze.diting.vpn.DnsProtocol
+import com.haoze.diting.core.rule.BlockResponseMode
+import com.haoze.diting.core.dns.DnsProtocol
 
 data class TransferConfig(
     val formatVersion: Int = ConfigTransferParser.FORMAT_VERSION,

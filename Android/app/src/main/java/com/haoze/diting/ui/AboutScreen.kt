@@ -60,7 +60,7 @@ import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsGroupTitle
 import com.haoze.diting.ui.components.SettingsSectionSpacing
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.normal.DnsVpnService
 import kotlin.math.sqrt
 
 private const val PROJECT_REPOSITORY_URL = "https://github.com/haoze-evolluling/DITING"

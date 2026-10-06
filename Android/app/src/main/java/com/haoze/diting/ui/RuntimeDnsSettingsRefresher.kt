@@ -4,10 +4,10 @@ import android.content.Context
 import android.util.Log
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.data.RuleDataset
-import com.haoze.diting.dnsmode.backend.DnsModeService
+import com.haoze.diting.server.backend.DnsModeService
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.normal.DnsVpnService
 
 object RuntimeDnsSettingsRefresher {
     private const val TAG = "RuntimeDnsRefresh"

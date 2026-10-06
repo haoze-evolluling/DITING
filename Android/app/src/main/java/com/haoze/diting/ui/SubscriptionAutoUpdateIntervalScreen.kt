@@ -36,8 +36,8 @@ import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSectionSpacing
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
-import com.haoze.diting.vpn.SubscriptionAutoUpdateScheduler
-import com.haoze.diting.vpn.SubscriptionAutoUpdateSettings
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateScheduler
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateSettings
 import kotlinx.coroutines.launch
 
 @Composable

@@ -10,9 +10,9 @@ import com.haoze.diting.ui.settings.AppearanceSettingsStore
 import com.haoze.diting.ui.settings.AppRulesSettingsStore
 import com.haoze.diting.ui.settings.SystemSettingsStore
 import com.haoze.diting.ui.theme.ThemeColorStyle
-import com.haoze.diting.vpn.DynamicBlockResponseConfig
-import com.haoze.diting.vpn.SubscriptionAutoUpdateScheduler
-import com.haoze.diting.vpn.SubscriptionAutoUpdateSettings
+import com.haoze.diting.core.rule.DynamicBlockResponseConfig
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateScheduler
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateSettings
 
 /**
  * Handles importing general rule toggles, block responses, subscription auto-update settings,

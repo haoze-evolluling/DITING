@@ -17,8 +17,8 @@ import com.haoze.diting.ui.components.ProviderManagementListContent
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.components.SettingsLoadingContent
 import com.haoze.diting.ui.components.SettingsScaffold
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
 
 @Composable
 fun ProviderManagementScreen(

@@ -1,9 +1,10 @@
 package com.haoze.diting.ui.settings
 
+import com.haoze.diting.core.cert.GoInspectionCaManager
 import android.content.Context
 import com.haoze.diting.data.RuleDataset
-import com.haoze.diting.vpn.BlockResponseMode
-import com.haoze.diting.vpn.DynamicBlockResponseConfig
+import com.haoze.diting.core.rule.BlockResponseMode
+import com.haoze.diting.core.rule.DynamicBlockResponseConfig
 
 object AppRulesSettingsStore {
     private const val KEY_EXCLUDED_APP_PACKAGES = "excluded_app_packages"
@@ -267,7 +268,7 @@ object AppRulesSettingsStore {
 
     fun checkAndUpdateHttpsInspectionReady(context: Context): Boolean {
         val installed = runCatching {
-            com.haoze.diting.vpn.GoInspectionCaManager.isInstalled(context)
+            GoInspectionCaManager.isInstalled(context)
         }.getOrDefault(false)
         setHttpsInspectionReady(context, installed)
         if (!installed) {

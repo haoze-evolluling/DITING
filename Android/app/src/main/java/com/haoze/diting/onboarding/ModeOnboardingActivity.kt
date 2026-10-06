@@ -36,7 +36,7 @@ import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.mode.overrideFadeTransition
 import com.haoze.diting.ui.mode.overrideOpenFadeTransition
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
-import com.haoze.diting.vpn.NetworkInfoProbe
+import com.haoze.diting.core.diagnostic.NetworkInfoProbe
 
 /**
  * 独立的模式专属新手引导 Activity。

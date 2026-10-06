@@ -3,8 +3,8 @@ package com.haoze.diting.express
 import com.haoze.diting.express.engine.PublicDnsHijackList
 import com.haoze.diting.express.notification.ExpressNotificationBuilder
 import com.haoze.diting.ui.DnsResolutionMode
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

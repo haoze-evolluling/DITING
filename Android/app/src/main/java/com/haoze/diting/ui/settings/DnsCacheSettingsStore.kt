@@ -2,9 +2,9 @@ package com.haoze.diting.ui.settings
 
 import android.content.Context
 import com.haoze.diting.data.RuleDataset
-import com.haoze.diting.vpn.cache.DnsCacheMode
-import com.haoze.diting.vpn.cache.DnsCachePolicy
-import com.haoze.diting.vpn.cache.DnsCachePreset
+import com.haoze.diting.core.cache.DnsCacheMode
+import com.haoze.diting.core.cache.DnsCachePolicy
+import com.haoze.diting.core.cache.DnsCachePreset
 
 object DnsCacheSettingsStore {
     private const val KEY_DNS_CACHE_ENABLED = "dns_cache_enabled_v2"

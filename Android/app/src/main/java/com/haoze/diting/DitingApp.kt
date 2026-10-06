@@ -9,8 +9,8 @@ import com.haoze.diting.crash.CrashCollector
 import com.haoze.diting.crash.CrashHandler
 import com.haoze.diting.crash.CrashLogManager
 import com.haoze.diting.ui.background.CustomBackgroundManager
-import com.haoze.diting.vpn.RuleIndexLayout
-import com.haoze.diting.vpn.SubscriptionAutoUpdateScheduler
+import com.haoze.diting.core.rule.RuleIndexLayout
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateScheduler
 
 /**
  * Application entry point for DITING. Initializes app-wide infrastructure such

@@ -10,9 +10,9 @@ import com.haoze.diting.data.entity.GoUrlRuleEntity
 import com.haoze.diting.data.entity.GoUrlRuleKind
 import com.haoze.diting.data.entity.RuleScope
 import com.haoze.diting.ui.settings.RuleSettingsAccess
-import com.haoze.diting.vpn.AdGuardRuleParser
-import com.haoze.diting.vpn.BlockListManager
-import com.haoze.diting.vpn.GoUrlRuleManager
+import com.haoze.diting.core.rule.AdGuardRuleParser
+import com.haoze.diting.core.rule.BlockListManager
+import com.haoze.diting.core.rule.GoUrlRuleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 import com.haoze.diting.data.entity.CosmeticRuleEntity
-import com.haoze.diting.vpn.CosmeticRuleManager
+import com.haoze.diting.core.rule.CosmeticRuleManager
 
 class BlacklistViewModel(
     application: Application,

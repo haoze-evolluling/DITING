@@ -29,7 +29,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DITING">
         <service
-            android:name=".vpn.DnsVpnService"
+            android:name=".normal.DnsVpnService"
             android:exported="true"
             android:foregroundServiceType="specialUse"
             android:permission="android.permission.BIND_VPN_SERVICE">
@@ -79,7 +79,7 @@
         </provider>
 
         <service
-            android:name=".vpn.DitingTileService"
+            android:name=".tile.DitingTileService"
             android:exported="true"
             android:icon="@drawable/dns_svgrepo_com"
             android:label="@string/quick_settings_tile_label"
@@ -136,7 +136,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".dnsmode.DnsMainActivity"
+            android:name=".server.DnsMainActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.DITING"
@@ -144,7 +144,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <service
-            android:name=".dnsmode.backend.DnsModeService"
+            android:name=".server.backend.DnsModeService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
@@ -153,7 +153,7 @@
         </service>
 
         <receiver
-            android:name=".dnsmode.backend.DnsModeBootReceiver"
+            android:name=".server.backend.DnsModeBootReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

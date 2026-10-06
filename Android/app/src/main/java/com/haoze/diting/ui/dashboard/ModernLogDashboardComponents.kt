@@ -46,7 +46,7 @@ import com.haoze.diting.ui.DashboardDailyStats
 import com.haoze.diting.ui.DashboardRequestLogItem
 import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.localizedText
-import com.haoze.diting.vpn.traffic.TrafficStatsManager
+import com.haoze.diting.core.traffic.TrafficStatsManager
 
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.size

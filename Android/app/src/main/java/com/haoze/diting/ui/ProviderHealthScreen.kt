@@ -35,10 +35,10 @@ import com.haoze.diting.ui.components.SettingsItem
 import com.haoze.diting.ui.components.SettingsScaffold
 import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
-import com.haoze.diting.vpn.DnsProvider
-import com.haoze.diting.vpn.ProviderHealthEngine
-import com.haoze.diting.vpn.ProviderHealthSnapshot
-import com.haoze.diting.vpn.ProviderHealthStore
+import com.haoze.diting.core.dns.DnsProvider
+import com.haoze.diting.core.diagnostic.ProviderHealthEngine
+import com.haoze.diting.core.diagnostic.ProviderHealthSnapshot
+import com.haoze.diting.core.diagnostic.ProviderHealthStore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

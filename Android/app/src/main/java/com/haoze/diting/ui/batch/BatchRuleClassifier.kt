@@ -2,9 +2,9 @@ package com.haoze.diting.ui.batch
 
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.entity.RewriteTargetType
-import com.haoze.diting.vpn.AdGuardDomainUtils
-import com.haoze.diting.vpn.AdGuardRuleParser
-import com.haoze.diting.vpn.HostsAndDnsmasqParser
+import com.haoze.diting.core.rule.AdGuardDomainUtils
+import com.haoze.diting.core.rule.AdGuardRuleParser
+import com.haoze.diting.core.rule.HostsAndDnsmasqParser
 
 internal sealed class ClassifiedLine {
     object Ignored : ClassifiedLine()

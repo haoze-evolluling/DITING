@@ -1,5 +1,7 @@
 package com.haoze.diting
 
+import com.haoze.diting.normal.ui.*
+
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,7 +14,7 @@ import com.haoze.diting.data.RequestSource
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.*
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.normal.DnsVpnService
 
 class LogRouteActivity : AppLocalizedActivity() {
     private var childLaunchInProgress = false
@@ -121,7 +123,7 @@ class LogRouteActivity : AppLocalizedActivity() {
             Routes.BOOTSTRAP_STATS -> BootstrapStatsScreen(onBack = onBack, dataset = dataset)
             Routes.SUBSCRIPTION_INTERCEPTION_STATS -> SubscriptionInterceptionStatsScreen(onBack = onBack, dataset = dataset)
             Routes.PROVIDER_HEALTH -> ProviderHealthScreen(onBack = onBack, dataset = dataset)
-            Routes.APP_TRAFFIC_STATS -> com.haoze.diting.ui.traffic.AppTrafficStatsScreen(onBack = onBack)
+            Routes.APP_TRAFFIC_STATS -> com.haoze.diting.normal.ui.AppTrafficStatsScreen(onBack = onBack)
             else -> {
                 if (isExpressMode) {
                     com.haoze.diting.express.ui.ExpressLogDashboardScreen(

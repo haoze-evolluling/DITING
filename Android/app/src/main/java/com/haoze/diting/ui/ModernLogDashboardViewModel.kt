@@ -20,7 +20,7 @@ import com.haoze.diting.data.repository.DnsLogRepository
 import com.haoze.diting.data.repository.RaceLogRepository
 import com.haoze.diting.ui.settings.SystemSettingsStore
 import com.haoze.diting.util.dayStartMillis
-import com.haoze.diting.vpn.LogResult
+import com.haoze.diting.core.log.LogResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow

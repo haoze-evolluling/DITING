@@ -14,8 +14,8 @@ import com.haoze.diting.express.ExpressVpnIntents
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
-import com.haoze.diting.vpn.DnsProvider
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.core.dns.DnsProvider
+import com.haoze.diting.normal.DnsVpnService
 import com.haoze.diting.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

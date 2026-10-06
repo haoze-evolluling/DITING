@@ -38,7 +38,7 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.formatMsValue
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.vpn.NetworkTraceRouteTool
+import com.haoze.diting.core.diagnostic.NetworkTraceRouteTool
 
 /**
  * Traceroute section: target and hop count configuration -> start button ->

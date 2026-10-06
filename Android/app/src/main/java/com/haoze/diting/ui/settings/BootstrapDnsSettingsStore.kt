@@ -2,9 +2,9 @@ package com.haoze.diting.ui.settings
 
 import android.content.Context
 import com.haoze.diting.data.RuleDataset
-import com.haoze.diting.vpn.BootstrapIpDefaults
-import com.haoze.diting.vpn.BootstrapIpEntry
-import com.haoze.diting.vpn.BootstrapIpValidator
+import com.haoze.diting.core.diagnostic.BootstrapIpDefaults
+import com.haoze.diting.core.diagnostic.BootstrapIpEntry
+import com.haoze.diting.core.diagnostic.BootstrapIpValidator
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID

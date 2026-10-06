@@ -8,7 +8,7 @@ import com.haoze.diting.data.BootstrapStatsRange
 import com.haoze.diting.data.dao.BootstrapLogDao
 import com.haoze.diting.ui.settings.BootstrapDnsSettingsStore
 import com.haoze.diting.util.statsRangeStartMillis
-import com.haoze.diting.vpn.BootstrapHealthStore
+import com.haoze.diting.core.diagnostic.BootstrapHealthStore
 
 class BootstrapLogRepository(
     private val context: Context,

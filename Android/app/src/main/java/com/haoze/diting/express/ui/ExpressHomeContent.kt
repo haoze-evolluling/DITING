@@ -61,7 +61,7 @@ import com.haoze.diting.ui.components.SettingsCornerShape
 import com.haoze.diting.ui.localizedText
 import com.haoze.diting.ui.raceProviderSummary
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProvider
 
 /**
  * Visual layout and control card for Express Mode Home dashboard.

@@ -12,15 +12,15 @@ import com.haoze.diting.ui.settings.AppRulesSettingsStore
 import com.haoze.diting.ui.settings.DnsCacheSettingsStore
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
 import com.haoze.diting.ui.settings.SystemSettingsStore
-import com.haoze.diting.vpn.AllowListManager
-import com.haoze.diting.vpn.BlockListManager
-import com.haoze.diting.vpn.BlockResponseMode
-import com.haoze.diting.vpn.DefaultWhitelistSeeder
-import com.haoze.diting.vpn.DnsProvider
-import com.haoze.diting.vpn.RewriteRuleManager
-import com.haoze.diting.vpn.RuleIndexLayout
-import com.haoze.diting.vpn.SubscriptionAutoUpdateScheduler
-import com.haoze.diting.vpn.SubscriptionAutoUpdateSettings
+import com.haoze.diting.core.rule.AllowListManager
+import com.haoze.diting.core.rule.BlockListManager
+import com.haoze.diting.core.rule.BlockResponseMode
+import com.haoze.diting.core.rule.DefaultWhitelistSeeder
+import com.haoze.diting.core.dns.DnsProvider
+import com.haoze.diting.core.rule.RewriteRuleManager
+import com.haoze.diting.core.rule.RuleIndexLayout
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateScheduler
+import com.haoze.diting.core.rule.SubscriptionAutoUpdateSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

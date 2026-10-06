@@ -1,7 +1,8 @@
 package com.haoze.diting.express
 
+import com.haoze.diting.ui.DnsResolutionMode
 import com.haoze.diting.data.RuleDataset
-import com.haoze.diting.vpn.RuleIndexLayout
+import com.haoze.diting.core.rule.RuleIndexLayout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue

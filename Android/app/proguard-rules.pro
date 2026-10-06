@@ -2,8 +2,8 @@
 -keep class com.haoze.diting.data.entity.** { *; }
 
 # 使用 org.json 手动序列化的数据类
--keepclassmembers class com.haoze.diting.vpn.DnsProvider { *; }
--keepclassmembers class com.haoze.diting.vpn.DnsProtocol { *; }
+-keepclassmembers class com.haoze.diting.core.dns.DnsProvider { *; }
+-keepclassmembers class com.haoze.diting.core.dns.DnsProtocol { *; }
 
 # 优化 Release 日志：移除冗余的 Verbose / Debug 日志调用，减少无用字符串常量和字节码
 -assumenosideeffects class android.util.Log {

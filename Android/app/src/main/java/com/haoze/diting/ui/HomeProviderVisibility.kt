@@ -1,7 +1,7 @@
 package com.haoze.diting.ui
 
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
 
 internal val DEFAULT_HOME_VISIBLE_PROTOCOLS = DnsProtocol.MANAGED_PROTOCOLS.toSet()
 

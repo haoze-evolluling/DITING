@@ -2,8 +2,8 @@ package com.haoze.diting.ui.transfer
 
 import com.haoze.diting.ui.HomeProviderVisibility
 import com.haoze.diting.ui.settings.ResolutionSettingsStore
-import com.haoze.diting.vpn.DnsProtocol
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProtocol
+import com.haoze.diting.core.dns.DnsProvider
 
 /**
  * Handles importing DNS providers, resolution modes, and provider reference bindings.

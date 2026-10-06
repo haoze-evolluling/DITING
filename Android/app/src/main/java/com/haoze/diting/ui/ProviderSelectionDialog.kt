@@ -60,7 +60,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import com.haoze.diting.ui.components.DnsProtocolBadge
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProvider
 
 internal const val MANAGE_PROVIDER_ID = "__manage__"
 internal const val PROVIDER_VISIBILITY_ID = "__provider_visibility__"

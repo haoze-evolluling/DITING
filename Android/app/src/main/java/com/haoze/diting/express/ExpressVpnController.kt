@@ -1,5 +1,7 @@
 package com.haoze.diting.express
 
+import com.haoze.diting.core.VpnStateRegistry
+import com.haoze.diting.core.WorkModeLifecycleRegistry
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -7,7 +9,7 @@ import android.content.IntentFilter
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.haoze.diting.data.ExpressRulesDatabase
-import com.haoze.diting.vpn.DnsProvider
+import com.haoze.diting.core.dns.DnsProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,15 @@ object ExpressVpnController {
                 val running = intent.getBooleanExtra(ExpressVpnIntents.EXTRA_RUNNING, false)
                 _isRunning.value = running
             }
+        }
+    }
+
+    init {
+        VpnStateRegistry.isExpressRunning = { ctx ->
+            isRunning(ctx)
+        }
+        WorkModeLifecycleRegistry.stopExpressMode = { ctx ->
+            stop(ctx)
         }
     }
 
@@ -139,12 +150,12 @@ object ExpressVpnController {
             com.haoze.diting.notification.VpnMonitorManager.onVpnStopped(context)
         }
         context.sendBroadcast(ExpressVpnIntents.statusBroadcastIntent(context, running))
-        val legacyIntent = Intent(com.haoze.diting.vpn.DnsVpnService.ACTION_VPN_STATUS_CHANGED).apply {
+        val legacyIntent = Intent("com.haoze.diting.vpn.ACTION_VPN_STATUS_CHANGED").apply {
             `package` = context.packageName
-            putExtra(com.haoze.diting.vpn.DnsVpnService.EXTRA_VPN_RUNNING, running)
+            putExtra("vpn_running", running)
         }
         context.sendBroadcast(legacyIntent)
-        com.haoze.diting.vpn.DitingTileService.requestTileUpdate(context)
+        com.haoze.diting.tile.DitingTileService.requestTileUpdate(context)
     }
 
     private fun getPersistedRunning(context: Context): Boolean =

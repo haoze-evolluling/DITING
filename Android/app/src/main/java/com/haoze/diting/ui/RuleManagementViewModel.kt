@@ -10,9 +10,9 @@ import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.data.RuleDatabases
 import com.haoze.diting.data.entity.MirrorTemplateEntity
 import com.haoze.diting.data.entity.RuleScope
-import com.haoze.diting.vpn.RuleOperationScheduler
-import com.haoze.diting.vpn.RuleOperationType
-import com.haoze.diting.vpn.RewriteRuleManager
+import com.haoze.diting.core.rule.RuleOperationScheduler
+import com.haoze.diting.core.rule.RuleOperationType
+import com.haoze.diting.core.rule.RewriteRuleManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

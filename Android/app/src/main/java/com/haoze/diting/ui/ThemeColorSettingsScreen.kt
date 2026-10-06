@@ -28,7 +28,7 @@ import com.haoze.diting.ui.components.SettingsSurfaceGroup
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
 import com.haoze.diting.ui.theme.ThemeColorStyle
 import com.haoze.diting.ui.theme.swatchColor
-import com.haoze.diting.vpn.DnsVpnService
+import com.haoze.diting.normal.DnsVpnService
 
 @Composable
 fun ThemeColorSettingsScreen(

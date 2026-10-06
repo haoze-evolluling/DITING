@@ -31,7 +31,7 @@ import com.haoze.diting.ui.components.SettingsSwitchItem
 import com.haoze.diting.ui.components.formatLossPercent
 import com.haoze.diting.ui.components.formatMsValue
 import com.haoze.diting.ui.components.SettingsCardMargin
-import com.haoze.diting.vpn.NetworkPingTool
+import com.haoze.diting.core.diagnostic.NetworkPingTool
 
 /**
  * Ping test section: target and count configuration -> start button ->

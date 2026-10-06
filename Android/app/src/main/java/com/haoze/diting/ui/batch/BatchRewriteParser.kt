@@ -1,7 +1,7 @@
 package com.haoze.diting.ui.batch
 
 import com.haoze.diting.data.entity.RewriteTargetType
-import com.haoze.diting.vpn.AdGuardRuleParser
+import com.haoze.diting.core.rule.AdGuardRuleParser
 import java.net.InetAddress
 
 internal object BatchRewriteParser {

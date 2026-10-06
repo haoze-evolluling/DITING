@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.settings.BootstrapDnsSettingsStore
-import com.haoze.diting.vpn.BootstrapHealthEngine
-import com.haoze.diting.vpn.BootstrapHealthSnapshot
-import com.haoze.diting.vpn.BootstrapHealthStore
-import com.haoze.diting.vpn.BootstrapIpEntry
+import com.haoze.diting.core.diagnostic.BootstrapHealthEngine
+import com.haoze.diting.core.diagnostic.BootstrapHealthSnapshot
+import com.haoze.diting.core.diagnostic.BootstrapHealthStore
+import com.haoze.diting.core.diagnostic.BootstrapIpEntry
 import com.haoze.diting.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
