@@ -68,6 +68,6 @@ class MainStartupCoordinator {
     }
 
     companion object {
-        private const val DATABASE_WARMUP_DELAY_MS = 500L
+        const val DATABASE_WARMUP_DELAY_MS = 500L
     }
 }

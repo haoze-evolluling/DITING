@@ -46,16 +46,21 @@ class MainActivity : AppLocalizedActivity() {
     private var backgroundRefreshRequested by mutableStateOf(false)
     private var bottomBarRefreshRequested by mutableStateOf(false)
 
-    private val startupCoordinator = MainStartupCoordinator()
-    private val workModeCoordinator = MainWorkModeCoordinator()
+    private val startupCoordinator: MainStartupCoordinator = MainStartupCoordinator()
 
-    private val vpnController = MainVpnController(
+    private val vpnController: MainVpnController = MainVpnController(
         activity = this,
         getCurrentWorkMode = { workModeCoordinator.currentWorkMode },
         onRefreshStatus = { mainViewModel.refreshStatus() }
     )
 
-    private val navigationCoordinator = MainNavigationCoordinator(
+    private val workModeCoordinator: MainWorkModeCoordinator = MainWorkModeCoordinator(
+        onInitializeAcceptedExperience = ::initializeAcceptedExperience,
+        onStopVpn = { vpnController.stopVpnService() },
+        onRefreshNormalStatus = { mainViewModel.refreshStatus() }
+    )
+
+    private val navigationCoordinator: MainNavigationCoordinator = MainNavigationCoordinator(
         activity = this,
         onRefreshRuntimeDns = {
             mainViewModel.loadProviders()
@@ -65,12 +70,7 @@ class MainActivity : AppLocalizedActivity() {
         onBackgroundChanged = { backgroundRefreshRequested = true },
         onBottomBarChanged = { bottomBarRefreshRequested = true },
         onWorkModeChanged = { targetMode ->
-            workModeCoordinator.switchWorkMode(
-                activity = this,
-                selectedMode = targetMode,
-                onInitializeAcceptedExperience = ::initializeAcceptedExperience,
-                onStopVpn = { vpnController.stopVpnService() }
-            )
+            workModeCoordinator.switchWorkMode(this, targetMode)
         }
     )
 
@@ -82,13 +82,7 @@ class MainActivity : AppLocalizedActivity() {
         startupCoordinator.performStartupChecks(this)
         applyRecentsPrivacySetting()
 
-        if (!workModeCoordinator.checkStartupOnboarding(
-                activity = this,
-                intent = intent,
-                onInitializeAcceptedExperience = ::initializeAcceptedExperience,
-                onStopVpn = { vpnController.stopVpnService() }
-            )
-        ) {
+        if (!workModeCoordinator.checkStartupOnboarding(this, intent)) {
             return
         }
 
@@ -128,10 +122,7 @@ class MainActivity : AppLocalizedActivity() {
                         onAccept = {
                             SystemSettingsStore.setInitialAgreementAccepted(this@MainActivity)
                             initialAgreementAccepted = true
-                            workModeCoordinator.onAgreementAccepted(
-                                activity = this@MainActivity,
-                                onInitializeAcceptedExperience = ::initializeAcceptedExperience
-                            )
+                            workModeCoordinator.onAgreementAccepted(this@MainActivity)
                         },
                         onDecline = {
                             vpnController.permissionDisclosure = null
@@ -160,16 +151,12 @@ class MainActivity : AppLocalizedActivity() {
                                     navigationCoordinator.launchModeSelection()
                                 },
                                 onSwitchToNormalMode = {
-                                    workModeCoordinator.switchWorkMode(
-                                        activity = this@MainActivity,
-                                        selectedMode = AppWorkMode.NORMAL,
-                                        onInitializeAcceptedExperience = ::initializeAcceptedExperience,
-                                        onStopVpn = { vpnController.stopVpnService() }
-                                    )
+                                    workModeCoordinator.switchWorkMode(this@MainActivity, AppWorkMode.NORMAL)
                                 },
                                 resetToHomeTrigger = workModeCoordinator.resetToHomeTrigger,
                                 bottomBarRefreshRequested = bottomBarRefreshRequested,
-                                onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false }
+                                onBottomBarRefreshConsumed = { bottomBarRefreshRequested = false },
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
                     }
@@ -218,12 +205,7 @@ class MainActivity : AppLocalizedActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        workModeCoordinator.syncOnNewIntent(
-            activity = this,
-            intent = intent,
-            onInitializeAcceptedExperience = ::initializeAcceptedExperience,
-            onStopVpn = { vpnController.stopVpnService() }
-        )
+        workModeCoordinator.syncOnNewIntent(this, intent)
         if (SystemSettingsStore.isInitialAgreementAccepted(this)) {
             vpnController.handleAutoStartIfNeeded(intent)
         }
@@ -243,7 +225,7 @@ class MainActivity : AppLocalizedActivity() {
             return
         }
         BatteryOptimizationHelper.invalidateCache()
-        workModeCoordinator.syncOnResume(this, mainViewModel)
+        workModeCoordinator.syncOnResume(this)
         applyRecentsPrivacySetting()
         appUpdateHost.refreshDownloadState()
     }

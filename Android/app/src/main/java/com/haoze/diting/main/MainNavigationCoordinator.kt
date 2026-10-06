@@ -59,11 +59,16 @@ class MainNavigationCoordinator(
     fun launchSettings(route: String, dataset: RuleDataset? = null) {
         if (settingsLaunchInProgress) return
         settingsLaunchInProgress = true
-        settingsLauncher.launch(SettingsRouteActivity.createIntent(activity, route, dataset = dataset))
+        try {
+            settingsLauncher.launch(SettingsRouteActivity.createIntent(activity, route, dataset = dataset))
+        } catch (e: Throwable) {
+            settingsLaunchInProgress = false
+            throw e
+        }
     }
 
     fun launchLogs(dataset: RuleDataset? = null) {
-        activity.startActivity(LogRouteActivity.createIntent(activity, Routes.LOG_DASHBOARD, dataset = dataset))
+        launchLogRoute(Routes.LOG_DASHBOARD, dataset)
     }
 
     fun launchLogRoute(route: String, dataset: RuleDataset? = null) {

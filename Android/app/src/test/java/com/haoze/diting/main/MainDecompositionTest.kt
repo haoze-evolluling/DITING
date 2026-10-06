@@ -22,4 +22,28 @@ class MainDecompositionTest {
         assertFalse(coordinator.hasSelectedWorkMode)
         assertEquals(0L, coordinator.resetToHomeTrigger)
     }
+
+    @Test
+    fun `MainStartupCoordinator startup tuning constants adhere to spec`() {
+        assertEquals(500L, MainStartupCoordinator.DATABASE_WARMUP_DELAY_MS)
+    }
+
+    @Test
+    fun `MainWorkModeCoordinator constructor callbacks default to safe no-ops`() {
+        var initialized = false
+        var stopped = false
+        var refreshed = false
+
+        val coordinator = MainWorkModeCoordinator(
+            onInitializeAcceptedExperience = { initialized = true },
+            onStopVpn = { stopped = true },
+            onRefreshNormalStatus = { refreshed = true }
+        )
+
+        assertEquals(AppWorkMode.NORMAL, coordinator.currentWorkMode)
+        assertFalse(coordinator.hasSelectedWorkMode)
+        assertFalse(initialized)
+        assertFalse(stopped)
+        assertFalse(refreshed)
+    }
 }

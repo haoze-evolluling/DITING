@@ -14,7 +14,6 @@ import com.haoze.diting.notification.VpnMonitorManager
 import com.haoze.diting.onboarding.ModeOnboardingActivity
 import com.haoze.diting.permission.ModePermissionStore
 import com.haoze.diting.server.backend.DnsModeManager
-import com.haoze.diting.ui.MainViewModel
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeActivity
 import com.haoze.diting.ui.mode.WorkModeStore
@@ -24,7 +23,11 @@ import com.haoze.diting.ui.settings.SystemSettingsStore
  * Coordinates app work modes (Normal, Express, Server/DNS), onboarding prerequisites,
  * and state transitions.
  */
-class MainWorkModeCoordinator {
+class MainWorkModeCoordinator(
+    private val onInitializeAcceptedExperience: () -> Unit = {},
+    private val onStopVpn: () -> Unit = {},
+    private val onRefreshNormalStatus: () -> Unit = {}
+) {
     var currentWorkMode by mutableStateOf(AppWorkMode.NORMAL)
         private set
     var hasSelectedWorkMode by mutableStateOf(false)
@@ -35,8 +38,8 @@ class MainWorkModeCoordinator {
     fun checkStartupOnboarding(
         activity: Activity,
         intent: Intent?,
-        onInitializeAcceptedExperience: () -> Unit,
-        onStopVpn: () -> Unit
+        onInitializeAccepted: () -> Unit = onInitializeAcceptedExperience,
+        onStop: () -> Unit = onStopVpn
     ): Boolean {
         currentWorkMode = WorkModeStore.getAppWorkMode(activity)
         hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(activity)
@@ -46,7 +49,7 @@ class MainWorkModeCoordinator {
                 ModePermissionStore.setOnboardingCompleted(activity, mode, true)
             }
         }
-        handleWorkModeChangeIntent(activity, intent, onInitializeAcceptedExperience, onStopVpn)
+        handleWorkModeChangeIntent(activity, intent, onInitializeAccepted, onStop)
         if (SystemSettingsStore.isInitialAgreementAccepted(activity) && !hasSelectedWorkMode) {
             WorkModeActivity.start(activity, isFirstLaunch = true)
             activity.finish()
@@ -64,8 +67,8 @@ class MainWorkModeCoordinator {
     fun handleWorkModeChangeIntent(
         activity: Activity,
         intent: Intent?,
-        onInitializeAcceptedExperience: () -> Unit,
-        onStopVpn: () -> Unit
+        onInitializeAccepted: () -> Unit = onInitializeAcceptedExperience,
+        onStop: () -> Unit = onStopVpn
     ) {
         if (intent?.getBooleanExtra(MainActivity.EXTRA_WORK_MODE_CHANGED, false) == true) {
             val targetModeStr = intent.getStringExtra(MainActivity.EXTRA_TARGET_WORK_MODE)
@@ -73,15 +76,15 @@ class MainWorkModeCoordinator {
                 ?: WorkModeStore.getAppWorkMode(activity)
             intent.removeExtra(MainActivity.EXTRA_WORK_MODE_CHANGED)
             intent.removeExtra(MainActivity.EXTRA_TARGET_WORK_MODE)
-            switchWorkMode(activity, targetMode, onInitializeAcceptedExperience, onStopVpn)
+            switchWorkMode(activity, targetMode, onInitializeAccepted, onStop)
         }
     }
 
     fun switchWorkMode(
         activity: Activity,
         selectedMode: AppWorkMode,
-        onInitializeAcceptedExperience: () -> Unit,
-        onStopVpn: () -> Unit
+        onInitializeAccepted: () -> Unit = onInitializeAcceptedExperience,
+        onStop: () -> Unit = onStopVpn
     ) {
         val previousMode = currentWorkMode
         WorkModeStore.setAppWorkMode(activity, selectedMode)
@@ -102,27 +105,27 @@ class MainWorkModeCoordinator {
         }
 
         if (selectedMode == AppWorkMode.DNS) {
-            onStopVpn()
+            onStop()
             VpnMonitorManager.stop(activity)
         } else if (selectedMode == AppWorkMode.EXPRESS) {
             ExpressModeLauncher.handleModeSelected(activity, selectedMode) {
-                onInitializeAcceptedExperience()
+                onInitializeAccepted()
             }
         } else {
-            onInitializeAcceptedExperience()
+            onInitializeAccepted()
         }
     }
 
     fun onAgreementAccepted(
         activity: Activity,
-        onInitializeAcceptedExperience: () -> Unit
+        onInitializeAccepted: () -> Unit = onInitializeAcceptedExperience
     ) {
         if (WorkModeStore.hasSelectedWorkMode(activity)) {
             val mode = WorkModeStore.getAppWorkMode(activity)
             if (!ModePermissionStore.isOnboardingCompleted(activity, mode)) {
                 ModeOnboardingActivity.start(activity, mode, isFirstLaunch = true)
             } else {
-                onInitializeAcceptedExperience()
+                onInitializeAccepted()
                 if (mode == AppWorkMode.EXPRESS) {
                     ExpressModeLauncher.switchToExpress(activity, AppWorkMode.EXPRESS)
                 }
@@ -135,15 +138,18 @@ class MainWorkModeCoordinator {
     fun syncOnNewIntent(
         activity: Activity,
         intent: Intent?,
-        onInitializeAcceptedExperience: () -> Unit,
-        onStopVpn: () -> Unit
+        onInitializeAccepted: () -> Unit = onInitializeAcceptedExperience,
+        onStop: () -> Unit = onStopVpn
     ) {
-        handleWorkModeChangeIntent(activity, intent, onInitializeAcceptedExperience, onStopVpn)
+        handleWorkModeChangeIntent(activity, intent, onInitializeAccepted, onStop)
         hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(activity)
         currentWorkMode = WorkModeStore.getAppWorkMode(activity)
     }
 
-    fun syncOnResume(activity: Activity, mainViewModel: MainViewModel) {
+    fun syncOnResume(
+        activity: Activity,
+        onRefreshStatus: () -> Unit = onRefreshNormalStatus
+    ) {
         hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(activity)
         currentWorkMode = WorkModeStore.getAppWorkMode(activity)
         if (currentWorkMode == AppWorkMode.DNS) {
@@ -156,7 +162,7 @@ class MainWorkModeCoordinator {
             }
             activity.sendBroadcast(legacyIntent)
         } else {
-            mainViewModel.refreshStatus()
+            onRefreshStatus()
         }
         VpnMonitorManager.sync(activity)
     }
