@@ -70,6 +70,7 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
     private val genericSettingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
+        refreshPermissionStates()
         triggerAppListProbeAndRefresh()
     }
 
@@ -83,6 +84,12 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         refreshPermissionStates()
+
+        if (PermissionDisclosureSettings.isAppListExplained(this) &&
+            !PermissionDisclosureSettings.wasAppListAvailable(this)
+        ) {
+            triggerAppListProbeAndRefresh()
+        }
 
         lifecycleScope.launch(Dispatchers.IO) {
             val ips = NetworkInfoProbe.probe(this@ModeOnboardingActivity)?.ipv4Addresses ?: emptyList()

@@ -4,15 +4,17 @@ import com.haoze.diting.data.dao.DnsLogDao
 import com.haoze.diting.data.entity.DnsLogEntity
 import com.haoze.diting.ui.DnsLogMode
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
- * DNS request logger with batch buffering and asynchronous writes. Expiry
- * cleanup is scheduled centrally by [LogMaintenance].
+ * DNS request logger with batch buffering, serialized asynchronous writes,
+ * and backpressure protection. Expiry cleanup is scheduled centrally by [LogMaintenance].
  */
 class DnsLogger(
     private val dao: DnsLogDao,
@@ -21,6 +23,7 @@ class DnsLogger(
 ) {
 
     private val mutex = Mutex()
+    private val writeMutex = Mutex()
     private val pending = ArrayList<DnsLogEntity>(BATCH_SIZE)
     private var scheduledFlush: Job? = null
 
@@ -61,24 +64,33 @@ class DnsLogger(
             scheduledFlush?.cancel()
             scheduledFlush = null
             if (pending.isEmpty()) {
-                entities
+                if (entities.size > MAX_PENDING_QUEUE) {
+                    entities.takeLast(MAX_PENDING_QUEUE)
+                } else {
+                    entities
+                }
             } else {
                 val combined = ArrayList<DnsLogEntity>(pending.size + entities.size)
                 combined.addAll(pending)
                 combined.addAll(entities)
                 pending.clear()
-                combined
+                if (combined.size > MAX_PENDING_QUEUE) {
+                    combined.takeLast(MAX_PENDING_QUEUE)
+                } else {
+                    combined
+                }
             }
         }
         if (batch.isNotEmpty()) {
-            runCatching {
-                batch.chunked(100).forEach { dao.insertAll(it) }
-            }
+            flushBatch(batch)
         }
     }
 
     private suspend fun enqueue(entity: DnsLogEntity) {
         val batch = mutex.withLock {
+            if (pending.size >= MAX_PENDING_QUEUE) {
+                pending.removeAt(0)
+            }
             if (pending.isEmpty()) {
                 scheduleFlush()
             }
@@ -94,7 +106,28 @@ class DnsLogger(
             }
         }
         if (batch != null && batch.isNotEmpty()) {
-            runCatching { dao.insertAll(batch) }
+            flushBatch(batch)
+        }
+    }
+
+    private suspend fun flushBatch(batch: List<DnsLogEntity>) {
+        val scope = flushScope
+        if (scope != null) {
+            scope.launch(Dispatchers.IO) {
+                writeMutex.withLock {
+                    runCatching {
+                        batch.chunked(100).forEach { dao.insertAll(it) }
+                    }
+                }
+            }
+        } else {
+            withContext(Dispatchers.IO) {
+                writeMutex.withLock {
+                    runCatching {
+                        batch.chunked(100).forEach { dao.insertAll(it) }
+                    }
+                }
+            }
         }
     }
 
@@ -107,7 +140,13 @@ class DnsLogger(
             snapshot
         }
         if (batch.isNotEmpty()) {
-            runCatching { dao.insertAll(batch) }
+            withContext(Dispatchers.IO) {
+                writeMutex.withLock {
+                    runCatching {
+                        batch.chunked(100).forEach { dao.insertAll(it) }
+                    }
+                }
+            }
         }
     }
 
@@ -119,7 +158,7 @@ class DnsLogger(
             snapshot
         }
         if (batch.isNotEmpty()) {
-            runCatching { dao.insertAll(batch) }
+            flushBatch(batch)
         }
     }
 
@@ -135,12 +174,17 @@ class DnsLogger(
             scheduledFlush?.cancel()
             scheduledFlush = null
             pending.clear()
-            dao.clearAll()
+        }
+        withContext(Dispatchers.IO) {
+            writeMutex.withLock {
+                dao.clearAll()
+            }
         }
     }
 
     companion object {
         private const val BATCH_SIZE = 50
         private const val FLUSH_INTERVAL_MS = 500L
+        private const val MAX_PENDING_QUEUE = 2_000
     }
 }

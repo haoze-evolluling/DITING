@@ -308,7 +308,7 @@ class ExpressTunnelManager {
                     else -> LogResult.PASSED
                 }
                 val msg = if (providerName != null) "$providerName (${latencyMs}ms)" else reason
-                scope.launch {
+                scope.launch(Dispatchers.IO) {
                     dnsLogger.log(
                         queryName = domain,
                         queryType = queryType,
