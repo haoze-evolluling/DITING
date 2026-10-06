@@ -2,7 +2,6 @@ package com.haoze.diting
 
 import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
@@ -10,26 +9,19 @@ import android.widget.Toast
 import com.haoze.diting.ui.settings.AppearanceSettingsStore
 import com.haoze.diting.ui.settings.SystemSettingsStore
 import com.haoze.diting.ui.showToast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.ui.unit.dp
-import com.haoze.diting.ui.components.AppConfirmDialog
-import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
@@ -38,9 +30,7 @@ import com.haoze.diting.data.RuleDataset
 import com.haoze.diting.ui.AppSettings
 import com.haoze.diting.ui.AppLanguageManager
 import com.haoze.diting.ui.AppLanguageMode
-import com.haoze.diting.ui.AppThemeMode
 import com.haoze.diting.ui.AppThemeSurface
-import com.haoze.diting.ui.MainScreen
 import com.haoze.diting.ui.MainViewModel
 import com.haoze.diting.ui.PermissionDisclosureSettings
 import com.haoze.diting.ui.RecentsPrivacyController
@@ -48,13 +38,11 @@ import com.haoze.diting.ui.Routes
 import com.haoze.diting.notification.AppNotificationChannels
 import com.haoze.diting.notification.NotificationPermissionHelper
 import com.haoze.diting.notification.VpnMonitorManager
-import com.haoze.diting.ui.AppUpdateDialog
-import com.haoze.diting.dnsmode.DnsMainActivity
+import com.haoze.diting.permission.ModePermissionStore
 import com.haoze.diting.ui.mode.AppWorkMode
 import com.haoze.diting.ui.mode.WorkModeActivity
 import com.haoze.diting.ui.mode.WorkModeStore
 import com.haoze.diting.update.AppUpdateHost
-import com.haoze.diting.ui.localizedText
 import com.haoze.diting.vpn.DnsVpnService
 import com.haoze.diting.vpn.SubscriptionAutoUpdateScheduler
 import kotlinx.coroutines.Dispatchers
@@ -62,10 +50,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+import com.haoze.diting.ui.AppUpdateDialog
 import com.haoze.diting.ui.InitialAgreementDialog
+import com.haoze.diting.ui.MainScreen
 import com.haoze.diting.ui.PermissionDisclosure
 import com.haoze.diting.ui.PermissionDisclosureDialog
-import com.haoze.diting.ui.mode.disableWindowTransitions
 
 private const val DATABASE_WARMUP_DELAY_MS = 500L
 
@@ -201,13 +190,23 @@ class MainActivity : AppLocalizedActivity() {
         }
         currentWorkMode = WorkModeStore.getAppWorkMode(this)
         hasSelectedWorkMode = WorkModeStore.hasSelectedWorkMode(this)
+        val isExistingUser = SystemSettingsStore.isInitialAgreementAccepted(this) && hasSelectedWorkMode
+        if (isExistingUser && !ModePermissionStore.isOnboardingCompleted(this, currentWorkMode)) {
+            AppWorkMode.entries.forEach { mode ->
+                ModePermissionStore.setOnboardingCompleted(this, mode, true)
+            }
+        }
         handleWorkModeChangeIntent(intent)
         if (SystemSettingsStore.isInitialAgreementAccepted(this) && !hasSelectedWorkMode) {
             WorkModeActivity.start(this, isFirstLaunch = true)
+            finish()
+            return
         } else if (SystemSettingsStore.isInitialAgreementAccepted(this) &&
-            !com.haoze.diting.permission.ModePermissionStore.isOnboardingCompleted(this, currentWorkMode)
+            !ModePermissionStore.isOnboardingCompleted(this, currentWorkMode)
         ) {
             com.haoze.diting.onboarding.ModeOnboardingActivity.start(this, currentWorkMode, isFirstLaunch = true)
+            finish()
+            return
         }
         setContent {
             var initialAgreementAccepted by remember {

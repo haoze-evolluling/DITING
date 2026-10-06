@@ -72,7 +72,7 @@ enum class AppPermission(
             VPN -> VpnService.prepare(context) == null
             NOTIFICATION -> NotificationPermissionHelper.hasPermission(context)
             BATTERY_OPTIMIZATION -> isBatteryOptimizationIgnored(context)
-            PACKAGE_QUERY -> isAppListAccessible(context)
+            PACKAGE_QUERY -> PermissionDisclosureSettings.wasAppListAvailable(context)
             SYSTEM_ALERT_WINDOW -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 Settings.canDrawOverlays(context)
             } else {

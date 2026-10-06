@@ -14,13 +14,10 @@ object ExpressDnsMessageUtils {
     private const val HEADER_LEN = 12
     const val TYPE_A = 1
     const val TYPE_AAAA = 28
-    private const val TYPE_SOA = 6
     private const val TYPE_OPT = 41
     private const val CLASS_IN = 1
     private const val BLOCK_RESPONSE_TTL_SECONDS = 300L
     private const val RESOURCE_RECORD_HEADER_SIZE = 12
-    private const val SOA_RDATA_SIZE = 22
-    private const val SOA_RECORD_SIZE = RESOURCE_RECORD_HEADER_SIZE + SOA_RDATA_SIZE
     private const val DNSSEC_OK_FLAG = 0x8000L
     private const val DNS_FLAG_QR = 0x80
     const val RCODE_NOERROR = 0
@@ -126,15 +123,14 @@ object ExpressDnsMessageUtils {
 
     fun buildNegativeResponse(query: ByteArray, responseCode: Int): ByteArray {
         val questionEnd = questionEnd(query) ?: return buildErrorResponse(query, RCODE_SERVFAIL)
-        val response = createResponse(
+        return createResponse(
             query = query,
             questionEnd = questionEnd,
             responseCode = responseCode,
-            authorityCount = 1,
-            extraSize = SOA_RECORD_SIZE
+            answerCount = 0,
+            authorityCount = 0,
+            extraSize = 0
         )
-        writeSoaRecord(response, questionEnd)
-        return response
     }
 
     fun buildRefusedResponse(query: ByteArray): ByteArray {
@@ -207,25 +203,6 @@ object ExpressDnsMessageUtils {
         val requestFlagsLow = query.getOrNull(3)?.toInt()?.and(0xFF) ?: 0
         response[2] = (DNS_FLAG_QR or (requestFlagsHigh and 0x79)).toByte()
         response[3] = (0x80 or (requestFlagsLow and 0x10) or (responseCode and 0x0F)).toByte()
-    }
-
-    private fun writeSoaRecord(response: ByteArray, start: Int) {
-        var offset = start
-        writeNamePointer(response, offset)
-        offset += 2
-        writeShort(response, offset, TYPE_SOA)
-        writeShort(response, offset + 2, CLASS_IN)
-        writeInt(response, offset + 4, BLOCK_RESPONSE_TTL_SECONDS)
-        writeShort(response, offset + 8, SOA_RDATA_SIZE)
-        offset = start + RESOURCE_RECORD_HEADER_SIZE
-
-        response[offset++] = 0
-        response[offset++] = 0
-        writeInt(response, offset, 0)
-        writeInt(response, offset + 4, 0)
-        writeInt(response, offset + 8, 0)
-        writeInt(response, offset + 12, 0)
-        writeInt(response, offset + 16, BLOCK_RESPONSE_TTL_SECONDS)
     }
 
     private fun writeNamePointer(response: ByteArray, offset: Int) {

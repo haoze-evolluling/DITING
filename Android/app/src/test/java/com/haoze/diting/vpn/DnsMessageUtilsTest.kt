@@ -14,13 +14,15 @@ class DnsMessageUtilsTest {
 
         assertEquals(0x1234, DnsMessageUtils.transactionId(nxdomain))
         assertEquals(3, DnsMessageUtils.responseCode(nxdomain))
+        assertEquals(queryA.size, nxdomain.size)
 
         val queryTxt = DnsMessageUtils.buildQuery("blocked.example", 16, 0x1235)
         val nodata = DnsMessageUtils.buildBlockedResponse(queryTxt, BlockResponseMode.NODATA)
 
         assertEquals(0x1235, DnsMessageUtils.transactionId(nodata))
         assertEquals(0, DnsMessageUtils.responseCode(nodata))
-        assertEquals(300L, DnsMessageUtils.cacheLifetimeSeconds(nodata))
+        assertEquals(0L, DnsMessageUtils.cacheLifetimeSeconds(nodata))
+        assertEquals(queryTxt.size, nodata.size)
     }
 
     @Test

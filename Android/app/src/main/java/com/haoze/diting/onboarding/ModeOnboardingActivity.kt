@@ -53,6 +53,7 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         get() = intent.getBooleanExtra(EXTRA_FIRST_LAUNCH, false)
 
     private val permissionStates = mutableStateMapOf<AppPermission, Boolean>()
+    private var localIps by mutableStateOf<List<String>>(emptyList())
 
     private val vpnLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -69,7 +70,7 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
     private val genericSettingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        refreshPermissionStates()
+        triggerAppListProbeAndRefresh()
     }
 
     private val appListPermissionLauncher = registerForActivityResult(
@@ -83,7 +84,12 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
         enableEdgeToEdge()
         refreshPermissionStates()
 
-        val localIps = NetworkInfoProbe.probe(this)?.ipv4Addresses ?: emptyList()
+        lifecycleScope.launch(Dispatchers.IO) {
+            val ips = NetworkInfoProbe.probe(this@ModeOnboardingActivity)?.ipv4Addresses ?: emptyList()
+            withContext(Dispatchers.Main) {
+                localIps = ips
+            }
+        }
 
         setContent {
             val themeMode by remember { mutableStateOf(AppearanceSettingsStore.getAppThemeMode(this)) }
@@ -181,7 +187,7 @@ class ModeOnboardingActivity : AppLocalizedActivity() {
             AppPermission.PACKAGE_QUERY -> {
                 val alreadyExplained = PermissionDisclosureSettings.isAppListExplained(this)
                 PermissionDisclosureSettings.setAppListExplained(this, true)
-                if (alreadyExplained && !AppPermission.isAppListAccessible(this)) {
+                if (alreadyExplained && !PermissionDisclosureSettings.wasAppListAvailable(this)) {
                     val intent = permission.createRequestIntent(this)
                     if (intent != null) {
                         try {

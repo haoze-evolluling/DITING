@@ -32,6 +32,7 @@ class ExpressDnsMessageUtilsTest {
         val nxResp = ExpressDnsMessageUtils.buildBlockedResponse(query, BlockResponseMode.NXDOMAIN)
         assertEquals(ExpressDnsMessageUtils.RCODE_NXDOMAIN, ExpressDnsMessageUtils.responseCode(nxResp))
         assertEquals(0x5678, ExpressDnsMessageUtils.transactionId(nxResp))
+        assertEquals(query.size, nxResp.size)
 
         // REFUSED
         val refResp = ExpressDnsMessageUtils.buildBlockedResponse(query, BlockResponseMode.REFUSED)
@@ -73,5 +74,35 @@ class ExpressDnsMessageUtilsTest {
         // Expired
         val expired = ExpressDnsMessageUtils.patchResponseTtl(resp, 300)
         assertNull(expired)
+    }
+
+    @Test
+    fun testRfcCompliantNegativeResponsesWithoutSoa() {
+        val domains = listOf("beacon.qq.com", "midas.gtimg.cn", "broker.game.qq.com")
+        for (domain in domains) {
+            val queryA = ExpressDnsMessageUtils.buildQuery(domain, ExpressDnsMessageUtils.TYPE_A, 0x4321)
+            val nxdomain = ExpressDnsMessageUtils.buildBlockedResponse(queryA, BlockResponseMode.NXDOMAIN)
+
+            // Flags: 0x8183 (QR=1, RD=1, RA=1, RCODE=3)
+            assertEquals(0x81.toByte(), nxdomain[2])
+            assertEquals(0x83.toByte(), nxdomain[3])
+            // QDCOUNT = 1
+            assertEquals(1, ((nxdomain[4].toInt() and 0xFF) shl 8) or (nxdomain[5].toInt() and 0xFF))
+            // ANCOUNT = 0
+            assertEquals(0, ((nxdomain[6].toInt() and 0xFF) shl 8) or (nxdomain[7].toInt() and 0xFF))
+            // NSCOUNT = 0 (Crucial: NO pseudo-SOA record that breaks MSDK/game network stack)
+            assertEquals(0, ((nxdomain[8].toInt() and 0xFF) shl 8) or (nxdomain[9].toInt() and 0xFF))
+            // ARCOUNT = 0
+            assertEquals(0, ((nxdomain[10].toInt() and 0xFF) shl 8) or (nxdomain[11].toInt() and 0xFF))
+            // Exact question length with no trailing authority payload
+            assertEquals(queryA.size, nxdomain.size)
+
+            // NODATA test
+            val nodata = ExpressDnsMessageUtils.buildBlockedResponse(queryA, BlockResponseMode.NODATA)
+            assertEquals(0x81.toByte(), nodata[2])
+            assertEquals(0x80.toByte(), nodata[3])
+            assertEquals(0, ((nodata[8].toInt() and 0xFF) shl 8) or (nodata[9].toInt() and 0xFF))
+            assertEquals(queryA.size, nodata.size)
+        }
     }
 }
