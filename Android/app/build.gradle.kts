@@ -11,10 +11,10 @@ plugins {
 // 1. 应用版本配置 (App Version Configuration)
 // ==============================================================================
 // 应用内部版本号（整数，用于系统版本对比及应用升级判断）
-val appVersionCode = 22
+val appVersionCode = 23
 
 // 应用展示版本号（对外版本名称，供界面展示及说明使用）
-val appVersionName = "1.2.8"
+val appVersionName = "1.2.9"
 
 // 应用产物显示版本号（用于 APK 输出重命名等归档标识）
 val apkVersionName = appVersionName
