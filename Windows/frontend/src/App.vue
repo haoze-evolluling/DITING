@@ -38,8 +38,32 @@ function toggleTheme() {
   themeManager.setThemeMode(nextMode);
 }
 
+function parseRoute() {
+  try {
+    const url = new URL(window.location.href);
+    const hash = url.hash.replace(/^#\/?/, '').split('?')[0].toLowerCase();
+    const tabParam = (url.searchParams.get('tab') || hash).toLowerCase();
+    const validTabs: NavTab[] = ['dashboard', 'adapters', 'upstream', 'cache', 'rules', 'logs', 'settings'];
+    if (validTabs.includes(tabParam as NavTab)) {
+      currentTab.value = tabParam as NavTab;
+    }
+    const themeParam = url.searchParams.get('theme');
+    if (themeParam === 'light' || themeParam === 'dark' || themeParam === 'system') {
+      themeManager.setThemeMode(themeParam);
+    }
+    if (url.searchParams.has('modal')) {
+      showAlertModal.value = url.searchParams.get('modal') === 'alert';
+    }
+  } catch (e) {
+    // ignore URL parse errors
+  }
+}
+
 function handleNavigate(tab: string) {
   currentTab.value = tab as NavTab;
+  try {
+    window.location.hash = '#' + tab;
+  } catch (_) {}
 }
 
 const isRetrying = ref(false);
@@ -59,18 +83,24 @@ async function retryConnect() {
 }
 
 onMounted(() => {
+  parseRoute();
+  window.addEventListener('hashchange', parseRoute);
+
   ipc.connectWS();
   ipc.checkHealth();
 
   unsubConn = ipc.onConnectionChange((connected) => {
     isConnected.value = connected;
-    if (!connected) {
+    const url = new URL(window.location.href);
+    const suppressAlert = url.searchParams.has('noalert');
+    if (!connected && !suppressAlert) {
       setTimeout(() => {
-        if (!ipc.isConnected) {
+        const currentUrl = new URL(window.location.href);
+        if (!ipc.isConnected && !currentUrl.searchParams.has('noalert')) {
           showAlertModal.value = true;
         }
       }, 2000);
-    } else {
+    } else if (connected) {
       showAlertModal.value = false;
     }
   });
@@ -81,6 +111,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  window.removeEventListener('hashchange', parseRoute);
   if (unsubConn) unsubConn();
   if (unsubTheme) unsubTheme();
 });
@@ -92,7 +123,7 @@ onUnmounted(() => {
     <nav class="w-20 md:w-24 shrink-0 flex flex-col items-center justify-between py-5 border-r border-surface-border bg-surface-card transition-colors z-20">
       <!-- 顶部 Logo & 品牌徽标 -->
       <div class="flex flex-col items-center gap-2">
-        <div class="relative group cursor-pointer" @click="currentTab = 'dashboard'">
+        <div class="relative group cursor-pointer" @click="handleNavigate('dashboard')">
           <img
             src="./assets/images/logo-universal.png"
             alt="谛听 Logo"
@@ -112,7 +143,7 @@ onUnmounted(() => {
         <button
           v-for="item in navItems"
           :key="item.id"
-          @click="currentTab = item.id"
+          @click="handleNavigate(item.id)"
           class="group relative flex flex-col items-center justify-center w-full py-2 rounded-2xl transition-all duration-200 cursor-pointer"
           :class="[
             currentTab === item.id
@@ -148,7 +179,7 @@ onUnmounted(() => {
 
         <!-- 设置快捷入口 -->
         <button
-          @click="currentTab = 'settings'"
+          @click="handleNavigate('settings')"
           class="flex items-center justify-center w-9 h-9 rounded-xl text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
           :class="{ 'text-brand-primary': currentTab === 'settings' }"
           title="系统与外观设置"
@@ -217,16 +248,16 @@ onUnmounted(() => {
       <template #actions>
         <button
           @click="showAlertModal = false"
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+          class="app-btn-secondary"
         >
           稍后处理
         </button>
         <button
           @click="retryConnect"
           :disabled="isRetrying"
-          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover shadow-xs flex items-center gap-1.5 transition-all flex-shrink-0 cursor-pointer disabled:opacity-60"
+          class="app-btn-primary"
         >
-          <M3Icon name="refresh" :size="15" :class="isRetrying ? 'animate-spin' : ''" />
+          <M3Icon name="refresh" :size="16" :class="isRetrying ? 'animate-spin' : ''" />
           <span>{{ isRetrying ? '正在连接...' : '重新尝试连接' }}</span>
         </button>
       </template>

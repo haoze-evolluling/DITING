@@ -117,15 +117,23 @@ onUnmounted(() => {
 
       <!-- 操作按钮组 -->
       <div class="flex items-center gap-2">
-        <md-outlined-button @click="togglePause">
-          <M3Icon :name="isPaused ? 'play_arrow' : 'pause'" slot="icon" :size="16" />
-          {{ isPaused ? '继续滚动' : '暂停滚屏' }}
-        </md-outlined-button>
+        <button
+          type="button"
+          @click="togglePause"
+          class="app-btn-secondary"
+        >
+          <M3Icon :name="isPaused ? 'play_arrow' : 'pause'" :size="16" />
+          <span>{{ isPaused ? '继续滚动' : '暂停滚屏' }}</span>
+        </button>
 
-        <md-outlined-button @click="clearLogs">
-          <M3Icon name="delete" slot="icon" :size="16" />
-          清空记录
-        </md-outlined-button>
+        <button
+          type="button"
+          @click="clearLogs"
+          class="app-btn-secondary"
+        >
+          <M3Icon name="delete" :size="16" />
+          <span>清空记录</span>
+        </button>
       </div>
     </div>
 
@@ -138,7 +146,7 @@ onUnmounted(() => {
           v-model="searchFilter"
           type="text"
           placeholder="检索域名或客户端 IP..."
-          class="w-full pl-9 pr-4 py-1.5 rounded-xl border border-surface-border-sub bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted"
+          class="w-full pl-9 pr-4 h-8 rounded-xl border border-surface-border-sub bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted"
         />
       </div>
 
@@ -148,7 +156,7 @@ onUnmounted(() => {
           v-for="t in queryTypes"
           :key="t"
           @click="selectedType = t"
-          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none cursor-pointer"
+          class="h-7 px-2.5 rounded-lg text-xs font-semibold transition-all duration-150 select-none cursor-pointer inline-flex items-center"
           :class="[
             selectedType === t
               ? 'bg-brand-primary text-white shadow-xs'
@@ -165,7 +173,7 @@ onUnmounted(() => {
           v-for="s in statusOptions"
           :key="s"
           @click="selectedStatus = s"
-          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none cursor-pointer"
+          class="h-7 px-2.5 rounded-lg text-xs font-semibold transition-all duration-150 select-none cursor-pointer inline-flex items-center"
           :class="[
             selectedStatus === s
               ? 'bg-brand-primary text-white shadow-xs'
@@ -180,7 +188,7 @@ onUnmounted(() => {
       <div class="flex items-center border-l border-surface-border pl-3">
         <button
           @click="onlyBlocked = !onlyBlocked"
-          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none flex items-center gap-1.5 cursor-pointer"
+          class="h-7 px-2.5 rounded-lg text-xs font-semibold transition-all duration-150 select-none inline-flex items-center gap-1.5 cursor-pointer"
           :class="[
             onlyBlocked
               ? 'bg-status-error text-white shadow-xs'

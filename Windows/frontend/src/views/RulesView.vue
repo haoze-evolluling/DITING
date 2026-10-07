@@ -311,14 +311,23 @@ onUnmounted(() => {
       <div class="flex items-center justify-between">
         <span class="text-xs text-text-sub">支持 HTTP(S) 公网规则源与本地文本规则库</span>
         <div class="flex items-center gap-3">
-          <md-outlined-button @click="refreshList()" :disabled="refreshing">
-            <M3Icon name="refresh" :size="16" slot="icon" class="mr-1" />
+          <button
+            type="button"
+            @click="refreshList()"
+            :disabled="refreshing"
+            class="app-btn-secondary"
+          >
+            <M3Icon name="refresh" :size="16" :class="refreshing ? 'animate-spin' : ''" />
             <span>{{ refreshing ? '正在全量拉取...' : '全量刷新' }}</span>
-          </md-outlined-button>
-          <md-filled-button @click="isAddModalOpen = true">
-            <M3Icon name="add" :size="16" slot="icon" class="mr-1" />
+          </button>
+          <button
+            type="button"
+            @click="isAddModalOpen = true"
+            class="app-btn-primary"
+          >
+            <M3Icon name="add" :size="16" />
             <span>添加订阅</span>
-          </md-filled-button>
+          </button>
         </div>
       </div>
 
@@ -343,11 +352,11 @@ onUnmounted(() => {
 
           <div class="flex items-center justify-between pt-3 border-t border-surface-border-sub text-[11px] text-text-muted">
             <span>最后同步: {{ formatTime(l.lastUpdated) }}</span>
-            <div class="flex items-center gap-2">
-              <button @click="refreshList(l.id)" class="p-1.5 rounded-lg hover:bg-surface-hover text-text-sub transition-colors cursor-pointer" title="重新拉取">
+            <div class="flex items-center gap-1.5">
+              <button @click="refreshList(l.id)" class="app-btn-icon" title="重新拉取">
                 <M3Icon name="refresh" :size="14" />
               </button>
-              <button @click="deleteList(l.id)" class="p-1.5 rounded-lg hover:bg-status-error-bg text-status-error transition-colors cursor-pointer" title="移除此源">
+              <button @click="deleteList(l.id)" class="app-btn-icon app-btn-icon-danger" title="移除此源">
                 <M3Icon name="delete" :size="14" />
               </button>
             </div>
@@ -379,10 +388,15 @@ onUnmounted(() => {
       </div>
 
       <div class="flex items-center justify-end gap-3">
-        <md-filled-button @click="saveCustomRules" :disabled="saving">
-          <M3Icon name="check" :size="16" slot="icon" class="mr-1" />
+        <button
+          type="button"
+          @click="saveCustomRules"
+          :disabled="saving"
+          class="app-btn-primary"
+        >
+          <M3Icon name="check" :size="16" />
           <span>{{ saving ? '保存中...' : '保存自定义规则' }}</span>
-        </md-filled-button>
+        </button>
       </div>
     </div>
 
@@ -394,25 +408,30 @@ onUnmounted(() => {
           <p class="text-xs text-text-sub mt-1">输入任意域名，即时测试其当前在 Trie 树和规则集中的匹配结果与处理动作</p>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-3">
+        <div class="flex flex-col md:flex-row gap-3 items-center">
           <input
             v-model="testDomain"
             placeholder="例如: pagead2.googlesyndication.com"
             @keyup.enter="runDomainTest"
-            class="flex-1 px-4 py-2.5 rounded-xl border border-surface-border bg-surface-card-sub text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main placeholder:text-text-muted"
+            class="flex-1 h-9 px-4 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main placeholder:text-text-muted"
           />
           <select
             v-model="testQType"
-            class="px-4 py-2.5 rounded-xl border border-surface-border bg-surface-card-sub text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main"
+            class="h-9 px-3 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main"
           >
             <option value="A">Type A (IPv4)</option>
             <option value="AAAA">Type AAAA (IPv6)</option>
             <option value="ANY">Type ANY</option>
           </select>
-          <md-filled-button @click="runDomainTest" :disabled="testing || !testDomain.trim()">
-            <M3Icon name="search" :size="16" slot="icon" class="mr-1" />
+          <button
+            type="button"
+            @click="runDomainTest"
+            :disabled="testing || !testDomain.trim()"
+            class="app-btn-primary"
+          >
+            <M3Icon name="search" :size="16" />
             <span>{{ testing ? '检测中...' : '立即测试' }}</span>
-          </md-filled-button>
+          </button>
         </div>
 
         <div v-if="testResult" class="p-5 rounded-xl border text-sm" :class="testResult.blocked ? 'bg-status-error-bg border-status-error/30' : testResult.action === 'allow' ? 'bg-status-success-bg border-status-success/30' : 'bg-surface-card-sub border-surface-border-sub'">
@@ -479,10 +498,15 @@ onUnmounted(() => {
         </div>
 
         <div class="pt-4 border-t border-surface-border flex justify-end">
-          <md-filled-button @click="saveConfig" :disabled="saving">
-            <M3Icon name="check" :size="16" slot="icon" class="mr-1" />
+          <button
+            type="button"
+            @click="saveConfig"
+            :disabled="saving"
+            class="app-btn-primary"
+          >
+            <M3Icon name="check" :size="16" />
             <span>{{ saving ? '保存中...' : '保存策略' }}</span>
-          </md-filled-button>
+          </button>
         </div>
       </div>
     </div>
@@ -517,7 +541,7 @@ onUnmounted(() => {
         <button
           type="button"
           @click="isAddModalOpen = false"
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+          class="app-btn-secondary"
         >
           取消
         </button>
@@ -525,7 +549,7 @@ onUnmounted(() => {
           type="button"
           :disabled="saving || !newListURL.trim()"
           @click="handleAddList"
-          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-all flex-shrink-0 cursor-pointer"
+          class="app-btn-primary"
         >
           添加并拉取
         </button>

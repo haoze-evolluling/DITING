@@ -40,6 +40,11 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, 来自谛听 (DITING) Windows GUI!", name)
 }
 
+// CaptureWindow 截取当前客户端自身窗口界面并保存为 PNG 图像文件
+func (a *App) CaptureWindow(outputPath string) (string, error) {
+	return windows.CaptureDitingWindow(outputPath)
+}
+
 // RunEmergencyRestore 执行离线应急恢复
 func (a *App) RunEmergencyRestore() (string, error) {
 	store := windows.NewFileStateStore("")

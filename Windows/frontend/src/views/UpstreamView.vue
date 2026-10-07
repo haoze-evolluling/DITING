@@ -179,14 +179,24 @@ onMounted(() => {
       </div>
 
       <div class="flex items-center gap-3">
-        <md-outlined-button @click="loadData" :disabled="loading">
-          <M3Icon name="refresh" slot="icon" :size="16" />
-          刷新状态
-        </md-outlined-button>
-        <md-filled-button @click="openAddDialog" :disabled="saving">
-          <M3Icon name="add" slot="icon" :size="16" />
-          新增上游节点
-        </md-filled-button>
+        <button
+          type="button"
+          @click="loadData"
+          :disabled="loading"
+          class="app-btn-secondary"
+        >
+          <M3Icon name="refresh" :size="16" :class="loading ? 'animate-spin' : ''" />
+          <span>刷新状态</span>
+        </button>
+        <button
+          type="button"
+          @click="openAddDialog"
+          :disabled="saving"
+          class="app-btn-primary"
+        >
+          <M3Icon name="add" :size="16" />
+          <span>新增上游节点</span>
+        </button>
       </div>
     </div>
 
@@ -196,7 +206,7 @@ onMounted(() => {
         <M3Icon name="check_circle" :size="18" />
         <span>{{ successMessage }}</span>
       </div>
-      <button @click="successMessage = ''" class="text-xs font-semibold px-2 py-1 rounded-lg hover:bg-surface-hover text-text-sub cursor-pointer">
+      <button @click="successMessage = ''" class="app-btn-secondary app-btn-compact">
         知道了
       </button>
     </div>
@@ -206,7 +216,7 @@ onMounted(() => {
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
       </div>
-      <button @click="errorMessage = ''" class="text-xs font-semibold px-2 py-1 rounded-lg hover:bg-surface-hover text-text-sub cursor-pointer">
+      <button @click="errorMessage = ''" class="app-btn-secondary app-btn-compact">
         关闭
       </button>
     </div>
@@ -291,28 +301,41 @@ onMounted(() => {
 
             <!-- 右侧测速与操作项 -->
             <div class="flex items-center gap-2">
-              <div v-if="probeResults[node.id] !== undefined" class="text-xs font-mono mr-2">
-                <span class="px-2 py-1 rounded-lg bg-status-success-bg text-status-success border border-status-success/30 font-semibold">
+              <div v-if="probeResults[node.id] !== undefined" class="text-xs font-mono mr-1">
+                <span class="h-8 px-2.5 rounded-lg bg-status-success-bg text-status-success border border-status-success/30 font-semibold inline-flex items-center">
                   {{ probeResults[node.id].toFixed(1) }} ms
                 </span>
               </div>
 
-              <md-outlined-button
+              <button
+                type="button"
+                class="app-btn-compact"
                 @click="handleTestNode({ id: node.id, protocol: node.protocol, server: node.server, url: node.url })"
                 :disabled="probingId === node.id"
               >
-                <md-circular-progress v-if="probingId === node.id" indeterminate slot="icon" class="w-4 h-4" />
-                <M3Icon v-else name="bolt" slot="icon" :size="16" />
-                节点测速
-              </md-outlined-button>
+                <M3Icon v-if="probingId === node.id" name="refresh" class="animate-spin" :size="14" />
+                <M3Icon v-else name="bolt" :size="14" />
+                <span>节点测速</span>
+              </button>
 
-              <md-icon-button @click="openEditDialog(idx)">
-                <M3Icon name="settings" :size="18" />
-              </md-icon-button>
+              <button
+                type="button"
+                @click="openEditDialog(idx)"
+                class="app-btn-icon"
+                title="编辑节点配置"
+              >
+                <M3Icon name="settings" :size="16" />
+              </button>
 
-              <md-icon-button @click="handleDeleteNode(idx)" :disabled="upstreams.length <= 1">
-                <M3Icon name="delete" :size="18" />
-              </md-icon-button>
+              <button
+                type="button"
+                @click="handleDeleteNode(idx)"
+                :disabled="upstreams.length <= 1"
+                class="app-btn-icon app-btn-icon-danger"
+                title="移除节点"
+              >
+                <M3Icon name="delete" :size="16" />
+              </button>
             </div>
           </div>
         </div>
@@ -373,14 +396,14 @@ onMounted(() => {
         <button
           type="button"
           @click="isDialogOpen = false"
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+          class="app-btn-secondary"
         >
           取消
         </button>
         <button
           type="button"
           @click="handleSaveDialog"
-          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover shadow-xs transition-all flex-shrink-0 cursor-pointer"
+          class="app-btn-primary"
         >
           保存节点
         </button>

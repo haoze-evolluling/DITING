@@ -222,16 +222,21 @@ onUnmounted(() => {
         </div>
 
         <!-- 刷新按钮 -->
-        <md-outlined-button @click="loadData" :disabled="loading">
-          <M3Icon slot="icon" name="refresh" :size="16" />
-          刷新
-        </md-outlined-button>
+        <button
+          type="button"
+          @click="loadData"
+          :disabled="loading"
+          class="app-btn-secondary"
+        >
+          <M3Icon name="refresh" :size="16" :class="loading ? 'animate-spin' : ''" />
+          <span>刷新</span>
+        </button>
 
         <!-- 一键清空按钮 -->
         <button
           @click="isClearDialogOpen = true"
           :disabled="loading || stats.entryCount === 0"
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-status-error hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs flex items-center gap-1.5 transition-all cursor-pointer flex-shrink-0"
+          class="app-btn-danger"
         >
           <M3Icon name="delete" :size="16" />
           <span>清空缓存</span>
@@ -351,9 +356,15 @@ onUnmounted(() => {
             <M3Icon name="settings" :size="20" class="text-brand-primary" />
             <h3 class="text-base font-bold text-text-main">缓存策略参数</h3>
           </div>
-          <md-filled-button @click="handleSaveConfig" :disabled="saving">
-            保存配置
-          </md-filled-button>
+          <button
+            type="button"
+            @click="handleSaveConfig"
+            :disabled="saving"
+            class="app-btn-primary"
+          >
+            <M3Icon name="check" :size="16" />
+            <span>保存配置</span>
+          </button>
         </div>
 
         <div class="space-y-4 pt-1">
@@ -451,9 +462,14 @@ onUnmounted(() => {
             <M3Icon slot="leading-icon" name="search" :size="16" />
           </md-outlined-text-field>
 
-          <md-outlined-button @click="handleSearch">
-            检索
-          </md-outlined-button>
+          <button
+            type="button"
+            @click="handleSearch"
+            class="app-btn-secondary"
+          >
+            <M3Icon name="search" :size="16" />
+            <span>检索</span>
+          </button>
         </div>
       </div>
 
@@ -468,8 +484,8 @@ onUnmounted(() => {
           ]"
           :key="f.id"
           @click="statusFilter = f.id as any"
-          class="px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer"
-          :class="statusFilter === f.id ? 'bg-brand-primary text-white' : 'bg-surface-card-sub border border-surface-border-sub text-text-sub hover:bg-surface-hover'"
+          class="h-8 px-3 rounded-lg text-xs font-semibold transition-colors cursor-pointer inline-flex items-center"
+          :class="statusFilter === f.id ? 'bg-brand-primary text-white shadow-xs' : 'bg-surface-card-sub border border-surface-border-sub text-text-sub hover:bg-surface-hover'"
         >
           {{ f.label }}
         </button>
@@ -537,7 +553,7 @@ onUnmounted(() => {
         <button
           type="button"
           @click="isClearDialogOpen = false"
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+          class="app-btn-secondary"
         >
           取消
         </button>
@@ -545,7 +561,7 @@ onUnmounted(() => {
           type="button"
           :disabled="clearing"
           @click="handleConfirmClear"
-          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-status-error hover:brightness-110 shadow-xs transition-all flex-shrink-0 cursor-pointer"
+          class="app-btn-danger"
         >
           确认清空
         </button>

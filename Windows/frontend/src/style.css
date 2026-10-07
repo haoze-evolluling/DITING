@@ -144,19 +144,91 @@ html, body {
   color: var(--app-text-main);
 }
 
-/* Material Web 桌面端现代圆角矩形按钮（告别胶囊变形与挤压溢出） */
+/* ========================================================
+   桌面端全域统一按钮标准规范 (Unified Button Standards)
+   规范标准高度 36px、紧凑高度 32px、圆角 10px、字号 13px
+   ======================================================== */
+
 md-filled-button,
 md-outlined-button,
 md-text-button,
 md-elevated-button {
+  --md-filled-button-container-height: 36px;
+  --md-outlined-button-container-height: 36px;
+  --md-text-button-container-height: 36px;
+  --md-elevated-button-container-height: 36px;
+
   --md-filled-button-container-shape: 10px;
   --md-outlined-button-container-shape: 10px;
   --md-text-button-container-shape: 10px;
   --md-elevated-button-container-shape: 10px;
+
+  --md-filled-button-label-text-font: inherit;
+  --md-outlined-button-label-text-font: inherit;
+  --md-text-button-label-text-font: inherit;
+  --md-elevated-button-label-text-font: inherit;
+
+  --md-filled-button-label-text-size: 13px;
+  --md-outlined-button-label-text-size: 13px;
+  --md-text-button-label-text-size: 13px;
+  --md-elevated-button-label-text-size: 13px;
+
+  --md-filled-button-label-text-weight: 600;
+  --md-outlined-button-label-text-weight: 600;
+  --md-text-button-label-text-weight: 600;
+  --md-elevated-button-label-text-weight: 600;
+
+  --md-filled-button-label-text-line-height: 20px;
+  --md-outlined-button-label-text-line-height: 20px;
+  --md-text-button-label-text-line-height: 20px;
+  --md-elevated-button-label-text-line-height: 20px;
+
+  --md-filled-button-leading-space: 16px;
+  --md-filled-button-trailing-space: 16px;
+  --md-outlined-button-leading-space: 16px;
+  --md-outlined-button-trailing-space: 16px;
+
+  --md-filled-button-with-leading-icon-leading-space: 12px;
+  --md-filled-button-with-leading-icon-trailing-space: 16px;
+  --md-outlined-button-with-leading-icon-leading-space: 12px;
+  --md-outlined-button-with-leading-icon-trailing-space: 16px;
+
+  --md-filled-button-icon-size: 16px;
+  --md-outlined-button-icon-size: 16px;
+  --md-filled-button-icon-label-space: 6px;
+  --md-outlined-button-icon-label-space: 6px;
+
+  --md-filled-button-touch-target-display: none;
+  --md-outlined-button-touch-target-display: none;
+  --md-text-button-touch-target-display: none;
+
   --md-sys-color-primary: var(--app-brand-primary);
   font-family: inherit;
   flex-shrink: 0;
   white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* 紧凑型 Material 按钮规格 (用于卡片内小操作) */
+.btn-compact {
+  --md-filled-button-container-height: 32px;
+  --md-outlined-button-container-height: 32px;
+  --md-filled-button-container-shape: 8px;
+  --md-outlined-button-container-shape: 8px;
+  --md-filled-button-label-text-size: 12px;
+  --md-outlined-button-label-text-size: 12px;
+  --md-filled-button-leading-space: 12px;
+  --md-filled-button-trailing-space: 12px;
+  --md-outlined-button-leading-space: 12px;
+  --md-outlined-button-trailing-space: 12px;
+  --md-filled-button-with-leading-icon-leading-space: 10px;
+  --md-filled-button-with-leading-icon-trailing-space: 12px;
+  --md-outlined-button-with-leading-icon-leading-space: 10px;
+  --md-outlined-button-with-leading-icon-trailing-space: 12px;
+  --md-filled-button-icon-size: 14px;
+  --md-outlined-button-icon-size: 14px;
+  --md-filled-button-icon-label-space: 5px;
+  --md-outlined-button-icon-label-space: 5px;
 }
 
 md-filled-button {
@@ -167,6 +239,204 @@ md-filled-button {
 :root[data-theme="dark"] md-filled-button,
 .dark md-filled-button {
   --md-filled-button-label-text-color: #082f49;
+}
+
+md-outlined-button {
+  --md-outlined-button-outline-color: var(--app-surface-border);
+  --md-outlined-button-label-text-color: var(--app-text-main);
+}
+
+:root[data-theme="dark"] md-outlined-button,
+.dark md-outlined-button {
+  --md-outlined-button-outline-color: var(--app-surface-border);
+  --md-outlined-button-label-text-color: var(--app-text-main);
+}
+
+/* 标准原生 HTML 按钮规格类，与 md-* 按钮完全同构等高 (36px / 32px) */
+.app-btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+  box-sizing: border-box;
+}
+
+.app-btn-base:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.app-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  background-color: var(--app-brand-primary);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 150ms ease;
+}
+.app-btn-primary:hover:not(:disabled) {
+  background-color: var(--app-brand-primary-hover);
+}
+:root[data-theme="dark"] .app-btn-primary,
+.dark .app-btn-primary {
+  color: #082f49;
+}
+.app-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.app-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  background-color: transparent;
+  color: var(--app-text-main);
+  border: 1px solid var(--app-surface-border);
+  transition: all 150ms ease;
+}
+.app-btn-secondary:hover:not(:disabled) {
+  background-color: var(--app-surface-hover);
+}
+.app-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.app-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  background-color: var(--app-status-error);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 150ms ease;
+}
+.app-btn-danger:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.app-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.app-btn-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  background-color: var(--app-status-warning);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 150ms ease;
+}
+.app-btn-warning:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.app-btn-warning:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.app-btn-compact {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  gap: 5px;
+}
+
+.app-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--app-surface-border);
+  color: var(--app-text-sub);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+.app-btn-icon:hover:not(:disabled) {
+  background-color: var(--app-surface-hover);
+  color: var(--app-text-main);
+}
+.app-btn-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.app-btn-icon-danger {
+  border-color: transparent;
+}
+.app-btn-icon-danger:hover:not(:disabled) {
+  background-color: var(--app-status-error-bg);
+  color: var(--app-status-error);
 }
 
 md-dialog {

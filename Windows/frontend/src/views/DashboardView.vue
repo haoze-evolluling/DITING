@@ -150,9 +150,10 @@ onUnmounted(() => {
       </div>
       <button
         @click="fetchStatus"
-        class="text-xs font-semibold px-3 py-1 rounded-lg bg-surface-card hover:bg-surface-hover text-text-main transition-colors cursor-pointer"
+        class="app-btn-secondary app-btn-compact"
       >
-        重试
+        <M3Icon name="refresh" :size="14" />
+        <span>重试</span>
       </button>
     </div>
 
@@ -273,7 +274,7 @@ onUnmounted(() => {
           </div>
           <button
             @click="emit('navigate', 'upstream')"
-            class="text-xs font-semibold px-2.5 py-1 rounded-lg text-brand-primary hover:bg-brand-container transition-colors cursor-pointer"
+            class="h-7 px-3 rounded-lg text-xs font-semibold text-brand-primary bg-brand-container/50 hover:bg-brand-container transition-colors cursor-pointer inline-flex items-center"
           >
             管理配置
           </button>
@@ -303,7 +304,7 @@ onUnmounted(() => {
           </div>
           <button
             @click="emit('navigate', 'cache')"
-            class="text-xs font-semibold px-2.5 py-1 rounded-lg text-brand-primary hover:bg-brand-container transition-colors cursor-pointer"
+            class="h-7 px-3 rounded-lg text-xs font-semibold text-brand-primary bg-brand-container/50 hover:bg-brand-container transition-colors cursor-pointer inline-flex items-center"
           >
             缓存监控
           </button>
@@ -333,7 +334,7 @@ onUnmounted(() => {
           </div>
           <button
             @click="emit('navigate', 'rules')"
-            class="text-xs font-semibold px-2.5 py-1 rounded-lg text-brand-primary hover:bg-brand-container transition-colors cursor-pointer"
+            class="h-7 px-3 rounded-lg text-xs font-semibold text-brand-primary bg-brand-container/50 hover:bg-brand-container transition-colors cursor-pointer inline-flex items-center"
           >
             管理规则
           </button>
@@ -363,7 +364,7 @@ onUnmounted(() => {
           </div>
           <button
             @click="emit('navigate', 'adapters')"
-            class="text-xs font-semibold px-2.5 py-1 rounded-lg text-brand-primary hover:bg-brand-container transition-colors cursor-pointer"
+            class="h-7 px-3 rounded-lg text-xs font-semibold text-brand-primary bg-brand-container/50 hover:bg-brand-container transition-colors cursor-pointer inline-flex items-center"
           >
             查看详情
           </button>

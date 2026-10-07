@@ -105,18 +105,35 @@ onMounted(() => {
       </div>
 
       <div class="flex items-center gap-3">
-        <md-outlined-button @click="loadData" :disabled="loading">
-          <M3Icon name="refresh" slot="icon" :size="16" />
-          刷新网卡
-        </md-outlined-button>
-        <md-filled-button v-if="!status?.takeover?.active" @click="handleTakeoverAll" :disabled="loading">
-          <M3Icon name="shield" slot="icon" :size="16" />
-          全量接管
-        </md-filled-button>
-        <md-outlined-button v-else @click="handleRestoreAll" :disabled="loading">
-          <M3Icon name="refresh" slot="icon" :size="16" />
-          全量还原
-        </md-outlined-button>
+        <button
+          type="button"
+          @click="loadData"
+          :disabled="loading"
+          class="app-btn-secondary"
+        >
+          <M3Icon name="refresh" :size="16" :class="loading ? 'animate-spin' : ''" />
+          <span>刷新网卡</span>
+        </button>
+        <button
+          v-if="!status?.takeover?.active"
+          type="button"
+          @click="handleTakeoverAll"
+          :disabled="loading"
+          class="app-btn-primary"
+        >
+          <M3Icon name="shield" :size="16" />
+          <span>全量接管</span>
+        </button>
+        <button
+          v-else
+          type="button"
+          @click="handleRestoreAll"
+          :disabled="loading"
+          class="app-btn-secondary"
+        >
+          <M3Icon name="refresh" :size="16" />
+          <span>全量还原</span>
+        </button>
       </div>
     </div>
 
@@ -128,7 +145,7 @@ onMounted(() => {
       </div>
       <button
         @click="errorMessage = ''"
-        class="text-xs font-semibold px-2.5 py-1 rounded-lg hover:bg-surface-hover text-text-sub cursor-pointer"
+        class="app-btn-secondary app-btn-compact"
       >
         关闭
       </button>
@@ -146,7 +163,14 @@ onMounted(() => {
       <h3 class="font-semibold text-text-main">未发现活动的物理网卡</h3>
       <p class="text-sm text-text-sub mt-1">请检查 Wi-Fi 或以太网连接是否已正常接入互联网。</p>
       <div class="mt-4">
-        <md-filled-button @click="loadData">重新扫描</md-filled-button>
+        <button
+          type="button"
+          @click="loadData"
+          class="app-btn-primary"
+        >
+          <M3Icon name="refresh" :size="16" />
+          <span>重新扫描</span>
+        </button>
       </div>
     </div>
 

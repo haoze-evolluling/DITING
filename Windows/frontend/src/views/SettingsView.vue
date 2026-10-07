@@ -180,11 +180,23 @@ onMounted(() => {
         <div v-else />
 
         <div class="flex items-center gap-3">
-          <md-outlined-button @click="testConnection" :disabled="testingConnection">
-            <M3Icon name="sync" slot="icon" :size="16" />
-            测试连通性
-          </md-outlined-button>
-          <md-filled-button @click="handleSaveIPC">保存通信配置</md-filled-button>
+          <button
+            type="button"
+            @click="testConnection"
+            :disabled="testingConnection"
+            class="app-btn-secondary"
+          >
+            <M3Icon name="sync" :size="16" :class="testingConnection ? 'animate-spin' : ''" />
+            <span>测试连通性</span>
+          </button>
+          <button
+            type="button"
+            @click="handleSaveIPC"
+            class="app-btn-primary"
+          >
+            <M3Icon name="check" :size="16" />
+            <span>保存通信配置</span>
+          </button>
         </div>
       </div>
     </div>
@@ -204,11 +216,11 @@ onMounted(() => {
             v-for="m in ([{ id: 'system', name: '跟随系统' }, { id: 'light', name: '浅色模式' }, { id: 'dark', name: '深色模式' }] as const)"
             :key="m.id"
             @click="handleModeChange(m.id)"
-            class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 border cursor-pointer"
+            class="app-btn-base transition-all duration-150"
             :class="[
               currentMode === m.id
-                ? 'bg-brand-primary text-white border-brand-primary shadow-xs'
-                : 'bg-surface-card-sub border-surface-border text-text-sub hover:bg-surface-hover',
+                ? 'bg-brand-primary text-white border-transparent shadow-xs'
+                : 'bg-surface-card-sub border border-surface-border text-text-sub hover:bg-surface-hover',
             ]"
           >
             {{ m.name }}
@@ -264,11 +276,16 @@ onMounted(() => {
         <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-text-main">53 端口冲突检测</span>
-            <md-outlined-button @click="handleDiagnosePort" :disabled="diagnosingPort">
-              <md-circular-progress v-if="diagnosingPort" indeterminate slot="icon" class="w-4 h-4" />
-              <M3Icon v-else name="search" slot="icon" :size="16" />
-              诊断端口
-            </md-outlined-button>
+            <button
+              type="button"
+              @click="handleDiagnosePort"
+              :disabled="diagnosingPort"
+              class="app-btn-secondary app-btn-compact"
+            >
+              <M3Icon v-if="diagnosingPort" name="refresh" :size="14" class="animate-spin" />
+              <M3Icon v-else name="search" :size="14" />
+              <span>诊断端口</span>
+            </button>
           </div>
           <p class="text-xs text-text-sub">
             检测 127.0.0.1:53 是否被 SharedAccess (ICS) 或其他第三方 DNS 软件占用。
@@ -285,11 +302,16 @@ onMounted(() => {
         <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-text-main">离线 DNS 应急恢复</span>
-            <md-filled-button @click="handleEmergencyRestore" :disabled="restoring">
-              <md-circular-progress v-if="restoring" indeterminate slot="icon" class="w-4 h-4" />
-              <M3Icon v-else name="refresh" slot="icon" :size="16" />
-              执行自愈
-            </md-filled-button>
+            <button
+              type="button"
+              @click="handleEmergencyRestore"
+              :disabled="restoring"
+              class="app-btn-primary app-btn-compact"
+            >
+              <M3Icon v-if="restoring" name="refresh" :size="14" class="animate-spin" />
+              <M3Icon v-else name="refresh" :size="14" />
+              <span>执行自愈</span>
+            </button>
           </div>
           <p class="text-xs text-text-sub">
             当极端异常导致系统网卡未还原时，一键从持久化快照完全还原原生 DNS。
@@ -323,14 +345,14 @@ onMounted(() => {
         <button
           type="button"
           @click="showRestoreDialog = false"
-          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+          class="app-btn-secondary"
         >
           取消
         </button>
         <button
           type="button"
           @click="doEmergencyRestore"
-          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-status-warning hover:brightness-110 shadow-xs transition-all flex-shrink-0 cursor-pointer"
+          class="app-btn-warning"
         >
           确认自愈恢复
         </button>
