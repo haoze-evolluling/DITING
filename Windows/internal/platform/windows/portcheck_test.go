@@ -119,3 +119,36 @@ func TestWindowsPortChecker_LiveCheck(t *testing.T) {
 	t.Logf("Port 53 check result: Available=%v, HasICS=%v, Conflicts=%d", res.Available, res.HasICS, len(res.Conflicts))
 	t.Logf("Diagnostic: %s", res.Diagnostic)
 }
+
+func TestParsePortCheckJSON_WithNoisyPrefixAndBOM(t *testing.T) {
+	noisy := "\xef\xbb\xbf[WARNING] Get-NetUDPEndpoint partially limited by {security policy}\n" +
+		"{\n" +
+		"  \"Listeners\": [{\"Protocol\":\"UDP\",\"LocalAddress\":\"0.0.0.0:53\",\"PID\":1000,\"ProcessName\":\"dnsmasq\"}],\n" +
+		"  \"ICS\": null\n" +
+		"}\n" +
+		"[INFO] Done\n"
+
+	conflicts, hasICS, diag := parsePortCheckJSON(noisy, false)
+	if hasICS {
+		t.Errorf("expected hasICS = false")
+	}
+	if len(conflicts) != 1 || conflicts[0].ProcessName != "dnsmasq" {
+		t.Fatalf("expected 1 conflict with dnsmasq, got %+v", conflicts)
+	}
+	if !strings.Contains(diag, "dnsmasq") {
+		t.Errorf("expected dnsmasq in diag: %s", diag)
+	}
+}
+
+func TestParsePortCheckJSON_UnavailableWithoutProcess(t *testing.T) {
+	// 模拟套接字被占用但权限不足未探测到具体进程名
+	cleanJSON := "{\"Listeners\": [], \"ICS\": null}"
+	conflicts, hasICS, diag := parsePortCheckJSON(cleanJSON, false)
+	if hasICS || len(conflicts) != 0 {
+		t.Fatalf("expected 0 conflicts, got %d", len(conflicts))
+	}
+	if !strings.Contains(diag, "未能直接绑定 127.0.0.1:53") {
+		t.Errorf("expected fallback advice when socket cannot bind: %s", diag)
+	}
+}
+

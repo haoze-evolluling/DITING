@@ -111,24 +111,73 @@ func parseStringOrSlice(raw json.RawMessage) []string {
 	return []string{}
 }
 
-// extractJSON 截取可能混入控制台警告前缀或后缀文本中的合法 JSON 数组或对象
+// extractJSON 从可能包含控制台输出、警告前缀或后缀的文本中提取合法的 JSON 数组或对象
 func extractJSON(s string) string {
 	trimmed := strings.TrimSpace(s)
-	startBracket := strings.Index(trimmed, "[")
-	startBrace := strings.Index(trimmed, "{")
+	trimmed = strings.TrimPrefix(trimmed, "\xef\xbb\xbf") // 剥除可能附带的 UTF-8 BOM
+	trimmed = strings.TrimSpace(trimmed)
+	if trimmed == "" || trimmed == "null" {
+		return trimmed
+	}
+	if json.Valid([]byte(trimmed)) {
+		return trimmed
+	}
 
-	if startBracket != -1 && (startBrace == -1 || startBracket < startBrace) {
-		endBracket := strings.LastIndex(trimmed, "]")
-		if endBracket != -1 && endBracket > startBracket {
-			return trimmed[startBracket : endBracket+1]
-		}
-	} else if startBrace != -1 {
-		endBrace := strings.LastIndex(trimmed, "}")
-		if endBrace != -1 && endBrace > startBrace {
-			return trimmed[startBrace : endBrace+1]
-		}
+	// 扫描寻找包含对象的合法 JSON 数组或独立 JSON 对象
+	candidate := findValidJSON(trimmed)
+	if candidate != "" {
+		return candidate
 	}
 	return trimmed
+}
+
+func findValidJSON(s string) string {
+	n := len(s)
+	var best string
+	for i := 0; i < n; i++ {
+		start := s[i]
+		if start != '[' && start != '{' {
+			continue
+		}
+		var end byte = ']'
+		if start == '{' {
+			end = '}'
+		}
+
+		depth := 0
+		inString := false
+		escaped := false
+		for j := i; j < n; j++ {
+			c := s[j]
+			if inString {
+				if escaped {
+					escaped = false
+				} else if c == '\\' {
+					escaped = true
+				} else if c == '"' {
+					inString = false
+				}
+				continue
+			}
+			if c == '"' {
+				inString = true
+			} else if c == start {
+				depth++
+			} else if c == end {
+				depth--
+				if depth == 0 {
+					candidate := s[i : j+1]
+					if strings.Contains(candidate, "{") && json.Valid([]byte(candidate)) {
+						if len(candidate) > len(best) {
+							best = candidate
+						}
+					}
+					break
+				}
+			}
+		}
+	}
+	return best
 }
 
 // adapterScanScript PowerShell 网卡信息提取脚本，设置静默错误处理防止特殊虚拟网卡抛出错误流
@@ -141,9 +190,9 @@ Get-NetAdapter -ErrorAction SilentlyContinue | ForEach-Object {
     $gw = if ($ip -and $ip.IPv4DefaultGateway) { $ip.IPv4DefaultGateway.NextHop } else { '' };
     $v4dns = if ($ip -and $ip.DNSServer) { @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 2 }).ServerAddresses) } else { @() };
     $v6dns = if ($ip -and $ip.DNSServer) { @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 23 }).ServerAddresses) } else { @() };
-    $reg = try { Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue 2>$null } catch { $null };
+    $reg = if ($a.InterfaceGuid) { try { Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue 2>$null } catch { $null } } else { $null };
     $v4dhcp = if ($reg) { ($reg.EnableDHCP -eq 1) -and ([string]::IsNullOrWhiteSpace($reg.NameServer)) } else { $true };
-    $reg6 = try { Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue 2>$null } catch { $null };
+    $reg6 = if ($a.InterfaceGuid) { try { Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue 2>$null } catch { $null } } else { $null };
     $v6dhcp = if ($reg6) { [string]::IsNullOrWhiteSpace($reg6.NameServer) } else { $true };
     [PSCustomObject]@{
         ID = $a.InterfaceGuid;

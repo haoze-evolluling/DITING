@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -252,21 +253,33 @@ func (p *program) StartDNS(ctx context.Context) error {
 		WriteTimeout: p.cfg.DNS.WriteTimeout,
 	}
 
-	// 53 端口占用前置检测：若本地监听端口已被外部进程或服务占用，立即执行深度冲突诊断
-	if p.portChecker != nil && !windows.IsPort53Available() {
+	// 53 端口占用前置检测：若本地监听包含 53 且不可用，立即执行深度冲突诊断
+	needs53 := false
+	for _, a := range append(serverCfg.UDPAddresses, serverCfg.TCPAddresses...) {
+		if strings.HasSuffix(a, ":53") {
+			needs53 = true
+			break
+		}
+	}
+	if needs53 && p.portChecker != nil && !windows.IsPort53Available() {
 		res, checkErr := p.portChecker.CheckPort53(ctx)
-		if checkErr == nil && !res.Available {
+		if checkErr == nil && res != nil && !res.Available {
 			return &windows.PortConflictError{Result: res}
+		}
+		if checkErr != nil {
+			return fallbackPortConflict(nil)
 		}
 	}
 
 	srv := ditingdns.NewServer(serverCfg, pipeline)
 	if err := srv.Start(); err != nil {
-		if p.portChecker != nil && windows.IsPortBindConflict(err) {
-			res, checkErr := p.portChecker.CheckPort53(ctx)
-			if checkErr == nil && res != nil {
-				return &windows.PortConflictError{Result: res, Err: err}
+		if windows.IsPortBindConflict(err) {
+			if p.portChecker != nil {
+				if res, checkErr := p.portChecker.CheckPort53(ctx); checkErr == nil && res != nil {
+					return &windows.PortConflictError{Result: res, Err: err}
+				}
 			}
+			return fallbackPortConflict(err)
 		}
 		return fmt.Errorf("启动 DNS 监听器失败: %w", err)
 	}
@@ -415,6 +428,16 @@ func (p *program) getFilterStatsSnapshot() core.FilterStats {
 // CheckPortConflicts 实现 ServiceController 接口
 func (p *program) CheckPortConflicts(ctx context.Context) (*windows.PortCheckResult, error) {
 	return p.portChecker.CheckPort53(ctx)
+}
+
+func fallbackPortConflict(err error) *windows.PortConflictError {
+	return &windows.PortConflictError{
+		Result: &windows.PortCheckResult{
+			Available:  false,
+			Diagnostic: "本地 53 端口已被占用，无法启动 DNS 监听器。排查建议：请检查是否有其他 DNS 或代理软件占用该端口。",
+		},
+		Err: err,
+	}
 }
 
 func (p *program) Stop(s service.Service) error {

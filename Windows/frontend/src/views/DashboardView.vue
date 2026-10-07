@@ -19,6 +19,8 @@ const togglingTakeover = ref(false);
 const errorMessage = ref('');
 const portConflict = ref<PortCheckResult | null>(null);
 const showConflictModal = ref(false);
+const recheckError = ref('');
+const isRetryingConflict = ref(false);
 
 const qpsHistory = ref<number[]>([]);
 const latencyHistory = ref<number[]>([]);
@@ -91,6 +93,7 @@ async function handleStartFailure(err: any) {
   if (err.conflict) {
     portConflict.value = err.conflict;
     showConflictModal.value = true;
+    recheckError.value = '';
     errorMessage.value = 'DNS 端口 (53) 被占用，请根据引导排查';
     return;
   }
@@ -102,6 +105,7 @@ async function handleStartFailure(err: any) {
       if (!res.available || res.hasICS || (res.conflicts && res.conflicts.length > 0)) {
         portConflict.value = res;
         showConflictModal.value = true;
+        recheckError.value = '';
         errorMessage.value = 'DNS 端口 (53) 被占用，请根据引导排查';
         return;
       }
@@ -113,7 +117,8 @@ async function handleStartFailure(err: any) {
 
 async function handleRetryAfterConflict() {
   try {
-    errorMessage.value = '';
+    isRetryingConflict.value = true;
+    recheckError.value = '';
     const checkRes = await ipc.checkPortConflicts();
     let hasOther = false;
     for (const c of (checkRes.conflicts || [])) {
@@ -122,9 +127,10 @@ async function handleRetryAfterConflict() {
         break;
       }
     }
-    if (!checkRes.available && hasOther) {
+    const isSelfOnly = (checkRes.conflicts && checkRes.conflicts.length > 0 && checkRes.conflicts.every(c => c.isSelf));
+    if (!checkRes.available && !isSelfOnly) {
       portConflict.value = checkRes;
-      alert('53 端口仍被占用中，请确认已关闭冲突程序或停止 ICS 服务后再重试。');
+      recheckError.value = '53 端口仍被占用中，请确认已关闭冲突程序或停止 ICS 服务后再重试。';
       return;
     }
 
@@ -134,8 +140,16 @@ async function handleRetryAfterConflict() {
     await ipc.startDNS();
     await fetchStatus();
   } catch (err: any) {
-    await handleStartFailure(err);
+    if (err.conflict) {
+      portConflict.value = err.conflict;
+      recheckError.value = '启动仍遇到 53 端口冲突，请排查占用进程。';
+      showConflictModal.value = true;
+    } else {
+      recheckError.value = `启动失败: ${err.message}`;
+      showConflictModal.value = true;
+    }
   } finally {
+    isRetryingConflict.value = false;
     togglingDNS.value = false;
   }
 }
@@ -492,7 +506,9 @@ onUnmounted(() => {
     <PortConflictModal
       :open="showConflictModal"
       :conflictResult="portConflict"
-      @close="showConflictModal = false"
+      :recheckError="recheckError"
+      :rechecking="isRetryingConflict"
+      @close="showConflictModal = false; recheckError = ''"
       @resolved="handleRetryAfterConflict"
     />
   </div>

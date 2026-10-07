@@ -120,7 +120,7 @@ $tcp = @(Get-NetTCPConnection -LocalPort 53 -ErrorAction SilentlyContinue | ForE
     }
 });
 $list = @($udp + $tcp) | Where-Object { $_ -and $_.LocalAddress };
-$ics = Get-CimInstance Win32_Service -ErrorAction SilentlyContinue | Where-Object { $_.Name -eq 'SharedAccess' } | Select-Object Name, ProcessId, State;
+$ics = try { Get-CimInstance Win32_Service -Filter "Name='SharedAccess'" -ErrorAction SilentlyContinue 2>$null | Select-Object Name, ProcessId, State } catch { $null };
 [PSCustomObject]@{
     Listeners = $list;
     ICS = $ics;
@@ -153,13 +153,26 @@ func (c *WindowsPortChecker) CheckPort53(ctx context.Context) (*PortCheckResult,
 
 	conflicts, hasICS, diag := parsePortCheckJSON(out, available, os.Getpid())
 	hasOtherConflict := false
+	hasSelfListener := false
 	for _, conf := range conflicts {
-		if !conf.IsSelf {
+		if conf.IsSelf {
+			hasSelfListener = true
+		} else {
 			hasOtherConflict = true
-			break
 		}
 	}
-	if !hasOtherConflict && !hasICS {
+
+	// 端口可用性判定：
+	// 1. 若检测到外部冲突进程或 ICS 正在运行，判定为不可用 (false)
+	// 2. 若套接字绑定探测失败，且非本服务自身监听中，判定为不可用 (false)
+	// 3. 仅当无外部冲突、无 ICS，且（套接字可正常绑定 或 当前已被本进程占用）时判定为可用
+	if hasOtherConflict || hasICS {
+		available = false
+	} else if !udpFree || !tcpFree {
+		if !hasSelfListener {
+			available = false
+		}
+	} else {
 		available = true
 	}
 
@@ -259,7 +272,7 @@ func parsePortCheckJSON(out string, available bool, selfPIDs ...int) ([]PortConf
 		if available {
 			return conflicts, hasICS, "53 端口空闲且可用，无端口冲突。"
 		}
-		return conflicts, hasICS, "未能直接绑定 127.0.0.1:53，但未探测到明确的系统监听进程（可能需要管理员权限）。"
+		return conflicts, hasICS, "未能直接绑定 127.0.0.1:53，但未探测到明确的系统监听进程（可能需要管理员权限）。排查建议：请检查是否有其他 DNS 或代理软件占用，或尝试以管理员身份运行本服务。"
 	}
 
 	return conflicts, hasICS, strings.Join(diagLines, "\n")

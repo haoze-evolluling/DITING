@@ -222,3 +222,32 @@ func TestParseAdapterJSON_WithErrorStreamPrefix(t *testing.T) {
 	}
 }
 
+func TestParseAdapterJSON_ComplexNoisyStreams(t *testing.T) {
+	// 场景 1: 前缀包含 [警告] 括号与 {参数} 花括号，且带 UTF-8 BOM，尾部带 [INFO]
+	noisyArray := "\xef\xbb\xbf[警告] 忽略无效网卡配置 [45] 附带元数据 {debug: true}\n" +
+		"[{\"ID\":\"{TEST-1}\",\"Name\":\"Ethernet\",\"Description\":\"Realtek\",\"Index\":2,\"Status\":\"Up\",\"Gateway\":\"10.0.0.1\",\"IPv4DHCP\":true,\"IPv6DHCP\":false,\"IPv4DNS\":[\"10.0.0.1\"],\"IPv6DNS\":[],\"Virtual\":false}]\n" +
+		"[INFO] 扫描完成\n"
+
+	adapters, err := parseAdapterJSON(noisyArray)
+	if err != nil {
+		t.Fatalf("parseAdapterJSON failed on complex noisy array: %v", err)
+	}
+	if len(adapters) != 1 || adapters[0].Name != "Ethernet" {
+		t.Fatalf("unexpected result from noisy array: %+v", adapters)
+	}
+
+	// 场景 2: 前缀带报错文本的单网卡对象输出 (非数组)
+	noisySingle := "Error at {component}: adapter lookup failed\n" +
+		"{\"ID\":\"{TEST-2}\",\"Name\":\"Wi-Fi\",\"Description\":\"Intel\",\"Index\":3,\"Status\":\"Up\",\"Gateway\":\"192.168.1.1\",\"IPv4DHCP\":true,\"IPv6DHCP\":true,\"IPv4DNS\":[\"1.1.1.1\"],\"IPv6DNS\":[],\"Virtual\":false}\n" +
+		"Cleaning up...\n"
+
+	singleAdapters, err := parseAdapterJSON(noisySingle)
+	if err != nil {
+		t.Fatalf("parseAdapterJSON failed on noisy single object: %v", err)
+	}
+	if len(singleAdapters) != 1 || singleAdapters[0].Name != "Wi-Fi" {
+		t.Fatalf("unexpected result from noisy single object: %+v", singleAdapters)
+	}
+}
+
+

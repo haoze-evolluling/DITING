@@ -7,6 +7,8 @@ import M3Icon from './M3Icon.vue';
 const props = defineProps<{
   open: boolean;
   conflictResult: PortCheckResult | null;
+  recheckError?: string;
+  rechecking?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -15,8 +17,6 @@ const emit = defineEmits<{
 }>();
 
 const copying = ref(false);
-const rechecking = ref(false);
-const recheckError = ref('');
 
 async function copyCommand(cmd: string) {
   try {
@@ -41,7 +41,6 @@ async function copyCommand(cmd: string) {
 }
 
 function handleClose() {
-  recheckError.value = '';
   emit('close');
 }
 </script>
@@ -141,10 +140,11 @@ function handleClose() {
       <button
         type="button"
         @click="emit('resolved')"
+        :disabled="rechecking"
         class="app-btn-primary"
       >
-        <M3Icon name="refresh" :size="14" />
-        <span>已解决，重新检测并启动</span>
+        <M3Icon :name="rechecking ? 'hourglass' : 'refresh'" :size="14" :class="rechecking ? 'animate-spin' : ''" />
+        <span>{{ rechecking ? '正在检测并启动...' : '已解决，重新检测并启动' }}</span>
       </button>
     </template>
   </AppModal>
