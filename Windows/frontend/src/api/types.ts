@@ -55,6 +55,61 @@ export interface StatusResponse {
   dns: DNSStatus;
   takeover: TakeoverStatus;
   metrics: MetricsStatus;
+  cache?: CacheStats;
+}
+
+export interface CacheStats {
+  enabled: boolean;
+  totalHits: number;
+  totalMisses: number;
+  staleHits: number;
+  negativeHits: number;
+  hitRatio: number;
+  entryCount: number;
+  maxEntries: number;
+  evictionCount: number;
+}
+
+export interface CacheConfig {
+  enabled: boolean;
+  maxEntries: number;
+  mode: 'follow_dns_ttl' | 'limit_max_ttl' | 'fixed_ttl' | string;
+  maxTtlSeconds: number;
+  fixedTtlSeconds: number;
+  minTtlEnabled: boolean;
+  minTtlSeconds: number;
+  staleFallbackEnabled: boolean;
+  staleFallbackSeconds: number;
+  negativeTtlEnabled: boolean;
+  negativeTtlSeconds: number;
+  optimistic: boolean;
+}
+
+export interface CacheEntryItem {
+  domain: string;
+  qtype: string;
+  ttl: number;
+  originalTtl: number;
+  remainingTtl: number;
+  expiresAt: number;
+  staleUntil: number;
+  hitCount: number;
+  lastHitAt: number;
+  isNegative: boolean;
+  status: 'fresh' | 'stale';
+  ipList?: string[];
+}
+
+export interface CacheEntriesResponse {
+  total: number;
+  entries: CacheEntryItem[];
+}
+
+export interface CacheDomainStat {
+  domain: string;
+  qtype: string;
+  hitCount: number;
+  lastHitAt: number;
 }
 
 export interface AdapterInfo {
@@ -94,6 +149,7 @@ export interface QueryEventData {
   durationMs: number;
   success: boolean;
   rcode?: string;
+  cacheHit?: string;
   errorMessage?: string;
 }
 

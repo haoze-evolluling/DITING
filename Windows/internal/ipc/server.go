@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/haoze-evolluling/diting/windows/internal/core"
 	"github.com/haoze-evolluling/diting/windows/internal/platform/windows"
 )
 
@@ -26,6 +27,12 @@ type ServiceController interface {
 	ConfigureUpstream(ctx context.Context, req ConfigureUpstreamRequest) error
 	TestUpstream(ctx context.Context, req TestUpstreamRequest) (*TestUpstreamResponse, error)
 	SetAdapterTakeover(ctx context.Context, req AdapterTakeoverRequest) error
+	GetCacheStats(ctx context.Context) (*core.CacheStats, error)
+	GetCacheEntries(ctx context.Context, query string, limit int) (*CacheEntriesResponse, error)
+	GetCacheTopDomains(ctx context.Context, limit int) ([]core.CacheDomainStat, error)
+	ClearCache(ctx context.Context) error
+	GetCacheConfig(ctx context.Context) (*core.CacheConfig, error)
+	UpdateCacheConfig(ctx context.Context, cfg core.CacheConfig) error
 }
 
 var upgrader = websocket.Upgrader{
@@ -100,6 +107,11 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/v1/takeover/adapter", s.withAuth(s.handleAdapterTakeover))
 	mux.HandleFunc("/api/v1/upstream/configure", s.withAuth(s.handleUpstreamConfigure))
 	mux.HandleFunc("/api/v1/upstream/test", s.withAuth(s.handleUpstreamTest))
+	mux.HandleFunc("/api/v1/cache/stats", s.withAuth(s.handleCacheStats))
+	mux.HandleFunc("/api/v1/cache/entries", s.withAuth(s.handleCacheEntries))
+	mux.HandleFunc("/api/v1/cache/top", s.withAuth(s.handleCacheTop))
+	mux.HandleFunc("/api/v1/cache/clear", s.withAuth(s.handleCacheClear))
+	mux.HandleFunc("/api/v1/cache/config", s.withAuth(s.handleCacheConfig))
 	mux.HandleFunc("/api/v1/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/portcheck", s.withAuth(s.handlePortCheck))
 	mux.HandleFunc("/api/v1/health", s.handleHealth)

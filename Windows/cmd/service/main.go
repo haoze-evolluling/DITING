@@ -36,6 +36,7 @@ type program struct {
 	cfg         *config.Config
 	server      *ditingdns.Server
 	resolver    *core.CoreResolver
+	cache       *core.DNSCache
 	takeoverMgr windows.DNSManager
 	adapterScan windows.AdapterScanner
 	stateStore  windows.StateStore
@@ -109,12 +110,13 @@ func (p *program) run() error {
 		}
 	}
 
-	// 5. 初始化纯 Go 核心解析器
+	// 5. 初始化纯 Go 核心解析器与智能缓存体系
 	res, err := core.NewResolver(cfg.Upstream)
 	if err != nil {
 		return fmt.Errorf("初始化 DNS 核心内核失败: %w", err)
 	}
 	p.resolver = res
+	p.cache = core.NewDNSCache(cfg.Cache)
 
 	// 6. 初始化 IPC 服务
 	p.ipcServer = ipc.NewServer(cfg.IPC.ListenAddress, cfg.IPC.AuthToken, p)
@@ -182,6 +184,17 @@ func (p *program) StartDNS(ctx context.Context) error {
 		success := (err == nil)
 		p.metrics.RecordQuery(duration, success)
 
+		cacheHitStr := ""
+		if val, ok := dctx.Get("cache_hit"); ok {
+			if s, ok := val.(string); ok {
+				cacheHitStr = s
+			}
+		}
+		rcodeStr := ""
+		if dctx.Resp != nil {
+			rcodeStr = miekgdns.RcodeToString[dctx.Resp.Rcode]
+		}
+
 		if p.ipcServer != nil {
 			errStr := ""
 			if err != nil {
@@ -196,13 +209,16 @@ func (p *program) StartDNS(ctx context.Context) error {
 					ClientIP:     formatIP(dctx.ClientIP),
 					DurationMs:   float64(duration.Nanoseconds()) / 1e6,
 					Success:      success,
+					RCode:        rcodeStr,
+					CacheHit:     cacheHitStr,
 					ErrorMessage: errStr,
 				},
 			})
 		}
 	})
 
-	pipeline := ditingdns.NewPipeline(metricsMw, ditingdns.NewForwardMiddleware(p.resolver))
+	cacheMw := ditingdns.NewCacheMiddleware(p.cache, p.resolver)
+	pipeline := ditingdns.NewPipeline(metricsMw, cacheMw, ditingdns.NewForwardMiddleware(p.resolver))
 	serverCfg := ditingdns.ServerConfig{
 		UDPAddresses: p.cfg.DNS.UDPAddresses,
 		TCPAddresses: p.cfg.DNS.TCPAddresses,
@@ -333,7 +349,15 @@ func (p *program) GetStatus(ctx context.Context) (*ipc.StatusResponse, error) {
 			Adapters: takenAdapters,
 		},
 		Metrics: p.metrics.Snapshot(),
+		Cache:   p.getCacheStatsSnapshot(),
 	}, nil
+}
+
+func (p *program) getCacheStatsSnapshot() core.CacheStats {
+	if p.cache != nil {
+		return p.cache.Stats()
+	}
+	return core.CacheStats{Enabled: false}
 }
 
 // CheckPortConflicts 实现 ServiceController 接口
@@ -352,6 +376,9 @@ func (p *program) Stop(s service.Service) error {
 
 	_ = p.StopDNS(context.Background())
 
+	if p.cache != nil {
+		p.cache.Close()
+	}
 	if p.ipcServer != nil {
 		_ = p.ipcServer.Shutdown(context.Background())
 	}

@@ -254,8 +254,8 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- 快捷摘要两列面板 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- 快捷摘要三列面板 (上游、缓存、网卡) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- 上游节点摘要 -->
       <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur">
         <div class="flex items-center justify-between mb-4">
@@ -276,6 +276,31 @@ onUnmounted(() => {
             <span class="text-sm text-slate-500 dark:text-slate-400">活动节点数</span>
             <span class="text-sm font-semibold text-slate-800 dark:text-slate-100">
               {{ status?.dns?.upstreams?.length || 0 }} 个上游节点
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 智能缓存摘要 (Phase 5) -->
+      <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <M3Icon name="cache" :size="18" class="text-slate-500" />
+            <h3 class="font-semibold text-slate-800 dark:text-slate-200">智能缓存大盘</h3>
+          </div>
+          <md-text-button @click="emit('navigate', 'cache')">缓存监控</md-text-button>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span class="text-sm text-slate-500 dark:text-slate-400">实时命中率</span>
+            <span class="text-sm font-bold text-primary font-mono">
+              {{ ((status?.cache?.hitRatio || 0) * 100).toFixed(1) }}%
+            </span>
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span class="text-sm text-slate-500 dark:text-slate-400">条目数 / 容量</span>
+            <span class="text-xs font-mono text-slate-700 dark:text-slate-300">
+              {{ status?.cache?.entryCount || 0 }} / {{ status?.cache?.maxEntries || 4096 }}
             </span>
           </div>
         </div>

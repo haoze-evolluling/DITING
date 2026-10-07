@@ -142,3 +142,70 @@ func TestController_ConfigureUpstream(t *testing.T) {
 		t.Errorf("expected 1 provider")
 	}
 }
+
+func TestController_CacheMethods(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cache := core.NewDNSCache(cfg.Cache)
+	defer cache.Close()
+
+	prg := &program{
+		cfg:   cfg,
+		cache: cache,
+	}
+
+	ctx := context.Background()
+
+	// 1. GetCacheStats
+	st, err := prg.GetCacheStats(ctx)
+	if err != nil || !st.Enabled {
+		t.Fatalf("GetCacheStats failed: err=%v, st=%+v", err, st)
+	}
+
+	// 2. Put 条目并通过 controller 查询
+	req := new(miekgdns.Msg)
+	req.SetQuestion("cached-ctrl.com.", miekgdns.TypeA)
+	resp := new(miekgdns.Msg)
+	resp.SetReply(req)
+	resp.Answer = []miekgdns.RR{
+		&miekgdns.A{
+			Hdr: miekgdns.RR_Header{Name: "cached-ctrl.com.", Rrtype: miekgdns.TypeA, Class: miekgdns.ClassINET, Ttl: 60},
+			A:   []byte{1, 2, 3, 4},
+		},
+	}
+	cache.Put(req, resp)
+
+	// 3. GetCacheEntries
+	entries, err := prg.GetCacheEntries(ctx, "cached-ctrl", 10)
+	if err != nil || entries.Total != 1 {
+		t.Fatalf("GetCacheEntries failed: err=%v, entries=%+v", err, entries)
+	}
+
+	// 4. GetCacheTopDomains
+	top, err := prg.GetCacheTopDomains(ctx, 5)
+	if err != nil || len(top) != 1 {
+		t.Fatalf("GetCacheTopDomains failed: err=%v, top=%+v", err, top)
+	}
+
+	// 5. GetCacheConfig & UpdateCacheConfig
+	cCfg, err := prg.GetCacheConfig(ctx)
+	if err != nil || !cCfg.Enabled {
+		t.Fatalf("GetCacheConfig failed: err=%v, cCfg=%+v", err, cCfg)
+	}
+
+	cCfg.MaxTTLSeconds = 1200
+	if err := prg.UpdateCacheConfig(ctx, *cCfg); err != nil {
+		t.Fatalf("UpdateCacheConfig failed: %v", err)
+	}
+	if prg.cfg.Cache.MaxTTLSeconds != 1200 {
+		t.Errorf("expected MaxTTLSeconds 1200, got %d", prg.cfg.Cache.MaxTTLSeconds)
+	}
+
+	// 6. ClearCache
+	if err := prg.ClearCache(ctx); err != nil {
+		t.Fatalf("ClearCache failed: %v", err)
+	}
+	stAfter, _ := prg.GetCacheStats(ctx)
+	if stAfter.EntryCount != 0 {
+		t.Errorf("expected 0 entries after clear, got %d", stAfter.EntryCount)
+	}
+}

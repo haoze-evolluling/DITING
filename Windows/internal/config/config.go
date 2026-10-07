@@ -77,6 +77,7 @@ type Config struct {
 	Upstream core.ResolverConfig `json:"upstream"`
 	IPC      IPCConfig           `json:"ipc"`
 	Takeover TakeoverConfig      `json:"takeover"`
+	Cache    core.CacheConfig    `json:"cache"`
 }
 
 // DefaultConfig 生成默认系统配置
@@ -110,5 +111,6 @@ func DefaultConfig() *Config {
 			AutoTakeoverOnStart: false,
 			StateFilePath:       "",
 		},
+		Cache: core.DefaultCacheConfig(),
 	}
 }

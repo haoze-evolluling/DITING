@@ -303,13 +303,55 @@ Windows/
 
 ---
 
+### 6.3 阶段五验收与完成记录 (Phase 5 Completed)
+
+- **阶段目标**：移植并重构 Android 端高性能 64 分片 LRU 缓存体系，提供遵循 RFC 2181 / RFC 2308 的递减 TTL 重写与负缓存能力，实现 Optimistic Stale-While-Revalidate (SWR) 亚毫秒容灾与 SingleFlight 并发防击穿；在前端全面落地遵循 Material Design 3 的缓存监控大盘与全流程控制闭环。
+- **后端内核与中间件核心成果**：
+  1. **64 分片并发安全 LRU 缓存 (`internal/core/cache.go`, `cache_types.go`)**：
+     - 采用 FNV-1a 哈希算法将缓存条目哈希至 64 个独立分片，每个分片拥有独立 `sync.RWMutex` 与 `container/list` 双向链表，杜绝全局锁竞争。
+     - 支持最大条目容量限制 (`maxEntries`，默认 4096)，满容时执行 LRU 尾部淘汰并记录 `evictions` 统计指标。
+     - 命中时热度自动置顶 (`MoveToFront`)，支持全局一键清空与后台周期性自动清理超期条目。
+  2. **RFC 2181 / RFC 2308 TTL 评估与重写 (`internal/core/cache_policy.go`)**：
+     - 正确提取 Answer 节最小有效 TTL，支持 `follow_dns_ttl`（跟随上游）、`limit_max_ttl`（限制上限）及 `fixed_ttl`（固定值）策略模式，支持最小保证 TTL (`minTtlSeconds`)。
+     - 负缓存 (Negative Caching)：针对 NXDOMAIN 与 NODATA，提取 Authority 节 SOA 记录的 MINTTL/TTL，支持 5s～300s 安全宽限。
+     - 动态 TTL 递减重写：命中缓存时，根据剩余有效秒数动态计算并重写报文全部记录的 TTL，杜绝静态固定 TTL 违规。
+  3. **Optimistic Stale-While-Revalidate (SWR) 容灾与 SingleFlight 防击穿 (`cache_flight.go`)**：
+     - 条目过期但处于 `staleFallbackSeconds` 宽限期内时，支持 Optimistic 模式以 TTL=1 极速返回客户端，后台通过 SingleFlight 异步并发回源刷新。
+     - 上游服务故障或超时断网时，自动 fallback 降级使用陈旧条目，杜绝客户端断网或挂起。
+     - SingleFlight 调用编排器实现 panic-safe 的同域名同记录并发合并，杜绝缓存击穿与惊群效应。
+  4. **DNS 流水线中间件与特权服务 IPC (`internal/dns/cache_middleware.go`, `internal/ipc/*`)**：
+     - 实现标准洋葱模型 `CacheMiddleware`，无缝嵌入 `MetricsMiddleware -> CacheMiddleware -> ForwardMiddleware`。
+     - 暴露 REST 控制接口：`GET /api/v1/cache/stats`、`GET /api/v1/cache/entries`、`GET /api/v1/cache/top`、`POST /api/v1/cache/clear`、`GET/POST /api/v1/cache/config`。
+     - 遥测流与单次查询事件携带 `cacheHit: "fresh" | "stale" | "stale_fallback"` 标记。
+- **前端 Material Design 3 缓存监控大盘 (`frontend/src/views/CacheView.vue`)**：
+  1. **Navigation Rail 导航接入**：左侧导航轨新增“智能缓存”原生目的地与 Material Symbols 矢量图标。
+  2. **实时缓存命中率仪表与指标卡片**：展示实时命中率环状高光卡片、总命中数、回源数、SWR 容灾保活数、负缓存拦截数、容量占用与淘汰数。
+  3. **热点域名 Top 统计**：按访问频次实时呈现排行榜前 10 域名、类型、命中次数柱状比例与最后命中时间。
+  4. **缓存条目检索与过滤**：支持关键字即时检索，提供 All / Fresh / Stale / Negative 状态彩色 Chips 过滤与详细 TTL 倒计时、IP 解析预览。
+  5. **缓存策略动态配置**：可视化配置 TTL 计算模式、最大/最小 TTL、Stale 容灾保活宽限时长与 Optimistic 开关。
+  6. **一键清空 `<md-dialog>` 交互**：标准 M3 模态对话框，支持确认清空全部分片条目与即时状态反馈。
+- **涉及模块**：
+  - `Windows/internal/core/cache*.go`
+  - `Windows/internal/dns/cache_middleware*.go`
+  - `Windows/internal/ipc/*cache*.go`
+  - `Windows/cmd/service/controller_cache*.go`
+  - `Windows/frontend/src/views/CacheView.vue`
+  - `Windows/frontend/src/api/*`
+  - `scripts/test_phase5_cache.py`
+- **验收标准与验证记录**：
+  - Go 全量测试套件（含 64 分片并发测试、LRU 淘汰、TTL 评估、SWR 容灾、SingleFlight 并发合并与 IPC 接口）100% 通过（`-count=1` 验证无缓存通过）。
+  - 前端 `npm run build`（Vue 3 + TypeScript + Vite）零报错打包成功。
+  - 所有 Kotlin 与 Go 源码文件行数均严格保持在 600 行以内（通过 `scripts/check_large_files.py` 自动化检测）。
+
+---
+
 ## 7. 后续扩展演进规划 (Future Roadmap)
 
 第一阶段核心闭环建立后，架构中预留的插槽可平滑扩展以下功能，后端核心与 M3 前端界面保持端到端同步演进：
 
-| 演进阶段 | 功能领域 | 对应后端内核扩展模块与设计 | 配套 Material Design 3 前端界面规划 |
-|---|---|---|---|
-| **Phase 5** | **智能缓存体系** | 移植 64 分片并发安全 LRU 缓存、Optimistic/Stale-While-Revalidate 容灾与 TTL 重写中间件 (`CacheMiddleware`) | **缓存监控大盘**：实时缓存命中率仪表图、热点域名 Top 统计、缓存条目检索与一键清空 `<md-dialog>` |
-| **Phase 6** | **规则过滤引擎** | 移植 AdGuard 语法解析器、Mmap Trie 树、BloomFilter 预检与阻断响应中间件 (`FilterMiddleware`) | **规则管理中心**：订阅规则源列表、内置/自定义规则编辑器、规则拦截率统计与拦截日志高亮过滤 |
-| **Phase 7** | **智能调度与竞速** | 移植 EWMA 智能延迟预测（Smart Prediction）与并行竞速（Parallel Race）上游调度策略 | **调度可视化面板**：各上游节点动态延迟分布折线图、EWMA 预测评分雷达图、竞速获胜率对比看板 |
-| **Phase 8** | **高级网络分流与统计** | 支持按域名/分流规则匹配不同上游、出站代理联动、查询日志持久化与历史分析 | **统计与高级网络视图**：时序查询趋势图、客户端/协议分流拓扑展示、历史日志分页检索与导出 |
+| 演进阶段 | 功能领域 | 对应后端内核扩展模块与设计 | 配套 Material Design 3 前端界面规划 | 状态 |
+|---|---|---|---|---|
+| **Phase 5** | **智能缓存体系** | 移植 64 分片并发安全 LRU 缓存、Optimistic/Stale-While-Revalidate 容灾与 TTL 重写中间件 (`CacheMiddleware`) | **缓存监控大盘**：实时缓存命中率仪表图、热点域名 Top 统计、缓存条目检索与一键清空 `<md-dialog>` | **已完成 (Completed)** |
+| **Phase 6** | **规则过滤引擎** | 移植 AdGuard 语法解析器、Mmap Trie 树、BloomFilter 预检与阻断响应中间件 (`FilterMiddleware`) | **规则管理中心**：订阅规则源列表、内置/自定义规则编辑器、规则拦截率统计与拦截日志高亮过滤 | 待进行 |
+| **Phase 7** | **智能调度与竞速** | 移植 EWMA 智能延迟预测（Smart Prediction）与并行竞速（Parallel Race）上游调度策略 | **调度可视化面板**：各上游节点动态延迟分布折线图、EWMA 预测评分雷达图、竞速获胜率对比看板 | 待进行 |
+| **Phase 8** | **高级网络分流与统计** | 支持按域名/分流规则匹配不同上游、出站代理联动、查询日志持久化与历史分析 | **统计与高级网络视图**：时序查询趋势图、客户端/协议分流拓扑展示、历史日志分页检索与导出 | 待进行 |

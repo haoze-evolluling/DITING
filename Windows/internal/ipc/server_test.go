@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/haoze-evolluling/diting/windows/internal/core"
 	"github.com/haoze-evolluling/diting/windows/internal/platform/windows"
 )
 
@@ -124,6 +125,52 @@ func (m *mockController) SetAdapterTakeover(ctx context.Context, req AdapterTake
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.takeoverOn = req.Enable
+	return nil
+}
+
+func (m *mockController) GetCacheStats(ctx context.Context) (*core.CacheStats, error) {
+	return &core.CacheStats{
+		Enabled:     true,
+		TotalHits:   10,
+		TotalMisses: 2,
+		HitRatio:    0.833,
+		EntryCount:  5,
+		MaxEntries:  4096,
+	}, nil
+}
+
+func (m *mockController) GetCacheEntries(ctx context.Context, query string, limit int) (*CacheEntriesResponse, error) {
+	return &CacheEntriesResponse{
+		Total: 1,
+		Entries: []core.CacheEntryItem{
+			{
+				Domain:       "test.com",
+				QType:        "A",
+				TTL:          60,
+				RemainingTTL: 55,
+				HitCount:     10,
+				Status:       "fresh",
+			},
+		},
+	}, nil
+}
+
+func (m *mockController) GetCacheTopDomains(ctx context.Context, limit int) ([]core.CacheDomainStat, error) {
+	return []core.CacheDomainStat{
+		{Domain: "test.com", QType: "A", HitCount: 10},
+	}, nil
+}
+
+func (m *mockController) ClearCache(ctx context.Context) error {
+	return nil
+}
+
+func (m *mockController) GetCacheConfig(ctx context.Context) (*core.CacheConfig, error) {
+	cfg := core.DefaultCacheConfig()
+	return &cfg, nil
+}
+
+func (m *mockController) UpdateCacheConfig(ctx context.Context, cfg core.CacheConfig) error {
 	return nil
 }
 
@@ -248,5 +295,34 @@ func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 
 	if err := client.SetAdapterTakeover(ctx, AdapterTakeoverRequest{AdapterID: "{GUID-TEST}", Enable: true}); err != nil {
 		t.Fatalf("SetAdapterTakeover failed: %v", err)
+	}
+
+	// 9. 测试智能缓存 (Phase 5) API: Stats, Entries, Top, Clear, Config
+	cStats, err := client.GetCacheStats(ctx)
+	if err != nil || !cStats.Enabled {
+		t.Fatalf("GetCacheStats failed: err=%v, stats=%+v", err, cStats)
+	}
+
+	cEntries, err := client.GetCacheEntries(ctx, "test", 10)
+	if err != nil || cEntries.Total != 1 {
+		t.Fatalf("GetCacheEntries failed: err=%v, res=%+v", err, cEntries)
+	}
+
+	cTop, err := client.GetCacheTopDomains(ctx, 5)
+	if err != nil || len(cTop) != 1 {
+		t.Fatalf("GetCacheTopDomains failed: err=%v, top=%+v", err, cTop)
+	}
+
+	if err := client.ClearCache(ctx); err != nil {
+		t.Fatalf("ClearCache failed: %v", err)
+	}
+
+	cCfg, err := client.GetCacheConfig(ctx)
+	if err != nil || !cCfg.Enabled {
+		t.Fatalf("GetCacheConfig failed: err=%v, cfg=%+v", err, cCfg)
+	}
+
+	if err := client.UpdateCacheConfig(ctx, *cCfg); err != nil {
+		t.Fatalf("UpdateCacheConfig failed: %v", err)
 	}
 }

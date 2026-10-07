@@ -109,4 +109,5 @@ func normalizeConfig(cfg *Config) {
 	if cfg.Upstream.Mode == "" {
 		cfg.Upstream.Mode = core.ModePrimaryBackup
 	}
+	core.NormalizeCacheConfig(&cfg.Cache)
 }

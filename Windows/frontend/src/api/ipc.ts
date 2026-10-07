@@ -7,6 +7,10 @@ import type {
   UpstreamConfigureRequest,
   TestUpstreamRequest,
   TestUpstreamResponse,
+  CacheStats,
+  CacheConfig,
+  CacheEntriesResponse,
+  CacheDomainStat,
 } from './types';
 
 // Wails 全局对象类型声明
@@ -242,6 +246,39 @@ class IPCService {
   public onEvent(listener: (event: WebSocketEvent) => void) {
     this.eventListeners.add(listener);
     return () => this.eventListeners.delete(listener);
+  }
+
+  // --- 智能缓存 (Phase 5) API ---
+
+  public async getCacheStats(): Promise<CacheStats> {
+    return this.request<CacheStats>('/api/v1/cache/stats');
+  }
+
+  public async getCacheEntries(query: string = '', limit: number = 100): Promise<CacheEntriesResponse> {
+    const params = new URLSearchParams();
+    if (query) params.set('query', query);
+    if (limit > 0) params.set('limit', String(limit));
+    const path = `/api/v1/cache/entries${params.toString() ? '?' + params.toString() : ''}`;
+    return this.request<CacheEntriesResponse>(path);
+  }
+
+  public async getCacheTopDomains(limit: number = 10): Promise<CacheDomainStat[]> {
+    return this.request<CacheDomainStat[]>(`/api/v1/cache/top?limit=${limit}`);
+  }
+
+  public async clearCache(): Promise<void> {
+    await this.request('/api/v1/cache/clear', { method: 'POST' });
+  }
+
+  public async getCacheConfig(): Promise<CacheConfig> {
+    return this.request<CacheConfig>('/api/v1/cache/config');
+  }
+
+  public async updateCacheConfig(config: Partial<CacheConfig>): Promise<void> {
+    await this.request('/api/v1/cache/config', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
   }
 
   // --- Wails 原生能力桥接 ---

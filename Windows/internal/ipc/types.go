@@ -51,12 +51,13 @@ type MetricsStatus struct {
 
 // StatusResponse GET /api/v1/status 响应载荷
 type StatusResponse struct {
-	Version       string         `json:"version"`
-	PID           int            `json:"pid"`
-	UptimeSeconds int64          `json:"uptimeSeconds"`
-	DNS           DNSStatus      `json:"dns"`
-	Takeover      TakeoverStatus `json:"takeover"`
-	Metrics       MetricsStatus  `json:"metrics"`
+	Version       string          `json:"version"`
+	PID           int             `json:"pid"`
+	UptimeSeconds int64           `json:"uptimeSeconds"`
+	DNS           DNSStatus       `json:"dns"`
+	Takeover      TakeoverStatus  `json:"takeover"`
+	Metrics       MetricsStatus   `json:"metrics"`
+	Cache         core.CacheStats `json:"cache"`
 }
 
 // Event WebSocket 事件推送载荷
@@ -74,7 +75,14 @@ type QueryEventData struct {
 	DurationMs   float64 `json:"durationMs"`
 	Success      bool    `json:"success"`
 	RCode        string  `json:"rcode,omitempty"`
+	CacheHit     string  `json:"cacheHit,omitempty"`
 	ErrorMessage string  `json:"errorMessage,omitempty"`
+}
+
+// CacheEntriesResponse 缓存条目列表响应
+type CacheEntriesResponse struct {
+	Total   int                   `json:"total"`
+	Entries []core.CacheEntryItem `json:"entries"`
 }
 
 // ConfigureUpstreamRequest 动态配置上游请求
