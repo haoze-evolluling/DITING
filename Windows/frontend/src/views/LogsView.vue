@@ -105,13 +105,13 @@ onUnmounted(() => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-text-main flex items-center gap-2">
-          实时 DNS 解析日志
+          网络访问与解析记录
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-surface-card-sub text-text-sub border border-surface-border-sub">
             {{ filteredLogs.length }} 条记录
           </span>
         </h2>
         <p class="text-sm text-text-sub">
-          基于 WebSocket 实时通道接收来自 127.0.0.1:53 的 DNS 查询事件。
+          实时记录本机的域名访问、解析耗时以及安全拦截情况。
         </p>
       </div>
 
@@ -145,7 +145,7 @@ onUnmounted(() => {
         <input
           v-model="searchFilter"
           type="text"
-          placeholder="检索域名或客户端 IP..."
+          placeholder="搜索网址或客户端 IP..."
           class="w-full pl-9 pr-4 h-[30px] rounded-lg border border-surface-border-sub bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted"
         />
       </div>
@@ -172,7 +172,7 @@ onUnmounted(() => {
           class="app-btn-chip"
           :class="{ active: selectedStatus === s }"
         >
-          {{ s }}
+          {{ s === 'ALL' ? '全部状态' : s === 'NOERROR' ? '成功' : s === 'NXDOMAIN' ? '域名不存在' : '解析失败' }}
         </button>
       </div>
 
@@ -184,7 +184,7 @@ onUnmounted(() => {
           :class="onlyBlocked ? '!bg-status-error !text-white !border-transparent shadow-xs' : '!text-status-error !bg-status-error-bg !border-status-error/30'"
         >
           <M3Icon name="block" :size="14" />
-          <span>仅拦截</span>
+          <span>仅看已拦截</span>
         </button>
       </div>
     </div>
@@ -199,7 +199,7 @@ onUnmounted(() => {
         class="h-full flex flex-col items-center justify-center p-12 text-text-muted"
       >
         <M3Icon name="logs" :size="36" class="mb-2 opacity-40 text-text-muted" />
-        <span>暂无匹配的 DNS 查询记录，发起域名访问后将自动实时呈现...</span>
+        <span>暂无符合条件的访问记录，上网浏览时将在此实时显示...</span>
       </div>
 
       <div
@@ -212,9 +212,9 @@ onUnmounted(() => {
           <span
             v-if="item.blocked"
             class="px-2 py-0.5 rounded-md bg-status-error text-white font-bold text-[10px] shrink-0"
-            :title="`规则阻断: ${item.filterRule || item.filterReason || '已拦截'}`"
+            :title="`安全拦截: ${item.filterRule || item.filterReason || '已拦截'}`"
           >
-            BLOCKED
+            已拦截
           </span>
 
           <!-- 状态色标 -->
@@ -226,7 +226,7 @@ onUnmounted(() => {
                 : 'bg-status-error-bg text-status-error border-status-error/30',
             ]"
           >
-            {{ item.rcode || (item.success ? 'NOERROR' : 'SERVFAIL') }}
+            {{ item.rcode === 'NXDOMAIN' ? '域名不存在' : !item.success || item.rcode === 'SERVFAIL' ? '解析失败' : '成功' }}
           </span>
 
           <!-- 查询类型 -->
@@ -241,7 +241,7 @@ onUnmounted(() => {
         </div>
 
         <div class="flex items-center gap-4 text-text-sub shrink-0 text-[11px]">
-          <span>IP: {{ item.clientIP || '127.0.0.1' }}</span>
+          <span>来源: {{ item.clientIP || '127.0.0.1' }}</span>
           <span class="font-semibold" :class="item.durationMs > 100 ? 'text-status-warning' : 'text-text-main'">
             {{ item.durationMs.toFixed(1) }} ms
           </span>

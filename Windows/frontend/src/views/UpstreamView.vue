@@ -29,10 +29,10 @@ const formUrl = ref('');
 const formWeight = ref(1);
 
 const schedulingModes = [
-  { id: 'single', name: '单节点 (Single)', desc: '仅使用列表中的首个可用上游节点' },
-  { id: 'primary_backup', name: '主备容灾 (Primary-Backup)', desc: '优先主节点，主节点超时故障时秒级切换备用' },
-  { id: 'parallel_race', name: '并发竞速 (Parallel-Race)', desc: '向全部节点并发发包，以最快返回的结果为准' },
-  { id: 'smart_prediction', name: '智能预测 (Smart-Prediction)', desc: '基于 EWMA 衰减平滑延迟评分优选最优节点' },
+  { id: 'single', name: '单服务器模式', desc: '始终固定使用列表中的首选服务器进行解析' },
+  { id: 'primary_backup', name: '主备自动容灾', desc: '平时优先使用主服务器，超时或故障时自动切换至备用服务器' },
+  { id: 'parallel_race', name: '并发极速响应', desc: '同时向全部服务器发送查询，自动采用最快返回的结果，解析延迟最低' },
+  { id: 'smart_prediction', name: '智能延迟优选', desc: '根据各服务器近期响应速度与稳定性动态评分，智能选用最优质服务器' },
 ];
 
 async function loadData() {
@@ -55,7 +55,7 @@ async function loadData() {
       }));
     }
   } catch (err: any) {
-    errorMessage.value = err.message || '获取上游配置失败';
+    errorMessage.value = err.message || '获取 DNS 配置失败';
   } finally {
     loading.value = false;
   }
@@ -75,13 +75,13 @@ async function saveConfig() {
       mode: currentMode.value.toUpperCase(),
       providers: providers.value,
     });
-    successMessage.value = '上游调度配置已成功更新并动态生效！';
+    successMessage.value = 'DNS 服务器配置已更新并即时生效！';
     await loadData();
     setTimeout(() => {
       successMessage.value = '';
     }, 3000);
   } catch (err: any) {
-    errorMessage.value = err.message || '更新上游配置失败';
+    errorMessage.value = err.message || '更新 DNS 配置失败';
   } finally {
     saving.value = false;
   }
@@ -98,7 +98,7 @@ async function handleTestNode(p: ProviderConfig) {
     if (res.success) {
       probeResults.value[p.id] = res.latencyMs;
     } else {
-      errorMessage.value = `节点 [${p.id}] 测试失败: ${res.error}`;
+      errorMessage.value = `服务器 [${p.id}] 测试失败: ${res.error}`;
     }
   } catch (err: any) {
     errorMessage.value = `测试失败: ${err.message}`;
@@ -109,7 +109,7 @@ async function handleTestNode(p: ProviderConfig) {
 
 function openAddDialog() {
   editingIndex.value = -1;
-  formId.value = `upstream-${providers.value.length + 1}`;
+  formId.value = `dns-server-${providers.value.length + 1}`;
   formProtocol.value = 'PLAIN';
   formServer.value = '223.5.5.5:53';
   formUrl.value = '';
@@ -130,7 +130,7 @@ function openEditDialog(index: number) {
 
 function handleDeleteNode(index: number) {
   if (providers.value.length <= 1) {
-    errorMessage.value = '至少需要保留一个上游 DNS 解析节点';
+    errorMessage.value = '至少需要保留一个 DNS 服务器';
     return;
   }
   providers.value.splice(index, 1);
@@ -139,7 +139,7 @@ function handleDeleteNode(index: number) {
 
 function handleSaveDialog() {
   if (!formId.value.trim() || !formServer.value.trim()) {
-    errorMessage.value = '节点标识与服务器地址不得为空';
+    errorMessage.value = '服务器名称与地址不得为空';
     return;
   }
   const item: ProviderConfig = {
@@ -171,10 +171,10 @@ onMounted(() => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-text-main">
-          上游 DNS 解析节点与调度策略
+          DNS 服务器与查询策略
         </h2>
         <p class="text-sm text-text-sub">
-          支持 Plain (UDP/TCP 53)、DoH (HTTPS) 及 DoT (TLS) 协议，多策略智能容灾与测速。
+          管理用于解析域名的 DNS 服务器，支持加密传输（DoH / DoT）与智能容灾测速。
         </p>
       </div>
 
@@ -195,7 +195,7 @@ onMounted(() => {
           class="app-btn-primary"
         >
           <M3Icon name="add" :size="16" />
-          <span>新增上游节点</span>
+          <span>添加 DNS 服务器</span>
         </button>
       </div>
     </div>
@@ -225,7 +225,7 @@ onMounted(() => {
     <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs transition-colors">
       <h3 class="text-base font-bold text-text-main mb-4 flex items-center gap-2">
         <M3Icon name="upstream" :size="20" class="text-brand-primary" />
-        上游调度策略选择
+        服务器优选策略
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -262,7 +262,7 @@ onMounted(() => {
     <div class="space-y-4">
       <h3 class="text-base font-bold text-text-main flex items-center gap-2">
         <M3Icon name="router" :size="20" class="text-brand-primary" />
-        已配置上游解析节点 ({{ upstreams.length }})
+        已添加的 DNS 服务器 ({{ upstreams.length }})
       </h3>
 
       <div class="space-y-3">
@@ -285,17 +285,17 @@ onMounted(() => {
                     'bg-surface-card-sub text-text-sub border border-surface-border-sub'
                   ]"
                 >
-                  {{ node.protocol }}
+                  {{ node.protocol === 'DOH' ? '加密 DoH' : node.protocol === 'DOT' ? '加密 DoT' : '普通 DNS' }}
                 </span>
                 <StatusBadge
                   :status="node.active ? 'active' : 'inactive'"
-                  :text="node.active ? '健康活动' : '故障隔离'"
+                  :text="node.active ? '连接正常' : '暂停使用'"
                   size="sm"
                 />
               </div>
               <p class="text-xs font-mono text-text-sub">
-                目标服务器: <span class="text-text-main font-medium">{{ node.server }}</span>
-                <span v-if="node.url" class="ml-2">| DoH: {{ node.url }}</span>
+                服务器地址: <span class="text-text-main font-medium">{{ node.server }}</span>
+                <span v-if="node.url" class="ml-2">| 加密接口: {{ node.url }}</span>
               </p>
             </div>
 
@@ -315,14 +315,14 @@ onMounted(() => {
               >
                 <M3Icon v-if="probingId === node.id" name="refresh" class="animate-spin" :size="14" />
                 <M3Icon v-else name="bolt" :size="14" />
-                <span>节点测速</span>
+                <span>测试延迟</span>
               </button>
 
               <button
                 type="button"
                 @click="openEditDialog(idx)"
                 class="app-btn-icon"
-                title="编辑节点配置"
+                title="编辑服务器"
               >
                 <M3Icon name="settings" :size="16" />
               </button>
@@ -332,7 +332,7 @@ onMounted(() => {
                 @click="handleDeleteNode(idx)"
                 :disabled="upstreams.length <= 1"
                 class="app-btn-icon app-btn-icon-danger"
-                title="移除节点"
+                title="删除服务器"
               >
                 <M3Icon name="delete" :size="16" />
               </button>
@@ -346,11 +346,11 @@ onMounted(() => {
     <AppModal
       :open="isDialogOpen"
       @close="isDialogOpen = false"
-      :title="editingIndex >= 0 ? '编辑上游节点' : '新增上游 DNS 节点'"
+      :title="editingIndex >= 0 ? '编辑 DNS 服务器' : '添加 DNS 服务器'"
     >
       <form id="upstream-dialog-form" @submit.prevent="handleSaveDialog" class="space-y-4 pt-1">
         <md-outlined-text-field
-          label="节点标识 ID"
+          label="服务器名称 / 标识"
           :value="formId"
           @input="formId = ($event.target as any).value"
           class="w-full"
@@ -358,33 +358,33 @@ onMounted(() => {
         ></md-outlined-text-field>
 
         <md-outlined-select
-          label="传输协议"
+          label="连接协议"
           :value="formProtocol"
           @change="formProtocol = ($event.target as any).value"
           class="w-full"
         >
           <md-select-option value="PLAIN">
-            <div slot="headline">PLAIN (标准 UDP/TCP 53)</div>
+            <div slot="headline">普通模式 (标准 DNS / 端口 53)</div>
           </md-select-option>
           <md-select-option value="DOH">
-            <div slot="headline">DOH (基于 HTTP/2 的 DNS over HTTPS)</div>
+            <div slot="headline">加密模式 (DNS over HTTPS / 安全防窥探)</div>
           </md-select-option>
           <md-select-option value="DOT">
-            <div slot="headline">DOT (基于 TLS 的 DNS over TLS 853)</div>
+            <div slot="headline">加密模式 (DNS over TLS / 端口 853)</div>
           </md-select-option>
         </md-outlined-select>
 
         <md-outlined-text-field
-          label="服务器地址 (host:port)"
+          label="服务器地址 (IP 或域名)"
           :value="formServer"
           @input="formServer = ($event.target as any).value"
           class="w-full font-mono"
-          placeholder="如 223.5.5.5:53 或 dns.alidns.com:853"
+          placeholder="如 223.5.5.5:53 或 dns.alidns.com"
         ></md-outlined-text-field>
 
         <md-outlined-text-field
           v-if="formProtocol === 'DOH'"
-          label="DoH URL 地址"
+          label="DoH 加密请求地址 (URL)"
           :value="formUrl"
           @input="formUrl = ($event.target as any).value"
           class="w-full font-mono"
@@ -405,7 +405,7 @@ onMounted(() => {
           @click="handleSaveDialog"
           class="app-btn-primary"
         >
-          保存节点
+          保存服务器
         </button>
       </template>
     </AppModal>

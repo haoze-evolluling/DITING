@@ -20,12 +20,12 @@ const isConnected = ref(false);
 const showAlertModal = ref(false);
 
 const navItems = [
-  { id: 'dashboard' as NavTab, label: '总览大盘', icon: 'dashboard' },
-  { id: 'adapters' as NavTab, label: '网卡接管', icon: 'adapters' },
-  { id: 'upstream' as NavTab, label: '上游调度', icon: 'upstream' },
-  { id: 'cache' as NavTab, label: '智能缓存', icon: 'cache' },
-  { id: 'rules' as NavTab, label: '规则防护', icon: 'shield' },
-  { id: 'logs' as NavTab, label: '实时日志', icon: 'logs' },
+  { id: 'dashboard' as NavTab, label: '运行总览', icon: 'dashboard' },
+  { id: 'adapters' as NavTab, label: '网络接管', icon: 'adapters' },
+  { id: 'upstream' as NavTab, label: 'DNS 服务', icon: 'upstream' },
+  { id: 'cache' as NavTab, label: '解析加速', icon: 'cache' },
+  { id: 'rules' as NavTab, label: '规则拦截', icon: 'shield' },
+  { id: 'logs' as NavTab, label: '访问日志', icon: 'logs' },
   { id: 'settings' as NavTab, label: '设置中心', icon: 'settings' },
 ];
 
@@ -176,7 +176,7 @@ onUnmounted(() => {
         <div class="flex items-center gap-3">
           <StatusBadge
             :status="isConnected ? 'active' : 'error'"
-            :text="isConnected ? '特权服务 15353 在线' : '特权服务离线'"
+            :text="isConnected ? '后台服务运行中' : '后台服务未连接'"
             :pulse="isConnected"
             size="sm"
           />
@@ -195,7 +195,7 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <!-- 特权服务未运行友好引导弹窗 (居中与现代圆角按钮) -->
+    <!-- 后台服务未运行引导弹窗 (居中与现代圆角按钮) -->
     <AppModal
       :open="showAlertModal"
       @close="showAlertModal = false"
@@ -204,13 +204,13 @@ onUnmounted(() => {
       <template #headline>
         <div class="flex items-center gap-2 text-status-error font-bold">
           <M3Icon name="warning" :size="22" />
-          <span>未检测到特权服务运行</span>
+          <span>未检测到后台核心服务</span>
         </div>
       </template>
 
       <div class="space-y-3 pt-1">
         <p class="text-xs text-text-sub leading-relaxed">
-          谛听客户端需要后台特权服务 (<code>diting-service.exe</code>) 以管理员权限运行，以接管物理网卡 DNS 并监听 53 端口。请确认服务已启动或使用以下命令手动运行：
+          谛听需要后台核心服务 (<code>diting-service.exe</code>) 保持运行，以提供网络加速与安全拦截保护。请确认服务已启动，或使用以下命令手动运行：
         </p>
         <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border font-mono text-xs text-text-main select-all">
           diting-service.exe -run

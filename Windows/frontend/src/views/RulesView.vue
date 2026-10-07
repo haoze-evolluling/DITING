@@ -100,13 +100,13 @@ async function handleAddList() {
       url: newListURL.value.trim(),
       enabled: true,
     });
-    showToast('规则订阅源已添加并开始拉取');
+    showToast('规则库已添加并开始下载');
     isAddModalOpen.value = false;
     newListName.value = '';
     newListURL.value = '';
     await fetchData();
   } catch (err: any) {
-    showToast(err?.message || '添加订阅源失败', true);
+    showToast(err?.message || '添加规则库失败', true);
   } finally {
     saving.value = false;
   }
@@ -116,19 +116,19 @@ async function toggleList(list: FilterList) {
   try {
     list.enabled = !list.enabled;
     await ipc.updateFilterList(list);
-    showToast(`已${list.enabled ? '启用' : '禁用'}规则源: ${list.name}`);
+    showToast(`已${list.enabled ? '启用' : '停用'}规则库: ${list.name}`);
     await fetchData();
   } catch (err: any) {
     list.enabled = !list.enabled;
-    showToast(err?.message || '切换规则源状态失败', true);
+    showToast(err?.message || '切换规则库状态失败', true);
   }
 }
 
 async function deleteList(id: string) {
-  if (!confirm('确定要移除此规则订阅源吗？')) return;
+  if (!confirm('确定要删除此规则库吗？')) return;
   try {
     await ipc.deleteFilterList(id);
-    showToast('已删除订阅源');
+    showToast('已删除规则库');
     await fetchData();
   } catch (err: any) {
     showToast(err?.message || '删除失败', true);
@@ -139,7 +139,7 @@ async function refreshList(id?: string) {
   try {
     refreshing.value = true;
     await ipc.refreshFilterLists(id);
-    showToast(id ? '规则源已更新重构' : '全量规则源拉取与索引重构完成');
+    showToast(id ? '规则库已更新' : '全部规则库已更新完成');
     await fetchData();
   } catch (err: any) {
     showToast(err?.message || '拉取规则失败', true);
@@ -248,11 +248,11 @@ onUnmounted(() => {
         </div>
         <div>
           <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold text-text-main">规则过滤与广告拦截</h2>
-            <StatusBadge :status="stats.enabled ? 'active' : 'inactive'" :text="stats.enabled ? '防护保护中' : '防护已暂停'" size="sm" />
+            <h2 class="text-xl font-bold text-text-main">广告拦截与安全防护</h2>
+            <StatusBadge :status="stats.enabled ? 'active' : 'inactive'" :text="stats.enabled ? '防护生效中' : '防护已暂停'" size="sm" />
           </div>
           <p class="text-xs text-text-sub mt-1">
-            支持 AdGuard / hosts 语法规则解析、倒序 Trie 树匹配与 BloomFilter 纳秒预检
+            支持主流广告拦截与恶意网址防护规则，毫秒级快速识别并阻断弹窗广告、隐私追踪与危险网站。
           </p>
         </div>
       </div>
@@ -264,10 +264,10 @@ onUnmounted(() => {
 
     <!-- KPI 统计卡片网格 -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <MetricCard title="拦截请求数" :value="stats.blockedQueries.toLocaleString()" unit="次" icon="block" />
-      <MetricCard title="拦截率" :value="stats.blockRate.toFixed(1)" unit="%" icon="speed" />
-      <MetricCard title="生效规则总数" :value="stats.totalRules.toLocaleString()" unit="条" icon="shield" />
-      <MetricCard title="活跃规则源" :value="stats.activeLists" unit="个" icon="adapters" />
+      <MetricCard title="已拦截请求" :value="stats.blockedQueries.toLocaleString()" unit="次" icon="block" />
+      <MetricCard title="拦截比例" :value="stats.blockRate.toFixed(1)" unit="%" icon="speed" />
+      <MetricCard title="有效防护规则" :value="stats.totalRules.toLocaleString()" unit="条" icon="shield" />
+      <MetricCard title="已启用规则库" :value="stats.activeLists" unit="个" icon="adapters" />
     </div>
 
     <!-- 标签切换栏 -->
@@ -278,7 +278,7 @@ onUnmounted(() => {
         :class="activeTab === 'lists' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
       >
         <M3Icon name="adapters" :size="16" />
-        <span>订阅规则源 ({{ lists.length }})</span>
+        <span>规则订阅库 ({{ lists.length }})</span>
       </button>
       <button
         @click="activeTab = 'custom'"
@@ -294,7 +294,7 @@ onUnmounted(() => {
         :class="activeTab === 'test' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
       >
         <M3Icon name="search" :size="16" />
-        <span>规则检测工具</span>
+        <span>网址拦截检测</span>
       </button>
       <button
         @click="activeTab = 'config'"
@@ -302,14 +302,14 @@ onUnmounted(() => {
         :class="activeTab === 'config' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
       >
         <M3Icon name="settings" :size="16" />
-        <span>拦截策略</span>
+        <span>拦截处理方式</span>
       </button>
     </div>
 
     <!-- TAB 1: 订阅规则源列表 -->
     <div v-if="activeTab === 'lists'" class="space-y-4">
       <div class="flex items-center justify-between">
-        <span class="text-xs text-text-sub">支持 HTTP(S) 公网规则源与本地文本规则库</span>
+        <span class="text-xs text-text-sub">支持在线规则订阅链接与本地规则文本文件</span>
         <div class="flex items-center gap-3">
           <button
             type="button"
@@ -318,7 +318,7 @@ onUnmounted(() => {
             class="app-btn-secondary"
           >
             <M3Icon name="refresh" :size="16" :class="refreshing ? 'animate-spin' : ''" />
-            <span>{{ refreshing ? '正在全量拉取...' : '全量刷新' }}</span>
+            <span>{{ refreshing ? '正在下载更新...' : '全部更新' }}</span>
           </button>
           <button
             type="button"
@@ -326,7 +326,7 @@ onUnmounted(() => {
             class="app-btn-primary"
           >
             <M3Icon name="add" :size="16" />
-            <span>添加订阅</span>
+            <span>添加规则库</span>
           </button>
         </div>
       </div>
@@ -351,12 +351,12 @@ onUnmounted(() => {
           </div>
 
           <div class="flex items-center justify-between pt-3 border-t border-surface-border-sub text-[11px] text-text-muted">
-            <span>最后同步: {{ formatTime(l.lastUpdated) }}</span>
+            <span>最后更新: {{ formatTime(l.lastUpdated) }}</span>
             <div class="flex items-center gap-1.5">
-              <button @click="refreshList(l.id)" class="app-btn-icon" title="重新拉取">
+              <button @click="refreshList(l.id)" class="app-btn-icon" title="立即更新">
                 <M3Icon name="refresh" :size="14" />
               </button>
-              <button @click="deleteList(l.id)" class="app-btn-icon app-btn-icon-danger" title="移除此源">
+              <button @click="deleteList(l.id)" class="app-btn-icon app-btn-icon-danger" title="删除此规则库">
                 <M3Icon name="delete" :size="14" />
               </button>
             </div>
@@ -370,19 +370,19 @@ onUnmounted(() => {
       <div class="p-4 rounded-2xl bg-surface-card border border-surface-border text-xs text-text-sub space-y-1 shadow-xs">
         <div class="font-bold text-text-main mb-1 flex items-center gap-2">
           <M3Icon name="info" :size="14" class="text-brand-primary" />
-          <span>规则语法快捷参考</span>
+          <span>常用规则编写指南</span>
         </div>
-        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">||example.com^</code> 拦截该域名及其所有子域名</div>
-        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">@@||safe.com^</code> 白名单例外放行 (优先于拦截规则)</div>
-        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">0.0.0.0 bad.com</code> 兼容标准 Hosts 阻断条目</div>
-        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">||urgent.com^$important</code> 最高权重重要阻断，覆盖常规白名单</div>
+        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">||example.com^</code> 拦截该网站及其所有子域名</div>
+        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">@@||safe.com^</code> 白名单信任放行 (允许访问该网站)</div>
+        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">0.0.0.0 bad.com</code> 兼容传统 Hosts 文件拦截格式</div>
+        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">||urgent.com^$important</code> 强制拦截 (最高优先级，忽略白名单)</div>
       </div>
 
       <div class="rounded-2xl border border-surface-border bg-surface-card p-2 focus-within:ring-2 focus-within:ring-brand-primary/40 shadow-xs">
         <textarea
           v-model="customRulesText"
           rows="14"
-          placeholder="在此输入自定义过滤规则，每行一条..."
+          placeholder="在此输入自定义拦截或信任规则，每行一条..."
           class="w-full bg-transparent border-0 resize-y p-2 text-xs font-mono text-text-main focus:outline-none"
         ></textarea>
       </div>
@@ -404,14 +404,14 @@ onUnmounted(() => {
     <div v-if="activeTab === 'test'" class="space-y-4">
       <div class="p-6 rounded-2xl bg-surface-card border border-surface-border space-y-4 shadow-xs">
         <div>
-          <h3 class="text-base font-bold text-text-main">域名检测与命中分析</h3>
-          <p class="text-xs text-text-sub mt-1">输入任意域名，即时测试其当前在 Trie 树和规则集中的匹配结果与处理动作</p>
+          <h3 class="text-base font-bold text-text-main">网址拦截模拟测试</h3>
+          <p class="text-xs text-text-sub mt-1">输入任意网址或域名，即可快速检测其是否会被防护规则拦截以及原因</p>
         </div>
 
         <div class="flex flex-col md:flex-row gap-3 items-center">
           <input
             v-model="testDomain"
-            placeholder="例如: pagead2.googlesyndication.com"
+            placeholder="例如: ad.example.com"
             @keyup.enter="runDomainTest"
             class="flex-1 h-9 px-4 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main placeholder:text-text-muted"
           />
@@ -440,22 +440,22 @@ onUnmounted(() => {
               class="px-2.5 py-1 rounded-full text-xs font-bold uppercase text-white"
               :class="testResult.blocked ? 'bg-status-error' : testResult.action === 'allow' ? 'bg-status-success' : 'bg-text-muted'"
             >
-              {{ testResult.blocked ? '已阻断 (BLOCKED)' : testResult.action === 'allow' ? '白名单放行 (ALLOWED)' : '正常通过 (PASS)' }}
+              {{ testResult.blocked ? '已拦截 (阻止访问)' : testResult.action === 'allow' ? '已放行 (信任名单)' : '未命中规则 (正常访问)' }}
             </span>
             <span class="font-mono font-bold text-text-main">{{ testDomain }}</span>
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 text-xs">
             <div>
-              <span class="text-text-muted">命中规则: </span>
+              <span class="text-text-muted">命中的规则: </span>
               <span class="font-mono text-text-main font-semibold">{{ testResult.matchedRule || '无' }}</span>
             </div>
             <div>
-              <span class="text-text-muted">规则来源: </span>
+              <span class="text-text-muted">所属规则库: </span>
               <span class="font-medium text-text-main">{{ testResult.listName || '无' }}</span>
             </div>
             <div>
-              <span class="text-text-muted">判定原因: </span>
+              <span class="text-text-muted">处理原因: </span>
               <span class="font-medium text-text-main">{{ testResult.reason || '未命中规则' }}</span>
             </div>
           </div>
@@ -467,32 +467,32 @@ onUnmounted(() => {
     <div v-if="activeTab === 'config'" class="space-y-4 max-w-2xl">
       <div class="p-6 rounded-2xl bg-surface-card border border-surface-border space-y-5 shadow-xs">
         <div>
-          <h3 class="text-base font-bold text-text-main">阻断响应策略配置</h3>
-          <p class="text-xs text-text-sub mt-1">定制当域名被命中阻断时向客户端交付的 DNS 应答行为</p>
+          <h3 class="text-base font-bold text-text-main">拦截处理方式</h3>
+          <p class="text-xs text-text-sub mt-1">选择当遇到被拦截的广告或恶意网址时，向系统和浏览器返回的处理方式</p>
         </div>
 
         <div class="space-y-3 text-sm">
           <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
             <input type="radio" v-model="config.blockMode" value="null_ip" class="accent-brand-primary" />
             <div>
-              <div class="font-medium text-text-main">空 IP 应答 (Null IP / 推荐)</div>
-              <div class="text-xs text-text-sub">返回 0.0.0.0 (A) 或 :: (AAAA)，快速阻断且不引起客户端持续重试</div>
+              <div class="font-medium text-text-main">直接拦截 (推荐)</div>
+              <div class="text-xs text-text-sub">立即返回空地址，以最快速度终止广告加载且不会引起网页反复重试</div>
             </div>
           </label>
 
           <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
             <input type="radio" v-model="config.blockMode" value="nxdomain" class="accent-brand-primary" />
             <div>
-              <div class="font-medium text-text-main">域名不存在 (NXDOMAIN)</div>
-              <div class="text-xs text-text-sub">响应 RcodeNameError，宣告域名在权威服务中不存在</div>
+              <div class="font-medium text-text-main">伪装为域名不存在 (NXDOMAIN)</div>
+              <div class="text-xs text-text-sub">告知浏览器该网址不存在，部分软件会放弃进一步连接</div>
             </div>
           </label>
 
           <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
             <input type="radio" v-model="config.blockMode" value="refused" class="accent-brand-primary" />
             <div>
-              <div class="font-medium text-text-main">拒绝访问 (REFUSED)</div>
-              <div class="text-xs text-text-sub">响应 RcodeRefused，告知请求被 DNS 策略拒绝</div>
+              <div class="font-medium text-text-main">明确拒绝连接 (REFUSED)</div>
+              <div class="text-xs text-text-sub">告知请求被安全策略明确拒绝</div>
             </div>
           </label>
         </div>
@@ -515,20 +515,20 @@ onUnmounted(() => {
     <AppModal
       :open="isAddModalOpen"
       @close="isAddModalOpen = false"
-      title="添加规则订阅源"
+      title="添加规则订阅库"
     >
       <div class="space-y-3 pt-1">
-        <p class="text-xs text-text-sub">输入规则列表源的名称与可访问的 URL 地址</p>
+        <p class="text-xs text-text-sub">输入规则库的名称以及在线订阅网址 (URL) 或本地文件路径</p>
         <div>
-          <label class="text-xs text-text-sub block mb-1">规则源名称</label>
+          <label class="text-xs text-text-sub block mb-1">规则库名称</label>
           <input
             v-model="newListName"
-            placeholder="例如: EasyList China"
+            placeholder="例如: 广告拦截通用规则"
             class="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
           />
         </div>
         <div>
-          <label class="text-xs text-text-sub block mb-1">规则源 URL / 路径</label>
+          <label class="text-xs text-text-sub block mb-1">订阅链接 / 文件路径</label>
           <input
             v-model="newListURL"
             placeholder="https://... 或本地文件路径"
@@ -551,7 +551,7 @@ onUnmounted(() => {
           @click="handleAddList"
           class="app-btn-primary"
         >
-          添加并拉取
+          添加并下载
         </button>
       </template>
     </AppModal>

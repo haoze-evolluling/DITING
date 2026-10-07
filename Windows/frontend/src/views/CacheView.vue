@@ -125,10 +125,10 @@ async function handleToggleCache(e: Event) {
     await ipc.updateCacheConfig(updated);
     config.value = updated;
     stats.value.enabled = enable;
-    successMessage.value = enable ? '智能缓存已启用' : '智能缓存已停用';
+    successMessage.value = enable ? '解析加速已开启' : '解析加速已关闭';
     setTimeout(() => (successMessage.value = ''), 3000);
   } catch (err: any) {
-    errorMessage.value = `切换缓存失败: ${err.message}`;
+    errorMessage.value = `切换加速状态失败: ${err.message}`;
     if ('selected' in target) {
       target.selected = !enable;
     } else {
@@ -143,7 +143,7 @@ async function handleSaveConfig() {
   successMessage.value = '';
   try {
     await ipc.updateCacheConfig(config.value);
-    successMessage.value = '缓存策略配置已保存并即时生效！';
+    successMessage.value = '加速策略配置已保存并即时生效！';
     await loadData();
     setTimeout(() => (successMessage.value = ''), 3000);
   } catch (err: any) {
@@ -158,7 +158,7 @@ async function handleConfirmClear() {
   try {
     await ipc.clearCache();
     isClearDialogOpen.value = false;
-    successMessage.value = '智能缓存已全部清空！';
+    successMessage.value = '加速缓存已全部清空！';
     await loadData();
     setTimeout(() => (successMessage.value = ''), 3000);
   } catch (err: any) {
@@ -198,23 +198,23 @@ onUnmounted(() => {
       <div>
         <div class="flex items-center gap-2">
           <h2 class="text-2xl font-bold tracking-tight text-text-main">
-            智能 DNS 缓存大盘
+            智能解析加速中心
           </h2>
           <StatusBadge
             :status="stats.enabled ? 'active' : 'inactive'"
-            :text="stats.enabled ? '64 分片 LRU 运转中' : '缓存已停用'"
+            :text="stats.enabled ? '加速引擎运行中' : '加速已停用'"
             size="sm"
           />
         </div>
         <p class="text-xs text-text-sub mt-1">
-          支持 64 分片高并发无锁竞争、RFC 2181/2308 动态 TTL 递减、Optimistic SWR 容灾与负缓存
+          自动缓存已访问过的网址解析结果，下次访问直接瞬间返回；在断网或网络卡顿时自动启用容灾兜底。
         </p>
       </div>
 
       <div class="flex items-center gap-3">
         <!-- 缓存总控 Switch -->
         <div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-surface-card border border-surface-border shadow-xs">
-          <span class="text-xs font-medium text-text-sub">智能缓存</span>
+          <span class="text-xs font-medium text-text-sub">解析加速</span>
           <md-switch
             :selected="stats.enabled"
             @change="handleToggleCache"
@@ -289,11 +289,11 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <MetricCard title="总命中数" :value="stats.totalHits.toLocaleString()" icon="check" subtext="缓存即时返回" />
-      <MetricCard title="未命中回源" :value="stats.totalMisses.toLocaleString()" icon="sync" subtext="上游转发响应" />
-      <MetricCard title="SWR 容灾命中" :value="stats.staleHits.toLocaleString()" icon="shield" subtext="陈旧条目保活" />
-      <MetricCard title="负缓存拦截" :value="stats.negativeHits.toLocaleString()" icon="cancel" subtext="NXDOMAIN 拦截" />
-      <MetricCard title="条目占用 / 容量" :value="`${stats.entryCount} / ${stats.maxEntries}`" icon="cache" :subtext="`淘汰数: ${stats.evictionCount}`" />
+      <MetricCard title="总命中数" :value="stats.totalHits.toLocaleString()" icon="check" subtext="本地瞬间返回，无需等待网络" />
+      <MetricCard title="实时联网解析" :value="stats.totalMisses.toLocaleString()" icon="sync" subtext="首次访问，向服务器查询" />
+      <MetricCard title="弱网容灾兜底" :value="stats.staleHits.toLocaleString()" icon="shield" subtext="网络故障时使用旧记录兜底" />
+      <MetricCard title="无效网址拦截" :value="stats.negativeHits.toLocaleString()" icon="cancel" subtext="记住不存在的网址，避免重复查询" />
+      <MetricCard title="已存条目 / 容量" :value="`${stats.entryCount} / ${stats.maxEntries}`" icon="cache" :subtext="`淘汰旧记录: ${stats.evictionCount}`" />
     </div>
 
     <!-- 双栏布局: 热点域名 Top 统计 & 缓存策略配置 -->
@@ -303,13 +303,13 @@ onUnmounted(() => {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <M3Icon name="bolt" :size="20" class="text-status-warning" />
-            <h3 class="text-base font-bold text-text-main">热点域名 Top 统计</h3>
+            <h3 class="text-base font-bold text-text-main">高频访问网址排行</h3>
           </div>
-          <span class="text-xs text-text-muted">实时请求频次排名前 10</span>
+          <span class="text-xs text-text-muted">访问次数最多的前 10 个网址</span>
         </div>
 
         <div v-if="topDomains.length === 0" class="py-8 text-center text-xs text-text-muted">
-          暂无缓存访问记录
+          暂无访问记录
         </div>
 
         <div v-else class="space-y-2.5">
@@ -358,7 +358,7 @@ onUnmounted(() => {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <M3Icon name="settings" :size="20" class="text-brand-primary" />
-            <h3 class="text-base font-bold text-text-main">缓存策略参数</h3>
+            <h3 class="text-base font-bold text-text-main">加速策略设置</h3>
           </div>
           <button
             type="button"
@@ -374,24 +374,24 @@ onUnmounted(() => {
         <div class="space-y-4 pt-1">
           <!-- TTL 策略模式 -->
           <div class="space-y-1">
-            <label class="text-xs font-medium text-text-sub">TTL 计算模式</label>
+            <label class="text-xs font-medium text-text-sub">有效期计算方式</label>
             <md-outlined-select :value="config.mode" @change="config.mode = ($event.target as any).value" class="w-full">
-              <md-select-option value="limit_max_ttl"><div slot="headline">限制最大 TTL (推荐)</div></md-select-option>
-              <md-select-option value="follow_dns_ttl"><div slot="headline">完全跟随上游 DNS TTL</div></md-select-option>
-              <md-select-option value="fixed_ttl"><div slot="headline">固定 TTL 模式</div></md-select-option>
+              <md-select-option value="limit_max_ttl"><div slot="headline">限制最长有效期 (推荐，避免过期失效)</div></md-select-option>
+              <md-select-option value="follow_dns_ttl"><div slot="headline">完全遵从服务器给出的有效期</div></md-select-option>
+              <md-select-option value="fixed_ttl"><div slot="headline">统一固定有效期</div></md-select-option>
             </md-outlined-select>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <md-outlined-text-field
-              label="最大 TTL (秒)"
+              label="最长保存时长 (秒)"
               type="number"
               :value="String(config.maxTtlSeconds)"
               @input="config.maxTtlSeconds = Number(($event.target as any).value)"
             ></md-outlined-text-field>
 
             <md-outlined-text-field
-              label="最小保证 TTL (秒)"
+              label="最短保底时长 (秒)"
               type="number"
               :value="String(config.minTtlSeconds)"
               @input="config.minTtlSeconds = Number(($event.target as any).value)"
@@ -402,8 +402,8 @@ onUnmounted(() => {
           <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub space-y-3">
             <div class="flex items-center justify-between">
               <div>
-                <span class="text-xs font-bold text-text-main">Stale 容灾保活 (SWR)</span>
-                <p class="text-[11px] text-text-sub">上游异常或过期宽限期内提供快速容灾响应</p>
+                <span class="text-xs font-bold text-text-main">弱网防断网容灾 (过期兜底)</span>
+                <p class="text-[11px] text-text-sub">当网络超时或波动时，临时使用近期缓存确保网页能正常打开</p>
               </div>
               <md-switch
                 :selected="config.staleFallbackEnabled"
@@ -413,14 +413,14 @@ onUnmounted(() => {
 
             <div v-if="config.staleFallbackEnabled" class="grid grid-cols-2 gap-3 pt-1">
               <md-outlined-text-field
-                label="保活宽限时长 (秒)"
+                label="容灾兜底宽限期 (秒)"
                 type="number"
                 :value="String(config.staleFallbackSeconds)"
                 @input="config.staleFallbackSeconds = Number(($event.target as any).value)"
               ></md-outlined-text-field>
 
               <div class="flex items-center justify-between px-2">
-                <span class="text-[11px] text-text-sub">Optimistic 优先响应</span>
+                <span class="text-[11px] text-text-sub">极速响应 (先用缓存后后台更新)</span>
                 <md-switch
                   :selected="config.optimistic"
                   @change="config.optimistic = Boolean(($event.target as any).selected ?? ($event.target as any).checked)"
@@ -432,8 +432,8 @@ onUnmounted(() => {
           <!-- 负缓存配置 -->
           <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub flex items-center justify-between">
             <div>
-              <span class="text-xs font-bold text-text-main">负缓存 (Negative Caching)</span>
-              <p class="text-[11px] text-text-sub">缓存 NXDOMAIN 与 NODATA 减少重复无效回源</p>
+              <span class="text-xs font-bold text-text-main">无效网址记忆加速</span>
+              <p class="text-[11px] text-text-sub">记住不存在或错误的网址，避免系统和软件频繁重复重试</p>
             </div>
             <md-switch
               :selected="config.negativeTtlEnabled"
@@ -450,7 +450,7 @@ onUnmounted(() => {
         <div class="flex items-center gap-2">
           <M3Icon name="search" :size="20" class="text-brand-primary" />
           <h3 class="text-base font-bold text-text-main">
-            缓存条目检索 ({{ totalEntriesCount }} 条)
+            已缓存域名列表 ({{ totalEntriesCount }} 条)
           </h3>
         </div>
 
@@ -461,7 +461,7 @@ onUnmounted(() => {
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="搜索域名或记录类型..."
+              placeholder="搜索网址或记录类型..."
               @keyup.enter="handleSearch"
               class="w-full pl-9 pr-3 h-9 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted font-mono"
             />
@@ -483,9 +483,9 @@ onUnmounted(() => {
         <button
           v-for="f in [
             { id: 'all', label: '全部' },
-            { id: 'fresh', label: '生效中 (Fresh)' },
-            { id: 'stale', label: '容灾保活 (Stale)' },
-            { id: 'negative', label: '负缓存 (Negative)' },
+            { id: 'fresh', label: '有效生效中' },
+            { id: 'stale', label: '过期容灾中' },
+            { id: 'negative', label: '无效网址记忆' },
           ]"
           :key="f.id"
           @click="statusFilter = f.id as any"
@@ -505,13 +505,13 @@ onUnmounted(() => {
         <table class="w-full text-left text-xs font-mono">
           <thead>
             <tr class="border-b border-surface-border text-text-muted">
-              <th class="py-2.5 font-medium">域名 (Domain)</th>
-              <th class="py-2.5 font-medium">类型</th>
-              <th class="py-2.5 font-medium">状态</th>
-              <th class="py-2.5 font-medium">剩余 TTL</th>
-              <th class="py-2.5 font-medium">初始 TTL</th>
-              <th class="py-2.5 font-medium">命中数</th>
-              <th class="py-2.5 font-medium">解析地址</th>
+              <th class="py-2.5 font-medium">网址 / 域名</th>
+              <th class="py-2.5 font-medium">记录类型</th>
+              <th class="py-2.5 font-medium">缓存状态</th>
+              <th class="py-2.5 font-medium">剩余有效期</th>
+              <th class="py-2.5 font-medium">初始有效期</th>
+              <th class="py-2.5 font-medium">命中次数</th>
+              <th class="py-2.5 font-medium">解析 IP</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-surface-border-sub">
@@ -519,9 +519,9 @@ onUnmounted(() => {
               <td class="py-2.5 font-bold text-text-main">{{ entry.domain }}</td>
               <td class="py-2.5 text-text-sub">{{ entry.qtype }}</td>
               <td class="py-2.5">
-                <span v-if="entry.isNegative" class="px-2 py-0.5 rounded-full text-[10px] bg-status-error-bg text-status-error">负缓存</span>
-                <span v-else-if="entry.status === 'fresh'" class="px-2 py-0.5 rounded-full text-[10px] bg-status-success-bg text-status-success">生效中</span>
-                <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-status-warning-bg text-status-warning">容灾保活</span>
+                <span v-if="entry.isNegative" class="px-2 py-0.5 rounded-full text-[10px] bg-status-error-bg text-status-error">无效网址</span>
+                <span v-else-if="entry.status === 'fresh'" class="px-2 py-0.5 rounded-full text-[10px] bg-status-success-bg text-status-success">有效</span>
+                <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-status-warning-bg text-status-warning">过期容灾</span>
               </td>
               <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-brand-primary' : 'text-status-warning'">{{ entry.remainingTtl }}s</td>
               <td class="py-2.5 text-text-muted">{{ entry.originalTtl }}s</td>
@@ -544,13 +544,13 @@ onUnmounted(() => {
       <template #headline>
         <div class="flex items-center gap-2 text-status-error font-bold">
           <M3Icon name="delete" :size="22" />
-          <span>清空所有智能缓存？</span>
+          <span>确定清空所有加速缓存？</span>
         </div>
       </template>
 
       <div class="space-y-2 pt-1 text-xs text-text-sub leading-relaxed">
         <p>
-          此操作将清空当前 64 分片内的全部活跃条目（共 {{ stats.entryCount }} 条）与 LRU 热度队列。后续 DNS 请求将重新回源解析并重新填充缓存。
+          此操作将清空当前全部已缓存的网址记录（共 {{ stats.entryCount }} 条）。清空后后续访问网址将重新通过网络解析。
         </p>
       </div>
 

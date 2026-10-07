@@ -220,14 +220,14 @@ export function handleMockRequest(rawPath: string, _options: RequestInit = {}): 
       action: 'block',
       matchedRule: '||adservice.google.com^',
       listName: 'AdGuard DNS Filter',
-      reason: '命中域名拦截黑名单规则',
+      reason: '命中广告拦截规则',
     } as CheckHostResult;
   }
   if (path === '/api/v1/system/check-port') {
     return {
       available: true,
       hasICS: false,
-      diagnostic: '端口 127.0.0.1:53 处于空闲状态，未检测到 SharedAccess 或第三方 DNS 抢占冲突。',
+      diagnostic: 'DNS 端口 (53) 正常空闲，未检测到网络共享或第三方软件占用冲突。',
       conflicts: [],
     } as PortCheckResult;
   }

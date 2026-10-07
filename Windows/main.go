@@ -55,9 +55,9 @@ func (a *App) RunEmergencyRestore() (string, error) {
 		return "", fmt.Errorf("应急恢复失败: %w", err)
 	}
 	if healed {
-		return "已成功自愈恢复系统 DNS 设置！", nil
+		return "已成功恢复网络 DNS 设置！", nil
 	}
-	return "系统 DNS 状态正常，未检测到残留接管。", nil
+	return "网络 DNS 状态正常，无需修复。", nil
 }
 
 // IsAutoStartEnabled 获取当前是否已开启开机自启

@@ -97,10 +97,10 @@ onMounted(() => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-text-main">
-          物理网卡与 DNS 接管
+          网络连接与保护接管
         </h2>
         <p class="text-sm text-text-sub">
-          已自动过滤虚拟网卡 (WSL/Hyper-V/VPN)，仅呈现具默认网关的真实活动物理网卡。
+          已自动排除虚拟与离线网络，仅显示当前正在使用的网络连接（如 Wi-Fi 或有线网络）。
         </p>
       </div>
 
@@ -112,7 +112,7 @@ onMounted(() => {
           class="app-btn-secondary"
         >
           <M3Icon name="refresh" :size="16" :class="loading ? 'animate-spin' : ''" />
-          <span>刷新网卡</span>
+          <span>刷新列表</span>
         </button>
         <button
           v-if="!status?.takeover?.active"
@@ -122,7 +122,7 @@ onMounted(() => {
           class="app-btn-primary"
         >
           <M3Icon name="shield" :size="16" />
-          <span>全量接管</span>
+          <span>全部开启保护</span>
         </button>
         <button
           v-else
@@ -132,7 +132,7 @@ onMounted(() => {
           class="app-btn-secondary"
         >
           <M3Icon name="refresh" :size="16" />
-          <span>全量还原</span>
+          <span>恢复系统默认</span>
         </button>
       </div>
     </div>
@@ -154,14 +154,14 @@ onMounted(() => {
     <!-- 加载中状态 -->
     <div v-if="loading && adapters.length === 0" class="flex flex-col items-center justify-center p-16 gap-4">
       <md-circular-progress indeterminate />
-      <span class="text-sm text-text-sub">正在扫描 Windows 物理网络适配器...</span>
+      <span class="text-sm text-text-sub">正在检测网络连接...</span>
     </div>
 
     <!-- 空网卡状态 -->
     <div v-else-if="adapters.length === 0" class="rounded-2xl border border-dashed border-surface-border p-12 text-center bg-surface-card">
       <M3Icon name="adapters" :size="48" class="text-text-muted mx-auto mb-3" />
-      <h3 class="font-semibold text-text-main">未发现活动的物理网卡</h3>
-      <p class="text-sm text-text-sub mt-1">请检查 Wi-Fi 或以太网连接是否已正常接入互联网。</p>
+      <h3 class="font-semibold text-text-main">未发现可用的网络连接</h3>
+      <p class="text-sm text-text-sub mt-1">请检查 Wi-Fi 或网线是否已正常连接至网络。</p>
       <div class="mt-4">
         <button
           type="button"
@@ -169,7 +169,7 @@ onMounted(() => {
           class="app-btn-primary"
         >
           <M3Icon name="refresh" :size="16" />
-          <span>重新扫描</span>
+          <span>重新检测</span>
         </button>
       </div>
     </div>
@@ -197,20 +197,20 @@ onMounted(() => {
                 <StatusBadge
                   v-if="isAdapterTakenOver(adapter)"
                   status="active"
-                  text="谛听接管生效中"
+                  text="保护生效中"
                   size="sm"
                   pulse
                 />
               </div>
               <p class="text-xs text-text-sub">
-                {{ adapter.description }} • 网关: {{ adapter.gateway || '无' }} • 索引: #{{ adapter.index }}
+                {{ adapter.description }} • 默认网关: {{ adapter.gateway || '无' }}
               </p>
             </div>
 
             <!-- 右侧单卡接管开关 -->
             <div class="flex items-center gap-3 bg-surface-card-sub px-4 py-2 rounded-xl border border-surface-border-sub">
               <span class="text-xs font-medium text-text-main">
-                {{ isAdapterTakenOver(adapter) ? '接管运行' : '未接管' }}
+                {{ isAdapterTakenOver(adapter) ? '保护已开启' : '未开启' }}
               </span>
               <md-switch
                 :selected="isAdapterTakenOver(adapter)"
@@ -223,26 +223,26 @@ onMounted(() => {
           <!-- DNS 配置对比详情 -->
           <div class="mt-4 pt-4 border-t border-surface-border grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
             <div class="rounded-xl bg-surface-card-sub border border-surface-border-sub p-3">
-              <span class="text-text-muted block mb-1">IPv4 获取模式</span>
+              <span class="text-text-muted block mb-1">IP 地址分配方式</span>
               <span class="font-semibold text-text-main">
-                {{ adapter.ipv4DHCP ? '动态 DHCP' : '静态分配 (Static)' }}
+                {{ adapter.ipv4DHCP ? '自动获取 (DHCP)' : '手动固定 (静态 IP)' }}
               </span>
             </div>
 
             <div class="rounded-xl bg-surface-card-sub border border-surface-border-sub p-3">
-              <span class="text-text-muted block mb-1">原有 IPv4 DNS 地址</span>
+              <span class="text-text-muted block mb-1">原始 DNS 服务器</span>
               <span class="font-mono font-medium text-text-main">
-                {{ adapter.ipv4DNS?.join(', ') || '从 DHCP 继承' }}
+                {{ adapter.ipv4DNS?.join(', ') || '自动获取 (路由器默认)' }}
               </span>
             </div>
 
             <div class="rounded-xl bg-surface-card-sub border border-surface-border-sub p-3">
-              <span class="text-text-muted block mb-1">当前接管 DNS 指向</span>
+              <span class="text-text-muted block mb-1">当前实际生效 DNS</span>
               <span
                 class="font-mono font-semibold"
                 :class="isAdapterTakenOver(adapter) ? 'text-status-success' : 'text-text-muted'"
               >
-                {{ isAdapterTakenOver(adapter) ? '127.0.0.1 / ::1 (双栈)' : '系统默认上游' }}
+                {{ isAdapterTakenOver(adapter) ? '本机加速保护 (127.0.0.1)' : '系统默认设置' }}
               </span>
             </div>
           </div>

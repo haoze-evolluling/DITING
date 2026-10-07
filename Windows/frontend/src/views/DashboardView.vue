@@ -167,32 +167,32 @@ onUnmounted(() => {
             <div class="space-y-1.5 min-w-0">
               <div class="flex items-center gap-2.5 flex-wrap">
                 <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
-                  系统 DNS 转发核心
+                  DNS 加速与防护引擎
                 </h2>
                 <StatusBadge
                   :status="dnsRunning ? 'active' : 'inactive'"
-                  :text="dnsRunning ? '监听运行中' : '服务已暂停'"
+                  :text="dnsRunning ? '服务运行中' : '服务已暂停'"
                   :pulse="dnsRunning"
                 />
                 <StatusBadge
                   v-if="takeoverActive"
                   status="active"
-                  :text="`已接管 ${activeAdaptersCount} 个物理网卡`"
+                  :text="`已保护 ${activeAdaptersCount} 个网络连接`"
                   size="sm"
                 />
               </div>
               <p class="text-xs sm:text-sm text-text-sub max-w-xl line-clamp-2">
-                谛听 (DITING) 双栈 DNS 内核正在 Windows 平台运行，提供毫秒级多协议上游调度、安全故障回退与崩溃状态持久化自愈。
+                谛听正在后台稳定运行，为您提供极速无感的域名解析加速、智能广告与威胁拦截，并提供防断网自动恢复保障。
               </p>
             </div>
 
             <!-- 主控制开关组 -->
             <div class="flex items-center gap-4 bg-surface-card-sub px-4 py-3 rounded-2xl border border-surface-border-sub shrink-0">
-              <!-- DNS 代理服务开关 -->
+              <!-- 本地 DNS 解析服务开关 -->
               <div class="flex items-center gap-2.5">
                 <div class="flex flex-col text-right">
-                  <span class="text-xs sm:text-sm font-semibold text-text-main">DNS 监听</span>
-                  <span class="text-[11px] text-text-muted">127.0.0.1:53</span>
+                  <span class="text-xs sm:text-sm font-semibold text-text-main">本地服务</span>
+                  <span class="text-[11px] text-text-muted">127.0.0.1 (本机)</span>
                 </div>
                 <md-switch
                   :selected="dnsRunning"
@@ -203,11 +203,11 @@ onUnmounted(() => {
 
               <div class="h-6 w-px bg-surface-border" />
 
-              <!-- 网卡接管开关 -->
+              <!-- 网络接管开关 -->
               <div class="flex items-center gap-2.5">
                 <div class="flex flex-col text-right">
-                  <span class="text-xs sm:text-sm font-semibold text-text-main">网卡接管</span>
-                  <span class="text-[11px] text-text-muted">双栈回路</span>
+                  <span class="text-xs sm:text-sm font-semibold text-text-main">网络接管</span>
+                  <span class="text-[11px] text-text-muted">IPv4 / IPv6</span>
                 </div>
                 <md-switch
                   :selected="takeoverActive"
@@ -219,52 +219,52 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- 实时遥测高光指标卡片 (4 列排布，在 8/12 宽度下非常宽敞) -->
+        <!-- 实时指标卡片 (4 列排布) -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
           <MetricCard
-            title="实时查询 QPS"
+            title="实时查询速率"
             :value="(status?.metrics?.qps || 0).toFixed(1)"
-            unit="req/s"
+            unit="次/秒"
             icon="speed"
-            subtext="当前请求吞吐率"
+            subtext="当前每秒处理量"
           />
           <MetricCard
-            title="平均响应延迟"
+            title="平均响应耗时"
             :value="(status?.metrics?.avgLatencyMs || 0).toFixed(1)"
-            unit="ms"
+            unit="毫秒"
             icon="bolt"
-            subtext="上游综合 RTT"
+            subtext="服务器平均耗时"
           />
           <MetricCard
-            title="查询成功率"
+            title="解析成功率"
             :value="successRate"
             icon="check_circle"
             :subtext="`成功: ${status?.metrics?.successQueries || 0} / 失败: ${status?.metrics?.failedQueries || 0}`"
           />
           <MetricCard
-            title="核心运行时间"
+            title="持续运行时长"
             :value="formatUptime"
             icon="shield"
-            :subtext="`进程 PID: ${status?.pid || '-'}`"
+            :subtext="`进程编号: ${status?.pid || '-'}`"
           />
         </div>
 
         <!-- 遥测波形图表 (双图表并列) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MetricChart
-            label="QPS 实时波形曲线 (req/s)"
+            label="实时查询速率趋势 (次/秒)"
             :data="qpsHistory"
             strokeColor="var(--app-brand-primary)"
             gradientId="chart-grad-qps"
-            unit="req/s"
+            unit="次/秒"
             :height="115"
           />
           <MetricChart
-            label="延迟波动历史 (ms)"
+            label="响应延迟波动历史 (毫秒)"
             :data="latencyHistory"
             strokeColor="var(--app-status-warning)"
             gradientId="chart-grad-latency"
-            unit="ms"
+            unit="毫秒"
             :height="115"
           />
         </div>
@@ -277,26 +277,26 @@ onUnmounted(() => {
           <div class="flex items-center justify-between gap-2 mb-2.5">
             <div class="flex items-center gap-2 min-w-0">
               <M3Icon name="upstream" :size="18" class="text-brand-primary shrink-0" />
-              <h3 class="font-semibold text-text-main text-sm truncate">上游调度</h3>
+              <h3 class="font-semibold text-text-main text-sm truncate">DNS 服务</h3>
             </div>
             <button
               @click="emit('navigate', 'upstream')"
               class="app-btn-tonal app-btn-compact !px-2.5"
             >
-              管理配置
+              管理服务器
             </button>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">调度策略</div>
+              <div class="text-[11px] text-text-sub">工作策略</div>
               <div class="text-xs font-semibold text-text-main uppercase truncate mt-0.5">
                 {{ status?.dns?.mode || 'PRIMARY_BACKUP' }}
               </div>
             </div>
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">活动节点</div>
+              <div class="text-[11px] text-text-sub">可用节点</div>
               <div class="text-xs font-semibold text-text-main truncate mt-0.5">
-                {{ status?.dns?.upstreams?.length || 0 }} 个节点
+                {{ status?.dns?.upstreams?.length || 0 }} 个可用
               </div>
             </div>
           </div>
@@ -307,24 +307,24 @@ onUnmounted(() => {
           <div class="flex items-center justify-between gap-2 mb-2.5">
             <div class="flex items-center gap-2 min-w-0">
               <M3Icon name="cache" :size="18" class="text-brand-primary shrink-0" />
-              <h3 class="font-semibold text-text-main text-sm truncate">智能缓存</h3>
+              <h3 class="font-semibold text-text-main text-sm truncate">解析加速</h3>
             </div>
             <button
               @click="emit('navigate', 'cache')"
               class="app-btn-tonal app-btn-compact !px-2.5"
             >
-              缓存监控
+              查看详情
             </button>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">实时命中率</div>
+              <div class="text-[11px] text-text-sub">缓存命中率</div>
               <div class="text-xs font-bold text-brand-primary font-mono mt-0.5">
                 {{ ((status?.cache?.hitRatio || 0) * 100).toFixed(1) }}%
               </div>
             </div>
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">条目数 / 容量</div>
+              <div class="text-[11px] text-text-sub">已存记录 / 容量</div>
               <div class="text-xs font-mono text-text-main truncate mt-0.5">
                 {{ status?.cache?.entryCount || 0 }} / {{ status?.cache?.maxEntries || 4096 }}
               </div>
@@ -354,7 +354,7 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">拦截 / 总规则</div>
+              <div class="text-[11px] text-text-sub">已拦截 / 规则数</div>
               <div class="text-xs font-mono text-text-main truncate mt-0.5">
                 {{ status?.filter?.blockedQueries || 0 }} / {{ status?.filter?.totalRules || 0 }}
               </div>
@@ -367,26 +367,26 @@ onUnmounted(() => {
           <div class="flex items-center justify-between gap-2 mb-2.5">
             <div class="flex items-center gap-2 min-w-0">
               <M3Icon name="adapters" :size="18" class="text-brand-primary shrink-0" />
-              <h3 class="font-semibold text-text-main text-sm truncate">网卡接管</h3>
+              <h3 class="font-semibold text-text-main text-sm truncate">网络接管</h3>
             </div>
             <button
               @click="emit('navigate', 'adapters')"
               class="app-btn-tonal app-btn-compact !px-2.5"
             >
-              查看详情
+              查看网络
             </button>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">系统接管状态</div>
+              <div class="text-[11px] text-text-sub">系统网络状态</div>
               <div class="text-xs font-semibold truncate mt-0.5" :class="takeoverActive ? 'text-status-success' : 'text-text-muted'">
-                {{ takeoverActive ? '已接管 (自动灾备)' : '未接管 (系统原生)' }}
+                {{ takeoverActive ? '已开启保护 (自动自愈)' : '未开启 (系统默认)' }}
               </div>
             </div>
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">持久化状态</div>
+              <div class="text-[11px] text-text-sub">防断网保障</div>
               <div class="text-[11px] font-mono text-text-sub truncate mt-0.5" title="%ProgramData%\DITING\dns_state.json">
-                已持久化自愈
+                已就绪 (崩溃自愈)
               </div>
             </div>
           </div>
