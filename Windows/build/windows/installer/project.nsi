@@ -7,7 +7,7 @@
 !define INFO_PROJECTNAME    "diting-gui"
 !define INFO_COMPANYNAME    "Diting"
 !define INFO_PRODUCTNAME    "谛听 DNS"
-!define INFO_PRODUCTVERSION "0.2.0"
+!define INFO_PRODUCTVERSION "1.2.10"
 !define INFO_COPYRIGHT      "Copyright 2026 DITING"
 
 !define PRODUCT_EXECUTABLE  "diting-gui.exe"
