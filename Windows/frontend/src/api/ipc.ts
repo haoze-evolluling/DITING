@@ -24,7 +24,6 @@ declare global {
       main?: {
         App?: {
           Greet?: (name: string) => Promise<string>;
-          GetSystemAccentColor?: () => Promise<string>;
           RunEmergencyRestore?: () => Promise<string>;
           IsAutoStartEnabled?: () => Promise<boolean>;
           SetAutoStart?: (enable: boolean) => Promise<boolean>;
@@ -355,17 +354,6 @@ class IPCService {
   }
 
   // --- Wails 原生能力桥接 ---
-
-  public async getNativeSystemAccentColor(): Promise<string> {
-    if (window.go?.main?.App?.GetSystemAccentColor) {
-      try {
-        return await window.go.main.App.GetSystemAccentColor();
-      } catch (e) {
-        console.warn('获取原生强调色失败:', e);
-      }
-    }
-    return '#00668b';
-  }
 
   public async runNativeEmergencyRestore(): Promise<string> {
     if (window.go?.main?.App?.RunEmergencyRestore) {

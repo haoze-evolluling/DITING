@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --md-sys-color-primary: #00668b;
+  --md-sys-color-primary: #0288d1;
   --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #c4e7ff;
-  --md-sys-color-on-primary-container: #001e2c;
+  --md-sys-color-primary-container: #d1e4ff;
+  --md-sys-color-on-primary-container: #001d36;
   --md-sys-color-surface: #f8fafd;
   --md-sys-color-on-surface: #191c1e;
   --md-sys-color-surface-container: #edeef2;

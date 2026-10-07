@@ -1,12 +1,13 @@
 <#
 .SYNOPSIS
-    谛听 (DITING) Windows 端构建脚本 (diting-service & diting-gui)
+    谛听 (DITING) Windows 端构建脚本 (diting-service & diting-gui & nsis-installer)
 
 .DESCRIPTION
-    一键编译 Windows 平台特权服务 (diting-service.exe) 与 Wails GUI 前端客户端 (diting-gui.exe)。
+    一键编译 Windows 平台特权服务 (diting-service.exe)、Wails GUI 前端客户端 (diting-gui.exe)
+    以及集成了特权服务与自动安装注册的独立 NSIS 安装包。
 
 .PARAMETER Target
-    构建目标: all (默认), service, gui
+    构建目标: all (默认，含完整安装包), service, gui, installer
 
 .PARAMETER Clean
     在构建前清理 build/bin 输出目录
@@ -14,7 +15,7 @@
 
 [CmdletBinding()]
 param (
-    [ValidateSet("all", "service", "gui")]
+    [ValidateSet("all", "service", "gui", "installer")]
     [string]$Target = "all",
 
     [switch]$Clean
@@ -27,7 +28,7 @@ $rootDir = Split-Path -Parent $scriptDir
 $windowsDir = Join-Path $rootDir "Windows"
 $binDir = Join-Path $windowsDir "build\bin"
 
-$version = "0.1.0-dev"
+$version = "0.2.0-dev"
 $gitCommit = try { (git -C $rootDir rev-parse --short HEAD 2>$null) } catch { "unknown" }
 if (-not $gitCommit) { $gitCommit = "unknown" }
 $buildTime = (Get-Date).ToString("yyyy-MM-ddTHH:mm:sszzz")
@@ -51,7 +52,7 @@ if (-not (Test-Path $binDir)) {
 }
 
 function Build-Service {
-    Write-Host "[1/2] Building diting-service.exe..." -ForegroundColor Green
+    Write-Host "[1/3] Building diting-service.exe..." -ForegroundColor Green
     Push-Location $windowsDir
     try {
         $outFile = Join-Path $binDir "diting-service.exe"
@@ -64,7 +65,7 @@ function Build-Service {
 }
 
 function Build-Gui {
-    Write-Host "[2/2] Building diting-gui.exe (Wails)..." -ForegroundColor Green
+    Write-Host "[2/3] Building diting-gui.exe (Wails)..." -ForegroundColor Green
     Push-Location $windowsDir
     try {
         wails build -ldflags $ldflags
@@ -75,12 +76,31 @@ function Build-Gui {
     }
 }
 
-switch ($Target) {
-    "service" { Build-Service }
-    "gui"     { Build-Gui }
-    "all"     {
+function Build-Installer {
+    Write-Host "[3/3] Building Windows NSIS Installer (Bundle GUI & Service)..." -ForegroundColor Green
+    # 确保特权服务二进制已就绪
+    $serviceExe = Join-Path $binDir "diting-service.exe"
+    if (-not (Test-Path $serviceExe)) {
+        Write-Host " -> Privileged service not found, building it first..." -ForegroundColor Yellow
         Build-Service
-        Build-Gui
+    }
+    Push-Location $windowsDir
+    try {
+        wails build -nsis -ldflags $ldflags
+        Write-Host " -> Output Installer in: $binDir" -ForegroundColor Green
+    }
+    finally {
+        Pop-Location
+    }
+}
+
+switch ($Target) {
+    "service"   { Build-Service }
+    "gui"       { Build-Gui }
+    "installer" { Build-Installer }
+    "all"       {
+        Build-Service
+        Build-Installer
     }
 }
 

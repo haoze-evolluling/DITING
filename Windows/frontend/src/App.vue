@@ -86,7 +86,7 @@ onUnmounted(() => {
           <img
             src="./assets/images/logo-universal.png"
             alt="谛听 Logo"
-            class="w-10 h-10 rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-105"
+            class="w-10 h-10 drop-shadow-sm transition-transform duration-200 group-hover:scale-105"
           />
           <span
             class="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-950"

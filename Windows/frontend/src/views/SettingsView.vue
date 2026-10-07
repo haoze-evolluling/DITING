@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ipc } from '../api/ipc';
-import { themeManager, PRESET_SEED_COLORS, type ThemeMode } from '../theme/dynamic-color';
+import { themeManager, CLASSIC_SKY_BLUE, type ThemeMode } from '../theme/dynamic-color';
 import type { PortCheckResult } from '../api/types';
 import M3Icon from '../components/M3Icon.vue';
 
@@ -12,9 +12,7 @@ const testingConnection = ref(false);
 const connResult = ref<{ success: boolean; message: string } | null>(null);
 
 // 主题状态
-const currentSeed = ref(themeManager.getSeedColor());
 const currentMode = ref<ThemeMode>(themeManager.getThemeMode());
-const useAccent = ref(themeManager.isUsingSystemAccent());
 
 // 端口诊断状态
 const diagnosingPort = ref(false);
@@ -58,9 +56,7 @@ function loadSettings() {
   host.value = cfg.host;
   port.value = cfg.port;
   token.value = cfg.token;
-  currentSeed.value = themeManager.getSeedColor();
   currentMode.value = themeManager.getThemeMode();
-  useAccent.value = themeManager.isUsingSystemAccent();
   checkAutostart();
 }
 
@@ -87,34 +83,9 @@ function handleSaveIPC() {
   testConnection();
 }
 
-function handleSelectSeed(hex: string) {
-  currentSeed.value = hex;
-  useAccent.value = false;
-  themeManager.setUseSystemAccent(false);
-  themeManager.setSeedColor(hex);
-}
-
-function handleCustomSeedChange(e: Event) {
-  const target = e.target as HTMLInputElement;
-  handleSelectSeed(target.value);
-}
-
 function handleModeChange(mode: ThemeMode) {
   currentMode.value = mode;
   themeManager.setThemeMode(mode);
-}
-
-async function handleToggleAccent(e: Event) {
-  const target = e.target as any;
-  const enable = Boolean(target.selected ?? target.checked);
-  useAccent.value = enable;
-  if (enable) {
-    const accent = await ipc.getNativeSystemAccentColor();
-    currentSeed.value = accent;
-    themeManager.setUseSystemAccent(true, accent);
-  } else {
-    themeManager.setUseSystemAccent(false);
-  }
 }
 
 async function handleDiagnosePort() {
@@ -244,43 +215,22 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 种子色选择 -->
-      <div class="space-y-3 pt-2">
-        <div class="flex items-center justify-between">
-          <label class="text-xs font-semibold text-slate-500 block">
-            M3 种子色 (Seed Color) 动态生成语义色盘
-          </label>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-500">提取 Windows 系统强调色</span>
-            <md-switch :selected="useAccent" @change="handleToggleAccent" />
-          </div>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-3">
-          <button
-            v-for="c in PRESET_SEED_COLORS"
-            :key="c.hex"
-            @click="handleSelectSeed(c.hex)"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all"
-            :class="[
-              currentSeed.toLowerCase() === c.hex.toLowerCase()
-                ? 'border-primary bg-primary/10 shadow-sm'
-                : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60',
-            ]"
-          >
-            <span class="w-3.5 h-3.5 rounded-full border border-black/10 shrink-0" :style="{ backgroundColor: c.hex }" />
-            <span class="text-slate-800 dark:text-slate-200">{{ c.name }}</span>
-          </button>
-
-          <!-- 自定义调色盘 -->
-          <div class="flex items-center gap-2 px-3 py-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
-            <input
-              type="color"
-              :value="currentSeed"
-              @input="handleCustomSeedChange"
-              class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent"
-            />
-            <span class="text-xs font-mono text-slate-600 dark:text-slate-300">{{ currentSeed }}</span>
+      <!-- 品牌基准主色锁定说明 -->
+      <div class="pt-2 border-t border-slate-200/40 dark:border-slate-800/60">
+        <div class="flex items-center justify-between p-3.5 rounded-xl border border-sky-100 dark:border-sky-950/60 bg-sky-50/50 dark:bg-sky-950/20">
+          <div class="flex items-center gap-3">
+            <span class="w-5 h-5 rounded-lg bg-[#0288D1] shadow-sm flex items-center justify-center shrink-0 border border-white/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+            </span>
+            <div>
+              <div class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <span>Material Design 经典天蓝色</span>
+                <span class="font-mono text-[11px] text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-900/60 px-1.5 py-0.5 rounded">#0288D1</span>
+              </div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                系统全域统一主色调，基于 M3 规范实时生成动态光暗语义色盘与容器层次
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -8,21 +8,10 @@ import {
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-export interface PresetColor {
-  name: string;
-  hex: string;
-}
-
-export const PRESET_SEED_COLORS: PresetColor[] = [
-  { name: '谛听碧蓝 (Default)', hex: '#00668B' },
-  { name: '深海幽蓝', hex: '#0061A4' },
-  { name: '青翠松柏', hex: '#006A60' },
-  { name: '自然青翠', hex: '#2E6A38' },
-  { name: '紫晶贵胄', hex: '#6750A4' },
-  { name: '赤霞晚照', hex: '#9C4146' },
-  { name: '琥珀流金', hex: '#7A5900' },
-  { name: '暗金玄黑', hex: '#586249' },
-];
+/**
+ * Material Design 经典天蓝色作为谛听官方基准主色
+ */
+export const CLASSIC_SKY_BLUE = '#0288D1';
 
 const materialColorTokens: Record<string, any> = {
   background: MaterialDynamicColors.background,
@@ -65,9 +54,8 @@ const materialColorTokens: Record<string, any> = {
 };
 
 class ThemeManager {
-  private seedColor: string = '#00668B';
+  private readonly seedColor: string = CLASSIC_SKY_BLUE;
   private mode: ThemeMode = 'system';
-  private useSystemAccent: boolean = false;
   private isDarkActive: boolean = false;
   private listeners: Set<() => void> = new Set();
 
@@ -76,18 +64,13 @@ class ThemeManager {
   }
 
   private init() {
-    const savedSeed = localStorage.getItem('diting_seed_color');
-    if (savedSeed && /^#[0-9A-Fa-f]{6}$/.test(savedSeed)) {
-      this.seedColor = savedSeed;
-    }
     const savedMode = localStorage.getItem('diting_theme_mode') as ThemeMode;
     if (savedMode === 'light' || savedMode === 'dark' || savedMode === 'system') {
       this.mode = savedMode;
     }
-    this.useSystemAccent = localStorage.getItem('diting_use_accent') === 'true';
 
     // 监听操作系统明暗主题变更
-    if (window.matchMedia) {
+    if (typeof window !== 'undefined' && window.matchMedia) {
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
         if (this.mode === 'system') {
           this.applyTheme();
@@ -104,19 +87,8 @@ class ThemeManager {
     return this.mode;
   }
 
-  public isUsingSystemAccent(): boolean {
-    return this.useSystemAccent;
-  }
-
   public isDark(): boolean {
     return this.isDarkActive;
-  }
-
-  public setSeedColor(hex: string) {
-    if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
-    this.seedColor = hex;
-    localStorage.setItem('diting_seed_color', hex);
-    this.applyTheme();
   }
 
   public setThemeMode(mode: ThemeMode) {
@@ -125,17 +97,8 @@ class ThemeManager {
     this.applyTheme();
   }
 
-  public setUseSystemAccent(enable: boolean, accentColor?: string) {
-    this.useSystemAccent = enable;
-    localStorage.setItem('diting_use_accent', String(enable));
-    if (enable && accentColor && /^#[0-9A-Fa-f]{6}$/.test(accentColor)) {
-      this.seedColor = accentColor;
-      localStorage.setItem('diting_seed_color', accentColor);
-    }
-    this.applyTheme();
-  }
-
   public applyTheme() {
+    if (typeof window === 'undefined') return;
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     this.isDarkActive = this.mode === 'dark' || (this.mode === 'system' && prefersDark);
 

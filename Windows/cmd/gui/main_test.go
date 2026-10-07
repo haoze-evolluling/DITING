@@ -12,14 +12,6 @@ func TestApp_Greet(t *testing.T) {
 	}
 }
 
-func TestApp_GetSystemAccentColor(t *testing.T) {
-	app := NewApp()
-	color := app.GetSystemAccentColor()
-	if len(color) != 7 || color[0] != '#' {
-		t.Errorf("expected valid hex color, got %s", color)
-	}
-}
-
 func TestApp_AutoStart(t *testing.T) {
 	app := NewApp()
 	// 验证查询接口正常运行

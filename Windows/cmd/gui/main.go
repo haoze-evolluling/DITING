@@ -40,22 +40,6 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, 来自谛听 (DITING) Windows GUI!", name)
 }
 
-// GetSystemAccentColor 获取 Windows 注册表中的强调色
-func (a *App) GetSystemAccentColor() string {
-	k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\DWM`, registry.QUERY_VALUE)
-	if err == nil {
-		defer k.Close()
-		val, _, err := k.GetIntegerValue("ColorizationColor")
-		if err == nil {
-			r := (val >> 16) & 0xFF
-			g := (val >> 8) & 0xFF
-			b := val & 0xFF
-			return fmt.Sprintf("#%02x%02x%02x", r, g, b)
-		}
-	}
-	return "#00668b"
-}
-
 // RunEmergencyRestore 执行离线应急恢复
 func (a *App) RunEmergencyRestore() (string, error) {
 	store := windows.NewFileStateStore("")

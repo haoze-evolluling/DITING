@@ -241,7 +241,7 @@ onUnmounted(() => {
       <MetricChart
         label="QPS 实时波形曲线 (req/s)"
         :data="qpsHistory"
-        strokeColor="var(--md-sys-color-primary, #00668b)"
+        strokeColor="var(--md-sys-color-primary, #0288d1)"
         gradientId="chart-grad-qps"
         unit="req/s"
       />
