@@ -264,17 +264,17 @@ onUnmounted(() => {
     </div>
 
     <!-- 快捷摘要四列面板 (上游、缓存、规则防护、网卡) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <!-- 上游节点摘要 -->
-      <div class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-colors">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <M3Icon name="upstream" :size="18" class="text-brand-primary" />
-            <h3 class="font-semibold text-text-main">当前上游调度模式</h3>
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
+        <div class="flex items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2 min-w-0">
+            <M3Icon name="upstream" :size="18" class="text-brand-primary shrink-0" />
+            <h3 class="font-semibold text-text-main text-sm truncate">上游调度</h3>
           </div>
           <button
             @click="emit('navigate', 'upstream')"
-            class="h-7 px-3 rounded-lg text-xs font-semibold text-brand-primary bg-brand-container/50 hover:bg-brand-container transition-colors cursor-pointer inline-flex items-center"
+            class="app-btn-tonal app-btn-compact !px-2.5"
           >
             管理配置
           </button>
@@ -296,15 +296,15 @@ onUnmounted(() => {
       </div>
 
       <!-- 智能缓存摘要 -->
-      <div class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-colors">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <M3Icon name="cache" :size="18" class="text-brand-primary" />
-            <h3 class="font-semibold text-text-main">智能缓存大盘</h3>
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
+        <div class="flex items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2 min-w-0">
+            <M3Icon name="cache" :size="18" class="text-brand-primary shrink-0" />
+            <h3 class="font-semibold text-text-main text-sm truncate">智能缓存</h3>
           </div>
           <button
             @click="emit('navigate', 'cache')"
-            class="h-7 px-3 rounded-lg text-xs font-semibold text-brand-primary bg-brand-container/50 hover:bg-brand-container transition-colors cursor-pointer inline-flex items-center"
+            class="app-btn-tonal app-btn-compact !px-2.5"
           >
             缓存监控
           </button>
@@ -326,15 +326,15 @@ onUnmounted(() => {
       </div>
 
       <!-- 规则防护摘要 -->
-      <div class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-colors">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <M3Icon name="shield" :size="18" class="text-brand-primary" />
-            <h3 class="font-semibold text-text-main">规则拦截大盘</h3>
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
+        <div class="flex items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2 min-w-0">
+            <M3Icon name="shield" :size="18" class="text-brand-primary shrink-0" />
+            <h3 class="font-semibold text-text-main text-sm truncate">规则拦截</h3>
           </div>
           <button
             @click="emit('navigate', 'rules')"
-            class="h-7 px-3 rounded-lg text-xs font-semibold text-brand-primary bg-brand-container/50 hover:bg-brand-container transition-colors cursor-pointer inline-flex items-center"
+            class="app-btn-tonal app-btn-compact !px-2.5"
           >
             管理规则
           </button>
@@ -356,15 +356,15 @@ onUnmounted(() => {
       </div>
 
       <!-- 网卡接管简报 -->
-      <div class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-colors">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <M3Icon name="adapters" :size="18" class="text-brand-primary" />
-            <h3 class="font-semibold text-text-main">物理网卡接管简报</h3>
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
+        <div class="flex items-center justify-between gap-2 mb-4">
+          <div class="flex items-center gap-2 min-w-0">
+            <M3Icon name="adapters" :size="18" class="text-brand-primary shrink-0" />
+            <h3 class="font-semibold text-text-main text-sm truncate">网卡接管</h3>
           </div>
           <button
             @click="emit('navigate', 'adapters')"
-            class="h-7 px-3 rounded-lg text-xs font-semibold text-brand-primary bg-brand-container/50 hover:bg-brand-container transition-colors cursor-pointer inline-flex items-center"
+            class="app-btn-tonal app-btn-compact !px-2.5"
           >
             查看详情
           </button>

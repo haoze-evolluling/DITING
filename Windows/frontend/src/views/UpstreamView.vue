@@ -309,7 +309,7 @@ onMounted(() => {
 
               <button
                 type="button"
-                class="app-btn-compact"
+                class="app-btn-secondary app-btn-compact"
                 @click="handleTestNode({ id: node.id, protocol: node.protocol, server: node.server, url: node.url })"
                 :disabled="probingId === node.id"
               >

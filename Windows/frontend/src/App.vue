@@ -54,6 +54,12 @@ function parseRoute() {
     if (url.searchParams.has('modal')) {
       showAlertModal.value = url.searchParams.get('modal') === 'alert';
     }
+    if (url.searchParams.get('mock') === '1') {
+      isConnected.value = true;
+      if (!url.searchParams.has('modal')) {
+        showAlertModal.value = false;
+      }
+    }
   } catch (e) {
     // ignore URL parse errors
   }

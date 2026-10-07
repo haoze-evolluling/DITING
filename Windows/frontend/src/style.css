@@ -149,111 +149,22 @@ html, body {
    规范标准高度 36px、紧凑高度 32px、圆角 10px、字号 13px
    ======================================================== */
 
-md-filled-button,
-md-outlined-button,
-md-text-button,
-md-elevated-button {
-  --md-filled-button-container-height: 36px;
-  --md-outlined-button-container-height: 36px;
-  --md-text-button-container-height: 36px;
-  --md-elevated-button-container-height: 36px;
+/* ========================================================
+   桌面端全域统一按钮标准规范 (Unified Button Standards)
+   - 标准尺寸: 高 36px、圆角 10px、字号 13px、字重 600、图标 16px、内边距 0 16px
+   - 紧凑尺寸: 高 32px、圆角 8px、字号 12px、字重 600、图标 14px、内边距 0 12px
+   - 图标按钮: 32x32px 正方、圆角 8px、图标 16px/14px
+   - 胶囊按钮: 高 30px、圆角 8px、字号 12px、字重 600、内边距 0 12px
+   ======================================================== */
 
-  --md-filled-button-container-shape: 10px;
-  --md-outlined-button-container-shape: 10px;
-  --md-text-button-container-shape: 10px;
-  --md-elevated-button-container-shape: 10px;
-
-  --md-filled-button-label-text-font: inherit;
-  --md-outlined-button-label-text-font: inherit;
-  --md-text-button-label-text-font: inherit;
-  --md-elevated-button-label-text-font: inherit;
-
-  --md-filled-button-label-text-size: 13px;
-  --md-outlined-button-label-text-size: 13px;
-  --md-text-button-label-text-size: 13px;
-  --md-elevated-button-label-text-size: 13px;
-
-  --md-filled-button-label-text-weight: 600;
-  --md-outlined-button-label-text-weight: 600;
-  --md-text-button-label-text-weight: 600;
-  --md-elevated-button-label-text-weight: 600;
-
-  --md-filled-button-label-text-line-height: 20px;
-  --md-outlined-button-label-text-line-height: 20px;
-  --md-text-button-label-text-line-height: 20px;
-  --md-elevated-button-label-text-line-height: 20px;
-
-  --md-filled-button-leading-space: 16px;
-  --md-filled-button-trailing-space: 16px;
-  --md-outlined-button-leading-space: 16px;
-  --md-outlined-button-trailing-space: 16px;
-
-  --md-filled-button-with-leading-icon-leading-space: 12px;
-  --md-filled-button-with-leading-icon-trailing-space: 16px;
-  --md-outlined-button-with-leading-icon-leading-space: 12px;
-  --md-outlined-button-with-leading-icon-trailing-space: 16px;
-
-  --md-filled-button-icon-size: 16px;
-  --md-outlined-button-icon-size: 16px;
-  --md-filled-button-icon-label-space: 6px;
-  --md-outlined-button-icon-label-space: 6px;
-
-  --md-filled-button-touch-target-display: none;
-  --md-outlined-button-touch-target-display: none;
-  --md-text-button-touch-target-display: none;
-
-  --md-sys-color-primary: var(--app-brand-primary);
-  font-family: inherit;
-  flex-shrink: 0;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-/* 紧凑型 Material 按钮规格 (用于卡片内小操作) */
-.btn-compact {
-  --md-filled-button-container-height: 32px;
-  --md-outlined-button-container-height: 32px;
-  --md-filled-button-container-shape: 8px;
-  --md-outlined-button-container-shape: 8px;
-  --md-filled-button-label-text-size: 12px;
-  --md-outlined-button-label-text-size: 12px;
-  --md-filled-button-leading-space: 12px;
-  --md-filled-button-trailing-space: 12px;
-  --md-outlined-button-leading-space: 12px;
-  --md-outlined-button-trailing-space: 12px;
-  --md-filled-button-with-leading-icon-leading-space: 10px;
-  --md-filled-button-with-leading-icon-trailing-space: 12px;
-  --md-outlined-button-with-leading-icon-leading-space: 10px;
-  --md-outlined-button-with-leading-icon-trailing-space: 12px;
-  --md-filled-button-icon-size: 14px;
-  --md-outlined-button-icon-size: 14px;
-  --md-filled-button-icon-label-space: 5px;
-  --md-outlined-button-icon-label-space: 5px;
-}
-
-md-filled-button {
-  --md-filled-button-container-color: var(--app-brand-primary);
-  --md-filled-button-label-text-color: #ffffff;
-}
-
-:root[data-theme="dark"] md-filled-button,
-.dark md-filled-button {
-  --md-filled-button-label-text-color: #082f49;
-}
-
-md-outlined-button {
-  --md-outlined-button-outline-color: var(--app-surface-border);
-  --md-outlined-button-label-text-color: var(--app-text-main);
-}
-
-:root[data-theme="dark"] md-outlined-button,
-.dark md-outlined-button {
-  --md-outlined-button-outline-color: var(--app-surface-border);
-  --md-outlined-button-label-text-color: var(--app-text-main);
-}
-
-/* 标准原生 HTML 按钮规格类，与 md-* 按钮完全同构等高 (36px / 32px) */
-.app-btn-base {
+.app-btn-base,
+.app-btn-primary,
+.app-btn-secondary,
+.app-btn-danger,
+.app-btn-warning,
+.app-btn-tonal,
+.app-btn-compact,
+.app-btn-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -261,6 +172,7 @@ md-outlined-button {
   height: 36px;
   padding: 0 16px;
   border-radius: 10px;
+  font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   line-height: 20px;
@@ -268,36 +180,44 @@ md-outlined-button {
   user-select: none;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 150ms ease;
   box-sizing: border-box;
+  transition: all 150ms ease;
+  outline: none;
 }
 
-.app-btn-base:disabled {
+.app-btn-base:disabled,
+.app-btn-primary:disabled,
+.app-btn-secondary:disabled,
+.app-btn-danger:disabled,
+.app-btn-warning:disabled,
+.app-btn-tonal:disabled,
+.app-btn-compact:disabled,
+.app-btn-chip:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-.app-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-  white-space: nowrap;
-  user-select: none;
-  cursor: pointer;
+/* 确保按钮内 SVG 与文本保持严格同轴垂直居中 */
+.app-btn-base svg,
+.app-btn-primary svg,
+.app-btn-secondary svg,
+.app-btn-danger svg,
+.app-btn-warning svg,
+.app-btn-tonal svg,
+.app-btn-compact svg,
+.app-btn-icon svg,
+.app-btn-chip svg {
+  display: block;
   flex-shrink: 0;
+}
+
+/* 1. 主操作按钮 (Primary Filled) */
+.app-btn-primary {
   background-color: var(--app-brand-primary);
   color: #ffffff;
   border: 1px solid transparent;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 150ms ease;
 }
 .app-btn-primary:hover:not(:disabled) {
   background-color: var(--app-brand-primary-hover);
@@ -306,122 +226,89 @@ md-outlined-button {
 .dark .app-btn-primary {
   color: #082f49;
 }
-.app-btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
 
+/* 2. 次级线框按钮 (Secondary Outlined) */
 .app-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-  white-space: nowrap;
-  user-select: none;
-  cursor: pointer;
-  flex-shrink: 0;
   background-color: transparent;
   color: var(--app-text-main);
   border: 1px solid var(--app-surface-border);
-  transition: all 150ms ease;
 }
 .app-btn-secondary:hover:not(:disabled) {
   background-color: var(--app-surface-hover);
 }
-.app-btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
+
+/* 3. 柔和色调按钮 (Tonal / Brand Container) */
+.app-btn-tonal {
+  background-color: var(--app-brand-container);
+  color: var(--app-brand-on-container);
+  border: 1px solid transparent;
+}
+.app-btn-tonal:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+:root[data-theme="dark"] .app-btn-tonal:hover:not(:disabled),
+.dark .app-btn-tonal:hover:not(:disabled) {
+  filter: brightness(1.2);
 }
 
+/* 4. 危险警示操作按钮 (Danger Filled) */
 .app-btn-danger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-  white-space: nowrap;
-  user-select: none;
-  cursor: pointer;
-  flex-shrink: 0;
   background-color: var(--app-status-error);
   color: #ffffff;
   border: 1px solid transparent;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 150ms ease;
 }
 .app-btn-danger:hover:not(:disabled) {
   filter: brightness(1.1);
 }
-.app-btn-danger:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
 
+/* 5. 告警确认操作按钮 (Warning Filled) */
 .app-btn-warning {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
-  white-space: nowrap;
-  user-select: none;
-  cursor: pointer;
-  flex-shrink: 0;
   background-color: var(--app-status-warning);
   color: #ffffff;
   border: 1px solid transparent;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 150ms ease;
 }
 .app-btn-warning:hover:not(:disabled) {
   filter: brightness(1.1);
 }
-.app-btn-warning:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
 
+/* 6. 紧凑型按钮规格 (Compact - 32px) */
 .app-btn-compact {
   height: 32px;
   padding: 0 12px;
   border-radius: 8px;
   font-size: 12px;
+  line-height: 18px;
   gap: 5px;
 }
+/* 若未指定变体直接使用 app-btn-compact，默认应用 secondary 外观保障安全退避 */
+button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-warning):not(.app-btn-tonal) {
+  background-color: transparent;
+  color: var(--app-text-main);
+  border: 1px solid var(--app-surface-border);
+}
+button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-warning):not(.app-btn-tonal):hover:not(:disabled) {
+  background-color: var(--app-surface-hover);
+}
 
+/* 7. 图标操作按钮 (Icon Button - 32x32px 正方形) */
 .app-btn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 32px;
   height: 32px;
+  padding: 0;
   border-radius: 8px;
   background: transparent;
   border: 1px solid var(--app-surface-border);
   color: var(--app-text-sub);
   cursor: pointer;
   flex-shrink: 0;
+  box-sizing: border-box;
   transition: all 150ms ease;
+  outline: none;
 }
 .app-btn-icon:hover:not(:disabled) {
   background-color: var(--app-surface-hover);
@@ -431,12 +318,41 @@ md-outlined-button {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.app-btn-icon-danger {
-  border-color: transparent;
-}
 .app-btn-icon-danger:hover:not(:disabled) {
   background-color: var(--app-status-error-bg);
   color: var(--app-status-error);
+  border-color: var(--app-status-error);
+}
+
+/* 8. 过滤器与切换胶囊按钮 (Filter / Pill Chip - 30px) */
+.app-btn-chip {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  gap: 4px;
+  background-color: var(--app-surface-card-sub);
+  color: var(--app-text-sub);
+  border: 1px solid var(--app-surface-border-sub);
+}
+.app-btn-chip:hover:not(:disabled) {
+  background-color: var(--app-surface-hover);
+  color: var(--app-text-main);
+}
+.app-btn-chip.active,
+.app-btn-chip[data-active="true"] {
+  background-color: var(--app-brand-primary);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+:root[data-theme="dark"] .app-btn-chip.active,
+:root[data-theme="dark"] .app-btn-chip[data-active="true"],
+.dark .app-btn-chip.active,
+.dark .app-btn-chip[data-active="true"] {
+  color: #082f49;
 }
 
 md-dialog {

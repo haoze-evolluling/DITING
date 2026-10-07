@@ -141,44 +141,36 @@ onUnmounted(() => {
     <div class="flex flex-wrap items-center gap-3 p-3 rounded-2xl border border-surface-border bg-surface-card shadow-xs shrink-0 transition-colors">
       <!-- 搜索框 -->
       <div class="relative flex-1 min-w-[200px]">
-        <M3Icon name="search" :size="18" class="absolute left-3 top-2.5 text-text-muted" />
+        <M3Icon name="search" :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
         <input
           v-model="searchFilter"
           type="text"
           placeholder="检索域名或客户端 IP..."
-          class="w-full pl-9 pr-4 h-8 rounded-xl border border-surface-border-sub bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted"
+          class="w-full pl-9 pr-4 h-[30px] rounded-lg border border-surface-border-sub bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted"
         />
       </div>
 
       <!-- QType Chips -->
-      <div class="flex items-center gap-1.5 overflow-x-auto py-1">
+      <div class="flex items-center gap-1.5 overflow-x-auto py-0.5">
         <button
           v-for="t in queryTypes"
           :key="t"
           @click="selectedType = t"
-          class="h-7 px-2.5 rounded-lg text-xs font-semibold transition-all duration-150 select-none cursor-pointer inline-flex items-center"
-          :class="[
-            selectedType === t
-              ? 'bg-brand-primary text-white shadow-xs'
-              : 'bg-surface-card-sub border border-surface-border-sub text-text-sub hover:bg-surface-hover',
-          ]"
+          class="app-btn-chip"
+          :class="{ active: selectedType === t }"
         >
           {{ t }}
         </button>
       </div>
 
       <!-- Status Chips -->
-      <div class="flex items-center gap-1.5 overflow-x-auto py-1 border-l border-surface-border pl-3">
+      <div class="flex items-center gap-1.5 overflow-x-auto py-0.5 border-l border-surface-border pl-3">
         <button
           v-for="s in statusOptions"
           :key="s"
           @click="selectedStatus = s"
-          class="h-7 px-2.5 rounded-lg text-xs font-semibold transition-all duration-150 select-none cursor-pointer inline-flex items-center"
-          :class="[
-            selectedStatus === s
-              ? 'bg-brand-primary text-white shadow-xs'
-              : 'bg-surface-card-sub border border-surface-border-sub text-text-sub hover:bg-surface-hover',
-          ]"
+          class="app-btn-chip"
+          :class="{ active: selectedStatus === s }"
         >
           {{ s }}
         </button>
@@ -188,14 +180,10 @@ onUnmounted(() => {
       <div class="flex items-center border-l border-surface-border pl-3">
         <button
           @click="onlyBlocked = !onlyBlocked"
-          class="h-7 px-2.5 rounded-lg text-xs font-semibold transition-all duration-150 select-none inline-flex items-center gap-1.5 cursor-pointer"
-          :class="[
-            onlyBlocked
-              ? 'bg-status-error text-white shadow-xs'
-              : 'bg-status-error-bg text-status-error border border-status-error/30 hover:bg-status-error/20',
-          ]"
+          class="app-btn-chip"
+          :class="onlyBlocked ? '!bg-status-error !text-white !border-transparent shadow-xs' : '!text-status-error !bg-status-error-bg !border-status-error/30'"
         >
-          <M3Icon name="block" :size="13" />
+          <M3Icon name="block" :size="14" />
           <span>仅拦截</span>
         </button>
       </div>

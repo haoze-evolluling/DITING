@@ -219,7 +219,7 @@ onMounted(() => {
             class="app-btn-base transition-all duration-150"
             :class="[
               currentMode === m.id
-                ? 'bg-brand-primary text-white border-transparent shadow-xs'
+                ? 'bg-brand-primary text-white dark:text-sky-950 border-transparent shadow-xs'
                 : 'bg-surface-card-sub border border-surface-border text-text-sub hover:bg-surface-hover',
             ]"
           >

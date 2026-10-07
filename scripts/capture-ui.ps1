@@ -93,7 +93,7 @@ foreach ($t in $targetThemes) {
         $targetUrl = if ($item -eq "modal-alert") {
             "$baseUrl/?modal=alert&theme=$t"
         } else {
-            "$baseUrl/?noalert=1&theme=$t#/$item"
+            "$baseUrl/?noalert=1&mock=1&theme=$t#/$item"
         }
 
         Write-Host "正在截取界面 [$t] -> $item..." -NoNewline

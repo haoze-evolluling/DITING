@@ -253,8 +253,8 @@ onUnmounted(() => {
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
       </div>
-      <button @click="errorMessage = ''" class="hover:opacity-75 cursor-pointer">
-        <M3Icon name="close" :size="16" />
+      <button @click="errorMessage = ''" class="app-btn-secondary app-btn-compact">
+        关闭
       </button>
     </div>
 
@@ -451,16 +451,17 @@ onUnmounted(() => {
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- 搜索输入框 -->
-          <md-outlined-text-field
-            placeholder="搜索域名或记录类型..."
-            :value="searchQuery"
-            @input="searchQuery = ($event.target as any).value"
-            @keyup.enter="handleSearch"
-            class="w-60 font-mono text-xs"
-          >
-            <M3Icon slot="leading-icon" name="search" :size="16" />
-          </md-outlined-text-field>
+          <!-- 搜索输入框 (高度与检索按钮保持严格等高 36px) -->
+          <div class="relative w-64">
+            <M3Icon name="search" :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="搜索域名或记录类型..."
+              @keyup.enter="handleSearch"
+              class="w-full pl-9 pr-3 h-9 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted font-mono"
+            />
+          </div>
 
           <button
             type="button"
@@ -484,8 +485,8 @@ onUnmounted(() => {
           ]"
           :key="f.id"
           @click="statusFilter = f.id as any"
-          class="h-8 px-3 rounded-lg text-xs font-semibold transition-colors cursor-pointer inline-flex items-center"
-          :class="statusFilter === f.id ? 'bg-brand-primary text-white shadow-xs' : 'bg-surface-card-sub border border-surface-border-sub text-text-sub hover:bg-surface-hover'"
+          class="app-btn-chip"
+          :class="{ active: statusFilter === f.id }"
         >
           {{ f.label }}
         </button>

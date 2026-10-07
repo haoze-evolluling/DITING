@@ -229,7 +229,7 @@ onUnmounted(() => {
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
       </div>
-      <button @click="errorMessage = ''" class="hover:opacity-75 cursor-pointer"><M3Icon name="close" :size="16" /></button>
+      <button @click="errorMessage = ''" class="app-btn-secondary app-btn-compact">关闭</button>
     </div>
 
     <div v-if="successMessage" class="p-4 rounded-2xl bg-status-success-bg text-status-success border border-status-success/20 flex items-center justify-between text-sm shadow-xs">
@@ -237,7 +237,7 @@ onUnmounted(() => {
         <M3Icon name="check_circle" :size="18" />
         <span>{{ successMessage }}</span>
       </div>
-      <button @click="successMessage = ''" class="hover:opacity-75 cursor-pointer"><M3Icon name="close" :size="16" /></button>
+      <button @click="successMessage = ''" class="app-btn-secondary app-btn-compact">知道了</button>
     </div>
 
     <!-- 顶栏核心主控卡片 -->

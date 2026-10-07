@@ -16,6 +16,7 @@ import type {
   FilterList,
   CheckHostResult,
 } from './types';
+import { handleMockRequest } from './mock';
 
 // Wails 全局对象类型声明
 declare global {
@@ -74,6 +75,11 @@ class IPCService {
   }
 
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      this.setConnected(true);
+      return handleMockRequest(path, options) as T;
+    }
+
     const url = `${this.baseURL}${path}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
