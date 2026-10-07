@@ -107,14 +107,21 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:  "谛听 (DITING) DNS 控制台",
-		Width:  1024,
-		Height: 768,
+		Title:     "谛听 (DITING) DNS 控制台",
+		Width:     1280,
+		Height:    720,
+		MinWidth:  1280,
+		MinHeight: 720,
 		AssetServer: &assetserver.Options{
 			Assets: frontend.Assets,
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
+		OnDomReady: func(ctx context.Context) {
+			go func() {
+				windows.LockWindowAspectRatio(windows.DefaultWindowTitle, 16.0/9.0)
+			}()
+		},
 		Bind: []interface{}{
 			app,
 		},

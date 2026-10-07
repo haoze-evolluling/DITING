@@ -143,7 +143,7 @@ onUnmounted(() => {
 <template>
   <div class="space-y-6 pb-12 select-none">
     <!-- 顶部状态提示条 -->
-    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-3 text-sm text-status-error">
+    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-2.5 text-sm text-status-error">
       <div class="flex items-center gap-2">
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
@@ -157,230 +157,238 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- 核心状态总控大卡片 -->
-    <div class="relative overflow-hidden rounded-3xl border border-surface-border bg-surface-card p-7 shadow-xs transition-colors">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div class="space-y-2">
-          <div class="flex items-center gap-3">
-            <h2 class="text-2xl font-bold tracking-tight text-text-main">
-              系统 DNS 转发核心
-            </h2>
-            <StatusBadge
-              :status="dnsRunning ? 'active' : 'inactive'"
-              :text="dnsRunning ? '监听运行中' : '服务已暂停'"
-              :pulse="dnsRunning"
-            />
-            <StatusBadge
-              v-if="takeoverActive"
-              status="active"
-              :text="`已接管 ${activeAdaptersCount} 个物理网卡`"
-              size="sm"
-            />
-          </div>
-          <p class="text-sm text-text-sub max-w-xl">
-            谛听 (DITING) 双栈 DNS 内核正在 Windows 平台运行，提供毫秒级多协议上游调度、安全故障回退与崩溃状态持久化自愈。
-          </p>
-        </div>
-
-        <!-- 主控制开关组 -->
-        <div class="flex flex-wrap items-center gap-6 bg-surface-card-sub p-4 rounded-2xl border border-surface-border-sub">
-          <!-- DNS 代理服务开关 -->
-          <div class="flex items-center gap-3">
-            <div class="flex flex-col text-right">
-              <span class="text-sm font-semibold text-text-main">DNS 代理监听</span>
-              <span class="text-xs text-text-muted">127.0.0.1:53</span>
+    <!-- 16:9 双栏全景主网格 (左侧：核心控制 + 指标 + 波形图表；右侧：快捷模块摘要) -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+      <!-- 左侧主控与实时监控栏 (占据 8/12 宽度) -->
+      <div class="xl:col-span-8 flex flex-col gap-4">
+        <!-- 核心状态总控卡片 (紧凑现代) -->
+        <div class="relative overflow-hidden rounded-3xl border border-surface-border bg-surface-card p-5 sm:p-6 shadow-xs transition-colors">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div class="space-y-1.5 min-w-0">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-text-main">
+                  系统 DNS 转发核心
+                </h2>
+                <StatusBadge
+                  :status="dnsRunning ? 'active' : 'inactive'"
+                  :text="dnsRunning ? '监听运行中' : '服务已暂停'"
+                  :pulse="dnsRunning"
+                />
+                <StatusBadge
+                  v-if="takeoverActive"
+                  status="active"
+                  :text="`已接管 ${activeAdaptersCount} 个物理网卡`"
+                  size="sm"
+                />
+              </div>
+              <p class="text-xs sm:text-sm text-text-sub max-w-xl line-clamp-2">
+                谛听 (DITING) 双栈 DNS 内核正在 Windows 平台运行，提供毫秒级多协议上游调度、安全故障回退与崩溃状态持久化自愈。
+              </p>
             </div>
-            <md-switch
-              :selected="dnsRunning"
-              :disabled="togglingDNS"
-              @change="handleToggleDNS"
-            />
-          </div>
 
-          <div class="h-8 w-px bg-surface-border" />
+            <!-- 主控制开关组 -->
+            <div class="flex items-center gap-4 bg-surface-card-sub px-4 py-3 rounded-2xl border border-surface-border-sub shrink-0">
+              <!-- DNS 代理服务开关 -->
+              <div class="flex items-center gap-2.5">
+                <div class="flex flex-col text-right">
+                  <span class="text-xs sm:text-sm font-semibold text-text-main">DNS 监听</span>
+                  <span class="text-[11px] text-text-muted">127.0.0.1:53</span>
+                </div>
+                <md-switch
+                  :selected="dnsRunning"
+                  :disabled="togglingDNS"
+                  @change="handleToggleDNS"
+                />
+              </div>
 
-          <!-- 网卡接管开关 -->
-          <div class="flex items-center gap-3">
-            <div class="flex flex-col text-right">
-              <span class="text-sm font-semibold text-text-main">物理网卡接管</span>
-              <span class="text-xs text-text-muted">双栈 127.0.0.1 / ::1</span>
+              <div class="h-6 w-px bg-surface-border" />
+
+              <!-- 网卡接管开关 -->
+              <div class="flex items-center gap-2.5">
+                <div class="flex flex-col text-right">
+                  <span class="text-xs sm:text-sm font-semibold text-text-main">网卡接管</span>
+                  <span class="text-[11px] text-text-muted">双栈回路</span>
+                </div>
+                <md-switch
+                  :selected="takeoverActive"
+                  :disabled="togglingTakeover || !dnsRunning"
+                  @change="handleToggleTakeover"
+                />
+              </div>
             </div>
-            <md-switch
-              :selected="takeoverActive"
-              :disabled="togglingTakeover || !dnsRunning"
-              @change="handleToggleTakeover"
-            />
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- 实时遥测高光指标卡片 -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <MetricCard
-        title="实时查询 QPS"
-        :value="(status?.metrics?.qps || 0).toFixed(1)"
-        unit="req/s"
-        icon="speed"
-        subtext="当前请求吞吐率"
-      />
-      <MetricCard
-        title="平均响应延迟"
-        :value="(status?.metrics?.avgLatencyMs || 0).toFixed(1)"
-        unit="ms"
-        icon="bolt"
-        subtext="上游综合 RTT"
-      />
-      <MetricCard
-        title="查询成功率"
-        :value="successRate"
-        icon="check_circle"
-        :subtext="`成功: ${status?.metrics?.successQueries || 0} / 失败: ${status?.metrics?.failedQueries || 0}`"
-      />
-      <MetricCard
-        title="核心运行时间"
-        :value="formatUptime"
-        icon="shield"
-        :subtext="`进程 PID: ${status?.pid || '-'}`"
-      />
-    </div>
-
-    <!-- 遥测波形图表 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <MetricChart
-        label="QPS 实时波形曲线 (req/s)"
-        :data="qpsHistory"
-        strokeColor="var(--app-brand-primary)"
-        gradientId="chart-grad-qps"
-        unit="req/s"
-      />
-      <MetricChart
-        label="延迟波动历史 (ms)"
-        :data="latencyHistory"
-        strokeColor="var(--app-status-warning)"
-        gradientId="chart-grad-latency"
-        unit="ms"
-      />
-    </div>
-
-    <!-- 快捷摘要四列面板 (上游、缓存、规则防护、网卡) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- 上游节点摘要 -->
-      <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
-        <div class="flex items-center justify-between gap-2 mb-4">
-          <div class="flex items-center gap-2 min-w-0">
-            <M3Icon name="upstream" :size="18" class="text-brand-primary shrink-0" />
-            <h3 class="font-semibold text-text-main text-sm truncate">上游调度</h3>
-          </div>
-          <button
-            @click="emit('navigate', 'upstream')"
-            class="app-btn-tonal app-btn-compact !px-2.5"
-          >
-            管理配置
-          </button>
+        <!-- 实时遥测高光指标卡片 (4 列排布，在 8/12 宽度下非常宽敞) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+          <MetricCard
+            title="实时查询 QPS"
+            :value="(status?.metrics?.qps || 0).toFixed(1)"
+            unit="req/s"
+            icon="speed"
+            subtext="当前请求吞吐率"
+          />
+          <MetricCard
+            title="平均响应延迟"
+            :value="(status?.metrics?.avgLatencyMs || 0).toFixed(1)"
+            unit="ms"
+            icon="bolt"
+            subtext="上游综合 RTT"
+          />
+          <MetricCard
+            title="查询成功率"
+            :value="successRate"
+            icon="check_circle"
+            :subtext="`成功: ${status?.metrics?.successQueries || 0} / 失败: ${status?.metrics?.failedQueries || 0}`"
+          />
+          <MetricCard
+            title="核心运行时间"
+            :value="formatUptime"
+            icon="shield"
+            :subtext="`进程 PID: ${status?.pid || '-'}`"
+          />
         </div>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-            <span class="text-sm text-text-sub">调度策略</span>
-            <span class="text-sm font-semibold text-text-main uppercase">
-              {{ status?.dns?.mode || 'PRIMARY_BACKUP' }}
-            </span>
-          </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-            <span class="text-sm text-text-sub">活动节点数</span>
-            <span class="text-sm font-semibold text-text-main">
-              {{ status?.dns?.upstreams?.length || 0 }} 个上游节点
-            </span>
-          </div>
+
+        <!-- 遥测波形图表 (双图表并列) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <MetricChart
+            label="QPS 实时波形曲线 (req/s)"
+            :data="qpsHistory"
+            strokeColor="var(--app-brand-primary)"
+            gradientId="chart-grad-qps"
+            unit="req/s"
+            :height="115"
+          />
+          <MetricChart
+            label="延迟波动历史 (ms)"
+            :data="latencyHistory"
+            strokeColor="var(--app-status-warning)"
+            gradientId="chart-grad-latency"
+            unit="ms"
+            :height="115"
+          />
         </div>
       </div>
 
-      <!-- 智能缓存摘要 -->
-      <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
-        <div class="flex items-center justify-between gap-2 mb-4">
-          <div class="flex items-center gap-2 min-w-0">
-            <M3Icon name="cache" :size="18" class="text-brand-primary shrink-0" />
-            <h3 class="font-semibold text-text-main text-sm truncate">智能缓存</h3>
+      <!-- 右侧快捷功能与监控摘要栏 (占据 4/12 宽度) -->
+      <div class="xl:col-span-4 flex flex-col gap-3.5">
+        <!-- 上游节点摘要 -->
+        <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2 min-w-0">
+              <M3Icon name="upstream" :size="18" class="text-brand-primary shrink-0" />
+              <h3 class="font-semibold text-text-main text-sm truncate">上游调度</h3>
+            </div>
+            <button
+              @click="emit('navigate', 'upstream')"
+              class="app-btn-tonal app-btn-compact !px-2.5"
+            >
+              管理配置
+            </button>
           </div>
-          <button
-            @click="emit('navigate', 'cache')"
-            class="app-btn-tonal app-btn-compact !px-2.5"
-          >
-            缓存监控
-          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+              <div class="text-[11px] text-text-sub">调度策略</div>
+              <div class="text-xs font-semibold text-text-main uppercase truncate mt-0.5">
+                {{ status?.dns?.mode || 'PRIMARY_BACKUP' }}
+              </div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+              <div class="text-[11px] text-text-sub">活动节点</div>
+              <div class="text-xs font-semibold text-text-main truncate mt-0.5">
+                {{ status?.dns?.upstreams?.length || 0 }} 个节点
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-            <span class="text-sm text-text-sub">实时命中率</span>
-            <span class="text-sm font-bold text-brand-primary font-mono">
-              {{ ((status?.cache?.hitRatio || 0) * 100).toFixed(1) }}%
-            </span>
-          </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-            <span class="text-sm text-text-sub">条目数 / 容量</span>
-            <span class="text-xs font-mono text-text-main">
-              {{ status?.cache?.entryCount || 0 }} / {{ status?.cache?.maxEntries || 4096 }}
-            </span>
-          </div>
-        </div>
-      </div>
 
-      <!-- 规则防护摘要 -->
-      <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
-        <div class="flex items-center justify-between gap-2 mb-4">
-          <div class="flex items-center gap-2 min-w-0">
-            <M3Icon name="shield" :size="18" class="text-brand-primary shrink-0" />
-            <h3 class="font-semibold text-text-main text-sm truncate">规则拦截</h3>
+        <!-- 智能缓存摘要 -->
+        <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2 min-w-0">
+              <M3Icon name="cache" :size="18" class="text-brand-primary shrink-0" />
+              <h3 class="font-semibold text-text-main text-sm truncate">智能缓存</h3>
+            </div>
+            <button
+              @click="emit('navigate', 'cache')"
+              class="app-btn-tonal app-btn-compact !px-2.5"
+            >
+              缓存监控
+            </button>
           </div>
-          <button
-            @click="emit('navigate', 'rules')"
-            class="app-btn-tonal app-btn-compact !px-2.5"
-          >
-            管理规则
-          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+              <div class="text-[11px] text-text-sub">实时命中率</div>
+              <div class="text-xs font-bold text-brand-primary font-mono mt-0.5">
+                {{ ((status?.cache?.hitRatio || 0) * 100).toFixed(1) }}%
+              </div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+              <div class="text-[11px] text-text-sub">条目数 / 容量</div>
+              <div class="text-xs font-mono text-text-main truncate mt-0.5">
+                {{ status?.cache?.entryCount || 0 }} / {{ status?.cache?.maxEntries || 4096 }}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-            <span class="text-sm text-text-sub">请求拦截率</span>
-            <span class="text-sm font-bold text-status-error font-mono">
-              {{ (status?.filter?.blockRate || 0).toFixed(1) }}%
-            </span>
-          </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-            <span class="text-sm text-text-sub">拦截数 / 规则</span>
-            <span class="text-xs font-mono text-text-main">
-              {{ status?.filter?.blockedQueries || 0 }} 拦截 / {{ status?.filter?.totalRules || 0 }} 规则
-            </span>
-          </div>
-        </div>
-      </div>
 
-      <!-- 网卡接管简报 -->
-      <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
-        <div class="flex items-center justify-between gap-2 mb-4">
-          <div class="flex items-center gap-2 min-w-0">
-            <M3Icon name="adapters" :size="18" class="text-brand-primary shrink-0" />
-            <h3 class="font-semibold text-text-main text-sm truncate">网卡接管</h3>
+        <!-- 规则防护摘要 -->
+        <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2 min-w-0">
+              <M3Icon name="shield" :size="18" class="text-brand-primary shrink-0" />
+              <h3 class="font-semibold text-text-main text-sm truncate">规则拦截</h3>
+            </div>
+            <button
+              @click="emit('navigate', 'rules')"
+              class="app-btn-tonal app-btn-compact !px-2.5"
+            >
+              管理规则
+            </button>
           </div>
-          <button
-            @click="emit('navigate', 'adapters')"
-            class="app-btn-tonal app-btn-compact !px-2.5"
-          >
-            查看详情
-          </button>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+              <div class="text-[11px] text-text-sub">请求拦截率</div>
+              <div class="text-xs font-bold text-status-error font-mono mt-0.5">
+                {{ (status?.filter?.blockRate || 0).toFixed(1) }}%
+              </div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+              <div class="text-[11px] text-text-sub">拦截 / 总规则</div>
+              <div class="text-xs font-mono text-text-main truncate mt-0.5">
+                {{ status?.filter?.blockedQueries || 0 }} / {{ status?.filter?.totalRules || 0 }}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-            <span class="text-sm text-text-sub">系统接管状态</span>
-            <span class="text-sm font-semibold" :class="takeoverActive ? 'text-status-success' : 'text-text-muted'">
-              {{ takeoverActive ? '已接管 (自动灾备)' : '未接管 (系统原生)' }}
-            </span>
+
+        <!-- 网卡接管简报 -->
+        <div class="rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs transition-colors">
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2 min-w-0">
+              <M3Icon name="adapters" :size="18" class="text-brand-primary shrink-0" />
+              <h3 class="font-semibold text-text-main text-sm truncate">网卡接管</h3>
+            </div>
+            <button
+              @click="emit('navigate', 'adapters')"
+              class="app-btn-tonal app-btn-compact !px-2.5"
+            >
+              查看详情
+            </button>
           </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-            <span class="text-sm text-text-sub">自愈持久化状态</span>
-            <span class="text-xs font-mono text-text-sub">
-              %ProgramData%\DITING\dns_state.json
-            </span>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+              <div class="text-[11px] text-text-sub">系统接管状态</div>
+              <div class="text-xs font-semibold truncate mt-0.5" :class="takeoverActive ? 'text-status-success' : 'text-text-muted'">
+                {{ takeoverActive ? '已接管 (自动灾备)' : '未接管 (系统原生)' }}
+              </div>
+            </div>
+            <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+              <div class="text-[11px] text-text-sub">持久化状态</div>
+              <div class="text-[11px] font-mono text-text-sub truncate mt-0.5" title="%ProgramData%\DITING\dns_state.json">
+                已持久化自愈
+              </div>
+            </div>
           </div>
         </div>
       </div>

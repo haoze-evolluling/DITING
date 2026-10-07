@@ -17,7 +17,6 @@ type NavTab = 'dashboard' | 'adapters' | 'upstream' | 'cache' | 'rules' | 'logs'
 
 const currentTab = ref<NavTab>('dashboard');
 const isConnected = ref(false);
-const isDark = ref(themeManager.isDark());
 const showAlertModal = ref(false);
 
 const navItems = [
@@ -31,12 +30,6 @@ const navItems = [
 ];
 
 let unsubConn: (() => void) | null = null;
-let unsubTheme: (() => void) | null = null;
-
-function toggleTheme() {
-  const nextMode = isDark.value ? 'light' : 'dark';
-  themeManager.setThemeMode(nextMode);
-}
 
 function parseRoute() {
   try {
@@ -110,23 +103,18 @@ onMounted(() => {
       showAlertModal.value = false;
     }
   });
-
-  unsubTheme = themeManager.onChange(() => {
-    isDark.value = themeManager.isDark();
-  });
 });
 
 onUnmounted(() => {
   window.removeEventListener('hashchange', parseRoute);
   if (unsubConn) unsubConn();
-  if (unsubTheme) unsubTheme();
 });
 </script>
 
 <template>
   <div class="flex h-screen w-screen overflow-hidden bg-surface-base text-text-main font-sans antialiased select-none">
     <!-- M3 桌面端 Navigation Rail (左侧垂直导航轨) -->
-    <nav class="w-20 md:w-24 shrink-0 flex flex-col items-center justify-between py-5 border-r border-surface-border bg-surface-card transition-colors z-20">
+    <nav class="w-20 md:w-24 shrink-0 flex flex-col items-center py-6 border-r border-surface-border bg-surface-card transition-colors z-20">
       <!-- 顶部 Logo & 品牌徽标 -->
       <div class="flex flex-col items-center gap-2">
         <div class="relative group cursor-pointer" @click="handleNavigate('dashboard')">
@@ -169,28 +157,6 @@ onUnmounted(() => {
             <M3Icon :name="item.icon" :size="20" />
           </div>
           <span class="text-[11px] mt-1 tracking-tight">{{ item.label }}</span>
-        </button>
-      </div>
-
-      <!-- 底部辅助工具 (明暗切换与连接状态) -->
-      <div class="flex flex-col items-center gap-3">
-        <!-- 主题切换 -->
-        <button
-          @click="toggleTheme"
-          class="flex items-center justify-center w-9 h-9 rounded-xl text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
-          :title="isDark ? '切换浅色模式' : '切换深色模式'"
-        >
-          <M3Icon :name="isDark ? 'light_mode' : 'dark_mode'" :size="18" />
-        </button>
-
-        <!-- 设置快捷入口 -->
-        <button
-          @click="handleNavigate('settings')"
-          class="flex items-center justify-center w-9 h-9 rounded-xl text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
-          :class="{ 'text-brand-primary': currentTab === 'settings' }"
-          title="系统与外观设置"
-        >
-          <M3Icon name="settings" :size="18" />
         </button>
       </div>
     </nav>
