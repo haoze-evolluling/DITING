@@ -10,8 +10,9 @@ import UpstreamView from './views/UpstreamView.vue';
 import LogsView from './views/LogsView.vue';
 import SettingsView from './views/SettingsView.vue';
 import CacheView from './views/CacheView.vue';
+import RulesView from './views/RulesView.vue';
 
-type NavTab = 'dashboard' | 'adapters' | 'upstream' | 'cache' | 'logs' | 'settings';
+type NavTab = 'dashboard' | 'adapters' | 'upstream' | 'cache' | 'rules' | 'logs' | 'settings';
 
 const currentTab = ref<NavTab>('dashboard');
 const isConnected = ref(false);
@@ -23,6 +24,7 @@ const navItems = [
   { id: 'adapters' as NavTab, label: '网卡接管', icon: 'adapters' },
   { id: 'upstream' as NavTab, label: '上游调度', icon: 'upstream' },
   { id: 'cache' as NavTab, label: '智能缓存', icon: 'cache' },
+  { id: 'rules' as NavTab, label: '规则防护', icon: 'shield' },
   { id: 'logs' as NavTab, label: '实时日志', icon: 'logs' },
   { id: 'settings' as NavTab, label: '设置中心', icon: 'settings' },
 ];
@@ -174,6 +176,7 @@ onUnmounted(() => {
         <AdaptersView v-else-if="currentTab === 'adapters'" />
         <UpstreamView v-else-if="currentTab === 'upstream'" />
         <CacheView v-else-if="currentTab === 'cache'" />
+        <RulesView v-else-if="currentTab === 'rules'" />
         <LogsView v-else-if="currentTab === 'logs'" />
         <SettingsView v-else-if="currentTab === 'settings'" />
       </div>

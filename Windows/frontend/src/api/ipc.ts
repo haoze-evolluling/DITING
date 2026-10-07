@@ -11,6 +11,10 @@ import type {
   CacheConfig,
   CacheEntriesResponse,
   CacheDomainStat,
+  FilterStats,
+  FilterConfig,
+  FilterList,
+  CheckHostResult,
 } from './types';
 
 // Wails 全局对象类型声明
@@ -278,6 +282,75 @@ class IPCService {
     await this.request('/api/v1/cache/config', {
       method: 'POST',
       body: JSON.stringify(config),
+    });
+  }
+
+  // --- 规则过滤相关接口 ---
+
+  public async getFilterStats(): Promise<FilterStats> {
+    return this.request<FilterStats>('/api/v1/filter/stats');
+  }
+
+  public async getFilterConfig(): Promise<FilterConfig> {
+    return this.request<FilterConfig>('/api/v1/filter/config');
+  }
+
+  public async updateFilterConfig(config: Partial<FilterConfig>): Promise<void> {
+    await this.request('/api/v1/filter/config', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
+  }
+
+  public async getFilterLists(): Promise<FilterList[]> {
+    const res = await this.request<{ total: number; lists: FilterList[] }>('/api/v1/filter/lists');
+    return res?.lists || [];
+  }
+
+  public async addFilterList(list: Partial<FilterList>): Promise<void> {
+    await this.request('/api/v1/filter/lists/add', {
+      method: 'POST',
+      body: JSON.stringify(list),
+    });
+  }
+
+  public async updateFilterList(list: FilterList): Promise<void> {
+    await this.request('/api/v1/filter/lists/update', {
+      method: 'POST',
+      body: JSON.stringify(list),
+    });
+  }
+
+  public async deleteFilterList(id: string): Promise<void> {
+    await this.request('/api/v1/filter/lists/delete', {
+      method: 'POST',
+      body: JSON.stringify({ id }),
+    });
+  }
+
+  public async refreshFilterLists(id?: string): Promise<void> {
+    await this.request('/api/v1/filter/lists/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ id: id || '' }),
+    });
+  }
+
+  public async getCustomRules(): Promise<string[]> {
+    const res = await this.request<{ rules: string[] }>('/api/v1/filter/rules');
+    return res?.rules || [];
+  }
+
+  public async setCustomRules(rules: string[]): Promise<void> {
+    await this.request('/api/v1/filter/rules', {
+      method: 'POST',
+      body: JSON.stringify({ rules }),
+    });
+  }
+
+  public async checkHost(domain: string, qtype?: string): Promise<CheckHostResult> {
+    return this.request<CheckHostResult>('/api/v1/filter/check', {
+      method: 'POST',
+      body: JSON.stringify({ domain, qtype }),
     });
   }
 

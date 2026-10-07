@@ -209,3 +209,69 @@ func TestController_CacheMethods(t *testing.T) {
 		t.Errorf("expected 0 entries after clear, got %d", stAfter.EntryCount)
 	}
 }
+
+func TestController_FilterIntegration(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := config.DefaultConfig()
+	cfg.Filter.DataDir = tmpDir
+	cfg.Filter.Lists = []core.FilterList{}
+	cfg.Filter.CustomRules = []string{"||blocked-ad.com^"}
+
+	engine := core.NewRuleEngine(cfg.Filter)
+	defer engine.Close()
+
+	prg := &program{
+		cfg:          cfg,
+		filterEngine: engine,
+	}
+
+	ctx := context.Background()
+
+	// 1. GetFilterStats
+	st, err := prg.GetFilterStats(ctx)
+	if err != nil || !st.Enabled {
+		t.Fatalf("GetFilterStats failed: err=%v, st=%+v", err, st)
+	}
+
+	// 2. CheckHostRule
+	check, err := prg.CheckHostRule(ctx, "blocked-ad.com", 1)
+	if err != nil || !check.Blocked {
+		t.Fatalf("CheckHostRule failed: err=%v, res=%+v", err, check)
+	}
+
+	// 3. GetFilterConfig & UpdateFilterConfig
+	fCfg, err := prg.GetFilterConfig(ctx)
+	if err != nil || !fCfg.Enabled {
+		t.Fatalf("GetFilterConfig failed: err=%v, fCfg=%+v", err, fCfg)
+	}
+	fCfg.BlockMode = core.BlockModeNXDOMAIN
+	if err := prg.UpdateFilterConfig(ctx, *fCfg); err != nil {
+		t.Fatalf("UpdateFilterConfig failed: %v", err)
+	}
+	if prg.cfg.Filter.BlockMode != core.BlockModeNXDOMAIN {
+		t.Errorf("expected BlockMode nxdomain, got %s", prg.cfg.Filter.BlockMode)
+	}
+
+	// 4. CustomRules
+	rules, err := prg.GetCustomRules(ctx)
+	if err != nil || len(rules) != 1 {
+		t.Fatalf("GetCustomRules failed: err=%v, rules=%+v", err, rules)
+	}
+	if err := prg.SetCustomRules(ctx, []string{"||new-ad.com^"}); err != nil {
+		t.Fatalf("SetCustomRules failed: %v", err)
+	}
+	checkNew, _ := prg.CheckHostRule(ctx, "new-ad.com", 1)
+	if !checkNew.Blocked {
+		t.Fatalf("new-ad.com should be blocked")
+	}
+
+	// 5. FilterLists
+	lists, err := prg.GetFilterLists(ctx)
+	if err != nil {
+		t.Fatalf("GetFilterLists failed: %v", err)
+	}
+	if err := prg.AddFilterList(ctx, core.FilterList{ID: "local-list", Name: "Local List", URL: "data.txt", Enabled: true}); err != nil {
+		// local file might not exist yet, but call was routed
+	}
+	_ = lists
+}

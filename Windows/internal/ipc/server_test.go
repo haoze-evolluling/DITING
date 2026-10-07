@@ -186,6 +186,51 @@ func (m *mockController) UpdateCacheConfig(ctx context.Context, cfg core.CacheCo
 	return nil
 }
 
+func (m *mockController) GetFilterStats(ctx context.Context) (*core.FilterStats, error) {
+	return &core.FilterStats{Enabled: true, TotalRules: 100, ActiveLists: 1, BlockedQueries: 5, BlockRate: 5.0}, nil
+}
+
+func (m *mockController) GetFilterConfig(ctx context.Context) (*core.FilterConfig, error) {
+	cfg := core.DefaultFilterConfig()
+	return &cfg, nil
+}
+
+func (m *mockController) UpdateFilterConfig(ctx context.Context, cfg core.FilterConfig) error {
+	return nil
+}
+
+func (m *mockController) GetFilterLists(ctx context.Context) ([]core.FilterList, error) {
+	return []core.FilterList{{ID: "test-list", Name: "Test List", Enabled: true, RulesCount: 10}}, nil
+}
+
+func (m *mockController) AddFilterList(ctx context.Context, list core.FilterList) error {
+	return nil
+}
+
+func (m *mockController) UpdateFilterList(ctx context.Context, list core.FilterList) error {
+	return nil
+}
+
+func (m *mockController) DeleteFilterList(ctx context.Context, id string) error {
+	return nil
+}
+
+func (m *mockController) RefreshFilterLists(ctx context.Context, id string) error {
+	return nil
+}
+
+func (m *mockController) GetCustomRules(ctx context.Context) ([]string, error) {
+	return []string{"||ad.com^"}, nil
+}
+
+func (m *mockController) SetCustomRules(ctx context.Context, rules []string) error {
+	return nil
+}
+
+func (m *mockController) CheckHostRule(ctx context.Context, domain string, qtype uint16) (*core.CheckHostResult, error) {
+	return &core.CheckHostResult{Blocked: true, Action: "block", MatchedRule: "||ad.com^", Reason: "blacklist"}, nil
+}
+
 func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 	mockCtrl := &mockController{}
 	token := "test-secret-token"
@@ -357,5 +402,55 @@ func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 	}
 	if !afterPartialCfg.Optimistic || !afterPartialCfg.StaleFallbackEnabled || afterPartialCfg.MaxTTLSeconds != 3600 {
 		t.Fatalf("Partial 更新错误地将其它字段重置为零值: %+v", afterPartialCfg)
+	}
+
+	// 11. 测试规则过滤引擎 (Phase 6) API: Stats, Config, Lists, Rules, Check
+	fStats, err := client.GetFilterStats(ctx)
+	if err != nil || !fStats.Enabled || fStats.TotalRules != 100 {
+		t.Fatalf("GetFilterStats failed: err=%v, stats=%+v", err, fStats)
+	}
+
+	fCfg, err := client.GetFilterConfig(ctx)
+	if err != nil || !fCfg.Enabled {
+		t.Fatalf("GetFilterConfig failed: err=%v, cfg=%+v", err, fCfg)
+	}
+
+	if err := client.UpdateFilterConfig(ctx, *fCfg); err != nil {
+		t.Fatalf("UpdateFilterConfig failed: %v", err)
+	}
+
+	fLists, err := client.GetFilterLists(ctx)
+	if err != nil || len(fLists) != 1 {
+		t.Fatalf("GetFilterLists failed: err=%v, lists=%+v", err, fLists)
+	}
+
+	if err := client.AddFilterList(ctx, core.FilterList{ID: "new-list", Name: "New List", URL: "https://example.com/filter.txt"}); err != nil {
+		t.Fatalf("AddFilterList failed: %v", err)
+	}
+
+	if err := client.UpdateFilterList(ctx, core.FilterList{ID: "test-list", Name: "Updated List", URL: "https://example.com/updated.txt"}); err != nil {
+		t.Fatalf("UpdateFilterList failed: %v", err)
+	}
+
+	if err := client.RefreshFilterLists(ctx, "test-list"); err != nil {
+		t.Fatalf("RefreshFilterLists failed: %v", err)
+	}
+
+	if err := client.DeleteFilterList(ctx, "test-list"); err != nil {
+		t.Fatalf("DeleteFilterList failed: %v", err)
+	}
+
+	fRules, err := client.GetCustomRules(ctx)
+	if err != nil || len(fRules) != 1 {
+		t.Fatalf("GetCustomRules failed: err=%v, rules=%+v", err, fRules)
+	}
+
+	if err := client.SetCustomRules(ctx, []string{"||ad.example.com^"}); err != nil {
+		t.Fatalf("SetCustomRules failed: %v", err)
+	}
+
+	checkRes, err := client.CheckHost(ctx, "ad.com", "A")
+	if err != nil || !checkRes.Blocked {
+		t.Fatalf("CheckHost failed: err=%v, res=%+v", err, checkRes)
 	}
 }

@@ -56,6 +56,7 @@ export interface StatusResponse {
   takeover: TakeoverStatus;
   metrics: MetricsStatus;
   cache?: CacheStats;
+  filter?: FilterStats;
 }
 
 export interface CacheStats {
@@ -150,7 +151,49 @@ export interface QueryEventData {
   success: boolean;
   rcode?: string;
   cacheHit?: string;
+  blocked?: boolean;
+  filterRule?: string;
+  filterReason?: string;
   errorMessage?: string;
+}
+
+export interface FilterStats {
+  enabled: boolean;
+  totalRules: number;
+  activeLists: number;
+  totalQueries: number;
+  blockedQueries: number;
+  allowedQueries: number;
+  blockRate: number;
+}
+
+export interface FilterList {
+  id: string;
+  name: string;
+  url: string;
+  enabled: boolean;
+  rulesCount: number;
+  lastUpdated: number;
+  checksum?: string;
+}
+
+export interface FilterConfig {
+  enabled: boolean;
+  blockMode: 'null_ip' | 'nxdomain' | 'refused' | string;
+  blockingIPv4: string;
+  blockingIPv6: string;
+  customRules: string[];
+  lists: FilterList[];
+  updateIntervalHours: number;
+  dataDir?: string;
+}
+
+export interface CheckHostResult {
+  blocked: boolean;
+  action: 'block' | 'allow' | 'pass' | string;
+  matchedRule?: string;
+  listName?: string;
+  reason?: string;
 }
 
 export interface WebSocketEvent {

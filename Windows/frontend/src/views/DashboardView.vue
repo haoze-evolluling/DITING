@@ -254,8 +254,8 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- 快捷摘要三列面板 (上游、缓存、网卡) -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 快捷摘要四列面板 (上游、缓存、规则防护、网卡) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- 上游节点摘要 -->
       <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur">
         <div class="flex items-center justify-between mb-4">
@@ -301,6 +301,31 @@ onUnmounted(() => {
             <span class="text-sm text-slate-500 dark:text-slate-400">条目数 / 容量</span>
             <span class="text-xs font-mono text-slate-700 dark:text-slate-300">
               {{ status?.cache?.entryCount || 0 }} / {{ status?.cache?.maxEntries || 4096 }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 规则防护摘要 (Phase 6) -->
+      <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <M3Icon name="shield" :size="18" class="text-slate-500" />
+            <h3 class="font-semibold text-slate-800 dark:text-slate-200">规则拦截大盘</h3>
+          </div>
+          <md-text-button @click="emit('navigate', 'rules')">管理规则</md-text-button>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span class="text-sm text-slate-500 dark:text-slate-400">请求拦截率</span>
+            <span class="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono">
+              {{ (status?.filter?.blockRate || 0).toFixed(1) }}%
+            </span>
+          </div>
+          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+            <span class="text-sm text-slate-500 dark:text-slate-400">拦截数 / 规则</span>
+            <span class="text-xs font-mono text-slate-700 dark:text-slate-300">
+              {{ status?.filter?.blockedQueries || 0 }} 拦截 / {{ status?.filter?.totalRules || 0 }} 规则
             </span>
           </div>
         </div>

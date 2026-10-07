@@ -15,6 +15,7 @@ const autoScroll = ref(true);
 const searchFilter = ref('');
 const selectedType = ref('ALL');
 const selectedStatus = ref('ALL');
+const onlyBlocked = ref(false);
 
 const logContainer = ref<HTMLElement | null>(null);
 let unsubEvents: (() => void) | null = null;
@@ -25,6 +26,10 @@ const statusOptions = ['ALL', 'NOERROR', 'NXDOMAIN', 'SERVFAIL'];
 
 const filteredLogs = computed(() => {
   return logs.value.filter((item) => {
+    // 拦截过滤
+    if (onlyBlocked.value && !item.blocked) {
+      return false;
+    }
     // 域名搜索
     if (searchFilter.value) {
       const q = searchFilter.value.toLowerCase();
@@ -174,6 +179,22 @@ onUnmounted(() => {
           {{ s }}
         </button>
       </div>
+
+      <!-- 仅拦截过滤器 -->
+      <div class="flex items-center border-l border-slate-200 dark:border-slate-800 pl-3">
+        <button
+          @click="onlyBlocked = !onlyBlocked"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none flex items-center gap-1.5"
+          :class="[
+            onlyBlocked
+              ? 'bg-rose-600 text-white shadow-sm'
+              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20',
+          ]"
+        >
+          <M3Icon name="block" :size="13" />
+          <span>仅拦截</span>
+        </button>
+      </div>
     </div>
 
     <!-- 实时日志滚动列表 -->
@@ -195,6 +216,15 @@ onUnmounted(() => {
         class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 bg-slate-50/60 dark:bg-slate-950/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40 transition-colors"
       >
         <div class="flex items-center gap-3 overflow-hidden">
+          <!-- 拦截标识 -->
+          <span
+            v-if="item.blocked"
+            class="px-2 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[10px] shrink-0"
+            :title="`规则阻断: ${item.filterRule || item.filterReason || '已拦截'}`"
+          >
+            BLOCKED
+          </span>
+
           <!-- 状态色标 -->
           <span
             class="px-2 py-0.5 rounded-md font-bold text-[10px] shrink-0"

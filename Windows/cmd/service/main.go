@@ -35,9 +35,10 @@ type program struct {
 
 	cfg         *config.Config
 	server      *ditingdns.Server
-	resolver    *core.CoreResolver
-	cache       *core.DNSCache
-	takeoverMgr windows.DNSManager
+	resolver     *core.CoreResolver
+	cache        *core.DNSCache
+	filterEngine *core.RuleEngine
+	takeoverMgr  windows.DNSManager
 	adapterScan windows.AdapterScanner
 	stateStore  windows.StateStore
 	portChecker windows.PortChecker
@@ -117,6 +118,7 @@ func (p *program) run() error {
 	}
 	p.resolver = res
 	p.cache = core.NewDNSCache(cfg.Cache)
+	p.filterEngine = core.NewRuleEngine(cfg.Filter)
 
 	// 6. 初始化 IPC 服务
 	p.ipcServer = ipc.NewServer(cfg.IPC.ListenAddress, cfg.IPC.AuthToken, p)
@@ -195,6 +197,25 @@ func (p *program) StartDNS(ctx context.Context) error {
 			rcodeStr = miekgdns.RcodeToString[dctx.Resp.Rcode]
 		}
 
+		filterBlocked := false
+		filterRule := ""
+		filterReason := ""
+		if val, ok := dctx.Get("filter_blocked"); ok {
+			if b, ok := val.(bool); ok {
+				filterBlocked = b
+			}
+		}
+		if val, ok := dctx.Get("filter_rule"); ok {
+			if s, ok := val.(string); ok {
+				filterRule = s
+			}
+		}
+		if val, ok := dctx.Get("filter_reason"); ok {
+			if s, ok := val.(string); ok {
+				filterReason = s
+			}
+		}
+
 		if p.ipcServer != nil {
 			errStr := ""
 			if err != nil {
@@ -211,14 +232,18 @@ func (p *program) StartDNS(ctx context.Context) error {
 					Success:      success,
 					RCode:        rcodeStr,
 					CacheHit:     cacheHitStr,
+					Blocked:      filterBlocked,
+					FilterRule:   filterRule,
+					FilterReason: filterReason,
 					ErrorMessage: errStr,
 				},
 			})
 		}
 	})
 
+	filterMw := ditingdns.NewFilterMiddleware(p.filterEngine)
 	cacheMw := ditingdns.NewCacheMiddleware(p.cache, p.resolver)
-	pipeline := ditingdns.NewPipeline(metricsMw, cacheMw, ditingdns.NewForwardMiddleware(p.resolver))
+	pipeline := ditingdns.NewPipeline(metricsMw, filterMw, cacheMw, ditingdns.NewForwardMiddleware(p.resolver))
 	serverCfg := ditingdns.ServerConfig{
 		UDPAddresses: p.cfg.DNS.UDPAddresses,
 		TCPAddresses: p.cfg.DNS.TCPAddresses,
@@ -350,6 +375,7 @@ func (p *program) GetStatus(ctx context.Context) (*ipc.StatusResponse, error) {
 		},
 		Metrics: p.metrics.Snapshot(),
 		Cache:   p.getCacheStatsSnapshot(),
+		Filter:  p.getFilterStatsSnapshot(),
 	}, nil
 }
 
@@ -358,6 +384,13 @@ func (p *program) getCacheStatsSnapshot() core.CacheStats {
 		return p.cache.Stats()
 	}
 	return core.CacheStats{Enabled: false}
+}
+
+func (p *program) getFilterStatsSnapshot() core.FilterStats {
+	if p.filterEngine != nil {
+		return p.filterEngine.GetStats()
+	}
+	return core.FilterStats{Enabled: false}
 }
 
 // CheckPortConflicts 实现 ServiceController 接口
@@ -372,6 +405,10 @@ func (p *program) Stop(s service.Service) error {
 	if p.takeoverMgr != nil && p.takeoverMgr.IsTakeoverActive() {
 		log.Println("[服务] 正在安全还原网卡 DNS...")
 		_ = p.takeoverMgr.Restore(context.Background())
+	}
+
+	if p.filterEngine != nil {
+		p.filterEngine.Close()
 	}
 
 	_ = p.StopDNS(context.Background())

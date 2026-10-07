@@ -78,6 +78,7 @@ type Config struct {
 	IPC      IPCConfig           `json:"ipc"`
 	Takeover TakeoverConfig      `json:"takeover"`
 	Cache    core.CacheConfig    `json:"cache"`
+	Filter   core.FilterConfig   `json:"filter"`
 }
 
 // DefaultConfig 生成默认系统配置
@@ -111,6 +112,7 @@ func DefaultConfig() *Config {
 			AutoTakeoverOnStart: false,
 			StateFilePath:       "",
 		},
-		Cache: core.DefaultCacheConfig(),
+		Cache:  core.DefaultCacheConfig(),
+		Filter: core.DefaultFilterConfig(),
 	}
 }

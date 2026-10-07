@@ -56,8 +56,9 @@ type StatusResponse struct {
 	UptimeSeconds int64           `json:"uptimeSeconds"`
 	DNS           DNSStatus       `json:"dns"`
 	Takeover      TakeoverStatus  `json:"takeover"`
-	Metrics       MetricsStatus   `json:"metrics"`
-	Cache         core.CacheStats `json:"cache"`
+	Metrics       MetricsStatus    `json:"metrics"`
+	Cache         core.CacheStats  `json:"cache"`
+	Filter        core.FilterStats `json:"filter"`
 }
 
 // Event WebSocket 事件推送载荷
@@ -76,6 +77,9 @@ type QueryEventData struct {
 	Success      bool    `json:"success"`
 	RCode        string  `json:"rcode,omitempty"`
 	CacheHit     string  `json:"cacheHit,omitempty"`
+	Blocked      bool    `json:"blocked"`
+	FilterRule   string  `json:"filterRule,omitempty"`
+	FilterReason string  `json:"filterReason,omitempty"`
 	ErrorMessage string  `json:"errorMessage,omitempty"`
 }
 
@@ -83,6 +87,22 @@ type QueryEventData struct {
 type CacheEntriesResponse struct {
 	Total   int                   `json:"total"`
 	Entries []core.CacheEntryItem `json:"entries"`
+}
+
+// FilterListsResponse 订阅规则列表响应
+type FilterListsResponse struct {
+	Total int               `json:"total"`
+	Lists []core.FilterList `json:"lists"`
+}
+
+// FilterRulesResponse 自定义规则文本响应
+type FilterRulesResponse struct {
+	Rules []string `json:"rules"`
+}
+
+// FilterActionRequest 单项规则操作请求
+type FilterActionRequest struct {
+	ID string `json:"id"`
 }
 
 // ConfigureUpstreamRequest 动态配置上游请求
@@ -110,4 +130,5 @@ type AdapterTakeoverRequest struct {
 	AdapterID string `json:"adapterId"`
 	Enable    bool   `json:"enable"`
 }
+
 

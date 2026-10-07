@@ -33,6 +33,17 @@ type ServiceController interface {
 	ClearCache(ctx context.Context) error
 	GetCacheConfig(ctx context.Context) (*core.CacheConfig, error)
 	UpdateCacheConfig(ctx context.Context, cfg core.CacheConfig) error
+	GetFilterStats(ctx context.Context) (*core.FilterStats, error)
+	GetFilterConfig(ctx context.Context) (*core.FilterConfig, error)
+	UpdateFilterConfig(ctx context.Context, cfg core.FilterConfig) error
+	GetFilterLists(ctx context.Context) ([]core.FilterList, error)
+	AddFilterList(ctx context.Context, list core.FilterList) error
+	UpdateFilterList(ctx context.Context, list core.FilterList) error
+	DeleteFilterList(ctx context.Context, id string) error
+	RefreshFilterLists(ctx context.Context, id string) error
+	GetCustomRules(ctx context.Context) ([]string, error)
+	SetCustomRules(ctx context.Context, rules []string) error
+	CheckHostRule(ctx context.Context, domain string, qtype uint16) (*core.CheckHostResult, error)
 }
 
 var upgrader = websocket.Upgrader{
@@ -112,6 +123,15 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/v1/cache/top", s.withAuth(s.handleCacheTop))
 	mux.HandleFunc("/api/v1/cache/clear", s.withAuth(s.handleCacheClear))
 	mux.HandleFunc("/api/v1/cache/config", s.withAuth(s.handleCacheConfig))
+	mux.HandleFunc("/api/v1/filter/stats", s.withAuth(s.handleFilterStats))
+	mux.HandleFunc("/api/v1/filter/config", s.withAuth(s.handleFilterConfig))
+	mux.HandleFunc("/api/v1/filter/lists", s.withAuth(s.handleFilterLists))
+	mux.HandleFunc("/api/v1/filter/lists/add", s.withAuth(s.handleFilterListAdd))
+	mux.HandleFunc("/api/v1/filter/lists/update", s.withAuth(s.handleFilterListUpdate))
+	mux.HandleFunc("/api/v1/filter/lists/delete", s.withAuth(s.handleFilterListDelete))
+	mux.HandleFunc("/api/v1/filter/lists/refresh", s.withAuth(s.handleFilterListRefresh))
+	mux.HandleFunc("/api/v1/filter/rules", s.withAuth(s.handleFilterRules))
+	mux.HandleFunc("/api/v1/filter/check", s.withAuth(s.handleFilterCheck))
 	mux.HandleFunc("/api/v1/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/portcheck", s.withAuth(s.handlePortCheck))
 	mux.HandleFunc("/api/v1/health", s.handleHealth)

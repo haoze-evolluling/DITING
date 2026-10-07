@@ -345,6 +345,51 @@ Windows/
 
 ---
 
+### 6.4 阶段六验收与完成记录 (Phase 6 Completed)
+
+- **阶段目标**：移植并实现 AdGuard 语法解析器、倒序域标签 Trie 树、BloomFilter 纳秒级预检体系与阻断响应中间件 (`FilterMiddleware`)，支持 Null IP (0.0.0.0 / ::)、NXDOMAIN、REFUSED 多种阻断响应行为；前端全面落地遵循 Material Design 3 规范的规则管理中心 (`RulesView.vue`)，提供规则订阅源管理、自定义规则多行编辑器、实时域名检测工具、日志高亮与仅拦截过滤。
+- **后端内核与中间件核心成果**：
+  1. **AdGuard / Hosts 语法解析器 (`internal/core/rule_parser.go`, `rule_types.go`)**：
+     - 全面解析 `||domain^` 域匹配与子域通配、`|domain|` 精确匹配、`*` 复杂通配符、`/pattern/` 正则表达式。
+     - 支持 `@@` 白名单例外规则与 `$important` 最高优先级规则，支持 `$dnstype=A|AAAA` 记录类型约束。
+     - 兼容标准 `/etc/hosts` 格式（如 `0.0.0.0 ad.com` 与 `127.0.0.1 tracker.com`）与纯域名列表。
+  2. **倒序域标签 Trie 树与紧凑二进制持久化 (`internal/core/rule_trie.go`)**：
+     - 采用倒序标签存储（如 `ads.google.com` 存储为 `com -> google -> ads`），支持全域及父域通配继承。
+     - 支持两遍 BFS 紧凑二进制格式序列化（兼容 Android `0x54524945` Magic / Version 2），毫秒级热加载。
+  3. **BloomFilter 预检过滤器 (`internal/core/rule_bloom.go`)**：
+     - 基于 64 位 FNV-1a 与 FNV-1 双重哈希计算，支持父域层级穿透快速探测 (`MightContainDomainOrParent`)。
+     - 为干净请求提供亚微秒级快速跳过判定，消除 90%+ 干净域名的 Trie 树深度遍历开销。
+  4. **多层级规则调度与优先级匹配器 (`internal/core/rule_matcher.go`, `rule_engine.go`)**：
+     - 严格遵循 AdGuard 标准优先级梯队：Important Allow > Important Block > Whitelist Allow > Bloom+Trie Block > Wildcard/Regex。
+     - 统一生命周期管理，支持后台定时自动拉取订阅源与线程安全原子热重载，杜绝查询中断。
+  5. **DNS 流水线阻断中间件与特权服务 IPC (`internal/dns/filter_middleware.go`, `internal/ipc/*filter*.go`, `cmd/service/controller_filter.go`)**：
+     - 在流水线中置于 `MetricsMiddleware -> FilterMiddleware -> CacheMiddleware -> ForwardMiddleware`，拦截命中时短路应答，杜绝缓存污染与上游回源。
+     - 暴露 REST 控制接口：`GET /api/v1/filter/stats`、`GET/POST /api/v1/filter/config`、`GET/POST /api/v1/filter/lists/*`、`GET/POST /api/v1/filter/rules`、`POST /api/v1/filter/check`。
+     - WebSocket 实时查询事件增加 `blocked`、`filterRule` 与 `filterReason` 拦截字段。
+- **前端 Material Design 3 规则管理中心 (`frontend/src/views/RulesView.vue`, `LogsView.vue`, `DashboardView.vue`)**：
+  1. **Navigation Rail 导航接入**：左侧导航轨新增“规则防护”盾牌图标目的地与页面路由。
+  2. **核心总控卡片与指标看板**：全局防护主控 `<md-switch>`，拦截请求数、拦截率、生效规则总数与活跃规则源 4 大指标高光卡片。
+  3. **订阅规则源列表**：支持添加/更新/删除订阅源，一键全量刷新拉取与 `<md-dialog>` 模态配置。
+  4. **自定义规则编辑器**：提供语法指引卡片与多行规则编辑文本域，即时保存生效。
+  5. **域名检测工具**：输入待测域名与记录类型，即时分析匹配状态、规则来源与阻断动作。
+  6. **实时日志与总览联动**：日志列表高亮呈现红色 `BLOCKED` 标签并提示规则，支持“仅拦截”快捷过滤芯片；总览大盘新增规则防护大盘摘要卡片。
+- **涉及模块**：
+  - `Windows/internal/core/rule_*.go`
+  - `Windows/internal/dns/filter_middleware*.go`
+  - `Windows/internal/ipc/*filter*.go`
+  - `Windows/cmd/service/controller_filter*.go`
+  - `Windows/frontend/src/views/RulesView.vue`
+  - `Windows/frontend/src/views/LogsView.vue`
+  - `Windows/frontend/src/views/DashboardView.vue`
+  - `Windows/frontend/src/api/*`
+  - `scripts/test_phase6_filter.py`
+- **验收标准与验证记录**：
+  - Go 全量测试套件（含规则解析、Trie/Bloom、优先级调度、流水线短路与 IPC 接口）100% 通过。
+  - 前端 `npm run build`（Vue 3 + TypeScript + Vite）零报错打包成功。
+  - 所有代码源文件行数均严格保持在 600 行以内（通过 `scripts/check_large_files.py` 自动化检测）。
+
+---
+
 ## 7. 后续扩展演进规划 (Future Roadmap)
 
 第一阶段核心闭环建立后，架构中预留的插槽可平滑扩展以下功能，后端核心与 M3 前端界面保持端到端同步演进：
@@ -352,6 +397,7 @@ Windows/
 | 演进阶段 | 功能领域 | 对应后端内核扩展模块与设计 | 配套 Material Design 3 前端界面规划 | 状态 |
 |---|---|---|---|---|
 | **Phase 5** | **智能缓存体系** | 移植 64 分片并发安全 LRU 缓存、Optimistic/Stale-While-Revalidate 容灾与 TTL 重写中间件 (`CacheMiddleware`) | **缓存监控大盘**：实时缓存命中率仪表图、热点域名 Top 统计、缓存条目检索与一键清空 `<md-dialog>` | **已完成 (Completed)** |
-| **Phase 6** | **规则过滤引擎** | 移植 AdGuard 语法解析器、Mmap Trie 树、BloomFilter 预检与阻断响应中间件 (`FilterMiddleware`) | **规则管理中心**：订阅规则源列表、内置/自定义规则编辑器、规则拦截率统计与拦截日志高亮过滤 | 待进行 |
+| **Phase 6** | **规则过滤引擎** | 移植 AdGuard 语法解析器、Mmap Trie 树、BloomFilter 预检与阻断响应中间件 (`FilterMiddleware`) | **规则管理中心**：订阅规则源列表、内置/自定义规则编辑器、规则拦截率统计与拦截日志高亮过滤 | **已完成 (Completed)** |
 | **Phase 7** | **智能调度与竞速** | 移植 EWMA 智能延迟预测（Smart Prediction）与并行竞速（Parallel Race）上游调度策略 | **调度可视化面板**：各上游节点动态延迟分布折线图、EWMA 预测评分雷达图、竞速获胜率对比看板 | 待进行 |
 | **Phase 8** | **高级网络分流与统计** | 支持按域名/分流规则匹配不同上游、出站代理联动、查询日志持久化与历史分析 | **统计与高级网络视图**：时序查询趋势图、客户端/协议分流拓扑展示、历史日志分页检索与导出 | 待进行 |
+
