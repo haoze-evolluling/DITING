@@ -23,8 +23,8 @@ param (
 
     [string]$OutputDir = "",
 
-    [int]$Width = 1024,
-    [int]$Height = 768
+    [int]$Width = 1280,
+    [int]$Height = 720
 )
 
 $ErrorActionPreference = "Stop"
