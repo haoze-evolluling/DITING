@@ -3,7 +3,10 @@ package core
 import (
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/miekg/dns"
 )
@@ -233,5 +236,174 @@ func TestRuleEngine(t *testing.T) {
 	res = engine.Match("another-ad.com", dns.TypeA)
 	if !res.Blocked {
 		t.Errorf("another-ad.com should be blocked after rule update")
+	}
+}
+
+func TestRuleParser_EdgeCases(t *testing.T) {
+	// 1. 测试以 | 结尾的精确匹配规则
+	rule, ok := ParseRuleLine("example.com|", "test")
+	if !ok || rule == nil || rule.Pattern != "example.com" || !rule.IsExact {
+		t.Errorf("example.com| should be parsed as exact match rule, got %+v, ok=%v", rule, ok)
+	}
+
+	// 2. 纯网页资源修饰符规则应在 DNS 过滤阶段安全忽略
+	webRules := []string{
+		"||cdn.example.com^$image",
+		"||cdn.example.com^$script",
+		"||cdn.example.com^$stylesheet,font",
+		"||cdn.example.com^$domain=foo.com",
+		"||cdn.example.com^$third-party",
+	}
+	for _, wr := range webRules {
+		r, ok := ParseRuleLine(wr, "test")
+		if ok || r != nil {
+			t.Errorf("Web-only rule %s should be safely skipped at DNS level, got %+v", wr, r)
+		}
+	}
+
+	// 3. /etc/hosts 单行多域名解析
+	hostsContent := "0.0.0.0 host1.com host2.com  host3.com # comment\n"
+	parsed, err := ParseRules(strings.NewReader(hostsContent), "hosts-test")
+	if err != nil {
+		t.Fatalf("ParseRules error: %v", err)
+	}
+	if len(parsed) != 3 {
+		t.Fatalf("Expected 3 rules from multi-host line, got %d", len(parsed))
+	}
+	expectedHosts := []string{"host1.com", "host2.com", "host3.com"}
+	for i, h := range expectedHosts {
+		if parsed[i].Pattern != h {
+			t.Errorf("Host %d expected %s, got %s", i, h, parsed[i].Pattern)
+		}
+	}
+}
+
+func TestBinaryTrie(t *testing.T) {
+	trie := NewDomainTrie()
+	r1, _ := ParseRuleLine("||ad.com^", "test")
+	r2, _ := ParseRuleLine("||tracking.net^", "test")
+	trie.Insert(r1)
+	trie.Insert(r2)
+
+	tmpDir := t.TempDir()
+	triePath := filepath.Join(tmpDir, "binary_test.trie")
+	if err := trie.SaveToFile(triePath); err != nil {
+		t.Fatalf("SaveToFile failed: %v", err)
+	}
+
+	bt, err := LoadBinaryTrie(triePath)
+	if err != nil {
+		t.Fatalf("LoadBinaryTrie failed: %v", err)
+	}
+
+	if !bt.ContainsOrParent("ad.com") {
+		t.Errorf("BinaryTrie should contain ad.com")
+	}
+	if !bt.ContainsOrParent("sub.ad.com") {
+		t.Errorf("BinaryTrie should contain sub.ad.com")
+	}
+	if !bt.ContainsOrParent("deep.sub.ad.com") {
+		t.Errorf("BinaryTrie should contain deep.sub.ad.com")
+	}
+	if !bt.ContainsOrParent("tracking.net") {
+		t.Errorf("BinaryTrie should contain tracking.net")
+	}
+	if bt.ContainsOrParent("clean.com") {
+		t.Errorf("BinaryTrie should not contain clean.com")
+	}
+}
+
+func TestRuleMatcherPriority_WildcardAndRegexExceptions(t *testing.T) {
+	rules := []*ParsedRule{
+		// 常规黑名单
+		{Raw: "||blocked.com^", Pattern: "blocked.com"},
+		// 通配符白名单 (必须覆盖常规黑名单)
+		{Raw: "@@||*.blocked.com^", Pattern: "*.blocked.com", IsAllow: true, IsWildcard: true, Regex: buildWildcardRegex("*.blocked.com")},
+		// 正则白名单 (必须覆盖常规黑名单)
+		{Raw: "@@/^safe[0-9]+\\.blocked\\.com$/", Pattern: "^safe[0-9]+\\.blocked\\.com$", IsAllow: true, IsRegex: true, Regex: regexp.MustCompile("(?i)^safe[0-9]+\\.blocked\\.com$")},
+		// 重要黑名单通配符 (必须覆盖常规白名单)
+		{Raw: "||*malware*.com^$important", Pattern: "*malware*.com", Important: true, IsWildcard: true, Regex: buildWildcardRegex("*malware*.com")},
+		// 常规白名单
+		{Raw: "@@||not-malware.com^", Pattern: "not-malware.com", IsAllow: true},
+	}
+
+	matcher := NewRuleMatcher()
+	matcher.BuildFromRules(rules)
+
+	// 1. 常规黑名单命中
+	res := matcher.Match("blocked.com", dns.TypeA)
+	if !res.Blocked || res.Reason != "blacklist" {
+		t.Errorf("blocked.com should be blacklisted, got %+v", res)
+	}
+
+	// 2. 通配符白名单胜过常规黑名单
+	res = matcher.Match("sub.blocked.com", dns.TypeA)
+	if res.Blocked || res.Action != "allow" {
+		t.Errorf("sub.blocked.com should be allowed by wildcard whitelist, got %+v", res)
+	}
+
+	// 3. 正则白名单胜过常规黑名单
+	res = matcher.Match("safe1.blocked.com", dns.TypeA)
+	if res.Blocked || res.Action != "allow" {
+		t.Errorf("safe1.blocked.com should be allowed by regex whitelist, got %+v", res)
+	}
+
+	// 4. 重要黑名单通配符胜过常规白名单
+	res = matcher.Match("not-malware.com", dns.TypeA)
+	if !res.Blocked || res.Reason != "important_block" {
+		t.Errorf("not-malware.com must be blocked by important wildcard rule, got %+v", res)
+	}
+
+	// 5. ANY 查询应匹配有 dnstype 限制的规则
+	ruleWithA := &ParsedRule{DNSType: dns.TypeA}
+	if !matchDNSType(ruleWithA, dns.TypeANY) {
+		t.Errorf("Type ANY query must match rule restricted to Type A")
+	}
+}
+
+func TestRuleEngine_ConfigMergeAndConcurrency(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := DefaultFilterConfig()
+	cfg.DataDir = tmpDir
+	cfg.CustomRules = []string{"||ad1.com^", "||ad2.com^"}
+
+	engine := NewRuleEngine(cfg)
+	defer engine.Close()
+
+	// 部分更新测试: 仅更新 blockMode，不应清空 CustomRules
+	partialCfg := FilterConfig{
+		BlockMode: BlockModeNXDOMAIN,
+	}
+	if err := engine.UpdateConfig(partialCfg); err != nil {
+		t.Fatalf("UpdateConfig error: %v", err)
+	}
+
+	currentCfg := engine.GetConfig()
+	if len(currentCfg.CustomRules) != 2 {
+		t.Fatalf("Partial config update wiped CustomRules! Expected 2, got %d", len(currentCfg.CustomRules))
+	}
+	if currentCfg.BlockMode != BlockModeNXDOMAIN {
+		t.Errorf("BlockMode expected %s, got %s", BlockModeNXDOMAIN, currentCfg.BlockMode)
+	}
+
+	// 并发查询与规则热更新压力测试
+	done := make(chan struct{})
+	go func() {
+		for i := 0; i < 50; i++ {
+			_ = engine.SetCustomRules([]string{"||concurrent-ad.com^"})
+			engine.SetEnabled(i%2 == 0)
+			time.Sleep(1 * time.Millisecond)
+		}
+		close(done)
+	}()
+
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			_ = engine.Match("concurrent-ad.com", dns.TypeA)
+			_ = engine.Match("clean.com", dns.TypeA)
+		}
 	}
 }

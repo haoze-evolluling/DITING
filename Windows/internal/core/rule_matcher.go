@@ -3,31 +3,45 @@ package core
 import (
 	"strings"
 	"sync"
+
+	"github.com/miekg/dns"
 )
 
 // RuleMatcher 封装多层级 Trie、Bloom 预检及正反向规则调度评估器
 type RuleMatcher struct {
-	mu                  sync.RWMutex
-	bloom               *DomainBloomFilter
-	blockTrie           *DomainTrie
-	importantBlockTrie  *DomainTrie
-	allowTrie           *DomainTrie
+	mu sync.RWMutex
+
+	// Tier 1: 带 $important 的白名单例外规则
 	importantAllowTrie  *DomainTrie
-	regexRules          []*ParsedRule
-	wildcardRules       []*ParsedRule
-	totalRulesCount     int
+	importantAllowRules []*ParsedRule
+
+	// Tier 2: 带 $important 的黑名单拦截规则
+	importantBlockTrie  *DomainTrie
+	importantBlockRules []*ParsedRule
+
+	// Tier 3: 常规白名单例外规则 (@@)
+	allowTrie  *DomainTrie
+	allowRules []*ParsedRule
+
+	// Tier 4: 常规黑名单拦截规则 (Bloom 预检 + Trie + 通配符/正则)
+	bloom           *DomainBloomFilter
+	blockTrie       *DomainTrie
+	blockRules      []*ParsedRule
+	totalRulesCount int
 }
 
 // NewRuleMatcher 创建规则评估匹配器
 func NewRuleMatcher() *RuleMatcher {
 	return &RuleMatcher{
-		bloom:              NewDomainBloomFilter(1000, 0.001),
-		blockTrie:          NewDomainTrie(),
-		importantBlockTrie: NewDomainTrie(),
-		allowTrie:          NewDomainTrie(),
-		importantAllowTrie: NewDomainTrie(),
-		regexRules:         make([]*ParsedRule, 0),
-		wildcardRules:      make([]*ParsedRule, 0),
+		importantAllowTrie:  NewDomainTrie(),
+		importantAllowRules: make([]*ParsedRule, 0),
+		importantBlockTrie:  NewDomainTrie(),
+		importantBlockRules: make([]*ParsedRule, 0),
+		allowTrie:           NewDomainTrie(),
+		allowRules:          make([]*ParsedRule, 0),
+		bloom:               NewDomainBloomFilter(1000, 0.001),
+		blockTrie:           NewDomainTrie(),
+		blockRules:          make([]*ParsedRule, 0),
 	}
 }
 
@@ -36,12 +50,17 @@ func (m *RuleMatcher) BuildFromRules(rules []*ParsedRule) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	blockTrie := NewDomainTrie()
-	importantBlockTrie := NewDomainTrie()
-	allowTrie := NewDomainTrie()
 	importantAllowTrie := NewDomainTrie()
-	var regexes []*ParsedRule
-	var wildcards []*ParsedRule
+	var importantAllowRules []*ParsedRule
+
+	importantBlockTrie := NewDomainTrie()
+	var importantBlockRules []*ParsedRule
+
+	allowTrie := NewDomainTrie()
+	var allowRules []*ParsedRule
+
+	blockTrie := NewDomainTrie()
+	var blockRules []*ParsedRule
 
 	blockDomains := make([]string, 0, len(rules))
 
@@ -50,29 +69,36 @@ func (m *RuleMatcher) BuildFromRules(rules []*ParsedRule) {
 			continue
 		}
 
-		if r.IsRegex {
-			regexes = append(regexes, r)
-			continue
-		}
-
-		if r.IsWildcard {
-			wildcards = append(wildcards, r)
-			continue
-		}
-
 		if r.IsAllow {
 			if r.Important {
-				importantAllowTrie.Insert(r)
+				if r.IsRegex || r.IsWildcard {
+					importantAllowRules = append(importantAllowRules, r)
+				} else {
+					importantAllowTrie.Insert(r)
+				}
 			} else {
-				allowTrie.Insert(r)
+				if r.IsRegex || r.IsWildcard {
+					allowRules = append(allowRules, r)
+				} else {
+					allowTrie.Insert(r)
+				}
 			}
 		} else {
 			if r.Important {
-				importantBlockTrie.Insert(r)
+				if r.IsRegex || r.IsWildcard {
+					importantBlockRules = append(importantBlockRules, r)
+				} else {
+					importantBlockTrie.Insert(r)
+					blockDomains = append(blockDomains, r.Pattern)
+				}
 			} else {
-				blockTrie.Insert(r)
+				if r.IsRegex || r.IsWildcard {
+					blockRules = append(blockRules, r)
+				} else {
+					blockTrie.Insert(r)
+					blockDomains = append(blockDomains, r.Pattern)
+				}
 			}
-			blockDomains = append(blockDomains, r.Pattern)
 		}
 	}
 
@@ -82,17 +108,19 @@ func (m *RuleMatcher) BuildFromRules(rules []*ParsedRule) {
 		bloom.Add(d)
 	}
 
+	m.importantAllowTrie = importantAllowTrie
+	m.importantAllowRules = importantAllowRules
+	m.importantBlockTrie = importantBlockTrie
+	m.importantBlockRules = importantBlockRules
+	m.allowTrie = allowTrie
+	m.allowRules = allowRules
 	m.bloom = bloom
 	m.blockTrie = blockTrie
-	m.importantBlockTrie = importantBlockTrie
-	m.allowTrie = allowTrie
-	m.importantAllowTrie = importantAllowTrie
-	m.regexRules = regexes
-	m.wildcardRules = wildcards
+	m.blockRules = blockRules
 	m.totalRulesCount = len(rules)
 }
 
-// Match 对域名进行多策略优先级匹配评估
+// Match 对域名进行多策略优先级匹配评估 (Important Allow > Important Block > Whitelist Allow > Bloom+Trie Block > Wildcard/Regex)
 func (m *RuleMatcher) Match(domain string, qtype uint16) CheckHostResult {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -102,7 +130,7 @@ func (m *RuleMatcher) Match(domain string, qtype uint16) CheckHostResult {
 		return CheckHostResult{Action: "pass"}
 	}
 
-	// 1. 最高优先级: 带 $important 的白名单例外规则
+	// 1. 最高优先级: 带 $important 的白名单例外规则 (Trie -> Wildcard/Regex)
 	if hit, rule := m.importantAllowTrie.Match(domain); hit && matchDNSType(rule, qtype) {
 		return CheckHostResult{
 			Blocked:     false,
@@ -112,8 +140,19 @@ func (m *RuleMatcher) Match(domain string, qtype uint16) CheckHostResult {
 			Reason:      "important_allow",
 		}
 	}
+	for _, rule := range m.importantAllowRules {
+		if matchDNSType(rule, qtype) && matchRulePattern(rule, domain) {
+			return CheckHostResult{
+				Blocked:     false,
+				Action:      "allow",
+				MatchedRule: rule.Raw,
+				ListName:    rule.Source,
+				Reason:      "important_allow",
+			}
+		}
+	}
 
-	// 2. 次高优先级: 带 $important 的黑名单拦截规则
+	// 2. 次高优先级: 带 $important 的黑名单拦截规则 (Trie -> Wildcard/Regex)
 	if hit, rule := m.importantBlockTrie.Match(domain); hit && matchDNSType(rule, qtype) {
 		return CheckHostResult{
 			Blocked:     true,
@@ -123,8 +162,19 @@ func (m *RuleMatcher) Match(domain string, qtype uint16) CheckHostResult {
 			Reason:      "important_block",
 		}
 	}
+	for _, rule := range m.importantBlockRules {
+		if matchDNSType(rule, qtype) && matchRulePattern(rule, domain) {
+			return CheckHostResult{
+				Blocked:     true,
+				Action:      "block",
+				MatchedRule: rule.Raw,
+				ListName:    rule.Source,
+				Reason:      "important_block",
+			}
+		}
+	}
 
-	// 3. 常规白名单例外规则 (@@)
+	// 3. 第三优先级: 常规白名单例外规则 (@@) (Trie -> Wildcard/Regex)
 	if hit, rule := m.allowTrie.Match(domain); hit && matchDNSType(rule, qtype) {
 		return CheckHostResult{
 			Blocked:     false,
@@ -134,15 +184,23 @@ func (m *RuleMatcher) Match(domain string, qtype uint16) CheckHostResult {
 			Reason:      "whitelist",
 		}
 	}
+	for _, rule := range m.allowRules {
+		if matchDNSType(rule, qtype) && matchRulePattern(rule, domain) {
+			return CheckHostResult{
+				Blocked:     false,
+				Action:      "allow",
+				MatchedRule: rule.Raw,
+				ListName:    rule.Source,
+				Reason:      "whitelist",
+			}
+		}
+	}
 
-	// 4. Bloom Filter 快速预检
-	// 若 Bloom 判定既不存在该域名也不存在其任何父域，可快速跳过 BlockTrie 遍历
+	// 4. 第四优先级: 常规黑名单 Trie 拦截规则 (前置 BloomFilter 纳秒预检)
 	inBloom := true
 	if m.bloom != nil && !m.bloom.MightContainDomainOrParent(domain) {
 		inBloom = false
 	}
-
-	// 5. 常规黑名单 Trie 匹配
 	if inBloom {
 		if hit, rule := m.blockTrie.Match(domain); hit && matchDNSType(rule, qtype) {
 			return CheckHostResult{
@@ -155,45 +213,19 @@ func (m *RuleMatcher) Match(domain string, qtype uint16) CheckHostResult {
 		}
 	}
 
-	// 6. 通配符与正则规则补刀匹配
-	for _, rule := range m.wildcardRules {
-		if matchDNSType(rule, qtype) && rule.Regex != nil && rule.Regex.MatchString(domain) {
-			if rule.IsAllow {
-				return CheckHostResult{
-					Blocked:     false,
-					Action:      "allow",
-					MatchedRule: rule.Raw,
-					ListName:    rule.Source,
-					Reason:      "wildcard_allow",
-				}
+	// 5. 第五优先级: 常规黑名单通配符与正则规则
+	for _, rule := range m.blockRules {
+		if matchDNSType(rule, qtype) && matchRulePattern(rule, domain) {
+			reason := "wildcard_block"
+			if rule.IsRegex {
+				reason = "regex_block"
 			}
 			return CheckHostResult{
 				Blocked:     true,
 				Action:      "block",
 				MatchedRule: rule.Raw,
 				ListName:    rule.Source,
-				Reason:      "wildcard_block",
-			}
-		}
-	}
-
-	for _, rule := range m.regexRules {
-		if matchDNSType(rule, qtype) && rule.Regex != nil && rule.Regex.MatchString(domain) {
-			if rule.IsAllow {
-				return CheckHostResult{
-					Blocked:     false,
-					Action:      "allow",
-					MatchedRule: rule.Raw,
-					ListName:    rule.Source,
-					Reason:      "regex_allow",
-				}
-			}
-			return CheckHostResult{
-				Blocked:     true,
-				Action:      "block",
-				MatchedRule: rule.Raw,
-				ListName:    rule.Source,
-				Reason:      "regex_block",
+				Reason:      reason,
 			}
 		}
 	}
@@ -211,8 +243,18 @@ func (m *RuleMatcher) TotalRules() int {
 	return m.totalRulesCount
 }
 
+func matchRulePattern(rule *ParsedRule, domain string) bool {
+	if rule == nil {
+		return false
+	}
+	if rule.Regex != nil {
+		return rule.Regex.MatchString(domain)
+	}
+	return false
+}
+
 func matchDNSType(rule *ParsedRule, qtype uint16) bool {
-	if rule == nil || rule.DNSType == 0 || qtype == 0 {
+	if rule == nil || rule.DNSType == 0 || qtype == 0 || qtype == dns.TypeANY {
 		return true
 	}
 	return rule.DNSType == qtype

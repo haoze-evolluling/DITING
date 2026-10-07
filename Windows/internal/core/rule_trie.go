@@ -242,3 +242,136 @@ func sortedChildKeys(m map[string]*trieNode) []string {
 	sort.Strings(keys)
 	return keys
 }
+
+// BinaryTrie 内存映射或常驻二进制紧凑格式反向字典树，兼容 Android 0x54524945 Magic / Version 2
+type BinaryTrie struct {
+	buffer []byte
+	limit  int
+}
+
+// LoadBinaryTrie 从二进制文件快速加载字典树
+func LoadBinaryTrie(path string) (*BinaryTrie, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("读取 trie 文件失败: %w", err)
+	}
+	return LoadBinaryTrieFromBytes(data)
+}
+
+// LoadBinaryTrieFromBytes 从字节数组反序列化二进制字典树
+func LoadBinaryTrieFromBytes(data []byte) (*BinaryTrie, error) {
+	if len(data) < trieHeaderSize {
+		return nil, fmt.Errorf("trie 数据长度不足")
+	}
+
+	magic := binary.BigEndian.Uint32(data[0:4])
+	if magic != trieMagic {
+		return nil, fmt.Errorf("无效的 trie magic: 0x%X (期望 0x%X)", magic, trieMagic)
+	}
+
+	version := binary.BigEndian.Uint32(data[4:8])
+	if version != trieVersion {
+		return nil, fmt.Errorf("不支持的 trie 版本: %d", version)
+	}
+
+	return &BinaryTrie{
+		buffer: data,
+		limit:  len(data),
+	}, nil
+}
+
+// ContainsOrParent 探测域名自身或其父域是否存在于字典树中
+func (bt *BinaryTrie) ContainsOrParent(domain string) bool {
+	if bt == nil || bt.buffer == nil || bt.limit < trieHeaderSize {
+		return false
+	}
+	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+	if domain == "" {
+		return false
+	}
+	labels := strings.Split(domain, ".")
+	return bt.matchWithWildcard(trieHeaderSize, labels, len(labels)-1)
+}
+
+func (bt *BinaryTrie) matchWithWildcard(nodeOffset int, labels []string, index int) bool {
+	if index < 0 || nodeOffset < 0 || nodeOffset >= bt.limit {
+		return false
+	}
+
+	targetLabel := labels[index]
+
+	exactOffset := bt.findChildOffset(nodeOffset, targetLabel)
+	if exactOffset != -1 {
+		if bt.isTerminal(exactOffset) {
+			return true
+		}
+		if bt.matchWithWildcard(exactOffset, labels, index-1) {
+			return true
+		}
+	}
+
+	wildcardOffset := bt.findChildOffset(nodeOffset, "*")
+	if wildcardOffset != -1 {
+		if bt.isTerminal(wildcardOffset) {
+			return true
+		}
+		if bt.matchWithWildcard(wildcardOffset, labels, index-1) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (bt *BinaryTrie) isTerminal(nodeOffset int) bool {
+	if nodeOffset < 0 || nodeOffset >= bt.limit {
+		return false
+	}
+	return bt.buffer[nodeOffset] != 0
+}
+
+func (bt *BinaryTrie) findChildOffset(nodeOffset int, targetLabel string) int {
+	if nodeOffset < 0 || nodeOffset+5 > bt.limit {
+		return -1
+	}
+
+	targetBytes := []byte(targetLabel)
+	targetLen := len(targetBytes)
+
+	pos := nodeOffset + 1
+	childCount := int(binary.BigEndian.Uint32(bt.buffer[pos : pos+4]))
+	pos += 4
+
+	for c := 0; c < childCount; c++ {
+		if pos+2 > bt.limit {
+			return -1
+		}
+		labelLen := int(binary.BigEndian.Uint16(bt.buffer[pos : pos+2]))
+		pos += 2
+
+		if pos+labelLen+4 > bt.limit {
+			return -1
+		}
+
+		if labelLen == targetLen {
+			match := true
+			for b := 0; b < labelLen; b++ {
+				if bt.buffer[pos+b] != targetBytes[b] {
+					match = false
+					break
+				}
+			}
+			if match {
+				childOffset := int(binary.BigEndian.Uint32(bt.buffer[pos+labelLen : pos+labelLen+4]))
+				if childOffset < trieHeaderSize || childOffset >= bt.limit {
+					return -1
+				}
+				return childOffset
+			}
+		}
+
+		pos += labelLen + 4
+	}
+
+	return -1
+}

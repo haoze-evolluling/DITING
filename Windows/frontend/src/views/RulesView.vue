@@ -67,8 +67,8 @@ async function fetchData() {
 }
 
 async function toggleMasterSwitch(e: Event) {
-  const target = e.target as HTMLInputElement;
-  const nextVal = target.checked ?? !stats.value.enabled;
+  const target = e.target as any;
+  const nextVal = Boolean(target.selected ?? target.checked ?? !stats.value.enabled);
   try {
     saving.value = true;
     await ipc.updateFilterConfig({ enabled: nextVal });
@@ -76,6 +76,11 @@ async function toggleMasterSwitch(e: Event) {
     config.value.enabled = nextVal;
     showToast(`规则拦截防护已${nextVal ? '开启' : '关闭'}`);
   } catch (err: any) {
+    if ('selected' in target) {
+      target.selected = !nextVal;
+    } else {
+      target.checked = !nextVal;
+    }
     showToast(err?.message || '更新开关失败', true);
   } finally {
     saving.value = false;

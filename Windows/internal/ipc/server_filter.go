@@ -43,17 +43,22 @@ func (s *Server) handleFilterConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
+		currentCfg, err := s.controller.GetFilterConfig(r.Context())
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
+			return
+		}
+		merged := *currentCfg
 		body, err := io.ReadAll(io.LimitReader(r.Body, 1024*1024))
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, Response[any]{Success: false, Error: "读取请求体失败"})
 			return
 		}
-		var cfg core.FilterConfig
-		if err := json.Unmarshal(body, &cfg); err != nil {
+		if err := json.Unmarshal(body, &merged); err != nil {
 			writeJSON(w, http.StatusBadRequest, Response[any]{Success: false, Error: "解析配置失败: " + err.Error()})
 			return
 		}
-		if err := s.controller.UpdateFilterConfig(r.Context(), cfg); err != nil {
+		if err := s.controller.UpdateFilterConfig(r.Context(), merged); err != nil {
 			writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
 			return
 		}

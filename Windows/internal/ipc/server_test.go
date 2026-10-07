@@ -23,6 +23,7 @@ type mockController struct {
 	statusResult *StatusResponse
 	portResult   *windows.PortCheckResult
 	cacheConfig  *core.CacheConfig
+	filterConfig *core.FilterConfig
 }
 
 func (m *mockController) StartDNS(ctx context.Context) error {
@@ -191,11 +192,20 @@ func (m *mockController) GetFilterStats(ctx context.Context) (*core.FilterStats,
 }
 
 func (m *mockController) GetFilterConfig(ctx context.Context) (*core.FilterConfig, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.filterConfig != nil {
+		cpy := *m.filterConfig
+		return &cpy, nil
+	}
 	cfg := core.DefaultFilterConfig()
 	return &cfg, nil
 }
 
 func (m *mockController) UpdateFilterConfig(ctx context.Context, cfg core.FilterConfig) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.filterConfig = &cfg
 	return nil
 }
 
@@ -417,6 +427,27 @@ func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 
 	if err := client.UpdateFilterConfig(ctx, *fCfg); err != nil {
 		t.Fatalf("UpdateFilterConfig failed: %v", err)
+	}
+
+	// 测试 Partial Filter Config 更新 (只发送 {"enabled": false}，验证 Lists 和 CustomRules 不被冲刷重置)
+	partialFilterBody := strings.NewReader(`{"enabled":false}`)
+	var partialFilterResp Response[string]
+	if err := client.doRequest(ctx, http.MethodPost, "/api/v1/filter/config", partialFilterBody, &partialFilterResp); err != nil {
+		t.Fatalf("Partial UpdateFilterConfig request failed: %v", err)
+	}
+	if !partialFilterResp.Success {
+		t.Fatalf("Partial UpdateFilterConfig returned failure: %s", partialFilterResp.Error)
+	}
+
+	afterPartialFCfg, err := client.GetFilterConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetFilterConfig after partial update failed: %v", err)
+	}
+	if afterPartialFCfg.Enabled {
+		t.Fatalf("预期 filter enabled 为 false，实际仍为 true")
+	}
+	if afterPartialFCfg.BlockMode != core.BlockModeNullIP || len(afterPartialFCfg.Lists) == 0 {
+		t.Fatalf("Partial 过滤更新错误地将其它字段重置: %+v", afterPartialFCfg)
 	}
 
 	fLists, err := client.GetFilterLists(ctx)

@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/binary"
 	"fmt"
-	"hash/fnv"
 	"math"
 	"os"
 	"strings"
@@ -77,11 +76,15 @@ func (bf *DomainBloomFilter) MightContain(domain string) bool {
 	bf.mu.RLock()
 	defer bf.mu.RUnlock()
 
+	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+	return bf.mightContainUnlocked(domain)
+}
+
+func (bf *DomainBloomFilter) mightContainUnlocked(domain string) bool {
 	if bf.bitCount == 0 || len(bf.bits) == 0 {
 		return true // fail-open
 	}
 
-	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
 	if domain == "" {
 		return false
 	}
@@ -102,13 +105,16 @@ func (bf *DomainBloomFilter) MightContain(domain string) bool {
 
 // MightContainDomainOrParent 层级探测域名及其所有父域 (如 sub.ad.google.com -> ad.google.com -> google.com)
 func (bf *DomainBloomFilter) MightContainDomainOrParent(domain string) bool {
+	bf.mu.RLock()
+	defer bf.mu.RUnlock()
+
 	d := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
 	if d == "" {
 		return false
 	}
 
 	for {
-		if bf.MightContain(d) {
+		if bf.mightContainUnlocked(d) {
 			return true
 		}
 		idx := strings.IndexByte(d, '.')
@@ -185,18 +191,29 @@ func LoadBloomFilter(path string) (*DomainBloomFilter, error) {
 	}, nil
 }
 
+const (
+	fnvOffset64 = 14695981039346656037
+	fnvPrime64  = 1099511628211
+)
+
 func bloomDoubleHash(s string) (uint64, uint64) {
-	h1 := fnv.New64a()
-	h1.Write([]byte(s))
-	v1 := h1.Sum64()
-
-	h2 := fnv.New64()
-	h2.Write([]byte(s))
-	v2 := h2.Sum64()
-
-	if v2%2 == 0 {
-		v2++ // 强制奇数防止循环退化
+	// FNV-1a (Zero allocations)
+	h1 := uint64(fnvOffset64)
+	for i := 0; i < len(s); i++ {
+		h1 ^= uint64(s[i])
+		h1 *= fnvPrime64
 	}
 
-	return v1, v2
+	// FNV-1 (Zero allocations)
+	h2 := uint64(fnvOffset64)
+	for i := 0; i < len(s); i++ {
+		h2 *= fnvPrime64
+		h2 ^= uint64(s[i])
+	}
+
+	if h2%2 == 0 {
+		h2++ // 强制奇数防止循环退化
+	}
+
+	return h1, h2
 }

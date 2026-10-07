@@ -101,6 +101,24 @@ func TestFilterMiddlewareBlockModes(t *testing.T) {
 	if ctx.Resp.Rcode != dns.RcodeNameError {
 		t.Fatalf("Expected NXDOMAIN rcode, got %d", ctx.Resp.Rcode)
 	}
+
+	// 测试 REFUSED 阻断响应
+	cfg.BlockMode = core.BlockModeRefused
+	_ = engine.UpdateConfig(cfg)
+	reqRefused := new(dns.Msg)
+	reqRefused.SetQuestion("nx.blocked.com.", dns.TypeA)
+	ctxRefused := NewDNSContext(context.Background(), reqRefused, &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 54321}, "udp")
+
+	err = mw(ctxRefused, func() error {
+		t.Fatalf("next() should not be called")
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("Error: %v", err)
+	}
+	if ctxRefused.Resp.Rcode != dns.RcodeRefused {
+		t.Fatalf("Expected REFUSED rcode, got %d", ctxRefused.Resp.Rcode)
+	}
 }
 
 func TestFilterMiddlewareWhitelistAndPass(t *testing.T) {

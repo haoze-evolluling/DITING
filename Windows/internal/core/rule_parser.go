@@ -33,6 +33,32 @@ func ParseRules(r io.Reader, source string) ([]*ParsedRule, error) {
 	var rules []*ParsedRule
 	for scanner.Scan() {
 		line := scanner.Text()
+		trimmed := strings.TrimSpace(strings.TrimPrefix(line, "\ufeff"))
+		if trimmed == "" || trimmed[0] == '!' || trimmed[0] == '#' || trimmed[0] == '[' {
+			continue
+		}
+
+		// 处理 /etc/hosts 多域名格式 (例如 0.0.0.0 ad1.com ad2.com)
+		fields := strings.Fields(trimmed)
+		if len(fields) >= 2 && isLiteralIP(fields[0]) {
+			if isSinkholeIP(fields[0]) {
+				for _, host := range fields[1:] {
+					// 剥离行末注释
+					if idx := strings.IndexByte(host, '#'); idx >= 0 {
+						host = host[:idx]
+					}
+					if norm, ok := normalizeDomain(host); ok {
+						rules = append(rules, &ParsedRule{
+							Raw:     line,
+							Pattern: norm,
+							Source:  source,
+						})
+					}
+				}
+			}
+			continue
+		}
+
 		parsed, ok := ParseRuleLine(line, source)
 		if ok && parsed != nil {
 			rules = append(rules, parsed)
@@ -50,8 +76,8 @@ func ParseRuleLine(line, source string) (*ParsedRule, bool) {
 	origLine := line
 	line = strings.TrimSpace(strings.TrimPrefix(line, "\ufeff"))
 
-	// 忽略空行与整行注释
-	if line == "" || line[0] == '!' || line[0] == '#' {
+	// 忽略空行、整行注释与列表头信息
+	if line == "" || line[0] == '!' || line[0] == '#' || line[0] == '[' {
 		return nil, false
 	}
 
@@ -67,7 +93,7 @@ func ParseRuleLine(line, source string) (*ParsedRule, bool) {
 	fields := strings.Fields(line)
 	if len(fields) >= 2 && isLiteralIP(fields[0]) {
 		if isSinkholeIP(fields[0]) {
-			// 取首个 host，多 host 可由外层拆分
+			// 取首个 host，多 host 可由外层 ParseRules 拆分
 			firstHost := fields[1]
 			norm, ok := normalizeDomain(firstHost)
 			if ok {
@@ -126,6 +152,9 @@ func ParseRuleLine(line, source string) (*ParsedRule, bool) {
 				if t, ok := dns.StringToType[strings.ToUpper(typeStr)]; ok {
 					dnsType = t
 				}
+			} else if isWebOnlyModifier(mod) {
+				// 浏览器专有资源修饰符，在 DNS 阶段安全跳过，防止整域误杀
+				return nil, false
 			}
 		}
 	}
@@ -158,10 +187,19 @@ func ParseRuleLine(line, source string) (*ParsedRule, bool) {
 		// ||example.com^ 表示匹配 example.com 及其所有子域名
 		domain = strings.TrimPrefix(line, "||")
 		domain = strings.TrimSuffix(domain, "^")
+		if strings.HasSuffix(domain, "|") {
+			domain = strings.TrimSuffix(domain, "|")
+			isExact = true
+		}
 	case strings.HasPrefix(line, "|") && strings.HasSuffix(line, "|"):
 		// |example.com| 精确匹配
 		isExact = true
 		domain = strings.Trim(line, "|")
+	case strings.HasSuffix(line, "|"):
+		// example.com| 精确匹配
+		isExact = true
+		domain = strings.TrimSuffix(line, "|")
+		domain = strings.TrimSuffix(domain, "^")
 	case strings.HasPrefix(line, "|"):
 		domain = strings.TrimPrefix(line, "|")
 		domain = strings.TrimSuffix(domain, "^")
@@ -278,4 +316,20 @@ func buildWildcardRegex(pattern string) *regexp.Regexp {
 		return nil
 	}
 	return re
+}
+
+func isWebOnlyModifier(mod string) bool {
+	switch mod {
+	case "script", "image", "stylesheet", "font", "media", "subdocument",
+		"websocket", "xhr", "xmlhttprequest", "ping", "popup", "document",
+		"other", "third-party", "~third-party", "strict-third-party",
+		"strict-first-party", "match-case", "all":
+		return true
+	}
+	if strings.HasPrefix(mod, "domain=") || strings.HasPrefix(mod, "app=") ||
+		strings.HasPrefix(mod, "~app=") || strings.HasPrefix(mod, "method=") ||
+		strings.HasPrefix(mod, "~method=") || strings.HasPrefix(mod, "denyallow=") {
+		return true
+	}
+	return false
 }

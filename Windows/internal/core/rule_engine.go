@@ -81,12 +81,42 @@ func (e *RuleEngine) GetConfig() FilterConfig {
 
 // UpdateConfig 更新过滤配置并热重载
 func (e *RuleEngine) UpdateConfig(cfg FilterConfig) error {
-	NormalizeFilterConfig(&cfg)
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
+	// 保持未显式更新字段
+	if cfg.CustomRules == nil {
+		cfg.CustomRules = e.cfg.CustomRules
+	}
+	if cfg.Lists == nil {
+		cfg.Lists = e.cfg.Lists
+	}
+	if cfg.DataDir == "" {
+		cfg.DataDir = e.cfg.DataDir
+	}
+	NormalizeFilterConfig(&cfg)
+
+	// 若仅切换了 Enabled 状态，无需全量从磁盘重构
+	onlyEnabledChanged := (e.cfg.Enabled != cfg.Enabled &&
+		e.cfg.BlockMode == cfg.BlockMode &&
+		e.cfg.BlockingIPv4 == cfg.BlockingIPv4 &&
+		e.cfg.BlockingIPv6 == cfg.BlockingIPv6 &&
+		e.cfg.UpdateIntervalHours == cfg.UpdateIntervalHours &&
+		len(e.cfg.CustomRules) == len(cfg.CustomRules) &&
+		len(e.cfg.Lists) == len(cfg.Lists))
+
 	e.cfg = cfg
+	if onlyEnabledChanged && e.matcher != nil && e.matcher.TotalRules() > 0 {
+		return nil
+	}
+
 	return e.rebuildUnlocked()
+}
+
+func (e *RuleEngine) getMatcher() *RuleMatcher {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.matcher
 }
 
 // GetStats 获取当前运行时拦截与规则统计指标
@@ -109,9 +139,14 @@ func (e *RuleEngine) GetStats() FilterStats {
 		}
 	}
 
+	totalRules := 0
+	if e.matcher != nil {
+		totalRules = e.matcher.TotalRules()
+	}
+
 	return FilterStats{
 		Enabled:        e.cfg.Enabled,
-		TotalRules:     e.matcher.TotalRules(),
+		TotalRules:     totalRules,
 		ActiveLists:    activeLists,
 		TotalQueries:   total,
 		BlockedQueries: blocked,
@@ -126,8 +161,13 @@ func (e *RuleEngine) Match(domain string, qtype uint16) CheckHostResult {
 		return CheckHostResult{Action: "pass"}
 	}
 
+	matcher := e.getMatcher()
+	if matcher == nil {
+		return CheckHostResult{Action: "pass"}
+	}
+
 	e.totalQueries.Add(1)
-	res := e.matcher.Match(domain, qtype)
+	res := matcher.Match(domain, qtype)
 
 	if res.Blocked {
 		e.blockedQueries.Add(1)
@@ -140,7 +180,11 @@ func (e *RuleEngine) Match(domain string, qtype uint16) CheckHostResult {
 
 // CheckHost 提供外部纯只读检测（不增加正式查询指标计数）
 func (e *RuleEngine) CheckHost(domain string, qtype uint16) CheckHostResult {
-	return e.matcher.Match(domain, qtype)
+	matcher := e.getMatcher()
+	if matcher == nil {
+		return CheckHostResult{Action: "pass"}
+	}
+	return matcher.Match(domain, qtype)
 }
 
 // GetCustomRules 获取用户自定义规则列表
@@ -277,14 +321,43 @@ func (e *RuleEngine) refreshListUnlocked(id string) error {
 		return fmt.Errorf("保存规则缓存文件失败: %w", err)
 	}
 
-	// 计算规则数与校验和
+	// 计算规则数与校验和，并编译二进制 .trie 与 .bloom 文件
 	rules, _ := ParseRules(bytes.NewReader(data), target.ID)
 	hash := sha256.Sum256(data)
 	target.RulesCount = len(rules)
 	target.LastUpdated = time.Now().UnixMilli()
 	target.Checksum = hex.EncodeToString(hash[:])
 
+	_ = e.compileBinaryList(rules, target.ID)
+
 	return e.rebuildUnlocked()
+}
+
+func (e *RuleEngine) compileBinaryList(rules []*ParsedRule, listID string) error {
+	if len(rules) == 0 {
+		return nil
+	}
+	trie := NewDomainTrie()
+	bloom := NewDomainBloomFilter(len(rules)+10, 0.001)
+
+	hasDomains := false
+	for _, r := range rules {
+		if r != nil && !r.IsAllow && !r.IsRegex && !r.IsWildcard && r.Pattern != "" {
+			trie.Insert(r)
+			bloom.Add(r.Pattern)
+			hasDomains = true
+		}
+	}
+	if !hasDomains {
+		return nil
+	}
+
+	triePath := filepath.Join(e.cfg.DataDir, listID+".trie")
+	bloomPath := filepath.Join(e.cfg.DataDir, listID+".bloom")
+
+	_ = trie.SaveToFile(triePath)
+	_ = bloom.SaveToFile(bloomPath)
+	return nil
 }
 
 func (e *RuleEngine) fetchListContent(urlStr string) ([]byte, error) {
