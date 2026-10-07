@@ -59,7 +59,7 @@ Windows 修改适配器 DNS 需要管理员权限（Administrator）。为兼顾
 ```
 +-----------------------------------------------------------+
 |               用户界面层 (diting-gui.exe)                   |
-|        Wails v2 + Vue 3 + TypeScript + Element Plus       |
+|   Wails v2 + Vue 3 + TypeScript + @material/web (M3)      |
 |                 (普通用户权限运行，轻量免 UAC)              |
 +-----------------------------+-----------------------------+
                               |
@@ -82,6 +82,7 @@ Windows 修改适配器 DNS 需要管理员权限（Administrator）。为兼顾
 ```
                 +----------------------------+
                 |    Wails Frontend (UI)     |
+                |  (Vue 3 + Material Web M3) |
                 +--------------+-------------+
                                |
                                v
@@ -195,15 +196,18 @@ Windows/
 │   └── config/                  # 配置管理
 │       ├── config.go            # 配置结构体 (监听、上游、IPC)
 │       └── store.go             # 配置文件读写与默认值填充
-├── frontend/                    # Wails Vue 3 前端工程
+├── frontend/                    # Wails Vue 3 前端工程 (遵循 Material Design 3)
 │   ├── src/
-│   │   ├── api/                 # 状态与控制调用
-│   │   ├── components/          # 仪表盘、开关、配置卡片
-│   │   ├── views/               # 主界面与设置页
-│   │   ├── App.vue
-│   │   └── main.ts
-│   ├── package.json
-│   └── vite.config.ts
+│   │   ├── api/                 # IPC HTTP/WS 客户端与事件通信封装
+│   │   ├── assets/              # 本地静态资源 (内嵌 Material Symbols 离线图标与 Logo)
+│   │   ├── theme/               # M3 动态色彩体系 (Seed Color 算法与 CSS 变量 Tokens)
+│   │   ├── components/          # 基于 @material/web 封装的通用 M3 组件与卡片
+│   │   ├── views/               # 5 大核心业务视图 (Dashboard, Adapters, Upstream, Logs, Settings)
+│   │   ├── App.vue              # 根视图 (集成 M3 Navigation Rail 与路由/视图容器)
+│   │   ├── style.css            # 全局样式与 M3 Design Tokens 注入
+│   │   └── main.ts              # 应用入口 (Vue 初始化、M3 组件注册与自定义元素配置)
+│   ├── package.json             # 依赖配置 (包含 @material/web)
+│   └── vite.config.ts           # Vite 配置 (配置 isCustomElement 规则支持 md-* 标签)
 ├── wails.json                   # Wails 配置文件
 ├── go.mod
 └── go.sum
@@ -215,99 +219,93 @@ Windows/
 
 ## 6. 分阶段开发路线图 (Roadmap)
 
-### 阶段零：工程骨架与基础依赖搭建 (Phase 0)
-- **阶段目标**：建立 Windows 端独立 Go 模块，打通 Wails 与特权服务的构建骨架。
-- **具体工作**：
-  1. 初始化 `Windows/go.mod`，引入 `github.com/miekg/dns`、`github.com/kardianos/service` 等核心依赖。
-  2. 使用 Wails CLI 初始化 `frontend` 前端骨架（Vue 3 + TypeScript + Tailwind CSS）。
-  3. 配置 `cmd/service` 和 `cmd/gui` 编译脚本与输出路径。
-- **涉及模块**：`Windows/go.mod`, `wails.json`, `frontend/`, `cmd/`
-- **前置依赖**：Go 1.23+ 环境、Wails v2 CLI、Node.js / pnpm。
-- **验收标准**：
-  - `go build ./cmd/service` 成功生成二进制并可输出版本号。
-  - `wails build` 可成功拉起空白应用窗口并正常渲染。
+### 6.1 已完成阶段里程碑 (Completed Milestones: Phase 0～3)
+
+当前 Windows 端核心后端底座与特权服务已全量落地并完成自愈与协议健壮性验证：
+
+- **阶段零：工程骨架与基础依赖搭建 (Phase 0 - 已完成)**
+  - 建立 Windows 独立 Go 模块，打通 Wails 与 `cmd/service`、`cmd/gui` 双二进制构建流程。
+  - 建立代码行数控制规范（单文件 $\le 600$ 行）与自动化脚本体系。
+- **阶段一：Go 核心 DNS 转发与服务层实现 (Phase 1 - 已完成)**
+  - 成功移植 Plain (UDP/TCP 53)、DoH、DoT 多协议上游解析器及 Bootstrap 引导机制，剥离 gomobile/netstack 依赖。
+  - 基于 `miekg/dns` 实现双栈监听与 Context/Middleware 中间件流水线，单测覆盖率达到标杆，通过 Python 专项脚本验证并发查询与上游失败回退。
+- **阶段二：Windows 平台 DNS 接管、还原与容灾自愈 (Phase 2 - 已完成)**
+  - 实现真实物理网卡精准枚举与虚拟/休眠适配器过滤，支持 53 端口冲突检测与占用告警。
+  - 实现双栈 DNS 接管（IPv4 `127.0.0.1` / IPv6 `::1`）与原子持久化（`dns_state.json`）。
+  - 实现基于快照的精准还原，具备服务启动自检与崩溃/意外断电灾备自愈能力，附带离线 `restore-dns.bat`。
+- **阶段三：服务化封装与 IPC 通信层实现 (Phase 3 - 已完成)**
+  - 接入 `kardianos/service` 支持后台 Windows Service 注册及前台 `-run` 调试。
+  - 搭建本地轻量 HTTP RESTful 控制接口（`127.0.0.1:15353` + Token 鉴权）及 WebSocket 实时指标推送流（`/api/v1/events`）。
 
 ---
 
-### 阶段一：Go 核心 DNS 转发与服务层实现 (Phase 1)
-- **阶段目标**：构建独立的 DNS 核心转发模块与服务监听管道，实现本地 DNS 代理基础功能。
-- **具体工作**：
-  1. 移植并改造 Android 端 `resolver_plain.go`、`resolver_doh.go` 与 `resolver_dot.go`，剥离 gomobile 与 netstack 代码。
-  2. 实现单服务（Single）与主备切换（Primary-Backup）两种基础调度策略。
-  3. 实现 Bootstrap 基础引导机制，保证 DoH 域名可被引导解析。
-  4. 基于 `miekg/dns` 实现 `127.0.0.1:53` 与 `[::1]:53` 双栈监听，搭建 Pipeline 请求处理流水线。
-  5. 编写单元测试模拟并发 DNS 查询与上游失败回退。
-- **涉及模块**：`internal/core/*`, `internal/dns/*`
-- **前置依赖**：阶段零完成。
+### 6.2 当前实施阶段：阶段四 (Phase 4) - Material Design 3 桌面端 UI 研发与全流程闭环
+
+- **阶段目标**：全面构建遵循 **Material Design 3 (M3)** 规范的高品质桌面客户端，深度参考、学习并复用 `LearningObjects/material-web-main` 的设计体系与代码资产，与特权服务打通实现开箱即用的产品化闭环。
+- **UI/UX 与前端技术核心要求**：
+  1. **组件库接入与 Vue 3 原生集成**：
+     - 直接引入 `@material/web` 官方 Web Components 组件库。
+     - 在 Vite / Vue 3 编译层配置 `isCustomElement: (tag) => tag.startsWith('md-')`，实现 Vue 模板对 `<md-*>` 自定义元素的原生数据绑定与事件监听。
+     - 深度参考 `LearningObjects/material-web-main` 中各核心组件的规范与代码设计：
+       - 开关：`<md-switch>`（服务主控、网卡接管、自启开关）
+       - 按钮：`<md-filled-button>`, `<md-outlined-button>`, `<md-text-button>`, `<md-icon-button>`
+       - 列表：`<md-list>`, `<md-list-item>`（网卡呈现、上游节点列表）
+       - 输入：`<md-outlined-text-field>`, `<md-filled-text-field>`（上游配置、Token 输入）
+       - 选择：`<md-radio>`, `<md-outlined-select>`, `<md-select-option>`（调度策略与协议选择）
+       - 弹窗：`<md-dialog>`（新增/编辑节点、恢复确认、错误警示）
+       - 反馈与进度：`<md-circular-progress>`, `<md-linear-progress>`（延迟测速、加载状态）
+       - 质感动效：`<md-elevation>`, `<md-ripple>`（卡片层级阴影与平滑水波纹反馈）
+  2. **M3 Dynamic Color 调色体系与双色系主题**：
+     - 参考 `material-web-main/tokens` 与色彩规范，接入 M3 Dynamic Color 算法。
+     - 支持基于 **Seed Color**（种子色）全量生成 M3 语义化色盘（Primary, Secondary, Tertiary, Surface, Surface Container 等），支持用户自定义主题色或直接提取 Windows 系统强调色（Accent Color）。
+     - 提供**深色模式（Dark）与浅色模式（Light）**平滑切换，默认跟随 Windows 桌面系统偏好。
+  3. **桌面端 Navigation Rail 导航体系**：
+     - 采用标准 M3 桌面端 **Navigation Rail**（左侧垂直导航轨）+ 主工作区流式卡片架构，保证 1024x768 桌面分辨率下的信息聚焦。
+     - 导航栏集成品牌 Logo、特权服务运行状态徽标（Active/Inactive Badge）以及 5 大核心功能路由入口。
+  4. **五大核心业务视图实现**：
+     - **仪表总览 (Dashboard)**：
+       - 核心状态总控大卡片：内置 `<md-switch>` 控制全局 DNS 代理及一键网络接管。
+       - 实时遥测指标：展示实时解析 QPS、平均延迟、查询成功率高光数据卡片与平滑波形图。
+       - 快捷上游与网卡摘要：呈现当前活动调度策略及接管网卡简报。
+     - **网卡接管 (Adapters)**：
+       - 物理网卡列表：以 `<md-list>` 结构清晰列出已识别活动物理网卡（排除虚拟网卡）。
+       - 网卡详情：显示适配器名称、IPv4/IPv6 获取模式（DHCP/Static）、原始 DNS 与当前接管 DNS 对比。
+       - 独立接管控制：支持针对特定物理网卡单独开启/还原接管。
+     - **上游配置 (Upstream)**：
+       - 上游节点管理：展示已配置的 Plain、DoH、DoT 节点列表及健康状态。
+       - 调度策略配置：通过 `<md-radio>` / `<md-outlined-select>` 切换单节点（Single）、主备容灾（Primary-Backup）等调度模式。
+       - 节点编辑与测试：利用 `<md-dialog>` 支持添加/修改上游，支持使用 `<md-circular-progress>` 显示实时延迟探测结果。
+     - **实时日志 (Logs)**：
+       - 实时事件滚动流：基于 WebSocket 连接（`/api/v1/events`）无延迟渲染 DNS 查询记录。
+       - 检索与过滤：提供按域名、查询类型（A/AAAA）即时过滤，不同响应码（NOERROR、NXDOMAIN、SERVFAIL）采用 M3 彩色 Chips 区分。
+       - 调试工具：支持一键清空日志视图、暂停/继续滚屏。
+     - **设置中心 (Settings)**：
+       - IPC 通信配置：配置本地特权服务监听端口（默认 15353）与 Token，内置连接探测。
+       - 外观与主题：Seed Color 拾色器、系统强调色提取开关、浅色/深色主题切换。
+       - 系统与容灾工具：Windows 开机启动配置、一键触发离线自愈恢复脚本（`restore-dns.bat`）。
+  5. **离线图标与视觉资源规范**：
+     - 本地内嵌 Material Symbols 矢量字体或 SVG 图标集，杜绝任何公网 CDN 依赖，保证在离线及内网环境中界面渲染完整。
+  6. **IPC 前后端打通与异常边界交互**：
+     - 封装 Wails 前端 HTTP/WebSocket 客户端，无缝调用后台 `diting-service` REST 接口。
+     - 增加特权服务生命周期感知：当服务未运行、崩溃或端口冲突时，前端呈现友好的 M3 引导 Dialog，指导用户一键启动服务或排查 53 端口冲突。
+- **涉及模块**：`Windows/frontend/*`, `Windows/cmd/gui/*`, `Windows/wails.json`
+- **前置依赖**：阶段三特权服务与 IPC 接口就绪（已达成）。
 - **验收标准**：
-  - 单元测试覆盖率 $\ge 80\%$。
-  - 使用 Python 测试脚本（`python scripts/test_dns.py www.bing.com 127.0.0.1` 或 `python scripts/test_dns.py --verify`）向本地服务发送真实 DNS 请求，能成功接收请求、转发至上游并正确获得 A/AAAA 响应（避开 Windows 自带 nslookup 存在 PTR 反向解析超时、端口参数失效及本地回环兼容缺陷的问题）。
-
----
-
-### 阶段二：Windows 平台 DNS 接管、还原与容灾自愈 (Phase 2)
-- **阶段目标**：实现 Windows 活动物理网卡的自动识别、双栈 DNS 接管、配置安全持久化与自愈还原。
-- **具体工作**：
-  1. 编写网卡扫描模块，通过 PowerShell / WMI 正确过滤出物理以太网和 Wi-Fi 网卡，排除虚拟与休眠适配器。
-  2. 实现 53 端口占用探测，若遇到 ICS (SharedAccess) 等占用能明确输出诊断告警。
-  3. 实现接管逻辑：备份原 DNS 并设置网卡为 `127.0.0.1` / `::1`，执行刷新缓存。
-  4. 实现还原逻辑：根据持久化记录还原 DHCP 或指定静态 DNS，并清理状态文件。
-  5. 实现异常崩溃与意外重启自愈检查：启动时检测到残留状态自动触发还原。
-- **涉及模块**：`internal/platform/windows/*`
-- **前置依赖**：阶段一完成。
-- **验收标准**：
-  - 执行接管命令后，网卡 IPv4/IPv6 DNS 正确指向本地，浏览器及系统网络正常解析。
-  - 执行还原命令后，网卡完全恢复初始 DHCP/静态 DNS 状态。
-  - 模拟 Kill 服务进程后再次启动，能自动检测到异常状态并正确自愈还原。
-
----
-
-### 阶段三：服务化封装与 IPC 通信层实现 (Phase 3)
-- **阶段目标**：将内核与平台能力包装为后台特权服务，提供本地 REST API 与 WebSocket 实时状态流。
-- **具体工作**：
-  1. 接入 `kardianos/service`，实现服务的安装、卸载、启动、停止及控制台 `-run` 调试模式。
-  2. 实现本地 HTTP 控制服务（默认监听 `127.0.0.1:15353`，带鉴权 Token）。
-  3. 实现 RESTful 接口：
-     - `POST /api/v1/dns/start`、`POST /api/v1/dns/stop`
-     - `POST /api/v1/takeover/enable`、`POST /api/v1/takeover/disable`
-     - `GET /api/v1/status`（包含运行状态、当前上游、接管网卡列表）
-  4. 实现 WebSocket `/api/v1/events`：推送实时查询计数、延迟及健康状态。
-- **涉及模块**：`cmd/service/*`, `internal/ipc/*`, `internal/config/*`
-- **前置依赖**：阶段二完成。
-- **验收标准**：
-  - `diting-service.exe -service install` 成功注册进 Windows 服务管理器。
-  - 通过 curl 或 Postman 调用 REST API 能成功控制 DNS 启停与接管还原。
-  - WebSocket 持续稳定输出请求事件流。
-
----
-
-### 阶段四：Wails UI 客户端集成与端到端闭环验证 (Phase 4)
-- **阶段目标**：完成前端界面构建，与特权服务打通，实现完整的桌面端产品闭环。
-- **具体工作**：
-  1. 在 Wails 中实现 IPC Client，封装与 `diting-service` 的 HTTP/WS 调用。
-  2. 搭建 Vue 3 前端界面：
-     - **服务总控卡片**：一键开启/停止 DNS 服务与系统接管状态。
-     - **网卡状态列表**：展示当前系统网卡接管与 DNS 分配详情。
-     - **实时指标展示**：展示当前解析 QPS、平均延迟、成功率。
-     - **上游配置面板**：配置上游 DNS 服务器地址与监听端口。
-  3. 异常边界交互：当特权服务未运行或端口冲突时，前端提供友好指引与重试提示。
-- **涉及模块**：`cmd/gui/*`, `frontend/src/*`, `wails.json`
-- **前置依赖**：阶段三完成。
-- **验收标准**：
-  - 启动 `diting-gui.exe`，无需管理员提权即可打开。
-  - 点击“启动接管”，系统网卡 DNS 切换至 `127.0.0.1`，界面实时展示解析请求与延迟指标。
-  - 点击“停止接管”，系统网卡 DNS 恢复原样，全程网络平滑无中断。
-  - 达成阶段核心闭环交付标准。
+  - 启动 `diting-gui.exe` 免 UAC 弹窗秒级渲染，全界面符合 M3 视觉质感（圆角、Elevation、Ripple 动效）。
+  - 支持 Seed Color 动态调色与明暗主题切换，UI 元素对比度与色彩层次分明。
+  - 五大视图功能完整可用，能通过 IPC 接口稳定控制 DNS 服务与系统网卡双栈接管/还原。
+  - WebSocket 遥测指标流与日志流持续稳定推送，高并发查询下界面不卡顿、内存平稳。
+  - 完全脱离外网 CDN 运行，断网状态下界面与图标完全正常。
 
 ---
 
 ## 7. 后续扩展演进规划 (Future Roadmap)
 
-第一阶段核心闭环建立后，架构中预留的插槽可平滑扩展以下功能，避免重复重构：
+第一阶段核心闭环建立后，架构中预留的插槽可平滑扩展以下功能，后端核心与 M3 前端界面保持端到端同步演进：
 
-| 演进阶段 | 功能领域 | 对应扩展模块与设计 |
-|---|---|---|
-| **Phase 5** | **智能缓存体系** | 引入移植自 Android 的 64 分片 LRU 缓存、Optimistic/Stale-While-Revalidate 容灾与 TTL 限制中间件 (`CacheMiddleware`) |
-| **Phase 6** | **规则过滤引擎** | 引入移植自 Android 的 AdGuard 语法解析器、Mmap Trie 树、BloomFilter 预检与阻断响应中间件 (`FilterMiddleware`) |
-| **Phase 7** | **智能调度与竞速** | 引入移植自 Android 的 EWMA 智能延迟预测（Smart Prediction）与并行竞速（Parallel Race）上游调度 |
-| **Phase 8** | **高级网络分流与统计** | 支持按域名分流上游、出站代理联动、查询日志落库与历史统计图表 |
+| 演进阶段 | 功能领域 | 对应后端内核扩展模块与设计 | 配套 Material Design 3 前端界面规划 |
+|---|---|---|---|
+| **Phase 5** | **智能缓存体系** | 移植 64 分片并发安全 LRU 缓存、Optimistic/Stale-While-Revalidate 容灾与 TTL 重写中间件 (`CacheMiddleware`) | **缓存监控大盘**：实时缓存命中率仪表图、热点域名 Top 统计、缓存条目检索与一键清空 `<md-dialog>` |
+| **Phase 6** | **规则过滤引擎** | 移植 AdGuard 语法解析器、Mmap Trie 树、BloomFilter 预检与阻断响应中间件 (`FilterMiddleware`) | **规则管理中心**：订阅规则源列表、内置/自定义规则编辑器、规则拦截率统计与拦截日志高亮过滤 |
+| **Phase 7** | **智能调度与竞速** | 移植 EWMA 智能延迟预测（Smart Prediction）与并行竞速（Parallel Race）上游调度策略 | **调度可视化面板**：各上游节点动态延迟分布折线图、EWMA 预测评分雷达图、竞速获胜率对比看板 |
+| **Phase 8** | **高级网络分流与统计** | 支持按域名/分流规则匹配不同上游、出站代理联动、查询日志持久化与历史分析 | **统计与高级网络视图**：时序查询趋势图、客户端/协议分流拓扑展示、历史日志分页检索与导出 |
