@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { ipc } from '../api/ipc';
 import type { FilterStats, FilterConfig, FilterList, CheckHostResult } from '../api/types';
 import StatusBadge from '../components/StatusBadge.vue';
 import MetricCard from '../components/MetricCard.vue';
 import M3Icon from '../components/M3Icon.vue';
+import AppModal from '../components/AppModal.vue';
 
 const stats = ref<FilterStats>({
   enabled: true,
@@ -41,7 +42,6 @@ const isAddModalOpen = ref(false);
 const newListName = ref('');
 const newListURL = ref('');
 
-const loading = ref(false);
 const saving = ref(false);
 const refreshing = ref(false);
 const errorMessage = ref('');
@@ -222,42 +222,42 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 max-w-7xl mx-auto pb-12">
+  <div class="space-y-6 max-w-7xl mx-auto pb-12 select-none">
     <!-- 顶部消息提示 -->
-    <div v-if="errorMessage" class="p-4 rounded-2xl bg-error/10 text-error border border-error/20 flex items-center justify-between text-sm animate-fade-in">
+    <div v-if="errorMessage" class="p-4 rounded-2xl bg-status-error-bg text-status-error border border-status-error/20 flex items-center justify-between text-sm shadow-xs">
       <div class="flex items-center gap-2">
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
       </div>
-      <button @click="errorMessage = ''" class="hover:opacity-70"><M3Icon name="close" :size="16" /></button>
+      <button @click="errorMessage = ''" class="hover:opacity-75 cursor-pointer"><M3Icon name="close" :size="16" /></button>
     </div>
 
-    <div v-if="successMessage" class="p-4 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-between text-sm animate-fade-in">
+    <div v-if="successMessage" class="p-4 rounded-2xl bg-status-success-bg text-status-success border border-status-success/20 flex items-center justify-between text-sm shadow-xs">
       <div class="flex items-center gap-2">
         <M3Icon name="check_circle" :size="18" />
         <span>{{ successMessage }}</span>
       </div>
-      <button @click="successMessage = ''" class="hover:opacity-70"><M3Icon name="close" :size="16" /></button>
+      <button @click="successMessage = ''" class="hover:opacity-75 cursor-pointer"><M3Icon name="close" :size="16" /></button>
     </div>
 
     <!-- 顶栏核心主控卡片 -->
-    <div class="p-6 rounded-3xl bg-surface-container-low border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="p-6 rounded-3xl bg-surface-card border border-surface-border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" :class="stats.enabled ? 'bg-primary/15 text-primary' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" :class="stats.enabled ? 'bg-brand-container text-brand-primary' : 'bg-surface-card-sub text-text-muted'">
           <M3Icon name="shield" :size="28" />
         </div>
         <div>
           <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">规则过滤与广告拦截</h2>
+            <h2 class="text-xl font-bold text-text-main">规则过滤与广告拦截</h2>
             <StatusBadge :status="stats.enabled ? 'active' : 'inactive'" :text="stats.enabled ? '防护保护中' : '防护已暂停'" size="sm" />
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <p class="text-xs text-text-sub mt-1">
             支持 AdGuard / hosts 语法规则解析、倒序 Trie 树匹配与 BloomFilter 纳秒预检
           </p>
         </div>
       </div>
-      <div class="flex items-center gap-4 shrink-0">
-        <span class="text-xs font-medium text-slate-600 dark:text-slate-400">总开关</span>
+      <div class="flex items-center gap-4 shrink-0 bg-surface-card-sub px-4 py-2 rounded-2xl border border-surface-border-sub">
+        <span class="text-xs font-medium text-text-main">总开关</span>
         <md-switch :selected="stats.enabled" @change="toggleMasterSwitch" :disabled="saving"></md-switch>
       </div>
     </div>
@@ -271,35 +271,35 @@ onUnmounted(() => {
     </div>
 
     <!-- 标签切换栏 -->
-    <div class="flex border-b border-slate-200/60 dark:border-slate-800 gap-2">
+    <div class="flex border-b border-surface-border gap-2">
       <button
         @click="activeTab = 'lists'"
-        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
-        :class="activeTab === 'lists' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer"
+        :class="activeTab === 'lists' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
       >
         <M3Icon name="adapters" :size="16" />
         <span>订阅规则源 ({{ lists.length }})</span>
       </button>
       <button
         @click="activeTab = 'custom'"
-        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
-        :class="activeTab === 'custom' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer"
+        :class="activeTab === 'custom' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
       >
         <M3Icon name="edit" :size="16" />
         <span>自定义规则</span>
       </button>
       <button
         @click="activeTab = 'test'"
-        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
-        :class="activeTab === 'test' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer"
+        :class="activeTab === 'test' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
       >
         <M3Icon name="search" :size="16" />
         <span>规则检测工具</span>
       </button>
       <button
         @click="activeTab = 'config'"
-        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
-        :class="activeTab === 'config' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'"
+        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer"
+        :class="activeTab === 'config' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
       >
         <M3Icon name="settings" :size="16" />
         <span>拦截策略</span>
@@ -309,7 +309,7 @@ onUnmounted(() => {
     <!-- TAB 1: 订阅规则源列表 -->
     <div v-if="activeTab === 'lists'" class="space-y-4">
       <div class="flex items-center justify-between">
-        <span class="text-xs text-slate-500 dark:text-slate-400">支持 HTTP(S) 公网规则源与本地文本规则库</span>
+        <span class="text-xs text-text-sub">支持 HTTP(S) 公网规则源与本地文本规则库</span>
         <div class="flex items-center gap-3">
           <md-outlined-button @click="refreshList()" :disabled="refreshing">
             <M3Icon name="refresh" :size="16" slot="icon" class="mr-1" />
@@ -326,28 +326,28 @@ onUnmounted(() => {
         <div
           v-for="l in lists"
           :key="l.id"
-          class="p-5 rounded-2xl bg-surface-container-low border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-between gap-4"
+          class="p-5 rounded-2xl bg-surface-card border border-surface-border shadow-xs flex flex-col justify-between gap-4 transition-all duration-200 hover:shadow-md hover:border-brand-primary/30"
         >
           <div>
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="font-bold text-slate-800 dark:text-slate-100 truncate text-sm">{{ l.name }}</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary shrink-0">
+                <span class="font-bold text-text-main truncate text-sm">{{ l.name }}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-container text-brand-primary shrink-0">
                   {{ l.rulesCount.toLocaleString() }} 条规则
                 </span>
               </div>
               <md-switch :selected="l.enabled" @change="toggleList(l)"></md-switch>
             </div>
-            <p class="text-xs text-slate-400 font-mono mt-2 truncate select-all" :title="l.url">{{ l.url }}</p>
+            <p class="text-xs text-text-muted font-mono mt-2 truncate select-all" :title="l.url">{{ l.url }}</p>
           </div>
 
-          <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-400">
+          <div class="flex items-center justify-between pt-3 border-t border-surface-border-sub text-[11px] text-text-muted">
             <span>最后同步: {{ formatTime(l.lastUpdated) }}</span>
             <div class="flex items-center gap-2">
-              <button @click="refreshList(l.id)" class="p-1.5 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800 text-slate-500" title="重新拉取">
+              <button @click="refreshList(l.id)" class="p-1.5 rounded-lg hover:bg-surface-hover text-text-sub transition-colors cursor-pointer" title="重新拉取">
                 <M3Icon name="refresh" :size="14" />
               </button>
-              <button @click="deleteList(l.id)" class="p-1.5 rounded-lg hover:bg-error/10 text-error" title="移除此源">
+              <button @click="deleteList(l.id)" class="p-1.5 rounded-lg hover:bg-status-error-bg text-status-error transition-colors cursor-pointer" title="移除此源">
                 <M3Icon name="delete" :size="14" />
               </button>
             </div>
@@ -358,23 +358,23 @@ onUnmounted(() => {
 
     <!-- TAB 2: 自定义规则编辑器 -->
     <div v-if="activeTab === 'custom'" class="space-y-4">
-      <div class="p-4 rounded-2xl bg-surface-container-low border border-slate-200/60 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-1">
-        <div class="font-bold text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-2">
-          <M3Icon name="info" :size="14" class="text-primary" />
+      <div class="p-4 rounded-2xl bg-surface-card border border-surface-border text-xs text-text-sub space-y-1 shadow-xs">
+        <div class="font-bold text-text-main mb-1 flex items-center gap-2">
+          <M3Icon name="info" :size="14" class="text-brand-primary" />
           <span>规则语法快捷参考</span>
         </div>
-        <div>• <code class="bg-slate-200/60 dark:bg-slate-800 px-1 py-0.5 rounded text-primary font-mono">||example.com^</code> 拦截该域名及其所有子域名</div>
-        <div>• <code class="bg-slate-200/60 dark:bg-slate-800 px-1 py-0.5 rounded text-primary font-mono">@@||safe.com^</code> 白名单例外放行 (优先于拦截规则)</div>
-        <div>• <code class="bg-slate-200/60 dark:bg-slate-800 px-1 py-0.5 rounded text-primary font-mono">0.0.0.0 bad.com</code> 兼容标准 Hosts 阻断条目</div>
-        <div>• <code class="bg-slate-200/60 dark:bg-slate-800 px-1 py-0.5 rounded text-primary font-mono">||urgent.com^$important</code> 最高权重重要阻断，覆盖常规白名单</div>
+        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">||example.com^</code> 拦截该域名及其所有子域名</div>
+        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">@@||safe.com^</code> 白名单例外放行 (优先于拦截规则)</div>
+        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">0.0.0.0 bad.com</code> 兼容标准 Hosts 阻断条目</div>
+        <div>• <code class="bg-surface-card-sub px-1 py-0.5 rounded text-brand-primary font-mono">||urgent.com^$important</code> 最高权重重要阻断，覆盖常规白名单</div>
       </div>
 
-      <div class="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-surface-container-lowest p-2 focus-within:ring-2 focus-within:ring-primary/40">
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-2 focus-within:ring-2 focus-within:ring-brand-primary/40 shadow-xs">
         <textarea
           v-model="customRulesText"
           rows="14"
           placeholder="在此输入自定义过滤规则，每行一条..."
-          class="w-full bg-transparent border-0 resize-y p-2 text-xs font-mono text-slate-800 dark:text-slate-200 focus:outline-none"
+          class="w-full bg-transparent border-0 resize-y p-2 text-xs font-mono text-text-main focus:outline-none"
         ></textarea>
       </div>
 
@@ -388,10 +388,10 @@ onUnmounted(() => {
 
     <!-- TAB 3: 域名规则检测工具 -->
     <div v-if="activeTab === 'test'" class="space-y-4">
-      <div class="p-6 rounded-2xl bg-surface-container-low border border-slate-200/60 dark:border-slate-800 space-y-4">
+      <div class="p-6 rounded-2xl bg-surface-card border border-surface-border space-y-4 shadow-xs">
         <div>
-          <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">域名检测与命中分析</h3>
-          <p class="text-xs text-slate-400 mt-1">输入任意域名，即时测试其当前在 Trie 树和规则集中的匹配结果与处理动作</p>
+          <h3 class="text-base font-bold text-text-main">域名检测与命中分析</h3>
+          <p class="text-xs text-text-sub mt-1">输入任意域名，即时测试其当前在 Trie 树和规则集中的匹配结果与处理动作</p>
         </div>
 
         <div class="flex flex-col md:flex-row gap-3">
@@ -399,11 +399,11 @@ onUnmounted(() => {
             v-model="testDomain"
             placeholder="例如: pagead2.googlesyndication.com"
             @keyup.enter="runDomainTest"
-            class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            class="flex-1 px-4 py-2.5 rounded-xl border border-surface-border bg-surface-card-sub text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main placeholder:text-text-muted"
           />
           <select
             v-model="testQType"
-            class="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            class="px-4 py-2.5 rounded-xl border border-surface-border bg-surface-card-sub text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main"
           >
             <option value="A">Type A (IPv4)</option>
             <option value="AAAA">Type AAAA (IPv6)</option>
@@ -415,29 +415,29 @@ onUnmounted(() => {
           </md-filled-button>
         </div>
 
-        <div v-if="testResult" class="p-5 rounded-xl border text-sm animate-fade-in" :class="testResult.blocked ? 'bg-error/5 border-error/20' : testResult.action === 'allow' ? 'bg-primary/5 border-primary/20' : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800'">
+        <div v-if="testResult" class="p-5 rounded-xl border text-sm" :class="testResult.blocked ? 'bg-status-error-bg border-status-error/30' : testResult.action === 'allow' ? 'bg-status-success-bg border-status-success/30' : 'bg-surface-card-sub border-surface-border-sub'">
           <div class="flex items-center gap-3">
             <span
-              class="px-2.5 py-1 rounded-full text-xs font-bold uppercase"
-              :class="testResult.blocked ? 'bg-error text-white' : testResult.action === 'allow' ? 'bg-primary text-white' : 'bg-slate-500 text-white'"
+              class="px-2.5 py-1 rounded-full text-xs font-bold uppercase text-white"
+              :class="testResult.blocked ? 'bg-status-error' : testResult.action === 'allow' ? 'bg-status-success' : 'bg-text-muted'"
             >
               {{ testResult.blocked ? '已阻断 (BLOCKED)' : testResult.action === 'allow' ? '白名单放行 (ALLOWED)' : '正常通过 (PASS)' }}
             </span>
-            <span class="font-mono font-bold text-slate-800 dark:text-slate-100">{{ testDomain }}</span>
+            <span class="font-mono font-bold text-text-main">{{ testDomain }}</span>
           </div>
 
           <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 text-xs">
             <div>
-              <span class="text-slate-400">命中规则: </span>
-              <span class="font-mono text-slate-700 dark:text-slate-200">{{ testResult.matchedRule || '无' }}</span>
+              <span class="text-text-muted">命中规则: </span>
+              <span class="font-mono text-text-main font-semibold">{{ testResult.matchedRule || '无' }}</span>
             </div>
             <div>
-              <span class="text-slate-400">规则来源: </span>
-              <span class="font-medium text-slate-700 dark:text-slate-200">{{ testResult.listName || '无' }}</span>
+              <span class="text-text-muted">规则来源: </span>
+              <span class="font-medium text-text-main">{{ testResult.listName || '无' }}</span>
             </div>
             <div>
-              <span class="text-slate-400">判定原因: </span>
-              <span class="font-medium text-slate-700 dark:text-slate-200">{{ testResult.reason || '未命中规则' }}</span>
+              <span class="text-text-muted">判定原因: </span>
+              <span class="font-medium text-text-main">{{ testResult.reason || '未命中规则' }}</span>
             </div>
           </div>
         </div>
@@ -446,39 +446,39 @@ onUnmounted(() => {
 
     <!-- TAB 4: 策略配置 -->
     <div v-if="activeTab === 'config'" class="space-y-4 max-w-2xl">
-      <div class="p-6 rounded-2xl bg-surface-container-low border border-slate-200/60 dark:border-slate-800 space-y-5">
+      <div class="p-6 rounded-2xl bg-surface-card border border-surface-border space-y-5 shadow-xs">
         <div>
-          <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">阻断响应策略配置</h3>
-          <p class="text-xs text-slate-400 mt-1">定制当域名被命中阻断时向客户端交付的 DNS 应答行为</p>
+          <h3 class="text-base font-bold text-text-main">阻断响应策略配置</h3>
+          <p class="text-xs text-text-sub mt-1">定制当域名被命中阻断时向客户端交付的 DNS 应答行为</p>
         </div>
 
         <div class="space-y-3 text-sm">
-          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
-            <input type="radio" v-model="config.blockMode" value="null_ip" class="text-primary" />
+          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
+            <input type="radio" v-model="config.blockMode" value="null_ip" class="accent-brand-primary" />
             <div>
-              <div class="font-medium text-slate-800 dark:text-slate-100">空 IP 应答 (Null IP / 推荐)</div>
-              <div class="text-xs text-slate-400">返回 0.0.0.0 (A) 或 :: (AAAA)，快速阻断且不引起客户端持续重试</div>
+              <div class="font-medium text-text-main">空 IP 应答 (Null IP / 推荐)</div>
+              <div class="text-xs text-text-sub">返回 0.0.0.0 (A) 或 :: (AAAA)，快速阻断且不引起客户端持续重试</div>
             </div>
           </label>
 
-          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
-            <input type="radio" v-model="config.blockMode" value="nxdomain" class="text-primary" />
+          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
+            <input type="radio" v-model="config.blockMode" value="nxdomain" class="accent-brand-primary" />
             <div>
-              <div class="font-medium text-slate-800 dark:text-slate-100">域名不存在 (NXDOMAIN)</div>
-              <div class="text-xs text-slate-400">响应 RcodeNameError，宣告域名在权威服务中不存在</div>
+              <div class="font-medium text-text-main">域名不存在 (NXDOMAIN)</div>
+              <div class="text-xs text-text-sub">响应 RcodeNameError，宣告域名在权威服务中不存在</div>
             </div>
           </label>
 
-          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
-            <input type="radio" v-model="config.blockMode" value="refused" class="text-primary" />
+          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
+            <input type="radio" v-model="config.blockMode" value="refused" class="accent-brand-primary" />
             <div>
-              <div class="font-medium text-slate-800 dark:text-slate-100">拒绝访问 (REFUSED)</div>
-              <div class="text-xs text-slate-400">响应 RcodeRefused，告知请求被 DNS 策略拒绝</div>
+              <div class="font-medium text-text-main">拒绝访问 (REFUSED)</div>
+              <div class="text-xs text-text-sub">响应 RcodeRefused，告知请求被 DNS 策略拒绝</div>
             </div>
           </label>
         </div>
 
-        <div class="pt-4 border-t border-slate-200/60 dark:border-slate-800 flex justify-end">
+        <div class="pt-4 border-t border-surface-border flex justify-end">
           <md-filled-button @click="saveConfig" :disabled="saving">
             <M3Icon name="check" :size="16" slot="icon" class="mr-1" />
             <span>{{ saving ? '保存中...' : '保存策略' }}</span>
@@ -487,36 +487,49 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 添加订阅弹窗 Modal -->
-    <div v-if="isAddModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-      <div class="w-full max-w-md p-6 rounded-3xl bg-surface-container-high border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
-        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">添加规则订阅源</h3>
-        <p class="text-xs text-slate-500">输入规则列表源的名称与可访问的 URL 地址</p>
-
-        <div class="space-y-3">
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">规则源名称</label>
-            <input
-              v-model="newListName"
-              placeholder="例如: EasyList China"
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">规则源 URL / 路径</label>
-            <input
-              v-model="newListURL"
-              placeholder="https://... 或本地文件路径"
-              class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-            />
-          </div>
+    <!-- 添加订阅弹窗 (统一使用 AppModal 架构) -->
+    <AppModal
+      :open="isAddModalOpen"
+      @close="isAddModalOpen = false"
+      title="添加规则订阅源"
+    >
+      <div class="space-y-3 pt-1">
+        <p class="text-xs text-text-sub">输入规则列表源的名称与可访问的 URL 地址</p>
+        <div>
+          <label class="text-xs text-text-sub block mb-1">规则源名称</label>
+          <input
+            v-model="newListName"
+            placeholder="例如: EasyList China"
+            class="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+          />
         </div>
-
-        <div class="flex items-center justify-end gap-3 pt-2">
-          <md-text-button @click="isAddModalOpen = false">取消</md-text-button>
-          <md-filled-button @click="handleAddList" :disabled="saving || !newListURL.trim()">添加并拉取</md-filled-button>
+        <div>
+          <label class="text-xs text-text-sub block mb-1">规则源 URL / 路径</label>
+          <input
+            v-model="newListURL"
+            placeholder="https://... 或本地文件路径"
+            class="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+          />
         </div>
       </div>
-    </div>
+
+      <template #actions>
+        <button
+          type="button"
+          @click="isAddModalOpen = false"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+        >
+          取消
+        </button>
+        <button
+          type="button"
+          :disabled="saving || !newListURL.trim()"
+          @click="handleAddList"
+          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-all flex-shrink-0 cursor-pointer"
+        >
+          添加并拉取
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>

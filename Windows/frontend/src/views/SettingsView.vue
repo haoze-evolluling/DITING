@@ -4,6 +4,7 @@ import { ipc } from '../api/ipc';
 import { themeManager, CLASSIC_SKY_BLUE, type ThemeMode } from '../theme/dynamic-color';
 import type { PortCheckResult } from '../api/types';
 import M3Icon from '../components/M3Icon.vue';
+import AppModal from '../components/AppModal.vue';
 
 const host = ref('127.0.0.1');
 const port = ref('15353');
@@ -111,7 +112,7 @@ async function doEmergencyRestore() {
   restoreMessage.value = '';
   try {
     const msg = await ipc.runNativeEmergencyRestore();
-    restoreMessage.value = msg || '应急恢复指令已执行完成！';
+    restoreMessage.value = msg || '应急恢复指令已执行完成。';
   } catch (err: any) {
     restoreMessage.value = `恢复失败: ${err.message}`;
   } finally {
@@ -125,20 +126,20 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-12">
+  <div class="space-y-6 pb-12 select-none">
     <div>
-      <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+      <h2 class="text-2xl font-bold tracking-tight text-text-main">
         控制台配置与系统工具
       </h2>
-      <p class="text-sm text-slate-500 dark:text-slate-400">
-        特权服务 IPC 通信、Material Design 3 动态色彩体系与端口容灾诊断。
+      <p class="text-sm text-text-sub">
+        特权服务 IPC 通信、现代高质感双色调色彩体系与端口容灾诊断。
       </p>
     </div>
 
     <!-- 1. IPC 通信配置卡片 -->
-    <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-6 shadow-sm backdrop-blur space-y-4">
-      <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-        <M3Icon name="router" :size="20" class="text-slate-500" />
+    <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-4 transition-colors">
+      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
+        <M3Icon name="router" :size="20" class="text-brand-primary" />
         核心特权服务 IPC 通信
       </h3>
 
@@ -172,7 +173,7 @@ onMounted(() => {
       </div>
 
       <div class="flex items-center justify-between pt-2">
-        <div v-if="connResult" class="text-xs font-medium flex items-center gap-2" :class="connResult.success ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'">
+        <div v-if="connResult" class="text-xs font-medium flex items-center gap-2" :class="connResult.success ? 'text-status-success' : 'text-status-error'">
           <M3Icon :name="connResult.success ? 'check_circle' : 'error'" :size="16" />
           <span>{{ connResult.message }}</span>
         </div>
@@ -188,26 +189,26 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 2. 外观与 M3 动态色彩体系 -->
-    <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-6 shadow-sm backdrop-blur space-y-5">
-      <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-        <M3Icon name="palette" :size="20" class="text-slate-500" />
-        外观与 Material Design 3 动态色彩
+    <!-- 2. 外观与现代高质感色彩体系 -->
+    <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-5 transition-colors">
+      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
+        <M3Icon name="palette" :size="20" class="text-brand-primary" />
+        外观与现代色彩系统
       </h3>
 
       <!-- 明暗模式切换 -->
       <div class="space-y-2">
-        <label class="text-xs font-semibold text-slate-500 block">主题色彩模式</label>
+        <label class="text-xs font-semibold text-text-sub block">主题色彩模式</label>
         <div class="flex flex-wrap gap-3">
           <button
             v-for="m in ([{ id: 'system', name: '跟随系统' }, { id: 'light', name: '浅色模式' }, { id: 'dark', name: '深色模式' }] as const)"
             :key="m.id"
             @click="handleModeChange(m.id)"
-            class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 border"
+            class="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-150 border cursor-pointer"
             :class="[
               currentMode === m.id
-                ? 'bg-primary text-on-primary border-primary shadow-sm'
-                : 'bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700',
+                ? 'bg-brand-primary text-white border-brand-primary shadow-xs'
+                : 'bg-surface-card-sub border-surface-border text-text-sub hover:bg-surface-hover',
             ]"
           >
             {{ m.name }}
@@ -216,19 +217,19 @@ onMounted(() => {
       </div>
 
       <!-- 品牌基准主色锁定说明 -->
-      <div class="pt-2 border-t border-slate-200/40 dark:border-slate-800/60">
-        <div class="flex items-center justify-between p-3.5 rounded-xl border border-sky-100 dark:border-sky-950/60 bg-sky-50/50 dark:bg-sky-950/20">
+      <div class="pt-2 border-t border-surface-border">
+        <div class="flex items-center justify-between p-3.5 rounded-xl border border-brand-primary/20 bg-brand-container/20">
           <div class="flex items-center gap-3">
-            <span class="w-5 h-5 rounded-lg bg-[#0288D1] shadow-sm flex items-center justify-center shrink-0 border border-white/20">
+            <span class="w-5 h-5 rounded-lg bg-[#0284c7] shadow-xs flex items-center justify-center shrink-0 border border-white/20">
               <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
             </span>
             <div>
-              <div class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                <span>Material Design 经典天蓝色</span>
-                <span class="font-mono text-[11px] text-sky-700 dark:text-sky-300 bg-sky-100 dark:bg-sky-900/60 px-1.5 py-0.5 rounded">#0288D1</span>
+              <div class="text-xs font-bold text-text-main flex items-center gap-2">
+                <span>经典天穹科技蓝 (Logo 标识色)</span>
+                <span class="font-mono text-[11px] text-brand-primary bg-surface-card px-1.5 py-0.5 rounded border border-surface-border">#0284C7</span>
               </div>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400">
-                系统全域统一主色调，基于 M3 规范实时生成动态光暗语义色盘与容器层次
+              <div class="text-[11px] text-text-sub">
+                系统全域统一主色调，规范浅色清爽纯净质感与深色暗夜深邃层次
               </div>
             </div>
           </div>
@@ -237,83 +238,103 @@ onMounted(() => {
     </div>
 
     <!-- 3. 系统诊断与容灾工具 -->
-    <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-6 shadow-sm backdrop-blur space-y-4">
-      <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-        <M3Icon name="shield" :size="20" class="text-slate-500" />
+    <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-4 transition-colors">
+      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
+        <M3Icon name="shield" :size="20" class="text-brand-primary" />
         系统诊断与容灾自愈工具
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Windows 开机自启 -->
-        <div class="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 space-y-3">
+        <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-slate-800 dark:text-slate-200">开机自动启动</span>
+            <span class="text-sm font-bold text-text-main">开机自动启动</span>
             <md-switch
               :selected="autostart"
               :disabled="togglingAutostart"
               @change="handleToggleAutostart"
             />
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">
+          <p class="text-xs text-text-sub">
             开机登录系统时自动启动客户端，保障 DNS 监控与状态持久化无缝运作。
           </p>
         </div>
 
         <!-- 端口诊断 -->
-        <div class="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 space-y-3">
+        <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-slate-800 dark:text-slate-200">53 端口冲突检测</span>
+            <span class="text-sm font-bold text-text-main">53 端口冲突检测</span>
             <md-outlined-button @click="handleDiagnosePort" :disabled="diagnosingPort">
               <md-circular-progress v-if="diagnosingPort" indeterminate slot="icon" class="w-4 h-4" />
               <M3Icon v-else name="search" slot="icon" :size="16" />
               诊断端口
             </md-outlined-button>
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">
+          <p class="text-xs text-text-sub">
             检测 127.0.0.1:53 是否被 SharedAccess (ICS) 或其他第三方 DNS 软件占用。
           </p>
-          <div v-if="portResult" class="p-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs space-y-1">
-            <div class="font-semibold" :class="portResult.available ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'">
+          <div v-if="portResult" class="p-3 rounded-lg bg-surface-card border border-surface-border text-xs space-y-1">
+            <div class="font-semibold" :class="portResult.available ? 'text-status-success' : 'text-status-warning'">
               {{ portResult.available ? '53 端口可用' : '检测到端口占用或冲突' }}
             </div>
-            <p class="text-slate-600 dark:text-slate-300 whitespace-pre-line">{{ portResult.diagnostic }}</p>
+            <p class="text-text-sub whitespace-pre-line">{{ portResult.diagnostic }}</p>
           </div>
         </div>
 
         <!-- 应急自愈脚本 -->
-        <div class="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 space-y-3">
+        <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-slate-800 dark:text-slate-200">离线 DNS 应急恢复</span>
+            <span class="text-sm font-bold text-text-main">离线 DNS 应急恢复</span>
             <md-filled-button @click="handleEmergencyRestore" :disabled="restoring">
               <md-circular-progress v-if="restoring" indeterminate slot="icon" class="w-4 h-4" />
               <M3Icon v-else name="refresh" slot="icon" :size="16" />
               执行自愈
             </md-filled-button>
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">
+          <p class="text-xs text-text-sub">
             当极端异常导致系统网卡未还原时，一键从持久化快照完全还原原生 DNS。
           </p>
-          <div v-if="restoreMessage" class="p-3 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+          <div v-if="restoreMessage" class="p-3 rounded-lg bg-status-success-bg text-status-success border border-status-success/30 text-xs font-semibold">
             {{ restoreMessage }}
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 离线恢复确认对话框 (M3 Alert Dialog) -->
-    <md-dialog :open="showRestoreDialog" @close="showRestoreDialog = false" type="alert">
-      <div slot="headline" class="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-        <M3Icon name="warning" :size="24" />
-        <span>确认执行系统 DNS 应急自愈？</span>
-      </div>
-      <form slot="content" id="restore-form" method="dialog" class="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+    <!-- 离线恢复确认对话框 (使用 AppModal 居中架构) -->
+    <AppModal
+      :open="showRestoreDialog"
+      @close="showRestoreDialog = false"
+      type="alert"
+    >
+      <template #headline>
+        <div class="flex items-center gap-2 text-status-warning font-bold">
+          <M3Icon name="warning" :size="24" />
+          <span>确认执行系统 DNS 应急自愈？</span>
+        </div>
+      </template>
+
+      <div class="space-y-2 text-xs text-text-sub leading-relaxed">
         <p>此操作将扫描 <code>%ProgramData%\DITING\dns_state.json</code> 持久化状态快照，将所有已接管物理网卡强制还原回 DHCP 或原静态 DNS 设置，并执行系统 DNS 缓存刷新。</p>
         <p>适用于后台特权服务非正常退出、或系统网卡 DNS 指向残留需要一键脱困的场景。</p>
-      </form>
-      <div slot="actions">
-        <md-text-button form="restore-form" value="cancel" @click="showRestoreDialog = false">取消</md-text-button>
-        <md-filled-button form="restore-form" value="confirm" @click="doEmergencyRestore">确认自愈恢复</md-filled-button>
       </div>
-    </md-dialog>
+
+      <template #actions>
+        <button
+          type="button"
+          @click="showRestoreDialog = false"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+        >
+          取消
+        </button>
+        <button
+          type="button"
+          @click="doEmergencyRestore"
+          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-status-warning hover:brightness-110 shadow-xs transition-all flex-shrink-0 cursor-pointer"
+        >
+          确认自愈恢复
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>

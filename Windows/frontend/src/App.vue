@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { ipc } from './api/ipc';
 import { themeManager } from './theme/dynamic-color';
 import M3Icon from './components/M3Icon.vue';
 import StatusBadge from './components/StatusBadge.vue';
+import AppModal from './components/AppModal.vue';
 import DashboardView from './views/DashboardView.vue';
 import AdaptersView from './views/AdaptersView.vue';
 import UpstreamView from './views/UpstreamView.vue';
@@ -54,7 +55,6 @@ onMounted(() => {
   unsubConn = ipc.onConnectionChange((connected) => {
     isConnected.value = connected;
     if (!connected) {
-      // 延迟 2 秒若仍未连通则弹窗提醒
       setTimeout(() => {
         if (!ipc.isConnected) {
           showAlertModal.value = true;
@@ -77,9 +77,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex h-screen w-screen overflow-hidden bg-surface text-on-surface font-sans antialiased select-none">
+  <div class="flex h-screen w-screen overflow-hidden bg-surface-base text-text-main font-sans antialiased select-none">
     <!-- M3 桌面端 Navigation Rail (左侧垂直导航轨) -->
-    <nav class="w-20 md:w-24 shrink-0 flex flex-col items-center justify-between py-5 border-r border-slate-200/50 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/70 backdrop-blur z-20">
+    <nav class="w-20 md:w-24 shrink-0 flex flex-col items-center justify-between py-5 border-r border-surface-border bg-surface-card transition-colors z-20">
       <!-- 顶部 Logo & 品牌徽标 -->
       <div class="flex flex-col items-center gap-2">
         <div class="relative group cursor-pointer" @click="currentTab = 'dashboard'">
@@ -89,25 +89,25 @@ onUnmounted(() => {
             class="w-10 h-10 drop-shadow-sm transition-transform duration-200 group-hover:scale-105"
           />
           <span
-            class="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 rounded-full border-2 border-white dark:border-slate-950"
-            :class="isConnected ? 'bg-emerald-500' : 'bg-rose-500'"
+            class="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 rounded-full border-2 border-surface-card"
+            :class="isConnected ? 'bg-status-success' : 'bg-status-error'"
             :title="isConnected ? '特权服务已连接' : '特权服务未连接'"
           />
         </div>
-        <span class="text-[11px] font-bold tracking-tight text-slate-800 dark:text-slate-200">谛听 DNS</span>
+        <span class="text-[11px] font-bold tracking-tight text-text-main">谛听 DNS</span>
       </div>
 
       <!-- 导航项列表 (Navigation Rail Destination) -->
-      <div class="flex flex-col items-center gap-3 my-auto w-full px-2">
+      <div class="flex flex-col items-center gap-2.5 my-auto w-full px-2">
         <button
           v-for="item in navItems"
           :key="item.id"
           @click="currentTab = item.id"
-          class="group relative flex flex-col items-center justify-center w-full py-2 rounded-2xl transition-all duration-200"
+          class="group relative flex flex-col items-center justify-center w-full py-2 rounded-2xl transition-all duration-200 cursor-pointer"
           :class="[
             currentTab === item.id
-              ? 'text-primary font-bold'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/50',
+              ? 'text-brand-primary font-bold'
+              : 'text-text-sub hover:text-text-main hover:bg-surface-hover',
           ]"
         >
           <!-- M3 活动指示气泡 (Active Indicator) -->
@@ -115,7 +115,7 @@ onUnmounted(() => {
             class="flex items-center justify-center w-14 h-8 rounded-full transition-all duration-200"
             :class="[
               currentTab === item.id
-                ? 'bg-primary/15 text-primary shadow-xs'
+                ? 'bg-brand-container text-brand-primary shadow-2xs'
                 : 'text-inherit',
             ]"
           >
@@ -130,7 +130,7 @@ onUnmounted(() => {
         <!-- 主题切换 -->
         <button
           @click="toggleTheme"
-          class="flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+          class="flex items-center justify-center w-9 h-9 rounded-xl text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
           :title="isDark ? '切换浅色模式' : '切换深色模式'"
         >
           <M3Icon :name="isDark ? 'light_mode' : 'dark_mode'" :size="18" />
@@ -139,8 +139,8 @@ onUnmounted(() => {
         <!-- 设置快捷入口 -->
         <button
           @click="currentTab = 'settings'"
-          class="flex items-center justify-center w-9 h-9 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
-          :class="{ 'text-primary': currentTab === 'settings' }"
+          class="flex items-center justify-center w-9 h-9 rounded-xl text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+          :class="{ 'text-brand-primary': currentTab === 'settings' }"
           title="系统与外观设置"
         >
           <M3Icon name="settings" :size="18" />
@@ -149,15 +149,15 @@ onUnmounted(() => {
     </nav>
 
     <!-- 右侧主视口区域 (Main Content Area) -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/50 dark:bg-slate-950/40">
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-surface-base">
       <!-- 顶栏状态条 (Top Bar) -->
-      <header class="h-14 shrink-0 flex items-center justify-between px-8 border-b border-slate-200/40 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/40 backdrop-blur">
+      <header class="h-14 shrink-0 flex items-center justify-between px-8 border-b border-surface-border bg-surface-card/80 backdrop-blur-md transition-colors">
         <div class="flex items-center gap-3">
-          <span class="text-sm font-bold text-slate-800 dark:text-slate-200">
+          <span class="text-sm font-bold text-text-main">
             {{ navItems.find(i => i.id === currentTab)?.label }}
           </span>
-          <span class="text-xs text-slate-400">|</span>
-          <span class="text-xs text-slate-500 dark:text-slate-400">Windows 桌面客户端 v0.1.0</span>
+          <span class="text-xs text-text-muted">|</span>
+          <span class="text-xs text-text-sub">Windows 桌面客户端 v0.1.0</span>
         </div>
 
         <div class="flex items-center gap-3">
@@ -182,24 +182,43 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <!-- 特权服务未运行友好引导弹窗 (标准 M3 Alert Dialog) -->
-    <md-dialog :open="showAlertModal" @close="showAlertModal = false" type="alert">
-      <div slot="headline" class="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-        <M3Icon name="warning" :size="24" />
-        <span>未检测到特权服务运行</span>
-      </div>
-      <form slot="content" id="alert-form" method="dialog" class="space-y-3 pt-1">
-        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+    <!-- 特权服务未运行友好引导弹窗 (居中与现代圆角按钮) -->
+    <AppModal
+      :open="showAlertModal"
+      @close="showAlertModal = false"
+      type="alert"
+    >
+      <template #headline>
+        <div class="flex items-center gap-2 text-status-error font-bold">
+          <M3Icon name="warning" :size="22" />
+          <span>未检测到特权服务运行</span>
+        </div>
+      </template>
+
+      <div class="space-y-3 pt-1">
+        <p class="text-xs text-text-sub leading-relaxed">
           谛听客户端需要后台特权服务 (<code>diting-service.exe</code>) 以管理员权限运行，以接管物理网卡 DNS 并监听 53 端口。请确认服务已启动或使用以下命令手动运行：
         </p>
-        <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono text-xs text-slate-800 dark:text-slate-200 select-all">
+        <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border font-mono text-xs text-text-main select-all">
           diting-service.exe -run
         </div>
-      </form>
-      <div slot="actions">
-        <md-text-button form="alert-form" value="dismiss" @click="showAlertModal = false">稍后处理</md-text-button>
-        <md-filled-button form="alert-form" value="retry" @click="retryConnect">重新尝试连接</md-filled-button>
       </div>
-    </md-dialog>
+
+      <template #actions>
+        <button
+          @click="showAlertModal = false"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+        >
+          稍后处理
+        </button>
+        <button
+          @click="retryConnect"
+          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover shadow-xs flex items-center gap-1.5 transition-all flex-shrink-0 cursor-pointer"
+        >
+          <M3Icon name="refresh" :size="15" />
+          <span>重新尝试连接</span>
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>

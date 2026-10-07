@@ -17,28 +17,28 @@ const props = withDefaults(
 const badgeClasses = computed(() => {
   switch (props.status) {
     case 'active':
-      return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
+      return 'bg-status-success-bg text-status-success border-status-success/30';
     case 'warning':
-      return 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30';
+      return 'bg-status-warning-bg text-status-warning border-status-warning/30';
     case 'error':
-      return 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30';
+      return 'bg-status-error-bg text-status-error border-status-error/30';
     case 'inactive':
     default:
-      return 'bg-slate-500/15 text-slate-500 dark:text-slate-400 border-slate-500/30';
+      return 'bg-surface-card-sub text-text-sub border-surface-border';
   }
 });
 
 const dotClasses = computed(() => {
   switch (props.status) {
     case 'active':
-      return 'bg-emerald-500';
+      return 'bg-status-success';
     case 'warning':
-      return 'bg-amber-500';
+      return 'bg-status-warning';
     case 'error':
-      return 'bg-rose-500';
+      return 'bg-status-error';
     case 'inactive':
     default:
-      return 'bg-slate-400';
+      return 'bg-text-muted';
   }
 });
 </script>

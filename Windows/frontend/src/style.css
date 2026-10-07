@@ -1,32 +1,121 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
+
+@theme {
+  --color-surface-base: var(--app-surface-base);
+  --color-surface-card: var(--app-surface-card);
+  --color-surface-card-sub: var(--app-surface-card-sub);
+  --color-surface-hover: var(--app-surface-hover);
+  --color-surface-border: var(--app-surface-border);
+  --color-surface-border-sub: var(--app-surface-border-sub);
+
+  --color-text-main: var(--app-text-main);
+  --color-text-sub: var(--app-text-sub);
+  --color-text-muted: var(--app-text-muted);
+
+  --color-brand-primary: var(--app-brand-primary);
+  --color-brand-primary-hover: var(--app-brand-primary-hover);
+  --color-brand-container: var(--app-brand-container);
+  --color-brand-on-container: var(--app-brand-on-container);
+
+  --color-status-success: var(--app-status-success);
+  --color-status-success-bg: var(--app-status-success-bg);
+  --color-status-warning: var(--app-status-warning);
+  --color-status-warning-bg: var(--app-status-warning-bg);
+  --color-status-error: var(--app-status-error);
+  --color-status-error-bg: var(--app-status-error-bg);
+}
+
 :root {
-  --md-sys-color-primary: #0288d1;
+  /* 基础画布与卡片容器 - 清爽纯净质感 (Light Mode) */
+  --app-surface-base: #f8fafc;
+  --app-surface-card: #ffffff;
+  --app-surface-card-sub: #f1f5f9;
+  --app-surface-hover: #e2e8f0;
+  --app-surface-border: #e2e8f0;
+  --app-surface-border-sub: #f1f5f9;
+
+  /* 排版文字层级 */
+  --app-text-main: #0f172a;
+  --app-text-sub: #475569;
+  --app-text-muted: #94a3b8;
+
+  /* 品牌天穹科技蓝 (#0284c7) */
+  --app-brand-primary: #0284c7;
+  --app-brand-primary-hover: #0369a1;
+  --app-brand-container: #e0f2fe;
+  --app-brand-on-container: #0369a1;
+
+  /* 状态反馈色 (Light) */
+  --app-status-success: #10b981;
+  --app-status-success-bg: #ecfdf5;
+  --app-status-warning: #f59e0b;
+  --app-status-warning-bg: #fffbeb;
+  --app-status-error: #ef4444;
+  --app-status-error-bg: #fef2f2;
+
+  /* Material Web Components 语义变量映射 (Light) */
+  --md-sys-color-primary: #0284c7;
   --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #d1e4ff;
-  --md-sys-color-on-primary-container: #001d36;
-  --md-sys-color-surface: #f8fafd;
-  --md-sys-color-on-surface: #191c1e;
-  --md-sys-color-surface-container: #edeef2;
-  --md-sys-color-outline: #71787e;
-  --md-sys-color-outline-variant: #c1c7ce;
-  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-primary-container: #e0f2fe;
+  --md-sys-color-on-primary-container: #0369a1;
+  --md-sys-color-surface: #f8fafc;
+  --md-sys-color-on-surface: #0f172a;
+  --md-sys-color-surface-container: #ffffff;
+  --md-sys-color-surface-container-high: #f1f5f9;
+  --md-sys-color-on-surface-variant: #475569;
+  --md-sys-color-outline: #cbd5e1;
+  --md-sys-color-outline-variant: #e2e8f0;
+  --md-sys-color-error: #ef4444;
   --md-sys-color-on-error: #ffffff;
+  --md-sys-color-scrim: rgba(15, 23, 42, 0.45);
 }
 
 :root[data-theme="dark"],
 .dark {
-  --md-sys-color-primary: #7cd0ff;
-  --md-sys-color-on-primary: #00344a;
-  --md-sys-color-primary-container: #004c6a;
-  --md-sys-color-on-primary-container: #c4e7ff;
-  --md-sys-color-surface: #0f1417;
-  --md-sys-color-on-surface: #deede6;
-  --md-sys-color-surface-container: #1b2024;
-  --md-sys-color-outline: #8b9198;
-  --md-sys-color-outline-variant: #41474d;
-  --md-sys-color-error: #ffb4ab;
-  --md-sys-color-on-error: #690005;
+  /* 基础画布与卡片容器 - 暗夜深邃立体质感 (Dark Mode) */
+  --app-surface-base: #090d16;
+  --app-surface-card: #131c2d;
+  --app-surface-card-sub: #19243a;
+  --app-surface-hover: #22304d;
+  --app-surface-border: #1e293b;
+  --app-surface-border-sub: #151f32;
+
+  /* 排版文字层级 */
+  --app-text-main: #f8fafc;
+  --app-text-sub: #94a3b8;
+  --app-text-muted: #64748b;
+
+  /* 品牌天穹科技蓝 (深色高亮 #38bdf8) */
+  --app-brand-primary: #38bdf8;
+  --app-brand-primary-hover: #7dd3fc;
+  --app-brand-container: rgba(56, 189, 248, 0.15);
+  --app-brand-on-container: #bae6fd;
+
+  /* 状态反馈色 (Dark) */
+  --app-status-success: #34d399;
+  --app-status-success-bg: rgba(16, 185, 129, 0.15);
+  --app-status-warning: #fbbf24;
+  --app-status-warning-bg: rgba(245, 158, 11, 0.15);
+  --app-status-error: #f87171;
+  --app-status-error-bg: rgba(239, 68, 68, 0.15);
+
+  /* Material Web Components 语义变量映射 (Dark) */
+  --md-sys-color-primary: #38bdf8;
+  --md-sys-color-on-primary: #082f49;
+  --md-sys-color-primary-container: #075985;
+  --md-sys-color-on-primary-container: #e0f2fe;
+  --md-sys-color-surface: #090d16;
+  --md-sys-color-on-surface: #f8fafc;
+  --md-sys-color-surface-container: #131c2d;
+  --md-sys-color-surface-container-high: #19243a;
+  --md-sys-color-on-surface-variant: #94a3b8;
+  --md-sys-color-outline: #475569;
+  --md-sys-color-outline-variant: #1e293b;
+  --md-sys-color-error: #f87171;
+  --md-sys-color-on-error: #450a0a;
+  --md-sys-color-scrim: rgba(0, 0, 0, 0.65);
 }
 
 @font-face {
@@ -43,38 +132,60 @@ html, body {
   height: 100vh;
   overflow: hidden;
   font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  background-color: var(--md-sys-color-surface);
-  color: var(--md-sys-color-on-surface);
+  background-color: var(--app-surface-base);
+  color: var(--app-text-main);
   user-select: none;
 }
 
 #app {
   width: 100%;
   height: 100%;
+  background-color: var(--app-surface-base);
+  color: var(--app-text-main);
 }
 
-/* Material Web 组件全局微调 */
+/* Material Web 桌面端现代圆角矩形按钮（告别胶囊变形与挤压溢出） */
 md-filled-button,
 md-outlined-button,
 md-text-button,
-md-icon-button,
-md-switch,
-md-radio,
-md-outlined-text-field,
-md-outlined-select,
-md-dialog {
-  --md-sys-color-primary: var(--md-sys-color-primary);
+md-elevated-button {
+  --md-filled-button-container-shape: 10px;
+  --md-outlined-button-container-shape: 10px;
+  --md-text-button-container-shape: 10px;
+  --md-elevated-button-container-shape: 10px;
+  --md-sys-color-primary: var(--app-brand-primary);
   font-family: inherit;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+md-filled-button {
+  --md-filled-button-container-color: var(--app-brand-primary);
+  --md-filled-button-label-text-color: #ffffff;
+}
+
+:root[data-theme="dark"] md-filled-button,
+.dark md-filled-button {
+  --md-filled-button-label-text-color: #082f49;
 }
 
 md-dialog {
-  --md-dialog-container-shape: 24px;
+  --md-dialog-container-shape: 20px;
+  --md-dialog-container-color: var(--app-surface-card);
+  --md-sys-color-surface-container-high: var(--app-surface-card);
+  font-family: inherit;
 }
 
 md-outlined-text-field,
 md-outlined-select {
-  --md-outlined-text-field-container-shape: 12px;
-  --md-outlined-select-text-field-container-shape: 12px;
+  --md-outlined-text-field-container-shape: 10px;
+  --md-outlined-select-text-field-container-shape: 10px;
+  --md-sys-color-primary: var(--app-brand-primary);
+  font-family: inherit;
+}
+
+md-switch {
+  --md-sys-color-primary: var(--app-brand-primary);
 }
 
 /* 自定义极简滚动条 */

@@ -14,7 +14,7 @@ const props = withDefaults(
   {
     maxPoints: 30,
     height: 120,
-    strokeColor: '#0288d1',
+    strokeColor: '#0284c7',
     gradientId: 'chart-grad-primary',
     label: '',
     unit: '',
@@ -68,17 +68,17 @@ const latestValue = computed(() => {
 </script>
 
 <template>
-  <div class="relative w-full rounded-2xl border border-slate-200/40 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-4 shadow-sm backdrop-blur">
+  <div class="relative w-full rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs">
     <div class="flex items-center justify-between mb-2">
-      <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+      <span class="text-xs font-semibold uppercase tracking-wider text-text-sub">
         {{ label }}
       </span>
-      <span class="text-xs font-medium text-slate-700 dark:text-slate-300">
-        当前: <strong class="text-sm font-bold text-slate-900 dark:text-slate-100">{{ latestValue.toFixed(1) }}</strong> {{ unit }}
+      <span class="text-xs font-medium text-text-sub">
+        当前: <strong class="text-sm font-bold text-text-main">{{ latestValue.toFixed(1) }}</strong> {{ unit }}
       </span>
     </div>
 
-    <div class="w-full overflow-hidden rounded-xl bg-slate-50/50 dark:bg-slate-950/40">
+    <div class="w-full overflow-hidden rounded-xl bg-surface-card-sub border border-surface-border-sub">
       <svg :viewBox="viewBox" class="w-full overflow-visible" preserveAspectRatio="none" :height="height">
         <defs>
           <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">

@@ -4,6 +4,7 @@ import { ipc } from '../api/ipc';
 import type { StatusResponse, ProviderConfig, UpstreamInfo } from '../api/types';
 import StatusBadge from '../components/StatusBadge.vue';
 import M3Icon from '../components/M3Icon.vue';
+import AppModal from '../components/AppModal.vue';
 
 const status = ref<StatusResponse | null>(null);
 const currentMode = ref('primary_backup');
@@ -165,14 +166,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-12">
+  <div class="space-y-6 pb-12 select-none">
     <!-- 头部操作栏 -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h2 class="text-2xl font-bold tracking-tight text-text-main">
           上游 DNS 解析节点与调度策略
         </h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400">
+        <p class="text-sm text-text-sub">
           支持 Plain (UDP/TCP 53)、DoH (HTTPS) 及 DoT (TLS) 协议，多策略智能容灾与测速。
         </p>
       </div>
@@ -190,26 +191,30 @@ onMounted(() => {
     </div>
 
     <!-- 消息横幅 -->
-    <div v-if="successMessage" class="flex items-center justify-between rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-sm text-emerald-600 dark:text-emerald-400">
+    <div v-if="successMessage" class="flex items-center justify-between rounded-xl bg-status-success-bg border border-status-success/20 px-4 py-3 text-sm text-status-success shadow-xs">
       <div class="flex items-center gap-2">
         <M3Icon name="check_circle" :size="18" />
         <span>{{ successMessage }}</span>
       </div>
-      <md-text-button @click="successMessage = ''">知道了</md-text-button>
+      <button @click="successMessage = ''" class="text-xs font-semibold px-2 py-1 rounded-lg hover:bg-surface-hover text-text-sub cursor-pointer">
+        知道了
+      </button>
     </div>
 
-    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
+    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-3 text-sm text-status-error shadow-xs">
       <div class="flex items-center gap-2">
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
       </div>
-      <md-text-button @click="errorMessage = ''">关闭</md-text-button>
+      <button @click="errorMessage = ''" class="text-xs font-semibold px-2 py-1 rounded-lg hover:bg-surface-hover text-text-sub cursor-pointer">
+        关闭
+      </button>
     </div>
 
     <!-- 调度策略选择卡片 (Radio + Cards) -->
-    <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-6 shadow-sm backdrop-blur">
-      <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-        <M3Icon name="upstream" :size="20" class="text-slate-500" />
+    <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs transition-colors">
+      <h3 class="text-base font-bold text-text-main mb-4 flex items-center gap-2">
+        <M3Icon name="upstream" :size="20" class="text-brand-primary" />
         上游调度策略选择
       </h3>
 
@@ -220,8 +225,8 @@ onMounted(() => {
           class="flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 cursor-pointer"
           :class="[
             currentMode === mode.id
-              ? 'border-primary/50 bg-primary/5 dark:bg-primary/10 shadow-sm'
-              : 'border-slate-200/60 dark:border-slate-800/60 hover:bg-slate-50 dark:hover:bg-slate-800/40',
+              ? 'border-brand-primary/60 bg-brand-container/20 shadow-xs'
+              : 'border-surface-border bg-surface-card-sub hover:bg-surface-hover',
           ]"
           @click="handleModeChange(mode.id)"
         >
@@ -232,10 +237,10 @@ onMounted(() => {
             class="mt-0.5"
           />
           <div class="space-y-1">
-            <span class="text-sm font-bold text-slate-900 dark:text-slate-100">
+            <span class="text-sm font-bold text-text-main">
               {{ mode.name }}
             </span>
-            <p class="text-xs text-slate-500 dark:text-slate-400">
+            <p class="text-xs text-text-sub">
               {{ mode.desc }}
             </p>
           </div>
@@ -245,21 +250,21 @@ onMounted(() => {
 
     <!-- 上游节点列表 -->
     <div class="space-y-4">
-      <h3 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-        <M3Icon name="router" :size="20" class="text-slate-500" />
-        已配置上游解析节点 ({{ providers.length }})
+      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
+        <M3Icon name="router" :size="20" class="text-brand-primary" />
+        已配置上游解析节点 ({{ upstreams.length }})
       </h3>
 
       <div class="space-y-3">
         <div
-          v-for="(node, idx) in providers"
+          v-for="(node, idx) in upstreams"
           :key="node.id"
-          class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur transition-all duration-200 hover:shadow-md"
+          class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-brand-primary/30"
         >
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="space-y-1.5">
               <div class="flex items-center gap-3">
-                <span class="text-base font-bold text-slate-900 dark:text-slate-100 font-mono">
+                <span class="text-base font-bold text-text-main font-mono">
                   {{ node.id }}
                 </span>
                 <span
@@ -267,43 +272,45 @@ onMounted(() => {
                   :class="[
                     node.protocol === 'DOH' ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400' :
                     node.protocol === 'DOT' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' :
-                    'bg-slate-500/15 text-slate-600 dark:text-slate-400'
+                    'bg-surface-card-sub text-text-sub border border-surface-border-sub'
                   ]"
                 >
                   {{ node.protocol }}
                 </span>
                 <StatusBadge
-                  status="active"
-                  text="就绪"
+                  :status="node.active ? 'active' : 'inactive'"
+                  :text="node.active ? '健康活动' : '故障隔离'"
                   size="sm"
                 />
               </div>
-
-              <p class="text-xs font-mono text-slate-600 dark:text-slate-300">
-                {{ node.protocol === 'DOH' ? node.url || node.server : node.server }}
+              <p class="text-xs font-mono text-text-sub">
+                目标服务器: <span class="text-text-main font-medium">{{ node.server }}</span>
+                <span v-if="node.url" class="ml-2">| DoH: {{ node.url }}</span>
               </p>
             </div>
 
-            <!-- 操作与测速按钮 -->
+            <!-- 右侧测速与操作项 -->
             <div class="flex items-center gap-2">
-              <div v-if="probeResults[node.id] !== undefined" class="mr-2 text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                RTT: {{ probeResults[node.id].toFixed(1) }} ms
+              <div v-if="probeResults[node.id] !== undefined" class="text-xs font-mono mr-2">
+                <span class="px-2 py-1 rounded-lg bg-status-success-bg text-status-success border border-status-success/30 font-semibold">
+                  {{ probeResults[node.id].toFixed(1) }} ms
+                </span>
               </div>
 
               <md-outlined-button
-                @click="handleTestNode(node)"
+                @click="handleTestNode({ id: node.id, protocol: node.protocol, server: node.server, url: node.url })"
                 :disabled="probingId === node.id"
               >
                 <md-circular-progress v-if="probingId === node.id" indeterminate slot="icon" class="w-4 h-4" />
                 <M3Icon v-else name="bolt" slot="icon" :size="16" />
-                测速
+                节点测速
               </md-outlined-button>
 
               <md-icon-button @click="openEditDialog(idx)">
-                <M3Icon name="edit" :size="18" />
+                <M3Icon name="settings" :size="18" />
               </md-icon-button>
 
-              <md-icon-button @click="handleDeleteNode(idx)" :disabled="providers.length <= 1">
+              <md-icon-button @click="handleDeleteNode(idx)" :disabled="upstreams.length <= 1">
                 <M3Icon name="delete" :size="18" />
               </md-icon-button>
             </div>
@@ -312,12 +319,13 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 新增 / 编辑节点弹窗 (标准 M3 Dialog + Outlined Text Field + Select) -->
-    <md-dialog :open="isDialogOpen" @close="isDialogOpen = false">
-      <div slot="headline">
-        {{ editingIndex >= 0 ? '编辑上游节点' : '新增上游 DNS 节点' }}
-      </div>
-      <form slot="content" id="upstream-dialog-form" method="dialog" class="space-y-4 pt-2">
+    <!-- 新增 / 编辑节点弹窗 (统一使用 AppModal 居中架构) -->
+    <AppModal
+      :open="isDialogOpen"
+      @close="isDialogOpen = false"
+      :title="editingIndex >= 0 ? '编辑上游节点' : '新增上游 DNS 节点'"
+    >
+      <form id="upstream-dialog-form" @submit.prevent="handleSaveDialog" class="space-y-4 pt-1">
         <md-outlined-text-field
           label="节点标识 ID"
           :value="formId"
@@ -360,10 +368,23 @@ onMounted(() => {
           placeholder="https://dns.alidns.com/dns-query"
         ></md-outlined-text-field>
       </form>
-      <div slot="actions">
-        <md-text-button form="upstream-dialog-form" value="cancel" @click="isDialogOpen = false">取消</md-text-button>
-        <md-filled-button form="upstream-dialog-form" value="save" @click="handleSaveDialog">保存节点</md-filled-button>
-      </div>
-    </md-dialog>
+
+      <template #actions>
+        <button
+          type="button"
+          @click="isDialogOpen = false"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+        >
+          取消
+        </button>
+        <button
+          type="button"
+          @click="handleSaveDialog"
+          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover shadow-xs transition-all flex-shrink-0 cursor-pointer"
+        >
+          保存节点
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>

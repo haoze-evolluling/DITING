@@ -11,7 +11,6 @@ interface LogItem extends QueryEventData {
 
 const logs = ref<LogItem[]>([]);
 const isPaused = ref(false);
-const autoScroll = ref(true);
 const searchFilter = ref('');
 const selectedType = ref('ALL');
 const selectedStatus = ref('ALL');
@@ -62,19 +61,15 @@ function handleNewQuery(data: QueryEventData, timestamp: number) {
   };
 
   logs.value.unshift(item);
-  // 保留最新 500 条记录
   if (logs.value.length > 500) {
     logs.value.pop();
   }
 
-  if (autoScroll.value && logContainer.value) {
-    nextTick(() => {
-      // 保持置顶滚动
-      if (logContainer.value) {
-        logContainer.value.scrollTop = 0;
-      }
-    });
-  }
+  nextTick(() => {
+    if (logContainer.value && !isPaused.value) {
+      logContainer.value.scrollTop = 0;
+    }
+  });
 }
 
 function clearLogs() {
@@ -85,9 +80,10 @@ function togglePause() {
   isPaused.value = !isPaused.value;
 }
 
-function formatTime(ts: number) {
-  const d = new Date(ts);
-  return d.toTimeString().split(' ')[0] + '.' + String(d.getMilliseconds()).padStart(3, '0');
+function formatTime(timestamp: number): string {
+  const d = new Date(timestamp);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${d.getMilliseconds().toString().padStart(3, '0')}`;
 }
 
 onMounted(() => {
@@ -104,17 +100,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-4 pb-12 flex flex-col h-[calc(100vh-140px)]">
-    <!-- 头部工具栏 -->
+  <div class="h-full flex flex-col space-y-4 pb-6 select-none">
+    <!-- 头部操作栏 -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <h2 class="text-2xl font-bold tracking-tight text-text-main flex items-center gap-2">
           实时 DNS 解析日志
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-surface-card-sub text-text-sub border border-surface-border-sub">
             {{ filteredLogs.length }} 条记录
           </span>
         </h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400">
+        <p class="text-sm text-text-sub">
           基于 WebSocket 实时通道接收来自 127.0.0.1:53 的 DNS 查询事件。
         </p>
       </div>
@@ -134,15 +130,15 @@ onUnmounted(() => {
     </div>
 
     <!-- 检索与过滤条 (Filter Chips & Search) -->
-    <div class="flex flex-wrap items-center gap-3 p-3 rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 shadow-sm backdrop-blur shrink-0">
+    <div class="flex flex-wrap items-center gap-3 p-3 rounded-2xl border border-surface-border bg-surface-card shadow-xs shrink-0 transition-colors">
       <!-- 搜索框 -->
       <div class="relative flex-1 min-w-[200px]">
-        <M3Icon name="search" :size="18" class="absolute left-3 top-2.5 text-slate-400" />
+        <M3Icon name="search" :size="18" class="absolute left-3 top-2.5 text-text-muted" />
         <input
           v-model="searchFilter"
           type="text"
           placeholder="检索域名或客户端 IP..."
-          class="w-full pl-9 pr-4 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-xs focus:outline-none focus:ring-2 focus:ring-primary/40 text-slate-900 dark:text-slate-100 placeholder:text-slate-400"
+          class="w-full pl-9 pr-4 py-1.5 rounded-xl border border-surface-border-sub bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted"
         />
       </div>
 
@@ -152,11 +148,11 @@ onUnmounted(() => {
           v-for="t in queryTypes"
           :key="t"
           @click="selectedType = t"
-          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none cursor-pointer"
           :class="[
             selectedType === t
-              ? 'bg-primary text-on-primary shadow-sm'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700',
+              ? 'bg-brand-primary text-white shadow-xs'
+              : 'bg-surface-card-sub border border-surface-border-sub text-text-sub hover:bg-surface-hover',
           ]"
         >
           {{ t }}
@@ -164,16 +160,16 @@ onUnmounted(() => {
       </div>
 
       <!-- Status Chips -->
-      <div class="flex items-center gap-1.5 overflow-x-auto py-1 border-l border-slate-200 dark:border-slate-800 pl-3">
+      <div class="flex items-center gap-1.5 overflow-x-auto py-1 border-l border-surface-border pl-3">
         <button
           v-for="s in statusOptions"
           :key="s"
           @click="selectedStatus = s"
-          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none cursor-pointer"
           :class="[
             selectedStatus === s
-              ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700',
+              ? 'bg-brand-primary text-white shadow-xs'
+              : 'bg-surface-card-sub border border-surface-border-sub text-text-sub hover:bg-surface-hover',
           ]"
         >
           {{ s }}
@@ -181,14 +177,14 @@ onUnmounted(() => {
       </div>
 
       <!-- 仅拦截过滤器 -->
-      <div class="flex items-center border-l border-slate-200 dark:border-slate-800 pl-3">
+      <div class="flex items-center border-l border-surface-border pl-3">
         <button
           @click="onlyBlocked = !onlyBlocked"
-          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none flex items-center gap-1.5"
+          class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-150 select-none flex items-center gap-1.5 cursor-pointer"
           :class="[
             onlyBlocked
-              ? 'bg-rose-600 text-white shadow-sm'
-              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20',
+              ? 'bg-status-error text-white shadow-xs'
+              : 'bg-status-error-bg text-status-error border border-status-error/30 hover:bg-status-error/20',
           ]"
         >
           <M3Icon name="block" :size="13" />
@@ -200,26 +196,26 @@ onUnmounted(() => {
     <!-- 实时日志滚动列表 -->
     <div
       ref="logContainer"
-      class="flex-1 overflow-y-auto rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 shadow-sm backdrop-blur p-3 space-y-2 font-mono text-xs"
+      class="flex-1 overflow-y-auto rounded-2xl border border-surface-border bg-surface-card shadow-xs p-3 space-y-2 font-mono text-xs transition-colors"
     >
       <div
         v-if="filteredLogs.length === 0"
-        class="h-full flex flex-col items-center justify-center p-12 text-slate-400"
+        class="h-full flex flex-col items-center justify-center p-12 text-text-muted"
       >
-        <M3Icon name="logs" :size="36" class="mb-2 opacity-50" />
+        <M3Icon name="logs" :size="36" class="mb-2 opacity-40 text-text-muted" />
         <span>暂无匹配的 DNS 查询记录，发起域名访问后将自动实时呈现...</span>
       </div>
 
       <div
         v-for="item in filteredLogs"
         :key="item.id"
-        class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 bg-slate-50/60 dark:bg-slate-950/30 hover:bg-slate-100/80 dark:hover:bg-slate-800/40 transition-colors"
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl border border-surface-border-sub bg-surface-card-sub hover:bg-surface-hover/70 transition-colors"
       >
         <div class="flex items-center gap-3 overflow-hidden">
           <!-- 拦截标识 -->
           <span
             v-if="item.blocked"
-            class="px-2 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[10px] shrink-0"
+            class="px-2 py-0.5 rounded-md bg-status-error text-white font-bold text-[10px] shrink-0"
             :title="`规则阻断: ${item.filterRule || item.filterReason || '已拦截'}`"
           >
             BLOCKED
@@ -227,33 +223,33 @@ onUnmounted(() => {
 
           <!-- 状态色标 -->
           <span
-            class="px-2 py-0.5 rounded-md font-bold text-[10px] shrink-0"
+            class="px-2 py-0.5 rounded-md font-bold text-[10px] shrink-0 border"
             :class="[
               item.success
-                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                : 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+                ? 'bg-status-success-bg text-status-success border-status-success/30'
+                : 'bg-status-error-bg text-status-error border-status-error/30',
             ]"
           >
             {{ item.rcode || (item.success ? 'NOERROR' : 'SERVFAIL') }}
           </span>
 
           <!-- 查询类型 -->
-          <span class="px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-600 dark:text-sky-400 font-bold text-[10px] shrink-0">
+          <span class="px-2 py-0.5 rounded-md bg-brand-container text-brand-primary font-bold text-[10px] shrink-0">
             {{ item.qtype || 'A' }}
           </span>
 
           <!-- 域名 -->
-          <span class="font-semibold text-slate-900 dark:text-slate-100 truncate" :title="item.domain">
+          <span class="font-semibold text-text-main truncate" :title="item.domain">
             {{ item.domain }}
           </span>
         </div>
 
-        <div class="flex items-center gap-4 text-slate-500 dark:text-slate-400 shrink-0 text-[11px]">
+        <div class="flex items-center gap-4 text-text-sub shrink-0 text-[11px]">
           <span>IP: {{ item.clientIP || '127.0.0.1' }}</span>
-          <span class="font-semibold" :class="item.durationMs > 100 ? 'text-amber-500' : 'text-slate-600 dark:text-slate-300'">
+          <span class="font-semibold" :class="item.durationMs > 100 ? 'text-status-warning' : 'text-text-main'">
             {{ item.durationMs.toFixed(1) }} ms
           </span>
-          <span class="text-slate-400">{{ formatTime(item.timestamp) }}</span>
+          <span class="text-text-muted">{{ formatTime(item.timestamp) }}</span>
         </div>
       </div>
     </div>

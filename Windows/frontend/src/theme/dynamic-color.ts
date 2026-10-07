@@ -1,57 +1,9 @@
-import {
-  argbFromHex,
-  hexFromArgb,
-  Hct,
-  SchemeContent,
-  MaterialDynamicColors,
-} from '@material/material-color-utilities';
-
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 /**
- * Material Design 经典天蓝色作为谛听官方基准主色
+ * 谛听官方基准品牌主色：经典天穹科技蓝 (匹配 Logo 地球天蓝)
  */
-export const CLASSIC_SKY_BLUE = '#0288D1';
-
-const materialColorTokens: Record<string, any> = {
-  background: MaterialDynamicColors.background,
-  'on-background': MaterialDynamicColors.onBackground,
-  surface: MaterialDynamicColors.surface,
-  'surface-dim': MaterialDynamicColors.surfaceDim,
-  'surface-bright': MaterialDynamicColors.surfaceBright,
-  'surface-container-lowest': MaterialDynamicColors.surfaceContainerLowest,
-  'surface-container-low': MaterialDynamicColors.surfaceContainerLow,
-  'surface-container': MaterialDynamicColors.surfaceContainer,
-  'surface-container-high': MaterialDynamicColors.surfaceContainerHigh,
-  'surface-container-highest': MaterialDynamicColors.surfaceContainerHighest,
-  'on-surface': MaterialDynamicColors.onSurface,
-  'surface-variant': MaterialDynamicColors.surfaceVariant,
-  'on-surface-variant': MaterialDynamicColors.onSurfaceVariant,
-  'inverse-surface': MaterialDynamicColors.inverseSurface,
-  'inverse-on-surface': MaterialDynamicColors.inverseOnSurface,
-  outline: MaterialDynamicColors.outline,
-  'outline-variant': MaterialDynamicColors.outlineVariant,
-  shadow: MaterialDynamicColors.shadow,
-  scrim: MaterialDynamicColors.scrim,
-  'surface-tint': MaterialDynamicColors.surfaceTint,
-  primary: MaterialDynamicColors.primary,
-  'on-primary': MaterialDynamicColors.onPrimary,
-  'primary-container': MaterialDynamicColors.primaryContainer,
-  'on-primary-container': MaterialDynamicColors.onPrimaryContainer,
-  'inverse-primary': MaterialDynamicColors.inversePrimary,
-  secondary: MaterialDynamicColors.secondary,
-  'on-secondary': MaterialDynamicColors.onSecondary,
-  'secondary-container': MaterialDynamicColors.secondaryContainer,
-  'on-secondary-container': MaterialDynamicColors.onSecondaryContainer,
-  tertiary: MaterialDynamicColors.tertiary,
-  'on-tertiary': MaterialDynamicColors.onTertiary,
-  'tertiary-container': MaterialDynamicColors.tertiaryContainer,
-  'on-tertiary-container': MaterialDynamicColors.onTertiaryContainer,
-  error: MaterialDynamicColors.error,
-  'on-error': MaterialDynamicColors.onError,
-  'error-container': MaterialDynamicColors.errorContainer,
-  'on-error-container': MaterialDynamicColors.onErrorContainer,
-};
+export const CLASSIC_SKY_BLUE = '#0284C7';
 
 class ThemeManager {
   private readonly seedColor: string = CLASSIC_SKY_BLUE;
@@ -102,31 +54,19 @@ class ThemeManager {
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     this.isDarkActive = this.mode === 'dark' || (this.mode === 'system' && prefersDark);
 
-    const scheme = new SchemeContent(
-      Hct.fromInt(argbFromHex(this.seedColor)),
-      this.isDarkActive,
-      0,
-    );
-
     const root = document.documentElement;
-    for (const [key, dynColor] of Object.entries(materialColorTokens)) {
-      const hex = hexFromArgb(dynColor.getArgb(scheme));
-      root.style.setProperty(`--md-sys-color-${key}`, hex);
-    }
 
     if (this.isDarkActive) {
       root.classList.add('dark');
       root.setAttribute('data-theme', 'dark');
+      root.style.backgroundColor = '#090d16';
+      root.style.color = '#f8fafc';
     } else {
       root.classList.remove('dark');
       root.setAttribute('data-theme', 'light');
+      root.style.backgroundColor = '#f8fafc';
+      root.style.color = '#0f172a';
     }
-
-    // 同步给页面背景和文字颜色
-    const bgColor = hexFromArgb(materialColorTokens['background'].getArgb(scheme));
-    const textColor = hexFromArgb(materialColorTokens['on-background'].getArgb(scheme));
-    root.style.backgroundColor = bgColor;
-    root.style.color = textColor;
 
     this.listeners.forEach((fn) => fn());
   }

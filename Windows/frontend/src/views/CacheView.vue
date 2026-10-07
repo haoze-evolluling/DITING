@@ -5,6 +5,7 @@ import type { CacheStats, CacheConfig, CacheEntryItem, CacheDomainStat, WebSocke
 import StatusBadge from '../components/StatusBadge.vue';
 import MetricCard from '../components/MetricCard.vue';
 import M3Icon from '../components/M3Icon.vue';
+import AppModal from '../components/AppModal.vue';
 
 const stats = ref<CacheStats>({
   enabled: true,
@@ -102,7 +103,7 @@ async function pollMetrics() {
     totalEntriesCount.value = entryRes.total || 0;
     topDomains.value = top || [];
   } catch {
-    // 忽略后台静默遥测异常
+    // 忽略静默遥测异常
   }
 }
 
@@ -191,12 +192,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-12">
+  <div class="space-y-6 pb-12 select-none">
     <!-- 头部操作与总控卡片 -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <div class="flex items-center gap-2">
-          <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 class="text-2xl font-bold tracking-tight text-text-main">
             智能 DNS 缓存大盘
           </h2>
           <StatusBadge
@@ -205,15 +206,15 @@ onUnmounted(() => {
             size="sm"
           />
         </div>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        <p class="text-xs text-text-sub mt-1">
           支持 64 分片高并发无锁竞争、RFC 2181/2308 动态 TTL 递减、Optimistic SWR 容灾与负缓存
         </p>
       </div>
 
       <div class="flex items-center gap-3">
         <!-- 缓存总控 Switch -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
-          <span class="text-xs font-medium text-slate-600 dark:text-slate-300">智能缓存</span>
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-surface-card border border-surface-border shadow-xs">
+          <span class="text-xs font-medium text-text-sub">智能缓存</span>
           <md-switch
             :selected="stats.enabled"
             @change="handleToggleCache"
@@ -227,34 +228,34 @@ onUnmounted(() => {
         </md-outlined-button>
 
         <!-- 一键清空按钮 -->
-        <md-filled-button
-          class="m3-danger-btn"
+        <button
           @click="isClearDialogOpen = true"
           :disabled="loading || stats.entryCount === 0"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-status-error hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs flex items-center gap-1.5 transition-all cursor-pointer flex-shrink-0"
         >
-          <M3Icon slot="icon" name="delete" :size="16" />
-          清空缓存
-        </md-filled-button>
+          <M3Icon name="delete" :size="16" />
+          <span>清空缓存</span>
+        </button>
       </div>
     </div>
 
     <!-- 状态反馈提示 -->
     <div
       v-if="errorMessage"
-      class="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-700 dark:text-rose-300 flex items-center justify-between shadow-2xs"
+      class="p-3 rounded-2xl bg-status-error-bg border border-status-error/20 text-xs text-status-error flex items-center justify-between shadow-xs"
     >
       <div class="flex items-center gap-2">
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
       </div>
-      <button @click="errorMessage = ''" class="hover:opacity-75">
+      <button @click="errorMessage = ''" class="hover:opacity-75 cursor-pointer">
         <M3Icon name="close" :size="16" />
       </button>
     </div>
 
     <div
       v-if="successMessage"
-      class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2 shadow-2xs"
+      class="p-3 rounded-2xl bg-status-success-bg border border-status-success/20 text-xs text-status-success flex items-center gap-2 shadow-xs"
     >
       <M3Icon name="check_circle" :size="18" />
       <span>{{ successMessage }}</span>
@@ -263,18 +264,17 @@ onUnmounted(() => {
     <!-- 核心指标遥测卡片网格 -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <!-- 缓存命中率高光卡片 -->
-      <div class="p-4 rounded-3xl bg-primary/10 dark:bg-primary/15 border border-primary/20 flex flex-col justify-between">
+      <div class="p-4 rounded-2xl bg-surface-card border border-surface-border flex flex-col justify-between shadow-xs">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-medium text-primary">缓存命中率</span>
-          <M3Icon name="speed" :size="18" class="text-primary" />
+          <span class="text-xs font-semibold text-brand-primary">缓存命中率</span>
+          <M3Icon name="speed" :size="18" class="text-brand-primary" />
         </div>
         <div class="my-2">
-          <span class="text-2xl font-bold text-primary font-mono">{{ hitRatioPercent }}</span>
+          <span class="text-2xl font-bold text-text-main font-mono">{{ hitRatioPercent }}</span>
         </div>
-        <!-- 简易环形/进度槽 -->
-        <div class="w-full bg-slate-200/60 dark:bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
+        <div class="w-full bg-surface-card-sub rounded-full h-1.5 overflow-hidden border border-surface-border-sub">
           <div
-            class="bg-primary h-full rounded-full transition-all duration-300"
+            class="bg-brand-primary h-full rounded-full transition-all duration-300"
             :style="{ width: `${Math.min(stats.hitRatio * 100, 100)}%` }"
           ></div>
         </div>
@@ -290,16 +290,16 @@ onUnmounted(() => {
     <!-- 双栏布局: 热点域名 Top 统计 & 缓存策略配置 -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- 热点域名 Top 统计排行榜 (7 列) -->
-      <div class="lg:col-span-7 p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+      <div class="lg:col-span-7 p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <M3Icon name="bolt" :size="20" class="text-amber-500" />
-            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">热点域名 Top 统计</h3>
+            <M3Icon name="bolt" :size="20" class="text-status-warning" />
+            <h3 class="text-base font-bold text-text-main">热点域名 Top 统计</h3>
           </div>
-          <span class="text-xs text-slate-400">实时请求频次排名前 10</span>
+          <span class="text-xs text-text-muted">实时请求频次排名前 10</span>
         </div>
 
-        <div v-if="topDomains.length === 0" class="py-8 text-center text-xs text-slate-400">
+        <div v-if="topDomains.length === 0" class="py-8 text-center text-xs text-text-muted">
           暂无缓存访问记录
         </div>
 
@@ -307,36 +307,36 @@ onUnmounted(() => {
           <div
             v-for="(item, idx) in topDomains"
             :key="item.domain + item.qtype"
-            class="p-2.5 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 text-xs"
+            class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub flex items-center justify-between gap-3 text-xs"
           >
             <!-- 排名与域名 -->
             <div class="flex items-center gap-3 min-w-0">
               <span
                 class="w-5 h-5 rounded-full flex items-center justify-center font-bold font-mono text-[10px]"
-                :class="idx < 3 ? 'bg-primary text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'"
+                :class="idx < 3 ? 'bg-brand-primary text-white' : 'bg-surface-hover text-text-sub'"
               >
                 {{ idx + 1 }}
               </span>
-              <span class="font-mono font-medium text-slate-800 dark:text-slate-200 truncate" :title="item.domain">
+              <span class="font-mono font-medium text-text-main truncate" :title="item.domain">
                 {{ item.domain }}
               </span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-slate-200/60 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300">
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-card border border-surface-border text-text-sub">
                 {{ item.qtype }}
               </span>
             </div>
 
             <!-- 频次柱状进度与命中数 -->
             <div class="flex items-center gap-3 shrink-0">
-              <div class="w-20 md:w-28 bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden hidden sm:block">
+              <div class="w-20 md:w-28 bg-surface-card border border-surface-border rounded-full h-1.5 overflow-hidden hidden sm:block">
                 <div
-                  class="bg-amber-500 h-full rounded-full"
+                  class="bg-status-warning h-full rounded-full"
                   :style="{ width: `${(item.hitCount / maxTopHits) * 100}%` }"
                 ></div>
               </div>
-              <span class="font-mono font-bold text-slate-700 dark:text-slate-300 min-w-8 text-right">
+              <span class="font-mono font-bold text-text-main min-w-8 text-right">
                 {{ item.hitCount }} 次
               </span>
-              <span class="text-[10px] text-slate-400 min-w-14 text-right">
+              <span class="text-[10px] text-text-muted min-w-14 text-right">
                 {{ formatTime(item.lastHitAt) }}
               </span>
             </div>
@@ -345,11 +345,11 @@ onUnmounted(() => {
       </div>
 
       <!-- 缓存运行策略配置 (5 列) -->
-      <div class="lg:col-span-5 p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+      <div class="lg:col-span-5 p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <M3Icon name="settings" :size="20" class="text-primary" />
-            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">缓存策略参数</h3>
+            <M3Icon name="settings" :size="20" class="text-brand-primary" />
+            <h3 class="text-base font-bold text-text-main">缓存策略参数</h3>
           </div>
           <md-filled-button @click="handleSaveConfig" :disabled="saving">
             保存配置
@@ -359,7 +359,7 @@ onUnmounted(() => {
         <div class="space-y-4 pt-1">
           <!-- TTL 策略模式 -->
           <div class="space-y-1">
-            <label class="text-xs font-medium text-slate-700 dark:text-slate-300">TTL 计算模式</label>
+            <label class="text-xs font-medium text-text-sub">TTL 计算模式</label>
             <md-outlined-select :value="config.mode" @change="config.mode = ($event.target as any).value" class="w-full">
               <md-select-option value="limit_max_ttl"><div slot="headline">限制最大 TTL (推荐)</div></md-select-option>
               <md-select-option value="follow_dns_ttl"><div slot="headline">完全跟随上游 DNS TTL</div></md-select-option>
@@ -384,11 +384,11 @@ onUnmounted(() => {
           </div>
 
           <!-- Stale 容灾与 Optimistic SWR 开关 -->
-          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 space-y-3">
+          <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub space-y-3">
             <div class="flex items-center justify-between">
               <div>
-                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Stale 容灾保活 (SWR)</span>
-                <p class="text-[11px] text-slate-500">上游异常或过期宽限期内提供快速容灾响应</p>
+                <span class="text-xs font-bold text-text-main">Stale 容灾保活 (SWR)</span>
+                <p class="text-[11px] text-text-sub">上游异常或过期宽限期内提供快速容灾响应</p>
               </div>
               <md-switch
                 :selected="config.staleFallbackEnabled"
@@ -405,7 +405,7 @@ onUnmounted(() => {
               ></md-outlined-text-field>
 
               <div class="flex items-center justify-between px-2">
-                <span class="text-[11px] text-slate-600 dark:text-slate-400">Optimistic 优先响应</span>
+                <span class="text-[11px] text-text-sub">Optimistic 优先响应</span>
                 <md-switch
                   :selected="config.optimistic"
                   @change="config.optimistic = Boolean(($event.target as any).selected ?? ($event.target as any).checked)"
@@ -415,10 +415,10 @@ onUnmounted(() => {
           </div>
 
           <!-- 负缓存配置 -->
-          <div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub flex items-center justify-between">
             <div>
-              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">负缓存 (Negative Caching)</span>
-              <p class="text-[11px] text-slate-500">缓存 NXDOMAIN 与 NODATA 减少重复无效回源</p>
+              <span class="text-xs font-bold text-text-main">负缓存 (Negative Caching)</span>
+              <p class="text-[11px] text-text-sub">缓存 NXDOMAIN 与 NODATA 减少重复无效回源</p>
             </div>
             <md-switch
               :selected="config.negativeTtlEnabled"
@@ -430,11 +430,11 @@ onUnmounted(() => {
     </div>
 
     <!-- 缓存条目检索与表格 -->
-    <div class="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+    <div class="p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <M3Icon name="search" :size="20" class="text-primary" />
-          <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">
+          <M3Icon name="search" :size="20" class="text-brand-primary" />
+          <h3 class="text-base font-bold text-text-main">
             缓存条目检索 ({{ totalEntriesCount }} 条)
           </h3>
         </div>
@@ -468,22 +468,22 @@ onUnmounted(() => {
           ]"
           :key="f.id"
           @click="statusFilter = f.id as any"
-          class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
-          :class="statusFilter === f.id ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'"
+          class="px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer"
+          :class="statusFilter === f.id ? 'bg-brand-primary text-white' : 'bg-surface-card-sub border border-surface-border-sub text-text-sub hover:bg-surface-hover'"
         >
           {{ f.label }}
         </button>
       </div>
 
       <!-- 条目列表 -->
-      <div v-if="filteredEntries.length === 0" class="py-12 text-center text-xs text-slate-400">
+      <div v-if="filteredEntries.length === 0" class="py-12 text-center text-xs text-text-muted">
         未匹配到符合条件的缓存条目
       </div>
 
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-xs font-mono">
           <thead>
-            <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400">
+            <tr class="border-b border-surface-border text-text-muted">
               <th class="py-2.5 font-medium">域名 (Domain)</th>
               <th class="py-2.5 font-medium">类型</th>
               <th class="py-2.5 font-medium">状态</th>
@@ -493,19 +493,19 @@ onUnmounted(() => {
               <th class="py-2.5 font-medium">解析地址</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-            <tr v-for="entry in filteredEntries" :key="entry.domain + entry.qtype" class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-              <td class="py-2.5 font-bold text-slate-800 dark:text-slate-200">{{ entry.domain }}</td>
-              <td class="py-2.5 text-slate-600 dark:text-slate-400">{{ entry.qtype }}</td>
+          <tbody class="divide-y divide-surface-border-sub">
+            <tr v-for="entry in filteredEntries" :key="entry.domain + entry.qtype" class="hover:bg-surface-hover/50 transition-colors">
+              <td class="py-2.5 font-bold text-text-main">{{ entry.domain }}</td>
+              <td class="py-2.5 text-text-sub">{{ entry.qtype }}</td>
               <td class="py-2.5">
-                <span v-if="entry.isNegative" class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300">负缓存</span>
-                <span v-else-if="entry.status === 'fresh'" class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">生效中</span>
-                <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">容灾保活</span>
+                <span v-if="entry.isNegative" class="px-2 py-0.5 rounded-full text-[10px] bg-status-error-bg text-status-error">负缓存</span>
+                <span v-else-if="entry.status === 'fresh'" class="px-2 py-0.5 rounded-full text-[10px] bg-status-success-bg text-status-success">生效中</span>
+                <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-status-warning-bg text-status-warning">容灾保活</span>
               </td>
-              <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-primary' : 'text-amber-500'">{{ entry.remainingTtl }}s</td>
-              <td class="py-2.5 text-slate-400">{{ entry.originalTtl }}s</td>
-              <td class="py-2.5 text-slate-700 dark:text-slate-300 font-bold">{{ entry.hitCount }}</td>
-              <td class="py-2.5 text-slate-500 max-w-xs truncate" :title="entry.ipList?.join(', ') || '无'">
+              <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-brand-primary' : 'text-status-warning'">{{ entry.remainingTtl }}s</td>
+              <td class="py-2.5 text-text-muted">{{ entry.originalTtl }}s</td>
+              <td class="py-2.5 text-text-main font-bold">{{ entry.hitCount }}</td>
+              <td class="py-2.5 text-text-sub max-w-xs truncate" :title="entry.ipList?.join(', ') || '无'">
                 {{ entry.ipList && entry.ipList.length > 0 ? entry.ipList.join(', ') : '-' }}
               </td>
             </tr>
@@ -514,23 +514,42 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 一键清空确认弹窗 (标准 M3 Dialog) -->
-    <md-dialog :open="isClearDialogOpen" @close="isClearDialogOpen = false" type="alert">
-      <div slot="headline" class="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-        <M3Icon name="delete" :size="22" />
-        <span>清空所有智能缓存？</span>
-      </div>
-      <form slot="content" id="clear-dialog-form" method="dialog" class="space-y-2 pt-1">
-        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+    <!-- 一键清空确认弹窗 (统一使用 AppModal 居中架构) -->
+    <AppModal
+      :open="isClearDialogOpen"
+      @close="isClearDialogOpen = false"
+      type="alert"
+    >
+      <template #headline>
+        <div class="flex items-center gap-2 text-status-error font-bold">
+          <M3Icon name="delete" :size="22" />
+          <span>清空所有智能缓存？</span>
+        </div>
+      </template>
+
+      <div class="space-y-2 pt-1 text-xs text-text-sub leading-relaxed">
+        <p>
           此操作将清空当前 64 分片内的全部活跃条目（共 {{ stats.entryCount }} 条）与 LRU 热度队列。后续 DNS 请求将重新回源解析并重新填充缓存。
         </p>
-      </form>
-      <div slot="actions">
-        <md-text-button form="clear-dialog-form" value="cancel" @click="isClearDialogOpen = false">取消</md-text-button>
-        <md-filled-button form="clear-dialog-form" value="confirm" class="m3-danger-btn" :disabled="clearing" @click="handleConfirmClear">
-          确认清空
-        </md-filled-button>
       </div>
-    </md-dialog>
+
+      <template #actions>
+        <button
+          type="button"
+          @click="isClearDialogOpen = false"
+          class="px-4 py-2 rounded-xl text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface-hover transition-colors cursor-pointer"
+        >
+          取消
+        </button>
+        <button
+          type="button"
+          :disabled="clearing"
+          @click="handleConfirmClear"
+          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-status-error hover:brightness-110 shadow-xs transition-all flex-shrink-0 cursor-pointer"
+        >
+          确认清空
+        </button>
+      </template>
+    </AppModal>
   </div>
 </template>

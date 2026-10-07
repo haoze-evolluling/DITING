@@ -61,31 +61,25 @@ async function fetchStatus() {
 }
 
 function pushMetricData(qps: number, latency: number) {
-  qpsHistory.value.push(qps);
-  if (qpsHistory.value.length > 30) qpsHistory.value.shift();
-
-  latencyHistory.value.push(latency);
-  if (latencyHistory.value.length > 30) latencyHistory.value.shift();
+  qpsHistory.value = [...qpsHistory.value.slice(-29), qps];
+  latencyHistory.value = [...latencyHistory.value.slice(-29), latency];
 }
 
 async function handleToggleDNS(e: Event) {
   const target = e.target as any;
-  const nextVal = Boolean(target.selected ?? target.checked);
-  togglingDNS.value = true;
+  const wantStart = target.selected ?? !dnsRunning.value;
   try {
-    if (nextVal) {
+    togglingDNS.value = true;
+    errorMessage.value = '';
+    if (wantStart) {
       await ipc.startDNS();
     } else {
       await ipc.stopDNS();
     }
     await fetchStatus();
   } catch (err: any) {
-    errorMessage.value = err.message;
-    if ('selected' in target) {
-      target.selected = !nextVal;
-    } else {
-      target.checked = !nextVal;
-    }
+    errorMessage.value = `DNS 操作失败: ${err.message}`;
+    target.selected = dnsRunning.value;
   } finally {
     togglingDNS.value = false;
   }
@@ -103,7 +97,7 @@ async function handleToggleTakeover(e: Event) {
     }
     await fetchStatus();
   } catch (err: any) {
-    errorMessage.value = err.message;
+    errorMessage.value = `网卡接管操作失败: ${err.message}`;
     if ('selected' in target) {
       target.selected = !nextVal;
     } else {
@@ -116,6 +110,7 @@ async function handleToggleTakeover(e: Event) {
 
 onMounted(() => {
   fetchStatus();
+
   unsubEvents = ipc.onEvent((event: WebSocketEvent) => {
     if (event.type === 'metrics') {
       const m = event.data;
@@ -138,22 +133,27 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-12">
+  <div class="space-y-6 pb-12 select-none">
     <!-- 顶部状态提示条 -->
-    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-sm text-rose-600 dark:text-rose-400">
+    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-3 text-sm text-status-error">
       <div class="flex items-center gap-2">
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
       </div>
-      <md-text-button @click="fetchStatus">重试</md-text-button>
+      <button
+        @click="fetchStatus"
+        class="text-xs font-semibold px-3 py-1 rounded-lg bg-surface-card hover:bg-surface-hover text-text-main transition-colors cursor-pointer"
+      >
+        重试
+      </button>
     </div>
 
     <!-- 核心状态总控大卡片 -->
-    <div class="relative overflow-hidden rounded-3xl border border-slate-200/50 dark:border-slate-800/80 bg-gradient-to-br from-white/90 via-slate-50/80 to-slate-100/50 dark:from-slate-900/90 dark:via-slate-900/60 dark:to-slate-950/80 p-7 shadow-sm backdrop-blur">
+    <div class="relative overflow-hidden rounded-3xl border border-surface-border bg-surface-card p-7 shadow-xs transition-colors">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div class="space-y-2">
           <div class="flex items-center gap-3">
-            <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+            <h2 class="text-2xl font-bold tracking-tight text-text-main">
               系统 DNS 转发核心
             </h2>
             <StatusBadge
@@ -168,18 +168,18 @@ onUnmounted(() => {
               size="sm"
             />
           </div>
-          <p class="text-sm text-slate-500 dark:text-slate-400 max-w-xl">
+          <p class="text-sm text-text-sub max-w-xl">
             谛听 (DITING) 双栈 DNS 内核正在 Windows 平台运行，提供毫秒级多协议上游调度、安全故障回退与崩溃状态持久化自愈。
           </p>
         </div>
 
         <!-- 主控制开关组 -->
-        <div class="flex flex-wrap items-center gap-6 bg-slate-100/80 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/40 dark:border-slate-700/40">
+        <div class="flex flex-wrap items-center gap-6 bg-surface-card-sub p-4 rounded-2xl border border-surface-border-sub">
           <!-- DNS 代理服务开关 -->
           <div class="flex items-center gap-3">
             <div class="flex flex-col text-right">
-              <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">DNS 代理监听</span>
-              <span class="text-xs text-slate-400">127.0.0.1:53</span>
+              <span class="text-sm font-semibold text-text-main">DNS 代理监听</span>
+              <span class="text-xs text-text-muted">127.0.0.1:53</span>
             </div>
             <md-switch
               :selected="dnsRunning"
@@ -188,13 +188,13 @@ onUnmounted(() => {
             />
           </div>
 
-          <div class="h-8 w-px bg-slate-200 dark:bg-slate-700" />
+          <div class="h-8 w-px bg-surface-border" />
 
           <!-- 网卡接管开关 -->
           <div class="flex items-center gap-3">
             <div class="flex flex-col text-right">
-              <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">物理网卡接管</span>
-              <span class="text-xs text-slate-400">双栈 127.0.0.1 / ::1</span>
+              <span class="text-sm font-semibold text-text-main">物理网卡接管</span>
+              <span class="text-xs text-text-muted">双栈 127.0.0.1 / ::1</span>
             </div>
             <md-switch
               :selected="takeoverActive"
@@ -241,14 +241,14 @@ onUnmounted(() => {
       <MetricChart
         label="QPS 实时波形曲线 (req/s)"
         :data="qpsHistory"
-        strokeColor="var(--md-sys-color-primary, #0288d1)"
+        strokeColor="var(--app-brand-primary)"
         gradientId="chart-grad-qps"
         unit="req/s"
       />
       <MetricChart
         label="延迟波动历史 (ms)"
         :data="latencyHistory"
-        strokeColor="var(--md-sys-color-tertiary, #006a60)"
+        strokeColor="var(--app-status-warning)"
         gradientId="chart-grad-latency"
         unit="ms"
       />
@@ -257,74 +257,89 @@ onUnmounted(() => {
     <!-- 快捷摘要四列面板 (上游、缓存、规则防护、网卡) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- 上游节点摘要 -->
-      <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur">
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-colors">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
-            <M3Icon name="upstream" :size="18" class="text-slate-500" />
-            <h3 class="font-semibold text-slate-800 dark:text-slate-200">当前上游调度模式</h3>
+            <M3Icon name="upstream" :size="18" class="text-brand-primary" />
+            <h3 class="font-semibold text-text-main">当前上游调度模式</h3>
           </div>
-          <md-text-button @click="emit('navigate', 'upstream')">管理配置</md-text-button>
+          <button
+            @click="emit('navigate', 'upstream')"
+            class="text-xs font-semibold px-2.5 py-1 rounded-lg text-brand-primary hover:bg-brand-container transition-colors cursor-pointer"
+          >
+            管理配置
+          </button>
         </div>
         <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span class="text-sm text-slate-500 dark:text-slate-400">调度策略</span>
-            <span class="text-sm font-semibold text-slate-800 dark:text-slate-100 uppercase">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+            <span class="text-sm text-text-sub">调度策略</span>
+            <span class="text-sm font-semibold text-text-main uppercase">
               {{ status?.dns?.mode || 'PRIMARY_BACKUP' }}
             </span>
           </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span class="text-sm text-slate-500 dark:text-slate-400">活动节点数</span>
-            <span class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+            <span class="text-sm text-text-sub">活动节点数</span>
+            <span class="text-sm font-semibold text-text-main">
               {{ status?.dns?.upstreams?.length || 0 }} 个上游节点
             </span>
           </div>
         </div>
       </div>
 
-      <!-- 智能缓存摘要 (Phase 5) -->
-      <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur">
+      <!-- 智能缓存摘要 -->
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-colors">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
-            <M3Icon name="cache" :size="18" class="text-slate-500" />
-            <h3 class="font-semibold text-slate-800 dark:text-slate-200">智能缓存大盘</h3>
+            <M3Icon name="cache" :size="18" class="text-brand-primary" />
+            <h3 class="font-semibold text-text-main">智能缓存大盘</h3>
           </div>
-          <md-text-button @click="emit('navigate', 'cache')">缓存监控</md-text-button>
+          <button
+            @click="emit('navigate', 'cache')"
+            class="text-xs font-semibold px-2.5 py-1 rounded-lg text-brand-primary hover:bg-brand-container transition-colors cursor-pointer"
+          >
+            缓存监控
+          </button>
         </div>
         <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span class="text-sm text-slate-500 dark:text-slate-400">实时命中率</span>
-            <span class="text-sm font-bold text-primary font-mono">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+            <span class="text-sm text-text-sub">实时命中率</span>
+            <span class="text-sm font-bold text-brand-primary font-mono">
               {{ ((status?.cache?.hitRatio || 0) * 100).toFixed(1) }}%
             </span>
           </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span class="text-sm text-slate-500 dark:text-slate-400">条目数 / 容量</span>
-            <span class="text-xs font-mono text-slate-700 dark:text-slate-300">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+            <span class="text-sm text-text-sub">条目数 / 容量</span>
+            <span class="text-xs font-mono text-text-main">
               {{ status?.cache?.entryCount || 0 }} / {{ status?.cache?.maxEntries || 4096 }}
             </span>
           </div>
         </div>
       </div>
 
-      <!-- 规则防护摘要 (Phase 6) -->
-      <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur">
+      <!-- 规则防护摘要 -->
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-colors">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
-            <M3Icon name="shield" :size="18" class="text-slate-500" />
-            <h3 class="font-semibold text-slate-800 dark:text-slate-200">规则拦截大盘</h3>
+            <M3Icon name="shield" :size="18" class="text-brand-primary" />
+            <h3 class="font-semibold text-text-main">规则拦截大盘</h3>
           </div>
-          <md-text-button @click="emit('navigate', 'rules')">管理规则</md-text-button>
+          <button
+            @click="emit('navigate', 'rules')"
+            class="text-xs font-semibold px-2.5 py-1 rounded-lg text-brand-primary hover:bg-brand-container transition-colors cursor-pointer"
+          >
+            管理规则
+          </button>
         </div>
         <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span class="text-sm text-slate-500 dark:text-slate-400">请求拦截率</span>
-            <span class="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+            <span class="text-sm text-text-sub">请求拦截率</span>
+            <span class="text-sm font-bold text-status-error font-mono">
               {{ (status?.filter?.blockRate || 0).toFixed(1) }}%
             </span>
           </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span class="text-sm text-slate-500 dark:text-slate-400">拦截数 / 规则</span>
-            <span class="text-xs font-mono text-slate-700 dark:text-slate-300">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+            <span class="text-sm text-text-sub">拦截数 / 规则</span>
+            <span class="text-xs font-mono text-text-main">
               {{ status?.filter?.blockedQueries || 0 }} 拦截 / {{ status?.filter?.totalRules || 0 }} 规则
             </span>
           </div>
@@ -332,24 +347,29 @@ onUnmounted(() => {
       </div>
 
       <!-- 网卡接管简报 -->
-      <div class="rounded-2xl border border-slate-200/50 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 p-5 shadow-sm backdrop-blur">
+      <div class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-colors">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2">
-            <M3Icon name="adapters" :size="18" class="text-slate-500" />
-            <h3 class="font-semibold text-slate-800 dark:text-slate-200">物理网卡接管简报</h3>
+            <M3Icon name="adapters" :size="18" class="text-brand-primary" />
+            <h3 class="font-semibold text-text-main">物理网卡接管简报</h3>
           </div>
-          <md-text-button @click="emit('navigate', 'adapters')">查看详情</md-text-button>
+          <button
+            @click="emit('navigate', 'adapters')"
+            class="text-xs font-semibold px-2.5 py-1 rounded-lg text-brand-primary hover:bg-brand-container transition-colors cursor-pointer"
+          >
+            查看详情
+          </button>
         </div>
         <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span class="text-sm text-slate-500 dark:text-slate-400">系统接管状态</span>
-            <span class="text-sm font-semibold" :class="takeoverActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+            <span class="text-sm text-text-sub">系统接管状态</span>
+            <span class="text-sm font-semibold" :class="takeoverActive ? 'text-status-success' : 'text-text-muted'">
               {{ takeoverActive ? '已接管 (自动灾备)' : '未接管 (系统原生)' }}
             </span>
           </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <span class="text-sm text-slate-500 dark:text-slate-400">自愈持久化状态</span>
-            <span class="text-xs font-mono text-slate-600 dark:text-slate-400">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub">
+            <span class="text-sm text-text-sub">自愈持久化状态</span>
+            <span class="text-xs font-mono text-text-sub">
               %ProgramData%\DITING\dns_state.json
             </span>
           </div>
