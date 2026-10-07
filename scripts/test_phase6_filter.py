@@ -22,10 +22,25 @@ def test_ipc_filter(ipc_base: str = "http://127.0.0.1:15353", token: str = "") -
         headers["Authorization"] = f"Bearer {token}"
 
     passed = 0
-    total = 3
+    total = 4
 
-    # 1. GET /api/v1/filter/stats
-    print("[1/3] 测试获取过滤统计 (GET /api/v1/filter/stats)...", end=" ", flush=True)
+    # 1. 确保配置为开启且拦截模式为 null_ip
+    print("[1/4] 测试配置拦截模式为 null_ip (POST /api/v1/filter/config)...", end=" ", flush=True)
+    try:
+        cfg_payload = json.dumps({"enabled": True, "blockMode": "null_ip"}).encode("utf-8")
+        req = urllib.request.Request(f"{ipc_base}/api/v1/filter/config", data=cfg_payload, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if data.get("success"):
+                print("PASS")
+                passed += 1
+            else:
+                print(f"FAIL ({data})")
+    except Exception as e:
+        print(f"SKIP ({e})")
+
+    # 2. GET /api/v1/filter/stats
+    print("[2/4] 测试获取过滤统计 (GET /api/v1/filter/stats)...", end=" ", flush=True)
     try:
         req = urllib.request.Request(f"{ipc_base}/api/v1/filter/stats", headers=headers)
         with urllib.request.urlopen(req, timeout=3) as resp:
@@ -38,8 +53,8 @@ def test_ipc_filter(ipc_base: str = "http://127.0.0.1:15353", token: str = "") -
     except Exception as e:
         print(f"SKIP ({e})")
 
-    # 2. POST /api/v1/filter/rules (注入临时测试规则)
-    print("[2/3] 测试保存自定义规则 (POST /api/v1/filter/rules)...", end=" ", flush=True)
+    # 3. POST /api/v1/filter/rules (注入临时测试规则)
+    print("[3/4] 测试保存自定义规则 (POST /api/v1/filter/rules)...", end=" ", flush=True)
     try:
         rules_payload = json.dumps({
             "rules": [
@@ -58,8 +73,8 @@ def test_ipc_filter(ipc_base: str = "http://127.0.0.1:15353", token: str = "") -
     except Exception as e:
         print(f"SKIP ({e})")
 
-    # 3. POST /api/v1/filter/check (检测域名命中)
-    print("[3/3] 测试域名规则检测 (POST /api/v1/filter/check)...", end=" ", flush=True)
+    # 4. POST /api/v1/filter/check (检测域名命中)
+    print("[4/4] 测试域名规则检测 (POST /api/v1/filter/check)...", end=" ", flush=True)
     try:
         check_payload = json.dumps({"domain": "diting-test-ad.local", "qtype": "A"}).encode("utf-8")
         req = urllib.request.Request(f"{ipc_base}/api/v1/filter/check", data=check_payload, headers=headers, method="POST")
@@ -94,11 +109,11 @@ def run_phase6_verification(server: str = "127.0.0.1", port: int = 53, ipc_base:
     print(f"[1/4] 测试广告拦截与空 IP 应答 ({bad_domain})...", end=" ", flush=True)
     try:
         resp, ms = client.query(bad_domain, DNSType.A)
-        if resp.rcode == DNSRcode.NOERROR and len(resp.answers) > 0 and resp.answers[0].data == "0.0.0.0":
+        if resp.rcode == DNSRcode.NOERROR and len(resp.answers) > 0 and resp.answers[0].rdata == "0.0.0.0":
             print(f"PASS (返回 0.0.0.0, 耗时 {ms:.1f}ms, 成功阻断)")
             passed += 1
         else:
-            ans = [a.data for a in resp.answers]
+            ans = [a.rdata for a in resp.answers]
             print(f"FAIL (未按预期拦截: rcode={resp.rcode}, answers={ans})")
     except Exception as e:
         print(f"ERROR ({e})")
@@ -108,11 +123,11 @@ def run_phase6_verification(server: str = "127.0.0.1", port: int = 53, ipc_base:
     print(f"[2/4] 测试倒序 Trie 树子域继承阻断 ({sub_bad_domain})...", end=" ", flush=True)
     try:
         resp, ms = client.query(sub_bad_domain, DNSType.A)
-        if resp.rcode == DNSRcode.NOERROR and len(resp.answers) > 0 and resp.answers[0].data == "0.0.0.0":
+        if resp.rcode == DNSRcode.NOERROR and len(resp.answers) > 0 and resp.answers[0].rdata == "0.0.0.0":
             print(f"PASS (返回 0.0.0.0, 子域名成功拦截)")
             passed += 1
         else:
-            ans = [a.data for a in resp.answers]
+            ans = [a.rdata for a in resp.answers]
             print(f"FAIL (子域名未拦截: {ans})")
     except Exception as e:
         print(f"ERROR ({e})")
@@ -123,7 +138,7 @@ def run_phase6_verification(server: str = "127.0.0.1", port: int = 53, ipc_base:
     try:
         resp, ms = client.query(allow_domain, DNSType.A)
         # 白名单会穿透至上游，返回正常上游结果或 NXDOMAIN，但绝不应为 0.0.0.0
-        ans = [a.data for a in resp.answers]
+        ans = [a.rdata for a in resp.answers]
         if "0.0.0.0" not in ans:
             print(f"PASS (白名单未被阻断为 0.0.0.0, 正常穿透上游)")
             passed += 1
@@ -137,7 +152,7 @@ def run_phase6_verification(server: str = "127.0.0.1", port: int = 53, ipc_base:
     print(f"[4/4] 测试干净域名透传与 Bloom 过滤 ({clean_domain})...", end=" ", flush=True)
     try:
         resp, ms = client.query(clean_domain, DNSType.A)
-        if resp.rcode == DNSRcode.NOERROR and len(resp.answers) > 0 and "0.0.0.0" not in [a.data for a in resp.answers]:
+        if resp.rcode == DNSRcode.NOERROR and len(resp.answers) > 0 and "0.0.0.0" not in [a.rdata for a in resp.answers]:
             print(f"PASS (正常解析交付, 耗时 {ms:.1f}ms)")
             passed += 1
         else:
