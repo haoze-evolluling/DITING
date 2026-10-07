@@ -266,18 +266,22 @@ onUnmounted(() => {
       <span>{{ successMessage }}</span>
     </div>
 
-    <!-- 核心指标遥测卡片网格 -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <!-- 核心指标遥测卡片网格 (3 列 x 2 行) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- 缓存命中率高光卡片 -->
-      <div class="p-4 rounded-2xl bg-surface-card border border-surface-border flex flex-col justify-between shadow-xs">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-brand-primary">缓存命中率</span>
-          <M3Icon name="speed" :size="18" class="text-brand-primary" />
+      <div
+        class="relative overflow-hidden rounded-2xl p-5 border border-surface-border bg-surface-card shadow-xs transition-all duration-200 hover:shadow-md hover:border-brand-primary/30 flex flex-col justify-between"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold text-brand-primary uppercase tracking-wider">缓存命中率</span>
+          <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-surface-card-sub text-brand-primary">
+            <M3Icon name="speed" :size="18" />
+          </div>
         </div>
-        <div class="my-2">
-          <span class="text-2xl font-bold text-text-main font-mono">{{ hitRatioPercent }}</span>
+        <div class="flex items-baseline gap-1.5 my-1">
+          <span class="text-2xl font-bold tracking-tight text-text-main font-mono">{{ hitRatioPercent }}</span>
         </div>
-        <div class="w-full bg-surface-card-sub rounded-full h-1.5 overflow-hidden border border-surface-border-sub">
+        <div class="mt-2 w-full bg-surface-card-sub rounded-full h-1.5 overflow-hidden border border-surface-border-sub">
           <div
             class="bg-brand-primary h-full rounded-full transition-all duration-300"
             :style="{ width: `${Math.min(stats.hitRatio * 100, 100)}%` }"
