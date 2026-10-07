@@ -2,6 +2,7 @@ package ipc
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -108,12 +109,22 @@ func (s *Server) handleCacheConfig(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		var req core.CacheConfig
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		currentCfg, err := s.controller.GetCacheConfig(r.Context())
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
+			return
+		}
+		merged := *currentCfg
+		bodyBytes, err := io.ReadAll(io.LimitReader(r.Body, 65536))
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, Response[any]{Success: false, Error: "读取请求体失败: " + err.Error()})
+			return
+		}
+		if err := json.Unmarshal(bodyBytes, &merged); err != nil {
 			writeJSON(w, http.StatusBadRequest, Response[any]{Success: false, Error: "解析缓存配置请求体失败: " + err.Error()})
 			return
 		}
-		if err := s.controller.UpdateCacheConfig(r.Context(), req); err != nil {
+		if err := s.controller.UpdateCacheConfig(r.Context(), merged); err != nil {
 			writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
 			return
 		}

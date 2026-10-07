@@ -90,6 +90,22 @@ async function loadData() {
   }
 }
 
+async function pollMetrics() {
+  try {
+    const [st, entryRes, top] = await Promise.all([
+      ipc.getCacheStats(),
+      ipc.getCacheEntries(searchQuery.value, 100),
+      ipc.getCacheTopDomains(10),
+    ]);
+    stats.value = st;
+    entries.value = entryRes.entries || [];
+    totalEntriesCount.value = entryRes.total || 0;
+    topDomains.value = top || [];
+  } catch {
+    // 忽略后台静默遥测异常
+  }
+}
+
 async function handleSearch() {
   try {
     const entryRes = await ipc.getCacheEntries(searchQuery.value, 100);
@@ -104,8 +120,9 @@ async function handleToggleCache(e: Event) {
   const target = e.target as any;
   const enable = Boolean(target.selected ?? target.checked);
   try {
-    await ipc.updateCacheConfig({ enabled: enable });
-    config.value.enabled = enable;
+    const updated = { ...config.value, enabled: enable };
+    await ipc.updateCacheConfig(updated);
+    config.value = updated;
     stats.value.enabled = enable;
     successMessage.value = enable ? '智能缓存已启用' : '智能缓存已停用';
     setTimeout(() => (successMessage.value = ''), 3000);
@@ -158,7 +175,7 @@ function formatTime(timestampMs: number): string {
 
 onMounted(() => {
   loadData();
-  pollTimer = setInterval(loadData, 4000);
+  pollTimer = setInterval(pollMetrics, 4000);
 
   unsubEvents = ipc.onEvent((event: WebSocketEvent) => {
     if (event.type === 'query' || event.type === 'metrics') {
@@ -263,40 +280,11 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <MetricCard
-        title="总命中数"
-        :value="stats.totalHits.toLocaleString()"
-        icon="check"
-        subtext="缓存即时返回"
-      />
-
-      <MetricCard
-        title="未命中回源"
-        :value="stats.totalMisses.toLocaleString()"
-        icon="sync"
-        subtext="上游转发响应"
-      />
-
-      <MetricCard
-        title="SWR 容灾命中"
-        :value="stats.staleHits.toLocaleString()"
-        icon="shield"
-        subtext="陈旧条目保活"
-      />
-
-      <MetricCard
-        title="负缓存拦截"
-        :value="stats.negativeHits.toLocaleString()"
-        icon="cancel"
-        subtext="NXDOMAIN 拦截"
-      />
-
-      <MetricCard
-        title="条目占用 / 容量"
-        :value="`${stats.entryCount} / ${stats.maxEntries}`"
-        icon="cache"
-        :subtext="`淘汰数: ${stats.evictionCount}`"
-      />
+      <MetricCard title="总命中数" :value="stats.totalHits.toLocaleString()" icon="check" subtext="缓存即时返回" />
+      <MetricCard title="未命中回源" :value="stats.totalMisses.toLocaleString()" icon="sync" subtext="上游转发响应" />
+      <MetricCard title="SWR 容灾命中" :value="stats.staleHits.toLocaleString()" icon="shield" subtext="陈旧条目保活" />
+      <MetricCard title="负缓存拦截" :value="stats.negativeHits.toLocaleString()" icon="cancel" subtext="NXDOMAIN 拦截" />
+      <MetricCard title="条目占用 / 容量" :value="`${stats.entryCount} / ${stats.maxEntries}`" icon="cache" :subtext="`淘汰数: ${stats.evictionCount}`" />
     </div>
 
     <!-- 双栏布局: 热点域名 Top 统计 & 缓存策略配置 -->
@@ -372,20 +360,10 @@ onUnmounted(() => {
           <!-- TTL 策略模式 -->
           <div class="space-y-1">
             <label class="text-xs font-medium text-slate-700 dark:text-slate-300">TTL 计算模式</label>
-            <md-outlined-select
-              :value="config.mode"
-              @change="config.mode = ($event.target as any).value"
-              class="w-full"
-            >
-              <md-select-option value="limit_max_ttl">
-                <div slot="headline">限制最大 TTL (推荐)</div>
-              </md-select-option>
-              <md-select-option value="follow_dns_ttl">
-                <div slot="headline">完全跟随上游 DNS TTL</div>
-              </md-select-option>
-              <md-select-option value="fixed_ttl">
-                <div slot="headline">固定 TTL 模式</div>
-              </md-select-option>
+            <md-outlined-select :value="config.mode" @change="config.mode = ($event.target as any).value" class="w-full">
+              <md-select-option value="limit_max_ttl"><div slot="headline">限制最大 TTL (推荐)</div></md-select-option>
+              <md-select-option value="follow_dns_ttl"><div slot="headline">完全跟随上游 DNS TTL</div></md-select-option>
+              <md-select-option value="fixed_ttl"><div slot="headline">固定 TTL 模式</div></md-select-option>
             </md-outlined-select>
           </div>
 
@@ -516,46 +494,17 @@ onUnmounted(() => {
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-            <tr
-              v-for="entry in filteredEntries"
-              :key="entry.domain + entry.qtype"
-              class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
-            >
-              <td class="py-2.5 font-bold text-slate-800 dark:text-slate-200">
-                {{ entry.domain }}
-              </td>
-              <td class="py-2.5 text-slate-600 dark:text-slate-400">
-                {{ entry.qtype }}
-              </td>
+            <tr v-for="entry in filteredEntries" :key="entry.domain + entry.qtype" class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-2.5 font-bold text-slate-800 dark:text-slate-200">{{ entry.domain }}</td>
+              <td class="py-2.5 text-slate-600 dark:text-slate-400">{{ entry.qtype }}</td>
               <td class="py-2.5">
-                <span
-                  v-if="entry.isNegative"
-                  class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
-                >
-                  负缓存
-                </span>
-                <span
-                  v-else-if="entry.status === 'fresh'"
-                  class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
-                >
-                  生效中
-                </span>
-                <span
-                  v-else
-                  class="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"
-                >
-                  容灾保活
-                </span>
+                <span v-if="entry.isNegative" class="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300">负缓存</span>
+                <span v-else-if="entry.status === 'fresh'" class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">生效中</span>
+                <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">容灾保活</span>
               </td>
-              <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-primary' : 'text-amber-500'">
-                {{ entry.remainingTtl }}s
-              </td>
-              <td class="py-2.5 text-slate-400">
-                {{ entry.originalTtl }}s
-              </td>
-              <td class="py-2.5 text-slate-700 dark:text-slate-300 font-bold">
-                {{ entry.hitCount }}
-              </td>
+              <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-primary' : 'text-amber-500'">{{ entry.remainingTtl }}s</td>
+              <td class="py-2.5 text-slate-400">{{ entry.originalTtl }}s</td>
+              <td class="py-2.5 text-slate-700 dark:text-slate-300 font-bold">{{ entry.hitCount }}</td>
               <td class="py-2.5 text-slate-500 max-w-xs truncate" :title="entry.ipList?.join(', ') || '无'">
                 {{ entry.ipList && entry.ipList.length > 0 ? entry.ipList.join(', ') : '-' }}
               </td>
@@ -578,13 +527,7 @@ onUnmounted(() => {
       </form>
       <div slot="actions">
         <md-text-button form="clear-dialog-form" value="cancel" @click="isClearDialogOpen = false">取消</md-text-button>
-        <md-filled-button
-          form="clear-dialog-form"
-          value="confirm"
-          class="m3-danger-btn"
-          :disabled="clearing"
-          @click="handleConfirmClear"
-        >
+        <md-filled-button form="clear-dialog-form" value="confirm" class="m3-danger-btn" :disabled="clearing" @click="handleConfirmClear">
           确认清空
         </md-filled-button>
       </div>

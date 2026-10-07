@@ -2,6 +2,8 @@ package ipc
 
 import (
 	"context"
+	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -20,6 +22,7 @@ type mockController struct {
 	restoreErr   error
 	statusResult *StatusResponse
 	portResult   *windows.PortCheckResult
+	cacheConfig  *core.CacheConfig
 }
 
 func (m *mockController) StartDNS(ctx context.Context) error {
@@ -166,11 +169,20 @@ func (m *mockController) ClearCache(ctx context.Context) error {
 }
 
 func (m *mockController) GetCacheConfig(ctx context.Context) (*core.CacheConfig, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.cacheConfig != nil {
+		cpy := *m.cacheConfig
+		return &cpy, nil
+	}
 	cfg := core.DefaultCacheConfig()
 	return &cfg, nil
 }
 
 func (m *mockController) UpdateCacheConfig(ctx context.Context, cfg core.CacheConfig) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.cacheConfig = &cfg
 	return nil
 }
 
@@ -324,5 +336,26 @@ func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 
 	if err := client.UpdateCacheConfig(ctx, *cCfg); err != nil {
 		t.Fatalf("UpdateCacheConfig failed: %v", err)
+	}
+
+	// 10. 测试 Partial Config 更新 (只发送 {"enabled": false}，验证其余布尔项与数值不被冲刷成零值)
+	partialBody := strings.NewReader(`{"enabled":false}`)
+	var partialResp Response[string]
+	if err := client.doRequest(ctx, http.MethodPost, "/api/v1/cache/config", partialBody, &partialResp); err != nil {
+		t.Fatalf("Partial UpdateCacheConfig request failed: %v", err)
+	}
+	if !partialResp.Success {
+		t.Fatalf("Partial UpdateCacheConfig returned failure: %s", partialResp.Error)
+	}
+
+	afterPartialCfg, err := client.GetCacheConfig(ctx)
+	if err != nil {
+		t.Fatalf("GetCacheConfig after partial update failed: %v", err)
+	}
+	if afterPartialCfg.Enabled {
+		t.Fatalf("预期 enabled 为 false，实际仍为 true")
+	}
+	if !afterPartialCfg.Optimistic || !afterPartialCfg.StaleFallbackEnabled || afterPartialCfg.MaxTTLSeconds != 3600 {
+		t.Fatalf("Partial 更新错误地将其它字段重置为零值: %+v", afterPartialCfg)
 	}
 }

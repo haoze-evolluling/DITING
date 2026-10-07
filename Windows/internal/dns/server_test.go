@@ -12,9 +12,10 @@ import (
 )
 
 func findAvailableLocalPort(t *testing.T) string {
-	for attempt := 0; attempt < 100; attempt++ {
+	for attempt := 0; attempt < 200; attempt++ {
 		l, err := net.Listen("tcp", "127.0.0.1:0")
 		if err != nil {
+			time.Sleep(2 * time.Millisecond)
 			continue
 		}
 		addr := l.Addr().String()
@@ -25,6 +26,7 @@ func findAvailableLocalPort(t *testing.T) string {
 			_ = pc.Close()
 			return addr
 		}
+		time.Sleep(2 * time.Millisecond)
 	}
 	t.Fatalf("failed to find available dual port")
 	return ""

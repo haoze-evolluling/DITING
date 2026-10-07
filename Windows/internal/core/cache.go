@@ -165,10 +165,10 @@ func (c *DNSCache) Get(req *dns.Msg) (resp *dns.Msg, hit bool, isStale bool, sta
 		elem := entry.elem
 		shard.mu.RUnlock()
 
-		// LRU 热度提升
-		if elem != nil && shard.lruList.Front() != elem {
+		// LRU 热度提升 (在写锁保护下安全检查与置顶)
+		if elem != nil {
 			shard.mu.Lock()
-			if elem.Value != nil && shard.lruList.Front() != elem {
+			if entry.elem == elem && elem.Value != nil && shard.lruList.Front() != elem {
 				shard.lruList.MoveToFront(elem)
 			}
 			shard.mu.Unlock()
@@ -193,6 +193,7 @@ func (c *DNSCache) Get(req *dns.Msg) (resp *dns.Msg, hit bool, isStale bool, sta
 			shard.lruList.Remove(e.elem)
 			e.elem = nil
 		}
+		c.evictions.Add(1)
 	}
 	shard.mu.Unlock()
 
@@ -210,6 +211,7 @@ func (c *DNSCache) BuildStaleResponse(req *dns.Msg, entry *cacheEntry) *dns.Msg 
 	RewriteTTL(cloned, 1)
 	entry.hitCount.Add(1)
 	entry.lastHitAt.Store(time.Now().UnixNano())
+	c.totalHits.Add(1)
 	c.staleHits.Add(1)
 	return cloned
 }

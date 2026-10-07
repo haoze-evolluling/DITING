@@ -402,3 +402,33 @@ func TestDNSCache_ClearAndClose(t *testing.T) {
 	// 重复 Close 安全性
 	cache.Close()
 }
+
+func TestDNSCache_ConcurrentReadWriteRace(t *testing.T) {
+	cfg := DefaultCacheConfig()
+	cfg.MaxEntries = 128 // 强制产生 LRU 淘汰以激发链表竞争
+	cache := NewDNSCache(cfg)
+	defer cache.Close()
+
+	var wg sync.WaitGroup
+	workers := 16
+	iterations := 200
+
+	for w := 0; w < workers; w++ {
+		wg.Add(1)
+		go func(workerID int) {
+			defer wg.Done()
+			for i := 0; i < iterations; i++ {
+				domain := fmt.Sprintf("race-%d.test", i%30)
+				req := createTestQuery(domain, dns.TypeA)
+				if i%2 == 0 {
+					resp := createTestResponse(domain, dns.TypeA, "1.2.3.4", 60)
+					cache.Put(req, resp)
+				} else {
+					_, _, _, _ = cache.Get(req)
+				}
+			}
+		}(w)
+	}
+
+	wg.Wait()
+}

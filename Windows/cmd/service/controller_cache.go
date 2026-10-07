@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/haoze-evolluling/diting/windows/internal/config"
 	"github.com/haoze-evolluling/diting/windows/internal/core"
 	"github.com/haoze-evolluling/diting/windows/internal/ipc"
 )
@@ -81,5 +82,8 @@ func (p *program) UpdateCacheConfig(ctx context.Context, cfg core.CacheConfig) e
 		p.cache.UpdateConfig(cfg)
 	}
 	p.cfg.Cache = cfg
+	if p.configPath != "" && p.cfg != nil {
+		_ = config.SaveConfig(p.configPath, p.cfg)
+	}
 	return nil
 }

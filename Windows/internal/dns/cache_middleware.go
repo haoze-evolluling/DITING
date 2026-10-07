@@ -40,7 +40,7 @@ func NewCacheMiddleware(cache *core.DNSCache, resolver core.Resolver) Middleware
 							flightKey := core.CacheKey(q.Name, q.Qtype, q.Qclass)
 							_, _, _ = cache.SingleFlight(flightKey, func() (*dns.Msg, error) {
 								freshResp, err := resolver.Exchange(context.Background(), reqCopy)
-								if err == nil && freshResp != nil && freshResp.Rcode == dns.RcodeSuccess {
+								if err == nil && freshResp != nil {
 									cache.Put(reqCopy, freshResp)
 								}
 								return freshResp, err
@@ -57,16 +57,17 @@ func NewCacheMiddleware(cache *core.DNSCache, resolver core.Resolver) Middleware
 		flightKey := core.CacheKey(q.Name, q.Qtype, q.Qclass)
 		var innerErr error
 
-		_, shared, flightErr := cache.SingleFlight(flightKey, func() (*dns.Msg, error) {
+		val, shared, flightErr := cache.SingleFlight(flightKey, func() (*dns.Msg, error) {
 			innerErr = next()
 			if innerErr == nil && ctx.Resp != nil {
 				cache.Put(req, ctx.Resp)
 				return ctx.Resp, nil
 			}
-			return nil, innerErr
+			return ctx.Resp, innerErr
 		})
 
-		// 若为并发共享等待者，直接从刚写入的缓存中获取
+		// 若为并发共享等待者，优先使用最新写入的缓存以具备动态 TTL 重写；
+		// 若条目未入缓存（如 TTL=0 或未开启负缓存），则回退使用 SingleFlight 交付的响应副本
 		if shared {
 			if freshResp, hit, _, _ := cache.Get(req); hit && freshResp != nil {
 				ctx.Resp = freshResp
@@ -74,6 +75,25 @@ func NewCacheMiddleware(cache *core.DNSCache, resolver core.Resolver) Middleware
 				ctx.Err = nil
 				return nil
 			}
+			if val != nil {
+				ctx.Resp = val.Copy()
+				ctx.Resp.Id = req.Id
+			}
+			if flightErr != nil || ctx.Resp == nil || ctx.Resp.Rcode == dns.RcodeServerFailure {
+				if isStale && staleCandidate != nil && cache.IsStaleFallbackEnabled() {
+					staleResp := cache.BuildStaleResponse(req, staleCandidate)
+					if staleResp != nil {
+						ctx.Resp = staleResp
+						ctx.Set("cache_hit", "stale_fallback")
+						ctx.Err = nil
+						return nil
+					}
+				}
+				ctx.Err = flightErr
+				return flightErr
+			}
+			ctx.Err = nil
+			return nil
 		}
 
 		// 4. 回源发生错误或 SERVFAIL，检查是否存在可用 Stale 候选进行降级容灾
