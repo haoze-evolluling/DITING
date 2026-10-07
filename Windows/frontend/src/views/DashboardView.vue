@@ -21,6 +21,7 @@ const qpsHistory = ref<number[]>([]);
 const latencyHistory = ref<number[]>([]);
 
 let unsubEvents: (() => void) | null = null;
+let unsubConn: (() => void) | null = null;
 let pollTimer: any = null;
 
 const dnsRunning = computed(() => !!status.value?.dns?.running);
@@ -123,11 +124,18 @@ onMounted(() => {
     }
   });
 
+  unsubConn = ipc.onConnectionChange((connected) => {
+    if (connected) {
+      fetchStatus();
+    }
+  });
+
   pollTimer = setInterval(fetchStatus, 5000);
 });
 
 onUnmounted(() => {
   if (unsubEvents) unsubEvents();
+  if (unsubConn) unsubConn();
   if (pollTimer) clearInterval(pollTimer);
 });
 </script>

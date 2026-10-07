@@ -144,7 +144,7 @@ func (s *Server) Start() error {
 	s.mu.Lock()
 	s.listener = ln
 	s.httpServer = &http.Server{
-		Handler:      mux,
+		Handler:      corsMiddleware(mux),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}

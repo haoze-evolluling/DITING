@@ -96,7 +96,7 @@ class IPCService {
       this.setConnected(true);
       return json.data as T;
     } catch (err: any) {
-      if (err.message && err.message.includes('Failed to fetch')) {
+      if (err instanceof TypeError || (err.message && (err.message.includes('fetch') || err.message.includes('Network') || err.message.includes('failed')))) {
         this.setConnected(false);
       }
       throw err;

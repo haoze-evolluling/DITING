@@ -42,10 +42,20 @@ function handleNavigate(tab: string) {
   currentTab.value = tab as NavTab;
 }
 
+const isRetrying = ref(false);
+
 async function retryConnect() {
-  showAlertModal.value = false;
-  await ipc.checkHealth();
-  ipc.reconnectWS();
+  if (isRetrying.value) return;
+  isRetrying.value = true;
+  try {
+    const healthy = await ipc.checkHealth();
+    ipc.reconnectWS();
+    if (healthy) {
+      showAlertModal.value = false;
+    }
+  } finally {
+    isRetrying.value = false;
+  }
 }
 
 onMounted(() => {
@@ -213,10 +223,11 @@ onUnmounted(() => {
         </button>
         <button
           @click="retryConnect"
-          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover shadow-xs flex items-center gap-1.5 transition-all flex-shrink-0 cursor-pointer"
+          :disabled="isRetrying"
+          class="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-brand-primary hover:bg-brand-primary-hover shadow-xs flex items-center gap-1.5 transition-all flex-shrink-0 cursor-pointer disabled:opacity-60"
         >
-          <M3Icon name="refresh" :size="15" />
-          <span>重新尝试连接</span>
+          <M3Icon name="refresh" :size="15" :class="isRetrying ? 'animate-spin' : ''" />
+          <span>{{ isRetrying ? '正在连接...' : '重新尝试连接' }}</span>
         </button>
       </template>
     </AppModal>
