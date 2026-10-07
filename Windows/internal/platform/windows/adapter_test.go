@@ -204,3 +204,21 @@ func TestPowerShellAdapterScanner_LiveScan(t *testing.T) {
 		t.Logf("Adapter: %s, Physical=%v, Status=%s, Gateway=%s", a.Name, a.IsPhysical, a.Status, a.Gateway)
 	}
 }
+
+func TestParseAdapterJSON_WithErrorStreamPrefix(t *testing.T) {
+	dirtyOutput := "Get-NetIPInterface : 找不到任何“InterfaceIndex”属性等于“45”的 MSFT_NetIPInterface 对象。\n" +
+		"所在位置 行:1 字符: 10\n" +
+		"[{\"ID\":\"{2D46BA6A-1CED-4E84-9956-D2FD033CCEFA}\",\"Name\":\"WLAN\",\"Description\":\"Intel Wi-Fi\",\"Index\":8,\"Status\":\"Up\",\"Gateway\":\"192.168.1.1\",\"IPv4DHCP\":true,\"IPv6DHCP\":true,\"IPv4DNS\":[\"192.168.1.1\"],\"IPv6DNS\":[],\"Virtual\":false}]\n"
+
+	adapters, err := parseAdapterJSON(dirtyOutput)
+	if err != nil {
+		t.Fatalf("parseAdapterJSON should successfully parse JSON with error prefix, got err: %v", err)
+	}
+	if len(adapters) != 1 {
+		t.Fatalf("expected 1 adapter, got %d", len(adapters))
+	}
+	if adapters[0].Name != "WLAN" {
+		t.Errorf("expected WLAN, got %s", adapters[0].Name)
+	}
+}
+

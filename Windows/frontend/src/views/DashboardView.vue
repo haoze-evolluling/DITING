@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { ipc } from '../api/ipc';
-import type { StatusResponse, WebSocketEvent } from '../api/types';
+import type { StatusResponse, WebSocketEvent, PortCheckResult } from '../api/types';
 import StatusBadge from '../components/StatusBadge.vue';
 import MetricCard from '../components/MetricCard.vue';
 import MetricChart from '../components/MetricChart.vue';
 import M3Icon from '../components/M3Icon.vue';
+import PortConflictModal from '../components/PortConflictModal.vue';
 
 const emit = defineEmits<{
   (e: 'navigate', tab: string): void;
@@ -16,6 +17,8 @@ const loading = ref(false);
 const togglingDNS = ref(false);
 const togglingTakeover = ref(false);
 const errorMessage = ref('');
+const portConflict = ref<PortCheckResult | null>(null);
+const showConflictModal = ref(false);
 
 const qpsHistory = ref<number[]>([]);
 const latencyHistory = ref<number[]>([]);
@@ -84,6 +87,59 @@ function pushMetricData(qps: number, latency: number) {
   latencyHistory.value = [...latencyHistory.value.slice(-29), latency];
 }
 
+async function handleStartFailure(err: any) {
+  if (err.conflict) {
+    portConflict.value = err.conflict;
+    showConflictModal.value = true;
+    errorMessage.value = 'DNS 端口 (53) 被占用，请根据引导排查';
+    return;
+  }
+
+  const msg = err.message || '';
+  if (msg.includes('53') || msg.includes('bind') || msg.includes('Only one usage') || msg.includes('占用')) {
+    try {
+      const res = await ipc.checkPortConflicts();
+      if (!res.available || res.hasICS || (res.conflicts && res.conflicts.length > 0)) {
+        portConflict.value = res;
+        showConflictModal.value = true;
+        errorMessage.value = 'DNS 端口 (53) 被占用，请根据引导排查';
+        return;
+      }
+    } catch {}
+  }
+
+  errorMessage.value = `DNS 操作失败: ${err.message}`;
+}
+
+async function handleRetryAfterConflict() {
+  try {
+    errorMessage.value = '';
+    const checkRes = await ipc.checkPortConflicts();
+    let hasOther = false;
+    for (const c of (checkRes.conflicts || [])) {
+      if (!c.isSelf) {
+        hasOther = true;
+        break;
+      }
+    }
+    if (!checkRes.available && hasOther) {
+      portConflict.value = checkRes;
+      alert('53 端口仍被占用中，请确认已关闭冲突程序或停止 ICS 服务后再重试。');
+      return;
+    }
+
+    showConflictModal.value = false;
+    portConflict.value = null;
+    togglingDNS.value = true;
+    await ipc.startDNS();
+    await fetchStatus();
+  } catch (err: any) {
+    await handleStartFailure(err);
+  } finally {
+    togglingDNS.value = false;
+  }
+}
+
 async function handleToggleDNS(e: Event) {
   const target = e.target as any;
   const wantStart = target.selected ?? !dnsRunning.value;
@@ -97,8 +153,12 @@ async function handleToggleDNS(e: Event) {
     }
     await fetchStatus();
   } catch (err: any) {
-    errorMessage.value = `DNS 操作失败: ${err.message}`;
     target.selected = dnsRunning.value;
+    if (wantStart) {
+      await handleStartFailure(err);
+    } else {
+      errorMessage.value = `停止服务失败: ${err.message}`;
+    }
   } finally {
     togglingDNS.value = false;
   }
@@ -116,11 +176,15 @@ async function handleToggleTakeover(e: Event) {
     }
     await fetchStatus();
   } catch (err: any) {
-    errorMessage.value = `网卡接管操作失败: ${err.message}`;
     if ('selected' in target) {
       target.selected = !nextVal;
     } else {
       target.checked = !nextVal;
+    }
+    if (nextVal) {
+      await handleStartFailure(err);
+    } else {
+      errorMessage.value = `网卡接管操作失败: ${err.message}`;
     }
   } finally {
     togglingTakeover.value = false;
@@ -161,18 +225,30 @@ onUnmounted(() => {
 <template>
   <div class="space-y-6 pb-12 select-none">
     <!-- 顶部状态提示条 -->
-    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-2.5 text-sm text-status-error">
-      <div class="flex items-center gap-2">
-        <M3Icon name="error" :size="18" />
+    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-2.5 text-sm text-status-error gap-3 flex-wrap">
+      <div class="flex items-center gap-2 min-w-0">
+        <M3Icon name="error" :size="18" class="shrink-0" />
         <span>{{ errorMessage }}</span>
       </div>
-      <button
-        @click="fetchStatus"
-        class="app-btn-secondary app-btn-compact"
-      >
-        <M3Icon name="refresh" :size="14" />
-        <span>重试</span>
-      </button>
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          v-if="portConflict"
+          type="button"
+          @click="showConflictModal = true"
+          class="app-btn-secondary app-btn-compact border-status-error/40 text-status-error hover:bg-status-error/10"
+        >
+          <M3Icon name="help" :size="14" />
+          <span>排查指引</span>
+        </button>
+        <button
+          type="button"
+          @click="fetchStatus"
+          class="app-btn-secondary app-btn-compact"
+        >
+          <M3Icon name="refresh" :size="14" />
+          <span>重试</span>
+        </button>
+      </div>
     </div>
 
     <!-- 16:9 双栏全景主网格 (左侧：核心控制 + 指标 + 波形图表；右侧：快捷模块摘要) -->
@@ -411,5 +487,13 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 53 端口占用冲突友好引导弹窗 -->
+    <PortConflictModal
+      :open="showConflictModal"
+      :conflictResult="portConflict"
+      @close="showConflictModal = false"
+      @resolved="handleRetryAfterConflict"
+    />
   </div>
 </template>

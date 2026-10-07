@@ -3,6 +3,7 @@ export interface ApiResponse<T = any> {
   message?: string;
   data?: T;
   error?: string;
+  conflict?: PortCheckResult;
 }
 
 export interface UpstreamInfo {
@@ -128,12 +129,15 @@ export interface AdapterInfo {
 }
 
 export interface PortConflictInfo {
+  port?: number;
   protocol: string;
   localAddress: string;
   pid: number;
   processName: string;
+  serviceName?: string;
   isICS: boolean;
   isSelf: boolean;
+  diagnosis?: string;
 }
 
 export interface PortCheckResult {

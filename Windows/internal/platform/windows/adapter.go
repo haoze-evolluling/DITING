@@ -111,17 +111,39 @@ func parseStringOrSlice(raw json.RawMessage) []string {
 	return []string{}
 }
 
-// adapterScanScript PowerShell 网卡信息提取脚本
+// extractJSON 截取可能混入控制台警告前缀或后缀文本中的合法 JSON 数组或对象
+func extractJSON(s string) string {
+	trimmed := strings.TrimSpace(s)
+	startBracket := strings.Index(trimmed, "[")
+	startBrace := strings.Index(trimmed, "{")
+
+	if startBracket != -1 && (startBrace == -1 || startBracket < startBrace) {
+		endBracket := strings.LastIndex(trimmed, "]")
+		if endBracket != -1 && endBracket > startBracket {
+			return trimmed[startBracket : endBracket+1]
+		}
+	} else if startBrace != -1 {
+		endBrace := strings.LastIndex(trimmed, "}")
+		if endBrace != -1 && endBrace > startBrace {
+			return trimmed[startBrace : endBrace+1]
+		}
+	}
+	return trimmed
+}
+
+// adapterScanScript PowerShell 网卡信息提取脚本，设置静默错误处理防止特殊虚拟网卡抛出错误流
 const adapterScanScript = `
-Get-NetAdapter | ForEach-Object {
+$ErrorActionPreference = 'SilentlyContinue';
+$ProgressPreference = 'SilentlyContinue';
+Get-NetAdapter -ErrorAction SilentlyContinue | ForEach-Object {
     $a = $_;
-    $ip = Get-NetIPConfiguration -InterfaceIndex $a.InterfaceIndex -ErrorAction SilentlyContinue;
-    $gw = if ($ip.IPv4DefaultGateway) { $ip.IPv4DefaultGateway.NextHop } else { '' };
-    $v4dns = @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 2 }).ServerAddresses);
-    $v6dns = @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 23 }).ServerAddresses);
-    $reg = Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue;
+    $ip = try { Get-NetIPConfiguration -InterfaceIndex $a.InterfaceIndex -ErrorAction SilentlyContinue 2>$null } catch { $null };
+    $gw = if ($ip -and $ip.IPv4DefaultGateway) { $ip.IPv4DefaultGateway.NextHop } else { '' };
+    $v4dns = if ($ip -and $ip.DNSServer) { @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 2 }).ServerAddresses) } else { @() };
+    $v6dns = if ($ip -and $ip.DNSServer) { @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 23 }).ServerAddresses) } else { @() };
+    $reg = try { Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue 2>$null } catch { $null };
     $v4dhcp = if ($reg) { ($reg.EnableDHCP -eq 1) -and ([string]::IsNullOrWhiteSpace($reg.NameServer)) } else { $true };
-    $reg6 = Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue;
+    $reg6 = try { Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue 2>$null } catch { $null };
     $v6dhcp = if ($reg6) { [string]::IsNullOrWhiteSpace($reg6.NameServer) } else { $true };
     [PSCustomObject]@{
         ID = $a.InterfaceGuid;
@@ -173,7 +195,7 @@ func (s *PowerShellAdapterScanner) GetActivePhysicalAdapters(ctx context.Context
 
 // parseAdapterJSON 解析 PowerShell 输出的 JSON 数据
 func parseAdapterJSON(output string) ([]AdapterInfo, error) {
-	trimmed := strings.TrimSpace(output)
+	trimmed := extractJSON(output)
 	if trimmed == "" || trimmed == "null" {
 		return []AdapterInfo{}, nil
 	}
@@ -182,7 +204,7 @@ func parseAdapterJSON(output string) ([]AdapterInfo, error) {
 	if err := json.Unmarshal([]byte(trimmed), &rawList); err != nil {
 		var single adapterRawDTO
 		if errSingle := json.Unmarshal([]byte(trimmed), &single); errSingle != nil {
-			return nil, fmt.Errorf("解析网卡 JSON 失败: %w (原文: %s)", err, trimmed)
+			return nil, fmt.Errorf("解析网卡 JSON 失败: %w (原文: %s)", err, strings.TrimSpace(output))
 		}
 		rawList = []adapterRawDTO{single}
 	}

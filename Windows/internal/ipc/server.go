@@ -3,6 +3,7 @@ package ipc
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -272,6 +273,15 @@ func (s *Server) handleDNSStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.controller.StartDNS(r.Context()); err != nil {
+		var pErr *windows.PortConflictError
+		if errors.As(err, &pErr) {
+			writeJSON(w, http.StatusConflict, Response[any]{
+				Success:  false,
+				Error:    pErr.Error(),
+				Conflict: pErr.Result,
+			})
+			return
+		}
 		writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
 		return
 	}
@@ -298,6 +308,15 @@ func (s *Server) handleTakeoverEnable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.controller.EnableTakeover(r.Context()); err != nil {
+		var pErr *windows.PortConflictError
+		if errors.As(err, &pErr) {
+			writeJSON(w, http.StatusConflict, Response[any]{
+				Success:  false,
+				Error:    pErr.Error(),
+				Conflict: pErr.Result,
+			})
+			return
+		}
 		writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
 		return
 	}

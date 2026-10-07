@@ -2,6 +2,7 @@ package ipc
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"sync"
@@ -485,3 +486,54 @@ func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 		t.Fatalf("CheckHost failed: err=%v, res=%+v", err, checkRes)
 	}
 }
+
+func TestServer_DNSStart_PortConflict(t *testing.T) {
+	conflictDetail := &windows.PortCheckResult{
+		Available: false,
+		HasICS:    true,
+		Conflicts: []windows.PortConflict{
+			{
+				Port:         53,
+				Protocol:     "UDP",
+				LocalAddress: "0.0.0.0:53",
+				PID:          1768,
+				ProcessName:  "svchost",
+				ServiceName:  "SharedAccess",
+				IsICS:        true,
+				Diagnosis:    "Windows ICS 占用 53 端口",
+			},
+		},
+		Diagnostic: "53 端口被 SharedAccess 占用",
+	}
+
+	mockCtrl := &mockController{
+		startErr: &windows.PortConflictError{Result: conflictDetail},
+	}
+	token := "test-secret-token"
+	server := NewServer("127.0.0.1:0", token, mockCtrl)
+
+	if err := server.Start(); err != nil {
+		t.Fatalf("server.Start failed: %v", err)
+	}
+	defer func() {
+		_ = server.Shutdown(context.Background())
+	}()
+
+	client := NewClient(server.Addr(), token)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := client.StartDNS(ctx)
+	if err == nil {
+		t.Fatalf("expected port conflict error, got nil")
+	}
+
+	var pErr *windows.PortConflictError
+	if !errors.As(err, &pErr) {
+		t.Fatalf("expected errors.As to match *windows.PortConflictError, got: %T (%v)", err, err)
+	}
+	if pErr.Result == nil || !pErr.Result.HasICS {
+		t.Fatalf("expected PortConflictError to contain conflict result with HasICS=true, got %+v", pErr.Result)
+	}
+}
+

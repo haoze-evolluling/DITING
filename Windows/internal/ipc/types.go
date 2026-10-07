@@ -7,10 +7,11 @@ import (
 
 // Response 通用 API JSON 响应体
 type Response[T any] struct {
-	Success bool   `json:"success"`
-	Message string `json:"message,omitempty"`
-	Data    T      `json:"data,omitempty"`
-	Error   string `json:"error,omitempty"`
+	Success  bool                     `json:"success"`
+	Message  string                   `json:"message,omitempty"`
+	Data     T                        `json:"data,omitempty"`
+	Error    string                   `json:"error,omitempty"`
+	Conflict *windows.PortCheckResult `json:"conflict,omitempty"`
 }
 
 // UpstreamInfo 上游 DNS 解析节点运行态信息

@@ -61,7 +61,46 @@ type icsInfoDTO struct {
 	State     string `json:"State"`
 }
 
+// PortConflictError 标识 53 端口冲突专用错误类型，包含深度的系统冲突探测诊断信息
+type PortConflictError struct {
+	Result *PortCheckResult
+	Err    error
+}
+
+func (e *PortConflictError) Error() string {
+	if e.Result != nil && e.Result.Diagnostic != "" {
+		return fmt.Sprintf("53 端口已被占用: %s", e.Result.Diagnostic)
+	}
+	if e.Err != nil {
+		return fmt.Sprintf("53 端口已被占用: %v", e.Err)
+	}
+	return "53 端口已被占用，无法启动 DNS 监听器"
+}
+
+func (e *PortConflictError) Unwrap() error {
+	return e.Err
+}
+
+// IsPort53Available 快速测试 127.0.0.1:53 是否可绑定 (UDP 与 TCP)
+func IsPort53Available() bool {
+	return testUDPBind("127.0.0.1:53") && testTCPBind("127.0.0.1:53")
+}
+
+// IsPortBindConflict 判断底层错误是否包含套接字绑定冲突关键词
+func IsPortBindConflict(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "bind") ||
+		strings.Contains(msg, "only one usage") ||
+		strings.Contains(msg, "address already in use") ||
+		strings.Contains(msg, "wsaeaddrinuse")
+}
+
 const portCheckScript = `
+$ErrorActionPreference = 'SilentlyContinue';
+$ProgressPreference = 'SilentlyContinue';
 $udp = @(Get-NetUDPEndpoint -LocalPort 53 -ErrorAction SilentlyContinue | ForEach-Object {
     $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue;
     [PSCustomObject]@{
@@ -157,7 +196,8 @@ func parsePortCheckJSON(out string, available bool, selfPIDs ...int) ([]PortConf
 	}
 
 	var res portScriptResult
-	if err := json.Unmarshal([]byte(strings.TrimSpace(out)), &res); err != nil {
+	trimmed := extractJSON(out)
+	if err := json.Unmarshal([]byte(trimmed), &res); err != nil {
 		return nil, false, "解析系统端口诊断信息失败: " + err.Error()
 	}
 
@@ -192,10 +232,10 @@ func parsePortCheckJSON(out string, available bool, selfPIDs ...int) ([]PortConf
 		if isSelf {
 			diagnosis = fmt.Sprintf("进程 PID %d (%s) 为谛听 (DITING) 服务自身正在监听 %s (%s)。", item.PID, item.ProcessName, item.LocalAddress, item.Protocol)
 		} else if isICS {
-			diagnosis = fmt.Sprintf("检测到 Windows 网络连接共享服务 (SharedAccess / ICS) 正在运行 (PID: %d)。ICS 会在 0.0.0.0:53 上占用 UDP，可能阻碍或干扰 DNS 本地代理。建议在服务管理器 (services.msc) 中将 'Internet Connection Sharing (ICS)' 服务停止并设置为禁用，或在管理员终端执行 'sc stop SharedAccess'。", item.PID)
+			diagnosis = fmt.Sprintf("检测到 Windows 网络连接共享服务 (SharedAccess / ICS) 正在运行 (PID: %d)。ICS 会在 0.0.0.0:53 上占用 UDP，阻止本地 DNS 代理绑定。排查建议：按 Win+R 打开 services.msc 停止并禁用 'Internet Connection Sharing (ICS)' 服务，或以管理员身份运行 'sc stop SharedAccess'。", item.PID)
 			diagLines = append(diagLines, diagnosis)
 		} else {
-			diagnosis = fmt.Sprintf("进程 PID %d (%s) 正在监听 %s (%s)。若与本地代理冲突，请停止该进程或更改其监听端口。", item.PID, item.ProcessName, item.LocalAddress, item.Protocol)
+			diagnosis = fmt.Sprintf("检测到外部进程 '%s' (PID: %d) 正在监听 %s (%s)。排查建议：请在任务管理器中结束该进程，或修改该软件的监听端口后重试。", item.ProcessName, item.PID, item.LocalAddress, item.Protocol)
 			diagLines = append(diagLines, diagnosis)
 		}
 

@@ -223,7 +223,7 @@ export function handleMockRequest(rawPath: string, _options: RequestInit = {}): 
       reason: '命中广告拦截规则',
     } as CheckHostResult;
   }
-  if (path === '/api/v1/system/check-port') {
+  if (path === '/api/v1/portcheck' || path === '/api/v1/system/check-port') {
     return {
       available: true,
       hasICS: false,

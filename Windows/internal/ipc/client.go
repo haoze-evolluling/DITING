@@ -56,6 +56,9 @@ func (c *Client) StartDNS(ctx context.Context) error {
 		return err
 	}
 	if !resp.Success {
+		if resp.Conflict != nil {
+			return &windows.PortConflictError{Result: resp.Conflict, Err: fmt.Errorf("%s", resp.Error)}
+		}
 		return fmt.Errorf("启动 DNS 失败: %s", resp.Error)
 	}
 	return nil
@@ -80,6 +83,9 @@ func (c *Client) EnableTakeover(ctx context.Context) error {
 		return err
 	}
 	if !resp.Success {
+		if resp.Conflict != nil {
+			return &windows.PortConflictError{Result: resp.Conflict, Err: fmt.Errorf("%s", resp.Error)}
+		}
 		return fmt.Errorf("开启接管失败: %s", resp.Error)
 	}
 	return nil

@@ -97,7 +97,11 @@ class IPCService {
       }
       const json: ApiResponse<T> = await resp.json();
       if (!json.success) {
-        throw new Error(json.error || json.message || '请求失败');
+        const err: any = new Error(json.error || json.message || '请求失败');
+        if (json.conflict) {
+          err.conflict = json.conflict;
+        }
+        throw err;
       }
       this.setConnected(true);
       return json.data as T;

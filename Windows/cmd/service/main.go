@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -251,8 +252,22 @@ func (p *program) StartDNS(ctx context.Context) error {
 		WriteTimeout: p.cfg.DNS.WriteTimeout,
 	}
 
+	// 53 端口占用前置检测：若本地监听端口已被外部进程或服务占用，立即执行深度冲突诊断
+	if p.portChecker != nil && !windows.IsPort53Available() {
+		res, checkErr := p.portChecker.CheckPort53(ctx)
+		if checkErr == nil && !res.Available {
+			return &windows.PortConflictError{Result: res}
+		}
+	}
+
 	srv := ditingdns.NewServer(serverCfg, pipeline)
 	if err := srv.Start(); err != nil {
+		if p.portChecker != nil && windows.IsPortBindConflict(err) {
+			res, checkErr := p.portChecker.CheckPort53(ctx)
+			if checkErr == nil && res != nil {
+				return &windows.PortConflictError{Result: res, Err: err}
+			}
+		}
 		return fmt.Errorf("启动 DNS 监听器失败: %w", err)
 	}
 
@@ -299,6 +314,10 @@ func (p *program) EnableTakeover(ctx context.Context) error {
 	if !dnsRun {
 		log.Println("[接管] DNS 服务未处于运行状态，自动先启动本地 DNS 监听器...")
 		if err := p.StartDNS(ctx); err != nil {
+			var pErr *windows.PortConflictError
+			if errors.As(err, &pErr) {
+				return pErr
+			}
 			return fmt.Errorf("接管前启动 DNS 监听器失败: %w", err)
 		}
 	}
