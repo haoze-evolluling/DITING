@@ -295,7 +295,7 @@ onMounted(() => {
               </div>
               <p class="text-xs font-mono text-text-sub">
                 服务器地址: <span class="text-text-main font-medium">{{ node.server }}</span>
-                <span v-if="node.url" class="ml-2">| 加密接口: {{ node.url }}</span>
+                <span v-if="node.url" class="ml-2">| 加密地址: {{ node.url }}</span>
               </p>
             </div>
 
@@ -303,7 +303,7 @@ onMounted(() => {
             <div class="flex items-center gap-2">
               <div v-if="probeResults[node.id] !== undefined" class="text-xs font-mono mr-1">
                 <span class="h-8 px-2.5 rounded-lg bg-status-success-bg text-status-success border border-status-success/30 font-semibold inline-flex items-center">
-                  {{ probeResults[node.id].toFixed(1) }} ms
+                  {{ probeResults[node.id].toFixed(1) }} 毫秒
                 </span>
               </div>
 
@@ -384,7 +384,7 @@ onMounted(() => {
 
         <md-outlined-text-field
           v-if="formProtocol === 'DOH'"
-          label="DoH 加密请求地址 (URL)"
+          label="DoH 加密解析地址 (URL)"
           :value="formUrl"
           @input="formUrl = ($event.target as any).value"
           class="w-full font-mono"

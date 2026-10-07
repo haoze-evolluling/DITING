@@ -207,7 +207,7 @@ onUnmounted(() => {
           />
         </div>
         <p class="text-xs text-text-sub mt-1">
-          自动缓存已访问过的网址解析结果，下次访问直接瞬间返回；在断网或网络卡顿时自动启用容灾兜底。
+          自动缓存已访问过的网址解析结果，下次访问直接瞬间返回；在断网或网络卡顿时自动启用应急保障。
         </p>
       </div>
 
@@ -291,9 +291,9 @@ onUnmounted(() => {
 
       <MetricCard title="总命中数" :value="stats.totalHits.toLocaleString()" icon="check" subtext="本地瞬间返回，无需等待网络" />
       <MetricCard title="实时联网解析" :value="stats.totalMisses.toLocaleString()" icon="sync" subtext="首次访问，向服务器查询" />
-      <MetricCard title="弱网容灾兜底" :value="stats.staleHits.toLocaleString()" icon="shield" subtext="网络故障时使用旧记录兜底" />
+      <MetricCard title="弱网应急保障" :value="stats.staleHits.toLocaleString()" icon="shield" subtext="网络故障时使用旧记录应急" />
       <MetricCard title="无效网址拦截" :value="stats.negativeHits.toLocaleString()" icon="cancel" subtext="记住不存在的网址，避免重复查询" />
-      <MetricCard title="已存条目 / 容量" :value="`${stats.entryCount} / ${stats.maxEntries}`" icon="cache" :subtext="`淘汰旧记录: ${stats.evictionCount}`" />
+      <MetricCard title="已存记录 / 上限" :value="`${stats.entryCount} / ${stats.maxEntries}`" icon="cache" :subtext="`自动清理旧记录: ${stats.evictionCount}`" />
     </div>
 
     <!-- 双栏布局: 热点域名 Top 统计 & 缓存策略配置 -->
@@ -391,7 +391,7 @@ onUnmounted(() => {
             ></md-outlined-text-field>
 
             <md-outlined-text-field
-              label="最短保底时长 (秒)"
+              label="最短保留时长 (秒)"
               type="number"
               :value="String(config.minTtlSeconds)"
               @input="config.minTtlSeconds = Number(($event.target as any).value)"
@@ -402,7 +402,7 @@ onUnmounted(() => {
           <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub space-y-3">
             <div class="flex items-center justify-between">
               <div>
-                <span class="text-xs font-bold text-text-main">弱网防断网容灾 (过期兜底)</span>
+                <span class="text-xs font-bold text-text-main">弱网应急保障 (旧记录兜底)</span>
                 <p class="text-[11px] text-text-sub">当网络超时或波动时，临时使用近期缓存确保网页能正常打开</p>
               </div>
               <md-switch
@@ -413,7 +413,7 @@ onUnmounted(() => {
 
             <div v-if="config.staleFallbackEnabled" class="grid grid-cols-2 gap-3 pt-1">
               <md-outlined-text-field
-                label="容灾兜底宽限期 (秒)"
+                label="应急记录保留期 (秒)"
                 type="number"
                 :value="String(config.staleFallbackSeconds)"
                 @input="config.staleFallbackSeconds = Number(($event.target as any).value)"
@@ -483,9 +483,9 @@ onUnmounted(() => {
         <button
           v-for="f in [
             { id: 'all', label: '全部' },
-            { id: 'fresh', label: '有效生效中' },
-            { id: 'stale', label: '过期容灾中' },
-            { id: 'negative', label: '无效网址记忆' },
+            { id: 'fresh', label: '有效记录' },
+            { id: 'stale', label: '应急备用' },
+            { id: 'negative', label: '无效网址' },
           ]"
           :key="f.id"
           @click="statusFilter = f.id as any"
@@ -521,7 +521,7 @@ onUnmounted(() => {
               <td class="py-2.5">
                 <span v-if="entry.isNegative" class="px-2 py-0.5 rounded-full text-[10px] bg-status-error-bg text-status-error">无效网址</span>
                 <span v-else-if="entry.status === 'fresh'" class="px-2 py-0.5 rounded-full text-[10px] bg-status-success-bg text-status-success">有效</span>
-                <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-status-warning-bg text-status-warning">过期容灾</span>
+                <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-status-warning-bg text-status-warning">应急备用</span>
               </td>
               <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-brand-primary' : 'text-status-warning'">{{ entry.remainingTtl }}s</td>
               <td class="py-2.5 text-text-muted">{{ entry.originalTtl }}s</td>

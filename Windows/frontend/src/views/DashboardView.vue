@@ -45,6 +45,24 @@ const formatUptime = computed(() => {
   return `${s}秒`;
 });
 
+const formatDnsMode = computed(() => {
+  const mode = status.value?.dns?.mode?.toLowerCase();
+  switch (mode) {
+    case 'single':
+      return '单服务器模式';
+    case 'primary_backup':
+      return '主备自动容灾';
+    case 'parallel_race':
+    case 'fastest':
+      return '并发极速响应';
+    case 'smart_prediction':
+    case 'load_balance':
+      return '智能延迟优选';
+    default:
+      return mode || '主备自动容灾';
+  }
+});
+
 async function fetchStatus() {
   try {
     loading.value = true;
@@ -289,8 +307,8 @@ onUnmounted(() => {
           <div class="grid grid-cols-2 gap-2">
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
               <div class="text-[11px] text-text-sub">工作策略</div>
-              <div class="text-xs font-semibold text-text-main uppercase truncate mt-0.5">
-                {{ status?.dns?.mode || 'PRIMARY_BACKUP' }}
+              <div class="text-xs font-semibold text-text-main truncate mt-0.5">
+                {{ formatDnsMode }}
               </div>
             </div>
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
@@ -380,13 +398,13 @@ onUnmounted(() => {
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
               <div class="text-[11px] text-text-sub">系统网络状态</div>
               <div class="text-xs font-semibold truncate mt-0.5" :class="takeoverActive ? 'text-status-success' : 'text-text-muted'">
-                {{ takeoverActive ? '已开启保护 (自动自愈)' : '未开启 (系统默认)' }}
+                {{ takeoverActive ? '已开启保护 (断网自动恢复)' : '未开启 (系统默认)' }}
               </div>
             </div>
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
               <div class="text-[11px] text-text-sub">防断网保障</div>
               <div class="text-[11px] font-mono text-text-sub truncate mt-0.5" title="%ProgramData%\DITING\dns_state.json">
-                已就绪 (崩溃自愈)
+                已就绪 (异常退出自动恢复)
               </div>
             </div>
           </div>

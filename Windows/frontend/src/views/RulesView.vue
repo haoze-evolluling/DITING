@@ -419,9 +419,9 @@ onUnmounted(() => {
             v-model="testQType"
             class="h-9 px-3 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main"
           >
-            <option value="A">Type A (IPv4)</option>
-            <option value="AAAA">Type AAAA (IPv6)</option>
-            <option value="ANY">Type ANY</option>
+            <option value="A">IPv4 地址 (A 记录)</option>
+            <option value="AAAA">IPv6 地址 (AAAA 记录)</option>
+            <option value="ANY">全部记录类型 (ANY)</option>
           </select>
           <button
             type="button"
@@ -483,7 +483,7 @@ onUnmounted(() => {
           <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
             <input type="radio" v-model="config.blockMode" value="nxdomain" class="accent-brand-primary" />
             <div>
-              <div class="font-medium text-text-main">伪装为域名不存在 (NXDOMAIN)</div>
+              <div class="font-medium text-text-main">提示域名不存在 (NXDOMAIN)</div>
               <div class="text-xs text-text-sub">告知浏览器该网址不存在，部分软件会放弃进一步连接</div>
             </div>
           </label>
@@ -491,7 +491,7 @@ onUnmounted(() => {
           <label class="flex items-center gap-3 cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
             <input type="radio" v-model="config.blockMode" value="refused" class="accent-brand-primary" />
             <div>
-              <div class="font-medium text-text-main">明确拒绝连接 (REFUSED)</div>
+              <div class="font-medium text-text-main">直接拒绝请求 (REFUSED)</div>
               <div class="text-xs text-text-sub">告知请求被安全策略明确拒绝</div>
             </div>
           </label>

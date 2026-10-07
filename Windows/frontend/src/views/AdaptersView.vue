@@ -191,7 +191,7 @@ onMounted(() => {
                 </span>
                 <StatusBadge
                   :status="adapter.status === 'Up' ? 'active' : 'inactive'"
-                  :text="adapter.status === 'Up' ? '连接正常' : adapter.status"
+                  :text="adapter.status === 'Up' ? '连接正常' : (adapter.status === 'Down' ? '未连接' : (adapter.status || '未连接'))"
                   size="sm"
                 />
                 <StatusBadge

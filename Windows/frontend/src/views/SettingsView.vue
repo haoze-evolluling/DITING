@@ -132,7 +132,7 @@ onMounted(() => {
         通用设置与故障排查
       </h2>
       <p class="text-sm text-text-sub">
-        配置核心服务连接、界面外观主题，以及网络故障排查与自愈工具。
+        配置核心服务连接、界面外观主题，以及网络故障排查与一键修复工具。
       </p>
     </div>
 
@@ -140,13 +140,13 @@ onMounted(() => {
     <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-4 transition-colors">
       <h3 class="text-base font-bold text-text-main flex items-center gap-2">
         <M3Icon name="router" :size="20" class="text-brand-primary" />
-        后台核心服务连接
+        后台服务连接设置
       </h3>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <md-outlined-text-field
-            label="服务地址 (Host)"
+            label="服务地址 (IP 或主机名)"
             :value="host"
             @input="host = ($event.target as any).value"
             class="w-full"
@@ -162,7 +162,7 @@ onMounted(() => {
         </div>
         <div>
           <md-outlined-text-field
-            label="连接密码 / Token (可选)"
+            label="访问密码 / 授权密钥 (可选)"
             :value="token"
             @input="token = ($event.target as any).value"
             type="password"

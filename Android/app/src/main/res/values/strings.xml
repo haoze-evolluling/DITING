@@ -9,7 +9,7 @@
     <string name="language_settings_summary">选择应用界面语言</string>
     <string name="feature_hub_dns_services">DNS 服务</string>
     <string name="feature_hub_provider_management">服务商管理</string>
-    <string name="feature_hub_bootstrap_settings">引导解析设置 (Bootstrap)</string>
+    <string name="feature_hub_bootstrap_settings">引导解析设置</string>
     <string name="feature_hub_resolution_mode">解析模式</string>
     <string name="feature_hub_network_control">网络控制</string>
     <string name="feature_hub_traffic_stats">应用流量统计</string>

@@ -159,7 +159,7 @@ onUnmounted(() => {
           class="app-btn-chip"
           :class="{ active: selectedType === t }"
         >
-          {{ t }}
+          {{ t === 'ALL' ? '全部类型' : t }}
         </button>
       </div>
 
@@ -243,7 +243,7 @@ onUnmounted(() => {
         <div class="flex items-center gap-4 text-text-sub shrink-0 text-[11px]">
           <span>来源: {{ item.clientIP || '127.0.0.1' }}</span>
           <span class="font-semibold" :class="item.durationMs > 100 ? 'text-status-warning' : 'text-text-main'">
-            {{ item.durationMs.toFixed(1) }} ms
+            {{ item.durationMs.toFixed(1) }} 毫秒
           </span>
           <span class="text-text-muted">{{ formatTime(item.timestamp) }}</span>
         </div>

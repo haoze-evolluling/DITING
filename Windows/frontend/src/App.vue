@@ -126,7 +126,7 @@ onUnmounted(() => {
           <span
             class="absolute -bottom-1 -right-1 flex h-3.5 w-3.5 rounded-full border-2 border-surface-card"
             :class="isConnected ? 'bg-status-success' : 'bg-status-error'"
-            :title="isConnected ? '特权服务已连接' : '特权服务未连接'"
+            :title="isConnected ? '后台服务已连接' : '后台服务未连接'"
           />
         </div>
         <span class="text-[11px] font-bold tracking-tight text-text-main">谛听 DNS</span>
