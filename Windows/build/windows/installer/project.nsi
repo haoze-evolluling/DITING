@@ -95,12 +95,12 @@ Section
 
     # 3. 自动向系统注册并启动特权服务
     DetailPrint "正在向系统注册 ${INFO_PRODUCTNAME} 内核特权服务..."
-    nsExec::ExecToLog '"$INSTDIR\${SERVICE_EXECUTABLE}" -service install'
-    nsExec::ExecToLog 'sc.exe config ${SERVICE_NAME} start= auto'
+    nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service install'
+    nsExec::Exec 'sc.exe config ${SERVICE_NAME} start= auto'
 
     DetailPrint "正在启动 ${INFO_PRODUCTNAME} 内核特权服务..."
-    nsExec::ExecToLog '"$INSTDIR\${SERVICE_EXECUTABLE}" -service start'
-    nsExec::ExecToLog 'net.exe start ${SERVICE_NAME}'
+    nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service start'
+    nsExec::Exec 'net.exe start ${SERVICE_NAME}'
 
     # 4. 创建桌面与开始菜单快捷方式
     CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0

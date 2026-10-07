@@ -84,6 +84,8 @@ function Build-Installer {
         Write-Host " -> Privileged service not found, building it first..." -ForegroundColor Yellow
         Build-Service
     }
+    # 若先前打开的安装程序尚未退出，先强制关闭以释放输出文件锁
+    Get-Process -Name "diting-gui-amd64-installer" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     Push-Location $windowsDir
     try {
         wails build -nsis -ldflags $ldflags
