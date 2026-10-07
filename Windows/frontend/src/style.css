@@ -1,28 +1,83 @@
 @import "tailwindcss";
 
-html {
-    background-color: rgba(27, 38, 54, 1);
-    text-align: center;
-    color: white;
+:root {
+  --md-sys-color-primary: #00668b;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #c4e7ff;
+  --md-sys-color-on-primary-container: #001e2c;
+  --md-sys-color-surface: #f8fafd;
+  --md-sys-color-on-surface: #191c1e;
+  --md-sys-color-surface-container: #edeef2;
+  --md-sys-color-outline: #71787e;
+  --md-sys-color-outline-variant: #c1c7ce;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
 }
 
-body {
-    margin: 0;
-    color: white;
-    font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+:root[data-theme="dark"],
+.dark {
+  --md-sys-color-primary: #7cd0ff;
+  --md-sys-color-on-primary: #00344a;
+  --md-sys-color-primary-container: #004c6a;
+  --md-sys-color-on-primary-container: #c4e7ff;
+  --md-sys-color-surface: #0f1417;
+  --md-sys-color-on-surface: #deede6;
+  --md-sys-color-surface-container: #1b2024;
+  --md-sys-color-outline: #8b9198;
+  --md-sys-color-outline-variant: #41474d;
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
 }
 
 @font-face {
-    font-family: "Nunito";
-    font-style: normal;
-    font-weight: 400;
-    src: local(""),
-    url("assets/fonts/nunito-v16-latin-regular.woff2") format("woff2");
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 400;
+  src: local(""), url("assets/fonts/nunito-v16-latin-regular.woff2") format("woff2");
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  user-select: none;
 }
 
 #app {
-    height: 100vh;
-    text-align: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Material Web 组件全局微调 */
+md-filled-button,
+md-outlined-button,
+md-text-button,
+md-icon-button,
+md-switch,
+md-radio {
+  --md-sys-color-primary: var(--md-sys-color-primary);
+}
+
+/* 自定义极简滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(140, 150, 160, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 150, 160, 0.45);
 }

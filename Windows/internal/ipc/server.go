@@ -23,6 +23,9 @@ type ServiceController interface {
 	GetStatus(ctx context.Context) (*StatusResponse, error)
 	CheckPortConflicts(ctx context.Context) (*windows.PortCheckResult, error)
 	GetAdapters(ctx context.Context) ([]windows.AdapterInfo, error)
+	ConfigureUpstream(ctx context.Context, req ConfigureUpstreamRequest) error
+	TestUpstream(ctx context.Context, req TestUpstreamRequest) (*TestUpstreamResponse, error)
+	SetAdapterTakeover(ctx context.Context, req AdapterTakeoverRequest) error
 }
 
 var upgrader = websocket.Upgrader{
@@ -94,6 +97,9 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/v1/takeover/disable", s.withAuth(s.handleTakeoverDisable))
 	mux.HandleFunc("/api/v1/status", s.withAuth(s.handleStatus))
 	mux.HandleFunc("/api/v1/adapters", s.withAuth(s.handleAdapters))
+	mux.HandleFunc("/api/v1/takeover/adapter", s.withAuth(s.handleAdapterTakeover))
+	mux.HandleFunc("/api/v1/upstream/configure", s.withAuth(s.handleUpstreamConfigure))
+	mux.HandleFunc("/api/v1/upstream/test", s.withAuth(s.handleUpstreamTest))
 	mux.HandleFunc("/api/v1/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/portcheck", s.withAuth(s.handlePortCheck))
 	mux.HandleFunc("/api/v1/health", s.handleHealth)
@@ -317,6 +323,60 @@ func (s *Server) handleAdapters(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, Response[[]windows.AdapterInfo]{Success: true, Data: adapters})
+}
+
+func (s *Server) handleAdapterTakeover(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, Response[any]{Success: false, Error: "method not allowed"})
+		return
+	}
+	var req AdapterTakeoverRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, Response[any]{Success: false, Error: err.Error()})
+		return
+	}
+	if err := s.controller.SetAdapterTakeover(r.Context(), req); err != nil {
+		writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
+		return
+	}
+	s.Broadcast(Event{Type: "takeover", Timestamp: time.Now().UnixMilli(), Data: req})
+	writeJSON(w, http.StatusOK, Response[any]{Success: true, Message: "网卡接管状态已更新"})
+}
+
+func (s *Server) handleUpstreamConfigure(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, Response[any]{Success: false, Error: "method not allowed"})
+		return
+	}
+	var req ConfigureUpstreamRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, Response[any]{Success: false, Error: err.Error()})
+		return
+	}
+	if err := s.controller.ConfigureUpstream(r.Context(), req); err != nil {
+		writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
+		return
+	}
+	s.Broadcast(Event{Type: "upstream", Timestamp: time.Now().UnixMilli(), Data: "configured"})
+	writeJSON(w, http.StatusOK, Response[any]{Success: true, Message: "上游配置已成功更新"})
+}
+
+func (s *Server) handleUpstreamTest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, Response[any]{Success: false, Error: "method not allowed"})
+		return
+	}
+	var req TestUpstreamRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, Response[any]{Success: false, Error: err.Error()})
+		return
+	}
+	res, err := s.controller.TestUpstream(r.Context(), req)
+	if err != nil {
+		writeJSON(w, http.StatusOK, Response[*TestUpstreamResponse]{Success: false, Error: err.Error(), Data: res})
+		return
+	}
+	writeJSON(w, http.StatusOK, Response[*TestUpstreamResponse]{Success: true, Data: res})
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {

@@ -112,6 +112,21 @@ func (m *mockController) GetAdapters(ctx context.Context) ([]windows.AdapterInfo
 	}, nil
 }
 
+func (m *mockController) ConfigureUpstream(ctx context.Context, req ConfigureUpstreamRequest) error {
+	return nil
+}
+
+func (m *mockController) TestUpstream(ctx context.Context, req TestUpstreamRequest) (*TestUpstreamResponse, error) {
+	return &TestUpstreamResponse{Success: true, LatencyMs: 12.5}, nil
+}
+
+func (m *mockController) SetAdapterTakeover(ctx context.Context, req AdapterTakeoverRequest) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.takeoverOn = req.Enable
+	return nil
+}
+
 func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 	mockCtrl := &mockController{}
 	token := "test-secret-token"
@@ -219,5 +234,19 @@ func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatalf("timeout waiting for WebSocket event")
+	}
+
+	// 8. 测试 ConfigureUpstream, TestUpstream, SetAdapterTakeover
+	if err := client.ConfigureUpstream(ctx, ConfigureUpstreamRequest{Mode: "SINGLE"}); err != nil {
+		t.Fatalf("ConfigureUpstream failed: %v", err)
+	}
+
+	testRes, err := client.TestUpstream(ctx, TestUpstreamRequest{Protocol: "PLAIN", Server: "223.5.5.5:53"})
+	if err != nil || !testRes.Success {
+		t.Fatalf("TestUpstream failed: err=%v, res=%+v", err, testRes)
+	}
+
+	if err := client.SetAdapterTakeover(ctx, AdapterTakeoverRequest{AdapterID: "{GUID-TEST}", Enable: true}); err != nil {
+		t.Fatalf("SetAdapterTakeover failed: %v", err)
 	}
 }

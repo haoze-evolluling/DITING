@@ -1,6 +1,7 @@
 package ipc
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -128,6 +129,54 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	}
 	if !resp.Success {
 		return fmt.Errorf("健康检查失败: %s", resp.Error)
+	}
+	return nil
+}
+
+// ConfigureUpstream 动态配置上游调度策略与节点
+func (c *Client) ConfigureUpstream(ctx context.Context, req ConfigureUpstreamRequest) error {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	var resp Response[any]
+	if err := c.doRequest(ctx, http.MethodPost, "/api/v1/upstream/configure", bytes.NewReader(body), &resp); err != nil {
+		return err
+	}
+	if !resp.Success {
+		return fmt.Errorf("配置上游失败: %s", resp.Error)
+	}
+	return nil
+}
+
+// TestUpstream 测试指定上游节点的延迟
+func (c *Client) TestUpstream(ctx context.Context, req TestUpstreamRequest) (*TestUpstreamResponse, error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	var resp Response[*TestUpstreamResponse]
+	if err := c.doRequest(ctx, http.MethodPost, "/api/v1/upstream/test", bytes.NewReader(body), &resp); err != nil {
+		return nil, err
+	}
+	if !resp.Success {
+		return nil, fmt.Errorf("测试上游失败: %s", resp.Error)
+	}
+	return resp.Data, nil
+}
+
+// SetAdapterTakeover 单独开启或还原指定网卡的接管
+func (c *Client) SetAdapterTakeover(ctx context.Context, req AdapterTakeoverRequest) error {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	var resp Response[any]
+	if err := c.doRequest(ctx, http.MethodPost, "/api/v1/takeover/adapter", bytes.NewReader(body), &resp); err != nil {
+		return err
+	}
+	if !resp.Success {
+		return fmt.Errorf("设置网卡接管失败: %s", resp.Error)
 	}
 	return nil
 }

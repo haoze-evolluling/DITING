@@ -19,7 +19,9 @@ var (
 // DNSManager 定义系统 DNS 接管与还原管理接口
 type DNSManager interface {
 	Takeover(ctx context.Context, adapters []AdapterInfo) error
+	TakeoverSingle(ctx context.Context, adapter AdapterInfo) error
 	Restore(ctx context.Context) error
+	RestoreSingle(ctx context.Context, adapterID string) error
 	RestoreAdapters(ctx context.Context, adapters []AdapterState) error
 	IsTakeoverActive() bool
 	GetTakenOverAdapters() []AdapterState
@@ -139,6 +141,57 @@ func (m *WindowsDNSManager) Takeover(ctx context.Context, adapters []AdapterInfo
 	return nil
 }
 
+// TakeoverSingle 接管指定单个活动物理网卡
+func (m *WindowsDNSManager) TakeoverSingle(ctx context.Context, adapter AdapterInfo) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	state := AdapterState{
+		ID:          adapter.ID,
+		Name:        adapter.Name,
+		Index:       adapter.Index,
+		Description: adapter.Description,
+		IPv4DHCP:    adapter.IPv4DHCP,
+		IPv6DHCP:    adapter.IPv6DHCP,
+		IPv4DNS:     adapter.IPv4DNS,
+		IPv6DNS:     adapter.IPv6DNS,
+	}
+
+	found := false
+	for i, a := range m.adapters {
+		if a.ID == adapter.ID || a.Name == adapter.Name {
+			m.adapters[i] = state
+			found = true
+			break
+		}
+	}
+	if !found {
+		m.adapters = append(m.adapters, state)
+	}
+
+	persistState := &TakeoverState{
+		Active:    true,
+		Version:   m.version,
+		PID:       os.Getpid(),
+		Timestamp: time.Now(),
+		Adapters:  m.adapters,
+	}
+	if err := m.stateStore.Save(persistState); err != nil {
+		return fmt.Errorf("接管前保存状态失败: %w", err)
+	}
+
+	scriptPath := filepath.Join(filepath.Dir(m.stateStore.GetFilePath()), "restore-dns.bat")
+	_ = GenerateRestoreScript(m.adapters, scriptPath)
+
+	if err := m.applyTakeoverOnAdapter(ctx, state); err != nil {
+		return err
+	}
+
+	_ = m.FlushDNSCache(ctx)
+	m.active = true
+	return nil
+}
+
 // applyTakeoverOnAdapter 在指定网卡上设置 IPv4 为 127.0.0.1，IPv6 为 ::1
 func (m *WindowsDNSManager) applyTakeoverOnAdapter(ctx context.Context, a AdapterState) error {
 	// 优先使用 PowerShell 同时配置双栈接管地址
@@ -172,6 +225,48 @@ func (m *WindowsDNSManager) Restore(ctx context.Context) error {
 	m.active = false
 	m.adapters = nil
 	_ = m.stateStore.Clear()
+	return nil
+}
+
+// RestoreSingle 还原指定单个网卡的 DNS 接管
+func (m *WindowsDNSManager) RestoreSingle(ctx context.Context, adapterID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	var target *AdapterState
+	var remaining []AdapterState
+	for _, a := range m.adapters {
+		if a.ID == adapterID || a.Name == adapterID {
+			curr := a
+			target = &curr
+		} else {
+			remaining = append(remaining, a)
+		}
+	}
+
+	if target == nil {
+		return nil
+	}
+
+	if err := m.restoreSingleAdapter(ctx, *target); err != nil {
+		return err
+	}
+	_ = m.FlushDNSCache(ctx)
+
+	m.adapters = remaining
+	if len(remaining) == 0 {
+		m.active = false
+		_ = m.stateStore.Clear()
+	} else {
+		persistState := &TakeoverState{
+			Active:    true,
+			Version:   m.version,
+			PID:       os.Getpid(),
+			Timestamp: time.Now(),
+			Adapters:  remaining,
+		}
+		_ = m.stateStore.Save(persistState)
+	}
 	return nil
 }
 

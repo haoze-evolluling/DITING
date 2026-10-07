@@ -1,6 +1,7 @@
 package ipc
 
 import (
+	"github.com/haoze-evolluling/diting/windows/internal/core"
 	"github.com/haoze-evolluling/diting/windows/internal/platform/windows"
 )
 
@@ -74,3 +75,30 @@ type QueryEventData struct {
 	RCode        string  `json:"rcode,omitempty"`
 	ErrorMessage string  `json:"errorMessage,omitempty"`
 }
+
+// ConfigureUpstreamRequest 动态配置上游请求
+type ConfigureUpstreamRequest struct {
+	Mode      string                `json:"mode"`
+	Providers []core.ProviderConfig `json:"providers"`
+}
+
+// TestUpstreamRequest 测试单个上游延迟请求
+type TestUpstreamRequest struct {
+	Protocol string `json:"protocol"`
+	Server   string `json:"server"`
+	URL      string `json:"url"`
+}
+
+// TestUpstreamResponse 测试单个上游延迟响应
+type TestUpstreamResponse struct {
+	Success   bool    `json:"success"`
+	LatencyMs float64 `json:"latencyMs"`
+	Error     string  `json:"error,omitempty"`
+}
+
+// AdapterTakeoverRequest 单个网卡接管/还原请求
+type AdapterTakeoverRequest struct {
+	AdapterID string `json:"adapterId"`
+	Enable    bool   `json:"enable"`
+}
+

@@ -236,10 +236,14 @@ Windows/
 - **阶段三：服务化封装与 IPC 通信层实现 (Phase 3 - 已完成)**
   - 接入 `kardianos/service` 支持后台 Windows Service 注册及前台 `-run` 调试。
   - 搭建本地轻量 HTTP RESTful 控制接口（`127.0.0.1:15353` + Token 鉴权）及 WebSocket 实时指标推送流（`/api/v1/events`）。
+- **阶段四：Material Design 3 桌面端 UI 研发与全流程闭环 (Phase 4 - 已完成)**
+  - 接入官方 `@material/web` 组件库与 MCU 动态色彩算法（Dynamic Color），实现多预设种子色与 Windows 系统强调色提取，支持深色/浅色平滑切换。
+  - 搭建标准桌面端 Navigation Rail 导航体系与五大核心业务视图（Dashboard、Adapters、Upstream、Logs、Settings），内嵌离线 Material Symbols 矢量图标。
+  - 完成特权服务 IPC 前后端打通与异常边界交互，支持一键接管/还原、单卡控制、上游动态热更与实时延迟探测。
 
 ---
 
-### 6.2 当前实施阶段：阶段四 (Phase 4) - Material Design 3 桌面端 UI 研发与全流程闭环
+### 6.2 阶段四验收与完成记录 (Phase 4 Completed)
 
 - **阶段目标**：全面构建遵循 **Material Design 3 (M3)** 规范的高品质桌面客户端，深度参考、学习并复用 `LearningObjects/material-web-main` 的设计体系与代码资产，与特权服务打通实现开箱即用的产品化闭环。
 - **UI/UX 与前端技术核心要求**：

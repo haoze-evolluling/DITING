@@ -7,9 +7,11 @@ import (
 	"os"
 
 	"github.com/haoze-evolluling/diting/windows/frontend"
+	"github.com/haoze-evolluling/diting/windows/internal/platform/windows"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"golang.org/x/sys/windows/registry"
 )
 
 // Version 信息
@@ -36,6 +38,37 @@ func (a *App) startup(ctx context.Context) {
 // Greet 测试方法
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, 来自谛听 (DITING) Windows GUI!", name)
+}
+
+// GetSystemAccentColor 获取 Windows 注册表中的强调色
+func (a *App) GetSystemAccentColor() string {
+	k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\DWM`, registry.QUERY_VALUE)
+	if err == nil {
+		defer k.Close()
+		val, _, err := k.GetIntegerValue("ColorizationColor")
+		if err == nil {
+			r := (val >> 16) & 0xFF
+			g := (val >> 8) & 0xFF
+			b := val & 0xFF
+			return fmt.Sprintf("#%02x%02x%02x", r, g, b)
+		}
+	}
+	return "#00668b"
+}
+
+// RunEmergencyRestore 执行离线应急恢复
+func (a *App) RunEmergencyRestore() (string, error) {
+	store := windows.NewFileStateStore("")
+	exec := windows.NewDefaultExecutor()
+	mgr := windows.NewDNSManager(exec, store, Version)
+	healed, err := store.CheckAndSelfHeal(context.Background(), mgr)
+	if err != nil {
+		return "", fmt.Errorf("应急恢复失败: %w", err)
+	}
+	if healed {
+		return "已成功自愈恢复系统 DNS 设置！", nil
+	}
+	return "系统 DNS 状态正常，未检测到残留接管。", nil
 }
 
 func main() {
