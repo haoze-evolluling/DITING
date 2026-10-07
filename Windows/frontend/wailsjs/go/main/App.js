@@ -10,6 +10,14 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function IsAutoStartEnabled() {
+  return window['go']['main']['App']['IsAutoStartEnabled']();
+}
+
 export function RunEmergencyRestore() {
   return window['go']['main']['App']['RunEmergencyRestore']();
+}
+
+export function SetAutoStart(arg1) {
+  return window['go']['main']['App']['SetAutoStart'](arg1);
 }

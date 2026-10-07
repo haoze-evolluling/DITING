@@ -59,8 +59,22 @@ md-outlined-button,
 md-text-button,
 md-icon-button,
 md-switch,
-md-radio {
+md-radio,
+md-outlined-text-field,
+md-outlined-select,
+md-dialog {
   --md-sys-color-primary: var(--md-sys-color-primary);
+  font-family: inherit;
+}
+
+md-dialog {
+  --md-dialog-container-shape: 24px;
+}
+
+md-outlined-text-field,
+md-outlined-select {
+  --md-outlined-text-field-container-shape: 12px;
+  --md-outlined-select-text-field-container-shape: 12px;
 }
 
 /* 自定义极简滚动条 */

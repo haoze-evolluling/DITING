@@ -49,7 +49,7 @@ async function loadData() {
         id: u.id,
         protocol: u.protocol,
         server: u.server,
-        url: u.protocol === 'DOH' ? `https://${u.server}/dns-query` : '',
+        url: u.url || (u.protocol === 'DOH' ? `https://${u.server}/dns-query` : ''),
         weight: u.weight || 1,
       }));
     }
@@ -312,65 +312,58 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 新增 / 编辑节点弹窗 (手写 M3 规范卡片模态) -->
-    <div
-      v-if="isDialogOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-    >
-      <div class="relative w-full max-w-md rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-5">
-        <h3 class="text-lg font-bold text-slate-900 dark:text-slate-100">
-          {{ editingIndex >= 0 ? '编辑上游节点' : '新增上游 DNS 节点' }}
-        </h3>
-
-        <div class="space-y-4">
-          <div>
-            <label class="text-xs font-semibold text-slate-500 block mb-1">节点标识 ID</label>
-            <input
-              v-model="formId"
-              type="text"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-              placeholder="如 alidns-plain"
-            />
-          </div>
-
-          <div>
-            <label class="text-xs font-semibold text-slate-500 block mb-1">传输协议</label>
-            <select
-              v-model="formProtocol"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-            >
-              <option value="PLAIN">PLAIN (标准 UDP/TCP 53)</option>
-              <option value="DOH">DOH (基于 HTTP/2 的 DNS over HTTPS)</option>
-              <option value="DOT">DOT (基于 TLS 的 DNS over TLS 853)</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="text-xs font-semibold text-slate-500 block mb-1">服务器地址 (host:port)</label>
-            <input
-              v-model="formServer"
-              type="text"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/40"
-              placeholder="如 223.5.5.5:53 或 dns.alidns.com:853"
-            />
-          </div>
-
-          <div v-if="formProtocol === 'DOH'">
-            <label class="text-xs font-semibold text-slate-500 block mb-1">DoH URL 地址</label>
-            <input
-              v-model="formUrl"
-              type="text"
-              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/40"
-              placeholder="https://dns.alidns.com/dns-query"
-            />
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-3 pt-2">
-          <md-text-button @click="isDialogOpen = false">取消</md-text-button>
-          <md-filled-button @click="handleSaveDialog">保存节点</md-filled-button>
-        </div>
+    <!-- 新增 / 编辑节点弹窗 (标准 M3 Dialog + Outlined Text Field + Select) -->
+    <md-dialog :open="isDialogOpen" @close="isDialogOpen = false">
+      <div slot="headline">
+        {{ editingIndex >= 0 ? '编辑上游节点' : '新增上游 DNS 节点' }}
       </div>
-    </div>
+      <form slot="content" id="upstream-dialog-form" method="dialog" class="space-y-4 pt-2">
+        <md-outlined-text-field
+          label="节点标识 ID"
+          :value="formId"
+          @input="formId = ($event.target as any).value"
+          class="w-full"
+          required
+        ></md-outlined-text-field>
+
+        <md-outlined-select
+          label="传输协议"
+          :value="formProtocol"
+          @change="formProtocol = ($event.target as any).value"
+          class="w-full"
+        >
+          <md-select-option value="PLAIN">
+            <div slot="headline">PLAIN (标准 UDP/TCP 53)</div>
+          </md-select-option>
+          <md-select-option value="DOH">
+            <div slot="headline">DOH (基于 HTTP/2 的 DNS over HTTPS)</div>
+          </md-select-option>
+          <md-select-option value="DOT">
+            <div slot="headline">DOT (基于 TLS 的 DNS over TLS 853)</div>
+          </md-select-option>
+        </md-outlined-select>
+
+        <md-outlined-text-field
+          label="服务器地址 (host:port)"
+          :value="formServer"
+          @input="formServer = ($event.target as any).value"
+          class="w-full font-mono"
+          placeholder="如 223.5.5.5:53 或 dns.alidns.com:853"
+        ></md-outlined-text-field>
+
+        <md-outlined-text-field
+          v-if="formProtocol === 'DOH'"
+          label="DoH URL 地址"
+          :value="formUrl"
+          @input="formUrl = ($event.target as any).value"
+          class="w-full font-mono"
+          placeholder="https://dns.alidns.com/dns-query"
+        ></md-outlined-text-field>
+      </form>
+      <div slot="actions">
+        <md-text-button form="upstream-dialog-form" value="cancel" @click="isDialogOpen = false">取消</md-text-button>
+        <md-filled-button form="upstream-dialog-form" value="save" @click="handleSaveDialog">保存节点</md-filled-button>
+      </div>
+    </md-dialog>
   </div>
 </template>

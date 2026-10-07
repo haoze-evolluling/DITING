@@ -71,6 +71,40 @@ func (a *App) RunEmergencyRestore() (string, error) {
 	return "系统 DNS 状态正常，未检测到残留接管。", nil
 }
 
+// IsAutoStartEnabled 获取当前是否已开启开机自启
+func (a *App) IsAutoStartEnabled() bool {
+	k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Run`, registry.QUERY_VALUE)
+	if err != nil {
+		return false
+	}
+	defer k.Close()
+	_, _, err = k.GetStringValue("DitingDNS")
+	return err == nil
+}
+
+// SetAutoStart 设置或取消开机自启
+func (a *App) SetAutoStart(enable bool) (bool, error) {
+	k, _, err := registry.CreateKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Run`, registry.SET_VALUE)
+	if err != nil {
+		return false, fmt.Errorf("访问注册表失败: %w", err)
+	}
+	defer k.Close()
+
+	if enable {
+		exePath, err := os.Executable()
+		if err != nil {
+			return false, fmt.Errorf("获取执行路径失败: %w", err)
+		}
+		if err := k.SetStringValue("DitingDNS", `"`+exePath+`"`); err != nil {
+			return false, fmt.Errorf("写入自启注册表失败: %w", err)
+		}
+		return true, nil
+	}
+
+	_ = k.DeleteValue("DitingDNS")
+	return false, nil
+}
+
 func main() {
 	showVersion := flag.Bool("v", false, "显示 GUI 版本号并退出")
 	flag.BoolVar(showVersion, "version", false, "显示 GUI 版本号并退出")

@@ -18,6 +18,8 @@ declare global {
           Greet?: (name: string) => Promise<string>;
           GetSystemAccentColor?: () => Promise<string>;
           RunEmergencyRestore?: () => Promise<string>;
+          IsAutoStartEnabled?: () => Promise<boolean>;
+          SetAutoStart?: (enable: boolean) => Promise<boolean>;
         };
       };
     };
@@ -262,6 +264,24 @@ class IPCService {
     // 回退到 IPC 接口
     await this.disableTakeover();
     return '已通过 IPC 还原网卡 DNS 接管';
+  }
+
+  public async isAutoStartEnabled(): Promise<boolean> {
+    if (window.go?.main?.App?.IsAutoStartEnabled) {
+      try {
+        return await window.go.main.App.IsAutoStartEnabled();
+      } catch (e) {
+        console.warn('获取开机自启状态失败:', e);
+      }
+    }
+    return false;
+  }
+
+  public async setAutoStart(enable: boolean): Promise<boolean> {
+    if (window.go?.main?.App?.SetAutoStart) {
+      return await window.go.main.App.SetAutoStart(enable);
+    }
+    return enable;
   }
 }
 

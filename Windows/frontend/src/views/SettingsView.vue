@@ -23,6 +23,35 @@ const portResult = ref<PortCheckResult | null>(null);
 // 应急恢复状态
 const restoring = ref(false);
 const restoreMessage = ref('');
+const showRestoreDialog = ref(false);
+
+// 开机自启状态
+const autostart = ref(false);
+const togglingAutostart = ref(false);
+
+async function checkAutostart() {
+  try {
+    autostart.value = await ipc.isAutoStartEnabled();
+  } catch {}
+}
+
+async function handleToggleAutostart(e: Event) {
+  const target = e.target as any;
+  const enable = Boolean(target.selected ?? target.checked);
+  togglingAutostart.value = true;
+  try {
+    autostart.value = await ipc.setAutoStart(enable);
+  } catch (err: any) {
+    alert(`设置开机自启失败: ${err.message}`);
+    if ('selected' in target) {
+      target.selected = !enable;
+    } else {
+      target.checked = !enable;
+    }
+  } finally {
+    togglingAutostart.value = false;
+  }
+}
 
 function loadSettings() {
   const cfg = ipc.getConfig();
@@ -32,6 +61,7 @@ function loadSettings() {
   currentSeed.value = themeManager.getSeedColor();
   currentMode.value = themeManager.getThemeMode();
   useAccent.value = themeManager.isUsingSystemAccent();
+  checkAutostart();
 }
 
 async function testConnection() {
@@ -75,8 +105,8 @@ function handleModeChange(mode: ThemeMode) {
 }
 
 async function handleToggleAccent(e: Event) {
-  const target = e.target as HTMLInputElement;
-  const enable = target.checked;
+  const target = e.target as any;
+  const enable = Boolean(target.selected ?? target.checked);
   useAccent.value = enable;
   if (enable) {
     const accent = await ipc.getNativeSystemAccentColor();
@@ -100,10 +130,12 @@ async function handleDiagnosePort() {
   }
 }
 
-async function handleEmergencyRestore() {
-  if (!confirm('确认执行离线系统 DNS 应急自愈恢复？这会将所有物理网卡恢复至初始快照。')) {
-    return;
-  }
+function handleEmergencyRestore() {
+  showRestoreDialog.value = true;
+}
+
+async function doEmergencyRestore() {
+  showRestoreDialog.value = false;
   restoring.value = true;
   restoreMessage.value = '';
   try {
@@ -141,29 +173,30 @@ onMounted(() => {
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label class="text-xs font-semibold text-slate-500 block mb-1">服务监听主机</label>
-          <input
-            v-model="host"
-            type="text"
-            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-slate-900 dark:text-slate-100"
-          />
+          <md-outlined-text-field
+            label="服务监听主机"
+            :value="host"
+            @input="host = ($event.target as any).value"
+            class="w-full"
+          ></md-outlined-text-field>
         </div>
         <div>
-          <label class="text-xs font-semibold text-slate-500 block mb-1">IPC 端口</label>
-          <input
-            v-model="port"
-            type="text"
-            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 text-slate-900 dark:text-slate-100"
-          />
+          <md-outlined-text-field
+            label="IPC 端口"
+            :value="port"
+            @input="port = ($event.target as any).value"
+            class="w-full font-mono"
+          ></md-outlined-text-field>
         </div>
         <div>
-          <label class="text-xs font-semibold text-slate-500 block mb-1">Token 鉴权密钥 (可选)</label>
-          <input
-            v-model="token"
+          <md-outlined-text-field
+            label="Token 鉴权密钥 (可选)"
+            :value="token"
+            @input="token = ($event.target as any).value"
             type="password"
             placeholder="留空即免密通信"
-            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-slate-900 dark:text-slate-100"
-          />
+            class="w-full"
+          ></md-outlined-text-field>
         </div>
       </div>
 
@@ -260,7 +293,22 @@ onMounted(() => {
         系统诊断与容灾自愈工具
       </h3>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Windows 开机自启 -->
+        <div class="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-slate-800 dark:text-slate-200">开机自动启动</span>
+            <md-switch
+              :selected="autostart"
+              :disabled="togglingAutostart"
+              @change="handleToggleAutostart"
+            />
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            开机登录系统时自动启动客户端，保障 DNS 监控与状态持久化无缝运作。
+          </p>
+        </div>
+
         <!-- 端口诊断 -->
         <div class="p-4 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 space-y-3">
           <div class="flex items-center justify-between">
@@ -293,7 +341,7 @@ onMounted(() => {
             </md-filled-button>
           </div>
           <p class="text-xs text-slate-500 dark:text-slate-400">
-            当极端异常发生导致系统网卡未还原时，一键从持久化快照完全还原原生 DNS。
+            当极端异常导致系统网卡未还原时，一键从持久化快照完全还原原生 DNS。
           </p>
           <div v-if="restoreMessage" class="p-3 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
             {{ restoreMessage }}
@@ -301,5 +349,21 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- 离线恢复确认对话框 (M3 Alert Dialog) -->
+    <md-dialog :open="showRestoreDialog" @close="showRestoreDialog = false" type="alert">
+      <div slot="headline" class="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+        <M3Icon name="warning" :size="24" />
+        <span>确认执行系统 DNS 应急自愈？</span>
+      </div>
+      <form slot="content" id="restore-form" method="dialog" class="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+        <p>此操作将扫描 <code>%ProgramData%\DITING\dns_state.json</code> 持久化状态快照，将所有已接管物理网卡强制还原回 DHCP 或原静态 DNS 设置，并执行系统 DNS 缓存刷新。</p>
+        <p>适用于后台特权服务非正常退出、或系统网卡 DNS 指向残留需要一键脱困的场景。</p>
+      </form>
+      <div slot="actions">
+        <md-text-button form="restore-form" value="cancel" @click="showRestoreDialog = false">取消</md-text-button>
+        <md-filled-button form="restore-form" value="confirm" @click="doEmergencyRestore">确认自愈恢复</md-filled-button>
+      </div>
+    </md-dialog>
   </div>
 </template>

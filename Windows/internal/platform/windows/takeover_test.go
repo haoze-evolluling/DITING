@@ -161,3 +161,98 @@ func TestWindowsDNSManager_TakeoverFailureRollback(t *testing.T) {
 		t.Errorf("takeover should not be active after failure")
 	}
 }
+
+func TestWindowsDNSManager_TakeoverSingleAndRestoreSingle(t *testing.T) {
+	tmpDir := t.TempDir()
+	stateFile := filepath.Join(tmpDir, "dns_state.json")
+	store := NewFileStateStore(stateFile)
+	executor := &mockExecutor{}
+
+	mgr := NewDNSManager(executor, store, "0.1.0-test")
+
+	adapter1 := AdapterInfo{
+		ID:         "{GUID-1}",
+		Name:       "Adapter1",
+		Index:      1,
+		IPv4DHCP:   true,
+		IsPhysical: true,
+		Status:     "Up",
+	}
+	adapter2 := AdapterInfo{
+		ID:         "{GUID-2}",
+		Name:       "Adapter2",
+		Index:      2,
+		IPv4DHCP:   true,
+		IsPhysical: true,
+		Status:     "Up",
+	}
+
+	// 1. 接管第一个网卡
+	if err := mgr.TakeoverSingle(context.Background(), adapter1); err != nil {
+		t.Fatalf("TakeoverSingle 1 failed: %v", err)
+	}
+	if !mgr.IsTakeoverActive() || len(mgr.GetTakenOverAdapters()) != 1 {
+		t.Fatalf("expected 1 active adapter")
+	}
+
+	// 2. 接管第二个网卡
+	if err := mgr.TakeoverSingle(context.Background(), adapter2); err != nil {
+		t.Fatalf("TakeoverSingle 2 failed: %v", err)
+	}
+	if len(mgr.GetTakenOverAdapters()) != 2 {
+		t.Fatalf("expected 2 active adapters")
+	}
+
+	// 3. 还原第一个网卡
+	if err := mgr.RestoreSingle(context.Background(), "{GUID-1}"); err != nil {
+		t.Fatalf("RestoreSingle 1 failed: %v", err)
+	}
+	if !mgr.IsTakeoverActive() || len(mgr.GetTakenOverAdapters()) != 1 {
+		t.Fatalf("expected 1 active adapter remaining")
+	}
+	if mgr.GetTakenOverAdapters()[0].ID != "{GUID-2}" {
+		t.Fatalf("expected Adapter2 remaining")
+	}
+
+	// 4. 还原第二个网卡
+	if err := mgr.RestoreSingle(context.Background(), "{GUID-2}"); err != nil {
+		t.Fatalf("RestoreSingle 2 failed: %v", err)
+	}
+	if mgr.IsTakeoverActive() || len(mgr.GetTakenOverAdapters()) != 0 {
+		t.Fatalf("expected 0 active adapters, fully restored")
+	}
+}
+
+func TestWindowsDNSManager_TakeoverSingleRollback(t *testing.T) {
+	tmpDir := t.TempDir()
+	stateFile := filepath.Join(tmpDir, "dns_state.json")
+	store := NewFileStateStore(stateFile)
+
+	failExecutor := &mockExecutor{
+		psErr:  fmt.Errorf("access denied"),
+		cmdErr: fmt.Errorf("access denied"),
+	}
+
+	mgr := NewDNSManager(failExecutor, store, "0.1.0-test")
+
+	adapter := AdapterInfo{
+		ID:         "{GUID-FAIL}",
+		Name:       "FailSingle",
+		Index:      5,
+		IPv4DHCP:   true,
+		IsPhysical: true,
+		Status:     "Up",
+	}
+
+	err := mgr.TakeoverSingle(context.Background(), adapter)
+	if err == nil {
+		t.Fatalf("expected TakeoverSingle to fail on command error")
+	}
+
+	if mgr.IsTakeoverActive() {
+		t.Errorf("takeover should not be active after single failure")
+	}
+	if len(mgr.GetTakenOverAdapters()) != 0 {
+		t.Errorf("taken adapters should be empty after rollback")
+	}
+}

@@ -176,35 +176,24 @@ onUnmounted(() => {
       </div>
     </main>
 
-    <!-- 特权服务未运行友好引导弹窗 (Service Alert Dialog) -->
-    <div
-      v-if="showAlertModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-    >
-      <div class="w-full max-w-md rounded-3xl border border-rose-500/30 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-4">
-        <div class="flex items-center gap-3 text-rose-600 dark:text-rose-400">
-          <div class="flex items-center justify-center w-10 h-10 rounded-2xl bg-rose-500/15">
-            <M3Icon name="warning" :size="24" />
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">未检测到特权服务运行</h3>
-            <span class="text-xs text-slate-500">127.0.0.1:15353 连接被拒绝</span>
-          </div>
-        </div>
-
+    <!-- 特权服务未运行友好引导弹窗 (标准 M3 Alert Dialog) -->
+    <md-dialog :open="showAlertModal" @close="showAlertModal = false" type="alert">
+      <div slot="headline" class="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+        <M3Icon name="warning" :size="24" />
+        <span>未检测到特权服务运行</span>
+      </div>
+      <form slot="content" id="alert-form" method="dialog" class="space-y-3 pt-1">
         <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
           谛听客户端需要后台特权服务 (<code>diting-service.exe</code>) 以管理员权限运行，以接管物理网卡 DNS 并监听 53 端口。请确认服务已启动或使用以下命令手动运行：
         </p>
-
         <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-mono text-xs text-slate-800 dark:text-slate-200 select-all">
           diting-service.exe -run
         </div>
-
-        <div class="flex items-center justify-end gap-3 pt-2">
-          <md-text-button @click="showAlertModal = false">稍后处理</md-text-button>
-          <md-filled-button @click="retryConnect">重新尝试连接</md-filled-button>
-        </div>
+      </form>
+      <div slot="actions">
+        <md-text-button form="alert-form" value="dismiss" @click="showAlertModal = false">稍后处理</md-text-button>
+        <md-filled-button form="alert-form" value="retry" @click="retryConnect">重新尝试连接</md-filled-button>
       </div>
-    </div>
+    </md-dialog>
   </div>
 </template>

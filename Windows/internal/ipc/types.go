@@ -18,6 +18,7 @@ type UpstreamInfo struct {
 	ID           string  `json:"id"`
 	Protocol     string  `json:"protocol"`
 	Server       string  `json:"server"`
+	URL          string  `json:"url,omitempty"`
 	Weight       int     `json:"weight"`
 	Active       bool    `json:"active"`
 	SuccessCount uint64  `json:"successCount"`

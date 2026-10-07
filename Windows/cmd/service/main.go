@@ -308,6 +308,7 @@ func (p *program) GetStatus(ctx context.Context) (*ipc.StatusResponse, error) {
 				ID:           stat.ID,
 				Protocol:     string(stat.Protocol),
 				Server:       stat.Server,
+				URL:          stat.URL,
 				Active:       stat.IsHealthy,
 				SuccessCount: stat.SuccessCount,
 				FailureCount: stat.FailureCount,

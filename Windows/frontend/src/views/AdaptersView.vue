@@ -44,15 +44,19 @@ function isAdapterTakenOver(adapter: AdapterInfo): boolean {
 }
 
 async function handleToggleAdapter(adapter: AdapterInfo, e: Event) {
-  const target = e.target as HTMLInputElement;
-  const enable = target.checked;
+  const target = e.target as any;
+  const enable = Boolean(target.selected ?? target.checked);
   operatingId.value = adapter.id;
   try {
     await ipc.setAdapterTakeover(adapter.id, enable);
     await loadData();
   } catch (err: any) {
     errorMessage.value = `操作网卡 [${adapter.name}] 失败: ${err.message}`;
-    target.checked = !enable;
+    if ('selected' in target) {
+      target.selected = !enable;
+    } else {
+      target.checked = !enable;
+    }
   } finally {
     operatingId.value = null;
   }

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -58,25 +60,47 @@ func (p *program) TestUpstream(ctx context.Context, req ipc.TestUpstreamRequest)
 	if proto == "DOH" {
 		urlStr := req.URL
 		if urlStr == "" {
-			urlStr = "https://" + req.Server + "/dns-query"
+			urlStr = req.Server
+			if !strings.HasPrefix(urlStr, "http://") && !strings.HasPrefix(urlStr, "https://") {
+				urlStr = "https://" + urlStr
+			}
+			if !strings.Contains(urlStr, "/dns-query") {
+				urlStr = strings.TrimRight(urlStr, "/") + "/dns-query"
+			}
 		}
-		testURL := urlStr
-		if strings.Contains(testURL, "?") {
-			testURL += "&name=dns.alidns.com&type=A"
-		} else {
-			testURL += "?name=dns.alidns.com&type=A"
+
+		rawQuery, packErr := m.Pack()
+		if packErr != nil {
+			return &ipc.TestUpstreamResponse{Success: false, Error: fmt.Sprintf("打包 DNS 报文失败: %v", packErr)}, nil
 		}
-		httpReq, httpErr := http.NewRequestWithContext(ctx, http.MethodGet, testURL, nil)
+
+		httpReq, httpErr := http.NewRequestWithContext(ctx, http.MethodPost, urlStr, bytes.NewReader(rawQuery))
 		if httpErr != nil {
 			return &ipc.TestUpstreamResponse{Success: false, Error: httpErr.Error()}, nil
 		}
+		httpReq.Header.Set("Content-Type", "application/dns-message")
 		httpReq.Header.Set("Accept", "application/dns-message")
+
 		c := &http.Client{Timeout: 3 * time.Second}
 		resp, httpErr := c.Do(httpReq)
 		if httpErr != nil {
 			return &ipc.TestUpstreamResponse{Success: false, Error: httpErr.Error()}, nil
 		}
-		_ = resp.Body.Close()
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return &ipc.TestUpstreamResponse{Success: false, Error: fmt.Sprintf("HTTP 响应状态异常: %d", resp.StatusCode)}, nil
+		}
+
+		body, readErr := io.ReadAll(io.LimitReader(resp.Body, 65535))
+		if readErr != nil {
+			return &ipc.TestUpstreamResponse{Success: false, Error: readErr.Error()}, nil
+		}
+
+		respMsg := new(miekgdns.Msg)
+		if unpackErr := respMsg.Unpack(body); unpackErr != nil {
+			return &ipc.TestUpstreamResponse{Success: false, Error: fmt.Sprintf("DNS 解析解包失败: %v", unpackErr)}, nil
+		}
 	} else if proto == "DOT" {
 		dotAddr := targetServer
 		if !strings.Contains(dotAddr, ":") {

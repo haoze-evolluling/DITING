@@ -69,8 +69,8 @@ function pushMetricData(qps: number, latency: number) {
 }
 
 async function handleToggleDNS(e: Event) {
-  const target = e.target as HTMLInputElement;
-  const nextVal = target.checked;
+  const target = e.target as any;
+  const nextVal = Boolean(target.selected ?? target.checked);
   togglingDNS.value = true;
   try {
     if (nextVal) {
@@ -81,15 +81,19 @@ async function handleToggleDNS(e: Event) {
     await fetchStatus();
   } catch (err: any) {
     errorMessage.value = err.message;
-    target.checked = !nextVal;
+    if ('selected' in target) {
+      target.selected = !nextVal;
+    } else {
+      target.checked = !nextVal;
+    }
   } finally {
     togglingDNS.value = false;
   }
 }
 
 async function handleToggleTakeover(e: Event) {
-  const target = e.target as HTMLInputElement;
-  const nextVal = target.checked;
+  const target = e.target as any;
+  const nextVal = Boolean(target.selected ?? target.checked);
   togglingTakeover.value = true;
   try {
     if (nextVal) {
@@ -100,7 +104,11 @@ async function handleToggleTakeover(e: Event) {
     await fetchStatus();
   } catch (err: any) {
     errorMessage.value = err.message;
-    target.checked = !nextVal;
+    if ('selected' in target) {
+      target.selected = !nextVal;
+    } else {
+      target.checked = !nextVal;
+    }
   } finally {
     togglingTakeover.value = false;
   }

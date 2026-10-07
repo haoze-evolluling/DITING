@@ -157,6 +157,11 @@ func (m *WindowsDNSManager) TakeoverSingle(ctx context.Context, adapter AdapterI
 		IPv6DNS:     adapter.IPv6DNS,
 	}
 
+	// 记录之前的快照，若接管失败则安全回滚
+	oldAdapters := make([]AdapterState, len(m.adapters))
+	copy(oldAdapters, m.adapters)
+	oldActive := m.active
+
 	found := false
 	for i, a := range m.adapters {
 		if a.ID == adapter.ID || a.Name == adapter.Name {
@@ -177,6 +182,7 @@ func (m *WindowsDNSManager) TakeoverSingle(ctx context.Context, adapter AdapterI
 		Adapters:  m.adapters,
 	}
 	if err := m.stateStore.Save(persistState); err != nil {
+		m.adapters = oldAdapters
 		return fmt.Errorf("接管前保存状态失败: %w", err)
 	}
 
@@ -184,6 +190,20 @@ func (m *WindowsDNSManager) TakeoverSingle(ctx context.Context, adapter AdapterI
 	_ = GenerateRestoreScript(m.adapters, scriptPath)
 
 	if err := m.applyTakeoverOnAdapter(ctx, state); err != nil {
+		// 回滚内部适配器列表及持久化状态
+		m.adapters = oldAdapters
+		m.active = oldActive
+		if len(oldAdapters) == 0 {
+			_ = m.stateStore.Clear()
+		} else {
+			_ = m.stateStore.Save(&TakeoverState{
+				Active:    oldActive,
+				Version:   m.version,
+				PID:       os.Getpid(),
+				Timestamp: time.Now(),
+				Adapters:  oldAdapters,
+			})
+		}
 		return err
 	}
 

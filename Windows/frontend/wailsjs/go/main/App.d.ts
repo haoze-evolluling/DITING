@@ -5,4 +5,8 @@ export function GetSystemAccentColor():Promise<string>;
 
 export function Greet(arg1:string):Promise<string>;
 
+export function IsAutoStartEnabled():Promise<boolean>;
+
 export function RunEmergencyRestore():Promise<string>;
+
+export function SetAutoStart(arg1:boolean):Promise<boolean>;

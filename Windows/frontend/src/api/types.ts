@@ -9,6 +9,7 @@ export interface UpstreamInfo {
   id: string;
   protocol: 'PLAIN' | 'DOH' | 'DOT';
   server: string;
+  url?: string;
   weight?: number;
   active: boolean;
   successCount: number;
