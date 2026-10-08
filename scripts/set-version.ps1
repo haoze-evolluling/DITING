@@ -87,7 +87,12 @@ function Read-FileUtf8([string]$Path) {
 }
 
 function Write-FileUtf8([string]$Path, [string]$Content) {
-    [System.IO.File]::WriteAllText($Path, $Content, [System.Text.Encoding]::UTF8)
+    if ($Path -match '\.(ps1|nsi|nsh)$') {
+        [System.IO.File]::WriteAllText($Path, $Content, [System.Text.Encoding]::UTF8)
+    } else {
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
+    }
 }
 
 function Get-CurrentFileVersion($item) {

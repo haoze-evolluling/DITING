@@ -1,4 +1,4 @@
-﻿# DO NOT EDIT - Generated automatically by `wails build`
+# DO NOT EDIT - Generated automatically by `wails build`
 
 !include "x64.nsh"
 !include "WinVer.nsh"
@@ -8,16 +8,16 @@
     !define INFO_PROJECTNAME "diting-gui"
 !endif
 !ifndef INFO_COMPANYNAME
-    !define INFO_COMPANYNAME "diting-gui"
+    !define INFO_COMPANYNAME "Diting"
 !endif
 !ifndef INFO_PRODUCTNAME
-    !define INFO_PRODUCTNAME "diting-gui"
+    !define INFO_PRODUCTNAME "谛听 DNS"
 !endif
 !ifndef INFO_PRODUCTVERSION
     !define INFO_PRODUCTVERSION "1.3.1"
 !endif
 !ifndef INFO_COPYRIGHT
-    !define INFO_COPYRIGHT "Copyright........."
+    !define INFO_COPYRIGHT "Copyright 2026 DITING"
 !endif
 !ifndef PRODUCT_EXECUTABLE
     !define PRODUCT_EXECUTABLE "${INFO_PROJECTNAME}.exe"
