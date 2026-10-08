@@ -31,6 +31,8 @@ type UpstreamInfo struct {
 type DNSStatus struct {
 	Running         bool                 `json:"running"`
 	ListenAddresses []string             `json:"listenAddresses"`
+	AllowLAN        bool                 `json:"allowLAN"`
+	LANAddresses    []string             `json:"lanAddresses,omitempty"`
 	Mode            string               `json:"mode"`
 	Upstreams       []UpstreamInfo       `json:"upstreams"`
 	Bootstrap       core.BootstrapConfig `json:"bootstrap"`
@@ -139,5 +141,25 @@ type AdapterTakeoverRequest struct {
 	AdapterID string `json:"adapterId"`
 	Enable    bool   `json:"enable"`
 }
+
+// LANStatusResponse 局域网 DNS 服务状态响应
+type LANStatusResponse struct {
+	AllowLAN        bool     `json:"allowLAN"`
+	ListenAddresses []string `json:"listenAddresses"`
+	LANAddresses    []string `json:"lanAddresses"`
+	FirewallAllowed bool     `json:"firewallAllowed"`
+}
+
+// ConfigureLANRequest 配置局域网 DNS 请求
+type ConfigureLANRequest struct {
+	AllowLAN          bool `json:"allowLAN"`
+	ConfigureFirewall bool `json:"configureFirewall,omitempty"`
+}
+
+// ConfigureFirewallRequest 配置防火墙请求
+type ConfigureFirewallRequest struct {
+	Enable bool `json:"enable"`
+}
+
 
 

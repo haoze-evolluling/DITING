@@ -17,6 +17,8 @@ import type {
   CheckHostResult,
   CoreServiceStatus,
   BootstrapConfig,
+  LANStatusResponse,
+  ConfigureLANRequest,
 } from './types';
 import { handleMockRequest } from './mock';
 
@@ -37,6 +39,7 @@ declare global {
           InstallCoreService?: () => Promise<string>;
           InstallAndStartCoreService?: () => Promise<string>;
           UninstallCoreService?: () => Promise<string>;
+          ConfigureFirewallForLAN?: (enable: boolean) => Promise<string>;
         };
       };
     };
@@ -531,6 +534,30 @@ class IPCService {
       return await window.go.main.App.UninstallCoreService();
     }
     throw new Error('当前环境不支持卸载 Windows 服务');
+  }
+
+  public async getLANStatus(): Promise<LANStatusResponse> {
+    return this.request<LANStatusResponse>('/api/v1/dns/lan');
+  }
+
+  public async configureLAN(req: ConfigureLANRequest): Promise<void> {
+    await this.request<void>('/api/v1/dns/lan/configure', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+  }
+
+  public async configureFirewall(enable: boolean): Promise<string> {
+    if (window.go?.main?.App?.ConfigureFirewallForLAN) {
+      try {
+        return await window.go.main.App.ConfigureFirewallForLAN(enable);
+      } catch {}
+    }
+    const res = await this.request<string>('/api/v1/dns/lan/firewall', {
+      method: 'POST',
+      body: JSON.stringify({ enable }),
+    });
+    return res || (enable ? '已成功放行 53 端口防火墙规则' : '已成功移除 53 端口防火墙规则');
   }
 }
 

@@ -246,9 +246,10 @@ func (p *program) StartDNS(ctx context.Context) error {
 	filterMw := ditingdns.NewFilterMiddleware(p.filterEngine)
 	cacheMw := ditingdns.NewCacheMiddleware(p.cache, p.resolver)
 	pipeline := ditingdns.NewPipeline(metricsMw, filterMw, cacheMw, ditingdns.NewForwardMiddleware(p.resolver))
+	udpAddrs, tcpAddrs := p.cfg.DNS.EffectiveListenAddresses()
 	serverCfg := ditingdns.ServerConfig{
-		UDPAddresses: p.cfg.DNS.UDPAddresses,
-		TCPAddresses: p.cfg.DNS.TCPAddresses,
+		UDPAddresses: udpAddrs,
+		TCPAddresses: tcpAddrs,
 		ReadTimeout:  p.cfg.DNS.ReadTimeout,
 		WriteTimeout: p.cfg.DNS.WriteTimeout,
 	}
@@ -391,13 +392,17 @@ func (p *program) GetStatus(ctx context.Context) (*ipc.StatusResponse, error) {
 	}
 
 	takenAdapters := p.takeoverMgr.GetTakenOverAdapters()
+	lanAddrs, _ := windows.GetLANAddresses()
+	effUDP, _ := p.cfg.DNS.EffectiveListenAddresses()
 	return &ipc.StatusResponse{
 		Version:       Version,
 		PID:           os.Getpid(),
 		UptimeSeconds: int64(time.Since(p.startTime).Seconds()),
 		DNS: ipc.DNSStatus{
 			Running:         dnsRun,
-			ListenAddresses: p.cfg.DNS.UDPAddresses,
+			ListenAddresses: effUDP,
+			AllowLAN:        p.cfg.DNS.AllowLAN,
+			LANAddresses:    lanAddrs,
 			Mode:            p.cfg.Upstream.Mode,
 			Upstreams:       upstreams,
 			Bootstrap:       p.cfg.Upstream.Bootstrap,

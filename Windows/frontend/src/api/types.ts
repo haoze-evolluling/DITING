@@ -21,6 +21,8 @@ export interface UpstreamInfo {
 export interface DNSStatus {
   running: boolean;
   listenAddresses: string[];
+  allowLAN?: boolean;
+  lanAddresses?: string[];
   mode: string;
   upstreams: UpstreamInfo[];
   bootstrap?: BootstrapConfig;
@@ -255,4 +257,21 @@ export interface CoreServiceStatus {
   canInstall: boolean;
   message?: string;
 }
+
+export interface LANStatusResponse {
+  allowLAN: boolean;
+  listenAddresses: string[];
+  lanAddresses: string[];
+  firewallAllowed: boolean;
+}
+
+export interface ConfigureLANRequest {
+  allowLAN: boolean;
+  configureFirewall?: boolean;
+}
+
+export interface ConfigureFirewallRequest {
+  enable: boolean;
+}
+
 

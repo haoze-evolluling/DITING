@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -47,6 +48,8 @@ func NewServer(config ServerConfig, pipeline *Pipeline) *Server {
 	if len(config.UDPAddresses) == 0 && len(config.TCPAddresses) == 0 {
 		config = DefaultServerConfig()
 	}
+	config.UDPAddresses = DeduplicateAddresses(config.UDPAddresses)
+	config.TCPAddresses = DeduplicateAddresses(config.TCPAddresses)
 	if config.ReadTimeout <= 0 {
 		config.ReadTimeout = 5 * time.Second
 	}
@@ -261,6 +264,49 @@ func isIPv6(addr string) bool {
 		ip := net.ParseIP(host)
 		return ip != nil && ip.To4() == nil
 	}
-	ip := net.ParseIP(addr)
+	ip := net.ParseIP(strings.Trim(addr, "[]"))
 	return ip != nil && ip.To4() == nil
+}
+
+// DeduplicateAddresses 去除重复及被全通配地址覆盖的地址
+func DeduplicateAddresses(addrs []string) []string {
+	if len(addrs) == 0 {
+		return nil
+	}
+	seen := make(map[string]bool)
+	wildcardPortsV4 := make(map[string]bool)
+	wildcardPortsV6 := make(map[string]bool)
+
+	// 第一轮：记录已有的 0.0.0.0 和 [::] 通配端口
+	for _, a := range addrs {
+		host, port, err := net.SplitHostPort(a)
+		if err == nil {
+			if host == "0.0.0.0" {
+				wildcardPortsV4[port] = true
+			} else if host == "::" {
+				wildcardPortsV6[port] = true
+			}
+		}
+	}
+
+	result := make([]string, 0, len(addrs))
+	for _, a := range addrs {
+		if seen[a] {
+			continue
+		}
+		host, port, err := net.SplitHostPort(a)
+		if err == nil {
+			// 若已有 0.0.0.0:port，则过滤同端口的其他所有 IPv4 地址，防止 Windows 套接字冲突
+			if wildcardPortsV4[port] && host != "0.0.0.0" && !isIPv6(a) {
+				continue
+			}
+			// 若已有 [::]:port，则过滤同端口的其他所有 IPv6 地址
+			if wildcardPortsV6[port] && host != "::" && isIPv6(a) {
+				continue
+			}
+		}
+		seen[a] = true
+		result = append(result, a)
+	}
+	return result
 }

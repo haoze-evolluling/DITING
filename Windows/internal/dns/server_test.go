@@ -342,3 +342,33 @@ func TestServer_UDPResponseTruncation(t *testing.T) {
 		t.Fatalf("expected EDNS response to not be truncated within 4096 limit")
 	}
 }
+
+func TestDeduplicateAddresses(t *testing.T) {
+	// 包含 0.0.0.0 和 127.0.0.1 同端口，应保留 0.0.0.0 并去除 127.0.0.1
+	input := []string{"0.0.0.0:53", "127.0.0.1:53", "[::]:53", "[::1]:53", "0.0.0.0:53"}
+	result := DeduplicateAddresses(input)
+	expected := []string{"0.0.0.0:53", "[::]:53"}
+	if len(result) != len(expected) {
+		t.Fatalf("expected %v, got %v", expected, result)
+	}
+	for i, v := range expected {
+		if result[i] != v {
+			t.Errorf("at index %d: expected %s, got %s", i, v, result[i])
+		}
+	}
+
+	// 纯回环地址保持原样
+	local := []string{"127.0.0.1:53", "[::1]:53"}
+	resLocal := DeduplicateAddresses(local)
+	if len(resLocal) != 2 || resLocal[0] != "127.0.0.1:53" || resLocal[1] != "[::1]:53" {
+		t.Errorf("unexpected local deduplication: %v", resLocal)
+	}
+
+	// 包含 0.0.0.0 与任意其他具体 IPv4 (如 192.168.1.100)，应彻底剔除其他 IPv4 避免 Windows 绑定冲突
+	mixed := []string{"0.0.0.0:53", "192.168.1.100:53", "10.0.0.1:53", "[::]:53", "[2408:844b::1]:53"}
+	resMixed := DeduplicateAddresses(mixed)
+	expectedMixed := []string{"0.0.0.0:53", "[::]:53"}
+	if len(resMixed) != len(expectedMixed) || resMixed[0] != expectedMixed[0] || resMixed[1] != expectedMixed[1] {
+		t.Errorf("unexpected mixed deduplication: %v, expected: %v", resMixed, expectedMixed)
+	}
+}

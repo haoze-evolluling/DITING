@@ -6,6 +6,7 @@ import StatusBadge from '../components/StatusBadge.vue';
 import M3Icon from '../components/M3Icon.vue';
 import AppModal from '../components/AppModal.vue';
 import BootstrapConfigCard from '../components/BootstrapConfigCard.vue';
+import LanDnsCard from '../components/LanDnsCard.vue';
 
 const status = ref<StatusResponse | null>(null);
 const currentMode = ref('primary_backup');
@@ -241,6 +242,9 @@ onMounted(() => {
         关闭
       </button>
     </div>
+
+    <!-- 局域网 DNS 服务器配置 (类似 AdGuard Home) -->
+    <LanDnsCard />
 
     <!-- 调度策略选择卡片 (Radio + Cards) -->
     <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs transition-colors">
