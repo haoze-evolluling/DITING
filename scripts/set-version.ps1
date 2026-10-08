@@ -133,16 +133,32 @@ if ($Show) {
     exit 0
 }
 
-# --- 检查输入版本号 ---
-if (-not $Version) {
-    Write-Host "错误: 请指定目标版本号，例如: .\scripts\set-version.ps1 1.4.0" -ForegroundColor Red
-    Write-Host "或者使用 -Show 参数查看当前版本: .\scripts\set-version.ps1 -Show" -ForegroundColor Yellow
-    exit 1
+# --- 检查输入版本号与交互式引导 ---
+$isInteractive = $false
+if (-not $Version -and -not $Show) {
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host "  谛听 (DITING) 电脑端版本号状态概览" -ForegroundColor Cyan
+    Write-Host "============================================================" -ForegroundColor Cyan
+    foreach ($item in $fileMap) {
+        $ver = Get-CurrentFileVersion $item
+        $rel = $item.Path.Replace("$rootDir\", "")
+        Write-Host ("  {0,-16} : {1,-10} ({2})" -f $item.Name, $ver, $rel) -ForegroundColor White
+    }
+    Write-Host "============================================================" -ForegroundColor Cyan
+    Write-Host ""
+    $inputVal = Read-Host "请输入目标版本号 (如 1.4.0，直接回车退出)"
+    if ([string]::IsNullOrWhiteSpace($inputVal)) {
+        Write-Host "已取消操作。`n" -ForegroundColor Yellow
+        exit 0
+    }
+    $Version = $inputVal.Trim()
+    $isInteractive = $true
 }
 
 $cleanVer = $Version.Trim() -replace '^[vV]', ''
 if ($cleanVer -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
     Write-Host "错误: 版本号 '$Version' 格式无效，必须遵循语义化版本规范 (例如 1.3.0, 1.4.0-beta.1)" -ForegroundColor Red
+    if ($isInteractive) { Read-Host "按回车键退出..." }
     exit 1
 }
 
@@ -266,4 +282,9 @@ if ($Commit -and -not $DryRun) {
     } else {
         Write-Host "  ℹ 无新增变更需要提交" -ForegroundColor Yellow
     }
+}
+
+if ($isInteractive) {
+    Write-Host ""
+    Read-Host "按回车键退出..."
 }
