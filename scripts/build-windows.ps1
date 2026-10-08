@@ -161,16 +161,22 @@ function Test-BuildPrerequisites {
 }
 
 function Sync-NsisVersion {
-    $projectNsiPath = Join-Path $windowsDir "build\windows\installer\project.nsi"
-    if (Test-Path $projectNsiPath) {
-        $cleanNsisVersion = ($version -replace '^[vV]', '') -replace '-.*$', ''
-        $parts = $cleanNsisVersion.Split('.')
-        while ($parts.Count -lt 3) { $parts += "0" }
-        $nsisVer = ($parts[0..2] -join '.')
-        $nsiContent = [System.IO.File]::ReadAllText($projectNsiPath, [System.Text.Encoding]::UTF8)
-        $nsiContent = [System.Text.RegularExpressions.Regex]::Replace($nsiContent, '!define INFO_PRODUCTVERSION\s+".*?"', "!define INFO_PRODUCTVERSION `"$nsisVer`"")
-        [System.IO.File]::WriteAllText($projectNsiPath, $nsiContent, [System.Text.Encoding]::UTF8)
-        Write-Host "  ➜ 同步 NSIS INFO_PRODUCTVERSION: $nsisVer" -ForegroundColor DarkGray
+    $setVerScript = Join-Path $scriptDir "set-version.ps1"
+    if (Test-Path $setVerScript) {
+        Write-Host "  ➜ 调用 set-version.ps1 自动同步项目版本元数据 ($version)..." -ForegroundColor DarkGray
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $setVerScript $version
+    } else {
+        $projectNsiPath = Join-Path $windowsDir "build\windows\installer\project.nsi"
+        if (Test-Path $projectNsiPath) {
+            $cleanNsisVersion = ($version -replace '^[vV]', '') -replace '-.*$', ''
+            $parts = $cleanNsisVersion.Split('.')
+            while ($parts.Count -lt 3) { $parts += "0" }
+            $nsisVer = ($parts[0..2] -join '.')
+            $nsiContent = [System.IO.File]::ReadAllText($projectNsiPath, [System.Text.Encoding]::UTF8)
+            $nsiContent = [System.Text.RegularExpressions.Regex]::Replace($nsiContent, '!define INFO_PRODUCTVERSION\s+".*?"', "!define INFO_PRODUCTVERSION `"$nsisVer`"")
+            [System.IO.File]::WriteAllText($projectNsiPath, $nsiContent, [System.Text.Encoding]::UTF8)
+            Write-Host "  ➜ 同步 NSIS INFO_PRODUCTVERSION: $nsisVer" -ForegroundColor DarkGray
+        }
     }
 }
 

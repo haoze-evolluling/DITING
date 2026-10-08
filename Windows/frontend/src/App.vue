@@ -16,6 +16,7 @@ import RulesView from './views/RulesView.vue';
 
 type NavTab = 'dashboard' | 'adapters' | 'upstream' | 'cache' | 'rules' | 'logs' | 'settings';
 
+const appVersion = __APP_VERSION__;
 const currentTab = ref<NavTab>('dashboard');
 const isConnected = ref(false);
 const showAlertModal = ref(false);
@@ -324,7 +325,7 @@ onUnmounted(() => {
             {{ navItems.find(i => i.id === currentTab)?.label }}
           </span>
           <span class="text-xs text-text-muted">|</span>
-          <span class="text-xs text-text-sub">Windows 桌面客户端 v1.3.0</span>
+          <span class="text-xs text-text-sub">Windows 桌面客户端 v{{ appVersion }}</span>
         </div>
 
         <div class="flex items-center gap-3">
