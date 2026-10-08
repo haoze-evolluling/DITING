@@ -30,6 +30,8 @@ let unsubConn: (() => void) | null = null;
 let pollTimer: any = null;
 
 const dnsRunning = computed(() => !!status.value?.dns?.running);
+const allowLAN = computed(() => !!status.value?.dns?.allowLAN);
+const primaryLanIP = computed(() => status.value?.dns?.lanAddresses?.[0] || '');
 const takeoverActive = computed(() => !!status.value?.takeover?.active);
 const activeAdaptersCount = computed(() => status.value?.takeover?.adapters?.length || 0);
 
@@ -283,6 +285,12 @@ onUnmounted(() => {
                   :pulse="dnsRunning"
                 />
                 <StatusBadge
+                  v-if="allowLAN"
+                  status="active"
+                  :text="`局域网 DNS: ${primaryLanIP || '运行中'}`"
+                  size="sm"
+                />
+                <StatusBadge
                   v-if="takeoverActive"
                   status="active"
                   :text="`已保护 ${activeAdaptersCount} 个网络连接`"
@@ -299,8 +307,8 @@ onUnmounted(() => {
               <!-- 本地 DNS 解析服务开关 -->
               <div class="flex items-center gap-2.5">
                 <div class="flex flex-col text-right">
-                  <span class="text-xs sm:text-sm font-semibold text-text-main">本地服务</span>
-                  <span class="text-[11px] text-text-muted">127.0.0.1 (本机)</span>
+                  <span class="text-xs sm:text-sm font-semibold text-text-main">{{ allowLAN ? '局域网服务' : '本地服务' }}</span>
+                  <span class="text-[11px] text-text-muted">{{ allowLAN ? (primaryLanIP || '全网监听') : '127.0.0.1 (本机)' }}</span>
                 </div>
                 <md-switch
                   :selected="dnsRunning"
@@ -402,9 +410,9 @@ onUnmounted(() => {
               </div>
             </div>
             <div class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">可用节点</div>
-              <div class="text-xs font-semibold text-text-main truncate mt-0.5">
-                {{ status?.dns?.upstreams?.length || 0 }} 个可用
+              <div class="text-[11px] text-text-sub">局域网服务</div>
+              <div class="text-xs font-semibold truncate mt-0.5" :class="allowLAN ? 'text-status-success font-mono' : 'text-text-sub'">
+                {{ allowLAN ? (primaryLanIP || '全网监听') : '仅本机' }}
               </div>
             </div>
           </div>

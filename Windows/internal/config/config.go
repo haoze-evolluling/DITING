@@ -3,6 +3,8 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/haoze-evolluling/diting/windows/internal/core"
@@ -14,6 +16,42 @@ type DNSConfig struct {
 	TCPAddresses []string      `json:"tcpAddresses"`
 	ReadTimeout  time.Duration `json:"readTimeout"`
 	WriteTimeout time.Duration `json:"writeTimeout"`
+	AllowLAN     bool          `json:"allowLAN"` // 是否启用局域网 DNS 服务器功能（监听 0.0.0.0 与所有局域网地址）
+}
+
+// EffectiveListenAddresses 根据 AllowLAN 配置返回实际应监听的双栈 UDP 与 TCP 地址
+func (c *DNSConfig) EffectiveListenAddresses() (udpAddrs []string, tcpAddrs []string) {
+	port := 53
+	extractPort := func(addrs []string) int {
+		for _, addr := range addrs {
+			if _, pStr, err := net.SplitHostPort(addr); err == nil {
+				if p, err := strconv.Atoi(pStr); err == nil && p > 0 {
+					return p
+				}
+			}
+		}
+		return 53
+	}
+	if p := extractPort(c.UDPAddresses); p > 0 {
+		port = p
+	} else if p := extractPort(c.TCPAddresses); p > 0 {
+		port = p
+	}
+
+	if c.AllowLAN {
+		lanAddrs := []string{fmt.Sprintf("0.0.0.0:%d", port), fmt.Sprintf("[::]:%d", port)}
+		return lanAddrs, lanAddrs
+	}
+
+	udp := c.UDPAddresses
+	if len(udp) == 0 {
+		udp = []string{fmt.Sprintf("127.0.0.1:%d", port), fmt.Sprintf("[::1]:%d", port)}
+	}
+	tcp := c.TCPAddresses
+	if len(tcp) == 0 {
+		tcp = []string{fmt.Sprintf("127.0.0.1:%d", port), fmt.Sprintf("[::1]:%d", port)}
+	}
+	return udp, tcp
 }
 
 // UnmarshalJSON 支持字符串 (如 "5s") 与数字纳秒对 time.Duration 的反序列化
@@ -89,6 +127,7 @@ func DefaultConfig() *Config {
 			TCPAddresses: []string{"127.0.0.1:53", "[::1]:53"},
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 5 * time.Second,
+			AllowLAN:     false,
 		},
 		Upstream: core.ResolverConfig{
 			Mode: core.ModePrimaryBackup,

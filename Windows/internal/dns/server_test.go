@@ -342,3 +342,25 @@ func TestServer_UDPResponseTruncation(t *testing.T) {
 		t.Fatalf("expected EDNS response to not be truncated within 4096 limit")
 	}
 }
+
+func TestDeduplicateAddresses(t *testing.T) {
+	// 包含 0.0.0.0 和 127.0.0.1 同端口，应保留 0.0.0.0 并去除 127.0.0.1
+	input := []string{"0.0.0.0:53", "127.0.0.1:53", "[::]:53", "[::1]:53", "0.0.0.0:53"}
+	result := DeduplicateAddresses(input)
+	expected := []string{"0.0.0.0:53", "[::]:53"}
+	if len(result) != len(expected) {
+		t.Fatalf("expected %v, got %v", expected, result)
+	}
+	for i, v := range expected {
+		if result[i] != v {
+			t.Errorf("at index %d: expected %s, got %s", i, v, result[i])
+		}
+	}
+
+	// 纯回环地址保持原样
+	local := []string{"127.0.0.1:53", "[::1]:53"}
+	resLocal := DeduplicateAddresses(local)
+	if len(resLocal) != 2 || resLocal[0] != "127.0.0.1:53" || resLocal[1] != "[::1]:53" {
+		t.Errorf("unexpected local deduplication: %v", resLocal)
+	}
+}

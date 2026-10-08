@@ -16,6 +16,8 @@ import type {
   FilterList,
   CheckHostResult,
   CoreServiceStatus,
+  LANStatusResponse,
+  ConfigureLANRequest,
 } from './types';
 import { handleMockRequest } from './mock';
 
@@ -36,6 +38,7 @@ declare global {
           InstallCoreService?: () => Promise<string>;
           InstallAndStartCoreService?: () => Promise<string>;
           UninstallCoreService?: () => Promise<string>;
+          ConfigureFirewallForLAN?: (enable: boolean) => Promise<string>;
         };
       };
     };
@@ -523,6 +526,34 @@ class IPCService {
       return await window.go.main.App.UninstallCoreService();
     }
     throw new Error('当前环境不支持卸载 Windows 服务');
+  }
+
+  public async getLANStatus(): Promise<LANStatusResponse> {
+    const res = await this.request<ApiResponse<LANStatusResponse>>('/api/v1/dns/lan');
+    if (!res.success || !res.data) throw new Error(res.error || '获取局域网 DNS 状态失败');
+    return res.data;
+  }
+
+  public async configureLAN(req: ConfigureLANRequest): Promise<void> {
+    const res = await this.request<ApiResponse<any>>('/api/v1/dns/lan/configure', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+    if (!res.success) throw new Error(res.error || '配置局域网 DNS 失败');
+  }
+
+  public async configureFirewall(enable: boolean): Promise<string> {
+    if (window.go?.main?.App?.ConfigureFirewallForLAN) {
+      try {
+        return await window.go.main.App.ConfigureFirewallForLAN(enable);
+      } catch {}
+    }
+    const res = await this.request<ApiResponse<any>>('/api/v1/dns/lan/firewall', {
+      method: 'POST',
+      body: JSON.stringify({ enable }),
+    });
+    if (!res.success) throw new Error(res.error || '配置防火墙规则失败');
+    return res.message || '操作成功';
   }
 }
 

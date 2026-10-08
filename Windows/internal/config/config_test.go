@@ -77,3 +77,39 @@ func TestConfig_StringDuration(t *testing.T) {
 		t.Errorf("expected WriteTimeout 2500ms, got %v", cfg.DNS.WriteTimeout)
 	}
 }
+
+func TestEffectiveListenAddresses(t *testing.T) {
+	// 默认本地回环模式
+	dnsCfg := DNSConfig{
+		UDPAddresses: []string{"127.0.0.1:53", "[::1]:53"},
+		TCPAddresses: []string{"127.0.0.1:53", "[::1]:53"},
+		AllowLAN:     false,
+	}
+	udp, tcp := dnsCfg.EffectiveListenAddresses()
+	if len(udp) != 2 || udp[0] != "127.0.0.1:53" {
+		t.Errorf("expected local udp, got %v", udp)
+	}
+	if len(tcp) != 2 || tcp[0] != "127.0.0.1:53" {
+		t.Errorf("expected local tcp, got %v", tcp)
+	}
+
+	// 启用局域网模式
+	dnsCfg.AllowLAN = true
+	udpLan, tcpLan := dnsCfg.EffectiveListenAddresses()
+	if len(udpLan) != 2 || udpLan[0] != "0.0.0.0:53" || udpLan[1] != "[::]:53" {
+		t.Errorf("expected lan udp 0.0.0.0 and [::], got %v", udpLan)
+	}
+	if len(tcpLan) != 2 || tcpLan[0] != "0.0.0.0:53" || tcpLan[1] != "[::]:53" {
+		t.Errorf("expected lan tcp 0.0.0.0 and [::], got %v", tcpLan)
+	}
+
+	// 自定义端口局域网模式
+	dnsCfgPort := DNSConfig{
+		UDPAddresses: []string{"127.0.0.1:5353"},
+		AllowLAN:     true,
+	}
+	udpPort, _ := dnsCfgPort.EffectiveListenAddresses()
+	if udpPort[0] != "0.0.0.0:5353" || udpPort[1] != "[::]:5353" {
+		t.Errorf("expected custom port lan addresses, got %v", udpPort)
+	}
+}

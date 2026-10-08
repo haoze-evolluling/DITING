@@ -171,6 +171,18 @@ func (a *App) UninstallCoreService() (string, error) {
 	return "后台核心服务已成功卸载。", nil
 }
 
+// ConfigureFirewallForLAN 按需配置局域网 53 端口 Windows 防火墙规则
+func (a *App) ConfigureFirewallForLAN(enable bool) (string, error) {
+	err := windows.ConfigureFirewallPort53(context.Background(), windows.NewDefaultExecutor(), enable)
+	if err != nil {
+		return "", fmt.Errorf("配置防火墙规则失败: %w", err)
+	}
+	if enable {
+		return "已成功放行局域网 53 端口防火墙入站规则！", nil
+	}
+	return "已成功清除局域网 53 端口防火墙入站规则。", nil
+}
+
 func main() {
 	showVersion := flag.Bool("v", false, "显示 GUI 版本号并退出")
 	flag.BoolVar(showVersion, "version", false, "显示 GUI 版本号并退出")

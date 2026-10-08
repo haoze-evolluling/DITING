@@ -11,6 +11,7 @@ import type {
   FilterList,
   CheckHostResult,
   PortCheckResult,
+  LANStatusResponse,
 } from './types';
 
 export const mockUpstreams: UpstreamInfo[] = [
@@ -75,7 +76,9 @@ export const mockStatus: StatusResponse = {
   uptimeSeconds: 7320,
   dns: {
     running: true,
-    listenAddresses: ['127.0.0.1:53', '[::1]:53'],
+    listenAddresses: ['0.0.0.0:53', '[::]:53'],
+    allowLAN: true,
+    lanAddresses: ['192.168.1.108'],
     mode: 'PRIMARY_BACKUP',
     upstreams: mockUpstreams,
   },
@@ -199,9 +202,41 @@ export const mockFilterConfig: FilterConfig = {
   updateIntervalHours: 24,
 };
 
+export const mockLANStatus: LANStatusResponse = {
+  allowLAN: true,
+  listenAddresses: ['0.0.0.0:53', '[::]:53'],
+  lanAddresses: ['192.168.1.108', '2408:844b:2020:76ad:7011:cfd2:8cc8:3f21'],
+  firewallAllowed: true,
+};
+
 export function handleMockRequest(rawPath: string, _options: RequestInit = {}): any {
   const path = rawPath.split('?')[0];
   if (path === '/api/v1/status') return mockStatus;
+  if (path === '/api/v1/dns/lan') return mockLANStatus;
+  if (path === '/api/v1/dns/lan/configure') {
+    if (_options.body) {
+      try {
+        const body = JSON.parse(_options.body as string);
+        mockLANStatus.allowLAN = !!body.allowLAN;
+        mockStatus.dns.allowLAN = !!body.allowLAN;
+        if (body.allowLAN) {
+          mockStatus.dns.listenAddresses = ['0.0.0.0:53', '[::]:53'];
+        } else {
+          mockStatus.dns.listenAddresses = ['127.0.0.1:53', '[::1]:53'];
+        }
+      } catch {}
+    }
+    return { success: true };
+  }
+  if (path === '/api/v1/dns/lan/firewall') {
+    if (_options.body) {
+      try {
+        const body = JSON.parse(_options.body as string);
+        mockLANStatus.firewallAllowed = !!body.enable;
+      } catch {}
+    }
+    return { success: true, message: '防火墙规则已更新' };
+  }
   if (path === '/api/v1/health') return 'OK';
   if (path === '/api/v1/adapters') return mockAdapters;
   if (path === '/api/v1/upstreams') return mockUpstreams;

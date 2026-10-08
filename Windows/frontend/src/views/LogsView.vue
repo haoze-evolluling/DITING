@@ -241,7 +241,15 @@ onUnmounted(() => {
         </div>
 
         <div class="flex items-center gap-4 text-text-sub shrink-0 text-[11px]">
-          <span>来源: {{ item.clientIP || '127.0.0.1' }}</span>
+          <span class="flex items-center gap-1.5">
+            <span
+              v-if="item.clientIP && item.clientIP !== '127.0.0.1' && item.clientIP !== '::1'"
+              class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand-primary/10 text-brand-primary border border-brand-primary/30"
+            >
+              局域网
+            </span>
+            <span>来源: {{ item.clientIP || '127.0.0.1' }}</span>
+          </span>
           <span class="font-semibold" :class="item.durationMs > 100 ? 'text-status-warning' : 'text-text-main'">
             {{ item.durationMs.toFixed(1) }} 毫秒
           </span>

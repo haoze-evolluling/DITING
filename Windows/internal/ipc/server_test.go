@@ -242,6 +242,23 @@ func (m *mockController) CheckHostRule(ctx context.Context, domain string, qtype
 	return &core.CheckHostResult{Blocked: true, Action: "block", MatchedRule: "||ad.com^", Reason: "blacklist"}, nil
 }
 
+func (m *mockController) GetLANStatus(ctx context.Context) (*LANStatusResponse, error) {
+	return &LANStatusResponse{
+		AllowLAN:        true,
+		ListenAddresses: []string{"0.0.0.0:53", "[::]:53"},
+		LANAddresses:    []string{"192.168.1.100"},
+		FirewallAllowed: true,
+	}, nil
+}
+
+func (m *mockController) ConfigureLAN(ctx context.Context, req ConfigureLANRequest) error {
+	return nil
+}
+
+func (m *mockController) ConfigureFirewall(ctx context.Context, enable bool) error {
+	return nil
+}
+
 func TestIPCServerAndClient_EndToEnd(t *testing.T) {
 	mockCtrl := &mockController{}
 	token := "test-secret-token"

@@ -45,6 +45,9 @@ type ServiceController interface {
 	GetCustomRules(ctx context.Context) ([]string, error)
 	SetCustomRules(ctx context.Context, rules []string) error
 	CheckHostRule(ctx context.Context, domain string, qtype uint16) (*core.CheckHostResult, error)
+	GetLANStatus(ctx context.Context) (*LANStatusResponse, error)
+	ConfigureLAN(ctx context.Context, req ConfigureLANRequest) error
+	ConfigureFirewall(ctx context.Context, enable bool) error
 }
 
 var upgrader = websocket.Upgrader{
@@ -133,6 +136,9 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/v1/filter/lists/refresh", s.withAuth(s.handleFilterListRefresh))
 	mux.HandleFunc("/api/v1/filter/rules", s.withAuth(s.handleFilterRules))
 	mux.HandleFunc("/api/v1/filter/check", s.withAuth(s.handleFilterCheck))
+	mux.HandleFunc("/api/v1/dns/lan", s.withAuth(s.handleLANStatus))
+	mux.HandleFunc("/api/v1/dns/lan/configure", s.withAuth(s.handleLANConfigure))
+	mux.HandleFunc("/api/v1/dns/lan/firewall", s.withAuth(s.handleFirewallConfigure))
 	mux.HandleFunc("/api/v1/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/portcheck", s.withAuth(s.handlePortCheck))
 	mux.HandleFunc("/api/v1/health", s.handleHealth)
