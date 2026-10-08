@@ -139,19 +139,41 @@ func (c *WindowsPortChecker) CheckPort53(ctx context.Context) (*PortCheckResult,
 	tcpFree := testTCPBind("127.0.0.1:53")
 	available := udpFree && tcpFree
 
-	// 2. 通过 PowerShell 深度检测全系统 53 端口监听实体及 ICS 状态
-	out, err := c.executor.RunPowerShell(ctx, portCheckScript)
-	if err != nil {
-		// 脚本执行失败时仅返回基础套接字探测结果
-		return &PortCheckResult{
-			Available:  available,
-			Conflicts:  nil,
-			HasICS:     false,
-			Diagnostic: fmt.Sprintf("53 端口套接字绑定探测: UDP=%v, TCP=%v (系统诊断命令失败: %v)", udpFree, tcpFree, err),
-		}, nil
+	var conflicts []PortConflict
+	var hasICS bool
+	var diag string
+
+	// 2. 优先通过 Windows 原生 API 深度检测全系统 53 端口监听实体及 ICS 状态
+	if isDefaultExecutor(c.executor) {
+		var err error
+		conflicts, hasICS, diag, err = checkPort53Native(available, os.Getpid())
+		if err != nil {
+			// 原生 API 异常时，降级使用 PowerShell 脚本兜底
+			out, psErr := c.executor.RunPowerShell(ctx, portCheckScript)
+			if psErr != nil {
+				return &PortCheckResult{
+					Available:  available,
+					Conflicts:  nil,
+					HasICS:     false,
+					Diagnostic: fmt.Sprintf("53 端口套接字绑定探测: UDP=%v, TCP=%v (系统诊断命令失败: %v)", udpFree, tcpFree, psErr),
+				}, nil
+			}
+			conflicts, hasICS, diag = parsePortCheckJSON(out, available, os.Getpid())
+		}
+	} else {
+		// Mock 或自定义执行器环境下调用执行器
+		out, err := c.executor.RunPowerShell(ctx, portCheckScript)
+		if err != nil {
+			return &PortCheckResult{
+				Available:  available,
+				Conflicts:  nil,
+				HasICS:     false,
+				Diagnostic: fmt.Sprintf("53 端口套接字绑定探测: UDP=%v, TCP=%v (系统诊断命令失败: %v)", udpFree, tcpFree, err),
+			}, nil
+		}
+		conflicts, hasICS, diag = parsePortCheckJSON(out, available, os.Getpid())
 	}
 
-	conflicts, hasICS, diag := parsePortCheckJSON(out, available, os.Getpid())
 	hasOtherConflict := false
 	hasSelfListener := false
 	for _, conf := range conflicts {
@@ -231,51 +253,17 @@ func parsePortCheckJSON(out string, available bool, selfPIDs ...int) ([]PortConf
 		}
 	}
 
-	conflicts := make([]PortConflict, 0, len(rawList))
-	var diagLines []string
-	hasSelfListener := false
-
-	for _, item := range rawList {
-		isSelf := (selfPID > 0 && item.PID == selfPID)
-		if isSelf {
-			hasSelfListener = true
-		}
-		isICS := !isSelf && hasICS && (item.PID == icsPID || strings.Contains(strings.ToLower(item.ProcessName), "svchost") && hasICS)
-		diagnosis := ""
-		if isSelf {
-			diagnosis = fmt.Sprintf("进程 PID %d (%s) 为谛听 (DITING) 服务自身正在监听 %s (%s)。", item.PID, item.ProcessName, item.LocalAddress, item.Protocol)
-		} else if isICS {
-			diagnosis = fmt.Sprintf("检测到 Windows 网络连接共享服务 (SharedAccess / ICS) 正在运行 (PID: %d)。ICS 会在 0.0.0.0:53 上占用 UDP，阻止本地 DNS 代理绑定。排查建议：按 Win+R 打开 services.msc 停止并禁用 'Internet Connection Sharing (ICS)' 服务，或以管理员身份运行 'sc stop SharedAccess'。", item.PID)
-			diagLines = append(diagLines, diagnosis)
-		} else {
-			diagnosis = fmt.Sprintf("检测到外部进程 '%s' (PID: %d) 正在监听 %s (%s)。排查建议：请在任务管理器中结束该进程，或修改该软件的监听端口后重试。", item.ProcessName, item.PID, item.LocalAddress, item.Protocol)
-			diagLines = append(diagLines, diagnosis)
-		}
-
-		conflicts = append(conflicts, PortConflict{
-			Port:         53,
-			Protocol:     item.Protocol,
-			LocalAddress: item.LocalAddress,
-			PID:          item.PID,
-			ProcessName:  item.ProcessName,
-			ServiceName:  ternary(isICS, "SharedAccess", ""),
-			IsICS:        isICS,
-			IsSelf:       isSelf,
-			Diagnosis:    diagnosis,
+	listeners := make([]nativePortListener, 0, len(rawList))
+	for _, raw := range rawList {
+		listeners = append(listeners, nativePortListener{
+			Protocol:     raw.Protocol,
+			LocalAddress: raw.LocalAddress,
+			PID:          raw.PID,
+			ProcessName:  raw.ProcessName,
 		})
 	}
 
-	if len(diagLines) == 0 {
-		if hasSelfListener {
-			return conflicts, hasICS, "127.0.0.1:53 当前由谛听 (DITING) 核心服务监听中，无外部端口冲突。"
-		}
-		if available {
-			return conflicts, hasICS, "53 端口空闲且可用，无端口冲突。"
-		}
-		return conflicts, hasICS, "未能直接绑定 127.0.0.1:53，但未探测到明确的系统监听进程（可能需要管理员权限）。排查建议：请检查是否有其他 DNS 或代理软件占用，或尝试以管理员身份运行本服务。"
-	}
-
-	return conflicts, hasICS, strings.Join(diagLines, "\n")
+	return formatPortConflicts(listeners, hasICS, icsPID, available, selfPID)
 }
 
 func ternary[T any](cond bool, a, b T) T {

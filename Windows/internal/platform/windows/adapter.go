@@ -22,9 +22,10 @@ type AdapterInfo struct {
 	Gateway     string   `json:"gateway"`     // IPv4 默认网关，如 "192.168.1.1"
 	IPv4DHCP    bool     `json:"ipv4DHCP"`    // IPv4 是否为 DHCP 动态获取
 	IPv6DHCP    bool     `json:"ipv6DHCP"`    // IPv6 是否为 DHCP 动态获取
-	IPv4DNS     []string `json:"ipv4DNS"`     // 原有 IPv4 DNS 服务器列表
-	IPv6DNS     []string `json:"ipv6DNS"`     // 原有 IPv6 DNS 服务器列表
-	IsPhysical  bool     `json:"isPhysical"`  // 是否为物理网卡（非虚拟）
+	IPv4DNS             []string `json:"ipv4DNS"`             // 原有 IPv4 DNS 服务器列表
+	IPv6DNS             []string `json:"ipv6DNS"`             // 原有 IPv6 DNS 服务器列表
+	IsPhysical          bool     `json:"isPhysical"`          // 是否为物理网卡（非虚拟）
+	HasResidualLoopback bool     `json:"hasResidualLoopback"` // 是否存在残留的回环 DNS 配置 (127.*, ::1 等)
 }
 
 // AdapterScanner 定义网卡枚举与扫描接口
@@ -252,6 +253,13 @@ Get-NetAdapter -ErrorAction SilentlyContinue | ForEach-Object {
 
 // ScanAll 枚举系统中的所有网卡
 func (s *PowerShellAdapterScanner) ScanAll(ctx context.Context) ([]AdapterInfo, error) {
+	if isDefaultExecutor(s.executor) {
+		adapters, err := scanAdaptersNative(ctx)
+		if err == nil {
+			return adapters, nil
+		}
+	}
+
 	out, err := s.executor.RunPowerShell(ctx, adapterScanScript)
 	if err != nil {
 		return nil, fmt.Errorf("执行网卡扫描 PowerShell 脚本失败: %w (输出: %s)", err, out)
@@ -312,18 +320,29 @@ func parseAdapterJSON(output string) ([]AdapterInfo, error) {
 		if len(v6DNS) == 0 {
 			v6DHCP = true
 		}
+		rawV4 := parseStringOrSlice(raw.IPv4DNS)
+		rawV6 := parseStringOrSlice(raw.IPv6DNS)
+		hasResidual := false
+		for _, ip := range append(rawV4, rawV6...) {
+			if IsLoopbackOrLocalIP(ip) {
+				hasResidual = true
+				break
+			}
+		}
+
 		results = append(results, AdapterInfo{
-			ID:          raw.ID,
-			Name:        raw.Name,
-			Description: raw.Description,
-			Index:       raw.Index,
-			Status:      raw.Status,
-			Gateway:     raw.Gateway,
-			IPv4DHCP:    v4DHCP,
-			IPv6DHCP:    v6DHCP,
-			IPv4DNS:     v4DNS,
-			IPv6DNS:     v6DNS,
-			IsPhysical:  !isVirt,
+			ID:                  raw.ID,
+			Name:                raw.Name,
+			Description:         raw.Description,
+			Index:               raw.Index,
+			Status:              raw.Status,
+			Gateway:             raw.Gateway,
+			IPv4DHCP:            v4DHCP,
+			IPv6DHCP:            v6DHCP,
+			IPv4DNS:             v4DNS,
+			IPv6DNS:             v6DNS,
+			IsPhysical:          !isVirt,
+			HasResidualLoopback: hasResidual,
 		})
 	}
 	return results, nil

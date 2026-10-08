@@ -230,7 +230,14 @@ func (m *WindowsDNSManager) TakeoverSingle(ctx context.Context, adapter AdapterI
 
 // applyTakeoverOnAdapter 在指定网卡上设置 IPv4 为 127.0.0.1，IPv6 为 ::1
 func (m *WindowsDNSManager) applyTakeoverOnAdapter(ctx context.Context, a AdapterState) error {
-	// 优先使用 PowerShell 同时配置双栈接管地址
+	// 1. 优先使用 Windows 原生 API (SetInterfaceDnsSettings) 配置双栈接管地址（无进程拉起开销）
+	if isDefaultExecutor(m.executor) {
+		if err := setAdapterDNSNative(a.ID, []string{"127.0.0.1", "::1"}); err == nil {
+			return nil
+		}
+	}
+
+	// 2. 备用方案：通过 PowerShell 或 netsh 进行配置
 	cmdV4 := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("127.0.0.1","%s")`, a.Index, "::1")
 	out, err := m.executor.RunPowerShell(ctx, cmdV4)
 	if err != nil {
@@ -332,8 +339,14 @@ func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterS
 	v4IsDHCP := a.IPv4DHCP || len(a.IPv4DNS) == 0
 	v6IsDHCP := a.IPv6DHCP || len(a.IPv6DNS) == 0
 
-	// 1. 若双栈全为 DHCP，一次性通过 ResetServerAddresses 还原
+	// 1. 若双栈全为 DHCP，一次性通过原生 API 或 ResetServerAddresses 还原
 	if v4IsDHCP && v6IsDHCP {
+		if isDefaultExecutor(m.executor) {
+			if err := resetAdapterDNSNative(a.ID); err == nil {
+				return nil
+			}
+		}
+
 		_, err := m.executor.RunPowerShell(ctx, fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ResetServerAddresses`, a.Index))
 		if err != nil {
 			_, errV4 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
@@ -351,10 +364,16 @@ func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterS
 		return nil
 	}
 
-	// 2. 若双栈全为静态配置，优先尝试一次性 PowerShell 还原全部 DNS 地址
+	// 2. 若双栈全为静态配置，优先尝试一次性原生 API 或 PowerShell 还原全部 DNS 地址
 	if !v4IsDHCP && !v6IsDHCP {
 		allServers := append([]string{}, a.IPv4DNS...)
 		allServers = append(allServers, a.IPv6DNS...)
+		if isDefaultExecutor(m.executor) {
+			if err := setAdapterDNSNative(a.ID, allServers); err == nil {
+				return nil
+			}
+		}
+
 		joined := strings.Join(allServers, `","`)
 		psCmd := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("%s")`, a.Index, joined)
 		_, err := m.executor.RunPowerShell(ctx, psCmd)
@@ -414,6 +433,15 @@ func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterS
 
 // ResetResidualLoopbackDNS 扫描系统所有网卡，对任何残留指向 127.0.0.0/8、::1 或未指定地址的 DNS 进行强力重置为 DHCP 自动获取
 func (m *WindowsDNSManager) ResetResidualLoopbackDNS(ctx context.Context) error {
+	// 生产环境下优先使用 Windows 原生 API 扫描并重置残留回环 DNS，免去启动 PowerShell 进程
+	if isDefaultExecutor(m.executor) {
+		if err := resetResidualLoopbackDNSNative(ctx, m.executor); err == nil {
+			_ = m.FlushDNSCache(ctx)
+			return nil
+		}
+	}
+
+	// 备用方案：通过 PowerShell / netsh 容灾重置
 	psScript := `
 $ErrorActionPreference = 'SilentlyContinue';
 Get-DnsClientServerAddress | Where-Object { ($_.ServerAddresses -contains '127.0.0.1') -or ($_.ServerAddresses -match '^127\.') -or ($_.ServerAddresses -contains '::1') -or ($_.ServerAddresses -contains '0.0.0.0') -or ($_.ServerAddresses -contains '::') } | ForEach-Object {
