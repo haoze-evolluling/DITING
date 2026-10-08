@@ -9,5 +9,12 @@
   "author": {
     "name": "leehaoze",
     "email": "leehaoze2022@gmail.com"
+  },
+  "info": {
+    "companyName": "Diting",
+    "productName": "谛听 DNS",
+    "productVersion": "1.3.0",
+    "copyright": "Copyright 2026 DITING",
+    "comments": "谛听 (DITING) Windows 客户端"
   }
 }

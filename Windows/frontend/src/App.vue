@@ -324,7 +324,7 @@ onUnmounted(() => {
             {{ navItems.find(i => i.id === currentTab)?.label }}
           </span>
           <span class="text-xs text-text-muted">|</span>
-          <span class="text-xs text-text-sub">Windows 桌面客户端 v0.1.0</span>
+          <span class="text-xs text-text-sub">Windows 桌面客户端 v1.3.0</span>
         </div>
 
         <div class="flex items-center gap-3">

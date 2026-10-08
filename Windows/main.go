@@ -16,7 +16,7 @@ import (
 
 // Version 信息
 var (
-	Version   = "1.2.10"
+	Version   = "1.3.0"
 	BuildTime = "dev"
 	GitCommit = "dev"
 )

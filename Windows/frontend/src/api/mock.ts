@@ -80,7 +80,7 @@ export const mockFilterStats: FilterStats = {
 };
 
 export const mockStatus: StatusResponse = {
-  version: '0.2.0-dev',
+  version: '1.3.0',
   pid: 14280,
   uptimeSeconds: 7320,
   dns: {
