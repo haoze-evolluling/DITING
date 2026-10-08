@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/haoze-evolluling/diting/windows/internal/config"
@@ -173,6 +174,43 @@ func TestController_ConfigureUpstream(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatalf("expected error on invalid bootstrap IP, got nil")
+	}
+
+	// 校验关闭 Bootstrap 配置时的持久化与重新加载
+	disabledBsCfg := core.BootstrapConfig{
+		Enabled: false,
+		Servers: []core.BootstrapServer{},
+	}
+	err = prg.ConfigureUpstream(context.Background(), ipc.ConfigureUpstreamRequest{
+		Bootstrap: &disabledBsCfg,
+	})
+	if err != nil {
+		t.Fatalf("ConfigureUpstream disabled failed: %v", err)
+	}
+	reloadedDisabled, err := config.LoadConfig(tmpConfig)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	if reloadedDisabled.Upstream.Bootstrap.Enabled {
+		t.Errorf("expected bootstrap Enabled to remain false after reload, got true")
+	}
+}
+
+func TestController_TestUpstream_IPv6(t *testing.T) {
+	prg := &program{
+		cfg: config.DefaultConfig(),
+	}
+
+	// 验证对纯 IPv6 地址的格式处理，不能报 "missing port in address"
+	res, err := prg.TestUpstream(context.Background(), ipc.TestUpstreamRequest{
+		Protocol: "PLAIN",
+		Server:   "2400:3200::1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+	if !res.Success && strings.Contains(res.Error, "missing port in address") {
+		t.Fatalf("expected valid port formatting for IPv6, got error: %s", res.Error)
 	}
 }
 

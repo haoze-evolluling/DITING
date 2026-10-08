@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,8 +37,12 @@ func ValidateBootstrapConfig(cfg BootstrapConfig) error {
 			return fmt.Errorf("bootstrap server %d: address is empty", i+1)
 		}
 		host := addr
-		if h, _, err := net.SplitHostPort(addr); err == nil {
+		if h, portStr, err := net.SplitHostPort(addr); err == nil {
 			host = h
+			p, pErr := strconv.Atoi(portStr)
+			if pErr != nil || p <= 0 || p > 65535 {
+				return fmt.Errorf("bootstrap server %q: invalid port %q in address %q", s.ID, portStr, s.Address)
+			}
 		}
 		cleanHost := strings.Trim(host, "[]")
 		if net.ParseIP(cleanHost) == nil {
@@ -139,10 +144,21 @@ func (h *bootstrapHealth) RecordResult(success bool, elapsedMs int64, now time.T
 }
 
 type bootstrapScore struct {
+	index       int
 	entry       BootstrapServer
 	weight      float64
 	coolingDown bool
 	sampleCount float64
+}
+
+func serverKey(s BootstrapServer, idx int) string {
+	if s.ID != "" {
+		return s.ID
+	}
+	if s.Address != "" {
+		return s.Address
+	}
+	return fmt.Sprintf("server-%d", idx)
 }
 
 func (h *bootstrapHealth) GetScore(entry BootstrapServer, now time.Time) bootstrapScore {
@@ -311,8 +327,10 @@ func (b *BootstrapResolver) choosePlan(servers []BootstrapServer, now time.Time)
 
 	scores := make([]bootstrapScore, len(servers))
 	for i, entry := range servers {
-		health := b.getOrCreateHealth(entry.ID)
-		scores[i] = health.GetScore(entry, now)
+		health := b.getOrCreateHealth(serverKey(entry, i))
+		score := health.GetScore(entry, now)
+		score.index = i
+		scores[i] = score
 	}
 
 	candidates := make([]bootstrapScore, 0, len(scores))
@@ -349,7 +367,7 @@ func (b *BootstrapResolver) choosePlan(servers []BootstrapServer, now time.Time)
 
 	remaining := make([]bootstrapScore, 0, len(scores)-1)
 	for _, s := range scores {
-		if s.entry.ID != primary.entry.ID {
+		if s.index != primary.index {
 			remaining = append(remaining, s)
 		}
 	}
@@ -412,7 +430,7 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 		return host, nil
 	}
 
-	normalizedHost := strings.ToLower(strings.TrimSpace(host))
+	normalizedHost := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(cleanHost)), ".")
 	if cachedIP, ok := b.getCached(normalizedHost); ok {
 		return cachedIP, nil
 	}
@@ -426,7 +444,7 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 	executionList := append([]BootstrapServer{plan.primary}, plan.fallbacks...)
 	var lastErr error
 
-	for _, entry := range executionList {
+	for i, entry := range executionList {
 		if ctx.Err() != nil {
 			return "", ctx.Err()
 		}
@@ -440,7 +458,7 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 			elapsedMs = 1
 		}
 
-		health := b.getOrCreateHealth(entry.ID)
+		health := b.getOrCreateHealth(serverKey(entry, i))
 		isSuccess := (err == nil && resolvedIP != "")
 		health.RecordResult(isSuccess, elapsedMs, time.Now())
 

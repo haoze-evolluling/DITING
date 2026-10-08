@@ -48,15 +48,30 @@ function validateIPAddress(input: string): boolean {
   const trimmed = input.trim();
   if (!trimmed) return false;
 
-  // 提取主机部分（去掉方括号与端口）
+  // 提取主机部分与端口部分
   let host = trimmed;
+  let portStr = '';
   if (trimmed.startsWith('[')) {
     const endBracket = trimmed.indexOf(']');
     if (endBracket === -1) return false;
     host = trimmed.substring(1, endBracket);
+    const rest = trimmed.substring(endBracket + 1);
+    if (rest.startsWith(':')) {
+      portStr = rest.substring(1);
+    } else if (rest.length > 0) {
+      return false;
+    }
   } else if (trimmed.includes(':') && trimmed.indexOf(':') === trimmed.lastIndexOf(':')) {
     // 只有一个冒号，为 IPv4:端口
-    host = trimmed.split(':')[0];
+    const parts = trimmed.split(':');
+    host = parts[0];
+    portStr = parts[1];
+  }
+
+  if (portStr) {
+    if (!/^\d+$/.test(portStr)) return false;
+    const p = parseInt(portStr, 10);
+    if (p <= 0 || p > 65535) return false;
   }
 
   // IPv4 校验 (0-255.0-255.0-255.0-255)

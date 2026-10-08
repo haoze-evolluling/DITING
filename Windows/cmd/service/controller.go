@@ -133,24 +133,33 @@ func (p *program) TestUpstream(ctx context.Context, req ipc.TestUpstreamRequest)
 			host = h
 			port = pt
 		}
-		dialHost := host
-		if resolvedIP, rErr := p.resolveHostWithBootstrap(ctx, host); rErr == nil && resolvedIP != "" {
+		cleanHost := strings.Trim(host, "[]")
+		dialHost := cleanHost
+		if resolvedIP, rErr := p.resolveHostWithBootstrap(ctx, cleanHost); rErr == nil && resolvedIP != "" {
 			dialHost = resolvedIP
 		}
 		dotAddr := net.JoinHostPort(strings.Trim(dialHost, "[]"), port)
 		c := &miekgdns.Client{
 			Net: "tcp-tls",
 			TLSConfig: &tls.Config{
-				ServerName: host,
+				ServerName: cleanHost,
 			},
 			Timeout: 3 * time.Second,
 		}
 		_, _, err = c.ExchangeContext(ctx, m, dotAddr)
 	} else {
-		plainAddr := targetServer
-		if !strings.Contains(plainAddr, ":") {
-			plainAddr += ":53"
+		host := targetServer
+		port := "53"
+		if h, pt, sErr := net.SplitHostPort(targetServer); sErr == nil {
+			host = h
+			port = pt
 		}
+		cleanHost := strings.Trim(host, "[]")
+		dialHost := cleanHost
+		if resolvedIP, rErr := p.resolveHostWithBootstrap(ctx, cleanHost); rErr == nil && resolvedIP != "" {
+			dialHost = resolvedIP
+		}
+		plainAddr := net.JoinHostPort(strings.Trim(dialHost, "[]"), port)
 		c := &miekgdns.Client{Net: "udp", Timeout: 3 * time.Second}
 		_, _, err = c.ExchangeContext(ctx, m, plainAddr)
 	}

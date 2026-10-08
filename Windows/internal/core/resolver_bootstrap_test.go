@@ -56,6 +56,30 @@ func TestBootstrap_AddressValidation(t *testing.T) {
 				{ID: "bad3", Address: "999.999.999.999"},
 			},
 		},
+		{
+			Enabled: true,
+			Servers: []BootstrapServer{
+				{ID: "bad4", Address: "223.5.5.5:abc"},
+			},
+		},
+		{
+			Enabled: true,
+			Servers: []BootstrapServer{
+				{ID: "bad5", Address: "223.5.5.5:0"},
+			},
+		},
+		{
+			Enabled: true,
+			Servers: []BootstrapServer{
+				{ID: "bad6", Address: "223.5.5.5:65536"},
+			},
+		},
+		{
+			Enabled: true,
+			Servers: []BootstrapServer{
+				{ID: "bad7", Address: "[2400:3200::1]:abc"},
+			},
+		},
 	}
 
 	for i, tc := range invalidCases {
@@ -239,5 +263,71 @@ func TestDoT_BootstrapFailover(t *testing.T) {
 	}
 	if len(respMsg.Answer) != 1 {
 		t.Fatalf("expected 1 answer from failover DoT, got %d", len(respMsg.Answer))
+	}
+}
+
+func TestBootstrap_DuplicateOrEmptyIDs_NoDropFallbacks(t *testing.T) {
+	bs := NewBootstrapResolver(BootstrapConfig{
+		Enabled: true,
+		Servers: []BootstrapServer{
+			{ID: "", Name: "S1", Address: "1.1.1.1:53"},
+			{ID: "", Name: "S2", Address: "8.8.8.8:53"},
+			{ID: "", Name: "S3", Address: "9.9.9.9:53"},
+		},
+	})
+
+	plan := bs.choosePlan(bs.servers, time.Now())
+	if plan.primary.Address == "" {
+		t.Fatalf("expected non-empty primary server")
+	}
+	if len(plan.fallbacks) != 2 {
+		t.Fatalf("expected 2 fallbacks even with empty IDs, got %d", len(plan.fallbacks))
+	}
+
+	bsDup := NewBootstrapResolver(BootstrapConfig{
+		Enabled: true,
+		Servers: []BootstrapServer{
+			{ID: "same-id", Name: "S1", Address: "1.1.1.1:53"},
+			{ID: "same-id", Name: "S2", Address: "8.8.8.8:53"},
+		},
+	})
+	planDup := bsDup.choosePlan(bsDup.servers, time.Now())
+	if len(planDup.fallbacks) != 1 {
+		t.Fatalf("expected 1 fallback with duplicate IDs, got %d", len(planDup.fallbacks))
+	}
+}
+
+func TestBootstrap_FQDNTrailingDotResolution(t *testing.T) {
+	dnsSrv, dnsAddr := startMockDNSServer(t, func(w dns.ResponseWriter, r *dns.Msg) {
+		m := new(dns.Msg)
+		m.SetReply(r)
+		if len(r.Question) > 0 && r.Question[0].Qtype == dns.TypeA {
+			rr, _ := dns.NewRR(fmt.Sprintf("%s 300 IN A 1.2.3.4", r.Question[0].Name))
+			m.Answer = append(m.Answer, rr)
+		}
+		_ = w.WriteMsg(m)
+	})
+	defer func() { _ = dnsSrv.Shutdown() }()
+
+	bs := NewBootstrapResolver(BootstrapConfig{
+		Enabled: true,
+		Servers: []BootstrapServer{
+			{ID: "bs-1", Address: dnsAddr},
+		},
+	})
+
+	ctx := context.Background()
+	ip1, err := bs.ResolveHost(ctx, "dot.example.test.")
+	if err != nil {
+		t.Fatalf("ResolveHost with trailing dot failed: %v", err)
+	}
+	if ip1 != "1.2.3.4" {
+		t.Fatalf("expected 1.2.3.4, got %s", ip1)
+	}
+
+	// 确认缓存同时命中无点域名
+	cached, ok := bs.getCached("dot.example.test")
+	if !ok || cached != "1.2.3.4" {
+		t.Fatalf("expected normalized cache hit for dot.example.test, got cached=%q, ok=%v", cached, ok)
 	}
 }

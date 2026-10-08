@@ -109,14 +109,15 @@ func (d *DoTResolver) Exchange(ctx context.Context, rawQuery []byte, server stri
 		host = h
 		port = p
 	}
+	cleanHost := strings.Trim(host, "[]")
 
 	d.mu.Lock()
 	bootstrap := d.bootstrap
 	d.mu.Unlock()
 
-	targetHost := host
+	targetHost := cleanHost
 	if bootstrap != nil && bootstrap.IsEnabled() {
-		if resolvedIP, rErr := bootstrap.ResolveHost(ctx, host); rErr == nil && resolvedIP != "" {
+		if resolvedIP, rErr := bootstrap.ResolveHost(ctx, cleanHost); rErr == nil && resolvedIP != "" {
 			targetHost = resolvedIP
 		}
 	}
@@ -143,7 +144,7 @@ func (d *DoTResolver) Exchange(ctx context.Context, rawQuery []byte, server stri
 
 	// 空闲连接不可用或复用失败，发起全新连接
 	if entry == nil && ctx.Err() == nil {
-		entry, err = d.dialFreshConn(ctx, host, targetServer)
+		entry, err = d.dialFreshConn(ctx, cleanHost, targetServer)
 		if err != nil {
 			return nil, err
 		}
