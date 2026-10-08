@@ -15,6 +15,7 @@ import type {
   FilterConfig,
   FilterList,
   CheckHostResult,
+  CoreServiceStatus,
 } from './types';
 import { handleMockRequest } from './mock';
 
@@ -28,6 +29,13 @@ declare global {
           RunEmergencyRestore?: () => Promise<string>;
           IsAutoStartEnabled?: () => Promise<boolean>;
           SetAutoStart?: (enable: boolean) => Promise<boolean>;
+          GetCoreServiceStatus?: () => Promise<CoreServiceStatus>;
+          StartCoreService?: () => Promise<string>;
+          StopCoreService?: () => Promise<string>;
+          RestartCoreService?: () => Promise<string>;
+          InstallCoreService?: () => Promise<string>;
+          InstallAndStartCoreService?: () => Promise<string>;
+          UninstallCoreService?: () => Promise<string>;
         };
       };
     };
@@ -390,6 +398,131 @@ class IPCService {
       return await window.go.main.App.SetAutoStart(enable);
     }
     return enable;
+  }
+
+  // --- 核心服务生命周期与系统权限管理 ---
+
+  public async getCoreServiceStatus(): Promise<CoreServiceStatus> {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      const mockState = (window as any).__mockCoreServiceStatus || {
+        installed: true,
+        running: true,
+        state: 'running',
+        stateText: '运行中',
+        executablePath: 'C:\\Program Files\\Diting\\谛听 DNS\\diting-service.exe',
+        isElevated: false,
+        canInstall: true,
+        message: '核心服务正常运行中。',
+      };
+      return mockState;
+    }
+
+    if (window.go?.main?.App?.GetCoreServiceStatus) {
+      try {
+        const res = await window.go.main.App.GetCoreServiceStatus();
+        return res as CoreServiceStatus;
+      } catch (err: any) {
+        console.warn('获取核心服务状态失败:', err);
+      }
+    }
+
+    return {
+      installed: false,
+      running: false,
+      state: 'unknown',
+      stateText: '未知状态',
+      executablePath: '',
+      isElevated: false,
+      canInstall: false,
+      message: '无法获取核心服务状态',
+    };
+  }
+
+  public async startCoreService(): Promise<string> {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      if ((window as any).__mockCoreServiceStatus) {
+        (window as any).__mockCoreServiceStatus.running = true;
+        (window as any).__mockCoreServiceStatus.state = 'running';
+        (window as any).__mockCoreServiceStatus.stateText = '运行中';
+      }
+      return '后台核心服务已成功启动！';
+    }
+    if (window.go?.main?.App?.StartCoreService) {
+      return await window.go.main.App.StartCoreService();
+    }
+    throw new Error('当前环境不支持启动 Windows 服务');
+  }
+
+  public async stopCoreService(): Promise<string> {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      if ((window as any).__mockCoreServiceStatus) {
+        (window as any).__mockCoreServiceStatus.running = false;
+        (window as any).__mockCoreServiceStatus.state = 'stopped';
+        (window as any).__mockCoreServiceStatus.stateText = '已停止';
+      }
+      return '后台核心服务已停止。';
+    }
+    if (window.go?.main?.App?.StopCoreService) {
+      return await window.go.main.App.StopCoreService();
+    }
+    throw new Error('当前环境不支持停止 Windows 服务');
+  }
+
+  public async restartCoreService(): Promise<string> {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      return '后台核心服务已成功重启！';
+    }
+    if (window.go?.main?.App?.RestartCoreService) {
+      return await window.go.main.App.RestartCoreService();
+    }
+    throw new Error('当前环境不支持重启 Windows 服务');
+  }
+
+  public async installCoreService(): Promise<string> {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      if ((window as any).__mockCoreServiceStatus) {
+        (window as any).__mockCoreServiceStatus.installed = true;
+        (window as any).__mockCoreServiceStatus.state = 'stopped';
+        (window as any).__mockCoreServiceStatus.stateText = '已停止';
+      }
+      return '后台核心服务已成功安装！';
+    }
+    if (window.go?.main?.App?.InstallCoreService) {
+      return await window.go.main.App.InstallCoreService();
+    }
+    throw new Error('当前环境不支持安装 Windows 服务');
+  }
+
+  public async installAndStartCoreService(): Promise<string> {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      if ((window as any).__mockCoreServiceStatus) {
+        (window as any).__mockCoreServiceStatus.installed = true;
+        (window as any).__mockCoreServiceStatus.running = true;
+        (window as any).__mockCoreServiceStatus.state = 'running';
+        (window as any).__mockCoreServiceStatus.stateText = '运行中';
+      }
+      return '后台核心服务已成功安装并启动！';
+    }
+    if (window.go?.main?.App?.InstallAndStartCoreService) {
+      return await window.go.main.App.InstallAndStartCoreService();
+    }
+    throw new Error('当前环境不支持安装并启动 Windows 服务');
+  }
+
+  public async uninstallCoreService(): Promise<string> {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      if ((window as any).__mockCoreServiceStatus) {
+        (window as any).__mockCoreServiceStatus.installed = false;
+        (window as any).__mockCoreServiceStatus.running = false;
+        (window as any).__mockCoreServiceStatus.state = 'not_installed';
+        (window as any).__mockCoreServiceStatus.stateText = '未安装';
+      }
+      return '后台核心服务已成功卸载。';
+    }
+    if (window.go?.main?.App?.UninstallCoreService) {
+      return await window.go.main.App.UninstallCoreService();
+    }
+    throw new Error('当前环境不支持卸载 Windows 服务');
   }
 }
 

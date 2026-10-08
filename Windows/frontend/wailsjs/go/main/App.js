@@ -10,8 +10,24 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function GetCoreServiceStatus() {
+  return window['go']['main']['App']['GetCoreServiceStatus']();
+}
+
+export function InstallAndStartCoreService() {
+  return window['go']['main']['App']['InstallAndStartCoreService']();
+}
+
+export function InstallCoreService() {
+  return window['go']['main']['App']['InstallCoreService']();
+}
+
 export function IsAutoStartEnabled() {
   return window['go']['main']['App']['IsAutoStartEnabled']();
+}
+
+export function RestartCoreService() {
+  return window['go']['main']['App']['RestartCoreService']();
 }
 
 export function RunEmergencyRestore() {
@@ -20,4 +36,16 @@ export function RunEmergencyRestore() {
 
 export function SetAutoStart(arg1) {
   return window['go']['main']['App']['SetAutoStart'](arg1);
+}
+
+export function StartCoreService() {
+  return window['go']['main']['App']['StartCoreService']();
+}
+
+export function StopCoreService() {
+  return window['go']['main']['App']['StopCoreService']();
+}
+
+export function UninstallCoreService() {
+  return window['go']['main']['App']['UninstallCoreService']();
 }

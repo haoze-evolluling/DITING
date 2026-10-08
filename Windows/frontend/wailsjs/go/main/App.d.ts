@@ -5,8 +5,22 @@ export function CaptureWindow(arg1:string):Promise<string>;
 
 export function Greet(arg1:string):Promise<string>;
 
+export function GetCoreServiceStatus():Promise<any>;
+
+export function InstallAndStartCoreService():Promise<string>;
+
+export function InstallCoreService():Promise<string>;
+
 export function IsAutoStartEnabled():Promise<boolean>;
+
+export function RestartCoreService():Promise<string>;
 
 export function RunEmergencyRestore():Promise<string>;
 
 export function SetAutoStart(arg1:boolean):Promise<boolean>;
+
+export function StartCoreService():Promise<string>;
+
+export function StopCoreService():Promise<string>;
+
+export function UninstallCoreService():Promise<string>;

@@ -23,12 +23,15 @@ var (
 
 // App 结构体
 type App struct {
-	ctx context.Context
+	ctx        context.Context
+	serviceMgr *windows.ServiceManager
 }
 
 // NewApp 构造函数
 func NewApp() *App {
-	return &App{}
+	return &App{
+		serviceMgr: windows.NewServiceManager(nil, nil),
+	}
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -92,6 +95,80 @@ func (a *App) SetAutoStart(enable bool) (bool, error) {
 
 	_ = k.DeleteValue("DitingDNS")
 	return false, nil
+}
+
+// GetCoreServiceStatus 获取后台核心服务状态
+func (a *App) GetCoreServiceStatus() (*windows.CoreServiceStatus, error) {
+	if a.serviceMgr == nil {
+		a.serviceMgr = windows.NewServiceManager(nil, nil)
+	}
+	return a.serviceMgr.GetStatus(context.Background())
+}
+
+// StartCoreService 按需提权启动后台核心服务
+func (a *App) StartCoreService() (string, error) {
+	if a.serviceMgr == nil {
+		a.serviceMgr = windows.NewServiceManager(nil, nil)
+	}
+	if err := a.serviceMgr.StartService(context.Background()); err != nil {
+		return "", err
+	}
+	return "后台核心服务已成功启动！", nil
+}
+
+// StopCoreService 按需提权停止后台核心服务
+func (a *App) StopCoreService() (string, error) {
+	if a.serviceMgr == nil {
+		a.serviceMgr = windows.NewServiceManager(nil, nil)
+	}
+	if err := a.serviceMgr.StopService(context.Background()); err != nil {
+		return "", err
+	}
+	return "后台核心服务已停止。", nil
+}
+
+// RestartCoreService 按需提权重启后台核心服务
+func (a *App) RestartCoreService() (string, error) {
+	if a.serviceMgr == nil {
+		a.serviceMgr = windows.NewServiceManager(nil, nil)
+	}
+	if err := a.serviceMgr.RestartService(context.Background()); err != nil {
+		return "", err
+	}
+	return "后台核心服务已成功重启！", nil
+}
+
+// InstallCoreService 按需提权安装注册后台核心服务
+func (a *App) InstallCoreService() (string, error) {
+	if a.serviceMgr == nil {
+		a.serviceMgr = windows.NewServiceManager(nil, nil)
+	}
+	if err := a.serviceMgr.InstallService(context.Background(), ""); err != nil {
+		return "", err
+	}
+	return "后台核心服务已成功安装注册为系统服务！", nil
+}
+
+// InstallAndStartCoreService 按需提权一键安装并启动后台核心服务（单次 UAC 授权）
+func (a *App) InstallAndStartCoreService() (string, error) {
+	if a.serviceMgr == nil {
+		a.serviceMgr = windows.NewServiceManager(nil, nil)
+	}
+	if err := a.serviceMgr.InstallAndStartService(context.Background(), ""); err != nil {
+		return "", err
+	}
+	return "后台核心服务已成功安装并启动！", nil
+}
+
+// UninstallCoreService 按需提权卸载注销后台核心服务
+func (a *App) UninstallCoreService() (string, error) {
+	if a.serviceMgr == nil {
+		a.serviceMgr = windows.NewServiceManager(nil, nil)
+	}
+	if err := a.serviceMgr.UninstallService(context.Background()); err != nil {
+		return "", err
+	}
+	return "后台核心服务已成功卸载。", nil
 }
 
 func main() {
