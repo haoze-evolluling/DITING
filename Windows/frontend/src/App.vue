@@ -22,6 +22,7 @@ const showAlertModal = ref(false);
 
 // 后台核心服务管理状态
 const coreServiceStatus = ref<CoreServiceStatus | null>(null);
+const isStatusLoading = ref(false);
 const serviceOperating = ref(false);
 const serviceOpText = ref('');
 const serviceOpError = ref('');
@@ -39,10 +40,13 @@ const navItems = [
 let unsubConn: (() => void) | null = null;
 
 async function loadCoreServiceStatus() {
+  isStatusLoading.value = true;
   try {
     coreServiceStatus.value = await ipc.getCoreServiceStatus();
   } catch (err: any) {
     console.warn('获取核心服务状态失败:', err);
+  } finally {
+    isStatusLoading.value = false;
   }
 }
 
@@ -125,6 +129,28 @@ async function retryConnect(): Promise<boolean> {
     return false;
   } finally {
     isRetrying.value = false;
+  }
+}
+
+async function handleInstallService() {
+  if (serviceOperating.value) return;
+  serviceOperating.value = true;
+  serviceOpText.value = '正在请求系统授权并安装服务...';
+  serviceOpError.value = '';
+
+  try {
+    await ipc.installCoreService();
+    serviceOpText.value = '服务安装成功！正在刷新状态...';
+    await new Promise((r) => setTimeout(r, 800));
+    await loadCoreServiceStatus();
+  } catch (err: any) {
+    if (err.message?.includes('取消') || err.message?.includes('canceled') || err.message?.includes('1223')) {
+      serviceOpError.value = '管理员权限授权已取消。安装系统服务需要管理员特权。';
+    } else {
+      serviceOpError.value = err.message || '安装服务失败，请重试';
+    }
+  } finally {
+    serviceOperating.value = false;
   }
 }
 
@@ -211,6 +237,7 @@ onMounted(() => {
   parseRoute();
   window.addEventListener('hashchange', parseRoute);
 
+  loadCoreServiceStatus();
   ipc.connectWS();
   ipc.checkHealth();
 
@@ -331,12 +358,20 @@ onUnmounted(() => {
       <template #headline>
         <div
           class="flex items-center gap-2 font-bold"
-          :class="coreServiceStatus?.installed ? 'text-status-warning' : 'text-status-error'"
+          :class="
+            isStatusLoading
+              ? 'text-brand-primary'
+              : coreServiceStatus?.installed
+              ? 'text-status-warning'
+              : 'text-status-error'
+          "
         >
-          <M3Icon name="warning" :size="22" />
+          <M3Icon :name="isStatusLoading ? 'sync' : 'warning'" :size="22" :class="isStatusLoading ? 'animate-spin' : ''" />
           <span>
             {{
-              !coreServiceStatus || !coreServiceStatus.installed
+              isStatusLoading
+                ? '正在检测后台核心服务...'
+                : !coreServiceStatus || !coreServiceStatus.installed
                 ? '未安装后台核心服务'
                 : coreServiceStatus.running
                 ? '后台核心服务未连接'
@@ -354,14 +389,16 @@ onUnmounted(() => {
             <span
               class="px-2 py-0.5 rounded-full text-[11px] font-bold"
               :class="[
-                coreServiceStatus?.installed && coreServiceStatus?.running
+                isStatusLoading
+                  ? 'bg-brand-container text-brand-primary'
+                  : coreServiceStatus?.installed && coreServiceStatus?.running
                   ? 'bg-status-success-bg text-status-success'
                   : coreServiceStatus?.installed
                   ? 'bg-status-warning-bg text-status-warning'
                   : 'bg-status-error-bg text-status-error'
               ]"
             >
-              {{ coreServiceStatus?.stateText || '检测中...' }}
+              {{ isStatusLoading ? '检测中...' : (coreServiceStatus?.stateText || '未知状态') }}
             </span>
           </div>
           <span class="text-[11px] text-text-muted">
@@ -370,13 +407,19 @@ onUnmounted(() => {
         </div>
 
         <!-- 场景描述 -->
+        <!-- 正在加载中 -->
+        <div v-if="isStatusLoading" class="p-4 flex flex-col items-center justify-center gap-2 text-xs text-text-sub">
+          <M3Icon name="sync" :size="20" class="animate-spin text-brand-primary" />
+          <span>正在与系统服务管理器通讯以确认核心服务状态...</span>
+        </div>
+
         <!-- 场景1: 未安装服务 -->
-        <div v-if="!coreServiceStatus || !coreServiceStatus.installed" class="space-y-2 text-xs text-text-sub leading-relaxed">
+        <div v-else-if="!coreServiceStatus || !coreServiceStatus.installed" class="space-y-2 text-xs text-text-sub leading-relaxed">
           <p>
             检测到当前 Windows 系统尚未安装谛听核心特权服务组件。
           </p>
           <p>
-            核心服务负责双栈物理网卡 DNS 安全接管与多协议上游转发。点击下方<b>“安装并启动服务”</b>，客户端将自动向系统注册服务并启动，降低手动部署门槛。
+            核心服务负责双栈物理网卡 DNS 安全接管与多协议上游转发。点击下方<b>“安装服务”</b>或<b>“安装并启动服务”</b>，客户端将自动向系统注册服务并按需申请管理员权限，降低手动部署门槛。
           </p>
           <div v-if="coreServiceStatus?.executablePath" class="text-[11px] font-mono text-text-muted truncate" :title="coreServiceStatus.executablePath">
             组件位置: {{ coreServiceStatus.executablePath }}
@@ -392,7 +435,7 @@ onUnmounted(() => {
             后台核心服务已向系统注册，但当前处于<b>停止状态</b>。
           </p>
           <p>
-            点击下方<b>“启动服务”</b>即可直接恢复网络加速与防护，系统将在需要时按需申请系统权限，无需在控制台输入任何指令。
+            点击下方<b>“启动服务”</b>即可直接恢复网络加速与防护，系统将在需要时按需申请系统权限，无需在控制台输入任何指令。若服务配置损坏，也可点击“重新安装服务”。
           </p>
         </div>
 
@@ -434,27 +477,57 @@ onUnmounted(() => {
           稍后处理
         </button>
 
-        <!-- 场景1: 未安装 -> 直接触发服务安装并启动 -->
-        <button
-          v-if="!coreServiceStatus || !coreServiceStatus.installed"
-          @click="handleInstallAndStart"
-          :disabled="serviceOperating || !!(coreServiceStatus && !coreServiceStatus.canInstall)"
-          class="app-btn-primary"
-        >
-          <M3Icon name="bolt" :size="16" />
-          <span>{{ serviceOperating ? '正在处理...' : '安装并启动服务' }}</span>
-        </button>
+        <!-- 加载状态中 -->
+        <template v-if="isStatusLoading">
+          <button disabled class="app-btn-primary opacity-50 cursor-not-allowed">
+            <M3Icon name="sync" :size="16" class="animate-spin" />
+            <span>检测中...</span>
+          </button>
+        </template>
 
-        <!-- 场景2: 已安装但已停止 -> 启动服务 -->
-        <button
-          v-else-if="!coreServiceStatus.running"
-          @click="handleStartService"
-          :disabled="serviceOperating"
-          class="app-btn-primary"
-        >
-          <M3Icon name="play_arrow" :size="16" />
-          <span>{{ serviceOperating ? '正在启动...' : '启动服务' }}</span>
-        </button>
+        <!-- 场景1: 未安装 -> 提供“安装服务”与“安装并启动服务” -->
+        <template v-else-if="!coreServiceStatus || !coreServiceStatus.installed">
+          <button
+            @click="handleInstallService"
+            :disabled="serviceOperating || !(coreServiceStatus?.canInstall)"
+            class="app-btn-secondary"
+            title="仅向系统注册 Windows 服务"
+          >
+            <M3Icon name="add" :size="16" />
+            <span>安装服务</span>
+          </button>
+          <button
+            @click="handleInstallAndStart"
+            :disabled="serviceOperating || !(coreServiceStatus?.canInstall)"
+            class="app-btn-primary"
+            title="一键注册并启动后台核心服务"
+          >
+            <M3Icon name="bolt" :size="16" />
+            <span>{{ serviceOperating ? '正在处理...' : '安装并启动服务' }}</span>
+          </button>
+        </template>
+
+        <!-- 场景2: 已安装但已停止 -> 提供“重新安装服务”与“启动服务” -->
+        <template v-else-if="!coreServiceStatus.running">
+          <button
+            @click="handleInstallService"
+            :disabled="serviceOperating || !(coreServiceStatus?.canInstall)"
+            class="app-btn-secondary"
+            title="重新注册或修复 Windows 服务"
+          >
+            <M3Icon name="sync" :size="16" />
+            <span>重新安装服务</span>
+          </button>
+          <button
+            @click="handleStartService"
+            :disabled="serviceOperating"
+            class="app-btn-primary"
+            title="启动后台核心特权服务"
+          >
+            <M3Icon name="play_arrow" :size="16" />
+            <span>{{ serviceOperating ? '正在启动...' : '启动服务' }}</span>
+          </button>
+        </template>
 
         <!-- 场景3: 运行中未连接 -> 重启服务 + 重新尝试连接 -->
         <template v-else>

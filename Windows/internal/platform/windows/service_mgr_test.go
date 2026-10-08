@@ -229,6 +229,26 @@ func TestServiceManager_UACCancelled(t *testing.T) {
 	}
 }
 
+func TestServiceManager_ElevatedExecutionError(t *testing.T) {
+	ctx := context.Background()
+	mockExec := &mockServiceCmdExecutor{
+		returnPSErr: errors.New("command failed: service failed to start with code 1"),
+	}
+	privExec := NewDefaultPrivilegedExecutor(mockExec)
+	mgr := NewServiceManager(mockExec, privExec)
+
+	err := mgr.StartService(ctx)
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+	if errors.Is(err, ErrUACCancelled) {
+		t.Errorf("unexpected ErrUACCancelled for generic execution failure")
+	}
+	if !strings.Contains(err.Error(), "特权操作执行失败") {
+		t.Errorf("expected wrapped error, got: %v", err)
+	}
+}
+
 func TestServiceManager_LocateExecutable(t *testing.T) {
 	// 创建临时可执行文件模拟
 	tmpDir := t.TempDir()

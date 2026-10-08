@@ -121,7 +121,13 @@ try {
 } catch {
     $msg = $_.Exception.Message
     [Console]::Error.WriteLine($msg)
-    exit 1223
+    if ($_.Exception -is [System.ComponentModel.Win32Exception] -and $_.Exception.NativeErrorCode -eq 1223) {
+        exit 1223
+    }
+    if ($msg -match "canceled|cancelled|取消") {
+        exit 1223
+    }
+    exit 1
 }
 `, encoded)
 
@@ -207,10 +213,13 @@ func (m *ServiceManager) LocateExecutable() (string, error) {
 	if k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Services\`+m.serviceName, registry.QUERY_VALUE); err == nil {
 		defer k.Close()
 		if imgPath, _, err := k.GetStringValue("ImagePath"); err == nil {
-			clean := strings.Trim(strings.TrimSpace(imgPath), `"`)
-			if idx := strings.Index(clean, ".exe"); idx != -1 {
+			clean := strings.TrimSpace(imgPath)
+			clean = os.ExpandEnv(clean)
+			clean = strings.Trim(clean, "\"")
+			if idx := strings.Index(strings.ToLower(clean), ".exe"); idx != -1 {
 				clean = clean[:idx+4]
 			}
+			clean = strings.Trim(clean, "\"")
 			if _, err := os.Stat(clean); err == nil {
 				return clean, nil
 			}
@@ -231,6 +240,22 @@ func (m *ServiceManager) LocateExecutable() (string, error) {
 			filepath.Join(dir, "..", "..", "build", "bin", "diting-service.exe"),
 		}
 		for _, c := range candidates {
+			if _, err := os.Stat(c); err == nil {
+				abs, _ := filepath.Abs(c)
+				return abs, nil
+			}
+		}
+	}
+
+	// 2.1 检查当前工作目录（适配开发调试环境）
+	if cwd, err := os.Getwd(); err == nil {
+		cwdCandidates := []string{
+			filepath.Join(cwd, "diting-service.exe"),
+			filepath.Join(cwd, "build", "bin", "diting-service.exe"),
+			filepath.Join(cwd, "..", "build", "bin", "diting-service.exe"),
+			filepath.Join(cwd, "Windows", "build", "bin", "diting-service.exe"),
+		}
+		for _, c := range cwdCandidates {
 			if _, err := os.Stat(c); err == nil {
 				abs, _ := filepath.Abs(c)
 				return abs, nil
@@ -404,12 +429,15 @@ func (m *ServiceManager) InstallService(ctx context.Context, exePath string) err
 	}
 
 	script := fmt.Sprintf(`
-& "%s" -service install
-if ($LASTEXITCODE -ne 0) {
-    throw "注册服务失败 (代码: $LASTEXITCODE)"
+$s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
+if ($null -eq $s) {
+    & "%s" -service install
+    if ($LASTEXITCODE -ne 0) {
+        throw "注册服务失败 (代码: $LASTEXITCODE)"
+    }
 }
 sc.exe config %s start= auto
-`, exePath, m.serviceName)
+`, m.serviceName, exePath, m.serviceName)
 
 	_, err := m.privExec.RunElevated(ctx, script)
 	return err
@@ -429,10 +457,16 @@ func (m *ServiceManager) InstallAndStartService(ctx context.Context, exePath str
 $s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
 if ($null -eq $s) {
     & "%s" -service install
+    if ($LASTEXITCODE -ne 0) {
+        throw "注册服务失败 (代码: $LASTEXITCODE)"
+    }
     sc.exe config %s start= auto
+    $s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
 }
-Start-Service -Name "%s" -ErrorAction Stop
-`, m.serviceName, exePath, m.serviceName, m.serviceName)
+if ($null -ne $s -and $s.Status -ne 'Running') {
+    Start-Service -Name "%s" -ErrorAction Stop
+}
+`, m.serviceName, exePath, m.serviceName, m.serviceName, m.serviceName)
 
 	_, err := m.privExec.RunElevated(ctx, script)
 	return err
