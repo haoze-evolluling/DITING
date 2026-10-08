@@ -296,10 +296,10 @@ onUnmounted(() => {
       <MetricCard title="已存记录 / 上限" :value="`${stats.entryCount} / ${stats.maxEntries}`" icon="cache" :subtext="`自动清理旧记录: ${stats.evictionCount}`" />
     </div>
 
-    <!-- 双栏布局: 热点域名 Top 统计 & 缓存策略配置 -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- 热点域名 Top 统计排行榜 (7 列) -->
-      <div class="lg:col-span-7 p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
+    <!-- 双栏等宽布局: 热点域名 Top 统计 & 缓存策略配置 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- 热点域名 Top 统计排行榜 -->
+      <div class="p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <M3Icon name="bolt" :size="20" class="text-status-warning" />
@@ -353,8 +353,8 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 缓存运行策略配置 (5 列) -->
-      <div class="lg:col-span-5 p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
+      <!-- 缓存运行策略配置 -->
+      <div class="p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <M3Icon name="settings" :size="20" class="text-brand-primary" />
