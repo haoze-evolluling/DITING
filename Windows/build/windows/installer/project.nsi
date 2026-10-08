@@ -1,4 +1,4 @@
-Unicode true
+﻿Unicode true
 
 ####
 ## 谛听 (DITING) Windows 端整合安装包配置

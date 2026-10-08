@@ -6,12 +6,12 @@ export function CaptureWindow(arg1) {
   return window['go']['main']['App']['CaptureWindow'](arg1);
 }
 
-export function Greet(arg1) {
-  return window['go']['main']['App']['Greet'](arg1);
-}
-
 export function GetCoreServiceStatus() {
   return window['go']['main']['App']['GetCoreServiceStatus']();
+}
+
+export function Greet(arg1) {
+  return window['go']['main']['App']['Greet'](arg1);
 }
 
 export function InstallAndStartCoreService() {
