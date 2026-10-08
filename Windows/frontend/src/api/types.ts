@@ -23,6 +23,7 @@ export interface DNSStatus {
   listenAddresses: string[];
   mode: string;
   upstreams: UpstreamInfo[];
+  bootstrap?: BootstrapConfig;
 }
 
 export interface AdapterState {
@@ -214,9 +215,22 @@ export interface ProviderConfig {
   weight?: number;
 }
 
+export interface BootstrapServer {
+  id: string;
+  name: string;
+  address: string;
+  weight?: number;
+}
+
+export interface BootstrapConfig {
+  enabled: boolean;
+  servers: BootstrapServer[];
+}
+
 export interface UpstreamConfigureRequest {
   mode: string;
   providers: ProviderConfig[];
+  bootstrap?: BootstrapConfig;
 }
 
 export interface TestUpstreamRequest {

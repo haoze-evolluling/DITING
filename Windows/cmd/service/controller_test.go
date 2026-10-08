@@ -125,11 +125,21 @@ func TestController_ConfigureUpstream(t *testing.T) {
 		resolver: resolver,
 	}
 
+	tmpConfig := t.TempDir() + "/config.json"
+	prg.configPath = tmpConfig
+
+	bsCfg := core.BootstrapConfig{
+		Enabled: true,
+		Servers: []core.BootstrapServer{
+			{ID: "bs-cf", Name: "Cloudflare", Address: "1.1.1.1:53"},
+		},
+	}
 	err = prg.ConfigureUpstream(context.Background(), ipc.ConfigureUpstreamRequest{
 		Mode: "SINGLE",
 		Providers: []core.ProviderConfig{
 			{ID: "node-1", Protocol: core.ProtocolPlain, Server: "223.5.5.5:53"},
 		},
+		Bootstrap: &bsCfg,
 	})
 	if err != nil {
 		t.Fatalf("ConfigureUpstream failed: %v", err)
@@ -140,6 +150,29 @@ func TestController_ConfigureUpstream(t *testing.T) {
 	}
 	if len(prg.cfg.Upstream.Providers) != 1 {
 		t.Errorf("expected 1 provider")
+	}
+	if len(prg.cfg.Upstream.Bootstrap.Servers) != 1 || prg.cfg.Upstream.Bootstrap.Servers[0].Address != "1.1.1.1:53" {
+		t.Errorf("bootstrap config not updated: %+v", prg.cfg.Upstream.Bootstrap)
+	}
+
+	// 验证持久化保存
+	loadedCfg, err := config.LoadConfig(tmpConfig)
+	if err != nil || len(loadedCfg.Upstream.Bootstrap.Servers) != 1 {
+		t.Fatalf("failed to reload persisted config: %v, %+v", err, loadedCfg)
+	}
+
+	// 校验非法 IP 报错
+	badBsCfg := core.BootstrapConfig{
+		Enabled: true,
+		Servers: []core.BootstrapServer{
+			{ID: "bad", Address: "invalid-domain.com"},
+		},
+	}
+	err = prg.ConfigureUpstream(context.Background(), ipc.ConfigureUpstreamRequest{
+		Bootstrap: &badBsCfg,
+	})
+	if err == nil {
+		t.Fatalf("expected error on invalid bootstrap IP, got nil")
 	}
 }
 

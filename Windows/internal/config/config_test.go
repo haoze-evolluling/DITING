@@ -15,6 +15,9 @@ func TestDefaultConfig(t *testing.T) {
 	if len(cfg.Upstream.Providers) != 2 {
 		t.Errorf("expected 2 default providers, got %d", len(cfg.Upstream.Providers))
 	}
+	if !cfg.Upstream.Bootstrap.Enabled || len(cfg.Upstream.Bootstrap.Servers) == 0 {
+		t.Errorf("expected default bootstrap to be enabled with servers")
+	}
 }
 
 func TestSaveAndLoadConfig(t *testing.T) {

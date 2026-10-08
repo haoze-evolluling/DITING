@@ -119,6 +119,7 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/v1/takeover/adapter", s.withAuth(s.handleAdapterTakeover))
 	mux.HandleFunc("/api/v1/upstream/configure", s.withAuth(s.handleUpstreamConfigure))
 	mux.HandleFunc("/api/v1/upstream/test", s.withAuth(s.handleUpstreamTest))
+	mux.HandleFunc("/api/v1/bootstrap/configure", s.withAuth(s.handleBootstrapConfigure))
 	mux.HandleFunc("/api/v1/cache/stats", s.withAuth(s.handleCacheStats))
 	mux.HandleFunc("/api/v1/cache/entries", s.withAuth(s.handleCacheEntries))
 	mux.HandleFunc("/api/v1/cache/top", s.withAuth(s.handleCacheTop))

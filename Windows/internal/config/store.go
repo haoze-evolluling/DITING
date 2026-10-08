@@ -109,6 +109,15 @@ func normalizeConfig(cfg *Config) {
 	if cfg.Upstream.Mode == "" {
 		cfg.Upstream.Mode = core.ModePrimaryBackup
 	}
+	if len(cfg.Upstream.Bootstrap.Servers) == 0 {
+		cfg.Upstream.Bootstrap = core.BootstrapConfig{
+			Enabled: true,
+			Servers: []core.BootstrapServer{
+				{ID: "bs-ali", Name: "AliDNS", Address: "223.5.5.5:53", Weight: 1.0},
+				{ID: "bs-dnspod", Name: "DNSPod", Address: "119.29.29.29:53", Weight: 1.0},
+			},
+		}
+	}
 	core.NormalizeCacheConfig(&cfg.Cache)
 	core.NormalizeFilterConfig(&cfg.Filter)
 }

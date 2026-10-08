@@ -94,6 +94,10 @@ func (r *CoreResolver) Configure(cfg ResolverConfig) error {
 		return fmt.Errorf("at least one upstream provider is required")
 	}
 
+	if err := ValidateBootstrapConfig(cfg.Bootstrap); err != nil {
+		return fmt.Errorf("invalid bootstrap configuration: %w", err)
+	}
+
 	mode := CanonicalMode(cfg.Mode)
 	if mode == ModeSingle && len(cfg.Providers) != 1 {
 		// 单节点模式若传入多个提供者，使用第一个

@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -21,6 +22,7 @@ const (
 type DoHResolver struct {
 	mu         sync.RWMutex
 	bootstrap  *BootstrapResolver
+	customTLS  *tls.Config
 	httpClient *http.Client
 }
 
@@ -31,6 +33,19 @@ func NewDoHResolver(bootstrap *BootstrapResolver) *DoHResolver {
 	}
 	d.httpClient = d.buildHTTPClient(bootstrap)
 	return d
+}
+
+// SetTLSConfig 设置自定义 TLS 配置（供测试或注入自签名证书使用）
+func (d *DoHResolver) SetTLSConfig(cfg *tls.Config) {
+	d.mu.Lock()
+	d.customTLS = cfg
+	oldClient := d.httpClient
+	d.httpClient = d.buildHTTPClient(d.bootstrap)
+	d.mu.Unlock()
+
+	if oldClient != nil {
+		oldClient.CloseIdleConnections()
+	}
 }
 
 // SetBootstrap 更新引导解析器并重建 HTTP 客户端连接池
@@ -52,10 +67,8 @@ func (d *DoHResolver) buildHTTPClient(bootstrap *BootstrapResolver) *http.Client
 			target := address
 			if bootstrap != nil && bootstrap.IsEnabled() {
 				if host, port, err := net.SplitHostPort(address); err == nil {
-					dialCtx, cancel := context.WithTimeout(ctx, defaultDoHConnectTimeout)
-					defer cancel()
-					if resolvedIP, rErr := bootstrap.ResolveHost(dialCtx, host); rErr == nil && resolvedIP != "" {
-						target = net.JoinHostPort(resolvedIP, port)
+					if resolvedIP, rErr := bootstrap.ResolveHost(ctx, host); rErr == nil && resolvedIP != "" {
+						target = net.JoinHostPort(strings.Trim(resolvedIP, "[]"), port)
 					}
 				}
 			}
@@ -69,6 +82,10 @@ func (d *DoHResolver) buildHTTPClient(bootstrap *BootstrapResolver) *http.Client
 		MaxIdleConnsPerHost: 5,
 		IdleConnTimeout:     90 * time.Second,
 		TLSHandshakeTimeout: defaultDoHConnectTimeout,
+	}
+
+	if d.customTLS != nil {
+		transport.TLSClientConfig = d.customTLS.Clone()
 	}
 
 	return &http.Client{

@@ -3,12 +3,16 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/haoze-evolluling/diting/windows/internal/config"
+	"github.com/haoze-evolluling/diting/windows/internal/core"
 	"github.com/haoze-evolluling/diting/windows/internal/ipc"
 	"github.com/haoze-evolluling/diting/windows/internal/platform/windows"
 	miekgdns "github.com/miekg/dns"
@@ -26,12 +30,21 @@ func (p *program) ConfigureUpstream(ctx context.Context, req ipc.ConfigureUpstre
 	if len(req.Providers) > 0 {
 		cfg.Providers = req.Providers
 	}
+	if req.Bootstrap != nil {
+		if err := core.ValidateBootstrapConfig(*req.Bootstrap); err != nil {
+			return err
+		}
+		cfg.Bootstrap = *req.Bootstrap
+	}
 	if p.resolver != nil {
 		if err := p.resolver.Configure(cfg); err != nil {
 			return err
 		}
 	}
 	p.cfg.Upstream = cfg
+	if p.configPath != "" {
+		_ = config.SaveConfig(p.configPath, p.cfg)
+	}
 	return nil
 }
 
@@ -81,7 +94,19 @@ func (p *program) TestUpstream(ctx context.Context, req ipc.TestUpstreamRequest)
 		httpReq.Header.Set("Content-Type", "application/dns-message")
 		httpReq.Header.Set("Accept", "application/dns-message")
 
-		c := &http.Client{Timeout: 3 * time.Second}
+		tr := &http.Transport{
+			DialContext: func(dialCtx context.Context, network, address string) (net.Conn, error) {
+				target := address
+				if h, pt, sErr := net.SplitHostPort(address); sErr == nil {
+					if resolvedIP, rErr := p.resolveHostWithBootstrap(dialCtx, h); rErr == nil && resolvedIP != "" {
+						target = net.JoinHostPort(strings.Trim(resolvedIP, "[]"), pt)
+					}
+				}
+				dialer := &net.Dialer{Timeout: 3 * time.Second}
+				return dialer.DialContext(dialCtx, network, target)
+			},
+		}
+		c := &http.Client{Transport: tr, Timeout: 3 * time.Second}
 		resp, httpErr := c.Do(httpReq)
 		if httpErr != nil {
 			return &ipc.TestUpstreamResponse{Success: false, Error: httpErr.Error()}, nil
@@ -102,11 +127,24 @@ func (p *program) TestUpstream(ctx context.Context, req ipc.TestUpstreamRequest)
 			return &ipc.TestUpstreamResponse{Success: false, Error: fmt.Sprintf("DNS 解析解包失败: %v", unpackErr)}, nil
 		}
 	} else if proto == "DOT" {
-		dotAddr := targetServer
-		if !strings.Contains(dotAddr, ":") {
-			dotAddr += ":853"
+		host := targetServer
+		port := "853"
+		if h, pt, sErr := net.SplitHostPort(targetServer); sErr == nil {
+			host = h
+			port = pt
 		}
-		c := &miekgdns.Client{Net: "tcp-tls", Timeout: 3 * time.Second}
+		dialHost := host
+		if resolvedIP, rErr := p.resolveHostWithBootstrap(ctx, host); rErr == nil && resolvedIP != "" {
+			dialHost = resolvedIP
+		}
+		dotAddr := net.JoinHostPort(strings.Trim(dialHost, "[]"), port)
+		c := &miekgdns.Client{
+			Net: "tcp-tls",
+			TLSConfig: &tls.Config{
+				ServerName: host,
+			},
+			Timeout: 3 * time.Second,
+		}
 		_, _, err = c.ExchangeContext(ctx, m, dotAddr)
 	} else {
 		plainAddr := targetServer
@@ -122,6 +160,22 @@ func (p *program) TestUpstream(ctx context.Context, req ipc.TestUpstreamRequest)
 		return &ipc.TestUpstreamResponse{Success: false, LatencyMs: latency, Error: err.Error()}, nil
 	}
 	return &ipc.TestUpstreamResponse{Success: true, LatencyMs: latency}, nil
+}
+
+func (p *program) resolveHostWithBootstrap(ctx context.Context, host string) (string, error) {
+	cleanHost := strings.Trim(host, "[]")
+	if cleanHost == "" || net.ParseIP(cleanHost) != nil {
+		return cleanHost, nil
+	}
+	p.mu.Lock()
+	bsCfg := p.cfg.Upstream.Bootstrap
+	p.mu.Unlock()
+
+	if !bsCfg.Enabled || len(bsCfg.Servers) == 0 {
+		return cleanHost, nil
+	}
+	bs := core.NewBootstrapResolver(bsCfg)
+	return bs.ResolveHost(ctx, cleanHost)
 }
 
 // SetAdapterTakeover 实现 ServiceController 接口

@@ -28,6 +28,25 @@ type BootstrapConfig struct {
 	Servers []BootstrapServer `json:"servers"`
 }
 
+// ValidateBootstrapConfig 校验 Bootstrap 配置合法性，要求服务器地址必须为有效 IP
+func ValidateBootstrapConfig(cfg BootstrapConfig) error {
+	for i, s := range cfg.Servers {
+		addr := strings.TrimSpace(s.Address)
+		if addr == "" {
+			return fmt.Errorf("bootstrap server %d: address is empty", i+1)
+		}
+		host := addr
+		if h, _, err := net.SplitHostPort(addr); err == nil {
+			host = h
+		}
+		cleanHost := strings.Trim(host, "[]")
+		if net.ParseIP(cleanHost) == nil {
+			return fmt.Errorf("bootstrap server %q: address %q must be a valid IP address", s.ID, s.Address)
+		}
+	}
+	return nil
+}
+
 type cachedBootstrapHost struct {
 	ip        string
 	expiresAt time.Time
@@ -378,8 +397,9 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 	if host == "" {
 		return "", fmt.Errorf("empty host")
 	}
-	if net.ParseIP(host) != nil {
-		return host, nil
+	cleanHost := strings.Trim(host, "[]")
+	if net.ParseIP(cleanHost) != nil {
+		return cleanHost, nil
 	}
 
 	b.mu.RLock()
@@ -411,8 +431,10 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 			return "", ctx.Err()
 		}
 
+		stepCtx, stepCancel := context.WithTimeout(ctx, 1500*time.Millisecond)
 		start := time.Now()
-		resolvedIP, err := queryBootstrapDNS(ctx, entry.Address, normalizedHost)
+		resolvedIP, err := queryBootstrapDNS(stepCtx, entry.Address, normalizedHost)
+		stepCancel()
 		elapsedMs := time.Since(start).Milliseconds()
 		if elapsedMs < 1 {
 			elapsedMs = 1
@@ -447,12 +469,12 @@ func queryBootstrapDNSRecursive(ctx context.Context, serverAddr, host string, de
 
 	addr := serverAddr
 	if _, _, err := net.SplitHostPort(addr); err != nil {
-		addr = net.JoinHostPort(addr, "53")
+		addr = net.JoinHostPort(strings.Trim(addr, "[]"), "53")
 	}
 
 	client := &dns.Client{
 		Net:     "udp",
-		Timeout: 3 * time.Second,
+		Timeout: 1500 * time.Millisecond,
 		UDPSize: dns.MaxMsgSize,
 	}
 
@@ -464,7 +486,7 @@ func queryBootstrapDNSRecursive(ctx context.Context, serverAddr, host string, de
 
 	resp, _, err := client.ExchangeContext(ctx, msg, addr)
 	if err == nil && resp != nil && resp.Truncated {
-		tcpClient := &dns.Client{Net: "tcp", Timeout: 3 * time.Second}
+		tcpClient := &dns.Client{Net: "tcp", Timeout: 1500 * time.Millisecond}
 		resp, _, err = tcpClient.ExchangeContext(ctx, msg, addr)
 	}
 

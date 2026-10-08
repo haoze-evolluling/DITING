@@ -400,6 +400,7 @@ func (p *program) GetStatus(ctx context.Context) (*ipc.StatusResponse, error) {
 			ListenAddresses: p.cfg.DNS.UDPAddresses,
 			Mode:            p.cfg.Upstream.Mode,
 			Upstreams:       upstreams,
+			Bootstrap:       p.cfg.Upstream.Bootstrap,
 		},
 		Takeover: ipc.TakeoverStatus{
 			Active:   p.takeoverMgr.IsTakeoverActive(),
