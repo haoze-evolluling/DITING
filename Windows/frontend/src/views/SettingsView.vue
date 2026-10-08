@@ -220,7 +220,7 @@ onMounted(() => {
             class="app-btn-base transition-all duration-150"
             :class="[
               currentMode === m.id
-                ? 'bg-brand-primary text-white dark:text-[#041e42] border-transparent shadow-xs'
+                ? 'bg-brand-primary text-white dark:text-[#003258] border-transparent shadow-xs'
                 : 'bg-surface-card-sub border border-surface-border text-text-sub hover:bg-surface-hover',
             ]"
           >
@@ -234,20 +234,20 @@ onMounted(() => {
         <div class="flex items-center justify-between p-3.5 rounded-xl border border-brand-primary/20 bg-brand-container/20">
           <div class="flex items-center gap-3">
             <div class="flex items-center -space-x-1 shrink-0">
-              <span class="w-5 h-5 rounded-lg bg-[#2b60ab] shadow-xs flex items-center justify-center shrink-0 border border-white/20 z-10" title="主色 #2b60ab">
+              <span class="w-5 h-5 rounded-lg bg-[#36618E] shadow-xs flex items-center justify-center shrink-0 border border-white/20 z-10" title="主色 #36618E">
                 <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
               </span>
-              <span class="w-5 h-5 rounded-lg bg-[#d4e3ff] shadow-xs flex items-center justify-center shrink-0 border border-brand-primary/30" title="辅助色 #d4e3ff">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#041e42]"></span>
+              <span class="w-5 h-5 rounded-lg bg-[#D1E4FF] shadow-xs flex items-center justify-center shrink-0 border border-brand-primary/30" title="容器色 #D1E4FF">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#1A4975]"></span>
               </span>
             </div>
             <div>
               <div class="text-xs font-bold text-text-main flex items-center gap-2">
-                <span>冰川蔚蓝 (品牌主题色)</span>
-                <span class="font-mono text-[11px] text-brand-primary bg-surface-card px-1.5 py-0.5 rounded border border-surface-border">#2b60ab / #d4e3ff</span>
+                <span>睡莲蓝 (Material 3 主题色)</span>
+                <span class="font-mono text-[11px] text-brand-primary bg-surface-card px-1.5 py-0.5 rounded border border-surface-border">#36618E / #D1E4FF</span>
               </div>
               <div class="text-[11px] text-text-sub">
-                应用全局统一主色调，完美适配浅色与深色模式
+                与移动端一致采用 Material 3 睡莲蓝规范，完美适配浅色与深色模式
               </div>
             </div>
           </div>

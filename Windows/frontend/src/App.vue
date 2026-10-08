@@ -304,7 +304,7 @@ onUnmounted(() => {
             class="flex items-center justify-center w-14 h-8 rounded-full transition-all duration-200"
             :class="[
               currentTab === item.id
-                ? 'bg-brand-container text-brand-primary shadow-2xs'
+                ? 'bg-brand-container text-brand-on-container shadow-2xs'
                 : 'text-inherit',
             ]"
           >

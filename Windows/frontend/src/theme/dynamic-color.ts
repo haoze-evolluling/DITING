@@ -1,12 +1,16 @@
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 /**
- * 谛听官方基准品牌主色：冰川蔚蓝主题体系
- * 主色：#2b60ab (高对比度品牌主色)
- * 容器辅助色：#d4e3ff (浅蓝主题核心色)
+ * 谛听官方基准品牌主色：Material 3 睡莲蓝主题体系 (与安卓端完全对齐)
+ * 浅色主色：#36618E (典雅深邃睡莲蓝)
+ * 浅色容器色：#D1E4FF (浅冰蓝容器底色)
+ * 深色主色：#A0CAFD (纯净浅天蓝)
+ * 深色容器色：#1A4975 (深沉幽蓝容器底色)
  */
-export const BRAND_PRIMARY_BLUE = '#2b60ab';
-export const BRAND_CONTAINER_BLUE = '#d4e3ff';
+export const BRAND_PRIMARY_BLUE = '#36618E';
+export const BRAND_CONTAINER_BLUE = '#D1E4FF';
+export const BRAND_DARK_PRIMARY = '#A0CAFD';
+export const BRAND_DARK_CONTAINER = '#1A4975';
 export const CLASSIC_SKY_BLUE = BRAND_PRIMARY_BLUE; // 向后兼容别名
 
 class ThemeManager {
@@ -63,13 +67,13 @@ class ThemeManager {
     if (this.isDarkActive) {
       root.classList.add('dark');
       root.setAttribute('data-theme', 'dark');
-      root.style.backgroundColor = '#090d16';
-      root.style.color = '#f8fafc';
+      root.style.backgroundColor = '#111418';
+      root.style.color = '#E1E2E8';
     } else {
       root.classList.remove('dark');
       root.setAttribute('data-theme', 'light');
-      root.style.backgroundColor = '#f8fafc';
-      root.style.color = '#0f172a';
+      root.style.backgroundColor = '#F8F9FF';
+      root.style.color = '#191C20';
     }
 
     this.listeners.forEach((fn) => fn());

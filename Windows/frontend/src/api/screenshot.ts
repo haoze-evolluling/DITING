@@ -26,7 +26,7 @@ export async function captureAppScreenshot(outputPath = ''): Promise<string> {
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--app-surface-base') || '#090d16';
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--app-surface-base') || '#111418';
         ctx.fillRect(0, 0, width, height);
       }
       const dataUrl = canvas.toDataURL('image/png');
