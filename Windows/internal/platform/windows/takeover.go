@@ -7,13 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
-)
-
-var (
-	dnsapiMod                 = syscall.NewLazyDLL("dnsapi.dll")
-	procDnsFlushResolverCache = dnsapiMod.NewProc("DnsFlushResolverCache")
 )
 
 // DNSManager 定义系统 DNS 接管与还原管理接口
@@ -73,11 +67,12 @@ func (m *WindowsDNSManager) GetTakenOverAdapters() []AdapterState {
 	return res
 }
 
-// FlushDNSCache 刷新 Windows 系统 DNS 解析缓存 (Win32 DnsFlushResolverCache + ipconfig /flushdns)
+// FlushDNSCache 刷新 Windows 系统 DNS 解析缓存 (优先 Win32 原生 DnsFlushResolverCache，异常时回退 ipconfig /flushdns)
 func (m *WindowsDNSManager) FlushDNSCache(ctx context.Context) error {
-	// 优先调用 Win32 动态库底层 API
-	if procDnsFlushResolverCache.Find() == nil {
-		_, _, _ = procDnsFlushResolverCache.Call()
+	if isDefaultExecutor(m.executor) {
+		if err := flushDNSCacheNative(); err == nil {
+			return nil
+		}
 	}
 
 	// 执行 ipconfig /flushdns 作为可靠兜底
@@ -389,18 +384,26 @@ func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterS
 			errs = append(errs, fmt.Sprintf("恢复 IPv4 DHCP 失败: %v", err))
 		}
 	} else {
-		servers := strings.Join(a.IPv4DNS, `","`)
-		psCmd := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("%s")`, a.Index, servers)
-		_, err := m.executor.RunPowerShell(ctx, psCmd)
-		if err != nil {
-			for i, dnsIP := range a.IPv4DNS {
-				if i == 0 {
-					_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", dnsIP, "primary", "validate=no")
-					if errNetsh != nil {
-						errs = append(errs, fmt.Sprintf("netsh 设置静态 IPv4 首选 DNS 失败: %v", errNetsh))
+		restoredV4 := false
+		if isDefaultExecutor(m.executor) {
+			if err := setAdapterDNSNative(a.ID, a.IPv4DNS); err == nil {
+				restoredV4 = true
+			}
+		}
+		if !restoredV4 {
+			servers := strings.Join(a.IPv4DNS, `","`)
+			psCmd := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("%s")`, a.Index, servers)
+			_, err := m.executor.RunPowerShell(ctx, psCmd)
+			if err != nil {
+				for i, dnsIP := range a.IPv4DNS {
+					if i == 0 {
+						_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", dnsIP, "primary", "validate=no")
+						if errNetsh != nil {
+							errs = append(errs, fmt.Sprintf("netsh 设置静态 IPv4 首选 DNS 失败: %v", errNetsh))
+						}
+					} else {
+						_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "add", "dnsservers", fmt.Sprintf("name=%s", a.Name), dnsIP, fmt.Sprintf("index=%d", i+1), "validate=no")
 					}
-				} else {
-					_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "add", "dnsservers", fmt.Sprintf("name=%s", a.Name), dnsIP, fmt.Sprintf("index=%d", i+1), "validate=no")
 				}
 			}
 		}

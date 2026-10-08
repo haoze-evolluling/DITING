@@ -15,17 +15,20 @@ func scanAdaptersNative(ctx context.Context) ([]AdapterInfo, error) {
 
 	var size uint32 = 16384
 	var buf []byte
+	var err error
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		buf = make([]byte, size)
 		aa := (*windows.IpAdapterAddresses)(unsafe.Pointer(&buf[0]))
-		err := windows.GetAdaptersAddresses(windows.AF_UNSPEC, flags, 0, aa, &size)
+		err = windows.GetAdaptersAddresses(windows.AF_UNSPEC, flags, 0, aa, &size)
 		if err == nil {
 			break
 		}
-		if err == windows.ERROR_BUFFER_OVERFLOW {
-			continue
+		if err != windows.ERROR_BUFFER_OVERFLOW {
+			return nil, err
 		}
+	}
+	if err != nil {
 		return nil, err
 	}
 
@@ -33,7 +36,7 @@ func scanAdaptersNative(ctx context.Context) ([]AdapterInfo, error) {
 	cur := (*windows.IpAdapterAddresses)(unsafe.Pointer(&buf[0]))
 
 	for cur != nil {
-		id := windows.BytePtrToString(cur.AdapterName)
+		id := normalizeGUID(windows.BytePtrToString(cur.AdapterName))
 		name := windows.UTF16PtrToString(cur.FriendlyName)
 		description := windows.UTF16PtrToString(cur.Description)
 		index := int(cur.IfIndex)
@@ -91,10 +94,10 @@ func scanAdaptersNative(ctx context.Context) ([]AdapterInfo, error) {
 
 		// 检查 DHCP 与静态 DNS 配置（从注册表读取真实配置以防被虚拟层覆盖）
 		v4DHCP, v6DHCP := getDHCPConfigFromRegistry(id)
-		if len(v4DNS) == 0 {
+		if len(v4DNS) == 0 && v4DHCP {
 			v4DHCP = true
 		}
-		if len(v6DNS) == 0 {
+		if len(v6DNS) == 0 && v6DHCP {
 			v6DHCP = true
 		}
 
@@ -123,11 +126,21 @@ func scanAdaptersNative(ctx context.Context) ([]AdapterInfo, error) {
 	return results, nil
 }
 
+// normalizeGUID 规范化 GUID 格式，确保外层包含花括号以兼容注册表路径
+func normalizeGUID(guid string) string {
+	clean := strings.Trim(strings.TrimSpace(guid), "{}")
+	if clean == "" {
+		return ""
+	}
+	return "{" + clean + "}"
+}
+
 // getDHCPConfigFromRegistry 从注册表读取网卡的 DHCP 配置状态
 func getDHCPConfigFromRegistry(guid string) (v4DHCP bool, v6DHCP bool) {
 	v4DHCP = true
 	v6DHCP = true
 
+	guid = normalizeGUID(guid)
 	if guid == "" {
 		return
 	}
@@ -142,7 +155,11 @@ func getDHCPConfigFromRegistry(guid string) (v4DHCP bool, v6DHCP bool) {
 
 		v4StaticDNS := parseRegistryNameServer(nameServer)
 		if errVal == nil {
-			v4DHCP = (enableDHCP == 1) && len(v4StaticDNS) == 0
+			if enableDHCP == 0 {
+				v4DHCP = false
+			} else {
+				v4DHCP = (len(v4StaticDNS) == 0)
+			}
 		} else if len(v4StaticDNS) > 0 {
 			v4DHCP = false
 		}
@@ -183,6 +200,7 @@ func parseRegistryNameServer(ns string) []string {
 
 // checkRegistryContainsLoopback 检查注册表中是否直接配置了 127.* 或 ::1 等回环 DNS
 func checkRegistryContainsLoopback(guid string) bool {
+	guid = normalizeGUID(guid)
 	if guid == "" {
 		return false
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -31,10 +32,10 @@ const (
 
 	mibTcpStateListen = 2
 
-	scManagerConnect   = 0x0001
-	serviceQueryStatus = 0x0004
+	scManagerConnect    = 0x0001
+	serviceQueryStatus  = 0x0004
 	scStatusProcessInfo = 0
-	serviceRunning     = 0x00000004
+	serviceRunning      = 0x00000004
 )
 
 type serviceStatusProcess struct {
@@ -81,7 +82,14 @@ func formatPortConflicts(rawList []nativePortListener, hasICS bool, icsPID int, 
 		if isSelf {
 			hasSelfListener = true
 		}
-		isICS := !isSelf && hasICS && (item.PID == icsPID || strings.Contains(strings.ToLower(item.ProcessName), "svchost") && hasICS)
+		isICS := false
+		if !isSelf && hasICS {
+			if icsPID > 0 {
+				isICS = (item.PID == icsPID)
+			} else {
+				isICS = strings.Contains(strings.ToLower(item.ProcessName), "svchost")
+			}
+		}
 		diagnosis := ""
 		if isSelf {
 			diagnosis = fmt.Sprintf("进程 PID %d (%s) 为谛听 (DITING) 服务自身正在监听 %s (%s)。", item.PID, item.ProcessName, item.LocalAddress, item.Protocol)
@@ -250,14 +258,25 @@ func parsePort(dwPort uint32) uint16 {
 
 func getTCP4Listeners(targetPort uint16) ([]rawListener, error) {
 	var size uint32
-	procGetExtendedTcpTable.Call(0, uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet), uintptr(tcpTableOwnerPidAll), 0)
-	if size == 0 {
-		return nil, nil
+	var buf []byte
+	var ret uintptr
+	for i := 0; i < 5; i++ {
+		var p unsafe.Pointer
+		if len(buf) > 0 {
+			p = unsafe.Pointer(&buf[0])
+		}
+		r, _, _ := procGetExtendedTcpTable.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet), uintptr(tcpTableOwnerPidAll), 0)
+		ret = r
+		if ret == 0 {
+			break
+		}
+		if ret != uintptr(windows.ERROR_INSUFFICIENT_BUFFER) {
+			return nil, syscall.Errno(ret)
+		}
+		buf = make([]byte, size)
 	}
-	buf := make([]byte, size)
-	ret, _, err := procGetExtendedTcpTable.Call(uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet), uintptr(tcpTableOwnerPidAll), 0)
-	if ret != 0 {
-		return nil, err
+	if ret != 0 || len(buf) < 4 {
+		return nil, nil
 	}
 
 	numEntries := binary.LittleEndian.Uint32(buf[0:4])
@@ -290,14 +309,25 @@ func getTCP4Listeners(targetPort uint16) ([]rawListener, error) {
 
 func getTCP6Listeners(targetPort uint16) ([]rawListener, error) {
 	var size uint32
-	procGetExtendedTcpTable.Call(0, uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet6), uintptr(tcpTableOwnerPidAll), 0)
-	if size == 0 {
-		return nil, nil
+	var buf []byte
+	var ret uintptr
+	for i := 0; i < 5; i++ {
+		var p unsafe.Pointer
+		if len(buf) > 0 {
+			p = unsafe.Pointer(&buf[0])
+		}
+		r, _, _ := procGetExtendedTcpTable.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet6), uintptr(tcpTableOwnerPidAll), 0)
+		ret = r
+		if ret == 0 {
+			break
+		}
+		if ret != uintptr(windows.ERROR_INSUFFICIENT_BUFFER) {
+			return nil, syscall.Errno(ret)
+		}
+		buf = make([]byte, size)
 	}
-	buf := make([]byte, size)
-	ret, _, err := procGetExtendedTcpTable.Call(uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet6), uintptr(tcpTableOwnerPidAll), 0)
-	if ret != 0 {
-		return nil, err
+	if ret != 0 || len(buf) < 4 {
+		return nil, nil
 	}
 
 	numEntries := binary.LittleEndian.Uint32(buf[0:4])
@@ -331,14 +361,25 @@ func getTCP6Listeners(targetPort uint16) ([]rawListener, error) {
 
 func getUDP4Listeners(targetPort uint16) ([]rawListener, error) {
 	var size uint32
-	procGetExtendedUdpTable.Call(0, uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet), uintptr(udpTableOwnerPid), 0)
-	if size == 0 {
-		return nil, nil
+	var buf []byte
+	var ret uintptr
+	for i := 0; i < 5; i++ {
+		var p unsafe.Pointer
+		if len(buf) > 0 {
+			p = unsafe.Pointer(&buf[0])
+		}
+		r, _, _ := procGetExtendedUdpTable.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet), uintptr(udpTableOwnerPid), 0)
+		ret = r
+		if ret == 0 {
+			break
+		}
+		if ret != uintptr(windows.ERROR_INSUFFICIENT_BUFFER) {
+			return nil, syscall.Errno(ret)
+		}
+		buf = make([]byte, size)
 	}
-	buf := make([]byte, size)
-	ret, _, err := procGetExtendedUdpTable.Call(uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet), uintptr(udpTableOwnerPid), 0)
-	if ret != 0 {
-		return nil, err
+	if ret != 0 || len(buf) < 4 {
+		return nil, nil
 	}
 
 	numEntries := binary.LittleEndian.Uint32(buf[0:4])
@@ -370,14 +411,25 @@ func getUDP4Listeners(targetPort uint16) ([]rawListener, error) {
 
 func getUDP6Listeners(targetPort uint16) ([]rawListener, error) {
 	var size uint32
-	procGetExtendedUdpTable.Call(0, uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet6), uintptr(udpTableOwnerPid), 0)
-	if size == 0 {
-		return nil, nil
+	var buf []byte
+	var ret uintptr
+	for i := 0; i < 5; i++ {
+		var p unsafe.Pointer
+		if len(buf) > 0 {
+			p = unsafe.Pointer(&buf[0])
+		}
+		r, _, _ := procGetExtendedUdpTable.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet6), uintptr(udpTableOwnerPid), 0)
+		ret = r
+		if ret == 0 {
+			break
+		}
+		if ret != uintptr(windows.ERROR_INSUFFICIENT_BUFFER) {
+			return nil, syscall.Errno(ret)
+		}
+		buf = make([]byte, size)
 	}
-	buf := make([]byte, size)
-	ret, _, err := procGetExtendedUdpTable.Call(uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet6), uintptr(udpTableOwnerPid), 0)
-	if ret != 0 {
-		return nil, err
+	if ret != 0 || len(buf) < 4 {
+		return nil, nil
 	}
 
 	numEntries := binary.LittleEndian.Uint32(buf[0:4])

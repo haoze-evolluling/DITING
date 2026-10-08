@@ -12,6 +12,9 @@ import (
 
 var (
 	procSetInterfaceDnsSettings = modIphlpapi.NewProc("SetInterfaceDnsSettings")
+
+	modDnsapi                  = windows.NewLazySystemDLL("dnsapi.dll")
+	procDnsFlushResolverCache = modDnsapi.NewProc("DnsFlushResolverCache")
 )
 
 const (
@@ -37,6 +40,18 @@ func isSetInterfaceDnsSettingsSupported() bool {
 	return procSetInterfaceDnsSettings.Find() == nil
 }
 
+// flushDNSCacheNative 原生调用 Win32 dnsapi.dll DnsFlushResolverCache 刷新系统 DNS 缓存
+func flushDNSCacheNative() error {
+	if procDnsFlushResolverCache.Find() != nil {
+		return fmt.Errorf("DnsFlushResolverCache 不受支持")
+	}
+	ret, _, err := procDnsFlushResolverCache.Call()
+	if ret == 0 {
+		return fmt.Errorf("DnsFlushResolverCache 失败: %w", err)
+	}
+	return nil
+}
+
 // setAdapterDNSNative 使用 Windows 原生 API (SetInterfaceDnsSettings) 配置网卡 DNS
 func setAdapterDNSNative(guidStr string, servers []string) error {
 	if !isSetInterfaceDnsSettingsSupported() {
@@ -54,13 +69,11 @@ func setAdapterDNSNative(guidStr string, servers []string) error {
 	settings.Flags = dnsSettingNameServer
 
 	nsJoined := strings.Join(servers, ",")
-	if nsJoined != "" {
-		nsPtr, err := windows.UTF16PtrFromString(nsJoined)
-		if err != nil {
-			return err
-		}
-		settings.NameServer = nsPtr
+	nsPtr, err := windows.UTF16PtrFromString(nsJoined)
+	if err != nil {
+		return err
 	}
+	settings.NameServer = nsPtr
 
 	ret, _, _ := procSetInterfaceDnsSettings.Call(
 		uintptr(unsafe.Pointer(&guid)),
