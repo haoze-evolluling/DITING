@@ -23,17 +23,25 @@ func startMockDualServer(t *testing.T, handler dns.HandlerFunc) (shutdown func()
 	var pc net.PacketConn
 	var err error
 
+	var discardedUDP []net.PacketConn
+	defer func() {
+		for _, c := range discardedUDP {
+			_ = c.Close()
+		}
+	}()
+
 	for attempt := 0; attempt < 50; attempt++ {
-		tcpL, err = net.Listen("tcp", "127.0.0.1:0")
+		pc, err = net.ListenPacket("udp", "127.0.0.1:0")
 		if err != nil {
 			continue
 		}
-		addr := tcpL.Addr().String()
-		pc, err = net.ListenPacket("udp", addr)
+		addr := pc.LocalAddr().String()
+		tcpL, err = net.Listen("tcp", addr)
 		if err == nil {
 			break
 		}
-		_ = tcpL.Close()
+		discardedUDP = append(discardedUDP, pc)
+		pc = nil
 	}
 
 	if pc == nil || tcpL == nil {
