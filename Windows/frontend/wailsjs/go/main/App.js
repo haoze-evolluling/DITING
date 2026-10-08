@@ -6,6 +6,10 @@ export function CaptureWindow(arg1) {
   return window['go']['main']['App']['CaptureWindow'](arg1);
 }
 
+export function ConfigureFirewallForLAN(arg1) {
+  return window['go']['main']['App']['ConfigureFirewallForLAN'](arg1);
+}
+
 export function GetCoreServiceStatus() {
   return window['go']['main']['App']['GetCoreServiceStatus']();
 }

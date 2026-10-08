@@ -4,6 +4,8 @@ import {windows} from '../models';
 
 export function CaptureWindow(arg1:string):Promise<string>;
 
+export function ConfigureFirewallForLAN(arg1:boolean):Promise<string>;
+
 export function GetCoreServiceStatus():Promise<windows.CoreServiceStatus>;
 
 export function Greet(arg1:string):Promise<string>;
