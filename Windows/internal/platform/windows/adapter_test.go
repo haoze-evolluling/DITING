@@ -7,22 +7,14 @@ import (
 )
 
 type mockExecutor struct {
-	psOutput  string
-	psErr     error
 	cmdOutput string
 	cmdErr    error
 	runCmds   []string
-	runPS     []string
 }
 
 func (m *mockExecutor) RunCommand(ctx context.Context, name string, args ...string) (string, error) {
 	m.runCmds = append(m.runCmds, name+" "+strings.Join(args, " "))
 	return m.cmdOutput, m.cmdErr
-}
-
-func (m *mockExecutor) RunPowerShell(ctx context.Context, script string) (string, error) {
-	m.runPS = append(m.runPS, script)
-	return m.psOutput, m.psErr
 }
 
 func TestIsVirtualAdapter(t *testing.T) {
@@ -73,184 +65,6 @@ func TestHasValidIPv4Gateway(t *testing.T) {
 	}
 }
 
-func TestParseAdapterJSON(t *testing.T) {
-	jsonSample := `[
-		{
-			"ID": "{2D46BA6A-1CED-4E84-9956-D2FD033CCEFA}",
-			"Name": "WLAN",
-			"Description": "Intel(R) Wi-Fi 6E AX210 160MHz",
-			"Index": 8,
-			"Status": "Up",
-			"Gateway": "192.168.1.1",
-			"IPv4DHCP": true,
-			"IPv6DHCP": true,
-			"IPv4DNS": ["192.168.1.1"],
-			"IPv6DNS": ["fd12:ff09:4260::1"],
-			"Virtual": false
-		},
-		{
-			"ID": "{B476128E-D850-49DD-9F43-349A4523F800}",
-			"Name": "以太网",
-			"Description": "Realtek PCIe GbE Family Controller",
-			"Index": 16,
-			"Status": "Disconnected",
-			"Gateway": "",
-			"IPv4DHCP": true,
-			"IPv6DHCP": true,
-			"IPv4DNS": [],
-			"IPv6DNS": null,
-			"Virtual": false
-		},
-		{
-			"ID": "{ADEF0804-6DCD-449A-9358-C0B5D2192AC4}",
-			"Name": "vEthernet (Default Switch)",
-			"Description": "Hyper-V Virtual Ethernet Adapter",
-			"Index": 37,
-			"Status": "Up",
-			"Gateway": "",
-			"IPv4DHCP": false,
-			"IPv6DHCP": true,
-			"IPv4DNS": null,
-			"IPv6DNS": [],
-			"Virtual": true
-		}
-	]`
-
-	adapters, err := parseAdapterJSON(jsonSample)
-	if err != nil {
-		t.Fatalf("parseAdapterJSON failed: %v", err)
-	}
-
-	if len(adapters) != 3 {
-		t.Fatalf("expected 3 adapters, got %d", len(adapters))
-	}
-
-	wlan := adapters[0]
-	if !wlan.IsPhysical {
-		t.Errorf("WLAN should be physical")
-	}
-	if len(wlan.IPv4DNS) != 1 || wlan.IPv4DNS[0] != "192.168.1.1" {
-		t.Errorf("unexpected IPv4DNS for WLAN: %v", wlan.IPv4DNS)
-	}
-
-	eth := adapters[1]
-	if !eth.IsPhysical {
-		t.Errorf("以太网 should be physical")
-	}
-	if eth.Status != "Disconnected" {
-		t.Errorf("unexpected status: %s", eth.Status)
-	}
-
-	vEth := adapters[2]
-	if vEth.IsPhysical {
-		t.Errorf("vEthernet should NOT be physical")
-	}
-}
-
-func TestGetActivePhysicalAdapters_Mock(t *testing.T) {
-	jsonSample := `[
-		{
-			"ID": "{GUID-1}",
-			"Name": "WLAN",
-			"Description": "Intel Wi-Fi",
-			"Index": 8,
-			"Status": "Up",
-			"Gateway": "192.168.1.1",
-			"IPv4DHCP": true,
-			"IPv6DHCP": true,
-			"IPv4DNS": "192.168.1.1",
-			"IPv6DNS": [],
-			"Virtual": false
-		},
-		{
-			"ID": "{GUID-2}",
-			"Name": "以太网",
-			"Description": "Realtek Ethernet",
-			"Index": 16,
-			"Status": "Disconnected",
-			"Gateway": "",
-			"IPv4DHCP": true,
-			"IPv6DHCP": true,
-			"IPv4DNS": [],
-			"IPv6DNS": [],
-			"Virtual": false
-		}
-	]`
-
-	mock := &mockExecutor{psOutput: jsonSample}
-	scanner := NewAdapterScanner(mock)
-
-	active, err := scanner.GetActivePhysicalAdapters(context.Background())
-	if err != nil {
-		t.Fatalf("GetActivePhysicalAdapters failed: %v", err)
-	}
-
-	if len(active) != 1 {
-		t.Fatalf("expected 1 active physical adapter, got %d", len(active))
-	}
-	if active[0].Name != "WLAN" {
-		t.Errorf("expected WLAN, got %s", active[0].Name)
-	}
-}
-
-func TestPowerShellAdapterScanner_LiveScan(t *testing.T) {
-	scanner := NewAdapterScanner(nil)
-	adapters, err := scanner.ScanAll(context.Background())
-	if err != nil {
-		t.Logf("Live ScanAll skipped/failed (likely running in restricted environment): %v", err)
-		return
-	}
-	t.Logf("Live ScanAll found %d adapters", len(adapters))
-	for _, a := range adapters {
-		t.Logf("Adapter: %s, Physical=%v, Status=%s, Gateway=%s", a.Name, a.IsPhysical, a.Status, a.Gateway)
-	}
-}
-
-func TestParseAdapterJSON_WithErrorStreamPrefix(t *testing.T) {
-	dirtyOutput := "Get-NetIPInterface : 找不到任何“InterfaceIndex”属性等于“45”的 MSFT_NetIPInterface 对象。\n" +
-		"所在位置 行:1 字符: 10\n" +
-		"[{\"ID\":\"{2D46BA6A-1CED-4E84-9956-D2FD033CCEFA}\",\"Name\":\"WLAN\",\"Description\":\"Intel Wi-Fi\",\"Index\":8,\"Status\":\"Up\",\"Gateway\":\"192.168.1.1\",\"IPv4DHCP\":true,\"IPv6DHCP\":true,\"IPv4DNS\":[\"192.168.1.1\"],\"IPv6DNS\":[],\"Virtual\":false}]\n"
-
-	adapters, err := parseAdapterJSON(dirtyOutput)
-	if err != nil {
-		t.Fatalf("parseAdapterJSON should successfully parse JSON with error prefix, got err: %v", err)
-	}
-	if len(adapters) != 1 {
-		t.Fatalf("expected 1 adapter, got %d", len(adapters))
-	}
-	if adapters[0].Name != "WLAN" {
-		t.Errorf("expected WLAN, got %s", adapters[0].Name)
-	}
-}
-
-func TestParseAdapterJSON_ComplexNoisyStreams(t *testing.T) {
-	// 场景 1: 前缀包含 [警告] 括号与 {参数} 花括号，且带 UTF-8 BOM，尾部带 [INFO]
-	noisyArray := "\xef\xbb\xbf[警告] 忽略无效网卡配置 [45] 附带元数据 {debug: true}\n" +
-		"[{\"ID\":\"{TEST-1}\",\"Name\":\"Ethernet\",\"Description\":\"Realtek\",\"Index\":2,\"Status\":\"Up\",\"Gateway\":\"10.0.0.1\",\"IPv4DHCP\":true,\"IPv6DHCP\":false,\"IPv4DNS\":[\"10.0.0.1\"],\"IPv6DNS\":[],\"Virtual\":false}]\n" +
-		"[INFO] 扫描完成\n"
-
-	adapters, err := parseAdapterJSON(noisyArray)
-	if err != nil {
-		t.Fatalf("parseAdapterJSON failed on complex noisy array: %v", err)
-	}
-	if len(adapters) != 1 || adapters[0].Name != "Ethernet" {
-		t.Fatalf("unexpected result from noisy array: %+v", adapters)
-	}
-
-	// 场景 2: 前缀带报错文本的单网卡对象输出 (非数组)
-	noisySingle := "Error at {component}: adapter lookup failed\n" +
-		"{\"ID\":\"{TEST-2}\",\"Name\":\"Wi-Fi\",\"Description\":\"Intel\",\"Index\":3,\"Status\":\"Up\",\"Gateway\":\"192.168.1.1\",\"IPv4DHCP\":true,\"IPv6DHCP\":true,\"IPv4DNS\":[\"1.1.1.1\"],\"IPv6DNS\":[],\"Virtual\":false}\n" +
-		"Cleaning up...\n"
-
-	singleAdapters, err := parseAdapterJSON(noisySingle)
-	if err != nil {
-		t.Fatalf("parseAdapterJSON failed on noisy single object: %v", err)
-	}
-	if len(singleAdapters) != 1 || singleAdapters[0].Name != "Wi-Fi" {
-		t.Fatalf("unexpected result from noisy single object: %+v", singleAdapters)
-	}
-}
-
 func TestFilterLoopbackIPs(t *testing.T) {
 	input := []string{
 		"127.0.0.1",
@@ -281,75 +95,21 @@ func TestFilterLoopbackIPs(t *testing.T) {
 	}
 }
 
-func TestParseAdapterJSON_TakenOverLoopbackFilter(t *testing.T) {
-	// 模拟已处于软件接管状态（127.0.0.1 与 ::1）下的网卡 JSON
-	jsonSample := `[
-		{
-			"ID": "{GUID-TAKEN}",
-			"Name": "WLAN",
-			"Description": "Intel Wi-Fi",
-			"Index": 7,
-			"Status": "Up",
-			"Gateway": "192.168.1.1",
-			"IPv4DHCP": false,
-			"IPv6DHCP": false,
-			"IPv4DNS": ["127.0.0.1"],
-			"IPv6DNS": ["::1"],
-			"Virtual": false
-		},
-		{
-			"ID": "{GUID-MIXED}",
-			"Name": "以太网",
-			"Description": "Realtek Ethernet",
-			"Index": 8,
-			"Status": "Up",
-			"Gateway": "192.168.1.1",
-			"IPv4DHCP": false,
-			"IPv6DHCP": false,
-			"IPv4DNS": ["127.0.0.1", "114.114.114.114"],
-			"IPv6DNS": ["::1", "2400:3200::1"],
-			"Virtual": false
-		}
-	]`
-
-	adapters, err := parseAdapterJSON(jsonSample)
+func TestNativeAdapterScanner_LiveScan(t *testing.T) {
+	scanner := NewAdapterScanner(nil)
+	adapters, err := scanner.ScanAll(context.Background())
 	if err != nil {
-		t.Fatalf("parseAdapterJSON failed: %v", err)
+		t.Logf("Live ScanAll skipped/failed: %v", err)
+		return
 	}
-	if len(adapters) != 2 {
-		t.Fatalf("expected 2 adapters, got %d", len(adapters))
-	}
-
-	// WLAN：仅有回环地址，应全部过滤并自动更正为 DHCP 自动获取
-	wlan := adapters[0]
-	if !wlan.IPv4DHCP {
-		t.Errorf("WLAN IPv4DHCP should be true after loopback filtering, got false")
-	}
-	if !wlan.IPv6DHCP {
-		t.Errorf("WLAN IPv6DHCP should be true after loopback filtering, got false")
-	}
-	if len(wlan.IPv4DNS) != 0 {
-		t.Errorf("WLAN IPv4DNS should be empty, got: %v", wlan.IPv4DNS)
-	}
-	if len(wlan.IPv6DNS) != 0 {
-		t.Errorf("WLAN IPv6DNS should be empty, got: %v", wlan.IPv6DNS)
+	t.Logf("Live ScanAll found %d adapters", len(adapters))
+	for _, a := range adapters {
+		t.Logf("Adapter: %s, Physical=%v, Status=%s, Gateway=%s", a.Name, a.IsPhysical, a.Status, a.Gateway)
 	}
 
-	// 以太网：混合了回环与真实静态 DNS，应仅过滤回环并保留合法静态 DNS 与静态判定
-	eth := adapters[1]
-	if eth.IPv4DHCP {
-		t.Errorf("以太网 IPv4DHCP should remain false for real static DNS")
+	active, err := scanner.GetActivePhysicalAdapters(context.Background())
+	if err != nil {
+		t.Fatalf("GetActivePhysicalAdapters failed: %v", err)
 	}
-	if eth.IPv6DHCP {
-		t.Errorf("以太网 IPv6DHCP should remain false for real static DNS")
-	}
-	if len(eth.IPv4DNS) != 1 || eth.IPv4DNS[0] != "114.114.114.114" {
-		t.Errorf("以太网 IPv4DNS unexpected: %v", eth.IPv4DNS)
-	}
-	if len(eth.IPv6DNS) != 1 || eth.IPv6DNS[0] != "2400:3200::1" {
-		t.Errorf("以太网 IPv6DNS unexpected: %v", eth.IPv6DNS)
-	}
+	t.Logf("Active physical adapters: %d", len(active))
 }
-
-
-

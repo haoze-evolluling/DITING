@@ -25,12 +25,15 @@ type DNSManager interface {
 
 // WindowsDNSManager 默认 Windows 平台 DNS 接管管理器
 type WindowsDNSManager struct {
-	mu         sync.Mutex
-	executor   CommandExecutor
-	stateStore StateStore
-	active     bool
-	adapters   []AdapterState
-	version    string
+	mu               sync.Mutex
+	executor         CommandExecutor
+	stateStore       StateStore
+	active           bool
+	adapters         []AdapterState
+	version          string
+	dnsSetter        func(guidStr string, servers []string) error
+	dnsResetter      func(guidStr string) error
+	residualResetter func(ctx context.Context) error
 }
 
 // NewDNSManager 创建 DNS 接管管理器
@@ -225,25 +228,13 @@ func (m *WindowsDNSManager) TakeoverSingle(ctx context.Context, adapter AdapterI
 
 // applyTakeoverOnAdapter 在指定网卡上设置 IPv4 为 127.0.0.1，IPv6 为 ::1
 func (m *WindowsDNSManager) applyTakeoverOnAdapter(ctx context.Context, a AdapterState) error {
-	// 1. 优先使用 Windows 原生 API (SetInterfaceDnsSettings) 配置双栈接管地址（无进程拉起开销）
-	if isDefaultExecutor(m.executor) {
-		if err := setAdapterDNSNative(a.ID, []string{"127.0.0.1", "::1"}); err == nil {
-			return nil
-		}
+	if m.dnsSetter != nil {
+		return m.dnsSetter(a.ID, []string{"127.0.0.1", "::1"})
 	}
-
-	// 2. 备用方案：通过 PowerShell 或 netsh 进行配置
-	cmdV4 := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("127.0.0.1","%s")`, a.Index, "::1")
-	out, err := m.executor.RunPowerShell(ctx, cmdV4)
-	if err != nil {
-		// 回退使用 netsh 尝试分别设置 IPv4 与 IPv6 (带 validate=no 避免网络探测挂起)
-		_, errV4 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", "127.0.0.1", "primary", "validate=no")
-		_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", "::1", "primary", "validate=no")
-		if errV4 != nil {
-			return fmt.Errorf("PowerShell 设置失败 (%s), netsh 设置 IPv4 亦失败: %w", out, errV4)
-		}
+	if !isDefaultExecutor(m.executor) {
+		return nil
 	}
-	return nil
+	return setAdapterDNSDualStackNative(a.ID, []string{"127.0.0.1"}, []string{"::1"})
 }
 
 // Restore 将当前被接管的网卡完全还原回原初始配置
@@ -329,190 +320,51 @@ func (m *WindowsDNSManager) RestoreAdapters(ctx context.Context, adapters []Adap
 // restoreSingleAdapter 还原单个网卡的 IPv4 与 IPv6 DNS
 func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterState) error {
 	a = CleanAdapterState(a)
-	var errs []string
 
 	v4IsDHCP := a.IPv4DHCP || len(a.IPv4DNS) == 0
 	v6IsDHCP := a.IPv6DHCP || len(a.IPv6DNS) == 0
 
-	// 1. 若双栈全为 DHCP，一次性通过原生 API 或 ResetServerAddresses 还原
-	if v4IsDHCP && v6IsDHCP {
-		if isDefaultExecutor(m.executor) {
-			if err := resetAdapterDNSNative(a.ID); err == nil {
-				return nil
-			}
-		}
+	var v4Servers []string
+	if !v4IsDHCP {
+		v4Servers = a.IPv4DNS
+	}
+	var v6Servers []string
+	if !v6IsDHCP {
+		v6Servers = a.IPv6DNS
+	}
 
-		_, err := m.executor.RunPowerShell(ctx, fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ResetServerAddresses`, a.Index))
-		if err != nil {
-			_, errV4 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
-			_, errV6 := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
-			if errV4 != nil {
-				errs = append(errs, fmt.Sprintf("netsh 恢复 IPv4 DHCP 失败: %v", errV4))
-			}
-			if errV6 != nil {
-				errs = append(errs, fmt.Sprintf("netsh 恢复 IPv6 DHCP 失败: %v", errV6))
-			}
+	if m.dnsSetter != nil {
+		all := append([]string{}, v4Servers...)
+		all = append(all, v6Servers...)
+		if len(all) > 0 {
+			return m.dnsSetter(a.ID, all)
 		}
-		if len(errs) > 0 {
-			return fmt.Errorf("还原网卡 [%s] 存在错误: %s", a.Name, strings.Join(errs, "; "))
+		if m.dnsResetter != nil {
+			return m.dnsResetter(a.ID)
 		}
 		return nil
 	}
-
-	// 2. 若双栈全为静态配置，优先尝试一次性原生 API 或 PowerShell 还原全部 DNS 地址
-	if !v4IsDHCP && !v6IsDHCP {
-		allServers := append([]string{}, a.IPv4DNS...)
-		allServers = append(allServers, a.IPv6DNS...)
-		if isDefaultExecutor(m.executor) {
-			if err := setAdapterDNSNative(a.ID, allServers); err == nil {
-				return nil
-			}
-		}
-
-		joined := strings.Join(allServers, `","`)
-		psCmd := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("%s")`, a.Index, joined)
-		_, err := m.executor.RunPowerShell(ctx, psCmd)
-		if err == nil {
-			return nil
-		}
+	if v4IsDHCP && v6IsDHCP && m.dnsResetter != nil {
+		return m.dnsResetter(a.ID)
 	}
 
-	// 3. 独立分别处理 IPv4 还原
-	if v4IsDHCP {
-		_, err := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
-		if err != nil {
-			errs = append(errs, fmt.Sprintf("恢复 IPv4 DHCP 失败: %v", err))
-		}
-	} else {
-		restoredV4 := false
-		if isDefaultExecutor(m.executor) {
-			if err := setAdapterDNSNative(a.ID, a.IPv4DNS); err == nil {
-				restoredV4 = true
-			}
-		}
-		if !restoredV4 {
-			servers := strings.Join(a.IPv4DNS, `","`)
-			psCmd := fmt.Sprintf(`Set-DnsClientServerAddress -InterfaceIndex %d -ServerAddresses @("%s")`, a.Index, servers)
-			_, err := m.executor.RunPowerShell(ctx, psCmd)
-			if err != nil {
-				for i, dnsIP := range a.IPv4DNS {
-					if i == 0 {
-						_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", dnsIP, "primary", "validate=no")
-						if errNetsh != nil {
-							errs = append(errs, fmt.Sprintf("netsh 设置静态 IPv4 首选 DNS 失败: %v", errNetsh))
-						}
-					} else {
-						_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "add", "dnsservers", fmt.Sprintf("name=%s", a.Name), dnsIP, fmt.Sprintf("index=%d", i+1), "validate=no")
-					}
-				}
-			}
-		}
+	if !isDefaultExecutor(m.executor) {
+		return nil
 	}
 
-	// 4. 独立分别处理 IPv6 还原
-	if v6IsDHCP {
-		_, err := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
-		if err != nil {
-			errs = append(errs, fmt.Sprintf("恢复 IPv6 DHCP 失败: %v", err))
-		}
-	} else {
-		for i, dnsIP := range a.IPv6DNS {
-			if i == 0 {
-				_, errNetsh := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "static", dnsIP, "primary", "validate=no")
-				if errNetsh != nil {
-					errs = append(errs, fmt.Sprintf("netsh 设置静态 IPv6 首选 DNS 失败: %v", errNetsh))
-				}
-			} else {
-				_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "add", "dnsservers", fmt.Sprintf("name=%s", a.Name), dnsIP, fmt.Sprintf("index=%d", i+1), "validate=no")
-			}
-		}
-	}
-
-	if len(errs) > 0 {
-		return fmt.Errorf("还原网卡 [%s] 存在错误: %s", a.Name, strings.Join(errs, "; "))
-	}
-	return nil
+	return setAdapterDNSDualStackNative(a.ID, v4Servers, v6Servers)
 }
 
 // ResetResidualLoopbackDNS 扫描系统所有网卡，对任何残留指向 127.0.0.0/8、::1 或未指定地址的 DNS 进行强力重置为 DHCP 自动获取
 func (m *WindowsDNSManager) ResetResidualLoopbackDNS(ctx context.Context) error {
-	// 生产环境下优先使用 Windows 原生 API 扫描并重置残留回环 DNS，免去启动 PowerShell 进程
-	if isDefaultExecutor(m.executor) {
-		if err := resetResidualLoopbackDNSNative(ctx, m.executor); err == nil {
-			_ = m.FlushDNSCache(ctx)
-			return nil
-		}
-	}
-
-	// 备用方案：通过 PowerShell / netsh 容灾重置
-	psScript := `
-$ErrorActionPreference = 'SilentlyContinue';
-Get-DnsClientServerAddress | Where-Object { ($_.ServerAddresses -contains '127.0.0.1') -or ($_.ServerAddresses -match '^127\.') -or ($_.ServerAddresses -contains '::1') -or ($_.ServerAddresses -contains '0.0.0.0') -or ($_.ServerAddresses -contains '::') } | ForEach-Object {
-    Set-DnsClientServerAddress -InterfaceIndex $_.InterfaceIndex -ResetServerAddresses -ErrorAction SilentlyContinue;
-    if ($_.InterfaceAlias) {
-        netsh interface ipv4 set dnsservers name="$($_.InterfaceAlias)" source=dhcp 2>$null;
-        netsh interface ipv6 set dnsservers name="$($_.InterfaceAlias)" source=dhcp 2>$null;
-    }
-};
-Clear-DnsClientCache -ErrorAction SilentlyContinue;
-`
-	_, err := m.executor.RunPowerShell(ctx, psScript)
-	if err != nil {
-		// PowerShell 异常时使用 netsh 容灾兜底解析并重置
-		_ = m.resetResidualLoopbackDNSViaNetsh(ctx)
+	var err error
+	if m.residualResetter != nil {
+		err = m.residualResetter(ctx)
+	} else if isDefaultExecutor(m.executor) {
+		err = resetResidualLoopbackDNSNative(ctx, m.executor)
 	}
 	_ = m.FlushDNSCache(ctx)
 	return err
-}
-
-func (m *WindowsDNSManager) resetResidualLoopbackDNSViaNetsh(ctx context.Context) error {
-	outV4, _ := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "show", "dnsservers")
-	for _, name := range parseNetshInterfacesWithLoopback(outV4) {
-		_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", name), "source=dhcp")
-	}
-
-	outV6, _ := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "show", "dnsservers")
-	for _, name := range parseNetshInterfacesWithLoopback(outV6) {
-		_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", name), "source=dhcp")
-	}
-	return nil
-}
-
-// parseNetshInterfacesWithLoopback 从 netsh 输出中提取配置了回环地址 DNS 的网卡别名
-func parseNetshInterfacesWithLoopback(output string) []string {
-	var result []string
-	lines := strings.Split(output, "\n")
-	var currentInterface string
-	hasLoopback := false
-
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "Configuration for interface \"") {
-			if currentInterface != "" && hasLoopback {
-				result = append(result, currentInterface)
-			}
-			currentInterface = strings.TrimSuffix(strings.TrimPrefix(trimmed, "Configuration for interface \""), "\"")
-			hasLoopback = false
-			continue
-		}
-		if strings.HasPrefix(trimmed, "接口 \"") {
-			if currentInterface != "" && hasLoopback {
-				result = append(result, currentInterface)
-			}
-			currentInterface = strings.TrimSuffix(strings.TrimPrefix(trimmed, "接口 \""), "\" 的配置")
-			currentInterface = strings.TrimSuffix(currentInterface, "\"")
-			hasLoopback = false
-			continue
-		}
-
-		if currentInterface != "" && (strings.Contains(trimmed, "127.") || strings.Contains(trimmed, "::1")) {
-			hasLoopback = true
-		}
-	}
-	if currentInterface != "" && hasLoopback {
-		result = append(result, currentInterface)
-	}
-	return result
 }
 
 // GenerateRestoreScript 生成独立离线恢复脚本 restore-dns.bat

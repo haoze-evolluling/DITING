@@ -2,7 +2,9 @@ package windows
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -18,6 +20,7 @@ var (
 )
 
 const (
+	dnsSettingIPV6               uint64 = 0x0001
 	dnsSettingNameServer         uint64 = 0x0002
 	dnsInterfaceSettingsVersion1 uint32 = 1
 )
@@ -52,8 +55,8 @@ func flushDNSCacheNative() error {
 	return nil
 }
 
-// setAdapterDNSNative 使用 Windows 原生 API (SetInterfaceDnsSettings) 配置网卡 DNS
-func setAdapterDNSNative(guidStr string, servers []string) error {
+// setInterfaceDnsSettingsNative 通过 Win32 原生 API 配置单栈 (IPv4 或 IPv6) DNS
+func setInterfaceDnsSettingsNative(guidStr string, isIPv6 bool, servers []string) error {
 	if !isSetInterfaceDnsSettingsSupported() {
 		return fmt.Errorf("SetInterfaceDnsSettings 不受支持")
 	}
@@ -67,27 +70,72 @@ func setAdapterDNSNative(guidStr string, servers []string) error {
 	var settings dnsInterfaceSettings
 	settings.Version = dnsInterfaceSettingsVersion1
 	settings.Flags = dnsSettingNameServer
-
-	nsJoined := strings.Join(servers, ",")
-	nsPtr, err := windows.UTF16PtrFromString(nsJoined)
-	if err != nil {
-		return err
+	if isIPv6 {
+		settings.Flags |= dnsSettingIPV6
 	}
-	settings.NameServer = nsPtr
+
+	if len(servers) > 0 {
+		nsJoined := strings.Join(servers, ",")
+		nsPtr, err := windows.UTF16PtrFromString(nsJoined)
+		if err != nil {
+			return err
+		}
+		settings.NameServer = nsPtr
+	} else {
+		// NameServer 为 nil 时，Windows 会将该栈 DNS 重置为 DHCP 自动获取
+		settings.NameServer = nil
+	}
 
 	ret, _, _ := procSetInterfaceDnsSettings.Call(
 		uintptr(unsafe.Pointer(&guid)),
 		uintptr(unsafe.Pointer(&settings)),
 	)
 	if ret != 0 {
-		return fmt.Errorf("SetInterfaceDnsSettings 失败，错误码: %d (%w)", ret, syscall.Errno(ret))
+		proto := "IPv4"
+		if isIPv6 {
+			proto = "IPv6"
+		}
+		return fmt.Errorf("SetInterfaceDnsSettings (%s) 失败，错误码: %d (%w)", proto, ret, syscall.Errno(ret))
 	}
 	return nil
 }
 
-// resetAdapterDNSNative 使用 Windows 原生 API 将网卡 DNS 恢复为 DHCP
+// setAdapterDNSDualStackNative 分别配置网卡的 IPv4 与 IPv6 DNS（传 nil 表示该栈使用 DHCP 自动获取）
+func setAdapterDNSDualStackNative(guidStr string, v4Servers []string, v6Servers []string) error {
+	var errs []error
+	if err := setInterfaceDnsSettingsNative(guidStr, false, v4Servers); err != nil {
+		errs = append(errs, err)
+	}
+	if err := setInterfaceDnsSettingsNative(guidStr, true, v6Servers); err != nil {
+		errs = append(errs, err)
+	}
+	return errors.Join(errs...)
+}
+
+// setAdapterDNSNative 使用 Windows 原生 API 配置网卡 DNS（自动将服务器地址区分为 IPv4 与 IPv6 双栈）
+func setAdapterDNSNative(guidStr string, servers []string) error {
+	if len(servers) == 0 {
+		return setAdapterDNSDualStackNative(guidStr, nil, nil)
+	}
+	var v4Servers, v6Servers []string
+	for _, s := range servers {
+		trimmed := strings.TrimSpace(s)
+		if trimmed == "" {
+			continue
+		}
+		ip := net.ParseIP(trimmed)
+		if ip != nil && ip.To4() == nil {
+			v6Servers = append(v6Servers, trimmed)
+		} else {
+			v4Servers = append(v4Servers, trimmed)
+		}
+	}
+	return setAdapterDNSDualStackNative(guidStr, v4Servers, v6Servers)
+}
+
+// resetAdapterDNSNative 使用 Windows 原生 API 将网卡 IPv4 与 IPv6 双栈 DNS 恢复为 DHCP
 func resetAdapterDNSNative(guidStr string) error {
-	return setAdapterDNSNative(guidStr, nil)
+	return setAdapterDNSDualStackNative(guidStr, nil, nil)
 }
 
 // resetResidualLoopbackDNSNative 枚举所有网卡并针对配置了回环地址 (127.*, ::1 等) 的网卡执行原生 DNS 重置

@@ -6,24 +6,17 @@ import (
 	"testing"
 )
 
-func TestParsePortCheckJSON_WithICS(t *testing.T) {
-	jsonSample := `{
-		"Listeners": [
-			{
-				"Protocol": "UDP",
-				"LocalAddress": "0.0.0.0:53",
-				"PID": 1824,
-				"ProcessName": "svchost"
-			}
-		],
-		"ICS": {
-			"Name": "SharedAccess",
-			"ProcessId": 1824,
-			"State": "Running"
-		}
-	}`
+func TestFormatPortConflicts_WithICS(t *testing.T) {
+	listeners := []nativePortListener{
+		{
+			Protocol:     "UDP",
+			LocalAddress: "0.0.0.0:53",
+			PID:          1824,
+			ProcessName:  "svchost.exe",
+		},
+	}
 
-	conflicts, hasICS, diag := parsePortCheckJSON(jsonSample, true)
+	conflicts, hasICS, diag := formatPortConflicts(listeners, true, 1824, true, 0)
 	if !hasICS {
 		t.Fatalf("expected hasICS = true")
 	}
@@ -38,20 +31,17 @@ func TestParsePortCheckJSON_WithICS(t *testing.T) {
 	}
 }
 
-func TestParsePortCheckJSON_OtherProcess(t *testing.T) {
-	jsonSample := `{
-		"Listeners": [
-			{
-				"Protocol": "UDP",
-				"LocalAddress": "127.0.0.1:53",
-				"PID": 9999,
-				"ProcessName": "acrylic.exe"
-			}
-		],
-		"ICS": null
-	}`
+func TestFormatPortConflicts_OtherProcess(t *testing.T) {
+	listeners := []nativePortListener{
+		{
+			Protocol:     "UDP",
+			LocalAddress: "127.0.0.1:53",
+			PID:          9999,
+			ProcessName:  "acrylic.exe",
+		},
+	}
 
-	conflicts, hasICS, diag := parsePortCheckJSON(jsonSample, false)
+	conflicts, hasICS, diag := formatPortConflicts(listeners, false, 0, false, 0)
 	if hasICS {
 		t.Fatalf("expected hasICS = false")
 	}
@@ -66,13 +56,10 @@ func TestParsePortCheckJSON_OtherProcess(t *testing.T) {
 	}
 }
 
-func TestParsePortCheckJSON_Clean(t *testing.T) {
-	jsonSample := `{
-		"Listeners": [],
-		"ICS": null
-	}`
+func TestFormatPortConflicts_Clean(t *testing.T) {
+	listeners := []nativePortListener{}
 
-	conflicts, hasICS, diag := parsePortCheckJSON(jsonSample, true)
+	conflicts, hasICS, diag := formatPortConflicts(listeners, false, 0, true, 0)
 	if hasICS || len(conflicts) != 0 {
 		t.Fatalf("expected clean result, got hasICS=%v, conflicts=%d", hasICS, len(conflicts))
 	}
@@ -81,20 +68,17 @@ func TestParsePortCheckJSON_Clean(t *testing.T) {
 	}
 }
 
-func TestParsePortCheckJSON_SelfProcess(t *testing.T) {
-	jsonSample := `{
-		"Listeners": [
-			{
-				"Protocol": "UDP",
-				"LocalAddress": "127.0.0.1:53",
-				"PID": 1234,
-				"ProcessName": "diting-service.exe"
-			}
-		],
-		"ICS": null
-	}`
+func TestFormatPortConflicts_SelfProcess(t *testing.T) {
+	listeners := []nativePortListener{
+		{
+			Protocol:     "UDP",
+			LocalAddress: "127.0.0.1:53",
+			PID:          1234,
+			ProcessName:  "diting-service.exe",
+		},
+	}
 
-	conflicts, hasICS, diag := parsePortCheckJSON(jsonSample, false, 1234)
+	conflicts, hasICS, diag := formatPortConflicts(listeners, false, 0, false, 1234)
 	if hasICS {
 		t.Fatalf("expected hasICS = false")
 	}
@@ -119,36 +103,3 @@ func TestWindowsPortChecker_LiveCheck(t *testing.T) {
 	t.Logf("Port 53 check result: Available=%v, HasICS=%v, Conflicts=%d", res.Available, res.HasICS, len(res.Conflicts))
 	t.Logf("Diagnostic: %s", res.Diagnostic)
 }
-
-func TestParsePortCheckJSON_WithNoisyPrefixAndBOM(t *testing.T) {
-	noisy := "\xef\xbb\xbf[WARNING] Get-NetUDPEndpoint partially limited by {security policy}\n" +
-		"{\n" +
-		"  \"Listeners\": [{\"Protocol\":\"UDP\",\"LocalAddress\":\"0.0.0.0:53\",\"PID\":1000,\"ProcessName\":\"dnsmasq\"}],\n" +
-		"  \"ICS\": null\n" +
-		"}\n" +
-		"[INFO] Done\n"
-
-	conflicts, hasICS, diag := parsePortCheckJSON(noisy, false)
-	if hasICS {
-		t.Errorf("expected hasICS = false")
-	}
-	if len(conflicts) != 1 || conflicts[0].ProcessName != "dnsmasq" {
-		t.Fatalf("expected 1 conflict with dnsmasq, got %+v", conflicts)
-	}
-	if !strings.Contains(diag, "dnsmasq") {
-		t.Errorf("expected dnsmasq in diag: %s", diag)
-	}
-}
-
-func TestParsePortCheckJSON_UnavailableWithoutProcess(t *testing.T) {
-	// 模拟套接字被占用但权限不足未探测到具体进程名
-	cleanJSON := "{\"Listeners\": [], \"ICS\": null}"
-	conflicts, hasICS, diag := parsePortCheckJSON(cleanJSON, false)
-	if hasICS || len(conflicts) != 0 {
-		t.Fatalf("expected 0 conflicts, got %d", len(conflicts))
-	}
-	if !strings.Contains(diag, "未能直接绑定 127.0.0.1:53") {
-		t.Errorf("expected fallback advice when socket cannot bind: %s", diag)
-	}
-}
-
