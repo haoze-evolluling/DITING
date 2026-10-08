@@ -28,6 +28,11 @@ func TestNativeSetInterfaceDnsSettings_Export(t *testing.T) {
 
 	errResetZero := resetAdapterDNSNative("{00000000-0000-0000-0000-000000000000}")
 	t.Logf("resetAdapterDNSNative with zero GUID returned: %v", errResetZero)
+
+	errDual := setAdapterDNSDualStackNative("invalid-guid", []string{"127.0.0.1"}, []string{"::1"})
+	if errDual == nil {
+		t.Errorf("expected error for invalid GUID on dual stack set, got nil")
+	}
 }
 
 func TestNativeResetResidualLoopbackDNS(t *testing.T) {

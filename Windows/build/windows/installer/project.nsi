@@ -1,4 +1,4 @@
-﻿Unicode true
+Unicode true
 
 ####
 ## 谛听 (DITING) Windows 端整合安装包配置
@@ -133,9 +133,9 @@ Section "uninstall"
     # 调用服务特权二进制执行离线恢复与自愈
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -restore'
 
-    # 3. 强力兜底全网卡 DNS 还原机制：遍历所有网卡，将任何残留指向 127.0.0.1 / ::1 的 DNS 重置为自动获取 (DHCP)
-    DetailPrint "正在执行全网卡 DNS 兜底自愈与还原..."
-    nsExec::Exec 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-DnsClientServerAddress | Where-Object { ($$_.ServerAddresses -contains $\"127.0.0.1$\") -or ($$_.ServerAddresses -match $\"^127\.$\") -or ($$_.ServerAddresses -contains $\"::1$\") -or ($$_.ServerAddresses -contains $\"0.0.0.0$\") } | ForEach-Object { Set-DnsClientServerAddress -InterfaceIndex $$_.InterfaceIndex -ResetServerAddresses -ErrorAction SilentlyContinue; if ($$_.InterfaceAlias) { netsh interface ipv4 set dnsservers name=\"$$($$_.InterfaceAlias)\" source=dhcp 2>$$null; netsh interface ipv6 set dnsservers name=\"$$($$_.InterfaceAlias)\" source=dhcp 2>$$null } }; Clear-DnsClientCache -ErrorAction SilentlyContinue; ipconfig /flushdns"'
+    # 3. 强力兜底全网卡 DNS 还原机制：服务二进制已使用 Windows 原生 API 遍历并重置所有残留网卡
+    DetailPrint "正在执行全网卡 DNS 兜底自愈与缓存刷新..."
+    nsExec::Exec 'ipconfig /flushdns'
 
     # 4. 从系统服务管理器中注销清理特权服务
     DetailPrint "正在从系统服务中注销谛听服务..."

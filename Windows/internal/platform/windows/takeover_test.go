@@ -437,3 +437,52 @@ func TestRestore_CleansResidualEvenWhenNoAdapters(t *testing.T) {
 	}
 }
 
+func TestRestoreAdapters_MixedDualStack(t *testing.T) {
+	mock := &mockExecutor{}
+	store := NewFileStateStore(filepath.Join(t.TempDir(), "dns_state.json"))
+	mgr := NewDNSManager(mock, store, "0.1.0-test")
+
+	var setterServers []string
+	mgr.dnsSetter = func(guidStr string, servers []string) error {
+		setterServers = append(setterServers, servers...)
+		return nil
+	}
+
+	// 1. 测试单栈 IPv4 静态，单栈 IPv6 DHCP
+	mixedAdapter := []AdapterState{
+		{
+			ID:       "{GUID-MIXED}",
+			Name:     "以太网",
+			IPv4DHCP: false,
+			IPv6DHCP: true,
+			IPv4DNS:  []string{"8.8.8.8"},
+			IPv6DNS:  nil,
+		},
+	}
+	if err := mgr.RestoreAdapters(context.Background(), mixedAdapter); err != nil {
+		t.Fatalf("RestoreAdapters failed: %v", err)
+	}
+	if len(setterServers) != 1 || setterServers[0] != "8.8.8.8" {
+		t.Errorf("expected [8.8.8.8], got %v", setterServers)
+	}
+
+	// 2. 测试单栈 IPv4 DHCP，单栈 IPv6 静态
+	setterServers = nil
+	mixedV6 := []AdapterState{
+		{
+			ID:       "{GUID-MIXED2}",
+			Name:     "以太网2",
+			IPv4DHCP: true,
+			IPv6DHCP: false,
+			IPv4DNS:  nil,
+			IPv6DNS:  []string{"2001:4860:4860::8888"},
+		},
+	}
+	if err := mgr.RestoreAdapters(context.Background(), mixedV6); err != nil {
+		t.Fatalf("RestoreAdapters failed: %v", err)
+	}
+	if len(setterServers) != 1 || setterServers[0] != "2001:4860:4860::8888" {
+		t.Errorf("expected [2001:4860:4860::8888], got %v", setterServers)
+	}
+}
+

@@ -234,7 +234,7 @@ func (m *WindowsDNSManager) applyTakeoverOnAdapter(ctx context.Context, a Adapte
 	if !isDefaultExecutor(m.executor) {
 		return nil
 	}
-	return setAdapterDNSNative(a.ID, []string{"127.0.0.1", "::1"})
+	return setAdapterDNSDualStackNative(a.ID, []string{"127.0.0.1"}, []string{"::1"})
 }
 
 // Restore 将当前被接管的网卡完全还原回原初始配置
@@ -324,54 +324,35 @@ func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterS
 	v4IsDHCP := a.IPv4DHCP || len(a.IPv4DNS) == 0
 	v6IsDHCP := a.IPv6DHCP || len(a.IPv6DNS) == 0
 
-	// 1. 若双栈全为 DHCP，通过原生 API 还原
-	if v4IsDHCP && v6IsDHCP {
+	var v4Servers []string
+	if !v4IsDHCP {
+		v4Servers = a.IPv4DNS
+	}
+	var v6Servers []string
+	if !v6IsDHCP {
+		v6Servers = a.IPv6DNS
+	}
+
+	if m.dnsSetter != nil {
+		all := append([]string{}, v4Servers...)
+		all = append(all, v6Servers...)
+		if len(all) > 0 {
+			return m.dnsSetter(a.ID, all)
+		}
 		if m.dnsResetter != nil {
 			return m.dnsResetter(a.ID)
 		}
-		if !isDefaultExecutor(m.executor) {
-			return nil
-		}
-		return resetAdapterDNSNative(a.ID)
+		return nil
 	}
-
-	// 2. 若双栈全为静态配置，通过原生 API 还原全部 DNS 地址
-	if !v4IsDHCP && !v6IsDHCP {
-		allServers := append([]string{}, a.IPv4DNS...)
-		allServers = append(allServers, a.IPv6DNS...)
-		if m.dnsSetter != nil {
-			return m.dnsSetter(a.ID, allServers)
-		}
-		if !isDefaultExecutor(m.executor) {
-			return nil
-		}
-		return setAdapterDNSNative(a.ID, allServers)
-	}
-
-	// 3. 混合场景：单栈静态 / 单栈 DHCP
-	var servers []string
-	if !v4IsDHCP {
-		servers = append(servers, a.IPv4DNS...)
-	}
-	if !v6IsDHCP {
-		servers = append(servers, a.IPv6DNS...)
-	}
-	if len(servers) > 0 {
-		if m.dnsSetter != nil {
-			return m.dnsSetter(a.ID, servers)
-		}
-		if !isDefaultExecutor(m.executor) {
-			return nil
-		}
-		return setAdapterDNSNative(a.ID, servers)
-	}
-	if m.dnsResetter != nil {
+	if v4IsDHCP && v6IsDHCP && m.dnsResetter != nil {
 		return m.dnsResetter(a.ID)
 	}
+
 	if !isDefaultExecutor(m.executor) {
 		return nil
 	}
-	return resetAdapterDNSNative(a.ID)
+
+	return setAdapterDNSDualStackNative(a.ID, v4Servers, v6Servers)
 }
 
 // ResetResidualLoopbackDNS 扫描系统所有网卡，对任何残留指向 127.0.0.0/8、::1 或未指定地址的 DNS 进行强力重置为 DHCP 自动获取

@@ -114,7 +114,11 @@ func (e *DefaultPrivilegedExecutor) IsElevated() bool {
 	return IsRunningAsAdmin()
 }
 
-func runElevatedNative(exePath string, args string) error {
+func runElevatedNative(ctx context.Context, exePath string, args string) error {
+	if ctx != nil && ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	verbPtr, _ := windows.UTF16PtrFromString("runas")
 	filePtr, _ := windows.UTF16PtrFromString(exePath)
 	var argsPtr *uint16
@@ -140,9 +144,18 @@ func runElevatedNative(exePath string, args string) error {
 
 	if sei.hProcess != 0 {
 		defer windows.CloseHandle(sei.hProcess)
-		event, errWait := windows.WaitForSingleObject(sei.hProcess, windows.INFINITE)
-		if errWait != nil || event != windows.WAIT_OBJECT_0 {
-			return fmt.Errorf("等待提权进程退出失败: %w", errWait)
+		for {
+			event, errWait := windows.WaitForSingleObject(sei.hProcess, 100)
+			if errWait != nil {
+				return fmt.Errorf("等待提权进程退出失败: %w", errWait)
+			}
+			if event == windows.WAIT_OBJECT_0 {
+				break
+			}
+			if ctx != nil && ctx.Err() != nil {
+				_ = windows.TerminateProcess(sei.hProcess, 1)
+				return ctx.Err()
+			}
 		}
 
 		var exitCode uint32
@@ -163,7 +176,7 @@ func (e *DefaultPrivilegedExecutor) RunElevated(ctx context.Context, exe string,
 		}
 		return nil
 	}
-	return runElevatedNative(exe, strings.Join(args, " "))
+	return runElevatedNative(ctx, exe, windows.ComposeCommandLine(args))
 }
 
 type scmQuerier func(serviceName string) (installed bool, running bool, state string, err error)
@@ -468,7 +481,14 @@ func (m *ServiceManager) StopService(ctx context.Context) error {
 func (m *ServiceManager) RestartService(ctx context.Context) error {
 	if m.privExec.IsElevated() {
 		_ = stopServiceNative(m.serviceName)
-		time.Sleep(300 * time.Millisecond)
+		// 轮询等待服务停止（最多等待 3 秒）
+		for i := 0; i < 30; i++ {
+			time.Sleep(100 * time.Millisecond)
+			_, running, _, _ := defaultSCMQuery(m.serviceName)
+			if !running {
+				break
+			}
+		}
 		if err := startServiceNative(m.serviceName); err == nil {
 			return nil
 		}

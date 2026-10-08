@@ -209,3 +209,14 @@ func TestServiceManager_LocateExecutable(t *testing.T) {
 		t.Errorf("expected path to end with .exe, got %s", path)
 	}
 }
+
+func TestDefaultPrivilegedExecutor_CancelledContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // 预先取消
+
+	exec := NewDefaultPrivilegedExecutor(nil)
+	err := exec.RunElevated(ctx, "cmd.exe", "/c", "echo test")
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("expected context.Canceled, got: %v", err)
+	}
+}
