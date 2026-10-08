@@ -13,25 +13,48 @@ const (
 	FirewallRuleNameTCP = "Diting DNS LAN Server (TCP)"
 )
 
-// CheckFirewallPort53 检测 Windows 防火墙是否已放行 53 端口入站规则
+// CheckFirewallPort53 检测 Windows 防火墙是否已放行 53 端口入站规则 (UDP 与 TCP 均需已启用且操作为允许)
 func CheckFirewallPort53(ctx context.Context, executor CommandExecutor) (bool, error) {
 	if executor == nil {
 		executor = NewDefaultExecutor()
 	}
 
-	out, err := executor.RunCommand(ctx, "netsh", "advfirewall", "firewall", "show", "rule", fmt.Sprintf("name=%s", FirewallRuleNameUDP))
-	if err != nil {
-		// netsh 返回非 0 表示规则不存在
+	outUDP, err := executor.RunCommand(ctx, "netsh", "advfirewall", "firewall", "show", "rule", fmt.Sprintf("name=%s", FirewallRuleNameUDP))
+	if err != nil || !isFirewallRuleActive(outUDP) {
 		return false, nil
 	}
 
-	lower := strings.ToLower(out)
-	// 校验规则是否已启用 (英文 Enabled: Yes 或中文 已启用: 是)
-	if strings.Contains(lower, "yes") || strings.Contains(out, "是") || strings.Contains(lower, "allow") || strings.Contains(out, "允许") {
-		return true, nil
+	outTCP, err := executor.RunCommand(ctx, "netsh", "advfirewall", "firewall", "show", "rule", fmt.Sprintf("name=%s", FirewallRuleNameTCP))
+	if err != nil || !isFirewallRuleActive(outTCP) {
+		return false, nil
 	}
 
-	return false, nil
+	return true, nil
+}
+
+func isFirewallRuleActive(out string) bool {
+	lines := strings.Split(out, "\n")
+	enabled := false
+	actionAllow := false
+	for _, rawLine := range lines {
+		line := strings.TrimSpace(rawLine)
+		lower := strings.ToLower(line)
+		if strings.HasPrefix(lower, "enabled:") || strings.HasPrefix(line, "已启用:") {
+			if strings.Contains(lower, "yes") || strings.Contains(line, "是") {
+				enabled = true
+			} else {
+				enabled = false
+			}
+		}
+		if strings.HasPrefix(lower, "action:") || strings.HasPrefix(line, "操作:") {
+			if strings.Contains(lower, "allow") || strings.Contains(line, "允许") {
+				actionAllow = true
+			} else {
+				actionAllow = false
+			}
+		}
+	}
+	return enabled && actionAllow
 }
 
 // ConfigureFirewallPort53 配置 Windows 防火墙允许或禁止局域网访问 53 端口 (UDP 与 TCP)

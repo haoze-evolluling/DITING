@@ -393,13 +393,14 @@ func (p *program) GetStatus(ctx context.Context) (*ipc.StatusResponse, error) {
 
 	takenAdapters := p.takeoverMgr.GetTakenOverAdapters()
 	lanAddrs, _ := windows.GetLANAddresses()
+	effUDP, _ := p.cfg.DNS.EffectiveListenAddresses()
 	return &ipc.StatusResponse{
 		Version:       Version,
 		PID:           os.Getpid(),
 		UptimeSeconds: int64(time.Since(p.startTime).Seconds()),
 		DNS: ipc.DNSStatus{
 			Running:         dnsRun,
-			ListenAddresses: p.cfg.DNS.UDPAddresses,
+			ListenAddresses: effUDP,
 			AllowLAN:        p.cfg.DNS.AllowLAN,
 			LANAddresses:    lanAddrs,
 			Mode:            p.cfg.Upstream.Mode,

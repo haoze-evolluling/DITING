@@ -112,4 +112,18 @@ func TestEffectiveListenAddresses(t *testing.T) {
 	if udpPort[0] != "0.0.0.0:5353" || udpPort[1] != "[::]:5353" {
 		t.Errorf("expected custom port lan addresses, got %v", udpPort)
 	}
+
+	// 局域网模式关闭且原配置残留通配地址时，应安全降级还原为回环地址
+	dnsCfgWildcardDisabled := DNSConfig{
+		UDPAddresses: []string{"0.0.0.0:53", "[::]:53"},
+		TCPAddresses: []string{"0.0.0.0:53", "[::]:53"},
+		AllowLAN:     false,
+	}
+	udpReverted, tcpReverted := dnsCfgWildcardDisabled.EffectiveListenAddresses()
+	if len(udpReverted) != 2 || udpReverted[0] != "127.0.0.1:53" || udpReverted[1] != "[::1]:53" {
+		t.Errorf("expected sanitized local addresses, got %v", udpReverted)
+	}
+	if len(tcpReverted) != 2 || tcpReverted[0] != "127.0.0.1:53" || tcpReverted[1] != "[::1]:53" {
+		t.Errorf("expected sanitized local addresses, got %v", tcpReverted)
+	}
 }

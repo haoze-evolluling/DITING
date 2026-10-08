@@ -363,4 +363,12 @@ func TestDeduplicateAddresses(t *testing.T) {
 	if len(resLocal) != 2 || resLocal[0] != "127.0.0.1:53" || resLocal[1] != "[::1]:53" {
 		t.Errorf("unexpected local deduplication: %v", resLocal)
 	}
+
+	// 包含 0.0.0.0 与任意其他具体 IPv4 (如 192.168.1.100)，应彻底剔除其他 IPv4 避免 Windows 绑定冲突
+	mixed := []string{"0.0.0.0:53", "192.168.1.100:53", "10.0.0.1:53", "[::]:53", "[2408:844b::1]:53"}
+	resMixed := DeduplicateAddresses(mixed)
+	expectedMixed := []string{"0.0.0.0:53", "[::]:53"}
+	if len(resMixed) != len(expectedMixed) || resMixed[0] != expectedMixed[0] || resMixed[1] != expectedMixed[1] {
+		t.Errorf("unexpected mixed deduplication: %v, expected: %v", resMixed, expectedMixed)
+	}
 }

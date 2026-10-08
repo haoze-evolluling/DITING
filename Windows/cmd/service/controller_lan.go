@@ -58,11 +58,17 @@ func (p *program) ConfigureLAN(ctx context.Context, req ipc.ConfigureLANRequest)
 	// 若当前 DNS 服务正在运行，无缝重启监听器使新绑定地址立即生效
 	if wasRunning {
 		log.Println("[LAN] 检测到 DNS 监听器运行中，正在平滑重载监听器以应用局域网模式...")
+		wasTakeoverActive := p.takeoverMgr != nil && p.takeoverMgr.IsTakeoverActive()
 		if err := p.StopDNS(ctx); err != nil {
 			log.Printf("[LAN] 停止原有监听器警告: %v\n", err)
 		}
 		if err := p.StartDNS(ctx); err != nil {
 			return err
+		}
+		if wasTakeoverActive {
+			if err := p.EnableTakeover(ctx); err != nil {
+				log.Printf("[LAN] 恢复系统 DNS 接管警告: %v\n", err)
+			}
 		}
 	}
 

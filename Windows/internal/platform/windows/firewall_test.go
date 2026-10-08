@@ -39,7 +39,8 @@ func TestCheckFirewallPort53(t *testing.T) {
 	// 1. 规则存在且启用 (中文)
 	mock := &mockFirewallExecutor{
 		outputs: map[string]string{
-			"show rule": "规则名称: Diting DNS LAN Server (UDP)\n已启用: 是\n操作: 允许\n",
+			"UDP": "规则名称: Diting DNS LAN Server (UDP)\n已启用: 是\n操作: 允许\n",
+			"TCP": "规则名称: Diting DNS LAN Server (TCP)\n已启用: 是\n操作: 允许\n",
 		},
 	}
 	allowed, err := CheckFirewallPort53(ctx, mock)
@@ -50,7 +51,8 @@ func TestCheckFirewallPort53(t *testing.T) {
 	// 2. 规则存在且启用 (英文)
 	mockEn := &mockFirewallExecutor{
 		outputs: map[string]string{
-			"show rule": "Rule Name: Diting DNS LAN Server (UDP)\nEnabled: Yes\nAction: Allow\n",
+			"UDP": "Rule Name: Diting DNS LAN Server (UDP)\nEnabled: Yes\nAction: Allow\n",
+			"TCP": "Rule Name: Diting DNS LAN Server (TCP)\nEnabled: Yes\nAction: Allow\n",
 		},
 	}
 	allowedEn, err := CheckFirewallPort53(ctx, mockEn)
@@ -58,7 +60,31 @@ func TestCheckFirewallPort53(t *testing.T) {
 		t.Fatalf("expected allowedEn true, got %v, err: %v", allowedEn, err)
 	}
 
-	// 3. 规则不存在 (netsh 报错)
+	// 3. 规则存在但被禁用 (Action 仍为 Allow / 允许)
+	mockDisabled := &mockFirewallExecutor{
+		outputs: map[string]string{
+			"UDP": "Rule Name: Diting DNS LAN Server (UDP)\nEnabled: No\nAction: Allow\n",
+			"TCP": "Rule Name: Diting DNS LAN Server (TCP)\nEnabled: Yes\nAction: Allow\n",
+		},
+	}
+	allowedDisabled, err := CheckFirewallPort53(ctx, mockDisabled)
+	if err != nil || allowedDisabled {
+		t.Fatalf("expected allowedDisabled false, got %v, err: %v", allowedDisabled, err)
+	}
+
+	// 4. 中文禁用
+	mockDisabledZh := &mockFirewallExecutor{
+		outputs: map[string]string{
+			"UDP": "规则名称: Diting DNS LAN Server (UDP)\n已启用: 否\n操作: 允许\n",
+			"TCP": "规则名称: Diting DNS LAN Server (TCP)\n已启用: 是\n操作: 允许\n",
+		},
+	}
+	allowedDisabledZh, err := CheckFirewallPort53(ctx, mockDisabledZh)
+	if err != nil || allowedDisabledZh {
+		t.Fatalf("expected allowedDisabledZh false, got %v, err: %v", allowedDisabledZh, err)
+	}
+
+	// 5. 规则不存在 (netsh 报错)
 	mockMissing := &mockFirewallExecutor{
 		errors: map[string]error{
 			"show rule": fmt.Errorf("找不到指定的规则"),

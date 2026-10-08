@@ -40,7 +40,7 @@ async function handleToggleLAN(e: Event) {
   try {
     await ipc.configureLAN({
       allowLAN: enable,
-      configureFirewall: enable, // 开启时默认同步放行防火墙
+      configureFirewall: true, // 保持防火墙放行规则与局域网服务状态一致（开启时放行，关闭时清除）
     });
     successMessage.value = enable
       ? '局域网 DNS 服务器已成功开启！局域网内其他设备现可填入本机 IP 使用。'

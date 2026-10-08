@@ -43,15 +43,28 @@ func (c *DNSConfig) EffectiveListenAddresses() (udpAddrs []string, tcpAddrs []st
 		return lanAddrs, lanAddrs
 	}
 
-	udp := c.UDPAddresses
-	if len(udp) == 0 {
-		udp = []string{fmt.Sprintf("127.0.0.1:%d", port), fmt.Sprintf("[::1]:%d", port)}
+	toLocal := func(addrs []string) []string {
+		var res []string
+		for _, addr := range addrs {
+			host, pStr, err := net.SplitHostPort(addr)
+			if err != nil {
+				continue
+			}
+			if host == "0.0.0.0" || host == "" {
+				res = append(res, fmt.Sprintf("127.0.0.1:%s", pStr))
+			} else if host == "::" || host == "[::]" {
+				res = append(res, fmt.Sprintf("[::1]:%s", pStr))
+			} else {
+				res = append(res, addr)
+			}
+		}
+		if len(res) == 0 {
+			res = []string{fmt.Sprintf("127.0.0.1:%d", port), fmt.Sprintf("[::1]:%d", port)}
+		}
+		return res
 	}
-	tcp := c.TCPAddresses
-	if len(tcp) == 0 {
-		tcp = []string{fmt.Sprintf("127.0.0.1:%d", port), fmt.Sprintf("[::1]:%d", port)}
-	}
-	return udp, tcp
+
+	return toLocal(c.UDPAddresses), toLocal(c.TCPAddresses)
 }
 
 // UnmarshalJSON 支持字符串 (如 "5s") 与数字纳秒对 time.Duration 的反序列化

@@ -55,5 +55,5 @@ func (s *Server) handleFirewallConfigure(w http.ResponseWriter, r *http.Request)
 	if !req.Enable {
 		msg = "已成功移除 53 端口防火墙规则"
 	}
-	writeJSON(w, http.StatusOK, Response[any]{Success: true, Message: msg})
+	writeJSON(w, http.StatusOK, Response[string]{Success: true, Data: msg, Message: msg})
 }

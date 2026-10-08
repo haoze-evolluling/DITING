@@ -226,7 +226,7 @@ export function handleMockRequest(rawPath: string, _options: RequestInit = {}): 
         }
       } catch {}
     }
-    return { success: true };
+    return undefined;
   }
   if (path === '/api/v1/dns/lan/firewall') {
     if (_options.body) {
@@ -235,7 +235,7 @@ export function handleMockRequest(rawPath: string, _options: RequestInit = {}): 
         mockLANStatus.firewallAllowed = !!body.enable;
       } catch {}
     }
-    return { success: true, message: '防火墙规则已更新' };
+    return mockLANStatus.firewallAllowed ? '已成功放行 53 端口防火墙规则' : '已成功移除 53 端口防火墙规则';
   }
   if (path === '/api/v1/health') return 'OK';
   if (path === '/api/v1/adapters') return mockAdapters;

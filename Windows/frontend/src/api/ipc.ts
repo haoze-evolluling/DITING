@@ -529,17 +529,14 @@ class IPCService {
   }
 
   public async getLANStatus(): Promise<LANStatusResponse> {
-    const res = await this.request<ApiResponse<LANStatusResponse>>('/api/v1/dns/lan');
-    if (!res.success || !res.data) throw new Error(res.error || '获取局域网 DNS 状态失败');
-    return res.data;
+    return this.request<LANStatusResponse>('/api/v1/dns/lan');
   }
 
   public async configureLAN(req: ConfigureLANRequest): Promise<void> {
-    const res = await this.request<ApiResponse<any>>('/api/v1/dns/lan/configure', {
+    await this.request<void>('/api/v1/dns/lan/configure', {
       method: 'POST',
       body: JSON.stringify(req),
     });
-    if (!res.success) throw new Error(res.error || '配置局域网 DNS 失败');
   }
 
   public async configureFirewall(enable: boolean): Promise<string> {
@@ -548,12 +545,11 @@ class IPCService {
         return await window.go.main.App.ConfigureFirewallForLAN(enable);
       } catch {}
     }
-    const res = await this.request<ApiResponse<any>>('/api/v1/dns/lan/firewall', {
+    const res = await this.request<string>('/api/v1/dns/lan/firewall', {
       method: 'POST',
       body: JSON.stringify({ enable }),
     });
-    if (!res.success) throw new Error(res.error || '配置防火墙规则失败');
-    return res.message || '操作成功';
+    return res || (enable ? '已成功放行 53 端口防火墙规则' : '已成功移除 53 端口防火墙规则');
   }
 }
 

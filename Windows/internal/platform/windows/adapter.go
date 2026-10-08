@@ -10,7 +10,7 @@ import (
 )
 
 // virtualPattern 匹配常见虚拟网卡、VPN、隧道、回环与过滤驱动的关键词
-var virtualPattern = regexp.MustCompile(`(?i)(Hyper-V|Virtual|VMware|VirtualBox|TAP|TUN|singbox|sing-tun|VPN|Tailscale|WireGuard|ZeroTier|Loopback|Npcap|Clat|WFP|WAN Miniport|Default Switch|Host-Only)`)
+var virtualPattern = regexp.MustCompile(`(?i)(Hyper-V|Virtual|VMware|VirtualBox|TAP|TUN|singbox|sing-tun|VPN|Tailscale|WireGuard|ZeroTier|Loopback|Npcap|Clat|WFP|WAN Miniport|Default Switch|Host-Only|vEthernet|WSL|Docker|Bluetooth|蓝牙|Radmin|Hamachi)`)
 
 // AdapterInfo 表示 Windows 适配器属性与 DNS 配置
 type AdapterInfo struct {

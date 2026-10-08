@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -263,7 +264,7 @@ func isIPv6(addr string) bool {
 		ip := net.ParseIP(host)
 		return ip != nil && ip.To4() == nil
 	}
-	ip := net.ParseIP(addr)
+	ip := net.ParseIP(strings.Trim(addr, "[]"))
 	return ip != nil && ip.To4() == nil
 }
 
@@ -295,12 +296,12 @@ func DeduplicateAddresses(addrs []string) []string {
 		}
 		host, port, err := net.SplitHostPort(a)
 		if err == nil {
-			// 若已有 0.0.0.0:port，则过滤同端口的 127.0.0.1
-			if wildcardPortsV4[port] && host == "127.0.0.1" {
+			// 若已有 0.0.0.0:port，则过滤同端口的其他所有 IPv4 地址，防止 Windows 套接字冲突
+			if wildcardPortsV4[port] && host != "0.0.0.0" && !isIPv6(a) {
 				continue
 			}
-			// 若已有 [::]:port，则过滤同端口的 ::1
-			if wildcardPortsV6[port] && host == "::1" {
+			// 若已有 [::]:port，则过滤同端口的其他所有 IPv6 地址
+			if wildcardPortsV6[port] && host != "::" && isIPv6(a) {
 				continue
 			}
 		}

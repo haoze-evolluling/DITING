@@ -318,4 +318,27 @@ func TestController_LANIntegration(t *testing.T) {
 	if len(lanStatusUpdated.ListenAddresses) != 2 || lanStatusUpdated.ListenAddresses[0] != "0.0.0.0:53" {
 		t.Errorf("expected listen on 0.0.0.0:53, got: %v", lanStatusUpdated.ListenAddresses)
 	}
+
+	// 4. 关闭局域网模式，验证安全还原为本地回环 (127.0.0.1:53)
+	err = prg.ConfigureLAN(ctx, ipc.ConfigureLANRequest{
+		AllowLAN:          false,
+		ConfigureFirewall: false,
+	})
+	if err != nil {
+		t.Fatalf("ConfigureLAN disable failed: %v", err)
+	}
+	if prg.cfg.DNS.AllowLAN {
+		t.Errorf("expected AllowLAN false after disable")
+	}
+
+	lanStatusDisabled, err := prg.GetLANStatus(ctx)
+	if err != nil {
+		t.Fatalf("GetLANStatus after disable failed: %v", err)
+	}
+	if lanStatusDisabled.AllowLAN {
+		t.Errorf("expected AllowLAN false in status response")
+	}
+	if len(lanStatusDisabled.ListenAddresses) != 2 || lanStatusDisabled.ListenAddresses[0] != "127.0.0.1:53" {
+		t.Errorf("expected reverted local listen on 127.0.0.1:53, got: %v", lanStatusDisabled.ListenAddresses)
+	}
 }

@@ -29,8 +29,8 @@ func extractLANAddresses(ifaces []net.Interface) []string {
 	seen := make(map[string]bool)
 
 	for _, iface := range ifaces {
-		// 忽略处于关闭状态、本地回环或匹配常见虚拟适配器特征的接口
-		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+		// 忽略处于关闭状态、本地回环、点对点通道或匹配常见虚拟适配器特征的接口
+		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 || iface.Flags&net.FlagPointToPoint != 0 {
 			continue
 		}
 		if IsVirtualAdapter(iface.Name, "", false) {
@@ -51,7 +51,7 @@ func extractLANAddresses(ifaces []net.Interface) []string {
 				ip = v.IP
 			}
 
-			if ip == nil || ip.IsLoopback() || ip.IsUnspecified() {
+			if ip == nil || ip.IsLoopback() || ip.IsUnspecified() || ip.IsMulticast() {
 				continue
 			}
 
