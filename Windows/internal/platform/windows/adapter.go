@@ -85,6 +85,40 @@ func HasValidIPv4Gateway(gateway string) bool {
 	return !ip.IsLoopback() && !ip.IsUnspecified()
 }
 
+// IsLoopbackOrLocalIP 判断 IP 字符串是否属于本地回环 (127.0.0.0/8, ::1) 或未指定/全零地址
+func IsLoopbackOrLocalIP(ipStr string) bool {
+	trimmed := strings.TrimSpace(ipStr)
+	if trimmed == "" {
+		return false
+	}
+	if host, _, err := net.SplitHostPort(trimmed); err == nil {
+		trimmed = host
+	}
+	ip := net.ParseIP(trimmed)
+	if ip != nil {
+		return ip.IsLoopback() || ip.IsUnspecified()
+	}
+	lower := strings.ToLower(trimmed)
+	return strings.HasPrefix(lower, "127.") || lower == "::1" || lower == "0.0.0.0" || lower == "::" || lower == "localhost"
+}
+
+// FilterLoopbackIPs 过滤切片中的本地回环地址与未指定地址
+func FilterLoopbackIPs(ips []string) []string {
+	if len(ips) == 0 {
+		return []string{}
+	}
+	clean := make([]string, 0, len(ips))
+	for _, ip := range ips {
+		if !IsLoopbackOrLocalIP(ip) {
+			trimmed := strings.TrimSpace(ip)
+			if trimmed != "" {
+				clean = append(clean, trimmed)
+			}
+		}
+	}
+	return clean
+}
+
 // parseStringOrSlice 解析 PowerShell 序列化时可能产生的单个字符串或字符串数组
 func parseStringOrSlice(raw json.RawMessage) []string {
 	if len(raw) == 0 || string(raw) == "null" {
@@ -191,9 +225,14 @@ Get-NetAdapter -ErrorAction SilentlyContinue | ForEach-Object {
     $v4dns = if ($ip -and $ip.DNSServer) { @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 2 }).ServerAddresses) } else { @() };
     $v6dns = if ($ip -and $ip.DNSServer) { @(($ip.DNSServer | Where-Object { $_.AddressFamily -eq 23 }).ServerAddresses) } else { @() };
     $reg = if ($a.InterfaceGuid) { try { Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue 2>$null } catch { $null } } else { $null };
-    $v4dhcp = if ($reg) { ($reg.EnableDHCP -eq 1) -and ([string]::IsNullOrWhiteSpace($reg.NameServer)) } else { $true };
+    $v4ns = if ($reg -and $reg.NameServer) { @($reg.NameServer -split '[, ]+' | Where-Object { $_ -and $_ -notmatch '^127\.' -and $_ -ne '0.0.0.0' }) } else { @() };
+    $v4dhcp = if ($reg) { ($reg.EnableDHCP -eq 1) -and ($v4ns.Count -eq 0) } else { $true };
+    if (-not $v4dhcp -and $v4ns.Count -eq 0 -and ($reg -and $reg.EnableDHCP -ne 0)) { $v4dhcp = $true };
     $reg6 = if ($a.InterfaceGuid) { try { Get-ItemProperty -Path ('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\' + $a.InterfaceGuid) -ErrorAction SilentlyContinue 2>$null } catch { $null } } else { $null };
-    $v6dhcp = if ($reg6) { [string]::IsNullOrWhiteSpace($reg6.NameServer) } else { $true };
+    $v6ns = if ($reg6 -and $reg6.NameServer) { @($reg6.NameServer -split '[, ]+' | Where-Object { $_ -and $_ -ne '::1' -and $_ -ne '::' -and $_ -notmatch '^127\.' }) } else { @() };
+    $v6dhcp = if ($reg6) { $v6ns.Count -eq 0 } else { $true };
+    $v4dnsClean = @($v4dns | Where-Object { $_ -and $_ -notmatch '^127\.' -and $_ -ne '0.0.0.0' });
+    $v6dnsClean = @($v6dns | Where-Object { $_ -and $_ -ne '::1' -and $_ -ne '::' -and $_ -notmatch '^127\.' });
     [PSCustomObject]@{
         ID = $a.InterfaceGuid;
         Name = $a.Name;
@@ -203,8 +242,8 @@ Get-NetAdapter -ErrorAction SilentlyContinue | ForEach-Object {
         Gateway = [string]$gw;
         IPv4DHCP = [bool]$v4dhcp;
         IPv6DHCP = [bool]$v6dhcp;
-        IPv4DNS = $v4dns;
-        IPv6DNS = $v6dns;
+        IPv4DNS = $v4dnsClean;
+        IPv6DNS = $v6dnsClean;
         Virtual = [bool]$a.Virtual;
     }
 } | ConvertTo-Json -Depth 3
@@ -261,6 +300,17 @@ func parseAdapterJSON(output string) ([]AdapterInfo, error) {
 	results := make([]AdapterInfo, 0, len(rawList))
 	for _, raw := range rawList {
 		isVirt := IsVirtualAdapter(raw.Name, raw.Description, raw.Virtual)
+		v4DNS := FilterLoopbackIPs(parseStringOrSlice(raw.IPv4DNS))
+		v6DNS := FilterLoopbackIPs(parseStringOrSlice(raw.IPv6DNS))
+		v4DHCP := raw.IPv4DHCP
+		// 若 DNS 列表为空（或原先仅含被过滤的回环地址），则强制修正为 DHCP 自动获取
+		if len(v4DNS) == 0 {
+			v4DHCP = true
+		}
+		v6DHCP := raw.IPv6DHCP
+		if len(v6DNS) == 0 {
+			v6DHCP = true
+		}
 		results = append(results, AdapterInfo{
 			ID:          raw.ID,
 			Name:        raw.Name,
@@ -268,10 +318,10 @@ func parseAdapterJSON(output string) ([]AdapterInfo, error) {
 			Index:       raw.Index,
 			Status:      raw.Status,
 			Gateway:     raw.Gateway,
-			IPv4DHCP:    raw.IPv4DHCP,
-			IPv6DHCP:    raw.IPv6DHCP,
-			IPv4DNS:     parseStringOrSlice(raw.IPv4DNS),
-			IPv6DNS:     parseStringOrSlice(raw.IPv6DNS),
+			IPv4DHCP:    v4DHCP,
+			IPv6DHCP:    v6DHCP,
+			IPv4DNS:     v4DNS,
+			IPv6DNS:     v6DNS,
 			IsPhysical:  !isVirt,
 		})
 	}

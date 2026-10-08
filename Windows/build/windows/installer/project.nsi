@@ -1,4 +1,4 @@
-﻿Unicode true
+Unicode true
 
 ####
 ## 谛听 (DITING) Windows 端整合安装包配置
@@ -125,16 +125,23 @@ Section "uninstall"
     nsExec::Exec 'net.exe stop "${SERVICE_NAME}"'
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -restore'
 
-    # 3. 从系统服务管理器中注销清理特权服务
+    # 3. 强力兜底全网卡 DNS 还原机制：遍历所有网卡，将任何残留指向 127.0.0.1 / ::1 的 DNS 重置为自动获取 (DHCP)
+    DetailPrint "正在执行全网卡 DNS 兜底自愈与还原..."
+    nsExec::Exec 'powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-DnsClientServerAddress | Where-Object { $$_.ServerAddresses -contains $\"127.0.0.1$\" -or $$_.ServerAddresses -contains $\"::1$\" } | ForEach-Object { Set-DnsClientServerAddress -InterfaceIndex $$_.InterfaceIndex -ResetServerAddresses -ErrorAction SilentlyContinue; if ($$_.InterfaceAlias) { netsh interface ipv4 set dnsservers name=\"$$($$_.InterfaceAlias)\" source=dhcp 2>$$null; netsh interface ipv6 set dnsservers name=\"$$($$_.InterfaceAlias)\" source=dhcp 2>$$null } }; Clear-DnsClientCache -ErrorAction SilentlyContinue; ipconfig /flushdns"'
+
+    # 4. 从系统服务管理器中注销清理特权服务
     DetailPrint "正在从系统服务中注销谛听服务..."
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service uninstall'
     nsExec::Exec 'sc.exe delete ${SERVICE_NAME}'
 
-    # 4. 清除用户数据与自启动注册表项
+    # 5. 清除用户数据、残留状态与自启动注册表项
+    SetShellVarContext all
+    RMDir /r "$APPDATA\DITING"
+    SetShellVarContext current
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}"
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "DitingDNS"
 
-    # 5. 删除程序本体
+    # 6. 删除程序本体
     Delete "$INSTDIR\${SERVICE_EXECUTABLE}"
     Delete "$INSTDIR\${PRODUCT_EXECUTABLE}"
     RMDir /r $INSTDIR

@@ -480,56 +480,6 @@ func formatIP(ip net.IP) string {
 	return ip.String()
 }
 
-func printVersion() {
-	fmt.Printf("diting-service version %s (built: %s, commit: %s)\n", Version, BuildTime, GitCommit)
-	fmt.Println("DNS engine: miekg/dns | Platform: Windows | IPC: HTTP/WebSocket")
-}
-
-func executeEmergencyRestore(customConfigPath string) {
-	fmt.Println("[谛听] 正在执行独立离线 DNS 紧急恢复...")
-	statePath := ""
-	if customConfigPath != "" {
-		if cfg, err := config.LoadConfig(customConfigPath); err == nil {
-			statePath = cfg.Takeover.StateFilePath
-		}
-	}
-	store := windows.NewFileStateStore(statePath)
-	exec := windows.NewDefaultExecutor()
-	mgr := windows.NewDNSManager(exec, store, Version)
-	healed, err := store.CheckAndSelfHeal(context.Background(), mgr)
-	if err != nil {
-		fmt.Printf("[失败] 恢复失败: %v\n", err)
-		os.Exit(1)
-	}
-	if healed {
-		fmt.Println("[成功] 已根据残留状态成功恢复系统网卡 DNS！")
-	} else {
-		fmt.Println("[提示] 未检测到残留接管状态文件，系统网卡 DNS 处于正常状态。")
-	}
-}
-
-func executePortDiagnostics() {
-	fmt.Println("[谛听] 正在探测本地 53 端口占用与冲突...")
-	checker := windows.NewPortChecker(nil)
-	res, err := checker.CheckPort53(context.Background())
-	if err != nil {
-		fmt.Printf("[错误] 探测失败: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("端口 127.0.0.1:53 绑定可用性: %v\n", res.Available)
-	fmt.Printf("是否检测到 ICS (SharedAccess): %v\n", res.HasICS)
-	fmt.Println("--------------------------------------------------")
-	fmt.Printf("诊断报告:\n%s\n", res.Diagnostic)
-	fmt.Println("--------------------------------------------------")
-	if len(res.Conflicts) > 0 {
-		fmt.Println("现存 53 端口监听实体:")
-		for i, c := range res.Conflicts {
-			fmt.Printf("  [%d] %s %s (PID: %d, 进程: %s, ICS: %v, 自身: %v)\n", i+1, c.Protocol, c.LocalAddress, c.PID, c.ProcessName, c.IsICS, c.IsSelf)
-		}
-	}
-}
-
 func main() {
 	showVersion := flag.Bool("v", false, "显示服务版本号并退出")
 	flag.BoolVar(showVersion, "version", false, "显示服务版本号并退出")

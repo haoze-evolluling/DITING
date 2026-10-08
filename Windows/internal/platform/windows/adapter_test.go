@@ -250,4 +250,102 @@ func TestParseAdapterJSON_ComplexNoisyStreams(t *testing.T) {
 	}
 }
 
+func TestFilterLoopbackIPs(t *testing.T) {
+	input := []string{
+		"127.0.0.1",
+		"::1",
+		"0.0.0.0",
+		"::",
+		"127.0.0.53",
+		"127.1.2.3:53",
+		"localhost",
+		"8.8.8.8",
+		"1.1.1.1",
+		"2001:4860:4860::8888",
+		"",
+	}
+	got := FilterLoopbackIPs(input)
+	want := []string{"8.8.8.8", "1.1.1.1", "2001:4860:4860::8888"}
+
+	if len(got) != len(want) {
+		t.Fatalf("FilterLoopbackIPs returned %d items, want %d: %v", len(got), len(want), got)
+	}
+	for i, v := range want {
+		if got[i] != v {
+			t.Errorf("FilterLoopbackIPs[%d] = %s; want %s", i, got[i], v)
+		}
+	}
+}
+
+func TestParseAdapterJSON_TakenOverLoopbackFilter(t *testing.T) {
+	// 模拟已处于软件接管状态（127.0.0.1 与 ::1）下的网卡 JSON
+	jsonSample := `[
+		{
+			"ID": "{GUID-TAKEN}",
+			"Name": "WLAN",
+			"Description": "Intel Wi-Fi",
+			"Index": 7,
+			"Status": "Up",
+			"Gateway": "192.168.1.1",
+			"IPv4DHCP": false,
+			"IPv6DHCP": false,
+			"IPv4DNS": ["127.0.0.1"],
+			"IPv6DNS": ["::1"],
+			"Virtual": false
+		},
+		{
+			"ID": "{GUID-MIXED}",
+			"Name": "以太网",
+			"Description": "Realtek Ethernet",
+			"Index": 8,
+			"Status": "Up",
+			"Gateway": "192.168.1.1",
+			"IPv4DHCP": false,
+			"IPv6DHCP": false,
+			"IPv4DNS": ["127.0.0.1", "114.114.114.114"],
+			"IPv6DNS": ["::1", "2400:3200::1"],
+			"Virtual": false
+		}
+	]`
+
+	adapters, err := parseAdapterJSON(jsonSample)
+	if err != nil {
+		t.Fatalf("parseAdapterJSON failed: %v", err)
+	}
+	if len(adapters) != 2 {
+		t.Fatalf("expected 2 adapters, got %d", len(adapters))
+	}
+
+	// WLAN：仅有回环地址，应全部过滤并自动更正为 DHCP 自动获取
+	wlan := adapters[0]
+	if !wlan.IPv4DHCP {
+		t.Errorf("WLAN IPv4DHCP should be true after loopback filtering, got false")
+	}
+	if !wlan.IPv6DHCP {
+		t.Errorf("WLAN IPv6DHCP should be true after loopback filtering, got false")
+	}
+	if len(wlan.IPv4DNS) != 0 {
+		t.Errorf("WLAN IPv4DNS should be empty, got: %v", wlan.IPv4DNS)
+	}
+	if len(wlan.IPv6DNS) != 0 {
+		t.Errorf("WLAN IPv6DNS should be empty, got: %v", wlan.IPv6DNS)
+	}
+
+	// 以太网：混合了回环与真实静态 DNS，应仅过滤回环并保留合法静态 DNS 与静态判定
+	eth := adapters[1]
+	if eth.IPv4DHCP {
+		t.Errorf("以太网 IPv4DHCP should remain false for real static DNS")
+	}
+	if eth.IPv6DHCP {
+		t.Errorf("以太网 IPv6DHCP should remain false for real static DNS")
+	}
+	if len(eth.IPv4DNS) != 1 || eth.IPv4DNS[0] != "114.114.114.114" {
+		t.Errorf("以太网 IPv4DNS unexpected: %v", eth.IPv4DNS)
+	}
+	if len(eth.IPv6DNS) != 1 || eth.IPv6DNS[0] != "2400:3200::1" {
+		t.Errorf("以太网 IPv6DNS unexpected: %v", eth.IPv6DNS)
+	}
+}
+
+
 

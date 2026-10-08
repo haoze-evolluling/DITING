@@ -23,6 +23,7 @@ type DNSManager interface {
 	Restore(ctx context.Context) error
 	RestoreSingle(ctx context.Context, adapterID string) error
 	RestoreAdapters(ctx context.Context, adapters []AdapterState) error
+	ResetResidualLoopbackDNS(ctx context.Context) error
 	IsTakeoverActive() bool
 	GetTakenOverAdapters() []AdapterState
 	FlushDNSCache(ctx context.Context) error
@@ -84,6 +85,21 @@ func (m *WindowsDNSManager) FlushDNSCache(ctx context.Context) error {
 	return err
 }
 
+// CleanAdapterState 净化网卡快照配置，过滤自身接管的回环地址（127.0.0.0/8、::1 等）
+// 若过滤后原始 DNS 为空，则自动将其修正为 DHCP 自动获取，避免恢复为静态 127.0.0.1 导致断网
+func CleanAdapterState(a AdapterState) AdapterState {
+	cleaned := a
+	cleaned.IPv4DNS = FilterLoopbackIPs(a.IPv4DNS)
+	cleaned.IPv6DNS = FilterLoopbackIPs(a.IPv6DNS)
+	if len(cleaned.IPv4DNS) == 0 {
+		cleaned.IPv4DHCP = true
+	}
+	if len(cleaned.IPv6DNS) == 0 {
+		cleaned.IPv6DHCP = true
+	}
+	return cleaned
+}
+
 // Takeover 对指定的活动物理网卡执行双栈 DNS 接管 (127.0.0.1 / ::1)
 func (m *WindowsDNSManager) Takeover(ctx context.Context, adapters []AdapterInfo) error {
 	m.mu.Lock()
@@ -95,7 +111,7 @@ func (m *WindowsDNSManager) Takeover(ctx context.Context, adapters []AdapterInfo
 
 	states := make([]AdapterState, 0, len(adapters))
 	for _, a := range adapters {
-		states = append(states, AdapterState{
+		states = append(states, CleanAdapterState(AdapterState{
 			ID:          a.ID,
 			Name:        a.Name,
 			Index:       a.Index,
@@ -104,7 +120,7 @@ func (m *WindowsDNSManager) Takeover(ctx context.Context, adapters []AdapterInfo
 			IPv6DHCP:    a.IPv6DHCP,
 			IPv4DNS:     a.IPv4DNS,
 			IPv6DNS:     a.IPv6DNS,
-		})
+		}))
 	}
 
 	// 1. 持久化记录接管状态至 dns_state.json
@@ -146,7 +162,7 @@ func (m *WindowsDNSManager) TakeoverSingle(ctx context.Context, adapter AdapterI
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	state := AdapterState{
+	state := CleanAdapterState(AdapterState{
 		ID:          adapter.ID,
 		Name:        adapter.Name,
 		Index:       adapter.Index,
@@ -155,7 +171,7 @@ func (m *WindowsDNSManager) TakeoverSingle(ctx context.Context, adapter AdapterI
 		IPv6DHCP:    adapter.IPv6DHCP,
 		IPv4DNS:     adapter.IPv4DNS,
 		IPv6DNS:     adapter.IPv6DNS,
-	}
+	})
 
 	// 记录之前的快照，若接管失败则安全回滚
 	oldAdapters := make([]AdapterState, len(m.adapters))
@@ -305,6 +321,7 @@ func (m *WindowsDNSManager) RestoreAdapters(ctx context.Context, adapters []Adap
 
 // restoreSingleAdapter 还原单个网卡的 IPv4 与 IPv6 DNS
 func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterState) error {
+	a = CleanAdapterState(a)
 	var errs []string
 
 	v4IsDHCP := a.IPv4DHCP || len(a.IPv4DNS) == 0
@@ -390,6 +407,24 @@ func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterS
 	return nil
 }
 
+// ResetResidualLoopbackDNS 扫描系统所有网卡，对任何残留指向 127.0.0.1 或 ::1 的 DNS 进行强力重置为 DHCP 自动获取
+func (m *WindowsDNSManager) ResetResidualLoopbackDNS(ctx context.Context) error {
+	psScript := `
+$ErrorActionPreference = 'SilentlyContinue';
+Get-DnsClientServerAddress | Where-Object { $_.ServerAddresses -contains '127.0.0.1' -or $_.ServerAddresses -contains '::1' } | ForEach-Object {
+    Set-DnsClientServerAddress -InterfaceIndex $_.InterfaceIndex -ResetServerAddresses -ErrorAction SilentlyContinue;
+    if ($_.InterfaceAlias) {
+        netsh interface ipv4 set dnsservers name="$($_.InterfaceAlias)" source=dhcp 2>$null;
+        netsh interface ipv6 set dnsservers name="$($_.InterfaceAlias)" source=dhcp 2>$null;
+    }
+};
+Clear-DnsClientCache -ErrorAction SilentlyContinue;
+`
+	_, err := m.executor.RunPowerShell(ctx, psScript)
+	_ = m.FlushDNSCache(ctx)
+	return err
+}
+
 // GenerateRestoreScript 生成独立离线恢复脚本 restore-dns.bat
 func GenerateRestoreScript(adapters []AdapterState, outputPath string) error {
 	var sb strings.Builder
@@ -407,7 +442,8 @@ func GenerateRestoreScript(adapters []AdapterState, outputPath string) error {
 	sb.WriteString(")\r\n\r\n")
 	sb.WriteString("echo [1/2] 正在还原网卡 DNS 配置...\r\n")
 
-	for _, a := range adapters {
+	for _, raw := range adapters {
+		a := CleanAdapterState(raw)
 		sb.WriteString(fmt.Sprintf("echo 正在恢复适配器 [%s] ...\r\n", a.Name))
 		if a.IPv4DHCP || len(a.IPv4DNS) == 0 {
 			sb.WriteString(fmt.Sprintf("netsh interface ipv4 set dnsservers name=\"%s\" source=dhcp\r\n", a.Name))

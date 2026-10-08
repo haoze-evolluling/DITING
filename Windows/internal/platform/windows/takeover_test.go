@@ -256,3 +256,152 @@ func TestWindowsDNSManager_TakeoverSingleRollback(t *testing.T) {
 		t.Errorf("taken adapters should be empty after rollback")
 	}
 }
+
+func TestCleanAdapterState(t *testing.T) {
+	dirty := AdapterState{
+		ID:          "{GUID-DIRTY}",
+		Name:        "WLAN",
+		Index:       7,
+		Description: "Wi-Fi",
+		IPv4DHCP:    false,
+		IPv6DHCP:    false,
+		IPv4DNS:     []string{"127.0.0.1"},
+		IPv6DNS:     []string{"::1"},
+	}
+
+	cleaned := CleanAdapterState(dirty)
+	if !cleaned.IPv4DHCP {
+		t.Errorf("expected IPv4DHCP to be true after cleaning, got false")
+	}
+	if !cleaned.IPv6DHCP {
+		t.Errorf("expected IPv6DHCP to be true after cleaning, got false")
+	}
+	if len(cleaned.IPv4DNS) != 0 {
+		t.Errorf("expected empty IPv4DNS, got %v", cleaned.IPv4DNS)
+	}
+	if len(cleaned.IPv6DNS) != 0 {
+		t.Errorf("expected empty IPv6DNS, got %v", cleaned.IPv6DNS)
+	}
+
+	// 测试真实静态 DNS 保留
+	realStatic := AdapterState{
+		ID:          "{GUID-REAL}",
+		Name:        "以太网",
+		Index:       8,
+		IPv4DHCP:    false,
+		IPv6DHCP:    false,
+		IPv4DNS:     []string{"127.0.0.1", "8.8.8.8"},
+		IPv6DNS:     []string{"::1", "2001:4860:4860::8888"},
+	}
+	cleanedStatic := CleanAdapterState(realStatic)
+	if cleanedStatic.IPv4DHCP {
+		t.Errorf("expected IPv4DHCP to remain false for real static DNS")
+	}
+	if len(cleanedStatic.IPv4DNS) != 1 || cleanedStatic.IPv4DNS[0] != "8.8.8.8" {
+		t.Errorf("unexpected cleaned IPv4DNS: %v", cleanedStatic.IPv4DNS)
+	}
+	if len(cleanedStatic.IPv6DNS) != 1 || cleanedStatic.IPv6DNS[0] != "2001:4860:4860::8888" {
+		t.Errorf("unexpected cleaned IPv6DNS: %v", cleanedStatic.IPv6DNS)
+	}
+}
+
+func TestGenerateRestoreScript_FilterLoopback(t *testing.T) {
+	tmpDir := t.TempDir()
+	batPath := filepath.Join(tmpDir, "restore-dns.bat")
+
+	// 模拟此前被误记录为静态 127.0.0.1 的残留网卡快照
+	dirtyStates := []AdapterState{
+		{
+			ID:          "{GUID-DIRTY}",
+			Name:        "WLAN",
+			Index:       7,
+			IPv4DHCP:    false,
+			IPv6DHCP:    false,
+			IPv4DNS:     []string{"127.0.0.1"},
+			IPv6DNS:     []string{"::1"},
+		},
+	}
+
+	if err := GenerateRestoreScript(dirtyStates, batPath); err != nil {
+		t.Fatalf("GenerateRestoreScript failed: %v", err)
+	}
+
+	bytes, err := os.ReadFile(batPath)
+	if err != nil {
+		t.Fatalf("read generated bat failed: %v", err)
+	}
+	content := string(bytes)
+
+	// 必须生成 source=dhcp 命令，绝对不可生成 static 127.0.0.1
+	if !strings.Contains(content, "netsh interface ipv4 set dnsservers name=\"WLAN\" source=dhcp") {
+		t.Errorf("bat should contain IPv4 source=dhcp, got: %s", content)
+	}
+	if !strings.Contains(content, "netsh interface ipv6 set dnsservers name=\"WLAN\" source=dhcp") {
+		t.Errorf("bat should contain IPv6 source=dhcp, got: %s", content)
+	}
+	if strings.Contains(content, "127.0.0.1") {
+		t.Errorf("bat must NOT contain 127.0.0.1: %s", content)
+	}
+	if strings.Contains(content, "::1") {
+		t.Errorf("bat must NOT contain ::1: %s", content)
+	}
+}
+
+func TestRestoreAdapters_FiltersResidualLoopback(t *testing.T) {
+	mock := &mockExecutor{}
+	store := NewFileStateStore(filepath.Join(t.TempDir(), "dns_state.json"))
+	mgr := NewDNSManager(mock, store, "0.1.0-test")
+
+	// 传入残留 127.0.0.1 与 ::1 的网卡快照
+	dirtyAdapters := []AdapterState{
+		{
+			ID:       "{GUID-1}",
+			Name:     "WLAN",
+			Index:    7,
+			IPv4DHCP: false,
+			IPv6DHCP: false,
+			IPv4DNS:  []string{"127.0.0.1"},
+			IPv6DNS:  []string{"::1"},
+		},
+	}
+
+	if err := mgr.RestoreAdapters(context.Background(), dirtyAdapters); err != nil {
+		t.Fatalf("RestoreAdapters failed: %v", err)
+	}
+
+	// 验证调用的命令是 ResetServerAddresses，而非设置 127.0.0.1
+	foundReset := false
+	for _, ps := range mock.runPS {
+		if strings.Contains(ps, "Set-DnsClientServerAddress -InterfaceIndex 7 -ResetServerAddresses") {
+			foundReset = true
+			break
+		}
+	}
+	if !foundReset {
+		t.Errorf("expected ResetServerAddresses command, got runPS: %v", mock.runPS)
+	}
+	for _, ps := range mock.runPS {
+		if strings.Contains(ps, "127.0.0.1") {
+			t.Errorf("mock runPS should not contain 127.0.0.1 during restore, got: %s", ps)
+		}
+	}
+}
+
+func TestResetResidualLoopbackDNS(t *testing.T) {
+	mock := &mockExecutor{}
+	store := NewFileStateStore(filepath.Join(t.TempDir(), "dns_state.json"))
+	mgr := NewDNSManager(mock, store, "0.1.0-test")
+
+	if err := mgr.ResetResidualLoopbackDNS(context.Background()); err != nil {
+		t.Fatalf("ResetResidualLoopbackDNS failed: %v", err)
+	}
+
+	if len(mock.runPS) == 0 {
+		t.Fatalf("expected PowerShell command executed")
+	}
+	ps := mock.runPS[0]
+	if !strings.Contains(ps, "Get-DnsClientServerAddress") || !strings.Contains(ps, "-ResetServerAddresses") {
+		t.Errorf("unexpected script executed: %s", ps)
+	}
+}
+
