@@ -1,4 +1,4 @@
-# DO NOT EDIT - Generated automatically by `wails build`
+﻿# DO NOT EDIT - Generated automatically by `wails build`
 
 !include "x64.nsh"
 !include "WinVer.nsh"
@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "diting-gui"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "1.3.0"
+    !define INFO_PRODUCTVERSION "1.3.1"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "Copyright........."

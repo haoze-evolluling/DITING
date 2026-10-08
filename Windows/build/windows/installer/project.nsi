@@ -1,4 +1,4 @@
-Unicode true
+﻿Unicode true
 
 ####
 ## 谛听 (DITING) Windows 端整合安装包配置
@@ -7,7 +7,7 @@ Unicode true
 !define INFO_PROJECTNAME    "diting-gui"
 !define INFO_COMPANYNAME    "Diting"
 !define INFO_PRODUCTNAME    "谛听 DNS"
-!define INFO_PRODUCTVERSION "1.3.0"
+!define INFO_PRODUCTVERSION "1.3.1"
 !define INFO_COPYRIGHT      "Copyright 2026 DITING"
 
 !define PRODUCT_EXECUTABLE  "diting-gui.exe"

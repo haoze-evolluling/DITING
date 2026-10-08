@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   StatusResponse,
   AdapterInfo,
   UpstreamInfo,
@@ -80,7 +80,7 @@ export const mockFilterStats: FilterStats = {
 };
 
 export const mockStatus: StatusResponse = {
-  version: '1.3.0',
+  version: '1.3.1',
   pid: 14280,
   uptimeSeconds: 7320,
   dns: {

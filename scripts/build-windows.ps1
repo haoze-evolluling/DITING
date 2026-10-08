@@ -1,17 +1,17 @@
-<#
+﻿<#
 .SYNOPSIS
     谛听 (DITING) Windows 端构建脚本 (diting-service & diting-gui & nsis-installer)
 
 .DESCRIPTION
     一键编译 Windows 平台特权服务 (diting-service.exe)、Wails GUI 前端客户端 (diting-gui.exe)
     以及集成了特权服务与自动安装注册的独立 NSIS 安装包。
-    支持自动版本注入、安装包规范命名（如 DITING-release-v1.3.0.exe）及中间调试产物清理。
+    支持自动版本注入、安装包规范命名（如 DITING-release-v1.3.1.exe）及中间调试产物清理。
 
 .PARAMETER Target
     构建目标: all (默认，完整安装包并清理中间体), service (仅特权服务), gui (仅GUI客户端), installer (仅打包安装包)
 
 .PARAMETER Version
-    应用版本号，默认 1.3.0 (如 1.3.0)
+    应用版本号，默认 1.3.1 (如 1.3.1)
 
 .PARAMETER BuildType
     构建类型: release (默认), debug
@@ -28,7 +28,7 @@ param (
     [ValidateSet("all", "service", "gui", "installer")]
     [string]$Target = "all",
 
-    [string]$Version = "1.3.0",
+    [string]$Version = "1.3.1",
 
     [ValidateSet("release", "debug")]
     [string]$BuildType = "release",
