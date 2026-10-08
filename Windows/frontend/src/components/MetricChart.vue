@@ -14,7 +14,7 @@ const props = withDefaults(
   {
     maxPoints: 30,
     height: 120,
-    strokeColor: '#0284c7',
+    strokeColor: '#2b60ab',
     gradientId: 'chart-grad-primary',
     label: '',
     unit: '',

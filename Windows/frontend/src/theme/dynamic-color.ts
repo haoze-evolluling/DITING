@@ -1,12 +1,16 @@
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 /**
- * 谛听官方基准品牌主色：经典天穹科技蓝 (匹配 Logo 地球天蓝)
+ * 谛听官方基准品牌主色：冰川蔚蓝主题体系
+ * 主色：#2b60ab (高对比度品牌主色)
+ * 容器辅助色：#d4e3ff (浅蓝主题核心色)
  */
-export const CLASSIC_SKY_BLUE = '#0284C7';
+export const BRAND_PRIMARY_BLUE = '#2b60ab';
+export const BRAND_CONTAINER_BLUE = '#d4e3ff';
+export const CLASSIC_SKY_BLUE = BRAND_PRIMARY_BLUE; // 向后兼容别名
 
 class ThemeManager {
-  private readonly seedColor: string = CLASSIC_SKY_BLUE;
+  private readonly seedColor: string = BRAND_PRIMARY_BLUE;
   private mode: ThemeMode = 'system';
   private isDarkActive: boolean = false;
   private listeners: Set<() => void> = new Set();

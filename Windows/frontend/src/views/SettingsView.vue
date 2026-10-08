@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ipc } from '../api/ipc';
-import { themeManager, CLASSIC_SKY_BLUE, type ThemeMode } from '../theme/dynamic-color';
+import { themeManager, type ThemeMode } from '../theme/dynamic-color';
 import type { PortCheckResult } from '../api/types';
 import M3Icon from '../components/M3Icon.vue';
 import AppModal from '../components/AppModal.vue';
@@ -220,7 +220,7 @@ onMounted(() => {
             class="app-btn-base transition-all duration-150"
             :class="[
               currentMode === m.id
-                ? 'bg-brand-primary text-white dark:text-sky-950 border-transparent shadow-xs'
+                ? 'bg-brand-primary text-white dark:text-[#041e42] border-transparent shadow-xs'
                 : 'bg-surface-card-sub border border-surface-border text-text-sub hover:bg-surface-hover',
             ]"
           >
@@ -233,13 +233,18 @@ onMounted(() => {
       <div class="pt-2 border-t border-surface-border">
         <div class="flex items-center justify-between p-3.5 rounded-xl border border-brand-primary/20 bg-brand-container/20">
           <div class="flex items-center gap-3">
-            <span class="w-5 h-5 rounded-lg bg-[#0284c7] shadow-xs flex items-center justify-center shrink-0 border border-white/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-            </span>
+            <div class="flex items-center -space-x-1 shrink-0">
+              <span class="w-5 h-5 rounded-lg bg-[#2b60ab] shadow-xs flex items-center justify-center shrink-0 border border-white/20 z-10" title="主色 #2b60ab">
+                <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+              </span>
+              <span class="w-5 h-5 rounded-lg bg-[#d4e3ff] shadow-xs flex items-center justify-center shrink-0 border border-brand-primary/30" title="辅助色 #d4e3ff">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#041e42]"></span>
+              </span>
+            </div>
             <div>
               <div class="text-xs font-bold text-text-main flex items-center gap-2">
-                <span>经典科技蓝 (品牌主色)</span>
-                <span class="font-mono text-[11px] text-brand-primary bg-surface-card px-1.5 py-0.5 rounded border border-surface-border">#0284C7</span>
+                <span>冰川蔚蓝 (品牌主题色)</span>
+                <span class="font-mono text-[11px] text-brand-primary bg-surface-card px-1.5 py-0.5 rounded border border-surface-border">#2b60ab / #d4e3ff</span>
               </div>
               <div class="text-[11px] text-text-sub">
                 应用全局统一主色调，完美适配浅色与深色模式

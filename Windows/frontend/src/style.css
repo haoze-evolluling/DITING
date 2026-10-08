@@ -41,11 +41,11 @@
   --app-text-sub: #475569;
   --app-text-muted: #94a3b8;
 
-  /* 品牌天穹科技蓝 (#0284c7) */
-  --app-brand-primary: #0284c7;
-  --app-brand-primary-hover: #0369a1;
-  --app-brand-container: #e0f2fe;
-  --app-brand-on-container: #0369a1;
+  /* 品牌冰川蔚蓝主题色体系 (#2b60ab / #d4e3ff) */
+  --app-brand-primary: #2b60ab;
+  --app-brand-primary-hover: #1f4a86;
+  --app-brand-container: #d4e3ff;
+  --app-brand-on-container: #041e42;
 
   /* 状态反馈色 (Light) */
   --app-status-success: #10b981;
@@ -56,10 +56,10 @@
   --app-status-error-bg: #fef2f2;
 
   /* Material Web Components 语义变量映射 (Light) */
-  --md-sys-color-primary: #0284c7;
+  --md-sys-color-primary: #2b60ab;
   --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #e0f2fe;
-  --md-sys-color-on-primary-container: #0369a1;
+  --md-sys-color-primary-container: #d4e3ff;
+  --md-sys-color-on-primary-container: #041e42;
   --md-sys-color-surface: #f8fafc;
   --md-sys-color-on-surface: #0f172a;
   --md-sys-color-surface-container: #ffffff;
@@ -87,11 +87,11 @@
   --app-text-sub: #94a3b8;
   --app-text-muted: #64748b;
 
-  /* 品牌天穹科技蓝 (深色高亮 #38bdf8) */
-  --app-brand-primary: #38bdf8;
-  --app-brand-primary-hover: #7dd3fc;
-  --app-brand-container: rgba(56, 189, 248, 0.15);
-  --app-brand-on-container: #bae6fd;
+  /* 品牌冰川蔚蓝主题色体系 (深色模式 #a8c7fa / #d4e3ff) */
+  --app-brand-primary: #a8c7fa;
+  --app-brand-primary-hover: #bfd6ff;
+  --app-brand-container: rgba(168, 199, 250, 0.15);
+  --app-brand-on-container: #d4e3ff;
 
   /* 状态反馈色 (Dark) */
   --app-status-success: #34d399;
@@ -102,10 +102,10 @@
   --app-status-error-bg: rgba(239, 68, 68, 0.15);
 
   /* Material Web Components 语义变量映射 (Dark) */
-  --md-sys-color-primary: #38bdf8;
-  --md-sys-color-on-primary: #082f49;
-  --md-sys-color-primary-container: #075985;
-  --md-sys-color-on-primary-container: #e0f2fe;
+  --md-sys-color-primary: #a8c7fa;
+  --md-sys-color-on-primary: #041e42;
+  --md-sys-color-primary-container: #1e3a66;
+  --md-sys-color-on-primary-container: #d4e3ff;
   --md-sys-color-surface: #090d16;
   --md-sys-color-on-surface: #f8fafc;
   --md-sys-color-surface-container: #131c2d;
@@ -224,7 +224,7 @@ html, body {
 }
 :root[data-theme="dark"] .app-btn-primary,
 .dark .app-btn-primary {
-  color: #082f49;
+  color: #041e42;
 }
 
 /* 2. 次级线框按钮 (Secondary Outlined) */
@@ -352,7 +352,7 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
 :root[data-theme="dark"] .app-btn-chip[data-active="true"],
 .dark .app-btn-chip.active,
 .dark .app-btn-chip[data-active="true"] {
-  color: #082f49;
+  color: #041e42;
 }
 
 md-dialog {
