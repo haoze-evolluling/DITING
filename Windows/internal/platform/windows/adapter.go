@@ -94,6 +94,7 @@ func IsLoopbackOrLocalIP(ipStr string) bool {
 	if host, _, err := net.SplitHostPort(trimmed); err == nil {
 		trimmed = host
 	}
+	trimmed = strings.Trim(trimmed, "[]")
 	ip := net.ParseIP(trimmed)
 	if ip != nil {
 		return ip.IsLoopback() || ip.IsUnspecified()

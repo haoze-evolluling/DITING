@@ -249,19 +249,24 @@ func (m *WindowsDNSManager) Restore(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if !m.active && len(m.adapters) == 0 {
-		return nil
-	}
-
-	err := m.RestoreAdapters(ctx, m.adapters)
-	if err != nil {
-		return err
+	var err error
+	if len(m.adapters) > 0 {
+		err = m.RestoreAdapters(ctx, m.adapters)
+	} else if m.stateStore != nil {
+		if state, loadErr := m.stateStore.Load(); loadErr == nil && state != nil && len(state.Adapters) > 0 {
+			err = m.RestoreAdapters(ctx, state.Adapters)
+		}
 	}
 
 	m.active = false
 	m.adapters = nil
-	_ = m.stateStore.Clear()
-	return nil
+	if m.stateStore != nil {
+		_ = m.stateStore.Clear()
+	}
+
+	// 无论原状态如何，均主动执行一次全网卡残留回环地址排查兜底
+	_ = m.ResetResidualLoopbackDNS(ctx)
+	return err
 }
 
 // RestoreSingle 还原指定单个网卡的 DNS 接管
@@ -407,11 +412,11 @@ func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a AdapterS
 	return nil
 }
 
-// ResetResidualLoopbackDNS 扫描系统所有网卡，对任何残留指向 127.0.0.1 或 ::1 的 DNS 进行强力重置为 DHCP 自动获取
+// ResetResidualLoopbackDNS 扫描系统所有网卡，对任何残留指向 127.0.0.0/8、::1 或未指定地址的 DNS 进行强力重置为 DHCP 自动获取
 func (m *WindowsDNSManager) ResetResidualLoopbackDNS(ctx context.Context) error {
 	psScript := `
 $ErrorActionPreference = 'SilentlyContinue';
-Get-DnsClientServerAddress | Where-Object { $_.ServerAddresses -contains '127.0.0.1' -or $_.ServerAddresses -contains '::1' } | ForEach-Object {
+Get-DnsClientServerAddress | Where-Object { ($_.ServerAddresses -contains '127.0.0.1') -or ($_.ServerAddresses -match '^127\.') -or ($_.ServerAddresses -contains '::1') -or ($_.ServerAddresses -contains '0.0.0.0') -or ($_.ServerAddresses -contains '::') } | ForEach-Object {
     Set-DnsClientServerAddress -InterfaceIndex $_.InterfaceIndex -ResetServerAddresses -ErrorAction SilentlyContinue;
     if ($_.InterfaceAlias) {
         netsh interface ipv4 set dnsservers name="$($_.InterfaceAlias)" source=dhcp 2>$null;
@@ -421,8 +426,62 @@ Get-DnsClientServerAddress | Where-Object { $_.ServerAddresses -contains '127.0.
 Clear-DnsClientCache -ErrorAction SilentlyContinue;
 `
 	_, err := m.executor.RunPowerShell(ctx, psScript)
+	if err != nil {
+		// PowerShell 异常时使用 netsh 容灾兜底解析并重置
+		_ = m.resetResidualLoopbackDNSViaNetsh(ctx)
+	}
 	_ = m.FlushDNSCache(ctx)
 	return err
+}
+
+func (m *WindowsDNSManager) resetResidualLoopbackDNSViaNetsh(ctx context.Context) error {
+	outV4, _ := m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "show", "dnsservers")
+	for _, name := range parseNetshInterfacesWithLoopback(outV4) {
+		_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", name), "source=dhcp")
+	}
+
+	outV6, _ := m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "show", "dnsservers")
+	for _, name := range parseNetshInterfacesWithLoopback(outV6) {
+		_, _ = m.executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", name), "source=dhcp")
+	}
+	return nil
+}
+
+// parseNetshInterfacesWithLoopback 从 netsh 输出中提取配置了回环地址 DNS 的网卡别名
+func parseNetshInterfacesWithLoopback(output string) []string {
+	var result []string
+	lines := strings.Split(output, "\n")
+	var currentInterface string
+	hasLoopback := false
+
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "Configuration for interface \"") {
+			if currentInterface != "" && hasLoopback {
+				result = append(result, currentInterface)
+			}
+			currentInterface = strings.TrimSuffix(strings.TrimPrefix(trimmed, "Configuration for interface \""), "\"")
+			hasLoopback = false
+			continue
+		}
+		if strings.HasPrefix(trimmed, "接口 \"") {
+			if currentInterface != "" && hasLoopback {
+				result = append(result, currentInterface)
+			}
+			currentInterface = strings.TrimSuffix(strings.TrimPrefix(trimmed, "接口 \""), "\" 的配置")
+			currentInterface = strings.TrimSuffix(currentInterface, "\"")
+			hasLoopback = false
+			continue
+		}
+
+		if currentInterface != "" && (strings.Contains(trimmed, "127.") || strings.Contains(trimmed, "::1")) {
+			hasLoopback = true
+		}
+	}
+	if currentInterface != "" && hasLoopback {
+		result = append(result, currentInterface)
+	}
+	return result
 }
 
 // GenerateRestoreScript 生成独立离线恢复脚本 restore-dns.bat

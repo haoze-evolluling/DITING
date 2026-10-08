@@ -33,7 +33,7 @@ func (e *DefaultExecutor) RunCommand(ctx context.Context, name string, args ...s
 // 分离 stdout 与 stderr，防止底层非致命警告或错误流混入标准输出导致 JSON 反序列化失败。
 func (e *DefaultExecutor) RunPowerShell(ctx context.Context, script string) (string, error) {
 	wrapped := "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; " + script
-	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-Command", wrapped)
+	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", wrapped)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

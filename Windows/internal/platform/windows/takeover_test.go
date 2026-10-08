@@ -405,3 +405,77 @@ func TestResetResidualLoopbackDNS(t *testing.T) {
 	}
 }
 
+func TestResetResidualLoopbackDNS_NetshFallback(t *testing.T) {
+	mock := &mockExecutor{
+		psErr: fmt.Errorf("powershell restricted"),
+		cmdOutput: `Configuration for interface "WLAN"
+    Statically Configured DNS Servers:    127.0.0.1
+    Register with which suffix:           Primary only`,
+	}
+	store := NewFileStateStore(filepath.Join(t.TempDir(), "dns_state.json"))
+	mgr := NewDNSManager(mock, store, "0.1.0-test")
+
+	// PowerShell 失败时应优雅降级调用 netsh，即使 PS 返回错误也执行了兜底
+	_ = mgr.ResetResidualLoopbackDNS(context.Background())
+
+	foundNetshReset := false
+	for _, cmd := range mock.runCmds {
+		if strings.Contains(cmd, "netsh interface") && strings.Contains(cmd, "source=dhcp") {
+			foundNetshReset = true
+			break
+		}
+	}
+	if !foundNetshReset {
+		t.Errorf("expected netsh source=dhcp fallback execution, got cmds: %v", mock.runCmds)
+	}
+}
+
+func TestRestore_CleansResidualEvenWhenNoAdapters(t *testing.T) {
+	mock := &mockExecutor{}
+	store := NewFileStateStore(filepath.Join(t.TempDir(), "dns_state.json"))
+	mgr := NewDNSManager(mock, store, "0.1.0-test")
+
+	// 模拟没有任何被接管网卡时调用 Restore
+	if err := mgr.Restore(context.Background()); err != nil {
+		t.Fatalf("Restore failed: %v", err)
+	}
+
+	// 必须主动触发一次全网卡兜底重置
+	foundReset := false
+	for _, ps := range mock.runPS {
+		if strings.Contains(ps, "Get-DnsClientServerAddress") {
+			foundReset = true
+			break
+		}
+	}
+	if !foundReset {
+		t.Errorf("Restore should execute ResetResidualLoopbackDNS sweep even when adapters list was empty")
+	}
+}
+
+func TestParseNetshInterfacesWithLoopback(t *testing.T) {
+	englishOutput := `Configuration for interface "singbox_tun"
+    Statically Configured DNS Servers:    172.18.0.2
+Configuration for interface "以太网"
+    DNS servers configured through DHCP:  None
+Configuration for interface "WLAN"
+    Statically Configured DNS Servers:    127.0.0.1
+Configuration for interface "Wi-Fi 2"
+    Statically Configured DNS Servers:    ::1`
+
+	names := parseNetshInterfacesWithLoopback(englishOutput)
+	if len(names) != 2 || names[0] != "WLAN" || names[1] != "Wi-Fi 2" {
+		t.Errorf("unexpected names parsed: %v", names)
+	}
+
+	chineseOutput := `接口 "本地连接" 的配置
+    静态配置的 DNS 服务器:  127.0.0.1
+接口 "以太网" 的配置
+    通过 DHCP 配置的 DNS 服务器: 无`
+
+	namesZh := parseNetshInterfacesWithLoopback(chineseOutput)
+	if len(namesZh) != 1 || namesZh[0] != "本地连接" {
+		t.Errorf("unexpected names parsed from Chinese output: %v", namesZh)
+	}
+}
+

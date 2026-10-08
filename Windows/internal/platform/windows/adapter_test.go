@@ -2,6 +2,7 @@ package windows
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ type mockExecutor struct {
 }
 
 func (m *mockExecutor) RunCommand(ctx context.Context, name string, args ...string) (string, error) {
-	m.runCmds = append(m.runCmds, name+" "+args[0])
+	m.runCmds = append(m.runCmds, name+" "+strings.Join(args, " "))
 	return m.cmdOutput, m.cmdErr
 }
 
@@ -254,6 +255,9 @@ func TestFilterLoopbackIPs(t *testing.T) {
 	input := []string{
 		"127.0.0.1",
 		"::1",
+		"[::1]",
+		"[::1]:53",
+		"[127.0.0.1]:53",
 		"0.0.0.0",
 		"::",
 		"127.0.0.53",
