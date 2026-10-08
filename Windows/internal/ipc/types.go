@@ -29,10 +29,11 @@ type UpstreamInfo struct {
 
 // DNSStatus DNS 监听器运行状态
 type DNSStatus struct {
-	Running         bool           `json:"running"`
-	ListenAddresses []string       `json:"listenAddresses"`
-	Mode            string         `json:"mode"`
-	Upstreams       []UpstreamInfo `json:"upstreams"`
+	Running         bool                 `json:"running"`
+	ListenAddresses []string             `json:"listenAddresses"`
+	Mode            string               `json:"mode"`
+	Upstreams       []UpstreamInfo       `json:"upstreams"`
+	Bootstrap       core.BootstrapConfig `json:"bootstrap"`
 }
 
 // TakeoverStatus 物理网卡接管运行状态
@@ -110,6 +111,13 @@ type FilterActionRequest struct {
 type ConfigureUpstreamRequest struct {
 	Mode      string                `json:"mode"`
 	Providers []core.ProviderConfig `json:"providers"`
+	Bootstrap *core.BootstrapConfig `json:"bootstrap,omitempty"`
+}
+
+// ConfigureBootstrapRequest 单独配置 Bootstrap 引导 DNS 请求
+type ConfigureBootstrapRequest struct {
+	Enabled *bool                  `json:"enabled,omitempty"`
+	Servers []core.BootstrapServer `json:"servers"`
 }
 
 // TestUpstreamRequest 测试单个上游延迟请求

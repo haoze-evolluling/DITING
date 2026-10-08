@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +27,29 @@ type BootstrapServer struct {
 type BootstrapConfig struct {
 	Enabled bool              `json:"enabled"`
 	Servers []BootstrapServer `json:"servers"`
+}
+
+// ValidateBootstrapConfig 校验 Bootstrap 配置合法性，要求服务器地址必须为有效 IP
+func ValidateBootstrapConfig(cfg BootstrapConfig) error {
+	for i, s := range cfg.Servers {
+		addr := strings.TrimSpace(s.Address)
+		if addr == "" {
+			return fmt.Errorf("bootstrap server %d: address is empty", i+1)
+		}
+		host := addr
+		if h, portStr, err := net.SplitHostPort(addr); err == nil {
+			host = h
+			p, pErr := strconv.Atoi(portStr)
+			if pErr != nil || p <= 0 || p > 65535 {
+				return fmt.Errorf("bootstrap server %q: invalid port %q in address %q", s.ID, portStr, s.Address)
+			}
+		}
+		cleanHost := strings.Trim(host, "[]")
+		if net.ParseIP(cleanHost) == nil {
+			return fmt.Errorf("bootstrap server %q: address %q must be a valid IP address", s.ID, s.Address)
+		}
+	}
+	return nil
 }
 
 type cachedBootstrapHost struct {
@@ -120,10 +144,21 @@ func (h *bootstrapHealth) RecordResult(success bool, elapsedMs int64, now time.T
 }
 
 type bootstrapScore struct {
+	index       int
 	entry       BootstrapServer
 	weight      float64
 	coolingDown bool
 	sampleCount float64
+}
+
+func serverKey(s BootstrapServer, idx int) string {
+	if s.ID != "" {
+		return s.ID
+	}
+	if s.Address != "" {
+		return s.Address
+	}
+	return fmt.Sprintf("server-%d", idx)
 }
 
 func (h *bootstrapHealth) GetScore(entry BootstrapServer, now time.Time) bootstrapScore {
@@ -292,8 +327,10 @@ func (b *BootstrapResolver) choosePlan(servers []BootstrapServer, now time.Time)
 
 	scores := make([]bootstrapScore, len(servers))
 	for i, entry := range servers {
-		health := b.getOrCreateHealth(entry.ID)
-		scores[i] = health.GetScore(entry, now)
+		health := b.getOrCreateHealth(serverKey(entry, i))
+		score := health.GetScore(entry, now)
+		score.index = i
+		scores[i] = score
 	}
 
 	candidates := make([]bootstrapScore, 0, len(scores))
@@ -330,7 +367,7 @@ func (b *BootstrapResolver) choosePlan(servers []BootstrapServer, now time.Time)
 
 	remaining := make([]bootstrapScore, 0, len(scores)-1)
 	for _, s := range scores {
-		if s.entry.ID != primary.entry.ID {
+		if s.index != primary.index {
 			remaining = append(remaining, s)
 		}
 	}
@@ -378,8 +415,9 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 	if host == "" {
 		return "", fmt.Errorf("empty host")
 	}
-	if net.ParseIP(host) != nil {
-		return host, nil
+	cleanHost := strings.Trim(host, "[]")
+	if net.ParseIP(cleanHost) != nil {
+		return cleanHost, nil
 	}
 
 	b.mu.RLock()
@@ -392,7 +430,7 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 		return host, nil
 	}
 
-	normalizedHost := strings.ToLower(strings.TrimSpace(host))
+	normalizedHost := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(cleanHost)), ".")
 	if cachedIP, ok := b.getCached(normalizedHost); ok {
 		return cachedIP, nil
 	}
@@ -406,19 +444,21 @@ func (b *BootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 	executionList := append([]BootstrapServer{plan.primary}, plan.fallbacks...)
 	var lastErr error
 
-	for _, entry := range executionList {
+	for i, entry := range executionList {
 		if ctx.Err() != nil {
 			return "", ctx.Err()
 		}
 
+		stepCtx, stepCancel := context.WithTimeout(ctx, 1500*time.Millisecond)
 		start := time.Now()
-		resolvedIP, err := queryBootstrapDNS(ctx, entry.Address, normalizedHost)
+		resolvedIP, err := queryBootstrapDNS(stepCtx, entry.Address, normalizedHost)
+		stepCancel()
 		elapsedMs := time.Since(start).Milliseconds()
 		if elapsedMs < 1 {
 			elapsedMs = 1
 		}
 
-		health := b.getOrCreateHealth(entry.ID)
+		health := b.getOrCreateHealth(serverKey(entry, i))
 		isSuccess := (err == nil && resolvedIP != "")
 		health.RecordResult(isSuccess, elapsedMs, time.Now())
 
@@ -447,12 +487,12 @@ func queryBootstrapDNSRecursive(ctx context.Context, serverAddr, host string, de
 
 	addr := serverAddr
 	if _, _, err := net.SplitHostPort(addr); err != nil {
-		addr = net.JoinHostPort(addr, "53")
+		addr = net.JoinHostPort(strings.Trim(addr, "[]"), "53")
 	}
 
 	client := &dns.Client{
 		Net:     "udp",
-		Timeout: 3 * time.Second,
+		Timeout: 1500 * time.Millisecond,
 		UDPSize: dns.MaxMsgSize,
 	}
 
@@ -464,7 +504,7 @@ func queryBootstrapDNSRecursive(ctx context.Context, serverAddr, host string, de
 
 	resp, _, err := client.ExchangeContext(ctx, msg, addr)
 	if err == nil && resp != nil && resp.Truncated {
-		tcpClient := &dns.Client{Net: "tcp", Timeout: 3 * time.Second}
+		tcpClient := &dns.Client{Net: "tcp", Timeout: 1500 * time.Millisecond}
 		resp, _, err = tcpClient.ExchangeContext(ctx, msg, addr)
 	}
 

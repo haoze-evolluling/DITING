@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -83,10 +84,16 @@ func (d *DoTResolver) SetTLSConfig(cfg *tls.Config) {
 	d.customTLS = cfg
 }
 
-// SetBootstrap 更新引导解析器引用
+// SetBootstrap 更新引导解析器引用并清理旧连接
 func (d *DoTResolver) SetBootstrap(bootstrap *BootstrapResolver) {
 	d.mu.Lock()
 	d.bootstrap = bootstrap
+	for _, entries := range d.conns {
+		for _, e := range entries {
+			e.close()
+		}
+	}
+	d.conns = make(map[string][]*dotConnEntry)
 	d.mu.Unlock()
 }
 
@@ -102,21 +109,19 @@ func (d *DoTResolver) Exchange(ctx context.Context, rawQuery []byte, server stri
 		host = h
 		port = p
 	}
+	cleanHost := strings.Trim(host, "[]")
 
 	d.mu.Lock()
 	bootstrap := d.bootstrap
 	d.mu.Unlock()
 
-	dialCtx, cancel := context.WithTimeout(ctx, defaultDoTConnectTimeout)
-	defer cancel()
-
-	targetHost := host
+	targetHost := cleanHost
 	if bootstrap != nil && bootstrap.IsEnabled() {
-		if resolvedIP, rErr := bootstrap.ResolveHost(dialCtx, host); rErr == nil && resolvedIP != "" {
+		if resolvedIP, rErr := bootstrap.ResolveHost(ctx, cleanHost); rErr == nil && resolvedIP != "" {
 			targetHost = resolvedIP
 		}
 	}
-	targetServer := net.JoinHostPort(targetHost, port)
+	targetServer := net.JoinHostPort(strings.Trim(targetHost, "[]"), port)
 
 	entry := d.popIdleConn(targetServer)
 	var resp []byte
@@ -139,7 +144,7 @@ func (d *DoTResolver) Exchange(ctx context.Context, rawQuery []byte, server stri
 
 	// 空闲连接不可用或复用失败，发起全新连接
 	if entry == nil && ctx.Err() == nil {
-		entry, err = d.dialFreshConn(ctx, host, targetServer)
+		entry, err = d.dialFreshConn(ctx, cleanHost, targetServer)
 		if err != nil {
 			return nil, err
 		}

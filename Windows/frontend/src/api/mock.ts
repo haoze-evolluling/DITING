@@ -11,7 +11,16 @@ import type {
   FilterList,
   CheckHostResult,
   PortCheckResult,
+  BootstrapConfig,
 } from './types';
+
+export const mockBootstrapConfig: BootstrapConfig = {
+  enabled: true,
+  servers: [
+    { id: 'bs-ali', name: 'AliDNS', address: '223.5.5.5:53', weight: 1.0 },
+    { id: 'bs-dnspod', name: 'DNSPod', address: '119.29.29.29:53', weight: 1.0 },
+  ],
+};
 
 export const mockUpstreams: UpstreamInfo[] = [
   {
@@ -78,6 +87,7 @@ export const mockStatus: StatusResponse = {
     listenAddresses: ['127.0.0.1:53', '[::1]:53'],
     mode: 'PRIMARY_BACKUP',
     upstreams: mockUpstreams,
+    bootstrap: mockBootstrapConfig,
   },
   takeover: {
     active: true,
@@ -205,7 +215,9 @@ export function handleMockRequest(rawPath: string, _options: RequestInit = {}): 
   if (path === '/api/v1/health') return 'OK';
   if (path === '/api/v1/adapters') return mockAdapters;
   if (path === '/api/v1/upstreams') return mockUpstreams;
-  if (path === '/api/v1/upstreams/test') return { server: '1.1.1.1', rttMs: 14.8, error: '' };
+  if (path === '/api/v1/upstreams/test' || path === '/api/v1/upstream/test') return { success: true, server: '1.1.1.1', rttMs: 14.8, latencyMs: 14.8, error: '' };
+  if (path === '/api/v1/upstream/configure') return { success: true };
+  if (path === '/api/v1/bootstrap/configure') return { success: true };
   if (path === '/api/v1/cache/stats') return mockCacheStats;
   if (path === '/api/v1/cache/config') return mockCacheConfig;
   if (path === '/api/v1/cache/top') return mockCacheTopDomains;

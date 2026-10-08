@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/haoze-evolluling/diting/windows/internal/config"
@@ -125,11 +126,21 @@ func TestController_ConfigureUpstream(t *testing.T) {
 		resolver: resolver,
 	}
 
+	tmpConfig := t.TempDir() + "/config.json"
+	prg.configPath = tmpConfig
+
+	bsCfg := core.BootstrapConfig{
+		Enabled: true,
+		Servers: []core.BootstrapServer{
+			{ID: "bs-cf", Name: "Cloudflare", Address: "1.1.1.1:53"},
+		},
+	}
 	err = prg.ConfigureUpstream(context.Background(), ipc.ConfigureUpstreamRequest{
 		Mode: "SINGLE",
 		Providers: []core.ProviderConfig{
 			{ID: "node-1", Protocol: core.ProtocolPlain, Server: "223.5.5.5:53"},
 		},
+		Bootstrap: &bsCfg,
 	})
 	if err != nil {
 		t.Fatalf("ConfigureUpstream failed: %v", err)
@@ -140,6 +151,66 @@ func TestController_ConfigureUpstream(t *testing.T) {
 	}
 	if len(prg.cfg.Upstream.Providers) != 1 {
 		t.Errorf("expected 1 provider")
+	}
+	if len(prg.cfg.Upstream.Bootstrap.Servers) != 1 || prg.cfg.Upstream.Bootstrap.Servers[0].Address != "1.1.1.1:53" {
+		t.Errorf("bootstrap config not updated: %+v", prg.cfg.Upstream.Bootstrap)
+	}
+
+	// 验证持久化保存
+	loadedCfg, err := config.LoadConfig(tmpConfig)
+	if err != nil || len(loadedCfg.Upstream.Bootstrap.Servers) != 1 {
+		t.Fatalf("failed to reload persisted config: %v, %+v", err, loadedCfg)
+	}
+
+	// 校验非法 IP 报错
+	badBsCfg := core.BootstrapConfig{
+		Enabled: true,
+		Servers: []core.BootstrapServer{
+			{ID: "bad", Address: "invalid-domain.com"},
+		},
+	}
+	err = prg.ConfigureUpstream(context.Background(), ipc.ConfigureUpstreamRequest{
+		Bootstrap: &badBsCfg,
+	})
+	if err == nil {
+		t.Fatalf("expected error on invalid bootstrap IP, got nil")
+	}
+
+	// 校验关闭 Bootstrap 配置时的持久化与重新加载
+	disabledBsCfg := core.BootstrapConfig{
+		Enabled: false,
+		Servers: []core.BootstrapServer{},
+	}
+	err = prg.ConfigureUpstream(context.Background(), ipc.ConfigureUpstreamRequest{
+		Bootstrap: &disabledBsCfg,
+	})
+	if err != nil {
+		t.Fatalf("ConfigureUpstream disabled failed: %v", err)
+	}
+	reloadedDisabled, err := config.LoadConfig(tmpConfig)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	if reloadedDisabled.Upstream.Bootstrap.Enabled {
+		t.Errorf("expected bootstrap Enabled to remain false after reload, got true")
+	}
+}
+
+func TestController_TestUpstream_IPv6(t *testing.T) {
+	prg := &program{
+		cfg: config.DefaultConfig(),
+	}
+
+	// 验证对纯 IPv6 地址的格式处理，不能报 "missing port in address"
+	res, err := prg.TestUpstream(context.Background(), ipc.TestUpstreamRequest{
+		Protocol: "PLAIN",
+		Server:   "2400:3200::1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+	if !res.Success && strings.Contains(res.Error, "missing port in address") {
+		t.Fatalf("expected valid port formatting for IPv6, got error: %s", res.Error)
 	}
 }
 

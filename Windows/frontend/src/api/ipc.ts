@@ -16,6 +16,7 @@ import type {
   FilterList,
   CheckHostResult,
   CoreServiceStatus,
+  BootstrapConfig,
 } from './types';
 import { handleMockRequest } from './mock';
 
@@ -180,6 +181,13 @@ class IPCService {
 
   public async configureUpstream(req: UpstreamConfigureRequest): Promise<void> {
     await this.request<void>('/api/v1/upstream/configure', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+  }
+
+  public async configureBootstrap(req: BootstrapConfig): Promise<void> {
+    await this.request<void>('/api/v1/bootstrap/configure', {
       method: 'POST',
       body: JSON.stringify(req),
     });

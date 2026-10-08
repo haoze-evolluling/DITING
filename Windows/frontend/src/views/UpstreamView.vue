@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ipc } from '../api/ipc';
-import type { StatusResponse, ProviderConfig, UpstreamInfo } from '../api/types';
+import type { StatusResponse, ProviderConfig, UpstreamInfo, BootstrapConfig } from '../api/types';
 import StatusBadge from '../components/StatusBadge.vue';
 import M3Icon from '../components/M3Icon.vue';
 import AppModal from '../components/AppModal.vue';
+import BootstrapConfigCard from '../components/BootstrapConfigCard.vue';
 
 const status = ref<StatusResponse | null>(null);
 const currentMode = ref('primary_backup');
 const providers = ref<ProviderConfig[]>([]);
 const upstreams = ref<UpstreamInfo[]>([]);
+const bootstrapConfig = ref<BootstrapConfig>({
+  enabled: true,
+  servers: [
+    { id: 'bs-ali', name: 'AliDNS', address: '223.5.5.5:53', weight: 1.0 },
+    { id: 'bs-dnspod', name: 'DNSPod', address: '119.29.29.29:53', weight: 1.0 },
+  ],
+});
 const loading = ref(false);
 const saving = ref(false);
 const errorMessage = ref('');
@@ -54,6 +62,13 @@ async function loadData() {
         weight: u.weight || 1,
       }));
     }
+
+    if (res.dns.bootstrap) {
+      bootstrapConfig.value = {
+        enabled: res.dns.bootstrap.enabled,
+        servers: res.dns.bootstrap.servers || [],
+      };
+    }
   } catch (err: any) {
     errorMessage.value = err.message || '获取 DNS 配置失败';
   } finally {
@@ -66,6 +81,11 @@ async function handleModeChange(mode: string) {
   await saveConfig();
 }
 
+async function handleBootstrapSave(updated: BootstrapConfig) {
+  bootstrapConfig.value = updated;
+  await saveConfig();
+}
+
 async function saveConfig() {
   saving.value = true;
   errorMessage.value = '';
@@ -74,6 +94,7 @@ async function saveConfig() {
     await ipc.configureUpstream({
       mode: currentMode.value.toUpperCase(),
       providers: providers.value,
+      bootstrap: bootstrapConfig.value,
     });
     successMessage.value = 'DNS 服务器配置已更新并即时生效！';
     await loadData();
@@ -341,6 +362,14 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Bootstrap DNS 引导解析配置卡片 -->
+    <BootstrapConfigCard
+      :config="bootstrapConfig"
+      :saving="saving"
+      @update:config="bootstrapConfig = $event"
+      @save="handleBootstrapSave"
+    />
 
     <!-- 新增 / 编辑节点弹窗 (统一使用 AppModal 居中架构) -->
     <AppModal

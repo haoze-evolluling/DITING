@@ -155,6 +155,22 @@ func (c *Client) ConfigureUpstream(ctx context.Context, req ConfigureUpstreamReq
 	return nil
 }
 
+// ConfigureBootstrap 动态配置 Bootstrap 引导解析器
+func (c *Client) ConfigureBootstrap(ctx context.Context, req ConfigureBootstrapRequest) error {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return err
+	}
+	var resp Response[any]
+	if err := c.doRequest(ctx, http.MethodPost, "/api/v1/bootstrap/configure", bytes.NewReader(body), &resp); err != nil {
+		return err
+	}
+	if !resp.Success {
+		return fmt.Errorf("配置 Bootstrap DNS 失败: %s", resp.Error)
+	}
+	return nil
+}
+
 // TestUpstream 测试指定上游节点的延迟
 func (c *Client) TestUpstream(ctx context.Context, req TestUpstreamRequest) (*TestUpstreamResponse, error) {
 	body, err := json.Marshal(req)

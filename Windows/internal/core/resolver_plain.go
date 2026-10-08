@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/miekg/dns"
@@ -52,7 +53,7 @@ func (p *PlainResolver) Exchange(ctx context.Context, rawQuery []byte, server st
 			targetHost = resolvedIP
 		}
 	}
-	targetServer := net.JoinHostPort(targetHost, port)
+	targetServer := net.JoinHostPort(strings.Trim(targetHost, "[]"), port)
 
 	// 首先尝试 UDP 发送请求
 	resp, err := p.queryUDP(ctx, rawQuery, targetServer)
