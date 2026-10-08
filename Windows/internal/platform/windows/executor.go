@@ -48,3 +48,13 @@ func (e *DefaultExecutor) RunPowerShell(ctx context.Context, script string) (str
 	return strings.TrimSpace(stdout.String()), nil
 }
 
+// isDefaultExecutor 判断执行器是否为默认系统执行器（或未指定，指示处于生产运行环境）
+func isDefaultExecutor(e CommandExecutor) bool {
+	if e == nil {
+		return true
+	}
+	_, ok := e.(*DefaultExecutor)
+	return ok
+}
+
+
