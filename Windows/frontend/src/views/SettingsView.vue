@@ -5,6 +5,7 @@ import { themeManager, CLASSIC_SKY_BLUE, type ThemeMode } from '../theme/dynamic
 import type { PortCheckResult } from '../api/types';
 import M3Icon from '../components/M3Icon.vue';
 import AppModal from '../components/AppModal.vue';
+import CoreServiceCard from '../components/CoreServiceCard.vue';
 
 const host = ref('127.0.0.1');
 const port = ref('15353');
@@ -249,7 +250,10 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 3. 系统诊断与容灾工具 -->
+    <!-- 3. 后台核心服务管理 -->
+    <CoreServiceCard />
+
+    <!-- 4. 系统诊断与容灾工具 -->
     <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-4 transition-colors">
       <h3 class="text-base font-bold text-text-main flex items-center gap-2">
         <M3Icon name="shield" :size="20" class="text-brand-primary" />

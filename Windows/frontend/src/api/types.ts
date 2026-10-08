@@ -230,3 +230,15 @@ export interface TestUpstreamResponse {
   latencyMs: number;
   error?: string;
 }
+
+export interface CoreServiceStatus {
+  installed: boolean;
+  running: boolean;
+  state: 'running' | 'stopped' | 'not_installed' | 'start_pending' | 'stop_pending' | 'unknown' | string;
+  stateText: string;
+  executablePath: string;
+  isElevated: boolean;
+  canInstall: boolean;
+  message?: string;
+}
+
