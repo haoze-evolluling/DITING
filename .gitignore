@@ -1,11 +1,8 @@
 # ====================================================================
 # Android & Gradle Build Outputs
+# ====================================================================
 /build/
 Android/**/build/
-Windows/build/bin/
-Windows/frontend/dist/
-Windows/frontend/node_modules/
-Windows/frontend/package.json.md5
 .gradle/
 .kotlin/
 .cxx/
@@ -15,14 +12,38 @@ captures/
 *.ap_
 *.aab
 
-# Backup & generated library files (merged from app/libs/.gitignore)
-*.aar.bak
-*.bak
+# ====================================================================
+# Windows & Frontend Build Outputs
+# ====================================================================
+Windows/build/bin/
+Windows/build/windows/installer/tmp/
+Windows/frontend/dist/
+Windows/frontend/package.json.md5
+node_modules/
 
 # ====================================================================
 # Local Configuration & SDK
 # ====================================================================
 local.properties
+
+# ====================================================================
+# Keystores & Signing Credentials
+# ====================================================================
+*.keystore
+*.jks
+*.p12
+keystore/
+DITING-keystore/
+secrets/
+keystore.properties
+signing.properties
+
+# ====================================================================
+# Python Cache & Bytecode
+# ====================================================================
+__pycache__/
+*.py[cod]
+*$py.class
 
 # ====================================================================
 # IDEs, Editors & Developer Tools
@@ -43,26 +64,6 @@ local.properties
 .agents/
 .codex/
 
-
-# ====================================================================
-# Keystores & Signing Credentials
-# ====================================================================
-*.keystore
-*.jks
-*.p12
-keystore/
-DITING-keystore/
-secrets/
-keystore.properties
-signing.properties
-
-# ====================================================================
-# Python (merged from scripts/.gitignore)
-# ====================================================================
-__pycache__/
-*.py[cod]
-*$py.class
-
 # ====================================================================
 # OS & System Files
 # ====================================================================
@@ -72,9 +73,10 @@ ehthumbs.db
 desktop.ini
 
 # ====================================================================
-# Temporary Files
+# Temporary Files & Backups
 # ====================================================================
 .tmp/
 *.tmp
+*.bak
 LearningObjects/
 screenshots/
