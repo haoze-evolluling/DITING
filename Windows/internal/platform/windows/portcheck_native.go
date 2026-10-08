@@ -57,7 +57,7 @@ type nativePortListener struct {
 	ProcessName  string
 }
 
-// checkPort53Native 纯原生探测 53 端口冲突并识别 SharedAccess (ICS) 等服务，无 PowerShell 开销
+// checkPort53Native 纯原生探测 53 端口冲突并识别 SharedAccess (ICS) 等服务
 func checkPort53Native(available bool, selfPID int) ([]PortConflict, bool, string, error) {
 	listeners, err := getPort53ListenersNative()
 	if err != nil {

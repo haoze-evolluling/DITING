@@ -2,15 +2,14 @@ package windows
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"unicode/utf16"
+	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -28,7 +27,33 @@ var (
 	ErrUACCancelled = errors.New("用户取消了管理员权限授权")
 	// ErrServiceExeNotFound 未找到核心服务执行程序
 	ErrServiceExeNotFound = errors.New("未找到后台核心服务执行程序 (diting-service.exe)")
+
+	modShell32          = windows.NewLazySystemDLL("shell32.dll")
+	procShellExecuteExW = modShell32.NewProc("ShellExecuteExW")
 )
+
+const (
+	seeMaskNoCloseProcess = 0x00000040
+	swHide                = 0
+)
+
+type shellExecuteInfo struct {
+	cbSize       uint32
+	fMask        uint32
+	hwnd         windows.Handle
+	lpVerb       *uint16
+	lpFile       *uint16
+	lpParameters *uint16
+	lpDirectory  *uint16
+	nShow        int32
+	hInstApp     windows.Handle
+	lpIDList     uintptr
+	lpClass      *uint16
+	hkeyClass    windows.Handle
+	dwHotKey     uint32
+	hIcon        windows.Handle
+	hProcess     windows.Handle
+}
 
 // CoreServiceStatus 核心服务状态
 type CoreServiceStatus struct {
@@ -44,12 +69,11 @@ type CoreServiceStatus struct {
 
 // PrivilegedExecutor 特权命令执行接口，支持测试 Mock
 type PrivilegedExecutor interface {
-	RunElevated(ctx context.Context, script string) (string, error)
-	RunDirect(ctx context.Context, script string) (string, error)
+	RunElevated(ctx context.Context, exe string, args ...string) error
 	IsElevated() bool
 }
 
-// DefaultPrivilegedExecutor 默认特权命令执行器
+// DefaultPrivilegedExecutor 默认特权命令执行器（基于 Win32 原生 API）
 type DefaultPrivilegedExecutor struct {
 	executor CommandExecutor
 }
@@ -90,59 +114,56 @@ func (e *DefaultPrivilegedExecutor) IsElevated() bool {
 	return IsRunningAsAdmin()
 }
 
-func encodePowerShell(script string) string {
-	runes := utf16.Encode([]rune(script))
-	raw := make([]byte, len(runes)*2)
-	for i, v := range runes {
-		binary.LittleEndian.PutUint16(raw[i*2:], v)
-	}
-	return base64.StdEncoding.EncodeToString(raw)
-}
-
-// RunDirect 直接执行脚本
-func (e *DefaultPrivilegedExecutor) RunDirect(ctx context.Context, script string) (string, error) {
-	return e.executor.RunPowerShell(ctx, script)
-}
-
-// RunElevated 请求管理员权限执行脚本（通过 UAC 弹窗按需授权）
-func (e *DefaultPrivilegedExecutor) RunElevated(ctx context.Context, script string) (string, error) {
-	if e.IsElevated() {
-		// 已具备管理员特权，直接执行无需二次弹窗
-		return e.executor.RunPowerShell(ctx, script)
+func runElevatedNative(exePath string, args string) error {
+	verbPtr, _ := windows.UTF16PtrFromString("runas")
+	filePtr, _ := windows.UTF16PtrFromString(exePath)
+	var argsPtr *uint16
+	if args != "" {
+		argsPtr, _ = windows.UTF16PtrFromString(args)
 	}
 
-	encoded := encodePowerShell(script)
-	wrappedScript := fmt.Sprintf(`
-try {
-    $p = Start-Process powershell.exe -ArgumentList "-NoProfile","-NonInteractive","-ExecutionPolicy","Bypass","-EncodedCommand","%s" -Verb RunAs -Wait -PassThru -WindowStyle Hidden
-    if ($p.ExitCode -ne 0) {
-        exit $p.ExitCode
-    }
-} catch {
-    $msg = $_.Exception.Message
-    [Console]::Error.WriteLine($msg)
-    if ($_.Exception -is [System.ComponentModel.Win32Exception] -and $_.Exception.NativeErrorCode -eq 1223) {
-        exit 1223
-    }
-    if ($msg -match "canceled|cancelled|取消") {
-        exit 1223
-    }
-    exit 1
-}
-`, encoded)
+	var sei shellExecuteInfo
+	sei.cbSize = uint32(unsafe.Sizeof(sei))
+	sei.fMask = seeMaskNoCloseProcess
+	sei.lpVerb = verbPtr
+	sei.lpFile = filePtr
+	sei.lpParameters = argsPtr
+	sei.nShow = swHide
 
-	out, err := e.executor.RunPowerShell(ctx, wrappedScript)
-	if err != nil {
-		errStr := err.Error()
-		if strings.Contains(errStr, "1223") ||
-			strings.Contains(errStr, "canceled by the user") ||
-			strings.Contains(errStr, "用户取消") ||
-			strings.Contains(errStr, "canceled") {
-			return "", ErrUACCancelled
+	r1, _, err := procShellExecuteExW.Call(uintptr(unsafe.Pointer(&sei)))
+	if r1 == 0 {
+		if errors.Is(err, windows.ERROR_CANCELLED) || strings.Contains(err.Error(), "1223") {
+			return ErrUACCancelled
 		}
-		return out, fmt.Errorf("特权操作执行失败: %w", err)
+		return fmt.Errorf("特权操作执行失败: %w", err)
 	}
-	return out, nil
+
+	if sei.hProcess != 0 {
+		defer windows.CloseHandle(sei.hProcess)
+		event, errWait := windows.WaitForSingleObject(sei.hProcess, windows.INFINITE)
+		if errWait != nil || event != windows.WAIT_OBJECT_0 {
+			return fmt.Errorf("等待提权进程退出失败: %w", errWait)
+		}
+
+		var exitCode uint32
+		if errExit := windows.GetExitCodeProcess(sei.hProcess, &exitCode); errExit == nil && exitCode != 0 {
+			return fmt.Errorf("特权操作执行失败 (退出代码: %d)", exitCode)
+		}
+	}
+	return nil
+}
+
+// RunElevated 请求管理员权限执行程序（底层使用 Win32 ShellExecuteEx 原生 API）
+func (e *DefaultPrivilegedExecutor) RunElevated(ctx context.Context, exe string, args ...string) error {
+	if e.IsElevated() {
+		cmd := exec.CommandContext(ctx, exe, args...)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("特权操作执行失败: %w (输出: %s)", err, strings.TrimSpace(string(out)))
+		}
+		return nil
+	}
+	return runElevatedNative(exe, strings.Join(args, " "))
 }
 
 type scmQuerier func(serviceName string) (installed bool, running bool, state string, err error)
@@ -295,7 +316,7 @@ func (m *ServiceManager) LocateExecutable() (string, error) {
 	return "", ErrServiceExeNotFound
 }
 
-// GetStatus 获取当前核心服务状态
+// GetStatus 获取当前核心服务状态（纯 Windows 原生 SCM API）
 func (m *ServiceManager) GetStatus(ctx context.Context) (*CoreServiceStatus, error) {
 	status := &CoreServiceStatus{
 		State:      "unknown",
@@ -311,111 +332,154 @@ func (m *ServiceManager) GetStatus(ctx context.Context) (*CoreServiceStatus, err
 		status.CanInstall = false
 	}
 
-	// 优先使用 Windows SCM API 查询（超低延迟且标准用户免管理员权限）
 	queryFn := m.scmQuery
 	if queryFn == nil {
 		queryFn = defaultSCMQuery
 	}
 
 	installed, running, state, err := queryFn(m.serviceName)
-	if err == nil {
-		status.Installed = installed
-		status.Running = running
-		status.State = state
-		switch state {
-		case "running":
-			status.StateText = "运行中"
-			status.Message = "核心服务正常运行中。"
-		case "stopped":
-			status.StateText = "已停止"
-			status.Message = "核心服务已安装，当前处于停止状态。"
-		case "start_pending":
-			status.StateText = "正在启动"
-			status.Message = "核心服务正在启动中..."
-		case "stop_pending":
-			status.StateText = "正在停止"
-			status.Message = "核心服务正在停止中..."
-		case "not_installed":
-			status.StateText = "未安装"
-			status.Message = "后台核心服务尚未安装到系统中。"
-		default:
-			status.StateText = "已停止"
-			status.Message = "核心服务未运行。"
-		}
-		return status, nil
+	if err != nil {
+		return status, fmt.Errorf("检测核心服务状态失败: %w", err)
 	}
 
-	// 备选降级方案：使用 PowerShell 查询
-	psQuery := fmt.Sprintf(`$s = Get-Service -Name "%s" -ErrorAction SilentlyContinue; if ($null -eq $s) { "NOT_INSTALLED" } else { $s.Status.ToString() }`, m.serviceName)
-	out, psErr := m.executor.RunPowerShell(ctx, psQuery)
-	if psErr == nil {
-		out = strings.TrimSpace(out)
-		if out == "NOT_INSTALLED" || out == "" {
-			status.Installed = false
-			status.Running = false
-			status.State = "not_installed"
-			status.StateText = "未安装"
-			status.Message = "后台核心服务尚未安装到系统中。"
-		} else if strings.EqualFold(out, "Running") {
-			status.Installed = true
-			status.Running = true
-			status.State = "running"
-			status.StateText = "运行中"
-			status.Message = "核心服务正常运行中。"
-		} else {
-			status.Installed = true
-			status.Running = false
-			status.State = "stopped"
-			status.StateText = "已停止"
-			status.Message = "核心服务已安装，当前处于停止状态。"
-		}
-		return status, nil
+	status.Installed = installed
+	status.Running = running
+	status.State = state
+	switch state {
+	case "running":
+		status.StateText = "运行中"
+		status.Message = "核心服务正常运行中。"
+	case "stopped":
+		status.StateText = "已停止"
+		status.Message = "核心服务已安装，当前处于停止状态。"
+	case "start_pending":
+		status.StateText = "正在启动"
+		status.Message = "核心服务正在启动中..."
+	case "stop_pending":
+		status.StateText = "正在停止"
+		status.Message = "核心服务正在停止中..."
+	case "not_installed":
+		status.StateText = "未安装"
+		status.Message = "后台核心服务尚未安装到系统中。"
+	default:
+		status.StateText = "已停止"
+		status.Message = "核心服务未运行。"
 	}
+	return status, nil
+}
 
-	return status, fmt.Errorf("检测核心服务状态失败: %w", psErr)
+func startServiceNative(serviceName string) error {
+	scm, err := windows.OpenSCManager(nil, nil, windows.SC_MANAGER_CONNECT)
+	if err != nil {
+		return fmt.Errorf("打开服务控制管理器失败: %w", err)
+	}
+	defer windows.CloseServiceHandle(scm)
+
+	namePtr, _ := windows.UTF16PtrFromString(serviceName)
+	svc, err := windows.OpenService(scm, namePtr, windows.SERVICE_START)
+	if err != nil {
+		return fmt.Errorf("打开服务 [%s] 失败: %w", serviceName, err)
+	}
+	defer windows.CloseServiceHandle(svc)
+
+	if err := windows.StartService(svc, 0, nil); err != nil {
+		if errors.Is(err, windows.ERROR_SERVICE_ALREADY_RUNNING) {
+			return nil
+		}
+		return fmt.Errorf("启动服务 [%s] 失败: %w", serviceName, err)
+	}
+	return nil
+}
+
+func stopServiceNative(serviceName string) error {
+	scm, err := windows.OpenSCManager(nil, nil, windows.SC_MANAGER_CONNECT)
+	if err != nil {
+		return fmt.Errorf("打开服务控制管理器失败: %w", err)
+	}
+	defer windows.CloseServiceHandle(scm)
+
+	namePtr, _ := windows.UTF16PtrFromString(serviceName)
+	svc, err := windows.OpenService(scm, namePtr, windows.SERVICE_STOP|windows.SERVICE_QUERY_STATUS)
+	if err != nil {
+		return fmt.Errorf("打开服务 [%s] 失败: %w", serviceName, err)
+	}
+	defer windows.CloseServiceHandle(svc)
+
+	var status windows.SERVICE_STATUS
+	if err := windows.ControlService(svc, windows.SERVICE_CONTROL_STOP, &status); err != nil {
+		if errors.Is(err, windows.ERROR_SERVICE_NOT_ACTIVE) {
+			return nil
+		}
+		return fmt.Errorf("停止服务 [%s] 失败: %w", serviceName, err)
+	}
+	return nil
+}
+
+func deleteServiceNative(serviceName string) error {
+	scm, err := windows.OpenSCManager(nil, nil, windows.SC_MANAGER_CONNECT)
+	if err != nil {
+		return err
+	}
+	defer windows.CloseServiceHandle(scm)
+
+	namePtr, _ := windows.UTF16PtrFromString(serviceName)
+	svc, err := windows.OpenService(scm, namePtr, windows.DELETE)
+	if err != nil {
+		if errors.Is(err, windows.ERROR_SERVICE_DOES_NOT_EXIST) {
+			return nil
+		}
+		return err
+	}
+	defer windows.CloseServiceHandle(svc)
+	return windows.DeleteService(svc)
 }
 
 // StartService 按需提权启动核心服务
 func (m *ServiceManager) StartService(ctx context.Context) error {
-	script := fmt.Sprintf(`
-$s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
-if ($null -eq $s) {
-    throw "服务未安装，无法启动"
-}
-if ($s.Status -ne 'Running') {
-    Start-Service -Name "%s" -ErrorAction Stop
-}
-`, m.serviceName, m.serviceName)
+	if m.privExec.IsElevated() {
+		if err := startServiceNative(m.serviceName); err == nil {
+			return nil
+		}
+	}
 
-	_, err := m.privExec.RunElevated(ctx, script)
-	return err
+	exePath, err := m.LocateExecutable()
+	if err == nil {
+		return m.privExec.RunElevated(ctx, exePath, "-service", "start")
+	}
+	return m.privExec.RunElevated(ctx, "sc.exe", "start", m.serviceName)
 }
 
 // StopService 按需提权停止核心服务
 func (m *ServiceManager) StopService(ctx context.Context) error {
-	script := fmt.Sprintf(`
-$s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
-if ($null -ne $s -and $s.Status -eq 'Running') {
-    Stop-Service -Name "%s" -Force -ErrorAction Stop
-}
-`, m.serviceName, m.serviceName)
+	if m.privExec.IsElevated() {
+		if err := stopServiceNative(m.serviceName); err == nil {
+			return nil
+		}
+	}
 
-	_, err := m.privExec.RunElevated(ctx, script)
-	return err
+	exePath, err := m.LocateExecutable()
+	if err == nil {
+		return m.privExec.RunElevated(ctx, exePath, "-service", "stop")
+	}
+	return m.privExec.RunElevated(ctx, "sc.exe", "stop", m.serviceName)
 }
 
 // RestartService 按需提权重启核心服务
 func (m *ServiceManager) RestartService(ctx context.Context) error {
-	script := fmt.Sprintf(`
-$s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
-if ($null -eq $s) {
-    throw "服务未安装，无法重启"
-}
-Restart-Service -Name "%s" -Force -ErrorAction Stop
-`, m.serviceName, m.serviceName)
+	if m.privExec.IsElevated() {
+		_ = stopServiceNative(m.serviceName)
+		time.Sleep(300 * time.Millisecond)
+		if err := startServiceNative(m.serviceName); err == nil {
+			return nil
+		}
+	}
 
-	_, err := m.privExec.RunElevated(ctx, script)
-	return err
+	exePath, err := m.LocateExecutable()
+	if err == nil {
+		return m.privExec.RunElevated(ctx, exePath, "-service", "restart")
+	}
+	_ = m.privExec.RunElevated(ctx, "sc.exe", "stop", m.serviceName)
+	return m.privExec.RunElevated(ctx, "sc.exe", "start", m.serviceName)
 }
 
 // InstallService 按需提权安装核心服务
@@ -428,22 +492,10 @@ func (m *ServiceManager) InstallService(ctx context.Context, exePath string) err
 		exePath = p
 	}
 
-	script := fmt.Sprintf(`
-$s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
-if ($null -eq $s) {
-    & "%s" -service install
-    if ($LASTEXITCODE -ne 0) {
-        throw "注册服务失败 (代码: $LASTEXITCODE)"
-    }
-}
-sc.exe config %s start= auto
-`, m.serviceName, exePath, m.serviceName)
-
-	_, err := m.privExec.RunElevated(ctx, script)
-	return err
+	return m.privExec.RunElevated(ctx, exePath, "-service", "install")
 }
 
-// InstallAndStartService 按需提权一键安装并立即启动核心服务（单次 UAC 授权）
+// InstallAndStartService 按需提权一键安装并立即启动核心服务
 func (m *ServiceManager) InstallAndStartService(ctx context.Context, exePath string) error {
 	if exePath == "" {
 		p, err := m.LocateExecutable()
@@ -453,42 +505,26 @@ func (m *ServiceManager) InstallAndStartService(ctx context.Context, exePath str
 		exePath = p
 	}
 
-	script := fmt.Sprintf(`
-$s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
-if ($null -eq $s) {
-    & "%s" -service install
-    if ($LASTEXITCODE -ne 0) {
-        throw "注册服务失败 (代码: $LASTEXITCODE)"
-    }
-    sc.exe config %s start= auto
-    $s = Get-Service -Name "%s" -ErrorAction SilentlyContinue
-}
-if ($null -ne $s -and $s.Status -ne 'Running') {
-    Start-Service -Name "%s" -ErrorAction Stop
-}
-`, m.serviceName, exePath, m.serviceName, m.serviceName, m.serviceName)
-
-	_, err := m.privExec.RunElevated(ctx, script)
-	return err
+	if err := m.InstallService(ctx, exePath); err != nil {
+		// 若已安装，继续尝试启动
+	}
+	return m.StartService(ctx)
 }
 
 // UninstallService 按需提权卸载核心服务
 func (m *ServiceManager) UninstallService(ctx context.Context) error {
-	exePath, _ := m.LocateExecutable()
-	var script string
-	if exePath != "" {
-		script = fmt.Sprintf(`
-Stop-Service -Name "%s" -Force -ErrorAction SilentlyContinue
-& "%s" -service uninstall
-sc.exe delete %s
-`, m.serviceName, exePath, m.serviceName)
-	} else {
-		script = fmt.Sprintf(`
-Stop-Service -Name "%s" -Force -ErrorAction SilentlyContinue
-sc.exe delete %s
-`, m.serviceName, m.serviceName)
+	if m.privExec.IsElevated() {
+		_ = stopServiceNative(m.serviceName)
+		exePath, err := m.LocateExecutable()
+		if err == nil {
+			_ = m.privExec.RunElevated(ctx, exePath, "-service", "uninstall")
+		}
+		return deleteServiceNative(m.serviceName)
 	}
 
-	_, err := m.privExec.RunElevated(ctx, script)
-	return err
+	exePath, err := m.LocateExecutable()
+	if err == nil {
+		return m.privExec.RunElevated(ctx, exePath, "-service", "uninstall")
+	}
+	return m.privExec.RunElevated(ctx, "sc.exe", "delete", m.serviceName)
 }

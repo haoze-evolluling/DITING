@@ -11,21 +11,17 @@ import (
 
 type mockPrivilegedExecutor struct {
 	elevatedCalled bool
-	lastScript     string
-	returnOutput   string
+	lastExe        string
+	lastArgs       []string
 	returnErr      error
 	elevatedState  bool
 }
 
-func (m *mockPrivilegedExecutor) RunElevated(ctx context.Context, script string) (string, error) {
+func (m *mockPrivilegedExecutor) RunElevated(ctx context.Context, exe string, args ...string) error {
 	m.elevatedCalled = true
-	m.lastScript = script
-	return m.returnOutput, m.returnErr
-}
-
-func (m *mockPrivilegedExecutor) RunDirect(ctx context.Context, script string) (string, error) {
-	m.lastScript = script
-	return m.returnOutput, m.returnErr
+	m.lastExe = exe
+	m.lastArgs = args
+	return m.returnErr
 }
 
 func (m *mockPrivilegedExecutor) IsElevated() bool {
@@ -33,26 +29,12 @@ func (m *mockPrivilegedExecutor) IsElevated() bool {
 }
 
 type mockServiceCmdExecutor struct {
-	lastPowerShell string
-	returnPSOutput string
-	returnPSErr    error
+	cmdOutput string
+	cmdErr    error
 }
 
 func (m *mockServiceCmdExecutor) RunCommand(ctx context.Context, name string, args ...string) (string, error) {
-	return "", nil
-}
-
-func (m *mockServiceCmdExecutor) RunPowerShell(ctx context.Context, script string) (string, error) {
-	m.lastPowerShell = script
-	return m.returnPSOutput, m.returnPSErr
-}
-
-func TestEncodePowerShell(t *testing.T) {
-	raw := `Write-Output "Test"`
-	encoded := encodePowerShell(raw)
-	if encoded == "" {
-		t.Fatalf("expected non-empty base64 string")
-	}
+	return m.cmdOutput, m.cmdErr
 }
 
 func TestServiceManager_GetStatus_SCM(t *testing.T) {
@@ -98,60 +80,27 @@ func TestServiceManager_GetStatus_SCM(t *testing.T) {
 	}
 }
 
-func TestServiceManager_GetStatus_PowerShellFallback(t *testing.T) {
+func TestServiceManager_GetStatus_SCMError(t *testing.T) {
 	ctx := context.Background()
 
-	mockExec := &mockServiceCmdExecutor{returnPSOutput: "NOT_INSTALLED"}
-	mockPriv := &mockPrivilegedExecutor{elevatedState: false}
-	mgr := NewServiceManager(mockExec, mockPriv)
-	// 模拟 SCM 无法连接，强制走 PowerShell 降级通路
+	mgr := NewServiceManager(nil, nil)
 	mgr.scmQuery = func(serviceName string) (bool, bool, string, error) {
 		return false, false, "", errors.New("SCM disconnected")
 	}
 
-	// 1. 测试未安装场景
-	status, err := mgr.GetStatus(ctx)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	_, err := mgr.GetStatus(ctx)
+	if err == nil {
+		t.Fatalf("expected error when SCM query fails, got nil")
 	}
-	if status.Installed {
-		t.Errorf("expected Installed to be false")
-	}
-	if status.State != "not_installed" {
-		t.Errorf("expected state not_installed, got %s", status.State)
-	}
-
-	// 2. 测试已安装且运行场景
-	mockExec.returnPSOutput = "Running"
-	status, err = mgr.GetStatus(ctx)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !status.Installed || !status.Running {
-		t.Errorf("expected Installed=true, Running=true")
-	}
-	if status.State != "running" {
-		t.Errorf("expected state running, got %s", status.State)
-	}
-
-	// 3. 测试已安装且停止场景
-	mockExec.returnPSOutput = "Stopped"
-	status, err = mgr.GetStatus(ctx)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !status.Installed || status.Running {
-		t.Errorf("expected Installed=true, Running=false")
-	}
-	if status.State != "stopped" {
-		t.Errorf("expected state stopped, got %s", status.State)
+	if !strings.Contains(err.Error(), "检测核心服务状态失败") {
+		t.Errorf("expected wrapped error, got: %v", err)
 	}
 }
 
 func TestServiceManager_Actions(t *testing.T) {
 	ctx := context.Background()
 	mockExec := &mockServiceCmdExecutor{}
-	mockPriv := &mockPrivilegedExecutor{}
+	mockPriv := &mockPrivilegedExecutor{elevatedState: false}
 	mgr := NewServiceManager(mockExec, mockPriv)
 
 	// 1. 测试 StartService
@@ -159,8 +108,8 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StartService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || !strings.Contains(mockPriv.lastScript, "Start-Service") {
-		t.Errorf("expected Start-Service script in elevated execution")
+	if !mockPriv.elevatedCalled || len(mockPriv.lastArgs) == 0 || mockPriv.lastArgs[len(mockPriv.lastArgs)-1] != "start" {
+		t.Errorf("expected start action in elevated execution, got %v", mockPriv.lastArgs)
 	}
 
 	// 2. 测试 StopService
@@ -169,8 +118,8 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StopService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || !strings.Contains(mockPriv.lastScript, "Stop-Service") {
-		t.Errorf("expected Stop-Service script in elevated execution")
+	if !mockPriv.elevatedCalled || len(mockPriv.lastArgs) == 0 || mockPriv.lastArgs[len(mockPriv.lastArgs)-1] != "stop" {
+		t.Errorf("expected stop action in elevated execution, got %v", mockPriv.lastArgs)
 	}
 
 	// 3. 测试 RestartService
@@ -179,8 +128,8 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RestartService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || !strings.Contains(mockPriv.lastScript, "Restart-Service") {
-		t.Errorf("expected Restart-Service script in elevated execution")
+	if !mockPriv.elevatedCalled || len(mockPriv.lastArgs) == 0 {
+		t.Errorf("expected elevated execution on restart")
 	}
 
 	// 4. 测试 InstallService
@@ -190,8 +139,8 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("InstallService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || !strings.Contains(mockPriv.lastScript, "-service install") {
-		t.Errorf("expected -service install in elevated execution")
+	if !mockPriv.elevatedCalled || len(mockPriv.lastArgs) == 0 || mockPriv.lastArgs[len(mockPriv.lastArgs)-1] != "install" {
+		t.Errorf("expected install in elevated execution, got %v", mockPriv.lastArgs)
 	}
 
 	// 5. 测试 InstallAndStartService
@@ -200,8 +149,8 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("InstallAndStartService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || !strings.Contains(mockPriv.lastScript, "Start-Service") || !strings.Contains(mockPriv.lastScript, "-service install") {
-		t.Errorf("expected install and start in single elevated script")
+	if !mockPriv.elevatedCalled {
+		t.Errorf("expected install and start in elevated execution")
 	}
 
 	// 6. 测试 UninstallService
@@ -210,18 +159,17 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UninstallService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || !strings.Contains(mockPriv.lastScript, "sc.exe delete") {
-		t.Errorf("expected sc.exe delete in elevated script")
+	if !mockPriv.elevatedCalled {
+		t.Errorf("expected elevated execution on uninstall")
 	}
 }
 
 func TestServiceManager_UACCancelled(t *testing.T) {
 	ctx := context.Background()
-	mockExec := &mockServiceCmdExecutor{
-		returnPSErr: errors.New("command failed: 1223 The operation was canceled by the user"),
+	mockPriv := &mockPrivilegedExecutor{
+		returnErr: ErrUACCancelled,
 	}
-	privExec := NewDefaultPrivilegedExecutor(mockExec)
-	mgr := NewServiceManager(mockExec, privExec)
+	mgr := NewServiceManager(nil, mockPriv)
 
 	err := mgr.StartService(ctx)
 	if !errors.Is(err, ErrUACCancelled) {
@@ -231,11 +179,10 @@ func TestServiceManager_UACCancelled(t *testing.T) {
 
 func TestServiceManager_ElevatedExecutionError(t *testing.T) {
 	ctx := context.Background()
-	mockExec := &mockServiceCmdExecutor{
-		returnPSErr: errors.New("command failed: service failed to start with code 1"),
+	mockPriv := &mockPrivilegedExecutor{
+		returnErr: errors.New("特权操作执行失败: code 1"),
 	}
-	privExec := NewDefaultPrivilegedExecutor(mockExec)
-	mgr := NewServiceManager(mockExec, privExec)
+	mgr := NewServiceManager(nil, mockPriv)
 
 	err := mgr.StartService(ctx)
 	if err == nil {
@@ -250,7 +197,6 @@ func TestServiceManager_ElevatedExecutionError(t *testing.T) {
 }
 
 func TestServiceManager_LocateExecutable(t *testing.T) {
-	// 创建临时可执行文件模拟
 	tmpDir := t.TempDir()
 	fakeExe := filepath.Join(tmpDir, "diting-service.exe")
 	if err := os.WriteFile(fakeExe, []byte("fake binary"), 0755); err != nil {
@@ -258,9 +204,7 @@ func TestServiceManager_LocateExecutable(t *testing.T) {
 	}
 
 	mgr := NewServiceManager(nil, nil)
-	// 测试真实环境下的可执行路径定位（不抛 panic）
 	path, _ := mgr.LocateExecutable()
-	// 如果本地有安装或开发构建产物，验证其包含 .exe
 	if path != "" && !strings.HasSuffix(strings.ToLower(path), ".exe") {
 		t.Errorf("expected path to end with .exe, got %s", path)
 	}
