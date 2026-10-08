@@ -1,7 +1,7 @@
 """
 谛听 (DITING) 品牌 Logo 矢量化生成与多尺寸图标导出脚本
-采用与安卓端完全同构的 Squircle（超椭圆圆角）徽标与核心球体雷达图腾，
-主色调融合 Material Design 经典天蓝色 (#0288D1)。
+采用与移动端同构的 Squircle（超椭圆圆角）徽标与核心球体雷达图腾，
+主色调为纯色浅蓝 (#d4e3ff) 与岩板深蓝图腾 (#404a58)。
 """
 
 import os
@@ -25,7 +25,7 @@ def extract_paths_from_android():
             paths.append((fill, stroke, d))
     return paths
 
-def generate_squircle_svg(bg_color="#0288D1", totem_color="#FFFFFF", sphere_bg="rgba(255,255,255,0.08)", subtle_gradient=True):
+def generate_squircle_svg(bg_color="#d4e3ff", totem_color="#404a58", sphere_bg=None, subtle_gradient=False):
     """
     生成高精度 SVG 矢量字符串。
     Squircle (超椭圆) 曲线与球体雷达图腾完全同构于 Android 端。
@@ -93,7 +93,12 @@ def export_all_assets():
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     windows_dir = os.path.join(root_dir, "Windows")
 
-    svg_content = generate_squircle_svg(subtle_gradient=True)
+    svg_content = generate_squircle_svg(
+        bg_color="#d4e3ff",
+        totem_color="#404a58",
+        sphere_bg=None,
+        subtle_gradient=False
+    )
 
     # 1. 导出高清 SVG 至 Windows 资源目录备用
     svg_out_path = os.path.join(windows_dir, "frontend", "src", "assets", "images", "logo.svg")
