@@ -161,5 +161,60 @@ type ConfigureFirewallRequest struct {
 	Enable bool `json:"enable"`
 }
 
+// AuthStatusResponse 描述当前认证与 Web 服务概况
+type AuthStatusResponse struct {
+	Initialized         bool   `json:"initialized"`
+	WebEnabled          bool   `json:"webEnabled"`
+	Authenticated       bool   `json:"authenticated"`
+	Username            string `json:"username"`
+	Locked              bool   `json:"locked"`
+	LockoutRemainingSec int64  `json:"lockoutRemainingSec"`
+}
+
+// LoginRequest 登录请求载荷
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// LoginResponse 登录成功响应载荷
+type LoginResponse struct {
+	Token     string `json:"token"`
+	Username  string `json:"username"`
+	ExpiresAt int64  `json:"expiresAt"`
+}
+
+// SetupAuthRequest 首次初始化管理员账号密码
+type SetupAuthRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// ChangePasswordRequest 修改密码请求
+type ChangePasswordRequest struct {
+	Username    string `json:"username"`
+	OldPassword string `json:"oldPassword,omitempty"`
+	NewPassword string `json:"newPassword"`
+}
+
+// WebStatusResponse 局域网 Web 管理服务状态响应
+type WebStatusResponse struct {
+	Enabled         bool     `json:"enabled"`
+	Port            int      `json:"port"`
+	ListenAddress   string   `json:"listenAddress"`
+	LANAddresses    []string `json:"lanAddresses"`
+	WebURLs         []string `json:"webUrls"`
+	FirewallAllowed bool     `json:"firewallAllowed"`
+	Initialized     bool     `json:"initialized"`
+	Username        string   `json:"username"`
+}
+
+// ConfigureWebRequest 配置局域网 Web 管理服务
+type ConfigureWebRequest struct {
+	Enabled           bool `json:"enabled"`
+	Port              int  `json:"port,omitempty"`
+	ConfigureFirewall bool `json:"configureFirewall,omitempty"`
+}
+
 
 

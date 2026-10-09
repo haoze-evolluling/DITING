@@ -122,6 +122,38 @@ type TakeoverConfig struct {
 	StateFilePath       string `json:"stateFilePath"`       // 接管状态持久化文件路径
 }
 
+// WebConfig 局域网 Web 管理控制台配置
+type WebConfig struct {
+	Enabled        bool          `json:"enabled"`        // 是否启用局域网 Web 远程管理
+	ListenPort     int           `json:"listenPort"`     // 独立端口（若为 0 则复用 IPC 端口）
+	Username       string        `json:"username"`       // 管理员账号（默认 admin）
+	PasswordHash   string        `json:"passwordHash"`   // 加盐密码哈希
+	Salt           string        `json:"salt"`           // 盐值
+	SessionTimeout time.Duration `json:"sessionTimeout"` // 会话有效时长（默认 7 * 24h）
+}
+
+// UnmarshalJSON 支持字符串 (如 "168h") 与数字纳秒对 time.Duration 的反序列化
+func (c *WebConfig) UnmarshalJSON(data []byte) error {
+	type Alias WebConfig
+	aux := &struct {
+		SessionTimeout any `json:"sessionTimeout"`
+		*Alias
+	}{
+		Alias: (*Alias)(c),
+	}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	if aux.SessionTimeout != nil {
+		d, err := parseDurationValue(aux.SessionTimeout)
+		if err != nil {
+			return fmt.Errorf("解析 sessionTimeout 失败: %w", err)
+		}
+		c.SessionTimeout = d
+	}
+	return nil
+}
+
 // Config 谛听 Windows 端完整核心配置
 type Config struct {
 	DNS      DNSConfig           `json:"dns"`
@@ -130,6 +162,7 @@ type Config struct {
 	Takeover TakeoverConfig      `json:"takeover"`
 	Cache    core.CacheConfig    `json:"cache"`
 	Filter   core.FilterConfig   `json:"filter"`
+	Web      WebConfig           `json:"web"`
 }
 
 // DefaultConfig 生成默认系统配置
@@ -166,5 +199,13 @@ func DefaultConfig() *Config {
 		},
 		Cache:  core.DefaultCacheConfig(),
 		Filter: core.DefaultFilterConfig(),
+		Web: WebConfig{
+			Enabled:        false,
+			ListenPort:     0,
+			Username:       "admin",
+			PasswordHash:   "",
+			Salt:           "",
+			SessionTimeout: 7 * 24 * time.Hour,
+		},
 	}
 }

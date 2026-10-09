@@ -4,6 +4,7 @@ import { ipc } from '../api/ipc';
 import type { AdapterInfo, StatusResponse } from '../api/types';
 import StatusBadge from '../components/StatusBadge.vue';
 import M3Icon from '../components/M3Icon.vue';
+import LanWebCard from '../components/LanWebCard.vue';
 
 const adapters = ref<AdapterInfo[]>([]);
 const status = ref<StatusResponse | null>(null);
@@ -136,6 +137,9 @@ onMounted(() => {
         </button>
       </div>
     </div>
+
+    <!-- 局域网 Web 远程管理控制台 -->
+    <LanWebCard />
 
     <!-- 错误横幅 -->
     <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-3 text-sm text-status-error">

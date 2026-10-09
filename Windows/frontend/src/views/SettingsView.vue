@@ -270,7 +270,9 @@ onMounted(() => {
         <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-text-main">开机自动启动</span>
+            <span v-if="ipc.isWebMode()" class="text-[11px] text-text-muted bg-surface-card px-2 py-0.5 rounded border border-surface-border">仅限宿主机桌面</span>
             <md-switch
+              v-else
               :selected="autostart"
               :disabled="togglingAutostart"
               @change="handleToggleAutostart"
@@ -311,7 +313,9 @@ onMounted(() => {
         <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-text-main">一键恢复网络设置</span>
+            <span v-if="ipc.isWebMode()" class="text-[11px] text-text-muted bg-surface-card px-2 py-0.5 rounded border border-surface-border">仅限宿主机桌面</span>
             <button
+              v-else
               type="button"
               @click="handleEmergencyRestore"
               :disabled="restoring"

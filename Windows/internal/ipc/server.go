@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -48,6 +48,15 @@ type ServiceController interface {
 	GetLANStatus(ctx context.Context) (*LANStatusResponse, error)
 	ConfigureLAN(ctx context.Context, req ConfigureLANRequest) error
 	ConfigureFirewall(ctx context.Context, enable bool) error
+	GetWebStatus(ctx context.Context) (*WebStatusResponse, error)
+	ConfigureWeb(ctx context.Context, req ConfigureWebRequest) error
+	ConfigureWebFirewall(ctx context.Context, enable bool) error
+	GetAuthStatus(ctx context.Context) (*AuthStatusResponse, error)
+	Login(ctx context.Context, req LoginRequest, clientIP string) (*LoginResponse, error)
+	Logout(ctx context.Context, token string) error
+	SetupAuth(ctx context.Context, req SetupAuthRequest) error
+	ChangePassword(ctx context.Context, req ChangePasswordRequest, bypassOldAuth bool) error
+	ValidateSession(token string) bool
 }
 
 var upgrader = websocket.Upgrader{
@@ -73,6 +82,7 @@ type Server struct {
 	controller ServiceController
 	httpServer *http.Server
 	listener   net.Listener
+	assetsFS   fs.FS
 
 	clients    map[*wsClient]bool
 	register   chan *wsClient
@@ -143,6 +153,19 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/v1/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/portcheck", s.withAuth(s.handlePortCheck))
 	mux.HandleFunc("/api/v1/health", s.handleHealth)
+
+	// Web 远程管理与认证路由
+	mux.HandleFunc("/api/v1/auth/status", s.handleAuthStatus)
+	mux.HandleFunc("/api/v1/auth/login", s.handleAuthLogin)
+	mux.HandleFunc("/api/v1/auth/logout", s.withAuth(s.handleAuthLogout))
+	mux.HandleFunc("/api/v1/auth/setup", s.handleAuthSetup)
+	mux.HandleFunc("/api/v1/auth/password", s.withAuth(s.handleAuthPassword))
+	mux.HandleFunc("/api/v1/web/status", s.withAuth(s.handleWebStatus))
+	mux.HandleFunc("/api/v1/web/configure", s.withAuth(s.handleWebConfigure))
+	mux.HandleFunc("/api/v1/web/firewall", s.withAuth(s.handleWebFirewall))
+
+	// SPA 静态资源路由回退
+	mux.HandleFunc("/", s.handleStaticSPA)
 
 	ln, err := net.Listen("tcp", s.addr)
 	if err != nil {
@@ -240,10 +263,10 @@ func (s *Server) runHub() {
 	}
 }
 
-// withAuth 校验 Bearer Token 或 X-API-Token 请求头
+// withAuth 校验 Bearer Token、X-API-Token 或 Web 会话凭证
 func (s *Server) withAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if s.token != "" && !s.verifyToken(r) {
+		if !s.verifyToken(r) {
 			writeJSON(w, http.StatusUnauthorized, Response[any]{
 				Success: false,
 				Error:   "unauthorized: missing or invalid authentication token",
@@ -255,23 +278,33 @@ func (s *Server) withAuth(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (s *Server) verifyToken(r *http.Request) bool {
-	if s.token == "" {
+	token := extractToken(r)
+
+	// 1. 若匹配本地 IPC 专用凭据，直接放行
+	if s.token != "" && token == s.token {
 		return true
 	}
-	authHeader := r.Header.Get("Authorization")
-	if strings.HasPrefix(authHeader, "Bearer ") {
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token == s.token {
-			return true
-		}
-	}
-	if r.Header.Get("X-API-Token") == s.token {
+
+	// 2. 若匹配有效的 Web 登录会话 Token，放行
+	if token != "" && s.controller != nil && s.controller.ValidateSession(token) {
 		return true
 	}
-	if r.URL.Query().Get("token") == s.token {
+
+	// 3. 本地回环免密直连 (来自本机 127.0.0.1 或 [::1] 且未强制配置专用 IPC 密钥)
+	if s.token == "" && isLoopbackRequest(r) {
 		return true
 	}
+
 	return false
+}
+
+func isLoopbackRequest(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 func (s *Server) handleDNSStart(w http.ResponseWriter, r *http.Request) {
@@ -442,7 +475,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
-	if s.token != "" && !s.verifyToken(r) {
+	if !s.verifyToken(r) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}

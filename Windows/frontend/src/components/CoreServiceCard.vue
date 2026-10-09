@@ -168,78 +168,84 @@ onMounted(() => {
 
     <!-- 操作工具栏 -->
     <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-      <div class="text-xs text-text-sub flex items-center gap-1.5">
-        <M3Icon name="info" :size="15" class="text-text-muted" />
-        <span>支持一键向 Windows 注册服务并开机托管，操作将在需要时请求管理员权限。</span>
+      <div v-if="ipc.isWebMode()" class="w-full flex items-center gap-2 text-xs text-text-sub bg-surface-card-sub p-3 rounded-xl border border-surface-border">
+        <M3Icon name="info" :size="16" class="text-brand-primary shrink-0" />
+        <span>当前为局域网 Web 远程管理控制台，后台服务正在宿主机守护运行中。Windows 系统服务注册与提权安装仅限在宿主机桌面端操作。</span>
       </div>
+      <template v-else>
+        <div class="text-xs text-text-sub flex items-center gap-1.5">
+          <M3Icon name="info" :size="15" class="text-text-muted" />
+          <span>支持一键向 Windows 注册服务并开机托管，操作将在需要时请求管理员权限。</span>
+        </div>
 
-      <div class="flex items-center gap-2">
-        <!-- 未安装状态：提供安装服务 -->
-        <template v-if="serviceStatus && !serviceStatus.installed">
-          <button
-            type="button"
-            @click="handleAction('install')"
-            :disabled="operating || !serviceStatus.canInstall"
-            class="app-btn-secondary app-btn-compact"
-          >
-            <M3Icon name="add" :size="14" />
-            <span>仅注册服务</span>
-          </button>
-          <button
-            type="button"
-            @click="handleAction('install_and_start')"
-            :disabled="operating || !serviceStatus.canInstall"
-            class="app-btn-primary app-btn-compact"
-          >
-            <M3Icon name="bolt" :size="14" />
-            <span>{{ operating ? '正在处理...' : '一键安装并启动' }}</span>
-          </button>
-        </template>
+        <div class="flex items-center gap-2">
+          <!-- 未安装状态：提供安装服务 -->
+          <template v-if="serviceStatus && !serviceStatus.installed">
+            <button
+              type="button"
+              @click="handleAction('install')"
+              :disabled="operating || !serviceStatus.canInstall"
+              class="app-btn-secondary app-btn-compact"
+            >
+              <M3Icon name="add" :size="14" />
+              <span>仅注册服务</span>
+            </button>
+            <button
+              type="button"
+              @click="handleAction('install_and_start')"
+              :disabled="operating || !serviceStatus.canInstall"
+              class="app-btn-primary app-btn-compact"
+            >
+              <M3Icon name="bolt" :size="14" />
+              <span>{{ operating ? '正在处理...' : '一键安装并启动' }}</span>
+            </button>
+          </template>
 
-        <!-- 已安装但已停止：提供启动与卸载 -->
-        <template v-else-if="serviceStatus?.installed && !serviceStatus?.running">
-          <button
-            type="button"
-            @click="handleAction('uninstall')"
-            :disabled="operating"
-            class="app-btn-danger app-btn-compact"
-          >
-            <M3Icon name="delete" :size="14" />
-            <span>卸载服务</span>
-          </button>
-          <button
-            type="button"
-            @click="handleAction('start')"
-            :disabled="operating"
-            class="app-btn-primary app-btn-compact"
-          >
-            <M3Icon name="play_arrow" :size="14" />
-            <span>{{ operating ? '正在启动...' : '启动服务' }}</span>
-          </button>
-        </template>
+          <!-- 已安装但已停止：提供启动与卸载 -->
+          <template v-else-if="serviceStatus?.installed && !serviceStatus?.running">
+            <button
+              type="button"
+              @click="handleAction('uninstall')"
+              :disabled="operating"
+              class="app-btn-danger app-btn-compact"
+            >
+              <M3Icon name="delete" :size="14" />
+              <span>卸载服务</span>
+            </button>
+            <button
+              type="button"
+              @click="handleAction('start')"
+              :disabled="operating"
+              class="app-btn-primary app-btn-compact"
+            >
+              <M3Icon name="play_arrow" :size="14" />
+              <span>{{ operating ? '正在启动...' : '启动服务' }}</span>
+            </button>
+          </template>
 
-        <!-- 已安装且运行中：提供重启与停止 -->
-        <template v-else-if="serviceStatus?.installed && serviceStatus?.running">
-          <button
-            type="button"
-            @click="handleAction('stop')"
-            :disabled="operating"
-            class="app-btn-secondary app-btn-compact"
-          >
-            <M3Icon name="pause" :size="14" />
-            <span>停止服务</span>
-          </button>
-          <button
-            type="button"
-            @click="handleAction('restart')"
-            :disabled="operating"
-            class="app-btn-primary app-btn-compact"
-          >
-            <M3Icon name="refresh" :size="14" :class="operating ? 'animate-spin' : ''" />
-            <span>{{ operating ? '正在重启...' : '重启服务' }}</span>
-          </button>
-        </template>
-      </div>
+          <!-- 已安装且运行中：提供重启与停止 -->
+          <template v-else-if="serviceStatus?.installed && serviceStatus?.running">
+            <button
+              type="button"
+              @click="handleAction('stop')"
+              :disabled="operating"
+              class="app-btn-secondary app-btn-compact"
+            >
+              <M3Icon name="pause" :size="14" />
+              <span>停止服务</span>
+            </button>
+            <button
+              type="button"
+              @click="handleAction('restart')"
+              :disabled="operating"
+              class="app-btn-primary app-btn-compact"
+            >
+              <M3Icon name="refresh" :size="14" :class="operating ? 'animate-spin' : ''" />
+              <span>{{ operating ? '正在重启...' : '重启服务' }}</span>
+            </button>
+          </template>
+        </div>
+      </template>
     </div>
   </div>
 </template>

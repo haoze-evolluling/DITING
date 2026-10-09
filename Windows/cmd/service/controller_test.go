@@ -5,9 +5,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/haoze-evolluling/diting/windows/internal/auth"
 	"github.com/haoze-evolluling/diting/windows/internal/config"
 	"github.com/haoze-evolluling/diting/windows/internal/core"
 	"github.com/haoze-evolluling/diting/windows/internal/ipc"
@@ -413,3 +416,73 @@ func TestController_LANIntegration(t *testing.T) {
 		t.Errorf("expected reverted local listen on 127.0.0.1:53, got: %v", lanStatusDisabled.ListenAddresses)
 	}
 }
+
+func TestController_WebAndAuthIntegration(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.json")
+
+	cfg := config.DefaultConfig()
+	cfg.Web.Enabled = false
+	cfg.Web.ListenPort = 15353
+	_ = config.SaveConfig(cfgPath, cfg)
+
+	prg := &program{
+		configPath: cfgPath,
+		cfg:        cfg,
+		authMgr:    auth.NewManager("admin", "", "", 24*time.Hour),
+	}
+	ctx := context.Background()
+
+	// 1. 获取初始状态
+	webStatus, err := prg.GetWebStatus(ctx)
+	if err != nil {
+		t.Fatalf("GetWebStatus failed: %v", err)
+	}
+	if webStatus.Enabled || webStatus.Initialized {
+		t.Errorf("expected webStatus initial disabled and uninitialized")
+	}
+
+	// 2. 初始化管理员凭据
+	err = prg.SetupAuth(ctx, ipc.SetupAuthRequest{Username: "admin", Password: "testpassword123"})
+	if err != nil {
+		t.Fatalf("SetupAuth failed: %v", err)
+	}
+
+	// 3. 登录并校验 Token
+	loginResp, err := prg.Login(ctx, ipc.LoginRequest{Username: "admin", Password: "testpassword123"}, "127.0.0.1")
+	if err != nil {
+		t.Fatalf("Login failed: %v", err)
+	}
+	if !prg.ValidateSession(loginResp.Token) {
+		t.Errorf("session token should be valid")
+	}
+
+	// 4. 启用局域网 Web 管理
+	err = prg.ConfigureWeb(ctx, ipc.ConfigureWebRequest{
+		Enabled:           true,
+		Port:              15353,
+		ConfigureFirewall: false,
+	})
+	if err != nil {
+		t.Fatalf("ConfigureWeb failed: %v", err)
+	}
+	if !prg.cfg.Web.Enabled || prg.cfg.IPC.ListenAddress != "0.0.0.0:15353" {
+		t.Errorf("expected Web enabled on 0.0.0.0:15353, got: %s", prg.cfg.IPC.ListenAddress)
+	}
+
+	// 5. 修改密码
+	err = prg.ChangePassword(ctx, ipc.ChangePasswordRequest{
+		Username:    "admin",
+		OldPassword: "testpassword123",
+		NewPassword: "newpassword456",
+	}, false)
+	if err != nil {
+		t.Fatalf("ChangePassword failed: %v", err)
+	}
+
+	// 密码修改后原 Token 应失效
+	if prg.ValidateSession(loginResp.Token) {
+		t.Errorf("old session token should be invalidated after password change")
+	}
+}
+

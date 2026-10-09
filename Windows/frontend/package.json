@@ -12,6 +12,8 @@
   "dependencies": {
     "@material/material-color-utilities": "^0.2.7",
     "@material/web": "^2.5.0",
+    "@types/qrcode": "^1.5.6",
+    "qrcode": "^1.5.4",
     "vue": "^3.5.0"
   },
   "devDependencies": {

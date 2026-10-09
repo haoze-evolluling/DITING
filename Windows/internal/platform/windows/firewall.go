@@ -101,7 +101,56 @@ func ConfigureFirewallPort53(ctx context.Context, executor CommandExecutor, enab
 	return nil
 }
 
+const (
+	// FirewallRuleNameWeb 谛听 Web 局域网远程管理 TCP 防火墙入站规则名称
+	FirewallRuleNameWeb = "Diting Web Admin (TCP)"
+)
+
+// CheckFirewallPortWeb 检测 Windows 防火墙是否已放行 Web 管理端口入站规则
+func CheckFirewallPortWeb(ctx context.Context, executor CommandExecutor) (bool, error) {
+	if executor == nil {
+		executor = NewDefaultExecutor()
+	}
+
+	out, err := executor.RunCommand(ctx, "netsh", "advfirewall", "firewall", "show", "rule", fmt.Sprintf("name=%s", FirewallRuleNameWeb))
+	if err != nil || !isFirewallRuleActive(out) {
+		return false, nil
+	}
+	return true, nil
+}
+
+// ConfigureFirewallPortWeb 配置 Windows 防火墙允许或禁止局域网访问 Web 管理端口
+func ConfigureFirewallPortWeb(ctx context.Context, executor CommandExecutor, port int, enable bool) error {
+	if executor == nil {
+		executor = NewDefaultExecutor()
+	}
+	if port <= 0 {
+		port = 15353
+	}
+
+	_ = deleteFirewallRule(ctx, executor, FirewallRuleNameWeb)
+
+	if !enable {
+		return nil
+	}
+
+	if out, err := executor.RunCommand(ctx, "netsh", "advfirewall", "firewall", "add", "rule",
+		fmt.Sprintf("name=%s", FirewallRuleNameWeb),
+		"dir=in",
+		"action=allow",
+		"protocol=TCP",
+		fmt.Sprintf("localport=%d", port),
+		"profile=any",
+		`description=谛听 Web 局域网远程管理端口放行`,
+	); err != nil {
+		return fmt.Errorf("添加 Web 管理防火墙规则失败: %s (%w)", strings.TrimSpace(out), err)
+	}
+
+	return nil
+}
+
 func deleteFirewallRule(ctx context.Context, executor CommandExecutor, ruleName string) error {
 	_, err := executor.RunCommand(ctx, "netsh", "advfirewall", "firewall", "delete", "rule", fmt.Sprintf("name=%s", ruleName))
 	return err
 }
+

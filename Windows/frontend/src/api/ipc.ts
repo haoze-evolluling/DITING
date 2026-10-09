@@ -19,32 +19,16 @@ import type {
   BootstrapConfig,
   LANStatusResponse,
   ConfigureLANRequest,
+  AuthStatusResponse,
+  LoginRequest,
+  LoginResponse,
+  SetupAuthRequest,
+  ChangePasswordRequest,
+  WebStatusResponse,
+  ConfigureWebRequest,
 } from './types';
 import { handleMockRequest } from './mock';
-
-// Wails 全局对象类型声明
-declare global {
-  interface Window {
-    go?: {
-      main?: {
-        App?: {
-          Greet?: (name: string) => Promise<string>;
-          RunEmergencyRestore?: () => Promise<string>;
-          IsAutoStartEnabled?: () => Promise<boolean>;
-          SetAutoStart?: (enable: boolean) => Promise<boolean>;
-          GetCoreServiceStatus?: () => Promise<CoreServiceStatus>;
-          StartCoreService?: () => Promise<string>;
-          StopCoreService?: () => Promise<string>;
-          RestartCoreService?: () => Promise<string>;
-          InstallCoreService?: () => Promise<string>;
-          InstallAndStartCoreService?: () => Promise<string>;
-          UninstallCoreService?: () => Promise<string>;
-          ConfigureFirewallForLAN?: (enable: boolean) => Promise<string>;
-        };
-      };
-    };
-  }
-}
+import { nativeBridge } from './native';
 
 class IPCService {
   private baseURL: string = 'http://127.0.0.1:15353';
@@ -54,17 +38,31 @@ class IPCService {
   private isConnectingWS: boolean = false;
   private eventListeners: Set<(event: WebSocketEvent) => void> = new Set();
   private connectionStatusListeners: Set<(connected: boolean) => void> = new Set();
+  private authStatusListeners: Set<(authRequired: boolean) => void> = new Set();
   public isConnected: boolean = false;
 
   constructor() {
     this.loadConfig();
   }
 
+  public isWebMode(): boolean {
+    return !nativeBridge.isDesktopApp();
+  }
+
   public loadConfig() {
-    const savedHost = localStorage.getItem('diting_ipc_host') || '127.0.0.1';
-    const savedPort = localStorage.getItem('diting_ipc_port') || '15353';
-    this.token = localStorage.getItem('diting_ipc_token') || '';
-    this.baseURL = `http://${savedHost}:${savedPort}`;
+    const isBrowser = typeof window !== 'undefined' && !window.go?.main?.App;
+    let defaultHost = '127.0.0.1';
+    let defaultPort = '15353';
+    if (isBrowser && window.location.hostname) {
+      defaultHost = window.location.hostname;
+      defaultPort = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+    }
+
+    const savedHost = localStorage.getItem('diting_ipc_host') || defaultHost;
+    const savedPort = localStorage.getItem('diting_ipc_port') || defaultPort;
+    this.token = localStorage.getItem('diting_session_token') || localStorage.getItem('diting_ipc_token') || '';
+    const protocol = (typeof window !== 'undefined' && window.location.protocol === 'https:') ? 'https:' : 'http:';
+    this.baseURL = `${protocol}//${savedHost}:${savedPort}`;
   }
 
   public saveConfig(host: string, port: string, token: string) {
@@ -105,7 +103,8 @@ class IPCService {
     try {
       const resp = await fetch(url, { ...options, headers });
       if (resp.status === 401) {
-        throw new Error('鉴权失败: Token 无效或未提供');
+        this.notifyAuthRequired(true);
+        throw new Error('未授权或登录已过期，请重新登录');
       }
       const json: ApiResponse<T> = await resp.json();
       if (!json.success) {
@@ -118,41 +117,124 @@ class IPCService {
       this.setConnected(true);
       return json.data as T;
     } catch (err: any) {
-      if (err instanceof TypeError || (err.message && (err.message.includes('fetch') || err.message.includes('Network') || err.message.includes('failed')))) {
+      if (err.message && err.message.includes('未授权')) {
+        throw err;
+      }
+      if (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
         this.setConnected(false);
       }
       throw err;
     }
   }
 
-  private setConnected(connected: boolean) {
+  public setConnected(connected: boolean) {
     if (this.isConnected !== connected) {
       this.isConnected = connected;
-      this.connectionStatusListeners.forEach((fn) => fn(connected));
+      this.connectionStatusListeners.forEach(listener => listener(connected));
     }
   }
 
-  public onConnectionChange(fn: (connected: boolean) => void) {
-    this.connectionStatusListeners.add(fn);
-    fn(this.isConnected);
-    return () => this.connectionStatusListeners.delete(fn);
+  public onConnectionChange(listener: (connected: boolean) => void): () => void {
+    this.connectionStatusListeners.add(listener);
+    listener(this.isConnected);
+    return () => {
+      this.connectionStatusListeners.delete(listener);
+    };
   }
 
-  // --- RESTful 控制接口 ---
+  public onAuthRequired(listener: (required: boolean) => void): () => void {
+    this.authStatusListeners.add(listener);
+    return () => {
+      this.authStatusListeners.delete(listener);
+    };
+  }
 
+  private notifyAuthRequired(required: boolean) {
+    this.authStatusListeners.forEach(listener => listener(required));
+  }
+
+  public connectWS() {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
+      return;
+    }
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+    if (this.isConnectingWS) return;
+    this.isConnectingWS = true;
+
+    const wsProtocol = this.baseURL.startsWith('https') ? 'wss' : 'ws';
+    const hostPort = this.baseURL.replace(/^https?:\/\//, '');
+    let wsUrl = `${wsProtocol}://${hostPort}/api/v1/events`;
+    if (this.token) {
+      wsUrl += `?token=${encodeURIComponent(this.token)}`;
+    }
+
+    try {
+      this.ws = new WebSocket(wsUrl);
+      this.ws.onopen = () => {
+        this.isConnectingWS = false;
+        this.setConnected(true);
+        if (this.wsReconnectTimer) {
+          clearTimeout(this.wsReconnectTimer);
+          this.wsReconnectTimer = null;
+        }
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const parsed: WebSocketEvent = JSON.parse(event.data);
+          this.eventListeners.forEach(listener => listener(parsed));
+        } catch (e) {
+          console.error('Failed to parse WebSocket event:', e);
+        }
+      };
+
+      this.ws.onclose = () => {
+        this.isConnectingWS = false;
+        this.scheduleWSRetry();
+      };
+
+      this.ws.onerror = () => {
+        this.isConnectingWS = false;
+        this.setConnected(false);
+      };
+    } catch {
+      this.isConnectingWS = false;
+      this.scheduleWSRetry();
+    }
+  }
+
+  private scheduleWSRetry() {
+    if (!this.wsReconnectTimer) {
+      this.wsReconnectTimer = setTimeout(() => {
+        this.wsReconnectTimer = null;
+        this.connectWS();
+      }, 3000);
+    }
+  }
+
+  public reconnectWS() {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    this.connectWS();
+  }
+
+  public onEvent(listener: (event: WebSocketEvent) => void): () => void {
+    this.eventListeners.add(listener);
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      this.connectWS();
+    }
+    return () => {
+      this.eventListeners.delete(listener);
+    };
+  }
+
+  // --- 核心网络与 DNS 状态操作 ---
   public async getStatus(): Promise<StatusResponse> {
     return this.request<StatusResponse>('/api/v1/status');
-  }
-
-  public async checkHealth(): Promise<boolean> {
-    try {
-      await this.request<string>('/api/v1/health');
-      this.setConnected(true);
-      return true;
-    } catch {
-      this.setConnected(false);
-      return false;
-    }
   }
 
   public async startDNS(): Promise<void> {
@@ -182,15 +264,22 @@ class IPCService {
     });
   }
 
-  public async configureUpstream(req: UpstreamConfigureRequest): Promise<void> {
-    await this.request<void>('/api/v1/upstream/configure', {
-      method: 'POST',
-      body: JSON.stringify(req),
-    });
+  public async checkPortConflicts(): Promise<PortCheckResult> {
+    return this.request<PortCheckResult>('/api/v1/portcheck');
   }
 
-  public async configureBootstrap(req: BootstrapConfig): Promise<void> {
-    await this.request<void>('/api/v1/bootstrap/configure', {
+  public async checkHealth(): Promise<boolean> {
+    try {
+      const res = await this.request<string>('/api/v1/health');
+      return res === 'ok';
+    } catch {
+      return false;
+    }
+  }
+
+  // --- 上游与 Bootstrap 引导 ---
+  public async configureUpstream(req: UpstreamConfigureRequest): Promise<void> {
+    await this.request<void>('/api/v1/upstream/configure', {
       method: 'POST',
       body: JSON.stringify(req),
     });
@@ -203,95 +292,23 @@ class IPCService {
     });
   }
 
-  public async checkPortConflicts(): Promise<PortCheckResult> {
-    return this.request<PortCheckResult>('/api/v1/portcheck');
+  public async configureBootstrap(config: BootstrapConfig): Promise<void> {
+    await this.request<void>('/api/v1/bootstrap/configure', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
   }
 
-  // --- WebSocket 实时事件订阅 ---
-
-  public connectWS() {
-    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
-      return;
-    }
-    if (this.isConnectingWS) return;
-    this.isConnectingWS = true;
-
-    const host = this.baseURL.replace(/^http:\/\//, '').replace(/^https:\/\//, '');
-    let wsUrl = `ws://${host}/api/v1/events`;
-    if (this.token) {
-      wsUrl += `?token=${encodeURIComponent(this.token)}`;
-    }
-
-    try {
-      this.ws = new WebSocket(wsUrl);
-
-      this.ws.onopen = () => {
-        this.isConnectingWS = false;
-        this.setConnected(true);
-        if (this.wsReconnectTimer) {
-          clearTimeout(this.wsReconnectTimer);
-          this.wsReconnectTimer = null;
-        }
-      };
-
-      this.ws.onmessage = (evt) => {
-        try {
-          const parsed: WebSocketEvent = JSON.parse(evt.data);
-          this.eventListeners.forEach((listener) => listener(parsed));
-        } catch (e) {
-          console.error('[WS Parse Error]', e);
-        }
-      };
-
-      this.ws.onerror = () => {
-        this.isConnectingWS = false;
-        this.setConnected(false);
-      };
-
-      this.ws.onclose = () => {
-        this.isConnectingWS = false;
-        this.ws = null;
-        this.scheduleReconnectWS();
-      };
-    } catch {
-      this.isConnectingWS = false;
-      this.scheduleReconnectWS();
-    }
-  }
-
-  public reconnectWS() {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
-    this.connectWS();
-  }
-
-  private scheduleReconnectWS() {
-    if (this.wsReconnectTimer) return;
-    this.wsReconnectTimer = setTimeout(() => {
-      this.wsReconnectTimer = null;
-      this.connectWS();
-    }, 3000);
-  }
-
-  public onEvent(listener: (event: WebSocketEvent) => void) {
-    this.eventListeners.add(listener);
-    return () => this.eventListeners.delete(listener);
-  }
-
-  // --- 智能缓存 (Phase 5) API ---
-
+  // --- 智能缓存系统 ---
   public async getCacheStats(): Promise<CacheStats> {
     return this.request<CacheStats>('/api/v1/cache/stats');
   }
 
-  public async getCacheEntries(query: string = '', limit: number = 100): Promise<CacheEntriesResponse> {
+  public async getCacheEntries(query: string = '', limit: number = 50): Promise<CacheEntriesResponse> {
     const params = new URLSearchParams();
-    if (query) params.set('query', query);
-    if (limit > 0) params.set('limit', String(limit));
-    const path = `/api/v1/cache/entries${params.toString() ? '?' + params.toString() : ''}`;
-    return this.request<CacheEntriesResponse>(path);
+    if (query) params.set('q', query);
+    if (limit) params.set('limit', limit.toString());
+    return this.request<CacheEntriesResponse>(`/api/v1/cache/entries?${params.toString()}`);
   }
 
   public async getCacheTopDomains(limit: number = 10): Promise<CacheDomainStat[]> {
@@ -299,22 +316,21 @@ class IPCService {
   }
 
   public async clearCache(): Promise<void> {
-    await this.request('/api/v1/cache/clear', { method: 'POST' });
+    await this.request<void>('/api/v1/cache/clear', { method: 'POST' });
   }
 
   public async getCacheConfig(): Promise<CacheConfig> {
     return this.request<CacheConfig>('/api/v1/cache/config');
   }
 
-  public async updateCacheConfig(config: Partial<CacheConfig>): Promise<void> {
-    await this.request('/api/v1/cache/config', {
+  public async updateCacheConfig(config: CacheConfig): Promise<void> {
+    await this.request<void>('/api/v1/cache/config', {
       method: 'POST',
       body: JSON.stringify(config),
     });
   }
 
-  // --- 规则过滤相关接口 ---
-
+  // --- 规则拦截模块 ---
   public async getFilterStats(): Promise<FilterStats> {
     return this.request<FilterStats>('/api/v1/filter/stats');
   }
@@ -324,7 +340,7 @@ class IPCService {
   }
 
   public async updateFilterConfig(config: Partial<FilterConfig>): Promise<void> {
-    await this.request('/api/v1/filter/config', {
+    await this.request<void>('/api/v1/filter/config', {
       method: 'POST',
       body: JSON.stringify(config),
     });
@@ -332,210 +348,61 @@ class IPCService {
 
   public async getFilterLists(): Promise<FilterList[]> {
     const res = await this.request<{ total: number; lists: FilterList[] }>('/api/v1/filter/lists');
-    return res?.lists || [];
+    return res.lists || [];
   }
 
   public async addFilterList(list: Partial<FilterList>): Promise<void> {
-    await this.request('/api/v1/filter/lists/add', {
+    await this.request<void>('/api/v1/filter/lists/add', {
       method: 'POST',
       body: JSON.stringify(list),
     });
   }
 
   public async updateFilterList(list: FilterList): Promise<void> {
-    await this.request('/api/v1/filter/lists/update', {
+    await this.request<void>('/api/v1/filter/lists/update', {
       method: 'POST',
       body: JSON.stringify(list),
     });
   }
 
   public async deleteFilterList(id: string): Promise<void> {
-    await this.request('/api/v1/filter/lists/delete', {
+    await this.request<void>('/api/v1/filter/lists/delete', {
       method: 'POST',
       body: JSON.stringify({ id }),
     });
   }
 
-  public async refreshFilterLists(id?: string): Promise<void> {
-    await this.request('/api/v1/filter/lists/refresh', {
+  public async refreshFilterLists(id: string = ''): Promise<void> {
+    await this.request<void>('/api/v1/filter/lists/refresh', {
       method: 'POST',
-      body: JSON.stringify({ id: id || '' }),
+      body: JSON.stringify({ id }),
     });
   }
 
   public async getCustomRules(): Promise<string[]> {
     const res = await this.request<{ rules: string[] }>('/api/v1/filter/rules');
-    return res?.rules || [];
+    return res.rules || [];
   }
 
   public async setCustomRules(rules: string[]): Promise<void> {
-    await this.request('/api/v1/filter/rules', {
+    await this.request<void>('/api/v1/filter/rules', {
       method: 'POST',
       body: JSON.stringify({ rules }),
     });
   }
 
-  public async checkHost(domain: string, qtype?: string): Promise<CheckHostResult> {
+  public async checkHost(domain: string, qtype: string | number = 'A'): Promise<CheckHostResult> {
     return this.request<CheckHostResult>('/api/v1/filter/check', {
       method: 'POST',
-      body: JSON.stringify({ domain, qtype }),
+      body: JSON.stringify({ domain, qtype: String(qtype) }),
     });
   }
 
-  // --- Wails 原生能力桥接 ---
-
-  public async runNativeEmergencyRestore(): Promise<string> {
-    if (window.go?.main?.App?.RunEmergencyRestore) {
-      return await window.go.main.App.RunEmergencyRestore();
-    }
-    // 回退到 IPC 接口
-    await this.disableTakeover();
-    return '已通过 IPC 还原网卡 DNS 接管';
+  public async checkHostRule(domain: string, qtype: string | number = 'A'): Promise<CheckHostResult> {
+    return this.checkHost(domain, qtype);
   }
 
-  public async isAutoStartEnabled(): Promise<boolean> {
-    if (window.go?.main?.App?.IsAutoStartEnabled) {
-      try {
-        return await window.go.main.App.IsAutoStartEnabled();
-      } catch (e) {
-        console.warn('获取开机自启状态失败:', e);
-      }
-    }
-    return false;
-  }
-
-  public async setAutoStart(enable: boolean): Promise<boolean> {
-    if (window.go?.main?.App?.SetAutoStart) {
-      return await window.go.main.App.SetAutoStart(enable);
-    }
-    return enable;
-  }
-
-  // --- 核心服务生命周期与系统权限管理 ---
-
-  public async getCoreServiceStatus(): Promise<CoreServiceStatus> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      const mockState = (window as any).__mockCoreServiceStatus || {
-        installed: true,
-        running: true,
-        state: 'running',
-        stateText: '运行中',
-        executablePath: 'C:\\Program Files\\Diting\\谛听 DNS\\diting-service.exe',
-        isElevated: false,
-        canInstall: true,
-        message: '核心服务正常运行中。',
-      };
-      return mockState;
-    }
-
-    if (window.go?.main?.App?.GetCoreServiceStatus) {
-      try {
-        const res = await window.go.main.App.GetCoreServiceStatus();
-        return res as CoreServiceStatus;
-      } catch (err: any) {
-        console.warn('获取核心服务状态失败:', err);
-      }
-    }
-
-    return {
-      installed: false,
-      running: false,
-      state: 'unknown',
-      stateText: '未知状态',
-      executablePath: '',
-      isElevated: false,
-      canInstall: false,
-      message: '无法获取核心服务状态',
-    };
-  }
-
-  public async startCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.running = true;
-        (window as any).__mockCoreServiceStatus.state = 'running';
-        (window as any).__mockCoreServiceStatus.stateText = '运行中';
-      }
-      return '后台核心服务已成功启动！';
-    }
-    if (window.go?.main?.App?.StartCoreService) {
-      return await window.go.main.App.StartCoreService();
-    }
-    throw new Error('当前环境不支持启动 Windows 服务');
-  }
-
-  public async stopCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.running = false;
-        (window as any).__mockCoreServiceStatus.state = 'stopped';
-        (window as any).__mockCoreServiceStatus.stateText = '已停止';
-      }
-      return '后台核心服务已停止。';
-    }
-    if (window.go?.main?.App?.StopCoreService) {
-      return await window.go.main.App.StopCoreService();
-    }
-    throw new Error('当前环境不支持停止 Windows 服务');
-  }
-
-  public async restartCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      return '后台核心服务已成功重启！';
-    }
-    if (window.go?.main?.App?.RestartCoreService) {
-      return await window.go.main.App.RestartCoreService();
-    }
-    throw new Error('当前环境不支持重启 Windows 服务');
-  }
-
-  public async installCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.installed = true;
-        (window as any).__mockCoreServiceStatus.state = 'stopped';
-        (window as any).__mockCoreServiceStatus.stateText = '已停止';
-      }
-      return '后台核心服务已成功安装！';
-    }
-    if (window.go?.main?.App?.InstallCoreService) {
-      return await window.go.main.App.InstallCoreService();
-    }
-    throw new Error('当前环境不支持安装 Windows 服务');
-  }
-
-  public async installAndStartCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.installed = true;
-        (window as any).__mockCoreServiceStatus.running = true;
-        (window as any).__mockCoreServiceStatus.state = 'running';
-        (window as any).__mockCoreServiceStatus.stateText = '运行中';
-      }
-      return '后台核心服务已成功安装并启动！';
-    }
-    if (window.go?.main?.App?.InstallAndStartCoreService) {
-      return await window.go.main.App.InstallAndStartCoreService();
-    }
-    throw new Error('当前环境不支持安装并启动 Windows 服务');
-  }
-
-  public async uninstallCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.installed = false;
-        (window as any).__mockCoreServiceStatus.running = false;
-        (window as any).__mockCoreServiceStatus.state = 'not_installed';
-        (window as any).__mockCoreServiceStatus.stateText = '未安装';
-      }
-      return '后台核心服务已成功卸载。';
-    }
-    if (window.go?.main?.App?.UninstallCoreService) {
-      return await window.go.main.App.UninstallCoreService();
-    }
-    throw new Error('当前环境不支持卸载 Windows 服务');
-  }
-
+  // --- 局域网 DNS 服务 ---
   public async getLANStatus(): Promise<LANStatusResponse> {
     return this.request<LANStatusResponse>('/api/v1/dns/lan');
   }
@@ -559,6 +426,81 @@ class IPCService {
     });
     return res || (enable ? '已成功放行 53 端口防火墙规则' : '已成功移除 53 端口防火墙规则');
   }
+
+  // --- Web 远程管理与认证 ---
+  public async getAuthStatus(): Promise<AuthStatusResponse> {
+    return this.request<AuthStatusResponse>('/api/v1/auth/status');
+  }
+
+  public async login(req: LoginRequest): Promise<LoginResponse> {
+    const res = await this.request<LoginResponse>('/api/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+    if (res?.token) {
+      this.token = res.token;
+      localStorage.setItem('diting_session_token', res.token);
+      localStorage.setItem('diting_session_user', res.username);
+      this.reconnectWS();
+      this.notifyAuthRequired(false);
+    }
+    return res;
+  }
+
+  public async logout(): Promise<void> {
+    try {
+      await this.request<void>('/api/v1/auth/logout', { method: 'POST' });
+    } catch {}
+    this.token = '';
+    localStorage.removeItem('diting_session_token');
+    localStorage.removeItem('diting_session_user');
+    this.notifyAuthRequired(true);
+  }
+
+  public async setupAuth(req: SetupAuthRequest): Promise<void> {
+    await this.request<void>('/api/v1/auth/setup', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+  }
+
+  public async changePassword(req: ChangePasswordRequest): Promise<void> {
+    await this.request<void>('/api/v1/auth/password', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+  }
+
+  public async getWebStatus(): Promise<WebStatusResponse> {
+    return this.request<WebStatusResponse>('/api/v1/web/status');
+  }
+
+  public async configureWeb(req: ConfigureWebRequest): Promise<void> {
+    await this.request<void>('/api/v1/web/configure', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+  }
+
+  public async configureWebFirewall(enable: boolean): Promise<string> {
+    const res = await this.request<string>('/api/v1/web/firewall', {
+      method: 'POST',
+      body: JSON.stringify({ enable }),
+    });
+    return res || (enable ? '已成功放行 Web 端口防火墙规则' : '已成功移除 Web 端口防火墙规则');
+  }
+
+  // --- Wails 原生平台委托 ---
+  public runNativeEmergencyRestore() { return nativeBridge.runNativeEmergencyRestore(); }
+  public isAutoStartEnabled() { return nativeBridge.isAutoStartEnabled(); }
+  public setAutoStart(enable: boolean) { return nativeBridge.setAutoStart(enable); }
+  public getCoreServiceStatus() { return nativeBridge.getCoreServiceStatus(); }
+  public startCoreService() { return nativeBridge.startCoreService(); }
+  public stopCoreService() { return nativeBridge.stopCoreService(); }
+  public restartCoreService() { return nativeBridge.restartCoreService(); }
+  public installCoreService() { return nativeBridge.installCoreService(); }
+  public installAndStartCoreService() { return nativeBridge.installAndStartCoreService(); }
+  public uninstallCoreService() { return nativeBridge.uninstallCoreService(); }
 }
 
 export const ipc = new IPCService();

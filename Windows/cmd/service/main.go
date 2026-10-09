@@ -3,16 +3,17 @@ package main
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/haoze-evolluling/diting/windows/frontend"
+	"github.com/haoze-evolluling/diting/windows/internal/auth"
 	"github.com/haoze-evolluling/diting/windows/internal/config"
 	"github.com/haoze-evolluling/diting/windows/internal/core"
 	ditingdns "github.com/haoze-evolluling/diting/windows/internal/dns"
@@ -35,16 +36,17 @@ type program struct {
 	ipcAddr    string
 	token      string
 
-	cfg         *config.Config
-	server      *ditingdns.Server
+	cfg          *config.Config
+	server       *ditingdns.Server
 	resolver     *core.CoreResolver
 	cache        *core.DNSCache
 	filterEngine *core.RuleEngine
 	takeoverMgr  windows.DNSManager
-	adapterScan windows.AdapterScanner
-	stateStore  windows.StateStore
-	portChecker windows.PortChecker
-	ipcServer   *ipc.Server
+	adapterScan  windows.AdapterScanner
+	stateStore   windows.StateStore
+	portChecker  windows.PortChecker
+	ipcServer    *ipc.Server
+	authMgr      *auth.Manager
 
 	startTime time.Time
 	metrics   *metricsTracker
@@ -122,12 +124,22 @@ func (p *program) run() error {
 	p.cache = core.NewDNSCache(cfg.Cache)
 	p.filterEngine = core.NewRuleEngine(cfg.Filter)
 
-	// 6. 初始化 IPC 服务
-	p.ipcServer = ipc.NewServer(cfg.IPC.ListenAddress, cfg.IPC.AuthToken, p)
+	// 5.1 初始化 Web 远程管理与认证引擎
+	p.authMgr = auth.NewManager(cfg.Web.Username, cfg.Web.PasswordHash, cfg.Web.Salt, cfg.Web.SessionTimeout)
+
+	// 6. 初始化 IPC / Web 静态服务
+	ipcListen := cfg.IPC.ListenAddress
+	if cfg.Web.Enabled {
+		port := p.effectiveWebPort()
+		ipcListen = fmt.Sprintf("0.0.0.0:%d", port)
+		p.cfg.IPC.ListenAddress = ipcListen
+	}
+	p.ipcServer = ipc.NewServer(ipcListen, cfg.IPC.AuthToken, p)
+	p.initAssetsForServer(p.ipcServer)
 	if err := p.ipcServer.Start(); err != nil {
 		return fmt.Errorf("启动 IPC 本地服务失败: %w", err)
 	}
-	log.Printf("[IPC] 本地服务已启动于: %s (Token鉴权: %v)\n", p.ipcServer.Addr(), cfg.IPC.AuthToken != "")
+	log.Printf("[IPC/Web] 服务已启动于: %s (局域网Web: %v, Token鉴权: %v)\n", p.ipcServer.Addr(), cfg.Web.Enabled, cfg.IPC.AuthToken != "")
 
 	// 7. 启动本地 DNS 监听器
 	if err := p.StartDNS(context.Background()); err != nil {
@@ -486,75 +498,12 @@ func formatIP(ip net.IP) string {
 	return ip.String()
 }
 
-func main() {
-	showVersion := flag.Bool("v", false, "显示服务版本号并退出")
-	flag.BoolVar(showVersion, "version", false, "显示服务版本号并退出")
-	serviceAction := flag.String("service", "", "控制 Windows 服务 (install, uninstall, start, stop, restart)")
-	runConsole := flag.Bool("run", false, "在前台控制台直接运行 DNS 服务")
-	listenPort := flag.Int("port", 0, "DNS 服务监听端口 (默认从配置读取或 53)")
-	ipcAddr := flag.String("ipc-addr", "", "IPC HTTP/WS 监听地址 (默认 127.0.0.1:15353)")
-	token := flag.String("token", "", "IPC 访问鉴权 Token")
-	configPath := flag.String("config", "", "配置文件绝对路径")
-	checkPorts := flag.Bool("check-ports", false, "独立诊断 53 端口冲突并退出")
-	emergencyRestore := flag.Bool("restore", false, "独立恢复残留的系统 DNS 设置并退出")
-	flag.Parse()
-
-	if *showVersion || (service.Interactive() && len(os.Args) == 1 && *serviceAction == "" && !*runConsole && !*checkPorts && !*emergencyRestore) {
-		printVersion()
+func (p *program) initAssetsForServer(srv *ipc.Server) {
+	if srv == nil {
 		return
 	}
-
-	if *checkPorts {
-		executePortDiagnostics()
-		return
-	}
-
-	if *emergencyRestore {
-		executeEmergencyRestore(*configPath)
-		return
-	}
-
-	svcConfig := &service.Config{
-		Name:        "DitingDNSService",
-		DisplayName: "谛听 DNS 内核特权服务",
-		Description: "谛听 Windows 端 DNS 内核特权服务，负责双栈物理网卡 DNS 接管与多协议上游转发。",
-		Arguments:   []string{"-run"},
-	}
-	if *configPath != "" {
-		absPath, _ := filepath.Abs(*configPath)
-		svcConfig.Arguments = append(svcConfig.Arguments, "-config", absPath)
-	}
-	if *listenPort > 0 {
-		svcConfig.Arguments = append(svcConfig.Arguments, "-port", fmt.Sprintf("%d", *listenPort))
-	}
-	if *ipcAddr != "" {
-		svcConfig.Arguments = append(svcConfig.Arguments, "-ipc-addr", *ipcAddr)
-	}
-	if *token != "" {
-		svcConfig.Arguments = append(svcConfig.Arguments, "-token", *token)
-	}
-
-	prg := &program{
-		configPath: *configPath,
-		dnsPort:    *listenPort,
-		ipcAddr:    *ipcAddr,
-		token:      *token,
-	}
-
-	s, err := service.New(prg, svcConfig)
-	if err != nil {
-		log.Fatalf("初始化 Windows 服务失败: %v\n", err)
-	}
-
-	if *serviceAction != "" {
-		if err := service.Control(s, *serviceAction); err != nil {
-			log.Fatalf("服务控制操作 [%s] 失败: %v\n", *serviceAction, err)
-		}
-		fmt.Printf("服务控制操作 [%s] 成功完成\n", *serviceAction)
-		return
-	}
-
-	if err := s.Run(); err != nil {
-		log.Fatalf("服务运行失败: %v\n", err)
+	if sub, err := fs.Sub(frontend.Assets, "dist"); err == nil {
+		srv.SetAssetsFS(sub)
 	}
 }
+

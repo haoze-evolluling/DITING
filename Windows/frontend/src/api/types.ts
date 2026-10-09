@@ -274,4 +274,52 @@ export interface ConfigureFirewallRequest {
   enable: boolean;
 }
 
+export interface AuthStatusResponse {
+  initialized: boolean;
+  webEnabled: boolean;
+  authenticated: boolean;
+  username: string;
+  locked: boolean;
+  lockoutRemainingSec: number;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  username: string;
+  expiresAt: number;
+}
+
+export interface SetupAuthRequest {
+  username: string;
+  password: string;
+}
+
+export interface ChangePasswordRequest {
+  username: string;
+  oldPassword?: string;
+  newPassword: string;
+}
+
+export interface WebStatusResponse {
+  enabled: boolean;
+  port: number;
+  listenAddress: string;
+  lanAddresses: string[];
+  webUrls: string[];
+  firewallAllowed: boolean;
+  initialized: boolean;
+  username: string;
+}
+
+export interface ConfigureWebRequest {
+  enabled: boolean;
+  port?: number;
+  configureFirewall?: boolean;
+}
+
 

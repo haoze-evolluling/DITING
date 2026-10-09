@@ -270,6 +270,41 @@ export function handleMockRequest(rawPath: string, _options: RequestInit = {}): 
       reason: '命中广告拦截规则',
     } as CheckHostResult;
   }
+  if (path === '/api/v1/auth/status') {
+    return {
+      initialized: true,
+      webEnabled: true,
+      authenticated: true,
+      username: 'admin',
+      locked: false,
+      lockoutRemainingSec: 0,
+    };
+  }
+  if (path === '/api/v1/auth/login') {
+    return {
+      token: 'mock-session-token',
+      username: 'admin',
+      expiresAt: Math.floor(Date.now() / 1000) + 7 * 86400,
+    };
+  }
+  if (path === '/api/v1/auth/logout' || path === '/api/v1/auth/setup' || path === '/api/v1/auth/password') {
+    return { success: true };
+  }
+  if (path === '/api/v1/web/status') {
+    return {
+      enabled: true,
+      port: 15353,
+      listenAddress: '0.0.0.0:15353',
+      lanAddresses: ['192.168.1.100', '192.168.31.25'],
+      webUrls: ['http://192.168.1.100:15353', 'http://192.168.31.25:15353'],
+      firewallAllowed: true,
+      initialized: true,
+      username: 'admin',
+    };
+  }
+  if (path === '/api/v1/web/configure' || path === '/api/v1/web/firewall') {
+    return { success: true };
+  }
   if (path === '/api/v1/portcheck' || path === '/api/v1/system/check-port') {
     return {
       available: true,
