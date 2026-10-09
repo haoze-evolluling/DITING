@@ -1,147 +1,221 @@
 # 谛听 (DITING)
 
-谛听（DITING）是一款专注于本地 DNS 解析优化与网络流量过滤的开源工具。致力于在设备本地实现高性能、低延迟的域名解析，提供灵活的规则过滤、防追踪与流量控制能力，完全在本地闭环运行，无任何远程数据上传与隐私追踪。
+谛听（DITING）是一款专注于本地高性能 DNS 解析加速、智能调度优化与网络流量过滤的开源工具。致力于在设备本地实现低延迟解析、灵活规则阻断、防追踪与流量管控，全链路在本地闭环运行，无任何远程数据上传与隐私追踪。
 
-本项目当前为 **Android 移动端（全功能正式版）** 实现：基于 Android `VpnService` 与 Go 用户态网络栈（gVisor netstack），支持完整的 DNS 接管优化、规则订阅过滤、细粒度应用网络分流、可选 HTTPS 流量解密检查、应用流量监控与快捷设置磁贴。
+本项目已实现跨平台支持：
+- 📱 **Android 移动端**：支持纯 Kotlin 极速模式（窄路由、极低功耗）、Go 用户态全隧道模式（gVisor netstack、应用级分流、HTTPS 检查）及局域网独立 DNS 服务模式。
+- 💻 **Windows 桌面端**：基于「特权系统服务 + Wails 桌面 GUI + 局域网 Web 控制台」双二进制协作架构，提供物理网卡双栈 DNS 安全接管、崩溃自愈、53 端口冲突检测与多端远程管理。
+- 🧰 **开发者维护工具箱**：基于 Python + PyWebView 提供桌面可视化维护套件，涵盖 DNS 批量压测、代码规范扫描、品牌资产渲染、跨端统一流水线构建与全端版本同步。
 
-***
+---
 
 ## 核心特性
 
 ### 📡 DNS 解析与上游调度
-
 - **多协议支持**：支持标准 DNS（UDP/TCP 53）、DNS-over-HTTPS（DoH）与 DNS-over-TLS（DoT）。
-- **多策略调度**：提供**单一服务**（Single）、**智能优选**（Smart EWMA 加权延迟与成功率）、**最快响应**（Fastest 并发竞速）及**依次尝试**（Sequential 备援容灾）四种解析调度模式。
-- **服务商管理**：内置主流公共 DNS 服务商（阿里、腾讯、Cloudflare、Google、DNSPod 等），支持自由增删与编辑自定义 DoH/DoT 节点。
-- **Bootstrap 引导与防绕过**：支持内置与自定义 Bootstrap IP 解析加密上游域名，避免递归解析死锁；支持 DDR 防绕过机制（阻断 `_dns.resolver.arpa`），引导客户端规范经由本地通道解析。
+- **多策略调度**：提供**单一服务**（Single）、**智能优选**（Smart EWMA 延迟预测与成功率考量）、**最快响应**（Fastest 并发竞速）及**依次尝试**（Sequential 备援容灾）四种调度模式。
+- **服务商管理**：内置阿里、腾讯、Cloudflare、Google、DNSPod 等主流公共 DNS，支持自由扩展与编辑自定义节点。
+- **Bootstrap 引导与防绕过**：内置与自定义 Bootstrap IP 负责解析加密上游域名，杜绝递归死锁；启用 DDR 防绕过机制（拦截 `_dns.resolver.arpa`），引导流量规范经由本地通道解析。
 
-### ⚡ 智能缓存与弱网容灾
-
-- **并发安全缓存**：采用 64 分片并发安全 LRU 缓存，提供跟随 TTL、平衡、高命中等多档策略预设，兼顾解析实时性与响应效率。
-- **乐观容灾（Stale-While-Revalidate）**：当上游解析超时或网络出现波动时，短暂复用仍处于宽限期内的过期缓存，保障弱网环境下的基本可用性。
+### ⚡ 智能缓存与容灾防击穿
+- **并发安全分片缓存**：采用 64 分片并发安全 LRU 缓存，提供跟随 TTL、平衡、高命中等多档预设策略，兼顾解析实时性与响应效率。
+- **乐观容灾（Stale-While-Revalidate）**：在上游超时或网络抖动时，短暂复用仍处于宽限期内的过期缓存，保障弱网基本可用。
+- **并发合并防击穿（Singleflight）**：针对突发同一域名的并发解析请求进行请求合并，减轻上游负载并防止本地缓存击穿。
 
 ### 🛡️ 规则引擎与地址覆写
-
-- **多维度规则匹配**：支持域名黑白名单（兼容 AdGuard 语法、通配符与正则）、网页元素隐藏（Cosmetic）规则、IPv4 / IPv6 地址覆写（A / AAAA 记录静态覆写）与 CNAME 重定向。
+- **高性能多维度匹配**：支持域名黑白名单（兼容 AdGuard 语法、通配符与正则）、Trie 前缀树与 Bloom 过滤器加速、网页元素隐藏（Cosmetic）规则。
 - **规则订阅与自动更新**：支持 AdGuard 格式远程规则订阅，支持规则分组、镜像源模板加速（如 GitHub 镜像代理）与后台定时自动拉取更新。
-- **灵活阻断响应**：支持零地址（`0.0.0.0` / `::`）、NXDOMAIN、NODATA 与 REFUSED 四种拦截响应行为。
+- **静态覆写与重定向**：支持 IPv4 / IPv6 静态地址覆写（A / AAAA 记录）与 CNAME 重定向解析。
+- **多样化阻断响应**：支持零地址（`0.0.0.0` / `::`）、NXDOMAIN、NODATA 与 REFUSED 四种拦截响应行为。
 
-### 🔒 应用管控与网络分流（Android）
+### 📱 Android 移动端专属特性
+- **细粒度应用分流**：支持排除应用（Bypass 直连物理网络）、禁止联网（丢弃全部外联）与应用白名单访问（仅限访问已解析 IP）。
+- **可选 HTTPS 流量检查**：基于 gVisor netstack 与本地 CA 证书，仅对用户勾选的应用解密与 URL 级过滤；支持证书绑定自适应旁路与 QUIC/H3 引导回退。
+- **出站代理联动**：支持将流量转接至本地 SOCKS5（含 UDP ASSOCIATE）或 HTTP CONNECT 代理。
+- **全景洞察与便捷工具**：支持悬浮窗与状态栏实时网速、按 UID 流量消耗统计排行、DNS 手动诊断查询与快捷设置磁贴（Quick Settings Tile）。
 
-- **排除应用（Bypass）**：支持按应用绕过 VPN，直接使用底层网络与系统 DNS。
-- **禁止联网**：按应用丢弃全部网络连接，阻止后台未经授权的外联行为。
-- **应用白名单访问**：仅允许指定应用连接白名单域名解析出的有效 IP，阻断其他非白名单 IP 直连。
-- **出站代理联动**：支持将过滤后的流量转发至本地 SOCKS5（支持 UDP ASSOCIATE）或 HTTP CONNECT 代理。
+### 💻 Windows 桌面端专属特性
+- **双二进制协作架构**：特权服务（`diting-service.exe`，管理员权限后台守护）负责网卡与网络核心；桌面 GUI（`diting-gui.exe`，普通权限免 UAC）负责可视化交互，两者通过本地 IPC 通信。
+- **物理网卡双栈接管与安全自愈**：自动识别并接管活动物理网卡的 IPv4/IPv6 DNS 配置；接管前原子备份原始状态，程序退出或异常中断时全自动恢复；内置应急脱困（Emergency Restore）能力。
+- **端口冲突检测与进程占用识别**：启动前自动探测 53 端口占用情况，精准定位占用进程名与 PID。
+- **局域网 Web 远程管理控制台**：服务内置 Web 仪表盘与 REST 控制接口，集成管理员账号密码鉴权、安全 Session/Token 验证与防火墙 53 端口规则一键放行，支持局域网其他设备直接管理。
+- **系统集成**：支持注册为 Windows 系统服务、开机静默启动、界面截图捕获。
 
-### 🔍 HTTPS 流量检查（Android 可选高级功能）
+### 🧰 开发者桌面维护工具箱
+- **桌面可视化交互**：基于 Python + PyWebView 构建，启动 `maintenance/run_maintenance.bat` 即可使用。
+- **核心维护能力**：
+  - **DNS 诊断与压测**：单次解析探测与多轮并发批量压测（统计平均耗时与丢包率）。
+  - **代码规范扫描**：递归扫描源码文件，检查行数超标文件（遵循单文件不超过 600 行规范）。
+  - **品牌资产生成**：一键预览与导出高清松石绿品牌 Logo（含 SVG、各尺寸 PNG 与 Windows ICO 格式）。
+  - **统一构建打包**：支持 Windows 特权服务、Wails 桌面端、NSIS 完整安装包的一键流水线构建与依赖工具链检测。
+  - **跨端版本管理**：跨 Go、NSIS、Wails、前端 package.json 等统一检测、同步版本号并生成校验信息。
 
-- **按需解密**：基于 Go 用户态网络栈（gVisor netstack）与本地 CA 根证书，仅对用户显式信任且主动勾选的目标应用进行解密与 URL 级规则匹配。
-- **安全自适应旁路**：遇证书绑定（Certificate Pinning）、双向 TLS、EV 证书及预设敏感域名时自动直连旁路，保障金融与关键安全应用正常通行。
-- **QUIC / HTTP/3 引导**：支持按目标应用阻断 QUIC（UDP 443）流量，平滑引导客户端回退至 TCP 进行分析。
+---
 
-### 🏠 局域网独立服务器模式（Standalone Server）
+## 工作模式与平台支持矩阵
 
-- 本机 1053 端口（UDP/TCP）提供轻量 DNS 解析服务，供局域网内其他设备（路由器、PC、电视等）将 DNS 指向本机使用。
-- 与普通模式共享规则库与缓存，完全本地解耦，不建立 VPN 通道。
+| 平台 | 模块 / 模式 | 最低系统要求 | 核心引擎与实现 | 核心特性与适用场景 |
+|---|---|---|---|---|
+| **Android** | ⚡ **极速模式** (Express) | Android 7.0+ (API 24)<br>`arm64-v8a` | **纯 Kotlin 原生**<br>轻量窄路由 TUN | **超轻量、极低功耗**。仅捕获 DNS 流量（53 端口），其余直接走物理网络；提供核心解析加速、4 种调度模式、规则拦截与缓存。适合老旧设备或注重省电的用户。 |
+| **Android** | 🛡️ **普通模式** (Normal) | Android 10.0+ (API 29)<br>`arm64-v8a` | **Go 用户态协议栈**<br>(gVisor netstack + AAR) | **全功能网络管控**。全隧道接管，支持细粒度应用分流、可选 HTTPS 流量解密检查、出站代理联动、实时网速与流量排行。 |
+| **Android** | 🏠 **服务器模式** (Server) | Android 10.0+ (API 29)<br>`arm64-v8a` | **Go 独立 DNS 服务**<br>(监听 `0.0.0.0:1053`) | **局域网共享 DNS**。供同一局域网下的 PC、路由器或电视接入解析，共享本地规则与缓存，不占用 VPN 槽位。 |
+| **Windows** | ⚙️ **特权核心服务** (Service) | Windows 10+ (64-bit) | **Go 原生服务**<br>(Windows Service / CLI) | **底层接管与 DNS 核心**。双栈接管物理网卡、本地 53 端口监听、LRU 缓存与规则匹配、崩溃自愈、53 端口冲突检测与局域网 Web 控制台服务。 |
+| **Windows** | 🖥️ **桌面图形控制台** (GUI) | Windows 10+ (64-bit)<br>WebView2 运行时 | **Wails v2 + Vue 3**<br>TypeScript + Material Web | **桌面交互与监控**。免管理员权限运行，提供实时查询流日志、服务商管理、缓存与规则配置、系统服务安装与启停、应急脱困与开机自启。 |
+| **Windows** | 🌐 **局域网 Web 控制台** | 任意主流浏览器 | **嵌入式 Web 仪表盘**<br>(带管理员账号认证) | **跨设备远程管理**。局域网内任意手机、平板或 PC 无需安装客户端，直接通过浏览器管理 Windows 核心服务。 |
 
-### 📊 全景可观测与实用工具
-
-- **实时监控仪表盘**：提供 DNS 请求日志流、拦截记录、HTTP 检查日志、缓存命中状态、服务商健康度与规则拦截统计。
-- **应用流量洞察（Android）**：按应用 UID 采样统计实时网速与历史消耗排行，支持悬浮窗实时查看与状态栏实时网速。
-- **内置诊断工具**：内置 DNS 手动解析查询与 Ping 延迟测试工具，支持配置导入导出与 Android 快捷设置磁贴（Quick Settings Tile）。
-- **个性化与多语言**：支持简体中文 / 英文界面，多套 Material 3 调色板与深浅色模式切换，可自定义背景图；集成可选的私有 LLM API 助手（BYOK，默认关闭，仅用于辅助域名与流量研判）。
-
-***
-
-## 工作模式与支持矩阵
-
-谛听提供三种完全独立的工作模式，满足不同设备环境与性能偏好：
-
-| 工作模式 | 最低系统要求 | 核心引擎与网络栈 | 核心特性与定位 |
-|---|---|---|---|
-| ⚡ **极速模式** (Express) | **Android 7.0+ (API 24)**<br>`arm64-v8a` | **纯 Kotlin 原生实现**<br>轻量窄路由 TUN + Kotlin 引擎 | **纯净轻量，极低功耗**。零 Go 内核依赖，窄路由仅捕获 DNS 流量（UDP/TCP 53）与公共 DNS 劫持，其余流量直连物理网络；提供核心 DNS 解析加速、4 种调度策略、规则过滤、多档缓存与日志。最低支持 Android 7 老旧设备。 |
-| 🛡️ **普通模式** (Normal) | **Android 10.0+ (API 29)**<br>`arm64-v8a` | **Go 用户态网络栈**<br>(gVisor netstack + AAR) | **全功能网络管控**。全隧道接管，支持细粒度应用级分流（排除/禁止联网/白名单）、HTTPS 流量解密检查、出站 SOCKS5/HTTP 代理联动、实时应用流量统计与状态栏网速。 |
-| 🏠 **服务器模式** (Server) | **Android 10.0+ (API 29)**<br>`arm64-v8a` | **Go 独立 DNS 服务**<br>(监听 `0.0.0.0:1053`) | **局域网 DNS 服务器**。供外部路由器、PC 与电视等设备接入解析，共享本地规则与缓存，完全本地解耦且不占用 VPN 槽位。 |
-
-***
-
-## 运行架构与安全边界
-
-- **Android 端架构**：
-  - **极速模式（窄路由）**：仅路由 DNS 虚拟地址与公共 DNS 劫持列表，非 53 端口 TCP 快速回写 RST 拒绝，不经过用户态 TCP/IP 协议栈，天然极低功耗。
-  - **普通模式（全隧道）**：由 Go 用户态网络栈（gVisor netstack）接管配置应用的网络流量，支持深度的应用分流与可选 HTTPS 流量检查。
-  - **服务器模式（局域网）**：直接监听 `0.0.0.0:1053`，供局域网外部设备接入。
-- **隐私保障**：全本地运行，无云端账户体系，无上报遥测，所有缓存、规则库与配置数据完整保存在设备本地。
-
-***
+---
 
 ## 项目工程结构
 
 ```
 DITING/
-├── Android/         # Android 客户端完整工程（应用层、UI、Room 数据库、Go 隧道 AAR）
-│   ├── app/         # Android 主程序源码与依赖配置（含 express 极速模式独立模块）
-│   ├── tunnel/      # Go 用户态网络栈与 DNS 引擎源码（编译为 tunnel.aar）
-│   └── build_apk.bat# Android 交互式构建与安装脚本
-├── docs/            # 设计规范、开发指南与技术文档
-│   ├── development/ # 工程维护文档（构建记录、证书规范、极速模式架构、语法参考等）
-├── maintenance/     # 开发者桌面交互工具箱 (Python + PyWebView) 与工程维护模块
-├── launch_toolbox.bat # 一键启动开发者工具箱图形界面
+├── Android/                    # Android 客户端工程
+│   ├── app/                    # Android 应用层源码（UI、Room 数据库、极速模式模块）
+│   ├── tunnel/                 # Go 用户态网络栈与 DNS 隧道模块（编译为 tunnel.aar）
+│   └── build_apk.bat           # Android 交互式构建、版本归档与 ADB 安装脚本
+├── Windows/                    # Windows 桌面端工程
+│   ├── cmd/
+│   │   ├── gui/                # Wails GUI 调试入口
+│   │   └── service/            # Windows 特权核心服务（CLI 与系统服务）源码
+│   ├── internal/               # Windows 端核心实现（DNS 内核、平台适配、IPC、鉴权）
+│   ├── frontend/               # Wails 前端界面源码（Vue 3 + TypeScript + Material Web）
+│   ├── build.bat               # Windows 端多目标流水线构建脚本
+│   ├── set_version.bat         # Windows 端版本同步与检测脚本
+│   └── wails.json              # Wails 项目配置文件
+├── maintenance/                # 开发者桌面交互式工具箱 (Python + PyWebView)
+│   ├── api.py                  # 工具箱前后端通信桥接层
+│   ├── app.py                  # 工具箱桌面应用启动入口
+│   ├── core/                   # 核心维护工具（构建、压测、扫描、Logo 导出、版本管理）
+│   ├── web/                    # 工具箱前端界面（HTML/CSS/JS）
+│   └── run_maintenance.bat     # 工具箱一键启动脚本
+├── docs/                       # 项目技术规范与维护文档
+│   ├── development/            # 核心架构与开发指南（AAR 构建、Windows 规划、贡献者维护）
+│   │   └── Archive/            # 历史设计方案与归档技术规范
+│   └── assets/                 # 文档静态资源（收款码图片等）
+├── avatars/                    # 赞助者与共建者头像资源（云控展示）
+├── recognition_members.json    # 赞助者与共建者名单配置（云端热更新）
+└── AGENTS.md                   # 项目开发与代码规范定义
 ```
 
-
-***
+---
 
 ## 环境要求与构建指南
 
 ### 📱 Android 客户端
 
 #### 运行与构建要求
-- 运行系统：
-  - **极速模式**：Android 7.0 及以上（API 级别 24+）
-  - **普通模式 / 服务器模式**：Android 10 及以上（API 级别 29+）
-- 设备架构：`arm64-v8a`
-- 构建环境：JDK 11 或更高版本（推荐使用 Android Studio 自带 JBR）、Android SDK
+- **系统要求**：极速模式 Android 7.0+ (API 24+)；普通模式 / 服务器模式 Android 10.0+ (API 29+)。
+- **硬件架构**：`arm64-v8a`。
+- **构建环境**：JDK 11 或更高版本（推荐使用 Android Studio 自带 JBR）、Android SDK。
 
 #### 构建命令
-进入 `Android/` 目录，推荐直接使用 Gradle Wrapper（Windows、Linux 与 CI 通用）：
+在 `Android/` 目录下使用 Gradle Wrapper：
 
 ```bash
 cd Android
 
 # 编译 Debug APK
-./gradlew :app:assembleDebug --console=plain    # Windows 下为 gradlew.bat
+./gradlew :app:assembleDebug --console=plain    # Windows 下使用 gradlew.bat
 
-# 编译 Release APK（已混淆压缩）
+# 编译 Release APK
 ./gradlew :app:assembleRelease --console=plain
 ```
 
-Windows 下亦可在 `Android/` 目录下运行交互式辅助脚本 `build_apk.bat`（或在项目根目录执行 `.\Android\build_apk.bat`）：选择 Debug / Release 模式后自动编译、定位产物 APK，并可选通过 ADB 安装到目标设备（支持输入 `IP:端口` 的无线调试连接）。
+亦可在 Windows 下直接双击运行或命令行执行 `Android/build_apk.bat`：支持一键选择编译模式、自动归档产物，并可通过 ADB（支持无线调试）快速部署至真机。
 
 构建产物路径：
 - 标准 APK：`Android/app/build/outputs/apk/<buildType>/app-<buildType>.apk`
-- 版本化安装包：`Android/app/build/outputs/apk/versioned/<buildType>/DITING-<buildType>-v<versionName>.apk`
+- 归档 APK：`Android/app/build/outputs/apk/versioned/<buildType>/DITING-<buildType>-v<versionName>.apk`
 
-***
+---
 
-## 技术栈
+### 💻 Windows 桌面端
 
-- **Android 客户端**：Kotlin / Jetpack Compose / Material 3 / Coroutines & Flow / Navigation Compose / Room / DataStore / VpnService / OkHttp / WorkManager
-- **核心引擎与网络栈**：Go 1.23+ / gVisor netstack / `gomobile` / quic-go / miekg/dns
+#### 构建环境要求
+- **Go**：Go 1.23 或更高版本。
+- **Node.js**：Node.js 18+ 与 npm。
+- **Wails CLI**：Wails v2 (`go install github.com/wailsapp/wails/v2/cmd/wails@latest`)。
+- **NSIS**（可选）：`makensis`（用于打包独立安装包）。
 
-***
+#### 构建方式
 
-## 开发文档索引
+##### 1. 使用构建脚本（推荐）
+在 `Windows/` 目录下运行 `build.bat`（自动调度 Python 构建引擎）：
 
-项目技术规范与开发维护文档归档于 `docs/development/` 目录：
+```cmd
+cd Windows
 
-- [Go AAR 构建记录](docs/development/aar-build-notes.md) — Android 端 Go 隧道 AAR（`tunnel.aar`）的编译环境、构建参数与产物验证方法。
-- [极速模式架构设计与技术规范](docs/development/express-mode-architecture.md) — 极速模式（Express Mode）“独立新文件、零污染旧代码”架构设计、DNS 专用窄路由数据面、DNS 劫持清单与取舍说明。
-- [Android 签名证书管理与发布签名规范](docs/development/android-signing-certificate-management.md) — 4096 位 Android 正式发布签名证书技术规格、指纹与打包流程。
-- [AdGuard 规则修饰符语法参考](docs/development/adguard-rule-modifier-syntax-reference.md) — AdGuard 规则语法与 `$modifier` 规范整理，包含规则引擎适配说明。
-- [云控贡献者名单维护说明](docs/development/recognition-members.md) — 赞助者与共建者名单的云控机制、配置 JSON 格式与头像维护流程。
+# 构建全部产物（特权服务 + GUI 客户端 + NSIS 安装包）
+build.bat -t all -b release
 
-***
+# 仅构建特权服务 (diting-service.exe)
+build.bat -t service -b release
+
+# 仅构建 GUI 客户端 (diting-gui.exe)
+build.bat -t gui -b release
+```
+
+构建产物默认生成在 `Windows/build/bin/` 目录下。
+
+##### 2. 手动分步构建
+```cmd
+cd Windows
+
+# 编译特权服务
+go build -ldflags "-s -w -H windowsgui -X main.Version=1.3.1" -o build/bin/diting-service.exe ./cmd/service
+
+# 编译 GUI 客户端
+wails build -platform windows/amd64 -o diting-gui.exe
+```
+
+---
+
+### 🧰 开发者桌面工具箱 (Maintenance Toolbox)
+
+工具箱提供统一的可视化维护界面，免去记忆各类命令行参数的负担。
+
+#### 环境要求
+- Python 3.8+
+- 安装依赖库：
+  ```bash
+  pip install pywebview dnspython pillow
+  ```
+
+#### 启动方式
+双击运行项目根目录下的 `maintenance/run_maintenance.bat`，或在命令行中执行：
+
+```bash
+python maintenance/app.py
+```
+
+#### 版本号统一同步
+如需发布新版本，可通过工具箱的「版本管理」模块更新，或使用快捷脚本执行全端检测与同步：
+
+```cmd
+.\Windows\set_version.bat 1.3.2
+```
+
+---
+
+## 技术栈一览
+
+- **Android 客户端**：Kotlin / Jetpack Compose / Material 3 / Coroutines & Flow / Room / DataStore / VpnService / OkHttp / WorkManager
+- **Windows 桌面端**：Go 1.23+ / Wails v2 / Vue 3 / TypeScript / Vite / @material/web (Material 3) / Win32 API / Windows Service
+- **核心 DNS 引擎**：Go / gVisor netstack (Android) / miekg/dns / quic-go / Singleflight
+- **维护工具箱**：Python 3 / PyWebView (WebView2) / HTML5 / CSS3 / JavaScript
+
+---
+
+## 开发与参考文档
+
+项目技术规范与深度设计文档归档于 `docs/development/` 目录：
+
+- [Windows 端基础 DNS 内核架构设计与分阶段开发规划](docs/development/windows-dns-kernel-roadmap.md) — Windows 端双进程架构、网卡接管与恢复状态机、IPC 与 Pipeline 详细设计。
+- [Go AAR 构建记录](docs/development/aar-build-notes.md) — Android 端 Go 隧道 AAR（`tunnel.aar`）的编译环境、构建参数与跨平台交叉编译细节。
+- [云控贡献者名单维护说明](docs/development/recognition-members.md) — 赞助者与共建者名单的云控机制、配置 JSON 规范与头像资源维护指南。
+- [历史归档文档 (Archive)](docs/development/Archive/) — 极速模式早期设计文档、Android 签名证书规范与 AdGuard 规则语法参考等。
+
+---
 
 <a id="sponsorship"></a>
 
@@ -153,9 +227,9 @@ Windows 下亦可在 `Android/` 目录下运行交互式辅助脚本 `build_apk.
 | :---: | :---: |
 | ![支付宝付款码](docs/assets/alipay_code.png) | ![微信付款码](docs/assets/wechatpay_code.png) |
 
-关于赞助者与共建者名单的动态展示机制，请参阅 [云控贡献者名单维护说明](docs/development/recognition-members.md)。
+关于赞助者与共建者名单的动态展示机制与头像提交规范，请参阅 [云控贡献者名单维护说明](docs/development/recognition-members.md)。
 
-***
+---
 
 ## 作者与开源协议
 
