@@ -1,8 +1,31 @@
 import os
+import re
 import subprocess
 import threading
 import time
 from typing import Callable, Optional
+
+ANSI_ESCAPE_RE = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def decode_bytes(data: bytes) -> str:
+    """智能多编码容错解码，杜绝 Windows 控制台与各类 CLI 工具的中文乱码"""
+    for enc in ("utf-8", "gb18030", "cp936", "latin1"):
+        try:
+            return data.decode(enc)
+        except (UnicodeDecodeError, LookupError):
+            continue
+    return data.decode("utf-8", errors="replace")
+
+
+def clean_output_line(raw: bytes) -> str:
+    """清理换行符、回车覆盖与 ANSI 彩色控制字符"""
+    decoded = decode_bytes(raw)
+    no_ansi = ANSI_ESCAPE_RE.sub("", decoded).strip("\r\n")
+    if "\r" in no_ansi:
+        parts = [p.strip() for p in no_ansi.split("\r") if p.strip()]
+        return parts[-1] if parts else ""
+    return no_ansi
 
 
 def stream_process_output(
@@ -31,16 +54,12 @@ def stream_process_output(
             cwd=cwd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
             env=run_env,
-            bufsize=1,
         )
         if on_proc_started:
             on_proc_started(proc)
 
-        for line in iter(proc.stdout.readline, ""):
+        for line_bytes in iter(proc.stdout.readline, b""):
             if is_cancelled():
                 try:
                     proc.terminate()
@@ -48,7 +67,7 @@ def stream_process_output(
                     pass
                 on_log("warn", "[已终止] 用户主动取消了任务。")
                 return -1
-            clean_line = line.rstrip("\r\n")
+            clean_line = clean_output_line(line_bytes)
             if clean_line:
                 on_log("info", clean_line)
 

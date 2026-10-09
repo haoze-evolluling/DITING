@@ -7,7 +7,13 @@
 !define INFO_PROJECTNAME    "diting-gui"
 !define INFO_COMPANYNAME    "Diting"
 !define INFO_PRODUCTNAME    "谛听 DNS"
-!define INFO_PRODUCTVERSION "1.3.2"
+!ifndef INFO_PRODUCTVERSION
+  !ifdef PRODUCT_VERSION
+    !define INFO_PRODUCTVERSION "${PRODUCT_VERSION}"
+  !else
+    !define INFO_PRODUCTVERSION "1.3.2"
+  !endif
+!endif
 !define INFO_COPYRIGHT      "Copyright 2026 DITING"
 
 !define PRODUCT_EXECUTABLE  "diting-gui.exe"
@@ -58,7 +64,11 @@ ManifestDPIAware true
 !insertmacro MUI_LANGUAGE "English"
 
 Name "${INFO_PRODUCTNAME}"
-OutFile "..\..\bin\${INFO_PROJECTNAME}-${ARCH}-installer.exe"
+!ifdef OUTPUT_FILENAME
+  OutFile "${OUTPUT_FILENAME}"
+!else
+  OutFile "..\..\bin\${INFO_PROJECTNAME}-${ARCH}-installer.exe"
+!endif
 !ifdef WAILS_INSTALL_SCOPE
   !if "${WAILS_INSTALL_SCOPE}" == "user"
     InstallDir "$LOCALAPPDATA\Programs\${INFO_PRODUCTNAME}"

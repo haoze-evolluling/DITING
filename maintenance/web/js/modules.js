@@ -216,7 +216,7 @@ window.BuildModule = {
 
   async startBuild() {
     const target = document.getElementById('build-target').value;
-    const version = document.getElementById('build-version').value.trim() || '1.3.1';
+    const version = document.getElementById('build-version').value.trim() || '1.3.2';
     const buildType = document.getElementById('build-type').value;
     const clean = document.getElementById('build-clean').checked;
 

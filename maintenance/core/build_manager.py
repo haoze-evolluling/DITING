@@ -15,9 +15,21 @@ import sys
 from typing import Callable, Dict, List, Optional
 
 if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+    try:
+        if sys.stdout.isatty():
+            sys.stdout.reconfigure(errors="replace")
+        else:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 if hasattr(sys.stderr, "reconfigure"):
-    sys.stderr.reconfigure(encoding="utf-8")
+    try:
+        if sys.stderr.isatty():
+            sys.stderr.reconfigure(errors="replace")
+        else:
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -29,6 +41,39 @@ from maintenance.core.runner import stream_process_output
 
 def get_root_dir() -> str:
     return ROOT_DIR
+
+
+def get_current_project_version() -> str:
+    """自动获取当前项目的核心版本号"""
+    try:
+        wails_json = os.path.join(ROOT_DIR, "Windows", "wails.json")
+        if os.path.exists(wails_json):
+            import json
+            with open(wails_json, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                v = data.get("info", {}).get("productVersion")
+                if v:
+                    return v
+    except Exception:
+        pass
+    return "1.3.2"
+
+
+def stop_running_processes(on_log: Optional[Callable[[str, str], None]] = None):
+    """构建前安全终止旧进程，防止文件占用锁导致编译或打包失败"""
+    targets = ["diting-gui.exe", "diting-service.exe"]
+    for exe in targets:
+        try:
+            res = subprocess.run(
+                ["taskkill", "/F", "/T", "/IM", exe],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+            if res.returncode == 0 and on_log:
+                on_log("info", f"已安全终止正在运行的旧进程: {exe}")
+        except Exception:
+            pass
 
 
 def find_tool(name: str, extra_paths: Optional[List[str]] = None) -> Optional[str]:
@@ -114,7 +159,7 @@ def run_cmd_live(cmd: list, cwd: str, on_log: Callable[[str, str], None], is_can
 
 def build_pipeline(
     target: str = "all",
-    version: str = "1.3.1",
+    version: Optional[str] = None,
     build_type: str = "release",
     clean: bool = False,
     skip_check: bool = False,
@@ -125,16 +170,23 @@ def build_pipeline(
         on_log = lambda lvl, msg: print(f"[{lvl.upper()}] {msg}")
     if not is_cancelled:
         is_cancelled = lambda: False
+    if not version:
+        version = get_current_project_version()
 
     root = get_root_dir()
     windows_dir = os.path.join(root, "Windows")
     bin_dir = os.path.join(windows_dir, "build", "bin")
+    service_bin = os.path.join(bin_dir, "diting-service.exe")
+    gui_bin = os.path.join(bin_dir, "diting-gui.exe")
 
     on_log("info", "=" * 50)
     on_log("info", f"谛听 (DITING) 构建任务启动: Target={target}, Ver={version}, Type={build_type}")
     on_log("info", "=" * 50)
 
-    # 1. 前置依赖检查
+    # 1. 终止可能正在运行的实例，防止文件写锁
+    stop_running_processes(on_log)
+
+    # 2. 前置依赖检查
     tools = check_toolchain()
     if not skip_check:
         if not tools["go"]["found"]:
@@ -150,7 +202,7 @@ def build_pipeline(
             on_log("error", "未找到 makensis，无法打包 NSIS 安装包。")
             return {"success": False, "message": "缺少 NSIS"}
 
-    # 2. 清理
+    # 3. 清理旧产物
     if clean and os.path.exists(bin_dir):
         on_log("info", f"清理旧构建产物: {bin_dir}")
         shutil.rmtree(bin_dir, ignore_errors=True)
@@ -168,10 +220,10 @@ def build_pipeline(
 
     built_artifacts = []
 
-    # 3. 编译特权服务
-    if target in ("all", "service"):
+    # 4. 编译特权服务
+    need_service = target in ("all", "service") or (target == "installer" and not os.path.exists(service_bin))
+    if need_service:
         on_log("info", ">>> 正在编译 Windows 特权服务 (diting-service.exe)...")
-        service_bin = os.path.join(bin_dir, "diting-service.exe")
         cmd_svc = ["go", "build", "-ldflags", f"-s -w -H windowsgui -X main.Version={version}", "-o", service_bin, "./cmd/service"]
         ok = run_cmd_live(cmd_svc, cwd=windows_dir, on_log=on_log, is_cancelled=is_cancelled)
         if not ok:
@@ -181,8 +233,9 @@ def build_pipeline(
             on_log("info", f"[OK] 特权服务编译成功: {service_bin} ({format_size(sz)})")
             built_artifacts.append(service_bin)
 
-    # 4. 编译 Wails GUI
-    if target in ("all", "gui"):
+    # 5. 编译 Wails GUI
+    need_gui = target in ("all", "gui") or (target == "installer" and not os.path.exists(gui_bin))
+    if need_gui:
         on_log("info", ">>> 正在使用 Wails 编译 GUI 客户端 (diting-gui.exe)...")
         wails_cmd = [tools["wails"]["cmd"] or "wails", "build", "-platform", "windows/amd64", "-o", "diting-gui.exe", "-ldflags", ldflags]
         if not is_rel:
@@ -190,27 +243,48 @@ def build_pipeline(
         ok = run_cmd_live(wails_cmd, cwd=windows_dir, on_log=on_log, is_cancelled=is_cancelled)
         if not ok:
             return {"success": False, "message": "GUI 客户端编译失败"}
-        gui_bin = os.path.join(bin_dir, "diting-gui.exe")
         if os.path.exists(gui_bin):
             sz = os.path.getsize(gui_bin)
             on_log("info", f"[OK] GUI 客户端编译成功: {gui_bin} ({format_size(sz)})")
             built_artifacts.append(gui_bin)
 
-    # 5. 打包 NSIS 安装包
+    # 6. 打包 NSIS 安装包
     if target in ("all", "installer"):
         on_log("info", ">>> 正在打包 NSIS 独立安装包...")
         nsis_exe = tools["nsis"]["cmd"] or "makensis"
         nsi_script = os.path.join(windows_dir, "build", "windows", "installer", "project.nsi")
         installer_name = f"DITING-{build_type.lower()}-v{version}.exe"
         installer_path = os.path.join(bin_dir, installer_name)
-        cmd_nsis = [nsis_exe, f"-DPRODUCT_VERSION={version}", f"-DOUTPUT_FILENAME={installer_path}", nsi_script]
+        fallback_installer = os.path.join(bin_dir, "diting-gui-amd64-installer.exe")
+
+        cmd_nsis = [
+            nsis_exe,
+            "/INPUTCHARSET",
+            "UTF8",
+            f"-DARG_WAILS_AMD64_BINARY={gui_bin}",
+            f"-DPRODUCT_VERSION={version}",
+            f"-DINFO_PRODUCTVERSION={version}",
+            f"-DOUTPUT_FILENAME={installer_path}",
+            nsi_script,
+        ]
         ok = run_cmd_live(cmd_nsis, cwd=windows_dir, on_log=on_log, is_cancelled=is_cancelled)
         if not ok:
             return {"success": False, "message": "NSIS 安装包打包失败"}
+
+        # 若生成到了默认名称，规范命名
+        if not os.path.exists(installer_path) and os.path.exists(fallback_installer):
+            try:
+                shutil.move(fallback_installer, installer_path)
+            except Exception:
+                pass
+
         if os.path.exists(installer_path):
             sz = os.path.getsize(installer_path)
             on_log("info", f"[OK] 安装包打包成功: {installer_path} ({format_size(sz)})")
             built_artifacts.append(installer_path)
+        else:
+            on_log("error", f"未找到生成的安装包文件: {installer_path}")
+            return {"success": False, "message": "未生成预期的安装包产物"}
 
     on_log("info", f"=== 全部构建流水线执行完毕，生成 {len(built_artifacts)} 个产物 ===")
     return {
@@ -225,7 +299,7 @@ def build_pipeline(
 def main():
     parser = argparse.ArgumentParser(description="谛听 Windows 构建工具")
     parser.add_argument("-t", "--target", choices=["all", "service", "gui", "installer"], default="all")
-    parser.add_argument("-v", "--version", default="1.3.1")
+    parser.add_argument("-v", "--version", default=None, help="目标版本号 (默认自动读取)")
     parser.add_argument("-b", "--build-type", choices=["release", "debug"], default="release")
     parser.add_argument("--clean", action="store_true")
     parser.add_argument("--skip-check", action="store_true")
