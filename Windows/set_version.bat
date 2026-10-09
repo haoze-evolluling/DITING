@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\scripts\set-version.ps1" %*
+python "%~dp0..\maintenance\core\version_manager.py" %*
 if "%~1"=="" (
     if errorlevel 1 pause
 )

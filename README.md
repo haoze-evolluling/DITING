@@ -85,9 +85,10 @@ DITING/
 │   └── build_apk.bat# Android 交互式构建与安装脚本
 ├── docs/            # 设计规范、开发指南与技术文档
 │   ├── development/ # 工程维护文档（构建记录、证书规范、极速模式架构、语法参考等）
-│   └── assets/      # 静态资源与赞助二维码
-└── scripts/         # 项目维护与辅助脚本
+├── maintenance/     # 开发者桌面交互工具箱 (Python + PyWebView) 与工程维护模块
+├── launch_toolbox.bat # 一键启动开发者工具箱图形界面
 ```
+
 
 ***
 

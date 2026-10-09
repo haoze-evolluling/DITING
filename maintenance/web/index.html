@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>谛听 (DITING) 开发者桌面工具箱</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-dark">
+  <div class="app-layout">
+    <!-- 侧边导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 144 144" width="36" height="36">
+            <path fill="#3b82f6" d="M72 0 C111.76 0 144 32.24 144 72 C144 111.76 111.76 144 72 144 C32.24 144 0 111.76 0 72 C0 32.24 32.24 0 72 0 Z"/>
+            <circle cx="72" cy="72" r="30" fill="#ffffff" opacity="0.9"/>
+            <circle cx="72" cy="72" r="14" fill="#1e3a8a"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="title">谛听工具箱</div>
+          <div class="subtitle">DITING Toolbox</div>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="dns">
+          <span class="icon">🌐</span>
+          <span class="label">DNS 调试诊断</span>
+        </button>
+        <button class="nav-item" data-tab="scanner">
+          <span class="icon">📊</span>
+          <span class="label">代码规模扫描</span>
+        </button>
+        <button class="nav-item" data-tab="logo">
+          <span class="icon">🎨</span>
+          <span class="label">品牌 Logo 工坊</span>
+        </button>
+        <button class="nav-item" data-tab="build">
+          <span class="icon">🔨</span>
+          <span class="label">Windows 构建打包</span>
+        </button>
+        <button class="nav-item" data-tab="version">
+          <span class="icon">🔖</span>
+          <span class="label">统一版本管理</span>
+        </button>
+        <button class="nav-item" data-tab="capture">
+          <span class="icon">📸</span>
+          <span class="label">界面自动截图</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-indicator" id="global-status">
+          <span class="dot idle"></span>
+          <span class="text">就绪</span>
+        </div>
+        <button id="theme-toggle" class="btn-icon" title="切换深浅主题">🌓</button>
+      </div>
+    </aside>
+
+    <!-- 主界面区域 -->
+    <main class="main-content">
+      <!-- 1. DNS 调试诊断 -->
+      <section class="tab-pane active" id="pane-dns">
+        <header class="pane-header">
+          <h2>DNS 调试与阶段 1 验证工具</h2>
+          <p class="desc">纯标准库底层实现的 DNS 查询工具，支持 UDP/TCP 双栈通信与阶段 1 核心功能自动化验收。</p>
+        </header>
+
+        <div class="card form-card">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label>目标域名</label>
+              <input type="text" id="dns-domain" value="www.bing.com" placeholder="例如 www.bing.com">
+            </div>
+            <div class="form-group flex-2">
+              <label>DNS 服务器 IP</label>
+              <input type="text" id="dns-server" value="127.0.0.1" placeholder="默认 127.0.0.1">
+            </div>
+            <div class="form-group flex-1">
+              <label>端口</label>
+              <input type="number" id="dns-port" value="53" placeholder="53">
+            </div>
+            <div class="form-group flex-1">
+              <label>记录类型</label>
+              <select id="dns-qtype">
+                <option value="A" selected>A</option>
+                <option value="AAAA">AAAA</option>
+                <option value="CNAME">CNAME</option>
+                <option value="TXT">TXT</option>
+                <option value="MX">MX</option>
+                <option value="NS">NS</option>
+                <option value="PTR">PTR</option>
+              </select>
+            </div>
+            <div class="form-group flex-1 flex-center">
+              <label class="checkbox-label">
+                <input type="checkbox" id="dns-tcp"> TCP 协议
+              </label>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-dns-query">单次查询</button>
+            <button class="btn btn-secondary" id="btn-dns-bench">批量压测 (5 次)</button>
+            <button class="btn btn-accent" id="btn-dns-verify">阶段 1 自动化验证套件</button>
+          </div>
+        </div>
+
+        <div class="result-area" id="dns-result-container" style="display: none;">
+          <div class="stats-grid" id="dns-stats-grid"></div>
+          <div class="card table-card" id="dns-answers-card" style="display: none;">
+            <div class="card-title">解析结果记录列表</div>
+            <table class="data-table" id="dns-table">
+              <thead>
+                <tr><th>域名</th><th>类型</th><th>TTL</th><th>记录值</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="card" id="dns-verify-card" style="display: none;">
+            <div class="card-title">阶段 1 测试套件执行结果</div>
+            <div class="checklist" id="dns-verify-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. 代码规模扫描 -->
+      <section class="tab-pane" id="pane-scanner">
+        <header class="pane-header">
+          <h2>源文件规模与大文件扫描</h2>
+          <p class="desc">递归统计项目源文件行数，精确识别代码行数超过指定阈值的文件（AGENTS 规则上限 600 行）。</p>
+        </header>
+
+        <div class="card form-card">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label>扫描根目录 (留空为项目根目录)</label>
+              <input type="text" id="scan-dir" placeholder="留空默认全项目">
+            </div>
+            <div class="form-group flex-1">
+              <label>文件扩展名</label>
+              <input type="text" id="scan-exts" value=".kt,.go">
+            </div>
+            <div class="form-group flex-1">
+              <label>行数阈值</label>
+              <input type="number" id="scan-threshold" value="600">
+            </div>
+            <div class="form-group flex-1 flex-center">
+              <label class="checkbox-label">
+                <input type="checkbox" id="scan-all"> 显示全部文件
+              </label>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-scan-start">开始代码扫描</button>
+          </div>
+        </div>
+
+        <div class="result-area" id="scan-result-container" style="display: none;">
+          <div class="stats-grid" id="scan-stats-grid"></div>
+          <div class="card table-card">
+            <div class="card-title">文件清单列表 (<span id="scan-matched-count">0</span> 个)</div>
+            <div class="table-scroll">
+              <table class="data-table" id="scan-table">
+                <thead>
+                  <tr><th>序号</th><th>行数</th><th>类型</th><th>文件相对路径</th><th>操作</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Logo 工坊 -->
+      <section class="tab-pane" id="pane-logo">
+        <header class="pane-header">
+          <h2>品牌 Logo 矢量生成与多规格导出</h2>
+          <p class="desc">与 Android 矢量图腾同构的高精度 Squircle 图标工坊，支持在线参数定制与一键导出 SVG / PNG / ICO 资源。</p>
+        </header>
+
+        <div class="split-view">
+          <div class="card form-card">
+            <div class="form-group">
+              <label>底色背景 (Background Hex)</label>
+              <div class="color-picker-wrap">
+                <input type="color" id="logo-bg-picker" value="#d4e3ff">
+                <input type="text" id="logo-bg-text" value="#d4e3ff">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>图腾颜色 (Totem Hex)</label>
+              <div class="color-picker-wrap">
+                <input type="color" id="logo-totem-picker" value="#404a58">
+                <input type="text" id="logo-totem-text" value="#404a58">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="logo-gradient"> 启用蓝调微渐变与光晕质感
+              </label>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" id="btn-logo-export">导出全部生产规格图标</button>
+              <button class="btn btn-secondary" id="btn-logo-open-res">打开资源目录</button>
+            </div>
+          </div>
+
+          <div class="card preview-card">
+            <div class="card-title">实时 SVG 矢量预览</div>
+            <div class="svg-preview-box" id="logo-preview-box">
+              <!-- SVG 动态注入 -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Windows 构建打包 -->
+      <section class="tab-pane" id="pane-build">
+        <header class="pane-header">
+          <h2>Windows 构建与打包流水线</h2>
+          <p class="desc">一键编译特权服务 (diting-service.exe)、Wails GUI 客户端并打包独立 NSIS 安装包。</p>
+        </header>
+
+        <div class="card toolchain-card">
+          <div class="card-title flex-between">
+            <span>环境工具链状态预检</span>
+            <button class="btn btn-sm btn-ghost" id="btn-refresh-toolchain">重新检测</button>
+          </div>
+          <div class="toolchain-grid" id="toolchain-grid"></div>
+        </div>
+
+        <div class="card form-card">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>构建目标</label>
+              <select id="build-target">
+                <option value="all" selected>all (完整安装包)</option>
+                <option value="service">service (仅特权服务)</option>
+                <option value="gui">gui (仅GUI客户端)</option>
+                <option value="installer">installer (仅NSIS安装包)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label>构建版本号</label>
+              <input type="text" id="build-version" value="1.3.1">
+            </div>
+            <div class="form-group flex-1">
+              <label>构建模式</label>
+              <select id="build-type">
+                <option value="release" selected>Release (精简优化)</option>
+                <option value="debug">Debug (带调试符号)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1 flex-center">
+              <label class="checkbox-label">
+                <input type="checkbox" id="build-clean"> 清理旧产物
+              </label>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-build-start">启动构建任务</button>
+            <button class="btn btn-danger" id="btn-build-cancel" disabled>中断构建</button>
+            <button class="btn btn-secondary" id="btn-build-open-bin">打开 build/bin 产物目录</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. 统一版本管理 -->
+      <section class="tab-pane" id="pane-version">
+        <header class="pane-header">
+          <h2>统一版本号管理</h2>
+          <p class="desc">跨 Go / Wails / NSIS / 前端配置的全局版本号集中探测与一键同步。</p>
+        </header>
+
+        <div class="card form-card">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label>目标新版本号</label>
+              <input type="text" id="target-version-input" placeholder="例如 1.4.0">
+            </div>
+            <div class="form-group flex-1 flex-center">
+              <label class="checkbox-label">
+                <input type="checkbox" id="ver-dry-run"> 仅预览 (DryRun)
+              </label>
+            </div>
+            <div class="form-group flex-1 flex-center">
+              <label class="checkbox-label">
+                <input type="checkbox" id="ver-verify"> 同步后验证 (Go Test)
+              </label>
+            </div>
+            <div class="form-group flex-1 flex-center">
+              <label class="checkbox-label">
+                <input type="checkbox" id="ver-commit"> 自动 Git 提交
+              </label>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-ver-sync">同步并应用版本号</button>
+            <button class="btn btn-secondary" id="btn-ver-refresh">刷新当前版本状态</button>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="card-title">各模块版本号检测表</div>
+          <table class="data-table" id="version-table">
+            <thead>
+              <tr><th>模块组件</th><th>当前记录版本</th><th>文件相对路径</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 6. 界面自动截图 -->
+      <section class="tab-pane" id="pane-capture">
+        <header class="pane-header">
+          <h2>软件界面自动截图工具</h2>
+          <p class="desc">调用 Microsoft Edge 无头模式对谛听客户端主要界面与弹窗进行高质量自动快照。</p>
+        </header>
+
+        <div class="card form-card">
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>截图目标标签页</label>
+              <select id="cap-tab">
+                <option value="all" selected>all (全部标签页及弹窗)</option>
+                <option value="dashboard">总览大盘 (dashboard)</option>
+                <option value="adapters">网卡接管 (adapters)</option>
+                <option value="upstream">上游调度 (upstream)</option>
+                <option value="cache">智能缓存 (cache)</option>
+                <option value="rules">规则防护 (rules)</option>
+                <option value="logs">实时日志 (logs)</option>
+                <option value="settings">设置中心 (settings)</option>
+                <option value="modal-alert">警报弹窗 (modal-alert)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label>主题色彩</label>
+              <select id="cap-theme">
+                <option value="both" selected>深浅双色 (both)</option>
+                <option value="dark">仅深色 (dark)</option>
+                <option value="light">仅浅色 (light)</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label>分辨率宽</label>
+              <input type="number" id="cap-width" value="1280">
+            </div>
+            <div class="form-group flex-1">
+              <label>分辨率高</label>
+              <input type="number" id="cap-height" value="720">
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-cap-start">开始自动截图</button>
+            <button class="btn btn-secondary" id="btn-cap-open-dir">打开截图输出目录</button>
+          </div>
+        </div>
+
+        <div class="card gallery-card" id="cap-gallery-card" style="display: none;">
+          <div class="card-title">截图成果画廊 (<span id="cap-count">0</span> 张)</div>
+          <div class="gallery-grid" id="cap-gallery-grid"></div>
+        </div>
+      </section>
+
+      <!-- 底部流式终端控制台 -->
+      <footer class="terminal-container" id="terminal-section">
+        <div class="terminal-bar">
+          <div class="terminal-title">
+            <span class="icon">💻</span>
+            <span>实时执行日志控制台</span>
+            <span class="spinner" id="terminal-spinner" style="display: none;"></span>
+          </div>
+          <div class="terminal-actions">
+            <button class="btn-sm btn-ghost" id="btn-log-copy">复制日志</button>
+            <button class="btn-sm btn-ghost" id="btn-log-clear">清空</button>
+            <button class="btn-sm btn-ghost" id="btn-log-toggle">折叠/展开</button>
+          </div>
+        </div>
+        <div class="terminal-body" id="terminal-output">
+          <div class="log-line log-system">[系统就绪] 谛听开发者工具箱已加载。请从上方选择模块并执行操作。</div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="js/modules.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
