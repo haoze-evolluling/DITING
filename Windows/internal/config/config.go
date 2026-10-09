@@ -145,8 +145,8 @@ func DefaultConfig() *Config {
 		Upstream: core.ResolverConfig{
 			Mode: core.ModePrimaryBackup,
 			Providers: []core.ProviderConfig{
-				{ID: "primary-ali", Protocol: core.ProtocolPlain, Server: "223.5.5.5:53"},
-				{ID: "backup-dnspod", Protocol: core.ProtocolPlain, Server: "119.29.29.29:53"},
+				{ID: "阿里云 (DoT)", Protocol: core.ProtocolDoT, Server: "dns.alidns.com:853"},
+				{ID: "腾讯云 (DoT)", Protocol: core.ProtocolDoT, Server: "dot.pub:853"},
 			},
 			Bootstrap: core.BootstrapConfig{
 				Enabled: true,

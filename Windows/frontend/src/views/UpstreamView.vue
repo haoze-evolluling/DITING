@@ -28,14 +28,27 @@ const successMessage = ref('');
 const probingId = ref<string | null>(null);
 const probeResults = ref<Record<string, number>>({});
 
+import { DNS_PRESET_PROVIDERS, type DnsProtocolType } from '../constants/dnsPresets';
+
 // 对话框状态
 const isDialogOpen = ref(false);
 const editingIndex = ref<number>(-1);
 const formId = ref('');
-const formProtocol = ref<'PLAIN' | 'DOH' | 'DOT'>('PLAIN');
+const formProtocol = ref<'PLAIN' | 'DOH' | 'DOT'>('DOT');
 const formServer = ref('');
 const formUrl = ref('');
 const formWeight = ref(1);
+
+// 预设选择器状态
+const currentPresetProvider = ref('阿里云');
+const currentPresetProtocol = ref<DnsProtocolType>('DOT');
+const selectedPresetDesc = ref('阿里巴巴公共 DNS，基于 TLS 的加密解析');
+
+const protocolOptions = [
+  { label: '普通 DNS', value: 'PLAIN' as DnsProtocolType },
+  { label: '加密 DoT', value: 'DOT' as DnsProtocolType },
+  { label: '加密 DoH', value: 'DOH' as DnsProtocolType },
+];
 
 const schedulingModes = [
   { id: 'single', name: '单服务器模式', desc: '始终固定使用列表中的首选服务器进行解析' },
@@ -129,12 +142,35 @@ async function handleTestNode(p: ProviderConfig) {
   }
 }
 
+function applyPreset(providerName: string, protocol: DnsProtocolType) {
+  currentPresetProvider.value = providerName;
+  currentPresetProtocol.value = protocol;
+  const group = DNS_PRESET_PROVIDERS.find((p) => p.name === providerName);
+  if (!group) return;
+  const preset = group.presets[protocol];
+  if (!preset) return;
+
+  formId.value = preset.id;
+  formProtocol.value = preset.protocol;
+  formServer.value = preset.server;
+  formUrl.value = preset.url || '';
+  selectedPresetDesc.value = preset.description || '';
+}
+
+function handleProtocolSelect(proto: DnsProtocolType) {
+  formProtocol.value = proto;
+  currentPresetProtocol.value = proto;
+  if (currentPresetProvider.value) {
+    const group = DNS_PRESET_PROVIDERS.find((p) => p.name === currentPresetProvider.value);
+    if (group && group.presets[proto]) {
+      selectedPresetDesc.value = group.presets[proto].description || '';
+    }
+  }
+}
+
 function openAddDialog() {
   editingIndex.value = -1;
-  formId.value = `dns-server-${providers.value.length + 1}`;
-  formProtocol.value = 'PLAIN';
-  formServer.value = '223.5.5.5:53';
-  formUrl.value = '';
+  applyPreset('阿里云', 'DOT');
   formWeight.value = 1;
   isDialogOpen.value = true;
 }
@@ -147,6 +183,27 @@ function openEditDialog(index: number) {
   formServer.value = p.server;
   formUrl.value = p.url || '';
   formWeight.value = p.weight || 1;
+
+  let matched = false;
+  for (const group of DNS_PRESET_PROVIDERS) {
+    for (const proto of ['PLAIN', 'DOT', 'DOH'] as DnsProtocolType[]) {
+      const item = group.presets[proto];
+      if (item.id === p.id || (item.server === p.server && item.protocol === p.protocol)) {
+        currentPresetProvider.value = group.name;
+        currentPresetProtocol.value = item.protocol;
+        selectedPresetDesc.value = item.description || '';
+        matched = true;
+        break;
+      }
+    }
+    if (matched) break;
+  }
+  if (!matched) {
+    currentPresetProvider.value = '';
+    currentPresetProtocol.value = p.protocol;
+    selectedPresetDesc.value = '';
+  }
+
   isDialogOpen.value = true;
 }
 
@@ -290,7 +347,17 @@ onMounted(() => {
         已添加的 DNS 服务器 ({{ upstreams.length }})
       </h3>
 
-      <div class="space-y-3">
+      <div v-if="upstreams.length === 0" class="rounded-2xl border border-dashed border-surface-border p-8 text-center bg-surface-card/50">
+        <M3Icon name="router" :size="32" class="text-text-sub mx-auto mb-2 opacity-50" />
+        <p class="text-sm font-medium text-text-main mb-1">暂无配置 DNS 服务器</p>
+        <p class="text-xs text-text-sub mb-4">请点击添加按钮，从预设库中快速选择并添加 DNS 服务器</p>
+        <button type="button" @click="openAddDialog" class="app-btn-primary app-btn-compact mx-auto">
+          <M3Icon name="add" :size="14" />
+          <span>添加预设服务器</span>
+        </button>
+      </div>
+
+      <div v-else class="space-y-3">
         <div
           v-for="(node, idx) in upstreams"
           :key="node.id"
@@ -382,6 +449,61 @@ onMounted(() => {
       :title="editingIndex >= 0 ? '编辑 DNS 服务器' : '添加 DNS 服务器'"
     >
       <form id="upstream-dialog-form" @submit.prevent="handleSaveDialog" class="space-y-4 pt-1">
+        <!-- 常用推荐预设快速填入 -->
+        <div class="rounded-xl border border-surface-border bg-surface-card-sub p-3 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-text-sub flex items-center gap-1.5">
+              <M3Icon name="bolt" :size="14" class="text-brand-primary" />
+              常用推荐预设 (点击快速填入):
+            </span>
+            <span v-if="selectedPresetDesc" class="text-[11px] text-text-sub truncate max-w-[210px]" :title="selectedPresetDesc">
+              {{ selectedPresetDesc }}
+            </span>
+          </div>
+
+          <!-- 服务商 Chips -->
+          <div class="space-y-1">
+            <div class="text-[11px] text-text-sub">服务商:</div>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="provider in DNS_PRESET_PROVIDERS"
+                :key="provider.name"
+                type="button"
+                @click="applyPreset(provider.name, currentPresetProtocol)"
+                class="px-2.5 py-1 text-xs rounded-lg border transition-all duration-150 font-medium"
+                :class="[
+                  currentPresetProvider === provider.name
+                    ? 'border-brand-primary bg-brand-primary/15 text-brand-primary font-bold shadow-xs'
+                    : 'border-surface-border bg-surface-card hover:bg-surface-hover text-text-main'
+                ]"
+              >
+                {{ provider.name }}
+              </button>
+            </div>
+          </div>
+
+          <!-- 协议 Chips -->
+          <div class="space-y-1">
+            <div class="text-[11px] text-text-sub">解析协议:</div>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="proto in protocolOptions"
+                :key="proto.value"
+                type="button"
+                @click="applyPreset(currentPresetProvider || '阿里云', proto.value)"
+                class="px-2.5 py-1 text-xs rounded-lg border transition-all duration-150 font-medium"
+                :class="[
+                  currentPresetProtocol === proto.value
+                    ? 'border-brand-primary bg-brand-primary/15 text-brand-primary font-bold shadow-xs'
+                    : 'border-surface-border bg-surface-card hover:bg-surface-hover text-text-main'
+                ]"
+              >
+                {{ proto.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <md-outlined-text-field
           label="服务器名称 / 标识"
           :value="formId"
@@ -393,7 +515,7 @@ onMounted(() => {
         <md-outlined-select
           label="连接协议"
           :value="formProtocol"
-          @change="formProtocol = ($event.target as any).value"
+          @change="handleProtocolSelect(($event.target as any).value)"
           class="w-full"
         >
           <md-select-option value="PLAIN">

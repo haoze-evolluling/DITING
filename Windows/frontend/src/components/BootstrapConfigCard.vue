@@ -27,14 +27,10 @@ const formError = ref('');
 const probingId = ref<string | null>(null);
 const probeResults = ref<Record<string, number>>({});
 
+import { BOOTSTRAP_PRESETS } from '../constants/dnsPresets';
+
 // 常用推荐预设
-const presets = [
-  { name: 'AliDNS (阿里)', ip: '223.5.5.5:53' },
-  { name: 'DNSPod (腾讯)', ip: '119.29.29.29:53' },
-  { name: '114 DNS', ip: '114.114.114.114:53' },
-  { name: 'Cloudflare', ip: '1.1.1.1:53' },
-  { name: 'Google DNS', ip: '8.8.8.8:53' },
-];
+const presets = BOOTSTRAP_PRESETS;
 
 function applyPreset(p: { name: string; ip: string }) {
   formName.value = p.name;
