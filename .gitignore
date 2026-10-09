@@ -17,8 +17,10 @@ captures/
 # ====================================================================
 Windows/build/bin/
 Windows/build/windows/installer/tmp/
+Windows/build/windows/installer/wails_tools.nsh
 Windows/frontend/dist/
 Windows/frontend/package.json.md5
+Windows/frontend/wailsjs/
 node_modules/
 
 # ====================================================================
