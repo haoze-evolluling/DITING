@@ -33,24 +33,12 @@ window.DNSModule = {
     App.setBusy(true, '正在进行批量 DNS 压测...');
     document.getElementById('dns-result-container').style.display = 'block';
     document.getElementById('dns-answers-card').style.display = 'none';
-    document.getElementById('dns-verify-card').style.display = 'none';
     await window.pywebview.api.dns_benchmark(domain, server, port, qtype, 5, tcp);
-  },
-
-  async verify() {
-    const server = document.getElementById('dns-server').value.trim();
-    const port = parseInt(document.getElementById('dns-port').value) || 53;
-
-    App.setBusy(true, '正在运行阶段 1 验证套件...');
-    document.getElementById('dns-result-container').style.display = 'block';
-    document.getElementById('dns-answers-card').style.display = 'none';
-    await window.pywebview.api.dns_verify_phase1(server, port);
   },
 
   renderQueryResult(res) {
     const container = document.getElementById('dns-result-container');
     container.style.display = 'block';
-    document.getElementById('dns-verify-card').style.display = 'none';
 
     const grid = document.getElementById('dns-stats-grid');
     const isOk = res.success && res.rcode === 'NOERROR';
@@ -116,47 +104,13 @@ window.DNSModule = {
         <span class="stat-value" style="font-size: 16px;">${d.min_ms} / ${d.max_ms} ms</span>
       </div>
     `;
-  },
-
-  onVerifyDone(payload) {
-    App.setBusy(false);
-    if (!payload.success || !payload.data) return;
-    const d = payload.data;
-    const grid = document.getElementById('dns-stats-grid');
-    grid.innerHTML = `
-      <div class="stat-box">
-        <span class="stat-label">套件总通过率</span>
-        <span class="stat-value" style="color: ${d.success ? '#10b981' : '#ef4444'}">${d.rate}%</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">测试用例</span>
-        <span class="stat-value">${d.passed} / ${d.total}</span>
-      </div>
-    `;
-
-    const verifyCard = document.getElementById('dns-verify-card');
-    verifyCard.style.display = 'block';
-    const list = document.getElementById('dns-verify-list');
-    list.innerHTML = '';
-    d.tests.forEach(t => {
-      const div = document.createElement('div');
-      div.className = 'checklist-item';
-      div.innerHTML = `
-        <span><strong>[测试 ${t.id}]</strong> ${t.name}</span>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 12px; color: var(--text-muted);">${t.details}</span>
-          <span class="badge ${t.passed ? 'badge-pass' : 'badge-fail'}">${t.passed ? 'PASS' : 'FAIL'}</span>
-        </div>
-      `;
-      list.appendChild(div);
-    });
   }
 };
 
 window.ScannerModule = {
   async startScan() {
     const dir = document.getElementById('scan-dir').value.trim();
-    const exts = document.getElementById('scan-exts').value.trim() || '.kt,.go';
+    const exts = document.getElementById('scan-exts').value.trim() || '.kt,.go,.ts,.vue,.py';
     const threshold = parseInt(document.getElementById('scan-threshold').value) || 600;
     const showAll = document.getElementById('scan-all').checked;
 

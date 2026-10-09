@@ -65,8 +65,8 @@
       <!-- 1. DNS 调试诊断 -->
       <section class="tab-pane active" id="pane-dns">
         <header class="pane-header">
-          <h2>DNS 调试与阶段 1 验证工具</h2>
-          <p class="desc">纯标准库底层实现的 DNS 查询工具，支持 UDP/TCP 双栈通信与阶段 1 核心功能自动化验收。</p>
+          <h2>DNS 调试与性能压测工具</h2>
+          <p class="desc">纯标准库底层实现的 DNS 查询诊断工具，支持 UDP/TCP 双栈通信与批量延迟压测。</p>
         </header>
 
         <div class="card form-card">
@@ -102,9 +102,8 @@
             </div>
           </div>
           <div class="btn-group">
-            <button class="btn btn-primary" id="btn-dns-query">单次查询</button>
-            <button class="btn btn-secondary" id="btn-dns-bench">批量压测 (5 次)</button>
-            <button class="btn btn-accent" id="btn-dns-verify">阶段 1 自动化验证套件</button>
+            <button class="btn btn-primary" id="btn-dns-query">单次诊断查询</button>
+            <button class="btn btn-secondary" id="btn-dns-bench">批量性能压测 (5 次)</button>
           </div>
         </div>
 
@@ -118,10 +117,6 @@
               </thead>
               <tbody></tbody>
             </table>
-          </div>
-          <div class="card" id="dns-verify-card" style="display: none;">
-            <div class="card-title">阶段 1 测试套件执行结果</div>
-            <div class="checklist" id="dns-verify-list"></div>
           </div>
         </div>
       </section>
@@ -141,7 +136,7 @@
             </div>
             <div class="form-group flex-1">
               <label>文件扩展名</label>
-              <input type="text" id="scan-exts" value=".kt,.go">
+              <input type="text" id="scan-exts" value=".kt,.go,.ts,.vue,.py">
             </div>
             <div class="form-group flex-1">
               <label>行数阈值</label>

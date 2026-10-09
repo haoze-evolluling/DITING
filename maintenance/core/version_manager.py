@@ -33,11 +33,11 @@ def get_file_targets() -> List[Dict[str, str]]:
         {"name": "特权服务", "path": os.path.join(windows, "cmd", "service", "main.go"), "type": "go"},
         {"name": "GUI 调试入口", "path": os.path.join(windows, "cmd", "gui", "main.go"), "type": "go"},
         {"name": "NSIS 主配置", "path": os.path.join(windows, "build", "windows", "installer", "project.nsi"), "type": "nsi"},
-        {"name": "NSIS 工具宏", "path": os.path.join(windows, "build", "windows", "installer", "wails_tools.nsh"), "type": "nsh"},
         {"name": "Wails 配置", "path": os.path.join(windows, "wails.json"), "type": "wails"},
         {"name": "前端 package.json", "path": os.path.join(frontend, "package.json"), "type": "pkg"},
         {"name": "前端 Mock 数据", "path": os.path.join(frontend, "src", "api", "mock.ts"), "type": "mock"},
     ]
+
 
 
 def read_file(path: str) -> str:
@@ -160,7 +160,7 @@ def sync_version(
         else:
             _log("warn", f"未匹配到版本标识或版本未变: {rel}")
 
-    # 同步更新 package.json.md5
+    # 同步更新本地 package.json.md5 校验文件 (已在 .gitignore 中，不纳入 Git 跟踪)
     pkg_path = os.path.join(root, "Windows", "frontend", "package.json")
     pkg_md5_path = os.path.join(root, "Windows", "frontend", "package.json.md5")
     if os.path.exists(pkg_path):
@@ -169,8 +169,7 @@ def sync_version(
         if not dry_run:
             with open(pkg_md5_path, "w", encoding="utf-8") as f:
                 f.write(h)
-            modified_files.append("Windows/frontend/package.json.md5")
-            _log("info", f"[已更新] 前端 package.json MD5 哈希: {h[:8]}...")
+            _log("info", f"[已更新本地缓存] 前端 package.json MD5 哈希: {h[:8]}...")
 
     if verify and not dry_run:
         _log("info", "正在运行 Go 编译测试以验证版本语法...")

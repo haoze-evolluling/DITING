@@ -1,9 +1,62 @@
 import os
-import queue
 import subprocess
 import threading
 import time
 from typing import Callable, Optional
+
+
+def stream_process_output(
+    cmd: list,
+    cwd: str,
+    on_log: Callable[[str, str], None],
+    is_cancelled: Optional[Callable[[], bool]] = None,
+    env: Optional[dict] = None,
+    on_proc_started: Optional[Callable[[subprocess.Popen], None]] = None,
+) -> int:
+    """通用的子进程流式输出执行器，按行实时回调输出并支持取消"""
+    if not is_cancelled:
+        is_cancelled = lambda: False
+
+    run_env = os.environ.copy()
+    if env:
+        run_env.update(env)
+
+    # 确保统一的 UTF-8 输入输出环境
+    run_env["PYTHONIOENCODING"] = "utf-8"
+    run_env["PYTHONUTF8"] = "1"
+
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=run_env,
+            bufsize=1,
+        )
+        if on_proc_started:
+            on_proc_started(proc)
+
+        for line in iter(proc.stdout.readline, ""):
+            if is_cancelled():
+                try:
+                    proc.terminate()
+                except Exception:
+                    pass
+                on_log("warn", "[已终止] 用户主动取消了任务。")
+                return -1
+            clean_line = line.rstrip("\r\n")
+            if clean_line:
+                on_log("info", clean_line)
+
+        proc.stdout.close()
+        return proc.wait()
+    except Exception as e:
+        on_log("error", f"命令启动失败: {e}")
+        return -1
 
 
 class TaskRunner:
@@ -36,12 +89,7 @@ class TaskRunner:
         on_log: Callable[[str, str], None],
         on_complete: Callable[[dict], None],
     ):
-        """在后台线程中启动任务
-
-        :param task_func: 接收 log_callback(level, text) 和 is_cancelled() 的执行函数
-        :param on_log: 前端日志回调函数
-        :param on_complete: 完成后的结果回调函数
-        """
+        """在后台线程中启动任务"""
         if self._is_running:
             on_log("warn", "当前已有任务正在执行中，请等待其完成或先终止。")
             return
@@ -60,7 +108,8 @@ class TaskRunner:
                 elapsed = time.time() - start_time
                 result["elapsed"] = round(elapsed, 2)
                 self._is_running = False
-                self._current_process = None
+                with self._lock:
+                    self._current_process = None
                 if on_complete:
                     on_complete(result)
 
@@ -76,47 +125,20 @@ class TaskRunner:
         env: Optional[dict] = None,
     ) -> int:
         """流式执行子进程并逐行回调输出"""
-        run_env = os.environ.copy()
-        if env:
-            run_env.update(env)
-
-        # 确保 UTF-8 编码
-        run_env["PYTHONIOENCODING"] = "utf-8"
-        run_env["PYTHONUTF8"] = "1"
-
-        try:
-            proc = subprocess.Popen(
-                cmd,
-                cwd=cwd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                env=run_env,
-                bufsize=1,
-            )
+        def _on_started(proc):
             with self._lock:
                 self._current_process = proc
 
-            for line in iter(proc.stdout.readline, ""):
-                if is_cancelled():
-                    try:
-                        proc.terminate()
-                    except Exception:
-                        pass
-                    on_log("warn", "[已终止] 用户主动取消了任务。")
-                    return -1
-                clean_line = line.rstrip("\r\n")
-                if clean_line:
-                    on_log("info", clean_line)
-
-            proc.stdout.close()
-            return_code = proc.wait()
-            return return_code
-        except Exception as e:
-            on_log("error", f"命令启动失败: {e}")
-            return -1
+        try:
+            return stream_process_output(
+                cmd=cmd,
+                cwd=cwd,
+                on_log=on_log,
+                is_cancelled=is_cancelled,
+                env=env,
+                on_proc_started=_on_started,
+            )
         finally:
             with self._lock:
                 self._current_process = None
+

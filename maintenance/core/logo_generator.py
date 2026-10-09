@@ -139,13 +139,27 @@ def export_logo_assets(
 
     exported_files = []
 
-    # 1. 默认 Windows 项目目录导出
+    # 1. 默认 Windows 项目目录导出 SVG
     svg_out_path = os.path.join(windows_dir, "frontend", "src", "assets", "images", "logo.svg")
     os.makedirs(os.path.dirname(svg_out_path), exist_ok=True)
     with open(svg_out_path, "w", encoding="utf-8") as f:
         f.write(svg_content)
     _log("info", f"导出 SVG 矢量图: {svg_out_path}")
     exported_files.append(svg_out_path)
+
+    if not QT_AVAILABLE:
+        _log("warn", "未检测到 PyQt6 环境，已生成标准 SVG 矢量资源；如需生成 PNG/ICO 位图请安装 PyQt6 与 Pillow。")
+        if output_dir and os.path.isdir(output_dir):
+            custom_svg = os.path.join(output_dir, "diting_logo.svg")
+            with open(custom_svg, "w", encoding="utf-8") as f:
+                f.write(svg_content)
+            exported_files.append(custom_svg)
+        return {
+            "success": True,
+            "files": exported_files,
+            "svg_content": svg_content,
+            "warning": "未安装 PyQt6，已完成 SVG 导出",
+        }
 
     # 2. 导出 1024x1024 appicon.png
     qimg_1024 = render_svg_to_qimage(svg_content, 1024, 1024)

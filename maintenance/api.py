@@ -13,11 +13,7 @@ import sys
 from typing import Optional
 
 from maintenance.core.build_manager import build_pipeline, check_toolchain
-from maintenance.core.dns_engine import (
-    execute_benchmark,
-    execute_dns_query,
-    execute_phase1_verification,
-)
+from maintenance.core.dns_engine import execute_benchmark, execute_dns_query
 from maintenance.core.file_scanner import run_scan_analysis
 from maintenance.core.logo_generator import export_logo_assets, generate_squircle_svg
 from maintenance.core.runner import TaskRunner
@@ -82,15 +78,6 @@ class ApiBridge:
             return {"success": True, "data": res}
 
         self.runner.run_async(_task, self._log, lambda res: self._emit("dns_benchmark_done", res))
-        return {"started": True}
-
-    def dns_verify_phase1(self, server: str, port: int):
-        def _task(log_cb, is_cancelled):
-            log_cb("info", f"启动阶段 1 核心 DNS 自动化验证套件: {server}:{port}")
-            res = execute_phase1_verification(server=server, port=int(port), on_log=log_cb)
-            return {"success": True, "data": res}
-
-        self.runner.run_async(_task, self._log, lambda res: self._emit("dns_verify_done", res))
         return {"started": True}
 
     # === 2. 代码扫描模块 ===

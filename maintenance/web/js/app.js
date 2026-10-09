@@ -106,8 +106,6 @@ window.App = {
       this.log(data.level, data.message);
     } else if (type === 'dns_benchmark_done') {
       DNSModule.onBenchmarkDone(data);
-    } else if (type === 'dns_verify_done') {
-      DNSModule.onVerifyDone(data);
     } else if (type === 'scan_done') {
       ScannerModule.onScanDone(data);
     } else if (type === 'logo_export_done') {
@@ -125,7 +123,6 @@ window.App = {
     // DNS
     document.getElementById('btn-dns-query').addEventListener('click', () => DNSModule.query());
     document.getElementById('btn-dns-bench').addEventListener('click', () => DNSModule.benchmark());
-    document.getElementById('btn-dns-verify').addEventListener('click', () => DNSModule.verify());
 
     // Scanner
     document.getElementById('btn-scan-start').addEventListener('click', () => ScannerModule.startScan());

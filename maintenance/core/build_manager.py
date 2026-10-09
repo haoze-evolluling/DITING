@@ -20,8 +20,15 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+from maintenance.core.runner import stream_process_output
+
+
 def get_root_dir() -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    return ROOT_DIR
 
 
 def find_tool(name: str, extra_paths: Optional[List[str]] = None) -> Optional[str]:
@@ -102,38 +109,7 @@ def format_size(bytes_num: int) -> str:
 
 
 def run_cmd_live(cmd: list, cwd: str, on_log: Callable[[str, str], None], is_cancelled: Callable[[], bool], env: Optional[dict] = None) -> bool:
-    run_env = os.environ.copy()
-    if env:
-        run_env.update(env)
-    run_env["PYTHONIOENCODING"] = "utf-8"
-    run_env["PYTHONUTF8"] = "1"
-
-    proc = subprocess.Popen(
-        cmd,
-        cwd=cwd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        env=run_env,
-        bufsize=1,
-    )
-    for line in iter(proc.stdout.readline, ""):
-        if is_cancelled():
-            try:
-                proc.terminate()
-            except Exception:
-                pass
-            on_log("warn", "用户中断了构建流程。")
-            return False
-        clean = line.rstrip("\r\n")
-        if clean:
-            on_log("info", clean)
-
-    proc.stdout.close()
-    code = proc.wait()
-    return code == 0
+    return stream_process_output(cmd=cmd, cwd=cwd, on_log=on_log, is_cancelled=is_cancelled, env=env) == 0
 
 
 def build_pipeline(

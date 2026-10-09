@@ -427,23 +427,6 @@ body.theme-light .data-table tbody tr:hover {
 .badge-fail { background: var(--badge-fail-bg); color: var(--badge-fail-text); }
 .badge-warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
 
-/* --- 验证 Checklist --- */
-.checklist {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.checklist-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 13px;
-}
 
 /* --- Logo 预览 --- */
 .split-view {

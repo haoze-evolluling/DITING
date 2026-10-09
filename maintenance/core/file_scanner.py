@@ -176,7 +176,7 @@ def format_table(
 
 def run_scan_analysis(
     root_dir: Optional[str] = None,
-    extensions: str = ".kt,.go",
+    extensions: str = ".kt,.go,.ts,.vue,.py",
     threshold: int = 600,
     show_all: bool = False,
     sort_by: str = "lines",
@@ -212,7 +212,7 @@ def main():
     parser = argparse.ArgumentParser(description="检测项目中大于指定行数的源文件")
     parser.add_argument("-t", "--threshold", type=int, default=600, help="行数阈值（默认: 600）")
     parser.add_argument("-d", "--dir", type=str, default=None, help="扫描根目录")
-    parser.add_argument("-e", "--extensions", type=str, default=".kt,.go", help="扩展名列表")
+    parser.add_argument("-e", "--extensions", type=str, default=".kt,.go,.ts,.vue,.py", help="扩展名列表")
     parser.add_argument("-s", "--sort", choices=["lines", "path"], default="lines", help="排序规则")
     parser.add_argument("-a", "--all", action="store_true", help="显示所有文件")
     args = parser.parse_args()

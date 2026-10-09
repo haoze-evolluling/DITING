@@ -400,73 +400,30 @@ def execute_benchmark(server: str, port: int, domain: str, qtype_str: str = "A",
     }
 
 
-def execute_phase1_verification(server: str, port: int, on_log: Optional[Callable[[str, str], None]] = None) -> dict:
-    client = DNSClient(server=server, port=port, timeout=4.0)
-    tests = [
-        {"id": 1, "name": "UDP A 记录解析 (www.bing.com)", "domain": "www.bing.com", "type": DNSType.A, "tcp": False},
-        {"id": 2, "name": "UDP AAAA 记录解析 (www.bing.com)", "domain": "www.bing.com", "type": DNSType.AAAA, "tcp": False},
-        {"id": 3, "name": "TCP 协议查询 (www.bing.com)", "domain": "www.bing.com", "type": DNSType.A, "tcp": True},
-        {"id": 4, "name": "异常域 NXDOMAIN 处理", "domain": f"diting-test-{random.randint(10000, 99999)}.invalid", "type": DNSType.A, "tcp": False},
-    ]
-
-    results = []
-    passed_count = 0
-    for t in tests:
-        test_info = {"id": t["id"], "name": t["name"], "passed": False, "details": "", "latency_ms": 0}
-        try:
-            resp, ms = client.query(t["domain"], t["type"], use_tcp=t["tcp"])
-            test_info["latency_ms"] = round(ms, 2)
-            if t["id"] in (1, 2, 3):
-                recs = [rr.rdata for rr in resp.answers if rr.rtype == t["type"]]
-                if resp.rcode == DNSRcode.NOERROR and len(recs) > 0:
-                    test_info["passed"] = True
-                    test_info["details"] = f"{ms:.1f}ms, 解析记录: {recs[0]}"
-                else:
-                    test_info["details"] = f"RCODE: {DNSRcode.to_name(resp.rcode)}, 记录数: {len(resp.answers)}"
-            else:
-                if resp.rcode in (DNSRcode.NXDOMAIN, DNSRcode.NOERROR) and len(resp.answers) == 0:
-                    test_info["passed"] = True
-                    test_info["details"] = f"{ms:.1f}ms, 状态码正确: {DNSRcode.to_name(resp.rcode)}"
-                else:
-                    test_info["details"] = f"状态码: {DNSRcode.to_name(resp.rcode)}, 记录数: {len(resp.answers)}"
-        except Exception as e:
-            test_info["details"] = f"异常: {e}"
-
-        if test_info["passed"]:
-            passed_count += 1
-            if on_log:
-                on_log("info", f"[PASS] {t['name']} -> {test_info['details']}")
-        else:
-            if on_log:
-                on_log("error", f"[FAIL] {t['name']} -> {test_info['details']}")
-        results.append(test_info)
-
-    all_passed = passed_count == len(tests)
-    return {
-        "success": all_passed,
-        "total": len(tests),
-        "passed": passed_count,
-        "rate": round(passed_count / len(tests) * 100, 1),
-        "tests": results,
-    }
-
-
 def main():
-    parser = argparse.ArgumentParser(description="谛听 (DITING) DNS 核心工具")
-    parser.add_argument("pos_domain", nargs="?", default=None)
-    parser.add_argument("pos_server", nargs="?", default="127.0.0.1")
-    parser.add_argument("pos_type", nargs="?", default="A")
-    parser.add_argument("-p", "--port", type=int, default=53)
-    parser.add_argument("--tcp", action="store_true")
-    parser.add_argument("--verify", action="store_true")
+    parser = argparse.ArgumentParser(description="谛听 (DITING) DNS 核心诊断工具")
+    parser.add_argument("domain", nargs="?", default="www.bing.com", help="目标查询域名")
+    parser.add_argument("server", nargs="?", default="127.0.0.1", help="DNS 服务器 IP")
+    parser.add_argument("type", nargs="?", default="A", help="DNS 记录类型 (A, AAAA, CNAME 等)")
+    parser.add_argument("-p", "--port", type=int, default=53, help="目标端口 (默认 53)")
+    parser.add_argument("--tcp", action="store_true", help="使用 TCP 协议进行查询")
+    parser.add_argument("-b", "--bench", type=int, default=0, help="执行指定次数的批量压测")
     args = parser.parse_args()
 
-    if args.verify or not args.pos_domain:
-        res = execute_phase1_verification(args.pos_server, args.port, lambda lvl, msg: print(f"[{lvl.upper()}] {msg}"))
-        print(f"验证完成: {res['passed']}/{res['total']} 通过 ({res['rate']}%)")
+    if args.bench > 0:
+        res = execute_benchmark(
+            server=args.server,
+            port=args.port,
+            domain=args.domain,
+            qtype_str=args.type,
+            count=args.bench,
+            use_tcp=args.tcp,
+            on_progress=lambda msg: print(msg),
+        )
+        print(f"\n压测完成: 成功 {res['success_count']}/{res['count']}, 平均耗时: {res['avg_ms']}ms, 丢包率: {res['loss_rate']}%")
         sys.exit(0 if res["success"] else 1)
 
-    result = execute_dns_query(args.pos_domain, args.pos_server, args.port, args.pos_type, args.tcp)
+    result = execute_dns_query(args.domain, args.server, args.port, args.type, args.tcp)
     if result.get("success"):
         print(result["raw_output"])
         sys.exit(0 if result.get("raw_rcode") == 0 else 2)
@@ -477,3 +434,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
