@@ -223,6 +223,7 @@ type ServiceManager struct {
 	executor    CommandExecutor
 	privExec    PrivilegedExecutor
 	scmQuery    scmQuerier
+	locateExe   func() (string, error)
 }
 
 // NewServiceManager 创建服务管理器
@@ -233,12 +234,22 @@ func NewServiceManager(executor CommandExecutor, privExec PrivilegedExecutor) *S
 	if privExec == nil {
 		privExec = NewDefaultPrivilegedExecutor(executor)
 	}
-	return &ServiceManager{
+	m := &ServiceManager{
 		serviceName: DefaultServiceName,
 		executor:    executor,
 		privExec:    privExec,
 		scmQuery:    defaultSCMQuery,
 	}
+	m.locateExe = m.LocateExecutable
+	return m
+}
+
+// locate 定位服务可执行文件（locateExe 便于测试注入）
+func (m *ServiceManager) locate() (string, error) {
+	if m.locateExe != nil {
+		return m.locateExe()
+	}
+	return m.LocateExecutable()
 }
 
 // LocateExecutable 寻找 diting-service.exe 可执行文件位置
@@ -260,7 +271,7 @@ func (m *ServiceManager) LocateExecutable() (string, error) {
 		}
 	}
 
-	// 2. 检查 GUI 所在同级目录
+	// 2. 检查 GUI 所在同级目录及构建产物目录
 	if exePath, err := os.Executable(); err == nil {
 		dir := filepath.Dir(exePath)
 		target := filepath.Join(dir, "diting-service.exe")
@@ -281,46 +292,7 @@ func (m *ServiceManager) LocateExecutable() (string, error) {
 		}
 	}
 
-	// 2.1 检查当前工作目录（适配开发调试环境）
-	if cwd, err := os.Getwd(); err == nil {
-		cwdCandidates := []string{
-			filepath.Join(cwd, "diting-service.exe"),
-			filepath.Join(cwd, "build", "bin", "diting-service.exe"),
-			filepath.Join(cwd, "..", "build", "bin", "diting-service.exe"),
-			filepath.Join(cwd, "Windows", "build", "bin", "diting-service.exe"),
-		}
-		for _, c := range cwdCandidates {
-			if _, err := os.Stat(c); err == nil {
-				abs, _ := filepath.Abs(c)
-				return abs, nil
-			}
-		}
-	}
-
-	// 3. 检查标准系统安装目录
-	progFiles := os.Getenv("ProgramFiles")
-	if progFiles != "" {
-		target := filepath.Join(progFiles, "Diting", "谛听 DNS", "diting-service.exe")
-		if _, err := os.Stat(target); err == nil {
-			return target, nil
-		}
-	}
-	progFilesX86 := os.Getenv("ProgramFiles(x86)")
-	if progFilesX86 != "" {
-		target := filepath.Join(progFilesX86, "Diting", "谛听 DNS", "diting-service.exe")
-		if _, err := os.Stat(target); err == nil {
-			return target, nil
-		}
-	}
-	localApp := os.Getenv("LOCALAPPDATA")
-	if localApp != "" {
-		target := filepath.Join(localApp, "Programs", "谛听 DNS", "diting-service.exe")
-		if _, err := os.Stat(target); err == nil {
-			return target, nil
-		}
-	}
-
-	// 4. 检查系统 PATH
+	// 3. 检查系统 PATH
 	if p, err := exec.LookPath("diting-service.exe"); err == nil {
 		abs, _ := filepath.Abs(p)
 		return abs, nil
@@ -337,7 +309,7 @@ func (m *ServiceManager) GetStatus(ctx context.Context) (*CoreServiceStatus, err
 		IsElevated: m.privExec.IsElevated(),
 	}
 
-	exePath, err := m.LocateExecutable()
+	exePath, err := m.locate()
 	if err == nil {
 		status.ExecutablePath = exePath
 		status.CanInstall = true
@@ -455,11 +427,11 @@ func (m *ServiceManager) StartService(ctx context.Context) error {
 		}
 	}
 
-	exePath, err := m.LocateExecutable()
-	if err == nil {
-		return m.privExec.RunElevated(ctx, exePath, "-service", "start")
+	exePath, err := m.locate()
+	if err != nil {
+		return err
 	}
-	return m.privExec.RunElevated(ctx, "sc.exe", "start", m.serviceName)
+	return m.privExec.RunElevated(ctx, exePath, "-service", "start")
 }
 
 // StopService 按需提权停止核心服务
@@ -470,11 +442,11 @@ func (m *ServiceManager) StopService(ctx context.Context) error {
 		}
 	}
 
-	exePath, err := m.LocateExecutable()
-	if err == nil {
-		return m.privExec.RunElevated(ctx, exePath, "-service", "stop")
+	exePath, err := m.locate()
+	if err != nil {
+		return err
 	}
-	return m.privExec.RunElevated(ctx, "sc.exe", "stop", m.serviceName)
+	return m.privExec.RunElevated(ctx, exePath, "-service", "stop")
 }
 
 // RestartService 按需提权重启核心服务
@@ -494,18 +466,17 @@ func (m *ServiceManager) RestartService(ctx context.Context) error {
 		}
 	}
 
-	exePath, err := m.LocateExecutable()
-	if err == nil {
-		return m.privExec.RunElevated(ctx, exePath, "-service", "restart")
+	exePath, err := m.locate()
+	if err != nil {
+		return err
 	}
-	_ = m.privExec.RunElevated(ctx, "sc.exe", "stop", m.serviceName)
-	return m.privExec.RunElevated(ctx, "sc.exe", "start", m.serviceName)
+	return m.privExec.RunElevated(ctx, exePath, "-service", "restart")
 }
 
 // InstallService 按需提权安装核心服务
 func (m *ServiceManager) InstallService(ctx context.Context, exePath string) error {
 	if exePath == "" {
-		p, err := m.LocateExecutable()
+		p, err := m.locate()
 		if err != nil {
 			return err
 		}
@@ -518,7 +489,7 @@ func (m *ServiceManager) InstallService(ctx context.Context, exePath string) err
 // InstallAndStartService 按需提权一键安装并立即启动核心服务
 func (m *ServiceManager) InstallAndStartService(ctx context.Context, exePath string) error {
 	if exePath == "" {
-		p, err := m.LocateExecutable()
+		p, err := m.locate()
 		if err != nil {
 			return err
 		}
@@ -535,16 +506,16 @@ func (m *ServiceManager) InstallAndStartService(ctx context.Context, exePath str
 func (m *ServiceManager) UninstallService(ctx context.Context) error {
 	if m.privExec.IsElevated() {
 		_ = stopServiceNative(m.serviceName)
-		exePath, err := m.LocateExecutable()
+		exePath, err := m.locate()
 		if err == nil {
 			_ = m.privExec.RunElevated(ctx, exePath, "-service", "uninstall")
 		}
 		return deleteServiceNative(m.serviceName)
 	}
 
-	exePath, err := m.LocateExecutable()
-	if err == nil {
-		return m.privExec.RunElevated(ctx, exePath, "-service", "uninstall")
+	exePath, err := m.locate()
+	if err != nil {
+		return err
 	}
-	return m.privExec.RunElevated(ctx, "sc.exe", "delete", m.serviceName)
+	return m.privExec.RunElevated(ctx, exePath, "-service", "uninstall")
 }

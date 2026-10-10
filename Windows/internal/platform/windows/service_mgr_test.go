@@ -111,6 +111,8 @@ func TestServiceManager_Actions(t *testing.T) {
 	mockExec := &mockServiceCmdExecutor{}
 	mockPriv := &mockPrivilegedExecutor{elevatedState: false}
 	mgr := NewServiceManager(mockExec, mockPriv)
+	fakeExe := `C:\Diting\diting-service.exe`
+	mgr.locateExe = func() (string, error) { return fakeExe, nil }
 
 	// 1. 测试 StartService
 	err := mgr.StartService(ctx)
@@ -143,7 +145,6 @@ func TestServiceManager_Actions(t *testing.T) {
 
 	// 4. 测试 InstallService
 	mockPriv.elevatedCalled = false
-	fakeExe := `C:\Diting\diting-service.exe`
 	err = mgr.InstallService(ctx, fakeExe)
 	if err != nil {
 		t.Fatalf("InstallService error: %v", err)
@@ -179,6 +180,7 @@ func TestServiceManager_UACCancelled(t *testing.T) {
 		returnErr: ErrUACCancelled,
 	}
 	mgr := NewServiceManager(nil, mockPriv)
+	mgr.locateExe = func() (string, error) { return `C:\Diting\diting-service.exe`, nil }
 
 	err := mgr.StartService(ctx)
 	if !errors.Is(err, ErrUACCancelled) {
@@ -192,6 +194,7 @@ func TestServiceManager_ElevatedExecutionError(t *testing.T) {
 		returnErr: errors.New("特权操作执行失败: code 1"),
 	}
 	mgr := NewServiceManager(nil, mockPriv)
+	mgr.locateExe = func() (string, error) { return `C:\Diting\diting-service.exe`, nil }
 
 	err := mgr.StartService(ctx)
 	if err == nil {

@@ -70,17 +70,9 @@ func (m *WindowsDNSManager) GetTakenOverAdapters() []AdapterState {
 	return res
 }
 
-// FlushDNSCache 刷新 Windows 系统 DNS 解析缓存 (优先 Win32 原生 DnsFlushResolverCache，异常时回退 ipconfig /flushdns)
+// FlushDNSCache 刷新 Windows 系统 DNS 解析缓存 (原生 DnsFlushResolverCache)
 func (m *WindowsDNSManager) FlushDNSCache(ctx context.Context) error {
-	if isDefaultExecutor(m.executor) {
-		if err := flushDNSCacheNative(); err == nil {
-			return nil
-		}
-	}
-
-	// 执行 ipconfig /flushdns 作为可靠兜底
-	_, err := m.executor.RunCommand(ctx, "ipconfig", "/flushdns")
-	return err
+	return flushDNSCacheNative()
 }
 
 // CleanAdapterState 净化网卡快照配置，过滤自身接管的回环地址（127.0.0.0/8、::1 等）
@@ -360,8 +352,8 @@ func (m *WindowsDNSManager) ResetResidualLoopbackDNS(ctx context.Context) error 
 	var err error
 	if m.residualResetter != nil {
 		err = m.residualResetter(ctx)
-	} else if isDefaultExecutor(m.executor) {
-		err = resetResidualLoopbackDNSNative(ctx, m.executor)
+	} else {
+		err = resetResidualLoopbackDNSNative(ctx)
 	}
 	_ = m.FlushDNSCache(ctx)
 	return err

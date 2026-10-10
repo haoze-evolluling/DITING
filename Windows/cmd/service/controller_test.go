@@ -503,9 +503,6 @@ func (m *mockTestPortChecker) CheckPort53ForAddresses(ctx context.Context, udpAd
 	m.lastTCPAddrs = tcpAddrs
 	return m.checkResult, nil
 }
-func (m *mockTestPortChecker) AutofixPort53(ctx context.Context) (*windows.PortCheckResult, error) {
-	return m.autofixResult, m.autofixErr
-}
 func (m *mockTestPortChecker) AutofixPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*windows.PortCheckResult, error) {
 	m.lastUDPAddrs = udpAddrs
 	m.lastTCPAddrs = tcpAddrs

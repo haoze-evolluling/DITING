@@ -3,7 +3,6 @@ package windows
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 	"unsafe"
 
@@ -36,7 +35,6 @@ func StopAndDisableSharedAccessNative() error {
 	desiredAccess := uintptr(serviceStop | serviceChangeConfig | serviceQueryStatus)
 	svc, _, err := procOpenServiceW.Call(scm, uintptr(unsafe.Pointer(svcNamePtr)), desiredAccess)
 	if svc == 0 {
-		// 若无法直接以完整权限打开服务，返回错误以触发命令行兜底
 		return fmt.Errorf("打开 SharedAccess 服务句柄失败: %w", err)
 	}
 	defer procCloseServiceHandle.Call(svc)
@@ -103,40 +101,9 @@ func StopAndDisableSharedAccessNative() error {
 	return fmt.Errorf("停止 SharedAccess 服务超时 (当前状态码: %d)", stopStatus.CurrentState)
 }
 
-// StopAndDisableICSService 统一封装 ICS 停止与禁用逻辑（原生 Win32 API 优先，sc.exe 命令行兜底）
-func StopAndDisableICSService(ctx context.Context, executor CommandExecutor) error {
-	var nativeErr error
-	nativeErr = StopAndDisableSharedAccessNative()
-	if nativeErr == nil {
-		return nil
-	}
-
-	// 原生 API 失败时，使用管理员权限命令行进行兜底
-	if executor == nil {
-		executor = NewDefaultExecutor()
-	}
-
-	// 先禁用自启动，再停止服务
-	_, _ = executor.RunCommand(ctx, "sc.exe", "config", "SharedAccess", "start=", "disabled")
-	out, err := executor.RunCommand(ctx, "sc.exe", "stop", "SharedAccess")
-	if err != nil {
-		// 某些系统上 SharedAccess 已经停止或处于不可用状态
-		if strings.Contains(strings.ToLower(out), "stop_pending") || strings.Contains(strings.ToLower(out), "1062") {
-			return nil
-		}
-		return fmt.Errorf("原生 API 失败 (%v)，sc.exe 停止失败: %w (输出: %s)", nativeErr, err, strings.TrimSpace(out))
-	}
-	return nil
-}
-
-// AutofixPort53 执行 53 端口冲突自动修复并重新探测默认回环地址可用性
-func (c *WindowsPortChecker) AutofixPort53(ctx context.Context) (*PortCheckResult, error) {
-	return c.AutofixPort53ForAddresses(ctx, []string{"127.0.0.1:53"}, []string{"127.0.0.1:53"})
-}
-
 // AutofixPort53ForAddresses 执行 53 端口冲突自动修复并重新探测指定目标地址的可用性
 func (c *WindowsPortChecker) AutofixPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*PortCheckResult, error) {
-	if err := StopAndDisableICSService(ctx, c.executor); err != nil {
+	if err := StopAndDisableSharedAccessNative(); err != nil {
 		return nil, err
 	}
 

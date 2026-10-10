@@ -12,15 +12,6 @@ func TestNativeSetInterfaceDnsSettings_Export(t *testing.T) {
 		t.Skip("SetInterfaceDnsSettings not supported on this platform")
 	}
 
-	// 传入非法 GUID 测试参数校验
-	err := setAdapterDNSNative("invalid-guid", []string{"127.0.0.1"})
-	if err == nil {
-		t.Errorf("expected error for invalid GUID, got nil")
-	}
-
-	errZero := setAdapterDNSNative("{00000000-0000-0000-0000-000000000000}", []string{"127.0.0.1"})
-	t.Logf("setAdapterDNSNative with zero GUID returned: %v", errZero)
-
 	errReset := resetAdapterDNSNative("invalid-guid")
 	if errReset == nil {
 		t.Errorf("expected error for invalid GUID on reset, got nil")
@@ -36,8 +27,7 @@ func TestNativeSetInterfaceDnsSettings_Export(t *testing.T) {
 }
 
 func TestNativeResetResidualLoopbackDNS(t *testing.T) {
-	mock := &mockExecutor{}
-	err := resetResidualLoopbackDNSNative(context.Background(), mock)
+	err := resetResidualLoopbackDNSNative(context.Background())
 	if err != nil {
 		t.Fatalf("resetResidualLoopbackDNSNative failed: %v", err)
 	}

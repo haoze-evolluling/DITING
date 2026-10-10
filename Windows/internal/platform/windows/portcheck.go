@@ -34,7 +34,6 @@ type PortCheckResult struct {
 type PortChecker interface {
 	CheckPort53(ctx context.Context) (*PortCheckResult, error)
 	CheckPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*PortCheckResult, error)
-	AutofixPort53(ctx context.Context) (*PortCheckResult, error)
 	AutofixPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*PortCheckResult, error)
 }
 
@@ -69,11 +68,6 @@ func (e *PortConflictError) Error() string {
 
 func (e *PortConflictError) Unwrap() error {
 	return e.Err
-}
-
-// IsPort53Available 快速测试 127.0.0.1:53 是否可绑定 (UDP 与 TCP)
-func IsPort53Available() bool {
-	return TestUDPBind("127.0.0.1:53") && TestTCPBind("127.0.0.1:53")
 }
 
 // AreAddressesAvailable 快速测试指定地址列表是否均可成功绑定
@@ -171,9 +165,6 @@ func evaluatePortAvailability(socketsFree bool, conflicts []PortConflict, hasICS
 	if socketsFree || hasSelfListener {
 		available = true
 		canAutofix = false
-		if hasICS && !isOnlyLoopback(udpAddrs, tcpAddrs) {
-			// 若启用了非回环地址但由于某种原因暂时通过（极少情况），保留 ICS 提示
-		}
 	} else {
 		available = false
 		if hasICS && !hasThirdPartyConflict {

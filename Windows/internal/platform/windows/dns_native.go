@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -112,34 +111,13 @@ func setAdapterDNSDualStackNative(guidStr string, v4Servers []string, v6Servers 
 	return errors.Join(errs...)
 }
 
-// setAdapterDNSNative 使用 Windows 原生 API 配置网卡 DNS（自动将服务器地址区分为 IPv4 与 IPv6 双栈）
-func setAdapterDNSNative(guidStr string, servers []string) error {
-	if len(servers) == 0 {
-		return setAdapterDNSDualStackNative(guidStr, nil, nil)
-	}
-	var v4Servers, v6Servers []string
-	for _, s := range servers {
-		trimmed := strings.TrimSpace(s)
-		if trimmed == "" {
-			continue
-		}
-		ip := net.ParseIP(trimmed)
-		if ip != nil && ip.To4() == nil {
-			v6Servers = append(v6Servers, trimmed)
-		} else {
-			v4Servers = append(v4Servers, trimmed)
-		}
-	}
-	return setAdapterDNSDualStackNative(guidStr, v4Servers, v6Servers)
-}
-
 // resetAdapterDNSNative 使用 Windows 原生 API 将网卡 IPv4 与 IPv6 双栈 DNS 恢复为 DHCP
 func resetAdapterDNSNative(guidStr string) error {
 	return setAdapterDNSDualStackNative(guidStr, nil, nil)
 }
 
 // resetResidualLoopbackDNSNative 枚举所有网卡并针对配置了回环地址 (127.*, ::1 等) 的网卡执行原生 DNS 重置
-func resetResidualLoopbackDNSNative(ctx context.Context, executor CommandExecutor) error {
+func resetResidualLoopbackDNSNative(ctx context.Context) error {
 	adapters, err := scanAdaptersNative(ctx)
 	if err != nil {
 		return err
@@ -149,12 +127,7 @@ func resetResidualLoopbackDNSNative(ctx context.Context, executor CommandExecuto
 		if !a.HasResidualLoopback {
 			continue
 		}
-		// 优先尝试原生 API 重置
-		if err := resetAdapterDNSNative(a.ID); err != nil && executor != nil {
-			// 原生重置异常时，使用 netsh 容灾重置
-			_, _ = executor.RunCommand(ctx, "netsh", "interface", "ipv4", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
-			_, _ = executor.RunCommand(ctx, "netsh", "interface", "ipv6", "set", "dnsservers", fmt.Sprintf("name=%s", a.Name), "source=dhcp")
-		}
+		_ = resetAdapterDNSNative(a.ID)
 	}
 	return nil
 }

@@ -34,5 +34,3 @@ func isDefaultExecutor(e CommandExecutor) bool {
 	_, ok := e.(*DefaultExecutor)
 	return ok
 }
-
-
