@@ -7,8 +7,6 @@ defineProps<{
   unit?: string;
   icon: string;
   subtext?: string;
-  trend?: string;
-  color?: 'primary' | 'secondary' | 'tertiary' | 'error';
 }>();
 </script>
 
@@ -34,9 +32,8 @@ defineProps<{
         {{ unit }}
       </span>
     </div>
-    <div v-if="subtext" class="mt-2 text-xs text-text-sub flex items-center justify-between">
-      <span>{{ subtext }}</span>
-      <span v-if="trend" class="font-medium text-status-success">{{ trend }}</span>
+    <div v-if="subtext" class="mt-2 text-xs text-text-sub">
+      {{ subtext }}
     </div>
   </div>
 </template>

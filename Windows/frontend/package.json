@@ -10,7 +10,6 @@
     "screenshot": "python ../../maintenance/core/ui_capturer.py"
   },
   "dependencies": {
-    "@material/material-color-utilities": "^0.2.7",
     "@material/web": "^2.5.0",
     "@types/qrcode": "^1.5.6",
     "qrcode": "^1.5.4",
