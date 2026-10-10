@@ -31,7 +31,6 @@ def get_file_targets() -> List[Dict[str, str]]:
     return [
         {"name": "Windows 主程序", "path": os.path.join(windows, "main.go"), "type": "go"},
         {"name": "特权服务", "path": os.path.join(windows, "cmd", "service", "main.go"), "type": "go"},
-        {"name": "GUI 调试入口", "path": os.path.join(windows, "cmd", "gui", "main.go"), "type": "go"},
         {"name": "NSIS 主配置", "path": os.path.join(windows, "build", "windows", "installer", "project.nsi"), "type": "nsi"},
         {"name": "Wails 配置", "path": os.path.join(windows, "wails.json"), "type": "wails"},
         {"name": "前端 package.json", "path": os.path.join(frontend, "package.json"), "type": "pkg"},
