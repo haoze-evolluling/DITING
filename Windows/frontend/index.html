@@ -3,7 +3,23 @@
 <head>
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="color-scheme" content="light dark"/>
     <title>谛听 DNS</title>
+    <script>
+        // 首帧主题引导：在延迟加载的模块包执行前同步应用主题，消除深色模式启动闪白
+        (function () {
+            try {
+                var mode = localStorage.getItem('diting_theme_mode') || 'system';
+                var dark = mode === 'dark' || (mode === 'system' &&
+                    window.matchMedia('(prefers-color-scheme: dark)').matches);
+                var root = document.documentElement;
+                root.classList.toggle('dark', dark);
+                root.setAttribute('data-theme', dark ? 'dark' : 'light');
+                root.style.backgroundColor = dark ? '#111418' : '#F8F9FF';
+                root.style.color = dark ? '#E1E2E8' : '#191C20';
+            } catch (e) { /* 忽略：交由主题管理器兜底 */ }
+        })();
+    </script>
 </head>
 <body>
 <div id="app"></div>

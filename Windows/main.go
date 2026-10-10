@@ -204,7 +204,7 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: frontend.Assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		BackgroundColour: &options.RGBA{R: 17, G: 20, B: 24, A: 1},
 		OnStartup:        app.startup,
 		OnDomReady: func(ctx context.Context) {
 			go func() {
