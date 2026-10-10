@@ -4,6 +4,9 @@ import { ipc } from '../api/ipc';
 import type { LANStatusResponse } from '../api/types';
 import M3Icon from './M3Icon.vue';
 import StatusBadge from './StatusBadge.vue';
+import ToastBanner from './ToastBanner.vue';
+import { revertSwitch } from '../utils/switch';
+import { useCopyFeedback } from '../composables/useCopyFeedback';
 
 const loading = ref(false);
 const toggling = ref(false);
@@ -11,18 +14,24 @@ const togglingFw = ref(false);
 const lanStatus = ref<LANStatusResponse | null>(null);
 const errorMessage = ref('');
 const successMessage = ref('');
-const copiedIP = ref<string | null>(null);
+const { copiedValue, copy, isCopied } = useCopyFeedback();
 
 const allowLAN = computed(() => !!lanStatus.value?.allowLAN);
 const lanAddresses = computed(() => lanStatus.value?.lanAddresses || []);
 const firewallAllowed = computed(() => !!lanStatus.value?.firewallAllowed);
 
+function flashSuccess(message: string, durationMs = 4000) {
+  successMessage.value = message;
+  setTimeout(() => {
+    successMessage.value = '';
+  }, durationMs);
+}
+
 async function loadData() {
   loading.value = true;
   errorMessage.value = '';
   try {
-    const data = await ipc.getLANStatus();
-    lanStatus.value = data;
+    lanStatus.value = await ipc.getLANStatus();
   } catch (err: any) {
     errorMessage.value = err.message || '加载局域网 DNS 服务状态失败';
   } finally {
@@ -31,8 +40,7 @@ async function loadData() {
 }
 
 async function handleToggleLAN(e: Event) {
-  const target = e.target as any;
-  const enable = Boolean(target.selected ?? target.checked);
+  const enable = Boolean((e.target as any).selected ?? (e.target as any).checked);
   toggling.value = true;
   errorMessage.value = '';
   successMessage.value = '';
@@ -42,20 +50,15 @@ async function handleToggleLAN(e: Event) {
       allowLAN: enable,
       configureFirewall: true, // 保持防火墙放行规则与局域网服务状态一致（开启时放行，关闭时清除）
     });
-    successMessage.value = enable
-      ? '局域网 DNS 服务器已成功开启！局域网内其他设备现可填入本机 IP 使用。'
-      : '已关闭局域网 DNS 服务，恢复为仅本机 (127.0.0.1) 监听。';
+    flashSuccess(
+      enable
+        ? '局域网 DNS 服务器已成功开启！局域网内其他设备现可填入本机 IP 使用。'
+        : '已关闭局域网 DNS 服务，恢复为仅本机 (127.0.0.1) 监听。'
+    );
     await loadData();
-    setTimeout(() => {
-      successMessage.value = '';
-    }, 4000);
   } catch (err: any) {
     errorMessage.value = `操作失败: ${err.message}`;
-    if ('selected' in target) {
-      target.selected = !enable;
-    } else {
-      target.checked = !enable;
-    }
+    revertSwitch(e, !enable);
   } finally {
     toggling.value = false;
   }
@@ -67,41 +70,12 @@ async function handleToggleFirewall() {
   try {
     const nextState = !firewallAllowed.value;
     const msg = await ipc.configureFirewall(nextState);
-    successMessage.value = msg || (nextState ? '已放行防火墙 53 端口' : '已关闭防火墙放行');
+    flashSuccess(msg || (nextState ? '已放行防火墙 53 端口' : '已关闭防火墙放行'), 3000);
     await loadData();
-    setTimeout(() => {
-      successMessage.value = '';
-    }, 3000);
   } catch (err: any) {
     errorMessage.value = `配置防火墙失败: ${err.message}`;
   } finally {
     togglingFw.value = false;
-  }
-}
-
-async function copyToClipboard(ip: string) {
-  try {
-    await navigator.clipboard.writeText(ip);
-    copiedIP.value = ip;
-    setTimeout(() => {
-      if (copiedIP.value === ip) {
-        copiedIP.value = null;
-      }
-    }, 2000);
-  } catch {
-    // 降级使用传统 document.execCommand
-    const ta = document.createElement('textarea');
-    ta.value = ip;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    copiedIP.value = ip;
-    setTimeout(() => {
-      if (copiedIP.value === ip) {
-        copiedIP.value = null;
-      }
-    }, 2000);
   }
 }
 
@@ -143,14 +117,8 @@ onMounted(() => {
     </div>
 
     <!-- 消息提示栏 -->
-    <div v-if="successMessage" class="p-3.5 rounded-xl bg-status-success-bg text-status-success border border-status-success/30 text-xs font-medium flex items-center gap-2">
-      <M3Icon name="check_circle" :size="16" />
-      <span>{{ successMessage }}</span>
-    </div>
-    <div v-if="errorMessage" class="p-3.5 rounded-xl bg-status-error-bg text-status-error border border-status-error/30 text-xs font-medium flex items-center gap-2">
-      <M3Icon name="error" :size="16" />
-      <span>{{ errorMessage }}</span>
-    </div>
+    <ToastBanner v-if="successMessage" :message="successMessage" type="success" compact />
+    <ToastBanner v-if="errorMessage" :message="errorMessage" type="error" compact dismissible @dismiss="errorMessage = ''" />
 
     <!-- 核心卡片网格：IP 地址展示与防火墙状态 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -198,11 +166,11 @@ onMounted(() => {
 
             <button
               type="button"
-              @click="copyToClipboard(ip)"
+              @click="copy(ip)"
               class="app-btn-secondary app-btn-compact text-[11px] shrink-0"
             >
-              <M3Icon :name="copiedIP === ip ? 'check' : 'content_copy'" :size="13" />
-              <span>{{ copiedIP === ip ? '已复制' : '复制' }}</span>
+              <M3Icon :name="isCopied(ip) ? 'check' : 'content_copy'" :size="13" />
+              <span>{{ isCopied(ip) ? '已复制' : '复制' }}</span>
             </button>
           </div>
         </div>

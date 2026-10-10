@@ -1,4 +1,5 @@
 import type { CoreServiceStatus } from './types';
+import { isDesktopApp } from '../utils/env';
 
 // Wails 全局对象类型声明
 declare global {
@@ -25,7 +26,7 @@ declare global {
 
 export class NativeBridgeService {
   public isDesktopApp(): boolean {
-    return typeof window !== 'undefined' && Boolean(window.go?.main?.App);
+    return isDesktopApp();
   }
 
   public async runNativeEmergencyRestore(): Promise<string> {
@@ -51,6 +52,18 @@ export class NativeBridgeService {
       return await window.go.main.App.SetAutoStart(enable);
     }
     return enable;
+  }
+
+  /** 桌面端返回原生放行结果；Web 端返回 null 表示需回退到服务端接口 */
+  public async configureFirewallForLAN(enable: boolean): Promise<string | null> {
+    if (window.go?.main?.App?.ConfigureFirewallForLAN) {
+      try {
+        return await window.go.main.App.ConfigureFirewallForLAN(enable);
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 
   public async getCoreServiceStatus(): Promise<CoreServiceStatus> {

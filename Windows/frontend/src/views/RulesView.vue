@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
 import { ipc } from '../api/ipc';
-import type { FilterStats, FilterConfig, FilterList, CheckHostResult } from '../api/types';
+import type { FilterStats, FilterConfig } from '../api/types';
 import StatusBadge from '../components/StatusBadge.vue';
 import MetricCard from '../components/MetricCard.vue';
 import M3Icon from '../components/M3Icon.vue';
-import AppModal from '../components/AppModal.vue';
+import ToastBanner from '../components/ToastBanner.vue';
+import RuleListsPanel from '../components/RuleListsPanel.vue';
+import RuleTestPanel from '../components/RuleTestPanel.vue';
+import { revertSwitch } from '../utils/switch';
+import { usePoller } from '../composables/usePoller';
+import { useToast } from '../composables/useToast';
 
 const stats = ref<FilterStats>({
   enabled: true,
@@ -27,27 +32,12 @@ const config = ref<FilterConfig>({
   updateIntervalHours: 24,
 });
 
-const lists = ref<FilterList[]>([]);
+const listCount = ref(0);
 const customRulesText = ref('');
 const activeTab = ref<'lists' | 'custom' | 'test' | 'config'>('lists');
 
-// 规则测试工具状态
-const testDomain = ref('');
-const testQType = ref('A');
-const testResult = ref<CheckHostResult | null>(null);
-const testing = ref(false);
-
-// 添加订阅源弹窗状态
-const isAddModalOpen = ref(false);
-const newListName = ref('');
-const newListURL = ref('');
-
 const saving = ref(false);
-const refreshing = ref(false);
-const errorMessage = ref('');
-const successMessage = ref('');
-
-let pollTimer: any = null;
+const { toast, show: showToast, dismiss } = useToast();
 
 async function fetchData() {
   try {
@@ -59,16 +49,15 @@ async function fetchData() {
     ]);
     if (st) stats.value = st;
     if (cfg) config.value = cfg;
-    if (l) lists.value = l;
-    if (rules) customRulesText.value = rules.join('\n');
+    listCount.value = (l || []).length;
+    customRulesText.value = (rules || []).join('\n');
   } catch (err: any) {
-    errorMessage.value = err?.message || '获取规则数据失败';
+    showToast(err?.message || '获取规则数据失败', true);
   }
 }
 
 async function toggleMasterSwitch(e: Event) {
-  const target = e.target as any;
-  const nextVal = Boolean(target.selected ?? target.checked ?? !stats.value.enabled);
+  const nextVal = Boolean((e.target as any).selected ?? (e.target as any).checked ?? !stats.value.enabled);
   try {
     saving.value = true;
     await ipc.updateFilterConfig({ enabled: nextVal });
@@ -76,75 +65,10 @@ async function toggleMasterSwitch(e: Event) {
     config.value.enabled = nextVal;
     showToast(`规则拦截防护已${nextVal ? '开启' : '关闭'}`);
   } catch (err: any) {
-    if ('selected' in target) {
-      target.selected = !nextVal;
-    } else {
-      target.checked = !nextVal;
-    }
+    revertSwitch(e, !nextVal);
     showToast(err?.message || '更新开关失败', true);
   } finally {
     saving.value = false;
-  }
-}
-
-async function handleAddList() {
-  if (!newListURL.value.trim()) {
-    showToast('请输入有效的规则源 URL 或本地文件路径', true);
-    return;
-  }
-  try {
-    saving.value = true;
-    const name = newListName.value.trim() || `订阅列表 ${lists.value.length + 1}`;
-    await ipc.addFilterList({
-      name,
-      url: newListURL.value.trim(),
-      enabled: true,
-    });
-    showToast('规则库已添加并开始下载');
-    isAddModalOpen.value = false;
-    newListName.value = '';
-    newListURL.value = '';
-    await fetchData();
-  } catch (err: any) {
-    showToast(err?.message || '添加规则库失败', true);
-  } finally {
-    saving.value = false;
-  }
-}
-
-async function toggleList(list: FilterList) {
-  try {
-    list.enabled = !list.enabled;
-    await ipc.updateFilterList(list);
-    showToast(`已${list.enabled ? '启用' : '停用'}规则库: ${list.name}`);
-    await fetchData();
-  } catch (err: any) {
-    list.enabled = !list.enabled;
-    showToast(err?.message || '切换规则库状态失败', true);
-  }
-}
-
-async function deleteList(id: string) {
-  if (!confirm('确定要删除此规则库吗？')) return;
-  try {
-    await ipc.deleteFilterList(id);
-    showToast('已删除规则库');
-    await fetchData();
-  } catch (err: any) {
-    showToast(err?.message || '删除失败', true);
-  }
-}
-
-async function refreshList(id?: string) {
-  try {
-    refreshing.value = true;
-    await ipc.refreshFilterLists(id);
-    showToast(id ? '规则库已更新' : '全部规则库已更新完成');
-    await fetchData();
-  } catch (err: any) {
-    showToast(err?.message || '拉取规则失败', true);
-  } finally {
-    refreshing.value = false;
   }
 }
 
@@ -162,18 +86,6 @@ async function saveCustomRules() {
     showToast(err?.message || '保存自定义规则失败', true);
   } finally {
     saving.value = false;
-  }
-}
-
-async function runDomainTest() {
-  if (!testDomain.value.trim()) return;
-  try {
-    testing.value = true;
-    testResult.value = await ipc.checkHost(testDomain.value.trim(), testQType.value);
-  } catch (err: any) {
-    showToast(err?.message || '规则检测异常', true);
-  } finally {
-    testing.value = false;
   }
 }
 
@@ -195,50 +107,13 @@ async function saveConfig() {
   }
 }
 
-function showToast(msg: string, isError = false) {
-  if (isError) {
-    errorMessage.value = msg;
-    setTimeout(() => { errorMessage.value = ''; }, 4000);
-  } else {
-    successMessage.value = msg;
-    setTimeout(() => { successMessage.value = ''; }, 3000);
-  }
-}
-
-function formatTime(ms: number): string {
-  if (!ms) return '未更新';
-  const d = new Date(ms);
-  return `${d.getMonth() + 1}-${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-}
-
-onMounted(() => {
-  fetchData();
-  pollTimer = setInterval(fetchData, 4000);
-});
-
-onUnmounted(() => {
-  if (pollTimer) clearInterval(pollTimer);
-});
+usePoller(fetchData, 4000);
 </script>
 
 <template>
   <div class="space-y-6 max-w-7xl mx-auto pb-12 select-none">
     <!-- 顶部消息提示 -->
-    <div v-if="errorMessage" class="p-4 rounded-2xl bg-status-error-bg text-status-error border border-status-error/20 flex items-center justify-between text-sm shadow-xs">
-      <div class="flex items-center gap-2">
-        <M3Icon name="error" :size="18" />
-        <span>{{ errorMessage }}</span>
-      </div>
-      <button @click="errorMessage = ''" class="app-btn-secondary app-btn-compact">关闭</button>
-    </div>
-
-    <div v-if="successMessage" class="p-4 rounded-2xl bg-status-success-bg text-status-success border border-status-success/20 flex items-center justify-between text-sm shadow-xs">
-      <div class="flex items-center gap-2">
-        <M3Icon name="check_circle" :size="18" />
-        <span>{{ successMessage }}</span>
-      </div>
-      <button @click="successMessage = ''" class="app-btn-secondary app-btn-compact">知道了</button>
-    </div>
+    <ToastBanner v-if="toast" :message="toast.message" :type="toast.isError ? 'error' : 'success'" dismissible @dismiss="dismiss" />
 
     <!-- 顶栏核心主控卡片 -->
     <div class="p-6 rounded-3xl bg-surface-card border border-surface-border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors">
@@ -273,97 +148,29 @@ onUnmounted(() => {
     <!-- 标签切换栏 -->
     <div class="flex border-b border-surface-border gap-2">
       <button
-        @click="activeTab = 'lists'"
+        v-for="tab in [
+          { id: 'lists', icon: 'adapters', label: `规则订阅库 (${listCount})` },
+          { id: 'custom', icon: 'edit', label: '自定义规则' },
+          { id: 'test', icon: 'search', label: '网址拦截检测' },
+          { id: 'config', icon: 'settings', label: '拦截处理方式' },
+        ]"
+        :key="tab.id"
+        @click="activeTab = tab.id as any"
         class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer"
-        :class="activeTab === 'lists' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
+        :class="activeTab === tab.id ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
       >
-        <M3Icon name="adapters" :size="16" />
-        <span>规则订阅库 ({{ lists.length }})</span>
-      </button>
-      <button
-        @click="activeTab = 'custom'"
-        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer"
-        :class="activeTab === 'custom' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
-      >
-        <M3Icon name="edit" :size="16" />
-        <span>自定义规则</span>
-      </button>
-      <button
-        @click="activeTab = 'test'"
-        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer"
-        :class="activeTab === 'test' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
-      >
-        <M3Icon name="search" :size="16" />
-        <span>网址拦截检测</span>
-      </button>
-      <button
-        @click="activeTab = 'config'"
-        class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 cursor-pointer"
-        :class="activeTab === 'config' ? 'border-brand-primary text-brand-primary font-bold' : 'border-transparent text-text-sub hover:text-text-main'"
-      >
-        <M3Icon name="settings" :size="16" />
-        <span>拦截处理方式</span>
+        <M3Icon :name="tab.icon" :size="16" />
+        <span>{{ tab.label }}</span>
       </button>
     </div>
 
     <!-- TAB 1: 订阅规则源列表 -->
-    <div v-if="activeTab === 'lists'" class="space-y-4">
-      <div class="flex items-center justify-between">
-        <span class="text-xs text-text-sub">支持在线规则订阅链接与本地规则文本文件</span>
-        <div class="flex items-center gap-3">
-          <button
-            type="button"
-            @click="refreshList()"
-            :disabled="refreshing"
-            class="app-btn-secondary"
-          >
-            <M3Icon name="refresh" :size="16" :class="refreshing ? 'animate-spin' : ''" />
-            <span>{{ refreshing ? '正在下载更新...' : '全部更新' }}</span>
-          </button>
-          <button
-            type="button"
-            @click="isAddModalOpen = true"
-            class="app-btn-primary"
-          >
-            <M3Icon name="add" :size="16" />
-            <span>添加规则库</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div
-          v-for="l in lists"
-          :key="l.id"
-          class="p-5 rounded-2xl bg-surface-card border border-surface-border shadow-xs flex flex-col justify-between gap-4 transition-all duration-200 hover:shadow-md hover:border-brand-primary/30"
-        >
-          <div>
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="font-bold text-text-main truncate text-sm">{{ l.name }}</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-container text-brand-primary shrink-0">
-                  {{ l.rulesCount.toLocaleString() }} 条规则
-                </span>
-              </div>
-              <md-switch :selected="l.enabled" @change="toggleList(l)"></md-switch>
-            </div>
-            <p class="text-xs text-text-muted font-mono mt-2 truncate select-all" :title="l.url">{{ l.url }}</p>
-          </div>
-
-          <div class="flex items-center justify-between pt-3 border-t border-surface-border-sub text-[11px] text-text-muted">
-            <span>最后更新: {{ formatTime(l.lastUpdated) }}</span>
-            <div class="flex items-center gap-1.5">
-              <button @click="refreshList(l.id)" class="app-btn-icon" title="立即更新">
-                <M3Icon name="refresh" :size="14" />
-              </button>
-              <button @click="deleteList(l.id)" class="app-btn-icon app-btn-icon-danger" title="删除此规则库">
-                <M3Icon name="delete" :size="14" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <RuleListsPanel
+      v-if="activeTab === 'lists'"
+      @error="(m) => showToast(m, true)"
+      @success="(m) => showToast(m)"
+      @changed="fetchData"
+    />
 
     <!-- TAB 2: 自定义规则编辑器 -->
     <div v-if="activeTab === 'custom'" class="space-y-4">
@@ -388,12 +195,7 @@ onUnmounted(() => {
       </div>
 
       <div class="flex items-center justify-end gap-3">
-        <button
-          type="button"
-          @click="saveCustomRules"
-          :disabled="saving"
-          class="app-btn-primary"
-        >
+        <button type="button" @click="saveCustomRules" :disabled="saving" class="app-btn-primary">
           <M3Icon name="check" :size="16" />
           <span>{{ saving ? '保存中...' : '保存自定义规则' }}</span>
         </button>
@@ -401,67 +203,7 @@ onUnmounted(() => {
     </div>
 
     <!-- TAB 3: 域名规则检测工具 -->
-    <div v-if="activeTab === 'test'" class="space-y-4">
-      <div class="p-6 rounded-2xl bg-surface-card border border-surface-border space-y-4 shadow-xs">
-        <div>
-          <h3 class="text-base font-bold text-text-main">网址拦截模拟测试</h3>
-          <p class="text-xs text-text-sub mt-1">输入任意网址或域名，即可快速检测其是否会被防护规则拦截以及原因</p>
-        </div>
-
-        <div class="flex flex-col md:flex-row gap-3 items-center">
-          <input
-            v-model="testDomain"
-            placeholder="例如: ad.example.com"
-            @keyup.enter="runDomainTest"
-            class="flex-1 h-9 px-4 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main placeholder:text-text-muted"
-          />
-          <select
-            v-model="testQType"
-            class="h-9 px-3 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main"
-          >
-            <option value="A">IPv4 地址 (A 记录)</option>
-            <option value="AAAA">IPv6 地址 (AAAA 记录)</option>
-            <option value="ANY">全部记录类型 (ANY)</option>
-          </select>
-          <button
-            type="button"
-            @click="runDomainTest"
-            :disabled="testing || !testDomain.trim()"
-            class="app-btn-primary"
-          >
-            <M3Icon name="search" :size="16" />
-            <span>{{ testing ? '检测中...' : '立即测试' }}</span>
-          </button>
-        </div>
-
-        <div v-if="testResult" class="p-5 rounded-xl border text-sm" :class="testResult.blocked ? 'bg-status-error-bg border-status-error/30' : testResult.action === 'allow' ? 'bg-status-success-bg border-status-success/30' : 'bg-surface-card-sub border-surface-border-sub'">
-          <div class="flex items-center gap-3">
-            <span
-              class="px-2.5 py-1 rounded-full text-xs font-bold uppercase text-white"
-              :class="testResult.blocked ? 'bg-status-error' : testResult.action === 'allow' ? 'bg-status-success' : 'bg-text-muted'"
-            >
-              {{ testResult.blocked ? '已拦截 (阻止访问)' : testResult.action === 'allow' ? '已放行 (信任名单)' : '未命中规则 (正常访问)' }}
-            </span>
-            <span class="font-mono font-bold text-text-main">{{ testDomain }}</span>
-          </div>
-
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4 text-xs">
-            <div>
-              <span class="text-text-muted">命中的规则: </span>
-              <span class="font-mono text-text-main font-semibold">{{ testResult.matchedRule || '无' }}</span>
-            </div>
-            <div>
-              <span class="text-text-muted">所属规则库: </span>
-              <span class="font-medium text-text-main">{{ testResult.listName || '无' }}</span>
-            </div>
-            <div>
-              <span class="text-text-muted">处理原因: </span>
-              <span class="font-medium text-text-main">{{ testResult.reason || '未命中规则' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <RuleTestPanel v-if="activeTab === 'test'" @error="(m) => showToast(m, true)" />
 
     <!-- TAB 4: 策略配置 -->
     <div v-if="activeTab === 'config'" class="space-y-4 max-w-2xl">
@@ -498,62 +240,12 @@ onUnmounted(() => {
         </div>
 
         <div class="pt-4 border-t border-surface-border flex justify-end">
-          <button
-            type="button"
-            @click="saveConfig"
-            :disabled="saving"
-            class="app-btn-primary"
-          >
+          <button type="button" @click="saveConfig" :disabled="saving" class="app-btn-primary">
             <M3Icon name="check" :size="16" />
             <span>{{ saving ? '保存中...' : '保存策略' }}</span>
           </button>
         </div>
       </div>
     </div>
-
-    <!-- 添加订阅弹窗 (统一使用 AppModal 架构) -->
-    <AppModal
-      :open="isAddModalOpen"
-      @close="isAddModalOpen = false"
-      title="添加规则订阅库"
-    >
-      <div class="space-y-3 pt-1">
-        <p class="text-xs text-text-sub">输入规则库的名称以及在线订阅网址 (URL) 或本地文件路径</p>
-        <div>
-          <label class="text-xs text-text-sub block mb-1">规则库名称</label>
-          <input
-            v-model="newListName"
-            placeholder="例如: 广告拦截通用规则"
-            class="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-          />
-        </div>
-        <div>
-          <label class="text-xs text-text-sub block mb-1">订阅链接 / 文件路径</label>
-          <input
-            v-model="newListURL"
-            placeholder="https://... 或本地文件路径"
-            class="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-          />
-        </div>
-      </div>
-
-      <template #actions>
-        <button
-          type="button"
-          @click="isAddModalOpen = false"
-          class="app-btn-secondary"
-        >
-          取消
-        </button>
-        <button
-          type="button"
-          :disabled="saving || !newListURL.trim()"
-          @click="handleAddList"
-          class="app-btn-primary"
-        >
-          添加并下载
-        </button>
-      </template>
-    </AppModal>
   </div>
 </template>

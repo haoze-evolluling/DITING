@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { ipc } from '../api/ipc';
 import type { WebSocketEvent, QueryEventData } from '../api/types';
 import M3Icon from '../components/M3Icon.vue';
+import { formatClockTimeMs } from '../utils/format';
 
 interface LogItem extends QueryEventData {
   id: string;
@@ -78,12 +79,6 @@ function clearLogs() {
 
 function togglePause() {
   isPaused.value = !isPaused.value;
-}
-
-function formatTime(timestamp: number): string {
-  const d = new Date(timestamp);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${d.getMilliseconds().toString().padStart(3, '0')}`;
 }
 
 onMounted(() => {
@@ -253,7 +248,7 @@ onUnmounted(() => {
           <span class="font-semibold" :class="item.durationMs > 100 ? 'text-status-warning' : 'text-text-main'">
             {{ item.durationMs.toFixed(1) }} 毫秒
           </span>
-          <span class="text-text-muted">{{ formatTime(item.timestamp) }}</span>
+          <span class="text-text-muted">{{ formatClockTimeMs(item.timestamp) }}</span>
         </div>
       </div>
     </div>

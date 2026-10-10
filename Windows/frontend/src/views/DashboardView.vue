@@ -2,14 +2,19 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { ipc } from '../api/ipc';
 import type { StatusResponse, WebSocketEvent, PortCheckResult } from '../api/types';
+import type { NavTab } from '../constants/navigation';
 import StatusBadge from '../components/StatusBadge.vue';
 import MetricCard from '../components/MetricCard.vue';
 import MetricChart from '../components/MetricChart.vue';
 import M3Icon from '../components/M3Icon.vue';
 import PortConflictModal from '../components/PortConflictModal.vue';
+import ToastBanner from '../components/ToastBanner.vue';
+import { revertSwitch } from '../utils/switch';
+import { usePoller } from '../composables/usePoller';
+import { formatUptime } from '../utils/format';
 
 const emit = defineEmits<{
-  (e: 'navigate', tab: string): void;
+  (e: 'navigate', tab: NavTab): void;
 }>();
 
 const status = ref<StatusResponse | null>(null);
@@ -28,7 +33,6 @@ const latencyHistory = ref<number[]>([]);
 
 let unsubEvents: (() => void) | null = null;
 let unsubConn: (() => void) | null = null;
-let pollTimer: any = null;
 
 const dnsRunning = computed(() => !!status.value?.dns?.running);
 const allowLAN = computed(() => !!status.value?.dns?.allowLAN);
@@ -43,15 +47,7 @@ const successRate = computed(() => {
   return `${rate.toFixed(1)}%`;
 });
 
-const formatUptime = computed(() => {
-  const sec = status.value?.uptimeSeconds || 0;
-  const hours = Math.floor(sec / 3600);
-  const mins = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (hours > 0) return `${hours}小时 ${mins}分`;
-  if (mins > 0) return `${mins}分 ${s}秒`;
-  return `${s}秒`;
-});
+const uptimeText = computed(() => formatUptime(status.value?.uptimeSeconds || 0));
 
 const formatDnsMode = computed(() => {
   const mode = status.value?.dns?.mode?.toLowerCase();
@@ -237,11 +233,7 @@ async function handleToggleTakeover(e: Event) {
     }
     await fetchStatus();
   } catch (err: any) {
-    if ('selected' in target) {
-      target.selected = !nextVal;
-    } else {
-      target.checked = !nextVal;
-    }
+    revertSwitch(e, !nextVal);
     if (nextVal) {
       await handleStartFailure(err);
     } else {
@@ -252,9 +244,9 @@ async function handleToggleTakeover(e: Event) {
   }
 }
 
-onMounted(() => {
-  fetchStatus();
+usePoller(fetchStatus, 5000);
 
+onMounted(() => {
   unsubEvents = ipc.onEvent((event: WebSocketEvent) => {
     if (event.type === 'metrics') {
       const m = event.data;
@@ -272,26 +264,19 @@ onMounted(() => {
       fetchStatus();
     }
   });
-
-  pollTimer = setInterval(fetchStatus, 5000);
 });
 
 onUnmounted(() => {
   if (unsubEvents) unsubEvents();
   if (unsubConn) unsubConn();
-  if (pollTimer) clearInterval(pollTimer);
 });
 </script>
 
 <template>
   <div class="space-y-6 pb-12 select-none">
     <!-- 顶部状态提示条 -->
-    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-2.5 text-sm text-status-error gap-3 flex-wrap">
-      <div class="flex items-center gap-2 min-w-0">
-        <M3Icon name="error" :size="18" class="shrink-0" />
-        <span>{{ errorMessage }}</span>
-      </div>
-      <div class="flex items-center gap-2 shrink-0">
+    <ToastBanner v-if="errorMessage" :message="errorMessage" type="error">
+      <template #actions>
         <button
           v-if="portConflict"
           type="button"
@@ -301,16 +286,12 @@ onUnmounted(() => {
           <M3Icon name="help" :size="14" />
           <span>排查指引</span>
         </button>
-        <button
-          type="button"
-          @click="fetchStatus"
-          class="app-btn-secondary app-btn-compact"
-        >
+        <button type="button" @click="fetchStatus" class="app-btn-secondary app-btn-compact">
           <M3Icon name="refresh" :size="14" />
           <span>重试</span>
         </button>
-      </div>
-    </div>
+      </template>
+    </ToastBanner>
 
     <!-- 16:9 双栏全景主网格 (左侧：核心控制 + 指标 + 波形图表；右侧：快捷模块摘要) -->
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
@@ -404,7 +385,7 @@ onUnmounted(() => {
           />
           <MetricCard
             title="持续运行时长"
-            :value="formatUptime"
+            :value="uptimeText"
             icon="shield"
             :subtext="`进程编号: ${status?.pid || '-'}`"
           />

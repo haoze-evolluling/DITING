@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { ipc } from '../api/ipc';
 import type { AdapterInfo, StatusResponse } from '../api/types';
+import { revertSwitch } from '../utils/switch';
 import StatusBadge from '../components/StatusBadge.vue';
 import M3Icon from '../components/M3Icon.vue';
 import LanWebCard from '../components/LanWebCard.vue';
@@ -53,11 +54,7 @@ async function handleToggleAdapter(adapter: AdapterInfo, e: Event) {
     await loadData();
   } catch (err: any) {
     errorMessage.value = `操作网卡 [${adapter.name}] 失败: ${err.message}`;
-    if ('selected' in target) {
-      target.selected = !enable;
-    } else {
-      target.checked = !enable;
-    }
+    revertSwitch(e, !enable);
   } finally {
     operatingId.value = null;
   }

@@ -5,7 +5,10 @@ import { ipc } from '../api/ipc';
 import type { WebStatusResponse } from '../api/types';
 import M3Icon from './M3Icon.vue';
 import StatusBadge from './StatusBadge.vue';
+import ToastBanner from './ToastBanner.vue';
 import LoginModal from './LoginModal.vue';
+import { revertSwitch } from '../utils/switch';
+import { useCopyFeedback } from '../composables/useCopyFeedback';
 
 const loading = ref(false);
 const toggling = ref(false);
@@ -13,18 +16,25 @@ const togglingFw = ref(false);
 const webStatus = ref<WebStatusResponse | null>(null);
 const errorMessage = ref('');
 const successMessage = ref('');
-const copiedUrl = ref<string | null>(null);
 const showPasswordModal = ref(false);
 const selectedQrUrl = ref<string>('');
 const qrDataUrl = ref<string>('');
 const isEditingPort = ref(false);
 const customPort = ref('15353');
+const { copy, isCopied } = useCopyFeedback();
 
 const isEnabled = computed(() => !!webStatus.value?.enabled);
 const webUrls = computed(() => webStatus.value?.webUrls || []);
 const firewallAllowed = computed(() => !!webStatus.value?.firewallAllowed);
 const adminUser = computed(() => webStatus.value?.username || 'admin');
 const isInitialized = computed(() => !!webStatus.value?.initialized);
+
+function flashSuccess(message: string, durationMs = 3000) {
+  successMessage.value = message;
+  setTimeout(() => {
+    successMessage.value = '';
+  }, durationMs);
+}
 
 async function loadData() {
   loading.value = true;
@@ -68,8 +78,7 @@ watch(selectedQrUrl, (newUrl) => {
 });
 
 async function handleToggleWeb(e: Event) {
-  const target = e.target as any;
-  const enable = Boolean(target.selected ?? target.checked);
+  const enable = Boolean((e.target as any).selected ?? (e.target as any).checked);
   toggling.value = true;
   errorMessage.value = '';
   successMessage.value = '';
@@ -82,20 +91,16 @@ async function handleToggleWeb(e: Event) {
       port: portNum,
       configureFirewall: true,
     });
-    successMessage.value = enable
-      ? '局域网 Web 远程管理已成功开启！局域网其他设备现可通过浏览器访问。'
-      : '已关闭局域网 Web 管理，服务恢复为仅限本地 (127.0.0.1) 通信。';
+    flashSuccess(
+      enable
+        ? '局域网 Web 远程管理已成功开启！局域网其他设备现可通过浏览器访问。'
+        : '已关闭局域网 Web 管理，服务恢复为仅限本地 (127.0.0.1) 通信。',
+      4000
+    );
     await loadData();
-    setTimeout(() => {
-      successMessage.value = '';
-    }, 4000);
   } catch (err: any) {
     errorMessage.value = `操作失败: ${err.message}`;
-    if ('selected' in target) {
-      target.selected = !enable;
-    } else {
-      target.checked = !enable;
-    }
+    revertSwitch(e, !enable);
   } finally {
     toggling.value = false;
   }
@@ -107,11 +112,8 @@ async function handleToggleFirewall() {
   try {
     const nextState = !firewallAllowed.value;
     const msg = await ipc.configureWebFirewall(nextState);
-    successMessage.value = msg || (nextState ? '已放行防火墙 Web 端口' : '已关闭防火墙放行');
+    flashSuccess(msg || (nextState ? '已放行防火墙 Web 端口' : '已关闭防火墙放行'));
     await loadData();
-    setTimeout(() => {
-      successMessage.value = '';
-    }, 3000);
   } catch (err: any) {
     errorMessage.value = `配置防火墙失败: ${err.message}`;
   } finally {
@@ -132,38 +134,10 @@ async function handleSavePort() {
       port: portNum,
       configureFirewall: true,
     });
-    successMessage.value = `Web 端口已成功更新为 ${portNum}`;
+    flashSuccess(`Web 端口已成功更新为 ${portNum}`);
     await loadData();
-    setTimeout(() => {
-      successMessage.value = '';
-    }, 3000);
   } catch (err: any) {
     errorMessage.value = `保存端口失败: ${err.message}`;
-  }
-}
-
-async function copyToClipboard(url: string) {
-  try {
-    await navigator.clipboard.writeText(url);
-    copiedUrl.value = url;
-    setTimeout(() => {
-      if (copiedUrl.value === url) {
-        copiedUrl.value = null;
-      }
-    }, 2000);
-  } catch {
-    const ta = document.createElement('textarea');
-    ta.value = url;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    copiedUrl.value = url;
-    setTimeout(() => {
-      if (copiedUrl.value === url) {
-        copiedUrl.value = null;
-      }
-    }, 2000);
   }
 }
 
@@ -214,31 +188,8 @@ onMounted(() => {
     </div>
 
     <!-- 成功与错误反馈横幅 -->
-    <div
-      v-if="successMessage"
-      class="p-3 rounded-xl bg-status-success-bg border border-status-success/30 text-status-success text-xs flex items-center justify-between"
-    >
-      <div class="flex items-center gap-2">
-        <M3Icon name="check_circle" :size="16" />
-        <span>{{ successMessage }}</span>
-      </div>
-      <button @click="successMessage = ''" class="app-btn-secondary app-btn-compact">
-        关闭
-      </button>
-    </div>
-
-    <div
-      v-if="errorMessage"
-      class="p-3 rounded-xl bg-status-error-bg border border-status-error/30 text-status-error text-xs flex items-center justify-between"
-    >
-      <div class="flex items-center gap-2">
-        <M3Icon name="error" :size="16" />
-        <span>{{ errorMessage }}</span>
-      </div>
-      <button @click="errorMessage = ''" class="app-btn-secondary app-btn-compact">
-        关闭
-      </button>
-    </div>
+    <ToastBanner v-if="successMessage" :message="successMessage" type="success" compact dismissible @dismiss="successMessage = ''" />
+    <ToastBanner v-if="errorMessage" :message="errorMessage" type="error" compact dismissible @dismiss="errorMessage = ''" />
 
     <!-- 展开详情面板 (当开启 Web 远程管理时) -->
     <div v-if="isEnabled" class="space-y-5 pt-2 border-t border-surface-border">
@@ -275,12 +226,12 @@ onMounted(() => {
               <div class="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
-                  @click="copyToClipboard(url)"
+                  @click="copy(url)"
                   class="app-btn-secondary app-btn-compact"
-                  :title="copiedUrl === url ? '已复制！' : '复制网址'"
+                  :title="isCopied(url) ? '已复制！' : '复制网址'"
                 >
-                  <M3Icon :name="copiedUrl === url ? 'check' : 'content_copy'" :size="14" />
-                  <span>{{ copiedUrl === url ? '已复制' : '复制' }}</span>
+                  <M3Icon :name="isCopied(url) ? 'check' : 'content_copy'" :size="14" />
+                  <span>{{ isCopied(url) ? '已复制' : '复制' }}</span>
                 </button>
                 <button
                   type="button"

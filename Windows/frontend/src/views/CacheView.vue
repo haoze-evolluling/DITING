@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { ipc } from '../api/ipc';
-import type { CacheStats, CacheConfig, CacheEntryItem, CacheDomainStat, WebSocketEvent } from '../api/types';
+import type { CacheStats, CacheConfig, CacheEntryItem, CacheDomainStat } from '../api/types';
 import StatusBadge from '../components/StatusBadge.vue';
 import MetricCard from '../components/MetricCard.vue';
 import M3Icon from '../components/M3Icon.vue';
 import AppModal from '../components/AppModal.vue';
+import ToastBanner from '../components/ToastBanner.vue';
+import { revertSwitch } from '../utils/switch';
+import { formatClockTime } from '../utils/format';
+import { usePoller } from '../composables/usePoller';
+import { useToast } from '../composables/useToast';
 
 const stats = ref<CacheStats>({
   enabled: true,
@@ -43,12 +48,8 @@ const statusFilter = ref<'all' | 'fresh' | 'stale' | 'negative'>('all');
 const loading = ref(false);
 const saving = ref(false);
 const clearing = ref(false);
-const errorMessage = ref('');
-const successMessage = ref('');
 const isClearDialogOpen = ref(false);
-
-let pollTimer: any = null;
-let unsubEvents: (() => void) | null = null;
+const { toast, show: showToast, dismiss } = useToast();
 
 const hitRatioPercent = computed(() => {
   const ratio = stats.value.hitRatio * 100;
@@ -71,7 +72,6 @@ const maxTopHits = computed(() => {
 
 async function loadData() {
   loading.value = true;
-  errorMessage.value = '';
   try {
     const [st, cfg, entryRes, top] = await Promise.all([
       ipc.getCacheStats(),
@@ -85,7 +85,7 @@ async function loadData() {
     totalEntriesCount.value = entryRes.total || 0;
     topDomains.value = top || [];
   } catch (err: any) {
-    errorMessage.value = err.message || '加载缓存数据失败';
+    showToast(err.message || '加载缓存数据失败', true);
   } finally {
     loading.value = false;
   }
@@ -113,7 +113,7 @@ async function handleSearch() {
     entries.value = entryRes.entries || [];
     totalEntriesCount.value = entryRes.total || 0;
   } catch (err: any) {
-    errorMessage.value = err.message;
+    showToast(err.message, true);
   }
 }
 
@@ -125,29 +125,21 @@ async function handleToggleCache(e: Event) {
     await ipc.updateCacheConfig(updated);
     config.value = updated;
     stats.value.enabled = enable;
-    successMessage.value = enable ? '解析加速已开启' : '解析加速已关闭';
-    setTimeout(() => (successMessage.value = ''), 3000);
+    showToast(enable ? '解析加速已开启' : '解析加速已关闭');
   } catch (err: any) {
-    errorMessage.value = `切换加速状态失败: ${err.message}`;
-    if ('selected' in target) {
-      target.selected = !enable;
-    } else {
-      target.checked = !enable;
-    }
+    showToast(`切换加速状态失败: ${err.message}`, true);
+    revertSwitch(e, !enable);
   }
 }
 
 async function handleSaveConfig() {
   saving.value = true;
-  errorMessage.value = '';
-  successMessage.value = '';
   try {
     await ipc.updateCacheConfig(config.value);
-    successMessage.value = '加速策略配置已保存并即时生效！';
+    showToast('加速策略配置已保存并即时生效！');
     await loadData();
-    setTimeout(() => (successMessage.value = ''), 3000);
   } catch (err: any) {
-    errorMessage.value = `保存配置失败: ${err.message}`;
+    showToast(`保存配置失败: ${err.message}`, true);
   } finally {
     saving.value = false;
   }
@@ -158,37 +150,16 @@ async function handleConfirmClear() {
   try {
     await ipc.clearCache();
     isClearDialogOpen.value = false;
-    successMessage.value = '加速缓存已全部清空！';
+    showToast('加速缓存已全部清空！');
     await loadData();
-    setTimeout(() => (successMessage.value = ''), 3000);
   } catch (err: any) {
-    errorMessage.value = `清空缓存失败: ${err.message}`;
+    showToast(`清空缓存失败: ${err.message}`, true);
   } finally {
     clearing.value = false;
   }
 }
 
-function formatTime(timestampMs: number): string {
-  if (!timestampMs || timestampMs <= 0) return '未命中';
-  const d = new Date(timestampMs);
-  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
-}
-
-onMounted(() => {
-  loadData();
-  pollTimer = setInterval(pollMetrics, 4000);
-
-  unsubEvents = ipc.onEvent((event: WebSocketEvent) => {
-    if (event.type === 'query' || event.type === 'metrics') {
-      // 收到请求事件时轻量同步
-    }
-  });
-});
-
-onUnmounted(() => {
-  if (pollTimer) clearInterval(pollTimer);
-  if (unsubEvents) unsubEvents();
-});
+usePoller(pollMetrics, 4000);
 </script>
 
 <template>
@@ -245,26 +216,14 @@ onUnmounted(() => {
     </div>
 
     <!-- 状态反馈提示 -->
-    <div
-      v-if="errorMessage"
-      class="p-3 rounded-2xl bg-status-error-bg border border-status-error/20 text-xs text-status-error flex items-center justify-between shadow-xs"
-    >
-      <div class="flex items-center gap-2">
-        <M3Icon name="error" :size="18" />
-        <span>{{ errorMessage }}</span>
-      </div>
-      <button @click="errorMessage = ''" class="app-btn-secondary app-btn-compact">
-        关闭
-      </button>
-    </div>
-
-    <div
-      v-if="successMessage"
-      class="p-3 rounded-2xl bg-status-success-bg border border-status-success/20 text-xs text-status-success flex items-center gap-2 shadow-xs"
-    >
-      <M3Icon name="check_circle" :size="18" />
-      <span>{{ successMessage }}</span>
-    </div>
+    <ToastBanner
+      v-if="toast"
+      :message="toast.message"
+      :type="toast.isError ? 'error' : 'success'"
+      compact
+      dismissible
+      @dismiss="dismiss"
+    />
 
     <!-- 核心指标遥测卡片网格 (3 列 x 2 行) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -346,7 +305,7 @@ onUnmounted(() => {
                 {{ item.hitCount }} 次
               </span>
               <span class="text-[10px] text-text-muted min-w-14 text-right">
-                {{ formatTime(item.lastHitAt) }}
+                {{ item.lastHitAt > 0 ? formatClockTime(item.lastHitAt) : '未命中' }}
               </span>
             </div>
           </div>

@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { ipc } from './api/ipc';
-import { themeManager } from './theme/dynamic-color';
+import { themeManager } from './theme/theme';
+import { NAV_ITEMS, isValidTab, type NavTab } from './constants/navigation';
+import { isWebMode } from './utils/env';
 import M3Icon from './components/M3Icon.vue';
+import NavItem from './components/NavItem.vue';
 import StatusBadge from './components/StatusBadge.vue';
 import ServiceAlertModal from './components/ServiceAlertModal.vue';
 import LoginModal from './components/LoginModal.vue';
@@ -14,28 +17,17 @@ import SettingsView from './views/SettingsView.vue';
 import CacheView from './views/CacheView.vue';
 import RulesView from './views/RulesView.vue';
 
-type NavTab = 'dashboard' | 'adapters' | 'upstream' | 'cache' | 'rules' | 'logs' | 'settings';
-
 const appVersion = __APP_VERSION__;
+const navItems = NAV_ITEMS;
 const currentTab = ref<NavTab>('dashboard');
 const isConnected = ref(false);
 const showAlertModal = ref(false);
 
 // Web 远程管理与用户态
-const isWebMode = ref(ipc.isWebMode());
+const webMode = isWebMode();
 const currentUser = ref(localStorage.getItem('diting_session_user') || '');
 const showAuthModal = ref(false);
 const authModalMode = ref<'login' | 'setup'>('login');
-
-const navItems = [
-  { id: 'dashboard' as NavTab, label: '运行总览', icon: 'dashboard' },
-  { id: 'adapters' as NavTab, label: '网络接管', icon: 'adapters' },
-  { id: 'upstream' as NavTab, label: 'DNS 服务', icon: 'upstream' },
-  { id: 'cache' as NavTab, label: '解析加速', icon: 'cache' },
-  { id: 'rules' as NavTab, label: '规则拦截', icon: 'shield' },
-  { id: 'logs' as NavTab, label: '访问日志', icon: 'logs' },
-  { id: 'settings' as NavTab, label: '设置中心', icon: 'settings' },
-];
 
 let unsubConn: (() => void) | null = null;
 let unsubAuth: (() => void) | null = null;
@@ -45,9 +37,8 @@ function parseRoute() {
     const url = new URL(window.location.href);
     const hash = url.hash.replace(/^#\/?/, '').split('?')[0].toLowerCase();
     const tabParam = (url.searchParams.get('tab') || hash).toLowerCase();
-    const validTabs: NavTab[] = ['dashboard', 'adapters', 'upstream', 'cache', 'rules', 'logs', 'settings'];
-    if (validTabs.includes(tabParam as NavTab)) {
-      currentTab.value = tabParam as NavTab;
+    if (isValidTab(tabParam)) {
+      currentTab.value = tabParam;
     }
     const themeParam = url.searchParams.get('theme');
     if (themeParam === 'light' || themeParam === 'dark' || themeParam === 'system') {
@@ -59,15 +50,15 @@ function parseRoute() {
   } catch {}
 }
 
-function handleNavigate(tab: string) {
-  currentTab.value = tab as NavTab;
+function handleNavigate(tab: NavTab) {
+  currentTab.value = tab;
   try {
     window.location.hash = '#' + tab;
   } catch {}
 }
 
 async function checkWebAuth() {
-  if (!isWebMode.value) return;
+  if (!webMode) return;
   try {
     const status = await ipc.getAuthStatus();
     if (!status.initialized) {
@@ -113,7 +104,7 @@ onMounted(() => {
   ipc.checkHealth();
 
   unsubAuth = ipc.onAuthRequired((required) => {
-    if (isWebMode.value && required) {
+    if (webMode && required) {
       authModalMode.value = 'login';
       showAuthModal.value = true;
     }
@@ -123,7 +114,7 @@ onMounted(() => {
     isConnected.value = connected;
     const url = new URL(window.location.href);
     const suppressAlert = url.searchParams.has('noalert');
-    if (!connected && !suppressAlert && !isWebMode.value) {
+    if (!connected && !suppressAlert && !webMode) {
       setTimeout(() => {
         const currentUrl = new URL(window.location.href);
         if (!ipc.isConnected && !currentUrl.searchParams.has('noalert')) {
@@ -166,49 +157,30 @@ onUnmounted(() => {
 
       <!-- 导航项列表 -->
       <div class="flex flex-col items-center gap-2.5 my-auto w-full px-2">
-        <button
+        <NavItem
           v-for="item in navItems"
           :key="item.id"
-          @click="handleNavigate(item.id)"
-          class="group relative flex flex-col items-center justify-center w-full py-2 rounded-2xl transition-all duration-200 cursor-pointer"
-          :class="[
-            currentTab === item.id
-              ? 'text-brand-primary font-bold'
-              : 'text-text-sub hover:text-text-main hover:bg-surface-hover',
-          ]"
-        >
-          <div
-            class="flex items-center justify-center w-14 h-8 rounded-full transition-all duration-200"
-            :class="[
-              currentTab === item.id
-                ? 'bg-brand-container text-brand-on-container shadow-2xs'
-                : 'text-inherit',
-            ]"
-          >
-            <M3Icon :name="item.icon" :size="20" />
-          </div>
-          <span class="text-[11px] mt-1 tracking-tight">{{ item.label }}</span>
-        </button>
+          :id="item.id"
+          :label="item.label"
+          :icon="item.icon"
+          :active="currentTab === item.id"
+          @navigate="handleNavigate"
+        />
       </div>
     </nav>
 
     <!-- 移动端底部导航栏 (手机小屏自适应展示) -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 z-30 bg-surface-card/95 backdrop-blur-md border-t border-surface-border flex items-center justify-around px-1 transition-colors">
-      <button
+      <NavItem
         v-for="item in navItems"
         :key="item.id"
-        @click="handleNavigate(item.id)"
-        class="flex flex-col items-center justify-center py-1 flex-1 transition-colors cursor-pointer"
-        :class="currentTab === item.id ? 'text-brand-primary font-bold' : 'text-text-sub'"
-      >
-        <div
-          class="flex items-center justify-center w-10 h-6 rounded-full transition-all"
-          :class="currentTab === item.id ? 'bg-brand-container text-brand-on-container shadow-2xs' : 'text-inherit'"
-        >
-          <M3Icon :name="item.icon" :size="18" />
-        </div>
-        <span class="text-[10px] tracking-tighter mt-0.5 truncate">{{ item.label }}</span>
-      </button>
+        :id="item.id"
+        :label="item.label"
+        :icon="item.icon"
+        :active="currentTab === item.id"
+        compact
+        @navigate="handleNavigate"
+      />
     </nav>
 
     <!-- 右侧主视口区域 (Main Content Area) -->
@@ -221,7 +193,7 @@ onUnmounted(() => {
           </span>
           <span class="text-xs text-text-muted">|</span>
           <span class="text-xs text-text-sub truncate hidden sm:inline">
-            {{ isWebMode ? '局域网 Web 控制台' : `Windows 桌面客户端 v${appVersion}` }}
+            {{ webMode ? '局域网 Web 控制台' : `Windows 桌面客户端 v${appVersion}` }}
           </span>
         </div>
 
@@ -232,7 +204,7 @@ onUnmounted(() => {
               <span class="text-text-muted">管理员:</span> {{ currentUser }}
             </span>
             <button
-              v-if="isWebMode"
+              v-if="webMode"
               type="button"
               @click="handleLogout"
               class="app-btn-secondary app-btn-compact text-xs"

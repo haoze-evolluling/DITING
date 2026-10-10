@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { ipc } from '../api/ipc';
-import { themeManager, type ThemeMode } from '../theme/dynamic-color';
+import { themeManager, type ThemeMode } from '../theme/theme';
 import type { PortCheckResult } from '../api/types';
 import M3Icon from '../components/M3Icon.vue';
 import AppModal from '../components/AppModal.vue';
 import CoreServiceCard from '../components/CoreServiceCard.vue';
+import { revertSwitch } from '../utils/switch';
+import { isWebMode } from '../utils/env';
 
+const webMode = isWebMode();
 const host = ref('127.0.0.1');
 const port = ref('15353');
 const token = ref('');
@@ -43,11 +46,7 @@ async function handleToggleAutostart(e: Event) {
     autostart.value = await ipc.setAutoStart(enable);
   } catch (err: any) {
     alert(`设置开机自启失败: ${err.message}`);
-    if ('selected' in target) {
-      target.selected = !enable;
-    } else {
-      target.checked = !enable;
-    }
+    revertSwitch(e, !enable);
   } finally {
     togglingAutostart.value = false;
   }
@@ -284,7 +283,7 @@ onMounted(() => {
         <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-text-main">开机自动启动</span>
-            <span v-if="ipc.isWebMode()" class="text-[11px] text-text-muted bg-surface-card px-2 py-0.5 rounded border border-surface-border">仅限宿主机桌面</span>
+            <span v-if="webMode" class="text-[11px] text-text-muted bg-surface-card px-2 py-0.5 rounded border border-surface-border">仅限宿主机桌面</span>
             <md-switch
               v-else
               :selected="autostart"
@@ -338,7 +337,7 @@ onMounted(() => {
         <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-text-main">一键恢复网络设置</span>
-            <span v-if="ipc.isWebMode()" class="text-[11px] text-text-muted bg-surface-card px-2 py-0.5 rounded border border-surface-border">仅限宿主机桌面</span>
+            <span v-if="webMode" class="text-[11px] text-text-muted bg-surface-card px-2 py-0.5 rounded border border-surface-border">仅限宿主机桌面</span>
             <button
               v-else
               type="button"
