@@ -90,6 +90,8 @@ function handleModeChange(mode: ThemeMode) {
   themeManager.setThemeMode(mode);
 }
 
+const autofixingPort = ref(false);
+
 async function handleDiagnosePort() {
   diagnosingPort.value = true;
   portResult.value = null;
@@ -100,6 +102,18 @@ async function handleDiagnosePort() {
     alert(`诊断失败: ${err.message}`);
   } finally {
     diagnosingPort.value = false;
+  }
+}
+
+async function handleAutofixInSettings() {
+  autofixingPort.value = true;
+  try {
+    const res = await ipc.autofixPortConflicts(false);
+    portResult.value = res;
+  } catch (err: any) {
+    alert(`自动修复失败: ${err.message}`);
+  } finally {
+    autofixingPort.value = false;
   }
 }
 
@@ -301,11 +315,22 @@ onMounted(() => {
           <p class="text-xs text-text-sub">
             检测标准 DNS 端口 (53) 是否被系统网络共享 (ICS) 或其他网络软件占用。
           </p>
-          <div v-if="portResult" class="p-3 rounded-lg bg-surface-card border border-surface-border text-xs space-y-1">
+          <div v-if="portResult" class="p-3 rounded-lg bg-surface-card border border-surface-border text-xs space-y-2">
             <div class="font-semibold" :class="portResult.available ? 'text-status-success' : 'text-status-warning'">
               {{ portResult.available ? 'DNS 端口正常可用' : '检测到端口被占用或冲突' }}
             </div>
             <p class="text-text-sub whitespace-pre-line">{{ portResult.diagnostic }}</p>
+            <div v-if="!portResult.available && (portResult.canAutofix || portResult.hasICS)" class="pt-1">
+              <button
+                type="button"
+                @click="handleAutofixInSettings"
+                :disabled="autofixingPort"
+                class="app-btn-primary app-btn-compact text-xs"
+              >
+                <M3Icon :name="autofixingPort ? 'refresh' : 'bolt'" :size="12" :class="autofixingPort ? 'animate-spin' : ''" />
+                <span>{{ autofixingPort ? '正在修复...' : '一键自动修复 ICS 冲突' }}</span>
+              </button>
+            </div>
           </div>
         </div>
 

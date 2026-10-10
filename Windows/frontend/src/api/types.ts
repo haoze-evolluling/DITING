@@ -146,6 +146,7 @@ export interface PortConflictInfo {
 export interface PortCheckResult {
   available: boolean;
   hasICS: boolean;
+  canAutofix?: boolean;
   diagnostic: string;
   conflicts: PortConflictInfo[];
 }

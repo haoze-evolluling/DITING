@@ -274,8 +274,8 @@ func (p *program) StartDNS(ctx context.Context) error {
 			break
 		}
 	}
-	if needs53 && p.portChecker != nil && !windows.IsPort53Available() {
-		res, checkErr := p.portChecker.CheckPort53(ctx)
+	if needs53 && p.portChecker != nil && !windows.AreAddressesAvailable(serverCfg.UDPAddresses, serverCfg.TCPAddresses) {
+		res, checkErr := p.portChecker.CheckPort53ForAddresses(ctx, serverCfg.UDPAddresses, serverCfg.TCPAddresses)
 		if checkErr == nil && res != nil && !res.Available {
 			return &windows.PortConflictError{Result: res}
 		}
@@ -288,7 +288,7 @@ func (p *program) StartDNS(ctx context.Context) error {
 	if err := srv.Start(); err != nil {
 		if windows.IsPortBindConflict(err) {
 			if p.portChecker != nil {
-				if res, checkErr := p.portChecker.CheckPort53(ctx); checkErr == nil && res != nil {
+				if res, checkErr := p.portChecker.CheckPort53ForAddresses(ctx, serverCfg.UDPAddresses, serverCfg.TCPAddresses); checkErr == nil && res != nil {
 					return &windows.PortConflictError{Result: res, Err: err}
 				}
 			}
@@ -445,7 +445,35 @@ func (p *program) getFilterStatsSnapshot() core.FilterStats {
 
 // CheckPortConflicts 实现 ServiceController 接口
 func (p *program) CheckPortConflicts(ctx context.Context) (*windows.PortCheckResult, error) {
-	return p.portChecker.CheckPort53(ctx)
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.portChecker == nil {
+		return nil, fmt.Errorf("端口检测器未初始化")
+	}
+	udpAddrs, tcpAddrs := p.cfg.DNS.EffectiveListenAddresses()
+	return p.portChecker.CheckPort53ForAddresses(ctx, udpAddrs, tcpAddrs)
+}
+
+// AutofixPortConflicts 实现 ServiceController 接口，自动停止/禁用 ICS 并可选拉起 DNS
+func (p *program) AutofixPortConflicts(ctx context.Context, startDNS bool) (*windows.PortCheckResult, error) {
+	if p.portChecker == nil {
+		return nil, fmt.Errorf("端口检测器未初始化")
+	}
+	res, err := p.portChecker.AutofixPort53(ctx)
+	if err != nil {
+		return res, fmt.Errorf("自动修复端口冲突失败: %w", err)
+	}
+	if startDNS && res != nil && res.Available {
+		p.mu.Lock()
+		running := p.dnsRunning
+		p.mu.Unlock()
+		if !running {
+			if err := p.StartDNS(ctx); err != nil {
+				return res, fmt.Errorf("冲突已修复，但启动 DNS 失败: %w", err)
+			}
+		}
+	}
+	return res, nil
 }
 
 func fallbackPortConflict(err error) *windows.PortConflictError {

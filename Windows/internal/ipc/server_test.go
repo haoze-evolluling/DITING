@@ -105,6 +105,20 @@ func (m *mockController) CheckPortConflicts(ctx context.Context) (*windows.PortC
 	}, nil
 }
 
+func (m *mockController) AutofixPortConflicts(ctx context.Context, startDNS bool) (*windows.PortCheckResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if startDNS {
+		m.dnsRunning = true
+	}
+	return &windows.PortCheckResult{
+		Available:  true,
+		Conflicts:  []windows.PortConflict{},
+		HasICS:     false,
+		Diagnostic: "53 端口冲突已自动修复",
+	}, nil
+}
+
 func (m *mockController) GetAdapters(ctx context.Context) ([]windows.AdapterInfo, error) {
 	return []windows.AdapterInfo{
 		{

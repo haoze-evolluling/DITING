@@ -115,6 +115,26 @@ func (c *Client) CheckPortConflicts(ctx context.Context) (*windows.PortCheckResu
 	return resp.Data, nil
 }
 
+// AutofixPortConflicts 自动修复 53 端口冲突并可按需拉起 DNS
+func (c *Client) AutofixPortConflicts(ctx context.Context, startDNS bool) (*windows.PortCheckResult, error) {
+	req := AutofixPortRequest{StartDNS: startDNS}
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	var resp Response[*windows.PortCheckResult]
+	if err := c.doRequest(ctx, http.MethodPost, "/api/v1/portcheck/autofix", bytes.NewReader(body), &resp); err != nil {
+		return nil, err
+	}
+	if !resp.Success {
+		if resp.Conflict != nil {
+			return resp.Conflict, fmt.Errorf("自动修复失败: %s", resp.Error)
+		}
+		return nil, fmt.Errorf("自动修复失败: %s", resp.Error)
+	}
+	return resp.Data, nil
+}
+
 // GetAdapters 枚举系统所有网卡详情
 func (c *Client) GetAdapters(ctx context.Context) ([]windows.AdapterInfo, error) {
 	var resp Response[[]windows.AdapterInfo]

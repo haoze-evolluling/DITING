@@ -21,6 +21,7 @@ const portConflict = ref<PortCheckResult | null>(null);
 const showConflictModal = ref(false);
 const recheckError = ref('');
 const isRetryingConflict = ref(false);
+const isAutofixing = ref(false);
 
 const qpsHistory = ref<number[]>([]);
 const latencyHistory = ref<number[]>([]);
@@ -104,7 +105,7 @@ async function handleStartFailure(err: any) {
   if (msg.includes('53') || msg.includes('bind') || msg.includes('Only one usage') || msg.includes('占用')) {
     try {
       const res = await ipc.checkPortConflicts();
-      if (!res.available || res.hasICS || (res.conflicts && res.conflicts.length > 0)) {
+      if (!res.available) {
         portConflict.value = res;
         showConflictModal.value = true;
         recheckError.value = '';
@@ -115,6 +116,50 @@ async function handleStartFailure(err: any) {
   }
 
   errorMessage.value = `DNS 操作失败: ${err.message}`;
+}
+
+async function handleAutofix() {
+  try {
+    isAutofixing.value = true;
+    recheckError.value = '';
+    const res = await ipc.autofixPortConflicts(true);
+    if (!res.available) {
+      portConflict.value = res;
+      recheckError.value = '自动修复执行完毕，但仍有外部进程占用 53 端口，请排查详细诊断。';
+      return;
+    }
+    showConflictModal.value = false;
+    portConflict.value = null;
+    await fetchStatus();
+  } catch (err: any) {
+    if (err.conflict) {
+      portConflict.value = err.conflict;
+    }
+    recheckError.value = `自动修复失败: ${err.message}`;
+  } finally {
+    isAutofixing.value = false;
+  }
+}
+
+async function handleDowngradeLAN() {
+  try {
+    isRetryingConflict.value = true;
+    recheckError.value = '';
+    await ipc.configureLAN({ allowLAN: false });
+    await ipc.startDNS();
+    showConflictModal.value = false;
+    portConflict.value = null;
+    await fetchStatus();
+  } catch (err: any) {
+    if (err.conflict) {
+      portConflict.value = err.conflict;
+      recheckError.value = `降级启动仍遇到冲突: ${err.message}`;
+    } else {
+      recheckError.value = `降级操作失败: ${err.message}`;
+    }
+  } finally {
+    isRetryingConflict.value = false;
+  }
 }
 
 async function handleRetryAfterConflict() {
@@ -516,8 +561,12 @@ onUnmounted(() => {
       :conflictResult="portConflict"
       :recheckError="recheckError"
       :rechecking="isRetryingConflict"
+      :autofixing="isAutofixing"
+      :allowLANDowngradable="allowLAN"
       @close="showConflictModal = false; recheckError = ''"
       @resolved="handleRetryAfterConflict"
+      @autofix="handleAutofix"
+      @downgradeLAN="handleDowngradeLAN"
     />
   </div>
 </template>

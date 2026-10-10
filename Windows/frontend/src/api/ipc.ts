@@ -268,6 +268,13 @@ class IPCService {
     return this.request<PortCheckResult>('/api/v1/portcheck');
   }
 
+  public async autofixPortConflicts(startDNS: boolean = false): Promise<PortCheckResult> {
+    return this.request<PortCheckResult>('/api/v1/portcheck/autofix', {
+      method: 'POST',
+      body: JSON.stringify({ startDNS }),
+    });
+  }
+
   public async checkHealth(): Promise<boolean> {
     try {
       const res = await this.request<string>('/api/v1/health');

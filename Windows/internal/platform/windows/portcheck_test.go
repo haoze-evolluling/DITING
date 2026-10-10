@@ -103,3 +103,23 @@ func TestWindowsPortChecker_LiveCheck(t *testing.T) {
 	t.Logf("Port 53 check result: Available=%v, HasICS=%v, Conflicts=%d", res.Available, res.HasICS, len(res.Conflicts))
 	t.Logf("Diagnostic: %s", res.Diagnostic)
 }
+
+func TestWindowsPortChecker_RealSocketCheck(t *testing.T) {
+	checker := NewPortChecker(nil)
+	resLoopback, err := checker.CheckPort53ForAddresses(context.Background(), []string{"127.0.0.1:53"}, []string{"127.0.0.1:53"})
+	if err != nil {
+		t.Fatalf("CheckPort53ForAddresses loopback failed: %v", err)
+	}
+	t.Logf("Loopback check: available=%v, hasICS=%v, canAutofix=%v", resLoopback.Available, resLoopback.HasICS, resLoopback.CanAutofix)
+
+	resLAN, err := checker.CheckPort53ForAddresses(context.Background(), []string{"0.0.0.0:53"}, []string{"0.0.0.0:53"})
+	if err != nil {
+		t.Fatalf("CheckPort53ForAddresses LAN failed: %v", err)
+	}
+	t.Logf("LAN check: available=%v, hasICS=%v, canAutofix=%v", resLAN.Available, resLAN.HasICS, resLAN.CanAutofix)
+	if resLAN.HasICS && !resLAN.Available {
+		if !resLAN.CanAutofix {
+			t.Errorf("expected CanAutofix=true when LAN port 53 is blocked by ICS")
+		}
+	}
+}

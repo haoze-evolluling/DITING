@@ -24,6 +24,7 @@ type ServiceController interface {
 	DisableTakeover(ctx context.Context) error
 	GetStatus(ctx context.Context) (*StatusResponse, error)
 	CheckPortConflicts(ctx context.Context) (*windows.PortCheckResult, error)
+	AutofixPortConflicts(ctx context.Context, startDNS bool) (*windows.PortCheckResult, error)
 	GetAdapters(ctx context.Context) ([]windows.AdapterInfo, error)
 	ConfigureUpstream(ctx context.Context, req ConfigureUpstreamRequest) error
 	TestUpstream(ctx context.Context, req TestUpstreamRequest) (*TestUpstreamResponse, error)
@@ -152,6 +153,7 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/v1/dns/lan/firewall", s.withAuth(s.handleFirewallConfigure))
 	mux.HandleFunc("/api/v1/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/portcheck", s.withAuth(s.handlePortCheck))
+	mux.HandleFunc("/api/v1/portcheck/autofix", s.withAuth(s.handlePortAutofix))
 	mux.HandleFunc("/api/v1/health", s.handleHealth)
 
 	// Web 远程管理与认证路由
@@ -388,19 +390,6 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, Response[*StatusResponse]{Success: true, Data: status})
-}
-
-func (s *Server) handlePortCheck(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, Response[any]{Success: false, Error: "method not allowed"})
-		return
-	}
-	result, err := s.controller.CheckPortConflicts(r.Context())
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, Response[any]{Success: false, Error: err.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, Response[*windows.PortCheckResult]{Success: true, Data: result})
 }
 
 func (s *Server) handleAdapters(w http.ResponseWriter, r *http.Request) {

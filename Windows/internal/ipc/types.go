@@ -216,5 +216,7 @@ type ConfigureWebRequest struct {
 	ConfigureFirewall bool `json:"configureFirewall,omitempty"`
 }
 
-
-
+// AutofixPortRequest 端口冲突自动修复请求
+type AutofixPortRequest struct {
+	StartDNS bool `json:"startDNS,omitempty"` // 修复成功后是否立即拉起 DNS 监听器
+}
