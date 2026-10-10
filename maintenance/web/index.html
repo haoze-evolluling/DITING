@@ -1,54 +1,43 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
   <title>谛听 (DITING) 开发者桌面工具箱</title>
+  <script>
+    // 首帧主题引导：在样式表与脚本加载前立即确定主题，消除启动闪白
+    (function () {
+      try {
+        var saved = localStorage.getItem('diting_theme_mode');
+        if (saved !== 'light' && saved !== 'dark') saved = 'light';
+        document.documentElement.setAttribute('data-theme', saved);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="theme-dark">
+<body>
   <div class="app-layout">
     <!-- 侧边导航栏 -->
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-logo">
-          <svg viewBox="0 0 144 144" width="36" height="36">
-            <path fill="#3b82f6" d="M72 0 C111.76 0 144 32.24 144 72 C144 111.76 111.76 144 72 144 C32.24 144 0 111.76 0 72 C0 32.24 32.24 0 72 0 Z"/>
-            <circle cx="72" cy="72" r="30" fill="#ffffff" opacity="0.9"/>
-            <circle cx="72" cy="72" r="14" fill="#1e3a8a"/>
-          </svg>
-        </div>
+        <div class="brand-bar"></div>
         <div class="brand-text">
-          <div class="title">谛听工具箱</div>
-          <div class="subtitle">DITING Toolbox</div>
+          <div class="title">谛听</div>
+          <div class="subtitle">开发者工具箱</div>
         </div>
       </div>
 
       <nav class="nav-menu">
-        <button class="nav-item active" data-tab="dns">
-          <span class="icon">🌐</span>
-          <span class="label">DNS 调试诊断</span>
-        </button>
-        <button class="nav-item" data-tab="scanner">
-          <span class="icon">📊</span>
-          <span class="label">代码规模扫描</span>
-        </button>
-        <button class="nav-item" data-tab="logo">
-          <span class="icon">🎨</span>
-          <span class="label">品牌 Logo 工坊</span>
-        </button>
-        <button class="nav-item" data-tab="build">
-          <span class="icon">🔨</span>
-          <span class="label">Windows 构建打包</span>
-        </button>
-        <button class="nav-item" data-tab="version">
-          <span class="icon">🔖</span>
-          <span class="label">统一版本管理</span>
-        </button>
-        <button class="nav-item" data-tab="capture">
-          <span class="icon">📸</span>
-          <span class="label">界面自动截图</span>
-        </button>
+        <button class="nav-item active" data-tab="dns">DNS 调试诊断</button>
+        <button class="nav-item" data-tab="scanner">代码规模扫描</button>
+        <button class="nav-item" data-tab="logo">品牌 Logo 工坊</button>
+        <button class="nav-item" data-tab="build">Windows 构建打包</button>
+        <button class="nav-item" data-tab="version">统一版本管理</button>
+        <button class="nav-item" data-tab="capture">界面自动截图</button>
       </nav>
 
       <div class="sidebar-footer">
@@ -56,7 +45,7 @@
           <span class="dot idle"></span>
           <span class="text">就绪</span>
         </div>
-        <button id="theme-toggle" class="btn-icon" title="切换深浅主题">🌓</button>
+        <button id="theme-toggle" class="btn-icon" title="切换深浅主题">◐</button>
       </div>
     </aside>
 
@@ -216,7 +205,7 @@
       <section class="tab-pane" id="pane-build">
         <header class="pane-header">
           <h2>Windows 构建与打包流水线</h2>
-          <p class="desc">一键编译特权服务 (diting-service.exe)、Wails GUI 客户端并打包独立 NSIS 安装包。</p>
+          <p class="desc">一键编译特权服务 diting-service.exe、Wails GUI 客户端并打包独立 NSIS 安装包。</p>
         </header>
 
         <div class="card toolchain-card">
@@ -240,7 +229,7 @@
             </div>
             <div class="form-group flex-1">
               <label>构建版本号</label>
-              <input type="text" id="build-version" value="1.3.2">
+              <input type="text" id="build-version" value="1.3.3">
             </div>
             <div class="form-group flex-1">
               <label>构建模式</label>
@@ -365,14 +354,13 @@
       <footer class="terminal-container" id="terminal-section">
         <div class="terminal-bar">
           <div class="terminal-title">
-            <span class="icon">💻</span>
-            <span>实时执行日志控制台</span>
+            <span>实时执行日志</span>
             <span class="spinner" id="terminal-spinner" style="display: none;"></span>
           </div>
           <div class="terminal-actions">
-            <button class="btn-sm btn-ghost" id="btn-log-copy">复制日志</button>
-            <button class="btn-sm btn-ghost" id="btn-log-clear">清空</button>
-            <button class="btn-sm btn-ghost" id="btn-log-toggle">折叠/展开</button>
+            <button class="btn btn-sm btn-ghost" id="btn-log-copy">复制日志</button>
+            <button class="btn btn-sm btn-ghost" id="btn-log-clear">清空</button>
+            <button class="btn btn-sm btn-ghost" id="btn-log-toggle">折叠/展开</button>
           </div>
         </div>
         <div class="terminal-body" id="terminal-output">
@@ -381,6 +369,8 @@
       </footer>
     </main>
   </div>
+
+  <div class="toast-host" id="toast-host"></div>
 
   <script src="js/modules.js"></script>
   <script src="js/app.js"></script>

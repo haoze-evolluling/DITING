@@ -8,7 +8,7 @@ window.DNSModule = {
     const qtype = document.getElementById('dns-qtype').value;
     const tcp = document.getElementById('dns-tcp').checked;
 
-    if (!domain) return alert('请输入目标域名');
+    if (!domain) return App.toast('请输入目标域名', 'warn');
 
     App.setBusy(true, '正在发送 DNS 查询...');
     try {
@@ -28,7 +28,7 @@ window.DNSModule = {
     const qtype = document.getElementById('dns-qtype').value;
     const tcp = document.getElementById('dns-tcp').checked;
 
-    if (!domain) return alert('请输入目标域名');
+    if (!domain) return App.toast('请输入目标域名', 'warn');
 
     App.setBusy(true, '正在进行批量 DNS 压测...');
     document.getElementById('dns-result-container').style.display = 'block';
@@ -45,7 +45,7 @@ window.DNSModule = {
     grid.innerHTML = `
       <div class="stat-box">
         <span class="stat-label">响应状态</span>
-        <span class="stat-value" style="color: ${isOk ? '#10b981' : '#ef4444'}">${res.rcode || 'FAIL'}</span>
+        <span class="stat-value ${isOk ? '' : 'is-fail'}">${res.rcode || 'FAIL'}</span>
       </div>
       <div class="stat-box">
         <span class="stat-label">查询耗时</span>
@@ -70,9 +70,9 @@ window.DNSModule = {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${a.name}</td>
-          <td><span class="badge badge-pass">${a.type}</span></td>
+          <td><span class="badge">${a.type}</span></td>
           <td>${a.ttl}s</td>
-          <td style="font-family: var(--font-mono)">${a.value}</td>
+          <td class="mono">${a.value}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -102,8 +102,7 @@ window.DNSModule = {
       <div class="stat-box">
         <span class="stat-label">极值 (Min/Max)</span>
         <span class="stat-value" style="font-size: 16px;">${d.min_ms} / ${d.max_ms} ms</span>
-      </div>
-    `;
+      </div>    `;
   }
 };
 
@@ -136,7 +135,7 @@ window.ScannerModule = {
       </div>
       <div class="stat-box">
         <span class="stat-label">超标文件 (&gt;${d.threshold}行)</span>
-        <span class="stat-value" style="color: ${d.exceeded_count > 0 ? '#ef4444' : '#10b981'}">${d.exceeded_count}</span>
+        <span class="stat-value ${d.exceeded_count > 0 ? 'is-fail' : ''}">${d.exceeded_count}</span>
       </div>
       <div class="stat-box">
         <span class="stat-label">最大单个文件行数</span>
@@ -151,9 +150,9 @@ window.ScannerModule = {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${idx + 1}</td>
-        <td style="font-weight: 600; color: ${item.exceeded ? '#ef4444' : 'inherit'}">${item.line_count} 行</td>
-        <td><span class="badge ${item.ext === '.kt' ? 'badge-pass' : 'badge-warn'}">${item.ext.toUpperCase()}</span></td>
-        <td style="font-family: var(--font-mono); font-size: 12px;">${item.rel_path}</td>
+        <td class="${item.exceeded ? 'is-fail' : ''}" style="font-weight: 600;">${item.line_count} 行</td>
+        <td><span class="badge ${item.ext === '.kt' ? '' : 'badge-warn'}">${item.ext.toUpperCase()}</span></td>
+        <td class="mono">${item.rel_path}</td>
         <td><button class="btn btn-sm btn-ghost" onclick="window.pywebview.api.open_explorer('${item.full_path.replace(/\\/g, '\\\\')}')">打开</button></td>
       `;
       tbody.appendChild(tr);
@@ -189,7 +188,7 @@ window.LogoModule = {
   onExportDone(payload) {
     App.setBusy(false);
     if (payload.success) {
-      alert('Logo 资源导出成功！SVG、1024/512 图标及 Windows ICO 已就绪。');
+      App.toast('Logo 资源导出成功，SVG、1024/512 图标及 Windows ICO 已就绪', 'ok');
     }
   }
 };
@@ -233,9 +232,9 @@ window.BuildModule = {
     App.setBusy(false);
     document.getElementById('btn-build-cancel').disabled = true;
     if (payload.success) {
-      alert(`构建流水线完成！产物已输出至 build/bin 目录。`);
+      App.toast('构建流水线完成，产物已输出至 build/bin 目录', 'ok');
     } else {
-      alert(`构建未成功: ${payload.message || '未知错误'}`);
+      App.toast(`构建未成功: ${payload.message || '未知错误'}`, 'error');
     }
   }
 };
@@ -251,8 +250,8 @@ window.VersionModule = {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><strong>${item.name}</strong></td>
-          <td><span class="badge badge-pass">${item.version}</span></td>
-          <td style="font-family: var(--font-mono); font-size: 12px;">${item.rel_path}</td>
+          <td><span class="badge">${item.version}</span></td>
+          <td class="mono">${item.rel_path}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -263,7 +262,7 @@ window.VersionModule = {
 
   async syncVersion() {
     const ver = document.getElementById('target-version-input').value.trim();
-    if (!ver) return alert('请输入目标新版本号 (例如 1.4.0)');
+    if (!ver) return App.toast('请输入目标新版本号 (例如 1.4.0)', 'warn');
 
     const dryRun = document.getElementById('ver-dry-run').checked;
     const verify = document.getElementById('ver-verify').checked;
@@ -277,7 +276,7 @@ window.VersionModule = {
     App.setBusy(false);
     this.refreshVersions();
     if (payload.success) {
-      alert(`版本号同步成功！影响文件数: ${payload.modified_files ? payload.modified_files.length : 0}`);
+      App.toast(`版本号同步成功，影响文件数: ${payload.modified_files ? payload.modified_files.length : 0}`, 'ok');
     }
   }
 };
@@ -307,9 +306,9 @@ window.CaptureModule = {
       div.className = 'gallery-item';
       div.onclick = () => window.pywebview.api.open_explorer(f.path);
       div.innerHTML = `
-        <div style="font-size: 24px; text-align: center; padding: 12px 0;">🖼️</div>
+        <div class="item-thumb">图</div>
         <div class="item-title" title="${f.name}">${f.name}</div>
-        <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">${f.size_kb} KB</div>
+        <div class="item-meta">${f.size_kb} KB</div>
       `;
       grid.appendChild(div);
     });

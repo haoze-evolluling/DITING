@@ -49,6 +49,7 @@ def main():
         height=args.height,
         min_size=(980, 640),
         text_select=True,
+        background_color="#F5F4F0",
     )
     api.set_window(window)
 

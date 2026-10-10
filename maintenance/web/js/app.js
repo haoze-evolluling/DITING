@@ -46,10 +46,25 @@ window.App = {
   bindTheme() {
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
-      const isDark = document.body.classList.contains('theme-dark');
-      document.body.classList.toggle('theme-dark', !isDark);
-      document.body.classList.toggle('theme-light', isDark);
+      const root = document.documentElement;
+      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('diting_theme_mode', next); } catch (e) { /* 忽略 */ }
     });
+  },
+
+  toast(message, type = 'ok') {
+    const host = document.getElementById('toast-host');
+    if (!host) return;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.textContent = message;
+    host.appendChild(el);
+    setTimeout(() => {
+      el.style.transition = 'opacity 0.2s ease';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 220);
+    }, 2600);
   },
 
   bindTerminal() {
@@ -60,7 +75,7 @@ window.App = {
     document.getElementById('btn-log-copy').addEventListener('click', () => {
       const text = document.getElementById('terminal-output').innerText;
       navigator.clipboard.writeText(text).then(() => {
-        alert('日志内容已成功复制到剪贴板！');
+        this.toast('日志内容已复制到剪贴板', 'ok');
       });
     });
 
