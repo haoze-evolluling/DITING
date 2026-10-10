@@ -46,9 +46,9 @@ window.App = {
   bindTheme() {
     const toggle = document.getElementById('theme-toggle');
     toggle.addEventListener('click', () => {
-      const root = document.documentElement;
-      const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      window.__applyTheme(next);
       try { localStorage.setItem('diting_theme_mode', next); } catch (e) { /* 忽略 */ }
     });
   },

@@ -1,20 +1,28 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark light">
   <title>谛听 (DITING) 开发者桌面工具箱</title>
   <script>
-    // 首帧主题引导：在样式表与脚本加载前立即确定主题，消除启动闪白
+    // 首帧主题引导：在样式表加载前同步确定主题并直接涂抹根元素底色，
+    // 消除「窗口已显示但样式尚未加载」这一帧的闪白。
     (function () {
-      try {
-        var saved = localStorage.getItem('diting_theme_mode');
-        if (saved !== 'light' && saved !== 'dark') saved = 'light';
-        document.documentElement.setAttribute('data-theme', saved);
-      } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'light');
-      }
+      var BG = { dark: '#131316', light: '#F5F4F0' };
+      var FG = { dark: '#E9E8E4', light: '#1A1A1C' };
+      window.__applyTheme = function (theme) {
+        if (theme !== 'light' && theme !== 'dark') theme = 'dark';
+        var root = document.documentElement;
+        root.setAttribute('data-theme', theme);
+        root.style.backgroundColor = BG[theme];
+        root.style.color = FG[theme];
+        root.style.colorScheme = theme;
+        return theme;
+      };
+      var saved = null;
+      try { saved = localStorage.getItem('diting_theme_mode'); } catch (e) { /* 忽略 */ }
+      window.__applyTheme(saved === 'light' || saved === 'dark' ? saved : 'dark');
     })();
   </script>
   <link rel="stylesheet" href="css/style.css">

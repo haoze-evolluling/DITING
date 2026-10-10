@@ -49,7 +49,8 @@ def main():
         height=args.height,
         min_size=(980, 640),
         text_select=True,
-        background_color="#F5F4F0",
+        # 与前端默认「墨夜」底色一致，避免原生窗口在内容加载前闪出白底
+        background_color="#131316",
     )
     api.set_window(window)
 
