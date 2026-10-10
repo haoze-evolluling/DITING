@@ -55,27 +55,27 @@ onUnmounted(() => {
     >
       <div
         v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 select-none"
         @click.self="emit('close')"
       >
         <div
-          class="relative w-full rounded-2xl bg-surface-card border border-surface-border p-6 shadow-2xl transition-all flex flex-col gap-5 text-text-main"
+          class="relative w-full rounded-md bg-surface-card border border-surface-border p-5 flex flex-col gap-4 text-text-main"
           :class="maxWidth"
         >
           <!-- 标题区域 -->
           <div class="flex items-center gap-2">
             <slot name="headline">
-              <span class="text-base font-bold tracking-tight text-text-main">{{ title }}</span>
+              <span class="section-title">{{ title }}</span>
             </slot>
           </div>
 
           <!-- 内容主体 -->
-          <div class="text-sm text-text-sub leading-relaxed">
+          <div class="text-[13px] text-text-sub leading-relaxed">
             <slot />
           </div>
 
           <!-- 底部操作按钮 -->
-          <div class="flex items-center justify-end gap-3 pt-2">
+          <div class="flex items-center justify-end gap-2.5 pt-1">
             <slot name="actions" />
           </div>
         </div>

@@ -205,15 +205,15 @@ function handleClose() {
   >
     <template #headline>
       <div class="flex items-center gap-3 w-full">
-        <div class="w-10 h-10 rounded-xl bg-brand-container flex items-center justify-center shrink-0 shadow-2xs">
+        <div class="w-10 h-10 rounded-md bg-brand-container flex items-center justify-center shrink-0 ">
           <M3Icon
             :name="currentMode === 'setup' ? 'key' : (currentMode === 'change_password' ? 'lock_reset' : 'verified_user')"
             :size="22"
-            class="text-brand-primary"
+            class="text-text-main"
           />
         </div>
         <div>
-          <h3 class="text-base font-bold text-text-main">
+          <h3 class="section-title">
             {{ currentMode === 'setup' ? '初始化管理员账号' : (currentMode === 'change_password' ? '修改管理员密码' : '登录谛听 Web 管理控制台') }}
           </h3>
           <p class="text-xs text-text-sub mt-0.5">
@@ -225,17 +225,17 @@ function handleClose() {
 
     <div class="space-y-4 py-1">
       <!-- 提示横幅 -->
-      <div v-if="errorMsg" class="p-3 rounded-xl bg-status-error-bg border border-status-error/30 text-status-error text-xs flex items-center gap-2">
+      <div v-if="errorMsg" class="p-3 rounded-md bg-status-error-bg border border-status-error/30 text-status-error text-xs flex items-center gap-2">
         <M3Icon name="error" :size="16" class="shrink-0" />
         <span>{{ errorMsg }}</span>
       </div>
 
-      <div v-if="successMsg" class="p-3 rounded-xl bg-status-success-bg border border-status-success/30 text-status-success text-xs flex items-center gap-2">
+      <div v-if="successMsg" class="p-3 rounded-md bg-status-success-bg border border-status-success/30 text-status-success text-xs flex items-center gap-2">
         <M3Icon name="check_circle" :size="16" class="shrink-0" />
         <span>{{ successMsg }}</span>
       </div>
 
-      <div v-if="lockoutSeconds > 0" class="p-3 rounded-xl bg-status-warning-bg border border-status-warning/30 text-status-warning text-xs flex items-center gap-2">
+      <div v-if="lockoutSeconds > 0" class="p-3 rounded-md bg-status-warning-bg border border-status-warning/30 text-status-warning text-xs flex items-center gap-2">
         <M3Icon name="alarm" :size="16" class="shrink-0" />
         <span>安全保护锁定中，请在 {{ lockoutSeconds }} 秒后再试</span>
       </div>
@@ -289,9 +289,9 @@ function handleClose() {
       </div>
 
       <!-- 安全说明 -->
-      <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border text-[11px] text-text-sub space-y-1">
+      <div class="p-3 rounded-md bg-surface-card-sub border border-surface-border text-[11px] text-text-sub space-y-1">
         <div class="flex items-center gap-1.5 font-medium text-text-main">
-          <M3Icon name="shield" :size="14" class="text-brand-primary" />
+          <M3Icon name="shield" :size="14" class="text-text-main" />
           <span>安全认证提示</span>
         </div>
         <p>• 登录凭据基于 SHA-256 加盐安全哈希存储，有效防范暴力碰撞与侧信道探测。</p>

@@ -27,9 +27,9 @@ async function runTest() {
 </script>
 
 <template>
-  <div class="p-6 rounded-2xl bg-surface-card border border-surface-border space-y-4 shadow-xs">
+  <div class="p-6 rounded-md bg-surface-card border border-surface-border space-y-4">
     <div>
-      <h3 class="text-base font-bold text-text-main">网址拦截模拟测试</h3>
+      <h3 class="section-title">网址拦截模拟测试</h3>
       <p class="text-xs text-text-sub mt-1">输入任意网址或域名，即可快速检测其是否会被防护规则拦截以及原因</p>
     </div>
 
@@ -38,11 +38,11 @@ async function runTest() {
         v-model="testDomain"
         placeholder="例如: ad.example.com"
         @keyup.enter="runTest"
-        class="flex-1 h-9 px-4 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main placeholder:text-text-muted"
+        class="flex-1 h-9 px-4 rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:border-accent-seal text-text-main placeholder:text-text-muted"
       />
       <select
         v-model="testQType"
-        class="h-9 px-3 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/30 text-text-main"
+        class="h-9 px-3 rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:border-accent-seal text-text-main"
       >
         <option value="A">IPv4 地址 (A 记录)</option>
         <option value="AAAA">IPv6 地址 (AAAA 记录)</option>
@@ -56,13 +56,13 @@ async function runTest() {
 
     <div
       v-if="testResult"
-      class="p-5 rounded-xl border text-sm"
+      class="p-5 rounded-md border text-sm"
       :class="testResult.blocked ? 'bg-status-error-bg border-status-error/30' : testResult.action === 'allow' ? 'bg-status-success-bg border-status-success/30' : 'bg-surface-card-sub border-surface-border-sub'"
     >
       <div class="flex items-center gap-3">
         <span
-          class="px-2.5 py-1 rounded-full text-xs font-bold uppercase text-white"
-          :class="testResult.blocked ? 'bg-status-error' : testResult.action === 'allow' ? 'bg-status-success' : 'bg-text-muted'"
+          class="px-2.5 py-1 rounded-full text-xs font-bold text-white"
+          :class="testResult.blocked ? 'bg-accent-seal' : testResult.action === 'allow' ? 'bg-status-success' : 'bg-text-muted'"
         >
           {{ testResult.blocked ? '已拦截 (阻止访问)' : testResult.action === 'allow' ? '已放行 (信任名单)' : '未命中规则 (正常访问)' }}
         </span>

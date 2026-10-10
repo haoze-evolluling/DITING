@@ -16,10 +16,10 @@ function handleAction(action: ServiceAction) {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-4 transition-colors">
+  <div class="rounded-md border border-surface-border bg-surface-card p-5 space-y-4 transition-colors">
     <div class="flex items-center justify-between">
-      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
-        <M3Icon name="router" :size="20" class="text-brand-primary" />
+      <h3 class="section-title flex items-center gap-2">
+        <M3Icon name="router" :size="20" class="text-text-main" />
         后台核心服务管理
       </h3>
       <button
@@ -37,7 +37,7 @@ function handleAction(action: ServiceAction) {
     <!-- 状态概览卡片区 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <!-- 1. 服务运行状态 -->
-      <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-2">
+      <div class="p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-2">
         <span class="text-xs font-semibold text-text-sub">系统服务状态</span>
         <div class="flex items-center gap-2 pt-1">
           <StatusBadge
@@ -71,7 +71,7 @@ function handleAction(action: ServiceAction) {
       </div>
 
       <!-- 2. 可执行程序路径 -->
-      <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-2">
+      <div class="p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-2">
         <span class="text-xs font-semibold text-text-sub">组件文件位置</span>
         <div class="font-mono text-[11px] text-text-main break-all line-clamp-2 pt-1" :title="serviceStatus?.executablePath">
           {{ serviceStatus?.executablePath || '未检测到可执行程序' }}
@@ -82,10 +82,10 @@ function handleAction(action: ServiceAction) {
       </div>
 
       <!-- 3. 管理权限模式 -->
-      <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-2">
+      <div class="p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-2">
         <span class="text-xs font-semibold text-text-sub">系统权限级别</span>
         <div class="flex items-center gap-1.5 pt-1">
-          <M3Icon name="shield" :size="16" :class="serviceStatus?.isElevated ? 'text-status-success' : 'text-brand-primary'" />
+          <M3Icon name="shield" :size="16" :class="serviceStatus?.isElevated ? 'text-status-success' : 'text-text-main'" />
           <span class="text-xs font-bold text-text-main">
             {{ serviceStatus?.isElevated ? '管理员特权模式' : '标准用户 (按需授权)' }}
           </span>
@@ -102,8 +102,8 @@ function handleAction(action: ServiceAction) {
 
     <!-- 操作工具栏 -->
     <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-      <div v-if="webMode" class="w-full flex items-center gap-2 text-xs text-text-sub bg-surface-card-sub p-3 rounded-xl border border-surface-border">
-        <M3Icon name="info" :size="16" class="text-brand-primary shrink-0" />
+      <div v-if="webMode" class="w-full flex items-center gap-2 text-xs text-text-sub bg-surface-card-sub p-3 rounded-md border border-surface-border">
+        <M3Icon name="info" :size="16" class="text-text-main shrink-0" />
         <span>当前为局域网 Web 远程管理控制台，后台服务正在宿主机守护运行中。Windows 系统服务注册与提权安装仅限在宿主机桌面端操作。</span>
       </div>
       <template v-else>

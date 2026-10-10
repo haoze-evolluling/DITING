@@ -85,13 +85,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-6 transition-colors">
+  <div class="rounded-md border border-surface-border bg-surface-card p-5 space-y-6 transition-colors">
     <!-- 头部与主控制开关 -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-border">
       <div class="space-y-1">
         <div class="flex items-center gap-2.5">
-          <M3Icon name="router" :size="22" class="text-brand-primary" />
-          <h3 class="text-lg font-bold text-text-main">
+          <M3Icon name="router" :size="22" class="text-text-main" />
+          <h3 class="section-title">
             局域网 DNS 服务器 (AdGuard Home 模式)
           </h3>
           <StatusBadge
@@ -123,10 +123,10 @@ onMounted(() => {
     <!-- 核心卡片网格：IP 地址展示与防火墙状态 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
       <!-- 局域网 IP 地址卡片 (占据 2 列) -->
-      <div class="lg:col-span-2 p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
+      <div class="lg:col-span-2 p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <M3Icon name="dns" :size="18" class="text-brand-primary" />
+            <M3Icon name="dns" :size="18" class="text-text-main" />
             <span class="text-sm font-bold text-text-main">本机局域网 DNS 服务器地址</span>
           </div>
           <button
@@ -150,12 +150,12 @@ onMounted(() => {
           <div
             v-for="ip in lanAddresses"
             :key="ip"
-            class="flex items-center justify-between p-2.5 rounded-lg bg-surface-card border border-surface-border hover:border-brand-primary/40 transition-colors"
+            class="flex items-center justify-between p-2.5 rounded-md bg-surface-card border border-surface-border hover:border-accent-seal/40 transition-colors"
           >
             <div class="flex items-center gap-2.5 min-w-0">
               <span
-                class="px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0"
-                :class="ip.includes(':') ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' : 'bg-brand-primary/10 text-brand-primary'"
+                class="px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0 border"
+                :class="ip.includes(':') ? 'border-surface-border text-text-muted' : 'border-accent-seal/40 text-accent-seal'"
               >
                 {{ ip.includes(':') ? 'IPv6' : 'IPv4 首选' }}
               </span>
@@ -180,11 +180,11 @@ onMounted(() => {
       </div>
 
       <!-- Windows 防火墙状态卡片 (占据 1 列) -->
-      <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3 flex flex-col justify-between">
+      <div class="p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-3 flex flex-col justify-between">
         <div class="space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-text-main flex items-center gap-1.5">
-              <M3Icon name="shield" :size="16" class="text-brand-primary" />
+              <M3Icon name="shield" :size="16" class="text-text-main" />
               防火墙放行状态
             </span>
             <span
@@ -215,29 +215,29 @@ onMounted(() => {
     </div>
 
     <!-- 局域网设备接入指引 (AdGuard Home 经典指南折叠体系) -->
-    <div class="rounded-xl border border-surface-border-sub bg-surface-card-sub p-4 space-y-3">
+    <div class="rounded-md border border-surface-border-sub bg-surface-card-sub p-4 space-y-3">
       <div class="flex items-center gap-2">
-        <M3Icon name="help_outline" :size="18" class="text-brand-primary" />
-        <h4 class="text-xs font-bold text-text-main uppercase tracking-wider">
+        <M3Icon name="help_outline" :size="18" class="text-text-main" />
+        <h4 class="label-quiet">
           局域网设备接入与配置指引
         </h4>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <!-- 方案 1：路由器全局配置 -->
-        <div class="p-3 rounded-lg bg-surface-card border border-surface-border space-y-1.5">
-          <div class="font-bold text-text-main flex items-center gap-1.5 text-brand-primary">
+        <div class="p-3 rounded-md bg-surface-card border border-surface-border space-y-1.5">
+          <div class="font-bold text-text-main flex items-center gap-1.5 text-text-main">
             <M3Icon name="wifi" :size="16" />
             <span>方案 A：路由器全局配置 (强烈推荐)</span>
           </div>
           <p class="text-text-sub leading-relaxed">
-            登录家用路由器后台 (通常为 192.168.1.1 或 192.168.0.1)，进入「LAN 口设置」或「DHCP 服务器」，将「主 DNS 服务器」修改为本机的局域网 IP (例如 <span class="font-mono text-brand-primary select-all">{{ lanAddresses[0] || '192.168.x.x' }}</span>)。保存后全屋所有设备自动生效！
+            登录家用路由器后台 (通常为 192.168.1.1 或 192.168.0.1)，进入「LAN 口设置」或「DHCP 服务器」，将「主 DNS 服务器」修改为本机的局域网 IP (例如 <span class="font-mono text-text-main select-all">{{ lanAddresses[0] || '192.168.x.x' }}</span>)。保存后全屋所有设备自动生效！
           </p>
         </div>
 
         <!-- 方案 2：移动设备与电脑独立配置 -->
-        <div class="p-3 rounded-lg bg-surface-card border border-surface-border space-y-1.5">
-          <div class="font-bold text-text-main flex items-center gap-1.5 text-brand-primary">
+        <div class="p-3 rounded-md bg-surface-card border border-surface-border space-y-1.5">
+          <div class="font-bold text-text-main flex items-center gap-1.5 text-text-main">
             <M3Icon name="devices" :size="16" />
             <span>方案 B：手机 / 平板 / 电脑单机配置</span>
           </div>

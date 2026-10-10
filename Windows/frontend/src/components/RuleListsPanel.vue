@@ -118,13 +118,13 @@ onMounted(loadLists);
       <div
         v-for="l in lists"
         :key="l.id"
-        class="p-5 rounded-2xl bg-surface-card border border-surface-border shadow-xs flex flex-col justify-between gap-4 transition-all duration-200 hover:shadow-md hover:border-brand-primary/30"
+        class="p-5 rounded-md bg-surface-card border border-surface-border flex flex-col justify-between gap-4 transition-all duration-200  "
       >
         <div>
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
               <span class="font-bold text-text-main truncate text-sm">{{ l.name }}</span>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-container text-brand-primary shrink-0">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-brand-container text-text-main shrink-0">
                 {{ l.rulesCount.toLocaleString() }} 条规则
               </span>
             </div>
@@ -156,7 +156,7 @@ onMounted(loadLists);
           <input
             v-model="newListName"
             placeholder="例如: 广告拦截通用规则"
-            class="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+            class="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:border-accent-seal"
           />
         </div>
         <div>
@@ -164,7 +164,7 @@ onMounted(loadLists);
           <input
             v-model="newListURL"
             placeholder="https://... 或本地文件路径"
-            class="w-full px-3 py-2 rounded-xl border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+            class="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:border-accent-seal"
           />
         </div>
       </div>

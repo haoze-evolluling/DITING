@@ -64,8 +64,8 @@ async function generateQR(url: string) {
       width: 160,
       margin: 1,
       color: {
-        dark: '#1e293b',
-        light: '#ffffff',
+        dark: '#1A1A1C',
+        light: '#FFFFFF',
       },
     });
   } catch (e) {
@@ -151,15 +151,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-5 transition-colors">
+  <div class="rounded-md border border-surface-border bg-surface-card p-5 space-y-5 transition-colors">
     <!-- 头部标题与总开关 -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div class="space-y-1">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-brand-container/60 flex items-center justify-center shrink-0">
-            <M3Icon name="web" :size="20" class="text-brand-primary" />
+          <div class="w-8 h-8 rounded-md bg-brand-container/60 flex items-center justify-center shrink-0">
+            <M3Icon name="web" :size="20" class="text-text-main" />
           </div>
-          <h3 class="text-base font-bold text-text-main flex items-center gap-2">
+          <h3 class="section-title flex items-center gap-2">
             局域网 Web 远程管理控制台
           </h3>
           <StatusBadge
@@ -199,7 +199,7 @@ onMounted(() => {
         <div class="lg:col-span-2 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-text-main flex items-center gap-1.5">
-              <M3Icon name="link" :size="16" class="text-brand-primary" />
+              <M3Icon name="link" :size="16" class="text-text-main" />
               局域网 Web 访问地址 (浏览器直接打开)
             </span>
             <span class="text-[11px] text-text-sub font-mono">
@@ -207,14 +207,14 @@ onMounted(() => {
             </span>
           </div>
 
-          <div v-if="webUrls.length === 0" class="p-4 rounded-xl bg-surface-card-sub text-center text-xs text-text-sub">
+          <div v-if="webUrls.length === 0" class="p-4 rounded-md bg-surface-card-sub text-center text-xs text-text-sub">
             未探测到可用的局域网网卡 IPv4 地址
           </div>
           <div v-else class="space-y-2">
             <div
               v-for="url in webUrls"
               :key="url"
-              class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-surface-card-sub border border-surface-border hover:border-brand-primary/40 transition-all"
+              class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-md bg-surface-card-sub border border-surface-border hover:border-accent-seal/40 transition-all"
             >
               <div class="flex items-center gap-2.5 min-w-0">
                 <span class="w-2 h-2 rounded-full bg-status-success shrink-0"></span>
@@ -247,12 +247,12 @@ onMounted(() => {
           </div>
 
           <!-- 安全凭据与密码修改 -->
-          <div class="flex items-center justify-between p-3.5 rounded-xl bg-brand-container/20 border border-brand-primary/20 mt-3">
+          <div class="flex items-center justify-between p-3.5 rounded-md bg-brand-container/20 border border-accent-seal/20 mt-3">
             <div class="flex items-center gap-2.5">
-              <M3Icon name="key" :size="18" class="text-brand-primary" />
+              <M3Icon name="key" :size="18" class="text-text-main" />
               <div>
                 <span class="text-xs font-bold text-text-main">
-                  管理员账号: <span class="font-mono text-brand-primary font-semibold">{{ adminUser }}</span>
+                  管理员账号: <span class="font-mono text-text-main font-semibold">{{ adminUser }}</span>
                 </span>
                 <p class="text-[11px] text-text-sub">
                   {{ isInitialized ? '密码保护已启用，局域网设备需输入密码登录' : '尚未设置初始密码，首次访问将进入设置向导' }}
@@ -271,12 +271,12 @@ onMounted(() => {
         </div>
 
         <!-- 右侧: 手机快速扫码直达卡片 -->
-        <div class="rounded-xl bg-surface-card-sub border border-surface-border p-4 flex flex-col items-center justify-center text-center gap-2.5">
+        <div class="rounded-md bg-surface-card-sub border border-surface-border p-4 flex flex-col items-center justify-center text-center gap-2.5">
           <span class="text-xs font-bold text-text-main flex items-center gap-1.5">
-            <M3Icon name="qr_code" :size="16" class="text-brand-primary" />
+            <M3Icon name="qr_code" :size="16" class="text-text-main" />
             手机扫码即刻管理
           </span>
-          <div class="p-2 rounded-xl bg-white shadow-xs border border-surface-border">
+          <div class="p-2 rounded-md bg-white border border-surface-border">
             <img
               v-if="qrDataUrl"
               :src="qrDataUrl"
@@ -296,7 +296,7 @@ onMounted(() => {
       <!-- 2. 防火墙放行状态与端口调整 -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-surface-border/60">
         <!-- 防火墙规则卡片 -->
-        <div class="flex items-center justify-between p-3.5 rounded-xl bg-surface-card-sub border border-surface-border">
+        <div class="flex items-center justify-between p-3.5 rounded-md bg-surface-card-sub border border-surface-border">
           <div class="space-y-0.5">
             <div class="flex items-center gap-2">
               <span class="text-xs font-bold text-text-main">Windows 防火墙规则</span>
@@ -322,7 +322,7 @@ onMounted(() => {
         </div>
 
         <!-- 端口修改 -->
-        <div class="flex items-center justify-between p-3.5 rounded-xl bg-surface-card-sub border border-surface-border">
+        <div class="flex items-center justify-between p-3.5 rounded-md bg-surface-card-sub border border-surface-border">
           <div class="space-y-0.5">
             <span class="text-xs font-bold text-text-main">远程管理通信端口</span>
             <p class="text-[11px] text-text-sub font-mono">
@@ -343,7 +343,7 @@ onMounted(() => {
             <input
               type="number"
               v-model="customPort"
-              class="w-20 px-2 py-1 text-xs font-mono rounded-lg border border-surface-border bg-surface-card text-text-main"
+              class="w-20 px-2 py-1 text-xs font-mono rounded-md border border-surface-border bg-surface-card text-text-main"
             />
             <button
               type="button"

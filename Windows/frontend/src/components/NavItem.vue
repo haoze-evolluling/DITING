@@ -8,9 +8,10 @@ withDefaults(
     label: string;
     icon: string;
     active: boolean;
-    compact?: boolean;
+    /** 中屏图标栏 / 小屏底部栏：纯图标 + 小字 */
+    iconOnly?: boolean;
   }>(),
-  { compact: false }
+  { iconOnly: false }
 );
 
 const emit = defineEmits<{
@@ -19,35 +20,43 @@ const emit = defineEmits<{
 </script>
 
 <template>
+  <!-- 纯图标态（中屏图标栏 / 小屏底部栏） -->
   <button
-    v-if="!compact"
+    v-if="iconOnly"
     type="button"
+    :title="label"
+    :aria-label="label"
+    :aria-current="active ? 'page' : undefined"
     @click="emit('navigate', id)"
-    class="group relative flex flex-col items-center justify-center w-full py-2 rounded-2xl transition-all duration-200 cursor-pointer"
-    :class="active ? 'text-brand-primary font-bold' : 'text-text-sub hover:text-text-main hover:bg-surface-hover'"
+    class="relative flex flex-col items-center justify-center gap-1 py-1.5 flex-1 transition-colors cursor-pointer"
+    :class="active ? 'text-text-main' : 'text-text-muted hover:text-text-sub'"
   >
-    <div
-      class="flex items-center justify-center w-14 h-8 rounded-full transition-all duration-200"
-      :class="active ? 'bg-brand-container text-brand-on-container shadow-2xs' : 'text-inherit'"
-    >
-      <M3Icon :name="icon" :size="20" />
-    </div>
-    <span class="text-[11px] mt-1 tracking-tight">{{ label }}</span>
+    <M3Icon :name="icon" :size="20" />
+    <span class="text-[10px] leading-none truncate max-w-full px-0.5">{{ label }}</span>
+    <span
+      v-if="active"
+      class="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-accent-seal"
+    />
   </button>
 
+  <!-- 文本行态（宽侧栏）：左侧朱色竖条 + 底纹 -->
   <button
     v-else
     type="button"
+    :aria-current="active ? 'page' : undefined"
     @click="emit('navigate', id)"
-    class="flex flex-col items-center justify-center py-1 flex-1 transition-colors cursor-pointer"
-    :class="active ? 'text-brand-primary font-bold' : 'text-text-sub'"
+    class="relative flex items-center gap-3 w-full pl-4 pr-3 py-2.5 text-[13.5px] transition-colors cursor-pointer"
+    :class="
+      active
+        ? 'bg-surface-card-sub text-text-main font-semibold'
+        : 'text-text-sub hover:bg-surface-hover hover:text-text-main'
+    "
   >
-    <div
-      class="flex items-center justify-center w-10 h-6 rounded-full transition-all"
-      :class="active ? 'bg-brand-container text-brand-on-container shadow-2xs' : 'text-inherit'"
-    >
-      <M3Icon :name="icon" :size="18" />
-    </div>
-    <span class="text-[10px] tracking-tighter mt-0.5 truncate">{{ label }}</span>
+    <span
+      class="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[2px] rounded-r-full bg-accent-seal transition-opacity"
+      :class="active ? 'opacity-100' : 'opacity-0'"
+    />
+    <M3Icon :name="icon" :size="18" />
+    <span class="truncate">{{ label }}</span>
   </button>
 </template>

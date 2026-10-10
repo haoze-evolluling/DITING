@@ -23,17 +23,17 @@ const emit = defineEmits<{
 <template>
   <div
     v-if="message"
-    class="rounded-xl border flex items-center justify-between gap-3"
+    class="rounded-md border-l-2 border-y border-r flex items-center justify-between gap-3"
     :class="[
       type === 'error'
-        ? 'bg-status-error-bg border-status-error/20 text-status-error'
-        : 'bg-status-success-bg border-status-success/20 text-status-success',
-      compact ? 'p-3 text-xs' : 'px-4 py-3 text-sm',
+        ? 'bg-status-error-bg border-accent-seal text-status-error'
+        : 'bg-status-success-bg border-status-success text-status-success',
+      compact ? 'p-3 text-xs' : 'px-4 py-3 text-[13px]',
     ]"
   >
-    <div class="flex items-center gap-2 min-w-0">
-      <M3Icon :name="type === 'error' ? 'error' : 'check_circle'" :size="18" class="shrink-0" />
-      <span class="min-w-0">{{ message }}</span>
+    <div class="flex items-start gap-2 min-w-0">
+      <M3Icon :name="type === 'error' ? 'error' : 'check_circle'" :size="16" class="shrink-0 mt-0.5" />
+      <span class="min-w-0 break-words">{{ message }}</span>
     </div>
 
     <div class="flex items-center gap-2 shrink-0">

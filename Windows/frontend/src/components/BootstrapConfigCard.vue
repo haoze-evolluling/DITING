@@ -194,13 +194,13 @@ async function handleTestLatency(s: BootstrapServer) {
 </script>
 
 <template>
-  <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs transition-all duration-200">
+  <div class="rounded-md border border-surface-border bg-surface-card p-5 transition-all duration-200">
     <!-- 标题与状态切换 -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-border/60">
       <div class="space-y-1">
         <div class="flex items-center gap-2.5">
-          <M3Icon name="dns" :size="22" class="text-brand-primary" />
-          <h3 class="text-base font-bold text-text-main">
+          <M3Icon name="dns" :size="22" class="text-text-main" />
+          <h3 class="section-title">
             Bootstrap DNS (引导解析服务器)
           </h3>
           <span
@@ -246,14 +246,14 @@ async function handleTestLatency(s: BootstrapServer) {
       <div
         v-for="(s, idx) in config.servers"
         :key="s.id"
-        class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-surface-border bg-surface-card-sub hover:bg-surface-hover/60 transition-colors"
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-md border border-surface-border bg-surface-card-sub hover:bg-surface-hover/60 transition-colors"
       >
         <div class="space-y-1">
           <div class="flex items-center gap-2">
             <span class="text-sm font-bold text-text-main">
               {{ s.name || s.id }}
             </span>
-            <span class="text-xs font-mono px-2 py-0.5 rounded bg-surface-card border border-surface-border text-brand-primary font-semibold">
+            <span class="text-xs font-mono px-2 py-0.5 rounded bg-surface-card border border-surface-border text-text-main font-semibold">
               {{ s.address }}
             </span>
           </div>
@@ -322,7 +322,7 @@ async function handleTestLatency(s: BootstrapServer) {
               :key="p.ip"
               type="button"
               @click="applyPreset(p)"
-              class="px-2.5 py-1 text-xs rounded-lg border border-surface-border bg-surface-card hover:bg-brand-primary/10 hover:border-brand-primary/40 text-text-main transition-colors"
+              class="px-2.5 py-1 text-xs rounded-md border border-surface-border bg-surface-card hover:bg-accent-seal-bg hover:border-accent-seal/40 text-text-main transition-colors"
             >
               {{ p.name }}
             </button>
@@ -346,7 +346,7 @@ async function handleTestLatency(s: BootstrapServer) {
           required
         ></md-outlined-text-field>
 
-        <div v-if="formError" class="p-2.5 rounded-lg bg-status-error-bg text-status-error text-xs flex items-center gap-1.5 border border-status-error/20">
+        <div v-if="formError" class="p-2.5 rounded-md bg-status-error-bg text-status-error text-xs flex items-center gap-1.5 border border-status-error/20">
           <M3Icon name="error" :size="16" />
           <span>{{ formError }}</span>
         </div>

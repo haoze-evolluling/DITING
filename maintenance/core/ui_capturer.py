@@ -91,7 +91,20 @@ def capture_screenshots(
         except Exception as e:
             _log("warn", f"启动临时 Vite 服务失败: {e}，请手动确保前端开发服务已运行。")
 
-    all_tabs = ["dashboard", "adapters", "upstream", "cache", "rules", "logs", "settings"]
+    # 五大类信息架构；多段类别用 "大类/子页签" 表示
+    all_tabs = [
+        "overview/status",
+        "overview/queries",
+        "network/adapters",
+        "network/upstream",
+        "network/lan",
+        "accel",
+        "rules/lists",
+        "rules/custom",
+        "rules/test",
+        "rules/config",
+        "system",
+    ]
     target_tabs = all_tabs + ["modal-alert"] if tab == "all" else [tab]
     target_themes = ["dark", "light"] if theme == "both" else [theme]
 
@@ -106,9 +119,16 @@ def capture_screenshots(
                     _log("warn", "截图任务已被用户中止。")
                     break
 
-                file_name = f"{t}_modal_alert.png" if item == "modal-alert" else f"{t}_tab_{item}.png"
+                slug = item.replace("/", "-")
+                file_name = f"{t}_modal_alert.png" if item == "modal-alert" else f"{t}_tab_{slug}.png"
                 out_path = os.path.join(output_dir, file_name)
-                target_url = f"{base_url}/?modal=alert&theme={t}" if item == "modal-alert" else f"{base_url}/?noalert=1&theme={t}#/{item}"
+                if item == "modal-alert":
+                    target_url = f"{base_url}/?modal=alert&theme={t}"
+                elif "/" in item:
+                    tab_id, sub_id = item.split("/", 1)
+                    target_url = f"{base_url}/?noalert=1&theme={t}#/{tab_id}/{sub_id}"
+                else:
+                    target_url = f"{base_url}/?noalert=1&theme={t}#/{item}"
 
                 _log("info", f"截取界面 [{t}] -> {item}...")
 
@@ -152,7 +172,7 @@ def capture_screenshots(
 
 def main():
     parser = argparse.ArgumentParser(description="谛听自动化界面截图工具")
-    parser.add_argument("-t", "--tab", choices=["all", "dashboard", "adapters", "upstream", "cache", "rules", "logs", "settings", "modal-alert"], default="all")
+    parser.add_argument("-t", "--tab", choices=["all", "overview/status", "overview/queries", "network/adapters", "network/upstream", "network/lan", "accel", "rules/lists", "rules/custom", "rules/test", "rules/config", "system", "modal-alert"], default="all")
     parser.add_argument("-m", "--theme", choices=["both", "dark", "light"], default="both")
     parser.add_argument("-o", "--output", default=None)
     parser.add_argument("-W", "--width", type=int, default=1280)

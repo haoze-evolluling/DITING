@@ -7,21 +7,24 @@ const props = withDefaults(
     maxPoints?: number;
     height?: number;
     strokeColor?: string;
-    gradientId?: string;
     label?: string;
     unit?: string;
   }>(),
   {
     maxPoints: 30,
     height: 120,
-    strokeColor: '#36618E',
-    gradientId: 'chart-grad-primary',
+    strokeColor: '',
     label: '',
     unit: '',
   }
 );
 
 const viewBox = computed(() => `0 0 500 ${props.height}`);
+
+/** 未显式指定则继承主题墨色（朱仅用于强调，不作图表默认色） */
+const stroke = computed(() =>
+  props.strokeColor ? props.strokeColor : 'var(--app-text-main)'
+);
 
 const points = computed(() => {
   const list = props.data.length > 0 ? props.data : [0];
@@ -54,48 +57,55 @@ const pathString = computed(() => {
   return d;
 });
 
-const areaString = computed(() => {
-  if (!pathString.value) return '';
-  const pts = points.value;
-  const last = pts[pts.length - 1];
-  return `${pathString.value} L ${last.x} ${props.height} L ${pts[0].x} ${props.height} Z`;
-});
-
 const latestValue = computed(() => {
   if (props.data.length === 0) return 0;
   return props.data[props.data.length - 1];
 });
+
+/** 三条水平墨色参考线（25% / 50% / 75%） */
+const gridLines = computed(() => {
+  const h = props.height;
+  return [0.25, 0.5, 0.75].map((r) => h - 10 - r * (h - 24));
+});
 </script>
 
 <template>
-  <div class="relative w-full rounded-2xl border border-surface-border bg-surface-card p-4 shadow-xs">
-    <div class="flex items-center justify-between mb-2">
-      <span class="text-xs font-semibold uppercase tracking-wider text-text-sub">
-        {{ label }}
-      </span>
-      <span class="text-xs font-medium text-text-sub">
-        当前: <strong class="text-sm font-bold text-text-main">{{ latestValue.toFixed(1) }}</strong> {{ unit }}
+  <div class="app-panel p-4">
+    <div class="flex items-baseline justify-between mb-2">
+      <span class="label-quiet">{{ label }}</span>
+      <span class="text-[12px] text-text-muted">
+        当前
+        <strong class="font-mono text-[15px] font-semibold text-text-main">{{ latestValue.toFixed(1) }}</strong>
+        <span class="ml-0.5">{{ unit }}</span>
       </span>
     </div>
 
-    <div class="w-full overflow-hidden rounded-xl bg-surface-card-sub border border-surface-border-sub">
+    <div class="w-full overflow-hidden">
       <svg :viewBox="viewBox" class="w-full overflow-visible" preserveAspectRatio="none" :height="height">
-        <defs>
-          <linearGradient :id="gradientId" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" :stop-color="strokeColor" stop-opacity="0.35" />
-            <stop offset="100%" :stop-color="strokeColor" stop-opacity="0.0" />
-          </linearGradient>
-        </defs>
-
-        <path :d="areaString" :fill="`url(#${gradientId})`" />
-        <path :d="pathString" fill="none" :stroke="strokeColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+        <line
+          v-for="(y, i) in gridLines"
+          :key="i"
+          x1="0"
+          :y1="y"
+          x2="500"
+          :y2="y"
+          stroke="var(--app-surface-border-sub)"
+          stroke-width="1"
+        />
+        <path
+          :d="pathString"
+          fill="none"
+          :stroke="stroke"
+          stroke-width="1.75"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
         <circle
           v-if="points.length > 0"
           :cx="points[points.length - 1].x"
           :cy="points[points.length - 1].y"
-          r="4"
-          :fill="strokeColor"
-          class="animate-pulse"
+          r="2.5"
+          :fill="stroke"
         />
       </svg>
     </div>

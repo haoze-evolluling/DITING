@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { ipc } from '../api/ipc';
-import type { StatusResponse, ProviderConfig, UpstreamInfo, BootstrapConfig } from '../api/types';
-import StatusBadge from '../components/StatusBadge.vue';
-import M3Icon from '../components/M3Icon.vue';
-import AppModal from '../components/AppModal.vue';
-import BootstrapConfigCard from '../components/BootstrapConfigCard.vue';
-import LanDnsCard from '../components/LanDnsCard.vue';
+import { ipc } from '../../api/ipc';
+import type { StatusResponse, ProviderConfig, UpstreamInfo, BootstrapConfig } from '../../api/types';
+import StatusBadge from '../../components/StatusBadge.vue';
+import M3Icon from '../../components/M3Icon.vue';
+import AppModal from '../../components/AppModal.vue';
+import BootstrapConfigCard from '../../components/BootstrapConfigCard.vue';
 
 const status = ref<StatusResponse | null>(null);
 const currentMode = ref('primary_backup');
@@ -28,7 +27,7 @@ const successMessage = ref('');
 const probingId = ref<string | null>(null);
 const probeResults = ref<Record<string, number>>({});
 
-import { DNS_PRESET_PROVIDERS, type DnsProtocolType } from '../constants/dnsPresets';
+import { DNS_PRESET_PROVIDERS, type DnsProtocolType } from '../../constants/dnsPresets';
 
 // 对话框状态
 const isDialogOpen = ref(false);
@@ -245,19 +244,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-12 select-none">
+  <div class="space-y-5 select-none">
     <!-- 头部操作栏 -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <h2 class="text-2xl font-bold tracking-tight text-text-main">
-          DNS 服务器与查询策略
-        </h2>
-        <p class="text-sm text-text-sub">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="min-w-0">
+        <h3 class="section-title">上游 DNS 与查询策略</h3>
+        <p class="text-[13px] text-text-sub mt-0.5">
           管理用于解析域名的 DNS 服务器，支持加密传输（DoH / DoT）与智能容灾测速。
         </p>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 shrink-0">
         <button
           type="button"
           @click="loadData"
@@ -280,7 +277,7 @@ onMounted(() => {
     </div>
 
     <!-- 消息横幅 -->
-    <div v-if="successMessage" class="flex items-center justify-between rounded-xl bg-status-success-bg border border-status-success/20 px-4 py-3 text-sm text-status-success shadow-xs">
+    <div v-if="successMessage" class="flex items-center justify-between rounded-md bg-status-success-bg border-l-2 border-status-success px-4 py-3 text-[13px] text-status-success">
       <div class="flex items-center gap-2">
         <M3Icon name="check_circle" :size="18" />
         <span>{{ successMessage }}</span>
@@ -290,7 +287,7 @@ onMounted(() => {
       </button>
     </div>
 
-    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-3 text-sm text-status-error shadow-xs">
+    <div v-if="errorMessage" class="flex items-center justify-between rounded-md bg-status-error-bg border-l-2 border-accent-seal px-4 py-3 text-[13px] text-status-error">
       <div class="flex items-center gap-2">
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
@@ -300,24 +297,18 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- 局域网 DNS 服务器配置 (类似 AdGuard Home) -->
-    <LanDnsCard />
+    <!-- 调度策略选择 -->
+    <div class="app-panel p-5">
+      <h4 class="section-title mb-4">服务器优选策略</h4>
 
-    <!-- 调度策略选择卡片 (Radio + Cards) -->
-    <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs transition-colors">
-      <h3 class="text-base font-bold text-text-main mb-4 flex items-center gap-2">
-        <M3Icon name="upstream" :size="20" class="text-brand-primary" />
-        服务器优选策略
-      </h3>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div
           v-for="mode in schedulingModes"
           :key="mode.id"
-          class="flex items-start gap-3 p-4 rounded-xl border transition-all duration-200 cursor-pointer"
+          class="flex items-start gap-3 p-3.5 rounded-md border transition-colors duration-150 cursor-pointer"
           :class="[
             currentMode === mode.id
-              ? 'border-brand-primary/60 bg-brand-container/20 shadow-xs'
+              ? 'border-accent-seal bg-accent-seal-bg'
               : 'border-surface-border bg-surface-card-sub hover:bg-surface-hover',
           ]"
           @click="handleModeChange(mode.id)"
@@ -328,11 +319,11 @@ onMounted(() => {
             name="scheduling-mode"
             class="mt-0.5"
           />
-          <div class="space-y-1">
-            <span class="text-sm font-bold text-text-main">
+          <div class="space-y-0.5">
+            <span class="text-[13.5px] font-semibold text-text-main">
               {{ mode.name }}
             </span>
-            <p class="text-xs text-text-sub">
+            <p class="text-[12px] text-text-sub leading-relaxed">
               {{ mode.desc }}
             </p>
           </div>
@@ -341,16 +332,13 @@ onMounted(() => {
     </div>
 
     <!-- 上游节点列表 -->
-    <div class="space-y-4">
-      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
-        <M3Icon name="router" :size="20" class="text-brand-primary" />
-        已添加的 DNS 服务器 ({{ upstreams.length }})
-      </h3>
+    <div class="space-y-3">
+      <h3 class="section-title">已添加的 DNS 服务器 · {{ upstreams.length }}</h3>
 
-      <div v-if="upstreams.length === 0" class="rounded-2xl border border-dashed border-surface-border p-8 text-center bg-surface-card/50">
-        <M3Icon name="router" :size="32" class="text-text-sub mx-auto mb-2 opacity-50" />
-        <p class="text-sm font-medium text-text-main mb-1">暂无配置 DNS 服务器</p>
-        <p class="text-xs text-text-sub mb-4">请点击添加按钮，从预设库中快速选择并添加 DNS 服务器</p>
+      <div v-if="upstreams.length === 0" class="rounded-md border border-dashed border-surface-border p-8 text-center">
+        <M3Icon name="router" :size="32" class="text-text-muted mx-auto mb-2 opacity-50" />
+        <p class="text-[13px] font-medium text-text-main mb-1">暂无配置 DNS 服务器</p>
+        <p class="text-[12px] text-text-sub mb-4">请点击添加按钮，从预设库中快速选择并添加 DNS 服务器</p>
         <button type="button" @click="openAddDialog" class="app-btn-primary app-btn-compact mx-auto">
           <M3Icon name="add" :size="14" />
           <span>添加预设服务器</span>
@@ -361,7 +349,7 @@ onMounted(() => {
         <div
           v-for="(node, idx) in upstreams"
           :key="node.id"
-          class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-brand-primary/30"
+          class="rounded-md border border-surface-border bg-surface-card p-5  transition-all duration-200 hover: "
         >
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="space-y-1.5">
@@ -370,11 +358,13 @@ onMounted(() => {
                   {{ node.id }}
                 </span>
                 <span
-                  class="px-2.5 py-0.5 rounded-full text-xs font-bold font-mono tracking-wider"
+                  class="px-2 py-0.5 rounded-full text-[11px] font-semibold font-mono border"
                   :class="[
-                    node.protocol === 'DOH' ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400' :
-                    node.protocol === 'DOT' ? 'bg-purple-500/15 text-purple-600 dark:text-purple-400' :
-                    'bg-surface-card-sub text-text-sub border border-surface-border-sub'
+                    node.protocol === 'DOH'
+                      ? 'border-accent-seal/50 text-accent-seal'
+                      : node.protocol === 'DOT'
+                        ? 'border-accent-seal/40 text-text-main'
+                        : 'border-surface-border text-text-sub'
                   ]"
                 >
                   {{ node.protocol === 'DOH' ? '加密 DoH' : node.protocol === 'DOT' ? '加密 DoT' : '普通 DNS' }}
@@ -394,7 +384,7 @@ onMounted(() => {
             <!-- 右侧测速与操作项 -->
             <div class="flex items-center gap-2">
               <div v-if="probeResults[node.id] !== undefined" class="text-xs font-mono mr-1">
-                <span class="h-8 px-2.5 rounded-lg bg-status-success-bg text-status-success border border-status-success/30 font-semibold inline-flex items-center">
+                <span class="h-8 px-2.5 rounded-md bg-status-success-bg text-status-success border border-status-success/30 font-semibold inline-flex items-center">
                   {{ probeResults[node.id].toFixed(1) }} 毫秒
                 </span>
               </div>
@@ -450,10 +440,10 @@ onMounted(() => {
     >
       <form id="upstream-dialog-form" @submit.prevent="handleSaveDialog" class="space-y-4 pt-1">
         <!-- 常用推荐预设快速填入 -->
-        <div class="rounded-xl border border-surface-border bg-surface-card-sub p-3 space-y-2.5">
+        <div class="rounded-md border border-surface-border bg-surface-card-sub p-3 space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-text-sub flex items-center gap-1.5">
-              <M3Icon name="bolt" :size="14" class="text-brand-primary" />
+              <M3Icon name="bolt" :size="14" class="text-text-main" />
               常用推荐预设 (点击快速填入):
             </span>
             <span v-if="selectedPresetDesc" class="text-[11px] text-text-sub truncate max-w-[210px]" :title="selectedPresetDesc">
@@ -470,10 +460,10 @@ onMounted(() => {
                 :key="provider.name"
                 type="button"
                 @click="applyPreset(provider.name, currentPresetProtocol)"
-                class="px-2.5 py-1 text-xs rounded-lg border transition-all duration-150 font-medium"
+                class="px-2.5 py-1 text-xs rounded-md border transition-all duration-150 font-medium"
                 :class="[
                   currentPresetProvider === provider.name
-                    ? 'border-brand-primary bg-brand-primary/15 text-brand-primary font-bold shadow-xs'
+                    ? 'border-accent-seal bg-accent-seal-bg text-text-main font-bold '
                     : 'border-surface-border bg-surface-card hover:bg-surface-hover text-text-main'
                 ]"
               >
@@ -491,10 +481,10 @@ onMounted(() => {
                 :key="proto.value"
                 type="button"
                 @click="applyPreset(currentPresetProvider || '阿里云', proto.value)"
-                class="px-2.5 py-1 text-xs rounded-lg border transition-all duration-150 font-medium"
+                class="px-2.5 py-1 text-xs rounded-md border transition-all duration-150 font-medium"
                 :class="[
                   currentPresetProtocol === proto.value
-                    ? 'border-brand-primary bg-brand-primary/15 text-brand-primary font-bold shadow-xs'
+                    ? 'border-accent-seal bg-accent-seal-bg text-text-main font-bold '
                     : 'border-surface-border bg-surface-card hover:bg-surface-hover text-text-main'
                 ]"
               >

@@ -5,6 +5,7 @@ const props = withDefaults(
   defineProps<{
     status: 'active' | 'inactive' | 'warning' | 'error';
     text: string;
+    /** 亚秒级呼吸（透明度），尊重 prefers-reduced-motion */
     pulse?: boolean;
     size?: 'sm' | 'md';
   }>(),
@@ -14,21 +15,20 @@ const props = withDefaults(
   }
 );
 
-const badgeClasses = computed(() => {
+const textClass = computed(() => {
   switch (props.status) {
     case 'active':
-      return 'bg-status-success-bg text-status-success border-status-success/30';
+      return 'text-status-success';
     case 'warning':
-      return 'bg-status-warning-bg text-status-warning border-status-warning/30';
+      return 'text-status-warning';
     case 'error':
-      return 'bg-status-error-bg text-status-error border-status-error/30';
-    case 'inactive':
+      return 'text-status-error';
     default:
-      return 'bg-surface-card-sub text-text-sub border-surface-border';
+      return 'text-text-muted';
   }
 });
 
-const dotClasses = computed(() => {
+const dotClass = computed(() => {
   switch (props.status) {
     case 'active':
       return 'bg-status-success';
@@ -36,7 +36,6 @@ const dotClasses = computed(() => {
       return 'bg-status-warning';
     case 'error':
       return 'bg-status-error';
-    case 'inactive':
     default:
       return 'bg-text-muted';
   }
@@ -45,19 +44,10 @@ const dotClasses = computed(() => {
 
 <template>
   <span
-    :class="[
-      'inline-flex items-center gap-1.5 rounded-full border font-medium select-none transition-all duration-200',
-      size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-xs',
-      badgeClasses,
-    ]"
+    class="inline-flex items-center gap-1.5 select-none"
+    :class="size === 'sm' ? 'text-[12px]' : 'text-[13px]'"
   >
-    <span class="relative flex h-2 w-2">
-      <span
-        v-if="pulse"
-        :class="['animate-ping absolute inline-flex h-full w-full rounded-full opacity-75', dotClasses]"
-      />
-      <span :class="['relative inline-flex rounded-full h-2 w-2', dotClasses]" />
-    </span>
-    <span>{{ text }}</span>
+    <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="[dotClass, pulse ? 'seal-pulse' : '']" />
+    <span class="font-medium" :class="textClass">{{ text }}</span>
   </span>
 </template>

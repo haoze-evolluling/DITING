@@ -162,7 +162,7 @@ watch(
         class="flex items-center gap-2 font-bold"
         :class="
           isStatusLoading
-            ? 'text-brand-primary'
+            ? 'text-text-main'
             : coreServiceStatus?.installed
             ? 'text-status-warning'
             : 'text-status-error'
@@ -184,14 +184,14 @@ watch(
     </template>
 
     <div class="space-y-3 pt-1">
-      <div class="flex items-center justify-between p-3 rounded-xl bg-surface-card-sub border border-surface-border">
+      <div class="flex items-center justify-between p-3 rounded-md bg-surface-card-sub border border-surface-border">
         <div class="flex items-center gap-2">
           <span class="text-xs font-semibold text-text-sub">当前服务状态:</span>
           <span
             class="px-2 py-0.5 rounded-full text-[11px] font-bold"
             :class="[
               isStatusLoading
-                ? 'bg-brand-container text-brand-primary'
+                ? 'bg-brand-container text-text-main'
                 : coreServiceStatus?.installed && coreServiceStatus?.running
                 ? 'bg-status-success-bg text-status-success'
                 : coreServiceStatus?.installed
@@ -208,7 +208,7 @@ watch(
       </div>
 
       <div v-if="isStatusLoading" class="p-4 flex flex-col items-center justify-center gap-2 text-xs text-text-sub">
-        <M3Icon name="sync" :size="20" class="animate-spin text-brand-primary" />
+        <M3Icon name="sync" :size="20" class="animate-spin text-text-main" />
         <span>正在与系统服务管理器通讯以确认核心服务状态...</span>
       </div>
 
@@ -232,7 +232,7 @@ watch(
 
       <div
         v-if="serviceOperating"
-        class="p-2.5 rounded-lg bg-brand-container text-brand-primary border border-brand-primary/20 text-xs flex items-center gap-2"
+        class="p-2.5 rounded-md bg-brand-container text-text-main border border-accent-seal/20 text-xs flex items-center gap-2"
       >
         <M3Icon name="refresh" :size="15" class="animate-spin" />
         <span>{{ serviceOpText }}</span>
@@ -240,7 +240,7 @@ watch(
 
       <div
         v-if="serviceOpError"
-        class="p-2.5 rounded-lg bg-status-error-bg text-status-error border border-status-error/30 text-xs flex items-center gap-2"
+        class="p-2.5 rounded-md bg-status-error-bg text-status-error border border-status-error/30 text-xs flex items-center gap-2"
       >
         <M3Icon name="error" :size="15" />
         <span>{{ serviceOpError }}</span>

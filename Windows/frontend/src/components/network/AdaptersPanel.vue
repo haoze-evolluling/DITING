@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { ipc } from '../api/ipc';
-import type { AdapterInfo, StatusResponse } from '../api/types';
-import { revertSwitch } from '../utils/switch';
-import StatusBadge from '../components/StatusBadge.vue';
-import M3Icon from '../components/M3Icon.vue';
-import LanWebCard from '../components/LanWebCard.vue';
+import { ipc } from '../../api/ipc';
+import type { AdapterInfo, StatusResponse } from '../../api/types';
+import { revertSwitch } from '../../utils/switch';
+import StatusBadge from '../../components/StatusBadge.vue';
+import M3Icon from '../../components/M3Icon.vue';
 
 const adapters = ref<AdapterInfo[]>([]);
 const status = ref<StatusResponse | null>(null);
@@ -90,14 +89,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-12 select-none">
+  <div class="space-y-5 pb-12 select-none">
     <!-- 头部操作栏 -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight text-text-main">
-          网络连接与保护接管
-        </h2>
-        <p class="text-sm text-text-sub">
+        <h2 class="section-title">网络连接与保护接管</h2>
+        <p class="text-[12px] text-text-sub mt-1">
           已自动排除虚拟与离线网络，仅显示当前正在使用的网络连接（如 Wi-Fi 或有线网络）。
         </p>
       </div>
@@ -135,11 +132,8 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 局域网 Web 远程管理控制台 -->
-    <LanWebCard />
-
     <!-- 错误横幅 -->
-    <div v-if="errorMessage" class="flex items-center justify-between rounded-xl bg-status-error-bg border border-status-error/20 px-4 py-3 text-sm text-status-error">
+    <div v-if="errorMessage" class="flex items-center justify-between rounded-md bg-status-error-bg border-l-2 border-accent-seal px-4 py-3 text-[13px] text-status-error">
       <div class="flex items-center gap-2">
         <M3Icon name="error" :size="18" />
         <span>{{ errorMessage }}</span>
@@ -159,7 +153,7 @@ onMounted(() => {
     </div>
 
     <!-- 空网卡状态 -->
-    <div v-else-if="adapters.length === 0" class="rounded-2xl border border-dashed border-surface-border p-12 text-center bg-surface-card">
+    <div v-else-if="adapters.length === 0" class="rounded-md border border-dashed border-surface-border p-12 text-center bg-surface-card">
       <M3Icon name="adapters" :size="48" class="text-text-muted mx-auto mb-3" />
       <h3 class="font-semibold text-text-main">未发现可用的网络连接</h3>
       <p class="text-sm text-text-sub mt-1">请检查 Wi-Fi 或网线是否已正常连接至网络。</p>
@@ -177,11 +171,11 @@ onMounted(() => {
 
     <!-- 网卡列表展示 -->
     <div v-else class="space-y-4">
-      <md-list class="bg-transparent p-0 rounded-2xl space-y-4">
+      <md-list class="bg-transparent p-0 rounded-md space-y-4">
         <div
           v-for="adapter in adapters"
           :key="adapter.id"
-          class="rounded-2xl border border-surface-border bg-surface-card p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-brand-primary/30"
+          class="rounded-md border border-surface-border bg-surface-card p-5  transition-all duration-200 hover: "
         >
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <!-- 网卡基本属性 -->
@@ -209,7 +203,7 @@ onMounted(() => {
             </div>
 
             <!-- 右侧单卡接管开关 -->
-            <div class="flex items-center gap-3 bg-surface-card-sub px-4 py-2 rounded-xl border border-surface-border-sub">
+            <div class="flex items-center gap-3 bg-surface-card-sub px-4 py-2 rounded-md border border-surface-border-sub">
               <span class="text-xs font-medium text-text-main">
                 {{ isAdapterTakenOver(adapter) ? '保护已开启' : '未开启' }}
               </span>
@@ -223,21 +217,21 @@ onMounted(() => {
 
           <!-- DNS 配置对比详情 -->
           <div class="mt-4 pt-4 border-t border-surface-border grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-            <div class="rounded-xl bg-surface-card-sub border border-surface-border-sub p-3">
+            <div class="rounded-md bg-surface-card-sub border border-surface-border-sub p-3">
               <span class="text-text-muted block mb-1">IP 地址分配方式</span>
               <span class="font-semibold text-text-main">
                 {{ adapter.ipv4DHCP ? '自动获取 (DHCP)' : '手动固定 (静态 IP)' }}
               </span>
             </div>
 
-            <div class="rounded-xl bg-surface-card-sub border border-surface-border-sub p-3">
+            <div class="rounded-md bg-surface-card-sub border border-surface-border-sub p-3">
               <span class="text-text-muted block mb-1">原始 DNS 服务器</span>
               <span class="font-mono font-medium text-text-main">
                 {{ adapter.ipv4DNS?.join(', ') || '自动获取 (路由器默认)' }}
               </span>
             </div>
 
-            <div class="rounded-xl bg-surface-card-sub border border-surface-border-sub p-3">
+            <div class="rounded-md bg-surface-card-sub border border-surface-border-sub p-3">
               <span class="text-text-muted block mb-1">当前实际生效 DNS</span>
               <span
                 class="font-mono font-semibold"

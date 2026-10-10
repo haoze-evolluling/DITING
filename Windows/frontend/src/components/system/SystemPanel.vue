@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { ipc } from '../api/ipc';
-import { themeManager, type ThemeMode } from '../theme/theme';
-import type { PortCheckResult } from '../api/types';
-import M3Icon from '../components/M3Icon.vue';
-import AppModal from '../components/AppModal.vue';
-import CoreServiceCard from '../components/CoreServiceCard.vue';
-import { revertSwitch } from '../utils/switch';
-import { isWebMode } from '../utils/env';
+import { ipc } from '../../api/ipc';
+import { themeManager, type ThemeMode } from '../../theme/theme';
+import type { PortCheckResult } from '../../api/types';
+import M3Icon from '../../components/M3Icon.vue';
+import AppModal from '../../components/AppModal.vue';
+import CoreServiceCard from '../../components/CoreServiceCard.vue';
+import { revertSwitch } from '../../utils/switch';
+import { isWebMode } from '../../utils/env';
 
 const webMode = isWebMode();
 const host = ref('127.0.0.1');
@@ -140,22 +140,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 pb-12 select-none">
-    <div>
-      <h2 class="text-2xl font-bold tracking-tight text-text-main">
-        通用设置与故障排查
-      </h2>
-      <p class="text-sm text-text-sub">
-        配置核心服务连接、界面外观主题，以及网络故障排查与一键修复工具。
-      </p>
-    </div>
-
+  <div class="space-y-5 select-none">
     <!-- 1. IPC 通信配置卡片 -->
-    <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-4 transition-colors">
-      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
-        <M3Icon name="router" :size="20" class="text-brand-primary" />
-        后台服务连接设置
-      </h3>
+    <div class="app-panel p-5 space-y-4">
+      <h3 class="section-title">后台服务连接</h3>
+      <p class="text-[12px] text-text-muted -mt-2">配置客户端连接核心服务的地址与授权信息。</p>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
@@ -215,25 +204,22 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 2. 外观与现代高质感色彩体系 -->
-    <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-5 transition-colors">
-      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
-        <M3Icon name="palette" :size="20" class="text-brand-primary" />
-        外观与主题
-      </h3>
+    <!-- 2. 外观与主题（墨朱体系） -->
+    <div class="app-panel p-5 space-y-4">
+      <h3 class="section-title">外观与主题</h3>
 
       <!-- 明暗模式切换 -->
       <div class="space-y-2">
-        <label class="text-xs font-semibold text-text-sub block">界面色彩模式</label>
-        <div class="flex flex-wrap gap-3">
+        <label class="text-[12px] font-semibold text-text-sub block">界面色彩模式</label>
+        <div class="flex flex-wrap gap-2.5">
           <button
-            v-for="m in ([{ id: 'system', name: '跟随系统' }, { id: 'light', name: '浅色模式' }, { id: 'dark', name: '深色模式' }] as const)"
+            v-for="m in ([{ id: 'system', name: '跟随系统' }, { id: 'light', name: '浅色宣纸' }, { id: 'dark', name: '深色墨夜' }] as const)"
             :key="m.id"
             @click="handleModeChange(m.id)"
-            class="app-btn-base transition-all duration-150"
+            class="app-btn-base"
             :class="[
               currentMode === m.id
-                ? 'bg-brand-primary text-white dark:text-[#003258] border-transparent shadow-xs'
+                ? 'bg-brand-primary text-surface-card border border-brand-primary'
                 : 'bg-surface-card-sub border border-surface-border text-text-sub hover:bg-surface-hover',
             ]"
           >
@@ -242,27 +228,20 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- 品牌基准主色说明 -->
-      <div class="pt-2 border-t border-surface-border">
-        <div class="flex items-center justify-between p-3.5 rounded-xl border border-brand-primary/20 bg-brand-container/20">
-          <div class="flex items-center gap-3">
-            <div class="flex items-center -space-x-1 shrink-0">
-              <span class="w-5 h-5 rounded-lg bg-[#36618E] shadow-xs flex items-center justify-center shrink-0 border border-white/20 z-10" title="主色 #36618E">
-                <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
-              </span>
-              <span class="w-5 h-5 rounded-lg bg-[#D1E4FF] shadow-xs flex items-center justify-center shrink-0 border border-brand-primary/30" title="容器色 #D1E4FF">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#1A4975]"></span>
-              </span>
-            </div>
-            <div>
-              <div class="text-xs font-bold text-text-main flex items-center gap-2">
-                <span>睡莲蓝 (Material 3 主题色)</span>
-                <span class="font-mono text-[11px] text-brand-primary bg-surface-card px-1.5 py-0.5 rounded border border-surface-border">#36618E / #D1E4FF</span>
-              </div>
-              <div class="text-[11px] text-text-sub">
-                与移动端一致采用 Material 3 睡莲蓝规范，完美适配浅色与深色模式
-              </div>
-            </div>
+      <!-- 墨·朱 视觉规范说明 -->
+      <div class="pt-3 border-t border-surface-border flex items-center gap-3">
+        <div class="flex items-center -space-x-1 shrink-0">
+          <span class="w-5 h-5 rounded-md bg-[#1A1A1C] border border-surface-border z-10" title="墨 #1A1A1C"></span>
+          <span class="w-5 h-5 rounded-md bg-[#8A8B8E] border border-surface-border" title="灰 #8A8B8E"></span>
+          <span class="w-5 h-5 rounded-md bg-[#F1EFE9] border border-surface-border" title="宣纸 #F1EFE9"></span>
+          <span class="w-5 h-5 rounded-md bg-[#9E2B25] border border-surface-border" title="朱砂 #9E2B25"></span>
+        </div>
+        <div>
+          <div class="text-[12px] font-semibold text-text-main">
+            墨 · 朱 视觉体系
+          </div>
+          <div class="text-[11px] text-text-muted">
+            以黑灰白墨色为主调，朱砂红仅用于强调与危险操作，深浅两套对等适配。
           </div>
         </div>
       </div>
@@ -272,17 +251,14 @@ onMounted(() => {
     <CoreServiceCard />
 
     <!-- 4. 系统诊断与容灾工具 -->
-    <div class="rounded-2xl border border-surface-border bg-surface-card p-6 shadow-xs space-y-4 transition-colors">
-      <h3 class="text-base font-bold text-text-main flex items-center gap-2">
-        <M3Icon name="shield" :size="20" class="text-brand-primary" />
-        网络诊断与应急修复
-      </h3>
+    <div class="app-panel p-5 space-y-4">
+      <h3 class="section-title">网络诊断与应急修复</h3>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <!-- Windows 开机自启 -->
-        <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-text-main">开机自动启动</span>
+        <div class="p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[13px] font-semibold text-text-main">开机自动启动</span>
             <span v-if="webMode" class="text-[11px] text-text-muted bg-surface-card px-2 py-0.5 rounded border border-surface-border">仅限宿主机桌面</span>
             <md-switch
               v-else
@@ -291,15 +267,15 @@ onMounted(() => {
               @change="handleToggleAutostart"
             />
           </div>
-          <p class="text-xs text-text-sub">
-            开机登录 Windows 时自动启动客户端，确保持续为您提供网络加速与安全防护。
+          <p class="text-[12px] text-text-sub leading-relaxed">
+            开机登录 Windows 时自动启动客户端，确保持续提供网络加速与安全防护。
           </p>
         </div>
 
         <!-- 端口诊断 -->
-        <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-text-main">DNS 端口冲突检测</span>
+        <div class="p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[13px] font-semibold text-text-main">DNS 端口冲突检测</span>
             <button
               type="button"
               @click="handleDiagnosePort"
@@ -311,10 +287,10 @@ onMounted(() => {
               <span>开始检测</span>
             </button>
           </div>
-          <p class="text-xs text-text-sub">
+          <p class="text-[12px] text-text-sub leading-relaxed">
             检测标准 DNS 端口 (53) 是否被系统网络共享 (ICS) 或其他网络软件占用。
           </p>
-          <div v-if="portResult" class="p-3 rounded-lg bg-surface-card border border-surface-border text-xs space-y-2">
+          <div v-if="portResult" class="p-3 rounded-md bg-surface-card border border-surface-border text-[12px] space-y-2">
             <div class="font-semibold" :class="portResult.available ? 'text-status-success' : 'text-status-warning'">
               {{ portResult.available ? 'DNS 端口正常可用' : '检测到端口被占用或冲突' }}
             </div>
@@ -324,7 +300,7 @@ onMounted(() => {
                 type="button"
                 @click="handleAutofixInSettings"
                 :disabled="autofixingPort"
-                class="app-btn-primary app-btn-compact text-xs"
+                class="app-btn-primary app-btn-compact"
               >
                 <M3Icon :name="autofixingPort ? 'refresh' : 'bolt'" :size="12" :class="autofixingPort ? 'animate-spin' : ''" />
                 <span>{{ autofixingPort ? '正在修复...' : '一键自动修复 ICS 冲突' }}</span>
@@ -334,9 +310,9 @@ onMounted(() => {
         </div>
 
         <!-- 应急自愈脚本 -->
-        <div class="p-4 rounded-xl border border-surface-border-sub bg-surface-card-sub space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-text-main">一键恢复网络设置</span>
+        <div class="p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[13px] font-semibold text-text-main">一键恢复网络设置</span>
             <span v-if="webMode" class="text-[11px] text-text-muted bg-surface-card px-2 py-0.5 rounded border border-surface-border">仅限宿主机桌面</span>
             <button
               v-else
@@ -350,10 +326,10 @@ onMounted(() => {
               <span>一键修复</span>
             </button>
           </div>
-          <p class="text-xs text-text-sub">
+          <p class="text-[12px] text-text-sub leading-relaxed">
             当异常关闭导致电脑无法上网时，一键自动修复并将网络 DNS 还原为系统默认设置。
           </p>
-          <div v-if="restoreMessage" class="p-3 rounded-lg bg-status-success-bg text-status-success border border-status-success/30 text-xs font-semibold">
+          <div v-if="restoreMessage" class="p-3 rounded-md bg-status-success-bg text-status-success border border-status-success/30 text-[12px] font-semibold">
             {{ restoreMessage }}
           </div>
         </div>

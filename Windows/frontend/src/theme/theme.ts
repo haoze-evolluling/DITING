@@ -3,10 +3,10 @@
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 const STORAGE_KEY = 'diting_theme_mode';
-const DARK_BG = '#111418';
-const DARK_FG = '#E1E2E8';
-const LIGHT_BG = '#F8F9FF';
-const LIGHT_FG = '#191C20';
+const DARK_BG = '#16171A';
+const DARK_FG = '#E9E8E4';
+const LIGHT_BG = '#FAF9F5';
+const LIGHT_FG = '#1A1A1C';
 
 /**
  * 主题切换只做两件事：在 <html> 上切换 dark 类 / data-theme 属性，

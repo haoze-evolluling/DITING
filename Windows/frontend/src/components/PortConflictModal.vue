@@ -74,7 +74,7 @@ function handleClose() {
       <!-- 自动修复优先引导模块 -->
       <div
         v-if="isAutofixAvailable"
-        class="rounded-xl border border-primary/25 bg-primary/5 dark:bg-primary/10 p-3.5 space-y-2.5"
+        class="rounded-md border border-primary/25 bg-primary/5 dark:bg-primary/10 p-3.5 space-y-2.5"
       >
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <div class="flex items-center gap-2 font-semibold text-primary">
@@ -99,7 +99,7 @@ function handleClose() {
       <!-- 局域网模式降级引导模块 -->
       <div
         v-if="allowLANDowngradable"
-        class="rounded-xl border border-surface-border-sub bg-surface-card-sub p-3 space-y-2"
+        class="rounded-md border border-surface-border-sub bg-surface-card-sub p-3 space-y-2"
       >
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <div class="text-xs font-semibold text-text-main flex items-center gap-1.5">
@@ -125,11 +125,11 @@ function handleClose() {
         <div
           v-for="(item, idx) in conflictResult.conflicts"
           :key="idx"
-          class="rounded-xl border border-surface-border-sub bg-surface-card-sub p-3.5 space-y-2.5"
+          class="rounded-md border border-surface-border-sub bg-surface-card-sub p-3.5 space-y-2.5"
         >
           <div class="flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2 font-semibold text-text-main">
-              <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold border border-status-warning/40 text-status-warning">
                 {{ item.protocol }} {{ item.localAddress }}
               </span>
               <span>{{ item.isICS ? 'Windows 网络连接共享服务 (ICS)' : (item.processName || '未知程序') }}</span>
@@ -144,7 +144,7 @@ function handleClose() {
             <p class="text-text-sub leading-relaxed">
               若希望手动操作，可在管理员 CMD 中执行以下命令停止服务：
             </p>
-            <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-surface-card border border-surface-border font-mono text-[11px]">
+            <div class="flex items-center justify-between gap-2 p-2 rounded-md bg-surface-card border border-surface-border font-mono text-[11px]">
               <span class="text-text-main select-all">sc stop SharedAccess</span>
               <button
                 type="button"
@@ -173,13 +173,13 @@ function handleClose() {
       </div>
 
       <!-- 综合诊断建议兜底 -->
-      <div v-else-if="conflictResult?.diagnostic" class="p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub text-xs space-y-1">
+      <div v-else-if="conflictResult?.diagnostic" class="p-3 rounded-md bg-surface-card-sub border border-surface-border-sub text-xs space-y-1">
         <div class="font-semibold text-status-warning">诊断建议</div>
         <p class="text-text-sub whitespace-pre-line">{{ conflictResult.diagnostic }}</p>
       </div>
 
       <!-- 重新检测或操作报错提示 -->
-      <div v-if="recheckError" class="p-2.5 rounded-lg bg-status-error-bg border border-status-error/20 text-xs text-status-error flex items-center gap-1.5">
+      <div v-if="recheckError" class="p-2.5 rounded-md bg-status-error-bg border border-status-error/20 text-xs text-status-error flex items-center gap-1.5">
         <M3Icon name="error" :size="14" />
         <span>{{ recheckError }}</span>
       </div>

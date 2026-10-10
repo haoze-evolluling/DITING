@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { ipc } from '../api/ipc';
-import type { CacheStats, CacheConfig, CacheEntryItem, CacheDomainStat } from '../api/types';
-import StatusBadge from '../components/StatusBadge.vue';
-import MetricCard from '../components/MetricCard.vue';
-import M3Icon from '../components/M3Icon.vue';
-import AppModal from '../components/AppModal.vue';
-import ToastBanner from '../components/ToastBanner.vue';
-import { revertSwitch } from '../utils/switch';
-import { formatClockTime } from '../utils/format';
-import { usePoller } from '../composables/usePoller';
-import { useToast } from '../composables/useToast';
+import { ipc } from '../../api/ipc';
+import type { CacheStats, CacheConfig, CacheEntryItem, CacheDomainStat } from '../../api/types';
+import StatusBadge from '../../components/StatusBadge.vue';
+import Panel from '../../components/ui/Panel.vue';
+import M3Icon from '../../components/M3Icon.vue';
+import AppModal from '../../components/AppModal.vue';
+import ToastBanner from '../../components/ToastBanner.vue';
+import { revertSwitch } from '../../utils/switch';
+import { formatClockTime } from '../../utils/format';
+import { usePoller } from '../../composables/usePoller';
+import { useToast } from '../../composables/useToast';
 
 const stats = ref<CacheStats>({
   enabled: true,
@@ -55,6 +55,14 @@ const hitRatioPercent = computed(() => {
   const ratio = stats.value.hitRatio * 100;
   return `${ratio.toFixed(1)}%`;
 });
+
+const cacheStats = computed(() => [
+  { label: '总命中数', value: stats.value.totalHits.toLocaleString() },
+  { label: '实时联网解析', value: stats.value.totalMisses.toLocaleString() },
+  { label: '弱网应急保障', value: stats.value.staleHits.toLocaleString() },
+  { label: '无效网址拦截', value: stats.value.negativeHits.toLocaleString() },
+  { label: '已存记录 / 上限', value: `${stats.value.entryCount} / ${stats.value.maxEntries}` },
+]);
 
 const filteredEntries = computed(() => {
   return entries.value.filter((item) => {
@@ -163,14 +171,12 @@ usePoller(pollMetrics, 4000);
 </script>
 
 <template>
-  <div class="space-y-6 pb-12 select-none">
-    <!-- 头部操作与总控卡片 -->
+  <div class="space-y-5 pb-12 select-none">
+    <!-- 头部操作与总控栏 -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <div class="flex items-center gap-2">
-          <h2 class="text-2xl font-bold tracking-tight text-text-main">
-            智能解析加速中心
-          </h2>
+        <div class="flex items-center gap-2.5">
+          <h2 class="section-title">智能解析加速中心</h2>
           <StatusBadge
             :status="stats.enabled ? 'active' : 'inactive'"
             :text="stats.enabled ? '加速引擎运行中' : '加速已停用'"
@@ -184,7 +190,7 @@ usePoller(pollMetrics, 4000);
 
       <div class="flex items-center gap-3">
         <!-- 缓存总控 Switch -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-surface-card border border-surface-border shadow-xs">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-card border border-surface-border ">
           <span class="text-xs font-medium text-text-sub">解析加速</span>
           <md-switch
             :selected="stats.enabled"
@@ -225,46 +231,37 @@ usePoller(pollMetrics, 4000);
       @dismiss="dismiss"
     />
 
-    <!-- 核心指标遥测卡片网格 (3 列 x 2 行) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- 缓存命中率高光卡片 -->
-      <div
-        class="relative overflow-hidden rounded-2xl p-5 border border-surface-border bg-surface-card shadow-xs transition-all duration-200 hover:shadow-md hover:border-brand-primary/30 flex flex-col justify-between"
-      >
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold text-brand-primary uppercase tracking-wider">缓存命中率</span>
-          <div class="flex items-center justify-center w-8 h-8 rounded-xl bg-surface-card-sub text-brand-primary">
-            <M3Icon name="speed" :size="18" />
+    <!-- 命中率（唯一强调数字）+ 指标带 -->
+    <Panel>
+      <div class="flex items-baseline gap-3 mb-3">
+        <span class="label-quiet">缓存命中率</span>
+        <span class="font-mono text-[32px] font-semibold leading-none text-text-main tabular-nums">
+          {{ hitRatioPercent }}
+        </span>
+      </div>
+      <div class="w-full bg-surface-card-sub rounded-full h-1.5 overflow-hidden">
+        <div
+          class="bg-accent-seal h-full rounded-full transition-all duration-300"
+          :style="{ width: `${Math.min(stats.hitRatio * 100, 100)}%` }"
+        />
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-4 mt-5 pt-4 border-t border-surface-border-sub">
+        <div v-for="s in cacheStats" :key="s.label">
+          <div class="label-quiet">{{ s.label }}</div>
+          <div class="mt-0.5 font-mono text-[17px] font-semibold text-text-main tabular-nums">
+            {{ s.value }}
           </div>
         </div>
-        <div class="flex items-baseline gap-1.5 my-1">
-          <span class="text-2xl font-bold tracking-tight text-text-main font-mono">{{ hitRatioPercent }}</span>
-        </div>
-        <div class="mt-2 w-full bg-surface-card-sub rounded-full h-1.5 overflow-hidden border border-surface-border-sub">
-          <div
-            class="bg-brand-primary h-full rounded-full transition-all duration-300"
-            :style="{ width: `${Math.min(stats.hitRatio * 100, 100)}%` }"
-          ></div>
-        </div>
       </div>
-
-      <MetricCard title="总命中数" :value="stats.totalHits.toLocaleString()" icon="check" subtext="本地瞬间返回，无需等待网络" />
-      <MetricCard title="实时联网解析" :value="stats.totalMisses.toLocaleString()" icon="sync" subtext="首次访问，向服务器查询" />
-      <MetricCard title="弱网应急保障" :value="stats.staleHits.toLocaleString()" icon="shield" subtext="网络故障时使用旧记录应急" />
-      <MetricCard title="无效网址拦截" :value="stats.negativeHits.toLocaleString()" icon="cancel" subtext="记住不存在的网址，避免重复查询" />
-      <MetricCard title="已存记录 / 上限" :value="`${stats.entryCount} / ${stats.maxEntries}`" icon="cache" :subtext="`自动清理旧记录: ${stats.evictionCount}`" />
-    </div>
+    </Panel>
 
     <!-- 双栏等宽布局: 热点域名 Top 统计 & 缓存策略配置 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- 热点域名 Top 统计排行榜 -->
-      <div class="p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <M3Icon name="bolt" :size="20" class="text-status-warning" />
-            <h3 class="text-base font-bold text-text-main">高频访问网址排行</h3>
-          </div>
-          <span class="text-xs text-text-muted">访问次数最多的前 10 个网址</span>
+      <div class="p-6 rounded-md bg-surface-card border border-surface-border  space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="section-title">高频访问网址排行</h3>
+          <span class="text-[11px] text-text-muted">访问次数最多的前 10 个网址</span>
         </div>
 
         <div v-if="topDomains.length === 0" class="py-8 text-center text-xs text-text-muted">
@@ -275,13 +272,13 @@ usePoller(pollMetrics, 4000);
           <div
             v-for="(item, idx) in topDomains"
             :key="item.domain + item.qtype"
-            class="p-2.5 rounded-xl bg-surface-card-sub border border-surface-border-sub flex items-center justify-between gap-3 text-xs"
+            class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub flex items-center justify-between gap-3 text-xs"
           >
             <!-- 排名与域名 -->
             <div class="flex items-center gap-3 min-w-0">
               <span
                 class="w-5 h-5 rounded-full flex items-center justify-center font-bold font-mono text-[10px]"
-                :class="idx < 3 ? 'bg-brand-primary text-white' : 'bg-surface-hover text-text-sub'"
+                :class="idx < 3 ? 'bg-brand-primary text-surface-card' : 'bg-surface-hover text-text-sub'"
               >
                 {{ idx + 1 }}
               </span>
@@ -313,12 +310,9 @@ usePoller(pollMetrics, 4000);
       </div>
 
       <!-- 缓存运行策略配置 -->
-      <div class="p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <M3Icon name="settings" :size="20" class="text-brand-primary" />
-            <h3 class="text-base font-bold text-text-main">加速策略设置</h3>
-          </div>
+      <div class="p-6 rounded-md bg-surface-card border border-surface-border  space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="section-title">加速策略设置</h3>
           <button
             type="button"
             @click="handleSaveConfig"
@@ -358,7 +352,7 @@ usePoller(pollMetrics, 4000);
           </div>
 
           <!-- Stale 容灾与 Optimistic SWR 开关 -->
-          <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub space-y-3">
+          <div class="p-3 rounded-md bg-surface-card-sub border border-surface-border-sub space-y-3">
             <div class="flex items-center justify-between">
               <div>
                 <span class="text-xs font-bold text-text-main">弱网应急保障 (旧记录兜底)</span>
@@ -389,7 +383,7 @@ usePoller(pollMetrics, 4000);
           </div>
 
           <!-- 负缓存配置 -->
-          <div class="p-3 rounded-xl bg-surface-card-sub border border-surface-border-sub flex items-center justify-between">
+          <div class="p-3 rounded-md bg-surface-card-sub border border-surface-border-sub flex items-center justify-between">
             <div>
               <span class="text-xs font-bold text-text-main">无效网址记忆加速</span>
               <p class="text-[11px] text-text-sub">记住不存在或错误的网址，避免系统和软件频繁重复重试</p>
@@ -404,11 +398,10 @@ usePoller(pollMetrics, 4000);
     </div>
 
     <!-- 缓存条目检索与表格 -->
-    <div class="p-6 rounded-2xl bg-surface-card border border-surface-border shadow-xs space-y-4">
+    <div class="p-6 rounded-md bg-surface-card border border-surface-border  space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <M3Icon name="search" :size="20" class="text-brand-primary" />
-          <h3 class="text-base font-bold text-text-main">
+          <h3 class="section-title">
             已缓存域名列表 ({{ totalEntriesCount }} 条)
           </h3>
         </div>
@@ -422,7 +415,7 @@ usePoller(pollMetrics, 4000);
               type="text"
               placeholder="搜索网址或记录类型..."
               @keyup.enter="handleSearch"
-              class="w-full pl-9 pr-3 h-9 rounded-xl border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:ring-brand-primary/40 text-text-main placeholder:text-text-muted font-mono"
+              class="w-full pl-9 pr-3 h-9 rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:border-accent-seal text-text-main placeholder:text-text-muted font-mono"
             />
           </div>
 
@@ -482,7 +475,7 @@ usePoller(pollMetrics, 4000);
                 <span v-else-if="entry.status === 'fresh'" class="px-2 py-0.5 rounded-full text-[10px] bg-status-success-bg text-status-success">有效</span>
                 <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-status-warning-bg text-status-warning">应急备用</span>
               </td>
-              <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-brand-primary' : 'text-status-warning'">{{ entry.remainingTtl }}s</td>
+              <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-text-main' : 'text-status-warning'">{{ entry.remainingTtl }}s</td>
               <td class="py-2.5 text-text-muted">{{ entry.originalTtl }}s</td>
               <td class="py-2.5 text-text-main font-bold">{{ entry.hitCount }}</td>
               <td class="py-2.5 text-text-sub max-w-xs truncate" :title="entry.ipList?.join(', ') || '无'">

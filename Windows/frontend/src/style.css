@@ -3,6 +3,7 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
 
 @theme {
+  /* 底与面 */
   --color-surface-base: var(--app-surface-base);
   --color-surface-card: var(--app-surface-card);
   --color-surface-card-sub: var(--app-surface-card-sub);
@@ -10,131 +11,150 @@
   --color-surface-border: var(--app-surface-border);
   --color-surface-border-sub: var(--app-surface-border-sub);
 
+  /* 文字层级 */
   --color-text-main: var(--app-text-main);
   --color-text-sub: var(--app-text-sub);
   --color-text-muted: var(--app-text-muted);
 
+  /* 主动作色（墨） */
   --color-brand-primary: var(--app-brand-primary);
   --color-brand-primary-hover: var(--app-brand-primary-hover);
   --color-brand-container: var(--app-brand-container);
   --color-brand-on-container: var(--app-brand-on-container);
 
+  /* 朱砂点缀（唯一点缀色，见使用白名单） */
+  --color-accent-seal: var(--app-accent-seal);
+  --color-accent-seal-bg: var(--app-accent-seal-bg);
+
+  /* 状态反馈（去饱和，归入墨系） */
   --color-status-success: var(--app-status-success);
   --color-status-success-bg: var(--app-status-success-bg);
   --color-status-warning: var(--app-status-warning);
   --color-status-warning-bg: var(--app-status-warning-bg);
   --color-status-error: var(--app-status-error);
   --color-status-error-bg: var(--app-status-error-bg);
+
+  /* 字体：宋体题、黑体文、等宽机器串 */
+  --font-serif: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC",
+    "SimSun", Georgia, serif;
+  --font-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui,
+    -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, ui-monospace, "SFMono-Regular",
+    Menlo, monospace;
 }
 
 :root {
-  /* 基础画布与卡片容器 - Material 3 睡莲蓝规范 (Light Mode) */
-  --app-surface-base: #F8F9FF;
-  --app-surface-card: #FFFFFF;
-  --app-surface-card-sub: #ECEEF4;
-  --app-surface-hover: #E2E4EC;
-  --app-surface-border: #DFE2EB;
-  --app-surface-border-sub: #ECEEF4;
+  /* 浅色「宣纸」 */
+  --app-surface-base: #faf9f5;
+  --app-surface-card: #ffffff;
+  --app-surface-card-sub: #f1efe9;
+  --app-surface-hover: #eae7de;
+  --app-surface-border: #e3e0d6;
+  --app-surface-border-sub: #edebe3;
 
-  /* 排版文字层级 */
-  --app-text-main: #191C20;
-  --app-text-sub: #43474E;
-  --app-text-muted: #73777F;
+  /* 排版文字层级（墨） */
+  --app-text-main: #1a1a1c;
+  --app-text-sub: #55565a;
+  --app-text-muted: #8a8b8e;
 
-  /* 品牌睡莲蓝主题色体系 (#36618E / #D1E4FF) */
-  --app-brand-primary: #36618E;
-  --app-brand-primary-hover: #2A5078;
-  --app-brand-container: #D1E4FF;
-  --app-brand-on-container: #1A4975;
+  /* 主动作即墨：填充墨底、纸白字 */
+  --app-brand-primary: #1a1a1c;
+  --app-brand-primary-hover: #333336;
+  --app-brand-container: #edeae2;
+  --app-brand-on-container: #1a1a1c;
 
-  /* 状态反馈色 (Light) */
-  --app-status-success: #10B981;
-  --app-status-success-bg: #E6F7EF;
-  --app-status-warning: #F59E0B;
-  --app-status-warning-bg: #FEF8EC;
-  --app-status-error: #BA1A1A;
-  --app-status-error-bg: #FFDAD6;
+  /* 朱砂：唯一点缀色 */
+  --app-accent-seal: #9e2b25;
+  --app-accent-seal-bg: #f6e6e4;
 
-  /* Material Web Components 语义变量映射 (Light) */
-  --md-sys-color-primary: #36618E;
-  --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #D1E4FF;
-  --md-sys-color-on-primary-container: #1A4975;
-  --md-sys-color-surface: #F8F9FF;
-  --md-sys-color-on-surface: #191C20;
-  --md-sys-color-surface-container: #FFFFFF;
-  --md-sys-color-surface-container-high: #ECEEF4;
-  --md-sys-color-on-surface-variant: #43474E;
-  --md-sys-color-outline: #73777F;
-  --md-sys-color-outline-variant: #C3C6CF;
-  --md-sys-color-error: #BA1A1A;
-  --md-sys-color-on-error: #FFFFFF;
-  --md-sys-color-scrim: rgba(25, 28, 32, 0.45);
+  /* 状态反馈（去饱和） */
+  --app-status-success: #2f6b4f;
+  --app-status-success-bg: #e7f0ea;
+  --app-status-warning: #8a6a1a;
+  --app-status-warning-bg: #f4edda;
+  --app-status-error: #9e2b25;
+  --app-status-error-bg: #f6e6e4;
+
+  /* Material Web / 弹层符号变量映射（浅色） */
+  --md-sys-color-primary: #1a1a1c;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #edeae2;
+  --md-sys-color-on-primary-container: #1a1a1c;
+  --md-sys-color-surface: #faf9f5;
+  --md-sys-color-on-surface: #1a1a1c;
+  --md-sys-color-surface-container: #ffffff;
+  --md-sys-color-surface-container-high: #f1efe9;
+  --md-sys-color-on-surface-variant: #55565a;
+  --md-sys-color-outline: #8a8b8e;
+  --md-sys-color-outline-variant: #d9d6cc;
+  --md-sys-color-error: #9e2b25;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-scrim: rgba(20, 20, 22, 0.42);
+  color-scheme: light;
 }
 
 :root[data-theme="dark"],
 .dark {
-  /* 基础画布与卡片容器 - Material 3 睡莲蓝暗夜立体质感 (Dark Mode) */
-  --app-surface-base: #111418;
-  --app-surface-card: #1D2024;
-  --app-surface-card-sub: #272A2F;
-  --app-surface-hover: #32353A;
-  --app-surface-border: #43474E;
-  --app-surface-border-sub: #272A2F;
+  /* 深色「墨夜」 */
+  --app-surface-base: #16171a;
+  --app-surface-card: #1e1f23;
+  --app-surface-card-sub: #26272b;
+  --app-surface-hover: #2e2f34;
+  --app-surface-border: #34353a;
+  --app-surface-border-sub: #2a2b2f;
 
-  /* 排版文字层级 */
-  --app-text-main: #E1E2E8;
-  --app-text-sub: #C3C6CF;
-  --app-text-muted: #8D9199;
+  --app-text-main: #e9e8e4;
+  --app-text-sub: #b4b4b0;
+  --app-text-muted: #7c7d80;
 
-  /* 品牌睡莲蓝主题色体系 (深色模式 #A0CAFD / #1A4975) */
-  --app-brand-primary: #A0CAFD;
-  --app-brand-primary-hover: #B8D8FE;
-  --app-brand-container: #1A4975;
-  --app-brand-on-container: #D1E4FF;
+  /* 深色下主动作反相为纸白 */
+  --app-brand-primary: #e9e8e4;
+  --app-brand-primary-hover: #f5f4f0;
+  --app-brand-container: #32333a;
+  --app-brand-on-container: #e9e8e4;
 
-  /* 状态反馈色 (Dark) */
-  --app-status-success: #34D399;
-  --app-status-success-bg: rgba(16, 185, 129, 0.15);
-  --app-status-warning: #FBBF24;
-  --app-status-warning-bg: rgba(245, 158, 11, 0.15);
-  --app-status-error: #FFB4AB;
-  --app-status-error-bg: rgba(147, 0, 10, 0.25);
+  --app-accent-seal: #d0463a;
+  --app-accent-seal-bg: rgba(208, 70, 58, 0.16);
 
-  /* Material Web Components 语义变量映射 (Dark) */
-  --md-sys-color-primary: #A0CAFD;
-  --md-sys-color-on-primary: #003258;
-  --md-sys-color-primary-container: #1A4975;
-  --md-sys-color-on-primary-container: #D1E4FF;
-  --md-sys-color-surface: #111418;
-  --md-sys-color-on-surface: #E1E2E8;
-  --md-sys-color-surface-container: #1D2024;
-  --md-sys-color-surface-container-high: #272A2F;
-  --md-sys-color-on-surface-variant: #C3C6CF;
-  --md-sys-color-outline: #8D9199;
-  --md-sys-color-outline-variant: #43474E;
-  --md-sys-color-error: #FFB4AB;
-  --md-sys-color-on-error: #690005;
-  --md-sys-color-scrim: rgba(0, 0, 0, 0.65);
+  --app-status-success: #7fb89a;
+  --app-status-success-bg: rgba(127, 184, 154, 0.14);
+  --app-status-warning: #d9b25c;
+  --app-status-warning-bg: rgba(217, 178, 92, 0.14);
+  --app-status-error: #e08277;
+  --app-status-error-bg: rgba(224, 130, 119, 0.16);
+
+  --md-sys-color-primary: #e9e8e4;
+  --md-sys-color-on-primary: #1a1a1c;
+  --md-sys-color-primary-container: #32333a;
+  --md-sys-color-on-primary-container: #e9e8e4;
+  --md-sys-color-surface: #16171a;
+  --md-sys-color-on-surface: #e9e8e4;
+  --md-sys-color-surface-container: #1e1f23;
+  --md-sys-color-surface-container-high: #26272b;
+  --md-sys-color-on-surface-variant: #b4b4b0;
+  --md-sys-color-outline: #7c7d80;
+  --md-sys-color-outline-variant: #383940;
+  --md-sys-color-error: #e08277;
+  --md-sys-color-on-error: #2a0d0a;
+  --md-sys-color-scrim: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
 }
 
-@font-face {
-  font-family: "Nunito";
-  font-style: normal;
-  font-weight: 400;
-  src: local(""), url("assets/fonts/nunito-v16-latin-regular.woff2") format("woff2");
-}
-
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.6;
   background-color: var(--app-surface-base);
   color: var(--app-text-main);
   user-select: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 #app {
@@ -145,18 +165,49 @@ html, body {
 }
 
 /* ========================================================
-   桌面端全域统一按钮标准规范 (Unified Button Standards)
-   规范标准高度 36px、紧凑高度 32px、圆角 10px、字号 13px
+   排版基元：宋体承担标题与品牌，等宽承担机器串
    ======================================================== */
+.font-serif {
+  font-family: var(--font-serif);
+  letter-spacing: 0.01em;
+}
+.font-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* 页面题：宋体，中量字重 */
+.page-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  color: var(--app-text-main);
+}
+/* 小节题：宋体，用于面板内分节与面板标题 */
+.section-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  color: var(--app-text-main);
+}
+/* 弱化小标签（散排，不用全大写） */
+.label-quiet {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--app-text-muted);
+}
 
 /* ========================================================
-   桌面端全域统一按钮标准规范 (Unified Button Standards)
-   - 标准尺寸: 高 36px、圆角 10px、字号 13px、字重 600、图标 16px、内边距 0 16px
-   - 紧凑尺寸: 高 32px、圆角 8px、字号 12px、字重 600、图标 14px、内边距 0 12px
-   - 图标按钮: 32x32px 正方、圆角 8px、图标 16px/14px
-   - 胶囊按钮: 高 30px、圆角 8px、字号 12px、字重 600、内边距 0 12px
+   统一按钮规范（墨朱体系）
+   - 标准 34px / 圆角 6px / 字号 13px / 字重 600
+   - 紧凑 30px / 圆角 6px / 字号 12px
+   - 图标钮 30x30 / 圆角 6px
+   - 胶囊 chip 28px / 圆角 6px
+   - 一律无阴影；主操作 = 墨底
    ======================================================== */
-
 .app-btn-base,
 .app-btn-primary,
 .app-btn-secondary,
@@ -169,9 +220,9 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 10px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 6px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -181,7 +232,7 @@ html, body {
   cursor: pointer;
   flex-shrink: 0;
   box-sizing: border-box;
-  transition: all 150ms ease;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
   outline: none;
 }
 
@@ -193,12 +244,11 @@ html, body {
 .app-btn-tonal:disabled,
 .app-btn-compact:disabled,
 .app-btn-chip:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-/* 确保按钮内 SVG 与文本保持严格同轴垂直居中 */
 .app-btn-base svg,
 .app-btn-primary svg,
 .app-btn-secondary svg,
@@ -212,22 +262,22 @@ html, body {
   flex-shrink: 0;
 }
 
-/* 1. 主操作按钮 (Primary Filled) */
+/* 1. 主操作（墨底） */
 .app-btn-primary {
   background-color: var(--app-brand-primary);
-  color: #ffffff;
-  border: 1px solid transparent;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: var(--app-surface-card);
+  border: 1px solid var(--app-brand-primary);
 }
 .app-btn-primary:hover:not(:disabled) {
   background-color: var(--app-brand-primary-hover);
+  border-color: var(--app-brand-primary-hover);
 }
 :root[data-theme="dark"] .app-btn-primary,
 .dark .app-btn-primary {
-  color: #003258;
+  color: #1a1a1c;
 }
 
-/* 2. 次级线框按钮 (Secondary Outlined) */
+/* 2. 次级（发丝线框） */
 .app-btn-secondary {
   background-color: transparent;
   color: var(--app-text-main);
@@ -237,52 +287,49 @@ html, body {
   background-color: var(--app-surface-hover);
 }
 
-/* 3. 柔和色调按钮 (Tonal / Brand Container) */
+/* 3. 柔和（墨调底） */
 .app-btn-tonal {
   background-color: var(--app-brand-container);
   color: var(--app-brand-on-container);
   border: 1px solid transparent;
 }
 .app-btn-tonal:hover:not(:disabled) {
-  filter: brightness(0.95);
+  filter: brightness(0.97);
 }
 :root[data-theme="dark"] .app-btn-tonal:hover:not(:disabled),
 .dark .app-btn-tonal:hover:not(:disabled) {
-  filter: brightness(1.2);
+  filter: brightness(1.15);
 }
 
-/* 4. 危险警示操作按钮 (Danger Filled) */
+/* 4. 危险（朱底：受白名单允许的危险操作） */
 .app-btn-danger {
-  background-color: var(--app-status-error);
-  color: #ffffff;
-  border: 1px solid transparent;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  background-color: var(--app-accent-seal);
+  color: #fff;
+  border: 1px solid var(--app-accent-seal);
 }
 .app-btn-danger:hover:not(:disabled) {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
 }
 
-/* 5. 告警确认操作按钮 (Warning Filled) */
+/* 5. 告警 */
 .app-btn-warning {
   background-color: var(--app-status-warning);
-  color: #ffffff;
-  border: 1px solid transparent;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: #fff;
+  border: 1px solid var(--app-status-warning);
 }
 .app-btn-warning:hover:not(:disabled) {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
 }
 
-/* 6. 紧凑型按钮规格 (Compact - 32px) */
+/* 6. 紧凑 30px */
 .app-btn-compact {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 8px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 6px;
   font-size: 12px;
   line-height: 18px;
   gap: 5px;
 }
-/* 若未指定变体直接使用 app-btn-compact，默认应用 secondary 外观保障安全退避 */
 button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-warning):not(.app-btn-tonal) {
   background-color: transparent;
   color: var(--app-text-main);
@@ -292,22 +339,22 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
   background-color: var(--app-surface-hover);
 }
 
-/* 7. 图标操作按钮 (Icon Button - 32x32px 正方形) */
+/* 7. 图标钮 30x30 */
 .app-btn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   border: 1px solid var(--app-surface-border);
   color: var(--app-text-sub);
   cursor: pointer;
   flex-shrink: 0;
   box-sizing: border-box;
-  transition: all 150ms ease;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
   outline: none;
 }
 .app-btn-icon:hover:not(:disabled) {
@@ -319,23 +366,23 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
   cursor: not-allowed;
 }
 .app-btn-icon-danger:hover:not(:disabled) {
-  background-color: var(--app-status-error-bg);
-  color: var(--app-status-error);
-  border-color: var(--app-status-error);
+  background-color: var(--app-accent-seal-bg);
+  color: var(--app-accent-seal);
+  border-color: var(--app-accent-seal);
 }
 
-/* 8. 过滤器与切换胶囊按钮 (Filter / Pill Chip - 30px) */
+/* 8. 过滤胶囊 28px */
 .app-btn-chip {
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 8px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   line-height: 18px;
   gap: 4px;
-  background-color: var(--app-surface-card-sub);
+  background-color: transparent;
   color: var(--app-text-sub);
-  border: 1px solid var(--app-surface-border-sub);
+  border: 1px solid var(--app-surface-border);
 }
 .app-btn-chip:hover:not(:disabled) {
   background-color: var(--app-surface-hover);
@@ -344,51 +391,114 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
 .app-btn-chip.active,
 .app-btn-chip[data-active="true"] {
   background-color: var(--app-brand-primary);
-  color: #ffffff;
-  border-color: transparent;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  color: var(--app-surface-card);
+  border-color: var(--app-brand-primary);
 }
 :root[data-theme="dark"] .app-btn-chip.active,
 :root[data-theme="dark"] .app-btn-chip[data-active="true"],
 .dark .app-btn-chip.active,
 .dark .app-btn-chip[data-active="true"] {
-  color: #003258;
+  color: #1a1a1c;
 }
 
+/* ========================================================
+   面板 / 表格 / 输入 通用基元（无阴影，发丝线分层）
+   ======================================================== */
+.app-panel {
+  background-color: var(--app-surface-card);
+  border: 1px solid var(--app-surface-border);
+  border-radius: 6px;
+}
+.app-hairline {
+  border-color: var(--app-surface-border);
+}
+
+/* 数据表：发丝行、等宽机器列 */
+.app-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.app-table thead th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-text-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--app-surface-border);
+  white-space: nowrap;
+}
+.app-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--app-surface-border-sub);
+  color: var(--app-text-sub);
+  vertical-align: middle;
+}
+.app-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.app-table tbody tr:hover td {
+  background-color: var(--app-surface-hover);
+}
+
+/* Material Web 组件随墨朱体系收圆角、换主色 */
 md-dialog {
-  --md-dialog-container-shape: 20px;
+  --md-dialog-container-shape: 8px;
   --md-dialog-container-color: var(--app-surface-card);
   --md-sys-color-surface-container-high: var(--app-surface-card);
-  font-family: inherit;
+  font-family: var(--font-sans);
 }
-
 md-outlined-text-field,
 md-outlined-select {
-  --md-outlined-text-field-container-shape: 10px;
-  --md-outlined-select-text-field-container-shape: 10px;
+  --md-outlined-text-field-container-shape: 6px;
+  --md-outlined-select-text-field-container-shape: 6px;
   --md-sys-color-primary: var(--app-brand-primary);
-  font-family: inherit;
+  font-family: var(--font-sans);
 }
-
 md-switch {
   --md-sys-color-primary: var(--app-brand-primary);
 }
 
-/* 自定义极简滚动条 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* 焦点环：朱色，仅键盘可见 */
+:focus-visible {
+  outline: 2px solid var(--app-accent-seal);
+  outline-offset: 2px;
 }
 
+/* 极简滚动条（墨系中性灰） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(140, 150, 160, 0.25);
+  background: var(--app-surface-border);
   border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(140, 150, 160, 0.45);
+  background: var(--app-text-muted);
+}
+
+/* 实时圆点：亚秒级透明度呼吸，尊重减少动效偏好 */
+@keyframes seal-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.seal-pulse {
+  animation: seal-breathe 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .seal-pulse {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
 }
