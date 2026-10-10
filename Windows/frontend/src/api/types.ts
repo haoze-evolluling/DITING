@@ -271,10 +271,6 @@ export interface ConfigureLANRequest {
   configureFirewall?: boolean;
 }
 
-export interface ConfigureFirewallRequest {
-  enable: boolean;
-}
-
 export interface AuthStatusResponse {
   initialized: boolean;
   webEnabled: boolean;

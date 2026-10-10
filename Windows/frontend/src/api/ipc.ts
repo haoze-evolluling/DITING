@@ -416,10 +416,6 @@ class IPCService {
     });
   }
 
-  public async checkHostRule(domain: string, qtype: string | number = 'A'): Promise<CheckHostResult> {
-    return this.checkHost(domain, qtype);
-  }
-
   // --- 局域网 DNS 服务 ---
   public async getLANStatus(): Promise<LANStatusResponse> {
     return this.request<LANStatusResponse>('/api/v1/dns/lan');
