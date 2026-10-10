@@ -35,6 +35,7 @@ type PortChecker interface {
 	CheckPort53(ctx context.Context) (*PortCheckResult, error)
 	CheckPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*PortCheckResult, error)
 	AutofixPort53(ctx context.Context) (*PortCheckResult, error)
+	AutofixPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*PortCheckResult, error)
 }
 
 // WindowsPortChecker Windows 平台 53 端口占用与冲突检测器
@@ -145,21 +146,25 @@ func (c *WindowsPortChecker) CheckPort53ForAddresses(ctx context.Context, udpAdd
 		}, nil
 	}
 
-	hasOtherConflict := false
+	return evaluatePortAvailability(socketsFree, conflicts, hasICS, diag, udpAddrs, tcpAddrs), nil
+}
+
+func evaluatePortAvailability(socketsFree bool, conflicts []PortConflict, hasICS bool, diag string, udpAddrs, tcpAddrs []string) *PortCheckResult {
+	hasThirdPartyConflict := false
 	hasSelfListener := false
 	for _, conf := range conflicts {
 		if conf.IsSelf {
 			hasSelfListener = true
-		} else {
-			hasOtherConflict = true
+		} else if !conf.IsICS {
+			hasThirdPartyConflict = true
 		}
 	}
 
 	// 3. 依据 Real Socket Check 判定目标地址真实可用性与 Autofix 资格：
 	// - 若目标套接字绑定成功（socketsFree），或当前已被自身 PID 监听，则 available = true；
 	// - 若当前仅监听回环 (127.0.0.1)，且套接字真实测试绑定成功，不因后台存在 ICS 服务而一票否决；
-	// - 若套接字绑定失败（!socketsFree），且检测到 ICS 正在运行，判定为不可用且 canAutofix = true；
-	// - 若套接字绑定失败且非 ICS 造成，判定为不可用且 canAutofix = false。
+	// - 若套接字绑定失败（!socketsFree），且检测到 ICS 正在运行且无第三方冲突，判定为不可用且 canAutofix = true；
+	// - 若存在第三方程序占用，判定为不可用且 canAutofix = false。
 	available := false
 	canAutofix := false
 
@@ -171,14 +176,17 @@ func (c *WindowsPortChecker) CheckPort53ForAddresses(ctx context.Context, udpAdd
 		}
 	} else {
 		available = false
-		if hasICS {
+		if hasICS && !hasThirdPartyConflict {
 			canAutofix = true
 			if !isOnlyLoopback(udpAddrs, tcpAddrs) {
 				diag = fmt.Sprintf("当前启用了局域网共享监听 (0.0.0.0:53)，检测到 Windows 网络连接共享服务 (SharedAccess / ICS) 正在运行并占用了 0.0.0.0:53。\n排查建议：点击【一键自动修复并启动】自动停止并禁用 ICS 服务，或关闭局域网共享模式降级为仅本机回环监听。\n%s", diag)
 			} else {
 				diag = fmt.Sprintf("53 端口套接字绑定失败。检测到 Windows 网络连接共享服务 (SharedAccess / ICS) 正在运行。\n排查建议：点击【一键自动修复并启动】自动停止并禁用 ICS 服务后重试。\n%s", diag)
 			}
-		} else if hasOtherConflict {
+		} else if hasICS && hasThirdPartyConflict {
+			canAutofix = false
+			diag = fmt.Sprintf("53 端口同时被 Windows 网络连接共享服务 (SharedAccess / ICS) 与第三方外部程序占用。\n排查建议：需先在任务管理器中关闭占用 53 端口的外部程序并停止 ICS 服务。\n%s", diag)
+		} else if hasThirdPartyConflict {
 			canAutofix = false
 		}
 	}
@@ -189,7 +197,7 @@ func (c *WindowsPortChecker) CheckPort53ForAddresses(ctx context.Context, udpAdd
 		HasICS:     hasICS,
 		CanAutofix: canAutofix,
 		Diagnostic: diag,
-	}, nil
+	}
 }
 
 func isOnlyLoopback(udpAddrs, tcpAddrs []string) bool {

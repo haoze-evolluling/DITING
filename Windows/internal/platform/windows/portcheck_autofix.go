@@ -129,8 +129,13 @@ func StopAndDisableICSService(ctx context.Context, executor CommandExecutor) err
 	return nil
 }
 
-// AutofixPort53 执行 53 端口冲突自动修复并重新探测端口可用性
+// AutofixPort53 执行 53 端口冲突自动修复并重新探测默认回环地址可用性
 func (c *WindowsPortChecker) AutofixPort53(ctx context.Context) (*PortCheckResult, error) {
+	return c.AutofixPort53ForAddresses(ctx, []string{"127.0.0.1:53"}, []string{"127.0.0.1:53"})
+}
+
+// AutofixPort53ForAddresses 执行 53 端口冲突自动修复并重新探测指定目标地址的可用性
+func (c *WindowsPortChecker) AutofixPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*PortCheckResult, error) {
 	if err := StopAndDisableICSService(ctx, c.executor); err != nil {
 		return nil, err
 	}
@@ -142,5 +147,5 @@ func (c *WindowsPortChecker) AutofixPort53(ctx context.Context) (*PortCheckResul
 	case <-time.After(300 * time.Millisecond):
 	}
 
-	return c.CheckPort53(ctx)
+	return c.CheckPort53ForAddresses(ctx, udpAddrs, tcpAddrs)
 }

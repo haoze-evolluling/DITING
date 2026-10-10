@@ -14,6 +14,7 @@ import (
 	"github.com/haoze-evolluling/diting/windows/internal/config"
 	"github.com/haoze-evolluling/diting/windows/internal/core"
 	"github.com/haoze-evolluling/diting/windows/internal/ipc"
+	"github.com/haoze-evolluling/diting/windows/internal/platform/windows"
 	miekgdns "github.com/miekg/dns"
 )
 
@@ -483,6 +484,83 @@ func TestController_WebAndAuthIntegration(t *testing.T) {
 	// 密码修改后原 Token 应失效
 	if prg.ValidateSession(loginResp.Token) {
 		t.Errorf("old session token should be invalidated after password change")
+	}
+}
+
+type mockTestPortChecker struct {
+	checkResult   *windows.PortCheckResult
+	autofixResult *windows.PortCheckResult
+	autofixErr    error
+	lastUDPAddrs  []string
+	lastTCPAddrs  []string
+}
+
+func (m *mockTestPortChecker) CheckPort53(ctx context.Context) (*windows.PortCheckResult, error) {
+	return m.checkResult, nil
+}
+func (m *mockTestPortChecker) CheckPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*windows.PortCheckResult, error) {
+	m.lastUDPAddrs = udpAddrs
+	m.lastTCPAddrs = tcpAddrs
+	return m.checkResult, nil
+}
+func (m *mockTestPortChecker) AutofixPort53(ctx context.Context) (*windows.PortCheckResult, error) {
+	return m.autofixResult, m.autofixErr
+}
+func (m *mockTestPortChecker) AutofixPort53ForAddresses(ctx context.Context, udpAddrs, tcpAddrs []string) (*windows.PortCheckResult, error) {
+	m.lastUDPAddrs = udpAddrs
+	m.lastTCPAddrs = tcpAddrs
+	return m.autofixResult, m.autofixErr
+}
+
+func TestController_PortConflictsAndAutofix(t *testing.T) {
+	mockChecker := &mockTestPortChecker{
+		checkResult: &windows.PortCheckResult{
+			Available:  false,
+			HasICS:     true,
+			CanAutofix: true,
+			Diagnostic: "ICS conflict on 0.0.0.0:53",
+		},
+		autofixResult: &windows.PortCheckResult{
+			Available:  true,
+			HasICS:     false,
+			CanAutofix: false,
+			Diagnostic: "conflict resolved",
+		},
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.DNS.AllowLAN = true
+	cfg.DNS.UDPAddresses = []string{"0.0.0.0:53"}
+	cfg.DNS.TCPAddresses = []string{"0.0.0.0:53"}
+
+	prg := &program{
+		cfg:         cfg,
+		portChecker: mockChecker,
+	}
+	ctx := context.Background()
+
+	// 1. 测试 CheckPortConflicts 传递实际监听地址
+	res, err := prg.CheckPortConflicts(ctx)
+	if err != nil {
+		t.Fatalf("CheckPortConflicts error: %v", err)
+	}
+	if res.Available || !res.CanAutofix {
+		t.Errorf("expected Available=false, CanAutofix=true, got %+v", res)
+	}
+	if len(mockChecker.lastUDPAddrs) == 0 || mockChecker.lastUDPAddrs[0] != "0.0.0.0:53" {
+		t.Errorf("expected CheckPortConflicts to query 0.0.0.0:53, got %v", mockChecker.lastUDPAddrs)
+	}
+
+	// 2. 测试 AutofixPortConflicts 传递目标地址且成功修复
+	fixRes, err := prg.AutofixPortConflicts(ctx, false)
+	if err != nil {
+		t.Fatalf("AutofixPortConflicts error: %v", err)
+	}
+	if !fixRes.Available {
+		t.Errorf("expected Available=true after autofix, got %+v", fixRes)
+	}
+	if len(mockChecker.lastUDPAddrs) == 0 || mockChecker.lastUDPAddrs[0] != "0.0.0.0:53" {
+		t.Errorf("expected AutofixPortConflicts to re-probe 0.0.0.0:53, got %v", mockChecker.lastUDPAddrs)
 	}
 }
 

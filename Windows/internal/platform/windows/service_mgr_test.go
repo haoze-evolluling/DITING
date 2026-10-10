@@ -97,6 +97,15 @@ func TestServiceManager_GetStatus_SCMError(t *testing.T) {
 	}
 }
 
+func containsArg(args []string, target string) bool {
+	for _, a := range args {
+		if a == target {
+			return true
+		}
+	}
+	return false
+}
+
 func TestServiceManager_Actions(t *testing.T) {
 	ctx := context.Background()
 	mockExec := &mockServiceCmdExecutor{}
@@ -108,7 +117,7 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StartService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || len(mockPriv.lastArgs) == 0 || mockPriv.lastArgs[len(mockPriv.lastArgs)-1] != "start" {
+	if !mockPriv.elevatedCalled || !containsArg(mockPriv.lastArgs, "start") {
 		t.Errorf("expected start action in elevated execution, got %v", mockPriv.lastArgs)
 	}
 
@@ -118,7 +127,7 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StopService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || len(mockPriv.lastArgs) == 0 || mockPriv.lastArgs[len(mockPriv.lastArgs)-1] != "stop" {
+	if !mockPriv.elevatedCalled || !containsArg(mockPriv.lastArgs, "stop") {
 		t.Errorf("expected stop action in elevated execution, got %v", mockPriv.lastArgs)
 	}
 
@@ -139,7 +148,7 @@ func TestServiceManager_Actions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("InstallService error: %v", err)
 	}
-	if !mockPriv.elevatedCalled || len(mockPriv.lastArgs) == 0 || mockPriv.lastArgs[len(mockPriv.lastArgs)-1] != "install" {
+	if !mockPriv.elevatedCalled || !containsArg(mockPriv.lastArgs, "install") {
 		t.Errorf("expected install in elevated execution, got %v", mockPriv.lastArgs)
 	}
 

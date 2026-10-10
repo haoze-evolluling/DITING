@@ -446,20 +446,35 @@ func (p *program) getFilterStatsSnapshot() core.FilterStats {
 // CheckPortConflicts 实现 ServiceController 接口
 func (p *program) CheckPortConflicts(ctx context.Context) (*windows.PortCheckResult, error) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 	if p.portChecker == nil {
+		p.mu.Unlock()
 		return nil, fmt.Errorf("端口检测器未初始化")
 	}
-	udpAddrs, tcpAddrs := p.cfg.DNS.EffectiveListenAddresses()
-	return p.portChecker.CheckPort53ForAddresses(ctx, udpAddrs, tcpAddrs)
+	var udpAddrs, tcpAddrs []string
+	if p.cfg != nil {
+		udpAddrs, tcpAddrs = p.cfg.DNS.EffectiveListenAddresses()
+	}
+	portChecker := p.portChecker
+	p.mu.Unlock()
+
+	return portChecker.CheckPort53ForAddresses(ctx, udpAddrs, tcpAddrs)
 }
 
 // AutofixPortConflicts 实现 ServiceController 接口，自动停止/禁用 ICS 并可选拉起 DNS
 func (p *program) AutofixPortConflicts(ctx context.Context, startDNS bool) (*windows.PortCheckResult, error) {
+	p.mu.Lock()
 	if p.portChecker == nil {
+		p.mu.Unlock()
 		return nil, fmt.Errorf("端口检测器未初始化")
 	}
-	res, err := p.portChecker.AutofixPort53(ctx)
+	var udpAddrs, tcpAddrs []string
+	if p.cfg != nil {
+		udpAddrs, tcpAddrs = p.cfg.DNS.EffectiveListenAddresses()
+	}
+	portChecker := p.portChecker
+	p.mu.Unlock()
+
+	res, err := portChecker.AutofixPort53ForAddresses(ctx, udpAddrs, tcpAddrs)
 	if err != nil {
 		return res, fmt.Errorf("自动修复端口冲突失败: %w", err)
 	}
