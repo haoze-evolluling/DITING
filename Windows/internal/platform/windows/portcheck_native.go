@@ -192,54 +192,17 @@ func getPort53ListenersNative() ([]nativePortListener, error) {
 	procMap := getProcessNameMapNative()
 	var listeners []nativePortListener
 
-	// 1. IPv4 TCP
-	tcp4, err := getTCP4Listeners(53)
-	if err == nil {
-		for _, item := range tcp4 {
-			listeners = append(listeners, nativePortListener{
-				Protocol:     "TCP",
-				LocalAddress: item.addr,
-				PID:          item.pid,
-				ProcessName:  procMap[item.pid],
-			})
+	for _, t := range port53Tables {
+		rows, err := walkPortTable(t.spec, 53)
+		if err != nil {
+			continue
 		}
-	}
-
-	// 2. IPv6 TCP
-	tcp6, err := getTCP6Listeners(53)
-	if err == nil {
-		for _, item := range tcp6 {
+		for _, row := range rows {
 			listeners = append(listeners, nativePortListener{
-				Protocol:     "TCP",
-				LocalAddress: item.addr,
-				PID:          item.pid,
-				ProcessName:  procMap[item.pid],
-			})
-		}
-	}
-
-	// 3. IPv4 UDP
-	udp4, err := getUDP4Listeners(53)
-	if err == nil {
-		for _, item := range udp4 {
-			listeners = append(listeners, nativePortListener{
-				Protocol:     "UDP",
-				LocalAddress: item.addr,
-				PID:          item.pid,
-				ProcessName:  procMap[item.pid],
-			})
-		}
-	}
-
-	// 4. IPv6 UDP
-	udp6, err := getUDP6Listeners(53)
-	if err == nil {
-		for _, item := range udp6 {
-			listeners = append(listeners, nativePortListener{
-				Protocol:     "UDP",
-				LocalAddress: item.addr,
-				PID:          item.pid,
-				ProcessName:  procMap[item.pid],
+				Protocol:     t.protocol,
+				LocalAddress: row.addr,
+				PID:          row.pid,
+				ProcessName:  procMap[row.pid],
 			})
 		}
 	}
@@ -252,11 +215,40 @@ type rawListener struct {
 	pid  int
 }
 
+// portTableSpec 描述一张 MIB 端口表（GetExtendedTcpTable/UdpTable）的内存布局
+type portTableSpec struct {
+	proc        *windows.LazyProc
+	family      uintptr // AF_INET / AF_INET6
+	class       uintptr // TCP_TABLE_OWNER_PID_ALL / UDP_TABLE_OWNER_PID
+	rowSize     int
+	addrOffset  int
+	portOffset  int
+	pidOffset   int
+	stateOffset int
+	hasState    bool
+	ipv6        bool
+}
+
+// port53Table 一张 MIB 表与其对应的协议标签
+type port53Table struct {
+	protocol string
+	spec     portTableSpec
+}
+
+// port53Tables 探测 53 端口占用所需的四张原生 MIB 表
+var port53Tables = []port53Table{
+	{"TCP", portTableSpec{proc: procGetExtendedTcpTable, family: afInet, class: tcpTableOwnerPidAll, rowSize: 24, addrOffset: 4, portOffset: 8, pidOffset: 20, stateOffset: 0, hasState: true}},
+	{"TCP", portTableSpec{proc: procGetExtendedTcpTable, family: afInet6, class: tcpTableOwnerPidAll, rowSize: 56, addrOffset: 0, portOffset: 20, pidOffset: 52, stateOffset: 48, hasState: true, ipv6: true}},
+	{"UDP", portTableSpec{proc: procGetExtendedUdpTable, family: afInet, class: udpTableOwnerPid, rowSize: 12, addrOffset: 0, portOffset: 4, pidOffset: 8}},
+	{"UDP", portTableSpec{proc: procGetExtendedUdpTable, family: afInet6, class: udpTableOwnerPid, rowSize: 28, addrOffset: 0, portOffset: 20, pidOffset: 24, ipv6: true}},
+}
+
 func parsePort(dwPort uint32) uint16 {
 	return binary.BigEndian.Uint16([]byte{byte(dwPort), byte(dwPort >> 8)})
 }
 
-func getTCP4Listeners(targetPort uint16) ([]rawListener, error) {
+// fetchMIBSyscall 按需扩容调用 MIB 查询过程，返回原始表缓冲区
+func fetchMIBSyscall(proc *windows.LazyProc, family, class uintptr) ([]byte, error) {
 	var size uint32
 	var buf []byte
 	var ret uintptr
@@ -265,7 +257,7 @@ func getTCP4Listeners(targetPort uint16) ([]rawListener, error) {
 		if len(buf) > 0 {
 			p = unsafe.Pointer(&buf[0])
 		}
-		r, _, _ := procGetExtendedTcpTable.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet), uintptr(tcpTableOwnerPidAll), 0)
+		r, _, _ := proc.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, family, class, 0)
 		ret = r
 		if ret == 0 {
 			break
@@ -278,184 +270,49 @@ func getTCP4Listeners(targetPort uint16) ([]rawListener, error) {
 	if ret != 0 || len(buf) < 4 {
 		return nil, nil
 	}
+	return buf, nil
+}
+
+// walkPortTable 通用遍历一张 MIB 端口表，提取监听 targetPort 的端点
+func walkPortTable(spec portTableSpec, targetPort uint16) ([]rawListener, error) {
+	buf, err := fetchMIBSyscall(spec.proc, spec.family, spec.class)
+	if err != nil || buf == nil {
+		return nil, err
+	}
 
 	numEntries := binary.LittleEndian.Uint32(buf[0:4])
-	offset := 4
-	rowSize := 24
 	var res []rawListener
-
+	offset := 4
 	for i := uint32(0); i < numEntries; i++ {
-		if offset+rowSize > len(buf) {
+		if offset+spec.rowSize > len(buf) {
 			break
 		}
-		row := buf[offset : offset+rowSize]
-		state := binary.LittleEndian.Uint32(row[0:4])
-		localAddrRaw := binary.LittleEndian.Uint32(row[4:8])
-		localPortRaw := binary.LittleEndian.Uint32(row[8:12])
-		owningPid := binary.LittleEndian.Uint32(row[20:24])
-		offset += rowSize
+		row := buf[offset : offset+spec.rowSize]
+		offset += spec.rowSize
 
-		port := parsePort(localPortRaw)
-		if port == targetPort && state == mibTcpStateListen {
-			ip := net.IPv4(byte(localAddrRaw), byte(localAddrRaw>>8), byte(localAddrRaw>>16), byte(localAddrRaw>>24))
-			res = append(res, rawListener{
-				addr: fmt.Sprintf("%s:%d", ip.String(), port),
-				pid:  int(owningPid),
-			})
+		if spec.hasState && binary.LittleEndian.Uint32(row[spec.stateOffset:spec.stateOffset+4]) != mibTcpStateListen {
+			continue
 		}
+		port := parsePort(binary.LittleEndian.Uint32(row[spec.portOffset : spec.portOffset+4]))
+		if port != targetPort {
+			continue
+		}
+
+		res = append(res, rawListener{
+			addr: fmt.Sprintf("%s:%d", decodeRowAddr(row, spec), port),
+			pid:  int(binary.LittleEndian.Uint32(row[spec.pidOffset : spec.pidOffset+4])),
+		})
 	}
 	return res, nil
 }
 
-func getTCP6Listeners(targetPort uint16) ([]rawListener, error) {
-	var size uint32
-	var buf []byte
-	var ret uintptr
-	for i := 0; i < 5; i++ {
-		var p unsafe.Pointer
-		if len(buf) > 0 {
-			p = unsafe.Pointer(&buf[0])
-		}
-		r, _, _ := procGetExtendedTcpTable.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet6), uintptr(tcpTableOwnerPidAll), 0)
-		ret = r
-		if ret == 0 {
-			break
-		}
-		if ret != uintptr(windows.ERROR_INSUFFICIENT_BUFFER) {
-			return nil, syscall.Errno(ret)
-		}
-		buf = make([]byte, size)
-	}
-	if ret != 0 || len(buf) < 4 {
-		return nil, nil
-	}
-
-	numEntries := binary.LittleEndian.Uint32(buf[0:4])
-	offset := 4
-	rowSize := 56
-	var res []rawListener
-
-	for i := uint32(0); i < numEntries; i++ {
-		if offset+rowSize > len(buf) {
-			break
-		}
-		row := buf[offset : offset+rowSize]
+// decodeRowAddr 解析端点地址（MIB 中 IPv4 为 4 字节小端，IPv6 为 16 字节原始序）
+func decodeRowAddr(row []byte, spec portTableSpec) string {
+	if spec.ipv6 {
 		var ipBytes [16]byte
-		copy(ipBytes[:], row[0:16])
-		localPortRaw := binary.LittleEndian.Uint32(row[20:24])
-		state := binary.LittleEndian.Uint32(row[48:52])
-		owningPid := binary.LittleEndian.Uint32(row[52:56])
-		offset += rowSize
-
-		port := parsePort(localPortRaw)
-		if port == targetPort && state == mibTcpStateListen {
-			ip := net.IP(ipBytes[:])
-			res = append(res, rawListener{
-				addr: fmt.Sprintf("%s:%d", ip.String(), port),
-				pid:  int(owningPid),
-			})
-		}
+		copy(ipBytes[:], row[spec.addrOffset:spec.addrOffset+16])
+		return net.IP(ipBytes[:]).String()
 	}
-	return res, nil
-}
-
-func getUDP4Listeners(targetPort uint16) ([]rawListener, error) {
-	var size uint32
-	var buf []byte
-	var ret uintptr
-	for i := 0; i < 5; i++ {
-		var p unsafe.Pointer
-		if len(buf) > 0 {
-			p = unsafe.Pointer(&buf[0])
-		}
-		r, _, _ := procGetExtendedUdpTable.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet), uintptr(udpTableOwnerPid), 0)
-		ret = r
-		if ret == 0 {
-			break
-		}
-		if ret != uintptr(windows.ERROR_INSUFFICIENT_BUFFER) {
-			return nil, syscall.Errno(ret)
-		}
-		buf = make([]byte, size)
-	}
-	if ret != 0 || len(buf) < 4 {
-		return nil, nil
-	}
-
-	numEntries := binary.LittleEndian.Uint32(buf[0:4])
-	offset := 4
-	rowSize := 12
-	var res []rawListener
-
-	for i := uint32(0); i < numEntries; i++ {
-		if offset+rowSize > len(buf) {
-			break
-		}
-		row := buf[offset : offset+rowSize]
-		localAddrRaw := binary.LittleEndian.Uint32(row[0:4])
-		localPortRaw := binary.LittleEndian.Uint32(row[4:8])
-		owningPid := binary.LittleEndian.Uint32(row[8:12])
-		offset += rowSize
-
-		port := parsePort(localPortRaw)
-		if port == targetPort {
-			ip := net.IPv4(byte(localAddrRaw), byte(localAddrRaw>>8), byte(localAddrRaw>>16), byte(localAddrRaw>>24))
-			res = append(res, rawListener{
-				addr: fmt.Sprintf("%s:%d", ip.String(), port),
-				pid:  int(owningPid),
-			})
-		}
-	}
-	return res, nil
-}
-
-func getUDP6Listeners(targetPort uint16) ([]rawListener, error) {
-	var size uint32
-	var buf []byte
-	var ret uintptr
-	for i := 0; i < 5; i++ {
-		var p unsafe.Pointer
-		if len(buf) > 0 {
-			p = unsafe.Pointer(&buf[0])
-		}
-		r, _, _ := procGetExtendedUdpTable.Call(uintptr(p), uintptr(unsafe.Pointer(&size)), 0, uintptr(afInet6), uintptr(udpTableOwnerPid), 0)
-		ret = r
-		if ret == 0 {
-			break
-		}
-		if ret != uintptr(windows.ERROR_INSUFFICIENT_BUFFER) {
-			return nil, syscall.Errno(ret)
-		}
-		buf = make([]byte, size)
-	}
-	if ret != 0 || len(buf) < 4 {
-		return nil, nil
-	}
-
-	numEntries := binary.LittleEndian.Uint32(buf[0:4])
-	offset := 4
-	rowSize := 28
-	var res []rawListener
-
-	for i := uint32(0); i < numEntries; i++ {
-		if offset+rowSize > len(buf) {
-			break
-		}
-		row := buf[offset : offset+rowSize]
-		var ipBytes [16]byte
-		copy(ipBytes[:], row[0:16])
-		localPortRaw := binary.LittleEndian.Uint32(row[20:24])
-		owningPid := binary.LittleEndian.Uint32(row[24:28])
-		offset += rowSize
-
-		port := parsePort(localPortRaw)
-		if port == targetPort {
-			ip := net.IP(ipBytes[:])
-			res = append(res, rawListener{
-				addr: fmt.Sprintf("%s:%d", ip.String(), port),
-				pid:  int(owningPid),
-			})
-		}
-	}
-	return res, nil
+	raw := binary.LittleEndian.Uint32(row[spec.addrOffset : spec.addrOffset+4])
+	return net.IPv4(byte(raw), byte(raw>>8), byte(raw>>16), byte(raw>>24)).String()
 }
