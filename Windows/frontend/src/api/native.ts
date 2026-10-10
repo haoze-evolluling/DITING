@@ -6,7 +6,6 @@ declare global {
     go?: {
       main?: {
         App?: {
-          Greet?: (name: string) => Promise<string>;
           RunEmergencyRestore?: () => Promise<string>;
           IsAutoStartEnabled?: () => Promise<boolean>;
           SetAutoStart?: (enable: boolean) => Promise<boolean>;
@@ -55,20 +54,6 @@ export class NativeBridgeService {
   }
 
   public async getCoreServiceStatus(): Promise<CoreServiceStatus> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      const mockState = (window as any).__mockCoreServiceStatus || {
-        installed: true,
-        running: true,
-        state: 'running',
-        stateText: '运行中',
-        executablePath: 'C:\\Program Files\\Diting\\谛听 DNS\\diting-service.exe',
-        isElevated: false,
-        canInstall: true,
-        message: '核心服务正常运行中。',
-      };
-      return mockState;
-    }
-
     if (window.go?.main?.App?.GetCoreServiceStatus) {
       try {
         const res = await window.go.main.App.GetCoreServiceStatus();
@@ -91,14 +76,6 @@ export class NativeBridgeService {
   }
 
   public async startCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.running = true;
-        (window as any).__mockCoreServiceStatus.state = 'running';
-        (window as any).__mockCoreServiceStatus.stateText = '运行中';
-      }
-      return '后台核心服务已成功启动！';
-    }
     if (window.go?.main?.App?.StartCoreService) {
       return await window.go.main.App.StartCoreService();
     }
@@ -106,14 +83,6 @@ export class NativeBridgeService {
   }
 
   public async stopCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.running = false;
-        (window as any).__mockCoreServiceStatus.state = 'stopped';
-        (window as any).__mockCoreServiceStatus.stateText = '已停止';
-      }
-      return '后台核心服务已停止。';
-    }
     if (window.go?.main?.App?.StopCoreService) {
       return await window.go.main.App.StopCoreService();
     }
@@ -121,9 +90,6 @@ export class NativeBridgeService {
   }
 
   public async restartCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      return '后台核心服务已成功重启！';
-    }
     if (window.go?.main?.App?.RestartCoreService) {
       return await window.go.main.App.RestartCoreService();
     }
@@ -131,14 +97,6 @@ export class NativeBridgeService {
   }
 
   public async installCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.installed = true;
-        (window as any).__mockCoreServiceStatus.state = 'stopped';
-        (window as any).__mockCoreServiceStatus.stateText = '已停止';
-      }
-      return '后台核心服务已成功安装！';
-    }
     if (window.go?.main?.App?.InstallCoreService) {
       return await window.go.main.App.InstallCoreService();
     }
@@ -146,15 +104,6 @@ export class NativeBridgeService {
   }
 
   public async installAndStartCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.installed = true;
-        (window as any).__mockCoreServiceStatus.running = true;
-        (window as any).__mockCoreServiceStatus.state = 'running';
-        (window as any).__mockCoreServiceStatus.stateText = '运行中';
-      }
-      return '后台核心服务已成功安装并启动！';
-    }
     if (window.go?.main?.App?.InstallAndStartCoreService) {
       return await window.go.main.App.InstallAndStartCoreService();
     }
@@ -162,15 +111,6 @@ export class NativeBridgeService {
   }
 
   public async uninstallCoreService(): Promise<string> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      if ((window as any).__mockCoreServiceStatus) {
-        (window as any).__mockCoreServiceStatus.installed = false;
-        (window as any).__mockCoreServiceStatus.running = false;
-        (window as any).__mockCoreServiceStatus.state = 'not_installed';
-        (window as any).__mockCoreServiceStatus.stateText = '未安装';
-      }
-      return '后台核心服务已成功卸载。';
-    }
     if (window.go?.main?.App?.UninstallCoreService) {
       return await window.go.main.App.UninstallCoreService();
     }

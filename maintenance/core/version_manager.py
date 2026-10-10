@@ -34,7 +34,6 @@ def get_file_targets() -> List[Dict[str, str]]:
         {"name": "NSIS 主配置", "path": os.path.join(windows, "build", "windows", "installer", "project.nsi"), "type": "nsi"},
         {"name": "Wails 配置", "path": os.path.join(windows, "wails.json"), "type": "wails"},
         {"name": "前端 package.json", "path": os.path.join(frontend, "package.json"), "type": "pkg"},
-        {"name": "前端 Mock 数据", "path": os.path.join(frontend, "src", "api", "mock.ts"), "type": "mock"},
     ]
 
 
@@ -68,9 +67,6 @@ def extract_version(item: Dict[str, str]) -> str:
     elif ftype == "pkg":
         m = re.search(r'"version":\s*"([^"]+)"', content)
         if m: return m.group(1)
-    elif ftype == "mock":
-        m = re.search(r"mockStatus:\s*StatusResponse\s*=\s*\{[\s\S]*?version:\s*'([^']+)'", content)
-        if m: return m.group(1)
 
     return "未知"
 
@@ -88,11 +84,6 @@ def replace_version_content(content: str, ftype: str, new_ver: str) -> Tuple[str
         if n > 0: return new_content, True
     elif ftype == "pkg":
         new_content, n = re.subn(r'("version":\s*")[^"]+(")', rf'\g<1>{new_ver}\g<2>', content)
-        if n > 0: return new_content, True
-    elif ftype == "mock":
-        pattern = r"(mockStatus:\s*StatusResponse\s*=\s*\{[\s\S]*?version:\s*')[^']+'"
-        replacement = rf"\g<1>{new_ver}'"
-        new_content, n = re.subn(pattern, replacement, content)
         if n > 0: return new_content, True
 
     return content, False

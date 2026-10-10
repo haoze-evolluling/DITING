@@ -108,7 +108,7 @@ def capture_screenshots(
 
                 file_name = f"{t}_modal_alert.png" if item == "modal-alert" else f"{t}_tab_{item}.png"
                 out_path = os.path.join(output_dir, file_name)
-                target_url = f"{base_url}/?modal=alert&theme={t}" if item == "modal-alert" else f"{base_url}/?noalert=1&mock=1&theme={t}#/{item}"
+                target_url = f"{base_url}/?modal=alert&theme={t}" if item == "modal-alert" else f"{base_url}/?noalert=1&theme={t}#/{item}"
 
                 _log("info", f"截取界面 [{t}] -> {item}...")
 

@@ -27,7 +27,6 @@ import type {
   WebStatusResponse,
   ConfigureWebRequest,
 } from './types';
-import { handleMockRequest } from './mock';
 import { nativeBridge } from './native';
 
 class IPCService {
@@ -101,11 +100,6 @@ class IPCService {
   }
 
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      this.setConnected(true);
-      return handleMockRequest(path, options) as T;
-    }
-
     const url = `${this.baseURL}${path}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -170,9 +164,6 @@ class IPCService {
   }
 
   public connectWS() {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mock') === '1') {
-      return;
-    }
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
