@@ -115,6 +115,9 @@ func normalizeConfig(cfg *Config) {
 			{ID: "bs-dnspod", Name: "DNSPod", Address: "119.29.29.29:53", Weight: 1.0},
 		}
 	}
+	if cfg.Web.ListenPort <= 0 {
+		cfg.Web.ListenPort = 15353
+	}
 	core.NormalizeCacheConfig(&cfg.Cache)
 	core.NormalizeFilterConfig(&cfg.Filter)
 }

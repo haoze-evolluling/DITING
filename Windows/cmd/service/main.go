@@ -133,6 +133,13 @@ func (p *program) run() error {
 		port := p.effectiveWebPort()
 		ipcListen = fmt.Sprintf("0.0.0.0:%d", port)
 		p.cfg.IPC.ListenAddress = ipcListen
+		go func(pt int) {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := windows.ConfigureFirewallPortWeb(ctx, executor, pt, true); err != nil {
+				log.Printf("[防火墙] 同步 Web 端口入站规则警告: %v\n", err)
+			}
+		}(port)
 	}
 	p.ipcServer = ipc.NewServer(ipcListen, cfg.IPC.AuthToken, p)
 	p.initAssetsForServer(p.ipcServer)

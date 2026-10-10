@@ -200,8 +200,8 @@ func DefaultConfig() *Config {
 		Cache:  core.DefaultCacheConfig(),
 		Filter: core.DefaultFilterConfig(),
 		Web: WebConfig{
-			Enabled:        false,
-			ListenPort:     0,
+			Enabled:        true,
+			ListenPort:     15353,
 			Username:       "admin",
 			PasswordHash:   "",
 			Salt:           "",

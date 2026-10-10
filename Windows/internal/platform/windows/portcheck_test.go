@@ -118,8 +118,15 @@ func TestWindowsPortChecker_RealSocketCheck(t *testing.T) {
 	}
 	t.Logf("LAN check: available=%v, hasICS=%v, canAutofix=%v", resLAN.Available, resLAN.HasICS, resLAN.CanAutofix)
 	if resLAN.HasICS && !resLAN.Available {
-		if !resLAN.CanAutofix {
-			t.Errorf("expected CanAutofix=true when LAN port 53 is blocked by ICS")
+		hasNonICS := false
+		for _, c := range resLAN.Conflicts {
+			if !c.IsICS {
+				hasNonICS = true
+				break
+			}
+		}
+		if !hasNonICS && !resLAN.CanAutofix {
+			t.Errorf("expected CanAutofix=true when LAN port 53 is blocked solely by ICS")
 		}
 	}
 }

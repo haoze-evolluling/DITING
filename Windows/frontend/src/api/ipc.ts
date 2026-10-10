@@ -51,21 +51,30 @@ class IPCService {
 
   public loadConfig() {
     const isBrowser = typeof window !== 'undefined' && !window.go?.main?.App;
-    let defaultHost = '127.0.0.1';
-    let defaultPort = '15353';
-    if (isBrowser && window.location.hostname) {
-      defaultHost = window.location.hostname;
-      defaultPort = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-    }
-
-    const savedHost = localStorage.getItem('diting_ipc_host') || defaultHost;
-    const savedPort = localStorage.getItem('diting_ipc_port') || defaultPort;
     this.token = localStorage.getItem('diting_session_token') || localStorage.getItem('diting_ipc_token') || '';
-    const protocol = (typeof window !== 'undefined' && window.location.protocol === 'https:') ? 'https:' : 'http:';
-    this.baseURL = `${protocol}//${savedHost}:${savedPort}`;
+
+    if (isBrowser && window.location.hostname) {
+      const customHost = localStorage.getItem('diting_ipc_custom_host');
+      const customPort = localStorage.getItem('diting_ipc_custom_port');
+      if (customHost && customPort) {
+        const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+        this.baseURL = `${protocol}//${customHost}:${customPort}`;
+      } else {
+        this.baseURL = window.location.origin;
+      }
+    } else {
+      const savedHost = localStorage.getItem('diting_ipc_host') || '127.0.0.1';
+      const savedPort = localStorage.getItem('diting_ipc_port') || '15353';
+      this.baseURL = `http://${savedHost}:${savedPort}`;
+    }
   }
 
   public saveConfig(host: string, port: string, token: string) {
+    const isBrowser = typeof window !== 'undefined' && !window.go?.main?.App;
+    if (isBrowser) {
+      localStorage.setItem('diting_ipc_custom_host', host);
+      localStorage.setItem('diting_ipc_custom_port', port);
+    }
     localStorage.setItem('diting_ipc_host', host);
     localStorage.setItem('diting_ipc_port', port);
     localStorage.setItem('diting_ipc_token', token);
@@ -75,8 +84,15 @@ class IPCService {
   }
 
   public getConfig() {
-    const savedHost = localStorage.getItem('diting_ipc_host') || '127.0.0.1';
-    const savedPort = localStorage.getItem('diting_ipc_port') || '15353';
+    const isBrowser = typeof window !== 'undefined' && !window.go?.main?.App;
+    let defHost = '127.0.0.1';
+    let defPort = '15353';
+    if (isBrowser && window.location.hostname) {
+      defHost = window.location.hostname;
+      defPort = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+    }
+    const savedHost = localStorage.getItem('diting_ipc_custom_host') || localStorage.getItem('diting_ipc_host') || defHost;
+    const savedPort = localStorage.getItem('diting_ipc_custom_port') || localStorage.getItem('diting_ipc_port') || defPort;
     return {
       host: savedHost,
       port: savedPort,
@@ -163,8 +179,12 @@ class IPCService {
     if (this.isConnectingWS) return;
     this.isConnectingWS = true;
 
+    const isBrowser = typeof window !== 'undefined' && !window.go?.main?.App;
     const wsProtocol = this.baseURL.startsWith('https') ? 'wss' : 'ws';
-    const hostPort = this.baseURL.replace(/^https?:\/\//, '');
+    let hostPort = this.baseURL.replace(/^https?:\/\//, '');
+    if (isBrowser && !localStorage.getItem('diting_ipc_custom_host') && window.location.host) {
+      hostPort = window.location.host;
+    }
     let wsUrl = `${wsProtocol}://${hostPort}/api/v1/events`;
     if (this.token) {
       wsUrl += `?token=${encodeURIComponent(this.token)}`;

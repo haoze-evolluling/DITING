@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 
 	"github.com/haoze-evolluling/diting/windows/internal/config"
 	"github.com/haoze-evolluling/diting/windows/internal/ipc"
@@ -44,7 +45,7 @@ func (p *program) GetWebStatus(ctx context.Context) (*ipc.WebStatusResponse, err
 
 	var webURLs []string
 	for _, ip := range lanAddrs {
-		webURLs = append(webURLs, fmt.Sprintf("http://%s:%d", ip, effPort))
+		webURLs = append(webURLs, fmt.Sprintf("http://%s", net.JoinHostPort(ip, strconv.Itoa(effPort))))
 	}
 	if len(webURLs) == 0 {
 		webURLs = append(webURLs, fmt.Sprintf("http://127.0.0.1:%d", effPort))
@@ -75,6 +76,7 @@ func (p *program) GetWebStatus(ctx context.Context) (*ipc.WebStatusResponse, err
 func (p *program) ConfigureWeb(ctx context.Context, req ipc.ConfigureWebRequest) error {
 	p.mu.Lock()
 	wasEnabled := p.cfg.Web.Enabled
+	oldListenAddr := p.cfg.IPC.ListenAddress
 	p.cfg.Web.Enabled = req.Enabled
 	if req.Port > 0 {
 		p.cfg.Web.ListenPort = req.Port
@@ -85,11 +87,11 @@ func (p *program) ConfigureWeb(ctx context.Context, req ipc.ConfigureWebRequest)
 	}
 
 	// 动态调整 IPC 监听地址 (启用局域网 Web 时监听 0.0.0.0)
+	targetListenAddr := fmt.Sprintf("127.0.0.1:%d", port)
 	if req.Enabled {
-		p.cfg.IPC.ListenAddress = fmt.Sprintf("0.0.0.0:%d", port)
-	} else {
-		p.cfg.IPC.ListenAddress = fmt.Sprintf("127.0.0.1:%d", port)
+		targetListenAddr = fmt.Sprintf("0.0.0.0:%d", port)
 	}
+	p.cfg.IPC.ListenAddress = targetListenAddr
 
 	// 持久化保存配置
 	if err := config.SaveConfig(p.configPath, p.cfg); err != nil {
@@ -107,18 +109,29 @@ func (p *program) ConfigureWeb(ctx context.Context, req ipc.ConfigureWebRequest)
 		}
 	}
 
-	// 若运行状态或监听发生变化，平滑重启 IPC/Web 服务
-	if wasEnabled != req.Enabled && p.ipcServer != nil {
-		log.Printf("[Web] 正在平滑重启服务以应用新监听设置 (%s)...\n", p.cfg.IPC.ListenAddress)
-		_ = p.ipcServer.Shutdown(ctx)
-		newServer := ipc.NewServer(p.cfg.IPC.ListenAddress, p.cfg.IPC.AuthToken, p)
-		p.initAssetsForServer(newServer)
-		if err := newServer.Start(); err != nil {
-			log.Printf("[Web] 重启服务失败: %v\n", err)
-		} else {
-			p.ipcServer = newServer
-			log.Printf("[Web] 服务已成功平滑重启于: %s\n", newServer.Addr())
-		}
+	// 若运行状态或监听发生变化，在后台异步协程中平滑重启 IPC/Web 服务
+	// 避免在当前 HTTP 请求处理函数中同步 Shutdown 引发自死锁
+	if (wasEnabled != req.Enabled || oldListenAddr != targetListenAddr) && p.ipcServer != nil {
+		oldServer := p.ipcServer
+		go func(srv *ipc.Server, targetAddr string) {
+			// 短暂延时确保当前的 HTTP 响应已成功发送给客户端
+			time.Sleep(100 * time.Millisecond)
+			log.Printf("[Web] 正在平滑重启服务以应用新监听设置 (%s)...\n", targetAddr)
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			_ = srv.Shutdown(shutdownCtx)
+
+			newServer := ipc.NewServer(targetAddr, p.cfg.IPC.AuthToken, p)
+			p.initAssetsForServer(newServer)
+			if err := newServer.Start(); err != nil {
+				log.Printf("[Web] 重启服务失败: %v\n", err)
+			} else {
+				p.mu.Lock()
+				p.ipcServer = newServer
+				p.mu.Unlock()
+				log.Printf("[Web] 服务已成功平滑重启于: %s\n", newServer.Addr())
+			}
+		}(oldServer, targetListenAddr)
 	}
 
 	return nil
