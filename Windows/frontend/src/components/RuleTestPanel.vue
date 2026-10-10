@@ -38,15 +38,15 @@ async function runTest() {
         v-model="testDomain"
         placeholder="例如: ad.example.com"
         @keyup.enter="runTest"
-        class="flex-1 h-9 px-4 rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:border-accent-seal text-text-main placeholder:text-text-muted"
+        class="flex-1 h-[34px] px-3.5 rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:border-accent-seal text-text-main placeholder:text-text-muted"
       />
       <select
         v-model="testQType"
-        class="h-9 px-3 rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:border-accent-seal text-text-main"
+        class="h-[34px] px-3 rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:border-accent-seal text-text-main cursor-pointer"
       >
-        <option value="A">IPv4 地址 (A 记录)</option>
-        <option value="AAAA">IPv6 地址 (AAAA 记录)</option>
-        <option value="ANY">全部记录类型 (ANY)</option>
+        <option value="A" class="bg-surface-card text-text-main">IPv4 地址 (A 记录)</option>
+        <option value="AAAA" class="bg-surface-card text-text-main">IPv6 地址 (AAAA 记录)</option>
+        <option value="ANY" class="bg-surface-card text-text-main">全部记录类型 (ANY)</option>
       </select>
       <button type="button" @click="runTest" :disabled="testing || !testDomain.trim()" class="app-btn-primary">
         <M3Icon name="search" :size="16" />

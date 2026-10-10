@@ -58,13 +58,15 @@ async function handleAddList() {
 }
 
 async function toggleList(list: FilterList) {
+  const prevEnabled = list.enabled;
   try {
-    list.enabled = !list.enabled;
+    list.enabled = !prevEnabled;
     await ipc.updateFilterList(list);
     notify(`已${list.enabled ? '启用' : '停用'}规则库: ${list.name}`, false);
     await loadLists();
     emit('changed');
   } catch (err: any) {
+    list.enabled = prevEnabled;
     notify(err?.message || '切换规则库状态失败', true);
   }
 }
@@ -156,7 +158,7 @@ onMounted(loadLists);
           <input
             v-model="newListName"
             placeholder="例如: 广告拦截通用规则"
-            class="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:border-accent-seal"
+            class="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:border-accent-seal placeholder:text-text-muted"
           />
         </div>
         <div>
@@ -164,7 +166,7 @@ onMounted(loadLists);
           <input
             v-model="newListURL"
             placeholder="https://... 或本地文件路径"
-            class="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:border-accent-seal"
+            class="w-full px-3 py-2 rounded-md border border-surface-border bg-surface-card-sub text-text-main text-sm focus:outline-none focus:border-accent-seal placeholder:text-text-muted"
           />
         </div>
       </div>

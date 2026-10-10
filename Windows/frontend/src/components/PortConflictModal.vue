@@ -74,10 +74,10 @@ function handleClose() {
       <!-- 自动修复优先引导模块 -->
       <div
         v-if="isAutofixAvailable"
-        class="rounded-md border border-primary/25 bg-primary/5 dark:bg-primary/10 p-3.5 space-y-2.5"
+        class="rounded-md border border-brand-primary/25 bg-brand-container/50 p-3.5 space-y-2.5"
       >
         <div class="flex items-center justify-between gap-2 flex-wrap">
-          <div class="flex items-center gap-2 font-semibold text-primary">
+          <div class="flex items-center gap-2 font-semibold text-brand-primary">
             <M3Icon name="bolt" :size="18" />
             <span>推荐处置方案：一键自动修复</span>
           </div>

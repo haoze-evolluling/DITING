@@ -35,12 +35,9 @@
   --color-status-error-bg: var(--app-status-error-bg);
 
   /* 字体：宋体题、黑体文、等宽机器串 */
-  --font-serif: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC",
-    "SimSun", Georgia, serif;
-  --font-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui,
-    -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "Cascadia Mono", Consolas, ui-monospace, "SFMono-Regular",
-    Menlo, monospace;
+  --font-serif: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", "SimSun", Georgia, serif;
+  --font-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
 :root {
@@ -80,10 +77,15 @@
   --md-sys-color-on-primary: #ffffff;
   --md-sys-color-primary-container: #edeae2;
   --md-sys-color-on-primary-container: #1a1a1c;
+  --md-sys-color-secondary: #55565a;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #edeae2;
+  --md-sys-color-on-secondary-container: #1a1a1c;
   --md-sys-color-surface: #faf9f5;
   --md-sys-color-on-surface: #1a1a1c;
   --md-sys-color-surface-container: #ffffff;
   --md-sys-color-surface-container-high: #f1efe9;
+  --md-sys-color-surface-container-highest: #edebe3;
   --md-sys-color-on-surface-variant: #55565a;
   --md-sys-color-outline: #8a8b8e;
   --md-sys-color-outline-variant: #d9d6cc;
@@ -127,10 +129,15 @@
   --md-sys-color-on-primary: #1a1a1c;
   --md-sys-color-primary-container: #32333a;
   --md-sys-color-on-primary-container: #e9e8e4;
+  --md-sys-color-secondary: #b4b4b0;
+  --md-sys-color-on-secondary: #1a1a1c;
+  --md-sys-color-secondary-container: #32333a;
+  --md-sys-color-on-secondary-container: #e9e8e4;
   --md-sys-color-surface: #16171a;
   --md-sys-color-on-surface: #e9e8e4;
   --md-sys-color-surface-container: #1e1f23;
   --md-sys-color-surface-container-high: #26272b;
+  --md-sys-color-surface-container-highest: #26272b;
   --md-sys-color-on-surface-variant: #b4b4b0;
   --md-sys-color-outline: #7c7d80;
   --md-sys-color-outline-variant: #383940;
@@ -208,14 +215,8 @@ body {
    - 胶囊 chip 28px / 圆角 6px
    - 一律无阴影；主操作 = 墨底
    ======================================================== */
-.app-btn-base,
-.app-btn-primary,
-.app-btn-secondary,
-.app-btn-danger,
-.app-btn-warning,
-.app-btn-tonal,
-.app-btn-compact,
-.app-btn-chip {
+.app-btn-base, .app-btn-primary, .app-btn-secondary, .app-btn-danger,
+.app-btn-warning, .app-btn-tonal, .app-btn-compact, .app-btn-chip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -236,28 +237,17 @@ body {
   outline: none;
 }
 
-.app-btn-base:disabled,
-.app-btn-primary:disabled,
-.app-btn-secondary:disabled,
-.app-btn-danger:disabled,
-.app-btn-warning:disabled,
-.app-btn-tonal:disabled,
-.app-btn-compact:disabled,
-.app-btn-chip:disabled {
+.app-btn-base:disabled, .app-btn-primary:disabled, .app-btn-secondary:disabled,
+.app-btn-danger:disabled, .app-btn-warning:disabled, .app-btn-tonal:disabled,
+.app-btn-compact:disabled, .app-btn-chip:disabled {
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-.app-btn-base svg,
-.app-btn-primary svg,
-.app-btn-secondary svg,
-.app-btn-danger svg,
-.app-btn-warning svg,
-.app-btn-tonal svg,
-.app-btn-compact svg,
-.app-btn-icon svg,
-.app-btn-chip svg {
+.app-btn-base svg, .app-btn-primary svg, .app-btn-secondary svg,
+.app-btn-danger svg, .app-btn-warning svg, .app-btn-tonal svg,
+.app-btn-compact svg, .app-btn-icon svg, .app-btn-chip svg {
   display: block;
   flex-shrink: 0;
 }
@@ -441,10 +431,12 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
   background-color: var(--app-surface-hover);
 }
 
-/* Material Web 组件随墨朱体系收圆角、换主色 */
+/* Material Web 组件随墨朱体系收圆角、换主色并深度适配双主题 */
 md-dialog {
   --md-dialog-container-shape: 8px;
   --md-dialog-container-color: var(--app-surface-card);
+  --md-dialog-headline-color: var(--app-text-main);
+  --md-dialog-supporting-text-color: var(--app-text-sub);
   --md-sys-color-surface-container-high: var(--app-surface-card);
   font-family: var(--font-sans);
 }
@@ -452,11 +444,97 @@ md-outlined-text-field,
 md-outlined-select {
   --md-outlined-text-field-container-shape: 6px;
   --md-outlined-select-text-field-container-shape: 6px;
+  --md-outlined-field-container-shape: 6px;
   --md-sys-color-primary: var(--app-brand-primary);
+  --md-outlined-field-focus-outline-width: 1.5px;
+  --md-outlined-field-focus-outline-color: var(--app-brand-primary);
+  --md-outlined-field-focus-label-text-color: var(--app-brand-primary);
+  --md-outlined-field-outline-color: var(--app-surface-border);
+  --md-outlined-field-hover-outline-color: var(--app-text-muted);
+  --md-outlined-field-content-color: var(--app-text-main);
+  --md-outlined-field-label-text-color: var(--app-text-sub);
+  --md-outlined-field-caret-color: var(--app-brand-primary);
   font-family: var(--font-sans);
+}
+md-menu {
+  --md-menu-container-color: var(--app-surface-card);
+  --md-menu-container-shape: 6px;
+  --md-menu-container-elevation: 0;
+  border: 1px solid var(--app-surface-border);
+}
+md-select-option,
+md-menu-item {
+  --md-menu-item-container-color: transparent;
+  --md-menu-item-selected-container-color: var(--app-brand-container);
+  --md-menu-item-selected-label-text-color: var(--app-brand-on-container);
+  --md-menu-item-label-text-color: var(--app-text-main);
+  --md-menu-item-supporting-text-color: var(--app-text-muted);
+  --md-menu-item-hover-state-layer-color: var(--app-surface-hover);
+  font-family: var(--font-sans);
+}
+md-radio {
+  --md-sys-color-primary: var(--app-brand-primary);
+  --md-radio-selected-icon-color: var(--app-brand-primary);
+  --md-radio-icon-color: var(--app-text-muted);
+  --md-radio-hover-icon-color: var(--app-text-main);
+  --md-radio-selected-hover-icon-color: var(--app-brand-primary-hover);
+  --md-radio-selected-focus-icon-color: var(--app-brand-primary-hover);
+  --md-radio-selected-pressed-icon-color: var(--app-brand-primary-hover);
+}
+md-circular-progress {
+  --md-circular-progress-active-indicator-color: var(--app-brand-primary);
+  --md-sys-color-primary: var(--app-brand-primary);
 }
 md-switch {
   --md-sys-color-primary: var(--app-brand-primary);
+  --md-switch-selected-track-color: var(--app-brand-primary);
+  --md-switch-selected-hover-track-color: var(--app-brand-primary-hover);
+  --md-switch-selected-focus-track-color: var(--app-brand-primary-hover);
+  --md-switch-selected-pressed-track-color: var(--app-brand-primary-hover);
+  --md-switch-selected-handle-color: var(--app-surface-card);
+  --md-switch-selected-hover-handle-color: var(--app-surface-card);
+  --md-switch-selected-focus-handle-color: var(--app-surface-card);
+  --md-switch-selected-pressed-handle-color: var(--app-surface-card);
+  --md-switch-selected-icon-color: var(--app-brand-primary);
+  --md-switch-track-color: var(--app-surface-card-sub);
+  --md-switch-track-outline-color: var(--app-surface-border);
+  --md-switch-track-outline-width: 1.5px;
+  --md-switch-hover-track-color: var(--app-surface-hover);
+  --md-switch-hover-track-outline-color: var(--app-text-muted);
+  --md-switch-focus-track-color: var(--app-surface-hover);
+  --md-switch-focus-track-outline-color: var(--app-text-sub);
+  --md-switch-pressed-track-color: var(--app-surface-hover);
+  --md-switch-pressed-track-outline-color: var(--app-text-sub);
+  --md-switch-handle-color: var(--app-text-muted);
+  --md-switch-hover-handle-color: var(--app-text-sub);
+  --md-switch-focus-handle-color: var(--app-text-sub);
+  --md-switch-pressed-handle-color: var(--app-text-sub);
+  --md-switch-icon-color: var(--app-surface-card-sub);
+  --md-switch-disabled-track-color: var(--app-surface-card-sub);
+  --md-switch-disabled-track-outline-color: var(--app-surface-border-sub);
+  --md-switch-disabled-handle-color: var(--app-surface-border);
+  --md-switch-disabled-selected-track-color: var(--app-surface-border);
+  --md-switch-disabled-selected-handle-color: var(--app-text-muted);
+  --md-switch-selected-hover-state-layer-color: var(--app-brand-primary);
+  --md-switch-selected-pressed-state-layer-color: var(--app-brand-primary);
+  --md-switch-hover-state-layer-color: var(--app-text-main);
+  --md-switch-pressed-state-layer-color: var(--app-text-main);
+}
+:root[data-theme="dark"] md-switch,
+.dark md-switch {
+  --md-switch-selected-handle-color: #1a1a1c;
+  --md-switch-selected-hover-handle-color: #1a1a1c;
+  --md-switch-selected-focus-handle-color: #1a1a1c;
+  --md-switch-selected-pressed-handle-color: #1a1a1c;
+  --md-switch-selected-icon-color: #1a1a1c;
+}
+::selection {
+  background-color: var(--app-brand-container);
+  color: var(--app-brand-on-container);
+}
+select option {
+  background-color: var(--app-surface-card);
+  color: var(--app-text-main);
 }
 
 /* 焦点环：朱色，仅键盘可见 */

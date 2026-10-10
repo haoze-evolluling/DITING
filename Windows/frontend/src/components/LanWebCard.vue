@@ -343,7 +343,7 @@ onMounted(() => {
             <input
               type="number"
               v-model="customPort"
-              class="w-20 px-2 py-1 text-xs font-mono rounded-md border border-surface-border bg-surface-card text-text-main"
+              class="w-20 px-2 py-1 text-xs font-mono rounded-md border border-surface-border bg-surface-card text-text-main focus:outline-none focus:border-accent-seal placeholder:text-text-muted"
             />
             <button
               type="button"
