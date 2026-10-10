@@ -42,7 +42,7 @@ type FilterConfig struct {
 	CustomRules         []string     `json:"customRules"`  // 用户自定义规则文本行
 	Lists               []FilterList `json:"lists"`        // 订阅规则列表
 	UpdateIntervalHours int          `json:"updateIntervalHours"`
-	DataDir             string       `json:"dataDir"` // 编译后 .trie / .bloom 存储目录
+	DataDir             string       `json:"dataDir"` // 规则源 .txt 缓存目录
 }
 
 // DefaultFilterConfig 生成默认过滤配置

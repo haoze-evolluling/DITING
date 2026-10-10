@@ -321,43 +321,14 @@ func (e *RuleEngine) refreshListUnlocked(id string) error {
 		return fmt.Errorf("保存规则缓存文件失败: %w", err)
 	}
 
-	// 计算规则数与校验和，并编译二进制 .trie 与 .bloom 文件
+	// 计算规则数与校验和
 	rules, _ := ParseRules(bytes.NewReader(data), target.ID)
 	hash := sha256.Sum256(data)
 	target.RulesCount = len(rules)
 	target.LastUpdated = time.Now().UnixMilli()
 	target.Checksum = hex.EncodeToString(hash[:])
 
-	_ = e.compileBinaryList(rules, target.ID)
-
 	return e.rebuildUnlocked()
-}
-
-func (e *RuleEngine) compileBinaryList(rules []*ParsedRule, listID string) error {
-	if len(rules) == 0 {
-		return nil
-	}
-	trie := NewDomainTrie()
-	bloom := NewDomainBloomFilter(len(rules)+10, 0.001)
-
-	hasDomains := false
-	for _, r := range rules {
-		if r != nil && !r.IsAllow && !r.IsRegex && !r.IsWildcard && r.Pattern != "" {
-			trie.Insert(r)
-			bloom.Add(r.Pattern)
-			hasDomains = true
-		}
-	}
-	if !hasDomains {
-		return nil
-	}
-
-	triePath := filepath.Join(e.cfg.DataDir, listID+".trie")
-	bloomPath := filepath.Join(e.cfg.DataDir, listID+".bloom")
-
-	_ = trie.SaveToFile(triePath)
-	_ = bloom.SaveToFile(bloomPath)
-	return nil
 }
 
 func (e *RuleEngine) fetchListContent(urlStr string) ([]byte, error) {

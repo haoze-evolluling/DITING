@@ -1,8 +1,6 @@
 package core
 
 import (
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -73,20 +71,6 @@ func TestBloomFilter(t *testing.T) {
 	if bf.MightContain("clean-domain-random-12345.org") {
 		t.Fatalf("BloomFilter false positive on random clean domain")
 	}
-
-	tmpDir := t.TempDir()
-	bloomPath := filepath.Join(tmpDir, "test.bloom")
-	if err := bf.SaveToFile(bloomPath); err != nil {
-		t.Fatalf("SaveToFile error: %v", err)
-	}
-
-	loaded, err := LoadBloomFilter(bloomPath)
-	if err != nil {
-		t.Fatalf("LoadBloomFilter error: %v", err)
-	}
-	if !loaded.MightContain("ad.google.com") {
-		t.Fatalf("Loaded bloom filter missing ad.google.com")
-	}
 }
 
 func TestDomainTrie(t *testing.T) {
@@ -125,18 +109,6 @@ func TestDomainTrie(t *testing.T) {
 	hit, _ = trie.Match("notad.com")
 	if hit {
 		t.Errorf("Should not match notad.com")
-	}
-
-	// 序列化测试
-	tmpDir := t.TempDir()
-	triePath := filepath.Join(tmpDir, "test.trie")
-	if err := trie.SaveToFile(triePath); err != nil {
-		t.Fatalf("Trie SaveToFile failed: %v", err)
-	}
-
-	fi, err := os.Stat(triePath)
-	if err != nil || fi.Size() < 16 {
-		t.Fatalf("Trie file too small or unreadable")
 	}
 }
 
@@ -275,41 +247,6 @@ func TestRuleParser_EdgeCases(t *testing.T) {
 		if parsed[i].Pattern != h {
 			t.Errorf("Host %d expected %s, got %s", i, h, parsed[i].Pattern)
 		}
-	}
-}
-
-func TestBinaryTrie(t *testing.T) {
-	trie := NewDomainTrie()
-	r1, _ := ParseRuleLine("||ad.com^", "test")
-	r2, _ := ParseRuleLine("||tracking.net^", "test")
-	trie.Insert(r1)
-	trie.Insert(r2)
-
-	tmpDir := t.TempDir()
-	triePath := filepath.Join(tmpDir, "binary_test.trie")
-	if err := trie.SaveToFile(triePath); err != nil {
-		t.Fatalf("SaveToFile failed: %v", err)
-	}
-
-	bt, err := LoadBinaryTrie(triePath)
-	if err != nil {
-		t.Fatalf("LoadBinaryTrie failed: %v", err)
-	}
-
-	if !bt.ContainsOrParent("ad.com") {
-		t.Errorf("BinaryTrie should contain ad.com")
-	}
-	if !bt.ContainsOrParent("sub.ad.com") {
-		t.Errorf("BinaryTrie should contain sub.ad.com")
-	}
-	if !bt.ContainsOrParent("deep.sub.ad.com") {
-		t.Errorf("BinaryTrie should contain deep.sub.ad.com")
-	}
-	if !bt.ContainsOrParent("tracking.net") {
-		t.Errorf("BinaryTrie should contain tracking.net")
-	}
-	if bt.ContainsOrParent("clean.com") {
-		t.Errorf("BinaryTrie should not contain clean.com")
 	}
 }
 

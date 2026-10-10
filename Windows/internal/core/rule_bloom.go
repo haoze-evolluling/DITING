@@ -1,18 +1,9 @@
 package core
 
 import (
-	"encoding/binary"
-	"fmt"
 	"math"
-	"os"
 	"strings"
 	"sync"
-)
-
-const (
-	bloomMagic      = 0x424C4F4D // "BLOM"
-	bloomVersion    = 1
-	bloomHeaderSize = 24
 )
 
 // DomainBloomFilter 高性能布隆过滤器，在遍历 Trie 树前以纳秒级过滤 ~90%+ 的干净域名
@@ -124,71 +115,6 @@ func (bf *DomainBloomFilter) MightContainDomainOrParent(domain string) bool {
 		d = d[idx+1:]
 	}
 	return false
-}
-
-// SaveToFile 保存至二进制文件 (.bloom)
-func (bf *DomainBloomFilter) SaveToFile(path string) error {
-	bf.mu.RLock()
-	defer bf.mu.RUnlock()
-
-	f, err := os.Create(path)
-	if err != nil {
-		return fmt.Errorf("创建 bloom 文件失败: %w", err)
-	}
-	defer f.Close()
-
-	header := make([]byte, bloomHeaderSize)
-	binary.BigEndian.PutUint32(header[0:4], bloomMagic)
-	binary.BigEndian.PutUint32(header[4:8], bloomVersion)
-	binary.BigEndian.PutUint64(header[8:16], bf.bitCount)
-	binary.BigEndian.PutUint32(header[16:20], bf.hashCount)
-
-	if _, err := f.Write(header); err != nil {
-		return fmt.Errorf("写入 bloom 文件头失败: %w", err)
-	}
-	if _, err := f.Write(bf.bits); err != nil {
-		return fmt.Errorf("写入 bloom 位数组失败: %w", err)
-	}
-	return nil
-}
-
-// LoadBloomFilter 从二进制文件加载布隆过滤器
-func LoadBloomFilter(path string) (*DomainBloomFilter, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("读取 bloom 文件失败: %w", err)
-	}
-
-	if len(data) < bloomHeaderSize {
-		return nil, fmt.Errorf("bloom 文件大小不足")
-	}
-
-	magic := binary.BigEndian.Uint32(data[0:4])
-	if magic != bloomMagic {
-		return nil, fmt.Errorf("无效的 bloom magic: 0x%X", magic)
-	}
-
-	version := binary.BigEndian.Uint32(data[4:8])
-	if version != bloomVersion {
-		return nil, fmt.Errorf("不支持的 bloom 版本: %d", version)
-	}
-
-	bitCount := binary.BigEndian.Uint64(data[8:16])
-	hashCount := binary.BigEndian.Uint32(data[16:20])
-
-	expectedBytes := bitCount / 8
-	if uint64(len(data)-bloomHeaderSize) < expectedBytes {
-		return nil, fmt.Errorf("bloom 文件已损坏或被截断")
-	}
-
-	bits := make([]byte, expectedBytes)
-	copy(bits, data[bloomHeaderSize:bloomHeaderSize+int(expectedBytes)])
-
-	return &DomainBloomFilter{
-		bits:      bits,
-		bitCount:  bitCount,
-		hashCount: hashCount,
-	}, nil
 }
 
 const (
