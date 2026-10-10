@@ -81,17 +81,31 @@
   --md-sys-color-on-secondary: #ffffff;
   --md-sys-color-secondary-container: #edeae2;
   --md-sys-color-on-secondary-container: #1a1a1c;
+  --md-sys-color-tertiary: #9e2b25;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #f6e6e4;
+  --md-sys-color-on-tertiary-container: #9e2b25;
   --md-sys-color-surface: #faf9f5;
   --md-sys-color-on-surface: #1a1a1c;
+  --md-sys-color-surface-variant: #edebe3;
+  --md-sys-color-on-surface-variant: #55565a;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f6f5ef;
   --md-sys-color-surface-container: #ffffff;
   --md-sys-color-surface-container-high: #f1efe9;
   --md-sys-color-surface-container-highest: #edebe3;
-  --md-sys-color-on-surface-variant: #55565a;
   --md-sys-color-outline: #8a8b8e;
   --md-sys-color-outline-variant: #d9d6cc;
   --md-sys-color-error: #9e2b25;
   --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #f6e6e4;
+  --md-sys-color-on-error-container: #9e2b25;
+  --md-sys-color-inverse-surface: #1a1a1c;
+  --md-sys-color-inverse-on-surface: #e9e8e4;
+  --md-sys-color-inverse-primary: #e9e8e4;
+  --md-sys-color-shadow: #000000;
   --md-sys-color-scrim: rgba(20, 20, 22, 0.42);
+  --md-focus-ring-color: #9e2b25;
   color-scheme: light;
 }
 
@@ -133,17 +147,31 @@
   --md-sys-color-on-secondary: #1a1a1c;
   --md-sys-color-secondary-container: #32333a;
   --md-sys-color-on-secondary-container: #e9e8e4;
+  --md-sys-color-tertiary: #d0463a;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: rgba(208, 70, 58, 0.16);
+  --md-sys-color-on-tertiary-container: #e9e8e4;
   --md-sys-color-surface: #16171a;
   --md-sys-color-on-surface: #e9e8e4;
+  --md-sys-color-surface-variant: #26272b;
+  --md-sys-color-on-surface-variant: #b4b4b0;
+  --md-sys-color-surface-container-lowest: #121316;
+  --md-sys-color-surface-container-low: #1a1b1f;
   --md-sys-color-surface-container: #1e1f23;
   --md-sys-color-surface-container-high: #26272b;
-  --md-sys-color-surface-container-highest: #26272b;
-  --md-sys-color-on-surface-variant: #b4b4b0;
+  --md-sys-color-surface-container-highest: #2e2f34;
   --md-sys-color-outline: #7c7d80;
   --md-sys-color-outline-variant: #383940;
   --md-sys-color-error: #e08277;
   --md-sys-color-on-error: #2a0d0a;
+  --md-sys-color-error-container: rgba(224, 130, 119, 0.16);
+  --md-sys-color-on-error-container: #e9e8e4;
+  --md-sys-color-inverse-surface: #e9e8e4;
+  --md-sys-color-inverse-on-surface: #1a1a1c;
+  --md-sys-color-inverse-primary: #1a1a1c;
+  --md-sys-color-shadow: #000000;
   --md-sys-color-scrim: rgba(0, 0, 0, 0.6);
+  --md-focus-ring-color: #d0463a;
   color-scheme: dark;
 }
 
@@ -171,41 +199,12 @@ body {
   color: var(--app-text-main);
 }
 
-/* ========================================================
-   排版基元：宋体承担标题与品牌，等宽承担机器串
-   ======================================================== */
-.font-serif {
-  font-family: var(--font-serif);
-  letter-spacing: 0.01em;
-}
-.font-mono {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-/* 页面题：宋体，中量字重 */
-.page-title {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.4;
-  color: var(--app-text-main);
-}
-/* 小节题：宋体，用于面板内分节与面板标题 */
-.section-title {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.015em;
-  color: var(--app-text-main);
-}
-/* 弱化小标签（散排，不用全大写） */
-.label-quiet {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--app-text-muted);
-}
+/* 排版基元：宋体承担标题与品牌，等宽承担机器串 */
+.font-serif { font-family: var(--font-serif); letter-spacing: 0.01em; }
+.font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.page-title { font-family: var(--font-serif); font-size: 20px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.4; color: var(--app-text-main); }
+.section-title { font-family: var(--font-serif); font-size: 15px; font-weight: 600; letter-spacing: 0.015em; color: var(--app-text-main); }
+.label-quiet { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--app-text-muted); }
 
 /* ========================================================
    统一按钮规范（墨朱体系）
@@ -263,9 +262,7 @@ body {
   border-color: var(--app-brand-primary-hover);
 }
 :root[data-theme="dark"] .app-btn-primary,
-.dark .app-btn-primary {
-  color: #1a1a1c;
-}
+.dark .app-btn-primary { color: #1a1a1c; }
 
 /* 2. 次级（发丝线框） */
 .app-btn-secondary {
@@ -273,9 +270,7 @@ body {
   color: var(--app-text-main);
   border: 1px solid var(--app-surface-border);
 }
-.app-btn-secondary:hover:not(:disabled) {
-  background-color: var(--app-surface-hover);
-}
+.app-btn-secondary:hover:not(:disabled) { background-color: var(--app-surface-hover); }
 
 /* 3. 柔和（墨调底） */
 .app-btn-tonal {
@@ -283,33 +278,23 @@ body {
   color: var(--app-brand-on-container);
   border: 1px solid transparent;
 }
-.app-btn-tonal:hover:not(:disabled) {
-  filter: brightness(0.97);
-}
+.app-btn-tonal:hover:not(:disabled) { filter: brightness(0.97); }
 :root[data-theme="dark"] .app-btn-tonal:hover:not(:disabled),
-.dark .app-btn-tonal:hover:not(:disabled) {
-  filter: brightness(1.15);
-}
+.dark .app-btn-tonal:hover:not(:disabled) { filter: brightness(1.15); }
 
-/* 4. 危险（朱底：受白名单允许的危险操作） */
+/* 4. 危险（朱底） / 5. 告警 */
 .app-btn-danger {
   background-color: var(--app-accent-seal);
   color: #fff;
   border: 1px solid var(--app-accent-seal);
 }
-.app-btn-danger:hover:not(:disabled) {
-  filter: brightness(1.08);
-}
-
-/* 5. 告警 */
+.app-btn-danger:hover:not(:disabled) { filter: brightness(1.08); }
 .app-btn-warning {
   background-color: var(--app-status-warning);
   color: #fff;
   border: 1px solid var(--app-status-warning);
 }
-.app-btn-warning:hover:not(:disabled) {
-  filter: brightness(1.08);
-}
+.app-btn-warning:hover:not(:disabled) { filter: brightness(1.08); }
 
 /* 6. 紧凑 30px */
 .app-btn-compact {
@@ -399,37 +384,19 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
   border: 1px solid var(--app-surface-border);
   border-radius: 6px;
 }
-.app-hairline {
-  border-color: var(--app-surface-border);
-}
+.app-hairline { border-color: var(--app-surface-border); }
 
 /* 数据表：发丝行、等宽机器列 */
-.app-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
+.app-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .app-table thead th {
-  text-align: left;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--app-text-muted);
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--app-surface-border);
-  white-space: nowrap;
+  text-align: left; font-size: 12px; font-weight: 600; color: var(--app-text-muted); padding: 8px 12px;
+  border-bottom: 1px solid var(--app-surface-border); white-space: nowrap;
 }
 .app-table tbody td {
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--app-surface-border-sub);
-  color: var(--app-text-sub);
-  vertical-align: middle;
+  padding: 9px 12px; border-bottom: 1px solid var(--app-surface-border-sub); color: var(--app-text-sub); vertical-align: middle;
 }
-.app-table tbody tr:last-child td {
-  border-bottom: none;
-}
-.app-table tbody tr:hover td {
-  background-color: var(--app-surface-hover);
-}
+.app-table tbody tr:last-child td { border-bottom: none; }
+.app-table tbody tr:hover td { background-color: var(--app-surface-hover); }
 
 /* Material Web 组件随墨朱体系收圆角、换主色并深度适配双主题 */
 md-dialog {
@@ -456,6 +423,15 @@ md-outlined-select {
   --md-outlined-field-caret-color: var(--app-brand-primary);
   font-family: var(--font-sans);
 }
+md-outlined-select {
+  --md-menu-container-color: var(--app-surface-card);
+  --md-menu-container-shape: 6px;
+  --md-menu-container-elevation: 0;
+}
+md-outlined-select::part(menu) {
+  border: 1px solid var(--app-surface-border);
+  border-radius: 6px;
+}
 md-menu {
   --md-menu-container-color: var(--app-surface-card);
   --md-menu-container-shape: 6px;
@@ -470,6 +446,10 @@ md-menu-item {
   --md-menu-item-label-text-color: var(--app-text-main);
   --md-menu-item-supporting-text-color: var(--app-text-muted);
   --md-menu-item-hover-state-layer-color: var(--app-surface-hover);
+  --md-menu-item-one-line-container-height: 38px;
+  --md-menu-item-top-space: 8px;
+  --md-menu-item-bottom-space: 8px;
+  --md-menu-item-label-text-size: 13px;
   font-family: var(--font-sans);
 }
 md-radio {
@@ -480,6 +460,10 @@ md-radio {
   --md-radio-selected-hover-icon-color: var(--app-brand-primary-hover);
   --md-radio-selected-focus-icon-color: var(--app-brand-primary-hover);
   --md-radio-selected-pressed-icon-color: var(--app-brand-primary-hover);
+  --md-radio-hover-state-layer-color: var(--app-text-main);
+  --md-radio-pressed-state-layer-color: var(--app-text-main);
+  --md-radio-selected-hover-state-layer-color: var(--app-brand-primary);
+  --md-radio-selected-pressed-state-layer-color: var(--app-brand-primary);
 }
 md-circular-progress {
   --md-circular-progress-active-indicator-color: var(--app-brand-primary);
@@ -527,6 +511,10 @@ md-switch {
   --md-switch-selected-focus-handle-color: #1a1a1c;
   --md-switch-selected-pressed-handle-color: #1a1a1c;
   --md-switch-selected-icon-color: #1a1a1c;
+}
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--app-brand-primary);
 }
 ::selection {
   background-color: var(--app-brand-container);

@@ -407,7 +407,7 @@ usePoller(pollMetrics, 4000);
         </div>
 
         <div class="flex items-center gap-3">
-          <!-- 搜索输入框 (高度与检索按钮保持严格等高 36px) -->
+          <!-- 搜索输入框 (高度与检索按钮保持严格等高 34px) -->
           <div class="relative w-64">
             <M3Icon name="search" :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
@@ -415,7 +415,7 @@ usePoller(pollMetrics, 4000);
               type="text"
               placeholder="搜索网址或记录类型..."
               @keyup.enter="handleSearch"
-              class="w-full pl-9 pr-3 h-9 rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:border-accent-seal text-text-main placeholder:text-text-muted font-mono"
+              class="w-full pl-9 pr-3 h-[34px] rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:border-accent-seal text-text-main placeholder:text-text-muted font-mono"
             />
           </div>
 

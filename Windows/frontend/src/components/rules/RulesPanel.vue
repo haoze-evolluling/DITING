@@ -193,24 +193,33 @@ usePoller(fetchData, 4000);
         </div>
 
         <div class="space-y-3 text-sm">
-          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-md hover:bg-surface-hover transition-colors">
-            <input type="radio" v-model="config.blockMode" value="null_ip" class="accent-accent-seal" />
+          <label
+            class="flex items-center gap-3 cursor-pointer p-3 rounded-md border transition-colors"
+            :class="config.blockMode === 'null_ip' ? 'bg-brand-container/40 border-brand-primary/30' : 'border-transparent hover:bg-surface-hover'"
+          >
+            <input type="radio" v-model="config.blockMode" value="null_ip" class="accent-brand-primary" />
             <div>
               <div class="font-medium text-text-main">直接拦截 (推荐)</div>
               <div class="text-xs text-text-sub">立即返回空地址，以最快速度终止广告加载且不会引起网页反复重试</div>
             </div>
           </label>
 
-          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-md hover:bg-surface-hover transition-colors">
-            <input type="radio" v-model="config.blockMode" value="nxdomain" class="accent-accent-seal" />
+          <label
+            class="flex items-center gap-3 cursor-pointer p-3 rounded-md border transition-colors"
+            :class="config.blockMode === 'nxdomain' ? 'bg-brand-container/40 border-brand-primary/30' : 'border-transparent hover:bg-surface-hover'"
+          >
+            <input type="radio" v-model="config.blockMode" value="nxdomain" class="accent-brand-primary" />
             <div>
               <div class="font-medium text-text-main">提示域名不存在 (NXDOMAIN)</div>
               <div class="text-xs text-text-sub">告知浏览器该网址不存在，部分软件会放弃进一步连接</div>
             </div>
           </label>
 
-          <label class="flex items-center gap-3 cursor-pointer p-3 rounded-md hover:bg-surface-hover transition-colors">
-            <input type="radio" v-model="config.blockMode" value="refused" class="accent-accent-seal" />
+          <label
+            class="flex items-center gap-3 cursor-pointer p-3 rounded-md border transition-colors"
+            :class="config.blockMode === 'refused' ? 'bg-brand-container/40 border-brand-primary/30' : 'border-transparent hover:bg-surface-hover'"
+          >
+            <input type="radio" v-model="config.blockMode" value="refused" class="accent-brand-primary" />
             <div>
               <div class="font-medium text-text-main">直接拒绝请求 (REFUSED)</div>
               <div class="text-xs text-text-sub">告知请求被安全策略明确拒绝</div>

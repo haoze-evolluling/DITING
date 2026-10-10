@@ -308,7 +308,7 @@ onMounted(() => {
           class="flex items-start gap-3 p-3.5 rounded-md border transition-colors duration-150 cursor-pointer"
           :class="[
             currentMode === mode.id
-              ? 'border-accent-seal bg-accent-seal-bg'
+              ? 'border-brand-primary bg-brand-container/40'
               : 'border-surface-border bg-surface-card-sub hover:bg-surface-hover',
           ]"
           @click="handleModeChange(mode.id)"

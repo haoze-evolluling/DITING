@@ -171,7 +171,7 @@ onMounted(() => {
 
     <!-- 网卡列表展示 -->
     <div v-else class="space-y-4">
-      <md-list class="bg-transparent p-0 rounded-md space-y-4">
+      <div class="space-y-4">
         <div
           v-for="adapter in adapters"
           :key="adapter.id"
@@ -242,7 +242,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-      </md-list>
+      </div>
     </div>
   </div>
 </template>

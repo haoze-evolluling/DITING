@@ -61,8 +61,8 @@ async function runTest() {
     >
       <div class="flex items-center gap-3">
         <span
-          class="px-2.5 py-1 rounded-full text-xs font-bold text-white"
-          :class="testResult.blocked ? 'bg-accent-seal' : testResult.action === 'allow' ? 'bg-status-success' : 'bg-text-muted'"
+          class="px-2.5 py-1 rounded-full text-xs font-bold"
+          :class="testResult.blocked ? 'bg-accent-seal text-white' : testResult.action === 'allow' ? 'bg-status-success-bg text-status-success border border-status-success/30' : 'bg-surface-card-sub text-text-sub border border-surface-border-sub'"
         >
           {{ testResult.blocked ? '已拦截 (阻止访问)' : testResult.action === 'allow' ? '已放行 (信任名单)' : '未命中规则 (正常访问)' }}
         </span>

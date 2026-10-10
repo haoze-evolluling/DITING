@@ -219,7 +219,7 @@ onMounted(() => {
             class="app-btn-base"
             :class="[
               currentMode === m.id
-                ? 'bg-brand-primary text-surface-card border border-brand-primary'
+                ? 'bg-brand-primary text-surface-card border border-brand-primary dark:text-[#1a1a1c]'
                 : 'bg-surface-card-sub border border-surface-border text-text-sub hover:bg-surface-hover',
             ]"
           >
