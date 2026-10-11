@@ -22,7 +22,7 @@ export class FilterApi {
 
   public async getLists(): Promise<FilterList[]> {
     const res = await this.http.request<{ total: number; lists: FilterList[] }>('/api/v1/filter/lists');
-    return res.lists || [];
+    return res?.lists || [];
   }
 
   public async addList(list: Partial<FilterList>): Promise<void> {
@@ -55,7 +55,7 @@ export class FilterApi {
 
   public async getCustomRules(): Promise<string[]> {
     const res = await this.http.request<{ rules: string[] }>('/api/v1/filter/rules');
-    return res.rules || [];
+    return res?.rules || [];
   }
 
   public async setCustomRules(rules: string[]): Promise<void> {

@@ -21,16 +21,15 @@ const props = withDefaults(
 
 const viewBox = computed(() => `0 0 500 ${props.height}`);
 
-/** 未显式指定则继承主题墨色（朱仅用于强调，不作图表默认色） */
 const stroke = computed(() =>
   props.strokeColor ? props.strokeColor : 'var(--app-text-main)'
 );
 
 const points = computed(() => {
-  const list = props.data.length > 0 ? props.data : [0];
+  const list = props.data && props.data.length > 0 ? props.data : [0];
   const max = Math.max(...list, 1);
   const min = 0;
-  const range = max - min;
+  const range = max - min || 1;
   const count = Math.max(list.length, 2);
   const stepX = 500 / (count - 1);
 
@@ -58,11 +57,10 @@ const pathString = computed(() => {
 });
 
 const latestValue = computed(() => {
-  if (props.data.length === 0) return 0;
+  if (!props.data || props.data.length === 0) return 0;
   return props.data[props.data.length - 1];
 });
 
-/** 三条水平墨色参考线（25% / 50% / 75%） */
 const gridLines = computed(() => {
   const h = props.height;
   return [0.25, 0.5, 0.75].map((r) => h - 10 - r * (h - 24));

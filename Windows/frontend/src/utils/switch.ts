@@ -1,16 +1,21 @@
 /**
- * md-switch 视觉状态回滚。
- *
- * @material/web 的 md-switch 使用 `selected` 属性，而原生 input 使用 `checked`，
- * 这里统一处理，避免每个调用点重复判断。
+ * md-switch / checkbox 视觉状态安全回滚与值提取。
  */
 
-/** 操作失败时把开关视觉状态回滚到切换前 */
+export function extractSwitchValue(e: Event): boolean {
+  const t = e.target as any;
+  if (!t) return false;
+  if ('selected' in t) return Boolean(t.selected);
+  if ('checked' in t) return Boolean(t.checked);
+  return false;
+}
+
 export function revertSwitch(e: Event, previous: boolean): void {
   const t = e.target as any;
+  if (!t) return;
   if ('selected' in t) {
     t.selected = previous;
-  } else {
+  } else if ('checked' in t) {
     t.checked = previous;
   }
 }

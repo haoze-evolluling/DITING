@@ -2,10 +2,11 @@
 import { ref, onMounted } from 'vue';
 import { ipc } from '../../api/ipc';
 import type { StatusResponse, ProviderConfig, UpstreamInfo, BootstrapConfig } from '../../api/types';
-import StatusBadge from '../../components/StatusBadge.vue';
-import M3Icon from '../../components/M3Icon.vue';
-import AppModal from '../../components/AppModal.vue';
-import BootstrapConfigCard from '../../components/BootstrapConfigCard.vue';
+import StatusBadge from '../StatusBadge.vue';
+import M3Icon from '../M3Icon.vue';
+import BootstrapConfigCard from '../BootstrapConfigCard.vue';
+import UpstreamEditModal from './UpstreamEditModal.vue';
+import ConfirmModal from '../ConfirmModal.vue';
 
 const status = ref<StatusResponse | null>(null);
 const currentMode = ref('primary_backup');
@@ -27,27 +28,16 @@ const successMessage = ref('');
 const probingId = ref<string | null>(null);
 const probeResults = ref<Record<string, number>>({});
 
-import { DNS_PRESET_PROVIDERS, type DnsProtocolType } from '../../constants/dnsPresets';
-
-// 对话框状态
+// 编辑弹窗状态
 const isDialogOpen = ref(false);
+const editingItem = ref<ProviderConfig | null>(null);
 const editingIndex = ref<number>(-1);
-const formId = ref('');
-const formProtocol = ref<'PLAIN' | 'DOH' | 'DOT'>('DOT');
-const formServer = ref('');
-const formUrl = ref('');
-const formWeight = ref(1);
 
-// 预设选择器状态
-const currentPresetProvider = ref('阿里云');
-const currentPresetProtocol = ref<DnsProtocolType>('DOT');
-const selectedPresetDesc = ref('阿里巴巴公共 DNS，基于 TLS 的加密解析');
-
-const protocolOptions = [
-  { label: '普通 DNS', value: 'PLAIN' as DnsProtocolType },
-  { label: '加密 DoT', value: 'DOT' as DnsProtocolType },
-  { label: '加密 DoH', value: 'DOH' as DnsProtocolType },
-];
+// 删除与确认弹窗
+const isConfirmOpen = ref(false);
+const confirmTitle = ref('');
+const confirmMessage = ref('');
+const deleteIndexPending = ref<number | null>(null);
 
 const schedulingModes = [
   { id: 'single', name: '单服务器模式', desc: '始终固定使用列表中的首选服务器进行解析' },
@@ -65,7 +55,6 @@ async function loadData() {
     currentMode.value = res.dns.mode.toLowerCase() || 'primary_backup';
     upstreams.value = res.dns.upstreams || [];
 
-    // 若本地未初始化 providers，从 status 映射
     if (providers.value.length === 0 && res.dns.upstreams) {
       providers.value = res.dns.upstreams.map((u) => ({
         id: u.id,
@@ -141,99 +130,47 @@ async function handleTestNode(p: ProviderConfig) {
   }
 }
 
-function applyPreset(providerName: string, protocol: DnsProtocolType) {
-  currentPresetProvider.value = providerName;
-  currentPresetProtocol.value = protocol;
-  const group = DNS_PRESET_PROVIDERS.find((p) => p.name === providerName);
-  if (!group) return;
-  const preset = group.presets[protocol];
-  if (!preset) return;
-
-  formId.value = preset.id;
-  formProtocol.value = preset.protocol;
-  formServer.value = preset.server;
-  formUrl.value = preset.url || '';
-  selectedPresetDesc.value = preset.description || '';
-}
-
-function handleProtocolSelect(proto: DnsProtocolType) {
-  formProtocol.value = proto;
-  currentPresetProtocol.value = proto;
-  if (currentPresetProvider.value) {
-    const group = DNS_PRESET_PROVIDERS.find((p) => p.name === currentPresetProvider.value);
-    if (group && group.presets[proto]) {
-      selectedPresetDesc.value = group.presets[proto].description || '';
-    }
-  }
-}
-
 function openAddDialog() {
   editingIndex.value = -1;
-  applyPreset('阿里云', 'DOT');
-  formWeight.value = 1;
+  editingItem.value = null;
   isDialogOpen.value = true;
 }
 
 function openEditDialog(index: number) {
   editingIndex.value = index;
-  const p = providers.value[index];
-  formId.value = p.id;
-  formProtocol.value = p.protocol;
-  formServer.value = p.server;
-  formUrl.value = p.url || '';
-  formWeight.value = p.weight || 1;
-
-  let matched = false;
-  for (const group of DNS_PRESET_PROVIDERS) {
-    for (const proto of ['PLAIN', 'DOT', 'DOH'] as DnsProtocolType[]) {
-      const item = group.presets[proto];
-      if (item.id === p.id || (item.server === p.server && item.protocol === p.protocol)) {
-        currentPresetProvider.value = group.name;
-        currentPresetProtocol.value = item.protocol;
-        selectedPresetDesc.value = item.description || '';
-        matched = true;
-        break;
-      }
-    }
-    if (matched) break;
-  }
-  if (!matched) {
-    currentPresetProvider.value = '';
-    currentPresetProtocol.value = p.protocol;
-    selectedPresetDesc.value = '';
-  }
-
+  editingItem.value = providers.value[index] || null;
   isDialogOpen.value = true;
 }
 
 function handleDeleteNode(index: number) {
   if (providers.value.length <= 1) {
-    errorMessage.value = '至少需要保留一个 DNS 服务器';
+    confirmTitle.value = '提示';
+    confirmMessage.value = '请至少保留一个 DNS 服务器以维持正常的域名解析服务。';
+    deleteIndexPending.value = null;
+    isConfirmOpen.value = true;
     return;
   }
-  providers.value.splice(index, 1);
-  saveConfig();
+  deleteIndexPending.value = index;
+  confirmTitle.value = '确认删除';
+  confirmMessage.value = `确定删除上游 DNS 服务器 [${providers.value[index]?.id || providers.value[index]?.server}] 吗？`;
+  isConfirmOpen.value = true;
 }
 
-function handleSaveDialog() {
-  if (!formId.value.trim() || !formServer.value.trim()) {
-    errorMessage.value = '服务器名称与地址不得为空';
-    return;
+function handleConfirmAction() {
+  if (deleteIndexPending.value !== null) {
+    providers.value.splice(deleteIndexPending.value, 1);
+    deleteIndexPending.value = null;
+    saveConfig();
   }
-  const item: ProviderConfig = {
-    id: formId.value.trim(),
-    protocol: formProtocol.value,
-    server: formServer.value.trim(),
-    url: formUrl.value.trim(),
-    weight: formWeight.value,
-  };
+  isConfirmOpen.value = false;
+}
 
+function handleSaveDialog(item: ProviderConfig) {
   if (editingIndex.value >= 0) {
     providers.value[editingIndex.value] = item;
   } else {
     providers.value.push(item);
   }
-
   isDialogOpen.value = false;
   saveConfig();
 }
@@ -349,7 +286,7 @@ onMounted(() => {
         <div
           v-for="(node, idx) in upstreams"
           :key="node.id"
-          class="rounded-md border border-surface-border bg-surface-card p-5  transition-all duration-200 hover: "
+          class="rounded-md border border-surface-border bg-surface-card p-5 transition-all duration-200"
         >
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="space-y-1.5">
@@ -432,119 +369,23 @@ onMounted(() => {
       @save="handleBootstrapSave"
     />
 
-    <!-- 新增 / 编辑节点弹窗 (统一使用 AppModal 居中架构) -->
-    <AppModal
+    <!-- 新增 / 编辑节点弹窗 -->
+    <UpstreamEditModal
       :open="isDialogOpen"
+      :editingItem="editingItem"
       @close="isDialogOpen = false"
-      :title="editingIndex >= 0 ? '编辑 DNS 服务器' : '添加 DNS 服务器'"
-    >
-      <form id="upstream-dialog-form" @submit.prevent="handleSaveDialog" class="space-y-4 pt-1">
-        <!-- 常用推荐预设快速填入 -->
-        <div class="rounded-md border border-surface-border bg-surface-card-sub p-3 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-text-sub flex items-center gap-1.5">
-              <M3Icon name="bolt" :size="14" class="text-text-main" />
-              常用推荐预设 (点击快速填入):
-            </span>
-            <span v-if="selectedPresetDesc" class="text-[11px] text-text-sub truncate max-w-[210px]" :title="selectedPresetDesc">
-              {{ selectedPresetDesc }}
-            </span>
-          </div>
+      @save="handleSaveDialog"
+    />
 
-          <!-- 服务商 Chips -->
-          <div class="space-y-1">
-            <div class="text-[11px] text-text-sub">服务商:</div>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                v-for="provider in DNS_PRESET_PROVIDERS"
-                :key="provider.name"
-                type="button"
-                @click="applyPreset(provider.name, currentPresetProtocol)"
-                class="app-btn-chip"
-                :class="{ active: currentPresetProvider === provider.name }"
-              >
-                {{ provider.name }}
-              </button>
-            </div>
-          </div>
-
-          <!-- 协议 Chips -->
-          <div class="space-y-1">
-            <div class="text-[11px] text-text-sub">解析协议:</div>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                v-for="proto in protocolOptions"
-                :key="proto.value"
-                type="button"
-                @click="applyPreset(currentPresetProvider || '阿里云', proto.value)"
-                class="app-btn-chip"
-                :class="{ active: currentPresetProtocol === proto.value }"
-              >
-                {{ proto.label }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <md-outlined-text-field
-          label="服务器名称 / 标识"
-          :value="formId"
-          @input="formId = ($event.target as any).value"
-          class="w-full"
-          required
-        ></md-outlined-text-field>
-
-        <md-outlined-select
-          label="连接协议"
-          :value="formProtocol"
-          @change="handleProtocolSelect(($event.target as any).value)"
-          class="w-full"
-        >
-          <md-select-option value="PLAIN">
-            <div slot="headline">普通模式 (标准 DNS / 端口 53)</div>
-          </md-select-option>
-          <md-select-option value="DOH">
-            <div slot="headline">加密模式 (DNS over HTTPS / 安全防窥探)</div>
-          </md-select-option>
-          <md-select-option value="DOT">
-            <div slot="headline">加密模式 (DNS over TLS / 端口 853)</div>
-          </md-select-option>
-        </md-outlined-select>
-
-        <md-outlined-text-field
-          label="服务器地址 (IP 或域名)"
-          :value="formServer"
-          @input="formServer = ($event.target as any).value"
-          class="w-full font-mono"
-          placeholder="如 223.5.5.5:53 或 dns.alidns.com"
-        ></md-outlined-text-field>
-
-        <md-outlined-text-field
-          v-if="formProtocol === 'DOH'"
-          label="DoH 加密解析地址 (URL)"
-          :value="formUrl"
-          @input="formUrl = ($event.target as any).value"
-          class="w-full font-mono"
-          placeholder="https://dns.alidns.com/dns-query"
-        ></md-outlined-text-field>
-      </form>
-
-      <template #actions>
-        <button
-          type="button"
-          @click="isDialogOpen = false"
-          class="app-btn-secondary"
-        >
-          取消
-        </button>
-        <button
-          type="button"
-          @click="handleSaveDialog"
-          class="app-btn-primary"
-        >
-          保存服务器
-        </button>
-      </template>
-    </AppModal>
+    <!-- 删除确认弹窗 -->
+    <ConfirmModal
+      :open="isConfirmOpen"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :danger="deleteIndexPending !== null"
+      :confirmText="deleteIndexPending !== null ? '确定删除' : '知道了'"
+      @confirm="handleConfirmAction"
+      @cancel="isConfirmOpen = false"
+    />
   </div>
 </template>

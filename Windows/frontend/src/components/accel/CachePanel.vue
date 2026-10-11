@@ -2,13 +2,15 @@
 import { ref, computed } from 'vue';
 import { ipc } from '../../api/ipc';
 import type { CacheStats, CacheConfig, CacheEntryItem, CacheDomainStat } from '../../api/types';
-import StatusBadge from '../../components/StatusBadge.vue';
-import Panel from '../../components/ui/Panel.vue';
-import M3Icon from '../../components/M3Icon.vue';
-import AppModal from '../../components/AppModal.vue';
-import ToastBanner from '../../components/ToastBanner.vue';
-import { revertSwitch } from '../../utils/switch';
-import { formatClockTime } from '../../utils/format';
+import StatusBadge from '../StatusBadge.vue';
+import Panel from '../ui/Panel.vue';
+import M3Icon from '../M3Icon.vue';
+import AppModal from '../AppModal.vue';
+import ToastBanner from '../ToastBanner.vue';
+import CacheTopDomains from './CacheTopDomains.vue';
+import CacheConfigCard from './CacheConfigCard.vue';
+import CacheEntriesTable from './CacheEntriesTable.vue';
+import { revertSwitch, extractSwitchValue } from '../../utils/switch';
 import { usePoller } from '../../composables/usePoller';
 import { useToast } from '../../composables/useToast';
 
@@ -42,8 +44,7 @@ const config = ref<CacheConfig>({
 const entries = ref<CacheEntryItem[]>([]);
 const topDomains = ref<CacheDomainStat[]>([]);
 const totalEntriesCount = ref(0);
-const searchQuery = ref('');
-const statusFilter = ref<'all' | 'fresh' | 'stale' | 'negative'>('all');
+const currentSearch = ref('');
 
 const loading = ref(false);
 const saving = ref(false);
@@ -52,7 +53,7 @@ const isClearDialogOpen = ref(false);
 const { toast, show: showToast, dismiss } = useToast();
 
 const hitRatioPercent = computed(() => {
-  const ratio = stats.value.hitRatio * 100;
+  const ratio = (stats.value.hitRatio || 0) * 100;
   return `${ratio.toFixed(1)}%`;
 });
 
@@ -64,33 +65,19 @@ const cacheStats = computed(() => [
   { label: '已存记录 / 上限', value: `${stats.value.entryCount} / ${stats.value.maxEntries}` },
 ]);
 
-const filteredEntries = computed(() => {
-  return entries.value.filter((item) => {
-    if (statusFilter.value === 'fresh' && item.status !== 'fresh') return false;
-    if (statusFilter.value === 'stale' && item.status !== 'stale') return false;
-    if (statusFilter.value === 'negative' && !item.isNegative) return false;
-    return true;
-  });
-});
-
-const maxTopHits = computed(() => {
-  if (topDomains.value.length === 0) return 1;
-  return Math.max(...topDomains.value.map((d) => d.hitCount), 1);
-});
-
 async function loadData() {
   loading.value = true;
   try {
     const [st, cfg, entryRes, top] = await Promise.all([
       ipc.getCacheStats(),
       ipc.getCacheConfig(),
-      ipc.getCacheEntries(searchQuery.value, 100),
+      ipc.getCacheEntries(currentSearch.value, 100),
       ipc.getCacheTopDomains(10),
     ]);
     stats.value = st;
     config.value = cfg;
-    entries.value = entryRes.entries || [];
-    totalEntriesCount.value = entryRes.total || 0;
+    entries.value = entryRes?.entries || [];
+    totalEntriesCount.value = entryRes?.total || 0;
     topDomains.value = top || [];
   } catch (err: any) {
     showToast(err.message || '加载缓存数据失败', true);
@@ -103,31 +90,31 @@ async function pollMetrics() {
   try {
     const [st, entryRes, top] = await Promise.all([
       ipc.getCacheStats(),
-      ipc.getCacheEntries(searchQuery.value, 100),
+      ipc.getCacheEntries(currentSearch.value, 100),
       ipc.getCacheTopDomains(10),
     ]);
     stats.value = st;
-    entries.value = entryRes.entries || [];
-    totalEntriesCount.value = entryRes.total || 0;
+    entries.value = entryRes?.entries || [];
+    totalEntriesCount.value = entryRes?.total || 0;
     topDomains.value = top || [];
   } catch {
     // 忽略静默遥测异常
   }
 }
 
-async function handleSearch() {
+async function handleSearch(query: string) {
+  currentSearch.value = query;
   try {
-    const entryRes = await ipc.getCacheEntries(searchQuery.value, 100);
-    entries.value = entryRes.entries || [];
-    totalEntriesCount.value = entryRes.total || 0;
+    const entryRes = await ipc.getCacheEntries(query, 100);
+    entries.value = entryRes?.entries || [];
+    totalEntriesCount.value = entryRes?.total || 0;
   } catch (err: any) {
     showToast(err.message, true);
   }
 }
 
 async function handleToggleCache(e: Event) {
-  const target = e.target as any;
-  const enable = Boolean(target.selected ?? target.checked);
+  const enable = extractSwitchValue(e);
   try {
     const updated = { ...config.value, enabled: enable };
     await ipc.updateCacheConfig(updated);
@@ -211,6 +198,7 @@ usePoller(pollMetrics, 4000);
 
         <!-- 一键清空按钮 -->
         <button
+          type="button"
           @click="isClearDialogOpen = true"
           :disabled="loading || stats.entryCount === 0"
           class="app-btn-danger"
@@ -242,7 +230,7 @@ usePoller(pollMetrics, 4000);
       <div class="w-full bg-surface-card-sub rounded-full h-1.5 overflow-hidden">
         <div
           class="bg-accent-seal h-full rounded-full transition-all duration-300"
-          :style="{ width: `${Math.min(stats.hitRatio * 100, 100)}%` }"
+          :style="{ width: `${Math.min((stats.hitRatio || 0) * 100, 100)}%` }"
         />
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-4 mt-5 pt-4 border-t border-surface-border-sub">
@@ -257,237 +245,18 @@ usePoller(pollMetrics, 4000);
 
     <!-- 双栏等宽布局: 热点域名 Top 统计 & 缓存策略配置 -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- 热点域名 Top 统计排行榜 -->
-      <div class="p-6 rounded-md bg-surface-card border border-surface-border  space-y-4">
-        <div class="flex items-center justify-between gap-3">
-          <h3 class="section-title">高频访问网址排行</h3>
-          <span class="text-[11px] text-text-muted">访问次数最多的前 10 个网址</span>
-        </div>
-
-        <div v-if="topDomains.length === 0" class="py-8 text-center text-xs text-text-muted">
-          暂无访问记录
-        </div>
-
-        <div v-else class="space-y-2.5">
-          <div
-            v-for="(item, idx) in topDomains"
-            :key="item.domain + item.qtype"
-            class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub flex items-center justify-between gap-3 text-xs"
-          >
-            <!-- 排名与域名 -->
-            <div class="flex items-center gap-3 min-w-0">
-              <span
-                class="w-5 h-5 rounded-full flex items-center justify-center font-bold font-mono text-[10px]"
-                :class="idx < 3 ? 'bg-brand-primary text-surface-card' : 'bg-surface-hover text-text-sub'"
-              >
-                {{ idx + 1 }}
-              </span>
-              <span class="font-mono font-medium text-text-main truncate" :title="item.domain">
-                {{ item.domain }}
-              </span>
-              <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-surface-card border border-surface-border text-text-sub">
-                {{ item.qtype }}
-              </span>
-            </div>
-
-            <!-- 频次柱状进度与命中数 -->
-            <div class="flex items-center gap-3 shrink-0">
-              <div class="w-20 md:w-28 bg-surface-card border border-surface-border rounded-full h-1.5 overflow-hidden hidden sm:block">
-                <div
-                  class="bg-status-warning h-full rounded-full"
-                  :style="{ width: `${(item.hitCount / maxTopHits) * 100}%` }"
-                ></div>
-              </div>
-              <span class="font-mono font-bold text-text-main min-w-8 text-right">
-                {{ item.hitCount }} 次
-              </span>
-              <span class="text-[10px] text-text-muted min-w-14 text-right">
-                {{ item.lastHitAt > 0 ? formatClockTime(item.lastHitAt) : '未命中' }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 缓存运行策略配置 -->
-      <div class="p-6 rounded-md bg-surface-card border border-surface-border  space-y-4">
-        <div class="flex items-center justify-between gap-3">
-          <h3 class="section-title">加速策略设置</h3>
-          <button
-            type="button"
-            @click="handleSaveConfig"
-            :disabled="saving"
-            class="app-btn-primary"
-          >
-            <M3Icon name="check" :size="16" />
-            <span>保存配置</span>
-          </button>
-        </div>
-
-        <div class="space-y-4 pt-1">
-          <!-- TTL 策略模式 -->
-          <div class="space-y-1">
-            <label class="text-xs font-medium text-text-sub">有效期计算方式</label>
-            <md-outlined-select :value="config.mode" @change="config.mode = ($event.target as any).value" class="w-full">
-              <md-select-option value="limit_max_ttl"><div slot="headline">限制最长有效期 (推荐，避免过期失效)</div></md-select-option>
-              <md-select-option value="follow_dns_ttl"><div slot="headline">完全遵从服务器给出的有效期</div></md-select-option>
-              <md-select-option value="fixed_ttl"><div slot="headline">统一固定有效期</div></md-select-option>
-            </md-outlined-select>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <md-outlined-text-field
-              label="最长保存时长 (秒)"
-              type="number"
-              :value="String(config.maxTtlSeconds)"
-              @input="config.maxTtlSeconds = Number(($event.target as any).value)"
-            ></md-outlined-text-field>
-
-            <md-outlined-text-field
-              label="最短保留时长 (秒)"
-              type="number"
-              :value="String(config.minTtlSeconds)"
-              @input="config.minTtlSeconds = Number(($event.target as any).value)"
-            ></md-outlined-text-field>
-          </div>
-
-          <!-- Stale 容灾与 Optimistic SWR 开关 -->
-          <div class="p-3 rounded-md bg-surface-card-sub border border-surface-border-sub space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <span class="text-xs font-bold text-text-main">弱网应急保障 (旧记录兜底)</span>
-                <p class="text-[11px] text-text-sub">当网络超时或波动时，临时使用近期缓存确保网页能正常打开</p>
-              </div>
-              <md-switch
-                :selected="config.staleFallbackEnabled"
-                @change="config.staleFallbackEnabled = Boolean(($event.target as any).selected ?? ($event.target as any).checked)"
-              ></md-switch>
-            </div>
-
-            <div v-if="config.staleFallbackEnabled" class="grid grid-cols-2 gap-3 pt-1">
-              <md-outlined-text-field
-                label="应急记录保留期 (秒)"
-                type="number"
-                :value="String(config.staleFallbackSeconds)"
-                @input="config.staleFallbackSeconds = Number(($event.target as any).value)"
-              ></md-outlined-text-field>
-
-              <div class="flex items-center justify-between px-2">
-                <span class="text-[11px] text-text-sub">极速响应 (先用缓存后后台更新)</span>
-                <md-switch
-                  :selected="config.optimistic"
-                  @change="config.optimistic = Boolean(($event.target as any).selected ?? ($event.target as any).checked)"
-                ></md-switch>
-              </div>
-            </div>
-          </div>
-
-          <!-- 负缓存配置 -->
-          <div class="p-3 rounded-md bg-surface-card-sub border border-surface-border-sub flex items-center justify-between">
-            <div>
-              <span class="text-xs font-bold text-text-main">无效网址记忆加速</span>
-              <p class="text-[11px] text-text-sub">记住不存在或错误的网址，避免系统和软件频繁重复重试</p>
-            </div>
-            <md-switch
-              :selected="config.negativeTtlEnabled"
-              @change="config.negativeTtlEnabled = Boolean(($event.target as any).selected ?? ($event.target as any).checked)"
-            ></md-switch>
-          </div>
-        </div>
-      </div>
+      <CacheTopDomains :topDomains="topDomains" />
+      <CacheConfigCard :config="config" :saving="saving" @save="handleSaveConfig" />
     </div>
 
     <!-- 缓存条目检索与表格 -->
-    <div class="p-6 rounded-md bg-surface-card border border-surface-border  space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-2">
-          <h3 class="section-title">
-            已缓存域名列表 ({{ totalEntriesCount }} 条)
-          </h3>
-        </div>
+    <CacheEntriesTable
+      :entries="entries"
+      :totalCount="totalEntriesCount"
+      @search="handleSearch"
+    />
 
-        <div class="flex items-center gap-3">
-          <!-- 搜索输入框 (高度与检索按钮保持严格等高 34px) -->
-          <div class="relative w-64">
-            <M3Icon name="search" :size="16" class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="搜索网址或记录类型..."
-              @keyup.enter="handleSearch"
-              class="w-full pl-9 pr-3 h-[34px] rounded-md border border-surface-border bg-surface-card-sub text-xs focus:outline-none focus:ring-2 focus:border-accent-seal text-text-main placeholder:text-text-muted font-mono"
-            />
-          </div>
-
-          <button
-            type="button"
-            @click="handleSearch"
-            class="app-btn-secondary"
-          >
-            <M3Icon name="search" :size="16" />
-            <span>检索</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 状态过滤 Chips -->
-      <div class="flex items-center gap-2">
-        <button
-          v-for="f in [
-            { id: 'all', label: '全部' },
-            { id: 'fresh', label: '有效记录' },
-            { id: 'stale', label: '应急备用' },
-            { id: 'negative', label: '无效网址' },
-          ]"
-          :key="f.id"
-          @click="statusFilter = f.id as any"
-          class="app-btn-chip"
-          :class="{ active: statusFilter === f.id }"
-        >
-          {{ f.label }}
-        </button>
-      </div>
-
-      <!-- 条目列表 -->
-      <div v-if="filteredEntries.length === 0" class="py-12 text-center text-xs text-text-muted">
-        未匹配到符合条件的缓存条目
-      </div>
-
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-left text-xs font-mono">
-          <thead>
-            <tr class="border-b border-surface-border text-text-muted">
-              <th class="py-2.5 font-medium">网址 / 域名</th>
-              <th class="py-2.5 font-medium">记录类型</th>
-              <th class="py-2.5 font-medium">缓存状态</th>
-              <th class="py-2.5 font-medium">剩余有效期</th>
-              <th class="py-2.5 font-medium">初始有效期</th>
-              <th class="py-2.5 font-medium">命中次数</th>
-              <th class="py-2.5 font-medium">解析 IP</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-surface-border-sub">
-            <tr v-for="entry in filteredEntries" :key="entry.domain + entry.qtype" class="hover:bg-surface-hover/50 transition-colors">
-              <td class="py-2.5 font-bold text-text-main">{{ entry.domain }}</td>
-              <td class="py-2.5 text-text-sub">{{ entry.qtype }}</td>
-              <td class="py-2.5">
-                <span v-if="entry.isNegative" class="px-2 py-0.5 rounded-full text-[10px] bg-status-error-bg text-status-error">无效网址</span>
-                <span v-else-if="entry.status === 'fresh'" class="px-2 py-0.5 rounded-full text-[10px] bg-status-success-bg text-status-success">有效</span>
-                <span v-else class="px-2 py-0.5 rounded-full text-[10px] bg-status-warning-bg text-status-warning">应急备用</span>
-              </td>
-              <td class="py-2.5 font-bold" :class="entry.remainingTtl > 0 ? 'text-text-main' : 'text-status-warning'">{{ entry.remainingTtl }}s</td>
-              <td class="py-2.5 text-text-muted">{{ entry.originalTtl }}s</td>
-              <td class="py-2.5 text-text-main font-bold">{{ entry.hitCount }}</td>
-              <td class="py-2.5 text-text-sub max-w-xs truncate" :title="entry.ipList?.join(', ') || '无'">
-                {{ entry.ipList && entry.ipList.length > 0 ? entry.ipList.join(', ') : '-' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 一键清空确认弹窗 (统一使用 AppModal 居中架构) -->
+    <!-- 一键清空确认弹窗 -->
     <AppModal
       :open="isClearDialogOpen"
       @close="isClearDialogOpen = false"

@@ -8,14 +8,17 @@ export function useCopyFeedback(holdMs = 2000) {
   const copiedValue = ref<string | null>(null);
   let timer: ReturnType<typeof setTimeout> | null = null;
 
-  async function copy(value: string) {
-    await copyToClipboard(value);
-    copiedValue.value = value;
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      if (copiedValue.value === value) copiedValue.value = null;
-      timer = null;
-    }, holdMs);
+  async function copy(value: string): Promise<boolean> {
+    const ok = await copyToClipboard(value);
+    if (ok) {
+      copiedValue.value = value;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (copiedValue.value === value) copiedValue.value = null;
+        timer = null;
+      }, holdMs);
+    }
+    return ok;
   }
 
   const isCopied = (value: string) => copiedValue.value === value;

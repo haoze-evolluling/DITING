@@ -3,7 +3,6 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *, .dark, .dark *));
 
 @theme {
-  /* 底与面 */
   --color-surface-base: var(--app-surface-base);
   --color-surface-card: var(--app-surface-card);
   --color-surface-card-sub: var(--app-surface-card-sub);
@@ -11,22 +10,18 @@
   --color-surface-border: var(--app-surface-border);
   --color-surface-border-sub: var(--app-surface-border-sub);
 
-  /* 文字层级 */
   --color-text-main: var(--app-text-main);
   --color-text-sub: var(--app-text-sub);
   --color-text-muted: var(--app-text-muted);
 
-  /* 主动作色（墨） */
   --color-brand-primary: var(--app-brand-primary);
   --color-brand-primary-hover: var(--app-brand-primary-hover);
   --color-brand-container: var(--app-brand-container);
   --color-brand-on-container: var(--app-brand-on-container);
 
-  /* 朱砂点缀（唯一点缀色，见使用白名单） */
   --color-accent-seal: var(--app-accent-seal);
   --color-accent-seal-bg: var(--app-accent-seal-bg);
 
-  /* 状态反馈（去饱和，归入墨系） */
   --color-status-success: var(--app-status-success);
   --color-status-success-bg: var(--app-status-success-bg);
   --color-status-warning: var(--app-status-warning);
@@ -34,7 +29,6 @@
   --color-status-error: var(--app-status-error);
   --color-status-error-bg: var(--app-status-error-bg);
 
-  /* 字体：宋体题、黑体文、等宽机器串 */
   --font-serif: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", "SimSun", Georgia, serif;
   --font-sans: "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "Cascadia Mono", Consolas, ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -49,22 +43,18 @@
   --app-surface-border: #e3e0d6;
   --app-surface-border-sub: #edebe3;
 
-  /* 排版文字层级（墨） */
   --app-text-main: #1a1a1c;
   --app-text-sub: #55565a;
   --app-text-muted: #8a8b8e;
 
-  /* 主动作即墨：填充墨底、纸白字 */
   --app-brand-primary: #1a1a1c;
   --app-brand-primary-hover: #333336;
   --app-brand-container: #edeae2;
   --app-brand-on-container: #1a1a1c;
 
-  /* 朱砂：唯一点缀色 */
   --app-accent-seal: #9e2b25;
   --app-accent-seal-bg: #f6e6e4;
 
-  /* 状态反馈（去饱和） */
   --app-status-success: #2f6b4f;
   --app-status-success-bg: #e7f0ea;
   --app-status-warning: #8a6a1a;
@@ -72,7 +62,6 @@
   --app-status-error: #9e2b25;
   --app-status-error-bg: #f6e6e4;
 
-  /* Material Web / 弹层符号变量映射（浅色） */
   --md-sys-color-primary: #1a1a1c;
   --md-sys-color-on-primary: #ffffff;
   --md-sys-color-primary-container: #edeae2;
@@ -123,7 +112,6 @@
   --app-text-sub: #b4b4b0;
   --app-text-muted: #7c7d80;
 
-  /* 深色下主动作反相为纸白 */
   --app-brand-primary: #e9e8e4;
   --app-brand-primary-hover: #f5f4f0;
   --app-brand-container: #32333a;
@@ -199,21 +187,13 @@ body {
   color: var(--app-text-main);
 }
 
-/* 排版基元：宋体承担标题与品牌，等宽承担机器串 */
 .font-serif { font-family: var(--font-serif); letter-spacing: 0.01em; }
 .font-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .page-title { font-family: var(--font-serif); font-size: 20px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.4; color: var(--app-text-main); }
 .section-title { font-family: var(--font-serif); font-size: 15px; font-weight: 600; letter-spacing: 0.015em; color: var(--app-text-main); }
 .label-quiet { font-size: 12px; font-weight: 500; letter-spacing: 0.02em; color: var(--app-text-muted); }
 
-/* ========================================================
-   统一按钮规范（墨朱体系）
-   - 标准 / 紧凑 34px / 圆角 6px / 字号 13px / 字重 600
-     （同一操作行内一律 34px 等高，紧凑档仅收紧左右内边距）
-   - 图标钮 34x34 / 圆角 6px
-   - 过滤胶囊 chip 28px / 圆角 6px（仅用于筛选条，不与 34px 按钮同行）
-   - 一律无阴影；主操作 = 墨底
-   ======================================================== */
+/* 统一按钮规范（墨朱体系） */
 .app-btn-base, .app-btn-primary, .app-btn-secondary, .app-btn-danger,
 .app-btn-warning, .app-btn-tonal, .app-btn-compact, .app-btn-chip {
   display: inline-flex;
@@ -244,7 +224,6 @@ body {
   pointer-events: none;
 }
 
-/* 按钮内图标统一 16px 方，避免同名按钮因图标 12/13/14/18/20 不一而重心漂移 */
 .app-btn-base svg, .app-btn-primary svg, .app-btn-secondary svg,
 .app-btn-danger svg, .app-btn-warning svg, .app-btn-tonal svg,
 .app-btn-compact svg, .app-btn-icon svg {
@@ -253,7 +232,7 @@ body {
   width: 16px;
   height: 16px;
 }
-/* 过滤胶囊属 28px 标签层，图标随之略小 */
+
 .app-btn-chip svg {
   display: block;
   flex-shrink: 0;
@@ -306,7 +285,7 @@ body {
 }
 .app-btn-warning:hover:not(:disabled) { filter: brightness(1.08); }
 
-/* 6. 紧凑档：与标准同高 34px，仅收紧左右内边距 */
+/* 6. 紧凑档 */
 .app-btn-compact {
   padding: 0 11px;
   gap: 5px;
@@ -338,19 +317,12 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
   transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
   outline: none;
 }
-/* 图标钮内的图标保持 18px，视觉重量与文本按钮的 16px 文字更接近 */
-.app-btn-icon svg {
-  width: 18px;
-  height: 18px;
-}
+.app-btn-icon svg { width: 18px; height: 18px; }
 .app-btn-icon:hover:not(:disabled) {
   background-color: var(--app-surface-hover);
   color: var(--app-text-main);
 }
-.app-btn-icon:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.app-btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
 .app-btn-icon-danger:hover:not(:disabled) {
   background-color: var(--app-accent-seal-bg);
   color: var(--app-accent-seal);
@@ -387,9 +359,7 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
   color: #1a1a1c;
 }
 
-/* ========================================================
-   面板 / 表格 / 输入 通用基元（无阴影，发丝线分层）
-   ======================================================== */
+/* 面板 / 表格 / 通用 */
 .app-panel {
   background-color: var(--app-surface-card);
   border: 1px solid var(--app-surface-border);
@@ -397,7 +367,6 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
 }
 .app-hairline { border-color: var(--app-surface-border); }
 
-/* 数据表：发丝行、等宽机器列 */
 .app-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .app-table thead th {
   text-align: left; font-size: 12px; font-weight: 600; color: var(--app-text-muted); padding: 8px 12px;
@@ -409,7 +378,7 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
 .app-table tbody tr:last-child td { border-bottom: none; }
 .app-table tbody tr:hover td { background-color: var(--app-surface-hover); }
 
-/* Material Web 组件随墨朱体系收圆角、换主色并深度适配双主题 */
+/* Material Web 样式适配 */
 md-dialog {
   --md-dialog-container-shape: 8px;
   --md-dialog-container-color: var(--app-surface-card);
@@ -480,9 +449,7 @@ md-circular-progress {
   --md-circular-progress-active-indicator-color: var(--app-brand-primary);
   --md-sys-color-primary: var(--app-brand-primary);
 }
-/* 开关：方圆定制形态，与 6px 圆角按钮同族（非 M3 大药丸） */
 md-switch {
-  /* 形态与尺寸：6px 方圆轨道 + 圆形手柄（保留方轨圆钮的对比），收窄至按钮尺度 */
   --md-switch-track-shape: 6px;
   --md-switch-track-width: 40px;
   --md-switch-track-height: 22px;
@@ -493,7 +460,7 @@ md-switch {
   --md-switch-pressed-handle-width: 18px;
   --md-switch-pressed-handle-height: 18px;
   --md-switch-state-layer-size: 34px;
-  --md-switch-track-outline-width: 1px;
+  --md-switch-track-outline-width: 1.5px;
 
   --md-sys-color-primary: var(--app-brand-primary);
   --md-switch-selected-track-color: var(--app-brand-primary);
@@ -507,7 +474,6 @@ md-switch {
   --md-switch-selected-icon-color: var(--app-brand-primary);
   --md-switch-track-color: var(--app-surface-card-sub);
   --md-switch-track-outline-color: var(--app-surface-border);
-  --md-switch-track-outline-width: 1.5px;
   --md-switch-hover-track-color: var(--app-surface-hover);
   --md-switch-hover-track-outline-color: var(--app-text-muted);
   --md-switch-focus-track-color: var(--app-surface-hover);
@@ -537,6 +503,7 @@ md-switch {
   --md-switch-selected-pressed-handle-color: #1a1a1c;
   --md-switch-selected-icon-color: #1a1a1c;
 }
+
 input[type="radio"],
 input[type="checkbox"] {
   accent-color: var(--app-brand-primary);
@@ -550,13 +517,11 @@ select option {
   color: var(--app-text-main);
 }
 
-/* 焦点环：朱色，仅键盘可见 */
 :focus-visible {
   outline: 2px solid var(--app-accent-seal);
   outline-offset: 2px;
 }
 
-/* 极简滚动条（墨系中性灰） */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -572,24 +537,15 @@ select option {
   background: var(--app-text-muted);
 }
 
-/* 实时圆点：亚秒级透明度呼吸，尊重减少动效偏好 */
 @keyframes seal-breathe {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 .seal-pulse {
   animation: seal-breathe 1.8s ease-in-out infinite;
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .seal-pulse {
-    animation: none !important;
-  }
-  * {
-    transition-duration: 0.01ms !important;
-  }
+  .seal-pulse { animation: none !important; }
+  * { transition-duration: 0.01ms !important; }
 }

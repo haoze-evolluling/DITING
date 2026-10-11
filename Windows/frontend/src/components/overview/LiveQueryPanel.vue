@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { ipc } from '../../api/ipc';
 import type { WebSocketEvent, QueryEventData } from '../../api/types';
-import M3Icon from '../../components/M3Icon.vue';
+import M3Icon from '../M3Icon.vue';
 import { formatClockTimeMs } from '../../utils/format';
 
 interface LogItem extends QueryEventData {
@@ -21,27 +21,23 @@ const logContainer = ref<HTMLElement | null>(null);
 let unsubEvents: (() => void) | null = null;
 let idCounter = 0;
 
-const queryTypes = ['ALL', 'A', 'AAAA', 'HTTPS', 'CNAME', 'PTR', 'TXT'];
-const statusOptions = ['ALL', 'NOERROR', 'NXDOMAIN', 'SERVFAIL'];
+const queryTypes = ['ALL', 'A', 'AAAA', 'HTTPS', 'CNAME', 'PTR', 'TXT'] as const;
+const statusOptions = ['ALL', 'NOERROR', 'NXDOMAIN', 'SERVFAIL'] as const;
 
 const filteredLogs = computed(() => {
   return logs.value.filter((item) => {
-    // 拦截过滤
     if (onlyBlocked.value && !item.blocked) {
       return false;
     }
-    // 域名搜索
     if (searchFilter.value) {
       const q = searchFilter.value.toLowerCase();
-      if (!item.domain.toLowerCase().includes(q) && !item.clientIP.toLowerCase().includes(q)) {
+      if (!item.domain.toLowerCase().includes(q) && !(item.clientIP || '').toLowerCase().includes(q)) {
         return false;
       }
     }
-    // 类型过滤
     if (selectedType.value !== 'ALL' && item.qtype !== selectedType.value) {
       return false;
     }
-    // 状态过滤
     if (selectedStatus.value !== 'ALL') {
       const rcode = item.rcode || (item.success ? 'NOERROR' : 'SERVFAIL');
       if (rcode !== selectedStatus.value) {
@@ -183,7 +179,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- 实时日志滚动列表（签名元素：等宽墨块 + 朱红高亮拦截） -->
+    <!-- 实时日志滚动列表 -->
     <div
       ref="logContainer"
       class="app-panel overflow-y-auto p-2 space-y-0.5 font-mono text-[12px] h-[clamp(340px,58vh,680px)]"
@@ -207,7 +203,7 @@ onUnmounted(() => {
         "
       >
         <div class="flex items-center gap-2.5 overflow-hidden">
-          <!-- 拦截标识（朱色，受白名单允许） -->
+          <!-- 拦截标识 -->
           <span
             v-if="item.blocked"
             class="px-1.5 py-0.5 rounded-sm bg-accent-seal text-white font-bold text-[10px] shrink-0"
@@ -216,8 +212,9 @@ onUnmounted(() => {
             拦截
           </span>
 
-          <!-- 状态色标：细点 + 文字（去胶囊噪声） -->
-          <span class="flex items-center gap-1.5 shrink-0 text-[11px]"
+          <!-- 状态色标 -->
+          <span
+            class="flex items-center gap-1.5 shrink-0 text-[11px]"
             :class="item.success ? 'text-status-success' : 'text-status-error'"
           >
             <span class="w-1.5 h-1.5 rounded-full bg-current" />

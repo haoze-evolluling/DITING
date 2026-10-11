@@ -3,13 +3,17 @@ import { ref, onMounted } from 'vue';
 import { ipc } from '../../api/ipc';
 import { themeManager, type ThemeMode } from '../../theme/theme';
 import type { PortCheckResult } from '../../api/types';
-import M3Icon from '../../components/M3Icon.vue';
-import AppModal from '../../components/AppModal.vue';
-import CoreServiceCard from '../../components/CoreServiceCard.vue';
+import M3Icon from '../M3Icon.vue';
+import AppModal from '../AppModal.vue';
+import ToastBanner from '../ToastBanner.vue';
+import CoreServiceCard from '../CoreServiceCard.vue';
+import LanWebCard from '../LanWebCard.vue';
 import { revertSwitch } from '../../utils/switch';
 import { isWebMode } from '../../utils/env';
+import { useToast } from '../../composables/useToast';
 
 const webMode = isWebMode();
+const { toast, show: showToast, dismiss } = useToast();
 const host = ref('127.0.0.1');
 const port = ref('15353');
 const token = ref('');
@@ -44,8 +48,9 @@ async function handleToggleAutostart(e: Event) {
   togglingAutostart.value = true;
   try {
     autostart.value = await ipc.setAutoStart(enable);
+    showToast(`开机自启已${enable ? '开启' : '关闭'}`);
   } catch (err: any) {
-    alert(`设置开机自启失败: ${err.message}`);
+    showToast(`设置开机自启失败: ${err.message}`, true);
     revertSwitch(e, !enable);
   } finally {
     togglingAutostart.value = false;
@@ -97,8 +102,13 @@ async function handleDiagnosePort() {
   try {
     const res = await ipc.checkPortConflicts();
     portResult.value = res;
+    if (res.available) {
+      showToast('DNS 端口正常可用');
+    } else {
+      showToast('检测到 DNS 端口被占用或冲突', true);
+    }
   } catch (err: any) {
-    alert(`诊断失败: ${err.message}`);
+    showToast(`诊断失败: ${err.message}`, true);
   } finally {
     diagnosingPort.value = false;
   }
@@ -109,8 +119,13 @@ async function handleAutofixInSettings() {
   try {
     const res = await ipc.autofixPortConflicts(false);
     portResult.value = res;
+    if (res.available) {
+      showToast('已成功修复 DNS 端口冲突');
+    } else {
+      showToast('自动修复完成，但仍有冲突', true);
+    }
   } catch (err: any) {
-    alert(`自动修复失败: ${err.message}`);
+    showToast(`自动修复失败: ${err.message}`, true);
   } finally {
     autofixingPort.value = false;
   }
@@ -141,6 +156,15 @@ onMounted(() => {
 
 <template>
   <div class="space-y-5 select-none">
+    <!-- 全局消息提示横幅 -->
+    <ToastBanner
+      v-if="toast"
+      :message="toast.message"
+      :type="toast.isError ? 'error' : 'success'"
+      dismissible
+      @dismiss="dismiss"
+    />
+
     <!-- 1. IPC 通信配置卡片 -->
     <div class="app-panel p-5 space-y-4">
       <h3 class="section-title">后台服务连接</h3>
@@ -250,7 +274,10 @@ onMounted(() => {
     <!-- 3. 后台核心服务管理 -->
     <CoreServiceCard />
 
-    <!-- 4. 系统诊断与容灾工具 -->
+    <!-- 4. 局域网 Web 远程管理控制台 -->
+    <LanWebCard />
+
+    <!-- 5. 系统诊断与容灾工具 -->
     <div class="app-panel p-5 space-y-4">
       <h3 class="section-title">网络诊断与应急修复</h3>
 

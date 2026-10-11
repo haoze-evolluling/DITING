@@ -28,7 +28,9 @@ export class WebAuthApi {
     });
     if (res?.token) {
       this.http.setSession(res.token);
-      localStorage.setItem('diting_session_user', res.username);
+      try {
+        localStorage.setItem('diting_session_user', res.username);
+      } catch {}
       this.events.reconnect();
       this.http.notifyAuthRequired(false);
     }

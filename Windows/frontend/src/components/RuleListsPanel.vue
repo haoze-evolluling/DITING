@@ -4,7 +4,9 @@ import { ipc } from '../api/ipc';
 import type { FilterList } from '../api/types';
 import M3Icon from './M3Icon.vue';
 import AppModal from './AppModal.vue';
+import ConfirmModal from './ConfirmModal.vue';
 import { formatMonthDayTime } from '../utils/format';
+import { extractSwitchValue, revertSwitch } from '../utils/switch';
 
 const emit = defineEmits<{
   (e: 'error', message: string): void;
@@ -18,6 +20,11 @@ const saving = ref(false);
 const isAddModalOpen = ref(false);
 const newListName = ref('');
 const newListURL = ref('');
+
+// 删除确认状态
+const isDeleteConfirmOpen = ref(false);
+const deletingId = ref<string | null>(null);
+const deletingName = ref('');
 
 function notify(message: string, isError: boolean) {
   if (isError) {
@@ -57,29 +64,40 @@ async function handleAddList() {
   }
 }
 
-async function toggleList(list: FilterList) {
+async function toggleList(list: FilterList, e: Event) {
+  const nextVal = extractSwitchValue(e);
   const prevEnabled = list.enabled;
   try {
-    list.enabled = !prevEnabled;
+    list.enabled = nextVal;
     await ipc.updateFilterList(list);
     notify(`已${list.enabled ? '启用' : '停用'}规则库: ${list.name}`, false);
     await loadLists();
     emit('changed');
   } catch (err: any) {
     list.enabled = prevEnabled;
+    revertSwitch(e, prevEnabled);
     notify(err?.message || '切换规则库状态失败', true);
   }
 }
 
-async function deleteList(id: string) {
-  if (!confirm('确定要删除此规则库吗？')) return;
+function askDeleteList(list: FilterList) {
+  deletingId.value = list.id;
+  deletingName.value = list.name;
+  isDeleteConfirmOpen.value = true;
+}
+
+async function handleConfirmDelete() {
+  if (!deletingId.value) return;
   try {
-    await ipc.deleteFilterList(id);
+    await ipc.deleteFilterList(deletingId.value);
     notify('已删除规则库', false);
+    deletingId.value = null;
     await loadLists();
     emit('changed');
   } catch (err: any) {
     notify(err?.message || '删除失败', true);
+  } finally {
+    isDeleteConfirmOpen.value = false;
   }
 }
 
@@ -120,7 +138,7 @@ onMounted(loadLists);
       <div
         v-for="l in lists"
         :key="l.id"
-        class="p-5 rounded-md bg-surface-card border border-surface-border flex flex-col justify-between gap-4 transition-all duration-200  "
+        class="p-5 rounded-md bg-surface-card border border-surface-border flex flex-col justify-between gap-4 transition-all duration-200"
       >
         <div>
           <div class="flex items-center justify-between gap-2">
@@ -130,7 +148,7 @@ onMounted(loadLists);
                 {{ l.rulesCount.toLocaleString() }} 条规则
               </span>
             </div>
-            <md-switch :selected="l.enabled" @change="toggleList(l)"></md-switch>
+            <md-switch :selected="l.enabled" @change="(e: Event) => toggleList(l, e)"></md-switch>
           </div>
           <p class="text-xs text-text-muted font-mono mt-2 truncate select-all" :title="l.url">{{ l.url }}</p>
         </div>
@@ -138,10 +156,10 @@ onMounted(loadLists);
         <div class="flex items-center justify-between pt-3 border-t border-surface-border-sub text-[11px] text-text-muted">
           <span>最后更新: {{ l.lastUpdated ? formatMonthDayTime(l.lastUpdated) : '未更新' }}</span>
           <div class="flex items-center gap-1.5">
-            <button @click="refreshList(l.id)" class="app-btn-icon" title="立即更新">
+            <button type="button" @click="refreshList(l.id)" class="app-btn-icon" title="立即更新">
               <M3Icon name="refresh" :size="14" />
             </button>
-            <button @click="deleteList(l.id)" class="app-btn-icon app-btn-icon-danger" title="删除此规则库">
+            <button type="button" @click="askDeleteList(l)" class="app-btn-icon app-btn-icon-danger" title="删除此规则库">
               <M3Icon name="delete" :size="14" />
             </button>
           </div>
@@ -183,5 +201,16 @@ onMounted(loadLists);
         </button>
       </template>
     </AppModal>
+
+    <!-- 删除确认弹窗 -->
+    <ConfirmModal
+      :open="isDeleteConfirmOpen"
+      title="删除规则库"
+      :message="`确定要删除规则库 [${deletingName}] 吗？删除后其包含的拦截规则将不再生效。`"
+      danger
+      confirmText="确定删除"
+      @confirm="handleConfirmDelete"
+      @cancel="isDeleteConfirmOpen = false"
+    />
   </div>
 </template>

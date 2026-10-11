@@ -13,7 +13,7 @@ const props = withDefaults(
   }
 );
 
-// Material Symbols SVG 路径定义 (无需外部网络字体，100% 本地离线即开即显)
+// Material Symbols SVG 路径定义 (100% 本地离线即开即显)
 const iconPaths: Record<string, string> = {
   dashboard:
     'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z',

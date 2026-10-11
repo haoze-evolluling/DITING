@@ -31,7 +31,7 @@ const loading = ref(false);
 const errorMsg = ref('');
 const successMsg = ref('');
 const lockoutSeconds = ref(0);
-let lockoutTimer: any = null;
+let lockoutTimer: ReturnType<typeof setInterval> | null = null;
 
 watch(
   () => props.open,
@@ -76,7 +76,7 @@ function startLockoutCountdown(seconds: number) {
   lockoutTimer = setInterval(() => {
     lockoutSeconds.value--;
     if (lockoutSeconds.value <= 0) {
-      clearInterval(lockoutTimer);
+      if (lockoutTimer) clearInterval(lockoutTimer);
       lockoutTimer = null;
       errorMsg.value = '';
     }
@@ -111,7 +111,6 @@ async function handleSubmit() {
         username: username.value.trim(),
         password: password.value,
       });
-      // 初始化成功后自动执行登录
       await ipc.login({
         username: username.value.trim(),
         password: password.value,
@@ -205,7 +204,7 @@ function handleClose() {
   >
     <template #headline>
       <div class="flex items-center gap-3 w-full">
-        <div class="w-10 h-10 rounded-md bg-brand-container flex items-center justify-center shrink-0 ">
+        <div class="w-10 h-10 rounded-md bg-brand-container flex items-center justify-center shrink-0">
           <M3Icon
             :name="currentMode === 'setup' ? 'key' : (currentMode === 'change_password' ? 'lock_reset' : 'verified_user')"
             :size="22"
@@ -224,7 +223,6 @@ function handleClose() {
     </template>
 
     <div class="space-y-4 py-1">
-      <!-- 提示横幅 -->
       <div v-if="errorMsg" class="p-3 rounded-md bg-status-error-bg border border-status-error/30 text-status-error text-xs flex items-center gap-2">
         <M3Icon name="error" :size="16" class="shrink-0" />
         <span>{{ errorMsg }}</span>
@@ -240,7 +238,6 @@ function handleClose() {
         <span>安全保护锁定中，请在 {{ lockoutSeconds }} 秒后再试</span>
       </div>
 
-      <!-- 表单输入区 -->
       <div class="space-y-3.5">
         <div>
           <md-outlined-text-field
@@ -288,7 +285,6 @@ function handleClose() {
         </div>
       </div>
 
-      <!-- 安全说明 -->
       <div class="p-3 rounded-md bg-surface-card-sub border border-surface-border text-[11px] text-text-sub space-y-1">
         <div class="flex items-center gap-1.5 font-medium text-text-main">
           <M3Icon name="shield" :size="14" class="text-text-main" />

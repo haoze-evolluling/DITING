@@ -7,7 +7,7 @@ import type { HttpTransport } from './http';
  */
 export class EventChannel {
   private ws: WebSocket | null = null;
-  private reconnectTimer: any = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private isConnecting = false;
   private listeners: Set<(event: WebSocketEvent) => void> = new Set();
 
@@ -21,10 +21,13 @@ export class EventChannel {
     this.isConnecting = true;
 
     const wsProtocol = this.transport.baseURL.startsWith('https') ? 'wss' : 'ws';
-    let hostPort = this.transport.baseURL.replace(/^https?:\/\//, '');
-    if (!isDesktopApp() && !localStorage.getItem('diting_ipc_custom_host') && window.location.host) {
-      hostPort = window.location.host;
-    }
+    let hostPort = this.transport.baseURL.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    try {
+      if (!isDesktopApp() && !localStorage.getItem('diting_ipc_custom_host') && window.location.host) {
+        hostPort = window.location.host;
+      }
+    } catch {}
+
     let wsUrl = `${wsProtocol}://${hostPort}/api/v1/events`;
     if (this.transport.token) {
       wsUrl += `?token=${encodeURIComponent(this.transport.token)}`;
@@ -32,6 +35,7 @@ export class EventChannel {
 
     try {
       this.ws = new WebSocket(wsUrl);
+
       this.ws.onopen = () => {
         this.isConnecting = false;
         this.transport.setConnected(true);
@@ -41,7 +45,13 @@ export class EventChannel {
       this.ws.onmessage = (event) => {
         try {
           const parsed: WebSocketEvent = JSON.parse(event.data);
-          this.listeners.forEach((listener) => listener(parsed));
+          this.listeners.forEach((listener) => {
+            try {
+              listener(parsed);
+            } catch (err) {
+              console.error('Error in WebSocket event listener:', err);
+            }
+          });
         } catch (e) {
           console.error('Failed to parse WebSocket event:', e);
         }
@@ -63,8 +73,11 @@ export class EventChannel {
   }
 
   public reconnect() {
+    this.cancelRetry();
     if (this.ws) {
-      this.ws.close();
+      try {
+        this.ws.close();
+      } catch {}
       this.ws = null;
     }
     this.connect();

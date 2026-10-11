@@ -13,7 +13,7 @@ export interface DnsProviderGroup {
   presets: Record<DnsProtocolType, DnsPresetItem>;
 }
 
-export const DNS_PRESET_PROVIDERS: DnsProviderGroup[] = [
+export const DNS_PRESET_PROVIDERS: readonly DnsProviderGroup[] = [
   {
     name: '阿里云',
     presets: {
@@ -170,13 +170,18 @@ export const DNS_PRESET_PROVIDERS: DnsProviderGroup[] = [
       },
     },
   },
-];
+] as const;
 
-export const BOOTSTRAP_PRESETS = [
+export interface BootstrapPresetItem {
+  name: string;
+  ip: string;
+}
+
+export const BOOTSTRAP_PRESETS: readonly BootstrapPresetItem[] = [
   { name: '阿里云', ip: '223.5.5.5:53' },
   { name: '腾讯云', ip: '119.29.29.29:53' },
   { name: '360', ip: '101.226.4.6:53' },
   { name: 'OneDNS', ip: '117.50.10.10:53' },
   { name: 'Google', ip: '8.8.8.8:53' },
   { name: 'Cloudflare', ip: '1.1.1.1:53' },
-];
+] as const;

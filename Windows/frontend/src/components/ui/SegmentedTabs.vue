@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * 分段页签（Segment Tabs）：类别内多段内容的二级导航。
- * 墨色 active=底纹 + 下缘朱色细线，不用胶囊 pill、不用发光。
+ * 墨色 active=底纹 + 下缘朱色细线。
  */
 export interface SegmentDef {
   id: string;
@@ -9,7 +9,7 @@ export interface SegmentDef {
 }
 
 defineProps<{
-  segments: SegmentDef[];
+  segments: readonly SegmentDef[] | SegmentDef[];
   modelValue: string;
 }>();
 

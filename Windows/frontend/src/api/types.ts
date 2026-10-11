@@ -1,3 +1,5 @@
+/** 谛听 (DITING) 核心与全模块类型定义 */
+
 export interface ApiResponse<T = any> {
   success: boolean;
   message?: string;
@@ -6,9 +8,11 @@ export interface ApiResponse<T = any> {
   conflict?: PortCheckResult;
 }
 
+export type UpstreamProtocol = 'PLAIN' | 'DOH' | 'DOT';
+
 export interface UpstreamInfo {
   id: string;
-  protocol: 'PLAIN' | 'DOH' | 'DOT';
+  protocol: UpstreamProtocol;
   server: string;
   url?: string;
   weight?: number;
@@ -16,6 +20,18 @@ export interface UpstreamInfo {
   successCount: number;
   failureCount: number;
   avgLatencyMs: number;
+}
+
+export interface BootstrapServer {
+  id: string;
+  name: string;
+  address: string;
+  weight?: number;
+}
+
+export interface BootstrapConfig {
+  enabled: boolean;
+  servers: BootstrapServer[];
 }
 
 export interface DNSStatus {
@@ -52,17 +68,6 @@ export interface MetricsStatus {
   qps: number;
 }
 
-export interface StatusResponse {
-  version: string;
-  pid: number;
-  uptimeSeconds: number;
-  dns: DNSStatus;
-  takeover: TakeoverStatus;
-  metrics: MetricsStatus;
-  cache?: CacheStats;
-  filter?: FilterStats;
-}
-
 export interface CacheStats {
   enabled: boolean;
   totalHits: number;
@@ -75,10 +80,33 @@ export interface CacheStats {
   evictionCount: number;
 }
 
+export interface FilterStats {
+  enabled: boolean;
+  totalRules: number;
+  activeLists: number;
+  totalQueries: number;
+  blockedQueries: number;
+  allowedQueries: number;
+  blockRate: number;
+}
+
+export interface StatusResponse {
+  version: string;
+  pid: number;
+  uptimeSeconds: number;
+  dns: DNSStatus;
+  takeover: TakeoverStatus;
+  metrics: MetricsStatus;
+  cache?: CacheStats;
+  filter?: FilterStats;
+}
+
+export type CacheMode = 'follow_dns_ttl' | 'limit_max_ttl' | 'fixed_ttl' | string;
+
 export interface CacheConfig {
   enabled: boolean;
   maxEntries: number;
-  mode: 'follow_dns_ttl' | 'limit_max_ttl' | 'fixed_ttl' | string;
+  mode: CacheMode;
   maxTtlSeconds: number;
   fixedTtlSeconds: number;
   minTtlEnabled: boolean;
@@ -165,16 +193,6 @@ export interface QueryEventData {
   errorMessage?: string;
 }
 
-export interface FilterStats {
-  enabled: boolean;
-  totalRules: number;
-  activeLists: number;
-  totalQueries: number;
-  blockedQueries: number;
-  allowedQueries: number;
-  blockRate: number;
-}
-
 export interface FilterList {
   id: string;
   name: string;
@@ -185,9 +203,11 @@ export interface FilterList {
   checksum?: string;
 }
 
+export type BlockMode = 'null_ip' | 'nxdomain' | 'refused' | string;
+
 export interface FilterConfig {
   enabled: boolean;
-  blockMode: 'null_ip' | 'nxdomain' | 'refused' | string;
+  blockMode: BlockMode;
   blockingIPv4: string;
   blockingIPv6: string;
   customRules: string[];
@@ -212,22 +232,10 @@ export interface WebSocketEvent {
 
 export interface ProviderConfig {
   id: string;
-  protocol: 'PLAIN' | 'DOH' | 'DOT';
+  protocol: UpstreamProtocol;
   server: string;
   url?: string;
   weight?: number;
-}
-
-export interface BootstrapServer {
-  id: string;
-  name: string;
-  address: string;
-  weight?: number;
-}
-
-export interface BootstrapConfig {
-  enabled: boolean;
-  servers: BootstrapServer[];
 }
 
 export interface UpstreamConfigureRequest {
@@ -318,5 +326,3 @@ export interface ConfigureWebRequest {
   port?: number;
   configureFirewall?: boolean;
 }
-
-

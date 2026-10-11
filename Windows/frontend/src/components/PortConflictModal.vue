@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import type { PortCheckResult } from '../api/types';
 import AppModal from './AppModal.vue';
 import M3Icon from './M3Icon.vue';
+import { useCopyFeedback } from '../composables/useCopyFeedback';
 
 const props = defineProps<{
   open: boolean;
@@ -20,32 +21,11 @@ const emit = defineEmits<{
   (e: 'downgradeLAN'): void;
 }>();
 
-const copying = ref(false);
+const { copy, isCopied } = useCopyFeedback();
 
 const isAutofixAvailable = computed(() => {
   return Boolean(props.conflictResult?.canAutofix || props.conflictResult?.hasICS);
 });
-
-async function copyCommand(cmd: string) {
-  try {
-    await navigator.clipboard.writeText(cmd);
-    copying.value = true;
-    setTimeout(() => {
-      copying.value = false;
-    }, 2000);
-  } catch (err) {
-    const textarea = document.createElement('textarea');
-    textarea.value = cmd;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    copying.value = true;
-    setTimeout(() => {
-      copying.value = false;
-    }, 2000);
-  }
-}
 
 function handleClose() {
   emit('close');
@@ -148,11 +128,11 @@ function handleClose() {
               <span class="text-text-main select-all">sc stop SharedAccess</span>
               <button
                 type="button"
-                @click="copyCommand('sc stop SharedAccess')"
+                @click="copy('sc stop SharedAccess')"
                 class="app-btn-secondary app-btn-compact shrink-0"
               >
-                <M3Icon :name="copying ? 'check' : 'content_copy'" :size="12" />
-                <span>{{ copying ? '已复制' : '复制命令' }}</span>
+                <M3Icon :name="isCopied('sc stop SharedAccess') ? 'check' : 'content_copy'" :size="12" />
+                <span>{{ isCopied('sc stop SharedAccess') ? '已复制' : '复制命令' }}</span>
               </button>
             </div>
             <p class="text-[11px] text-text-muted">

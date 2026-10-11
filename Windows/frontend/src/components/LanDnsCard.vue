@@ -5,7 +5,7 @@ import type { LANStatusResponse } from '../api/types';
 import M3Icon from './M3Icon.vue';
 import StatusBadge from './StatusBadge.vue';
 import ToastBanner from './ToastBanner.vue';
-import { revertSwitch } from '../utils/switch';
+import { revertSwitch, extractSwitchValue } from '../utils/switch';
 import { useCopyFeedback } from '../composables/useCopyFeedback';
 
 const loading = ref(false);
@@ -14,11 +14,11 @@ const togglingFw = ref(false);
 const lanStatus = ref<LANStatusResponse | null>(null);
 const errorMessage = ref('');
 const successMessage = ref('');
-const { copiedValue, copy, isCopied } = useCopyFeedback();
+const { copy, isCopied } = useCopyFeedback();
 
-const allowLAN = computed(() => !!lanStatus.value?.allowLAN);
+const allowLAN = computed(() => Boolean(lanStatus.value?.allowLAN));
 const lanAddresses = computed(() => lanStatus.value?.lanAddresses || []);
-const firewallAllowed = computed(() => !!lanStatus.value?.firewallAllowed);
+const firewallAllowed = computed(() => Boolean(lanStatus.value?.firewallAllowed));
 
 function flashSuccess(message: string, durationMs = 4000) {
   successMessage.value = message;
@@ -40,7 +40,7 @@ async function loadData() {
 }
 
 async function handleToggleLAN(e: Event) {
-  const enable = Boolean((e.target as any).selected ?? (e.target as any).checked);
+  const enable = extractSwitchValue(e);
   toggling.value = true;
   errorMessage.value = '';
   successMessage.value = '';
@@ -48,7 +48,7 @@ async function handleToggleLAN(e: Event) {
   try {
     await ipc.configureLAN({
       allowLAN: enable,
-      configureFirewall: true, // 保持防火墙放行规则与局域网服务状态一致（开启时放行，关闭时清除）
+      configureFirewall: true,
     });
     flashSuccess(
       enable
@@ -122,7 +122,7 @@ onMounted(() => {
 
     <!-- 核心卡片网格：IP 地址展示与防火墙状态 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-      <!-- 局域网 IP 地址卡片 (占据 2 列) -->
+      <!-- 局域网 IP 地址卡片 -->
       <div class="lg:col-span-2 p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -179,7 +179,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Windows 防火墙状态卡片 (占据 1 列) -->
+      <!-- Windows 防火墙状态卡片 -->
       <div class="p-4 rounded-md border border-surface-border-sub bg-surface-card-sub space-y-3 flex flex-col justify-between">
         <div class="space-y-2">
           <div class="flex items-center justify-between">
@@ -214,7 +214,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 局域网设备接入指引 (AdGuard Home 经典指南折叠体系) -->
+    <!-- 局域网设备接入指引 -->
     <div class="rounded-md border border-surface-border-sub bg-surface-card-sub p-4 space-y-3">
       <div class="flex items-center gap-2">
         <M3Icon name="help_outline" :size="18" class="text-text-main" />
@@ -226,7 +226,7 @@ onMounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <!-- 方案 1：路由器全局配置 -->
         <div class="p-3 rounded-md bg-surface-card border border-surface-border space-y-1.5">
-          <div class="font-bold text-text-main flex items-center gap-1.5 text-text-main">
+          <div class="font-bold text-text-main flex items-center gap-1.5">
             <M3Icon name="wifi" :size="16" />
             <span>方案 A：路由器全局配置 (强烈推荐)</span>
           </div>
@@ -237,7 +237,7 @@ onMounted(() => {
 
         <!-- 方案 2：移动设备与电脑独立配置 -->
         <div class="p-3 rounded-md bg-surface-card border border-surface-border space-y-1.5">
-          <div class="font-bold text-text-main flex items-center gap-1.5 text-text-main">
+          <div class="font-bold text-text-main flex items-center gap-1.5">
             <M3Icon name="devices" :size="16" />
             <span>方案 B：手机 / 平板 / 电脑单机配置</span>
           </div>

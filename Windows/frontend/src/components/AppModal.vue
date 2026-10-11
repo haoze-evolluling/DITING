@@ -59,7 +59,7 @@ onUnmounted(() => {
         @click.self="emit('close')"
       >
         <div
-          class="relative w-full rounded-md bg-surface-card border border-surface-border p-5 flex flex-col gap-4 text-text-main"
+          class="relative w-full rounded-md bg-surface-card border border-surface-border p-5 flex flex-col gap-4 text-text-main shadow-lg"
           :class="maxWidth"
         >
           <!-- 标题区域 -->

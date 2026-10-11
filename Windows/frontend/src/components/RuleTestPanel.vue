@@ -49,7 +49,7 @@ async function runTest() {
         <option value="ANY" class="bg-surface-card text-text-main">全部记录类型 (ANY)</option>
       </select>
       <button type="button" @click="runTest" :disabled="testing || !testDomain.trim()" class="app-btn-primary">
-        <M3Icon name="search" :size="16" />
+        <M3Icon :name="testing ? 'refresh' : 'search'" :size="16" :class="testing ? 'animate-spin' : ''" />
         <span>{{ testing ? '检测中...' : '立即测试' }}</span>
       </button>
     </div>

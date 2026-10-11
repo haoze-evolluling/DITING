@@ -9,11 +9,10 @@ import type {
 } from './types';
 import type { HttpTransport } from './http';
 
-/** 核心网络与 DNS 状态、上游服务器与 Bootstrap 引导 */
+/** 核心网络与 DNS 状态、网卡接管、端口诊断与上游配置 */
 export class CoreApi {
   constructor(private http: HttpTransport) {}
 
-  // --- 状态与 DNS 服务 ---
   public getStatus(): Promise<StatusResponse> {
     return this.http.request<StatusResponse>('/api/v1/status');
   }
@@ -28,13 +27,13 @@ export class CoreApi {
 
   public async checkHealth(): Promise<boolean> {
     try {
-      return (await this.http.request<string>('/api/v1/health')) === 'ok';
+      const res = await this.http.request<string>('/api/v1/health');
+      return res === 'ok' || Boolean(res);
     } catch {
       return false;
     }
   }
 
-  // --- 网卡接管 ---
   public async enableTakeover(): Promise<void> {
     await this.http.request<void>('/api/v1/takeover/enable', { method: 'POST' });
   }
@@ -54,7 +53,6 @@ export class CoreApi {
     });
   }
 
-  // --- 53 端口冲突诊断与自愈 ---
   public checkPortConflicts(): Promise<PortCheckResult> {
     return this.http.request<PortCheckResult>('/api/v1/portcheck');
   }
@@ -66,7 +64,6 @@ export class CoreApi {
     });
   }
 
-  // --- 上游服务器与 Bootstrap ---
   public async configureUpstream(req: UpstreamConfigureRequest): Promise<void> {
     await this.http.request<void>('/api/v1/upstream/configure', {
       method: 'POST',

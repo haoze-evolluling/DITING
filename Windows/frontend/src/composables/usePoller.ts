@@ -7,8 +7,14 @@ export function usePoller(task: () => void | Promise<void>, intervalMs: number) 
   let timer: ReturnType<typeof setInterval> | null = null;
 
   onMounted(() => {
-    task();
-    timer = setInterval(task, intervalMs);
+    try {
+      task();
+    } catch {}
+    timer = setInterval(() => {
+      try {
+        task();
+      } catch {}
+    }, intervalMs);
   });
 
   onUnmounted(() => {

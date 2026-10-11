@@ -11,10 +11,7 @@ import { isWebMode } from '../utils/env';
 
 /**
  * IPC 服务聚合门面。
- *
- * 传输（http.ts）、事件通道（ws.ts）、平台原生委托（native.ts）与
- * 按资源分组的各 API 模块（core/cache/filter/network/web）在此组合，
- * 对外仍暴露唯一的 `ipc` 单例与既有方法名，调用方无需改动。
+ * 统一组合传输、事件通道、平台桥接与各领域模块。
  */
 class IPCService {
   private http = new HttpTransport();

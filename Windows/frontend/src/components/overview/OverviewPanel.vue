@@ -3,13 +3,14 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { ipc } from '../../api/ipc';
 import type { StatusResponse, WebSocketEvent, PortCheckResult } from '../../api/types';
 import type { NavTab } from '../../constants/navigation';
-import StatusBadge from '../../components/StatusBadge.vue';
-import MetricStrip, { type StatEntry } from '../../components/ui/MetricStrip.vue';
-import MetricChart from '../../components/MetricChart.vue';
-import M3Icon from '../../components/M3Icon.vue';
-import PortConflictModal from '../../components/PortConflictModal.vue';
-import ToastBanner from '../../components/ToastBanner.vue';
-import { revertSwitch } from '../../utils/switch';
+import StatusBadge from '../StatusBadge.vue';
+import MetricStrip, { type StatEntry } from '../ui/MetricStrip.vue';
+import MetricChart from '../MetricChart.vue';
+import M3Icon from '../M3Icon.vue';
+import PortConflictModal from '../PortConflictModal.vue';
+import ToastBanner from '../ToastBanner.vue';
+import OverviewQuickCards from './OverviewQuickCards.vue';
+import { revertSwitch, extractSwitchValue } from '../../utils/switch';
 import { usePoller } from '../../composables/usePoller';
 import { formatUptime } from '../../utils/format';
 
@@ -34,10 +35,10 @@ const latencyHistory = ref<number[]>([]);
 let unsubEvents: (() => void) | null = null;
 let unsubConn: (() => void) | null = null;
 
-const dnsRunning = computed(() => !!status.value?.dns?.running);
-const allowLAN = computed(() => !!status.value?.dns?.allowLAN);
+const dnsRunning = computed(() => Boolean(status.value?.dns?.running));
+const allowLAN = computed(() => Boolean(status.value?.dns?.allowLAN));
 const primaryLanIP = computed(() => status.value?.dns?.lanAddresses?.[0] || '');
-const takeoverActive = computed(() => !!status.value?.takeover?.active);
+const takeoverActive = computed(() => Boolean(status.value?.takeover?.active));
 const activeAdaptersCount = computed(() => status.value?.takeover?.adapters?.length || 0);
 
 const successRate = computed(() => {
@@ -46,6 +47,8 @@ const successRate = computed(() => {
   const rate = (m.successQueries / m.totalQueries) * 100;
   return `${rate.toFixed(1)}%`;
 });
+
+const uptimeText = computed(() => formatUptime(status.value?.uptimeSeconds || 0));
 
 const metricStats = computed<StatEntry[]>(() => [
   {
@@ -61,8 +64,6 @@ const metricStats = computed<StatEntry[]>(() => [
   { label: '解析成功率', value: successRate.value },
   { label: '持续运行时长', value: uptimeText.value },
 ]);
-
-const uptimeText = computed(() => formatUptime(status.value?.uptimeSeconds || 0));
 
 const formatDnsMode = computed(() => {
   const mode = status.value?.dns?.mode?.toLowerCase();
@@ -178,14 +179,11 @@ async function handleRetryAfterConflict() {
     isRetryingConflict.value = true;
     recheckError.value = '';
     const checkRes = await ipc.checkPortConflicts();
-    let hasOther = false;
-    for (const c of (checkRes.conflicts || [])) {
-      if (!c.isSelf) {
-        hasOther = true;
-        break;
-      }
-    }
-    const isSelfOnly = (checkRes.conflicts && checkRes.conflicts.length > 0 && checkRes.conflicts.every(c => c.isSelf));
+    const isSelfOnly =
+      checkRes.conflicts &&
+      checkRes.conflicts.length > 0 &&
+      checkRes.conflicts.every((c) => c.isSelf);
+
     if (!checkRes.available && !isSelfOnly) {
       portConflict.value = checkRes;
       recheckError.value = '53 端口仍被占用中，请确认已关闭冲突程序或停止 ICS 服务后再重试。';
@@ -213,8 +211,7 @@ async function handleRetryAfterConflict() {
 }
 
 async function handleToggleDNS(e: Event) {
-  const target = e.target as any;
-  const wantStart = target.selected ?? !dnsRunning.value;
+  const wantStart = extractSwitchValue(e);
   try {
     togglingDNS.value = true;
     errorMessage.value = '';
@@ -225,7 +222,7 @@ async function handleToggleDNS(e: Event) {
     }
     await fetchStatus();
   } catch (err: any) {
-    target.selected = dnsRunning.value;
+    revertSwitch(e, !wantStart);
     if (wantStart) {
       await handleStartFailure(err);
     } else {
@@ -237,8 +234,7 @@ async function handleToggleDNS(e: Event) {
 }
 
 async function handleToggleTakeover(e: Event) {
-  const target = e.target as any;
-  const nextVal = Boolean(target.selected ?? target.checked);
+  const nextVal = extractSwitchValue(e);
   togglingTakeover.value = true;
   try {
     if (nextVal) {
@@ -308,7 +304,7 @@ onUnmounted(() => {
       </template>
     </ToastBanner>
 
-    <!-- 双栏主网格 (左侧：运行控制 + 指标带 + 波形；右侧：快捷摘要) -->
+    <!-- 双栏主网格 -->
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
       <!-- 左侧主控与实时监控栏 -->
       <div class="xl:col-span-8 flex flex-col gap-4">
@@ -375,10 +371,10 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- 实时指标带（发丝线分隔，无卡片、无图标框） -->
+        <!-- 实时指标带 -->
         <MetricStrip :stats="metricStats" />
 
-        <!-- 遥测波形图表 (双图表并列) -->
+        <!-- 遥测波形图表 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <MetricChart
             label="查询速率趋势"
@@ -396,131 +392,20 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 右侧快捷功能与监控摘要栏 (占据 4/12 宽度) -->
-      <div class="xl:col-span-4 flex flex-col gap-3.5">
-        <!-- 上游节点摘要 -->
-        <div class="rounded-md border border-surface-border bg-surface-card p-4  transition-colors">
-          <div class="flex items-center justify-between gap-2 mb-2.5">
-            <div class="flex items-center gap-2 min-w-0">
-              <M3Icon name="upstream" :size="18" class="text-text-main shrink-0" />
-              <h3 class="font-semibold text-text-main text-sm truncate">DNS 服务</h3>
-            </div>
-            <button
-              @click="emit('navigate', 'network')"
-              class="app-btn-tonal app-btn-compact"
-            >
-              管理服务器
-            </button>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">工作策略</div>
-              <div class="text-xs font-semibold text-text-main truncate mt-0.5">
-                {{ formatDnsMode }}
-              </div>
-            </div>
-            <div class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">局域网服务</div>
-              <div class="text-xs font-semibold truncate mt-0.5" :class="allowLAN ? 'text-status-success font-mono' : 'text-text-sub'">
-                {{ allowLAN ? (primaryLanIP || '全网监听') : '仅本机' }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 智能缓存摘要 -->
-        <div class="rounded-md border border-surface-border bg-surface-card p-4  transition-colors">
-          <div class="flex items-center justify-between gap-2 mb-2.5">
-            <div class="flex items-center gap-2 min-w-0">
-              <M3Icon name="cache" :size="18" class="text-text-main shrink-0" />
-              <h3 class="font-semibold text-text-main text-sm truncate">解析加速</h3>
-            </div>
-            <button
-              @click="emit('navigate', 'accel')"
-              class="app-btn-tonal app-btn-compact"
-            >
-              查看详情
-            </button>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">缓存命中率</div>
-              <div class="text-xs font-bold text-text-main font-mono mt-0.5">
-                {{ ((status?.cache?.hitRatio || 0) * 100).toFixed(1) }}%
-              </div>
-            </div>
-            <div class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">已存记录 / 容量</div>
-              <div class="text-xs font-mono text-text-main truncate mt-0.5">
-                {{ status?.cache?.entryCount || 0 }} / {{ status?.cache?.maxEntries || 4096 }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 规则防护摘要 -->
-        <div class="rounded-md border border-surface-border bg-surface-card p-4  transition-colors">
-          <div class="flex items-center justify-between gap-2 mb-2.5">
-            <div class="flex items-center gap-2 min-w-0">
-              <M3Icon name="shield" :size="18" class="text-text-main shrink-0" />
-              <h3 class="font-semibold text-text-main text-sm truncate">规则拦截</h3>
-            </div>
-            <button
-              @click="emit('navigate', 'rules')"
-              class="app-btn-tonal app-btn-compact"
-            >
-              管理规则
-            </button>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">请求拦截率</div>
-              <div class="text-xs font-bold text-status-error font-mono mt-0.5">
-                {{ (status?.filter?.blockRate || 0).toFixed(1) }}%
-              </div>
-            </div>
-            <div class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">已拦截 / 规则数</div>
-              <div class="text-xs font-mono text-text-main truncate mt-0.5">
-                {{ status?.filter?.blockedQueries || 0 }} / {{ status?.filter?.totalRules || 0 }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 网卡接管简报 -->
-        <div class="rounded-md border border-surface-border bg-surface-card p-4  transition-colors">
-          <div class="flex items-center justify-between gap-2 mb-2.5">
-            <div class="flex items-center gap-2 min-w-0">
-              <M3Icon name="adapters" :size="18" class="text-text-main shrink-0" />
-              <h3 class="font-semibold text-text-main text-sm truncate">网络接管</h3>
-            </div>
-            <button
-              @click="emit('navigate', 'network')"
-              class="app-btn-tonal app-btn-compact"
-            >
-              查看网络
-            </button>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">系统网络状态</div>
-              <div class="text-xs font-semibold truncate mt-0.5" :class="takeoverActive ? 'text-status-success' : 'text-text-muted'">
-                {{ takeoverActive ? '已开启保护 (断网自动恢复)' : '未开启 (系统默认)' }}
-              </div>
-            </div>
-            <div class="p-2.5 rounded-md bg-surface-card-sub border border-surface-border-sub">
-              <div class="text-[11px] text-text-sub">防断网保障</div>
-              <div class="text-[11px] font-mono text-text-sub truncate mt-0.5" title="%ProgramData%\DITING\dns_state.json">
-                已就绪 (异常退出自动恢复)
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- 右侧快捷功能与监控摘要栏 -->
+      <div class="xl:col-span-4">
+        <OverviewQuickCards
+          :status="status"
+          :formatDnsMode="formatDnsMode"
+          :allowLAN="allowLAN"
+          :primaryLanIP="primaryLanIP"
+          :takeoverActive="takeoverActive"
+          @navigate="emit('navigate', $event)"
+        />
       </div>
     </div>
 
-    <!-- 53 端口占用冲突友好引导弹窗 -->
+    <!-- 53 端口占用冲突引导弹窗 -->
     <PortConflictModal
       :open="showConflictModal"
       :conflictResult="portConflict"

@@ -1,14 +1,11 @@
 <script setup lang="ts">
 /**
  * 面板基元：纯平 surface + 1px 发丝线 + 6px 圆角，无阴影。
- * 只在内容真正成组处使用，避免把页面切成一堆同款卡片。
  */
 withDefaults(
   defineProps<{
-    /** 面板标题（宋体小节题），省略则不渲染标题栏 */
     title?: string;
     subtitle?: string;
-    /** 是否给主体加内边距；表格类面板可设为 false */
     padded?: boolean;
   }>(),
   { title: '', subtitle: '', padded: true }

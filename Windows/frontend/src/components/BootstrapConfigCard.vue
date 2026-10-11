@@ -3,7 +3,9 @@ import { ref } from 'vue';
 import { ipc } from '../api/ipc';
 import type { BootstrapConfig, BootstrapServer } from '../api/types';
 import M3Icon from './M3Icon.vue';
-import AppModal from './AppModal.vue';
+import BootstrapEditModal from './network/BootstrapEditModal.vue';
+import ConfirmModal from './ConfirmModal.vue';
+import { extractSwitchValue } from '../utils/switch';
 
 const props = defineProps<{
   config: BootstrapConfig;
@@ -17,80 +19,21 @@ const emit = defineEmits<{
 
 // 对话框表单状态
 const isDialogOpen = ref(false);
+const editingItem = ref<BootstrapServer | null>(null);
 const editingIndex = ref(-1);
-const formId = ref('');
-const formName = ref('');
-const formAddress = ref('');
-const formError = ref('');
+
+// 删除与告警弹窗
+const isConfirmOpen = ref(false);
+const confirmTitle = ref('');
+const confirmMessage = ref('');
+const deleteIndexPending = ref<number | null>(null);
 
 // 延迟测速状态
 const probingId = ref<string | null>(null);
 const probeResults = ref<Record<string, number>>({});
 
-import { BOOTSTRAP_PRESETS } from '../constants/dnsPresets';
-
-// 常用推荐预设
-const presets = BOOTSTRAP_PRESETS;
-
-function applyPreset(p: { name: string; ip: string }) {
-  formName.value = p.name;
-  formAddress.value = p.ip;
-  if (!formId.value.trim() || formId.value.startsWith('bootstrap-')) {
-    formId.value = p.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
-  }
-}
-
-function validateIPAddress(input: string): boolean {
-  const trimmed = input.trim();
-  if (!trimmed) return false;
-
-  // 提取主机部分与端口部分
-  let host = trimmed;
-  let portStr = '';
-  if (trimmed.startsWith('[')) {
-    const endBracket = trimmed.indexOf(']');
-    if (endBracket === -1) return false;
-    host = trimmed.substring(1, endBracket);
-    const rest = trimmed.substring(endBracket + 1);
-    if (rest.startsWith(':')) {
-      portStr = rest.substring(1);
-    } else if (rest.length > 0) {
-      return false;
-    }
-  } else if (trimmed.includes(':') && trimmed.indexOf(':') === trimmed.lastIndexOf(':')) {
-    // 只有一个冒号，为 IPv4:端口
-    const parts = trimmed.split(':');
-    host = parts[0];
-    portStr = parts[1];
-  }
-
-  if (portStr) {
-    if (!/^\d+$/.test(portStr)) return false;
-    const p = parseInt(portStr, 10);
-    if (p <= 0 || p > 65535) return false;
-  }
-
-  // IPv4 校验 (0-255.0-255.0-255.0-255)
-  const ipv4Parts = host.split('.');
-  if (ipv4Parts.length === 4) {
-    return ipv4Parts.every((part) => {
-      if (!/^\d+$/.test(part)) return false;
-      const num = parseInt(part, 10);
-      return num >= 0 && num <= 255 && (part === '0' || !part.startsWith('0'));
-    });
-  }
-
-  // IPv6 校验（至少含有2个冒号，十六进制字符）
-  if (host.includes(':')) {
-    return /^[0-9a-fA-F:]+$/.test(host);
-  }
-
-  return false;
-}
-
 function handleToggleEnabled(e: Event) {
-  const target = e.target as any;
-  const newEnabled = Boolean(target.selected ?? target.checked);
+  const newEnabled = extractSwitchValue(e);
   const updated: BootstrapConfig = {
     ...props.config,
     enabled: newEnabled,
@@ -101,61 +44,46 @@ function handleToggleEnabled(e: Event) {
 
 function openAddDialog() {
   editingIndex.value = -1;
-  formId.value = `bootstrap-${(props.config.servers?.length || 0) + 1}`;
-  formName.value = '';
-  formAddress.value = '223.5.5.5:53';
-  formError.value = '';
+  editingItem.value = null;
   isDialogOpen.value = true;
 }
 
 function openEditDialog(index: number) {
   editingIndex.value = index;
-  const s = props.config.servers[index];
-  formId.value = s.id;
-  formName.value = s.name || '';
-  formAddress.value = s.address;
-  formError.value = '';
+  editingItem.value = props.config.servers[index] || null;
   isDialogOpen.value = true;
 }
 
 function handleDelete(index: number) {
   if (props.config.servers.length <= 1) {
-    alert('请至少保留一个 Bootstrap DNS 服务器');
+    confirmTitle.value = '提示';
+    confirmMessage.value = '请至少保留一个 Bootstrap DNS 服务器，避免加密握手域名无法解析。';
+    deleteIndexPending.value = null;
+    isConfirmOpen.value = true;
     return;
   }
-  const updatedServers = [...props.config.servers];
-  updatedServers.splice(index, 1);
-  const updated: BootstrapConfig = {
-    ...props.config,
-    servers: updatedServers,
-  };
-  emit('update:config', updated);
-  emit('save', updated);
+  deleteIndexPending.value = index;
+  confirmTitle.value = '确认删除';
+  confirmMessage.value = `确定删除引导服务器 [${props.config.servers[index]?.name || props.config.servers[index]?.address}] 吗？`;
+  isConfirmOpen.value = true;
 }
 
-function handleSaveDialog() {
-  formError.value = '';
-  const addr = formAddress.value.trim();
-  if (!addr) {
-    formError.value = 'Bootstrap DNS 地址不得为空';
-    return;
+function handleConfirmAction() {
+  if (deleteIndexPending.value !== null) {
+    const updatedServers = [...props.config.servers];
+    updatedServers.splice(deleteIndexPending.value, 1);
+    const updated: BootstrapConfig = {
+      ...props.config,
+      servers: updatedServers,
+    };
+    emit('update:config', updated);
+    emit('save', updated);
+    deleteIndexPending.value = null;
   }
+  isConfirmOpen.value = false;
+}
 
-  if (!validateIPAddress(addr)) {
-    formError.value = '地址必须为有效的 IP 地址（IPv4 或 IPv6，如 223.5.5.5 或 119.29.29.29），不能填写域名';
-    return;
-  }
-
-  const id = formId.value.trim() || `bootstrap-${Date.now()}`;
-  const name = formName.value.trim() || addr;
-
-  const item: BootstrapServer = {
-    id,
-    name,
-    address: addr,
-    weight: 1.0,
-  };
-
+function handleSaveServer(item: BootstrapServer) {
   const updatedServers = [...(props.config.servers || [])];
   if (editingIndex.value >= 0) {
     updatedServers[editingIndex.value] = item;
@@ -307,67 +235,23 @@ async function handleTestLatency(s: BootstrapServer) {
     </div>
 
     <!-- 添加 / 编辑弹窗 -->
-    <AppModal
+    <BootstrapEditModal
       :open="isDialogOpen"
+      :editingItem="editingItem"
+      :serverCount="config.servers?.length || 0"
       @close="isDialogOpen = false"
-      :title="editingIndex >= 0 ? '编辑 Bootstrap DNS 服务器' : '添加 Bootstrap DNS 服务器'"
-    >
-      <form id="bootstrap-dialog-form" @submit.prevent="handleSaveDialog" class="space-y-4 pt-1">
-        <!-- 常用预设快捷选用 -->
-        <div class="space-y-1.5">
-          <label class="text-xs font-medium text-text-sub">常用公共 DNS 快捷选用：</label>
-          <div class="flex flex-wrap gap-2">
-            <button
-              v-for="p in presets"
-              :key="p.ip"
-              type="button"
-              @click="applyPreset(p)"
-              class="app-btn-chip"
-            >
-              {{ p.name }}
-            </button>
-          </div>
-        </div>
+      @save="handleSaveServer"
+    />
 
-        <md-outlined-text-field
-          label="服务器显示名称"
-          :value="formName"
-          @input="formName = ($event.target as any).value"
-          class="w-full"
-          placeholder="例如：AliDNS"
-        ></md-outlined-text-field>
-
-        <md-outlined-text-field
-          label="IP 地址 (支持 IPv4 / IPv6，可带端口 :53)"
-          :value="formAddress"
-          @input="formAddress = ($event.target as any).value"
-          class="w-full font-mono"
-          placeholder="223.5.5.5:53 或 119.29.29.29"
-          required
-        ></md-outlined-text-field>
-
-        <div v-if="formError" class="p-2.5 rounded-md bg-status-error-bg text-status-error text-xs flex items-center gap-1.5 border border-status-error/20">
-          <M3Icon name="error" :size="16" />
-          <span>{{ formError }}</span>
-        </div>
-      </form>
-
-      <template #actions>
-        <button
-          type="button"
-          @click="isDialogOpen = false"
-          class="app-btn-secondary"
-        >
-          取消
-        </button>
-        <button
-          type="button"
-          @click="handleSaveDialog"
-          class="app-btn-primary"
-        >
-          保存
-        </button>
-      </template>
-    </AppModal>
+    <!-- 确认 / 告警弹窗 -->
+    <ConfirmModal
+      :open="isConfirmOpen"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :danger="deleteIndexPending !== null"
+      :confirmText="deleteIndexPending !== null ? '确定删除' : '知道了'"
+      @confirm="handleConfirmAction"
+      @cancel="isConfirmOpen = false"
+    />
   </div>
 </template>

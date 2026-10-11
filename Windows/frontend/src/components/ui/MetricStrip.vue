@@ -1,14 +1,11 @@
 <script setup lang="ts">
 /**
  * 指标带：横向排列的「散标签 + 大数值」组，靠发丝线分隔成表格式栅格。
- * 取代 4 个等宽圆角指标卡；数值用等宽大数字承载信息密度。
- * 用 auto-fit 网格，任意项数与任意屏宽下都不会出现错位分隔线。
  */
 export interface StatEntry {
   label: string;
   value: string | number;
   unit?: string;
-  /** 数值语气：默认墨；seal 用于被拦截等需朱色强调的项 */
   tone?: 'default' | 'seal' | 'muted';
 }
 

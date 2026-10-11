@@ -46,8 +46,8 @@ export function useServiceControl() {
     }
   }
 
-  async function run(action: ServiceAction): Promise<void> {
-    if (operating.value) return;
+  async function run(action: ServiceAction): Promise<boolean> {
+    if (operating.value) return false;
     operating.value = true;
     opMessage.value = '';
     opError.value = '';
@@ -77,10 +77,12 @@ export function useServiceControl() {
       opMessage.value = msg || `${ACTION_LABELS[action]}成功`;
       await fetchStatus();
       await ipc.checkHealth();
+      return true;
     } catch (err: any) {
       opError.value = isUACCancelled(err)
         ? '管理员权限授权已取消，该项操作需要管理员特权。'
         : err.message || `${ACTION_LABELS[action]}失败`;
+      return false;
     } finally {
       operating.value = false;
     }
