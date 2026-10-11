@@ -1,11 +1,12 @@
 import { ref } from 'vue';
 
 export interface ConfirmDialogOptions {
-  title: string;
+  title?: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
   danger?: boolean;
+  showCancel?: boolean;
 }
 
 /**
@@ -19,15 +20,18 @@ export function useConfirmModal() {
     confirmText: '确定',
     cancelText: '取消',
     danger: false,
+    showCancel: true,
   });
 
   let resolvePromise: ((value: boolean) => void) | null = null;
 
   function ask(opts: ConfirmDialogOptions): Promise<boolean> {
     options.value = {
+      title: '确认操作',
       confirmText: '确定',
       cancelText: '取消',
       danger: false,
+      showCancel: true,
       ...opts,
     };
     isOpen.value = true;

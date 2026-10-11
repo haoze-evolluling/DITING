@@ -7,7 +7,7 @@ import M3Icon from './M3Icon.vue';
 import StatusBadge from './StatusBadge.vue';
 import ToastBanner from './ToastBanner.vue';
 import LoginModal from './LoginModal.vue';
-import { revertSwitch } from '../utils/switch';
+import { revertSwitch, extractSwitchValue } from '../utils/switch';
 import { useCopyFeedback } from '../composables/useCopyFeedback';
 
 const loading = ref(false);
@@ -78,7 +78,7 @@ watch(selectedQrUrl, (newUrl) => {
 });
 
 async function handleToggleWeb(e: Event) {
-  const enable = Boolean((e.target as any).selected ?? (e.target as any).checked);
+  const enable = extractSwitchValue(e);
   toggling.value = true;
   errorMessage.value = '';
   successMessage.value = '';

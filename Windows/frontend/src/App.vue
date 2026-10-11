@@ -114,7 +114,7 @@ onMounted(() => {
 
   mql = window.matchMedia('(min-width: 1024px)');
   wideSidebar.value = mql.matches;
-  mql.addEventListener('change', (e) => (wideSidebar.value = e.matches));
+  mql.addEventListener('change', handleMqlChange);
 
   checkWebAuth();
   ipc.connectWS();
@@ -144,9 +144,13 @@ onMounted(() => {
   });
 });
 
+function handleMqlChange(e: MediaQueryListEvent) {
+  wideSidebar.value = e.matches;
+}
+
 onUnmounted(() => {
   window.removeEventListener('hashchange', parseRoute);
-  if (mql) mql.removeEventListener('change', () => {});
+  if (mql) mql.removeEventListener('change', handleMqlChange);
   if (unsubConn) unsubConn();
   if (unsubAuth) unsubAuth();
 });

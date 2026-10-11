@@ -7,6 +7,7 @@ import M3Icon from '../M3Icon.vue';
 import BootstrapConfigCard from '../BootstrapConfigCard.vue';
 import UpstreamEditModal from './UpstreamEditModal.vue';
 import ConfirmModal from '../ConfirmModal.vue';
+import { useConfirmModal } from '../../composables/useConfirmModal';
 
 const status = ref<StatusResponse | null>(null);
 const currentMode = ref('primary_backup');
@@ -33,11 +34,13 @@ const isDialogOpen = ref(false);
 const editingItem = ref<ProviderConfig | null>(null);
 const editingIndex = ref<number>(-1);
 
-// 删除与确认弹窗
-const isConfirmOpen = ref(false);
-const confirmTitle = ref('');
-const confirmMessage = ref('');
-const deleteIndexPending = ref<number | null>(null);
+const {
+  isOpen: isConfirmOpen,
+  options: confirmOptions,
+  ask: askConfirm,
+  handleConfirm: handleConfirmAction,
+  handleCancel: handleCancelAction,
+} = useConfirmModal();
 
 const schedulingModes = [
   { id: 'single', name: '单服务器模式', desc: '始终固定使用列表中的首选服务器进行解析' },
@@ -46,7 +49,7 @@ const schedulingModes = [
   { id: 'smart_prediction', name: '智能延迟优选', desc: '根据各服务器近期响应速度与稳定性动态评分，智能选用最优质服务器' },
 ];
 
-async function loadData() {
+async function loadData(forceSyncProviders = false) {
   loading.value = true;
   errorMessage.value = '';
   try {
@@ -55,7 +58,7 @@ async function loadData() {
     currentMode.value = res.dns.mode.toLowerCase() || 'primary_backup';
     upstreams.value = res.dns.upstreams || [];
 
-    if (providers.value.length === 0 && res.dns.upstreams) {
+    if ((providers.value.length === 0 || forceSyncProviders) && res.dns.upstreams) {
       providers.value = res.dns.upstreams.map((u) => ({
         id: u.id,
         protocol: u.protocol,
@@ -142,27 +145,26 @@ function openEditDialog(index: number) {
   isDialogOpen.value = true;
 }
 
-function handleDeleteNode(index: number) {
+async function handleDeleteNode(index: number) {
   if (providers.value.length <= 1) {
-    confirmTitle.value = '提示';
-    confirmMessage.value = '请至少保留一个 DNS 服务器以维持正常的域名解析服务。';
-    deleteIndexPending.value = null;
-    isConfirmOpen.value = true;
+    await askConfirm({
+      title: '提示',
+      message: '请至少保留一个 DNS 服务器以维持正常的域名解析服务。',
+      confirmText: '知道了',
+      showCancel: false,
+    });
     return;
   }
-  deleteIndexPending.value = index;
-  confirmTitle.value = '确认删除';
-  confirmMessage.value = `确定删除上游 DNS 服务器 [${providers.value[index]?.id || providers.value[index]?.server}] 吗？`;
-  isConfirmOpen.value = true;
-}
-
-function handleConfirmAction() {
-  if (deleteIndexPending.value !== null) {
-    providers.value.splice(deleteIndexPending.value, 1);
-    deleteIndexPending.value = null;
-    saveConfig();
-  }
-  isConfirmOpen.value = false;
+  const target = providers.value[index];
+  const confirmed = await askConfirm({
+    title: '确认删除',
+    message: `确定删除上游 DNS 服务器 [${target?.id || target?.server}] 吗？`,
+    danger: true,
+    confirmText: '确定删除',
+  });
+  if (!confirmed) return;
+  providers.value.splice(index, 1);
+  saveConfig();
 }
 
 function handleSaveDialog(item: ProviderConfig) {
@@ -194,7 +196,7 @@ onMounted(() => {
       <div class="flex items-center gap-2 shrink-0">
         <button
           type="button"
-          @click="loadData"
+          @click="loadData(true)"
           :disabled="loading"
           class="app-btn-secondary"
         >
@@ -380,12 +382,14 @@ onMounted(() => {
     <!-- 删除确认弹窗 -->
     <ConfirmModal
       :open="isConfirmOpen"
-      :title="confirmTitle"
-      :message="confirmMessage"
-      :danger="deleteIndexPending !== null"
-      :confirmText="deleteIndexPending !== null ? '确定删除' : '知道了'"
+      :title="confirmOptions.title"
+      :message="confirmOptions.message"
+      :danger="confirmOptions.danger"
+      :confirmText="confirmOptions.confirmText"
+      :cancelText="confirmOptions.cancelText"
+      :showCancel="confirmOptions.showCancel"
       @confirm="handleConfirmAction"
-      @cancel="isConfirmOpen = false"
+      @cancel="handleCancelAction"
     />
   </div>
 </template>

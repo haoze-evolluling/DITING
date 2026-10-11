@@ -105,6 +105,18 @@ function handleSave() {
     return;
   }
 
+  if (formProtocol.value === 'DOH') {
+    const url = formUrl.value.trim();
+    if (!url) {
+      formError.value = 'DoH 协议必须填写加密解析地址 (URL，如 https://...)';
+      return;
+    }
+    if (!url.startsWith('https://') && !url.startsWith('http://')) {
+      formError.value = 'DoH 加密解析地址必须以 https:// 开头';
+      return;
+    }
+  }
+
   const item: ProviderConfig = {
     id: formId.value.trim(),
     protocol: formProtocol.value,

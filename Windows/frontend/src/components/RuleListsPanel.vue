@@ -5,6 +5,7 @@ import type { FilterList } from '../api/types';
 import M3Icon from './M3Icon.vue';
 import AppModal from './AppModal.vue';
 import ConfirmModal from './ConfirmModal.vue';
+import { useConfirmModal } from '../composables/useConfirmModal';
 import { formatMonthDayTime } from '../utils/format';
 import { extractSwitchValue, revertSwitch } from '../utils/switch';
 
@@ -21,10 +22,13 @@ const isAddModalOpen = ref(false);
 const newListName = ref('');
 const newListURL = ref('');
 
-// 删除确认状态
-const isDeleteConfirmOpen = ref(false);
-const deletingId = ref<string | null>(null);
-const deletingName = ref('');
+const {
+  isOpen: isDeleteConfirmOpen,
+  options: deleteConfirmOptions,
+  ask: askConfirm,
+  handleConfirm: handleConfirmDelete,
+  handleCancel: handleCancelDelete,
+} = useConfirmModal();
 
 function notify(message: string, isError: boolean) {
   if (isError) {
@@ -80,24 +84,21 @@ async function toggleList(list: FilterList, e: Event) {
   }
 }
 
-function askDeleteList(list: FilterList) {
-  deletingId.value = list.id;
-  deletingName.value = list.name;
-  isDeleteConfirmOpen.value = true;
-}
-
-async function handleConfirmDelete() {
-  if (!deletingId.value) return;
+async function askDeleteList(list: FilterList) {
+  const confirmed = await askConfirm({
+    title: '删除规则库',
+    message: `确定要删除规则库 [${list.name}] 吗？删除后其包含的拦截规则将不再生效。`,
+    danger: true,
+    confirmText: '确定删除',
+  });
+  if (!confirmed) return;
   try {
-    await ipc.deleteFilterList(deletingId.value);
+    await ipc.deleteFilterList(list.id);
     notify('已删除规则库', false);
-    deletingId.value = null;
     await loadLists();
     emit('changed');
   } catch (err: any) {
     notify(err?.message || '删除失败', true);
-  } finally {
-    isDeleteConfirmOpen.value = false;
   }
 }
 
@@ -205,12 +206,14 @@ onMounted(loadLists);
     <!-- 删除确认弹窗 -->
     <ConfirmModal
       :open="isDeleteConfirmOpen"
-      title="删除规则库"
-      :message="`确定要删除规则库 [${deletingName}] 吗？删除后其包含的拦截规则将不再生效。`"
-      danger
-      confirmText="确定删除"
+      :title="deleteConfirmOptions.title"
+      :message="deleteConfirmOptions.message"
+      :danger="deleteConfirmOptions.danger"
+      :confirmText="deleteConfirmOptions.confirmText"
+      :cancelText="deleteConfirmOptions.cancelText"
+      :showCancel="deleteConfirmOptions.showCancel"
       @confirm="handleConfirmDelete"
-      @cancel="isDeleteConfirmOpen = false"
+      @cancel="handleCancelDelete"
     />
   </div>
 </template>

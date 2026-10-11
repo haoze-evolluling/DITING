@@ -5,6 +5,7 @@ import type { BootstrapConfig, BootstrapServer } from '../api/types';
 import M3Icon from './M3Icon.vue';
 import BootstrapEditModal from './network/BootstrapEditModal.vue';
 import ConfirmModal from './ConfirmModal.vue';
+import { useConfirmModal } from '../composables/useConfirmModal';
 import { extractSwitchValue } from '../utils/switch';
 
 const props = defineProps<{
@@ -22,11 +23,13 @@ const isDialogOpen = ref(false);
 const editingItem = ref<BootstrapServer | null>(null);
 const editingIndex = ref(-1);
 
-// 删除与告警弹窗
-const isConfirmOpen = ref(false);
-const confirmTitle = ref('');
-const confirmMessage = ref('');
-const deleteIndexPending = ref<number | null>(null);
+const {
+  isOpen: isConfirmOpen,
+  options: confirmOptions,
+  ask: askConfirm,
+  handleConfirm: handleConfirmAction,
+  handleCancel: handleCancelAction,
+} = useConfirmModal();
 
 // 延迟测速状态
 const probingId = ref<string | null>(null);
@@ -54,33 +57,32 @@ function openEditDialog(index: number) {
   isDialogOpen.value = true;
 }
 
-function handleDelete(index: number) {
+async function handleDelete(index: number) {
   if (props.config.servers.length <= 1) {
-    confirmTitle.value = '提示';
-    confirmMessage.value = '请至少保留一个 Bootstrap DNS 服务器，避免加密握手域名无法解析。';
-    deleteIndexPending.value = null;
-    isConfirmOpen.value = true;
+    await askConfirm({
+      title: '提示',
+      message: '请至少保留一个 Bootstrap DNS 服务器，避免加密握手域名无法解析。',
+      confirmText: '知道了',
+      showCancel: false,
+    });
     return;
   }
-  deleteIndexPending.value = index;
-  confirmTitle.value = '确认删除';
-  confirmMessage.value = `确定删除引导服务器 [${props.config.servers[index]?.name || props.config.servers[index]?.address}] 吗？`;
-  isConfirmOpen.value = true;
-}
-
-function handleConfirmAction() {
-  if (deleteIndexPending.value !== null) {
-    const updatedServers = [...props.config.servers];
-    updatedServers.splice(deleteIndexPending.value, 1);
-    const updated: BootstrapConfig = {
-      ...props.config,
-      servers: updatedServers,
-    };
-    emit('update:config', updated);
-    emit('save', updated);
-    deleteIndexPending.value = null;
-  }
-  isConfirmOpen.value = false;
+  const target = props.config.servers[index];
+  const confirmed = await askConfirm({
+    title: '确认删除',
+    message: `确定删除引导服务器 [${target?.name || target?.address}] 吗？`,
+    danger: true,
+    confirmText: '确定删除',
+  });
+  if (!confirmed) return;
+  const updatedServers = [...props.config.servers];
+  updatedServers.splice(index, 1);
+  const updated: BootstrapConfig = {
+    ...props.config,
+    servers: updatedServers,
+  };
+  emit('update:config', updated);
+  emit('save', updated);
 }
 
 function handleSaveServer(item: BootstrapServer) {
@@ -246,12 +248,14 @@ async function handleTestLatency(s: BootstrapServer) {
     <!-- 确认 / 告警弹窗 -->
     <ConfirmModal
       :open="isConfirmOpen"
-      :title="confirmTitle"
-      :message="confirmMessage"
-      :danger="deleteIndexPending !== null"
-      :confirmText="deleteIndexPending !== null ? '确定删除' : '知道了'"
+      :title="confirmOptions.title"
+      :message="confirmOptions.message"
+      :danger="confirmOptions.danger"
+      :confirmText="confirmOptions.confirmText"
+      :cancelText="confirmOptions.cancelText"
+      :showCancel="confirmOptions.showCancel"
       @confirm="handleConfirmAction"
-      @cancel="isConfirmOpen = false"
+      @cancel="handleCancelAction"
     />
   </div>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { ipc } from '../../api/ipc';
 import type { CacheStats, CacheConfig, CacheEntryItem, CacheDomainStat } from '../../api/types';
 import StatusBadge from '../StatusBadge.vue';
@@ -153,6 +153,10 @@ async function handleConfirmClear() {
     clearing.value = false;
   }
 }
+
+onMounted(() => {
+  loadData();
+});
 
 usePoller(pollMetrics, 4000);
 </script>

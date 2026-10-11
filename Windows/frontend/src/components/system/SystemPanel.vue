@@ -8,7 +8,7 @@ import AppModal from '../AppModal.vue';
 import ToastBanner from '../ToastBanner.vue';
 import CoreServiceCard from '../CoreServiceCard.vue';
 import LanWebCard from '../LanWebCard.vue';
-import { revertSwitch } from '../../utils/switch';
+import { revertSwitch, extractSwitchValue } from '../../utils/switch';
 import { isWebMode } from '../../utils/env';
 import { useToast } from '../../composables/useToast';
 
@@ -43,8 +43,7 @@ async function checkAutostart() {
 }
 
 async function handleToggleAutostart(e: Event) {
-  const target = e.target as any;
-  const enable = Boolean(target.selected ?? target.checked);
+  const enable = extractSwitchValue(e);
   togglingAutostart.value = true;
   try {
     autostart.value = await ipc.setAutoStart(enable);

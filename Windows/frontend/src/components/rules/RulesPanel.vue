@@ -8,7 +8,7 @@ import MetricStrip, { type StatEntry } from '../../components/ui/MetricStrip.vue
 import ToastBanner from '../../components/ToastBanner.vue';
 import RuleListsPanel from '../../components/RuleListsPanel.vue';
 import RuleTestPanel from '../../components/RuleTestPanel.vue';
-import { revertSwitch } from '../../utils/switch';
+import { revertSwitch, extractSwitchValue } from '../../utils/switch';
 import { usePoller } from '../../composables/usePoller';
 import { useToast } from '../../composables/useToast';
 
@@ -65,7 +65,7 @@ async function fetchData() {
 }
 
 async function toggleMasterSwitch(e: Event) {
-  const nextVal = Boolean((e.target as any).selected ?? (e.target as any).checked ?? !stats.value.enabled);
+  const nextVal = extractSwitchValue(e);
   try {
     saving.value = true;
     await ipc.updateFilterConfig({ enabled: nextVal });

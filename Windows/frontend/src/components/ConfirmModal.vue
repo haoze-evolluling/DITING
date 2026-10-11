@@ -11,6 +11,7 @@ withDefaults(
     cancelText?: string;
     danger?: boolean;
     loading?: boolean;
+    showCancel?: boolean;
   }>(),
   {
     title: '确认操作',
@@ -18,6 +19,7 @@ withDefaults(
     cancelText: '取消',
     danger: false,
     loading: false,
+    showCancel: true,
   }
 );
 
@@ -47,6 +49,7 @@ const emit = defineEmits<{
 
     <template #actions>
       <button
+        v-if="showCancel"
         type="button"
         @click="emit('cancel')"
         :disabled="loading"
