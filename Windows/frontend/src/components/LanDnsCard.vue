@@ -133,7 +133,7 @@ onMounted(() => {
             type="button"
             @click="loadData"
             :disabled="loading"
-            class="app-btn-secondary app-btn-compact text-[11px]"
+            class="app-btn-secondary app-btn-compact"
             title="刷新本机 IP"
           >
             <M3Icon name="refresh" :size="14" :class="loading ? 'animate-spin' : ''" />
@@ -167,7 +167,7 @@ onMounted(() => {
             <button
               type="button"
               @click="copy(ip)"
-              class="app-btn-secondary app-btn-compact text-[11px] shrink-0"
+              class="app-btn-secondary app-btn-compact shrink-0"
             >
               <M3Icon :name="isCopied(ip) ? 'check' : 'content_copy'" :size="13" />
               <span>{{ isCopied(ip) ? '已复制' : '复制' }}</span>

@@ -140,7 +140,7 @@ onUnmounted(() => {
           v-model="searchFilter"
           type="text"
           placeholder="搜索网址或客户端 IP..."
-          class="w-full pl-9 pr-4 h-[30px] rounded-md border border-surface-border-sub bg-surface-card-sub font-mono text-[12px] focus:outline-none focus:border-accent-seal text-text-main placeholder:text-text-muted"
+          class="w-full pl-9 pr-4 h-[28px] rounded-md border border-surface-border-sub bg-surface-card-sub font-mono text-[12px] focus:outline-none focus:border-accent-seal text-text-main placeholder:text-text-muted"
         />
       </div>
 

@@ -85,7 +85,7 @@ function handleClose() {
             type="button"
             @click="emit('autofix')"
             :disabled="autofixing || rechecking"
-            class="app-btn-primary app-btn-compact text-xs font-semibold shrink-0"
+            class="app-btn-primary app-btn-compact shrink-0"
           >
             <M3Icon :name="autofixing ? 'refresh' : 'bolt'" :size="13" :class="autofixing ? 'animate-spin' : ''" />
             <span>{{ autofixing ? '正在停止服务并拉起...' : '一键自动修复并启动' }}</span>
@@ -110,7 +110,7 @@ function handleClose() {
             type="button"
             @click="emit('downgradeLAN')"
             :disabled="autofixing || rechecking"
-            class="app-btn-secondary app-btn-compact text-xs shrink-0"
+            class="app-btn-secondary app-btn-compact shrink-0"
           >
             <span>切换为本机监听并启动</span>
           </button>

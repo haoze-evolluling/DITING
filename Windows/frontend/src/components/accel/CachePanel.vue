@@ -189,8 +189,8 @@ usePoller(pollMetrics, 4000);
       </div>
 
       <div class="flex items-center gap-3">
-        <!-- 缓存总控 Switch -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-card border border-surface-border ">
+        <!-- 缓存总控 Switch（容器 34px 与相邻按钮等高） -->
+        <div class="flex items-center gap-2 h-[34px] px-3 rounded-md bg-surface-card border border-surface-border">
           <span class="text-xs font-medium text-text-sub">解析加速</span>
           <md-switch
             :selected="stats.enabled"

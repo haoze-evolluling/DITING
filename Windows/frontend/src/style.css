@@ -208,10 +208,10 @@ body {
 
 /* ========================================================
    统一按钮规范（墨朱体系）
-   - 标准 34px / 圆角 6px / 字号 13px / 字重 600
-   - 紧凑 30px / 圆角 6px / 字号 12px
-   - 图标钮 30x30 / 圆角 6px
-   - 胶囊 chip 28px / 圆角 6px
+   - 标准 / 紧凑 34px / 圆角 6px / 字号 13px / 字重 600
+     （同一操作行内一律 34px 等高，紧凑档仅收紧左右内边距）
+   - 图标钮 34x34 / 圆角 6px
+   - 过滤胶囊 chip 28px / 圆角 6px（仅用于筛选条，不与 34px 按钮同行）
    - 一律无阴影；主操作 = 墨底
    ======================================================== */
 .app-btn-base, .app-btn-primary, .app-btn-secondary, .app-btn-danger,
@@ -296,13 +296,9 @@ body {
 }
 .app-btn-warning:hover:not(:disabled) { filter: brightness(1.08); }
 
-/* 6. 紧凑 30px */
+/* 6. 紧凑档：与标准同高 34px，仅收紧左右内边距 */
 .app-btn-compact {
-  height: 30px;
   padding: 0 11px;
-  border-radius: 6px;
-  font-size: 12px;
-  line-height: 18px;
   gap: 5px;
 }
 button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-warning):not(.app-btn-tonal) {
@@ -314,13 +310,13 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
   background-color: var(--app-surface-hover);
 }
 
-/* 7. 图标钮 30x30 */
+/* 7. 图标钮 34x34 */
 .app-btn-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border-radius: 6px;
   background: transparent;
@@ -469,7 +465,21 @@ md-circular-progress {
   --md-circular-progress-active-indicator-color: var(--app-brand-primary);
   --md-sys-color-primary: var(--app-brand-primary);
 }
+/* 开关：方圆定制形态，与 6px 圆角按钮同族（非 M3 大药丸） */
 md-switch {
+  /* 形态与尺寸：6px 方圆轨道 + 圆形手柄（保留方轨圆钮的对比），收窄至按钮尺度 */
+  --md-switch-track-shape: 6px;
+  --md-switch-track-width: 40px;
+  --md-switch-track-height: 22px;
+  --md-switch-handle-width: 16px;
+  --md-switch-handle-height: 16px;
+  --md-switch-selected-handle-width: 16px;
+  --md-switch-selected-handle-height: 16px;
+  --md-switch-pressed-handle-width: 18px;
+  --md-switch-pressed-handle-height: 18px;
+  --md-switch-state-layer-size: 34px;
+  --md-switch-track-outline-width: 1px;
+
   --md-sys-color-primary: var(--app-brand-primary);
   --md-switch-selected-track-color: var(--app-brand-primary);
   --md-switch-selected-hover-track-color: var(--app-brand-primary-hover);
