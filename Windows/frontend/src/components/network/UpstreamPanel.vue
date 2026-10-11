@@ -460,12 +460,8 @@ onMounted(() => {
                 :key="provider.name"
                 type="button"
                 @click="applyPreset(provider.name, currentPresetProtocol)"
-                class="px-2.5 py-1 text-xs rounded-md border transition-all duration-150 font-medium"
-                :class="[
-                  currentPresetProvider === provider.name
-                    ? 'border-accent-seal bg-accent-seal-bg text-text-main font-bold '
-                    : 'border-surface-border bg-surface-card hover:bg-surface-hover text-text-main'
-                ]"
+                class="app-btn-chip"
+                :class="{ active: currentPresetProvider === provider.name }"
               >
                 {{ provider.name }}
               </button>
@@ -481,12 +477,8 @@ onMounted(() => {
                 :key="proto.value"
                 type="button"
                 @click="applyPreset(currentPresetProvider || '阿里云', proto.value)"
-                class="px-2.5 py-1 text-xs rounded-md border transition-all duration-150 font-medium"
-                :class="[
-                  currentPresetProtocol === proto.value
-                    ? 'border-accent-seal bg-accent-seal-bg text-text-main font-bold '
-                    : 'border-surface-border bg-surface-card hover:bg-surface-hover text-text-main'
-                ]"
+                class="app-btn-chip"
+                :class="{ active: currentPresetProtocol === proto.value }"
               >
                 {{ proto.label }}
               </button>

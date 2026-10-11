@@ -322,7 +322,7 @@ async function handleTestLatency(s: BootstrapServer) {
               :key="p.ip"
               type="button"
               @click="applyPreset(p)"
-              class="px-2.5 py-1 text-xs rounded-md border border-surface-border bg-surface-card hover:bg-accent-seal-bg hover:border-accent-seal/40 text-text-main transition-colors"
+              class="app-btn-chip"
             >
               {{ p.name }}
             </button>

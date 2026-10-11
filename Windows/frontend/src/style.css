@@ -244,11 +244,21 @@ body {
   pointer-events: none;
 }
 
+/* 按钮内图标统一 16px 方，避免同名按钮因图标 12/13/14/18/20 不一而重心漂移 */
 .app-btn-base svg, .app-btn-primary svg, .app-btn-secondary svg,
 .app-btn-danger svg, .app-btn-warning svg, .app-btn-tonal svg,
-.app-btn-compact svg, .app-btn-icon svg, .app-btn-chip svg {
+.app-btn-compact svg, .app-btn-icon svg {
   display: block;
   flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+/* 过滤胶囊属 28px 标签层，图标随之略小 */
+.app-btn-chip svg {
+  display: block;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
 }
 
 /* 1. 主操作（墨底） */
@@ -327,6 +337,11 @@ button.app-btn-compact:not(.app-btn-primary):not(.app-btn-danger):not(.app-btn-w
   box-sizing: border-box;
   transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
   outline: none;
+}
+/* 图标钮内的图标保持 18px，视觉重量与文本按钮的 16px 文字更接近 */
+.app-btn-icon svg {
+  width: 18px;
+  height: 18px;
 }
 .app-btn-icon:hover:not(:disabled) {
   background-color: var(--app-surface-hover);

@@ -407,7 +407,7 @@ onUnmounted(() => {
             </div>
             <button
               @click="emit('navigate', 'network')"
-              class="app-btn-tonal app-btn-compact !px-2.5"
+              class="app-btn-tonal app-btn-compact"
             >
               管理服务器
             </button>
@@ -437,7 +437,7 @@ onUnmounted(() => {
             </div>
             <button
               @click="emit('navigate', 'accel')"
-              class="app-btn-tonal app-btn-compact !px-2.5"
+              class="app-btn-tonal app-btn-compact"
             >
               查看详情
             </button>
@@ -467,7 +467,7 @@ onUnmounted(() => {
             </div>
             <button
               @click="emit('navigate', 'rules')"
-              class="app-btn-tonal app-btn-compact !px-2.5"
+              class="app-btn-tonal app-btn-compact"
             >
               管理规则
             </button>
@@ -497,7 +497,7 @@ onUnmounted(() => {
             </div>
             <button
               @click="emit('navigate', 'network')"
-              class="app-btn-tonal app-btn-compact !px-2.5"
+              class="app-btn-tonal app-btn-compact"
             >
               查看网络
             </button>

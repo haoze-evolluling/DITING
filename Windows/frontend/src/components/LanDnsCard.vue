@@ -204,7 +204,7 @@ onMounted(() => {
           type="button"
           @click="handleToggleFirewall"
           :disabled="togglingFw"
-          class="w-full text-xs justify-center"
+          class="app-btn-base w-full justify-center"
           :class="firewallAllowed ? 'app-btn-secondary' : 'app-btn-primary'"
         >
           <M3Icon v-if="togglingFw" name="sync" :size="14" class="animate-spin" />
