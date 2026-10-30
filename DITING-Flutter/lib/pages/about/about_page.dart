@@ -65,7 +65,7 @@ class AboutPage extends ConsumerWidget {
             items: [
               _LinkRow(
                 glyph: AppGlyphs.palette,
-                title: 'FlClash',
+                title: '       ',
                 label: context.l10n.aboutCreditsUi,
                 url: flClashRepositoryUrl,
               ),
