@@ -29,6 +29,7 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
     final candidates = ref.watch(autoUpdatableSubscriptionsProvider).value;
     final lastRun = ref.watch(autoUpdateLastRunProvider);
     final enabled = settings.enabled;
+    final interval = settings.schedule == AutoUpdateSchedule.interval;
     return CommonScaffold(
       title: context.l10n.autoUpdateTitle,
       body: PageBody(
@@ -52,33 +53,76 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
                   in LegacySettings.subscriptionAutoUpdatePresetHours)
                 ListItem(
                   leading: GlyphIcon(
-                    settings.intervalHours == hours
+                    interval && settings.intervalHours == hours
                         ? AppGlyphs.checkCircle
                         : AppGlyphs.clock,
                     size: 20,
                   ),
                   title: Text(context.l10n.autoUpdateEveryHours(hours)),
-                  trailing: settings.intervalHours == hours
+                  trailing: interval && settings.intervalHours == hours
                       ? const SelectionCheck()
                       : null,
                   onTap: enabled ? () => actions.setIntervalHours(hours) : null,
                 ),
               ListItem(
                 leading: GlyphIcon(
-                  settings.isCustom ? AppGlyphs.checkCircle : AppGlyphs.sliders,
+                  interval && settings.isCustom
+                      ? AppGlyphs.checkCircle
+                      : AppGlyphs.sliders,
                   size: 20,
                 ),
                 title: Text(context.l10n.autoUpdateCustomInterval),
                 subtitle: Text(
                   settings.isCustom
-                      ? context.l10n.autoUpdateEveryHours(settings.intervalHours)
+                      ? context.l10n.autoUpdateEveryHours(
+                          settings.intervalHours,
+                        )
                       : context.l10n.autoUpdateCustomHint,
                 ),
-                trailing: settings.isCustom ? const SelectionCheck() : null,
+                trailing: interval && settings.isCustom
+                    ? const SelectionCheck()
+                    : null,
                 onTap: enabled
                     ? () => _editCustom(context, ref, settings)
                     : null,
               ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.autoUpdateTimedSection,
+            items: [
+              for (final schedule in const [
+                AutoUpdateSchedule.daily,
+                AutoUpdateSchedule.everyOtherDay,
+              ])
+                ListItem(
+                  leading: GlyphIcon(
+                    settings.schedule == schedule
+                        ? AppGlyphs.checkCircle
+                        : AppGlyphs.clock,
+                    size: 20,
+                  ),
+                  title: Text(
+                    schedule == AutoUpdateSchedule.daily
+                        ? context.l10n.autoUpdateDailyAt(
+                            _clock(settings.timeMinutes),
+                          )
+                        : context.l10n.autoUpdateEveryOtherDayAt(
+                            _clock(settings.timeMinutes),
+                          ),
+                  ),
+                  subtitle: Text(
+                    settings.schedule == schedule
+                        ? context.l10n.autoUpdateTimedChangeHint
+                        : context.l10n.autoUpdateTimedPickHint,
+                  ),
+                  trailing: settings.schedule == schedule
+                      ? const SelectionCheck()
+                      : null,
+                  onTap: enabled
+                      ? () => _pickTime(context, ref, settings, schedule)
+                      : null,
+                ),
             ],
             footer: context.l10n.autoUpdateIntervalFooter,
           ),
@@ -155,8 +199,37 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
     }
   }
 
+  /// Opens the system time picker; the chosen wall-clock time follows the phone's time zone.
+  Future<void> _pickTime(
+    BuildContext context,
+    WidgetRef ref,
+    AutoUpdateSettings settings,
+    AutoUpdateSchedule schedule,
+  ) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: settings.timeMinutes ~/ 60,
+        minute: settings.timeMinutes % 60,
+      ),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (picked == null) return;
+    ref
+        .read(autoUpdateActionsProvider)
+        .setTimedSchedule(schedule, picked.hour * 60 + picked.minute);
+  }
+
+  static String _clock(int minutes) {
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${two(minutes ~/ 60)}:${two(minutes % 60)}';
+  }
+
   /// The "next update" line, covering switch off, no candidates and the earliest due one;
-  /// [AutoUpdateRunner.nextDueAt] derives it from the real `lastAttemptAt`.
+  /// [AutoUpdatePlan.nextDueAt] derives it from the real `lastAttemptAt`.
   String _nextUpdateText(
     AppL10n l10n,
     bool enabled,
@@ -173,11 +246,7 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
       return l10n.autoUpdateNoCandidates;
     }
     final now = DateTime.now().millisecondsSinceEpoch;
-    final due = AutoUpdateRunner.nextDueAt(
-      candidates,
-      settings.intervalHours,
-      now,
-    );
+    final due = settings.plan.nextDueAt(candidates, now);
     if (due == null) {
       return l10n.autoUpdateNoSubscriptions;
     }

@@ -370,6 +370,28 @@ extension _BackupImportSettings on BackupImporter {
       settings.setSubscriptionAutoUpdateIntervalHours,
       convert: (incoming) => (incoming as num).toInt(),
     );
+    final schedule = value['subscriptionAutoUpdateSchedule'];
+    final timeMinutes = value['subscriptionAutoUpdateTimeMinutes'];
+    if (schedule is String || timeMinutes is num) {
+      final nextSchedule = schedule is String
+          ? schedule
+          : settings.subscriptionAutoUpdateScheduleRaw;
+      final nextTime = timeMinutes is num
+          ? timeMinutes.toInt()
+          : settings.subscriptionAutoUpdateTimeMinutes;
+      if (nextSchedule == settings.subscriptionAutoUpdateScheduleRaw &&
+          nextTime == settings.subscriptionAutoUpdateTimeMinutes) {
+        skipped++;
+      } else {
+        settings.setSubscriptionAutoUpdateScheduleRaw(nextSchedule);
+        settings.setSubscriptionAutoUpdateTimeMinutes(nextTime);
+        // The cycle restarts on this device, as it would after picking the time by hand.
+        settings.setSubscriptionAutoUpdateSinceMs(
+          DateTime.now().millisecondsSinceEpoch,
+        );
+        added++;
+      }
+    }
 
     return BackupGroupOutcome(
       group: BackupGroup.system,

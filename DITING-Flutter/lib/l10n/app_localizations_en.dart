@@ -6632,7 +6632,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get autoUpdateRulesSwitchSubtitle =>
-      'Checks for due subscriptions on launch or when returning to the foreground';
+      'Checks for due subscriptions on launch, when returning to the foreground, or at the set time';
 
   @override
   String get autoUpdateIntervalSection => 'Update frequency';
@@ -6650,8 +6650,27 @@ class AppL10nEn extends AppL10n {
       'Enter an interval between 1 and 168 hours';
 
   @override
+  String get autoUpdateTimedSection => 'Update at a set time';
+
+  @override
+  String autoUpdateDailyAt(String time) {
+    return 'Every day at $time';
+  }
+
+  @override
+  String autoUpdateEveryOtherDayAt(String time) {
+    return 'Every other day at $time';
+  }
+
+  @override
+  String get autoUpdateTimedPickHint => 'Tap to pick the time';
+
+  @override
+  String get autoUpdateTimedChangeHint => 'Tap to change the time';
+
+  @override
   String get autoUpdateIntervalFooter =>
-      'The interval is stored in the dataset of the current work mode (normal, speed and server each keep their own). There is no background task queue: due subscriptions are only checked and run while the app is in the foreground (launch and returning to the foreground), never while the process is closed.';
+      'Settings are stored in the dataset of the current work mode (normal, speed and server each keep their own). Timed updates follow the phone\'s clock and time zone; if the chosen time has already passed today, counting starts from the next one. There is no background task queue: while the app is in the foreground the update runs on time, otherwise it catches up on the next launch or return to the foreground, and never runs while the process is closed.';
 
   @override
   String get autoUpdateStatusSection => 'Run status';
@@ -6672,7 +6691,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get autoUpdateStatusFooter =>
-      'The check compares each subscription\'s last attempt with the interval above; a manual update in progress makes this round step aside.';
+      'With an interval, each subscription\'s last attempt is compared with the interval; with a set time, a subscription is due when it has not been attempted since the most recent scheduled time. A manual update in progress makes this round step aside.';
 
   @override
   String get autoUpdateGroupsSection => 'Per-group auto-update';
@@ -6700,7 +6719,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get autoUpdateDueNow =>
-      'Due now: it runs as soon as the app returns to the foreground';
+      'Due now: it runs right away while the app is in the foreground';
 
   @override
   String autoUpdateRemainingHours(int hours, int minutes) {
@@ -6924,6 +6943,16 @@ class AppL10nEn extends AppL10n {
   @override
   String ruleControlAutoUpdateOn(int hours) {
     return 'On · auto-updates every $hours hours';
+  }
+
+  @override
+  String ruleControlAutoUpdateDaily(String time) {
+    return 'On · auto-updates every day at $time';
+  }
+
+  @override
+  String ruleControlAutoUpdateEveryOtherDay(String time) {
+    return 'On · auto-updates every other day at $time';
   }
 
   @override

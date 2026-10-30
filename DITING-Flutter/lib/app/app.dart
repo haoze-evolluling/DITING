@@ -10,6 +10,7 @@ import 'package:diting/data/native/tile_bridge.dart';
 import 'package:diting/router.dart';
 import 'package:diting/state/appearance_extra_providers.dart';
 import 'package:diting/state/appearance_providers.dart';
+import 'package:diting/state/auto_update_providers.dart';
 import 'package:diting/state/auto_update_runner.dart';
 import 'package:diting/state/db_health_providers.dart';
 import 'package:diting/state/installed_apps_providers.dart';
@@ -57,6 +58,14 @@ class _DitingAppState extends ConsumerState<DitingApp> {
 
   Timer? _autoUpdateDelayTimer;
 
+  /// Fires at the next due moment while the app stays in the foreground, so a daily slot is met
+  /// without waiting for the next resume. Cancelled on pause: a backgrounded isolate does not
+  /// run timers reliably, and resume catches up anyway.
+  Timer? _autoUpdateDueTimer;
+
+  /// Retry delay when a manual update made the runner yield.
+  static const _autoUpdateBusyRetry = Duration(minutes: 1);
+
   /// Icons are fetched ahead of the first app list, but after startup has settled so the batches
   /// do not compete with the first frame's queries.
   static const _appIconsWarmDelay = Duration(seconds: 3);
@@ -73,7 +82,10 @@ class _DitingAppState extends ConsumerState<DitingApp> {
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(onResume: _onResume);
+    _lifecycle = AppLifecycleListener(
+      onResume: _onResume,
+      onPause: _cancelAutoUpdateDue,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeApplyTileStart();
       _maybeRunAutoUpdate();
@@ -155,6 +167,7 @@ class _DitingAppState extends ConsumerState<DitingApp> {
   @override
   void dispose() {
     _autoUpdateDelayTimer?.cancel();
+    _autoUpdateDueTimer?.cancel();
     _appIconsWarmTimer?.cancel();
     _lifecycle?.dispose();
     super.dispose();
@@ -182,9 +195,34 @@ class _DitingAppState extends ConsumerState<DitingApp> {
         // must not be shown as "just updated".
         ref.read(autoUpdateLastRunProvider.notifier).record(run);
       }
+      _armAutoUpdateDue(
+        run.skip == AutoUpdateSkip.busy
+            ? DateTime.now().add(_autoUpdateBusyRetry).millisecondsSinceEpoch
+            : run.dueAt,
+      );
     } finally {
       _autoUpdateChecking = false;
     }
+  }
+
+  void _cancelAutoUpdateDue() {
+    _autoUpdateDueTimer?.cancel();
+    _autoUpdateDueTimer = null;
+  }
+
+  /// One second of slack so the check lands after the slot, not a hair before it. A run that
+  /// still reports "due now" (a row whose attempt was not recorded) waits the retry delay
+  /// instead of spinning.
+  void _armAutoUpdateDue(int? dueAt) {
+    _cancelAutoUpdateDue();
+    if (dueAt == null || !mounted) return;
+    final state = WidgetsBinding.instance.lifecycleState;
+    if (state != null && state != AppLifecycleState.resumed) return;
+    final wait = dueAt - DateTime.now().millisecondsSinceEpoch;
+    _autoUpdateDueTimer = Timer(
+      wait <= 0 ? _autoUpdateBusyRetry : Duration(milliseconds: wait + 1000),
+      _maybeRunAutoUpdate,
+    );
   }
 
   @override
@@ -198,6 +236,14 @@ class _DitingAppState extends ConsumerState<DitingApp> {
         _scheduleAppIconsWarm();
       }
     });
+    // A new schedule moves the next due moment; re-check so the foreground timer follows it.
+    ref.listen(
+      autoUpdateSettingsProvider.select(
+        (s) =>
+            (s.enabled, s.intervalHours, s.schedule, s.timeMinutes, s.sinceMs),
+      ),
+      (_, _) => _maybeRunAutoUpdate(),
+    );
     final mode = ref.watch(themeModeProvider);
     final palette = ref.watch(paletteProvider);
     final pureBlack = ref.watch(pureBlackProvider);

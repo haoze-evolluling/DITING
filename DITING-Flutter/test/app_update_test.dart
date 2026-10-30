@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:diting/data/db/subscription_models.dart';
 import 'package:diting/data/update/app_update_checker.dart';
 import 'package:diting/state/auto_update_runner.dart';
+import 'package:diting/state/auto_update_schedule.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -321,6 +322,53 @@ void _autoUpdate() {
         record(id: 2),
       ];
       expect(AutoUpdateRunner.nextDueAt(records, 24, now), now);
+    });
+  });
+
+  group('按时刻更新（本地时间）', () {
+    int at(int y, int m, int d, int h, [int min = 0]) =>
+        DateTime(y, m, d, h, min).millisecondsSinceEpoch;
+    AutoUpdatePlan plan(AutoUpdateSchedule schedule, int sinceMs) =>
+        AutoUpdatePlan(
+          schedule: schedule,
+          intervalHours: 24,
+          timeMinutes: 4 * 60,
+          sinceMs: sinceMs,
+        );
+
+    test('每天：时刻已过且之后未尝试 → 到期；尝试过 → 等到明天', () {
+      final daily = plan(AutoUpdateSchedule.daily, at(2025, 3, 1, 12));
+      final now = at(2025, 3, 3, 9);
+      expect(
+        daily.isDue(record(lastAttemptAt: at(2025, 3, 2, 5)), now),
+        isTrue,
+      );
+      final fresh = record(lastAttemptAt: at(2025, 3, 3, 4, 1));
+      expect(daily.isDue(fresh, now), isFalse);
+      expect(daily.nextDueAt([fresh], now), at(2025, 3, 4, 4));
+    });
+
+    test('新选的时刻今天已过，不会立刻触发', () {
+      final since = at(2025, 3, 3, 12);
+      final daily = plan(AutoUpdateSchedule.daily, since);
+      final old = record(lastAttemptAt: at(2025, 3, 1, 4));
+      expect(daily.isDue(old, since + 60000), isFalse);
+      expect(daily.nextDueAt([old], since + 60000), at(2025, 3, 4, 4));
+    });
+
+    test('隔天：从设定后的第一个时刻起每两天一次', () {
+      final since = at(2025, 3, 3, 12);
+      final alternate = plan(AutoUpdateSchedule.everyOtherDay, since);
+      // 3 号 04:00 已过，第一个时刻是 4 号，之后是 6 号。
+      final ran = record(lastAttemptAt: at(2025, 3, 4, 4, 5));
+      expect(alternate.isDue(ran, at(2025, 3, 5, 9)), isFalse);
+      expect(alternate.nextDueAt([ran], at(2025, 3, 5, 9)), at(2025, 3, 6, 4));
+      expect(alternate.isDue(ran, at(2025, 3, 6, 4, 1)), isTrue);
+    });
+
+    test('从未尝试过的订阅照常立即到期', () {
+      final daily = plan(AutoUpdateSchedule.daily, at(2025, 3, 3, 12));
+      expect(daily.isDue(record(), at(2025, 3, 3, 13)), isTrue);
     });
   });
 

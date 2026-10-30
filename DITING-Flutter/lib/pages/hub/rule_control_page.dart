@@ -118,11 +118,22 @@ class RuleControlPage extends ConsumerWidget {
                 leading: const GlyphIcon(AppGlyphs.refresh),
                 title: Text(context.l10n.autoUpdateTitle),
                 subtitle: Text(
-                  autoUpdate.enabled
-                      ? context.l10n.ruleControlAutoUpdateOn(
-                          autoUpdate.intervalHours,
-                        )
-                      : context.l10n.ruleControlAutoUpdateOff,
+                  !autoUpdate.enabled
+                      ? context.l10n.ruleControlAutoUpdateOff
+                      : switch (autoUpdate.schedule) {
+                          AutoUpdateSchedule.interval =>
+                            context.l10n.ruleControlAutoUpdateOn(
+                              autoUpdate.intervalHours,
+                            ),
+                          AutoUpdateSchedule.daily =>
+                            context.l10n.ruleControlAutoUpdateDaily(
+                              _clock(autoUpdate.timeMinutes),
+                            ),
+                          AutoUpdateSchedule.everyOtherDay =>
+                            context.l10n.ruleControlAutoUpdateEveryOtherDay(
+                              _clock(autoUpdate.timeMinutes),
+                            ),
+                        },
                 ),
                 onTap: () => context.push('/hub/rules/auto-update'),
               ),
@@ -144,6 +155,11 @@ class RuleControlPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  static String _clock(int minutes) {
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${two(minutes ~/ 60)}:${two(minutes % 60)}';
   }
 }
 

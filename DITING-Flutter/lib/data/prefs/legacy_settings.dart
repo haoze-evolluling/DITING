@@ -69,6 +69,20 @@ class LegacySettings {
 
   static const subscriptionAutoUpdatePresetHours = [6, 12, 24, 48];
 
+  /// `interval` (every N hours), `daily` or `every_other_day` at a local wall-clock time.
+  static const subscriptionAutoUpdateScheduleKey =
+      'subscription_auto_update_schedule';
+
+  /// Minutes after local midnight for the daily / every-other-day schedules.
+  static const subscriptionAutoUpdateTimeKey =
+      'subscription_auto_update_time_minutes';
+
+  static const defaultSubscriptionAutoUpdateTimeMinutes = 4 * 60;
+
+  /// Epoch ms when the timed schedule was last chosen or retimed (see `AutoUpdatePlan.sinceMs`).
+  static const subscriptionAutoUpdateSinceKey =
+      'subscription_auto_update_schedule_since';
+
   /// Raw legacy keys for backups; pages should use the named accessors.
   LegacyPrefsStore get rawStore => _store;
 

@@ -1,5 +1,5 @@
-/// Foreground catch-up for 1.4.3 `executePeriodic`: runs on start and resume, as there is no
-/// WorkManager.
+/// Foreground catch-up for 1.4.3 `executePeriodic`: runs on start, on resume and at the next due
+/// moment while the app stays in the foreground, as there is no WorkManager.
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
@@ -54,37 +54,21 @@ class AutoUpdateRunner {
 
   final Ref _ref;
 
-  /// Due from `lastAttemptAt`, not `lastUpdated`: a 304-only row would otherwise look due forever.
-  static bool isDue(SubscriptionRecord record, int intervalHours, int nowMs) {
-    final last = record.lastAttemptAt;
-    if (last <= 0) {
-      return true;
-    }
-    final intervalMs = intervalHours * 3600 * 1000;
-    return nowMs - last >= intervalMs;
-  }
+  /// Interval-mode shortcuts kept for callers and tests; see [AutoUpdatePlan].
+  static bool isDue(SubscriptionRecord record, int intervalHours, int nowMs) =>
+      _intervalPlan(intervalHours).isDue(record, nowMs);
 
   /// Next due time (epoch ms); null when no subscription is eligible.
   static int? nextDueAt(
     List<SubscriptionRecord> records,
     int intervalHours,
     int nowMs,
-  ) {
-    if (records.isEmpty) {
-      return null;
-    }
-    final intervalMs = intervalHours * 3600 * 1000;
-    var earliest = nowMs + intervalMs;
-    for (final record in records) {
-      final due = record.lastAttemptAt <= 0
-          ? nowMs
-          : record.lastAttemptAt + intervalMs;
-      if (due < earliest) {
-        earliest = due;
-      }
-    }
-    return earliest;
-  }
+  ) => _intervalPlan(intervalHours).nextDueAt(records, nowMs);
+
+  static AutoUpdatePlan _intervalPlan(int hours) => AutoUpdatePlan(
+    schedule: AutoUpdateSchedule.interval,
+    intervalHours: hours,
+  );
 
   /// Never throws: lifecycle callbacks drive it, so an exception would red-screen on every resume.
   Future<AutoUpdateRun> runIfDue() async {
@@ -100,15 +84,16 @@ class AutoUpdateRunner {
     if (records.isEmpty) {
       return const AutoUpdateRun(skip: AutoUpdateSkip.noSubscriptions);
     }
+    final plan = settings.plan;
     final now = DateTime.now().millisecondsSinceEpoch;
     final due = [
       for (final record in records)
-        if (isDue(record, settings.intervalHours, now)) record,
+        if (plan.isDue(record, now)) record,
     ];
     if (due.isEmpty) {
       return AutoUpdateRun(
         skip: AutoUpdateSkip.notDue,
-        dueAt: nextDueAt(records, settings.intervalHours, now),
+        dueAt: plan.nextDueAt(records, now),
       );
     }
     // Mutually exclusive with manual updates: yield now, catch up next round.
@@ -126,7 +111,7 @@ class AutoUpdateRunner {
     return AutoUpdateRun(
       summary: message ?? currentL10n.autoUpdateChecked(entries.length),
       ranCount: entries.length,
-      dueAt: nextDueAt(records, settings.intervalHours, now),
+      dueAt: plan.nextDueAt(records, DateTime.now().millisecondsSinceEpoch),
     );
   }
 }

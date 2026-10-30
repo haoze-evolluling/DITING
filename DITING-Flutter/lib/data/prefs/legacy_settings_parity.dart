@@ -191,6 +191,49 @@ extension LegacySettingsParity on LegacySettings {
     ),
   );
 
+  /// Raw schedule id; unknown values read as `interval`, the only mode older builds had.
+  String get subscriptionAutoUpdateScheduleRaw {
+    final value = _string(
+      dnsContainer,
+      LegacySettings.subscriptionAutoUpdateScheduleKey,
+    );
+    return const {'interval', 'daily', 'every_other_day'}.contains(value)
+        ? value!
+        : 'interval';
+  }
+
+  void setSubscriptionAutoUpdateScheduleRaw(String value) => _store.putString(
+    dnsContainer,
+    LegacySettings.subscriptionAutoUpdateScheduleKey,
+    value,
+  );
+
+  int get subscriptionAutoUpdateTimeMinutes {
+    final value = _int(
+      dnsContainer,
+      LegacySettings.subscriptionAutoUpdateTimeKey,
+      LegacySettings.defaultSubscriptionAutoUpdateTimeMinutes,
+    );
+    return value >= 0 && value < 24 * 60
+        ? value
+        : LegacySettings.defaultSubscriptionAutoUpdateTimeMinutes;
+  }
+
+  void setSubscriptionAutoUpdateTimeMinutes(int minutes) => _store.putInt(
+    dnsContainer,
+    LegacySettings.subscriptionAutoUpdateTimeKey,
+    minutes.clamp(0, 24 * 60 - 1),
+  );
+
+  int get subscriptionAutoUpdateSinceMs =>
+      _int(dnsContainer, LegacySettings.subscriptionAutoUpdateSinceKey, 0);
+
+  void setSubscriptionAutoUpdateSinceMs(int epochMs) => _store.putLong(
+    dnsContainer,
+    LegacySettings.subscriptionAutoUpdateSinceKey,
+    epochMs,
+  );
+
   /// The nine AI analysis keys are global and shared by the log, domain and parameter pages.
   bool get agentApiEnabled => _bool(_ui, 'agent_api_enabled', true);
 

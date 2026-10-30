@@ -361,6 +361,10 @@ class BackupExporter {
       'subscriptionAutoUpdateEnabled': settings.subscriptionAutoUpdateEnabled,
       'subscriptionAutoUpdateIntervalHours':
           settings.subscriptionAutoUpdateIntervalHours,
+      'subscriptionAutoUpdateSchedule':
+          settings.subscriptionAutoUpdateScheduleRaw,
+      'subscriptionAutoUpdateTimeMinutes':
+          settings.subscriptionAutoUpdateTimeMinutes,
     };
   }
 

@@ -3678,7 +3678,7 @@
   "autoUpdateTitle": "自动更新设置",
   "autoUpdateSection": "自动更新",
   "autoUpdateRulesSwitch": "自动更新规则订阅",
-  "autoUpdateRulesSwitchSubtitle": "启动应用或回到前台时检查是否到期",
+  "autoUpdateRulesSwitchSubtitle": "启动应用、回到前台或到达设定时刻时检查是否到期",
   "autoUpdateIntervalSection": "更新频率",
   "autoUpdateEveryHours": "每 {hours} 小时",
   "@autoUpdateEveryHours": {
@@ -3690,7 +3690,26 @@
   },
   "autoUpdateCustomInterval": "自定义更新时间",
   "autoUpdateCustomHint": "输入 1 至 168 小时之间的更新时间",
-  "autoUpdateIntervalFooter": "间隔保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。本机没有后台任务队列：应用在前台（含启动与切回前台）时才检查到期并执行，进程被完全关闭期间不会更新。",
+  "autoUpdateTimedSection": "按时刻更新",
+  "autoUpdateDailyAt": "每天 {time}",
+  "@autoUpdateDailyAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "autoUpdateEveryOtherDayAt": "隔天 {time}",
+  "@autoUpdateEveryOtherDayAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "autoUpdateTimedPickHint": "点按选择执行时刻",
+  "autoUpdateTimedChangeHint": "点按修改执行时刻",
+  "autoUpdateIntervalFooter": "设置保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。按时刻更新使用手机系统时间与时区；新选的时刻若今天已过，从下一次开始计。本机没有后台任务队列：应用在前台时到点立即执行，不在前台时会在下次启动或切回前台时补跑，进程被完全关闭期间不会更新。",
   "autoUpdateStatusSection": "执行状态",
   "autoUpdateNext": "下次预计更新",
   "autoUpdateLast": "上次自动更新",
@@ -3703,7 +3722,7 @@
       }
     }
   },
-  "autoUpdateStatusFooter": "判据是每条订阅的「上次尝试时间」与上面的间隔；正在手动更新时本轮会让路。",
+  "autoUpdateStatusFooter": "按间隔时，判据是每条订阅的「上次尝试时间」与间隔；按时刻时，最近一个已到的时刻之后没有尝试过的订阅视为到期。正在手动更新时本轮会让路。",
   "autoUpdateGroupsSection": "分组自动更新",
   "autoUpdateReadingGroups": "读取分组中…",
   "autoUpdateNoGroups": "还没有分组",
@@ -3711,7 +3730,7 @@
   "autoUpdateGroupsFooter": "仅会自动更新已开启的分组中的网络订阅；写入 `subscription_group` 表。",
   "autoUpdateReadingSubs": "正在读取订阅…",
   "autoUpdateNoCandidates": "没有可自动更新的订阅（需为远程、已启用、且所在分组已开启）",
-  "autoUpdateDueNow": "已到期：回到前台时会立即执行",
+  "autoUpdateDueNow": "已到期：应用在前台时会立即执行",
   "autoUpdateRemainingHours": "{hours} 小时 {minutes} 分钟后",
   "@autoUpdateRemainingHours": {
     "placeholders": {
@@ -3904,6 +3923,22 @@
     "placeholders": {
       "hours": {
         "type": "int"
+      }
+    }
+  },
+  "ruleControlAutoUpdateDaily": "已开启 · 每天 {time} 自动更新",
+  "@ruleControlAutoUpdateDaily": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleControlAutoUpdateEveryOtherDay": "已开启 · 隔天 {time} 自动更新",
+  "@ruleControlAutoUpdateEveryOtherDay": {
+    "placeholders": {
+      "time": {
+        "type": "String"
       }
     }
   },

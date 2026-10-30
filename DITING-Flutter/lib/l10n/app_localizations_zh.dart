@@ -6274,7 +6274,7 @@ class AppL10nZh extends AppL10n {
   String get autoUpdateRulesSwitch => '自动更新规则订阅';
 
   @override
-  String get autoUpdateRulesSwitchSubtitle => '启动应用或回到前台时检查是否到期';
+  String get autoUpdateRulesSwitchSubtitle => '启动应用、回到前台或到达设定时刻时检查是否到期';
 
   @override
   String get autoUpdateIntervalSection => '更新频率';
@@ -6291,8 +6291,27 @@ class AppL10nZh extends AppL10n {
   String get autoUpdateCustomHint => '输入 1 至 168 小时之间的更新时间';
 
   @override
+  String get autoUpdateTimedSection => '按时刻更新';
+
+  @override
+  String autoUpdateDailyAt(String time) {
+    return '每天 $time';
+  }
+
+  @override
+  String autoUpdateEveryOtherDayAt(String time) {
+    return '隔天 $time';
+  }
+
+  @override
+  String get autoUpdateTimedPickHint => '点按选择执行时刻';
+
+  @override
+  String get autoUpdateTimedChangeHint => '点按修改执行时刻';
+
+  @override
   String get autoUpdateIntervalFooter =>
-      '间隔保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。本机没有后台任务队列：应用在前台（含启动与切回前台）时才检查到期并执行，进程被完全关闭期间不会更新。';
+      '设置保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。按时刻更新使用手机系统时间与时区；新选的时刻若今天已过，从下一次开始计。本机没有后台任务队列：应用在前台时到点立即执行，不在前台时会在下次启动或切回前台时补跑，进程被完全关闭期间不会更新。';
 
   @override
   String get autoUpdateStatusSection => '执行状态';
@@ -6312,7 +6331,8 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get autoUpdateStatusFooter => '判据是每条订阅的「上次尝试时间」与上面的间隔；正在手动更新时本轮会让路。';
+  String get autoUpdateStatusFooter =>
+      '按间隔时，判据是每条订阅的「上次尝试时间」与间隔；按时刻时，最近一个已到的时刻之后没有尝试过的订阅视为到期。正在手动更新时本轮会让路。';
 
   @override
   String get autoUpdateGroupsSection => '分组自动更新';
@@ -6337,7 +6357,7 @@ class AppL10nZh extends AppL10n {
   String get autoUpdateNoCandidates => '没有可自动更新的订阅（需为远程、已启用、且所在分组已开启）';
 
   @override
-  String get autoUpdateDueNow => '已到期：回到前台时会立即执行';
+  String get autoUpdateDueNow => '已到期：应用在前台时会立即执行';
 
   @override
   String autoUpdateRemainingHours(int hours, int minutes) {
@@ -6546,6 +6566,16 @@ class AppL10nZh extends AppL10n {
   @override
   String ruleControlAutoUpdateOn(int hours) {
     return '已开启 · 每 $hours 小时自动更新';
+  }
+
+  @override
+  String ruleControlAutoUpdateDaily(String time) {
+    return '已开启 · 每天 $time 自动更新';
+  }
+
+  @override
+  String ruleControlAutoUpdateEveryOtherDay(String time) {
+    return '已开启 · 隔天 $time 自动更新';
   }
 
   @override

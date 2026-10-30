@@ -11538,7 +11538,7 @@ abstract class AppL10n {
   /// No description provided for @autoUpdateRulesSwitchSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'启动应用或回到前台时检查是否到期'**
+  /// **'启动应用、回到前台或到达设定时刻时检查是否到期'**
   String get autoUpdateRulesSwitchSubtitle;
 
   /// No description provided for @autoUpdateIntervalSection.
@@ -11565,10 +11565,40 @@ abstract class AppL10n {
   /// **'输入 1 至 168 小时之间的更新时间'**
   String get autoUpdateCustomHint;
 
+  /// No description provided for @autoUpdateTimedSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'按时刻更新'**
+  String get autoUpdateTimedSection;
+
+  /// No description provided for @autoUpdateDailyAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'每天 {time}'**
+  String autoUpdateDailyAt(String time);
+
+  /// No description provided for @autoUpdateEveryOtherDayAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'隔天 {time}'**
+  String autoUpdateEveryOtherDayAt(String time);
+
+  /// No description provided for @autoUpdateTimedPickHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'点按选择执行时刻'**
+  String get autoUpdateTimedPickHint;
+
+  /// No description provided for @autoUpdateTimedChangeHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'点按修改执行时刻'**
+  String get autoUpdateTimedChangeHint;
+
   /// No description provided for @autoUpdateIntervalFooter.
   ///
   /// In zh, this message translates to:
-  /// **'间隔保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。本机没有后台任务队列：应用在前台（含启动与切回前台）时才检查到期并执行，进程被完全关闭期间不会更新。'**
+  /// **'设置保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。按时刻更新使用手机系统时间与时区；新选的时刻若今天已过，从下一次开始计。本机没有后台任务队列：应用在前台时到点立即执行，不在前台时会在下次启动或切回前台时补跑，进程被完全关闭期间不会更新。'**
   String get autoUpdateIntervalFooter;
 
   /// No description provided for @autoUpdateStatusSection.
@@ -11604,7 +11634,7 @@ abstract class AppL10n {
   /// No description provided for @autoUpdateStatusFooter.
   ///
   /// In zh, this message translates to:
-  /// **'判据是每条订阅的「上次尝试时间」与上面的间隔；正在手动更新时本轮会让路。'**
+  /// **'按间隔时，判据是每条订阅的「上次尝试时间」与间隔；按时刻时，最近一个已到的时刻之后没有尝试过的订阅视为到期。正在手动更新时本轮会让路。'**
   String get autoUpdateStatusFooter;
 
   /// No description provided for @autoUpdateGroupsSection.
@@ -11652,7 +11682,7 @@ abstract class AppL10n {
   /// No description provided for @autoUpdateDueNow.
   ///
   /// In zh, this message translates to:
-  /// **'已到期：回到前台时会立即执行'**
+  /// **'已到期：应用在前台时会立即执行'**
   String get autoUpdateDueNow;
 
   /// No description provided for @autoUpdateRemainingHours.
@@ -11997,6 +12027,18 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'已开启 · 每 {hours} 小时自动更新'**
   String ruleControlAutoUpdateOn(int hours);
+
+  /// No description provided for @ruleControlAutoUpdateDaily.
+  ///
+  /// In zh, this message translates to:
+  /// **'已开启 · 每天 {time} 自动更新'**
+  String ruleControlAutoUpdateDaily(String time);
+
+  /// No description provided for @ruleControlAutoUpdateEveryOtherDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'已开启 · 隔天 {time} 自动更新'**
+  String ruleControlAutoUpdateEveryOtherDay(String time);
 
   /// No description provided for @ruleControlAutoUpdateOff.
   ///
