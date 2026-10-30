@@ -4373,6 +4373,12 @@ abstract class AppL10n {
   /// **'留空则使用默认文案'**
   String get notificationTextHint;
 
+  /// No description provided for @notificationTextSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'通知文案'**
+  String get notificationTextSection;
+
   /// No description provided for @notificationTextFooter.
   ///
   /// In zh, this message translates to:

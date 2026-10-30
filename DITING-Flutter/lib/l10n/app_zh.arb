@@ -1303,6 +1303,7 @@
   "notificationTextRunning": "DNS 服务开启时",
   "notificationTextStopped": "DNS 服务关闭时",
   "notificationTextHint": "留空则使用默认文案",
+  "notificationTextSection": "通知文案",
   "notificationTextFooter": "留空则使用默认文案；文案只影响通知栏，不改变服务行为。",
   "notificationPermissions": "权限",
   "notificationSystemPermission": "系统通知权限",

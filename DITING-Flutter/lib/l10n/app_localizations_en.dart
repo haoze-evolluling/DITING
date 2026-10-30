@@ -2455,6 +2455,9 @@ class AppL10nEn extends AppL10n {
   String get notificationTextHint => 'Leave empty to use the default text';
 
   @override
+  String get notificationTextSection => 'Notification text';
+
+  @override
   String get notificationTextFooter =>
       'Empty fields use the default text; the wording only affects the notification, never the service.';
 

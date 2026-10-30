@@ -2320,6 +2320,9 @@ class AppL10nZh extends AppL10n {
   String get notificationTextHint => '留空则使用默认文案';
 
   @override
+  String get notificationTextSection => '通知文案';
+
+  @override
   String get notificationTextFooter => '留空则使用默认文案；文案只影响通知栏，不改变服务行为。';
 
   @override

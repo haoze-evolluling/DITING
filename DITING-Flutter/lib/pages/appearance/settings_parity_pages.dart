@@ -95,8 +95,10 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
             enabled: settings.persistent,
             onChanged: _refreshNotification,
           ),
+          // The header also supplies the gap a titled section leaves above it.
+          ListHeader(title: context.l10n.notificationTextSection),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: FieldGroupCard(
               children: [
                 LabeledTextField(

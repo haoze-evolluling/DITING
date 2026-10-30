@@ -712,6 +712,7 @@
   "notificationTextRunning": "When the DNS service is on",
   "notificationTextStopped": "When the DNS service is off",
   "notificationTextHint": "Leave empty to use the default text",
+  "notificationTextSection": "Notification text",
   "notificationTextFooter": "Empty fields use the default text; the wording only affects the notification, never the service.",
   "notificationPermissions": "Permissions",
   "notificationSystemPermission": "System notification permission",
