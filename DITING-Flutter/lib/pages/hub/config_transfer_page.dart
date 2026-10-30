@@ -31,9 +31,10 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
   bool get _noneSelected => _selected.isEmpty;
 
   void _toggleAll() {
+    final selectAll = !_allSelected;
     setState(() {
       _selected.clear();
-      if (!_allSelected) _selected.addAll(BackupGroup.values);
+      if (selectAll) _selected.addAll(BackupGroup.values);
     });
   }
 
