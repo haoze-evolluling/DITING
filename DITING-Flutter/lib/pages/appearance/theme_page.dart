@@ -1,6 +1,8 @@
 /// Appearance settings menu, mirroring the legacy `APPEARANCE_SETTINGS`.
 library;
 
+import 'dart:async';
+
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/app/theme/colors.dart';
 import 'package:diting/app/theme/manager.dart';
@@ -13,21 +15,45 @@ import 'package:diting/state/settings_providers.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/nav_entry_row.dart';
 import 'package:diting/widgets/stat_strip.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Each scheme builds a whole `ThemeData`, and the appearance pages ask for the same few on every
-/// rebuild, one per thumbnail. Keys are palette x brightness x pure black: a few dozen at most.
+/// The appearance pages ask for the same few schemes on every rebuild, one per thumbnail. Keys are
+/// palette x brightness x pure black: a few dozen at most.
 final _demoSchemes = <(Color, Brightness, bool), ColorScheme>{};
 
+/// The scheme [buildAppTheme] would resolve, without building the rest of a `ThemeData`: nine
+/// thumbnails each building a full theme cost the color page a 30 ms first frame.
 ColorScheme demoColorScheme({
   required Color seed,
   required Brightness brightness,
   bool pureBlack = false,
-}) => _demoSchemes[(seed, brightness, pureBlack)] ??= buildAppTheme(
-  AppThemeSpec(seedColor: seed, brightness: brightness, pureBlack: pureBlack),
-).colorScheme;
+}) => _demoSchemes[(seed, brightness, pureBlack)] ??= seededColorScheme(
+  seedColor: seed,
+  brightness: brightness,
+).toPureBlack(pureBlack);
+
+final _warmingSchemes = <(Color, Brightness, bool)>{};
+
+/// Fills the cache for every palette while the app is idle, one scheme per task. Each takes about
+/// 3 ms; the color page shows all nine, so computing them on its first frame cost 30-40 ms.
+void warmDemoSchemes({
+  required Brightness brightness,
+  required bool pureBlack,
+}) {
+  for (final palette in AppPalette.values) {
+    final key = (palette.effectiveSeed, brightness, pureBlack);
+    if (_demoSchemes.containsKey(key) || !_warmingSchemes.add(key)) continue;
+    unawaited(
+      SchedulerBinding.instance.scheduleTask(() {
+        _warmingSchemes.remove(key);
+        demoColorScheme(seed: key.$1, brightness: key.$2, pureBlack: key.$3);
+      }, Priority.idle),
+    );
+  }
+}
 
 /// Light and dark schemes for one preview, computed once so the same parameters do
 /// not rebuild `ThemeData` on every row.
@@ -70,6 +96,10 @@ class ThemePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pureBlack = ref.watch(pureBlackProvider);
     final dark = Theme.of(context).brightness == Brightness.dark;
+    warmDemoSchemes(
+      brightness: dark ? Brightness.dark : Brightness.light,
+      pureBlack: pureBlack,
+    );
     final transition = ref.watch(tabTransitionProvider);
     final glass = ref.watch(liquidGlassModeProvider);
     final barStyle = ref.watch(bottomBarStyleProvider);
@@ -104,16 +134,19 @@ class ThemePage extends ConsumerWidget {
               NavEntryRow(
                 glyph: AppGlyphs.dashboard,
                 title: context.l10n.bottomBarCustomTitle,
-                subtitle:
-                    context.l10n.appearanceBottomBarSelected(
-                      ref.watch(bottomBarProvider).length,
-                    ),
+                subtitle: context.l10n.appearanceBottomBarSelected(
+                  ref.watch(bottomBarProvider).length,
+                ),
                 onPressed: () => context.push(SystemPaths.bottomBar),
               ),
               // Retained entries, after the legacy ones.
               ListItem.toggle(
                 title: Text(context.l10n.appearancePureBlack),
-                subtitle: Text(dark ? context.l10n.appearancePureBlackOn : context.l10n.appearancePureBlackOff),
+                subtitle: Text(
+                  dark
+                      ? context.l10n.appearancePureBlackOn
+                      : context.l10n.appearancePureBlackOff,
+                ),
                 leading: const GlyphIcon(AppGlyphs.pureBlack),
                 value: pureBlack,
                 onChanged: dark
@@ -171,7 +204,11 @@ class ThemePage extends ConsumerWidget {
               // Retained entries, after the legacy ones.
               ListItem<BottomBarStyle>.options(
                 title: Text(context.l10n.appearanceBottomBarStyle),
-                subtitle: Text(barStyle.isFloating ? context.l10n.appearanceBottomBarStyleFloating : context.l10n.appearanceBottomBarStyleDocked),
+                subtitle: Text(
+                  barStyle.isFloating
+                      ? context.l10n.appearanceBottomBarStyleFloating
+                      : context.l10n.appearanceBottomBarStyleDocked,
+                ),
                 leading: const GlyphIcon(AppGlyphs.sliders),
                 options: BottomBarStyle.values,
                 value: barStyle,
@@ -206,7 +243,6 @@ class ThemePage extends ConsumerWidget {
       ),
     );
   }
-
 }
 
 class _ThemePreview extends ConsumerStatefulWidget {
