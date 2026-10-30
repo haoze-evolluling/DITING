@@ -1601,10 +1601,10 @@
   "ruleTally": "共 {matched} 条 · 启用 {enabled}",
   "@ruleTally": {
     "placeholders": {
-      "enabled": {
+      "matched": {
         "type": "int"
       },
-      "matched": {
+      "enabled": {
         "type": "int"
       }
     }

@@ -2792,7 +2792,7 @@ class AppL10nZh extends AppL10n {
   String get ruleAllowEditMessage => '白名单是放行名单，改动它可能让本应被拦截的流量通过。确认你清楚这条风险后再开启。';
 
   @override
-  String ruleTally(int enabled, int matched) {
+  String ruleTally(int matched, int enabled) {
     return '共 $matched 条 · 启用 $enabled';
   }
 

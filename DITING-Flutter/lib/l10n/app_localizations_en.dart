@@ -2946,7 +2946,7 @@ class AppL10nEn extends AppL10n {
       'The allow list lets traffic through, so changing it may pass traffic that should be blocked. Enable this only if you understand the risk.';
 
   @override
-  String ruleTally(int enabled, int matched) {
+  String ruleTally(int matched, int enabled) {
     return '$matched total · $enabled enabled';
   }
 

@@ -5235,7 +5235,7 @@ abstract class AppL10n {
   ///
   /// In zh, this message translates to:
   /// **'共 {matched} 条 · 启用 {enabled}'**
-  String ruleTally(int enabled, int matched);
+  String ruleTally(int matched, int enabled);
 
   /// No description provided for @ruleNoRulesForKind.
   ///
