@@ -4277,17 +4277,83 @@ abstract class AppL10n {
   /// **'服务运行时保留一条不可划掉的通知'**
   String get notificationPersistentSubtitle;
 
-  /// No description provided for @notificationShowSpeed.
-  ///
-  /// In zh, this message translates to:
-  /// **'显示实时速率'**
-  String get notificationShowSpeed;
-
   /// No description provided for @notificationShowSpeedSubtitle.
   ///
   /// In zh, this message translates to:
   /// **'在通知里显示当前上下行速率'**
   String get notificationShowSpeedSubtitle;
+
+  /// No description provided for @notificationStatsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'通知详情'**
+  String get notificationStatsSection;
+
+  /// No description provided for @notificationStatsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'未显示任何详情，通知只保留状态文案'**
+  String get notificationStatsEmpty;
+
+  /// No description provided for @notificationStatsFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'统计从本次服务启动开始累计，与日志记录模式无关；已开启的项目按住拖动可调整顺序。极速与服务器模式没有实时网速，该项会自动省略。'**
+  String get notificationStatsFooter;
+
+  /// No description provided for @notificationStatsHidden.
+  ///
+  /// In zh, this message translates to:
+  /// **'未显示的项目'**
+  String get notificationStatsHidden;
+
+  /// No description provided for @notificationStatTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求'**
+  String get notificationStatTotal;
+
+  /// No description provided for @notificationStatSpeed.
+  ///
+  /// In zh, this message translates to:
+  /// **'实时网速'**
+  String get notificationStatSpeed;
+
+  /// No description provided for @notificationStatTotalSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本次运行处理的请求总数（DNS 与 HTTPS）'**
+  String get notificationStatTotalSubtitle;
+
+  /// No description provided for @notificationStatPassedSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'正常放行的请求，含覆写后返回的结果'**
+  String get notificationStatPassedSubtitle;
+
+  /// No description provided for @notificationStatFilteredSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'被规则过滤拦截的请求'**
+  String get notificationStatFilteredSubtitle;
+
+  /// No description provided for @notificationStatFailedSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析或处理失败的请求'**
+  String get notificationStatFailedSubtitle;
+
+  /// No description provided for @notificationStatCachedSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'由本机缓存直接应答的请求'**
+  String get notificationStatCachedSubtitle;
+
+  /// No description provided for @notificationStatRewrittenSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中覆写规则、返回改写结果的请求'**
+  String get notificationStatRewrittenSubtitle;
 
   /// No description provided for @notificationTextRunning.
   ///

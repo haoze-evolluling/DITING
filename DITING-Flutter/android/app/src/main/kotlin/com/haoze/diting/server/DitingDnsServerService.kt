@@ -22,8 +22,11 @@ import com.haoze.diting.log.DnsCacheMirror
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineStats
 import com.haoze.diting.log.RaceLogWriter
+import com.haoze.diting.log.RequestStats
+import com.haoze.diting.normal.SpeedTicker
 import com.haoze.diting.platform.NotificationMode
 import com.haoze.diting.platform.NotificationSettings
+import com.haoze.diting.platform.NotificationStatsLine
 import com.haoze.diting.tile.QuickSettingsTileUpdater
 import tunnel.BatchLogCallback
 import tunnel.BootstrapLogCallback
@@ -40,6 +43,15 @@ class DitingDnsServerService : Service() {
     private val generation = AtomicInteger(0)
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
+
+    /// Repaints the request counts; a no-op tick when no detail item is enabled.
+    private val statsTicker = SpeedTicker(
+        context = this,
+        active = { isRunning },
+        onTick = {
+            if (NotificationSettings.hasLiveItems(this)) refreshNotification(this)
+        },
+    )
 
     override fun onBind(intent: Intent?): android.os.IBinder? = null
 
@@ -109,6 +121,7 @@ class DitingDnsServerService : Service() {
                 } else {
                     DnsLogWriter.MODE_OFF
                 }
+                RequestStats.reset()
                 created.setBatchLogCallback(object : BatchLogCallback {
                     override fun onDNSQueryBatch(jsonLogs: String) {
                         DnsLogWriter.writeBatch(
@@ -195,6 +208,7 @@ class DitingDnsServerService : Service() {
                 startedAt = System.currentTimeMillis()
                 lastError = null
                 setServiceActive(this, true)
+                statsTicker.start()
                 Log.i(TAG, "standalone DNS server listening on 0.0.0.0:$port (UDP & TCP)")
             } catch (t: Throwable) {
                 Log.e(TAG, "Unable to start standalone DNS server", t)
@@ -216,6 +230,7 @@ class DitingDnsServerService : Service() {
         runCatching { current?.stop() }
         isRunning = false
         startedAt = 0L
+        statsTicker.stop()
         setServiceActive(this, false)
         releaseLocks()
         stopForegroundCompat()
@@ -244,6 +259,7 @@ class DitingDnsServerService : Service() {
         runCatching { current?.stop() }
         isRunning = false
         startedAt = 0L
+        statsTicker.stop()
         setServiceActive(this, false)
         releaseLocks()
         stopForegroundCompat()
@@ -426,11 +442,14 @@ class DitingDnsServerService : Service() {
                 NotificationMode.SERVER,
                 "运行中 · 端口 $port",
             )
+            // The server has no TUN, so there is no speed readout to show.
+            val detail = NotificationStatsLine.compose(context, withSpeed = false)
+            val body = if (detail == null) status else "$status\n$detail"
             return NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("$label · 服务器模式")
-                .setContentText(status)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(status))
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                 .setContentIntent(openIntent)
                 .addAction(0, "停止", stopIntent)
                 .setOngoing(true)

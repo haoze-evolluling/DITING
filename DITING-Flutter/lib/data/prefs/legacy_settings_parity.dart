@@ -130,8 +130,37 @@ extension LegacySettingsParity on LegacySettings {
 
   bool get notificationSpeed => _bool(_notification, 'speed', false);
 
-  void setNotificationSpeed(bool value) =>
-      _store.putBool(_notification, 'speed', value);
+  /// Keeps an existing item list in step, so an old backup that only carries the speed switch
+  /// still shows or hides the readout.
+  void setNotificationSpeed(bool value) {
+    _store.putBool(_notification, 'speed', value);
+    if (_string(_notification, 'stats_items') == null) return;
+    final items = [...notificationStatsItems]..remove('speed');
+    if (value) items.add('speed');
+    _store.putString(_notification, 'stats_items', items.join(','));
+  }
+
+  /// Ordered ids of the notification detail items (`total`, `passed`, `filtered`, `failed`,
+  /// `cached`, `rewritten`, `speed`). Without the key, older installs fall back to the speed
+  /// switch, the only item they had; the native reader does the same.
+  List<String> get notificationStatsItems {
+    final raw = _string(_notification, 'stats_items');
+    if (raw == null) return notificationSpeed ? const ['speed'] : const [];
+    return [
+      for (final id in raw.split(',').map((id) => id.trim()).toSet())
+        if (id.isNotEmpty) id,
+    ];
+  }
+
+  /// Also writes the legacy speed switch, which 1.4.3 backups and older builds read.
+  void setNotificationStatsItems(List<String> ids) {
+    _store.putString(_notification, 'stats_items', ids.toSet().join(','));
+    _store.putBool(_notification, 'speed', ids.contains('speed'));
+  }
+
+  /// Item labels as JSON, so the native notification follows the in-app language.
+  void setNotificationStatsLabelsJson(String value) =>
+      _store.putString(_notification, 'stats_labels', value);
 
   ({String running, String stopped}) get notificationTexts => (
     running: _string(_notification, 'custom_running_text') ?? '',

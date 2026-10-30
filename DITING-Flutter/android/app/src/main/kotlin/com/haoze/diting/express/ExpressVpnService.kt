@@ -21,8 +21,11 @@ import com.haoze.diting.log.EngineLogCallbacks
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.EngineStats
 import com.haoze.diting.log.LogRetention
+import com.haoze.diting.log.RequestStats
+import com.haoze.diting.normal.SpeedTicker
 import com.haoze.diting.platform.NotificationMode
 import com.haoze.diting.platform.NotificationSettings
+import com.haoze.diting.platform.NotificationStatsLine
 import com.haoze.diting.proxy.OutboundProxyBridge
 import com.haoze.diting.proxy.OutboundProxyScope
 import com.haoze.diting.tile.QuickSettingsTileUpdater
@@ -42,6 +45,15 @@ class ExpressVpnService : VpnService() {
 
     @Volatile
     private var stopping = false
+
+    /// Repaints the request counts; a no-op tick when no detail item is enabled.
+    private val statsTicker = SpeedTicker(
+        context = this,
+        active = { isRunning && !stopping },
+        onTick = {
+            if (NotificationSettings.hasLiveItems(this)) refreshNotification(this)
+        },
+    )
 
     /// Follows a revoke caused by another VPN and reconnects once that VPN lets go of the slot.
     private val reclaimer = VpnReclaimer(
@@ -169,6 +181,7 @@ class ExpressVpnService : VpnService() {
             val logMode = getSharedPreferences(SETTINGS_PREFS, MODE_PRIVATE)
                 .getString(KEY_LOG_MODE, DnsLogWriter.MODE_ALL)
                 ?: DnsLogWriter.MODE_ALL
+            RequestStats.reset()
             EngineLogCallbacks.attach(goEngine, this, DnsLogWriter.DB_EXPRESS, logMode)
             goEngine.setFilterDNS(true)
             goEngine.setUseTcpStack(true)
@@ -192,6 +205,7 @@ class ExpressVpnService : VpnService() {
         // Authoritative start time: a recreated UI process must not restart the uptime counter.
         startedAt = System.currentTimeMillis()
         setPersistedRunning(this, true)
+        statsTicker.start()
         // Express has its own log file, so no HTTP or traffic tables.
         LogRetention.start(
             context = this,
@@ -264,6 +278,7 @@ class ExpressVpnService : VpnService() {
         runCatching { tun?.close() }
         tun = null
         worker = null
+        statsTicker.stop()
         // Retention sweep is bound to the tunnel lifetime, not the process.
         LogRetention.stop()
     }
@@ -446,11 +461,14 @@ class ExpressVpnService : VpnService() {
                 NotificationMode.EXPRESS,
                 "运行中",
             )
+            // No traffic monitor runs in express mode, so the speed item is left out here.
+            val detail = NotificationStatsLine.compose(context, withSpeed = false)
+            val body = if (detail == null) status else "$status\n$detail"
             return NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle("$label · 极速模式")
-                .setContentText(status)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(status))
+                .setContentText(body)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                 .setContentIntent(openIntent)
                 .addAction(0, "停止", stopIntent)
                 .setOngoing(true)

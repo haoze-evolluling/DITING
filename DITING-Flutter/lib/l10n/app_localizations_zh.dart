@@ -2271,10 +2271,44 @@ class AppL10nZh extends AppL10n {
   String get notificationPersistentSubtitle => '服务运行时保留一条不可划掉的通知';
 
   @override
-  String get notificationShowSpeed => '显示实时速率';
+  String get notificationShowSpeedSubtitle => '在通知里显示当前上下行速率';
 
   @override
-  String get notificationShowSpeedSubtitle => '在通知里显示当前上下行速率';
+  String get notificationStatsSection => '通知详情';
+
+  @override
+  String get notificationStatsEmpty => '未显示任何详情，通知只保留状态文案';
+
+  @override
+  String get notificationStatsFooter =>
+      '统计从本次服务启动开始累计，与日志记录模式无关；已开启的项目按住拖动可调整顺序。极速与服务器模式没有实时网速，该项会自动省略。';
+
+  @override
+  String get notificationStatsHidden => '未显示的项目';
+
+  @override
+  String get notificationStatTotal => '请求';
+
+  @override
+  String get notificationStatSpeed => '实时网速';
+
+  @override
+  String get notificationStatTotalSubtitle => '本次运行处理的请求总数（DNS 与 HTTPS）';
+
+  @override
+  String get notificationStatPassedSubtitle => '正常放行的请求，含覆写后返回的结果';
+
+  @override
+  String get notificationStatFilteredSubtitle => '被规则过滤拦截的请求';
+
+  @override
+  String get notificationStatFailedSubtitle => '解析或处理失败的请求';
+
+  @override
+  String get notificationStatCachedSubtitle => '由本机缓存直接应答的请求';
+
+  @override
+  String get notificationStatRewrittenSubtitle => '命中覆写规则、返回改写结果的请求';
 
   @override
   String get notificationTextRunning => 'DNS 服务开启时';

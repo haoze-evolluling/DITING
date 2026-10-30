@@ -2398,11 +2398,52 @@ class AppL10nEn extends AppL10n {
       'Keeps an unswipeable notification while the service runs';
 
   @override
-  String get notificationShowSpeed => 'Show live rate';
-
-  @override
   String get notificationShowSpeedSubtitle =>
       'Shows the current up/down rate in the notification';
+
+  @override
+  String get notificationStatsSection => 'Notification details';
+
+  @override
+  String get notificationStatsEmpty =>
+      'No details shown; the notification keeps only the status text';
+
+  @override
+  String get notificationStatsFooter =>
+      'Counts start when the service starts and do not depend on the log mode. Press and drag an enabled item to reorder it. Speed and server modes have no live rate, so that item is left out there.';
+
+  @override
+  String get notificationStatsHidden => 'Hidden items';
+
+  @override
+  String get notificationStatTotal => 'Requests';
+
+  @override
+  String get notificationStatSpeed => 'Live rate';
+
+  @override
+  String get notificationStatTotalSubtitle =>
+      'All requests handled in this run (DNS and HTTPS)';
+
+  @override
+  String get notificationStatPassedSubtitle =>
+      'Requests let through, including rewritten answers';
+
+  @override
+  String get notificationStatFilteredSubtitle =>
+      'Requests blocked by the filter rules';
+
+  @override
+  String get notificationStatFailedSubtitle =>
+      'Requests that failed to resolve or be handled';
+
+  @override
+  String get notificationStatCachedSubtitle =>
+      'Requests answered from the local cache';
+
+  @override
+  String get notificationStatRewrittenSubtitle =>
+      'Requests that matched a rewrite rule';
 
   @override
   String get notificationTextRunning => 'When the DNS service is on';

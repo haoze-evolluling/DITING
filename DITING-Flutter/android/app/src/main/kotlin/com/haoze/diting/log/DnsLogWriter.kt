@@ -20,9 +20,14 @@ object DnsLogWriter {
     private const val TABLE = "dns_log"
 
     fun writeBatch(context: Context, databaseName: String, mode: String, jsonLogs: String) {
-        if (mode == MODE_OFF || jsonLogs.isBlank()) return
+        if (jsonLogs.isBlank()) return
         val array = runCatching { JSONArray(jsonLogs) }.getOrNull() ?: return
         if (array.length() == 0) return
+        // Counted before the mode check: the notification shows requests with logging off too.
+        for (i in 0 until array.length()) {
+            array.optJSONObject(i)?.let(RequestStats::onDns)
+        }
+        if (mode == MODE_OFF) return
 
         val writer = LogTableWriters.of(context, databaseName, TABLE, "diting-dns-log")
         for (i in 0 until array.length()) {

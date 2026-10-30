@@ -7,7 +7,10 @@ import 'dart:io';
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/data/native/notification_bridge.dart';
 import 'package:diting/data/native/permissions_bridge.dart';
+import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/pages/appearance/appearance_inputs.dart';
+import 'package:diting/pages/appearance/notification_stats_section.dart';
+import 'package:diting/state/notification_stats_providers.dart';
 import 'package:diting/state/permission_providers.dart';
 import 'package:diting/state/settings_providers.dart';
 import 'package:diting/ui/ui.dart';
@@ -16,7 +19,7 @@ import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Notification settings. The four keys live in `notification_settings_prefs`: the
+/// Notification settings. The keys live in `notification_settings_prefs`: the
 /// foreground service reads that container, so writing elsewhere silently does nothing.
 class ThemeNotificationPage extends ConsumerStatefulWidget {
   const ThemeNotificationPage({super.key});
@@ -37,6 +40,14 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
     final settings = ref.read(notificationSettingsProvider);
     _running = TextEditingController(text: settings.runningText);
     _stopped = TextEditingController(text: settings.stoppedText);
+    // Labels follow the in-app language; refreshed here so a language switch reaches the shade.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      writeNotificationStatLabels(
+        ref.read(legacySettingsProvider),
+        context.l10n,
+      );
+    });
   }
 
   @override
@@ -78,19 +89,11 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
                   _refreshNotification();
                 },
               ),
-              ListItem.toggle(
-                title: Text(context.l10n.notificationShowSpeed),
-                subtitle: Text(context.l10n.notificationShowSpeedSubtitle),
-                leading: const GlyphIcon(AppGlyphs.speed),
-                value: settings.showSpeed,
-                onChanged: settings.persistent
-                    ? (value) {
-                        notifier.setShowSpeed(value);
-                        _refreshNotification();
-                      }
-                    : null,
-              ),
             ],
+          ),
+          NotificationStatsSection(
+            enabled: settings.persistent,
+            onChanged: _refreshNotification,
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),

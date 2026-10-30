@@ -338,6 +338,7 @@ class BackupExporter {
       'appLanguageMode': settings.appLanguageModeRaw,
       'notificationPersistent': settings.notificationPersistent,
       'notificationSpeed': settings.notificationSpeed,
+      'notificationStatsItems': settings.notificationStatsItems,
       'customRunningNotificationText': texts.running,
       'customStoppedNotificationText': texts.stopped,
       'domainRulesEnabled': settings.domainRulesEnabled,

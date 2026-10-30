@@ -19,6 +19,7 @@ import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.EngineStats
 import com.haoze.diting.log.LogRetention
 import com.haoze.diting.log.PackageUids
+import com.haoze.diting.log.RequestStats
 import com.haoze.diting.log.TrafficRateMonitor
 import com.haoze.diting.overlay.FloatingLogOverlay
 import com.haoze.diting.proxy.OutboundProxyBridge
@@ -172,6 +173,8 @@ class DitingVpnService : VpnService() {
             val logMode = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                 .getString(KEY_LOG_MODE, DnsLogWriter.MODE_ALL)
                 ?: DnsLogWriter.MODE_ALL
+            // Counts belong to this run; the notification shows them since the tunnel came up.
+            RequestStats.reset()
             EngineLogCallbacks.attach(goEngine, this, DnsLogWriter.DB_NORMAL, logMode)
             goEngine.setFilterDNS(true)
             goEngine.setUseTcpStack(true)

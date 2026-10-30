@@ -41,6 +41,7 @@ class HttpRequestLogWriter(
         matchedRule: String,
     ) {
         if (closed) return
+        RequestStats.onHttp(outcome.ifBlank { "error" })
         val mode = modeProvider()
         if (mode == DnsLogWriter.MODE_OFF) return
         if (mode == DnsLogWriter.MODE_BLOCKED_AND_ERRORS && outcome in PASS_THROUGH_OUTCOMES) return

@@ -232,6 +232,17 @@ extension _BackupImportSettings on BackupImporter {
       settings.notificationSpeed,
       settings.setNotificationSpeed,
     );
+    // After the speed switch: the list is the newer, more precise value and also sets it.
+    final statsItems = value['notificationStatsItems'];
+    if (statsItems is List) {
+      final ids = [for (final id in statsItems) if (id is String) id];
+      if (_sameList(ids, settings.notificationStatsItems)) {
+        skipped++;
+      } else {
+        settings.setNotificationStatsItems(ids);
+        added++;
+      }
+    }
     final runningText = value['customRunningNotificationText'];
     final stoppedText = value['customStoppedNotificationText'];
     if (runningText is String || stoppedText is String) {
@@ -415,4 +426,12 @@ Set<String> _stringSet(Object? value) {
     };
   }
   return const {};
+}
+
+bool _sameList(List<String> a, List<String> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }

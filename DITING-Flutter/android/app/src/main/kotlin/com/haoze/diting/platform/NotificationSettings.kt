@@ -19,12 +19,28 @@ object NotificationSettings {
     private const val KEY_PERSISTENT = "persistent"
     private const val KEY_SPEED = "speed"
     private const val KEY_RUNNING_TEXT = "custom_running_text"
+    private const val KEY_STATS_ITEMS = "stats_items"
+    private const val KEY_STATS_LABELS = "stats_labels"
 
     fun persistent(context: Context): Boolean =
         prefs(context).getBoolean(KEY_PERSISTENT, true)
 
-    fun showSpeed(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_SPEED, false)
+    fun showSpeed(context: Context): Boolean = "speed" in statsItems(context)
+
+    /// Ordered ids of the detail items to show. Builds before this key only had the speed
+    /// switch, so its absence falls back to that switch.
+    fun statsItems(context: Context): List<String> {
+        val prefs = prefs(context)
+        val raw = prefs.getString(KEY_STATS_ITEMS, null)
+            ?: return if (prefs.getBoolean(KEY_SPEED, false)) listOf("speed") else emptyList()
+        return raw.split(',').map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+    }
+
+    /// Whether any detail item is on, i.e. whether the body changes between ticks.
+    fun hasLiveItems(context: Context): Boolean = statsItems(context).isNotEmpty()
+
+    fun statsLabelsJson(context: Context): String? =
+        prefs(context).getString(KEY_STATS_LABELS, null)
 
     /// Custom text wins, then the legacy-style body Dart composed for this mode, then [fallback].
     /// A blank body looks like a rendering bug, hence the chain.

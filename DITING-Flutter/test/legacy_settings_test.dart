@@ -321,6 +321,25 @@ void _settingsCatalog() {
       expect(store.read('dns_vpn_prefs', 'persistent'), isNull);
     });
 
+    test('通知详情项：没有新键时沿用旧的网速开关，写入时同步旧键', () {
+      expect(settings.notificationStatsItems, isEmpty);
+      settings.setNotificationSpeed(true);
+      expect(settings.notificationStatsItems, ['speed']);
+
+      settings.setNotificationStatsItems(['filtered', 'total', 'filtered']);
+      expect(
+        store.read('notification_settings_prefs', 'stats_items'),
+        'filtered,total',
+      );
+      expect(store.read('notification_settings_prefs', 'speed'), isFalse);
+
+      // A backup that only knows the speed switch still adds the readout, at the end.
+      settings.setNotificationSpeed(true);
+      expect(settings.notificationStatsItems, ['filtered', 'total', 'speed']);
+      settings.setNotificationSpeed(false);
+      expect(settings.notificationStatsItems, ['filtered', 'total']);
+    });
+
     test('软件背景：启用、当前、历史清单三个键', () {
       expect(settings.customBackgroundEnabled, isFalse);
       expect(settings.customBackgroundUri, isNull);

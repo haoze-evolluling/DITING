@@ -271,7 +271,6 @@ class NotificationSettingsNotifier extends Notifier<NotificationSettingsState> {
     final texts = settings.notificationTexts;
     return NotificationSettingsState(
       persistent: settings.notificationPersistent,
-      showSpeed: settings.notificationSpeed,
       runningText: texts.running,
       stoppedText: texts.stopped,
     );
@@ -280,12 +279,6 @@ class NotificationSettingsNotifier extends Notifier<NotificationSettingsState> {
   void setPersistent(bool value) {
     state = state.copyWith(persistent: value);
     _settings(ref).setNotificationPersistent(value);
-    _bump(ref);
-  }
-
-  void setShowSpeed(bool value) {
-    state = state.copyWith(showSpeed: value);
-    _settings(ref).setNotificationSpeed(value);
     _bump(ref);
   }
 
@@ -304,28 +297,25 @@ class NotificationSettingsNotifier extends Notifier<NotificationSettingsState> {
   }
 }
 
-/// The four notification values; an empty string means the default text.
+/// Notification switch and texts; an empty string means the default text. The detail items live
+/// in `notificationStatsProvider`.
 class NotificationSettingsState {
   const NotificationSettingsState({
     required this.persistent,
-    required this.showSpeed,
     required this.runningText,
     required this.stoppedText,
   });
 
   final bool persistent;
-  final bool showSpeed;
   final String runningText;
   final String stoppedText;
 
   NotificationSettingsState copyWith({
     bool? persistent,
-    bool? showSpeed,
     String? runningText,
     String? stoppedText,
   }) => NotificationSettingsState(
     persistent: persistent ?? this.persistent,
-    showSpeed: showSpeed ?? this.showSpeed,
     runningText: runningText ?? this.runningText,
     stoppedText: stoppedText ?? this.stoppedText,
   );
