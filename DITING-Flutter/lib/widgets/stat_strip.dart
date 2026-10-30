@@ -237,9 +237,14 @@ class PageBody extends StatelessWidget {
       removeTop: true,
       child: FloatingBarScope(
         inset: 0,
-        child: ListView(
-          padding: padding + EdgeInsets.only(top: inset),
-          children: [...children, if (dockSpacer) const DockSpacer()],
+        // Rows below the fold wait for the route to settle, so they do not land in the
+        // transition's first frame.
+        child: RouteArrivalScope(
+          builder: (_, cacheExtent) => ListView(
+            scrollCacheExtent: cacheExtent,
+            padding: padding + EdgeInsets.only(top: inset),
+            children: [...children, if (dockSpacer) const DockSpacer()],
+          ),
         ),
       ),
     );

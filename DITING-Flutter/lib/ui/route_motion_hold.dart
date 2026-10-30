@@ -137,3 +137,43 @@ mixin RouteSettledMixin<T extends StatefulWidget> on State<T> {
 ScrollCacheExtent? arrivalScrollCacheExtent(bool routeSettled) {
   return routeSettled ? null : const ScrollCacheExtent.pixels(0);
 }
+
+/// Builds a scroll body with no cache extent while its route slides in, so the transition's first
+/// frame only builds what is on screen; the rows below follow once the route settles. A page that
+/// is not arriving (a tab root, a rebuilt page) starts settled and never rebuilds for it.
+class RouteArrivalScope extends StatefulWidget {
+  const RouteArrivalScope({super.key, required this.builder});
+
+  final Widget Function(BuildContext context, ScrollCacheExtent? cacheExtent)
+  builder;
+
+  @override
+  State<RouteArrivalScope> createState() => _RouteArrivalScopeState();
+}
+
+class _RouteArrivalScopeState extends State<RouteArrivalScope> {
+  bool? _settled;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_settled != null) {
+      return;
+    }
+    _settled = !isRouteArriving(context);
+    if (!_settled!) {
+      unawaited(_settle());
+    }
+  }
+
+  Future<void> _settle() async {
+    await whenRouteSettled(context);
+    if (mounted) {
+      setState(() => _settled = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      widget.builder(context, arrivalScrollCacheExtent(_settled ?? true));
+}

@@ -29,7 +29,13 @@ class FeatureHubPage extends ConsumerWidget {
         slivers: [
           SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
           for (final category in categories)
-            SliverToBoxAdapter(child: _CategorySection(category: category)),
+            // A box adapter gets no repaint boundary of its own, unlike a list item, so without
+            // one every scroll frame re-records every visible card.
+            SliverToBoxAdapter(
+              child: RepaintBoundary(
+                child: _CategorySection(category: category),
+              ),
+            ),
           const SliverToBoxAdapter(child: DockSpacer()),
         ],
       ),

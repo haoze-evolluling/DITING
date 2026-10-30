@@ -17,11 +17,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// Each scheme builds a whole `ThemeData`, and the appearance pages ask for the same few on every
+/// rebuild, one per thumbnail. Keys are palette x brightness x pure black: a few dozen at most.
+final _demoSchemes = <(Color, Brightness, bool), ColorScheme>{};
+
 ColorScheme demoColorScheme({
   required Color seed,
   required Brightness brightness,
   bool pureBlack = false,
-}) => buildAppTheme(
+}) => _demoSchemes[(seed, brightness, pureBlack)] ??= buildAppTheme(
   AppThemeSpec(seedColor: seed, brightness: brightness, pureBlack: pureBlack),
 ).colorScheme;
 

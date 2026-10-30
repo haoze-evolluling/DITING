@@ -222,7 +222,9 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
       // Avoids `PageBody` (a lazy ListView): this is a directory, and never-built entries stay
       // invisible to the a11y tree and screenshot review. Building them all is cheap.
       body: AppBarClearance(
-        child: SingleChildScrollView(
+        // The rows are built eagerly; a boundary under the scroll view lets scrolling move one
+        // layer instead of re-recording every row each frame.
+        child: _ScrollLayer(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -458,4 +460,15 @@ class _ActionRow extends StatelessWidget {
       onTap: onTap,
     );
   }
+}
+
+/// [SingleChildScrollView] with its content on its own layer.
+class _ScrollLayer extends StatelessWidget {
+  const _ScrollLayer({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      SingleChildScrollView(child: RepaintBoundary(child: child));
 }

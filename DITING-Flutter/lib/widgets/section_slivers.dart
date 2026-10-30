@@ -29,12 +29,15 @@ class SliverPageBody extends StatelessWidget {
       removeTop: true,
       child: FloatingBarScope(
         inset: 0,
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
-            ...slivers,
-            const SliverToBoxAdapter(child: DockSpacer()),
-          ],
+        child: RouteArrivalScope(
+          builder: (_, cacheExtent) => CustomScrollView(
+            scrollCacheExtent: cacheExtent,
+            slivers: [
+              SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
+              ...slivers,
+              const SliverToBoxAdapter(child: DockSpacer()),
+            ],
+          ),
         ),
       ),
     );

@@ -117,8 +117,9 @@ class _TrafficPageState extends ConsumerState<TrafficPage> {
 
     return AppListScrollView(
       slivers: [
+        // The header is a box adapter, which gets no repaint boundary of its own.
         SliverToBoxAdapter(
-          child: Column(
+          child: RepaintBoundary(child: Column(
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -225,7 +226,7 @@ class _TrafficPageState extends ConsumerState<TrafficPage> {
                   ),
                 ),
             ],
-          ),
+          )),
         ),
         if (visible.isNotEmpty)
           ...appListSlivers(
