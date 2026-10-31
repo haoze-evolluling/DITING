@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"regexp"
+	"regexp/syntax"
 	"strings"
 )
 
@@ -117,4 +118,40 @@ func matchSingleDomainOrSuffix(domain, pattern string) bool {
 		return true
 	}
 	return strings.HasSuffix(domain, "."+pattern)
+}
+
+// regexAnchoredPrefix returns the ASCII literal that every match of pattern must
+// start with (e.g. "^ads\." -> "ads."), or "" when there is none. It is only a
+// prefilter: callers still run the regex, and compare case-insensitively.
+func regexAnchoredPrefix(pattern string) string {
+	re, err := syntax.Parse(pattern, syntax.Perl)
+	if err != nil {
+		return ""
+	}
+	re = re.Simplify()
+	if re.Op != syntax.OpConcat || len(re.Sub) < 2 || re.Sub[0].Op != syntax.OpBeginText {
+		return ""
+	}
+	lit := re.Sub[1]
+	if lit.Op != syntax.OpLiteral {
+		return ""
+	}
+	var sb strings.Builder
+	for _, r := range lit.Rune {
+		if r >= 0x80 {
+			break
+		}
+		sb.WriteRune(r)
+	}
+	return strings.ToLower(sb.String())
+}
+
+// mayMatchPrefix reports whether domain can satisfy an anchored literal prefix.
+// Non-ASCII domains are never rejected, because regex case folding is broader
+// than ASCII EqualFold there.
+func mayMatchPrefix(domain, prefix string) bool {
+	if prefix == "" || !isASCII(domain) {
+		return true
+	}
+	return len(domain) >= len(prefix) && strings.EqualFold(domain[:len(prefix)], prefix)
 }

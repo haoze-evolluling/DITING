@@ -10,9 +10,9 @@ type appRuleBucket struct {
 	block     map[string]string
 	important map[string]string
 
-	allowWildcards     []*wildcardMatcher
-	blockWildcards     []*wildcardMatcher
-	importantWildcards []*wildcardMatcher
+	allowWildcards     *wildcardIndex
+	blockWildcards     *wildcardIndex
+	importantWildcards *wildcardIndex
 }
 
 type invertedRule struct {
@@ -33,6 +33,7 @@ type specialRule struct {
 	denyallow     []string
 	isRegex       bool
 	regex         *regexp.Regexp
+	rxPrefix      string
 	wildcard      *wildcardMatcher
 	includeQtypes map[uint16]struct{}
 	excludeQtypes map[uint16]struct{}
@@ -87,7 +88,7 @@ func (r *specialRule) matches(domain, appName string, qtype uint16) bool {
 
 	// 4. Pattern check (regex, wildcard, or domain suffix)
 	if r.isRegex {
-		if r.regex == nil || !r.regex.MatchString(domain) {
+		if r.regex == nil || !mayMatchPrefix(domain, r.rxPrefix) || !r.regex.MatchString(domain) {
 			return false
 		}
 	} else if r.wildcard != nil {
@@ -108,18 +109,18 @@ type policySnapshot struct {
 	hasRules      bool
 
 	globalImportant          map[string]string
-	globalImportantWildcards []*wildcardMatcher
+	globalImportantWildcards *wildcardIndex
 	importantInverted        []invertedRule
 	importantBlockTrie       *dtriReader
 
 	globalAllow          map[string]struct{}
-	globalAllowWildcards []*wildcardMatcher
+	globalAllowWildcards *wildcardIndex
 	allowInverted        []invertedRule
 	importantAllowTrie   *dtriReader
 	allowTrie            *dtriReader
 
 	globalBlock          map[string]string
-	globalBlockWildcards []*wildcardMatcher
+	globalBlockWildcards *wildcardIndex
 	blockInverted        []invertedRule
 	blockTrie            *dtriReader
 
@@ -133,6 +134,12 @@ type policySnapshot struct {
 	disabledRules map[string]struct{}
 
 	appBuckets map[string]*appRuleBucket
+
+	// appSensitive/qtypeSensitive record whether any rule looks at the app
+	// name or query type; the decision cache drops dimensions nobody reads.
+	appSensitive   bool
+	qtypeSensitive bool
+	cache          *decisionCache
 }
 
 // evaluate executes the 7-level rule evaluation priority:
@@ -147,23 +154,60 @@ func (s *policySnapshot) evaluate(domain, appName string, qtype uint16) (blocked
 	if s == nil || !s.filterEnabled {
 		return false, ""
 	}
-
-	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+	domain = normalizePolicyDomain(domain)
 	if domain == "" {
 		return false, ""
 	}
 	appName = strings.TrimSpace(appName)
+	if s.cache == nil || !s.hasRules {
+		return s.evaluateNormalized(domain, appName, qtype)
+	}
+	key := s.cacheKey(domain, appName, qtype)
+	if blocked, reason, ok := s.cache.get(key); ok {
+		return blocked, reason
+	}
+	blocked, reason = s.evaluateNormalized(domain, appName, qtype)
+	s.cache.put(key, blocked, reason, 1)
+	return blocked, reason
+}
 
+// evaluateUncached runs the full rule walk without touching the decision cache.
+func (s *policySnapshot) evaluateUncached(domain, appName string, qtype uint16) (bool, string) {
+	if s == nil || !s.filterEnabled {
+		return false, ""
+	}
+	domain = normalizePolicyDomain(domain)
+	if domain == "" {
+		return false, ""
+	}
+	return s.evaluateNormalized(domain, strings.TrimSpace(appName), qtype)
+}
+
+// normalizePolicyDomain lower-cases and trims domain, skipping the
+// allocations when it is already in canonical form (the common case).
+func normalizePolicyDomain(domain string) string {
+	canonical := true
+	for i := 0; i < len(domain); i++ {
+		if c := domain[i]; c >= 'A' && c <= 'Z' || c >= 0x80 || c <= ' ' {
+			canonical = false
+			break
+		}
+	}
+	if !canonical {
+		domain = strings.ToLower(strings.TrimSpace(domain))
+	}
+	return strings.TrimSuffix(domain, ".")
+}
+
+func (s *policySnapshot) evaluateNormalized(domain, appName string, qtype uint16) (blocked bool, reason string) {
 	// Level 1: App-specific $important blocking rules
 	if appName != "" && len(s.appBuckets) > 0 {
 		if bucket, ok := s.appBuckets[appName]; ok {
 			if r, hit := matchDomainOrSuffix(domain, bucket.important); hit {
 				return true, r
 			}
-			for _, wc := range bucket.importantWildcards {
-				if wc.matches(domain) {
-					return true, wc.pattern
-				}
+			if pat, hit := bucket.importantWildcards.match(domain); hit {
+				return true, pat
 			}
 		}
 	}
@@ -198,10 +242,8 @@ func (s *policySnapshot) evaluate(domain, appName string, qtype uint16) (blocked
 	if r, hit := matchDomainOrSuffix(domain, s.globalImportant); hit {
 		return true, r
 	}
-	for _, wc := range s.globalImportantWildcards {
-		if wc.matches(domain) {
-			return true, wc.pattern
-		}
+	if pat, hit := s.globalImportantWildcards.match(domain); hit {
+		return true, pat
 	}
 	if s.importantBlockTrie != nil {
 		if hit, src := s.importantBlockTrie.containsOrParentWithDisabled(domain, s.disabledRules); hit {
@@ -215,10 +257,8 @@ func (s *policySnapshot) evaluate(domain, appName string, qtype uint16) (blocked
 			if matchDomainOrSuffixSet(domain, bucket.allow) {
 				return false, "__ALLOW__"
 			}
-			for _, wc := range bucket.allowWildcards {
-				if wc.matches(domain) {
-					return false, "__ALLOW__"
-				}
+			if _, hit := bucket.allowWildcards.match(domain); hit {
+				return false, "__ALLOW__"
 			}
 		}
 	}
@@ -253,10 +293,8 @@ func (s *policySnapshot) evaluate(domain, appName string, qtype uint16) (blocked
 	if matchDomainOrSuffixSet(domain, s.globalAllow) {
 		return false, "__ALLOW__"
 	}
-	for _, wc := range s.globalAllowWildcards {
-		if wc.matches(domain) {
-			return false, "__ALLOW__"
-		}
+	if _, hit := s.globalAllowWildcards.match(domain); hit {
+		return false, "__ALLOW__"
 	}
 
 	if s.importantAllowTrie != nil {
@@ -276,10 +314,8 @@ func (s *policySnapshot) evaluate(domain, appName string, qtype uint16) (blocked
 			if r, hit := matchDomainOrSuffix(domain, bucket.block); hit {
 				return true, r
 			}
-			for _, wc := range bucket.blockWildcards {
-				if wc.matches(domain) {
-					return true, wc.pattern
-				}
+			if pat, hit := bucket.blockWildcards.match(domain); hit {
+				return true, pat
 			}
 		}
 	}
@@ -314,10 +350,8 @@ func (s *policySnapshot) evaluate(domain, appName string, qtype uint16) (blocked
 	if r, hit := matchDomainOrSuffix(domain, s.globalBlock); hit {
 		return true, r
 	}
-	for _, wc := range s.globalBlockWildcards {
-		if wc.matches(domain) {
-			return true, wc.pattern
-		}
+	if pat, hit := s.globalBlockWildcards.match(domain); hit {
+		return true, pat
 	}
 	if s.blockTrie != nil {
 		if hit, src := s.blockTrie.containsOrParentWithDisabled(domain, s.disabledRules); hit {

@@ -118,6 +118,7 @@ func parseSpecialRule(cfg specialRuleConfigJSON, isAllow bool) *specialRule {
 			return nil
 		}
 		rule.regex = rx
+		rule.rxPrefix = regexAnchoredPrefix(rxPattern)
 	} else {
 		rule.pattern = strings.ToLower(rule.pattern)
 		if cfg.IsWildcard || strings.Contains(rule.pattern, "*") {
@@ -198,6 +199,7 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 		disabledRules:   make(map[string]struct{}),
 		appBuckets:      make(map[string]*appRuleBucket),
 	}
+	var importantWcs, allowWcs, blockWcs []*wildcardMatcher
 
 	for _, p := range req.DisabledRules {
 		p = strings.ToLower(strings.TrimSpace(p))
@@ -213,7 +215,7 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 		}
 		if p == "*" || strings.Contains(p, "*") {
 			if wc := newWildcardMatcher(p); wc != nil {
-				snap.globalImportantWildcards = append(snap.globalImportantWildcards, wc)
+				importantWcs = append(importantWcs, wc)
 			}
 		} else {
 			snap.globalImportant[p] = "important"
@@ -227,7 +229,7 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 		}
 		if p == "*" || strings.Contains(p, "*") {
 			if wc := newWildcardMatcher(p); wc != nil {
-				snap.globalAllowWildcards = append(snap.globalAllowWildcards, wc)
+				allowWcs = append(allowWcs, wc)
 			}
 		} else {
 			snap.globalAllow[p] = struct{}{}
@@ -241,7 +243,7 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 		}
 		if p == "*" || strings.Contains(p, "*") {
 			if wc := newWildcardMatcher(p); wc != nil {
-				snap.globalBlockWildcards = append(snap.globalBlockWildcards, wc)
+				blockWcs = append(blockWcs, wc)
 			}
 		} else {
 			snap.globalBlock[p] = p
@@ -258,6 +260,7 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 			block:     make(map[string]string),
 			important: make(map[string]string),
 		}
+		var bucketAllowWcs, bucketBlockWcs, bucketImportantWcs []*wildcardMatcher
 
 		for _, p := range bucketConf.Allow {
 			p = strings.ToLower(strings.TrimSpace(p))
@@ -266,7 +269,7 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 			}
 			if p == "*" || strings.Contains(p, "*") {
 				if wc := newWildcardMatcher(p); wc != nil {
-					bucket.allowWildcards = append(bucket.allowWildcards, wc)
+					bucketAllowWcs = append(bucketAllowWcs, wc)
 				}
 			} else {
 				bucket.allow[p] = struct{}{}
@@ -280,7 +283,7 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 			}
 			if p == "*" || strings.Contains(p, "*") {
 				if wc := newWildcardMatcher(p); wc != nil {
-					bucket.blockWildcards = append(bucket.blockWildcards, wc)
+					bucketBlockWcs = append(bucketBlockWcs, wc)
 				}
 			} else {
 				bucket.block[p] = p
@@ -294,15 +297,22 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 			}
 			if p == "*" || strings.Contains(p, "*") {
 				if wc := newWildcardMatcher(p); wc != nil {
-					bucket.importantWildcards = append(bucket.importantWildcards, wc)
+					bucketImportantWcs = append(bucketImportantWcs, wc)
 				}
 			} else {
 				bucket.important[p] = "important"
 			}
 		}
 
+		bucket.allowWildcards = newWildcardIndex(bucketAllowWcs)
+		bucket.blockWildcards = newWildcardIndex(bucketBlockWcs)
+		bucket.importantWildcards = newWildcardIndex(bucketImportantWcs)
 		snap.appBuckets[pkg] = bucket
 	}
+
+	snap.globalImportantWildcards = newWildcardIndex(importantWcs)
+	snap.globalAllowWildcards = newWildcardIndex(allowWcs)
+	snap.globalBlockWildcards = newWildcardIndex(blockWcs)
 
 	for _, inv := range req.InvertedBlock {
 		p := strings.ToLower(strings.TrimSpace(inv.Pattern))
@@ -446,16 +456,16 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 	snap.allowTrie = getOrOpenTrie(req.AllowTriePath)
 
 	snap.hasRules = len(snap.globalImportant) > 0 ||
-		len(snap.globalImportantWildcards) > 0 ||
+		snap.globalImportantWildcards != nil ||
 		len(snap.importantInverted) > 0 ||
 		snap.importantBlockTrie != nil ||
 		len(snap.globalAllow) > 0 ||
-		len(snap.globalAllowWildcards) > 0 ||
+		snap.globalAllowWildcards != nil ||
 		len(snap.allowInverted) > 0 ||
 		snap.importantAllowTrie != nil ||
 		snap.allowTrie != nil ||
 		len(snap.globalBlock) > 0 ||
-		len(snap.globalBlockWildcards) > 0 ||
+		snap.globalBlockWildcards != nil ||
 		len(snap.blockInverted) > 0 ||
 		snap.blockTrie != nil ||
 		len(snap.appBuckets) > 0 ||
@@ -466,8 +476,12 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 		len(snap.appBlockSpecial) > 0 ||
 		len(snap.globalBlockSpecial) > 0
 
-	pe.snapshot.Store(snap)
+	snap.finalizeLookup()
+	prev := pe.snapshot.Swap(snap)
 	pe.initialized.Store(true)
+	if snap.cache != nil && prev != nil && prev.cache != nil {
+		go snap.prewarmFrom(prev)
+	}
 
 	for path, reader := range pe.currentTries {
 		if !neededPaths[path] {
