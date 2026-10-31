@@ -97,25 +97,22 @@ func TestApplyDNSConfigPublishesOnSuccess(t *testing.T) {
 	}
 }
 
-// stubDomainChecker reports every domain as blocked, so the standalone server
-// would definitely synthesize a block if it still evaluated the rules.
-type stubDomainChecker struct{}
-
-func (stubDomainChecker) IsBlocked(string) bool                      { return true }
-func (stubDomainChecker) GetBlockReason(string) string               { return "stub" }
-func (stubDomainChecker) CheckDomain(string, string) string          { return "stub" }
-func (stubDomainChecker) HasCustomRule(string) int                   { return 1 }
-func (stubDomainChecker) IsBlockedForApp(string, string) bool        { return true }
-func (stubDomainChecker) GetBlockReasonForApp(string, string) string { return "stub" }
-func (stubDomainChecker) HasCustomRuleForApp(string, string) int     { return 1 }
+// blockDomainByPolicy installs a policy snapshot that blocks domain, so the
+// standalone server would definitely synthesize a block if it evaluated rules.
+func blockDomainByPolicy(t *testing.T, e *Engine, domain string) {
+	t.Helper()
+	if err := e.policyEngine.applySnapshot(`{"globalBlock":["` + domain + `"]}`); err != nil {
+		t.Fatalf("applySnapshot: %v", err)
+	}
+}
 
 // A-023: with filtering switched off the standalone server must forward instead
-// of consulting the domain checker / native tries.
+// of consulting the policy rules.
 func TestServeDNSSkipsFilteringWhenFilterDNSDisabled(t *testing.T) {
 	const domain = "blocked-by-policy.example"
 
 	e, w := newAllowlistTestEngine(t, domain, "203.0.113.30")
-	e.domainChecker = stubDomainChecker{}
+	blockDomainByPolicy(t, e, domain)
 	e.filterDNS.Store(false)
 
 	e.serveDNS(w, allowlistQuery(t, domain), "", allowlistTestUID)
@@ -130,12 +127,12 @@ func TestServeDNSSkipsFilteringWhenFilterDNSDisabled(t *testing.T) {
 	}
 }
 
-// The control: with filtering enabled the very same checker must block.
+// The control: with filtering enabled the very same rule must block.
 func TestServeDNSBlocksWhenFilterDNSEnabled(t *testing.T) {
 	const domain = "blocked-by-policy.example"
 
 	e, w := newAllowlistTestEngine(t, domain, "203.0.113.30")
-	e.domainChecker = stubDomainChecker{}
+	blockDomainByPolicy(t, e, domain)
 	e.filterDNS.Store(true)
 	e.SetBlockResponseType("NXDOMAIN")
 
@@ -144,7 +141,7 @@ func TestServeDNSBlocksWhenFilterDNSEnabled(t *testing.T) {
 		t.Fatal("no response written")
 	}
 	if w.msg.Rcode != dns.RcodeNameError {
-		t.Fatalf("filtering enabled must block via the domain checker, got rcode %d", w.msg.Rcode)
+		t.Fatalf("filtering enabled must block via the policy rule, got rcode %d", w.msg.Rcode)
 	}
 }
 

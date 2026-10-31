@@ -1,6 +1,6 @@
 //go:build !windows
 
-// mmap_unix.go maps the read-only rule indexes (bloom, trie, DTRI) into memory
+// mmap_unix.go maps the read-only DTRI rule indexes into memory
 // on the targets the app actually ships to.
 package tunnel
 

@@ -6,7 +6,7 @@
 //   preserving original client source ports for /proc/net/udp UID and package attribution.
 // - Discovery of Designated Resolvers (DDR, RFC 9462) mitigation: returns NXDOMAIN for
 //   _dns.resolver.arpa to prevent clients (Android 13+, Chrome) from bypassing local filtering.
-// - Priority evaluation: Firewall checks -> CNAME rewrites -> PolicyEngine -> Native Tries -> Upstream.
+// - Priority evaluation: Firewall checks -> CNAME rewrites -> PolicyEngine -> Upstream.
 // - lookupIP fallback: provides dedicated, direct public DNS resolution for internal engine
 //   components (such as the MITM proxy), bypassing fragile Android system resolver stubs.
 
@@ -146,7 +146,7 @@ func (e *Engine) serveDNS(w dns.ResponseWriter, r *dns.Msg, appOverride string, 
 
 	// "启用域名过滤" must gate the whole filtering pipeline, exactly like the
 	// full-tunnel path does in handleDNSQuery. Without this guard the standalone
-	// server kept evaluating the policy engine and the native tries while the
+	// server kept evaluating the policy engine while the
 	// user had filtering switched off.
 	if !e.filterDNS.Load() {
 		e.standaloneForward(w, r, appName, startTime, uid)
@@ -154,51 +154,10 @@ func (e *Engine) serveDNS(w dns.ResponseWriter, r *dns.Msg, appOverride string, 
 	}
 
 	if e.policyEngine != nil && e.policyEngine.isActive() && e.policyEngine.hasRules() {
-		blocked, reason := e.policyEngine.evaluate(domain, appName, queryType)
-		if blocked {
+		if blocked, reason := e.policyEngine.evaluate(domain, appName, queryType); blocked {
 			e.standaloneBlock(w, r, reason, appName, startTime)
 			return
 		}
-		if reason == "__ALLOW__" {
-			e.standaloneForward(w, r, appName, startTime, uid)
-			return
-		}
-
-		if e.domainChecker != nil {
-			checkRes := e.domainChecker.CheckDomain(domain, appName)
-			if checkRes == "__ALLOW__" {
-				e.standaloneForward(w, r, appName, startTime, uid)
-				return
-			} else if checkRes != "" {
-				e.standaloneBlock(w, r, checkRes, appName, startTime)
-				return
-			}
-		}
-		e.standaloneForward(w, r, appName, startTime, uid)
-		return
-	} else {
-
-		if e.hasImportantMatch(domain) {
-			e.standaloneBlock(w, r, "important", appName, startTime)
-			return
-		}
-		if e.domainChecker != nil {
-			checkRes := e.domainChecker.CheckDomain(domain, appName)
-			if checkRes == "__ALLOW__" {
-				e.standaloneForward(w, r, appName, startTime, uid)
-				return
-			} else if checkRes != "" {
-				e.standaloneBlock(w, r, checkRes, appName, startTime)
-				return
-			}
-		}
-	}
-
-	matchedIDs := e.loadNativeRules().matchNativeRules(domain, false)
-
-	if len(matchedIDs) > 0 {
-		e.standaloneBlock(w, r, strings.Join(matchedIDs, ","), appName, startTime)
-		return
 	}
 
 	e.standaloneForward(w, r, appName, startTime, uid)

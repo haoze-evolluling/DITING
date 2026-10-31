@@ -1,7 +1,7 @@
 // mitm_common.go defines shared data structures, interfaces, and HTTP utility functions for MITM interception.
 //
 // Core Interfaces & Filtering Helpers:
-// - adBlockChecker: Abstraction allowing the MITM handler to query the engine's trie and resolve domain IPs.
+// - adBlockChecker: Abstraction allowing the MITM handler to query the engine's policy rules and resolve domain IPs.
 // - requestAcceptsHTML: Inspects client Accept headers to conditionally strip Accept-Encoding, allowing HTML responses
 //   to arrive uncompressed for streaming cosmetic CSS tag injection.
 

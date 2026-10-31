@@ -45,10 +45,6 @@ func (e *Engine) GetDNSCacheEntries(limit int64) string {
 	return e.dnsCache.snapshotJSON(int(limit))
 }
 
-func (e *Engine) SetDomainChecker(checker DomainChecker) {
-	e.domainChecker = checker
-}
-
 func (e *Engine) ApplyRuleSnapshot(jsonSnapshot string) string {
 	e.mu.Lock()
 	if e.policyEngine == nil {

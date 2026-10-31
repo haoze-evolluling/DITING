@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"hash/fnv"
 	"net"
 	"strings"
 	"sync/atomic"
@@ -14,25 +13,6 @@ import (
 
 	"github.com/miekg/dns"
 )
-
-// bloomDoubleHash must stay bit-identical to hash/fnv: the Kotlin builder writes
-// filter files with the same FNV-1a / FNV-1 double hash.
-func TestBloomDoubleHashMatchesStdlibFNV(t *testing.T) {
-	for _, s := range []string{"", "a", "com", "ads.example.com", "xn--fiqs8s.cn", strings.Repeat("z", 300)} {
-		h1 := fnv.New64a()
-		h1.Write([]byte(s))
-		h2 := fnv.New64()
-		h2.Write([]byte(s))
-		want2 := h2.Sum64()
-		if want2%2 == 0 {
-			want2++
-		}
-		got1, got2 := bloomDoubleHash(s)
-		if got1 != h1.Sum64() || got2 != want2 {
-			t.Fatalf("bloomDoubleHash(%q) = (%d,%d), want (%d,%d)", s, got1, got2, h1.Sum64(), want2)
-		}
-	}
-}
 
 func TestCacheKeyFormatUnchanged(t *testing.T) {
 	got := cacheKey("Example.COM.", 28, 1)

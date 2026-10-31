@@ -68,7 +68,6 @@ type Engine struct {
 	trafficTracker         *TrafficTracker
 	resolver               *Resolver
 	dnsCache               *dnsCache
-	domainChecker          DomainChecker
 	requestRules           []requestRule
 	filterDNS              atomic.Bool
 	rewriteRules           map[string]*rewriteEntry
@@ -76,21 +75,8 @@ type Engine struct {
 	appResolver            AppResolver
 	appUidResolver         AppUidResolver
 
-	adTries        []*MmapTrie
-	adTrieIDs      []string
-	secTries       []*MmapTrie
-	secTrieIDs     []string
-	importantTries []*MmapTrie
-
-	adBlooms  []*BloomFilter
-	secBlooms []*BloomFilter
-
-	hasNativeRules    atomic.Bool
-	hasImportantRules atomic.Bool
-
 	// Lock-free read views for the DNS hot path; writers update them under mu
 	// together with the fields they mirror.
-	nativeRules     atomic.Pointer[nativeRuleSnapshot]
 	resolverView    atomic.Pointer[Resolver]
 	dynamicRespView atomic.Pointer[dynamicBlockConfig]
 
@@ -178,8 +164,7 @@ func (e *Engine) Stop() {
 	// NewEngine() and must be freed even when no tunnel ever started (A-017).
 	// Everything below is already idempotent, so a second Stop is harmless:
 	// each field is nil-ed on the way out, logAggregator/trafficTracker guard with
-	// running.Swap, bufferedTun uses sync.Once, and the mmap tries/blooms
-	// nil their own handles inside Close.
+	// running.Swap, and bufferedTun uses sync.Once.
 	e.sessionGen++
 	e.running = false
 
@@ -216,43 +201,6 @@ func (e *Engine) Stop() {
 	if oldFlowOutbound != nil {
 		_ = oldFlowOutbound.Close()
 	}
-
-	for _, t := range e.adTries {
-		if t != nil {
-			t.Close()
-		}
-	}
-	e.adTries = nil
-	e.adTrieIDs = nil
-
-	for _, t := range e.secTries {
-		if t != nil {
-			t.Close()
-		}
-	}
-	e.secTries = nil
-	e.secTrieIDs = nil
-	for _, t := range e.importantTries {
-		if t != nil {
-			t.Close()
-		}
-	}
-	e.importantTries = nil
-	e.publishNativeRulesLocked()
-
-	for _, bf := range e.adBlooms {
-		if bf != nil {
-			bf.Close()
-		}
-	}
-	e.adBlooms = nil
-
-	for _, bf := range e.secBlooms {
-		if bf != nil {
-			bf.Close()
-		}
-	}
-	e.secBlooms = nil
 
 	oldUdp := e.standaloneUdp
 	e.standaloneUdp = nil
@@ -346,18 +294,6 @@ func ResolveHostForProtection(hostname string) string {
 		return ""
 	}
 	return ips[0]
-}
-
-func CheckDomainInTrieFile(filePath, domain string) bool {
-	if filePath == "" || domain == "" {
-		return false
-	}
-	t, err := LoadMmapTrie(filePath)
-	if err != nil {
-		return false
-	}
-	defer t.Close()
-	return t.ContainsOrParent(domain)
 }
 
 func (e *Engine) domainForIP(ip net.IP) string {

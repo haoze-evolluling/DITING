@@ -4,8 +4,6 @@
 // JNI Safety & Callback Contracts:
 // - AppUidResolver maps UID to Android package names using integer arguments only;
 //   byte-slice arguments are forbidden in concurrent paths to prevent Go runtime cgocheck panics.
-// - DomainChecker evaluates domain status returning "" (pass), "__ALLOW__" (whitelist override),
-//   or the specific blocking reason string.
 // - SocketProtector wraps Android VpnService.protect() to exempt outbound sockets from VPN routing loops.
 // - Callback interfaces provide telemetry for DNS queries, batched logs, race events,
 //   and privacy-sanitized HTTP metadata.
@@ -44,22 +42,6 @@ type HttpLogCallback interface {
 
 type OutboundProxyStatusCallback interface {
 	OnOutboundProxyStatus(state string, message string)
-}
-
-type DomainChecker interface {
-	IsBlocked(domain string) bool
-
-	GetBlockReason(domain string) string
-
-	CheckDomain(domain string, appName string) string
-
-	HasCustomRule(domain string) int
-
-	IsBlockedForApp(domain string, appName string) bool
-
-	GetBlockReasonForApp(domain string, appName string) string
-
-	HasCustomRuleForApp(domain string, appName string) int
 }
 
 type FirewallChecker interface {
