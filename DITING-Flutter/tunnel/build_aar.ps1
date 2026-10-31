@@ -58,7 +58,7 @@ function Invoke-GomobileBind {
     Write-Host "[INFO] target       = $Target"
     Write-Host "[INFO] output       = $Output"
 
-    & gomobile bind "-target=$Target" -androidapi 24 -trimpath '-ldflags=-s -w' -o $Output .
+    & gomobile bind "-target=$Target" -androidapi 28 -trimpath '-ldflags=-s -w' -o $Output .
     if ($LASTEXITCODE -ne 0) { throw "gomobile bind failed (target=$Target, exit $LASTEXITCODE)." }
     Write-Host "[DONE] $Output"
 }

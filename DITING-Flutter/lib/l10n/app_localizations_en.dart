@@ -210,7 +210,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agreementMessage =>
-      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: Normal (full-tunnel control), Turbo (a lightweight pure-Kotlin narrow route) and Standalone server (a LAN service that needs no VPN). Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and Turbo modes take over DNS resolution through the Android local VPN interface and never connect to a remote VPN server; Standalone server mode needs no VPN permission and listens on local port 1053 for LAN devices. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
+      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: Normal (full-tunnel control), Turbo (a DNS-only narrow route on the same Go engine) and Standalone server (a LAN service that needs no VPN). Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and Turbo modes take over DNS resolution through the Android local VPN interface and never connect to a remote VPN server; Standalone server mode needs no VPN permission and listens on local port 1053 for LAN devices. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
 
   @override
   String get homeProviderSingleLabel => 'Resolver';
@@ -1246,7 +1246,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get workModeExpressSummary =>
-      'Pure Kotlin DNS acceleration and rule filtering, Android 7+ (64-bit)';
+      'DNS narrow route, acceleration and rule filtering, Android 9+ (64-bit)';
 
   @override
   String get stateStopped => 'Stopped';
@@ -4661,7 +4661,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      'All three modes share one set of rules and cache; they differ in how they take over traffic: normal mode uses a full tunnel, server mode only serves LAN DNS, and express mode is a pure-Kotlin narrow route.';
+      'All three modes share one set of rules and cache; they differ in how they take over traffic: normal mode uses a full tunnel, server mode only serves LAN DNS, and express mode narrows the route to DNS only.';
 
   @override
   String get modeNormalFeature1 => 'Full tunnel';
@@ -4720,11 +4720,11 @@ class AppL10nEn extends AppL10n {
       'Handles DNS queries only, without forwarding traffic';
 
   @override
-  String get modeExpressFeature1 => 'Pure Kotlin';
+  String get modeExpressFeature1 => 'Go engine, narrow route';
 
   @override
   String get modeExpressFeature1Body =>
-      'A narrow route, so starting and switching are faster';
+      'Only DNS is captured; everything else goes direct';
 
   @override
   String get modeExpressFeature2 => 'Four upstream strategies';
@@ -4741,10 +4741,11 @@ class AppL10nEn extends AppL10n {
       'A high hit rate with predictable memory use';
 
   @override
-  String get modeExpressFeature4 => 'Works on older systems';
+  String get modeExpressFeature4 => 'Lower power';
 
   @override
-  String get modeExpressFeature4Body => 'Android 7+ (64-bit required)';
+  String get modeExpressFeature4Body =>
+      'DNS queries only, no full-tunnel forwarding';
 
   @override
   String get onboardingTitle => 'Setup';

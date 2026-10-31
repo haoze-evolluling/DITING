@@ -210,7 +210,7 @@ void _initialAgreement() {
     expect(message, contains('免责条款'));
 
     expect(message, contains('普通模式（全隧道深度管控）'));
-    expect(message, contains('极速模式（纯 Kotlin 原生轻量窄路由）'));
+    expect(message, contains('极速模式（Go 引擎 + DNS 窄路由）'));
     expect(message, contains('独立服务器模式（局域网免 VPN 服务）'));
     expect(message, contains('无任何远程数据上传与隐私追踪'));
     expect(message, contains('1053 端口'));

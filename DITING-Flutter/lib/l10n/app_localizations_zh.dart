@@ -208,7 +208,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get agreementMessage =>
-      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式（全隧道深度管控）、极速模式（纯 Kotlin 原生轻量窄路由）与独立服务器模式（局域网免 VPN 服务）。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通模式与极速模式依赖 Android 本地 VPN 接口接管 DNS 解析，不连接任何远程 VPN 服务器；独立服务器模式无需 VPN 权限，直接监听本地 1053 端口供局域网设备接入。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
+      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式（全隧道深度管控）、极速模式（Go 引擎 + DNS 窄路由）与独立服务器模式（局域网免 VPN 服务）。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通模式与极速模式依赖 Android 本地 VPN 接口接管 DNS 解析，不连接任何远程 VPN 服务器；独立服务器模式无需 VPN 权限，直接监听本地 1053 端口供局域网设备接入。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
 
   @override
   String get homeProviderSingleLabel => '解析服务商';
@@ -1201,7 +1201,7 @@ class AppL10nZh extends AppL10n {
   String get workModeExpressBadge => '极速';
 
   @override
-  String get workModeExpressSummary => '纯 Kotlin、DNS 加速与规则过滤、Android 7+（64 位）';
+  String get workModeExpressSummary => 'DNS 窄路由、加速与规则过滤、Android 9+（64 位）';
 
   @override
   String get stateStopped => '已停止';
@@ -4428,7 +4428,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      '三种模式共用一套规则与缓存，区别在接管方式：普通模式走全隧道，服务器模式只做局域网 DNS，极速模式是纯 Kotlin 窄路由。';
+      '三种模式共用一套规则与缓存，区别在接管方式：普通模式走全隧道，服务器模式只做局域网 DNS，极速模式把路由收窄到只接管 DNS。';
 
   @override
   String get modeNormalFeature1 => '全隧道接管';
@@ -4479,10 +4479,10 @@ class AppL10nZh extends AppL10n {
   String get modeServerFeature4Body => '只处理 DNS 查询，无流量转发';
 
   @override
-  String get modeExpressFeature1 => '纯 Kotlin 实现';
+  String get modeExpressFeature1 => 'Go 引擎 + 窄路由';
 
   @override
-  String get modeExpressFeature1Body => '窄路由，启动与切换都更快';
+  String get modeExpressFeature1Body => '只接管 DNS 端口，其余流量直连物理网络';
 
   @override
   String get modeExpressFeature2 => '四种上游调度';
@@ -4497,10 +4497,10 @@ class AppL10nZh extends AppL10n {
   String get modeExpressFeature3Body => '命中率高、内存占用可控';
 
   @override
-  String get modeExpressFeature4 => '兼容更旧系统';
+  String get modeExpressFeature4 => '更低功耗';
 
   @override
-  String get modeExpressFeature4Body => 'Android 7+（需 64 位）';
+  String get modeExpressFeature4Body => '只处理 DNS 查询，无全隧道转发';
 
   @override
   String get onboardingTitle => '引导';

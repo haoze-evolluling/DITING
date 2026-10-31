@@ -25,7 +25,9 @@
 - `-PditingAbi=all` → `tunnel-all.aar`（release 也可打出双 ABI 包）；
 - `-PtunnelAar=<路径>` 显式覆盖；文件缺失会在 Gradle 配置期直接报错并提示生成命令。
 
-- Android 最低 API：24
+- Android 最低 API：28（Android 9.0，`-androidapi 28`）。该值同时是 AAR 清单里的 `minSdkVersion`，
+  也是应用侧 `android/app/build.gradle.kts` 中 `minSdk = 28` 的来源：Go 引擎不再兼容更旧的系统版本，
+  低于 API 28 的设备不允许安装。
 - AAR：启用 ZIP 压缩
 - Go 二进制：移除符号表和调试信息
 - 构建路径：启用 `-trimpath`
@@ -64,7 +66,7 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 
 gomobile bind `
   -target=android/arm64 `
-  -androidapi 24 `
+  -androidapi 28 `
   -trimpath `
   -ldflags="-s -w" `
   -o ..\android\app\libs\tunnel-arm64.aar .

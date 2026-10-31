@@ -71,7 +71,9 @@ android {
 
     defaultConfig {
         applicationId = "com.haoze.diting"
-        minSdk = flutter.minSdkVersion
+        // The Go engine AAR is built with `-androidapi 28` (tunnel/build_aar.ps1), so the app
+        // cannot run below Android 9.0. Overrides the Flutter default (24) on purpose.
+        minSdk = 28
         targetSdk = flutter.targetSdkVersion
         // Version code from pubspec.yaml; split APKs add 1000 * ABI_VERSION unless overridden.
         versionCode = flutter.versionCode
