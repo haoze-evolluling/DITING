@@ -1,19 +1,39 @@
-# README
+# 谛听桌面端
 
-## About
+## 工程组成
 
-This is the official Wails Vue-TS template.
+- `cmd/service/`、`internal/`：现有 Go DNS 核心、Windows 服务与平台能力。
+- `flutter_frontend/`：Windows Wails 原生窗口使用的 Flutter UI 构建产物。
+- `frontend/`：保留的 Vue 局域网 Web 控制台，由服务内嵌；与原生窗口资源相互独立。
+- `../DITING-Flutter/lib/desktop/`：Flutter 桌面 UI 源码。
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+Flutter UI 通过现有本机 HTTP API 和 Wails App 绑定访问后端，不在 Dart 中复制 DNS 业务逻辑。
 
-## Live Development
+## 开发
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+界面预览：
 
-## Building
+```bash
+cd ../DITING-Flutter
+flutter run -d chrome -t lib/desktop/main.dart
+```
 
-To build a redistributable, production mode package, use `wails build`.
+单独构建 Flutter 桌面资源：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build_flutter_frontend.ps1
+```
+
+完整 Windows 构建（需要 Flutter 3.47+、Go 1.25+、Node.js 18+、Wails v2，打包还需 NSIS）：
+
+```cmd
+build.bat
+```
+
+Wails 会根据 `wails.json` 调用 Flutter 构建钩子；构建管理器会另外构建保留的 Web 控制台。
+
+## 文档
+
+桌面 UI 的完成范围、响应式规范、后端映射和后续路线见：
+
+[`docs/development/flutter-desktop-ui.md`](../docs/development/flutter-desktop-ui.md)

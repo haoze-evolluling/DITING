@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="谛听 DITING 本地 DNS 加速与网络防护控制台">
+  <meta name="theme-color" content="#f8f9ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="谛听 DNS">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="manifest" href="manifest.json">
+  <title>谛听 DNS</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; background: #f8f9ff; }
+    #loading { height: 100%; display: grid; place-items: center; color: #5f5e66;
+      font: 14px system-ui, "Microsoft YaHei UI", sans-serif; letter-spacing: .08em; }
+  </style>
+</head>
+<body>
+  <div id="loading" aria-live="polite">谛听 DNS 正在载入</div>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      document.getElementById('loading')?.remove();
+    });
+  </script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

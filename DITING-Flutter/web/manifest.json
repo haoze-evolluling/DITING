@@ -1,0 +1,26 @@
+{
+  "name": "谛听 DITING DNS",
+  "short_name": "谛听 DNS",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f8f9ff",
+  "theme_color": "#f8f9ff",
+  "description": "本地 DNS 加速与网络防护控制台",
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "icons/Icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/Icon-512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "icons/Icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/Icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

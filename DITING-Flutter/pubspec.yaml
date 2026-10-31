@@ -1,5 +1,5 @@
 name: diting
-description: "谛听 DITING — Android 客户端（Flutter 重写，兼容 1.4.3 数据）。"
+description: "谛听 DITING — Android 与桌面客户端（Flutter 统一 UI）。"
 publish_to: 'none'
 # versionCode is major*10000 + minor*100 + patch (2.0.1 = 20001) so upgrades are
 # never treated as downgrades.
@@ -34,6 +34,10 @@ dependencies:
   intl: any
   cupertino_icons: ^2.0.0
   url_launcher: ^6.3.3
+
+  # Desktop UI: existing local Go API and lightweight appearance persistence.
+  http: ^1.6.0
+  shared_preferences: ^2.5.4
 
 dev_dependencies:
   flutter_test:

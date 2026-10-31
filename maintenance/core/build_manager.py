@@ -121,6 +121,7 @@ def check_toolchain() -> Dict[str, dict]:
         "git": {"found": False, "version": "", "cmd": shutil.which("git")},
         "wails": {"found": False, "version": "", "cmd": shutil.which("wails")},
         "node": {"found": False, "version": "", "cmd": shutil.which("node")},
+        "flutter": {"found": False, "version": "", "cmd": shutil.which("flutter")},
         "nsis": {"found": False, "version": "", "cmd": find_tool("makensis", nsis_extra)},
     }
 
@@ -154,6 +155,18 @@ def check_toolchain() -> Dict[str, dict]:
             out = subprocess.check_output([tools["node"]["cmd"], "-v"], text=True).strip()
             tools["node"]["found"] = True
             tools["node"]["version"] = out
+        except Exception:
+            pass
+
+    if tools["flutter"]["cmd"]:
+        try:
+            out = subprocess.check_output(
+                [tools["flutter"]["cmd"], "--version"],
+                text=True,
+                stderr=subprocess.STDOUT,
+            ).splitlines()
+            tools["flutter"]["found"] = True
+            tools["flutter"]["version"] = out[0] if out else "已安装"
         except Exception:
             pass
 
@@ -229,16 +242,29 @@ def cross_compile_linux_binary(
 
 
 def ensure_frontend_dist(desktop_dir: str) -> None:
-    """确保 frontend/dist 目录存在，避免 Go embed 在未构建前端时直接报错中断"""
-    dist_dir = os.path.join(desktop_dir, "frontend", "dist")
-    os.makedirs(dist_dir, exist_ok=True)
-    keep_file = os.path.join(dist_dir, ".gitkeep")
-    if not os.path.exists(keep_file) and not os.listdir(dist_dir):
-        try:
-            with open(keep_file, "w", encoding="utf-8") as f:
-                f.write("")
-        except Exception:
-            pass
+    """确保两个 Go embed 前端目录存在；实际产物由各自构建链生成。"""
+    for relative_dir in (
+        os.path.join("frontend", "dist"),
+        os.path.join("flutter_frontend", "dist"),
+    ):
+        dist_dir = os.path.join(desktop_dir, relative_dir)
+        os.makedirs(dist_dir, exist_ok=True)
+        keep_file = os.path.join(dist_dir, ".gitkeep")
+        if not os.path.exists(keep_file) and not os.listdir(dist_dir):
+            try:
+                with open(keep_file, "w", encoding="utf-8") as f:
+                    f.write("")
+            except Exception:
+                pass
+
+
+def build_web_console(desktop_dir: str, on_log: Callable[[str, str], None], is_cancelled: Callable[[], bool]) -> bool:
+    """构建保留给局域网远程管理的 Vue 控制台。"""
+    frontend_dir = os.path.join(desktop_dir, "frontend")
+    on_log("info", ">>> 正在编译局域网 Web 控制台...")
+    if not run_cmd_live(["npm", "install"], frontend_dir, on_log, is_cancelled):
+        return False
+    return run_cmd_live(["npm", "run", "build"], frontend_dir, on_log, is_cancelled)
 
 
 def ensure_webview2_bootstrapper(installer_dir: str, on_log: Optional[Callable[[str, str], None]] = None) -> bool:
@@ -349,12 +375,16 @@ def build_pipeline(
             if not tools["wails"]["found"]:
                 on_log("error", "未找到 Wails CLI，请执行: go install github.com/wailsapp/wails/v2/cmd/wails@latest")
                 return {"success": False, "message": "缺少 Wails CLI"}
-            if not tools["node"]["found"]:
-                on_log("error", "未找到 Node.js，前端客户端编译需要 Node.js。")
-                return {"success": False, "message": "缺少 Node.js"}
+            if not tools["flutter"]["found"]:
+                on_log("error", "未找到 Flutter SDK，桌面 UI 编译需要 Flutter 3.47+。")
+                return {"success": False, "message": "缺少 Flutter SDK"}
             if not tools["nsis"]["found"]:
                 on_log("error", "未找到 makensis，无法打包 NSIS 安装包。")
                 return {"success": False, "message": "缺少 NSIS"}
+
+        if (need_win or need_deb) and not tools["node"]["found"]:
+            on_log("error", "未找到 Node.js，局域网 Web 控制台编译需要 Node.js。")
+            return {"success": False, "message": "缺少 Node.js"}
 
         if need_deb:
             if not tools["go"]["found"]:
@@ -386,6 +416,10 @@ def build_pipeline(
     )
 
     built_artifacts = []
+
+    # 桌面 Flutter UI 由 Wails 构建钩子编译；远程 Web 控制台仍独立构建。
+    if not build_web_console(desktop_dir, on_log, is_cancelled):
+        return {"success": False, "message": "局域网 Web 控制台编译失败"}
 
     # 4. 构建 Windows EXE 安装包
     if need_win:

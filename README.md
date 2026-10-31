@@ -3,7 +3,7 @@
 谛听（DITING）是一款本地优先的开源 DNS 加速与网络流量过滤工具，提供低延迟解析、规则阻断、防追踪与流量管控。全部处理在设备本地闭环完成，不上传远程数据；支持 Android、Windows、Linux 三端，并提供开发者维护工具箱。
 
 - 📱 **Android**：`DITING-Flutter`（Flutter 架构）自带 Go 隧道引擎源码（`tunnel/`，gomobile 编译为 AAR），支持极速模式、普通模式（gVisor netstack 全隧道）与局域网独立 DNS 服务，要求 Android 9.0+（`arm64-v8a`）。
-- 💻 **Windows**：特权系统服务 + Wails 桌面 GUI + 局域网 Web 控制台，支持物理网卡双栈 DNS 接管与崩溃自愈。
+- 💻 **Windows**：特权系统服务 + Wails/Flutter 桌面 GUI + 局域网 Web 控制台，支持物理网卡双栈 DNS 接管与崩溃自愈。
 - 🐧 **Linux**：单二进制 `diting-service` + 内嵌 Web 控制台，systemd 托管，自动适配多种 DNS 后端。
 - 🧰 **维护工具箱**：Python + PyWebView 桌面套件，涵盖压测、代码扫描、Logo 导出、截图、跨端构建与版本同步。
 
@@ -65,7 +65,7 @@
 | **Android** | 🛡️ 普通模式 | Android 9.0+ / `arm64-v8a` | gVisor 全隧道，支持应用分流、HTTPS 检查、出站代理 |
 | **Android** | 🏠 服务器模式 | Android 9.0+ / `arm64-v8a` | Go 独立 DNS 服务，监听 `0.0.0.0:1053`，共享给局域网设备 |
 | **Windows** | ⚙️ 特权核心服务 | Windows 10+ 64-bit | 双栈接管物理网卡、本地 53 监听、缓存规则、局域网 DNS、崩溃自愈 |
-| **Windows** | 🖥️ 桌面 GUI | Windows 10+ 64-bit + WebView2 | Wails v2 + Vue 3，免管理员权限管理服务与实时日志 |
+| **Windows** | 🖥️ 桌面 GUI | Windows 10+ 64-bit + WebView2 | Wails v2 + Flutter UI，免管理员权限管理服务；新 UI 骨架已接入 |
 | **Windows** | 🌐 Web 控制台 | 任意主流浏览器 | 访问 15353 端口远程管理 Windows 核心服务 |
 | **Linux** | ⚙️ 核心服务 | systemd 发行版 / `amd64`·`arm64` | 多后端 DNS 接管、53 监听、缓存规则、局域网 DNS、离线还原 |
 | **Linux** | 🌐 Web 控制台 | 任意主流浏览器 | 访问 15353 端口完成全部配置，无需桌面环境 |
@@ -79,7 +79,8 @@
 
 ```
 DITING/
-├── DITING-Flutter/           # ★ Android 客户端（Flutter 架构，主力开发，兼容 1.4.3 的配置与数据库）
+├── DITING-Flutter/           # ★ Android 与桌面 UI 的 Flutter 工程
+│   ├── lib/desktop/          #   Windows 桌面 UI 独立入口、导航、页面与 Go API 适配
 │   ├── lib/ui/               #   移植自 1.4.3 的设计系统（GPL-3.0）
 │   ├── lib/data/             #   旧版配置（SharedPreferences 11 个容器）与旧版 SQLite 读写
 │   ├── lib/pages/            #   页面（85 条路由）
@@ -89,7 +90,8 @@ DITING/
 ├── Desktop/                  # Windows / Linux 工程
 │   ├── cmd/service/          # 特权核心服务（Windows Service / Linux systemd）
 │   ├── internal/             # DNS 内核、平台适配、IPC、鉴权、查询日志
-│   ├── frontend/             # Vue 3 + TypeScript + Material Web 前端
+│   ├── flutter_frontend/     # Wails 原生窗口内嵌的 Flutter 桌面 UI 产物
+│   ├── frontend/             # 保留的 Vue 3 局域网 Web 控制台
 │   ├── build/                # 构建产物、NSIS 与 systemd 打包脚本
 │   ├── main.go               # Wails 桌面 GUI 入口
 │   └── build*.bat/sh         # 构建、打包与版本同步脚本
@@ -147,7 +149,7 @@ flutter test
 详情见 [Go AAR 构建记录](docs/development/aar-build-notes.md)。
 
 ### 💻 Windows
-要求 Go 1.25+、Node.js 18+、Wails v2（`go install github.com/wailsapp/wails/v2/cmd/wails@latest`）；打包独立安装包需 NSIS（可选）。
+要求 Flutter 3.47+、Go 1.25+、Node.js 18+（局域网 Web 控制台）、Wails v2（`go install github.com/wailsapp/wails/v2/cmd/wails@latest`）；打包独立安装包需 NSIS（可选）。
 
 ```cmd
 cd Desktop
@@ -231,7 +233,7 @@ REM 同步桌面端等其余模块（示例）
 ## 技术栈
 
 - **Android**：Flutter / Dart 3 / Riverpod / go_router / sqflite（直接打开 1.4.3 的库）/ 移植的 Material 3 设计系统 / Kotlin 原生通道（VpnService、快捷磁贴、悬浮窗）
-- **Windows**：Go 1.25+ / Wails v2 / Vue 3 / TypeScript / Vite / Material Web / Win32 API / Windows Service
+- **Windows**：Go 1.25+ / Wails v2 / Flutter / Dart（原生窗口 UI）/ Win32 API / Windows Service；Vue 3 保留用于局域网 Web 控制台
 - **Linux**：Go 1.25+ / systemd / resolvectl / nmcli / netlink / Vue 3 内嵌控制台
 - **DNS 引擎**：Go / gVisor netstack / miekg/dns / quic-go / Singleflight
 - **维护工具箱**：Python 3 / PyWebView (WebView2) / HTML5 / CSS3 / JavaScript
@@ -242,6 +244,7 @@ REM 同步桌面端等其余模块（示例）
 
 - [Go AAR 构建记录](docs/development/aar-build-notes.md) — Android `tunnel.aar` 的编译环境、参数与交叉编译细节。
 - [云控贡献者名单维护](docs/development/recognition-members.md) — 名单云控机制、JSON 规范与头像维护。
+- [桌面端 Flutter UI 重构说明](docs/development/flutter-desktop-ui.md) — 当前骨架、真实接口范围、响应式规范与后续路线。
 
 ---
 
