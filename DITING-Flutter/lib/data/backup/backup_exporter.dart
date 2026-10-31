@@ -71,11 +71,13 @@ class BackupExporter {
     final counts = <BackupGroup, int>{};
     final skipped = <String>[];
     final included = <BackupGroup>[];
+    // Shared per-run cache: the two rewrite groups split one table, so it is read once.
+    final cache = <String, Object?>{};
 
     for (final group in BackupGroup.values) {
       if (!selected.contains(group)) continue;
       try {
-        final value = await _valueOf(group, source);
+        final value = await _valueOf(group, source, cache: cache);
         data[group.key] = value;
         counts[group] = _countOf(value);
         included.add(group);
@@ -111,16 +113,21 @@ class BackupExporter {
   /// One group as JSON: a `Map` for structured config, a `List` for rules.
   Future<Object?> _valueOf(
     BackupGroup group,
-    BackupExportSource source,
-  ) async => switch (group) {
+    BackupExportSource source, {
+    required Map<String, Object?> cache,
+  }) async => switch (group) {
     BackupGroup.providers => _providers(source),
     BackupGroup.bootstrap => _bootstrap(source),
     BackupGroup.cache => _cache(source),
     BackupGroup.outbound => _outbound(source),
     BackupGroup.subscriptions => _subscriptions(source),
     BackupGroup.domainRules => _rules(source, group),
-    BackupGroup.rewriteDomain => _rewriteRules(source, const {'IPv4', 'IPv6'}),
-    BackupGroup.rewriteCname => _rewriteRules(source, const {'CNAME'}),
+    BackupGroup.rewriteDomain => _rewriteRules(
+      source,
+      const {'IPv4', 'IPv6'},
+      cache,
+    ),
+    BackupGroup.rewriteCname => _rewriteRules(source, const {'CNAME'}, cache),
     BackupGroup.addressRules => _addressRules(source),
     BackupGroup.excluded => _stringList(source.settings.excludedPackages),
     BackupGroup.blocked => {

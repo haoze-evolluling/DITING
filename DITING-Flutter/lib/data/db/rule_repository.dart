@@ -287,6 +287,26 @@ class RuleRepository {
     });
   }
 
+  /// How many user-origin rules exist across the three kinds, counted inside SQLite.
+  ///
+  /// The backup overview only needs the number: loading the tables through [loadKind] to count
+  /// them in Dart allocated the whole dataset on subscription-sized databases, which is what
+  /// crashed the config export.
+  Future<int> countUser() async {
+    final placeholders = List.filled(userSources.length, '?').join(',');
+    var total = 0;
+    for (final kind in RuleKind.values) {
+      final rows = await _db.rawQuery(
+        'SELECT COUNT(DISTINCT r.id) AS n FROM ${_ruleTables[kind]} r '
+        'JOIN ${_sourceTables[kind]} s ON s.ruleId = r.id '
+        'WHERE s.source IN ($placeholders)',
+        userSources,
+      );
+      total += (rows.first['n'] as num?)?.toInt() ?? 0;
+    }
+    return total;
+  }
+
   Future<int> resetPresetWhitelist(
     List<({String domain, String group})> entries,
   ) {

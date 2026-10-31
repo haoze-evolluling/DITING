@@ -165,6 +165,22 @@ void _ruleRepository() {
       expect(byPattern['preset.example']!.source, RuleSource.preset);
     });
 
+    test('countUser 只数用户来源，且多来源不重复计数', () async {
+      await insertBlock('user.example');
+      await insertBlock('imported.example', source: 'local_import');
+      await insertBlock('preset.example', source: 'preset');
+      await insertBlock('sub.example', source: 'sub_7');
+      final both = await insertBlock('both.example');
+      await db.insert('block_rule_source', {
+        'ruleId': both,
+        'source': 'local_hosts',
+        'enabled': 1,
+      });
+
+      // 三张表里只有 block_rule 有行，allow / rewrite 计 0。
+      expect(await RuleRepository(db).countUser(), 3);
+    });
+
     test('规则或来源任一禁用即视为禁用', () async {
       await insertBlock('off-rule.example', enabled: false);
       await insertBlock('off-source.example', sourceEnabled: false);

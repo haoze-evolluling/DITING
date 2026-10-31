@@ -70,15 +70,14 @@ extension _BackupRuleExport on BackupExporter {
     if (db == null) return const [];
     final exported = <Object?>[];
     for (final kind in const [RuleKind.block, RuleKind.allow]) {
-      final table = kind == RuleKind.block ? 'block_rule' : 'allow_rule';
-      final sourceTable = kind == RuleKind.block
-          ? 'block_rule_source'
-          : 'allow_rule_source';
-      final userRuleIds = await _userRuleIds(db, sourceTable);
-      final rows = await db.query(table, orderBy: 'id DESC');
+      final rows = await _userRuleRows(
+        db,
+        table: kind == RuleKind.block ? 'block_rule' : 'allow_rule',
+        sourceTable: kind == RuleKind.block
+            ? 'block_rule_source'
+            : 'allow_rule_source',
+      );
       for (final row in rows) {
-        // User-added only: presets ship with the app, subscriptions rebuild.
-        if (!userRuleIds.contains(row['id'] as int)) continue;
         exported.add({
           'pattern': row['pattern'],
           'kind': kind == RuleKind.allow ? 'allow' : 'block',
@@ -94,29 +93,41 @@ extension _BackupRuleExport on BackupExporter {
     return exported;
   }
 
-  /// Ids of user-origin rules (`useradd`/`local_import`/`local_hosts`).
-  Future<Set<int>> _userRuleIds(Database db, String sourceTable) async {
-    final rows = await db.query(sourceTable, columns: ['ruleId', 'source']);
-    return {
-      for (final row in rows)
-        if (RuleRepository.userSources.contains(row['source']))
-          row['ruleId'] as int,
-    };
-  }
+  /// User-origin rows of [table], filtered inside SQLite.
+  ///
+  /// Only user rules are exported, but the filter has to run in SQL: reading the whole table and
+  /// dropping subscription rows in Dart materialized every row of a subscription-sized dataset in
+  /// the ART heap, which is what killed the process during an export (2026-10-31 log: heap climbed
+  /// to 255MB/256MB and the last three seconds were GC-thrash). `*_source(source)` is indexed, so
+  /// the join only touches the user rows.
+  Future<List<Map<String, Object?>>> _userRuleRows(
+    Database db, {
+    required String table,
+    required String sourceTable,
+  }) => db.rawQuery(
+    'SELECT r.* FROM $table r '
+    'JOIN $sourceTable s ON s.ruleId = r.id '
+    'WHERE s.source IN '
+    '(${List.filled(RuleRepository.userSources.length, '?').join(',')}) '
+    'GROUP BY r.id ORDER BY r.id DESC',
+    RuleRepository.userSources,
+  );
 
   /// Rewrite rules, split by `targetType` into IPv4/IPv6 and CNAME.
+  ///
+  /// Both groups split the same table, so the rows are read once per export and reused; a rule with
+  /// several user sources appears once.
   Future<Object?> _rewriteRules(
     BackupExportSource source,
     Set<String> targetTypes,
+    Map<String, Object?> cache,
   ) async {
     final db = source.database;
     if (db == null) return const [];
-    final rows = await db.query('rewrite_rule', orderBy: 'id DESC');
-    final userRuleIds = await _userRewriteRuleIds(db);
+    final rows = await _cachedUserRewriteRows(db, cache);
     return [
       for (final row in rows)
-        if (targetTypes.contains(row['targetType']) &&
-            userRuleIds.contains(row['id'] as int))
+        if (targetTypes.contains(row['targetType']))
           {
             'pattern': row['pattern'],
             'targetType': row['targetType'],
@@ -127,41 +138,37 @@ extension _BackupRuleExport on BackupExporter {
     ];
   }
 
-  Future<Set<int>> _userRewriteRuleIds(Database db) async {
-    final rows = await db.query(
-      'rewrite_rule_source',
-      columns: ['ruleId', 'source'],
+  Future<List<Map<String, Object?>>> _cachedUserRewriteRows(
+    Database db,
+    Map<String, Object?> cache,
+  ) async {
+    final cached = cache['rewrite'];
+    if (cached is List<Map<String, Object?>>) return cached;
+    final rows = await _userRuleRows(
+      db,
+      table: 'rewrite_rule',
+      sourceTable: 'rewrite_rule_source',
     );
-    return {
-      for (final row in rows)
-        if (RuleRepository.userSources.contains(row['source']))
-          row['ruleId'] as int,
-    };
+    cache['rewrite'] = rows;
+    return rows;
   }
 
   Object? _addressRules(BackupExportSource source) async {
     final db = source.database;
     if (db == null) return const [];
-    final rows = await db.query('go_url_rule', orderBy: 'id DESC');
-    final userRuleIds = <int>{};
-    final sources = await db.query(
-      'go_url_rule_source',
-      columns: ['ruleId', 'source'],
+    final rows = await _userRuleRows(
+      db,
+      table: 'go_url_rule',
+      sourceTable: 'go_url_rule_source',
     );
-    for (final row in sources) {
-      if (RuleRepository.userSources.contains(row['source'])) {
-        userRuleIds.add(row['ruleId'] as int);
-      }
-    }
     return [
       for (final row in rows)
-        if (userRuleIds.contains(row['id'] as int))
-          {
-            'pattern': row['pattern'],
-            'kind': row['kind'],
-            'rawLine': row['rawLine'],
-            'enabled': (row['enabled'] as int? ?? 1) == 1,
-          },
+        {
+          'pattern': row['pattern'],
+          'kind': row['kind'],
+          'rawLine': row['rawLine'],
+          'enabled': (row['enabled'] as int? ?? 1) == 1,
+        },
     ];
   }
 }

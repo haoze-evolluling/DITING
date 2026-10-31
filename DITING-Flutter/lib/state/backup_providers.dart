@@ -8,7 +8,6 @@ import 'package:diting/data/backup/backup_importer.dart';
 import 'package:diting/data/backup/backup_models.dart';
 import 'package:diting/data/db/rule_dataset_providers.dart';
 import 'package:diting/data/db/rule_repository.dart';
-import 'package:diting/data/mock_data.dart';
 import 'package:diting/data/native/platform_bridge.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/data/vpn/dns_config_builder.dart';
@@ -56,17 +55,13 @@ final backupStatsProvider = FutureProvider<BackupStats>((ref) async {
     } on Exception {
       subscriptions = 0;
     }
-    final repository = RuleRepository(db);
-    for (final kind in [RuleKind.block, RuleKind.allow, RuleKind.rewrite]) {
-      try {
-        final rules = await repository.loadKind(kind);
-        customRules += rules
-            .where((rule) => rule.source == RuleSource.user)
-            .length;
-      } on Exception {
-        // A missing table counts as 0: this tile is an overview, not an error.
-        continue;
-      }
+    // Counted in SQLite: the overview needs a number, and loading the three tables to count them
+    // exhausted the heap on subscription-sized databases.
+    try {
+      customRules = await RuleRepository(db).countUser();
+    } on Exception {
+      // A missing table counts as 0: this tile is an overview, not an error.
+      customRules = 0;
     }
   }
 
