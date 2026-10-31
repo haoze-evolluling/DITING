@@ -3,7 +3,7 @@ description: "谛听 DITING — Android 与桌面客户端（Flutter 统一 UI�
 publish_to: 'none'
 # versionCode is major*10000 + minor*100 + patch (2.0.1 = 20001) so upgrades are
 # never treated as downgrades.
-version: 2.2.8+20208
+version: 2.2.9+20209
 
 environment:
   sdk: ^3.13.5
