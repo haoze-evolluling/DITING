@@ -21,9 +21,6 @@ Desktop/build/windows/installer/tmp/
 Desktop/frontend/dist/
 Desktop/frontend/package.json.md5
 Desktop/frontend/wailsjs/
-Desktop/flutter_frontend/dist/*
-!Desktop/flutter_frontend/dist/.gitkeep
-Desktop/flutter_frontend/wailsjs/
 node_modules/
 
 # ====================================================================

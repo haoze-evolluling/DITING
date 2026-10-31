@@ -5,9 +5,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
-	flutterfrontend "github.com/haoze-evolluling/diting/desktop/flutter_frontend"
+	"github.com/haoze-evolluling/diting/desktop/frontend"
 	"github.com/haoze-evolluling/diting/desktop/internal/platform"
 	"github.com/haoze-evolluling/diting/desktop/internal/platform/windows"
 	"github.com/wailsapp/wails/v2"
@@ -48,8 +49,8 @@ func runGUI(app *App, startMinimized bool) {
 		Title:             "谛听 (DITING) DNS 控制台",
 		Width:             1280,
 		Height:            720,
-		MinWidth:          720,
-		MinHeight:         560,
+		MinWidth:          1280,
+		MinHeight:         720,
 		StartHidden:       startMinimized,
 		HideWindowOnClose: true,
 		SingleInstanceLock: &options.SingleInstanceLock{
@@ -61,14 +62,21 @@ func runGUI(app *App, startMinimized bool) {
 			},
 		},
 		AssetServer: &assetserver.Options{
-			Assets: flutterfrontend.Assets,
+			Assets: frontend.Assets,
 		},
 		BackgroundColour: &options.RGBA{R: 17, G: 20, B: 24, A: 1},
 		OnStartup: func(ctx context.Context) {
 			app.startup(ctx)
 		},
 		OnDomReady: func(ctx context.Context) {
-			// Flutter UI 支持任意窗口比例，不再强制锁定 16:9。
+			go func() {
+				// 返回值必须检查：SetWindowSubclass 曾在本进程静默失败，
+				// 丢弃返回值让「比例锁定」整整一代版本没有生效。
+				if !windows.LockWindowAspectRatio(windows.DefaultWindowTitle, 16.0/9.0) {
+					log.Printf("[GUI] 窗口比例锁定安装失败，窗口可被拉成任意比例")
+				}
+			}()
+			// 主窗口此时必定已创建，可安全挂载托盘图标与消息子类。
 			app.initTray()
 		},
 		OnShutdown: func(ctx context.Context) {
