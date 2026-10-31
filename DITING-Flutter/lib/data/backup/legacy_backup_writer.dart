@@ -10,34 +10,56 @@ abstract final class LegacyBackupWriter {
   /// The legacy `ConfigTransferParser.FORMAT_VERSION`.
   static const int formatVersion = 10;
 
-  /// Flat legacy root fields for the groups present; appearance and system settings fall back to
-  /// [settings].
-  static Map<String, Object?> toLegacy(
-    Map<String, Object?> data,
+  /// Flat legacy root fields contributed by one group.
+  ///
+  /// The exporter streams the document, so these are written right after the group they come from
+  /// instead of after every group has been read: the flat copy of a subscription-sized rule list is
+  /// then produced and written before the grouped copy exists. Field names must still match the
+  /// legacy exporter exactly.
+  static Map<String, Object?> legacyOf(
+    BackupGroup group,
+    Object? value,
     LegacySettings settings,
   ) {
-    final root = <String, Object?>{'formatVersion': formatVersion};
-    _putProviders(root, data[BackupGroup.providers.key]);
-    _putBootstrap(root, data[BackupGroup.bootstrap.key]);
-    _putCache(root, data[BackupGroup.cache.key]);
-    _putOutbound(root, data[BackupGroup.outbound.key]);
-    _putSubscriptions(root, data[BackupGroup.subscriptions.key]);
-    _putDomainRules(root, data[BackupGroup.domainRules.key]);
-    _putRewrites(
-      root,
-      'customRewriteDomainRules',
-      data[BackupGroup.rewriteDomain.key],
-    );
-    _putRewrites(
-      root,
-      'customRewriteCnameRules',
-      data[BackupGroup.rewriteCname.key],
-    );
-    _putAddressRules(root, data[BackupGroup.addressRules.key]);
-    _putFlatSwitches(root, data[BackupGroup.system.key]);
-    _putAppSections(root, data);
-    _putAppearance(root, data[BackupGroup.appearance.key], settings);
-    _putSystem(root, data[BackupGroup.system.key], settings);
+    final root = <String, Object?>{};
+    switch (group) {
+      case BackupGroup.providers:
+        _putProviders(root, value);
+      case BackupGroup.bootstrap:
+        _putBootstrap(root, value);
+      case BackupGroup.cache:
+        _putCache(root, value);
+      case BackupGroup.outbound:
+        _putOutbound(root, value);
+      case BackupGroup.subscriptions:
+        _putSubscriptions(root, value);
+      case BackupGroup.domainRules:
+        _putDomainRules(root, value);
+      case BackupGroup.rewriteDomain:
+        _putRewrites(root, 'customRewriteDomainRules', value);
+      case BackupGroup.rewriteCname:
+        _putRewrites(root, 'customRewriteCnameRules', value);
+      case BackupGroup.addressRules:
+        _putAddressRules(root, value);
+      case BackupGroup.system:
+        _putFlatSwitches(root, value);
+        _putSystem(root, value, settings);
+      case BackupGroup.appearance:
+        _putAppearance(root, value, settings);
+      case BackupGroup.excluded:
+      case BackupGroup.blocked:
+      case BackupGroup.allowlist:
+      case BackupGroup.httpInspection:
+        // The four app lists share one legacy section; [appSectionsOf] writes it once.
+        break;
+    }
+    return root;
+  }
+
+  /// The shared legacy app section, from whichever of the four list groups were selected.
+  static Map<String, Object?> appSectionsOf(Map<String, Object?> byKey) {
+    final root = <String, Object?>{};
+    _putAppSections(root, byKey);
     return root;
   }
 

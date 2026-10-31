@@ -8,7 +8,6 @@ import 'package:diting/data/backup/backup_importer.dart';
 import 'package:diting/data/backup/backup_models.dart';
 import 'package:diting/data/db/rule_dataset_providers.dart';
 import 'package:diting/data/db/rule_repository.dart';
-import 'package:diting/data/native/platform_bridge.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/data/vpn/dns_config_builder.dart';
 import 'package:diting/state/cleanup_providers.dart';
@@ -90,6 +89,32 @@ final backupImporterProvider = Provider<BackupImporter>(
   (ref) => const BackupImporter(),
 );
 
+/// What [BackupActions.exportToDocument] ended up doing; the page only needs to report it.
+class BackupExportOutcome {
+  const BackupExportOutcome.saved(BackupExportResult this.result)
+    : cancelled = false,
+      error = null;
+
+  const BackupExportOutcome.cancelled()
+    : result = null,
+      cancelled = true,
+      error = null;
+
+  const BackupExportOutcome.empty()
+    : result = null,
+      cancelled = false,
+      error = null;
+
+  const BackupExportOutcome.failed(String this.error)
+    : result = null,
+      cancelled = false;
+
+  /// Set only when the document was written.
+  final BackupExportResult? result;
+  final bool cancelled;
+  final String? error;
+}
+
 class BackupActions {
   BackupActions(this._ref);
 
@@ -109,10 +134,57 @@ class BackupActions {
     return result;
   }
 
-  /// Saves via the system picker; returns the user-facing result.
-  Future<DocumentSaveResult> saveToDocument(BackupExportResult export) => _ref
-      .read(platformBridgeProvider)
-      .exportDocument(name: export.fileName, content: export.content);
+  /// Exports straight into the document the user picks, one chunk per group.
+  ///
+  /// The picker opens first: nothing is generated until there is somewhere to write it, and the
+  /// JSON never exists as a whole string. An empty selection deletes the file again instead of
+  /// leaving an empty document behind.
+  Future<BackupExportOutcome> exportToDocument(Set<BackupGroup> groups) async {
+    final bridge = _ref.read(platformBridgeProvider);
+    final begun = await bridge.beginExportDocument(
+      name:
+          '${BackupFormat.fileNamePrefix}-'
+          '${BackupFormat.stampOf(DateTime.now())}.json',
+    );
+    if (begun.cancelled) return const BackupExportOutcome.cancelled();
+    final handle = begun.handle;
+    if (handle == null) {
+      return BackupExportOutcome.failed(
+        begun.error ?? currentL10n.transferExportFailed,
+      );
+    }
+    try {
+      final db = await _ref.read(subscriptionDatabaseProvider.future);
+      final result = await _ref
+          .read(backupExporterProvider)
+          .exportTo(
+            (chunk) async {
+              final written = await bridge.appendExportChunk(
+                handle: handle,
+                chunk: chunk,
+              );
+              if (!written) throw StateError(currentL10n.transferExportFailed);
+            },
+            BackupExportSource(
+              settings: _ref.read(legacySettingsProvider),
+              database: db,
+            ),
+            groups: groups,
+          );
+      if (result.isEmpty) {
+        await bridge.abortExportDocument();
+        return const BackupExportOutcome.empty();
+      }
+      final saved = await bridge.endExportDocument(handle);
+      if (saved.saved) return BackupExportOutcome.saved(result);
+      return BackupExportOutcome.failed(
+        saved.error ?? currentL10n.transferExportFailed,
+      );
+    } catch (error) {
+      await bridge.abortExportDocument();
+      return BackupExportOutcome.failed('$error');
+    }
+  }
 
   /// Opens the system picker, parses and merges the picked file.
   Future<BackupImportResult> importFromDocument() async {

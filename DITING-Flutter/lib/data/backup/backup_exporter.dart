@@ -42,6 +42,8 @@ class BackupExportResult {
     this.skipped = const [],
   });
 
+  /// The whole document. Empty for a streamed export ([BackupExporter.exportTo]): the JSON went to
+  /// the sink instead of being kept in memory.
   final String content;
   final String fileName;
   final List<BackupGroup> included;
@@ -54,60 +56,167 @@ class BackupExportResult {
   int get totalItems => counts.values.fold(0, (sum, value) => sum + value);
 
   bool get isEmpty => totalItems == 0;
+
+  BackupExportResult withContent(String content) => BackupExportResult(
+    content: content,
+    fileName: fileName,
+    included: included,
+    counts: counts,
+    skipped: skipped,
+  );
 }
+
+/// Receives the document as it is produced. Each call carries one group (or one root section), so a
+/// backup never has to exist as a single string.
+typedef BackupChunkSink = Future<void> Function(String chunk);
 
 class BackupExporter {
   const BackupExporter();
 
   static const _encoder = JsonEncoder.withIndent('  ');
 
-  /// Serializes [groups] only; all groups when null.
+  /// The four groups that share one flat legacy app section.
+  static const _appSectionGroups = {
+    BackupGroup.excluded,
+    BackupGroup.blocked,
+    BackupGroup.allowlist,
+    BackupGroup.httpInspection,
+  };
+
+  /// The whole document as one string, for the WebDAV upload and the tests. A large dataset should
+  /// go through [exportTo] instead: this variant holds the document in memory by definition.
   Future<BackupExportResult> export(
     BackupExportSource source, {
     Set<BackupGroup>? groups,
   }) async {
+    final buffer = StringBuffer();
+    final result = await exportTo(
+      (chunk) async => buffer.write(chunk),
+      source,
+      groups: groups,
+    );
+    return result.withContent(buffer.toString());
+  }
+
+  /// Streams [groups] only (all groups when null) to [sink], one chunk per group.
+  ///
+  /// Peak memory is one group plus its encoded text. The document used to be built as a single
+  /// string and then copied across the platform channel, which put a subscription-sized rule list
+  /// in memory several times at once and crashed the export.
+  ///
+  /// Two passes instead of one: the flat legacy fields and the grouped `data` object sit in
+  /// different parts of the document, and keeping every group's value around until the second pass
+  /// is exactly the cost streaming exists to avoid. Only user rules are read, so the second pass is
+  /// cheap.
+  Future<BackupExportResult> exportTo(
+    BackupChunkSink sink,
+    BackupExportSource source, {
+    Set<BackupGroup>? groups,
+  }) async {
     final selected = groups ?? BackupGroup.values.toSet();
-    final data = <String, Object?>{};
     final counts = <BackupGroup, int>{};
     final skipped = <String>[];
     final included = <BackupGroup>[];
-    // Shared per-run cache: the two rewrite groups split one table, so it is read once.
     final cache = <String, Object?>{};
+    final appValues = <String, Object?>{};
+    final appGroups = _appSectionGroups.where(selected.contains).toSet();
+    final now = DateTime.now();
+
+    await sink('{\n');
+    await sink('  "format": ${_encodeAt(BackupFormat.magic, 1)},\n');
+    await sink('  "version": ${_encodeAt(BackupFormat.version, 1)},\n');
+    await sink('  "exportedAt": ${_encodeAt(now.millisecondsSinceEpoch, 1)},\n');
+    await sink(
+      '  "formatVersion": ${_encodeAt(LegacyBackupWriter.formatVersion, 1)}',
+    );
 
     for (final group in BackupGroup.values) {
       if (!selected.contains(group)) continue;
+      final Object? value;
       try {
-        final value = await _valueOf(group, source, cache: cache);
-        data[group.key] = value;
-        counts[group] = _countOf(value);
-        included.add(group);
+        value = await _valueOf(group, source, cache: cache);
       } catch (error) {
         // One failing group must not abort the backup; a partial backup beats none.
         debugPrint('backup export skipped ${group.key}: $error');
         skipped.add('${group.title(currentL10n)}：$error');
         source.onSkip?.call('${group.title(currentL10n)}：$error');
+        continue;
       }
+      counts[group] = _countOf(value);
+      included.add(group);
+      await _writeEntries(
+        sink,
+        LegacyBackupWriter.legacyOf(group, value, source.settings),
+      );
+      if (appGroups.contains(group)) {
+        appValues[group.key] = value;
+        if (appValues.length == appGroups.length) {
+          await _writeEntries(
+            sink,
+            LegacyBackupWriter.appSectionsOf(appValues),
+          );
+        }
+      }
+      // The encode above is the only synchronous work left; yielding keeps the UI responsive while
+      // a big group is serialized.
+      await Future<void>.delayed(Duration.zero);
     }
 
-    final now = DateTime.now();
-    final payload = <String, Object?>{
-      'format': BackupFormat.magic,
-      'version': BackupFormat.version,
-      'exportedAt': now.millisecondsSinceEpoch,
-      'selection': [for (final group in included) group.key],
-      'data': data,
-      // Legacy flat fields are written too, so both readers accept the file.
-      ...LegacyBackupWriter.toLegacy(data, source.settings),
-    };
+    var firstGroup = true;
+    for (final group in included) {
+      final Object? value;
+      try {
+        value = await _valueOf(group, source, cache: cache);
+      } catch (error) {
+        debugPrint('backup export skipped ${group.key}: $error');
+        continue;
+      }
+      await sink(
+        '${firstGroup ? ',\n  "data": {\n' : ',\n'}'
+        '    ${_encodeKey(group.key)}: ${_encodeAt(value, 2)}',
+      );
+      firstGroup = false;
+      await Future<void>.delayed(Duration.zero);
+    }
+    if (firstGroup) {
+      await sink(',\n  "data": {}');
+    } else {
+      await sink('\n  }');
+    }
+    await sink(',\n');
+
+    await sink(
+      '  "selection": ${_encodeAt([for (final group in included) group.key], 1)}\n',
+    );
+    await sink('}\n');
 
     return BackupExportResult(
-      content: _encoder.convert(payload),
+      content: '',
       fileName:
           '${BackupFormat.fileNamePrefix}-${BackupFormat.stampOf(now)}.json',
       included: included,
       counts: counts,
       skipped: skipped,
     );
+  }
+
+  Future<void> _writeEntries(
+    BackupChunkSink sink,
+    Map<String, Object?> entries,
+  ) async {
+    for (final entry in entries.entries) {
+      await sink(',\n  ${_encodeKey(entry.key)}: ${_encodeAt(entry.value, 1)}');
+    }
+  }
+
+  static String _encodeKey(String key) => _encoder.convert(key);
+
+  /// One JSON value as a chunk, indented exactly as [JsonEncoder.withIndent] would indent it inside
+  /// the whole document. Encoding the value on its own is what keeps the document out of memory.
+  static String _encodeAt(Object? value, int depth) {
+    final text = _encoder.convert(value);
+    if (depth == 0 || !text.contains('\n')) return text;
+    return text.replaceAll('\n', '\n${'  ' * depth}');
   }
 
   /// One group as JSON: a `Map` for structured config, a `List` for rules.

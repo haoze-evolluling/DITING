@@ -16,7 +16,7 @@ typedef RuleBootstrap = ({RuleRepository? repository});
 /// [settings] must be the view of that data set, or the seed marker lands in another container.
 /// Only the cheap parts live here: the full-table [RuleRepository.loadAll] that used to run before
 /// `runApp` blocked the first frame for seconds on subscription-sized datasets, so it now runs via
-/// [loadInitialRules] once the UI is up.
+/// [loadInitialRulesPaged] once the UI is up.
 Future<RuleBootstrap> bootstrapRules(
   DataSet dataSet,
   LegacySettings settings, {
@@ -38,19 +38,19 @@ Future<RuleBootstrap> bootstrapRules(
   return (repository: repository);
 }
 
-/// Post-`runApp` fill for `initialRulesProvider`; a missing repository or failed read yields the
-/// empty snapshot rather than blocking startup.
-Future<Map<RuleKind, List<MockRule>>> loadInitialRules(
+/// Paged fill for `initialRulesProvider`: [onPage] receives each page as it arrives, so the caller
+/// can publish it right away instead of holding a subscription's whole table in memory. A failed
+/// read stops the fill with what already arrived rather than throwing away the pages on screen.
+Future<void> loadInitialRulesPaged(
   RuleRepository? repository,
-) async {
-  if (repository == null) {
-    return _emptyRules();
-  }
+  void Function(RuleKind kind, List<MockRule> page) onPage, {
+  int pageSize = RuleRepository.loadPageSize,
+}) async {
+  if (repository == null) return;
   try {
-    return await repository.loadAll();
+    await repository.loadAllPaged(onPage, pageSize: pageSize);
   } on DatabaseException catch (error) {
     debugPrint('rule load failed: $error');
-    return _emptyRules();
   }
 }
 
@@ -82,7 +82,3 @@ Future<void> seedPresetWhitelistIfNeeded(
     debugPrint('preset whitelist seed failed: $error');
   }
 }
-
-Map<RuleKind, List<MockRule>> _emptyRules() => {
-  for (final kind in RuleKind.values) kind: const [],
-};

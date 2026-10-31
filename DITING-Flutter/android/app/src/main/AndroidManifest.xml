@@ -113,10 +113,13 @@
                 android:value="dns_server" />
         </service>
         <!-- Manual runtime-log capture (功能中心 → 故障排查 → 运行日志). Foreground so a
-             backgrounded app keeps collecting; the notification is also the stop affordance. -->
+             backgrounded app keeps collecting; the notification is also the stop affordance.
+             Its own process on purpose: a capture inside the app process dies with it, so the
+             crash the user is trying to record would never be written. -->
         <service
             android:name=".log.RuntimeLogService"
             android:exported="false"
+            android:process=":log"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"

@@ -181,6 +181,33 @@ void _ruleRepository() {
       expect(await RuleRepository(db).countUser(), 3);
     });
 
+    test('loadAllPaged 按页读取，且不把一条规则的多个来源拆到两页', () async {
+      for (var index = 0; index < 5; index++) {
+        final id = await insertBlock('multi$index.example');
+        await db.insert('block_rule_source', {
+          'ruleId': id,
+          'source': 'sub_9',
+          'enabled': 1,
+        });
+      }
+
+      final pages = <int>[];
+      final rules = <MockRule>[];
+      await RuleRepository(db).loadAllPaged((kind, page) {
+        if (kind != RuleKind.block) return;
+        pages.add(page.length);
+        rules.addAll(page);
+      }, pageSize: 2);
+
+      expect(pages, [2, 2, 1]);
+      expect(rules, hasLength(5));
+      // 两个来源都读到了，来源标签才会是订阅而不是用户。
+      expect(
+        rules.every((rule) => rule.source == RuleSource.subscription),
+        isTrue,
+      );
+    });
+
     test('规则或来源任一禁用即视为禁用', () async {
       await insertBlock('off-rule.example', enabled: false);
       await insertBlock('off-source.example', sourceEnabled: false);

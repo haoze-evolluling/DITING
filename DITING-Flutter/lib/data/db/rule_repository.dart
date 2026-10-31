@@ -32,6 +32,10 @@ class RuleRepository {
   /// Sources that [clearUser] may delete; `preset` and `sub_*` are kept.
   static const userSources = ['useradd', 'local_import', 'local_hosts'];
 
+  /// Rows per [loadAllPaged] page: 100k rules is ~125 queries, and one page never dominates the
+  /// heap.
+  static const loadPageSize = 800;
+
   Future<Map<RuleKind, List<MockRule>>> loadAll() async {
     final subscriptions = await _subscriptionNames();
     return {
@@ -43,6 +47,33 @@ class RuleRepository {
   Future<List<MockRule>> loadKind(RuleKind kind) async =>
       _loadKind(kind, await _subscriptionNames());
 
+  /// Full-table load in `id` pages, one [onPage] call per page.
+  ///
+  /// [loadAll] has to hold a whole table and every parsed rule at once; on a subscription-sized
+  /// dataset that is what pushed the heap to its 256MB limit during startup. Paging keeps the peak
+  /// at one page and lets the caller publish each page as it arrives.
+  Future<void> loadAllPaged(
+    void Function(RuleKind kind, List<MockRule> page) onPage, {
+    int pageSize = loadPageSize,
+  }) async {
+    final subscriptions = await _subscriptionNames();
+    for (final kind in RuleKind.values) {
+      int? beforeId;
+      while (true) {
+        final page = await _loadKindPage(
+          kind,
+          subscriptions,
+          beforeId: beforeId,
+          limit: pageSize,
+        );
+        if (page.isEmpty) break;
+        onPage(kind, page);
+        if (page.length < pageSize) break;
+        beforeId = int.parse(page.last.id);
+      }
+    }
+  }
+
   Future<Map<int, String>> _subscriptionNames() async {
     final rows = await _db.query('subscription', columns: ['id', 'name']);
     return {for (final row in rows) row['id'] as int: row['name'] as String};
@@ -51,26 +82,58 @@ class RuleRepository {
   Future<List<MockRule>> _loadKind(
     RuleKind kind,
     Map<int, String> subscriptionNames,
-  ) async {
-    final rows = await _db.query(_ruleTables[kind]!, orderBy: 'id DESC');
-    final sourceRows = await _db.query(_sourceTables[kind]!);
-    final byRule = <int, List<_SourceRef>>{};
-    for (final row in sourceRows) {
-      final ruleId = row['ruleId'] as int;
-      (byRule[ruleId] ??= []).add(
-        _SourceRef(row['source'] as String, (row['enabled'] as int) == 1),
-      );
-    }
+  ) => _loadKindPage(kind, subscriptionNames);
 
-    return [
-      for (final row in rows)
-        _toRule(
-          kind,
-          row,
-          byRule[row['id'] as int] ?? const [],
-          subscriptionNames,
-        ),
-    ];
+  /// One `id` range of a rule table, or the whole table when [limit] is null.
+  ///
+  /// The `*_source` rows are joined in rather than fetched as their own full table: the two reads
+  /// used to exist side by side, so this halves the peak for the same result. [beforeId] is
+  /// exclusive and pages walk `id DESC`, which keeps a rule's sources inside one page.
+  Future<List<MockRule>> _loadKindPage(
+    RuleKind kind,
+    Map<int, String> subscriptionNames, {
+    int? beforeId,
+    int? limit,
+  }) async {
+    final table = _ruleTables[kind]!;
+    final sources = _sourceTables[kind]!;
+    final rows = await _db.rawQuery(
+      'SELECT r.*, s.source AS sourceName, s.enabled AS sourceEnabled FROM '
+      '(SELECT * FROM $table'
+      '${beforeId == null ? '' : ' WHERE id < ?'} ORDER BY id DESC'
+      '${limit == null ? '' : ' LIMIT ?'}) r '
+      'LEFT JOIN $sources s ON s.ruleId = r.id '
+      'ORDER BY r.id DESC',
+      [?beforeId, ?limit],
+    );
+    return _rowsToRules(kind, rows, subscriptionNames);
+  }
+
+  /// Groups the joined rows back into rules; consecutive rows share an `id` because of the
+  /// `ORDER BY r.id DESC`.
+  List<MockRule> _rowsToRules(
+    RuleKind kind,
+    List<Map<String, Object?>> rows,
+    Map<int, String> subscriptionNames,
+  ) {
+    final rules = <MockRule>[];
+    var index = 0;
+    while (index < rows.length) {
+      final row = rows[index];
+      final id = row['id'] as int;
+      final sources = <_SourceRef>[];
+      while (index < rows.length && rows[index]['id'] == id) {
+        final source = rows[index]['sourceName'] as String?;
+        if (source != null) {
+          sources.add(
+            _SourceRef(source, (rows[index]['sourceEnabled'] as int? ?? 0) == 1),
+          );
+        }
+        index++;
+      }
+      rules.add(_toRule(kind, row, sources, subscriptionNames));
+    }
+    return rules;
   }
 
   MockRule _toRule(

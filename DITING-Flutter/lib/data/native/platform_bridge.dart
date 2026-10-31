@@ -133,16 +133,50 @@ class PlatformBridge {
     }
   }
 
-  /// Opens the system save picker and writes [content] into it; on Android 11+ the app-private
-  /// external dir is hard to reach even from a file manager.
-  Future<DocumentSaveResult> exportDocument({
-    required String name,
-    required String content,
+  /// Opens the system save picker and keeps the chosen document open, so the JSON can be streamed
+  /// into it with [appendExportChunk].
+  ///
+  /// The single-string variant is gone on purpose: it forced the whole document through the Dart
+  /// heap, the channel and a byte array at once, which is what ran the process out of memory on a
+  /// subscription-sized dataset. On Android 11+ the app-private external dir is hard to reach even
+  /// from a file manager, so the picker is still the way out.
+  Future<DocumentExportHandle> beginExportDocument({required String name}) async {
+    try {
+      final raw = await _channel.invokeMethod<Object?>('beginExportDocument', {
+        'name': name,
+      });
+      return DocumentExportHandle.fromMap(raw);
+    } on MissingPluginException {
+      return DocumentExportHandle.unavailable();
+    } on PlatformException catch (error) {
+      return DocumentExportHandle.failed(
+        currentL10n.platformNoSaveDialog(error.message ?? ''),
+      );
+    }
+  }
+
+  /// Writes one chunk; false means the document is gone and the export must stop.
+  Future<bool> appendExportChunk({
+    required int handle,
+    required String chunk,
   }) async {
     try {
-      final raw = await _channel.invokeMethod<Object?>('exportDocument', {
-        'name': name,
-        'content': content,
+      return await _channel.invokeMethod<bool>('appendExportChunk', {
+            'handle': handle,
+            'chunk': chunk,
+          }) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<DocumentSaveResult> endExportDocument(int handle) async {
+    try {
+      final raw = await _channel.invokeMethod<Object?>('endExportDocument', {
+        'handle': handle,
       });
       return DocumentSaveResult.fromMap(raw);
     } on MissingPluginException {
@@ -151,6 +185,17 @@ class PlatformBridge {
       return DocumentSaveResult.failed(
         currentL10n.platformNoSaveDialog(error.message ?? ''),
       );
+    }
+  }
+
+  /// Closes and deletes a half-written export.
+  Future<void> abortExportDocument() async {
+    try {
+      await _channel.invokeMethod<bool>('abortExportDocument');
+    } on MissingPluginException {
+      // Nothing was written, so there is nothing to clean up.
+    } on PlatformException {
+      // Same: the file is only a partial export the user can delete.
     }
   }
 
@@ -277,6 +322,43 @@ class DocumentSaveResult {
     final map = raw is Map ? Map<Object?, Object?>.from(raw) : const {};
     return DocumentSaveResult(
       saved: map['saved'] == true,
+      name: map['name'] as String?,
+      cancelled: map['cancelled'] == true,
+      error: map['error'] as String?,
+    );
+  }
+}
+
+/// An open export document, ready to receive chunks.
+class DocumentExportHandle {
+  const DocumentExportHandle({
+    this.handle,
+    this.name,
+    this.cancelled = false,
+    this.error,
+  });
+
+  DocumentExportHandle.unavailable()
+    : handle = null,
+      name = null,
+      cancelled = false,
+      error = currentL10n.platformNoSystemPicker;
+
+  const DocumentExportHandle.failed(String this.error)
+    : handle = null,
+      name = null,
+      cancelled = false;
+
+  /// Native side handle; null when the picker was cancelled or failed.
+  final int? handle;
+  final String? name;
+  final bool cancelled;
+  final String? error;
+
+  static DocumentExportHandle fromMap(Object? raw) {
+    final map = raw is Map ? Map<Object?, Object?>.from(raw) : const {};
+    return DocumentExportHandle(
+      handle: (map['handle'] as num?)?.toInt(),
       name: map['name'] as String?,
       cancelled: map['cancelled'] == true,
       error: map['error'] as String?,

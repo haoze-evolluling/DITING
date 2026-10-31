@@ -68,12 +68,21 @@ final ruleRepositoryProvider = Provider<RuleRepository?>((ref) {
 });
 
 /// Filled once the UI is up (the full-table load must not block the first frame) and refilled by
-/// `ruleSnapshotSyncProvider` when the data set changes.
+/// `ruleSnapshotSyncProvider` when the data set changes. The fill is paged, so the rules page shows
+/// rows while the rest of a subscription-sized table is still being read.
 class InitialRulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
   @override
   Map<RuleKind, List<MockRule>> build() => _emptyRules();
 
-  void fill(Map<RuleKind, List<MockRule>> rules) => state = rules;
+  /// Appends one page of the paged load. Pages arrive in `id DESC` order, so the list keeps the
+  /// same order a full load produced.
+  void append(RuleKind kind, List<MockRule> page) {
+    if (page.isEmpty) return;
+    state = {
+      ...state,
+      kind: [...?state[kind], ...page],
+    };
+  }
 
   /// Empties the snapshot while a newly selected data set's database opens, so the page cannot
   /// keep showing another mode's rows.

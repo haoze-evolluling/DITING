@@ -458,20 +458,20 @@ RuleLineParseResult parseRuleLines(
 
 /// Keeps the rule list in step with the active data set. The startup fill covers the first mode;
 /// every switch to another data set opens its database and reloads that data set's rows here, so
-/// the page can never show another mode's rules while writing into the new one.
+/// the page can never show another mode's rules while writing into the new one. Pages are published
+/// as they arrive: a subscription-sized table never has to fit in memory at once.
 final ruleSnapshotSyncProvider = Provider<void>((ref) {
   var disposed = false;
   ref.onDispose(() => disposed = true);
   ref.listen<RuleRepository?>(ruleRepositoryProvider, (previous, next) {
     if (identical(previous, next)) return;
-    if (next == null) {
-      ref.read(initialRulesProvider.notifier).clear();
-      return;
-    }
+    final notifier = ref.read(initialRulesProvider.notifier);
+    notifier.clear();
+    if (next == null) return;
     unawaited(
-      loadInitialRules(next).then((rules) {
+      loadInitialRulesPaged(next, (kind, page) {
         if (disposed) return;
-        ref.read(initialRulesProvider.notifier).fill(rules);
+        notifier.append(kind, page);
       }),
     );
   });

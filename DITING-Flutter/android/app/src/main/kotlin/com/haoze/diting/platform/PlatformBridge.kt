@@ -12,6 +12,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.io.OutputStream
 import java.security.MessageDigest
 
 /// OS-level operations with no Dart equivalent; the SAF pickers and task list need an Activity.
@@ -77,7 +78,12 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             "clearUpdateCache" -> result.success(storage.clearUpdateCache(call.argument<Boolean>("includeTemp") ?: true))
             "clearCustomBackgroundCache" -> result.success(storage.clearCustomBackgroundCache())
             // Both are picker round trips; the answer arrives through onActivityResult.
-            "exportDocument" -> exportDocument(call, result)
+            // The export opens the document and keeps it open, so Dart can stream the JSON in
+            // group-sized chunks instead of handing over one string.
+            "beginExportDocument" -> beginExportDocument(call, result)
+            "appendExportChunk" -> appendExportChunk(call, result)
+            "endExportDocument" -> endExportDocument(call, result)
+            "abortExportDocument" -> abortExportDocument(result)
             "importDocument" -> importDocument(call, result)
             // Local-file subscriptions: the grant must outlive the picker dialog, so these are
             // separate from importDocument, which only reads the text once.
@@ -90,16 +96,15 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         }
     }
 
-    private fun exportDocument(call: MethodCall, result: MethodChannel.Result) {
+    /// Opens the save picker and keeps the chosen document open for [appendExportChunk].
+    private fun beginExportDocument(call: MethodCall, result: MethodChannel.Result) {
         val suggested = call.argument<String>("name")?.takeIf { it.isNotBlank() }
             ?: "diting-backup.json"
-        val content = call.argument<String>("content").orEmpty()
         if (pendingDocumentResult != null) {
             result.error("picker_busy", "另一个文件选择器仍在打开", null)
             return
         }
         pendingDocumentResult = result
-        pendingExportContent = content
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "application/json"
@@ -108,9 +113,70 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         runCatching { activity.startActivityForResult(intent, REQUEST_EXPORT_DOCUMENT) }
             .onFailure {
                 pendingDocumentResult = null
-                pendingExportContent = null
                 result.error("picker_failed", it.message, null)
             }
+    }
+
+    /// Appends one chunk of the exported document.
+    ///
+    /// The backup used to travel as a single string: built in the Dart heap, copied across the
+    /// channel, turned into a byte array and written in one go, so a big rule list existed four
+    /// times at once. Chunks go straight to the file.
+    private fun appendExportChunk(call: MethodCall, result: MethodChannel.Result) {
+        val session = exportSession
+        if (session == null || call.argument<Int>("handle") != session.handle) {
+            result.error("export_closed", "导出文件已关闭", null)
+            return
+        }
+        try {
+            session.stream.write(call.argument<String>("chunk").orEmpty().toByteArray(Charsets.UTF_8))
+            session.stream.flush()
+            result.success(true)
+        } catch (error: Throwable) {
+            closeExportSession(delete = true)
+            result.error("export_failed", error.message ?: "写入失败", null)
+        }
+    }
+
+    private fun endExportDocument(call: MethodCall, result: MethodChannel.Result) {
+        val session = exportSession
+        if (session == null || call.argument<Int>("handle") != session.handle) {
+            result.error("export_closed", "导出文件已关闭", null)
+            return
+        }
+        exportSession = null
+        result.success(
+            runCatching {
+                session.stream.flush()
+                session.stream.close()
+                mapOf(
+                    "saved" to true,
+                    "name" to (displayNameOf(session.uri) ?: session.uri.lastPathSegment ?: ""),
+                    "cancelled" to false,
+                )
+            }.getOrElse { error ->
+                mapOf(
+                    "saved" to false,
+                    "name" to null,
+                    "cancelled" to false,
+                    "error" to (error.message ?: error.javaClass.simpleName),
+                )
+            },
+        )
+    }
+
+    /// Drops a half-written export: the document is closed and deleted, so a failed or empty export
+    /// does not leave a truncated file in the user's folder.
+    private fun abortExportDocument(result: MethodChannel.Result) {
+        closeExportSession(delete = true)
+        result.success(true)
+    }
+
+    private fun closeExportSession(delete: Boolean) {
+        val session = exportSession ?: return
+        exportSession = null
+        runCatching { session.stream.close() }
+        if (delete) runCatching { activity.contentResolver.delete(session.uri, null, null) }
     }
 
     private fun importDocument(call: MethodCall, result: MethodChannel.Result) {
@@ -119,7 +185,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             return
         }
         pendingDocumentResult = result
-        pendingExportContent = null
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             // `application/json` alone hides files a file manager labelled `text/plain`.
@@ -145,9 +210,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         val isImport = requestCode == REQUEST_IMPORT_DOCUMENT
         if (!isExport && !isImport) return false
         val pending = pendingDocumentResult
-        val content = pendingExportContent
         pendingDocumentResult = null
-        pendingExportContent = null
         if (pending == null) return true
         val uri = data?.data
         if (resultCode != Activity.RESULT_OK || uri == null) {
@@ -158,13 +221,16 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             pending.success(
                 runCatching {
                     // "wt" truncates: a shorter backup would leave the previous tail.
-                    activity.contentResolver.openOutputStream(uri, "wt")?.use {
-                        it.write(content.orEmpty().toByteArray())
-                    } ?: error("无法打开导出文件")
+                    val stream = activity.contentResolver.openOutputStream(uri, "wt")
+                        ?: error("无法打开导出文件")
+                    closeExportSession(delete = false)
+                    exportHandle += 1
+                    exportSession = ExportSession(exportHandle, uri, stream)
                     mapOf(
                         "saved" to true,
-                        "name" to (uri.lastPathSegment ?: ""),
+                        "name" to (displayNameOf(uri) ?: uri.lastPathSegment ?: ""),
                         "cancelled" to false,
+                        "handle" to exportHandle,
                     )
                 }.getOrElse { error ->
                     mapOf(
@@ -207,7 +273,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             return
         }
         pendingDocumentResult = result
-        pendingExportContent = null
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             // Rule files are plain text but file managers label them inconsistently.
@@ -223,7 +288,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     private fun finishPickTextFile(resultCode: Int, data: Intent?) {
         val pending = pendingDocumentResult
         pendingDocumentResult = null
-        pendingExportContent = null
         if (pending == null) return
         val uri = data?.data
         if (resultCode != Activity.RESULT_OK || uri == null) {
@@ -264,7 +328,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             return
         }
         pendingDocumentResult = result
-        pendingExportContent = null
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             // `font/*` matches almost nothing on Android, and plenty of file managers label a TTF
@@ -281,7 +344,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     private fun finishPickFontFile(resultCode: Int, data: Intent?) {
         val pending = pendingDocumentResult
         pendingDocumentResult = null
-        pendingExportContent = null
         if (pending == null) return
         val uri = data?.data
         if (resultCode != Activity.RESULT_OK || uri == null) {
@@ -396,7 +458,12 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
 
     private var pendingDocumentResult: MethodChannel.Result? = null
 
-    private var pendingExportContent: String? = null
+    /// The document an export is being streamed into; null when no export is in flight.
+    private var exportSession: ExportSession? = null
+
+    private var exportHandle = 0
+
+    private class ExportSession(val handle: Int, val uri: Uri, val stream: OutputStream)
 
     private fun applyRecentsPrivacy(call: MethodCall, result: MethodChannel.Result) {
         val hide = call.argument<Boolean>("hide") ?: false

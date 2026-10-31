@@ -113,7 +113,7 @@ Future<void> main() async {
     UncontrolledProviderScope(container: container, child: const DitingApp()),
   );
   // The full-table rule load used to run before `runApp` and kept the first frame waiting on the
-  // biggest tables; it now lands as a state update once the UI is up.
+  // biggest tables; it now lands page by page once the UI is up.
   unawaited(_loadInitialRules(container, rules.repository, watch));
 }
 
@@ -127,8 +127,11 @@ Future<void> _loadInitialRules(
   RuleRepository? repository,
   Stopwatch watch,
 ) async {
-  final rules = await loadInitialRules(repository);
-  container.read(initialRulesProvider.notifier).fill(rules);
+  final notifier = container.read(initialRulesProvider.notifier);
+  await loadInitialRulesPaged(
+    repository,
+    (kind, page) => notifier.append(kind, page),
+  );
   if (_startupTrace) {
     debugPrint('startup rules-loaded +${watch.elapsedMilliseconds}ms');
   }

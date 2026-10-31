@@ -223,26 +223,25 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
   Future<void> _export() async {
     setState(() => _busy = context.l10n.transferBusyExporting);
     try {
-      final actions = ref.read(backupActionsProvider);
-      final export = await actions.export(_selected);
+      final outcome = await ref.read(backupActionsProvider).exportToDocument(_selected);
       if (!mounted) return;
-      if (export.isEmpty) {
+      if (outcome.cancelled) {
+        _toast(context.l10n.transferExportCancelled);
+        return;
+      }
+      if (outcome.error != null) {
+        _toast(outcome.error!);
+        return;
+      }
+      final export = outcome.result;
+      if (export == null) {
         _toast(context.l10n.transferExportEmpty);
         return;
       }
-      setState(() => _busy = context.l10n.transferBusySaving);
-      final saved = await actions.saveToDocument(export);
-      if (!mounted) return;
-      if (saved.cancelled) {
-        _toast(context.l10n.transferExportCancelled);
-      } else if (saved.saved) {
-        _toast(
-          '${context.l10n.transferExportDone(export.included.length, export.totalItems)}'
-          '${export.skipped.isEmpty ? '' : context.l10n.transferExportSkipped(export.skipped.length)}',
-        );
-      } else {
-        _toast(saved.error ?? context.l10n.transferExportFailed);
-      }
+      _toast(
+        '${context.l10n.transferExportDone(export.included.length, export.totalItems)}'
+        '${export.skipped.isEmpty ? '' : context.l10n.transferExportSkipped(export.skipped.length)}',
+      );
     } finally {
       if (mounted) setState(() => _busy = null);
     }
