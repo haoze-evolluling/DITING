@@ -186,7 +186,7 @@ dependencies {
     //   ditingAbi=arm64         -> libs/tunnel-arm64.aar
     //   ditingAbi unset         -> debug: libs/tunnel-all.aar so ONE debug APK runs on both
     //                              ARM devices and the x86_64 emulator; release/profile:
-    //                              libs/tunnel-arm64.aar (committed)
+    //                              libs/tunnel-arm64.aar (built locally, not committed)
     fun tunnelAar(relPath: String): File {
         val aarFile = file(relPath)
         if (!aarFile.exists()) {

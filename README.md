@@ -94,7 +94,7 @@ DITING/
 │   ├── main.go               # Wails 桌面 GUI 入口
 │   └── build*.bat/sh         # 构建、打包与版本同步脚本
 ├── maintenance/              # Python + PyWebView 维护工具箱
-├── docs/                     # 开发文档、历史归档与静态资源
+├── docs/                     # 开发文档与静态资源
 ├── avatars/                  # 赞助者与共建者头像
 ├── recognition_members.json  # 赞助者与共建者名单
 ├── AGENTS.md                 # 开发与代码规范
@@ -103,8 +103,7 @@ DITING/
 
 > **引擎说明**：Go 隧道引擎源码位于 `DITING-Flutter/tunnel`，工程自含源码与 AAR 构建入口
 > （`tunnel/build_aar.ps1`）。三种工作模式共用同一引擎，差异只在 TUN 路由范围：极速模式仅接管 DNS，
-> 普通模式接管全网络，服务器模式不建隧道。
-> `docs/development/Archive/` 下的历史文档保留当年的旧路径与旧结论，属归档记录，不再同步。
+> 普通模式接管全网络，服务器模式不建隧道。AAR 为构建产物、不入库，首次打包前需本地生成。
 
 
 ---
@@ -114,6 +113,8 @@ DITING/
 ### 📱 Android（`DITING-Flutter`）
 
 要求 Flutter 3.47+、JDK 11+、Android SDK；最低 Android 9.0（API 28），Release 产物架构为 `arm64-v8a`。
+隧道引擎 AAR 不入库，首次构建前先在 `DITING-Flutter/tunnel` 执行 `pwsh -File build_aar.ps1`
+生成 `tunnel-arm64.aar`（模拟器或 debug 包用 `-Arch x64` / `-Arch all`）。
 
 ```bash
 cd DITING-Flutter
@@ -132,10 +133,11 @@ flutter test
 | 4 | Release | Release Key | `x86_64` | 仅 x86_64 | **仅 x86_64 模拟器** |
 | 5 | — | — | — | — | 清理编译缓存与构建产物（`flutter clean` + `gradlew clean`） |
 
-**架构匹配注意**：3 档打的是 arm64 引擎（`tunnel-arm64.aar`，入库），4 档打的是 x86_64 引擎
+**架构匹配注意**：3 档打的是 arm64 引擎（`tunnel-arm64.aar`），4 档打的是 x86_64 引擎
 （`tunnel-x64.aar`），1/2 档 debug 打的是双 ABI 一体引擎（`tunnel-all.aar`，真机与模拟器同包
-通用）。`tunnel-x64.aar` / `tunnel-all.aar` 均按需由 `tunnel/build_aar.ps1 -Arch x64|all`
-生成且不入库，`build.gradle.kts` 按 `-PditingAbi` / `--target-platform` 自动选用，缺文件时
+通用）。三种 AAR 都是构建产物、**不入库**：全新克隆后首次打包前，先在 `DITING-Flutter/tunnel`
+执行 `pwsh -File build_aar.ps1`（或 `-Arch x64` / `-Arch all`）生成；`build.gradle.kts` 按
+`-PditingAbi` / `--target-platform` 自动选用，缺文件时
 构建报错并提示。把 3/4 档的包装到不匹配的设备上会报「安装失败 / 安装包与系统不兼容」。
 另外所有 debug 构建共用同一输出文件 `app-debug.apk`，磁盘上的产物永远是**最后一次**构建的
 结果——装设备前先看构建日志里的 `Tunnel engine ABI` 行确认。
@@ -191,7 +193,7 @@ systemctl status diting-dnsservice
 
 管理地址：`http://127.0.0.1:15353`。卸载：`sudo ./uninstall.sh`（保留配置），加 `--purge` 一并清理。
 
-WSL 调试时 53 端口可能被 systemd-resolved stub 占用，建议用 `DITING_DATA_DIR` 重定向数据并以非特权端口验证，详见 [Linux 移植说明](docs/development/linux-port-notes.md)。
+WSL 调试时 53 端口可能被 systemd-resolved stub 占用，建议用 `DITING_DATA_DIR` 重定向数据并以非特权端口验证。
 
 <details>
 <summary>手动交叉编译</summary>
@@ -238,11 +240,8 @@ REM 同步桌面端等其余模块（示例）
 
 ## 开发文档
 
-- [Windows DNS 内核架构与开发规划](docs/development/windows-dns-kernel-roadmap.md) — 双进程架构、网卡接管与恢复状态机、IPC 与 Pipeline 设计。
-- [Linux 移植说明](docs/development/linux-port-notes.md) — 平台差异、DNS 接管后端、`DITING_DATA_DIR` 调试与功能差异。
 - [Go AAR 构建记录](docs/development/aar-build-notes.md) — Android `tunnel.aar` 的编译环境、参数与交叉编译细节。
 - [云控贡献者名单维护](docs/development/recognition-members.md) — 名单云控机制、JSON 规范与头像维护。
-- 历史设计归档见 [`docs/development/Archive/`](docs/development/Archive/)。
 
 ---
 

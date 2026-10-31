@@ -12,6 +12,8 @@ captures/
 *.apk
 *.ap_
 *.aab
+# Go 隧道引擎 AAR 是构建产物：本地用 DITING-Flutter/tunnel/build_aar.ps1 生成，不入库
+*.aar
 
 # ====================================================================
 # Desktop & Frontend Build Outputs

@@ -14,9 +14,6 @@ key.properties
 **/*.jks
 /build/
 
-# Local on-demand tunnel AARs, not committed: x86_64 emulator single-ABI and
-# the dual-ABI all-in-one that debug APKs bundle by default.
-app/libs/tunnel-x64.aar
-app/libs/tunnel-all.aar
-# gomobile bind writes a -sources.jar next to every AAR it builds.
+# Tunnel AARs are build products of tunnel/build_aar.ps1; the root .gitignore drops
+# every *.aar. gomobile bind also writes a -sources.jar next to each AAR it builds.
 app/libs/tunnel-*-sources.jar

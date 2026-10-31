@@ -2,10 +2,9 @@
 
 本文记录 DITING 项目 Go 隧道 AAR 的编译过程、构建参数、遇到的问题及解决办法，便于后续重新生成 `DITING-Flutter/android/app/libs/` 下的 tunnel AAR。
 
-> **2026-10 结构调整**：Go 隧道引擎源码已从 `DITING-Legacy/tunnel` 迁至 `DITING-Flutter/tunnel`
-> （新版工程自含引擎源码与构建入口）。`DITING-Legacy/app/libs/tunnel.aar` 是迁移时的冻结副本，
-> 旧版工程继续用它构建，不再随引擎更新。日常重建直接运行 `DITING-Flutter/tunnel/build_aar.ps1`，
-> 下文的手工命令等价于该脚本。
+> **2026-10 结构调整**：Go 隧道引擎源码已从旧版工程迁至 `DITING-Flutter/tunnel`
+> （工程自含引擎源码与构建入口）。日常重建直接运行 `DITING-Flutter/tunnel/build_aar.ps1`，
+> 下文的手工命令等价于该脚本。生成的 AAR 均为构建产物，不入库（根 `.gitignore` 忽略 `*.aar`）。
 
 ## 构建目标
 
@@ -13,9 +12,12 @@
 
 | 架构 | 目标平台 | 输出文件 | 入库 | 用途 |
 | --- | --- | --- | --- | --- |
-| arm64-v8a（默认） | `android/arm64` | `DITING-Flutter/android/app/libs/tunnel-arm64.aar` | 是 | 真机 release 安装包（历史默认名 `tunnel.aar`） |
+| arm64-v8a（默认） | `android/arm64` | `DITING-Flutter/android/app/libs/tunnel-arm64.aar` | 否 | 真机 release 安装包（历史默认名 `tunnel.aar`） |
 | x86_64 | `android/amd64` | `DITING-Flutter/android/app/libs/tunnel-x64.aar` | 否 | x86_64 模拟器 release 安装包 |
 | 双 ABI（all） | `android/arm64,android/amd64` | `DITING-Flutter/android/app/libs/tunnel-all.aar` | 否 | **debug APK 默认引擎**，一个包通吃真机与 x86_64 模拟器 |
+
+三种 AAR 均为构建产物，根 `.gitignore` 忽略 `*.aar`，**均不入库**：全新克隆后首次打包前
+必须先在本目录执行 `pwsh -File build_aar.ps1`（或 `-Arch x64` / `-Arch all`）生成对应文件。
 
 打包 APK 时 `android/app/build.gradle.kts` 自动选用：
 
