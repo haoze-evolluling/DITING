@@ -1,7 +1,7 @@
 # 谛听桌面端 Flutter UI 说明与重建约束
 
-> 当前状态：**目标已修订；此前的桌面独立 UI 实现已整体移除**
-> 本文只描述目标、约束与重建顺序。仓库中目前**没有**桌面 Flutter UI 代码，Windows 桌面窗口仍由 `Desktop/frontend`（Vue）提供。
+> 当前状态：**第 1 步（入口、主题与外观偏好）已完成；Wails 集成尚未切换**
+> Windows 桌面窗口仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 目标（已修订）
 
@@ -73,13 +73,23 @@
 
 ## 6. 当前仓库状态与构建方式
 
-- `DITING-Flutter` 目前只构建 Android（`flutter run -t lib/main.dart`），无 `web/` 目录，`pubspec.yaml` 不含桌面专属依赖。
+- `DITING-Flutter` 的 Android 入口仍为 `lib/main.dart`；桌面预览入口为 `lib/desktop/main.dart`，`web/` 仅作为 Wails/WebView 的编译宿主。
+- 桌面入口复用 `buildAppTheme`、`AppThemeCache`、`ThemeCrossFade`、`AppScopes`、液态玻璃作用域与全部本地化 delegate，页面暂时只有 `CommonScaffold` + `PageBody` 启动占位。
+- 桌面外观偏好通过 `SharedPreferencesLegacyPrefsStore` 使用与 Android 相同的容器和键；Android 仍走原生 MethodChannel。
+
+```bash
+cd DITING-Flutter
+flutter run -d chrome -t lib/desktop/main.dart
+flutter build web -t lib/desktop/main.dart
+flutter test test/desktop_app_test.dart test/desktop_preferences_test.dart
+```
+
 - Windows 桌面窗口仍加载 `Desktop/frontend`（Vue 3），`wails.json` 使用 `npm install` / `npm run build`，窗口恢复 `1280×720` 最小尺寸与 16:9 比例锁定。
 - `Desktop/build.bat` → `maintenance/core/build_manager.py`，仅构建 Vue 前端 + Go 服务/安装包。
 
 ## 7. 重建顺序
 
-1. **入口与主题**：新增桌面入口，装配 `buildAppTheme` + `AppThemeCache` + `ThemeCrossFade` + `AppScopes` + `AppUiLocalizations.delegate`，外观偏好直接读 Android 的存储键。
+1. **入口与主题（已完成）**：桌面入口已装配 `buildAppTheme` + `AppThemeCache` + `ThemeCrossFade` + `AppScopes` + `AppUiLocalizations.delegate`，外观偏好使用 Android 的存储键并跨重启保存。
 2. **壳与导航**：六个分支的 `StatefulShellRoute.indexedStack`，`DockInsetScope` + `NavigationDock`（宽屏降级 `NavigationBar`），标签切换过渡复用 `_TabTransitionHost` 的语义。
 3. **页面骨架**：`CommonScaffold` + `PageBody`；首页按 Android 仪表盘重建（电源按钮、诗句、卡片板），其余分支先用 `NullStatus` 表达"尚未接入"，不用假数据。
 4. **数据接入**：按分支逐个接本机 HTTP API 与 Wails 绑定，替换占位。

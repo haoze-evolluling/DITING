@@ -1,0 +1,89 @@
+import 'package:diting/app/bootstrap.dart';
+import 'package:diting/app/l10n/l10n.dart';
+import 'package:diting/app/l10n/ui_strings.dart';
+import 'package:diting/app/theme/colors.dart';
+import 'package:diting/app/theme/manager.dart';
+import 'package:diting/desktop/pages/bootstrap_page.dart';
+import 'package:diting/state/appearance_extra_providers.dart';
+import 'package:diting/state/appearance_providers.dart';
+import 'package:diting/state/settings_providers.dart';
+import 'package:diting/ui/ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+/// Desktop app root: exactly the Android theme and scope assembly, without Android startup work.
+///
+/// Keep this in step with `DitingApp`: cached light/dark themes, localized delegates,
+/// `ThemeCrossFade`, system overlay, glass scopes, and [AppScopes] above the Navigator. Routes and
+/// page data are deliberately outside this step; the placeholder proves the shared UI primitives
+/// can resolve their inherited scopes before the six-branch shell is introduced.
+class DesktopApp extends ConsumerStatefulWidget {
+  const DesktopApp({super.key});
+
+  @override
+  ConsumerState<DesktopApp> createState() => _DesktopAppState();
+}
+
+class _DesktopAppState extends ConsumerState<DesktopApp> {
+  final _themes = AppThemeCache();
+
+  @override
+  Widget build(BuildContext context) {
+    final mode = ref.watch(themeModeProvider);
+    final palette = ref.watch(paletteProvider);
+    final pureBlack = ref.watch(pureBlackProvider);
+    final textScale = ref.watch(textScaleProvider);
+    final fontFamily = ref.watch(selectedFontFamilyProvider);
+    final locale = ref.watch(appLocaleProvider);
+    final background = ref.watch(customBackgroundProvider);
+    final showBackground =
+        background.enabled &&
+        background.currentUri != null &&
+        background.currentUri!.isNotEmpty;
+    final pair = AppThemePair(
+      seedColor: palette.effectiveSeed,
+      pureBlack: pureBlack,
+      transparentPage: showBackground,
+      fontFamily: fontFamily,
+    );
+
+    return MaterialApp(
+      onGenerateTitle: (context) => context.l10n.appTitle,
+      debugShowCheckedModeBanner: false,
+      themeMode: switch (mode) {
+        AppThemeMode.system => ThemeMode.system,
+        AppThemeMode.light => ThemeMode.light,
+        AppThemeMode.dark => ThemeMode.dark,
+      },
+      theme: _themes.of(pair.lightSpec, locales: AppL10n.supportedLocales),
+      darkTheme: _themes.of(pair.darkSpec, locales: AppL10n.supportedLocales),
+      localizationsDelegates: const [
+        AppUiLocalizations.delegate,
+        AppL10n.delegate,
+        ...GlobalMaterialLocalizations.delegates,
+      ],
+      supportedLocales: AppL10n.supportedLocales,
+      locale: locale,
+      home: const DesktopBootstrapPage(),
+      builder: (context, child) {
+        setCurrentL10n(AppL10n.of(context));
+        final glass = ref.watch(liquidGlassModeProvider);
+        return ThemeCrossFade(
+          child: AppSystemUi(
+            child: AppScopes(
+              textScale: textScale,
+              child: LiquidGlassScope(
+                enabled: glass.enabled,
+                quality: glass.quality,
+                child: LiquidGlassHost(
+                  enabled: glass.enabled,
+                  child: child ?? const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

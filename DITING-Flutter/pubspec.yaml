@@ -35,6 +35,9 @@ dependencies:
   cupertino_icons: ^2.0.0
   url_launcher: ^6.3.3
 
+  # Desktop host persistence; Android reads the same legacy keys through MethodChannel.
+  shared_preferences: ^2.5.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
