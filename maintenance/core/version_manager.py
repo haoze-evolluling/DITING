@@ -26,11 +26,10 @@ def get_root_dir() -> str:
 
 
 # 版本号分组：Flutter 主力工程独立维护（版本号与桌面端早已分叉），
-# 旧版 Android 与其他模块合并在折叠区里，平时不展开。
+# 桌面端等其余模块合并在折叠区里，平时不展开。
 GROUP_FLUTTER = "flutter"
-GROUP_LEGACY = "legacy"
 GROUP_COMMON = "common"
-ALL_GROUPS = (GROUP_FLUTTER, GROUP_LEGACY, GROUP_COMMON)
+ALL_GROUPS = (GROUP_FLUTTER, GROUP_COMMON)
 
 
 def get_file_targets(groups: Optional[List[str]] = None) -> List[Dict[str, str]]:
@@ -38,7 +37,6 @@ def get_file_targets(groups: Optional[List[str]] = None) -> List[Dict[str, str]]
     root = get_root_dir()
     desktop = os.path.join(root, "Desktop")
     frontend = os.path.join(desktop, "frontend")
-    android = os.path.join(root, "DITING-Legacy")
     flutter = os.path.join(root, "DITING-Flutter")
     targets = [
         {"name": "桌面端主程序", "path": os.path.join(desktop, "main.go"), "type": "go", "group": GROUP_COMMON},
@@ -51,7 +49,6 @@ def get_file_targets(groups: Optional[List[str]] = None) -> List[Dict[str, str]]
         {"name": "前端 package.json", "path": os.path.join(frontend, "package.json"), "type": "pkg", "group": GROUP_COMMON},
         {"name": "前端锁文件", "path": os.path.join(frontend, "package-lock.json"), "type": "pkg-lock", "group": GROUP_COMMON},
         {"name": "Flutter 客户端版本（DITING-Flutter）", "path": os.path.join(flutter, "pubspec.yaml"), "type": "pubspec", "group": GROUP_FLUTTER},
-        {"name": "旧版 Android 应用配置（DITING-Legacy）", "path": os.path.join(android, "app", "build.gradle.kts"), "type": "gradle", "group": GROUP_LEGACY},
         {"name": "README 版本示例", "path": os.path.join(root, "README.md"), "type": "readme", "group": GROUP_COMMON},
     ]
     if not groups:
@@ -134,9 +131,6 @@ def extract_version(item: Dict[str, str]) -> str:
             ver = root_pkg.get("version")
         ver = ver or data.get("version")
         if ver: return str(ver)
-    elif ftype == "gradle":
-        m = re.search(r'(?m)^\s*val\s+appVersionName\s*=\s*"([^"]+)"', content)
-        if m: return m.group(1)
     elif ftype == "pubspec":
         m = re.search(r'(?m)^version:\s*([^\s+#]+)(?:\+(\d+))?', content)
         if m:
@@ -166,16 +160,6 @@ def replace_version_content(content: str, ftype: str, new_ver: str) -> Tuple[str
         if n > 0 and new_content != content: return new_content, True
     elif ftype == "pkg-lock":
         return _replace_lock_version(content, new_ver)
-    elif ftype == "gradle":
-        new_content, n = re.subn(r'(?m)^(\s*val\s+appVersionName\s*=\s*")[^"]+(")', rf'\g<1>{new_ver}\g<2>', content)
-        if n > 0:
-            code = _android_version_code(new_ver)
-            if code is not None:
-                m = re.search(r'(?m)^(\s*val\s+appVersionCode\s*=\s*)(\d+)', new_content)
-                if m and int(m.group(2)) < code:
-                    new_content = re.sub(r'(?m)^(\s*val\s+appVersionCode\s*=\s*)\d+', rf'\g<1>{code}', new_content, count=1)
-            if new_content != content:
-                return new_content, True
     elif ftype == "readme":
         new_content, n = re.subn(r'(set_version\.bat\s+)\d+\.\d+\.\d+', rf'\g<1>{new_ver}', content)
         if n > 0 and new_content != content: return new_content, True
@@ -222,7 +206,7 @@ def get_current_version(groups: Optional[List[str]] = None) -> str:
     if groups is None:
         # 默认只读桌面端/共用分组：Flutter 工程的版本号已独立演进，
         # 混进来会让桌面端构建脚本取到错误的默认版本。
-        groups = [GROUP_COMMON, GROUP_LEGACY]
+        groups = [GROUP_COMMON]
     targets = get_file_targets(groups)
     for item in targets:
         ver = extract_version(item)
@@ -328,7 +312,7 @@ def main():
         "--group",
         action="append",
         choices=list(ALL_GROUPS),
-        help="只处理指定分组（flutter / legacy / common），可重复；缺省为全部",
+        help="只处理指定分组（flutter / common），可重复；缺省为全部",
     )
     args = parser.parse_args()
 

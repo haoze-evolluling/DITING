@@ -293,8 +293,8 @@ window.BuildModule = {
 };
 
 // 版本号维护：Flutter 主力客户端独立维护，其余模块折叠归档。
-// groups 传 null 表示全部模块（仅刷新折叠区时使用 legacy+common）。
-const VERSION_COMMON_GROUPS = ['legacy', 'common'];
+// groups 传 null 表示全部模块（仅刷新折叠区时使用 common）。
+const VERSION_COMMON_GROUPS = ['common'];
 
 function renderVersionRows(tbody, items) {
   tbody.innerHTML = '';

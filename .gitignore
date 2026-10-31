@@ -2,8 +2,6 @@
 # Android & Gradle Build Outputs
 # ====================================================================
 /build/
-# 旧版 Kotlin 工程（DITING-Legacy）的 Gradle 产物；新版由 DITING-Flutter/.gitignore 覆盖
-DITING-Legacy/**/build/
 .gradle/
 .kotlin/
 .cxx/

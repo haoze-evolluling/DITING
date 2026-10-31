@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="diting_window_background">#FFFFFBFE</color>
-    <!-- Brand icon, light mode: background #FAF8F9, foreground #007AFE. -->
-    <color name="ic_launcher_foreground">#FF007AFE</color>
-    <color name="ic_launcher_background">#FFFAF8F9</color>
-    <color name="splash_card_stroke">#1F000000</color>
-</resources>

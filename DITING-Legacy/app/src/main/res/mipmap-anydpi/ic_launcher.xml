@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Pre-API 26 fallback: the adaptive icon in mipmap-anydpi-v26 wins on 8.0+. -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/ic_launcher_background" />
-    <item
-        android:drawable="@drawable/ic_launcher_foreground"
-        android:gravity="center" />
-</layer-list>

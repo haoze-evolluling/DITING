@@ -86,7 +86,6 @@ DITING/
 │   ├── lib/pages/            #   页面（85 条路由）
 │   ├── tunnel/               #   Go 用户态隧道引擎源码（gomobile 编译为 arm64/x64/all 三种 AAR）
 │   └── android/              #   Flutter Android 壳（包名 com.haoze.diting）
-├── DITING-Legacy/            # 旧版参考实现（已停止维护，不参与构建与发布）
 ├── Desktop/                  # Windows / Linux 工程
 │   ├── cmd/service/          # 特权核心服务（Windows Service / Linux systemd）
 │   ├── internal/             # DNS 内核、平台适配、IPC、鉴权、查询日志
@@ -95,7 +94,7 @@ DITING/
 │   ├── build/                # 构建产物、NSIS 与 systemd 打包脚本
 │   ├── main.go               # Wails 桌面 GUI 入口
 │   └── build*.bat/sh         # 构建、打包与版本同步脚本
-├── maintenance/              # Python + PyWebView 维护工具箱
+├── maintenance/              # Python + PyWebView 维护工具箱（assets/brand 为品牌矢量源）
 ├── docs/                     # 开发文档与静态资源
 ├── avatars/                  # 赞助者与共建者头像
 ├── recognition_members.json  # 赞助者与共建者名单
