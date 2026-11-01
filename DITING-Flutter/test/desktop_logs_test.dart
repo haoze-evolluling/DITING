@@ -478,4 +478,85 @@ void main() {
     expect(find.text(l10n.desktopLiveDisconnectedBody), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('留存策略展示服务返回的开关、数字与落盘目录', (tester) async {
+    final backend = await pumpLogs(tester);
+    final l10n = l10nOf(tester);
+
+    expect(backend.has('/api/v1/querylog/config'), isTrue);
+    expect(find.text(l10n.desktopLogConfigTitle), findsOneWidget);
+    expect(find.text(l10n.desktopLogConfigEnabled), findsOneWidget);
+    expect(find.text(l10n.desktopLogConfigFile), findsOneWidget);
+    expect(find.text(l10n.desktopLogConfigClients), findsOneWidget);
+    expect(find.text('10000'), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+    expect(
+      find.text(l10n.desktopLogConfigDataDir(r'C:\ProgramData\DITING\logs')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('关闭查询日志后立即提交，落盘开关随之隐藏', (tester) async {
+    final backend = await pumpLogs(tester);
+    final l10n = l10nOf(tester);
+
+    await tapAt(tester, find.text(l10n.desktopLogConfigEnabled));
+    expect(backend.configUpdates.single['enabled'], isFalse);
+    expect(find.text(l10n.desktopLogConfigFile), findsNothing);
+    expect(find.text(l10n.desktopLogConfigSaved), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('开关被服务拒绝时回到原值并说明原因', (tester) async {
+    final backend = await pumpLogs(tester);
+    final l10n = l10nOf(tester);
+    // 只让写操作失败：读仍然正常，否则连配置都读不到。
+    backend.rejectWrites = true;
+
+    await tapAt(tester, find.text(l10n.desktopLogConfigClients));
+    // 卡片内保留失败原因，同时弹一次提示。
+    expect(find.textContaining(l10n.desktopActionFailed('')), findsWidgets);
+    // 开关保持服务端当前值，页面不假装已生效。
+    expect(find.text(l10n.desktopLogConfigFile), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('缓冲条数与留存天数由保存按钮提交，非法值不提交', (tester) async {
+    final backend = await pumpLogs(tester);
+    final l10n = l10nOf(tester);
+
+    final numbers = find.byType(TextFormField);
+    await tester.ensureVisible(numbers.first);
+    await tester.enterText(numbers.first, '');
+    await tester.pumpAndSettle();
+    await tapAt(tester, find.byTooltip(l10n.desktopLogConfigSave));
+    expect(find.text(l10n.desktopLogConfigInvalid), findsOneWidget);
+    expect(backend.configUpdates, isEmpty, reason: '空值不该发给服务');
+
+    await tester.enterText(numbers.first, '20000');
+    await tester.enterText(numbers.last, '14');
+    await tester.pumpAndSettle();
+    await tapAt(tester, find.byTooltip(l10n.desktopLogConfigSave));
+
+    final update = backend.configUpdates.last;
+    expect(update['maxEntries'], 20000);
+    expect(update['retentionDays'], 14);
+    expect(update['enabled'], isTrue, reason: '其余字段原样带上');
+    expect(update.containsKey('dataDir'), isFalse, reason: '落盘目录由服务拥有');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('读不到留存策略时说明原因并给重试', (tester) async {
+    await pumpLogs(tester, backend: FakeDesktopBackend(statusCode: 500));
+    final l10n = l10nOf(tester);
+
+    expect(
+      find.textContaining(l10n.desktopLogConfigLoadFailed),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.desktopLogConfigEnabled), findsNothing);
+    expect(find.text(l10n.desktopRetry), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
 }

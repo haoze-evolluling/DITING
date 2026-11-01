@@ -137,6 +137,23 @@ Map<String, Object?> queryStatsPayload({
   'topClients': topClients,
 };
 
+/// A `GET /api/v1/querylog/config` payload.
+Map<String, Object?> queryLogConfigPayload({
+  bool enabled = true,
+  int maxEntries = 10000,
+  bool fileEnabled = true,
+  int retentionDays = 7,
+  bool logClients = true,
+  String dataDir = r'C:\ProgramData\DITING\logs',
+}) => {
+  'enabled': enabled,
+  'maxEntries': maxEntries,
+  'fileEnabled': fileEnabled,
+  'retentionDays': retentionDays,
+  'logClients': logClients,
+  'dataDir': dataDir,
+};
+
 Map<String, Object?> servicePayload({
   bool installed = true,
   bool running = true,
@@ -157,17 +174,26 @@ class FakeDesktopBackend {
     Map<String, Object?>? service,
     Map<String, Object?>? queryLog,
     Map<String, Object?>? queryStats,
+    Map<String, Object?>? logConfig,
     this.failAfter,
     this.statusCode = 200,
   }) : status = status ?? statusPayload(),
        service = service ?? servicePayload(),
        queryLog = queryLog ?? queryLogPayload(),
-       queryStats = queryStats ?? queryStatsPayload();
+       queryStats = queryStats ?? queryStatsPayload(),
+       logConfig = logConfig ?? queryLogConfigPayload();
 
   Map<String, Object?> status;
   Map<String, Object?> service;
   Map<String, Object?> queryLog;
   Map<String, Object?> queryStats;
+
+  /// Mutated by a `POST /api/v1/querylog/config`, as the service merges the body it receives.
+  Map<String, Object?> logConfig;
+
+  /// Bodies of every config update, so a test can assert what the page sent rather than what it
+  /// then re-read.
+  final configUpdates = <Map<String, Object?>>[];
 
   /// Number of `/api/v1/status` answers that succeed before every later one fails; null never
   /// fails. Counting only the snapshot keeps a test from depending on how many other reads the
@@ -176,6 +202,10 @@ class FakeDesktopBackend {
 
   /// Applied to every answer, so a 401 test does not need a different fake.
   int statusCode;
+
+  /// When set, every POST is refused while reads keep working: a write the service rejected must
+  /// be reported, not assumed.
+  bool rejectWrites = false;
 
   final requests = <String>[];
 
@@ -199,12 +229,26 @@ class FakeDesktopBackend {
       if (path == '/api/v1/querylog/search') {
         searches.add(request.url.queryParameters);
       }
+      if (path == '/api/v1/querylog/config' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        configUpdates.add(body);
+        logConfig = {...logConfig, ...body};
+      }
       if (path == '/api/v1/status') _statusRequests++;
       final limit = failAfter;
       if (path == '/api/v1/status' &&
           limit != null &&
           _statusRequests > limit) {
         throw http.ClientException('connection refused', request.url);
+      }
+      if (rejectWrites && request.method == 'POST') {
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode({'success': false, 'error': 'write rejected'}),
+          ),
+          500,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       }
       if (statusCode >= 400) {
         return http.Response(
@@ -229,6 +273,10 @@ class FakeDesktopBackend {
         ),
         '/api/v1/querylog/stats' => http.Response(
           jsonEncode(apiEnvelope(queryStats)),
+          200,
+        ),
+        '/api/v1/querylog/config' => http.Response(
+          jsonEncode(apiEnvelope(logConfig)),
           200,
         ),
         _ => http.Response(jsonEncode({'success': true, 'message': 'ok'}), 200),

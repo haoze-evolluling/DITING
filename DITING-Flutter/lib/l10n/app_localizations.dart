@@ -16558,6 +16558,90 @@ abstract class AppL10n {
   /// **'容灾复用'**
   String get desktopLiveStale;
 
+  /// No description provided for @desktopLogConfigTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询日志与留存策略'**
+  String get desktopLogConfigTitle;
+
+  /// No description provided for @desktopLogConfigEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用查询日志记录'**
+  String get desktopLogConfigEnabled;
+
+  /// No description provided for @desktopLogConfigEnabledBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭后不再记录任何查询历史与统计，DNS 解析不受影响'**
+  String get desktopLogConfigEnabledBody;
+
+  /// No description provided for @desktopLogConfigMaxEntries.
+  ///
+  /// In zh, this message translates to:
+  /// **'内存缓冲条数'**
+  String get desktopLogConfigMaxEntries;
+
+  /// No description provided for @desktopLogConfigRetentionDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'落盘留存天数'**
+  String get desktopLogConfigRetentionDays;
+
+  /// No description provided for @desktopLogConfigFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'历史记录落盘'**
+  String get desktopLogConfigFile;
+
+  /// No description provided for @desktopLogConfigFileBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'按天写入 JSON-Lines 文件，供历史检索回溯（目录不可写时自动降级为纯内存）'**
+  String get desktopLogConfigFileBody;
+
+  /// No description provided for @desktopLogConfigClients.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录客户端信息'**
+  String get desktopLogConfigClients;
+
+  /// No description provided for @desktopLogConfigClientsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录发起查询的设备 IP 与主机名；关闭后仅保留域名维度统计'**
+  String get desktopLogConfigClientsBody;
+
+  /// No description provided for @desktopLogConfigDataDir.
+  ///
+  /// In zh, this message translates to:
+  /// **'落盘目录：{path}'**
+  String desktopLogConfigDataDir(String path);
+
+  /// No description provided for @desktopLogConfigSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存策略'**
+  String get desktopLogConfigSave;
+
+  /// No description provided for @desktopLogConfigSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询日志配置已保存并生效'**
+  String get desktopLogConfigSaved;
+
+  /// No description provided for @desktopLogConfigLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到查询日志配置'**
+  String get desktopLogConfigLoadFailed;
+
+  /// No description provided for @desktopLogConfigInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓冲条数与留存天数需为正整数'**
+  String get desktopLogConfigInvalid;
+
   /// No description provided for @desktopLogPagePrev.
   ///
   /// In zh, this message translates to:

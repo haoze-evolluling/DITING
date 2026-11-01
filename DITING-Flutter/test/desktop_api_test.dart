@@ -276,4 +276,40 @@ void main() {
       ),
     );
   });
+
+  test('查询日志配置读得回、写得进，且不发送服务端拥有的目录', () async {
+    final backend = FakeDesktopBackend();
+    final config = await backend.client().queryLogConfig();
+    expect(config.enabled, isTrue);
+    expect(config.maxEntries, 10000);
+    expect(config.fileEnabled, isTrue);
+    expect(config.retentionDays, 7);
+    expect(config.logClients, isTrue);
+    expect(config.dataDir, isNotEmpty);
+
+    await backend.client().updateQueryLogConfig(
+      config.copyWith(maxEntries: 500, retentionDays: 3),
+    );
+    final update = backend.configUpdates.single;
+    expect(update['maxEntries'], 500);
+    expect(update['retentionDays'], 3);
+    expect(update['enabled'], isTrue);
+    expect(update.containsKey('dataDir'), isFalse);
+
+    // 写后回读的是服务端状态，而不是页面自己拼的预期。
+    final reread = await backend.client().queryLogConfig();
+    expect(reread.retentionDays, 3);
+    expect(reread.dataDir, config.dataDir);
+  });
+
+  test('缺字段的查询日志配置按零值解析', () async {
+    final client = clientOf(
+      MockClient((_) async => http.Response(jsonEncode(apiEnvelope({})), 200)),
+    );
+    final config = await client.queryLogConfig();
+    expect(config.enabled, isFalse);
+    expect(config.maxEntries, 0);
+    expect(config.retentionDays, 0);
+    expect(config.dataDir, isEmpty);
+  });
 }

@@ -9058,6 +9058,51 @@ class AppL10nZh extends AppL10n {
   String get desktopLiveStale => '容灾复用';
 
   @override
+  String get desktopLogConfigTitle => '查询日志与留存策略';
+
+  @override
+  String get desktopLogConfigEnabled => '启用查询日志记录';
+
+  @override
+  String get desktopLogConfigEnabledBody => '关闭后不再记录任何查询历史与统计，DNS 解析不受影响';
+
+  @override
+  String get desktopLogConfigMaxEntries => '内存缓冲条数';
+
+  @override
+  String get desktopLogConfigRetentionDays => '落盘留存天数';
+
+  @override
+  String get desktopLogConfigFile => '历史记录落盘';
+
+  @override
+  String get desktopLogConfigFileBody =>
+      '按天写入 JSON-Lines 文件，供历史检索回溯（目录不可写时自动降级为纯内存）';
+
+  @override
+  String get desktopLogConfigClients => '记录客户端信息';
+
+  @override
+  String get desktopLogConfigClientsBody => '记录发起查询的设备 IP 与主机名；关闭后仅保留域名维度统计';
+
+  @override
+  String desktopLogConfigDataDir(String path) {
+    return '落盘目录：$path';
+  }
+
+  @override
+  String get desktopLogConfigSave => '保存策略';
+
+  @override
+  String get desktopLogConfigSaved => '查询日志配置已保存并生效';
+
+  @override
+  String get desktopLogConfigLoadFailed => '读不到查询日志配置';
+
+  @override
+  String get desktopLogConfigInvalid => '缓冲条数与留存天数需为正整数';
+
+  @override
   String get desktopLogPagePrev => '上一页';
 
   @override

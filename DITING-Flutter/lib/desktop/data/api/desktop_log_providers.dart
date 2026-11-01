@@ -206,3 +206,60 @@ final desktopLogClearProvider =
     NotifierProvider<DesktopLogClearNotifier, DesktopLogClearState>(
       DesktopLogClearNotifier.new,
     );
+
+class DesktopLogConfigState {
+  const DesktopLogConfigState({this.config, this.error, this.saving = false});
+
+  final DesktopQueryLogConfig? config;
+  final DesktopApiException? error;
+  final bool saving;
+
+  bool get isLoading => config == null && error == null;
+}
+
+/// `GET` / `POST /api/v1/querylog/config`. Switches save on the spot, the two numbers save with the
+/// button, exactly as the old console's `QueryLogConfigCard` does.
+class DesktopLogConfigNotifier extends Notifier<DesktopLogConfigState> {
+  @override
+  DesktopLogConfigState build() {
+    unawaited(_load());
+    return const DesktopLogConfigState();
+  }
+
+  Future<void> reload() => _load();
+
+  Future<void> _load() async {
+    try {
+      final config = await ref.read(desktopApiClientProvider).queryLogConfig();
+      if (ref.mounted) state = DesktopLogConfigState(config: config);
+    } on DesktopApiException catch (error) {
+      if (ref.mounted) {
+        state = DesktopLogConfigState(config: state.config, error: error);
+      }
+    }
+  }
+
+  /// Applies [next] and adopts the config the service reports afterwards. A rejection leaves the
+  /// previous config in place, so a switch that did not take effect flips back instead of lying.
+  Future<DesktopApiException?> save(DesktopQueryLogConfig next) async {
+    if (state.saving) return null;
+    state = DesktopLogConfigState(config: state.config, saving: true);
+    final client = ref.read(desktopApiClientProvider);
+    try {
+      await client.updateQueryLogConfig(next);
+      final config = await client.queryLogConfig();
+      if (ref.mounted) state = DesktopLogConfigState(config: config);
+      return null;
+    } on DesktopApiException catch (error) {
+      if (ref.mounted) {
+        state = DesktopLogConfigState(config: state.config, error: error);
+      }
+      return error;
+    }
+  }
+}
+
+final desktopLogConfigProvider =
+    NotifierProvider<DesktopLogConfigNotifier, DesktopLogConfigState>(
+      DesktopLogConfigNotifier.new,
+    );

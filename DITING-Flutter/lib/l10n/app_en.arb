@@ -2760,6 +2760,27 @@
     }
   },
   "desktopLiveStale": "Stale fallback",
+  "desktopLogConfigTitle": "Query log and retention",
+  "desktopLogConfigEnabled": "Record the query log",
+  "desktopLogConfigEnabledBody": "When off, no history and no statistics are recorded. Resolution is unaffected.",
+  "desktopLogConfigMaxEntries": "In-memory entries",
+  "desktopLogConfigRetentionDays": "Days kept on disk",
+  "desktopLogConfigFile": "Write history to disk",
+  "desktopLogConfigFileBody": "One JSON-Lines file per day, so history survives restarts. Falls back to memory when the directory is not writable.",
+  "desktopLogConfigClients": "Record client details",
+  "desktopLogConfigClientsBody": "Keeps the device IP and host name behind each query; without it only domain-level statistics remain.",
+  "desktopLogConfigDataDir": "On-disk directory: {path}",
+  "@desktopLogConfigDataDir": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopLogConfigSave": "Save",
+  "desktopLogConfigSaved": "Query log settings saved and applied",
+  "desktopLogConfigLoadFailed": "Cannot read the query log settings",
+  "desktopLogConfigInvalid": "Entries and days must be positive whole numbers",
   "desktopLogPagePrev": "Previous",
   "desktopLogPageNext": "Next",
   "desktopLogPageInfo": "Rows {from}–{to} of {total}"

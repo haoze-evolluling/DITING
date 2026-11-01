@@ -5370,6 +5370,27 @@
     }
   },
   "desktopLiveStale": "容灾复用",
+  "desktopLogConfigTitle": "查询日志与留存策略",
+  "desktopLogConfigEnabled": "启用查询日志记录",
+  "desktopLogConfigEnabledBody": "关闭后不再记录任何查询历史与统计，DNS 解析不受影响",
+  "desktopLogConfigMaxEntries": "内存缓冲条数",
+  "desktopLogConfigRetentionDays": "落盘留存天数",
+  "desktopLogConfigFile": "历史记录落盘",
+  "desktopLogConfigFileBody": "按天写入 JSON-Lines 文件，供历史检索回溯（目录不可写时自动降级为纯内存）",
+  "desktopLogConfigClients": "记录客户端信息",
+  "desktopLogConfigClientsBody": "记录发起查询的设备 IP 与主机名；关闭后仅保留域名维度统计",
+  "desktopLogConfigDataDir": "落盘目录：{path}",
+  "@desktopLogConfigDataDir": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopLogConfigSave": "保存策略",
+  "desktopLogConfigSaved": "查询日志配置已保存并生效",
+  "desktopLogConfigLoadFailed": "读不到查询日志配置",
+  "desktopLogConfigInvalid": "缓冲条数与留存天数需为正整数",
   "desktopLogPagePrev": "上一页",
   "desktopLogPageNext": "下一页",
   "desktopLogPageInfo": "第 {from}–{to} 条，共 {total} 条",

@@ -111,6 +111,14 @@ class DesktopApiClient {
   /// undo, so the page asks before calling this.
   Future<void> clearQueryLog() => _post('/api/v1/querylog/clear');
 
+  Future<DesktopQueryLogConfig> queryLogConfig() async =>
+      DesktopQueryLogConfig.fromJson(await _get('/api/v1/querylog/config'));
+
+  /// The service merges the body over the config it already holds, so the page sends the whole
+  /// form and then re-reads rather than assuming what was applied.
+  Future<void> updateQueryLogConfig(DesktopQueryLogConfig config) =>
+      _post('/api/v1/querylog/config', body: config.toJson());
+
   Future<void> startDns() => _post('/api/v1/dns/start');
 
   Future<void> stopDns() => _post('/api/v1/dns/stop');

@@ -9658,6 +9658,54 @@ class AppL10nEn extends AppL10n {
   String get desktopLiveStale => 'Stale fallback';
 
   @override
+  String get desktopLogConfigTitle => 'Query log and retention';
+
+  @override
+  String get desktopLogConfigEnabled => 'Record the query log';
+
+  @override
+  String get desktopLogConfigEnabledBody =>
+      'When off, no history and no statistics are recorded. Resolution is unaffected.';
+
+  @override
+  String get desktopLogConfigMaxEntries => 'In-memory entries';
+
+  @override
+  String get desktopLogConfigRetentionDays => 'Days kept on disk';
+
+  @override
+  String get desktopLogConfigFile => 'Write history to disk';
+
+  @override
+  String get desktopLogConfigFileBody =>
+      'One JSON-Lines file per day, so history survives restarts. Falls back to memory when the directory is not writable.';
+
+  @override
+  String get desktopLogConfigClients => 'Record client details';
+
+  @override
+  String get desktopLogConfigClientsBody =>
+      'Keeps the device IP and host name behind each query; without it only domain-level statistics remain.';
+
+  @override
+  String desktopLogConfigDataDir(String path) {
+    return 'On-disk directory: $path';
+  }
+
+  @override
+  String get desktopLogConfigSave => 'Save';
+
+  @override
+  String get desktopLogConfigSaved => 'Query log settings saved and applied';
+
+  @override
+  String get desktopLogConfigLoadFailed => 'Cannot read the query log settings';
+
+  @override
+  String get desktopLogConfigInvalid =>
+      'Entries and days must be positive whole numbers';
+
+  @override
   String get desktopLogPagePrev => 'Previous';
 
   @override

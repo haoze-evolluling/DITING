@@ -376,6 +376,70 @@ class QueryStatsSummary {
 /// lists them (`frontend/src/components/overview/QueryHistoryPanel.vue`). Empty means no filter.
 const List<String> desktopLogQTypes = ['A', 'AAAA', 'HTTPS', 'CNAME', 'PTR', 'TXT'];
 
+/// `GET /api/v1/querylog/config` — what the service records and for how long.
+class DesktopQueryLogConfig {
+  const DesktopQueryLogConfig({
+    required this.enabled,
+    required this.maxEntries,
+    required this.fileEnabled,
+    required this.retentionDays,
+    required this.logClients,
+    required this.dataDir,
+  });
+
+  factory DesktopQueryLogConfig.fromJson(Map<String, Object?> json) =>
+      DesktopQueryLogConfig(
+        enabled: _bool(json['enabled']),
+        maxEntries: _int(json['maxEntries']),
+        fileEnabled: _bool(json['fileEnabled']),
+        retentionDays: _int(json['retentionDays']),
+        logClients: _bool(json['logClients']),
+        dataDir: '${json['dataDir'] ?? ''}',
+      );
+
+  final bool enabled;
+
+  /// Entries kept in the in-memory ring the dashboard and the live search read.
+  final int maxEntries;
+
+  /// Whether history is written to JSON-Lines files under [dataDir].
+  final bool fileEnabled;
+
+  /// Days of on-disk history the service keeps before pruning.
+  final int retentionDays;
+
+  /// Whether each record carries the client IP and host name.
+  final bool logClients;
+
+  /// Read-only here: the directory belongs to the service's data layout, not to this page.
+  final String dataDir;
+
+  DesktopQueryLogConfig copyWith({
+    bool? enabled,
+    int? maxEntries,
+    bool? fileEnabled,
+    int? retentionDays,
+    bool? logClients,
+  }) => DesktopQueryLogConfig(
+    enabled: enabled ?? this.enabled,
+    maxEntries: maxEntries ?? this.maxEntries,
+    fileEnabled: fileEnabled ?? this.fileEnabled,
+    retentionDays: retentionDays ?? this.retentionDays,
+    logClients: logClients ?? this.logClients,
+    dataDir: dataDir,
+  );
+
+  /// The service merges what it receives over its current config, so every field travels; `dataDir`
+  /// stays out because the service owns it.
+  Map<String, Object?> toJson() => {
+    'enabled': enabled,
+    'maxEntries': maxEntries,
+    'fileEnabled': fileEnabled,
+    'retentionDays': retentionDays,
+    'logClients': logClients,
+  };
+}
+
 /// The `status` values `querylog.SearchQuery` accepts; the empty one means "no filter".
 ///
 /// The words the filter shows are the log page's own ARB keys, so this enum carries only the

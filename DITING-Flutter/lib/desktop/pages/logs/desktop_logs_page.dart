@@ -1,5 +1,5 @@
 /// The log branch: the service's 24-hour summary and rankings over the query log it retained, the
-/// queries it pushes live, and that log as a paged table.
+/// queries it pushes live, that log as a paged table, and the retention policy behind all three.
 ///
 /// The functional blueprint is the old desktop console, not Android: `OverviewView`'s query
 /// history and statistics panels (`frontend/src/components/overview/QueryHistoryPanel.vue`,
@@ -14,6 +14,7 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_log_providers.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
+import 'package:diting/desktop/pages/logs/widgets/log_config_card.dart';
 import 'package:diting/desktop/pages/logs/widgets/log_live_panel.dart';
 import 'package:diting/desktop/pages/logs/widgets/log_query_table.dart';
 import 'package:diting/desktop/pages/logs/widgets/log_rankings_card.dart';
@@ -69,6 +70,7 @@ class DesktopLogsPage extends ConsumerWidget {
                       LogRankings(snapshot: stats, wide: wide),
                     const LogLivePanel(),
                     LogQueryTable(wide: wide, onRetry: refreshFeed),
+                    const LogConfigCard(),
                   ],
                 ),
               ),
