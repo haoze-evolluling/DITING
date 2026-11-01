@@ -20383,7 +20383,7 @@ abstract class AppL10n {
   /// No description provided for @desktopHubDeviceSection.
   ///
   /// In zh, this message translates to:
-  /// **'设备与隐私'**
+  /// **'设备与网络'**
   String get desktopHubDeviceSection;
 
   /// No description provided for @desktopSafeSearchTitle.
@@ -22611,6 +22611,432 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'凭据仅用于局域网控制台登录；桌面客户端仍通过本机接口通信。'**
   String get desktopLanWebFooter;
+
+  /// No description provided for @desktopHubAdapters.
+  ///
+  /// In zh, this message translates to:
+  /// **'网卡接管'**
+  String get desktopHubAdapters;
+
+  /// No description provided for @desktopHubAdaptersBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'逐网卡查看网关、DNS 与接管状态，可单个或全部接管'**
+  String get desktopHubAdaptersBody;
+
+  /// No description provided for @desktopHubLanDns.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网 DNS 服务'**
+  String get desktopHubLanDns;
+
+  /// No description provided for @desktopHubLanDnsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'对外监听 53 端口，供路由器与终端共享解析与拦截'**
+  String get desktopHubLanDnsBody;
+
+  /// No description provided for @desktopAdaptersPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'网卡接管'**
+  String get desktopAdaptersPageTitle;
+
+  /// No description provided for @desktopAdaptersRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新网卡列表'**
+  String get desktopAdaptersRefresh;
+
+  /// No description provided for @desktopAdaptersLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到网卡列表'**
+  String get desktopAdaptersLoadFailed;
+
+  /// No description provided for @desktopAdaptersSectionTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络连接与保护接管'**
+  String get desktopAdaptersSectionTitle;
+
+  /// No description provided for @desktopAdaptersSectionBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'只列出当前正在使用的网络连接，虚拟与离线网卡由服务端排除。'**
+  String get desktopAdaptersSectionBody;
+
+  /// No description provided for @desktopAdaptersTakeoverAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部开启保护'**
+  String get desktopAdaptersTakeoverAll;
+
+  /// No description provided for @desktopAdaptersRestoreAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复系统默认'**
+  String get desktopAdaptersRestoreAll;
+
+  /// No description provided for @desktopAdaptersProtecting.
+  ///
+  /// In zh, this message translates to:
+  /// **'保护中'**
+  String get desktopAdaptersProtecting;
+
+  /// No description provided for @desktopAdaptersInactive.
+  ///
+  /// In zh, this message translates to:
+  /// **'未开启'**
+  String get desktopAdaptersInactive;
+
+  /// No description provided for @desktopAdaptersConnected.
+  ///
+  /// In zh, this message translates to:
+  /// **'已连接'**
+  String get desktopAdaptersConnected;
+
+  /// No description provided for @desktopAdaptersDisconnected.
+  ///
+  /// In zh, this message translates to:
+  /// **'未连接'**
+  String get desktopAdaptersDisconnected;
+
+  /// No description provided for @desktopAdaptersGateway.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认网关'**
+  String get desktopAdaptersGateway;
+
+  /// No description provided for @desktopAdaptersNoGateway.
+  ///
+  /// In zh, this message translates to:
+  /// **'无'**
+  String get desktopAdaptersNoGateway;
+
+  /// No description provided for @desktopAdaptersIpMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'IP 模式'**
+  String get desktopAdaptersIpMode;
+
+  /// No description provided for @desktopAdaptersDhcp.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动 (DHCP)'**
+  String get desktopAdaptersDhcp;
+
+  /// No description provided for @desktopAdaptersStatic.
+  ///
+  /// In zh, this message translates to:
+  /// **'固定静态 IP'**
+  String get desktopAdaptersStatic;
+
+  /// No description provided for @desktopAdaptersOriginalDns.
+  ///
+  /// In zh, this message translates to:
+  /// **'原始系统 DNS'**
+  String get desktopAdaptersOriginalDns;
+
+  /// No description provided for @desktopAdaptersAutoDns.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动获取 (系统默认)'**
+  String get desktopAdaptersAutoDns;
+
+  /// No description provided for @desktopAdaptersEffectiveDns.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前生效 DNS'**
+  String get desktopAdaptersEffectiveDns;
+
+  /// No description provided for @desktopAdaptersEffectiveLoopback.
+  ///
+  /// In zh, this message translates to:
+  /// **'127.0.0.1 (本机保护)'**
+  String get desktopAdaptersEffectiveLoopback;
+
+  /// No description provided for @desktopAdaptersEffectiveSystem.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统默认未接管'**
+  String get desktopAdaptersEffectiveSystem;
+
+  /// No description provided for @desktopAdaptersEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'未发现可用的网络连接'**
+  String get desktopAdaptersEmpty;
+
+  /// No description provided for @desktopAdaptersEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'请确认 Wi-Fi 或网线已连接，然后重新检测。'**
+  String get desktopAdaptersEmptyBody;
+
+  /// No description provided for @desktopAdaptersAllOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已接管全部物理网卡'**
+  String get desktopAdaptersAllOn;
+
+  /// No description provided for @desktopAdaptersAllOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已恢复系统默认 DNS'**
+  String get desktopAdaptersAllOff;
+
+  /// No description provided for @desktopAdaptersAdapterToggled.
+  ///
+  /// In zh, this message translates to:
+  /// **'{name}：{state}'**
+  String desktopAdaptersAdapterToggled(String name, String state);
+
+  /// No description provided for @desktopAdaptersAdapterOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已接管'**
+  String get desktopAdaptersAdapterOn;
+
+  /// No description provided for @desktopAdaptersAdapterOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已恢复'**
+  String get desktopAdaptersAdapterOff;
+
+  /// No description provided for @desktopAdaptersActionFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopAdaptersActionFailed(String message);
+
+  /// No description provided for @desktopLanDnsPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网 DNS 服务'**
+  String get desktopLanDnsPageTitle;
+
+  /// No description provided for @desktopLanDnsRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新局域网 DNS 状态'**
+  String get desktopLanDnsRefresh;
+
+  /// No description provided for @desktopLanDnsLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到局域网 DNS 状态'**
+  String get desktopLanDnsLoadFailed;
+
+  /// No description provided for @desktopLanDnsServiceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网 DNS 服务'**
+  String get desktopLanDnsServiceTitle;
+
+  /// No description provided for @desktopLanDnsServiceBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后，路由器、手机、平板与 NAS 可将首选 DNS 设为本机 IP，共享加速与拦截。'**
+  String get desktopLanDnsServiceBody;
+
+  /// No description provided for @desktopLanDnsOnChip.
+  ///
+  /// In zh, this message translates to:
+  /// **'全网监听 (0.0.0.0)'**
+  String get desktopLanDnsOnChip;
+
+  /// No description provided for @desktopLanDnsOffChip.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅本机模式'**
+  String get desktopLanDnsOffChip;
+
+  /// No description provided for @desktopLanDnsOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网 DNS 服务已开启'**
+  String get desktopLanDnsOn;
+
+  /// No description provided for @desktopLanDnsOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已关闭局域网 DNS 服务，恢复为仅本机监听'**
+  String get desktopLanDnsOff;
+
+  /// No description provided for @desktopLanDnsListenTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前监听地址'**
+  String get desktopLanDnsListenTitle;
+
+  /// No description provided for @desktopLanDnsNoListen.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务当前未监听任何地址'**
+  String get desktopLanDnsNoListen;
+
+  /// No description provided for @desktopLanDnsAddressesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机可用的局域网 DNS 地址'**
+  String get desktopLanDnsAddressesTitle;
+
+  /// No description provided for @desktopLanDnsNoAddresses.
+  ///
+  /// In zh, this message translates to:
+  /// **'未检测到物理活动网卡 IP，请确认已连接 Wi-Fi 或以太网。'**
+  String get desktopLanDnsNoAddresses;
+
+  /// No description provided for @desktopLanDnsIpv4.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv4'**
+  String get desktopLanDnsIpv4;
+
+  /// No description provided for @desktopLanDnsIpv6.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv6'**
+  String get desktopLanDnsIpv6;
+
+  /// No description provided for @desktopLanDnsRouterHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'把 {address} 填进路由器的 DNS 设置即可覆盖全屋设备。'**
+  String desktopLanDnsRouterHint(String address);
+
+  /// No description provided for @desktopLanDnsFirewallTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'防火墙入站放行'**
+  String get desktopLanDnsFirewallTitle;
+
+  /// No description provided for @desktopLanDnsFirewallAllowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'53 端口已放行'**
+  String get desktopLanDnsFirewallAllowed;
+
+  /// No description provided for @desktopLanDnsFirewallBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'未放行'**
+  String get desktopLanDnsFirewallBlocked;
+
+  /// No description provided for @desktopLanDnsFirewallNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'无需放行'**
+  String get desktopLanDnsFirewallNone;
+
+  /// No description provided for @desktopLanDnsFirewallBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网设备需通过 UDP/TCP 53 端口向本机发送解析请求；被防火墙拦截会导致这些设备断网。'**
+  String get desktopLanDnsFirewallBody;
+
+  /// No description provided for @desktopLanDnsFirewallNoneBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统未检测到防火墙后端，53 端口已直接对外开放，无需放行规则。'**
+  String get desktopLanDnsFirewallNoneBody;
+
+  /// No description provided for @desktopLanDnsFirewallStatusOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'允许局域网设备接入 53 端口'**
+  String get desktopLanDnsFirewallStatusOn;
+
+  /// No description provided for @desktopLanDnsFirewallStatusOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'53 端口受限或被拦截'**
+  String get desktopLanDnsFirewallStatusOff;
+
+  /// No description provided for @desktopLanDnsFirewallAllow.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键放行入站 53 端口'**
+  String get desktopLanDnsFirewallAllow;
+
+  /// No description provided for @desktopLanDnsFirewallRemove.
+  ///
+  /// In zh, this message translates to:
+  /// **'移除防火墙入站放行'**
+  String get desktopLanDnsFirewallRemove;
+
+  /// No description provided for @desktopLanDnsFirewallOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已放行 53 端口入站规则'**
+  String get desktopLanDnsFirewallOn;
+
+  /// No description provided for @desktopLanDnsFirewallOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已移除 53 端口入站规则'**
+  String get desktopLanDnsFirewallOff;
+
+  /// No description provided for @desktopLanDnsRouterTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'方案 A：路由器全局配置'**
+  String get desktopLanDnsRouterTitle;
+
+  /// No description provided for @desktopLanDnsRouterBadge.
+  ///
+  /// In zh, this message translates to:
+  /// **'强烈推荐'**
+  String get desktopLanDnsRouterBadge;
+
+  /// No description provided for @desktopLanDnsRouterBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录路由器后台（通常为 192.168.1.1），在「局域网 LAN 设置」或「DHCP 服务器」里把主 DNS 改为本机 IP。'**
+  String get desktopLanDnsRouterBody;
+
+  /// No description provided for @desktopLanDnsRouterFoot.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存并重连 Wi-Fi 后，全屋设备统一生效。'**
+  String get desktopLanDnsRouterFoot;
+
+  /// No description provided for @desktopLanDnsDeviceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'方案 B：单终端独立配置'**
+  String get desktopLanDnsDeviceTitle;
+
+  /// No description provided for @desktopLanDnsDeviceBadge.
+  ///
+  /// In zh, this message translates to:
+  /// **'独立体验'**
+  String get desktopLanDnsDeviceBadge;
+
+  /// No description provided for @desktopLanDnsDeviceBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在手机或电脑的 Wi-Fi 详情里把 IP 设置改为静态，DNS 1 填入本机 IP。'**
+  String get desktopLanDnsDeviceBody;
+
+  /// No description provided for @desktopLanDnsDeviceFoot.
+  ///
+  /// In zh, this message translates to:
+  /// **'适用于没有路由器管理权限，或只想让单台设备体验的场景。'**
+  String get desktopLanDnsDeviceFoot;
+
+  /// No description provided for @desktopLanDnsPlaceholder.
+  ///
+  /// In zh, this message translates to:
+  /// **'192.168.x.x'**
+  String get desktopLanDnsPlaceholder;
+
+  /// No description provided for @desktopLanDnsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopLanDnsFailed(String message);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

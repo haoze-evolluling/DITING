@@ -6,6 +6,7 @@
 library;
 
 // The feature groups live in sibling extensions so no single file outgrows the budget.
+export 'package:diting/desktop/data/api/desktop_api_client_network.dart';
 export 'package:diting/desktop/data/api/desktop_api_client_privacy.dart';
 export 'package:diting/desktop/data/api/desktop_api_client_traffic.dart';
 

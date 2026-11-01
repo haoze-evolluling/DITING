@@ -11887,7 +11887,7 @@ class AppL10nEn extends AppL10n {
       'No longer following the system hosts file';
 
   @override
-  String get desktopHubDeviceSection => 'Devices and privacy';
+  String get desktopHubDeviceSection => 'Devices and network';
 
   @override
   String get desktopSafeSearchTitle => 'Forced safe search';
@@ -13165,4 +13165,241 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopLanWebFooter =>
       'The credential only guards console login; the desktop client keeps using the local API.';
+
+  @override
+  String get desktopHubAdapters => 'Adapter takeover';
+
+  @override
+  String get desktopHubAdaptersBody =>
+      'Per-adapter gateway, DNS and takeover state, one by one or all at once';
+
+  @override
+  String get desktopHubLanDns => 'LAN DNS service';
+
+  @override
+  String get desktopHubLanDnsBody =>
+      'Listen on port 53 so routers and devices share this resolver';
+
+  @override
+  String get desktopAdaptersPageTitle => 'Adapter takeover';
+
+  @override
+  String get desktopAdaptersRefresh => 'Refresh adapter list';
+
+  @override
+  String get desktopAdaptersLoadFailed => 'Cannot read the adapter list';
+
+  @override
+  String get desktopAdaptersSectionTitle => 'Network connections and takeover';
+
+  @override
+  String get desktopAdaptersSectionBody =>
+      'Only connections in use are listed; the service drops virtual and offline adapters.';
+
+  @override
+  String get desktopAdaptersTakeoverAll => 'Protect all';
+
+  @override
+  String get desktopAdaptersRestoreAll => 'Restore system default';
+
+  @override
+  String get desktopAdaptersProtecting => 'Protecting';
+
+  @override
+  String get desktopAdaptersInactive => 'Off';
+
+  @override
+  String get desktopAdaptersConnected => 'Connected';
+
+  @override
+  String get desktopAdaptersDisconnected => 'Disconnected';
+
+  @override
+  String get desktopAdaptersGateway => 'Gateway';
+
+  @override
+  String get desktopAdaptersNoGateway => 'None';
+
+  @override
+  String get desktopAdaptersIpMode => 'IP mode';
+
+  @override
+  String get desktopAdaptersDhcp => 'Automatic (DHCP)';
+
+  @override
+  String get desktopAdaptersStatic => 'Static IP';
+
+  @override
+  String get desktopAdaptersOriginalDns => 'Original system DNS';
+
+  @override
+  String get desktopAdaptersAutoDns => 'Automatic (system default)';
+
+  @override
+  String get desktopAdaptersEffectiveDns => 'DNS in effect';
+
+  @override
+  String get desktopAdaptersEffectiveLoopback =>
+      '127.0.0.1 (protected locally)';
+
+  @override
+  String get desktopAdaptersEffectiveSystem => 'System default, not taken over';
+
+  @override
+  String get desktopAdaptersEmpty => 'No usable network connection';
+
+  @override
+  String get desktopAdaptersEmptyBody =>
+      'Check that Wi-Fi or the network cable is connected, then detect again.';
+
+  @override
+  String get desktopAdaptersAllOn => 'All physical adapters are taken over';
+
+  @override
+  String get desktopAdaptersAllOff => 'System default DNS restored';
+
+  @override
+  String desktopAdaptersAdapterToggled(String name, String state) {
+    return '$name: $state';
+  }
+
+  @override
+  String get desktopAdaptersAdapterOn => 'taken over';
+
+  @override
+  String get desktopAdaptersAdapterOff => 'restored';
+
+  @override
+  String desktopAdaptersActionFailed(String message) {
+    return 'Failed: $message';
+  }
+
+  @override
+  String get desktopLanDnsPageTitle => 'LAN DNS service';
+
+  @override
+  String get desktopLanDnsRefresh => 'Refresh LAN DNS state';
+
+  @override
+  String get desktopLanDnsLoadFailed => 'Cannot read the LAN DNS state';
+
+  @override
+  String get desktopLanDnsServiceTitle => 'LAN DNS service';
+
+  @override
+  String get desktopLanDnsServiceBody =>
+      'When on, routers, phones, tablets and NAS boxes can point their primary DNS at this host and share the acceleration and blocking.';
+
+  @override
+  String get desktopLanDnsOnChip => 'Listening on all interfaces (0.0.0.0)';
+
+  @override
+  String get desktopLanDnsOffChip => 'This host only';
+
+  @override
+  String get desktopLanDnsOn => 'LAN DNS service is on';
+
+  @override
+  String get desktopLanDnsOff =>
+      'LAN DNS service is off; listening locally again';
+
+  @override
+  String get desktopLanDnsListenTitle => 'Addresses being listened on';
+
+  @override
+  String get desktopLanDnsNoListen =>
+      'The service is not listening on any address';
+
+  @override
+  String get desktopLanDnsAddressesTitle => 'LAN DNS addresses of this host';
+
+  @override
+  String get desktopLanDnsNoAddresses =>
+      'No active physical adapter address found; check Wi-Fi or Ethernet.';
+
+  @override
+  String get desktopLanDnsIpv4 => 'IPv4';
+
+  @override
+  String get desktopLanDnsIpv6 => 'IPv6';
+
+  @override
+  String desktopLanDnsRouterHint(String address) {
+    return 'Put $address into the router\'s DNS setting to cover every device at home.';
+  }
+
+  @override
+  String get desktopLanDnsFirewallTitle => 'Firewall inbound rule';
+
+  @override
+  String get desktopLanDnsFirewallAllowed => 'Port 53 allowed';
+
+  @override
+  String get desktopLanDnsFirewallBlocked => 'Not allowed';
+
+  @override
+  String get desktopLanDnsFirewallNone => 'Nothing to allow';
+
+  @override
+  String get desktopLanDnsFirewallBody =>
+      'LAN devices send queries to UDP/TCP port 53 on this host; a firewall block makes those devices lose their network.';
+
+  @override
+  String get desktopLanDnsFirewallNoneBody =>
+      'No firewall manager was detected, so port 53 is already open and no rule is needed.';
+
+  @override
+  String get desktopLanDnsFirewallStatusOn => 'LAN devices may reach port 53';
+
+  @override
+  String get desktopLanDnsFirewallStatusOff =>
+      'Port 53 is restricted or blocked';
+
+  @override
+  String get desktopLanDnsFirewallAllow => 'Allow inbound port 53';
+
+  @override
+  String get desktopLanDnsFirewallRemove => 'Remove the inbound rule';
+
+  @override
+  String get desktopLanDnsFirewallOn => 'Inbound rule for port 53 added';
+
+  @override
+  String get desktopLanDnsFirewallOff => 'Inbound rule for port 53 removed';
+
+  @override
+  String get desktopLanDnsRouterTitle => 'Option A: router-wide setting';
+
+  @override
+  String get desktopLanDnsRouterBadge => 'Recommended';
+
+  @override
+  String get desktopLanDnsRouterBody =>
+      'Open the router admin page (usually 192.168.1.1) and set the primary DNS to this host\'s address under LAN or DHCP settings.';
+
+  @override
+  String get desktopLanDnsRouterFoot =>
+      'Save and reconnect Wi-Fi; every device at home follows.';
+
+  @override
+  String get desktopLanDnsDeviceTitle => 'Option B: one device at a time';
+
+  @override
+  String get desktopLanDnsDeviceBadge => '独立体验';
+
+  @override
+  String get desktopLanDnsDeviceBody =>
+      'In the Wi-Fi details of a phone or computer, switch IP assignment to static and put this host\'s address into DNS 1.';
+
+  @override
+  String get desktopLanDnsDeviceFoot =>
+      'For cases without router access, or when only one device should use it.';
+
+  @override
+  String get desktopLanDnsPlaceholder => '192.168.x.x';
+
+  @override
+  String desktopLanDnsFailed(String message) {
+    return 'Failed: $message';
+  }
 }

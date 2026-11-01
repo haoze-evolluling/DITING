@@ -7,12 +7,14 @@
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
+import 'package:diting/desktop/pages/hub/desktop_adapters_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_cache_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_dns64_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_encrypted_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_config_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_lists_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_rules_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_lan_dns_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_schedule_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_privacy_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_services_page.dart';
@@ -135,6 +137,20 @@ class DesktopFeatureHubPage extends StatelessWidget {
                 children: [
                   ListHeader(title: l10n.desktopHubDeviceSection),
                   generateGroup([
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.connections,
+                      title: l10n.desktopHubAdapters,
+                      body: l10n.desktopHubAdaptersBody,
+                      path: DesktopAdaptersPage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.dns,
+                      title: l10n.desktopHubLanDns,
+                      body: l10n.desktopHubLanDnsBody,
+                      path: DesktopLanDnsPage.path,
+                    ),
                     _entry(
                       context,
                       glyph: AppGlyphs.lock,

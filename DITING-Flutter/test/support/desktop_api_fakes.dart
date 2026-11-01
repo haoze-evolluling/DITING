@@ -601,6 +601,55 @@ Map<String, Object?> webStatusPayload({
   'username': username,
 };
 
+/// A `GET /api/v1/adapters` payload: one connected adapter and one disconnected.
+List<Map<String, Object?>> adaptersPayload() => [
+  {
+    'id': 'wlan-guid',
+    'name': 'WLAN',
+    'description': 'Intel(R) Wi-Fi 6E AX210 160MHz',
+    'index': 12,
+    'status': 'Up',
+    'gateway': '192.168.1.1',
+    'ipv4DHCP': true,
+    'ipv6DHCP': true,
+    'ipv4DNS': const ['192.168.1.1'],
+    'ipv6DNS': const <String>[],
+    'isPhysical': true,
+    'hasResidualLoopback': false,
+  },
+  {
+    'id': 'eth-guid',
+    'name': '以太网',
+    'description': 'Realtek Gaming 2.5GbE Family Controller',
+    'index': 7,
+    'status': 'Disconnected',
+    'gateway': '',
+    'ipv4DHCP': false,
+    'ipv6DHCP': false,
+    'ipv4DNS': const <String>[],
+    'ipv6DNS': const <String>[],
+    'isPhysical': true,
+    'hasResidualLoopback': false,
+  },
+];
+
+/// A `GET /api/v1/dns/lan` payload.
+Map<String, Object?> lanPayload({
+  bool allowLan = false,
+  List<String> listenAddresses = const ['127.0.0.1:53'],
+  List<String> lanAddresses = const ['192.168.1.10', 'fe80::1'],
+  bool firewallAllowed = false,
+  String firewallBackend = 'netsh',
+}) => {
+  'allowLAN': allowLan,
+  'listenAddresses': allowLan
+      ? const ['0.0.0.0:53', '[::]:53']
+      : listenAddresses,
+  'lanAddresses': lanAddresses,
+  'firewallAllowed': firewallAllowed,
+  'firewallBackend': firewallBackend,
+};
+
 /// A `GET /api/v1/clients/groups` payload.
 Map<String, Object?> groupsPayload() => {
   'enabled': true,
@@ -744,6 +793,8 @@ class FakeDesktopBackend {
     Map<String, Object?>? portCheck,
     Map<String, Object?>? ruleCheck,
     Map<String, Object?>? web,
+    List<Map<String, Object?>>? adapters,
+    Map<String, Object?>? lan,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -779,6 +830,8 @@ class FakeDesktopBackend {
        portCheck = portCheck ?? portCheckPayload(),
        ruleCheck = ruleCheck ?? ruleCheckPayload(),
        web = web ?? webStatusPayload(),
+       adapters = adapters ?? adaptersPayload(),
+       lan = lan ?? lanPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -876,6 +929,19 @@ class FakeDesktopBackend {
   final webUpdates = <Map<String, Object?>>[];
   final firewallUpdates = <Map<String, Object?>>[];
   final passwordUpdates = <Map<String, Object?>>[];
+
+  /// Answered to `/adapters`; the takeover writes mutate [status]'s `takeover` block instead.
+  List<Map<String, Object?>> adapters;
+
+  /// Bodies of every per-adapter takeover, in order.
+  final adapterTakeovers = <Map<String, Object?>>[];
+
+  /// Mutated by the LAN DNS writes; `GET /dns/lan` answers with it.
+  Map<String, Object?> lan;
+
+  /// Bodies of every LAN DNS configure and firewall write, in order.
+  final lanUpdates = <Map<String, Object?>>[];
+  final lanFirewallUpdates = <Map<String, Object?>>[];
 
   /// Bodies of every simulated lookup, in order.
   final ruleCheckUpdates = <Map<String, Object?>>[];
@@ -1079,6 +1145,69 @@ class FakeDesktopBackend {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
         firewallUpdates.add(body);
         web = {...web, 'firewallAllowed': body['enable']};
+      }
+      if (path == '/api/v1/takeover/adapter' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        adapterTakeovers.add(body);
+        final id = '${body['adapterId'] ?? ''}';
+        final enable = body['enable'] == true;
+        final takeover =
+            (status['takeover'] as Map?)?.cast<String, Object?>() ?? const {};
+        final current = [
+          for (final row in (takeover['adapters'] as List? ?? const []))
+            if (row is Map) '${row['id'] ?? ''}',
+        ];
+        final next = enable
+            ? (current.contains(id) ? current : [...current, id])
+            : [
+                for (final entry in current)
+                  if (entry != id) entry,
+              ];
+        status = {
+          ...status,
+          'takeover': {
+            'active': next.isNotEmpty,
+            'adapters': [
+              for (final entry in next) {'id': entry},
+            ],
+          },
+        };
+      }
+      if ((path == '/api/v1/takeover/enable' ||
+              path == '/api/v1/takeover/disable') &&
+          request.method == 'POST') {
+        final enable = path.endsWith('/enable');
+        status = {
+          ...status,
+          'takeover': {
+            'active': enable,
+            'adapters': enable
+                ? [
+                    for (final adapter in adapters)
+                      {'id': '${adapter['id'] ?? ''}'},
+                  ]
+                : const <Object>[],
+          },
+        };
+      }
+      if (path == '/api/v1/dns/lan/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        lanUpdates.add(body);
+        final allow = body['allowLAN'] == true;
+        lan = {
+          ...lan,
+          'allowLAN': allow,
+          'listenAddresses': allow
+              ? const ['0.0.0.0:53', '[::]:53']
+              : const ['127.0.0.1:53'],
+          'firewallAllowed':
+              body['configureFirewall'] == true ? allow : lan['firewallAllowed'],
+        };
+      }
+      if (path == '/api/v1/dns/lan/firewall' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        lanFirewallUpdates.add(body);
+        lan = {...lan, 'firewallAllowed': body['enable'] == true};
       }
       if (path == '/api/v1/auth/password' && request.method == 'POST') {
         passwordUpdates.add(
@@ -1391,6 +1520,13 @@ class FakeDesktopBackend {
           apiEnvelope(safeBrowsing),
         ),
         '/api/v1/portcheck' => utf8Json(apiEnvelope(portCheck)),
+        '/api/v1/adapters' => utf8Json(apiEnvelope(adapters)),
+        '/api/v1/dns/lan' => utf8Json(apiEnvelope(lan)),
+        '/api/v1/takeover/adapter' => utf8Json(apiEnvelope(null)),
+        '/api/v1/takeover/enable' => utf8Json(apiEnvelope(null)),
+        '/api/v1/takeover/disable' => utf8Json(apiEnvelope(null)),
+        '/api/v1/dns/lan/configure' => utf8Json(apiEnvelope(null)),
+        '/api/v1/dns/lan/firewall' => utf8Json(apiEnvelope(null)),
         '/api/v1/web/status' => utf8Json(apiEnvelope(web)),
         '/api/v1/web/configure' => utf8Json(apiEnvelope(null)),
         '/api/v1/web/firewall' => utf8Json(apiEnvelope(null)),

@@ -11186,7 +11186,7 @@ class AppL10nZh extends AppL10n {
   String get desktopPrivacyHostsSystemOff => '已停止联动系统 hosts';
 
   @override
-  String get desktopHubDeviceSection => '设备与隐私';
+  String get desktopHubDeviceSection => '设备与网络';
 
   @override
   String get desktopSafeSearchTitle => '强制安全搜索';
@@ -12392,4 +12392,230 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopLanWebFooter => '凭据仅用于局域网控制台登录；桌面客户端仍通过本机接口通信。';
+
+  @override
+  String get desktopHubAdapters => '网卡接管';
+
+  @override
+  String get desktopHubAdaptersBody => '逐网卡查看网关、DNS 与接管状态，可单个或全部接管';
+
+  @override
+  String get desktopHubLanDns => '局域网 DNS 服务';
+
+  @override
+  String get desktopHubLanDnsBody => '对外监听 53 端口，供路由器与终端共享解析与拦截';
+
+  @override
+  String get desktopAdaptersPageTitle => '网卡接管';
+
+  @override
+  String get desktopAdaptersRefresh => '刷新网卡列表';
+
+  @override
+  String get desktopAdaptersLoadFailed => '读不到网卡列表';
+
+  @override
+  String get desktopAdaptersSectionTitle => '网络连接与保护接管';
+
+  @override
+  String get desktopAdaptersSectionBody => '只列出当前正在使用的网络连接，虚拟与离线网卡由服务端排除。';
+
+  @override
+  String get desktopAdaptersTakeoverAll => '全部开启保护';
+
+  @override
+  String get desktopAdaptersRestoreAll => '恢复系统默认';
+
+  @override
+  String get desktopAdaptersProtecting => '保护中';
+
+  @override
+  String get desktopAdaptersInactive => '未开启';
+
+  @override
+  String get desktopAdaptersConnected => '已连接';
+
+  @override
+  String get desktopAdaptersDisconnected => '未连接';
+
+  @override
+  String get desktopAdaptersGateway => '默认网关';
+
+  @override
+  String get desktopAdaptersNoGateway => '无';
+
+  @override
+  String get desktopAdaptersIpMode => 'IP 模式';
+
+  @override
+  String get desktopAdaptersDhcp => '自动 (DHCP)';
+
+  @override
+  String get desktopAdaptersStatic => '固定静态 IP';
+
+  @override
+  String get desktopAdaptersOriginalDns => '原始系统 DNS';
+
+  @override
+  String get desktopAdaptersAutoDns => '自动获取 (系统默认)';
+
+  @override
+  String get desktopAdaptersEffectiveDns => '当前生效 DNS';
+
+  @override
+  String get desktopAdaptersEffectiveLoopback => '127.0.0.1 (本机保护)';
+
+  @override
+  String get desktopAdaptersEffectiveSystem => '系统默认未接管';
+
+  @override
+  String get desktopAdaptersEmpty => '未发现可用的网络连接';
+
+  @override
+  String get desktopAdaptersEmptyBody => '请确认 Wi-Fi 或网线已连接，然后重新检测。';
+
+  @override
+  String get desktopAdaptersAllOn => '已接管全部物理网卡';
+
+  @override
+  String get desktopAdaptersAllOff => '已恢复系统默认 DNS';
+
+  @override
+  String desktopAdaptersAdapterToggled(String name, String state) {
+    return '$name：$state';
+  }
+
+  @override
+  String get desktopAdaptersAdapterOn => '已接管';
+
+  @override
+  String get desktopAdaptersAdapterOff => '已恢复';
+
+  @override
+  String desktopAdaptersActionFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String get desktopLanDnsPageTitle => '局域网 DNS 服务';
+
+  @override
+  String get desktopLanDnsRefresh => '刷新局域网 DNS 状态';
+
+  @override
+  String get desktopLanDnsLoadFailed => '读不到局域网 DNS 状态';
+
+  @override
+  String get desktopLanDnsServiceTitle => '局域网 DNS 服务';
+
+  @override
+  String get desktopLanDnsServiceBody =>
+      '开启后，路由器、手机、平板与 NAS 可将首选 DNS 设为本机 IP，共享加速与拦截。';
+
+  @override
+  String get desktopLanDnsOnChip => '全网监听 (0.0.0.0)';
+
+  @override
+  String get desktopLanDnsOffChip => '仅本机模式';
+
+  @override
+  String get desktopLanDnsOn => '局域网 DNS 服务已开启';
+
+  @override
+  String get desktopLanDnsOff => '已关闭局域网 DNS 服务，恢复为仅本机监听';
+
+  @override
+  String get desktopLanDnsListenTitle => '当前监听地址';
+
+  @override
+  String get desktopLanDnsNoListen => '服务当前未监听任何地址';
+
+  @override
+  String get desktopLanDnsAddressesTitle => '本机可用的局域网 DNS 地址';
+
+  @override
+  String get desktopLanDnsNoAddresses => '未检测到物理活动网卡 IP，请确认已连接 Wi-Fi 或以太网。';
+
+  @override
+  String get desktopLanDnsIpv4 => 'IPv4';
+
+  @override
+  String get desktopLanDnsIpv6 => 'IPv6';
+
+  @override
+  String desktopLanDnsRouterHint(String address) {
+    return '把 $address 填进路由器的 DNS 设置即可覆盖全屋设备。';
+  }
+
+  @override
+  String get desktopLanDnsFirewallTitle => '防火墙入站放行';
+
+  @override
+  String get desktopLanDnsFirewallAllowed => '53 端口已放行';
+
+  @override
+  String get desktopLanDnsFirewallBlocked => '未放行';
+
+  @override
+  String get desktopLanDnsFirewallNone => '无需放行';
+
+  @override
+  String get desktopLanDnsFirewallBody =>
+      '局域网设备需通过 UDP/TCP 53 端口向本机发送解析请求；被防火墙拦截会导致这些设备断网。';
+
+  @override
+  String get desktopLanDnsFirewallNoneBody =>
+      '系统未检测到防火墙后端，53 端口已直接对外开放，无需放行规则。';
+
+  @override
+  String get desktopLanDnsFirewallStatusOn => '允许局域网设备接入 53 端口';
+
+  @override
+  String get desktopLanDnsFirewallStatusOff => '53 端口受限或被拦截';
+
+  @override
+  String get desktopLanDnsFirewallAllow => '一键放行入站 53 端口';
+
+  @override
+  String get desktopLanDnsFirewallRemove => '移除防火墙入站放行';
+
+  @override
+  String get desktopLanDnsFirewallOn => '已放行 53 端口入站规则';
+
+  @override
+  String get desktopLanDnsFirewallOff => '已移除 53 端口入站规则';
+
+  @override
+  String get desktopLanDnsRouterTitle => '方案 A：路由器全局配置';
+
+  @override
+  String get desktopLanDnsRouterBadge => '强烈推荐';
+
+  @override
+  String get desktopLanDnsRouterBody =>
+      '登录路由器后台（通常为 192.168.1.1），在「局域网 LAN 设置」或「DHCP 服务器」里把主 DNS 改为本机 IP。';
+
+  @override
+  String get desktopLanDnsRouterFoot => '保存并重连 Wi-Fi 后，全屋设备统一生效。';
+
+  @override
+  String get desktopLanDnsDeviceTitle => '方案 B：单终端独立配置';
+
+  @override
+  String get desktopLanDnsDeviceBadge => '独立体验';
+
+  @override
+  String get desktopLanDnsDeviceBody =>
+      '在手机或电脑的 Wi-Fi 详情里把 IP 设置改为静态，DNS 1 填入本机 IP。';
+
+  @override
+  String get desktopLanDnsDeviceFoot => '适用于没有路由器管理权限，或只想让单台设备体验的场景。';
+
+  @override
+  String get desktopLanDnsPlaceholder => '192.168.x.x';
+
+  @override
+  String desktopLanDnsFailed(String message) {
+    return '操作失败：$message';
+  }
 }
