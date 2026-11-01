@@ -580,6 +580,27 @@ Map<String, Object?> portCheckPayload({
   'diagnostic': diagnostic,
 };
 
+/// A `GET /api/v1/web/status` payload.
+Map<String, Object?> webStatusPayload({
+  bool enabled = false,
+  int port = 15353,
+  List<String> webUrls = const ['http://192.168.1.10:15353'],
+  bool firewallAllowed = false,
+  String firewallBackend = 'netsh',
+  bool initialized = true,
+  String username = 'admin',
+}) => {
+  'enabled': enabled,
+  'port': port,
+  'listenAddress': enabled ? '0.0.0.0' : '127.0.0.1',
+  'lanAddresses': const ['192.168.1.10'],
+  'webUrls': enabled ? webUrls : const <String>[],
+  'firewallAllowed': firewallAllowed,
+  'firewallBackend': firewallBackend,
+  'initialized': initialized,
+  'username': username,
+};
+
 /// A `GET /api/v1/clients/groups` payload.
 Map<String, Object?> groupsPayload() => {
   'enabled': true,
@@ -722,6 +743,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? groups,
     Map<String, Object?>? portCheck,
     Map<String, Object?>? ruleCheck,
+    Map<String, Object?>? web,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -756,6 +778,7 @@ class FakeDesktopBackend {
        groups = groups ?? groupsPayload(),
        portCheck = portCheck ?? portCheckPayload(),
        ruleCheck = ruleCheck ?? ruleCheckPayload(),
+       web = web ?? webStatusPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -845,6 +868,14 @@ class FakeDesktopBackend {
 
   /// Answered to `/filter/check`; tests that need another verdict pass it in.
   Map<String, Object?> ruleCheck;
+
+  /// Mutated by the web-console and credential writes.
+  Map<String, Object?> web;
+
+  /// Bodies of every web configure, firewall and credential write, in order.
+  final webUpdates = <Map<String, Object?>>[];
+  final firewallUpdates = <Map<String, Object?>>[];
+  final passwordUpdates = <Map<String, Object?>>[];
 
   /// Bodies of every simulated lookup, in order.
   final ruleCheckUpdates = <Map<String, Object?>>[];
@@ -1029,6 +1060,35 @@ class FakeDesktopBackend {
                 item.cast<String, Object?>(),
           ],
         };
+      }
+      if (path == '/api/v1/web/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        webUpdates.add(body);
+        web = {
+          ...web,
+          'enabled': body['enabled'],
+          'port': body['port'],
+          'listenAddress': body['enabled'] == true ? '0.0.0.0' : '127.0.0.1',
+          'webUrls': body['enabled'] == true
+              ? const ['http://192.168.1.10:15353']
+              : const <String>[],
+          if (body['configureFirewall'] == true) 'firewallAllowed': true,
+        };
+      }
+      if (path == '/api/v1/web/firewall' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        firewallUpdates.add(body);
+        web = {...web, 'firewallAllowed': body['enable']};
+      }
+      if (path == '/api/v1/auth/password' && request.method == 'POST') {
+        passwordUpdates.add(
+          (jsonDecode(request.body) as Map).cast<String, Object?>(),
+        );
+      }
+      if (path == '/api/v1/auth/setup' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        passwordUpdates.add(body);
+        web = {...web, 'initialized': true, 'username': body['username']};
       }
       if (path == '/api/v1/filter/check' && request.method == 'POST') {
         ruleCheckUpdates.add(
@@ -1331,6 +1391,11 @@ class FakeDesktopBackend {
           apiEnvelope(safeBrowsing),
         ),
         '/api/v1/portcheck' => utf8Json(apiEnvelope(portCheck)),
+        '/api/v1/web/status' => utf8Json(apiEnvelope(web)),
+        '/api/v1/web/configure' => utf8Json(apiEnvelope(null)),
+        '/api/v1/web/firewall' => utf8Json(apiEnvelope(null)),
+        '/api/v1/auth/password' => utf8Json(apiEnvelope(null)),
+        '/api/v1/auth/setup' => utf8Json(apiEnvelope(null)),
         '/api/v1/filter/check' => utf8Json(apiEnvelope(ruleCheck)),
         '/api/v1/clients' => utf8Json(apiEnvelope(clients)),
         '/api/v1/clients/groups' => utf8Json(apiEnvelope(groups)),

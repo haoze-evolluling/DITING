@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 的外观子页（配色方案 + 深浅模式）与服务连接子页（IPC 地址/端口/令牌 + 核心服务与自启只读状态）已完成；局域网控制台待迁移，Wails 切换尚未开始。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 的外观子页（配色方案 + 深浅模式）、服务连接子页（IPC 地址/端口/令牌 + 核心服务与自启只读状态）与局域网控制台子页（远程管理开关/端口/地址/防火墙/管理员凭据）已完成，六个分支全部迁移完成；Wails 切换尚未开始。**
 > Windows 桌面窗口目前仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 三层分工（唯一规范）
@@ -113,6 +113,7 @@
 - 规则检测 `lib/desktop/pages/tools/desktop_rule_check_page.dart`（`/tools/rule-test` 子路由，工具页入口进入；左卡域名 + A/AAAA/ANY 选择 + 示例填充，右卡判定徽标、命中规则/来源库/原因、重写应答或权威 NODATA 说明）。**已覆盖旧版桌面 `RuleTestPanel`**，`tools` 的规则检测迁移完成。
 - 设置 `lib/desktop/pages/settings/desktop_settings_page.dart`（`settings` 分支根页，按 hub 同款入口列表）与 `desktop_appearance_page.dart`（`/settings/appearance` 子路由）、`widgets/appearance_theme_card.dart`（九种配色缩略图 + 跟随系统/浅色/深色，直接读写共享的 `paletteProvider` / `themeModeProvider`，与移动端同一组偏好键）。**已覆盖旧版桌面 `AppearancePanel`**，`settings` 的外观迁移完成。
 - 服务与连接 `lib/desktop/pages/settings/desktop_service_page.dart`（`/settings/service` 子路由）、`widgets/service_connection_card.dart`（读写 `ipc_host`/`ipc_port`/`ipc_token`，保存后重建客户端，测试连接走 `/health`，非法端口不写入）、`widgets/core_service_card.dart`（`/service/status` 的安装/运行/状态文本/开机自启只读展示；安装与自启由宿主机托管，与旧版 Web 模式一致）。**已覆盖旧版桌面 `ServicePanel` 的连接与核心服务部分**。
+- 局域网控制台 `lib/desktop/pages/settings/desktop_lan_web_page.dart`（`/settings/lan-web` 子路由）、`widgets/lan_web_card.dart`（开关按 `configureFirewall:true` 提交、局域网地址复制/打开、端口草稿与非法值拦截、防火墙放行开关与 `none` 后端说明、管理员用户名/初始化状态与改密/初始化弹窗）。**已覆盖旧版桌面 `LanWebCard` 的开关、地址、防火墙与凭据部分**（二维码未实现：未引入二维码依赖）。
 - `lib/desktop/pages/desktop_pages.dart` 只剩未知路由兜底页：`CommonScaffold` + 居中 `NullStatus`。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 - 实时流依赖 `web_socket_channel`（`pubspec.yaml` 固定 3.0.3）；Wails/WebView 宿主与 `flutter run -d chrome` 都走浏览器 WebSocket。
@@ -135,6 +136,7 @@ flutter test test/desktop_app_test.dart test/desktop_shell_test.dart \
   test/desktop_rule_check_test.dart \
   test/desktop_settings_appearance_test.dart \
   test/desktop_settings_service_test.dart \
+  test/desktop_settings_lan_web_test.dart \
   test/desktop_api_test.dart test/desktop_preferences_test.dart
 
 # 应用自截图（写到 build/screenshots/，不提交）：
@@ -149,7 +151,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`settings` 剩余**：局域网控制台（外观、服务与连接已完成）。
+1. **Wails 切换**：把 Windows 窗口的加载目标从 `Desktop/frontend`（Vue）换成 Flutter Web 构建产物，并保留 Go 服务与安装包流程（详见第 6 节）。
 
 ## 8. 验收与守卫
 
@@ -176,6 +178,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 19. **安全隐私（安全搜索与声誉查询）**：安全搜索总开关、服务商勾选与 TTL 都显示服务返回值，服务商开关只提交黑名单、TTL 非法不提交；声誉查询显示查询/拦截/命中率/失败/拦截方式，开关与家长控制各自只提交一个字段，超时/容量/有效期草稿随保存提交且非法值不提交；窄窗不横向溢出。
 20. **加密 DNS**：总开关、三种协议开关与配置端口、实际监听地址、DoH 客户端地址、证书摘要/指纹/剩余天数、DDR 与反向代理状态都显示服务返回值；总开关与各协议开关各自提交一个字段，监听参数由保存按钮整份提交且端口非法不提交，可信来源按行去空行保存；DDR 需确认后才提交，取消不写；签发证书提交 CN/密钥类型/SAN/有效期，导入必须同时给出证书与私钥；证书过期时给出显著告警；窄窗单列不横向溢出。
 21. **客户端分组**：组名、启用状态、成员、拦截方式、仅白名单、组级时间计划与订阅/上游绑定都显示服务返回值；改名/改成员/切换绑定进入同一次保存，无成员分组与不完整窗口不提交，新增与删除分组（删除需确认）都只改草稿，保存后回读；写被拒时说明原因并保留草稿；窄窗单列不横向溢出。
+27. **局域网控制台**：开关显示仅本地/对外开放，开启提交端口与 `configureFirewall:true` 并显示局域网地址；端口非法不提交、合法则保存；防火墙开关提交 `enable` 并在 `none` 后端时说明无需放行；改密提交旧/新密码、未初始化走 setup，两次不一致不提交；设置分支可进入该子页；窄窗单列不横向溢出。
 26. **服务与连接**：连接卡显示当前 host/port/token，保存写入 `ipc_host`/`ipc_port`/`ipc_token` 并重建客户端，非法端口不写入；测试连接报告可达/不可达；核心服务卡显示安装、运行、状态文本与开机自启，未安装时如实标注；设置分支可进入该子页；窄窗单列不横向溢出。
 25. **外观主题**：设置分支列出外观入口并可进入；九种配色与三种深浅模式都按当前偏好高亮，点选后立即切换（与移动端共用偏好键）；窄窗单列不横向溢出。
 24. **规则检测**：未检测时只给提示；运行提交域名与记录类型（A/AAAA/ANY），示例标签直接填充并运行；判定徽标、命中规则、来源库、原因与 `$dnsrewrite` 应答码/记录都显示服务返回值，重写为 NODATA 时说明不返回记录；检测失败时说明原因且不显示旧判定；窄窗单列不横向溢出。

@@ -13027,4 +13027,142 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopServiceRefresh => 'Reload the core service state';
+
+  @override
+  String get desktopLanWebPageTitle => 'LAN console';
+
+  @override
+  String get desktopLanWebEntryBody =>
+      'Remote access switch, URLs, firewall rule and admin credential';
+
+  @override
+  String get desktopLanWebRefresh => 'Reload the LAN console status';
+
+  @override
+  String get desktopLanWebLoadFailed => 'Could not read the LAN console status';
+
+  @override
+  String get desktopLanWebTitle => 'LAN web console';
+
+  @override
+  String get desktopLanWebOpen => 'Open to the LAN';
+
+  @override
+  String get desktopLanWebLocal => 'Local only (127.0.0.1)';
+
+  @override
+  String get desktopLanWebEnabledBody =>
+      'Phones and computers on the LAN can open the full console in a browser.';
+
+  @override
+  String get desktopLanWebDisabledBody =>
+      'When enabled, phones and computers on the LAN can open the full console and share this service\'s data and config.';
+
+  @override
+  String get desktopLanWebOn => 'LAN web access is on';
+
+  @override
+  String get desktopLanWebOff => 'LAN web access is off';
+
+  @override
+  String desktopLanWebFailed(String message) {
+    return 'The action failed: $message';
+  }
+
+  @override
+  String get desktopLanWebUrls => 'LAN URLs (open in a browser)';
+
+  @override
+  String get desktopLanWebNoUrls => 'No IPv4 LAN interface was found';
+
+  @override
+  String get desktopLanWebPort => 'Web port';
+
+  @override
+  String get desktopLanWebSavePort => 'Save port';
+
+  @override
+  String get desktopLanWebPortInvalid => 'Enter a valid port (1–65535)';
+
+  @override
+  String get desktopLanWebFirewall => 'Allow the inbound firewall rule';
+
+  @override
+  String get desktopLanWebFirewallBody =>
+      'Adds or removes the system firewall rule for the web port';
+
+  @override
+  String get desktopLanWebFirewallOn =>
+      'The web port was allowed through the firewall';
+
+  @override
+  String get desktopLanWebFirewallOff =>
+      'The web port firewall rule was removed';
+
+  @override
+  String get desktopLanWebNoFirewall =>
+      'No firewall manager was detected, so the port is already open and needs no rule.';
+
+  @override
+  String get desktopLanWebCredentials => 'Console credential';
+
+  @override
+  String desktopLanWebUser(String user) {
+    return 'Administrator: $user';
+  }
+
+  @override
+  String get desktopLanWebNoUser => 'No administrator yet';
+
+  @override
+  String get desktopLanWebProtected => 'Password protection is on';
+
+  @override
+  String get desktopLanWebUnprotected =>
+      'No password yet; the first visit must set one';
+
+  @override
+  String get desktopLanWebChangePassword => 'Change the admin password';
+
+  @override
+  String get desktopLanWebSetPassword => 'Set the initial password';
+
+  @override
+  String get desktopLanWebPasswordSave => 'Save';
+
+  @override
+  String get desktopLanWebPasswordSaved => 'The admin password was saved';
+
+  @override
+  String desktopLanWebChangeBody(String user) {
+    return 'Changes the password for $user; existing external sessions stop working.';
+  }
+
+  @override
+  String desktopLanWebSetupBody(String user) {
+    return 'Sets the initial password for $user; later console visits must log in.';
+  }
+
+  @override
+  String get desktopLanWebOldPassword => 'Current password';
+
+  @override
+  String get desktopLanWebNewPassword => 'New password';
+
+  @override
+  String get desktopLanWebConfirmPassword => 'Confirm the new password';
+
+  @override
+  String get desktopLanWebPasswordRequired => 'The new password is required';
+
+  @override
+  String get desktopLanWebPasswordMismatch =>
+      'The two new passwords do not match';
+
+  @override
+  String get desktopLanWebOldRequired => 'Enter the current password';
+
+  @override
+  String get desktopLanWebFooter =>
+      'The credential only guards console login; the desktop client keeps using the local API.';
 }

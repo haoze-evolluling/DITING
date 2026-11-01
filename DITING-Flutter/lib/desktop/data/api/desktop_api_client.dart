@@ -23,6 +23,7 @@ import 'package:diting/desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_rule_check_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
+import 'package:diting/desktop/data/api/desktop_web_models.dart';
 import 'package:diting/desktop/data/api/desktop_zone_models.dart';
 import 'package:http/http.dart' as http;
 
@@ -546,6 +547,39 @@ class DesktopApiClient {
       '/api/v1/filter/check',
       body: {'domain': domain, 'qtype': qtype},
     ),
+  );
+
+  Future<DesktopWebStatus> webStatus() async =>
+      DesktopWebStatus.fromJson(await _get('/api/v1/web/status'));
+
+  /// The service decides the listen address and whether a firewall rule is needed.
+  Future<void> configureWeb({required bool enabled, required int port}) => _post(
+    '/api/v1/web/configure',
+    body: {'enabled': enabled, 'port': port, 'configureFirewall': true},
+  );
+
+  Future<void> configureWebFirewall(bool allowed) =>
+      _post('/api/v1/web/firewall', body: {'enable': allowed});
+
+  Future<void> setupAdmin({
+    required String username,
+    required String password,
+  }) => _post(
+    '/api/v1/auth/setup',
+    body: {'username': username, 'password': password},
+  );
+
+  Future<void> changeAdminPassword({
+    required String username,
+    required String oldPassword,
+    required String newPassword,
+  }) => _post(
+    '/api/v1/auth/password',
+    body: {
+      'username': username,
+      'oldPassword': oldPassword,
+      'newPassword': newPassword,
+    },
   );
 
   /// Opens and closes the DNS port to see whether it can be taken; on demand only.

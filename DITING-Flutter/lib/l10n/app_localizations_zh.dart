@@ -12263,4 +12263,133 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopServiceRefresh => '刷新核心服务状态';
+
+  @override
+  String get desktopLanWebPageTitle => '局域网控制台';
+
+  @override
+  String get desktopLanWebEntryBody => '远程管理开关、访问地址、防火墙放行与管理员凭据';
+
+  @override
+  String get desktopLanWebRefresh => '刷新局域网控制台状态';
+
+  @override
+  String get desktopLanWebLoadFailed => '读不到局域网控制台状态';
+
+  @override
+  String get desktopLanWebTitle => '局域网 Web 控制台';
+
+  @override
+  String get desktopLanWebOpen => '对外开放中';
+
+  @override
+  String get desktopLanWebLocal => '仅本地（127.0.0.1）';
+
+  @override
+  String get desktopLanWebEnabledBody => '局域网内的手机或电脑可通过浏览器访问完整控制台进行远程管理。';
+
+  @override
+  String get desktopLanWebDisabledBody =>
+      '开启后，局域网内的手机或电脑可通过浏览器访问完整控制台，与桌面客户端共享核心数据与配置。';
+
+  @override
+  String get desktopLanWebOn => '局域网 Web 管理已开启';
+
+  @override
+  String get desktopLanWebOff => '局域网 Web 管理已关闭';
+
+  @override
+  String desktopLanWebFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String get desktopLanWebUrls => '局域网访问网址（浏览器直连）';
+
+  @override
+  String get desktopLanWebNoUrls => '未探测到可用的局域网网卡 IPv4 地址';
+
+  @override
+  String get desktopLanWebPort => 'Web 端口';
+
+  @override
+  String get desktopLanWebSavePort => '保存端口';
+
+  @override
+  String get desktopLanWebPortInvalid => '请输入有效的端口号（1–65535）';
+
+  @override
+  String get desktopLanWebFirewall => '放行防火墙入站规则';
+
+  @override
+  String get desktopLanWebFirewallBody => '为 Web 端口添加或清除系统防火墙放行规则';
+
+  @override
+  String get desktopLanWebFirewallOn => '已放行防火墙 Web 端口';
+
+  @override
+  String get desktopLanWebFirewallOff => '已清除防火墙 Web 端口规则';
+
+  @override
+  String get desktopLanWebNoFirewall => '系统未检测到防火墙管理器，端口本就对外开放，无需放行规则。';
+
+  @override
+  String get desktopLanWebCredentials => '控制台凭据';
+
+  @override
+  String desktopLanWebUser(String user) {
+    return '管理员：$user';
+  }
+
+  @override
+  String get desktopLanWebNoUser => '尚未设置管理员';
+
+  @override
+  String get desktopLanWebProtected => '密码保护已启用';
+
+  @override
+  String get desktopLanWebUnprotected => '尚未初始化密码，首次进入需设置';
+
+  @override
+  String get desktopLanWebChangePassword => '修改管理员密码';
+
+  @override
+  String get desktopLanWebSetPassword => '设置初始密码';
+
+  @override
+  String get desktopLanWebPasswordSave => '保存';
+
+  @override
+  String get desktopLanWebPasswordSaved => '管理员密码已保存';
+
+  @override
+  String desktopLanWebChangeBody(String user) {
+    return '修改 $user 的密码，保存后已有外部会话将失效。';
+  }
+
+  @override
+  String desktopLanWebSetupBody(String user) {
+    return '为 $user 设置初始密码，之后访问控制台需要登录。';
+  }
+
+  @override
+  String get desktopLanWebOldPassword => '当前密码';
+
+  @override
+  String get desktopLanWebNewPassword => '新密码';
+
+  @override
+  String get desktopLanWebConfirmPassword => '确认新密码';
+
+  @override
+  String get desktopLanWebPasswordRequired => '新密码不能为空';
+
+  @override
+  String get desktopLanWebPasswordMismatch => '两次输入的新密码不一致';
+
+  @override
+  String get desktopLanWebOldRequired => '请输入当前密码';
+
+  @override
+  String get desktopLanWebFooter => '凭据仅用于局域网控制台登录；桌面客户端仍通过本机接口通信。';
 }

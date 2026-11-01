@@ -22371,6 +22371,246 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'刷新核心服务状态'**
   String get desktopServiceRefresh;
+
+  /// No description provided for @desktopLanWebPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网控制台'**
+  String get desktopLanWebPageTitle;
+
+  /// No description provided for @desktopLanWebEntryBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'远程管理开关、访问地址、防火墙放行与管理员凭据'**
+  String get desktopLanWebEntryBody;
+
+  /// No description provided for @desktopLanWebRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新局域网控制台状态'**
+  String get desktopLanWebRefresh;
+
+  /// No description provided for @desktopLanWebLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到局域网控制台状态'**
+  String get desktopLanWebLoadFailed;
+
+  /// No description provided for @desktopLanWebTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网 Web 控制台'**
+  String get desktopLanWebTitle;
+
+  /// No description provided for @desktopLanWebOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'对外开放中'**
+  String get desktopLanWebOpen;
+
+  /// No description provided for @desktopLanWebLocal.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅本地（127.0.0.1）'**
+  String get desktopLanWebLocal;
+
+  /// No description provided for @desktopLanWebEnabledBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网内的手机或电脑可通过浏览器访问完整控制台进行远程管理。'**
+  String get desktopLanWebEnabledBody;
+
+  /// No description provided for @desktopLanWebDisabledBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后，局域网内的手机或电脑可通过浏览器访问完整控制台，与桌面客户端共享核心数据与配置。'**
+  String get desktopLanWebDisabledBody;
+
+  /// No description provided for @desktopLanWebOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网 Web 管理已开启'**
+  String get desktopLanWebOn;
+
+  /// No description provided for @desktopLanWebOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网 Web 管理已关闭'**
+  String get desktopLanWebOff;
+
+  /// No description provided for @desktopLanWebFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopLanWebFailed(String message);
+
+  /// No description provided for @desktopLanWebUrls.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网访问网址（浏览器直连）'**
+  String get desktopLanWebUrls;
+
+  /// No description provided for @desktopLanWebNoUrls.
+  ///
+  /// In zh, this message translates to:
+  /// **'未探测到可用的局域网网卡 IPv4 地址'**
+  String get desktopLanWebNoUrls;
+
+  /// No description provided for @desktopLanWebPort.
+  ///
+  /// In zh, this message translates to:
+  /// **'Web 端口'**
+  String get desktopLanWebPort;
+
+  /// No description provided for @desktopLanWebSavePort.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存端口'**
+  String get desktopLanWebSavePort;
+
+  /// No description provided for @desktopLanWebPortInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的端口号（1–65535）'**
+  String get desktopLanWebPortInvalid;
+
+  /// No description provided for @desktopLanWebFirewall.
+  ///
+  /// In zh, this message translates to:
+  /// **'放行防火墙入站规则'**
+  String get desktopLanWebFirewall;
+
+  /// No description provided for @desktopLanWebFirewallBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'为 Web 端口添加或清除系统防火墙放行规则'**
+  String get desktopLanWebFirewallBody;
+
+  /// No description provided for @desktopLanWebFirewallOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已放行防火墙 Web 端口'**
+  String get desktopLanWebFirewallOn;
+
+  /// No description provided for @desktopLanWebFirewallOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已清除防火墙 Web 端口规则'**
+  String get desktopLanWebFirewallOff;
+
+  /// No description provided for @desktopLanWebNoFirewall.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统未检测到防火墙管理器，端口本就对外开放，无需放行规则。'**
+  String get desktopLanWebNoFirewall;
+
+  /// No description provided for @desktopLanWebCredentials.
+  ///
+  /// In zh, this message translates to:
+  /// **'控制台凭据'**
+  String get desktopLanWebCredentials;
+
+  /// No description provided for @desktopLanWebUser.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理员：{user}'**
+  String desktopLanWebUser(String user);
+
+  /// No description provided for @desktopLanWebNoUser.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未设置管理员'**
+  String get desktopLanWebNoUser;
+
+  /// No description provided for @desktopLanWebProtected.
+  ///
+  /// In zh, this message translates to:
+  /// **'密码保护已启用'**
+  String get desktopLanWebProtected;
+
+  /// No description provided for @desktopLanWebUnprotected.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未初始化密码，首次进入需设置'**
+  String get desktopLanWebUnprotected;
+
+  /// No description provided for @desktopLanWebChangePassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改管理员密码'**
+  String get desktopLanWebChangePassword;
+
+  /// No description provided for @desktopLanWebSetPassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置初始密码'**
+  String get desktopLanWebSetPassword;
+
+  /// No description provided for @desktopLanWebPasswordSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get desktopLanWebPasswordSave;
+
+  /// No description provided for @desktopLanWebPasswordSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理员密码已保存'**
+  String get desktopLanWebPasswordSaved;
+
+  /// No description provided for @desktopLanWebChangeBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改 {user} 的密码，保存后已有外部会话将失效。'**
+  String desktopLanWebChangeBody(String user);
+
+  /// No description provided for @desktopLanWebSetupBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'为 {user} 设置初始密码，之后访问控制台需要登录。'**
+  String desktopLanWebSetupBody(String user);
+
+  /// No description provided for @desktopLanWebOldPassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前密码'**
+  String get desktopLanWebOldPassword;
+
+  /// No description provided for @desktopLanWebNewPassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'新密码'**
+  String get desktopLanWebNewPassword;
+
+  /// No description provided for @desktopLanWebConfirmPassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认新密码'**
+  String get desktopLanWebConfirmPassword;
+
+  /// No description provided for @desktopLanWebPasswordRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'新密码不能为空'**
+  String get desktopLanWebPasswordRequired;
+
+  /// No description provided for @desktopLanWebPasswordMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'两次输入的新密码不一致'**
+  String get desktopLanWebPasswordMismatch;
+
+  /// No description provided for @desktopLanWebOldRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入当前密码'**
+  String get desktopLanWebOldRequired;
+
+  /// No description provided for @desktopLanWebFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'凭据仅用于局域网控制台登录；桌面客户端仍通过本机接口通信。'**
+  String get desktopLanWebFooter;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
