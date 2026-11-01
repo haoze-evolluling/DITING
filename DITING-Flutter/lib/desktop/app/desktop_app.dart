@@ -4,6 +4,7 @@ import 'package:diting/app/l10n/ui_strings.dart';
 import 'package:diting/app/theme/colors.dart';
 import 'package:diting/app/theme/manager.dart';
 import 'package:diting/desktop/router.dart';
+import 'package:diting/desktop/widgets/desktop_auth_gate.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:diting/state/appearance_extra_providers.dart';
 import 'package:diting/state/appearance_providers.dart';
@@ -19,6 +20,9 @@ import 'package:material_ui/material_ui.dart';
 /// Keep this in step with `DitingApp`: cached light/dark themes, localized delegates,
 /// `ThemeCrossFade`, system overlay, glass scopes, and [AppScopes] above the Navigator. Anything
 /// that only exists because the host is Wails/WebView belongs in `lib/desktop/data`.
+///
+/// The same bundle is also served to browsers by the LAN web console, so [DesktopAuthGate] sits above
+/// the router: it lets the desktop window through and asks a browser for the admin credential first.
 class DesktopApp extends ConsumerStatefulWidget {
   const DesktopApp({super.key, this.initialLocation});
 
@@ -85,7 +89,10 @@ class _DesktopAppState extends ConsumerState<DesktopApp> {
                 quality: glass.quality,
                 child: LiquidGlassHost(
                   enabled: glass.enabled,
-                  child: child ?? const SizedBox.shrink(),
+                  // The web console gates on a session; the desktop window passes straight through.
+                  child: DesktopAuthGate(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),

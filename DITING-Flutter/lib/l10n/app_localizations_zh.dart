@@ -12618,4 +12618,156 @@ class AppL10nZh extends AppL10n {
   String desktopLanDnsFailed(String message) {
     return '操作失败：$message';
   }
+
+  @override
+  String get desktopLoginTitle => '谛听 DNS 控制台';
+
+  @override
+  String get desktopLoginSubtitle => '局域网远程管理服务 · 请验证管理员凭据';
+
+  @override
+  String get desktopLoginSetupSubtitle => '初始化管理员密码，守护局域网远程管理安全';
+
+  @override
+  String get desktopLoginUserLabel => '管理员账号';
+
+  @override
+  String get desktopLoginPasswordLabel => '管理员密码';
+
+  @override
+  String get desktopLoginSetupPasswordLabel => '设置初始密码 (至少 4 位)';
+
+  @override
+  String get desktopLoginConfirmLabel => '确认管理员密码';
+
+  @override
+  String get desktopLoginSubmit => '立即登录';
+
+  @override
+  String get desktopLoginSetupSubmit => '完成初始化并进入控制台';
+
+  @override
+  String get desktopLoginSecurity => 'SHA-256 加盐哈希保护 · 连续错误自动安全锁定';
+
+  @override
+  String get desktopLoginFooter => '谛听 (DITING) DNS 解析加速与安全防护系统';
+
+  @override
+  String get desktopLoginChecking => '控制台安全载入中…';
+
+  @override
+  String get desktopLoginShowPassword => '显示密码';
+
+  @override
+  String get desktopLoginHidePassword => '隐藏密码';
+
+  @override
+  String get desktopLoginUserRequired => '请输入用户名';
+
+  @override
+  String get desktopLoginPasswordRequired => '请输入密码';
+
+  @override
+  String get desktopLoginPasswordTooShort => '密码长度至少为 4 位字符';
+
+  @override
+  String get desktopLoginPasswordMismatch => '两次输入的密码不一致';
+
+  @override
+  String get desktopLoginSuccess => '身份验证成功，正在进入控制台…';
+
+  @override
+  String get desktopLoginSetupSuccess => '管理员密码设置成功，正在进入系统…';
+
+  @override
+  String desktopLoginLockout(int seconds) {
+    return '安全频控锁定中，请等待 $seconds 秒后再试';
+  }
+
+  @override
+  String get desktopLoginUnreachable => '连不上本机服务';
+
+  @override
+  String get desktopLoginRetry => '重试';
+
+  @override
+  String get desktopLoginThemeCycle => '切换深浅模式';
+
+  @override
+  String get desktopLoginPaletteCycle => '切换配色方案';
+
+  @override
+  String get desktopLoginBackground => '自定义背景';
+
+  @override
+  String get desktopLoginBackgroundEnabled => '已启用自定义背景';
+
+  @override
+  String get desktopLoginBackgroundTitle => '登录背景';
+
+  @override
+  String get desktopLoginBackgroundLocal => '本地上传';
+
+  @override
+  String get desktopLoginBackgroundUrl => '网络图片';
+
+  @override
+  String get desktopLoginBackgroundChoose => '选择图片';
+
+  @override
+  String get desktopLoginBackgroundNoFile => '未选择图片';
+
+  @override
+  String get desktopLoginBackgroundUrlLabel => '图片地址';
+
+  @override
+  String get desktopLoginBackgroundUrlInvalid =>
+      '请输入 http:// 或 https:// 开头的图片地址';
+
+  @override
+  String get desktopLoginBackgroundOpacity => '遮罩暗度';
+
+  @override
+  String get desktopLoginBackgroundBlur => '毛玻璃模糊';
+
+  @override
+  String get desktopLoginBackgroundSave => '保存背景';
+
+  @override
+  String get desktopLoginBackgroundReset => '恢复默认背景';
+
+  @override
+  String get desktopLoginBackgroundSaved => '登录背景已保存';
+
+  @override
+  String get desktopLoginBackgroundResetDone => '已恢复系统默认背景';
+
+  @override
+  String get desktopLoginBackgroundNeedImage => '请先选择图片或填写图片地址';
+
+  @override
+  String get desktopLoginBackgroundPassword => '管理员密码';
+
+  @override
+  String get desktopLoginBackgroundPasswordBody => '局域网远程修改登录背景需要验证管理员密码。';
+
+  @override
+  String desktopLoginBackgroundFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String get desktopSettingsSessionSection => '当前会话';
+
+  @override
+  String get desktopSettingsLogout => '退出登录';
+
+  @override
+  String get desktopSettingsLogoutBody => '清除本机保存的管理员会话，返回登录页';
+
+  @override
+  String get desktopSettingsLogoutConfirm => '退出后需要重新输入管理员凭据才能进入控制台。';
+
+  @override
+  String get desktopSettingsLogoutDone => '已退出登录';
 }

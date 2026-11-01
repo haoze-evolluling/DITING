@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/desktop/data/api/desktop_api_client.dart';
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
+import 'package:diting/desktop/data/api/desktop_auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Container for the desktop host's own connection settings, so they cannot collide with an
@@ -19,6 +20,17 @@ const desktopPrefsContainer = 'diting_desktop';
 /// Where the local service listens. Defaults to the loopback address the service binds out of the
 /// box; the keys match what the Wails console writes.
 final desktopApiConfigProvider = Provider<DesktopApiConfig>((ref) {
+  // The browser that loaded the web console talks to the origin it came from, and authenticates with
+  // the session token instead of the desktop host's IPC token.
+  if (ref.watch(desktopWebConsoleProvider)) {
+    final origin = ref.watch(desktopPageOriginProvider);
+    return DesktopApiConfig(
+      scheme: origin.scheme,
+      host: origin.host,
+      port: origin.port,
+      token: ref.watch(desktopSessionTokenProvider),
+    );
+  }
   final store = ref.watch(legacyPrefsStoreProvider);
   final host = store.read(desktopPrefsContainer, 'ipc_host');
   final port = store.read(desktopPrefsContainer, 'ipc_port');
@@ -35,7 +47,13 @@ final desktopApiConfigProvider = Provider<DesktopApiConfig>((ref) {
 });
 
 final desktopApiClientProvider = Provider<DesktopApiClient>((ref) {
-  final client = DesktopApiClient(config: ref.watch(desktopApiConfigProvider));
+  // A 401 on a request that carried a token means the web session expired; the signal carries that
+  // news to the auth state machine without the client depending on it.
+  final signal = ref.watch(desktopAuthSignalProvider);
+  final client = DesktopApiClient(
+    config: ref.watch(desktopApiConfigProvider),
+    onUnauthorized: signal.fire,
+  );
   ref.onDispose(client.close);
   return client;
 });

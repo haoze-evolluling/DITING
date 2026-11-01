@@ -78,6 +78,56 @@ void main() {
     );
   });
 
+  test('401 把服务端原因带进异常消息', () async {
+    final client = clientOf(
+      MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode(
+            jsonEncode({'success': false, 'error': '会话已过期，请重新登录'}),
+          ),
+          401,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        ),
+      ),
+    );
+    await expectLater(
+      client.status(),
+      throwsA(
+        isA<DesktopApiException>()
+            .having((error) => error.unauthorized, 'unauthorized', isTrue)
+            .having((error) => error.message, 'message', '会话已过期，请重新登录'),
+      ),
+    );
+  });
+
+  test('401 回调只在非登录接口触发', () async {
+    var fired = 0;
+    DesktopApiClient withCallback(MockClient mock) => DesktopApiClient(
+      httpClient: mock,
+      onUnauthorized: () => fired++,
+    );
+    final unauthorized = MockClient(
+      (_) async => http.Response(
+        jsonEncode({'success': false, 'error': 'unauthorized'}),
+        401,
+      ),
+    );
+
+    await expectLater(
+      withCallback(unauthorized).status(),
+      throwsA(isA<DesktopApiException>()),
+    );
+    expect(fired, 1);
+
+    await expectLater(
+      withCallback(
+        unauthorized,
+      ).signIn(username: 'admin', password: 'wrong'),
+      throwsA(isA<DesktopApiException>()),
+    );
+    expect(fired, 1);
+  });
+
   test('错误信封的 error 字段成为异常消息', () async {
     final client = clientOf(
       MockClient(

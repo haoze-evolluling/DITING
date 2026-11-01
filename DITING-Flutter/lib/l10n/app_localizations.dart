@@ -23037,6 +23037,300 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'操作失败：{message}'**
   String desktopLanDnsFailed(String message);
+
+  /// No description provided for @desktopLoginTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'谛听 DNS 控制台'**
+  String get desktopLoginTitle;
+
+  /// No description provided for @desktopLoginSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网远程管理服务 · 请验证管理员凭据'**
+  String get desktopLoginSubtitle;
+
+  /// No description provided for @desktopLoginSetupSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'初始化管理员密码，守护局域网远程管理安全'**
+  String get desktopLoginSetupSubtitle;
+
+  /// No description provided for @desktopLoginUserLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理员账号'**
+  String get desktopLoginUserLabel;
+
+  /// No description provided for @desktopLoginPasswordLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理员密码'**
+  String get desktopLoginPasswordLabel;
+
+  /// No description provided for @desktopLoginSetupPasswordLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置初始密码 (至少 4 位)'**
+  String get desktopLoginSetupPasswordLabel;
+
+  /// No description provided for @desktopLoginConfirmLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认管理员密码'**
+  String get desktopLoginConfirmLabel;
+
+  /// No description provided for @desktopLoginSubmit.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即登录'**
+  String get desktopLoginSubmit;
+
+  /// No description provided for @desktopLoginSetupSubmit.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成初始化并进入控制台'**
+  String get desktopLoginSetupSubmit;
+
+  /// No description provided for @desktopLoginSecurity.
+  ///
+  /// In zh, this message translates to:
+  /// **'SHA-256 加盐哈希保护 · 连续错误自动安全锁定'**
+  String get desktopLoginSecurity;
+
+  /// No description provided for @desktopLoginFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'谛听 (DITING) DNS 解析加速与安全防护系统'**
+  String get desktopLoginFooter;
+
+  /// No description provided for @desktopLoginChecking.
+  ///
+  /// In zh, this message translates to:
+  /// **'控制台安全载入中…'**
+  String get desktopLoginChecking;
+
+  /// No description provided for @desktopLoginShowPassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示密码'**
+  String get desktopLoginShowPassword;
+
+  /// No description provided for @desktopLoginHidePassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏密码'**
+  String get desktopLoginHidePassword;
+
+  /// No description provided for @desktopLoginUserRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入用户名'**
+  String get desktopLoginUserRequired;
+
+  /// No description provided for @desktopLoginPasswordRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入密码'**
+  String get desktopLoginPasswordRequired;
+
+  /// No description provided for @desktopLoginPasswordTooShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'密码长度至少为 4 位字符'**
+  String get desktopLoginPasswordTooShort;
+
+  /// No description provided for @desktopLoginPasswordMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'两次输入的密码不一致'**
+  String get desktopLoginPasswordMismatch;
+
+  /// No description provided for @desktopLoginSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'身份验证成功，正在进入控制台…'**
+  String get desktopLoginSuccess;
+
+  /// No description provided for @desktopLoginSetupSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理员密码设置成功，正在进入系统…'**
+  String get desktopLoginSetupSuccess;
+
+  /// No description provided for @desktopLoginLockout.
+  ///
+  /// In zh, this message translates to:
+  /// **'安全频控锁定中，请等待 {seconds} 秒后再试'**
+  String desktopLoginLockout(int seconds);
+
+  /// No description provided for @desktopLoginUnreachable.
+  ///
+  /// In zh, this message translates to:
+  /// **'连不上本机服务'**
+  String get desktopLoginUnreachable;
+
+  /// No description provided for @desktopLoginRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get desktopLoginRetry;
+
+  /// No description provided for @desktopLoginThemeCycle.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换深浅模式'**
+  String get desktopLoginThemeCycle;
+
+  /// No description provided for @desktopLoginPaletteCycle.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换配色方案'**
+  String get desktopLoginPaletteCycle;
+
+  /// No description provided for @desktopLoginBackground.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义背景'**
+  String get desktopLoginBackground;
+
+  /// No description provided for @desktopLoginBackgroundEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已启用自定义背景'**
+  String get desktopLoginBackgroundEnabled;
+
+  /// No description provided for @desktopLoginBackgroundTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录背景'**
+  String get desktopLoginBackgroundTitle;
+
+  /// No description provided for @desktopLoginBackgroundLocal.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地上传'**
+  String get desktopLoginBackgroundLocal;
+
+  /// No description provided for @desktopLoginBackgroundUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络图片'**
+  String get desktopLoginBackgroundUrl;
+
+  /// No description provided for @desktopLoginBackgroundChoose.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择图片'**
+  String get desktopLoginBackgroundChoose;
+
+  /// No description provided for @desktopLoginBackgroundNoFile.
+  ///
+  /// In zh, this message translates to:
+  /// **'未选择图片'**
+  String get desktopLoginBackgroundNoFile;
+
+  /// No description provided for @desktopLoginBackgroundUrlLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片地址'**
+  String get desktopLoginBackgroundUrlLabel;
+
+  /// No description provided for @desktopLoginBackgroundUrlInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 http:// 或 https:// 开头的图片地址'**
+  String get desktopLoginBackgroundUrlInvalid;
+
+  /// No description provided for @desktopLoginBackgroundOpacity.
+  ///
+  /// In zh, this message translates to:
+  /// **'遮罩暗度'**
+  String get desktopLoginBackgroundOpacity;
+
+  /// No description provided for @desktopLoginBackgroundBlur.
+  ///
+  /// In zh, this message translates to:
+  /// **'毛玻璃模糊'**
+  String get desktopLoginBackgroundBlur;
+
+  /// No description provided for @desktopLoginBackgroundSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存背景'**
+  String get desktopLoginBackgroundSave;
+
+  /// No description provided for @desktopLoginBackgroundReset.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认背景'**
+  String get desktopLoginBackgroundReset;
+
+  /// No description provided for @desktopLoginBackgroundSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'登录背景已保存'**
+  String get desktopLoginBackgroundSaved;
+
+  /// No description provided for @desktopLoginBackgroundResetDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已恢复系统默认背景'**
+  String get desktopLoginBackgroundResetDone;
+
+  /// No description provided for @desktopLoginBackgroundNeedImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先选择图片或填写图片地址'**
+  String get desktopLoginBackgroundNeedImage;
+
+  /// No description provided for @desktopLoginBackgroundPassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理员密码'**
+  String get desktopLoginBackgroundPassword;
+
+  /// No description provided for @desktopLoginBackgroundPasswordBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网远程修改登录背景需要验证管理员密码。'**
+  String get desktopLoginBackgroundPasswordBody;
+
+  /// No description provided for @desktopLoginBackgroundFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopLoginBackgroundFailed(String message);
+
+  /// No description provided for @desktopSettingsSessionSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前会话'**
+  String get desktopSettingsSessionSection;
+
+  /// No description provided for @desktopSettingsLogout.
+  ///
+  /// In zh, this message translates to:
+  /// **'退出登录'**
+  String get desktopSettingsLogout;
+
+  /// No description provided for @desktopSettingsLogoutBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除本机保存的管理员会话，返回登录页'**
+  String get desktopSettingsLogoutBody;
+
+  /// No description provided for @desktopSettingsLogoutConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'退出后需要重新输入管理员凭据才能进入控制台。'**
+  String get desktopSettingsLogoutConfirm;
+
+  /// No description provided for @desktopSettingsLogoutDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已退出登录'**
+  String get desktopSettingsLogoutDone;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

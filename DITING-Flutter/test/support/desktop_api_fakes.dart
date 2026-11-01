@@ -601,6 +601,37 @@ Map<String, Object?> webStatusPayload({
   'username': username,
 };
 
+/// A `GET /api/v1/auth/status` payload.
+Map<String, Object?> authPayload({
+  bool initialized = true,
+  bool webEnabled = true,
+  String username = 'admin',
+  bool locked = false,
+  int lockoutRemainingSec = 0,
+}) => {
+  'initialized': initialized,
+  'webEnabled': webEnabled,
+  'authenticated': false,
+  'username': username,
+  'locked': locked,
+  'lockoutRemainingSec': lockoutRemainingSec,
+};
+
+/// A `GET /api/v1/auth/background` payload.
+Map<String, Object?> backgroundPayload({
+  String type = 'none',
+  String url = '',
+  int opacity = 40,
+  int blur = 0,
+  int updatedAt = 1700000000,
+}) => {
+  'type': type,
+  'url': url,
+  'opacity': opacity,
+  'blur': blur,
+  'updatedAt': updatedAt,
+};
+
 /// A `GET /api/v1/adapters` payload: one connected adapter and one disconnected.
 List<Map<String, Object?>> adaptersPayload() => [
   {
@@ -795,6 +826,8 @@ class FakeDesktopBackend {
     Map<String, Object?>? web,
     List<Map<String, Object?>>? adapters,
     Map<String, Object?>? lan,
+    Map<String, Object?>? auth,
+    Map<String, Object?>? background,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -832,6 +865,8 @@ class FakeDesktopBackend {
        web = web ?? webStatusPayload(),
        adapters = adapters ?? adaptersPayload(),
        lan = lan ?? lanPayload(),
+       auth = auth ?? authPayload(),
+       background = background ?? backgroundPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -942,6 +977,23 @@ class FakeDesktopBackend {
   /// Bodies of every LAN DNS configure and firewall write, in order.
   final lanUpdates = <Map<String, Object?>>[];
   final lanFirewallUpdates = <Map<String, Object?>>[];
+
+  /// Mutated by the setup call; `/auth/status` answers with it.
+  Map<String, Object?> auth;
+
+  /// Answered to `/auth/background`; the background writes replace it.
+  Map<String, Object?> background;
+
+  /// When false, `POST /auth/login` answers 401 like a wrong password.
+  bool loginAccepted = true;
+
+  /// When true, `GET /status` answers 401 so a stored token can be shown as expired.
+  bool statusRejected = false;
+
+  /// Bodies of every login, background save and background reset, in order.
+  final loginRequests = <Map<String, Object?>>[];
+  final backgroundUpdates = <Map<String, Object?>>[];
+  final backgroundResets = <Map<String, Object?>>[];
 
   /// Bodies of every simulated lookup, in order.
   final ruleCheckUpdates = <Map<String, Object?>>[];
@@ -1209,6 +1261,54 @@ class FakeDesktopBackend {
         lanFirewallUpdates.add(body);
         lan = {...lan, 'firewallAllowed': body['enable'] == true};
       }
+      if (path == '/api/v1/auth/login' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        loginRequests.add(body);
+        if (!loginAccepted) {
+          return http.Response.bytes(
+            utf8.encode(
+              jsonEncode({
+                'success': false,
+                'error': '用户名或密码错误',
+              }),
+            ),
+            401,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode(
+              apiEnvelope({
+                'token': 'session-token',
+                'username': '${auth['username'] ?? body['username'] ?? 'admin'}',
+                'expiresAt': 1800000000,
+              }),
+            ),
+          ),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }
+      if (path == '/api/v1/auth/background' &&
+          (request.method == 'POST' || request.method == 'PUT')) {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        backgroundUpdates.add(body);
+        final url = '${body['url'] ?? ''}';
+        background = {
+          'type': url.startsWith('data:image/') ? 'custom' : 'url',
+          'url': url,
+          'opacity': body['opacity'] ?? 40,
+          'blur': body['blur'] ?? 0,
+          'updatedAt': 1700000001,
+        };
+      }
+      if (path == '/api/v1/auth/background' && request.method == 'DELETE') {
+        backgroundResets.add({
+          'adminPassword': request.url.queryParameters['adminPassword'] ?? '',
+        });
+        background = backgroundPayload();
+      }
       if (path == '/api/v1/auth/password' && request.method == 'POST') {
         passwordUpdates.add(
           (jsonDecode(request.body) as Map).cast<String, Object?>(),
@@ -1218,6 +1318,7 @@ class FakeDesktopBackend {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
         passwordUpdates.add(body);
         web = {...web, 'initialized': true, 'username': body['username']};
+        auth = {...auth, 'initialized': true, 'username': body['username']};
       }
       if (path == '/api/v1/filter/check' && request.method == 'POST') {
         ruleCheckUpdates.add(
@@ -1486,6 +1587,15 @@ class FakeDesktopBackend {
           headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }
+      if (statusRejected && path == '/api/v1/status') {
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode({'success': false, 'error': '会话已过期'}),
+          ),
+          401,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }
       if (statusCode >= 400) {
         return http.Response(
           jsonEncode({
@@ -1520,6 +1630,9 @@ class FakeDesktopBackend {
           apiEnvelope(safeBrowsing),
         ),
         '/api/v1/portcheck' => utf8Json(apiEnvelope(portCheck)),
+        '/api/v1/auth/status' => utf8Json(apiEnvelope(auth)),
+        '/api/v1/auth/background' => utf8Json(apiEnvelope(background)),
+        '/api/v1/auth/logout' => utf8Json(apiEnvelope(null)),
         '/api/v1/adapters' => utf8Json(apiEnvelope(adapters)),
         '/api/v1/dns/lan' => utf8Json(apiEnvelope(lan)),
         '/api/v1/takeover/adapter' => utf8Json(apiEnvelope(null)),

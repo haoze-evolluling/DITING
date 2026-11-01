@@ -6,6 +6,7 @@
 library;
 
 // The feature groups live in sibling extensions so no single file outgrows the budget.
+export 'package:diting/desktop/data/api/desktop_api_client_auth.dart';
 export 'package:diting/desktop/data/api/desktop_api_client_network.dart';
 export 'package:diting/desktop/data/api/desktop_api_client_privacy.dart';
 export 'package:diting/desktop/data/api/desktop_api_client_traffic.dart';
@@ -30,22 +31,31 @@ import 'package:http/http.dart' as http;
 /// when the service was started with one configured.
 class DesktopApiConfig {
   const DesktopApiConfig({
+    this.scheme = 'http',
     this.host = '127.0.0.1',
     this.port = 15353,
     this.token = '',
   });
 
+  final String scheme;
   final String host;
   final int port;
   final String token;
 
   Uri uri(String path, [Map<String, String>? query]) => Uri(
-    scheme: 'http',
+    scheme: scheme,
     host: host,
     port: port,
     path: path,
     queryParameters: query,
   );
+
+  /// The base a relative service path hangs off, e.g. `/api/v1/auth/background/image`.
+  Uri get origin => Uri(scheme: scheme, host: host, port: port);
+
+  /// Absolute form of a service-relative path; an absolute URL is returned unchanged.
+  Uri resolve(String pathOrUrl) =>
+      origin.resolveUri(Uri.parse(pathOrUrl));
 }
 
 /// A failed request. [unauthorized] means the service answered 401: the token is missing or wrong,
@@ -66,9 +76,17 @@ class DesktopApiException implements Exception {
 }
 
 class DesktopApiClient {
-  DesktopApiClient({DesktopApiConfig? config, http.Client? httpClient})
-    : _config = config ?? const DesktopApiConfig(),
-      _http = httpClient ?? http.Client();
+  DesktopApiClient({
+    DesktopApiConfig? config,
+    http.Client? httpClient,
+    this.onUnauthorized,
+  }) : _config = config ?? const DesktopApiConfig(),
+       _http = httpClient ?? http.Client();
+
+  /// Called when the service answers 401 to a request that carried a token, so the web console can
+  /// drop an expired session. The login and setup calls are excluded: their 401 is a wrong password,
+  /// not an expired session.
+  final void Function()? onUnauthorized;
 
   static const _timeout = Duration(seconds: 8);
 
@@ -452,6 +470,12 @@ class DesktopApiClient {
     Map<String, Object?>? body,
   }) => _postData(path, body: body);
 
+  /// A `DELETE` whose answer is data rather than only a success flag.
+  Future<Map<String, Object?>> deleteJson(
+    String path, {
+    Map<String, String>? query,
+  }) async => _dataOf(await _send(path, method: 'DELETE', query: query));
+
   Future<void> postAction(String path, {Map<String, Object?>? body}) =>
       _post(path, body: body);
 
@@ -500,13 +524,22 @@ class DesktopApiClient {
     } on http.ClientException catch (error) {
       throw DesktopApiException(error.message);
     }
-    return _decode(response);
+    // A wrong password is not an expired session, so the auth routes never trigger the callback.
+    final authRoute = path.startsWith('/api/v1/auth/login') ||
+        path.startsWith('/api/v1/auth/setup');
+    return _decode(response, notifyAuthRequired: !authRoute);
   }
 
-  Map<String, Object?> _decode(http.Response response) {
+  Map<String, Object?> _decode(
+    http.Response response, {
+    bool notifyAuthRequired = true,
+  }) {
     if (response.statusCode == 401) {
-      throw const DesktopApiException(
-        'unauthorized',
+      if (notifyAuthRequired) onUnauthorized?.call();
+      // The service names the reason (wrong password, lockout, expired session); show its words
+      // rather than a generic one, and keep a fallback for a body that is not JSON.
+      throw DesktopApiException(
+        _errorMessageOf(response) ?? 'unauthorized',
         statusCode: 401,
         unauthorized: true,
       );
@@ -527,6 +560,17 @@ class DesktopApiClient {
       );
     }
     return envelope;
+  }
+
+  /// The service's own `error` (or `message`) from a non-success envelope, when the body carries one.
+  String? _errorMessageOf(http.Response response) {
+    try {
+      final envelope = (jsonDecode(response.body) as Map).cast<String, Object?>();
+      final error = envelope['error'] ?? envelope['message'];
+      return error is String && error.isNotEmpty ? error : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   /// `{"success": true, "data": ...}`; a `null` data still has to reach the parser, so it becomes

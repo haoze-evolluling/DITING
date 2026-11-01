@@ -13385,7 +13385,7 @@ class AppL10nEn extends AppL10n {
   String get desktopLanDnsDeviceTitle => 'Option B: one device at a time';
 
   @override
-  String get desktopLanDnsDeviceBadge => '独立体验';
+  String get desktopLanDnsDeviceBadge => 'Standalone';
 
   @override
   String get desktopLanDnsDeviceBody =>
@@ -13402,4 +13402,167 @@ class AppL10nEn extends AppL10n {
   String desktopLanDnsFailed(String message) {
     return 'Failed: $message';
   }
+
+  @override
+  String get desktopLoginTitle => 'DITING DNS console';
+
+  @override
+  String get desktopLoginSubtitle =>
+      'LAN remote administration · verify the admin credential';
+
+  @override
+  String get desktopLoginSetupSubtitle =>
+      'Set the admin password to guard LAN remote administration';
+
+  @override
+  String get desktopLoginUserLabel => 'Admin account';
+
+  @override
+  String get desktopLoginPasswordLabel => 'Admin password';
+
+  @override
+  String get desktopLoginSetupPasswordLabel =>
+      'Initial password (at least 4 characters)';
+
+  @override
+  String get desktopLoginConfirmLabel => 'Confirm admin password';
+
+  @override
+  String get desktopLoginSubmit => 'Sign in';
+
+  @override
+  String get desktopLoginSetupSubmit => 'Finish setup and enter the console';
+
+  @override
+  String get desktopLoginSecurity =>
+      'SHA-256 salted hash · repeated failures lock the form';
+
+  @override
+  String get desktopLoginFooter => 'DITING DNS acceleration and protection';
+
+  @override
+  String get desktopLoginChecking => 'Loading the console securely…';
+
+  @override
+  String get desktopLoginShowPassword => 'Show password';
+
+  @override
+  String get desktopLoginHidePassword => 'Hide password';
+
+  @override
+  String get desktopLoginUserRequired => 'Enter the user name';
+
+  @override
+  String get desktopLoginPasswordRequired => 'Enter the password';
+
+  @override
+  String get desktopLoginPasswordTooShort =>
+      'The password needs at least 4 characters';
+
+  @override
+  String get desktopLoginPasswordMismatch => 'The two passwords differ';
+
+  @override
+  String get desktopLoginSuccess => 'Verified, entering the console…';
+
+  @override
+  String get desktopLoginSetupSuccess =>
+      'Admin password saved, entering the console…';
+
+  @override
+  String desktopLoginLockout(int seconds) {
+    return 'Locked after too many failures; retry in ${seconds}s';
+  }
+
+  @override
+  String get desktopLoginUnreachable => 'Cannot reach the service';
+
+  @override
+  String get desktopLoginRetry => 'Retry';
+
+  @override
+  String get desktopLoginThemeCycle => 'Switch light or dark';
+
+  @override
+  String get desktopLoginPaletteCycle => 'Switch colour palette';
+
+  @override
+  String get desktopLoginBackground => 'Custom background';
+
+  @override
+  String get desktopLoginBackgroundEnabled => 'Custom background is on';
+
+  @override
+  String get desktopLoginBackgroundTitle => 'Login background';
+
+  @override
+  String get desktopLoginBackgroundLocal => 'Upload';
+
+  @override
+  String get desktopLoginBackgroundUrl => 'Image URL';
+
+  @override
+  String get desktopLoginBackgroundChoose => 'Choose an image';
+
+  @override
+  String get desktopLoginBackgroundNoFile => 'No image selected';
+
+  @override
+  String get desktopLoginBackgroundUrlLabel => 'Image address';
+
+  @override
+  String get desktopLoginBackgroundUrlInvalid =>
+      'Enter an address starting with http:// or https://';
+
+  @override
+  String get desktopLoginBackgroundOpacity => 'Overlay darkness';
+
+  @override
+  String get desktopLoginBackgroundBlur => 'Frosted blur';
+
+  @override
+  String get desktopLoginBackgroundSave => 'Save background';
+
+  @override
+  String get desktopLoginBackgroundReset => 'Restore default';
+
+  @override
+  String get desktopLoginBackgroundSaved => 'Login background saved';
+
+  @override
+  String get desktopLoginBackgroundResetDone =>
+      'System default background restored';
+
+  @override
+  String get desktopLoginBackgroundNeedImage =>
+      'Choose an image or enter an address first';
+
+  @override
+  String get desktopLoginBackgroundPassword => 'Admin password';
+
+  @override
+  String get desktopLoginBackgroundPasswordBody =>
+      'Changing the background remotely over the LAN needs the admin password.';
+
+  @override
+  String desktopLoginBackgroundFailed(String message) {
+    return 'Failed: $message';
+  }
+
+  @override
+  String get desktopSettingsSessionSection => 'Current session';
+
+  @override
+  String get desktopSettingsLogout => 'Sign out';
+
+  @override
+  String get desktopSettingsLogoutBody =>
+      'Drop the admin session stored in this browser and return to the login page';
+
+  @override
+  String get desktopSettingsLogoutConfirm =>
+      'Signing out means entering the admin credential again to get back in.';
+
+  @override
+  String get desktopSettingsLogoutDone => 'Signed out';
 }

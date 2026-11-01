@@ -164,7 +164,9 @@ void main() {
   });
 
   testWidgets('写被拒时说明原因且开关保持服务端值', (tester) async {
-    final backend = await pumpLan(tester)..rejectWrites = true;
+    final backend = await pumpLan(tester);
+    // Reject every write from here on; the page must keep what the service still reports.
+    backend.rejectWrites = true;
     final l10n = l10nOf(tester);
 
     await tester.tap(find.byType(DashboardSwitch));
@@ -174,6 +176,8 @@ void main() {
       find.text(l10n.desktopLanDnsFailed('write rejected')),
       findsOneWidget,
     );
+    // The request went out and was rejected: the switch stays where the service is.
+    expect(backend.lanUpdates, hasLength(1));
     final toggle = tester.widget<DashboardSwitch>(
       find.byType(DashboardSwitch),
     );
