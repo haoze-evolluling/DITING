@@ -8,6 +8,7 @@ library;
 
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/pages/hub/desktop_cache_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
@@ -56,6 +57,16 @@ class DesktopFeatureHubPage extends StatelessWidget {
                           size: 18,
                         ),
                         onTap: () => context.push(DesktopCachePage.path),
+                      ),
+                      ListItem(
+                        leading: const GlyphIcon(AppGlyphs.edit, size: 20),
+                        title: Text(l10n.desktopHubRewrite),
+                        subtitle: Text(l10n.desktopHubRewriteBody),
+                        trailing: const GlyphIcon(
+                          AppGlyphs.chevronForward,
+                          size: 18,
+                        ),
+                        onTap: () => context.push(DesktopRewritePage.path),
                       ),
                     ]),
                   ],

@@ -10,6 +10,7 @@ import 'dart:convert';
 
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_cache_models.dart';
+import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:http/http.dart' as http;
 
@@ -218,6 +219,49 @@ class DesktopApiClient {
   /// Reads the persisted file back into memory, and answers with how many entries it restored.
   Future<DesktopCachePersist> loadCache() async =>
       DesktopCachePersist.fromJson(await _postData('/api/v1/cache/load'));
+
+  /// Reads the engine switch and default TTL from `/status` (its `rewrite` summary) and the rule
+  /// list from its own endpoint: the console does the same, and the list is what an edit rewrites.
+  Future<DesktopRewriteConfig> rewriteConfig() async {
+    final status = await _get('/api/v1/status');
+    final rewrite = status['rewrite'];
+    final config = DesktopRewriteConfig.fromJson(
+      rewrite is Map ? rewrite.cast<String, Object?>() : const {},
+    );
+    return config.copyWith(rules: await rewriteRules());
+  }
+
+  /// Every configured rule, in the service's order. The endpoint answers with a bare array.
+  Future<List<DesktopRewriteRule>> rewriteRules() async {
+    final envelope = await _send('/api/v1/dns/rewrite/rules', method: 'GET');
+    final data = envelope['data'];
+    return [
+      for (final item in data is List ? data : const [])
+        if (item is Map)
+          DesktopRewriteRule.fromJson(item.cast<String, Object?>()),
+    ];
+  }
+
+  /// The service merges the field into the current config, so one switch or one TTL never rewrites
+  /// the rule list.
+  Future<void> setRewriteEnabled(bool enabled) =>
+      _post('/api/v1/dns/rewrite/configure', body: {'enabled': enabled});
+
+  Future<void> setRewriteTtl(int ttl) =>
+      _post('/api/v1/dns/rewrite/configure', body: {'ttl': ttl});
+
+  /// Adds a rule or replaces the one with the same domain; the service validates the records.
+  Future<void> saveRewriteRule(DesktopRewriteRule rule) =>
+      _post('/api/v1/dns/rewrite/rules', body: rule.toJson());
+
+  /// Removes the rule for [domain]. The service has no undo, so the page asks first.
+  Future<void> deleteRewriteRule(String domain) async {
+    await _send(
+      '/api/v1/dns/rewrite/rules',
+      method: 'DELETE',
+      query: {'domain': domain},
+    );
+  }
 
   void close() => _http.close();
 

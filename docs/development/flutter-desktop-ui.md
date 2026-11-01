@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）与解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）已完成；`hub` 其余子页与 `traffic` / `tools` / `settings` 待迁移，Wails 切换尚未开始。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）与自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器）已完成；`hub` 其余子页与 `traffic` / `tools` / `settings` 待迁移，Wails 切换尚未开始。**
 > Windows 桌面窗口目前仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 三层分工（唯一规范）
@@ -63,11 +63,12 @@
 
 `lib/desktop/data/api/` 是桌面端唯一数据层，不承载视觉决策：
 
-- `desktop_api_client.dart`：`/status`、`/service/status`、`/upstream/configure`（`GET` 读、`POST` 整表提交）、`/upstream/test`、`/upstream/stamp`、`/querylog/search`（首页 `limit=N&includeFile=0`；日志页 `limit/offset/includeFile=1` 加可选 `domain`/`client`/`qtype`/`status`）、`/querylog/stats`、`/querylog/clear`、`/querylog/config`（`GET` 读、`POST` 整表提交并由服务合并）、`/dns/start|stop`、`/takeover/enable|disable`、`/filter/pause`。信封 `{success, data, error}`，`401` 标记为鉴权问题。
+- `desktop_api_client.dart`：`/status`、`/service/status`、`/upstream/configure`（`GET` 读、`POST` 整表提交）、`/upstream/test`、`/upstream/stamp`、`/querylog/search`（首页 `limit=N&includeFile=0`；日志页 `limit/offset/includeFile=1` 加可选 `domain`/`client`/`qtype`/`status`）、`/querylog/stats`、`/querylog/clear`、`/querylog/config`（`GET` 读、`POST` 整表提交并由服务合并）、`/dns/start|stop`、`/takeover/enable|disable`、`/filter/pause`、`/dns/rewrite/rules`（`GET` 列表、`POST` 单条新增/覆盖、`DELETE ?domain=`）与 `/dns/rewrite/configure`（部分字段提交，服务合并）。信封 `{success, data, error}`，`401` 标记为鉴权问题。
 - `desktop_api_models.dart`：不可变模型（状态、缓存、过滤、查询行、`DesktopQueryStats`、`DesktopLogStatus`），缺字段按零值解析、不抛异常。
 - `desktop_api_providers.dart`：`desktopStatusProvider`（2 s）、`desktopServiceStatusProvider`（10 s）、`desktopRecentQueriesProvider`（5 s）、`desktopControlProvider`（写操作串行化，失败保留错误）。
 - `desktop_upstream_models.dart` / `desktop_upstream_providers.dart`：上游配置整表模型（模式、节点、Bootstrap、条件分流、独立回退链）与写路径；保存后回读服务端值，失败保留原表单并标过期；`desktopUpstreamProbeProvider` 只记录单节点测速结果，不把节点失败当服务离线。
 - `desktop_log_providers.dart`：`desktopQueryStatsProvider`（10 s，失败保留上一份并标过期）、`desktopLogQueryProvider`（域名 + 客户端 + `qtype` + `status` + offset）、`desktopLogFeedProvider`（随条件重读）、`desktopLogClearProvider`（清空历史，成功后重读汇总与表格）、`desktopLogConfigProvider`（留存策略：开关即时写、数字随保存按钮、写后回读服务端值，失败保留原配置）。与首页快照分文件：一次日志失败不该清空首页。
+- `desktop_rewrite_models.dart` / `desktop_rewrite_providers.dart`：重写引擎整表（开关、默认 TTL、规则列表）与单条规则（域名、快捷地址/别名/TXT、`records`、`rcode`、`ttl`）模型；`desktopRewriteProvider` 启动即读 `GET /api/v1/status`（取 `rewrite` 摘要）与 `GET /api/v1/dns/rewrite/rules`（取规则列表），四个写路径（开关、TTL、保存规则、删除规则）串行化并回读服务端；写被拒只把原因返回给页面，不改写屏幕上的值。错误码与记录类型清单与 Go 侧 `REWRITE_RCODES` / `rewriteRecordTypes` 同名同序。
 - `desktop_cache_models.dart` / `desktop_cache_providers.dart`：缓存统计、条目、热点排行、落盘状态与整表配置模型；`desktopCacheSnapshotProvider`（4 s 轮询统计 + 排行 + 落盘状态，失败保留上一份并标过期）、`desktopCacheSearchProvider` + `desktopCacheEntriesProvider`（检索变化即重读，`query` 交给服务）、`desktopCacheConfigProvider`（开关即时写、策略表单随保存按钮、写后回读服务端值）、`desktopCacheActionProvider`（清空 / 立即落盘 / 从文件恢复，串行化并返回服务端结果）。
 - `desktop_event_client.dart`：`/api/v1/events` 的 WebSocket 客户端（`web_socket_channel`，Web 与 IO 同一份代码）。令牌走查询串（浏览器握手不能带 header），断线 3 s 后重连；只把 `type: "query"` 事件转成 `DesktopLiveQuery`，并按 `errorMessage`/`success` → `blocked` → `cacheHit` 的顺序分类；`DesktopChannelEvent` 汇报通道通断。
 - `desktop_live_providers.dart`：`desktopEventStreamProvider`（唯一套接字入口，测试用 `StreamController` 覆写）、`desktopLiveProvider`（500 条滚动缓冲、暂停即丢弃、清空只清缓冲）、`desktopLiveEnabledProvider`（widget 测试关闭，避免开套接字）。实时流不轮询：socket 断即明说未连接。
@@ -82,6 +83,7 @@
 - 日志 `lib/desktop/pages/logs/`：`desktop_logs_page.dart`（汇总 + 三列排行 + 实时流 + 表格 + 留存策略）、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_rankings_card.dart`（高频域名 / 拦截排行 / 活跃客户端，顺序与截断由服务给定）、`widgets/log_live_panel.dart`（`/events` 实时流：连接状态、暂停/继续、清空、域名/客户端检索、类型与响应码筛选、仅看已拦截、缓冲计数）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史，`LogPicker` 与实时流共用）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`widgets/log_config_card.dart`（留存策略：记录开关、内存缓冲条数、落盘开关与留存天数、客户端信息开关、落盘目录只读）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` + `QueryStatsPanel` + `LiveQueryPanel` + `QueryLogConfigCard`**，`logs` 分支迁移完成。
 - 功能中心 `lib/desktop/pages/hub/`：`desktop_hub_page.dart`（按解析/防护分组的共享列表行，只列已迁移入口）、`desktop_upstream_page.dart`（`/hub/upstream` 子路由，宽窗并排 Bootstrap 与回退链）、`widgets/upstream_mode_card.dart`、`widgets/upstream_nodes_card.dart`、`widgets/upstream_editor_dialog.dart`（预设 + sdns:// 印章 + 证书指纹校验）、`widgets/bootstrap_card.dart`、`widgets/conditional_routes_card.dart`、`widgets/fallback_chain_card.dart`、`widgets/upstream_common.dart`（协议名、模式文案）。**已覆盖旧版桌面 `UpstreamPanel` + `BootstrapConfigCard` + `ConditionalRoutesCard` + `FallbackUpstreamCard` + `UpstreamEditModal`**，`hub` 的上游子页迁移完成。
 - 功能中心缓存 `lib/desktop/pages/hub/desktop_cache_page.dart`（`/hub/cache` 子路由，宽窗两列卡片、窄窗单列）、`widgets/cache_overview_cards.dart`（引擎总控 + 命中率 + 遥测指标 + 容量条）、`widgets/cache_top_card.dart`（Top 10 热点域名）、`widgets/cache_config_card.dart`（TTL 模式、最长/最短有效期、弱网兜底、极速响应、无效网址记忆、热点预取）、`widgets/cache_persist_card.dart`（落盘开关、间隔、文件路径、失败原因、立即落盘/从文件恢复）、`widgets/cache_exclude_card.dart`（Go RE2 排除正则、三条预设、条数与长度上限）、`widgets/cache_entries_card.dart`（服务端检索 + 四态筛选 + TTL/IP 明细表）、`widgets/cache_common.dart`（模式名、状态徽标、开关行与容量条）。**已覆盖旧版桌面 `CachePanel` + `CacheConfigCard` + `CachePersistCard` + `CacheExcludeCard` + `CacheTopDomains` + `CacheEntriesTable`**，`hub` 的缓存子页迁移完成。
+- 功能中心重写 `lib/desktop/pages/hub/desktop_rewrite_page.dart`（`/hub/rewrite` 子路由）、`widgets/rewrite_engine_card.dart`（引擎开关 + 默认 TTL 即时保存）、`widgets/rewrite_rules_card.dart`（本地检索五列规则表、空态区分无规则/无匹配、行内编辑与删除确认）、`widgets/rewrite_editor_dialog.dart`（快捷目标与自定义记录两种模式、记录类型/取值、应答码覆盖、规则 TTL、服务端同款校验）、`widgets/rewrite_common.dart`（类型徽标文案与配色、TTL 回退）。**已覆盖旧版桌面 `RewritePanel` + `RewriteEditModal`**，`hub` 的重写子页迁移完成（同页的 `ZoneFileCard` 本地权威区尚未迁移）。
 - 其余三个分支在 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`（`commonPendingTitle` / `commonPendingBody`）。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 - 实时流依赖 `web_socket_channel`（`pubspec.yaml` 固定 3.0.3）；Wails/WebView 宿主与 `flutter run -d chrome` 都走浏览器 WebSocket。
@@ -107,14 +109,14 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`hub` 剩余子页**：解析组（重写、DNS64）+ 防护组（订阅、应用拦截、自定义规则、拦截方式、时间计划）+ 设备·加密 DNS / 安全隐私；每个子页在 `desktop_hub_page.dart` 增加一条入口并挂到 `/hub/*` 嵌套路由。
+1. **`hub` 剩余子页**：解析组（DNS64、本地权威区 / zone 文件）+ 防护组（订阅、应用拦截、自定义规则、拦截方式、时间计划）+ 设备·加密 DNS / 安全隐私；每个子页在 `desktop_hub_page.dart` 增加一条入口并挂到 `/hub/*` 嵌套路由。
 2. **`traffic`**：设备管理 + 缓存热点/Top 域名与客户端（不做按应用流量）。
 3. **`tools`**：诊断与修复、规则检测、上游/区域测试。
 4. **`settings`**：外观主题（复用 `lib/pages/appearance` 的组件与语义）、服务与连接、局域网控制台。
 
 ## 8. 验收与守卫
 
-`test/desktop_shell_test.dart`、`test/desktop_home_test.dart`、`test/desktop_logs_test.dart`、`test/desktop_upstream_test.dart`、`test/desktop_cache_test.dart`、`test/desktop_api_test.dart`、`test/desktop_event_client_test.dart` 覆盖：
+`test/desktop_shell_test.dart`、`test/desktop_home_test.dart`、`test/desktop_logs_test.dart`、`test/desktop_upstream_test.dart`、`test/desktop_cache_test.dart`、`test/desktop_rewrite_test.dart`、`test/desktop_api_test.dart`、`test/desktop_event_client_test.dart` 覆盖：
 
 1. **骨架**：桌面一级路由集合与 `branchOrder` 一致，每分支由 `CommonScaffold` 承载；已接入分支不再出现占位空态。
 2. **视觉语言**：源码扫描 `lib/desktop`，不得出现 `Icons.`、`BorderRadius.circular(`、`ColorScheme.fromSeed`、`ThemeData(`、`fontSize:`、`Colors.`、硬编码中文。
@@ -125,6 +127,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 7. **留存策略**：开关即时提交、被拒后回到服务端当前值、非法数字不提交、落盘目录只读。
 8. **上游解析**：四种调度模式、节点/Bootstrap/分流/回退都显示服务返回值；切换模式提交整份配置；增删节点、Bootstrap 开关、分流规则、回退链、超时与响应码各自发出正确请求；保存被拒时说明服务错误并保留原表单；测速只影响节点徽标；印章解析回填协议、地址与 URL。
 9. **缓存**：命中率、遥测、容量与 Top 10 都显示服务返回值；开关与策略保存提交整份配置、非法秒数不提交；检索把关键字发给服务、四态筛选只收窄已返回条目；清空与恢复先确认，落盘间隔按 30–86400 钳制；排除规则一行一条并丢弃空行；写被拒时说明原因且开关回到服务端值；窄窗收起初始 TTL 与地址列。
+10. **重写**：规则名、类型徽标、目标行与 TTL 都显示服务返回值，失败应答码替换全部类型徽标；开关与 TTL 各自只提交自己那一个字段，非法 TTL 不提交；添加/编辑按快捷字段或记录列表组装整条规则、域名统一小写、失败应答码不再要求目标；删除先确认再发 `DELETE`；写被拒时说明原因且开关保持服务端值；检索只过滤已返回规则、不重发请求；无规则与无匹配空态分开；窄窗收起 TTL 列。
 
 ## 9. 明确禁止
 

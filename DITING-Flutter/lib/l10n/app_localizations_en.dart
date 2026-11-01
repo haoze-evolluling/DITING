@@ -10401,4 +10401,260 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopCacheNoIps => 'None';
+
+  @override
+  String get desktopHubRewrite => 'DNS rewrite';
+
+  @override
+  String get desktopHubRewriteBody =>
+      'Answer a name with an address, alias or TXT from this machine';
+
+  @override
+  String get desktopRewriteTitle => 'DNS rewrite';
+
+  @override
+  String get desktopRewriteEngineTitle =>
+      'Custom DNS rewrite and name disguise';
+
+  @override
+  String get desktopRewriteEngineBody =>
+      'Matching rules answer authoritatively before any upstream query; exact names and wildcards such as *.lan both work.';
+
+  @override
+  String get desktopRewriteEngineOn => 'Rewrite engine ready';
+
+  @override
+  String get desktopRewriteEngineOff => 'Rewrite engine disabled';
+
+  @override
+  String get desktopRewriteEnabled => 'Rewrite on';
+
+  @override
+  String get desktopRewriteDisabled => 'Rewrite off';
+
+  @override
+  String get desktopRewriteDefaultTtl => 'Default lifetime (s)';
+
+  @override
+  String get desktopRewriteTtlSave => 'Save';
+
+  @override
+  String get desktopRewriteTtlSaved => 'The default rewrite TTL was saved';
+
+  @override
+  String get desktopRewriteTtlInvalid =>
+      'The TTL must be a positive whole number';
+
+  @override
+  String get desktopRewriteToggleOn => 'Custom DNS rewrite is on';
+
+  @override
+  String get desktopRewriteToggleOff => 'Custom DNS rewrite is off';
+
+  @override
+  String desktopRewriteSaveFailed(String message) {
+    return 'Could not save the rewrite config: $message';
+  }
+
+  @override
+  String get desktopRewriteLoadFailed =>
+      'Could not read the DNS rewrite config';
+
+  @override
+  String get desktopRewriteRulesTitle => 'Rewrite rules';
+
+  @override
+  String get desktopRewriteRulesBody =>
+      'The disguise mappings currently in effect';
+
+  @override
+  String desktopRewriteRulesCount(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String get desktopRewriteAdd => 'Add rule';
+
+  @override
+  String get desktopRewriteSearch => 'Search a name, target address or alias…';
+
+  @override
+  String get desktopRewriteEmpty =>
+      'No DNS rewrite rules yet; use the button above to add one';
+
+  @override
+  String get desktopRewriteNoMatch => 'No rewrite rule matches this search';
+
+  @override
+  String get desktopRewriteResetSearch => 'Clear search';
+
+  @override
+  String get desktopRewriteDomain => 'Name';
+
+  @override
+  String get desktopRewriteTypes => 'Types';
+
+  @override
+  String get desktopRewriteTarget => 'Target';
+
+  @override
+  String get desktopRewriteTtl => 'TTL';
+
+  @override
+  String get desktopRewriteActions => 'Actions';
+
+  @override
+  String get desktopRewriteEdit => 'Edit rule';
+
+  @override
+  String get desktopRewriteDelete => 'Delete rule';
+
+  @override
+  String desktopRewriteSeconds(int count) {
+    return '$count s';
+  }
+
+  @override
+  String get desktopRewriteNoTarget => 'No target';
+
+  @override
+  String desktopRewriteRcodeOnly(String rcode) {
+    return 'Answers $rcode with no records';
+  }
+
+  @override
+  String get desktopRewriteDeleteTitle => 'Delete this DNS rewrite rule?';
+
+  @override
+  String desktopRewriteDeleteBody(String domain) {
+    return 'Remove the DNS rewrite rule for “$domain”?';
+  }
+
+  @override
+  String desktopRewriteRuleSaved(String domain) {
+    return 'Rule “$domain” saved and in effect';
+  }
+
+  @override
+  String desktopRewriteRuleDeleted(String domain) {
+    return 'Rule “$domain” deleted';
+  }
+
+  @override
+  String desktopRewriteRuleFailed(String message) {
+    return 'Could not save the rewrite rule: $message';
+  }
+
+  @override
+  String desktopRewriteDeleteFailed(String message) {
+    return 'Could not delete the rule: $message';
+  }
+
+  @override
+  String get desktopRewriteAddTitle => 'Add a DNS rewrite rule';
+
+  @override
+  String get desktopRewriteEditTitle => 'Edit the DNS rewrite rule';
+
+  @override
+  String get desktopRewriteDomainLabel => 'Matched name';
+
+  @override
+  String get desktopRewriteDomainHint => 'host.lan or *.home.local';
+
+  @override
+  String get desktopRewriteDomainHelp =>
+      'An exact name (router.lan) or a wildcard (*.cluster.internal)';
+
+  @override
+  String get desktopRewriteDomainRequired =>
+      'Enter the name to match (exact or a *.lan wildcard)';
+
+  @override
+  String get desktopRewriteTargetMode => 'Answer';
+
+  @override
+  String get desktopRewriteModeShortcut => 'Shortcut target';
+
+  @override
+  String get desktopRewriteModeRecords => 'Custom records';
+
+  @override
+  String get desktopRewriteTargetType => 'Target type';
+
+  @override
+  String get desktopRewriteTypeIp => 'A / AAAA address';
+
+  @override
+  String get desktopRewriteTypeCname => 'CNAME alias';
+
+  @override
+  String get desktopRewriteTypeTxt => 'TXT text';
+
+  @override
+  String get desktopRewriteIpsLabel => 'IPv4 / IPv6 addresses';
+
+  @override
+  String get desktopRewriteIpsHelp =>
+      'One address per line; several are returned together';
+
+  @override
+  String get desktopRewriteCnameLabel => 'CNAME target';
+
+  @override
+  String get desktopRewriteCnameHelp =>
+      'The alias chain is followed during resolution';
+
+  @override
+  String get desktopRewriteTxtLabel => 'TXT contents (one per line)';
+
+  @override
+  String get desktopRewriteRecordsLabel => 'Custom records';
+
+  @override
+  String get desktopRewriteRecordAdd => 'Add record';
+
+  @override
+  String get desktopRewriteRecordEmpty =>
+      'No records yet; use “Add record” to start';
+
+  @override
+  String get desktopRewriteRecordValueHint => 'Record value';
+
+  @override
+  String get desktopRewriteRecordsHelp =>
+      'Values follow AdGuard\'s dnsrewrite syntax: MX takes “preference host”, SRV takes “priority weight port target”, HTTPS/SVCB take “priority target parameters…”. Only queries of the matching type receive them.';
+
+  @override
+  String get desktopRewriteRcodeLabel => 'Response code override (optional)';
+
+  @override
+  String get desktopRewriteRcodeNone => 'No override (answer records normally)';
+
+  @override
+  String get desktopRewriteRcodeWarning =>
+      'With a failure code the rule answers that error and no records; clients treat the name as unavailable or refused.';
+
+  @override
+  String get desktopRewriteTtlLabel => 'Lifetime TTL (seconds, optional)';
+
+  @override
+  String get desktopRewriteTtlHint => 'Empty uses the global default TTL';
+
+  @override
+  String get desktopRewriteNeedIp =>
+      'Enter at least one IPv4 or IPv6 target address';
+
+  @override
+  String get desktopRewriteNeedCname => 'Enter the CNAME target name';
+
+  @override
+  String get desktopRewriteNeedTxt => 'Enter at least one line of TXT text';
+
+  @override
+  String get desktopRewriteNeedRecord =>
+      'Add at least one complete record (both type and value)';
+
+  @override
+  String get desktopRewriteChipEmpty => 'Empty';
 }

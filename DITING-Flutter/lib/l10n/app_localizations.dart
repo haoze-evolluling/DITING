@@ -17829,6 +17829,450 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'无'**
   String get desktopCacheNoIps;
+
+  /// No description provided for @desktopHubRewrite.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义重写'**
+  String get desktopHubRewrite;
+
+  /// No description provided for @desktopHubRewriteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'把域名指向指定 IP、别名或 TXT，本地直接权威应答'**
+  String get desktopHubRewriteBody;
+
+  /// No description provided for @desktopRewriteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义 DNS 重写'**
+  String get desktopRewriteTitle;
+
+  /// No description provided for @desktopRewriteEngineTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义 DNS 重写与域名伪装'**
+  String get desktopRewriteEngineTitle;
+
+  /// No description provided for @desktopRewriteEngineBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'匹配规则在上游解析前直接权威应答，无需等待外网请求；支持精确域名与 *.lan 泛域名。'**
+  String get desktopRewriteEngineBody;
+
+  /// No description provided for @desktopRewriteEngineOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写引擎已就绪'**
+  String get desktopRewriteEngineOn;
+
+  /// No description provided for @desktopRewriteEngineOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写引擎已停用'**
+  String get desktopRewriteEngineOff;
+
+  /// No description provided for @desktopRewriteEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写已启用'**
+  String get desktopRewriteEnabled;
+
+  /// No description provided for @desktopRewriteDisabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写已关闭'**
+  String get desktopRewriteDisabled;
+
+  /// No description provided for @desktopRewriteDefaultTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认生存期（秒）'**
+  String get desktopRewriteDefaultTtl;
+
+  /// No description provided for @desktopRewriteTtlSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get desktopRewriteTtlSave;
+
+  /// No description provided for @desktopRewriteTtlSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认重写 TTL 已保存'**
+  String get desktopRewriteTtlSaved;
+
+  /// No description provided for @desktopRewriteTtlInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'TTL 需为正整数'**
+  String get desktopRewriteTtlInvalid;
+
+  /// No description provided for @desktopRewriteToggleOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义 DNS 重写已开启'**
+  String get desktopRewriteToggleOn;
+
+  /// No description provided for @desktopRewriteToggleOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义 DNS 重写已关闭'**
+  String get desktopRewriteToggleOff;
+
+  /// No description provided for @desktopRewriteSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存重写配置失败：{message}'**
+  String desktopRewriteSaveFailed(String message);
+
+  /// No description provided for @desktopRewriteLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到 DNS 重写配置'**
+  String get desktopRewriteLoadFailed;
+
+  /// No description provided for @desktopRewriteRulesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 重写规则列表'**
+  String get desktopRewriteRulesTitle;
+
+  /// No description provided for @desktopRewriteRulesBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前生效的自定义伪装映射'**
+  String get desktopRewriteRulesBody;
+
+  /// No description provided for @desktopRewriteRulesCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条规则'**
+  String desktopRewriteRulesCount(int count);
+
+  /// No description provided for @desktopRewriteAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加重写规则'**
+  String get desktopRewriteAdd;
+
+  /// No description provided for @desktopRewriteSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索域名、目标 IP 或别名…'**
+  String get desktopRewriteSearch;
+
+  /// No description provided for @desktopRewriteEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂未添加任何 DNS 重写规则，点击上方按钮即可添加'**
+  String get desktopRewriteEmpty;
+
+  /// No description provided for @desktopRewriteNoMatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'未找到符合条件的重写规则'**
+  String get desktopRewriteNoMatch;
+
+  /// No description provided for @desktopRewriteResetSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除检索'**
+  String get desktopRewriteResetSearch;
+
+  /// No description provided for @desktopRewriteDomain.
+  ///
+  /// In zh, this message translates to:
+  /// **'匹配域名'**
+  String get desktopRewriteDomain;
+
+  /// No description provided for @desktopRewriteTypes.
+  ///
+  /// In zh, this message translates to:
+  /// **'类型'**
+  String get desktopRewriteTypes;
+
+  /// No description provided for @desktopRewriteTarget.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写目标详情'**
+  String get desktopRewriteTarget;
+
+  /// No description provided for @desktopRewriteTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'TTL'**
+  String get desktopRewriteTtl;
+
+  /// No description provided for @desktopRewriteActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作'**
+  String get desktopRewriteActions;
+
+  /// No description provided for @desktopRewriteEdit.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑重写规则'**
+  String get desktopRewriteEdit;
+
+  /// No description provided for @desktopRewriteDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除规则'**
+  String get desktopRewriteDelete;
+
+  /// No description provided for @desktopRewriteSeconds.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 秒'**
+  String desktopRewriteSeconds(int count);
+
+  /// No description provided for @desktopRewriteNoTarget.
+  ///
+  /// In zh, this message translates to:
+  /// **'无目标'**
+  String get desktopRewriteNoTarget;
+
+  /// No description provided for @desktopRewriteRcodeOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅返回 {rcode}，不返回任何记录'**
+  String desktopRewriteRcodeOnly(String rcode);
+
+  /// No description provided for @desktopRewriteDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除 DNS 重写规则'**
+  String get desktopRewriteDeleteTitle;
+
+  /// No description provided for @desktopRewriteDeleteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除域名「{domain}」的 DNS 重写规则吗？'**
+  String desktopRewriteDeleteBody(String domain);
+
+  /// No description provided for @desktopRewriteRuleSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写规则「{domain}」已保存并生效'**
+  String desktopRewriteRuleSaved(String domain);
+
+  /// No description provided for @desktopRewriteRuleDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写规则「{domain}」已删除'**
+  String desktopRewriteRuleDeleted(String domain);
+
+  /// No description provided for @desktopRewriteRuleFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存重写规则失败：{message}'**
+  String desktopRewriteRuleFailed(String message);
+
+  /// No description provided for @desktopRewriteDeleteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除规则失败：{message}'**
+  String desktopRewriteDeleteFailed(String message);
+
+  /// No description provided for @desktopRewriteAddTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加 DNS 重写与伪装规则'**
+  String get desktopRewriteAddTitle;
+
+  /// No description provided for @desktopRewriteEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑 DNS 重写规则'**
+  String get desktopRewriteEditTitle;
+
+  /// No description provided for @desktopRewriteDomainLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'匹配域名'**
+  String get desktopRewriteDomainLabel;
+
+  /// No description provided for @desktopRewriteDomainHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'如 host.lan 或 *.home.local'**
+  String get desktopRewriteDomainHint;
+
+  /// No description provided for @desktopRewriteDomainHelp.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持精确域名（如 router.lan）或泛域名（如 *.cluster.internal）'**
+  String get desktopRewriteDomainHelp;
+
+  /// No description provided for @desktopRewriteDomainRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入匹配域名（支持精准匹配或 *.lan 泛域名）'**
+  String get desktopRewriteDomainRequired;
+
+  /// No description provided for @desktopRewriteTargetMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'应答目标'**
+  String get desktopRewriteTargetMode;
+
+  /// No description provided for @desktopRewriteModeShortcut.
+  ///
+  /// In zh, this message translates to:
+  /// **'快捷目标'**
+  String get desktopRewriteModeShortcut;
+
+  /// No description provided for @desktopRewriteModeRecords.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义记录'**
+  String get desktopRewriteModeRecords;
+
+  /// No description provided for @desktopRewriteTargetType.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写目标类型'**
+  String get desktopRewriteTargetType;
+
+  /// No description provided for @desktopRewriteTypeIp.
+  ///
+  /// In zh, this message translates to:
+  /// **'A / AAAA 地址'**
+  String get desktopRewriteTypeIp;
+
+  /// No description provided for @desktopRewriteTypeCname.
+  ///
+  /// In zh, this message translates to:
+  /// **'CNAME 别名'**
+  String get desktopRewriteTypeCname;
+
+  /// No description provided for @desktopRewriteTypeTxt.
+  ///
+  /// In zh, this message translates to:
+  /// **'TXT 文本'**
+  String get desktopRewriteTypeTxt;
+
+  /// No description provided for @desktopRewriteIpsLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv4 / IPv6 目标解析地址'**
+  String get desktopRewriteIpsLabel;
+
+  /// No description provided for @desktopRewriteIpsHelp.
+  ///
+  /// In zh, this message translates to:
+  /// **'每行一个 IP 地址，支持多 IP 负载均衡返回'**
+  String get desktopRewriteIpsHelp;
+
+  /// No description provided for @desktopRewriteCnameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'CNAME 目标重定向域名'**
+  String get desktopRewriteCnameLabel;
+
+  /// No description provided for @desktopRewriteCnameHelp.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统将自动遵循别名链进行递归解析'**
+  String get desktopRewriteCnameHelp;
+
+  /// No description provided for @desktopRewriteTxtLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'TXT 记录内容（每行一条）'**
+  String get desktopRewriteTxtLabel;
+
+  /// No description provided for @desktopRewriteRecordsLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义记录'**
+  String get desktopRewriteRecordsLabel;
+
+  /// No description provided for @desktopRewriteRecordAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加记录'**
+  String get desktopRewriteRecordAdd;
+
+  /// No description provided for @desktopRewriteRecordEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未添加记录，点击「添加记录」开始'**
+  String get desktopRewriteRecordEmpty;
+
+  /// No description provided for @desktopRewriteRecordValueHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录取值'**
+  String get desktopRewriteRecordValueHint;
+
+  /// No description provided for @desktopRewriteRecordsHelp.
+  ///
+  /// In zh, this message translates to:
+  /// **'取值语法与 AdGuard 的 dnsrewrite 一致：MX 填「优先级 主机」，SRV 填「优先级 权重 端口 目标」，HTTPS/SVCB 填「优先级 目标 参数…」。仅与匹配记录类型的查询返回这些记录。'**
+  String get desktopRewriteRecordsHelp;
+
+  /// No description provided for @desktopRewriteRcodeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'应答码覆盖（可选）'**
+  String get desktopRewriteRcodeLabel;
+
+  /// No description provided for @desktopRewriteRcodeNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'不覆盖（正常返回记录）'**
+  String get desktopRewriteRcodeNone;
+
+  /// No description provided for @desktopRewriteRcodeWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择失败应答码后，本条规则只返回该错误码，不再返回任何记录；客户端会认为该域名不可用或被拒绝。'**
+  String get desktopRewriteRcodeWarning;
+
+  /// No description provided for @desktopRewriteTtlLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'生存时间 TTL（秒，可选）'**
+  String get desktopRewriteTtlLabel;
+
+  /// No description provided for @desktopRewriteTtlHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'留空则使用全局默认 TTL'**
+  String get desktopRewriteTtlHint;
+
+  /// No description provided for @desktopRewriteNeedIp.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入至少一个 IPv4 或 IPv6 目标解析地址'**
+  String get desktopRewriteNeedIp;
+
+  /// No description provided for @desktopRewriteNeedCname.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 CNAME 别名重定向目标域名'**
+  String get desktopRewriteNeedCname;
+
+  /// No description provided for @desktopRewriteNeedTxt.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入至少一条 TXT 记录文本'**
+  String get desktopRewriteNeedTxt;
+
+  /// No description provided for @desktopRewriteNeedRecord.
+  ///
+  /// In zh, this message translates to:
+  /// **'请至少添加一条有效记录（类型与取值均不能为空）'**
+  String get desktopRewriteNeedRecord;
+
+  /// No description provided for @desktopRewriteChipEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'空'**
+  String get desktopRewriteChipEmpty;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

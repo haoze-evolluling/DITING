@@ -16,6 +16,39 @@ Map<String, Object?> apiEnvelope(Object? data) => {
   'data': data,
 };
 
+/// A `GET /api/v1/status` payload's `rewrite` field and the answer of `/dns/rewrite/rules`. The
+/// service stores both in one config, so the fake does too.
+Map<String, Object?> rewritePayload({
+  bool enabled = true,
+  int ttl = 60,
+  List<Map<String, Object?>>? rules,
+}) => {
+  'enabled': enabled,
+  'ttl': ttl,
+  'rules':
+      rules ??
+      const [
+        {
+          'domain': 'host.lan',
+          'ips': ['192.168.1.100', 'fd00::100'],
+          'ttl': 120,
+        },
+        {'domain': 'alias.lan', 'cname': 'target.lan'},
+        {
+          'domain': 'text.lan',
+          'txt': ['v=spf1 ~all'],
+        },
+        {
+          'domain': 'mail.lan',
+          'records': [
+            {'type': 'MX', 'value': '32 mail.lan'},
+            {'type': 'A', 'value': '10.0.0.5'},
+          ],
+        },
+        {'domain': 'gone.lan', 'rcode': 'NXDOMAIN'},
+      ],
+};
+
 /// A `GET /api/v1/status` payload. Every value can be overridden, so a test states only the fields
 /// it asserts on.
 Map<String, Object?> statusPayload({
@@ -270,6 +303,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? cacheEntries,
     List<Map<String, Object?>>? cacheTop,
     Map<String, Object?>? cachePersist,
+    Map<String, Object?>? rewrite,
     this.failAfter,
     this.statusCode = 200,
   }) : status = status ?? statusPayload(),
@@ -284,7 +318,8 @@ class FakeDesktopBackend {
        cacheConfig = cacheConfig ?? cacheConfigPayload(),
        cacheEntries = cacheEntries ?? cacheEntriesPayload(),
        cacheTop = cacheTop ?? cacheTopPayload(),
-       cachePersist = cachePersist ?? cachePersistPayload();
+       cachePersist = cachePersist ?? cachePersistPayload(),
+       rewrite = rewrite ?? rewritePayload();
 
   Map<String, Object?> status;
   Map<String, Object?> service;
@@ -310,6 +345,17 @@ class FakeDesktopBackend {
   Map<String, Object?> cacheEntries;
   List<Map<String, Object?>> cacheTop;
   Map<String, Object?> cachePersist;
+
+  /// Mutated by `POST /dns/rewrite/configure` and `/dns/rewrite/rules`, as the service merges what
+  /// it receives. `GET /status` carries it as its `rewrite` field.
+  Map<String, Object?> rewrite;
+
+  /// Bodies of every rewrite config save, in order.
+  final rewriteConfigUpdates = <Map<String, Object?>>[];
+
+  /// Bodies of every rule save, and the domains of every delete, in order.
+  final rewriteRuleUpdates = <Map<String, Object?>>[];
+  final rewriteDeletes = <String>[];
 
   /// Bodies of every cache config save, in order.
   final cacheConfigUpdates = <Map<String, Object?>>[];
@@ -404,6 +450,40 @@ class FakeDesktopBackend {
         cacheLoads++;
         cachePersist = {...cachePersist, 'restored': 2};
       }
+      if (path == '/api/v1/dns/rewrite/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        rewriteConfigUpdates.add(body);
+        rewrite = {...rewrite, ...body};
+      }
+      if (path == '/api/v1/dns/rewrite/rules' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        rewriteRuleUpdates.add(body);
+        final rules = [
+          for (final item in rewrite['rules'] as List? ?? const [])
+            (item as Map).cast<String, Object?>(),
+        ];
+        final index = rules.indexWhere(
+          (rule) => rule['domain'] == body['domain'],
+        );
+        if (index >= 0) {
+          rules[index] = body;
+        } else {
+          rules.add(body);
+        }
+        rewrite = {...rewrite, 'rules': rules};
+      }
+      if (path == '/api/v1/dns/rewrite/rules' && request.method == 'DELETE') {
+        final domain = request.url.queryParameters['domain'] ?? '';
+        rewriteDeletes.add(domain);
+        rewrite = {
+          ...rewrite,
+          'rules': [
+            for (final item in rewrite['rules'] as List? ?? const [])
+              if ((item as Map)['domain'] != domain)
+                item.cast<String, Object?>(),
+          ],
+        };
+      }
       if (path == '/api/v1/status') _statusRequests++;
       final limit = failAfter;
       if (path == '/api/v1/status' &&
@@ -411,7 +491,8 @@ class FakeDesktopBackend {
           _statusRequests > limit) {
         throw http.ClientException('connection refused', request.url);
       }
-      if (rejectWrites && request.method == 'POST') {
+      if (rejectWrites &&
+          (request.method == 'POST' || request.method == 'DELETE')) {
         return http.Response.bytes(
           utf8.encode(
             jsonEncode({'success': false, 'error': 'write rejected'}),
@@ -430,7 +511,14 @@ class FakeDesktopBackend {
         );
       }
       return switch (path) {
-        '/api/v1/status' => http.Response(jsonEncode(apiEnvelope(status)), 200),
+        '/api/v1/status' => http.Response(
+          jsonEncode(apiEnvelope({...status, 'rewrite': rewrite})),
+          200,
+        ),
+        '/api/v1/dns/rewrite/rules' => http.Response(
+          jsonEncode(apiEnvelope(rewrite['rules'] ?? const [])),
+          200,
+        ),
         '/api/v1/service/status' => http.Response(
           jsonEncode(apiEnvelope(service)),
           200,

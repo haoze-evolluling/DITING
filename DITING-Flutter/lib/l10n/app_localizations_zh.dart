@@ -9762,4 +9762,248 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopCacheNoIps => '无';
+
+  @override
+  String get desktopHubRewrite => '自定义重写';
+
+  @override
+  String get desktopHubRewriteBody => '把域名指向指定 IP、别名或 TXT，本地直接权威应答';
+
+  @override
+  String get desktopRewriteTitle => '自定义 DNS 重写';
+
+  @override
+  String get desktopRewriteEngineTitle => '自定义 DNS 重写与域名伪装';
+
+  @override
+  String get desktopRewriteEngineBody =>
+      '匹配规则在上游解析前直接权威应答，无需等待外网请求；支持精确域名与 *.lan 泛域名。';
+
+  @override
+  String get desktopRewriteEngineOn => '重写引擎已就绪';
+
+  @override
+  String get desktopRewriteEngineOff => '重写引擎已停用';
+
+  @override
+  String get desktopRewriteEnabled => '重写已启用';
+
+  @override
+  String get desktopRewriteDisabled => '重写已关闭';
+
+  @override
+  String get desktopRewriteDefaultTtl => '默认生存期（秒）';
+
+  @override
+  String get desktopRewriteTtlSave => '保存';
+
+  @override
+  String get desktopRewriteTtlSaved => '默认重写 TTL 已保存';
+
+  @override
+  String get desktopRewriteTtlInvalid => 'TTL 需为正整数';
+
+  @override
+  String get desktopRewriteToggleOn => '自定义 DNS 重写已开启';
+
+  @override
+  String get desktopRewriteToggleOff => '自定义 DNS 重写已关闭';
+
+  @override
+  String desktopRewriteSaveFailed(String message) {
+    return '保存重写配置失败：$message';
+  }
+
+  @override
+  String get desktopRewriteLoadFailed => '读不到 DNS 重写配置';
+
+  @override
+  String get desktopRewriteRulesTitle => 'DNS 重写规则列表';
+
+  @override
+  String get desktopRewriteRulesBody => '当前生效的自定义伪装映射';
+
+  @override
+  String desktopRewriteRulesCount(int count) {
+    return '$count 条规则';
+  }
+
+  @override
+  String get desktopRewriteAdd => '添加重写规则';
+
+  @override
+  String get desktopRewriteSearch => '搜索域名、目标 IP 或别名…';
+
+  @override
+  String get desktopRewriteEmpty => '暂未添加任何 DNS 重写规则，点击上方按钮即可添加';
+
+  @override
+  String get desktopRewriteNoMatch => '未找到符合条件的重写规则';
+
+  @override
+  String get desktopRewriteResetSearch => '清除检索';
+
+  @override
+  String get desktopRewriteDomain => '匹配域名';
+
+  @override
+  String get desktopRewriteTypes => '类型';
+
+  @override
+  String get desktopRewriteTarget => '重写目标详情';
+
+  @override
+  String get desktopRewriteTtl => 'TTL';
+
+  @override
+  String get desktopRewriteActions => '操作';
+
+  @override
+  String get desktopRewriteEdit => '编辑重写规则';
+
+  @override
+  String get desktopRewriteDelete => '删除规则';
+
+  @override
+  String desktopRewriteSeconds(int count) {
+    return '$count 秒';
+  }
+
+  @override
+  String get desktopRewriteNoTarget => '无目标';
+
+  @override
+  String desktopRewriteRcodeOnly(String rcode) {
+    return '仅返回 $rcode，不返回任何记录';
+  }
+
+  @override
+  String get desktopRewriteDeleteTitle => '删除 DNS 重写规则';
+
+  @override
+  String desktopRewriteDeleteBody(String domain) {
+    return '确定要删除域名「$domain」的 DNS 重写规则吗？';
+  }
+
+  @override
+  String desktopRewriteRuleSaved(String domain) {
+    return '重写规则「$domain」已保存并生效';
+  }
+
+  @override
+  String desktopRewriteRuleDeleted(String domain) {
+    return '重写规则「$domain」已删除';
+  }
+
+  @override
+  String desktopRewriteRuleFailed(String message) {
+    return '保存重写规则失败：$message';
+  }
+
+  @override
+  String desktopRewriteDeleteFailed(String message) {
+    return '删除规则失败：$message';
+  }
+
+  @override
+  String get desktopRewriteAddTitle => '添加 DNS 重写与伪装规则';
+
+  @override
+  String get desktopRewriteEditTitle => '编辑 DNS 重写规则';
+
+  @override
+  String get desktopRewriteDomainLabel => '匹配域名';
+
+  @override
+  String get desktopRewriteDomainHint => '如 host.lan 或 *.home.local';
+
+  @override
+  String get desktopRewriteDomainHelp =>
+      '支持精确域名（如 router.lan）或泛域名（如 *.cluster.internal）';
+
+  @override
+  String get desktopRewriteDomainRequired => '请输入匹配域名（支持精准匹配或 *.lan 泛域名）';
+
+  @override
+  String get desktopRewriteTargetMode => '应答目标';
+
+  @override
+  String get desktopRewriteModeShortcut => '快捷目标';
+
+  @override
+  String get desktopRewriteModeRecords => '自定义记录';
+
+  @override
+  String get desktopRewriteTargetType => '重写目标类型';
+
+  @override
+  String get desktopRewriteTypeIp => 'A / AAAA 地址';
+
+  @override
+  String get desktopRewriteTypeCname => 'CNAME 别名';
+
+  @override
+  String get desktopRewriteTypeTxt => 'TXT 文本';
+
+  @override
+  String get desktopRewriteIpsLabel => 'IPv4 / IPv6 目标解析地址';
+
+  @override
+  String get desktopRewriteIpsHelp => '每行一个 IP 地址，支持多 IP 负载均衡返回';
+
+  @override
+  String get desktopRewriteCnameLabel => 'CNAME 目标重定向域名';
+
+  @override
+  String get desktopRewriteCnameHelp => '系统将自动遵循别名链进行递归解析';
+
+  @override
+  String get desktopRewriteTxtLabel => 'TXT 记录内容（每行一条）';
+
+  @override
+  String get desktopRewriteRecordsLabel => '自定义记录';
+
+  @override
+  String get desktopRewriteRecordAdd => '添加记录';
+
+  @override
+  String get desktopRewriteRecordEmpty => '尚未添加记录，点击「添加记录」开始';
+
+  @override
+  String get desktopRewriteRecordValueHint => '记录取值';
+
+  @override
+  String get desktopRewriteRecordsHelp =>
+      '取值语法与 AdGuard 的 dnsrewrite 一致：MX 填「优先级 主机」，SRV 填「优先级 权重 端口 目标」，HTTPS/SVCB 填「优先级 目标 参数…」。仅与匹配记录类型的查询返回这些记录。';
+
+  @override
+  String get desktopRewriteRcodeLabel => '应答码覆盖（可选）';
+
+  @override
+  String get desktopRewriteRcodeNone => '不覆盖（正常返回记录）';
+
+  @override
+  String get desktopRewriteRcodeWarning =>
+      '选择失败应答码后，本条规则只返回该错误码，不再返回任何记录；客户端会认为该域名不可用或被拒绝。';
+
+  @override
+  String get desktopRewriteTtlLabel => '生存时间 TTL（秒，可选）';
+
+  @override
+  String get desktopRewriteTtlHint => '留空则使用全局默认 TTL';
+
+  @override
+  String get desktopRewriteNeedIp => '请输入至少一个 IPv4 或 IPv6 目标解析地址';
+
+  @override
+  String get desktopRewriteNeedCname => '请输入 CNAME 别名重定向目标域名';
+
+  @override
+  String get desktopRewriteNeedTxt => '请输入至少一条 TXT 记录文本';
+
+  @override
+  String get desktopRewriteNeedRecord => '请至少添加一条有效记录（类型与取值均不能为空）';
+
+  @override
+  String get desktopRewriteChipEmpty => '空';
 }

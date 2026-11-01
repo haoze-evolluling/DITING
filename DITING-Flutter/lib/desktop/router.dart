@@ -1,6 +1,7 @@
 import 'package:diting/desktop/pages/desktop_pages.dart';
 import 'package:diting/desktop/pages/hub/desktop_cache_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_hub_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/pages/logs/desktop_logs_page.dart';
@@ -69,6 +70,11 @@ List<RouteBase> _subRoutesOf(String location) => switch (location) {
       path: 'cache',
       pageBuilder: (context, state) =>
           androidDefaultPage(state, const DesktopCachePage()),
+    ),
+    GoRoute(
+      path: 'rewrite',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopRewritePage()),
     ),
   ],
   _ => const [],
