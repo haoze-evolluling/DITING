@@ -10006,4 +10006,124 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopRewriteChipEmpty => '空';
+
+  @override
+  String get desktopZoneTitle => '本地权威区（zone 文件）';
+
+  @override
+  String get desktopZoneBody =>
+      '整段声明一个名字空间由本机负责，区内未收录的名字返回权威 NODATA 而非转发上游；适合内网域名与局域网服务发现';
+
+  @override
+  String desktopZoneBadge(int zones, int maxZones, int records) {
+    return '$zones / $maxZones 区 · $records 个名字';
+  }
+
+  @override
+  String get desktopZoneRules =>
+      '区顶点及其以下所有名字都由本地负责：区里没有的名字会被权威地判为「不存在」，不会漏到公网，同名时也优先于 hosts 条目。因此顶点要写成完整后缀（如 lan.），而不是单条域名。区文件语法遵循 RFC 1035，INCLUDE 指令出于安全考虑一律拒绝。';
+
+  @override
+  String get desktopZoneDefaultTtl => '默认 TTL（秒）';
+
+  @override
+  String get desktopZoneTtlSaved => '本地权威区默认 TTL 已保存';
+
+  @override
+  String get desktopZoneTtlInvalid => 'TTL 需为正整数';
+
+  @override
+  String get desktopZoneToggleOn => '本地权威区已启用';
+
+  @override
+  String get desktopZoneToggleOff => '本地权威区已停用';
+
+  @override
+  String desktopZoneSaveFailed(String message) {
+    return '保存本地权威区配置失败：$message';
+  }
+
+  @override
+  String get desktopZoneLoadFailed => '读不到本地权威区配置';
+
+  @override
+  String desktopZoneLimit(int records) {
+    return '合计上限 $records 条记录；超出部分会被截断并在区上标注。';
+  }
+
+  @override
+  String get desktopZoneAdd => '添加区';
+
+  @override
+  String get desktopZoneSaveAll => '保存全部';
+
+  @override
+  String get desktopZoneSaved => '本地权威区配置已保存并生效';
+
+  @override
+  String get desktopZoneEmpty => '尚未配置任何本地权威区';
+
+  @override
+  String desktopZoneMaxZones(int max) {
+    return '最多支持 $max 个区，请先删除不再使用的区';
+  }
+
+  @override
+  String get desktopZoneOriginHint => '区顶点，如 lan.';
+
+  @override
+  String desktopZoneDeleted(String origin) {
+    return '区「$origin」已删除';
+  }
+
+  @override
+  String get desktopZoneUnnamed => '（未命名）';
+
+  @override
+  String get desktopZoneStateDisabled => '已停用';
+
+  @override
+  String get desktopZoneStatePending => '待构建';
+
+  @override
+  String get desktopZoneStateFailed => '解析失败';
+
+  @override
+  String desktopZoneStateTruncated(int count) {
+    return '已加载 $count 条（截断）';
+  }
+
+  @override
+  String desktopZoneStateLoaded(int count) {
+    return '已加载 $count 条';
+  }
+
+  @override
+  String get desktopZoneFailedReason => '该区未被加载';
+
+  @override
+  String get desktopZoneExpand => '展开编辑';
+
+  @override
+  String get desktopZoneCollapse => '收起';
+
+  @override
+  String get desktopZoneDelete => '删除该区';
+
+  @override
+  String get desktopZoneContent => '区文件内容';
+
+  @override
+  String get desktopZonePreview => '预演解析';
+
+  @override
+  String get desktopZonePreviewNote => '用与后端一致的解析路径试跑一次；改动需点「保存全部」才会生效。';
+
+  @override
+  String get desktopZonePreviewEmpty => '（空区，无记录）';
+
+  @override
+  String desktopZonePreviewMore(int count) {
+    return '… 其余 $count 条已省略';
+  }
 }

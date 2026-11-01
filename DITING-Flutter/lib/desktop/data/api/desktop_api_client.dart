@@ -12,6 +12,7 @@ import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_cache_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
+import 'package:diting/desktop/data/api/desktop_zone_models.dart';
 import 'package:http/http.dart' as http;
 
 /// Where the desktop app finds the local service. Loopback by default; the token is only needed
@@ -262,6 +263,39 @@ class DesktopApiClient {
       query: {'domain': domain},
     );
   }
+
+  /// The config plus the service's build result for every zone. Saving posts the form and adopts
+  /// the rebuilt state, because a zone that fails to parse still has to be visible as failing.
+  Future<DesktopZoneConfig> zoneConfig() async =>
+      DesktopZoneConfig.fromJson(await _get('/api/v1/dns/zone/config'));
+
+  /// Only the fields given are changed; the answer is the rebuilt config, or null when the service
+  /// saved but could not describe the result (it then asks again with [zoneConfig]).
+  Future<DesktopZoneConfig?> updateZoneConfig({
+    bool? enabled,
+    int? ttl,
+    List<DesktopZoneEntry>? zones,
+  }) async {
+    final body = <String, Object?>{'enabled': ?enabled, 'ttl': ?ttl};
+    if (zones != null) {
+      body['zones'] = [for (final zone in zones) zone.toJson()];
+    }
+    final data = await _postData('/api/v1/dns/zone/config', body: body);
+    return data.isEmpty ? null : DesktopZoneConfig.fromJson(data);
+  }
+
+  /// Runs one zone text through the engine's parser without saving it. A parse failure is an
+  /// expected answer (`success: false`), not a failed request.
+  Future<DesktopZoneTest> testZone({
+    required String origin,
+    required String content,
+    int ttl = desktopZoneDefaultTtl,
+  }) async => DesktopZoneTest.fromJson(
+    await _postData(
+      '/api/v1/dns/zone/test',
+      body: {'origin': origin, 'content': content, 'ttl': ttl},
+    ),
+  );
 
   void close() => _http.close();
 

@@ -9,44 +9,16 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import 'desktop_cache_fakes.dart';
+import 'desktop_rewrite_fakes.dart';
+import 'desktop_zone_fakes.dart';
+
+export 'desktop_rewrite_fakes.dart';
+export 'desktop_zone_fakes.dart';
 
 /// Envelope the service uses for every answer.
 Map<String, Object?> apiEnvelope(Object? data) => {
   'success': true,
   'data': data,
-};
-
-/// A `GET /api/v1/status` payload's `rewrite` field and the answer of `/dns/rewrite/rules`. The
-/// service stores both in one config, so the fake does too.
-Map<String, Object?> rewritePayload({
-  bool enabled = true,
-  int ttl = 60,
-  List<Map<String, Object?>>? rules,
-}) => {
-  'enabled': enabled,
-  'ttl': ttl,
-  'rules':
-      rules ??
-      const [
-        {
-          'domain': 'host.lan',
-          'ips': ['192.168.1.100', 'fd00::100'],
-          'ttl': 120,
-        },
-        {'domain': 'alias.lan', 'cname': 'target.lan'},
-        {
-          'domain': 'text.lan',
-          'txt': ['v=spf1 ~all'],
-        },
-        {
-          'domain': 'mail.lan',
-          'records': [
-            {'type': 'MX', 'value': '32 mail.lan'},
-            {'type': 'A', 'value': '10.0.0.5'},
-          ],
-        },
-        {'domain': 'gone.lan', 'rcode': 'NXDOMAIN'},
-      ],
 };
 
 /// A `GET /api/v1/status` payload. Every value can be overridden, so a test states only the fields
@@ -304,6 +276,8 @@ class FakeDesktopBackend {
     List<Map<String, Object?>>? cacheTop,
     Map<String, Object?>? cachePersist,
     Map<String, Object?>? rewrite,
+    Map<String, Object?>? zone,
+    Map<String, Object?>? zoneTest,
     this.failAfter,
     this.statusCode = 200,
   }) : status = status ?? statusPayload(),
@@ -319,7 +293,9 @@ class FakeDesktopBackend {
        cacheEntries = cacheEntries ?? cacheEntriesPayload(),
        cacheTop = cacheTop ?? cacheTopPayload(),
        cachePersist = cachePersist ?? cachePersistPayload(),
-       rewrite = rewrite ?? rewritePayload();
+       rewrite = rewrite ?? rewritePayload(),
+       zone = zone ?? zonePayload(),
+       zoneTest = zoneTest ?? zoneTestPayload();
 
   Map<String, Object?> status;
   Map<String, Object?> service;
@@ -356,6 +332,16 @@ class FakeDesktopBackend {
   /// Bodies of every rule save, and the domains of every delete, in order.
   final rewriteRuleUpdates = <Map<String, Object?>>[];
   final rewriteDeletes = <String>[];
+
+  /// Mutated by `POST /dns/zone/config`; the fake rebuilds every zone's state after each save.
+  Map<String, Object?> zone;
+
+  /// The answer `/api/v1/dns/zone/test` gives next.
+  Map<String, Object?> zoneTest;
+
+  /// Bodies of every zone config save and every zone preview, in order.
+  final zoneConfigUpdates = <Map<String, Object?>>[];
+  final zoneTests = <Map<String, Object?>>[];
 
   /// Bodies of every cache config save, in order.
   final cacheConfigUpdates = <Map<String, Object?>>[];
@@ -484,6 +470,16 @@ class FakeDesktopBackend {
           ],
         };
       }
+      if (path == '/api/v1/dns/zone/config' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        zoneConfigUpdates.add(body);
+        zone = zoneConfigAfter(zone, body);
+      }
+      if (path == '/api/v1/dns/zone/test' && request.method == 'POST') {
+        zoneTests.add(
+          (jsonDecode(request.body) as Map).cast<String, Object?>(),
+        );
+      }
       if (path == '/api/v1/status') _statusRequests++;
       final limit = failAfter;
       if (path == '/api/v1/status' &&
@@ -517,6 +513,14 @@ class FakeDesktopBackend {
         ),
         '/api/v1/dns/rewrite/rules' => http.Response(
           jsonEncode(apiEnvelope(rewrite['rules'] ?? const [])),
+          200,
+        ),
+        '/api/v1/dns/zone/config' => http.Response(
+          jsonEncode(apiEnvelope(zone)),
+          200,
+        ),
+        '/api/v1/dns/zone/test' => http.Response(
+          jsonEncode(apiEnvelope(zoneTest)),
           200,
         ),
         '/api/v1/service/status' => http.Response(

@@ -18273,6 +18273,210 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'空'**
   String get desktopRewriteChipEmpty;
+
+  /// No description provided for @desktopZoneTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地权威区（zone 文件）'**
+  String get desktopZoneTitle;
+
+  /// No description provided for @desktopZoneBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'整段声明一个名字空间由本机负责，区内未收录的名字返回权威 NODATA 而非转发上游；适合内网域名与局域网服务发现'**
+  String get desktopZoneBody;
+
+  /// No description provided for @desktopZoneBadge.
+  ///
+  /// In zh, this message translates to:
+  /// **'{zones} / {maxZones} 区 · {records} 个名字'**
+  String desktopZoneBadge(int zones, int maxZones, int records);
+
+  /// No description provided for @desktopZoneRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'区顶点及其以下所有名字都由本地负责：区里没有的名字会被权威地判为「不存在」，不会漏到公网，同名时也优先于 hosts 条目。因此顶点要写成完整后缀（如 lan.），而不是单条域名。区文件语法遵循 RFC 1035，INCLUDE 指令出于安全考虑一律拒绝。'**
+  String get desktopZoneRules;
+
+  /// No description provided for @desktopZoneDefaultTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认 TTL（秒）'**
+  String get desktopZoneDefaultTtl;
+
+  /// No description provided for @desktopZoneTtlSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地权威区默认 TTL 已保存'**
+  String get desktopZoneTtlSaved;
+
+  /// No description provided for @desktopZoneTtlInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'TTL 需为正整数'**
+  String get desktopZoneTtlInvalid;
+
+  /// No description provided for @desktopZoneToggleOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地权威区已启用'**
+  String get desktopZoneToggleOn;
+
+  /// No description provided for @desktopZoneToggleOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地权威区已停用'**
+  String get desktopZoneToggleOff;
+
+  /// No description provided for @desktopZoneSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存本地权威区配置失败：{message}'**
+  String desktopZoneSaveFailed(String message);
+
+  /// No description provided for @desktopZoneLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到本地权威区配置'**
+  String get desktopZoneLoadFailed;
+
+  /// No description provided for @desktopZoneLimit.
+  ///
+  /// In zh, this message translates to:
+  /// **'合计上限 {records} 条记录；超出部分会被截断并在区上标注。'**
+  String desktopZoneLimit(int records);
+
+  /// No description provided for @desktopZoneAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加区'**
+  String get desktopZoneAdd;
+
+  /// No description provided for @desktopZoneSaveAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存全部'**
+  String get desktopZoneSaveAll;
+
+  /// No description provided for @desktopZoneSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地权威区配置已保存并生效'**
+  String get desktopZoneSaved;
+
+  /// No description provided for @desktopZoneEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未配置任何本地权威区'**
+  String get desktopZoneEmpty;
+
+  /// No description provided for @desktopZoneMaxZones.
+  ///
+  /// In zh, this message translates to:
+  /// **'最多支持 {max} 个区，请先删除不再使用的区'**
+  String desktopZoneMaxZones(int max);
+
+  /// No description provided for @desktopZoneOriginHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'区顶点，如 lan.'**
+  String get desktopZoneOriginHint;
+
+  /// No description provided for @desktopZoneDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'区「{origin}」已删除'**
+  String desktopZoneDeleted(String origin);
+
+  /// No description provided for @desktopZoneUnnamed.
+  ///
+  /// In zh, this message translates to:
+  /// **'（未命名）'**
+  String get desktopZoneUnnamed;
+
+  /// No description provided for @desktopZoneStateDisabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已停用'**
+  String get desktopZoneStateDisabled;
+
+  /// No description provided for @desktopZoneStatePending.
+  ///
+  /// In zh, this message translates to:
+  /// **'待构建'**
+  String get desktopZoneStatePending;
+
+  /// No description provided for @desktopZoneStateFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析失败'**
+  String get desktopZoneStateFailed;
+
+  /// No description provided for @desktopZoneStateTruncated.
+  ///
+  /// In zh, this message translates to:
+  /// **'已加载 {count} 条（截断）'**
+  String desktopZoneStateTruncated(int count);
+
+  /// No description provided for @desktopZoneStateLoaded.
+  ///
+  /// In zh, this message translates to:
+  /// **'已加载 {count} 条'**
+  String desktopZoneStateLoaded(int count);
+
+  /// No description provided for @desktopZoneFailedReason.
+  ///
+  /// In zh, this message translates to:
+  /// **'该区未被加载'**
+  String get desktopZoneFailedReason;
+
+  /// No description provided for @desktopZoneExpand.
+  ///
+  /// In zh, this message translates to:
+  /// **'展开编辑'**
+  String get desktopZoneExpand;
+
+  /// No description provided for @desktopZoneCollapse.
+  ///
+  /// In zh, this message translates to:
+  /// **'收起'**
+  String get desktopZoneCollapse;
+
+  /// No description provided for @desktopZoneDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除该区'**
+  String get desktopZoneDelete;
+
+  /// No description provided for @desktopZoneContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'区文件内容'**
+  String get desktopZoneContent;
+
+  /// No description provided for @desktopZonePreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'预演解析'**
+  String get desktopZonePreview;
+
+  /// No description provided for @desktopZonePreviewNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'用与后端一致的解析路径试跑一次；改动需点「保存全部」才会生效。'**
+  String get desktopZonePreviewNote;
+
+  /// No description provided for @desktopZonePreviewEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'（空区，无记录）'**
+  String get desktopZonePreviewEmpty;
+
+  /// No description provided for @desktopZonePreviewMore.
+  ///
+  /// In zh, this message translates to:
+  /// **'… 其余 {count} 条已省略'**
+  String desktopZonePreviewMore(int count);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

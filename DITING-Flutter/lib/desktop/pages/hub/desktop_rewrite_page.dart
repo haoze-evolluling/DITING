@@ -11,6 +11,7 @@ import 'package:diting/desktop/data/api/desktop_rewrite_providers.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting/desktop/pages/hub/widgets/rewrite_engine_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/rewrite_rules_card.dart';
+import 'package:diting/desktop/pages/hub/widgets/zone_file_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
@@ -72,6 +73,7 @@ class DesktopRewritePage extends ConsumerWidget {
                             config: config,
                             saving: state.saving,
                           ),
+                          const ZoneFileCard(),
                         ],
                       ),
                     ),

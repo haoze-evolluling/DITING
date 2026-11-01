@@ -10657,4 +10657,125 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopRewriteChipEmpty => 'Empty';
+
+  @override
+  String get desktopZoneTitle => 'Local zones';
+
+  @override
+  String get desktopZoneBody =>
+      'Declare a whole namespace as this machine\'s own: names missing from a zone answer authoritative NODATA instead of leaking upstream. Made for internal names and LAN discovery';
+
+  @override
+  String desktopZoneBadge(int zones, int maxZones, int records) {
+    return '$zones / $maxZones zones · $records names';
+  }
+
+  @override
+  String get desktopZoneRules =>
+      'The apex and every name below it belong to this machine: a name missing from the zone is authoritatively answered as non-existent rather than leaking to the internet, and the zone wins over a hosts entry. The apex must be a complete suffix (lan.), not a single host name. Syntax follows RFC 1035; INCLUDE is refused for security.';
+
+  @override
+  String get desktopZoneDefaultTtl => 'Default TTL (s)';
+
+  @override
+  String get desktopZoneTtlSaved => 'The default zone TTL was saved';
+
+  @override
+  String get desktopZoneTtlInvalid => 'The TTL must be a positive whole number';
+
+  @override
+  String get desktopZoneToggleOn => 'Local zones are on';
+
+  @override
+  String get desktopZoneToggleOff => 'Local zones are off';
+
+  @override
+  String desktopZoneSaveFailed(String message) {
+    return 'Could not save the zone config: $message';
+  }
+
+  @override
+  String get desktopZoneLoadFailed => 'Could not read the local zone config';
+
+  @override
+  String desktopZoneLimit(int records) {
+    return '$records records in total; anything beyond that is truncated and marked on the zone.';
+  }
+
+  @override
+  String get desktopZoneAdd => 'Add zone';
+
+  @override
+  String get desktopZoneSaveAll => 'Save all';
+
+  @override
+  String get desktopZoneSaved => 'The zone config was saved and is in effect';
+
+  @override
+  String get desktopZoneEmpty => 'No local zone configured yet';
+
+  @override
+  String desktopZoneMaxZones(int max) {
+    return 'At most $max zones; delete one that is no longer used first';
+  }
+
+  @override
+  String get desktopZoneOriginHint => 'Apex, for example lan.';
+
+  @override
+  String desktopZoneDeleted(String origin) {
+    return 'Zone “$origin” deleted';
+  }
+
+  @override
+  String get desktopZoneUnnamed => '(unnamed)';
+
+  @override
+  String get desktopZoneStateDisabled => 'Disabled';
+
+  @override
+  String get desktopZoneStatePending => 'Not built';
+
+  @override
+  String get desktopZoneStateFailed => 'Failed';
+
+  @override
+  String desktopZoneStateTruncated(int count) {
+    return 'Loaded $count (truncated)';
+  }
+
+  @override
+  String desktopZoneStateLoaded(int count) {
+    return 'Loaded $count';
+  }
+
+  @override
+  String get desktopZoneFailedReason => 'This zone was not loaded';
+
+  @override
+  String get desktopZoneExpand => 'Expand';
+
+  @override
+  String get desktopZoneCollapse => 'Collapse';
+
+  @override
+  String get desktopZoneDelete => 'Delete zone';
+
+  @override
+  String get desktopZoneContent => 'Zone file contents';
+
+  @override
+  String get desktopZonePreview => 'Preview';
+
+  @override
+  String get desktopZonePreviewNote =>
+      'Runs the same parser the service uses; the edits only take effect after “Save all”.';
+
+  @override
+  String get desktopZonePreviewEmpty => '(Empty zone, no records)';
+
+  @override
+  String desktopZonePreviewMore(int count) {
+    return '… $count more omitted';
+  }
 }
