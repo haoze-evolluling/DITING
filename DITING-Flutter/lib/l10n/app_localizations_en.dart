@@ -991,6 +991,13 @@ class AppL10nEn extends AppL10n {
   String get commonNoData => 'No data';
 
   @override
+  String get commonPendingTitle => 'Not connected yet';
+
+  @override
+  String get commonPendingBody =>
+      'This page is not connected to the local service yet; live data appears once it is.';
+
+  @override
   String intranetModeNotListening(String mode) {
     return '$mode does not listen on the LAN, so other devices cannot use this as their DNS';
   }

@@ -299,6 +299,8 @@
   "speedNoDataInMode": "No rate data in this mode",
   "speedWaitingSample": "Waiting for the first sample",
   "commonNoData": "No data",
+  "commonPendingTitle": "Not connected yet",
+  "commonPendingBody": "This page is not connected to the local service yet; live data appears once it is.",
   "intranetModeNotListening": "{mode} does not listen on the LAN, so other devices cannot use this as their DNS",
   "intranetListeningOn": "Listening on 0.0.0.0:{port}; point other devices' DNS at the address above",
   "intranetServiceStopped": "Service not started: port {port} is bound once it starts",

@@ -1891,6 +1891,18 @@ abstract class AppL10n {
   /// **'无数据'**
   String get commonNoData;
 
+  /// No description provided for @commonPendingTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未接入'**
+  String get commonPendingTitle;
+
+  /// No description provided for @commonPendingBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个页面还没有连接到本机服务，接入后会显示实时数据。'**
+  String get commonPendingBody;
+
   /// No description provided for @intranetModeNotListening.
   ///
   /// In zh, this message translates to:

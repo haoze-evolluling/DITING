@@ -951,6 +951,12 @@ class AppL10nZh extends AppL10n {
   String get commonNoData => '无数据';
 
   @override
+  String get commonPendingTitle => '尚未接入';
+
+  @override
+  String get commonPendingBody => '这个页面还没有连接到本机服务，接入后会显示实时数据。';
+
+  @override
   String intranetModeNotListening(String mode) {
     return '$mode不监听局域网，其他设备无法把这里当 DNS';
   }

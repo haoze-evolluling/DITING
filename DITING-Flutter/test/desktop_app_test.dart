@@ -3,7 +3,7 @@ import 'package:diting/app/theme/manager.dart';
 import 'package:diting/data/prefs/legacy_prefs_store.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
-import 'package:diting/desktop/pages/bootstrap_page.dart';
+import 'package:diting/desktop/pages/desktop_pages.dart';
 import 'package:diting/state/appearance_providers.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +21,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: DesktopApp()));
     await tester.pumpAndSettle();
 
-    final context = tester.element(find.byType(DesktopBootstrapPage));
+    final context = tester.element(find.byType(DesktopHomePage));
     final expected = buildAppTheme(
       AppThemeSpec(
         seedColor: AppPalette.blue.effectiveSeed,
@@ -79,7 +79,7 @@ void main() {
     container.read(pureBlackProvider.notifier).toggle(true);
     await tester.pumpAndSettle();
 
-    final context = tester.element(find.byType(DesktopBootstrapPage));
+    final context = tester.element(find.byType(DesktopHomePage));
     expect(Theme.of(context).brightness, Brightness.dark);
     expect(Theme.of(context).colorScheme.surface, Colors.black);
     expect(ViewScope.isMobileOf(context), isTrue);

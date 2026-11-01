@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与重建约束
 
-> 当前状态：**第 1 步（入口、主题与外观偏好）已完成；Wails 集成尚未切换**
+> 当前状态：**第 1 步（入口、主题与外观偏好）、第 2 步（壳与导航）已完成；Wails 集成尚未切换**
 > Windows 桌面窗口仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 目标（已修订）
@@ -74,14 +74,17 @@
 ## 6. 当前仓库状态与构建方式
 
 - `DITING-Flutter` 的 Android 入口仍为 `lib/main.dart`；桌面预览入口为 `lib/desktop/main.dart`，`web/` 仅作为 Wails/WebView 的编译宿主。
-- 桌面入口复用 `buildAppTheme`、`AppThemeCache`、`ThemeCrossFade`、`AppScopes`、液态玻璃作用域与全部本地化 delegate，页面暂时只有 `CommonScaffold` + `PageBody` 启动占位。
+- 桌面入口复用 `buildAppTheme`、`AppThemeCache`、`ThemeCrossFade`、`AppScopes`、液态玻璃作用域与全部本地化 delegate。
+- 桌面路由 `lib/desktop/router.dart` 用共享的 `branchOrder` 生成六个分支；分支路径与顺序的唯一来源是 `lib/routes/branches.dart`（`lib/router.dart` 重新导出它）。
+- 壳与底栏的唯一实现是 `lib/shell/dock_shell.dart` 的 `DockShell`：Android 的 `AppShell` 只在它外面加服务器模式分支，桌面直接使用。`NavigationDock` / 宽屏 `NavigationBar` 降级、`DockInsetScope` 预留、标签切换动效都在这一个文件里。
+- 六个分支页面位于 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + `PageBody` + `NullStatus`（文案为 ARB 的 `commonPendingTitle` / `commonPendingBody`），标题与 Android 同键；首页仪表盘留给第 3 步。
 - 桌面外观偏好通过 `SharedPreferencesLegacyPrefsStore` 使用与 Android 相同的容器和键；Android 仍走原生 MethodChannel。
 
 ```bash
 cd DITING-Flutter
 flutter run -d chrome -t lib/desktop/main.dart
 flutter build web -t lib/desktop/main.dart
-flutter test test/desktop_app_test.dart test/desktop_preferences_test.dart
+flutter test test/desktop_app_test.dart test/desktop_shell_test.dart test/desktop_preferences_test.dart
 ```
 
 - Windows 桌面窗口仍加载 `Desktop/frontend`（Vue 3），`wails.json` 使用 `npm install` / `npm run build`，窗口恢复 `1280×720` 最小尺寸与 16:9 比例锁定。
@@ -90,8 +93,8 @@ flutter test test/desktop_app_test.dart test/desktop_preferences_test.dart
 ## 7. 重建顺序
 
 1. **入口与主题（已完成）**：桌面入口已装配 `buildAppTheme` + `AppThemeCache` + `ThemeCrossFade` + `AppScopes` + `AppUiLocalizations.delegate`，外观偏好使用 Android 的存储键并跨重启保存。
-2. **壳与导航**：六个分支的 `StatefulShellRoute.indexedStack`，`DockInsetScope` + `NavigationDock`（宽屏降级 `NavigationBar`），标签切换过渡复用 `_TabTransitionHost` 的语义。
-3. **页面骨架**：`CommonScaffold` + `PageBody`；首页按 Android 仪表盘重建（电源按钮、诗句、卡片板），其余分支先用 `NullStatus` 表达"尚未接入"，不用假数据。
+2. **壳与导航（已完成）**：六个分支的 `StatefulShellRoute.indexedStack`，`DockInsetScope` + `NavigationDock`（宽屏降级 `NavigationBar`），标签切换过渡复用 `_TabTransitionHost` 的语义。实现下沉为共享的 `lib/shell/dock_shell.dart`，Android 与桌面共用；桌面只保留 `lib/desktop/router.dart` 的页面映射，不写第二套壳。
+3. **页面骨架**：`CommonScaffold` + `PageBody`；首页按 Android 仪表盘重建（电源按钮、诗句、卡片板），其余分支先用 `NullStatus` 表达"尚未接入"，不用假数据。（六个分支的骨架与占位已随第 2 步落地，首页内容待建）
 4. **数据接入**：按分支逐个接本机 HTTP API 与 Wails 绑定，替换占位。
 5. **外观设置**：复用 `lib/pages/appearance` 的组件与预览语义，不另做一套。
 
@@ -99,7 +102,7 @@ flutter test test/desktop_app_test.dart test/desktop_preferences_test.dart
 
 ## 8. 验收与守卫
 
-重建后必须存在以下自动化守卫，防止再次偏离：
+重建后必须存在以下自动化守卫，防止再次偏离（当前实现：`test/desktop_app_test.dart`、`test/desktop_shell_test.dart`）：
 
 1. **主题守卫**：同一 `AppThemeSpec` 下，桌面 `ThemeData` 的 `colorScheme`、`textTheme`、`cardTheme.shape` 与 `buildAppTheme` 输出一致。
 2. **骨架守卫**：桌面一级路由集合与 `lib/router.dart` 的六个分支路径一致；页面必须由 `CommonScaffold` 承载。
