@@ -15,6 +15,9 @@ type ServiceController interface {
 	StopDNS(ctx context.Context) error
 	EnableTakeover(ctx context.Context) error
 	DisableTakeover(ctx context.Context) error
+	// EmergencyRestore 按落盘的接管快照把系统 DNS 恢复为接管前的样子，用于软件异常退出后
+	// 无法上网的应急场景。桌面窗口与局域网控制台走同一接口。
+	EmergencyRestore(ctx context.Context) (*EmergencyRestoreResponse, error)
 	GetStatus(ctx context.Context) (*StatusResponse, error)
 	// GetCoreServiceStatus 返回宿主机后台核心服务的真实运行状态与自启托管情况。
 	//

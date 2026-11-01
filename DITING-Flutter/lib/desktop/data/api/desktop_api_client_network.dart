@@ -9,6 +9,7 @@ library;
 import 'package:diting/desktop/data/api/desktop_adapters_models.dart';
 import 'package:diting/desktop/data/api/desktop_api_client.dart';
 import 'package:diting/desktop/data/api/desktop_lan_models.dart';
+import 'package:diting/desktop/data/api/desktop_tools_models.dart';
 
 extension DesktopNetworkApi on DesktopApiClient {
   /// Only adapters the host considers usable: the service has already dropped virtual and
@@ -40,6 +41,13 @@ extension DesktopNetworkApi on DesktopApiClient {
     '/api/v1/dns/lan/configure',
     body: {'allowLAN': allowLan, 'configureFirewall': configureFirewall},
   );
+
+  /// Restores the system DNS from the takeover snapshot, resets residual loopback DNS and flushes
+  /// the system cache; the old console's `App.RunEmergencyRestore` did the first step only.
+  Future<DesktopEmergencyRestore> emergencyRestore() async =>
+      DesktopEmergencyRestore.fromJson(
+        await postJson('/api/v1/takeover/emergency-restore'),
+      );
 
   Future<void> configureLanFirewall(bool enable) => postAction(
     '/api/v1/dns/lan/firewall',

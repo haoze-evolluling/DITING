@@ -4022,5 +4022,16 @@
   "desktopSettingsLogout": "Sign out",
   "desktopSettingsLogoutBody": "Drop the admin session stored in this browser and return to the login page",
   "desktopSettingsLogoutConfirm": "Signing out means entering the admin credential again to get back in.",
-  "desktopSettingsLogoutDone": "Signed out"
+  "desktopSettingsLogoutDone": "Signed out",
+  "desktopToolsEmergencyTitle": "Restore system network defaults",
+  "desktopToolsEmergencyBody": "When a crash leaves the machine offline, restore the system DNS from the pre-takeover snapshot, clear residual loopback DNS and flush the system cache.",
+  "desktopToolsEmergencyAction": "Restore now",
+  "desktopToolsEmergencyBusy": "Restoring…",
+  "desktopToolsEmergencyConfirmTitle": "Run the emergency restore?",
+  "desktopToolsEmergencyConfirmBody": "The system DNS is restored from the snapshot saved before the takeover, residual loopback DNS is cleared, and the system DNS cache is flushed.",
+  "desktopToolsEmergencyDone": "Network settings restored",
+  "desktopToolsEmergencyFailed": "Restore failed: {message}",
+  "@desktopToolsEmergencyFailed": {"placeholders": {"message": {"type": "String"}}},
+  "desktopToolsEmergencyFooter": "The restore replays the snapshot saved before the takeover; it does not touch the adapter drivers.",
+  "desktopLanWebQrCaption": "On the same Wi-Fi, scan with the phone camera to open the console"
 }

@@ -601,6 +601,12 @@ Map<String, Object?> webStatusPayload({
   'username': username,
 };
 
+/// A `POST /api/v1/takeover/emergency-restore` payload.
+Map<String, Object?> emergencyRestorePayload({
+  bool healed = true,
+  String message = '已成功恢复网络 DNS 设置！',
+}) => {'healed': healed, 'message': message};
+
 /// A `GET /api/v1/auth/status` payload.
 Map<String, Object?> authPayload({
   bool initialized = true,
@@ -828,6 +834,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? lan,
     Map<String, Object?>? auth,
     Map<String, Object?>? background,
+    Map<String, Object?>? emergency,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -867,6 +874,7 @@ class FakeDesktopBackend {
        lan = lan ?? lanPayload(),
        auth = auth ?? authPayload(),
        background = background ?? backgroundPayload(),
+       emergency = emergency ?? emergencyRestorePayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -989,6 +997,12 @@ class FakeDesktopBackend {
 
   /// When true, `GET /status` answers 401 so a stored token can be shown as expired.
   bool statusRejected = false;
+
+  /// Answered to `/takeover/emergency-restore`; every call is counted.
+  Map<String, Object?> emergency;
+
+  /// How many times the emergency restore was requested.
+  int emergencyRestores = 0;
 
   /// Bodies of every login, background save and background reset, in order.
   final loginRequests = <Map<String, Object?>>[];
@@ -1260,6 +1274,10 @@ class FakeDesktopBackend {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
         lanFirewallUpdates.add(body);
         lan = {...lan, 'firewallAllowed': body['enable'] == true};
+      }
+      if (path == '/api/v1/takeover/emergency-restore' &&
+          request.method == 'POST') {
+        emergencyRestores++;
       }
       if (path == '/api/v1/auth/login' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
@@ -1634,6 +1652,9 @@ class FakeDesktopBackend {
         '/api/v1/auth/background' => utf8Json(apiEnvelope(background)),
         '/api/v1/auth/logout' => utf8Json(apiEnvelope(null)),
         '/api/v1/adapters' => utf8Json(apiEnvelope(adapters)),
+        '/api/v1/takeover/emergency-restore' => utf8Json(
+          apiEnvelope(emergency),
+        ),
         '/api/v1/dns/lan' => utf8Json(apiEnvelope(lan)),
         '/api/v1/takeover/adapter' => utf8Json(apiEnvelope(null)),
         '/api/v1/takeover/enable' => utf8Json(apiEnvelope(null)),

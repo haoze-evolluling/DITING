@@ -23331,6 +23331,66 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'已退出登录'**
   String get desktopSettingsLogoutDone;
+
+  /// No description provided for @desktopToolsEmergencyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键恢复系统网络默认'**
+  String get desktopToolsEmergencyTitle;
+
+  /// No description provided for @desktopToolsEmergencyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'当软件异常退出导致无法上网时，按接管前的快照还原系统 DNS，并清理残留回环 DNS 与系统缓存。'**
+  String get desktopToolsEmergencyBody;
+
+  /// No description provided for @desktopToolsEmergencyAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键恢复'**
+  String get desktopToolsEmergencyAction;
+
+  /// No description provided for @desktopToolsEmergencyBusy.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在恢复…'**
+  String get desktopToolsEmergencyBusy;
+
+  /// No description provided for @desktopToolsEmergencyConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认执行应急恢复？'**
+  String get desktopToolsEmergencyConfirmTitle;
+
+  /// No description provided for @desktopToolsEmergencyConfirmBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'将按接管前落盘的快照还原系统 DNS，兜底清理指向本机的残留回环 DNS，再清空系统 DNS 缓存。'**
+  String get desktopToolsEmergencyConfirmBody;
+
+  /// No description provided for @desktopToolsEmergencyDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络设置已恢复默认'**
+  String get desktopToolsEmergencyDone;
+
+  /// No description provided for @desktopToolsEmergencyFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复失败：{message}'**
+  String desktopToolsEmergencyFailed(String message);
+
+  /// No description provided for @desktopToolsEmergencyFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复依据是接管前落盘的快照，不会改动网卡驱动本身。'**
+  String get desktopToolsEmergencyFooter;
+
+  /// No description provided for @desktopLanWebQrCaption.
+  ///
+  /// In zh, this message translates to:
+  /// **'手机与电脑连同一 Wi-Fi，用相机扫码直达控制台'**
+  String get desktopLanWebQrCaption;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -13565,4 +13565,40 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopSettingsLogoutDone => 'Signed out';
+
+  @override
+  String get desktopToolsEmergencyTitle => 'Restore system network defaults';
+
+  @override
+  String get desktopToolsEmergencyBody =>
+      'When a crash leaves the machine offline, restore the system DNS from the pre-takeover snapshot, clear residual loopback DNS and flush the system cache.';
+
+  @override
+  String get desktopToolsEmergencyAction => 'Restore now';
+
+  @override
+  String get desktopToolsEmergencyBusy => 'Restoring…';
+
+  @override
+  String get desktopToolsEmergencyConfirmTitle => 'Run the emergency restore?';
+
+  @override
+  String get desktopToolsEmergencyConfirmBody =>
+      'The system DNS is restored from the snapshot saved before the takeover, residual loopback DNS is cleared, and the system DNS cache is flushed.';
+
+  @override
+  String get desktopToolsEmergencyDone => 'Network settings restored';
+
+  @override
+  String desktopToolsEmergencyFailed(String message) {
+    return 'Restore failed: $message';
+  }
+
+  @override
+  String get desktopToolsEmergencyFooter =>
+      'The restore replays the snapshot saved before the takeover; it does not touch the adapter drivers.';
+
+  @override
+  String get desktopLanWebQrCaption =>
+      'On the same Wi-Fi, scan with the phone camera to open the console';
 }

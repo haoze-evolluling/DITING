@@ -9,6 +9,7 @@ import 'package:diting/desktop/data/api/desktop_api_providers.dart';
 import 'package:diting/desktop/data/api/desktop_live_providers.dart';
 import 'package:diting/desktop/data/api/desktop_tools_models.dart';
 import 'package:diting/desktop/pages/tools/desktop_tools_page.dart';
+import 'package:diting/desktop/pages/tools/widgets/emergency_restore_card.dart';
 import 'package:diting/desktop/pages/tools/widgets/port_diagnosis_card.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +48,10 @@ void main() {
 
   Finder inCard(Finder matching) =>
       find.descendant(of: find.byType(PortDiagnosisCard), matching: matching);
+  Finder inEmergency(Finder matching) => find.descendant(
+    of: find.byType(EmergencyRestoreCard),
+    matching: matching,
+  );
 
   Future<void> tapAt(WidgetTester tester, Finder finder) async {
     await Scrollable.ensureVisible(
@@ -161,6 +166,68 @@ void main() {
     expect(find.text('UDP :53'), findsOneWidget);
     await clearMessages(tester);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('应急恢复需确认，确认后采用服务端原话', (tester) async {
+    final backend = await pumpTools(tester);
+    final l10n = l10nOf(tester);
+
+    expect(
+      inEmergency(find.text(l10n.desktopToolsEmergencyTitle)),
+      findsOneWidget,
+    );
+    await tapAt(tester, inEmergency(find.text(l10n.desktopToolsEmergencyAction)));
+
+    expect(find.text(l10n.desktopToolsEmergencyConfirmBody), findsOneWidget);
+    await tapAt(tester, find.text(l10n.desktopToolsEmergencyAction).last);
+
+    expect(backend.emergencyRestores, 1);
+    expect(inEmergency(find.text('已成功恢复网络 DNS 设置！')), findsOneWidget);
+    await clearMessages(tester);
+  });
+
+  testWidgets('取消确认不发应急恢复请求', (tester) async {
+    final backend = await pumpTools(tester);
+    final l10n = l10nOf(tester);
+
+    await tapAt(tester, inEmergency(find.text(l10n.desktopToolsEmergencyAction)));
+    await tapAt(tester, find.text(l10n.commonCancel));
+
+    expect(backend.emergencyRestores, 0);
+  });
+
+  testWidgets('服务端说无需修复时如实展示', (tester) async {
+    await pumpTools(
+      tester,
+      backend: FakeDesktopBackend(
+        emergency: emergencyRestorePayload(
+          healed: false,
+          message: '网络 DNS 状态正常，无需修复。',
+        ),
+      ),
+    );
+    final l10n = l10nOf(tester);
+
+    await tapAt(tester, inEmergency(find.text(l10n.desktopToolsEmergencyAction)));
+    await tapAt(tester, find.text(l10n.desktopToolsEmergencyAction).last);
+
+    expect(inEmergency(find.text('网络 DNS 状态正常，无需修复。')), findsOneWidget);
+    await clearMessages(tester);
+  });
+
+  testWidgets('应急恢复失败时说明原因', (tester) async {
+    final backend = await pumpTools(tester);
+    backend.rejectWrites = true;
+    final l10n = l10nOf(tester);
+
+    await tapAt(tester, inEmergency(find.text(l10n.desktopToolsEmergencyAction)));
+    await tapAt(tester, find.text(l10n.desktopToolsEmergencyAction).last);
+
+    expect(
+      find.text(l10n.desktopToolsEmergencyFailed('write rejected')),
+      findsOneWidget,
+    );
+    await clearMessages(tester);
   });
 
   testWidgets('窄窗不横向溢出', (tester) async {

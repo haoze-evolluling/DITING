@@ -18,6 +18,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/takeover/disable", s.withAuth(s.handleTakeoverDisable))
 	mux.HandleFunc("/api/v1/adapters", s.withAuth(s.handleAdapters))
 	mux.HandleFunc("/api/v1/takeover/adapter", s.withAuth(s.handleAdapterTakeover))
+	mux.HandleFunc("/api/v1/takeover/emergency-restore", s.withAuth(s.handleEmergencyRestore))
 
 	// 上游与引导
 	mux.HandleFunc("/api/v1/upstream", s.withAuth(s.handleUpstreamConfigure))

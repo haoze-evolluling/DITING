@@ -1,13 +1,14 @@
 /// The `tools` branch: network diagnosis first, with the rule and lookup testers as sub-pages.
 ///
 /// The old desktop console's `DiagnosticsPanel.vue` is the functional blueprint. Its emergency
-/// network restore is a native call with no HTTP endpoint, so it is not offered here rather than
-/// being faked.
+/// network restore used to be a Wails-only binding; the service now exposes it over HTTP, so the
+/// same card serves the desktop window and the LAN console.
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/data/api/desktop_tools_providers.dart';
 import 'package:diting/desktop/pages/tools/desktop_rule_check_page.dart';
+import 'package:diting/desktop/pages/tools/widgets/emergency_restore_card.dart';
 import 'package:diting/desktop/pages/tools/widgets/port_diagnosis_card.dart';
 import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
@@ -44,6 +45,7 @@ class DesktopToolsPage extends ConsumerWidget {
           DesktopCardBoard(
             cards: [
               PortDiagnosisCard(state: state),
+              const EmergencyRestoreCard(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

@@ -22,6 +22,8 @@ type mockController struct {
 	stopErr              error
 	takeoverErr          error
 	restoreErr           error
+	emergencyErr         error
+	emergencyResult      *EmergencyRestoreResponse
 	statusResult         *StatusResponse
 	portResult           *platform.PortCheckResult
 	cacheConfig          *core.CacheConfig

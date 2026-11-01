@@ -40,6 +40,8 @@ dependencies:
   http: ^1.6.0
   # The desktop log branch's live stream (`/api/v1/events`); works on web and on IO.
   web_socket_channel: 3.0.3
+  # Encodes the LAN console's login URL as a QR code; pure Dart, no platform channel.
+  qr: 4.0.0
 
 dev_dependencies:
   flutter_test:

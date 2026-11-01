@@ -11,6 +11,7 @@ import 'package:diting/desktop/data/api/desktop_web_models.dart';
 import 'package:diting/desktop/pages/settings/desktop_lan_web_page.dart';
 import 'package:diting/desktop/pages/settings/desktop_settings_page.dart';
 import 'package:diting/desktop/pages/settings/widgets/lan_web_card.dart';
+import 'package:diting/desktop/widgets/desktop_qr_code.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:diting/ui/ui.dart';
@@ -147,6 +148,40 @@ void main() {
     expect(backend.firewallUpdates.single, {'enable': true});
     await clearMessages(tester);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('开启后给出可扫的二维码，编码第一个局域网地址', (tester) async {
+    await pumpLanWeb(
+      tester,
+      backend: FakeDesktopBackend(
+        web: webStatusPayload(
+          enabled: true,
+          webUrls: const [
+            'http://192.168.1.10:15353',
+            'http://10.0.0.5:15353',
+          ],
+        ),
+      ),
+    );
+    final l10n = l10nOf(tester);
+
+    final qr = tester.widget<DesktopQrCode>(find.byType(DesktopQrCode));
+    expect(qr.data, 'http://192.168.1.10:15353');
+    expect(find.text(l10n.desktopLanWebQrCaption), findsOneWidget);
+    expect(qr.semanticLabel, l10n.desktopLanWebQrCaption);
+  });
+
+  testWidgets('未开启或没有局域网地址时不画二维码', (tester) async {
+    await pumpLanWeb(tester);
+    expect(find.byType(DesktopQrCode), findsNothing);
+
+    await pumpLanWeb(
+      tester,
+      backend: FakeDesktopBackend(
+        web: webStatusPayload(enabled: true, webUrls: const []),
+      ),
+    );
+    expect(find.byType(DesktopQrCode), findsNothing);
   });
 
   testWidgets('无防火墙后端时说明无需放行', (tester) async {

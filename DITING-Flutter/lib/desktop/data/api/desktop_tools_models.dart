@@ -103,3 +103,20 @@ class DesktopPortCheck {
 
   bool get canRepair => !available && (canAutofix || hasICS);
 }
+
+/// `POST /api/v1/takeover/emergency-restore`: whether anything was actually restored.
+///
+/// The service answers with its own sentence, so the page shows that instead of inventing one;
+/// `healed == false` means the host was already clean, not that the button did nothing.
+class DesktopEmergencyRestore {
+  const DesktopEmergencyRestore({required this.healed, required this.message});
+
+  factory DesktopEmergencyRestore.fromJson(Map<String, Object?> json) =>
+      DesktopEmergencyRestore(
+        healed: json['healed'] == true,
+        message: '${json['message'] ?? ''}',
+      );
+
+  final bool healed;
+  final String message;
+}

@@ -12770,4 +12770,38 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopSettingsLogoutDone => '已退出登录';
+
+  @override
+  String get desktopToolsEmergencyTitle => '一键恢复系统网络默认';
+
+  @override
+  String get desktopToolsEmergencyBody =>
+      '当软件异常退出导致无法上网时，按接管前的快照还原系统 DNS，并清理残留回环 DNS 与系统缓存。';
+
+  @override
+  String get desktopToolsEmergencyAction => '一键恢复';
+
+  @override
+  String get desktopToolsEmergencyBusy => '正在恢复…';
+
+  @override
+  String get desktopToolsEmergencyConfirmTitle => '确认执行应急恢复？';
+
+  @override
+  String get desktopToolsEmergencyConfirmBody =>
+      '将按接管前落盘的快照还原系统 DNS，兜底清理指向本机的残留回环 DNS，再清空系统 DNS 缓存。';
+
+  @override
+  String get desktopToolsEmergencyDone => '网络设置已恢复默认';
+
+  @override
+  String desktopToolsEmergencyFailed(String message) {
+    return '恢复失败：$message';
+  }
+
+  @override
+  String get desktopToolsEmergencyFooter => '恢复依据是接管前落盘的快照，不会改动网卡驱动本身。';
+
+  @override
+  String get desktopLanWebQrCaption => '手机与电脑连同一 Wi-Fi，用相机扫码直达控制台';
 }

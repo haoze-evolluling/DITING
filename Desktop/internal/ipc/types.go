@@ -164,6 +164,13 @@ type TestUpstreamResponse struct {
 	Error     string  `json:"error,omitempty"`
 }
 
+// EmergencyRestoreResponse 应急恢复结果
+type EmergencyRestoreResponse struct {
+	// Healed 为 true 表示确实改回了系统 DNS；false 表示原本就是干净的。
+	Healed  bool   `json:"healed"`
+	Message string `json:"message"`
+}
+
 // AdapterTakeoverRequest 单个网卡接管/还原请求
 type AdapterTakeoverRequest struct {
 	AdapterID string `json:"adapterId"`

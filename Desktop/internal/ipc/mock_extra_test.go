@@ -58,6 +58,24 @@ type mockExtra struct {
 	aclWriteErr bool
 }
 
+// EmergencyRestore 实现 ServiceController 接口：应急恢复系统 DNS。
+func (m *mockController) EmergencyRestore(ctx context.Context) (*EmergencyRestoreResponse, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.emergencyErr != nil {
+		return nil, m.emergencyErr
+	}
+	if m.emergencyResult != nil {
+		return m.emergencyResult, nil
+	}
+	healed := m.takeoverOn
+	m.takeoverOn = false
+	if healed {
+		return &EmergencyRestoreResponse{Healed: true, Message: "已成功恢复网络 DNS 设置！"}, nil
+	}
+	return &EmergencyRestoreResponse{Healed: false, Message: "网络 DNS 状态正常，无需修复。"}, nil
+}
+
 // CachePersistStatus 实现 ServiceController 接口（A6）
 func (m *mockExtra) CachePersistStatus(ctx context.Context) (*CachePersistResponse, error) {
 	if m.cachePersistErr {

@@ -67,3 +67,43 @@ final desktopPortCheckProvider =
     NotifierProvider<DesktopPortCheckNotifier, DesktopPortCheckState>(
       DesktopPortCheckNotifier.new,
     );
+
+class DesktopEmergencyRestoreState {
+  const DesktopEmergencyRestoreState({this.result, this.busy = false});
+
+  final DesktopEmergencyRestore? result;
+
+  /// A restore is in flight; the button is disabled until the service answers.
+  final bool busy;
+}
+
+/// The emergency restore, run only when the user confirms: it rewrites the host's DNS settings.
+class DesktopEmergencyRestoreNotifier
+    extends Notifier<DesktopEmergencyRestoreState> {
+  @override
+  DesktopEmergencyRestoreState build() =>
+      const DesktopEmergencyRestoreState();
+
+  Future<DesktopApiException?> restore() async {
+    if (state.busy) return null;
+    state = DesktopEmergencyRestoreState(result: state.result, busy: true);
+    try {
+      final result = await ref
+          .read(desktopApiClientProvider)
+          .emergencyRestore();
+      if (ref.mounted) state = DesktopEmergencyRestoreState(result: result);
+      return null;
+    } on DesktopApiException catch (error) {
+      if (ref.mounted) {
+        state = DesktopEmergencyRestoreState(result: state.result);
+      }
+      return error;
+    }
+  }
+}
+
+final desktopEmergencyRestoreProvider =
+    NotifierProvider<
+      DesktopEmergencyRestoreNotifier,
+      DesktopEmergencyRestoreState
+    >(DesktopEmergencyRestoreNotifier.new);

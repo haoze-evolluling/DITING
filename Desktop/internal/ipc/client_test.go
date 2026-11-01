@@ -136,6 +136,18 @@ func (c *Client) AutofixPortConflicts(ctx context.Context, startDNS bool) (*plat
 	return resp.Data, nil
 }
 
+// EmergencyRestore 按落盘快照应急恢复系统 DNS
+func (c *Client) EmergencyRestore(ctx context.Context) (*EmergencyRestoreResponse, error) {
+	var resp Response[*EmergencyRestoreResponse]
+	if err := c.doRequest(ctx, http.MethodPost, "/api/v1/takeover/emergency-restore", nil, &resp); err != nil {
+		return nil, err
+	}
+	if !resp.Success {
+		return nil, fmt.Errorf("应急恢复失败: %s", resp.Error)
+	}
+	return resp.Data, nil
+}
+
 // GetAdapters 枚举系统所有网卡详情
 func (c *Client) GetAdapters(ctx context.Context) ([]platform.AdapterInfo, error) {
 	var resp Response[[]platform.AdapterInfo]

@@ -13,6 +13,7 @@ import 'package:diting/desktop/data/api/desktop_web_models.dart';
 import 'package:diting/desktop/data/api/desktop_web_providers.dart';
 import 'package:diting/desktop/pages/hub/widgets/filter_common.dart';
 import 'package:diting/desktop/widgets/desktop_feedback.dart';
+import 'package:diting/desktop/widgets/desktop_qr_code.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
@@ -170,6 +171,10 @@ class _LanWebCardState extends ConsumerState<LanWebCard> {
               )
             else
               for (final url in status.webUrls) _UrlRow(url: url),
+            if (status.webUrls.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _ScanRow(url: status.webUrls.first),
+            ],
             const SizedBox(height: 10),
             Wrap(
               spacing: 10,
@@ -282,6 +287,36 @@ class _UrlRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The first LAN address as a scannable code: the console's answer to "typing an IP on a phone".
+class _ScanRow extends StatelessWidget {
+  const _ScanRow({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Row(
+      spacing: 12,
+      children: [
+        DesktopQrCode(
+          data: url,
+          size: 88,
+          semanticLabel: l10n.desktopLanWebQrCaption,
+        ),
+        Expanded(
+          child: Text(
+            l10n.desktopLanWebQrCaption,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: DashboardText.label(context),
+          ),
+        ),
+      ],
     );
   }
 }
