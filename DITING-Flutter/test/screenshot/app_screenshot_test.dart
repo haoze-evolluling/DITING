@@ -157,7 +157,7 @@ void main() {
         ScreenshotSpec(
           name: 'desktop-home-two-column-wide',
           app: app(),
-          size: const Size(1200, 800),
+          size: const Size(1600, 900),
           platform: TargetPlatform.windows,
         ),
       );

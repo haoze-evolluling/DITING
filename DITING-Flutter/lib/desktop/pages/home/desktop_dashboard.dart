@@ -1,10 +1,6 @@
-/// The dashboard board: upstream FlClash's desktop grid (four columns of at most 440 dp, centered,
-/// with a summary row, a control row and a card row) over this app's cards, a two-column waterfall
-/// at the middle breakpoint, and one column of natural-height cards on a narrow window.
-///
-/// The two-column board is masonry: cards keep the height their content needs and each one goes
-/// into the shortest column, so a short card never leaves a hole under a tall neighbour. The
-/// four-column board keeps the design's fixed rows because that is the wide-window composition.
+/// The dashboard board: one column of natural-height cards on a narrow window, two columns of
+/// masonry on a wider one. Cards keep the height their content needs and each one goes into the
+/// shortest column, so a short card never leaves a hole under a tall neighbour.
 library;
 
 import 'dart:math' as math;
@@ -20,11 +16,9 @@ import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Cards never grow past this width; the grid centers what is left over.
-const _maxColumnWidth = 440.0;
-
-/// Below this the query list is not worth a row: it would show one entry and a scroll bar.
-const _tableMinHeight = 150.0;
+/// A two-column board on a very wide monitor would stretch each card past a readable width;
+/// the grid centers itself inside this bound instead.
+const _maxBoardWidth = 1280.0;
 
 /// Room below the floating app bar plus the design's own gap, so the first card never sits under
 /// the title. `TopInsetScope` reads 0 inside a page, so this comes from the bar itself.
@@ -55,8 +49,6 @@ class DesktopDashboardBoard extends StatelessWidget {
           scale: scale,
           child: columns <= 1
               ? _StackedCards(status: status, width: room.width)
-              : columns >= 4
-              ? _DesktopGrid(status: status, columns: columns)
               : _MasonryBoard(status: status, columns: columns),
         );
       },
@@ -93,7 +85,7 @@ class _StackedCards extends StatelessWidget {
   }
 }
 
-/// Two columns at the middle breakpoint: cards keep their content height and fill the shorter
+/// Two columns once the window has room: cards keep their content height and fill the shorter
 /// column first, so the board reads as a waterfall instead of two equal-height rows.
 class _MasonryBoard extends StatelessWidget {
   const _MasonryBoard({required this.status, required this.columns});
@@ -113,19 +105,24 @@ class _MasonryBoard extends StatelessWidget {
         24,
         _bottomPaddingOf(context),
       ),
-      child: MasonryGrid(
-        columns: columns,
-        spacing: gap,
-        runSpacing: gap,
-        children: [
-          for (final card in _cardsOf(status)) RepaintBoundary(child: card),
-        ],
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _maxBoardWidth),
+          child: MasonryGrid(
+            columns: columns,
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              for (final card in _cardsOf(status)) RepaintBoundary(child: card),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-/// The cards in reading order; shared so the stacked and gridded boards cannot drift apart.
+/// The cards in reading order; shared so the stacked and masonry boards cannot drift apart.
 List<Widget> _cardsOf(DesktopStatus status) => [
   DnsServiceCard(status: status),
   QueryMetricsCard(status: status),
@@ -138,99 +135,6 @@ List<Widget> _cardsOf(DesktopStatus status) => [
   RuntimeCard(status: status),
   const RecentQueriesCard(),
 ];
-
-class _DesktopGrid extends StatelessWidget {
-  const _DesktopGrid({required this.status, required this.columns});
-
-  final DesktopStatus status;
-  final int columns;
-
-  @override
-  Widget build(BuildContext context) {
-    final density = DashboardDensityScope.of(context);
-    final compact = density.isCompact;
-    final scale = DashboardDensityScope.scaleOf(context);
-    final gap = 16.0 * scale;
-    final base = EdgeInsetsDirectional.fromSTEB(
-      16,
-      _topPaddingOf(context),
-      24,
-      _bottomPaddingOf(context),
-    );
-    final topHeight = (compact ? 176 : 208) * scale;
-    final controlHeight = (compact ? 56 : 64) * scale;
-    final middleHeight = (compact ? 152 : 176) * scale;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final room =
-            constraints.maxWidth - base.horizontal - gap * (columns - 1);
-        final column = math.min(room / columns, _maxColumnWidth * scale);
-        final inset = (room - column * columns) / 2;
-        final padding = base.copyWith(
-          start: base.start + inset,
-          end: base.end + inset,
-        );
-        double span(int count) => column * count + gap * (count - 1);
-        Widget cardRow(List<(int, Widget)> cards) => Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: gap,
-          children: [
-            for (final (count, card) in cards)
-              SizedBox(
-                width: span(count),
-                child: RepaintBoundary(child: card),
-              ),
-          ],
-        );
-        Widget row(double height, List<(int, Widget)> cards) =>
-            SizedBox(height: height, child: cardRow(cards));
-        final rowsHeight =
-            padding.vertical +
-            topHeight +
-            controlHeight +
-            middleHeight +
-            gap * 2;
-        // A window with room to spare gives it to the query list, as upstream gives its tables the
-        // leftover rows; a short one keeps the design heights and scrolls instead of squeezing.
-        final fills =
-            constraints.maxHeight >= rowsHeight + _tableMinHeight * scale;
-        return SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: fills ? constraints.maxHeight : null,
-            child: Padding(
-              padding: padding,
-              child: Column(
-                spacing: gap,
-                children: [
-                  row(topHeight, [
-                    (2, DnsServiceCard(status: status)),
-                    (2, QueryMetricsCard(status: status)),
-                  ]),
-                  row(controlHeight, [
-                    (1, TakeoverTile(status: status)),
-                    (1, FilterPauseTile(status: status)),
-                    (2, const HostServiceCard()),
-                  ]),
-                  row(middleHeight, [
-                    (1, CacheCard(status: status)),
-                    (1, FilterStatsCard(status: status)),
-                    (1, PerformanceCard(status: status)),
-                    (1, RuntimeCard(status: status)),
-                  ]),
-                  if (fills)
-                    const Expanded(child: RecentQueriesCard())
-                  else
-                    row(middleHeight, [(4, const RecentQueriesCard())]),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
 
 /// Shown when the service answered before but the last poll failed: the figures on screen are the
 /// last real ones, and saying so is better than silently freezing them.

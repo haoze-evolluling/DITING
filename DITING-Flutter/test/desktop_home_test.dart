@@ -52,7 +52,7 @@ void main() {
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopHomePage)).l10n;
 
-  testWidgets('宽屏按上游桌面网格铺开全部卡片', (tester) async {
+  testWidgets('宽屏按瀑布流铺开全部卡片', (tester) async {
     await pumpHome(tester);
     final l10n = l10nOf(tester);
 
@@ -188,6 +188,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(backend.has('/api/v1/takeover/enable'), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('超宽窗口仍保持双列瀑布流，不回到等高网格', (tester) async {
+    await pumpHome(tester, size: const Size(1920, 1080));
+
+    final cards = find.byType(DashboardCard).evaluate().toList();
+    expect(cards, hasLength(10));
+    final boxes = [
+      for (final element in cards) element.renderObject! as RenderBox,
+    ];
+    final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
+    expect(lefts, hasLength(2));
+    final heights = boxes.map((box) => box.size.height).toSet();
+    expect(heights.length, greaterThan(1));
     expect(tester.takeException(), isNull);
   });
 

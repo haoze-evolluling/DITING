@@ -24,16 +24,10 @@ const minDesktopWidth = 640.0;
 
 /// Two columns need enough room for a title, a badge and a switch; below this a card stacks.
 const minTwoColumnWidth = 760.0;
-/// Four columns only start once the design's standard-width grid has room for them.
-const minFourColumnWidth = 1040.0;
 const minStandardHeight = 824.0;
 const mobileMaxWidth = 560.0;
 
-int dashboardColumnsOf(double width) => width < minTwoColumnWidth
-    ? 1
-    : width < minFourColumnWidth
-    ? 2
-    : 4;
+int dashboardColumnsOf(double width) => width < minTwoColumnWidth ? 1 : 2;
 
 double dashboardMobileSideOf(double width) =>
     math.max(16, (width - mobileMaxWidth) / 2);
