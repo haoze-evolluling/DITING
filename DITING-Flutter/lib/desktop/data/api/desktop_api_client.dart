@@ -86,6 +86,8 @@ class DesktopApiClient {
   /// the retained files when the ring cannot fill the page anyway.
   Future<QueryLogPage> searchQueries({
     String domain = '',
+    String client = '',
+    String qtype = '',
     DesktopLogStatus status = DesktopLogStatus.all,
     int limit = 25,
     int offset = 0,
@@ -98,10 +100,16 @@ class DesktopApiClient {
         'offset': '$offset',
         'includeFile': includeFile ? '1' : '0',
         if (domain.isNotEmpty) 'domain': domain,
+        if (client.isNotEmpty) 'client': client,
+        if (qtype.isNotEmpty) 'qtype': qtype,
         if (status != DesktopLogStatus.all) 'status': status.apiValue,
       },
     ),
   );
+
+  /// Deletes the retained history together with the aggregate built from it. The service has no
+  /// undo, so the page asks before calling this.
+  Future<void> clearQueryLog() => _post('/api/v1/querylog/clear');
 
   Future<void> startDns() => _post('/api/v1/dns/start');
 

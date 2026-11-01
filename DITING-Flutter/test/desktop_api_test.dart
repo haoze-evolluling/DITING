@@ -211,5 +211,42 @@ void main() {
       'domain': 'example.com',
       'status': 'blocked',
     });
+
+    await client.searchQueries(client: '192.168.1.20', qtype: 'AAAA');
+    expect(urls.last.queryParameters, {
+      'limit': '25',
+      'offset': '0',
+      'includeFile': '1',
+      'client': '192.168.1.20',
+      'qtype': 'AAAA',
+    });
+  });
+
+  test('清空历史是一次 POST，失败透出服务端的错误', () async {
+    final backend = FakeDesktopBackend();
+    await backend.client().clearQueryLog();
+    expect(backend.has('/api/v1/querylog/clear'), isTrue);
+
+    final failing = clientOf(
+      MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode(
+            jsonEncode({'success': false, 'error': '日志文件不可写'}),
+          ),
+          500,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        ),
+      ),
+    );
+    await expectLater(
+      failing.clearQueryLog(),
+      throwsA(
+        isA<DesktopApiException>().having(
+          (error) => error.message,
+          'message',
+          '日志文件不可写',
+        ),
+      ),
+    );
   });
 }

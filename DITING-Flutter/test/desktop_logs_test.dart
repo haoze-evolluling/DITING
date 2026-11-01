@@ -80,7 +80,7 @@ void main() {
     final backend = await pumpLogs(tester);
     final before = backend.searches.length;
 
-    await tester.enterText(find.byType(TextField), 'example2');
+    await tester.enterText(find.byType(TextField).first, 'example2');
     await tester.pump(const Duration(milliseconds: 100));
     expect(backend.searches.length, before, reason: '每次按键都发请求会压垮服务端');
 
@@ -88,6 +88,68 @@ void main() {
     await tester.pumpAndSettle();
     expect(backend.lastSearch['domain'], 'example2');
     expect(backend.lastSearch['offset'], '0');
+  });
+
+  testWidgets('客户端与记录类型各自作为独立条件发给服务', (tester) async {
+    final backend = await pumpLogs(tester);
+    final l10n = l10nOf(tester);
+
+    await tester.enterText(find.byType(TextField).last, '192.168.1.20');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(backend.lastSearch['client'], '192.168.1.20');
+    expect(backend.lastSearch.containsKey('domain'), isFalse);
+
+    await tester.tap(find.text(l10n.desktopLogAllTypes));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CommonPopupMenu),
+        matching: find.text('AAAA'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(backend.lastSearch['qtype'], 'AAAA');
+    expect(backend.lastSearch['offset'], '0');
+
+    await tester.tap(find.text(l10n.obsClearFilter));
+    await tester.pumpAndSettle();
+    expect(backend.lastSearch.containsKey('client'), isFalse);
+    expect(backend.lastSearch.containsKey('qtype'), isFalse);
+    expect(find.byType(TextField), findsNWidgets(2));
+    expect(
+      tester.widget<TextField>(find.byType(TextField).last).controller?.text,
+      isEmpty,
+    );
+  });
+
+  testWidgets('清空历史先确认，确认后请服务删除并重读', (tester) async {
+    final backend = await pumpLogs(tester);
+    final l10n = l10nOf(tester);
+    final searches = backend.searches.length;
+
+    await tester.tap(find.text(l10n.desktopLogClear));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.desktopLogClearBody), findsOneWidget);
+    // 取消不发出任何写请求。
+    await tester.tap(find.text(l10n.configCancel));
+    await tester.pumpAndSettle();
+    expect(backend.has('/api/v1/querylog/clear'), isFalse);
+
+    await tester.tap(find.text(l10n.desktopLogClear));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(CommonDialog),
+        matching: find.text(l10n.desktopLogClear),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(backend.has('/api/v1/querylog/clear'), isTrue);
+    // 服务把统计一并删了，所以表格与汇总都必须重读。
+    expect(backend.searches.length, greaterThan(searches));
+    expect(find.text(l10n.desktopLogClearDone), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('状态筛选把 status 发给服务，重置后不再带条件', (tester) async {

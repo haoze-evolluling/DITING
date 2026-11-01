@@ -16372,12 +16372,6 @@ abstract class AppL10n {
   /// **'近 24 小时'**
   String get desktopLogWindow24h;
 
-  /// No description provided for @desktopLogSearchHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'搜索域名或客户端'**
-  String get desktopLogSearchHint;
-
   /// No description provided for @desktopLogDomain.
   ///
   /// In zh, this message translates to:
@@ -16389,6 +16383,54 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'客户端'**
   String get desktopLogClient;
+
+  /// No description provided for @desktopLogDomainHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'域名包含'**
+  String get desktopLogDomainHint;
+
+  /// No description provided for @desktopLogClientHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端 IP 或主机名'**
+  String get desktopLogClientHint;
+
+  /// No description provided for @desktopLogAllTypes.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部类型'**
+  String get desktopLogAllTypes;
+
+  /// No description provided for @desktopLogClear.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空历史'**
+  String get desktopLogClear;
+
+  /// No description provided for @desktopLogClearTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空查询历史？'**
+  String get desktopLogClearTitle;
+
+  /// No description provided for @desktopLogClearBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'将删除全部内存记录与已落盘的历史日志文件，此操作不可撤销。'**
+  String get desktopLogClearBody;
+
+  /// No description provided for @desktopLogClearDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询历史与统计已清空'**
+  String get desktopLogClearDone;
+
+  /// No description provided for @desktopLogClearFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空失败：{message}'**
+  String desktopLogClearFailed(String message);
 
   /// No description provided for @desktopLogPagePrev.
   ///

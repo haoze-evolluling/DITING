@@ -1,5 +1,5 @@
-/// The query log as a table: search, one status filter, and offset paging, all of it answered by
-/// `/api/v1/querylog/search`.
+/// The query log as a table: the conditions the old desktop console offers, and offset paging, all
+/// of it answered by `/api/v1/querylog/search`.
 ///
 /// The search conditions, the status values and the page arithmetic follow the old desktop console
 /// (`frontend/src/components/overview/QueryHistoryPanel.vue`, `frontend/src/api/querylog.ts`). Only
@@ -15,6 +15,7 @@ import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_log_providers.dart';
 import 'package:diting/desktop/pages/home/desktop_format.dart';
 import 'package:diting/desktop/pages/logs/log_format.dart';
+import 'package:diting/desktop/pages/logs/widgets/log_filters.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
@@ -49,27 +50,32 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
   /// Android's request feed uses.
   static const _searchDebounce = Duration(milliseconds: 250);
 
-  final _search = TextEditingController();
+  final _domain = TextEditingController();
+  final _client = TextEditingController();
   Timer? _searchTimer;
 
   @override
   void dispose() {
     _searchTimer?.cancel();
-    _search.dispose();
+    _domain.dispose();
+    _client.dispose();
     super.dispose();
   }
 
-  void _onSearch(String value) {
-    _searchTimer?.cancel();
-    _searchTimer = Timer(_searchDebounce, () {
-      if (!mounted) return;
-      ref.read(desktopLogQueryProvider.notifier).setDomain(value);
-    });
-  }
+  /// One debounce for both fields: typing in either restarts it, and the last edit wins.
+  ValueChanged<String> _debounced(void Function(String value) apply) =>
+      (String value) {
+        _searchTimer?.cancel();
+        _searchTimer = Timer(_searchDebounce, () {
+          if (!mounted) return;
+          apply(value);
+        });
+      };
 
   void _reset() {
     _searchTimer?.cancel();
-    _search.clear();
+    _domain.clear();
+    _client.clear();
     ref.read(desktopLogQueryProvider.notifier).reset();
   }
 
@@ -106,10 +112,16 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
             ],
           ),
           const SizedBox(height: 12),
-          _Filters(
-            controller: _search,
-            onChanged: _onSearch,
+          LogFilterBar(
+            domain: _domain,
+            client: _client,
             wide: widget.wide,
+            onDomainChanged: _debounced(
+              ref.read(desktopLogQueryProvider.notifier).setDomain,
+            ),
+            onClientChanged: _debounced(
+              ref.read(desktopLogQueryProvider.notifier).setClient,
+            ),
           ),
           const SizedBox(height: 8),
           _body(context, feed, query, rows),
@@ -156,7 +168,7 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
               ? l10n.obsNoMatchingRequests
               : l10n.logRecentRequestsEmpty,
           description: query.isFiltered
-              ? l10n.obsCurrentFilter(_filterLabel(context, query))
+              ? l10n.obsCurrentFilter(logFilterLabel(context, query))
               : null,
           action: query.isFiltered
               ? FilledButton.tonal(
@@ -186,123 +198,6 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
 
 /// The active filter in words, for the empty state's description. Uses the same labels the
 /// filter itself shows, so the two cannot disagree.
-String _filterLabel(BuildContext context, DesktopLogQuery query) => [
-  if (query.status != DesktopLogStatus.all) _statusLabel(context, query.status),
-  if (query.domain.isNotEmpty) query.domain,
-].join(' · ');
-
-String _statusLabel(BuildContext context, DesktopLogStatus status) {
-  final l10n = context.l10n;
-  return switch (status) {
-    DesktopLogStatus.all => l10n.commonAll,
-    DesktopLogStatus.passed => l10n.logPassed,
-    DesktopLogStatus.blocked => l10n.logBlocked,
-    DesktopLogStatus.cached => l10n.logCacheHits,
-    DesktopLogStatus.error => l10n.logFailed,
-  };
-}
-
-class _Filters extends ConsumerWidget {
-  const _Filters({
-    required this.controller,
-    required this.onChanged,
-    required this.wide,
-  });
-
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final bool wide;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final query = ref.watch(desktopLogQueryProvider);
-    final search = SearchField(
-      controller: controller,
-      hintText: l10n.desktopLogSearchHint,
-      onChanged: onChanged,
-      onSubmitted: () => ref
-          .read(desktopLogQueryProvider.notifier)
-          .setDomain(controller.text),
-    );
-    final status = _StatusPicker(query: query);
-    if (!wide) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
-        children: [search, Align(alignment: AlignmentDirectional.centerStart, child: status)],
-      );
-    }
-    return Row(
-      spacing: 10,
-      children: [
-        Expanded(flex: 3, child: search),
-        status,
-        if (query.isFiltered)
-          TextButton(
-            onPressed: () {
-              controller.clear();
-              ref.read(desktopLogQueryProvider.notifier).reset();
-            },
-            child: Text(l10n.obsClearFilter),
-          ),
-      ],
-    );
-  }
-}
-
-/// The status filter, shaped like Android's window picker: a label, a chevron and a menu of
-/// checked entries.
-class _StatusPicker extends ConsumerWidget {
-  const _StatusPicker({required this.query});
-
-  final DesktopLogQuery query;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = context.colorScheme;
-    final color = query.isFiltered
-        ? colorScheme.primary
-        : colorScheme.onSurfaceVariant;
-    return CommonPopupBox(
-      targetBuilder: (open) => Semantics(
-        button: true,
-        label: context.l10n.obsStatus,
-        child: InkWell(
-          customBorder: AppShape.all(AppCorner.sm),
-          onTap: open,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 4,
-              children: [
-                GlyphIcon(AppGlyphs.filter, size: 16, color: color),
-                Text(
-                  _statusLabel(context, query.status),
-                  style: AppTextStyle.callout.of(context).copyWith(color: color),
-                ),
-                GlyphIcon(AppGlyphs.chevronDown, size: 16, color: color),
-              ],
-            ),
-          ),
-        ),
-      ),
-      popupBuilder: (_) => CommonPopupMenu(
-        items: [
-          for (final status in DesktopLogStatus.values)
-            CommonPopupMenuItem(
-              label: _statusLabel(context, status),
-              checked: status == query.status,
-              onPressed: () =>
-                  ref.read(desktopLogQueryProvider.notifier).setStatus(status),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _TableHeader extends StatelessWidget {
   const _TableHeader();
 

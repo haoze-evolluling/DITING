@@ -68,6 +68,8 @@ final desktopQueryStatsProvider =
 class DesktopLogQuery {
   const DesktopLogQuery({
     this.domain = '',
+    this.client = '',
+    this.qtype = '',
     this.status = DesktopLogStatus.all,
     this.offset = 0,
   });
@@ -75,17 +77,30 @@ class DesktopLogQuery {
   static const pageSize = 25;
 
   final String domain;
+  final String client;
+
+  /// A record type from [desktopLogQTypes]; empty means every type.
+  final String qtype;
+
   final DesktopLogStatus status;
   final int offset;
 
-  bool get isFiltered => domain.isNotEmpty || status != DesktopLogStatus.all;
+  bool get isFiltered =>
+      domain.isNotEmpty ||
+      client.isNotEmpty ||
+      qtype.isNotEmpty ||
+      status != DesktopLogStatus.all;
 
   DesktopLogQuery copyWith({
     String? domain,
+    String? client,
+    String? qtype,
     DesktopLogStatus? status,
     int? offset,
   }) => DesktopLogQuery(
     domain: domain ?? this.domain,
+    client: client ?? this.client,
+    qtype: qtype ?? this.qtype,
     status: status ?? this.status,
     offset: offset ?? this.offset,
   );
@@ -101,6 +116,18 @@ class DesktopLogQueryNotifier extends Notifier<DesktopLogQuery> {
     final domain = value.trim();
     if (domain == state.domain) return;
     state = state.copyWith(domain: domain, offset: 0);
+  }
+
+  void setClient(String value) {
+    final client = value.trim();
+    if (client == state.client) return;
+    state = state.copyWith(client: client, offset: 0);
+  }
+
+  /// Empty selects every record type, which is what the service does when `qtype` is absent.
+  void setQType(String value) {
+    if (value == state.qtype) return;
+    state = state.copyWith(qtype: value, offset: 0);
   }
 
   void setStatus(DesktopLogStatus value) {
@@ -138,8 +165,44 @@ final desktopLogFeedProvider = FutureProvider<QueryLogPage>((ref) async {
       .watch(desktopApiClientProvider)
       .searchQueries(
         domain: query.domain,
+        client: query.client,
+        qtype: query.qtype,
         status: query.status,
         limit: DesktopLogQuery.pageSize,
         offset: query.offset,
       );
 });
+
+/// `POST /api/v1/querylog/clear`, which also drops the aggregate the summary card shows. A success
+/// re-reads both, because the service, not this app, decides what is left.
+class DesktopLogClearNotifier extends Notifier<DesktopLogClearState> {
+  @override
+  DesktopLogClearState build() => const DesktopLogClearState();
+
+  Future<DesktopApiException?> clear() async {
+    if (state.pending) return null;
+    state = const DesktopLogClearState(pending: true);
+    try {
+      await ref.read(desktopApiClientProvider).clearQueryLog();
+      ref.invalidate(desktopLogFeedProvider);
+      await ref.read(desktopQueryStatsProvider.notifier).refresh();
+      if (ref.mounted) state = const DesktopLogClearState();
+      return null;
+    } on DesktopApiException catch (error) {
+      if (ref.mounted) state = DesktopLogClearState(error: error);
+      return error;
+    }
+  }
+}
+
+class DesktopLogClearState {
+  const DesktopLogClearState({this.pending = false, this.error});
+
+  final bool pending;
+  final DesktopApiException? error;
+}
+
+final desktopLogClearProvider =
+    NotifierProvider<DesktopLogClearNotifier, DesktopLogClearState>(
+      DesktopLogClearNotifier.new,
+    );

@@ -5318,9 +5318,23 @@
   "desktopRecentQueriesTitle": "最近查询",
   "desktopRecentQueriesEmpty": "还没有查询记录",
   "desktopLogWindow24h": "近 24 小时",
-  "desktopLogSearchHint": "搜索域名或客户端",
   "desktopLogDomain": "域名",
   "desktopLogClient": "客户端",
+  "desktopLogDomainHint": "域名包含",
+  "desktopLogClientHint": "客户端 IP 或主机名",
+  "desktopLogAllTypes": "全部类型",
+  "desktopLogClear": "清空历史",
+  "desktopLogClearTitle": "清空查询历史？",
+  "desktopLogClearBody": "将删除全部内存记录与已落盘的历史日志文件，此操作不可撤销。",
+  "desktopLogClearDone": "查询历史与统计已清空",
+  "desktopLogClearFailed": "清空失败：{message}",
+  "@desktopLogClearFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLogPagePrev": "上一页",
   "desktopLogPageNext": "下一页",
   "desktopLogPageInfo": "第 {from}–{to} 条，共 {total} 条",

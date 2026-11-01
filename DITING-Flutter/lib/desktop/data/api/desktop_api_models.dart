@@ -340,6 +340,10 @@ class QueryStatsSummary {
   int get passed => (queries - blocked).clamp(0, queries);
 }
 
+/// The record types the console offers as one-tap filters, in the order the old desktop console
+/// lists them (`frontend/src/components/overview/QueryHistoryPanel.vue`). Empty means no filter.
+const List<String> desktopLogQTypes = ['A', 'AAAA', 'HTTPS', 'CNAME', 'PTR', 'TXT'];
+
 /// The `status` values `querylog.SearchQuery` accepts; the empty one means "no filter".
 ///
 /// The words the filter shows are the log page's own ARB keys, so this enum carries only the

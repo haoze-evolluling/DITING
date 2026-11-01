@@ -8959,13 +8959,36 @@ class AppL10nZh extends AppL10n {
   String get desktopLogWindow24h => '近 24 小时';
 
   @override
-  String get desktopLogSearchHint => '搜索域名或客户端';
-
-  @override
   String get desktopLogDomain => '域名';
 
   @override
   String get desktopLogClient => '客户端';
+
+  @override
+  String get desktopLogDomainHint => '域名包含';
+
+  @override
+  String get desktopLogClientHint => '客户端 IP 或主机名';
+
+  @override
+  String get desktopLogAllTypes => '全部类型';
+
+  @override
+  String get desktopLogClear => '清空历史';
+
+  @override
+  String get desktopLogClearTitle => '清空查询历史？';
+
+  @override
+  String get desktopLogClearBody => '将删除全部内存记录与已落盘的历史日志文件，此操作不可撤销。';
+
+  @override
+  String get desktopLogClearDone => '查询历史与统计已清空';
+
+  @override
+  String desktopLogClearFailed(String message) {
+    return '清空失败：$message';
+  }
 
   @override
   String get desktopLogPagePrev => '上一页';

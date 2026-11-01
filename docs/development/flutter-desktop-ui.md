@@ -63,10 +63,10 @@
 
 `lib/desktop/data/api/` 是桌面端唯一数据层，不承载视觉决策：
 
-- `desktop_api_client.dart`：`/status`、`/service/status`、`/querylog/search`（首页 `limit=N&includeFile=0`；日志页 `limit/offset/includeFile=1` 加可选 `domain`/`status`）、`/querylog/stats`、`/dns/start|stop`、`/takeover/enable|disable`、`/filter/pause`。信封 `{success, data, error}`，`401` 标记为鉴权问题。
+- `desktop_api_client.dart`：`/status`、`/service/status`、`/querylog/search`（首页 `limit=N&includeFile=0`；日志页 `limit/offset/includeFile=1` 加可选 `domain`/`client`/`qtype`/`status`）、`/querylog/stats`、`/querylog/clear`、`/dns/start|stop`、`/takeover/enable|disable`、`/filter/pause`。信封 `{success, data, error}`，`401` 标记为鉴权问题。
 - `desktop_api_models.dart`：不可变模型（状态、缓存、过滤、查询行、`DesktopQueryStats`、`DesktopLogStatus`），缺字段按零值解析、不抛异常。
 - `desktop_api_providers.dart`：`desktopStatusProvider`（2 s）、`desktopServiceStatusProvider`（10 s）、`desktopRecentQueriesProvider`（5 s）、`desktopControlProvider`（写操作串行化，失败保留错误）。
-- `desktop_log_providers.dart`：`desktopQueryStatsProvider`（10 s，失败保留上一份并标过期）、`desktopLogQueryProvider`（域名 + `status` + offset）、`desktopLogFeedProvider`（随条件重读）。与首页快照分文件：一次日志失败不该清空首页。
+- `desktop_log_providers.dart`：`desktopQueryStatsProvider`（10 s，失败保留上一份并标过期）、`desktopLogQueryProvider`（域名 + 客户端 + `qtype` + `status` + offset）、`desktopLogFeedProvider`（随条件重读）、`desktopLogClearProvider`（清空历史，成功后重读汇总与表格）。与首页快照分文件：一次日志失败不该清空首页。
 - 连接配置来自 `diting_desktop` 容器（`ipc_host`/`ipc_port`/`ipc_token`），默认 `127.0.0.1:15353` 且免密。
 - 失败语义：从未成功 → 说明「连不上本机服务 / 需要访问令牌」并给重试；曾经成功 → **保留上一份快照**并标过期。
 
@@ -75,7 +75,7 @@
 - Android 入口 `lib/main.dart`；桌面预览入口 `lib/desktop/main.dart`，`web/` 仅作 Wails/WebView 编译宿主。
 - 路由 `lib/desktop/router.dart`：`StatefulShellRoute.indexedStack` 六分支；壳为 `lib/desktop/shell/desktop_shell.dart`（宽窗 `NavigationSidebar` + 内容区，窄窗共享 `DockShell`，折叠状态不落盘）。
 - 首页 `lib/desktop/pages/home/`：`desktop_home_page.dart`（三种诚实状态 + 过期提示）、`desktop_dashboard.dart`（四列网格）、`widgets/*`（DNS 服务、查询指标、系统接管、暂停拦截、后台服务、缓存、规则拦截、性能、运行信息、最近查询）、`desktop_format.dart`。
-- 日志 `lib/desktop/pages/logs/`：`desktop_logs_page.dart`、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_query_table.dart`（250 ms 防抖搜索、状态筛选、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` + `QueryStatsPanel` 的汇总部分**；`qtype` 筛选、Top-N 三列排行、实时查询（`/events`）、日志留存配置（`QueryLogConfigCard`）尚未搬。
+- 日志 `lib/desktop/pages/logs/`：`desktop_logs_page.dart`、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` 的检索条件（`domain`/`client`/`qtype`/`status`）与清空历史**；Top-N 三列排行、实时查询（`/events`）、日志留存配置（`QueryLogConfigCard`）尚未搬。
 - 其余四个分支在 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`（`commonPendingTitle` / `commonPendingBody`）。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 
@@ -99,7 +99,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`logs` 补齐**：对齐旧版桌面 `QueryHistoryPanel`（`qtype` 筛选、实时模式）、`QueryStatsPanel`（Top 域名/拦截/客户端三列）、`LiveQueryPanel`（`/events` 实时流）、`QueryLogConfigCard`（日志留存配置）。
+1. **`logs` 补齐**：`QueryStatsPanel`（Top 域名/拦截/客户端三列）、`LiveQueryPanel`（`/events` 实时流）、`QueryLogConfigCard`（日志留存配置）。
 2. **`hub`**：解析 + 防护两组子页（上游、缓存、重写、DNS64、订阅、应用拦截、自定义规则、拦截方式、时间计划）。
 3. **`traffic`**：设备管理 + 缓存热点/Top 域名与客户端（不做按应用流量）。
 4. **`tools`**：诊断与修复、规则检测、上游/区域测试。

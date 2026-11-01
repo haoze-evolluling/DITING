@@ -9557,13 +9557,37 @@ class AppL10nEn extends AppL10n {
   String get desktopLogWindow24h => 'Last 24 hours';
 
   @override
-  String get desktopLogSearchHint => 'Search domain or client';
-
-  @override
   String get desktopLogDomain => 'Domain';
 
   @override
   String get desktopLogClient => 'Client';
+
+  @override
+  String get desktopLogDomainHint => 'Domain contains';
+
+  @override
+  String get desktopLogClientHint => 'Client IP or host name';
+
+  @override
+  String get desktopLogAllTypes => 'All types';
+
+  @override
+  String get desktopLogClear => 'Clear history';
+
+  @override
+  String get desktopLogClearTitle => 'Clear the query history?';
+
+  @override
+  String get desktopLogClearBody =>
+      'This deletes every in-memory record and every retained log file. It cannot be undone.';
+
+  @override
+  String get desktopLogClearDone => 'Query history and statistics cleared';
+
+  @override
+  String desktopLogClearFailed(String message) {
+    return 'Clear failed: $message';
+  }
 
   @override
   String get desktopLogPagePrev => 'Previous';

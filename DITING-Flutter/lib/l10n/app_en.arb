@@ -2708,9 +2708,23 @@
   "desktopRecentQueriesTitle": "Recent queries",
   "desktopRecentQueriesEmpty": "No queries yet",
   "desktopLogWindow24h": "Last 24 hours",
-  "desktopLogSearchHint": "Search domain or client",
   "desktopLogDomain": "Domain",
   "desktopLogClient": "Client",
+  "desktopLogDomainHint": "Domain contains",
+  "desktopLogClientHint": "Client IP or host name",
+  "desktopLogAllTypes": "All types",
+  "desktopLogClear": "Clear history",
+  "desktopLogClearTitle": "Clear the query history?",
+  "desktopLogClearBody": "This deletes every in-memory record and every retained log file. It cannot be undone.",
+  "desktopLogClearDone": "Query history and statistics cleared",
+  "desktopLogClearFailed": "Clear failed: {message}",
+  "@desktopLogClearFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLogPagePrev": "Previous",
   "desktopLogPageNext": "Next",
   "desktopLogPageInfo": "Rows {from}–{to} of {total}"
