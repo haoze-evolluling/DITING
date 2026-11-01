@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
+import 'package:diting/desktop/data/api/desktop_cache_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:http/http.dart' as http;
 
@@ -170,6 +171,53 @@ class DesktopApiClient {
     '/api/v1/filter/pause',
     body: {'paused': paused, if (paused) 'durationSec': 0},
   );
+
+  Future<DesktopCacheStats> cacheStats() async =>
+      DesktopCacheStats.fromJson(await _get('/api/v1/cache/stats'));
+
+  /// `query` matches the domain and the record type; the service answers with the total it counted
+  /// plus at most `limit` rows.
+  Future<DesktopCacheEntries> cacheEntries({
+    String query = '',
+    int limit = 100,
+  }) async => DesktopCacheEntries.fromJson(
+    await _get(
+      '/api/v1/cache/entries',
+      query: {'limit': '$limit', if (query.isNotEmpty) 'query': query},
+    ),
+  );
+
+  /// Already ranked and capped by the service; the page neither re-sorts nor extends the list.
+  Future<List<DesktopCacheDomain>> cacheTopDomains({int limit = 10}) async {
+    final response = await _send(
+      '/api/v1/cache/top',
+      method: 'GET',
+      query: {'limit': '$limit'},
+    );
+    return desktopCacheDomains(response['data']);
+  }
+
+  /// Drops every cached answer. The service keeps no undo, so the page asks first.
+  Future<void> clearCache() => _post('/api/v1/cache/clear');
+
+  Future<DesktopCacheConfig> cacheConfig() async =>
+      DesktopCacheConfig.fromJson(await _get('/api/v1/cache/config'));
+
+  /// The service merges the body over its current config and clamps it, so the page sends the whole
+  /// form and re-reads instead of assuming what was applied.
+  Future<void> updateCacheConfig(DesktopCacheConfig config) =>
+      _post('/api/v1/cache/config', body: config.toJson());
+
+  Future<DesktopCachePersist> cachePersist() async =>
+      DesktopCachePersist.fromJson(await _get('/api/v1/cache/persist'));
+
+  /// Writes the in-memory cache to disk now, and answers with the resulting status.
+  Future<DesktopCachePersist> dumpCache() async =>
+      DesktopCachePersist.fromJson(await _postData('/api/v1/cache/dump'));
+
+  /// Reads the persisted file back into memory, and answers with how many entries it restored.
+  Future<DesktopCachePersist> loadCache() async =>
+      DesktopCachePersist.fromJson(await _postData('/api/v1/cache/load'));
 
   void close() => _http.close();
 

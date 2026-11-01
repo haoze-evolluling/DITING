@@ -8,6 +8,8 @@ import 'package:diting/desktop/data/api/desktop_api_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'desktop_cache_fakes.dart';
+
 /// Envelope the service uses for every answer.
 Map<String, Object?> apiEnvelope(Object? data) => {
   'success': true,
@@ -154,7 +156,6 @@ Map<String, Object?> queryLogConfigPayload({
   'dataDir': dataDir,
 };
 
-
 /// A `GET /api/v1/upstream/configure` payload. The service returns lower-case mode and always
 /// includes `fallbackOnRcode`, which the form must round-trip.
 Map<String, Object?> upstreamPayload({
@@ -169,7 +170,8 @@ Map<String, Object?> upstreamPayload({
   bool fallbackOnError = true,
 }) => {
   'mode': mode,
-  'providers': providers ??
+  'providers':
+      providers ??
       const [
         {
           'id': 'AliDNS (DoT)',
@@ -188,10 +190,21 @@ Map<String, Object?> upstreamPayload({
       ],
   'bootstrap': {
     'enabled': bootstrapEnabled,
-    'servers': bootstrapServers ??
+    'servers':
+        bootstrapServers ??
         const [
-          {'id': 'bootstrap-1', 'name': 'AliDNS', 'address': '223.5.5.5:53', 'weight': 1},
-          {'id': 'bootstrap-2', 'name': 'DNSPod', 'address': '119.29.29.29:53', 'weight': 1},
+          {
+            'id': 'bootstrap-1',
+            'name': 'AliDNS',
+            'address': '223.5.5.5:53',
+            'weight': 1,
+          },
+          {
+            'id': 'bootstrap-2',
+            'name': 'DNSPod',
+            'address': '119.29.29.29:53',
+            'weight': 1,
+          },
         ],
   },
   'conditionalRoutes': conditionalRoutes,
@@ -202,7 +215,10 @@ Map<String, Object?> upstreamPayload({
 };
 
 /// A `POST /api/v1/upstream/test` answer for a reachable node.
-Map<String, Object?> upstreamProbePayload({double latencyMs = 23.5, String error = ''}) => {
+Map<String, Object?> upstreamProbePayload({
+  double latencyMs = 23.5,
+  String error = '',
+}) => {
   'success': error.isEmpty,
   'latencyMs': error.isEmpty ? latencyMs : 0,
   if (error.isNotEmpty) 'error': error,
@@ -249,6 +265,11 @@ class FakeDesktopBackend {
     Map<String, Object?>? upstream,
     Map<String, Object?>? probe,
     Map<String, Object?>? stamp,
+    Map<String, Object?>? cacheStats,
+    Map<String, Object?>? cacheConfig,
+    Map<String, Object?>? cacheEntries,
+    List<Map<String, Object?>>? cacheTop,
+    Map<String, Object?>? cachePersist,
     this.failAfter,
     this.statusCode = 200,
   }) : status = status ?? statusPayload(),
@@ -258,7 +279,12 @@ class FakeDesktopBackend {
        logConfig = logConfig ?? queryLogConfigPayload(),
        upstream = upstream ?? upstreamPayload(),
        probe = probe ?? upstreamProbePayload(),
-       stamp = stamp ?? stampPayload();
+       stamp = stamp ?? stampPayload(),
+       cacheStats = cacheStats ?? cacheStatsPayload(),
+       cacheConfig = cacheConfig ?? cacheConfigPayload(),
+       cacheEntries = cacheEntries ?? cacheEntriesPayload(),
+       cacheTop = cacheTop ?? cacheTopPayload(),
+       cachePersist = cachePersist ?? cachePersistPayload();
 
   Map<String, Object?> status;
   Map<String, Object?> service;
@@ -276,6 +302,25 @@ class FakeDesktopBackend {
 
   /// The answer `/api/v1/upstream/stamp` gives next.
   Map<String, Object?> stamp;
+
+  /// The cache the service reports; `POST /cache/config` merges into [cacheConfig], and
+  /// `POST /cache/clear` empties [cacheEntries] and the stats count.
+  Map<String, Object?> cacheStats;
+  Map<String, Object?> cacheConfig;
+  Map<String, Object?> cacheEntries;
+  List<Map<String, Object?>> cacheTop;
+  Map<String, Object?> cachePersist;
+
+  /// Bodies of every cache config save, in order.
+  final cacheConfigUpdates = <Map<String, Object?>>[];
+
+  /// Query parameters of every `/api/v1/cache/entries` call, in order.
+  final cacheQueries = <Map<String, String>>[];
+
+  /// How many times each cache action was called.
+  int cacheClears = 0;
+  int cacheDumps = 0;
+  int cacheLoads = 0;
 
   /// Bodies of every upstream save, in order.
   final upstreamUpdates = <Map<String, Object?>>[];
@@ -334,6 +379,31 @@ class FakeDesktopBackend {
       if (path == '/api/v1/upstream/test' && request.method == 'POST') {
         probes.add((jsonDecode(request.body) as Map).cast<String, Object?>());
       }
+      if (path == '/api/v1/cache/entries') {
+        cacheQueries.add(request.url.queryParameters);
+      }
+      if (path == '/api/v1/cache/config' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        cacheConfigUpdates.add(body);
+        cacheConfig = {...cacheConfig, ...body};
+      }
+      if (path == '/api/v1/cache/clear' && request.method == 'POST') {
+        cacheClears++;
+        cacheEntries = cacheEntriesPayload(total: 0, entries: const []);
+        cacheStats = {...cacheStats, 'entryCount': 0};
+        cacheTop = const [];
+      }
+      if (path == '/api/v1/cache/dump' && request.method == 'POST') {
+        cacheDumps++;
+        cachePersist = {
+          ...cachePersist,
+          'entryCount': cacheStats['entryCount'],
+        };
+      }
+      if (path == '/api/v1/cache/load' && request.method == 'POST') {
+        cacheLoads++;
+        cachePersist = {...cachePersist, 'restored': 2};
+      }
       if (path == '/api/v1/status') _statusRequests++;
       final limit = failAfter;
       if (path == '/api/v1/status' &&
@@ -354,9 +424,7 @@ class FakeDesktopBackend {
         return http.Response(
           jsonEncode({
             'success': false,
-            'error': statusCode == 401
-                ? 'unauthorized'
-                : 'HTTP $statusCode',
+            'error': statusCode == 401 ? 'unauthorized' : 'HTTP $statusCode',
           }),
           statusCode,
         );
@@ -389,6 +457,34 @@ class FakeDesktopBackend {
         ),
         '/api/v1/upstream/stamp' => http.Response(
           jsonEncode(apiEnvelope(stamp)),
+          200,
+        ),
+        '/api/v1/cache/stats' => http.Response(
+          jsonEncode(apiEnvelope(cacheStats)),
+          200,
+        ),
+        '/api/v1/cache/entries' => http.Response(
+          jsonEncode(apiEnvelope(cacheEntries)),
+          200,
+        ),
+        '/api/v1/cache/top' => http.Response(
+          jsonEncode(apiEnvelope(cacheTop)),
+          200,
+        ),
+        '/api/v1/cache/config' => http.Response(
+          jsonEncode(apiEnvelope(cacheConfig)),
+          200,
+        ),
+        '/api/v1/cache/persist' => http.Response(
+          jsonEncode(apiEnvelope(cachePersist)),
+          200,
+        ),
+        '/api/v1/cache/dump' => http.Response(
+          jsonEncode(apiEnvelope(cachePersist)),
+          200,
+        ),
+        '/api/v1/cache/load' => http.Response(
+          jsonEncode(apiEnvelope(cachePersist)),
           200,
         ),
         _ => http.Response(jsonEncode({'success': true, 'message': 'ok'}), 200),

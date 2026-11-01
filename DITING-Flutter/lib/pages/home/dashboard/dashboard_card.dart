@@ -240,14 +240,16 @@ class DashboardChip extends StatelessWidget {
                 shape: const CircleBorder(),
               ),
             ),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: (large ? AppTextStyle.footnote : AppTextStyle.caption1)
-                .of(context, emphasized: true)
-                .toTabular
-                .copyWith(color: foreground),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: (large ? AppTextStyle.footnote : AppTextStyle.caption1)
+                  .of(context, emphasized: true)
+                  .toTabular
+                  .copyWith(color: foreground),
+            ),
           ),
         ],
       ),

@@ -9394,4 +9394,372 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopUpstreamBootstrapEditTitle => '编辑 Bootstrap DNS 服务器';
+
+  @override
+  String get desktopHubCache => '解析缓存';
+
+  @override
+  String get desktopHubCacheBody => '命中率、容量、TTL 策略、排除规则与落盘持久化';
+
+  @override
+  String get desktopCacheEngineTitle => '智能解析加速引擎';
+
+  @override
+  String get desktopCacheEngineBody => '自动缓存已访问过的解析结果，下次访问直接返回；上游抖动时复用近期记录兜底。';
+
+  @override
+  String get desktopCacheEngineOn => '加速生效中';
+
+  @override
+  String get desktopCacheEngineOff => '加速已停用';
+
+  @override
+  String get desktopCacheHitRatio => '缓存命中率';
+
+  @override
+  String get desktopCacheRefresh => '刷新数据';
+
+  @override
+  String get desktopCacheClear => '一键清空缓存';
+
+  @override
+  String get desktopCacheClearTitle => '确定清空所有加速缓存？';
+
+  @override
+  String desktopCacheClearBody(int count) {
+    return '此操作将清空当前全部已缓存的网址记录（共 $count 条）。清空后后续访问将重新通过网络解析。';
+  }
+
+  @override
+  String get desktopCacheClearDone => '加速缓存已全部清空';
+
+  @override
+  String desktopCacheClearFailed(String message) {
+    return '清空缓存失败：$message';
+  }
+
+  @override
+  String get desktopCacheTelemetryTitle => '缓存遥测指标';
+
+  @override
+  String desktopCacheTelemetryCapacity(int used, int max) {
+    return '容量 $used / $max';
+  }
+
+  @override
+  String get desktopCacheMisses => '实时联网解析';
+
+  @override
+  String get desktopCacheStaleHits => '弱网应急保障';
+
+  @override
+  String get desktopCacheNegativeHits => '无效网址拦截';
+
+  @override
+  String get desktopCachePrefetchCount => '热点预取刷新';
+
+  @override
+  String get desktopCacheTopTitle => '高频访问网址排行';
+
+  @override
+  String get desktopCacheTopBody => '本地缓存命中次数最高的前 10 个域名';
+
+  @override
+  String get desktopCacheTopEmpty => '暂无高频网址访问记录';
+
+  @override
+  String desktopCacheTopHits(int count) {
+    return '$count 次';
+  }
+
+  @override
+  String get desktopCacheConfigTitle => '加速策略设置';
+
+  @override
+  String get desktopCacheConfigBody => '有效期规则、弱网容灾与热点预取';
+
+  @override
+  String get desktopCacheConfigSave => '保存策略';
+
+  @override
+  String get desktopCacheConfigSaved => '加速策略已保存并即时生效';
+
+  @override
+  String get desktopCacheModeLabel => '记录有效期计算方式';
+
+  @override
+  String get desktopCacheModeLimit => '限制最长有效期（推荐）';
+
+  @override
+  String get desktopCacheModeFollow => '完全遵从上游 TTL';
+
+  @override
+  String get desktopCacheModeFixed => '强制使用固定有效期';
+
+  @override
+  String get desktopCacheMaxTtl => '最长保存时长（秒）';
+
+  @override
+  String get desktopCacheMinTtl => '最短保留时长（秒）';
+
+  @override
+  String get desktopCacheFixedTtl => '固定有效期（秒）';
+
+  @override
+  String get desktopCacheMinTtlEnabled => '应用最短保留时长';
+
+  @override
+  String get desktopCacheStaleTitle => '弱网应急保障（旧记录兜底）';
+
+  @override
+  String get desktopCacheStaleBody => '上游超时或断网时，复用近期缓存防止网页报错';
+
+  @override
+  String get desktopCacheStaleSeconds => '应急保留期（秒）';
+
+  @override
+  String get desktopCacheOptimistic => '极速响应';
+
+  @override
+  String get desktopCacheOptimisticBody => '先返回缓存，后台静默刷新';
+
+  @override
+  String get desktopCacheNegative => '无效网址记忆加速';
+
+  @override
+  String get desktopCacheNegativeBody => '记住不存在或错误的域名，避免频繁重复重试';
+
+  @override
+  String get desktopCacheNegativeSeconds => '无效记录保留（秒）';
+
+  @override
+  String get desktopCachePrefetchTitle => '热点域名主动预取';
+
+  @override
+  String get desktopCachePrefetchBody => '在常用域名记录到期前提前回源刷新，避免首次访问等待';
+
+  @override
+  String get desktopCachePrefetchThreshold => '命中次数门槛';
+
+  @override
+  String get desktopCachePrefetchThresholdHint => '被访问达到该次数的域名才会预取';
+
+  @override
+  String get desktopCachePrefetchBefore => '剩余有效期阈值（毫秒）';
+
+  @override
+  String get desktopCachePrefetchBeforeHint => '剩余有效期低于该值时触发刷新';
+
+  @override
+  String get desktopCacheInvalidNumbers => '秒数与阈值需为正整数';
+
+  @override
+  String desktopCacheSaveFailed(String message) {
+    return '保存缓存配置失败：$message';
+  }
+
+  @override
+  String get desktopCacheLoadFailed => '读不到缓存配置';
+
+  @override
+  String get desktopCachePersistTitle => '缓存落盘持久化';
+
+  @override
+  String get desktopCachePersistBody =>
+      '把内存中的解析结果定期写入磁盘，服务重启后可直接读回。默认关闭：读取上次的应答会让「上游已变更但仍命中旧记录」更难察觉。';
+
+  @override
+  String get desktopCachePersistOn => '已开启';
+
+  @override
+  String get desktopCachePersistOff => '未开启';
+
+  @override
+  String get desktopCachePersistInterval => '定时落盘间隔（秒）';
+
+  @override
+  String get desktopCachePersistIntervalHint =>
+      '取值范围 30–86400；留空或 0 使用默认值 300。服务退出时总会额外写一次。';
+
+  @override
+  String get desktopCachePersistPath => '落盘文件';
+
+  @override
+  String desktopCachePersistLastError(String message) {
+    return '最近一次落盘失败：$message';
+  }
+
+  @override
+  String desktopCachePersistRecords(int count) {
+    return '当前 $count 条可落盘记录';
+  }
+
+  @override
+  String get desktopCachePersistDump => '立即落盘';
+
+  @override
+  String get desktopCachePersistLoad => '从文件恢复';
+
+  @override
+  String desktopCachePersistDumpDone(int count) {
+    return '已落盘 $count 条缓存记录';
+  }
+
+  @override
+  String desktopCachePersistLoadDone(int count) {
+    return '已从落盘文件恢复 $count 条缓存记录';
+  }
+
+  @override
+  String desktopCachePersistDumpFailed(String message) {
+    return '落盘失败：$message';
+  }
+
+  @override
+  String desktopCachePersistLoadFailed(String message) {
+    return '恢复失败：$message';
+  }
+
+  @override
+  String get desktopCachePersistLoadTitle => '确定从落盘文件恢复缓存？';
+
+  @override
+  String get desktopCachePersistLoadBody =>
+      '文件中仍有效的记录会被读入当前缓存，覆盖同名的现有条目；已过期的记录会被自动忽略。';
+
+  @override
+  String get desktopCachePersistToggleOn => '缓存落盘已开启';
+
+  @override
+  String get desktopCachePersistToggleOff => '缓存落盘已关闭';
+
+  @override
+  String get desktopCachePersistIntervalSaved => '落盘间隔已更新';
+
+  @override
+  String get desktopCacheExcludeTitle => '缓存排除规则';
+
+  @override
+  String get desktopCacheExcludeBody =>
+      '命中规则的域名既不读取也不写入缓存，每次都实时回源。适用于内网域名、动态 IP 探测等「缓存反而出错」的场景。';
+
+  @override
+  String get desktopCacheExcludeOff => '未启用';
+
+  @override
+  String desktopCacheExcludeCount(int count) {
+    return '$count 条规则';
+  }
+
+  @override
+  String get desktopCacheExcludeLabel => '正则表达式（一行一条，Go RE2 语法）';
+
+  @override
+  String get desktopCacheExcludeHint => '例如：\\.local\$';
+
+  @override
+  String get desktopCacheExcludeSave => '保存规则';
+
+  @override
+  String desktopCacheExcludeSaved(int count) {
+    return '已保存 $count 条排除规则';
+  }
+
+  @override
+  String get desktopCacheExcludeCleared => '已清空排除规则，全部域名重新参与缓存';
+
+  @override
+  String desktopCacheExcludeFailed(String message) {
+    return '保存排除规则失败：$message';
+  }
+
+  @override
+  String desktopCacheExcludeHits(int count) {
+    return '已拦截 $count 次缓存读写';
+  }
+
+  @override
+  String get desktopCacheExcludeReset => '撤销修改';
+
+  @override
+  String desktopCacheExcludeTooMany(int max) {
+    return '规则超过 $max 条，超出部分不会被保存';
+  }
+
+  @override
+  String desktopCacheExcludeTooLong(int count, int max) {
+    return '$count 条规则超过 $max 字符，保存时会被忽略';
+  }
+
+  @override
+  String get desktopCacheExcludePresetLocal => '内网单标签域';
+
+  @override
+  String get desktopCacheExcludePresetPtr => 'PTR 反查';
+
+  @override
+  String get desktopCacheExcludePresetProbe => '临时探测域';
+
+  @override
+  String get desktopCacheEntriesTitle => '已缓存域名明细';
+
+  @override
+  String get desktopCacheEntriesBody => '实时查看分片缓存记录、TTL 有效期与解析 IP';
+
+  @override
+  String get desktopCacheEntriesSearch => '搜索网址或记录类型…';
+
+  @override
+  String get desktopCacheEntriesEmpty => '未匹配到符合条件的缓存条目';
+
+  @override
+  String get desktopCacheEntriesNone => '缓存中暂无记录';
+
+  @override
+  String get desktopCacheEntriesLoadFailed => '读取缓存条目失败';
+
+  @override
+  String get desktopCacheFilterAll => '全部';
+
+  @override
+  String get desktopCacheFilterFresh => '有效记录';
+
+  @override
+  String get desktopCacheFilterStale => '应急备用';
+
+  @override
+  String get desktopCacheFilterNegative => '无效网址';
+
+  @override
+  String get desktopCacheEntryDomain => '网址 / 域名';
+
+  @override
+  String get desktopCacheEntryType => '类型';
+
+  @override
+  String get desktopCacheEntryStatus => '状态';
+
+  @override
+  String get desktopCacheEntryRemaining => '剩余有效期';
+
+  @override
+  String get desktopCacheEntryTtl => '初始 TTL';
+
+  @override
+  String get desktopCacheEntryHits => '命中次数';
+
+  @override
+  String get desktopCacheEntryIps => '解析 IP 列表';
+
+  @override
+  String get desktopCacheStatusFresh => '有效';
+
+  @override
+  String get desktopCacheStatusStale => '应急备用';
+
+  @override
+  String get desktopCacheStatusNegative => '无效网址';
+
+  @override
+  String get desktopCacheNoIps => '无';
 }

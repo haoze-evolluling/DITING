@@ -10015,4 +10015,390 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopUpstreamBootstrapEditTitle => 'Edit bootstrap DNS server';
+
+  @override
+  String get desktopHubCache => 'Resolver cache';
+
+  @override
+  String get desktopHubCacheBody =>
+      'Hit rate, capacity, TTL policy, exclude rules and on-disk persistence';
+
+  @override
+  String get desktopCacheEngineTitle => 'Resolver acceleration engine';
+
+  @override
+  String get desktopCacheEngineBody =>
+      'Caches answers that were already looked up and returns them instantly; recent records cover an upstream that stalls.';
+
+  @override
+  String get desktopCacheEngineOn => 'Acceleration active';
+
+  @override
+  String get desktopCacheEngineOff => 'Acceleration off';
+
+  @override
+  String get desktopCacheHitRatio => 'Cache hit rate';
+
+  @override
+  String get desktopCacheRefresh => 'Refresh data';
+
+  @override
+  String get desktopCacheClear => 'Clear cache';
+
+  @override
+  String get desktopCacheClearTitle => 'Clear every cached answer?';
+
+  @override
+  String desktopCacheClearBody(int count) {
+    return 'This deletes all $count cached names. Later lookups go back to the network.';
+  }
+
+  @override
+  String get desktopCacheClearDone => 'The cache is empty';
+
+  @override
+  String desktopCacheClearFailed(String message) {
+    return 'Could not clear the cache: $message';
+  }
+
+  @override
+  String get desktopCacheTelemetryTitle => 'Cache telemetry';
+
+  @override
+  String desktopCacheTelemetryCapacity(int used, int max) {
+    return 'Capacity $used / $max';
+  }
+
+  @override
+  String get desktopCacheMisses => 'Live lookups';
+
+  @override
+  String get desktopCacheStaleHits => 'Stale fallbacks';
+
+  @override
+  String get desktopCacheNegativeHits => 'Negative answers';
+
+  @override
+  String get desktopCachePrefetchCount => 'Prefetch refreshes';
+
+  @override
+  String get desktopCacheTopTitle => 'Most queried names';
+
+  @override
+  String get desktopCacheTopBody =>
+      'The ten names with the most local cache hits';
+
+  @override
+  String get desktopCacheTopEmpty => 'No frequently queried names yet';
+
+  @override
+  String desktopCacheTopHits(int count) {
+    return '$count hits';
+  }
+
+  @override
+  String get desktopCacheConfigTitle => 'Acceleration policy';
+
+  @override
+  String get desktopCacheConfigBody =>
+      'Record lifetime, stale fallback and prefetch';
+
+  @override
+  String get desktopCacheConfigSave => 'Save policy';
+
+  @override
+  String get desktopCacheConfigSaved =>
+      'The acceleration policy is saved and active';
+
+  @override
+  String get desktopCacheModeLabel => 'How record lifetime is computed';
+
+  @override
+  String get desktopCacheModeLimit => 'Cap the maximum lifetime (recommended)';
+
+  @override
+  String get desktopCacheModeFollow => 'Follow the upstream TTL exactly';
+
+  @override
+  String get desktopCacheModeFixed => 'Force one fixed lifetime';
+
+  @override
+  String get desktopCacheMaxTtl => 'Maximum lifetime (s)';
+
+  @override
+  String get desktopCacheMinTtl => 'Minimum lifetime (s)';
+
+  @override
+  String get desktopCacheFixedTtl => 'Fixed lifetime (s)';
+
+  @override
+  String get desktopCacheMinTtlEnabled => 'Apply the minimum lifetime';
+
+  @override
+  String get desktopCacheStaleTitle => 'Stale fallback';
+
+  @override
+  String get desktopCacheStaleBody =>
+      'Reuse a recent record when the upstream times out or the network drops';
+
+  @override
+  String get desktopCacheStaleSeconds => 'Fallback window (s)';
+
+  @override
+  String get desktopCacheOptimistic => 'Instant response';
+
+  @override
+  String get desktopCacheOptimisticBody =>
+      'Answer from cache, refresh in the background';
+
+  @override
+  String get desktopCacheNegative => 'Remember negative answers';
+
+  @override
+  String get desktopCacheNegativeBody =>
+      'Remember names that do not exist so software stops retrying them';
+
+  @override
+  String get desktopCacheNegativeSeconds => 'Negative record lifetime (s)';
+
+  @override
+  String get desktopCachePrefetchTitle => 'Prefetch hot names';
+
+  @override
+  String get desktopCachePrefetchBody =>
+      'Refresh a frequently used name before it expires, so the next visit does not wait';
+
+  @override
+  String get desktopCachePrefetchThreshold => 'Hit threshold';
+
+  @override
+  String get desktopCachePrefetchThresholdHint =>
+      'Only names reached this often are prefetched';
+
+  @override
+  String get desktopCachePrefetchBefore => 'Remaining lifetime threshold (ms)';
+
+  @override
+  String get desktopCachePrefetchBeforeHint =>
+      'Refresh once the remaining lifetime drops below this';
+
+  @override
+  String get desktopCacheInvalidNumbers =>
+      'Seconds and thresholds must be positive whole numbers';
+
+  @override
+  String desktopCacheSaveFailed(String message) {
+    return 'Could not save the cache config: $message';
+  }
+
+  @override
+  String get desktopCacheLoadFailed => 'Could not read the cache config';
+
+  @override
+  String get desktopCachePersistTitle => 'Cache persistence';
+
+  @override
+  String get desktopCachePersistBody =>
+      'Writes the in-memory answers to disk periodically so a restart can read them back. Off by default: replaying old answers makes a changed upstream harder to notice.';
+
+  @override
+  String get desktopCachePersistOn => 'On';
+
+  @override
+  String get desktopCachePersistOff => 'Off';
+
+  @override
+  String get desktopCachePersistInterval => 'Write interval (s)';
+
+  @override
+  String get desktopCachePersistIntervalHint =>
+      '30–86400; empty or 0 uses the default 300. The service always writes once more on exit.';
+
+  @override
+  String get desktopCachePersistPath => 'Cache file';
+
+  @override
+  String desktopCachePersistLastError(String message) {
+    return 'The last write failed: $message';
+  }
+
+  @override
+  String desktopCachePersistRecords(int count) {
+    return '$count records can be written';
+  }
+
+  @override
+  String get desktopCachePersistDump => 'Write now';
+
+  @override
+  String get desktopCachePersistLoad => 'Restore from file';
+
+  @override
+  String desktopCachePersistDumpDone(int count) {
+    return 'Wrote $count cache records';
+  }
+
+  @override
+  String desktopCachePersistLoadDone(int count) {
+    return 'Restored $count cache records from the file';
+  }
+
+  @override
+  String desktopCachePersistDumpFailed(String message) {
+    return 'Could not write the cache: $message';
+  }
+
+  @override
+  String desktopCachePersistLoadFailed(String message) {
+    return 'Could not restore the cache: $message';
+  }
+
+  @override
+  String get desktopCachePersistLoadTitle => 'Restore the cache from the file?';
+
+  @override
+  String get desktopCachePersistLoadBody =>
+      'Records still valid in the file are read into the current cache and replace entries with the same name; expired records are ignored.';
+
+  @override
+  String get desktopCachePersistToggleOn => 'Cache persistence is on';
+
+  @override
+  String get desktopCachePersistToggleOff => 'Cache persistence is off';
+
+  @override
+  String get desktopCachePersistIntervalSaved =>
+      'The write interval is updated';
+
+  @override
+  String get desktopCacheExcludeTitle => 'Cache exclude rules';
+
+  @override
+  String get desktopCacheExcludeBody =>
+      'A matching name is neither read from nor written to the cache; it always goes upstream. Useful for internal names and dynamic-IP probes where caching does harm.';
+
+  @override
+  String get desktopCacheExcludeOff => 'Not enabled';
+
+  @override
+  String desktopCacheExcludeCount(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String get desktopCacheExcludeLabel =>
+      'Regular expressions (one per line, Go RE2)';
+
+  @override
+  String get desktopCacheExcludeHint => 'For example: \\.local\$';
+
+  @override
+  String get desktopCacheExcludeSave => 'Save rules';
+
+  @override
+  String desktopCacheExcludeSaved(int count) {
+    return 'Saved $count exclude rules';
+  }
+
+  @override
+  String get desktopCacheExcludeCleared =>
+      'Exclude rules cleared; every name is cached again';
+
+  @override
+  String desktopCacheExcludeFailed(String message) {
+    return 'Could not save the exclude rules: $message';
+  }
+
+  @override
+  String desktopCacheExcludeHits(int count) {
+    return '$count cache reads and writes bypassed';
+  }
+
+  @override
+  String get desktopCacheExcludeReset => 'Discard changes';
+
+  @override
+  String desktopCacheExcludeTooMany(int max) {
+    return 'More than $max rules; the extra ones are not saved';
+  }
+
+  @override
+  String desktopCacheExcludeTooLong(int count, int max) {
+    return '$count rules exceed $max characters and are ignored on save';
+  }
+
+  @override
+  String get desktopCacheExcludePresetLocal => 'Single-label internal names';
+
+  @override
+  String get desktopCacheExcludePresetPtr => 'PTR lookups';
+
+  @override
+  String get desktopCacheExcludePresetProbe => 'Captive-portal probes';
+
+  @override
+  String get desktopCacheEntriesTitle => 'Cached names';
+
+  @override
+  String get desktopCacheEntriesBody =>
+      'Live shard entries, their TTL and the addresses they resolve to';
+
+  @override
+  String get desktopCacheEntriesSearch => 'Search a name or record type…';
+
+  @override
+  String get desktopCacheEntriesEmpty =>
+      'No cache entry matches these conditions';
+
+  @override
+  String get desktopCacheEntriesNone => 'The cache holds no entries yet';
+
+  @override
+  String get desktopCacheEntriesLoadFailed =>
+      'Could not read the cache entries';
+
+  @override
+  String get desktopCacheFilterAll => 'All';
+
+  @override
+  String get desktopCacheFilterFresh => 'Fresh';
+
+  @override
+  String get desktopCacheFilterStale => 'Stale';
+
+  @override
+  String get desktopCacheFilterNegative => 'Negative';
+
+  @override
+  String get desktopCacheEntryDomain => 'Name';
+
+  @override
+  String get desktopCacheEntryType => 'Type';
+
+  @override
+  String get desktopCacheEntryStatus => 'State';
+
+  @override
+  String get desktopCacheEntryRemaining => 'Remaining TTL';
+
+  @override
+  String get desktopCacheEntryTtl => 'Initial TTL';
+
+  @override
+  String get desktopCacheEntryHits => 'Hits';
+
+  @override
+  String get desktopCacheEntryIps => 'Addresses';
+
+  @override
+  String get desktopCacheStatusFresh => 'Fresh';
+
+  @override
+  String get desktopCacheStatusStale => 'Stale';
+
+  @override
+  String get desktopCacheStatusNegative => 'Negative';
+
+  @override
+  String get desktopCacheNoIps => 'None';
 }

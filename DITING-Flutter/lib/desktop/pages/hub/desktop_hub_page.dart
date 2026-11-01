@@ -7,6 +7,7 @@
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
+import 'package:diting/desktop/pages/hub/desktop_cache_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
@@ -45,6 +46,16 @@ class DesktopFeatureHubPage extends StatelessWidget {
                           size: 18,
                         ),
                         onTap: () => context.push(DesktopUpstreamPage.path),
+                      ),
+                      ListItem(
+                        leading: const GlyphIcon(AppGlyphs.resources, size: 20),
+                        title: Text(l10n.desktopHubCache),
+                        subtitle: Text(l10n.desktopHubCacheBody),
+                        trailing: const GlyphIcon(
+                          AppGlyphs.chevronForward,
+                          size: 18,
+                        ),
+                        onTap: () => context.push(DesktopCachePage.path),
                       ),
                     ]),
                   ],

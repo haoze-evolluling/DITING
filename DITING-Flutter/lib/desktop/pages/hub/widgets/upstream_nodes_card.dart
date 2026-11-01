@@ -8,6 +8,7 @@ import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_providers.dart';
 import 'package:diting/desktop/pages/hub/widgets/upstream_common.dart';
 import 'package:diting/desktop/pages/hub/widgets/upstream_editor_dialog.dart';
+import 'package:diting/desktop/widgets/desktop_feedback.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';

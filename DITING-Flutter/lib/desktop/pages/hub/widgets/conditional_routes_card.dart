@@ -3,7 +3,7 @@
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
-import 'package:diting/desktop/pages/hub/widgets/upstream_common.dart';
+import 'package:diting/desktop/widgets/desktop_feedback.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';

@@ -17169,6 +17169,666 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'编辑 Bootstrap DNS 服务器'**
   String get desktopUpstreamBootstrapEditTitle;
+
+  /// No description provided for @desktopHubCache.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析缓存'**
+  String get desktopHubCache;
+
+  /// No description provided for @desktopHubCacheBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中率、容量、TTL 策略、排除规则与落盘持久化'**
+  String get desktopHubCacheBody;
+
+  /// No description provided for @desktopCacheEngineTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'智能解析加速引擎'**
+  String get desktopCacheEngineTitle;
+
+  /// No description provided for @desktopCacheEngineBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动缓存已访问过的解析结果，下次访问直接返回；上游抖动时复用近期记录兜底。'**
+  String get desktopCacheEngineBody;
+
+  /// No description provided for @desktopCacheEngineOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'加速生效中'**
+  String get desktopCacheEngineOn;
+
+  /// No description provided for @desktopCacheEngineOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'加速已停用'**
+  String get desktopCacheEngineOff;
+
+  /// No description provided for @desktopCacheHitRatio.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存命中率'**
+  String get desktopCacheHitRatio;
+
+  /// No description provided for @desktopCacheRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新数据'**
+  String get desktopCacheRefresh;
+
+  /// No description provided for @desktopCacheClear.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键清空缓存'**
+  String get desktopCacheClear;
+
+  /// No description provided for @desktopCacheClearTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定清空所有加速缓存？'**
+  String get desktopCacheClearTitle;
+
+  /// No description provided for @desktopCacheClearBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'此操作将清空当前全部已缓存的网址记录（共 {count} 条）。清空后后续访问将重新通过网络解析。'**
+  String desktopCacheClearBody(int count);
+
+  /// No description provided for @desktopCacheClearDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'加速缓存已全部清空'**
+  String get desktopCacheClearDone;
+
+  /// No description provided for @desktopCacheClearFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空缓存失败：{message}'**
+  String desktopCacheClearFailed(String message);
+
+  /// No description provided for @desktopCacheTelemetryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存遥测指标'**
+  String get desktopCacheTelemetryTitle;
+
+  /// No description provided for @desktopCacheTelemetryCapacity.
+  ///
+  /// In zh, this message translates to:
+  /// **'容量 {used} / {max}'**
+  String desktopCacheTelemetryCapacity(int used, int max);
+
+  /// No description provided for @desktopCacheMisses.
+  ///
+  /// In zh, this message translates to:
+  /// **'实时联网解析'**
+  String get desktopCacheMisses;
+
+  /// No description provided for @desktopCacheStaleHits.
+  ///
+  /// In zh, this message translates to:
+  /// **'弱网应急保障'**
+  String get desktopCacheStaleHits;
+
+  /// No description provided for @desktopCacheNegativeHits.
+  ///
+  /// In zh, this message translates to:
+  /// **'无效网址拦截'**
+  String get desktopCacheNegativeHits;
+
+  /// No description provided for @desktopCachePrefetchCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'热点预取刷新'**
+  String get desktopCachePrefetchCount;
+
+  /// No description provided for @desktopCacheTopTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'高频访问网址排行'**
+  String get desktopCacheTopTitle;
+
+  /// No description provided for @desktopCacheTopBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地缓存命中次数最高的前 10 个域名'**
+  String get desktopCacheTopBody;
+
+  /// No description provided for @desktopCacheTopEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无高频网址访问记录'**
+  String get desktopCacheTopEmpty;
+
+  /// No description provided for @desktopCacheTopHits.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 次'**
+  String desktopCacheTopHits(int count);
+
+  /// No description provided for @desktopCacheConfigTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'加速策略设置'**
+  String get desktopCacheConfigTitle;
+
+  /// No description provided for @desktopCacheConfigBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'有效期规则、弱网容灾与热点预取'**
+  String get desktopCacheConfigBody;
+
+  /// No description provided for @desktopCacheConfigSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存策略'**
+  String get desktopCacheConfigSave;
+
+  /// No description provided for @desktopCacheConfigSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'加速策略已保存并即时生效'**
+  String get desktopCacheConfigSaved;
+
+  /// No description provided for @desktopCacheModeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录有效期计算方式'**
+  String get desktopCacheModeLabel;
+
+  /// No description provided for @desktopCacheModeLimit.
+  ///
+  /// In zh, this message translates to:
+  /// **'限制最长有效期（推荐）'**
+  String get desktopCacheModeLimit;
+
+  /// No description provided for @desktopCacheModeFollow.
+  ///
+  /// In zh, this message translates to:
+  /// **'完全遵从上游 TTL'**
+  String get desktopCacheModeFollow;
+
+  /// No description provided for @desktopCacheModeFixed.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制使用固定有效期'**
+  String get desktopCacheModeFixed;
+
+  /// No description provided for @desktopCacheMaxTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'最长保存时长（秒）'**
+  String get desktopCacheMaxTtl;
+
+  /// No description provided for @desktopCacheMinTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'最短保留时长（秒）'**
+  String get desktopCacheMinTtl;
+
+  /// No description provided for @desktopCacheFixedTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'固定有效期（秒）'**
+  String get desktopCacheFixedTtl;
+
+  /// No description provided for @desktopCacheMinTtlEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用最短保留时长'**
+  String get desktopCacheMinTtlEnabled;
+
+  /// No description provided for @desktopCacheStaleTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'弱网应急保障（旧记录兜底）'**
+  String get desktopCacheStaleTitle;
+
+  /// No description provided for @desktopCacheStaleBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'上游超时或断网时，复用近期缓存防止网页报错'**
+  String get desktopCacheStaleBody;
+
+  /// No description provided for @desktopCacheStaleSeconds.
+  ///
+  /// In zh, this message translates to:
+  /// **'应急保留期（秒）'**
+  String get desktopCacheStaleSeconds;
+
+  /// No description provided for @desktopCacheOptimistic.
+  ///
+  /// In zh, this message translates to:
+  /// **'极速响应'**
+  String get desktopCacheOptimistic;
+
+  /// No description provided for @desktopCacheOptimisticBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'先返回缓存，后台静默刷新'**
+  String get desktopCacheOptimisticBody;
+
+  /// No description provided for @desktopCacheNegative.
+  ///
+  /// In zh, this message translates to:
+  /// **'无效网址记忆加速'**
+  String get desktopCacheNegative;
+
+  /// No description provided for @desktopCacheNegativeBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'记住不存在或错误的域名，避免频繁重复重试'**
+  String get desktopCacheNegativeBody;
+
+  /// No description provided for @desktopCacheNegativeSeconds.
+  ///
+  /// In zh, this message translates to:
+  /// **'无效记录保留（秒）'**
+  String get desktopCacheNegativeSeconds;
+
+  /// No description provided for @desktopCachePrefetchTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'热点域名主动预取'**
+  String get desktopCachePrefetchTitle;
+
+  /// No description provided for @desktopCachePrefetchBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在常用域名记录到期前提前回源刷新，避免首次访问等待'**
+  String get desktopCachePrefetchBody;
+
+  /// No description provided for @desktopCachePrefetchThreshold.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中次数门槛'**
+  String get desktopCachePrefetchThreshold;
+
+  /// No description provided for @desktopCachePrefetchThresholdHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'被访问达到该次数的域名才会预取'**
+  String get desktopCachePrefetchThresholdHint;
+
+  /// No description provided for @desktopCachePrefetchBefore.
+  ///
+  /// In zh, this message translates to:
+  /// **'剩余有效期阈值（毫秒）'**
+  String get desktopCachePrefetchBefore;
+
+  /// No description provided for @desktopCachePrefetchBeforeHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'剩余有效期低于该值时触发刷新'**
+  String get desktopCachePrefetchBeforeHint;
+
+  /// No description provided for @desktopCacheInvalidNumbers.
+  ///
+  /// In zh, this message translates to:
+  /// **'秒数与阈值需为正整数'**
+  String get desktopCacheInvalidNumbers;
+
+  /// No description provided for @desktopCacheSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存缓存配置失败：{message}'**
+  String desktopCacheSaveFailed(String message);
+
+  /// No description provided for @desktopCacheLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到缓存配置'**
+  String get desktopCacheLoadFailed;
+
+  /// No description provided for @desktopCachePersistTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存落盘持久化'**
+  String get desktopCachePersistTitle;
+
+  /// No description provided for @desktopCachePersistBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'把内存中的解析结果定期写入磁盘，服务重启后可直接读回。默认关闭：读取上次的应答会让「上游已变更但仍命中旧记录」更难察觉。'**
+  String get desktopCachePersistBody;
+
+  /// No description provided for @desktopCachePersistOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已开启'**
+  String get desktopCachePersistOn;
+
+  /// No description provided for @desktopCachePersistOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'未开启'**
+  String get desktopCachePersistOff;
+
+  /// No description provided for @desktopCachePersistInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'定时落盘间隔（秒）'**
+  String get desktopCachePersistInterval;
+
+  /// No description provided for @desktopCachePersistIntervalHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'取值范围 30–86400；留空或 0 使用默认值 300。服务退出时总会额外写一次。'**
+  String get desktopCachePersistIntervalHint;
+
+  /// No description provided for @desktopCachePersistPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'落盘文件'**
+  String get desktopCachePersistPath;
+
+  /// No description provided for @desktopCachePersistLastError.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近一次落盘失败：{message}'**
+  String desktopCachePersistLastError(String message);
+
+  /// No description provided for @desktopCachePersistRecords.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前 {count} 条可落盘记录'**
+  String desktopCachePersistRecords(int count);
+
+  /// No description provided for @desktopCachePersistDump.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即落盘'**
+  String get desktopCachePersistDump;
+
+  /// No description provided for @desktopCachePersistLoad.
+  ///
+  /// In zh, this message translates to:
+  /// **'从文件恢复'**
+  String get desktopCachePersistLoad;
+
+  /// No description provided for @desktopCachePersistDumpDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已落盘 {count} 条缓存记录'**
+  String desktopCachePersistDumpDone(int count);
+
+  /// No description provided for @desktopCachePersistLoadDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已从落盘文件恢复 {count} 条缓存记录'**
+  String desktopCachePersistLoadDone(int count);
+
+  /// No description provided for @desktopCachePersistDumpFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'落盘失败：{message}'**
+  String desktopCachePersistDumpFailed(String message);
+
+  /// No description provided for @desktopCachePersistLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复失败：{message}'**
+  String desktopCachePersistLoadFailed(String message);
+
+  /// No description provided for @desktopCachePersistLoadTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定从落盘文件恢复缓存？'**
+  String get desktopCachePersistLoadTitle;
+
+  /// No description provided for @desktopCachePersistLoadBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件中仍有效的记录会被读入当前缓存，覆盖同名的现有条目；已过期的记录会被自动忽略。'**
+  String get desktopCachePersistLoadBody;
+
+  /// No description provided for @desktopCachePersistToggleOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存落盘已开启'**
+  String get desktopCachePersistToggleOn;
+
+  /// No description provided for @desktopCachePersistToggleOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存落盘已关闭'**
+  String get desktopCachePersistToggleOff;
+
+  /// No description provided for @desktopCachePersistIntervalSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'落盘间隔已更新'**
+  String get desktopCachePersistIntervalSaved;
+
+  /// No description provided for @desktopCacheExcludeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存排除规则'**
+  String get desktopCacheExcludeTitle;
+
+  /// No description provided for @desktopCacheExcludeBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中规则的域名既不读取也不写入缓存，每次都实时回源。适用于内网域名、动态 IP 探测等「缓存反而出错」的场景。'**
+  String get desktopCacheExcludeBody;
+
+  /// No description provided for @desktopCacheExcludeOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'未启用'**
+  String get desktopCacheExcludeOff;
+
+  /// No description provided for @desktopCacheExcludeCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条规则'**
+  String desktopCacheExcludeCount(int count);
+
+  /// No description provided for @desktopCacheExcludeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'正则表达式（一行一条，Go RE2 语法）'**
+  String get desktopCacheExcludeLabel;
+
+  /// No description provided for @desktopCacheExcludeHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：\\.local\$'**
+  String get desktopCacheExcludeHint;
+
+  /// No description provided for @desktopCacheExcludeSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存规则'**
+  String get desktopCacheExcludeSave;
+
+  /// No description provided for @desktopCacheExcludeSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存 {count} 条排除规则'**
+  String desktopCacheExcludeSaved(int count);
+
+  /// No description provided for @desktopCacheExcludeCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'已清空排除规则，全部域名重新参与缓存'**
+  String get desktopCacheExcludeCleared;
+
+  /// No description provided for @desktopCacheExcludeFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存排除规则失败：{message}'**
+  String desktopCacheExcludeFailed(String message);
+
+  /// No description provided for @desktopCacheExcludeHits.
+  ///
+  /// In zh, this message translates to:
+  /// **'已拦截 {count} 次缓存读写'**
+  String desktopCacheExcludeHits(int count);
+
+  /// No description provided for @desktopCacheExcludeReset.
+  ///
+  /// In zh, this message translates to:
+  /// **'撤销修改'**
+  String get desktopCacheExcludeReset;
+
+  /// No description provided for @desktopCacheExcludeTooMany.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则超过 {max} 条，超出部分不会被保存'**
+  String desktopCacheExcludeTooMany(int max);
+
+  /// No description provided for @desktopCacheExcludeTooLong.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条规则超过 {max} 字符，保存时会被忽略'**
+  String desktopCacheExcludeTooLong(int count, int max);
+
+  /// No description provided for @desktopCacheExcludePresetLocal.
+  ///
+  /// In zh, this message translates to:
+  /// **'内网单标签域'**
+  String get desktopCacheExcludePresetLocal;
+
+  /// No description provided for @desktopCacheExcludePresetPtr.
+  ///
+  /// In zh, this message translates to:
+  /// **'PTR 反查'**
+  String get desktopCacheExcludePresetPtr;
+
+  /// No description provided for @desktopCacheExcludePresetProbe.
+  ///
+  /// In zh, this message translates to:
+  /// **'临时探测域'**
+  String get desktopCacheExcludePresetProbe;
+
+  /// No description provided for @desktopCacheEntriesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'已缓存域名明细'**
+  String get desktopCacheEntriesTitle;
+
+  /// No description provided for @desktopCacheEntriesBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'实时查看分片缓存记录、TTL 有效期与解析 IP'**
+  String get desktopCacheEntriesBody;
+
+  /// No description provided for @desktopCacheEntriesSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索网址或记录类型…'**
+  String get desktopCacheEntriesSearch;
+
+  /// No description provided for @desktopCacheEntriesEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'未匹配到符合条件的缓存条目'**
+  String get desktopCacheEntriesEmpty;
+
+  /// No description provided for @desktopCacheEntriesNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存中暂无记录'**
+  String get desktopCacheEntriesNone;
+
+  /// No description provided for @desktopCacheEntriesLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读取缓存条目失败'**
+  String get desktopCacheEntriesLoadFailed;
+
+  /// No description provided for @desktopCacheFilterAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部'**
+  String get desktopCacheFilterAll;
+
+  /// No description provided for @desktopCacheFilterFresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'有效记录'**
+  String get desktopCacheFilterFresh;
+
+  /// No description provided for @desktopCacheFilterStale.
+  ///
+  /// In zh, this message translates to:
+  /// **'应急备用'**
+  String get desktopCacheFilterStale;
+
+  /// No description provided for @desktopCacheFilterNegative.
+  ///
+  /// In zh, this message translates to:
+  /// **'无效网址'**
+  String get desktopCacheFilterNegative;
+
+  /// No description provided for @desktopCacheEntryDomain.
+  ///
+  /// In zh, this message translates to:
+  /// **'网址 / 域名'**
+  String get desktopCacheEntryDomain;
+
+  /// No description provided for @desktopCacheEntryType.
+  ///
+  /// In zh, this message translates to:
+  /// **'类型'**
+  String get desktopCacheEntryType;
+
+  /// No description provided for @desktopCacheEntryStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'状态'**
+  String get desktopCacheEntryStatus;
+
+  /// No description provided for @desktopCacheEntryRemaining.
+  ///
+  /// In zh, this message translates to:
+  /// **'剩余有效期'**
+  String get desktopCacheEntryRemaining;
+
+  /// No description provided for @desktopCacheEntryTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'初始 TTL'**
+  String get desktopCacheEntryTtl;
+
+  /// No description provided for @desktopCacheEntryHits.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中次数'**
+  String get desktopCacheEntryHits;
+
+  /// No description provided for @desktopCacheEntryIps.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析 IP 列表'**
+  String get desktopCacheEntryIps;
+
+  /// No description provided for @desktopCacheStatusFresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'有效'**
+  String get desktopCacheStatusFresh;
+
+  /// No description provided for @desktopCacheStatusStale.
+  ///
+  /// In zh, this message translates to:
+  /// **'应急备用'**
+  String get desktopCacheStatusStale;
+
+  /// No description provided for @desktopCacheStatusNegative.
+  ///
+  /// In zh, this message translates to:
+  /// **'无效网址'**
+  String get desktopCacheStatusNegative;
+
+  /// No description provided for @desktopCacheNoIps.
+  ///
+  /// In zh, this message translates to:
+  /// **'无'**
+  String get desktopCacheNoIps;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
