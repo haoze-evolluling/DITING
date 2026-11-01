@@ -5,25 +5,23 @@
 /// `desktop_api_models.dart` and turns failures into [DesktopApiException].
 library;
 
+// The feature groups live in sibling extensions so no single file outgrows the budget.
+export 'package:diting/desktop/data/api/desktop_api_client_privacy.dart';
+export 'package:diting/desktop/data/api/desktop_api_client_traffic.dart';
+
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_cache_models.dart';
-import 'package:diting/desktop/data/api/desktop_client_groups_models.dart';
 import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
 import 'package:diting/desktop/data/api/desktop_encrypted_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_models.dart';
-import 'package:diting/desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting/desktop/data/api/desktop_schedule_models.dart';
 import 'package:diting/desktop/data/api/desktop_services_models.dart';
-import 'package:diting/desktop/data/api/desktop_tools_models.dart';
-import 'package:diting/desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
-import 'package:diting/desktop/data/api/desktop_rule_check_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
-import 'package:diting/desktop/data/api/desktop_web_models.dart';
 import 'package:diting/desktop/data/api/desktop_zone_models.dart';
 import 'package:http/http.dart' as http;
 
@@ -340,61 +338,6 @@ class DesktopApiClient {
       DesktopFilterPause.fromJson(await _get('/api/v1/filter/pause'));
 
   /// The privacy and protocol-hardening fields `/status` carries, in one read.
-  Future<DesktopPrivacyConfig> privacyConfig() async =>
-      DesktopPrivacyConfig.fromJson(await _get('/api/v1/status'));
-
-  Future<void> configurePrivacy(DesktopPrivacyConfig config) =>
-      _post('/api/v1/dns/privacy/configure', body: config.privacyJson());
-
-  Future<void> configureUnqualified(bool enabled) => _post(
-    '/api/v1/dns/unqualified/configure',
-    body: {'blockUnqualified': enabled},
-  );
-
-  Future<void> configureEcs(DesktopPrivacyConfig config) => _post(
-    '/api/v1/dns/ecs/configure',
-    body: {
-      'enabled': config.ecsEnabled,
-      'stripECS': config.ecsStrip,
-      'customSubnet': config.ecsCustomSubnet.trim(),
-    },
-  );
-
-  Future<void> configureRebind(DesktopPrivacyConfig config) => _post(
-    '/api/v1/dns/rebind/configure',
-    body: {
-      'enabled': config.rebindEnabled,
-      'allowedDomains': config.rebindAllowedDomains,
-    },
-  );
-
-  Future<void> configureHosts(DesktopPrivacyConfig config) => _post(
-    '/api/v1/dns/hosts/configure',
-    body: {
-      'enabled': config.hostsEnabled,
-      'useSystemHost': config.hostsUseSystem,
-      'customFiles': config.hostsCustomFiles,
-      'ttl': config.hostsTtl,
-    },
-  );
-
-  Future<DesktopSafeSearchConfig> safeSearch() async =>
-      DesktopSafeSearchConfig.fromJson(await _get('/api/v1/safesearch/config'));
-
-  /// The service merges the patch and answers with a success flag, so the page re-reads.
-  Future<void> configureSafeSearch(Map<String, Object?> patch) =>
-      _post('/api/v1/safesearch/config', body: patch);
-
-  Future<DesktopSafeBrowsing> safeBrowsing() async =>
-      DesktopSafeBrowsing.fromJson(await _get('/api/v1/filter/safebrowsing'));
-
-  /// Answers with the normalised state (config + counters), which the page adopts directly.
-  Future<DesktopSafeBrowsing> configureSafeBrowsing(
-    Map<String, Object?> patch,
-  ) async => DesktopSafeBrowsing.fromJson(
-    await _postData('/api/v1/filter/safebrowsing', body: patch),
-  );
-
   Future<DesktopEncryptedStatus> encryptedStatus() async =>
       DesktopEncryptedStatus.fromJson(
         await _get('/api/v1/encrypted/dns/status'),
@@ -493,108 +436,23 @@ class DesktopApiClient {
   Future<void> setCustomRules(List<String> rules) =>
       _post('/api/v1/filter/rules', body: {'rules': rules});
 
-  /// The clients the service has seen, in its own order.
-  Future<List<DesktopClient>> clients() async {
-    final response = await _send('/api/v1/clients', method: 'GET');
-    return desktopClients(response['data']);
-  }
+  /// Transport for the feature extensions in the sibling `desktop_api_client_*.dart` files.
+  ///
+  /// They exist so one client can stay under the file-size budget without a second HTTP stack or a
+  /// second source of connection settings. Pages never call these; the extensions do.
+  Future<Map<String, Object?>> getJson(String path) => _get(path);
 
-  Future<DesktopClientGroups> clientGroups() async =>
-      DesktopClientGroups.fromJson(await _get('/api/v1/clients/groups'));
+  /// The raw `data` of a GET, for endpoints whose data is a list rather than an object.
+  Future<Object?> getData(String path) async =>
+      (await _send(path, method: 'GET'))['data'];
 
-  /// The service drops groups without members and normalises the rest, so the caller re-reads.
-  Future<void> configureClientGroups({
-    required bool enabled,
-    required List<DesktopClientGroup> groups,
-  }) => _post(
-    '/api/v1/clients/groups',
-    body: {
-      'enabled': enabled,
-      'groups': [for (final group in groups) group.toJson()],
-    },
-  );
+  Future<Map<String, Object?>> postJson(
+    String path, {
+    Map<String, Object?>? body,
+  }) => _postData(path, body: body);
 
-  /// The ACL and rate-limit blocks live inside `/status`; there is no dedicated read endpoint.
-  Future<DesktopClientLimits> clientLimits() async =>
-      DesktopClientLimits.fromJson(await _get('/api/v1/status'));
-
-  /// An empty [name] clears the alias.
-  Future<void> configureClientAlias({
-    required String ip,
-    required String name,
-  }) => _post('/api/v1/clients/alias', body: {'ip': ip, 'name': name});
-
-  Future<void> configureAccess({
-    required List<String> allowedClients,
-    required List<String> blockedClients,
-  }) => _post(
-    '/api/v1/dns/access/configure',
-    body: {
-      'allowedClients': allowedClients,
-      'blockedClients': blockedClients,
-    },
-  );
-
-  Future<void> configureRateLimit(Map<String, Object?> config) =>
-      _post('/api/v1/dns/ratelimit/configure', body: config);
-
-  /// Simulates one lookup against the loaded rules. `qtype` is the DNS type name, e.g. `A`.
-  Future<DesktopRuleCheckResult> checkRule({
-    required String domain,
-    required String qtype,
-  }) async => DesktopRuleCheckResult.fromJson(
-    await _postData(
-      '/api/v1/filter/check',
-      body: {'domain': domain, 'qtype': qtype},
-    ),
-  );
-
-  Future<DesktopWebStatus> webStatus() async =>
-      DesktopWebStatus.fromJson(await _get('/api/v1/web/status'));
-
-  /// The service decides the listen address and whether a firewall rule is needed.
-  Future<void> configureWeb({required bool enabled, required int port}) => _post(
-    '/api/v1/web/configure',
-    body: {'enabled': enabled, 'port': port, 'configureFirewall': true},
-  );
-
-  Future<void> configureWebFirewall(bool allowed) =>
-      _post('/api/v1/web/firewall', body: {'enable': allowed});
-
-  Future<void> setupAdmin({
-    required String username,
-    required String password,
-  }) => _post(
-    '/api/v1/auth/setup',
-    body: {'username': username, 'password': password},
-  );
-
-  Future<void> changeAdminPassword({
-    required String username,
-    required String oldPassword,
-    required String newPassword,
-  }) => _post(
-    '/api/v1/auth/password',
-    body: {
-      'username': username,
-      'oldPassword': oldPassword,
-      'newPassword': newPassword,
-    },
-  );
-
-  /// Opens and closes the DNS port to see whether it can be taken; on demand only.
-  Future<DesktopPortCheck> portCheck() async =>
-      DesktopPortCheck.fromJson(await _get('/api/v1/portcheck'));
-
-  /// Stops the system listener the service knows about (ICS / resolved stub) and re-probes.
-  /// `startDNS` stays false: the old console fixed the port without starting the listener.
-  Future<DesktopPortCheck> autofixPort() async =>
-      DesktopPortCheck.fromJson(
-        await _postData(
-          '/api/v1/portcheck/autofix',
-          body: {'startDNS': false},
-        ),
-      );
+  Future<void> postAction(String path, {Map<String, Object?>? body}) =>
+      _post(path, body: body);
 
   void close() => _http.close();
 
