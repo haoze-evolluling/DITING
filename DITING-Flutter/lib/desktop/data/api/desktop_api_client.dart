@@ -13,6 +13,7 @@ import 'package:diting/desktop/data/api/desktop_cache_models.dart';
 import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_models.dart';
+import 'package:diting/desktop/data/api/desktop_schedule_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting/desktop/data/api/desktop_zone_models.dart';
@@ -325,6 +326,14 @@ class DesktopApiClient {
 
   Future<DesktopFilterPause> filterPause() async =>
       DesktopFilterPause.fromJson(await _get('/api/v1/filter/pause'));
+
+  Future<DesktopScheduleConfig> blockingSchedule() async =>
+      DesktopScheduleConfig.fromJson(await _get('/api/v1/filter/schedule'));
+
+  /// The service validates every window's clock and weekdays; the page sends the whole list and then
+  /// re-reads what it kept.
+  Future<void> updateBlockingSchedule(DesktopScheduleConfig config) =>
+      _post('/api/v1/filter/schedule', body: config.toJson());
 
   /// The counters the console shows above the subscription lists.
   Future<DesktopFilterSummary> filterStats() async =>

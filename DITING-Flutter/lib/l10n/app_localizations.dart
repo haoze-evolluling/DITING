@@ -19503,6 +19503,222 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'8 小时'**
   String get desktopFilterPauseEightHours;
+
+  /// No description provided for @desktopHubFilterSchedule.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间计划'**
+  String get desktopHubFilterSchedule;
+
+  /// No description provided for @desktopHubFilterScheduleBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'只在指定时段执行拦截，其余时间自动放行'**
+  String get desktopHubFilterScheduleBody;
+
+  /// No description provided for @desktopSchedulePageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间计划'**
+  String get desktopSchedulePageTitle;
+
+  /// No description provided for @desktopScheduleRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新时间计划'**
+  String get desktopScheduleRefresh;
+
+  /// No description provided for @desktopScheduleLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到时间计划'**
+  String get desktopScheduleLoadFailed;
+
+  /// No description provided for @desktopScheduleTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'分时拦截 · 时间计划'**
+  String get desktopScheduleTitle;
+
+  /// No description provided for @desktopScheduleBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅在指定时段内执行广告拦截，其余时间自动放行'**
+  String get desktopScheduleBody;
+
+  /// No description provided for @desktopScheduleBadgeOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'未启用 · 拦截常开'**
+  String get desktopScheduleBadgeOff;
+
+  /// No description provided for @desktopScheduleBadgeActive.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截生效中'**
+  String get desktopScheduleBadgeActive;
+
+  /// No description provided for @desktopScheduleBadgePaused.
+  ///
+  /// In zh, this message translates to:
+  /// **'计划暂停 · 放行全部'**
+  String get desktopScheduleBadgePaused;
+
+  /// No description provided for @desktopScheduleEnable.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用分时拦截'**
+  String get desktopScheduleEnable;
+
+  /// No description provided for @desktopScheduleEnableBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭时拦截始终生效；开启后仅在下列时间窗口内执行拦截。'**
+  String get desktopScheduleEnableBody;
+
+  /// No description provided for @desktopScheduleNoEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前无已启用计划，拦截将保持常开。请至少启用一条计划以限制拦截时段。'**
+  String get desktopScheduleNoEnabled;
+
+  /// No description provided for @desktopScheduleSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存计划'**
+  String get desktopScheduleSave;
+
+  /// No description provided for @desktopScheduleSaving.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存中…'**
+  String get desktopScheduleSaving;
+
+  /// No description provided for @desktopScheduleSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间计划已保存并生效'**
+  String get desktopScheduleSaved;
+
+  /// No description provided for @desktopScheduleSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存时间计划失败：{message}'**
+  String desktopScheduleSaveFailed(String message);
+
+  /// No description provided for @desktopScheduleAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增时间计划'**
+  String get desktopScheduleAdd;
+
+  /// No description provided for @desktopScheduleName.
+  ///
+  /// In zh, this message translates to:
+  /// **'计划名称'**
+  String get desktopScheduleName;
+
+  /// No description provided for @desktopScheduleEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用该计划'**
+  String get desktopScheduleEnabled;
+
+  /// No description provided for @desktopScheduleStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'生效开始时刻'**
+  String get desktopScheduleStart;
+
+  /// No description provided for @desktopScheduleEnd.
+  ///
+  /// In zh, this message translates to:
+  /// **'生效结束时刻'**
+  String get desktopScheduleEnd;
+
+  /// No description provided for @desktopScheduleEndHelper.
+  ///
+  /// In zh, this message translates to:
+  /// **'早于开始即跨夜'**
+  String get desktopScheduleEndHelper;
+
+  /// No description provided for @desktopScheduleWeekdays.
+  ///
+  /// In zh, this message translates to:
+  /// **'生效星期'**
+  String get desktopScheduleWeekdays;
+
+  /// No description provided for @desktopScheduleEveryDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'每天'**
+  String get desktopScheduleEveryDay;
+
+  /// No description provided for @desktopScheduleDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除该计划'**
+  String get desktopScheduleDelete;
+
+  /// No description provided for @desktopScheduleDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除时间计划'**
+  String get desktopScheduleDeleteTitle;
+
+  /// No description provided for @desktopScheduleDeleteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除该时间计划吗？保存后不再生效。'**
+  String get desktopScheduleDeleteBody;
+
+  /// No description provided for @desktopScheduleDeleteConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get desktopScheduleDeleteConfirm;
+
+  /// No description provided for @desktopWeekdayMon.
+  ///
+  /// In zh, this message translates to:
+  /// **'一'**
+  String get desktopWeekdayMon;
+
+  /// No description provided for @desktopWeekdayTue.
+  ///
+  /// In zh, this message translates to:
+  /// **'二'**
+  String get desktopWeekdayTue;
+
+  /// No description provided for @desktopWeekdayWed.
+  ///
+  /// In zh, this message translates to:
+  /// **'三'**
+  String get desktopWeekdayWed;
+
+  /// No description provided for @desktopWeekdayThu.
+  ///
+  /// In zh, this message translates to:
+  /// **'四'**
+  String get desktopWeekdayThu;
+
+  /// No description provided for @desktopWeekdayFri.
+  ///
+  /// In zh, this message translates to:
+  /// **'五'**
+  String get desktopWeekdayFri;
+
+  /// No description provided for @desktopWeekdaySat.
+  ///
+  /// In zh, this message translates to:
+  /// **'六'**
+  String get desktopWeekdaySat;
+
+  /// No description provided for @desktopWeekdaySun.
+  ///
+  /// In zh, this message translates to:
+  /// **'日'**
+  String get desktopWeekdaySun;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

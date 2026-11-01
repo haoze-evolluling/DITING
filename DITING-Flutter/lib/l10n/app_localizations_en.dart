@@ -11381,4 +11381,120 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopFilterPauseEightHours => '8 hours';
+
+  @override
+  String get desktopHubFilterSchedule => 'Time plan';
+
+  @override
+  String get desktopHubFilterScheduleBody =>
+      'Block only inside the chosen windows and let everything through otherwise';
+
+  @override
+  String get desktopSchedulePageTitle => 'Time plan';
+
+  @override
+  String get desktopScheduleRefresh => 'Reload the time plan';
+
+  @override
+  String get desktopScheduleLoadFailed => 'Could not read the time plan';
+
+  @override
+  String get desktopScheduleTitle => 'Scheduled blocking';
+
+  @override
+  String get desktopScheduleBody =>
+      'Blocks only inside the chosen windows and lets everything through the rest of the time';
+
+  @override
+  String get desktopScheduleBadgeOff => 'Off · blocking always on';
+
+  @override
+  String get desktopScheduleBadgeActive => 'Blocking is active';
+
+  @override
+  String get desktopScheduleBadgePaused => 'Outside the windows · all allowed';
+
+  @override
+  String get desktopScheduleEnable => 'Enable scheduled blocking';
+
+  @override
+  String get desktopScheduleEnableBody =>
+      'Off means blocking always applies; on means it only applies inside the windows below.';
+
+  @override
+  String get desktopScheduleNoEnabled =>
+      'No window is enabled, so blocking stays on all the time. Enable at least one window to limit it.';
+
+  @override
+  String get desktopScheduleSave => 'Save plan';
+
+  @override
+  String get desktopScheduleSaving => 'Saving…';
+
+  @override
+  String get desktopScheduleSaved => 'The time plan was saved and is in effect';
+
+  @override
+  String desktopScheduleSaveFailed(String message) {
+    return 'Could not save the time plan: $message';
+  }
+
+  @override
+  String get desktopScheduleAdd => 'Add a window';
+
+  @override
+  String get desktopScheduleName => 'Window name';
+
+  @override
+  String get desktopScheduleEnabled => 'Enable this window';
+
+  @override
+  String get desktopScheduleStart => 'Starts at';
+
+  @override
+  String get desktopScheduleEnd => 'Ends at';
+
+  @override
+  String get desktopScheduleEndHelper =>
+      'Earlier than the start means overnight';
+
+  @override
+  String get desktopScheduleWeekdays => 'Days';
+
+  @override
+  String get desktopScheduleEveryDay => 'Every day';
+
+  @override
+  String get desktopScheduleDelete => 'Delete this window';
+
+  @override
+  String get desktopScheduleDeleteTitle => 'Delete the window';
+
+  @override
+  String get desktopScheduleDeleteBody =>
+      'Delete this window? It stops applying after the next save.';
+
+  @override
+  String get desktopScheduleDeleteConfirm => 'Delete';
+
+  @override
+  String get desktopWeekdayMon => 'Mo';
+
+  @override
+  String get desktopWeekdayTue => 'Tu';
+
+  @override
+  String get desktopWeekdayWed => 'We';
+
+  @override
+  String get desktopWeekdayThu => 'Th';
+
+  @override
+  String get desktopWeekdayFri => 'Fr';
+
+  @override
+  String get desktopWeekdaySat => 'Sa';
+
+  @override
+  String get desktopWeekdaySun => 'Su';
 }

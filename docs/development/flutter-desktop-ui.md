@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）与拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）已完成；`hub` 其余子页与 `traffic` / `tools` / `settings` 待迁移，Wails 切换尚未开始。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）与时间计划子页（分时开关 + 窗口编辑 + 生效状态）已完成；`hub` 其余子页与 `traffic` / `tools` / `settings` 待迁移，Wails 切换尚未开始。**
 > Windows 桌面窗口目前仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 三层分工（唯一规范）
@@ -72,6 +72,7 @@
 - `desktop_zone_models.dart` / `desktop_zone_providers.dart`：本地权威区整表（引擎开关、默认 TTL、区列表、逐区构建结果、条数与长度上限）与预演结果模型；`desktopZoneProvider` 启动即读 `/dns/zone/config`，开关、TTL、整份区列表三个写路径串行化并直接采用服务回传的重建结果（含解析失败的区），被拒时保留上一份。区文本只在本地草稿里编辑，保存全部才提交。
 - `desktop_dns64_models.dart` / `desktop_dns64_providers.dart`：DNS64 合成整表（开关 + RFC 6052 前缀列表，空列表按知名前缀 `64:ff9b::/96` 展示）与单一写路径；`desktopDns64Provider` 启动即读 `/status` 的 `dns64` 摘要，保存提交整表并回读服务端值，被拒时保留原配置。前缀文本按行去空行，是否为合法前缀由服务判定。
 - `desktop_filter_config_models.dart` / `desktop_filter_config_providers.dart`：拦截引擎整表（总开关、应答模式、阻断地址、同步周期、响应侧复检、仅白名单、伪应答纠正及地址清单）与暂停状态（剩余时长、总开关）；`desktopFilterConfigProvider` 启动读 `/filter/stats` + `/filter/config`，每次写入后重读两份；`desktopFilterPauseProvider` 读 `/filter/pause`，暂停按所选时长提交、恢复不带时长。`POST /filter/config` 由服务合并，故整表只提交页面负责的字段。
+- `desktop_schedule_models.dart` / `desktop_schedule_providers.dart`：时间计划整表（开关、窗口列表、当前是否生效与命中的窗口 id）与逐服务的计划状态；窗口含名称、开关、`HH:MM` 起止（早于开始即跨夜）与星期键（空表示每天），空时刻的窗口不算完整。`desktopScheduleProvider` 读 `/filter/schedule`，保存提交开关与整份窗口列表后回读；被拒时保留原配置。
 - `desktop_custom_rules_providers.dart`：自定义规则整表（`GET /filter/rules` 的字符串数组）与唯一写路径（`POST` 整表替换后回读）；被拒时保留服务端列表，页面草稿由脏标记保护，不会被回读覆盖。
 - `desktop_filter_models.dart` / `desktop_filter_providers.dart`：规则拦截总览（拦截量、比例、规则数、启用库数、暂停剩余）与订阅列表整表（名称、URL、开关、条数、最近更新、`lastStatus`/`lastError` 健康度）；`desktopFilterListsProvider` 启动即读 `/filter/stats` + `/filter/lists`，新增、开关、删除、单个/全部更新四条写路径都重读两份答案，被拒时保留原行并回传原因。
 - `desktop_cache_models.dart` / `desktop_cache_providers.dart`：缓存统计、条目、热点排行、落盘状态与整表配置模型；`desktopCacheSnapshotProvider`（4 s 轮询统计 + 排行 + 落盘状态，失败保留上一份并标过期）、`desktopCacheSearchProvider` + `desktopCacheEntriesProvider`（检索变化即重读，`query` 交给服务）、`desktopCacheConfigProvider`（开关即时写、策略表单随保存按钮、写后回读服务端值）、`desktopCacheActionProvider`（清空 / 立即落盘 / 从文件恢复，串行化并返回服务端结果）。
@@ -93,6 +94,7 @@
 - 防护·规则订阅 `lib/desktop/pages/hub/desktop_filter_lists_page.dart`（`/hub/filter-lists` 子路由）、`widgets/filter_lists_card.dart`（拦截总览指标、规则库两列网格、空态、添加/全部更新、逐行开关/立即更新/删除确认、健康度徽标与失败原因）、`widgets/filter_list_dialog.dart`（名称可留空、URL 必填）、`widgets/filter_common.dart`（健康度文案、`MM-DD HH:mm` 时间、暂停剩余时长）。**已覆盖旧版桌面 `RulesPanel` 的订阅页签与 `RuleListsPanel`**，`hub` 的订阅子页迁移完成。
 - 防护·自定义规则 `lib/desktop/pages/hub/desktop_filter_rules_page.dart`（`/hub/filter-rules` 子路由）、`widgets/filter_custom_rules_card.dart`（宽窗左右并排的 AdGuard 语法速查与整表编辑器、非空行计数、脏标记草稿、保存后回读；保存失败保留草稿并说明原因）。**已覆盖旧版桌面 `RulesPanel` 的自定义规则页签**，`hub` 的自定义规则子页迁移完成。
 - 防护·拦截方式 `lib/desktop/pages/hub/desktop_filter_config_page.dart`（`/hub/filter-config` 子路由）、`widgets/filter_mode_card.dart`（三种应答模式选择、阻断 IPv4/IPv6 与同步周期、脏标记草稿、非法值不提交）、`widgets/filter_pause_card.dart`（时长选择、暂停/立即恢复、剩余时长）、`widgets/filter_advanced_card.dart`（响应侧复检、仅白名单与警示、伪应答纠正开关与地址清单、可疑格式提示、快捷预设与撤销）；`FilterSummaryCard` 增加可选总开关。**已覆盖旧版桌面 `RulesPanel` 的拦截方式与高级拦截页签**，`hub` 的拦截方式子页迁移完成。
+- 防护·时间计划 `lib/desktop/pages/hub/desktop_schedule_page.dart`（`/hub/filter-schedule` 子路由）、`widgets/schedule_editor.dart`（可复用的窗口编辑器：名称、开关、起止时刻、七个星期开关、每天、增删与删除确认；只有「保存计划」提交，未填时刻的行被丢弃）。**已覆盖旧版桌面 `SchedulePanel` + `ScheduleEditor`**，`hub` 的时间计划子页迁移完成。
 - 其余三个分支在 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`（`commonPendingTitle` / `commonPendingBody`）。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 - 实时流依赖 `web_socket_channel`（`pubspec.yaml` 固定 3.0.3）；Wails/WebView 宿主与 `flutter run -d chrome` 都走浏览器 WebSocket。
@@ -104,7 +106,7 @@ flutter build web -t lib/desktop/main.dart
 flutter test test/desktop_app_test.dart test/desktop_shell_test.dart \
   test/desktop_home_test.dart test/desktop_logs_test.dart \
   test/desktop_upstream_test.dart test/desktop_cache_test.dart \
-  test/desktop_rewrite_test.dart test/desktop_zone_test.dart \n  test/desktop_dns64_test.dart test/desktop_filter_lists_test.dart \n  test/desktop_filter_rules_test.dart test/desktop_filter_config_test.dart \
+  test/desktop_rewrite_test.dart test/desktop_zone_test.dart \n  test/desktop_dns64_test.dart test/desktop_filter_lists_test.dart \n  test/desktop_filter_rules_test.dart test/desktop_filter_config_test.dart \n  test/desktop_schedule_test.dart \
   test/desktop_api_test.dart test/desktop_preferences_test.dart
 
 # 应用自截图（写到 build/screenshots/，不提交）：
@@ -119,14 +121,14 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`hub` 剩余子页**：防护组（应用拦截、时间计划）+ 设备·加密 DNS / 安全隐私；每个子页在 `desktop_hub_page.dart` 增加一条入口并挂到 `/hub/*` 嵌套路由。
+1. **`hub` 剩余子页**：防护组（应用拦截）+ 设备·加密 DNS / 安全隐私；每个子页在 `desktop_hub_page.dart` 增加一条入口并挂到 `/hub/*` 嵌套路由。
 2. **`traffic`**：设备管理 + 缓存热点/Top 域名与客户端（不做按应用流量）。
 3. **`tools`**：诊断与修复、规则检测、上游/区域测试。
 4. **`settings`**：外观主题（复用 `lib/pages/appearance` 的组件与语义）、服务与连接、局域网控制台。
 
 ## 8. 验收与守卫
 
-`test/desktop_shell_test.dart`、`test/desktop_home_test.dart`、`test/desktop_logs_test.dart`、`test/desktop_upstream_test.dart`、`test/desktop_cache_test.dart`、`test/desktop_rewrite_test.dart`、`test/desktop_zone_test.dart`、`test/desktop_dns64_test.dart`、`test/desktop_filter_lists_test.dart`、`test/desktop_filter_rules_test.dart`、`test/desktop_filter_config_test.dart`、`test/desktop_api_test.dart`、`test/desktop_event_client_test.dart` 覆盖：
+`test/desktop_shell_test.dart`、`test/desktop_home_test.dart`、`test/desktop_logs_test.dart`、`test/desktop_upstream_test.dart`、`test/desktop_cache_test.dart`、`test/desktop_rewrite_test.dart`、`test/desktop_zone_test.dart`、`test/desktop_dns64_test.dart`、`test/desktop_filter_lists_test.dart`、`test/desktop_filter_rules_test.dart`、`test/desktop_filter_config_test.dart`、`test/desktop_schedule_test.dart`、`test/desktop_api_test.dart`、`test/desktop_event_client_test.dart` 覆盖：
 
 1. **骨架**：桌面一级路由集合与 `branchOrder` 一致，每分支由 `CommonScaffold` 承载；已接入分支不再出现占位空态。
 2. **视觉语言**：源码扫描 `lib/desktop`，不得出现 `Icons.`、`BorderRadius.circular(`、`ColorScheme.fromSeed`、`ThemeData(`、`fontSize:`、`Colors.`、硬编码中文。
@@ -143,6 +145,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 13. **规则订阅**：拦截量、比例、规则数、启用库数与每个规则库的条数/时间/健康度都显示服务返回值；开关提交整条记录（含 URL），单个与全部更新分别发出对应 id，添加先校验 URL 再提交名称与地址（名称留空按位置命名），删除先确认；写被拒时说明原因且开关保持服务端值；无订阅显示空态；窄窗单列不横向溢出。
 14. **自定义规则**：语法速查与编辑器显示服务返回的规则；非空行计数随输入变化；保存提交去空行后的整表并回显服务端值；保存被拒时说明原因并保留草稿；窄窗单列不横向溢出。
 15. **拦截方式**：总开关、三种应答模式、阻断地址、同步周期与指标都显示服务返回值；切换总开关提交整份表单，模式与地址/周期由保存按钮提交，非法周期或空地址不提交；暂停按所选时长提交 `durationSec`、恢复不带时长，暂停态显示剩余时间；高级开关各自提交一个字段，伪应答地址按行去空行保存并提示可疑格式；写被拒时说明原因且开关保持服务端值；窄窗单列不横向溢出。
+16. **时间计划**：状态徽标区分未启用 / 生效中 / 计划外，均来自服务返回值；启用后显示窗口编辑器，新增/删除/改名/开关/起止/星期都只改草稿，「保存计划」才提交整份列表并回读；未填时刻的行不提交；保存被拒时说明原因；窄窗不横向溢出。
 
 ## 9. 明确禁止
 

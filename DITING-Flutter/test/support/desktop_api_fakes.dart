@@ -362,6 +362,19 @@ Map<String, Object?> filterPausePayload({
   'blockingEnabled': blockingEnabled,
 };
 
+/// A `GET /api/v1/filter/schedule` payload.
+Map<String, Object?> schedulePayload({
+  bool enabled = false,
+  List<Map<String, Object?>> schedules = const [],
+  bool active = true,
+  String activeId = '',
+}) => {
+  'enabled': enabled,
+  'schedules': schedules,
+  'active': active,
+  'activeId': activeId,
+};
+
 /// Records the paths it was asked for, and can be told to fail after [failAfter] requests to model
 /// a service that drops while the window is open.
 class FakeDesktopBackend {
@@ -385,6 +398,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? filterLists,
     Map<String, Object?>? filterConfig,
     Map<String, Object?>? filterPause,
+    Map<String, Object?>? schedule,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -409,6 +423,7 @@ class FakeDesktopBackend {
        filterLists = filterLists ?? filterListsPayload(),
        filterConfig = filterConfig ?? filterConfigPayload(),
        filterPause = filterPause ?? filterPausePayload(),
+       schedule = schedule ?? schedulePayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -474,6 +489,12 @@ class FakeDesktopBackend {
   /// Bodies of every config save and every pause call, in order.
   final filterConfigUpdates = <Map<String, Object?>>[];
   final filterPauseRequests = <Map<String, Object?>>[];
+
+  /// Mutated by `POST /filter/schedule`; `GET /filter/schedule` answers with it.
+  Map<String, Object?> schedule;
+
+  /// Bodies of every time-plan save, in order.
+  final scheduleUpdates = <Map<String, Object?>>[];
 
   /// Bodies of every rewrite config save, in order.
   final rewriteConfigUpdates = <Map<String, Object?>>[];
@@ -619,6 +640,11 @@ class FakeDesktopBackend {
           ],
         };
       }
+      if (path == '/api/v1/filter/schedule' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        scheduleUpdates.add(body);
+        schedule = {...schedule, ...body};
+      }
       if (path == '/api/v1/filter/config' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
         filterConfigUpdates.add(body);
@@ -762,6 +788,7 @@ class FakeDesktopBackend {
         ),
         '/api/v1/filter/config' => utf8Json(apiEnvelope(filterConfig)),
         '/api/v1/filter/pause' => utf8Json(apiEnvelope(filterPause)),
+        '/api/v1/filter/schedule' => utf8Json(apiEnvelope(schedule)),
         '/api/v1/dns/zone/config' => http.Response(
           jsonEncode(apiEnvelope(zone)),
           200,

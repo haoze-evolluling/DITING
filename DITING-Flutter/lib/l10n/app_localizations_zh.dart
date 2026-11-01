@@ -10694,4 +10694,114 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopFilterPauseEightHours => '8 小时';
+
+  @override
+  String get desktopHubFilterSchedule => '时间计划';
+
+  @override
+  String get desktopHubFilterScheduleBody => '只在指定时段执行拦截，其余时间自动放行';
+
+  @override
+  String get desktopSchedulePageTitle => '时间计划';
+
+  @override
+  String get desktopScheduleRefresh => '刷新时间计划';
+
+  @override
+  String get desktopScheduleLoadFailed => '读不到时间计划';
+
+  @override
+  String get desktopScheduleTitle => '分时拦截 · 时间计划';
+
+  @override
+  String get desktopScheduleBody => '仅在指定时段内执行广告拦截，其余时间自动放行';
+
+  @override
+  String get desktopScheduleBadgeOff => '未启用 · 拦截常开';
+
+  @override
+  String get desktopScheduleBadgeActive => '拦截生效中';
+
+  @override
+  String get desktopScheduleBadgePaused => '计划暂停 · 放行全部';
+
+  @override
+  String get desktopScheduleEnable => '启用分时拦截';
+
+  @override
+  String get desktopScheduleEnableBody => '关闭时拦截始终生效；开启后仅在下列时间窗口内执行拦截。';
+
+  @override
+  String get desktopScheduleNoEnabled => '当前无已启用计划，拦截将保持常开。请至少启用一条计划以限制拦截时段。';
+
+  @override
+  String get desktopScheduleSave => '保存计划';
+
+  @override
+  String get desktopScheduleSaving => '保存中…';
+
+  @override
+  String get desktopScheduleSaved => '时间计划已保存并生效';
+
+  @override
+  String desktopScheduleSaveFailed(String message) {
+    return '保存时间计划失败：$message';
+  }
+
+  @override
+  String get desktopScheduleAdd => '新增时间计划';
+
+  @override
+  String get desktopScheduleName => '计划名称';
+
+  @override
+  String get desktopScheduleEnabled => '启用该计划';
+
+  @override
+  String get desktopScheduleStart => '生效开始时刻';
+
+  @override
+  String get desktopScheduleEnd => '生效结束时刻';
+
+  @override
+  String get desktopScheduleEndHelper => '早于开始即跨夜';
+
+  @override
+  String get desktopScheduleWeekdays => '生效星期';
+
+  @override
+  String get desktopScheduleEveryDay => '每天';
+
+  @override
+  String get desktopScheduleDelete => '删除该计划';
+
+  @override
+  String get desktopScheduleDeleteTitle => '删除时间计划';
+
+  @override
+  String get desktopScheduleDeleteBody => '确定要删除该时间计划吗？保存后不再生效。';
+
+  @override
+  String get desktopScheduleDeleteConfirm => '删除';
+
+  @override
+  String get desktopWeekdayMon => '一';
+
+  @override
+  String get desktopWeekdayTue => '二';
+
+  @override
+  String get desktopWeekdayWed => '三';
+
+  @override
+  String get desktopWeekdayThu => '四';
+
+  @override
+  String get desktopWeekdayFri => '五';
+
+  @override
+  String get desktopWeekdaySat => '六';
+
+  @override
+  String get desktopWeekdaySun => '日';
 }
