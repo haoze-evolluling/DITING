@@ -16177,13 +16177,13 @@ abstract class AppL10n {
   /// No description provided for @desktopFilterRules.
   ///
   /// In zh, this message translates to:
-  /// **'规则总数'**
+  /// **'有效防护规则'**
   String get desktopFilterRules;
 
   /// No description provided for @desktopFilterBlockRate.
   ///
   /// In zh, this message translates to:
-  /// **'拦截率'**
+  /// **'拦截比例'**
   String get desktopFilterBlockRate;
 
   /// No description provided for @desktopTakeoverTitle.
@@ -18603,6 +18603,366 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'读不到 DNS64 配置'**
   String get desktopDns64LoadFailed;
+
+  /// No description provided for @desktopHubFilterLists.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则订阅'**
+  String get desktopHubFilterLists;
+
+  /// No description provided for @desktopHubFilterListsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在线规则库与本地规则文件，按订阅批量生效'**
+  String get desktopHubFilterListsBody;
+
+  /// No description provided for @desktopFilterListsPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则订阅'**
+  String get desktopFilterListsPageTitle;
+
+  /// No description provided for @desktopFilterListsRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新订阅状态'**
+  String get desktopFilterListsRefresh;
+
+  /// No description provided for @desktopFilterSummaryTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则拦截总览'**
+  String get desktopFilterSummaryTitle;
+
+  /// No description provided for @desktopFilterEngineOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'防护生效中'**
+  String get desktopFilterEngineOn;
+
+  /// No description provided for @desktopFilterEngineOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'防护已关闭'**
+  String get desktopFilterEngineOff;
+
+  /// No description provided for @desktopFilterPausedChip.
+  ///
+  /// In zh, this message translates to:
+  /// **'已暂停'**
+  String get desktopFilterPausedChip;
+
+  /// No description provided for @desktopFilterBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已拦截请求'**
+  String get desktopFilterBlocked;
+
+  /// No description provided for @desktopFilterTimes.
+  ///
+  /// In zh, this message translates to:
+  /// **'次'**
+  String get desktopFilterTimes;
+
+  /// No description provided for @desktopFilterRulesUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'条'**
+  String get desktopFilterRulesUnit;
+
+  /// No description provided for @desktopFilterActiveLists.
+  ///
+  /// In zh, this message translates to:
+  /// **'已启用规则库'**
+  String get desktopFilterActiveLists;
+
+  /// No description provided for @desktopFilterListsUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'个'**
+  String get desktopFilterListsUnit;
+
+  /// No description provided for @desktopFilterPausedRemaining.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截已暂停，剩余 {remaining} 后自动恢复'**
+  String desktopFilterPausedRemaining(String remaining);
+
+  /// No description provided for @desktopFilterPauseDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'{days} 天'**
+  String desktopFilterPauseDays(int days);
+
+  /// No description provided for @desktopFilterPauseHours.
+  ///
+  /// In zh, this message translates to:
+  /// **'{hours} 小时 {minutes} 分'**
+  String desktopFilterPauseHours(int hours, int minutes);
+
+  /// No description provided for @desktopFilterPauseMinutes.
+  ///
+  /// In zh, this message translates to:
+  /// **'{minutes} 分 {seconds} 秒'**
+  String desktopFilterPauseMinutes(int minutes, int seconds);
+
+  /// No description provided for @desktopFilterPauseSeconds.
+  ///
+  /// In zh, this message translates to:
+  /// **'{seconds} 秒'**
+  String desktopFilterPauseSeconds(int seconds);
+
+  /// No description provided for @desktopFilterListsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则订阅库'**
+  String get desktopFilterListsTitle;
+
+  /// No description provided for @desktopFilterListsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持在线订阅链接与本地规则文本文件；每个规则库独立开关，全部更新会逐个重新拉取。'**
+  String get desktopFilterListsBody;
+
+  /// No description provided for @desktopFilterListsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个规则库'**
+  String desktopFilterListsCount(int count);
+
+  /// No description provided for @desktopFilterListUpdateAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部更新'**
+  String get desktopFilterListUpdateAll;
+
+  /// No description provided for @desktopFilterListAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加规则库'**
+  String get desktopFilterListAdd;
+
+  /// No description provided for @desktopFilterListsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无规则订阅库'**
+  String get desktopFilterListsEmpty;
+
+  /// No description provided for @desktopFilterListsEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加 AdGuard 语法规则链接或本地 Hosts 规则文件后，规则会随订阅自动下载并生效。'**
+  String get desktopFilterListsEmptyBody;
+
+  /// No description provided for @desktopFilterListDefaultName.
+  ///
+  /// In zh, this message translates to:
+  /// **'订阅列表 {index}'**
+  String desktopFilterListDefaultName(int index);
+
+  /// No description provided for @desktopFilterListAdded.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则库已添加并开始下载'**
+  String get desktopFilterListAdded;
+
+  /// No description provided for @desktopFilterListAllUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部规则库已更新完成'**
+  String get desktopFilterListAllUpdated;
+
+  /// No description provided for @desktopFilterListUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则库已更新'**
+  String get desktopFilterListUpdated;
+
+  /// No description provided for @desktopFilterActionFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopFilterActionFailed(String message);
+
+  /// No description provided for @desktopFilterListToggleOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已启用规则库：{name}'**
+  String desktopFilterListToggleOn(String name);
+
+  /// No description provided for @desktopFilterListToggleOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已停用规则库：{name}'**
+  String desktopFilterListToggleOff(String name);
+
+  /// No description provided for @desktopFilterListDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除规则库'**
+  String get desktopFilterListDeleteTitle;
+
+  /// No description provided for @desktopFilterListDeleteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除规则库「{name}」吗？删除后其包含的拦截规则将不再生效。'**
+  String desktopFilterListDeleteBody(String name);
+
+  /// No description provided for @desktopFilterListDeleteConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定删除'**
+  String get desktopFilterListDeleteConfirm;
+
+  /// No description provided for @desktopFilterListDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则库已删除'**
+  String get desktopFilterListDeleted;
+
+  /// No description provided for @desktopFilterListRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条规则'**
+  String desktopFilterListRules(int count);
+
+  /// No description provided for @desktopFilterListEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则拦截生效中'**
+  String get desktopFilterListEnabled;
+
+  /// No description provided for @desktopFilterListDisabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已暂停拦截'**
+  String get desktopFilterListDisabled;
+
+  /// No description provided for @desktopFilterListNeverUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'最后更新：未更新'**
+  String get desktopFilterListNeverUpdated;
+
+  /// No description provided for @desktopFilterListUpdatedAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'最后更新：{time}'**
+  String desktopFilterListUpdatedAt(String time);
+
+  /// No description provided for @desktopFilterListRefreshOne.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即更新此规则库'**
+  String get desktopFilterListRefreshOne;
+
+  /// No description provided for @desktopFilterListDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除此规则库'**
+  String get desktopFilterListDelete;
+
+  /// No description provided for @desktopFilterListHealthOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'已同步'**
+  String get desktopFilterListHealthOk;
+
+  /// No description provided for @desktopFilterListHealthUnchanged.
+  ///
+  /// In zh, this message translates to:
+  /// **'未变更'**
+  String get desktopFilterListHealthUnchanged;
+
+  /// No description provided for @desktopFilterListHealthCached.
+  ///
+  /// In zh, this message translates to:
+  /// **'沿用缓存'**
+  String get desktopFilterListHealthCached;
+
+  /// No description provided for @desktopFilterListHealthFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新失败'**
+  String get desktopFilterListHealthFailed;
+
+  /// No description provided for @desktopFilterListHealthOkBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'本次拉取获取到新内容并已生效'**
+  String get desktopFilterListHealthOkBody;
+
+  /// No description provided for @desktopFilterListHealthUnchangedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务端返回 304，本地副本仍然有效'**
+  String get desktopFilterListHealthUnchangedBody;
+
+  /// No description provided for @desktopFilterListHealthCachedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'拉取失败，继续使用上次缓存内容'**
+  String get desktopFilterListHealthCachedBody;
+
+  /// No description provided for @desktopFilterListHealthFailedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'拉取失败且无可用缓存'**
+  String get desktopFilterListHealthFailedBody;
+
+  /// No description provided for @desktopFilterListAddTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加规则订阅库'**
+  String get desktopFilterListAddTitle;
+
+  /// No description provided for @desktopFilterListAddBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入规则库的名称，以及在线订阅网址（URL）或本地文件路径。'**
+  String get desktopFilterListAddBody;
+
+  /// No description provided for @desktopFilterListNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则库名称'**
+  String get desktopFilterListNameLabel;
+
+  /// No description provided for @desktopFilterListNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：广告拦截通用规则'**
+  String get desktopFilterListNameHint;
+
+  /// No description provided for @desktopFilterListUrlLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'订阅链接 / 文件路径'**
+  String get desktopFilterListUrlLabel;
+
+  /// No description provided for @desktopFilterListUrlHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'https://… 或本地文件路径'**
+  String get desktopFilterListUrlHint;
+
+  /// No description provided for @desktopFilterListAddConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加并下载'**
+  String get desktopFilterListAddConfirm;
+
+  /// No description provided for @desktopFilterListNeedUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效的规则源 URL 或本地文件路径'**
+  String get desktopFilterListNeedUrl;
+
+  /// No description provided for @desktopFilterListsLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到规则订阅库'**
+  String get desktopFilterListsLoadFailed;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

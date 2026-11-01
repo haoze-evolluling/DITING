@@ -15,6 +15,14 @@ import 'desktop_zone_fakes.dart';
 export 'desktop_rewrite_fakes.dart';
 export 'desktop_zone_fakes.dart';
 
+/// A JSON answer in UTF-8. `http.Response(String)` encodes as latin-1, which cannot carry the
+/// Chinese names a real service returns.
+http.Response utf8Json(Object? data) => http.Response.bytes(
+  utf8.encode(jsonEncode(data)),
+  200,
+  headers: {'content-type': 'application/json; charset=utf-8'},
+);
+
 /// Envelope the service uses for every answer.
 Map<String, Object?> apiEnvelope(Object? data) => {
   'success': true,
@@ -264,6 +272,59 @@ Map<String, Object?> dns64Payload({
   List<String> prefixes = const ['64:ff9b::/96'],
 }) => {'enabled': enabled, 'prefixes': prefixes};
 
+/// A `GET /api/v1/filter/stats` payload.
+Map<String, Object?> filterStatsPayload({
+  bool enabled = true,
+  int totalRules = 2048,
+  int activeLists = 3,
+  int totalQueries = 12345,
+  int blockedQueries = 987,
+  double blockRate = 0.08,
+  bool paused = false,
+  int pausedRemainingSec = 0,
+}) => {
+  'enabled': enabled,
+  'totalRules': totalRules,
+  'activeLists': activeLists,
+  'totalQueries': totalQueries,
+  'blockedQueries': blockedQueries,
+  'allowedQueries': totalQueries - blockedQueries,
+  'blockRate': blockRate,
+  'scheduleActive': true,
+  'paused': paused,
+  'pausedRemainingSec': paused ? pausedRemainingSec : 0,
+};
+
+/// A `GET /api/v1/filter/lists` payload.
+Map<String, Object?> filterListsPayload({
+  List<Map<String, Object?>>? lists,
+}) {
+  final rows =
+      lists ??
+      const [
+        {
+          'id': 'list-1',
+          'name': '广告拦截通用规则',
+          'url': 'https://example.com/ads.txt',
+          'enabled': true,
+          'rulesCount': 1200,
+          'lastUpdated': 1700000000000,
+          'lastStatus': 'ok',
+        },
+        {
+          'id': 'list-2',
+          'name': '本地 hosts',
+          'url': 'C:\\rules\\hosts.txt',
+          'enabled': false,
+          'rulesCount': 48,
+          'lastUpdated': 0,
+          'lastStatus': 'cached',
+          'lastError': 'connection refused',
+        },
+      ];
+  return {'total': rows.length, 'lists': rows};
+}
+
 /// Records the paths it was asked for, and can be told to fail after [failAfter] requests to model
 /// a service that drops while the window is open.
 class FakeDesktopBackend {
@@ -283,6 +344,8 @@ class FakeDesktopBackend {
     Map<String, Object?>? cachePersist,
     Map<String, Object?>? rewrite,
     Map<String, Object?>? dns64,
+    Map<String, Object?>? filterStats,
+    Map<String, Object?>? filterLists,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
     this.failAfter,
@@ -302,6 +365,8 @@ class FakeDesktopBackend {
        cachePersist = cachePersist ?? cachePersistPayload(),
        rewrite = rewrite ?? rewritePayload(),
        dns64 = dns64 ?? dns64Payload(),
+       filterStats = filterStats ?? filterStatsPayload(),
+       filterLists = filterLists ?? filterListsPayload(),
        zone = zone ?? zonePayload(),
        zoneTest = zoneTest ?? zoneTestPayload();
 
@@ -339,6 +404,16 @@ class FakeDesktopBackend {
 
   /// Bodies of every DNS64 save, in order.
   final dns64Updates = <Map<String, Object?>>[];
+
+  /// Mutated by the four filter-list writes; the counters follow `activeLists`.
+  Map<String, Object?> filterStats;
+  Map<String, Object?> filterLists;
+
+  /// Bodies of every list add and update, the ids of every delete and every refresh, in order.
+  final filterListAdds = <Map<String, Object?>>[];
+  final filterListUpdates = <Map<String, Object?>>[];
+  final filterListDeletes = <String>[];
+  final filterListRefreshes = <String>[];
 
   /// Bodies of every rewrite config save, in order.
   final rewriteConfigUpdates = <Map<String, Object?>>[];
@@ -484,6 +559,60 @@ class FakeDesktopBackend {
           ],
         };
       }
+      if (path == '/api/v1/filter/lists/add' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        filterListAdds.add(body);
+        final rows = [
+          for (final item in filterLists['lists'] as List? ?? const [])
+            (item as Map).cast<String, Object?>(),
+          {
+            'id': 'list-${filterListAdds.length + 10}',
+            ...body,
+            'rulesCount': 0,
+            'lastUpdated': 0,
+          },
+        ];
+        filterLists = {'total': rows.length, 'lists': rows};
+      }
+      if (path == '/api/v1/filter/lists/update' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        filterListUpdates.add(body);
+        final rows = [
+          for (final item in filterLists['lists'] as List? ?? const [])
+            if ((item as Map)['id'] == body['id'])
+              {...item.cast<String, Object?>(), ...body}
+            else
+              item.cast<String, Object?>(),
+        ];
+        filterLists = {'total': rows.length, 'lists': rows};
+      }
+      if (path == '/api/v1/filter/lists/delete' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        final id = '${body['id'] ?? ''}';
+        filterListDeletes.add(id);
+        final rows = [
+          for (final item in filterLists['lists'] as List? ?? const [])
+            if ((item as Map)['id'] != id) item.cast<String, Object?>(),
+        ];
+        filterLists = {'total': rows.length, 'lists': rows};
+      }
+      if (path == '/api/v1/filter/lists/refresh' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        final id = '${body['id'] ?? ''}';
+        filterListRefreshes.add(id);
+        final rows = [
+          for (final item in filterLists['lists'] as List? ?? const [])
+            if (id.isEmpty || (item as Map)['id'] == id)
+              {
+                ...item.cast<String, Object?>(),
+                'lastStatus': 'ok',
+                'lastError': '',
+              }
+            else
+              item.cast<String, Object?>(),
+        ];
+        filterLists = {'total': rows.length, 'lists': rows};
+      }
       if (path == '/api/v1/dns/dns64/configure' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
         dns64Updates.add(body);
@@ -536,6 +665,8 @@ class FakeDesktopBackend {
           jsonEncode(apiEnvelope(rewrite['rules'] ?? const [])),
           200,
         ),
+        '/api/v1/filter/stats' => utf8Json(apiEnvelope(filterStats)),
+        '/api/v1/filter/lists' => utf8Json(apiEnvelope(filterLists)),
         '/api/v1/dns/zone/config' => http.Response(
           jsonEncode(apiEnvelope(zone)),
           200,

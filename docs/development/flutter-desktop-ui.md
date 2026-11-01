@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）与 DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）已完成；`hub` 其余子页与 `traffic` / `tools` / `settings` 待迁移，Wails 切换尚未开始。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）与防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）已完成；`hub` 其余子页与 `traffic` / `tools` / `settings` 待迁移，Wails 切换尚未开始。**
 > Windows 桌面窗口目前仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 三层分工（唯一规范）
@@ -71,6 +71,7 @@
 - `desktop_rewrite_models.dart` / `desktop_rewrite_providers.dart`：重写引擎整表（开关、默认 TTL、规则列表）与单条规则（域名、快捷地址/别名/TXT、`records`、`rcode`、`ttl`）模型；`desktopRewriteProvider` 启动即读 `GET /api/v1/status`（取 `rewrite` 摘要）与 `GET /api/v1/dns/rewrite/rules`（取规则列表），四个写路径（开关、TTL、保存规则、删除规则）串行化并回读服务端；写被拒只把原因返回给页面，不改写屏幕上的值。错误码与记录类型清单与 Go 侧 `REWRITE_RCODES` / `rewriteRecordTypes` 同名同序。
 - `desktop_zone_models.dart` / `desktop_zone_providers.dart`：本地权威区整表（引擎开关、默认 TTL、区列表、逐区构建结果、条数与长度上限）与预演结果模型；`desktopZoneProvider` 启动即读 `/dns/zone/config`，开关、TTL、整份区列表三个写路径串行化并直接采用服务回传的重建结果（含解析失败的区），被拒时保留上一份。区文本只在本地草稿里编辑，保存全部才提交。
 - `desktop_dns64_models.dart` / `desktop_dns64_providers.dart`：DNS64 合成整表（开关 + RFC 6052 前缀列表，空列表按知名前缀 `64:ff9b::/96` 展示）与单一写路径；`desktopDns64Provider` 启动即读 `/status` 的 `dns64` 摘要，保存提交整表并回读服务端值，被拒时保留原配置。前缀文本按行去空行，是否为合法前缀由服务判定。
+- `desktop_filter_models.dart` / `desktop_filter_providers.dart`：规则拦截总览（拦截量、比例、规则数、启用库数、暂停剩余）与订阅列表整表（名称、URL、开关、条数、最近更新、`lastStatus`/`lastError` 健康度）；`desktopFilterListsProvider` 启动即读 `/filter/stats` + `/filter/lists`，新增、开关、删除、单个/全部更新四条写路径都重读两份答案，被拒时保留原行并回传原因。
 - `desktop_cache_models.dart` / `desktop_cache_providers.dart`：缓存统计、条目、热点排行、落盘状态与整表配置模型；`desktopCacheSnapshotProvider`（4 s 轮询统计 + 排行 + 落盘状态，失败保留上一份并标过期）、`desktopCacheSearchProvider` + `desktopCacheEntriesProvider`（检索变化即重读，`query` 交给服务）、`desktopCacheConfigProvider`（开关即时写、策略表单随保存按钮、写后回读服务端值）、`desktopCacheActionProvider`（清空 / 立即落盘 / 从文件恢复，串行化并返回服务端结果）。
 - `desktop_event_client.dart`：`/api/v1/events` 的 WebSocket 客户端（`web_socket_channel`，Web 与 IO 同一份代码）。令牌走查询串（浏览器握手不能带 header），断线 3 s 后重连；只把 `type: "query"` 事件转成 `DesktopLiveQuery`，并按 `errorMessage`/`success` → `blocked` → `cacheHit` 的顺序分类；`DesktopChannelEvent` 汇报通道通断。
 - `desktop_live_providers.dart`：`desktopEventStreamProvider`（唯一套接字入口，测试用 `StreamController` 覆写）、`desktopLiveProvider`（500 条滚动缓冲、暂停即丢弃、清空只清缓冲）、`desktopLiveEnabledProvider`（widget 测试关闭，避免开套接字）。实时流不轮询：socket 断即明说未连接。
@@ -87,6 +88,7 @@
 - 功能中心缓存 `lib/desktop/pages/hub/desktop_cache_page.dart`（`/hub/cache` 子路由，宽窗两列卡片、窄窗单列）、`widgets/cache_overview_cards.dart`（引擎总控 + 命中率 + 遥测指标 + 容量条）、`widgets/cache_top_card.dart`（Top 10 热点域名）、`widgets/cache_config_card.dart`（TTL 模式、最长/最短有效期、弱网兜底、极速响应、无效网址记忆、热点预取）、`widgets/cache_persist_card.dart`（落盘开关、间隔、文件路径、失败原因、立即落盘/从文件恢复）、`widgets/cache_exclude_card.dart`（Go RE2 排除正则、三条预设、条数与长度上限）、`widgets/cache_entries_card.dart`（服务端检索 + 四态筛选 + TTL/IP 明细表）、`widgets/cache_common.dart`（模式名、状态徽标、开关行与容量条）。**已覆盖旧版桌面 `CachePanel` + `CacheConfigCard` + `CachePersistCard` + `CacheExcludeCard` + `CacheTopDomains` + `CacheEntriesTable`**，`hub` 的缓存子页迁移完成。
 - 功能中心重写 `lib/desktop/pages/hub/desktop_rewrite_page.dart`（`/hub/rewrite` 子路由）、`widgets/rewrite_engine_card.dart`（引擎开关 + 默认 TTL 即时保存）、`widgets/rewrite_rules_card.dart`（本地检索五列规则表、空态区分无规则/无匹配、行内编辑与删除确认）、`widgets/rewrite_editor_dialog.dart`（快捷目标与自定义记录两种模式、记录类型/取值、应答码覆盖、规则 TTL、服务端同款校验）、`widgets/rewrite_common.dart`（类型徽标文案与配色、TTL 回退）、`widgets/zone_file_card.dart`（本地权威区：引擎开关、默认 TTL、逐区构建状态徽标与失败原因、可展开的 RFC 1035 文本、预演解析、增删与「保存全部」、删除失败回滚、窄窗徽标换行）。**已覆盖旧版桌面 `RewritePanel` + `RewriteEditModal` + `ZoneFileCard`**，`hub` 的重写子页迁移完成。
 - 功能中心 DNS64 `lib/desktop/pages/hub/desktop_dns64_page.dart`（`/hub/dns64` 子路由）、`widgets/dns64_card.dart`（合成开关携带已输入前缀即时保存、前缀多行编辑与「填入标准前缀」、内置排除网段说明、保存按钮与失败提示）。**已覆盖旧版桌面 `DNS64Panel`**，`hub` 的 DNS64 子页迁移完成。
+- 防护·规则订阅 `lib/desktop/pages/hub/desktop_filter_lists_page.dart`（`/hub/filter-lists` 子路由）、`widgets/filter_lists_card.dart`（拦截总览指标、规则库两列网格、空态、添加/全部更新、逐行开关/立即更新/删除确认、健康度徽标与失败原因）、`widgets/filter_list_dialog.dart`（名称可留空、URL 必填）、`widgets/filter_common.dart`（健康度文案、`MM-DD HH:mm` 时间、暂停剩余时长）。**已覆盖旧版桌面 `RulesPanel` 的订阅页签与 `RuleListsPanel`**，`hub` 的订阅子页迁移完成。
 - 其余三个分支在 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`（`commonPendingTitle` / `commonPendingBody`）。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 - 实时流依赖 `web_socket_channel`（`pubspec.yaml` 固定 3.0.3）；Wails/WebView 宿主与 `flutter run -d chrome` 都走浏览器 WebSocket。
@@ -98,7 +100,7 @@ flutter build web -t lib/desktop/main.dart
 flutter test test/desktop_app_test.dart test/desktop_shell_test.dart \
   test/desktop_home_test.dart test/desktop_logs_test.dart \
   test/desktop_upstream_test.dart test/desktop_cache_test.dart \
-  test/desktop_rewrite_test.dart test/desktop_zone_test.dart \n  test/desktop_dns64_test.dart \
+  test/desktop_rewrite_test.dart test/desktop_zone_test.dart \n  test/desktop_dns64_test.dart test/desktop_filter_lists_test.dart \
   test/desktop_api_test.dart test/desktop_preferences_test.dart
 
 # 应用自截图（写到 build/screenshots/，不提交）：
@@ -113,14 +115,14 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`hub` 剩余子页**：防护组（订阅、应用拦截、自定义规则、拦截方式、时间计划）+ 设备·加密 DNS / 安全隐私；每个子页在 `desktop_hub_page.dart` 增加一条入口并挂到 `/hub/*` 嵌套路由。
+1. **`hub` 剩余子页**：防护组（应用拦截、自定义规则、拦截方式、时间计划）+ 设备·加密 DNS / 安全隐私；每个子页在 `desktop_hub_page.dart` 增加一条入口并挂到 `/hub/*` 嵌套路由。
 2. **`traffic`**：设备管理 + 缓存热点/Top 域名与客户端（不做按应用流量）。
 3. **`tools`**：诊断与修复、规则检测、上游/区域测试。
 4. **`settings`**：外观主题（复用 `lib/pages/appearance` 的组件与语义）、服务与连接、局域网控制台。
 
 ## 8. 验收与守卫
 
-`test/desktop_shell_test.dart`、`test/desktop_home_test.dart`、`test/desktop_logs_test.dart`、`test/desktop_upstream_test.dart`、`test/desktop_cache_test.dart`、`test/desktop_rewrite_test.dart`、`test/desktop_zone_test.dart`、`test/desktop_dns64_test.dart`、`test/desktop_api_test.dart`、`test/desktop_event_client_test.dart` 覆盖：
+`test/desktop_shell_test.dart`、`test/desktop_home_test.dart`、`test/desktop_logs_test.dart`、`test/desktop_upstream_test.dart`、`test/desktop_cache_test.dart`、`test/desktop_rewrite_test.dart`、`test/desktop_zone_test.dart`、`test/desktop_dns64_test.dart`、`test/desktop_filter_lists_test.dart`、`test/desktop_api_test.dart`、`test/desktop_event_client_test.dart` 覆盖：
 
 1. **骨架**：桌面一级路由集合与 `branchOrder` 一致，每分支由 `CommonScaffold` 承载；已接入分支不再出现占位空态。
 2. **视觉语言**：源码扫描 `lib/desktop`，不得出现 `Icons.`、`BorderRadius.circular(`、`ColorScheme.fromSeed`、`ThemeData(`、`fontSize:`、`Colors.`、硬编码中文。
@@ -134,6 +136,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 10. **重写**：规则名、类型徽标、目标行与 TTL 都显示服务返回值，失败应答码替换全部类型徽标；开关与 TTL 各自只提交自己那一个字段，非法 TTL 不提交；添加/编辑按快捷字段或记录列表组装整条规则、域名统一小写、失败应答码不再要求目标；删除先确认再发 `DELETE`；写被拒时说明原因且开关保持服务端值；检索只过滤已返回规则、不重发请求；无规则与无匹配空态分开；窄窗收起 TTL 列。
 11. **本地权威区**：区数量/名字数与逐区构建状态都显示服务返回值，停用区标「已停用」、未加载区同时给出服务端原因；新增与文本编辑只改本地草稿，「保存全部」才提交整份列表；区引擎开关与默认 TTL 各自只提交一个字段、非法 TTL 不提交；删除立即提交，被拒后回滚到服务端仍持有的区；预演把顶点、文本与 TTL 发给 `/dns/zone/test` 并显示记录或失败原因；窄窗把状态徽标换到下一行。
 12. **DNS64**：开关、生效状态与前缀列表都显示 `/status` 返回值，空前缀按知名前缀展示；切换开关提交整份配置并携带已输入前缀；保存按钮提交按行去空行后的列表并回显服务端值；「填入标准前缀」只改草稿不提交；写被拒时说明原因且开关保持服务端值；窄窗不横向溢出。
+13. **规则订阅**：拦截量、比例、规则数、启用库数与每个规则库的条数/时间/健康度都显示服务返回值；开关提交整条记录（含 URL），单个与全部更新分别发出对应 id，添加先校验 URL 再提交名称与地址（名称留空按位置命名），删除先确认；写被拒时说明原因且开关保持服务端值；无订阅显示空态；窄窗单列不横向溢出。
 
 ## 9. 明确禁止
 

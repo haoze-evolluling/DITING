@@ -8854,10 +8854,10 @@ class AppL10nZh extends AppL10n {
   String get desktopFilterTitle => '规则拦截';
 
   @override
-  String get desktopFilterRules => '规则总数';
+  String get desktopFilterRules => '有效防护规则';
 
   @override
-  String get desktopFilterBlockRate => '拦截率';
+  String get desktopFilterBlockRate => '拦截比例';
 
   @override
   String get desktopTakeoverTitle => '系统 DNS 接管';
@@ -10195,4 +10195,212 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopDns64LoadFailed => '读不到 DNS64 配置';
+
+  @override
+  String get desktopHubFilterLists => '规则订阅';
+
+  @override
+  String get desktopHubFilterListsBody => '在线规则库与本地规则文件，按订阅批量生效';
+
+  @override
+  String get desktopFilterListsPageTitle => '规则订阅';
+
+  @override
+  String get desktopFilterListsRefresh => '刷新订阅状态';
+
+  @override
+  String get desktopFilterSummaryTitle => '规则拦截总览';
+
+  @override
+  String get desktopFilterEngineOn => '防护生效中';
+
+  @override
+  String get desktopFilterEngineOff => '防护已关闭';
+
+  @override
+  String get desktopFilterPausedChip => '已暂停';
+
+  @override
+  String get desktopFilterBlocked => '已拦截请求';
+
+  @override
+  String get desktopFilterTimes => '次';
+
+  @override
+  String get desktopFilterRulesUnit => '条';
+
+  @override
+  String get desktopFilterActiveLists => '已启用规则库';
+
+  @override
+  String get desktopFilterListsUnit => '个';
+
+  @override
+  String desktopFilterPausedRemaining(String remaining) {
+    return '拦截已暂停，剩余 $remaining 后自动恢复';
+  }
+
+  @override
+  String desktopFilterPauseDays(int days) {
+    return '$days 天';
+  }
+
+  @override
+  String desktopFilterPauseHours(int hours, int minutes) {
+    return '$hours 小时 $minutes 分';
+  }
+
+  @override
+  String desktopFilterPauseMinutes(int minutes, int seconds) {
+    return '$minutes 分 $seconds 秒';
+  }
+
+  @override
+  String desktopFilterPauseSeconds(int seconds) {
+    return '$seconds 秒';
+  }
+
+  @override
+  String get desktopFilterListsTitle => '规则订阅库';
+
+  @override
+  String get desktopFilterListsBody =>
+      '支持在线订阅链接与本地规则文本文件；每个规则库独立开关，全部更新会逐个重新拉取。';
+
+  @override
+  String desktopFilterListsCount(int count) {
+    return '$count 个规则库';
+  }
+
+  @override
+  String get desktopFilterListUpdateAll => '全部更新';
+
+  @override
+  String get desktopFilterListAdd => '添加规则库';
+
+  @override
+  String get desktopFilterListsEmpty => '暂无规则订阅库';
+
+  @override
+  String get desktopFilterListsEmptyBody =>
+      '添加 AdGuard 语法规则链接或本地 Hosts 规则文件后，规则会随订阅自动下载并生效。';
+
+  @override
+  String desktopFilterListDefaultName(int index) {
+    return '订阅列表 $index';
+  }
+
+  @override
+  String get desktopFilterListAdded => '规则库已添加并开始下载';
+
+  @override
+  String get desktopFilterListAllUpdated => '全部规则库已更新完成';
+
+  @override
+  String get desktopFilterListUpdated => '规则库已更新';
+
+  @override
+  String desktopFilterActionFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String desktopFilterListToggleOn(String name) {
+    return '已启用规则库：$name';
+  }
+
+  @override
+  String desktopFilterListToggleOff(String name) {
+    return '已停用规则库：$name';
+  }
+
+  @override
+  String get desktopFilterListDeleteTitle => '删除规则库';
+
+  @override
+  String desktopFilterListDeleteBody(String name) {
+    return '确定要删除规则库「$name」吗？删除后其包含的拦截规则将不再生效。';
+  }
+
+  @override
+  String get desktopFilterListDeleteConfirm => '确定删除';
+
+  @override
+  String get desktopFilterListDeleted => '规则库已删除';
+
+  @override
+  String desktopFilterListRules(int count) {
+    return '$count 条规则';
+  }
+
+  @override
+  String get desktopFilterListEnabled => '规则拦截生效中';
+
+  @override
+  String get desktopFilterListDisabled => '已暂停拦截';
+
+  @override
+  String get desktopFilterListNeverUpdated => '最后更新：未更新';
+
+  @override
+  String desktopFilterListUpdatedAt(String time) {
+    return '最后更新：$time';
+  }
+
+  @override
+  String get desktopFilterListRefreshOne => '立即更新此规则库';
+
+  @override
+  String get desktopFilterListDelete => '删除此规则库';
+
+  @override
+  String get desktopFilterListHealthOk => '已同步';
+
+  @override
+  String get desktopFilterListHealthUnchanged => '未变更';
+
+  @override
+  String get desktopFilterListHealthCached => '沿用缓存';
+
+  @override
+  String get desktopFilterListHealthFailed => '更新失败';
+
+  @override
+  String get desktopFilterListHealthOkBody => '本次拉取获取到新内容并已生效';
+
+  @override
+  String get desktopFilterListHealthUnchangedBody => '服务端返回 304，本地副本仍然有效';
+
+  @override
+  String get desktopFilterListHealthCachedBody => '拉取失败，继续使用上次缓存内容';
+
+  @override
+  String get desktopFilterListHealthFailedBody => '拉取失败且无可用缓存';
+
+  @override
+  String get desktopFilterListAddTitle => '添加规则订阅库';
+
+  @override
+  String get desktopFilterListAddBody => '输入规则库的名称，以及在线订阅网址（URL）或本地文件路径。';
+
+  @override
+  String get desktopFilterListNameLabel => '规则库名称';
+
+  @override
+  String get desktopFilterListNameHint => '例如：广告拦截通用规则';
+
+  @override
+  String get desktopFilterListUrlLabel => '订阅链接 / 文件路径';
+
+  @override
+  String get desktopFilterListUrlHint => 'https://… 或本地文件路径';
+
+  @override
+  String get desktopFilterListAddConfirm => '添加并下载';
+
+  @override
+  String get desktopFilterListNeedUrl => '请输入有效的规则源 URL 或本地文件路径';
+
+  @override
+  String get desktopFilterListsLoadFailed => '读不到规则订阅库';
 }

@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_cache_models.dart';
 import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
+import 'package:diting/desktop/data/api/desktop_filter_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting/desktop/data/api/desktop_zone_models.dart';
@@ -311,6 +312,35 @@ class DesktopApiClient {
   /// the page sends the whole form and then re-reads instead of assuming it was accepted.
   Future<void> updateDns64Config(DesktopDns64Config config) =>
       _post('/api/v1/dns/dns64/configure', body: config.toJson());
+
+  /// The counters the console shows above the subscription lists.
+  Future<DesktopFilterSummary> filterStats() async =>
+      DesktopFilterSummary.fromJson(await _get('/api/v1/filter/stats'));
+
+  Future<DesktopFilterLists> filterLists() async =>
+      DesktopFilterLists.fromJson(await _get('/api/v1/filter/lists'));
+
+  /// The service refuses an empty URL; the page checks first so the dialog can say so without a
+  /// round trip.
+  Future<void> addFilterList({
+    required String name,
+    required String url,
+  }) => _post(
+    '/api/v1/filter/lists/add',
+    body: {'name': name, 'url': url, 'enabled': true},
+  );
+
+  /// Replaces the list's name, URL and switch; the rule counters stay the service's.
+  Future<void> updateFilterList(DesktopFilterList list) =>
+      _post('/api/v1/filter/lists/update', body: list.toJson());
+
+  /// Removes the list and its rules. The service has no undo, so the page asks first.
+  Future<void> deleteFilterList(String id) =>
+      _post('/api/v1/filter/lists/delete', body: {'id': id});
+
+  /// Downloads one list, or every list when [id] is empty.
+  Future<void> refreshFilterLists(String id) =>
+      _post('/api/v1/filter/lists/refresh', body: {'id': id});
 
   void close() => _http.close();
 

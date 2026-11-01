@@ -9449,7 +9449,7 @@ class AppL10nEn extends AppL10n {
   String get desktopFilterTitle => 'Rule blocking';
 
   @override
-  String get desktopFilterRules => 'Rules';
+  String get desktopFilterRules => 'Active rules';
 
   @override
   String get desktopFilterBlockRate => 'Block rate';
@@ -10848,4 +10848,221 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopDns64LoadFailed => 'Could not read the DNS64 config';
+
+  @override
+  String get desktopHubFilterLists => 'Subscriptions';
+
+  @override
+  String get desktopHubFilterListsBody =>
+      'Online rule lists and local rule files, applied as subscriptions';
+
+  @override
+  String get desktopFilterListsPageTitle => 'Subscriptions';
+
+  @override
+  String get desktopFilterListsRefresh => 'Reload the subscriptions';
+
+  @override
+  String get desktopFilterSummaryTitle => 'Blocking overview';
+
+  @override
+  String get desktopFilterEngineOn => 'Protection is on';
+
+  @override
+  String get desktopFilterEngineOff => 'Protection is off';
+
+  @override
+  String get desktopFilterPausedChip => 'Paused';
+
+  @override
+  String get desktopFilterBlocked => 'Blocked queries';
+
+  @override
+  String get desktopFilterTimes => '';
+
+  @override
+  String get desktopFilterRulesUnit => '';
+
+  @override
+  String get desktopFilterActiveLists => 'Enabled lists';
+
+  @override
+  String get desktopFilterListsUnit => '';
+
+  @override
+  String desktopFilterPausedRemaining(String remaining) {
+    return 'Blocking is paused and resumes in $remaining';
+  }
+
+  @override
+  String desktopFilterPauseDays(int days) {
+    return '$days d';
+  }
+
+  @override
+  String desktopFilterPauseHours(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String desktopFilterPauseMinutes(int minutes, int seconds) {
+    return '$minutes min $seconds s';
+  }
+
+  @override
+  String desktopFilterPauseSeconds(int seconds) {
+    return '$seconds s';
+  }
+
+  @override
+  String get desktopFilterListsTitle => 'Subscription lists';
+
+  @override
+  String get desktopFilterListsBody =>
+      'Online subscriptions and local rule files. Each list has its own switch; “update all” pulls every one again.';
+
+  @override
+  String desktopFilterListsCount(int count) {
+    return '$count lists';
+  }
+
+  @override
+  String get desktopFilterListUpdateAll => 'Update all';
+
+  @override
+  String get desktopFilterListAdd => 'Add list';
+
+  @override
+  String get desktopFilterListsEmpty => 'No subscription list yet';
+
+  @override
+  String get desktopFilterListsEmptyBody =>
+      'Add an AdGuard-syntax subscription link or a local hosts file; the rules download and take effect on their own.';
+
+  @override
+  String desktopFilterListDefaultName(int index) {
+    return 'Subscription $index';
+  }
+
+  @override
+  String get desktopFilterListAdded =>
+      'The list was added and the download started';
+
+  @override
+  String get desktopFilterListAllUpdated => 'Every list was updated';
+
+  @override
+  String get desktopFilterListUpdated => 'The list was updated';
+
+  @override
+  String desktopFilterActionFailed(String message) {
+    return 'The action failed: $message';
+  }
+
+  @override
+  String desktopFilterListToggleOn(String name) {
+    return 'Enabled the list $name';
+  }
+
+  @override
+  String desktopFilterListToggleOff(String name) {
+    return 'Disabled the list $name';
+  }
+
+  @override
+  String get desktopFilterListDeleteTitle => 'Delete the list';
+
+  @override
+  String desktopFilterListDeleteBody(String name) {
+    return 'Delete “$name”? Its blocking rules stop applying immediately.';
+  }
+
+  @override
+  String get desktopFilterListDeleteConfirm => 'Delete';
+
+  @override
+  String get desktopFilterListDeleted => 'The list was deleted';
+
+  @override
+  String desktopFilterListRules(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String get desktopFilterListEnabled => 'Blocking is active';
+
+  @override
+  String get desktopFilterListDisabled => 'Blocking is paused';
+
+  @override
+  String get desktopFilterListNeverUpdated => 'Last update: never';
+
+  @override
+  String desktopFilterListUpdatedAt(String time) {
+    return 'Last update: $time';
+  }
+
+  @override
+  String get desktopFilterListRefreshOne => 'Update this list now';
+
+  @override
+  String get desktopFilterListDelete => 'Delete this list';
+
+  @override
+  String get desktopFilterListHealthOk => 'Synced';
+
+  @override
+  String get desktopFilterListHealthUnchanged => 'Unchanged';
+
+  @override
+  String get desktopFilterListHealthCached => 'Using cache';
+
+  @override
+  String get desktopFilterListHealthFailed => 'Update failed';
+
+  @override
+  String get desktopFilterListHealthOkBody =>
+      'The pull fetched new content and it is in effect';
+
+  @override
+  String get desktopFilterListHealthUnchangedBody =>
+      'The server answered 304; the local copy is still valid';
+
+  @override
+  String get desktopFilterListHealthCachedBody =>
+      'The pull failed and the last cached copy is still in use';
+
+  @override
+  String get desktopFilterListHealthFailedBody =>
+      'The pull failed and no cached copy is available';
+
+  @override
+  String get desktopFilterListAddTitle => 'Add a subscription list';
+
+  @override
+  String get desktopFilterListAddBody =>
+      'Enter a name, plus the subscription URL or the path of a local rule file.';
+
+  @override
+  String get desktopFilterListNameLabel => 'List name';
+
+  @override
+  String get desktopFilterListNameHint => 'e.g. General ad blocking';
+
+  @override
+  String get desktopFilterListUrlLabel => 'Subscription URL / file path';
+
+  @override
+  String get desktopFilterListUrlHint => 'https://… or a local file path';
+
+  @override
+  String get desktopFilterListAddConfirm => 'Add and download';
+
+  @override
+  String get desktopFilterListNeedUrl =>
+      'Enter a valid rule source URL or local file path';
+
+  @override
+  String get desktopFilterListsLoadFailed =>
+      'Could not read the subscription lists';
 }

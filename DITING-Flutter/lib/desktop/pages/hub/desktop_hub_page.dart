@@ -9,6 +9,7 @@ library;
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/pages/hub/desktop_cache_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_dns64_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_filter_lists_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/ui/ui.dart';
@@ -21,6 +22,21 @@ const double _contentMaxWidth = 880;
 
 class DesktopFeatureHubPage extends StatelessWidget {
   const DesktopFeatureHubPage({super.key});
+
+  /// One feature row. The trailing chevron is the same on every row, so the builder owns it.
+  ListItem _entry(
+    BuildContext context, {
+    required Glyph glyph,
+    required String title,
+    required String body,
+    required String path,
+  }) => ListItem(
+    leading: GlyphIcon(glyph, size: 20),
+    title: Text(title),
+    subtitle: Text(body),
+    trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+    onTap: () => context.push(path),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -39,45 +55,43 @@ class DesktopFeatureHubPage extends StatelessWidget {
                   children: [
                     ListHeader(title: l10n.desktopHubResolveSection),
                     generateGroup([
-                      ListItem(
-                        leading: const GlyphIcon(AppGlyphs.dns, size: 20),
-                        title: Text(l10n.desktopHubUpstream),
-                        subtitle: Text(l10n.desktopHubUpstreamBody),
-                        trailing: const GlyphIcon(
-                          AppGlyphs.chevronForward,
-                          size: 18,
-                        ),
-                        onTap: () => context.push(DesktopUpstreamPage.path),
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.dns,
+                        title: l10n.desktopHubUpstream,
+                        body: l10n.desktopHubUpstreamBody,
+                        path: DesktopUpstreamPage.path,
                       ),
-                      ListItem(
-                        leading: const GlyphIcon(AppGlyphs.resources, size: 20),
-                        title: Text(l10n.desktopHubCache),
-                        subtitle: Text(l10n.desktopHubCacheBody),
-                        trailing: const GlyphIcon(
-                          AppGlyphs.chevronForward,
-                          size: 18,
-                        ),
-                        onTap: () => context.push(DesktopCachePage.path),
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.resources,
+                        title: l10n.desktopHubCache,
+                        body: l10n.desktopHubCacheBody,
+                        path: DesktopCachePage.path,
                       ),
-                      ListItem(
-                        leading: const GlyphIcon(AppGlyphs.edit, size: 20),
-                        title: Text(l10n.desktopHubRewrite),
-                        subtitle: Text(l10n.desktopHubRewriteBody),
-                        trailing: const GlyphIcon(
-                          AppGlyphs.chevronForward,
-                          size: 18,
-                        ),
-                        onTap: () => context.push(DesktopRewritePage.path),
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.edit,
+                        title: l10n.desktopHubRewrite,
+                        body: l10n.desktopHubRewriteBody,
+                        path: DesktopRewritePage.path,
                       ),
-                      ListItem(
-                        leading: const GlyphIcon(AppGlyphs.layers, size: 20),
-                        title: Text(l10n.desktopHubDns64),
-                        subtitle: Text(l10n.desktopHubDns64Body),
-                        trailing: const GlyphIcon(
-                          AppGlyphs.chevronForward,
-                          size: 18,
-                        ),
-                        onTap: () => context.push(DesktopDns64Page.path),
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.layers,
+                        title: l10n.desktopHubDns64,
+                        body: l10n.desktopHubDns64Body,
+                        path: DesktopDns64Page.path,
+                      ),
+                    ]),
+                    ListHeader(title: l10n.desktopHubProtectSection),
+                    generateGroup([
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.rules,
+                        title: l10n.desktopHubFilterLists,
+                        body: l10n.desktopHubFilterListsBody,
+                        path: DesktopFilterListsPage.path,
                       ),
                     ]),
                   ],
