@@ -22209,6 +22209,168 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'外观偏好与移动端共用同一组键，切换后重启仍生效。'**
   String get desktopSettingsAppearanceFooter;
+
+  /// No description provided for @desktopServicePageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务与连接'**
+  String get desktopServicePageTitle;
+
+  /// No description provided for @desktopServiceEntryBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'后台连接设置、核心服务与开机自启状态'**
+  String get desktopServiceEntryBody;
+
+  /// No description provided for @desktopServiceConnectionTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'后台服务连接设置'**
+  String get desktopServiceConnectionTitle;
+
+  /// No description provided for @desktopServiceConnectionBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'前端客户端与核心服务的通信管道'**
+  String get desktopServiceConnectionBody;
+
+  /// No description provided for @desktopServiceConnectionFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存后立即用新地址重建连接；「测试连接」检查当前服务是否应答。'**
+  String get desktopServiceConnectionFooter;
+
+  /// No description provided for @desktopServiceHost.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务地址（IP 或主机名）'**
+  String get desktopServiceHost;
+
+  /// No description provided for @desktopServicePort.
+  ///
+  /// In zh, this message translates to:
+  /// **'通信端口'**
+  String get desktopServicePort;
+
+  /// No description provided for @desktopServiceToken.
+  ///
+  /// In zh, this message translates to:
+  /// **'访问密钥 / 授权 Token（可选）'**
+  String get desktopServiceToken;
+
+  /// No description provided for @desktopServiceTokenHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'留空表示本机无需密码'**
+  String get desktopServiceTokenHint;
+
+  /// No description provided for @desktopServiceTest.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试连接'**
+  String get desktopServiceTest;
+
+  /// No description provided for @desktopServiceSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存配置'**
+  String get desktopServiceSave;
+
+  /// No description provided for @desktopServiceSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接设置已保存'**
+  String get desktopServiceSaved;
+
+  /// No description provided for @desktopServiceReachable.
+  ///
+  /// In zh, this message translates to:
+  /// **'通信正常'**
+  String get desktopServiceReachable;
+
+  /// No description provided for @desktopServiceUnreachable.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接异常'**
+  String get desktopServiceUnreachable;
+
+  /// No description provided for @desktopServiceConfigured.
+  ///
+  /// In zh, this message translates to:
+  /// **'已配置'**
+  String get desktopServiceConfigured;
+
+  /// No description provided for @desktopServiceAddressInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务地址不能为空，端口需为 1–65535 的整数'**
+  String get desktopServiceAddressInvalid;
+
+  /// No description provided for @desktopServiceCoreTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'后台核心服务'**
+  String get desktopServiceCoreTitle;
+
+  /// No description provided for @desktopServiceCoreBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'宿主机上负责 DNS 与拦截的核心服务状态'**
+  String get desktopServiceCoreBody;
+
+  /// No description provided for @desktopServiceCoreFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'安装、启动与开机自启由宿主机托管，本页只读取并显示其真实状态。'**
+  String get desktopServiceCoreFooter;
+
+  /// No description provided for @desktopServiceState.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务状态'**
+  String get desktopServiceState;
+
+  /// No description provided for @desktopServiceAutoStartOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已开启'**
+  String get desktopServiceAutoStartOn;
+
+  /// No description provided for @desktopServiceAutoStartOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'未开启'**
+  String get desktopServiceAutoStartOff;
+
+  /// No description provided for @desktopServiceAutoStartUnknown.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务未上报'**
+  String get desktopServiceAutoStartUnknown;
+
+  /// No description provided for @desktopServiceRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'运行中'**
+  String get desktopServiceRunning;
+
+  /// No description provided for @desktopServiceStopped.
+  ///
+  /// In zh, this message translates to:
+  /// **'已停止'**
+  String get desktopServiceStopped;
+
+  /// No description provided for @desktopServiceUnknown.
+  ///
+  /// In zh, this message translates to:
+  /// **'未知'**
+  String get desktopServiceUnknown;
+
+  /// No description provided for @desktopServiceRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新核心服务状态'**
+  String get desktopServiceRefresh;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

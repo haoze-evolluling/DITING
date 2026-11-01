@@ -14,6 +14,7 @@ import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/pages/tools/desktop_rule_check_page.dart';
 import 'package:diting/desktop/pages/settings/desktop_appearance_page.dart';
+import 'package:diting/desktop/pages/settings/desktop_service_page.dart';
 import 'package:diting/desktop/pages/settings/desktop_settings_page.dart';
 import 'package:diting/desktop/pages/tools/desktop_tools_page.dart';
 import 'package:diting/desktop/pages/traffic/desktop_client_groups_page.dart';
@@ -79,6 +80,11 @@ List<RouteBase> _subRoutesOf(String location) => switch (location) {
       path: 'appearance',
       pageBuilder: (context, state) =>
           androidDefaultPage(state, const DesktopAppearancePage()),
+    ),
+    GoRoute(
+      path: 'service',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopServicePage()),
     ),
   ],
   Routes.tools => [

@@ -7,6 +7,7 @@ library;
 
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/pages/settings/desktop_appearance_page.dart';
+import 'package:diting/desktop/pages/settings/desktop_service_page.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:go_router/go_router.dart';
@@ -55,6 +56,13 @@ class DesktopSettingsPage extends StatelessWidget {
                         title: l10n.desktopSettingsAppearance,
                         body: l10n.desktopSettingsAppearanceEntryBody,
                         path: DesktopAppearancePage.path,
+                      ),
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.sync,
+                        title: l10n.desktopServicePageTitle,
+                        body: l10n.desktopServiceEntryBody,
+                        path: DesktopServicePage.path,
                       ),
                     ]),
                   ],

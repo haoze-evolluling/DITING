@@ -9476,7 +9476,7 @@ class AppL10nEn extends AppL10n {
   String get desktopServiceHostTitle => 'Host service';
 
   @override
-  String get desktopServiceAutoStart => 'Auto start';
+  String get desktopServiceAutoStart => 'Boot start';
 
   @override
   String get desktopServiceNotInstalled => 'Not installed';
@@ -12939,4 +12939,92 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopSettingsAppearanceFooter =>
       'Appearance shares the mobile app\'s preference keys, so the choice survives a restart.';
+
+  @override
+  String get desktopServicePageTitle => 'Service and connection';
+
+  @override
+  String get desktopServiceEntryBody =>
+      'Connection settings, the core service and its boot registration';
+
+  @override
+  String get desktopServiceConnectionTitle => 'Service connection';
+
+  @override
+  String get desktopServiceConnectionBody =>
+      'The channel between this client and the core service';
+
+  @override
+  String get desktopServiceConnectionFooter =>
+      'Saving rebuilds the connection with the new address; the test checks the service that is answering now.';
+
+  @override
+  String get desktopServiceHost => 'Service address (IP or host)';
+
+  @override
+  String get desktopServicePort => 'Port';
+
+  @override
+  String get desktopServiceToken => 'Access token (optional)';
+
+  @override
+  String get desktopServiceTokenHint =>
+      'Empty when the loopback service needs no password';
+
+  @override
+  String get desktopServiceTest => 'Test the connection';
+
+  @override
+  String get desktopServiceSave => 'Save';
+
+  @override
+  String get desktopServiceSaved => 'The connection settings were saved';
+
+  @override
+  String get desktopServiceReachable => 'Connected';
+
+  @override
+  String get desktopServiceUnreachable => 'Unreachable';
+
+  @override
+  String get desktopServiceConfigured => 'Configured';
+
+  @override
+  String get desktopServiceAddressInvalid =>
+      'The address is required and the port must be a whole number from 1 to 65535';
+
+  @override
+  String get desktopServiceCoreTitle => 'Core service';
+
+  @override
+  String get desktopServiceCoreBody =>
+      'The host service that runs DNS and blocking';
+
+  @override
+  String get desktopServiceCoreFooter =>
+      'Installing, starting and the boot registration are handled on the host; this page only reads its state.';
+
+  @override
+  String get desktopServiceState => 'State';
+
+  @override
+  String get desktopServiceAutoStartOn => 'Enabled';
+
+  @override
+  String get desktopServiceAutoStartOff => 'Off';
+
+  @override
+  String get desktopServiceAutoStartUnknown => 'Not reported';
+
+  @override
+  String get desktopServiceRunning => 'Running';
+
+  @override
+  String get desktopServiceStopped => 'Stopped';
+
+  @override
+  String get desktopServiceUnknown => 'Unknown';
+
+  @override
+  String get desktopServiceRefresh => 'Reload the core service state';
 }

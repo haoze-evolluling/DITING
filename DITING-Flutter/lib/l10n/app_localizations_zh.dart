@@ -12181,4 +12181,86 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopSettingsAppearanceFooter => '外观偏好与移动端共用同一组键，切换后重启仍生效。';
+
+  @override
+  String get desktopServicePageTitle => '服务与连接';
+
+  @override
+  String get desktopServiceEntryBody => '后台连接设置、核心服务与开机自启状态';
+
+  @override
+  String get desktopServiceConnectionTitle => '后台服务连接设置';
+
+  @override
+  String get desktopServiceConnectionBody => '前端客户端与核心服务的通信管道';
+
+  @override
+  String get desktopServiceConnectionFooter =>
+      '保存后立即用新地址重建连接；「测试连接」检查当前服务是否应答。';
+
+  @override
+  String get desktopServiceHost => '服务地址（IP 或主机名）';
+
+  @override
+  String get desktopServicePort => '通信端口';
+
+  @override
+  String get desktopServiceToken => '访问密钥 / 授权 Token（可选）';
+
+  @override
+  String get desktopServiceTokenHint => '留空表示本机无需密码';
+
+  @override
+  String get desktopServiceTest => '测试连接';
+
+  @override
+  String get desktopServiceSave => '保存配置';
+
+  @override
+  String get desktopServiceSaved => '连接设置已保存';
+
+  @override
+  String get desktopServiceReachable => '通信正常';
+
+  @override
+  String get desktopServiceUnreachable => '连接异常';
+
+  @override
+  String get desktopServiceConfigured => '已配置';
+
+  @override
+  String get desktopServiceAddressInvalid => '服务地址不能为空，端口需为 1–65535 的整数';
+
+  @override
+  String get desktopServiceCoreTitle => '后台核心服务';
+
+  @override
+  String get desktopServiceCoreBody => '宿主机上负责 DNS 与拦截的核心服务状态';
+
+  @override
+  String get desktopServiceCoreFooter => '安装、启动与开机自启由宿主机托管，本页只读取并显示其真实状态。';
+
+  @override
+  String get desktopServiceState => '服务状态';
+
+  @override
+  String get desktopServiceAutoStartOn => '已开启';
+
+  @override
+  String get desktopServiceAutoStartOff => '未开启';
+
+  @override
+  String get desktopServiceAutoStartUnknown => '服务未上报';
+
+  @override
+  String get desktopServiceRunning => '运行中';
+
+  @override
+  String get desktopServiceStopped => '已停止';
+
+  @override
+  String get desktopServiceUnknown => '未知';
+
+  @override
+  String get desktopServiceRefresh => '刷新核心服务状态';
 }

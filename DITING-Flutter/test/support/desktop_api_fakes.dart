@@ -726,6 +726,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
     this.failAfter,
+    this.healthOk = true,
     this.statusCode = 200,
   }) : status = status ?? statusPayload(),
        service = service ?? servicePayload(),
@@ -931,6 +932,9 @@ class FakeDesktopBackend {
   /// When set, every POST is refused while reads keep working: a write the service rejected must
   /// be reported, not assumed.
   bool rejectWrites = false;
+
+  /// When false, `/api/v1/health` answers 503, which is how the connection card sees an outage.
+  bool healthOk;
 
   final requests = <String>[];
 
@@ -1353,6 +1357,9 @@ class FakeDesktopBackend {
           jsonEncode(apiEnvelope(zoneTest)),
           200,
         ),
+        '/api/v1/health' => healthOk
+            ? utf8Json(apiEnvelope('ok'))
+            : http.Response('', 503),
         '/api/v1/service/status' => http.Response(
           jsonEncode(apiEnvelope(service)),
           200,

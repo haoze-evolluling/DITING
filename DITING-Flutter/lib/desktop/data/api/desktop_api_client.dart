@@ -81,6 +81,10 @@ class DesktopApiClient {
   Future<CoreServiceState> serviceStatus() async =>
       CoreServiceState.fromJson(await _get('/api/v1/service/status'));
 
+  /// Whether the service answers at all; the answer carries a bare `ok` string, not an object.
+  Future<bool> health() async =>
+      (await _send('/api/v1/health', method: 'GET'))['data'] == 'ok';
+
   /// Newest first. `includeFile=0` keeps the read to the in-memory ring: the dashboard wants the
   /// last few queries, not a scan of the retained history on disk.
   Future<QueryLogPage> recentQueries({int limit = 8}) async =>
