@@ -14,7 +14,7 @@ import 'package:diting/desktop/data/api/desktop_event_client.dart';
 import 'package:diting/desktop/data/api/desktop_live_providers.dart';
 import 'package:diting/desktop/pages/home/desktop_format.dart';
 import 'package:diting/desktop/pages/logs/log_format.dart';
-import 'package:diting/desktop/pages/logs/widgets/log_filters.dart';
+import 'package:diting/desktop/widgets/desktop_picker.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
@@ -102,7 +102,7 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
       onChanged: (value) => setState(() => _needle = value.trim().toLowerCase()),
     );
     final controls = <Widget>[
-      LogPicker(
+      DesktopPicker(
         glyph: AppGlyphs.sort,
         semanticLabel: l10n.logsRecordType,
         label: _qtype.isEmpty ? l10n.desktopLogAllTypes : _qtype,
@@ -121,7 +121,7 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
             ),
         ],
       ),
-      LogPicker(
+      DesktopPicker(
         glyph: AppGlyphs.status,
         semanticLabel: l10n.obsStatus,
         label: _rcode.isEmpty ? l10n.commonAll : _rcode,

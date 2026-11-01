@@ -9,6 +9,7 @@ library;
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_log_providers.dart';
+import 'package:diting/desktop/widgets/desktop_picker.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -123,60 +124,6 @@ class LogFilterBar extends ConsumerWidget {
   }
 }
 
-/// A label, a chevron and a menu of checked entries: the shape every filter in this shell takes.
-/// Shared with the live list, so both filters of the branch read the same.
-class LogPicker extends StatelessWidget {
-  const LogPicker({
-    super.key,
-    required this.glyph,
-    required this.semanticLabel,
-    required this.label,
-    required this.active,
-    required this.items,
-  });
-
-  final Glyph glyph;
-  final String semanticLabel;
-  final String label;
-
-  /// Whether anything is filtered; an active filter colours the control.
-  final bool active;
-
-  final List<CommonPopupMenuItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final color = active ? colorScheme.primary : colorScheme.onSurfaceVariant;
-    return CommonPopupBox(
-      targetBuilder: (open) => Semantics(
-        button: true,
-        label: semanticLabel,
-        child: InkWell(
-          customBorder: AppShape.all(AppCorner.sm),
-          onTap: open,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 4,
-              children: [
-                GlyphIcon(glyph, size: 16, color: color),
-                Text(
-                  label,
-                  style: AppTextStyle.callout.of(context).copyWith(color: color),
-                ),
-                GlyphIcon(AppGlyphs.chevronDown, size: 16, color: color),
-              ],
-            ),
-          ),
-        ),
-      ),
-      popupBuilder: (_) => CommonPopupMenu(items: items),
-    );
-  }
-}
-
 class _StatusPicker extends ConsumerWidget {
   const _StatusPicker({required this.query});
 
@@ -184,7 +131,7 @@ class _StatusPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LogPicker(
+    return DesktopPicker(
       glyph: AppGlyphs.filter,
       semanticLabel: context.l10n.obsStatus,
       label: logStatusLabel(context, query.status),
@@ -211,7 +158,7 @@ class _TypePicker extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final notifier = ref.read(desktopLogQueryProvider.notifier);
-    return LogPicker(
+    return DesktopPicker(
       glyph: AppGlyphs.sort,
       semanticLabel: l10n.logsRecordType,
       label: query.qtype.isEmpty ? l10n.desktopLogAllTypes : query.qtype,

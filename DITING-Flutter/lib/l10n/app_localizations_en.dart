@@ -9715,4 +9715,304 @@ class AppL10nEn extends AppL10n {
   String desktopLogPageInfo(String from, String to, String total) {
     return 'Rows $from–$to of $total';
   }
+
+  @override
+  String get desktopHubResolveSection => 'Resolution';
+
+  @override
+  String get desktopHubProtectSection => 'Protection';
+
+  @override
+  String get desktopHubUpstream => 'Upstream resolution';
+
+  @override
+  String get desktopHubUpstreamBody =>
+      'Scheduling mode, upstream nodes, bootstrap and split DNS';
+
+  @override
+  String get desktopUpstreamTitle => 'Upstream resolution';
+
+  @override
+  String get desktopUpstreamModeTitle => 'Upstream scheduling';
+
+  @override
+  String get desktopUpstreamModeBody =>
+      'How the configured servers share queries and fail over';
+
+  @override
+  String get desktopUpstreamModeSingle => 'Single server';
+
+  @override
+  String get desktopUpstreamModeSingleBody =>
+      'Always resolve through the first server in the list';
+
+  @override
+  String get desktopUpstreamModeBackup => 'Primary with failover';
+
+  @override
+  String get desktopUpstreamModeBackupBody =>
+      'Prefer the primary; switch to a backup on timeout or failure';
+
+  @override
+  String get desktopUpstreamModeRace => 'Parallel race';
+
+  @override
+  String get desktopUpstreamModeRaceBody =>
+      'Query every server at once and use the fastest answer';
+
+  @override
+  String get desktopUpstreamModeSmart => 'Smart latency';
+
+  @override
+  String get desktopUpstreamModeSmartBody =>
+      'Score recent latency and stability, then use the best server';
+
+  @override
+  String get desktopUpstreamNodesTitle => 'Configured DNS servers';
+
+  @override
+  String get desktopUpstreamNodesBody =>
+      'Servers used to resolve names, with encrypted transports and latency probes';
+
+  @override
+  String desktopUpstreamNodesCount(int count) {
+    return '$count nodes';
+  }
+
+  @override
+  String get desktopUpstreamAdd => 'Add DNS server';
+
+  @override
+  String get desktopUpstreamAddTitle => 'Add DNS server';
+
+  @override
+  String get desktopUpstreamEditTitle => 'Edit DNS server';
+
+  @override
+  String get desktopUpstreamName => 'Server name / id';
+
+  @override
+  String get desktopUpstreamProtocol => 'Transport';
+
+  @override
+  String get desktopUpstreamAddress => 'Server address (IP or host)';
+
+  @override
+  String get desktopUpstreamUrl => 'Encrypted query URL';
+
+  @override
+  String get desktopUpstreamPin =>
+      'Certificate fingerprint (optional, SHA-256)';
+
+  @override
+  String get desktopUpstreamPinWarning =>
+      'A fingerprint replaces the system CA chain and is only for self-signed or private-CA upstreams. A mismatch makes the upstream unusable.';
+
+  @override
+  String get desktopUpstreamPreset => 'Common presets';
+
+  @override
+  String get desktopUpstreamPresetProvider => 'Provider';
+
+  @override
+  String get desktopUpstreamPresetProtocol => 'Protocol';
+
+  @override
+  String get desktopUpstreamStamp => 'DNS stamp (sdns://)';
+
+  @override
+  String get desktopUpstreamStampHint => 'Paste a stamp';
+
+  @override
+  String get desktopUpstreamStampParse => 'Parse';
+
+  @override
+  String get desktopUpstreamStampParsing => 'Parsing…';
+
+  @override
+  String get desktopUpstreamStampEmpty => 'Paste an sdns:// stamp first';
+
+  @override
+  String desktopUpstreamStampFailed(String message) {
+    return 'Cannot parse the stamp: $message';
+  }
+
+  @override
+  String desktopUpstreamStampParsed(String proto) {
+    return 'Parsed as $proto';
+  }
+
+  @override
+  String get desktopUpstreamInvalid => 'A name and an address are required';
+
+  @override
+  String get desktopUpstreamDeleteTitle => 'Delete server?';
+
+  @override
+  String desktopUpstreamDeleteBody(String name) {
+    return 'Delete upstream DNS server [$name]?';
+  }
+
+  @override
+  String get desktopUpstreamKeepOne =>
+      'Keep at least one DNS server so names can still be resolved.';
+
+  @override
+  String get desktopUpstreamEmpty => 'No DNS server configured';
+
+  @override
+  String get desktopUpstreamEmptyBody =>
+      'Add a primary or backup server and save.';
+
+  @override
+  String get desktopUpstreamTest => 'Test latency';
+
+  @override
+  String desktopUpstreamTestFailed(String message) {
+    return 'Test failed: $message';
+  }
+
+  @override
+  String desktopUpstreamSaveFailed(String message) {
+    return 'Cannot update the DNS config: $message';
+  }
+
+  @override
+  String get desktopUpstreamSaved => 'DNS servers updated and applied';
+
+  @override
+  String get desktopUpstreamLoadFailed => 'Cannot read the upstream config';
+
+  @override
+  String get desktopUpstreamBootstrapTitle => 'Bootstrap resolution';
+
+  @override
+  String get desktopUpstreamBootstrapBody =>
+      'Resolves upstream host names before a DoT or DoH handshake. Prefer plain IP addresses.';
+
+  @override
+  String get desktopUpstreamBootstrapOn => 'Bootstrap on';
+
+  @override
+  String get desktopUpstreamBootstrapOff => 'Off';
+
+  @override
+  String get desktopUpstreamBootstrapAdd => 'Add bootstrap';
+
+  @override
+  String get desktopUpstreamBootstrapEmpty =>
+      'No bootstrap DNS server configured';
+
+  @override
+  String get desktopUpstreamBootstrapKeepOne =>
+      'Keep at least one bootstrap server so encrypted host names can be resolved.';
+
+  @override
+  String get desktopUpstreamBootstrapName => 'Name';
+
+  @override
+  String get desktopUpstreamBootstrapAddress => 'IP address (port optional)';
+
+  @override
+  String get desktopUpstreamBootstrapInvalid =>
+      'A name and an IP address are required';
+
+  @override
+  String desktopUpstreamBootstrapDeleteBody(String name) {
+    return 'Delete bootstrap server [$name]?';
+  }
+
+  @override
+  String get desktopUpstreamRoutesTitle => 'Split DNS routes';
+
+  @override
+  String get desktopUpstreamRoutesBody =>
+      'Send private suffixes to a dedicated DNS server; wildcards such as *.internal are supported';
+
+  @override
+  String get desktopUpstreamRoutesAdd => 'Add route';
+
+  @override
+  String get desktopUpstreamRoutesEmpty =>
+      'No split route configured; every name follows the global scheduling mode.';
+
+  @override
+  String get desktopUpstreamRouteDomain => 'Domain or suffix';
+
+  @override
+  String get desktopUpstreamRouteServer => 'Target DNS server';
+
+  @override
+  String get desktopUpstreamRouteInvalid =>
+      'A matching domain and a target DNS address are required';
+
+  @override
+  String desktopUpstreamRouteDeleteBody(String domain) {
+    return 'Delete the split route for [$domain]?';
+  }
+
+  @override
+  String get desktopUpstreamFallbackTitle => 'Independent fallback chain';
+
+  @override
+  String get desktopUpstreamFallbackBody =>
+      'A separate chain used only after the whole main chain fails';
+
+  @override
+  String get desktopUpstreamFallbackOff => 'Disabled';
+
+  @override
+  String desktopUpstreamFallbackCount(int count) {
+    return '$count fallback nodes';
+  }
+
+  @override
+  String get desktopUpstreamFallbackNote =>
+      'The main chain gets its own timeout. Only when it fails or returns one of the selected response codes does the whole query switch to this chain.';
+
+  @override
+  String get desktopUpstreamFallbackEmpty =>
+      'No fallback upstream; queries are not duplicated.';
+
+  @override
+  String get desktopUpstreamFallbackAdd => 'Add fallback node';
+
+  @override
+  String get desktopUpstreamFallbackTimeout => 'Main chain timeout (ms)';
+
+  @override
+  String get desktopUpstreamFallbackTimeoutHint =>
+      'Empty or 0 uses the service default of 2000 ms; valid range is 100–30000.';
+
+  @override
+  String get desktopUpstreamFallbackRcode => 'Fallback response codes';
+
+  @override
+  String get desktopUpstreamFallbackRcodeHint =>
+      'SERVFAIL and REFUSED by default. NXDOMAIN is an authoritative answer; ticking it would also ask the fallback about names that do not exist.';
+
+  @override
+  String get desktopUpstreamFallbackOnError =>
+      'Timeouts and connection failures also trigger fallback';
+
+  @override
+  String desktopUpstreamWeight(int weight) {
+    return 'Weight $weight';
+  }
+
+  @override
+  String get desktopUpstreamPinSet => 'Fingerprint pinned';
+
+  @override
+  String get desktopUpstreamPresetMissing =>
+      'This provider has no public endpoint for that protocol; fill it in manually';
+
+  @override
+  String get desktopUpstreamProbeFailed => 'Test failed';
+
+  @override
+  String get desktopUpstreamBootstrapAddTitle => 'Add bootstrap DNS server';
+
+  @override
+  String get desktopUpstreamBootstrapEditTitle => 'Edit bootstrap DNS server';
 }

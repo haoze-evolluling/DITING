@@ -154,6 +154,77 @@ Map<String, Object?> queryLogConfigPayload({
   'dataDir': dataDir,
 };
 
+
+/// A `GET /api/v1/upstream/configure` payload. The service returns lower-case mode and always
+/// includes `fallbackOnRcode`, which the form must round-trip.
+Map<String, Object?> upstreamPayload({
+  String mode = 'primary_backup',
+  List<Map<String, Object?>>? providers,
+  bool bootstrapEnabled = true,
+  List<Map<String, Object?>>? bootstrapServers,
+  Map<String, String> conditionalRoutes = const {},
+  List<Map<String, Object?>> fallbackProviders = const [],
+  int fallbackTimeoutMs = 0,
+  List<int> fallbackOnRcode = const [2, 5],
+  bool fallbackOnError = true,
+}) => {
+  'mode': mode,
+  'providers': providers ??
+      const [
+        {
+          'id': 'AliDNS (DoT)',
+          'protocol': 'DOT',
+          'server': 'dns.alidns.com:853',
+          'weight': 1,
+        },
+        {
+          'id': 'Cloudflare (DoH)',
+          'protocol': 'DOH',
+          'server': 'cloudflare-dns.com',
+          'url': 'https://cloudflare-dns.com/dns-query',
+          'weight': 1,
+          'pin': 'AA:BB',
+        },
+      ],
+  'bootstrap': {
+    'enabled': bootstrapEnabled,
+    'servers': bootstrapServers ??
+        const [
+          {'id': 'bootstrap-1', 'name': 'AliDNS', 'address': '223.5.5.5:53', 'weight': 1},
+          {'id': 'bootstrap-2', 'name': 'DNSPod', 'address': '119.29.29.29:53', 'weight': 1},
+        ],
+  },
+  'conditionalRoutes': conditionalRoutes,
+  'fallbackProviders': fallbackProviders,
+  'fallbackTimeoutMs': fallbackTimeoutMs,
+  'fallbackOnRcode': fallbackOnRcode,
+  'fallbackOnError': fallbackOnError,
+};
+
+/// A `POST /api/v1/upstream/test` answer for a reachable node.
+Map<String, Object?> upstreamProbePayload({double latencyMs = 23.5, String error = ''}) => {
+  'success': error.isEmpty,
+  'latencyMs': error.isEmpty ? latencyMs : 0,
+  if (error.isNotEmpty) 'error': error,
+};
+
+/// A `POST /api/v1/upstream/stamp` answer.
+Map<String, Object?> stampPayload({
+  String protocol = 'DOH',
+  String server = 'dns.alidns.com',
+  String url = 'https://dns.alidns.com/dns-query',
+  String providerName = 'AliDNS',
+  String pin = '',
+}) => {
+  'protocol': protocol,
+  'server': server,
+  'url': url,
+  'providerName': providerName,
+  'pin': pin,
+  'protoName': 'DoH',
+  'props': {'dnssec': true, 'noLog': true, 'noFilter': false},
+};
+
 Map<String, Object?> servicePayload({
   bool installed = true,
   bool running = true,
@@ -175,13 +246,19 @@ class FakeDesktopBackend {
     Map<String, Object?>? queryLog,
     Map<String, Object?>? queryStats,
     Map<String, Object?>? logConfig,
+    Map<String, Object?>? upstream,
+    Map<String, Object?>? probe,
+    Map<String, Object?>? stamp,
     this.failAfter,
     this.statusCode = 200,
   }) : status = status ?? statusPayload(),
        service = service ?? servicePayload(),
        queryLog = queryLog ?? queryLogPayload(),
        queryStats = queryStats ?? queryStatsPayload(),
-       logConfig = logConfig ?? queryLogConfigPayload();
+       logConfig = logConfig ?? queryLogConfigPayload(),
+       upstream = upstream ?? upstreamPayload(),
+       probe = probe ?? upstreamProbePayload(),
+       stamp = stamp ?? stampPayload();
 
   Map<String, Object?> status;
   Map<String, Object?> service;
@@ -190,6 +267,21 @@ class FakeDesktopBackend {
 
   /// Mutated by a `POST /api/v1/querylog/config`, as the service merges the body it receives.
   Map<String, Object?> logConfig;
+
+  /// Mutated by a `POST /api/v1/upstream/configure`, as the service replaces what it receives.
+  Map<String, Object?> upstream;
+
+  /// The answer `/api/v1/upstream/test` gives next.
+  Map<String, Object?> probe;
+
+  /// The answer `/api/v1/upstream/stamp` gives next.
+  Map<String, Object?> stamp;
+
+  /// Bodies of every upstream save, in order.
+  final upstreamUpdates = <Map<String, Object?>>[];
+
+  /// Bodies of every latency probe, in order.
+  final probes = <Map<String, Object?>>[];
 
   /// Bodies of every config update, so a test can assert what the page sent rather than what it
   /// then re-read.
@@ -234,6 +326,14 @@ class FakeDesktopBackend {
         configUpdates.add(body);
         logConfig = {...logConfig, ...body};
       }
+      if (path == '/api/v1/upstream/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        upstreamUpdates.add(body);
+        upstream = {...upstream, ...body};
+      }
+      if (path == '/api/v1/upstream/test' && request.method == 'POST') {
+        probes.add((jsonDecode(request.body) as Map).cast<String, Object?>());
+      }
       if (path == '/api/v1/status') _statusRequests++;
       final limit = failAfter;
       if (path == '/api/v1/status' &&
@@ -277,6 +377,18 @@ class FakeDesktopBackend {
         ),
         '/api/v1/querylog/config' => http.Response(
           jsonEncode(apiEnvelope(logConfig)),
+          200,
+        ),
+        '/api/v1/upstream/configure' => http.Response(
+          jsonEncode(apiEnvelope(upstream)),
+          200,
+        ),
+        '/api/v1/upstream/test' => http.Response(
+          jsonEncode(apiEnvelope(probe)),
+          200,
+        ),
+        '/api/v1/upstream/stamp' => http.Response(
+          jsonEncode(apiEnvelope(stamp)),
           200,
         ),
         _ => http.Response(jsonEncode({'success': true, 'message': 'ok'}), 200),

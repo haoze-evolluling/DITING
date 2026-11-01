@@ -16659,6 +16659,516 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'第 {from}–{to} 条，共 {total} 条'**
   String desktopLogPageInfo(String from, String to, String total);
+
+  /// No description provided for @desktopHubResolveSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析'**
+  String get desktopHubResolveSection;
+
+  /// No description provided for @desktopHubProtectSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'防护'**
+  String get desktopHubProtectSection;
+
+  /// No description provided for @desktopHubUpstream.
+  ///
+  /// In zh, this message translates to:
+  /// **'上游解析'**
+  String get desktopHubUpstream;
+
+  /// No description provided for @desktopHubUpstreamBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'调度策略、上游节点、Bootstrap 引导与条件分流'**
+  String get desktopHubUpstreamBody;
+
+  /// No description provided for @desktopUpstreamTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'上游解析'**
+  String get desktopUpstreamTitle;
+
+  /// No description provided for @desktopUpstreamModeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'上游调度策略'**
+  String get desktopUpstreamModeTitle;
+
+  /// No description provided for @desktopUpstreamModeBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择多服务器协同工作与容灾模式'**
+  String get desktopUpstreamModeBody;
+
+  /// No description provided for @desktopUpstreamModeSingle.
+  ///
+  /// In zh, this message translates to:
+  /// **'单服务器模式'**
+  String get desktopUpstreamModeSingle;
+
+  /// No description provided for @desktopUpstreamModeSingleBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'始终固定使用列表中的首选服务器进行解析'**
+  String get desktopUpstreamModeSingleBody;
+
+  /// No description provided for @desktopUpstreamModeBackup.
+  ///
+  /// In zh, this message translates to:
+  /// **'主备自动容灾'**
+  String get desktopUpstreamModeBackup;
+
+  /// No description provided for @desktopUpstreamModeBackupBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'平时优先使用主服务器，超时或故障时自动切换至备用服务器'**
+  String get desktopUpstreamModeBackupBody;
+
+  /// No description provided for @desktopUpstreamModeRace.
+  ///
+  /// In zh, this message translates to:
+  /// **'并发极速响应'**
+  String get desktopUpstreamModeRace;
+
+  /// No description provided for @desktopUpstreamModeRaceBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'同时向全部服务器发送查询，自动采用最快返回的结果，解析延迟最低'**
+  String get desktopUpstreamModeRaceBody;
+
+  /// No description provided for @desktopUpstreamModeSmart.
+  ///
+  /// In zh, this message translates to:
+  /// **'智能延迟优选'**
+  String get desktopUpstreamModeSmart;
+
+  /// No description provided for @desktopUpstreamModeSmartBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'根据各服务器近期响应速度与稳定性动态评分，智能选用最优质服务器'**
+  String get desktopUpstreamModeSmartBody;
+
+  /// No description provided for @desktopUpstreamNodesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'已配置的 DNS 服务器'**
+  String get desktopUpstreamNodesTitle;
+
+  /// No description provided for @desktopUpstreamNodesBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理用于解析域名的 DNS 服务器，支持加密传输与智能容灾测速'**
+  String get desktopUpstreamNodesBody;
+
+  /// No description provided for @desktopUpstreamNodesCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个节点'**
+  String desktopUpstreamNodesCount(int count);
+
+  /// No description provided for @desktopUpstreamAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加 DNS 服务器'**
+  String get desktopUpstreamAdd;
+
+  /// No description provided for @desktopUpstreamAddTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加 DNS 服务器'**
+  String get desktopUpstreamAddTitle;
+
+  /// No description provided for @desktopUpstreamEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑 DNS 服务器'**
+  String get desktopUpstreamEditTitle;
+
+  /// No description provided for @desktopUpstreamName.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器名称 / 标识'**
+  String get desktopUpstreamName;
+
+  /// No description provided for @desktopUpstreamProtocol.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接协议'**
+  String get desktopUpstreamProtocol;
+
+  /// No description provided for @desktopUpstreamAddress.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器地址 (IP 或域名)'**
+  String get desktopUpstreamAddress;
+
+  /// No description provided for @desktopUpstreamUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'加密解析地址 (URL)'**
+  String get desktopUpstreamUrl;
+
+  /// No description provided for @desktopUpstreamPin.
+  ///
+  /// In zh, this message translates to:
+  /// **'证书指纹 (可选，SHA-256)'**
+  String get desktopUpstreamPin;
+
+  /// No description provided for @desktopUpstreamPinWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'填写指纹后将替代系统 CA 链校验，仅适用于自签或私有 CA 部署的上游。指纹不匹配时该上游将完全不可用。'**
+  String get desktopUpstreamPinWarning;
+
+  /// No description provided for @desktopUpstreamPreset.
+  ///
+  /// In zh, this message translates to:
+  /// **'常用推荐预设'**
+  String get desktopUpstreamPreset;
+
+  /// No description provided for @desktopUpstreamPresetProvider.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务商'**
+  String get desktopUpstreamPresetProvider;
+
+  /// No description provided for @desktopUpstreamPresetProtocol.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析协议'**
+  String get desktopUpstreamPresetProtocol;
+
+  /// No description provided for @desktopUpstreamStamp.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 印章 (sdns://)'**
+  String get desktopUpstreamStamp;
+
+  /// No description provided for @desktopUpstreamStampHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'粘贴印章'**
+  String get desktopUpstreamStampHint;
+
+  /// No description provided for @desktopUpstreamStampParse.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析'**
+  String get desktopUpstreamStampParse;
+
+  /// No description provided for @desktopUpstreamStampParsing.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析中…'**
+  String get desktopUpstreamStampParsing;
+
+  /// No description provided for @desktopUpstreamStampEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先粘贴 sdns:// 印章'**
+  String get desktopUpstreamStampEmpty;
+
+  /// No description provided for @desktopUpstreamStampFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'印章解析失败：{message}'**
+  String desktopUpstreamStampFailed(String message);
+
+  /// No description provided for @desktopUpstreamStampParsed.
+  ///
+  /// In zh, this message translates to:
+  /// **'已解析为 {proto}'**
+  String desktopUpstreamStampParsed(String proto);
+
+  /// No description provided for @desktopUpstreamInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器名称与地址不得为空'**
+  String get desktopUpstreamInvalid;
+
+  /// No description provided for @desktopUpstreamDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除'**
+  String get desktopUpstreamDeleteTitle;
+
+  /// No description provided for @desktopUpstreamDeleteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定删除上游 DNS 服务器 [{name}] 吗？'**
+  String desktopUpstreamDeleteBody(String name);
+
+  /// No description provided for @desktopUpstreamKeepOne.
+  ///
+  /// In zh, this message translates to:
+  /// **'请至少保留一个 DNS 服务器以维持正常的域名解析服务。'**
+  String get desktopUpstreamKeepOne;
+
+  /// No description provided for @desktopUpstreamEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无配置 DNS 服务器'**
+  String get desktopUpstreamEmpty;
+
+  /// No description provided for @desktopUpstreamEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'请添加主备 DNS 服务器后保存。'**
+  String get desktopUpstreamEmptyBody;
+
+  /// No description provided for @desktopUpstreamTest.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试延迟'**
+  String get desktopUpstreamTest;
+
+  /// No description provided for @desktopUpstreamTestFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试失败：{message}'**
+  String desktopUpstreamTestFailed(String message);
+
+  /// No description provided for @desktopUpstreamSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新 DNS 配置失败：{message}'**
+  String desktopUpstreamSaveFailed(String message);
+
+  /// No description provided for @desktopUpstreamSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 服务器配置已更新并即时生效'**
+  String get desktopUpstreamSaved;
+
+  /// No description provided for @desktopUpstreamLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读取上游配置失败'**
+  String get desktopUpstreamLoadFailed;
+
+  /// No description provided for @desktopUpstreamBootstrapTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'Bootstrap 引导解析'**
+  String get desktopUpstreamBootstrapTitle;
+
+  /// No description provided for @desktopUpstreamBootstrapBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'建立 DoT（TLS）和 DoH（HTTPS）加密连接前解析上游域名的前置服务器，优先使用纯 IP 地址。'**
+  String get desktopUpstreamBootstrapBody;
+
+  /// No description provided for @desktopUpstreamBootstrapOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'引导启用'**
+  String get desktopUpstreamBootstrapOn;
+
+  /// No description provided for @desktopUpstreamBootstrapOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已停用'**
+  String get desktopUpstreamBootstrapOff;
+
+  /// No description provided for @desktopUpstreamBootstrapAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加引导'**
+  String get desktopUpstreamBootstrapAdd;
+
+  /// No description provided for @desktopUpstreamBootstrapEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'未配置 Bootstrap DNS 服务器'**
+  String get desktopUpstreamBootstrapEmpty;
+
+  /// No description provided for @desktopUpstreamBootstrapKeepOne.
+  ///
+  /// In zh, this message translates to:
+  /// **'请至少保留一个 Bootstrap DNS 服务器，避免加密握手域名无法解析。'**
+  String get desktopUpstreamBootstrapKeepOne;
+
+  /// No description provided for @desktopUpstreamBootstrapName.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称'**
+  String get desktopUpstreamBootstrapName;
+
+  /// No description provided for @desktopUpstreamBootstrapAddress.
+  ///
+  /// In zh, this message translates to:
+  /// **'IP 地址 (可带端口)'**
+  String get desktopUpstreamBootstrapAddress;
+
+  /// No description provided for @desktopUpstreamBootstrapInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请填写名称与 IP 地址'**
+  String get desktopUpstreamBootstrapInvalid;
+
+  /// No description provided for @desktopUpstreamBootstrapDeleteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定删除引导服务器 [{name}] 吗？'**
+  String desktopUpstreamBootstrapDeleteBody(String name);
+
+  /// No description provided for @desktopUpstreamRoutesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'条件分流路由'**
+  String get desktopUpstreamRoutesTitle;
+
+  /// No description provided for @desktopUpstreamRoutesBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'为内部私有域名定向指定专用 DNS 服务器，支持 *.internal 这类泛域名'**
+  String get desktopUpstreamRoutesBody;
+
+  /// No description provided for @desktopUpstreamRoutesAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加分流规则'**
+  String get desktopUpstreamRoutesAdd;
+
+  /// No description provided for @desktopUpstreamRoutesEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂未配置条件分流路由，全部域名请求遵循全局调度模式。'**
+  String get desktopUpstreamRoutesEmpty;
+
+  /// No description provided for @desktopUpstreamRouteDomain.
+  ///
+  /// In zh, this message translates to:
+  /// **'匹配域名或后缀'**
+  String get desktopUpstreamRouteDomain;
+
+  /// No description provided for @desktopUpstreamRouteServer.
+  ///
+  /// In zh, this message translates to:
+  /// **'定向 DNS 服务器地址'**
+  String get desktopUpstreamRouteServer;
+
+  /// No description provided for @desktopUpstreamRouteInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请填写匹配域名与目标 DNS 地址'**
+  String get desktopUpstreamRouteInvalid;
+
+  /// No description provided for @desktopUpstreamRouteDeleteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定删除匹配域名 [{domain}] 的分流规则吗？'**
+  String desktopUpstreamRouteDeleteBody(String domain);
+
+  /// No description provided for @desktopUpstreamFallbackTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'独立回退上游'**
+  String get desktopUpstreamFallbackTitle;
+
+  /// No description provided for @desktopUpstreamFallbackBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'主链路整体失效后整链切换的备用解析链路'**
+  String get desktopUpstreamFallbackBody;
+
+  /// No description provided for @desktopUpstreamFallbackOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'未启用'**
+  String get desktopUpstreamFallbackOff;
+
+  /// No description provided for @desktopUpstreamFallbackCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个回退节点'**
+  String desktopUpstreamFallbackCount(int count);
+
+  /// No description provided for @desktopUpstreamFallbackNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'与主链路是两条独立链路：主链路先以独立超时尝试整条链，失败或命中下列响应码后，才整链切换到回退上游。'**
+  String get desktopUpstreamFallbackNote;
+
+  /// No description provided for @desktopUpstreamFallbackEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'未配置回退上游，DNS 查询量不会因此增加。'**
+  String get desktopUpstreamFallbackEmpty;
+
+  /// No description provided for @desktopUpstreamFallbackAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加回退节点'**
+  String get desktopUpstreamFallbackAdd;
+
+  /// No description provided for @desktopUpstreamFallbackTimeout.
+  ///
+  /// In zh, this message translates to:
+  /// **'主链路独立超时（毫秒）'**
+  String get desktopUpstreamFallbackTimeout;
+
+  /// No description provided for @desktopUpstreamFallbackTimeoutHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'留空或 0 使用服务端默认 2000ms，取值范围 100–30000。'**
+  String get desktopUpstreamFallbackTimeoutHint;
+
+  /// No description provided for @desktopUpstreamFallbackRcode.
+  ///
+  /// In zh, this message translates to:
+  /// **'触发回退的响应码'**
+  String get desktopUpstreamFallbackRcode;
+
+  /// No description provided for @desktopUpstreamFallbackRcodeHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认仅 SERVFAIL 与 REFUSED。NXDOMAIN 是权威有效判定，勾选它会让「域名不存在」也去问备用上游。'**
+  String get desktopUpstreamFallbackRcodeHint;
+
+  /// No description provided for @desktopUpstreamFallbackOnError.
+  ///
+  /// In zh, this message translates to:
+  /// **'超时、连接失败等链路故障同样触发回退'**
+  String get desktopUpstreamFallbackOnError;
+
+  /// No description provided for @desktopUpstreamWeight.
+  ///
+  /// In zh, this message translates to:
+  /// **'权重 {weight}'**
+  String desktopUpstreamWeight(int weight);
+
+  /// No description provided for @desktopUpstreamPinSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'指纹固定'**
+  String get desktopUpstreamPinSet;
+
+  /// No description provided for @desktopUpstreamPresetMissing.
+  ///
+  /// In zh, this message translates to:
+  /// **'该服务商未提供此协议的公开端点，请手动填写'**
+  String get desktopUpstreamPresetMissing;
+
+  /// No description provided for @desktopUpstreamProbeFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试失败'**
+  String get desktopUpstreamProbeFailed;
+
+  /// No description provided for @desktopUpstreamBootstrapAddTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加 Bootstrap DNS 服务器'**
+  String get desktopUpstreamBootstrapAddTitle;
+
+  /// No description provided for @desktopUpstreamBootstrapEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑 Bootstrap DNS 服务器'**
+  String get desktopUpstreamBootstrapEditTitle;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

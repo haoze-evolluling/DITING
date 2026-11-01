@@ -1,4 +1,6 @@
 import 'package:diting/desktop/pages/desktop_pages.dart';
+import 'package:diting/desktop/pages/hub/desktop_hub_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/pages/logs/desktop_logs_page.dart';
 import 'package:diting/desktop/shell/desktop_shell.dart';
@@ -29,6 +31,7 @@ GoRouter createDesktopRouter({String initialLocation = Routes.home}) {
                   path: location,
                   pageBuilder: (context, state) =>
                       androidDefaultPage(state, _pageOf(location)),
+                  routes: _subRoutesOf(location),
                 ),
               ],
             ),
@@ -50,4 +53,17 @@ Widget _pageOf(String location) => switch (location) {
   Routes.tools => const DesktopToolsPage(),
   Routes.settings => const DesktopSettingsPage(),
   _ => throw StateError('No desktop page for branch $location'),
+};
+
+/// Sub-pages live inside the branch, so the branch's record (and its tab) stays current while the
+/// page is open. Only branches that actually have sub-pages return routes.
+List<RouteBase> _subRoutesOf(String location) => switch (location) {
+  Routes.hub => [
+    GoRoute(
+      path: 'upstream',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopUpstreamPage()),
+    ),
+  ],
+  _ => const [],
 };

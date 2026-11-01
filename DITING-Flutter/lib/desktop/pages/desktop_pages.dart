@@ -1,4 +1,4 @@
-/// The four desktop branches that are still placeholders.
+/// The three desktop branches that are still placeholders.
 ///
 /// They are rebuilt here rather than imported from `lib/pages` because those pages own Android
 /// data sources (native channels, sqflite, VPN providers). Their functionality is not invented
@@ -15,16 +15,6 @@ library;
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
-
-class DesktopFeatureHubPage extends StatelessWidget {
-  const DesktopFeatureHubPage({super.key});
-
-  @override
-  Widget build(BuildContext context) => _PendingPage(
-    title: context.l10n.bottomBarFeatureHub,
-    illustration: NullStatusIllustration.apps,
-  );
-}
 
 class DesktopTrafficPage extends StatelessWidget {
   const DesktopTrafficPage({super.key});

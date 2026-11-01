@@ -9112,4 +9112,286 @@ class AppL10nZh extends AppL10n {
   String desktopLogPageInfo(String from, String to, String total) {
     return '第 $from–$to 条，共 $total 条';
   }
+
+  @override
+  String get desktopHubResolveSection => '解析';
+
+  @override
+  String get desktopHubProtectSection => '防护';
+
+  @override
+  String get desktopHubUpstream => '上游解析';
+
+  @override
+  String get desktopHubUpstreamBody => '调度策略、上游节点、Bootstrap 引导与条件分流';
+
+  @override
+  String get desktopUpstreamTitle => '上游解析';
+
+  @override
+  String get desktopUpstreamModeTitle => '上游调度策略';
+
+  @override
+  String get desktopUpstreamModeBody => '选择多服务器协同工作与容灾模式';
+
+  @override
+  String get desktopUpstreamModeSingle => '单服务器模式';
+
+  @override
+  String get desktopUpstreamModeSingleBody => '始终固定使用列表中的首选服务器进行解析';
+
+  @override
+  String get desktopUpstreamModeBackup => '主备自动容灾';
+
+  @override
+  String get desktopUpstreamModeBackupBody => '平时优先使用主服务器，超时或故障时自动切换至备用服务器';
+
+  @override
+  String get desktopUpstreamModeRace => '并发极速响应';
+
+  @override
+  String get desktopUpstreamModeRaceBody => '同时向全部服务器发送查询，自动采用最快返回的结果，解析延迟最低';
+
+  @override
+  String get desktopUpstreamModeSmart => '智能延迟优选';
+
+  @override
+  String get desktopUpstreamModeSmartBody => '根据各服务器近期响应速度与稳定性动态评分，智能选用最优质服务器';
+
+  @override
+  String get desktopUpstreamNodesTitle => '已配置的 DNS 服务器';
+
+  @override
+  String get desktopUpstreamNodesBody => '管理用于解析域名的 DNS 服务器，支持加密传输与智能容灾测速';
+
+  @override
+  String desktopUpstreamNodesCount(int count) {
+    return '$count 个节点';
+  }
+
+  @override
+  String get desktopUpstreamAdd => '添加 DNS 服务器';
+
+  @override
+  String get desktopUpstreamAddTitle => '添加 DNS 服务器';
+
+  @override
+  String get desktopUpstreamEditTitle => '编辑 DNS 服务器';
+
+  @override
+  String get desktopUpstreamName => '服务器名称 / 标识';
+
+  @override
+  String get desktopUpstreamProtocol => '连接协议';
+
+  @override
+  String get desktopUpstreamAddress => '服务器地址 (IP 或域名)';
+
+  @override
+  String get desktopUpstreamUrl => '加密解析地址 (URL)';
+
+  @override
+  String get desktopUpstreamPin => '证书指纹 (可选，SHA-256)';
+
+  @override
+  String get desktopUpstreamPinWarning =>
+      '填写指纹后将替代系统 CA 链校验，仅适用于自签或私有 CA 部署的上游。指纹不匹配时该上游将完全不可用。';
+
+  @override
+  String get desktopUpstreamPreset => '常用推荐预设';
+
+  @override
+  String get desktopUpstreamPresetProvider => '服务商';
+
+  @override
+  String get desktopUpstreamPresetProtocol => '解析协议';
+
+  @override
+  String get desktopUpstreamStamp => 'DNS 印章 (sdns://)';
+
+  @override
+  String get desktopUpstreamStampHint => '粘贴印章';
+
+  @override
+  String get desktopUpstreamStampParse => '解析';
+
+  @override
+  String get desktopUpstreamStampParsing => '解析中…';
+
+  @override
+  String get desktopUpstreamStampEmpty => '请先粘贴 sdns:// 印章';
+
+  @override
+  String desktopUpstreamStampFailed(String message) {
+    return '印章解析失败：$message';
+  }
+
+  @override
+  String desktopUpstreamStampParsed(String proto) {
+    return '已解析为 $proto';
+  }
+
+  @override
+  String get desktopUpstreamInvalid => '服务器名称与地址不得为空';
+
+  @override
+  String get desktopUpstreamDeleteTitle => '确认删除';
+
+  @override
+  String desktopUpstreamDeleteBody(String name) {
+    return '确定删除上游 DNS 服务器 [$name] 吗？';
+  }
+
+  @override
+  String get desktopUpstreamKeepOne => '请至少保留一个 DNS 服务器以维持正常的域名解析服务。';
+
+  @override
+  String get desktopUpstreamEmpty => '暂无配置 DNS 服务器';
+
+  @override
+  String get desktopUpstreamEmptyBody => '请添加主备 DNS 服务器后保存。';
+
+  @override
+  String get desktopUpstreamTest => '测试延迟';
+
+  @override
+  String desktopUpstreamTestFailed(String message) {
+    return '测试失败：$message';
+  }
+
+  @override
+  String desktopUpstreamSaveFailed(String message) {
+    return '更新 DNS 配置失败：$message';
+  }
+
+  @override
+  String get desktopUpstreamSaved => 'DNS 服务器配置已更新并即时生效';
+
+  @override
+  String get desktopUpstreamLoadFailed => '读取上游配置失败';
+
+  @override
+  String get desktopUpstreamBootstrapTitle => 'Bootstrap 引导解析';
+
+  @override
+  String get desktopUpstreamBootstrapBody =>
+      '建立 DoT（TLS）和 DoH（HTTPS）加密连接前解析上游域名的前置服务器，优先使用纯 IP 地址。';
+
+  @override
+  String get desktopUpstreamBootstrapOn => '引导启用';
+
+  @override
+  String get desktopUpstreamBootstrapOff => '已停用';
+
+  @override
+  String get desktopUpstreamBootstrapAdd => '添加引导';
+
+  @override
+  String get desktopUpstreamBootstrapEmpty => '未配置 Bootstrap DNS 服务器';
+
+  @override
+  String get desktopUpstreamBootstrapKeepOne =>
+      '请至少保留一个 Bootstrap DNS 服务器，避免加密握手域名无法解析。';
+
+  @override
+  String get desktopUpstreamBootstrapName => '名称';
+
+  @override
+  String get desktopUpstreamBootstrapAddress => 'IP 地址 (可带端口)';
+
+  @override
+  String get desktopUpstreamBootstrapInvalid => '请填写名称与 IP 地址';
+
+  @override
+  String desktopUpstreamBootstrapDeleteBody(String name) {
+    return '确定删除引导服务器 [$name] 吗？';
+  }
+
+  @override
+  String get desktopUpstreamRoutesTitle => '条件分流路由';
+
+  @override
+  String get desktopUpstreamRoutesBody =>
+      '为内部私有域名定向指定专用 DNS 服务器，支持 *.internal 这类泛域名';
+
+  @override
+  String get desktopUpstreamRoutesAdd => '添加分流规则';
+
+  @override
+  String get desktopUpstreamRoutesEmpty => '暂未配置条件分流路由，全部域名请求遵循全局调度模式。';
+
+  @override
+  String get desktopUpstreamRouteDomain => '匹配域名或后缀';
+
+  @override
+  String get desktopUpstreamRouteServer => '定向 DNS 服务器地址';
+
+  @override
+  String get desktopUpstreamRouteInvalid => '请填写匹配域名与目标 DNS 地址';
+
+  @override
+  String desktopUpstreamRouteDeleteBody(String domain) {
+    return '确定删除匹配域名 [$domain] 的分流规则吗？';
+  }
+
+  @override
+  String get desktopUpstreamFallbackTitle => '独立回退上游';
+
+  @override
+  String get desktopUpstreamFallbackBody => '主链路整体失效后整链切换的备用解析链路';
+
+  @override
+  String get desktopUpstreamFallbackOff => '未启用';
+
+  @override
+  String desktopUpstreamFallbackCount(int count) {
+    return '$count 个回退节点';
+  }
+
+  @override
+  String get desktopUpstreamFallbackNote =>
+      '与主链路是两条独立链路：主链路先以独立超时尝试整条链，失败或命中下列响应码后，才整链切换到回退上游。';
+
+  @override
+  String get desktopUpstreamFallbackEmpty => '未配置回退上游，DNS 查询量不会因此增加。';
+
+  @override
+  String get desktopUpstreamFallbackAdd => '添加回退节点';
+
+  @override
+  String get desktopUpstreamFallbackTimeout => '主链路独立超时（毫秒）';
+
+  @override
+  String get desktopUpstreamFallbackTimeoutHint =>
+      '留空或 0 使用服务端默认 2000ms，取值范围 100–30000。';
+
+  @override
+  String get desktopUpstreamFallbackRcode => '触发回退的响应码';
+
+  @override
+  String get desktopUpstreamFallbackRcodeHint =>
+      '默认仅 SERVFAIL 与 REFUSED。NXDOMAIN 是权威有效判定，勾选它会让「域名不存在」也去问备用上游。';
+
+  @override
+  String get desktopUpstreamFallbackOnError => '超时、连接失败等链路故障同样触发回退';
+
+  @override
+  String desktopUpstreamWeight(int weight) {
+    return '权重 $weight';
+  }
+
+  @override
+  String get desktopUpstreamPinSet => '指纹固定';
+
+  @override
+  String get desktopUpstreamPresetMissing => '该服务商未提供此协议的公开端点，请手动填写';
+
+  @override
+  String get desktopUpstreamProbeFailed => '测试失败';
+
+  @override
+  String get desktopUpstreamBootstrapAddTitle => '添加 Bootstrap DNS 服务器';
+
+  @override
+  String get desktopUpstreamBootstrapEditTitle => '编辑 Bootstrap DNS 服务器';
 }

@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
+import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:http/http.dart' as http;
 
 /// Where the desktop app finds the local service. Loopback by default; the token is only needed
@@ -119,6 +120,44 @@ class DesktopApiClient {
   Future<void> updateQueryLogConfig(DesktopQueryLogConfig config) =>
       _post('/api/v1/querylog/config', body: config.toJson());
 
+  /// The authoritative resolver config; `/status` only carries a summary of it.
+  Future<DesktopUpstreamConfig> upstreamConfig() async =>
+      DesktopUpstreamConfig.fromJson(await _get('/api/v1/upstream/configure'));
+
+  /// The service merges the body over its current config, so the page sends the whole form and
+  /// then re-reads instead of assuming what was applied.
+  Future<void> updateUpstreamConfig(DesktopUpstreamConfig config) =>
+      _post('/api/v1/upstream/configure', body: config.toJson());
+
+  /// A probe answers `success: false` with the reason when the node itself failed; that is a
+  /// result the page shows next to the node, not a failed request.
+  Future<DesktopUpstreamProbe> testUpstream({
+    required String protocol,
+    required String server,
+    String url = '',
+  }) async {
+    final data = await _postData(
+      '/api/v1/upstream/test',
+      body: {
+        'protocol': protocol,
+        'server': server,
+        if (url.isNotEmpty) 'url': url,
+      },
+    );
+    final latency = data['latencyMs'];
+    return DesktopUpstreamProbe(
+      latencyMs: latency is num ? latency.toDouble() : null,
+      error: '${data['error'] ?? ''}'.isEmpty
+          ? (data['success'] == true ? null : 'unknown error')
+          : '${data['error']}',
+    );
+  }
+
+  Future<DesktopStampResult> parseStamp(String stamp) async =>
+      DesktopStampResult.fromJson(
+        await _postData('/api/v1/upstream/stamp', body: {'stamp': stamp}),
+      );
+
   Future<void> startDns() => _post('/api/v1/dns/start');
 
   Future<void> stopDns() => _post('/api/v1/dns/stop');
@@ -145,6 +184,12 @@ class DesktopApiClient {
   Future<void> _post(String path, {Map<String, Object?>? body}) async {
     await _send(path, method: 'POST', body: body);
   }
+
+  /// A `POST` whose answer is data rather than only a success flag.
+  Future<Map<String, Object?>> _postData(
+    String path, {
+    Map<String, Object?>? body,
+  }) async => _dataOf(await _send(path, method: 'POST', body: body));
 
   Future<Map<String, Object?>> _send(
     String path, {
