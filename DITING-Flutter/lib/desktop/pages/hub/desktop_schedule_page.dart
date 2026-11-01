@@ -13,6 +13,7 @@ import 'package:diting/desktop/data/api/desktop_schedule_models.dart';
 import 'package:diting/desktop/data/api/desktop_schedule_providers.dart';
 import 'package:diting/desktop/pages/hub/widgets/schedule_editor.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/desktop/widgets/desktop_feedback.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
@@ -21,15 +22,14 @@ import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-const double _contentMaxWidth = 880;
-
 class DesktopSchedulePage extends ConsumerStatefulWidget {
   const DesktopSchedulePage({super.key});
 
   static const path = '/hub/filter-schedule';
 
   @override
-  ConsumerState<DesktopSchedulePage> createState() => _DesktopSchedulePageState();
+  ConsumerState<DesktopSchedulePage> createState() =>
+      _DesktopSchedulePageState();
 }
 
 class _DesktopSchedulePageState extends ConsumerState<DesktopSchedulePage> {
@@ -94,17 +94,7 @@ class _DesktopSchedulePageState extends ConsumerState<DesktopSchedulePage> {
                 state.isStale
                     ? StaleStatusNotice(onRetry: retry)
                     : const SizedBox.shrink(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _contentMaxWidth,
-                      ),
-                      child: _card(context, config, state),
-                    ),
-                  ),
-                ),
+                DesktopCardBoard(cards: [_card(context, config, state)]),
               ],
             ),
     );
@@ -207,9 +197,7 @@ class _DesktopSchedulePageState extends ConsumerState<DesktopSchedulePage> {
           Align(
             alignment: AlignmentDirectional.centerEnd,
             child: FilledButton.tonalIcon(
-              onPressed: state.saving
-                  ? null
-                  : () => unawaited(_save(config)),
+              onPressed: state.saving ? null : () => unawaited(_save(config)),
               icon: const GlyphIcon(AppGlyphs.check, size: 16),
               label: Text(
                 state.saving

@@ -179,7 +179,7 @@ class _CacheEntriesCardState extends ConsumerState<CacheEntriesCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Header(wide: wide),
+        wide ? const _Header() : const _CompactHeader(),
         for (final (index, entry) in rows.indexed) ...[
           if (index > 0 || wide) const _Divider(),
           _Row(entry: entry, wide: wide),
@@ -194,9 +194,7 @@ class _CacheEntriesCardState extends ConsumerState<CacheEntriesCard> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.wide});
-
-  final bool wide;
+  const _Header();
 
   @override
   Widget build(BuildContext context) {
@@ -226,17 +224,16 @@ class _Header extends StatelessWidget {
               style: style,
             ),
           ),
-          if (wide)
-            SizedBox(
-              width: _ttlWidth,
-              child: Text(
-                l10n.desktopCacheEntryTtl,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: style,
-              ),
+          SizedBox(
+            width: _ttlWidth,
+            child: Text(
+              l10n.desktopCacheEntryTtl,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: style,
             ),
+          ),
           SizedBox(
             width: _hitsWidth,
             child: Text(
@@ -247,16 +244,42 @@ class _Header extends StatelessWidget {
               style: style,
             ),
           ),
-          if (wide)
-            SizedBox(
-              width: 180,
-              child: Text(
-                l10n.desktopCacheEntryIps,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: style,
-              ),
+          SizedBox(
+            width: 180,
+            child: Text(
+              l10n.desktopCacheEntryIps,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: style,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactHeader extends StatelessWidget {
+  const _CompactHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final style = DashboardText.label(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        spacing: 8,
+        children: [
+          Expanded(child: Text(l10n.desktopCacheEntryDomain, style: style)),
+          SizedBox(
+            width: _typeWidth,
+            child: Text(l10n.desktopCacheEntryType, style: style),
+          ),
+          SizedBox(
+            width: _statusWidth,
+            child: Text(l10n.desktopCacheEntryStatus, style: style),
+          ),
         ],
       ),
     );
@@ -274,6 +297,55 @@ class _Row extends StatelessWidget {
     final l10n = context.l10n;
     final colorScheme = context.colorScheme;
     final label = DashboardText.label(context);
+    final status = DashboardChip(
+      label: desktopCacheStatusLabel(context, entry),
+      tone: desktopCacheStatusTone(entry),
+    );
+    if (!wide) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 4,
+          children: [
+            Row(
+              spacing: 8,
+              children: [
+                Expanded(
+                  child: Text(
+                    entry.domain,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DashboardText.rowTitle(context),
+                  ),
+                ),
+                SizedBox(
+                  width: _typeWidth,
+                  child: Text(entry.qtype, maxLines: 1, style: label),
+                ),
+              ],
+            ),
+            Row(
+              spacing: 8,
+              children: [
+                status,
+                const Spacer(),
+                Text(
+                  '${entry.remainingTtl}s',
+                  maxLines: 1,
+                  style: label.copyWith(
+                    color: entry.remainingTtl > 0
+                        ? colorScheme.onSurface
+                        : colorScheme.warning,
+                  ),
+                ),
+                Text('${entry.hitCount}', maxLines: 1, style: label),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
@@ -295,10 +367,7 @@ class _Row extends StatelessWidget {
             width: _statusWidth,
             child: Align(
               alignment: AlignmentDirectional.centerStart,
-              child: DashboardChip(
-                label: desktopCacheStatusLabel(context, entry),
-                tone: desktopCacheStatusTone(entry),
-              ),
+              child: status,
             ),
           ),
           SizedBox(
@@ -315,17 +384,16 @@ class _Row extends StatelessWidget {
               ),
             ),
           ),
-          if (wide)
-            SizedBox(
-              width: _ttlWidth,
-              child: Text(
-                '${entry.originalTtl}s',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: label,
-              ),
+          SizedBox(
+            width: _ttlWidth,
+            child: Text(
+              '${entry.originalTtl}s',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: label,
             ),
+          ),
           SizedBox(
             width: _hitsWidth,
             child: Text(
@@ -336,18 +404,17 @@ class _Row extends StatelessWidget {
               style: label,
             ),
           ),
-          if (wide)
-            SizedBox(
-              width: 180,
-              child: Text(
-                entry.ipList.isEmpty
-                    ? l10n.desktopCacheNoIps
-                    : entry.ipList.join(', '),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: label,
-              ),
+          SizedBox(
+            width: 180,
+            child: Text(
+              entry.ipList.isEmpty
+                  ? l10n.desktopCacheNoIps
+                  : entry.ipList.join(', '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: label,
             ),
+          ),
         ],
       ),
     );

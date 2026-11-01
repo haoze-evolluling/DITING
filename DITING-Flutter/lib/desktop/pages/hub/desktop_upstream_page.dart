@@ -15,17 +15,13 @@ import 'package:diting/desktop/pages/hub/widgets/conditional_routes_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/fallback_chain_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/upstream_mode_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/desktop/pages/hub/widgets/upstream_nodes_card.dart';
 import 'package:diting/desktop/widgets/desktop_feedback.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// Two columns appear only once two cards still fit their fields; below this they stack.
-const double _wideBreakpoint = 980;
-const double _contentMaxWidth = 1200;
 
 class DesktopUpstreamPage extends ConsumerWidget {
   const DesktopUpstreamPage({super.key});
@@ -54,8 +50,7 @@ class DesktopUpstreamPage extends ConsumerWidget {
     final state = ref.watch(desktopUpstreamProvider);
     final config = state.config;
     void retry() => ref.read(desktopUpstreamProvider.notifier).reload();
-    void save(DesktopUpstreamConfig next) =>
-        _save(context, ref, next);
+    void save(DesktopUpstreamConfig next) => _save(context, ref, next);
     void failed(String message) => showDesktopMessage(context, message);
 
     return CommonScaffold(
@@ -82,68 +77,40 @@ class DesktopUpstreamPage extends ConsumerWidget {
             )
           : LayoutBuilder(
               builder: (context, constraints) {
-                final wide = constraints.maxWidth >= _wideBreakpoint;
-                final bootstrap = BootstrapCard(
-                  config: config,
-                  saving: state.saving,
-                  onChanged: save,
-                  onSaveFailed: failed,
-                );
-                final fallback = FallbackChainCard(
-                  config: config,
-                  saving: state.saving,
-                  onChanged: save,
-                );
+                final cards = <Widget>[
+                  UpstreamModeCard(
+                    config: config,
+                    saving: state.saving,
+                    onChanged: save,
+                  ),
+                  UpstreamNodesCard(
+                    config: config,
+                    saving: state.saving,
+                    onChanged: save,
+                    onSaveFailed: failed,
+                  ),
+                  BootstrapCard(
+                    config: config,
+                    saving: state.saving,
+                    onChanged: save,
+                    onSaveFailed: failed,
+                  ),
+                  FallbackChainCard(
+                    config: config,
+                    saving: state.saving,
+                    onChanged: save,
+                  ),
+                  ConditionalRoutesCard(
+                    routes: config.conditionalRoutes,
+                    saving: state.saving,
+                    onChanged: (routes) =>
+                        save(config.copyWith(conditionalRoutes: routes)),
+                  ),
+                ];
                 return PageBody(
                   children: [
                     if (state.isStale) StaleStatusNotice(onRetry: retry),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: _contentMaxWidth,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: dashboardCardGap,
-                            children: [
-                              UpstreamModeCard(
-                                config: config,
-                                saving: state.saving,
-                                onChanged: save,
-                              ),
-                              UpstreamNodesCard(
-                                config: config,
-                                saving: state.saving,
-                                onChanged: save,
-                                onSaveFailed: failed,
-                              ),
-                              if (wide)
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: dashboardCardGap,
-                                  children: [
-                                    Expanded(child: bootstrap),
-                                    Expanded(child: fallback),
-                                  ],
-                                )
-                              else ...[
-                                bootstrap,
-                                fallback,
-                              ],
-                              ConditionalRoutesCard(
-                                routes: config.conditionalRoutes,
-                                saving: state.saving,
-                                onChanged: (routes) => save(
-                                  config.copyWith(conditionalRoutes: routes),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    DesktopCardBoard(cards: cards),
                   ],
                 );
               },

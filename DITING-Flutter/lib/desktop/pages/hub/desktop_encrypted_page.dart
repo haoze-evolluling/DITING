@@ -13,14 +13,11 @@ import 'package:diting/desktop/pages/hub/widgets/encrypted_cert_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/encrypted_extras_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/encrypted_listeners_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-const double _wideBreakpoint = 980;
-const double _contentMaxWidth = 1200;
 
 class DesktopEncryptedPage extends ConsumerWidget {
   const DesktopEncryptedPage({super.key});
@@ -55,49 +52,17 @@ class DesktopEncryptedPage extends ConsumerWidget {
             )
           : LayoutBuilder(
               builder: (context, constraints) {
-                final wide = constraints.maxWidth >= _wideBreakpoint;
-                final listeners = EncryptedListenersCard(
-                  status: status,
-                  saving: state.saving,
-                );
-                final side = Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: dashboardCardGap,
-                  children: [
-                    EncryptedCertCard(status: status, saving: state.saving),
-                    EncryptedExtrasCard(status: status, saving: state.saving),
-                  ],
-                );
+                final cards = <Widget>[
+                  EncryptedListenersCard(status: status, saving: state.saving),
+                  EncryptedCertCard(status: status, saving: state.saving),
+                  EncryptedExtrasCard(status: status, saving: state.saving),
+                ];
                 return PageBody(
                   children: [
                     state.isStale
                         ? StaleStatusNotice(onRetry: retry)
                         : const SizedBox.shrink(),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: _contentMaxWidth,
-                          ),
-                          child: wide
-                              ? Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: dashboardCardGap,
-                                  children: [
-                                    Expanded(child: listeners),
-                                    Expanded(child: side),
-                                  ],
-                                )
-                              : Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  spacing: dashboardCardGap,
-                                  children: [listeners, side],
-                                ),
-                        ),
-                      ),
-                    ),
+                    DesktopCardBoard(cards: cards),
                   ],
                 );
               },

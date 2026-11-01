@@ -19,16 +19,11 @@ import 'package:diting/desktop/pages/hub/widgets/cache_persist_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/cache_top_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting/desktop/widgets/desktop_feedback.dart';
-import 'package:diting/desktop/widgets/masonry_grid.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// Two columns appear only once two cards still fit their fields; below this they stack.
-const double _wideBreakpoint = 980;
-const double _contentMaxWidth = 1200;
 
 class DesktopCachePage extends ConsumerWidget {
   const DesktopCachePage({super.key});
@@ -80,6 +75,29 @@ class DesktopCachePage extends ConsumerWidget {
       );
     }
     final config = configState.config;
+    final cards = <Widget>[
+      CacheEngineCard(
+        stats: stats,
+        enabled: config?.enabled ?? stats.enabled,
+        busy: configState.saving || config == null,
+        clearing: action.isBusyWith(DesktopCacheAction.clear),
+        onToggle: config == null
+            ? null
+            : (value) => unawaited(
+                ref
+                    .read(desktopCacheConfigProvider.notifier)
+                    .save(config.copyWith(enabled: value)),
+              ),
+        onRefresh: retry,
+        onClear: () => _clear(context, ref),
+      ),
+      CacheTelemetryCard(stats: stats),
+      CacheTopCard(domains: snapshot.topDomains),
+      const CacheConfigCard(),
+      CachePersistCard(persist: snapshot.persist),
+      CacheExcludeCard(persist: snapshot.persist),
+      const CacheEntriesCard(),
+    ];
     return CommonScaffold(
       title: l10n.desktopCacheTitle,
       actions: [
@@ -89,63 +107,11 @@ class DesktopCachePage extends ConsumerWidget {
           icon: const GlyphIcon(AppGlyphs.refresh),
         ),
       ],
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= _wideBreakpoint;
-          final cards = <Widget>[
-            CacheEngineCard(
-              stats: stats,
-              enabled: config?.enabled ?? stats.enabled,
-              busy: configState.saving || config == null,
-              clearing: action.isBusyWith(DesktopCacheAction.clear),
-              onToggle: config == null
-                  ? null
-                  : (value) => unawaited(
-                      ref
-                          .read(desktopCacheConfigProvider.notifier)
-                          .save(config.copyWith(enabled: value)),
-                    ),
-              onRefresh: retry,
-              onClear: () => _clear(context, ref),
-            ),
-            CacheTelemetryCard(stats: stats),
-            CacheTopCard(domains: snapshot.topDomains),
-            const CacheConfigCard(),
-            CachePersistCard(persist: snapshot.persist),
-            CacheExcludeCard(persist: snapshot.persist),
-          ];
-          return PageBody(
-            children: [
-              if (snapshot.isStale) StaleStatusNotice(onRetry: retry),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: _contentMaxWidth,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: dashboardCardGap,
-                      children: [
-                        if (wide)
-                          MasonryGrid(
-                            columns: 2,
-                            spacing: dashboardCardGap,
-                            runSpacing: dashboardCardGap,
-                            children: cards,
-                          )
-                        else
-                          ...cards,
-                        const CacheEntriesCard(),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+      body: PageBody(
+        children: [
+          if (snapshot.isStale) StaleStatusNotice(onRetry: retry),
+          DesktopCardBoard(cards: cards),
+        ],
       ),
     );
   }

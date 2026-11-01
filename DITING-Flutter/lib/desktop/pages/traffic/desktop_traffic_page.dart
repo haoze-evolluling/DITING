@@ -13,14 +13,11 @@ import 'package:diting/desktop/pages/traffic/widgets/client_access_card.dart';
 import 'package:diting/desktop/pages/traffic/widgets/client_list_card.dart';
 import 'package:diting/desktop/pages/traffic/widgets/client_rate_limit_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-const double _wideBreakpoint = 980;
-const double _contentMaxWidth = 1200;
 
 class DesktopTrafficPage extends ConsumerWidget {
   const DesktopTrafficPage({super.key});
@@ -51,61 +48,31 @@ class DesktopTrafficPage extends ConsumerWidget {
               error: state.error,
               onRetry: retry,
             )
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final wide = constraints.maxWidth >= _wideBreakpoint;
-                final access = ClientAccessCard(
-                  access: limits.access,
-                  saving: state.saving,
-                );
-                final rateLimit = ClientRateLimitCard(
-                  rateLimit: limits.rateLimit,
-                  saving: state.saving,
-                );
-                return PageBody(
-                  children: [
-                    state.isStale
-                        ? StaleStatusNotice(onRetry: retry)
-                        : const SizedBox.shrink(),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: _contentMaxWidth,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: dashboardCardGap,
-                            children: [
-                              DesktopClientListCard(
-                                clients: state.clients,
-                                access: limits.access,
-                                saving: state.saving,
-                                loading: state.isLoading,
-                                onRefresh: retry,
-                              ),
-                              if (wide)
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: dashboardCardGap,
-                                  children: [
-                                    Expanded(child: access),
-                                    Expanded(child: rateLimit),
-                                  ],
-                                )
-                              else ...[
-                                access,
-                                rateLimit,
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
+          : PageBody(
+              children: [
+                state.isStale
+                    ? StaleStatusNotice(onRetry: retry)
+                    : const SizedBox.shrink(),
+                DesktopCardBoard(
+                  cards: [
+                    DesktopClientListCard(
+                      clients: state.clients,
+                      access: limits.access,
+                      saving: state.saving,
+                      loading: state.isLoading,
+                      onRefresh: retry,
+                    ),
+                    ClientAccessCard(
+                      access: limits.access,
+                      saving: state.saving,
+                    ),
+                    ClientRateLimitCard(
+                      rateLimit: limits.rateLimit,
+                      saving: state.saving,
                     ),
                   ],
-                );
-              },
+                ),
+              ],
             ),
     );
   }

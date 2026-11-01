@@ -270,9 +270,18 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('宽窗六张卡片按双列瀑布流铺开，窄窗收起瀑布流', (tester) async {
+  testWidgets('宽窗全部卡片按双列瀑布流铺开，没有卡片跨两列', (tester) async {
     await pumpCache(tester);
     expect(find.byType(MasonryGrid), findsOneWidget);
+    final cards = find.byType(DashboardCard).evaluate().toList();
+    expect(cards, hasLength(7));
+    final boxes = [
+      for (final element in cards) element.renderObject! as RenderBox,
+    ];
+    final widths = boxes.map((box) => box.size.width).toSet();
+    expect(widths, hasLength(1), reason: '所有卡片应等宽，不能有卡片跨两列');
+    final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
+    expect(lefts, hasLength(2));
     expect(tester.takeException(), isNull);
 
     await pumpCache(tester, size: const Size(900, 900));

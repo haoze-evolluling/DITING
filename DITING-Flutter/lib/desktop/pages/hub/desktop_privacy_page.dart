@@ -14,15 +14,11 @@ import 'package:diting/desktop/pages/hub/widgets/privacy_protocol_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/privacy_reputation_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/privacy_safe_search_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// Two columns appear only once both cards still fit their fields; below this they stack.
-const double _wideBreakpoint = 980;
-const double _contentMaxWidth = 1200;
 
 class DesktopPrivacyPage extends ConsumerWidget {
   const DesktopPrivacyPage({super.key});
@@ -57,58 +53,19 @@ class DesktopPrivacyPage extends ConsumerWidget {
             )
           : LayoutBuilder(
               builder: (context, constraints) {
-                final wide = constraints.maxWidth >= _wideBreakpoint;
-                final side = Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: dashboardCardGap,
-                  children: [
-                    PrivacyEcsCard(config: config, saving: state.saving),
-                    PrivacyDefenceCard(config: config, saving: state.saving),
-                  ],
-                );
-                final protocol = PrivacyProtocolCard(
-                  config: config,
-                  saving: state.saving,
-                );
+                final cards = <Widget>[
+                  PrivacyProtocolCard(config: config, saving: state.saving),
+                  PrivacyEcsCard(config: config, saving: state.saving),
+                  PrivacyDefenceCard(config: config, saving: state.saving),
+                  const PrivacySafeSearchCard(),
+                  const PrivacyReputationCard(),
+                ];
                 return PageBody(
                   children: [
                     state.isStale
                         ? StaleStatusNotice(onRetry: retry)
                         : const SizedBox.shrink(),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: _contentMaxWidth,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: dashboardCardGap,
-                            children: [
-                              wide
-                                  ? Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      spacing: dashboardCardGap,
-                                      children: [
-                                        Expanded(child: protocol),
-                                        Expanded(child: side),
-                                      ],
-                                    )
-                                  : Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      spacing: dashboardCardGap,
-                                      children: [protocol, side],
-                                    ),
-                              const PrivacySafeSearchCard(),
-                              const PrivacyReputationCard(),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    DesktopCardBoard(cards: cards),
                   ],
                 );
               },

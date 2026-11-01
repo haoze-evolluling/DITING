@@ -24,7 +24,7 @@ const double _ttlWidth = 80;
 const double _actionsWidth = 84;
 
 /// Below this the TTL column is dropped; the name, the chips, the target and the actions still fit.
-const double _wideBreakpoint = 900;
+const double _wideBreakpoint = 560;
 
 class RewriteRulesCard extends ConsumerStatefulWidget {
   const RewriteRulesCard({
@@ -312,7 +312,27 @@ class _Row extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(flex: 5, child: _Target(rule: rule)),
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 2,
+              children: [
+                _Target(rule: rule),
+                // The wide table has a TTL column; a narrow card keeps the lifetime under the
+                // target instead of dropping it.
+                if (!wide)
+                  Text(
+                    l10n.desktopRewriteSeconds(
+                      desktopRewriteRuleTtl(rule, config),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DashboardText.label(context),
+                  ),
+              ],
+            ),
+          ),
           if (wide)
             SizedBox(
               width: _ttlWidth,

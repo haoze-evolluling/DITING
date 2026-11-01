@@ -10,13 +10,12 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/data/api/desktop_api_client.dart';
 import 'package:diting/desktop/data/api/desktop_client_groups_providers.dart';
 import 'package:diting/desktop/pages/traffic/widgets/client_groups_card.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-const double _contentMaxWidth = 1200;
 
 class DesktopClientGroupsPage extends ConsumerWidget {
   const DesktopClientGroupsPage({super.key});
@@ -54,19 +53,8 @@ class DesktopClientGroupsPage extends ConsumerWidget {
                 state.isStale
                     ? StaleStatusNotice(onRetry: retry)
                     : const SizedBox.shrink(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _contentMaxWidth,
-                      ),
-                      child: ClientGroupsCard(
-                        data: data,
-                        saving: state.saving,
-                      ),
-                    ),
-                  ),
+                DesktopCardBoard(
+                  cards: [ClientGroupsCard(data: data, saving: state.saving)],
                 ),
               ],
             ),

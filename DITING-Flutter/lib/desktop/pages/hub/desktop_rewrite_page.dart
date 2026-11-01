@@ -12,13 +12,11 @@ import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting/desktop/pages/hub/widgets/rewrite_engine_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/rewrite_rules_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/zone_file_card.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-const double _contentMaxWidth = 1200;
 
 class DesktopRewritePage extends ConsumerWidget {
   const DesktopRewritePage({super.key});
@@ -54,30 +52,12 @@ class DesktopRewritePage extends ConsumerWidget {
           : PageBody(
               children: [
                 if (state.error != null) StaleStatusNotice(onRetry: retry),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _contentMaxWidth,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: dashboardCardGap,
-                        children: [
-                          RewriteEngineCard(
-                            config: config,
-                            saving: state.saving,
-                          ),
-                          RewriteRulesCard(
-                            config: config,
-                            saving: state.saving,
-                          ),
-                          const ZoneFileCard(),
-                        ],
-                      ),
-                    ),
-                  ),
+                DesktopCardBoard(
+                  cards: [
+                    RewriteEngineCard(config: config, saving: state.saving),
+                    RewriteRulesCard(config: config, saving: state.saving),
+                    const ZoneFileCard(),
+                  ],
                 ),
               ],
             ),

@@ -9,13 +9,12 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/data/api/desktop_api_client.dart';
 import 'package:diting/desktop/data/api/desktop_web_providers.dart';
 import 'package:diting/desktop/pages/settings/widgets/lan_web_card.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-const double _contentMaxWidth = 980;
 
 class DesktopLanWebPage extends ConsumerWidget {
   const DesktopLanWebPage({super.key});
@@ -53,16 +52,8 @@ class DesktopLanWebPage extends ConsumerWidget {
                 state.isStale
                     ? StaleStatusNotice(onRetry: retry)
                     : const SizedBox.shrink(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _contentMaxWidth,
-                      ),
-                      child: LanWebCard(status: status, saving: state.saving),
-                    ),
-                  ),
+                DesktopCardBoard(
+                  cards: [LanWebCard(status: status, saving: state.saving)],
                 ),
               ],
             ),

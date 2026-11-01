@@ -33,11 +33,12 @@ const double _latencyWidth = 66;
 /// a card that otherwise sizes to its rows.
 const double _emptyHeight = 260;
 
-class LogQueryTable extends ConsumerStatefulWidget {
-  const LogQueryTable({super.key, required this.wide, required this.onRetry});
+/// A card column this wide can carry the time, type and client columns; below it the row stacks
+/// them into the domain line instead.
+const double _wideBreakpoint = 560;
 
-  /// Whether there is room for the time, type and client columns.
-  final bool wide;
+class LogQueryTable extends ConsumerStatefulWidget {
+  const LogQueryTable({super.key, required this.onRetry});
 
   final VoidCallback onRetry;
 
@@ -90,56 +91,61 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
     final rows = page?.entries ?? const <QueryLogEntry>[];
     final total = page?.total ?? 0;
 
-    return DashboardCard(
-      semanticLabel: l10n.obsRecordsHeader,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DashboardCardHeader(
-            glyph: AppGlyphs.logs,
-            title: l10n.obsRecordsHeader,
-            leading: [
-              if (feed.isLoading)
-                const SizedBox.square(
-                  dimension: 14,
-                  child: CommonCircleLoading(),
-                )
-              else
-                DashboardChip(
-                  label: dashboardCount(total),
-                  tone: DashboardChipTone.idle,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= _wideBreakpoint;
+        return DashboardCard(
+          semanticLabel: l10n.obsRecordsHeader,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DashboardCardHeader(
+                glyph: AppGlyphs.logs,
+                title: l10n.obsRecordsHeader,
+                leading: [
+                  if (feed.isLoading)
+                    const SizedBox.square(
+                      dimension: 14,
+                      child: CommonCircleLoading(),
+                    )
+                  else
+                    DashboardChip(
+                      label: dashboardCount(total),
+                      tone: DashboardChipTone.idle,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              LogFilterBar(
+                domain: _domain,
+                client: _client,
+                wide: wide,
+                onDomainChanged: _debounced(
+                  ref.read(desktopLogQueryProvider.notifier).setDomain,
                 ),
+                onClientChanged: _debounced(
+                  ref.read(desktopLogQueryProvider.notifier).setClient,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _body(context, feed, query, rows, wide),
+              if (rows.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                _Pager(
+                  query: query,
+                  total: total,
+                  shown: rows.length,
+                  onPrevious: () =>
+                      ref.read(desktopLogQueryProvider.notifier).previousPage(),
+                  onNext: () => ref
+                      .read(desktopLogQueryProvider.notifier)
+                      .nextPage(total),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 12),
-          LogFilterBar(
-            domain: _domain,
-            client: _client,
-            wide: widget.wide,
-            onDomainChanged: _debounced(
-              ref.read(desktopLogQueryProvider.notifier).setDomain,
-            ),
-            onClientChanged: _debounced(
-              ref.read(desktopLogQueryProvider.notifier).setClient,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _body(context, feed, query, rows),
-          if (rows.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            _Pager(
-              query: query,
-              total: total,
-              shown: rows.length,
-              onPrevious: () =>
-                  ref.read(desktopLogQueryProvider.notifier).previousPage(),
-              onNext: () => ref
-                  .read(desktopLogQueryProvider.notifier)
-                  .nextPage(total),
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -148,6 +154,7 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
     AsyncValue<QueryLogPage> feed,
     DesktopLogQuery query,
     List<QueryLogEntry> rows,
+    bool wide,
   ) {
     final l10n = context.l10n;
     if (rows.isEmpty) {
@@ -182,10 +189,10 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (widget.wide) const _TableHeader(),
+        if (wide) const _TableHeader(),
         for (final (index, entry) in rows.indexed) ...[
-          if (index > 0 || widget.wide) const _RowDivider(),
-          _LogRow(entry: entry, wide: widget.wide),
+          if (index > 0 || wide) const _RowDivider(),
+          _LogRow(entry: entry, wide: wide),
         ],
         if (feed.hasError) ...[
           const _RowDivider(),
@@ -210,10 +217,16 @@ class _TableHeader extends StatelessWidget {
       child: Row(
         spacing: 8,
         children: [
-          SizedBox(width: _timeWidth, child: Text(l10n.obsTime, style: style)),
+          SizedBox(
+            width: _timeWidth,
+            child: Text(l10n.obsTime, style: style),
+          ),
           const SizedBox(width: _statusWidth),
           Expanded(child: Text(l10n.desktopLogDomain, style: style)),
-          SizedBox(width: _typeWidth, child: Text(l10n.obsProtocol, style: style)),
+          SizedBox(
+            width: _typeWidth,
+            child: Text(l10n.obsProtocol, style: style),
+          ),
           SizedBox(
             width: _clientWidth,
             child: Text(
@@ -251,7 +264,10 @@ class _LogRow extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final (glyph, color) = switch (entry) {
       QueryLogEntry(blocked: true) => (AppGlyphs.block, colorScheme.error),
-      QueryLogEntry(cached: true) => (AppGlyphs.checkCircle, colorScheme.success),
+      QueryLogEntry(cached: true) => (
+        AppGlyphs.checkCircle,
+        colorScheme.success,
+      ),
       QueryLogEntry(status: 'error') => (AppGlyphs.error, colorScheme.error),
       _ => (AppGlyphs.arrowUp, colorScheme.onSurfaceVariant),
     };
@@ -276,19 +292,34 @@ class _LogRow extends StatelessWidget {
             child: GlyphIcon(glyph, size: 16, color: color),
           ),
           Expanded(
-            child: Row(
-              spacing: 6,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
               children: [
-                Flexible(
-                  child: Text(
-                    entry.displayDomain,
+                Row(
+                  spacing: 6,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        entry.displayDomain,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: DashboardText.rowTitle(context),
+                      ),
+                    ),
+                    if (!wide && entry.qtype.isNotEmpty)
+                      Text(entry.qtype, maxLines: 1, style: label),
+                  ],
+                ),
+                // The wide table has a client column; a narrow card keeps the name under the
+                // domain instead of dropping it.
+                if (!wide && entry.client.isNotEmpty)
+                  Text(
+                    entry.client,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: DashboardText.rowTitle(context),
+                    style: label,
                   ),
-                ),
-                if (!wide && entry.qtype.isNotEmpty)
-                  Text(entry.qtype, maxLines: 1, style: label),
               ],
             ),
           ),

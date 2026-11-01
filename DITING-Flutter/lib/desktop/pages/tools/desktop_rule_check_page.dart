@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/data/api/desktop_rule_check_models.dart';
 import 'package:diting/desktop/data/api/desktop_rule_check_providers.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/desktop/widgets/desktop_picker.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
@@ -18,8 +19,6 @@ import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-const double _wideBreakpoint = 980;
-const double _contentMaxWidth = 1200;
 const List<String> _qtypes = ['A', 'AAAA', 'ANY'];
 const List<String> _examples = [
   'adservice.google.com',
@@ -89,47 +88,22 @@ class _DesktopRuleCheckPageState extends ConsumerState<DesktopRuleCheckPage> {
               : const GlyphIcon(AppGlyphs.bolt),
         ),
       ],
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= _wideBreakpoint;
-          final input = _InputCard(
-            domain: _domain,
-            qtype: _qtype,
-            running: state.running,
-            onQtype: (value) => setState(() => _qtype = value),
-            onRun: _run,
-            onFill: _fill,
-          );
-          final verdict = _VerdictCard(state: state);
-          return PageBody(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: _contentMaxWidth,
-                    ),
-                    child: wide
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: dashboardCardGap,
-                            children: [
-                              Expanded(child: input),
-                              Expanded(child: verdict),
-                            ],
-                          )
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: dashboardCardGap,
-                            children: [input, verdict],
-                          ),
-                  ),
-                ),
+      body: PageBody(
+        children: [
+          DesktopCardBoard(
+            cards: [
+              _InputCard(
+                domain: _domain,
+                qtype: _qtype,
+                running: state.running,
+                onQtype: (value) => setState(() => _qtype = value),
+                onRun: _run,
+                onFill: _fill,
               ),
+              _VerdictCard(state: state),
             ],
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -237,9 +211,7 @@ class _InputCard extends StatelessWidget {
           FilledButton.tonal(
             onPressed: running ? null : onRun,
             child: Text(
-              running
-                  ? l10n.desktopToolsRuleRunning
-                  : l10n.desktopToolsRuleRun,
+              running ? l10n.desktopToolsRuleRunning : l10n.desktopToolsRuleRun,
             ),
           ),
         ],
@@ -293,10 +265,7 @@ class _VerdictCard extends StatelessWidget {
               style: DashboardText.label(context, color: colorScheme.error),
             )
           else if (result == null)
-            Text(
-              l10n.desktopToolsRuleIdle,
-              style: DashboardText.label(context),
-            )
+            Text(l10n.desktopToolsRuleIdle, style: DashboardText.label(context))
           else ...[
             Wrap(
               spacing: 8,
@@ -307,10 +276,7 @@ class _VerdictCard extends StatelessWidget {
                   state.domain,
                   style: DashboardText.rowTitle(context).toMonospace,
                 ),
-                DashboardChip(
-                  label: state.qtype,
-                  tone: DashboardChipTone.idle,
-                ),
+                DashboardChip(label: state.qtype, tone: DashboardChipTone.idle),
               ],
             ),
             const SizedBox(height: 10),
@@ -336,9 +302,9 @@ class _VerdictCard extends StatelessWidget {
             if (result.isRewrite) ...[
               const SizedBox(height: 6),
               Text(
-                l10n.desktopToolsRuleRewrite(desktopRcodeName(
-                  result.rewritten!.rcode,
-                )),
+                l10n.desktopToolsRuleRewrite(
+                  desktopRcodeName(result.rewritten!.rcode),
+                ),
                 style: DashboardText.label(context),
               ),
               if (result.rewritten!.summary.isEmpty)
@@ -348,10 +314,7 @@ class _VerdictCard extends StatelessWidget {
                 )
               else
                 for (final record in result.rewritten!.summary)
-                  Text(
-                    record,
-                    style: DashboardText.label(context).toMonospace,
-                  ),
+                  Text(record, style: DashboardText.label(context).toMonospace),
             ],
           ],
           const SizedBox(height: 6),

@@ -162,6 +162,53 @@ void main() {
         ),
       );
     }, skip: skip);
+
+    // Every page at both sides of the 760 breakpoint. The 1000-wide window leaves a 764-wide
+    // content column after the sidebar, which is the tightest two-column board; 700 drops to one
+    // column. This is the layout contract the screenshots exist to catch.
+    const allPages = [
+      '/',
+      '/hub',
+      '/logs',
+      '/traffic',
+      '/tools',
+      '/settings',
+      '/hub/upstream',
+      '/hub/cache',
+      '/hub/rewrite',
+      '/hub/dns64',
+      '/hub/filter-lists',
+      '/hub/filter-rules',
+      '/hub/filter-config',
+      '/hub/filter-schedule',
+      '/hub/filter-services',
+      '/hub/privacy',
+      '/hub/encrypted-dns',
+      '/traffic/groups',
+      '/tools/rule-test',
+      '/settings/appearance',
+      '/settings/service',
+      '/settings/lan-web',
+    ];
+    for (final location in allPages) {
+      for (final (label, size) in [
+        ('two-column', const Size(1000, 800)),
+        ('single', const Size(700, 800)),
+      ]) {
+        testWidgets('桌面布局 ${_slug(location)} $label', (tester) async {
+          await captureScreenshot(
+            tester,
+            ScreenshotSpec(
+              name: 'desktop-all-${_slug(location)}-$label',
+              app: app(location: location),
+              size: size,
+              platform: TargetPlatform.windows,
+            ),
+          );
+          expect(tester.takeException(), isNull);
+        }, skip: skip);
+      }
+    }
   });
 
   group('安卓参照', () {

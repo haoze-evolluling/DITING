@@ -9,14 +9,12 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/data/api/desktop_tools_providers.dart';
 import 'package:diting/desktop/pages/tools/desktop_rule_check_page.dart';
 import 'package:diting/desktop/pages/tools/widgets/port_diagnosis_card.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
-
-const double _contentMaxWidth = 980;
 
 class DesktopToolsPage extends ConsumerWidget {
   const DesktopToolsPage({super.key});
@@ -43,33 +41,28 @@ class DesktopToolsPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: _contentMaxWidth),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: dashboardCardGap,
-                  children: [
-                    PortDiagnosisCard(state: state),
-                    ListHeader(title: l10n.desktopToolsMoreSection),
-                    generateGroup([
-                      ListItem(
-                        leading: const GlyphIcon(AppGlyphs.rules, size: 20),
-                        title: Text(l10n.desktopToolsRulePageTitle),
-                        subtitle: Text(l10n.desktopToolsRuleEntryBody),
-                        trailing: const GlyphIcon(
-                          AppGlyphs.chevronForward,
-                          size: 18,
-                        ),
-                        onTap: () => context.push(DesktopRuleCheckPage.path),
+          DesktopCardBoard(
+            cards: [
+              PortDiagnosisCard(state: state),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ListHeader(title: l10n.desktopToolsMoreSection),
+                  generateGroup([
+                    ListItem(
+                      leading: const GlyphIcon(AppGlyphs.rules, size: 20),
+                      title: Text(l10n.desktopToolsRulePageTitle),
+                      subtitle: Text(l10n.desktopToolsRuleEntryBody),
+                      trailing: const GlyphIcon(
+                        AppGlyphs.chevronForward,
+                        size: 18,
                       ),
-                    ]),
-                  ],
-                ),
+                      onTap: () => context.push(DesktopRuleCheckPage.path),
+                    ),
+                  ]),
+                ],
               ),
-            ),
+            ],
           ),
         ],
       ),

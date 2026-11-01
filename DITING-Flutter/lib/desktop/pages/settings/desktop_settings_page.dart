@@ -9,13 +9,11 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/pages/settings/desktop_appearance_page.dart';
 import 'package:diting/desktop/pages/settings/desktop_lan_web_page.dart';
 import 'package:diting/desktop/pages/settings/desktop_service_page.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// Keeps a desktop feature list readable instead of stretching a row across a 1920-wide window.
-const double _contentMaxWidth = 880;
 
 class DesktopSettingsPage extends StatelessWidget {
   const DesktopSettingsPage({super.key});
@@ -41,42 +39,38 @@ class DesktopSettingsPage extends StatelessWidget {
       title: l10n.bottomBarSettings,
       body: PageBody(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: _contentMaxWidth),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ListHeader(title: l10n.desktopSettingsSection),
-                    generateGroup([
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.palette,
-                        title: l10n.desktopSettingsAppearance,
-                        body: l10n.desktopSettingsAppearanceEntryBody,
-                        path: DesktopAppearancePage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.sync,
-                        title: l10n.desktopServicePageTitle,
-                        body: l10n.desktopServiceEntryBody,
-                        path: DesktopServicePage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.link,
-                        title: l10n.desktopLanWebPageTitle,
-                        body: l10n.desktopLanWebEntryBody,
-                        path: DesktopLanWebPage.path,
-                      ),
-                    ]),
-                  ],
-                ),
+          DesktopCardBoard(
+            cards: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ListHeader(title: l10n.desktopSettingsSection),
+                  generateGroup([
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.palette,
+                      title: l10n.desktopSettingsAppearance,
+                      body: l10n.desktopSettingsAppearanceEntryBody,
+                      path: DesktopAppearancePage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.sync,
+                      title: l10n.desktopServicePageTitle,
+                      body: l10n.desktopServiceEntryBody,
+                      path: DesktopServicePage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.link,
+                      title: l10n.desktopLanWebPageTitle,
+                      body: l10n.desktopLanWebEntryBody,
+                      path: DesktopLanWebPage.path,
+                    ),
+                  ]),
+                ],
               ),
-            ),
+            ],
           ),
         ],
       ),

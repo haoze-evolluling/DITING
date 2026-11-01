@@ -11,14 +11,11 @@ import 'package:diting/desktop/data/api/desktop_api_client.dart';
 import 'package:diting/desktop/data/api/desktop_filter_providers.dart';
 import 'package:diting/desktop/pages/hub/widgets/filter_lists_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// A list of tiles reads best no wider than this; the console caps its grid the same way.
-const double _contentMaxWidth = 1200;
 
 class DesktopFilterListsPage extends ConsumerWidget {
   const DesktopFilterListsPage({super.key});
@@ -53,23 +50,11 @@ class DesktopFilterListsPage extends ConsumerWidget {
                 state.isStale
                     ? StaleStatusNotice(onRetry: retry)
                     : const SizedBox.shrink(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _contentMaxWidth,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: dashboardCardGap,
-                        children: [
-                          FilterSummaryCard(summary: state.summary),
-                          const FilterListsCard(),
-                        ],
-                      ),
-                    ),
-                  ),
+                DesktopCardBoard(
+                  cards: [
+                    FilterSummaryCard(summary: state.summary),
+                    const FilterListsCard(),
+                  ],
                 ),
               ],
             ),

@@ -7,12 +7,10 @@ library;
 
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/pages/settings/widgets/appearance_theme_card.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:material_ui/material_ui.dart';
-
-const double _contentMaxWidth = 980;
 
 class DesktopAppearancePage extends StatelessWidget {
   const DesktopAppearancePage({super.key});
@@ -24,21 +22,9 @@ class DesktopAppearancePage extends StatelessWidget {
     final l10n = context.l10n;
     return CommonScaffold(
       title: l10n.desktopSettingsAppearance,
-      body: PageBody(
+      body: const PageBody(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: _contentMaxWidth),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: dashboardCardGap,
-                  children: const [AppearanceThemeCard()],
-                ),
-              ),
-            ),
-          ),
+          DesktopCardBoard(cards: [AppearanceThemeCard()]),
         ],
       ),
     );

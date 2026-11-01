@@ -11,13 +11,11 @@ import 'package:diting/desktop/data/api/desktop_api_client.dart';
 import 'package:diting/desktop/data/api/desktop_dns64_providers.dart';
 import 'package:diting/desktop/pages/hub/widgets/dns64_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// A single form card; the console stretches it no wider than a readable measure.
-const double _contentMaxWidth = 880;
 
 class DesktopDns64Page extends ConsumerWidget {
   const DesktopDns64Page({super.key});
@@ -55,16 +53,8 @@ class DesktopDns64Page extends ConsumerWidget {
                 state.isStale
                     ? StaleStatusNotice(onRetry: retry)
                     : const SizedBox.shrink(),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _contentMaxWidth,
-                      ),
-                      child: Dns64Card(config: config, saving: state.saving),
-                    ),
-                  ),
+                DesktopCardBoard(
+                  cards: [Dns64Card(config: config, saving: state.saving)],
                 ),
               ],
             ),

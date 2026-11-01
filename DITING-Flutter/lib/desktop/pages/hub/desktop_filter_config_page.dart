@@ -18,16 +18,12 @@ import 'package:diting/desktop/pages/hub/widgets/filter_lists_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/filter_mode_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/filter_pause_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/desktop/widgets/desktop_feedback.dart';
-import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// Two columns appear only once both cards still fit their fields; below this they stack.
-const double _wideBreakpoint = 980;
-const double _contentMaxWidth = 1200;
 
 class DesktopFilterConfigPage extends ConsumerWidget {
   const DesktopFilterConfigPage({super.key});
@@ -88,65 +84,23 @@ class DesktopFilterConfigPage extends ConsumerWidget {
             )
           : LayoutBuilder(
               builder: (context, constraints) {
-                final wide = constraints.maxWidth >= _wideBreakpoint;
-                final mode = FilterModeCard(
-                  config: config,
-                  saving: state.saving,
-                );
-                final side = Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: dashboardCardGap,
-                  children: [
-                    const FilterPauseCard(),
-                    FilterAdvancedCard(
-                      config: config,
-                      saving: state.saving,
-                    ),
-                  ],
-                );
+                final cards = <Widget>[
+                  FilterSummaryCard(
+                    summary: state.summary ?? DesktopFilterSummary.empty,
+                    saving: state.saving,
+                    onToggle: (value) =>
+                        unawaited(_toggle(context, ref, config, value)),
+                  ),
+                  FilterModeCard(config: config, saving: state.saving),
+                  const FilterPauseCard(),
+                  FilterAdvancedCard(config: config, saving: state.saving),
+                ];
                 return PageBody(
                   children: [
                     state.isStale
                         ? StaleStatusNotice(onRetry: retry)
                         : const SizedBox.shrink(),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: _contentMaxWidth,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: dashboardCardGap,
-                            children: [
-                              FilterSummaryCard(
-                                summary:
-                                    state.summary ??
-                                    DesktopFilterSummary.empty,
-                                saving: state.saving,
-                                onToggle: (value) => unawaited(
-                                  _toggle(context, ref, config, value),
-                                ),
-                              ),
-                              if (wide)
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: dashboardCardGap,
-                                  children: [
-                                    Expanded(child: mode),
-                                    Expanded(child: side),
-                                  ],
-                                )
-                              else ...[
-                                mode,
-                                side,
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                    DesktopCardBoard(cards: cards),
                   ],
                 );
               },

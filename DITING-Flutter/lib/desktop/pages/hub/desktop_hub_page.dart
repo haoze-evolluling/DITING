@@ -18,13 +18,11 @@ import 'package:diting/desktop/pages/hub/desktop_privacy_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_services_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
+import 'package:diting/desktop/widgets/desktop_card_board.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
-
-/// Keeps a desktop feature list readable instead of stretching a row across a 1920-wide window.
-const double _contentMaxWidth = 880;
 
 class DesktopFeatureHubPage extends StatelessWidget {
   const DesktopFeatureHubPage({super.key});
@@ -51,104 +49,110 @@ class DesktopFeatureHubPage extends StatelessWidget {
       title: l10n.bottomBarFeatureHub,
       body: PageBody(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: _contentMaxWidth),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ListHeader(title: l10n.desktopHubResolveSection),
-                    generateGroup([
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.dns,
-                        title: l10n.desktopHubUpstream,
-                        body: l10n.desktopHubUpstreamBody,
-                        path: DesktopUpstreamPage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.resources,
-                        title: l10n.desktopHubCache,
-                        body: l10n.desktopHubCacheBody,
-                        path: DesktopCachePage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.edit,
-                        title: l10n.desktopHubRewrite,
-                        body: l10n.desktopHubRewriteBody,
-                        path: DesktopRewritePage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.layers,
-                        title: l10n.desktopHubDns64,
-                        body: l10n.desktopHubDns64Body,
-                        path: DesktopDns64Page.path,
-                      ),
-                    ]),
-                    ListHeader(title: l10n.desktopHubProtectSection),
-                    generateGroup([
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.rules,
-                        title: l10n.desktopHubFilterLists,
-                        body: l10n.desktopHubFilterListsBody,
-                        path: DesktopFilterListsPage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.edit,
-                        title: l10n.desktopHubFilterRules,
-                        body: l10n.desktopHubFilterRulesBody,
-                        path: DesktopFilterRulesPage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.sliders,
-                        title: l10n.desktopHubFilterConfig,
-                        body: l10n.desktopHubFilterConfigBody,
-                        path: DesktopFilterConfigPage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.clock,
-                        title: l10n.desktopHubFilterSchedule,
-                        body: l10n.desktopHubFilterScheduleBody,
-                        path: DesktopSchedulePage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.appsList,
-                        title: l10n.desktopHubFilterServices,
-                        body: l10n.desktopHubFilterServicesBody,
-                        path: DesktopServicesPage.path,
-                      ),
-                    ]),
-                    ListHeader(title: l10n.desktopHubDeviceSection),
-                    generateGroup([
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.lock,
-                        title: l10n.desktopHubEncrypted,
-                        body: l10n.desktopHubEncryptedBody,
-                        path: DesktopEncryptedPage.path,
-                      ),
-                      _entry(
-                        context,
-                        glyph: AppGlyphs.key,
-                        title: l10n.desktopHubPrivacy,
-                        body: l10n.desktopHubPrivacyBody,
-                        path: DesktopPrivacyPage.path,
-                      ),
-                    ]),
-                  ],
-                ),
+          DesktopCardBoard(
+            cards: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ListHeader(title: l10n.desktopHubResolveSection),
+                  generateGroup([
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.dns,
+                      title: l10n.desktopHubUpstream,
+                      body: l10n.desktopHubUpstreamBody,
+                      path: DesktopUpstreamPage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.resources,
+                      title: l10n.desktopHubCache,
+                      body: l10n.desktopHubCacheBody,
+                      path: DesktopCachePage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.edit,
+                      title: l10n.desktopHubRewrite,
+                      body: l10n.desktopHubRewriteBody,
+                      path: DesktopRewritePage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.layers,
+                      title: l10n.desktopHubDns64,
+                      body: l10n.desktopHubDns64Body,
+                      path: DesktopDns64Page.path,
+                    ),
+                  ]),
+                ],
               ),
-            ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ListHeader(title: l10n.desktopHubProtectSection),
+                  generateGroup([
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.rules,
+                      title: l10n.desktopHubFilterLists,
+                      body: l10n.desktopHubFilterListsBody,
+                      path: DesktopFilterListsPage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.edit,
+                      title: l10n.desktopHubFilterRules,
+                      body: l10n.desktopHubFilterRulesBody,
+                      path: DesktopFilterRulesPage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.sliders,
+                      title: l10n.desktopHubFilterConfig,
+                      body: l10n.desktopHubFilterConfigBody,
+                      path: DesktopFilterConfigPage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.clock,
+                      title: l10n.desktopHubFilterSchedule,
+                      body: l10n.desktopHubFilterScheduleBody,
+                      path: DesktopSchedulePage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.appsList,
+                      title: l10n.desktopHubFilterServices,
+                      body: l10n.desktopHubFilterServicesBody,
+                      path: DesktopServicesPage.path,
+                    ),
+                  ]),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ListHeader(title: l10n.desktopHubDeviceSection),
+                  generateGroup([
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.lock,
+                      title: l10n.desktopHubEncrypted,
+                      body: l10n.desktopHubEncryptedBody,
+                      path: DesktopEncryptedPage.path,
+                    ),
+                    _entry(
+                      context,
+                      glyph: AppGlyphs.key,
+                      title: l10n.desktopHubPrivacy,
+                      body: l10n.desktopHubPrivacyBody,
+                      path: DesktopPrivacyPage.path,
+                    ),
+                  ]),
+                ],
+              ),
+            ],
           ),
         ],
       ),
