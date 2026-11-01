@@ -10,6 +10,7 @@ import 'dart:convert';
 
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_cache_models.dart';
+import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting/desktop/data/api/desktop_zone_models.dart';
@@ -296,6 +297,20 @@ class DesktopApiClient {
       body: {'origin': origin, 'content': content, 'ttl': ttl},
     ),
   );
+
+  /// Reads the synthesizer config from `/status` (its `dns64` field), like the console does.
+  Future<DesktopDns64Config> dns64Config() async {
+    final status = await _get('/api/v1/status');
+    final dns64 = status['dns64'];
+    return DesktopDns64Config.fromJson(
+      dns64 is Map ? dns64.cast<String, Object?>() : const {},
+    );
+  }
+
+  /// The service validates every prefix and answers with an error when one is outside RFC 6052, so
+  /// the page sends the whole form and then re-reads instead of assuming it was accepted.
+  Future<void> updateDns64Config(DesktopDns64Config config) =>
+      _post('/api/v1/dns/dns64/configure', body: config.toJson());
 
   void close() => _http.close();
 

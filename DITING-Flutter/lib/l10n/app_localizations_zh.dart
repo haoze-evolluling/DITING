@@ -10126,4 +10126,73 @@ class AppL10nZh extends AppL10n {
   String desktopZonePreviewMore(int count) {
     return '… 其余 $count 条已省略';
   }
+
+  @override
+  String get desktopHubDns64 => 'IPv6 / DNS64';
+
+  @override
+  String get desktopHubDns64Body => '为纯 IPv6 网络把仅有 IPv4 记录的目标合成为 AAAA';
+
+  @override
+  String get desktopDns64Title => 'IPv6 / DNS64';
+
+  @override
+  String get desktopDns64Refresh => '刷新 DNS64 配置';
+
+  @override
+  String get desktopDns64CardTitle => 'DNS64 IPv6-only 网络过渡合成';
+
+  @override
+  String get desktopDns64CardBody =>
+      '遵循 RFC 6052 / RFC 6147，为纯 IPv6 终端自动把仅有 A 记录的目标合成为 AAAA';
+
+  @override
+  String get desktopDns64EngineOn => 'DNS64 合成中';
+
+  @override
+  String get desktopDns64EngineOff => '功能已停用';
+
+  @override
+  String get desktopDns64Description =>
+      '当客户端位于纯 IPv6 网络并通过 NAT64 网关访问互联网时，若目标域名只有 IPv4（A）记录而没有原生 IPv6（AAAA）记录，DNS64 引擎会用指定前缀把 IPv4 地址合成映射为 AAAA 返回，让终端仍能端到端访问。';
+
+  @override
+  String get desktopDns64PrefixesLabel => '用于合成的 IPv6 前缀（每行一个）';
+
+  @override
+  String get desktopDns64PrefixesHelper =>
+      '每行一个 IPv6 网段。支持 /32、/40、/48、/56、/64、/96；留空时服务使用知名公共前缀 64:ff9b::/96。';
+
+  @override
+  String get desktopDns64FillWellKnown => '填入标准前缀';
+
+  @override
+  String get desktopDns64NoteTitle => '智能保护机制';
+
+  @override
+  String get desktopDns64NoteBody =>
+      '服务内置 RFC 6147 排除网段（回环、链路本地、IPv4-mapped 与自身前缀），避免回环与重复嵌套合成；目标已有原生 AAAA 时直接返回原生记录，不做额外合成。';
+
+  @override
+  String get desktopDns64Save => '保存 DNS64 配置';
+
+  @override
+  String get desktopDns64Saving => '保存中…';
+
+  @override
+  String get desktopDns64Saved => 'DNS64 过渡合成配置已更新';
+
+  @override
+  String get desktopDns64ToggleOn => 'DNS64 过渡合成已开启';
+
+  @override
+  String get desktopDns64ToggleOff => 'DNS64 过渡合成已关闭';
+
+  @override
+  String desktopDns64SaveFailed(String message) {
+    return '更新 DNS64 配置失败：$message';
+  }
+
+  @override
+  String get desktopDns64LoadFailed => '读不到 DNS64 配置';
 }

@@ -1,5 +1,6 @@
 import 'package:diting/desktop/pages/desktop_pages.dart';
 import 'package:diting/desktop/pages/hub/desktop_cache_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_dns64_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
@@ -75,6 +76,11 @@ List<RouteBase> _subRoutesOf(String location) => switch (location) {
       path: 'rewrite',
       pageBuilder: (context, state) =>
           androidDefaultPage(state, const DesktopRewritePage()),
+    ),
+    GoRoute(
+      path: 'dns64',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopDns64Page()),
     ),
   ],
   _ => const [],

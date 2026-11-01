@@ -258,6 +258,12 @@ Map<String, Object?> servicePayload({
   'autoStart': autoStart == null ? null : {'enabled': autoStart},
 };
 
+/// A `GET /api/v1/status` `dns64` payload.
+Map<String, Object?> dns64Payload({
+  bool enabled = false,
+  List<String> prefixes = const ['64:ff9b::/96'],
+}) => {'enabled': enabled, 'prefixes': prefixes};
+
 /// Records the paths it was asked for, and can be told to fail after [failAfter] requests to model
 /// a service that drops while the window is open.
 class FakeDesktopBackend {
@@ -276,6 +282,7 @@ class FakeDesktopBackend {
     List<Map<String, Object?>>? cacheTop,
     Map<String, Object?>? cachePersist,
     Map<String, Object?>? rewrite,
+    Map<String, Object?>? dns64,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
     this.failAfter,
@@ -294,6 +301,7 @@ class FakeDesktopBackend {
        cacheTop = cacheTop ?? cacheTopPayload(),
        cachePersist = cachePersist ?? cachePersistPayload(),
        rewrite = rewrite ?? rewritePayload(),
+       dns64 = dns64 ?? dns64Payload(),
        zone = zone ?? zonePayload(),
        zoneTest = zoneTest ?? zoneTestPayload();
 
@@ -325,6 +333,12 @@ class FakeDesktopBackend {
   /// Mutated by `POST /dns/rewrite/configure` and `/dns/rewrite/rules`, as the service merges what
   /// it receives. `GET /status` carries it as its `rewrite` field.
   Map<String, Object?> rewrite;
+
+  /// Mutated by `POST /dns/dns64/configure`; `GET /status` carries it as its `dns64` field.
+  Map<String, Object?> dns64;
+
+  /// Bodies of every DNS64 save, in order.
+  final dns64Updates = <Map<String, Object?>>[];
 
   /// Bodies of every rewrite config save, in order.
   final rewriteConfigUpdates = <Map<String, Object?>>[];
@@ -470,6 +484,11 @@ class FakeDesktopBackend {
           ],
         };
       }
+      if (path == '/api/v1/dns/dns64/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        dns64Updates.add(body);
+        dns64 = {...dns64, ...body};
+      }
       if (path == '/api/v1/dns/zone/config' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
         zoneConfigUpdates.add(body);
@@ -508,7 +527,9 @@ class FakeDesktopBackend {
       }
       return switch (path) {
         '/api/v1/status' => http.Response(
-          jsonEncode(apiEnvelope({...status, 'rewrite': rewrite})),
+          jsonEncode(
+            apiEnvelope({...status, 'rewrite': rewrite, 'dns64': dns64}),
+          ),
           200,
         ),
         '/api/v1/dns/rewrite/rules' => http.Response(

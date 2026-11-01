@@ -10778,4 +10778,74 @@ class AppL10nEn extends AppL10n {
   String desktopZonePreviewMore(int count) {
     return '… $count more omitted';
   }
+
+  @override
+  String get desktopHubDns64 => 'IPv6 / DNS64';
+
+  @override
+  String get desktopHubDns64Body =>
+      'Synthesize AAAA answers for IPv4-only names on an IPv6-only network';
+
+  @override
+  String get desktopDns64Title => 'IPv6 / DNS64';
+
+  @override
+  String get desktopDns64Refresh => 'Reload the DNS64 config';
+
+  @override
+  String get desktopDns64CardTitle => 'DNS64 IPv6-only transition';
+
+  @override
+  String get desktopDns64CardBody =>
+      'Follows RFC 6052 / RFC 6147 to synthesize AAAA answers for names that only have an A record';
+
+  @override
+  String get desktopDns64EngineOn => 'Synthesizing';
+
+  @override
+  String get desktopDns64EngineOff => 'Turned off';
+
+  @override
+  String get desktopDns64Description =>
+      'When a client on an IPv6-only network reaches the internet through a NAT64 gateway and a name has only IPv4 (A) records, the DNS64 engine embeds the address into the configured prefix and answers with AAAA, so the client can still connect end to end.';
+
+  @override
+  String get desktopDns64PrefixesLabel => 'Synthesis prefixes (one per line)';
+
+  @override
+  String get desktopDns64PrefixesHelper =>
+      'One IPv6 CIDR per line. /32, /40, /48, /56, /64 and /96 are accepted; an empty list makes the service use the well-known 64:ff9b::/96.';
+
+  @override
+  String get desktopDns64FillWellKnown => 'Use the well-known prefix';
+
+  @override
+  String get desktopDns64NoteTitle => 'Built-in protections';
+
+  @override
+  String get desktopDns64NoteBody =>
+      'The service excludes the RFC 6147 ranges (loopback, link-local, IPv4-mapped and its own prefixes) so nothing is synthesized twice, and a name with a native AAAA record is answered natively.';
+
+  @override
+  String get desktopDns64Save => 'Save DNS64 config';
+
+  @override
+  String get desktopDns64Saving => 'Saving…';
+
+  @override
+  String get desktopDns64Saved => 'The DNS64 config was updated';
+
+  @override
+  String get desktopDns64ToggleOn => 'DNS64 synthesis is on';
+
+  @override
+  String get desktopDns64ToggleOff => 'DNS64 synthesis is off';
+
+  @override
+  String desktopDns64SaveFailed(String message) {
+    return 'Could not update the DNS64 config: $message';
+  }
+
+  @override
+  String get desktopDns64LoadFailed => 'Could not read the DNS64 config';
 }

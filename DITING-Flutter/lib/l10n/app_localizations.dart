@@ -18477,6 +18477,132 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'… 其余 {count} 条已省略'**
   String desktopZonePreviewMore(int count);
+
+  /// No description provided for @desktopHubDns64.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv6 / DNS64'**
+  String get desktopHubDns64;
+
+  /// No description provided for @desktopHubDns64Body.
+  ///
+  /// In zh, this message translates to:
+  /// **'为纯 IPv6 网络把仅有 IPv4 记录的目标合成为 AAAA'**
+  String get desktopHubDns64Body;
+
+  /// No description provided for @desktopDns64Title.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv6 / DNS64'**
+  String get desktopDns64Title;
+
+  /// No description provided for @desktopDns64Refresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新 DNS64 配置'**
+  String get desktopDns64Refresh;
+
+  /// No description provided for @desktopDns64CardTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS64 IPv6-only 网络过渡合成'**
+  String get desktopDns64CardTitle;
+
+  /// No description provided for @desktopDns64CardBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'遵循 RFC 6052 / RFC 6147，为纯 IPv6 终端自动把仅有 A 记录的目标合成为 AAAA'**
+  String get desktopDns64CardBody;
+
+  /// No description provided for @desktopDns64EngineOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS64 合成中'**
+  String get desktopDns64EngineOn;
+
+  /// No description provided for @desktopDns64EngineOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'功能已停用'**
+  String get desktopDns64EngineOff;
+
+  /// No description provided for @desktopDns64Description.
+  ///
+  /// In zh, this message translates to:
+  /// **'当客户端位于纯 IPv6 网络并通过 NAT64 网关访问互联网时，若目标域名只有 IPv4（A）记录而没有原生 IPv6（AAAA）记录，DNS64 引擎会用指定前缀把 IPv4 地址合成映射为 AAAA 返回，让终端仍能端到端访问。'**
+  String get desktopDns64Description;
+
+  /// No description provided for @desktopDns64PrefixesLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'用于合成的 IPv6 前缀（每行一个）'**
+  String get desktopDns64PrefixesLabel;
+
+  /// No description provided for @desktopDns64PrefixesHelper.
+  ///
+  /// In zh, this message translates to:
+  /// **'每行一个 IPv6 网段。支持 /32、/40、/48、/56、/64、/96；留空时服务使用知名公共前缀 64:ff9b::/96。'**
+  String get desktopDns64PrefixesHelper;
+
+  /// No description provided for @desktopDns64FillWellKnown.
+  ///
+  /// In zh, this message translates to:
+  /// **'填入标准前缀'**
+  String get desktopDns64FillWellKnown;
+
+  /// No description provided for @desktopDns64NoteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'智能保护机制'**
+  String get desktopDns64NoteTitle;
+
+  /// No description provided for @desktopDns64NoteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务内置 RFC 6147 排除网段（回环、链路本地、IPv4-mapped 与自身前缀），避免回环与重复嵌套合成；目标已有原生 AAAA 时直接返回原生记录，不做额外合成。'**
+  String get desktopDns64NoteBody;
+
+  /// No description provided for @desktopDns64Save.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存 DNS64 配置'**
+  String get desktopDns64Save;
+
+  /// No description provided for @desktopDns64Saving.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存中…'**
+  String get desktopDns64Saving;
+
+  /// No description provided for @desktopDns64Saved.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS64 过渡合成配置已更新'**
+  String get desktopDns64Saved;
+
+  /// No description provided for @desktopDns64ToggleOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS64 过渡合成已开启'**
+  String get desktopDns64ToggleOn;
+
+  /// No description provided for @desktopDns64ToggleOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS64 过渡合成已关闭'**
+  String get desktopDns64ToggleOff;
+
+  /// No description provided for @desktopDns64SaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新 DNS64 配置失败：{message}'**
+  String desktopDns64SaveFailed(String message);
+
+  /// No description provided for @desktopDns64LoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到 DNS64 配置'**
+  String get desktopDns64LoadFailed;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
