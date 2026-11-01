@@ -9602,6 +9602,62 @@ class AppL10nEn extends AppL10n {
   String get desktopLogNoBlocked => 'Nothing blocked yet';
 
   @override
+  String get desktopLiveTitle => 'Live queries';
+
+  @override
+  String get desktopLiveConnected => 'Listening';
+
+  @override
+  String get desktopLivePaused => 'Paused';
+
+  @override
+  String get desktopLiveDisconnected => 'Disconnected';
+
+  @override
+  String get desktopLiveDisconnectedBody =>
+      'The local event channel is not connected, so nothing is streaming. History and the summary still read.';
+
+  @override
+  String desktopLiveShown(String count) {
+    return 'Matching $count';
+  }
+
+  @override
+  String get desktopLiveSearchHint => 'Search domain or client IP';
+
+  @override
+  String get desktopLiveOnlyBlocked => 'Blocked only';
+
+  @override
+  String get desktopLivePause => 'Pause';
+
+  @override
+  String get desktopLiveResume => 'Resume';
+
+  @override
+  String get desktopLiveClear => 'Clear';
+
+  @override
+  String get desktopLiveEmpty => 'Nothing pushed yet';
+
+  @override
+  String get desktopLiveCaptured => 'In buffer';
+
+  @override
+  String get desktopLiveBlocked => 'Blocked';
+
+  @override
+  String get desktopLiveSuccessRate => 'Success rate';
+
+  @override
+  String desktopLiveBufferNote(String count) {
+    return 'Rolling buffer holds $count';
+  }
+
+  @override
+  String get desktopLiveStale => 'Stale fallback';
+
+  @override
   String get desktopLogPagePrev => 'Previous';
 
   @override

@@ -124,8 +124,10 @@ class LogFilterBar extends ConsumerWidget {
 }
 
 /// A label, a chevron and a menu of checked entries: the shape every filter in this shell takes.
-class _Picker extends StatelessWidget {
-  const _Picker({
+/// Shared with the live list, so both filters of the branch read the same.
+class LogPicker extends StatelessWidget {
+  const LogPicker({
+    super.key,
     required this.glyph,
     required this.semanticLabel,
     required this.label,
@@ -182,7 +184,7 @@ class _StatusPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _Picker(
+    return LogPicker(
       glyph: AppGlyphs.filter,
       semanticLabel: context.l10n.obsStatus,
       label: logStatusLabel(context, query.status),
@@ -209,7 +211,7 @@ class _TypePicker extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final notifier = ref.read(desktopLogQueryProvider.notifier);
-    return _Picker(
+    return LogPicker(
       glyph: AppGlyphs.sort,
       semanticLabel: l10n.logsRecordType,
       label: query.qtype.isEmpty ? l10n.desktopLogAllTypes : query.qtype,

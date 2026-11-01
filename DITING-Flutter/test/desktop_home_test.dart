@@ -7,6 +7,7 @@ import 'package:diting/data/prefs/legacy_prefs_store.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
 import 'package:diting/desktop/data/api/desktop_api_providers.dart';
+import 'package:diting/desktop/data/api/desktop_live_providers.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting/desktop/pages/home/desktop_format.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
@@ -38,6 +39,7 @@ void main() {
             MemoryLegacyPrefsStore(seed),
           ),
           desktopPollingEnabledProvider.overrideWithValue(false),
+          desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(fake.client()),
         ],
         child: const DesktopApp(),

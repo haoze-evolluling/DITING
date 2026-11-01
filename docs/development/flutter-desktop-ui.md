@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、日志分支（查询历史 + 24 小时汇总）已完成；日志其余子面板与 hub / traffic / tools / settings 待迁移，Wails 切换尚未开始。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、日志分支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索）已完成；日志留存配置与 hub / traffic / tools / settings 待迁移，Wails 切换尚未开始。**
 > Windows 桌面窗口目前仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 三层分工（唯一规范）
@@ -67,6 +67,8 @@
 - `desktop_api_models.dart`：不可变模型（状态、缓存、过滤、查询行、`DesktopQueryStats`、`DesktopLogStatus`），缺字段按零值解析、不抛异常。
 - `desktop_api_providers.dart`：`desktopStatusProvider`（2 s）、`desktopServiceStatusProvider`（10 s）、`desktopRecentQueriesProvider`（5 s）、`desktopControlProvider`（写操作串行化，失败保留错误）。
 - `desktop_log_providers.dart`：`desktopQueryStatsProvider`（10 s，失败保留上一份并标过期）、`desktopLogQueryProvider`（域名 + 客户端 + `qtype` + `status` + offset）、`desktopLogFeedProvider`（随条件重读）、`desktopLogClearProvider`（清空历史，成功后重读汇总与表格）。与首页快照分文件：一次日志失败不该清空首页。
+- `desktop_event_client.dart`：`/api/v1/events` 的 WebSocket 客户端（`web_socket_channel`，Web 与 IO 同一份代码）。令牌走查询串（浏览器握手不能带 header），断线 3 s 后重连；只把 `type: "query"` 事件转成 `DesktopLiveQuery`，并按 `errorMessage`/`success` → `blocked` → `cacheHit` 的顺序分类；`DesktopChannelEvent` 汇报通道通断。
+- `desktop_live_providers.dart`：`desktopEventStreamProvider`（唯一套接字入口，测试用 `StreamController` 覆写）、`desktopLiveProvider`（500 条滚动缓冲、暂停即丢弃、清空只清缓冲）、`desktopLiveEnabledProvider`（widget 测试关闭，避免开套接字）。实时流不轮询：socket 断即明说未连接。
 - 连接配置来自 `diting_desktop` 容器（`ipc_host`/`ipc_port`/`ipc_token`），默认 `127.0.0.1:15353` 且免密。
 - 失败语义：从未成功 → 说明「连不上本机服务 / 需要访问令牌」并给重试；曾经成功 → **保留上一份快照**并标过期。
 
@@ -75,9 +77,10 @@
 - Android 入口 `lib/main.dart`；桌面预览入口 `lib/desktop/main.dart`，`web/` 仅作 Wails/WebView 编译宿主。
 - 路由 `lib/desktop/router.dart`：`StatefulShellRoute.indexedStack` 六分支；壳为 `lib/desktop/shell/desktop_shell.dart`（宽窗 `NavigationSidebar` + 内容区，窄窗共享 `DockShell`，折叠状态不落盘）。
 - 首页 `lib/desktop/pages/home/`：`desktop_home_page.dart`（三种诚实状态 + 过期提示）、`desktop_dashboard.dart`（四列网格）、`widgets/*`（DNS 服务、查询指标、系统接管、暂停拦截、后台服务、缓存、规则拦截、性能、运行信息、最近查询）、`desktop_format.dart`。
-- 日志 `lib/desktop/pages/logs/`：`desktop_logs_page.dart`（汇总 + 三列排行 + 表格）、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_rankings_card.dart`（高频域名 / 拦截排行 / 活跃客户端，顺序与截断由服务给定）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` + `QueryStatsPanel`**；实时查询（`/events`）与日志留存配置（`QueryLogConfigCard`）尚未搬。
+- 日志 `lib/desktop/pages/logs/`：`desktop_logs_page.dart`（汇总 + 三列排行 + 实时流 + 表格）、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_rankings_card.dart`（高频域名 / 拦截排行 / 活跃客户端，顺序与截断由服务给定）、`widgets/log_live_panel.dart`（`/events` 实时流：连接状态、暂停/继续、清空、域名/客户端检索、类型与响应码筛选、仅看已拦截、缓冲计数）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史，`LogPicker` 与实时流共用）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` + `QueryStatsPanel` + `LiveQueryPanel`**；日志留存配置（`QueryLogConfigCard`）尚未搬。
 - 其余四个分支在 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`（`commonPendingTitle` / `commonPendingBody`）。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
+- 实时流依赖 `web_socket_channel`（`pubspec.yaml` 固定 3.0.3）；Wails/WebView 宿主与 `flutter run -d chrome` 都走浏览器 WebSocket。
 
 ```bash
 cd DITING-Flutter
@@ -99,7 +102,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`logs` 补齐**：`LiveQueryPanel`（`/events` 实时流）、`QueryLogConfigCard`（日志留存配置）。
+1. **`logs` 补齐**：`QueryLogConfigCard`（日志留存配置：内存缓冲条数、落盘留存天数、落盘开关、客户端信息开关、落盘目录）。
 2. **`hub`**：解析 + 防护两组子页（上游、缓存、重写、DNS64、订阅、应用拦截、自定义规则、拦截方式、时间计划）。
 3. **`traffic`**：设备管理 + 缓存热点/Top 域名与客户端（不做按应用流量）。
 4. **`tools`**：诊断与修复、规则检测、上游/区域测试。

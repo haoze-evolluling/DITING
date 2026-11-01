@@ -38,6 +38,8 @@ dependencies:
   # Desktop host persistence; Android reads the same legacy keys through MethodChannel.
   shared_preferences: ^2.5.4
   http: ^1.6.0
+  # The desktop log branch's live stream (`/api/v1/events`); works on web and on IO.
+  web_socket_channel: 3.0.3
 
 dev_dependencies:
   flutter_test:

@@ -9003,6 +9003,61 @@ class AppL10nZh extends AppL10n {
   String get desktopLogNoBlocked => '暂无拦截记录';
 
   @override
+  String get desktopLiveTitle => '实时查询流';
+
+  @override
+  String get desktopLiveConnected => '实时监听中';
+
+  @override
+  String get desktopLivePaused => '已暂停';
+
+  @override
+  String get desktopLiveDisconnected => '未连接';
+
+  @override
+  String get desktopLiveDisconnectedBody => '本机事件通道没有连上，实时记录暂停；查询历史与统计仍可正常读取。';
+
+  @override
+  String desktopLiveShown(String count) {
+    return '符合筛选 $count 条';
+  }
+
+  @override
+  String get desktopLiveSearchHint => '检索域名或客户端 IP';
+
+  @override
+  String get desktopLiveOnlyBlocked => '仅看已拦截';
+
+  @override
+  String get desktopLivePause => '暂停';
+
+  @override
+  String get desktopLiveResume => '继续';
+
+  @override
+  String get desktopLiveClear => '清空';
+
+  @override
+  String get desktopLiveEmpty => '还没有推送的查询';
+
+  @override
+  String get desktopLiveCaptured => '缓冲区记录';
+
+  @override
+  String get desktopLiveBlocked => '已拦截';
+
+  @override
+  String get desktopLiveSuccessRate => '成功率';
+
+  @override
+  String desktopLiveBufferNote(String count) {
+    return '滚动缓冲区上限 $count 条';
+  }
+
+  @override
+  String get desktopLiveStale => '容灾复用';
+
+  @override
   String get desktopLogPagePrev => '上一页';
 
   @override

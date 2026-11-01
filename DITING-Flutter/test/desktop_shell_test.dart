@@ -9,6 +9,7 @@ import 'package:diting/data/prefs/legacy_prefs_store.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
 import 'package:diting/desktop/data/api/desktop_api_providers.dart';
+import 'package:diting/desktop/data/api/desktop_live_providers.dart';
 import 'package:diting/desktop/pages/desktop_pages.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/pages/logs/desktop_logs_page.dart';
@@ -46,6 +47,7 @@ Future<void> _pumpDesktop(
           MemoryLegacyPrefsStore(seed),
         ),
         desktopPollingEnabledProvider.overrideWithValue(false),
+        desktopLiveEnabledProvider.overrideWithValue(false),
         desktopApiClientProvider.overrideWithValue(
           (backend ?? FakeDesktopBackend()).client(),
         ),

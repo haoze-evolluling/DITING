@@ -2729,6 +2729,37 @@
   "desktopLogTopBlocked": "Most blocked domains",
   "desktopLogTopClients": "Busiest clients",
   "desktopLogNoBlocked": "Nothing blocked yet",
+  "desktopLiveTitle": "Live queries",
+  "desktopLiveConnected": "Listening",
+  "desktopLivePaused": "Paused",
+  "desktopLiveDisconnected": "Disconnected",
+  "desktopLiveDisconnectedBody": "The local event channel is not connected, so nothing is streaming. History and the summary still read.",
+  "desktopLiveShown": "Matching {count}",
+  "@desktopLiveShown": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopLiveSearchHint": "Search domain or client IP",
+  "desktopLiveOnlyBlocked": "Blocked only",
+  "desktopLivePause": "Pause",
+  "desktopLiveResume": "Resume",
+  "desktopLiveClear": "Clear",
+  "desktopLiveEmpty": "Nothing pushed yet",
+  "desktopLiveCaptured": "In buffer",
+  "desktopLiveBlocked": "Blocked",
+  "desktopLiveSuccessRate": "Success rate",
+  "desktopLiveBufferNote": "Rolling buffer holds {count}",
+  "@desktopLiveBufferNote": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopLiveStale": "Stale fallback",
   "desktopLogPagePrev": "Previous",
   "desktopLogPageNext": "Next",
   "desktopLogPageInfo": "Rows {from}–{to} of {total}"

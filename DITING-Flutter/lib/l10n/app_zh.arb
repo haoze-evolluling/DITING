@@ -5339,6 +5339,37 @@
   "desktopLogTopBlocked": "拦截命中排行",
   "desktopLogTopClients": "活跃客户端",
   "desktopLogNoBlocked": "暂无拦截记录",
+  "desktopLiveTitle": "实时查询流",
+  "desktopLiveConnected": "实时监听中",
+  "desktopLivePaused": "已暂停",
+  "desktopLiveDisconnected": "未连接",
+  "desktopLiveDisconnectedBody": "本机事件通道没有连上，实时记录暂停；查询历史与统计仍可正常读取。",
+  "desktopLiveShown": "符合筛选 {count} 条",
+  "@desktopLiveShown": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopLiveSearchHint": "检索域名或客户端 IP",
+  "desktopLiveOnlyBlocked": "仅看已拦截",
+  "desktopLivePause": "暂停",
+  "desktopLiveResume": "继续",
+  "desktopLiveClear": "清空",
+  "desktopLiveEmpty": "还没有推送的查询",
+  "desktopLiveCaptured": "缓冲区记录",
+  "desktopLiveBlocked": "已拦截",
+  "desktopLiveSuccessRate": "成功率",
+  "desktopLiveBufferNote": "滚动缓冲区上限 {count} 条",
+  "@desktopLiveBufferNote": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopLiveStale": "容灾复用",
   "desktopLogPagePrev": "上一页",
   "desktopLogPageNext": "下一页",
   "desktopLogPageInfo": "第 {from}–{to} 条，共 {total} 条",

@@ -16456,6 +16456,108 @@ abstract class AppL10n {
   /// **'暂无拦截记录'**
   String get desktopLogNoBlocked;
 
+  /// No description provided for @desktopLiveTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'实时查询流'**
+  String get desktopLiveTitle;
+
+  /// No description provided for @desktopLiveConnected.
+  ///
+  /// In zh, this message translates to:
+  /// **'实时监听中'**
+  String get desktopLiveConnected;
+
+  /// No description provided for @desktopLivePaused.
+  ///
+  /// In zh, this message translates to:
+  /// **'已暂停'**
+  String get desktopLivePaused;
+
+  /// No description provided for @desktopLiveDisconnected.
+  ///
+  /// In zh, this message translates to:
+  /// **'未连接'**
+  String get desktopLiveDisconnected;
+
+  /// No description provided for @desktopLiveDisconnectedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机事件通道没有连上，实时记录暂停；查询历史与统计仍可正常读取。'**
+  String get desktopLiveDisconnectedBody;
+
+  /// No description provided for @desktopLiveShown.
+  ///
+  /// In zh, this message translates to:
+  /// **'符合筛选 {count} 条'**
+  String desktopLiveShown(String count);
+
+  /// No description provided for @desktopLiveSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'检索域名或客户端 IP'**
+  String get desktopLiveSearchHint;
+
+  /// No description provided for @desktopLiveOnlyBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅看已拦截'**
+  String get desktopLiveOnlyBlocked;
+
+  /// No description provided for @desktopLivePause.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停'**
+  String get desktopLivePause;
+
+  /// No description provided for @desktopLiveResume.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续'**
+  String get desktopLiveResume;
+
+  /// No description provided for @desktopLiveClear.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空'**
+  String get desktopLiveClear;
+
+  /// No description provided for @desktopLiveEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有推送的查询'**
+  String get desktopLiveEmpty;
+
+  /// No description provided for @desktopLiveCaptured.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓冲区记录'**
+  String get desktopLiveCaptured;
+
+  /// No description provided for @desktopLiveBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已拦截'**
+  String get desktopLiveBlocked;
+
+  /// No description provided for @desktopLiveSuccessRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'成功率'**
+  String get desktopLiveSuccessRate;
+
+  /// No description provided for @desktopLiveBufferNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'滚动缓冲区上限 {count} 条'**
+  String desktopLiveBufferNote(String count);
+
+  /// No description provided for @desktopLiveStale.
+  ///
+  /// In zh, this message translates to:
+  /// **'容灾复用'**
+  String get desktopLiveStale;
+
   /// No description provided for @desktopLogPagePrev.
   ///
   /// In zh, this message translates to:

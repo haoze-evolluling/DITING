@@ -14,6 +14,7 @@ import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/data/vpn/vpn_bridge.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
 import 'package:diting/desktop/data/api/desktop_api_providers.dart';
+import 'package:diting/desktop/data/api/desktop_live_providers.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:diting/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,6 +42,7 @@ void main() {
           // A deterministic backend: the shots must not depend on whether a service happens to be
           // listening on this machine, and no test may open a socket.
           desktopPollingEnabledProvider.overrideWithValue(false),
+          desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(
             FakeDesktopBackend().client(),
           ),
