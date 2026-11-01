@@ -461,6 +461,46 @@ Map<String, Object?> servicesPayload({
   };
 }
 
+/// A `GET /api/v1/safesearch/config` payload.
+Map<String, Object?> safeSearchPayload({
+  bool enabled = false,
+  List<String> disabled = const [],
+  int ttl = 300,
+}) => {'enabled': enabled, 'disabled': disabled, 'ttl': ttl};
+
+/// A `GET /api/v1/filter/safebrowsing` payload.
+Map<String, Object?> safeBrowsingPayload({
+  bool enabled = false,
+  bool parentalEnabled = false,
+  int timeoutMs = 3000,
+  int cacheSize = 10000,
+  int cacheTtlSeconds = 600,
+  int lookups = 120,
+  int blocked = 7,
+  int cacheHits = 90,
+  int failures = 2,
+  String blockingIPv4 = '0.0.0.0',
+  String blockingIPv6 = '::',
+  String blockMode = 'null_ip',
+}) => {
+  'config': {
+    'enabled': enabled,
+    'parentalEnabled': parentalEnabled,
+    'timeoutMs': timeoutMs,
+    'cacheSize': cacheSize,
+    'cacheTTLSeconds': cacheTtlSeconds,
+  },
+  'stats': {
+    'lookups': lookups,
+    'blocked': blocked,
+    'cacheHits': cacheHits,
+    'failures': failures,
+  },
+  'blockingIPv4': blockingIPv4,
+  'blockingIPv6': blockingIPv6,
+  'blockMode': blockMode,
+};
+
 /// Records the paths it was asked for, and can be told to fail after [failAfter] requests to model
 /// a service that drops while the window is open.
 class FakeDesktopBackend {
@@ -486,6 +526,8 @@ class FakeDesktopBackend {
     Map<String, Object?>? filterPause,
     Map<String, Object?>? schedule,
     Map<String, Object?>? services,
+    Map<String, Object?>? safeSearch,
+    Map<String, Object?>? safeBrowsing,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -512,6 +554,8 @@ class FakeDesktopBackend {
        filterPause = filterPause ?? filterPausePayload(),
        schedule = schedule ?? schedulePayload(),
        services = services ?? servicesPayload(),
+       safeSearch = safeSearch ?? safeSearchPayload(),
+       safeBrowsing = safeBrowsing ?? safeBrowsingPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -589,6 +633,14 @@ class FakeDesktopBackend {
 
   /// Bodies of every service-selection save, in order.
   final servicesUpdates = <Map<String, Object?>>[];
+
+  /// Mutated by the safe-search and reputation saves.
+  Map<String, Object?> safeSearch;
+  Map<String, Object?> safeBrowsing;
+
+  /// Bodies of every safe-search and reputation save, in order.
+  final safeSearchUpdates = <Map<String, Object?>>[];
+  final safeBrowsingUpdates = <Map<String, Object?>>[];
 
   /// Bodies of every privacy-side save, in order.
   final privacyUpdates = <Map<String, Object?>>[];
@@ -739,6 +791,20 @@ class FakeDesktopBackend {
               if ((item as Map)['domain'] != domain)
                 item.cast<String, Object?>(),
           ],
+        };
+      }
+      if (path == '/api/v1/safesearch/config' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        safeSearchUpdates.add(body);
+        safeSearch = {...safeSearch, ...body};
+      }
+      if (path == '/api/v1/filter/safebrowsing' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        safeBrowsingUpdates.add(body);
+        final config = {...(safeBrowsing['config'] as Map? ?? const {})};
+        safeBrowsing = {
+          ...safeBrowsing,
+          'config': {...config, ...body},
         };
       }
       if (path == '/api/v1/dns/privacy/configure' && request.method == 'POST') {
@@ -949,6 +1015,10 @@ class FakeDesktopBackend {
         '/api/v1/filter/pause' => utf8Json(apiEnvelope(filterPause)),
         '/api/v1/filter/schedule' => utf8Json(apiEnvelope(schedule)),
         '/api/v1/filter/services' => utf8Json(apiEnvelope(services)),
+        '/api/v1/safesearch/config' => utf8Json(apiEnvelope(safeSearch)),
+        '/api/v1/filter/safebrowsing' => utf8Json(
+          apiEnvelope(safeBrowsing),
+        ),
         '/api/v1/dns/zone/config' => http.Response(
           jsonEncode(apiEnvelope(zone)),
           200,

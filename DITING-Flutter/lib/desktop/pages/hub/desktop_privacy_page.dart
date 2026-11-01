@@ -11,6 +11,8 @@ import 'package:diting/desktop/data/api/desktop_privacy_providers.dart';
 import 'package:diting/desktop/pages/hub/widgets/privacy_defence_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/privacy_ecs_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/privacy_protocol_card.dart';
+import 'package:diting/desktop/pages/hub/widgets/privacy_reputation_card.dart';
+import 'package:diting/desktop/pages/hub/widgets/privacy_safe_search_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
@@ -80,21 +82,30 @@ class DesktopPrivacyPage extends ConsumerWidget {
                           constraints: const BoxConstraints(
                             maxWidth: _contentMaxWidth,
                           ),
-                          child: wide
-                              ? Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  spacing: dashboardCardGap,
-                                  children: [
-                                    Expanded(child: protocol),
-                                    Expanded(child: side),
-                                  ],
-                                )
-                              : Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  spacing: dashboardCardGap,
-                                  children: [protocol, side],
-                                ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            spacing: dashboardCardGap,
+                            children: [
+                              wide
+                                  ? Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      spacing: dashboardCardGap,
+                                      children: [
+                                        Expanded(child: protocol),
+                                        Expanded(child: side),
+                                      ],
+                                    )
+                                  : Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      spacing: dashboardCardGap,
+                                      children: [protocol, side],
+                                    ),
+                              const PrivacySafeSearchCard(),
+                              const PrivacyReputationCard(),
+                            ],
+                          ),
                         ),
                       ),
                     ),

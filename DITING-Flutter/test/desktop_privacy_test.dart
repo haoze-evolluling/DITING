@@ -13,6 +13,8 @@ import 'package:diting/desktop/pages/hub/desktop_privacy_page.dart';
 import 'package:diting/desktop/pages/hub/widgets/privacy_defence_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/privacy_ecs_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/privacy_protocol_card.dart';
+import 'package:diting/desktop/pages/hub/widgets/privacy_reputation_card.dart';
+import 'package:diting/desktop/pages/hub/widgets/privacy_safe_search_card.dart';
 import 'package:diting/desktop/widgets/desktop_picker.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/ui/ui.dart';
@@ -58,6 +60,14 @@ void main() {
       find.descendant(of: find.byType(PrivacyEcsCard), matching: matching);
   Finder inDefence(Finder matching) => find.descendant(
     of: find.byType(PrivacyDefenceCard),
+    matching: matching,
+  );
+  Finder inSafeSearch(Finder matching) => find.descendant(
+    of: find.byType(PrivacySafeSearchCard),
+    matching: matching,
+  );
+  Finder inReputation(Finder matching) => find.descendant(
+    of: find.byType(PrivacyReputationCard),
     matching: matching,
   );
 
@@ -252,6 +262,103 @@ void main() {
     expect(find.byType(PrivacyProtocolCard), findsOneWidget);
     expect(find.byType(PrivacyEcsCard), findsOneWidget);
     expect(find.byType(PrivacyDefenceCard), findsOneWidget);
+    expect(find.byType(PrivacySafeSearchCard), findsOneWidget);
+    expect(find.byType(PrivacyReputationCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('安全搜索开关与服务商各自提交', (tester) async {
+    final backend = await pumpPrivacy(
+      tester,
+      backend: FakeDesktopBackend(
+        safeSearch: safeSearchPayload(enabled: true, disabled: const ['yandex']),
+      ),
+    );
+    final l10n = l10nOf(tester);
+
+    expect(
+      find.text(l10n.desktopSafeSearchEnabled(6)),
+      findsOneWidget,
+    );
+    await tapAt(tester, inSafeSearch(find.text('Google')));
+    expect(backend.safeSearchUpdates.single['disabled'], ['yandex', 'google']);
+    await clearMessages(tester);
+
+    await tapAt(tester, inSafeSearch(find.byType(DashboardSwitch)));
+    expect(backend.safeSearchUpdates.last['enabled'], isFalse);
+    await clearMessages(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('安全搜索 TTL 由保存按钮提交，非法值不提交', (tester) async {
+    final backend = await pumpPrivacy(
+      tester,
+      backend: FakeDesktopBackend(
+        safeSearch: safeSearchPayload(enabled: true),
+      ),
+    );
+    final l10n = l10nOf(tester);
+
+    await tester.enterText(inSafeSearch(find.byType(TextFormField)), '0');
+    await tapAt(tester, inSafeSearch(find.text(l10n.desktopSafeSearchTtlSave)));
+    expect(backend.safeSearchUpdates, isEmpty);
+    expect(find.text(l10n.desktopSafeSearchTtlInvalid), findsOneWidget);
+
+    await tester.enterText(inSafeSearch(find.byType(TextFormField)), '120');
+    await tapAt(tester, inSafeSearch(find.text(l10n.desktopSafeSearchTtlSave)));
+    expect(backend.safeSearchUpdates.single['ttl'], 120);
+    await clearMessages(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('声誉查询显示统计并按字段提交', (tester) async {
+    final backend = await pumpPrivacy(
+      tester,
+      backend: FakeDesktopBackend(
+        safeBrowsing: safeBrowsingPayload(enabled: true, blocked: 7),
+      ),
+    );
+    final l10n = l10nOf(tester);
+
+    expect(find.text(l10n.desktopReputationBlocked), findsOneWidget);
+    expect(find.text('7'), findsWidgets);
+    expect(find.text('75'), findsOneWidget, reason: '90 / 120 命中率');
+
+    await tapAt(tester, inReputation(find.byType(DashboardSwitch)).at(1));
+    expect(backend.safeBrowsingUpdates.single['parentalEnabled'], isTrue);
+    await clearMessages(tester);
+
+    await tester.enterText(inReputation(find.byType(TextFormField)).at(0), '5000');
+    await tapAt(
+      tester,
+      inReputation(find.text(l10n.desktopReputationParamsSave)),
+    );
+    expect(backend.safeBrowsingUpdates.last, {
+      'timeoutMs': 5000,
+      'cacheSize': 10000,
+      'cacheTTLSeconds': 600,
+    });
+    await clearMessages(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('声誉查询非法参数不提交', (tester) async {
+    final backend = await pumpPrivacy(
+      tester,
+      backend: FakeDesktopBackend(
+        safeBrowsing: safeBrowsingPayload(enabled: true),
+      ),
+    );
+    final l10n = l10nOf(tester);
+
+    await tester.enterText(inReputation(find.byType(TextFormField)).at(0), '0');
+    await tapAt(
+      tester,
+      inReputation(find.text(l10n.desktopReputationParamsSave)),
+    );
+
+    expect(backend.safeBrowsingUpdates, isEmpty);
+    expect(find.text(l10n.desktopReputationParamsInvalid), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }

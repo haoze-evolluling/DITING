@@ -11187,4 +11187,139 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopHubDeviceSection => '设备与隐私';
+
+  @override
+  String get desktopSafeSearchTitle => '强制安全搜索';
+
+  @override
+  String get desktopSafeSearchBody =>
+      '把主流搜索引擎重写为强制过滤入口，从 DNS 层确保无法关闭安全搜索。属新增拦截能力，默认关闭。';
+
+  @override
+  String desktopSafeSearchEnabled(int count) {
+    return '已生效 · $count 家';
+  }
+
+  @override
+  String get desktopSafeSearchOff => '未启用';
+
+  @override
+  String get desktopSafeSearchOn => '强制安全搜索已开启';
+
+  @override
+  String get desktopSafeSearchOffMessage => '强制安全搜索已关闭';
+
+  @override
+  String get desktopSafeSearchServiceSaved => '安全搜索服务商已更新';
+
+  @override
+  String get desktopSafeSearchTtl => '重写应答 TTL（秒）';
+
+  @override
+  String get desktopSafeSearchTtlSave => '保存';
+
+  @override
+  String get desktopSafeSearchTtlSaved => '安全搜索应答 TTL 已保存';
+
+  @override
+  String get desktopSafeSearchTtlInvalid => 'TTL 需为正整数';
+
+  @override
+  String get desktopSafeSearchFooter => '未勾选的服务商将直接透传正常解析。';
+
+  @override
+  String get desktopSafeSearchBing => 'Bing';
+
+  @override
+  String get desktopSafeSearchDuckDuckGo => 'DuckDuckGo';
+
+  @override
+  String get desktopSafeSearchEcosia => 'Ecosia';
+
+  @override
+  String get desktopSafeSearchGoogle => 'Google';
+
+  @override
+  String get desktopSafeSearchPixabay => 'Pixabay';
+
+  @override
+  String get desktopSafeSearchYandex => 'Yandex';
+
+  @override
+  String get desktopSafeSearchYoutube => 'YouTube';
+
+  @override
+  String get desktopReputationTitle => '恶意网址库（Safe Browsing）';
+
+  @override
+  String get desktopReputationOn => '查询中';
+
+  @override
+  String get desktopReputationOff => '未启用';
+
+  @override
+  String get desktopReputationOnMessage => '恶意网址库查询已开启';
+
+  @override
+  String get desktopReputationOffMessage => '恶意网址库查询已关闭';
+
+  @override
+  String get desktopReputationBody =>
+      '查询时只把域名的 SHA-256 前 2 字节发往第三方哈希前缀服务，对方返回命中的完整摘要，本地再比对；第三方无法从这 2 个字节还原完整域名。查询失败一律放行。';
+
+  @override
+  String get desktopReputationLookups => '查询次数';
+
+  @override
+  String get desktopReputationBlocked => '命中拦截';
+
+  @override
+  String get desktopReputationHitRate => '缓存命中率';
+
+  @override
+  String get desktopReputationFailures => '查询失败';
+
+  @override
+  String get desktopReputationAnswer => '拦截方式';
+
+  @override
+  String get desktopReputationAnswerNullIp => '空地址';
+
+  @override
+  String get desktopReputationTimeout => '查询超时（毫秒）';
+
+  @override
+  String get desktopReputationCacheSize => '缓存条目上限';
+
+  @override
+  String get desktopReputationCacheTtl => '缓存有效期（秒）';
+
+  @override
+  String get desktopReputationParamsInvalid => '超时与缓存有效期需为正整数，缓存条目不能为负';
+
+  @override
+  String get desktopReputationParamsSave => '保存查询参数';
+
+  @override
+  String get desktopReputationParamsSaved => '查询参数已保存';
+
+  @override
+  String get desktopReputationFooter => '缓存按 2 字节前缀索引，同一前缀下的域名共享一次查询。';
+
+  @override
+  String get desktopParentalTitle => '家长控制';
+
+  @override
+  String get desktopParentalBody =>
+      '与恶意网址库机制相同，借第三方分类库拦截成人内容域名；两者各自独立开关，可只开家长控制。';
+
+  @override
+  String get desktopParentalWarning =>
+      '恶意网址库当前未开启。两者互不依赖，但钓鱼与恶意软件站点不在家长控制的分类范围内。';
+
+  @override
+  String get desktopParentalOn => '家长控制已开启';
+
+  @override
+  String get desktopParentalOff => '家长控制已关闭';
 }

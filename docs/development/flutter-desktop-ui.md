@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）与安全隐私子页的协议加固/ECS/重绑定/hosts 部分已完成；安全搜索、声誉查询与加密 DNS 服务，以及 `traffic` / `tools` / `settings` 待迁移，Wails 切换尚未开始。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）与安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）已完成；加密 DNS 服务，以及 `traffic` / `tools` / `settings` 待迁移，Wails 切换尚未开始。**
 > Windows 桌面窗口目前仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 三层分工（唯一规范）
@@ -72,6 +72,7 @@
 - `desktop_zone_models.dart` / `desktop_zone_providers.dart`：本地权威区整表（引擎开关、默认 TTL、区列表、逐区构建结果、条数与长度上限）与预演结果模型；`desktopZoneProvider` 启动即读 `/dns/zone/config`，开关、TTL、整份区列表三个写路径串行化并直接采用服务回传的重建结果（含解析失败的区），被拒时保留上一份。区文本只在本地草稿里编辑，保存全部才提交。
 - `desktop_dns64_models.dart` / `desktop_dns64_providers.dart`：DNS64 合成整表（开关 + RFC 6052 前缀列表，空列表按知名前缀 `64:ff9b::/96` 展示）与单一写路径；`desktopDns64Provider` 启动即读 `/status` 的 `dns64` 摘要，保存提交整表并回读服务端值，被拒时保留原配置。前缀文本按行去空行，是否为合法前缀由服务判定。
 - `desktop_filter_config_models.dart` / `desktop_filter_config_providers.dart`：拦截引擎整表（总开关、应答模式、阻断地址、同步周期、响应侧复检、仅白名单、伪应答纠正及地址清单）与暂停状态（剩余时长、总开关）；`desktopFilterConfigProvider` 启动读 `/filter/stats` + `/filter/config`，每次写入后重读两份；`desktopFilterPauseProvider` 读 `/filter/pause`，暂停按所选时长提交、恢复不带时长。`POST /filter/config` 由服务合并，故整表只提交页面负责的字段。
+- `desktop_privacy_models.dart` / `desktop_reputation_providers.dart`：强制安全搜索整表（开关、服务商黑名单、TTL）与声誉查询整表（恶意网址库/家长控制开关、超时/缓存容量/有效期、查询/命中/失败计数与拦截方式）；`desktopSafeSearchProvider` 读 `/safesearch/config`、写后回读；`desktopReputationProvider` 读 `/filter/safebrowsing` 并直接采用写回状态（服务会归一化越界参数）。
 - `desktop_privacy_models.dart` / `desktop_privacy_providers.dart`：安全隐私整表（从 `/status` 的 `dns`/`ecs`/`rebind`/`hosts` 读取：EDE、私有 PTR、单标签、ECH、IPv6、ANY 与应答形式、EDNS 填充、ECS、重绑定白名单、hosts）；`desktopPrivacyProvider` 有五条写路径（隐私子集、单标签、ECS、重绑定、hosts），各自只提交自己那组字段并回读 `/status`，被拒时保留原配置。
 - `desktop_services_models.dart` / `desktop_services_providers.dart`：内置服务目录整表（服务与分组、已勾选 id/分组、生效规则数、逐服务周计划与计划状态）；`desktopServicesProvider` 读 `/filter/services`，单个/整组/全部取消/逐服务计划四条写路径都直接采用服务回传的完整状态（省略字段保持原值，空数组清空）；整组拦截时清掉组内单独勾选，被拒时保留上一份并回传原因。
 - `desktop_schedule_models.dart` / `desktop_schedule_providers.dart`：时间计划整表（开关、窗口列表、当前是否生效与命中的窗口 id）与逐服务的计划状态；窗口含名称、开关、`HH:MM` 起止（早于开始即跨夜）与星期键（空表示每天），空时刻的窗口不算完整。`desktopScheduleProvider` 读 `/filter/schedule`，保存提交开关与整份窗口列表后回读；被拒时保留原配置。
@@ -99,6 +100,7 @@
 - 防护·时间计划 `lib/desktop/pages/hub/desktop_schedule_page.dart`（`/hub/filter-schedule` 子路由）、`widgets/schedule_editor.dart`（可复用的窗口编辑器：名称、开关、起止时刻、七个星期开关、每天、增删与删除确认；只有「保存计划」提交，未填时刻的行被丢弃）。**已覆盖旧版桌面 `SchedulePanel` + `ScheduleEditor`**，`hub` 的时间计划子页迁移完成。
 - 防护·应用拦截 `lib/desktop/pages/hub/desktop_services_page.dart`（`/hub/filter-services` 子路由）、`widgets/blocked_services_card.dart`（已拦截计数、名称/域名/规则检索、分组选择与分组快捷开关、全部取消、服务网格与规则展开、随分组/计划内/计划外徽标）、`widgets/service_schedule_dialog.dart`（复用窗口编辑器编辑单个服务的周计划）。**已覆盖旧版桌面 `ServicesPanel` + `ServiceScheduleModal`**，`hub` 的应用拦截子页迁移完成。
 - 设备·安全隐私 `lib/desktop/pages/hub/desktop_privacy_page.dart`（`/hub/privacy` 子路由）、`widgets/privacy_protocol_card.dart`（六个协议开关、ANY 应答形式、EDNS 填充选择器）、`widgets/privacy_ecs_card.dart`（ECS 开关、剥离真实子网、自定义子网草稿与保存）、`widgets/privacy_defence_card.dart`（重绑定开关与白名单弹窗、hosts 开关与联动系统 hosts）。**已覆盖旧版桌面 `PrivacyPanel` 的协议隐私、ECS 与内置防御部分**。
+- 安全隐私续 `widgets/privacy_safe_search_card.dart`（总开关、七个服务商勾选、TTL 草稿与保存）、`widgets/privacy_reputation_card.dart`（恶意网址库开关与五项统计、超时/容量/有效期草稿、家长控制独立开关与未启用提示）。**已覆盖旧版桌面 `SafeSearchCard` + `SafeBrowsingCard` + `ParentalControlCard`**，`hub` 的安全隐私子页迁移完成。
 - 其余三个分支在 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`（`commonPendingTitle` / `commonPendingBody`）。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 - 实时流依赖 `web_socket_channel`（`pubspec.yaml` 固定 3.0.3）；Wails/WebView 宿主与 `flutter run -d chrome` 都走浏览器 WebSocket。
@@ -125,7 +127,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`hub` 剩余子页**：安全搜索、声誉查询（恶意网址库 / 家长控制）与加密 DNS 服务；每个子页在 `desktop_hub_page.dart` 增加一条入口并挂到 `/hub/*` 嵌套路由。
+1. **`hub` 剩余子页**：加密 DNS 服务；每个子页在 `desktop_hub_page.dart` 增加一条入口并挂到 `/hub/*` 嵌套路由。
 2. **`traffic`**：设备管理 + 缓存热点/Top 域名与客户端（不做按应用流量）。
 3. **`tools`**：诊断与修复、规则检测、上游/区域测试。
 4. **`settings`**：外观主题（复用 `lib/pages/appearance` 的组件与语义）、服务与连接、局域网控制台。
@@ -152,6 +154,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 16. **时间计划**：状态徽标区分未启用 / 生效中 / 计划外，均来自服务返回值；启用后显示窗口编辑器，新增/删除/改名/开关/起止/星期都只改草稿，「保存计划」才提交整份列表并回读；未填时刻的行不提交；保存被拒时说明原因；窄窗不横向溢出。
 17. **应用拦截**：已拦截计数、分组、生效规则数与服务规则都显示服务返回值；检索按名称/域名/规则收窄已返回条目且不重发请求；单个开关提交整份选择，整组拦截清掉组内单独勾选，全部取消提交空选择；逐服务周计划保存提交到该服务并回读计划状态；写被拒时说明原因且选择保持服务端状态；窄窗单列不横向溢出。
 18. **安全隐私（协议部分）**：六个协议开关、ANY 应答形式、EDNS 填充、ECS、重绑定与 hosts 都显示服务返回值；各开关提交自己那组字段（隐私子集 / 单标签 / ECS / 重绑定 / hosts），ECS 子网与重绑定白名单按草稿保存，白名单去空行；写被拒时说明原因且开关保持服务端值；窄窗单列不横向溢出。
+19. **安全隐私（安全搜索与声誉查询）**：安全搜索总开关、服务商勾选与 TTL 都显示服务返回值，服务商开关只提交黑名单、TTL 非法不提交；声誉查询显示查询/拦截/命中率/失败/拦截方式，开关与家长控制各自只提交一个字段，超时/容量/有效期草稿随保存提交且非法值不提交；窄窗不横向溢出。
 
 ## 9. 明确禁止
 

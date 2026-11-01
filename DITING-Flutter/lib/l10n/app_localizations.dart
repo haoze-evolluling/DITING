@@ -20385,6 +20385,264 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'设备与隐私'**
   String get desktopHubDeviceSection;
+
+  /// No description provided for @desktopSafeSearchTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制安全搜索'**
+  String get desktopSafeSearchTitle;
+
+  /// No description provided for @desktopSafeSearchBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'把主流搜索引擎重写为强制过滤入口，从 DNS 层确保无法关闭安全搜索。属新增拦截能力，默认关闭。'**
+  String get desktopSafeSearchBody;
+
+  /// No description provided for @desktopSafeSearchEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已生效 · {count} 家'**
+  String desktopSafeSearchEnabled(int count);
+
+  /// No description provided for @desktopSafeSearchOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'未启用'**
+  String get desktopSafeSearchOff;
+
+  /// No description provided for @desktopSafeSearchOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制安全搜索已开启'**
+  String get desktopSafeSearchOn;
+
+  /// No description provided for @desktopSafeSearchOffMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制安全搜索已关闭'**
+  String get desktopSafeSearchOffMessage;
+
+  /// No description provided for @desktopSafeSearchServiceSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'安全搜索服务商已更新'**
+  String get desktopSafeSearchServiceSaved;
+
+  /// No description provided for @desktopSafeSearchTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'重写应答 TTL（秒）'**
+  String get desktopSafeSearchTtl;
+
+  /// No description provided for @desktopSafeSearchTtlSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get desktopSafeSearchTtlSave;
+
+  /// No description provided for @desktopSafeSearchTtlSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'安全搜索应答 TTL 已保存'**
+  String get desktopSafeSearchTtlSaved;
+
+  /// No description provided for @desktopSafeSearchTtlInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'TTL 需为正整数'**
+  String get desktopSafeSearchTtlInvalid;
+
+  /// No description provided for @desktopSafeSearchFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'未勾选的服务商将直接透传正常解析。'**
+  String get desktopSafeSearchFooter;
+
+  /// No description provided for @desktopSafeSearchBing.
+  ///
+  /// In zh, this message translates to:
+  /// **'Bing'**
+  String get desktopSafeSearchBing;
+
+  /// No description provided for @desktopSafeSearchDuckDuckGo.
+  ///
+  /// In zh, this message translates to:
+  /// **'DuckDuckGo'**
+  String get desktopSafeSearchDuckDuckGo;
+
+  /// No description provided for @desktopSafeSearchEcosia.
+  ///
+  /// In zh, this message translates to:
+  /// **'Ecosia'**
+  String get desktopSafeSearchEcosia;
+
+  /// No description provided for @desktopSafeSearchGoogle.
+  ///
+  /// In zh, this message translates to:
+  /// **'Google'**
+  String get desktopSafeSearchGoogle;
+
+  /// No description provided for @desktopSafeSearchPixabay.
+  ///
+  /// In zh, this message translates to:
+  /// **'Pixabay'**
+  String get desktopSafeSearchPixabay;
+
+  /// No description provided for @desktopSafeSearchYandex.
+  ///
+  /// In zh, this message translates to:
+  /// **'Yandex'**
+  String get desktopSafeSearchYandex;
+
+  /// No description provided for @desktopSafeSearchYoutube.
+  ///
+  /// In zh, this message translates to:
+  /// **'YouTube'**
+  String get desktopSafeSearchYoutube;
+
+  /// No description provided for @desktopReputationTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'恶意网址库（Safe Browsing）'**
+  String get desktopReputationTitle;
+
+  /// No description provided for @desktopReputationOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询中'**
+  String get desktopReputationOn;
+
+  /// No description provided for @desktopReputationOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'未启用'**
+  String get desktopReputationOff;
+
+  /// No description provided for @desktopReputationOnMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'恶意网址库查询已开启'**
+  String get desktopReputationOnMessage;
+
+  /// No description provided for @desktopReputationOffMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'恶意网址库查询已关闭'**
+  String get desktopReputationOffMessage;
+
+  /// No description provided for @desktopReputationBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询时只把域名的 SHA-256 前 2 字节发往第三方哈希前缀服务，对方返回命中的完整摘要，本地再比对；第三方无法从这 2 个字节还原完整域名。查询失败一律放行。'**
+  String get desktopReputationBody;
+
+  /// No description provided for @desktopReputationLookups.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询次数'**
+  String get desktopReputationLookups;
+
+  /// No description provided for @desktopReputationBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中拦截'**
+  String get desktopReputationBlocked;
+
+  /// No description provided for @desktopReputationHitRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存命中率'**
+  String get desktopReputationHitRate;
+
+  /// No description provided for @desktopReputationFailures.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询失败'**
+  String get desktopReputationFailures;
+
+  /// No description provided for @desktopReputationAnswer.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截方式'**
+  String get desktopReputationAnswer;
+
+  /// No description provided for @desktopReputationAnswerNullIp.
+  ///
+  /// In zh, this message translates to:
+  /// **'空地址'**
+  String get desktopReputationAnswerNullIp;
+
+  /// No description provided for @desktopReputationTimeout.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询超时（毫秒）'**
+  String get desktopReputationTimeout;
+
+  /// No description provided for @desktopReputationCacheSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存条目上限'**
+  String get desktopReputationCacheSize;
+
+  /// No description provided for @desktopReputationCacheTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存有效期（秒）'**
+  String get desktopReputationCacheTtl;
+
+  /// No description provided for @desktopReputationParamsInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'超时与缓存有效期需为正整数，缓存条目不能为负'**
+  String get desktopReputationParamsInvalid;
+
+  /// No description provided for @desktopReputationParamsSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存查询参数'**
+  String get desktopReputationParamsSave;
+
+  /// No description provided for @desktopReputationParamsSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询参数已保存'**
+  String get desktopReputationParamsSaved;
+
+  /// No description provided for @desktopReputationFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存按 2 字节前缀索引，同一前缀下的域名共享一次查询。'**
+  String get desktopReputationFooter;
+
+  /// No description provided for @desktopParentalTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'家长控制'**
+  String get desktopParentalTitle;
+
+  /// No description provided for @desktopParentalBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'与恶意网址库机制相同，借第三方分类库拦截成人内容域名；两者各自独立开关，可只开家长控制。'**
+  String get desktopParentalBody;
+
+  /// No description provided for @desktopParentalWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'恶意网址库当前未开启。两者互不依赖，但钓鱼与恶意软件站点不在家长控制的分类范围内。'**
+  String get desktopParentalWarning;
+
+  /// No description provided for @desktopParentalOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'家长控制已开启'**
+  String get desktopParentalOn;
+
+  /// No description provided for @desktopParentalOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'家长控制已关闭'**
+  String get desktopParentalOff;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

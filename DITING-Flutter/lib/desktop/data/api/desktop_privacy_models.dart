@@ -150,3 +150,133 @@ class DesktopPrivacyConfig {
     'ednsPadding': ednsPadding,
   };
 }
+
+/// The providers safe search can force, in the service's own order.
+const List<String> desktopSafeSearchServices = [
+  'bing',
+  'duckduckgo',
+  'ecosia',
+  'google',
+  'pixabay',
+  'yandex',
+  'youtube',
+];
+
+/// `GET /api/v1/safesearch/config`.
+class DesktopSafeSearchConfig {
+  const DesktopSafeSearchConfig({
+    required this.enabled,
+    required this.disabled,
+    required this.ttl,
+  });
+
+  factory DesktopSafeSearchConfig.fromJson(Map<String, Object?> json) =>
+      DesktopSafeSearchConfig(
+        enabled: _bool(json['enabled']),
+        disabled: _strings(json['disabled']),
+        ttl: _int(json['ttl']),
+      );
+
+  static const empty = DesktopSafeSearchConfig(
+    enabled: false,
+    disabled: [],
+    ttl: 300,
+  );
+
+  final bool enabled;
+
+  /// Providers the user turned off; everything else in [desktopSafeSearchServices] is forced.
+  final List<String> disabled;
+  final int ttl;
+
+  int get effectiveTtl => ttl > 0 ? ttl : 300;
+
+  bool isServiceEnabled(String id) => !disabled.contains(id);
+
+  int get enabledCount =>
+      desktopSafeSearchServices.length -
+      disabled.where(desktopSafeSearchServices.contains).length;
+
+  DesktopSafeSearchConfig copyWith({
+    bool? enabled,
+    List<String>? disabled,
+    int? ttl,
+  }) => DesktopSafeSearchConfig(
+    enabled: enabled ?? this.enabled,
+    disabled: disabled ?? this.disabled,
+    ttl: ttl ?? this.ttl,
+  );
+}
+
+/// `GET /api/v1/filter/safebrowsing` — the reputation lookups and their counters.
+class DesktopSafeBrowsing {
+  const DesktopSafeBrowsing({
+    required this.enabled,
+    required this.parentalEnabled,
+    required this.timeoutMs,
+    required this.cacheSize,
+    required this.cacheTtlSeconds,
+    required this.lookups,
+    required this.blocked,
+    required this.cacheHits,
+    required this.failures,
+    required this.blockingIpv4,
+    required this.blockingIpv6,
+    required this.blockMode,
+  });
+
+  factory DesktopSafeBrowsing.fromJson(Map<String, Object?> json) {
+    final config = _map(json['config']);
+    final stats = _map(json['stats']);
+    return DesktopSafeBrowsing(
+      enabled: _bool(config['enabled']),
+      parentalEnabled: _bool(config['parentalEnabled']),
+      timeoutMs: _int(config['timeoutMs']),
+      cacheSize: _int(config['cacheSize']),
+      cacheTtlSeconds: _int(config['cacheTTLSeconds']),
+      lookups: _int(stats['lookups']),
+      blocked: _int(stats['blocked']),
+      cacheHits: _int(stats['cacheHits']),
+      failures: _int(stats['failures']),
+      blockingIpv4: '${json['blockingIPv4'] ?? ''}',
+      blockingIpv6: '${json['blockingIPv6'] ?? ''}',
+      blockMode: '${json['blockMode'] ?? ''}',
+    );
+  }
+
+  static const empty = DesktopSafeBrowsing(
+    enabled: false,
+    parentalEnabled: false,
+    timeoutMs: 0,
+    cacheSize: 0,
+    cacheTtlSeconds: 0,
+    lookups: 0,
+    blocked: 0,
+    cacheHits: 0,
+    failures: 0,
+    blockingIpv4: '',
+    blockingIpv6: '',
+    blockMode: '',
+  );
+
+  final bool enabled;
+  final bool parentalEnabled;
+  final int timeoutMs;
+  final int cacheSize;
+  final int cacheTtlSeconds;
+  final int lookups;
+  final int blocked;
+  final int cacheHits;
+  final int failures;
+  final String blockingIpv4;
+  final String blockingIpv6;
+
+  /// `null_ip` | `nxdomain` | `refused`, shared with rule blocking.
+  final String blockMode;
+
+  /// 0..1, or null before the first lookup.
+  double? get hitRate => lookups == 0 ? null : cacheHits / lookups;
+
+  int get effectiveTimeoutMs => timeoutMs > 0 ? timeoutMs : 3000;
+  int get effectiveCacheTtl => cacheTtlSeconds > 0 ? cacheTtlSeconds : 600;
+}

@@ -11888,4 +11888,144 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopHubDeviceSection => 'Devices and privacy';
+
+  @override
+  String get desktopSafeSearchTitle => 'Forced safe search';
+
+  @override
+  String get desktopSafeSearchBody =>
+      'Rewrites the big search engines to their filtered endpoints, so safe search cannot be switched off at the DNS layer. Off by default.';
+
+  @override
+  String desktopSafeSearchEnabled(int count) {
+    return 'Active · $count providers';
+  }
+
+  @override
+  String get desktopSafeSearchOff => 'Off';
+
+  @override
+  String get desktopSafeSearchOn => 'Forced safe search is on';
+
+  @override
+  String get desktopSafeSearchOffMessage => 'Forced safe search is off';
+
+  @override
+  String get desktopSafeSearchServiceSaved =>
+      'The provider selection was updated';
+
+  @override
+  String get desktopSafeSearchTtl => 'Rewrite TTL (s)';
+
+  @override
+  String get desktopSafeSearchTtlSave => 'Save';
+
+  @override
+  String get desktopSafeSearchTtlSaved => 'The safe search TTL was saved';
+
+  @override
+  String get desktopSafeSearchTtlInvalid =>
+      'The TTL must be a positive whole number';
+
+  @override
+  String get desktopSafeSearchFooter =>
+      'An unchecked provider is resolved normally.';
+
+  @override
+  String get desktopSafeSearchBing => 'Bing';
+
+  @override
+  String get desktopSafeSearchDuckDuckGo => 'DuckDuckGo';
+
+  @override
+  String get desktopSafeSearchEcosia => 'Ecosia';
+
+  @override
+  String get desktopSafeSearchGoogle => 'Google';
+
+  @override
+  String get desktopSafeSearchPixabay => 'Pixabay';
+
+  @override
+  String get desktopSafeSearchYandex => 'Yandex';
+
+  @override
+  String get desktopSafeSearchYoutube => 'YouTube';
+
+  @override
+  String get desktopReputationTitle => 'Malicious-site lookups (Safe Browsing)';
+
+  @override
+  String get desktopReputationOn => 'Looking up';
+
+  @override
+  String get desktopReputationOff => 'Off';
+
+  @override
+  String get desktopReputationOnMessage => 'Malicious-site lookups are on';
+
+  @override
+  String get desktopReputationOffMessage => 'Malicious-site lookups are off';
+
+  @override
+  String get desktopReputationBody =>
+      'Only the first 2 bytes of a name\'s SHA-256 leave the machine; the third party answers the matching full digests and the comparison happens locally. A failed lookup always lets the name through.';
+
+  @override
+  String get desktopReputationLookups => 'Lookups';
+
+  @override
+  String get desktopReputationBlocked => 'Blocked';
+
+  @override
+  String get desktopReputationHitRate => 'Cache hit rate';
+
+  @override
+  String get desktopReputationFailures => 'Failures';
+
+  @override
+  String get desktopReputationAnswer => 'Answer';
+
+  @override
+  String get desktopReputationAnswerNullIp => 'Null address';
+
+  @override
+  String get desktopReputationTimeout => 'Lookup timeout (ms)';
+
+  @override
+  String get desktopReputationCacheSize => 'Cache entries';
+
+  @override
+  String get desktopReputationCacheTtl => 'Cache lifetime (s)';
+
+  @override
+  String get desktopReputationParamsInvalid =>
+      'The timeout and cache lifetime must be positive and the entry count cannot be negative';
+
+  @override
+  String get desktopReputationParamsSave => 'Save query parameters';
+
+  @override
+  String get desktopReputationParamsSaved => 'The query parameters were saved';
+
+  @override
+  String get desktopReputationFooter =>
+      'The cache is keyed by the 2-byte prefix, so names under one prefix share a single lookup.';
+
+  @override
+  String get desktopParentalTitle => 'Parental control';
+
+  @override
+  String get desktopParentalBody =>
+      'Same mechanism as malicious-site lookups, using a third-party category list to block adult domains; the two switches are independent.';
+
+  @override
+  String get desktopParentalWarning =>
+      'Malicious-site lookups are off. They are independent, but phishing and malware sites are not part of the parental categories.';
+
+  @override
+  String get desktopParentalOn => 'Parental control is on';
+
+  @override
+  String get desktopParentalOff => 'Parental control is off';
 }
