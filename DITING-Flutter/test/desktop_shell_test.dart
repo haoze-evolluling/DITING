@@ -11,6 +11,7 @@ import 'package:diting/desktop/app/desktop_app.dart';
 import 'package:diting/desktop/data/api/desktop_api_providers.dart';
 import 'package:diting/desktop/pages/desktop_pages.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
+import 'package:diting/desktop/pages/logs/desktop_logs_page.dart';
 import 'package:diting/desktop/router.dart';
 import 'package:diting/desktop/shell/desktop_shell.dart';
 import 'package:diting/routes/branches.dart';
@@ -82,6 +83,11 @@ void _skeleton() {
       if (location == Routes.home) {
         // Home renders the board from the service snapshot instead of an empty state.
         expect(find.byType(NullStatus), findsNothing);
+      } else if (location == Routes.logs) {
+        // Logs is wired to the service's log API: summary figures and the query table, with no
+        // full-page pending state left behind.
+        expect(find.byType(DesktopLogsPage), findsOneWidget);
+        expect(find.byType(AppBarClearance), findsNothing);
       } else {
         // Unwired branches say so instead of inventing values, centered like Android's own
         // full-page empty states.

@@ -16365,6 +16365,48 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'还没有查询记录'**
   String get desktopRecentQueriesEmpty;
+
+  /// No description provided for @desktopLogWindow24h.
+  ///
+  /// In zh, this message translates to:
+  /// **'近 24 小时'**
+  String get desktopLogWindow24h;
+
+  /// No description provided for @desktopLogSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索域名或客户端'**
+  String get desktopLogSearchHint;
+
+  /// No description provided for @desktopLogDomain.
+  ///
+  /// In zh, this message translates to:
+  /// **'域名'**
+  String get desktopLogDomain;
+
+  /// No description provided for @desktopLogClient.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端'**
+  String get desktopLogClient;
+
+  /// No description provided for @desktopLogPagePrev.
+  ///
+  /// In zh, this message translates to:
+  /// **'上一页'**
+  String get desktopLogPagePrev;
+
+  /// No description provided for @desktopLogPageNext.
+  ///
+  /// In zh, this message translates to:
+  /// **'下一页'**
+  String get desktopLogPageNext;
+
+  /// No description provided for @desktopLogPageInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'第 {from}–{to} 条，共 {total} 条'**
+  String desktopLogPageInfo(String from, String to, String total);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与重建约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘（含本机 HTTP API 数据接入）已完成；下一步按移动端页面迁移其余五个分支，Wails 切换尚未开始**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、日志分支已完成；下一步按移动端页面迁移 hub / traffic / tools / settings 四个分支，Wails 切换尚未开始**
 > Windows 桌面窗口仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 目标（已修订）
@@ -77,9 +77,10 @@
 
 `lib/desktop/data/api/` 是桌面端唯一的数据层，不承载任何视觉决策：
 
-- `desktop_api_client.dart`：`GET /api/v1/status`、`GET /api/v1/service/status`、`GET /api/v1/querylog/search?limit=N&includeFile=0`、`POST /api/v1/dns/start|stop`、`POST /api/v1/takeover/enable|disable`、`POST /api/v1/filter/pause`。响应信封为 `{success, data, error}`，`401` 单独标记为鉴权问题。
-- `desktop_api_models.dart`：不可变的 `DesktopStatus` / `DnsServiceState` / `QueryMetrics` / `CacheStats` / `FilterStats` / `CoreServiceState` / `QueryLogEntry`，缺字段按零值解析，不抛异常。
+- `desktop_api_client.dart`：`GET /api/v1/status`、`GET /api/v1/service/status`、`GET /api/v1/querylog/search`（首页 `limit=N&includeFile=0`；日志页 `limit/offset/includeFile=1` 加可选 `domain` / `status`）、`GET /api/v1/querylog/stats`、`POST /api/v1/dns/start|stop`、`POST /api/v1/takeover/enable|disable`、`POST /api/v1/filter/pause`。响应信封为 `{success, data, error}`，`401` 单独标记为鉴权问题。
+- `desktop_api_models.dart`：不可变的 `DesktopStatus` / `DnsServiceState` / `QueryMetrics` / `CacheStats` / `FilterStats` / `CoreServiceState` / `QueryLogEntry` / `DesktopQueryStats`（含 `QueryStatsSummary`）与 `DesktopLogStatus`（`status` 参数的五个取值），缺字段按零值解析，不抛异常。
 - `desktop_api_providers.dart`：`desktopStatusProvider`（2 s 轮询）、`desktopServiceStatusProvider`（10 s）、`desktopRecentQueriesProvider`（5 s）、`desktopControlProvider`（三个写操作，串行化，失败保留错误供 UI 提示）。轮询由 `desktopPollingEnabledProvider` 控制，测试中关闭。
+- `desktop_log_providers.dart`（日志分支）：`desktopQueryStatsProvider`（`GET /api/v1/querylog/stats`，10 s 轮询，失败保留上一份并标过期）、`desktopLogQueryProvider`（域名 + `status` + offset 的检索条件，改条件即回到第一页）、`desktopLogFeedProvider`（随条件重读 `GET /api/v1/querylog/search`，`includeFile=1` 以便翻到落盘历史）。它与仪表盘分文件，因为一次日志读取失败不该清空首页快照。
 - 连接配置来自 `diting_desktop` 容器（`ipc_host` / `ipc_port` / `ipc_token`），默认 `127.0.0.1:15353` 且免密（服务端对本机回环放行）。
 - 失败语义：从未成功过 → 整页说明"连不上本机服务 / 需要访问令牌"并给出重试；曾经成功过但当前轮询失败 → **保留上一份快照**并显示过期提示。不显示伪造的成功状态。
 
@@ -93,7 +94,12 @@
   - `desktop_dashboard.dart`：FlClash 桌面网格（四列、列宽上限 440 dp、居中、`top/control/middle` 三档行高、余量给查询列表），窄于四列时退化为单列自然高度。
   - `widgets/dashboard_cards.dart`、`dashboard_tiles.dart`、`recent_queries_card.dart`、`desktop_power_button.dart`：DNS 服务、查询指标、系统接管、暂停拦截、后台服务、缓存、规则拦截、性能、运行信息、最近查询。
   - `desktop_format.dart`：运行时长、百分比、时延、QPS 的文本格式；未知值统一显示 `—`。
-- 其余五个分支位于 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`，文案为 ARB 的 `commonPendingTitle` / `commonPendingBody`。
+- 日志分支在 `lib/desktop/pages/logs/`：
+  - `desktop_logs_page.dart`：`CommonScaffold`（顶栏刷新按钮）+ `PageBody`，窄窗/宽窗只改排布；统计卡读 `/querylog/stats` 的 24 小时窗口，失败时给出重试而不是零值。
+  - `widgets/log_summary_card.dart`：请求概览的七项指标（总请求、通过、过滤拦截、缓存命中、异常失败、平均解析耗时、缓存命中率），值只来自服务端聚合，不在本地把一页行数当总数。
+  - `widgets/log_query_table.dart`：请求记录表。搜索 250 ms 防抖（与移动端请求流一致）、状态筛选走 `CommonPopupBox` + `CommonPopupMenu`（与移动端窗口选择器同形）、offset 翻页并把 `total` 显示成 `第 x–y 条，共 n 条`；空结果区分「没有记录」与「筛选后为空」，读失败给重试行。
+  - `log_format.dart`：行内时间 `14:03:41`（本机时区）。
+- 其余四个分支位于 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`，文案为 ARB 的 `commonPendingTitle` / `commonPendingBody`。
 - 桌面外观偏好通过 `SharedPreferencesLegacyPrefsStore` 使用与 Android 相同的容器和键；Android 仍走原生 MethodChannel。
 
 ```bash
@@ -101,7 +107,8 @@ cd DITING-Flutter
 flutter run -d chrome -t lib/desktop/main.dart
 flutter build web -t lib/desktop/main.dart
 flutter test test/desktop_app_test.dart test/desktop_shell_test.dart \
-  test/desktop_home_test.dart test/desktop_api_test.dart test/desktop_preferences_test.dart
+  test/desktop_home_test.dart test/desktop_logs_test.dart \
+  test/desktop_api_test.dart test/desktop_preferences_test.dart
 
 # 应用自截图（写到 build/screenshots/，不提交）：
 DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --update-goldens
@@ -117,8 +124,8 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 2. **外壳与导航（已完成）**：宽窗 FlClash 侧栏、窄窗共享浮条；分支路径唯一来源 `lib/routes/branches.dart`。
 3. **首页仪表盘（已完成）**：FlClash 桌面网格 + 共享卡片框架；数据来自本机 HTTP API，含离线/鉴权/过期三种诚实状态。
 4. **页面内容迁移（进行中）**：按移动端同名页面逐分支替换 `NullStatus` 占位，方法见 1.1。
+   - `logs` ← `lib/pages/logs/logs_page.dart`、`log_stats_card.dart` 与 `lib/pages/observability/requests_page.dart`（**已完成**：统计卡片 + 可搜索/筛选/翻页的请求记录表；移动端的缓存热点、竞速、Bootstrap、订阅拦截等卡片依赖 sqflite 与原生写入方，桌面端暂无对应接口，未搬）
    - `hub` ← `lib/pages/hub/feature_hub_page.dart`（分组入口；宽窗可两列）
-   - `logs` ← `lib/pages/logs/logs_page.dart` 与 `log_dashboard_board.dart`（统计卡片 + 查询表）
    - `traffic` ← `lib/pages/traffic/traffic_page.dart`（筛选 + 明细行）
    - `tools` ← `lib/pages/tools/tools_page.dart`（DNS / ping / trace / speed 面板）
    - `settings` ← `lib/pages/settings/settings_page.dart`（分组设置行，外观复用 `lib/pages/appearance`）
@@ -135,7 +142,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 3. **响应式守卫**：1280 宽出现 `NavigationSidebar` 且无 `NavigationDock`/`NavigationBar`；390 宽出现 `NavigationDock`；侧栏可切换分支、可折叠；放大字号不溢出。
 4. **数据守卫**：卡片显示服务返回的数字（版本、PID、运行时长、计数、命中率、监听地址）；离线/401/过期三种状态各自的文案与重试；电源按钮确认后发出 `/dns/stop`，取消则不发；接管开关发出 `/takeover/enable`。
 5. **解析守卫**：缺字段按零值解析、401 标记为鉴权、错误信封透出 `error`、非 JSON 与连接失败都转成 `DesktopApiException`、令牌随请求发送。
-6. **内容守卫**（迁移分支时逐条补）：桌面页面出现的分区标题与移动端同名页面使用同一批 ARB 键；新增键必须先加进 `app_zh.arb` / `app_en.arb` 再由两端共用。
+6. **内容守卫**（迁移分支时逐条补）：桌面页面出现的分区标题与移动端同名页面使用同一批 ARB 键；新增键必须先加进 `app_zh.arb` / `app_en.arb` 再由两端共用。日志分支已覆盖：`test/desktop_logs_test.dart` 断言汇总卡显示服务端 24 小时数字、表格请求 `limit/offset/includeFile` 与 `domain/status` 条件、搜索防抖、翻页 offset 与两端禁用、空结果与读失败两种状态、窄窗收起时间与协议列。
 
 ## 9. 明确禁止的做法
 

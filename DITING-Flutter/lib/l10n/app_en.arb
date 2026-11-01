@@ -2706,5 +2706,12 @@
   "desktopLastUpdated": "Updated {time}",
   "desktopRetry": "Retry",
   "desktopRecentQueriesTitle": "Recent queries",
-  "desktopRecentQueriesEmpty": "No queries yet"
+  "desktopRecentQueriesEmpty": "No queries yet",
+  "desktopLogWindow24h": "Last 24 hours",
+  "desktopLogSearchHint": "Search domain or client",
+  "desktopLogDomain": "Domain",
+  "desktopLogClient": "Client",
+  "desktopLogPagePrev": "Previous",
+  "desktopLogPageNext": "Next",
+  "desktopLogPageInfo": "Rows {from}–{to} of {total}"
 }

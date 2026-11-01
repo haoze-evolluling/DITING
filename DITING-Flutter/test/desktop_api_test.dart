@@ -5,6 +5,7 @@
 import 'dart:convert';
 
 import 'package:diting/desktop/data/api/desktop_api_client.dart';
+import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -160,5 +161,55 @@ void main() {
     final anonymous = DesktopApiClient(httpClient: recorder());
     await anonymous.status();
     expect(headers.last.containsKey('Authorization'), isFalse);
+  });
+
+  test('解析 24 小时汇总，缺字段按零值', () async {
+    final backend = FakeDesktopBackend();
+    final summary = (await backend.client().queryStats()).summary;
+    expect(summary.queries, 12345);
+    expect(summary.blocked, 987);
+    expect(summary.cached, 8000);
+    expect(summary.forwarded, 3000);
+    expect(summary.errors, 12);
+    expect(summary.averageResponseMs, 12.4);
+    expect(summary.cacheHitRate, closeTo(0.648, 0.0001));
+    expect(summary.passed, 12345 - 987);
+
+    final client = clientOf(
+      MockClient((_) async => http.Response(jsonEncode(apiEnvelope({})), 200)),
+    );
+    final empty = (await client.queryStats()).summary;
+    expect(empty.queries, 0);
+    expect(empty.passed, 0);
+    expect(empty.cacheHitRate, 0);
+  });
+
+  test('日志检索只把设了值的条件放进查询串', () async {
+    final urls = <Uri>[];
+    final client = clientOf(
+      MockClient((request) async {
+        urls.add(request.url);
+        return http.Response(jsonEncode(apiEnvelope(queryLogPayload())), 200);
+      }),
+    );
+
+    await client.searchQueries(offset: 50);
+    expect(urls.last.queryParameters, {
+      'limit': '25',
+      'offset': '50',
+      'includeFile': '1',
+    });
+
+    await client.searchQueries(
+      domain: 'example.com',
+      status: DesktopLogStatus.blocked,
+    );
+    expect(urls.last.queryParameters, {
+      'limit': '25',
+      'offset': '0',
+      'includeFile': '1',
+      'domain': 'example.com',
+      'status': 'blocked',
+    });
   });
 }

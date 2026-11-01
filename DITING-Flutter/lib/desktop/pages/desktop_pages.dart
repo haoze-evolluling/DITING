@@ -1,4 +1,4 @@
-/// The five desktop branches that are still placeholders.
+/// The four desktop branches that are still placeholders.
 ///
 /// They are rebuilt here rather than imported from `lib/pages` because those pages own Android
 /// data sources (native channels, sqflite, VPN providers). What must not be rebuilt is the look:
@@ -7,7 +7,7 @@
 /// desktop window does not leave the block stranded at the top. Until a branch's data layer lands
 /// (step 4 of `docs/development/flutter-desktop-ui.md`), it states that plainly instead of showing
 /// invented values. Home is not listed here: it has its own dashboard board (see
-/// `home/desktop_home_page.dart`).
+/// `home/desktop_home_page.dart`), and logs has its own page (see `logs/desktop_logs_page.dart`).
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
@@ -21,16 +21,6 @@ class DesktopFeatureHubPage extends StatelessWidget {
   Widget build(BuildContext context) => _PendingPage(
     title: context.l10n.bottomBarFeatureHub,
     illustration: NullStatusIllustration.apps,
-  );
-}
-
-class DesktopLogsPage extends StatelessWidget {
-  const DesktopLogsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) => _PendingPage(
-    title: context.l10n.logsDashboardTitle,
-    illustration: NullStatusIllustration.logs,
   );
 }
 

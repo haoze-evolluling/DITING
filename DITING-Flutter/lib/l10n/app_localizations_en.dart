@@ -9552,4 +9552,27 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopRecentQueriesEmpty => 'No queries yet';
+
+  @override
+  String get desktopLogWindow24h => 'Last 24 hours';
+
+  @override
+  String get desktopLogSearchHint => 'Search domain or client';
+
+  @override
+  String get desktopLogDomain => 'Domain';
+
+  @override
+  String get desktopLogClient => 'Client';
+
+  @override
+  String get desktopLogPagePrev => 'Previous';
+
+  @override
+  String get desktopLogPageNext => 'Next';
+
+  @override
+  String desktopLogPageInfo(String from, String to, String total) {
+    return 'Rows $from–$to of $total';
+  }
 }

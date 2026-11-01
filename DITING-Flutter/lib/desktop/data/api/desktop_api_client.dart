@@ -76,6 +76,33 @@ class DesktopApiClient {
         ),
       );
 
+  /// The service's own aggregate over its 24-hour window, so the page does not add up a page of
+  /// rows and call it a total.
+  Future<DesktopQueryStats> queryStats() async =>
+      DesktopQueryStats.fromJson(await _get('/api/v1/querylog/stats'));
+
+  /// One page of the query log, newest first. Unlike [recentQueries] this leaves `includeFile` on:
+  /// paging past the in-memory ring is the whole point of a log page, and the service only scans
+  /// the retained files when the ring cannot fill the page anyway.
+  Future<QueryLogPage> searchQueries({
+    String domain = '',
+    DesktopLogStatus status = DesktopLogStatus.all,
+    int limit = 25,
+    int offset = 0,
+    bool includeFile = true,
+  }) async => QueryLogPage.fromJson(
+    await _get(
+      '/api/v1/querylog/search',
+      query: {
+        'limit': '$limit',
+        'offset': '$offset',
+        'includeFile': includeFile ? '1' : '0',
+        if (domain.isNotEmpty) 'domain': domain,
+        if (status != DesktopLogStatus.all) 'status': status.apiValue,
+      },
+    ),
+  );
+
   Future<void> startDns() => _post('/api/v1/dns/start');
 
   Future<void> stopDns() => _post('/api/v1/dns/stop');

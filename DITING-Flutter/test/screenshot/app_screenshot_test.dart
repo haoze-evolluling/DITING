@@ -89,6 +89,18 @@ void main() {
       );
     }, skip: skip);
 
+    testWidgets('桌面日志窄窗口', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-logs-narrow',
+          app: app(location: '/logs'),
+          size: const Size(390, 844),
+          platform: TargetPlatform.windows,
+        ),
+      );
+    }, skip: skip);
+
     testWidgets('桌面首页放大字号', (tester) async {
       await captureScreenshot(
         tester,

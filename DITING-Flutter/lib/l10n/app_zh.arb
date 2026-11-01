@@ -5316,5 +5316,25 @@
   },
   "desktopRetry": "重试",
   "desktopRecentQueriesTitle": "最近查询",
-  "desktopRecentQueriesEmpty": "还没有查询记录"
+  "desktopRecentQueriesEmpty": "还没有查询记录",
+  "desktopLogWindow24h": "近 24 小时",
+  "desktopLogSearchHint": "搜索域名或客户端",
+  "desktopLogDomain": "域名",
+  "desktopLogClient": "客户端",
+  "desktopLogPagePrev": "上一页",
+  "desktopLogPageNext": "下一页",
+  "desktopLogPageInfo": "第 {from}–{to} 条，共 {total} 条",
+  "@desktopLogPageInfo": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  }
 }

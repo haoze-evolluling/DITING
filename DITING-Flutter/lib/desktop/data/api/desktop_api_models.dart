@@ -1,4 +1,4 @@
-/// Immutable models of what the desktop dashboard reads from the local service.
+/// Immutable models of what the desktop pages read from the local service.
 ///
 /// Only the fields a card shows are parsed. Every parser tolerates a missing or mistyped value,
 /// because the service answers with `omitempty` fields and an older build must not crash the UI.
@@ -276,4 +276,82 @@ class QueryLogPage {
 
   final int total;
   final List<QueryLogEntry> entries;
+}
+
+/// `GET /api/v1/querylog/stats` — the service's own 24-hour rolling window. The trend and top-N
+/// lists of the same answer are not parsed: no desktop page shows them yet.
+class DesktopQueryStats {
+  const DesktopQueryStats({required this.summary});
+
+  static const empty = DesktopQueryStats(summary: QueryStatsSummary.empty);
+
+  factory DesktopQueryStats.fromJson(Map<String, Object?> json) =>
+      DesktopQueryStats(
+        summary: QueryStatsSummary.fromJson(_map(json['summary'])),
+      );
+
+  final QueryStatsSummary summary;
+}
+
+/// `querylog.Summary`.
+class QueryStatsSummary {
+  const QueryStatsSummary({
+    required this.queries,
+    required this.blocked,
+    required this.cached,
+    required this.forwarded,
+    required this.errors,
+    required this.averageResponseMs,
+    required this.cacheHitRate,
+  });
+
+  static const empty = QueryStatsSummary(
+    queries: 0,
+    blocked: 0,
+    cached: 0,
+    forwarded: 0,
+    errors: 0,
+    averageResponseMs: 0,
+    cacheHitRate: 0,
+  );
+
+  factory QueryStatsSummary.fromJson(Map<String, Object?> json) =>
+      QueryStatsSummary(
+        queries: _int(json['queries']),
+        blocked: _int(json['blocked']),
+        cached: _int(json['cached']),
+        forwarded: _int(json['forwarded']),
+        errors: _int(json['errors']),
+        averageResponseMs: _double(json['avgResponseMs']),
+        cacheHitRate: _double(json['cacheHitRate']),
+      );
+
+  final int queries;
+  final int blocked;
+  final int cached;
+  final int forwarded;
+  final int errors;
+  final double averageResponseMs;
+
+  /// 0..1.
+  final double cacheHitRate;
+
+  /// Everything the window saw that was not blocked, including cache hits.
+  int get passed => (queries - blocked).clamp(0, queries);
+}
+
+/// The `status` values `querylog.SearchQuery` accepts; the empty one means "no filter".
+///
+/// The words the filter shows are the log page's own ARB keys, so this enum carries only the
+/// value the service understands.
+enum DesktopLogStatus {
+  all(''),
+  passed('allowed'),
+  blocked('blocked'),
+  cached('cached'),
+  error('error');
+
+  const DesktopLogStatus(this.apiValue);
+
+  final String apiValue;
 }

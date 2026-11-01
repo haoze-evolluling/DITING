@@ -8954,4 +8954,27 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopRecentQueriesEmpty => '还没有查询记录';
+
+  @override
+  String get desktopLogWindow24h => '近 24 小时';
+
+  @override
+  String get desktopLogSearchHint => '搜索域名或客户端';
+
+  @override
+  String get desktopLogDomain => '域名';
+
+  @override
+  String get desktopLogClient => '客户端';
+
+  @override
+  String get desktopLogPagePrev => '上一页';
+
+  @override
+  String get desktopLogPageNext => '下一页';
+
+  @override
+  String desktopLogPageInfo(String from, String to, String total) {
+    return '第 $from–$to 条，共 $total 条';
+  }
 }
