@@ -532,6 +532,37 @@ List<Map<String, Object?>> clientsPayload() => [
   {'ip': '192.168.1.21', 'name': '', 'queryCount': 7, 'lastSeen': 0},
 ];
 
+/// A `GET /api/v1/portcheck` payload.
+Map<String, Object?> portCheckPayload({
+  bool available = false,
+  bool hasICS = true,
+  bool canAutofix = true,
+  String diagnostic = '53 端口被 SharedAccess 服务占用',
+  List<Map<String, Object?>>? conflicts,
+}) => {
+  'available': available,
+  'conflicts':
+      conflicts ??
+      (available
+          ? const <Map<String, Object?>>[]
+          : [
+              {
+                'port': 53,
+                'protocol': 'UDP',
+                'localAddress': '0.0.0.0:53',
+                'pid': 1234,
+                'processName': 'svchost.exe',
+                'serviceName': 'SharedAccess',
+                'isICS': true,
+                'isSelf': false,
+                'diagnosis': '停止 Internet Connection Sharing 后即可释放端口',
+              },
+            ]),
+  'hasICS': hasICS,
+  'canAutofix': canAutofix,
+  'diagnostic': diagnostic,
+};
+
 /// A `GET /api/v1/clients/groups` payload.
 Map<String, Object?> groupsPayload() => {
   'enabled': true,
@@ -672,6 +703,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? encrypted,
     List<Map<String, Object?>>? clients,
     Map<String, Object?>? groups,
+    Map<String, Object?>? portCheck,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -703,6 +735,7 @@ class FakeDesktopBackend {
        encrypted = encrypted ?? encryptedPayload(),
        clients = clients ?? clientsPayload(),
        groups = groups ?? groupsPayload(),
+       portCheck = portCheck ?? portCheckPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -786,6 +819,12 @@ class FakeDesktopBackend {
 
   /// Mutated by the client-group save; the service drops groups without members.
   Map<String, Object?> groups;
+
+  /// Mutated by the port autofix.
+  Map<String, Object?> portCheck;
+
+  /// Bodies of every port autofix call, in order.
+  final autofixUpdates = <Map<String, Object?>>[];
 
   /// Bodies of every client-group save, in order.
   final groupsUpdates = <Map<String, Object?>>[];
@@ -961,6 +1000,13 @@ class FakeDesktopBackend {
                 item.cast<String, Object?>(),
           ],
         };
+      }
+      if (path == '/api/v1/portcheck/autofix' && request.method == 'POST') {
+        final body = request.body.isEmpty
+            ? <String, Object?>{}
+            : (jsonDecode(request.body) as Map).cast<String, Object?>();
+        autofixUpdates.add(body);
+        portCheck = portCheckPayload(available: true, hasICS: false, canAutofix: false, diagnostic: '');
       }
       if (path == '/api/v1/clients/groups' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
@@ -1250,6 +1296,7 @@ class FakeDesktopBackend {
         '/api/v1/filter/safebrowsing' => utf8Json(
           apiEnvelope(safeBrowsing),
         ),
+        '/api/v1/portcheck' => utf8Json(apiEnvelope(portCheck)),
         '/api/v1/clients' => utf8Json(apiEnvelope(clients)),
         '/api/v1/clients/groups' => utf8Json(apiEnvelope(groups)),
         '/api/v1/dns/access/configure' => utf8Json(apiEnvelope(null)),

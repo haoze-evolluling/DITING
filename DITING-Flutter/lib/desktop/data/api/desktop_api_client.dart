@@ -18,6 +18,7 @@ import 'package:diting/desktop/data/api/desktop_filter_models.dart';
 import 'package:diting/desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting/desktop/data/api/desktop_schedule_models.dart';
 import 'package:diting/desktop/data/api/desktop_services_models.dart';
+import 'package:diting/desktop/data/api/desktop_tools_models.dart';
 import 'package:diting/desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
@@ -530,6 +531,20 @@ class DesktopApiClient {
 
   Future<void> configureRateLimit(Map<String, Object?> config) =>
       _post('/api/v1/dns/ratelimit/configure', body: config);
+
+  /// Opens and closes the DNS port to see whether it can be taken; on demand only.
+  Future<DesktopPortCheck> portCheck() async =>
+      DesktopPortCheck.fromJson(await _get('/api/v1/portcheck'));
+
+  /// Stops the system listener the service knows about (ICS / resolved stub) and re-probes.
+  /// `startDNS` stays false: the old console fixed the port without starting the listener.
+  Future<DesktopPortCheck> autofixPort() async =>
+      DesktopPortCheck.fromJson(
+        await _postData(
+          '/api/v1/portcheck/autofix',
+          body: {'startDNS': false},
+        ),
+      );
 
   void close() => _http.close();
 

@@ -145,7 +145,10 @@ class DashboardCardHeader extends StatelessWidget {
                     style: style,
                   ),
                 ),
-                ...leading,
+                // A chip must be allowed to shrink: on a 390 px window the title's own
+                // minimum plus a fixed chip is wider than the header, and a chip that cannot
+                // ellipsize overflows the row instead of truncating.
+                for (final child in leading) Flexible(child: child),
               ],
             ),
           ),

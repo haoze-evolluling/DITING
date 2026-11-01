@@ -16,16 +16,6 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-class DesktopToolsPage extends StatelessWidget {
-  const DesktopToolsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) => _PendingPage(
-    title: context.l10n.toolDiagnostics,
-    illustration: NullStatusIllustration.wifi,
-  );
-}
-
 class DesktopSettingsPage extends StatelessWidget {
   const DesktopSettingsPage({super.key});
 

@@ -11994,4 +11994,60 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopGroupsListDisabled => '该订阅已停用';
+
+  @override
+  String get desktopToolsPortTitle => '网络诊断与修复';
+
+  @override
+  String get desktopToolsPortBody =>
+      '排查 53 端口被 ICS 共享或 systemd-resolved stub 占用导致无法启动的问题';
+
+  @override
+  String get desktopToolsPortIdle => '尚未检测。点右上角或本卡片的检索按钮运行一次端口探测。';
+
+  @override
+  String get desktopToolsPortOk => '端口正常可用';
+
+  @override
+  String get desktopToolsPortConflict => '检测到端口冲突';
+
+  @override
+  String get desktopToolsCheck => '检测端口';
+
+  @override
+  String get desktopToolsFix => '一键修复端口占用';
+
+  @override
+  String get desktopToolsFixTitle => '修复端口占用？';
+
+  @override
+  String get desktopToolsFixBody =>
+      '将停止占用 53 端口的系统监听（Windows ICS 共享 / systemd-resolved stub），不会启动或重启 DNS 服务。';
+
+  @override
+  String get desktopToolsFixed => '端口冲突已修复';
+
+  @override
+  String desktopToolsFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String get desktopToolsSystemListener => '系统占用';
+
+  @override
+  String get desktopToolsSelfListener => '谛听自身';
+
+  @override
+  String desktopToolsConflictOwner(String process, int pid, String address) {
+    return '$process · PID $pid · $address';
+  }
+
+  @override
+  String desktopToolsConflictService(String service) {
+    return '服务：$service';
+  }
+
+  @override
+  String get desktopToolsPortFooter => '探测只临时占用端口以确认可用性；诊断文本与处置建议来自系统探测本身。';
 }

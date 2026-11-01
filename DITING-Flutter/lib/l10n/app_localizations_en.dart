@@ -12739,4 +12739,62 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopGroupsListDisabled => 'This subscription is disabled';
+
+  @override
+  String get desktopToolsPortTitle => 'Network diagnosis and repair';
+
+  @override
+  String get desktopToolsPortBody =>
+      'Finds out whether ICS sharing or the systemd-resolved stub holds port 53 and blocks startup';
+
+  @override
+  String get desktopToolsPortIdle =>
+      'Not checked yet. Use the search button in the corner or on this card to run one probe.';
+
+  @override
+  String get desktopToolsPortOk => 'The port is available';
+
+  @override
+  String get desktopToolsPortConflict => 'A port conflict was found';
+
+  @override
+  String get desktopToolsCheck => 'Check the port';
+
+  @override
+  String get desktopToolsFix => 'Repair the port conflict';
+
+  @override
+  String get desktopToolsFixTitle => 'Repair the port conflict?';
+
+  @override
+  String get desktopToolsFixBody =>
+      'Stops the system listener on port 53 (Windows ICS sharing / the systemd-resolved stub). It does not start or restart DNS.';
+
+  @override
+  String get desktopToolsFixed => 'The port conflict was repaired';
+
+  @override
+  String desktopToolsFailed(String message) {
+    return 'The action failed: $message';
+  }
+
+  @override
+  String get desktopToolsSystemListener => 'System listener';
+
+  @override
+  String get desktopToolsSelfListener => 'DITING itself';
+
+  @override
+  String desktopToolsConflictOwner(String process, int pid, String address) {
+    return '$process · PID $pid · $address';
+  }
+
+  @override
+  String desktopToolsConflictService(String service) {
+    return 'Service: $service';
+  }
+
+  @override
+  String get desktopToolsPortFooter =>
+      'The probe only takes the port briefly to confirm it is free; the report and advice come from the system probe itself.';
 }

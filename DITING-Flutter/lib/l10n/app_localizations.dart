@@ -21873,6 +21873,102 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'该订阅已停用'**
   String get desktopGroupsListDisabled;
+
+  /// No description provided for @desktopToolsPortTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络诊断与修复'**
+  String get desktopToolsPortTitle;
+
+  /// No description provided for @desktopToolsPortBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'排查 53 端口被 ICS 共享或 systemd-resolved stub 占用导致无法启动的问题'**
+  String get desktopToolsPortBody;
+
+  /// No description provided for @desktopToolsPortIdle.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未检测。点右上角或本卡片的检索按钮运行一次端口探测。'**
+  String get desktopToolsPortIdle;
+
+  /// No description provided for @desktopToolsPortOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口正常可用'**
+  String get desktopToolsPortOk;
+
+  /// No description provided for @desktopToolsPortConflict.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测到端口冲突'**
+  String get desktopToolsPortConflict;
+
+  /// No description provided for @desktopToolsCheck.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测端口'**
+  String get desktopToolsCheck;
+
+  /// No description provided for @desktopToolsFix.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键修复端口占用'**
+  String get desktopToolsFix;
+
+  /// No description provided for @desktopToolsFixTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'修复端口占用？'**
+  String get desktopToolsFixTitle;
+
+  /// No description provided for @desktopToolsFixBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'将停止占用 53 端口的系统监听（Windows ICS 共享 / systemd-resolved stub），不会启动或重启 DNS 服务。'**
+  String get desktopToolsFixBody;
+
+  /// No description provided for @desktopToolsFixed.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口冲突已修复'**
+  String get desktopToolsFixed;
+
+  /// No description provided for @desktopToolsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopToolsFailed(String message);
+
+  /// No description provided for @desktopToolsSystemListener.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统占用'**
+  String get desktopToolsSystemListener;
+
+  /// No description provided for @desktopToolsSelfListener.
+  ///
+  /// In zh, this message translates to:
+  /// **'谛听自身'**
+  String get desktopToolsSelfListener;
+
+  /// No description provided for @desktopToolsConflictOwner.
+  ///
+  /// In zh, this message translates to:
+  /// **'{process} · PID {pid} · {address}'**
+  String desktopToolsConflictOwner(String process, int pid, String address);
+
+  /// No description provided for @desktopToolsConflictService.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务：{service}'**
+  String desktopToolsConflictService(String service);
+
+  /// No description provided for @desktopToolsPortFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'探测只临时占用端口以确认可用性；诊断文本与处置建议来自系统探测本身。'**
+  String get desktopToolsPortFooter;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
