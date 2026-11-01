@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_cache_models.dart';
 import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
+import 'package:diting/desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
@@ -170,10 +171,11 @@ class DesktopApiClient {
   Future<void> setTakeover(bool enabled) =>
       _post(enabled ? '/api/v1/takeover/enable' : '/api/v1/takeover/disable');
 
-  /// Pauses rule blocking until resumed by hand (`durationSec: 0`), or resumes it right away.
-  Future<void> setFilterPaused(bool paused) => _post(
+  /// Pauses rule blocking for [durationSec] (`0` means until resumed by hand), or resumes it right
+  /// away. The service refuses a negative or absurdly long duration itself.
+  Future<void> setFilterPaused(bool paused, {int? durationSec}) => _post(
     '/api/v1/filter/pause',
-    body: {'paused': paused, if (paused) 'durationSec': 0},
+    body: {'paused': paused, if (paused) 'durationSec': durationSec ?? 0},
   );
 
   Future<DesktopCacheStats> cacheStats() async =>
@@ -312,6 +314,17 @@ class DesktopApiClient {
   /// the page sends the whole form and then re-reads instead of assuming it was accepted.
   Future<void> updateDns64Config(DesktopDns64Config config) =>
       _post('/api/v1/dns/dns64/configure', body: config.toJson());
+
+  Future<DesktopFilterConfig> filterConfig() async =>
+      DesktopFilterConfig.fromJson(await _get('/api/v1/filter/config'));
+
+  /// The service merges the body over its current config, so the page sends its whole form and then
+  /// re-reads instead of assuming what was applied.
+  Future<void> updateFilterConfig(DesktopFilterConfig config) =>
+      _post('/api/v1/filter/config', body: config.toJson());
+
+  Future<DesktopFilterPause> filterPause() async =>
+      DesktopFilterPause.fromJson(await _get('/api/v1/filter/pause'));
 
   /// The counters the console shows above the subscription lists.
   Future<DesktopFilterSummary> filterStats() async =>

@@ -54,6 +54,26 @@ String desktopFilterHealthDetail(
   };
 }
 
+/// `1 小时 5 分` — the console's `pauseRemainingText`, rounded down as it does.
+String desktopPauseRemaining(BuildContext context, Duration remaining) {
+  final l10n = context.l10n;
+  final seconds = remaining.inSeconds;
+  if (seconds <= 0) return '';
+  if (seconds >= 86400) {
+    return l10n.desktopFilterPauseDays((seconds / 86400).ceil());
+  }
+  if (seconds >= 3600) {
+    return l10n.desktopFilterPauseHours(
+      seconds ~/ 3600,
+      (seconds % 3600) ~/ 60,
+    );
+  }
+  if (seconds >= 60) {
+    return l10n.desktopFilterPauseMinutes(seconds ~/ 60, seconds % 60);
+  }
+  return l10n.desktopFilterPauseSeconds(seconds);
+}
+
 /// One `label : value` block of the counters strip.
 class FilterMetric extends StatelessWidget {
   const FilterMetric({
@@ -99,6 +119,76 @@ class FilterMetric extends StatelessWidget {
           style: DashboardText.label(context),
         ),
       ],
+    );
+  }
+}
+
+/// A title, an explanation and a switch: the console's repeated row shape for the protection
+/// switches. The surrounding block owns the tap, so a narrow window does not need a pixel-perfect
+/// hit on the track.
+class FilterToggleRow extends StatelessWidget {
+  const FilterToggleRow({
+    super.key,
+    required this.title,
+    required this.body,
+    required this.value,
+    required this.onChanged,
+    this.warning,
+  });
+
+  final String title;
+  final String body;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  /// Shown under the row when the switch is on and the choice needs a caution.
+  final String? warning;
+
+  @override
+  Widget build(BuildContext context) {
+    final warning = this.warning;
+    return DashboardBlock(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 4,
+        children: [
+          Row(
+            spacing: 10,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DashboardText.rowTitle(context),
+                ),
+              ),
+              DashboardSwitch(
+                value: value,
+                semanticLabel: title,
+                onChanged: onChanged,
+              ),
+            ],
+          ),
+          Text(
+            body,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: DashboardText.label(context),
+          ),
+          if (value && warning != null)
+            Text(
+              warning,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: DashboardText.label(
+                context,
+                color: context.colorScheme.warning,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -325,6 +325,43 @@ Map<String, Object?> filterListsPayload({
   return {'total': rows.length, 'lists': rows};
 }
 
+/// A `GET /api/v1/filter/config` payload: the fields the protection pages edit.
+Map<String, Object?> filterConfigPayload({
+  bool enabled = true,
+  String blockMode = 'null_ip',
+  String blockingIPv4 = '0.0.0.0',
+  String blockingIPv6 = '::',
+  int updateIntervalHours = 24,
+  bool filterResponse = false,
+  bool allowlistOnly = false,
+  bool bogusNxDomain = false,
+  List<String> bogusNxDomainNetworks = const [],
+}) => {
+  'enabled': enabled,
+  'blockMode': blockMode,
+  'blockingIPv4': blockingIPv4,
+  'blockingIPv6': blockingIPv6,
+  'customRules': const <String>[],
+  'lists': const <Object>[],
+  'updateIntervalHours': updateIntervalHours,
+  'filterResponse': filterResponse,
+  'allowlistOnly': allowlistOnly,
+  'bogusNxDomain': bogusNxDomain,
+  'bogusNxDomainNetworks': bogusNxDomainNetworks,
+};
+
+/// A `GET /api/v1/filter/pause` payload.
+Map<String, Object?> filterPausePayload({
+  bool paused = false,
+  int remainingSeconds = 0,
+  bool blockingEnabled = true,
+}) => {
+  'paused': paused,
+  'remainingSeconds': paused ? remainingSeconds : 0,
+  'pausedUntilMs': 0,
+  'blockingEnabled': blockingEnabled,
+};
+
 /// Records the paths it was asked for, and can be told to fail after [failAfter] requests to model
 /// a service that drops while the window is open.
 class FakeDesktopBackend {
@@ -346,6 +383,8 @@ class FakeDesktopBackend {
     Map<String, Object?>? dns64,
     Map<String, Object?>? filterStats,
     Map<String, Object?>? filterLists,
+    Map<String, Object?>? filterConfig,
+    Map<String, Object?>? filterPause,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -368,6 +407,8 @@ class FakeDesktopBackend {
        dns64 = dns64 ?? dns64Payload(),
        filterStats = filterStats ?? filterStatsPayload(),
        filterLists = filterLists ?? filterListsPayload(),
+       filterConfig = filterConfig ?? filterConfigPayload(),
+       filterPause = filterPause ?? filterPausePayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -423,6 +464,16 @@ class FakeDesktopBackend {
 
   /// Bodies of every custom-rule save, in order.
   final customRuleUpdates = <List<String>>[];
+
+  /// Mutated by `POST /filter/config`; `GET /filter/config` answers with it.
+  Map<String, Object?> filterConfig;
+
+  /// Mutated by `POST /filter/pause`; `GET /filter/pause` answers with it.
+  Map<String, Object?> filterPause;
+
+  /// Bodies of every config save and every pause call, in order.
+  final filterConfigUpdates = <Map<String, Object?>>[];
+  final filterPauseRequests = <Map<String, Object?>>[];
 
   /// Bodies of every rewrite config save, in order.
   final rewriteConfigUpdates = <Map<String, Object?>>[];
@@ -568,6 +619,28 @@ class FakeDesktopBackend {
           ],
         };
       }
+      if (path == '/api/v1/filter/config' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        filterConfigUpdates.add(body);
+        filterConfig = {...filterConfig, ...body};
+        if (body.containsKey('enabled')) {
+          filterStats = {...filterStats, 'enabled': body['enabled']};
+        }
+      }
+      if (path == '/api/v1/filter/pause' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        filterPauseRequests.add(body);
+        if (body['paused'] == true) {
+          filterPause = filterPausePayload(
+            paused: true,
+            remainingSeconds: (body['durationSec'] as num?)?.toInt() ?? 0,
+          );
+          filterStats = {...filterStats, 'paused': true};
+        } else {
+          filterPause = filterPausePayload();
+          filterStats = {...filterStats, 'paused': false};
+        }
+      }
       if (path == '/api/v1/filter/rules' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
         final rules = [
@@ -687,6 +760,8 @@ class FakeDesktopBackend {
         '/api/v1/filter/rules' => utf8Json(
           apiEnvelope({'rules': customRules}),
         ),
+        '/api/v1/filter/config' => utf8Json(apiEnvelope(filterConfig)),
+        '/api/v1/filter/pause' => utf8Json(apiEnvelope(filterPause)),
         '/api/v1/dns/zone/config' => http.Response(
           jsonEncode(apiEnvelope(zone)),
           200,

@@ -9464,7 +9464,7 @@ class AppL10nEn extends AppL10n {
   String get desktopTakeoverOff => 'Not taken over';
 
   @override
-  String get desktopFilterPauseTitle => 'Pause blocking';
+  String get desktopFilterPauseTitle => 'Pause blocking temporarily';
 
   @override
   String get desktopFilterPaused => 'Paused';
@@ -11178,4 +11178,207 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopFilterGuideFooter =>
       'One rule per line; a line starting with ! is a comment.';
+
+  @override
+  String get desktopHubFilterConfig => 'Blocking mode';
+
+  @override
+  String get desktopHubFilterConfigBody =>
+      'Answer mode, blocking addresses, refresh interval, temporary pause and advanced switches';
+
+  @override
+  String get desktopFilterConfigPageTitle => 'Blocking mode';
+
+  @override
+  String get desktopFilterConfigRefresh => 'Reload the blocking config';
+
+  @override
+  String get desktopFilterConfigLoadFailed =>
+      'Could not read the blocking config';
+
+  @override
+  String desktopFilterConfigSaveFailed(String message) {
+    return 'Could not save the blocking config: $message';
+  }
+
+  @override
+  String get desktopFilterEngineOnMessage => 'Rule blocking is on';
+
+  @override
+  String get desktopFilterEngineOffMessage => 'Rule blocking is off';
+
+  @override
+  String get desktopFilterModeTitle => 'How a blocked name is answered';
+
+  @override
+  String get desktopFilterModeBody =>
+      'The answer a client gets when a blocking rule matches';
+
+  @override
+  String get desktopFilterModeSave => 'Save policy and parameters';
+
+  @override
+  String get desktopFilterModeSaving => 'Saving…';
+
+  @override
+  String get desktopFilterModeSaved => 'The blocking policy was saved';
+
+  @override
+  String get desktopFilterModeParamsTitle =>
+      'List refresh and blocking addresses';
+
+  @override
+  String get desktopFilterModeBlockingIPv4 => 'Blocking IPv4 address';
+
+  @override
+  String get desktopFilterModeBlockingIPv6 => 'Blocking IPv6 address';
+
+  @override
+  String get desktopFilterModeInterval => 'List refresh interval (hours)';
+
+  @override
+  String get desktopFilterModeIntervalHelper => '24 hours by default';
+
+  @override
+  String get desktopFilterModeInvalid =>
+      'The interval must be a positive whole number and neither address may be empty';
+
+  @override
+  String get desktopFilterModeNullIp =>
+      'Answer the null address (0.0.0.0 / ::)';
+
+  @override
+  String get desktopFilterModeNullIpBody =>
+      'Ends ad and popup loading instantly without making the browser retry.';
+
+  @override
+  String get desktopFilterModeNxdomain =>
+      'Say the name does not exist (NXDOMAIN)';
+
+  @override
+  String get desktopFilterModeNxdomainBody =>
+      'Tells the client the name is absent, so well-behaved software stops probing.';
+
+  @override
+  String get desktopFilterModeRefused => 'Refuse the request (REFUSED)';
+
+  @override
+  String get desktopFilterModeRefusedBody =>
+      'Returns a refusal code: the DNS firewall blocked the query on purpose.';
+
+  @override
+  String get desktopFilterAdvancedTitle => 'Advanced blocking';
+
+  @override
+  String get desktopFilterAdvancedBody =>
+      'Extra defences against bypass tricks; all off by default';
+
+  @override
+  String get desktopFilterAdvancedResponseTitle => 'Re-check the CNAME chain';
+
+  @override
+  String get desktopFilterAdvancedResponseBody =>
+      'Matches the CNAME targets and A/AAAA owner names in an upstream answer against the block lists again, catching a legal query whose alias points at a blocked domain; cached answers are re-checked too.';
+
+  @override
+  String get desktopFilterAdvancedResponseOn => 'CNAME chain re-checking is on';
+
+  @override
+  String get desktopFilterAdvancedResponseOff =>
+      'CNAME chain re-checking is off';
+
+  @override
+  String get desktopFilterAdvancedAllowlistTitle => 'Allowlist only';
+
+  @override
+  String get desktopFilterAdvancedAllowlistBody =>
+      'Only queries that hit an allow rule (@@ exception) pass; everything else is blocked. Local answers such as hosts, rewrites and internal zones are unaffected.';
+
+  @override
+  String get desktopFilterAdvancedAllowlistWarning =>
+      'Make sure the allowlist is complete first, or a large number of names will fail to resolve.';
+
+  @override
+  String get desktopFilterAdvancedAllowlistOn => 'Allowlist-only mode is on';
+
+  @override
+  String get desktopFilterAdvancedAllowlistOff => 'Allowlist-only mode is off';
+
+  @override
+  String get desktopFilterAdvancedBogusTitle => 'Correct bogus answers';
+
+  @override
+  String get desktopFilterAdvancedBogusBody =>
+      'Some networks answer a missing name with a fixed portal or ad address. When the answer falls inside the list below it is treated as an upstream hijack and rewritten to NXDOMAIN.';
+
+  @override
+  String get desktopFilterAdvancedBogusOn => 'Bogus-answer correction is on';
+
+  @override
+  String get desktopFilterAdvancedBogusOff => 'Bogus-answer correction is off';
+
+  @override
+  String get desktopFilterAdvancedBogusListLabel =>
+      'Hijack addresses (one per line; IP or CIDR)';
+
+  @override
+  String desktopFilterAdvancedBogusSuspicious(String entries) {
+    return 'These entries look malformed and will be ignored by the service if they cannot be parsed: $entries';
+  }
+
+  @override
+  String get desktopFilterAdvancedBogusPresets => 'Quick add:';
+
+  @override
+  String get desktopFilterAdvancedBogusReset => 'Undo changes';
+
+  @override
+  String get desktopFilterAdvancedBogusSave => 'Save the list';
+
+  @override
+  String desktopFilterAdvancedBogusSaved(int count) {
+    return '$count hijack addresses saved';
+  }
+
+  @override
+  String get desktopFilterAdvancedBogusCleared =>
+      'The hijack address list was cleared';
+
+  @override
+  String get desktopFilterPauseBody =>
+      'Lets every query through for the chosen duration, then resumes on its own (a service restart also resumes).';
+
+  @override
+  String get desktopFilterPauseDuration => 'Pause duration';
+
+  @override
+  String get desktopFilterPauseAction => 'Pause';
+
+  @override
+  String get desktopFilterPauseResume => 'Resume now';
+
+  @override
+  String get desktopFilterPauseStarted => 'Blocking is paused';
+
+  @override
+  String get desktopFilterPauseResumed => 'Blocking resumed';
+
+  @override
+  String get desktopFilterPauseActiveTitle => 'Blocking is paused';
+
+  @override
+  String desktopFilterPauseActiveBody(String remaining) {
+    return 'Resumes automatically in $remaining';
+  }
+
+  @override
+  String desktopFilterPauseMinutesOnly(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get desktopFilterPauseOneHour => '1 hour';
+
+  @override
+  String get desktopFilterPauseEightHours => '8 hours';
 }

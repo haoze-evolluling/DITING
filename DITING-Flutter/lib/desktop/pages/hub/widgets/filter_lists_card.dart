@@ -24,9 +24,18 @@ const double _twoColumnBreakpoint = 900;
 
 /// The counters above the lists: what the engine blocked, how large it is and how many lists are on.
 class FilterSummaryCard extends StatelessWidget {
-  const FilterSummaryCard({super.key, required this.summary});
+  const FilterSummaryCard({
+    super.key,
+    required this.summary,
+    this.onToggle,
+    this.saving = false,
+  });
 
   final DesktopFilterSummary summary;
+
+  /// The master switch; only the page that owns the config write path passes it.
+  final ValueChanged<bool>? onToggle;
+  final bool saving;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +63,14 @@ class FilterSummaryCard extends StatelessWidget {
                 DashboardChip(
                   label: l10n.desktopFilterPausedChip,
                   tone: DashboardChipTone.warn,
+                ),
+            ],
+            trailing: [
+              if (onToggle case final toggle?)
+                DashboardSwitch(
+                  value: summary.enabled,
+                  semanticLabel: l10n.desktopFilterSummaryTitle,
+                  onChanged: saving ? null : toggle,
                 ),
             ],
           ),
@@ -109,26 +126,6 @@ class FilterSummaryCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// `1 小时 5 分` — the console's `pauseRemainingText`, rounded down as it does.
-String desktopPauseRemaining(BuildContext context, Duration remaining) {
-  final l10n = context.l10n;
-  final seconds = remaining.inSeconds;
-  if (seconds <= 0) return '';
-  if (seconds >= 86400) {
-    return l10n.desktopFilterPauseDays((seconds / 86400).ceil());
-  }
-  if (seconds >= 3600) {
-    return l10n.desktopFilterPauseHours(
-      seconds ~/ 3600,
-      (seconds % 3600) ~/ 60,
-    );
-  }
-  if (seconds >= 60) {
-    return l10n.desktopFilterPauseMinutes(seconds ~/ 60, seconds % 60);
-  }
-  return l10n.desktopFilterPauseSeconds(seconds);
 }
 
 /// The list itself: header actions, the empty state and the tiles.

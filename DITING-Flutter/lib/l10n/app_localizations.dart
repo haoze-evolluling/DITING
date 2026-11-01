@@ -16207,7 +16207,7 @@ abstract class AppL10n {
   /// No description provided for @desktopFilterPauseTitle.
   ///
   /// In zh, this message translates to:
-  /// **'暂停拦截'**
+  /// **'临时暂停拦截'**
   String get desktopFilterPauseTitle;
 
   /// No description provided for @desktopFilterPaused.
@@ -19155,6 +19155,354 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'提示：每行一条规则，以 ! 开头的行为注释。'**
   String get desktopFilterGuideFooter;
+
+  /// No description provided for @desktopHubFilterConfig.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截方式'**
+  String get desktopHubFilterConfig;
+
+  /// No description provided for @desktopHubFilterConfigBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'应答模式、阻断地址、更新周期、临时暂停与高级拦截'**
+  String get desktopHubFilterConfigBody;
+
+  /// No description provided for @desktopFilterConfigPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截方式'**
+  String get desktopFilterConfigPageTitle;
+
+  /// No description provided for @desktopFilterConfigRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新拦截配置'**
+  String get desktopFilterConfigRefresh;
+
+  /// No description provided for @desktopFilterConfigLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到拦截配置'**
+  String get desktopFilterConfigLoadFailed;
+
+  /// No description provided for @desktopFilterConfigSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存拦截配置失败：{message}'**
+  String desktopFilterConfigSaveFailed(String message);
+
+  /// No description provided for @desktopFilterEngineOnMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则拦截防护已开启'**
+  String get desktopFilterEngineOnMessage;
+
+  /// No description provided for @desktopFilterEngineOffMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则拦截防护已关闭'**
+  String get desktopFilterEngineOffMessage;
+
+  /// No description provided for @desktopFilterModeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截响应处理方式'**
+  String get desktopFilterModeTitle;
+
+  /// No description provided for @desktopFilterModeBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中拦截规则时向客户端返回的应答'**
+  String get desktopFilterModeBody;
+
+  /// No description provided for @desktopFilterModeSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存策略与参数'**
+  String get desktopFilterModeSave;
+
+  /// No description provided for @desktopFilterModeSaving.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存中…'**
+  String get desktopFilterModeSaving;
+
+  /// No description provided for @desktopFilterModeSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截策略配置已保存'**
+  String get desktopFilterModeSaved;
+
+  /// No description provided for @desktopFilterModeParamsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则自动更新与阻断地址'**
+  String get desktopFilterModeParamsTitle;
+
+  /// No description provided for @desktopFilterModeBlockingIPv4.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻断 IPv4 响应地址'**
+  String get desktopFilterModeBlockingIPv4;
+
+  /// No description provided for @desktopFilterModeBlockingIPv6.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻断 IPv6 响应地址'**
+  String get desktopFilterModeBlockingIPv6;
+
+  /// No description provided for @desktopFilterModeInterval.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则库同步周期（小时）'**
+  String get desktopFilterModeInterval;
+
+  /// No description provided for @desktopFilterModeIntervalHelper.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认 24 小时'**
+  String get desktopFilterModeIntervalHelper;
+
+  /// No description provided for @desktopFilterModeInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'同步周期需为正整数，阻断地址不能为空'**
+  String get desktopFilterModeInvalid;
+
+  /// No description provided for @desktopFilterModeNullIp.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即返回空地址（0.0.0.0 / ::）'**
+  String get desktopFilterModeNullIp;
+
+  /// No description provided for @desktopFilterModeNullIpBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'以极速终止广告和弹窗资源加载，不会引起浏览器反复重发请求。'**
+  String get desktopFilterModeNullIpBody;
+
+  /// No description provided for @desktopFilterModeNxdomain.
+  ///
+  /// In zh, this message translates to:
+  /// **'提示域名不存在（NXDOMAIN）'**
+  String get desktopFilterModeNxdomain;
+
+  /// No description provided for @desktopFilterModeNxdomainBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'告知客户端该网址不存在，部分标准网络软件将放弃进一步连接探测。'**
+  String get desktopFilterModeNxdomainBody;
+
+  /// No description provided for @desktopFilterModeRefused.
+  ///
+  /// In zh, this message translates to:
+  /// **'明确拒绝请求（REFUSED）'**
+  String get desktopFilterModeRefused;
+
+  /// No description provided for @desktopFilterModeRefusedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'向客户端返回拒绝码，表示请求被 DNS 防火墙安全策略主动阻止。'**
+  String get desktopFilterModeRefusedBody;
+
+  /// No description provided for @desktopFilterAdvancedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'高级拦截能力'**
+  String get desktopFilterAdvancedTitle;
+
+  /// No description provided for @desktopFilterAdvancedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'针对绕过手法的增强拦截策略，默认关闭，按需开启'**
+  String get desktopFilterAdvancedBody;
+
+  /// No description provided for @desktopFilterAdvancedResponseTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'响应侧别名链深度复检'**
+  String get desktopFilterAdvancedResponseTitle;
+
+  /// No description provided for @desktopFilterAdvancedResponseBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'对上游应答中的 CNAME 目标与 A/AAAA 所属名二次匹配黑名单，拦截「查询域名合法但别名指向黑名单域」的深链绕过；缓存命中的应答同样复检。'**
+  String get desktopFilterAdvancedResponseBody;
+
+  /// No description provided for @desktopFilterAdvancedResponseOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'响应侧别名链复检已开启'**
+  String get desktopFilterAdvancedResponseOn;
+
+  /// No description provided for @desktopFilterAdvancedResponseOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'响应侧别名链复检已关闭'**
+  String get desktopFilterAdvancedResponseOff;
+
+  /// No description provided for @desktopFilterAdvancedAllowlistTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅白名单模式'**
+  String get desktopFilterAdvancedAllowlistTitle;
+
+  /// No description provided for @desktopFilterAdvancedAllowlistBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后仅命中放行规则（@@ 例外）的查询才被放行，其余一律阻断；本地 Hosts / 重写 / 内网域名等本地权威应答不受影响。'**
+  String get desktopFilterAdvancedAllowlistBody;
+
+  /// No description provided for @desktopFilterAdvancedAllowlistWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先确保已配置充分的放行白名单，否则可能造成大面积域名解析失败。'**
+  String get desktopFilterAdvancedAllowlistWarning;
+
+  /// No description provided for @desktopFilterAdvancedAllowlistOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅白名单模式已开启'**
+  String get desktopFilterAdvancedAllowlistOn;
+
+  /// No description provided for @desktopFilterAdvancedAllowlistOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅白名单模式已关闭'**
+  String get desktopFilterAdvancedAllowlistOff;
+
+  /// No description provided for @desktopFilterAdvancedBogusTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'伪应答纠正'**
+  String get desktopFilterAdvancedBogusTitle;
+
+  /// No description provided for @desktopFilterAdvancedBogusBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'部分网络在域名不存在时返回固定的导航或广告页地址；开启后应答地址落在下方清单内即判定为上游劫持，就地改写为 NXDOMAIN。'**
+  String get desktopFilterAdvancedBogusBody;
+
+  /// No description provided for @desktopFilterAdvancedBogusOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'伪应答纠正已开启'**
+  String get desktopFilterAdvancedBogusOn;
+
+  /// No description provided for @desktopFilterAdvancedBogusOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'伪应答纠正已关闭'**
+  String get desktopFilterAdvancedBogusOff;
+
+  /// No description provided for @desktopFilterAdvancedBogusListLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'劫持地址清单（一行一条，支持 IP 与 CIDR 网段）'**
+  String get desktopFilterAdvancedBogusListLabel;
+
+  /// No description provided for @desktopFilterAdvancedBogusSuspicious.
+  ///
+  /// In zh, this message translates to:
+  /// **'以下条目格式可疑，保存时若无法解析将被服务忽略：{entries}'**
+  String desktopFilterAdvancedBogusSuspicious(String entries);
+
+  /// No description provided for @desktopFilterAdvancedBogusPresets.
+  ///
+  /// In zh, this message translates to:
+  /// **'快捷填入：'**
+  String get desktopFilterAdvancedBogusPresets;
+
+  /// No description provided for @desktopFilterAdvancedBogusReset.
+  ///
+  /// In zh, this message translates to:
+  /// **'撤销修改'**
+  String get desktopFilterAdvancedBogusReset;
+
+  /// No description provided for @desktopFilterAdvancedBogusSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存地址清单'**
+  String get desktopFilterAdvancedBogusSave;
+
+  /// No description provided for @desktopFilterAdvancedBogusSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存 {count} 条劫持地址'**
+  String desktopFilterAdvancedBogusSaved(int count);
+
+  /// No description provided for @desktopFilterAdvancedBogusCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'劫持地址清单已清空'**
+  String get desktopFilterAdvancedBogusCleared;
+
+  /// No description provided for @desktopFilterPauseBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在指定时长内整体放行全部查询，到期自动恢复（重启服务亦恢复）。'**
+  String get desktopFilterPauseBody;
+
+  /// No description provided for @desktopFilterPauseDuration.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停时长'**
+  String get desktopFilterPauseDuration;
+
+  /// No description provided for @desktopFilterPauseAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停'**
+  String get desktopFilterPauseAction;
+
+  /// No description provided for @desktopFilterPauseResume.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即恢复拦截'**
+  String get desktopFilterPauseResume;
+
+  /// No description provided for @desktopFilterPauseStarted.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截已暂停'**
+  String get desktopFilterPauseStarted;
+
+  /// No description provided for @desktopFilterPauseResumed.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截已恢复'**
+  String get desktopFilterPauseResumed;
+
+  /// No description provided for @desktopFilterPauseActiveTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截已暂停'**
+  String get desktopFilterPauseActiveTitle;
+
+  /// No description provided for @desktopFilterPauseActiveBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'剩余 {remaining} 后自动恢复拦截'**
+  String desktopFilterPauseActiveBody(String remaining);
+
+  /// No description provided for @desktopFilterPauseMinutesOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'{minutes} 分钟'**
+  String desktopFilterPauseMinutesOnly(int minutes);
+
+  /// No description provided for @desktopFilterPauseOneHour.
+  ///
+  /// In zh, this message translates to:
+  /// **'1 小时'**
+  String get desktopFilterPauseOneHour;
+
+  /// No description provided for @desktopFilterPauseEightHours.
+  ///
+  /// In zh, this message translates to:
+  /// **'8 小时'**
+  String get desktopFilterPauseEightHours;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

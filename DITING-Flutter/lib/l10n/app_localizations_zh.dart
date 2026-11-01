@@ -8869,7 +8869,7 @@ class AppL10nZh extends AppL10n {
   String get desktopTakeoverOff => '未接管';
 
   @override
-  String get desktopFilterPauseTitle => '暂停拦截';
+  String get desktopFilterPauseTitle => '临时暂停拦截';
 
   @override
   String get desktopFilterPaused => '已暂停';
@@ -10505,4 +10505,193 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopFilterGuideFooter => '提示：每行一条规则，以 ! 开头的行为注释。';
+
+  @override
+  String get desktopHubFilterConfig => '拦截方式';
+
+  @override
+  String get desktopHubFilterConfigBody => '应答模式、阻断地址、更新周期、临时暂停与高级拦截';
+
+  @override
+  String get desktopFilterConfigPageTitle => '拦截方式';
+
+  @override
+  String get desktopFilterConfigRefresh => '刷新拦截配置';
+
+  @override
+  String get desktopFilterConfigLoadFailed => '读不到拦截配置';
+
+  @override
+  String desktopFilterConfigSaveFailed(String message) {
+    return '保存拦截配置失败：$message';
+  }
+
+  @override
+  String get desktopFilterEngineOnMessage => '规则拦截防护已开启';
+
+  @override
+  String get desktopFilterEngineOffMessage => '规则拦截防护已关闭';
+
+  @override
+  String get desktopFilterModeTitle => '拦截响应处理方式';
+
+  @override
+  String get desktopFilterModeBody => '命中拦截规则时向客户端返回的应答';
+
+  @override
+  String get desktopFilterModeSave => '保存策略与参数';
+
+  @override
+  String get desktopFilterModeSaving => '保存中…';
+
+  @override
+  String get desktopFilterModeSaved => '拦截策略配置已保存';
+
+  @override
+  String get desktopFilterModeParamsTitle => '规则自动更新与阻断地址';
+
+  @override
+  String get desktopFilterModeBlockingIPv4 => '阻断 IPv4 响应地址';
+
+  @override
+  String get desktopFilterModeBlockingIPv6 => '阻断 IPv6 响应地址';
+
+  @override
+  String get desktopFilterModeInterval => '规则库同步周期（小时）';
+
+  @override
+  String get desktopFilterModeIntervalHelper => '默认 24 小时';
+
+  @override
+  String get desktopFilterModeInvalid => '同步周期需为正整数，阻断地址不能为空';
+
+  @override
+  String get desktopFilterModeNullIp => '立即返回空地址（0.0.0.0 / ::）';
+
+  @override
+  String get desktopFilterModeNullIpBody => '以极速终止广告和弹窗资源加载，不会引起浏览器反复重发请求。';
+
+  @override
+  String get desktopFilterModeNxdomain => '提示域名不存在（NXDOMAIN）';
+
+  @override
+  String get desktopFilterModeNxdomainBody => '告知客户端该网址不存在，部分标准网络软件将放弃进一步连接探测。';
+
+  @override
+  String get desktopFilterModeRefused => '明确拒绝请求（REFUSED）';
+
+  @override
+  String get desktopFilterModeRefusedBody => '向客户端返回拒绝码，表示请求被 DNS 防火墙安全策略主动阻止。';
+
+  @override
+  String get desktopFilterAdvancedTitle => '高级拦截能力';
+
+  @override
+  String get desktopFilterAdvancedBody => '针对绕过手法的增强拦截策略，默认关闭，按需开启';
+
+  @override
+  String get desktopFilterAdvancedResponseTitle => '响应侧别名链深度复检';
+
+  @override
+  String get desktopFilterAdvancedResponseBody =>
+      '对上游应答中的 CNAME 目标与 A/AAAA 所属名二次匹配黑名单，拦截「查询域名合法但别名指向黑名单域」的深链绕过；缓存命中的应答同样复检。';
+
+  @override
+  String get desktopFilterAdvancedResponseOn => '响应侧别名链复检已开启';
+
+  @override
+  String get desktopFilterAdvancedResponseOff => '响应侧别名链复检已关闭';
+
+  @override
+  String get desktopFilterAdvancedAllowlistTitle => '仅白名单模式';
+
+  @override
+  String get desktopFilterAdvancedAllowlistBody =>
+      '开启后仅命中放行规则（@@ 例外）的查询才被放行，其余一律阻断；本地 Hosts / 重写 / 内网域名等本地权威应答不受影响。';
+
+  @override
+  String get desktopFilterAdvancedAllowlistWarning =>
+      '请先确保已配置充分的放行白名单，否则可能造成大面积域名解析失败。';
+
+  @override
+  String get desktopFilterAdvancedAllowlistOn => '仅白名单模式已开启';
+
+  @override
+  String get desktopFilterAdvancedAllowlistOff => '仅白名单模式已关闭';
+
+  @override
+  String get desktopFilterAdvancedBogusTitle => '伪应答纠正';
+
+  @override
+  String get desktopFilterAdvancedBogusBody =>
+      '部分网络在域名不存在时返回固定的导航或广告页地址；开启后应答地址落在下方清单内即判定为上游劫持，就地改写为 NXDOMAIN。';
+
+  @override
+  String get desktopFilterAdvancedBogusOn => '伪应答纠正已开启';
+
+  @override
+  String get desktopFilterAdvancedBogusOff => '伪应答纠正已关闭';
+
+  @override
+  String get desktopFilterAdvancedBogusListLabel =>
+      '劫持地址清单（一行一条，支持 IP 与 CIDR 网段）';
+
+  @override
+  String desktopFilterAdvancedBogusSuspicious(String entries) {
+    return '以下条目格式可疑，保存时若无法解析将被服务忽略：$entries';
+  }
+
+  @override
+  String get desktopFilterAdvancedBogusPresets => '快捷填入：';
+
+  @override
+  String get desktopFilterAdvancedBogusReset => '撤销修改';
+
+  @override
+  String get desktopFilterAdvancedBogusSave => '保存地址清单';
+
+  @override
+  String desktopFilterAdvancedBogusSaved(int count) {
+    return '已保存 $count 条劫持地址';
+  }
+
+  @override
+  String get desktopFilterAdvancedBogusCleared => '劫持地址清单已清空';
+
+  @override
+  String get desktopFilterPauseBody => '在指定时长内整体放行全部查询，到期自动恢复（重启服务亦恢复）。';
+
+  @override
+  String get desktopFilterPauseDuration => '暂停时长';
+
+  @override
+  String get desktopFilterPauseAction => '暂停';
+
+  @override
+  String get desktopFilterPauseResume => '立即恢复拦截';
+
+  @override
+  String get desktopFilterPauseStarted => '拦截已暂停';
+
+  @override
+  String get desktopFilterPauseResumed => '拦截已恢复';
+
+  @override
+  String get desktopFilterPauseActiveTitle => '拦截已暂停';
+
+  @override
+  String desktopFilterPauseActiveBody(String remaining) {
+    return '剩余 $remaining 后自动恢复拦截';
+  }
+
+  @override
+  String desktopFilterPauseMinutesOnly(int minutes) {
+    return '$minutes 分钟';
+  }
+
+  @override
+  String get desktopFilterPauseOneHour => '1 小时';
+
+  @override
+  String get desktopFilterPauseEightHours => '8 小时';
 }
