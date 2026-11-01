@@ -501,6 +501,81 @@ Map<String, Object?> safeBrowsingPayload({
   'blockMode': blockMode,
 };
 
+/// A `GET /api/v1/encrypted/dns/status` payload.
+Map<String, Object?> encryptedPayload({
+  bool enabled = true,
+  bool dotEnabled = true,
+  bool dohEnabled = true,
+  bool doqEnabled = false,
+  bool ddrEnabled = false,
+  String listenAddress = '',
+  int dotPort = 853,
+  int dohPort = 443,
+  int doqPort = 853,
+  String dohPath = '/dns-query',
+  String serverName = 'dns.lan',
+  bool proxyEnabled = false,
+  List<String> proxySources = const [],
+  String proxyHeader = '',
+  bool certLoaded = true,
+  bool selfSigned = true,
+  bool certExpiresSoon = false,
+  bool certExpired = false,
+  bool unrestrictedTrust = false,
+  String dotListen = '192.168.1.10:853',
+  String dohListen = '192.168.1.10:443',
+}) => {
+  'config': {
+    'enabled': enabled,
+    'dotEnabled': dotEnabled,
+    'dohEnabled': dohEnabled,
+    'doqEnabled': doqEnabled,
+    'ddrEnabled': ddrEnabled,
+    'listenAddress': listenAddress,
+    'dotPort': dotPort,
+    'dohPort': dohPort,
+    'doqPort': doqPort,
+    'dohPath': dohPath,
+    'serverName': serverName,
+    'cert': {
+      'keyType': 'ecdsa',
+      'commonName': serverName,
+      'dnsNames': [serverName],
+      'ipAddresses': ['192.168.1.10'],
+      'validDays': 365,
+    },
+    'reverseProxy': {
+      'enabled': proxyEnabled,
+      'trustedSources': proxySources,
+      'clientIpHeader': proxyHeader,
+    },
+  },
+  'cert': {
+    'source': 'self-signed',
+    'subject': 'CN=$serverName',
+    'issuer': 'CN=$serverName',
+    'notAfter': '2027-01-01T00:00:00Z',
+    'dnsNames': [serverName],
+    'ipAddresses': ['192.168.1.10'],
+    'daysRemaining': 300,
+    'fingerprint': 'AA:BB:CC',
+    'loaded': certLoaded,
+    'selfSigned': selfSigned,
+  },
+  'certDir': 'C:/certs',
+  'defaultDotPort': 853,
+  'defaultDohPort': 443,
+  'defaultDoqPort': 853,
+  'defaultDohPath': '/dns-query',
+  'dotListen': dotListen,
+  'dohListen': dohListen,
+  'doqListen': '',
+  'dohUrls': ['https://$serverName/dns-query'],
+  'unrestrictedTrust': unrestrictedTrust,
+  'certExpiresSoon': certExpiresSoon,
+  'certExpired': certExpired,
+};
+
 /// Records the paths it was asked for, and can be told to fail after [failAfter] requests to model
 /// a service that drops while the window is open.
 class FakeDesktopBackend {
@@ -528,6 +603,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? services,
     Map<String, Object?>? safeSearch,
     Map<String, Object?>? safeBrowsing,
+    Map<String, Object?>? encrypted,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -556,6 +632,7 @@ class FakeDesktopBackend {
        services = services ?? servicesPayload(),
        safeSearch = safeSearch ?? safeSearchPayload(),
        safeBrowsing = safeBrowsing ?? safeBrowsingPayload(),
+       encrypted = encrypted ?? encryptedPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -633,6 +710,14 @@ class FakeDesktopBackend {
 
   /// Bodies of every service-selection save, in order.
   final servicesUpdates = <Map<String, Object?>>[];
+
+  /// Mutated by the encrypted-DNS configure / certificate calls.
+  Map<String, Object?> encrypted;
+
+  /// Bodies of every encrypted-DNS save, certificate generation and import, in order.
+  final encryptedUpdates = <Map<String, Object?>>[];
+  final certGenerations = <Map<String, Object?>>[];
+  final certImports = <Map<String, Object?>>[];
 
   /// Mutated by the safe-search and reputation saves.
   Map<String, Object?> safeSearch;
@@ -792,6 +877,34 @@ class FakeDesktopBackend {
                 item.cast<String, Object?>(),
           ],
         };
+      }
+      if (path == '/api/v1/encrypted/dns/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        encryptedUpdates.add(body);
+        final config = {...(encrypted['config'] as Map? ?? const {})};
+        for (final entry in body.entries) {
+          if (entry.key == 'reverseProxy' && entry.value is Map) {
+            config['reverseProxy'] = {
+              ...(config['reverseProxy'] as Map? ?? const {}),
+              ...(entry.value as Map).cast<String, Object?>(),
+            };
+          } else {
+            config[entry.key] = entry.value;
+          }
+        }
+        encrypted = {...encrypted, 'config': config};
+      }
+      if (path == '/api/v1/encrypted/dns/cert/generate' &&
+          request.method == 'POST') {
+        certGenerations.add(
+          (jsonDecode(request.body) as Map).cast<String, Object?>(),
+        );
+      }
+      if (path == '/api/v1/encrypted/dns/cert/import' &&
+          request.method == 'POST') {
+        certImports.add(
+          (jsonDecode(request.body) as Map).cast<String, Object?>(),
+        );
       }
       if (path == '/api/v1/safesearch/config' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
@@ -1018,6 +1131,18 @@ class FakeDesktopBackend {
         '/api/v1/safesearch/config' => utf8Json(apiEnvelope(safeSearch)),
         '/api/v1/filter/safebrowsing' => utf8Json(
           apiEnvelope(safeBrowsing),
+        ),
+        '/api/v1/encrypted/dns/status' => utf8Json(
+          apiEnvelope(encrypted),
+        ),
+        '/api/v1/encrypted/dns/configure' => utf8Json(
+          apiEnvelope(encrypted),
+        ),
+        '/api/v1/encrypted/dns/cert/generate' => utf8Json(
+          apiEnvelope(encrypted),
+        ),
+        '/api/v1/encrypted/dns/cert/import' => utf8Json(
+          apiEnvelope(encrypted),
         ),
         '/api/v1/dns/zone/config' => http.Response(
           jsonEncode(apiEnvelope(zone)),

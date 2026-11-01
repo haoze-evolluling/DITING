@@ -11,6 +11,7 @@ import 'dart:convert';
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_cache_models.dart';
 import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
+import 'package:diting/desktop/data/api/desktop_encrypted_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_models.dart';
 import 'package:diting/desktop/data/api/desktop_privacy_models.dart';
@@ -384,6 +385,40 @@ class DesktopApiClient {
   ) async => DesktopSafeBrowsing.fromJson(
     await _postData('/api/v1/filter/safebrowsing', body: patch),
   );
+
+  Future<DesktopEncryptedStatus> encryptedStatus() async =>
+      DesktopEncryptedStatus.fromJson(
+        await _get('/api/v1/encrypted/dns/status'),
+      );
+
+  /// The service merges the patch and answers with the normalised status.
+  Future<DesktopEncryptedStatus> configureEncryptedDns(
+    Map<String, Object?> patch,
+  ) async => DesktopEncryptedStatus.fromJson(
+    await _postData('/api/v1/encrypted/dns/configure', body: patch),
+  );
+
+  Future<DesktopEncryptedStatus> generateEncryptedCert(
+    Map<String, Object?> params,
+  ) async => DesktopEncryptedStatus.fromJson(
+    await _postData('/api/v1/encrypted/dns/cert/generate', body: params),
+  );
+
+  Future<DesktopEncryptedStatus> importEncryptedCert({
+    required String certPem,
+    required String keyPem,
+  }) async => DesktopEncryptedStatus.fromJson(
+    await _postData(
+      '/api/v1/encrypted/dns/cert/import',
+      body: {'mode': 'pem', 'certPem': certPem, 'keyPem': keyPem},
+    ),
+  );
+
+  /// The mobile configuration profile is served as a file and authenticates by query token, because
+  /// a device opening the link cannot send a custom header.
+  Uri mobileConfigUri() => _config.uri('/api/v1/encrypted/mobileconfig', {
+    if (_config.token.isNotEmpty) 'token': _config.token,
+  });
 
   /// The built-in catalogue plus the current selection and plans.
   Future<DesktopBlockedServices> blockedServices() async =>

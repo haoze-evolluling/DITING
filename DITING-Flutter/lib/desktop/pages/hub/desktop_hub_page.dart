@@ -9,6 +9,7 @@ library;
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/pages/hub/desktop_cache_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_dns64_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_encrypted_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_config_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_lists_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_rules_page.dart';
@@ -132,6 +133,13 @@ class DesktopFeatureHubPage extends StatelessWidget {
                       _entry(
                         context,
                         glyph: AppGlyphs.lock,
+                        title: l10n.desktopHubEncrypted,
+                        body: l10n.desktopHubEncryptedBody,
+                        path: DesktopEncryptedPage.path,
+                      ),
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.key,
                         title: l10n.desktopHubPrivacy,
                         body: l10n.desktopHubPrivacyBody,
                         path: DesktopPrivacyPage.path,

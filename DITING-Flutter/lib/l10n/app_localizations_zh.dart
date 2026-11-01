@@ -11322,4 +11322,328 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopParentalOff => '家长控制已关闭';
+
+  @override
+  String get desktopHubEncrypted => '加密 DNS 服务';
+
+  @override
+  String get desktopHubEncryptedBody => '以 DoT / DoH / DoQ 向局域网提供加密解析，含证书与 DDR';
+
+  @override
+  String get desktopEncryptedPageTitle => '加密 DNS 服务';
+
+  @override
+  String get desktopEncryptedRefresh => '刷新加密 DNS 状态';
+
+  @override
+  String get desktopEncryptedLoadFailed => '读不到加密 DNS 服务状态';
+
+  @override
+  String desktopEncryptedSaveFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String get desktopEncryptedListenersTitle => '加密 DNS 服务';
+
+  @override
+  String get desktopEncryptedListenersBody =>
+      '在局域网内以 DoT / DoH / DoQ 提供解析，终端无需明文查询';
+
+  @override
+  String get desktopEncryptedEnabled => '已启用';
+
+  @override
+  String get desktopEncryptedDisabled => '未启用';
+
+  @override
+  String get desktopEncryptedOn => '加密 DNS 服务已开启';
+
+  @override
+  String get desktopEncryptedOff => '加密 DNS 服务已关闭';
+
+  @override
+  String get desktopEncryptedNoProtocol => '服务总开关已打开，但三种协议都没选中，因此不会有任何监听。';
+
+  @override
+  String get desktopEncryptedDot => 'DoT · DNS over TLS';
+
+  @override
+  String desktopEncryptedDotBody(int port) {
+    return '端口 $port，客户端用 tls:// 连接';
+  }
+
+  @override
+  String get desktopEncryptedDoh => 'DoH · DNS over HTTPS';
+
+  @override
+  String desktopEncryptedDohBody(int port, String path) {
+    return '端口 $port，路径 $path';
+  }
+
+  @override
+  String get desktopEncryptedDoq => 'DoQ · DNS over QUIC';
+
+  @override
+  String desktopEncryptedDoqBody(int port) {
+    return '端口 $port，UDP 上的加密解析';
+  }
+
+  @override
+  String desktopEncryptedListening(String address) {
+    return '正在监听 $address';
+  }
+
+  @override
+  String get desktopEncryptedNotListening => '未在监听（服务未启动、证书不可用或端口被占用）';
+
+  @override
+  String get desktopEncryptedDotOn => 'DoT 已启用';
+
+  @override
+  String get desktopEncryptedDotOff => 'DoT 已停用';
+
+  @override
+  String get desktopEncryptedDohOn => 'DoH 已启用';
+
+  @override
+  String get desktopEncryptedDohOff => 'DoH 已停用';
+
+  @override
+  String get desktopEncryptedDoqOn => 'DoQ 已启用';
+
+  @override
+  String get desktopEncryptedDoqOff => 'DoQ 已停用';
+
+  @override
+  String get desktopEncryptedUrls => '客户端填写以下任一地址即可使用：';
+
+  @override
+  String get desktopEncryptedNetworkTitle => '监听参数';
+
+  @override
+  String get desktopEncryptedListenAddress => '监听地址';
+
+  @override
+  String get desktopEncryptedListenHint => '留空表示全部网卡';
+
+  @override
+  String get desktopEncryptedServerName => '服务器名（客户端连接用）';
+
+  @override
+  String get desktopEncryptedDotPort => 'DoT 端口';
+
+  @override
+  String get desktopEncryptedDohPort => 'DoH 端口';
+
+  @override
+  String get desktopEncryptedDoqPort => 'DoQ 端口';
+
+  @override
+  String get desktopEncryptedDohPath => 'DoH 路径';
+
+  @override
+  String get desktopEncryptedServerNameHint =>
+      '服务器名会被写进证书的 SAN，终端按它连接才不会报证书错误。';
+
+  @override
+  String get desktopEncryptedPortInvalid => '端口需为 1–65535 的整数';
+
+  @override
+  String get desktopEncryptedReset => '恢复默认';
+
+  @override
+  String get desktopEncryptedSaveNetwork => '保存';
+
+  @override
+  String get desktopEncryptedNetworkSaved => '监听参数已保存';
+
+  @override
+  String get desktopEncryptedCertTitle => '服务端证书';
+
+  @override
+  String get desktopEncryptedCertBody => '服务端 TLS 证书的摘要；私钥不会离开本机';
+
+  @override
+  String get desktopEncryptedCertSelfSigned => '自签证书';
+
+  @override
+  String get desktopEncryptedCertLoaded => '已载入';
+
+  @override
+  String get desktopEncryptedCertMissing => '未载入';
+
+  @override
+  String get desktopEncryptedCertExpired =>
+      '服务端证书已过期：客户端 TLS 握手会全部失败。请立即重新签发或导入有效证书。';
+
+  @override
+  String get desktopEncryptedCertExpiresSoon =>
+      '服务端自签证书将在 30 天内到期。到期后所有加密查询都会握手失败，建议尽早重新签发。';
+
+  @override
+  String get desktopEncryptedCertMissingBody => '尚未配置可用证书，加密监听无法启动。';
+
+  @override
+  String get desktopEncryptedCertSubject => '主体';
+
+  @override
+  String get desktopEncryptedCertIssuer => '签发者';
+
+  @override
+  String get desktopEncryptedCertNotAfter => '有效期至';
+
+  @override
+  String get desktopEncryptedCertDays => '剩余天数';
+
+  @override
+  String desktopEncryptedCertDaysValue(int days) {
+    return '$days 天';
+  }
+
+  @override
+  String get desktopEncryptedCertDns => '覆盖域名';
+
+  @override
+  String get desktopEncryptedCertIps => '覆盖 IP';
+
+  @override
+  String desktopEncryptedCertFingerprint(String fingerprint) {
+    return 'SHA-256：$fingerprint';
+  }
+
+  @override
+  String desktopEncryptedCertDir(String dir) {
+    return '证书目录：$dir';
+  }
+
+  @override
+  String get desktopEncryptedCertGenerate => '重新签发';
+
+  @override
+  String get desktopEncryptedCertImport => '导入 PEM';
+
+  @override
+  String get desktopEncryptedCertGenerated => '证书已生成';
+
+  @override
+  String get desktopEncryptedCertImported => '证书已导入';
+
+  @override
+  String get desktopEncryptedCertGenerateTitle => '生成自签证书';
+
+  @override
+  String get desktopEncryptedCertGenerateBody => '覆盖性动作：已信任旧证书的客户端将全部失效。';
+
+  @override
+  String get desktopEncryptedCertKeyType => '密钥类型';
+
+  @override
+  String get desktopEncryptedCertCommonName => '通用名（CN）';
+
+  @override
+  String get desktopEncryptedCertDnsNames => 'SAN 域名（每行一个）';
+
+  @override
+  String get desktopEncryptedCertIpAddresses => 'SAN IP（每行一个）';
+
+  @override
+  String get desktopEncryptedCertValidDays => '有效期（天）';
+
+  @override
+  String get desktopEncryptedCertGenerateConfirm => '生成';
+
+  @override
+  String get desktopEncryptedCertImportTitle => '导入 PEM 证书';
+
+  @override
+  String get desktopEncryptedCertImportBody => '粘贴证书链与私钥 PEM 文本，两者必须匹配。';
+
+  @override
+  String get desktopEncryptedCertPem => '证书链 PEM';
+
+  @override
+  String get desktopEncryptedKeyPem => '私钥 PEM';
+
+  @override
+  String get desktopEncryptedCertImportConfirm => '导入';
+
+  @override
+  String get desktopEncryptedCertImportInvalid => '证书与私钥都不能为空';
+
+  @override
+  String get desktopEncryptedExtrasTitle => '发现与代理';
+
+  @override
+  String get desktopEncryptedExtrasBody => '客户端自动发现、反向代理信任与移动端描述文件';
+
+  @override
+  String get desktopEncryptedDdrTitle => '指定解析器发现（DDR）';
+
+  @override
+  String get desktopEncryptedDdrBody =>
+      '应答 _dns.resolver.arpa 探测，让终端自动发现本机的加密解析入口。';
+
+  @override
+  String get desktopEncryptedDdrSelfSignedWarning =>
+      '当前是自签证书：终端若未预先信任它，开启 DDR 会直接失去 DNS 解析。';
+
+  @override
+  String get desktopEncryptedDdrConfirmTitle => '确认开启 DDR？';
+
+  @override
+  String get desktopEncryptedDdrConfirmBody =>
+      'DDR 会让客户端自动切换解析入口；证书不被信任时，这一步等于让客户端失去 DNS。';
+
+  @override
+  String get desktopEncryptedDdrConfirm => '仍要开启';
+
+  @override
+  String get desktopEncryptedDdrOn => 'DDR 已开启';
+
+  @override
+  String get desktopEncryptedDdrOff => 'DDR 已关闭';
+
+  @override
+  String get desktopEncryptedProxyTitle => '反向代理透传';
+
+  @override
+  String get desktopEncryptedProxyBody =>
+      '仅当 DoH 确实位于自己掌握的反向代理之后才开启；开启后会采信转发头。';
+
+  @override
+  String get desktopEncryptedProxyUnrestricted =>
+      '可信来源包含 0.0.0.0/0 或 ::/0：任何人都能伪造来源地址。';
+
+  @override
+  String get desktopEncryptedProxyOn => '反向代理透传已开启';
+
+  @override
+  String get desktopEncryptedProxyOff => '反向代理透传已关闭';
+
+  @override
+  String get desktopEncryptedProxySources => '可信代理来源（每行一个 IP 或 CIDR）';
+
+  @override
+  String get desktopEncryptedProxyHeader =>
+      '自定义转发头（留空则依次尝试 X-Forwarded-For 与 X-Real-IP）';
+
+  @override
+  String get desktopEncryptedProxySave => '保存代理配置';
+
+  @override
+  String get desktopEncryptedProxySaved => '反向代理配置已保存';
+
+  @override
+  String get desktopEncryptedMobileConfigTitle => '移动端描述文件';
+
+  @override
+  String get desktopEncryptedMobileConfigBody =>
+      '在设备上打开该链接即可安装包含本机加密 DNS 的描述文件。';
+
+  @override
+  String get desktopEncryptedMobileConfigOpen => '打开描述文件';
+
+  @override
+  String get desktopEncryptedOpenUrl => '在浏览器中打开';
 }

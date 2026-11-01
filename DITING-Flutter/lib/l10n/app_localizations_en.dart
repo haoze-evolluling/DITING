@@ -12028,4 +12028,344 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopParentalOff => 'Parental control is off';
+
+  @override
+  String get desktopHubEncrypted => 'Encrypted DNS';
+
+  @override
+  String get desktopHubEncryptedBody =>
+      'Serve DoT / DoH / DoQ to the LAN, with a certificate and DDR';
+
+  @override
+  String get desktopEncryptedPageTitle => 'Encrypted DNS server';
+
+  @override
+  String get desktopEncryptedRefresh => 'Reload the encrypted DNS status';
+
+  @override
+  String get desktopEncryptedLoadFailed =>
+      'Could not read the encrypted DNS status';
+
+  @override
+  String desktopEncryptedSaveFailed(String message) {
+    return 'The action failed: $message';
+  }
+
+  @override
+  String get desktopEncryptedListenersTitle => 'Encrypted DNS server';
+
+  @override
+  String get desktopEncryptedListenersBody =>
+      'Serves DoT / DoH / DoQ on the LAN so clients never query in cleartext';
+
+  @override
+  String get desktopEncryptedEnabled => 'Enabled';
+
+  @override
+  String get desktopEncryptedDisabled => 'Off';
+
+  @override
+  String get desktopEncryptedOn => 'The encrypted DNS server is on';
+
+  @override
+  String get desktopEncryptedOff => 'The encrypted DNS server is off';
+
+  @override
+  String get desktopEncryptedNoProtocol =>
+      'The server is on but none of the three protocols is selected, so nothing is listening.';
+
+  @override
+  String get desktopEncryptedDot => 'DoT · DNS over TLS';
+
+  @override
+  String desktopEncryptedDotBody(int port) {
+    return 'Port $port; clients connect with tls://';
+  }
+
+  @override
+  String get desktopEncryptedDoh => 'DoH · DNS over HTTPS';
+
+  @override
+  String desktopEncryptedDohBody(int port, String path) {
+    return 'Port $port, path $path';
+  }
+
+  @override
+  String get desktopEncryptedDoq => 'DoQ · DNS over QUIC';
+
+  @override
+  String desktopEncryptedDoqBody(int port) {
+    return 'Port $port; encrypted DNS over UDP';
+  }
+
+  @override
+  String desktopEncryptedListening(String address) {
+    return 'Listening on $address';
+  }
+
+  @override
+  String get desktopEncryptedNotListening =>
+      'Not listening (service stopped, certificate unusable or port taken)';
+
+  @override
+  String get desktopEncryptedDotOn => 'DoT is on';
+
+  @override
+  String get desktopEncryptedDotOff => 'DoT is off';
+
+  @override
+  String get desktopEncryptedDohOn => 'DoH is on';
+
+  @override
+  String get desktopEncryptedDohOff => 'DoH is off';
+
+  @override
+  String get desktopEncryptedDoqOn => 'DoQ is on';
+
+  @override
+  String get desktopEncryptedDoqOff => 'DoQ is off';
+
+  @override
+  String get desktopEncryptedUrls => 'A client can use any of these addresses:';
+
+  @override
+  String get desktopEncryptedNetworkTitle => 'Listener parameters';
+
+  @override
+  String get desktopEncryptedListenAddress => 'Listen address';
+
+  @override
+  String get desktopEncryptedListenHint => 'Empty means every interface';
+
+  @override
+  String get desktopEncryptedServerName => 'Server name (for clients)';
+
+  @override
+  String get desktopEncryptedDotPort => 'DoT port';
+
+  @override
+  String get desktopEncryptedDohPort => 'DoH port';
+
+  @override
+  String get desktopEncryptedDoqPort => 'DoQ port';
+
+  @override
+  String get desktopEncryptedDohPath => 'DoH path';
+
+  @override
+  String get desktopEncryptedServerNameHint =>
+      'The server name goes into the certificate SAN; clients connecting by it will not see a name error.';
+
+  @override
+  String get desktopEncryptedPortInvalid =>
+      'A port must be a whole number from 1 to 65535';
+
+  @override
+  String get desktopEncryptedReset => 'Reset to defaults';
+
+  @override
+  String get desktopEncryptedSaveNetwork => 'Save';
+
+  @override
+  String get desktopEncryptedNetworkSaved =>
+      'The listener parameters were saved';
+
+  @override
+  String get desktopEncryptedCertTitle => 'Server certificate';
+
+  @override
+  String get desktopEncryptedCertBody =>
+      'A summary of the TLS certificate; the private key never leaves this machine';
+
+  @override
+  String get desktopEncryptedCertSelfSigned => 'Self-signed';
+
+  @override
+  String get desktopEncryptedCertLoaded => 'Loaded';
+
+  @override
+  String get desktopEncryptedCertMissing => 'Not loaded';
+
+  @override
+  String get desktopEncryptedCertExpired =>
+      'The certificate has expired: every client TLS handshake will fail. Re-issue or import a valid one now.';
+
+  @override
+  String get desktopEncryptedCertExpiresSoon =>
+      'The self-signed certificate expires within 30 days; every encrypted query will then fail its handshake. Re-issue it soon.';
+
+  @override
+  String get desktopEncryptedCertMissingBody =>
+      'No usable certificate is configured, so the encrypted listeners cannot start.';
+
+  @override
+  String get desktopEncryptedCertSubject => 'Subject';
+
+  @override
+  String get desktopEncryptedCertIssuer => 'Issuer';
+
+  @override
+  String get desktopEncryptedCertNotAfter => 'Valid until';
+
+  @override
+  String get desktopEncryptedCertDays => 'Days left';
+
+  @override
+  String desktopEncryptedCertDaysValue(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get desktopEncryptedCertDns => 'DNS names';
+
+  @override
+  String get desktopEncryptedCertIps => 'IP addresses';
+
+  @override
+  String desktopEncryptedCertFingerprint(String fingerprint) {
+    return 'SHA-256: $fingerprint';
+  }
+
+  @override
+  String desktopEncryptedCertDir(String dir) {
+    return 'Certificate directory: $dir';
+  }
+
+  @override
+  String get desktopEncryptedCertGenerate => 'Re-issue';
+
+  @override
+  String get desktopEncryptedCertImport => 'Import PEM';
+
+  @override
+  String get desktopEncryptedCertGenerated => 'The certificate was generated';
+
+  @override
+  String get desktopEncryptedCertImported => 'The certificate was imported';
+
+  @override
+  String get desktopEncryptedCertGenerateTitle =>
+      'Generate a self-signed certificate';
+
+  @override
+  String get desktopEncryptedCertGenerateBody =>
+      'This replaces the current certificate: every client that trusted the old one will stop working.';
+
+  @override
+  String get desktopEncryptedCertKeyType => 'Key type';
+
+  @override
+  String get desktopEncryptedCertCommonName => 'Common name (CN)';
+
+  @override
+  String get desktopEncryptedCertDnsNames => 'SAN DNS names (one per line)';
+
+  @override
+  String get desktopEncryptedCertIpAddresses => 'SAN IPs (one per line)';
+
+  @override
+  String get desktopEncryptedCertValidDays => 'Valid for (days)';
+
+  @override
+  String get desktopEncryptedCertGenerateConfirm => 'Generate';
+
+  @override
+  String get desktopEncryptedCertImportTitle => 'Import a PEM certificate';
+
+  @override
+  String get desktopEncryptedCertImportBody =>
+      'Paste the certificate chain and the private key; the two must match.';
+
+  @override
+  String get desktopEncryptedCertPem => 'Certificate chain PEM';
+
+  @override
+  String get desktopEncryptedKeyPem => 'Private key PEM';
+
+  @override
+  String get desktopEncryptedCertImportConfirm => 'Import';
+
+  @override
+  String get desktopEncryptedCertImportInvalid =>
+      'Both the certificate and the key are required';
+
+  @override
+  String get desktopEncryptedExtrasTitle => 'Discovery and proxy';
+
+  @override
+  String get desktopEncryptedExtrasBody =>
+      'Client auto-discovery, reverse-proxy trust and the mobile profile';
+
+  @override
+  String get desktopEncryptedDdrTitle =>
+      'Discovery of designated resolver (DDR)';
+
+  @override
+  String get desktopEncryptedDdrBody =>
+      'Answers _dns.resolver.arpa probes so clients find this encrypted resolver on their own.';
+
+  @override
+  String get desktopEncryptedDdrSelfSignedWarning =>
+      'The certificate is self-signed: a client that does not already trust it loses DNS entirely when DDR is on.';
+
+  @override
+  String get desktopEncryptedDdrConfirmTitle => 'Turn DDR on?';
+
+  @override
+  String get desktopEncryptedDdrConfirmBody =>
+      'DDR makes clients switch their resolver automatically; if the certificate is not trusted, that means no DNS at all.';
+
+  @override
+  String get desktopEncryptedDdrConfirm => 'Turn it on anyway';
+
+  @override
+  String get desktopEncryptedDdrOn => 'DDR is on';
+
+  @override
+  String get desktopEncryptedDdrOff => 'DDR is off';
+
+  @override
+  String get desktopEncryptedProxyTitle => 'Reverse-proxy pass-through';
+
+  @override
+  String get desktopEncryptedProxyBody =>
+      'Only enable this when DoH really sits behind a proxy you control; forwarded headers are trusted once it is on.';
+
+  @override
+  String get desktopEncryptedProxyUnrestricted =>
+      'A trusted source is 0.0.0.0/0 or ::/0: anyone can forge the source address.';
+
+  @override
+  String get desktopEncryptedProxyOn => 'Reverse-proxy pass-through is on';
+
+  @override
+  String get desktopEncryptedProxyOff => 'Reverse-proxy pass-through is off';
+
+  @override
+  String get desktopEncryptedProxySources =>
+      'Trusted proxy sources (one IP or CIDR per line)';
+
+  @override
+  String get desktopEncryptedProxyHeader =>
+      'Custom forwarding header (empty tries X-Forwarded-For then X-Real-IP)';
+
+  @override
+  String get desktopEncryptedProxySave => 'Save the proxy config';
+
+  @override
+  String get desktopEncryptedProxySaved => 'The reverse-proxy config was saved';
+
+  @override
+  String get desktopEncryptedMobileConfigTitle =>
+      'Mobile configuration profile';
+
+  @override
+  String get desktopEncryptedMobileConfigBody =>
+      'Opening this link on a device installs a profile that points it at this encrypted resolver.';
+
+  @override
+  String get desktopEncryptedMobileConfigOpen => 'Open the profile';
+
+  @override
+  String get desktopEncryptedOpenUrl => 'Open in browser';
 }

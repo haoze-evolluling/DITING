@@ -20643,6 +20643,600 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'家长控制已关闭'**
   String get desktopParentalOff;
+
+  /// No description provided for @desktopHubEncrypted.
+  ///
+  /// In zh, this message translates to:
+  /// **'加密 DNS 服务'**
+  String get desktopHubEncrypted;
+
+  /// No description provided for @desktopHubEncryptedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'以 DoT / DoH / DoQ 向局域网提供加密解析，含证书与 DDR'**
+  String get desktopHubEncryptedBody;
+
+  /// No description provided for @desktopEncryptedPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'加密 DNS 服务'**
+  String get desktopEncryptedPageTitle;
+
+  /// No description provided for @desktopEncryptedRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新加密 DNS 状态'**
+  String get desktopEncryptedRefresh;
+
+  /// No description provided for @desktopEncryptedLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到加密 DNS 服务状态'**
+  String get desktopEncryptedLoadFailed;
+
+  /// No description provided for @desktopEncryptedSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopEncryptedSaveFailed(String message);
+
+  /// No description provided for @desktopEncryptedListenersTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'加密 DNS 服务'**
+  String get desktopEncryptedListenersTitle;
+
+  /// No description provided for @desktopEncryptedListenersBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在局域网内以 DoT / DoH / DoQ 提供解析，终端无需明文查询'**
+  String get desktopEncryptedListenersBody;
+
+  /// No description provided for @desktopEncryptedEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已启用'**
+  String get desktopEncryptedEnabled;
+
+  /// No description provided for @desktopEncryptedDisabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'未启用'**
+  String get desktopEncryptedDisabled;
+
+  /// No description provided for @desktopEncryptedOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'加密 DNS 服务已开启'**
+  String get desktopEncryptedOn;
+
+  /// No description provided for @desktopEncryptedOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'加密 DNS 服务已关闭'**
+  String get desktopEncryptedOff;
+
+  /// No description provided for @desktopEncryptedNoProtocol.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务总开关已打开，但三种协议都没选中，因此不会有任何监听。'**
+  String get desktopEncryptedNoProtocol;
+
+  /// No description provided for @desktopEncryptedDot.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoT · DNS over TLS'**
+  String get desktopEncryptedDot;
+
+  /// No description provided for @desktopEncryptedDotBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口 {port}，客户端用 tls:// 连接'**
+  String desktopEncryptedDotBody(int port);
+
+  /// No description provided for @desktopEncryptedDoh.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoH · DNS over HTTPS'**
+  String get desktopEncryptedDoh;
+
+  /// No description provided for @desktopEncryptedDohBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口 {port}，路径 {path}'**
+  String desktopEncryptedDohBody(int port, String path);
+
+  /// No description provided for @desktopEncryptedDoq.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoQ · DNS over QUIC'**
+  String get desktopEncryptedDoq;
+
+  /// No description provided for @desktopEncryptedDoqBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口 {port}，UDP 上的加密解析'**
+  String desktopEncryptedDoqBody(int port);
+
+  /// No description provided for @desktopEncryptedListening.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在监听 {address}'**
+  String desktopEncryptedListening(String address);
+
+  /// No description provided for @desktopEncryptedNotListening.
+  ///
+  /// In zh, this message translates to:
+  /// **'未在监听（服务未启动、证书不可用或端口被占用）'**
+  String get desktopEncryptedNotListening;
+
+  /// No description provided for @desktopEncryptedDotOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoT 已启用'**
+  String get desktopEncryptedDotOn;
+
+  /// No description provided for @desktopEncryptedDotOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoT 已停用'**
+  String get desktopEncryptedDotOff;
+
+  /// No description provided for @desktopEncryptedDohOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoH 已启用'**
+  String get desktopEncryptedDohOn;
+
+  /// No description provided for @desktopEncryptedDohOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoH 已停用'**
+  String get desktopEncryptedDohOff;
+
+  /// No description provided for @desktopEncryptedDoqOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoQ 已启用'**
+  String get desktopEncryptedDoqOn;
+
+  /// No description provided for @desktopEncryptedDoqOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoQ 已停用'**
+  String get desktopEncryptedDoqOff;
+
+  /// No description provided for @desktopEncryptedUrls.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端填写以下任一地址即可使用：'**
+  String get desktopEncryptedUrls;
+
+  /// No description provided for @desktopEncryptedNetworkTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'监听参数'**
+  String get desktopEncryptedNetworkTitle;
+
+  /// No description provided for @desktopEncryptedListenAddress.
+  ///
+  /// In zh, this message translates to:
+  /// **'监听地址'**
+  String get desktopEncryptedListenAddress;
+
+  /// No description provided for @desktopEncryptedListenHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'留空表示全部网卡'**
+  String get desktopEncryptedListenHint;
+
+  /// No description provided for @desktopEncryptedServerName.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器名（客户端连接用）'**
+  String get desktopEncryptedServerName;
+
+  /// No description provided for @desktopEncryptedDotPort.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoT 端口'**
+  String get desktopEncryptedDotPort;
+
+  /// No description provided for @desktopEncryptedDohPort.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoH 端口'**
+  String get desktopEncryptedDohPort;
+
+  /// No description provided for @desktopEncryptedDoqPort.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoQ 端口'**
+  String get desktopEncryptedDoqPort;
+
+  /// No description provided for @desktopEncryptedDohPath.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoH 路径'**
+  String get desktopEncryptedDohPath;
+
+  /// No description provided for @desktopEncryptedServerNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器名会被写进证书的 SAN，终端按它连接才不会报证书错误。'**
+  String get desktopEncryptedServerNameHint;
+
+  /// No description provided for @desktopEncryptedPortInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口需为 1–65535 的整数'**
+  String get desktopEncryptedPortInvalid;
+
+  /// No description provided for @desktopEncryptedReset.
+  ///
+  /// In zh, this message translates to:
+  /// **'恢复默认'**
+  String get desktopEncryptedReset;
+
+  /// No description provided for @desktopEncryptedSaveNetwork.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get desktopEncryptedSaveNetwork;
+
+  /// No description provided for @desktopEncryptedNetworkSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'监听参数已保存'**
+  String get desktopEncryptedNetworkSaved;
+
+  /// No description provided for @desktopEncryptedCertTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务端证书'**
+  String get desktopEncryptedCertTitle;
+
+  /// No description provided for @desktopEncryptedCertBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务端 TLS 证书的摘要；私钥不会离开本机'**
+  String get desktopEncryptedCertBody;
+
+  /// No description provided for @desktopEncryptedCertSelfSigned.
+  ///
+  /// In zh, this message translates to:
+  /// **'自签证书'**
+  String get desktopEncryptedCertSelfSigned;
+
+  /// No description provided for @desktopEncryptedCertLoaded.
+  ///
+  /// In zh, this message translates to:
+  /// **'已载入'**
+  String get desktopEncryptedCertLoaded;
+
+  /// No description provided for @desktopEncryptedCertMissing.
+  ///
+  /// In zh, this message translates to:
+  /// **'未载入'**
+  String get desktopEncryptedCertMissing;
+
+  /// No description provided for @desktopEncryptedCertExpired.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务端证书已过期：客户端 TLS 握手会全部失败。请立即重新签发或导入有效证书。'**
+  String get desktopEncryptedCertExpired;
+
+  /// No description provided for @desktopEncryptedCertExpiresSoon.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务端自签证书将在 30 天内到期。到期后所有加密查询都会握手失败，建议尽早重新签发。'**
+  String get desktopEncryptedCertExpiresSoon;
+
+  /// No description provided for @desktopEncryptedCertMissingBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未配置可用证书，加密监听无法启动。'**
+  String get desktopEncryptedCertMissingBody;
+
+  /// No description provided for @desktopEncryptedCertSubject.
+  ///
+  /// In zh, this message translates to:
+  /// **'主体'**
+  String get desktopEncryptedCertSubject;
+
+  /// No description provided for @desktopEncryptedCertIssuer.
+  ///
+  /// In zh, this message translates to:
+  /// **'签发者'**
+  String get desktopEncryptedCertIssuer;
+
+  /// No description provided for @desktopEncryptedCertNotAfter.
+  ///
+  /// In zh, this message translates to:
+  /// **'有效期至'**
+  String get desktopEncryptedCertNotAfter;
+
+  /// No description provided for @desktopEncryptedCertDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'剩余天数'**
+  String get desktopEncryptedCertDays;
+
+  /// No description provided for @desktopEncryptedCertDaysValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'{days} 天'**
+  String desktopEncryptedCertDaysValue(int days);
+
+  /// No description provided for @desktopEncryptedCertDns.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖域名'**
+  String get desktopEncryptedCertDns;
+
+  /// No description provided for @desktopEncryptedCertIps.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖 IP'**
+  String get desktopEncryptedCertIps;
+
+  /// No description provided for @desktopEncryptedCertFingerprint.
+  ///
+  /// In zh, this message translates to:
+  /// **'SHA-256：{fingerprint}'**
+  String desktopEncryptedCertFingerprint(String fingerprint);
+
+  /// No description provided for @desktopEncryptedCertDir.
+  ///
+  /// In zh, this message translates to:
+  /// **'证书目录：{dir}'**
+  String desktopEncryptedCertDir(String dir);
+
+  /// No description provided for @desktopEncryptedCertGenerate.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新签发'**
+  String get desktopEncryptedCertGenerate;
+
+  /// No description provided for @desktopEncryptedCertImport.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入 PEM'**
+  String get desktopEncryptedCertImport;
+
+  /// No description provided for @desktopEncryptedCertGenerated.
+  ///
+  /// In zh, this message translates to:
+  /// **'证书已生成'**
+  String get desktopEncryptedCertGenerated;
+
+  /// No description provided for @desktopEncryptedCertImported.
+  ///
+  /// In zh, this message translates to:
+  /// **'证书已导入'**
+  String get desktopEncryptedCertImported;
+
+  /// No description provided for @desktopEncryptedCertGenerateTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成自签证书'**
+  String get desktopEncryptedCertGenerateTitle;
+
+  /// No description provided for @desktopEncryptedCertGenerateBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'覆盖性动作：已信任旧证书的客户端将全部失效。'**
+  String get desktopEncryptedCertGenerateBody;
+
+  /// No description provided for @desktopEncryptedCertKeyType.
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥类型'**
+  String get desktopEncryptedCertKeyType;
+
+  /// No description provided for @desktopEncryptedCertCommonName.
+  ///
+  /// In zh, this message translates to:
+  /// **'通用名（CN）'**
+  String get desktopEncryptedCertCommonName;
+
+  /// No description provided for @desktopEncryptedCertDnsNames.
+  ///
+  /// In zh, this message translates to:
+  /// **'SAN 域名（每行一个）'**
+  String get desktopEncryptedCertDnsNames;
+
+  /// No description provided for @desktopEncryptedCertIpAddresses.
+  ///
+  /// In zh, this message translates to:
+  /// **'SAN IP（每行一个）'**
+  String get desktopEncryptedCertIpAddresses;
+
+  /// No description provided for @desktopEncryptedCertValidDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'有效期（天）'**
+  String get desktopEncryptedCertValidDays;
+
+  /// No description provided for @desktopEncryptedCertGenerateConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成'**
+  String get desktopEncryptedCertGenerateConfirm;
+
+  /// No description provided for @desktopEncryptedCertImportTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入 PEM 证书'**
+  String get desktopEncryptedCertImportTitle;
+
+  /// No description provided for @desktopEncryptedCertImportBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'粘贴证书链与私钥 PEM 文本，两者必须匹配。'**
+  String get desktopEncryptedCertImportBody;
+
+  /// No description provided for @desktopEncryptedCertPem.
+  ///
+  /// In zh, this message translates to:
+  /// **'证书链 PEM'**
+  String get desktopEncryptedCertPem;
+
+  /// No description provided for @desktopEncryptedKeyPem.
+  ///
+  /// In zh, this message translates to:
+  /// **'私钥 PEM'**
+  String get desktopEncryptedKeyPem;
+
+  /// No description provided for @desktopEncryptedCertImportConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'导入'**
+  String get desktopEncryptedCertImportConfirm;
+
+  /// No description provided for @desktopEncryptedCertImportInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'证书与私钥都不能为空'**
+  String get desktopEncryptedCertImportInvalid;
+
+  /// No description provided for @desktopEncryptedExtrasTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'发现与代理'**
+  String get desktopEncryptedExtrasTitle;
+
+  /// No description provided for @desktopEncryptedExtrasBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端自动发现、反向代理信任与移动端描述文件'**
+  String get desktopEncryptedExtrasBody;
+
+  /// No description provided for @desktopEncryptedDdrTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'指定解析器发现（DDR）'**
+  String get desktopEncryptedDdrTitle;
+
+  /// No description provided for @desktopEncryptedDdrBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'应答 _dns.resolver.arpa 探测，让终端自动发现本机的加密解析入口。'**
+  String get desktopEncryptedDdrBody;
+
+  /// No description provided for @desktopEncryptedDdrSelfSignedWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前是自签证书：终端若未预先信任它，开启 DDR 会直接失去 DNS 解析。'**
+  String get desktopEncryptedDdrSelfSignedWarning;
+
+  /// No description provided for @desktopEncryptedDdrConfirmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认开启 DDR？'**
+  String get desktopEncryptedDdrConfirmTitle;
+
+  /// No description provided for @desktopEncryptedDdrConfirmBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'DDR 会让客户端自动切换解析入口；证书不被信任时，这一步等于让客户端失去 DNS。'**
+  String get desktopEncryptedDdrConfirmBody;
+
+  /// No description provided for @desktopEncryptedDdrConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'仍要开启'**
+  String get desktopEncryptedDdrConfirm;
+
+  /// No description provided for @desktopEncryptedDdrOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'DDR 已开启'**
+  String get desktopEncryptedDdrOn;
+
+  /// No description provided for @desktopEncryptedDdrOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'DDR 已关闭'**
+  String get desktopEncryptedDdrOff;
+
+  /// No description provided for @desktopEncryptedProxyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'反向代理透传'**
+  String get desktopEncryptedProxyTitle;
+
+  /// No description provided for @desktopEncryptedProxyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅当 DoH 确实位于自己掌握的反向代理之后才开启；开启后会采信转发头。'**
+  String get desktopEncryptedProxyBody;
+
+  /// No description provided for @desktopEncryptedProxyUnrestricted.
+  ///
+  /// In zh, this message translates to:
+  /// **'可信来源包含 0.0.0.0/0 或 ::/0：任何人都能伪造来源地址。'**
+  String get desktopEncryptedProxyUnrestricted;
+
+  /// No description provided for @desktopEncryptedProxyOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'反向代理透传已开启'**
+  String get desktopEncryptedProxyOn;
+
+  /// No description provided for @desktopEncryptedProxyOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'反向代理透传已关闭'**
+  String get desktopEncryptedProxyOff;
+
+  /// No description provided for @desktopEncryptedProxySources.
+  ///
+  /// In zh, this message translates to:
+  /// **'可信代理来源（每行一个 IP 或 CIDR）'**
+  String get desktopEncryptedProxySources;
+
+  /// No description provided for @desktopEncryptedProxyHeader.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义转发头（留空则依次尝试 X-Forwarded-For 与 X-Real-IP）'**
+  String get desktopEncryptedProxyHeader;
+
+  /// No description provided for @desktopEncryptedProxySave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存代理配置'**
+  String get desktopEncryptedProxySave;
+
+  /// No description provided for @desktopEncryptedProxySaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'反向代理配置已保存'**
+  String get desktopEncryptedProxySaved;
+
+  /// No description provided for @desktopEncryptedMobileConfigTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'移动端描述文件'**
+  String get desktopEncryptedMobileConfigTitle;
+
+  /// No description provided for @desktopEncryptedMobileConfigBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在设备上打开该链接即可安装包含本机加密 DNS 的描述文件。'**
+  String get desktopEncryptedMobileConfigBody;
+
+  /// No description provided for @desktopEncryptedMobileConfigOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开描述文件'**
+  String get desktopEncryptedMobileConfigOpen;
+
+  /// No description provided for @desktopEncryptedOpenUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'在浏览器中打开'**
+  String get desktopEncryptedOpenUrl;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
