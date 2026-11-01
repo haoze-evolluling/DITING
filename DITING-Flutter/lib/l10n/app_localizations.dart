@@ -21969,6 +21969,180 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'探测只临时占用端口以确认可用性；诊断文本与处置建议来自系统探测本身。'**
   String get desktopToolsPortFooter;
+
+  /// No description provided for @desktopToolsRulePageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则检测'**
+  String get desktopToolsRulePageTitle;
+
+  /// No description provided for @desktopToolsMoreSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测工具'**
+  String get desktopToolsMoreSection;
+
+  /// No description provided for @desktopToolsRuleEntryBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'模拟一次查询，查看命中规则与处置结论'**
+  String get desktopToolsRuleEntryBody;
+
+  /// No description provided for @desktopToolsRuleInputTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'网址拦截模拟测试'**
+  String get desktopToolsRuleInputTitle;
+
+  /// No description provided for @desktopToolsRuleInputBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入域名快速检测是否命中过滤拦截规则'**
+  String get desktopToolsRuleInputBody;
+
+  /// No description provided for @desktopToolsRuleDomain.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试目标域名'**
+  String get desktopToolsRuleDomain;
+
+  /// No description provided for @desktopToolsRuleDomainHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如: ad.example.com 或 tracker.domain.com'**
+  String get desktopToolsRuleDomainHint;
+
+  /// No description provided for @desktopToolsRuleQtype.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 记录类型'**
+  String get desktopToolsRuleQtype;
+
+  /// No description provided for @desktopToolsRuleQtypeOption.
+  ///
+  /// In zh, this message translates to:
+  /// **'{type} 记录'**
+  String desktopToolsRuleQtypeOption(String type);
+
+  /// No description provided for @desktopToolsRuleExamples.
+  ///
+  /// In zh, this message translates to:
+  /// **'快速填充示例：'**
+  String get desktopToolsRuleExamples;
+
+  /// No description provided for @desktopToolsRuleRun.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即模拟检测'**
+  String get desktopToolsRuleRun;
+
+  /// No description provided for @desktopToolsRuleRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在执行规则匹配…'**
+  String get desktopToolsRuleRunning;
+
+  /// No description provided for @desktopToolsRuleVerdictTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则诊断与拦截判定'**
+  String get desktopToolsRuleVerdictTitle;
+
+  /// No description provided for @desktopToolsRuleVerdictBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则匹配结果、所属规则库与响应动作'**
+  String get desktopToolsRuleVerdictBody;
+
+  /// No description provided for @desktopToolsRuleIdle.
+  ///
+  /// In zh, this message translates to:
+  /// **'在左侧输入域名并点击「立即模拟检测」以查看规则判定明细'**
+  String get desktopToolsRuleIdle;
+
+  /// No description provided for @desktopToolsRuleBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已拦截（阻断访问）'**
+  String get desktopToolsRuleBlocked;
+
+  /// No description provided for @desktopToolsRuleRewritten.
+  ///
+  /// In zh, this message translates to:
+  /// **'已重写（{code}）'**
+  String desktopToolsRuleRewritten(String code);
+
+  /// No description provided for @desktopToolsRuleAllowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'已放行（信任名单）'**
+  String get desktopToolsRuleAllowed;
+
+  /// No description provided for @desktopToolsRulePassed.
+  ///
+  /// In zh, this message translates to:
+  /// **'未命中（正常解析）'**
+  String get desktopToolsRulePassed;
+
+  /// No description provided for @desktopToolsRuleMatched.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中的防护规则'**
+  String get desktopToolsRuleMatched;
+
+  /// No description provided for @desktopToolsRuleNoMatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'未命中任何规则'**
+  String get desktopToolsRuleNoMatch;
+
+  /// No description provided for @desktopToolsRuleList.
+  ///
+  /// In zh, this message translates to:
+  /// **'来源规则库'**
+  String get desktopToolsRuleList;
+
+  /// No description provided for @desktopToolsRuleNoList.
+  ///
+  /// In zh, this message translates to:
+  /// **'无'**
+  String get desktopToolsRuleNoList;
+
+  /// No description provided for @desktopToolsRuleReason.
+  ///
+  /// In zh, this message translates to:
+  /// **'处置判定原因'**
+  String get desktopToolsRuleReason;
+
+  /// No description provided for @desktopToolsRuleNoReason.
+  ///
+  /// In zh, this message translates to:
+  /// **'正常直连解析'**
+  String get desktopToolsRuleNoReason;
+
+  /// No description provided for @desktopToolsRuleRewrite.
+  ///
+  /// In zh, this message translates to:
+  /// **'\$dnsrewrite 应答：{code}'**
+  String desktopToolsRuleRewrite(String code);
+
+  /// No description provided for @desktopToolsRuleRewriteEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'不返回任何记录（权威 NODATA）'**
+  String get desktopToolsRuleRewriteEmpty;
+
+  /// No description provided for @desktopToolsRuleFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持 AdGuard、Hosts 及自定义规则即时模拟测试。'**
+  String get desktopToolsRuleFooter;
+
+  /// No description provided for @desktopToolsRuleFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测失败：{message}'**
+  String desktopToolsRuleFailed(String message);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

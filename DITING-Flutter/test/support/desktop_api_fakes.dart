@@ -532,6 +532,23 @@ List<Map<String, Object?>> clientsPayload() => [
   {'ip': '192.168.1.21', 'name': '', 'queryCount': 7, 'lastSeen': 0},
 ];
 
+/// A `POST /api/v1/filter/check` payload.
+Map<String, Object?> ruleCheckPayload({
+  bool blocked = true,
+  String action = 'block',
+  String matchedRule = '||ads.example^',
+  String listName = '广告拦截',
+  String reason = '命中拦截规则',
+  Map<String, Object?>? rewritten,
+}) => {
+  'blocked': blocked,
+  'action': action,
+  'matchedRule': matchedRule,
+  'listName': listName,
+  'reason': reason,
+  'rewritten': ?rewritten,
+};
+
 /// A `GET /api/v1/portcheck` payload.
 Map<String, Object?> portCheckPayload({
   bool available = false,
@@ -704,6 +721,7 @@ class FakeDesktopBackend {
     List<Map<String, Object?>>? clients,
     Map<String, Object?>? groups,
     Map<String, Object?>? portCheck,
+    Map<String, Object?>? ruleCheck,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -736,6 +754,7 @@ class FakeDesktopBackend {
        clients = clients ?? clientsPayload(),
        groups = groups ?? groupsPayload(),
        portCheck = portCheck ?? portCheckPayload(),
+       ruleCheck = ruleCheck ?? ruleCheckPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -822,6 +841,12 @@ class FakeDesktopBackend {
 
   /// Mutated by the port autofix.
   Map<String, Object?> portCheck;
+
+  /// Answered to `/filter/check`; tests that need another verdict pass it in.
+  Map<String, Object?> ruleCheck;
+
+  /// Bodies of every simulated lookup, in order.
+  final ruleCheckUpdates = <Map<String, Object?>>[];
 
   /// Bodies of every port autofix call, in order.
   final autofixUpdates = <Map<String, Object?>>[];
@@ -1000,6 +1025,11 @@ class FakeDesktopBackend {
                 item.cast<String, Object?>(),
           ],
         };
+      }
+      if (path == '/api/v1/filter/check' && request.method == 'POST') {
+        ruleCheckUpdates.add(
+          (jsonDecode(request.body) as Map).cast<String, Object?>(),
+        );
       }
       if (path == '/api/v1/portcheck/autofix' && request.method == 'POST') {
         final body = request.body.isEmpty
@@ -1297,6 +1327,7 @@ class FakeDesktopBackend {
           apiEnvelope(safeBrowsing),
         ),
         '/api/v1/portcheck' => utf8Json(apiEnvelope(portCheck)),
+        '/api/v1/filter/check' => utf8Json(apiEnvelope(ruleCheck)),
         '/api/v1/clients' => utf8Json(apiEnvelope(clients)),
         '/api/v1/clients/groups' => utf8Json(apiEnvelope(groups)),
         '/api/v1/dns/access/configure' => utf8Json(apiEnvelope(null)),

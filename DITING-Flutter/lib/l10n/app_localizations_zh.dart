@@ -12050,4 +12050,100 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopToolsPortFooter => '探测只临时占用端口以确认可用性；诊断文本与处置建议来自系统探测本身。';
+
+  @override
+  String get desktopToolsRulePageTitle => '规则检测';
+
+  @override
+  String get desktopToolsMoreSection => '检测工具';
+
+  @override
+  String get desktopToolsRuleEntryBody => '模拟一次查询，查看命中规则与处置结论';
+
+  @override
+  String get desktopToolsRuleInputTitle => '网址拦截模拟测试';
+
+  @override
+  String get desktopToolsRuleInputBody => '输入域名快速检测是否命中过滤拦截规则';
+
+  @override
+  String get desktopToolsRuleDomain => '测试目标域名';
+
+  @override
+  String get desktopToolsRuleDomainHint =>
+      '例如: ad.example.com 或 tracker.domain.com';
+
+  @override
+  String get desktopToolsRuleQtype => 'DNS 记录类型';
+
+  @override
+  String desktopToolsRuleQtypeOption(String type) {
+    return '$type 记录';
+  }
+
+  @override
+  String get desktopToolsRuleExamples => '快速填充示例：';
+
+  @override
+  String get desktopToolsRuleRun => '立即模拟检测';
+
+  @override
+  String get desktopToolsRuleRunning => '正在执行规则匹配…';
+
+  @override
+  String get desktopToolsRuleVerdictTitle => '规则诊断与拦截判定';
+
+  @override
+  String get desktopToolsRuleVerdictBody => '规则匹配结果、所属规则库与响应动作';
+
+  @override
+  String get desktopToolsRuleIdle => '在左侧输入域名并点击「立即模拟检测」以查看规则判定明细';
+
+  @override
+  String get desktopToolsRuleBlocked => '已拦截（阻断访问）';
+
+  @override
+  String desktopToolsRuleRewritten(String code) {
+    return '已重写（$code）';
+  }
+
+  @override
+  String get desktopToolsRuleAllowed => '已放行（信任名单）';
+
+  @override
+  String get desktopToolsRulePassed => '未命中（正常解析）';
+
+  @override
+  String get desktopToolsRuleMatched => '命中的防护规则';
+
+  @override
+  String get desktopToolsRuleNoMatch => '未命中任何规则';
+
+  @override
+  String get desktopToolsRuleList => '来源规则库';
+
+  @override
+  String get desktopToolsRuleNoList => '无';
+
+  @override
+  String get desktopToolsRuleReason => '处置判定原因';
+
+  @override
+  String get desktopToolsRuleNoReason => '正常直连解析';
+
+  @override
+  String desktopToolsRuleRewrite(String code) {
+    return '\$dnsrewrite 应答：$code';
+  }
+
+  @override
+  String get desktopToolsRuleRewriteEmpty => '不返回任何记录（权威 NODATA）';
+
+  @override
+  String get desktopToolsRuleFooter => '支持 AdGuard、Hosts 及自定义规则即时模拟测试。';
+
+  @override
+  String desktopToolsRuleFailed(String message) {
+    return '检测失败：$message';
+  }
 }

@@ -21,6 +21,7 @@ import 'package:diting/desktop/data/api/desktop_services_models.dart';
 import 'package:diting/desktop/data/api/desktop_tools_models.dart';
 import 'package:diting/desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
+import 'package:diting/desktop/data/api/desktop_rule_check_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting/desktop/data/api/desktop_zone_models.dart';
 import 'package:http/http.dart' as http;
@@ -531,6 +532,17 @@ class DesktopApiClient {
 
   Future<void> configureRateLimit(Map<String, Object?> config) =>
       _post('/api/v1/dns/ratelimit/configure', body: config);
+
+  /// Simulates one lookup against the loaded rules. `qtype` is the DNS type name, e.g. `A`.
+  Future<DesktopRuleCheckResult> checkRule({
+    required String domain,
+    required String qtype,
+  }) async => DesktopRuleCheckResult.fromJson(
+    await _postData(
+      '/api/v1/filter/check',
+      body: {'domain': domain, 'qtype': qtype},
+    ),
+  );
 
   /// Opens and closes the DNS port to see whether it can be taken; on demand only.
   Future<DesktopPortCheck> portCheck() async =>

@@ -12797,4 +12797,106 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopToolsPortFooter =>
       'The probe only takes the port briefly to confirm it is free; the report and advice come from the system probe itself.';
+
+  @override
+  String get desktopToolsRulePageTitle => 'Rule check';
+
+  @override
+  String get desktopToolsMoreSection => 'Test tools';
+
+  @override
+  String get desktopToolsRuleEntryBody =>
+      'Simulate one lookup and read the matched rule and verdict';
+
+  @override
+  String get desktopToolsRuleInputTitle => 'Blocking simulation';
+
+  @override
+  String get desktopToolsRuleInputBody =>
+      'Enter a domain to see whether a blocking rule matches it';
+
+  @override
+  String get desktopToolsRuleDomain => 'Domain to test';
+
+  @override
+  String get desktopToolsRuleDomainHint =>
+      'e.g. ad.example.com or tracker.domain.com';
+
+  @override
+  String get desktopToolsRuleQtype => 'DNS record type';
+
+  @override
+  String desktopToolsRuleQtypeOption(String type) {
+    return '$type record';
+  }
+
+  @override
+  String get desktopToolsRuleExamples => 'Quick examples:';
+
+  @override
+  String get desktopToolsRuleRun => 'Run the simulation';
+
+  @override
+  String get desktopToolsRuleRunning => 'Matching rules…';
+
+  @override
+  String get desktopToolsRuleVerdictTitle => 'Rule diagnosis and verdict';
+
+  @override
+  String get desktopToolsRuleVerdictBody =>
+      'The matched rule, the list it came from and the response';
+
+  @override
+  String get desktopToolsRuleIdle =>
+      'Enter a domain on the left and run the simulation to see the verdict';
+
+  @override
+  String get desktopToolsRuleBlocked => 'Blocked';
+
+  @override
+  String desktopToolsRuleRewritten(String code) {
+    return 'Rewritten ($code)';
+  }
+
+  @override
+  String get desktopToolsRuleAllowed => 'Allowed (trusted list)';
+
+  @override
+  String get desktopToolsRulePassed => 'No match (normal resolution)';
+
+  @override
+  String get desktopToolsRuleMatched => 'Matched rule';
+
+  @override
+  String get desktopToolsRuleNoMatch => 'No rule matched';
+
+  @override
+  String get desktopToolsRuleList => 'Source list';
+
+  @override
+  String get desktopToolsRuleNoList => 'None';
+
+  @override
+  String get desktopToolsRuleReason => 'Verdict reason';
+
+  @override
+  String get desktopToolsRuleNoReason => 'Normal direct resolution';
+
+  @override
+  String desktopToolsRuleRewrite(String code) {
+    return '\$dnsrewrite answer: $code';
+  }
+
+  @override
+  String get desktopToolsRuleRewriteEmpty =>
+      'No records returned (authoritative NODATA)';
+
+  @override
+  String get desktopToolsRuleFooter =>
+      'Tests AdGuard, Hosts and custom rules instantly.';
+
+  @override
+  String desktopToolsRuleFailed(String message) {
+    return 'The check failed: $message';
+  }
 }
