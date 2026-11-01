@@ -10,6 +10,7 @@ import 'dart:convert';
 
 import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/data/api/desktop_cache_models.dart';
+import 'package:diting/desktop/data/api/desktop_client_groups_models.dart';
 import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
 import 'package:diting/desktop/data/api/desktop_encrypted_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_config_models.dart';
@@ -490,6 +491,21 @@ class DesktopApiClient {
     final response = await _send('/api/v1/clients', method: 'GET');
     return desktopClients(response['data']);
   }
+
+  Future<DesktopClientGroups> clientGroups() async =>
+      DesktopClientGroups.fromJson(await _get('/api/v1/clients/groups'));
+
+  /// The service drops groups without members and normalises the rest, so the caller re-reads.
+  Future<void> configureClientGroups({
+    required bool enabled,
+    required List<DesktopClientGroup> groups,
+  }) => _post(
+    '/api/v1/clients/groups',
+    body: {
+      'enabled': enabled,
+      'groups': [for (final group in groups) group.toJson()],
+    },
+  );
 
   /// The ACL and rate-limit blocks live inside `/status`; there is no dedicated read endpoint.
   Future<DesktopClientLimits> clientLimits() async =>

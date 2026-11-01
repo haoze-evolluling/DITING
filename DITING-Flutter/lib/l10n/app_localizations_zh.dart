@@ -11851,4 +11851,147 @@ class AppL10nZh extends AppL10n {
   @override
   String get desktopTrafficRateInvalid =>
       '速率与突发需大于 0，掩码需在 1–32（IPv4）与 1–128（IPv6）之间';
+
+  @override
+  String get desktopGroupsPageTitle => '客户端分组';
+
+  @override
+  String get desktopGroupsRefresh => '刷新客户端分组';
+
+  @override
+  String get desktopGroupsLoadFailed => '读不到客户端分组配置';
+
+  @override
+  String get desktopGroupsTitle => '客户端分组 · 精细策略';
+
+  @override
+  String get desktopGroupsBody => '为不同设备组绑定专属订阅规则集与拦截方式，实现精细化管控';
+
+  @override
+  String desktopGroupsCount(int enabled, int total) {
+    return '$enabled / $total 个启用分组';
+  }
+
+  @override
+  String get desktopGroupsOn => '分组生效中';
+
+  @override
+  String get desktopGroupsOff => '分组未启用';
+
+  @override
+  String get desktopGroupsSave => '保存策略';
+
+  @override
+  String get desktopGroupsSaved => '客户端分组策略已保存并生效';
+
+  @override
+  String get desktopGroupsMaster => '启用客户端分组';
+
+  @override
+  String get desktopGroupsMasterBody => '关闭时所有客户端统一使用全局规则；开启后按网段最长前缀匹配分组。';
+
+  @override
+  String get desktopGroupsAdd => '新增客户端分组';
+
+  @override
+  String get desktopGroupsEmpty => '尚未配置任何分组。未命中分组的客户端将统一使用全局规则（默认组）。';
+
+  @override
+  String get desktopGroupsFooter => '采用最长前缀匹配：更具体的网段（如 /24）优先于更宽泛的网段（如 /16）。';
+
+  @override
+  String get desktopGroupsOpen => '客户端分组';
+
+  @override
+  String get desktopGroupsName => '分组名称';
+
+  @override
+  String get desktopGroupsEnabled => '启用该分组';
+
+  @override
+  String get desktopGroupsDelete => '删除该分组';
+
+  @override
+  String get desktopGroupsDeleteTitle => '删除客户端分组';
+
+  @override
+  String get desktopGroupsDeleteBody => '确定要删除该客户端分组吗？保存后不再生效。';
+
+  @override
+  String get desktopGroupsMembers => '成员 IP / 网段';
+
+  @override
+  String get desktopGroupsMembersHint =>
+      '例如:\n192.168.1.0/24\n10.0.0.7\nfd00::/8';
+
+  @override
+  String get desktopGroupsMembersBody => '每行一个 IP 或 CIDR，支持 IPv4/IPv6。';
+
+  @override
+  String get desktopGroupsBlockMode => '拦截应答方式';
+
+  @override
+  String get desktopGroupsModeInherit => '继承全局';
+
+  @override
+  String get desktopGroupsModeNullIp => '空 IP（0.0.0.0 / ::）';
+
+  @override
+  String get desktopGroupsModeNxdomain => 'NXDOMAIN（域名不存在）';
+
+  @override
+  String get desktopGroupsModeRefused => 'REFUSED（拒绝应答）';
+
+  @override
+  String get desktopGroupsAllowlistOnly => '仅白名单模式';
+
+  @override
+  String get desktopGroupsAllowlistOnlyBody => '开启后该组仅放行命中放行规则（@@）的查询，其余一律阻断';
+
+  @override
+  String get desktopGroupsSchedule => '组级时间计划';
+
+  @override
+  String get desktopGroupsScheduleBody => '开启后该组按自身窗口拦截；关闭则继承全局时间计划';
+
+  @override
+  String get desktopGroupsRuleLists => '绑定的订阅规则集';
+
+  @override
+  String get desktopGroupsInheritAll => '继承全部';
+
+  @override
+  String get desktopGroupsNoRuleLists => '当前无可用订阅列表，该组将仅应用自定义规则。';
+
+  @override
+  String get desktopGroupsRuleListsInherited => '未勾选任何列表 → 继承全部订阅规则。';
+
+  @override
+  String get desktopGroupsRuleListsSelected => '该组只应用所选订阅列表。';
+
+  @override
+  String get desktopGroupsUpstreams => '专属上游 DNS';
+
+  @override
+  String get desktopGroupsInheritChain => '沿用主链路';
+
+  @override
+  String get desktopGroupsNoUpstreams => '当前无可选上游，该组将沿用主链路。';
+
+  @override
+  String get desktopGroupsUpstreamsInherited => '未勾选任何上游 → 沿用主链路调度策略。';
+
+  @override
+  String get desktopGroupsUpstreamsSelected => '该组的查询直接由所选上游解析，不参与全局回退链。';
+
+  @override
+  String desktopGroupsNewName(int index) {
+    return '新分组 $index';
+  }
+
+  @override
+  String get desktopGroupsListEnabled => '该订阅已启用';
+
+  @override
+  String get desktopGroupsListDisabled => '该订阅已停用';
 }

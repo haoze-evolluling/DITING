@@ -532,6 +532,41 @@ List<Map<String, Object?>> clientsPayload() => [
   {'ip': '192.168.1.21', 'name': '', 'queryCount': 7, 'lastSeen': 0},
 ];
 
+/// A `GET /api/v1/clients/groups` payload.
+Map<String, Object?> groupsPayload() => {
+  'enabled': true,
+  'groups': [
+    {
+      'id': 'kids',
+      'name': '儿童设备',
+      'enabled': true,
+      'clients': ['192.168.1.30'],
+      'ruleListIds': ['ads'],
+      'blockMode': 'nxdomain',
+      'upstreamIds': ['up1'],
+      'scheduleEnabled': true,
+      'schedules': [
+        {
+          'id': 'w1',
+          'name': '晚间',
+          'enabled': true,
+          'weekdays': ['mon'],
+          'start': '20:00',
+          'end': '22:00',
+        },
+      ],
+      'allowlistOnly': true,
+    },
+  ],
+  'ruleLists': [
+    {'id': 'ads', 'name': '广告拦截', 'enabled': true},
+    {'id': 'mal', 'name': '恶意域名', 'enabled': false},
+  ],
+  'upstreams': [
+    {'id': 'up1', 'protocol': 'doh', 'server': 'https://dns.example/dns-query'},
+  ],
+};
+
 /// A `GET /api/v1/encrypted/dns/status` payload.
 Map<String, Object?> encryptedPayload({
   bool enabled = true,
@@ -636,6 +671,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? safeBrowsing,
     Map<String, Object?>? encrypted,
     List<Map<String, Object?>>? clients,
+    Map<String, Object?>? groups,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -666,6 +702,7 @@ class FakeDesktopBackend {
        safeBrowsing = safeBrowsing ?? safeBrowsingPayload(),
        encrypted = encrypted ?? encryptedPayload(),
        clients = clients ?? clientsPayload(),
+       groups = groups ?? groupsPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -746,6 +783,12 @@ class FakeDesktopBackend {
 
   /// Mutated by the alias and limit saves.
   List<Map<String, Object?>> clients;
+
+  /// Mutated by the client-group save; the service drops groups without members.
+  Map<String, Object?> groups;
+
+  /// Bodies of every client-group save, in order.
+  final groupsUpdates = <Map<String, Object?>>[];
 
   /// Bodies of every client alias, ACL and rate-limit save, in order.
   final aliasUpdates = <Map<String, Object?>>[];
@@ -918,6 +961,17 @@ class FakeDesktopBackend {
                 item.cast<String, Object?>(),
           ],
         };
+      }
+      if (path == '/api/v1/clients/groups' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        groupsUpdates.add(body);
+        final kept = [
+          for (final group in body['groups'] as List? ?? const [])
+            if (group is Map &&
+                (group['clients'] as List? ?? const []).isNotEmpty)
+              group,
+        ];
+        groups = {...groups, 'enabled': body['enabled'], 'groups': kept};
       }
       if (path == '/api/v1/clients/alias' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
@@ -1197,6 +1251,7 @@ class FakeDesktopBackend {
           apiEnvelope(safeBrowsing),
         ),
         '/api/v1/clients' => utf8Json(apiEnvelope(clients)),
+        '/api/v1/clients/groups' => utf8Json(apiEnvelope(groups)),
         '/api/v1/dns/access/configure' => utf8Json(apiEnvelope(null)),
         '/api/v1/dns/ratelimit/configure' => utf8Json(apiEnvelope(null)),
         '/api/v1/clients/alias' => utf8Json(apiEnvelope(null)),

@@ -12,6 +12,7 @@ import 'package:diting/desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
+import 'package:diting/desktop/pages/traffic/desktop_client_groups_page.dart';
 import 'package:diting/desktop/pages/traffic/desktop_traffic_page.dart';
 import 'package:diting/desktop/pages/logs/desktop_logs_page.dart';
 import 'package:diting/desktop/shell/desktop_shell.dart';
@@ -69,6 +70,13 @@ Widget _pageOf(String location) => switch (location) {
 /// Sub-pages live inside the branch, so the branch's record (and its tab) stays current while the
 /// page is open. Only branches that actually have sub-pages return routes.
 List<RouteBase> _subRoutesOf(String location) => switch (location) {
+  Routes.traffic => [
+    GoRoute(
+      path: 'groups',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopClientGroupsPage()),
+    ),
+  ],
   Routes.hub => [
     GoRoute(
       path: 'upstream',

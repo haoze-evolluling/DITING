@@ -12581,4 +12581,162 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopTrafficRateInvalid =>
       'Rate and burst must be positive; prefixes must be 1–32 (IPv4) and 1–128 (IPv6)';
+
+  @override
+  String get desktopGroupsPageTitle => 'Client groups';
+
+  @override
+  String get desktopGroupsRefresh => 'Reload the client groups';
+
+  @override
+  String get desktopGroupsLoadFailed =>
+      'Could not read the client group config';
+
+  @override
+  String get desktopGroupsTitle => 'Client groups · fine-grained policy';
+
+  @override
+  String get desktopGroupsBody =>
+      'Binds a device group to its own subscription sets and blocking mode';
+
+  @override
+  String desktopGroupsCount(int enabled, int total) {
+    return '$enabled / $total groups enabled';
+  }
+
+  @override
+  String get desktopGroupsOn => 'Groups active';
+
+  @override
+  String get desktopGroupsOff => 'Groups off';
+
+  @override
+  String get desktopGroupsSave => 'Save policy';
+
+  @override
+  String get desktopGroupsSaved => 'The client group policy was saved';
+
+  @override
+  String get desktopGroupsMaster => 'Enable client groups';
+
+  @override
+  String get desktopGroupsMasterBody =>
+      'When off, every client uses the global rules; when on, groups match by longest prefix.';
+
+  @override
+  String get desktopGroupsAdd => 'Add a client group';
+
+  @override
+  String get desktopGroupsEmpty =>
+      'No group is configured. Clients that match none use the global rules (the default group).';
+
+  @override
+  String get desktopGroupsFooter =>
+      'Longest-prefix match: a narrower range such as /24 wins over /16.';
+
+  @override
+  String get desktopGroupsOpen => 'Client groups';
+
+  @override
+  String get desktopGroupsName => 'Group name';
+
+  @override
+  String get desktopGroupsEnabled => 'Enable this group';
+
+  @override
+  String get desktopGroupsDelete => 'Delete this group';
+
+  @override
+  String get desktopGroupsDeleteTitle => 'Delete the client group';
+
+  @override
+  String get desktopGroupsDeleteBody =>
+      'Delete this client group? It stops applying once saved.';
+
+  @override
+  String get desktopGroupsMembers => 'Member IPs / ranges';
+
+  @override
+  String get desktopGroupsMembersHint =>
+      'e.g.\n192.168.1.0/24\n10.0.0.7\nfd00::/8';
+
+  @override
+  String get desktopGroupsMembersBody =>
+      'One IP or CIDR per line; IPv4 and IPv6 are both accepted.';
+
+  @override
+  String get desktopGroupsBlockMode => 'Blocking response';
+
+  @override
+  String get desktopGroupsModeInherit => 'Inherit the global mode';
+
+  @override
+  String get desktopGroupsModeNullIp => 'Null IP (0.0.0.0 / ::)';
+
+  @override
+  String get desktopGroupsModeNxdomain => 'NXDOMAIN (no such domain)';
+
+  @override
+  String get desktopGroupsModeRefused => 'REFUSED (refuse the answer)';
+
+  @override
+  String get desktopGroupsAllowlistOnly => 'Allowlist only';
+
+  @override
+  String get desktopGroupsAllowlistOnlyBody =>
+      'Only queries that match an allow rule (@@) pass; everything else is blocked';
+
+  @override
+  String get desktopGroupsSchedule => 'Group schedule';
+
+  @override
+  String get desktopGroupsScheduleBody =>
+      'When on, this group blocks by its own windows; when off it inherits the global schedule';
+
+  @override
+  String get desktopGroupsRuleLists => 'Bound subscription sets';
+
+  @override
+  String get desktopGroupsInheritAll => 'Inherit all';
+
+  @override
+  String get desktopGroupsNoRuleLists =>
+      'No subscription is available; this group applies only custom rules.';
+
+  @override
+  String get desktopGroupsRuleListsInherited =>
+      'Nothing selected → every subscription rule is inherited.';
+
+  @override
+  String get desktopGroupsRuleListsSelected =>
+      'Only the selected subscriptions apply to this group.';
+
+  @override
+  String get desktopGroupsUpstreams => 'Dedicated upstreams';
+
+  @override
+  String get desktopGroupsInheritChain => 'Use the main chain';
+
+  @override
+  String get desktopGroupsNoUpstreams =>
+      'No upstream is available; this group uses the main chain.';
+
+  @override
+  String get desktopGroupsUpstreamsInherited =>
+      'Nothing selected → the main-chain scheduling applies.';
+
+  @override
+  String get desktopGroupsUpstreamsSelected =>
+      'This group resolves through the selected upstreams and skips the global fallback chain.';
+
+  @override
+  String desktopGroupsNewName(int index) {
+    return 'Group $index';
+  }
+
+  @override
+  String get desktopGroupsListEnabled => 'This subscription is enabled';
+
+  @override
+  String get desktopGroupsListDisabled => 'This subscription is disabled';
 }

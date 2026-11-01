@@ -21597,6 +21597,282 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'速率与突发需大于 0，掩码需在 1–32（IPv4）与 1–128（IPv6）之间'**
   String get desktopTrafficRateInvalid;
+
+  /// No description provided for @desktopGroupsPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端分组'**
+  String get desktopGroupsPageTitle;
+
+  /// No description provided for @desktopGroupsRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新客户端分组'**
+  String get desktopGroupsRefresh;
+
+  /// No description provided for @desktopGroupsLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到客户端分组配置'**
+  String get desktopGroupsLoadFailed;
+
+  /// No description provided for @desktopGroupsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端分组 · 精细策略'**
+  String get desktopGroupsTitle;
+
+  /// No description provided for @desktopGroupsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'为不同设备组绑定专属订阅规则集与拦截方式，实现精细化管控'**
+  String get desktopGroupsBody;
+
+  /// No description provided for @desktopGroupsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{enabled} / {total} 个启用分组'**
+  String desktopGroupsCount(int enabled, int total);
+
+  /// No description provided for @desktopGroupsOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'分组生效中'**
+  String get desktopGroupsOn;
+
+  /// No description provided for @desktopGroupsOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'分组未启用'**
+  String get desktopGroupsOff;
+
+  /// No description provided for @desktopGroupsSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存策略'**
+  String get desktopGroupsSave;
+
+  /// No description provided for @desktopGroupsSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端分组策略已保存并生效'**
+  String get desktopGroupsSaved;
+
+  /// No description provided for @desktopGroupsMaster.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用客户端分组'**
+  String get desktopGroupsMaster;
+
+  /// No description provided for @desktopGroupsMasterBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭时所有客户端统一使用全局规则；开启后按网段最长前缀匹配分组。'**
+  String get desktopGroupsMasterBody;
+
+  /// No description provided for @desktopGroupsAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增客户端分组'**
+  String get desktopGroupsAdd;
+
+  /// No description provided for @desktopGroupsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未配置任何分组。未命中分组的客户端将统一使用全局规则（默认组）。'**
+  String get desktopGroupsEmpty;
+
+  /// No description provided for @desktopGroupsFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'采用最长前缀匹配：更具体的网段（如 /24）优先于更宽泛的网段（如 /16）。'**
+  String get desktopGroupsFooter;
+
+  /// No description provided for @desktopGroupsOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端分组'**
+  String get desktopGroupsOpen;
+
+  /// No description provided for @desktopGroupsName.
+  ///
+  /// In zh, this message translates to:
+  /// **'分组名称'**
+  String get desktopGroupsName;
+
+  /// No description provided for @desktopGroupsEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用该分组'**
+  String get desktopGroupsEnabled;
+
+  /// No description provided for @desktopGroupsDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除该分组'**
+  String get desktopGroupsDelete;
+
+  /// No description provided for @desktopGroupsDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除客户端分组'**
+  String get desktopGroupsDeleteTitle;
+
+  /// No description provided for @desktopGroupsDeleteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确定要删除该客户端分组吗？保存后不再生效。'**
+  String get desktopGroupsDeleteBody;
+
+  /// No description provided for @desktopGroupsMembers.
+  ///
+  /// In zh, this message translates to:
+  /// **'成员 IP / 网段'**
+  String get desktopGroupsMembers;
+
+  /// No description provided for @desktopGroupsMembersHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如:\n192.168.1.0/24\n10.0.0.7\nfd00::/8'**
+  String get desktopGroupsMembersHint;
+
+  /// No description provided for @desktopGroupsMembersBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'每行一个 IP 或 CIDR，支持 IPv4/IPv6。'**
+  String get desktopGroupsMembersBody;
+
+  /// No description provided for @desktopGroupsBlockMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截应答方式'**
+  String get desktopGroupsBlockMode;
+
+  /// No description provided for @desktopGroupsModeInherit.
+  ///
+  /// In zh, this message translates to:
+  /// **'继承全局'**
+  String get desktopGroupsModeInherit;
+
+  /// No description provided for @desktopGroupsModeNullIp.
+  ///
+  /// In zh, this message translates to:
+  /// **'空 IP（0.0.0.0 / ::）'**
+  String get desktopGroupsModeNullIp;
+
+  /// No description provided for @desktopGroupsModeNxdomain.
+  ///
+  /// In zh, this message translates to:
+  /// **'NXDOMAIN（域名不存在）'**
+  String get desktopGroupsModeNxdomain;
+
+  /// No description provided for @desktopGroupsModeRefused.
+  ///
+  /// In zh, this message translates to:
+  /// **'REFUSED（拒绝应答）'**
+  String get desktopGroupsModeRefused;
+
+  /// No description provided for @desktopGroupsAllowlistOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅白名单模式'**
+  String get desktopGroupsAllowlistOnly;
+
+  /// No description provided for @desktopGroupsAllowlistOnlyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后该组仅放行命中放行规则（@@）的查询，其余一律阻断'**
+  String get desktopGroupsAllowlistOnlyBody;
+
+  /// No description provided for @desktopGroupsSchedule.
+  ///
+  /// In zh, this message translates to:
+  /// **'组级时间计划'**
+  String get desktopGroupsSchedule;
+
+  /// No description provided for @desktopGroupsScheduleBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后该组按自身窗口拦截；关闭则继承全局时间计划'**
+  String get desktopGroupsScheduleBody;
+
+  /// No description provided for @desktopGroupsRuleLists.
+  ///
+  /// In zh, this message translates to:
+  /// **'绑定的订阅规则集'**
+  String get desktopGroupsRuleLists;
+
+  /// No description provided for @desktopGroupsInheritAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'继承全部'**
+  String get desktopGroupsInheritAll;
+
+  /// No description provided for @desktopGroupsNoRuleLists.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前无可用订阅列表，该组将仅应用自定义规则。'**
+  String get desktopGroupsNoRuleLists;
+
+  /// No description provided for @desktopGroupsRuleListsInherited.
+  ///
+  /// In zh, this message translates to:
+  /// **'未勾选任何列表 → 继承全部订阅规则。'**
+  String get desktopGroupsRuleListsInherited;
+
+  /// No description provided for @desktopGroupsRuleListsSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'该组只应用所选订阅列表。'**
+  String get desktopGroupsRuleListsSelected;
+
+  /// No description provided for @desktopGroupsUpstreams.
+  ///
+  /// In zh, this message translates to:
+  /// **'专属上游 DNS'**
+  String get desktopGroupsUpstreams;
+
+  /// No description provided for @desktopGroupsInheritChain.
+  ///
+  /// In zh, this message translates to:
+  /// **'沿用主链路'**
+  String get desktopGroupsInheritChain;
+
+  /// No description provided for @desktopGroupsNoUpstreams.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前无可选上游，该组将沿用主链路。'**
+  String get desktopGroupsNoUpstreams;
+
+  /// No description provided for @desktopGroupsUpstreamsInherited.
+  ///
+  /// In zh, this message translates to:
+  /// **'未勾选任何上游 → 沿用主链路调度策略。'**
+  String get desktopGroupsUpstreamsInherited;
+
+  /// No description provided for @desktopGroupsUpstreamsSelected.
+  ///
+  /// In zh, this message translates to:
+  /// **'该组的查询直接由所选上游解析，不参与全局回退链。'**
+  String get desktopGroupsUpstreamsSelected;
+
+  /// No description provided for @desktopGroupsNewName.
+  ///
+  /// In zh, this message translates to:
+  /// **'新分组 {index}'**
+  String desktopGroupsNewName(int index);
+
+  /// No description provided for @desktopGroupsListEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'该订阅已启用'**
+  String get desktopGroupsListEnabled;
+
+  /// No description provided for @desktopGroupsListDisabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'该订阅已停用'**
+  String get desktopGroupsListDisabled;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

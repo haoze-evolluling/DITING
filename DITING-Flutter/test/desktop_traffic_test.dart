@@ -10,9 +10,11 @@ import 'package:diting/desktop/data/api/desktop_api_providers.dart';
 import 'package:diting/desktop/data/api/desktop_live_providers.dart';
 import 'package:diting/desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting/desktop/pages/hub/widgets/filter_common.dart';
+import 'package:diting/desktop/pages/traffic/desktop_client_groups_page.dart';
 import 'package:diting/desktop/pages/traffic/desktop_traffic_page.dart';
 import 'package:diting/desktop/pages/traffic/widgets/client_access_card.dart';
 import 'package:diting/desktop/pages/traffic/widgets/client_list_card.dart';
+import 'package:diting/desktop/pages/traffic/widgets/client_groups_card.dart';
 import 'package:diting/desktop/pages/traffic/widgets/client_rate_limit_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/routes/branches.dart';
@@ -243,6 +245,16 @@ void main() {
       findsOneWidget,
     );
     await clearMessages(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('设备页可进入客户端分组子页', (tester) async {
+    await pumpTraffic(tester);
+    final l10n = l10nOf(tester);
+
+    await tapAt(tester, inClients(find.byTooltip(l10n.desktopGroupsOpen)));
+    expect(find.byType(DesktopClientGroupsPage), findsOneWidget);
+    expect(find.byType(ClientGroupsCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

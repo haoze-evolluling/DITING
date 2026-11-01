@@ -11,11 +11,13 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting/desktop/data/api/desktop_traffic_providers.dart';
 import 'package:diting/desktop/pages/hub/widgets/filter_common.dart';
+import 'package:diting/desktop/pages/traffic/desktop_client_groups_page.dart';
 import 'package:diting/desktop/widgets/desktop_feedback.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class DesktopClientListCard extends ConsumerWidget {
@@ -131,6 +133,16 @@ class DesktopClientListCard extends ConsumerWidget {
               ),
             ],
             trailing: [
+              SizedBox(
+                height: 28,
+                child: DashboardIconButton(
+                  glyph: AppGlyphs.layers,
+                  tooltip: l10n.desktopGroupsOpen,
+                  size: 28,
+                  glyphSize: 15,
+                  onPressed: () => context.push(DesktopClientGroupsPage.path),
+                ),
+              ),
               SizedBox(
                 height: 28,
                 child: DashboardIconButton(
