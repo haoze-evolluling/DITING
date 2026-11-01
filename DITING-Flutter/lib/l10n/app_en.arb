@@ -2725,6 +2725,10 @@
       }
     }
   },
+  "desktopLogTopDomains": "Most queried domains",
+  "desktopLogTopBlocked": "Most blocked domains",
+  "desktopLogTopClients": "Busiest clients",
+  "desktopLogNoBlocked": "Nothing blocked yet",
   "desktopLogPagePrev": "Previous",
   "desktopLogPageNext": "Next",
   "desktopLogPageInfo": "Rows {from}–{to} of {total}"

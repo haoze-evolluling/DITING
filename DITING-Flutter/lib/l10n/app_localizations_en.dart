@@ -9590,6 +9590,18 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String get desktopLogTopDomains => 'Most queried domains';
+
+  @override
+  String get desktopLogTopBlocked => 'Most blocked domains';
+
+  @override
+  String get desktopLogTopClients => 'Busiest clients';
+
+  @override
+  String get desktopLogNoBlocked => 'Nothing blocked yet';
+
+  @override
   String get desktopLogPagePrev => 'Previous';
 
   @override

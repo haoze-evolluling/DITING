@@ -278,20 +278,52 @@ class QueryLogPage {
   final List<QueryLogEntry> entries;
 }
 
-/// `GET /api/v1/querylog/stats` — the service's own 24-hour rolling window. The trend and top-N
-/// lists of the same answer are not parsed: no desktop page shows them yet.
+/// `GET /api/v1/querylog/stats` — the service's own 24-hour rolling window: the summary, plus the
+/// three top-N lists the console's statistics panel ranks.
 class DesktopQueryStats {
-  const DesktopQueryStats({required this.summary});
+  const DesktopQueryStats({
+    required this.summary,
+    this.topDomains = const [],
+    this.topBlocked = const [],
+    this.topClients = const [],
+  });
 
   static const empty = DesktopQueryStats(summary: QueryStatsSummary.empty);
 
   factory DesktopQueryStats.fromJson(Map<String, Object?> json) =>
       DesktopQueryStats(
         summary: QueryStatsSummary.fromJson(_map(json['summary'])),
+        topDomains: _counts(json['topDomains']),
+        topBlocked: _counts(json['topBlocked']),
+        topClients: _counts(json['topClients']),
       );
 
   final QueryStatsSummary summary;
+
+  /// Most queried names, most blocked names, busiest clients — each already ranked and capped by
+  /// the service; the page neither re-sorts nor extends them.
+  final List<QueryNameCount> topDomains;
+  final List<QueryNameCount> topBlocked;
+  final List<QueryNameCount> topClients;
 }
+
+/// One `querylog.NameCount`.
+class QueryNameCount {
+  const QueryNameCount({required this.name, required this.count});
+
+  factory QueryNameCount.fromJson(Map<String, Object?> json) => QueryNameCount(
+    name: '${json['name'] ?? ''}',
+    count: _int(json['count']),
+  );
+
+  final String name;
+  final int count;
+}
+
+List<QueryNameCount> _counts(Object? value) => [
+  for (final item in value as List? ?? const [])
+    if (item is Map) QueryNameCount.fromJson(item.cast<String, Object?>()),
+];
 
 /// `querylog.Summary`.
 class QueryStatsSummary {

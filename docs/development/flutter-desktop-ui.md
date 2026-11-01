@@ -75,7 +75,7 @@
 - Android 入口 `lib/main.dart`；桌面预览入口 `lib/desktop/main.dart`，`web/` 仅作 Wails/WebView 编译宿主。
 - 路由 `lib/desktop/router.dart`：`StatefulShellRoute.indexedStack` 六分支；壳为 `lib/desktop/shell/desktop_shell.dart`（宽窗 `NavigationSidebar` + 内容区，窄窗共享 `DockShell`，折叠状态不落盘）。
 - 首页 `lib/desktop/pages/home/`：`desktop_home_page.dart`（三种诚实状态 + 过期提示）、`desktop_dashboard.dart`（四列网格）、`widgets/*`（DNS 服务、查询指标、系统接管、暂停拦截、后台服务、缓存、规则拦截、性能、运行信息、最近查询）、`desktop_format.dart`。
-- 日志 `lib/desktop/pages/logs/`：`desktop_logs_page.dart`、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` 的检索条件（`domain`/`client`/`qtype`/`status`）与清空历史**；Top-N 三列排行、实时查询（`/events`）、日志留存配置（`QueryLogConfigCard`）尚未搬。
+- 日志 `lib/desktop/pages/logs/`：`desktop_logs_page.dart`（汇总 + 三列排行 + 表格）、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_rankings_card.dart`（高频域名 / 拦截排行 / 活跃客户端，顺序与截断由服务给定）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` + `QueryStatsPanel`**；实时查询（`/events`）与日志留存配置（`QueryLogConfigCard`）尚未搬。
 - 其余四个分支在 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + 居中 `NullStatus`（`commonPendingTitle` / `commonPendingBody`）。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 
@@ -99,7 +99,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`logs` 补齐**：`QueryStatsPanel`（Top 域名/拦截/客户端三列）、`LiveQueryPanel`（`/events` 实时流）、`QueryLogConfigCard`（日志留存配置）。
+1. **`logs` 补齐**：`LiveQueryPanel`（`/events` 实时流）、`QueryLogConfigCard`（日志留存配置）。
 2. **`hub`**：解析 + 防护两组子页（上游、缓存、重写、DNS64、订阅、应用拦截、自定义规则、拦截方式、时间计划）。
 3. **`traffic`**：设备管理 + 缓存热点/Top 域名与客户端（不做按应用流量）。
 4. **`tools`**：诊断与修复、规则检测、上游/区域测试。

@@ -8991,6 +8991,18 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
+  String get desktopLogTopDomains => '高频访问域名';
+
+  @override
+  String get desktopLogTopBlocked => '拦截命中排行';
+
+  @override
+  String get desktopLogTopClients => '活跃客户端';
+
+  @override
+  String get desktopLogNoBlocked => '暂无拦截记录';
+
+  @override
   String get desktopLogPagePrev => '上一页';
 
   @override

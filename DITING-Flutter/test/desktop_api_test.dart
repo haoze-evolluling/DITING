@@ -184,6 +184,33 @@ void main() {
     expect(empty.cacheHitRate, 0);
   });
 
+  test('解析三列排行，缺列表按空处理', () async {
+    final backend = FakeDesktopBackend(
+      queryStats: queryStatsPayload(
+        topDomains: const [
+          {'name': 'api.example.com', 'count': 321},
+        ],
+        topClients: const [
+          {'name': 'laptop', 'count': 45},
+          {'name': 'phone'},
+        ],
+      ),
+    );
+    final stats = await backend.client().queryStats();
+    expect(stats.topDomains.single.name, 'api.example.com');
+    expect(stats.topDomains.single.count, 321);
+    expect(stats.topBlocked, isEmpty);
+    expect(stats.topClients.last.count, 0, reason: '缺 count 按零值解析');
+
+    final client = clientOf(
+      MockClient((_) async => http.Response(jsonEncode(apiEnvelope({})), 200)),
+    );
+    final empty = await client.queryStats();
+    expect(empty.topDomains, isEmpty);
+    expect(empty.topBlocked, isEmpty);
+    expect(empty.topClients, isEmpty);
+  });
+
   test('日志检索只把设了值的条件放进查询串', () async {
     final urls = <Uri>[];
     final client = clientOf(

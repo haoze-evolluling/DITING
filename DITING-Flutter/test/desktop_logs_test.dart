@@ -172,6 +172,57 @@ void main() {
     expect(backend.lastSearch.containsKey('status'), isFalse);
   });
 
+  testWidgets('三列排行按服务返回的顺序与计数展示', (tester) async {
+    await pumpLogs(
+      tester,
+      backend: FakeDesktopBackend(
+        queryStats: queryStatsPayload(
+          topDomains: const [
+            {'name': 'api.example.com', 'count': 321},
+            {'name': 'cdn.example.com', 'count': 123},
+          ],
+          topBlocked: const [
+            {'name': 'ads.example.com', 'count': 88},
+          ],
+          topClients: const [
+            {'name': 'laptop', 'count': 45},
+          ],
+        ),
+      ),
+    );
+    final l10n = l10nOf(tester);
+
+    expect(find.text(l10n.desktopLogTopDomains), findsOneWidget);
+    expect(find.text(l10n.desktopLogTopBlocked), findsOneWidget);
+    expect(find.text(l10n.desktopLogTopClients), findsOneWidget);
+    expect(find.text('api.example.com'), findsOneWidget);
+    expect(find.text('321'), findsOneWidget);
+    expect(find.text('ads.example.com'), findsOneWidget);
+    expect(find.text('88'), findsOneWidget);
+    expect(find.text('45'), findsOneWidget);
+    // 排行是服务算好的，页面不补也不截。
+    expect(find.text(l10n.commonNoData), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('排行无数据时分别说明无数据与无拦截', (tester) async {
+    await pumpLogs(tester);
+    final l10n = l10nOf(tester);
+
+    expect(find.text(l10n.commonNoData), findsNWidgets(2));
+    expect(find.text(l10n.desktopLogNoBlocked), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('汇总读不到时不画排行，只留一处离线提示', (tester) async {
+    await pumpLogs(tester, backend: FakeDesktopBackend(statusCode: 500));
+    final l10n = l10nOf(tester);
+
+    expect(find.text(l10n.desktopLogTopDomains), findsNothing);
+    expect(find.text(l10n.desktopBackendOfflineTitle), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('翻页按 offset 请求，两端按钮随总数禁用', (tester) async {
     final backend = await pumpLogs(
       tester,

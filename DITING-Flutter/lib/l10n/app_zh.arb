@@ -5335,6 +5335,10 @@
       }
     }
   },
+  "desktopLogTopDomains": "高频访问域名",
+  "desktopLogTopBlocked": "拦截命中排行",
+  "desktopLogTopClients": "活跃客户端",
+  "desktopLogNoBlocked": "暂无拦截记录",
   "desktopLogPagePrev": "上一页",
   "desktopLogPageNext": "下一页",
   "desktopLogPageInfo": "第 {from}–{to} 条，共 {total} 条",

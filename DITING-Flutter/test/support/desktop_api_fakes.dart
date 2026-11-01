@@ -118,6 +118,9 @@ Map<String, Object?> queryStatsPayload({
   int errors = 12,
   double avgResponseMs = 12.4,
   double cacheHitRate = 0.648,
+  List<Map<String, Object?>> topDomains = const [],
+  List<Map<String, Object?>> topBlocked = const [],
+  List<Map<String, Object?>> topClients = const [],
 }) => {
   'summary': {
     'queries': queries,
@@ -129,9 +132,9 @@ Map<String, Object?> queryStatsPayload({
     'cacheHitRate': cacheHitRate,
   },
   'perHour': const [],
-  'topDomains': const [],
-  'topBlocked': const [],
-  'topClients': const [],
+  'topDomains': topDomains,
+  'topBlocked': topBlocked,
+  'topClients': topClients,
 };
 
 Map<String, Object?> servicePayload({

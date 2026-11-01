@@ -16432,6 +16432,30 @@ abstract class AppL10n {
   /// **'清空失败：{message}'**
   String desktopLogClearFailed(String message);
 
+  /// No description provided for @desktopLogTopDomains.
+  ///
+  /// In zh, this message translates to:
+  /// **'高频访问域名'**
+  String get desktopLogTopDomains;
+
+  /// No description provided for @desktopLogTopBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截命中排行'**
+  String get desktopLogTopBlocked;
+
+  /// No description provided for @desktopLogTopClients.
+  ///
+  /// In zh, this message translates to:
+  /// **'活跃客户端'**
+  String get desktopLogTopClients;
+
+  /// No description provided for @desktopLogNoBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无拦截记录'**
+  String get desktopLogNoBlocked;
+
   /// No description provided for @desktopLogPagePrev.
   ///
   /// In zh, this message translates to:
