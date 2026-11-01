@@ -17,6 +17,7 @@ import 'package:diting/desktop/data/api/desktop_filter_models.dart';
 import 'package:diting/desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting/desktop/data/api/desktop_schedule_models.dart';
 import 'package:diting/desktop/data/api/desktop_services_models.dart';
+import 'package:diting/desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting/desktop/data/api/desktop_zone_models.dart';
@@ -483,6 +484,36 @@ class DesktopApiClient {
   /// Replaces the whole list; the service rebuilds its index and answers with a success flag.
   Future<void> setCustomRules(List<String> rules) =>
       _post('/api/v1/filter/rules', body: {'rules': rules});
+
+  /// The clients the service has seen, in its own order.
+  Future<List<DesktopClient>> clients() async {
+    final response = await _send('/api/v1/clients', method: 'GET');
+    return desktopClients(response['data']);
+  }
+
+  /// The ACL and rate-limit blocks live inside `/status`; there is no dedicated read endpoint.
+  Future<DesktopClientLimits> clientLimits() async =>
+      DesktopClientLimits.fromJson(await _get('/api/v1/status'));
+
+  /// An empty [name] clears the alias.
+  Future<void> configureClientAlias({
+    required String ip,
+    required String name,
+  }) => _post('/api/v1/clients/alias', body: {'ip': ip, 'name': name});
+
+  Future<void> configureAccess({
+    required List<String> allowedClients,
+    required List<String> blockedClients,
+  }) => _post(
+    '/api/v1/dns/access/configure',
+    body: {
+      'allowedClients': allowedClients,
+      'blockedClients': blockedClients,
+    },
+  );
+
+  Future<void> configureRateLimit(Map<String, Object?> config) =>
+      _post('/api/v1/dns/ratelimit/configure', body: config);
 
   void close() => _http.close();
 

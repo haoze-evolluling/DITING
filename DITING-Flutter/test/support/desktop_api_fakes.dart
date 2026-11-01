@@ -73,6 +73,14 @@ Map<String, Object?> statusPayload({
   bool hostsEnabled = true,
   bool hostsUseSystem = true,
   int hostsTtl = 60,
+  List<String> allowedClients = const [],
+  List<String> blockedClients = const [],
+  bool rateLimitEnabled = false,
+  double rateLimitRate = 50,
+  int rateLimitBurst = 100,
+  int rateLimitIpv4Prefix = 32,
+  int rateLimitIpv6Prefix = 128,
+  List<String> rateLimitExempt = const ['127.0.0.1', '::1'],
 }) => {
   'version': version,
   'pid': pid,
@@ -130,6 +138,18 @@ Map<String, Object?> statusPayload({
     'entryCount': cacheEntries,
     'maxEntries': cacheMaxEntries,
     'evictionCount': cacheEvictions,
+  },
+  'access': {
+    'allowedClients': allowedClients,
+    'blockedClients': blockedClients,
+  },
+  'rateLimit': {
+    'enabled': rateLimitEnabled,
+    'rate': rateLimitRate,
+    'burst': rateLimitBurst,
+    'ipv4Prefix': rateLimitIpv4Prefix,
+    'ipv6Prefix': rateLimitIpv6Prefix,
+    'exemptIPs': rateLimitExempt,
   },
   'filter': {
     'enabled': true,
@@ -501,6 +521,17 @@ Map<String, Object?> safeBrowsingPayload({
   'blockMode': blockMode,
 };
 
+/// A `GET /api/v1/clients` payload.
+List<Map<String, Object?>> clientsPayload() => [
+  {
+    'ip': '192.168.1.20',
+    'name': 'laptop.lan',
+    'queryCount': 321,
+    'lastSeen': 1700000000,
+  },
+  {'ip': '192.168.1.21', 'name': '', 'queryCount': 7, 'lastSeen': 0},
+];
+
 /// A `GET /api/v1/encrypted/dns/status` payload.
 Map<String, Object?> encryptedPayload({
   bool enabled = true,
@@ -604,6 +635,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? safeSearch,
     Map<String, Object?>? safeBrowsing,
     Map<String, Object?>? encrypted,
+    List<Map<String, Object?>>? clients,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -633,6 +665,7 @@ class FakeDesktopBackend {
        safeSearch = safeSearch ?? safeSearchPayload(),
        safeBrowsing = safeBrowsing ?? safeBrowsingPayload(),
        encrypted = encrypted ?? encryptedPayload(),
+       clients = clients ?? clientsPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -710,6 +743,14 @@ class FakeDesktopBackend {
 
   /// Bodies of every service-selection save, in order.
   final servicesUpdates = <Map<String, Object?>>[];
+
+  /// Mutated by the alias and limit saves.
+  List<Map<String, Object?>> clients;
+
+  /// Bodies of every client alias, ACL and rate-limit save, in order.
+  final aliasUpdates = <Map<String, Object?>>[];
+  final accessUpdates = <Map<String, Object?>>[];
+  final rateLimitUpdates = <Map<String, Object?>>[];
 
   /// Mutated by the encrypted-DNS configure / certificate calls.
   Map<String, Object?> encrypted;
@@ -877,6 +918,29 @@ class FakeDesktopBackend {
                 item.cast<String, Object?>(),
           ],
         };
+      }
+      if (path == '/api/v1/clients/alias' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        aliasUpdates.add(body);
+        clients = [
+          for (final client in clients)
+            if (client['ip'] == body['ip'])
+              {...client, 'name': '${body['name'] ?? ''}'}
+            else
+              client,
+        ];
+      }
+      if (path == '/api/v1/dns/access/configure' &&
+          request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        accessUpdates.add(body);
+        status['access'] = body;
+      }
+      if (path == '/api/v1/dns/ratelimit/configure' &&
+          request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        rateLimitUpdates.add(body);
+        status['rateLimit'] = body;
       }
       if (path == '/api/v1/encrypted/dns/configure' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
@@ -1132,6 +1196,10 @@ class FakeDesktopBackend {
         '/api/v1/filter/safebrowsing' => utf8Json(
           apiEnvelope(safeBrowsing),
         ),
+        '/api/v1/clients' => utf8Json(apiEnvelope(clients)),
+        '/api/v1/dns/access/configure' => utf8Json(apiEnvelope(null)),
+        '/api/v1/dns/ratelimit/configure' => utf8Json(apiEnvelope(null)),
+        '/api/v1/clients/alias' => utf8Json(apiEnvelope(null)),
         '/api/v1/encrypted/dns/status' => utf8Json(
           apiEnvelope(encrypted),
         ),

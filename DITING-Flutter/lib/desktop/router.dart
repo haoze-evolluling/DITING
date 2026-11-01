@@ -12,6 +12,7 @@ import 'package:diting/desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
+import 'package:diting/desktop/pages/traffic/desktop_traffic_page.dart';
 import 'package:diting/desktop/pages/logs/desktop_logs_page.dart';
 import 'package:diting/desktop/shell/desktop_shell.dart';
 import 'package:diting/routes/branches.dart';

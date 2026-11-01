@@ -11646,4 +11646,209 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopEncryptedOpenUrl => '在浏览器中打开';
+
+  @override
+  String get desktopTrafficPageTitle => '设备与客户端';
+
+  @override
+  String get desktopTrafficRefresh => '刷新设备与访问控制';
+
+  @override
+  String get desktopTrafficLoadFailed => '读不到设备与访问控制状态';
+
+  @override
+  String desktopTrafficSaveFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String get desktopTrafficClientsTitle => '已识别的局域网客户端';
+
+  @override
+  String get desktopTrafficClientsBody => '通过 rDNS 或自定义别名识别发起查询的设备';
+
+  @override
+  String desktopTrafficClientCount(int count) {
+    return '$count 个活跃设备';
+  }
+
+  @override
+  String get desktopTrafficClientsEmpty => '暂未识别到来自外部或局域网的 DNS 查询设备。';
+
+  @override
+  String get desktopTrafficClientUnnamed => '未设置（未知设备）';
+
+  @override
+  String desktopTrafficClientQueries(int count) {
+    return '累计查询 $count 次';
+  }
+
+  @override
+  String get desktopTrafficClientNever => '最近活跃：从未';
+
+  @override
+  String desktopTrafficClientLastSeen(String time) {
+    return '最近活跃 $time';
+  }
+
+  @override
+  String get desktopTrafficStateBlocked => '已阻断';
+
+  @override
+  String get desktopTrafficStateAllowed => '白名单';
+
+  @override
+  String get desktopTrafficStateNotAllowed => '未在白名单';
+
+  @override
+  String get desktopTrafficStateOpen => '正常放行';
+
+  @override
+  String get desktopTrafficAlias => '别名';
+
+  @override
+  String get desktopTrafficAliasTitle => '配置客户端设备别名';
+
+  @override
+  String get desktopTrafficAliasField => '自定义友好设备名称';
+
+  @override
+  String get desktopTrafficAliasHint => '如 客厅电视、工作用笔记本、NAS 存储';
+
+  @override
+  String get desktopTrafficAliasBody => '留空保存将清除自定义别名。';
+
+  @override
+  String get desktopTrafficAliasSave => '保存别名';
+
+  @override
+  String desktopTrafficAliasSaved(String ip) {
+    return '客户端 [$ip] 别名已更新';
+  }
+
+  @override
+  String desktopTrafficAliasCleared(String ip) {
+    return '客户端 [$ip] 别名已清除';
+  }
+
+  @override
+  String get desktopTrafficAllowedAdd => '白名单';
+
+  @override
+  String get desktopTrafficAllowedRemove => '已放行';
+
+  @override
+  String desktopTrafficAllowedAdded(String ip) {
+    return '客户端 [$ip] 已加入白名单';
+  }
+
+  @override
+  String desktopTrafficAllowedRemoved(String ip) {
+    return '客户端 [$ip] 已移出白名单';
+  }
+
+  @override
+  String get desktopTrafficBlockedAdd => '阻断';
+
+  @override
+  String get desktopTrafficBlockedRemove => '已阻断';
+
+  @override
+  String desktopTrafficBlockedAdded(String ip) {
+    return '客户端 [$ip] 已加入黑名单阻断';
+  }
+
+  @override
+  String desktopTrafficBlockedRemoved(String ip) {
+    return '客户端 [$ip] 已移出黑名单';
+  }
+
+  @override
+  String get desktopTrafficAccessTitle => '客户端访问控制（ACL）';
+
+  @override
+  String get desktopTrafficAccessBody => '限制特定 IP 或 CIDR 网段设备的 DNS 查询权限';
+
+  @override
+  String get desktopTrafficAccessOpen => '未限制';
+
+  @override
+  String get desktopTrafficAccessAllowOnly => '仅白名单';
+
+  @override
+  String get desktopTrafficAccessAllowed => '允许访问白名单';
+
+  @override
+  String get desktopTrafficAccessAllowedHint =>
+      '例如: 192.168.1.0/24 或 192.168.1.50';
+
+  @override
+  String get desktopTrafficAccessAllowedBody =>
+      '若填写，则仅允许名单内的客户端解析；留空表示不限制。每行一个 IP 或 CIDR。';
+
+  @override
+  String get desktopTrafficAccessBlocked => '显式阻断黑名单';
+
+  @override
+  String get desktopTrafficAccessBlockedHint =>
+      '例如: 192.168.1.199 或 10.0.0.0/8';
+
+  @override
+  String get desktopTrafficAccessBlockedBody =>
+      '命中该名单的客户端将被直接拒绝解析请求。每行一个 IP 或 CIDR。';
+
+  @override
+  String get desktopTrafficAccessSave => '保存名单';
+
+  @override
+  String get desktopTrafficAccessReset => '撤销修改';
+
+  @override
+  String get desktopTrafficAccessSaved => '客户端黑白名单已保存';
+
+  @override
+  String get desktopTrafficRateLimitTitle => '客户端请求速率限制';
+
+  @override
+  String get desktopTrafficRateLimitBody => '基于令牌桶限流，防范局域网 DoS 泛洪与 DNS 放大攻击';
+
+  @override
+  String get desktopTrafficRateLimitOn => '限流生效中';
+
+  @override
+  String get desktopTrafficRateLimitOff => '限流已停用';
+
+  @override
+  String get desktopTrafficRateLimitSavedOn => '速率限制已开启';
+
+  @override
+  String get desktopTrafficRateLimitSavedOff => '速率限制已关闭';
+
+  @override
+  String get desktopTrafficRate => '速率（令牌/秒）';
+
+  @override
+  String get desktopTrafficBurst => '突发容量（次）';
+
+  @override
+  String get desktopTrafficIpv4Prefix => 'IPv4 聚合掩码';
+
+  @override
+  String get desktopTrafficIpv6Prefix => 'IPv6 聚合掩码';
+
+  @override
+  String get desktopTrafficPrefixBody => '单 IP 为 32 / 128；局域网可按需聚合，如 24 / 64。';
+
+  @override
+  String get desktopTrafficExempt => '豁免 IP / 网段';
+
+  @override
+  String get desktopTrafficExemptBody => '回环与受信任网段不计入限流统计。';
+
+  @override
+  String get desktopTrafficRateLimitSave => '保存速率限制';
+
+  @override
+  String get desktopTrafficRateInvalid =>
+      '速率与突发需大于 0，掩码需在 1–32（IPv4）与 1–128（IPv6）之间';
 }

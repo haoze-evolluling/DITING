@@ -12368,4 +12368,217 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopEncryptedOpenUrl => 'Open in browser';
+
+  @override
+  String get desktopTrafficPageTitle => 'Devices and clients';
+
+  @override
+  String get desktopTrafficRefresh => 'Reload devices and access control';
+
+  @override
+  String get desktopTrafficLoadFailed =>
+      'Could not read the devices and access control';
+
+  @override
+  String desktopTrafficSaveFailed(String message) {
+    return 'The action failed: $message';
+  }
+
+  @override
+  String get desktopTrafficClientsTitle => 'Recognised LAN clients';
+
+  @override
+  String get desktopTrafficClientsBody =>
+      'Devices that queried, identified by rDNS or a custom alias';
+
+  @override
+  String desktopTrafficClientCount(int count) {
+    return '$count active devices';
+  }
+
+  @override
+  String get desktopTrafficClientsEmpty =>
+      'No device has queried from the LAN or outside yet.';
+
+  @override
+  String get desktopTrafficClientUnnamed => 'Not set (unknown device)';
+
+  @override
+  String desktopTrafficClientQueries(int count) {
+    return '$count queries';
+  }
+
+  @override
+  String get desktopTrafficClientNever => 'Last seen: never';
+
+  @override
+  String desktopTrafficClientLastSeen(String time) {
+    return 'Last seen $time';
+  }
+
+  @override
+  String get desktopTrafficStateBlocked => 'Blocked';
+
+  @override
+  String get desktopTrafficStateAllowed => 'Allowlisted';
+
+  @override
+  String get desktopTrafficStateNotAllowed => 'Not allowlisted';
+
+  @override
+  String get desktopTrafficStateOpen => 'Allowed';
+
+  @override
+  String get desktopTrafficAlias => 'Alias';
+
+  @override
+  String get desktopTrafficAliasTitle => 'Set the client\'s device alias';
+
+  @override
+  String get desktopTrafficAliasField => 'Friendly device name';
+
+  @override
+  String get desktopTrafficAliasHint => 'e.g. living-room TV, work laptop, NAS';
+
+  @override
+  String get desktopTrafficAliasBody =>
+      'Saving an empty name clears the alias.';
+
+  @override
+  String get desktopTrafficAliasSave => 'Save alias';
+
+  @override
+  String desktopTrafficAliasSaved(String ip) {
+    return 'The alias for [$ip] was updated';
+  }
+
+  @override
+  String desktopTrafficAliasCleared(String ip) {
+    return 'The alias for [$ip] was cleared';
+  }
+
+  @override
+  String get desktopTrafficAllowedAdd => 'Allowlist';
+
+  @override
+  String get desktopTrafficAllowedRemove => 'Allowlisted';
+
+  @override
+  String desktopTrafficAllowedAdded(String ip) {
+    return '[$ip] was added to the allowlist';
+  }
+
+  @override
+  String desktopTrafficAllowedRemoved(String ip) {
+    return '[$ip] was removed from the allowlist';
+  }
+
+  @override
+  String get desktopTrafficBlockedAdd => 'Block';
+
+  @override
+  String get desktopTrafficBlockedRemove => 'Blocked';
+
+  @override
+  String desktopTrafficBlockedAdded(String ip) {
+    return '[$ip] was added to the blocklist';
+  }
+
+  @override
+  String desktopTrafficBlockedRemoved(String ip) {
+    return '[$ip] was removed from the blocklist';
+  }
+
+  @override
+  String get desktopTrafficAccessTitle => 'Client access control (ACL)';
+
+  @override
+  String get desktopTrafficAccessBody =>
+      'Restricts which client IPs or CIDR ranges may resolve';
+
+  @override
+  String get desktopTrafficAccessOpen => 'Unrestricted';
+
+  @override
+  String get desktopTrafficAccessAllowOnly => 'Allowlist only';
+
+  @override
+  String get desktopTrafficAccessAllowed => 'Allowlist';
+
+  @override
+  String get desktopTrafficAccessAllowedHint =>
+      'e.g. 192.168.1.0/24 or 192.168.1.50';
+
+  @override
+  String get desktopTrafficAccessAllowedBody =>
+      'When set, only listed clients may resolve; empty means no restriction. One IP or CIDR per line.';
+
+  @override
+  String get desktopTrafficAccessBlocked => 'Explicit blocklist';
+
+  @override
+  String get desktopTrafficAccessBlockedHint =>
+      'e.g. 192.168.1.199 or 10.0.0.0/8';
+
+  @override
+  String get desktopTrafficAccessBlockedBody =>
+      'Clients matching this list have their queries refused outright. One IP or CIDR per line.';
+
+  @override
+  String get desktopTrafficAccessSave => 'Save lists';
+
+  @override
+  String get desktopTrafficAccessReset => 'Discard changes';
+
+  @override
+  String get desktopTrafficAccessSaved => 'The client lists were saved';
+
+  @override
+  String get desktopTrafficRateLimitTitle => 'Client rate limit';
+
+  @override
+  String get desktopTrafficRateLimitBody =>
+      'Token-bucket limiting against LAN DoS floods and DNS amplification';
+
+  @override
+  String get desktopTrafficRateLimitOn => 'Limiting';
+
+  @override
+  String get desktopTrafficRateLimitOff => 'Off';
+
+  @override
+  String get desktopTrafficRateLimitSavedOn => 'Rate limiting is on';
+
+  @override
+  String get desktopTrafficRateLimitSavedOff => 'Rate limiting is off';
+
+  @override
+  String get desktopTrafficRate => 'Rate (tokens/s)';
+
+  @override
+  String get desktopTrafficBurst => 'Burst capacity';
+
+  @override
+  String get desktopTrafficIpv4Prefix => 'IPv4 prefix length';
+
+  @override
+  String get desktopTrafficIpv6Prefix => 'IPv6 prefix length';
+
+  @override
+  String get desktopTrafficPrefixBody =>
+      '32 / 128 for a single address; aggregate on a LAN with e.g. 24 / 64.';
+
+  @override
+  String get desktopTrafficExempt => 'Exempt IPs / ranges';
+
+  @override
+  String get desktopTrafficExemptBody =>
+      'Loopback and trusted ranges are not counted.';
+
+  @override
+  String get desktopTrafficRateLimitSave => 'Save rate limit';
+
+  @override
+  String get desktopTrafficRateInvalid =>
+      'Rate and burst must be positive; prefixes must be 1–32 (IPv4) and 1–128 (IPv6)';
 }

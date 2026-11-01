@@ -21237,6 +21237,366 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'在浏览器中打开'**
   String get desktopEncryptedOpenUrl;
+
+  /// No description provided for @desktopTrafficPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'设备与客户端'**
+  String get desktopTrafficPageTitle;
+
+  /// No description provided for @desktopTrafficRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新设备与访问控制'**
+  String get desktopTrafficRefresh;
+
+  /// No description provided for @desktopTrafficLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到设备与访问控制状态'**
+  String get desktopTrafficLoadFailed;
+
+  /// No description provided for @desktopTrafficSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopTrafficSaveFailed(String message);
+
+  /// No description provided for @desktopTrafficClientsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'已识别的局域网客户端'**
+  String get desktopTrafficClientsTitle;
+
+  /// No description provided for @desktopTrafficClientsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'通过 rDNS 或自定义别名识别发起查询的设备'**
+  String get desktopTrafficClientsBody;
+
+  /// No description provided for @desktopTrafficClientCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个活跃设备'**
+  String desktopTrafficClientCount(int count);
+
+  /// No description provided for @desktopTrafficClientsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂未识别到来自外部或局域网的 DNS 查询设备。'**
+  String get desktopTrafficClientsEmpty;
+
+  /// No description provided for @desktopTrafficClientUnnamed.
+  ///
+  /// In zh, this message translates to:
+  /// **'未设置（未知设备）'**
+  String get desktopTrafficClientUnnamed;
+
+  /// No description provided for @desktopTrafficClientQueries.
+  ///
+  /// In zh, this message translates to:
+  /// **'累计查询 {count} 次'**
+  String desktopTrafficClientQueries(int count);
+
+  /// No description provided for @desktopTrafficClientNever.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近活跃：从未'**
+  String get desktopTrafficClientNever;
+
+  /// No description provided for @desktopTrafficClientLastSeen.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近活跃 {time}'**
+  String desktopTrafficClientLastSeen(String time);
+
+  /// No description provided for @desktopTrafficStateBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已阻断'**
+  String get desktopTrafficStateBlocked;
+
+  /// No description provided for @desktopTrafficStateAllowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'白名单'**
+  String get desktopTrafficStateAllowed;
+
+  /// No description provided for @desktopTrafficStateNotAllowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'未在白名单'**
+  String get desktopTrafficStateNotAllowed;
+
+  /// No description provided for @desktopTrafficStateOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'正常放行'**
+  String get desktopTrafficStateOpen;
+
+  /// No description provided for @desktopTrafficAlias.
+  ///
+  /// In zh, this message translates to:
+  /// **'别名'**
+  String get desktopTrafficAlias;
+
+  /// No description provided for @desktopTrafficAliasTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置客户端设备别名'**
+  String get desktopTrafficAliasTitle;
+
+  /// No description provided for @desktopTrafficAliasField.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义友好设备名称'**
+  String get desktopTrafficAliasField;
+
+  /// No description provided for @desktopTrafficAliasHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'如 客厅电视、工作用笔记本、NAS 存储'**
+  String get desktopTrafficAliasHint;
+
+  /// No description provided for @desktopTrafficAliasBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'留空保存将清除自定义别名。'**
+  String get desktopTrafficAliasBody;
+
+  /// No description provided for @desktopTrafficAliasSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存别名'**
+  String get desktopTrafficAliasSave;
+
+  /// No description provided for @desktopTrafficAliasSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端 [{ip}] 别名已更新'**
+  String desktopTrafficAliasSaved(String ip);
+
+  /// No description provided for @desktopTrafficAliasCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端 [{ip}] 别名已清除'**
+  String desktopTrafficAliasCleared(String ip);
+
+  /// No description provided for @desktopTrafficAllowedAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'白名单'**
+  String get desktopTrafficAllowedAdd;
+
+  /// No description provided for @desktopTrafficAllowedRemove.
+  ///
+  /// In zh, this message translates to:
+  /// **'已放行'**
+  String get desktopTrafficAllowedRemove;
+
+  /// No description provided for @desktopTrafficAllowedAdded.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端 [{ip}] 已加入白名单'**
+  String desktopTrafficAllowedAdded(String ip);
+
+  /// No description provided for @desktopTrafficAllowedRemoved.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端 [{ip}] 已移出白名单'**
+  String desktopTrafficAllowedRemoved(String ip);
+
+  /// No description provided for @desktopTrafficBlockedAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻断'**
+  String get desktopTrafficBlockedAdd;
+
+  /// No description provided for @desktopTrafficBlockedRemove.
+  ///
+  /// In zh, this message translates to:
+  /// **'已阻断'**
+  String get desktopTrafficBlockedRemove;
+
+  /// No description provided for @desktopTrafficBlockedAdded.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端 [{ip}] 已加入黑名单阻断'**
+  String desktopTrafficBlockedAdded(String ip);
+
+  /// No description provided for @desktopTrafficBlockedRemoved.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端 [{ip}] 已移出黑名单'**
+  String desktopTrafficBlockedRemoved(String ip);
+
+  /// No description provided for @desktopTrafficAccessTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端访问控制（ACL）'**
+  String get desktopTrafficAccessTitle;
+
+  /// No description provided for @desktopTrafficAccessBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'限制特定 IP 或 CIDR 网段设备的 DNS 查询权限'**
+  String get desktopTrafficAccessBody;
+
+  /// No description provided for @desktopTrafficAccessOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'未限制'**
+  String get desktopTrafficAccessOpen;
+
+  /// No description provided for @desktopTrafficAccessAllowOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅白名单'**
+  String get desktopTrafficAccessAllowOnly;
+
+  /// No description provided for @desktopTrafficAccessAllowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'允许访问白名单'**
+  String get desktopTrafficAccessAllowed;
+
+  /// No description provided for @desktopTrafficAccessAllowedHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如: 192.168.1.0/24 或 192.168.1.50'**
+  String get desktopTrafficAccessAllowedHint;
+
+  /// No description provided for @desktopTrafficAccessAllowedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'若填写，则仅允许名单内的客户端解析；留空表示不限制。每行一个 IP 或 CIDR。'**
+  String get desktopTrafficAccessAllowedBody;
+
+  /// No description provided for @desktopTrafficAccessBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'显式阻断黑名单'**
+  String get desktopTrafficAccessBlocked;
+
+  /// No description provided for @desktopTrafficAccessBlockedHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如: 192.168.1.199 或 10.0.0.0/8'**
+  String get desktopTrafficAccessBlockedHint;
+
+  /// No description provided for @desktopTrafficAccessBlockedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中该名单的客户端将被直接拒绝解析请求。每行一个 IP 或 CIDR。'**
+  String get desktopTrafficAccessBlockedBody;
+
+  /// No description provided for @desktopTrafficAccessSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存名单'**
+  String get desktopTrafficAccessSave;
+
+  /// No description provided for @desktopTrafficAccessReset.
+  ///
+  /// In zh, this message translates to:
+  /// **'撤销修改'**
+  String get desktopTrafficAccessReset;
+
+  /// No description provided for @desktopTrafficAccessSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端黑白名单已保存'**
+  String get desktopTrafficAccessSaved;
+
+  /// No description provided for @desktopTrafficRateLimitTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端请求速率限制'**
+  String get desktopTrafficRateLimitTitle;
+
+  /// No description provided for @desktopTrafficRateLimitBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'基于令牌桶限流，防范局域网 DoS 泛洪与 DNS 放大攻击'**
+  String get desktopTrafficRateLimitBody;
+
+  /// No description provided for @desktopTrafficRateLimitOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'限流生效中'**
+  String get desktopTrafficRateLimitOn;
+
+  /// No description provided for @desktopTrafficRateLimitOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'限流已停用'**
+  String get desktopTrafficRateLimitOff;
+
+  /// No description provided for @desktopTrafficRateLimitSavedOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'速率限制已开启'**
+  String get desktopTrafficRateLimitSavedOn;
+
+  /// No description provided for @desktopTrafficRateLimitSavedOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'速率限制已关闭'**
+  String get desktopTrafficRateLimitSavedOff;
+
+  /// No description provided for @desktopTrafficRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'速率（令牌/秒）'**
+  String get desktopTrafficRate;
+
+  /// No description provided for @desktopTrafficBurst.
+  ///
+  /// In zh, this message translates to:
+  /// **'突发容量（次）'**
+  String get desktopTrafficBurst;
+
+  /// No description provided for @desktopTrafficIpv4Prefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv4 聚合掩码'**
+  String get desktopTrafficIpv4Prefix;
+
+  /// No description provided for @desktopTrafficIpv6Prefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv6 聚合掩码'**
+  String get desktopTrafficIpv6Prefix;
+
+  /// No description provided for @desktopTrafficPrefixBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'单 IP 为 32 / 128；局域网可按需聚合，如 24 / 64。'**
+  String get desktopTrafficPrefixBody;
+
+  /// No description provided for @desktopTrafficExempt.
+  ///
+  /// In zh, this message translates to:
+  /// **'豁免 IP / 网段'**
+  String get desktopTrafficExempt;
+
+  /// No description provided for @desktopTrafficExemptBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'回环与受信任网段不计入限流统计。'**
+  String get desktopTrafficExemptBody;
+
+  /// No description provided for @desktopTrafficRateLimitSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存速率限制'**
+  String get desktopTrafficRateLimitSave;
+
+  /// No description provided for @desktopTrafficRateInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'速率与突发需大于 0，掩码需在 1–32（IPv4）与 1–128（IPv6）之间'**
+  String get desktopTrafficRateInvalid;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
