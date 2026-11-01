@@ -12,3 +12,7 @@ Uri? get desktopPageOrigin => null;
 
 /// Picks one image and returns it as a `data:image/...;base64,` URL; null when nothing was picked.
 Future<String?> pickDesktopImageDataUrl() async => null;
+
+/// Shrinks a picked image before it is sent; off the web there is nothing to shrink it with, so the
+/// payload is passed through unchanged (the service still validates and caps it).
+Future<String?> compressDesktopImageDataUrl(String dataUrl) async => dataUrl;

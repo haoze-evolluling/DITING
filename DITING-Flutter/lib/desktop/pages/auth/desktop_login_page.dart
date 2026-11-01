@@ -13,6 +13,7 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/app/theme/colors.dart';
 import 'package:diting/desktop/data/api/desktop_auth_providers.dart';
 import 'package:diting/desktop/pages/auth/widgets/login_background_dialog.dart';
+import 'package:diting/desktop/pages/auth/widgets/login_change_password_card.dart';
 import 'package:diting/desktop/widgets/desktop_feedback.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
@@ -38,6 +39,7 @@ class _DesktopLoginPageState extends ConsumerState<DesktopLoginPage> {
   String? _success;
   int _lockout = 0;
   Timer? _lockoutTimer;
+  bool _changing = false;
 
   @override
   void initState() {
@@ -212,7 +214,15 @@ class _DesktopLoginPageState extends ConsumerState<DesktopLoginPage> {
                         constraints: const BoxConstraints(maxWidth: 420),
                         child: DashboardCard(
                           semanticLabel: l10n.desktopLoginTitle,
-                          child: Column(
+                          child: _changing && !setup
+                              ? LoginChangePasswordCard(
+                                  username: _username.text.trim().isEmpty
+                                      ? 'admin'
+                                      : _username.text.trim(),
+                                  onBack: () =>
+                                      setState(() => _changing = false),
+                                )
+                              : Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _CardHeader(setup: setup),
@@ -311,6 +321,17 @@ class _DesktopLoginPageState extends ConsumerState<DesktopLoginPage> {
                                   ),
                                 ],
                               ),
+                              if (!setup)
+                                Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: TextButton(
+                                    onPressed: () =>
+                                        setState(() => _changing = true),
+                                    child: Text(
+                                      l10n.desktopLoginChangePassword,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),

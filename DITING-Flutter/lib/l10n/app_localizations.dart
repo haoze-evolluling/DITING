@@ -23391,6 +23391,60 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'手机与电脑连同一 Wi-Fi，用相机扫码直达控制台'**
   String get desktopLanWebQrCaption;
+
+  /// No description provided for @desktopLoginBackgroundPreparing.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在压缩图片…'**
+  String get desktopLoginBackgroundPreparing;
+
+  /// No description provided for @desktopLoginChangePassword.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改管理员密码'**
+  String get desktopLoginChangePassword;
+
+  /// No description provided for @desktopLoginChangeSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新管理员凭据，保存后其他外部会话立即失效'**
+  String get desktopLoginChangeSubtitle;
+
+  /// No description provided for @desktopLoginOldPasswordLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前密码'**
+  String get desktopLoginOldPasswordLabel;
+
+  /// No description provided for @desktopLoginNewPasswordLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'新密码 (至少 4 位)'**
+  String get desktopLoginNewPasswordLabel;
+
+  /// No description provided for @desktopLoginChangeSubmit.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存新密码'**
+  String get desktopLoginChangeSubmit;
+
+  /// No description provided for @desktopLoginChangeSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理员密码已更新，请用新密码登录'**
+  String get desktopLoginChangeSuccess;
+
+  /// No description provided for @desktopLoginBackToSignIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'返回登录'**
+  String get desktopLoginBackToSignIn;
+
+  /// No description provided for @desktopLoginOldPasswordRequired.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入当前密码'**
+  String get desktopLoginOldPasswordRequired;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

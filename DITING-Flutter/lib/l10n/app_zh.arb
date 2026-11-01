@@ -6656,5 +6656,14 @@
   "desktopToolsEmergencyFailed": "恢复失败：{message}",
   "@desktopToolsEmergencyFailed": {"placeholders": {"message": {"type": "String"}}},
   "desktopToolsEmergencyFooter": "恢复依据是接管前落盘的快照，不会改动网卡驱动本身。",
-  "desktopLanWebQrCaption": "手机与电脑连同一 Wi-Fi，用相机扫码直达控制台"
+  "desktopLanWebQrCaption": "手机与电脑连同一 Wi-Fi，用相机扫码直达控制台",
+  "desktopLoginBackgroundPreparing": "正在压缩图片…",
+  "desktopLoginChangePassword": "修改管理员密码",
+  "desktopLoginChangeSubtitle": "更新管理员凭据，保存后其他外部会话立即失效",
+  "desktopLoginOldPasswordLabel": "当前密码",
+  "desktopLoginNewPasswordLabel": "新密码 (至少 4 位)",
+  "desktopLoginChangeSubmit": "保存新密码",
+  "desktopLoginChangeSuccess": "管理员密码已更新，请用新密码登录",
+  "desktopLoginBackToSignIn": "返回登录",
+  "desktopLoginOldPasswordRequired": "请输入当前密码"
 }

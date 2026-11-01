@@ -227,6 +227,25 @@ class DesktopAuthNotifier extends Notifier<DesktopAuthState> {
     return signIn(username: username, password: password);
   }
 
+  /// Rotating the credential from the login page: the service invalidates every other session, so
+  /// the caller returns to the login form instead of assuming it is still signed in.
+  Future<DesktopApiException?> changePassword({
+    required String username,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      await _client.changeAdminPassword(
+        username: username,
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+      );
+      return null;
+    } on DesktopApiException catch (error) {
+      return error;
+    }
+  }
+
   Future<DesktopApiException?> signOut() async {
     DesktopApiException? failure;
     try {

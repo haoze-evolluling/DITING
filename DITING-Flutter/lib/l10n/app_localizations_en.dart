@@ -13601,4 +13601,34 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopLanWebQrCaption =>
       'On the same Wi-Fi, scan with the phone camera to open the console';
+
+  @override
+  String get desktopLoginBackgroundPreparing => 'Compressing the image…';
+
+  @override
+  String get desktopLoginChangePassword => 'Change admin password';
+
+  @override
+  String get desktopLoginChangeSubtitle =>
+      'Rotating the credential signs every other external session out';
+
+  @override
+  String get desktopLoginOldPasswordLabel => 'Current password';
+
+  @override
+  String get desktopLoginNewPasswordLabel =>
+      'New password (at least 4 characters)';
+
+  @override
+  String get desktopLoginChangeSubmit => 'Save new password';
+
+  @override
+  String get desktopLoginChangeSuccess =>
+      'Admin password updated; sign in with the new one';
+
+  @override
+  String get desktopLoginBackToSignIn => 'Back to sign in';
+
+  @override
+  String get desktopLoginOldPasswordRequired => 'Enter the current password';
 }

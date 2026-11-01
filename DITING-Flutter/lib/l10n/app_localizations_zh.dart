@@ -12804,4 +12804,31 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopLanWebQrCaption => '手机与电脑连同一 Wi-Fi，用相机扫码直达控制台';
+
+  @override
+  String get desktopLoginBackgroundPreparing => '正在压缩图片…';
+
+  @override
+  String get desktopLoginChangePassword => '修改管理员密码';
+
+  @override
+  String get desktopLoginChangeSubtitle => '更新管理员凭据，保存后其他外部会话立即失效';
+
+  @override
+  String get desktopLoginOldPasswordLabel => '当前密码';
+
+  @override
+  String get desktopLoginNewPasswordLabel => '新密码 (至少 4 位)';
+
+  @override
+  String get desktopLoginChangeSubmit => '保存新密码';
+
+  @override
+  String get desktopLoginChangeSuccess => '管理员密码已更新，请用新密码登录';
+
+  @override
+  String get desktopLoginBackToSignIn => '返回登录';
+
+  @override
+  String get desktopLoginOldPasswordRequired => '请输入当前密码';
 }

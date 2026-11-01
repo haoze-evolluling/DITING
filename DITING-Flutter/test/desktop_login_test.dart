@@ -9,8 +9,10 @@ import 'package:diting/desktop/app/desktop_app.dart';
 import 'package:diting/desktop/data/api/desktop_api_providers.dart';
 import 'package:diting/desktop/data/api/desktop_auth_providers.dart';
 import 'package:diting/desktop/data/api/desktop_live_providers.dart';
+import 'package:diting/desktop/data/host/desktop_platform_host.dart';
 import 'package:diting/desktop/pages/auth/desktop_login_page.dart';
 import 'package:diting/desktop/pages/auth/widgets/login_background_dialog.dart';
+import 'package:diting/desktop/pages/auth/widgets/login_change_password_card.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/pages/settings/desktop_settings_page.dart';
 import 'package:diting/routes/branches.dart';
@@ -61,6 +63,106 @@ void main() {
   Map<String, Map<String, Object?>> seededToken({String token = 'stored'}) => {
     'diting_desktop': {'session_token': token, 'session_user': 'admin'},
   };
+
+  test('背景图按 1920×1080 等比缩放，不放大小图', () {
+    expect(desktopBackgroundSize(3840, 2160), (width: 1920, height: 1080));
+    expect(desktopBackgroundSize(4000, 1000), (width: 1920, height: 480));
+    expect(desktopBackgroundSize(1000, 4000), (width: 270, height: 1080));
+    expect(desktopBackgroundSize(1280, 720), (width: 1280, height: 720));
+    expect(desktopBackgroundSize(0, 0), (width: 0, height: 0));
+  });
+
+  test('体积仍然过大时二次降采样到 1280×720 以内且有下限', () {
+    expect(
+      desktopBackgroundShrinkSize(1920, 1080),
+      (width: 1280, height: 720),
+    );
+    // 0.75 of the first pass wins when the caps allow it.
+    expect(
+      desktopBackgroundShrinkSize(800, 600),
+      (width: 600, height: 450),
+    );
+    // Never below the console's floor.
+    expect(
+      desktopBackgroundShrinkSize(100, 100),
+      (width: desktopBackgroundMinWidth, height: desktopBackgroundMinHeight),
+    );
+  });
+
+  test('非 web 宿主没有压缩能力，原样返回而不丢图', () async {
+    const dataUrl = 'data:image/png;base64,AAAA';
+    expect(await compressDesktopImageDataUrl(dataUrl), dataUrl);
+  });
+
+  testWidgets('登录页可改密码：提交原密码、新密码并回到登录', (tester) async {
+    final (backend, _) = await pumpConsole(tester);
+    final l10n = l10nOf(tester);
+
+    await tester.tap(find.text(l10n.desktopLoginChangePassword));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginChangePasswordCard), findsOneWidget);
+    expect(find.text(l10n.desktopLoginChangeSubtitle), findsOneWidget);
+
+    final fields = find.descendant(
+      of: find.byType(LoginChangePasswordCard),
+      matching: find.byType(TextField),
+    );
+    expect(fields, findsNWidgets(3));
+    await tester.enterText(fields.at(0), 'old-pass');
+    await tester.enterText(fields.at(1), 'new-pass');
+    await tester.enterText(fields.at(2), 'new-pass');
+    await tester.tap(find.text(l10n.desktopLoginChangeSubmit));
+    await tester.pumpAndSettle();
+
+    expect(backend.passwordUpdates.single, {
+      'username': 'admin',
+      'oldPassword': 'old-pass',
+      'newPassword': 'new-pass',
+    });
+    expect(find.text(l10n.desktopLoginChangeSuccess), findsOneWidget);
+
+    await tester.tap(find.text(l10n.desktopLoginBackToSignIn));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginChangePasswordCard), findsNothing);
+    expect(find.text(l10n.desktopLoginSubmit), findsOneWidget);
+  });
+
+  testWidgets('改密码缺原密码或两次不一致时不提交', (tester) async {
+    final (backend, _) = await pumpConsole(tester);
+    final l10n = l10nOf(tester);
+
+    await tester.tap(find.text(l10n.desktopLoginChangePassword));
+    await tester.pumpAndSettle();
+    final fields = find.descendant(
+      of: find.byType(LoginChangePasswordCard),
+      matching: find.byType(TextField),
+    );
+
+    await tester.enterText(fields.at(1), 'new-pass');
+    await tester.enterText(fields.at(2), 'new-pass');
+    await tester.tap(find.text(l10n.desktopLoginChangeSubmit));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.desktopLoginOldPasswordRequired), findsOneWidget);
+
+    await tester.enterText(fields.at(0), 'old-pass');
+    await tester.enterText(fields.at(1), 'new-pass');
+    await tester.enterText(fields.at(2), 'other-pass');
+    await tester.tap(find.text(l10n.desktopLoginChangeSubmit));
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.desktopLoginPasswordMismatch), findsOneWidget);
+
+    expect(backend.passwordUpdates, isEmpty);
+  });
+
+  testWidgets('首次初始化时不提供改密码入口', (tester) async {
+    await pumpConsole(
+      tester,
+      backend: FakeDesktopBackend(auth: authPayload(initialized: false)),
+    );
+    final l10n = l10nOf(tester);
+
+    expect(find.text(l10n.desktopLoginChangePassword), findsNothing);
+  });
 
   testWidgets('桌面窗口不出现登录页，直接进入控制台', (tester) async {
     final backend = FakeDesktopBackend();

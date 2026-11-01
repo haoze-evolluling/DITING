@@ -52,6 +52,7 @@ class _LoginBackgroundDialogState
   double _opacity = 40;
   double _blur = 0;
   String? _error;
+  bool _preparing = false;
 
   @override
   void initState() {
@@ -95,8 +96,15 @@ class _LoginBackgroundDialogState
     }
     setState(() {
       _error = null;
+      _preparing = true;
       _local = true;
-      _dataUrl = picked;
+    });
+    // Shrunk before it is stored: the service caps the payload, but a phone photo is wasteful.
+    final prepared = await compressDesktopImageDataUrl(picked);
+    if (!mounted) return;
+    setState(() {
+      _preparing = false;
+      _dataUrl = prepared ?? picked;
     });
   }
 
@@ -187,9 +195,18 @@ class _LoginBackgroundDialogState
                 Align(
                   alignment: AlignmentDirectional.centerStart,
                   child: OutlinedButton.icon(
-                    onPressed: _pickImage,
-                    icon: const GlyphIcon(AppGlyphs.photos, size: 16),
-                    label: Text(l10n.desktopLoginBackgroundChoose),
+                    onPressed: _preparing ? null : _pickImage,
+                    icon: _preparing
+                        ? const SizedBox.square(
+                            dimension: 14,
+                            child: CommonCircleLoading(),
+                          )
+                        : const GlyphIcon(AppGlyphs.photos, size: 16),
+                    label: Text(
+                      _preparing
+                          ? l10n.desktopLoginBackgroundPreparing
+                          : l10n.desktopLoginBackgroundChoose,
+                    ),
                   ),
                 )
               else

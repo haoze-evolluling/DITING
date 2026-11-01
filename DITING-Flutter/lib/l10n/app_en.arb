@@ -4033,5 +4033,14 @@
   "desktopToolsEmergencyFailed": "Restore failed: {message}",
   "@desktopToolsEmergencyFailed": {"placeholders": {"message": {"type": "String"}}},
   "desktopToolsEmergencyFooter": "The restore replays the snapshot saved before the takeover; it does not touch the adapter drivers.",
-  "desktopLanWebQrCaption": "On the same Wi-Fi, scan with the phone camera to open the console"
+  "desktopLanWebQrCaption": "On the same Wi-Fi, scan with the phone camera to open the console",
+  "desktopLoginBackgroundPreparing": "Compressing the image…",
+  "desktopLoginChangePassword": "Change admin password",
+  "desktopLoginChangeSubtitle": "Rotating the credential signs every other external session out",
+  "desktopLoginOldPasswordLabel": "Current password",
+  "desktopLoginNewPasswordLabel": "New password (at least 4 characters)",
+  "desktopLoginChangeSubmit": "Save new password",
+  "desktopLoginChangeSuccess": "Admin password updated; sign in with the new one",
+  "desktopLoginBackToSignIn": "Back to sign in",
+  "desktopLoginOldPasswordRequired": "Enter the current password"
 }
