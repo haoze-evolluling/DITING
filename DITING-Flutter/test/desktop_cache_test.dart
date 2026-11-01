@@ -15,6 +15,7 @@ import 'package:diting/desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting/desktop/pages/hub/widgets/cache_overview_cards.dart';
 import 'package:diting/desktop/pages/hub/widgets/cache_entries_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/cache_persist_card.dart';
+import 'package:diting/desktop/widgets/masonry_grid.dart';
 import 'package:diting/pages/home/dashboard/dashboard_card.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -266,6 +267,17 @@ void main() {
     expect(find.text(l10n.desktopCacheLoadFailed), findsOneWidget);
     expect(find.text(l10n.desktopBackendUnauthorizedBody), findsOneWidget);
     expect(find.text(l10n.desktopRetry), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('宽窗六张卡片按双列瀑布流铺开，窄窗收起瀑布流', (tester) async {
+    await pumpCache(tester);
+    expect(find.byType(MasonryGrid), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await pumpCache(tester, size: const Size(900, 900));
+    expect(find.byType(MasonryGrid), findsNothing);
+    expect(find.byType(DashboardCard), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

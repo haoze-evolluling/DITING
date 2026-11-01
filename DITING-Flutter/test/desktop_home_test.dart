@@ -191,6 +191,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('中等宽度按双列瀑布流排布，卡片保持内容高度', (tester) async {
+    await pumpHome(tester, size: const Size(1000, 800));
+
+    final cards = find.byType(DashboardCard).evaluate().toList();
+    expect(cards, hasLength(10));
+    final boxes = [
+      for (final element in cards) element.renderObject! as RenderBox,
+    ];
+    // Two columns, not one stretched list and not the four-column design grid.
+    final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
+    expect(lefts, hasLength(2));
+    // Cards keep their own height: a masonry board cannot give every card one row height.
+    final heights = boxes.map((box) => box.size.height).toSet();
+    expect(heights.length, greaterThan(1));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('窄窗把卡片排成一列，不套桌面行高', (tester) async {
     await pumpHome(tester, size: const Size(390, 844));
 

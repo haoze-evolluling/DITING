@@ -36,7 +36,7 @@
 1. **读旧版桌面**：`frontend/src/components` 对应面板与 `frontend/src/api` 调用，记下字段、默认值、校验与失败提示。
 2. **读后端**：`Desktop/internal/ipc/routes.go` 与对应 `server_*.go` / `types.go`，确认返回结构与错误语义。
 3. **读移动端**：`lib/pages/**` 同名页面，只取分区顺序与文案键（不取数据来源）。
-4. **选容器**：整页 `CommonScaffold` + `PageBody`；概览用仪表盘栅格 + `DashboardCard`；设置用共享设置行；列表用表格/列表行。宽窗并列、窄窗单列，不新增指标。
+4. **选容器**：整页 `CommonScaffold` + `PageBody`；概览用仪表盘栅格 + `DashboardCard`；多张高度不一的卡片用 `MasonryGrid` 两列瀑布流；设置用共享设置行；列表用表格/列表行。宽窗四列或两列、窄窗单列，不新增指标。
 5. **补测试与文档**：widget 测试用真实模型 + `FakeDesktopBackend`，然后回写第 6、7 节。
 
 ## 4. 硬约束（验收项）
@@ -52,7 +52,7 @@
 | 文案 | ARB + `context.l10n`（先加 `app_zh.arb` / `app_en.arb` 再两端共用） | 页面内硬编码中文/英文、写死 `Locale` |
 | 骨架 | `CommonScaffold`（浮条顶栏）；其余分支 `AppBarClearance` + `NullStatus` | 自造顶栏 + `SingleChildScrollView` 一把梭 |
 | 导航 | 宽窗 `NavigationSidebar`、窄窗共享 `DockShell`，分支只来自 `branches.dart` | 另立一级页面结构或自管选中状态 |
-| 仪表盘 | FlClash 桌面网格（四列、列宽上限 440、密度行高、余量给查询列表） | 自造卡片、自选栅格、假数据 |
+| 仪表盘 | 宽窗 FlClash 四列网格（列宽上限 440、密度行高、余量给查询列表）；中宽 760–1039 用 `MasonryGrid` 两列瀑布流；窄窗单列 | 自造卡片、假数据；除 `MasonryGrid` 外另造栅格 |
 | 数据 | 只读/只写本机 HTTP API，失败即明说（离线 / 需令牌 / 过期快照） | 本地推演服务端状态、把未知画成「运行正常」 |
 | 作用域 | `AppScopes`（`ViewScope` + `MeasureScope` + `textScaler` 钳制）位于 `MaterialApp.builder` | 缺 `ViewScope` 直接用 `lib/ui` 组件 |
 
@@ -93,10 +93,11 @@
 
 - Android 入口 `lib/main.dart`；桌面预览入口 `lib/desktop/main.dart`，`web/` 仅作 Wails/WebView 编译宿主。
 - 路由 `lib/desktop/router.dart`：`StatefulShellRoute.indexedStack` 六分支；壳为 `lib/desktop/shell/desktop_shell.dart`（宽窗 `NavigationSidebar` + 内容区，窄窗共享 `DockShell`，折叠状态不落盘）。
-- 首页 `lib/desktop/pages/home/`：`desktop_home_page.dart`（三种诚实状态 + 过期提示）、`desktop_dashboard.dart`（四列网格）、`widgets/*`（DNS 服务、查询指标、系统接管、暂停拦截、后台服务、缓存、规则拦截、性能、运行信息、最近查询）、`desktop_format.dart`。
+- 首页 `lib/desktop/pages/home/`：`desktop_home_page.dart`（三种诚实状态 + 过期提示）、`desktop_dashboard.dart`（宽窗四列网格、中宽两列瀑布流、窄窗单列）、`widgets/*`（DNS 服务、查询指标、系统接管、暂停拦截、后台服务、缓存、规则拦截、性能、运行信息、最近查询）、`desktop_format.dart`。
+- 响应式卡片：`lib/desktop/widgets/masonry_grid.dart`（两列瀑布流：子项保持内容高度并落进最短列；首页中宽与缓存子页宽窗共用同一套列宽、间距与命中测试）。
 - 日志 `lib/desktop/pages/logs/`：`desktop_logs_page.dart`（汇总 + 三列排行 + 实时流 + 表格 + 留存策略）、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_rankings_card.dart`（高频域名 / 拦截排行 / 活跃客户端，顺序与截断由服务给定）、`widgets/log_live_panel.dart`（`/events` 实时流：连接状态、暂停/继续、清空、域名/客户端检索、类型与响应码筛选、仅看已拦截、缓冲计数）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史，`LogPicker` 与实时流共用）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`widgets/log_config_card.dart`（留存策略：记录开关、内存缓冲条数、落盘开关与留存天数、客户端信息开关、落盘目录只读）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` + `QueryStatsPanel` + `LiveQueryPanel` + `QueryLogConfigCard`**，`logs` 分支迁移完成。
 - 功能中心 `lib/desktop/pages/hub/`：`desktop_hub_page.dart`（按解析/防护分组的共享列表行，只列已迁移入口）、`desktop_upstream_page.dart`（`/hub/upstream` 子路由，宽窗并排 Bootstrap 与回退链）、`widgets/upstream_mode_card.dart`、`widgets/upstream_nodes_card.dart`、`widgets/upstream_editor_dialog.dart`（预设 + sdns:// 印章 + 证书指纹校验）、`widgets/bootstrap_card.dart`、`widgets/conditional_routes_card.dart`、`widgets/fallback_chain_card.dart`、`widgets/upstream_common.dart`（协议名、模式文案）。**已覆盖旧版桌面 `UpstreamPanel` + `BootstrapConfigCard` + `ConditionalRoutesCard` + `FallbackUpstreamCard` + `UpstreamEditModal`**，`hub` 的上游子页迁移完成。
-- 功能中心缓存 `lib/desktop/pages/hub/desktop_cache_page.dart`（`/hub/cache` 子路由，宽窗两列卡片、窄窗单列）、`widgets/cache_overview_cards.dart`（引擎总控 + 命中率 + 遥测指标 + 容量条）、`widgets/cache_top_card.dart`（Top 10 热点域名）、`widgets/cache_config_card.dart`（TTL 模式、最长/最短有效期、弱网兜底、极速响应、无效网址记忆、热点预取）、`widgets/cache_persist_card.dart`（落盘开关、间隔、文件路径、失败原因、立即落盘/从文件恢复）、`widgets/cache_exclude_card.dart`（Go RE2 排除正则、三条预设、条数与长度上限）、`widgets/cache_entries_card.dart`（服务端检索 + 四态筛选 + TTL/IP 明细表）、`widgets/cache_common.dart`（模式名、状态徽标、开关行与容量条）。**已覆盖旧版桌面 `CachePanel` + `CacheConfigCard` + `CachePersistCard` + `CacheExcludeCard` + `CacheTopDomains` + `CacheEntriesTable`**，`hub` 的缓存子页迁移完成。
+- 功能中心缓存 `lib/desktop/pages/hub/desktop_cache_page.dart`（`/hub/cache` 子路由，宽窗两列瀑布流、窄窗单列）、`widgets/cache_overview_cards.dart`（引擎总控 + 命中率 + 遥测指标 + 容量条）、`widgets/cache_top_card.dart`（Top 10 热点域名）、`widgets/cache_config_card.dart`（TTL 模式、最长/最短有效期、弱网兜底、极速响应、无效网址记忆、热点预取）、`widgets/cache_persist_card.dart`（落盘开关、间隔、文件路径、失败原因、立即落盘/从文件恢复）、`widgets/cache_exclude_card.dart`（Go RE2 排除正则、三条预设、条数与长度上限）、`widgets/cache_entries_card.dart`（服务端检索 + 四态筛选 + TTL/IP 明细表）、`widgets/cache_common.dart`（模式名、状态徽标、开关行与容量条）。**已覆盖旧版桌面 `CachePanel` + `CacheConfigCard` + `CachePersistCard` + `CacheExcludeCard` + `CacheTopDomains` + `CacheEntriesTable`**，`hub` 的缓存子页迁移完成。
 - 功能中心重写 `lib/desktop/pages/hub/desktop_rewrite_page.dart`（`/hub/rewrite` 子路由）、`widgets/rewrite_engine_card.dart`（引擎开关 + 默认 TTL 即时保存）、`widgets/rewrite_rules_card.dart`（本地检索五列规则表、空态区分无规则/无匹配、行内编辑与删除确认）、`widgets/rewrite_editor_dialog.dart`（快捷目标与自定义记录两种模式、记录类型/取值、应答码覆盖、规则 TTL、服务端同款校验）、`widgets/rewrite_common.dart`（类型徽标文案与配色、TTL 回退）、`widgets/zone_file_card.dart`（本地权威区：引擎开关、默认 TTL、逐区构建状态徽标与失败原因、可展开的 RFC 1035 文本、预演解析、增删与「保存全部」、删除失败回滚、窄窗徽标换行）。**已覆盖旧版桌面 `RewritePanel` + `RewriteEditModal` + `ZoneFileCard`**，`hub` 的重写子页迁移完成。
 - 功能中心 DNS64 `lib/desktop/pages/hub/desktop_dns64_page.dart`（`/hub/dns64` 子路由）、`widgets/dns64_card.dart`（合成开关携带已输入前缀即时保存、前缀多行编辑与「填入标准前缀」、内置排除网段说明、保存按钮与失败提示）。**已覆盖旧版桌面 `DNS64Panel`**，`hub` 的 DNS64 子页迁移完成。
 - 防护·规则订阅 `lib/desktop/pages/hub/desktop_filter_lists_page.dart`（`/hub/filter-lists` 子路由）、`widgets/filter_lists_card.dart`（拦截总览指标、规则库两列网格、空态、添加/全部更新、逐行开关/立即更新/删除确认、健康度徽标与失败原因）、`widgets/filter_list_dialog.dart`（名称可留空、URL 必填）、`widgets/filter_common.dart`（健康度文案、`MM-DD HH:mm` 时间、暂停剩余时长）。**已覆盖旧版桌面 `RulesPanel` 的订阅页签与 `RuleListsPanel`**，`hub` 的订阅子页迁移完成。

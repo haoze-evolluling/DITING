@@ -1,8 +1,10 @@
 /// The dashboard board: upstream FlClash's desktop grid (four columns of at most 440 dp, centered,
-/// with a summary row, a control row and a card row) over this app's cards.
+/// with a summary row, a control row and a card row) over this app's cards, a two-column waterfall
+/// at the middle breakpoint, and one column of natural-height cards on a narrow window.
 ///
-/// A window narrower than four columns gets one column of cards at their natural height, so no
-/// card has to fit a height meant for a wider window.
+/// The two-column board is masonry: cards keep the height their content needs and each one goes
+/// into the shortest column, so a short card never leaves a hole under a tall neighbour. The
+/// four-column board keeps the design's fixed rows because that is the wide-window composition.
 library;
 
 import 'dart:math' as math;
@@ -12,6 +14,7 @@ import 'package:diting/desktop/data/api/desktop_api_models.dart';
 import 'package:diting/desktop/pages/home/widgets/dashboard_cards.dart';
 import 'package:diting/desktop/pages/home/widgets/dashboard_tiles.dart';
 import 'package:diting/desktop/pages/home/widgets/recent_queries_card.dart';
+import 'package:diting/desktop/widgets/masonry_grid.dart';
 import 'package:diting/pages/home/dashboard/dashboard_density.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
@@ -46,15 +49,15 @@ class DesktopDashboardBoard extends StatelessWidget {
           constraints.maxHeight / scale,
         );
         final density = DashboardDensity.of(room);
+        final columns = dashboardColumnsOf(room.width);
         return DashboardDensityScope(
           density: density,
           scale: scale,
-          child: density.isDesktop
-              ? _DesktopGrid(
-                  status: status,
-                  columns: dashboardColumnsOf(room.width),
-                )
-              : _StackedCards(status: status, width: room.width),
+          child: columns <= 1
+              ? _StackedCards(status: status, width: room.width)
+              : columns >= 4
+              ? _DesktopGrid(status: status, columns: columns)
+              : _MasonryBoard(status: status, columns: columns),
         );
       },
     );
@@ -85,6 +88,38 @@ class _StackedCards extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: dashboardCardGap,
         children: _cardsOf(status),
+      ),
+    );
+  }
+}
+
+/// Two columns at the middle breakpoint: cards keep their content height and fill the shorter
+/// column first, so the board reads as a waterfall instead of two equal-height rows.
+class _MasonryBoard extends StatelessWidget {
+  const _MasonryBoard({required this.status, required this.columns});
+
+  final DesktopStatus status;
+  final int columns;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = DashboardDensityScope.scaleOf(context);
+    final gap = 16.0 * scale;
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsetsDirectional.fromSTEB(
+        16,
+        _topPaddingOf(context),
+        24,
+        _bottomPaddingOf(context),
+      ),
+      child: MasonryGrid(
+        columns: columns,
+        spacing: gap,
+        runSpacing: gap,
+        children: [
+          for (final card in _cardsOf(status)) RepaintBoundary(child: card),
+        ],
       ),
     );
   }
@@ -125,17 +160,6 @@ class _DesktopGrid extends StatelessWidget {
     final topHeight = (compact ? 176 : 208) * scale;
     final controlHeight = (compact ? 56 : 64) * scale;
     final middleHeight = (compact ? 152 : 176) * scale;
-    if (columns < 4) {
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: base,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: gap,
-          children: _cardsOf(status),
-        ),
-      );
-    }
     return LayoutBuilder(
       builder: (context, constraints) {
         final room =

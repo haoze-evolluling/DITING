@@ -19,6 +19,7 @@ import 'package:diting/desktop/pages/hub/widgets/cache_persist_card.dart';
 import 'package:diting/desktop/pages/hub/widgets/cache_top_card.dart';
 import 'package:diting/desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting/desktop/widgets/desktop_feedback.dart';
+import 'package:diting/desktop/widgets/masonry_grid.dart';
 import 'package:diting/pages/home/dashboard/dashboard_style.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
@@ -91,20 +92,28 @@ class DesktopCachePage extends ConsumerWidget {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= _wideBreakpoint;
-          Widget pair(Widget left, Widget right) => wide
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: dashboardCardGap,
-                  children: [
-                    Expanded(child: left),
-                    Expanded(child: right),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: dashboardCardGap,
-                  children: [left, right],
-                );
+          final cards = <Widget>[
+            CacheEngineCard(
+              stats: stats,
+              enabled: config?.enabled ?? stats.enabled,
+              busy: configState.saving || config == null,
+              clearing: action.isBusyWith(DesktopCacheAction.clear),
+              onToggle: config == null
+                  ? null
+                  : (value) => unawaited(
+                      ref
+                          .read(desktopCacheConfigProvider.notifier)
+                          .save(config.copyWith(enabled: value)),
+                    ),
+              onRefresh: retry,
+              onClear: () => _clear(context, ref),
+            ),
+            CacheTelemetryCard(stats: stats),
+            CacheTopCard(domains: snapshot.topDomains),
+            const CacheConfigCard(),
+            CachePersistCard(persist: snapshot.persist),
+            CacheExcludeCard(persist: snapshot.persist),
+          ];
           return PageBody(
             children: [
               if (snapshot.isStale) StaleStatusNotice(onRetry: retry),
@@ -119,36 +128,15 @@ class DesktopCachePage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       spacing: dashboardCardGap,
                       children: [
-                        pair(
-                          CacheEngineCard(
-                            stats: stats,
-                            enabled: config?.enabled ?? stats.enabled,
-                            busy: configState.saving || config == null,
-                            clearing: action.isBusyWith(
-                              DesktopCacheAction.clear,
-                            ),
-                            onToggle: config == null
-                                ? null
-                                : (value) => unawaited(
-                                    ref
-                                        .read(
-                                          desktopCacheConfigProvider.notifier,
-                                        )
-                                        .save(config.copyWith(enabled: value)),
-                                  ),
-                            onRefresh: retry,
-                            onClear: () => _clear(context, ref),
-                          ),
-                          CacheTelemetryCard(stats: stats),
-                        ),
-                        pair(
-                          CacheTopCard(domains: snapshot.topDomains),
-                          const CacheConfigCard(),
-                        ),
-                        pair(
-                          CachePersistCard(persist: snapshot.persist),
-                          CacheExcludeCard(persist: snapshot.persist),
-                        ),
+                        if (wide)
+                          MasonryGrid(
+                            columns: 2,
+                            spacing: dashboardCardGap,
+                            runSpacing: dashboardCardGap,
+                            children: cards,
+                          )
+                        else
+                          ...cards,
                         const CacheEntriesCard(),
                       ],
                     ),
