@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三张排行卡 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 的外观子页（配色方案 + 深浅模式）、服务连接子页（IPC 地址/端口/令牌 + 核心服务与自启只读状态）与局域网控制台子页（远程管理开关/端口/地址/防火墙/管理员凭据）已完成；Wails 窗口已改为嵌入 Flutter Web 产物（`Desktop/build_frontend.py`），旧 Vue 源码保留备查但不再参与构建。**六个分支与旧版 `DevicesView` 的「网卡接管」「局域网 DNS」页签、以及 Web 控制台登录页均已迁移完成；剩余只有 Windows 实机验证（见第 7 节）。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三张排行卡 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 的外观子页（配色方案 + 深浅模式）、服务连接子页（IPC 地址/端口/令牌 + 核心服务与自启只读状态）与局域网控制台子页（远程管理开关/端口/地址/防火墙/管理员凭据）已完成；Wails 窗口已改为嵌入 Flutter Web 产物（`Desktop/build_frontend.py`），旧 Vue 源码保留备查但不再参与构建。**旧版控制台的全部页面与能力均已迁移：六个分支、`DevicesView` 的「网卡接管」「局域网 DNS」页签、Web 控制台登录页（含背景压缩与改密）、局域网控制台二维码、应急网络恢复；剩余只有 Windows 实机验证（清单见第 7 节）。**
 > Windows 桌面窗口由 Wails 宿主加载 `Desktop/frontend/dist`，该目录现在由 Flutter 桌面入口构建（见第 6 节）；Vue 源码仅作对照。
 
 ## 1. 三层分工（唯一规范）
@@ -26,7 +26,7 @@
 | `logs` 日志仪表盘 | 总览·实时查询 / 查询历史 / 统计中心（`LiveQueryPanel`、`QueryHistoryPanel`、`QueryStatsPanel`、`QueryLogConfigCard`） | `/querylog/search`、`/querylog/stats`、`/querylog/config` |
 | `hub` 功能中心 | 解析（`UpstreamPanel`、`CachePanel`、`RewritePanel`、`DNS64Panel`）+ 防护（`RulesPanel`、`ServicesPanel`、`SchedulePanel`）+ 设备·网卡接管（`AdaptersPanel`）/ 局域网 DNS（`LanDnsCard`）/ 加密 DNS / 安全隐私 | `/upstream/*`、`/cache/*`、`/dns/rewrite/*`、`/dns/dns64/*`、`/filter/*`、`/adapters`、`/takeover/*`、`/dns/lan*`、`/encrypted/*`、`/dns/privacy/*` |
 | `traffic` 应用流量 | 设备·设备管理（`ClientsPanel` ✅、`ClientGroupsCard` ✅）+ 缓存热点与统计中心 Top 域名/客户端 | `/clients`、`/clients/groups`、`/cache/top`、`/querylog/stats` |
-| `tools` 网络工具 | 系统·诊断与修复（`DiagnosticsPanel` ✅ 端口部分）+ 防护·规则检测（`RuleTestPanel` ✅）+ 上游/区域测试（已在上游页/重写页编辑器内实现） | `/portcheck`、`/filter/check`、`/upstream/test`、`/dns/zone/test` |
+| `tools` 网络工具 | 系统·诊断与修复（`DiagnosticsPanel`：端口部分 ✅ + 应急网络恢复 ✅）+ 防护·规则检测（`RuleTestPanel` ✅）+ 上游/区域测试（已在上游页/重写页编辑器内实现） | `/portcheck`、`/takeover/emergency-restore`、`/filter/check`、`/upstream/test`、`/dns/zone/test` |
 | `settings` 设置 | 系统·外观主题 / 服务与连接 / 局域网控制台 | `/status`、`/service/status`、`/web/*`、`/auth/*` |
 
 > 旧版桌面没有按应用流量统计：`traffic` 只用设备与缓存维度，不画「按应用排行」。
@@ -87,11 +87,12 @@
 - `desktop_custom_rules_providers.dart`：自定义规则整表（`GET /filter/rules` 的字符串数组）与唯一写路径（`POST` 整表替换后回读）；被拒时保留服务端列表，页面草稿由脏标记保护，不会被回读覆盖。
 - `desktop_filter_models.dart` / `desktop_filter_providers.dart`：规则拦截总览（拦截量、比例、规则数、启用库数、暂停剩余）与订阅列表整表（名称、URL、开关、条数、最近更新、`lastStatus`/`lastError` 健康度）；`desktopFilterListsProvider` 启动即读 `/filter/stats` + `/filter/lists`，新增、开关、删除、单个/全部更新四条写路径都重读两份答案，被拒时保留原行并回传原因。
 - `desktop_cache_models.dart` / `desktop_cache_providers.dart`：缓存统计、条目、热点排行、落盘状态与整表配置模型；`desktopCacheSnapshotProvider`（4 s 轮询统计 + 排行 + 落盘状态，失败保留上一份并标过期）、`desktopCacheSearchProvider` + `desktopCacheEntriesProvider`（检索变化即重读，`query` 交给服务）、`desktopCacheConfigProvider`（开关即时写、策略表单随保存按钮、写后回读服务端值）、`desktopCacheActionProvider`（清空 / 立即落盘 / 从文件恢复，串行化并返回服务端结果）。
-- `desktop_api_client_network.dart` / `desktop_api_client_auth.dart`：网卡与局域网 DNS（`/adapters`、`/takeover/adapter`、`/takeover/enable|disable`、`/dns/lan`、`/dns/lan/configure`、`/dns/lan/firewall`）与 Web 控制台鉴权（`/auth/status|login|setup|logout`、`/auth/background` 的 `GET`/`POST`/`DELETE`）。同样是同一个客户端上的扩展，只为止住单文件行数。
+- `desktop_api_client_network.dart` / `desktop_api_client_auth.dart`：网卡与局域网 DNS（`/adapters`、`/takeover/adapter`、`/takeover/enable|disable`、`/dns/lan`、`/dns/lan/configure`、`/dns/lan/firewall`）与 Web 控制台鉴权（`/auth/status|login|setup|logout|password`、`/auth/background` 的 `GET`/`POST`/`DELETE`）；应急恢复走 `POST /takeover/emergency-restore`，与网卡接管同族。同样是同一个客户端上的扩展，只为止住单文件行数。
 - `desktop_adapters_models.dart` / `desktop_adapters_providers.dart`：网卡列表（id、名称、描述、连接状态、网关、IPv4 DHCP、接管前 DNS、物理/残留回环标记）与接管集合；`desktopAdaptersProvider` 一次读 `/adapters` + `/status`（接管集合里 id 或名字命中即算），三个写路径（单网卡、全部开启、恢复默认）各自重读两份，被拒时保留服务端状态并回传原因。
 - `desktop_lan_models.dart` / `desktop_lan_providers.dart`：局域网 DNS 状态（`allowLAN`、实际监听地址、本机局域网地址、防火墙放行与后端）与两条写路径；开启时按控制台语义一并提交 `configureFirewall:true`，`firewallBackend == "none"` 表示无需放行规则。
 - `desktop_auth_models.dart` / `desktop_auth_providers.dart`：鉴权状态（是否初始化、管理员名、锁定剩余）、会话（令牌 + 到期）与登录背景（类型、地址、暗度、模糊）。`desktopWebConsoleProvider` 用 `kIsWeb && !window.go` 判定宿主：Wails 窗口走 `127.0.0.1` IPC，浏览器走 `desktopPageOriginProvider`（同源地址）+ 会话令牌；`desktopSessionTokenProvider` 把令牌存进 `diting_desktop` 容器的 `session_token`/`session_user`，令牌变化即重建客户端，所以登录后每个页面自动换成新凭据。`desktopAuthProvider` 的状态机只有四个相位（检查中 / 未登录 / 已登录 / 服务不可达），登录失败后重读 `/auth/status` 判断是未初始化、锁定还是密码错误，不比对中文报错文案；`desktopAuthSignalProvider` 是客户端 401 与状态机之间的唯一通道（登录/初始化接口的 401 不算会话过期）。登录背景的客户端压缩旧版用 canvas 做，这里改为原图直传，体积由服务端 10MB 限额把关。
-- `data/host/desktop_platform_host.dart`：条件导入的宿主适配层（`desktopHasWailsBindings` / `desktopPageOrigin` / `pickDesktopImageDataUrl`）。web 实现用 `dart:js_interop` 读 `window.go` 并驱动隐藏 `<input type=file>` + `FileReader`；非 web 实现一律返回空，测试与桌面窗口都走这条。
+- `data/host/desktop_platform_host.dart`：条件导入的宿主适配层（`desktopHasWailsBindings` / `desktopPageOrigin` / `pickDesktopImageDataUrl` / `compressDesktopImageDataUrl`）。web 实现用 `dart:js_interop` 读 `window.go`、驱动隐藏 `<input type=file>` + `FileReader`，并用 canvas 复刻旧控制台的背景压缩（先等比压到 1920×1080、WebP 0.82，失败退 JPEG/PNG；仍超过 1.5MB 再压到 ≤1280×720、0.72）；非 web 实现一律返回空/原样，测试与桌面窗口走这条。尺寸算术单独放在 `data/host/desktop_image_size.dart`，不依赖浏览器即可单测。
+- `widgets/desktop_qr_code.dart`：局域网控制台地址的二维码，用 `qr` 4.0.0 生成矩阵、`CustomPainter` 绘制；模块色固定 `#1A1A1C`/`#FFFFFF`（与旧控制台一致），不跟随主题——扫码需要对比度。
 - `desktop_event_client.dart`：`/api/v1/events` 的 WebSocket 客户端（`web_socket_channel`，Web 与 IO 同一份代码）。令牌走查询串（浏览器握手不能带 header），断线 3 s 后重连；只把 `type: "query"` 事件转成 `DesktopLiveQuery`，并按 `errorMessage`/`success` → `blocked` → `cacheHit` 的顺序分类；`DesktopChannelEvent` 汇报通道通断。
 - `desktop_live_providers.dart`：`desktopEventStreamProvider`（唯一套接字入口，测试用 `StreamController` 覆写）、`desktopLiveProvider`（500 条滚动缓冲、暂停即丢弃、清空只清缓冲）、`desktopLiveEnabledProvider`（widget 测试关闭，避免开套接字）。实时流不轮询：socket 断即明说未连接。
 - 连接配置来自 `diting_desktop` 容器（`ipc_host`/`ipc_port`/`ipc_token`），默认 `127.0.0.1:15353` 且免密。
@@ -125,7 +126,9 @@
 - 局域网控制台 `lib/desktop/pages/settings/desktop_lan_web_page.dart`（`/settings/lan-web` 子路由）、`widgets/lan_web_card.dart`（开关按 `configureFirewall:true` 提交、局域网地址复制/打开、端口草稿与非法值拦截、防火墙放行开关与 `none` 后端说明、管理员用户名/初始化状态与改密/初始化弹窗）。**已覆盖旧版桌面 `LanWebCard` 的开关、地址、防火墙与凭据部分**（二维码未实现：未引入二维码依赖）。
 - 设备·网卡接管 `lib/desktop/pages/hub/desktop_adapters_page.dart`（`/hub/adapters` 子路由）、`widgets/adapter_card.dart`（逐网卡卡片：连接状态与「保护中」徽标、接管开关、网关与 IP 模式、接管前 DNS 与当前生效 DNS 两栏）。**已覆盖旧版桌面 `network/AdaptersPanel`**。
 - 设备·局域网 DNS `lib/desktop/pages/hub/desktop_lan_dns_page.dart`（`/hub/lan-dns` 子路由）：服务卡（开关 + 监听地址 + 本机局域网地址 + 每地址复制行）、防火墙入站卡（`none` 后端时只说明无需放行）、路由器全局配置与单终端配置两张说明卡；地址复制行抽到 `lib/desktop/widgets/desktop_copy_row.dart`。**已覆盖旧版桌面 `LanDnsCard`**。
-- Web 控制台登录页 `lib/desktop/pages/auth/desktop_login_page.dart` + `widgets/login_background_dialog.dart` + `lib/desktop/widgets/desktop_auth_gate.dart`：`DesktopAuthGate` 位于 `MaterialApp.builder` 内、路由之上——桌面窗口直接放行，浏览器先看会话；未登录时用自带 `Navigator` 承载登录/初始化表单（Tooltip 与背景弹窗都需要 Overlay 与路由）。登录页含自定义背景（图片 + 遮罩暗度 + 毛玻璃）、深浅与配色快捷切换、锁定倒计时、明暗主题下的品牌图标；设置页在 Web 模式下多出「当前会话 → 退出登录」。**已覆盖旧版桌面 `views/LoginView` 的登录/初始化/背景主体与 `App.vue` 的鉴权分支**。
+- 诊断页补全 `lib/desktop/pages/tools/widgets/emergency_restore_card.dart`（确认后调 `POST /takeover/emergency-restore`，展示服务端原话；`healed=false` 表示本来就干净，不是「按钮没生效」）。**已覆盖旧版桌面 `DiagnosticsPanel` 的应急恢复区块**，`tools` 整支迁移完成。
+- 局域网控制台卡补上二维码（`_ScanRow` → `widgets/desktop_qr_code.dart`，编码 `webUrls.first`）与「手机同一 Wi-Fi 扫码直达」说明，**已覆盖旧版桌面 `LanWebCard` 的扫码区块**。
+- Web 控制台登录页 `lib/desktop/pages/auth/desktop_login_page.dart` + `widgets/login_background_dialog.dart` + `lib/desktop/widgets/desktop_auth_gate.dart`：`DesktopAuthGate` 位于 `MaterialApp.builder` 内、路由之上——桌面窗口直接放行，浏览器先看会话；未登录时用自带 `Navigator` 承载登录/初始化表单（Tooltip 与背景弹窗都需要 Overlay 与路由）。登录页含自定义背景（图片 + 遮罩暗度 + 毛玻璃 + 上传前 canvas 压缩）、深浅与配色快捷切换、锁定倒计时、明暗主题下的品牌图标，以及「修改管理员密码」（独立卡片 `widgets/login_change_password_card.dart`，成功后回到登录表单）；设置页在 Web 模式下多出「当前会话 → 退出登录」。**已覆盖旧版桌面 `views/LoginView` 的登录/初始化/背景主体与 `App.vue` 的鉴权分支**。
 - `lib/desktop/pages/desktop_pages.dart` 只剩未知路由兜底页：`CommonScaffold` + 居中 `NullStatus`。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 - 实时流依赖 `web_socket_channel`（`pubspec.yaml` 固定 3.0.3）；Wails/WebView 宿主与 `flutter run -d chrome` 都走浏览器 WebSocket。
@@ -163,23 +166,22 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 - Windows 窗口由 Wails 嵌入 `frontend/dist`（`frontend/embed.go` 的 `//go:embed all:dist`）；`wails.json` 的 `frontend:install` 只做 `flutter pub get`、`frontend:build` 调用 `Desktop/build_frontend.py`，脚本先清空 `dist` 再用 `flutter build web -t lib/desktop/main.dart` 写入，避免旧 Vue 产物混入；`1280×720` 最小尺寸与 16:9 锁定不变。
 - `Desktop/build.bat` → `maintenance/core/build_manager.py`，只构建 Vue 前端 + Go 服务/安装包。
 
-## 7. 剩余清单
+## 7. 迁移清单与剩余项
 
-按第 3 节逐分支推进；分支内子页用 `StatefulShellRoute` 内的嵌套 `GoRoute`。六个分支的全部页面与 Web 控制台登录页均已迁移：
+按第 3 节逐分支推进；分支内子页用 `StatefulShellRoute` 内的嵌套 `GoRoute`。旧版控制台的**全部页面与能力**都已迁移，没有保留「不迁移项」：
 
 | # | 项目 | 旧版来源 | 落点 | 状态 |
 |---|---|---|---|---|
 | 1 | 网卡接管 | `DevicesView` → `network/AdaptersPanel.vue` | `hub` 设备分区 → `/hub/adapters` | ✅ |
 | 2 | 局域网 DNS 服务 | `DevicesView` → `LanDnsCard.vue` | `hub` 设备分区 → `/hub/lan-dns` | ✅ |
 | 3 | Web 控制台登录页 | `App.vue` 鉴权分支 + `views/LoginView.vue` + `auth/LoginBgModal.vue` | `lib/desktop/pages/auth/` + `DesktopAuthGate` | ✅ |
-| 4 | Windows 实机验证 | — | WebView2 渲染、`1280×720` 窗口约束、安装包 | ⏳ 唯一剩余 |
+| 4 | 登录背景客户端压缩 | `utils/imageCompressor.ts`（canvas 1920×1080 / 0.82，再降采样到 ≤1280×720 / 0.72） | `data/host/desktop_platform_host_web.dart` + `desktop_image_size.dart` | ✅ |
+| 5 | 登录页修改密码 | `LoginModal.vue` 的 `change_password` 模式 | `pages/auth/widgets/login_change_password_card.dart`（`/auth/password`） | ✅ |
+| 6 | 局域网控制台二维码 | `LanWebCard.vue` 的 npm `qrcode` | `widgets/desktop_qr_code.dart`（依赖 `qr` 4.0.0）+ `lan_web_card.dart` | ✅ |
+| 7 | 应急网络恢复 | `DiagnosticsPanel.vue` 调 Wails 绑定 `App.RunEmergencyRestore` | Go：`POST /takeover/emergency-restore` + `cmd/service/controller_emergency.go`；Dart：`pages/tools/widgets/emergency_restore_card.dart` | ✅ |
+| 8 | Windows 实机验证 | — | WebView2 渲染、`1280×720` 窗口约束、安装包 | ⏳ 唯一剩余 |
 
-不迁移项（与第 2、6 节一致，不得用假实现补）：
-
-- 登录背景的前端压缩（旧版用 canvas 缩放）：改为原图直传，体积上限由服务端 10MB 限额把关。
-- 局域网控制台二维码（未引入二维码依赖）。
-- `DiagnosticsPanel` 的应急网络恢复（原生调用，没有 HTTP 接口）。
-- Web 控制台登录页的「修改密码」：与设置·局域网控制台的凭据卡同一接口，不重复造页。
+应急恢复的失败语义与 CLI 离线通道 `diting-service -emergency-restore` 对齐：先按落盘快照还原接管过的网卡，再兜底重置残留回环 DNS，最后清空系统 DNS 缓存；任一步失败都会把原因带回调用方，不把「没做事」画成「已恢复」。桌面窗口与局域网控制台走同一条受鉴权保护的 HTTP 通路。
 
 ## 8. 验收与守卫
 
@@ -209,13 +211,18 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 28. **Wails 构建切换**：`wails.json` 的 `frontend:build` 指向 `python build_frontend.py`、`frontend:install` 只解析依赖且不再有 Vue 开发服务器键；脚本把 `lib/desktop/main.dart` 构建到 `frontend/dist`；Wails 宿主仍 `//go:embed all:dist`。
 29. **网卡接管**：网卡名、描述、连接状态、网关、IP 分配方式与原始 DNS 都显示 `/adapters` 返回值，接管态来自 `/status` 的 `takeover.adapters`（id 或名字命中即算）；逐网卡开关提交 `{adapterId,enable}`，「全部开启保护」/「恢复系统默认」分别走 `/takeover/enable`、`/takeover/disable`；写被拒时说明原因并保留服务端状态；无网卡时给空态；窄窗单列不横向溢出。
 30. **局域网 DNS**：开关、监听地址、局域网 IP 与防火墙状态都显示 `/dns/lan` 返回值；开启提交 `{allowLAN:true,configureFirewall:true}`，关闭只提交 `allowLAN:false`；`firewallBackend == "none"` 时不画放行开关而是说明无需放行；刷新 IP 重新读 `/dns/lan`；写被拒时说明原因且开关保持服务端值；窄窗单列不横向溢出。
-31. **Web 控制台登录页**：桌面模式（Wails 注入 `window.go`）不出现登录页且不读鉴权接口；Web 模式先读 `/auth/status`，未初始化进 setup、无会话进 login、有会话用 `/status` 验一次；登录提交 `{username,password}` 并保存服务端令牌，setup 先 `/auth/setup` 再登录；密码错误、未初始化、锁定三类错误各自说明；令牌失效（非登录接口 401）回到登录页；退出登录调 `/auth/logout` 并清掉令牌；登录背景读 `/auth/background`、自定义图走 `/auth/background/image`，保存/恢复默认分别提交 `POST`/`DELETE`，局域网未登录修改需管理员密码。
 27. **局域网控制台**：开关显示仅本地/对外开放，开启提交端口与 `configureFirewall:true` 并显示局域网地址；端口非法不提交、合法则保存；防火墙开关提交 `enable` 并在 `none` 后端时说明无需放行；改密提交旧/新密码、未初始化走 setup，两次不一致不提交；设置分支可进入该子页；窄窗单列不横向溢出。
 26. **服务与连接**：连接卡显示当前 host/port/token，保存写入 `ipc_host`/`ipc_port`/`ipc_token` 并重建客户端，非法端口不写入；测试连接报告可达/不可达；核心服务卡显示安装、运行、状态文本与开机自启，未安装时如实标注；设置分支可进入该子页；窄窗单列不横向溢出。
 25. **外观主题**：设置分支列出外观入口并可进入；九种配色与三种深浅模式都按当前偏好高亮，点选后立即切换（与移动端共用偏好键）；窄窗单列不横向溢出。
 24. **规则检测**：未检测时只给提示；运行提交域名与记录类型（A/AAAA/ANY），示例标签直接填充并运行；判定徽标、命中规则、来源库、原因与 `$dnsrewrite` 应答码/记录都显示服务返回值，重写为 NODATA 时说明不返回记录；检测失败时说明原因且不显示旧判定；窄窗单列不横向溢出。
 23. **端口诊断**：未探测时只给提示；探测后可用性与诊断文本、冲突进程（PID/进程名/服务名/地址）与系统/自身徽标都显示服务返回值；仅在不可用且可修复时给出修复按钮，修复需确认、提交 `startDNS:false` 并采用复检结果；写被拒时说明原因并保留冲突信息；窄窗不横向溢出。
 22. **设备（traffic 根页）**：客户端 IP/名称/累计查询/最近活跃与 ACL 状态都显示服务返回值；别名保存提交 `{ip,name}` 且留空即清除，白名单与阻断互斥并提交整份名单，ACL 按行去空行保存、撤销恢复服务端值，限流开关与保存提交整份表单且非法数值不提交；写被拒时说明原因且开关保持服务端值；窄窗单列不横向溢出。
+
+31. **Web 控制台登录页**：桌面模式（Wails 注入 `window.go`）不出现登录页且不读鉴权接口；Web 模式先读 `/auth/status`，未初始化进 setup、无会话进 login、有会话用 `/status` 验一次；登录提交 `{username,password}` 并保存服务端令牌，setup 先 `/auth/setup` 再登录；密码错误、未初始化、锁定三类错误各自说明；令牌失效（非登录接口 401）回到登录页；退出登录调 `/auth/logout` 并清掉令牌；登录背景读 `/auth/background`、自定义图走 `/auth/background/image`，保存/恢复默认分别提交 `POST`/`DELETE`，局域网未登录修改需管理员密码。
+32. **应急网络恢复**：卡片常驻诊断页，点击需确认，确认后 `POST /takeover/emergency-restore`；`healed=true/false` 都照服务端原话展示（后者是「本来就干净」而非失败），接口失败时说明原因；窄窗不横向溢出。
+33. **局域网控制台二维码**：开启且存在 `webUrls` 时，二维码编码第一个局域网地址并带无障碍标签；未开启或无地址时不画码；模块色固定不随主题反转。
+34. **登录背景压缩**：上传后先按 1920×1080 等比缩放（不放大小图），仍超过 1.5MB 时二次降采样到 ≤1280×720 且有 320×180 下限；SVG 原样保留；压缩失败回退原图，不丢用户图片。
+35. **登录页修改密码**：初始化后才出现入口；提交 `{username,oldPassword,newPassword}`，缺原密码、新密码过短或两次不一致都不提交；成功后展示服务端结果并回到登录表单（服务不留旧会话）。
 
 ## 9. 明确禁止
 
@@ -226,3 +233,4 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 5. 照搬移动端的原生通道、sqflite、Android 启动流程。
 6. 后端缺接口时用本地推演补数——应先在 `Desktop/internal` 补 Go 接口。
 7. 再从 `LearningObjects/FlClash-0.9.2` 拷页面级代码：设计语言以它为准，功能以旧版桌面端为准。
+8. 把还没做的事写成「不迁移项」了事：旧版控制台的能力要么迁移，要么在第 7 节留下带原因的缺口，不得用「不迁移」替代实现。
