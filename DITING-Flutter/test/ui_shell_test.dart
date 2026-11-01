@@ -47,8 +47,9 @@ void _appShell() {
     String? initialLocation,
     FakeVpnController? vpn,
     List<BottomBarDestination>? dock,
+    Size size = const Size(1170, 2532),
   }) async {
-    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
@@ -316,6 +317,34 @@ void _appShell() {
       await pumpApp(tester, initialLocation: Routes.traffic, dock: userDock);
       final dock = tester.widget<NavigationDock>(find.byType(NavigationDock));
       expect(dock.selectedIndex, -1);
+    });
+
+    testWidgets('宽屏备用底栏也不点亮任何一项', (tester) async {
+      // Wide windows replace the floating dock with the plain `NavigationBar`, which has no
+      // "nothing selected" state; clamping the index to 0 used to light up 首页 on `/traffic`.
+      await pumpApp(
+        tester,
+        initialLocation: Routes.traffic,
+        dock: userDock,
+        size: const Size(3840, 2400),
+      );
+      expect(find.byType(NavigationDock), findsNothing);
+      final bar = find.byType(NavigationBar);
+      expect(bar, findsOneWidget);
+      final theme = tester.widget<NavigationBarTheme>(
+        find.ancestor(of: bar, matching: find.byType(NavigationBarTheme)).first,
+      );
+      final scheme = Theme.of(tester.element(bar)).colorScheme;
+      const selected = {WidgetState.selected};
+      expect(theme.data.indicatorColor, Colors.transparent);
+      expect(
+        theme.data.iconTheme?.resolve(selected)?.color,
+        scheme.onSurfaceVariant,
+      );
+      expect(
+        theme.data.labelTextStyle?.resolve(selected)?.color,
+        scheme.onSurfaceVariant,
+      );
     });
   });
 }

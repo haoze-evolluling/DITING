@@ -250,9 +250,9 @@ class _FallbackBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
+    final bar = NavigationBar(
       // `NavigationBar` requires 0 <= selectedIndex < length, but off-dock branches pass -1.
-      // Clamping only satisfies the assert; every tap still fires.
+      // Clamping satisfies the assert; `_unlit` below hides the resulting highlight.
       selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
       onDestinationSelected: onSelected,
       destinations: [
@@ -262,6 +262,32 @@ class _FallbackBar extends StatelessWidget {
             label: destination.label(context.l10n),
           ),
       ],
+    );
+    if (selectedIndex >= 0) return bar;
+
+    // The current branch is not in the dock (e.g. `/settings` with the default three tabs). The
+    // dock floats over the page and lights nothing; this bar cannot express "none", so it must not
+    // claim the user is on the first tab either. Same bar, every destination painted unselected.
+    final theme = Theme.of(context);
+    final navigationBarTheme = theme.navigationBarTheme;
+    final muted = theme.colorScheme.onSurfaceVariant;
+    final iconTheme =
+        navigationBarTheme.iconTheme?.resolve(const <WidgetState>{}) ??
+        const IconThemeData(size: 24);
+    final labelStyle =
+        navigationBarTheme.labelTextStyle?.resolve(const <WidgetState>{}) ??
+        theme.textTheme.labelMedium;
+    return NavigationBarTheme(
+      data: navigationBarTheme.copyWith(
+        indicatorColor: Colors.transparent,
+        iconTheme: WidgetStatePropertyAll(
+          iconTheme.copyWith(color: muted),
+        ),
+        labelTextStyle: WidgetStatePropertyAll(
+          labelStyle?.copyWith(color: muted),
+        ),
+      ),
+      child: bar,
     );
   }
 }

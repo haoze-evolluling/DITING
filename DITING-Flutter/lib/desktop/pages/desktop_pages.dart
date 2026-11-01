@@ -2,15 +2,16 @@
 ///
 /// They are rebuilt here rather than imported from `lib/pages` because those pages own Android
 /// data sources (native channels, sqflite, VPN providers). What must not be rebuilt is the look:
-/// every page is a [CommonScaffold] over a [PageBody], with the same localized titles as Android.
-/// Until a branch's data layer lands (step 4 of `docs/development/flutter-desktop-ui.md`), it
-/// states that plainly through [NullStatus] instead of showing invented values. Home is not
-/// listed here: it already has its Android skeleton (see `home/desktop_home_page.dart`).
+/// a [CommonScaffold] with the same localized title as Android, and a [NullStatus] empty state
+/// placed like Android's own full-page empty states (`AppBarClearance` + `Center`), so a tall
+/// desktop window does not leave the block stranded at the top. Until a branch's data layer lands
+/// (step 4 of `docs/development/flutter-desktop-ui.md`), it states that plainly instead of showing
+/// invented values. Home is not listed here: it already has its Android skeleton (see
+/// `home/desktop_home_page.dart`).
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/ui/ui.dart';
-import 'package:diting/widgets/stat_strip.dart';
 import 'package:material_ui/material_ui.dart';
 
 class DesktopFeatureHubPage extends StatelessWidget {
@@ -72,14 +73,12 @@ class DesktopUnknownRoutePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => CommonScaffold(
     title: context.l10n.unknownRouteTitle,
-    body: PageBody(
-      children: [
-        NullStatus(
-          label: context.l10n.unknownRouteBody,
-          description: location,
-          illustration: NullStatusIllustration.search,
-        ),
-      ],
+    body: _CenteredEmptyState(
+      status: NullStatus(
+        label: context.l10n.unknownRouteBody,
+        description: location,
+        illustration: NullStatusIllustration.search,
+      ),
     ),
   );
 }
@@ -95,14 +94,30 @@ class _PendingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => CommonScaffold(
     title: title,
-    body: PageBody(
-      children: [
-        NullStatus(
-          label: context.l10n.commonPendingTitle,
-          description: context.l10n.commonPendingBody,
-          illustration: illustration,
-        ),
-      ],
+    body: _CenteredEmptyState(
+      status: NullStatus(
+        label: context.l10n.commonPendingTitle,
+        description: context.l10n.commonPendingBody,
+        illustration: illustration,
+      ),
+    ),
+  );
+}
+
+/// Full-page empty state: centered, but still scrollable so enlarged text cannot overflow, with
+/// room reserved for the floating app bar. Same arrangement as `UnknownRoutePage` on Android.
+class _CenteredEmptyState extends StatelessWidget {
+  const _CenteredEmptyState({required this.status});
+
+  final Widget status;
+
+  @override
+  Widget build(BuildContext context) => AppBarClearance(
+    child: Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: status,
+      ),
     ),
   );
 }

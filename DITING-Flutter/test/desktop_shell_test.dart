@@ -60,22 +60,26 @@ void _skeleton() {
   });
 
   for (final location in branchOrder) {
-    testWidgets('分支 $location 由 CommonScaffold + PageBody 承载', (tester) async {
+    testWidgets('分支 $location 由 CommonScaffold 承载并说明状态', (tester) async {
       await _pumpDesktop(tester, initialLocation: location);
 
       expect(find.byType(CommonScaffold), findsOneWidget);
-      expect(find.byType(PageBody), findsOneWidget);
       // The title comes from the ARB, never from a literal in the page.
       final scaffold = tester.widget<CommonScaffold>(
         find.byType(CommonScaffold),
       );
       expect(scaffold.title, isNotNull);
       expect(scaffold.title, isNotEmpty);
-      // Unwired branches say so instead of inventing values; home is the dashboard instead.
-      expect(
-        find.byType(NullStatus),
-        location == Routes.home ? findsNothing : findsOneWidget,
-      );
+      if (location == Routes.home) {
+        // The dashboard scrolls its own card board.
+        expect(find.byType(PageBody), findsOneWidget);
+        expect(find.byType(NullStatus), findsNothing);
+      } else {
+        // Unwired branches say so instead of inventing values, centered like Android's own
+        // full-page empty states.
+        expect(find.byType(NullStatus), findsOneWidget);
+        expect(find.byType(AppBarClearance), findsOneWidget);
+      }
       expect(tester.takeException(), isNull);
     });
   }
