@@ -2,8 +2,8 @@
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "diting-gui",
   "outputfilename": "diting-gui",
-  "frontend:install": "python build_frontend.py --deps-only",
-  "frontend:build": "python build_frontend.py",
+  "frontend:install": "python ../build_frontend.py --deps-only",
+  "frontend:build": "python ../build_frontend.py",
   "author": {
     "name": "leehaoze",
     "email": "leehaoze2022@gmail.com"
