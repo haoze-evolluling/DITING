@@ -8,6 +8,7 @@ import 'package:diting/data/prefs/legacy_prefs_store.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
 import 'package:diting/desktop/pages/desktop_pages.dart';
+import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/router.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:diting/ui/ui.dart';
@@ -70,8 +71,11 @@ void _skeleton() {
       );
       expect(scaffold.title, isNotNull);
       expect(scaffold.title, isNotEmpty);
-      // Unwired branches say so instead of inventing values.
-      expect(find.byType(NullStatus), findsOneWidget);
+      // Unwired branches say so instead of inventing values; home is the dashboard instead.
+      expect(
+        find.byType(NullStatus),
+        location == Routes.home ? findsNothing : findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   }

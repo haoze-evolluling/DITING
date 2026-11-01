@@ -434,6 +434,7 @@
   "commonNoData": "无数据",
   "commonPendingTitle": "尚未接入",
   "commonPendingBody": "这个页面还没有连接到本机服务，接入后会显示实时数据。",
+  "homePowerPending": "电源控制还没有接入本机服务",
   "intranetModeNotListening": "{mode}不监听局域网，其他设备无法把这里当 DNS",
   "@intranetModeNotListening": {
     "placeholders": {

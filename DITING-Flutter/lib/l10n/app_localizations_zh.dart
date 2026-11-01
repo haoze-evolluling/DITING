@@ -957,6 +957,9 @@ class AppL10nZh extends AppL10n {
   String get commonPendingBody => '这个页面还没有连接到本机服务，接入后会显示实时数据。';
 
   @override
+  String get homePowerPending => '电源控制还没有接入本机服务';
+
+  @override
   String intranetModeNotListening(String mode) {
     return '$mode不监听局域网，其他设备无法把这里当 DNS';
   }

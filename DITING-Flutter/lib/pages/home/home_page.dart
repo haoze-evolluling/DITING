@@ -1,10 +1,9 @@
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/pages/home/dashboard/dashboard_board.dart';
 import 'package:diting/pages/home/dashboard/dashboard_density.dart';
-import 'package:diting/pages/home/widgets/home_power_button.dart';
+import 'package:diting/pages/home/widgets/home_headline.dart';
 import 'package:diting/router.dart';
 import 'package:diting/routes/routes.dart';
-import 'package:diting/state/appearance_providers.dart';
 import 'package:diting/state/dashboard_providers.dart';
 import 'package:diting/state/log_refresh_providers.dart';
 import 'package:diting/state/server_status_providers.dart';
@@ -68,16 +67,17 @@ class _HomePageState extends ConsumerState<HomePage>
   Widget build(BuildContext context) {
     final mode = ref.watch(workModeProvider);
     final power = ref.watch(powerProvider);
-    final sentence = ref.watch(homeSentenceProvider);
-    final opacity = ref.watch(homeOpacityProvider);
     final editing = ref.watch(dashboardEditingProvider);
-    final scale = DashboardDensityScope.scaleOf(context);
     return DashboardDensityScopeHost(
       child: CommonScaffold(
-        title: editing ? context.l10n.homeEditDashboard : _titleOf(mode, context.l10n),
+        title: editing
+            ? context.l10n.homeEditDashboard
+            : _titleOf(mode, context.l10n),
         primaryAction: IconButtonData(
           glyph: editing ? AppGlyphs.check : AppGlyphs.customize,
-          tooltip: editing ? context.l10n.homeDone : context.l10n.homeEditDashboard,
+          tooltip: editing
+              ? context.l10n.homeDone
+              : context.l10n.homeEditDashboard,
           onPressed: () => ref.read(dashboardEditingProvider.notifier).toggle(),
         ),
         // The mode is already in the title, so the bar uses a round icon of the same
@@ -94,34 +94,13 @@ class _HomePageState extends ConsumerState<HomePage>
           children: [
             // Edit mode hides the fixed blocks so only cards remain and the drag targets
             // are obvious.
-            if (!editing) ...[
-              SizedBox(height: 8 * scale),
-              Opacity(
-                opacity: opacity[HomeLayer.powerButton] ?? 1,
-                child: HomePowerButton(
-                  state: power,
-                  onPressed: () => ref.read(powerProvider.notifier).toggle(),
-                ),
+            if (!editing)
+              ...buildHomeHeadline(
+                context: context,
+                ref: ref,
+                state: power,
+                onPressed: () => ref.read(powerProvider.notifier).toggle(),
               ),
-              if (sentence.forState(power) case final text?
-                  when text.isNotEmpty)
-                Opacity(
-                  opacity: opacity[HomeLayer.poem] ?? 1,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(32, 20, 32, 4),
-                    child: Text(
-                      text,
-                      textAlign: TextAlign.center,
-                      style: AppTextStyle.subheadline
-                          .of(context)
-                          .copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-            ],
             DashboardBoard(
               actions: DashboardCardActions(
                 onOpenDetail: (widget) {
@@ -142,9 +121,4 @@ class _HomePageState extends ConsumerState<HomePage>
     AppWorkMode.server => l10n.homeTitleServer,
     AppWorkMode.express => l10n.homeTitleExpress,
   };
-}
-
-extension on ({String running, String stopped}) {
-  String? forState(PowerState state) =>
-      state.isRunning || state == PowerState.starting ? running : stopped;
 }

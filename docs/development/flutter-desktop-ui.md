@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与重建约束
 
-> 当前状态：**第 1 步（入口、主题与外观偏好）、第 2 步（壳与导航）已完成；Wails 集成尚未切换**
+> 当前状态：**第 1–3 步（入口/主题、壳与导航、页面骨架）已完成；数据接入与 Wails 切换尚未开始**
 > Windows 桌面窗口仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 目标（已修订）
@@ -77,14 +77,15 @@
 - 桌面入口复用 `buildAppTheme`、`AppThemeCache`、`ThemeCrossFade`、`AppScopes`、液态玻璃作用域与全部本地化 delegate。
 - 桌面路由 `lib/desktop/router.dart` 用共享的 `branchOrder` 生成六个分支；分支路径与顺序的唯一来源是 `lib/routes/branches.dart`（`lib/router.dart` 重新导出它）。
 - 壳与底栏的唯一实现是 `lib/shell/dock_shell.dart` 的 `DockShell`：Android 的 `AppShell` 只在它外面加服务器模式分支，桌面直接使用。`NavigationDock` / 宽屏 `NavigationBar` 降级、`DockInsetScope` 预留、标签切换动效都在这一个文件里。
-- 六个分支页面位于 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + `PageBody` + `NullStatus`（文案为 ARB 的 `commonPendingTitle` / `commonPendingBody`），标题与 Android 同键；首页仪表盘留给第 3 步。
+- 首页在 `lib/desktop/pages/home/desktop_home_page.dart`：`DashboardDensityScopeHost` + `CommonScaffold` + `PageBody`，电源按钮与诗句来自共享的 `buildHomeHeadline`（同一份 `homeOpacityProvider` / `homeSentenceProvider`），卡片板沿用安卓的 `DashboardCard` 卡框、`DashboardCardHeader` 标题、`dashboardCardGap` 间距与 `DashboardCardEntrance` 入场动效，顺序取自共享的 `dashboardWidgetsProvider`。
+- 其余五个分支页面位于 `lib/desktop/pages/desktop_pages.dart`：`CommonScaffold` + `PageBody` + `NullStatus`（文案为 ARB 的 `commonPendingTitle` / `commonPendingBody`），标题与 Android 同键。
 - 桌面外观偏好通过 `SharedPreferencesLegacyPrefsStore` 使用与 Android 相同的容器和键；Android 仍走原生 MethodChannel。
 
 ```bash
 cd DITING-Flutter
 flutter run -d chrome -t lib/desktop/main.dart
 flutter build web -t lib/desktop/main.dart
-flutter test test/desktop_app_test.dart test/desktop_shell_test.dart test/desktop_preferences_test.dart
+flutter test test/desktop_app_test.dart test/desktop_shell_test.dart test/desktop_home_test.dart test/desktop_preferences_test.dart
 ```
 
 - Windows 桌面窗口仍加载 `Desktop/frontend`（Vue 3），`wails.json` 使用 `npm install` / `npm run build`，窗口恢复 `1280×720` 最小尺寸与 16:9 比例锁定。
@@ -94,7 +95,10 @@ flutter test test/desktop_app_test.dart test/desktop_shell_test.dart test/deskto
 
 1. **入口与主题（已完成）**：桌面入口已装配 `buildAppTheme` + `AppThemeCache` + `ThemeCrossFade` + `AppScopes` + `AppUiLocalizations.delegate`，外观偏好使用 Android 的存储键并跨重启保存。
 2. **壳与导航（已完成）**：六个分支的 `StatefulShellRoute.indexedStack`，`DockInsetScope` + `NavigationDock`（宽屏降级 `NavigationBar`），标签切换过渡复用 `_TabTransitionHost` 的语义。实现下沉为共享的 `lib/shell/dock_shell.dart`，Android 与桌面共用；桌面只保留 `lib/desktop/router.dart` 的页面映射，不写第二套壳。
-3. **页面骨架**：`CommonScaffold` + `PageBody`；首页按 Android 仪表盘重建（电源按钮、诗句、卡片板），其余分支先用 `NullStatus` 表达"尚未接入"，不用假数据。（六个分支的骨架与占位已随第 2 步落地，首页内容待建）
+3. **页面骨架（已完成）**：`CommonScaffold` + `PageBody`；首页按 Android 仪表盘重建（电源按钮、诗句、卡片板），其余分支先用 `NullStatus` 表达"尚未接入"，不用假数据。
+   - 共享而非复制：`PowerState` 下沉到 `data/vpn/power_state.dart`（桌面不必引入 VPN 通道），`buildHomeHeadline` 供两端共用，`DashboardCardEntrance` 从 `DashboardBoard` 提升为公开组件，`dashboardWidgetsProvider` / `dashboardEditingProvider` 拆到 `state/dashboard_layout_providers.dart`（只依赖偏好，无原生数据源）。
+   - 电源按钮当前停在 `PowerState.stopped`，点击只用 `homePowerPending` 说明"尚未接入"；每张卡片用 `commonPendingTitle` 徽标代替数字。第 4 步接上本机 API 后替换，不动骨架。
+   - 桌面卡片板暂为只读（不提供编辑/移除），编辑入口随数据接入一起恢复，避免在没有数据的板上做无意义排序。
 4. **数据接入**：按分支逐个接本机 HTTP API 与 Wails 绑定，替换占位。
 5. **外观设置**：复用 `lib/pages/appearance` 的组件与预览语义，不另做一套。
 

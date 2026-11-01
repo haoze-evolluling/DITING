@@ -998,6 +998,10 @@ class AppL10nEn extends AppL10n {
       'This page is not connected to the local service yet; live data appears once it is.';
 
   @override
+  String get homePowerPending =>
+      'Power control is not connected to the local service yet';
+
+  @override
   String intranetModeNotListening(String mode) {
     return '$mode does not listen on the LAN, so other devices cannot use this as their DNS';
   }

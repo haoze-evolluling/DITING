@@ -85,36 +85,12 @@ class DashboardBoard extends ConsumerWidget {
         spacing: dashboardCardGap,
         children: [
           for (final widget in widgets)
-            _CardEntrance(
+            DashboardCardEntrance(
               key: ValueKey(widget),
               child: buildDashboardCard(widget, actions),
             ),
         ],
       ),
-    );
-  }
-}
-
-/// Card entrance: fade plus a small rise, played once per list refresh.
-class _CardEntrance extends StatelessWidget {
-  const _CardEntrance({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
-      builder: (context, amount, child) => Opacity(
-        opacity: amount,
-        child: Transform.translate(
-          offset: Offset(0, 12 * (1 - amount)),
-          child: child,
-        ),
-      ),
-      child: child,
     );
   }
 }

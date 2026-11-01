@@ -1903,6 +1903,12 @@ abstract class AppL10n {
   /// **'这个页面还没有连接到本机服务，接入后会显示实时数据。'**
   String get commonPendingBody;
 
+  /// No description provided for @homePowerPending.
+  ///
+  /// In zh, this message translates to:
+  /// **'电源控制还没有接入本机服务'**
+  String get homePowerPending;
+
   /// No description provided for @intranetModeNotListening.
   ///
   /// In zh, this message translates to:

@@ -1,4 +1,5 @@
 import 'package:diting/desktop/pages/desktop_pages.dart';
+import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:diting/routes/page.dart';
 import 'package:diting/shell/dock_shell.dart';

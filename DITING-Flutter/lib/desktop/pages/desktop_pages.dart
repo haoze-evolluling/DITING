@@ -1,26 +1,17 @@
-/// The six desktop branch pages.
+/// The five desktop branches that are still placeholders.
 ///
 /// They are rebuilt here rather than imported from `lib/pages` because those pages own Android
 /// data sources (native channels, sqflite, VPN providers). What must not be rebuilt is the look:
 /// every page is a [CommonScaffold] over a [PageBody], with the same localized titles as Android.
-/// Until a branch's data layer lands (steps 3–4 of `docs/development/flutter-desktop-ui.md`), it
-/// states that plainly through [NullStatus] instead of showing invented values.
+/// Until a branch's data layer lands (step 4 of `docs/development/flutter-desktop-ui.md`), it
+/// states that plainly through [NullStatus] instead of showing invented values. Home is not
+/// listed here: it already has its Android skeleton (see `home/desktop_home_page.dart`).
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:diting/widgets/stat_strip.dart';
 import 'package:material_ui/material_ui.dart';
-
-class DesktopHomePage extends StatelessWidget {
-  const DesktopHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) => _PendingPage(
-    title: context.l10n.bottomBarHome,
-    illustration: NullStatusIllustration.data,
-  );
-}
 
 class DesktopFeatureHubPage extends StatelessWidget {
   const DesktopFeatureHubPage({super.key});

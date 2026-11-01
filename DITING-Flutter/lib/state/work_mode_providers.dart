@@ -2,12 +2,14 @@
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
+
 import 'dart:async';
 
 import 'package:diting/data/mock_data.dart';
 import 'package:diting/data/notifications/notification_status_text.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/data/vpn/dns_config_builder.dart';
+import 'package:diting/data/vpn/power_state.dart';
 import 'package:diting/data/vpn/vpn_bridge.dart';
 import 'package:diting/state/appearance_providers.dart';
 import 'package:diting/state/outbound_proxy_providers.dart';
@@ -15,6 +17,7 @@ import 'package:diting/state/provider_catalog_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+export 'package:diting/data/vpn/power_state.dart';
 export 'package:diting/state/provider_catalog_providers.dart';
 
 part 'work_mode_power.dart';
@@ -56,26 +59,8 @@ enum AppWorkMode {
 }
 
 /// Power state machine; the error state is server-mode only.
-enum PowerState {
-  stopped,
-  starting,
-  running,
-  stopping,
-  error;
-
-  String label(AppL10n l10n) => switch (this) {
-    PowerState.stopped => l10n.stateStopped,
-    PowerState.starting => l10n.stateStarting,
-    PowerState.running => l10n.stateRunning,
-    PowerState.stopping => l10n.stateStopping,
-    PowerState.error => l10n.powerStateError,
-  };
-
-  bool get isBusy => this == starting || this == stopping;
-
-  bool get isRunning => this == running;
-}
-
+/// The enum lives in `data/vpn/power_state.dart` so UI-only consumers (desktop) can import it
+/// without the VPN channel; this library re-exports it.
 /// Work mode and power state share a notifier: switching mode stops the other service.
 class WorkModeNotifier extends Notifier<AppWorkMode> {
   @override

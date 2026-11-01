@@ -3,7 +3,7 @@ import 'package:diting/app/theme/manager.dart';
 import 'package:diting/data/prefs/legacy_prefs_store.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
-import 'package:diting/desktop/pages/desktop_pages.dart';
+import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/state/appearance_providers.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
