@@ -13,6 +13,8 @@ import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/pages/tools/desktop_rule_check_page.dart';
+import 'package:diting/desktop/pages/settings/desktop_appearance_page.dart';
+import 'package:diting/desktop/pages/settings/desktop_settings_page.dart';
 import 'package:diting/desktop/pages/tools/desktop_tools_page.dart';
 import 'package:diting/desktop/pages/traffic/desktop_client_groups_page.dart';
 import 'package:diting/desktop/pages/traffic/desktop_traffic_page.dart';
@@ -72,6 +74,13 @@ Widget _pageOf(String location) => switch (location) {
 /// Sub-pages live inside the branch, so the branch's record (and its tab) stays current while the
 /// page is open. Only branches that actually have sub-pages return routes.
 List<RouteBase> _subRoutesOf(String location) => switch (location) {
+  Routes.settings => [
+    GoRoute(
+      path: 'appearance',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopAppearancePage()),
+    ),
+  ],
   Routes.tools => [
     GoRoute(
       path: 'rule-test',

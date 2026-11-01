@@ -6434,5 +6434,17 @@
   "desktopToolsRuleRewriteEmpty": "不返回任何记录（权威 NODATA）",
   "desktopToolsRuleFooter": "支持 AdGuard、Hosts 及自定义规则即时模拟测试。",
   "desktopToolsRuleFailed": "检测失败：{message}",
-  "@desktopToolsRuleFailed": {"placeholders": {"message": {"type": "String"}}}
+  "@desktopToolsRuleFailed": {"placeholders": {"message": {"type": "String"}}},
+  "desktopSettingsSection": "设置",
+  "desktopSettingsAppearance": "外观主题",
+  "desktopSettingsAppearanceEntryBody": "配色方案与深浅模式，即时预览",
+  "desktopSettingsAppearanceTitle": "外观与界面主题",
+  "desktopSettingsAppearanceBody": "多套配色方案与深浅模式自由切换，全局即时适配",
+  "desktopSettingsPalette": "主题配色方案",
+  "desktopSettingsPaletteBody": "选择符合个人偏好的视觉设计体系，所有界面元素即时协调匹配",
+  "desktopSettingsMode": "深浅模式",
+  "desktopSettingsModeBody": "跟随系统时按系统深浅偏好自动同步",
+  "desktopSettingsCurrent": "当前：{palette} · {mode}",
+  "@desktopSettingsCurrent": {"placeholders": {"palette": {"type": "String"}, "mode": {"type": "String"}}},
+  "desktopSettingsAppearanceFooter": "外观偏好与移动端共用同一组键，切换后重启仍生效。"
 }

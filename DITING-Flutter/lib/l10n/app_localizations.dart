@@ -22143,6 +22143,72 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'检测失败：{message}'**
   String desktopToolsRuleFailed(String message);
+
+  /// No description provided for @desktopSettingsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置'**
+  String get desktopSettingsSection;
+
+  /// No description provided for @desktopSettingsAppearance.
+  ///
+  /// In zh, this message translates to:
+  /// **'外观主题'**
+  String get desktopSettingsAppearance;
+
+  /// No description provided for @desktopSettingsAppearanceEntryBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'配色方案与深浅模式，即时预览'**
+  String get desktopSettingsAppearanceEntryBody;
+
+  /// No description provided for @desktopSettingsAppearanceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'外观与界面主题'**
+  String get desktopSettingsAppearanceTitle;
+
+  /// No description provided for @desktopSettingsAppearanceBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'多套配色方案与深浅模式自由切换，全局即时适配'**
+  String get desktopSettingsAppearanceBody;
+
+  /// No description provided for @desktopSettingsPalette.
+  ///
+  /// In zh, this message translates to:
+  /// **'主题配色方案'**
+  String get desktopSettingsPalette;
+
+  /// No description provided for @desktopSettingsPaletteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择符合个人偏好的视觉设计体系，所有界面元素即时协调匹配'**
+  String get desktopSettingsPaletteBody;
+
+  /// No description provided for @desktopSettingsMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'深浅模式'**
+  String get desktopSettingsMode;
+
+  /// No description provided for @desktopSettingsModeBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随系统时按系统深浅偏好自动同步'**
+  String get desktopSettingsModeBody;
+
+  /// No description provided for @desktopSettingsCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前：{palette} · {mode}'**
+  String desktopSettingsCurrent(String palette, String mode);
+
+  /// No description provided for @desktopSettingsAppearanceFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'外观偏好与移动端共用同一组键，切换后重启仍生效。'**
+  String get desktopSettingsAppearanceFooter;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

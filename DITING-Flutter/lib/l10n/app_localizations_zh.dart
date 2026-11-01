@@ -12146,4 +12146,39 @@ class AppL10nZh extends AppL10n {
   String desktopToolsRuleFailed(String message) {
     return '检测失败：$message';
   }
+
+  @override
+  String get desktopSettingsSection => '设置';
+
+  @override
+  String get desktopSettingsAppearance => '外观主题';
+
+  @override
+  String get desktopSettingsAppearanceEntryBody => '配色方案与深浅模式，即时预览';
+
+  @override
+  String get desktopSettingsAppearanceTitle => '外观与界面主题';
+
+  @override
+  String get desktopSettingsAppearanceBody => '多套配色方案与深浅模式自由切换，全局即时适配';
+
+  @override
+  String get desktopSettingsPalette => '主题配色方案';
+
+  @override
+  String get desktopSettingsPaletteBody => '选择符合个人偏好的视觉设计体系，所有界面元素即时协调匹配';
+
+  @override
+  String get desktopSettingsMode => '深浅模式';
+
+  @override
+  String get desktopSettingsModeBody => '跟随系统时按系统深浅偏好自动同步';
+
+  @override
+  String desktopSettingsCurrent(String palette, String mode) {
+    return '当前：$palette · $mode';
+  }
+
+  @override
+  String get desktopSettingsAppearanceFooter => '外观偏好与移动端共用同一组键，切换后重启仍生效。';
 }

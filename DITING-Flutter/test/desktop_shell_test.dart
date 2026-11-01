@@ -14,6 +14,7 @@ import 'package:diting/desktop/pages/desktop_pages.dart';
 import 'package:diting/desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/pages/logs/desktop_logs_page.dart';
+import 'package:diting/desktop/pages/settings/desktop_settings_page.dart';
 import 'package:diting/desktop/pages/tools/desktop_tools_page.dart';
 import 'package:diting/desktop/pages/traffic/desktop_traffic_page.dart';
 import 'package:diting/desktop/router.dart';
@@ -91,6 +92,10 @@ void _skeleton() {
       } else if (location == Routes.hub) {
         // The hub is a real feature list now; its resolution section opens the upstream page.
         expect(find.byType(DesktopFeatureHubPage), findsOneWidget);
+        expect(find.byType(AppBarClearance), findsNothing);
+      } else if (location == Routes.settings) {
+        // Settings is a real entry list now; its rows open the desktop sub-pages.
+        expect(find.byType(DesktopSettingsPage), findsOneWidget);
         expect(find.byType(AppBarClearance), findsNothing);
       } else if (location == Routes.tools) {
         // The tools page runs the port probe on demand; no pending empty state.

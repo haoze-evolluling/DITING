@@ -3811,5 +3811,17 @@
   "desktopToolsRuleRewriteEmpty": "No records returned (authoritative NODATA)",
   "desktopToolsRuleFooter": "Tests AdGuard, Hosts and custom rules instantly.",
   "desktopToolsRuleFailed": "The check failed: {message}",
-  "@desktopToolsRuleFailed": {"placeholders": {"message": {"type": "String"}}}
+  "@desktopToolsRuleFailed": {"placeholders": {"message": {"type": "String"}}},
+  "desktopSettingsSection": "Settings",
+  "desktopSettingsAppearance": "Appearance",
+  "desktopSettingsAppearanceEntryBody": "Palette and day/night mode, previewed live",
+  "desktopSettingsAppearanceTitle": "Appearance and theme",
+  "desktopSettingsAppearanceBody": "Switch palettes and day/night modes; the whole interface follows at once",
+  "desktopSettingsPalette": "Palette",
+  "desktopSettingsPaletteBody": "Pick the visual system you prefer; every element follows it",
+  "desktopSettingsMode": "Day/night mode",
+  "desktopSettingsModeBody": "Following the system uses the system's light/dark preference",
+  "desktopSettingsCurrent": "Current: {palette} · {mode}",
+  "@desktopSettingsCurrent": {"placeholders": {"palette": {"type": "String"}, "mode": {"type": "String"}}},
+  "desktopSettingsAppearanceFooter": "Appearance shares the mobile app's preference keys, so the choice survives a restart."
 }

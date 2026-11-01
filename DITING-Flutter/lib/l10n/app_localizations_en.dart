@@ -12899,4 +12899,44 @@ class AppL10nEn extends AppL10n {
   String desktopToolsRuleFailed(String message) {
     return 'The check failed: $message';
   }
+
+  @override
+  String get desktopSettingsSection => 'Settings';
+
+  @override
+  String get desktopSettingsAppearance => 'Appearance';
+
+  @override
+  String get desktopSettingsAppearanceEntryBody =>
+      'Palette and day/night mode, previewed live';
+
+  @override
+  String get desktopSettingsAppearanceTitle => 'Appearance and theme';
+
+  @override
+  String get desktopSettingsAppearanceBody =>
+      'Switch palettes and day/night modes; the whole interface follows at once';
+
+  @override
+  String get desktopSettingsPalette => 'Palette';
+
+  @override
+  String get desktopSettingsPaletteBody =>
+      'Pick the visual system you prefer; every element follows it';
+
+  @override
+  String get desktopSettingsMode => 'Day/night mode';
+
+  @override
+  String get desktopSettingsModeBody =>
+      'Following the system uses the system\'s light/dark preference';
+
+  @override
+  String desktopSettingsCurrent(String palette, String mode) {
+    return 'Current: $palette · $mode';
+  }
+
+  @override
+  String get desktopSettingsAppearanceFooter =>
+      'Appearance shares the mobile app\'s preference keys, so the choice survives a restart.';
 }
