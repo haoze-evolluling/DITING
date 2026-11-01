@@ -1,6 +1,6 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成；上游/区域测试与 `settings` 待迁移，Wails 切换尚未开始。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 待迁移，Wails 切换尚未开始。**
 > Windows 桌面窗口目前仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 三层分工（唯一规范）
@@ -26,7 +26,7 @@
 | `logs` 日志仪表盘 | 总览·实时查询 / 查询历史 / 统计中心（`LiveQueryPanel`、`QueryHistoryPanel`、`QueryStatsPanel`、`QueryLogConfigCard`） | `/querylog/search`、`/querylog/stats`、`/querylog/config` |
 | `hub` 功能中心 | 解析（`UpstreamPanel` ✅、`CachePanel`、`RewritePanel`、`DNS64Panel`）+ 防护（`RulesPanel`、`ServicesPanel`、`SchedulePanel`）+ 设备·加密 DNS / 安全隐私 | `/upstream/*`、`/cache/*`、`/dns/rewrite/*`、`/dns/dns64/*`、`/filter/*`、`/encrypted/*`、`/dns/privacy/*` |
 | `traffic` 应用流量 | 设备·设备管理（`ClientsPanel` ✅、`ClientGroupsCard` ✅）+ 缓存热点与统计中心 Top 域名/客户端 | `/clients`、`/clients/groups`、`/cache/top`、`/querylog/stats` |
-| `tools` 网络工具 | 系统·诊断与修复（`DiagnosticsPanel` ✅ 端口部分）+ 防护·规则检测（`RuleTestPanel` ✅）+ 上游/区域测试 | `/portcheck`、`/filter/check`、`/upstream/test`、`/dns/zone/test` |
+| `tools` 网络工具 | 系统·诊断与修复（`DiagnosticsPanel` ✅ 端口部分）+ 防护·规则检测（`RuleTestPanel` ✅）+ 上游/区域测试（已在上游页/重写页编辑器内实现） | `/portcheck`、`/filter/check`、`/upstream/test`、`/dns/zone/test` |
 | `settings` 设置 | 系统·外观主题 / 服务与连接 / 局域网控制台 | `/status`、`/service/status`、`/web/*`、`/auth/*` |
 
 > 旧版桌面没有按应用流量统计：`traffic` 只用设备与缓存维度，不画「按应用排行」。
@@ -145,8 +145,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **`tools` 剩余**：上游/区域测试（端口诊断与规则检测已完成）。
-2. **`settings`**：外观主题（复用 `lib/pages/appearance` 的组件与语义）、服务与连接、局域网控制台。
+1. **`settings`**：外观主题（复用 `lib/pages/appearance` 的组件与语义）、服务与连接、局域网控制台。
 
 ## 8. 验收与守卫
 
