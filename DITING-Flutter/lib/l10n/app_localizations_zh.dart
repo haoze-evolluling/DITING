@@ -10804,4 +10804,134 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopWeekdaySun => '日';
+
+  @override
+  String get desktopHubFilterServices => '应用拦截';
+
+  @override
+  String get desktopHubFilterServicesBody => '内置应用与网站规则，一键整组拦截，可按周计划放行';
+
+  @override
+  String get desktopServicesPageTitle => '应用拦截';
+
+  @override
+  String get desktopServicesRefresh => '刷新应用拦截';
+
+  @override
+  String get desktopServicesLoadFailed => '读不到内置服务目录';
+
+  @override
+  String get desktopServicesTitle => '应用与网站拦截';
+
+  @override
+  String get desktopServicesBody =>
+      '一键拦截常见应用与网站，规则随程序内置、无需联网拉取；可与订阅规则、自定义规则叠加生效。';
+
+  @override
+  String desktopServicesCount(int blocked, int total) {
+    return '$blocked / $total 项已拦截';
+  }
+
+  @override
+  String get desktopServicesClearAll => '全部取消';
+
+  @override
+  String get desktopServicesCleared => '已取消全部应用拦截';
+
+  @override
+  String get desktopServicesSearchHint => '搜索应用名称、域名或规则…';
+
+  @override
+  String get desktopServicesGroupFilter => '分组筛选';
+
+  @override
+  String get desktopServicesAllGroups => '全部分组';
+
+  @override
+  String desktopServicesGroupItem(String name, int count) {
+    return '$name ($count)';
+  }
+
+  @override
+  String desktopServicesGroupChip(String name, int count) {
+    return '$name · $count';
+  }
+
+  @override
+  String desktopServicesActiveRules(int count) {
+    return '展开 $count 条规则';
+  }
+
+  @override
+  String get desktopServicesEmpty => '内置服务目录为空';
+
+  @override
+  String get desktopServicesNoMatch => '未找到符合条件的应用';
+
+  @override
+  String desktopServicesBlocked(String name) {
+    return '已拦截：$name';
+  }
+
+  @override
+  String desktopServicesUnblocked(String name) {
+    return '已取消拦截：$name';
+  }
+
+  @override
+  String desktopServicesActionFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String desktopServicesGroupOn(String name) {
+    return '已整组拦截：$name';
+  }
+
+  @override
+  String desktopServicesGroupOff(String name) {
+    return '已取消整组拦截：$name';
+  }
+
+  @override
+  String get desktopServicesByGroup => '随分组';
+
+  @override
+  String get desktopServicesScheduleInside => '计划内';
+
+  @override
+  String get desktopServicesScheduleOutside => '计划外';
+
+  @override
+  String desktopServicesRuleCount(String group, int count) {
+    return '$group · $count 条规则';
+  }
+
+  @override
+  String get desktopServicesScheduleEdit => '编辑每周生效计划';
+
+  @override
+  String get desktopServicesShowRules => '查看或收起规则';
+
+  @override
+  String desktopServicesScheduleTitle(String name) {
+    return '$name 的每周生效计划';
+  }
+
+  @override
+  String get desktopServicesScheduleBody =>
+      '仅在命中的时间窗口内拦截该应用，其余时间正常放行。未配置任何计划时恒为拦截；需要某段时间完全不限制时，取消勾选该服务比清空计划更直观。';
+
+  @override
+  String get desktopServicesScheduleSave => '保存计划';
+
+  @override
+  String desktopServicesScheduleSaved(String name) {
+    return '「$name」的每周生效计划已保存';
+  }
+
+  @override
+  String desktopServicesScheduleRemoved(String name) {
+    return '「$name」已恢复为始终拦截';
+  }
 }

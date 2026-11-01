@@ -14,6 +14,7 @@ import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_models.dart';
 import 'package:diting/desktop/data/api/desktop_schedule_models.dart';
+import 'package:diting/desktop/data/api/desktop_services_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting/desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting/desktop/data/api/desktop_zone_models.dart';
@@ -326,6 +327,20 @@ class DesktopApiClient {
 
   Future<DesktopFilterPause> filterPause() async =>
       DesktopFilterPause.fromJson(await _get('/api/v1/filter/pause'));
+
+  /// The built-in catalogue plus the current selection and plans.
+  Future<DesktopBlockedServices> blockedServices() async =>
+      DesktopBlockedServices.fromJson(
+        await _get('/api/v1/filter/services'),
+      );
+
+  /// Omitted fields keep their current value; an empty list clears that dimension. The service
+  /// answers with the whole new state, which the page adopts directly.
+  Future<DesktopBlockedServices> configureBlockedServices(
+    Map<String, Object?> body,
+  ) async => DesktopBlockedServices.fromJson(
+    await _postData('/api/v1/filter/services', body: body),
+  );
 
   Future<DesktopScheduleConfig> blockingSchedule() async =>
       DesktopScheduleConfig.fromJson(await _get('/api/v1/filter/schedule'));

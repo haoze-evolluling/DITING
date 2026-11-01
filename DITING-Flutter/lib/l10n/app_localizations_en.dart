@@ -11497,4 +11497,136 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopWeekdaySun => 'Su';
+
+  @override
+  String get desktopHubFilterServices => 'App blocking';
+
+  @override
+  String get desktopHubFilterServicesBody =>
+      'Built-in app and site rules, blocked by group, with optional weekly windows';
+
+  @override
+  String get desktopServicesPageTitle => 'App blocking';
+
+  @override
+  String get desktopServicesRefresh => 'Reload the app blocking state';
+
+  @override
+  String get desktopServicesLoadFailed =>
+      'Could not read the built-in service catalogue';
+
+  @override
+  String get desktopServicesTitle => 'App and site blocking';
+
+  @override
+  String get desktopServicesBody =>
+      'Blocks common apps and sites with rules built into the app, no download needed; combines with subscription and custom rules.';
+
+  @override
+  String desktopServicesCount(int blocked, int total) {
+    return '$blocked / $total blocked';
+  }
+
+  @override
+  String get desktopServicesClearAll => 'Clear all';
+
+  @override
+  String get desktopServicesCleared => 'Every app block was cleared';
+
+  @override
+  String get desktopServicesSearchHint => 'Search a name, domain or rule…';
+
+  @override
+  String get desktopServicesGroupFilter => 'Group filter';
+
+  @override
+  String get desktopServicesAllGroups => 'All groups';
+
+  @override
+  String desktopServicesGroupItem(String name, int count) {
+    return '$name ($count)';
+  }
+
+  @override
+  String desktopServicesGroupChip(String name, int count) {
+    return '$name · $count';
+  }
+
+  @override
+  String desktopServicesActiveRules(int count) {
+    return '$count rules in effect';
+  }
+
+  @override
+  String get desktopServicesEmpty => 'The built-in catalogue is empty';
+
+  @override
+  String get desktopServicesNoMatch => 'No service matches the filter';
+
+  @override
+  String desktopServicesBlocked(String name) {
+    return 'Blocked $name';
+  }
+
+  @override
+  String desktopServicesUnblocked(String name) {
+    return 'Unblocked $name';
+  }
+
+  @override
+  String desktopServicesActionFailed(String message) {
+    return 'The action failed: $message';
+  }
+
+  @override
+  String desktopServicesGroupOn(String name) {
+    return 'Blocked the whole group $name';
+  }
+
+  @override
+  String desktopServicesGroupOff(String name) {
+    return 'Unblocked the whole group $name';
+  }
+
+  @override
+  String get desktopServicesByGroup => 'By group';
+
+  @override
+  String get desktopServicesScheduleInside => 'In window';
+
+  @override
+  String get desktopServicesScheduleOutside => 'Outside window';
+
+  @override
+  String desktopServicesRuleCount(String group, int count) {
+    return '$group · $count rules';
+  }
+
+  @override
+  String get desktopServicesScheduleEdit => 'Edit the weekly plan';
+
+  @override
+  String get desktopServicesShowRules => 'Show or hide the rules';
+
+  @override
+  String desktopServicesScheduleTitle(String name) {
+    return 'Weekly plan for $name';
+  }
+
+  @override
+  String get desktopServicesScheduleBody =>
+      'Blocks this app only inside the matching windows and lets it through the rest of the time. No window means always blocked; to lift the limit for a while, unblocking the service is clearer than clearing the plan.';
+
+  @override
+  String get desktopServicesScheduleSave => 'Save plan';
+
+  @override
+  String desktopServicesScheduleSaved(String name) {
+    return 'The weekly plan for “$name” was saved';
+  }
+
+  @override
+  String desktopServicesScheduleRemoved(String name) {
+    return '“$name” is blocked all the time again';
+  }
 }

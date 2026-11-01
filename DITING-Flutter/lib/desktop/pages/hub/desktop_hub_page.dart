@@ -13,6 +13,7 @@ import 'package:diting/desktop/pages/hub/desktop_filter_config_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_lists_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_rules_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_schedule_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_services_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/ui/ui.dart';
@@ -116,6 +117,13 @@ class DesktopFeatureHubPage extends StatelessWidget {
                         title: l10n.desktopHubFilterSchedule,
                         body: l10n.desktopHubFilterScheduleBody,
                         path: DesktopSchedulePage.path,
+                      ),
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.appsList,
+                        title: l10n.desktopHubFilterServices,
+                        body: l10n.desktopHubFilterServicesBody,
+                        path: DesktopServicesPage.path,
                       ),
                     ]),
                   ],

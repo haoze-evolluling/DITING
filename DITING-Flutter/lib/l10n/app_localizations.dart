@@ -19719,6 +19719,210 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'日'**
   String get desktopWeekdaySun;
+
+  /// No description provided for @desktopHubFilterServices.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用拦截'**
+  String get desktopHubFilterServices;
+
+  /// No description provided for @desktopHubFilterServicesBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'内置应用与网站规则，一键整组拦截，可按周计划放行'**
+  String get desktopHubFilterServicesBody;
+
+  /// No description provided for @desktopServicesPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用拦截'**
+  String get desktopServicesPageTitle;
+
+  /// No description provided for @desktopServicesRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新应用拦截'**
+  String get desktopServicesRefresh;
+
+  /// No description provided for @desktopServicesLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到内置服务目录'**
+  String get desktopServicesLoadFailed;
+
+  /// No description provided for @desktopServicesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用与网站拦截'**
+  String get desktopServicesTitle;
+
+  /// No description provided for @desktopServicesBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键拦截常见应用与网站，规则随程序内置、无需联网拉取；可与订阅规则、自定义规则叠加生效。'**
+  String get desktopServicesBody;
+
+  /// No description provided for @desktopServicesCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{blocked} / {total} 项已拦截'**
+  String desktopServicesCount(int blocked, int total);
+
+  /// No description provided for @desktopServicesClearAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部取消'**
+  String get desktopServicesClearAll;
+
+  /// No description provided for @desktopServicesCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消全部应用拦截'**
+  String get desktopServicesCleared;
+
+  /// No description provided for @desktopServicesSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索应用名称、域名或规则…'**
+  String get desktopServicesSearchHint;
+
+  /// No description provided for @desktopServicesGroupFilter.
+  ///
+  /// In zh, this message translates to:
+  /// **'分组筛选'**
+  String get desktopServicesGroupFilter;
+
+  /// No description provided for @desktopServicesAllGroups.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部分组'**
+  String get desktopServicesAllGroups;
+
+  /// No description provided for @desktopServicesGroupItem.
+  ///
+  /// In zh, this message translates to:
+  /// **'{name} ({count})'**
+  String desktopServicesGroupItem(String name, int count);
+
+  /// No description provided for @desktopServicesGroupChip.
+  ///
+  /// In zh, this message translates to:
+  /// **'{name} · {count}'**
+  String desktopServicesGroupChip(String name, int count);
+
+  /// No description provided for @desktopServicesActiveRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'展开 {count} 条规则'**
+  String desktopServicesActiveRules(int count);
+
+  /// No description provided for @desktopServicesEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'内置服务目录为空'**
+  String get desktopServicesEmpty;
+
+  /// No description provided for @desktopServicesNoMatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'未找到符合条件的应用'**
+  String get desktopServicesNoMatch;
+
+  /// No description provided for @desktopServicesBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已拦截：{name}'**
+  String desktopServicesBlocked(String name);
+
+  /// No description provided for @desktopServicesUnblocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消拦截：{name}'**
+  String desktopServicesUnblocked(String name);
+
+  /// No description provided for @desktopServicesActionFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopServicesActionFailed(String message);
+
+  /// No description provided for @desktopServicesGroupOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已整组拦截：{name}'**
+  String desktopServicesGroupOn(String name);
+
+  /// No description provided for @desktopServicesGroupOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消整组拦截：{name}'**
+  String desktopServicesGroupOff(String name);
+
+  /// No description provided for @desktopServicesByGroup.
+  ///
+  /// In zh, this message translates to:
+  /// **'随分组'**
+  String get desktopServicesByGroup;
+
+  /// No description provided for @desktopServicesScheduleInside.
+  ///
+  /// In zh, this message translates to:
+  /// **'计划内'**
+  String get desktopServicesScheduleInside;
+
+  /// No description provided for @desktopServicesScheduleOutside.
+  ///
+  /// In zh, this message translates to:
+  /// **'计划外'**
+  String get desktopServicesScheduleOutside;
+
+  /// No description provided for @desktopServicesRuleCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{group} · {count} 条规则'**
+  String desktopServicesRuleCount(String group, int count);
+
+  /// No description provided for @desktopServicesScheduleEdit.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑每周生效计划'**
+  String get desktopServicesScheduleEdit;
+
+  /// No description provided for @desktopServicesShowRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看或收起规则'**
+  String get desktopServicesShowRules;
+
+  /// No description provided for @desktopServicesScheduleTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'{name} 的每周生效计划'**
+  String desktopServicesScheduleTitle(String name);
+
+  /// No description provided for @desktopServicesScheduleBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅在命中的时间窗口内拦截该应用，其余时间正常放行。未配置任何计划时恒为拦截；需要某段时间完全不限制时，取消勾选该服务比清空计划更直观。'**
+  String get desktopServicesScheduleBody;
+
+  /// No description provided for @desktopServicesScheduleSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存计划'**
+  String get desktopServicesScheduleSave;
+
+  /// No description provided for @desktopServicesScheduleSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{name}」的每周生效计划已保存'**
+  String desktopServicesScheduleSaved(String name);
+
+  /// No description provided for @desktopServicesScheduleRemoved.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{name}」已恢复为始终拦截'**
+  String desktopServicesScheduleRemoved(String name);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

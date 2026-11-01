@@ -375,6 +375,53 @@ Map<String, Object?> schedulePayload({
   'activeId': activeId,
 };
 
+/// A `GET /api/v1/filter/services` payload.
+Map<String, Object?> servicesPayload({
+  List<Map<String, Object?>>? services,
+  List<Map<String, Object?>>? groups,
+  List<String> blockedIds = const ['youtube'],
+  List<String> blockedGroups = const [],
+  int activeRules = 2,
+  Map<String, List<Map<String, Object?>>> schedules = const {},
+  List<Map<String, Object?>> scheduleStates = const [],
+}) {
+  final catalogue =
+      services ??
+      const [
+        {
+          'id': 'douyin',
+          'name': '抖音',
+          'group': 'social',
+          'rules': ['||douyin.com^'],
+          'ruleCount': 1,
+          'source': 'builtin',
+        },
+        {
+          'id': 'youtube',
+          'name': 'YouTube',
+          'group': 'video',
+          'rules': ['||youtube.com^', '||ytimg.com^'],
+          'ruleCount': 2,
+          'source': 'builtin',
+        },
+      ];
+  final catalogueGroups =
+      groups ??
+      const [
+        {'id': 'social', 'name': '社交', 'count': 1},
+        {'id': 'video', 'name': '视频', 'count': 1},
+      ];
+  return {
+    'services': catalogue,
+    'groups': catalogueGroups,
+    'blockedIds': blockedIds,
+    'blockedGroups': blockedGroups,
+    'activeRules': activeRules,
+    'schedules': schedules,
+    'scheduleStates': scheduleStates,
+  };
+}
+
 /// Records the paths it was asked for, and can be told to fail after [failAfter] requests to model
 /// a service that drops while the window is open.
 class FakeDesktopBackend {
@@ -399,6 +446,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? filterConfig,
     Map<String, Object?>? filterPause,
     Map<String, Object?>? schedule,
+    Map<String, Object?>? services,
     List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
@@ -424,6 +472,7 @@ class FakeDesktopBackend {
        filterConfig = filterConfig ?? filterConfigPayload(),
        filterPause = filterPause ?? filterPausePayload(),
        schedule = schedule ?? schedulePayload(),
+       services = services ?? servicesPayload(),
        customRules =
            customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
@@ -495,6 +544,12 @@ class FakeDesktopBackend {
 
   /// Bodies of every time-plan save, in order.
   final scheduleUpdates = <Map<String, Object?>>[];
+
+  /// Mutated by `POST /filter/services`; `GET /filter/services` answers with it.
+  Map<String, Object?> services;
+
+  /// Bodies of every service-selection save, in order.
+  final servicesUpdates = <Map<String, Object?>>[];
 
   /// Bodies of every rewrite config save, in order.
   final rewriteConfigUpdates = <Map<String, Object?>>[];
@@ -639,6 +694,20 @@ class FakeDesktopBackend {
                 item.cast<String, Object?>(),
           ],
         };
+      }
+      if (path == '/api/v1/filter/services' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        servicesUpdates.add(body);
+        final next = {...services};
+        if (body['ids'] case final List ids) next['blockedIds'] = ids;
+        if (body['groups'] case final List groups) next['blockedGroups'] = groups;
+        if (body['schedules'] case final Map schedules) {
+          next['scheduleStates'] = [
+            for (final id in schedules.keys)
+              {'serviceId': id, 'hasSchedule': true, 'active': true},
+          ];
+        }
+        services = next;
       }
       if (path == '/api/v1/filter/schedule' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
@@ -789,6 +858,7 @@ class FakeDesktopBackend {
         '/api/v1/filter/config' => utf8Json(apiEnvelope(filterConfig)),
         '/api/v1/filter/pause' => utf8Json(apiEnvelope(filterPause)),
         '/api/v1/filter/schedule' => utf8Json(apiEnvelope(schedule)),
+        '/api/v1/filter/services' => utf8Json(apiEnvelope(services)),
         '/api/v1/dns/zone/config' => http.Response(
           jsonEncode(apiEnvelope(zone)),
           200,
