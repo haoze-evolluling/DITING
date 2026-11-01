@@ -10,6 +10,7 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/desktop/pages/hub/desktop_cache_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_dns64_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_lists_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_filter_rules_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
 import 'package:diting/ui/ui.dart';
@@ -92,6 +93,13 @@ class DesktopFeatureHubPage extends StatelessWidget {
                         title: l10n.desktopHubFilterLists,
                         body: l10n.desktopHubFilterListsBody,
                         path: DesktopFilterListsPage.path,
+                      ),
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.edit,
+                        title: l10n.desktopHubFilterRules,
+                        body: l10n.desktopHubFilterRulesBody,
+                        path: DesktopFilterRulesPage.path,
                       ),
                     ]),
                   ],

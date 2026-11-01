@@ -346,6 +346,7 @@ class FakeDesktopBackend {
     Map<String, Object?>? dns64,
     Map<String, Object?>? filterStats,
     Map<String, Object?>? filterLists,
+    List<String>? customRules,
     Map<String, Object?>? zone,
     Map<String, Object?>? zoneTest,
     this.failAfter,
@@ -367,6 +368,8 @@ class FakeDesktopBackend {
        dns64 = dns64 ?? dns64Payload(),
        filterStats = filterStats ?? filterStatsPayload(),
        filterLists = filterLists ?? filterListsPayload(),
+       customRules =
+           customRules ?? ['||ads.example^', '@@||safe.example^'],
        zone = zone ?? zonePayload(),
        zoneTest = zoneTest ?? zoneTestPayload();
 
@@ -414,6 +417,12 @@ class FakeDesktopBackend {
   final filterListUpdates = <Map<String, Object?>>[];
   final filterListDeletes = <String>[];
   final filterListRefreshes = <String>[];
+
+  /// Mutated by `POST /filter/rules`; `GET /filter/rules` answers with it.
+  List<String> customRules;
+
+  /// Bodies of every custom-rule save, in order.
+  final customRuleUpdates = <List<String>>[];
 
   /// Bodies of every rewrite config save, in order.
   final rewriteConfigUpdates = <Map<String, Object?>>[];
@@ -559,6 +568,14 @@ class FakeDesktopBackend {
           ],
         };
       }
+      if (path == '/api/v1/filter/rules' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        final rules = [
+          for (final rule in body['rules'] as List? ?? const []) '$rule',
+        ];
+        customRuleUpdates.add(rules);
+        customRules = rules;
+      }
       if (path == '/api/v1/filter/lists/add' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
         filterListAdds.add(body);
@@ -667,6 +684,9 @@ class FakeDesktopBackend {
         ),
         '/api/v1/filter/stats' => utf8Json(apiEnvelope(filterStats)),
         '/api/v1/filter/lists' => utf8Json(apiEnvelope(filterLists)),
+        '/api/v1/filter/rules' => utf8Json(
+          apiEnvelope({'rules': customRules}),
+        ),
         '/api/v1/dns/zone/config' => http.Response(
           jsonEncode(apiEnvelope(zone)),
           200,

@@ -10403,4 +10403,106 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopFilterListsLoadFailed => '读不到规则订阅库';
+
+  @override
+  String get desktopHubFilterRules => '自定义规则';
+
+  @override
+  String get desktopHubFilterRulesBody => '手写 AdGuard 语法规则，保存后立即热重载生效';
+
+  @override
+  String get desktopFilterRulesPageTitle => '自定义规则';
+
+  @override
+  String get desktopFilterRulesRefresh => '重新读取自定义规则';
+
+  @override
+  String get desktopFilterRulesEditorTitle => '自定义规则文本编辑器';
+
+  @override
+  String get desktopFilterRulesEditorBody => '编辑用户专属的过滤拦截或放行清单，每行一条';
+
+  @override
+  String get desktopFilterRulesSave => '保存规则';
+
+  @override
+  String get desktopFilterRulesSaving => '保存中…';
+
+  @override
+  String get desktopFilterRulesSaved => '自定义规则已保存生效';
+
+  @override
+  String desktopFilterRulesSaveFailed(String message) {
+    return '保存自定义规则失败：$message';
+  }
+
+  @override
+  String get desktopFilterRulesLoadFailed => '读不到自定义规则';
+
+  @override
+  String get desktopFilterRulesPlaceholder => '在此输入自定义拦截或信任规则，每行一条…';
+
+  @override
+  String desktopFilterRulesLineCount(int count) {
+    return '行数统计：$count 条规则';
+  }
+
+  @override
+  String get desktopFilterRulesHint => '每行一条规则，以 ! 开头的行为注释；修改后点击保存立即热重载生效。';
+
+  @override
+  String get desktopFilterGuideTitle => 'AdGuard 语法速查指南';
+
+  @override
+  String get desktopFilterGuideBody => '主流广告过滤与信任规则编写格式';
+
+  @override
+  String get desktopFilterGuideCommon => '常用格式';
+
+  @override
+  String get desktopFilterGuideExempt => '豁免放行';
+
+  @override
+  String get desktopFilterGuideCompat => '传统兼容';
+
+  @override
+  String get desktopFilterGuidePriority => '强制优先';
+
+  @override
+  String get desktopFilterGuideRewrite => '应答重写';
+
+  @override
+  String get desktopFilterGuideDomainTitle => '域名与子域名拦截';
+
+  @override
+  String get desktopFilterGuideDomainBody =>
+      '匹配并拦截 example.com 及其所有子域名（如 ad.example.com）。';
+
+  @override
+  String get desktopFilterGuideAllowTitle => '白名单信任放行';
+
+  @override
+  String get desktopFilterGuideAllowBody => '即便其他规则命中，也始终允许解析 safe.com。';
+
+  @override
+  String get desktopFilterGuideHostsTitle => 'Hosts 文件格式';
+
+  @override
+  String get desktopFilterGuideHostsBody => '兼容标准 Hosts 文件屏蔽特定域名的语法。';
+
+  @override
+  String get desktopFilterGuideImportantTitle => '最高优先级强力拦截';
+
+  @override
+  String get desktopFilterGuideImportantBody => '忽略所有白名单规则，强制拦截该域名。';
+
+  @override
+  String get desktopFilterGuideRewriteTitle => '应答重写';
+
+  @override
+  String get desktopFilterGuideRewriteBody =>
+      '无需上游应答，直接按规则给出结果：支持 IPv4/IPv6 地址、域名（CNAME）、NOERROR;A;1.2.3.4 这类显式写法，以及 REFUSED / NXDOMAIN 等应答码；显式写法还支持 MX、SRV、NS、PTR、TXT、HTTPS、SVCB。优先级高于一切拦截与放行规则，用 @@||nas.lan^\$dnsrewrite 可取消该域名的全部重写。';
+
+  @override
+  String get desktopFilterGuideFooter => '提示：每行一条规则，以 ! 开头的行为注释。';
 }

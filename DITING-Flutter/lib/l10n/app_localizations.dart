@@ -18963,6 +18963,198 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'读不到规则订阅库'**
   String get desktopFilterListsLoadFailed;
+
+  /// No description provided for @desktopHubFilterRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义规则'**
+  String get desktopHubFilterRules;
+
+  /// No description provided for @desktopHubFilterRulesBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'手写 AdGuard 语法规则，保存后立即热重载生效'**
+  String get desktopHubFilterRulesBody;
+
+  /// No description provided for @desktopFilterRulesPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义规则'**
+  String get desktopFilterRulesPageTitle;
+
+  /// No description provided for @desktopFilterRulesRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新读取自定义规则'**
+  String get desktopFilterRulesRefresh;
+
+  /// No description provided for @desktopFilterRulesEditorTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义规则文本编辑器'**
+  String get desktopFilterRulesEditorTitle;
+
+  /// No description provided for @desktopFilterRulesEditorBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑用户专属的过滤拦截或放行清单，每行一条'**
+  String get desktopFilterRulesEditorBody;
+
+  /// No description provided for @desktopFilterRulesSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存规则'**
+  String get desktopFilterRulesSave;
+
+  /// No description provided for @desktopFilterRulesSaving.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存中…'**
+  String get desktopFilterRulesSaving;
+
+  /// No description provided for @desktopFilterRulesSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义规则已保存生效'**
+  String get desktopFilterRulesSaved;
+
+  /// No description provided for @desktopFilterRulesSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存自定义规则失败：{message}'**
+  String desktopFilterRulesSaveFailed(String message);
+
+  /// No description provided for @desktopFilterRulesLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到自定义规则'**
+  String get desktopFilterRulesLoadFailed;
+
+  /// No description provided for @desktopFilterRulesPlaceholder.
+  ///
+  /// In zh, this message translates to:
+  /// **'在此输入自定义拦截或信任规则，每行一条…'**
+  String get desktopFilterRulesPlaceholder;
+
+  /// No description provided for @desktopFilterRulesLineCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'行数统计：{count} 条规则'**
+  String desktopFilterRulesLineCount(int count);
+
+  /// No description provided for @desktopFilterRulesHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'每行一条规则，以 ! 开头的行为注释；修改后点击保存立即热重载生效。'**
+  String get desktopFilterRulesHint;
+
+  /// No description provided for @desktopFilterGuideTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'AdGuard 语法速查指南'**
+  String get desktopFilterGuideTitle;
+
+  /// No description provided for @desktopFilterGuideBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'主流广告过滤与信任规则编写格式'**
+  String get desktopFilterGuideBody;
+
+  /// No description provided for @desktopFilterGuideCommon.
+  ///
+  /// In zh, this message translates to:
+  /// **'常用格式'**
+  String get desktopFilterGuideCommon;
+
+  /// No description provided for @desktopFilterGuideExempt.
+  ///
+  /// In zh, this message translates to:
+  /// **'豁免放行'**
+  String get desktopFilterGuideExempt;
+
+  /// No description provided for @desktopFilterGuideCompat.
+  ///
+  /// In zh, this message translates to:
+  /// **'传统兼容'**
+  String get desktopFilterGuideCompat;
+
+  /// No description provided for @desktopFilterGuidePriority.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制优先'**
+  String get desktopFilterGuidePriority;
+
+  /// No description provided for @desktopFilterGuideRewrite.
+  ///
+  /// In zh, this message translates to:
+  /// **'应答重写'**
+  String get desktopFilterGuideRewrite;
+
+  /// No description provided for @desktopFilterGuideDomainTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'域名与子域名拦截'**
+  String get desktopFilterGuideDomainTitle;
+
+  /// No description provided for @desktopFilterGuideDomainBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'匹配并拦截 example.com 及其所有子域名（如 ad.example.com）。'**
+  String get desktopFilterGuideDomainBody;
+
+  /// No description provided for @desktopFilterGuideAllowTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'白名单信任放行'**
+  String get desktopFilterGuideAllowTitle;
+
+  /// No description provided for @desktopFilterGuideAllowBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'即便其他规则命中，也始终允许解析 safe.com。'**
+  String get desktopFilterGuideAllowBody;
+
+  /// No description provided for @desktopFilterGuideHostsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'Hosts 文件格式'**
+  String get desktopFilterGuideHostsTitle;
+
+  /// No description provided for @desktopFilterGuideHostsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'兼容标准 Hosts 文件屏蔽特定域名的语法。'**
+  String get desktopFilterGuideHostsBody;
+
+  /// No description provided for @desktopFilterGuideImportantTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'最高优先级强力拦截'**
+  String get desktopFilterGuideImportantTitle;
+
+  /// No description provided for @desktopFilterGuideImportantBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'忽略所有白名单规则，强制拦截该域名。'**
+  String get desktopFilterGuideImportantBody;
+
+  /// No description provided for @desktopFilterGuideRewriteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'应答重写'**
+  String get desktopFilterGuideRewriteTitle;
+
+  /// No description provided for @desktopFilterGuideRewriteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'无需上游应答，直接按规则给出结果：支持 IPv4/IPv6 地址、域名（CNAME）、NOERROR;A;1.2.3.4 这类显式写法，以及 REFUSED / NXDOMAIN 等应答码；显式写法还支持 MX、SRV、NS、PTR、TXT、HTTPS、SVCB。优先级高于一切拦截与放行规则，用 @@||nas.lan^\$dnsrewrite 可取消该域名的全部重写。'**
+  String get desktopFilterGuideRewriteBody;
+
+  /// No description provided for @desktopFilterGuideFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'提示：每行一条规则，以 ! 开头的行为注释。'**
+  String get desktopFilterGuideFooter;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

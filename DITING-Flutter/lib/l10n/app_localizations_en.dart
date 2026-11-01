@@ -11065,4 +11065,117 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopFilterListsLoadFailed =>
       'Could not read the subscription lists';
+
+  @override
+  String get desktopHubFilterRules => 'Custom rules';
+
+  @override
+  String get desktopHubFilterRulesBody =>
+      'Hand-written AdGuard-syntax rules, hot-reloaded the moment they are saved';
+
+  @override
+  String get desktopFilterRulesPageTitle => 'Custom rules';
+
+  @override
+  String get desktopFilterRulesRefresh => 'Reload the custom rules';
+
+  @override
+  String get desktopFilterRulesEditorTitle => 'Custom rule editor';
+
+  @override
+  String get desktopFilterRulesEditorBody =>
+      'Edit your own blocking and allow rules, one per line';
+
+  @override
+  String get desktopFilterRulesSave => 'Save rules';
+
+  @override
+  String get desktopFilterRulesSaving => 'Saving…';
+
+  @override
+  String get desktopFilterRulesSaved =>
+      'The custom rules were saved and are in effect';
+
+  @override
+  String desktopFilterRulesSaveFailed(String message) {
+    return 'Could not save the custom rules: $message';
+  }
+
+  @override
+  String get desktopFilterRulesLoadFailed => 'Could not read the custom rules';
+
+  @override
+  String get desktopFilterRulesPlaceholder =>
+      'Type your blocking or trust rules here, one per line…';
+
+  @override
+  String desktopFilterRulesLineCount(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String get desktopFilterRulesHint =>
+      'One rule per line; a line starting with ! is a comment. Saving hot-reloads the engine.';
+
+  @override
+  String get desktopFilterGuideTitle => 'AdGuard syntax cheat sheet';
+
+  @override
+  String get desktopFilterGuideBody =>
+      'The formats used by mainstream ad-blocking and trust rules';
+
+  @override
+  String get desktopFilterGuideCommon => 'Common';
+
+  @override
+  String get desktopFilterGuideExempt => 'Exempt';
+
+  @override
+  String get desktopFilterGuideCompat => 'Legacy';
+
+  @override
+  String get desktopFilterGuidePriority => 'Priority';
+
+  @override
+  String get desktopFilterGuideRewrite => 'Rewrite';
+
+  @override
+  String get desktopFilterGuideDomainTitle =>
+      'Block a domain and its subdomains';
+
+  @override
+  String get desktopFilterGuideDomainBody =>
+      'Matches and blocks example.com and every subdomain such as ad.example.com.';
+
+  @override
+  String get desktopFilterGuideAllowTitle => 'Allowlist a trusted domain';
+
+  @override
+  String get desktopFilterGuideAllowBody =>
+      'Always resolves safe.com, even when another rule matches it.';
+
+  @override
+  String get desktopFilterGuideHostsTitle => 'Hosts file format';
+
+  @override
+  String get desktopFilterGuideHostsBody =>
+      'Compatible with the standard hosts-file way of blocking a name.';
+
+  @override
+  String get desktopFilterGuideImportantTitle => 'Force a block';
+
+  @override
+  String get desktopFilterGuideImportantBody =>
+      'Ignores every allow rule and blocks the name outright.';
+
+  @override
+  String get desktopFilterGuideRewriteTitle => 'Rewrite the answer';
+
+  @override
+  String get desktopFilterGuideRewriteBody =>
+      'Answers directly without asking upstream: IPv4/IPv6 addresses, a CNAME, explicit forms like NOERROR;A;1.2.3.4, and codes such as REFUSED / NXDOMAIN. Explicit forms also cover MX, SRV, NS, PTR, TXT, HTTPS and SVCB. A rewrite outranks every block and allow rule; @@||nas.lan^\$dnsrewrite removes all rewrites for that name.';
+
+  @override
+  String get desktopFilterGuideFooter =>
+      'One rule per line; a line starting with ! is a comment.';
 }

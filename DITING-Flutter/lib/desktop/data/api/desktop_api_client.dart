@@ -342,6 +342,19 @@ class DesktopApiClient {
   Future<void> refreshFilterLists(String id) =>
       _post('/api/v1/filter/lists/refresh', body: {'id': id});
 
+  /// The user's own rules, in the service's order. The endpoint answers with a bare array.
+  Future<List<String>> customRules() async {
+    final data = await _get('/api/v1/filter/rules');
+    return switch (data['rules']) {
+      List() => [for (final rule in data['rules'] as List) '$rule'],
+      _ => const [],
+    };
+  }
+
+  /// Replaces the whole list; the service rebuilds its index and answers with a success flag.
+  Future<void> setCustomRules(List<String> rules) =>
+      _post('/api/v1/filter/rules', body: {'rules': rules});
+
   void close() => _http.close();
 
   Future<Map<String, Object?>> _get(

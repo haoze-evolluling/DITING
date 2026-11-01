@@ -52,7 +52,9 @@ class DesktopDns64Page extends ConsumerWidget {
             )
           : PageBody(
               children: [
-                if (state.isStale) StaleStatusNotice(onRetry: retry),
+                state.isStale
+                    ? StaleStatusNotice(onRetry: retry)
+                    : const SizedBox.shrink(),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: Center(
