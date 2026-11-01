@@ -1,8 +1,8 @@
 import 'package:diting/desktop/pages/desktop_pages.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
+import 'package:diting/desktop/shell/desktop_shell.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:diting/routes/page.dart';
-import 'package:diting/shell/dock_shell.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -17,7 +17,7 @@ GoRouter createDesktopRouter({String initialLocation = Routes.home}) {
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
-            DockShell(navigationShell: navigationShell),
+            DesktopShell(navigationShell: navigationShell),
         branches: [
           // Driven by [branchOrder] so a path can never drift from the shared information
           // architecture; the guard test compares the two lists.

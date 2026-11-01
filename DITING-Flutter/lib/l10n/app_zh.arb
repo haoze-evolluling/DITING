@@ -5253,5 +5253,68 @@
   "floatingLogOpacity": "面板不透明度",
   "floatingLogSizeTitle": "面板大小",
   "logRetentionOverlayHowTo": "拖动悬浮球或面板标题栏可移动位置；点按一行展开详情，长按复制域名。",
-  "permOverlay": "悬浮窗"
+  "permOverlay": "悬浮窗",
+  "desktopDnsServiceTitle": "DNS 服务",
+  "desktopQueriesTitle": "查询指标",
+  "desktopQueriesTotal": "总查询",
+  "desktopQueriesSuccess": "成功",
+  "desktopQueriesFailed": "失败",
+  "desktopQps": "QPS",
+  "desktopCacheTitle": "缓存",
+  "desktopCacheHits": "命中",
+  "desktopCacheEvictions": "淘汰",
+  "desktopFilterTitle": "规则拦截",
+  "desktopFilterRules": "规则总数",
+  "desktopFilterBlockRate": "拦截率",
+  "desktopTakeoverTitle": "系统 DNS 接管",
+  "desktopTakeoverOn": "已接管",
+  "desktopTakeoverOff": "未接管",
+  "desktopFilterPauseTitle": "暂停拦截",
+  "desktopFilterPaused": "已暂停",
+  "desktopFilterActive": "生效中",
+  "desktopServiceHostTitle": "后台服务",
+  "desktopServiceAutoStart": "开机自启",
+  "desktopServiceNotInstalled": "未安装",
+  "desktopVersion": "版本",
+  "desktopProcessId": "进程",
+  "desktopPerformanceTitle": "性能",
+  "desktopRuntimeTitle": "运行信息",
+  "desktopLanAllowed": "局域网",
+  "desktopListeningOn": "监听",
+  "desktopStartDns": "启动 DNS",
+  "desktopStopDns": "停止 DNS",
+  "desktopStartDnsTitle": "启动 DNS 服务？",
+  "desktopStartDnsMessage": "启动后本机解析与规则过滤随之生效。",
+  "desktopStopDnsTitle": "停止 DNS 服务？",
+  "desktopStopDnsMessage": "停止后本机解析回到系统默认 DNS，接管与规则随之失效。",
+  "desktopBackendOfflineTitle": "连不上本机服务",
+  "desktopBackendOfflineBody": "确认谛听服务正在运行，并监听 {address}。",
+  "@desktopBackendOfflineBody": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopBackendUnauthorizedTitle": "需要访问令牌",
+  "desktopBackendUnauthorizedBody": "本机服务已启用 IPC 令牌，填入令牌后才能读取状态。",
+  "desktopActionFailed": "操作失败：{message}",
+  "@desktopActionFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopLastUpdated": "更新于 {time}",
+  "@desktopLastUpdated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "desktopRetry": "重试",
+  "desktopRecentQueriesTitle": "最近查询",
+  "desktopRecentQueriesEmpty": "还没有查询记录"
 }

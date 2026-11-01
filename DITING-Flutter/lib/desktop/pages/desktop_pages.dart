@@ -6,7 +6,7 @@
 /// placed like Android's own full-page empty states (`AppBarClearance` + `Center`), so a tall
 /// desktop window does not leave the block stranded at the top. Until a branch's data layer lands
 /// (step 4 of `docs/development/flutter-desktop-ui.md`), it states that plainly instead of showing
-/// invented values. Home is not listed here: it already has its Android skeleton (see
+/// invented values. Home is not listed here: it has its own dashboard board (see
 /// `home/desktop_home_page.dart`).
 library;
 

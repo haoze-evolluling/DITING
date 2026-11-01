@@ -3,12 +3,15 @@ import 'package:diting/app/theme/manager.dart';
 import 'package:diting/data/prefs/legacy_prefs_store.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
+import 'package:diting/desktop/data/api/desktop_api_providers.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/state/appearance_providers.dart';
 import 'package:diting/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+
+import 'support/desktop_api_fakes.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +21,17 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(const ProviderScope(child: DesktopApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          desktopPollingEnabledProvider.overrideWithValue(false),
+          desktopApiClientProvider.overrideWithValue(
+            FakeDesktopBackend().client(),
+          ),
+        ],
+        child: const DesktopApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(DesktopHomePage));
@@ -67,7 +80,13 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [legacyPrefsStoreProvider.overrideWithValue(store)],
+        overrides: [
+          legacyPrefsStoreProvider.overrideWithValue(store),
+          desktopPollingEnabledProvider.overrideWithValue(false),
+          desktopApiClientProvider.overrideWithValue(
+            FakeDesktopBackend().client(),
+          ),
+        ],
         child: const DesktopApp(),
       ),
     );

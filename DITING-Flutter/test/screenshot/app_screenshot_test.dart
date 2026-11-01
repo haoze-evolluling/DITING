@@ -13,12 +13,14 @@ import 'package:diting/data/prefs/legacy_prefs_store.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/data/vpn/vpn_bridge.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
+import 'package:diting/desktop/data/api/desktop_api_providers.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:diting/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../support/desktop_api_fakes.dart';
 import '../support/fake_vpn_controller.dart';
 import '../support/test_hooks.dart';
 import 'screenshot_harness.dart';
@@ -35,6 +37,12 @@ void main() {
         overrides: [
           legacyPrefsStoreProvider.overrideWithValue(
             MemoryLegacyPrefsStore({'dns_vpn_prefs': ?settings}),
+          ),
+          // A deterministic backend: the shots must not depend on whether a service happens to be
+          // listening on this machine, and no test may open a socket.
+          desktopPollingEnabledProvider.overrideWithValue(false),
+          desktopApiClientProvider.overrideWithValue(
+            FakeDesktopBackend().client(),
           ),
         ],
         child: DesktopApp(initialLocation: location),

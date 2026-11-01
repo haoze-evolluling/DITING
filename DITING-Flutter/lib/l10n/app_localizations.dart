@@ -16113,6 +16113,258 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'悬浮窗'**
   String get permOverlay;
+
+  /// No description provided for @desktopDnsServiceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 服务'**
+  String get desktopDnsServiceTitle;
+
+  /// No description provided for @desktopQueriesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询指标'**
+  String get desktopQueriesTitle;
+
+  /// No description provided for @desktopQueriesTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'总查询'**
+  String get desktopQueriesTotal;
+
+  /// No description provided for @desktopQueriesSuccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'成功'**
+  String get desktopQueriesSuccess;
+
+  /// No description provided for @desktopQueriesFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'失败'**
+  String get desktopQueriesFailed;
+
+  /// No description provided for @desktopQps.
+  ///
+  /// In zh, this message translates to:
+  /// **'QPS'**
+  String get desktopQps;
+
+  /// No description provided for @desktopCacheTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存'**
+  String get desktopCacheTitle;
+
+  /// No description provided for @desktopCacheHits.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中'**
+  String get desktopCacheHits;
+
+  /// No description provided for @desktopCacheEvictions.
+  ///
+  /// In zh, this message translates to:
+  /// **'淘汰'**
+  String get desktopCacheEvictions;
+
+  /// No description provided for @desktopFilterTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则拦截'**
+  String get desktopFilterTitle;
+
+  /// No description provided for @desktopFilterRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则总数'**
+  String get desktopFilterRules;
+
+  /// No description provided for @desktopFilterBlockRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截率'**
+  String get desktopFilterBlockRate;
+
+  /// No description provided for @desktopTakeoverTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统 DNS 接管'**
+  String get desktopTakeoverTitle;
+
+  /// No description provided for @desktopTakeoverOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已接管'**
+  String get desktopTakeoverOn;
+
+  /// No description provided for @desktopTakeoverOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'未接管'**
+  String get desktopTakeoverOff;
+
+  /// No description provided for @desktopFilterPauseTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停拦截'**
+  String get desktopFilterPauseTitle;
+
+  /// No description provided for @desktopFilterPaused.
+  ///
+  /// In zh, this message translates to:
+  /// **'已暂停'**
+  String get desktopFilterPaused;
+
+  /// No description provided for @desktopFilterActive.
+  ///
+  /// In zh, this message translates to:
+  /// **'生效中'**
+  String get desktopFilterActive;
+
+  /// No description provided for @desktopServiceHostTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'后台服务'**
+  String get desktopServiceHostTitle;
+
+  /// No description provided for @desktopServiceAutoStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'开机自启'**
+  String get desktopServiceAutoStart;
+
+  /// No description provided for @desktopServiceNotInstalled.
+  ///
+  /// In zh, this message translates to:
+  /// **'未安装'**
+  String get desktopServiceNotInstalled;
+
+  /// No description provided for @desktopVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本'**
+  String get desktopVersion;
+
+  /// No description provided for @desktopProcessId.
+  ///
+  /// In zh, this message translates to:
+  /// **'进程'**
+  String get desktopProcessId;
+
+  /// No description provided for @desktopPerformanceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'性能'**
+  String get desktopPerformanceTitle;
+
+  /// No description provided for @desktopRuntimeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'运行信息'**
+  String get desktopRuntimeTitle;
+
+  /// No description provided for @desktopLanAllowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'局域网'**
+  String get desktopLanAllowed;
+
+  /// No description provided for @desktopListeningOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'监听'**
+  String get desktopListeningOn;
+
+  /// No description provided for @desktopStartDns.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动 DNS'**
+  String get desktopStartDns;
+
+  /// No description provided for @desktopStopDns.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止 DNS'**
+  String get desktopStopDns;
+
+  /// No description provided for @desktopStartDnsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动 DNS 服务？'**
+  String get desktopStartDnsTitle;
+
+  /// No description provided for @desktopStartDnsMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动后本机解析与规则过滤随之生效。'**
+  String get desktopStartDnsMessage;
+
+  /// No description provided for @desktopStopDnsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止 DNS 服务？'**
+  String get desktopStopDnsTitle;
+
+  /// No description provided for @desktopStopDnsMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止后本机解析回到系统默认 DNS，接管与规则随之失效。'**
+  String get desktopStopDnsMessage;
+
+  /// No description provided for @desktopBackendOfflineTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'连不上本机服务'**
+  String get desktopBackendOfflineTitle;
+
+  /// No description provided for @desktopBackendOfflineBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认谛听服务正在运行，并监听 {address}。'**
+  String desktopBackendOfflineBody(String address);
+
+  /// No description provided for @desktopBackendUnauthorizedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要访问令牌'**
+  String get desktopBackendUnauthorizedTitle;
+
+  /// No description provided for @desktopBackendUnauthorizedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机服务已启用 IPC 令牌，填入令牌后才能读取状态。'**
+  String get desktopBackendUnauthorizedBody;
+
+  /// No description provided for @desktopActionFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：{message}'**
+  String desktopActionFailed(String message);
+
+  /// No description provided for @desktopLastUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新于 {time}'**
+  String desktopLastUpdated(String time);
+
+  /// No description provided for @desktopRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get desktopRetry;
+
+  /// No description provided for @desktopRecentQueriesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近查询'**
+  String get desktopRecentQueriesTitle;
+
+  /// No description provided for @desktopRecentQueriesEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有查询记录'**
+  String get desktopRecentQueriesEmpty;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

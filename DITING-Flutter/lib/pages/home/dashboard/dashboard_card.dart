@@ -297,6 +297,38 @@ class DashboardMetric extends StatelessWidget {
   }
 }
 
+/// A switch laid out at its track size, not its tap target: a 48-high target would set the height
+/// of every row that holds one. The surrounding card owns the tap.
+class DashboardSwitch extends StatelessWidget {
+  const DashboardSwitch({
+    super.key,
+    required this.value,
+    this.onChanged,
+    this.semanticLabel,
+  });
+
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final String? semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: CommonSwitch.trackWidth,
+      height: CommonSwitch.trackHeight,
+      child: OverflowBox(
+        maxWidth: double.infinity,
+        maxHeight: double.infinity,
+        child: CommonSwitch(
+          value: value,
+          onChanged: onChanged,
+          semanticLabel: semanticLabel,
+        ),
+      ),
+    );
+  }
+}
+
 /// Round icon button for the card's top-right corner. The 24-high title row would squeeze a
 /// default button, so it overflows explicitly.
 class DashboardIconButton extends StatelessWidget {

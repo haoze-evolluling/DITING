@@ -94,6 +94,15 @@ String destinationLocation(BottomBarDestination destination) =>
       BottomBarDestination.settings => Routes.settings,
     };
 
+/// Route to the dock destination that owns it. The sidebar lists every branch, and a branch it
+/// cannot name would be a silent hole, so this throws instead of returning null.
+BottomBarDestination destinationOfBranch(String location) {
+  for (final destination in BottomBarDestination.values) {
+    if (destinationLocation(destination) == location) return destination;
+  }
+  throw StateError('No bottom-bar destination for branch $location');
+}
+
 class _Dock extends StatelessWidget {
   const _Dock({
     required this.destinations,

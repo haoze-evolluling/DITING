@@ -8822,4 +8822,136 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get permOverlay => '悬浮窗';
+
+  @override
+  String get desktopDnsServiceTitle => 'DNS 服务';
+
+  @override
+  String get desktopQueriesTitle => '查询指标';
+
+  @override
+  String get desktopQueriesTotal => '总查询';
+
+  @override
+  String get desktopQueriesSuccess => '成功';
+
+  @override
+  String get desktopQueriesFailed => '失败';
+
+  @override
+  String get desktopQps => 'QPS';
+
+  @override
+  String get desktopCacheTitle => '缓存';
+
+  @override
+  String get desktopCacheHits => '命中';
+
+  @override
+  String get desktopCacheEvictions => '淘汰';
+
+  @override
+  String get desktopFilterTitle => '规则拦截';
+
+  @override
+  String get desktopFilterRules => '规则总数';
+
+  @override
+  String get desktopFilterBlockRate => '拦截率';
+
+  @override
+  String get desktopTakeoverTitle => '系统 DNS 接管';
+
+  @override
+  String get desktopTakeoverOn => '已接管';
+
+  @override
+  String get desktopTakeoverOff => '未接管';
+
+  @override
+  String get desktopFilterPauseTitle => '暂停拦截';
+
+  @override
+  String get desktopFilterPaused => '已暂停';
+
+  @override
+  String get desktopFilterActive => '生效中';
+
+  @override
+  String get desktopServiceHostTitle => '后台服务';
+
+  @override
+  String get desktopServiceAutoStart => '开机自启';
+
+  @override
+  String get desktopServiceNotInstalled => '未安装';
+
+  @override
+  String get desktopVersion => '版本';
+
+  @override
+  String get desktopProcessId => '进程';
+
+  @override
+  String get desktopPerformanceTitle => '性能';
+
+  @override
+  String get desktopRuntimeTitle => '运行信息';
+
+  @override
+  String get desktopLanAllowed => '局域网';
+
+  @override
+  String get desktopListeningOn => '监听';
+
+  @override
+  String get desktopStartDns => '启动 DNS';
+
+  @override
+  String get desktopStopDns => '停止 DNS';
+
+  @override
+  String get desktopStartDnsTitle => '启动 DNS 服务？';
+
+  @override
+  String get desktopStartDnsMessage => '启动后本机解析与规则过滤随之生效。';
+
+  @override
+  String get desktopStopDnsTitle => '停止 DNS 服务？';
+
+  @override
+  String get desktopStopDnsMessage => '停止后本机解析回到系统默认 DNS，接管与规则随之失效。';
+
+  @override
+  String get desktopBackendOfflineTitle => '连不上本机服务';
+
+  @override
+  String desktopBackendOfflineBody(String address) {
+    return '确认谛听服务正在运行，并监听 $address。';
+  }
+
+  @override
+  String get desktopBackendUnauthorizedTitle => '需要访问令牌';
+
+  @override
+  String get desktopBackendUnauthorizedBody => '本机服务已启用 IPC 令牌，填入令牌后才能读取状态。';
+
+  @override
+  String desktopActionFailed(String message) {
+    return '操作失败：$message';
+  }
+
+  @override
+  String desktopLastUpdated(String time) {
+    return '更新于 $time';
+  }
+
+  @override
+  String get desktopRetry => '重试';
+
+  @override
+  String get desktopRecentQueriesTitle => '最近查询';
+
+  @override
+  String get desktopRecentQueriesEmpty => '还没有查询记录';
 }

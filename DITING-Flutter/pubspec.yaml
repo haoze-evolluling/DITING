@@ -37,6 +37,7 @@ dependencies:
 
   # Desktop host persistence; Android reads the same legacy keys through MethodChannel.
   shared_preferences: ^2.5.4
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:

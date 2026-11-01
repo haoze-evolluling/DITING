@@ -41,6 +41,7 @@ export 'metrics.dart';
 export 'models.dart';
 export 'motion.dart';
 export 'navigation_dock.dart';
+export 'sidebar.dart';
 export 'navigator.dart';
 export 'null_status.dart';
 export 'pop_scope.dart';

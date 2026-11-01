@@ -9417,4 +9417,139 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get permOverlay => 'Overlay';
+
+  @override
+  String get desktopDnsServiceTitle => 'DNS service';
+
+  @override
+  String get desktopQueriesTitle => 'Query metrics';
+
+  @override
+  String get desktopQueriesTotal => 'Queries';
+
+  @override
+  String get desktopQueriesSuccess => 'Succeeded';
+
+  @override
+  String get desktopQueriesFailed => 'Failed';
+
+  @override
+  String get desktopQps => 'QPS';
+
+  @override
+  String get desktopCacheTitle => 'Cache';
+
+  @override
+  String get desktopCacheHits => 'Hits';
+
+  @override
+  String get desktopCacheEvictions => 'Evictions';
+
+  @override
+  String get desktopFilterTitle => 'Rule blocking';
+
+  @override
+  String get desktopFilterRules => 'Rules';
+
+  @override
+  String get desktopFilterBlockRate => 'Block rate';
+
+  @override
+  String get desktopTakeoverTitle => 'System DNS takeover';
+
+  @override
+  String get desktopTakeoverOn => 'Taken over';
+
+  @override
+  String get desktopTakeoverOff => 'Not taken over';
+
+  @override
+  String get desktopFilterPauseTitle => 'Pause blocking';
+
+  @override
+  String get desktopFilterPaused => 'Paused';
+
+  @override
+  String get desktopFilterActive => 'Active';
+
+  @override
+  String get desktopServiceHostTitle => 'Host service';
+
+  @override
+  String get desktopServiceAutoStart => 'Auto start';
+
+  @override
+  String get desktopServiceNotInstalled => 'Not installed';
+
+  @override
+  String get desktopVersion => 'Version';
+
+  @override
+  String get desktopProcessId => 'Process';
+
+  @override
+  String get desktopPerformanceTitle => 'Performance';
+
+  @override
+  String get desktopRuntimeTitle => 'Runtime';
+
+  @override
+  String get desktopLanAllowed => 'LAN';
+
+  @override
+  String get desktopListeningOn => 'Listening on';
+
+  @override
+  String get desktopStartDns => 'Start DNS';
+
+  @override
+  String get desktopStopDns => 'Stop DNS';
+
+  @override
+  String get desktopStartDnsTitle => 'Start the DNS service?';
+
+  @override
+  String get desktopStartDnsMessage =>
+      'Resolution and rule filtering take effect once it starts.';
+
+  @override
+  String get desktopStopDnsTitle => 'Stop the DNS service?';
+
+  @override
+  String get desktopStopDnsMessage =>
+      'Resolution falls back to the system DNS and takeover and rules stop applying.';
+
+  @override
+  String get desktopBackendOfflineTitle => 'Cannot reach the local service';
+
+  @override
+  String desktopBackendOfflineBody(String address) {
+    return 'Check that the DITING service is running and listening on $address.';
+  }
+
+  @override
+  String get desktopBackendUnauthorizedTitle => 'Access token required';
+
+  @override
+  String get desktopBackendUnauthorizedBody =>
+      'The local service requires an IPC token before it reports status.';
+
+  @override
+  String desktopActionFailed(String message) {
+    return 'Action failed: $message';
+  }
+
+  @override
+  String desktopLastUpdated(String time) {
+    return 'Updated $time';
+  }
+
+  @override
+  String get desktopRetry => 'Retry';
+
+  @override
+  String get desktopRecentQueriesTitle => 'Recent queries';
+
+  @override
+  String get desktopRecentQueriesEmpty => 'No queries yet';
 }

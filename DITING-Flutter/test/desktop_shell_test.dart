@@ -1,5 +1,6 @@
-// Desktop rebuild guards (docs/development/flutter-desktop-ui.md §8): the shell must be the shared
-// one, the branch table must match Android, and no desktop-only visual language may appear.
+// Desktop rebuild guards (docs/development/flutter-desktop-ui.md §8): the shell is the FlClash
+// sidebar on a wide window and the shared dock on a narrow one, the branch table matches Android,
+// and no desktop-only visual language may appear.
 
 import 'dart:io';
 
@@ -7,16 +8,19 @@ import 'package:diting/app/l10n/l10n.dart';
 import 'package:diting/data/prefs/legacy_prefs_store.dart';
 import 'package:diting/data/prefs/legacy_settings_provider.dart';
 import 'package:diting/desktop/app/desktop_app.dart';
+import 'package:diting/desktop/data/api/desktop_api_providers.dart';
 import 'package:diting/desktop/pages/desktop_pages.dart';
 import 'package:diting/desktop/pages/home/desktop_home_page.dart';
 import 'package:diting/desktop/router.dart';
+import 'package:diting/desktop/shell/desktop_shell.dart';
 import 'package:diting/routes/branches.dart';
 import 'package:diting/ui/ui.dart';
-import 'package:diting/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
+
+import 'support/desktop_api_fakes.dart';
 
 void main() {
   group('骨架守卫', _skeleton);
@@ -29,6 +33,7 @@ Future<void> _pumpDesktop(
   String? initialLocation,
   Size size = const Size(1280, 800),
   Map<String, Map<String, Object?>>? seed,
+  FakeDesktopBackend? backend,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -38,6 +43,10 @@ Future<void> _pumpDesktop(
       overrides: [
         legacyPrefsStoreProvider.overrideWithValue(
           MemoryLegacyPrefsStore(seed),
+        ),
+        desktopPollingEnabledProvider.overrideWithValue(false),
+        desktopApiClientProvider.overrideWithValue(
+          (backend ?? FakeDesktopBackend()).client(),
         ),
       ],
       child: DesktopApp(initialLocation: initialLocation),
@@ -71,8 +80,7 @@ void _skeleton() {
       expect(scaffold.title, isNotNull);
       expect(scaffold.title, isNotEmpty);
       if (location == Routes.home) {
-        // The dashboard scrolls its own card board.
-        expect(find.byType(PageBody), findsOneWidget);
+        // Home renders the board from the service snapshot instead of an empty state.
         expect(find.byType(NullStatus), findsNothing);
       } else {
         // Unwired branches say so instead of inventing values, centered like Android's own
@@ -133,44 +141,75 @@ void _visualLanguage() {
 }
 
 void _responsive() {
+  testWidgets('宽屏是侧栏，不叠浮条也不降级成 NavigationBar', (tester) async {
+    await _pumpDesktop(tester, size: const Size(1280, 800));
+
+    expect(find.byType(DesktopShell), findsOneWidget);
+    expect(find.byType(NavigationSidebar), findsOneWidget);
+    expect(find.byType(NavigationDock), findsNothing);
+    expect(find.byType(NavigationBar), findsNothing);
+    // Nothing floats over the page, so pages reserve only the plain bottom gap.
+    expect(
+      DockInsetScope.of(tester.element(find.byType(CommonScaffold))),
+      DockInsetScope.pageBottomGap,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('窄屏用浮条 NavigationDock，且为内容预留间隙', (tester) async {
     await _pumpDesktop(tester, size: const Size(390, 844));
 
+    expect(find.byType(NavigationSidebar), findsNothing);
     expect(find.byType(NavigationDock), findsOneWidget);
-    expect(find.byType(NavigationBar), findsNothing);
-    final inset = DockInsetScope.of(
-      tester.element(find.byType(PageBody).first),
+    expect(
+      DockInsetScope.of(tester.element(find.byType(CommonScaffold))),
+      greaterThan(DockInsetScope.pageBottomGap),
     );
-    expect(inset, greaterThan(DockInsetScope.pageBottomGap));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('宽屏降级为 NavigationBar，而不是自造侧栏', (tester) async {
+  testWidgets('点击侧栏切换分支，并保持分支表顺序', (tester) async {
     await _pumpDesktop(tester, size: const Size(1280, 800));
-
-    expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.byType(NavigationDock), findsNothing);
-    final inset = DockInsetScope.of(
-      tester.element(find.byType(PageBody).first),
-    );
-    expect(inset, greaterThan(DockInsetScope.pageBottomGap));
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('点击底栏切换分支', (tester) async {
-    await _pumpDesktop(tester, size: const Size(390, 844));
     expect(find.byType(DesktopHomePage), findsOneWidget);
 
-    // The label follows the active locale, so read it from the live context instead of a literal.
-    final hub = tester
-        .element(find.byType(DesktopHomePage))
-        .l10n
-        .bottomBarFeatureHub;
-    await tester.tap(find.text(hub));
+    final l10n = tester.element(find.byType(DesktopHomePage)).l10n;
+    final sidebar = find.byType(NavigationSidebar);
+    final hub = find.descendant(
+      of: sidebar,
+      matching: find.text(l10n.bottomBarFeatureHub),
+    );
+    expect(hub, findsOneWidget);
+
+    await tester.tap(hub);
     await tester.pumpAndSettle();
 
     expect(find.byType(DesktopFeatureHubPage), findsOneWidget);
     expect(find.byType(DesktopHomePage), findsNothing);
+  });
+
+  testWidgets('折叠侧栏后仍可切换分支', (tester) async {
+    await _pumpDesktop(tester, size: const Size(1280, 800));
+    final l10n = tester.element(find.byType(DesktopHomePage)).l10n;
+
+    final collapsedWidth = tester.getSize(find.byType(NavigationSidebar)).width;
+    await tester.tap(find.byTooltip(l10n.uiShowLess));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getSize(find.byType(NavigationSidebar)).width,
+      lessThan(collapsedWidth),
+    );
+    // Collapsed, the labels are clipped away and every row is identified by its tooltip.
+    // Collapsed, only the icons are inside the clip, so the row is hit through its glyph.
+    final rows = find.descendant(
+      of: find.byType(NavigationSidebar),
+      matching: find.byType(AnimatedGlyph),
+    );
+    expect(rows, findsNWidgets(branchOrder.length));
+    await tester.tap(rows.at(branchIndexOf(Routes.logs)));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DesktopLogsPage), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('文字放大后页面不横向溢出', (tester) async {
