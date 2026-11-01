@@ -1,7 +1,7 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 的外观子页（配色方案 + 深浅模式）、服务连接子页（IPC 地址/端口/令牌 + 核心服务与自启只读状态）与局域网控制台子页（远程管理开关/端口/地址/防火墙/管理员凭据）已完成，六个分支全部迁移完成；Wails 切换尚未开始。**
-> Windows 桌面窗口目前仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三列排行 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 的外观子页（配色方案 + 深浅模式）、服务连接子页（IPC 地址/端口/令牌 + 核心服务与自启只读状态）与局域网控制台子页（远程管理开关/端口/地址/防火墙/管理员凭据）已完成，六个分支全部迁移完成；Wails 窗口已改为嵌入 Flutter Web 产物（`Desktop/build_frontend.py`），旧 Vue 源码保留备查但不再参与构建。**
+> Windows 桌面窗口由 Wails 宿主加载 `Desktop/frontend/dist`，该目录现在由 Flutter 桌面入口构建（见第 6 节）；Vue 源码仅作对照。
 
 ## 1. 三层分工（唯一规范）
 
@@ -137,6 +137,7 @@ flutter test test/desktop_app_test.dart test/desktop_shell_test.dart \
   test/desktop_settings_appearance_test.dart \
   test/desktop_settings_service_test.dart \
   test/desktop_settings_lan_web_test.dart \
+  test/desktop_wails_switch_test.dart \
   test/desktop_api_test.dart test/desktop_preferences_test.dart
 
 # 应用自截图（写到 build/screenshots/，不提交）：
@@ -144,14 +145,14 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 ```
 
 - `test/screenshot/` 的桌面用例用 `FakeDesktopBackend` 渲染真实入口，不打开套接字；默认 `flutter test` 跳过。
-- Windows 窗口仍加载 `Desktop/frontend`（Vue 3），`wails.json` 用 `npm install` / `npm run build`，`1280×720` 最小尺寸与 16:9 锁定。
+- Windows 窗口由 Wails 嵌入 `frontend/dist`（`frontend/embed.go` 的 `//go:embed all:dist`）；`wails.json` 的 `frontend:install` 只做 `flutter pub get`、`frontend:build` 调用 `Desktop/build_frontend.py`，脚本先清空 `dist` 再用 `flutter build web -t lib/desktop/main.dart` 写入，避免旧 Vue 产物混入；`1280×720` 最小尺寸与 16:9 锁定不变。
 - `Desktop/build.bat` → `maintenance/core/build_manager.py`，只构建 Vue 前端 + Go 服务/安装包。
 
 ## 7. 剩余顺序
 
 按第 3 节逐分支推进；分支内子页可用 `StatefulShellRoute` 内的嵌套 `GoRoute`。顺序：
 
-1. **Wails 切换**：把 Windows 窗口的加载目标从 `Desktop/frontend`（Vue）换成 Flutter Web 构建产物，并保留 Go 服务与安装包流程（详见第 6 节）。
+1. **无**：六个分支与 Wails 构建切换均已完成；后续为 Windows 实机验证（WebView2 下的 Flutter 渲染、窗口尺寸、安装包）与细节打磨。
 
 ## 8. 验收与守卫
 
@@ -178,6 +179,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 19. **安全隐私（安全搜索与声誉查询）**：安全搜索总开关、服务商勾选与 TTL 都显示服务返回值，服务商开关只提交黑名单、TTL 非法不提交；声誉查询显示查询/拦截/命中率/失败/拦截方式，开关与家长控制各自只提交一个字段，超时/容量/有效期草稿随保存提交且非法值不提交；窄窗不横向溢出。
 20. **加密 DNS**：总开关、三种协议开关与配置端口、实际监听地址、DoH 客户端地址、证书摘要/指纹/剩余天数、DDR 与反向代理状态都显示服务返回值；总开关与各协议开关各自提交一个字段，监听参数由保存按钮整份提交且端口非法不提交，可信来源按行去空行保存；DDR 需确认后才提交，取消不写；签发证书提交 CN/密钥类型/SAN/有效期，导入必须同时给出证书与私钥；证书过期时给出显著告警；窄窗单列不横向溢出。
 21. **客户端分组**：组名、启用状态、成员、拦截方式、仅白名单、组级时间计划与订阅/上游绑定都显示服务返回值；改名/改成员/切换绑定进入同一次保存，无成员分组与不完整窗口不提交，新增与删除分组（删除需确认）都只改草稿，保存后回读；写被拒时说明原因并保留草稿；窄窗单列不横向溢出。
+28. **Wails 构建切换**：`wails.json` 的 `frontend:build` 指向 `python build_frontend.py`、`frontend:install` 只解析依赖且不再有 Vue 开发服务器键；脚本把 `lib/desktop/main.dart` 构建到 `frontend/dist`；Wails 宿主仍 `//go:embed all:dist`。
 27. **局域网控制台**：开关显示仅本地/对外开放，开启提交端口与 `configureFirewall:true` 并显示局域网地址；端口非法不提交、合法则保存；防火墙开关提交 `enable` 并在 `none` 后端时说明无需放行；改密提交旧/新密码、未初始化走 setup，两次不一致不提交；设置分支可进入该子页；窄窗单列不横向溢出。
 26. **服务与连接**：连接卡显示当前 host/port/token，保存写入 `ipc_host`/`ipc_port`/`ipc_token` 并重建客户端，非法端口不写入；测试连接报告可达/不可达；核心服务卡显示安装、运行、状态文本与开机自启，未安装时如实标注；设置分支可进入该子页；窄窗单列不横向溢出。
 25. **外观主题**：设置分支列出外观入口并可进入；九种配色与三种深浅模式都按当前偏好高亮，点选后立即切换（与移动端共用偏好键）；窄窗单列不横向溢出。
