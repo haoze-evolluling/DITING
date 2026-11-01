@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/haoze-evolluling/diting/desktop/frontend"
 	"github.com/haoze-evolluling/diting/desktop/internal/platform"
@@ -14,6 +15,7 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	wailsWindows "github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
 // NewApp 为 Windows 平台构造带有完整原生实现的 App 实例。
@@ -43,6 +45,15 @@ func NewApp() *App {
 	}
 }
 
+// webviewUserDataPath 返回当前用户可写的 WebView2 用户数据目录。
+func webviewUserDataPath() string {
+	base, err := os.UserCacheDir()
+	if err != nil || base == "" {
+		base = os.TempDir()
+	}
+	return filepath.Join(base, "DITING", "WebView2")
+}
+
 // runGUI 启动 Windows 平台 Wails GUI 窗口应用。
 func runGUI(app *App, startMinimized bool) {
 	err := wails.Run(&options.App{
@@ -63,6 +74,12 @@ func runGUI(app *App, startMinimized bool) {
 		},
 		AssetServer: &assetserver.Options{
 			Assets: frontend.Assets,
+		},
+		// WebView2 默认把用户数据目录放在 exe 同级目录：装在 Program Files 时
+		// 免 UAC 的 GUI 无权写入，浏览器进程会直接起不来（8000FFFF / 800700AA）。
+		// 固定到用户缓存目录，既避开权限问题，也避免与其他 WebView2 宿主抢同一份 profile。
+		Windows: &wailsWindows.Options{
+			WebviewUserDataPath: webviewUserDataPath(),
 		},
 		BackgroundColour: &options.RGBA{R: 17, G: 20, B: 24, A: 1},
 		OnStartup: func(ctx context.Context) {
