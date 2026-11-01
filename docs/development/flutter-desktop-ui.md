@@ -1,17 +1,31 @@
 # 谛听桌面端 Flutter UI 说明与重建约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘（含本机 HTTP API 数据接入）已完成；其余五个分支仍是占位，Wails 切换尚未开始**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘（含本机 HTTP API 数据接入）已完成；下一步按移动端页面迁移其余五个分支，Wails 切换尚未开始**
 > Windows 桌面窗口仍由 `Desktop/frontend`（Vue）提供；Flutter 桌面入口可独立构建预览。
 
 ## 1. 目标（已修订）
 
-桌面端**布局沿用 FlClash**（`LearningObjects/FlClash-0.9.2`，同为 GPL-3.0）：宽窗左侧导航栏 + 四列仪表盘网格，窄窗浮条底栏 + 单列卡片。视觉语言与基础组件继续共享 `lib/ui`（该目录本身就是 FlClash `lib/ui` 的移植，保留归属头）。
+桌面端由三层组成，职责不重叠：
 
-- 共享：`lib/ui`、`lib/app/theme`、`lib/l10n` 的 ARB、`lib/routes/branches.dart` 的六分支信息架构。
-- 允许差异：窗口尺寸带来的断点差异（侧栏 / 浮条）、以及桌面独有的页面（`lib/desktop/**`）。
-- 数据：桌面端**只**通过本机 HTTP API（`127.0.0.1:15353`）读写，不引入 Android 原生通道，也不复制 DNS 业务规则。
+| 层 | 来源 | 状态 |
+|---|---|---|
+| UI 框架 | FlClash（`LearningObjects/FlClash-0.9.2`，同为 GPL-3.0） | **已定型**：侧栏壳、浮条底栏、桌面仪表盘栅格、`DashboardCard` 家族。不再从 FlClash 新增移植 |
+| 页面内容 | 谛听移动端 `lib/pages/**` | **迁移中**：信息层级、文案键、卡片与列表结构与移动端一致，只按窗口宽度重排 |
+| 数据 | 本机 HTTP API（`127.0.0.1:15353`） | **进行中**：`lib/desktop/data/api/` 逐分支补齐 |
 
-不再要求"桌面页面与 Android 页面一一对应"：Android 首页是手机形态的单列卡片板，桌面首页是 FlClash 的桌面网格，两者共用同一套卡片组件与配色，但排布各自符合窗口。
+- 框架只回答"怎么摆"：`NavigationSidebar` / `DockShell`、`CommonScaffold`、仪表盘栅格与 `DashboardCard` 家族、`AppShape` / `AppTextStyle` / `AppGlyphs`。
+- 内容只回答"摆什么"：每个页面读移动端同名页面（`FeatureHubPage`、`LogsPage`、`TrafficPage`、`ToolsPage`、`SettingsPage` 及其子页）的分区、字段与文案键。
+- 数据只回答"数值从哪来"：桌面端没有 Android 原生通道与 sqflite，一律走本机 HTTP API。
+
+**从 FlClash 拷贝代码的阶段到此结束，FlClash 的设计语言仍是唯一规范。** 谛听移动端与 FlClash 移动端用的是同一套设计语言（同一份 `lib/ui` 家族：`CommonScaffold`、`DashboardCard`、`NavigationDock`、超椭圆、Glyph 图标、`SurfaceLevel` 分级），所以"按移动端页面迁移"不是换一套视觉规范，而是继续用 FlClash 的设计语言去摆谛听的信息架构：设计规则以 FlClash 为准，页面级实现以 `lib/pages/**` 为蓝本。两者只在两处不同：信息架构（谛听的六个分支与分区）与页面级代码来源（`lib/pages/**` 而非 `FlClash/lib/views/**`）。
+
+### 1.1 迁移一个移动端页面的顺序
+
+1. **读移动端**：`lib/pages/<分支>/**.dart` 与 `lib/state/*_providers.dart`，记下分区顺序、标题与文案键。
+2. **找本机接口**：查 `Desktop/internal/ipc/routes.go` 的路由表，必要时在 `lib/desktop/data/api/` 补模型与客户端方法。接口缺失时页面显示"尚未接入"，不伪造数据。
+3. **选框架容器**：整页用 `CommonScaffold`；列表用 `PageBody` + `DockSpacer`；概览用仪表盘栅格 + `DashboardCard`；设置项用共享的 `SettingTextCard` / 列表行。
+4. **只改排布，不改语义**：同一份 ARB 键、同一套图标与状态色（移动端与 FlClash 同源，照搬即合规）；桌面多出来的宽度用于并列（宽窗两列）而不是新增功能或指标。
+5. **补测试并回写文档**：该分支的 widget 测试（真实模型 + `FakeDesktopBackend`），然后更新本文档第 6、7 节的状态。
 
 ## 2. 已移除的内容与原因
 
@@ -42,6 +56,7 @@
 | 页面骨架 | `CommonScaffold`（浮条顶栏 + 预留 inset），其余分支用 `AppBarClearance` + `NullStatus` | 自造顶栏 + `SingleChildScrollView` 一把梭 |
 | 导航 | 宽窗 `NavigationSidebar`（`lib/ui/sidebar.dart`，移植自 FlClash），窄窗共享 `DockShell`；分支路径与顺序只来自 `lib/routes/branches.dart` | 另立一级页面结构或自管选中状态 |
 | 仪表盘 | FlClash 桌面网格：四列、列宽上限 440、按密度缩放行高、余量给查询列表 | 自造卡片、自选栅格、假数据 |
+| 页面内容 | 以移动端同名页面为蓝本：分区、字段、文案键一致，仅排布随窗口变化 | 自创分区、自加指标、把桌面做成另一套信息架构 |
 | 数据 | 只读/只写本机 HTTP API，失败即明说（离线 / 需令牌 / 过期快照） | 本地推演服务端状态、把未知画成"运行正常" |
 | 作用域 | `AppScopes`（`ViewScope` + `MeasureScope` + `textScaler` 钳制）必须位于 `MaterialApp.builder` | 缺 `ViewScope` 直接使用 `lib/ui` 组件（会命中 assert） |
 
@@ -101,7 +116,14 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 1. **入口与主题（已完成）**：`buildAppTheme` + `AppThemeCache` + `ThemeCrossFade` + `AppScopes` + `AppUiLocalizations.delegate`。
 2. **外壳与导航（已完成）**：宽窗 FlClash 侧栏、窄窗共享浮条；分支路径唯一来源 `lib/routes/branches.dart`。
 3. **首页仪表盘（已完成）**：FlClash 桌面网格 + 共享卡片框架；数据来自本机 HTTP API，含离线/鉴权/过期三种诚实状态。
-4. **其余分支数据接入（未开始）**：按分支逐个接本机 API（日志、流量、工具、设置），替换 `NullStatus` 占位。
+4. **页面内容迁移（进行中）**：按移动端同名页面逐分支替换 `NullStatus` 占位，方法见 1.1。
+   - `hub` ← `lib/pages/hub/feature_hub_page.dart`（分组入口；宽窗可两列）
+   - `logs` ← `lib/pages/logs/logs_page.dart` 与 `log_dashboard_board.dart`（统计卡片 + 查询表）
+   - `traffic` ← `lib/pages/traffic/traffic_page.dart`（筛选 + 明细行）
+   - `tools` ← `lib/pages/tools/tools_page.dart`（DNS / ping / trace / speed 面板）
+   - `settings` ← `lib/pages/settings/settings_page.dart`（分组设置行，外观复用 `lib/pages/appearance`）
+
+   移动端页面本身不改；桌面端只换数据来源（`lib/desktop/data/api/`）与排布。
 5. **外观设置（未开始）**：复用 `lib/pages/appearance` 的组件与预览语义，不另做一套。
 
 ## 8. 验收与守卫
@@ -113,6 +135,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 3. **响应式守卫**：1280 宽出现 `NavigationSidebar` 且无 `NavigationDock`/`NavigationBar`；390 宽出现 `NavigationDock`；侧栏可切换分支、可折叠；放大字号不溢出。
 4. **数据守卫**：卡片显示服务返回的数字（版本、PID、运行时长、计数、命中率、监听地址）；离线/401/过期三种状态各自的文案与重试；电源按钮确认后发出 `/dns/stop`，取消则不发；接管开关发出 `/takeover/enable`。
 5. **解析守卫**：缺字段按零值解析、401 标记为鉴权、错误信封透出 `error`、非 JSON 与连接失败都转成 `DesktopApiException`、令牌随请求发送。
+6. **内容守卫**（迁移分支时逐条补）：桌面页面出现的分区标题与移动端同名页面使用同一批 ARB 键；新增键必须先加进 `app_zh.arb` / `app_en.arb` 再由两端共用。
 
 ## 9. 明确禁止的做法
 
@@ -123,3 +146,4 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --upd
 5. 在页面里硬编码中文文案，或把 `locale` 写死。
 6. 为桌面另立导航信息架构或外观偏好键。
 7. 在 Dart 侧复制 DNS 业务规则，或把未知状态画成"运行正常"。
+8. 再从 `LearningObjects/FlClash-0.9.2` 拷贝页面级代码：设计语言仍以它为准，但页面级蓝本是移动端（两者本就同源）。
