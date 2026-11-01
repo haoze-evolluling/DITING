@@ -11629,4 +11629,263 @@ class AppL10nEn extends AppL10n {
   String desktopServicesScheduleRemoved(String name) {
     return '“$name” is blocked all the time again';
   }
+
+  @override
+  String get desktopHubPrivacy => 'Privacy';
+
+  @override
+  String get desktopHubPrivacyBody =>
+      'Protocol hardening, ECS subnet privacy and the built-in rebinding / hosts defences';
+
+  @override
+  String get desktopPrivacyPageTitle => 'Security and privacy';
+
+  @override
+  String get desktopPrivacyRefresh => 'Reload the privacy config';
+
+  @override
+  String get desktopPrivacyLoadFailed => 'Could not read the privacy config';
+
+  @override
+  String desktopPrivacySaveFailed(String message) {
+    return 'Could not save: $message';
+  }
+
+  @override
+  String get desktopPrivacyProtocolTitle => 'Protocol privacy and leak defence';
+
+  @override
+  String get desktopPrivacyProtocolBody =>
+      'Stops private PTR and single-label leaks, and blocks ECH bypasses and packet-length side channels';
+
+  @override
+  String get desktopPrivacyEdeTitle => 'Extended DNS Errors (EDE)';
+
+  @override
+  String get desktopPrivacyEdeBody =>
+      'Returns RFC 8914 extended error codes and reasons in the OPT record (policy block, rate limit, rebind block or upstream failure).';
+
+  @override
+  String get desktopPrivacyEdeOn => 'EDE diagnostics are on';
+
+  @override
+  String get desktopPrivacyEdeOff => 'EDE diagnostics are off';
+
+  @override
+  String get desktopPrivacyPtrTitle => 'Private reverse PTR leak defence';
+
+  @override
+  String get desktopPrivacyPtrBody =>
+      'Keeps private LAN addresses\' reverse lookups away from public upstreams; an unbound private PTR answers an authoritative NXDOMAIN.';
+
+  @override
+  String get desktopPrivacyPtrOn => 'Private PTR leak defence is on';
+
+  @override
+  String get desktopPrivacyPtrOff => 'Private PTR leak defence is off';
+
+  @override
+  String get desktopPrivacyUnqualifiedTitle => 'Block single-label name leaks';
+
+  @override
+  String get desktopPrivacyUnqualifiedBody =>
+      'Blocks internal single-label lookups without a dot (router, printer) so a typo or missing search domain cannot leak host names to a public resolver.';
+
+  @override
+  String get desktopPrivacyUnqualifiedOn => 'Single-label leak defence is on';
+
+  @override
+  String get desktopPrivacyUnqualifiedOff => 'Single-label leak defence is off';
+
+  @override
+  String get desktopPrivacyEchTitle => 'Strip ECH (encrypted ClientHello)';
+
+  @override
+  String get desktopPrivacyEchBody =>
+      'Removes the ech parameter from upstream HTTPS / SVCB records so a client cannot hide the real name behind TLS 1.3 ECH and bypass local auditing.';
+
+  @override
+  String get desktopPrivacyEchOn => 'ECH stripping is on';
+
+  @override
+  String get desktopPrivacyEchOff => 'ECH stripping is off';
+
+  @override
+  String get desktopPrivacyAnyTitle => 'Minimise ANY queries';
+
+  @override
+  String get desktopPrivacyAnyBody =>
+      'ANY is a favourite of DNS amplification and defeats per-type blocking; with this on the host stops forwarding ANY and answers minimally instead.';
+
+  @override
+  String get desktopPrivacyAnyOn => 'ANY minimisation is on';
+
+  @override
+  String get desktopPrivacyAnyOff => 'ANY minimisation is off';
+
+  @override
+  String get desktopPrivacyAnyModeLabel => 'Answer shape';
+
+  @override
+  String get desktopPrivacyAnyModeNotimp => 'NOTIMP (recommended)';
+
+  @override
+  String get desktopPrivacyAnyModeNotimpBody =>
+      'Says the query is not supported, so a client cannot mistake it for a real answer.';
+
+  @override
+  String get desktopPrivacyAnyModeRfc => 'RFC 8482 minimal answer';
+
+  @override
+  String get desktopPrivacyAnyModeRfcBody =>
+      'Answers NOERROR with one HINFO(\"RFC8482\"); more precise, but the client has to understand the convention.';
+
+  @override
+  String get desktopPrivacyAnyModeSaved => 'The ANY answer shape was saved';
+
+  @override
+  String get desktopPrivacyIpv6Title => 'Filter IPv6 (AAAA) queries';
+
+  @override
+  String get desktopPrivacyIpv6Body =>
+      'Answers every AAAA query with an authoritative NODATA and drops ipv6hint from HTTPS answers, removing dual-stack retry stalls on a weak IPv6 network.';
+
+  @override
+  String get desktopPrivacyIpv6On => 'IPv6 filtering is on';
+
+  @override
+  String get desktopPrivacyIpv6Off => 'IPv6 filtering is off';
+
+  @override
+  String get desktopPrivacyPaddingTitle => 'EDNS0 padding size';
+
+  @override
+  String get desktopPrivacyPaddingBody =>
+      'Pads encrypted DNS to a fixed block to defeat packet-length fingerprinting.';
+
+  @override
+  String desktopPrivacyPaddingValue(int size) {
+    return '$size bytes';
+  }
+
+  @override
+  String get desktopPrivacyPaddingSaved => 'The EDNS0 padding size was saved';
+
+  @override
+  String get desktopPrivacyEcsTitle => 'EDNS Client Subnet (ECS policy)';
+
+  @override
+  String get desktopPrivacyEcsBody =>
+      'ECS carries the client\'s subnet to the recursive resolver for better CDN routing, but unhandled ECS leaks a home or office subnet upstream.';
+
+  @override
+  String get desktopPrivacyEcsOn => 'ECS policy is active';
+
+  @override
+  String get desktopPrivacyEcsOff => 'Policy is off';
+
+  @override
+  String get desktopPrivacyEcsOnMessage => 'The ECS policy is on';
+
+  @override
+  String get desktopPrivacyEcsOffMessage => 'The ECS policy is off';
+
+  @override
+  String get desktopPrivacyEcsStripTitle => 'Strip the real client subnet';
+
+  @override
+  String get desktopPrivacyEcsStripBody =>
+      'Removes the client\'s real egress subnet from forwarded queries, protecting every device behind this resolver.';
+
+  @override
+  String get desktopPrivacyEcsStripOn => 'Client subnet stripping is on';
+
+  @override
+  String get desktopPrivacyEcsStripOff => 'Client subnet stripping is off';
+
+  @override
+  String get desktopPrivacyEcsSubnetLabel => 'Custom subnet (CIDR)';
+
+  @override
+  String get desktopPrivacyEcsSubnetHelper =>
+      'Optional. A public egress subnet keeps CDN routing good; leave empty to stay fully private.';
+
+  @override
+  String get desktopPrivacyEcsSave => 'Save the ECS policy';
+
+  @override
+  String get desktopPrivacyEcsSaved => 'The ECS policy was updated';
+
+  @override
+  String get desktopPrivacyDefenceTitle => 'Built-in defences';
+
+  @override
+  String get desktopPrivacyDefenceBody =>
+      'Rebinding protection and the local hosts resolver';
+
+  @override
+  String get desktopPrivacyRebindTitle => 'DNS rebinding protection';
+
+  @override
+  String get desktopPrivacyRebindBody =>
+      'Stops public names from resolving to private addresses, so a rebinding attack cannot reach LAN devices.';
+
+  @override
+  String get desktopPrivacyRebindOn => 'DNS rebinding protection is on';
+
+  @override
+  String get desktopPrivacyRebindOff => 'DNS rebinding protection is off';
+
+  @override
+  String desktopPrivacyRebindCount(int count) {
+    return '$count allowlisted domains';
+  }
+
+  @override
+  String get desktopPrivacyRebindAllowlist => 'Allowlist';
+
+  @override
+  String get desktopPrivacyRebindDialogTitle => 'Rebinding allowlist';
+
+  @override
+  String get desktopPrivacyRebindDialogBody =>
+      'Names here may resolve to private addresses (192.168.x.x, 10.x.x.x, 127.0.0.1); a leading dot matches a suffix (.lan, .local). One per line.';
+
+  @override
+  String get desktopPrivacyRebindDialogSave => 'Save the allowlist';
+
+  @override
+  String get desktopPrivacyRebindSaved => 'The rebinding allowlist was saved';
+
+  @override
+  String get desktopPrivacyHostsTitle => 'Local hosts resolver';
+
+  @override
+  String get desktopPrivacyHostsBody =>
+      'System and custom hosts entries answer first, without asking upstream.';
+
+  @override
+  String get desktopPrivacyHostsOn => 'The local hosts resolver is on';
+
+  @override
+  String get desktopPrivacyHostsOff => 'The local hosts resolver is off';
+
+  @override
+  String get desktopPrivacyHostsSystem => 'Follow the system hosts file';
+
+  @override
+  String desktopPrivacyHostsTtl(int seconds) {
+    return 'TTL ${seconds}s';
+  }
+
+  @override
+  String get desktopPrivacyHostsSystemOn =>
+      'Now following the system hosts file';
+
+  @override
+  String get desktopPrivacyHostsSystemOff =>
+      'No longer following the system hosts file';
+
+  @override
+  String get desktopHubDeviceSection => 'Devices and privacy';
 }

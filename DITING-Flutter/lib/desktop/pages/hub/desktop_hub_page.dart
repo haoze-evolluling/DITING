@@ -13,6 +13,7 @@ import 'package:diting/desktop/pages/hub/desktop_filter_config_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_lists_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_rules_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_schedule_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_privacy_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_services_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_upstream_page.dart';
@@ -124,6 +125,16 @@ class DesktopFeatureHubPage extends StatelessWidget {
                         title: l10n.desktopHubFilterServices,
                         body: l10n.desktopHubFilterServicesBody,
                         path: DesktopServicesPage.path,
+                      ),
+                    ]),
+                    ListHeader(title: l10n.desktopHubDeviceSection),
+                    generateGroup([
+                      _entry(
+                        context,
+                        glyph: AppGlyphs.lock,
+                        title: l10n.desktopHubPrivacy,
+                        body: l10n.desktopHubPrivacyBody,
+                        path: DesktopPrivacyPage.path,
                       ),
                     ]),
                   ],

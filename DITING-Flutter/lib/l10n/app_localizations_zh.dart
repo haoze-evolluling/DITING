@@ -10934,4 +10934,257 @@ class AppL10nZh extends AppL10n {
   String desktopServicesScheduleRemoved(String name) {
     return '「$name」已恢复为始终拦截';
   }
+
+  @override
+  String get desktopHubPrivacy => '安全隐私';
+
+  @override
+  String get desktopHubPrivacyBody => '协议加固、ECS 子网隐私与内置重绑定 / hosts 防御';
+
+  @override
+  String get desktopPrivacyPageTitle => '安全隐私';
+
+  @override
+  String get desktopPrivacyRefresh => '刷新安全隐私配置';
+
+  @override
+  String get desktopPrivacyLoadFailed => '读不到安全隐私配置';
+
+  @override
+  String desktopPrivacySaveFailed(String message) {
+    return '保存失败：$message';
+  }
+
+  @override
+  String get desktopPrivacyProtocolTitle => '协议隐私与外泄防御';
+
+  @override
+  String get desktopPrivacyProtocolBody =>
+      '阻断局域网私有 PTR 与单标签域名泄露，防御 ECH 加密绕过与报文侧信道嗅探';
+
+  @override
+  String get desktopPrivacyEdeTitle => 'Extended DNS Errors（EDE 错误诊断扩展）';
+
+  @override
+  String get desktopPrivacyEdeBody =>
+      '向支持的客户端在 OPT 报文中透明返回 RFC 8914 扩展错误代码与原因说明（如策略阻断、速率超限、Rebind 拦截或上游解析故障）。';
+
+  @override
+  String get desktopPrivacyEdeOn => 'EDE 错误诊断已开启';
+
+  @override
+  String get desktopPrivacyEdeOff => 'EDE 错误诊断已关闭';
+
+  @override
+  String get desktopPrivacyPtrTitle => '私有反向 PTR 解析防泄露';
+
+  @override
+  String get desktopPrivacyPtrBody =>
+      '阻断局域网私有 IP 的反向域名 PTR 查询向公共上游泄露；命中且未在本地绑定的反查直接返回权威 NXDOMAIN。';
+
+  @override
+  String get desktopPrivacyPtrOn => '私有 PTR 防泄露已开启';
+
+  @override
+  String get desktopPrivacyPtrOff => '私有 PTR 防泄露已关闭';
+
+  @override
+  String get desktopPrivacyUnqualifiedTitle => '阻止无点单标签域名外泄';
+
+  @override
+  String get desktopPrivacyUnqualifiedBody =>
+      '拦截没有顶级域名点分隔的内部单标签请求（如 router、printer），防止拼写错误或搜索域缺失导致内网主机名泄漏至公共递归解析器。';
+
+  @override
+  String get desktopPrivacyUnqualifiedOn => '单标签域名防外泄已开启';
+
+  @override
+  String get desktopPrivacyUnqualifiedOff => '单标签域名防外泄已关闭';
+
+  @override
+  String get desktopPrivacyEchTitle => '剥离 ECH（加密 ClientHello）';
+
+  @override
+  String get desktopPrivacyEchBody =>
+      '从上游 HTTPS / SVCB 资源记录中过滤剥离 ech 参数，防止客户端用 TLS 1.3 ECH 隐藏真实域名而绕过本地审计。';
+
+  @override
+  String get desktopPrivacyEchOn => 'ECH 剥离已开启';
+
+  @override
+  String get desktopPrivacyEchOff => 'ECH 剥离已关闭';
+
+  @override
+  String get desktopPrivacyAnyTitle => 'ANY 查询最小化';
+
+  @override
+  String get desktopPrivacyAnyBody =>
+      'ANY 查询常被用于 DNS 放大攻击，也会让按记录类型下发的拦截失效；开启后本机不再转发 ANY，而是直接给出最小化应答。';
+
+  @override
+  String get desktopPrivacyAnyOn => 'ANY 查询最小化已开启';
+
+  @override
+  String get desktopPrivacyAnyOff => 'ANY 查询最小化已关闭';
+
+  @override
+  String get desktopPrivacyAnyModeLabel => '应答形式';
+
+  @override
+  String get desktopPrivacyAnyModeNotimp => 'NOTIMP（推荐）';
+
+  @override
+  String get desktopPrivacyAnyModeNotimpBody =>
+      '明确回应「不支持该查询」，客户端不会把它误当成一次有效解析。';
+
+  @override
+  String get desktopPrivacyAnyModeRfc => 'RFC 8482 最小应答';
+
+  @override
+  String get desktopPrivacyAnyModeRfcBody =>
+      '返回 NOERROR + 一条 HINFO(\"RFC8482\")，语义更准确，但需要客户端理解这一约定。';
+
+  @override
+  String get desktopPrivacyAnyModeSaved => 'ANY 最小化应答形式已保存';
+
+  @override
+  String get desktopPrivacyIpv6Title => '过滤 IPv6（AAAA）查询';
+
+  @override
+  String get desktopPrivacyIpv6Body =>
+      '对所有 AAAA 查询秒级应答权威 NODATA，并在 HTTPS 查询中过滤 ipv6hint；在 IPv6 不佳的网络里消除双栈重试导致的卡顿。';
+
+  @override
+  String get desktopPrivacyIpv6On => 'IPv6 过滤已开启';
+
+  @override
+  String get desktopPrivacyIpv6Off => 'IPv6 过滤已关闭';
+
+  @override
+  String get desktopPrivacyPaddingTitle => 'EDNS0 报文填充大小';
+
+  @override
+  String get desktopPrivacyPaddingBody => '对加密 DNS 填充至固定块，防范报文长度指纹侧信道分析。';
+
+  @override
+  String desktopPrivacyPaddingValue(int size) {
+    return '$size 字节';
+  }
+
+  @override
+  String get desktopPrivacyPaddingSaved => 'EDNS0 填充大小已保存';
+
+  @override
+  String get desktopPrivacyEcsTitle => 'EDNS Client Subnet（ECS 策略）';
+
+  @override
+  String get desktopPrivacyEcsBody =>
+      'ECS 允许向递归解析器携带客户端所在子网以优化 CDN 调度，但未经处理的原生 ECS 会向上游泄露家庭或企业内网真实网段。';
+
+  @override
+  String get desktopPrivacyEcsOn => 'ECS 策略已生效';
+
+  @override
+  String get desktopPrivacyEcsOff => '策略已停用';
+
+  @override
+  String get desktopPrivacyEcsOnMessage => 'ECS 策略已开启';
+
+  @override
+  String get desktopPrivacyEcsOffMessage => 'ECS 策略已关闭';
+
+  @override
+  String get desktopPrivacyEcsStripTitle => '剥离请求中的真实客户端子网';
+
+  @override
+  String get desktopPrivacyEcsStripBody =>
+      '开启后转发查询时主动抹除客户端发送的真实出口子网信息，保障家庭或内网各设备的网络隐私。';
+
+  @override
+  String get desktopPrivacyEcsStripOn => '真实客户端子网剥离已开启';
+
+  @override
+  String get desktopPrivacyEcsStripOff => '真实客户端子网剥离已关闭';
+
+  @override
+  String get desktopPrivacyEcsSubnetLabel => '自定义转发子网（CIDR）';
+
+  @override
+  String get desktopPrivacyEcsSubnetHelper =>
+      '可选。填写公共出口网段向权威 DNS 伪装位置以保持 CDN 调度，留空则完全保密。';
+
+  @override
+  String get desktopPrivacyEcsSave => '保存 ECS 策略';
+
+  @override
+  String get desktopPrivacyEcsSaved => 'EDNS Client Subnet 客户端子网策略已更新';
+
+  @override
+  String get desktopPrivacyDefenceTitle => '内置安全防御模块';
+
+  @override
+  String get desktopPrivacyDefenceBody => '重绑定防御与本地 Hosts 解析的运行状态与配置';
+
+  @override
+  String get desktopPrivacyRebindTitle => 'DNS 重绑定防御';
+
+  @override
+  String get desktopPrivacyRebindBody =>
+      '阻断外网域名解析为私有 IP，防止攻击者用 DNS 重绑定访问局域网设备。';
+
+  @override
+  String get desktopPrivacyRebindOn => 'DNS 重绑定防御已开启';
+
+  @override
+  String get desktopPrivacyRebindOff => 'DNS 重绑定防御已关闭';
+
+  @override
+  String desktopPrivacyRebindCount(int count) {
+    return '$count 个白名单域名';
+  }
+
+  @override
+  String get desktopPrivacyRebindAllowlist => '白名单设置';
+
+  @override
+  String get desktopPrivacyRebindDialogTitle => 'DNS 重绑定防御白名单域名';
+
+  @override
+  String get desktopPrivacyRebindDialogBody =>
+      '名单内的域名允许解析为局域网私有 IP（如 192.168.x.x、10.x.x.x、127.0.0.1），支持后缀通配（如 .lan、.local）。每行一个。';
+
+  @override
+  String get desktopPrivacyRebindDialogSave => '保存白名单';
+
+  @override
+  String get desktopPrivacyRebindSaved => 'DNS 重绑定防御白名单已保存';
+
+  @override
+  String get desktopPrivacyHostsTitle => '本地 Hosts 解析器';
+
+  @override
+  String get desktopPrivacyHostsBody => '系统与自定义 hosts 映射优先应答，命中后不再向上游查询。';
+
+  @override
+  String get desktopPrivacyHostsOn => '本地 Hosts 解析已开启';
+
+  @override
+  String get desktopPrivacyHostsOff => '本地 Hosts 解析已关闭';
+
+  @override
+  String get desktopPrivacyHostsSystem => '联动系统 hosts 文件';
+
+  @override
+  String desktopPrivacyHostsTtl(int seconds) {
+    return 'TTL ${seconds}s';
+  }
+
+  @override
+  String get desktopPrivacyHostsSystemOn => '已联动系统 hosts';
+
+  @override
+  String get desktopPrivacyHostsSystemOff => '已停止联动系统 hosts';
+
+  @override
+  String get desktopHubDeviceSection => '设备与隐私';
 }

@@ -19923,6 +19923,468 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'「{name}」已恢复为始终拦截'**
   String desktopServicesScheduleRemoved(String name);
+
+  /// No description provided for @desktopHubPrivacy.
+  ///
+  /// In zh, this message translates to:
+  /// **'安全隐私'**
+  String get desktopHubPrivacy;
+
+  /// No description provided for @desktopHubPrivacyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'协议加固、ECS 子网隐私与内置重绑定 / hosts 防御'**
+  String get desktopHubPrivacyBody;
+
+  /// No description provided for @desktopPrivacyPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'安全隐私'**
+  String get desktopPrivacyPageTitle;
+
+  /// No description provided for @desktopPrivacyRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新安全隐私配置'**
+  String get desktopPrivacyRefresh;
+
+  /// No description provided for @desktopPrivacyLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'读不到安全隐私配置'**
+  String get desktopPrivacyLoadFailed;
+
+  /// No description provided for @desktopPrivacySaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存失败：{message}'**
+  String desktopPrivacySaveFailed(String message);
+
+  /// No description provided for @desktopPrivacyProtocolTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'协议隐私与外泄防御'**
+  String get desktopPrivacyProtocolTitle;
+
+  /// No description provided for @desktopPrivacyProtocolBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻断局域网私有 PTR 与单标签域名泄露，防御 ECH 加密绕过与报文侧信道嗅探'**
+  String get desktopPrivacyProtocolBody;
+
+  /// No description provided for @desktopPrivacyEdeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'Extended DNS Errors（EDE 错误诊断扩展）'**
+  String get desktopPrivacyEdeTitle;
+
+  /// No description provided for @desktopPrivacyEdeBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'向支持的客户端在 OPT 报文中透明返回 RFC 8914 扩展错误代码与原因说明（如策略阻断、速率超限、Rebind 拦截或上游解析故障）。'**
+  String get desktopPrivacyEdeBody;
+
+  /// No description provided for @desktopPrivacyEdeOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'EDE 错误诊断已开启'**
+  String get desktopPrivacyEdeOn;
+
+  /// No description provided for @desktopPrivacyEdeOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'EDE 错误诊断已关闭'**
+  String get desktopPrivacyEdeOff;
+
+  /// No description provided for @desktopPrivacyPtrTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'私有反向 PTR 解析防泄露'**
+  String get desktopPrivacyPtrTitle;
+
+  /// No description provided for @desktopPrivacyPtrBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻断局域网私有 IP 的反向域名 PTR 查询向公共上游泄露；命中且未在本地绑定的反查直接返回权威 NXDOMAIN。'**
+  String get desktopPrivacyPtrBody;
+
+  /// No description provided for @desktopPrivacyPtrOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'私有 PTR 防泄露已开启'**
+  String get desktopPrivacyPtrOn;
+
+  /// No description provided for @desktopPrivacyPtrOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'私有 PTR 防泄露已关闭'**
+  String get desktopPrivacyPtrOff;
+
+  /// No description provided for @desktopPrivacyUnqualifiedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻止无点单标签域名外泄'**
+  String get desktopPrivacyUnqualifiedTitle;
+
+  /// No description provided for @desktopPrivacyUnqualifiedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截没有顶级域名点分隔的内部单标签请求（如 router、printer），防止拼写错误或搜索域缺失导致内网主机名泄漏至公共递归解析器。'**
+  String get desktopPrivacyUnqualifiedBody;
+
+  /// No description provided for @desktopPrivacyUnqualifiedOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'单标签域名防外泄已开启'**
+  String get desktopPrivacyUnqualifiedOn;
+
+  /// No description provided for @desktopPrivacyUnqualifiedOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'单标签域名防外泄已关闭'**
+  String get desktopPrivacyUnqualifiedOff;
+
+  /// No description provided for @desktopPrivacyEchTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'剥离 ECH（加密 ClientHello）'**
+  String get desktopPrivacyEchTitle;
+
+  /// No description provided for @desktopPrivacyEchBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'从上游 HTTPS / SVCB 资源记录中过滤剥离 ech 参数，防止客户端用 TLS 1.3 ECH 隐藏真实域名而绕过本地审计。'**
+  String get desktopPrivacyEchBody;
+
+  /// No description provided for @desktopPrivacyEchOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'ECH 剥离已开启'**
+  String get desktopPrivacyEchOn;
+
+  /// No description provided for @desktopPrivacyEchOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'ECH 剥离已关闭'**
+  String get desktopPrivacyEchOff;
+
+  /// No description provided for @desktopPrivacyAnyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'ANY 查询最小化'**
+  String get desktopPrivacyAnyTitle;
+
+  /// No description provided for @desktopPrivacyAnyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'ANY 查询常被用于 DNS 放大攻击，也会让按记录类型下发的拦截失效；开启后本机不再转发 ANY，而是直接给出最小化应答。'**
+  String get desktopPrivacyAnyBody;
+
+  /// No description provided for @desktopPrivacyAnyOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'ANY 查询最小化已开启'**
+  String get desktopPrivacyAnyOn;
+
+  /// No description provided for @desktopPrivacyAnyOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'ANY 查询最小化已关闭'**
+  String get desktopPrivacyAnyOff;
+
+  /// No description provided for @desktopPrivacyAnyModeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'应答形式'**
+  String get desktopPrivacyAnyModeLabel;
+
+  /// No description provided for @desktopPrivacyAnyModeNotimp.
+  ///
+  /// In zh, this message translates to:
+  /// **'NOTIMP（推荐）'**
+  String get desktopPrivacyAnyModeNotimp;
+
+  /// No description provided for @desktopPrivacyAnyModeNotimpBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'明确回应「不支持该查询」，客户端不会把它误当成一次有效解析。'**
+  String get desktopPrivacyAnyModeNotimpBody;
+
+  /// No description provided for @desktopPrivacyAnyModeRfc.
+  ///
+  /// In zh, this message translates to:
+  /// **'RFC 8482 最小应答'**
+  String get desktopPrivacyAnyModeRfc;
+
+  /// No description provided for @desktopPrivacyAnyModeRfcBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'返回 NOERROR + 一条 HINFO(\"RFC8482\")，语义更准确，但需要客户端理解这一约定。'**
+  String get desktopPrivacyAnyModeRfcBody;
+
+  /// No description provided for @desktopPrivacyAnyModeSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'ANY 最小化应答形式已保存'**
+  String get desktopPrivacyAnyModeSaved;
+
+  /// No description provided for @desktopPrivacyIpv6Title.
+  ///
+  /// In zh, this message translates to:
+  /// **'过滤 IPv6（AAAA）查询'**
+  String get desktopPrivacyIpv6Title;
+
+  /// No description provided for @desktopPrivacyIpv6Body.
+  ///
+  /// In zh, this message translates to:
+  /// **'对所有 AAAA 查询秒级应答权威 NODATA，并在 HTTPS 查询中过滤 ipv6hint；在 IPv6 不佳的网络里消除双栈重试导致的卡顿。'**
+  String get desktopPrivacyIpv6Body;
+
+  /// No description provided for @desktopPrivacyIpv6On.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv6 过滤已开启'**
+  String get desktopPrivacyIpv6On;
+
+  /// No description provided for @desktopPrivacyIpv6Off.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv6 过滤已关闭'**
+  String get desktopPrivacyIpv6Off;
+
+  /// No description provided for @desktopPrivacyPaddingTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'EDNS0 报文填充大小'**
+  String get desktopPrivacyPaddingTitle;
+
+  /// No description provided for @desktopPrivacyPaddingBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'对加密 DNS 填充至固定块，防范报文长度指纹侧信道分析。'**
+  String get desktopPrivacyPaddingBody;
+
+  /// No description provided for @desktopPrivacyPaddingValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'{size} 字节'**
+  String desktopPrivacyPaddingValue(int size);
+
+  /// No description provided for @desktopPrivacyPaddingSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'EDNS0 填充大小已保存'**
+  String get desktopPrivacyPaddingSaved;
+
+  /// No description provided for @desktopPrivacyEcsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'EDNS Client Subnet（ECS 策略）'**
+  String get desktopPrivacyEcsTitle;
+
+  /// No description provided for @desktopPrivacyEcsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'ECS 允许向递归解析器携带客户端所在子网以优化 CDN 调度，但未经处理的原生 ECS 会向上游泄露家庭或企业内网真实网段。'**
+  String get desktopPrivacyEcsBody;
+
+  /// No description provided for @desktopPrivacyEcsOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'ECS 策略已生效'**
+  String get desktopPrivacyEcsOn;
+
+  /// No description provided for @desktopPrivacyEcsOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'策略已停用'**
+  String get desktopPrivacyEcsOff;
+
+  /// No description provided for @desktopPrivacyEcsOnMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'ECS 策略已开启'**
+  String get desktopPrivacyEcsOnMessage;
+
+  /// No description provided for @desktopPrivacyEcsOffMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'ECS 策略已关闭'**
+  String get desktopPrivacyEcsOffMessage;
+
+  /// No description provided for @desktopPrivacyEcsStripTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'剥离请求中的真实客户端子网'**
+  String get desktopPrivacyEcsStripTitle;
+
+  /// No description provided for @desktopPrivacyEcsStripBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后转发查询时主动抹除客户端发送的真实出口子网信息，保障家庭或内网各设备的网络隐私。'**
+  String get desktopPrivacyEcsStripBody;
+
+  /// No description provided for @desktopPrivacyEcsStripOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'真实客户端子网剥离已开启'**
+  String get desktopPrivacyEcsStripOn;
+
+  /// No description provided for @desktopPrivacyEcsStripOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'真实客户端子网剥离已关闭'**
+  String get desktopPrivacyEcsStripOff;
+
+  /// No description provided for @desktopPrivacyEcsSubnetLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义转发子网（CIDR）'**
+  String get desktopPrivacyEcsSubnetLabel;
+
+  /// No description provided for @desktopPrivacyEcsSubnetHelper.
+  ///
+  /// In zh, this message translates to:
+  /// **'可选。填写公共出口网段向权威 DNS 伪装位置以保持 CDN 调度，留空则完全保密。'**
+  String get desktopPrivacyEcsSubnetHelper;
+
+  /// No description provided for @desktopPrivacyEcsSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存 ECS 策略'**
+  String get desktopPrivacyEcsSave;
+
+  /// No description provided for @desktopPrivacyEcsSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'EDNS Client Subnet 客户端子网策略已更新'**
+  String get desktopPrivacyEcsSaved;
+
+  /// No description provided for @desktopPrivacyDefenceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'内置安全防御模块'**
+  String get desktopPrivacyDefenceTitle;
+
+  /// No description provided for @desktopPrivacyDefenceBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'重绑定防御与本地 Hosts 解析的运行状态与配置'**
+  String get desktopPrivacyDefenceBody;
+
+  /// No description provided for @desktopPrivacyRebindTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 重绑定防御'**
+  String get desktopPrivacyRebindTitle;
+
+  /// No description provided for @desktopPrivacyRebindBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻断外网域名解析为私有 IP，防止攻击者用 DNS 重绑定访问局域网设备。'**
+  String get desktopPrivacyRebindBody;
+
+  /// No description provided for @desktopPrivacyRebindOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 重绑定防御已开启'**
+  String get desktopPrivacyRebindOn;
+
+  /// No description provided for @desktopPrivacyRebindOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 重绑定防御已关闭'**
+  String get desktopPrivacyRebindOff;
+
+  /// No description provided for @desktopPrivacyRebindCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个白名单域名'**
+  String desktopPrivacyRebindCount(int count);
+
+  /// No description provided for @desktopPrivacyRebindAllowlist.
+  ///
+  /// In zh, this message translates to:
+  /// **'白名单设置'**
+  String get desktopPrivacyRebindAllowlist;
+
+  /// No description provided for @desktopPrivacyRebindDialogTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 重绑定防御白名单域名'**
+  String get desktopPrivacyRebindDialogTitle;
+
+  /// No description provided for @desktopPrivacyRebindDialogBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'名单内的域名允许解析为局域网私有 IP（如 192.168.x.x、10.x.x.x、127.0.0.1），支持后缀通配（如 .lan、.local）。每行一个。'**
+  String get desktopPrivacyRebindDialogBody;
+
+  /// No description provided for @desktopPrivacyRebindDialogSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存白名单'**
+  String get desktopPrivacyRebindDialogSave;
+
+  /// No description provided for @desktopPrivacyRebindSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 重绑定防御白名单已保存'**
+  String get desktopPrivacyRebindSaved;
+
+  /// No description provided for @desktopPrivacyHostsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地 Hosts 解析器'**
+  String get desktopPrivacyHostsTitle;
+
+  /// No description provided for @desktopPrivacyHostsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统与自定义 hosts 映射优先应答，命中后不再向上游查询。'**
+  String get desktopPrivacyHostsBody;
+
+  /// No description provided for @desktopPrivacyHostsOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地 Hosts 解析已开启'**
+  String get desktopPrivacyHostsOn;
+
+  /// No description provided for @desktopPrivacyHostsOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地 Hosts 解析已关闭'**
+  String get desktopPrivacyHostsOff;
+
+  /// No description provided for @desktopPrivacyHostsSystem.
+  ///
+  /// In zh, this message translates to:
+  /// **'联动系统 hosts 文件'**
+  String get desktopPrivacyHostsSystem;
+
+  /// No description provided for @desktopPrivacyHostsTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'TTL {seconds}s'**
+  String desktopPrivacyHostsTtl(int seconds);
+
+  /// No description provided for @desktopPrivacyHostsSystemOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已联动系统 hosts'**
+  String get desktopPrivacyHostsSystemOn;
+
+  /// No description provided for @desktopPrivacyHostsSystemOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已停止联动系统 hosts'**
+  String get desktopPrivacyHostsSystemOff;
+
+  /// No description provided for @desktopHubDeviceSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'设备与隐私'**
+  String get desktopHubDeviceSection;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

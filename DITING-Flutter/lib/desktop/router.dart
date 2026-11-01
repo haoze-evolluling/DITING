@@ -5,6 +5,7 @@ import 'package:diting/desktop/pages/hub/desktop_filter_config_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_lists_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_filter_rules_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_schedule_page.dart';
+import 'package:diting/desktop/pages/hub/desktop_privacy_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_services_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting/desktop/pages/hub/desktop_rewrite_page.dart';
@@ -111,6 +112,11 @@ List<RouteBase> _subRoutesOf(String location) => switch (location) {
       path: 'filter-services',
       pageBuilder: (context, state) =>
           androidDefaultPage(state, const DesktopServicesPage()),
+    ),
+    GoRoute(
+      path: 'privacy',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopPrivacyPage()),
     ),
   ],
   _ => const [],

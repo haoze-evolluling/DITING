@@ -13,6 +13,7 @@ import 'package:diting/desktop/data/api/desktop_cache_models.dart';
 import 'package:diting/desktop/data/api/desktop_dns64_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting/desktop/data/api/desktop_filter_models.dart';
+import 'package:diting/desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting/desktop/data/api/desktop_schedule_models.dart';
 import 'package:diting/desktop/data/api/desktop_services_models.dart';
 import 'package:diting/desktop/data/api/desktop_rewrite_models.dart';
@@ -327,6 +328,45 @@ class DesktopApiClient {
 
   Future<DesktopFilterPause> filterPause() async =>
       DesktopFilterPause.fromJson(await _get('/api/v1/filter/pause'));
+
+  /// The privacy and protocol-hardening fields `/status` carries, in one read.
+  Future<DesktopPrivacyConfig> privacyConfig() async =>
+      DesktopPrivacyConfig.fromJson(await _get('/api/v1/status'));
+
+  Future<void> configurePrivacy(DesktopPrivacyConfig config) =>
+      _post('/api/v1/dns/privacy/configure', body: config.privacyJson());
+
+  Future<void> configureUnqualified(bool enabled) => _post(
+    '/api/v1/dns/unqualified/configure',
+    body: {'blockUnqualified': enabled},
+  );
+
+  Future<void> configureEcs(DesktopPrivacyConfig config) => _post(
+    '/api/v1/dns/ecs/configure',
+    body: {
+      'enabled': config.ecsEnabled,
+      'stripECS': config.ecsStrip,
+      'customSubnet': config.ecsCustomSubnet.trim(),
+    },
+  );
+
+  Future<void> configureRebind(DesktopPrivacyConfig config) => _post(
+    '/api/v1/dns/rebind/configure',
+    body: {
+      'enabled': config.rebindEnabled,
+      'allowedDomains': config.rebindAllowedDomains,
+    },
+  );
+
+  Future<void> configureHosts(DesktopPrivacyConfig config) => _post(
+    '/api/v1/dns/hosts/configure',
+    body: {
+      'enabled': config.hostsEnabled,
+      'useSystemHost': config.hostsUseSystem,
+      'customFiles': config.hostsCustomFiles,
+      'ttl': config.hostsTtl,
+    },
+  );
 
   /// The built-in catalogue plus the current selection and plans.
   Future<DesktopBlockedServices> blockedServices() async =>

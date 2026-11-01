@@ -57,6 +57,22 @@ Map<String, Object?> statusPayload({
   int blockedQueries = 987,
   double blockRate = 0.08,
   bool filterPaused = false,
+  bool enableEDE = true,
+  bool blockPrivatePTR = true,
+  bool blockUnqualified = false,
+  bool blockECH = false,
+  bool blockIPv6 = false,
+  bool blockANY = false,
+  String blockANYMode = 'notimp',
+  int ednsPadding = 128,
+  bool ecsEnabled = true,
+  bool ecsStrip = true,
+  String ecsSubnet = '',
+  bool rebindEnabled = true,
+  List<String> rebindAllowed = const ['localhost', '.lan'],
+  bool hostsEnabled = true,
+  bool hostsUseSystem = true,
+  int hostsTtl = 60,
 }) => {
   'version': version,
   'pid': pid,
@@ -67,6 +83,29 @@ Map<String, Object?> statusPayload({
     'allowLAN': allowLan,
     'lanAddresses': allowLan ? const ['192.168.1.10'] : const <String>[],
     'mode': 'normal',
+    'enableEDE': enableEDE,
+    'blockPrivatePTR': blockPrivatePTR,
+    'blockUnqualified': blockUnqualified,
+    'blockECH': blockECH,
+    'blockIPv6': blockIPv6,
+    'blockANY': blockANY,
+    'blockANYMode': blockANYMode,
+    'ednsPadding': ednsPadding,
+  },
+  'ecs': {
+    'enabled': ecsEnabled,
+    'stripECS': ecsStrip,
+    'customSubnet': ecsSubnet,
+  },
+  'rebind': {
+    'enabled': rebindEnabled,
+    'allowedDomains': rebindAllowed,
+  },
+  'hosts': {
+    'enabled': hostsEnabled,
+    'useSystemHost': hostsUseSystem,
+    'customFiles': const <String>[],
+    'ttl': hostsTtl,
   },
   'takeover': {
     'active': takeover,
@@ -551,6 +590,13 @@ class FakeDesktopBackend {
   /// Bodies of every service-selection save, in order.
   final servicesUpdates = <Map<String, Object?>>[];
 
+  /// Bodies of every privacy-side save, in order.
+  final privacyUpdates = <Map<String, Object?>>[];
+  final unqualifiedUpdates = <Map<String, Object?>>[];
+  final ecsUpdates = <Map<String, Object?>>[];
+  final rebindUpdates = <Map<String, Object?>>[];
+  final hostsUpdates = <Map<String, Object?>>[];
+
   /// Bodies of every rewrite config save, in order.
   final rewriteConfigUpdates = <Map<String, Object?>>[];
 
@@ -694,6 +740,50 @@ class FakeDesktopBackend {
                 item.cast<String, Object?>(),
           ],
         };
+      }
+      if (path == '/api/v1/dns/privacy/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        privacyUpdates.add(body);
+        final dns = {...(status['dns'] as Map? ?? const {})};
+        if (body['blockANY'] != null) dns['blockANY'] = body['blockANY'];
+        if (body['blockANYMode'] != null) {
+          dns['blockANYMode'] = body['blockANYMode'];
+        }
+        if (body['ednsPadding'] != null) {
+          dns['ednsPadding'] = body['ednsPadding'];
+        }
+        for (final key in [
+          'enableEDE',
+          'blockPrivatePTR',
+          'blockIPv6',
+          'blockECH',
+        ]) {
+          if (body[key] != null) dns[key] = body[key];
+        }
+        status = {...status, 'dns': dns};
+      }
+      if (path == '/api/v1/dns/unqualified/configure' &&
+          request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        unqualifiedUpdates.add(body);
+        final dns = {...(status['dns'] as Map? ?? const {})};
+        dns['blockUnqualified'] = body['blockUnqualified'];
+        status = {...status, 'dns': dns};
+      }
+      if (path == '/api/v1/dns/ecs/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        ecsUpdates.add(body);
+        status = {...status, 'ecs': body};
+      }
+      if (path == '/api/v1/dns/rebind/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        rebindUpdates.add(body);
+        status = {...status, 'rebind': body};
+      }
+      if (path == '/api/v1/dns/hosts/configure' && request.method == 'POST') {
+        final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
+        hostsUpdates.add(body);
+        status = {...status, 'hosts': body};
       }
       if (path == '/api/v1/filter/services' && request.method == 'POST') {
         final body = (jsonDecode(request.body) as Map).cast<String, Object?>();
