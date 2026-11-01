@@ -1,12 +1,14 @@
 /// The four desktop branches that are still placeholders.
 ///
 /// They are rebuilt here rather than imported from `lib/pages` because those pages own Android
-/// data sources (native channels, sqflite, VPN providers). What must not be rebuilt is the look:
-/// a [CommonScaffold] with the same localized title as Android, and a [NullStatus] empty state
-/// placed like Android's own full-page empty states (`AppBarClearance` + `Center`), so a tall
-/// desktop window does not leave the block stranded at the top. Until a branch's data layer lands
-/// (step 4 of `docs/development/flutter-desktop-ui.md`), it states that plainly instead of showing
-/// invented values. Home is not listed here: it has its own dashboard board (see
+/// data sources (native channels, sqflite, VPN providers). Their functionality is not invented
+/// either: each branch maps onto the old desktop console's pages (`Desktop/frontend/src`), which
+/// is the functional blueprint. What must not be rebuilt is the look: a [CommonScaffold] with the
+/// same localized title as Android, and a [NullStatus] empty state placed like Android's own
+/// full-page empty states (`AppBarClearance` + `Center`), so a tall desktop window does not leave
+/// the block stranded at the top. Until a branch's data layer lands (step 4 of
+/// `docs/development/flutter-desktop-ui.md`), it states that plainly instead of showing invented
+/// values. Home is not listed here: it has its own dashboard board (see
 /// `home/desktop_home_page.dart`), and logs has its own page (see `logs/desktop_logs_page.dart`).
 library;
 

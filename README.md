@@ -241,7 +241,7 @@ REM 同步桌面端等其余模块（示例）
 
 - [Go AAR 构建记录](docs/development/aar-build-notes.md) — Android `tunnel.aar` 的编译环境、参数与交叉编译细节。
 - [云控贡献者名单维护](docs/development/recognition-members.md) — 名单云控机制、JSON 规范与头像维护。
-- [桌面端 Flutter UI 说明](docs/development/flutter-desktop-ui.md) — UI 框架沿用 FlClash（已定型），页面内容按移动端同名页面迁移，数据走本机 HTTP API。
+- [桌面端 Flutter UI 说明](docs/development/flutter-desktop-ui.md) — UI 与信息架构沿用 FlClash + 移动端，功能与后端实现以旧版桌面端（`Desktop/`）为准。
 
 ---
 

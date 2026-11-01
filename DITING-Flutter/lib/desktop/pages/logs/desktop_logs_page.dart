@@ -1,11 +1,13 @@
 /// The log branch: the service's 24-hour summary over the query log it retained, and that log as
 /// a paged table.
 ///
-/// Android's log page is a card board over sqflite, with each card drilling into a page of its
-/// own. The desktop host has no sqflite and one HTTP log, so the content is the figures the mobile
-/// dashboard already shows (requests, passed, blocked, cache hits, failures, average latency,
-/// cache hit rate) followed by the rows those figures count. Nothing here is derived locally: the
-/// totals come from `/api/v1/querylog/stats` and every row from `/api/v1/querylog/search`.
+/// The functional blueprint is the old desktop console, not Android: `OverviewView`'s query
+/// history and statistics panels (`frontend/src/components/overview/QueryHistoryPanel.vue`,
+/// `QueryStatsPanel.vue`) define what these figures mean and which filters the search takes. The
+/// layout follows the current desktop style instead: a summary card over one wide table. Android's
+/// log board is a card board over sqflite, which this host does not have and does not emulate.
+/// Nothing here is derived locally: the totals come from `/api/v1/querylog/stats` and every row
+/// from `/api/v1/querylog/search`.
 library;
 
 import 'package:diting/app/l10n/l10n.dart';

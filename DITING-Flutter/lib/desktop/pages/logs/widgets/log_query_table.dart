@@ -1,10 +1,11 @@
 /// The query log as a table: search, one status filter, and offset paging, all of it answered by
 /// `/api/v1/querylog/search`.
 ///
-/// Android's request feed scrolls a `ListView` and loads the next page when the end comes into
-/// view. A desktop window shows the same rows as a table with a visible pager, so the reader can
-/// see where they are in a result set the service counts for them (`total`), instead of guessing
-/// from a scroll position.
+/// The search conditions, the status values and the page arithmetic follow the old desktop console
+/// (`frontend/src/components/overview/QueryHistoryPanel.vue`, `frontend/src/api/querylog.ts`). Only
+/// the presentation differs: Android's request feed scrolls a `ListView` and loads more at the end;
+/// a desktop window shows the same rows as a table with a visible pager, so the reader can see
+/// where they are in a result set the service counts for them (`total`).
 library;
 
 import 'dart:async';

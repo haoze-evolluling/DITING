@@ -1,5 +1,6 @@
-/// The 24-hour request summary: the same figures Android's request overview and performance cards
-/// show, read from the service's own aggregate instead of being recounted from a page of rows.
+/// The 24-hour request summary: the figures the old desktop console shows in its statistics panel
+/// (`frontend/src/components/overview/QueryStatsPanel.vue`), read from the service's own aggregate
+/// instead of being recounted from a page of rows.
 library;
 
 import 'package:diting/app/l10n/l10n.dart';
