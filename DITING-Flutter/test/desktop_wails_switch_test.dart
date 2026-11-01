@@ -14,7 +14,8 @@ void main() {
     final file = File('${desktop.path}/wails.json');
     expect(file.existsSync(), isTrue);
     final json = jsonDecode(file.readAsStringSync()) as Map<String, Object?>;
-    expect(json['frontend:build'], 'python build_frontend.py');
+    // Wails runs frontend commands with `Desktop/frontend` as the working directory.
+    expect(json['frontend:build'], 'python ../build_frontend.py');
     expect('${json['frontend:install']}', contains('--deps-only'));
     expect(json.containsKey('frontend:dev:watcher'), isFalse);
   });
