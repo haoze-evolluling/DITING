@@ -36,6 +36,43 @@ def run(command: list[str]) -> None:
     subprocess.run(command, cwd=FLUTTER_DIR, check=True)
 
 
+def resolve_dependencies(flutter: str) -> bool:
+    """解析依赖；网络不可用时允许复用已有的 package_config。"""
+    log(" ".join([flutter, "pub", "get"]))
+    if subprocess.run([flutter, "pub", "get"], cwd=FLUTTER_DIR).returncode == 0:
+        return True
+    package_config = ROOT_DIR / "DITING-Flutter" / ".dart_tool" / "package_config.json"
+    if package_config.exists():
+        log("flutter pub get 失败，但已有依赖解析缓存，继续构建")
+        return True
+    return False
+
+
+def prune_unused_renderers(dist_dir: Path) -> None:
+    """删除 Release 不需要的 CanvasKit 变体与调试符号文件。
+
+    `web/flutter_bootstrap.js` 固定了 `canvasKitBaseUrl: "canvaskit/"` 与
+    `canvasKitVariant: "full"`，因此运行时只会请求 `canvaskit/canvaskit.js` 和
+    `canvaskit/canvaskit.wasm`；chromium/webparagraph/skwasm/wimp 与 .symbols 都不会被加载。
+    """
+    canvaskit = dist_dir / "canvaskit"
+    if not canvaskit.is_dir():
+        return
+    removed = 0
+    for variant in ("chromium", "webparagraph"):
+        variant_dir = canvaskit / variant
+        if variant_dir.is_dir():
+            removed += sum(1 for path in variant_dir.rglob("*") if path.is_file())
+            shutil.rmtree(variant_dir)
+    for pattern in ("skwasm*", "wimp*", "*.symbols", "*.map"):
+        for path in canvaskit.rglob(pattern):
+            if path.is_file():
+                path.unlink()
+                removed += 1
+    if removed:
+        log(f"已移除 {removed} 个未使用的渲染器/调试文件")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -51,7 +88,8 @@ def main() -> int:
     if flutter is None:
         return fail("未找到 flutter 命令，请先安装 Flutter SDK 并加入 PATH")
 
-    run([flutter, "pub", "get"])
+    if not resolve_dependencies(flutter):
+        return fail("flutter pub get 失败，且没有可用的依赖解析缓存")
     if args.deps_only:
         return 0
 
@@ -67,6 +105,7 @@ def main() -> int:
                 "build",
                 "web",
                 "--release",
+                "--no-pub",
                 "-t",
                 ENTRY,
                 "--output",
@@ -79,6 +118,7 @@ def main() -> int:
     index = DIST_DIR / "index.html"
     if not index.exists():
         return fail(f"构建完成但缺少 {index}")
+    prune_unused_renderers(DIST_DIR)
     log(f"Flutter Web 产物已写入 {DIST_DIR}")
     return 0
 

@@ -1,4 +1,6 @@
 Unicode true
+SetCompressor /SOLID lzma
+SetCompressorDictSize 32
 
 ####
 ## 谛听 (DITING) Windows 端整合安装包配置

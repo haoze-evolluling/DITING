@@ -344,7 +344,7 @@ def build_pipeline(
             if os.path.exists(stale_kernel):
                 os.remove(stale_kernel)
                 on_log("info", "已清理 Flutter 调试构建残留的 kernel_blob.bin")
-        flutter_cmd = [tools["flutter"]["cmd"] or "flutter", "build", "windows"]
+        flutter_cmd = [tools["flutter"]["cmd"] or "flutter", "build", "windows", "--no-pub"]
         flutter_cmd.append("--release" if is_rel else "--debug")
         ok = run_cmd_live(flutter_cmd, cwd=flutter_project, on_log=on_log, is_cancelled=is_cancelled)
         if not ok:
