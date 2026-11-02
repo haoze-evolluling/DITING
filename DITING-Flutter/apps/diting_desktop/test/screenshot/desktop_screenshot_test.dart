@@ -53,7 +53,7 @@ void main() {
 
     const window = Size(1280, 800);
 
-    for (final location in branchOrder) {
+    for (final location in desktopBranchOrder) {
       testWidgets('桌面 ${_slug(location)}', (tester) async {
         await captureScreenshot(
           tester,
@@ -91,12 +91,12 @@ void main() {
       );
     }, skip: skip);
 
-    testWidgets('桌面日志窄窗口', (tester) async {
+    testWidgets('桌面关于窄窗口', (tester) async {
       await captureScreenshot(
         tester,
         ScreenshotSpec(
-          name: 'desktop-logs-narrow',
-          app: app(location: '/logs'),
+          name: 'desktop-about-narrow',
+          app: app(location: '/about'),
           size: const Size(390, 844),
           platform: TargetPlatform.windows,
         ),
@@ -169,10 +169,7 @@ void main() {
     const allPages = [
       '/',
       '/hub',
-      '/logs',
-      '/traffic',
-      '/tools',
-      '/settings',
+      '/about',
       '/hub/upstream',
       '/hub/cache',
       '/hub/rewrite',
@@ -184,11 +181,11 @@ void main() {
       '/hub/filter-services',
       '/hub/privacy',
       '/hub/encrypted-dns',
-      '/traffic/groups',
-      '/tools/rule-test',
-      '/settings/appearance',
-      '/settings/service',
-      '/settings/lan-web',
+      '/home/client-groups',
+      '/hub/rule-test',
+      '/hub/appearance',
+      '/hub/service',
+      '/hub/lan-web',
     ];
     for (final location in allPages) {
       for (final (label, size) in [

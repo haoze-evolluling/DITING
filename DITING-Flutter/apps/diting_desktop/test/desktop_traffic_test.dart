@@ -1,4 +1,4 @@
-// Desktop traffic branch, devices half (docs/development/flutter-desktop-ui.md step 4): the
+// Desktop home, device half (docs/development/flutter-desktop-ui.md step 4): the
 // recognised clients plus the ACL and rate limit from `/status`. Every value comes from the
 // service; each write re-reads the state it touched.
 
@@ -9,9 +9,9 @@ import 'package:diting_desktop/app/desktop_app.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_traffic_models.dart';
+import 'package:diting_desktop/pages/home/desktop_home_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/filter_common.dart';
 import 'package:diting_desktop/pages/traffic/desktop_client_groups_page.dart';
-import 'package:diting_desktop/pages/traffic/desktop_traffic_page.dart';
 import 'package:diting_desktop/pages/traffic/widgets/client_access_card.dart';
 import 'package:diting_desktop/pages/traffic/widgets/client_list_card.dart';
 import 'package:diting_desktop/pages/traffic/widgets/client_groups_card.dart';
@@ -43,7 +43,7 @@ void main() {
           desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(fake.client()),
         ],
-        child: const DesktopApp(initialLocation: Routes.traffic),
+        child: const DesktopApp(initialLocation: Routes.home),
       ),
     );
     await tester.pumpAndSettle();
@@ -51,7 +51,7 @@ void main() {
   }
 
   AppL10n l10nOf(WidgetTester tester) =>
-      tester.element(find.byType(DesktopTrafficPage)).l10n;
+      tester.element(find.byType(DesktopHomePage)).l10n;
 
   Finder inClients(Finder matching) =>
       find.descendant(of: find.byType(DesktopClientListCard), matching: matching);

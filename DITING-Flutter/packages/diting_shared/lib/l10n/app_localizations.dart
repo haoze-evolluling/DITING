@@ -21889,7 +21889,7 @@ abstract class AppL10n {
   /// No description provided for @desktopToolsPortIdle.
   ///
   /// In zh, this message translates to:
-  /// **'尚未检测。点右上角或本卡片的检索按钮运行一次端口探测。'**
+  /// **'尚未检测。点本卡片右上角的检索按钮运行一次端口探测。'**
   String get desktopToolsPortIdle;
 
   /// No description provided for @desktopToolsPortOk.
@@ -22149,6 +22149,18 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'设置'**
   String get desktopSettingsSection;
+
+  /// No description provided for @desktopAboutProjectSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'项目与链接'**
+  String get desktopAboutProjectSection;
+
+  /// No description provided for @desktopAboutDisclaimerSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'软件说明与免责声明'**
+  String get desktopAboutDisclaimerSection;
 
   /// No description provided for @desktopSettingsAppearance.
   ///

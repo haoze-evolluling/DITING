@@ -1,4 +1,4 @@
-/// The settings branch's appearance page: the palette and the day/night mode.
+/// The hub's appearance page: the palette and the day/night mode.
 ///
 /// The old desktop console's `AppearancePanel.vue` is the functional blueprint. It writes the same
 /// appearance keys the Android pages write, so a choice made here survives a restart and shows up
@@ -15,7 +15,7 @@ import 'package:material_ui/material_ui.dart';
 class DesktopAppearancePage extends StatelessWidget {
   const DesktopAppearancePage({super.key});
 
-  static const path = '/settings/appearance';
+  static const path = '/hub/appearance';
 
   @override
   Widget build(BuildContext context) {

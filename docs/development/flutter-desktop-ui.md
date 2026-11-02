@@ -1,14 +1,16 @@
 # 谛听桌面端 Flutter UI 说明与迁移约束
 
-> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三张排行卡 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 的外观子页（配色方案 + 深浅模式）、服务连接子页（IPC 地址/端口/令牌 + 核心服务与自启只读状态）与局域网控制台子页（远程管理开关/端口/地址/防火墙/管理员凭据）已完成；Wails 窗口已改为嵌入 Flutter Web 产物（`Desktop/build_frontend.py`），旧 Vue 源码保留备查但不再参与构建。**旧版控制台的全部页面与能力均已迁移：六个分支、`DevicesView` 的「网卡接管」「局域网 DNS」页签、Web 控制台登录页（含背景压缩与改密）、局域网控制台二维码、应急网络恢复；剩余只有 Windows 实机验证（清单见第 7 节）。**
+> 当前状态：**入口/主题、外壳与导航、首页仪表盘、`logs` 整支（24 小时汇总 + 三张排行卡 + 实时查询流 + 查询历史检索 + 留存策略）、`hub` 的上游解析子页（调度模式 + 上游节点 + Bootstrap + 条件分流 + 独立回退链）、解析缓存子页（引擎总控 + 遥测 + 热点排行 + TTL 策略 + 排除规则 + 落盘持久化 + 缓存明细表）、自定义重写子页（引擎开关 + 默认 TTL + 规则检索 + 快捷目标/自定义记录编辑器 + 本地权威区 zone 文件）、DNS64 子页（合成开关 + RFC 6052 前缀列表 + 内置保护说明）、防护组的订阅子页（拦截总览 + 规则库增删改查 + 健康度 + 全部更新）、自定义规则子页（语法速查 + 整表编辑与热重载）、拦截方式子页（总开关 + 三种应答模式 + 阻断地址与更新周期 + 临时暂停 + 高级拦截）、时间计划子页（分时开关 + 窗口编辑 + 生效状态）、应用拦截子页（内置目录 + 检索/分组 + 整组拦截 + 逐服务周计划）、安全隐私子页（协议加固 + ECS + 重绑定/hosts + 强制安全搜索 + 声誉查询/家长控制）与加密 DNS 服务子页（DoT/DoH/DoQ 监听 + 服务端证书 + DDR + 反向代理 + 移动端描述文件）已完成；`traffic` 的设备子页（客户端识别与别名 + ACL + 令牌桶限流）与客户端分组子页（网段分组 + 组级拦截方式/白名单/时间计划 + 订阅与上游绑定）已完成，`traffic` 整支迁移完成（缓存热点与 Top 域名/客户端由既有 `hub` 缓存页与 `logs` 排行页承担，不重复实现）；`tools` 的诊断子页（53 端口探测 + 一键修复）与规则检测子页（域名/记录类型模拟 + 命中规则与重写应答）已完成，`tools` 整支迁移完成（上游连通性探测与区域文件自检已分别在 `hub` 上游页与重写页的编辑器内实现，不重复造页）；`settings` 的外观子页（配色方案 + 深浅模式）、服务连接子页（IPC 地址/端口/令牌 + 核心服务与自启只读状态）与局域网控制台子页（远程管理开关/端口/地址/防火墙/管理员凭据）已完成；Wails 窗口已改为嵌入 Flutter Web 产物（`Desktop/build_frontend.py`），旧 Vue 源码保留备查但不再参与构建。**旧版控制台的全部页面与能力均已迁移：桌面三分支（`desktopBranchOrder`）/ Android 六分支（`branchOrder`）、`DevicesView` 的「网卡接管」「局域网 DNS」页签、Web 控制台登录页（含背景压缩与改密）、局域网控制台二维码、应急网络恢复；剩余只有 Windows 实机验证（清单见第 7 节）。**
 > Windows 桌面窗口由 Wails 宿主加载 `Desktop/frontend/dist`，该目录现在由 Flutter 桌面入口构建（见第 6 节）；Vue 源码仅作对照。
+>
+> **桌面信息架构（2026-11 重构）**：移动端的六个分支在桌面合并为三个——`home` 首页（仪表盘 + 设备与访问控制 + 日志仪表盘）、`hub` 功能中心（解析 / 防护 / 设备 + 设置 + 网络工具箱）、`about` 关于（版本、链接、致谢、免责声明、Web 控制台会话）。合并的理由是桌面窗口的宽度：六个分支把能力摊成六个薄页面，而一个宽窗口能在一屏里放下更多卡片。一级分类只来自 `desktopBranchOrder`；Android 的 `branchOrder` 六分支保持不变，两端仍共用同一批路径。
 
 ## 1. 三层分工（唯一规范）
 
 | 层 | 来源 | 约束 |
 |---|---|---|
 | UI 框架 | FlClash 0.9.2（GPL-3.0） | **已定型**：侧栏/浮条壳、桌面仪表盘栅格、`DashboardCard` 家族、`AppShape` / `AppTextStyle` / `AppGlyphs`。不再新增移植 |
-| 信息架构 | 移动端 `lib/pages/**`（六分支） | 分支路径与顺序只来自 `lib/routes/branches.dart`；分区顺序与文案键沿用移动端同名页面 |
+| 信息架构 | 移动端 `lib/pages/**`（六分支） | 路径只来自 `lib/routes/branches.dart`：Android 一级分支用 `branchOrder`，桌面用 `desktopBranchOrder`；分区顺序与文案键沿用移动端同名页面 |
 | 功能与后端 | 旧版桌面端 `Desktop/` | Vue 页面（`frontend/src/views`、`components`、`api`）与 Go 服务（`internal/ipc`）是功能蓝本：字段含义、状态机、接口、默认值、校验与边界情况一律以它为准 |
 
 判定规则：
@@ -22,14 +24,13 @@
 
 | 分支 | 旧版桌面来源（Vue） | 主要接口 |
 |---|---|---|
-| `home` 首页 | 总览·状态总览（`OverviewPanel`、`OverviewQuickCards`） | `/status`、`/service/status` |
-| `logs` 日志仪表盘 | 总览·实时查询 / 查询历史 / 统计中心（`LiveQueryPanel`、`QueryHistoryPanel`、`QueryStatsPanel`、`QueryLogConfigCard`） | `/querylog/search`、`/querylog/stats`、`/querylog/config` |
-| `hub` 功能中心 | 解析（`UpstreamPanel`、`CachePanel`、`RewritePanel`、`DNS64Panel`）+ 防护（`RulesPanel`、`ServicesPanel`、`SchedulePanel`）+ 设备·网卡接管（`AdaptersPanel`）/ 局域网 DNS（`LanDnsCard`）/ 加密 DNS / 安全隐私 | `/upstream/*`、`/cache/*`、`/dns/rewrite/*`、`/dns/dns64/*`、`/filter/*`、`/adapters`、`/takeover/*`、`/dns/lan*`、`/encrypted/*`、`/dns/privacy/*` |
-| `traffic` 应用流量 | 设备·设备管理（`ClientsPanel` ✅、`ClientGroupsCard` ✅）+ 缓存热点与统计中心 Top 域名/客户端 | `/clients`、`/clients/groups`、`/cache/top`、`/querylog/stats` |
-| `tools` 网络工具 | 系统·诊断与修复（`DiagnosticsPanel`：端口部分 ✅ + 应急网络恢复 ✅）+ 防护·规则检测（`RuleTestPanel` ✅）+ 上游/区域测试（已在上游页/重写页编辑器内实现） | `/portcheck`、`/takeover/emergency-restore`、`/filter/check`、`/upstream/test`、`/dns/zone/test` |
-| `settings` 设置 | 系统·外观主题 / 服务与连接 / 局域网控制台 | `/status`、`/service/status`、`/web/*`、`/auth/*` |
+| `home` 首页 | 总览·状态总览（`OverviewPanel`、`OverviewQuickCards`）+ 总览·实时查询 / 查询历史 / 统计中心（`LiveQueryPanel`、`QueryHistoryPanel`、`QueryStatsPanel`、`QueryLogConfigCard`）+ 设备·设备管理（`ClientsPanel`、`ClientGroupsCard`） | `/status`、`/service/status`、`/querylog/search`、`/querylog/stats`、`/querylog/config`、`/clients`、`/clients/groups` |
+| `hub` 功能中心 | 解析（`UpstreamPanel`、`CachePanel`、`RewritePanel`、`DNS64Panel`）+ 防护（`RulesPanel`、`ServicesPanel`、`SchedulePanel`）+ 设备·网卡接管（`AdaptersPanel`）/ 局域网 DNS（`LanDnsCard`）/ 加密 DNS / 安全隐私 + 系统·外观主题 / 服务与连接 / 局域网控制台 + 系统·诊断与修复（`DiagnosticsPanel`）+ 防护·规则检测（`RuleTestPanel`） | `/upstream/*`、`/cache/*`、`/dns/rewrite/*`、`/dns/dns64/*`、`/filter/*`、`/adapters`、`/takeover/*`、`/dns/lan*`、`/encrypted/*`、`/dns/privacy/*`、`/web/*`、`/auth/*`、`/portcheck`、`/takeover/emergency-restore`、`/filter/check` |
+| `about` 关于 | 无（旧版控制台没有关于页）：版本取自 `/status`，链接 / 致谢 / 免责声明复用共用 ARB 文案 | `/status`、`/auth/*`（Web 控制台会话） |
 
-> 旧版桌面没有按应用流量统计：`traffic` 只用设备与缓存维度，不画「按应用排行」。
+> 旧版桌面没有按应用流量统计：设备与缓存维度只用 `/clients`、`/cache/top`、`/querylog/stats`，不画「按应用排行」。
+>
+> 子页一律挂在所属分支下：`/home/client-groups`、`/hub/appearance`、`/hub/service`、`/hub/lan-web`、`/hub/rule-test`，其余 `hub` 子页路径不变。
 >
 > Web 控制台（浏览器打开 15353）与桌面窗口共用同一份 Flutter 产物；桌面窗口由 Wails 注入 `window.go`，据此判定为桌面模式并走 `127.0.0.1` IPC，浏览器打开时判定为 Web 模式并走同源地址 + 登录会话，见第 5 节的鉴权层。
 
@@ -53,7 +54,7 @@
 | 图标 | `GlyphIcon(AppGlyphs.xxx)` | `Icons.*` |
 | 文案 | ARB + `context.l10n`（先加 `app_zh.arb` / `app_en.arb` 再两端共用） | 页面内硬编码中文/英文、写死 `Locale` |
 | 骨架 | `CommonScaffold`（浮条顶栏）；其余分支 `AppBarClearance` + `NullStatus` | 自造顶栏 + `SingleChildScrollView` 一把梭 |
-| 导航 | 宽窗 `NavigationSidebar`、窄窗共享 `DockShell`，分支只来自 `branches.dart` | 另立一级页面结构或自管选中状态 |
+| 导航 | 宽窗 `NavigationSidebar`、窄窗三项目 `NavigationDock`，分支只来自 `desktopBranchOrder` | 另立一级页面结构或自管选中状态；在桌面复用 Android 的 `DockShell`（它的分支表是六分支） |
 | 瀑布流 | 所有桌面页面统一 `DesktopCardBoard`：内容宽度 <760 单列、≥760 两列瀑布流；每张卡片只占一列；整体内容宽度上限 1280 | 卡片跨两列或占满整行；页面自定 980 等其它断点；自造卡片、假数据；除 `MasonryGrid` 外另造栅格 |
 | 数据 | 只读/只写本机 HTTP API，失败即明说（离线 / 需令牌 / 过期快照） | 本地推演服务端状态、把未知画成「运行正常」 |
 | 作用域 | `AppScopes`（`ViewScope` + `MeasureScope` + `textScaler` 钳制）位于 `MaterialApp.builder` | 缺 `ViewScope` 直接用 `lib/ui` 组件 |
@@ -108,11 +109,11 @@
 
 
 - Android 入口 `lib/main.dart`；桌面预览入口 `apps/diting_desktop/lib/main.dart`，`web/` 仅作 Wails/WebView 编译宿主。
-- 路由 `apps/diting_desktop/lib/router.dart`：`StatefulShellRoute.indexedStack` 六分支；壳为 `apps/diting_desktop/lib/shell/desktop_shell.dart`（宽窗 `NavigationSidebar` + 内容区，窄窗共享 `DockShell`，折叠状态不落盘）。
-- 首页 `apps/diting_desktop/lib/pages/home/`：`desktop_home_page.dart`（三种诚实状态 + 过期提示）、`desktop_dashboard.dart`（内容宽度 ≥760 两列瀑布流、<760 单列）、`widgets/*`（DNS 服务、查询指标、系统接管、暂停拦截、后台服务、缓存、规则拦截、性能、运行信息、最近查询）、`desktop_format.dart`。
+- 路由 `apps/diting_desktop/lib/router.dart`：`StatefulShellRoute.indexedStack` 三分支（`desktopBranchOrder`）；壳为 `apps/diting_desktop/lib/shell/desktop_shell.dart`（宽窗 `NavigationSidebar` + 内容区，窄窗三项目 `NavigationDock`，折叠状态不落盘；`desktopDestinationOf` 是两套布局共用的图标与文案表）。
+- 首页 `apps/diting_desktop/lib/pages/home/`：`desktop_home_page.dart`（三种诚实状态 + 过期提示 + 整页刷新；把仪表盘、设备与日志三组卡片放进**同一个** `DesktopCardBoard`，`_HomeBoard` 只在状态快照到手后才订阅设备与日志 provider）、`desktop_dashboard.dart`（`desktopDashboardCards(status)` 卡片列表 + `StaleStatusNotice`）、`widgets/*`（DNS 服务、查询指标、系统接管、暂停拦截、后台服务、缓存、规则拦截、性能、运行信息、最近查询）、`desktop_format.dart`。
 - 响应式卡片：`apps/diting_desktop/lib/widgets/desktop_card_board.dart`（所有页面共用的 1/2 列容器：内容宽度 <760 单列、≥760 两列；每张卡片只占一列；整体内容宽度上限 1280）与 `masonry_grid.dart`（子项保持内容高度并落进最短列；列宽、间距与命中测试共用）。
-- 日志 `apps/diting_desktop/lib/pages/logs/`：`desktop_logs_page.dart`（汇总 + 三张排行卡 + 实时流 + 查询表 + 留存策略，全部卡片各占一列）、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_rankings_card.dart`（高频域名 / 拦截排行 / 活跃客户端，顺序与截断由服务给定）、`widgets/log_live_panel.dart`（`/events` 实时流：连接状态、暂停/继续、清空、域名/客户端检索、类型与响应码筛选、仅看已拦截、缓冲计数）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史，`LogPicker` 与实时流共用）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`widgets/log_config_card.dart`（留存策略：记录开关、内存缓冲条数、落盘开关与留存天数、客户端信息开关、落盘目录只读）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` + `QueryStatsPanel` + `LiveQueryPanel` + `QueryLogConfigCard`**，`logs` 分支迁移完成。
-- 功能中心 `apps/diting_desktop/lib/pages/hub/`：`desktop_hub_page.dart`（按解析/防护分组的共享列表行，只列已迁移入口）、`desktop_upstream_page.dart`（`/hub/upstream` 子路由，所有卡片按内容高度进入两列瀑布流）、`widgets/upstream_mode_card.dart`、`widgets/upstream_nodes_card.dart`、`widgets/upstream_editor_dialog.dart`（预设 + sdns:// 印章 + 证书指纹校验）、`widgets/bootstrap_card.dart`、`widgets/conditional_routes_card.dart`、`widgets/fallback_chain_card.dart`、`widgets/upstream_common.dart`（协议名、模式文案）。**已覆盖旧版桌面 `UpstreamPanel` + `BootstrapConfigCard` + `ConditionalRoutesCard` + `FallbackUpstreamCard` + `UpstreamEditModal`**，`hub` 的上游子页迁移完成。
+- 日志 `apps/diting_desktop/lib/pages/logs/`：`desktop_logs_section.dart`（`desktopLogCards`：汇总 + 三张排行卡 + 实时流 + 查询表 + 留存策略，由首页摊进它的瀑布流）、`widgets/log_summary_card.dart`（24 小时七项指标）、`widgets/log_rankings_card.dart`（高频域名 / 拦截排行 / 活跃客户端，顺序与截断由服务给定）、`widgets/log_live_panel.dart`（`/events` 实时流：连接状态、暂停/继续、清空、域名/客户端检索、类型与响应码筛选、仅看已拦截、缓冲计数）、`widgets/log_filters.dart`（域名/客户端两个检索框、记录类型与状态两个选择器、清空历史，`LogPicker` 与实时流共用）、`widgets/log_query_table.dart`（250 ms 防抖搜索、offset 翻页、空态区分无记录/筛选为空、读失败重试）、`widgets/log_config_card.dart`（留存策略：记录开关、内存缓冲条数、落盘开关与留存天数、客户端信息开关、落盘目录只读）、`log_format.dart`。**已覆盖旧版桌面 `QueryHistoryPanel` + `QueryStatsPanel` + `LiveQueryPanel` + `QueryLogConfigCard`**，日志仪表盘已并入首页。
+- 功能中心 `apps/diting_desktop/lib/pages/hub/`：`desktop_hub_page.dart`（解析 / 防护 / 设备与网络 / 设置四组共享列表行 + 网络工具箱两张诊断卡与规则检测入口，只列已迁移入口；会话退出登录放在关于页）、`desktop_upstream_page.dart`（`/hub/upstream` 子路由，所有卡片按内容高度进入两列瀑布流）、`widgets/upstream_mode_card.dart`、`widgets/upstream_nodes_card.dart`、`widgets/upstream_editor_dialog.dart`（预设 + sdns:// 印章 + 证书指纹校验）、`widgets/bootstrap_card.dart`、`widgets/conditional_routes_card.dart`、`widgets/fallback_chain_card.dart`、`widgets/upstream_common.dart`（协议名、模式文案）。**已覆盖旧版桌面 `UpstreamPanel` + `BootstrapConfigCard` + `ConditionalRoutesCard` + `FallbackUpstreamCard` + `UpstreamEditModal`**，`hub` 的上游子页迁移完成。
 - 功能中心缓存 `apps/diting_desktop/lib/pages/hub/desktop_cache_page.dart`（`/hub/cache` 子路由，全部卡片（含明细表）按 1/2 列规则进入瀑布流）、`widgets/cache_overview_cards.dart`（引擎总控 + 命中率 + 遥测指标 + 容量条）、`widgets/cache_top_card.dart`（Top 10 热点域名）、`widgets/cache_config_card.dart`（TTL 模式、最长/最短有效期、弱网兜底、极速响应、无效网址记忆、热点预取）、`widgets/cache_persist_card.dart`（落盘开关、间隔、文件路径、失败原因、立即落盘/从文件恢复）、`widgets/cache_exclude_card.dart`（Go RE2 排除正则、三条预设、条数与长度上限）、`widgets/cache_entries_card.dart`（服务端检索 + 四态筛选 + TTL/IP 明细表）、`widgets/cache_common.dart`（模式名、状态徽标、开关行与容量条）。**已覆盖旧版桌面 `CachePanel` + `CacheConfigCard` + `CachePersistCard` + `CacheExcludeCard` + `CacheTopDomains` + `CacheEntriesTable`**，`hub` 的缓存子页迁移完成。
 - 功能中心重写 `apps/diting_desktop/lib/pages/hub/desktop_rewrite_page.dart`（`/hub/rewrite` 子路由）、`widgets/rewrite_engine_card.dart`（引擎开关 + 默认 TTL 即时保存）、`widgets/rewrite_rules_card.dart`（本地检索五列规则表、空态区分无规则/无匹配、行内编辑与删除确认）、`widgets/rewrite_editor_dialog.dart`（快捷目标与自定义记录两种模式、记录类型/取值、应答码覆盖、规则 TTL、服务端同款校验）、`widgets/rewrite_common.dart`（类型徽标文案与配色、TTL 回退）、`widgets/zone_file_card.dart`（本地权威区：引擎开关、默认 TTL、逐区构建状态徽标与失败原因、可展开的 RFC 1035 文本、预演解析、增删与「保存全部」、删除失败回滚、窄窗徽标换行）。**已覆盖旧版桌面 `RewritePanel` + `RewriteEditModal` + `ZoneFileCard`**，`hub` 的重写子页迁移完成。
 - 功能中心 DNS64 `apps/diting_desktop/lib/pages/hub/desktop_dns64_page.dart`（`/hub/dns64` 子路由）、`widgets/dns64_card.dart`（合成开关携带已输入前缀即时保存、前缀多行编辑与「填入标准前缀」、内置排除网段说明、保存按钮与失败提示）。**已覆盖旧版桌面 `DNS64Panel`**，`hub` 的 DNS64 子页迁移完成。
@@ -124,18 +125,19 @@
 - 设备·安全隐私 `apps/diting_desktop/lib/pages/hub/desktop_privacy_page.dart`（`/hub/privacy` 子路由）、`widgets/privacy_protocol_card.dart`（六个协议开关、ANY 应答形式、EDNS 填充选择器）、`widgets/privacy_ecs_card.dart`（ECS 开关、剥离真实子网、自定义子网草稿与保存）、`widgets/privacy_defence_card.dart`（重绑定开关与白名单弹窗、hosts 开关与联动系统 hosts）。**已覆盖旧版桌面 `PrivacyPanel` 的协议隐私、ECS 与内置防御部分**。
 - 安全隐私续 `widgets/privacy_safe_search_card.dart`（总开关、七个服务商勾选、TTL 草稿与保存）、`widgets/privacy_reputation_card.dart`（恶意网址库开关与五项统计、超时/容量/有效期草稿、家长控制独立开关与未启用提示）。**已覆盖旧版桌面 `SafeSearchCard` + `SafeBrowsingCard` + `ParentalControlCard`**，`hub` 的安全隐私子页迁移完成。
 - 设备·加密 DNS `apps/diting_desktop/lib/pages/hub/desktop_encrypted_page.dart`（`/hub/encrypted-dns` 子路由）、`widgets/encrypted_listeners_card.dart`（总开关、三种协议各自的配置端口与实际监听地址、DoH 客户端地址复制/打开、监听参数草稿与非法端口拦截）、`widgets/encrypted_cert_card.dart`（证书摘要与指纹、过期/临期告警、自签签发与 PEM 导入弹窗）、`widgets/encrypted_extras_card.dart`（DDR 确认后开启、反向代理透传与可信来源草稿、移动端描述文件链接）。**已覆盖旧版桌面 `EncryptedDNSPanel` 的监听/证书/DDR/反代/描述文件部分**，`hub` 的加密 DNS 子页迁移完成。
-- 设备 `apps/diting_desktop/lib/pages/traffic/desktop_traffic_page.dart`（`traffic` 分支根页，替代占位页）、`widgets/client_list_card.dart`（客户端块列表、状态徽标、别名弹窗、逐客户端白名单/阻断）、`widgets/client_access_card.dart`（允许/阻断名单草稿、撤销与保存）、`widgets/client_rate_limit_card.dart`（总开关、速率/突发/聚合掩码、豁免清单、非法值不提交）。**已覆盖旧版桌面 `ClientsPanel`**，`traffic` 的客户端管理迁移完成。
-- 客户端分组 `apps/diting_desktop/lib/pages/traffic/desktop_client_groups_page.dart`（`/traffic/groups` 子路由，设备页列表卡右上角进入）、`widgets/client_groups_card.dart`（总开关、稳定行键的分组草稿列表、新增/删除确认、整份保存、无成员分组不提交）、`widgets/client_group_editor.dart`（组名与启用、成员多行编辑、拦截方式选择、仅白名单、组级时间计划复用 `ScheduleEditor`、订阅/上游可切换绑定与继承说明）。**已覆盖旧版桌面 `ClientGroupsCard`**，`traffic` 的客户端分组迁移完成。
-- 诊断 `apps/diting_desktop/lib/pages/tools/desktop_tools_page.dart`（`tools` 分支根页，替代占位页）、`widgets/port_diagnosis_card.dart`（按需探测、诊断文本原样展示、冲突进程块、系统/自身徽标、确认后一键修复）。**已覆盖旧版桌面 `DiagnosticsPanel` 的端口排查与自动修复部分**；其应急网络恢复是原生调用、没有 HTTP 接口，故未实现。
-- 规则检测 `apps/diting_desktop/lib/pages/tools/desktop_rule_check_page.dart`（`/tools/rule-test` 子路由，工具页入口进入；输入卡（域名 + A/AAAA/ANY 选择 + 示例填充）与判定卡各占瀑布流一列，判定卡显示判定徽标、命中规则/来源库/原因、重写应答或权威 NODATA 说明）。**已覆盖旧版桌面 `RuleTestPanel`**，`tools` 的规则检测迁移完成。
-- 设置 `apps/diting_desktop/lib/pages/settings/desktop_settings_page.dart`（`settings` 分支根页，按 hub 同款入口列表）与 `desktop_appearance_page.dart`（`/settings/appearance` 子路由）、`widgets/appearance_theme_card.dart`（九种配色缩略图 + 跟随系统/浅色/深色，直接读写共享的 `paletteProvider` / `themeModeProvider`，与移动端同一组偏好键）。**已覆盖旧版桌面 `AppearancePanel`**，`settings` 的外观迁移完成。
-- 服务与连接 `apps/diting_desktop/lib/pages/settings/desktop_service_page.dart`（`/settings/service` 子路由）、`widgets/service_connection_card.dart`（读写 `ipc_host`/`ipc_port`/`ipc_token`，保存后重建客户端，测试连接走 `/health`，非法端口不写入）、`widgets/core_service_card.dart`（`/service/status` 的安装/运行/状态文本/开机自启只读展示；安装与自启由宿主机托管，与旧版 Web 模式一致）。**已覆盖旧版桌面 `ServicePanel` 的连接与核心服务部分**。
-- 局域网控制台 `apps/diting_desktop/lib/pages/settings/desktop_lan_web_page.dart`（`/settings/lan-web` 子路由）、`widgets/lan_web_card.dart`（开关按 `configureFirewall:true` 提交、局域网地址复制/打开、端口草稿与非法值拦截、防火墙放行开关与 `none` 后端说明、管理员用户名/初始化状态与改密/初始化弹窗）。**已覆盖旧版桌面 `LanWebCard` 的开关、地址、防火墙与凭据部分**（二维码未实现：未引入二维码依赖）。
+- 设备 `apps/diting_desktop/lib/pages/traffic/desktop_traffic_section.dart`（`desktopTrafficCards`：设备卡片列表、ACL 与限流；首屏之前读不到时给一张如实的 `_TrafficUnavailableCard`）、`widgets/client_list_card.dart`（客户端块列表、状态徽标、别名弹窗、逐客户端白名单/阻断）、`widgets/client_access_card.dart`（允许/阻断名单草稿、撤销与保存）、`widgets/client_rate_limit_card.dart`（总开关、速率/突发/聚合掩码、豁免清单、非法值不提交）。**已覆盖旧版桌面 `ClientsPanel`**，设备管理已并入首页。
+- 客户端分组 `apps/diting_desktop/lib/pages/traffic/desktop_client_groups_page.dart`（`/home/client-groups` 子路由，设备卡右上角进入）、`widgets/client_groups_card.dart`（总开关、稳定行键的分组草稿列表、新增/删除确认、整份保存、无成员分组不提交）、`widgets/client_group_editor.dart`（组名与启用、成员多行编辑、拦截方式选择、仅白名单、组级时间计划复用 `ScheduleEditor`、订阅/上游可切换绑定与继承说明）。**已覆盖旧版桌面 `ClientGroupsCard`**，客户端分组迁移完成。
+- 诊断 `apps/diting_desktop/lib/pages/tools/widgets/port_diagnosis_card.dart`（功能中心网络工具箱的一张卡：按需探测、诊断文本原样展示、冲突进程块、系统/自身徽标、确认后一键修复；探测按钮在卡片自己的表头，所以不再需要页面级动作）。**已覆盖旧版桌面 `DiagnosticsPanel` 的端口排查与自动修复部分**。
+- 规则检测 `apps/diting_desktop/lib/pages/tools/desktop_rule_check_page.dart`（`/hub/rule-test` 子路由，功能中心网络工具箱入口进入；输入卡（域名 + A/AAAA/ANY 选择 + 示例填充）与判定卡各占瀑布流一列，判定卡显示判定徽标、命中规则/来源库/原因、重写应答或权威 NODATA 说明）。**已覆盖旧版桌面 `RuleTestPanel`**，规则检测迁移完成。
+- 设置 `apps/diting_desktop/lib/pages/settings/desktop_appearance_page.dart`（`/hub/appearance` 子路由，功能中心「设置」组进入）、`widgets/appearance_theme_card.dart`（九种配色缩略图 + 跟随系统/浅色/深色，直接读写共享的 `paletteProvider` / `themeModeProvider`，与移动端同一组偏好键）。**已覆盖旧版桌面 `AppearancePanel`**，外观迁移完成。
+- 服务与连接 `apps/diting_desktop/lib/pages/settings/desktop_service_page.dart`（`/hub/service` 子路由）、`widgets/service_connection_card.dart`（读写 `ipc_host`/`ipc_port`/`ipc_token`，保存后重建客户端，测试连接走 `/health`，非法端口不写入）、`widgets/core_service_card.dart`（`/service/status` 的安装/运行/状态文本/开机自启只读展示；安装与自启由宿主机托管，与旧版 Web 模式一致）。**已覆盖旧版桌面 `ServicePanel` 的连接与核心服务部分**。
+- 局域网控制台 `apps/diting_desktop/lib/pages/settings/desktop_lan_web_page.dart`（`/hub/lan-web` 子路由）、`widgets/lan_web_card.dart`（开关按 `configureFirewall:true` 提交、局域网地址复制/打开、端口草稿与非法值拦截、防火墙放行开关与 `none` 后端说明、管理员用户名/初始化状态与改密/初始化弹窗）。**已覆盖旧版桌面 `LanWebCard` 的开关、地址、防火墙与凭据部分**（二维码未实现：未引入二维码依赖）。
 - 设备·网卡接管 `apps/diting_desktop/lib/pages/hub/desktop_adapters_page.dart`（`/hub/adapters` 子路由）、`widgets/adapter_card.dart`（逐网卡卡片：连接状态与「保护中」徽标、接管开关、网关与 IP 模式、接管前 DNS 与当前生效 DNS 两栏）。**已覆盖旧版桌面 `network/AdaptersPanel`**。
 - 设备·局域网 DNS `apps/diting_desktop/lib/pages/hub/desktop_lan_dns_page.dart`（`/hub/lan-dns` 子路由）：服务卡（开关 + 监听地址 + 本机局域网地址 + 每地址复制行）、防火墙入站卡（`none` 后端时只说明无需放行）、路由器全局配置与单终端配置两张说明卡；地址复制行抽到 `apps/diting_desktop/lib/widgets/desktop_copy_row.dart`。**已覆盖旧版桌面 `LanDnsCard`**。
 - 诊断页补全 `apps/diting_desktop/lib/pages/tools/widgets/emergency_restore_card.dart`（确认后调 `POST /takeover/emergency-restore`，展示服务端原话；`healed=false` 表示本来就干净，不是「按钮没生效」）。**已覆盖旧版桌面 `DiagnosticsPanel` 的应急恢复区块**，`tools` 整支迁移完成。
 - 局域网控制台卡补上二维码（`_ScanRow` → `widgets/desktop_qr_code.dart`，编码 `webUrls.first`）与「手机同一 Wi-Fi 扫码直达」说明，**已覆盖旧版桌面 `LanWebCard` 的扫码区块**。
 - Web 控制台登录页 `apps/diting_desktop/lib/pages/auth/desktop_login_page.dart` + `widgets/login_background_dialog.dart` + `apps/diting_desktop/lib/widgets/desktop_auth_gate.dart`：`DesktopAuthGate` 位于 `MaterialApp.builder` 内、路由之上——桌面窗口直接放行，浏览器先看会话；未登录时用自带 `Navigator` 承载登录/初始化表单（Tooltip 与背景弹窗都需要 Overlay 与路由）。登录页含自定义背景（图片 + 遮罩暗度 + 毛玻璃 + 上传前 canvas 压缩）、深浅与配色快捷切换、锁定倒计时、明暗主题下的品牌图标，以及「修改管理员密码」（独立卡片 `widgets/login_change_password_card.dart`，成功后回到登录表单）；设置页在 Web 模式下多出「当前会话 → 退出登录」。**已覆盖旧版桌面 `views/LoginView` 的登录/初始化/背景主体与 `App.vue` 的鉴权分支**。
+- 关于 `apps/diting_desktop/lib/pages/about/desktop_about_page.dart`（`about` 分支根页）：身份卡（品牌图标、名称、`/status` 的版本、GPL-3.0 与标语）、项目与链接（仓库 / QQ 群 / 赞助）、开源致谢（FlClash / blockads-android，脚注为致谢正文）、软件说明与免责声明（`agreementMessage` 全文）、会话（仅 Web 控制台：退出登录）。`desktop_about_links.dart` 放链接常量与「打不开就复制」的降级；不调用更新检查，因为桌面窗口没有安装器可接管。
 - `apps/diting_desktop/lib/pages/desktop_pages.dart` 只剩未知路由兜底页：`CommonScaffold` + 居中 `NullStatus`。
 - 外观偏好复用 Android 的容器与键（`SharedPreferencesLegacyPrefsStore`）。
 - 实时流依赖 `web_socket_channel`（`pubspec.yaml` 固定 3.0.3）；Wails/WebView 宿主与 `flutter run -d chrome` 都走浏览器 WebSocket。
@@ -180,7 +182,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/desktop_screenshot_test.dart -
 
 `test/desktop_shell_test.dart`、`test/desktop_home_test.dart`、`test/desktop_logs_test.dart`、`test/desktop_upstream_test.dart`、`test/desktop_cache_test.dart`、`test/desktop_rewrite_test.dart`、`test/desktop_zone_test.dart`、`test/desktop_dns64_test.dart`、`test/desktop_filter_lists_test.dart`、`test/desktop_filter_rules_test.dart`、`test/desktop_filter_config_test.dart`、`test/desktop_schedule_test.dart`、`test/desktop_services_test.dart`、`test/desktop_privacy_test.dart`、`test/desktop_adapters_test.dart`、`test/desktop_lan_dns_test.dart`、`test/desktop_login_test.dart`、`test/desktop_api_test.dart`、`test/desktop_event_client_test.dart` 覆盖：
 
-1. **骨架**：桌面一级路由集合与 `branchOrder` 一致，每分支由 `CommonScaffold` 承载；已接入分支不再出现占位空态。
+1. **骨架**：桌面一级路由集合与 `desktopBranchOrder` 一致（三分支），且 Android 的 `branchOrder` 仍是六分支；每分支由 `CommonScaffold` 承载，不再出现占位空态。
 2. **视觉语言**：源码扫描 `apps/diting_desktop/lib`，不得出现 `Icons.`、`BorderRadius.circular(`、`ColorScheme.fromSeed`、`ThemeData(`、`fontSize:`、`Colors.`、硬编码中文。
 3. **响应式**：1280 宽出现 `NavigationSidebar` 且无 `NavigationDock`/`NavigationBar`；390 宽出现 `NavigationDock`；侧栏可切换、可折叠；放大字号不溢出。
 4. **数据**：卡片/表格显示服务返回的数字；离线、401、过期三种状态各自的文案与重试；写操作发出正确请求。
@@ -221,7 +223,7 @@ DITING_SCREENSHOTS=1 flutter test test/screenshot/desktop_screenshot_test.dart -
 
 1. 为桌面单独写 `ThemeData`，或在 `apps/diting_desktop/lib` 内自造卡片、状态标签、指标块、按钮等基础组件。
 2. 用 `BorderRadius.circular`、`Icons.*`、硬编码中文、写死 `locale`、`fontSize:`、`Colors.*` 绕过设计系统。
-3. 为桌面另立导航信息架构或外观偏好键。
+3. 为桌面另立导航信息架构（桌面分组只写在 `desktopBranchOrder`，路径仍来自 `Routes`）或外观偏好键。
 4. 在 Dart 侧复制 Go 的 DNS 业务规则，或把未知状态画成「运行正常」。
 5. 照搬移动端的原生通道、sqflite、Android 启动流程。
 6. 后端缺接口时用本地推演补数——应先在 `Desktop/internal` 补 Go 接口。

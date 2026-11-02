@@ -12749,7 +12749,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopToolsPortIdle =>
-      'Not checked yet. Use the search button in the corner or on this card to run one probe.';
+      'Not checked yet. Use the search button in this card to run one probe.';
 
   @override
   String get desktopToolsPortOk => 'The port is available';
@@ -12902,6 +12902,12 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopSettingsSection => 'Settings';
+
+  @override
+  String get desktopAboutProjectSection => 'Project and links';
+
+  @override
+  String get desktopAboutDisclaimerSection => 'About the app and disclaimer';
 
   @override
   String get desktopSettingsAppearance => 'Appearance';

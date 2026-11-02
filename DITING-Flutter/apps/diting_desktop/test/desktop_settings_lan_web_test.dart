@@ -9,7 +9,7 @@ import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_web_models.dart';
 import 'package:diting_desktop/pages/settings/desktop_lan_web_page.dart';
-import 'package:diting_desktop/pages/settings/desktop_settings_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/settings/widgets/lan_web_card.dart';
 import 'package:diting_desktop/widgets/desktop_qr_code.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
@@ -299,11 +299,11 @@ void main() {
           desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(fake.client()),
         ],
-        child: const DesktopApp(initialLocation: Routes.settings),
+        child: const DesktopApp(initialLocation: Routes.hub),
       ),
     );
     await tester.pumpAndSettle();
-    final l10n = tester.element(find.byType(DesktopSettingsPage)).l10n;
+    final l10n = tester.element(find.byType(DesktopFeatureHubPage)).l10n;
 
     await tapAt(tester, find.text(l10n.desktopLanWebPageTitle));
     expect(find.byType(DesktopLanWebPage), findsOneWidget);

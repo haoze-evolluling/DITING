@@ -8,7 +8,7 @@ import 'package:diting_desktop/app/desktop_app.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/settings/desktop_appearance_page.dart';
-import 'package:diting_desktop/pages/settings/desktop_settings_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/settings/widgets/appearance_theme_card.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -47,10 +47,10 @@ void main() {
       tester.element(find.byType(CommonScaffold).first).l10n;
 
   testWidgets('设置分支列出外观入口并可进入', (tester) async {
-    await pumpSettings(tester, location: Routes.settings);
+    await pumpSettings(tester, location: Routes.hub);
     final l10n = l10nOf(tester);
 
-    expect(find.byType(DesktopSettingsPage), findsOneWidget);
+    expect(find.byType(DesktopFeatureHubPage), findsOneWidget);
     expect(find.text(l10n.desktopSettingsAppearance), findsOneWidget);
 
     await tester.tap(find.text(l10n.desktopSettingsAppearance));

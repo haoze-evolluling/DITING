@@ -1,6 +1,6 @@
 // Desktop rebuild guards (docs/development/flutter-desktop-ui.md §8): the shell is the FlClash
-// sidebar on a wide window and the shared dock on a narrow one, the branch table matches Android,
-// and no desktop-only visual language may appear.
+// sidebar on a wide window and a three-item dock on a narrow one, the branch table is the desktop's
+// own three branches, and no desktop-only visual language may appear.
 
 import 'dart:io';
 
@@ -10,13 +10,10 @@ import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_desktop/app/desktop_app.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
+import 'package:diting_desktop/pages/about/desktop_about_page.dart';
 import 'package:diting_desktop/pages/desktop_pages.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
-import 'package:diting_desktop/pages/logs/desktop_logs_page.dart';
-import 'package:diting_desktop/pages/settings/desktop_settings_page.dart';
-import 'package:diting_desktop/pages/tools/desktop_tools_page.dart';
-import 'package:diting_desktop/pages/traffic/desktop_traffic_page.dart';
 import 'package:diting_desktop/router.dart';
 import 'package:diting_desktop/shell/desktop_shell.dart';
 import 'package:diting_shared/routes/branches.dart';
@@ -63,7 +60,7 @@ Future<void> _pumpDesktop(
 }
 
 void _skeleton() {
-  test('桌面分支路径与顺序和 Android 分支表一致', () {
+  test('桌面分支路径与顺序来自桌面分支表，Android 的六分支不受影响', () {
     final shell = createDesktopRouter().configuration.routes
         .whereType<StatefulShellRoute>()
         .single;
@@ -71,11 +68,13 @@ void _skeleton() {
       for (final branch in shell.branches)
         (branch.routes.single as GoRoute).path,
     ];
-    expect(paths, branchOrder);
+    expect(paths, desktopBranchOrder);
+    expect(desktopBranchOrder, hasLength(3));
+    // The merged desktop grouping must not shrink the Android tab bar.
     expect(branchOrder, hasLength(6));
   });
 
-  for (final location in branchOrder) {
+  for (final location in desktopBranchOrder) {
     testWidgets('分支 $location 由 CommonScaffold 承载并说明状态', (tester) async {
       await _pumpDesktop(tester, initialLocation: location);
 
@@ -86,36 +85,15 @@ void _skeleton() {
       );
       expect(scaffold.title, isNotNull);
       expect(scaffold.title, isNotEmpty);
-      if (location == Routes.home) {
-        // Home renders the board from the service snapshot instead of an empty state.
-        expect(find.byType(NullStatus), findsNothing);
-      } else if (location == Routes.hub) {
-        // The hub is a real feature list now; its resolution section opens the upstream page.
-        expect(find.byType(DesktopFeatureHubPage), findsOneWidget);
-        expect(find.byType(AppBarClearance), findsNothing);
-      } else if (location == Routes.settings) {
-        // Settings is a real entry list now; its rows open the desktop sub-pages.
-        expect(find.byType(DesktopSettingsPage), findsOneWidget);
-        expect(find.byType(AppBarClearance), findsNothing);
-      } else if (location == Routes.tools) {
-        // The tools page runs the port probe on demand; no pending empty state.
-        expect(find.byType(DesktopToolsPage), findsOneWidget);
-        expect(find.byType(AppBarClearance), findsNothing);
-      } else if (location == Routes.traffic) {
-        // The device page is wired to `/clients` and `/status`; no pending empty state.
-        expect(find.byType(DesktopTrafficPage), findsOneWidget);
-        expect(find.byType(AppBarClearance), findsNothing);
-      } else if (location == Routes.logs) {
-        // Logs is wired to the service's log API: summary figures and the query table, with no
-        // full-page pending state left behind.
-        expect(find.byType(DesktopLogsPage), findsOneWidget);
-        expect(find.byType(AppBarClearance), findsNothing);
-      } else {
-        // Unwired branches say so instead of inventing values, centered like Android's own
-        // full-page empty states.
-        expect(find.byType(NullStatus), findsOneWidget);
-        expect(find.byType(AppBarClearance), findsOneWidget);
-      }
+      final expected = switch (location) {
+        Routes.home => DesktopHomePage,
+        Routes.hub => DesktopFeatureHubPage,
+        Routes.about => DesktopAboutPage,
+        _ => throw StateError('No desktop page for branch $location'),
+      };
+      // Every branch is wired to a real page: no placeholder empty state is left behind.
+      expect(find.byType(expected), findsOneWidget);
+      expect(find.byType(AppBarClearance), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }
@@ -232,11 +210,11 @@ void _responsive() {
       of: find.byType(NavigationSidebar),
       matching: find.byType(AnimatedGlyph),
     );
-    expect(rows, findsNWidgets(branchOrder.length));
-    await tester.tap(rows.at(branchIndexOf(Routes.logs)));
+    expect(rows, findsNWidgets(desktopBranchOrder.length));
+    await tester.tap(rows.at(desktopBranchOrder.indexOf(Routes.about)));
     await tester.pumpAndSettle();
 
-    expect(find.byType(DesktopLogsPage), findsOneWidget);
+    expect(find.byType(DesktopAboutPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

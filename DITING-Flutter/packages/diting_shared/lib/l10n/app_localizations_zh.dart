@@ -12003,7 +12003,7 @@ class AppL10nZh extends AppL10n {
       '排查 53 端口被 ICS 共享或 systemd-resolved stub 占用导致无法启动的问题';
 
   @override
-  String get desktopToolsPortIdle => '尚未检测。点右上角或本卡片的检索按钮运行一次端口探测。';
+  String get desktopToolsPortIdle => '尚未检测。点本卡片右上角的检索按钮运行一次端口探测。';
 
   @override
   String get desktopToolsPortOk => '端口正常可用';
@@ -12149,6 +12149,12 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopSettingsSection => '设置';
+
+  @override
+  String get desktopAboutProjectSection => '项目与链接';
+
+  @override
+  String get desktopAboutDisclaimerSection => '软件说明与免责声明';
 
   @override
   String get desktopSettingsAppearance => '外观主题';

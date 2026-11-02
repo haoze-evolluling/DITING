@@ -40,7 +40,7 @@ String desktopRcodeName(int rcode) => switch (rcode) {
 class DesktopRuleCheckPage extends ConsumerStatefulWidget {
   const DesktopRuleCheckPage({super.key});
 
-  static const path = '/tools/rule-test';
+  static const path = '/hub/rule-test';
 
   @override
   ConsumerState<DesktopRuleCheckPage> createState() =>

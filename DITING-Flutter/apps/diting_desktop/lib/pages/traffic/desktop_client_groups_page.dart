@@ -1,9 +1,9 @@
-/// The `traffic` branch's client-group page: one card that edits the whole `/clients/groups`
+/// The home branch's client-group page: one card that edits the whole `/clients/groups`
 /// document and saves it in one request.
 ///
 /// The old desktop console's `ClientGroupsCard.vue` is the functional blueprint. It is a sub-page
-/// (`/traffic/groups`) rather than a second card on the device page, because the editor is long and
-/// the device page stays about who is connected.
+/// (`/home/client-groups`) rather than a second card on the home board, because the editor is long
+/// and the device cards stay about who is connected.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -20,7 +20,7 @@ import 'package:material_ui/material_ui.dart';
 class DesktopClientGroupsPage extends ConsumerWidget {
   const DesktopClientGroupsPage({super.key});
 
-  static const path = '/traffic/groups';
+  static const path = '/home/client-groups';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

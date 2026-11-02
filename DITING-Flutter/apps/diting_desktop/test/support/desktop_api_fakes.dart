@@ -1092,6 +1092,10 @@ class FakeDesktopBackend {
   /// Applied to every answer, so a 401 test does not need a different fake.
   int statusCode;
 
+  /// Paths that answer with an error while the rest of the service stays healthy. The home page
+  /// now reads the log API next to `/status`, so a log-only outage needs its own switch.
+  final failingPaths = <String>{};
+
   /// When set, every POST is refused while reads keep working: a write the service rejected must
   /// be reported, not assumed.
   bool rejectWrites = false;
@@ -1612,6 +1616,12 @@ class FakeDesktopBackend {
           ),
           401,
           headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }
+      if (failingPaths.contains(path)) {
+        return http.Response(
+          jsonEncode({'success': false, 'error': 'HTTP 500'}),
+          500,
         );
       }
       if (statusCode >= 400) {

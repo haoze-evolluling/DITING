@@ -52,6 +52,14 @@ void main() {
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopHomePage)).l10n;
 
+  /// The board's own children. A few cards draw nested `DashboardCard`s for their rows (the log
+  /// retention switches, for instance), and a masonry measurement must not count those twice.
+  List<RenderBox> boardCards(WidgetTester tester) => [
+    for (final element in find.byType(DashboardCard).evaluate())
+      if (element.findAncestorWidgetOfExactType<DashboardCard>() == null)
+        element.renderObject! as RenderBox,
+  ];
+
   testWidgets('宽屏按瀑布流铺开全部卡片', (tester) async {
     await pumpHome(tester);
     final l10n = l10nOf(tester);
@@ -71,7 +79,7 @@ void main() {
     ]) {
       expect(find.text(title), findsWidgets, reason: title);
     }
-    expect(find.byType(DashboardCard), findsNWidgets(10));
+    expect(find.byType(DashboardCard), findsAtLeastNWidgets(10));
     expect(find.byType(RecentQueriesCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -89,9 +97,14 @@ void main() {
     );
     expect(find.text('12,345'), findsWidgets);
     expect(find.text('67%'), findsOneWidget);
-    // The query list comes from its own endpoint, newest first.
-    expect(find.text('example1.com'), findsOneWidget);
-    expect(find.text('laptop'), findsOneWidget);
+    // The query list comes from its own endpoint, newest first; the log ranking cards below the
+    // dashboard repeat these names, so the assertions name the card they mean.
+    Finder inRecent(Finder matching) => find.descendant(
+      of: find.byType(RecentQueriesCard),
+      matching: matching,
+    );
+    expect(inRecent(find.text('example1.com')), findsOneWidget);
+    expect(inRecent(find.text('laptop')), findsOneWidget);
     expect(find.text('8.0%'), findsOneWidget);
     expect(find.text('127.0.0.1:5353'), findsOneWidget);
     expect(find.text(l10n.stateRunning), findsWidgets);
@@ -113,7 +126,7 @@ void main() {
     await tester.tap(find.text(l10n.desktopRetry));
     await tester.pumpAndSettle();
 
-    expect(find.byType(DashboardCard), findsNWidgets(10));
+    expect(find.byType(DashboardCard), findsAtLeastNWidgets(10));
     expect(find.byType(RecentQueriesCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -194,11 +207,8 @@ void main() {
   testWidgets('超宽窗口仍保持双列瀑布流，不回到等高网格', (tester) async {
     await pumpHome(tester, size: const Size(1920, 1080));
 
-    final cards = find.byType(DashboardCard).evaluate().toList();
-    expect(cards, hasLength(10));
-    final boxes = [
-      for (final element in cards) element.renderObject! as RenderBox,
-    ];
+    final boxes = boardCards(tester);
+    expect(boxes.length, greaterThanOrEqualTo(10));
     final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
     expect(lefts, hasLength(2));
     final heights = boxes.map((box) => box.size.height).toSet();
@@ -209,11 +219,8 @@ void main() {
   testWidgets('中等宽度按双列瀑布流排布，卡片保持内容高度', (tester) async {
     await pumpHome(tester, size: const Size(1000, 800));
 
-    final cards = find.byType(DashboardCard).evaluate().toList();
-    expect(cards, hasLength(10));
-    final boxes = [
-      for (final element in cards) element.renderObject! as RenderBox,
-    ];
+    final boxes = boardCards(tester);
+    expect(boxes.length, greaterThanOrEqualTo(10));
     // Two columns, not one stretched list and not the four-column design grid.
     final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
     expect(lefts, hasLength(2));
@@ -226,13 +233,9 @@ void main() {
   testWidgets('窄窗把卡片排成一列，不套桌面行高', (tester) async {
     await pumpHome(tester, size: const Size(390, 844));
 
-    expect(find.byType(DesktopDashboardBoard), findsOneWidget);
-    expect(find.byType(DashboardCard), findsNWidgets(10));
+    expect(find.byType(DashboardCard), findsAtLeastNWidgets(10));
     // Every card is full width in one column.
-    final widths = {
-      for (final element in find.byType(DashboardCard).evaluate())
-        (element.renderObject! as RenderBox).size.width,
-    };
+    final widths = {for (final box in boardCards(tester)) box.size.width};
     expect(widths, hasLength(1));
     expect(tester.takeException(), isNull);
   });

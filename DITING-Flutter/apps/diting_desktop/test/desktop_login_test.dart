@@ -14,7 +14,7 @@ import 'package:diting_desktop/pages/auth/desktop_login_page.dart';
 import 'package:diting_desktop/pages/auth/widgets/login_background_dialog.dart';
 import 'package:diting_desktop/pages/auth/widgets/login_change_password_card.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
-import 'package:diting_desktop/pages/settings/desktop_settings_page.dart';
+import 'package:diting_desktop/pages/about/desktop_about_page.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -418,15 +418,15 @@ void main() {
     expect(find.text(l10n.desktopLoginBackgroundPasswordBody), findsNothing);
   });
 
-  testWidgets('设置页在 Web 模式下提供退出登录，退出后回到登录页', (tester) async {
+  testWidgets('关于页在 Web 模式下提供退出登录，退出后回到登录页', (tester) async {
     final backend = FakeDesktopBackend();
     await pumpConsole(
       tester,
       backend: backend,
       seed: seededToken(),
-      initialLocation: Routes.settings,
+      initialLocation: Routes.about,
     );
-    final l10n = tester.element(find.byType(DesktopSettingsPage)).l10n;
+    final l10n = tester.element(find.byType(DesktopAboutPage)).l10n;
 
     expect(find.text(l10n.desktopSettingsSessionSection), findsOneWidget);
     await tester.tap(find.text(l10n.desktopSettingsLogout));
@@ -447,9 +447,9 @@ void main() {
     await pumpConsole(
       tester,
       web: false,
-      initialLocation: Routes.settings,
+      initialLocation: Routes.about,
     );
-    final l10n = tester.element(find.byType(DesktopSettingsPage)).l10n;
+    final l10n = tester.element(find.byType(DesktopAboutPage)).l10n;
 
     expect(find.text(l10n.desktopSettingsSessionSection), findsNothing);
     expect(find.text(l10n.desktopSettingsLogout), findsNothing);

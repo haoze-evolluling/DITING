@@ -1,4 +1,4 @@
-/// The settings branch's LAN console page: whether the web console is reachable from the LAN, on which
+/// The hub's LAN console page: whether the web console is reachable from the LAN, on which
 /// port, and with which admin credential.
 ///
 /// The old desktop console's `LanWebCard.vue` is the functional blueprint. The card never decides the
@@ -19,7 +19,7 @@ import 'package:material_ui/material_ui.dart';
 class DesktopLanWebPage extends ConsumerWidget {
   const DesktopLanWebPage({super.key});
 
-  static const path = '/settings/lan-web';
+  static const path = '/hub/lan-web';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

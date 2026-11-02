@@ -1,4 +1,4 @@
-// Desktop tools branch, diagnosis half (docs/development/flutter-desktop-ui.md step 4): the port
+// Desktop hub, network-toolbox half (docs/development/flutter-desktop-ui.md step 4): the port
 // probe and its autofix. The probe runs on demand; both calls adopt the service's answer.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -8,7 +8,7 @@ import 'package:diting_desktop/app/desktop_app.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_tools_models.dart';
-import 'package:diting_desktop/pages/tools/desktop_tools_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/tools/widgets/emergency_restore_card.dart';
 import 'package:diting_desktop/pages/tools/widgets/port_diagnosis_card.dart';
 import 'package:diting_shared/routes/branches.dart';
@@ -36,7 +36,7 @@ void main() {
           desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(fake.client()),
         ],
-        child: const DesktopApp(initialLocation: Routes.tools),
+        child: const DesktopApp(initialLocation: Routes.hub),
       ),
     );
     await tester.pumpAndSettle();
@@ -44,7 +44,7 @@ void main() {
   }
 
   AppL10n l10nOf(WidgetTester tester) =>
-      tester.element(find.byType(DesktopToolsPage)).l10n;
+      tester.element(find.byType(DesktopFeatureHubPage)).l10n;
 
   Finder inCard(Finder matching) =>
       find.descendant(of: find.byType(PortDiagnosisCard), matching: matching);

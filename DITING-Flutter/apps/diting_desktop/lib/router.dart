@@ -1,3 +1,4 @@
+import 'package:diting_desktop/pages/about/desktop_about_page.dart';
 import 'package:diting_desktop/pages/desktop_pages.dart';
 import 'package:diting_desktop/pages/hub/desktop_adapters_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_cache_page.dart';
@@ -18,19 +19,15 @@ import 'package:diting_desktop/pages/tools/desktop_rule_check_page.dart';
 import 'package:diting_desktop/pages/settings/desktop_appearance_page.dart';
 import 'package:diting_desktop/pages/settings/desktop_lan_web_page.dart';
 import 'package:diting_desktop/pages/settings/desktop_service_page.dart';
-import 'package:diting_desktop/pages/settings/desktop_settings_page.dart';
-import 'package:diting_desktop/pages/tools/desktop_tools_page.dart';
 import 'package:diting_desktop/pages/traffic/desktop_client_groups_page.dart';
-import 'package:diting_desktop/pages/traffic/desktop_traffic_page.dart';
-import 'package:diting_desktop/pages/logs/desktop_logs_page.dart';
 import 'package:diting_desktop/shell/desktop_shell.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/routes/page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Desktop route table: the same six branches, in the same order, at the same paths as
-/// `lib/router.dart` (see [branchOrder]). Only the pages differ, because their data sources do.
+/// Desktop route table: [desktopBranchOrder], the desktop's own grouping of the shared paths. Only
+/// the pages differ from Android's table, because their data sources do.
 ///
 /// No first-run redirect: the agreement, work-mode and onboarding gates belong to the Android
 /// startup flow, and a desktop session that has not accepted anything yet has no tunnel to guard.
@@ -42,9 +39,9 @@ GoRouter createDesktopRouter({String initialLocation = Routes.home}) {
         builder: (context, state, navigationShell) =>
             DesktopShell(navigationShell: navigationShell),
         branches: [
-          // Driven by [branchOrder] so a path can never drift from the shared information
+          // Driven by [desktopBranchOrder] so a path can never drift from the desktop information
           // architecture; the guard test compares the two lists.
-          for (final location in branchOrder)
+          for (final location in desktopBranchOrder)
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -63,48 +60,22 @@ GoRouter createDesktopRouter({String initialLocation = Routes.home}) {
   );
 }
 
-/// Branch root to page. Every [branchOrder] entry must be handled; the throw is a build-time
-/// tripwire for a branch added to the shared table without a desktop page.
+/// Branch root to page. Every [desktopBranchOrder] entry must be handled; the throw is a build-time
+/// tripwire for a branch added to the table without a desktop page.
 Widget _pageOf(String location) => switch (location) {
   Routes.home => const DesktopHomePage(),
   Routes.hub => const DesktopFeatureHubPage(),
-  Routes.logs => const DesktopLogsPage(),
-  Routes.traffic => const DesktopTrafficPage(),
-  Routes.tools => const DesktopToolsPage(),
-  Routes.settings => const DesktopSettingsPage(),
+  Routes.about => const DesktopAboutPage(),
   _ => throw StateError('No desktop page for branch $location'),
 };
 
 /// Sub-pages live inside the branch, so the branch's record (and its tab) stays current while the
-/// page is open. Only branches that actually have sub-pages return routes.
+/// page is open. Each one hangs off the branch that owns its entry, which is why the redirects of
+/// the old six-branch table land under `home` and `hub` instead of keeping their old prefixes.
 List<RouteBase> _subRoutesOf(String location) => switch (location) {
-  Routes.settings => [
+  Routes.home => [
     GoRoute(
-      path: 'appearance',
-      pageBuilder: (context, state) =>
-          androidDefaultPage(state, const DesktopAppearancePage()),
-    ),
-    GoRoute(
-      path: 'service',
-      pageBuilder: (context, state) =>
-          androidDefaultPage(state, const DesktopServicePage()),
-    ),
-    GoRoute(
-      path: 'lan-web',
-      pageBuilder: (context, state) =>
-          androidDefaultPage(state, const DesktopLanWebPage()),
-    ),
-  ],
-  Routes.tools => [
-    GoRoute(
-      path: 'rule-test',
-      pageBuilder: (context, state) =>
-          androidDefaultPage(state, const DesktopRuleCheckPage()),
-    ),
-  ],
-  Routes.traffic => [
-    GoRoute(
-      path: 'groups',
+      path: DesktopClientGroupsPage.path.substring(1),
       pageBuilder: (context, state) =>
           androidDefaultPage(state, const DesktopClientGroupsPage()),
     ),
@@ -174,6 +145,26 @@ List<RouteBase> _subRoutesOf(String location) => switch (location) {
       path: 'encrypted-dns',
       pageBuilder: (context, state) =>
           androidDefaultPage(state, const DesktopEncryptedPage()),
+    ),
+    GoRoute(
+      path: 'appearance',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopAppearancePage()),
+    ),
+    GoRoute(
+      path: 'service',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopServicePage()),
+    ),
+    GoRoute(
+      path: 'lan-web',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopLanWebPage()),
+    ),
+    GoRoute(
+      path: 'rule-test',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopRuleCheckPage()),
     ),
   ],
   _ => const [],

@@ -39,6 +39,15 @@ const branchOrder = <String>[
   Routes.settings,
 ];
 
+/// Desktop branch order: the desktop window merges Android's six tabs into three, because a
+/// desktop window has room for many cards per page but not for six thin pages. The log dashboard
+/// and the device list live on home, settings and the network tools live in the hub, and the about
+/// screen keeps a tab of its own.
+///
+/// Only the grouping differs: the paths still come from [Routes], so both hosts keep speaking the
+/// same information architecture and a sub-page never has two addresses.
+const desktopBranchOrder = <String>[Routes.home, Routes.hub, Routes.about];
+
 /// Maps a location to its branch index. Must match the longest prefix: `/` prefixes every
 /// absolute path, so the first hit would map `/hub` and `/logs` to home. Falls back to 0
 /// (home), which is safer than throwing on a navigation path.

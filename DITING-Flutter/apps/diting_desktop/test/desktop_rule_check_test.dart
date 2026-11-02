@@ -9,7 +9,7 @@ import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_rule_check_models.dart';
 import 'package:diting_desktop/pages/tools/desktop_rule_check_page.dart';
-import 'package:diting_desktop/pages/tools/desktop_tools_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/widgets/desktop_picker.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/routes/branches.dart';
@@ -216,11 +216,11 @@ void main() {
           desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(fake.client()),
         ],
-        child: const DesktopApp(initialLocation: Routes.tools),
+        child: const DesktopApp(initialLocation: Routes.hub),
       ),
     );
     await tester.pumpAndSettle();
-    final l10n = tester.element(find.byType(DesktopToolsPage)).l10n;
+    final l10n = tester.element(find.byType(DesktopFeatureHubPage)).l10n;
 
     await tapAt(tester, find.text(l10n.desktopToolsRulePageTitle));
     expect(find.byType(DesktopRuleCheckPage), findsOneWidget);
