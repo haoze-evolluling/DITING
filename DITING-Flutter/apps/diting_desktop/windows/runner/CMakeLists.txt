@@ -9,6 +9,10 @@ project(runner LANGUAGES CXX)
 add_executable(${BINARY_NAME} WIN32
   "flutter_window.cpp"
   "main.cpp"
+  "tray/tray_autostart.cpp"
+  "tray/tray_channel.cpp"
+  "tray/tray_icon.cpp"
+  "tray/tray_service.cpp"
   "utils.cpp"
   "win32_window.cpp"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
@@ -30,10 +34,17 @@ target_compile_definitions(${BINARY_NAME} PRIVATE "FLUTTER_VERSION_BUILD=${FLUTT
 # Disable Windows macros that collide with C++ standard library functions.
 target_compile_definitions(${BINARY_NAME} PRIVATE "NOMINMAX")
 
+# The runner's tray strings are UTF-8 sources with Chinese literals. Without this
+# MSVC reads them as the OEM code page (936 here) and mangles the literals.
+target_compile_options(${BINARY_NAME} PRIVATE "/utf-8")
+
 # Add dependency libraries and include directories. Add any application-specific
 # dependencies here.
 target_link_libraries(${BINARY_NAME} PRIVATE flutter flutter_wrapper_app)
 target_link_libraries(${BINARY_NAME} PRIVATE "dwmapi.lib")
+# Notification-area icon (Shell_NotifyIcon, ShellExecuteExW) and the
+# SCM/registry calls behind the tray's service and auto-start items.
+target_link_libraries(${BINARY_NAME} PRIVATE "shell32.lib" "advapi32.lib")
 target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.

@@ -13640,4 +13640,65 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopLoginOldPasswordRequired => 'Enter the current password';
+
+  @override
+  String get desktopTrayTooltip => 'DITING DNS Console';
+
+  @override
+  String get desktopTrayOpenWindow => 'Open main window';
+
+  @override
+  String get desktopTrayHideWindow => 'Hide main window';
+
+  @override
+  String get desktopTrayAutoStart => 'Start on sign-in';
+
+  @override
+  String get desktopTrayServiceRunning => 'Core service: running';
+
+  @override
+  String get desktopTrayServiceStopped => 'Core service: stopped';
+
+  @override
+  String get desktopTrayServiceUnknown => 'Core service: status unknown';
+
+  @override
+  String get desktopTrayServiceStart => 'Start core service';
+
+  @override
+  String get desktopTrayServiceStop => 'Stop core service';
+
+  @override
+  String get desktopTrayServiceRestart => 'Restart core service';
+
+  @override
+  String get desktopTrayQuit => 'Quit';
+
+  @override
+  String get desktopTrayBalloonServiceTitle => 'Core service';
+
+  @override
+  String get desktopTrayBalloonServiceStarted => 'Core service started';
+
+  @override
+  String get desktopTrayBalloonServiceStopped => 'Core service stopped';
+
+  @override
+  String get desktopTrayBalloonServiceRestarted => 'Core service restarted';
+
+  @override
+  String get desktopTrayBalloonAutoStartTitle => 'Start on sign-in';
+
+  @override
+  String get desktopTrayBalloonAutoStartOn => 'Start on sign-in enabled';
+
+  @override
+  String get desktopTrayBalloonAutoStartOff => 'Start on sign-in disabled';
+
+  @override
+  String get desktopTrayBalloonFailedPrefix => 'Operation failed: ';
+
+  @override
+  String get desktopTrayBalloonMinimized =>
+      'DITING keeps running in the notification area.\nClick the tray icon to reopen the main window.';
 }

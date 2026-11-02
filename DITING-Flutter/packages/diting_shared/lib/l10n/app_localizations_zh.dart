@@ -12840,4 +12840,65 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopLoginOldPasswordRequired => '请输入当前密码';
+
+  @override
+  String get desktopTrayTooltip => '谛听 (DITING) DNS 控制台';
+
+  @override
+  String get desktopTrayOpenWindow => '打开主界面';
+
+  @override
+  String get desktopTrayHideWindow => '隐藏主界面';
+
+  @override
+  String get desktopTrayAutoStart => '开机自启动';
+
+  @override
+  String get desktopTrayServiceRunning => '核心服务：运行中';
+
+  @override
+  String get desktopTrayServiceStopped => '核心服务：已停止';
+
+  @override
+  String get desktopTrayServiceUnknown => '核心服务：状态未知';
+
+  @override
+  String get desktopTrayServiceStart => '启动核心服务';
+
+  @override
+  String get desktopTrayServiceStop => '停止核心服务';
+
+  @override
+  String get desktopTrayServiceRestart => '重启核心服务';
+
+  @override
+  String get desktopTrayQuit => '退出程序';
+
+  @override
+  String get desktopTrayBalloonServiceTitle => '核心服务';
+
+  @override
+  String get desktopTrayBalloonServiceStarted => '核心服务已启动';
+
+  @override
+  String get desktopTrayBalloonServiceStopped => '核心服务已停止';
+
+  @override
+  String get desktopTrayBalloonServiceRestarted => '核心服务已重启';
+
+  @override
+  String get desktopTrayBalloonAutoStartTitle => '开机自启动';
+
+  @override
+  String get desktopTrayBalloonAutoStartOn => '已开启开机自启动';
+
+  @override
+  String get desktopTrayBalloonAutoStartOff => '已关闭开机自启动';
+
+  @override
+  String get desktopTrayBalloonFailedPrefix => '操作失败：';
+
+  @override
+  String get desktopTrayBalloonMinimized =>
+      '谛听已最小化到系统托盘，并在后台继续运行。\n点击托盘图标可重新打开主界面。';
 }

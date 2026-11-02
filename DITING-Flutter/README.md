@@ -53,6 +53,19 @@ go build -o build/bin/diting-service.exe ./cmd/service
 build\bin\diting-service.exe -run      # 管理员权限；前台运行，关掉即停止服务
 ```
 
+### 系统托盘
+
+桌面窗口沿用旧版 Wails 端的行为：点击关闭按钮只把窗口隐藏到系统托盘（首次会弹一次气泡提示），
+进程继续在后台运行；左键单击托盘图标恢复主界面。右键菜单提供打开/隐藏主界面、开机自启动开关、
+核心服务状态与启动/停止/重启、退出程序。
+
+托盘由 `apps/diting_desktop/windows/runner/tray/` 的原生代码实现（图标、菜单、SCM 与注册表调用），
+不依赖 Flutter 首帧，因此开机自启写入的 `--minimized` 参数可以直接静默进入托盘。Dart 只通过
+`diting/tray` 方法通道把当前语言的菜单文案推给原生侧（`lib/data/host/desktop_tray.dart`）。
+
+Windows 窗口与 Web 控制台的图标资源都来自品牌矢量源，由 `maintenance/core/logo_generator.py`
+统一导出（`windows/runner/resources/app_icon.ico`、`web/favicon.png`、`web/icons/*`），不要手改位图。
+
 ## 目录边界
 
 - `diting_shared` 只允许放两个宿主都需要的代码：`lib/ui`（设计系统）、`lib/app`（主题/l10n）、

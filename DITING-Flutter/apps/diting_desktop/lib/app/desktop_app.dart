@@ -5,6 +5,7 @@ import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/manager.dart';
 import 'package:diting_desktop/router.dart';
 import 'package:diting_desktop/widgets/desktop_auth_gate.dart';
+import 'package:diting_desktop/widgets/desktop_tray_sync.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
@@ -90,8 +91,10 @@ class _DesktopAppState extends ConsumerState<DesktopApp> {
                 child: LiquidGlassHost(
                   enabled: glass.enabled,
                   // The web console gates on a session; the desktop window passes straight through.
-                  child: DesktopAuthGate(
-                    child: child ?? const SizedBox.shrink(),
+                  child: DesktopTraySync(
+                    child: DesktopAuthGate(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               ),

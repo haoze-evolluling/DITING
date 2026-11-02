@@ -23463,6 +23463,126 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'请输入当前密码'**
   String get desktopLoginOldPasswordRequired;
+
+  /// No description provided for @desktopTrayTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'谛听 (DITING) DNS 控制台'**
+  String get desktopTrayTooltip;
+
+  /// No description provided for @desktopTrayOpenWindow.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开主界面'**
+  String get desktopTrayOpenWindow;
+
+  /// No description provided for @desktopTrayHideWindow.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏主界面'**
+  String get desktopTrayHideWindow;
+
+  /// No description provided for @desktopTrayAutoStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'开机自启动'**
+  String get desktopTrayAutoStart;
+
+  /// No description provided for @desktopTrayServiceRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'核心服务：运行中'**
+  String get desktopTrayServiceRunning;
+
+  /// No description provided for @desktopTrayServiceStopped.
+  ///
+  /// In zh, this message translates to:
+  /// **'核心服务：已停止'**
+  String get desktopTrayServiceStopped;
+
+  /// No description provided for @desktopTrayServiceUnknown.
+  ///
+  /// In zh, this message translates to:
+  /// **'核心服务：状态未知'**
+  String get desktopTrayServiceUnknown;
+
+  /// No description provided for @desktopTrayServiceStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动核心服务'**
+  String get desktopTrayServiceStart;
+
+  /// No description provided for @desktopTrayServiceStop.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止核心服务'**
+  String get desktopTrayServiceStop;
+
+  /// No description provided for @desktopTrayServiceRestart.
+  ///
+  /// In zh, this message translates to:
+  /// **'重启核心服务'**
+  String get desktopTrayServiceRestart;
+
+  /// No description provided for @desktopTrayQuit.
+  ///
+  /// In zh, this message translates to:
+  /// **'退出程序'**
+  String get desktopTrayQuit;
+
+  /// No description provided for @desktopTrayBalloonServiceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'核心服务'**
+  String get desktopTrayBalloonServiceTitle;
+
+  /// No description provided for @desktopTrayBalloonServiceStarted.
+  ///
+  /// In zh, this message translates to:
+  /// **'核心服务已启动'**
+  String get desktopTrayBalloonServiceStarted;
+
+  /// No description provided for @desktopTrayBalloonServiceStopped.
+  ///
+  /// In zh, this message translates to:
+  /// **'核心服务已停止'**
+  String get desktopTrayBalloonServiceStopped;
+
+  /// No description provided for @desktopTrayBalloonServiceRestarted.
+  ///
+  /// In zh, this message translates to:
+  /// **'核心服务已重启'**
+  String get desktopTrayBalloonServiceRestarted;
+
+  /// No description provided for @desktopTrayBalloonAutoStartTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'开机自启动'**
+  String get desktopTrayBalloonAutoStartTitle;
+
+  /// No description provided for @desktopTrayBalloonAutoStartOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'已开启开机自启动'**
+  String get desktopTrayBalloonAutoStartOn;
+
+  /// No description provided for @desktopTrayBalloonAutoStartOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'已关闭开机自启动'**
+  String get desktopTrayBalloonAutoStartOff;
+
+  /// No description provided for @desktopTrayBalloonFailedPrefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作失败：'**
+  String get desktopTrayBalloonFailedPrefix;
+
+  /// No description provided for @desktopTrayBalloonMinimized.
+  ///
+  /// In zh, this message translates to:
+  /// **'谛听已最小化到系统托盘，并在后台继续运行。\n点击托盘图标可重新打开主界面。'**
+  String get desktopTrayBalloonMinimized;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

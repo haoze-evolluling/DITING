@@ -27,8 +27,25 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
+  // The tray exists from the first frame on, so a `--minimized` start is
+  // reachable and closing the window behaves like the old Wails desktop
+  // (hide to tray) from the very beginning.
+  tray_ = std::make_unique<TrayIcon>();
+  tray_->SetQuitHandler([this]() {
+    quit_requested_ = true;
+    PostMessage(GetHandle(), WM_CLOSE, 0, 0);
+  });
+  if (tray_->Create(GetHandle())) {
+    tray_channel_ = std::make_unique<TrayChannel>(
+        flutter_controller_->engine()->messenger(), tray_.get());
+  } else {
+    tray_.reset();
+  }
+
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    this->Show();
+    if (!start_hidden_) {
+      this->Show();
+    }
   });
 
   // Flutter can complete the first frame before the "show window" callback is
@@ -40,6 +57,12 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  tray_channel_.reset();
+  if (tray_) {
+    tray_->Destroy();
+    tray_.reset();
+  }
+
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -51,6 +74,20 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // Closing the window keeps DITING running in the notification area, exactly
+  // like the old Wails window: it hides instead of destroying the window. The
+  // tray's "quit" item sets |quit_requested_| and posts another WM_CLOSE that
+  // falls through to the default handling below.
+  if (message == WM_CLOSE && tray_ != nullptr && !quit_requested_) {
+    tray_->NotifyFirstClose();
+    ShowWindow(hwnd, SW_HIDE);
+    return 0;
+  }
+
+  if (tray_ != nullptr && tray_->HandleMessage(message, wparam, lparam)) {
+    return 0;
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =
