@@ -4,6 +4,11 @@
 /// The cards are returned as a list, not a widget, so the home page can append its device and log
 /// cards to the same board; a second board would leave the page with two waterfalls and a hole
 /// between them.
+///
+/// Everything here is a reading: the home window reports what the service is doing and offers no
+/// switch or field. The controls that used to sit on this board (adapter takeover, the filter pause,
+/// the client ACL and rate limit, the log retention policy and its search) live on the pages that own
+/// them under the feature hub.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -20,8 +25,6 @@ import 'package:material_ui/material_ui.dart';
 List<Widget> desktopDashboardCards(DesktopStatus status) => [
   DnsServiceCard(status: status),
   QueryMetricsCard(status: status),
-  TakeoverTile(status: status),
-  FilterPauseTile(status: status),
   const HostServiceCard(),
   CacheCard(status: status),
   FilterStatsCard(status: status),

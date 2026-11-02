@@ -60,6 +60,14 @@ void main() {
     of: find.byType(FilterAdvancedCard),
     matching: matching,
   );
+  Finder inParams(Finder matching) => find.descendant(
+    of: find.byType(FilterBlockingParamsCard),
+    matching: matching,
+  );
+  Finder inBogus(Finder matching) => find.descendant(
+    of: find.byType(BogusNxDomainCard),
+    matching: matching,
+  );
   Finder inPause(Finder matching) =>
       find.descendant(of: find.byType(FilterPauseCard), matching: matching);
 
@@ -145,14 +153,18 @@ void main() {
     final l10n = l10nOf(tester);
 
     await tapAt(tester, inMode(find.text(l10n.desktopFilterModeNxdomain)));
-    final fields = inMode(find.byType(TextFormField));
+    await tapAt(tester, inMode(find.text(l10n.desktopFilterModeSave)).first);
+    expect(backend.filterConfigUpdates.last['blockMode'], 'nxdomain');
+    await clearMessages(tester);
+
+    final fields = inParams(find.byType(TextFormField));
     await tester.enterText(fields.at(0), '127.0.0.1');
     await tester.enterText(fields.at(1), '::1');
     await tester.enterText(fields.at(2), '6');
-    await tapAt(tester, inMode(find.text(l10n.desktopFilterModeSave)).first);
+    await tapAt(tester, inParams(find.text(l10n.desktopFilterModeSave)).first);
 
-    final update = backend.filterConfigUpdates.single;
-    expect(update['blockMode'], 'nxdomain');
+    final update = backend.filterConfigUpdates.last;
+    expect(update['blockMode'], 'nxdomain', reason: '模式保持已保存的值');
     expect(update['blockingIPv4'], '127.0.0.1');
     expect(update['blockingIPv6'], '::1');
     expect(update['updateIntervalHours'], 6);
@@ -165,9 +177,9 @@ void main() {
     final backend = await pumpConfig(tester);
     final l10n = l10nOf(tester);
 
-    final fields = inMode(find.byType(TextFormField));
+    final fields = inParams(find.byType(TextFormField));
     await tester.enterText(fields.at(2), '0');
-    await tapAt(tester, inMode(find.text(l10n.desktopFilterModeSave)).first);
+    await tapAt(tester, inParams(find.text(l10n.desktopFilterModeSave)).first);
 
     expect(backend.filterConfigUpdates, isEmpty);
     expect(find.text(l10n.desktopFilterModeInvalid), findsOneWidget);
@@ -204,15 +216,17 @@ void main() {
     expect(backend.filterConfigUpdates.last['filterResponse'], isTrue);
     await clearMessages(tester);
 
-    await tapAt(tester, inAdvanced(find.byType(DashboardSwitch)).at(2));
+    expect(inAdvanced(find.byType(DashboardSwitch)), findsNWidgets(2));
+
+    await tapAt(tester, inBogus(find.byType(DashboardSwitch)));
     expect(backend.filterConfigUpdates.last['bogusNxDomain'], isTrue);
     await clearMessages(tester);
 
     await tester.enterText(
-      inAdvanced(find.byType(TextField)),
+      inBogus(find.byType(TextField)),
       ' 0.0.0.0/8 \n\n127.0.0.0/8\n',
     );
-    await tapAt(tester, inAdvanced(find.text(l10n.desktopFilterAdvancedBogusSave)));
+    await tapAt(tester, inBogus(find.text(l10n.desktopFilterAdvancedBogusSave)));
 
     expect(backend.filterConfigUpdates.last['bogusNxDomainNetworks'], [
       '0.0.0.0/8',
@@ -238,7 +252,7 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
-    await tester.enterText(inAdvanced(find.byType(TextField)), 'not-an-ip');
+    await tester.enterText(inBogus(find.byType(TextField)), 'not-an-ip');
     await tester.pumpAndSettle();
 
     expect(
@@ -272,8 +286,10 @@ void main() {
   testWidgets('窄窗下三张卡片单列且不横向溢出', (tester) async {
     await pumpConfig(tester, size: const Size(390, 844));
     expect(find.byType(FilterModeCard), findsOneWidget);
+    expect(find.byType(FilterBlockingParamsCard), findsOneWidget);
     expect(find.byType(FilterPauseCard), findsOneWidget);
     expect(find.byType(FilterAdvancedCard), findsOneWidget);
+    expect(find.byType(BogusNxDomainCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

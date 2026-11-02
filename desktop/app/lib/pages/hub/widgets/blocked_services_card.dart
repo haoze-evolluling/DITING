@@ -59,41 +59,6 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
     );
   }
 
-  Future<void> _toggleGroup(DesktopServiceGroup group) async {
-    final l10n = context.l10n;
-    final blocked = ref
-        .read(desktopServicesProvider)
-        .data
-        ?.blockedGroups
-        .contains(group.id);
-    final error = await ref
-        .read(desktopServicesProvider.notifier)
-        .toggleGroup(group);
-    if (!mounted) return;
-    showDesktopMessage(
-      context,
-      error == null
-          ? (blocked == true
-                ? l10n.desktopServicesGroupOff(group.name)
-                : l10n.desktopServicesGroupOn(group.name))
-          : l10n.desktopServicesActionFailed(error.message),
-    );
-  }
-
-  Future<void> _clearAll() async {
-    final l10n = context.l10n;
-    final error = await ref
-        .read(desktopServicesProvider.notifier)
-        .clearAll();
-    if (!mounted) return;
-    showDesktopMessage(
-      context,
-      error == null
-          ? l10n.desktopServicesCleared
-          : l10n.desktopServicesActionFailed(error.message),
-    );
-  }
-
   Future<void> _editSchedule(DesktopBlockedService service) async {
     final l10n = context.l10n;
     final data = ref.read(desktopServicesProvider).data;
@@ -218,32 +183,6 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
                       ),
                   ],
                 ),
-                Text(
-                  l10n.desktopServicesActiveRules(data.activeRules),
-                  style: DashboardText.label(context),
-                ),
-                TextButton(
-                  onPressed: saving || data.blockedCount == 0
-                      ? null
-                      : () => unawaited(_clearAll()),
-                  child: Text(l10n.desktopServicesClearAll),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final group in data.groups)
-                  _GroupChip(
-                    label: l10n.desktopServicesGroupChip(
-                      group.name,
-                      group.count,
-                    ),
-                    selected: data.blockedGroups.contains(group.id),
-                    onPressed: saving ? null : () => unawaited(_toggleGroup(group)),
-                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -325,35 +264,6 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
           ],
         );
       },
-    );
-  }
-}
-
-class _GroupChip extends StatelessWidget {
-  const _GroupChip({
-    required this.label,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return CommonCard(
-      isSelected: selected,
-      fillsSelection: true,
-      onPressed: onPressed,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Text(
-        label,
-        style: AppTextStyle.caption1
-            .of(context, emphasized: true)
-            .copyWith(color: selected ? colorScheme.onPrimary : null),
-      ),
     );
   }
 }

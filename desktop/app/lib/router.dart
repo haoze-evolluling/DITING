@@ -2,6 +2,7 @@ import 'package:diting_desktop/pages/about/desktop_about_page.dart';
 import 'package:diting_desktop/pages/desktop_pages.dart';
 import 'package:diting_desktop/pages/hub/desktop_adapters_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_cache_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_client_access_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_dns64_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_encrypted_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_filter_config_page.dart';
@@ -10,6 +11,7 @@ import 'package:diting_desktop/pages/hub/desktop_filter_rules_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_lan_dns_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_schedule_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_privacy_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_query_log_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_services_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_rewrite_page.dart';
@@ -160,6 +162,16 @@ List<RouteBase> _subRoutesOf(String location) => switch (location) {
       path: 'lan-web',
       pageBuilder: (context, state) =>
           androidDefaultPage(state, const DesktopLanWebPage()),
+    ),
+    GoRoute(
+      path: 'client-access',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopClientAccessPage()),
+    ),
+    GoRoute(
+      path: 'query-log',
+      pageBuilder: (context, state) =>
+          androidDefaultPage(state, const DesktopQueryLogPage()),
     ),
     GoRoute(
       path: 'rule-test',

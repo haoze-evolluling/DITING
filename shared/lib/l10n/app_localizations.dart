@@ -17062,6 +17062,24 @@ abstract class AppL10n {
   /// **'确定删除匹配域名 [{domain}] 的分流规则吗？'**
   String desktopUpstreamRouteDeleteBody(String domain);
 
+  /// No description provided for @desktopUpstreamFallbackPolicyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'回退触发条件'**
+  String get desktopUpstreamFallbackPolicyTitle;
+
+  /// No description provided for @desktopUpstreamFallbackPolicyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'何时改用备用上游：超时、应答码与解析失败'**
+  String get desktopUpstreamFallbackPolicyBody;
+
+  /// No description provided for @desktopUpstreamFallbackPolicyOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'备用链未开启，触发条件暂不生效。'**
+  String get desktopUpstreamFallbackPolicyOff;
+
   /// No description provided for @desktopUpstreamFallbackTitle.
   ///
   /// In zh, this message translates to:
@@ -17332,6 +17350,18 @@ abstract class AppL10n {
   /// **'加速策略已保存并即时生效'**
   String get desktopCacheConfigSaved;
 
+  /// No description provided for @desktopCacheFallbackTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'弱网回退'**
+  String get desktopCacheFallbackTitle;
+
+  /// No description provided for @desktopCacheFallbackBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'上游抖动时用过期记录兜底，以及先回旧值再刷新的乐观模式'**
+  String get desktopCacheFallbackBody;
+
   /// No description provided for @desktopCacheModeLabel.
   ///
   /// In zh, this message translates to:
@@ -17535,6 +17565,18 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'当前 {count} 条可落盘记录'**
   String desktopCachePersistRecords(int count);
+
+  /// No description provided for @desktopCacheSnapshotTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'磁盘快照'**
+  String get desktopCacheSnapshotTitle;
+
+  /// No description provided for @desktopCacheSnapshotBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'把当前缓存立即写入落盘文件，或从文件读回上次的记录'**
+  String get desktopCacheSnapshotBody;
 
   /// No description provided for @desktopCachePersistDump.
   ///
@@ -18274,6 +18316,18 @@ abstract class AppL10n {
   /// **'空'**
   String get desktopRewriteChipEmpty;
 
+  /// No description provided for @desktopZoneSettingsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'区域解析开关与默认 TTL'**
+  String get desktopZoneSettingsTitle;
+
+  /// No description provided for @desktopZoneSettingsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'开关本地权威区域，并设置没有写明 TTL 的记录使用多久'**
+  String get desktopZoneSettingsBody;
+
   /// No description provided for @desktopZoneTitle.
   ///
   /// In zh, this message translates to:
@@ -18531,6 +18585,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'当客户端位于纯 IPv6 网络并通过 NAT64 网关访问互联网时，若目标域名只有 IPv4（A）记录而没有原生 IPv6（AAAA）记录，DNS64 引擎会用指定前缀把 IPv4 地址合成映射为 AAAA 返回，让终端仍能端到端访问。'**
   String get desktopDns64Description;
+
+  /// No description provided for @desktopDns64PrefixesCardTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'合成前缀'**
+  String get desktopDns64PrefixesCardTitle;
 
   /// No description provided for @desktopDns64PrefixesLabel.
   ///
@@ -19240,6 +19300,12 @@ abstract class AppL10n {
   /// **'规则自动更新与阻断地址'**
   String get desktopFilterModeParamsTitle;
 
+  /// No description provided for @desktopFilterModeParamsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'被拦截域名得到的应答地址，以及规则列表的自动更新周期'**
+  String get desktopFilterModeParamsBody;
+
   /// No description provided for @desktopFilterModeBlockingIPv4.
   ///
   /// In zh, this message translates to:
@@ -19750,6 +19816,18 @@ abstract class AppL10n {
   /// **'读不到内置服务目录'**
   String get desktopServicesLoadFailed;
 
+  /// No description provided for @desktopServicesGroupsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'整组拦截'**
+  String get desktopServicesGroupsTitle;
+
+  /// No description provided for @desktopServicesGroupsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'一次性开关整组应用与网站，不必逐个点选'**
+  String get desktopServicesGroupsBody;
+
   /// No description provided for @desktopServicesTitle.
   ///
   /// In zh, this message translates to:
@@ -19971,6 +20049,18 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'阻断局域网私有 PTR 与单标签域名泄露，防御 ECH 加密绕过与报文侧信道嗅探'**
   String get desktopPrivacyProtocolBody;
+
+  /// No description provided for @desktopPrivacyBlockTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录类型拦截'**
+  String get desktopPrivacyBlockTitle;
+
+  /// No description provided for @desktopPrivacyBlockBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'ECH、ANY 与 IPv6 查询的拦截策略，与协议加固分开设置'**
+  String get desktopPrivacyBlockBody;
 
   /// No description provided for @desktopPrivacyEdeTitle.
   ///
@@ -20464,6 +20554,24 @@ abstract class AppL10n {
   /// **'未勾选的服务商将直接透传正常解析。'**
   String get desktopSafeSearchFooter;
 
+  /// No description provided for @desktopSafeSearchTtlCardTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'安全搜索改写有效期'**
+  String get desktopSafeSearchTtlCardTitle;
+
+  /// No description provided for @desktopSafeSearchTtlCardBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制安全搜索的改写记录在本地保留多久，到期后重新向上游确认。'**
+  String get desktopSafeSearchTtlCardBody;
+
+  /// No description provided for @desktopSafeSearchTtlChip.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前 {seconds}s'**
+  String desktopSafeSearchTtlChip(int seconds);
+
   /// No description provided for @desktopSafeSearchBing.
   ///
   /// In zh, this message translates to:
@@ -20595,6 +20703,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'缓存有效期（秒）'**
   String get desktopReputationCacheTtl;
+
+  /// No description provided for @desktopReputationParamsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询参数'**
+  String get desktopReputationParamsTitle;
 
   /// No description provided for @desktopReputationParamsInvalid.
   ///
@@ -21994,6 +22108,24 @@ abstract class AppL10n {
   /// **'模拟一次查询，查看命中规则与处置结论'**
   String get desktopToolsRuleEntryBody;
 
+  /// No description provided for @desktopHubQueryLog.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询日志'**
+  String get desktopHubQueryLog;
+
+  /// No description provided for @desktopHubQueryLogBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'实时查询流、历史记录检索与日志保留策略'**
+  String get desktopHubQueryLogBody;
+
+  /// No description provided for @desktopQueryLogPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询日志'**
+  String get desktopQueryLogPageTitle;
+
   /// No description provided for @desktopToolsRuleInputTitle.
   ///
   /// In zh, this message translates to:
@@ -22402,6 +22534,24 @@ abstract class AppL10n {
   /// **'远程管理开关、访问地址、防火墙放行与管理员凭据'**
   String get desktopLanWebEntryBody;
 
+  /// No description provided for @desktopHubClientAccess.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端访问控制'**
+  String get desktopHubClientAccess;
+
+  /// No description provided for @desktopHubClientAccessBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'哪些局域网客户端可以解析，以及每个客户端的查询限速'**
+  String get desktopHubClientAccessBody;
+
+  /// No description provided for @desktopClientAccessPageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端访问控制'**
+  String get desktopClientAccessPageTitle;
+
   /// No description provided for @desktopLanWebRefresh.
   ///
   /// In zh, this message translates to:
@@ -22413,6 +22563,18 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'读不到局域网控制台状态'**
   String get desktopLanWebLoadFailed;
+
+  /// No description provided for @desktopLanWebAccessTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'放行与管理员凭据'**
+  String get desktopLanWebAccessTitle;
+
+  /// No description provided for @desktopLanWebAccessBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'防火墙放行规则与本控制台的登录账号，凭据只影响局域网访问'**
+  String get desktopLanWebAccessBody;
 
   /// No description provided for @desktopLanWebTitle.
   ///
@@ -22881,6 +23043,18 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'已关闭局域网 DNS 服务，恢复为仅本机监听'**
   String get desktopLanDnsOff;
+
+  /// No description provided for @desktopLanDnsAddressesCardTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'监听与访问地址'**
+  String get desktopLanDnsAddressesCardTitle;
+
+  /// No description provided for @desktopLanDnsAddressesCardBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务实际绑定的地址，以及局域网内其他设备可以填写的地址'**
+  String get desktopLanDnsAddressesCardBody;
 
   /// No description provided for @desktopLanDnsListenTitle.
   ///

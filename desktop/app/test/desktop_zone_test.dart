@@ -11,6 +11,7 @@ import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_zone_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/zone_file_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/zone_settings_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,10 @@ void main() {
 
   Finder inZones(Finder matching) =>
       find.descendant(of: find.byType(ZoneFileCard), matching: matching);
+  Finder inSettings(Finder matching) => find.descendant(
+    of: find.byType(ZoneSettingsCard),
+    matching: matching,
+  );
 
   Future<void> tapAt(WidgetTester tester, Finder finder) async {
     await Scrollable.ensureVisible(
@@ -94,8 +99,9 @@ void main() {
     final l10n = l10nOf(tester);
 
     expect(find.byType(ZoneFileCard), findsOneWidget);
+    expect(find.byType(ZoneSettingsCard), findsOneWidget);
     expect(find.text(l10n.desktopZoneTitle), findsOneWidget);
-    expect(find.text(l10n.desktopZoneBadge(2, 32, 2)), findsOneWidget);
+    expect(find.text(l10n.desktopZoneBadge(2, 32, 2)), findsWidgets);
     expect(find.byKey(const ValueKey('zone-lan-origin')), findsOneWidget);
     expect(find.byKey(const ValueKey('zone-intra-origin')), findsOneWidget);
     expect(find.text(l10n.desktopZoneStateLoaded(2)), findsOneWidget);
@@ -191,14 +197,14 @@ void main() {
     final backend = await pumpZones(tester);
     final l10n = l10nOf(tester);
 
-    final ttl = inZones(
+    final ttl = inSettings(
       find.widgetWithText(TextFormField, l10n.desktopZoneDefaultTtl),
     );
     await tester.enterText(ttl, '');
     await tester.pumpAndSettle();
     await tapAt(
       tester,
-      inZones(find.widgetWithText(TonalButton, l10n.commonSave)),
+      inSettings(find.widgetWithText(TonalButton, l10n.commonSave)),
     );
     expect(find.text(l10n.desktopZoneTtlInvalid), findsOneWidget);
     expect(backend.zoneConfigUpdates, isEmpty, reason: '空值不该发给服务');
@@ -207,7 +213,7 @@ void main() {
     await tester.pumpAndSettle();
     await tapAt(
       tester,
-      inZones(find.widgetWithText(TonalButton, l10n.commonSave)),
+      inSettings(find.widgetWithText(TonalButton, l10n.commonSave)),
     );
 
     expect(backend.zoneConfigUpdates.single, {'ttl': 600});
@@ -219,7 +225,7 @@ void main() {
     final backend = await pumpZones(tester);
     final l10n = l10nOf(tester);
 
-    await tapAt(tester, inZones(find.byType(DashboardSwitch)).first);
+    await tapAt(tester, inSettings(find.byType(DashboardSwitch)));
 
     expect(backend.zoneConfigUpdates.single, {'enabled': false});
     expect(find.text(l10n.desktopZoneToggleOff), findsOneWidget);

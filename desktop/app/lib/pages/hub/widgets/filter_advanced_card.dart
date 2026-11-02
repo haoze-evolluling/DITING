@@ -1,8 +1,8 @@
-/// The advanced blocking switches: response-side CNAME re-checking, allowlist-only mode and bogus
-/// NXDOMAIN correction with its address list.
+/// The advanced blocking switches: response-side CNAME re-checking and allowlist-only mode.
 ///
-/// The old desktop console's `RulesPanel.vue` "advanced" tab and its `BogusNxDomainCard.vue` are the
-/// blueprint. Each switch saves on the spot; the address list is a draft that saves with its button.
+/// The old desktop console's `RulesPanel.vue` "advanced" tab is the blueprint. Each switch saves on the
+/// spot. The bogus-NXDOMAIN correction with its address list is [BogusNxDomainCard], because a list
+/// editor inside the switch card made it the tallest card on the page.
 library;
 
 import 'dart:async';
@@ -34,7 +34,7 @@ List<String> desktopBogusNetworks(String text) => [
     if (line.trim().isNotEmpty) line.trim(),
 ];
 
-class FilterAdvancedCard extends ConsumerStatefulWidget {
+class FilterAdvancedCard extends ConsumerWidget {
   const FilterAdvancedCard({
     super.key,
     required this.config,
@@ -44,11 +44,112 @@ class FilterAdvancedCard extends ConsumerStatefulWidget {
   final DesktopFilterConfig config;
   final bool saving;
 
+  Future<void> _toggle(
+    BuildContext context,
+    WidgetRef ref,
+    DesktopFilterConfig next, {
+    required String success,
+  }) async {
+    final l10n = context.l10n;
+    final error = await ref
+        .read(desktopFilterConfigProvider.notifier)
+        .save(next);
+    if (!context.mounted) return;
+    showDesktopMessage(
+      context,
+      error == null
+          ? success
+          : l10n.desktopFilterConfigSaveFailed(error.message),
+    );
+  }
+
   @override
-  ConsumerState<FilterAdvancedCard> createState() => _FilterAdvancedCardState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final saving = this.saving;
+    return DashboardCard(
+      semanticLabel: l10n.desktopFilterAdvancedTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DashboardCardHeader(
+            glyph: AppGlyphs.rules,
+            title: l10n.desktopFilterAdvancedTitle,
+            trailing: [
+              if (saving)
+                const SizedBox.square(
+                  dimension: 16,
+                  child: CommonCircleLoading(),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.desktopFilterAdvancedBody,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: DashboardText.label(context),
+          ),
+          const SizedBox(height: 12),
+          FilterToggleRow(
+            title: l10n.desktopFilterAdvancedResponseTitle,
+            body: l10n.desktopFilterAdvancedResponseBody,
+            value: config.filterResponse,
+            onChanged: saving
+                ? null
+                : (value) => unawaited(
+                    _toggle(
+                      context,
+                      ref,
+                      config.copyWith(filterResponse: value),
+                      success: value
+                          ? l10n.desktopFilterAdvancedResponseOn
+                          : l10n.desktopFilterAdvancedResponseOff,
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 8),
+          FilterToggleRow(
+            title: l10n.desktopFilterAdvancedAllowlistTitle,
+            body: l10n.desktopFilterAdvancedAllowlistBody,
+            value: config.allowlistOnly,
+            warning: l10n.desktopFilterAdvancedAllowlistWarning,
+            onChanged: saving
+                ? null
+                : (value) => unawaited(
+                    _toggle(
+                      context,
+                      ref,
+                      config.copyWith(allowlistOnly: value),
+                      success: value
+                          ? l10n.desktopFilterAdvancedAllowlistOn
+                          : l10n.desktopFilterAdvancedAllowlistOff,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _FilterAdvancedCardState extends ConsumerState<FilterAdvancedCard> {
+/// The bogus-NXDOMAIN correction: the switch and the address list that marks an upstream answer as a
+/// hijack page.
+class BogusNxDomainCard extends ConsumerStatefulWidget {
+  const BogusNxDomainCard({
+    super.key,
+    required this.config,
+    required this.saving,
+  });
+
+  final DesktopFilterConfig config;
+  final bool saving;
+
+  @override
+  ConsumerState<BogusNxDomainCard> createState() => _BogusNxDomainCardState();
+}
+
+class _BogusNxDomainCardState extends ConsumerState<BogusNxDomainCard> {
   final _networks = TextEditingController();
   DesktopFilterConfig? _adopted;
   bool _dirty = false;
@@ -60,7 +161,7 @@ class _FilterAdvancedCardState extends ConsumerState<FilterAdvancedCard> {
   }
 
   @override
-  void didUpdateWidget(FilterAdvancedCard oldWidget) {
+  void didUpdateWidget(BogusNxDomainCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     _adopt(widget.config);
   }
@@ -122,69 +223,35 @@ class _FilterAdvancedCardState extends ConsumerState<FilterAdvancedCard> {
         .where((entry) => !_addressShape.hasMatch(entry))
         .toList();
     return DashboardCard(
-      semanticLabel: l10n.desktopFilterAdvancedTitle,
+      semanticLabel: l10n.desktopFilterAdvancedBogusTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.rules,
-            title: l10n.desktopFilterAdvancedTitle,
+            glyph: AppGlyphs.warning,
+            title: l10n.desktopFilterAdvancedBogusTitle,
+            leading: [
+              DashboardChip(
+                label: config.bogusNxDomain
+                    ? l10n.commonEnabled
+                    : l10n.commonDisabled,
+                tone: config.bogusNxDomain
+                    ? DashboardChipTone.ok
+                    : DashboardChipTone.idle,
+                dot: config.bogusNxDomain,
+              ),
+            ],
             trailing: [
               if (saving)
                 const SizedBox.square(
                   dimension: 16,
                   child: CommonCircleLoading(),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.desktopFilterAdvancedBody,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: DashboardText.label(context),
-          ),
-          const SizedBox(height: 12),
-          FilterToggleRow(
-            title: l10n.desktopFilterAdvancedResponseTitle,
-            body: l10n.desktopFilterAdvancedResponseBody,
-            value: config.filterResponse,
-            onChanged: saving
-                ? null
-                : (value) => unawaited(
-                    _toggle(
-                      config.copyWith(filterResponse: value),
-                      success: value
-                          ? l10n.desktopFilterAdvancedResponseOn
-                          : l10n.desktopFilterAdvancedResponseOff,
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 8),
-          FilterToggleRow(
-            title: l10n.desktopFilterAdvancedAllowlistTitle,
-            body: l10n.desktopFilterAdvancedAllowlistBody,
-            value: config.allowlistOnly,
-            warning: l10n.desktopFilterAdvancedAllowlistWarning,
-            onChanged: saving
-                ? null
-                : (value) => unawaited(
-                    _toggle(
-                      config.copyWith(allowlistOnly: value),
-                      success: value
-                          ? l10n.desktopFilterAdvancedAllowlistOn
-                          : l10n.desktopFilterAdvancedAllowlistOff,
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 8),
-          FilterToggleRow(
-            title: l10n.desktopFilterAdvancedBogusTitle,
-            body: l10n.desktopFilterAdvancedBogusBody,
-            value: config.bogusNxDomain,
-            onChanged: saving
-                ? null
-                : (value) => unawaited(
+                )
+              else
+                DashboardSwitch(
+                  value: config.bogusNxDomain,
+                  semanticLabel: l10n.desktopFilterAdvancedBogusTitle,
+                  onChanged: (value) => unawaited(
                     _toggle(
                       config.copyWith(bogusNxDomain: value),
                       success: value
@@ -192,9 +259,18 @@ class _FilterAdvancedCardState extends ConsumerState<FilterAdvancedCard> {
                           : l10n.desktopFilterAdvancedBogusOff,
                     ),
                   ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.desktopFilterAdvancedBogusBody,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: DashboardText.label(context),
           ),
           if (config.bogusNxDomain) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               l10n.desktopFilterAdvancedBogusListLabel,
               style: DashboardText.rowTitle(context),

@@ -1,6 +1,6 @@
-// Desktop home, device half (desktop parity): the
-// recognised clients plus the ACL and rate limit from `/status`. Every value comes from the
-// service; each write re-reads the state it touched.
+// Desktop devices (desktop parity): the recognised clients on the dashboard, and the ACL and rate
+// limit on the feature hub's client-access page. Every value comes from the service; each write
+// re-reads the state it touched.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
@@ -10,6 +10,7 @@ import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_client_access_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/filter_common.dart';
 import 'package:diting_desktop/pages/traffic/desktop_client_groups_page.dart';
 import 'package:diting_desktop/pages/traffic/widgets/client_access_card.dart';
@@ -30,6 +31,7 @@ void main() {
     WidgetTester tester, {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 900),
+    bool accessPage = false,
   }) async {
     final fake = backend ?? FakeDesktopBackend();
     tester.view.physicalSize = size;
@@ -43,15 +45,23 @@ void main() {
           desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(fake.client()),
         ],
-        child: const DesktopApp(initialLocation: Routes.home),
+        child: DesktopApp(
+          initialLocation: accessPage
+              ? DesktopClientAccessPage.path
+              : Routes.home,
+        ),
       ),
     );
     await tester.pumpAndSettle();
     return fake;
   }
 
-  AppL10n l10nOf(WidgetTester tester) =>
-      tester.element(find.byType(DesktopHomePage)).l10n;
+  AppL10n l10nOf(WidgetTester tester) {
+    final page = find.byType(DesktopClientAccessPage);
+    return tester.element(
+      page.evaluate().isEmpty ? find.byType(DesktopHomePage) : page,
+    ).l10n;
+  }
 
   Finder inClients(Finder matching) =>
       find.descendant(of: find.byType(DesktopClientListCard), matching: matching);
@@ -184,7 +194,7 @@ void main() {
   });
 
   testWidgets('ACL 草稿按行去空行保存，撤销恢复服务端值', (tester) async {
-    final backend = await pumpTraffic(tester);
+    final backend = await pumpTraffic(tester, accessPage: true);
     final l10n = l10nOf(tester);
 
     final allowed = inAccess(find.byType(TextField)).first;
@@ -207,7 +217,7 @@ void main() {
   });
 
   testWidgets('限流开关提交整份表单，非法数值不提交', (tester) async {
-    final backend = await pumpTraffic(tester);
+    final backend = await pumpTraffic(tester, accessPage: true);
     final l10n = l10nOf(tester);
 
     final rate = inRateLimit(find.byType(TextFormField)).first;
@@ -232,7 +242,7 @@ void main() {
 
   testWidgets('写被拒时说明原因且开关保持服务端值', (tester) async {
     final backend = FakeDesktopBackend()..rejectWrites = true;
-    await pumpTraffic(tester, backend: backend);
+    await pumpTraffic(tester, backend: backend, accessPage: true);
     final l10n = l10nOf(tester);
 
     await tapAt(tester, inRateLimit(find.byType(DashboardSwitch)));
@@ -261,6 +271,14 @@ void main() {
   testWidgets('窄窗单列且不横向溢出', (tester) async {
     await pumpTraffic(tester, size: const Size(390, 844));
     expect(find.byType(DesktopClientListCard), findsOneWidget);
+    // The dashboard offers no ACL; that page is its own single column.
+    expect(find.byType(ClientAccessCard), findsNothing);
+    expect(find.byType(ClientRateLimitCard), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('访问控制页窄窗单列且不横向溢出', (tester) async {
+    await pumpTraffic(tester, size: const Size(390, 844), accessPage: true);
     expect(find.byType(ClientAccessCard), findsOneWidget);
     expect(find.byType(ClientRateLimitCard), findsOneWidget);
     expect(tester.takeException(), isNull);

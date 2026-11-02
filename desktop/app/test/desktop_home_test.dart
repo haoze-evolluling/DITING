@@ -11,8 +11,12 @@ import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting_desktop/pages/home/desktop_format.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
-import 'package:diting_desktop/pages/home/widgets/dashboard_tiles.dart';
 import 'package:diting_desktop/pages/home/widgets/recent_queries_card.dart';
+import 'package:diting_desktop/pages/logs/widgets/log_config_card.dart';
+import 'package:diting_desktop/pages/logs/widgets/log_live_panel.dart';
+import 'package:diting_desktop/pages/logs/widgets/log_query_table.dart';
+import 'package:diting_desktop/pages/traffic/widgets/client_access_card.dart';
+import 'package:diting_desktop/pages/traffic/widgets/client_rate_limit_card.dart';
 import 'package:diting_desktop/pages/home/widgets/desktop_power_button.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,12 +69,10 @@ void main() {
     final l10n = l10nOf(tester);
 
     expect(find.byType(DesktopHomePage), findsOneWidget);
-    // Two summary cards, two switches plus the host service, four cards.
+    // The dashboard's readings: no control tiles, because the home board only reports.
     for (final title in [
       l10n.desktopDnsServiceTitle,
       l10n.desktopQueriesTitle,
-      l10n.desktopTakeoverTitle,
-      l10n.desktopFilterPauseTitle,
       l10n.desktopServiceHostTitle,
       l10n.desktopCacheTitle,
       l10n.desktopFilterTitle,
@@ -187,20 +189,24 @@ void main() {
     expect(backend.has('/api/v1/dns/stop'), isFalse);
   });
 
-  testWidgets('接管开关把请求发到服务端', (tester) async {
-    final backend = FakeDesktopBackend(status: statusPayload(takeover: false));
-    await pumpHome(tester, backend: backend);
+  testWidgets('首页只有数据：没有开关、输入框与设置卡片', (tester) async {
+    await pumpHome(tester);
+    final l10n = l10nOf(tester);
 
-    backend.status = statusPayload(takeover: true);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(TakeoverTile),
-        matching: find.byType(DashboardCard),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(backend.has('/api/v1/takeover/enable'), isTrue);
+    // The board reports; it does not offer to change anything. The takeover and pause switches, the
+    // client ACL and rate limit, and the log policy and search moved to the feature hub.
+    expect(find.byType(DashboardSwitch), findsNothing);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(TextFormField), findsNothing);
+    expect(find.text(l10n.desktopFilterPauseTitle), findsNothing);
+    expect(find.byType(ClientAccessCard), findsNothing);
+    expect(find.byType(ClientRateLimitCard), findsNothing);
+    expect(find.byType(LogConfigCard), findsNothing);
+    expect(find.byType(LogLivePanel), findsNothing);
+    expect(find.byType(LogQueryTable), findsNothing);
+    // The readings that stay: the dashboard cards, the client list and the log summary/rankings.
+    expect(find.byType(DashboardCard), findsAtLeastNWidgets(8));
+    expect(find.byType(RecentQueriesCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

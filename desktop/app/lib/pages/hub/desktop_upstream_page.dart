@@ -100,6 +100,11 @@ class DesktopUpstreamPage extends ConsumerWidget {
                     saving: state.saving,
                     onChanged: save,
                   ),
+                  FallbackPolicyCard(
+                    config: config,
+                    saving: state.saving,
+                    onChanged: save,
+                  ),
                   ConditionalRoutesCard(
                     routes: config.conditionalRoutes,
                     saving: state.saving,

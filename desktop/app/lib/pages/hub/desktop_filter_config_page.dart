@@ -1,5 +1,6 @@
 /// The `hub` branch's blocking mode page: the master switch, the three answer modes, the addresses
-/// they return, the refresh interval, the temporary pause and the advanced switches.
+/// they return, the refresh interval, the temporary pause, the advanced switches and the bogus
+/// NXDOMAIN correction.
 ///
 /// The old desktop console (`ProtectView.vue`, `RulesPanel.vue` "config"/"advanced" tabs) is the
 /// functional blueprint. The page owns no blocking logic: it reads `/filter/config`,
@@ -92,8 +93,13 @@ class DesktopFilterConfigPage extends ConsumerWidget {
                         unawaited(_toggle(context, ref, config, value)),
                   ),
                   FilterModeCard(config: config, saving: state.saving),
+                  FilterBlockingParamsCard(
+                    config: config,
+                    saving: state.saving,
+                  ),
                   const FilterPauseCard(),
                   FilterAdvancedCard(config: config, saving: state.saving),
+                  BogusNxDomainCard(config: config, saving: state.saving),
                 ];
                 return PageBody(
                   children: [

@@ -10,6 +10,11 @@ import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_privacy_page.dart';
+import 'package:diting_desktop/pages/hub/widgets/privacy_block_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/privacy_hosts_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/privacy_parental_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/privacy_reputation_params_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/privacy_safe_search_ttl_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/privacy_defence_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/privacy_ecs_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/privacy_protocol_card.dart';
@@ -54,6 +59,26 @@ void main() {
 
   Finder inProtocol(Finder matching) => find.descendant(
     of: find.byType(PrivacyProtocolCard),
+    matching: matching,
+  );
+  Finder inBlock(Finder matching) => find.descendant(
+    of: find.byType(PrivacyBlockCard),
+    matching: matching,
+  );
+  Finder inHosts(Finder matching) => find.descendant(
+    of: find.byType(PrivacyHostsCard),
+    matching: matching,
+  );
+  Finder inSafeSearchTtl(Finder matching) => find.descendant(
+    of: find.byType(PrivacySafeSearchTtlCard),
+    matching: matching,
+  );
+  Finder inReputationParams(Finder matching) => find.descendant(
+    of: find.byType(PrivacyReputationParamsCard),
+    matching: matching,
+  );
+  Finder inParental(Finder matching) => find.descendant(
+    of: find.byType(PrivacyParentalCard),
     matching: matching,
   );
   Finder inEcs(Finder matching) =>
@@ -116,9 +141,13 @@ void main() {
     final l10n = l10nOf(tester);
 
     expect(find.text(l10n.desktopPrivacyProtocolTitle), findsOneWidget);
+    expect(find.text(l10n.desktopPrivacyBlockTitle), findsOneWidget);
     expect(find.text(l10n.desktopPrivacyEcsTitle), findsOneWidget);
-    expect(find.text(l10n.desktopPrivacyDefenceTitle), findsOneWidget);
-    expect(inProtocol(find.byType(DashboardSwitch)), findsNWidgets(6));
+    expect(find.text(l10n.desktopPrivacyRebindTitle), findsOneWidget);
+    expect(find.text(l10n.desktopPrivacyHostsTitle), findsOneWidget);
+    // The protocol card keeps the three protocol switches; the record-type blocks are their own card.
+    expect(inProtocol(find.byType(DashboardSwitch)), findsNWidgets(3));
+    expect(inBlock(find.byType(DashboardSwitch)), findsNWidgets(3));
     expect(
       tester.widget<DashboardSwitch>(
         inProtocol(find.byType(DashboardSwitch)).first,
@@ -157,7 +186,7 @@ void main() {
     final backend = await pumpPrivacy(tester);
     final l10n = l10nOf(tester);
 
-    await tapAt(tester, inProtocol(find.byType(DashboardSwitch)).at(4));
+    await tapAt(tester, inBlock(find.byType(DashboardSwitch)).at(1));
     expect(backend.privacyUpdates.last['blockANY'], isTrue);
     await clearMessages(tester);
 
@@ -204,7 +233,10 @@ void main() {
     final backend = await pumpPrivacy(tester);
     final l10n = l10nOf(tester);
 
-    await tapAt(tester, find.text(l10n.desktopPrivacyRebindAllowlist));
+    await tapAt(
+      tester,
+      inDefence(find.text(l10n.desktopPrivacyRebindAllowlist)),
+    );
     await tester.enterText(
       find.descendant(
         of: find.byType(CommonDialog),
@@ -227,7 +259,7 @@ void main() {
   testWidgets('Hosts 联动系统开关提交', (tester) async {
     final backend = await pumpPrivacy(tester);
 
-    await tapAt(tester, inDefence(find.byType(DashboardSwitch)).last);
+    await tapAt(tester, inHosts(find.byType(DashboardSwitch)).last);
 
     final update = backend.hostsUpdates.single;
     expect(update['useSystemHost'], isFalse);
@@ -260,10 +292,15 @@ void main() {
   testWidgets('窄窗下三张卡片单列且不横向溢出', (tester) async {
     await pumpPrivacy(tester, size: const Size(390, 844));
     expect(find.byType(PrivacyProtocolCard), findsOneWidget);
+    expect(find.byType(PrivacyBlockCard), findsOneWidget);
     expect(find.byType(PrivacyEcsCard), findsOneWidget);
     expect(find.byType(PrivacyDefenceCard), findsOneWidget);
+    expect(find.byType(PrivacyHostsCard), findsOneWidget);
     expect(find.byType(PrivacySafeSearchCard), findsOneWidget);
+    expect(find.byType(PrivacySafeSearchTtlCard), findsOneWidget);
     expect(find.byType(PrivacyReputationCard), findsOneWidget);
+    expect(find.byType(PrivacyReputationParamsCard), findsOneWidget);
+    expect(find.byType(PrivacyParentalCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   testWidgets('安全搜索开关与服务商各自提交', (tester) async {
@@ -298,13 +335,25 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
-    await tester.enterText(inSafeSearch(find.byType(TextFormField)), '0');
-    await tapAt(tester, inSafeSearch(find.text(l10n.desktopSafeSearchTtlSave)));
+    await tester.enterText(
+      inSafeSearchTtl(find.byType(TextFormField)),
+      '0',
+    );
+    await tapAt(
+      tester,
+      inSafeSearchTtl(find.text(l10n.desktopSafeSearchTtlSave)),
+    );
     expect(backend.safeSearchUpdates, isEmpty);
     expect(find.text(l10n.desktopSafeSearchTtlInvalid), findsOneWidget);
 
-    await tester.enterText(inSafeSearch(find.byType(TextFormField)), '120');
-    await tapAt(tester, inSafeSearch(find.text(l10n.desktopSafeSearchTtlSave)));
+    await tester.enterText(
+      inSafeSearchTtl(find.byType(TextFormField)),
+      '120',
+    );
+    await tapAt(
+      tester,
+      inSafeSearchTtl(find.text(l10n.desktopSafeSearchTtlSave)),
+    );
     expect(backend.safeSearchUpdates.single['ttl'], 120);
     await clearMessages(tester);
     expect(tester.takeException(), isNull);
@@ -323,14 +372,18 @@ void main() {
     expect(find.text('7'), findsWidgets);
     expect(find.text('75'), findsOneWidget, reason: '90 / 120 命中率');
 
-    await tapAt(tester, inReputation(find.byType(DashboardSwitch)).at(1));
+    expect(inReputation(find.byType(DashboardSwitch)), findsOneWidget);
+    await tapAt(tester, inParental(find.byType(DashboardSwitch)));
     expect(backend.safeBrowsingUpdates.single['parentalEnabled'], isTrue);
     await clearMessages(tester);
 
-    await tester.enterText(inReputation(find.byType(TextFormField)).at(0), '5000');
+    await tester.enterText(
+      inReputationParams(find.byType(TextFormField)).at(0),
+      '5000',
+    );
     await tapAt(
       tester,
-      inReputation(find.text(l10n.desktopReputationParamsSave)),
+      inReputationParams(find.text(l10n.desktopReputationParamsSave)),
     );
     expect(backend.safeBrowsingUpdates.last, {
       'timeoutMs': 5000,
@@ -350,10 +403,13 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
-    await tester.enterText(inReputation(find.byType(TextFormField)).at(0), '0');
+    await tester.enterText(
+      inReputationParams(find.byType(TextFormField)).at(0),
+      '0',
+    );
     await tapAt(
       tester,
-      inReputation(find.text(l10n.desktopReputationParamsSave)),
+      inReputationParams(find.text(l10n.desktopReputationParamsSave)),
     );
 
     expect(backend.safeBrowsingUpdates, isEmpty);

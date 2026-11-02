@@ -1,9 +1,9 @@
-/// Cache persistence: whether the in-memory answers are written to disk, how often, and the two
-/// manual operations.
+/// Cache persistence: whether the in-memory answers are written to disk, how often, and where.
 ///
-/// The old desktop console's `CachePersistCard.vue` is the blueprint: the switch applies at once,
-/// the interval travels on its own (clamped to 30–86400), the file path is read-only because the
-/// service owns the data layout, and a restore is confirmed because it overwrites entries.
+/// The old desktop console's `CachePersistCard.vue` is the blueprint: the switch applies at once, the
+/// interval travels on its own (clamped to 30–86400) and the file path is read-only because the service
+/// owns the data layout. The two manual operations are [CacheSnapshotCard], because a settings card and
+/// a pair of destructive-ish buttons answer different questions.
 library;
 
 import 'dart:async';
@@ -78,47 +78,10 @@ class _CachePersistCardState extends ConsumerState<CachePersistCard> {
     }
   }
 
-  Future<void> _load() async {
-    final l10n = context.l10n;
-    final confirmed = await confirmDesktopAction(
-      context,
-      title: l10n.desktopCachePersistLoadTitle,
-      body: l10n.desktopCachePersistLoadBody,
-      confirmLabel: l10n.desktopCachePersistLoad,
-      destructive: false,
-    );
-    if (!confirmed || !mounted) return;
-    final (error, persist) = await ref
-        .read(desktopCacheActionProvider.notifier)
-        .load();
-    if (!mounted) return;
-    showDesktopMessage(
-      context,
-      error == null
-          ? l10n.desktopCachePersistLoadDone(persist?.restored ?? 0)
-          : l10n.desktopCachePersistLoadFailed(error.message),
-    );
-  }
-
-  Future<void> _dump() async {
-    final l10n = context.l10n;
-    final (error, persist) = await ref
-        .read(desktopCacheActionProvider.notifier)
-        .dump();
-    if (!mounted) return;
-    showDesktopMessage(
-      context,
-      error == null
-          ? l10n.desktopCachePersistDumpDone(persist?.entryCount ?? 0)
-          : l10n.desktopCachePersistDumpFailed(error.message),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(desktopCacheConfigProvider);
-    final action = ref.watch(desktopCacheActionProvider);
     final config = state.config;
     final persist = widget.persist;
     if (config != null && _interval.isEmpty) {
@@ -178,87 +141,47 @@ class _CachePersistCardState extends ConsumerState<CachePersistCard> {
               error: state.error,
               onRetry: ref.read(desktopCacheConfigProvider.notifier).reload,
             )
-          else ...[
-            if (enabled) ...[
-              Row(
-                spacing: 10,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 240,
-                    child: TextFormField(
-                      initialValue: _interval,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        labelText: l10n.desktopCachePersistInterval,
-                        helperText: l10n.desktopCachePersistIntervalHint,
-                        helperMaxLines: 3,
-                      ),
-                      style: AppTextStyle.callout.of(context),
-                      onChanged: (value) => _interval = value,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: TonalButton(
-                      size: TonalButtonSize.compact,
-                      glyph: AppGlyphs.check,
-                      label: l10n.commonSave,
-                      onPressed: state.saving
-                          ? null
-                          : () => unawaited(_submitInterval(config)),
-                    ),
-                  ),
-                ],
-              ),
-              if (persist?.path.isNotEmpty ?? false) ...[
-                const SizedBox(height: 10),
-                _PathBlock(path: persist!.path),
-              ],
-              if (persist?.lastError.isNotEmpty ?? false) ...[
-                const SizedBox(height: 8),
-                _LastError(message: persist!.lastError),
-              ],
-            ],
-            const SizedBox(height: 12),
-            Text(
-              l10n.desktopCachePersistRecords(persist?.entryCount ?? 0),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: DashboardText.label(context),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+          else if (enabled) ...[
+            Row(
+              spacing: 10,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TonalButton(
-                  size: TonalButtonSize.compact,
-                  glyph: AppGlyphs.upload,
-                  label: l10n.desktopCachePersistLoad,
-                  onPressed: !enabled || action.isBusy ? null : _load,
+                SizedBox(
+                  width: 240,
+                  child: TextFormField(
+                    initialValue: _interval,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: l10n.desktopCachePersistInterval,
+                      helperText: l10n.desktopCachePersistIntervalHint,
+                      helperMaxLines: 3,
+                    ),
+                    style: AppTextStyle.callout.of(context),
+                    onChanged: (value) => _interval = value,
+                  ),
                 ),
-                TonalButton(
-                  size: TonalButtonSize.compact,
-                  glyph: AppGlyphs.bolt,
-                  label: l10n.desktopCachePersistDump,
-                  onPressed: !enabled || action.isBusy ? null : _dump,
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TonalButton(
+                    size: TonalButtonSize.compact,
+                    glyph: AppGlyphs.check,
+                    label: l10n.commonSave,
+                    onPressed: state.saving
+                        ? null
+                        : () => unawaited(_submitInterval(config)),
+                  ),
                 ),
               ],
             ),
-            if (action.error case final error?)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  l10n.desktopActionFailed(error.message),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
-                      .of(context)
-                      .copyWith(color: context.colorScheme.error),
-                ),
-              ),
+            if (persist?.path.isNotEmpty ?? false) ...[
+              const SizedBox(height: 10),
+              _PathBlock(path: persist!.path),
+            ],
+            if (persist?.lastError.isNotEmpty ?? false) ...[
+              const SizedBox(height: 8),
+              _LastError(message: persist!.lastError),
+            ],
           ],
         ],
       ),

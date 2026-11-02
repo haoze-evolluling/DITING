@@ -11,6 +11,7 @@ import 'package:diting_desktop/data/api/desktop_dns64_models.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/hub/desktop_dns64_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/dns64_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/dns64_prefixes_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,6 +49,8 @@ void main() {
 
   Finder inCard(Finder matching) =>
       find.descendant(of: find.byType(Dns64Card), matching: matching);
+  Finder inPrefixes(Finder matching) =>
+      find.descendant(of: find.byType(Dns64PrefixesCard), matching: matching);
 
   Future<void> tapAt(WidgetTester tester, Finder finder) async {
     await Scrollable.ensureVisible(
@@ -103,7 +106,9 @@ void main() {
       inCard(find.byType(DashboardSwitch)),
       findsOneWidget,
     );
-    final field = tester.widget<TextField>(inCard(find.byType(TextField)));
+    final field = tester.widget<TextField>(
+      inPrefixes(find.byType(TextField)),
+    );
     expect(field.controller?.text, '64:ff9b::/96\n2001:db8::/32');
     expect(tester.takeException(), isNull);
   });
@@ -117,15 +122,16 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
+    // 开关只提交开关：前缀草稿由前缀卡片的保存按钮提交。
     await tester.enterText(
-      inCard(find.byType(TextField)),
+      inPrefixes(find.byType(TextField)),
       '64:ff9b::/96\n2001:db8::/32',
     );
     await tapAt(tester, inCard(find.byType(DashboardSwitch)));
 
     final update = backend.dns64Updates.single;
     expect(update['enabled'], isTrue);
-    expect(update['prefixes'], ['64:ff9b::/96', '2001:db8::/32']);
+    expect(update['prefixes'], ['64:ff9b::/96']);
     expect(find.text(l10n.desktopDns64EngineOn), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -135,15 +141,17 @@ void main() {
     final l10n = l10nOf(tester);
 
     await tester.enterText(
-      inCard(find.byType(TextField)),
+      inPrefixes(find.byType(TextField)),
       ' 2001:db8::/32 \n\n',
     );
-    await tapAt(tester, find.text(l10n.desktopDns64Save));
+    await tapAt(tester, inPrefixes(find.text(l10n.desktopDns64Save)));
 
     final update = backend.dns64Updates.single;
     expect(update['enabled'], isFalse);
     expect(update['prefixes'], ['2001:db8::/32']);
-    final field = tester.widget<TextField>(inCard(find.byType(TextField)));
+    final field = tester.widget<TextField>(
+      inPrefixes(find.byType(TextField)),
+    );
     expect(field.controller?.text, '2001:db8::/32');
     expect(tester.takeException(), isNull);
   });
@@ -157,10 +165,12 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
-    await tapAt(tester, find.text(l10n.desktopDns64FillWellKnown));
+    await tapAt(tester, inPrefixes(find.text(l10n.desktopDns64FillWellKnown)));
 
     expect(backend.dns64Updates, isEmpty);
-    final field = tester.widget<TextField>(inCard(find.byType(TextField)));
+    final field = tester.widget<TextField>(
+      inPrefixes(find.byType(TextField)),
+    );
     expect(field.controller?.text, desktopDns64WellKnownPrefix);
     expect(tester.takeException(), isNull);
   });
@@ -187,6 +197,7 @@ void main() {
   testWidgets('窄窗下卡片不横向溢出', (tester) async {
     await pumpDns64(tester, size: const Size(390, 844));
     expect(find.byType(Dns64Card), findsOneWidget);
+    expect(find.byType(Dns64PrefixesCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

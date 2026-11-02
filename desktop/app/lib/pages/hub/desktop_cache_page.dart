@@ -1,5 +1,6 @@
 /// The `hub` branch's cache page: the acceleration engine, the service's telemetry, the ten hottest
-/// names, the policy form, persistence and the exclude rules, over the cached-entry table.
+/// names, the policy forms (TTL, fallback, prefetch), persistence and its snapshot, the exclude rules
+/// and the cached-entry table.
 ///
 /// The old desktop console (`ResolveView.vue` and its `accel/CachePanel.vue`) is the functional
 /// blueprint. The page owns no cache logic: it polls `/api/v1/cache/stats|top|persist`, posts the
@@ -14,8 +15,11 @@ import 'package:diting_desktop/data/api/desktop_cache_providers.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_config_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_entries_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_exclude_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/cache_fallback_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_overview_cards.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_persist_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/cache_prefetch_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/cache_snapshot_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_top_card.dart';
 import 'package:diting_desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting_desktop/widgets/desktop_feedback.dart';
@@ -94,7 +98,10 @@ class DesktopCachePage extends ConsumerWidget {
       CacheTelemetryCard(stats: stats),
       CacheTopCard(domains: snapshot.topDomains),
       const CacheConfigCard(),
+      const CacheFallbackCard(),
+      const CachePrefetchCard(),
       CachePersistCard(persist: snapshot.persist),
+      CacheSnapshotCard(persist: snapshot.persist),
       CacheExcludeCard(persist: snapshot.persist),
       const CacheEntriesCard(),
     ];

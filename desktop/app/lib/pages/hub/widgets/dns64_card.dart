@@ -1,9 +1,10 @@
-/// The DNS64 synthesizer card: the engine switch, the RFC 6052 prefix list and the protections the
-/// service applies on its own.
+/// The DNS64 synthesizer: the engine switch, what it does and the protections the service applies on
+/// its own.
 ///
-/// The old desktop console's `DNS64Panel.vue` is the blueprint. The switch saves the moment it
-/// moves and carries the prefixes as typed, the save button posts the whole form, and both re-read
-/// `/status`, so a prefix the service rejected never stays on screen as if it had been applied.
+/// The old desktop console's `DNS64Panel.vue` is the blueprint. The switch saves the moment it moves and
+/// both writes re-read `/status`, so a prefix the service rejected never stays on screen as if it had
+/// been applied. The prefix list is [Dns64PrefixesCard], because a five-line editor next to the long
+/// explanation made one card taller than the window.
 library;
 
 import 'dart:async';
@@ -18,91 +19,29 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-class Dns64Card extends ConsumerStatefulWidget {
+class Dns64Card extends ConsumerWidget {
   const Dns64Card({super.key, required this.config, required this.saving});
 
   final DesktopDns64Config config;
   final bool saving;
 
-  @override
-  ConsumerState<Dns64Card> createState() => _Dns64CardState();
-}
-
-class _Dns64CardState extends ConsumerState<Dns64Card> {
-  /// The prefixes as typed. Adopted from the service only when a new answer arrives, so a rebuild
-  /// never overwrites what is being edited.
-  final _prefixes = TextEditingController();
-  DesktopDns64Config? _adopted;
-
-  @override
-  void initState() {
-    super.initState();
-    _adopt(widget.config);
-  }
-
-  @override
-  void didUpdateWidget(Dns64Card oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _adopt(widget.config);
-  }
-
-  @override
-  void dispose() {
-    _prefixes.dispose();
-    super.dispose();
-  }
-
-  void _adopt(DesktopDns64Config config) {
-    if (identical(_adopted, config)) return;
-    _adopted = config;
-    _prefixes.text = config.prefixText;
-  }
-
-  Future<void> _save(DesktopDns64Config next, {required bool toggle}) async {
+  Future<void> _toggle(BuildContext context, WidgetRef ref, bool enabled) async {
     final l10n = context.l10n;
-    final error = await ref.read(desktopDns64Provider.notifier).save(next);
-    if (!mounted) return;
+    final error = await ref
+        .read(desktopDns64Provider.notifier)
+        .save(config.copyWith(enabled: enabled));
+    if (!context.mounted) return;
     showDesktopMessage(
       context,
       error == null
-          ? (toggle
-                ? (next.enabled
-                      ? l10n.desktopDns64ToggleOn
-                      : l10n.desktopDns64ToggleOff)
-                : l10n.desktopDns64Saved)
+          ? (enabled ? l10n.desktopDns64ToggleOn : l10n.desktopDns64ToggleOff)
           : l10n.desktopDns64SaveFailed(error.message),
     );
   }
 
-  /// The switch sends the typed prefixes too, exactly like the console: moving the switch must not
-  /// silently drop an edit that is already on screen.
-  void _toggle(bool enabled) {
-    unawaited(
-      _save(
-        widget.config.copyWith(
-          enabled: enabled,
-          prefixes: desktopDns64ParsePrefixes(_prefixes.text),
-        ),
-        toggle: true,
-      ),
-    );
-  }
-
-  void _submit() {
-    unawaited(
-      _save(
-        widget.config.copyWith(
-          prefixes: desktopDns64ParsePrefixes(_prefixes.text),
-        ),
-        toggle: false,
-      ),
-    );
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final config = widget.config;
     final colorScheme = context.colorScheme;
     return DashboardCard(
       semanticLabel: l10n.desktopDns64CardTitle,
@@ -124,11 +63,18 @@ class _Dns64CardState extends ConsumerState<Dns64Card> {
               ),
             ],
             trailing: [
-              DashboardSwitch(
-                value: config.enabled,
-                semanticLabel: l10n.desktopDns64CardTitle,
-                onChanged: widget.saving ? null : _toggle,
-              ),
+              if (saving)
+                const SizedBox.square(
+                  dimension: 16,
+                  child: CommonCircleLoading(),
+                )
+              else
+                DashboardSwitch(
+                  value: config.enabled,
+                  semanticLabel: l10n.desktopDns64CardTitle,
+                  onChanged: (value) =>
+                      unawaited(_toggle(context, ref, value)),
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -141,39 +87,6 @@ class _Dns64CardState extends ConsumerState<Dns64Card> {
           const SizedBox(height: 12),
           Text(
             l10n.desktopDns64Description,
-            style: DashboardText.label(context),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                l10n.desktopDns64PrefixesLabel,
-                style: DashboardText.rowTitle(context),
-              ),
-              TextButton(
-                onPressed: widget.saving
-                    ? null
-                    : () => setState(
-                        () => _prefixes.text = desktopDns64WellKnownPrefix,
-                      ),
-                child: Text(l10n.desktopDns64FillWellKnown),
-              ),
-            ],
-          ),
-          TextField(
-            controller: _prefixes,
-            minLines: 3,
-            maxLines: 5,
-            keyboardType: TextInputType.multiline,
-            style: AppTextStyle.callout.of(context).toMonospace,
-            decoration: const InputDecoration(hintText: desktopDns64WellKnownPrefix),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.desktopDns64PrefixesHelper,
             style: DashboardText.label(context),
           ),
           const SizedBox(height: 14),
@@ -205,24 +118,6 @@ class _Dns64CardState extends ConsumerState<Dns64Card> {
                   style: DashboardText.label(context),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: FilledButton.tonalIcon(
-              onPressed: widget.saving ? null : _submit,
-              icon: widget.saving
-                  ? const SizedBox.square(
-                      dimension: 14,
-                      child: CommonCircleLoading(),
-                    )
-                  : const GlyphIcon(AppGlyphs.check, size: 16),
-              label: Text(
-                widget.saving
-                    ? l10n.desktopDns64Saving
-                    : l10n.desktopDns64Save,
-              ),
             ),
           ),
         ],

@@ -16,6 +16,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_tools_providers.dart';
 import 'package:diting_desktop/pages/hub/desktop_adapters_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_cache_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_client_access_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_dns64_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_encrypted_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_filter_config_page.dart';
@@ -24,6 +25,7 @@ import 'package:diting_desktop/pages/hub/desktop_filter_rules_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_lan_dns_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_schedule_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_privacy_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_query_log_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_services_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_rewrite_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_upstream_page.dart';
@@ -214,6 +216,13 @@ class DesktopFeatureHubPage extends ConsumerWidget {
                     body: l10n.desktopLanWebEntryBody,
                     path: DesktopLanWebPage.path,
                   ),
+                  _entry(
+                    context,
+                    glyph: AppGlyphs.devices,
+                    title: l10n.desktopHubClientAccess,
+                    body: l10n.desktopHubClientAccessBody,
+                    path: DesktopClientAccessPage.path,
+                  ),
                 ],
               ),
               // Everything that answers 「为什么解析不对」: the rule tester (a sub-page, because it
@@ -227,6 +236,13 @@ class DesktopFeatureHubPage extends ConsumerWidget {
                     title: l10n.desktopToolsRulePageTitle,
                     body: l10n.desktopToolsRuleEntryBody,
                     path: DesktopRuleCheckPage.path,
+                  ),
+                  _entry(
+                    context,
+                    glyph: AppGlyphs.logs,
+                    title: l10n.desktopHubQueryLog,
+                    body: l10n.desktopHubQueryLogBody,
+                    path: DesktopQueryLogPage.path,
                   ),
                 ],
                 cards: [

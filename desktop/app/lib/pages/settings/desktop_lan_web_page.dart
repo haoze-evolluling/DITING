@@ -8,6 +8,7 @@ library;
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
 import 'package:diting_desktop/data/api/desktop_web_providers.dart';
+import 'package:diting_desktop/pages/settings/widgets/lan_web_access_card.dart';
 import 'package:diting_desktop/pages/settings/widgets/lan_web_card.dart';
 import 'package:diting_desktop/widgets/desktop_card_board.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -53,7 +54,10 @@ class DesktopLanWebPage extends ConsumerWidget {
                     ? StaleStatusNotice(onRetry: retry)
                     : const SizedBox.shrink(),
                 DesktopCardBoard(
-                  cards: [LanWebCard(status: status, saving: state.saving)],
+                  cards: [
+                    LanWebCard(status: status, saving: state.saving),
+                    LanWebAccessCard(status: status, saving: state.saving),
+                  ],
                 ),
               ],
             ),

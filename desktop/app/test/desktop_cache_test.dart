@@ -14,7 +14,10 @@ import 'package:diting_desktop/pages/hub/desktop_cache_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_overview_cards.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_entries_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/cache_config_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/cache_fallback_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_persist_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/cache_snapshot_card.dart';
 import 'package:diting_desktop/widgets/masonry_grid.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -56,6 +59,12 @@ void main() {
       find.descendant(of: find.byType(CacheEngineCard), matching: matching);
   Finder inPersist(Finder matching) =>
       find.descendant(of: find.byType(CachePersistCard), matching: matching);
+  Finder inSnapshot(Finder matching) =>
+      find.descendant(of: find.byType(CacheSnapshotCard), matching: matching);
+  Finder inConfig(Finder matching) =>
+      find.descendant(of: find.byType(CacheConfigCard), matching: matching);
+  Finder inFallback(Finder matching) =>
+      find.descendant(of: find.byType(CacheFallbackCard), matching: matching);
   Finder inEntries(Finder matching) =>
       find.descendant(of: find.byType(CacheEntriesCard), matching: matching);
   Finder inDialog(Finder matching) =>
@@ -139,7 +148,8 @@ void main() {
     final backend = await pumpCache(tester);
     final l10n = l10nOf(tester);
 
-    final numbers = find.byType(TextFormField);
+    // 策略卡片只提交 TTL 上下限：回退与预取的秒数各有自己的卡片和按钮。
+    final numbers = inConfig(find.byType(TextFormField));
     await tester.ensureVisible(numbers.first);
     await tester.enterText(numbers.first, '');
     await tester.pumpAndSettle();
@@ -149,15 +159,21 @@ void main() {
 
     await tester.enterText(numbers.first, '900');
     await tester.enterText(numbers.at(1), '90');
-    await tester.enterText(numbers.at(2), '240');
     await tester.pumpAndSettle();
     await tapAt(tester, find.byTooltip(l10n.desktopCacheConfigSave));
 
     final update = backend.cacheConfigUpdates.last;
     expect(update['maxTtlSeconds'], 900);
     expect(update['minTtlSeconds'], 90);
-    expect(update['staleFallbackSeconds'], 240);
+    expect(update['staleFallbackSeconds'], 300, reason: '未编辑的项原样带上');
     expect(update['prefetchEnabled'], isFalse, reason: '未开启的项原样带上');
+    await clearMessages(tester);
+
+    final stale = inFallback(find.byType(TextFormField));
+    await tester.enterText(stale.first, '240');
+    await tester.pumpAndSettle();
+    await tapAt(tester, inFallback(find.text(l10n.commonSave)));
+    expect(backend.cacheConfigUpdates.last['staleFallbackSeconds'], 240);
     expect(tester.takeException(), isNull);
   });
 
@@ -222,7 +238,7 @@ void main() {
     );
     await clearMessages(tester);
 
-    await tapAt(tester, inPersist(find.text(l10n.desktopCachePersistLoad)));
+    await tapAt(tester, inSnapshot(find.text(l10n.desktopCachePersistLoad)));
     expect(find.text(l10n.desktopCachePersistLoadTitle), findsOneWidget);
     await tapAt(tester, inDialog(find.text(l10n.desktopCachePersistLoad)));
     expect(backend.cacheLoads, 1);
@@ -274,7 +290,7 @@ void main() {
     await pumpCache(tester);
     expect(find.byType(MasonryGrid), findsOneWidget);
     final cards = find.byType(DashboardCard).evaluate().toList();
-    expect(cards, hasLength(7));
+    expect(cards, hasLength(10));
     final boxes = [
       for (final element in cards) element.renderObject! as RenderBox,
     ];

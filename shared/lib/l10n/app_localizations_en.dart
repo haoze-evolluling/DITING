@@ -9952,6 +9952,17 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String get desktopUpstreamFallbackPolicyTitle => 'Fallback triggers';
+
+  @override
+  String get desktopUpstreamFallbackPolicyBody =>
+      'When the backup upstreams are used: timeouts, response codes and lookup failures';
+
+  @override
+  String get desktopUpstreamFallbackPolicyOff =>
+      'The fallback chain is off, so these triggers do nothing yet.';
+
+  @override
   String get desktopUpstreamFallbackTitle => 'Independent fallback chain';
 
   @override
@@ -10111,6 +10122,13 @@ class AppL10nEn extends AppL10n {
       'The acceleration policy is saved and active';
 
   @override
+  String get desktopCacheFallbackTitle => 'Weak-network fallback';
+
+  @override
+  String get desktopCacheFallbackBody =>
+      'Serve a stale record while upstreams falter, and refresh optimistically';
+
+  @override
   String get desktopCacheModeLabel => 'How record lifetime is computed';
 
   @override
@@ -10226,6 +10244,13 @@ class AppL10nEn extends AppL10n {
   String desktopCachePersistRecords(int count) {
     return '$count records can be written';
   }
+
+  @override
+  String get desktopCacheSnapshotTitle => 'Disk snapshot';
+
+  @override
+  String get desktopCacheSnapshotBody =>
+      'Write the current cache to the persistence file now, or read the last one back';
 
   @override
   String get desktopCachePersistDump => 'Write now';
@@ -10659,6 +10684,13 @@ class AppL10nEn extends AppL10n {
   String get desktopRewriteChipEmpty => 'Empty';
 
   @override
+  String get desktopZoneSettingsTitle => 'Zones switch and default TTL';
+
+  @override
+  String get desktopZoneSettingsBody =>
+      'Turn local authoritative zones on, and set the TTL for records that do not state one';
+
+  @override
   String get desktopZoneTitle => 'Local zones';
 
   @override
@@ -10808,6 +10840,9 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopDns64Description =>
       'When a client on an IPv6-only network reaches the internet through a NAT64 gateway and a name has only IPv4 (A) records, the DNS64 engine embeds the address into the configured prefix and answers with AAAA, so the client can still connect end to end.';
+
+  @override
+  String get desktopDns64PrefixesCardTitle => 'Synthesis prefixes';
 
   @override
   String get desktopDns64PrefixesLabel => 'Synthesis prefixes (one per line)';
@@ -11228,6 +11263,10 @@ class AppL10nEn extends AppL10n {
       'List refresh and blocking addresses';
 
   @override
+  String get desktopFilterModeParamsBody =>
+      'The address a blocked name is answered with, and how often the rule lists refresh';
+
+  @override
   String get desktopFilterModeBlockingIPv4 => 'Blocking IPv4 address';
 
   @override
@@ -11516,6 +11555,13 @@ class AppL10nEn extends AppL10n {
       'Could not read the built-in service catalogue';
 
   @override
+  String get desktopServicesGroupsTitle => 'Whole-group blocking';
+
+  @override
+  String get desktopServicesGroupsBody =>
+      'Turn a whole group of apps and sites on or off in one tap';
+
+  @override
   String get desktopServicesTitle => 'App and site blocking';
 
   @override
@@ -11657,6 +11703,13 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopPrivacyProtocolBody =>
       'Stops private PTR and single-label leaks, and blocks ECH bypasses and packet-length side channels';
+
+  @override
+  String get desktopPrivacyBlockTitle => 'Record-type blocking';
+
+  @override
+  String get desktopPrivacyBlockBody =>
+      'How ECH, ANY and IPv6 lookups are handled, kept apart from protocol hardening';
 
   @override
   String get desktopPrivacyEdeTitle => 'Extended DNS Errors (EDE)';
@@ -11935,6 +11988,18 @@ class AppL10nEn extends AppL10n {
       'An unchecked provider is resolved normally.';
 
   @override
+  String get desktopSafeSearchTtlCardTitle => 'Safe-search rewrite lifetime';
+
+  @override
+  String get desktopSafeSearchTtlCardBody =>
+      'How long a forced safe-search rewrite is kept locally before the service asks upstream again.';
+
+  @override
+  String desktopSafeSearchTtlChip(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
   String get desktopSafeSearchBing => 'Bing';
 
   @override
@@ -12000,6 +12065,9 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopReputationCacheTtl => 'Cache lifetime (s)';
+
+  @override
+  String get desktopReputationParamsTitle => 'Lookup parameters';
 
   @override
   String get desktopReputationParamsInvalid =>
@@ -12812,6 +12880,16 @@ class AppL10nEn extends AppL10n {
       'Simulate one lookup and read the matched rule and verdict';
 
   @override
+  String get desktopHubQueryLog => 'Query log';
+
+  @override
+  String get desktopHubQueryLogBody =>
+      'Live query stream, searchable history and retention policy';
+
+  @override
+  String get desktopQueryLogPageTitle => 'Query log';
+
+  @override
   String get desktopToolsRuleInputTitle => 'Blocking simulation';
 
   @override
@@ -13045,10 +13123,27 @@ class AppL10nEn extends AppL10n {
       'Remote access switch, URLs, firewall rule and admin credential';
 
   @override
+  String get desktopHubClientAccess => 'Client access';
+
+  @override
+  String get desktopHubClientAccessBody =>
+      'Which LAN clients may resolve, and the query rate limit each one gets';
+
+  @override
+  String get desktopClientAccessPageTitle => 'Client access control';
+
+  @override
   String get desktopLanWebRefresh => 'Reload the LAN console status';
 
   @override
   String get desktopLanWebLoadFailed => 'Could not read the LAN console status';
+
+  @override
+  String get desktopLanWebAccessTitle => 'Firewall rule and admin credential';
+
+  @override
+  String get desktopLanWebAccessBody =>
+      'The firewall rule and the login this console uses; the credential only affects LAN access';
 
   @override
   String get desktopLanWebTitle => 'LAN web console';
@@ -13311,6 +13406,13 @@ class AppL10nEn extends AppL10n {
   @override
   String get desktopLanDnsOff =>
       'LAN DNS service is off; listening locally again';
+
+  @override
+  String get desktopLanDnsAddressesCardTitle => 'Listen and access addresses';
+
+  @override
+  String get desktopLanDnsAddressesCardBody =>
+      'Where the service is bound, and the address other devices on the LAN can use';
 
   @override
   String get desktopLanDnsListenTitle => 'Addresses being listened on';

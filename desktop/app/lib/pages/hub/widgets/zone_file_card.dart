@@ -1,8 +1,10 @@
-/// The local authoritative zones: one row per zone with its build result, an expandable RFC 1035
-/// text area, and a preview that runs the service's own parser before saving.
+/// The local authoritative zones: one row per zone with its build result, an expandable RFC 1035 text
+/// area, and a preview that runs the service's own parser before saving.
 ///
-/// The old desktop console's `ZoneFileCard.vue` is the blueprint. Zone text is edited locally and
-/// only "save all" posts it; a rejected save rolls the list back to what the service still holds.
+/// The old desktop console's `ZoneFileCard.vue` is the blueprint. Zone text is edited locally and only
+/// "save all" posts it; a rejected save rolls the list back to what the service still holds. The switch
+/// and the default TTL are [ZoneSettingsCard], because a list of editable blocks and its header
+/// settings in one card made it the tallest card in the window.
 library;
 
 import 'dart:async';
@@ -16,15 +18,13 @@ import 'package:diting_desktop/widgets/desktop_feedback.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-const double _numberWidth = 190;
-const double _badgeWidth = 132;
-
 /// Below this the state chip moves under the row, so a narrow window does not squeeze the apex.
 const double _chipInlineBreakpoint = 560;
+
+const double _badgeWidth = 132;
 
 /// A new zone starts as a working example, exactly like the console's template.
 const String _zoneTemplate =
@@ -40,7 +40,6 @@ class ZoneFileCard extends ConsumerStatefulWidget {
 }
 
 class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
-  final _ttl = TextEditingController();
   final _zones = <DesktopZoneEntry>[];
   final _previews = <String, ({bool ok, String text})>{};
 
@@ -49,13 +48,6 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
   List<DesktopZoneEntry>? _adopted;
 
   String _expanded = '';
-  bool _ttlInvalid = false;
-
-  @override
-  void dispose() {
-    _ttl.dispose();
-    super.dispose();
-  }
 
   void _adopt(DesktopZoneConfig config) {
     if (identical(_adopted, config.zones)) return;
@@ -63,40 +55,7 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
     _zones
       ..clear()
       ..addAll(config.zones);
-    _ttl.text = '${config.effectiveTtl}';
     _previews.clear();
-  }
-
-  Future<void> _toggle(bool enabled) async {
-    final l10n = context.l10n;
-    final error = await ref
-        .read(desktopZoneProvider.notifier)
-        .setEnabled(enabled);
-    if (!mounted) return;
-    showDesktopMessage(
-      context,
-      error == null
-          ? (enabled ? l10n.desktopZoneToggleOn : l10n.desktopZoneToggleOff)
-          : l10n.desktopZoneSaveFailed(error.message),
-    );
-  }
-
-  Future<void> _saveTtl() async {
-    final l10n = context.l10n;
-    final ttl = int.tryParse(_ttl.text);
-    if (ttl == null || ttl <= 0) {
-      setState(() => _ttlInvalid = true);
-      return;
-    }
-    setState(() => _ttlInvalid = false);
-    final error = await ref.read(desktopZoneProvider.notifier).setTtl(ttl);
-    if (!mounted) return;
-    showDesktopMessage(
-      context,
-      error == null
-          ? l10n.desktopZoneTtlSaved
-          : l10n.desktopZoneSaveFailed(error.message),
-    );
   }
 
   /// Posts the whole list. On a rejection the drafts go back to [rollback], because a zone list the
@@ -171,9 +130,8 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
     _previews.remove(id);
   }
 
-  Future<void> _preview(DesktopZoneEntry zone) async {
+  Future<void> _preview(DesktopZoneEntry zone, int ttl) async {
     final l10n = context.l10n;
-    final ttl = int.tryParse(_ttl.text) ?? desktopZoneDefaultTtl;
     try {
       final result = await ref
           .read(desktopApiClientProvider)
@@ -218,22 +176,16 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.dns,
+            glyph: AppGlyphs.rules,
             title: l10n.desktopZoneTitle,
             leading: [
-              if (config == null)
-                const SizedBox.square(
-                  dimension: 14,
-                  child: CommonCircleLoading(),
-                )
-              else
-                DashboardChip(
-                  label: l10n.desktopZoneBadge(
-                    config.zones.length,
-                    config.maxZones,
-                    config.recordCount,
-                  ),
+              DashboardChip(
+                label: l10n.desktopZoneBadge(
+                  _zones.length,
+                  config?.maxZones ?? _zones.length,
+                  config?.recordCount ?? 0,
                 ),
+              ),
             ],
             trailing: [
               if (state.saving)
@@ -242,127 +194,76 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
                   child: CommonCircleLoading(),
                 )
               else if (config != null)
-                DashboardSwitch(
-                  value: config.enabled,
-                  semanticLabel: l10n.desktopZoneTitle,
-                  onChanged: (value) => _toggle(value),
+                DashboardChip(
+                  label: config.enabled
+                      ? l10n.commonEnabled
+                      : l10n.commonDisabled,
+                  tone: config.enabled
+                      ? DashboardChipTone.ok
+                      : DashboardChipTone.idle,
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.desktopZoneBody,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: DashboardText.label(context),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           if (config == null)
             _Unavailable(
               error: state.error,
               onRetry: ref.read(desktopZoneProvider.notifier).reload,
             )
-          else
-            ..._body(context, config, state),
+          else ...[
+            Text(
+              l10n.desktopZoneLimit(config.maxRecords),
+              style: DashboardText.label(context),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                TonalButton(
+                  size: TonalButtonSize.compact,
+                  glyph: AppGlyphs.add,
+                  label: l10n.desktopZoneAdd,
+                  onPressed: state.saving ? null : () => _add(config),
+                ),
+                TonalButton(
+                  size: TonalButtonSize.compact,
+                  glyph: AppGlyphs.check,
+                  label: l10n.desktopZoneSaveAll,
+                  onPressed: state.saving || _zones.isEmpty
+                      ? null
+                      : () => unawaited(
+                          _persist(rollback: List.of(_zones)),
+                        ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (_zones.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  l10n.desktopZoneEmpty,
+                  textAlign: TextAlign.center,
+                  style: DashboardText.label(context),
+                ),
+              )
+            else
+              for (final zone in _zones) ...[
+                _zoneRow(
+                  context,
+                  zone,
+                  config,
+                  state.saving,
+                  config.effectiveTtl,
+                ),
+                const SizedBox(height: 8),
+              ],
+          ],
         ],
       ),
     );
-  }
-
-  List<Widget> _body(
-    BuildContext context,
-    DesktopZoneConfig config,
-    DesktopZoneConfigState state,
-  ) {
-    final l10n = context.l10n;
-    final colorScheme = context.colorScheme;
-    return [
-      Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          SizedBox(
-            width: _numberWidth,
-            child: TextFormField(
-              controller: _ttl,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                labelText: l10n.desktopZoneDefaultTtl,
-              ),
-              style: AppTextStyle.callout.of(context),
-              onChanged: (_) {
-                if (_ttlInvalid) setState(() => _ttlInvalid = false);
-              },
-            ),
-          ),
-          TonalButton(
-            size: TonalButtonSize.compact,
-            label: l10n.commonSave,
-            onPressed: state.saving ? null : () => unawaited(_saveTtl()),
-          ),
-        ],
-      ),
-      if (_ttlInvalid) ...[
-        const SizedBox(height: 8),
-        Text(
-          l10n.desktopZoneTtlInvalid,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyle.caption1
-              .of(context)
-              .copyWith(color: colorScheme.error),
-        ),
-      ],
-      const SizedBox(height: 12),
-      Text(
-        l10n.desktopZoneRules,
-        maxLines: 5,
-        overflow: TextOverflow.ellipsis,
-        style: DashboardText.label(context),
-      ),
-      const SizedBox(height: 12),
-      Wrap(
-        spacing: 10,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(
-            l10n.desktopZoneLimit(config.maxRecords),
-            style: DashboardText.label(context),
-          ),
-          TonalButton(
-            size: TonalButtonSize.compact,
-            glyph: AppGlyphs.add,
-            label: l10n.desktopZoneAdd,
-            onPressed: state.saving ? null : () => _add(config),
-          ),
-          TonalButton(
-            size: TonalButtonSize.compact,
-            label: l10n.desktopZoneSaveAll,
-            onPressed: state.saving || _zones.isEmpty
-                ? null
-                : () => unawaited(_persist(rollback: List.of(_zones))),
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-      if (_zones.isEmpty)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Text(
-            l10n.desktopZoneEmpty,
-            textAlign: TextAlign.center,
-            style: DashboardText.label(context),
-          ),
-        )
-      else
-        for (final zone in _zones) ...[
-          _zoneRow(context, zone, config, state.saving),
-          const SizedBox(height: 8),
-        ],
-    ];
   }
 
   Widget _zoneRow(
@@ -370,6 +271,7 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
     DesktopZoneEntry zone,
     DesktopZoneConfig config,
     bool saving,
+    int ttl,
   ) {
     final l10n = context.l10n;
     final colorScheme = context.colorScheme;
@@ -491,7 +393,7 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
                   size: TonalButtonSize.compact,
                   glyph: AppGlyphs.check,
                   label: l10n.desktopZonePreview,
-                  onPressed: () => unawaited(_preview(zone)),
+                  onPressed: () => unawaited(_preview(zone, ttl)),
                 ),
                 Text(
                   l10n.desktopZonePreviewNote,

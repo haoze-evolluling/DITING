@@ -1,8 +1,9 @@
-/// The blocking response form: the three answer modes, the addresses they return, the list refresh
-/// interval, and the save button that posts them.
+/// The blocking response: the three answer modes, and the save button that posts the choice.
 ///
-/// The old desktop console's `RulesPanel.vue` "config" tab is the blueprint. The mode tiles and the
-/// fields are a local draft; only the button posts, and the card then adopts what the service kept.
+/// The old desktop console's `RulesPanel.vue` "config" tab is the blueprint. The mode tiles are a local
+/// draft; only the button posts, and the card then adopts what the service kept. The response
+/// addresses and the list refresh interval are [FilterBlockingParamsCard], so a mode picker and three
+/// fields do not share one card.
 library;
 
 import 'dart:async';
@@ -31,13 +32,9 @@ class FilterModeCard extends ConsumerStatefulWidget {
 }
 
 class _FilterModeCardState extends ConsumerState<FilterModeCard> {
-  final _ipv4 = TextEditingController();
-  final _ipv6 = TextEditingController();
-  final _interval = TextEditingController();
   DesktopFilterConfig? _adopted;
   String _mode = desktopBlockModes.first;
   bool _dirty = false;
-  bool _invalid = false;
 
   @override
   void initState() {
@@ -51,54 +48,19 @@ class _FilterModeCardState extends ConsumerState<FilterModeCard> {
     _adopt(widget.config);
   }
 
-  @override
-  void dispose() {
-    _ipv4.dispose();
-    _ipv6.dispose();
-    _interval.dispose();
-    super.dispose();
-  }
-
-  /// Adopts the service's values only when a new answer arrives and nothing is being edited; a
-  /// switch elsewhere must not silently discard a half-typed address.
+  /// Adopts the service's mode only when a new answer arrives and nothing has been picked since.
   void _adopt(DesktopFilterConfig config) {
     if (identical(_adopted, config)) return;
     _adopted = config;
     if (_dirty) return;
     _mode = config.effectiveBlockMode;
-    _ipv4.text = config.blockingIPv4;
-    _ipv6.text = config.blockingIPv6;
-    _interval.text = '${config.effectiveIntervalHours}';
-  }
-
-  void _markDirty() {
-    if (_dirty) return;
-    setState(() => _dirty = true);
   }
 
   Future<void> _save() async {
     final l10n = context.l10n;
-    final interval = int.tryParse(_interval.text);
-    final valid =
-        interval != null &&
-        interval > 0 &&
-        _ipv4.text.trim().isNotEmpty &&
-        _ipv6.text.trim().isNotEmpty;
-    if (!valid) {
-      setState(() => _invalid = true);
-      return;
-    }
-    setState(() => _invalid = false);
     final error = await ref
         .read(desktopFilterConfigProvider.notifier)
-        .save(
-          widget.config.copyWith(
-            blockMode: _mode,
-            blockingIPv4: _ipv4.text.trim(),
-            blockingIPv6: _ipv6.text.trim(),
-            updateIntervalHours: interval,
-          ),
-        );
+        .save(widget.config.copyWith(blockMode: _mode));
     if (!mounted) return;
     if (error == null) setState(() => _dirty = false);
     showDesktopMessage(
@@ -112,7 +74,6 @@ class _FilterModeCardState extends ConsumerState<FilterModeCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final colorScheme = context.colorScheme;
     return DashboardCard(
       semanticLabel: l10n.desktopFilterModeTitle,
       child: Column(
@@ -159,11 +120,145 @@ class _FilterModeCardState extends ConsumerState<FilterModeCard> {
             const SizedBox(height: 8),
           ],
           const SizedBox(height: 4),
-          Text(
-            l10n.desktopFilterModeParamsTitle,
-            style: DashboardText.rowTitle(context),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FilledButton.tonalIcon(
+              onPressed: widget.saving ? null : () => unawaited(_save()),
+              icon: const GlyphIcon(AppGlyphs.check, size: 16),
+              label: Text(
+                widget.saving
+                    ? l10n.desktopFilterModeSaving
+                    : l10n.desktopFilterModeSave,
+              ),
+            ),
           ),
-          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+/// The addresses a blocked name is answered with, and the interval the rule lists refresh on.
+class FilterBlockingParamsCard extends ConsumerStatefulWidget {
+  const FilterBlockingParamsCard({
+    super.key,
+    required this.config,
+    required this.saving,
+  });
+
+  final DesktopFilterConfig config;
+  final bool saving;
+
+  @override
+  ConsumerState<FilterBlockingParamsCard> createState() =>
+      _FilterBlockingParamsCardState();
+}
+
+class _FilterBlockingParamsCardState
+    extends ConsumerState<FilterBlockingParamsCard> {
+  final _ipv4 = TextEditingController();
+  final _ipv6 = TextEditingController();
+  final _interval = TextEditingController();
+  DesktopFilterConfig? _adopted;
+  bool _dirty = false;
+  bool _invalid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _adopt(widget.config);
+  }
+
+  @override
+  void didUpdateWidget(FilterBlockingParamsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _adopt(widget.config);
+  }
+
+  @override
+  void dispose() {
+    _ipv4.dispose();
+    _ipv6.dispose();
+    _interval.dispose();
+    super.dispose();
+  }
+
+  /// Adopts the service's values only when a new answer arrives and nothing is being edited; a
+  /// switch elsewhere must not silently discard a half-typed address.
+  void _adopt(DesktopFilterConfig config) {
+    if (identical(_adopted, config)) return;
+    _adopted = config;
+    if (_dirty) return;
+    _ipv4.text = config.blockingIPv4;
+    _ipv6.text = config.blockingIPv6;
+    _interval.text = '${config.effectiveIntervalHours}';
+  }
+
+  void _markDirty() {
+    if (_dirty) return;
+    setState(() => _dirty = true);
+  }
+
+  Future<void> _save() async {
+    final l10n = context.l10n;
+    final interval = int.tryParse(_interval.text);
+    final valid =
+        interval != null &&
+        interval > 0 &&
+        _ipv4.text.trim().isNotEmpty &&
+        _ipv6.text.trim().isNotEmpty;
+    if (!valid) {
+      setState(() => _invalid = true);
+      return;
+    }
+    setState(() => _invalid = false);
+    final error = await ref
+        .read(desktopFilterConfigProvider.notifier)
+        .save(
+          widget.config.copyWith(
+            blockingIPv4: _ipv4.text.trim(),
+            blockingIPv6: _ipv6.text.trim(),
+            updateIntervalHours: interval,
+          ),
+        );
+    if (!mounted) return;
+    if (error == null) setState(() => _dirty = false);
+    showDesktopMessage(
+      context,
+      error == null
+          ? l10n.desktopFilterModeSaved
+          : l10n.desktopFilterConfigSaveFailed(error.message),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final colorScheme = context.colorScheme;
+    return DashboardCard(
+      semanticLabel: l10n.desktopFilterModeParamsTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DashboardCardHeader(
+            glyph: AppGlyphs.sliders,
+            title: l10n.desktopFilterModeParamsTitle,
+            trailing: [
+              if (widget.saving)
+                const SizedBox.square(
+                  dimension: 16,
+                  child: CommonCircleLoading(),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.desktopFilterModeParamsBody,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: DashboardText.label(context),
+          ),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 12,
             runSpacing: 10,
@@ -266,7 +361,7 @@ class _ModeTile extends StatelessWidget {
       isSelected: selected,
       fillsSelection: true,
       onPressed: onPressed,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,

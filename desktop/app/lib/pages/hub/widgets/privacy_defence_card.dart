@@ -1,9 +1,11 @@
-/// The two built-in defence modules: DNS rebinding protection with its allowlist, and the local
-/// hosts resolver.
+/// DNS rebinding protection: the switch and the allowlist of domains allowed to answer with a
+/// private address.
 ///
-/// The old desktop console's `PrivacyPanel.vue` (rebinding + hosts blocks and its modal) is the
-/// blueprint. Every switch saves on the spot; the allowlist is edited in a dialog and posted with
-/// its own button.
+/// The old desktop console's `PrivacyPanel.vue` (rebinding block and its modal) is the blueprint.
+/// The switch saves on the spot; the allowlist is edited in a dialog and posted with its own button.
+///
+/// The local hosts resolver used to share this card; it is [PrivacyHostsCard] now, because two
+/// independent modules and a modal button made one card taller than the window.
 library;
 
 import 'dart:async';
@@ -11,8 +13,7 @@ import 'dart:async';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_providers.dart';
-import 'package:diting_desktop/pages/hub/widgets/filter_common.dart';
-import 'package:diting_desktop/widgets/desktop_feedback.dart';
+import 'package:diting_desktop/pages/hub/widgets/privacy_common.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -29,21 +30,6 @@ class PrivacyDefenceCard extends ConsumerWidget {
   final DesktopPrivacyConfig config;
   final bool saving;
 
-  Future<void> _write(
-    BuildContext context,
-    WidgetRef ref,
-    Future<Object?> Function() action,
-    String success,
-  ) async {
-    final l10n = context.l10n;
-    final error = await action();
-    if (!context.mounted) return;
-    showDesktopMessage(
-      context,
-      error == null ? success : l10n.desktopPrivacySaveFailed('$error'),
-    );
-  }
-
   Future<void> _editDomains(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final domains = await showRebindDomainsDialog(
@@ -51,7 +37,7 @@ class PrivacyDefenceCard extends ConsumerWidget {
       allowed: config.rebindAllowedDomains,
     );
     if (domains == null || !context.mounted) return;
-    await _write(
+    await savePrivacySetting(
       context,
       ref,
       () => ref
@@ -66,37 +52,36 @@ class PrivacyDefenceCard extends ConsumerWidget {
     final l10n = context.l10n;
     final notifier = ref.read(desktopPrivacyProvider.notifier);
     return DashboardCard(
-      semanticLabel: l10n.desktopPrivacyDefenceTitle,
+      semanticLabel: l10n.desktopPrivacyRebindTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
             glyph: AppGlyphs.lock,
-            title: l10n.desktopPrivacyDefenceTitle,
+            title: l10n.desktopPrivacyRebindTitle,
+            leading: [
+              DashboardChip(
+                label: config.rebindEnabled
+                    ? l10n.commonEnabled
+                    : l10n.commonDisabled,
+                tone: config.rebindEnabled
+                    ? DashboardChipTone.ok
+                    : DashboardChipTone.idle,
+                dot: config.rebindEnabled,
+              ),
+            ],
             trailing: [
               if (saving)
                 const SizedBox.square(
                   dimension: 16,
                   child: CommonCircleLoading(),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.desktopPrivacyDefenceBody,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: DashboardText.label(context),
-          ),
-          const SizedBox(height: 12),
-          FilterToggleRow(
-            title: l10n.desktopPrivacyRebindTitle,
-            body: l10n.desktopPrivacyRebindBody,
-            value: config.rebindEnabled,
-            onChanged: saving
-                ? null
-                : (value) => unawaited(
-                    _write(
+                )
+              else
+                DashboardSwitch(
+                  value: config.rebindEnabled,
+                  semanticLabel: l10n.desktopPrivacyRebindTitle,
+                  onChanged: (value) => unawaited(
+                    savePrivacySetting(
                       context,
                       ref,
                       () => notifier.setRebind(
@@ -107,84 +92,38 @@ class PrivacyDefenceCard extends ConsumerWidget {
                           : l10n.desktopPrivacyRebindOff,
                     ),
                   ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            spacing: 8,
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.desktopPrivacyRebindCount(
-                    config.rebindAllowedDomains.length,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.label(context),
                 ),
-              ),
-              TextButton.icon(
-                onPressed: saving
-                    ? null
-                    : () => unawaited(_editDomains(context, ref)),
-                icon: const GlyphIcon(AppGlyphs.settings, size: 14),
-                label: Text(l10n.desktopPrivacyRebindAllowlist),
-              ),
             ],
           ),
-          const SizedBox(height: 8),
-          FilterToggleRow(
-            title: l10n.desktopPrivacyHostsTitle,
-            body: l10n.desktopPrivacyHostsBody,
-            value: config.hostsEnabled,
-            onChanged: saving
-                ? null
-                : (value) => unawaited(
-                    _write(
-                      context,
-                      ref,
-                      () =>
-                          notifier.setHosts(config.copyWith(hostsEnabled: value)),
-                      value
-                          ? l10n.desktopPrivacyHostsOn
-                          : l10n.desktopPrivacyHostsOff,
-                    ),
-                  ),
-          ),
           const SizedBox(height: 6),
+          Text(
+            l10n.desktopPrivacyRebindBody,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: DashboardText.label(context),
+          ),
+          const SizedBox(height: 10),
           DashboardBlock(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
-              spacing: 10,
+              spacing: 8,
               children: [
                 Expanded(
                   child: Text(
-                    l10n.desktopPrivacyHostsSystem,
-                    maxLines: 2,
+                    l10n.desktopPrivacyRebindCount(
+                      config.rebindAllowedDomains.length,
+                    ),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: DashboardText.label(context),
                   ),
                 ),
-                Text(
-                  l10n.desktopPrivacyHostsTtl(config.hostsTtl),
-                  style: DashboardText.label(context),
-                ),
-                DashboardSwitch(
-                  value: config.hostsUseSystem,
-                  semanticLabel: l10n.desktopPrivacyHostsSystem,
-                  onChanged: saving || !config.hostsEnabled
+                TextButton.icon(
+                  onPressed: saving
                       ? null
-                      : (value) => unawaited(
-                          _write(
-                            context,
-                            ref,
-                            () => notifier.setHosts(
-                              config.copyWith(hostsUseSystem: value),
-                            ),
-                            value
-                                ? l10n.desktopPrivacyHostsSystemOn
-                                : l10n.desktopPrivacyHostsSystemOff,
-                          ),
-                        ),
+                      : () => unawaited(_editDomains(context, ref)),
+                  icon: const GlyphIcon(AppGlyphs.settings, size: 14),
+                  label: Text(l10n.desktopPrivacyRebindAllowlist),
                 ),
               ],
             ),
@@ -214,16 +153,16 @@ class _RebindDomainsDialog extends StatefulWidget {
 }
 
 class _RebindDomainsDialogState extends State<_RebindDomainsDialog> {
-  late final _text = TextEditingController(text: widget.allowed.join('\n'));
+  late final _draft = TextEditingController(text: widget.allowed.join('\n'));
 
   @override
   void dispose() {
-    _text.dispose();
+    _draft.dispose();
     super.dispose();
   }
 
-  List<String> get _domains => [
-    for (final line in _text.text.split('\n'))
+  List<String> get _parsed => [
+    for (final line in _draft.text.split('\n'))
       if (line.trim().isNotEmpty) line.trim(),
   ];
 
@@ -240,7 +179,7 @@ class _RebindDomainsDialogState extends State<_RebindDomainsDialog> {
           child: Text(l10n.commonCancel),
         ),
         TextButton(
-          onPressed: () => popFloatingDialog(context, _domains),
+          onPressed: () => popFloatingDialog(context, _parsed),
           child: Text(l10n.desktopPrivacyRebindDialogSave),
         ),
       ],
@@ -255,7 +194,7 @@ class _RebindDomainsDialogState extends State<_RebindDomainsDialog> {
               style: DashboardText.label(context),
             ),
             TextField(
-              controller: _text,
+              controller: _draft,
               minLines: 6,
               maxLines: 10,
               style: AppTextStyle.callout.of(context).toMonospace,

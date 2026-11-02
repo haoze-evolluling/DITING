@@ -1,24 +1,26 @@
-/// The device and access-control cards, spread by the home page into its one board.
+/// The device cards, spread by the home page into its one board.
 ///
 /// The old desktop console's `DevicesView.vue` → `ClientsPanel` is the functional blueprint. There
 /// is no per-application traffic here: the old console never measured it, and these cards do not
 /// invent it. A failed read keeps whatever was on screen and says so through the page's stale
-/// notice; before the first answer, this section shows one honest card instead of three empty ones.
+/// notice; before the first answer, this section shows one honest card instead of an empty one.
+///
+/// The allow/block lists and the token bucket are settings, so they live on `hub/client-access`
+/// instead of on the dashboard. What stays here is the list itself: who is connected, with the
+/// console's quick alias and allow/block actions on each row.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
 import 'package:diting_desktop/data/api/desktop_traffic_providers.dart';
-import 'package:diting_desktop/pages/traffic/widgets/client_access_card.dart';
 import 'package:diting_desktop/pages/traffic/widgets/client_list_card.dart';
-import 'package:diting_desktop/pages/traffic/widgets/client_rate_limit_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The client list, the allow/block lists and the token bucket, in reading order.
+/// The client list, in reading order.
 List<Widget> desktopTrafficCards(BuildContext context, WidgetRef ref) {
   final state = ref.watch(desktopTrafficProvider);
   final limits = state.limits;
@@ -40,8 +42,6 @@ List<Widget> desktopTrafficCards(BuildContext context, WidgetRef ref) {
       loading: state.isLoading,
       onRefresh: retry,
     ),
-    ClientAccessCard(access: limits.access, saving: state.saving),
-    ClientRateLimitCard(rateLimit: limits.rateLimit, saving: state.saving),
   ];
 }
 

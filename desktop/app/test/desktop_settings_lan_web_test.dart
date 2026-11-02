@@ -10,6 +10,7 @@ import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_web_models.dart';
 import 'package:diting_desktop/pages/settings/desktop_lan_web_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
+import 'package:diting_desktop/pages/settings/widgets/lan_web_access_card.dart';
 import 'package:diting_desktop/pages/settings/widgets/lan_web_card.dart';
 import 'package:diting_desktop/widgets/desktop_qr_code.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
@@ -51,6 +52,10 @@ void main() {
 
   Finder inCard(Finder matching) =>
       find.descendant(of: find.byType(LanWebCard), matching: matching);
+  Finder inAccess(Finder matching) => find.descendant(
+    of: find.byType(LanWebAccessCard),
+    matching: matching,
+  );
 
   Future<void> tapAt(WidgetTester tester, Finder finder) async {
     await Scrollable.ensureVisible(
@@ -144,7 +149,7 @@ void main() {
       ),
     );
 
-    await tapAt(tester, inCard(find.byType(DashboardSwitch)).last);
+    await tapAt(tester, inAccess(find.byType(DashboardSwitch)));
     expect(backend.firewallUpdates.single, {'enable': true});
     await clearMessages(tester);
     expect(tester.takeException(), isNull);
@@ -211,7 +216,7 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
-    await tapAt(tester, inCard(find.text(l10n.desktopLanWebChangePassword)));
+    await tapAt(tester, inAccess(find.text(l10n.desktopLanWebChangePassword)));
     final fields = find.descendant(
       of: find.byType(CommonDialog),
       matching: find.byType(TextField),
@@ -240,7 +245,7 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
-    await tapAt(tester, inCard(find.text(l10n.desktopLanWebChangePassword)));
+    await tapAt(tester, inAccess(find.text(l10n.desktopLanWebChangePassword)));
     final fields = find.descendant(
       of: find.byType(CommonDialog),
       matching: find.byType(TextField),
@@ -269,7 +274,7 @@ void main() {
     final l10n = l10nOf(tester);
 
     expect(find.text(l10n.desktopLanWebUnprotected), findsOneWidget);
-    await tapAt(tester, inCard(find.text(l10n.desktopLanWebSetPassword)));
+    await tapAt(tester, inAccess(find.text(l10n.desktopLanWebSetPassword)));
     final fields = find.descendant(
       of: find.byType(CommonDialog),
       matching: find.byType(TextField),

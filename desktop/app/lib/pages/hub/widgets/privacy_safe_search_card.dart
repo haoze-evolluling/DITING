@@ -1,7 +1,8 @@
-/// Forced safe search: the master switch, the seven providers and the rewrite TTL.
+/// Forced safe search: the master switch and the seven providers.
 ///
 /// The old desktop console's `SafeSearchCard.vue` is the blueprint. The switch and each provider save
-/// on the spot with only the field they change; the TTL is a draft that saves with its button.
+/// on the spot with only the field they change; the rewrite TTL is a draft and lives beside this card
+/// as [PrivacySafeSearchTtlCard], because the provider grid alone already fills a card.
 library;
 
 import 'dart:async';
@@ -9,67 +10,31 @@ import 'dart:async';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting_desktop/data/api/desktop_reputation_providers.dart';
-import 'package:diting_desktop/widgets/desktop_feedback.dart';
+import 'package:diting_desktop/pages/hub/widgets/privacy_common.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-class PrivacySafeSearchCard extends ConsumerStatefulWidget {
+class PrivacySafeSearchCard extends ConsumerWidget {
   const PrivacySafeSearchCard({super.key});
 
   @override
-  ConsumerState<PrivacySafeSearchCard> createState() =>
-      _PrivacySafeSearchCardState();
-}
-
-class _PrivacySafeSearchCardState
-    extends ConsumerState<PrivacySafeSearchCard> {
-  final _ttl = TextEditingController();
-  DesktopSafeSearchConfig? _adopted;
-  bool _dirty = false;
-  bool _invalid = false;
-
-  @override
-  void dispose() {
-    _ttl.dispose();
-    super.dispose();
-  }
-
-  void _adopt(DesktopSafeSearchConfig config) {
-    if (identical(_adopted, config)) return;
-    _adopted = config;
-    if (_dirty) return;
-    _ttl.text = '${config.effectiveTtl}';
-  }
-
-  Future<void> _save(
-    Map<String, Object?> patch, {
-    required String success,
-  }) async {
-    final l10n = context.l10n;
-    final error = await ref
-        .read(desktopSafeSearchProvider.notifier)
-        .save(patch);
-    if (!mounted) return;
-    if (error == null && patch.containsKey('ttl')) {
-      setState(() => _dirty = false);
-    }
-    showDesktopMessage(
-      context,
-      error == null ? success : l10n.desktopPrivacySaveFailed(error.message),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final state = ref.watch(desktopSafeSearchProvider);
     final config = state.config;
-    if (config != null) _adopt(config);
     final saving = state.saving;
+    Future<void> save(
+      Map<String, Object?> patch, {
+      required String success,
+    }) => savePrivacySetting(
+      context,
+      ref,
+      () => ref.read(desktopSafeSearchProvider.notifier).save(patch),
+      success,
+    );
     return DashboardCard(
       semanticLabel: l10n.desktopSafeSearchTitle,
       child: Column(
@@ -101,7 +66,7 @@ class _PrivacySafeSearchCardState
                   value: config.enabled,
                   semanticLabel: l10n.desktopSafeSearchTitle,
                   onChanged: (value) => unawaited(
-                    _save(
+                    save(
                       {'enabled': value, 'disabled': config.disabled},
                       success: value
                           ? l10n.desktopSafeSearchOn
@@ -143,7 +108,7 @@ class _PrivacySafeSearchCardState
                                         if (item != id) item,
                                     ];
                               unawaited(
-                                _save(
+                                save(
                                   {'disabled': disabled},
                                   success: l10n.desktopSafeSearchServiceSaved,
                                 ),
@@ -178,60 +143,6 @@ class _PrivacySafeSearchCardState
                 );
               },
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                SizedBox(
-                  width: 190,
-                  child: TextFormField(
-                    controller: _ttl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    decoration: InputDecoration(
-                      labelText: l10n.desktopSafeSearchTtl,
-                    ),
-                    style: AppTextStyle.callout.of(context),
-                    onChanged: (_) {
-                      if (!_dirty) setState(() => _dirty = true);
-                      if (_invalid) setState(() => _invalid = false);
-                    },
-                  ),
-                ),
-                FilledButton.tonal(
-                  onPressed: saving
-                      ? null
-                      : () {
-                          final ttl = int.tryParse(_ttl.text);
-                          if (ttl == null || ttl <= 0) {
-                            setState(() => _invalid = true);
-                            return;
-                          }
-                          unawaited(
-                            _save(
-                              {'ttl': ttl},
-                              success: l10n.desktopSafeSearchTtlSaved,
-                            ),
-                          );
-                        },
-                  child: Text(l10n.desktopSafeSearchTtlSave),
-                ),
-              ],
-            ),
-            if (_invalid) ...[
-              const SizedBox(height: 6),
-              Text(
-                l10n.desktopSafeSearchTtlInvalid,
-                style: DashboardText.label(
-                  context,
-                  color: context.colorScheme.error,
-                ),
-              ),
-            ],
             const SizedBox(height: 8),
             Text(
               l10n.desktopSafeSearchFooter,

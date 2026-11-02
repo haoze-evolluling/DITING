@@ -103,6 +103,7 @@ class DesktopLanDnsPage extends ConsumerWidget {
                       onChanged: (allow) =>
                           unawaited(_setAllowLan(context, ref, allow)),
                     ),
+                    _LanAddressesCard(status: status),
                     _FirewallCard(
                       status: status,
                       saving: state.saving,
@@ -133,7 +134,6 @@ class _ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final first = status.lanAddresses.isEmpty ? null : status.lanAddresses.first;
     return DashboardCard(
       semanticLabel: l10n.desktopLanDnsServiceTitle,
       child: Column(
@@ -168,7 +168,43 @@ class _ServiceCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// Where the LAN listener is bound and which address other devices should use.
+///
+/// This was the second half of the service card; it is its own card now, because a switch with three
+/// address lists beside it made one card taller than the window.
+class _LanAddressesCard extends StatelessWidget {
+  const _LanAddressesCard({required this.status});
+
+  final DesktopLanStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final first = status.lanAddresses.isEmpty ? null : status.lanAddresses.first;
+    return DashboardCard(
+      semanticLabel: l10n.desktopLanDnsAddressesCardTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DashboardCardHeader(
+            glyph: AppGlyphs.connections,
+            title: l10n.desktopLanDnsAddressesCardTitle,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.desktopLanDnsAddressesCardBody,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: DashboardText.label(context),
+          ),
+          const SizedBox(height: 10),
           Text(
             l10n.desktopLanDnsListenTitle,
             style: DashboardText.rowTitle(context),

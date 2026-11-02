@@ -11,6 +11,8 @@ import 'package:diting_desktop/data/api/desktop_encrypted_models.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/hub/desktop_encrypted_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/encrypted_cert_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/encrypted_network_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/encrypted_proxy_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/encrypted_extras_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/encrypted_listeners_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
@@ -57,6 +59,14 @@ void main() {
       find.descendant(of: find.byType(EncryptedCertCard), matching: matching);
   Finder inExtras(Finder matching) => find.descendant(
     of: find.byType(EncryptedExtrasCard),
+    matching: matching,
+  );
+  Finder inNetwork(Finder matching) => find.descendant(
+    of: find.byType(EncryptedNetworkCard),
+    matching: matching,
+  );
+  Finder inProxy(Finder matching) => find.descendant(
+    of: find.byType(EncryptedProxyCard),
     matching: matching,
   );
 
@@ -135,11 +145,11 @@ void main() {
     final backend = await pumpEncrypted(tester);
     final l10n = l10nOf(tester);
 
-    final fields = inListeners(find.byType(TextFormField));
+    final fields = inNetwork(find.byType(TextFormField));
     await tester.enterText(fields.at(2), '0');
     await tapAt(
       tester,
-      inListeners(find.text(l10n.desktopEncryptedSaveNetwork)),
+      inNetwork(find.text(l10n.desktopEncryptedSaveNetwork)),
     );
     expect(backend.encryptedUpdates, isEmpty);
     expect(find.text(l10n.desktopEncryptedPortInvalid), findsOneWidget);
@@ -147,7 +157,7 @@ void main() {
     await tester.enterText(fields.at(2), '8853');
     await tapAt(
       tester,
-      inListeners(find.text(l10n.desktopEncryptedSaveNetwork)),
+      inNetwork(find.text(l10n.desktopEncryptedSaveNetwork)),
     );
     final update = backend.encryptedUpdates.single;
     expect(update['dotPort'], 8853);
@@ -201,18 +211,18 @@ void main() {
     final backend = await pumpEncrypted(tester);
     final l10n = l10nOf(tester);
 
-    await tapAt(tester, inExtras(find.byType(DashboardSwitch)).at(1));
+    await tapAt(tester, inProxy(find.byType(DashboardSwitch)));
     final enabled = backend.encryptedUpdates.single['reverseProxy'] as Map;
     expect(enabled['enabled'], isTrue);
     await clearMessages(tester);
 
     await tester.enterText(
-      inExtras(find.byType(TextField)).first,
+      inProxy(find.byType(TextField)).first,
       ' 192.168.1.0/24 \n\n10.0.0.1\n',
     );
     await tapAt(
       tester,
-      inExtras(find.text(l10n.desktopEncryptedProxySave)),
+      inProxy(find.text(l10n.desktopEncryptedProxySave)),
     );
     final proxy = backend.encryptedUpdates.last['reverseProxy'] as Map;
     expect(proxy['trustedSources'], ['192.168.1.0/24', '10.0.0.1']);
@@ -239,8 +249,10 @@ void main() {
   testWidgets('窄窗下两列改单列且不横向溢出', (tester) async {
     await pumpEncrypted(tester, size: const Size(390, 844));
     expect(find.byType(EncryptedListenersCard), findsOneWidget);
+    expect(find.byType(EncryptedNetworkCard), findsOneWidget);
     expect(find.byType(EncryptedCertCard), findsOneWidget);
     expect(find.byType(EncryptedExtrasCard), findsOneWidget);
+    expect(find.byType(EncryptedProxyCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

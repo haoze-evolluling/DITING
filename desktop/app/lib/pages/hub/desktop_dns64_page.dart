@@ -10,6 +10,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
 import 'package:diting_desktop/data/api/desktop_dns64_providers.dart';
 import 'package:diting_desktop/pages/hub/widgets/dns64_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/dns64_prefixes_card.dart';
 import 'package:diting_desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting_desktop/widgets/desktop_card_board.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -54,7 +55,10 @@ class DesktopDns64Page extends ConsumerWidget {
                     ? StaleStatusNotice(onRetry: retry)
                     : const SizedBox.shrink(),
                 DesktopCardBoard(
-                  cards: [Dns64Card(config: config, saving: state.saving)],
+                  cards: [
+                    Dns64Card(config: config, saving: state.saving),
+                    Dns64PrefixesCard(config: config, saving: state.saving),
+                  ],
                 ),
               ],
             ),

@@ -1,12 +1,11 @@
 /// The encrypted DNS listeners: the master switch, the three protocols with their real listen state,
-/// the network parameters and the DoH URLs a client can be given.
+/// and the DoH URLs a client can be given.
 ///
 /// The old desktop console's `EncryptedListenersCard.vue` is the blueprint. A configured port is not
-/// a bound port, so each protocol shows both. Switches save one field each; the network parameters
-/// are a draft that saves with its button.
+/// a bound port, so each protocol shows both. The network parameters are a draft that saves with its
+/// own button, so they are [EncryptedNetworkCard]: one card holding both the switches and a five-field
+/// form grew taller than the window.
 library;
-
-import 'dart:async';
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_encrypted_models.dart';
@@ -20,9 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const double _fieldWidth = 190;
-
-class EncryptedListenersCard extends ConsumerStatefulWidget {
+class EncryptedListenersCard extends ConsumerWidget {
   const EncryptedListenersCard({
     super.key,
     required this.status,
@@ -32,128 +29,28 @@ class EncryptedListenersCard extends ConsumerStatefulWidget {
   final DesktopEncryptedStatus status;
   final bool saving;
 
-  @override
-  ConsumerState<EncryptedListenersCard> createState() =>
-      _EncryptedListenersCardState();
-}
-
-class _EncryptedListenersCardState
-    extends ConsumerState<EncryptedListenersCard> {
-  final _listen = TextEditingController();
-  final _serverName = TextEditingController();
-  final _dotPort = TextEditingController();
-  final _dohPort = TextEditingController();
-  final _doqPort = TextEditingController();
-  final _dohPath = TextEditingController();
-  DesktopEncryptedStatus? _adopted;
-  bool _dirty = false;
-  bool _invalid = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _adopt(widget.status);
-  }
-
-  @override
-  void didUpdateWidget(EncryptedListenersCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _adopt(widget.status);
-  }
-
-  @override
-  void dispose() {
-    _listen.dispose();
-    _serverName.dispose();
-    _dotPort.dispose();
-    _dohPort.dispose();
-    _doqPort.dispose();
-    _dohPath.dispose();
-    super.dispose();
-  }
-
-  void _adopt(DesktopEncryptedStatus status) {
-    if (identical(_adopted, status)) return;
-    _adopted = status;
-    if (_dirty) return;
-    _applyNetwork(status.config);
-  }
-
-  void _applyNetwork(DesktopEncryptedConfig config) {
-    _listen.text = config.listenAddress;
-    _serverName.text = config.serverName;
-    _dotPort.text = '${config.effectiveDotPort}';
-    _dohPort.text = '${config.effectiveDohPort}';
-    _doqPort.text = '${config.effectiveDoqPort}';
-    _dohPath.text = config.effectiveDohPath;
-  }
-
-  void _markDirty() {
-    if (!_dirty) setState(() => _dirty = true);
-  }
-
   Future<void> _configure(
+    BuildContext context,
+    WidgetRef ref,
     Map<String, Object?> patch, {
     required String success,
-    bool fromForm = false,
   }) async {
     final l10n = context.l10n;
     final error = await ref
         .read(desktopEncryptedProvider.notifier)
         .configure(patch);
-    if (!mounted) return;
-    if (error == null && fromForm) setState(() => _dirty = false);
+    if (!context.mounted) return;
     showDesktopMessage(
       context,
       error == null ? success : l10n.desktopEncryptedSaveFailed(error.message),
     );
   }
 
-  void _saveNetwork() {
-    final l10n = context.l10n;
-    final dot = int.tryParse(_dotPort.text);
-    final doh = int.tryParse(_dohPort.text);
-    final doq = int.tryParse(_doqPort.text);
-    bool portOk(int? port) => port != null && port > 0 && port <= 65535;
-    if (!portOk(dot) || !portOk(doh) || !portOk(doq)) {
-      setState(() => _invalid = true);
-      return;
-    }
-    setState(() => _invalid = false);
-    unawaited(
-      _configure(
-        {
-          'listenAddress': _listen.text.trim(),
-          'serverName': _serverName.text.trim(),
-          'dotPort': dot,
-          'dohPort': doh,
-          'doqPort': doq,
-          'dohPath': _dohPath.text.trim(),
-        },
-        success: l10n.desktopEncryptedNetworkSaved,
-        fromForm: true,
-      ),
-    );
-  }
-
-  void _resetNetwork() {
-    setState(() {
-      _dirty = false;
-      _listen.text = '';
-      _serverName.text = '';
-      _dotPort.text = '${widget.status.defaultDotPort}';
-      _dohPort.text = '${widget.status.defaultDohPort}';
-      _doqPort.text = '${widget.status.defaultDoqPort}';
-      _dohPath.text = widget.status.defaultDohPath;
-    });
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final status = widget.status;
     final config = status.config;
-    final saving = widget.saving;
+    final saving = this.saving;
     return DashboardCard(
       semanticLabel: l10n.desktopEncryptedListenersTitle,
       child: Column(
@@ -183,13 +80,13 @@ class _EncryptedListenersCardState
                 DashboardSwitch(
                   value: config.enabled,
                   semanticLabel: l10n.desktopEncryptedListenersTitle,
-                  onChanged: (value) => unawaited(
-                    _configure(
-                      {'enabled': value},
-                      success: value
-                          ? l10n.desktopEncryptedOn
-                          : l10n.desktopEncryptedOff,
-                    ),
+                  onChanged: (value) => _configure(
+                    context,
+                    ref,
+                    {'enabled': value},
+                    success: value
+                        ? l10n.desktopEncryptedOn
+                        : l10n.desktopEncryptedOff,
                   ),
                 ),
             ],
@@ -219,13 +116,13 @@ class _EncryptedListenersCardState
             listen: status.dotListen,
             onChanged: saving
                 ? null
-                : (value) => unawaited(
-                    _configure(
-                      {'dotEnabled': value},
-                      success: value
-                          ? l10n.desktopEncryptedDotOn
-                          : l10n.desktopEncryptedDotOff,
-                    ),
+                : (value) => _configure(
+                    context,
+                    ref,
+                    {'dotEnabled': value},
+                    success: value
+                        ? l10n.desktopEncryptedDotOn
+                        : l10n.desktopEncryptedDotOff,
                   ),
           ),
           const SizedBox(height: 6),
@@ -239,13 +136,13 @@ class _EncryptedListenersCardState
             listen: status.dohListen,
             onChanged: saving
                 ? null
-                : (value) => unawaited(
-                    _configure(
-                      {'dohEnabled': value},
-                      success: value
-                          ? l10n.desktopEncryptedDohOn
-                          : l10n.desktopEncryptedDohOff,
-                    ),
+                : (value) => _configure(
+                    context,
+                    ref,
+                    {'dohEnabled': value},
+                    success: value
+                        ? l10n.desktopEncryptedDohOn
+                        : l10n.desktopEncryptedDohOff,
                   ),
           ),
           if (config.dohEnabled && status.dohUrls.isNotEmpty) ...[
@@ -255,8 +152,7 @@ class _EncryptedListenersCardState
               style: DashboardText.label(context),
             ),
             const SizedBox(height: 4),
-            for (final url in status.dohUrls)
-              _UrlRow(url: url),
+            for (final url in status.dohUrls) _UrlRow(url: url),
           ],
           const SizedBox(height: 6),
           _ProtocolRow(
@@ -266,94 +162,14 @@ class _EncryptedListenersCardState
             listen: status.doqListen,
             onChanged: saving
                 ? null
-                : (value) => unawaited(
-                    _configure(
-                      {'doqEnabled': value},
-                      success: value
-                          ? l10n.desktopEncryptedDoqOn
-                          : l10n.desktopEncryptedDoqOff,
-                    ),
+                : (value) => _configure(
+                    context,
+                    ref,
+                    {'doqEnabled': value},
+                    success: value
+                        ? l10n.desktopEncryptedDoqOn
+                        : l10n.desktopEncryptedDoqOff,
                   ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l10n.desktopEncryptedNetworkTitle,
-            style: DashboardText.rowTitle(context),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _Field(
-                label: l10n.desktopEncryptedListenAddress,
-                controller: _listen,
-                hint: l10n.desktopEncryptedListenHint,
-                onChanged: _markDirty,
-              ),
-              _Field(
-                label: l10n.desktopEncryptedServerName,
-                controller: _serverName,
-                hint: 'dns.lan',
-                onChanged: _markDirty,
-              ),
-              _Field(
-                label: l10n.desktopEncryptedDotPort,
-                controller: _dotPort,
-                onChanged: _markDirty,
-                number: true,
-              ),
-              _Field(
-                label: l10n.desktopEncryptedDohPort,
-                controller: _dohPort,
-                onChanged: _markDirty,
-                number: true,
-              ),
-              _Field(
-                label: l10n.desktopEncryptedDoqPort,
-                controller: _doqPort,
-                onChanged: _markDirty,
-                number: true,
-              ),
-              _Field(
-                label: l10n.desktopEncryptedDohPath,
-                controller: _dohPath,
-                hint: '/dns-query',
-                onChanged: _markDirty,
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.desktopEncryptedServerNameHint,
-            style: DashboardText.label(context),
-          ),
-          if (_invalid) ...[
-            const SizedBox(height: 6),
-            Text(
-              l10n.desktopEncryptedPortInvalid,
-              style: DashboardText.label(
-                context,
-                color: context.colorScheme.error,
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.end,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              TextButton(
-                onPressed: saving ? null : _resetNetwork,
-                child: Text(l10n.desktopEncryptedReset),
-              ),
-              FilledButton.tonal(
-                onPressed: saving ? null : _saveNetwork,
-                child: Text(l10n.desktopEncryptedSaveNetwork),
-              ),
-            ],
           ),
         ],
       ),
@@ -470,39 +286,6 @@ class _UrlRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.label,
-    required this.controller,
-    required this.onChanged,
-    this.hint,
-    this.number = false,
-  });
-
-  final String label;
-  final TextEditingController controller;
-  final VoidCallback onChanged;
-  final String? hint;
-  final bool number;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: _fieldWidth,
-      child: TextFormField(
-        controller: controller,
-        keyboardType: number ? TextInputType.number : TextInputType.text,
-        inputFormatters: number
-            ? [FilteringTextInputFormatter.digitsOnly]
-            : null,
-        decoration: InputDecoration(labelText: label, hintText: hint),
-        style: AppTextStyle.callout.of(context).toMonospace,
-        onChanged: (_) => onChanged(),
-      ),
     );
   }
 }

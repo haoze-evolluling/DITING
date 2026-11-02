@@ -11,6 +11,7 @@ import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_services_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_services_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/blocked_services_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/blocked_services_groups_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/schedule_editor.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,6 +50,10 @@ void main() {
 
   Finder inCard(Finder matching) =>
       find.descendant(of: find.byType(BlockedServicesCard), matching: matching);
+  Finder inGroups(Finder matching) => find.descendant(
+    of: find.byType(BlockedServiceGroupsCard),
+    matching: matching,
+  );
 
   Future<void> tapAt(WidgetTester tester, Finder finder) async {
     await Scrollable.ensureVisible(
@@ -151,7 +156,10 @@ void main() {
     final backend = await pumpServices(tester);
     final l10n = l10nOf(tester);
 
-    await tapAt(tester, inCard(find.text(l10n.desktopServicesClearAll)));
+    await tapAt(
+      tester,
+      inGroups(find.byTooltip(l10n.desktopServicesClearAll)),
+    );
 
     final update = backend.servicesUpdates.single;
     expect(update['ids'], isEmpty);
@@ -245,6 +253,7 @@ void main() {
   testWidgets('窄窗下服务卡片单列且不横向溢出', (tester) async {
     await pumpServices(tester, size: const Size(390, 844));
     expect(find.byType(BlockedServicesCard), findsOneWidget);
+    expect(find.byType(BlockedServiceGroupsCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

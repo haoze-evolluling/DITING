@@ -9335,6 +9335,15 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
+  String get desktopUpstreamFallbackPolicyTitle => '回退触发条件';
+
+  @override
+  String get desktopUpstreamFallbackPolicyBody => '何时改用备用上游：超时、应答码与解析失败';
+
+  @override
+  String get desktopUpstreamFallbackPolicyOff => '备用链未开启，触发条件暂不生效。';
+
+  @override
   String get desktopUpstreamFallbackTitle => '独立回退上游';
 
   @override
@@ -9485,6 +9494,12 @@ class AppL10nZh extends AppL10n {
   String get desktopCacheConfigSaved => '加速策略已保存并即时生效';
 
   @override
+  String get desktopCacheFallbackTitle => '弱网回退';
+
+  @override
+  String get desktopCacheFallbackBody => '上游抖动时用过期记录兜底，以及先回旧值再刷新的乐观模式';
+
+  @override
   String get desktopCacheModeLabel => '记录有效期计算方式';
 
   @override
@@ -9593,6 +9608,12 @@ class AppL10nZh extends AppL10n {
   String desktopCachePersistRecords(int count) {
     return '当前 $count 条可落盘记录';
   }
+
+  @override
+  String get desktopCacheSnapshotTitle => '磁盘快照';
+
+  @override
+  String get desktopCacheSnapshotBody => '把当前缓存立即写入落盘文件，或从文件读回上次的记录';
 
   @override
   String get desktopCachePersistDump => '立即落盘';
@@ -10008,6 +10029,12 @@ class AppL10nZh extends AppL10n {
   String get desktopRewriteChipEmpty => '空';
 
   @override
+  String get desktopZoneSettingsTitle => '区域解析开关与默认 TTL';
+
+  @override
+  String get desktopZoneSettingsBody => '开关本地权威区域，并设置没有写明 TTL 的记录使用多久';
+
+  @override
   String get desktopZoneTitle => '本地权威区（zone 文件）';
 
   @override
@@ -10155,6 +10182,9 @@ class AppL10nZh extends AppL10n {
   @override
   String get desktopDns64Description =>
       '当客户端位于纯 IPv6 网络并通过 NAT64 网关访问互联网时，若目标域名只有 IPv4（A）记录而没有原生 IPv6（AAAA）记录，DNS64 引擎会用指定前缀把 IPv4 地址合成映射为 AAAA 返回，让终端仍能端到端访问。';
+
+  @override
+  String get desktopDns64PrefixesCardTitle => '合成前缀';
 
   @override
   String get desktopDns64PrefixesLabel => '用于合成的 IPv6 前缀（每行一个）';
@@ -10551,6 +10581,9 @@ class AppL10nZh extends AppL10n {
   String get desktopFilterModeParamsTitle => '规则自动更新与阻断地址';
 
   @override
+  String get desktopFilterModeParamsBody => '被拦截域名得到的应答地址，以及规则列表的自动更新周期';
+
+  @override
   String get desktopFilterModeBlockingIPv4 => '阻断 IPv4 响应地址';
 
   @override
@@ -10821,6 +10854,12 @@ class AppL10nZh extends AppL10n {
   String get desktopServicesLoadFailed => '读不到内置服务目录';
 
   @override
+  String get desktopServicesGroupsTitle => '整组拦截';
+
+  @override
+  String get desktopServicesGroupsBody => '一次性开关整组应用与网站，不必逐个点选';
+
+  @override
   String get desktopServicesTitle => '应用与网站拦截';
 
   @override
@@ -10961,6 +11000,12 @@ class AppL10nZh extends AppL10n {
   @override
   String get desktopPrivacyProtocolBody =>
       '阻断局域网私有 PTR 与单标签域名泄露，防御 ECH 加密绕过与报文侧信道嗅探';
+
+  @override
+  String get desktopPrivacyBlockTitle => '记录类型拦截';
+
+  @override
+  String get desktopPrivacyBlockBody => 'ECH、ANY 与 IPv6 查询的拦截策略，与协议加固分开设置';
 
   @override
   String get desktopPrivacyEdeTitle => 'Extended DNS Errors（EDE 错误诊断扩展）';
@@ -11231,6 +11276,17 @@ class AppL10nZh extends AppL10n {
   String get desktopSafeSearchFooter => '未勾选的服务商将直接透传正常解析。';
 
   @override
+  String get desktopSafeSearchTtlCardTitle => '安全搜索改写有效期';
+
+  @override
+  String get desktopSafeSearchTtlCardBody => '强制安全搜索的改写记录在本地保留多久，到期后重新向上游确认。';
+
+  @override
+  String desktopSafeSearchTtlChip(int seconds) {
+    return '当前 ${seconds}s';
+  }
+
+  @override
   String get desktopSafeSearchBing => 'Bing';
 
   @override
@@ -11296,6 +11352,9 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopReputationCacheTtl => '缓存有效期（秒）';
+
+  @override
+  String get desktopReputationParamsTitle => '查询参数';
 
   @override
   String get desktopReputationParamsInvalid => '超时与缓存有效期需为正整数，缓存条目不能为负';
@@ -12064,6 +12123,15 @@ class AppL10nZh extends AppL10n {
   String get desktopToolsRuleEntryBody => '模拟一次查询，查看命中规则与处置结论';
 
   @override
+  String get desktopHubQueryLog => '查询日志';
+
+  @override
+  String get desktopHubQueryLogBody => '实时查询流、历史记录检索与日志保留策略';
+
+  @override
+  String get desktopQueryLogPageTitle => '查询日志';
+
+  @override
   String get desktopToolsRuleInputTitle => '网址拦截模拟测试';
 
   @override
@@ -12280,10 +12348,25 @@ class AppL10nZh extends AppL10n {
   String get desktopLanWebEntryBody => '远程管理开关、访问地址、防火墙放行与管理员凭据';
 
   @override
+  String get desktopHubClientAccess => '客户端访问控制';
+
+  @override
+  String get desktopHubClientAccessBody => '哪些局域网客户端可以解析，以及每个客户端的查询限速';
+
+  @override
+  String get desktopClientAccessPageTitle => '客户端访问控制';
+
+  @override
   String get desktopLanWebRefresh => '刷新局域网控制台状态';
 
   @override
   String get desktopLanWebLoadFailed => '读不到局域网控制台状态';
+
+  @override
+  String get desktopLanWebAccessTitle => '放行与管理员凭据';
+
+  @override
+  String get desktopLanWebAccessBody => '防火墙放行规则与本控制台的登录账号，凭据只影响局域网访问';
 
   @override
   String get desktopLanWebTitle => '局域网 Web 控制台';
@@ -12532,6 +12615,12 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopLanDnsOff => '已关闭局域网 DNS 服务，恢复为仅本机监听';
+
+  @override
+  String get desktopLanDnsAddressesCardTitle => '监听与访问地址';
+
+  @override
+  String get desktopLanDnsAddressesCardBody => '服务实际绑定的地址，以及局域网内其他设备可以填写的地址';
 
   @override
   String get desktopLanDnsListenTitle => '当前监听地址';

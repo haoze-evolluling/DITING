@@ -1,5 +1,5 @@
-/// The `hub` branch's app blocking page: the built-in service catalogue, the search and group
-/// filters, the selection and each service's weekly plan.
+/// The `hub` branch's app blocking page: the group shortcuts, the built-in service catalogue, the
+/// search and group filters, the selection and each service's weekly plan.
 ///
 /// The old desktop console (`ProtectView.vue` and its `ServicesPanel`) is the functional blueprint.
 /// The page owns no blocking logic: it reads `/api/v1/filter/services` and adopts the whole state the
@@ -10,6 +10,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
 import 'package:diting_desktop/data/api/desktop_services_providers.dart';
 import 'package:diting_desktop/pages/hub/widgets/blocked_services_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/blocked_services_groups_card.dart';
 import 'package:diting_desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting_desktop/widgets/desktop_card_board.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -48,7 +49,12 @@ class DesktopServicesPage extends ConsumerWidget {
                 state.isStale
                     ? StaleStatusNotice(onRetry: retry)
                     : const SizedBox.shrink(),
-                const DesktopCardBoard(cards: [BlockedServicesCard()]),
+                const DesktopCardBoard(
+                  cards: [
+                    BlockedServiceGroupsCard(),
+                    BlockedServicesCard(),
+                  ],
+                ),
               ],
             ),
     );

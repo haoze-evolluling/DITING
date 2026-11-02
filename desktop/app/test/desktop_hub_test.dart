@@ -99,8 +99,12 @@ void main() {
         l10n.desktopHubAdapters,
         l10n.desktopHubLanDns,
         l10n.desktopLanWebPageTitle,
+        l10n.desktopHubClientAccess,
       ],
-      l10n.desktopHubDiagnoseSection: [l10n.desktopToolsRulePageTitle],
+      l10n.desktopHubDiagnoseSection: [
+        l10n.desktopToolsRulePageTitle,
+        l10n.desktopHubQueryLog,
+      ],
       l10n.desktopHubAppSection: [
         l10n.desktopSettingsAppearance,
         l10n.desktopServicePageTitle,

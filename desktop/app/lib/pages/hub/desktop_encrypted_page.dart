@@ -1,5 +1,5 @@
-/// The `hub` branch's encrypted DNS server: the DoT / DoH / DoQ listeners, the certificate, discovery,
-/// reverse-proxy trust and the mobile profile.
+/// The `hub` branch's encrypted DNS server: the DoT / DoH / DoQ listeners, their network parameters,
+/// the certificate, discovery, reverse-proxy trust and the mobile profile.
 ///
 /// The old desktop console (`DevicesView.vue` and its `encrypted/EncryptedDNSPanel`) is the functional
 /// blueprint. The page owns no TLS logic: it reads `/api/v1/encrypted/dns/status` and adopts the whole
@@ -12,6 +12,8 @@ import 'package:diting_desktop/data/api/desktop_encrypted_providers.dart';
 import 'package:diting_desktop/pages/hub/widgets/encrypted_cert_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/encrypted_extras_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/encrypted_listeners_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/encrypted_network_card.dart';
+import 'package:diting_desktop/pages/hub/widgets/encrypted_proxy_card.dart';
 import 'package:diting_desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting_desktop/widgets/desktop_card_board.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -54,8 +56,10 @@ class DesktopEncryptedPage extends ConsumerWidget {
               builder: (context, constraints) {
                 final cards = <Widget>[
                   EncryptedListenersCard(status: status, saving: state.saving),
+                  EncryptedNetworkCard(status: status, saving: state.saving),
                   EncryptedCertCard(status: status, saving: state.saving),
                   EncryptedExtrasCard(status: status, saving: state.saving),
+                  EncryptedProxyCard(status: status, saving: state.saving),
                 ];
                 return PageBody(
                   children: [

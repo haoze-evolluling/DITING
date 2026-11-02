@@ -5,10 +5,35 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_cache_models.dart';
+import 'package:diting_desktop/data/api/desktop_cache_providers.dart';
+import 'package:diting_desktop/widgets/desktop_feedback.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+
+/// The one write path the cache policy cards share: post the whole config, then say what the service
+/// answered. A rejection is reported with the service's reason, because it clamps the numbers and the
+/// card must not pretend the value on screen was applied.
+Future<void> saveCacheSetting(
+  BuildContext context,
+  WidgetRef ref,
+  DesktopCacheConfig next,
+  String success,
+) async {
+  final l10n = context.l10n;
+  final error = await ref
+      .read(desktopCacheConfigProvider.notifier)
+      .save(next);
+  if (!context.mounted) return;
+  showDesktopMessage(
+    context,
+    error == null
+        ? success
+        : l10n.desktopCacheSaveFailed(error.message),
+  );
+}
 
 String desktopCacheModeLabel(BuildContext context, String mode) {
   final l10n = context.l10n;

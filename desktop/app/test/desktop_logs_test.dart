@@ -1,6 +1,6 @@
-// Desktop log branch (desktop parity): the service's 24-hour
-// summary and rankings, its live query stream and its query log with the console's search
-// conditions and offset paging. Every figure and row must come from the API; a failed read says so
+// Desktop logs (desktop parity): the service's 24-hour summary and rankings on the dashboard, and
+// the live query stream, the query log with the console's search conditions and offset paging, and
+// the retention policy on the hub's query-log page. Every figure and row must come from the API; a failed read says so
 // instead of showing an empty table, and a socket that is down says so instead of looking quiet.
 
 import 'dart:async';
@@ -13,6 +13,7 @@ import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_event_client.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
+import 'package:diting_desktop/pages/hub/desktop_query_log_page.dart';
 import 'package:diting_desktop/pages/logs/widgets/log_config_card.dart';
 import 'package:diting_desktop/pages/logs/widgets/log_live_panel.dart';
 import 'package:diting_desktop/pages/logs/widgets/log_query_table.dart';
@@ -33,6 +34,7 @@ void main() {
     Size size = const Size(1280, 800),
     Map<String, Map<String, Object?>>? seed,
     Stream<DesktopEvent>? live,
+    bool queryLog = true,
   }) async {
     final fake = backend ?? FakeDesktopBackend();
     tester.view.physicalSize = size;
@@ -50,15 +52,22 @@ void main() {
             desktopEventStreamProvider.overrideWithValue(live),
           desktopApiClientProvider.overrideWithValue(fake.client()),
         ],
-        child: const DesktopApp(initialLocation: Routes.home),
+        child: DesktopApp(
+          initialLocation: queryLog ? DesktopQueryLogPage.path : Routes.home,
+        ),
       ),
     );
     await tester.pumpAndSettle();
     return fake;
   }
 
-  AppL10n l10nOf(WidgetTester tester) =>
-      tester.element(find.byType(DesktopHomePage)).l10n;
+  AppL10n l10nOf(WidgetTester tester) {
+    final page = find.byType(DesktopQueryLogPage);
+    final target = page.evaluate().isEmpty
+        ? find.byType(DesktopHomePage)
+        : page;
+    return tester.element(target).l10n;
+  }
 
   /// The live card has its own search field and type picker, so a filter test has to name the card
   /// it means instead of matching text that appears twice on the page.
@@ -96,7 +105,7 @@ void main() {
   }
 
   testWidgets('汇总与查询表都显示服务返回的数字', (tester) async {
-    final backend = await pumpLogs(tester);
+    final backend = await pumpLogs(tester, queryLog: false);
     final l10n = l10nOf(tester);
 
     expect(find.byType(DesktopHomePage), findsOneWidget);
@@ -111,6 +120,14 @@ void main() {
     expect(inLogs(find.text('12 ms')), findsOneWidget);
     expect(inLogs(find.text('65%')), findsOneWidget);
 
+    expect(backend.has('/api/v1/querylog/stats'), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('查询表在查询日志页显示服务返回的记录', (tester) async {
+    final backend = await pumpLogs(tester);
+    final l10n = l10nOf(tester);
+
     // Rows come from the log endpoint, newest first, with the trailing dot stripped.
     expect(inTable(find.text('example1.com')), findsOneWidget);
     expect(inTable(find.text('example2.com')), findsOneWidget);
@@ -122,7 +139,6 @@ void main() {
     expect(lastTableSearch(backend)['limit'], '25');
     expect(lastTableSearch(backend)['offset'], '0');
     expect(lastTableSearch(backend)['includeFile'], '1');
-    expect(backend.has('/api/v1/querylog/stats'), isTrue);
     expect(tester.takeException(), isNull);
   });
 
@@ -218,6 +234,7 @@ void main() {
   testWidgets('三列排行按服务返回的顺序与计数展示', (tester) async {
     await pumpLogs(
       tester,
+      queryLog: false,
       backend: FakeDesktopBackend(
         queryStats: queryStatsPayload(
           topDomains: const [
@@ -249,7 +266,7 @@ void main() {
   });
 
   testWidgets('排行无数据时分别说明无数据与无拦截', (tester) async {
-    await pumpLogs(tester);
+    await pumpLogs(tester, queryLog: false);
     final l10n = l10nOf(tester);
 
     expect(inLogs(find.text(l10n.commonNoData)), findsNWidgets(2));
@@ -260,6 +277,7 @@ void main() {
   testWidgets('汇总读不到时不画排行，只留一处离线提示', (tester) async {
     await pumpLogs(
       tester,
+      queryLog: false,
       backend: FakeDesktopBackend()
         ..failingPaths.add('/api/v1/querylog/stats'),
     );

@@ -1,6 +1,10 @@
 /// The independent fallback chain: a second chain the resolver only enters when the whole main
 /// chain fails or returns one of the selected response codes. `FallbackUpstreamCard.vue` defines the
 /// behaviour, including that clearing the chain is how the chain is turned off.
+///
+/// The triggers that decide *when* to enter the chain — timeout, response codes and lookup failures —
+/// are [FallbackPolicyCard] beside it: the chain itself is a list, and one card holding the list, the
+/// timeout and four code chips was taller than the window.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -80,13 +84,6 @@ class FallbackChainCard extends StatelessWidget {
     );
   }
 
-  void _toggleRcode(int code) {
-    final next = {...config.fallbackOnRcode};
-    if (!next.remove(code)) next.add(code);
-    final sorted = next.toList()..sort();
-    onChanged(config.copyWith(fallbackOnRcode: sorted));
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -153,64 +150,6 @@ class FallbackChainCard extends StatelessWidget {
                 label: l10n.desktopUpstreamFallbackAdd,
                 onPressed: saving ? null : () => _add(context),
               ),
-            ),
-            const SizedBox(height: 14),
-            _TimeoutField(
-              value: config.effectiveFallbackTimeoutMs,
-              enabled: !saving,
-              onChanged: (value) => onChanged(
-                config.copyWith(fallbackTimeoutMs: value),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              l10n.desktopUpstreamFallbackRcode,
-              style: DashboardText.rowTitle(context),
-            ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final choice in _rcodeChoices)
-                  _RcodeChip(
-                    label: choice.label,
-                    selected: config.fallbackOnRcode.contains(choice.value),
-                    onPressed: saving
-                        ? null
-                        : () => _toggleRcode(choice.value),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              l10n.desktopUpstreamFallbackRcodeHint,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: DashboardText.label(context),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              spacing: 10,
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.desktopUpstreamFallbackOnError,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: DashboardText.label(context),
-                  ),
-                ),
-                DashboardSwitch(
-                  value: config.fallbackOnError,
-                  semanticLabel: l10n.desktopUpstreamFallbackOnError,
-                  onChanged: saving
-                      ? null
-                      : (value) => onChanged(
-                          config.copyWith(fallbackOnError: value),
-                        ),
-                ),
-              ],
             ),
           ],
         ],
@@ -383,6 +322,121 @@ class _TimeoutFieldState extends State<_TimeoutField> {
           icon: const GlyphIcon(AppGlyphs.check, size: 18),
         ),
       ],
+    );
+  }
+}
+
+/// When the fallback chain is entered: the timeout, the response codes and whether a failed lookup
+/// counts as a trigger. These are the switches of `FallbackUpstreamCard.vue`'s trigger section.
+class FallbackPolicyCard extends StatelessWidget {
+  const FallbackPolicyCard({
+    super.key,
+    required this.config,
+    required this.saving,
+    required this.onChanged,
+  });
+
+  final DesktopUpstreamConfig config;
+  final bool saving;
+  final ValueChanged<DesktopUpstreamConfig> onChanged;
+
+  void _toggleRcode(int code) {
+    final selected = config.fallbackOnRcode.contains(code)
+        ? [
+            for (final value in config.fallbackOnRcode)
+              if (value != code) value,
+          ]
+        : [...config.fallbackOnRcode, code];
+    onChanged(config.copyWith(fallbackOnRcode: selected));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return DashboardCard(
+      semanticLabel: l10n.desktopUpstreamFallbackPolicyTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DashboardCardHeader(
+            glyph: AppGlyphs.bolt,
+            title: l10n.desktopUpstreamFallbackPolicyTitle,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.desktopUpstreamFallbackPolicyBody,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: DashboardText.label(context),
+          ),
+          const SizedBox(height: 12),
+          if (!config.fallbackEnabled)
+            Text(
+              l10n.desktopUpstreamFallbackPolicyOff,
+              style: DashboardText.label(context),
+            )
+          else ...[
+            const SizedBox(height: 14),
+            _TimeoutField(
+              value: config.effectiveFallbackTimeoutMs,
+              enabled: !saving,
+              onChanged: (value) => onChanged(
+                config.copyWith(fallbackTimeoutMs: value),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              l10n.desktopUpstreamFallbackRcode,
+              style: DashboardText.rowTitle(context),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final choice in _rcodeChoices)
+                  _RcodeChip(
+                    label: choice.label,
+                    selected: config.fallbackOnRcode.contains(choice.value),
+                    onPressed: saving
+                        ? null
+                        : () => _toggleRcode(choice.value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.desktopUpstreamFallbackRcodeHint,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: DashboardText.label(context),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              spacing: 10,
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.desktopUpstreamFallbackOnError,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: DashboardText.label(context),
+                  ),
+                ),
+                DashboardSwitch(
+                  value: config.fallbackOnError,
+                  semanticLabel: l10n.desktopUpstreamFallbackOnError,
+                  onChanged: saving
+                      ? null
+                      : (value) => onChanged(
+                          config.copyWith(fallbackOnError: value),
+                        ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
