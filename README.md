@@ -2,7 +2,7 @@
 
 谛听（DITING）是一款本地优先的开源 DNS 加速与网络流量过滤工具，提供低延迟解析、规则阻断、防追踪与流量管控。全部处理在设备本地闭环完成，不上传远程数据；支持 Android、Windows、Linux 三端，并提供开发者维护工具箱。
 
-- 📱 **Android**：`DITING-Flutter`（Flutter 架构）自带 Go 隧道引擎源码（`tunnel/`，gomobile 编译为 AAR），支持极速模式、普通模式（gVisor netstack 全隧道）与局域网独立 DNS 服务，要求 Android 9.0+（`arm64-v8a`）。
+- 📱 **Android**：`android/`（Flutter 架构）自带 Go 隧道引擎源码（`engine/`，gomobile 编译为 AAR），支持极速模式、普通模式（gVisor netstack 全隧道）与局域网独立 DNS 服务，要求 Android 9.0+（`arm64-v8a`）。
 - 💻 **Windows**：特权系统服务 + Flutter 桌面端 + 局域网 Web 控制台，支持物理网卡双栈 DNS 接管与崩溃自愈。
 - 🐧 **Linux**：单二进制 `diting-service` + 内嵌 Web 控制台，systemd 托管，自动适配多种 DNS 后端。
 - 🧰 **维护工具箱**：Python + PyWebView 桌面套件，涵盖压测、代码扫描、Logo 导出、跨端构建与版本同步。
@@ -52,7 +52,7 @@
 - **Web 控制台**：内嵌仪表盘默认 15353 端口，支持管理员鉴权与全功能远程配置。
 
 ### 🧰 维护工具箱
-- 基于 Python + PyWebView + WebView2，双击 `maintenance/run_maintenance.bat` 即可启动。
+- 基于 Python + PyWebView + WebView2，双击 `desktop/toolbox/run_maintenance.bat` 即可启动。
 - 五大工坊：DNS 诊断压测、代码规模扫描、品牌 Logo 导出、跨端构建打包、版本号维护。
 
 ---
@@ -70,7 +70,7 @@
 | **Linux** | ⚙️ 核心服务 | systemd 发行版 / `amd64`·`arm64` | 多后端 DNS 接管、53 监听、缓存规则、局域网 DNS、离线还原 |
 | **Linux** | 🌐 Web 控制台 | 任意主流浏览器 | 访问 15353 端口完成全部配置，无需桌面环境 |
 
-> 三种 Android 模式均由 `DITING-Flutter` 客户端提供，共用同一套 Go 引擎源码（`tunnel/`，按架构编译为
+> 三种 Android 模式均由 `android/app` 客户端提供，共用同一套 Go 引擎源码（`android/engine/`，按架构编译为
 > `tunnel-arm64/x64/all.aar`），读取 1.4.3 的配置与数据库；部分页面数据仍为演示。
 
 ---
@@ -79,28 +79,28 @@
 
 ```
 DITING/
-├── DITING-Flutter/           # ★ Flutter 工作区（共享包 + Android 客户端 + Windows 桌面端）
-│   ├── packages/diting_shared/  #   共享设计系统、主题、l10n、旧版配置与 SQLite 读取（GPL-3.0）
-│   ├── apps/diting_android/     #   Android 客户端：页面/路由/原生通道、android/ 壳、tunnel/ 引擎源码
-│   ├── apps/diting_desktop/     #   Windows 桌面端：Flutter 原生窗口 + web/（局域网 Web 控制台）
-│   ├── run_desktop.bat          #   启动桌面端；`run_desktop.bat release` 构建并启动 Release
-│   └── pubspec.yaml             #   pub workspace 根（一份 lockfile）
-├── Server/                   # Windows / Linux 服务端工程
-│   ├── cmd/service/          #   特权核心服务（Windows Service / Linux systemd）
-│   ├── internal/             #   DNS 内核、平台适配、IPC、鉴权、查询日志
-│   ├── frontend/             #   内嵌的 Flutter Web 控制台产物与 embed.go
-│   ├── build/                #   构建产物、NSIS 与 systemd 打包脚本
-│   └── build*.bat/sh         #   构建、打包与版本同步脚本
-├── maintenance/              # Python + PyWebView 维护工具箱（assets/brand 为品牌矢量源）
-├── docs/                     # 开发文档与静态资源
-├── avatars/                  # 赞助者与共建者头像
-├── recognition_members.json  # 赞助者与共建者名单
-├── AGENTS.md                 # 开发与代码规范
+├── android/                   # Android 端专属代码
+│   ├── app/                   #   Flutter Android 客户端：lib、test、android/ 原生壳、build_apk.bat
+│   └── engine/                #   Go 隧道引擎源码与 build_aar.ps1
+├── desktop/                   # 桌面端专属代码
+│   ├── app/                   #   Flutter Windows 桌面窗口 + web/（局域网 Web 控制台）
+│   ├── service/               #   Go 特权服务 diting-service、IPC、内嵌前端产物
+│   ├── toolbox/               #   Python + PyWebView 开发者维护工具箱（assets/brand 为品牌矢量源）
+│   └── run_desktop.bat        #   启动桌面端；`run_desktop.bat release` 构建并启动 Release
+├── shared/                    # 两端共用的 Flutter 设计系统、主题、l10n、配置与 SQLite 读取（GPL-3.0）
+├── docs/                      # 开发文档与静态资源
+├── avatars/                   # 赞助者与共建者头像
+├── recognition_members.json   # 赞助者与共建者名单
+├── pubspec.yaml               # Flutter pub workspace 根（一份 lockfile）
+├── AGENTS.md                  # 开发与代码规范
 └── README.md
 ```
 
-> **引擎说明**：Go 隧道引擎源码位于 `DITING-Flutter/apps/diting_android/tunnel`，工程自含源码与 AAR 构建入口
-> （`tunnel/build_aar.ps1`）。三种工作模式共用同一引擎，差异只在 TUN 路由范围：极速模式仅接管 DNS，
+各平台的日常工作说明见 [`android/README.md`](android/README.md)、[`desktop/README.md`](desktop/README.md)
+与 [`shared/README.md`](shared/README.md)。
+
+> **引擎说明**：Go 隧道引擎源码位于 `android/engine`，工程自含源码与 AAR 构建入口
+> （`build_aar.ps1`）。三种工作模式共用同一引擎，差异只在 TUN 路由范围：极速模式仅接管 DNS，
 > 普通模式接管全网络，服务器模式不建隧道。AAR 为构建产物、不入库，首次打包前需本地生成。
 
 
@@ -108,21 +108,20 @@ DITING/
 
 ## 构建指南
 
-### 📱 Android（`DITING-Flutter/apps/diting_android`）
+### 📱 Android（`android/app`）
 
 要求 Flutter 3.47+、JDK 11+、Android SDK；最低 Android 9.0（API 28），Release 产物架构为 `arm64-v8a`。
-隧道引擎 AAR 不入库，首次构建前先在 `DITING-Flutter/apps/diting_android/tunnel` 执行 `pwsh -File build_aar.ps1`
+隧道引擎 AAR 不入库，首次构建前先在 `android/engine` 执行 `pwsh -File build_aar.ps1`
 生成 `tunnel-arm64.aar`（模拟器或 debug 包用 `-Arch x64` / `-Arch all`）。
 
 ```bash
-cd DITING-Flutter
 flutter pub get                # 工作区根：一次解析 shared + 两个 app
 flutter analyze
-cd apps/diting_android
+cd android/app
 flutter test
 ```
 
-日常打包运行 `DITING-Flutter/apps/diting_android/build_apk.bat`，交互式选择编译档位并自动归档：
+日常打包运行 `android/app/build_apk.bat`，交互式选择编译档位并自动归档：
 
 | 档位 | 编译模式 | 签名 | Flutter 库架构 | 隧道引擎架构 | 可安装的设备 |
 | --- | --- | --- | --- | --- | --- |
@@ -134,7 +133,7 @@ flutter test
 
 **架构匹配注意**：3 档打的是 arm64 引擎（`tunnel-arm64.aar`），4 档打的是 x86_64 引擎
 （`tunnel-x64.aar`），1/2 档 debug 打的是双 ABI 一体引擎（`tunnel-all.aar`，真机与模拟器同包
-通用）。三种 AAR 都是构建产物、**不入库**：全新克隆后首次打包前，先在 `DITING-Flutter/apps/diting_android/tunnel`
+通用）。三种 AAR 都是构建产物、**不入库**：全新克隆后首次打包前，先在 `android/engine`
 执行 `pwsh -File build_aar.ps1`（或 `-Arch x64` / `-Arch all`）生成；`build.gradle.kts` 按
 `-PditingAbi` / `--target-platform` 自动选用，缺文件时
 构建报错并提示。把 3/4 档的包装到不匹配的设备上会报「安装失败 / 安装包与系统不兼容」。
@@ -145,21 +144,21 @@ flutter test
 `-PditingCompressNativeLibs=true`（默认）对 `.so` 使用 legacy 打包（安装时解压）。
 详情见 [Go AAR 构建记录](docs/development/aar-build-notes.md)。
 
-### 🖥️ Flutter 桌面端（`DITING-Flutter/apps/diting_desktop`）
+### 🖥️ Flutter 桌面端（`desktop/app`）
 
 要求 Flutter 3.47+、Visual Studio「使用 C++ 的桌面开发」工作负载（`flutter doctor -v` 中
 Visual Studio 一栏为 OK），并开启 Windows 开发者模式（`start ms-settings:developers`，
-插件符号链接需要）。入口 `lib/main.dart`，共享代码来自 `packages/diting_shared`。
+插件符号链接需要）。入口 `lib/main.dart`，共享代码来自 `shared`。
 
 ```bat
-DITING-Flutter/run_desktop.bat            :: debug 运行（热重载）
-DITING-Flutter/run_desktop.bat release    :: 构建 Release EXE 并启动
+desktop\run_desktop.bat            :: debug 运行（热重载）
+desktop\run_desktop.bat release    :: 构建 Release EXE 并启动
 ```
 
 手动等价命令：
 
 ```bash
-cd DITING-Flutter/apps/diting_desktop
+cd desktop/app
 flutter run -d windows
 flutter build windows --release
 ```
@@ -168,19 +167,19 @@ flutter build windows --release
 要求 Go 1.25+、Flutter 3.47+、Visual Studio「使用 C++ 的桌面开发」工作负载；打包独立安装包需 NSIS（可选）。
 
 ```cmd
-cd Server
+cd desktop\service
 build.bat
 ```
 
-一键构建 Windows EXE 安装包，纯净产物输出至 `Server/build/bin/DITING-release-v*.exe`。构建脚本会先构建 Flutter Web 控制台、Flutter Windows 桌面端与特权服务，再交给 NSIS 打包，并自动注入版本、提交与构建时间。
+一键构建 Windows EXE 安装包，纯净产物输出至 `desktop/service/build/bin/DITING-release-v*.exe`。构建脚本会先构建 Flutter Web 控制台、Flutter Windows 桌面端与特权服务，再交给 NSIS 打包，并自动注入版本、提交与构建时间。
 
-需要自定义目标或双平台打包时：`python ..\maintenance\core\build_manager.py -t both -b release`。
+需要自定义目标或双平台打包时：`python desktop\toolbox\core\build_manager.py -t both -b release`。
 
 <details>
 <summary>手动编译二进制</summary>
 
 ```cmd
-cd Server
+cd desktop\service
 
 REM 构建 Web 控制台产物（服务 embed 需要）
 python build_frontend.py
@@ -189,7 +188,7 @@ REM 编译特权服务
 go build -ldflags "-s -w -H windowsgui" -o build/bin/diting-service.exe ./cmd/service
 
 REM 编译 Flutter 桌面端
-cd ..\DITING-Flutter\apps\diting_desktop
+cd ..\app
 flutter build windows --release
 ```
 </details>
@@ -198,17 +197,17 @@ flutter build windows --release
 要求 Go 1.25+；生成 `.deb` 需 `dpkg-deb`（可选）。
 
 ```bash
-cd Server
+cd desktop/service
 ./build_linux.sh --package            # 当前架构
 ./build_linux.sh -a arm64 --package   # 指定 amd64 / arm64 / arm
 ```
 
-在 Windows 上可通过 `build_deb.bat` 打包：Windows 本机 Go 交叉编译 Linux 二进制，WSL 仅用 `dpkg-deb` 组装，无需在 WSL 内安装 Go。产物为 `Server/build/bin/` 下的 `.deb` 或单二进制。
+在 Windows 上可通过 `build_deb.bat` 打包：Windows 本机 Go 交叉编译 Linux 二进制，WSL 仅用 `dpkg-deb` 组装，无需在 WSL 内安装 Go。产物为 `desktop/service/build/bin/` 下的 `.deb` 或单二进制。
 
 安装为 systemd 服务：
 
 ```bash
-cd Server/build/linux
+cd desktop/service/build/linux
 sudo ./install.sh --bin ../../build/bin/diting-service
 systemctl status diting-dnsservice
 ```
@@ -221,7 +220,7 @@ WSL 调试时 53 端口可能被 systemd-resolved stub 占用，建议用 `DITIN
 <summary>手动交叉编译</summary>
 
 ```bash
-cd Server
+cd desktop/service
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
   -trimpath -ldflags "-s -w" \
   -o build/bin/diting-service ./cmd/service
@@ -232,20 +231,20 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 要求 Python 3.8+。首次运行可执行：
 
 ```bash
-python -m pip install -r maintenance/requirements.txt
-python maintenance/app.py
+python -m pip install -r desktop/toolbox/requirements.txt
+python desktop/toolbox/app.py
 ```
 
-也可直接双击 `maintenance/run_maintenance.bat`：脚本会检测缺失依赖并自动安装，异常退出时保留窗口以便查看报错。
+也可直接双击 `desktop/toolbox/run_maintenance.bat`：脚本会检测缺失依赖并自动安装，异常退出时保留窗口以便查看报错。
 
-版本号维护在工具箱的「版本号维护」页完成：Flutter Android / 桌面端（`DITING-Flutter/apps/*/pubspec.yaml`）是常用入口；服务端 / NSIS 的版本号维护已折叠归档，仅在需要时展开。命令行等价用法：
+版本号维护在工具箱的「版本号维护」页完成：Flutter Android / 桌面端（`android/app/pubspec.yaml`、`desktop/app/pubspec.yaml`）是常用入口；服务端 / NSIS 的版本号维护已折叠归档，仅在需要时展开。命令行等价用法：
 
 ```cmd
 REM 同步 Flutter 客户端版本（构建号自动按 major*10000+minor*100+patch 推导，只增不减）
-python maintenance/core/version_manager.py 2.0.2 -g flutter
+python desktop/toolbox/core/version_manager.py 2.0.2 -g flutter
 
 REM 同步服务端等其余模块（示例）
-.\Server\set_version.bat 1.4.3 -g common
+.\desktop\service\set_version.bat 1.4.3 -g common
 ```
 
 ---

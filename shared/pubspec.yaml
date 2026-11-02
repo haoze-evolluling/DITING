@@ -1,0 +1,54 @@
+name: diting_shared
+description: "谛听 DITING shared Flutter UI: theme, design system, l10n and the prefs/db shims both apps use."
+publish_to: 'none'
+version: 2.2.9+20209
+
+environment:
+  sdk: ^3.13.5
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Design system dependencies (same pins as the original app).
+  material_ui: 1.8.0                     # Material3 widgets (superellipse, Easing)
+  material_color_utilities: 0.13.0       # HCT / DynamicColor (pinned by the Flutter SDK)
+  material_new_shapes: 1.0.0             # Morph / toPath (material_ui 1.8 does not export them)
+  animations: 3.0.0                      # FadeThrough / OpenContainer
+  path_parsing: 1.1.0                    # Parses Glyph SVG paths
+  collection: ^1.19.1
+  cupertino_icons: ^2.0.0
+
+  flutter_riverpod: 3.4.3
+  go_router: ^18.1.1
+
+  # The legacy database reader shared by both hosts.
+  sqflite: ^2.4.5
+  path: ^1.9.1
+
+  # Localization: gen-l10n reads lib/l10n/*.arb (see l10n.yaml).
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  # Regenerates lib/l10n/app_localizations*.dart from lib/l10n/*.arb.
+  # Run `cd shared && flutter gen-l10n` after editing an ARB file.
+  generate: true
+  assets:
+    - assets/https_passthrough.txt
+    # Brand icon drawn on the about page hero and the login gate.
+    - assets/images/
+    # Payment QR codes for the sponsor page. The member list and avatars are not
+    # bundled; they are fetched as recognition_members.json plus avatars/.
+    - assets/pay/
+  shaders:
+    - shaders/liquid_glass.frag

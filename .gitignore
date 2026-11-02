@@ -10,15 +10,36 @@ captures/
 *.apk
 *.ap_
 *.aab
-# Go 隧道引擎 AAR 是构建产物：本地用 DITING-Flutter/tunnel/build_aar.ps1 生成，不入库
+# Go 隧道引擎 AAR 是构建产物：本地用 android/engine/build_aar.ps1 生成，不入库
 *.aar
 
 # ====================================================================
-# Server & Flutter Web Build Outputs
+# Flutter / Pub Workspace Build Outputs
 # ====================================================================
-Server/build/bin/
-Server/frontend/dist/
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+android/app/build/
+desktop/app/build/
+shared/build/
+coverage/
+app.*.symbols
+app.*.map.json
+
+# ====================================================================
+# Service & Flutter Web Console Build Outputs
+# ====================================================================
+desktop/service/build/bin/
+desktop/service/frontend/dist/
 node_modules/
+
+# Flutter tool generates this registrant for the workspace root's `android/`
+# container when a root-level `flutter analyze` runs. The real Android registrant
+# lives in android/app/android/app/src/main/java/io/flutter/plugins/.
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # ====================================================================
 # Local Configuration & SDK
@@ -33,7 +54,7 @@ local.properties
 *.p12
 # 唯一例外：证书导入单测的 PKCS#12 素材（口令公开，非真实凭据）。
 # 它需保持由真实 OpenSSL 3.x 默认参数导出，才能持续覆盖解析兼容性。
-!Server/internal/core/testdata/dns-lan.p12
+!desktop/service/internal/core/testdata/dns-lan.p12
 keystore/
 DITING-keystore/
 secrets/
@@ -87,3 +108,7 @@ screenshots/
 
 # 本地排障用的临时抓取（截图、拉取的数据库/备份样本）
 .tmp-test/
+.tmp_verify/
+
+# 真机 UI 取证产物（截图与几何 dump），不入库
+shared/tool/uiprobe/
