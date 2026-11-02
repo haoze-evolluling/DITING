@@ -25,8 +25,8 @@ go build -o build/bin/diting-service.exe ./cmd/service
 build\bin\diting-service.exe -run
 ```
 
-浏览器打开 `http://127.0.0.1:15353` 即可使用 Web 控制台；桌面端直接运行
-`..\run_desktop.bat`。
+浏览器打开 `http://127.0.0.1:15353` 即可使用 Web 控制台；桌面窗口从源码运行时
+`cd ..\app && flutter run -d windows`，打安装包用 `..\build_installer.bat`。
 
 ## Windows 安装包
 

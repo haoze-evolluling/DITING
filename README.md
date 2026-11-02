@@ -86,7 +86,7 @@ DITING/
 │   ├── app/                   #   Flutter Windows 桌面窗口 + web/（局域网 Web 控制台）
 │   ├── service/               #   Go 特权服务 diting-service、IPC、内嵌前端产物
 │   ├── toolbox/               #   Python + PyWebView 开发者维护工具箱（assets/brand 为品牌矢量源）
-│   └── run_desktop.bat        #   启动桌面端；`run_desktop.bat release` 构建并启动 Release
+│   └── build_installer.bat    #   构建桌面端安装包（Windows EXE / Linux deb）
 ├── shared/                    # 两端共用的 Flutter 设计系统、主题、l10n、配置与 SQLite 读取（GPL-3.0）
 ├── docs/                      # 开发文档与静态资源
 ├── avatars/                   # 赞助者与共建者头像
@@ -151,11 +151,11 @@ Visual Studio 一栏为 OK），并开启 Windows 开发者模式（`start ms-se
 插件符号链接需要）。入口 `lib/main.dart`，共享代码来自 `shared`。
 
 ```bat
-desktop\run_desktop.bat            :: debug 运行（热重载）
-desktop\run_desktop.bat release    :: 构建 Release EXE 并启动
+desktop\build_installer.bat            :: 构建 Windows EXE 安装包
+desktop\build_installer.bat both       :: EXE + Linux deb
 ```
 
-手动等价命令：
+手动等价命令（从源码运行窗口，不打包）：
 
 ```bash
 cd desktop/app

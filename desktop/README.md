@@ -7,7 +7,7 @@ desktop/
 ├── app/                    # Flutter Windows 桌面窗口 + web/（局域网 Web 控制台）
 ├── service/                # Go 特权服务 diting-service、IPC、内嵌 Web 控制台产物
 ├── toolbox/                # Python + PyWebView 开发者工具箱
-└── run_desktop.bat         # 启动桌面端；release 参数用于构建
+└── build_installer.bat    # 构建 Windows EXE / Linux deb 安装包
 ```
 
 Flutter 工作区根在仓库根 `pubspec.yaml`，共享代码在 `../shared`。
@@ -19,9 +19,14 @@ Flutter 工作区根在仓库根 `pubspec.yaml`，共享代码在 `../shared`。
 flutter pub get
 flutter analyze
 
-# 桌面端（Windows 原生窗口）
-desktop\run_desktop.bat            # debug，支持热重载
-desktop\run_desktop.bat release    # 构建 Release EXE 并启动
+# 桌面端（Windows 原生窗口）：从源码运行
+cd desktop/app
+flutter run -d windows
+
+# 桌面端安装包（Windows EXE，可选同时打 Linux deb）
+desktop\build_installer.bat            # 默认只打 Windows EXE
+cd desktop
+build_installer.bat both               # EXE + Linux deb（Windows 上经 WSL 组装）
 
 # 只用浏览器预览桌面 UI（无需 Visual Studio）
 cd desktop/app
@@ -41,9 +46,9 @@ flutter test
 桌面窗口只是客户端：所有数值都来自特权服务 `diting-service.exe` 的本地 IPC
 （默认 `127.0.0.1:15353`）。服务没起来时，窗口会如实显示「连不上本机服务」，不会伪造状态。
 
-`run_desktop.bat` 启动前会先探测该端口：已在监听就复用；`desktop/service/build/bin/diting-service.exe`
-存在则以管理员权限拉起它，再启动窗口；两者都没有时打印编译/启动命令后继续（窗口仍可打开，
-但只能显示离线态）。端口改过可用环境变量覆盖探测：`set DITING_IPC_PORT=15354`。
+`build_installer.bat` 只负责编译打包，不会启动或安装任何东西。先按下面的命令把服务跑起来
+（管理员权限），再启动窗口；窗口按 `127.0.0.1:15353` 连接，端口改过时两边都要改：
+`set DITING_IPC_PORT=15354`。
 
 手工准备服务（只需一次）：
 
@@ -69,8 +74,10 @@ Windows 窗口与 Web 控制台的图标资源都来自品牌矢量源，由 `to
 
 ## 构建与打包
 
-Windows 安装包与 Linux `.deb` 由 `service/build.bat`、`service/build_deb.bat` 或
-`toolbox/core/build_manager.py` 驱动，详见 [`service/README.md`](service/README.md)。
+Windows 安装包与 Linux `.deb` 由 `desktop\build_installer.bat`、`service/build.bat`、
+`service/build_deb.bat` 或 `toolbox/core/build_manager.py` 驱动，详见
+[`service/README.md`](service/README.md)。桌面端安装包的推荐入口是 `build_installer.bat`：
+默认只打 Windows EXE，传 `deb` 或 `both` 追加 Linux 包。
 
 开发者工具箱可直接双击 `toolbox/run_maintenance.bat`，或从仓库根运行：
 
