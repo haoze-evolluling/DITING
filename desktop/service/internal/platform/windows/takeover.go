@@ -233,7 +233,7 @@ func (m *WindowsDNSManager) applyTakeoverOnAdapter(ctx context.Context, a platfo
 	if !platform.IsDefaultExecutor(m.executor) {
 		return nil
 	}
-	return setAdapterDNSDualStackNative(a.ID, []string{"127.0.0.1"}, []string{"::1"})
+	return setAdapterDNSDualStackNative(a.ID, a.Name, []string{"127.0.0.1"}, []string{"::1"})
 }
 
 // mergeAdapterState 返回把 state 合并进 base 后的新切片（按 GUID 替换，否则追加）。
@@ -382,9 +382,19 @@ func (m *WindowsDNSManager) RestoreSingle(ctx context.Context, adapterID string)
 // RestoreAdapters 批量还原指定网卡列表的 DNS 配置
 func (m *WindowsDNSManager) RestoreAdapters(ctx context.Context, adapters []platform.AdapterState) error {
 	var lastErr error
+	var failed []platform.AdapterState
 	for _, a := range adapters {
 		if err := m.restoreSingleAdapter(ctx, a); err != nil {
 			lastErr = err
+			failed = append(failed, a)
+		}
+	}
+
+	// 还原失败的网卡往往仍停在 127.0.0.1/::1 上（用户侧就是彻底断网），
+	// 这里用 netsh 强行拉回 DHCP 先保证有网；快照仍在状态文件里，可再次恢复。
+	if len(failed) > 0 && platform.IsDefaultExecutor(m.executor) {
+		if sweepErr := forceResetLoopbackAdaptersToDHCP(ctx, failed); sweepErr != nil {
+			log.Printf("[接管] 还原失败后的回环 DNS 兜底清理未完成: %v\n", sweepErr)
 		}
 	}
 
@@ -427,7 +437,7 @@ func (m *WindowsDNSManager) restoreSingleAdapter(ctx context.Context, a platform
 		return nil
 	}
 
-	return setAdapterDNSDualStackNative(a.ID, v4Servers, v6Servers)
+	return setAdapterDNSDualStackNative(a.ID, a.Name, v4Servers, v6Servers)
 }
 
 // ResetResidualLoopbackDNS 扫描系统所有网卡，对任何残留指向 127.0.0.0/8、::1 或未指定地址的 DNS 进行强力重置为 DHCP 自动获取

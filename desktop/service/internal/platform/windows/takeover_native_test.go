@@ -14,23 +14,30 @@ func TestNativeSetInterfaceDnsSettings_Export(t *testing.T) {
 		t.Skip("SetInterfaceDnsSettings not supported on this platform")
 	}
 
-	errReset := resetAdapterDNSNative("invalid-guid")
+	errReset := resetAdapterDNSNative("invalid-guid", "")
 	if errReset == nil {
 		t.Errorf("expected error for invalid GUID on reset, got nil")
 	}
 
-	errResetZero := resetAdapterDNSNative("{00000000-0000-0000-0000-000000000000}")
+	errResetZero := resetAdapterDNSNative("{00000000-0000-0000-0000-000000000000}", "")
 	t.Logf("resetAdapterDNSNative with zero GUID returned: %v", errResetZero)
 
-	errDual := setAdapterDNSDualStackNative("invalid-guid", []string{"127.0.0.1"}, []string{"::1"})
+	errDual := setAdapterDNSDualStackNative("invalid-guid", "", []string{"127.0.0.1"}, []string{"::1"})
 	if errDual == nil {
 		t.Errorf("expected error for invalid GUID on dual stack set, got nil")
 	}
 }
 
 func TestNativeResetResidualLoopbackDNS(t *testing.T) {
-	err := resetResidualLoopbackDNSNative(context.Background())
-	if err != nil {
+	if !isSetInterfaceDnsSettingsSupported() {
+		t.Skip("SetInterfaceDnsSettings not supported on this platform")
+	}
+	// 真下发 DNS 改动需要管理员令牌，否则 SetInterfaceDnsSettings 恒返 5、netsh 兜底也必然失败；
+	// 这是权限前提，不是被测逻辑的缺陷。
+	if !windows.GetCurrentProcessToken().IsElevated() {
+		t.Skip("需要管理员权限才能验证残留 DNS 重置")
+	}
+	if err := resetResidualLoopbackDNSNative(context.Background()); err != nil {
 		t.Fatalf("resetResidualLoopbackDNSNative failed: %v", err)
 	}
 }
