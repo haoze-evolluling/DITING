@@ -71,7 +71,7 @@
 | **Linux** | 🌐 Web 控制台 | 任意主流浏览器 | 访问 15353 端口完成全部配置，无需桌面环境 |
 
 > 三种 Android 模式均由 `android/app` 客户端提供，共用同一套 Go 引擎源码（`android/engine/`，按架构编译为
-> `tunnel-arm64/x64/all.aar`），读取 1.4.3 的配置与数据库；部分页面数据仍为演示。
+> `tunnel-arm64/x64/all.aar`），读取 2.2.9 的配置与数据库；部分页面数据仍为演示。
 
 ---
 
@@ -244,14 +244,14 @@ REM 同步 Flutter 客户端版本（构建号自动按 major*10000+minor*100+pa
 python desktop/toolbox/core/version_manager.py 2.0.2 -g flutter
 
 REM 同步服务端等其余模块（示例）
-.\desktop\service\set_version.bat 1.4.3 -g common
+.\desktop\service\set_version.bat 2.2.9 -g common
 ```
 
 ---
 
 ## 技术栈
 
-- **Android**：Flutter / Dart 3 / Riverpod / go_router / sqflite（直接打开 1.4.3 的库）/ 移植的 Material 3 设计系统 / Kotlin 原生通道（VpnService、快捷磁贴、悬浮窗）
+- **Android**：Flutter / Dart 3 / Riverpod / go_router / sqflite（直接打开 2.2.9 的库）/ 移植的 Material 3 设计系统 / Kotlin 原生通道（VpnService、快捷磁贴、悬浮窗）
 - **Windows**：Go 1.25+ / Flutter / Dart / Win32 API / Windows Service
 - **Linux**：Go 1.25+ / systemd / resolvectl / nmcli / netlink / Flutter 内嵌控制台
 - **DNS 引擎**：Go / gVisor netstack / miekg/dns / quic-go / Singleflight
