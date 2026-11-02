@@ -36,6 +36,23 @@ flutter run -d chrome
 （`start ms-settings:developers`，插件符号链接需要）。`flutter doctor -v` 中 Visual Studio
 一栏为 OK 才可构建原生窗口。
 
+### 桌面窗口需要本机服务
+
+桌面窗口只是客户端：所有数值都来自特权服务 `diting-service.exe` 的本地 IPC
+（默认 `127.0.0.1:15353`）。服务没起来时，窗口会如实显示「连不上本机服务」，不会伪造状态。
+
+`run_desktop.bat` 启动前会先探测该端口：已在监听就复用；`Desktop\build\bin\diting-service.exe`
+存在则以管理员权限拉起它，再启动窗口；两者都没有时打印编译/启动命令后继续（窗口仍可打开，
+但只能显示离线态）。端口改过可用环境变量覆盖探测：`set DITING_IPC_PORT=15354`。
+
+手工准备服务（只需一次）：
+
+```bash
+cd Desktop
+go build -o build/bin/diting-service.exe ./cmd/service
+build\bin\diting-service.exe -run      # 管理员权限；前台运行，关掉即停止服务
+```
+
 ## 目录边界
 
 - `diting_shared` 只允许放两个宿主都需要的代码：`lib/ui`（设计系统）、`lib/app`（主题/l10n）、

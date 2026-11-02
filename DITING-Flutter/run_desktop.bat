@@ -15,6 +15,13 @@ title DITING Flutter Desktop
 ::   run_desktop.bat            debug run with hot reload (default)
 ::   run_desktop.bat release    build a release EXE and launch it
 ::
+:: The Flutter window is only a client: every figure comes from the local
+:: DITING service (Desktop/cmd/service), which listens on 127.0.0.1:15353 by
+:: default. This script probes that port and, when the privileged service
+:: binary is already built, starts it elevated before launching the window.
+:: Override the port with DITING_IPC_PORT if the service was configured
+:: differently.
+::
 :: Intentionally pure ASCII: cmd.exe parses batch files in the OEM code page.
 :: Chinese notes live in README.md.
 
@@ -23,6 +30,10 @@ cd /d "%~dp0"
 if not exist "apps\diting_desktop\pubspec.yaml" goto ERR_NO_PROJECT
 where flutter >nul 2>&1
 if errorlevel 1 goto ERR_NO_FLUTTER
+
+set "IPC_HOST=127.0.0.1"
+set "IPC_PORT=15353"
+if defined DITING_IPC_PORT set "IPC_PORT=%DITING_IPC_PORT%"
 
 :: Flutter's windows build needs the MSVC C++ toolchain, which ships with Visual
 :: Studio (not just the Build Tools installer shell). vswhere is the supported probe.
@@ -54,6 +65,37 @@ set "PUSHED=1"
 
 call flutter pub get
 if errorlevel 1 goto ERR_PUB_GET
+
+:: Start the core service first, otherwise the window can only show "cannot reach
+:: the local service": it has no mock backend and never invents state.
+call :PROBE_IPC
+if defined IPC_SEEN goto SERVICE_READY
+echo [INFO] Nothing answers on %IPC_HOST%:%IPC_PORT%.
+echo        The desktop window is only a client of the local DITING service,
+set "SVC_EXE=%~dp0..\Desktop\build\bin\diting-service.exe"
+if not exist "%SVC_EXE%" goto SERVICE_MISSING
+echo        so it is started first (a UAC prompt is expected):
+for %%I in ("%SVC_EXE%") do echo            %%~fI -run
+powershell -NoProfile -Command "Start-Process -FilePath '%SVC_EXE%' -ArgumentList '-run' -Verb RunAs" >nul 2>&1
+if errorlevel 1 goto SERVICE_MISSING
+for /l %%I in (1,1,10) do (
+    call :PROBE_IPC
+    if defined IPC_SEEN goto SERVICE_READY
+    timeout /t 1 /nobreak >nul 2>&1
+)
+echo [WARN] The service did not open %IPC_HOST%:%IPC_PORT% within 10s.
+echo        The window will report the service as unreachable until it does.
+goto SERVICE_READY
+
+:SERVICE_MISSING
+echo        without it the window shows "cannot reach the local service".
+echo        build and start it once with:
+echo            cd Desktop
+echo            go build -o build\bin\diting-service.exe ./cmd/service
+echo            build\bin\diting-service.exe -run     (as Administrator)
+echo.
+
+:SERVICE_READY
 
 if /i "%~1"=="release" goto RELEASE_RUN
 
@@ -119,3 +161,12 @@ echo.
 echo [INFO] Press any key to exit...
 pause >nul
 exit /b 1
+
+:: Sets IPC_SEEN when the local service answers on the IPC port, so a running
+:: service is never started twice. A TCP connect is the honest probe: it asks the
+:: same question the window will ask, and it does not depend on parsing netstat.
+:PROBE_IPC
+set "IPC_SEEN="
+powershell -NoProfile -Command "try { $c = New-Object Net.Sockets.TcpClient; $c.Connect('%IPC_HOST%', %IPC_PORT%); $c.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
+if not errorlevel 1 set "IPC_SEEN=1"
+exit /b 0

@@ -97,6 +97,7 @@
 - `desktop_event_client.dart`：`/api/v1/events` 的 WebSocket 客户端（`web_socket_channel`，Web 与 IO 同一份代码）。令牌走查询串（浏览器握手不能带 header），断线 3 s 后重连；只把 `type: "query"` 事件转成 `DesktopLiveQuery`，并按 `errorMessage`/`success` → `blocked` → `cacheHit` 的顺序分类；`DesktopChannelEvent` 汇报通道通断。
 - `desktop_live_providers.dart`：`desktopEventStreamProvider`（唯一套接字入口，测试用 `StreamController` 覆写）、`desktopLiveProvider`（500 条滚动缓冲、暂停即丢弃、清空只清缓冲）、`desktopLiveEnabledProvider`（widget 测试关闭，避免开套接字）。实时流不轮询：socket 断即明说未连接。
 - 连接配置来自 `diting_desktop` 容器（`ipc_host`/`ipc_port`/`ipc_token`），默认 `127.0.0.1:15353` 且免密。
+- 桌面窗口是纯客户端：数据只来自特权服务 `diting-service.exe` 的本地 IPC，服务未启动时窗口只能显示离线态。开发时由 `run_desktop.bat` 先探测 `127.0.0.1:15353`（可用 `DITING_IPC_PORT` 覆盖），未监听且 `Desktop/build/bin/diting-service.exe` 存在则提权拉起 `-run`，缺服务时打印编译命令；正式安装包把服务注册为 Windows 服务，不需要手工启动。
 - 失败语义：从未成功 → 说明「连不上本机服务 / 需要访问令牌」并给重试；曾经成功 → **保留上一份快照**并标过期。
 
 ## 6. 当前仓库状态与构建方式

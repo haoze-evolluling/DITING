@@ -19,7 +19,18 @@ flutter run -d chrome
 
 要调试 Flutter 原生窗口，直接在 `DITING-Flutter` 下运行 `run_desktop.bat`（需要 Visual Studio C++ 工作负载）。
 
-需要连同 Go 服务一起调试时，先启动 `diting-service`，再运行上面的命令；桌面壳（侧栏、窗口尺寸、安装包）仍由 Wails 提供。
+桌面窗口本身只是客户端，必须连得上核心服务 `diting-service.exe`（本地 IPC，默认 `127.0.0.1:15353`），
+否则它会如实显示「连不上本机服务」。`run_desktop.bat` 会在启动前探测该端口：已在监听就复用；
+`build\bin\diting-service.exe` 存在就提权拉起 `-run`；两者都没有则打印编译命令。手工准备：
+
+```bash
+cd Desktop
+go build -o build/bin/diting-service.exe ./cmd/service
+build\bin\diting-service.exe -run      # 管理员权限
+```
+
+桌面壳（侧栏、窗口尺寸、安装包）仍由 Wails 提供；正式安装包里的服务由 NSIS 安装为 Windows 服务，
+不需要手动启动。
 
 ## 构建
 
