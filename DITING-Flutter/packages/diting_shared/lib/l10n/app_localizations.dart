@@ -16663,13 +16663,13 @@ abstract class AppL10n {
   /// No description provided for @desktopHubResolveSection.
   ///
   /// In zh, this message translates to:
-  /// **'解析'**
+  /// **'解析服务'**
   String get desktopHubResolveSection;
 
   /// No description provided for @desktopHubProtectSection.
   ///
   /// In zh, this message translates to:
-  /// **'防护'**
+  /// **'拦截防护'**
   String get desktopHubProtectSection;
 
   /// No description provided for @desktopHubUpstream.
@@ -20380,11 +20380,17 @@ abstract class AppL10n {
   /// **'已停止联动系统 hosts'**
   String get desktopPrivacyHostsSystemOff;
 
-  /// No description provided for @desktopHubDeviceSection.
+  /// No description provided for @desktopHubPrivacySection.
   ///
   /// In zh, this message translates to:
-  /// **'设备与网络'**
-  String get desktopHubDeviceSection;
+  /// **'隐私与加密'**
+  String get desktopHubPrivacySection;
+
+  /// No description provided for @desktopHubShareSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络共享'**
+  String get desktopHubShareSection;
 
   /// No description provided for @desktopSafeSearchTitle.
   ///
@@ -21976,11 +21982,11 @@ abstract class AppL10n {
   /// **'规则检测'**
   String get desktopToolsRulePageTitle;
 
-  /// No description provided for @desktopToolsMoreSection.
+  /// No description provided for @desktopHubDiagnoseSection.
   ///
   /// In zh, this message translates to:
-  /// **'检测工具'**
-  String get desktopToolsMoreSection;
+  /// **'诊断与恢复'**
+  String get desktopHubDiagnoseSection;
 
   /// No description provided for @desktopToolsRuleEntryBody.
   ///
@@ -22144,11 +22150,11 @@ abstract class AppL10n {
   /// **'检测失败：{message}'**
   String desktopToolsRuleFailed(String message);
 
-  /// No description provided for @desktopSettingsSection.
+  /// No description provided for @desktopHubAppSection.
   ///
   /// In zh, this message translates to:
-  /// **'设置'**
-  String get desktopSettingsSection;
+  /// **'应用与服务'**
+  String get desktopHubAppSection;
 
   /// No description provided for @desktopAboutProjectSection.
   ///

@@ -9114,10 +9114,10 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get desktopHubResolveSection => '解析';
+  String get desktopHubResolveSection => '解析服务';
 
   @override
-  String get desktopHubProtectSection => '防护';
+  String get desktopHubProtectSection => '拦截防护';
 
   @override
   String get desktopHubUpstream => '上游解析';
@@ -11186,7 +11186,10 @@ class AppL10nZh extends AppL10n {
   String get desktopPrivacyHostsSystemOff => '已停止联动系统 hosts';
 
   @override
-  String get desktopHubDeviceSection => '设备与网络';
+  String get desktopHubPrivacySection => '隐私与加密';
+
+  @override
+  String get desktopHubShareSection => '网络共享';
 
   @override
   String get desktopSafeSearchTitle => '强制安全搜索';
@@ -12055,7 +12058,7 @@ class AppL10nZh extends AppL10n {
   String get desktopToolsRulePageTitle => '规则检测';
 
   @override
-  String get desktopToolsMoreSection => '检测工具';
+  String get desktopHubDiagnoseSection => '诊断与恢复';
 
   @override
   String get desktopToolsRuleEntryBody => '模拟一次查询，查看命中规则与处置结论';
@@ -12148,7 +12151,7 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get desktopSettingsSection => '设置';
+  String get desktopHubAppSection => '应用与服务';
 
   @override
   String get desktopAboutProjectSection => '项目与链接';

@@ -46,14 +46,22 @@ void main() {
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(CommonScaffold).first).l10n;
 
-  testWidgets('设置分支列出外观入口并可进入', (tester) async {
+  testWidgets('功能中心的「应用与服务」分类列出外观入口并可进入', (tester) async {
     await pumpSettings(tester, location: Routes.hub);
     final l10n = l10nOf(tester);
 
     expect(find.byType(DesktopFeatureHubPage), findsOneWidget);
     expect(find.text(l10n.desktopSettingsAppearance), findsOneWidget);
 
-    await tester.tap(find.text(l10n.desktopSettingsAppearance));
+    // 分类顺序固定，外观在最末一组，滚动到它再点。
+    final entry = find.text(l10n.desktopSettingsAppearance);
+    await Scrollable.ensureVisible(
+      tester.element(entry),
+      alignment: 0.5,
+      duration: Duration.zero,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(entry);
     await tester.pumpAndSettle();
     expect(find.byType(DesktopAppearancePage), findsOneWidget);
     expect(tester.takeException(), isNull);

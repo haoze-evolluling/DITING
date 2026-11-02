@@ -9717,10 +9717,10 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get desktopHubResolveSection => 'Resolution';
+  String get desktopHubResolveSection => 'Resolution service';
 
   @override
-  String get desktopHubProtectSection => 'Protection';
+  String get desktopHubProtectSection => 'Blocking defence';
 
   @override
   String get desktopHubUpstream => 'Upstream resolution';
@@ -11887,7 +11887,10 @@ class AppL10nEn extends AppL10n {
       'No longer following the system hosts file';
 
   @override
-  String get desktopHubDeviceSection => 'Devices and network';
+  String get desktopHubPrivacySection => 'Privacy and encryption';
+
+  @override
+  String get desktopHubShareSection => 'Network sharing';
 
   @override
   String get desktopSafeSearchTitle => 'Forced safe search';
@@ -12802,7 +12805,7 @@ class AppL10nEn extends AppL10n {
   String get desktopToolsRulePageTitle => 'Rule check';
 
   @override
-  String get desktopToolsMoreSection => 'Test tools';
+  String get desktopHubDiagnoseSection => 'Diagnosis and recovery';
 
   @override
   String get desktopToolsRuleEntryBody =>
@@ -12901,7 +12904,7 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get desktopSettingsSection => 'Settings';
+  String get desktopHubAppSection => 'App and service';
 
   @override
   String get desktopAboutProjectSection => 'Project and links';
