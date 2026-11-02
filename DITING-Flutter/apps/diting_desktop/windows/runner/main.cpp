@@ -27,7 +27,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(L"谛听 (DITING) DNS 控制台", origin, size)) {
+  if (!window.Create(L"\u8c1b\u542c (DITING) DNS \u63a7\u5236\u53f0", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
