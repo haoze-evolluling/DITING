@@ -12,6 +12,7 @@ import 'package:diting_desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_providers.dart';
 import 'package:diting_desktop/pages/hub/widgets/filter_common.dart';
 import 'package:diting_desktop/pages/hub/widgets/privacy_common.dart';
+import 'package:diting_desktop/widgets/desktop_option_tile.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -98,8 +99,13 @@ class PrivacyBlockCard extends ConsumerWidget {
               spacing: 6,
               children: [
                 for (final mode in desktopAnyModes)
-                  _AnyModeTile(
-                    mode: mode,
+                  DesktopOptionTile(
+                    label: mode == 'rfc8482'
+                        ? l10n.desktopPrivacyAnyModeRfc
+                        : l10n.desktopPrivacyAnyModeNotimp,
+                    description: mode == 'rfc8482'
+                        ? l10n.desktopPrivacyAnyModeRfcBody
+                        : l10n.desktopPrivacyAnyModeNotimpBody,
                     selected: config.effectiveAnyMode == mode,
                     onPressed: saving
                         ? null
@@ -124,76 +130,6 @@ class PrivacyBlockCard extends ConsumerWidget {
                         ? l10n.desktopPrivacyIpv6On
                         : l10n.desktopPrivacyIpv6Off,
                   ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AnyModeTile extends StatelessWidget {
-  const _AnyModeTile({
-    required this.mode,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final String mode;
-  final bool selected;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final colorScheme = context.colorScheme;
-    final foreground = selected ? colorScheme.onPrimary : null;
-    return CommonCard(
-      isSelected: selected,
-      fillsSelection: true,
-      onPressed: onPressed,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 8,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: GlyphIcon(
-              selected ? AppGlyphs.checkCircle : AppGlyphs.picker,
-              size: 18,
-              color: foreground,
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 2,
-              children: [
-                Text(
-                  mode == 'rfc8482'
-                      ? l10n.desktopPrivacyAnyModeRfc
-                      : l10n.desktopPrivacyAnyModeNotimp,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.rowTitle(
-                    context,
-                  ).copyWith(color: foreground),
-                ),
-                Text(
-                  mode == 'rfc8482'
-                      ? l10n.desktopPrivacyAnyModeRfcBody
-                      : l10n.desktopPrivacyAnyModeNotimpBody,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.label(
-                    context,
-                    color: selected
-                        ? colorScheme.onPrimary.withValues(alpha: 0.85)
-                        : null,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

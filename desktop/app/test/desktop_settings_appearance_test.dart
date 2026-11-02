@@ -10,6 +10,7 @@ import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/settings/desktop_appearance_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/settings/widgets/appearance_theme_card.dart';
+import 'package:diting_desktop/widgets/desktop_card_board.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -92,6 +93,20 @@ void main() {
   testWidgets('窄窗单列且不横向溢出', (tester) async {
     await pumpSettings(tester, size: const Size(390, 844));
     expect(find.byType(AppearanceThemeCard), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('宽窗外现卡片独占一行，不把半页留白', (tester) async {
+    await pumpSettings(tester);
+
+    // 配色是卡片内的多列网格，卡片本身再占半栏就会把右半边空出来。
+    final board = tester.renderObject<RenderBox>(
+      find.byType(DesktopCardBoard),
+    );
+    final card = tester.renderObject<RenderBox>(
+      find.byType(AppearanceThemeCard),
+    );
+    expect(card.size.width, greaterThan(board.size.width * 0.9));
     expect(tester.takeException(), isNull);
   });
 }

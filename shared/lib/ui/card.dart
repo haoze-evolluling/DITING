@@ -138,7 +138,8 @@ class CommonCard extends StatelessWidget {
     required bool ringed,
   }) {
     if (!ringed || !states.contains(WidgetState.focused)) {
-      return BorderSide.none;
+      // A caller that passes a [shape] with a side (a selected tile's outline) keeps it.
+      return shape?.side ?? BorderSide.none;
     }
     final colorScheme = context.colorScheme;
     final side = focusRingSide(colorScheme);

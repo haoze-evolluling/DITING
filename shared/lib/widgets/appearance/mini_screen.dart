@@ -96,18 +96,26 @@ class MiniScreen extends StatelessWidget {
 /// Clips the thumbnail into a phone shape (9:17). Content is painted at a fixed
 /// 90x170 logical size and scaled, so the width-based geometry stays proportional.
 class MiniScreenThumb extends StatelessWidget {
-  const MiniScreenThumb({super.key, required this.screen});
+  const MiniScreenThumb({
+    super.key,
+    required this.screen,
+    this.height = _shownHeight,
+  });
 
   static const Size _logicalSize = Size(90, 170);
   static const double _shownHeight = 30;
 
   final Widget screen;
 
+  /// Rendered height; the width follows the phone's 9:17 shape. Pages that show the
+  /// thumbnail as a real preview rather than a row glyph pass a larger value.
+  final double height;
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: _shownHeight,
-      width: _shownHeight * _logicalSize.width / _logicalSize.height,
+      height: height,
+      width: height * _logicalSize.width / _logicalSize.height,
       child: ClipRSuperellipse(
         borderRadius: AppRadius.xs,
         child: FittedBox(

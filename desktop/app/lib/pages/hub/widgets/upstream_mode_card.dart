@@ -5,6 +5,7 @@ library;
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting_desktop/pages/hub/widgets/upstream_common.dart';
+import 'package:diting_desktop/widgets/desktop_option_tile.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -58,9 +59,9 @@ class UpstreamModeCard extends StatelessWidget {
               final twoColumns = constraints.maxWidth >= 520;
               final cards = [
                 for (final mode in desktopUpstreamModes)
-                  _ModeTile(
+                  DesktopOptionTile(
                     label: desktopUpstreamModeLabel(context, mode),
-                    body: desktopUpstreamModeBody(context, mode),
+                    description: desktopUpstreamModeBody(context, mode),
                     selected: config.mode == mode,
                     onPressed: saving || config.mode == mode
                         ? null
@@ -76,24 +77,10 @@ class UpstreamModeCard extends StatelessWidget {
               }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: 8,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
-                    children: [
-                      Expanded(child: cards[0]),
-                      Expanded(child: cards[1]),
-                    ],
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8,
-                    children: [
-                      Expanded(child: cards[2]),
-                      Expanded(child: cards[3]),
-                    ],
-                  ),
+                  _ModeRow(children: [cards[0], cards[1]]),
+                  const SizedBox(height: 8),
+                  _ModeRow(children: [cards[2], cards[3]]),
                 ],
               );
             },
@@ -104,68 +91,20 @@ class UpstreamModeCard extends StatelessWidget {
   }
 }
 
-class _ModeTile extends StatelessWidget {
-  const _ModeTile({
-    required this.label,
-    required this.body,
-    required this.selected,
-    required this.onPressed,
-  });
+/// Two tiles on one line, both stretched to the taller one: an option grid whose cells change
+/// height with their description reads as misaligned.
+class _ModeRow extends StatelessWidget {
+  const _ModeRow({required this.children});
 
-  final String label;
-  final String body;
-  final bool selected;
-  final VoidCallback? onPressed;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final foreground = selected ? colorScheme.onPrimary : null;
-    return CommonCard(
-      isSelected: selected,
-      fillsSelection: true,
-      onPressed: onPressed,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return IntrinsicHeight(
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 8,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: GlyphIcon(
-              selected ? AppGlyphs.checkCircle : AppGlyphs.picker,
-              size: 18,
-              color: foreground,
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 2,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.rowTitle(
-                    context,
-                  ).copyWith(color: foreground),
-                ),
-                Text(
-                  body,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.label(
-                    context,
-                    color: selected
-                        ? colorScheme.onPrimary.withValues(alpha: 0.85)
-                        : null,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        children: [for (final child in children) Expanded(child: child)],
       ),
     );
   }

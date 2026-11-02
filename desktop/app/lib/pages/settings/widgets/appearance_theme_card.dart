@@ -17,7 +17,16 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-const double _tileWidth = 220;
+/// A thumbnail is a phone-shaped preview, not a row glyph: 30 high (what the Android list rows use)
+/// looks like a sliver once the tile is 200+ wide.
+const double _thumbHeight = 62;
+const double _tileGap = 10;
+
+/// Narrowest a palette tile may get before the grid drops a column.
+const double _tileMinWidth = 190;
+
+/// A wide card would otherwise give each preview more empty room than the preview itself.
+const int _maxTileColumns = 5;
 
 class AppearanceThemeCard extends ConsumerWidget {
   const AppearanceThemeCard({super.key});
@@ -35,7 +44,10 @@ class AppearanceThemeCard extends ConsumerWidget {
       AppThemeMode.dark => Brightness.dark,
       AppThemeMode.system => MediaQuery.platformBrightnessOf(context),
     };
-    final schemes = previewSchemes(seed: palette.effectiveSeed, pureBlack: pureBlack);
+    final schemes = previewSchemes(
+      seed: palette.effectiveSeed,
+      pureBlack: pureBlack,
+    );
     Widget thumb(AppPalette option, Brightness value) => miniScreenThumb(
       colorScheme: demoColorScheme(
         seed: option.effectiveSeed,
@@ -44,6 +56,18 @@ class AppearanceThemeCard extends ConsumerWidget {
       ),
       floatingBar: floating,
       liquidGlass: glass,
+    );
+    // The phone sits on a recessed stage so a pale light preview still reads as a screen instead of
+    // melting into the tile's own tone.
+    Widget preview(Widget screen) => Container(
+      padding: const EdgeInsets.all(3),
+      decoration: ShapeDecoration(
+        color: DashboardColors.of(context).tone2,
+        shape: AppShape.all(AppCorner.sm),
+      ),
+      child: ExcludeSemantics(
+        child: MiniScreenThumb(screen: screen, height: _thumbHeight),
+      ),
     );
     return DashboardCard(
       semanticLabel: l10n.desktopSettingsAppearanceTitle,
@@ -70,7 +94,7 @@ class AppearanceThemeCard extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text(
             l10n.desktopSettingsPalette,
             style: DashboardText.rowTitle(context),
@@ -81,24 +105,35 @@ class AppearanceThemeCard extends ConsumerWidget {
             style: DashboardText.label(context),
           ),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final option in AppPalette.values)
-                SizedBox(
-                  width: _tileWidth,
-                  child: _PaletteTile(
-                    label: option.label(l10n),
-                    selected: option == palette,
-                    thumbnail: thumb(option, brightness),
-                    onPressed: () =>
-                        ref.read(paletteProvider.notifier).select(option),
-                  ),
-                ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // As many columns as fit the card, so the previews stay the same size on a wide
+              // board instead of stretching with it.
+              final columns = (constraints.maxWidth / _tileMinWidth)
+                  .floor()
+                  .clamp(1, _maxTileColumns);
+              final tileWidth =
+                  (constraints.maxWidth - _tileGap * (columns - 1)) / columns;
+              return Wrap(
+                spacing: _tileGap,
+                runSpacing: _tileGap,
+                children: [
+                  for (final option in AppPalette.values)
+                    SizedBox(
+                      width: tileWidth,
+                      child: _ChoiceTile(
+                        label: option.label(l10n),
+                        selected: option == palette,
+                        thumbnail: preview(thumb(option, brightness)),
+                        onPressed: () =>
+                            ref.read(paletteProvider.notifier).select(option),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Text(
             l10n.desktopSettingsMode,
             style: DashboardText.rowTitle(context),
@@ -109,37 +144,61 @@ class AppearanceThemeCard extends ConsumerWidget {
             style: DashboardText.label(context),
           ),
           const SizedBox(height: 8),
-          for (final option in AppThemeMode.values)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _ModeTile(
-                label: option.label(l10n),
-                description: option == AppThemeMode.system
-                    ? l10n.dayNightFollowSystemDescription
-                    : null,
-                selected: option == mode,
-                thumbnail: switch (option) {
-                  AppThemeMode.system => MiniScreenThumb(
-                    screen: MiniSplitScreen(
-                      light: MiniScreen(
-                        colorScheme: schemes.light,
-                        floatingBar: floating,
-                        liquidGlass: glass,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final tiles = [
+                for (final option in AppThemeMode.values)
+                  _ChoiceTile(
+                    label: option.label(l10n),
+                    description: option == AppThemeMode.system
+                        ? l10n.dayNightFollowSystemDescription
+                        : null,
+                    selected: option == mode,
+                    thumbnail: switch (option) {
+                      AppThemeMode.system => preview(
+                        MiniSplitScreen(
+                          light: MiniScreen(
+                            colorScheme: schemes.light,
+                            floatingBar: floating,
+                            liquidGlass: glass,
+                          ),
+                          dark: MiniScreen(
+                            colorScheme: schemes.dark,
+                            floatingBar: floating,
+                            liquidGlass: glass,
+                          ),
+                        ),
                       ),
-                      dark: MiniScreen(
-                        colorScheme: schemes.dark,
-                        floatingBar: floating,
-                        liquidGlass: glass,
+                      AppThemeMode.light => preview(
+                        thumb(palette, Brightness.light),
                       ),
-                    ),
+                      AppThemeMode.dark => preview(
+                        thumb(palette, Brightness.dark),
+                      ),
+                    },
+                    onPressed: () =>
+                        ref.read(themeModeProvider.notifier).select(option),
                   ),
-                  AppThemeMode.light => thumb(palette, Brightness.light),
-                  AppThemeMode.dark => thumb(palette, Brightness.dark),
-                },
-                onPressed: () =>
-                    ref.read(themeModeProvider.notifier).select(option),
-              ),
-            ),
+              ];
+              // Three fixed choices: side by side when each tile stays wide enough for its note,
+              // one per row otherwise. Stretched, so the note makes no tile taller than its row.
+              if (constraints.maxWidth < 740) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: _tileGap,
+                  children: tiles,
+                );
+              }
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: _tileGap,
+                  children: [for (final tile in tiles) Expanded(child: tile)],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 10),
           Text(
             l10n.desktopSettingsAppearanceFooter,
             style: DashboardText.label(context),
@@ -150,60 +209,13 @@ class AppearanceThemeCard extends ConsumerWidget {
   }
 }
 
-class _PaletteTile extends StatelessWidget {
-  const _PaletteTile({
+/// One choice: the preview on the left, its name (and an optional note) beside it, the check on the
+/// right so the label never shifts between the two states. The selected tile is outlined and tinted
+/// by its label, which keeps the preview's own colours readable.
+class _ChoiceTile extends StatelessWidget {
+  const _ChoiceTile({
     required this.label,
-    required this.selected,
-    required this.thumbnail,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool selected;
-  final Widget thumbnail;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return CommonCard(
-      isSelected: selected,
-      onPressed: onPressed,
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 6,
-        children: [
-          ExcludeSemantics(child: thumbnail),
-          Row(
-            spacing: 6,
-            children: [
-              if (selected)
-                GlyphIcon(
-                  AppGlyphs.check,
-                  size: 14,
-                  color: colorScheme.primary,
-                ),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1.of(context, emphasized: true),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModeTile extends StatelessWidget {
-  const _ModeTile({
-    required this.label,
-    required this.description,
+    this.description,
     required this.selected,
     required this.thumbnail,
     required this.onPressed,
@@ -220,22 +232,29 @@ class _ModeTile extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return CommonCard(
       isSelected: selected,
+      shape: AppShape.all(DashboardCorner.block).copyWith(
+        side: selected
+            ? BorderSide(color: colorScheme.primary, width: 1.5)
+            : BorderSide.none,
+      ),
       onPressed: onPressed,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         spacing: 10,
         children: [
-          SizedBox(width: 72, child: ExcludeSemantics(child: thumbnail)),
+          thumbnail,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               spacing: 2,
               children: [
                 Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: DashboardText.rowTitle(context),
+                  style: DashboardText.rowTitle(context)
+                      .copyWith(color: selected ? colorScheme.primary : null),
                 ),
                 if (description case final description?)
                   Text(
@@ -247,8 +266,16 @@ class _ModeTile extends StatelessWidget {
               ],
             ),
           ),
-          if (selected)
-            GlyphIcon(AppGlyphs.check, size: 16, color: colorScheme.primary),
+          SizedBox(
+            width: 20,
+            child: selected
+                ? GlyphIcon(
+                    AppGlyphs.check,
+                    size: 16,
+                    color: colorScheme.primary,
+                  )
+                : null,
+          ),
         ],
       ),
     );

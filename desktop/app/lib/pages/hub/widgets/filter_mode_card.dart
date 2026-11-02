@@ -12,6 +12,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting_desktop/data/api/desktop_filter_config_providers.dart';
 import 'package:diting_desktop/widgets/desktop_feedback.dart';
+import 'package:diting_desktop/widgets/desktop_option_tile.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -105,8 +106,9 @@ class _FilterModeCardState extends ConsumerState<FilterModeCard> {
           ),
           const SizedBox(height: 12),
           for (final mode in desktopBlockModes) ...[
-            _ModeTile(
-              mode: mode,
+            DesktopOptionTile(
+              label: desktopBlockModeLabel(context, mode),
+              description: desktopBlockModeBody(context, mode),
               selected: _mode == mode,
               onPressed: widget.saving
                   ? null
@@ -337,71 +339,6 @@ class _AddressField extends StatelessWidget {
         style: AppTextStyle.callout.of(context).toMonospace,
         decoration: InputDecoration(labelText: label),
         onChanged: (_) => onChanged(),
-      ),
-    );
-  }
-}
-
-class _ModeTile extends StatelessWidget {
-  const _ModeTile({
-    required this.mode,
-    required this.selected,
-    required this.onPressed,
-  });
-
-  final String mode;
-  final bool selected;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    final foreground = selected ? colorScheme.onPrimary : null;
-    return CommonCard(
-      isSelected: selected,
-      fillsSelection: true,
-      onPressed: onPressed,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 8,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 1),
-            child: GlyphIcon(
-              selected ? AppGlyphs.checkCircle : AppGlyphs.picker,
-              size: 18,
-              color: foreground,
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 2,
-              children: [
-                Text(
-                  desktopBlockModeLabel(context, mode),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.rowTitle(
-                    context,
-                  ).copyWith(color: foreground),
-                ),
-                Text(
-                  desktopBlockModeBody(context, mode),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.label(
-                    context,
-                    color: selected
-                        ? colorScheme.onPrimary.withValues(alpha: 0.85)
-                        : null,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

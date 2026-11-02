@@ -47,6 +47,9 @@ class DashboardCard extends StatelessWidget {
               ],
             ),
     );
+    // The card is its own surface level: anything nested (a `CommonCard` tile, a chip) must be
+    // painted one level up, otherwise it takes the card's own color and its background vanishes.
+    final scoped = SurfaceScope(level: SurfaceLevel.card, child: content);
     return Semantics(
       container: true,
       label: semanticLabel,
@@ -60,13 +63,13 @@ class DashboardCard extends StatelessWidget {
         child: Material(
           type: MaterialType.transparency,
           child: onTap == null || editBar != null
-              ? content
+              ? scoped
               : FocusRing(
                   shape: shape,
                   child: InkWell(
                     customBorder: shape,
                     onTap: onTap,
-                    child: content,
+                    child: scoped,
                   ),
                 ),
         ),
