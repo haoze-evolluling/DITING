@@ -1,4 +1,4 @@
-// Desktop settings branch, service and connection (docs/development/flutter-desktop-ui.md step 4):
+// Desktop settings branch, service and connection (desktop parity):
 // the app's own IPC settings are editable, the host core service is read-only.
 
 import 'package:diting_shared/app/l10n/l10n.dart';

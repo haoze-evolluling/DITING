@@ -1,4 +1,4 @@
-// Desktop hub, network-toolbox half (docs/development/flutter-desktop-ui.md step 4): the port
+// Desktop hub, network-toolbox half (desktop parity): the port
 // probe and its autofix. The probe runs on demand; both calls adopt the service's answer.
 
 import 'package:diting_shared/app/l10n/l10n.dart';

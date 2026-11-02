@@ -1,4 +1,4 @@
-// Desktop hub app blocking (docs/development/flutter-desktop-ui.md step 4): the built-in catalogue,
+// Desktop hub app blocking (desktop parity): the built-in catalogue,
 // the selection, group blocking and the per-service weekly plan. Every value must come from
 // `/filter/services`; each write adopts the whole state the service answers with.
 

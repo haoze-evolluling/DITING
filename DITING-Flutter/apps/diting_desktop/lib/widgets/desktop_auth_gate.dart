@@ -2,8 +2,8 @@
 /// session.
 ///
 /// The old desktop console did the same in `App.vue` — check `/auth/status`, show `LoginView` when the
-/// browser has no session, and only then mount the console. The desktop window is recognised by the
-/// Wails bindings, so it never authenticates and never sees a login form.
+/// browser has no session, and only then mount the console. The native desktop window is not web, so
+/// it never authenticates and never sees a login form.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

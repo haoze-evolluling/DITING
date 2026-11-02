@@ -19,7 +19,7 @@ import 'package:material_ui/material_ui.dart';
 ///
 /// Keep this in step with `DitingApp`: cached light/dark themes, localized delegates,
 /// `ThemeCrossFade`, system overlay, glass scopes, and [AppScopes] above the Navigator. Anything
-/// that only exists because the host is Wails/WebView belongs in `apps/diting_desktop/lib/data`.
+/// that only exists because the host is the web console belongs in `apps/diting_desktop/lib/data`.
 ///
 /// The same bundle is also served to browsers by the LAN web console, so [DesktopAuthGate] sits above
 /// the router: it lets the desktop window through and asks a browser for the admin credential first.

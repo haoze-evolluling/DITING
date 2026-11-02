@@ -1,6 +1,6 @@
-// The web console login page (docs/development/flutter-desktop-ui.md §8.31): the same bundle is served
-// to the Wails window and to a browser, and only the browser authenticates. Every branch below is a
-// promise the old console's `LoginView.vue` made.
+// The web console login page: the same Flutter bundle is served to a browser, and only the browser
+// authenticates — the native Windows window is never web. Every branch below is a promise the old
+// console's `LoginView.vue` made.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';

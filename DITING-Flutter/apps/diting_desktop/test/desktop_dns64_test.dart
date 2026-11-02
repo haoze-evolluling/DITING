@@ -1,4 +1,4 @@
-// Desktop hub DNS64 page (docs/development/flutter-desktop-ui.md step 4): the synthesizer switch,
+// Desktop hub DNS64 page (desktop parity): the synthesizer switch,
 // the RFC 6052 prefix list and the protections the service applies. Every value must come from
 // `/status`; a save posts the whole form and re-reads it, and a rejected write is reported.
 

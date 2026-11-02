@@ -1,4 +1,4 @@
-// Desktop hub cache page (docs/development/flutter-desktop-ui.md step 4): the console's
+// Desktop hub cache page (desktop parity): the console's
 // acceleration engine, telemetry, top names, policy form, persistence, exclude rules and the
 // cached-entry table. Every figure must come from the service; a save posts the whole config and
 // re-reads it, and a rejected write is reported instead of assumed.

@@ -1,4 +1,4 @@
-// Desktop home dashboard (docs/development/flutter-desktop-ui.md step 3–4): FlClash's board over
+// Desktop home dashboard (desktop parity): FlClash's board over
 // the local service API. The figures must come from the snapshot, and every state that is not a
 // live snapshot must say so.
 

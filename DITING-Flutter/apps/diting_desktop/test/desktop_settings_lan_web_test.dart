@@ -1,4 +1,4 @@
-// Desktop settings branch, LAN console (docs/development/flutter-desktop-ui.md step 4):
+// Desktop settings branch, LAN console (desktop parity):
 // `/web/status` decides the address, the firewall backend and the credential state.
 
 import 'package:diting_shared/app/l10n/l10n.dart';

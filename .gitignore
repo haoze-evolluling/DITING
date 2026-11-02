@@ -14,13 +14,10 @@ captures/
 *.aar
 
 # ====================================================================
-# Desktop & Frontend Build Outputs
+# Server & Flutter Web Build Outputs
 # ====================================================================
-Desktop/build/bin/
-Desktop/build/windows/installer/tmp/
-Desktop/frontend/dist/
-Desktop/frontend/package.json.md5
-Desktop/frontend/wailsjs/
+Server/build/bin/
+Server/frontend/dist/
 node_modules/
 
 # ====================================================================
@@ -36,7 +33,7 @@ local.properties
 *.p12
 # 唯一例外：证书导入单测的 PKCS#12 素材（口令公开，非真实凭据）。
 # 它需保持由真实 OpenSSL 3.x 默认参数导出，才能持续覆盖解析兼容性。
-!Desktop/internal/core/testdata/dns-lan.p12
+!Server/internal/core/testdata/dns-lan.p12
 keystore/
 DITING-keystore/
 secrets/
@@ -87,7 +84,6 @@ LearningObjects/
 screenshots/
 # adb 真机验收时抓的截图，只作本地证据，不进仓库
 .adb-shots/
-.tmp_ui/
 
 # 本地排障用的临时抓取（截图、拉取的数据库/备份样本）
 .tmp-test/

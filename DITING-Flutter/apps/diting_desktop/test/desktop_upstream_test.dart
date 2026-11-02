@@ -1,4 +1,4 @@
-// Desktop hub upstream page (docs/development/flutter-desktop-ui.md step 4): the console's
+// Desktop hub upstream page (desktop parity): the console's
 // scheduling modes, configured servers, bootstrap DNS, split routes and independent fallback chain.
 // Every number and name must come from the service; a save posts the whole config and re-reads it.
 

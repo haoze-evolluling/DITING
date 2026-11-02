@@ -3,7 +3,7 @@
 
 """
 谛听 (DITING) Windows 端构建与安装包打包引擎
-纯 Python 驱动，支持特权服务、Wails 前端与 NSIS 安装包流水线编译及环境预检。
+纯 Python 驱动，支持 Flutter 桌面端 Web 控制台产物、特权服务与 NSIS 安装包流水线编译及环境预检。
 """
 
 import argparse
@@ -53,25 +53,13 @@ def get_current_project_version() -> str:
             return v
     except Exception:
         pass
-
-    try:
-        wails_json = os.path.join(ROOT_DIR, "Desktop", "wails.json")
-        if os.path.exists(wails_json):
-            import json
-            with open(wails_json, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                v = data.get("info", {}).get("productVersion")
-                if v:
-                    return v
-    except Exception:
-        pass
     return "0.0.0"
 
 
 def stop_running_processes(on_log: Optional[Callable[[str, str], None]] = None):
     """构建前安全终止旧进程，防止文件占用锁导致编译或打包失败"""
     if sys.platform == "win32":
-        for exe in ("diting-gui.exe", "diting-service.exe"):
+        for exe in ("diting_desktop.exe", "diting-service.exe"):
             try:
                 res = subprocess.run(
                     ["taskkill", "/F", "/T", "/IM", exe],
@@ -86,7 +74,7 @@ def stop_running_processes(on_log: Optional[Callable[[str, str], None]] = None):
         return
 
     # 类 Unix（Linux/macOS）：以 pkill 结束同名进程，未运行时 pkill 返回非零属正常
-    for name in ("diting-gui", "diting-service"):
+    for name in ("diting_desktop", "diting-service"):
         if not shutil.which("pkill"):
             break
         try:
@@ -119,8 +107,7 @@ def check_toolchain() -> Dict[str, dict]:
     tools = {
         "go": {"found": False, "version": "", "cmd": shutil.which("go")},
         "git": {"found": False, "version": "", "cmd": shutil.which("git")},
-        "wails": {"found": False, "version": "", "cmd": shutil.which("wails")},
-        "node": {"found": False, "version": "", "cmd": shutil.which("node")},
+        "flutter": {"found": False, "version": "", "cmd": shutil.which("flutter")},
         "nsis": {"found": False, "version": "", "cmd": find_tool("makensis", nsis_extra)},
     }
 
@@ -140,22 +127,14 @@ def check_toolchain() -> Dict[str, dict]:
         except Exception:
             pass
 
-    if tools["wails"]["cmd"]:
+    if tools["flutter"]["cmd"]:
         try:
-            out = subprocess.check_output([tools["wails"]["cmd"], "version"], text=True, stderr=subprocess.STDOUT).splitlines()
-            tools["wails"]["found"] = True
-            tools["wails"]["version"] = out[0] if out else "已安装"
+            out = subprocess.check_output([tools["flutter"]["cmd"], "--version"], text=True, stderr=subprocess.STDOUT).splitlines()
+            tools["flutter"]["found"] = True
+            tools["flutter"]["version"] = out[0].replace("Flutter ", "") if out else "已安装"
         except Exception:
-            tools["wails"]["found"] = True
-            tools["wails"]["version"] = "已安装"
-
-    if tools["node"]["cmd"]:
-        try:
-            out = subprocess.check_output([tools["node"]["cmd"], "-v"], text=True).strip()
-            tools["node"]["found"] = True
-            tools["node"]["version"] = out
-        except Exception:
-            pass
+            tools["flutter"]["found"] = True
+            tools["flutter"]["version"] = "已安装"
 
     if tools["nsis"]["cmd"]:
         try:
@@ -185,7 +164,7 @@ def run_cmd_live(cmd: list, cwd: str, on_log: Callable[[str, str], None], is_can
 
 
 def cross_compile_linux_binary(
-    desktop_dir: str,
+    server_dir: str,
     bin_dir: str,
     arch: str,
     version: str,
@@ -212,7 +191,7 @@ def cross_compile_linux_binary(
     env.update({"GOOS": "linux", "GOARCH": arch, "CGO_ENABLED": "0"})
     on_log("info", f">>> 正在使用本机 Go 交叉编译 Linux 二进制 (linux/{arch})...")
     cmd = ["go", "build", "-trimpath", "-ldflags", " ".join(ldflags), "-o", bin_path, "./cmd/service"]
-    if not run_cmd_live(cmd, cwd=desktop_dir, on_log=on_log, is_cancelled=is_cancelled, env=env):
+    if not run_cmd_live(cmd, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled, env=env):
         return None
     if not os.path.exists(bin_path):
         on_log("error", f"交叉编译未生成二进制: {bin_path}")
@@ -228,68 +207,38 @@ def cross_compile_linux_binary(
     return bin_path
 
 
-def ensure_frontend_dist(desktop_dir: str) -> None:
-    """确保 frontend/dist 目录存在，避免 Go embed 在未构建前端时直接报错中断"""
-    dist_dir = os.path.join(desktop_dir, "frontend", "dist")
-    os.makedirs(dist_dir, exist_ok=True)
-    keep_file = os.path.join(dist_dir, ".gitkeep")
-    if not os.path.exists(keep_file) and not os.listdir(dist_dir):
-        try:
-            with open(keep_file, "w", encoding="utf-8") as f:
-                f.write("")
-        except Exception:
-            pass
-
-
-def ensure_webview2_bootstrapper(installer_dir: str, on_log: Optional[Callable[[str, str], None]] = None) -> bool:
-    """确保 NSIS 打包所需的 MicrosoftEdgeWebview2Setup.exe 存在"""
-    tmp_dir = os.path.join(installer_dir, "tmp")
-    target_path = os.path.join(tmp_dir, "MicrosoftEdgeWebview2Setup.exe")
-    if os.path.exists(target_path) and os.path.getsize(target_path) > 1024:
-        return True
-
-    os.makedirs(tmp_dir, exist_ok=True)
-
-    # 1. 优先尝试从本地 Go 模块缓存中提取 Wails 自带的 bootstrapper 二进制
-    try:
-        gopath = os.environ.get("GOPATH")
-        if not gopath:
-            try:
-                gopath = subprocess.check_output(["go", "env", "GOPATH"], text=True).strip()
-            except Exception:
-                gopath = os.path.expanduser("~/go")
-        if gopath:
-            import glob
-            pattern = os.path.join(gopath, "pkg", "mod", "github.com", "wailsapp", "wails", "v2*", "internal", "webview2runtime", "MicrosoftEdgeWebview2Setup.exe")
-            matches = glob.glob(pattern)
-            if matches:
-                matches.sort()
-                shutil.copy2(matches[-1], target_path)
-                if on_log:
-                    on_log("info", "已从本地 Wails 模块缓存就绪 WebView2 安装引导程序")
-                return True
-    except Exception as e:
+def build_web_console_assets(
+    server_dir: str,
+    on_log: Optional[Callable[[str, str], None]] = None,
+    is_cancelled: Optional[Callable[[], bool]] = None,
+) -> bool:
+    """把 Flutter 桌面端构建为 Web 控制台产物，供 Go 服务 embed。"""
+    script = os.path.join(server_dir, "build_frontend.py")
+    if not os.path.exists(script):
         if on_log:
-            on_log("warn", f"从 Go 模块缓存提取 WebView2 Bootstrapper 失败: {e}")
+            on_log("error", f"未找到 Web 控制台构建脚本: {script}")
+        return False
+    if on_log:
+        on_log("info", ">>> 正在构建 Flutter Web 控制台产物 (frontend/dist)...")
+    return run_cmd_live(
+        [sys.executable, script],
+        cwd=server_dir,
+        on_log=on_log or (lambda lvl, msg: None),
+        is_cancelled=is_cancelled or (lambda: False),
+    )
 
-    # 2. 从微软官方分发链接下载
-    try:
-        if on_log:
-            on_log("info", "正在下载微软官方 WebView2 安装引导程序 (MicrosoftEdgeWebview2Setup.exe)...")
-        import urllib.request
-        url = "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=30) as resp, open(target_path, "wb") as f:
-            shutil.copyfileobj(resp, f)
-        if os.path.exists(target_path) and os.path.getsize(target_path) > 1024:
-            if on_log:
-                on_log("info", "WebView2 安装引导程序下载完成")
-            return True
-    except Exception as e:
-        if on_log:
-            on_log("error", f"下载 WebView2 Bootstrapper 失败: {e}")
 
-    return False
+def find_flutter_release_dir(flutter_project: str, build_type: str) -> Optional[str]:
+    """定位 `flutter build windows` 的输出目录（新老 Flutter 版本路径不同）。"""
+    config = "Release" if build_type.lower() == "release" else "Debug"
+    for relative in (
+        os.path.join("build", "windows", "x64", "runner", config),
+        os.path.join("build", "windows", "runner", config),
+    ):
+        candidate = os.path.join(flutter_project, relative)
+        if os.path.exists(os.path.join(candidate, "diting_desktop.exe")):
+            return candidate
+    return None
 
 
 def build_pipeline(
@@ -315,10 +264,11 @@ def build_pipeline(
         return {"success": False, "message": f"非法版本号: {version}"}
 
     root = get_root_dir()
-    desktop_dir = os.path.join(root, "Desktop")
-    bin_dir = os.path.join(desktop_dir, "build", "bin")
+    server_dir = os.path.join(root, "Server")
+    flutter_project = os.path.join(root, "DITING-Flutter", "apps", "diting_desktop")
+    bin_dir = os.path.join(server_dir, "build", "bin")
     service_bin = os.path.join(bin_dir, "diting-service.exe")
-    gui_bin = os.path.join(bin_dir, "diting-gui.exe")
+    app_stage = os.path.join(server_dir, "build", "windows", "app")
 
     on_log("info", "=" * 50)
     on_log("info", f"谛听 (DITING) 构建任务启动: Target={target}, Ver={version}, Type={build_type}")
@@ -346,12 +296,9 @@ def build_pipeline(
             if not tools["go"]["found"]:
                 on_log("error", "未找到 Go 环境，无法继续编译。")
                 return {"success": False, "message": "缺少 Go 环境"}
-            if not tools["wails"]["found"]:
-                on_log("error", "未找到 Wails CLI，请执行: go install github.com/wailsapp/wails/v2/cmd/wails@latest")
-                return {"success": False, "message": "缺少 Wails CLI"}
-            if not tools["node"]["found"]:
-                on_log("error", "未找到 Node.js，前端客户端编译需要 Node.js。")
-                return {"success": False, "message": "缺少 Node.js"}
+            if not tools["flutter"]["found"]:
+                on_log("error", "未找到 Flutter SDK，请把 flutter 加入 PATH。")
+                return {"success": False, "message": "缺少 Flutter SDK"}
             if not tools["nsis"]["found"]:
                 on_log("error", "未找到 makensis，无法打包 NSIS 安装包。")
                 return {"success": False, "message": "缺少 NSIS"}
@@ -360,6 +307,9 @@ def build_pipeline(
             if not tools["go"]["found"]:
                 on_log("error", "未找到 Go 环境，无法交叉编译 Linux 服务。")
                 return {"success": False, "message": "缺少 Go 环境"}
+            if not tools["flutter"]["found"]:
+                on_log("error", "未找到 Flutter SDK，无法构建内嵌 Web 控制台。")
+                return {"success": False, "message": "缺少 Flutter SDK"}
             if sys.platform == "win32" and not shutil.which("wsl"):
                 on_log("error", "未检测到 WSL 环境。在 Windows 上打包 deb 安装包需要 WSL 支持。")
                 return {"success": False, "message": "缺少 WSL 环境"}
@@ -369,7 +319,9 @@ def build_pipeline(
         on_log("info", f"清理旧构建产物: {bin_dir}")
         shutil.rmtree(bin_dir, ignore_errors=True)
     os.makedirs(bin_dir, exist_ok=True)
-    ensure_frontend_dist(desktop_dir)
+
+    if not build_web_console_assets(server_dir, on_log=on_log, is_cancelled=is_cancelled):
+        return {"success": False, "message": "Web 控制台构建失败"}
 
     git_commit = "unknown"
     try:
@@ -379,59 +331,59 @@ def build_pipeline(
     build_time = datetime.datetime.now().astimezone().isoformat()
 
     is_rel = build_type.lower() == "release"
-    ldflags = (
-        f"-s -w -X 'main.Version={version}' -X 'main.GitCommit={git_commit}' -X 'main.BuildTime={build_time}'"
-        if is_rel
-        else f"-X 'main.Version={version}' -X 'main.GitCommit={git_commit}' -X 'main.BuildTime={build_time}'"
-    )
 
     built_artifacts = []
 
     # 4. 构建 Windows EXE 安装包
     if need_win:
-        on_log("info", ">>> [1/3] 正在使用 Wails 编译 GUI 桌面客户端 (diting-gui.exe)...")
-        wails_cmd = [tools["wails"]["cmd"] or "wails", "build", "-platform", "windows/amd64", "-o", "diting-gui.exe", "-ldflags", ldflags]
-        if not is_rel:
-            wails_cmd.append("-debug")
-        ok = run_cmd_live(wails_cmd, cwd=desktop_dir, on_log=on_log, is_cancelled=is_cancelled)
-        if not ok or not os.path.exists(gui_bin):
-            return {"success": False, "message": "GUI 客户端编译失败"}
+        on_log("info", ">>> [1/3] 正在构建 Flutter Windows 桌面端...")
+        flutter_cmd = [tools["flutter"]["cmd"] or "flutter", "build", "windows"]
+        flutter_cmd.append("--release" if is_rel else "--debug")
+        ok = run_cmd_live(flutter_cmd, cwd=flutter_project, on_log=on_log, is_cancelled=is_cancelled)
+        if not ok:
+            return {"success": False, "message": "Flutter 桌面端编译失败"}
+
+        release_dir = find_flutter_release_dir(flutter_project, build_type)
+        if not release_dir:
+            return {"success": False, "message": "未找到 Flutter Windows 产物目录"}
+
+        if os.path.isdir(app_stage):
+            shutil.rmtree(app_stage, ignore_errors=True)
+        os.makedirs(os.path.dirname(app_stage), exist_ok=True)
+        shutil.copytree(release_dir, app_stage)
+        on_log("info", f"     Flutter 产物已暂存: {app_stage}")
 
         on_log("info", ">>> [2/3] 正在编译 Windows 特权服务 (diting-service.exe)...")
         svc_ldflags = f"{'-s -w ' if is_rel else ''}-H windowsgui -X 'main.Version={version}' -X 'main.GitCommit={git_commit}' -X 'main.BuildTime={build_time}'"
         cmd_svc = ["go", "build", "-ldflags", svc_ldflags, "-o", service_bin, "./cmd/service"]
-        ok = run_cmd_live(cmd_svc, cwd=desktop_dir, on_log=on_log, is_cancelled=is_cancelled)
+        ok = run_cmd_live(cmd_svc, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
         if not ok or not os.path.exists(service_bin):
             return {"success": False, "message": "特权服务编译失败"}
 
         on_log("info", ">>> [3/3] 正在打包 NSIS 独立安装包...")
-        installer_dir = os.path.join(desktop_dir, "build", "windows", "installer")
-        tools_nsh = os.path.join(installer_dir, "wails_tools.nsh")
-        if not os.path.exists(tools_nsh):
-            on_log("error", f"未找到 NSIS 宏定义配置文件: {tools_nsh}")
-            return {"success": False, "message": "缺少 wails_tools.nsh 宏文件"}
-
-        if not ensure_webview2_bootstrapper(installer_dir, on_log=on_log):
-            on_log("error", "无法就绪 WebView2 Bootstrapper 安装引导程序，NSIS 打包中止。")
-            return {"success": False, "message": "缺少 WebView2 引导程序"}
+        installer_dir = os.path.join(server_dir, "build", "windows", "installer")
+        nsi_script = os.path.join(installer_dir, "project.nsi")
+        if not os.path.exists(nsi_script):
+            on_log("error", f"未找到 NSIS 安装脚本: {nsi_script}")
+            return {"success": False, "message": "缺少 project.nsi"}
 
         nsis_exe = tools["nsis"]["cmd"] or "makensis"
-        nsi_script = os.path.join(installer_dir, "project.nsi")
         installer_name = f"DITING-{build_type.lower()}-v{version}.exe"
         installer_path = os.path.join(bin_dir, installer_name)
-        fallback_installer = os.path.join(bin_dir, "diting-gui-amd64-installer.exe")
+        fallback_installer = os.path.join(bin_dir, "diting-desktop-installer.exe")
 
         cmd_nsis = [
             nsis_exe,
             "/INPUTCHARSET",
             "UTF8",
-            f"-DARG_WAILS_AMD64_BINARY={gui_bin}",
+            f"-DARG_APP_DIR={app_stage}",
+            f"-DARG_SERVICE_BINARY={service_bin}",
             f"-DPRODUCT_VERSION={version}",
             f"-DINFO_PRODUCTVERSION={version}",
             f"-DOUTPUT_FILENAME={installer_path}",
             nsi_script,
         ]
-        ok = run_cmd_live(cmd_nsis, cwd=desktop_dir, on_log=on_log, is_cancelled=is_cancelled)
+        ok = run_cmd_live(cmd_nsis, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
         if not ok:
             return {"success": False, "message": "NSIS 安装包打包失败"}
 
@@ -445,11 +397,13 @@ def build_pipeline(
             on_log("error", f"未找到生成的安装包文件: {installer_path}")
             return {"success": False, "message": "未生成预期的 EXE 安装包产物"}
 
-        # 仅保留最终安装包，清理所有中间编译二进制
-        for temp_bin in (service_bin, gui_bin, fallback_installer):
-            if os.path.exists(temp_bin):
+        # 仅保留最终安装包，清理所有中间编译产物
+        for temp_path in (service_bin, app_stage, fallback_installer):
+            if os.path.isdir(temp_path):
+                shutil.rmtree(temp_path, ignore_errors=True)
+            elif os.path.exists(temp_path):
                 try:
-                    os.remove(temp_bin)
+                    os.remove(temp_path)
                 except Exception:
                     pass
 
@@ -465,17 +419,17 @@ def build_pipeline(
         # 始终以 bash 显式执行，避免脚本缺失可执行位（如 Windows 克隆检出）导致失败
         if sys.platform == "win32":
             bin_path = cross_compile_linux_binary(
-                desktop_dir, bin_dir, arch, version, build_type, git_commit, build_time,
+                server_dir, bin_dir, arch, version, build_type, git_commit, build_time,
                 on_log=on_log, is_cancelled=is_cancelled,
             )
             if not bin_path:
                 return {"success": False, "message": "Linux 二进制交叉编译失败"}
-            wsl_dir = desktop_dir.replace("\\", "/")
+            wsl_dir = server_dir.replace("\\", "/")
             cmd_pkg = ["wsl.exe", "-e", "bash", "-c", f"cd \"$(wslpath '{wsl_dir}')\" && exec bash ./build_linux.sh --package --prebuilt -a {arch} -v {version} -b {build_type}"]
-            ok = run_cmd_live(cmd_pkg, cwd=desktop_dir, on_log=on_log, is_cancelled=is_cancelled)
+            ok = run_cmd_live(cmd_pkg, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
         else:
             cmd_pkg = ["bash", "./build_linux.sh", "--package", "-a", arch, "-v", version, "-b", build_type]
-            ok = run_cmd_live(cmd_pkg, cwd=desktop_dir, on_log=on_log, is_cancelled=is_cancelled)
+            ok = run_cmd_live(cmd_pkg, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
 
         if not ok:
             return {"success": False, "message": "Linux 发行包打包失败"}

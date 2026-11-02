@@ -25,10 +25,10 @@ final desktopPageOriginProvider = Provider<Uri>(
   (ref) => desktopPageOrigin ?? Uri.base,
 );
 
-/// True when the bundle is being served to a browser, i.e. the LAN web console. Wails injects its
-/// bindings into the desktop window, so `window.go` tells the two apart.
+/// True when the bundle is being served to a browser, i.e. the LAN web console. The native Windows
+/// window (`flutter run -d windows`) is never web, so it skips authentication entirely.
 final desktopWebConsoleProvider = Provider<bool>(
-  (ref) => kIsWeb && !desktopHasWailsBindings,
+  (ref) => kIsWeb,
 );
 
 /// Fires when the service answers 401 to a request that carried a session token. A plain object

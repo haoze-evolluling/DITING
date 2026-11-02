@@ -1,4 +1,4 @@
-// Desktop hub custom rules (docs/development/flutter-desktop-ui.md step 4): the AdGuard syntax
+// Desktop hub custom rules (desktop parity): the AdGuard syntax
 // guide beside the editor that replaces the whole rule list. The text is a local draft; only the
 // save button posts it, and the page then adopts the list the service re-reads.
 

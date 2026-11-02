@@ -1,7 +1,7 @@
 /// The emergency network restore: put the host's DNS back the way it was before the takeover, clear
 /// residual loopback DNS and flush the system cache.
 ///
-/// The old desktop console kept this behind a Wails binding (`App.RunEmergencyRestore`), so only its
+/// The old desktop console kept this behind a native binding (`App.RunEmergencyRestore`), so only its
 /// desktop window could offer it. The service now answers `POST /takeover/emergency-restore`, so the
 /// same card works in the desktop window and in the LAN console — and it never runs without the
 /// confirmation, because it rewrites the host's DNS settings.

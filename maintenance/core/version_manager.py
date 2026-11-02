@@ -7,7 +7,6 @@
 """
 
 import argparse
-import hashlib
 import json
 import os
 import re
@@ -35,20 +34,15 @@ ALL_GROUPS = (GROUP_FLUTTER, GROUP_COMMON)
 def get_file_targets(groups: Optional[List[str]] = None) -> List[Dict[str, str]]:
     """按分组返回待维护的文件清单；groups 为空表示全部。"""
     root = get_root_dir()
-    desktop = os.path.join(root, "Desktop")
-    frontend = os.path.join(desktop, "frontend")
+    server = os.path.join(root, "Server")
     flutter = os.path.join(root, "DITING-Flutter", "apps", "diting_android")
+    flutter_desktop = os.path.join(root, "DITING-Flutter", "apps", "diting_desktop")
     targets = [
-        {"name": "桌面端主程序", "path": os.path.join(desktop, "main.go"), "type": "go", "group": GROUP_COMMON},
-        {"name": "Linux 端主程序", "path": os.path.join(desktop, "main_linux.go"), "type": "go", "group": GROUP_COMMON},
-        {"name": "Linux 构建脚本", "path": os.path.join(desktop, "build_linux.sh"), "type": "sh", "group": GROUP_COMMON},
-        {"name": "特权服务", "path": os.path.join(desktop, "cmd", "service", "main.go"), "type": "go", "group": GROUP_COMMON},
-        {"name": "NSIS 主配置", "path": os.path.join(desktop, "build", "windows", "installer", "project.nsi"), "type": "nsi", "group": GROUP_COMMON},
-        {"name": "NSIS 工具模板", "path": os.path.join(desktop, "build", "windows", "installer", "wails_tools.nsh"), "type": "nsi", "group": GROUP_COMMON},
-        {"name": "Wails 配置", "path": os.path.join(desktop, "wails.json"), "type": "wails", "group": GROUP_COMMON},
-        {"name": "前端 package.json", "path": os.path.join(frontend, "package.json"), "type": "pkg", "group": GROUP_COMMON},
-        {"name": "前端锁文件", "path": os.path.join(frontend, "package-lock.json"), "type": "pkg-lock", "group": GROUP_COMMON},
+        {"name": "特权服务", "path": os.path.join(server, "cmd", "service", "main.go"), "type": "go", "group": GROUP_COMMON},
+        {"name": "Linux 构建脚本", "path": os.path.join(server, "build_linux.sh"), "type": "sh", "group": GROUP_COMMON},
+        {"name": "NSIS 主配置", "path": os.path.join(server, "build", "windows", "installer", "project.nsi"), "type": "nsi", "group": GROUP_COMMON},
         {"name": "Flutter 客户端版本（DITING-Flutter）", "path": os.path.join(flutter, "pubspec.yaml"), "type": "pubspec", "group": GROUP_FLUTTER},
+        {"name": "Flutter 桌面端版本（DITING-Flutter）", "path": os.path.join(flutter_desktop, "pubspec.yaml"), "type": "pubspec", "group": GROUP_FLUTTER},
         {"name": "README 版本示例", "path": os.path.join(root, "README.md"), "type": "readme", "group": GROUP_COMMON},
     ]
     if not groups:
@@ -113,9 +107,6 @@ def extract_version(item: Dict[str, str]) -> str:
     elif ftype in ("nsi", "nsh"):
         m = re.search(r'!define INFO_PRODUCTVERSION\s+"([^"]+)"', content)
         if m: return m.group(1)
-    elif ftype == "wails":
-        m = re.search(r'"productVersion":\s*"([^"]+)"', content)
-        if m: return m.group(1)
     elif ftype == "pkg":
         m = re.search(r'"version":\s*"([^"]+)"', content)
         if m: return m.group(1)
@@ -151,9 +142,6 @@ def replace_version_content(content: str, ftype: str, new_ver: str) -> Tuple[str
         if n > 0 and new_content != content: return new_content, True
     elif ftype in ("nsi", "nsh"):
         new_content, n = re.subn(r'(!define INFO_PRODUCTVERSION\s+")[^"]+(")', rf'\g<1>{new_ver}\g<2>', content)
-        if n > 0 and new_content != content: return new_content, True
-    elif ftype == "wails":
-        new_content, n = re.subn(r'("productVersion":\s*")[^"]+(")', rf'\g<1>{new_ver}\g<2>', content)
         if n > 0 and new_content != content: return new_content, True
     elif ftype == "pkg":
         new_content, n = re.subn(r'("version":\s*")[^"]+(")', rf'\g<1>{new_ver}\g<2>', content)
@@ -260,21 +248,11 @@ def sync_version(
         else:
             _log("warn", f"未匹配到版本标识或版本未变: {rel}")
 
-    # 同步更新本地 package.json.md5 校验文件 (已在 .gitignore 中，不纳入 Git 跟踪)
-    pkg_path = os.path.join(root, "Desktop", "frontend", "package.json")
-    pkg_md5_path = os.path.join(root, "Desktop", "frontend", "package.json.md5")
-    if os.path.exists(pkg_path):
-        with open(pkg_path, "rb") as f:
-            h = hashlib.md5(f.read()).hexdigest()
-        if not dry_run:
-            with open(pkg_md5_path, "w", encoding="utf-8") as f:
-                f.write(h)
-            _log("info", f"[已更新本地缓存] 前端 package.json MD5 哈希: {h[:8]}...")
-
+    # 同步更新后的验证
     if verify and not dry_run:
         _log("info", "正在运行 Go 编译测试以验证版本语法...")
         cmd = ["go", "test", "./..."]
-        p = subprocess.run(cmd, cwd=os.path.join(root, "Desktop"), capture_output=True, text=True)
+        p = subprocess.run(cmd, cwd=os.path.join(root, "Server"), capture_output=True, text=True)
         if p.returncode != 0:
             _log("error", f"Go 测试失败:\n{p.stderr or p.stdout}")
             return {"success": False, "message": "Go 验证测试失败", "modified": modified_files}

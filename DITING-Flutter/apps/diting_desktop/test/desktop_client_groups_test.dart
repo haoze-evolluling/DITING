@@ -1,4 +1,4 @@
-// Desktop traffic branch, client groups (docs/development/flutter-desktop-ui.md step 4):
+// Desktop traffic branch, client groups (desktop parity):
 // `/clients/groups` is one document, edited as drafts and written once.
 
 import 'package:diting_shared/app/l10n/l10n.dart';

@@ -1,4 +1,4 @@
-// Desktop adapter takeover (docs/development/flutter-desktop-ui.md §8.29): the adapter list from
+// Desktop adapter takeover (desktop parity): the adapter list from
 // `/adapters`, the takeover set from `/status`, and the three writes. Every value comes from the
 // service; a rejected write keeps the state the service still holds.
 

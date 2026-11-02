@@ -3,8 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Host implementation of the legacy preference containers.
 ///
-/// Android mirrors its real XML files through [MethodChannelLegacyPrefsStore]. The Wails/WebView
-/// host has no Android shared-preference API, so it keeps the same container/key contract in the
+/// Android mirrors its real XML files through [MethodChannelLegacyPrefsStore]. The desktop/web host
+/// has no Android shared-preference API, so it keeps the same container/key contract in the
 /// browser local storage backing `shared_preferences`. Container and key remain separate arguments
 /// everywhere else; only this adapter namespaces them for storage.
 class SharedPreferencesLegacyPrefsStore implements LegacyPrefsStore {

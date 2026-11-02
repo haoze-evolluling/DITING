@@ -16,7 +16,7 @@ title DITING Flutter Desktop
 ::   run_desktop.bat release    build a release EXE and launch it
 ::
 :: The Flutter window is only a client: every figure comes from the local
-:: DITING service (Desktop/cmd/service), which listens on 127.0.0.1:15353 by
+:: DITING service (Server/cmd/service), which listens on 127.0.0.1:15353 by
 :: default. This script probes that port and, when the privileged service
 :: binary is already built, starts it elevated before launching the window.
 :: Override the port with DITING_IPC_PORT if the service was configured
@@ -72,7 +72,7 @@ call :PROBE_IPC
 if defined IPC_SEEN goto SERVICE_READY
 echo [INFO] Nothing answers on %IPC_HOST%:%IPC_PORT%.
 echo        The desktop window is only a client of the local DITING service,
-set "SVC_EXE=%~dp0..\Desktop\build\bin\diting-service.exe"
+set "SVC_EXE=%~dp0..\Server\build\bin\diting-service.exe"
 if not exist "%SVC_EXE%" goto SERVICE_MISSING
 echo        so it is started first (a UAC prompt is expected):
 for %%I in ("%SVC_EXE%") do echo            %%~fI -run
@@ -90,7 +90,7 @@ goto SERVICE_READY
 :SERVICE_MISSING
 echo        without it the window shows "cannot reach the local service".
 echo        build and start it once with:
-echo            cd Desktop
+echo            cd Server
 echo            go build -o build\bin\diting-service.exe ./cmd/service
 echo            build\bin\diting-service.exe -run     (as Administrator)
 echo.

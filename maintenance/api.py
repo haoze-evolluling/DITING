@@ -17,7 +17,6 @@ from maintenance.core.dns_engine import execute_benchmark, execute_dns_query
 from maintenance.core.file_scanner import run_scan_analysis
 from maintenance.core.logo_generator import export_logo_assets, generate_squircle_svg
 from maintenance.core.runner import TaskRunner
-from maintenance.core.ui_capturer import capture_screenshots
 from maintenance.core.version_manager import inspect_versions, sync_version
 
 
@@ -141,13 +140,4 @@ class ApiBridge:
             return res
 
         self.runner.run_async(_task, self._log, lambda res: self._emit("version_sync_done", res))
-        return {"started": True}
-
-    # === 6. 界面截图模块 ===
-    def capture_start(self, tab: str, theme: str, width: int, height: int, output_dir: Optional[str] = None):
-        def _task(log_cb, is_cancelled):
-            res = capture_screenshots(tab=tab, theme=theme, width=int(width), height=int(height), output_dir=output_dir, on_log=log_cb, is_cancelled=is_cancelled)
-            return res
-
-        self.runner.run_async(_task, self._log, lambda res: self._emit("capture_done", res))
         return {"started": True}

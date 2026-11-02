@@ -431,37 +431,3 @@ window.VersionModule = {
     }
   }
 };
-
-window.CaptureModule = {
-  async startCapture() {
-    const tab = document.getElementById('cap-tab').value;
-    const theme = document.getElementById('cap-theme').value;
-    const width = parseInt(document.getElementById('cap-width').value) || 1280;
-    const height = parseInt(document.getElementById('cap-height').value) || 720;
-
-    App.setBusy(true, '正在启动无头浏览器并截取界面...');
-    await window.pywebview.api.capture_start(tab, theme, width, height, null);
-  },
-
-  onCaptureDone(payload) {
-    App.setBusy(false);
-    if (!payload.success || !payload.files) return;
-    const card = document.getElementById('cap-gallery-card');
-    card.style.display = 'block';
-    document.getElementById('cap-count').textContent = payload.files.length;
-
-    const grid = document.getElementById('cap-gallery-grid');
-    grid.innerHTML = '';
-    payload.files.forEach(f => {
-      const div = document.createElement('div');
-      div.className = 'gallery-item';
-      div.onclick = () => window.pywebview.api.open_explorer(f.path);
-      div.innerHTML = `
-        <div class="item-thumb">图</div>
-        <div class="item-title" title="${f.name}">${f.name}</div>
-        <div class="item-meta">${f.size_kb} KB</div>
-      `;
-      grid.appendChild(div);
-    });
-  }
-};

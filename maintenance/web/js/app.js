@@ -154,8 +154,6 @@ window.App = {
       BuildModule.onBuildDone(data);
     } else if (type === 'version_sync_done') {
       VersionModule.onSyncDone(data);
-    } else if (type === 'capture_done') {
-      CaptureModule.onCaptureDone(data);
     }
   },
 
@@ -188,7 +186,7 @@ window.App = {
     document.getElementById('logo-gradient').addEventListener('change', () => LogoModule.refreshPreview());
     document.getElementById('btn-logo-export').addEventListener('click', () => LogoModule.exportAssets());
     document.getElementById('btn-logo-open-res').addEventListener('click', () => {
-      window.pywebview.api.open_explorer('Desktop/frontend/src/assets/images');
+      window.pywebview.api.open_explorer('DITING-Flutter/packages/diting_shared/assets/images');
     });
 
     // Build
@@ -196,7 +194,7 @@ window.App = {
     document.getElementById('btn-build-start').addEventListener('click', () => BuildModule.startBuild());
     document.getElementById('btn-build-cancel').addEventListener('click', () => BuildModule.cancelBuild());
     document.getElementById('btn-build-open-bin').addEventListener('click', () => {
-      window.pywebview.api.open_explorer('Desktop/build/bin');
+      window.pywebview.api.open_explorer('Server/build/bin');
     });
 
     // Version - Flutter 客户端（常用）
@@ -214,12 +212,6 @@ window.App = {
     if (bumpPatchBtn) bumpPatchBtn.addEventListener('click', () => VersionModule.bumpVersion('patch'));
     const bumpMinorBtn = document.getElementById('btn-ver-bump-minor');
     if (bumpMinorBtn) bumpMinorBtn.addEventListener('click', () => VersionModule.bumpVersion('minor'));
-
-    // Capture
-    document.getElementById('btn-cap-start').addEventListener('click', () => CaptureModule.startCapture());
-    document.getElementById('btn-cap-open-dir').addEventListener('click', () => {
-      window.pywebview.api.open_explorer('screenshots');
-    });
   }
 };
 

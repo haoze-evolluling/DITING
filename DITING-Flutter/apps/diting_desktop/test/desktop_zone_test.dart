@@ -1,6 +1,6 @@
-// Desktop hub rewrite page's local authoritative zones (docs/development/flutter-desktop-ui.md step
-// 4): one row per zone with the service's build result, the RFC 1035 text edited locally, and a
-// preview through the service's own parser. Only "save all" writes; a rejected save rolls back.
+// Desktop hub rewrite page's local authoritative zones (desktop parity): one row per zone with the
+// service's build result, the RFC 1035 text edited locally, and a preview through the service's own
+// parser. Only "save all" writes; a rejected save rolls back.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';

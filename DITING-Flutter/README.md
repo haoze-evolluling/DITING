@@ -6,7 +6,7 @@
 DITING-Flutter/
 ├── packages/diting_shared/   # 共享设计系统、主题、l10n、旧版配置/SQLite 读取
 ├── apps/diting_android/      # Android 客户端：页面、路由、原生通道、android/、tunnel/
-├── apps/diting_desktop/      # Windows 桌面端：原生 Flutter 窗口 + web/（Wails / 局域网控制台）
+├── apps/diting_desktop/      # Windows 桌面端：原生 Flutter 窗口 + web/（局域网控制台）
 ├── run_desktop.bat           # 启动桌面端；release 参数用于打包
 └── pubspec.yaml              # workspace 根
 ```
@@ -41,14 +41,14 @@ flutter run -d chrome
 桌面窗口只是客户端：所有数值都来自特权服务 `diting-service.exe` 的本地 IPC
 （默认 `127.0.0.1:15353`）。服务没起来时，窗口会如实显示「连不上本机服务」，不会伪造状态。
 
-`run_desktop.bat` 启动前会先探测该端口：已在监听就复用；`Desktop\build\bin\diting-service.exe`
+`run_desktop.bat` 启动前会先探测该端口：已在监听就复用；`Server\build\bin\diting-service.exe`
 存在则以管理员权限拉起它，再启动窗口；两者都没有时打印编译/启动命令后继续（窗口仍可打开，
 但只能显示离线态）。端口改过可用环境变量覆盖探测：`set DITING_IPC_PORT=15354`。
 
 手工准备服务（只需一次）：
 
 ```bash
-cd Desktop
+cd Server
 go build -o build/bin/diting-service.exe ./cmd/service
 build\bin\diting-service.exe -run      # 管理员权限；前台运行，关掉即停止服务
 ```

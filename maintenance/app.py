@@ -37,7 +37,7 @@ def main():
     api = ApiBridge()
 
     # 应用窗口图标（优先选择桌面端构建图标）
-    icon_path = os.path.join(ROOT_DIR, "Desktop", "build", "windows", "icon.ico")
+    icon_path = os.path.join(ROOT_DIR, "Server", "build", "windows", "icon.ico")
     if not os.path.exists(icon_path):
         icon_path = None
 

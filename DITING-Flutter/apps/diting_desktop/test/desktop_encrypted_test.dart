@@ -1,4 +1,4 @@
-// Desktop hub encrypted DNS server (docs/development/flutter-desktop-ui.md step 4): listeners,
+// Desktop hub encrypted DNS server (desktop parity): listeners,
 // certificate, DDR, reverse-proxy trust and the mobile profile. Every value comes from
 // `/encrypted/dns/status`; each write adopts the whole status the service answers with.
 

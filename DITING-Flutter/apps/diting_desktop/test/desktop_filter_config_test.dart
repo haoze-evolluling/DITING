@@ -1,4 +1,4 @@
-// Desktop hub blocking mode (docs/development/flutter-desktop-ui.md step 4): the master switch, the
+// Desktop hub blocking mode (desktop parity): the master switch, the
 // three answer modes, their addresses and interval, the temporary pause and the advanced switches.
 // Every value must come from `/filter/config`, `/filter/stats` and `/filter/pause`; each write
 // re-reads them, and a rejected write is reported instead of assumed.

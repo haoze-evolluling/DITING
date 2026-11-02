@@ -1,4 +1,4 @@
-// Desktop home, device half (docs/development/flutter-desktop-ui.md step 4): the
+// Desktop home, device half (desktop parity): the
 // recognised clients plus the ACL and rate limit from `/status`. Every value comes from the
 // service; each write re-reads the state it touched.
 

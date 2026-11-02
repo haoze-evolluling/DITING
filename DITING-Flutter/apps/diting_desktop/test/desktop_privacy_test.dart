@@ -1,4 +1,4 @@
-// Desktop hub security and privacy (docs/development/flutter-desktop-ui.md step 4): the
+// Desktop hub security and privacy (desktop parity): the
 // protocol-hardening switches, the ECS policy and the rebinding / hosts defences. Values come from
 // `/status`; each switch patches its own endpoint and the page re-reads.
 

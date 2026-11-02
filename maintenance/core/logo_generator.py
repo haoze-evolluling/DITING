@@ -193,34 +193,33 @@ def _save_ico(base: Image.Image, path: str, log: Callable[[str, str], None]) -> 
 
 
 def export_desktop(log: Callable[[str, str], None]) -> List[str]:
-    """桌面端（Wails + Vue3）：Windows 图标、Linux pixmap、Web favicon 与前端资源。"""
-    desktop = os.path.join(ROOT_DIR, "Desktop")
+    """服务端与 Flutter 桌面端：Windows 图标、Linux pixmap、Web 控制台图标。"""
+    server = os.path.join(ROOT_DIR, "Server")
+    desktop_app = os.path.join(ROOT_DIR, "DITING-Flutter", "apps", "diting_desktop")
     files: List[str] = []
 
     light_1024 = render_icon(LIGHT, 1024)
     light_512 = light_1024.resize((512, 512), Image.LANCZOS)
-    dark_512 = render_icon(DARK, 512)
+    light_192 = light_1024.resize((192, 192), Image.LANCZOS)
+    light_64 = light_1024.resize((64, 64), Image.LANCZOS)
 
-    files.append(_save_png(light_1024, os.path.join(desktop, "build", "appicon.png"), log))
-    files.append(_save_ico(light_512, os.path.join(desktop, "build", "windows", "icon.ico"), log))
+    # NSIS 安装包与系统服务图标
+    files.append(_save_png(light_1024, os.path.join(server, "build", "appicon.png"), log))
+    files.append(_save_ico(light_512, os.path.join(server, "build", "windows", "icon.ico"), log))
     # Linux 桌面启动器 / 窗口管理器图标
-    files.append(_save_png(light_512, os.path.join(desktop, "build", "linux", "diting.png"), log))
+    files.append(_save_png(light_512, os.path.join(server, "build", "linux", "diting.png"), log))
 
-    assets = os.path.join(desktop, "frontend", "src", "assets", "images")
-    files.append(_save_png(light_512, os.path.join(assets, "logo-universal.png"), log))
-    files.append(_save_png(dark_512, os.path.join(assets, "logo-universal-dark.png"), log))
+    # Flutter Windows 原生窗口图标
+    files.append(_save_ico(light_512, os.path.join(desktop_app, "windows", "runner", "resources", "app_icon.ico"), log))
 
-    public = os.path.join(desktop, "frontend", "public")
-    files.append(_save_png(light_512, os.path.join(public, "appicon.png"), log))
-    files.append(_save_ico(light_512, os.path.join(public, "favicon.ico"), log))
-    files.append(_save_png(dark_512, os.path.join(public, "appicon-dark.png"), log))
-
-    for path in (os.path.join(assets, "logo.svg"), os.path.join(public, "logo.svg")):
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as handle:
-            handle.write(adaptive_svg())
-        log("info", f"SVG (随明暗切换): {path}")
-        files.append(path)
+    # Flutter Web 控制台（局域网浏览器访问）图标
+    web = os.path.join(desktop_app, "web")
+    icons = os.path.join(web, "icons")
+    files.append(_save_png(light_64, os.path.join(web, "favicon.png"), log))
+    files.append(_save_png(light_192, os.path.join(icons, "Icon-192.png"), log))
+    files.append(_save_png(light_512, os.path.join(icons, "Icon-512.png"), log))
+    files.append(_save_png(light_192, os.path.join(icons, "Icon-maskable-192.png"), log))
+    files.append(_save_png(light_512, os.path.join(icons, "Icon-maskable-512.png"), log))
     return files
 
 

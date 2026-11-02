@@ -18,7 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 const desktopPrefsContainer = 'diting_desktop';
 
 /// Where the local service listens. Defaults to the loopback address the service binds out of the
-/// box; the keys match what the Wails console writes.
+/// box; the keys match what earlier desktop builds wrote.
 final desktopApiConfigProvider = Provider<DesktopApiConfig>((ref) {
   // The browser that loaded the web console talks to the origin it came from, and authenticates with
   // the session token instead of the desktop host's IPC token.

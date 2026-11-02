@@ -1,4 +1,4 @@
-// Desktop settings branch, appearance (docs/development/flutter-desktop-ui.md step 4): palette and
+// Desktop settings branch, appearance (desktop parity): palette and
 // day/night mode are the app's shared appearance providers, not a desktop-only copy.
 
 import 'package:diting_shared/app/l10n/l10n.dart';

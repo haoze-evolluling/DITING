@@ -1,4 +1,4 @@
-// Desktop hub information architecture (docs/development/flutter-desktop-ui.md step 4): the six
+// Desktop hub information architecture (desktop parity): the six
 // use-order categories, which entries each one owns, and the two operation cards that belong to
 // the diagnosis category instead of floating loose on the board.
 //

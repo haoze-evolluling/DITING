@@ -1,0 +1,95 @@
+﻿package main
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/haoze-evolluling/diting/server/internal/config"
+	"github.com/haoze-evolluling/diting/server/internal/core"
+	"github.com/haoze-evolluling/diting/server/internal/ipc"
+)
+
+// GetCacheStats 实现 ServiceController 接口
+func (p *program) GetCacheStats(ctx context.Context) (*core.CacheStats, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.cache == nil {
+		return &core.CacheStats{Enabled: false}, nil
+	}
+	st := p.cache.Stats()
+	return &st, nil
+}
+
+// GetCacheEntries 实现 ServiceController 接口
+func (p *program) GetCacheEntries(ctx context.Context, query string, limit int) (*ipc.CacheEntriesResponse, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.cache == nil {
+		return &ipc.CacheEntriesResponse{Total: 0, Entries: []core.CacheEntryItem{}}, nil
+	}
+	total, entries := p.cache.GetEntries(query, limit)
+	return &ipc.CacheEntriesResponse{
+		Total:   total,
+		Entries: entries,
+	}, nil
+}
+
+// GetCacheTopDomains 实现 ServiceController 接口
+func (p *program) GetCacheTopDomains(ctx context.Context, limit int) ([]core.CacheDomainStat, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.cache == nil {
+		return []core.CacheDomainStat{}, nil
+	}
+	return p.cache.GetTopDomains(limit), nil
+}
+
+// ClearCache 实现 ServiceController 接口
+func (p *program) ClearCache(ctx context.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.cache == nil {
+		return fmt.Errorf("智能缓存尚未初始化")
+	}
+	p.cache.Clear()
+	return nil
+}
+
+// GetCacheConfig 实现 ServiceController 接口
+func (p *program) GetCacheConfig(ctx context.Context) (*core.CacheConfig, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.cache == nil {
+		cfg := p.cfg.Cache
+		return &cfg, nil
+	}
+	cfg := p.cache.GetConfig()
+	return &cfg, nil
+}
+
+// UpdateCacheConfig 实现 ServiceController 接口
+func (p *program) UpdateCacheConfig(ctx context.Context, cfg core.CacheConfig) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	core.NormalizeCacheConfig(&cfg)
+	// 前端提交空路径表示"沿用平台约定"。此处必须回填成具体路径，
+	// 否则落盘与恢复会指向不同的文件（一个空路径等于不落盘）。
+	if cfg.PersistEnabled && strings.TrimSpace(cfg.PersistPath) == "" {
+		cfg.PersistPath = p.cachePersistPath()
+	}
+	if p.cache != nil {
+		p.cache.UpdateConfig(cfg)
+	}
+	p.cfg.Cache = cfg
+	if p.configPath != "" && p.cfg != nil {
+		_ = config.SaveConfig(p.configPath, p.cfg)
+	}
+	return nil
+}

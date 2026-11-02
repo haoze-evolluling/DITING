@@ -1,4 +1,4 @@
-// Desktop tools branch, rule simulator (docs/development/flutter-desktop-ui.md step 4):
+// Desktop tools branch, rule simulator (desktop parity):
 // `/filter/check` judges one domain and the page repeats its verdict.
 
 import 'package:diting_shared/app/l10n/l10n.dart';

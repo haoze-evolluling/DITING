@@ -3,9 +3,9 @@
 谛听（DITING）是一款本地优先的开源 DNS 加速与网络流量过滤工具，提供低延迟解析、规则阻断、防追踪与流量管控。全部处理在设备本地闭环完成，不上传远程数据；支持 Android、Windows、Linux 三端，并提供开发者维护工具箱。
 
 - 📱 **Android**：`DITING-Flutter`（Flutter 架构）自带 Go 隧道引擎源码（`tunnel/`，gomobile 编译为 AAR），支持极速模式、普通模式（gVisor netstack 全隧道）与局域网独立 DNS 服务，要求 Android 9.0+（`arm64-v8a`）。
-- 💻 **Windows**：特权系统服务 + Wails 桌面 GUI + 局域网 Web 控制台，支持物理网卡双栈 DNS 接管与崩溃自愈。
+- 💻 **Windows**：特权系统服务 + Flutter 桌面端 + 局域网 Web 控制台，支持物理网卡双栈 DNS 接管与崩溃自愈。
 - 🐧 **Linux**：单二进制 `diting-service` + 内嵌 Web 控制台，systemd 托管，自动适配多种 DNS 后端。
-- 🧰 **维护工具箱**：Python + PyWebView 桌面套件，涵盖压测、代码扫描、Logo 导出、截图、跨端构建与版本同步。
+- 🧰 **维护工具箱**：Python + PyWebView 桌面套件，涵盖压测、代码扫描、Logo 导出、跨端构建与版本同步。
 
 ---
 
@@ -36,7 +36,7 @@
 - **个性化**：Material 3 动态取色、深浅主题、配置导入导出；可选 BYOK LLM 助手（默认关闭）。
 
 ### 💻 Windows 专属
-- **双二进制架构**：`diting-service.exe`（管理员权限）负责网络核心，`diting-gui.exe`（免 UAC）负责交互，经本地 IPC 通信。
+- **双二进制架构**：`diting-service.exe`（管理员权限）负责网络核心，`diting_desktop.exe`（Flutter，免 UAC）负责交互，经本地 IPC 通信。
 - **双栈接管与自愈**：自动接管活动物理网卡 IPv4/IPv6 DNS，接管前原子备份，退出或异常时自动恢复，支持应急脱困。
 - **端口冲突检测**：启动前探测 53 端口占用，定位进程名与 PID。
 - **局域网 DNS 服务**：监听 `0.0.0.0:53` 与 `[::]:53`，一键放行 Windows 防火墙 UDP/TCP 入站。
@@ -44,7 +44,7 @@
 - **系统集成**：Windows 服务注册与管理、开机静默启动、界面截图。
 
 ### 🐧 Linux 专属
-- **单二进制交付**：`diting-service` 内嵌 Vue 3 控制台；systemd 托管，开机自启、异常重启。
+- **单二进制交付**：`diting-service` 内嵌 Flutter Web 控制台；systemd 托管，开机自启、异常重启。
 - **多后端接管**：自动适配 systemd-resolved（`resolvectl`）→ NetworkManager（`nmcli`）→ `/etc/resolv.conf`，接管前快照、退出还原、崩溃自愈，并生成离线 `restore-dns.sh`。
 - **stub 冲突处置**：识别 `127.0.0.53:53` / `127.0.0.54:53` 占用，可写入 `DNSStubListener=no` drop-in 并重启服务。
 - **防火墙适配**：探测 firewalld / ufw / nftables / iptables 并维护放行规则；无防火墙管理器时降级为诊断提示。
@@ -53,7 +53,7 @@
 
 ### 🧰 维护工具箱
 - 基于 Python + PyWebView + WebView2，双击 `maintenance/run_maintenance.bat` 即可启动。
-- 六大工坊：DNS 诊断压测、代码规模扫描、品牌 Logo 导出、跨端构建打包、版本号维护、界面自动截图。
+- 五大工坊：DNS 诊断压测、代码规模扫描、品牌 Logo 导出、跨端构建打包、版本号维护。
 
 ---
 
@@ -65,7 +65,7 @@
 | **Android** | 🛡️ 普通模式 | Android 9.0+ / `arm64-v8a` | gVisor 全隧道，支持应用分流、HTTPS 检查、出站代理 |
 | **Android** | 🏠 服务器模式 | Android 9.0+ / `arm64-v8a` | Go 独立 DNS 服务，监听 `0.0.0.0:1053`，共享给局域网设备 |
 | **Windows** | ⚙️ 特权核心服务 | Windows 10+ 64-bit | 双栈接管物理网卡、本地 53 监听、缓存规则、局域网 DNS、崩溃自愈 |
-| **Windows** | 🖥️ 桌面 GUI | Windows 10+ 64-bit + WebView2 | Wails v2 + Vue 3，免管理员权限管理服务与实时日志 |
+| **Windows** | 🖥️ 桌面 GUI | Windows 10+ 64-bit | Flutter 原生窗口，免管理员权限管理服务与实时日志 |
 | **Windows** | 🌐 Web 控制台 | 任意主流浏览器 | 访问 15353 端口远程管理 Windows 核心服务 |
 | **Linux** | ⚙️ 核心服务 | systemd 发行版 / `amd64`·`arm64` | 多后端 DNS 接管、53 监听、缓存规则、局域网 DNS、离线还原 |
 | **Linux** | 🌐 Web 控制台 | 任意主流浏览器 | 访问 15353 端口完成全部配置，无需桌面环境 |
@@ -82,16 +82,15 @@ DITING/
 ├── DITING-Flutter/           # ★ Flutter 工作区（共享包 + Android 客户端 + Windows 桌面端）
 │   ├── packages/diting_shared/  #   共享设计系统、主题、l10n、旧版配置与 SQLite 读取（GPL-3.0）
 │   ├── apps/diting_android/     #   Android 客户端：页面/路由/原生通道、android/ 壳、tunnel/ 引擎源码
-│   ├── apps/diting_desktop/     #   Windows 桌面端：Flutter 原生窗口 + web/ 宿主（Wails/局域网控制台共用）
+│   ├── apps/diting_desktop/     #   Windows 桌面端：Flutter 原生窗口 + web/（局域网 Web 控制台）
 │   ├── run_desktop.bat          #   启动桌面端；`run_desktop.bat release` 构建并启动 Release
 │   └── pubspec.yaml             #   pub workspace 根（一份 lockfile）
-├── Desktop/                  # Windows / Linux 工程
-│   ├── cmd/service/          # 特权核心服务（Windows Service / Linux systemd）
-│   ├── internal/             # DNS 内核、平台适配、IPC、鉴权、查询日志
-│   ├── frontend/             # Vue 3 + TypeScript + Material Web 前端
-│   ├── build/                # 构建产物、NSIS 与 systemd 打包脚本
-│   ├── main.go               # Wails 桌面 GUI 入口
-│   └── build*.bat/sh         # 构建、打包与版本同步脚本
+├── Server/                   # Windows / Linux 服务端工程
+│   ├── cmd/service/          #   特权核心服务（Windows Service / Linux systemd）
+│   ├── internal/             #   DNS 内核、平台适配、IPC、鉴权、查询日志
+│   ├── frontend/             #   内嵌的 Flutter Web 控制台产物与 embed.go
+│   ├── build/                #   构建产物、NSIS 与 systemd 打包脚本
+│   └── build*.bat/sh         #   构建、打包与版本同步脚本
 ├── maintenance/              # Python + PyWebView 维护工具箱（assets/brand 为品牌矢量源）
 ├── docs/                     # 开发文档与静态资源
 ├── avatars/                  # 赞助者与共建者头像
@@ -166,14 +165,14 @@ flutter build windows --release
 ```
 
 ### 💻 Windows
-要求 Go 1.25+、Node.js 18+、Wails v2（`go install github.com/wailsapp/wails/v2/cmd/wails@latest`）；打包独立安装包需 NSIS（可选）。
+要求 Go 1.25+、Flutter 3.47+、Visual Studio「使用 C++ 的桌面开发」工作负载；打包独立安装包需 NSIS（可选）。
 
 ```cmd
-cd Desktop
+cd Server
 build.bat
 ```
 
-一键构建 Windows EXE 安装包，纯净产物输出至 `Desktop/build/bin/DITING-release-v*.exe`。构建脚本会自动注入版本、提交与构建时间，手动编译仅用于调试。
+一键构建 Windows EXE 安装包，纯净产物输出至 `Server/build/bin/DITING-release-v*.exe`。构建脚本会先构建 Flutter Web 控制台、Flutter Windows 桌面端与特权服务，再交给 NSIS 打包，并自动注入版本、提交与构建时间。
 
 需要自定义目标或双平台打包时：`python ..\maintenance\core\build_manager.py -t both -b release`。
 
@@ -181,13 +180,17 @@ build.bat
 <summary>手动编译二进制</summary>
 
 ```cmd
-cd Desktop
+cd Server
+
+REM 构建 Web 控制台产物（服务 embed 需要）
+python build_frontend.py
 
 REM 编译特权服务
 go build -ldflags "-s -w -H windowsgui" -o build/bin/diting-service.exe ./cmd/service
 
-REM 编译 GUI
-wails build -platform windows/amd64 -o diting-gui.exe
+REM 编译 Flutter 桌面端
+cd ..\DITING-Flutter\apps\diting_desktop
+flutter build windows --release
 ```
 </details>
 
@@ -195,17 +198,17 @@ wails build -platform windows/amd64 -o diting-gui.exe
 要求 Go 1.25+；生成 `.deb` 需 `dpkg-deb`（可选）。
 
 ```bash
-cd Desktop
+cd Server
 ./build_linux.sh --package            # 当前架构
 ./build_linux.sh -a arm64 --package   # 指定 amd64 / arm64 / arm
 ```
 
-在 Windows 上可通过 `build_deb.bat` 打包：Windows 本机 Go 交叉编译 Linux 二进制，WSL 仅用 `dpkg-deb` 组装，无需在 WSL 内安装 Go。产物为 `Desktop/build/bin/` 下的 `.deb` 或单二进制。
+在 Windows 上可通过 `build_deb.bat` 打包：Windows 本机 Go 交叉编译 Linux 二进制，WSL 仅用 `dpkg-deb` 组装，无需在 WSL 内安装 Go。产物为 `Server/build/bin/` 下的 `.deb` 或单二进制。
 
 安装为 systemd 服务：
 
 ```bash
-cd Desktop/build/linux
+cd Server/build/linux
 sudo ./install.sh --bin ../../build/bin/diting-service
 systemctl status diting-dnsservice
 ```
@@ -218,7 +221,7 @@ WSL 调试时 53 端口可能被 systemd-resolved stub 占用，建议用 `DITIN
 <summary>手动交叉编译</summary>
 
 ```bash
-cd Desktop
+cd Server
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
   -trimpath -ldflags "-s -w" \
   -o build/bin/diting-service ./cmd/service
@@ -235,14 +238,14 @@ python maintenance/app.py
 
 也可直接双击 `maintenance/run_maintenance.bat`：脚本会检测缺失依赖并自动安装，异常退出时保留窗口以便查看报错。
 
-版本号维护在工具箱的「版本号维护」页完成：Flutter 客户端（`DITING-Flutter/apps/diting_android/pubspec.yaml`）是常用入口；桌面端 / Wails / NSIS 的版本号维护已折叠归档，仅在需要时展开。命令行等价用法：
+版本号维护在工具箱的「版本号维护」页完成：Flutter Android / 桌面端（`DITING-Flutter/apps/*/pubspec.yaml`）是常用入口；服务端 / NSIS 的版本号维护已折叠归档，仅在需要时展开。命令行等价用法：
 
 ```cmd
 REM 同步 Flutter 客户端版本（构建号自动按 major*10000+minor*100+patch 推导，只增不减）
 python maintenance/core/version_manager.py 2.0.2 -g flutter
 
-REM 同步桌面端等其余模块（示例）
-.\Desktop\set_version.bat 1.4.3 -g common
+REM 同步服务端等其余模块（示例）
+.\Server\set_version.bat 1.4.3 -g common
 ```
 
 ---
@@ -250,8 +253,8 @@ REM 同步桌面端等其余模块（示例）
 ## 技术栈
 
 - **Android**：Flutter / Dart 3 / Riverpod / go_router / sqflite（直接打开 1.4.3 的库）/ 移植的 Material 3 设计系统 / Kotlin 原生通道（VpnService、快捷磁贴、悬浮窗）
-- **Windows**：Go 1.25+ / Wails v2 / Vue 3 / TypeScript / Vite / Material Web / Win32 API / Windows Service
-- **Linux**：Go 1.25+ / systemd / resolvectl / nmcli / netlink / Vue 3 内嵌控制台
+- **Windows**：Go 1.25+ / Flutter / Dart / Win32 API / Windows Service
+- **Linux**：Go 1.25+ / systemd / resolvectl / nmcli / netlink / Flutter 内嵌控制台
 - **DNS 引擎**：Go / gVisor netstack / miekg/dns / quic-go / Singleflight
 - **维护工具箱**：Python 3 / PyWebView (WebView2) / HTML5 / CSS3 / JavaScript
 
@@ -261,7 +264,6 @@ REM 同步桌面端等其余模块（示例）
 
 - [Go AAR 构建记录](docs/development/aar-build-notes.md) — Android `tunnel.aar` 的编译环境、参数与交叉编译细节。
 - [云控贡献者名单维护](docs/development/recognition-members.md) — 名单云控机制、JSON 规范与头像维护。
-- [桌面端 Flutter UI 说明](docs/development/flutter-desktop-ui.md) — UI 与信息架构沿用 FlClash + 移动端，功能与后端实现以旧版桌面端（`Desktop/`）为准。
 
 ---
 

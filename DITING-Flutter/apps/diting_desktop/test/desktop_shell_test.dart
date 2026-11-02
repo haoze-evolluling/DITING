@@ -1,4 +1,4 @@
-// Desktop rebuild guards (docs/development/flutter-desktop-ui.md §8): the shell is the FlClash
+// Desktop rebuild guards (desktop parity): the shell is the FlClash
 // sidebar on a wide window and a three-item dock on a narrow one, the branch table is the desktop's
 // own three branches, and no desktop-only visual language may appear.
 

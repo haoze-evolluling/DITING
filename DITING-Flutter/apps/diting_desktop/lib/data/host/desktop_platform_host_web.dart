@@ -1,9 +1,8 @@
-/// Web host: Wails detection plus the browser file picker used by the login background dialog.
+/// Web host: the browser file picker used by the login background dialog.
 ///
-/// Wails injects its bindings as `window.go` (the desktop window binds `main.App`), so its presence is
-/// what tells the desktop window apart from a browser that loaded the same bundle from the LAN web
-/// console. The picker is plain DOM: a hidden `<input type="file">` whose `FileReader` result becomes
-/// the `data:image/...;base64,` URL the service accepts.
+/// The bundle is served to a browser as the LAN web console. The picker is plain DOM: a hidden
+/// `<input type="file">` whose `FileReader` result becomes the `data:image/...;base64,` URL the
+/// service accepts.
 library;
 
 import 'dart:async';
@@ -11,9 +10,6 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
 import 'desktop_image_size.dart';
-
-/// Whether the page was served by the Wails window rather than a browser.
-bool get desktopHasWailsBindings => globalContext.has('go');
 
 /// The origin the page was loaded from, which is also the API base for the web console.
 Uri? get desktopPageOrigin => Uri.base;

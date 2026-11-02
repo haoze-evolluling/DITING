@@ -46,7 +46,6 @@
         <button class="nav-item" data-tab="logo">品牌 Logo 工坊</button>
         <button class="nav-item" data-tab="build">双平台构建打包</button>
         <button class="nav-item" data-tab="version">版本号维护</button>
-        <button class="nav-item" data-tab="capture">界面自动截图</button>
       </nav>
 
       <div class="sidebar-footer">
@@ -288,12 +287,12 @@
       <section class="tab-pane" id="pane-version">
         <header class="pane-header">
           <h2>版本号维护</h2>
-          <p class="desc">Flutter 主力客户端版本号日常维护入口；桌面端 / Wails / NSIS 的版本号维护已折叠归档。</p>
+          <p class="desc">Flutter Android / 桌面端版本号日常维护入口；服务端 / NSIS 的版本号维护已折叠归档。</p>
         </header>
 
         <!-- 5.1 Flutter 客户端（常用） -->
         <div class="card form-card">
-          <div class="card-title">Flutter 客户端版本（DITING-Flutter/pubspec.yaml）</div>
+          <div class="card-title">Flutter 应用版本（DITING-Flutter/apps/*/pubspec.yaml）</div>
           <p class="hint-text">
             同步时写入 <code>version: X.Y.Z+构建号</code>，构建号按
             <code>major*10000 + minor*100 + patch</code> 自动推导且只增不减，避免系统判定为降级包。
@@ -325,7 +324,7 @@
         </div>
 
         <div class="card table-card">
-          <div class="card-title">Flutter 客户端版本号</div>
+          <div class="card-title">Flutter 应用版本号</div>
           <table class="data-table" id="flutter-version-table">
             <thead>
               <tr><th>模块组件</th><th>当前记录版本</th><th>文件相对路径</th></tr>
@@ -338,7 +337,7 @@
         <details class="card collapsible-card" id="other-version-group">
           <summary class="collapsible-head">
             <span class="collapsible-arrow"></span>
-            <span class="collapsible-title">其他模块版本号维护（桌面端 / Wails / NSIS）</span>
+            <span class="collapsible-title">其他模块版本号维护（服务端 / NSIS）</span>
             <span class="collapsible-hint">
               <span class="hint-closed">低频使用，点击展开</span>
               <span class="hint-open">点击收起</span>
@@ -387,74 +386,6 @@
             </table>
           </div>
         </details>
-      </section>
-
-      <!-- 6. 界面自动截图 -->
-      <section class="tab-pane" id="pane-capture">
-        <header class="pane-header">
-          <h2>软件界面自动截图工具</h2>
-          <p class="desc">调用 Microsoft Edge 无头模式对谛听客户端主要界面与弹窗进行高质量自动快照。</p>
-        </header>
-
-        <div class="card form-card">
-          <div class="form-row">
-            <div class="form-group flex-1">
-              <label>截图目标标签页</label>
-              <select id="cap-tab">
-                <option value="all" selected>all (全部标签页及弹窗)</option>
-                <option value="login">登录/初始化 (login)</option>
-                <option value="overview/status">状态总览 (overview/status)</option>
-                <option value="overview/queries">实时查询 (overview/queries)</option>
-                <option value="overview/history">查询历史 (overview/history)</option>
-                <option value="overview/stats">统计中心 (overview/stats)</option>
-                <option value="resolve/upstream">上游解析 (resolve/upstream)</option>
-                <option value="resolve/cache">缓存加速 (resolve/cache)</option>
-                <option value="resolve/rewrite">DNS 重写 (resolve/rewrite)</option>
-                <option value="resolve/dns64">IPv6 / DNS64 (resolve/dns64)</option>
-                <option value="protect/lists">规则订阅 (protect/lists)</option>
-                <option value="protect/custom">自定义规则 (protect/custom)</option>
-                <option value="protect/test">规则检测 (protect/test)</option>
-                <option value="protect/config">拦截方式 (protect/config)</option>
-                <option value="protect/advanced">高级拦截 (protect/advanced)</option>
-                <option value="protect/schedule">时间计划 (protect/schedule)</option>
-                <option value="devices/adapters">网卡接管 (devices/adapters)</option>
-                <option value="devices/lan">局域网 DNS (devices/lan)</option>
-                <option value="devices/clients">设备管理 (devices/clients)</option>
-                <option value="devices/privacy">安全隐私 (devices/privacy)</option>
-                <option value="system/appearance">外观主题 (system/appearance)</option>
-                <option value="system/service">服务与连接 (system/service)</option>
-                <option value="system/lanweb">局域网控制台 (system/lanweb)</option>
-                <option value="system/diagnostics">诊断与修复 (system/diagnostics)</option>
-                <option value="modal-alert">警报弹窗 (modal-alert)</option>
-              </select>
-            </div>
-            <div class="form-group flex-1">
-              <label>主题色彩</label>
-              <select id="cap-theme">
-                <option value="both" selected>深浅双色 (both)</option>
-                <option value="dark">仅深色 (dark)</option>
-                <option value="light">仅浅色 (light)</option>
-              </select>
-            </div>
-            <div class="form-group flex-1">
-              <label>分辨率宽</label>
-              <input type="number" id="cap-width" value="1280">
-            </div>
-            <div class="form-group flex-1">
-              <label>分辨率高</label>
-              <input type="number" id="cap-height" value="720">
-            </div>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn-primary" id="btn-cap-start">开始自动截图</button>
-            <button class="btn btn-secondary" id="btn-cap-open-dir">打开截图输出目录</button>
-          </div>
-        </div>
-
-        <div class="card gallery-card" id="cap-gallery-card" style="display: none;">
-          <div class="card-title">截图成果画廊 (<span id="cap-count">0</span> 张)</div>
-          <div class="gallery-grid" id="cap-gallery-grid"></div>
-        </div>
       </section>
 
       <!-- 底部流式终端自适应抽屉控制台 -->

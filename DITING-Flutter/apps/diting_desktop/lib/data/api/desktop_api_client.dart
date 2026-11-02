@@ -1,5 +1,5 @@
-/// Transport for the local service API (`Desktop/internal/ipc`), the desktop host's only data
-/// source: it has no Android channels and no Wails bindings.
+/// Transport for the local service API (`Server/internal/ipc`), the desktop host's only data
+/// source: it has no Android channels and no native bindings.
 ///
 /// Nothing here decides how anything looks; it turns HTTP answers into the models in
 /// `desktop_api_models.dart` and turns failures into [DesktopApiException].

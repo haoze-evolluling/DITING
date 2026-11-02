@@ -1,9 +1,9 @@
 /// Where the desktop app looks for the local service: host, port and token.
 ///
 /// The old desktop console's `ServicePanel.vue` connection block is the blueprint. The keys are the
-/// ones the Wails console wrote (`ipc_host` / `ipc_port` / `ipc_token`), so an existing install keeps
-/// its address. Saving rewrites those keys and rebuilds the API client; testing pings the service the
-/// app is currently using.
+/// ones earlier desktop builds wrote (`ipc_host` / `ipc_port` / `ipc_token`), so an existing install
+/// keeps its address. Saving rewrites those keys and rebuilds the API client; testing pings the
+/// service the app is currently using.
 library;
 
 import 'dart:async';

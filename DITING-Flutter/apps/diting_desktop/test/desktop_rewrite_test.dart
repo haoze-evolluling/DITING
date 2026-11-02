@@ -1,4 +1,4 @@
-// Desktop hub rewrite page (docs/development/flutter-desktop-ui.md step 4): the console's engine
+// Desktop hub rewrite page (desktop parity): the console's engine
 // switch, default lifetime and rule table. Every figure must come from the service; a switch, a TTL
 // or a rule save posts to `/dns/rewrite/*` and the page then shows what the service re-read.
 

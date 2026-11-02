@@ -1,11 +1,8 @@
-/// Off-web host: there are no Wails bindings, no page origin and no file picker.
+/// Off-web host: no page origin and no file picker.
 ///
-/// Tests and the (non-existent) IO build use this, so the desktop window keeps taking the
-/// `127.0.0.1` IPC path and the login gate stays out of the way.
+/// Tests and the native Windows build use this; the window keeps taking the `127.0.0.1` IPC path
+/// and the login gate stays out of the way.
 library;
-
-/// Whether the page was served by the Wails window rather than a browser.
-bool get desktopHasWailsBindings => false;
 
 /// The origin the page was loaded from; null when there is no page.
 Uri? get desktopPageOrigin => null;

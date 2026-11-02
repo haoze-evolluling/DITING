@@ -1,4 +1,4 @@
-// Desktop hub time plan (docs/development/flutter-desktop-ui.md step 4): the switch, the named
+// Desktop hub time plan (desktop parity): the switch, the named
 // windows and the service's "active now" state. Windows are a local draft; only the save button
 // posts them, and the page then shows what the service re-reads.
 

@@ -1,4 +1,4 @@
-// Desktop log branch (docs/development/flutter-desktop-ui.md step 4): the service's 24-hour
+// Desktop log branch (desktop parity): the service's 24-hour
 // summary and rankings, its live query stream and its query log with the console's search
 // conditions and offset paging. Every figure and row must come from the API; a failed read says so
 // instead of showing an empty table, and a socket that is down says so instead of looking quiet.

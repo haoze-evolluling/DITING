@@ -9,8 +9,7 @@
 /// the emergency restore and the rule tester, because all three answer 「为什么解析不对」.
 ///
 /// Only entries whose page exists are listed: a row that opens a placeholder would promise work
-/// the host cannot do, and the migration order in `docs/development/flutter-desktop-ui.md` adds the
-/// remaining rows as their data layers land.
+/// the host cannot do, and the remaining rows land as their data layers do.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

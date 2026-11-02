@@ -1,4 +1,4 @@
-// Desktop hub subscription lists (docs/development/flutter-desktop-ui.md step 4): the counters, the
+// Desktop hub subscription lists (desktop parity): the counters, the
 // per-list health and the four writes. Every value must come from `/filter/stats` and
 // `/filter/lists`; each write re-reads both, and a rejected write is reported instead of assumed.
 

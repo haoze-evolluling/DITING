@@ -1,4 +1,4 @@
-// Desktop LAN DNS service (docs/development/flutter-desktop-ui.md §8.30): the listen addresses, the
+// Desktop LAN DNS service (desktop parity): the listen addresses, the
 // host's LAN addresses and the 53-port firewall rule, all from `/dns/lan`. Each write re-reads it.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
