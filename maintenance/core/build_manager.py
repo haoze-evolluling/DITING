@@ -337,6 +337,13 @@ def build_pipeline(
     # 4. 构建 Windows EXE 安装包
     if need_win:
         on_log("info", ">>> [1/3] 正在构建 Flutter Windows 桌面端...")
+        # Flutter 的共享资源目录会把调试构建留下的 kernel_blob.bin 一路复制进 Release，
+        # 而 Release 用 app.so AOT 运行，不需要这份 ~96MB 的 JIT 内核。
+        if is_rel:
+            stale_kernel = os.path.join(flutter_project, "build", "flutter_assets", "kernel_blob.bin")
+            if os.path.exists(stale_kernel):
+                os.remove(stale_kernel)
+                on_log("info", "已清理 Flutter 调试构建残留的 kernel_blob.bin")
         flutter_cmd = [tools["flutter"]["cmd"] or "flutter", "build", "windows"]
         flutter_cmd.append("--release" if is_rel else "--debug")
         ok = run_cmd_live(flutter_cmd, cwd=flutter_project, on_log=on_log, is_cancelled=is_cancelled)
@@ -346,6 +353,12 @@ def build_pipeline(
         release_dir = find_flutter_release_dir(flutter_project, build_type)
         if not release_dir:
             return {"success": False, "message": "未找到 Flutter Windows 产物目录"}
+
+        if is_rel:
+            output_kernel = os.path.join(release_dir, "data", "flutter_assets", "kernel_blob.bin")
+            if os.path.exists(output_kernel):
+                os.remove(output_kernel)
+                on_log("info", "已从 Release 产物中移除 kernel_blob.bin")
 
         if os.path.isdir(app_stage):
             shutil.rmtree(app_stage, ignore_errors=True)
