@@ -8,6 +8,7 @@ import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -107,5 +108,47 @@ void main() {
     expect(ViewScope.isMobileOf(context), isTrue);
     expect(MediaQuery.textScalerOf(context).scale(1), 1.2);
     expect(store.read(LegacySettings.uiContainer, 'pure_black_theme'), true);
+  });
+
+  testWidgets('desktop keeps the system font over a stored custom family', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final store = MemoryLegacyPrefsStore({
+      LegacySettings.uiContainer: {
+        'app_font_family': 'CustomFace',
+        'app_imported_fonts': '[{"family":"CustomFace","label":"CustomFace","path":"C:/tmp/custom.ttf"}]',
+      },
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          legacyPrefsStoreProvider.overrideWithValue(store),
+          desktopPollingEnabledProvider.overrideWithValue(false),
+          desktopLiveEnabledProvider.overrideWithValue(false),
+          desktopApiClientProvider.overrideWithValue(
+            FakeDesktopBackend().client(),
+          ),
+        ],
+        child: const DesktopApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final theme = Theme.of(tester.element(find.byType(DesktopHomePage)));
+    final system = Typography.material2021(platform: defaultTargetPlatform);
+    expect(theme.textTheme.bodyLarge?.fontFamily, isNot('CustomFace'));
+    expect(
+      theme.textTheme.bodyLarge?.fontFamily,
+      system.black.bodyLarge?.fontFamily,
+    );
+    // The Han fallback chain is also a customisation; the desktop drops it too.
+    expect(
+      theme.textTheme.bodyLarge?.fontFamilyFallback,
+      system.black.bodyLarge?.fontFamilyFallback,
+    );
   });
 }

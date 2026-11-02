@@ -46,7 +46,6 @@ class _DesktopAppState extends ConsumerState<DesktopApp> {
     final palette = ref.watch(paletteProvider);
     final pureBlack = ref.watch(pureBlackProvider);
     final textScale = ref.watch(textScaleProvider);
-    final fontFamily = ref.watch(selectedFontFamilyProvider);
     final locale = ref.watch(appLocaleProvider);
     final background = ref.watch(customBackgroundProvider);
     final showBackground =
@@ -57,7 +56,9 @@ class _DesktopAppState extends ConsumerState<DesktopApp> {
       seedColor: palette.effectiveSeed,
       pureBlack: pureBlack,
       transparentPage: showBackground,
-      fontFamily: fontFamily,
+      // The desktop window always draws with the system's own fonts; the imported / selected
+      // families belong to the Android app's `/font-family` page.
+      useSystemFonts: true,
     );
 
     return MaterialApp.router(

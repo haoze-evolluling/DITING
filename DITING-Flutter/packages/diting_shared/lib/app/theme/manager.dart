@@ -13,6 +13,7 @@ class AppThemeSpec {
     this.style = ColorStyle.vivid,
     this.transparentPage = false,
     this.fontFamily,
+    this.useSystemFonts = false,
   });
 
   final Color seedColor;
@@ -23,6 +24,11 @@ class AppThemeSpec {
   /// Overrides `ThemeData.fontFamily` (`.withAppTypography` rewrites sizes but keeps the family);
   /// null keeps the platform default from `appFontFamilyFallback`.
   final String? fontFamily;
+
+  /// Ignores [fontFamily] and `appFontFamilyFallback`, leaving the font to the engine's system
+  /// default. The desktop window opts in so it draws exactly like a native Windows app; Android
+  /// keeps the fallback chain its Han glyphs depend on.
+  final bool useSystemFonts;
 
   /// Makes the page background transparent so the wallpaper shows through; same as upstream
   /// `DITINGTheme(transparentBackground)`.
@@ -36,6 +42,7 @@ class AppThemeSpec {
     ColorStyle? style,
     bool? transparentPage,
     String? fontFamily,
+    bool? useSystemFonts,
   }) => AppThemeSpec(
     seedColor: seedColor ?? this.seedColor,
     brightness: brightness ?? this.brightness,
@@ -43,6 +50,7 @@ class AppThemeSpec {
     style: style ?? this.style,
     transparentPage: transparentPage ?? this.transparentPage,
     fontFamily: fontFamily ?? this.fontFamily,
+    useSystemFonts: useSystemFonts ?? this.useSystemFonts,
   );
 
   @override
@@ -54,7 +62,8 @@ class AppThemeSpec {
           other.pureBlack == pureBlack &&
           other.style == style &&
           other.transparentPage == transparentPage &&
-          other.fontFamily == fontFamily;
+          other.fontFamily == fontFamily &&
+          other.useSystemFonts == useSystemFonts;
 
   @override
   int get hashCode => Object.hash(
@@ -64,6 +73,7 @@ class AppThemeSpec {
     style,
     transparentPage,
     fontFamily,
+    useSystemFonts,
   );
 }
 
@@ -103,11 +113,10 @@ ThemeData buildAppTheme(
     ),
     // Transparent page background only; cards and sheets stay opaque.
     colorScheme: scheme,
-    fontFamily: spec.fontFamily,
-    fontFamilyFallback: appFontFamilyFallback(
-      platform: target,
-      locales: locales,
-    ),
+    fontFamily: spec.useSystemFonts ? null : spec.fontFamily,
+    fontFamilyFallback: spec.useSystemFonts
+        ? null
+        : appFontFamilyFallback(platform: target, locales: locales),
     extensions: [if (dark) ElevatedColorScheme(scheme.elevated)],
   ).withAppShapes.withAppSurfaces.withAppTypography.copyWith(
     scaffoldBackgroundColor: transparent ? Colors.transparent : null,
@@ -159,6 +168,7 @@ class AppThemePair {
     this.style = ColorStyle.vivid,
     this.transparentPage = false,
     this.fontFamily,
+    this.useSystemFonts = false,
   });
 
   final Color seedColor;
@@ -171,12 +181,16 @@ class AppThemePair {
   /// Font family chosen on `/font-family`; null keeps the platform default.
   final String? fontFamily;
 
+  /// Drops [fontFamily] and the platform fallback chain; see [AppThemeSpec.useSystemFonts].
+  final bool useSystemFonts;
+
   AppThemeSpec get lightSpec => AppThemeSpec(
     seedColor: seedColor,
     brightness: Brightness.light,
     style: style,
     transparentPage: transparentPage,
     fontFamily: fontFamily,
+    useSystemFonts: useSystemFonts,
   );
 
   AppThemeSpec get darkSpec => AppThemeSpec(
@@ -186,5 +200,6 @@ class AppThemePair {
     style: style,
     transparentPage: transparentPage,
     fontFamily: fontFamily,
+    useSystemFonts: useSystemFonts,
   );
 }

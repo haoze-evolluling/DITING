@@ -1,4 +1,3 @@
-import 'package:diting_shared/data/fonts/font_repository.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_desktop/app/desktop_app.dart';
 import 'package:diting_desktop/data/shared_preferences_legacy_store.dart';
@@ -12,8 +11,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final preferences = await SharedPreferences.getInstance();
   final store = SharedPreferencesLegacyPrefsStore(preferences);
-  // Imported families must be registered before the first theme resolves `fontFamily`.
-  await FontRepository(settings: LegacySettings(store)).registerAll();
   runApp(
     ProviderScope(
       overrides: [legacyPrefsStoreProvider.overrideWithValue(store)],

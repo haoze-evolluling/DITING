@@ -4,8 +4,8 @@
 //   DITING_SCREENSHOTS=1 flutter test test/screenshot/desktop_screenshot_test.dart --update-goldens
 //
 // Without the environment variable every case is skipped, so a plain `flutter test` stays clean.
-// The shots render `DesktopApp` as a Windows window, so the theme picks the Windows font fallbacks
-// and page transitions the product uses.
+// The shots render `DesktopApp` as a Windows window, so the theme picks the Windows page
+// transitions and leaves text to the system fonts the product uses.
 
 import 'package:diting_desktop/app/desktop_app.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
