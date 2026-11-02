@@ -364,40 +364,75 @@ def execute_dns_query(domain: str, server: str = "127.0.0.1", port: int = 53, qt
         return {"success": False, "error": str(e), "domain": domain, "server": server, "port": port}
 
 
-def execute_benchmark(server: str, port: int, domain: str, qtype_str: str = "A", count: int = 5, use_tcp: bool = False, timeout: float = 3.0, on_progress: Optional[Callable[[str], None]] = None) -> dict:
-    latencies = []
-    success_count = 0
-    errors = []
+def execute_benchmark(
+    server: str,
+    port: int,
+    domain: str,
+    qtype_str: str = "A",
+    count: int = 5,
+    use_tcp: bool = False,
+    timeout: float = 3.0,
+    on_progress: Optional[Callable[[str], None]] = None,
+    is_cancelled: Optional[Callable[[], bool]] = None,
+) -> dict:
+    """批量压测。只要收到 DNS 响应就算一次成功，NXDOMAIN/REFUSED 不计为丢包。"""
+    count = max(1, int(count))
+    latencies: List[float] = []
+    errors: List[str] = []
+    rcodes: Dict[str, int] = {}
+    responded = 0
+    completed = 0
+    cancelled = False
+
     for i in range(1, count + 1):
+        if is_cancelled and is_cancelled():
+            cancelled = True
+            if on_progress:
+                on_progress(f"[已取消] 完成 {completed}/{count} 次查询后停止")
+            break
+
         res = execute_dns_query(domain, server, port, qtype_str, use_tcp, timeout)
-        if res.get("success") and res.get("raw_rcode") == DNSRcode.NOERROR:
-            success_count += 1
+        completed += 1
+
+        if res.get("success"):
+            responded += 1
             lat = res["elapsed_ms"]
             latencies.append(lat)
-            msg = f"[{i}/{count}] 成功: {lat:.1f}ms"
+            rcode = res.get("rcode") or "UNKNOWN"
+            rcodes[rcode] = rcodes.get(rcode, 0) + 1
+            msg = f"[{i}/{count}] 响应 {rcode}: {lat:.1f}ms"
         else:
-            err = res.get("error") or res.get("rcode") or "查询失败"
+            err = res.get("error") or "查询失败"
             errors.append(err)
             msg = f"[{i}/{count}] 失败: {err}"
+
         if on_progress:
             on_progress(msg)
-        time.sleep(0.05)
+        if i < count:
+            time.sleep(0.05)
 
     avg_ms = round(sum(latencies) / len(latencies), 2) if latencies else 0.0
     min_ms = round(min(latencies), 2) if latencies else 0.0
     max_ms = round(max(latencies), 2) if latencies else 0.0
-    loss_rate = round((count - success_count) / count * 100, 1)
+    loss_rate = round((completed - responded) / completed * 100, 1) if completed else 0.0
 
-    return {
-        "success": True,
+    result = {
+        "success": not cancelled,
+        "cancelled": cancelled,
         "count": count,
-        "success_count": success_count,
+        "completed": completed,
+        "success_count": responded,
         "loss_rate": loss_rate,
         "avg_ms": avg_ms,
         "min_ms": min_ms,
         "max_ms": max_ms,
+        "proto": "TCP" if use_tcp else "UDP",
+        "rcodes": rcodes,
         "errors": errors,
     }
+    if cancelled:
+        result["message"] = "用户已取消压测"
+    return result
 
 
 def main():

@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+import sys
 import threading
 import time
 from typing import Callable, Optional
@@ -28,6 +29,23 @@ def clean_output_line(raw: bytes) -> str:
     return no_ansi
 
 
+def _terminate_process(proc: subprocess.Popen) -> None:
+    """terminate 后短暂等待，仍未退出则 kill，避免留下孤儿进程。"""
+    if proc.poll() is not None:
+        return
+    try:
+        proc.terminate()
+        proc.wait(timeout=3)
+        return
+    except Exception:
+        pass
+    try:
+        proc.kill()
+        proc.wait(timeout=3)
+    except Exception:
+        pass
+
+
 def stream_process_output(
     cmd: list,
     cwd: str,
@@ -48,6 +66,8 @@ def stream_process_output(
     run_env["PYTHONIOENCODING"] = "utf-8"
     run_env["PYTHONUTF8"] = "1"
 
+    creationflags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+    proc: Optional[subprocess.Popen] = None
     try:
         proc = subprocess.Popen(
             cmd,
@@ -55,27 +75,32 @@ def stream_process_output(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             env=run_env,
+            creationflags=creationflags,
         )
         if on_proc_started:
             on_proc_started(proc)
 
         for line_bytes in iter(proc.stdout.readline, b""):
             if is_cancelled():
-                try:
-                    proc.terminate()
-                except Exception:
-                    pass
+                _terminate_process(proc)
                 on_log("warn", "[已终止] 用户主动取消了任务。")
                 return -1
             clean_line = clean_output_line(line_bytes)
             if clean_line:
                 on_log("info", clean_line)
 
-        proc.stdout.close()
         return proc.wait()
     except Exception as e:
+        if proc is not None:
+            _terminate_process(proc)
         on_log("error", f"命令启动失败: {e}")
         return -1
+    finally:
+        if proc is not None and proc.stdout is not None:
+            try:
+                proc.stdout.close()
+            except Exception:
+                pass
 
 
 class TaskRunner:
@@ -90,32 +115,34 @@ class TaskRunner:
 
     @property
     def is_running(self) -> bool:
-        return self._is_running
+        with self._lock:
+            return self._is_running
 
     def cancel(self):
         """取消当前正在运行的任务"""
         with self._lock:
             self._cancel_requested = True
-            if self._current_process and self._current_process.poll() is None:
-                try:
-                    self._current_process.terminate()
-                except Exception:
-                    pass
+            current = self._current_process
+        if current and current.poll() is None:
+            _terminate_process(current)
 
     def run_async(
         self,
         task_func: Callable[[Callable[[str, str], None], Callable[[], bool]], dict],
         on_log: Callable[[str, str], None],
         on_complete: Callable[[dict], None],
-    ):
-        """在后台线程中启动任务"""
-        if self._is_running:
+    ) -> bool:
+        """在后台线程中启动任务；已有任务运行时返回 False，不排队。"""
+        with self._lock:
+            busy = self._is_running
+            if not busy:
+                self._is_running = True
+                self._cancel_requested = False
+        if busy:
             on_log("warn", "当前已有任务正在执行中，请等待其完成或先终止。")
-            return
+            return False
 
         def _worker():
-            self._is_running = True
-            self._cancel_requested = False
             start_time = time.time()
             result = {"success": False, "message": "", "data": None}
             try:
@@ -126,14 +153,26 @@ class TaskRunner:
             finally:
                 elapsed = time.time() - start_time
                 result["elapsed"] = round(elapsed, 2)
-                self._is_running = False
                 with self._lock:
+                    self._is_running = False
                     self._current_process = None
                 if on_complete:
-                    on_complete(result)
+                    try:
+                        on_complete(result)
+                    except Exception as e:
+                        on_log("error", f"任务完成回调异常: {e}")
 
-        self._active_thread = threading.Thread(target=_worker, daemon=True)
-        self._active_thread.start()
+        thread = threading.Thread(target=_worker, daemon=True)
+        try:
+            thread.start()
+        except Exception as e:
+            with self._lock:
+                self._is_running = False
+            on_log("error", f"无法启动后台任务: {e}")
+            return False
+
+        self._active_thread = thread
+        return True
 
     def run_command_stream(
         self,
@@ -144,6 +183,7 @@ class TaskRunner:
         env: Optional[dict] = None,
     ) -> int:
         """流式执行子进程并逐行回调输出"""
+
         def _on_started(proc):
             with self._lock:
                 self._current_process = proc
@@ -160,4 +200,3 @@ class TaskRunner:
         finally:
             with self._lock:
                 self._current_process = None
-

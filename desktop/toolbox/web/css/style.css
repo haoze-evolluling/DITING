@@ -413,6 +413,22 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 
 .svg-preview-box svg { max-width: 200px; max-height: 200px; }
 
+.svg-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.svg-preview-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.svg-preview-item .svg-preview-box { height: 190px; }
+
+.preview-label { font-size: 11.5px; color: var(--fg-muted); }
+
+.brand-palette-list { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 16px; }
+
+.brand-palette-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--fg-muted); }
+.brand-palette-row code { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg); }
+.swatch { width: 16px; height: 16px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface-2); }
+
+.tag-exceeded { font-size: 11px; }
+
 /* ============ 工具链芯片 ============ */
 .toolchain-grid { display: flex; flex-wrap: wrap; gap: 10px; }
 
@@ -568,6 +584,7 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 
 @media (max-width: 900px) {
   .split-view { grid-template-columns: 1fr; }
+  .svg-preview-grid { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

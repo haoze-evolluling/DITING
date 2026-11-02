@@ -14,11 +14,11 @@ import webview
 # 添加 desktop 目录至 sys.path，保证 toolbox 包正常被识别
 TOOLBOX_DIR = os.path.dirname(os.path.abspath(__file__))
 DESKTOP_DIR = os.path.dirname(TOOLBOX_DIR)
-PROJECT_ROOT = os.path.dirname(DESKTOP_DIR)
 if DESKTOP_DIR not in sys.path:
     sys.path.insert(0, DESKTOP_DIR)
 
 from toolbox.api import ApiBridge
+from toolbox.core import paths
 
 
 def main():
@@ -28,9 +28,7 @@ def main():
     parser.add_argument("-H", "--height", type=int, default=780, help="窗口高度 (默认 780)")
     args = parser.parse_args()
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    web_dir = os.path.join(current_dir, "web")
-    html_entry = os.path.join(web_dir, "index.html")
+    html_entry = os.path.join(paths.WEB_DIR, "index.html")
 
     if not os.path.exists(html_entry):
         print(f"错误: 未找到前端入口文件: {html_entry}", file=sys.stderr)
@@ -38,8 +36,8 @@ def main():
 
     api = ApiBridge()
 
-    # 应用窗口图标（优先选择桌面端构建图标）
-    icon_path = os.path.join(PROJECT_ROOT, "desktop", "service", "build", "windows", "icon.ico")
+    # 应用窗口图标（品牌导出产物）
+    icon_path = os.path.join(paths.SERVICE_DIR, "build", "windows", "icon.ico")
     if not os.path.exists(icon_path):
         icon_path = None
 
@@ -57,7 +55,7 @@ def main():
     api.set_window(window)
 
     # 启动 PyWebView 事件循环 (在 Windows 上默认使用 WebView2 引擎)
-    webview.start(debug=args.debug)
+    webview.start(debug=args.debug, icon=icon_path)
 
 
 if __name__ == "__main__":

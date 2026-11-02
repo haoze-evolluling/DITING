@@ -10,7 +10,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-python -c "import webview, dns, PIL" >nul 2>nul
+python -c "import webview, PIL" >nul 2>nul
 if errorlevel 1 (
     echo [提示] 检测到维护工具箱依赖缺失，正在安装...
     python -m pip install -r "%~dp0requirements.txt"

@@ -80,7 +80,8 @@ window.App = {
 
   bindTerminal() {
     document.getElementById('btn-log-clear').addEventListener('click', () => {
-      document.getElementById('terminal-output').innerHTML = '';
+      const output = document.getElementById('terminal-output');
+      output.textContent = '';
       this.logCount = 0;
       const badge = document.getElementById('terminal-badge');
       if (badge) badge.style.display = 'none';
@@ -90,6 +91,8 @@ window.App = {
       const text = document.getElementById('terminal-output').innerText;
       navigator.clipboard.writeText(text).then(() => {
         this.toast('日志内容已复制到剪贴板', 'ok');
+      }).catch((e) => {
+        this.log('error', `复制日志失败: ${e}`);
       });
     });
 
@@ -99,9 +102,19 @@ window.App = {
     });
   },
 
+  async openPath(path) {
+    try {
+      const res = await window.pywebview.api.open_explorer(path);
+      if (!res.success) this.toast(res.message || '无法打开路径', 'error');
+    } catch (e) {
+      this.log('error', `打开路径异常: ${e}`);
+    }
+  },
+
   setBusy(busy, label = '') {
     this.isBusy = busy;
     const indicator = document.getElementById('global-status');
+    if (!indicator) return;
     const dot = indicator.querySelector('.dot');
     const text = indicator.querySelector('.text');
     const spinner = document.getElementById('terminal-spinner');
@@ -110,24 +123,30 @@ window.App = {
     if (busy) {
       dot.className = 'dot busy';
       text.textContent = label || '处理中...';
-      spinner.style.display = 'inline-block';
+      if (spinner) spinner.style.display = 'inline-block';
       if (sec && sec.classList.contains('collapsed')) {
         sec.classList.remove('collapsed');
       }
     } else {
       dot.className = 'dot idle';
       text.textContent = '就绪';
-      spinner.style.display = 'none';
+      if (spinner) spinner.style.display = 'none';
     }
   },
 
   log(level, msg) {
     const output = document.getElementById('terminal-output');
+    if (!output) return;
     const timeStr = new Date().toTimeString().split(' ')[0];
     const div = document.createElement('div');
     div.className = `log-line log-${level}`;
     div.textContent = `[${timeStr}] [${level.toUpperCase()}] ${msg}`;
     output.appendChild(div);
+
+    // 长时间构建会持续输出日志，保留最近 1200 行避免 DOM 无限膨胀。
+    while (output.childElementCount > 1200) {
+      output.removeChild(output.firstElementChild);
+    }
     output.scrollTop = output.scrollHeight;
 
     this.logCount += 1;
@@ -175,26 +194,21 @@ window.App = {
     if (filterExcBtn) filterExcBtn.addEventListener('click', () => ScannerModule.setFilter('exceeded'));
 
     // Logo
-    const syncColor = (pickerId, textId) => {
-      const p = document.getElementById(pickerId);
-      const t = document.getElementById(textId);
-      p.addEventListener('input', () => { t.value = p.value; LogoModule.refreshPreview(); });
-      t.addEventListener('input', () => { p.value = t.value; LogoModule.refreshPreview(); });
-    };
-    syncColor('logo-bg-picker', 'logo-bg-text');
-    syncColor('logo-totem-picker', 'logo-totem-text');
-    document.getElementById('logo-gradient').addEventListener('change', () => LogoModule.refreshPreview());
     document.getElementById('btn-logo-export').addEventListener('click', () => LogoModule.exportAssets());
     document.getElementById('btn-logo-open-res').addEventListener('click', () => {
-      window.pywebview.api.open_explorer('shared/assets/images');
+      App.openPath('shared/assets/images');
     });
+    const openBrandBtn = document.getElementById('btn-logo-open-brand');
+    if (openBrandBtn) {
+      openBrandBtn.addEventListener('click', () => App.openPath('desktop/toolbox/assets/brand'));
+    }
 
     // Build
-    document.getElementById('btn-refresh-toolchain').addEventListener('click', () => BuildModule.refreshToolchain());
+    document.getElementById('btn-refresh-toolchain').addEventListener('click', () => BuildModule.refreshToolchain(true));
     document.getElementById('btn-build-start').addEventListener('click', () => BuildModule.startBuild());
     document.getElementById('btn-build-cancel').addEventListener('click', () => BuildModule.cancelBuild());
     document.getElementById('btn-build-open-bin').addEventListener('click', () => {
-      window.pywebview.api.open_explorer('desktop/service/build/bin');
+      App.openPath('desktop/service/build/bin');
     });
 
     // Version - Flutter 客户端（常用）

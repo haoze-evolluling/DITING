@@ -3,39 +3,64 @@
 window.DNSModule = {
   lastAnswers: [],
 
-  async query() {
+  readForm() {
     const domain = document.getElementById('dns-domain').value.trim();
-    const server = document.getElementById('dns-server').value.trim();
-    const port = parseInt(document.getElementById('dns-port').value) || 53;
+    const server = document.getElementById('dns-server').value.trim() || '127.0.0.1';
+    const port = parseInt(document.getElementById('dns-port').value, 10) || 53;
     const qtype = document.getElementById('dns-qtype').value;
     const tcp = document.getElementById('dns-tcp').checked;
+    if (!domain) {
+      App.toast('请输入目标域名', 'warn');
+      return null;
+    }
+    return { domain, server, port, qtype, tcp };
+  },
 
-    if (!domain) return App.toast('请输入目标域名', 'warn');
+  async query() {
+    const form = this.readForm();
+    if (!form) return;
 
     App.setBusy(true, '正在发送 DNS 查询...');
     try {
-      const res = await window.pywebview.api.dns_query(domain, server, port, qtype, tcp);
+      const res = await window.pywebview.api.dns_query(
+        form.domain, form.server, form.port, form.qtype, form.tcp,
+      );
       this.renderQueryResult(res);
+      if (!res.success) {
+        const message = res.error || '未知错误';
+        App.log('error', `DNS 查询失败: ${message}`);
+        App.toast(`DNS 查询失败: ${message}`, 'error');
+      }
     } catch (e) {
       App.log('error', `DNS 查询异常: ${e}`);
+      App.toast(`DNS 查询异常: ${e}`, 'error');
     } finally {
       App.setBusy(false);
     }
   },
 
   async benchmark() {
-    const domain = document.getElementById('dns-domain').value.trim();
-    const server = document.getElementById('dns-server').value.trim();
-    const port = parseInt(document.getElementById('dns-port').value) || 53;
-    const qtype = document.getElementById('dns-qtype').value;
-    const tcp = document.getElementById('dns-tcp').checked;
-
-    if (!domain) return App.toast('请输入目标域名', 'warn');
+    const form = this.readForm();
+    if (!form) return;
 
     App.setBusy(true, '正在进行批量 DNS 压测...');
     document.getElementById('dns-result-container').style.display = 'block';
     document.getElementById('dns-answers-card').style.display = 'none';
-    await window.pywebview.api.dns_benchmark(domain, server, port, qtype, 5, tcp);
+    document.getElementById('dns-error-note').style.display = 'none';
+
+    try {
+      const res = await window.pywebview.api.dns_benchmark(
+        form.domain, form.server, form.port, form.qtype, 5, form.tcp,
+      );
+      if (!res.started) {
+        App.setBusy(false);
+        App.toast(res.message || '压测未能启动', 'warn');
+      }
+    } catch (e) {
+      App.setBusy(false);
+      App.log('error', `DNS 压测异常: ${e}`);
+      App.toast(`DNS 压测异常: ${e}`, 'error');
+    }
   },
 
   setPreset(server) {
@@ -60,72 +85,65 @@ window.DNSModule = {
     const container = document.getElementById('dns-result-container');
     container.style.display = 'block';
 
-    const grid = document.getElementById('dns-stats-grid');
+    const errorNote = document.getElementById('dns-error-note');
+    if (res.success) {
+      errorNote.style.display = 'none';
+      errorNote.textContent = '';
+    } else {
+      errorNote.style.display = 'block';
+      errorNote.textContent = `查询失败：${res.error || '未知错误'}`;
+    }
+
     const isOk = res.success && res.rcode === 'NOERROR';
-    grid.innerHTML = `
-      <div class="stat-box">
-        <span class="stat-label">响应状态</span>
-        <span class="stat-value ${isOk ? '' : 'is-fail'}">${res.rcode || 'FAIL'}</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">查询耗时</span>
-        <span class="stat-value">${res.elapsed_ms || 0} ms</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">传输协议</span>
-        <span class="stat-value">${res.proto || 'UDP'}</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">记录数量</span>
-        <span class="stat-value">${res.answers ? res.answers.length : 0} 条</span>
-      </div>
-    `;
+    UI.stats(document.getElementById('dns-stats-grid'), [
+      { label: '响应状态', value: res.rcode || (res.success ? 'NOERROR' : 'FAIL'), fail: !isOk },
+      { label: '查询耗时', value: `${res.elapsed_ms || 0} ms` },
+      { label: '传输协议', value: res.proto || (document.getElementById('dns-tcp').checked ? 'TCP' : 'UDP') },
+      { label: '记录数量', value: `${res.answers ? res.answers.length : 0} 条` },
+    ]);
 
     const answersCard = document.getElementById('dns-answers-card');
     const tbody = document.querySelector('#dns-table tbody');
-    tbody.innerHTML = '';
+    UI.clear(tbody);
     this.lastAnswers = res.answers || [];
-    if (this.lastAnswers.length > 0) {
-      answersCard.style.display = 'block';
-      this.lastAnswers.forEach(a => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${a.name}</td>
-          <td><span class="badge">${a.type}</span></td>
-          <td>${a.ttl}s</td>
-          <td class="mono">${a.value}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    } else {
+
+    if (this.lastAnswers.length === 0) {
       answersCard.style.display = 'none';
+      return;
     }
+
+    answersCard.style.display = 'block';
+    this.lastAnswers.forEach((answer) => {
+      UI.row(tbody, [
+        answer.name,
+        { node: UI.badge(answer.type) },
+        `${answer.ttl}s`,
+        { node: UI.el('span', { className: 'mono', text: answer.value }) },
+      ]);
+    });
   },
 
   onBenchmarkDone(payload) {
     App.setBusy(false);
-    if (!payload.success || !payload.data) return;
+    if (!payload || !payload.success || !payload.data) {
+      const message = payload && payload.message ? payload.message : '压测未完成';
+      App.toast(message, payload && payload.message === '用户已取消压测' ? 'warn' : 'error');
+      return;
+    }
+
     const d = payload.data;
-    const grid = document.getElementById('dns-stats-grid');
-    grid.innerHTML = `
-      <div class="stat-box">
-        <span class="stat-label">测试轮次</span>
-        <span class="stat-value">${d.success_count}/${d.count}</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">丢包率</span>
-        <span class="stat-value">${d.loss_rate}%</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">平均延迟</span>
-        <span class="stat-value">${d.avg_ms} ms</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">极值 (Min/Max)</span>
-        <span class="stat-value" style="font-size: 16px;">${d.min_ms} / ${d.max_ms} ms</span>
-      </div>
-    `;
-  }
+    const completed = d.completed || d.count;
+    UI.stats(document.getElementById('dns-stats-grid'), [
+      { label: '响应次数', value: `${d.success_count}/${completed}`, fail: d.loss_rate > 0 },
+      { label: '丢包率', value: `${d.loss_rate}%`, fail: d.loss_rate > 0 },
+      { label: '平均延迟', value: `${d.avg_ms} ms` },
+      { label: '极值 (Min/Max)', value: `${d.min_ms} / ${d.max_ms} ms` },
+    ]);
+
+    const rcodes = d.rcodes || {};
+    const rcodeText = Object.entries(rcodes).map(([k, v]) => `${k}×${v}`).join('，');
+    App.log('info', `压测完成：完成 ${completed}/${d.count} 次${rcodeText ? `，响应状态 ${rcodeText}` : ''}`);
+  },
 };
 
 window.ScannerModule = {
@@ -134,12 +152,25 @@ window.ScannerModule = {
 
   async startScan() {
     const dir = document.getElementById('scan-dir').value.trim();
-    const exts = document.getElementById('scan-exts').value.trim() || '.kt,.go,.ts,.vue,.py';
-    const threshold = parseInt(document.getElementById('scan-threshold').value) || 600;
+    const exts = document.getElementById('scan-exts').value.trim() || '.dart,.go,.py';
+    const threshold = parseInt(document.getElementById('scan-threshold').value, 10) || 600;
     const showAll = document.getElementById('scan-all').checked;
+    const ignoreGenerated = !document.getElementById('scan-generated').checked;
 
     App.setBusy(true, '正在扫描项目源文件规模...');
-    await window.pywebview.api.scan_files(dir, exts, threshold, showAll);
+    try {
+      const res = await window.pywebview.api.scan_files(
+        dir, exts, threshold, showAll, 'lines', ignoreGenerated,
+      );
+      if (!res.started) {
+        App.setBusy(false);
+        App.toast(res.message || '扫描未能启动', 'warn');
+      }
+    } catch (e) {
+      App.setBusy(false);
+      App.log('error', `代码扫描异常: ${e}`);
+      App.toast(`代码扫描异常: ${e}`, 'error');
+    }
   },
 
   setFilter(mode) {
@@ -151,7 +182,7 @@ window.ScannerModule = {
 
   renderTable() {
     const tbody = document.querySelector('#scan-table tbody');
-    tbody.innerHTML = '';
+    UI.clear(tbody);
     const filesToDisplay = this.filterMode === 'exceeded'
       ? this.currentFiles.filter(item => item.exceeded)
       : this.currentFiles;
@@ -159,104 +190,138 @@ window.ScannerModule = {
     document.getElementById('scan-matched-count').textContent = filesToDisplay.length;
 
     filesToDisplay.forEach((item, idx) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td class="${item.exceeded ? 'is-fail' : ''}" style="font-weight: 600;">${item.line_count} 行</td>
-        <td><span class="badge ${item.ext === '.kt' ? '' : 'badge-warn'}">${item.ext.toUpperCase()}</span></td>
-        <td class="mono">${item.rel_path}${item.exceeded ? ' <strong style="color:var(--seal);font-size:11px;">[超标]</strong>' : ''}</td>
-        <td><button class="btn btn-sm btn-ghost" onclick="window.pywebview.api.open_explorer('${item.full_path.replace(/\\/g, '\\\\')}')">打开</button></td>
-      `;
-      tbody.appendChild(tr);
+      const pathCell = UI.el('span', { className: 'mono' },
+        item.rel_path,
+        item.exceeded ? UI.el('strong', { className: 'is-fail tag-exceeded', text: ' [超标]' }) : null,
+      );
+      UI.row(tbody, [
+        idx + 1,
+        { className: item.exceeded ? 'is-fail' : '', node: UI.el('strong', { text: `${item.line_count} 行` }) },
+        { node: UI.badge(item.ext.replace('.', '').toUpperCase(), item.ext === '.dart' ? 'badge' : 'badge-warn') },
+        { node: pathCell },
+        {
+          node: UI.button('打开', () => {
+            window.pywebview.api.open_explorer(item.full_path);
+          }),
+        },
+      ]);
     });
   },
 
   onScanDone(payload) {
     App.setBusy(false);
-    if (!payload.success || !payload.data) return;
+    if (!payload || !payload.success || !payload.data) {
+      const message = payload && payload.message ? payload.message : '扫描失败';
+      App.toast(message, 'error');
+      App.log('error', `代码扫描失败: ${message}`);
+      return;
+    }
+
     const d = payload.data;
     document.getElementById('scan-result-container').style.display = 'block';
 
-    const grid = document.getElementById('scan-stats-grid');
-    grid.innerHTML = `
-      <div class="stat-box">
-        <span class="stat-label">扫描文件总数</span>
-        <span class="stat-value">${d.stats.total_scanned}</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">代码总行数</span>
-        <span class="stat-value">${d.stats.total_lines.toLocaleString()}</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">超标文件 (&gt;${d.threshold}行)</span>
-        <span class="stat-value ${d.exceeded_count > 0 ? 'is-fail' : ''}">${d.exceeded_count}</span>
-      </div>
-      <div class="stat-box">
-        <span class="stat-label">最大单个文件行数</span>
-        <span class="stat-value">${d.max_file ? d.max_file.line_count : 0}</span>
-      </div>
-    `;
+    UI.stats(document.getElementById('scan-stats-grid'), [
+      { label: '扫描文件总数', value: d.stats.total_scanned },
+      { label: '代码总行数', value: d.stats.total_lines.toLocaleString() },
+      { label: `超标文件 (>${d.threshold}行)`, value: d.exceeded_count, fail: d.exceeded_count > 0 },
+      { label: '最大单个文件行数', value: d.max_file ? d.max_file.line_count : 0 },
+    ]);
 
     this.currentFiles = d.matched_files || [];
     this.renderTable();
-  }
+  },
 };
 
 window.LogoModule = {
   async refreshPreview() {
-    const bg = document.getElementById('logo-bg-text').value.trim();
-    const totem = document.getElementById('logo-totem-text').value.trim();
-    const gradient = document.getElementById('logo-gradient').checked;
-
     try {
-      const res = await window.pywebview.api.logo_preview(bg, totem, gradient);
-      if (res.success) {
-        document.getElementById('logo-preview-box').innerHTML = res.svg;
+      const res = await window.pywebview.api.logo_preview();
+      if (!res.success) {
+        App.log('error', `Logo 预览失败: ${res.error || '未知错误'}`);
+        return;
       }
+      const palettes = res.palettes || {};
+      const light = palettes.light || {};
+      const dark = palettes.dark || {};
+
+      document.getElementById('logo-preview-light').innerHTML = light.svg || '';
+      document.getElementById('logo-preview-dark').innerHTML = dark.svg || '';
+      document.getElementById('light-bg-hex').textContent = light.background || '—';
+      document.getElementById('light-fg-hex').textContent = light.foreground || '—';
+      document.getElementById('dark-bg-hex').textContent = dark.background || '—';
+      document.getElementById('dark-fg-hex').textContent = dark.foreground || '—';
+      document.getElementById('light-bg-swatch').style.background = light.background || 'transparent';
+      document.getElementById('light-fg-swatch').style.background = light.foreground || 'transparent';
+      document.getElementById('dark-bg-swatch').style.background = dark.background || 'transparent';
+      document.getElementById('dark-fg-swatch').style.background = dark.foreground || 'transparent';
     } catch (e) {
-      console.error(e);
+      App.log('error', `Logo 预览异常: ${e}`);
     }
   },
 
   async exportAssets() {
-    const bg = document.getElementById('logo-bg-text').value.trim();
-    const totem = document.getElementById('logo-totem-text').value.trim();
-    const gradient = document.getElementById('logo-gradient').checked;
-
     App.setBusy(true, '正在生成各尺寸 PNG 与 ICO 图标...');
-    await window.pywebview.api.logo_export(bg, totem, gradient, null);
+    try {
+      const res = await window.pywebview.api.logo_export();
+      if (!res.started) {
+        App.setBusy(false);
+        App.toast(res.message || '导出未能启动', 'warn');
+      }
+    } catch (e) {
+      App.setBusy(false);
+      App.log('error', `Logo 导出异常: ${e}`);
+      App.toast(`Logo 导出异常: ${e}`, 'error');
+    }
   },
 
   onExportDone(payload) {
     App.setBusy(false);
-    if (payload.success) {
-      App.toast('Logo 资源导出成功，SVG、1024/512 图标及 Windows ICO 已就绪', 'ok');
+    if (payload && payload.success) {
+      App.toast('品牌资源导出成功，SVG、PNG 与 Windows ICO 已就绪', 'ok');
+      App.log('info', `Logo 导出完成，耗时 ${payload.elapsed || 0}s`);
+    } else {
+      App.toast((payload && payload.message) || 'Logo 导出失败', 'error');
     }
-  }
+  },
 };
 
 window.BuildModule = {
-  async refreshToolchain() {
+  _toolchainLoaded: false,
+  _refreshing: false,
+
+  async refreshToolchain(force = false) {
+    if (this._refreshing) return;
+    this._refreshing = true;
+    const grid = document.getElementById('toolchain-grid');
+    if (!this._toolchainLoaded) {
+      UI.clear(grid);
+      grid.appendChild(UI.note('正在检测工具链...', 'hint-text'));
+    }
+
     try {
-      const res = await window.pywebview.api.build_get_toolchain();
-      const tools = res.tools || res;
-      if (res.default_version) {
-        const verInput = document.getElementById('build-version');
-        if (verInput) verInput.value = res.default_version;
-      }
-      const grid = document.getElementById('toolchain-grid');
-      grid.innerHTML = '';
-      Object.entries(tools).forEach(([k, info]) => {
-        const chip = document.createElement('div');
-        chip.className = `tool-chip ${info.found ? '' : 'missing'}`;
-        chip.innerHTML = `
-          <span class="chip-dot"></span>
-          <span><strong>${k.toUpperCase()}</strong>: ${info.version || (info.found ? '已就绪' : '未安装')}</span>
-        `;
-        grid.appendChild(chip);
+      const res = await window.pywebview.api.build_get_toolchain(Boolean(force));
+      const tools = res.tools || {};
+      UI.clear(grid);
+      Object.entries(tools).forEach(([key, info]) => {
+        grid.appendChild(UI.el('div', { className: `tool-chip ${info.found ? '' : 'missing'}` },
+          UI.el('span', { className: 'chip-dot' }),
+          UI.el('span', { text: `${key.toUpperCase()}: ${info.version || (info.found ? '已就绪' : '未安装')}` }),
+        ));
       });
+      if (!Object.keys(tools).length) {
+        grid.appendChild(UI.note('未获取到工具链状态。', 'hint-text'));
+      }
+      if (res.default_version) {
+        const input = document.getElementById('build-version');
+        if (input && !input.value) input.value = res.default_version;
+      }
+      this._toolchainLoaded = true;
     } catch (e) {
-      console.error(e);
+      UI.clear(grid);
+      grid.appendChild(UI.note('工具链检测失败，请查看日志。', 'hint-text is-fail'));
+      App.log('error', `工具链检测异常: ${e}`);
+    } finally {
+      this._refreshing = false;
     }
   },
 
@@ -272,40 +337,60 @@ window.BuildModule = {
     const taskLabel = labelMap[target] || `${target} 安装包`;
 
     App.setBusy(true, `正在执行 ${taskLabel} 构建流水线...`);
-    document.getElementById('btn-build-cancel').disabled = false;
-    await window.pywebview.api.build_start(target, version, buildType, clean, false, arch);
+    try {
+      const res = await window.pywebview.api.build_start(target, version, buildType, clean, false, arch);
+      if (!res.started) {
+        App.setBusy(false);
+        App.toast(res.message || '构建未能启动', 'warn');
+        return;
+      }
+      document.getElementById('btn-build-cancel').disabled = false;
+    } catch (e) {
+      App.setBusy(false);
+      App.log('error', `构建启动异常: ${e}`);
+      App.toast(`构建启动异常: ${e}`, 'error');
+    }
   },
 
   async cancelBuild() {
-    await window.pywebview.api.cancel_current_task();
+    try {
+      const res = await window.pywebview.api.cancel_current_task();
+      if (res.success) App.toast('已发送中断信号，等待当前步骤退出', 'warn');
+    } catch (e) {
+      App.log('error', `中断请求异常: ${e}`);
+    }
   },
 
   onBuildDone(payload) {
     App.setBusy(false);
     document.getElementById('btn-build-cancel').disabled = true;
+    if (!payload) return;
+
+    if (payload.cancelled) {
+      App.toast('构建已中断', 'warn');
+      return;
+    }
     if (payload.success) {
-      const count = payload.artifacts ? payload.artifacts.length : 1;
-      App.toast(`纯净安装包构建完成！已输出 ${count} 个独立安装包至 build/bin 目录`, 'ok');
+      const artifacts = payload.artifacts || [];
+      App.toast(`构建完成，已输出 ${artifacts.length} 个安装包至 build/bin`, 'ok');
+      artifacts.forEach(art => App.log('info', `产物: ${art}`));
     } else {
       App.toast(`构建未成功: ${payload.message || '未知错误'}`, 'error');
     }
-  }
+  },
 };
 
 // 版本号维护：Flutter 主力客户端独立维护，其余模块折叠归档。
-// groups 传 null 表示全部模块（仅刷新折叠区时使用 common）。
 const VERSION_COMMON_GROUPS = ['common'];
 
 function renderVersionRows(tbody, items) {
-  tbody.innerHTML = '';
-  items.forEach(item => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${item.name}</strong></td>
-      <td><span class="badge">${item.version}</span></td>
-      <td class="mono">${item.rel_path}</td>
-    `;
-    tbody.appendChild(tr);
+  UI.clear(tbody);
+  items.forEach((item) => {
+    UI.row(tbody, [
+      { node: UI.el('strong', { text: item.name }) },
+      { node: UI.badge(item.version) },
+      { node: UI.el('span', { className: 'mono', text: item.rel_path }) },
+    ]);
   });
 }
 
@@ -318,7 +403,7 @@ function pickLatestVersion(items) {
 }
 
 function bumpSemver(base, type) {
-  const parts = base.split('.').map(x => parseInt(x) || 0);
+  const parts = base.split('.').map(x => parseInt(x, 10) || 0);
   while (parts.length < 3) parts.push(0);
   if (type === 'patch') {
     parts[2] += 1;
@@ -333,17 +418,19 @@ window.VersionModule = {
   latestDetectedVersion: '',
   latestFlutterVersion: '',
 
-  // ---- Flutter 统一版本维护 ----
   async refreshFlutterVersions() {
     try {
       const res = await window.pywebview.api.version_inspect(['flutter']);
-      if (!res.success) return;
+      if (!res.success) {
+        App.log('error', `Flutter 版本读取失败: ${res.error || '未知错误'}`);
+        return;
+      }
       const tbody = document.querySelector('#flutter-version-table tbody');
       if (tbody) renderVersionRows(tbody, res.items);
       const latest = pickLatestVersion(res.items);
       if (latest) this.latestFlutterVersion = latest;
     } catch (e) {
-      console.error(e);
+      App.log('error', `Flutter 版本读取异常: ${e}`);
     }
   },
 
@@ -367,20 +454,32 @@ window.VersionModule = {
     const commit = document.getElementById('flutter-commit').checked;
 
     App.setBusy(true, `正在同步 Flutter 版本至 v${ver}...`);
-    await window.pywebview.api.version_sync(ver, dryRun, false, commit, ['flutter']);
+    try {
+      const res = await window.pywebview.api.version_sync(ver, dryRun, false, commit, ['flutter']);
+      if (!res.started) {
+        App.setBusy(false);
+        App.toast(res.message || '版本同步未能启动', 'warn');
+      }
+    } catch (e) {
+      App.setBusy(false);
+      App.log('error', `Flutter 版本同步异常: ${e}`);
+      App.toast(`Flutter 版本同步异常: ${e}`, 'error');
+    }
   },
 
-  // ---- 其他模块（折叠区）版本维护 ----
   async refreshVersions() {
     try {
       const res = await window.pywebview.api.version_inspect(VERSION_COMMON_GROUPS);
-      if (!res.success) return;
+      if (!res.success) {
+        App.log('error', `版本读取失败: ${res.error || '未知错误'}`);
+        return;
+      }
       const tbody = document.querySelector('#version-table tbody');
       if (tbody) renderVersionRows(tbody, res.items);
       const latest = pickLatestVersion(res.items);
       if (latest) this.latestDetectedVersion = latest;
     } catch (e) {
-      console.error(e);
+      App.log('error', `版本读取异常: ${e}`);
     }
   },
 
@@ -404,30 +503,50 @@ window.VersionModule = {
     const commit = document.getElementById('ver-commit').checked;
 
     App.setBusy(true, `正在同步其他模块版本至 v${ver}...`);
-    await window.pywebview.api.version_sync(ver, dryRun, verify, commit, VERSION_COMMON_GROUPS);
+    try {
+      const res = await window.pywebview.api.version_sync(ver, dryRun, verify, commit, VERSION_COMMON_GROUPS);
+      if (!res.started) {
+        App.setBusy(false);
+        App.toast(res.message || '版本同步未能启动', 'warn');
+      }
+    } catch (e) {
+      App.setBusy(false);
+      App.log('error', `版本同步异常: ${e}`);
+      App.toast(`版本同步异常: ${e}`, 'error');
+    }
   },
 
-  // 统一回调：区分本次同步作用于哪些分组
   onSyncDone(payload) {
     App.setBusy(false);
-    const files = (payload.modified_files || []).join('/');
-    const isFlutterScope = files.includes('pubspec.yaml');
-    if (isFlutterScope) {
+    if (!payload) return;
+
+    const groups = Array.isArray(payload.groups) ? payload.groups : [];
+    if (groups.includes('flutter')) {
       this.refreshFlutterVersions();
+    } else if (groups.includes('common')) {
+      this.refreshVersions();
     } else {
+      this.refreshFlutterVersions();
       this.refreshVersions();
     }
-    if (payload.success) {
-      if (payload.target_version) {
-        if (isFlutterScope) {
-          this.latestFlutterVersion = payload.target_version;
-        } else {
-          this.latestDetectedVersion = payload.target_version;
-          const buildVerInput = document.getElementById('build-version');
-          if (buildVerInput) buildVerInput.value = payload.target_version;
-        }
-      }
-      App.toast(`版本号同步成功，影响文件数: ${payload.modified_files ? payload.modified_files.length : 0}`, 'ok');
+
+    if (!payload.success) {
+      App.toast(payload.message || '版本同步失败', 'error');
+      return;
     }
-  }
+
+    if (payload.target_version) {
+      if (groups.includes('flutter')) {
+        this.latestFlutterVersion = payload.target_version;
+      } else {
+        this.latestDetectedVersion = payload.target_version;
+        const buildVerInput = document.getElementById('build-version');
+        if (buildVerInput) buildVerInput.value = payload.target_version;
+      }
+    }
+
+    const count = payload.modified_files ? payload.modified_files.length : 0;
+    const prefix = payload.dry_run ? '版本预览完成' : '版本号同步成功';
+    App.toast(`${prefix}，影响文件数: ${count}`, 'ok');
+  },
 };

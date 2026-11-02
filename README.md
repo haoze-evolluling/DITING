@@ -237,6 +237,8 @@ python desktop/toolbox/app.py
 
 也可直接双击 `desktop/toolbox/run_maintenance.bat`：脚本会检测缺失依赖并自动安装，异常退出时保留窗口以便查看报错。
 
+五个模块已对齐当前工程结构：DNS 诊断压测；代码规模扫描（默认 `.dart/.go/.py/.kt/.java/.js/.sh`，并忽略 `.dart_tool`、生成 l10n、`*.g.dart` 等生成代码）；品牌 Logo 导出（固定浅/深两套品牌纯色）；Windows / Linux 构建打包（预检 Go / Flutter / NSIS，Windows 另需 MSVC 与 WSL）；版本号维护。
+
 版本号维护在工具箱的「版本号维护」页完成：Flutter Android / 桌面端（`android/app/pubspec.yaml`、`desktop/app/pubspec.yaml`）是常用入口；服务端 / NSIS 的版本号维护已折叠归档，仅在需要时展开。命令行等价用法：
 
 ```cmd

@@ -13,7 +13,7 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Optional
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -33,13 +33,14 @@ if hasattr(sys.stderr, "reconfigure"):
         pass
 
 
-TOOLBOX_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-DESKTOP_DIR = os.path.dirname(TOOLBOX_DIR)
-ROOT_DIR = os.path.dirname(DESKTOP_DIR)
-if DESKTOP_DIR not in sys.path:
-    sys.path.insert(0, DESKTOP_DIR)
+_TOOLBOX_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_DESKTOP_DIR = os.path.dirname(_TOOLBOX_DIR)
+if _DESKTOP_DIR not in sys.path:
+    sys.path.insert(0, _DESKTOP_DIR)
 
+from toolbox.core.paths import BUILD_BIN_DIR, DESKTOP_APP_DIR, INSTALLER_DIR, ROOT_DIR, SERVICE_DIR
 from toolbox.core.runner import stream_process_output
+from toolbox.core.toolchain import check_toolchain
 
 
 def get_root_dir() -> str:
@@ -90,65 +91,6 @@ def stop_running_processes(on_log: Optional[Callable[[str, str], None]] = None):
                 on_log("info", f"已安全终止正在运行的旧进程: {name}")
         except Exception:
             pass
-
-
-def find_tool(name: str, extra_paths: Optional[List[str]] = None) -> Optional[str]:
-    cmd = shutil.which(name)
-    if cmd:
-        return cmd
-    if extra_paths:
-        for p in extra_paths:
-            candidate = os.path.join(p, f"{name}.exe" if sys.platform == "win32" else name)
-            if os.path.exists(candidate):
-                return candidate
-    return None
-
-
-def check_toolchain() -> Dict[str, dict]:
-    nsis_extra = ["C:\\Program Files (x86)\\NSIS", "C:\\Program Files\\NSIS"]
-    tools = {
-        "go": {"found": False, "version": "", "cmd": shutil.which("go")},
-        "git": {"found": False, "version": "", "cmd": shutil.which("git")},
-        "flutter": {"found": False, "version": "", "cmd": shutil.which("flutter")},
-        "nsis": {"found": False, "version": "", "cmd": find_tool("makensis", nsis_extra)},
-    }
-
-    if tools["go"]["cmd"]:
-        try:
-            out = subprocess.check_output([tools["go"]["cmd"], "version"], text=True).strip()
-            tools["go"]["found"] = True
-            tools["go"]["version"] = out.replace("go version ", "")
-        except Exception:
-            pass
-
-    if tools["git"]["cmd"]:
-        try:
-            out = subprocess.check_output([tools["git"]["cmd"], "--version"], text=True).strip()
-            tools["git"]["found"] = True
-            tools["git"]["version"] = out
-        except Exception:
-            pass
-
-    if tools["flutter"]["cmd"]:
-        try:
-            out = subprocess.check_output([tools["flutter"]["cmd"], "--version"], text=True, stderr=subprocess.STDOUT).splitlines()
-            tools["flutter"]["found"] = True
-            tools["flutter"]["version"] = out[0].replace("Flutter ", "") if out else "已安装"
-        except Exception:
-            tools["flutter"]["found"] = True
-            tools["flutter"]["version"] = "已安装"
-
-    if tools["nsis"]["cmd"]:
-        try:
-            out = subprocess.check_output([tools["nsis"]["cmd"], "/VERSION"], text=True).strip()
-            tools["nsis"]["found"] = True
-            # makensis /VERSION 自身已带前缀 v（如 v3.12），避免重复显示为 vv3.12
-            tools["nsis"]["version"] = out if out.lower().startswith("v") else f"v{out}"
-        except Exception:
-            tools["nsis"]["found"] = True
-            tools["nsis"]["version"] = "已安装"
-
-    return tools
 
 
 def format_size(bytes_num: int) -> str:
@@ -260,24 +202,27 @@ def build_pipeline(
     if not version:
         version = get_current_project_version()
 
+    def _fail(message: str) -> dict:
+        if is_cancelled():
+            on_log("warn", "构建已取消。")
+            return {"success": False, "message": "构建已取消", "cancelled": True}
+        return {"success": False, "message": message}
+
     # 版本号会拼入 WSL 命令行与产物文件名，限制字符集以防注入或非法路径
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._+-]*", version):
         on_log("error", f"非法的版本号: {version} (仅允许字母、数字与 . _ + - 且需以字母或数字开头)")
         return {"success": False, "message": f"非法版本号: {version}"}
 
     root = get_root_dir()
-    server_dir = os.path.join(root, "desktop", "service")
-    flutter_project = os.path.join(root, "desktop", "app")
-    bin_dir = os.path.join(server_dir, "build", "bin")
+    server_dir = SERVICE_DIR
+    flutter_project = DESKTOP_APP_DIR
+    bin_dir = BUILD_BIN_DIR
     service_bin = os.path.join(bin_dir, "diting-service.exe")
     app_stage = os.path.join(server_dir, "build", "windows", "app")
 
     on_log("info", "=" * 50)
     on_log("info", f"谛听 (DITING) 构建任务启动: Target={target}, Ver={version}, Type={build_type}")
     on_log("info", "=" * 50)
-
-    # 1. 终止可能正在运行的实例，防止文件写锁
-    stop_running_processes(on_log)
 
     # 规范化构建目标
     tgt = target.lower().strip()
@@ -288,8 +233,11 @@ def build_pipeline(
         on_log("error", f"未知的构建目标: {target} (支持: exe, deb, both)")
         return {"success": False, "message": f"不支持的构建目标: {target}"}
 
+    # 1. 终止可能正在运行的实例，防止文件写锁
+    stop_running_processes(on_log)
+
     # 2. 前置依赖检查
-    tools = check_toolchain()
+    tools = check_toolchain(force=True)
     need_win = tgt in ("exe", "both")
     need_deb = tgt in ("deb", "both")
 
@@ -304,6 +252,9 @@ def build_pipeline(
             if not tools["nsis"]["found"]:
                 on_log("error", "未找到 makensis，无法打包 NSIS 安装包。")
                 return {"success": False, "message": "缺少 NSIS"}
+            if sys.platform == "win32" and not tools.get("msvc", {}).get("found"):
+                on_log("error", "未找到 Visual Studio C++ 桌面开发工具链，无法构建 Flutter Windows 窗口。")
+                return {"success": False, "message": "缺少 Visual Studio C++ 工具链"}
 
         if need_deb:
             if not tools["go"]["found"]:
@@ -312,9 +263,13 @@ def build_pipeline(
             if not tools["flutter"]["found"]:
                 on_log("error", "未找到 Flutter SDK，无法构建内嵌 Web 控制台。")
                 return {"success": False, "message": "缺少 Flutter SDK"}
-            if sys.platform == "win32" and not shutil.which("wsl"):
+            if sys.platform == "win32" and not tools.get("wsl", {}).get("found"):
                 on_log("error", "未检测到 WSL 环境。在 Windows 上打包 deb 安装包需要 WSL 支持。")
                 return {"success": False, "message": "缺少 WSL 环境"}
+
+    if is_cancelled():
+        on_log("warn", "构建已在启动前取消。")
+        return {"success": False, "message": "构建已取消", "cancelled": True}
 
     # 3. 清理旧产物
     if clean and os.path.exists(bin_dir):
@@ -323,7 +278,7 @@ def build_pipeline(
     os.makedirs(bin_dir, exist_ok=True)
 
     if not build_web_console_assets(server_dir, on_log=on_log, is_cancelled=is_cancelled):
-        return {"success": False, "message": "Web 控制台构建失败"}
+        return _fail("Web 控制台构建失败")
 
     git_commit = "unknown"
     try:
@@ -350,11 +305,11 @@ def build_pipeline(
         flutter_cmd.append("--release" if is_rel else "--debug")
         ok = run_cmd_live(flutter_cmd, cwd=flutter_project, on_log=on_log, is_cancelled=is_cancelled)
         if not ok:
-            return {"success": False, "message": "Flutter 桌面端编译失败"}
+            return _fail("Flutter 桌面端编译失败")
 
         release_dir = find_flutter_release_dir(flutter_project, build_type)
         if not release_dir:
-            return {"success": False, "message": "未找到 Flutter Windows 产物目录"}
+            return _fail("未找到 Flutter Windows 产物目录")
 
         if is_rel:
             output_kernel = os.path.join(release_dir, "data", "flutter_assets", "kernel_blob.bin")
@@ -373,10 +328,10 @@ def build_pipeline(
         cmd_svc = ["go", "build", "-ldflags", svc_ldflags, "-o", service_bin, "./cmd/service"]
         ok = run_cmd_live(cmd_svc, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
         if not ok or not os.path.exists(service_bin):
-            return {"success": False, "message": "特权服务编译失败"}
+            return _fail("特权服务编译失败")
 
         on_log("info", ">>> [3/3] 正在打包 NSIS 独立安装包...")
-        installer_dir = os.path.join(server_dir, "build", "windows", "installer")
+        installer_dir = INSTALLER_DIR
         nsi_script = os.path.join(installer_dir, "project.nsi")
         if not os.path.exists(nsi_script):
             on_log("error", f"未找到 NSIS 安装脚本: {nsi_script}")
@@ -400,7 +355,7 @@ def build_pipeline(
         ]
         ok = run_cmd_live(cmd_nsis, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
         if not ok:
-            return {"success": False, "message": "NSIS 安装包打包失败"}
+            return _fail("NSIS 安装包打包失败")
 
         if not os.path.exists(installer_path) and os.path.exists(fallback_installer):
             try:
@@ -410,7 +365,7 @@ def build_pipeline(
 
         if not os.path.exists(installer_path):
             on_log("error", f"未找到生成的安装包文件: {installer_path}")
-            return {"success": False, "message": "未生成预期的 EXE 安装包产物"}
+            return _fail("未生成预期的 EXE 安装包产物")
 
         # 仅保留最终安装包，清理所有中间编译产物
         for temp_path in (service_bin, app_stage, fallback_installer):
@@ -438,7 +393,7 @@ def build_pipeline(
                 on_log=on_log, is_cancelled=is_cancelled,
             )
             if not bin_path:
-                return {"success": False, "message": "Linux 二进制交叉编译失败"}
+                return _fail("Linux 二进制交叉编译失败")
             wsl_dir = server_dir.replace("\\", "/")
             cmd_pkg = ["wsl.exe", "-e", "bash", "-c", f"cd \"$(wslpath '{wsl_dir}')\" && exec bash ./build_linux.sh --package --prebuilt -a {arch} -v {version} -b {build_type}"]
             ok = run_cmd_live(cmd_pkg, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
@@ -447,12 +402,12 @@ def build_pipeline(
             ok = run_cmd_live(cmd_pkg, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
 
         if not ok:
-            return {"success": False, "message": "Linux 发行包打包失败"}
+            return _fail("Linux 发行包打包失败")
 
         deb_name = f"diting_{version}_linux_{arch}.deb"
         deb_file = os.path.join(bin_dir, deb_name)
         if not os.path.exists(deb_file):
-            return {"success": False, "message": "未找到生成的 DEB 安装包产物"}
+            return _fail("未找到生成的 DEB 安装包产物")
 
         # 确保产物目录纯净：清理可能残留的 Linux 单二进制及临时目录
         raw_linux_bin = os.path.join(bin_dir, "diting-service")

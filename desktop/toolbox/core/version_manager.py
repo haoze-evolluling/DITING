@@ -19,9 +19,16 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
+try:  # 作为 toolbox.core 包导入
+    from .paths import DESKTOP_APP_DIR, ANDROID_APP_DIR, INSTALLER_DIR, ROOT_DIR, SERVICE_DIR
+    from .paths import relative as rel_path
+except ImportError:  # 直接以脚本运行（python desktop/toolbox/core/version_manager.py）
+    from paths import DESKTOP_APP_DIR, ANDROID_APP_DIR, INSTALLER_DIR, ROOT_DIR, SERVICE_DIR
+    from paths import relative as rel_path
+
 
 def get_root_dir() -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    return ROOT_DIR
 
 
 # 版本号分组：Flutter 主力工程独立维护（版本号与桌面端早已分叉），
@@ -33,17 +40,13 @@ ALL_GROUPS = (GROUP_FLUTTER, GROUP_COMMON)
 
 def get_file_targets(groups: Optional[List[str]] = None) -> List[Dict[str, str]]:
     """按分组返回待维护的文件清单；groups 为空表示全部。"""
-    root = get_root_dir()
-    server = os.path.join(root, "desktop", "service")
-    flutter = os.path.join(root, "android", "app")
-    flutter_desktop = os.path.join(root, "desktop", "app")
     targets = [
-        {"name": "特权服务", "path": os.path.join(server, "cmd", "service", "main.go"), "type": "go", "group": GROUP_COMMON},
-        {"name": "Linux 构建脚本", "path": os.path.join(server, "build_linux.sh"), "type": "sh", "group": GROUP_COMMON},
-        {"name": "NSIS 主配置", "path": os.path.join(server, "build", "windows", "installer", "project.nsi"), "type": "nsi", "group": GROUP_COMMON},
-        {"name": "Flutter 客户端版本（android/app）", "path": os.path.join(flutter, "pubspec.yaml"), "type": "pubspec", "group": GROUP_FLUTTER},
-        {"name": "Flutter 桌面端版本（desktop/app）", "path": os.path.join(flutter_desktop, "pubspec.yaml"), "type": "pubspec", "group": GROUP_FLUTTER},
-        {"name": "README 版本示例", "path": os.path.join(root, "README.md"), "type": "readme", "group": GROUP_COMMON},
+        {"name": "特权服务", "path": os.path.join(SERVICE_DIR, "cmd", "service", "main.go"), "type": "go", "group": GROUP_COMMON},
+        {"name": "Linux 构建脚本", "path": os.path.join(SERVICE_DIR, "build_linux.sh"), "type": "sh", "group": GROUP_COMMON},
+        {"name": "NSIS 主配置", "path": os.path.join(INSTALLER_DIR, "project.nsi"), "type": "nsi", "group": GROUP_COMMON},
+        {"name": "Flutter 客户端版本（android/app）", "path": os.path.join(ANDROID_APP_DIR, "pubspec.yaml"), "type": "pubspec", "group": GROUP_FLUTTER},
+        {"name": "Flutter 桌面端版本（desktop/app）", "path": os.path.join(DESKTOP_APP_DIR, "pubspec.yaml"), "type": "pubspec", "group": GROUP_FLUTTER},
+        {"name": "README 版本示例", "path": os.path.join(ROOT_DIR, "README.md"), "type": "readme", "group": GROUP_COMMON},
     ]
     if not groups:
         return targets
@@ -171,20 +174,19 @@ def replace_version_content(content: str, ftype: str, new_ver: str) -> Tuple[str
 
 
 def inspect_versions(groups: Optional[List[str]] = None) -> List[Dict[str, str]]:
-    root = get_root_dir()
     targets = get_file_targets(groups)
     results = []
     for item in targets:
         ver = extract_version(item)
-        rel_path = os.path.relpath(item["path"], root).replace("\\", "/")
+        path = item["path"]
         results.append({
             "name": item["name"],
-            "path": item["path"],
-            "rel_path": rel_path,
+            "path": path,
+            "rel_path": rel_path(path),
             "type": item["type"],
             "group": item.get("group", GROUP_COMMON),
             "version": ver,
-            "exists": os.path.exists(item["path"]),
+            "exists": os.path.exists(path),
         })
     return results
 
@@ -217,6 +219,7 @@ def sync_version(
 
     root = get_root_dir()
     targets = get_file_targets(groups)
+    active_groups = list(groups) if groups else list(ALL_GROUPS)
     modified_files = []
 
     def _log(lvl, msg):
@@ -230,7 +233,7 @@ def sync_version(
 
     for item in targets:
         path = item["path"]
-        rel = os.path.relpath(path, root).replace("\\", "/")
+        rel = rel_path(path)
         if not os.path.exists(path):
             _log("warn", f"跳过不存在文件: {rel}")
             continue
@@ -248,22 +251,40 @@ def sync_version(
         else:
             _log("warn", f"未匹配到版本标识或版本未变: {rel}")
 
-    # 同步更新后的验证
-    if verify and not dry_run:
+    # 同步更新后的验证（仅 Go 服务相关分组需要编译校验）
+    if verify and not dry_run and GROUP_COMMON in active_groups:
         _log("info", "正在运行 Go 编译测试以验证版本语法...")
         cmd = ["go", "test", "./..."]
-        p = subprocess.run(cmd, cwd=os.path.join(root, "desktop", "service"), capture_output=True, text=True)
+        p = subprocess.run(
+            cmd,
+            cwd=SERVICE_DIR,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
         if p.returncode != 0:
             _log("error", f"Go 测试失败:\n{p.stderr or p.stdout}")
-            return {"success": False, "message": "Go 验证测试失败", "modified": modified_files}
+            return {
+                "success": False,
+                "message": "Go 验证测试失败",
+                "modified_files": modified_files,
+                "groups": active_groups,
+            }
         _log("info", "Go 测试校验通过!")
 
-    if commit and not dry_run:
+    if commit and not dry_run and modified_files:
         _log("info", "正在将版本修改提交至 Git...")
         for mf in modified_files:
-            subprocess.run(["git", "-C", root, "add", mf], capture_output=True)
-        commit_msg = f"chore(release): bump version to v{target_ver}"
-        p = subprocess.run(["git", "-C", root, "commit", "-m", commit_msg], capture_output=True, text=True)
+            subprocess.run(["git", "-C", root, "add", "--", mf], capture_output=True)
+        commit_msg = f"chore(release): 版本号更新至 v{target_ver}"
+        p = subprocess.run(
+            ["git", "-C", root, "commit", "-m", commit_msg],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
         if p.returncode == 0:
             _log("info", f"Git 提交成功: {commit_msg}")
         else:
@@ -274,6 +295,7 @@ def sync_version(
         "success": True,
         "target_version": target_ver,
         "modified_files": modified_files,
+        "groups": active_groups,
         "dry_run": dry_run,
     }
 

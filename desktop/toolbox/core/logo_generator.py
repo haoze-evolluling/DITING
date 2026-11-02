@@ -30,16 +30,13 @@ from PIL import Image
 
 try:  # 作为包导入
     from . import vector_raster as vr
+    from .paths import ANDROID_RES_DIR, BRAND_XML, DESKTOP_APP_DIR, SERVICE_DIR, SHARED_DIR
 except ImportError:  # 直接脚本运行
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from core import vector_raster as vr  # type: ignore[no-redef]
+    from core.paths import ANDROID_RES_DIR, BRAND_XML, DESKTOP_APP_DIR, SERVICE_DIR, SHARED_DIR
 
 AND = "{http://schemas.android.com/apk/res/android}"
-
-TOOLBOX_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-DESKTOP_DIR = os.path.dirname(TOOLBOX_DIR)
-ROOT_DIR = os.path.dirname(DESKTOP_DIR)
-BRAND_XML = os.path.join(TOOLBOX_DIR, "assets", "brand", "ic_splash_squircle_logo.xml")
 
 # === 品牌调色板（唯一真源） ===
 LIGHT = {"background": "#FAF8F9", "foreground": "#007AFE"}
@@ -151,6 +148,15 @@ def squircle_svg(palette: Dict[str, str]) -> str:
     )
 
 
+def brand_svgs() -> Dict[str, Dict[str, str]]:
+    """返回浅/深两套品牌配色与对应 SVG，供工具箱预览使用。"""
+    return {
+        "light": {**LIGHT, "svg": squircle_svg(LIGHT)},
+        "dark": {**DARK, "svg": squircle_svg(DARK)},
+        "source": BRAND_XML,
+    }
+
+
 def adaptive_svg() -> str:
     """随系统明暗自动切换的品牌 SVG（用于浏览器 favicon / 网页 logo）。"""
     light_svg = squircle_svg(LIGHT)
@@ -196,8 +202,8 @@ def _save_ico(base: Image.Image, path: str, log: Callable[[str, str], None]) -> 
 
 def export_desktop(log: Callable[[str, str], None]) -> List[str]:
     """服务端与 Flutter 桌面端：Windows 图标、Linux pixmap、Web 控制台图标。"""
-    server = os.path.join(ROOT_DIR, "desktop", "service")
-    desktop_app = os.path.join(ROOT_DIR, "desktop", "app")
+    server = SERVICE_DIR
+    desktop_app = DESKTOP_APP_DIR
     files: List[str] = []
 
     light_1024 = render_icon(LIGHT, 1024)
@@ -227,7 +233,7 @@ def export_desktop(log: Callable[[str, str], None]) -> List[str]:
 
 def export_flutter_assets(log: Callable[[str, str], None]) -> List[str]:
     """Flutter 应用内展示用图标（关于页），浅色与深色各一份。"""
-    images = os.path.join(ROOT_DIR, "shared", "assets", "images")
+    images = os.path.join(SHARED_DIR, "assets", "images")
     files = [
         _save_png(render_icon(LIGHT, 512), os.path.join(images, "icon.png"), log),
         _save_png(render_icon(DARK, 512), os.path.join(images, "icon_dark.png"), log),
@@ -357,7 +363,7 @@ def export_all(on_log: Optional[Callable[[str, str], None]] = None) -> Dict[str,
     exported: List[str] = []
     exported += export_desktop(log)
     exported += export_flutter_assets(log)
-    flutter_res = os.path.join(ROOT_DIR, "android", "app", "android", "app", "src", "main", "res")
+    flutter_res = ANDROID_RES_DIR
     exported += export_android_launcher(flutter_res, log, "android/app")
     # Flutter 是唯一在 v31 主题里声明了启动图标的工程。
     exported += export_android_splash(flutter_res, log, "android/app")
