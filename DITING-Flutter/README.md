@@ -1,0 +1,69 @@
+# DITING-Flutter
+
+谛听 Flutter 工作区（pub workspace）：一份 lockfile，三个包。
+
+```
+DITING-Flutter/
+├── packages/diting_shared/   # 共享设计系统、主题、l10n、旧版配置/SQLite 读取
+├── apps/diting_android/      # Android 客户端：页面、路由、原生通道、android/、tunnel/
+├── apps/diting_desktop/      # Windows 桌面端：原生 Flutter 窗口 + web/（Wails / 局域网控制台）
+├── run_desktop.bat           # 启动桌面端；release 参数用于打包
+└── pubspec.yaml              # workspace 根
+```
+
+## 常用命令
+
+```bash
+# 工作区根：一次解析三个包
+flutter pub get
+flutter analyze
+
+# Android
+cd apps/diting_android
+flutter test
+build_apk.bat                 # 交互式打包（见仓库根 README）
+
+# 桌面端（Windows 原生窗口）
+DITING-Flutter\run_desktop.bat            # debug，支持热重载
+DITING-Flutter\run_desktop.bat release    # 构建 Release EXE 并启动
+
+# 只用浏览器预览桌面 UI（无需 Visual Studio）
+cd apps/diting_desktop
+flutter run -d chrome
+```
+
+桌面端依赖：Flutter 3.47+、Visual Studio「使用 C++ 的桌面开发」工作负载、Windows 开发者模式
+（`start ms-settings:developers`，插件符号链接需要）。`flutter doctor -v` 中 Visual Studio
+一栏为 OK 才可构建原生窗口。
+
+## 目录边界
+
+- `diting_shared` 只允许放两个宿主都需要的代码：`lib/ui`（设计系统）、`lib/app`（主题/l10n）、
+  `lib/l10n`（ARB 与生成文件）、`lib/data/prefs`、`lib/data/db` 中桌面也会编译到的读取层、
+  `lib/widgets/dashboard` 等共享组件。资源与 shader 也在这里，代码里用
+  `packages/diting_shared/assets/...` 引用。
+- `apps/diting_android/lib/pages`、`routes`、`shell`、`overlay`、`data/native` 等只服务 Android。
+- `apps/diting_desktop/lib` 只服务桌面窗口与 Web 控制台；不要反向依赖 `diting_android`。
+
+## 本地化
+
+ARB 与生成文件都在 `packages/diting_shared/lib/l10n`。修改 `app_zh.arb` / `app_en.arb` 后执行：
+
+```bash
+cd packages/diting_shared
+flutter gen-l10n
+```
+
+## 测试
+
+```bash
+cd apps/diting_android && flutter test
+cd apps/diting_desktop && flutter test
+```
+
+桌面自截图（写到 `apps/diting_desktop/build/screenshots/`，不入库）：
+
+```bash
+cd apps/diting_desktop
+DITING_SCREENSHOTS=1 flutter test test/screenshot/desktop_screenshot_test.dart --update-goldens
+```

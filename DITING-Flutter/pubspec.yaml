@@ -1,74 +1,19 @@
-name: diting
-description: "谛听 DITING — Android 客户端（Flutter 重写，兼容 1.4.3 数据）。"
-publish_to: 'none'
-# versionCode is major*10000 + minor*100 + patch (2.0.1 = 20001) so upgrades are
-# never treated as downgrades.
-version: 2.2.9+20209
+# Pub workspace root: one lockfile for the shared package and the two apps.
+#
+#   flutter pub get                     # resolve everything
+#   flutter analyze                     # analyze from the root
+#   flutter test apps/diting_android    # Android suites
+#   flutter test apps/diting_desktop    # desktop suites
+#
+# Platform projects live in apps/; shared UI, theme, l10n and data shims live in
+# packages/diting_shared. Each app only depends on what it actually imports.
+name: diting_workspace
+publish_to: none
 
 environment:
   sdk: ^3.13.5
 
-dependencies:
-  flutter:
-    sdk: flutter
-
-  # Pinned to the versions used by the original app.
-  material_ui: 1.8.0                     # Material3 widgets (superellipse, Easing)
-  material_color_utilities: 0.13.0       # HCT / DynamicColor (pinned by the Flutter SDK)
-  material_new_shapes: 1.0.0             # Morph / toPath (material_ui 1.8 does not export them)
-  animations: 3.0.0                      # FadeThrough / OpenContainer
-  path_parsing: 1.1.0                    # Parses Glyph SVG paths
-  collection: ^1.19.1
-
-  # State management and routing.
-  flutter_riverpod: 3.4.3
-  go_router: ^18.1.1
-
-  # Reads the legacy SQLite database directly.
-  sqflite: ^2.4.5
-  path: ^1.9.1
-
-  # Localization: gen-l10n reads lib/l10n/*.arb (see l10n.yaml).
-  flutter_localizations:
-    sdk: flutter
-  intl: any
-  cupertino_icons: ^2.0.0
-  url_launcher: ^6.3.3
-
-  # Desktop host persistence; Android reads the same legacy keys through MethodChannel.
-  shared_preferences: ^2.5.4
-  http: ^1.6.0
-  # The desktop log branch's live stream (`/api/v1/events`); works on web and on IO.
-  web_socket_channel: 3.0.3
-  # Encodes the LAN console's login URL as a QR code; pure Dart, no platform channel.
-  qr: 4.0.0
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^6.0.0
-  sqflite_common_ffi: ^2.4.5
-  # Drives the timers behind the power-key timeout in power_guard_test.
-  fake_async: ^1.3.3
-
-# The sqflite ffi suites need sqlite3's precompiled binary, which lives on GitHub
-# releases; that host is unreachable from this network, so the download goes
-# through a mirror. $RELEASE_TAG / $FILENAME are substituted by the build hook.
-hooks:
-  user_defines:
-    sqlite3:
-      url_pattern: "https://gh-proxy.com/https://github.com/simolus3/sqlite3.dart/releases/download/$RELEASE_TAG/$FILENAME"
-
-flutter:
-  uses-material-design: true
-  # Regenerates lib/l10n/app_localizations*.dart from lib/l10n/*.arb on every build.
-  generate: true
-  assets:
-    - assets/https_passthrough.txt
-    # Brand icon drawn on the about page hero.
-    - assets/images/
-    # Payment QR codes for the sponsor page. The member list and avatars are not
-    # bundled; they are fetched as recognition_members.json plus avatars/.
-    - assets/pay/
-  shaders:
-    - shaders/liquid_glass.frag
+workspace:
+  - packages/diting_shared
+  - apps/diting_android
+  - apps/diting_desktop

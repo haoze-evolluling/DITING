@@ -79,12 +79,12 @@
 
 ```
 DITING/
-├── DITING-Flutter/           # ★ Android 客户端（Flutter 架构，主力开发，兼容 1.4.3 的配置与数据库）
-│   ├── lib/ui/               #   移植自 1.4.3 的设计系统（GPL-3.0）
-│   ├── lib/data/             #   旧版配置（SharedPreferences 11 个容器）与旧版 SQLite 读写
-│   ├── lib/pages/            #   页面（85 条路由）
-│   ├── tunnel/               #   Go 用户态隧道引擎源码（gomobile 编译为 arm64/x64/all 三种 AAR）
-│   └── android/              #   Flutter Android 壳（包名 com.haoze.diting）
+├── DITING-Flutter/           # ★ Flutter 工作区（共享包 + Android 客户端 + Windows 桌面端）
+│   ├── packages/diting_shared/  #   共享设计系统、主题、l10n、旧版配置与 SQLite 读取（GPL-3.0）
+│   ├── apps/diting_android/     #   Android 客户端：页面/路由/原生通道、android/ 壳、tunnel/ 引擎源码
+│   ├── apps/diting_desktop/     #   Windows 桌面端：Flutter 原生窗口 + web/ 宿主（Wails/局域网控制台共用）
+│   ├── run_desktop.bat          #   启动桌面端；`run_desktop.bat release` 构建并启动 Release
+│   └── pubspec.yaml             #   pub workspace 根（一份 lockfile）
 ├── Desktop/                  # Windows / Linux 工程
 │   ├── cmd/service/          # 特权核心服务（Windows Service / Linux systemd）
 │   ├── internal/             # DNS 内核、平台适配、IPC、鉴权、查询日志
@@ -100,7 +100,7 @@ DITING/
 └── README.md
 ```
 
-> **引擎说明**：Go 隧道引擎源码位于 `DITING-Flutter/tunnel`，工程自含源码与 AAR 构建入口
+> **引擎说明**：Go 隧道引擎源码位于 `DITING-Flutter/apps/diting_android/tunnel`，工程自含源码与 AAR 构建入口
 > （`tunnel/build_aar.ps1`）。三种工作模式共用同一引擎，差异只在 TUN 路由范围：极速模式仅接管 DNS，
 > 普通模式接管全网络，服务器模式不建隧道。AAR 为构建产物、不入库，首次打包前需本地生成。
 
@@ -109,20 +109,21 @@ DITING/
 
 ## 构建指南
 
-### 📱 Android（`DITING-Flutter`）
+### 📱 Android（`DITING-Flutter/apps/diting_android`）
 
 要求 Flutter 3.47+、JDK 11+、Android SDK；最低 Android 9.0（API 28），Release 产物架构为 `arm64-v8a`。
-隧道引擎 AAR 不入库，首次构建前先在 `DITING-Flutter/tunnel` 执行 `pwsh -File build_aar.ps1`
+隧道引擎 AAR 不入库，首次构建前先在 `DITING-Flutter/apps/diting_android/tunnel` 执行 `pwsh -File build_aar.ps1`
 生成 `tunnel-arm64.aar`（模拟器或 debug 包用 `-Arch x64` / `-Arch all`）。
 
 ```bash
 cd DITING-Flutter
-flutter pub get
-flutter analyze lib test
+flutter pub get                # 工作区根：一次解析 shared + 两个 app
+flutter analyze
+cd apps/diting_android
 flutter test
 ```
 
-日常打包运行 `DITING-Flutter/build_apk.bat`，交互式选择编译档位并自动归档：
+日常打包运行 `DITING-Flutter/apps/diting_android/build_apk.bat`，交互式选择编译档位并自动归档：
 
 | 档位 | 编译模式 | 签名 | Flutter 库架构 | 隧道引擎架构 | 可安装的设备 |
 | --- | --- | --- | --- | --- | --- |
@@ -134,7 +135,7 @@ flutter test
 
 **架构匹配注意**：3 档打的是 arm64 引擎（`tunnel-arm64.aar`），4 档打的是 x86_64 引擎
 （`tunnel-x64.aar`），1/2 档 debug 打的是双 ABI 一体引擎（`tunnel-all.aar`，真机与模拟器同包
-通用）。三种 AAR 都是构建产物、**不入库**：全新克隆后首次打包前，先在 `DITING-Flutter/tunnel`
+通用）。三种 AAR 都是构建产物、**不入库**：全新克隆后首次打包前，先在 `DITING-Flutter/apps/diting_android/tunnel`
 执行 `pwsh -File build_aar.ps1`（或 `-Arch x64` / `-Arch all`）生成；`build.gradle.kts` 按
 `-PditingAbi` / `--target-platform` 自动选用，缺文件时
 构建报错并提示。把 3/4 档的包装到不匹配的设备上会报「安装失败 / 安装包与系统不兼容」。
@@ -144,6 +145,25 @@ flutter test
 为缩小安装包体积，Release 档位以 `-PditingAbi=<abi>` 构建单架构包，并通过
 `-PditingCompressNativeLibs=true`（默认）对 `.so` 使用 legacy 打包（安装时解压）。
 详情见 [Go AAR 构建记录](docs/development/aar-build-notes.md)。
+
+### 🖥️ Flutter 桌面端（`DITING-Flutter/apps/diting_desktop`）
+
+要求 Flutter 3.47+、Visual Studio「使用 C++ 的桌面开发」工作负载（`flutter doctor -v` 中
+Visual Studio 一栏为 OK），并开启 Windows 开发者模式（`start ms-settings:developers`，
+插件符号链接需要）。入口 `lib/main.dart`，共享代码来自 `packages/diting_shared`。
+
+```bat
+DITING-Flutter/run_desktop.bat            :: debug 运行（热重载）
+DITING-Flutter/run_desktop.bat release    :: 构建 Release EXE 并启动
+```
+
+手动等价命令：
+
+```bash
+cd DITING-Flutter/apps/diting_desktop
+flutter run -d windows
+flutter build windows --release
+```
 
 ### 💻 Windows
 要求 Go 1.25+、Node.js 18+、Wails v2（`go install github.com/wailsapp/wails/v2/cmd/wails@latest`）；打包独立安装包需 NSIS（可选）。
@@ -215,7 +235,7 @@ python maintenance/app.py
 
 也可直接双击 `maintenance/run_maintenance.bat`：脚本会检测缺失依赖并自动安装，异常退出时保留窗口以便查看报错。
 
-版本号维护在工具箱的「版本号维护」页完成：Flutter 客户端（`DITING-Flutter/pubspec.yaml`）是常用入口；桌面端 / Wails / NSIS 的版本号维护已折叠归档，仅在需要时展开。命令行等价用法：
+版本号维护在工具箱的「版本号维护」页完成：Flutter 客户端（`DITING-Flutter/apps/diting_android/pubspec.yaml`）是常用入口；桌面端 / Wails / NSIS 的版本号维护已折叠归档，仅在需要时展开。命令行等价用法：
 
 ```cmd
 REM 同步 Flutter 客户端版本（构建号自动按 major*10000+minor*100+patch 推导，只增不减）

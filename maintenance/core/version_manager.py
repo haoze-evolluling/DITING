@@ -37,7 +37,7 @@ def get_file_targets(groups: Optional[List[str]] = None) -> List[Dict[str, str]]
     root = get_root_dir()
     desktop = os.path.join(root, "Desktop")
     frontend = os.path.join(desktop, "frontend")
-    flutter = os.path.join(root, "DITING-Flutter")
+    flutter = os.path.join(root, "DITING-Flutter", "apps", "diting_android")
     targets = [
         {"name": "桌面端主程序", "path": os.path.join(desktop, "main.go"), "type": "go", "group": GROUP_COMMON},
         {"name": "Linux 端主程序", "path": os.path.join(desktop, "main_linux.go"), "type": "go", "group": GROUP_COMMON},

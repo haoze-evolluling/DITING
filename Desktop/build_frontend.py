@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the Flutter desktop UI into `Desktop/frontend/dist`, which the Wails host embeds.
+"""Build the Flutter desktop UI (DITING-Flutter/apps/diting_desktop) into `Desktop/frontend/dist`, which the Wails host embeds.
 
 Wails embeds `frontend/dist` (`frontend/embed.go`), so switching the window from the Vue console to
 the Flutter rebuild is a matter of what fills that directory. This script is the `frontend:build`
@@ -19,9 +19,9 @@ from pathlib import Path
 
 DESKTOP_DIR = Path(__file__).resolve().parent
 ROOT_DIR = DESKTOP_DIR.parent
-FLUTTER_DIR = ROOT_DIR / "DITING-Flutter"
+FLUTTER_DIR = ROOT_DIR / "DITING-Flutter" / "apps" / "diting_desktop"
 DIST_DIR = DESKTOP_DIR / "frontend" / "dist"
-ENTRY = "lib/desktop/main.dart"
+ENTRY = "lib/main.dart"
 
 
 def log(message: str) -> None:

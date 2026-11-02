@@ -23,15 +23,15 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
-# Flutter/Dart/Pub related
+# Flutter/Dart/Pub related (workspace root: patterns apply to every package)
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+coverage/
 
 # Symbolication related
 app.*.symbols
@@ -40,15 +40,16 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+android/app/debug
+android/app/profile
+android/app/release
+android/key.properties
 
 # Widget Preview related
 .widget_preview/
 
 # 真机 UI 取证产物（截图与几何 dump），不入库
-tool/uiprobe/
+packages/diting_shared/tool/uiprobe/
 
 # 多轮 ADB 实测的截图、UI dump 与 VM Service 驱动脚本，不入库
 .tmp_verify/

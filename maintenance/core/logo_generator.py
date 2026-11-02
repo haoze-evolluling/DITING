@@ -226,7 +226,7 @@ def export_desktop(log: Callable[[str, str], None]) -> List[str]:
 
 def export_flutter_assets(log: Callable[[str, str], None]) -> List[str]:
     """Flutter 应用内展示用图标（关于页），浅色与深色各一份。"""
-    images = os.path.join(ROOT_DIR, "DITING-Flutter", "assets", "images")
+    images = os.path.join(ROOT_DIR, "DITING-Flutter", "packages", "diting_shared", "assets", "images")
     files = [
         _save_png(render_icon(LIGHT, 512), os.path.join(images, "icon.png"), log),
         _save_png(render_icon(DARK, 512), os.path.join(images, "icon_dark.png"), log),
@@ -356,7 +356,7 @@ def export_all(on_log: Optional[Callable[[str, str], None]] = None) -> Dict[str,
     exported: List[str] = []
     exported += export_desktop(log)
     exported += export_flutter_assets(log)
-    flutter_res = os.path.join(ROOT_DIR, "DITING-Flutter", "android", "app", "src", "main", "res")
+    flutter_res = os.path.join(ROOT_DIR, "DITING-Flutter", "apps", "diting_android", "android", "app", "src", "main", "res")
     exported += export_android_launcher(flutter_res, log, "DITING-Flutter")
     # Flutter 是唯一在 v31 主题里声明了启动图标的工程。
     exported += export_android_splash(flutter_res, log, "DITING-Flutter")

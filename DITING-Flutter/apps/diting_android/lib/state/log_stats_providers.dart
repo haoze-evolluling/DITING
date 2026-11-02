@@ -1,0 +1,118 @@
+/// Data for the log dashboard "statistics" card: request and data-usage totals over a chosen
+/// [TrafficWindow], each section with its own window.
+library;
+
+import 'package:diting_android/data/db/dns_log_repository.dart';
+import 'package:diting_android/data/db/http_request_repository.dart';
+import 'package:diting_android/data/log_dashboard_models.dart';
+import 'package:diting_android/data/log_dashboard_rows.dart';
+import 'package:diting_android/state/log_providers.dart';
+import 'package:diting_android/state/observability_providers.dart';
+import 'package:diting_android/state/traffic_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sqflite/sqflite.dart';
+
+/// The card's two sections; each remembers its window for the app session.
+enum LogStatsSection { requests, data }
+
+final logStatsWindowProvider =
+    NotifierProvider.family<
+      LogStatsWindowNotifier,
+      TrafficWindow,
+      LogStatsSection
+    >(LogStatsWindowNotifier.new);
+
+class LogStatsWindowNotifier extends Notifier<TrafficWindow> {
+  LogStatsWindowNotifier(this.section);
+
+  final LogStatsSection section;
+
+  @override
+  TrafficWindow build() => TrafficWindow.today;
+
+  void select(TrafficWindow window) => state = window;
+}
+
+/// Local start of [window]: midnight today, Monday, the 1st, or the epoch for all history.
+/// Matches the calendar windows of the traffic page.
+DateTime logStatsWindowStart(TrafficWindow window, [DateTime? now]) {
+  final today = now ?? DateTime.now();
+  final midnight = DateTime(today.year, today.month, today.day);
+  return switch (window) {
+    TrafficWindow.today => midnight,
+    TrafficWindow.week => midnight.subtract(Duration(days: today.weekday - 1)),
+    TrafficWindow.month => DateTime(today.year, today.month),
+    TrafficWindow.all => DateTime.fromMillisecondsSinceEpoch(0),
+  };
+}
+
+/// [cached] never overlaps [blocked]: a cached answer is a passed one.
+typedef LogStatsRequests = ({int total, int blocked, int cached});
+
+/// [saved] is an estimate: cached answers in the window times the average cached response size,
+/// the bytes an upstream query would have returned.
+typedef LogStatsData = ({int saved, int uploaded, int downloaded});
+
+/// Same sources and counting as the request overview card, over [TrafficWindow] instead of today.
+final logStatsRequestsProvider =
+    FutureProvider.family<LogStatsRequests, TrafficWindow>((ref, window) async {
+      ref.watch(dnsLogRevisionProvider);
+      final express = ref.watch(workModeProvider) == AppWorkMode.express;
+      final since = logStatsWindowStart(window);
+      final db = await ref.watch(activeLogDatabaseProvider.future);
+      if (db == null) return (total: 0, blocked: 0, cached: 0);
+
+      final dns = await DnsLogRepository(db).dailyStats(since: since);
+      var httpTotal = 0;
+      var httpBlocked = 0;
+      if (!express) {
+        final mainDb = await ref.watch(mainLogDatabaseProvider.future);
+        if (mainDb != null) {
+          try {
+            final http = await HttpRequestRepository(mainDb)
+                .dailyStats(since: since);
+            httpTotal = http.total;
+            for (final entry in http.byOutcome.entries) {
+              if (httpRowStatusOf(entry.key) == LogRowStatus.filtered) {
+                httpBlocked += entry.value;
+              }
+            }
+          } on DatabaseException {
+            // Older schema without the HTTPS table: DNS rows only.
+          }
+        }
+      }
+      return (
+        total: dns.total + httpTotal,
+        blocked: dns.blocked + httpBlocked,
+        cached: dns.cached,
+      );
+    });
+
+final logStatsDataProvider = FutureProvider.family<LogStatsData, TrafficWindow>(
+  (ref, window) async {
+    final traffic = await ref.watch(trafficSnapshotOfProvider(window).future);
+    final db = await ref.watch(activeLogDatabaseProvider.future);
+    var saved = 0;
+    if (db != null) {
+      final start = logStatsWindowStart(window).millisecondsSinceEpoch;
+      final hits = await db.rawQuery(
+        "SELECT COALESCE(SUM(result NOT IN ('BLOCKED', 'ERROR') AND cached = 1), 0) "
+        'AS n FROM dns_log WHERE timestamp >= ?',
+        [start],
+      );
+      final size = await db.rawQuery(
+        'SELECT AVG(responseSize) AS n FROM dns_cache',
+      );
+      final count = (hits.first['n'] as num?)?.toInt() ?? 0;
+      final average = (size.first['n'] as num?)?.toDouble() ?? 0;
+      saved = (count * average).round();
+    }
+    return (
+      saved: saved,
+      uploaded: traffic.txBytes,
+      downloaded: traffic.rxBytes,
+    );
+  },
+);

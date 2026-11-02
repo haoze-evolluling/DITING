@@ -1,0 +1,46 @@
+name: diting_android
+description: "谛听 DITING — Android client (Flutter), compatible with the 1.4.3 data format."
+publish_to: 'none'
+# versionCode is major*10000 + minor*100 + patch (2.0.1 = 20001) so upgrades are
+# never treated as downgrades.
+version: 2.2.9+20209
+
+environment:
+  sdk: ^3.13.5
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  diting_shared:
+    path: ../../packages/diting_shared
+
+  material_ui: 1.8.0
+  material_new_shapes: 1.0.0
+  flutter_riverpod: 3.4.3
+  go_router: ^18.1.1
+  sqflite: ^2.4.5
+  url_launcher: ^6.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  sqflite_common_ffi: ^2.4.5
+  # Drives the timers behind the power-key timeout in power_guard_test.
+  fake_async: ^1.3.3
+  path: ^1.9.1
+
+# The sqflite ffi suites need sqlite3's precompiled binary, which lives on GitHub
+# releases; that host is unreachable from this network, so the download goes
+# through a mirror. $RELEASE_TAG / $FILENAME are substituted by the build hook.
+hooks:
+  user_defines:
+    sqlite3:
+      url_pattern: "https://gh-proxy.com/https://github.com/simolus3/sqlite3.dart/releases/download/$RELEASE_TAG/$FILENAME"
+
+flutter:
+  uses-material-design: true
+  # The shared package owns the ARB files and the generated localizations.
