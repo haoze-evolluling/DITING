@@ -20,74 +20,73 @@ class ProviderVisibilityPage extends ConsumerStatefulWidget {
 
 class _ProviderVisibilityPageState
     extends ConsumerState<ProviderVisibilityPage> {
-  late Set<String> _visibleProtocols;
-  late Set<String> _hiddenProviders;
-  late Set<String> _explicitVisible;
+  void _write({
+    required Set<String> visibleProtocols,
+    required Set<String> hiddenProviderIds,
+    required Set<String> visibleProviderIds,
+  }) => ref.writeSettings(
+    (settings) => settings.setHomeProviderVisibility(
+      visibleProtocols: visibleProtocols,
+      hiddenProviderIds: hiddenProviderIds,
+      visibleProviderIds: visibleProviderIds,
+    ),
+  );
 
-  @override
-  void initState() {
-    super.initState();
-    final settings = ref.read(legacySettingsProvider);
-    _visibleProtocols = {...settings.homeVisibleProtocols};
-    _hiddenProviders = {...settings.homeHiddenProviderIds};
-    _explicitVisible = {...settings.homeVisibleProviderIds};
-  }
-
-  void _save() {
-    ref
-        .read(legacySettingsProvider)
-        .setHomeProviderVisibility(
-          visibleProtocols: _visibleProtocols,
-          hiddenProviderIds: _hiddenProviders,
-          visibleProviderIds: _explicitVisible,
-        );
-    ref.read(legacySettingsRevisionProvider.notifier).bump();
-  }
-
-  bool _visible(ProviderProtocol protocol, MockProvider provider) =>
-      _visibleProtocols.contains(protocol.name.toUpperCase())
-      ? !_hiddenProviders.contains(provider.id)
-      : _explicitVisible.contains(provider.id);
+  /// Reads the sets back from the store on every build instead of mirroring them locally, so a
+  /// backup import or another page's write shows up without leaving the page.
+  bool _visible(
+    LegacySettings settings,
+    ProviderProtocol protocol,
+    MockProvider provider,
+  ) => settings.homeVisibleProtocols.contains(protocol.name.toUpperCase())
+      ? !settings.homeHiddenProviderIds.contains(provider.id)
+      : settings.homeVisibleProviderIds.contains(provider.id);
 
   /// Toggles one provider. Under a visible protocol it is a "hide" flag; under a hidden
   /// protocol it is the explicit allow-list upstream keeps.
   void _toggleProvider(ProviderProtocol protocol, MockProvider provider) {
-    setState(() {
-      if (_visibleProtocols.contains(protocol.name.toUpperCase())) {
-        if (!_hiddenProviders.remove(provider.id)) {
-          _hiddenProviders.add(provider.id);
-        }
-      } else {
-        if (!_explicitVisible.remove(provider.id)) {
-          _explicitVisible.add(provider.id);
-        }
+    final settings = ref.read(legacySettingsProvider);
+    final protocols = {...settings.homeVisibleProtocols};
+    final hidden = {...settings.homeHiddenProviderIds};
+    final explicit = {...settings.homeVisibleProviderIds};
+    if (protocols.contains(protocol.name.toUpperCase())) {
+      if (!hidden.remove(provider.id)) {
+        hidden.add(provider.id);
       }
-    });
-    _save();
+    } else {
+      if (!explicit.remove(provider.id)) {
+        explicit.add(provider.id);
+      }
+    }
+    _write(
+      visibleProtocols: protocols,
+      hiddenProviderIds: hidden,
+      visibleProviderIds: explicit,
+    );
   }
 
   void _setProtocol(ProviderProtocol protocol, bool visible) {
-    setState(() {
-      if (visible) {
-        _visibleProtocols.add(protocol.name.toUpperCase());
-        // Re-enabling a group clears the per-provider overrides inside it.
-        _hiddenProviders.removeAll(
-          ref
-              .read(dnsProviderCatalogProvider)
-              .where((provider) => provider.protocol == protocol)
-              .map((provider) => provider.id),
-        );
-      } else {
-        _visibleProtocols.remove(protocol.name.toUpperCase());
-        _explicitVisible.removeAll(
-          ref
-              .read(dnsProviderCatalogProvider)
-              .where((provider) => provider.protocol == protocol)
-              .map((provider) => provider.id),
-        );
-      }
-    });
-    _save();
+    final settings = ref.read(legacySettingsProvider);
+    final protocols = {...settings.homeVisibleProtocols};
+    final hidden = {...settings.homeHiddenProviderIds};
+    final explicit = {...settings.homeVisibleProviderIds};
+    final ids = [
+      for (final provider in ref.read(dnsProviderCatalogProvider))
+        if (provider.protocol == protocol) provider.id,
+    ];
+    if (visible) {
+      protocols.add(protocol.name.toUpperCase());
+      // Re-enabling a group clears the per-provider overrides inside it.
+      hidden.removeAll(ids);
+    } else {
+      protocols.remove(protocol.name.toUpperCase());
+      explicit.removeAll(ids);
+    }
+    _write(
+      visibleProtocols: protocols,
+      hiddenProviderIds: hidden,
+      visibleProviderIds: explicit,
+    );
   }
 
   @override
@@ -96,10 +95,7 @@ class _ProviderVisibilityPageState
       title: context.l10n.providerVisibilityTitle,
       body: PageBody(
         children: [
-          PageIntroCard(
-            text:
-                context.l10n.providerVisibilityNote,
-          ),
+          PageIntroCard(text: context.l10n.providerVisibilityNote),
           for (final protocol in ProviderProtocol.values)
             _protocolSection(protocol),
           const SizedBox(height: 24),
@@ -113,10 +109,11 @@ class _ProviderVisibilityPageState
         .watch(dnsProviderCatalogProvider)
         .where((provider) => provider.protocol == protocol)
         .toList(growable: false);
+    final settings = ref.watch(legacySettingsProvider);
     final selectedCount = providers
-        .where((provider) => _visible(protocol, provider))
+        .where((provider) => _visible(settings, protocol, provider))
         .length;
-    final protocolVisible = _visibleProtocols.contains(
+    final protocolVisible = settings.homeVisibleProtocols.contains(
       protocol.name.toUpperCase(),
     );
     return generateSection(
@@ -144,7 +141,7 @@ class _ProviderVisibilityPageState
         for (final provider in providers)
           ListItem(
             leading: GlyphIcon(
-              _visible(protocol, provider)
+              _visible(settings, protocol, provider)
                   ? AppGlyphs.checkCircle
                   : AppGlyphs.removeCircle,
               size: 20,
@@ -152,7 +149,7 @@ class _ProviderVisibilityPageState
             title: Text(provider.name),
             subtitle: Text(provider.address),
             trailing: CommonCheckBox(
-              value: _visible(protocol, provider),
+              value: _visible(settings, protocol, provider),
               onChanged: (_) => _toggleProvider(protocol, provider),
             ),
             onTap: () => _toggleProvider(protocol, provider),

@@ -14,6 +14,7 @@ import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/site_latency_categories.dart';
 import 'package:diting_android/data/site_latency_targets.dart';
 import 'package:diting_android/pages/config/on_demand_capabilities.dart';
+import 'package:diting_android/pages/hub/provider_visibility_page.dart';
 import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/config_providers_resources.dart';
@@ -24,6 +25,9 @@ import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/site_latency_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+
+import 'support/app_host.dart';
 
 void main() {
   group('重新打开后仍在', _settingsPersistence);
@@ -271,6 +275,51 @@ void _settingsPersistence() {
 
       notifier.selectUserAgent(null);
       expect(container().read(requestUserAgentProvider), appFallbackUserAgent);
+    });
+  });
+
+  group('服务显示页不再把设置抄到本地', () {
+    Future<void> pumpPage(WidgetTester tester, ProviderContainer c) async {
+      tester.view.physicalSize = const Size(1170, 2532);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: c,
+          child: const AppHost(child: ProviderVisibilityPage()),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('切换后立即刷新并落盘', (tester) async {
+      await pumpPage(tester, container());
+
+      await tester.tap(find.text('全部 DNS 服务'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('不显示该类型的服务'), findsOneWidget);
+      expect(
+        store.read('dns_vpn_prefs', 'home_visible_protocols'),
+        isNot(contains('DNS')),
+      );
+    });
+
+    testWidgets('外部改写（如导入备份）后不需要重进就同步', (tester) async {
+      final c = container();
+      await pumpPage(tester, c);
+
+      c
+          .read(legacySettingsProvider)
+          .setHomeProviderVisibility(
+            visibleProtocols: const {'DOH', 'DOT'},
+            hiddenProviderIds: const {},
+            visibleProviderIds: const {},
+          );
+      c.read(legacySettingsRevisionProvider.notifier).bump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('不显示该类型的服务'), findsOneWidget);
     });
   });
 }
