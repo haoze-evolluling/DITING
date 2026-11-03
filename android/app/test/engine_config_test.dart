@@ -103,6 +103,28 @@ void _providerCatalog() {
       expect(readUserProviders(settings).map((item) => item.id), ['d']);
     });
 
+    test('普通 DNS 缺省端口是 53，IPv6 地址带方括号', () {
+      final settings = LegacySettings(MemoryLegacyPrefsStore());
+      addUserProvider(
+        settings,
+        name: '自建 DNS',
+        protocol: DnsProtocol.dns,
+        address: 'dns.example.com',
+        id: 'user_3',
+      );
+      addUserProvider(
+        settings,
+        name: '自建 IPv6',
+        protocol: DnsProtocol.dot,
+        address: joinHostPort('::1', 853),
+        id: 'user_4',
+      );
+      final records = readUserProviders(settings);
+      expect(records.first.port, 53);
+      expect(records.first.address, 'dns.example.com:53');
+      expect(records.last.address, '[::1]:853');
+    });
+
     test('编辑保留 id，删除会清掉选中项与三种模式引用', () {
       final seed = jsonEncode([
         {

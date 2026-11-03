@@ -14629,8 +14629,20 @@ abstract class AppL10n {
   /// No description provided for @providerMgmtAddressLabel.
   ///
   /// In zh, this message translates to:
-  /// **'地址（host:port）'**
+  /// **'地址'**
   String get providerMgmtAddressLabel;
+
+  /// No description provided for @providerMgmtPortLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口'**
+  String get providerMgmtPortLabel;
+
+  /// No description provided for @providerMgmtDohAddressLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'DoH 地址'**
+  String get providerMgmtDohAddressLabel;
 
   /// No description provided for @providerMgmtNameRequired.
   ///
@@ -14644,11 +14656,17 @@ abstract class AppL10n {
   /// **'DoH 地址需以 https:// 开头'**
   String get providerMgmtDohRequired;
 
-  /// No description provided for @providerMgmtHostPortRequired.
+  /// No description provided for @providerMgmtAddressRequired.
   ///
   /// In zh, this message translates to:
-  /// **'请填写 host:port 形式的地址'**
-  String get providerMgmtHostPortRequired;
+  /// **'请填写地址'**
+  String get providerMgmtAddressRequired;
+
+  /// No description provided for @providerMgmtPortRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口需在 1–65535 之间'**
+  String get providerMgmtPortRange;
 
   /// No description provided for @notifModeSingle.
   ///

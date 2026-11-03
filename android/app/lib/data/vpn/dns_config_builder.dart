@@ -44,9 +44,7 @@ class DnsProviderEntry {
   final String host;
   final int port;
 
-  String get hostPort => host.contains(':') && !host.startsWith('[')
-      ? '[$host]:$port'
-      : '$host:$port';
+  String get hostPort => joinHostPort(host, port);
 
   /// Endpoint as 1.4.3 renders it (`[DoH] https://...` / `[DNS] 1.1.1.1:53`).
   String get endpointLabel => switch (protocol) {
@@ -81,6 +79,12 @@ class DnsProviderEntry {
     'url': url,
   };
 }
+
+/// `host:port`, bracketing bare IPv6 hosts so the engine can parse the result.
+String joinHostPort(String host, int port) =>
+    host.contains(':') && !host.startsWith('[')
+    ? '[$host]:$port'
+    : '$host:$port';
 
 class BootstrapEntry {
   const BootstrapEntry(this.id, this.name, this.ip, {this.enabled = true});
@@ -360,7 +364,9 @@ List<DnsProviderEntry> parseUserProviders(String? raw) {
     if (id == null || id.isEmpty || name == null || name.isEmpty) continue;
     final url = (item['url'] as String?)?.trim() ?? '';
     final host = (item['host'] as String?)?.trim() ?? '';
-    final port = item['port'] is int ? item['port'] as int : 853;
+    final port = item['port'] is int
+        ? item['port'] as int
+        : (protocol == DnsProtocol.dot ? 853 : 53);
     if (protocol == DnsProtocol.doh) {
       if (!url.toLowerCase().startsWith('https://')) continue;
       providers.add(

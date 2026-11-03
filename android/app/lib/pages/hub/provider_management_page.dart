@@ -1,6 +1,7 @@
 // ignore_for_file: sort_child_properties_last
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
+import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -285,8 +286,24 @@ class _ProviderEditorState extends State<_ProviderEditor> {
   late final TextEditingController _name = TextEditingController(
     text: widget.initial?.name ?? '',
   );
+
+  /// DoH only; plain DNS and DoT fill [_host] and [_port] separately.
   late final TextEditingController _address = TextEditingController(
-    text: widget.initial?.address ?? '',
+    text: widget.initial?.protocol == ProviderProtocol.doh
+        ? widget.initial?.address ?? ''
+        : '',
+  );
+  late final _HostPort _initialHostPort = _splitHostPort(
+    widget.initial?.protocol == ProviderProtocol.doh
+        ? null
+        : widget.initial?.address,
+    widget.protocol,
+  );
+  late final TextEditingController _host = TextEditingController(
+    text: _initialHostPort.host,
+  );
+  late final TextEditingController _port = TextEditingController(
+    text: '${_initialHostPort.port}',
   );
   late ProviderProtocol _protocol = widget.protocol;
   String? _error;
@@ -295,27 +312,36 @@ class _ProviderEditorState extends State<_ProviderEditor> {
   void dispose() {
     _name.dispose();
     _address.dispose();
+    _host.dispose();
+    _port.dispose();
     super.dispose();
   }
 
   void _save() {
     final name = _name.text.trim();
-    final address = _address.text.trim();
-    final valid = switch (_protocol) {
-      ProviderProtocol.doh => address.startsWith('https://'),
-      _ => address.contains(':') && !address.contains('://'),
-    };
     if (name.isEmpty) {
       setState(() => _error = context.l10n.providerMgmtNameRequired);
       return;
     }
-    if (!valid) {
-      setState(() {
-        _error = _protocol == ProviderProtocol.doh
-            ? context.l10n.providerMgmtDohRequired
-            : context.l10n.providerMgmtHostPortRequired;
-      });
-      return;
+    final String address;
+    if (_protocol == ProviderProtocol.doh) {
+      address = _address.text.trim();
+      if (!address.startsWith('https://')) {
+        setState(() => _error = context.l10n.providerMgmtDohRequired);
+        return;
+      }
+    } else {
+      final host = _stripBrackets(_host.text.trim());
+      final port = int.tryParse(_port.text.trim()) ?? 0;
+      if (host.isEmpty) {
+        setState(() => _error = context.l10n.providerMgmtAddressRequired);
+        return;
+      }
+      if (port < 1 || port > 65535) {
+        setState(() => _error = context.l10n.providerMgmtPortRange);
+        return;
+      }
+      address = joinHostPort(host, port);
     }
     Navigator.of(context)
         .pop(_ProviderDraft(name: name, protocol: _protocol, address: address));
@@ -323,6 +349,7 @@ class _ProviderEditorState extends State<_ProviderEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final isDoh = _protocol == ProviderProtocol.doh;
     return CommonDialog(
       title: widget.initial == null ? context.l10n.providerMgmtAdd : context.l10n.providerMgmtEditTitle,
       hasFields: true,
@@ -338,6 +365,13 @@ class _ProviderEditorState extends State<_ProviderEditor> {
             ],
             value: _protocol,
             onChanged: (value) => setState(() {
+              // Switching protocol also swaps in that protocol's default port, unless the user
+              // typed a custom one.
+              final previousDefault = '${_defaultPortOf(_protocol)}';
+              final port = _port.text.trim();
+              if (port.isEmpty || port == previousDefault) {
+                _port.text = '${_defaultPortOf(value)}';
+              }
               _protocol = value;
               _error = null;
             }),
@@ -346,18 +380,33 @@ class _ProviderEditorState extends State<_ProviderEditor> {
             controller: _name,
             decoration: InputDecoration(labelText: context.l10n.serverName),
           ),
-          TextField(
-            controller: _address,
-            autocorrect: false,
-            decoration: InputDecoration(
-              labelText: _protocol == ProviderProtocol.doh
-                  ? context.l10n.serverDohAddress
-                  : context.l10n.providerMgmtAddressLabel,
-              hintText: _protocol == ProviderProtocol.doh
-                  ? 'https://dns.example.com/dns-query'
-                  : '1.1.1.1:853',
+          if (isDoh)
+            TextField(
+              controller: _address,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: context.l10n.providerMgmtDohAddressLabel,
+                hintText: 'https://dns.example.com/dns-query',
+              ),
+            )
+          else ...[
+            TextField(
+              controller: _host,
+              autocorrect: false,
+              decoration: InputDecoration(
+                labelText: context.l10n.providerMgmtAddressLabel,
+                hintText: '1.1.1.1',
+              ),
             ),
-          ),
+            TextField(
+              controller: _port,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: context.l10n.providerMgmtPortLabel,
+                hintText: '${_defaultPortOf(_protocol)}',
+              ),
+            ),
+          ],
           if (_error != null)
             Text(
               _error!,
@@ -376,4 +425,38 @@ class _ProviderEditorState extends State<_ProviderEditor> {
       ],
     );
   }
+}
+
+class _HostPort {
+  const _HostPort(this.host, this.port);
+
+  final String host;
+  final int port;
+}
+
+/// Splits a stored `host:port` for the editor; a missing port falls back to the protocol default.
+_HostPort _splitHostPort(String? address, ProviderProtocol protocol) {
+  final fallback = _defaultPortOf(protocol);
+  final trimmed = address?.trim() ?? '';
+  if (trimmed.isEmpty) return _HostPort('', fallback);
+  final separator = trimmed.lastIndexOf(':');
+  if (separator <= 0) return _HostPort(trimmed, fallback);
+  return _HostPort(
+    _stripBrackets(trimmed.substring(0, separator)),
+    int.tryParse(trimmed.substring(separator + 1)) ?? fallback,
+  );
+}
+
+int _defaultPortOf(ProviderProtocol protocol) => switch (protocol) {
+  ProviderProtocol.dot => 853,
+  ProviderProtocol.dns => 53,
+  // DoH carries its port inside the URL; 443 is only a placeholder.
+  ProviderProtocol.doh => 443,
+};
+
+String _stripBrackets(String value) {
+  var result = value;
+  if (result.startsWith('[')) result = result.substring(1);
+  if (result.endsWith(']')) result = result.substring(0, result.length - 1);
+  return result;
 }

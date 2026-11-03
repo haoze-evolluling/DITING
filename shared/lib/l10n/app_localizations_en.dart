@@ -8499,7 +8499,13 @@ class AppL10nEn extends AppL10n {
   String get providerMgmtEditTitle => 'Edit DNS provider';
 
   @override
-  String get providerMgmtAddressLabel => 'Address (host:port)';
+  String get providerMgmtAddressLabel => 'Address';
+
+  @override
+  String get providerMgmtPortLabel => 'Port';
+
+  @override
+  String get providerMgmtDohAddressLabel => 'DoH address';
 
   @override
   String get providerMgmtNameRequired => 'Fill in a name';
@@ -8509,8 +8515,10 @@ class AppL10nEn extends AppL10n {
       'A DoH address must start with https://';
 
   @override
-  String get providerMgmtHostPortRequired =>
-      'Enter an address in host:port form';
+  String get providerMgmtAddressRequired => 'Fill in an address';
+
+  @override
+  String get providerMgmtPortRange => 'Port must be between 1 and 65535';
 
   @override
   String get notifModeSingle => 'Single provider';

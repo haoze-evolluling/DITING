@@ -7996,7 +7996,13 @@ class AppL10nZh extends AppL10n {
   String get providerMgmtEditTitle => '编辑 DNS 服务商';
 
   @override
-  String get providerMgmtAddressLabel => '地址（host:port）';
+  String get providerMgmtAddressLabel => '地址';
+
+  @override
+  String get providerMgmtPortLabel => '端口';
+
+  @override
+  String get providerMgmtDohAddressLabel => 'DoH 地址';
 
   @override
   String get providerMgmtNameRequired => '请填写名称';
@@ -8005,7 +8011,10 @@ class AppL10nZh extends AppL10n {
   String get providerMgmtDohRequired => 'DoH 地址需以 https:// 开头';
 
   @override
-  String get providerMgmtHostPortRequired => '请填写 host:port 形式的地址';
+  String get providerMgmtAddressRequired => '请填写地址';
+
+  @override
+  String get providerMgmtPortRange => '端口需在 1–65535 之间';
 
   @override
   String get notifModeSingle => '单一服务';

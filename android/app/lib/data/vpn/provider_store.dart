@@ -60,7 +60,9 @@ List<UserProviderRecord> readUserProviders(LegacySettings settings) {
     if (name.isEmpty) continue;
     final url = (item['url'] as String?)?.trim() ?? '';
     final host = (item['host'] as String?)?.trim() ?? '';
-    final port = item['port'] is int ? item['port'] as int : 853;
+    final port = item['port'] is int
+        ? item['port'] as int
+        : _defaultPort(protocol);
     if (protocol == DnsProtocol.doh) {
       if (!url.toLowerCase().startsWith('https://')) continue;
       result.add(
@@ -171,11 +173,14 @@ void deleteUserProvider(LegacySettings settings, String id) {
   }
   final separator = trimmed.lastIndexOf(':');
   if (separator <= 0) {
-    return ('', trimmed, protocol == DnsProtocol.dns ? 53 : 853);
+    return ('', trimmed, _defaultPort(protocol));
   }
   final host = trimmed.substring(0, separator);
   final port =
-      int.tryParse(trimmed.substring(separator + 1)) ??
-      (protocol == DnsProtocol.dns ? 53 : 853);
+      int.tryParse(trimmed.substring(separator + 1)) ?? _defaultPort(protocol);
   return ('', host, port);
 }
+
+/// Plain DNS falls back to 53, DoT to 853.
+int _defaultPort(DnsProtocol protocol) =>
+    protocol == DnsProtocol.dot ? 853 : 53;
