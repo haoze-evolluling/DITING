@@ -2,46 +2,28 @@
 // probe and its autofix. The probe runs on demand; both calls adopt the service's answer.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_tools_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/tools/widgets/emergency_restore_card.dart';
 import 'package:diting_desktop/pages/tools/widgets/port_diagnosis_card.dart';
 import 'package:diting_shared/routes/branches.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpTools(
     WidgetTester tester, {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 900),
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: const DesktopApp(initialLocation: Routes.hub),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    path: Routes.hub,
+    backend: backend,
+    size: size,
+  );
 
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopFeatureHubPage)).l10n;
@@ -53,21 +35,7 @@ void main() {
     matching: matching,
   );
 
-  Future<void> tapAt(WidgetTester tester, Finder finder) async {
-    await Scrollable.ensureVisible(
-      tester.element(finder),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
 
-  Future<void> clearMessages(WidgetTester tester) async {
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-  }
 
   test('缺字段按不可用解析，冲突列表为空', () {
     final result = DesktopPortCheck.fromJson(const {});

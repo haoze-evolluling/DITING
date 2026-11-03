@@ -3,11 +3,6 @@
 // re-reads the state it touched.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_client_access_page.dart';
@@ -20,11 +15,11 @@ import 'package:diting_desktop/pages/traffic/widgets/client_rate_limit_card.dart
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpTraffic(
@@ -32,29 +27,12 @@ void main() {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 900),
     bool accessPage = false,
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: DesktopApp(
-          initialLocation: accessPage
-              ? DesktopClientAccessPage.path
-              : Routes.home,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    path: accessPage ? DesktopClientAccessPage.path : Routes.home,
+    backend: backend,
+    size: size,
+  );
 
   AppL10n l10nOf(WidgetTester tester) {
     final page = find.byType(DesktopClientAccessPage);
@@ -72,21 +50,7 @@ void main() {
     matching: matching,
   );
 
-  Future<void> tapAt(WidgetTester tester, Finder finder) async {
-    await Scrollable.ensureVisible(
-      tester.element(finder),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
 
-  Future<void> clearMessages(WidgetTester tester) async {
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-  }
 
   test('缺字段按零值解析，限流回落到服务默认值', () {
     final client = DesktopClient.fromJson(const {});

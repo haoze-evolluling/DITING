@@ -3,46 +3,28 @@
 // `/filter/lists`; each write re-reads both, and a rejected write is reported instead of assumed.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_filter_models.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/hub/desktop_filter_lists_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/filter_lists_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpLists(
     WidgetTester tester, {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 900),
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: const DesktopApp(initialLocation: DesktopFilterListsPage.path),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    path: DesktopFilterListsPage.path,
+    backend: backend,
+    size: size,
+  );
 
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopFilterListsPage)).l10n;
@@ -50,24 +32,8 @@ void main() {
   Finder inCard(Finder matching) =>
       find.descendant(of: find.byType(FilterListsCard), matching: matching);
 
-  Finder inDialog(Finder matching) =>
-      find.descendant(of: find.byType(CommonDialog), matching: matching);
 
-  Future<void> tapAt(WidgetTester tester, Finder finder) async {
-    await Scrollable.ensureVisible(
-      tester.element(finder),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
 
-  Future<void> clearMessages(WidgetTester tester) async {
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-  }
 
   test('缺字段按零值解析，未更新时间保持空', () {
     final list = DesktopFilterList.fromJson(const {'id': 'l1'});

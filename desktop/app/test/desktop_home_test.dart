@@ -3,11 +3,7 @@
 // live snapshot must say so.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting_desktop/pages/home/desktop_format.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
@@ -24,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpHome(
@@ -31,27 +28,12 @@ void main() {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 800),
     Map<String, Map<String, Object?>>? seed,
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(
-            MemoryLegacyPrefsStore(seed),
-          ),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: const DesktopApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    backend: backend,
+    size: size,
+    seed: seed,
+  );
 
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopHomePage)).l10n;

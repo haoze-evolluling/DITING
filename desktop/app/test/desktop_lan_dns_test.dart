@@ -2,45 +2,27 @@
 // host's LAN addresses and the 53-port firewall rule, all from `/dns/lan`. Each write re-reads it.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_lan_models.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/hub/desktop_lan_dns_page.dart';
 import 'package:diting_desktop/widgets/desktop_copy_row.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpLan(
     WidgetTester tester, {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 900),
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: const DesktopApp(initialLocation: DesktopLanDnsPage.path),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    path: DesktopLanDnsPage.path,
+    backend: backend,
+    size: size,
+  );
 
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopLanDnsPage)).l10n;

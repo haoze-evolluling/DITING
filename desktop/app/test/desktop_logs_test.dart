@@ -6,12 +6,7 @@
 import 'dart:async';
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_event_client.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_query_log_page.dart';
 import 'package:diting_desktop/pages/logs/widgets/log_config_card.dart';
@@ -21,11 +16,11 @@ import 'package:diting_desktop/pages/logs/widgets/log_rankings_card.dart';
 import 'package:diting_desktop/pages/logs/widgets/log_summary_card.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpLogs(
@@ -35,31 +30,14 @@ void main() {
     Map<String, Map<String, Object?>>? seed,
     Stream<DesktopEvent>? live,
     bool queryLog = true,
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(
-            MemoryLegacyPrefsStore(seed),
-          ),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          if (live != null)
-            desktopEventStreamProvider.overrideWithValue(live),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: DesktopApp(
-          initialLocation: queryLog ? DesktopQueryLogPage.path : Routes.home,
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    path: queryLog ? DesktopQueryLogPage.path : Routes.home,
+    backend: backend,
+    size: size,
+    seed: seed,
+    live: live,
+  );
 
   AppL10n l10nOf(WidgetTester tester) {
     final page = find.byType(DesktopQueryLogPage);

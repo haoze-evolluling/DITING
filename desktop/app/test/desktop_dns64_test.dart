@@ -3,46 +3,28 @@
 // `/status`; a save posts the whole form and re-reads it, and a rejected write is reported.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_dns64_models.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/hub/desktop_dns64_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/dns64_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/dns64_prefixes_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpDns64(
     WidgetTester tester, {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 900),
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: const DesktopApp(initialLocation: DesktopDns64Page.path),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    path: DesktopDns64Page.path,
+    backend: backend,
+    size: size,
+  );
 
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopDns64Page)).l10n;
@@ -52,16 +34,6 @@ void main() {
   Finder inPrefixes(Finder matching) =>
       find.descendant(of: find.byType(Dns64PrefixesCard), matching: matching);
 
-  Future<void> tapAt(WidgetTester tester, Finder finder) async {
-    await Scrollable.ensureVisible(
-      tester.element(finder),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
 
   test('缺字段按零值解析，空前缀回落到知名前缀', () {
     final empty = DesktopDns64Config.fromJson(const {});

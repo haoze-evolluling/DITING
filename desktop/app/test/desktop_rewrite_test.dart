@@ -3,11 +3,6 @@
 // or a rule save posts to `/dns/rewrite/*` and the page then shows what the service re-read.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_rewrite_page.dart';
@@ -15,11 +10,11 @@ import 'package:diting_desktop/pages/hub/widgets/rewrite_engine_card.dart';
 import 'package:diting_desktop/pages/home/desktop_dashboard.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpRewrite(
@@ -27,53 +22,22 @@ void main() {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 900),
     String location = DesktopRewritePage.path,
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: DesktopApp(initialLocation: location),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    path: location,
+    backend: backend,
+    size: size,
+  );
 
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopRewritePage)).l10n;
 
   Finder inEngine(Finder matching) =>
       find.descendant(of: find.byType(RewriteEngineCard), matching: matching);
-  Finder inDialog(Finder matching) =>
-      find.descendant(of: find.byType(CommonDialog), matching: matching);
 
   /// The page is taller than a window, so a control below the fold has to be scrolled to first.
-  Future<void> tapAt(WidgetTester tester, Finder finder) async {
-    // Center it, not flush to the top: the scaffold's bar floats over the page and would eat a
-    // tap on a control that ensureVisible parked at y=0.
-    await Scrollable.ensureVisible(
-      tester.element(finder),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
 
   /// Lets the current snackbar expire, so the next action's message is the one on screen.
-  Future<void> clearMessages(WidgetTester tester) async {
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-  }
 
   test('缺字段按零值解析，失败应答码替换类型徽标', () {
     final rule = DesktopRewriteRule.fromJson(const {'domain': 'lan'});

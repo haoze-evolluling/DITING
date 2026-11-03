@@ -5,11 +5,6 @@
 import 'dart:io';
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/about/desktop_about_page.dart';
 import 'package:diting_desktop/pages/desktop_pages.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
@@ -18,12 +13,12 @@ import 'package:diting_desktop/router.dart';
 import 'package:diting_desktop/shell/desktop_shell.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   group('骨架守卫', _skeleton);
@@ -31,33 +26,19 @@ void main() {
   group('响应式守卫', _responsive);
 }
 
-Future<void> _pumpDesktop(
+Future<FakeDesktopBackend> _pumpDesktop(
   WidgetTester tester, {
   String? initialLocation,
   Size size = const Size(1280, 800),
   Map<String, Map<String, Object?>>? seed,
   FakeDesktopBackend? backend,
-}) async {
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        legacyPrefsStoreProvider.overrideWithValue(
-          MemoryLegacyPrefsStore(seed),
-        ),
-        desktopPollingEnabledProvider.overrideWithValue(false),
-        desktopLiveEnabledProvider.overrideWithValue(false),
-        desktopApiClientProvider.overrideWithValue(
-          (backend ?? FakeDesktopBackend()).client(),
-        ),
-      ],
-      child: DesktopApp(initialLocation: initialLocation),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
+}) => pumpDesktopPage(
+  tester,
+  path: initialLocation,
+  size: size,
+  seed: seed,
+  backend: backend,
+);
 
 void _skeleton() {
   test('桌面分支路径与顺序来自桌面分支表，Android 的六分支不受影响', () {

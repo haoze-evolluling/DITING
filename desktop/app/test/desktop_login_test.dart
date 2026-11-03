@@ -4,11 +4,7 @@
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_auth_providers.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/host/desktop_platform_host.dart';
 import 'package:diting_desktop/pages/auth/desktop_login_page.dart';
 import 'package:diting_desktop/pages/auth/widgets/login_background_dialog.dart';
@@ -22,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   final origin = Uri.parse('http://192.168.1.10:15353');
@@ -35,25 +32,18 @@ void main() {
     String? initialLocation,
     Size size = const Size(1280, 900),
   }) async {
-    final fake = backend ?? FakeDesktopBackend();
     final store = MemoryLegacyPrefsStore(seed);
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(store),
-          desktopWebConsoleProvider.overrideWithValue(web),
-          desktopPageOriginProvider.overrideWithValue(pageOrigin ?? origin),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: DesktopApp(initialLocation: initialLocation),
-      ),
+    final fake = await pumpDesktopPage(
+      tester,
+      path: initialLocation,
+      backend: backend,
+      store: store,
+      size: size,
+      overrides: [
+        desktopWebConsoleProvider.overrideWithValue(web),
+        desktopPageOriginProvider.overrideWithValue(pageOrigin ?? origin),
+      ],
     );
-    await tester.pumpAndSettle();
     return (fake, store);
   }
 

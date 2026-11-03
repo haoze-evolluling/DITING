@@ -6,43 +6,20 @@
 // here a category only has to prove which rows and cards it holds.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/settings/desktop_lan_web_page.dart';
 import 'package:diting_desktop/pages/tools/widgets/emergency_restore_card.dart';
 import 'package:diting_desktop/pages/tools/widgets/port_diagnosis_card.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
-  Future<void> pumpHub(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1280, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(
-            FakeDesktopBackend().client(),
-          ),
-        ],
-        child: const DesktopApp(initialLocation: Routes.hub),
-      ),
-    );
-    await tester.pumpAndSettle();
-  }
+  Future<void> pumpHub(WidgetTester tester) =>
+      pumpDesktopPage(tester, path: Routes.hub);
 
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopFeatureHubPage)).l10n;

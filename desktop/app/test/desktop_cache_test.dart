@@ -26,31 +26,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<FakeDesktopBackend> pumpCache(
     WidgetTester tester, {
     FakeDesktopBackend? backend,
     Size size = const Size(1280, 900),
-  }) async {
-    final fake = backend ?? FakeDesktopBackend();
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: const DesktopApp(initialLocation: DesktopCachePage.path),
-      ),
-    );
-    await tester.pumpAndSettle();
-    return fake;
-  }
+  }) => pumpDesktopPage(
+    tester,
+    path: DesktopCachePage.path,
+    backend: backend,
+    size: size,
+  );
 
   AppL10n l10nOf(WidgetTester tester) =>
       tester.element(find.byType(DesktopCachePage)).l10n;
@@ -67,28 +55,10 @@ void main() {
       find.descendant(of: find.byType(CacheFallbackCard), matching: matching);
   Finder inEntries(Finder matching) =>
       find.descendant(of: find.byType(CacheEntriesCard), matching: matching);
-  Finder inDialog(Finder matching) =>
-      find.descendant(of: find.byType(CommonDialog), matching: matching);
 
   /// The page is taller than a window, so a control below the fold has to be scrolled to first.
-  Future<void> tapAt(WidgetTester tester, Finder finder) async {
-    // Center it, not flush to the top: the scaffold's bar floats over the page and would eat a
-    // tap on a control that ensureVisible parked at y=0.
-    await Scrollable.ensureVisible(
-      tester.element(finder),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
 
   /// Lets the current snackbar expire, so the next action's message is the one on screen.
-  Future<void> clearMessages(WidgetTester tester) async {
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-  }
 
   test('缺字段按零值解析，落盘间隔回落到服务默认值', () {
     final stats = DesktopCacheStats.fromJson(const {});

@@ -18,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'support/desktop_api_fakes.dart';
+import 'support/desktop_page_harness.dart';
 
 void main() {
   Future<MemoryLegacyPrefsStore> pumpService(
@@ -26,23 +27,14 @@ void main() {
     Map<String, Map<String, Object?>>? seed,
     Size size = const Size(1280, 900),
   }) async {
-    final fake = backend ?? FakeDesktopBackend();
     final store = MemoryLegacyPrefsStore(seed);
-    tester.view.physicalSize = size;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(store),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: const DesktopApp(initialLocation: DesktopServicePage.path),
-      ),
+    await pumpDesktopPage(
+      tester,
+      path: DesktopServicePage.path,
+      backend: backend,
+      store: store,
+      size: size,
     );
-    await tester.pumpAndSettle();
     return store;
   }
 
@@ -56,21 +48,7 @@ void main() {
   Finder inCore(Finder matching) =>
       find.descendant(of: find.byType(CoreServiceCard), matching: matching);
 
-  Future<void> tapAt(WidgetTester tester, Finder finder) async {
-    await Scrollable.ensureVisible(
-      tester.element(finder),
-      alignment: 0.5,
-      duration: Duration.zero,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(finder);
-    await tester.pumpAndSettle();
-  }
 
-  Future<void> clearMessages(WidgetTester tester) async {
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-  }
 
   testWidgets('连接设置显示当前地址，测试连接报告可达', (tester) async {
     await pumpService(
