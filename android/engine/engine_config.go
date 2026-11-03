@@ -1,15 +1,12 @@
-// engine_config.go manages dynamic configuration and runtime control knobs for the
-// Engine instance, exposing gomobile-compatible setters called from Android Kotlin.
-//
-// Key Configuration Responsibilities:
-// - Upstream DNS endpoints (Plain, DoH, DoT, DoQ), fallbacks, and block response types
+// engine_config.go manages dynamic configuration and runtime control knobs for the Engine,
+// exposing gomobile-compatible setters called from Kotlin:
+// - Upstream endpoints (Plain, DoH, DoT, DoQ), fallbacks and block response types
 //   (CUSTOM_IP 0.0.0.0, NXDOMAIN, REFUSED).
 // - PolicyEngine rule snapshots and CNAME rewrite mappings.
-// - Android UI event callback bridges (LogCallback, BatchLogCallback, RaceLogCallback,
-//   BootstrapLogCallback, HttpLogCallback, TrafficCallback).
-// - Screen state adaptive tick intervals (e.g., 1000ms interactive vs 10000ms screen-off)
-//   which conserve battery while maintaining continuous atomic byte/packet accounting.
-// - Outbound proxy session configuration and domain checker bindings.
+// - UI event callbacks (Log, BatchLog, RaceLog, BootstrapLog, HttpLog, Traffic).
+// - Adaptive tick intervals (e.g. 1000ms interactive vs 10000ms screen-off) that save battery
+//   while keeping atomic byte/packet accounting continuous.
+// - Outbound proxy sessions and domain checker bindings.
 
 package tunnel
 

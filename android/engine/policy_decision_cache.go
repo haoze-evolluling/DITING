@@ -1,16 +1,15 @@
 // policy_decision_cache.go keeps a bounded cache of recent policy decisions per rule snapshot,
 // plus hot-domain prewarming across snapshot swaps.
 //
-// Cache key: the normalized domain, plus the app name only when the snapshot has app-dependent
-// rules, and the qtype only when some rule has a dnsType constraint. When neither applies, every
-// app and query type shares one entry per domain.
+// Key: normalized domain, plus the app name only when the snapshot has app-dependent rules,
+// and the qtype only when some rule has a dnsType constraint. Otherwise all apps and query
+// types share one entry per domain.
 //
 // Eviction: each shard is a fixed ring swept by a CLOCK hand with frequency aging, so lookups
-// only take a read lock and bump atomics. Hit counts drive both eviction and prewarm ranking.
+// only take a read lock and bump atomics; hit counts drive both eviction and prewarm ranking.
 //
-// Prewarming: when a new snapshot is published, the most-hit keys of the previous cache are
-// re-evaluated against the new snapshot in a background goroutine. High-frequency domains stay
-// fast right after a rule reload instead of all missing at once.
+// Prewarming: when a snapshot is published, the previous cache's most-hit keys are re-evaluated
+// against it in the background, so hot domains stay fast after a rule reload.
 //
 // A cache belongs to exactly one immutable snapshot, so rule changes never serve stale results.
 

@@ -11,18 +11,16 @@ const RFC8482HINFO = "RFC8482"
 
 // NewANYMiddleware 创建 ANY 查询最小化应答中间件。
 //
-// ANY (QtypeANY) 查询在实践中有两个问题：一是被大量用于 DNS 放大攻击，
-// 二是它按定义返回"该名字的全部记录"，会让按记录类型下发的拦截策略失效——
-// 客户端只要查 ANY 就能同时拿到 A 与 AAAA，绕过针对其中一种类型的阻断。
+// ANY 查询常被用于 DNS 放大攻击，且按定义返回名字的全部记录，会让按记录类型下发的拦截
+// 策略失效：查 ANY 即可同时拿到 A 与 AAAA，绕过针对其中一种的阻断。
 //
 // 两种应答形式（RFC 8482 §4.2/§4.3）：
-//   - notimp：NOTIMP，明确表示不支持该查询。更保守，客户端不会误当成有效解析。
-//   - rfc8482：NOERROR + HINFO("RFC8482")，语义更准确，但需要客户端理解这一约定。
+//   - notimp：NOTIMP，明确不支持该查询，客户端不会误当成有效解析。
+//   - rfc8482：NOERROR + HINFO("RFC8482")，语义更准确，但要求客户端理解该约定。
 //
-// mode 由调用方动态传入以支持热更新；未知取值按 notimp 处理。
-//
-// 注册位置在 unqualified 之后、filter 之前：本地权威应答（Hosts / 自定义重写）
-// 与前面的拦截已有结论，此处只处理真正会外泄到上游的 ANY 查询。
+// mode 由调用方传入以支持热更新；未知取值按 notimp 处理。注册在 unqualified 之后、
+// filter 之前：本地权威应答（Hosts / 自定义重写）与前面的拦截已有结论，这里只处理
+// 真正会外泄到上游的 ANY 查询。
 func NewANYMiddleware(enabled func() bool, mode func() string) Middleware {
 	return func(ctx *DNSContext, next func() error) error {
 		if enabled == nil || !enabled() || ctx.Req == nil || len(ctx.Req.Question) == 0 {

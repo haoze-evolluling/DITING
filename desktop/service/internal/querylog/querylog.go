@@ -131,18 +131,13 @@ func (q *QueryLog) Search(sq SearchQuery) SearchResult {
 	return SearchResult{Total: total, Entries: page}
 }
 
-// searchFiles 扫描落盘文件补齐更早的历史命中（返回新→旧顺序）。
+// searchFiles 扫描落盘文件补齐更早的历史命中（新→旧）。
 //
-// 以内存环最旧记录的时间为上界，仅扫描更旧的部分，避免与内存结果重复计数。
-// 仅收集到 offset+limit 条候选后不再追加，但继续计数。
-// searchFiles 扫描落盘文件补齐更早的历史命中（返回新→旧顺序）。
+// 以内存环最旧记录的时间为上界，仅扫描更旧部分，避免与内存结果重复。返回的 total 是
+// 文件窗口内的全部命中数（不是本页候选数），保证翻页时 Total 稳定。
 //
-// 以内存环最旧记录的时间为上界，仅扫描更旧的部分，避免与内存结果重复计数。
-// 返回的 total 是文件窗口内的全部命中数（不是本页候选数），保证翻页时 Total 稳定。
-//
-// 同一次调用里既需要「补齐本页候选」又需要「准确总数」：分页页码由 Total 算出，
-// 若把「采满即停」当作总数，Total 会随 offset 增长、第 1 页永远没有下一页
-// （BUG-65）。因此这里始终走计数模式，候选收够后继续扫描但不再追加。
+// 分页页码由 Total 算出，若把「采满即停」当作总数，Total 会随 offset 增长、第 1 页
+// 永远没有下一页（BUG-65）。因此始终走计数模式：候选收够后继续扫描但不再追加。
 func searchFiles(w *writer, sq SearchQuery, memTotal int, memOldest int64) ([]Record, int) {
 	fileQ := sq
 	if memOldest > 0 && (fileQ.EndMs == 0 || fileQ.EndMs > memOldest) {

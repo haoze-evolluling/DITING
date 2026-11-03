@@ -23,11 +23,8 @@ import (
 	"software.sslmate.com/src/go-pkcs12"
 )
 
-// 自签证书在证书目录中的固定文件名。
-//
-// 固定而非按 CN 命名：改了 CommonName 还不该让旧文件变成孤儿，
-// 而证书目录里同时躺着几张同名不同期的文件正是「到底在用哪张」
-// 这类问题的温床。
+// 自签证书在证书目录中的固定文件名。固定而非按 CN 命名：改 CommonName 不该让旧文件
+// 变成孤儿，而目录里几张同名不同期的文件正是「到底在用哪张」的温床。
 const (
 	SelfSignedCertFileName = "server.crt"
 	SelfSignedKeyFileName  = "server.key"
@@ -122,9 +119,8 @@ func (m *CertManager) snapshot() (CertConfig, string) {
 
 // TLSConfig 返回供监听器使用的 TLS 配置；证书不可用时返回错误。
 //
-// 客户端用 SNI 指明要访问哪个名字，证书里没有那个名字就会校验失败。
-// 这里不做「取第一张证书顶上去」的兜底：那只会把配置错误推迟到
-// 客户端，且以一条与真实原因无关的报错呈现。
+// 客户端用 SNI 指明要访问的名字，证书没有该名字就会校验失败。这里不做「取第一张
+// 证书顶上去」的兜底：那只会把配置错误推迟到客户端，并以无关的报错呈现。
 func (m *CertManager) TLSConfig(nextProtos ...string) (*tls.Config, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

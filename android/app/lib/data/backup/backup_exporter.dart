@@ -100,14 +100,13 @@ class BackupExporter {
 
   /// Streams [groups] only (all groups when null) to [sink], one chunk per group.
   ///
-  /// Peak memory is one group plus its encoded text. The document used to be built as a single
-  /// string and then copied across the platform channel, which put a subscription-sized rule list
-  /// in memory several times at once and crashed the export.
+  /// Peak memory is one group plus its encoded text. Building the whole document as a single string
+  /// and copying it across the platform channel put a subscription-sized rule list in memory several
+  /// times at once and crashed the export.
   ///
-  /// Two passes instead of one: the flat legacy fields and the grouped `data` object sit in
-  /// different parts of the document, and keeping every group's value around until the second pass
-  /// is exactly the cost streaming exists to avoid. Only user rules are read, so the second pass is
-  /// cheap.
+  /// Two passes because the flat legacy fields and the grouped `data` object sit in different parts
+  /// of the document; keeping every group's value until the second pass is the cost streaming exists
+  /// to avoid. Only user rules are read, so the second pass is cheap.
   Future<BackupExportResult> exportTo(
     BackupChunkSink sink,
     BackupExportSource source, {

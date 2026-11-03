@@ -7,17 +7,13 @@ import (
 	"github.com/miekg/dns"
 )
 
-// NewSafeBrowsingMiddleware 创建恶意网址库与家长控制拦截中间件。
+// NewSafeBrowsingMiddleware 创建恶意网址库与家长控制拦截中间件（做法同 AdGuard Home 的
+// hashprefix）：把域名及各级父域做 SHA-256，取前 2 字节的十六进制拼成查询名发往第三方权威
+// 服务器，对方返回命中的完整摘要，本地再比对。第三方只看到 2 字节前缀，无法还原域名。
 //
-// 借鉴自 AdGuard Home 的 hashprefix 插件：把域名及其各级父域做 SHA-256，
-// 取前 2 字节的十六进制拼成查询名发往第三方权威服务器，对方返回命中的
-// 完整摘要，本地再比对。第三方只看到 2 字节前缀，无法还原完整域名。
-//
-// **fail-open**：查询失败（超时、上游故障、解析器未就绪）一律放行，
-// 并如实打上失败标记。这与本地黑名单的 fail-closed 相反，是刻意的——
-// 本地规则是我们自己掌握的数据，出问题说明配置有误；而声誉查询依赖
-// 第三方可用性，让它的抖动决定整个网络的解析成败代价太大。
-// 上层可通过标记在日志里观察到这类放行，而不是把它当成一次干净的通过。
+// fail-open：查询失败（超时、上游故障、解析器未就绪）一律放行并打上失败标记。这与本地黑名单
+// 的 fail-closed 相反：本地规则由我们自己掌握，出错说明配置有误；声誉查询依赖第三方可用性，
+// 让它的抖动决定整个网络的解析成败代价太大。上层可从标记观察到这类放行。
 func NewSafeBrowsingMiddleware(engine *core.SafeBrowsingEngine, fallback func() core.FilterConfig) Middleware {
 	return func(ctx *DNSContext, next func() error) error {
 		if engine == nil || !engine.IsEnabled() || ctx.Req == nil || len(ctx.Req.Question) == 0 {

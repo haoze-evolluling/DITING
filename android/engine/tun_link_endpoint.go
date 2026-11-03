@@ -1,13 +1,13 @@
 // tun_link_endpoint.go is the gVisor link endpoint used by the full-tunnel data plane.
 //
 // It replaces tun2socks' iobased endpoint, removing per-packet work:
-// - Inbound: iobased allocated a fresh MTU-sized []byte for every packet read from the TUN. This
-//   endpoint reads into one reused buffer (the read loop is single-threaded) and copies the bytes
-//   into a gVisor pooled chunk, so steady-state reads allocate nothing on the Go heap.
-// - Outbound: iobased cloned each packet into a channel, had a second goroutine clone it again
-//   (ToBuffer), Flatten it into a new slice, and then bufferedTun copied it once more. Here the
-//   packet views are copied once, straight into a pooled bufferedTun buffer, on the caller's
-//   goroutine. bufferedTun keeps its non-blocking queue, drop-on-overflow and retry semantics.
+// - Inbound: iobased allocated a fresh MTU-sized []byte per read. This endpoint reads into one
+//   reused buffer (the read loop is single-threaded) and copies into a gVisor pooled chunk, so
+//   steady-state reads allocate nothing on the Go heap.
+// - Outbound: iobased cloned each packet into a channel, cloned again (ToBuffer), flattened into
+//   a new slice, then bufferedTun copied it once more. Here the packet views are copied once,
+//   straight into a pooled bufferedTun buffer on the caller's goroutine. bufferedTun keeps its
+//   non-blocking queue, drop-on-overflow and retry semantics.
 
 package tunnel
 

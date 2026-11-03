@@ -102,18 +102,17 @@ func (e *Engine) hasAppAllowlistUIDs() bool {
 	return len(e.appAllowlist.domains) > 0
 }
 
-// rememberAppAllowlistWire grants app-allowlist IP authorization from an already
-// serialized DNS response, i.e. one served straight from the DNS cache.
+// rememberAppAllowlistWire grants app-allowlist IP authorization from an already serialized
+// DNS response (one served straight from the DNS cache).
 //
-// The upstream paths grant authorization by calling rememberAppAllowlistResponse
-// on the resolved *dns.Msg, but the cache-hit and stale-while-revalidate branches
-// return wire bytes and returned early without granting anything. A whitelisted
-// app therefore resolved successfully from cache and then had every following
-// connection refused by appAllowlistConnectionAllowed, which is why "解析成功、
-// 连接恒被拦" was permanent rather than transient: the cache kept answering.
+// Upstream paths grant authorization via rememberAppAllowlistResponse on the resolved
+// *dns.Msg, but the cache-hit and stale-while-revalidate branches return wire bytes and used
+// to return early. A whitelisted app then resolved from cache and had every following
+// connection refused by appAllowlistConnectionAllowed, so "解析成功、连接恒被拦" was permanent
+// while the cache kept answering.
 //
-// The grant covers exactly the answer that was handed to the client, so the
-// authorization lifetime never exceeds the TTL the client was told.
+// The grant covers exactly the answer handed to the client, so its lifetime never exceeds the
+// TTL the client was told.
 func (e *Engine) rememberAppAllowlistWire(uid int, rawResponse []byte) {
 	if e == nil || len(rawResponse) < 12 {
 		return

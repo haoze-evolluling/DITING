@@ -73,16 +73,14 @@ type PinLookup func(host string) *CertPin
 
 // PinAwareTLSConfig 让一份共享的 TLS 配置支持按主机名区分的证书固定。
 //
-// 为什么不能简单地在配置上写死一个指纹：同一份 TLS 配置会被多个上游复用，
-// 而指纹是每个上游各自的，因此必须在握手时按实际 ServerName 分派。
+// 同一份 TLS 配置会被多个上游复用，而指纹各自独立，因此必须在握手时按实际
+// ServerName 分派，不能写死在配置上。
 //
-// 安全语义（重要）：
-//   - lookup 为 nil（未配置任何指纹）时，原样返回 base，行为与从前完全一致。
-//   - 存在指纹时，才接管校验：置 InsecureSkipVerify 并改用 VerifyConnection，
-//     因为 Go 的证书链校验一旦被绕过，就必须由我们自己补齐。
-//   - 命中指纹 → 只比对该指纹（这正是固定机制的本意：信任自签/私有 CA 部署）。
-//   - 未命中指纹 → 回落到标准系统 CA 链校验，**不会**因为别的上游配了固定
-//     就放宽这个上游的校验。
+// 安全语义：
+//   - lookup 为 nil（无指纹）时原样返回 base，行为不变。
+//   - 存在指纹时才接管校验：置 InsecureSkipVerify 并改用 VerifyConnection。
+//   - 命中指纹 → 只比对该指纹（可信任自签/私有 CA 部署）。
+//   - 未命中指纹 → 回落到标准系统 CA 链校验，不会因别的上游配了固定而放宽。
 func PinAwareTLSConfig(base *tls.Config, lookup PinLookup) *tls.Config {
 	var cfg *tls.Config
 	if base != nil {

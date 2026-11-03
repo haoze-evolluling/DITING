@@ -1,17 +1,16 @@
-// engine_full_tunnel.go implements the high-throughput full-network data plane for HTTPS filtering.
+// engine_full_tunnel.go implements the full-network data plane used for HTTPS filtering.
 //
-// Architecture & Deadlock Elimination:
-// - Direct TUN Inbound: gVisor reads the TUN device directly to eliminate intermediate packet queue backpressure deadlocks.
-// - Non-Blocking Outbound: bufferedTun decouples writes into an outbound channel with a sync.Pool buffer pool (tunPacketPool),
-//   dropping on overflow to prioritize dispatch loop responsiveness.
-// - Self-Healing Outbound Writer: a TUN write error is treated as transient. The drain goroutine retries with backoff
-//   instead of exiting, so a network handover cannot blackhole the outbound direction for the rest of the session.
-// - Flow Routing Topology:
-//     apps -> TUN -> gVisor stack:
-//       • TCP: Routed to MITM handler or direct protected passthrough.
-//       • UDP :53: Handled by Engine.ServeDNS for ad blocking and resolution.
-//       • UDP :443: Dropped for targeted browsers to force HTTP/3 fallback to TCP TLS for inspection.
-//       • UDP other: Relayed via protected sockets.
+// Architecture:
+// - gVisor reads the TUN device directly, avoiding packet-queue backpressure deadlocks.
+// - bufferedTun decouples writes into a channel with a sync.Pool (tunPacketPool), dropping
+//   on overflow to keep the dispatch loop responsive.
+// - TUN write errors are treated as transient: the drain goroutine retries with backoff so a
+//   network handover cannot blackhole the outbound direction.
+// - Flow routing:
+//     TCP: MITM handler or direct protected passthrough.
+//     UDP :53: Engine.ServeDNS.
+//     UDP :443: dropped for targeted browsers to force HTTP/3 fallback to TCP TLS.
+//     UDP other: relayed via protected sockets.
 
 package tunnel
 

@@ -41,13 +41,12 @@ func ValidateClientID(id string) error {
 // hostSNI 是本机认定的服务器名，cliSNI 是客户端实际发来的名字：
 //
 //	cliSNI == hostSNI                    → 未指定 ClientID，返回空串
-//	cliSNI 是 hostSNI 的直接子域          → 取最外层那一级标签作为 ClientID
+//	cliSNI 是 hostSNI 的直接子域          → 取最外层标签作为 ClientID
 //	其余（含大小写不一致、更深的子域）    → 不是 ClientID
 //
-// 只认「直接子域」而不是任意后代，是为了让 a.b.dns.lan 不至于被读成
-// ClientID "a.b"：那个名字说不清客户端想表达什么，静默取一层反而会把它
-// 归到一个它从未声明过的身份上。大小写不敏感，因为服务器名由用户填写，
-// 而 DNS 客户端把名字小写化是常态。
+// 只认「直接子域」：任意后代会把 a.b.dns.lan 读成 ClientID "a.b"，静默归到一个
+// 客户端从未声明的身份上。大小写不敏感，因为服务器名由用户填写，而 DNS 客户端
+// 通常把名字小写化。
 func ClientIDFromServerName(hostSNI, cliSNI string) string {
 	host := normalizeServerName(hostSNI)
 	client := normalizeServerName(cliSNI)

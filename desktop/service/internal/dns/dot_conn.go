@@ -11,14 +11,12 @@ import (
 
 // dotConn 是 DoT 单连接上的 dns.ResponseWriter 实现。
 //
-// 之所以不用 miekg/dns 自带的 `Server{Net: "tcp-tls"}`：那条路径虽然也通过
-// ConnectionStater 暴露握手状态，但底层连接被包在它自己的 response 结构里，
-// 取不到 SNI，也就无法按 `<ClientID>.<服务器名>` 识别客户端。自己实现这个
-// 接口后，ServerName 在连接建立的那一刻就能拿到。
+// 不用 miekg/dns 自带的 `Server{Net: "tcp-tls"}`：那条路径把底层连接包在自己的 response
+// 结构里，取不到 SNI，也就无法按 `<ClientID>.<服务器名>` 识别客户端。自己实现后，
+// ServerName 在连接建立时即可拿到。
 //
-// 与 TCP 一样，一条连接上可以串行承载多个查询（RFC 7858 §3.1），因此这里
-// 按查询循环读，而不是一问一答就断开——客户端每次重连都要重做一次 TLS
-// 握手，那样代价太高。
+// 与 TCP 一样，一条连接上可串行承载多个查询（RFC 7858 §3.1），因此按查询循环读，
+// 而不是一问一答就断开——每次重连都要重做 TLS 握手，代价太高。
 type dotConn struct {
 	conn *tls.Conn
 	srv  *Server

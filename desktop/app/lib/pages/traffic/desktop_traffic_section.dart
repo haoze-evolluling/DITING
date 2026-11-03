@@ -1,13 +1,11 @@
 /// The device cards, spread by the home page into its one board.
 ///
-/// The old desktop console's `DevicesView.vue` → `ClientsPanel` is the functional blueprint. There
-/// is no per-application traffic here: the old console never measured it, and these cards do not
-/// invent it. A failed read keeps whatever was on screen and says so through the page's stale
-/// notice; before the first answer, this section shows one honest card instead of an empty one.
+/// There is no per-application traffic here: the old console never measured it, and these cards do
+/// not invent it. A failed read keeps whatever was on screen and reports it through the page's
+/// stale notice; before the first answer this section shows one honest card instead of an empty one.
 ///
-/// The allow/block lists and the token bucket are settings, so they live on `hub/client-access`
-/// instead of on the dashboard. What stays here is the list itself: who is connected, with the
-/// console's quick alias and allow/block actions on each row.
+/// Allow/block lists and the token bucket are settings and live on `hub/client-access`; what stays
+/// here is the list itself — who is connected, with the console's quick alias and allow/block actions.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

@@ -50,10 +50,9 @@ class _DitingAppState extends ConsumerState<DitingApp> {
   AppLifecycleListener? _lifecycle;
   bool _autoUpdateChecking = false;
 
-  /// The update rewrites the rule tables in long transactions. Running it in the same seconds as
-  /// the first frame's queries is what let a big subscription lock `diting_database` while the
-  /// tunnel's log writers were opening it (2.1.7: 183 failed opens, zero successes). A few seconds
-  /// of head start is enough for the first frame and is invisible to the user.
+  /// The update rewrites rule tables in long transactions; running it alongside the first frame's
+  /// queries let a big subscription lock `diting_database` while the tunnel's log writers were
+  /// opening it (2.1.7: 183 failed opens, zero successes). A few seconds of head start is enough.
   static const _autoUpdateDelay = Duration(seconds: 5);
 
   Timer? _autoUpdateDelayTimer;

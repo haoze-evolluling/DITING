@@ -6,14 +6,13 @@ import (
 
 // NewDDRMiddleware 创建 DDR（RFC 9462）指定解析器发现中间件。
 //
-// 必须注册在 SUDN 之前：SUDN 会对整个 resolver.arpa 返回 NODATA 以防止
-// 探测外泄，DDR 只有在它之前才有机会接管 _dns.resolver.arpa.。
+// 必须注册在 SUDN 之前：SUDN 会对整个 resolver.arpa 返回 NODATA 防探测外泄，
+// DDR 只有在它之前才能接管 _dns.resolver.arpa.。
 //
-// 开关与内容都通过回调动态读取：加密监听器是随配置热重建的，
-// 在这条流水线里缓存一份快照会立刻过期。
+// 开关与内容都通过回调动态读取：加密监听器随配置热重建，缓存快照会立即过期。
 //
-// 默认关闭是刻意的：DDR 会让客户端在证书不受信任时直接失去解析能力，
-// 而它带来的收益（少填一个地址）远不抵这个风险。
+// 默认关闭：DDR 会让客户端在证书不受信任时直接失去解析能力，收益（少填一个地址）
+// 远不抵这个风险。
 func NewDDRMiddleware(enabled func() bool, answer func() DDRAnswer) Middleware {
 	return func(ctx *DNSContext, next func() error) error {
 		if ctx.Req == nil || len(ctx.Req.Question) == 0 {

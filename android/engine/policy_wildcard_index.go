@@ -3,18 +3,16 @@
 //
 // Index layout (ASCII patterns only; anything else stays on the linear path):
 //   - "*"            -> matches everything, remembered by its list position.
-//   - "*.base"       -> equivalent to "domain == base or ends with .base", stored in a hash
-//     map keyed by base and probed once per label suffix of the domain.
+//   - "*.base"       -> "domain == base or ends with .base", hashed by base and probed
+//     once per label suffix.
 //   - other globs    -> bucketed by the complete labels after the last "*" (for
-//     "ads*.example.org" the key is "example.org"); only buckets whose key is a label
-//     suffix of the domain are tried, and the original regex confirms the match.
-//   - remaining globs (no complete trailing label) are scanned linearly behind a cheap
-//     HasSuffix prefilter on the literal tail.
+//     "ads*.example.org" the key is "example.org"); only suffix-matching buckets are
+//     tried and the original regex confirms the match.
+//   - remaining globs are scanned linearly behind a HasSuffix prefilter on the literal tail.
 //
-// Every entry keeps its original list position, and match returns the lowest position
-// that matches, so the reported pattern is identical to the old first-match linear scan.
-// Domains containing non-ASCII bytes fall back to that linear scan, because (?i) regex
-// case folding differs from strings.ToLower outside ASCII.
+// match returns the lowest original list position, identical to the old first-match scan.
+// Non-ASCII domains fall back to the linear scan because (?i) folding differs from
+// strings.ToLower outside ASCII.
 
 package tunnel
 

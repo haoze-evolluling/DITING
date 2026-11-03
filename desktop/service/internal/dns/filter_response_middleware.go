@@ -9,15 +9,13 @@ import (
 
 // NewFilterResponseMiddleware 创建响应侧别名链复检中间件（深链拦截，默认关闭）。
 //
-// 借鉴自 blocky (resolver/blocking_resolver.go 的 isResponseBlocked/extractEntryToCheckFromResponse)
-// 与 dnscrypt-proxy (plugin_block_name.go 的别名链上限 8)：
-// 纯 CNAME 别名换域（CDN 换域、跳转器）可绕过仅检查 QNAME 的拦截，因此在应答装配后二次复检。
+// 做法同 blocky（isResponseBlocked）与 dnscrypt-proxy（别名链上限 8）：纯 CNAME 换域可绕过
+// 只检查 QNAME 的拦截，因此在应答装配后二次复检。
 //
-// 必须置于流水线中「包裹缓存」的位置（echMw 之后、cacheMw 之前，且不在 cacheMw 之后）：
-// 缓存命中路径不执行 next()（见 cache_middleware.go），只有外层中间件才能覆盖缓存响应；
-// 同时保证每条响应都会被复检，配置热关闭后立即生效而非等待 TTL 过期。
+// 必须包裹缓存（echMw 之后、cacheMw 之前）：缓存命中路径不执行 next()（见
+// cache_middleware.go），只有外层中间件才能覆盖缓存响应；同时保证热关闭后立即生效，不等 TTL 过期。
 //
-// groupResolver 是取值函数而非解析器实例：分组热更新替换实例，流水线只装配一次。
+// groupResolver 是取值函数而非实例：分组热更新会替换实例，流水线只装配一次。
 func NewFilterResponseMiddleware(
 	engine *core.RuleEngine,
 	groupResolver func() *core.GroupResolver,

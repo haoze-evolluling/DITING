@@ -7,19 +7,17 @@ import (
 
 // buildPipeline 装配 DNS 请求处理流水线。
 //
-// 中间件的注册顺序即语义的一部分，调用方不得随意调整：
+// 中间件注册顺序即语义，调用方不得随意调整：
 //
 //	metrics → EDE → ECH → client → access → ratelimit → DDR → SUDN → zone → hosts
 //	→ rewrite → safesearch → IPv6 → privatePTR → unqualified → ANY → filter → safeBrowsing
 //	→ rebind → filterResponse → DNS64 → ECS → cache → bogusNXDomain → upstreamRoute → forward
 //
-// 其中响应侧复检（filterResponse）位于 rebind 之后、DNS64 之前：
-// 既包裹缓存（缓存命中也复检），又在 DNS64 合成之后获得最终应答，
-// 且被 rebind 的已阻断判定短路。
-//
+// 响应侧复检（filterResponse）位于 rebind 之后、DNS64 之前：既包裹缓存（命中亦复检），
+// 又能在 DNS64 合成后看到最终应答，且已被 rebind 阻断的请求会被短路。
 // 伪应答纠正（bogusNXDomain）夹在缓存与回源之间，理由见该处注释。
 //
-// 调用方需持有 p.mu（内部对 p.cfg 的读取依赖该保护）。
+// 调用方需持有 p.mu：内部读取 p.cfg 依赖该保护。
 func (p *program) buildPipeline() *ditingdns.Pipeline {
 	metricsMw := p.newMetricsMiddleware()
 

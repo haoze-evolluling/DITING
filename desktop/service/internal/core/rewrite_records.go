@@ -10,11 +10,9 @@ import (
 	"github.com/miekg/dns"
 )
 
-// RewriteRecord 描述一条自定义重写记录。
-//
-// 用于承载 RewriteRule 中 IPs/CNAME/TXT 三个快捷字段之外的记录类型
-// （MX / SRV / NS / PTR / HTTPS / SVCB）。取值语法与 AdGuard Home 的
-// $dnsrewrite 保持一致，便于用户在两处使用同一套写法：
+// RewriteRecord 描述一条自定义重写记录，承载 RewriteRule 中 IPs/CNAME/TXT 之外的
+// 记录类型（MX / SRV / NS / PTR / HTTPS / SVCB）。取值语法与 AdGuard Home 的
+// $dnsrewrite 一致：
 //
 //	MX     "32 example.mail"                优先级 空格 交换主机
 //	SRV    "10 60 8080 example.com"         优先级 权重 端口 目标

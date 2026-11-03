@@ -8,11 +8,9 @@ import (
 	"strings"
 )
 
-// 加密 DNS 服务端监听器的默认端口与路径。
-//
-// 853 与 443 是 RFC 7858 / RFC 8484 的注册端口，也是客户端
-// （systemd-resolved、Chrome、iOS 配置描述文件）默认尝试的端口，
-// 不按约定使用会让「粘贴一个地址就能用」这件事失效。
+// 加密 DNS 监听器的默认端口与路径：853/443 是 RFC 7858/8484 的注册端口，也是
+// systemd-resolved、Chrome、iOS 配置描述文件默认尝试的端口，不按约定使用会让
+// 「粘贴一个地址就能用」失效。
 const (
 	DefaultDoTPort = 853
 	DefaultDoHPort = 443
@@ -33,9 +31,8 @@ const (
 
 // CertConfig 加密 DNS 服务端证书配置。
 //
-// 这只是配置，不含任何私钥材料：私钥始终留在磁盘上由 CertManager 按需读取，
-// 既不进配置文件也不经 IPC 回传。证书链与私钥一旦进入配置对象，
-// 它就会随 /api/v1/status 之类的只读接口扩散到控制台与日志里。
+// 只含配置，不含任何私钥材料：私钥留在磁盘上由 CertManager 按需读取，不进配置也不经
+// IPC 回传，否则会随 /api/v1/status 之类的只读接口扩散到控制台与日志里。
 type CertConfig struct {
 	// Source 证书来源，取值见 CertSource* 常量
 	Source string `json:"source"`
@@ -59,9 +56,8 @@ type CertConfig struct {
 
 // EncryptedDNSConfig 加密 DNS 服务端配置。
 //
-// 三个监听器各自独立开关：只开 DoT 是常见形态（移动端原生支持最好），
-// 强制要求全开才能用会把这个功能挡在门外。本批次只落配置与证书，
-// 监听器在后续步骤挂载。
+// 三个监听器各自独立开关：只开 DoT 是常见形态（移动端原生支持最好），强制全开会把
+// 这个功能挡在门外。本批次只落配置与证书，监听器在后续步骤挂载。
 type EncryptedDNSConfig struct {
 	Enabled bool       `json:"enabled"`
 	Cert    CertConfig `json:"cert"`

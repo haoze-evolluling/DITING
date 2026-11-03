@@ -1,14 +1,11 @@
 /// The dashboard cards of the home page: one board of natural-height cards, laid out by the shared
 /// `DesktopCardBoard` one/two-column rule like every other desktop page.
 ///
-/// The cards are returned as a list, not a widget, so the home page can append its device and log
-/// cards to the same board; a second board would leave the page with two waterfalls and a hole
-/// between them.
+/// The cards are a list, not a widget, so the home page can append its device and log cards to the
+/// same board; a second board would leave two waterfalls with a hole between them.
 ///
 /// Everything here is a reading: the home window reports what the service is doing and offers no
-/// switch or field. The controls that used to sit on this board (adapter takeover, the filter pause,
-/// the client ACL and rate limit, the log retention policy and its search) live on the pages that own
-/// them under the feature hub.
+/// switch or field. Controls live on the pages that own them under the feature hub.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

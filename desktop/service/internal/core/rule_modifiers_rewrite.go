@@ -12,16 +12,15 @@ import (
 // ReasonDNSRewrite 命中 $dnsrewrite 修饰符时的判定原因标识
 const ReasonDNSRewrite = "DNSREWRITE"
 
-// RewriteAction 描述一条 $dnsrewrite 修饰符的解析结果。
-//
-// 语法对齐 AdGuard Home urlfilter（其文档明确 dnsrewrite 规则优先级高于其它规则）：
+// RewriteAction 描述一条 $dnsrewrite 修饰符的解析结果（语法对齐 AdGuard Home urlfilter，
+// 其 dnsrewrite 规则优先级高于其它规则）：
 //
 //	$dnsrewrite=1.2.3.4                  简写 → NOERROR;A;1.2.3.4
 //	$dnsrewrite=abcd::1234               简写 → NOERROR;AAAA;abcd::1234
 //	$dnsrewrite=example.net              简写 → NOERROR;CNAME;example.net
 //	$dnsrewrite=REFUSED                  仅应答码，不产出记录
 //	$dnsrewrite=NOERROR;TXT;hello_world  显式形式 RCODE;记录类型;取值
-//	$dnsrewrite=NOERROR;;                显式声明该名字无任何记录（权威 NODATA）
+//	$dnsrewrite=NOERROR;;                权威 NODATA
 //	$dnsrewrite                          裸形式，仅用于例外规则，取消该域名的全部重写
 //
 // 例外规则 @@||example.com^$dnsrewrite 取消该域名全部重写；

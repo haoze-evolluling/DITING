@@ -1,14 +1,12 @@
 // engine_standalone.go implements standalone DNS server capabilities (root and proxy modes),
-// allowing the engine to operate without an active Android VPN TUN device.
-//
-// Core Standalone Mechanisms:
-// - Direct socket binding on IPv4 and IPv6 loopback interfaces with iptables REDIRECT support,
-//   preserving original client source ports for /proc/net/udp UID and package attribution.
-// - Discovery of Designated Resolvers (DDR, RFC 9462) mitigation: returns NXDOMAIN for
-//   _dns.resolver.arpa to prevent clients (Android 13+, Chrome) from bypassing local filtering.
-// - Priority evaluation: Firewall checks -> CNAME rewrites -> PolicyEngine -> Upstream.
-// - lookupIP fallback: provides dedicated, direct public DNS resolution for internal engine
-//   components (such as the MITM proxy), bypassing fragile Android system resolver stubs.
+// so the engine can run without an active Android VPN TUN device:
+// - Binds IPv4/IPv6 loopback directly with iptables REDIRECT support, preserving client source
+//   ports for /proc/net/udp UID and package attribution.
+// - DDR (RFC 9462) mitigation: returns NXDOMAIN for _dns.resolver.arpa so clients (Android 13+,
+//   Chrome) cannot bypass local filtering.
+// - Priority: firewall checks -> CNAME rewrites -> PolicyEngine -> upstream.
+// - lookupIP falls back to direct public DNS for internal components (e.g. the MITM proxy),
+//   bypassing fragile Android system resolver stubs.
 
 package tunnel
 

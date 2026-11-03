@@ -104,9 +104,8 @@ func (e *RuleEngine) GetConfig() FilterConfig {
 
 // cloneFilterConfig 深拷贝配置中的切片字段。
 //
-// 引擎必须独占自己的配置存储：调用方拿到 GetConfig 的结果后改动再传回
-// UpdateConfig 是常见用法，共享底层数组会让「旧值」随调用方的修改一起变，
-// 变更检测（含订阅列表逐项比较）随之永远看不到差异。
+// 引擎必须独占配置存储：调用方常把 GetConfig 的结果改完再传回 UpdateConfig，共享底层
+// 数组会让「旧值」跟着变，变更检测（含订阅列表逐项比较）就永远看不到差异。
 func cloneFilterConfig(cfg FilterConfig) FilterConfig {
 	cfg.CustomRules = append([]string(nil), cfg.CustomRules...)
 	cfg.Lists = append([]FilterList(nil), cfg.Lists...)
@@ -326,12 +325,11 @@ func (e *RuleEngine) CheckHost(domain string, qtype uint16) CheckHostResult {
 	return matcher.Match(domain, qtype)
 }
 
-// compileGroupMatchersUnlocked 为每个启用分组构建专属规则匹配器。
+// compileGroupMatchersUnlocked 为每个启用分组构建专属规则匹配器。调用方须持有 e.mu 写锁。
 //
-// 调用方须已持有 e.mu 写锁。组级规则集按 RuleListIDs 过滤：
-// 空列表表示继承全部；否则只包含指定的订阅列表。
-// 自定义规则与内置服务规则始终包含——前者是用户对本机最直接的意图，
-// 后者是显式勾选的整组拦截，都不应被「只订阅某几个列表」的过滤条件悄悄关掉。
+// 组级规则按 RuleListIDs 过滤：空列表继承全部，否则只含指定订阅。自定义规则与内置服务
+// 规则始终包含——前者是用户最直接的意图，后者是显式勾选的整组拦截，都不应被订阅过滤
+// 条件悄悄关掉。
 func (e *RuleEngine) compileGroupMatchersUnlocked(customRules, serviceRules, listRules []*ParsedRule) {
 	e.groupMatchers = make(map[string]*RuleMatcher)
 	e.groupBlockModes = make(map[string]string)

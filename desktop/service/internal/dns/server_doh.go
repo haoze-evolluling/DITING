@@ -71,12 +71,9 @@ func (s *Server) DoHPath() string {
 
 // normalizeDoHPath 保证路径以 "/" 开头且没有末尾斜杠。
 //
-// 客户端会把配置里写的东西逐字拼进 URL，缺前导斜杠会得到
-// https://hostdns-query 这种解析不了的地址；末尾斜杠则会让
-// "/dns-query" 与 "/dns-query/" 变成两个不同的路由。
-//
-// 单独的 "/" 也回落到默认路径：它会让 ServeMux 注册出一条通配路由，
-// 于是任意路径都被当成 DoH 入口，远不是填写者想要的效果。
+// 客户端会把配置逐字拼进 URL：缺前导斜杠会得到 https://hostdns-query 这种非法地址，
+// 末尾斜杠则让 "/dns-query" 与 "/dns-query/" 成为两个路由。单独的 "/" 也回落到默认值：
+// 它会让 ServeMux 注册出通配路由，任意路径都被当成 DoH 入口。
 func normalizeDoHPath(path string) string {
 	p := strings.TrimSpace(path)
 	if p == "" || p == "/" {
@@ -89,12 +86,10 @@ func normalizeDoHPath(path string) string {
 	if p == "" {
 		return "/dns-query"
 	}
-	// ServeMux 的模式语法对非法 pattern 直接 panic：内部 "//" 会报
-	// "unclean path"，花括号会被当成通配段。用户输入必须在这里收敛成
-	// 一个绝不会 panic 的普通字面路径。
-	//
-	// DDR 模板里的 "{?dns}" 占位符不是路径的一部分，先剥掉再统一拼回，
-	// 避免同一份配置在「注册路由」与「广播 DDR」两处得到不同结果。
+	// ServeMux 对非法 pattern 直接 panic（内部 "//" 报 "unclean path"，花括号被当成通配段），
+	// 用户输入必须在这里收敛成绝不会 panic 的普通字面路径。
+	// DDR 模板中的 "{?dns}" 占位符不属于路径，先剥掉再统一拼回，避免「注册路由」与
+	// 「广播 DDR」两处得到不同结果。
 	p = stripDoHTemplate(p)
 	p = pathpkg.Clean(p)
 	if p == "/" || p == "." {

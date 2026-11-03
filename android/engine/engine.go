@@ -1,23 +1,17 @@
 // Package tunnel provides a Go-based DNS tunnel engine for Android ad blocking,
-// compiled with gomobile bind and invoked directly from Android Kotlin. It runs the
-// full-tunnel gVisor data plane (StartFull) and the standalone DNS server
-// (StartStandalone), forwarding DNS across multiple protocols (Plain, DoH,
-// DoT, DoQ), domain rule matching, and full-network filtering. All exported methods
-// adhere strictly to gomobile-compatible types (string, []byte, int, bool).
+// compiled with gomobile bind and invoked from Kotlin. It runs the full-tunnel gVisor
+// data plane (StartFull) and the standalone DNS server (StartStandalone), forwarding
+// DNS over Plain, DoH, DoT and DoQ with domain rules and full-network filtering.
+// All exported methods use gomobile-compatible types only.
 //
-// GC Tuning Rationale:
-// Under high-frequency small-packet DNS workloads, Go runtime default GOGC=100 causes
-// short, frequent GC cycles resulting in CPU bursts and device heating. GOGC=400 trades
-// bounded heap headroom for ~4x fewer GC cycles. A generous soft memory limit
-// (engineSoftMemoryLimit) bounds the worst case on low-RAM devices; it sits well
-// above the expected live heap so steady-state GC cadence is unchanged.
+// GC tuning: high-frequency small-packet DNS makes GOGC=100 run short, frequent GC
+// cycles that heat the device. GOGC=400 trades heap headroom for ~4x fewer cycles;
+// engineSoftMemoryLimit bounds the worst case without changing steady-state cadence.
 //
-// Concurrency & Teardown Architecture:
-// - quicDrop controls whether UDP 443 QUIC traffic is dropped (forcing HTTP/3 fallback
-//   to TCP TLS for MITM inspection) or relayed for optimal loading performance.
-// - TUN file descriptors are duplicated to establish independent Go runtime ownership.
-// - Engine teardown executes outside critical mutex locks to guarantee deadlock-free
-//   termination of worker goroutines, the TUN link endpoint and embedded proxy servers.
+// Teardown: quicDrop selects dropping UDP 443 (forcing HTTP/3 over TCP for MITM) vs
+// relaying it; TUN descriptors are duplicated for independent Go ownership; teardown
+// runs outside critical mutexes so worker goroutines, the TUN endpoint and embedded
+// proxies always terminate.
 
 package tunnel
 

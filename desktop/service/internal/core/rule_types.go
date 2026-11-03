@@ -78,10 +78,9 @@ type FilterConfig struct {
 
 	// BogusNXDomain 伪应答纠正开关（默认关闭）。
 	//
-	// 开启后，应答中的 A/AAAA 若落在 BogusNXDomainNetworks 内即判定为上游劫持，
-	// 就地改写为 NXDOMAIN 并打上拦截标记，使查询日志与 EDE 自动归类。
-	//
-	// 默认关闭是必要的：企业内网大量使用私网地址，误判会让合法域名直接解析失败。
+	// 开启后，应答中的 A/AAAA 落在 BogusNXDomainNetworks 内即判定为上游劫持，就地改写为
+	// NXDOMAIN 并打上拦截标记，使查询日志与 EDE 自动归类。默认关闭是必要的：企业内网
+	// 大量使用私网地址，误判会让合法域名直接解析失败。
 	BogusNXDomain bool `json:"bogusNxDomain"`
 	// BogusNXDomainNetworks 伪应答地址清单，同时接受单个 IP 与 CIDR 网段
 	BogusNXDomainNetworks []string `json:"bogusNxDomainNetworks,omitempty"`

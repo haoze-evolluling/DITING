@@ -1,15 +1,11 @@
-/// The hub branch: every desktop console page that is not the dashboard, grouped by the order a
-/// user actually walks them — resolve first, block second, then privacy, sharing, diagnosis and
-/// finally the app's own service settings.
+/// The hub branch: every desktop console page except the dashboard, grouped by the order a user
+/// walks them — resolve, block, privacy, sharing, diagnosis, then the app's own settings.
 ///
-/// The six categories replace the old 「解析 / 防护 / 设备与网络 / 设置」 split plus two floating
-/// diagnosis cards: 「设置」 mixed the app's own service with network features, and the two
-/// operation cards belonged to no category at all. Network sharing now owns the LAN console (it
-/// describes how other devices reach this host), and the diagnosis category owns the port probe,
-/// the emergency restore and the rule tester, because all three answer 「为什么解析不对」.
+/// Network sharing owns the LAN console (how other devices reach this host); diagnosis owns the
+/// port probe, emergency restore and rule tester (all answer 「为什么解析不对」).
 ///
 /// Only entries whose page exists are listed: a row that opens a placeholder would promise work
-/// the host cannot do, and the remaining rows land as their data layers do.
+/// the host cannot do.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

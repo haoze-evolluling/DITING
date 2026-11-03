@@ -304,9 +304,8 @@ func ParseRuleLine(line, source string) (*ParsedRule, bool) {
 
 // splitModifiers 按逗号拆分修饰符列表，但保留 $dnsrewrite 取值内部的逗号。
 //
-// dnsrewrite 的取值本身可能含逗号（HTTPS / SVCB 的 alpn=h3,h2），
-// 直接按逗号切分会把它拦腰截断成一条语法错误的取值。定位到 dnsrewrite
-// 之后，只有看起来像新修饰符的片段才会开始下一项，其余一律并入当前取值。
+// dnsrewrite 的取值可能含逗号（HTTPS/SVCB 的 alpn=h3,h2），直接切分会截断成语法错误。
+// 定位到 dnsrewrite 后，只有看起来像新修饰符的片段才开启下一项，其余并入当前取值。
 func splitModifiers(modPart string) []string {
 	head, tail, ok := cutRewriteModifier(modPart)
 	if !ok {
