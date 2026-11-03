@@ -4760,6 +4760,24 @@
   "providerMgmtDohRequired": "DoH 地址需以 https:// 开头",
   "providerMgmtAddressRequired": "请填写地址",
   "providerMgmtPortRange": "端口需在 1–65535 之间",
+  "providerMgmtProbeTooltip": "测试该服务是否可用",
+  "providerMgmtProbeOk": "可用 · {ms} ms",
+  "@providerMgmtProbeOk": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
+  "providerMgmtProbeFailed": "不可用：{message}",
+  "@providerMgmtProbeFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "providerMgmtProbeNoResponse": "无响应",
   "notifModeSingle": "单一服务",
   "notifModeSmart": "智能选择",
   "notifModeParallel": "最快响应",

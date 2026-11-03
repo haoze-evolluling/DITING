@@ -8017,6 +8017,22 @@ class AppL10nZh extends AppL10n {
   String get providerMgmtPortRange => '端口需在 1–65535 之间';
 
   @override
+  String get providerMgmtProbeTooltip => '测试该服务是否可用';
+
+  @override
+  String providerMgmtProbeOk(int ms) {
+    return '可用 · $ms ms';
+  }
+
+  @override
+  String providerMgmtProbeFailed(String message) {
+    return '不可用：$message';
+  }
+
+  @override
+  String get providerMgmtProbeNoResponse => '无响应';
+
+  @override
   String get notifModeSingle => '单一服务';
 
   @override

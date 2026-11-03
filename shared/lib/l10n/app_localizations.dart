@@ -14668,6 +14668,30 @@ abstract class AppL10n {
   /// **'端口需在 1–65535 之间'**
   String get providerMgmtPortRange;
 
+  /// No description provided for @providerMgmtProbeTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试该服务是否可用'**
+  String get providerMgmtProbeTooltip;
+
+  /// No description provided for @providerMgmtProbeOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'可用 · {ms} ms'**
+  String providerMgmtProbeOk(int ms);
+
+  /// No description provided for @providerMgmtProbeFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'不可用：{message}'**
+  String providerMgmtProbeFailed(String message);
+
+  /// No description provided for @providerMgmtProbeNoResponse.
+  ///
+  /// In zh, this message translates to:
+  /// **'无响应'**
+  String get providerMgmtProbeNoResponse;
+
   /// No description provided for @notifModeSingle.
   ///
   /// In zh, this message translates to:

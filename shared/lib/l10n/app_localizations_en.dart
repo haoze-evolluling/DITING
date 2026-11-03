@@ -8521,6 +8521,22 @@ class AppL10nEn extends AppL10n {
   String get providerMgmtPortRange => 'Port must be between 1 and 65535';
 
   @override
+  String get providerMgmtProbeTooltip => 'Test whether this provider works';
+
+  @override
+  String providerMgmtProbeOk(int ms) {
+    return 'Reachable · $ms ms';
+  }
+
+  @override
+  String providerMgmtProbeFailed(String message) {
+    return 'Unreachable: $message';
+  }
+
+  @override
+  String get providerMgmtProbeNoResponse => 'No response';
+
+  @override
   String get notifModeSingle => 'Single provider';
 
   @override
