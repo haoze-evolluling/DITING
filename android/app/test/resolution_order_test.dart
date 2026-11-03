@@ -5,6 +5,8 @@
 import 'dart:convert';
 
 import 'package:diting_android/pages/hub/resolution_mode_page.dart';
+import 'package:diting_android/state/primary_provider_providers.dart';
+import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -16,6 +18,7 @@ import 'support/app_host.dart';
 
 void main() {
   group('依次尝试排序', _ordering);
+  group('主用服务商与摘要顺序', _displayOrder);
 }
 
 MemoryLegacyPrefsStore _store(List<String> order) => MemoryLegacyPrefsStore({
@@ -54,16 +57,14 @@ void _ordering() {
   double topOf(WidgetTester tester, String name) =>
       tester.getTopLeft(find.text(name)).dy;
 
-  List<String> persistedOrder(MemoryLegacyPrefsStore store) =>
-      (jsonDecode(
-                store.read('dns_vpn_prefs', 'primary_backup_provider_ids')!
-                    as String,
-              )
-              as List)
-          .cast<String>();
+  List<String> persistedOrder(MemoryLegacyPrefsStore store) => (jsonDecode(
+    store.read('dns_vpn_prefs', 'primary_backup_provider_ids')! as String,
+  ) as List).cast<String>();
 
   Finder moveUpOf(String name) => find.descendant(
-    of: find.ancestor(of: find.text(name), matching: find.byType(ListItem)).last,
+    of: find
+        .ancestor(of: find.text(name), matching: find.byType(ListItem))
+        .last,
     matching: find.byTooltip('上移'),
   );
 
@@ -121,5 +122,45 @@ void _ordering() {
 
     expect(topOf(tester, '腾讯云 DNSPod'), lessThan(topOf(tester, '阿里云')));
     expect(topOf(tester, '阿里云'), lessThan(topOf(tester, 'Cloudflare')));
+  });
+}
+
+/// Cards and the status card must read the same order the engine follows instead of the catalog's
+/// preset order.
+void _displayOrder() {
+  ProviderContainer container({String workMode = 'normal'}) {
+    final dns = {
+      'dns_resolution_mode': 'primary_backup',
+      'preset_dns_service': 'DOH',
+      'primary_backup_provider_ids':
+          '["preset_dnspod_doh","preset_alidns_doh"]',
+    };
+    final store = MemoryLegacyPrefsStore({
+      // Server mode keeps its DNS keys in its own container.
+      'dns_vpn_prefs': workMode == 'dns' ? const {} : dns,
+      'diting_dns_mode_prefs': workMode == 'dns' ? dns : const {},
+      'diting_express_prefs': const {},
+      'diting_settings': {'app_work_mode': workMode},
+    });
+    final c = ProviderContainer(
+      overrides: [legacyPrefsStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(c.dispose);
+    return c;
+  }
+
+  test('多服务模式的主用服务商是排序首项', () {
+    final c = container(workMode: 'dns');
+    expect(c.read(primaryProviderProvider)?.id, 'preset_dnspod_doh');
+  });
+
+  test('竞速摘要按尝试顺序拼名字', () {
+    final c = container();
+    final summary = summaryOfProviders({
+      'preset_dnspod_doh',
+      'preset_alidns_doh',
+    }, c.read(dnsProviderCatalogProvider));
+
+    expect(summary.indexOf('腾讯云 DNSPod'), lessThan(summary.indexOf('阿里云')));
   });
 }

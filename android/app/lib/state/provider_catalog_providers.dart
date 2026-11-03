@@ -58,12 +58,11 @@ String providerLatencyLabel(MockProvider provider) => provider.latencyMs < 0
     ? currentL10n.providerNotTested
     : currentL10n.providerLatencyValue(provider.latencyMs);
 
-/// Names joined for the race summary; ids missing from the catalog are skipped.
+/// Names in the given order (the order the engine tries them); ids missing from the catalog are
+/// skipped.
 String summaryOfProviders(Set<String> ids, List<MockProvider> catalog) {
-  final names = [
-    for (final provider in catalog)
-      if (ids.contains(provider.id)) provider.name,
-  ];
+  final byId = {for (final provider in catalog) provider.id: provider};
+  final names = [for (final id in ids) ?byId[id]?.name];
   if (names.isEmpty) {
     return currentL10n.providerNoProviderSelected;
   }

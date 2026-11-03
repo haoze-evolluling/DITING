@@ -106,18 +106,19 @@ class ResolutionCard extends ConsumerWidget {
   }
 }
 
-/// One line per endpoint in use; multi mode lists providers in catalog order, so the order does
-/// not shuffle as providers are picked.
+/// One line per endpoint in use, in the order the engine tries them (primary first), so the card
+/// matches the resolution page; single mode has just one.
 final _endpointLinesProvider = Provider<List<String>>((ref) {
   final resolution = ref.watch(resolutionModeProvider);
   final selectedId = ref.watch(selectedProviderProvider);
   final raceIds = ref.watch(raceProvidersProvider);
   final catalog = ref.watch(dnsProviderCatalogProvider);
+  final byId = {for (final provider in catalog) provider.id: provider};
   final endpoints = resolution.isSingle
       ? [endpointOfProvider(selectedId, catalog)]
       : [
-          for (final provider in catalog)
-            if (raceIds.contains(provider.id))
+          for (final id in raceIds)
+            if (byId[id] case final provider?)
               '${provider.protocol.label} · ${provider.address}',
         ];
   return endpoints.isEmpty ? [currentL10n.resolutionNoProvider] : endpoints;
