@@ -1,12 +1,11 @@
 /// The log cards the home page spreads into its one board: the service's 24-hour summary and
-/// rankings over the query log it retained.
+/// rankings over the retained query log.
 ///
-/// The functional blueprint is the old desktop console, not Android: `OverviewView`'s
-/// `QueryStatsPanel.vue` defines what these figures mean. Nothing here is derived locally: the
-/// totals and rankings come from `/api/v1/querylog/stats`.
+/// The blueprint is the old desktop console (`OverviewView`'s `QueryStatsPanel.vue`), not Android.
+/// Nothing is derived locally: totals and rankings come from `/api/v1/querylog/stats`.
 ///
-/// Only readings live on the dashboard. The live stream, the searchable history table and the
-/// retention policy are settings and queries, so they live on `hub/query-log`.
+/// Only readings live on the dashboard. The live stream, searchable history and retention policy
+/// are settings/queries and live on `hub/query-log`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

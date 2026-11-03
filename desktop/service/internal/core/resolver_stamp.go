@@ -10,15 +10,12 @@ import (
 	"strings"
 )
 
-// DNS Stamps（sdns://）规范实现。
-//
-// 逐字节解析印章二进制，与 dnscrypt-proxy 的 go-dnsstamps 保持一致：
-//   - 首字节为协议标识
-//   - 紧随其后是 8 字节小端 props 位图
+// DNS Stamps（sdns://）规范实现，逐字节解析，与 dnscrypt-proxy 的 go-dnsstamps 一致：
+//   - 首字节为协议标识，紧随其后是 8 字节小端 props 位图
 //   - 字符串字段统一为 lp-string（1 字节长度 + 内容）
 //   - 指纹与引导 IP 使用 VLP（最高位 0x80 表示"还有下一项"）
 //
-// DNSCrypt 与 ODoH 印章在本项目中暂不支持，解析时会给出明确错误而非静默降级。
+// DNSCrypt 与 ODoH 印章暂不支持，解析时给出明确错误而非静默降级。
 
 const (
 	stampScheme = "sdns://"

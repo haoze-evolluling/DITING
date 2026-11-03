@@ -15,15 +15,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Desktop app root: exactly the Android theme, localization and scope assembly, over the shared
+/// Desktop app root: the Android theme, localization and scope assembly, over the shared
 /// six-branch shell ([createDesktopRouter]), without any Android startup work.
 ///
-/// Keep this in step with `DitingApp`: cached light/dark themes, localized delegates,
-/// `ThemeCrossFade`, system overlay, glass scopes, and [AppScopes] above the Navigator. Anything
-/// that only exists because the host is the web console belongs in `desktop/app/lib/data`.
+/// Keep in step with `DitingApp`: cached light/dark themes, localized delegates, `ThemeCrossFade`,
+/// system overlay, glass scopes, and [AppScopes] above the Navigator. Host-specific pieces belong
+/// in `desktop/app/lib/data`.
 ///
-/// The same bundle is also served to browsers by the LAN web console, so [DesktopAuthGate] sits above
-/// the router: it lets the desktop window through and asks a browser for the admin credential first.
+/// The same bundle is served to browsers, so [DesktopAuthGate] sits above the router: the desktop
+/// window passes through, a browser must authenticate first.
 class DesktopApp extends ConsumerStatefulWidget {
   const DesktopApp({super.key, this.initialLocation});
 

@@ -12,12 +12,11 @@ func NewClientMiddleware(resolver *core.ClientResolver) Middleware {
 
 // NewClientMiddlewareWithGroups 创建带客户端分组标记的中间件。
 //
-// 分组标记必须在流水线早期写入：缓存中间件依赖它做按组隔离的键，
-// 若注册位置晚于缓存，缓存键会退化为默认组，分组隔离随之失效。
+// 分组标记必须写入在流水线早期：缓存中间件靠它做按组隔离的键，注册晚于缓存会让键退化
+// 为默认组，隔离失效。
 //
-// groups 是**取值函数**而非解析器实例：分组配置热更新会整体替换解析器，
-// 而流水线在 DNS 启动时一次性装配、之后逐查询复用。按值捕获旧实例会让
-// 新增分组/成员在转发路径上永久不生效，直到监听器重启。
+// groups 是取值函数而非实例：分组配置热更新会整体替换解析器，而流水线只在 DNS 启动时
+// 装配一次。按值捕获旧实例会让新增分组/成员在转发路径上永久不生效，直到监听器重启。
 // 传 nil 表示不启用分组标记。
 func NewClientMiddlewareWithGroups(resolver *core.ClientResolver, groups func() *core.GroupResolver) Middleware {
 	return func(ctx *DNSContext, next func() error) error {

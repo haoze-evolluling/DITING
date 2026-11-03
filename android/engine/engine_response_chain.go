@@ -13,19 +13,17 @@ import (
 	"github.com/miekg/dns"
 )
 
-// checkResponseChain re-runs filtering rules against every CNAME target and
-// SVCB/HTTPS TargetName present in an upstream DNS answer.
+// checkResponseChain re-runs filtering rules against every CNAME target and SVCB/HTTPS
+// TargetName in an upstream answer.
 //
 // Semantics (aligned with AdGuard Home):
 //   - A blocking match anywhere in the chain blocks the whole response.
-//   - A whitelist ("__ALLOW__") hit only exempts that particular target;
-//     evaluation continues with the remaining chain entries.
-//   - Chain filtering is only active when the policy engine is active and has
-//     rules; otherwise responses pass through unchanged.
+//   - A whitelist ("__ALLOW__") hit only exempts that target; evaluation continues with the
+//     remaining entries.
+//   - Chain filtering only runs when the policy engine is active and has rules.
 //
-// The returned reason carries a "cname:"/"svcb:" prefix plus the hit domain
-// and the underlying rule source, e.g. "cname:tracker.example.com (filter_list)",
-// so query logs can attribute the block to the actual chain hop.
+// The reason carries a "cname:"/"svcb:" prefix plus the hit domain and rule source, e.g.
+// "cname:tracker.example.com (filter_list)", so logs attribute the block to the actual hop.
 func (e *Engine) checkResponseChain(msg *dns.Msg, appName string) (blocked bool, reason string) {
 	if e == nil || msg == nil || len(msg.Answer) == 0 {
 		return false, ""

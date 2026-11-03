@@ -14,13 +14,12 @@ func NewCacheMiddleware(cache *core.DNSCache, resolver core.Resolver) Middleware
 
 // NewCacheMiddlewareWithGroups 创建带客户端分组隔离的缓存中间件。
 //
-// groups 为取值函数（分组热更新会替换解析器实例，流水线只装配一次）；
-// 为 nil 时键退回默认组，行为与既有版本逐字一致。
-// 非 nil 时按分组隔离：不同分组可能被路由到不同上游、得到不同应答，
-// 共用缓存会让 A 组的结果被 B 组命中，分组的策略隔离随之失效。
+// groups 为取值函数（分组热更新会替换解析器实例，流水线只装配一次）；为 nil 时键退回
+// 默认组，行为与既有版本一致。非 nil 时按分组隔离：不同分组可能被路由到不同上游、得到
+// 不同应答，共用缓存会让 A 组的结果被 B 组命中，策略隔离随之失效。
 //
-// 注：分组判定本身由 client 中间件写入上下文，这里只消费上下文属性，
-// 参数保留是为了让调用方签名统一、并可在装配期做 nil 判定。
+// 分组判定由 client 中间件写入上下文，这里只消费属性；参数保留是为了统一调用方签名并
+// 在装配期做 nil 判定。
 func NewCacheMiddlewareWithGroups(cache *core.DNSCache, resolver core.Resolver, groups func() *core.GroupResolver) Middleware {
 	_ = groups
 	return func(ctx *DNSContext, next func() error) error {

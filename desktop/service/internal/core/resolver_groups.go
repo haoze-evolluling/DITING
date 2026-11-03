@@ -94,15 +94,12 @@ func (r *CoreResolver) HasGroupUpstreams(group string) bool {
 	return len(r.groupUpstreams[strings.TrimSpace(group)]) > 0
 }
 
-// ExchangeForGroup 使用该分组的专属上游解析结构化请求。
+// ExchangeForGroup 使用该分组的专属上游解析结构化请求。分组未配专属上游时返回错误，
+// 由调用方决定回落策略。
 //
-// 分组未配置专属上游时返回错误，由调用方决定回落策略——
-// 调用方不应在此处猜测意图。
-//
-// 与全局回退链的关系：分组专属上游**不会**跨到全局回退链。
-// 专属上游通常承载的是策略选择（如面向儿童的过滤解析器），
-// 在其不可用时改走默认上游会静默绕过该策略，与用户设置分组的本意相反。
-// 组内仍按当前调度模式在主备节点之间自动容灾。
+// 分组专属上游不会跨到全局回退链：它通常承载策略选择（如面向儿童的过滤解析器），
+// 不可用时改走默认上游会静默绕过该策略，与设置分组的本意相反。组内仍按当前调度模式
+// 在主备节点间自动容灾。
 func (r *CoreResolver) ExchangeForGroup(ctx context.Context, group string, req *dns.Msg) (*dns.Msg, error) {
 	if req == nil {
 		return nil, fmt.Errorf("nil dns request")

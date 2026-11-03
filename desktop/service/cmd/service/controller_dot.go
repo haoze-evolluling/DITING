@@ -86,15 +86,14 @@ func isValidEncPort(port int) bool {
 	return port > 0 && port <= 65535
 }
 
-// reloadDNSWithCurrentConfig 热重载加密监听器（调用方**不得**持有 p.mu）。
+// reloadDNSWithCurrentConfig 热重载加密监听器（调用方不得持有 p.mu）。
 //
-// 加密监听的配置（端口、证书、服务器名）改动时仅启停加密端口（853 / 443 等），
-// 无需重启 53 端口明文监听，避免产生端口绑定冲突或造成主解析链路瞬断。
+// 加密监听的配置（端口、证书、服务器名）改动时只启停加密端口（853/443 等），无需重启 53
+// 端口明文监听，避免端口绑定冲突或主解析链路瞬断。
 //
-// 这里必须先快照配置、释放 p.mu，再执行 ReloadEncrypted：后者会等待在途查询
-// 协程退出（最多 3s×3），而在途查询的每个中间件 getter 都要拿 p.mu。
-// 持锁调用即锁序倒置——配置线程等查询退出、查询线程等 p.mu，只能靠超时打破，
-// 表现为每次保存加密设置都让整条解析流水线停顿数秒。
+// 必须先快照配置、释放 p.mu，再执行 ReloadEncrypted：后者会等待在途查询协程退出（最多
+// 3s×3），而在途查询的每个中间件 getter 都要拿 p.mu。持锁调用即锁序倒置——配置线程等
+// 查询退出、查询线程等 p.mu，只能靠超时打破，每次保存加密设置都会让解析流水线停顿数秒。
 func (p *program) reloadDNSWithCurrentConfig() {
 	p.mu.Lock()
 	running := p.dnsRunning

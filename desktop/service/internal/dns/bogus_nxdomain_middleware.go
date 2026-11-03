@@ -9,16 +9,15 @@ import (
 
 // NewBogusNXDomainMiddleware 创建伪应答纠正中间件。
 //
-// 部分网络在域名不存在时不返回 NXDOMAIN，而是返回一个固定的导航/广告页地址，
-// 且 Rcode 为 NOERROR。客户端据此认为域名存在，解析结果还会被正常缓存。
-// 本中间件在响应侧识别这类地址并就地改写为 NXDOMAIN。
+// 部分网络在域名不存在时不返回 NXDOMAIN，而是返回固定的导航/广告页地址（Rcode 仍为
+// NOERROR），客户端据此认为域名存在，结果还会被正常缓存。本中间件在响应侧识别这类地址
+// 并就地改写为 NXDOMAIN。
 //
-// matcher 由调用方持有并支持热替换（传 func 而非实例）：配置更新后应立即生效，
-// 而中间件只在启动时装配一次。
+// matcher 由调用方持有并支持热替换（传 func 而非实例）：配置更新应立即生效，而中间件
+// 只在启动时装配一次。
 //
-// 注册位置必须是「缓存之后、回源之前」：
-// 放在缓存之前会让 NXDOMAIN 纠正无法被缓存，伪地址仍可能被写入缓存；
-// 放在回源之后则已写入的伪记录无法被撤回。
+// 必须注册在「缓存之后、回源之前」：放缓存之前则纠正不会被缓存，伪地址仍可能写入；
+// 放回源之后则已写入的伪记录无法撤回。
 func NewBogusNXDomainMiddleware(matcher func() *core.BogusNXDomainMatcher) Middleware {
 	return func(ctx *DNSContext, next func() error) error {
 		err := next()
