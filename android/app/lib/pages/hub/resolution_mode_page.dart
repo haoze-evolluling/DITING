@@ -197,7 +197,6 @@ class _ResolutionModeConfigPageState
     extends ConsumerState<ResolutionModeConfigPage> {
   /// Local filter; null follows the built-in protocol until the user picks one here.
   ProviderProtocol? _protocol;
-  late List<String> _order;
 
   ResolutionMode get _mode => switch (widget.modeId) {
     'smart' => ResolutionMode.smart,
@@ -208,26 +207,14 @@ class _ResolutionModeConfigPageState
 
   bool get _single => _mode == ResolutionMode.single;
 
-  @override
-  void initState() {
-    super.initState();
-    final race = ref.read(raceProvidersProvider);
-    final catalog = ref.read(dnsProviderCatalogProvider);
-    _order = [
-      for (final provider in catalog)
-        if (race.contains(provider.id)) provider.id,
-    ];
-  }
-
   void _select(MockProvider provider) {
     if (_single) {
       ref.read(selectedProviderProvider.notifier).select(provider.id);
       return;
     }
-    final notifier = ref.read(raceProvidersProvider.notifier);
     final before = ref.read(raceProvidersProvider);
-    final willRemove = before.contains(provider.id);
-    if (willRemove && before.length <= RaceProvidersNotifier.minCount) {
+    if (before.contains(provider.id) &&
+        before.length <= RaceProvidersNotifier.minCount) {
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
           content: Text(context.l10n.resolutionMinProviders),
@@ -236,29 +223,31 @@ class _ResolutionModeConfigPageState
       );
       return;
     }
-    notifier.toggle(provider.id);
-    final next = ref.read(raceProvidersProvider);
-    setState(() {
-      final nextOrder = [..._order];
-      if (next.contains(provider.id) && !nextOrder.contains(provider.id)) {
-        nextOrder.add(provider.id);
-      }
-      nextOrder.removeWhere((id) => !next.contains(id));
-      _order = nextOrder;
-    });
+    // The notifier owns the order: it appends new ids and keeps the stored sequence.
+    ref.read(raceProvidersProvider.notifier).toggle(provider.id);
   }
 
-  void _move(int index, int delta) {
+  /// Swaps the row with its neighbour inside [visibleIds] (the current protocol group), so the
+  /// arrows always move what the user sees and other protocols keep their stored slots.
+  void _move(List<String> visibleIds, String id, int delta) {
+    final index = visibleIds.indexOf(id);
     final target = index + delta;
-    if (target < 0 || target >= _order.length) {
+    if (index < 0 || target < 0 || target >= visibleIds.length) {
       return;
     }
-    setState(() {
-      final item = _order.removeAt(index);
-      _order.insert(target, item);
-    });
+    final other = visibleIds[target];
+    // Swap the two stored slots rather than the whole list, so the order lives in the notifier
+    // (which persists it) instead of a page-local copy that could drift.
+    final next = ref.read(raceProvidersProvider).toList();
+    final from = next.indexOf(id);
+    final to = next.indexOf(other);
+    if (from < 0 || to < 0) {
+      return;
+    }
+    next[from] = other;
+    next[to] = id;
     // Primary-to-backup order is persisted (the engine tries providers in list order).
-    ref.read(raceProvidersProvider.notifier).reorder(_order);
+    ref.read(raceProvidersProvider.notifier).reorder(next);
   }
 
   @override
@@ -275,16 +264,18 @@ class _ResolutionModeConfigPageState
     final valid = _single
         ? providers.any((provider) => provider.id == selectedId)
         : selectedCount >= RaceProvidersNotifier.minCount;
+    // Render the stored order: it is what the engine tries, so the first row is the primary.
     final ordered = [
-      for (final id in _order)
+      for (final id in raceIds)
         ...catalog.where(
           (provider) => provider.id == id && provider.protocol == protocol,
         ),
     ];
     final rest = [
       for (final provider in providers)
-        if (!_order.contains(provider.id)) provider,
+        if (!raceIds.contains(provider.id)) provider,
     ];
+    final orderedIds = [for (final provider in ordered) provider.id];
     return CommonScaffold(
       title: _mode.label(context.l10n),
       body: PageBody(
@@ -362,8 +353,8 @@ class _ResolutionModeConfigPageState
                       _mode == ResolutionMode.primaryBackup &&
                           raceIds.contains(provider.id)
                       ? _OrderButtons(
-                          onUp: () => _move(_order.indexOf(provider.id), -1),
-                          onDown: () => _move(_order.indexOf(provider.id), 1),
+                          onUp: () => _move(orderedIds, provider.id, -1),
+                          onDown: () => _move(orderedIds, provider.id, 1),
                         )
                       : null,
                   onTap: () => _select(provider),
