@@ -127,6 +127,12 @@ class CommonCard extends StatelessWidget {
   final bool isError;
   final void Function()? onPressed;
   final Widget child;
+
+  /// Inset between the card's edge and [child]. The card's own pressed state covers this
+  /// inset, but a tappable child (a `ListItem`, an `InkWell`) is laid out inside it, so its
+  /// highlight would stop short of the edge with square corners: give such a child the inset
+  /// itself and leave this null, so the row fills the card and the card's rounded shape clips
+  /// its highlight.
   final EdgeInsets? padding;
   final double? radius;
   final OutlinedBorder? shape;

@@ -167,85 +167,85 @@ class _PermissionRow extends ConsumerWidget {
     };
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
+      // The card owns the tap so the pressed state covers the whole rounded card; a tap
+      // surface nested inside the card's padding leaves square corners inside it.
       child: CommonCard(
         padding: const EdgeInsets.all(14),
-        child: InkWell(
-          onTap: granted ? null : () => _request(context, ref),
-          borderRadius: AppRadius.md,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 12,
-            children: [
-              IconBadge(
-                glyph: granted ? AppGlyphs.checkCircle : glyph,
-                size: 44,
-                glyphSize: 22,
-                color: granted
-                    ? colorScheme.primaryContainer
-                    : colorScheme.surfaceContainerHigh,
-                foregroundColor: granted
-                    ? colorScheme.onPrimaryContainer
-                    : colorScheme.primary,
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 4,
-                  children: [
-                    Row(
-                      spacing: 6,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            name,
-                            style: AppTextStyle.subheadline.of(
-                              context,
-                              emphasized: true,
-                            ),
+        inert: granted,
+        onPressed: granted ? null : () => _request(context, ref),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 12,
+          children: [
+            IconBadge(
+              glyph: granted ? AppGlyphs.checkCircle : glyph,
+              size: 44,
+              glyphSize: 22,
+              color: granted
+                  ? colorScheme.primaryContainer
+                  : colorScheme.surfaceContainerHigh,
+              foregroundColor: granted
+                  ? colorScheme.onPrimaryContainer
+                  : colorScheme.primary,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 4,
+                children: [
+                  Row(
+                    spacing: 6,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          name,
+                          style: AppTextStyle.subheadline.of(
+                            context,
+                            emphasized: true,
                           ),
                         ),
-                        TonalChip(
-                          label: level,
-                          color: required
-                              ? colorScheme.errorContainer
-                              : colorScheme.secondaryContainer,
-                          foregroundColor: required
-                              ? colorScheme.onErrorContainer
-                              : colorScheme.onSecondaryContainer,
-                          onPressed: null,
-                        ),
-                        TonalChip(
-                          label: statusLabel,
-                          color: granted
-                              ? colorScheme.secondaryContainer
-                              : colorScheme.surfaceContainerHighest,
-                          foregroundColor: granted
-                              ? colorScheme.onSecondaryContainer
-                              : colorScheme.onSurfaceVariant,
-                          onPressed: null,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      detail,
-                      style: AppTextStyle.caption1
-                          .of(context)
-                          .copyWith(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
+                      ),
+                      TonalChip(
+                        label: level,
+                        color: required
+                            ? colorScheme.errorContainer
+                            : colorScheme.secondaryContainer,
+                        foregroundColor: required
+                            ? colorScheme.onErrorContainer
+                            : colorScheme.onSecondaryContainer,
+                        onPressed: null,
+                      ),
+                      TonalChip(
+                        label: statusLabel,
+                        color: granted
+                            ? colorScheme.secondaryContainer
+                            : colorScheme.surfaceContainerHighest,
+                        foregroundColor: granted
+                            ? colorScheme.onSecondaryContainer
+                            : colorScheme.onSurfaceVariant,
+                        onPressed: null,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    detail,
+                    style: AppTextStyle.caption1
+                        .of(context)
+                        .copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            if (!granted)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: TonalButton(
+                  size: TonalButtonSize.bar,
+                  label: context.l10n.permGrant,
+                  onPressed: () => _request(context, ref),
                 ),
               ),
-              if (!granted)
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: TonalButton(
-                    size: TonalButtonSize.bar,
-                    label: context.l10n.permGrant,
-                    onPressed: () => _request(context, ref),
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );

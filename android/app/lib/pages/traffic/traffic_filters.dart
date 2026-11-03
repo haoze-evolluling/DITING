@@ -105,9 +105,12 @@ class _TrafficFilterBar extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
+          // The row has to fill the card: a card padding would inset the row's pressed
+          // state, leaving a square highlight inside the rounded card. The card's 12/4
+          // inset is therefore folded into the row's own content padding.
           child: CommonCard(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
             child: ListItem.toggle(
+              padding: const EdgeInsets.fromLTRB(28, 4, 20, 4),
               leading: const GlyphIcon(AppGlyphs.appsList, size: 20),
               title: Text(context.l10n.trafficHideSystemApps),
               subtitle: Text(context.l10n.trafficHideSystemAppsSubtitle),

@@ -355,6 +355,18 @@ void _observabilityPages() {
       expect(find.text('全部历史'), findsWidgets);
       expect(find.text('隐藏系统应用'), findsOneWidget);
       expect(find.byType(TextField), findsWidgets);
+
+      // The row carries the card's inset, so the tile fills the card: a card padding would
+      // leave the pressed state as a square patch inside the rounded card.
+      final title = find.text('隐藏系统应用');
+      expect(
+        tester.getRect(
+          find.ancestor(of: title, matching: find.byType(ListTile)),
+        ),
+        tester.getRect(
+          find.ancestor(of: title, matching: find.byType(FilledButton)),
+        ),
+      );
     });
   });
 }
