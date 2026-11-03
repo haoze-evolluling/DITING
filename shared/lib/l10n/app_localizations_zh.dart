@@ -5808,7 +5808,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get providerVisibilityNote =>
-      '关闭竞速模式时，首页解析服务下拉框仅显示这里选中的服务。当前正在使用的服务会始终保留。';
+      '关闭竞速模式时，首页解析服务下拉框仅显示这里选中的服务。当前正在使用的服务会始终保留。按住右侧手柄拖动可调整顺序，该顺序同时决定选择竞速服务商时的排列。';
 
   @override
   String providerVisibilityProtocol(String protocol) {

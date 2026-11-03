@@ -162,18 +162,8 @@ class _ProviderManagementPageState
               onChanged: (value) => setState(() => _protocol = value),
             ),
           ),
-          if (presets.isNotEmpty)
-            generateSection(
-              title: context.l10n.providerMgmtBuiltin,
-              items: [
-                for (final provider in presets)
-                  _ProviderRow(
-                    provider: provider,
-                    selected: provider.id == selectedId,
-                    onTap: () => _select(provider),
-                  ),
-              ],
-            ),
+          // Custom providers come first: they are the ones the user maintains here, the built-in
+          // list below only offers presets to switch to.
           if (customs.isNotEmpty)
             generateSection(
               title: context.l10n.providerMgmtCustom,
@@ -197,6 +187,18 @@ class _ProviderManagementPageState
                   subtitle: Text(context.l10n.providerMgmtEmptyCustomSubtitle),
                   leading: GlyphIcon(AppGlyphs.addCircle),
                 ),
+              ],
+            ),
+          if (presets.isNotEmpty)
+            generateSection(
+              title: context.l10n.providerMgmtBuiltin,
+              items: [
+                for (final provider in presets)
+                  _ProviderRow(
+                    provider: provider,
+                    selected: provider.id == selectedId,
+                    onTap: () => _select(provider),
+                  ),
               ],
             ),
           ListFooter(text: context.l10n.providerMgmtFooter),

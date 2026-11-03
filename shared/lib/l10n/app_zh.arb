@@ -3412,7 +3412,7 @@
   "recognitionBuilderIntro": "感谢每一位为谛听提出建议、帮助测试的共建者！名单按用户名称的字母顺序排列，中文名称按拼音排序。",
   "recognitionBuilderSection": "共建者",
   "providerVisibilityTitle": "服务显示",
-  "providerVisibilityNote": "关闭竞速模式时，首页解析服务下拉框仅显示这里选中的服务。当前正在使用的服务会始终保留。",
+  "providerVisibilityNote": "关闭竞速模式时，首页解析服务下拉框仅显示这里选中的服务。当前正在使用的服务会始终保留。按住右侧手柄拖动可调整顺序，该顺序同时决定选择竞速服务商时的排列。",
   "providerVisibilityProtocol": "{protocol} 服务",
   "@providerVisibilityProtocol": {
     "placeholders": {

@@ -9,7 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Provider visibility (upstream `HomeProviderVisibilityScreen`). With racing off the home provider
-/// dropdown only lists the providers selected here; the one in use always stays visible.
+/// dropdown only lists the providers selected here; the one in use always stays visible. The rows
+/// also carry the shared display order, which the provider picker uses for both modes.
 class ProviderVisibilityPage extends ConsumerStatefulWidget {
   const ProviderVisibilityPage({super.key});
 
@@ -89,6 +90,22 @@ class _ProviderVisibilityPageState
     );
   }
 
+  /// Moves one row inside its protocol group and writes the group back into the shared order, so
+  /// the other protocols keep their slots.
+  void _reorder(List<MockProvider> group, int oldIndex, int newIndex) {
+    final ordered = orderedProviders(
+      ref.read(dnsProviderCatalogProvider),
+      ref.read(legacySettingsProvider).providerDisplayOrderIds,
+    );
+    final next = reorderProviderIds(
+      order: [for (final provider in ordered) provider.id],
+      groupIds: [for (final provider in group) provider.id],
+      oldIndex: oldIndex,
+      newIndex: newIndex,
+    );
+    ref.writeSettings((settings) => settings.setProviderDisplayOrderIds(next));
+  }
+
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
@@ -105,56 +122,124 @@ class _ProviderVisibilityPageState
   }
 
   Widget _protocolSection(ProviderProtocol protocol) {
-    final providers = ref
-        .watch(dnsProviderCatalogProvider)
-        .where((provider) => provider.protocol == protocol)
-        .toList(growable: false);
     final settings = ref.watch(legacySettingsProvider);
+    final providers =
+        orderedProviders(
+              ref.watch(dnsProviderCatalogProvider),
+              settings.providerDisplayOrderIds,
+            )
+            .where((provider) => provider.protocol == protocol)
+            .toList(growable: false);
     final selectedCount = providers
         .where((provider) => _visible(settings, protocol, provider))
         .length;
     final protocolVisible = settings.homeVisibleProtocols.contains(
       protocol.name.toUpperCase(),
     );
-    return generateSection(
-      title: context.l10n.providerVisibilityProtocol(protocol.label),
-      items: [
-        ListItem(
-          leading: GlyphIcon(
-            protocolVisible ? AppGlyphs.checkCircle : AppGlyphs.removeCircle,
-            size: 20,
-          ),
-          title: Text(context.l10n.providerVisibilityAll(protocol.label)),
-          subtitle: Text(
-            !protocolVisible
-                ? context.l10n.providerVisibilityNone
-                : selectedCount == providers.length
-                ? context.l10n.providerVisibilityAllOn
-                : context.l10n.providerVisibilityCount('$selectedCount'),
-          ),
-          trailing: CommonCheckBox(
-            value: protocolVisible && selectedCount > 0,
-            onChanged: (_) => _setProtocol(protocol, !protocolVisible),
-          ),
-          onTap: () => _setProtocol(protocol, !protocolVisible),
+    final allRow = ListItem(
+      leading: GlyphIcon(
+        protocolVisible ? AppGlyphs.checkCircle : AppGlyphs.removeCircle,
+        size: 20,
+      ),
+      title: Text(context.l10n.providerVisibilityAll(protocol.label)),
+      subtitle: Text(
+        !protocolVisible
+            ? context.l10n.providerVisibilityNone
+            : selectedCount == providers.length
+            ? context.l10n.providerVisibilityAllOn
+            : context.l10n.providerVisibilityCount('$selectedCount'),
+      ),
+      trailing: CommonCheckBox(
+        value: protocolVisible && selectedCount > 0,
+        onChanged: (_) => _setProtocol(protocol, !protocolVisible),
+      ),
+      onTap: () => _setProtocol(protocol, !protocolVisible),
+    );
+    return Column(
+      children: [
+        ListHeader(
+          title: context.l10n.providerVisibilityProtocol(protocol.label),
         ),
-        for (final provider in providers)
-          ListItem(
-            leading: GlyphIcon(
-              _visible(settings, protocol, provider)
-                  ? AppGlyphs.checkCircle
-                  : AppGlyphs.removeCircle,
-              size: 20,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ReorderableListView.builder(
+            // The page already scrolls; a nested scrollable would steal drag gestures.
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            proxyDecorator: commonProxyDecorator,
+            // The group switch shares the card but never takes part in the ordering.
+            header: ItemPositionProvider(
+              position: ItemPosition.start,
+              child: allRow,
             ),
-            title: Text(provider.name),
-            subtitle: Text(provider.address),
-            trailing: CommonCheckBox(
-              value: _visible(settings, protocol, provider),
-              onChanged: (_) => _toggleProvider(protocol, provider),
-            ),
-            onTap: () => _toggleProvider(protocol, provider),
+            itemCount: providers.length,
+            onReorderItem: (oldIndex, newIndex) =>
+                _reorder(providers, oldIndex, newIndex),
+            itemBuilder: (context, index) {
+              final provider = providers[index];
+              return ReorderableDelayedDragStartListener(
+                key: ValueKey(provider.id),
+                index: index,
+                child: ItemPositionProvider(
+                  position: ItemPosition.get(index, providers.length),
+                  child: _ProviderRow(
+                    provider: provider,
+                    visible: _visible(settings, protocol, provider),
+                    index: index,
+                    onToggle: () => _toggleProvider(protocol, provider),
+                  ),
+                ),
+              );
+            },
           ),
+        ),
       ],
+    );
+  }
+}
+
+/// One provider row: tap or checkbox toggles it, the trailing handle drags it into order.
+class _ProviderRow extends StatelessWidget {
+  const _ProviderRow({
+    required this.provider,
+    required this.visible,
+    required this.index,
+    required this.onToggle,
+  });
+
+  final MockProvider provider;
+  final bool visible;
+  final int index;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem(
+      leading: GlyphIcon(
+        visible ? AppGlyphs.checkCircle : AppGlyphs.removeCircle,
+        size: 20,
+      ),
+      title: Text(provider.name),
+      subtitle: Text(provider.address),
+      padding: const EdgeInsets.only(left: 16, right: 4),
+      onTap: onToggle,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CommonCheckBox(value: visible, onChanged: (_) => onToggle()),
+          ReorderableDragStartListener(
+            index: index,
+            child: const MouseRegion(
+              cursor: SystemMouseCursors.grab,
+              child: SizedBox.square(
+                dimension: kMinInteractiveDimension,
+                child: Center(child: GlyphIcon(AppGlyphs.dragHandle)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

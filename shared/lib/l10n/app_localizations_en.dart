@@ -6141,7 +6141,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get providerVisibilityNote =>
-      'With race mode off, the resolver picker on the home page only shows the providers selected here. The one currently in use is always kept.';
+      'With race mode off, the resolver picker on the home page only shows the providers selected here. The one currently in use is always kept. Drag the handle on the right to reorder; that order also sets how the race provider list is arranged.';
 
   @override
   String providerVisibilityProtocol(String protocol) {

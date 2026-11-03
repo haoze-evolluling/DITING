@@ -1764,7 +1764,7 @@
   "recognitionBuilderIntro": "Thanks to everyone who suggested ideas and helped test Diting! Names are sorted alphabetically, with Chinese names sorted by pinyin.",
   "recognitionBuilderSection": "Contributors",
   "providerVisibilityTitle": "Provider visibility",
-  "providerVisibilityNote": "With race mode off, the resolver picker on the home page only shows the providers selected here. The one currently in use is always kept.",
+  "providerVisibilityNote": "With race mode off, the resolver picker on the home page only shows the providers selected here. The one currently in use is always kept. Drag the handle on the right to reorder; that order also sets how the race provider list is arranged.",
   "providerVisibilityProtocol": "{protocol} providers",
   "providerVisibilityAll": "All {protocol} providers",
   "providerVisibilityNone": "Hide this provider type",

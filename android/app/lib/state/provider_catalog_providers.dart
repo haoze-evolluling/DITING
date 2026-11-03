@@ -135,11 +135,52 @@ final dnsProviderCatalogProvider =
       ProviderCatalogNotifier.new,
     );
 
+/// Providers in the arranged display order: ids without a slot keep catalog order behind the
+/// arranged ones. The order comes from the service display page and drives the provider picker.
+List<MockProvider> orderedProviders(
+  List<MockProvider> catalog,
+  List<String> order,
+) {
+  final byId = {for (final provider in catalog) provider.id: provider};
+  final arranged = [for (final id in order) ?byId[id]];
+  final arrangedIds = {for (final provider in arranged) provider.id};
+  return [
+    ...arranged,
+    for (final provider in catalog)
+      if (!arrangedIds.contains(provider.id)) provider,
+  ];
+}
+
+/// Moves one row inside its own group and returns the full order to persist; ids outside the group
+/// keep their slots, so the other protocols' arrangement is untouched.
+List<String> reorderProviderIds({
+  required List<String> order,
+  required List<String> groupIds,
+  required int oldIndex,
+  required int newIndex,
+}) {
+  final moved = [...groupIds];
+  // `onReorderItem` already accounts for the row removed at `oldIndex`.
+  moved.insert(newIndex, moved.removeAt(oldIndex));
+  final slots = [
+    for (var index = 0; index < order.length; index++)
+      if (groupIds.contains(order[index])) index,
+  ];
+  final next = [...order];
+  for (var index = 0; index < slots.length && index < moved.length; index++) {
+    next[slots[index]] = moved[index];
+  }
+  return next;
+}
+
 /// Providers the home picker may show: a protocol or per-provider switch hides entries, but never
 /// the selected one.
 final visibleProvidersProvider = Provider<List<MockProvider>>((ref) {
   final settings = ref.watch(legacySettingsProvider);
-  final catalog = ref.watch(dnsProviderCatalogProvider);
+  final catalog = orderedProviders(
+    ref.watch(dnsProviderCatalogProvider),
+    settings.providerDisplayOrderIds,
+  );
   final selectedId = ref.watch(selectedProviderProvider);
   final visibleProtocols = settings.homeVisibleProtocols;
   final hidden = settings.homeHiddenProviderIds;

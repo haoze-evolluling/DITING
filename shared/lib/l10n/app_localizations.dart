@@ -10698,7 +10698,7 @@ abstract class AppL10n {
   /// No description provided for @providerVisibilityNote.
   ///
   /// In zh, this message translates to:
-  /// **'关闭竞速模式时，首页解析服务下拉框仅显示这里选中的服务。当前正在使用的服务会始终保留。'**
+  /// **'关闭竞速模式时，首页解析服务下拉框仅显示这里选中的服务。当前正在使用的服务会始终保留。按住右侧手柄拖动可调整顺序，该顺序同时决定选择竞速服务商时的排列。'**
   String get providerVisibilityNote;
 
   /// No description provided for @providerVisibilityProtocol.

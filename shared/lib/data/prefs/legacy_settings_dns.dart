@@ -133,6 +133,17 @@ extension LegacyDnsSettings on LegacySettings {
     }
   }
 
+  /// Display order arranged on the service display page, shared by the provider picker and the
+  /// race selection lists. Empty means catalog order.
+  List<String> get providerDisplayOrderIds =>
+      _idList('provider_display_order_ids', fallback: const []);
+
+  void setProviderDisplayOrderIds(List<String> ids) => _store.putString(
+    dnsContainer,
+    'provider_display_order_ids',
+    jsonEncode(ids),
+  );
+
   /// Stored as sorted JSON arrays, like the legacy `writeStringSet`.
   Set<String> get homeVisibleProtocols =>
       _stringSet('home_visible_protocols') ?? const {'DNS', 'DOH', 'DOT'};
