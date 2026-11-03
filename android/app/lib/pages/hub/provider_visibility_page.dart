@@ -182,7 +182,9 @@ class _ProviderVisibilityPageState
                 key: ValueKey(provider.id),
                 index: index,
                 child: ItemPositionProvider(
-                  position: ItemPosition.get(index, providers.length),
+                  // The group switch above is this card's first row, so every provider row
+                  // starts one slot later; only the last one is rounded at the bottom.
+                  position: ItemPosition.get(index + 1, providers.length + 1),
                   child: _ProviderRow(
                     provider: provider,
                     visible: _visible(settings, protocol, provider),

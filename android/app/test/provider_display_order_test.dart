@@ -95,6 +95,35 @@ void _order() {
     );
   });
 
+  testWidgets('分组开关与服务商行共用一张卡片', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [legacyPrefsStoreProvider.overrideWithValue(store())],
+        child: const AppHost(child: ProviderVisibilityPage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // A rounded top on the first provider row would split the card at the group switch.
+    ItemPosition positionOf(String title) => tester
+        .widget<ItemPositionProvider>(
+          find
+              .ancestor(
+                of: find.text(title),
+                matching: find.byType(ItemPositionProvider),
+              )
+              .first,
+        )
+        .position;
+
+    expect(positionOf('全部 DNS 服务'), ItemPosition.start);
+    expect(positionOf('阿里云'), ItemPosition.middle);
+    expect(positionOf('Google'), ItemPosition.end);
+  });
+
   testWidgets('拖动行后写回顺序', (tester) async {
     final prefs = store();
     // Tall enough for the whole page: an off-screen row cannot receive the drag.
