@@ -110,7 +110,9 @@ DITING/
 
 ### 📱 Android（`android/app`）
 
-要求 Flutter 3.47+、JDK 11+、Android SDK；最低 Android 9.0（API 28），Release 产物架构为 `arm64-v8a`。
+要求 Flutter 3.50+（本机为 beta `3.50.0-0.3.pre`）、JDK 17+、Android SDK；最低 Android 9.0（API 28），Release 产物架构为 `arm64-v8a`。
+Gradle `9.5.0` / AGP `9.3.3` / 内置 Kotlin `2.4.21` 及 **Maven 镜像 init 脚本**（本机 Central 403，
+不装脚本构建会卡在依赖下载）见 [Android 构建环境](docs/development/android-build-environment.md)。
 隧道引擎 AAR 不入库，首次构建前先在 `android/engine` 执行 `pwsh -File build_aar.ps1`
 生成 `tunnel-arm64.aar`（模拟器或 debug 包用 `-Arch x64` / `-Arch all`）。
 
@@ -146,7 +148,7 @@ flutter test
 
 ### 🖥️ Flutter 桌面端（`desktop/app`）
 
-要求 Flutter 3.47+、Visual Studio「使用 C++ 的桌面开发」工作负载（`flutter doctor -v` 中
+要求 Flutter 3.50+、Visual Studio「使用 C++ 的桌面开发」工作负载（`flutter doctor -v` 中
 Visual Studio 一栏为 OK），并开启 Windows 开发者模式（`start ms-settings:developers`，
 插件符号链接需要）。入口 `lib/main.dart`，共享代码来自 `shared`。
 
