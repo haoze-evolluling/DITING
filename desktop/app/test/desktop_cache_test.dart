@@ -4,12 +4,7 @@
 // re-reads it, and a rejected write is reported instead of assumed.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_cache_models.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/pages/hub/desktop_cache_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_overview_cards.dart';
@@ -20,8 +15,8 @@ import 'package:diting_desktop/pages/hub/widgets/cache_persist_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/cache_snapshot_card.dart';
 import 'package:diting_desktop/widgets/masonry_grid.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
+import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -288,23 +283,7 @@ void main() {
   });
 
   testWidgets('功能中心入口打开缓存子页', (tester) async {
-    tester.view.physicalSize = const Size(1280, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(
-            FakeDesktopBackend().client(),
-          ),
-        ],
-        child: const DesktopApp(initialLocation: '/hub'),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await pumpDesktopPage(tester, path: Routes.hub);
     final l10n = tester.element(find.byType(DesktopFeatureHubPage)).l10n;
 
     await tapAt(tester, find.text(l10n.desktopHubCache));

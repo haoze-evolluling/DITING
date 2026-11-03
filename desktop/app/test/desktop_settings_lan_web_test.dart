@@ -2,11 +2,6 @@
 // `/web/status` decides the address, the firewall backend and the credential state.
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_desktop/app/desktop_app.dart';
-import 'package:diting_desktop/data/api/desktop_api_providers.dart';
-import 'package:diting_desktop/data/api/desktop_live_providers.dart';
 import 'package:diting_desktop/data/api/desktop_web_models.dart';
 import 'package:diting_desktop/pages/settings/desktop_lan_web_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
@@ -16,7 +11,6 @@ import 'package:diting_desktop/widgets/desktop_qr_code.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -266,22 +260,7 @@ void main() {
   });
 
   testWidgets('设置分支列出局域网控制台入口并可进入', (tester) async {
-    final fake = FakeDesktopBackend();
-    tester.view.physicalSize = const Size(1280, 900);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          legacyPrefsStoreProvider.overrideWithValue(MemoryLegacyPrefsStore()),
-          desktopPollingEnabledProvider.overrideWithValue(false),
-          desktopLiveEnabledProvider.overrideWithValue(false),
-          desktopApiClientProvider.overrideWithValue(fake.client()),
-        ],
-        child: const DesktopApp(initialLocation: Routes.hub),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await pumpDesktopPage(tester, path: Routes.hub);
     final l10n = tester.element(find.byType(DesktopFeatureHubPage)).l10n;
 
     await tapAt(tester, find.text(l10n.desktopLanWebPageTitle));
