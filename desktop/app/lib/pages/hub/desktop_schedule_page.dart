@@ -126,12 +126,6 @@ class _DesktopSchedulePageState extends ConsumerState<DesktopSchedulePage> {
                 const SizedBox.square(
                   dimension: 16,
                   child: CommonCircleLoading(),
-                )
-              else
-                DashboardIconButton(
-                  glyph: AppGlyphs.check,
-                  tooltip: l10n.desktopScheduleSave,
-                  onPressed: () => unawaited(_save(config)),
                 ),
             ],
           ),

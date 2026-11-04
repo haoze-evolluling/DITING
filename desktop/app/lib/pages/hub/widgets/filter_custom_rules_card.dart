@@ -95,12 +95,6 @@ class _CustomRulesEditorCardState extends ConsumerState<CustomRulesEditorCard> {
                 const SizedBox.square(
                   dimension: 16,
                   child: CommonCircleLoading(),
-                )
-              else
-                DashboardIconButton(
-                  glyph: AppGlyphs.check,
-                  tooltip: l10n.desktopFilterRulesSave,
-                  onPressed: state.loaded ? () => unawaited(_save()) : null,
                 ),
             ],
           ),
@@ -321,10 +315,7 @@ class _Unavailable extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: DashboardText.label(context),
         ),
-        FilledButton.tonal(
-          onPressed: onRetry,
-          child: Text(l10n.desktopRetry),
-        ),
+        FilledButton.tonal(onPressed: onRetry, child: Text(l10n.desktopRetry)),
       ],
     );
   }

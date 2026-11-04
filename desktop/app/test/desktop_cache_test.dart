@@ -219,7 +219,7 @@ void main() {
     await tester.ensureVisible(editor);
     await tester.enterText(editor, [r'\.local$', '', r'^time\.'].join('\n'));
     await tester.pumpAndSettle();
-    await tapAt(tester, find.byTooltip(l10n.desktopCacheExcludeSave));
+    await tapAt(tester, find.text(l10n.desktopCacheExcludeSave));
 
     final patterns =
         backend.cacheConfigUpdates.last['excludePatterns'] as List<Object?>;

@@ -89,12 +89,6 @@ class _FilterModeCardState extends ConsumerState<FilterModeCard> {
                 const SizedBox.square(
                   dimension: 16,
                   child: CommonCircleLoading(),
-                )
-              else
-                DashboardIconButton(
-                  glyph: AppGlyphs.check,
-                  tooltip: l10n.desktopFilterModeSave,
-                  onPressed: _save,
                 ),
             ],
           ),

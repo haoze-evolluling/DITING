@@ -33,7 +33,11 @@ void main() {
   final skip = !screenshotsEnabled;
 
   group('桌面', () {
-    Widget app({String? location, Map<String, Object?>? settings}) {
+    Widget app({
+      String? location,
+      Map<String, Object?>? settings,
+      FakeDesktopBackend? backend,
+    }) {
       return ProviderScope(
         overrides: [
           legacyPrefsStoreProvider.overrideWithValue(
@@ -44,7 +48,7 @@ void main() {
           desktopPollingEnabledProvider.overrideWithValue(false),
           desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(
-            FakeDesktopBackend().client(),
+            (backend ?? FakeDesktopBackend()).client(),
           ),
         ],
         child: DesktopApp(initialLocation: location),
@@ -158,6 +162,18 @@ void main() {
           name: 'desktop-home-single-wide',
           app: app(),
           size: const Size(1150, 900),
+          platform: TargetPlatform.windows,
+        ),
+      );
+    }, skip: skip);
+
+    testWidgets('桌面服务连不上', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-home-offline',
+          app: app(backend: FakeDesktopBackend(statusCode: 503)),
+          size: window,
           platform: TargetPlatform.windows,
         ),
       );

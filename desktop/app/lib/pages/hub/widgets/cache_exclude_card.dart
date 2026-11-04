@@ -126,14 +126,6 @@ class _CacheExcludeCardState extends ConsumerState<CacheExcludeCard> {
                 const SizedBox.square(
                   dimension: 16,
                   child: CommonCircleLoading(),
-                )
-              else
-                DashboardIconButton(
-                  glyph: AppGlyphs.check,
-                  tooltip: l10n.desktopCacheExcludeSave,
-                  onPressed: config == null || !dirty
-                      ? null
-                      : () => unawaited(_save(parsed)),
                 ),
             ],
           ),
