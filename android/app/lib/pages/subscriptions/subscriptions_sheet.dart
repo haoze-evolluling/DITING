@@ -121,7 +121,9 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       child: InputDialog(
         title: context.l10n.subsNewGroupTitle,
         value: '',
-        validator: (value) => (value ?? '').trim().isEmpty ? context.l10n.subsGroupNameRequired : null,
+        validator: (value) => (value ?? '').trim().isEmpty
+            ? context.l10n.subsGroupNameRequired
+            : null,
       ),
     );
     if (name == null || !mounted) {
@@ -279,18 +281,26 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
               if (isLocal) ...[
                 if (isEdit)
                   ListItem(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     leading: const GlyphIcon(AppGlyphs.importFile, size: 20),
                     title: Text(_localName ?? context.l10n.subsLocalRuleFile),
                     subtitle: Text(context.l10n.subsLocalFileSubscription),
                   )
                 else
                   ListItem(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     leading: const GlyphIcon(AppGlyphs.importFile, size: 20),
                     title: Text(_localName ?? context.l10n.subsPickFile),
                     subtitle: Text(
-                      _localName == null ? context.l10n.subsLocalFileHint : context.l10n.subsLocalFileRepick,
+                      _localName == null
+                          ? context.l10n.subsLocalFileHint
+                          : context.l10n.subsLocalFileRepick,
                     ),
                     trailing: TonalButton(
                       size: TonalButtonSize.compact,
@@ -301,7 +311,10 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                     ),
                     onTap: _picking ? null : _pickFile,
                   ),
-                _SheetField(label: context.l10n.subsNameOptional, child: _nameField(context.l10n.subsNameEmptyFileName)),
+                _SheetField(
+                  label: context.l10n.subsNameOptional,
+                  child: _nameField(context.l10n.subsNameEmptyFileName),
+                ),
               ] else ...[
                 _SheetField(
                   label: context.l10n.subsUrl,
@@ -326,17 +339,32 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                     ),
                   ),
                 ),
-                _SheetField(label: context.l10n.subsNameOptional, child: _nameField(context.l10n.subsNameEmptyUrlTail)),
+                _SheetField(
+                  label: context.l10n.subsNameOptional,
+                  child: _nameField(context.l10n.subsNameEmptyUrlTail),
+                ),
               ],
               if (_formError case final message?)
-                InlineNotice(
-                  message: message,
-                  glyph: AppGlyphs.error,
-                  color: context.colorScheme.errorContainer,
-                  foregroundColor: context.colorScheme.onErrorContainer,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: InlineNotice(
+                    message: message,
+                    glyph: AppGlyphs.error,
+                    color: context.colorScheme.errorContainer,
+                    foregroundColor: context.colorScheme.onErrorContainer,
+                  ),
                 ),
               if (_localWarning case final warning?)
-                InlineNotice(message: warning),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: InlineNotice(message: warning),
+                ),
             ],
           ),
           if (!isLocal)
@@ -349,7 +377,10 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
             title: context.l10n.subsRuleType,
             children: [
               ListItem<SubscriptionKind>.options(
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 title: Text(context.l10n.subsKindLabel),
                 subtitle: Text(
                   _kind == SubscriptionKind.hosts
@@ -420,7 +451,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         footer: context.l10n.subsMirrorTemplateFooter,
         children: [
           ListItem(
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: const GlyphIcon(AppGlyphs.layers, size: 20),
             title: Text(context.l10n.subsAddMirrorTemplate),
             subtitle: Text(context.l10n.subsAddMirrorTemplateSubtitle),
@@ -435,7 +466,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       footer: context.l10n.subsMirrorFooter,
       children: [
         ListItem.toggle(
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading: const GlyphIcon(AppGlyphs.bolt, size: 20),
           title: Text(context.l10n.subsUseMirrorTemplate),
           subtitle: Text(context.l10n.subsUseMirrorTemplateSubtitle),
@@ -451,7 +482,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         ),
         if (_useMirror) ...[
           ListItem<MirrorTemplateRecord>.options(
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             title: Text(context.l10n.subsMirrorTemplate),
             subtitle: selected == null
                 ? null
@@ -470,7 +501,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
           ),
           if (preview != null) _PreviewBox(url: preview),
           ListItem.toggle(
-            padding: EdgeInsets.zero,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: const GlyphIcon(AppGlyphs.swap, size: 20),
             title: Text(context.l10n.subsMirrorFallback),
             subtitle: Text(context.l10n.subsMirrorFallbackSubtitle),
