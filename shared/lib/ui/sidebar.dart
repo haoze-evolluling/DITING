@@ -17,7 +17,8 @@ import 'package:material_ui/material_ui.dart';
 const _compactWidth = 48.0;
 const _expandedWidth = 220.0;
 const _itemSize = 40.0;
-const _itemGap = 4.0;
+const _rowInset = 8.0;
+const _itemGap = 6.0;
 const _toggleGap = 8.0;
 const _verticalInset = 4.0;
 const _maxSideInset = 12.0;
@@ -145,18 +146,29 @@ class _NavigationSidebarState extends State<NavigationSidebar>
         );
       },
       child: SafeArea(
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(end: widget.expanded ? 1.0 : 0.0),
-          duration: _expandDuration,
-          curve: Easing.standard,
-          builder: (context, progress, _) => _SidebarPane(
-            progress: progress,
-            windowControls: widget.windowControls,
-            expanded: widget.expanded,
-            destinations: widget.destinations,
-            selectedIndex: widget.selectedIndex,
-            onSelected: widget.onSelected,
-            onToggle: _handleToggle,
+        // The pane paints its own chrome surface and a hairline against the page: the page and
+        // the navigation share the same background color otherwise, so the sidebar reads as loose
+        // text floating on the content instead of as a separate region.
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: context.colorScheme.chromeSurface,
+            border: BorderDirectional(
+              end: Divider.createBorderSide(context, width: 1),
+            ),
+          ),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(end: widget.expanded ? 1.0 : 0.0),
+            duration: _expandDuration,
+            curve: Easing.standard,
+            builder: (context, progress, _) => _SidebarPane(
+              progress: progress,
+              windowControls: widget.windowControls,
+              expanded: widget.expanded,
+              destinations: widget.destinations,
+              selectedIndex: widget.selectedIndex,
+              onSelected: widget.onSelected,
+              onToggle: _handleToggle,
+            ),
           ),
         ),
       ),
@@ -277,12 +289,15 @@ class _SidebarPane extends StatelessWidget {
     final fontSize = AppTextStyle.subheadline.size;
     final labelOpacity = ((progress - 0.4) / 0.6).clamp(0.0, 1.0);
     final compactWidth = math.max(_compactWidth, windowControls.width);
-    final sideInset = math.min(_maxSideInset, (compactWidth - _itemSize) / 2);
-    final itemWidth = compactWidth - sideInset * 2;
+    // The collapsed rail keeps the tight FlClash inset, but an open pane can afford a wider one:
+    // a pill that stops four pixels short of the divider reads as if it were pushed against it.
+    final railInset = math.min(_maxSideInset, (compactWidth - _itemSize) / 2);
+    final sideInset = lerpDouble(railInset, _rowInset, progress)!;
+    final itemWidth = compactWidth - railInset * 2;
     final iconInset = (itemWidth - _iconSize) / 2;
     final itemHeight =
         _itemSize + MediaQuery.textScalerOf(context).scale(fontSize) - fontSize;
-    final rowWidth = _expandedWidth - sideInset * 2;
+    final rowWidth = _expandedWidth - _rowInset * 2;
     final labelStyle = AppTextStyle.subheadline
         .of(context)
         .copyWith(color: colors.label);
@@ -340,7 +355,11 @@ class _SidebarPane extends StatelessWidget {
                               selected: index == selectedIndex,
                               width: rowWidth,
                               iconInset: iconInset,
-                              style: labelStyle,
+                              style: index == selectedIndex
+                                  ? labelStyle.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    )
+                                  : labelStyle,
                               labelOpacity: labelOpacity,
                             ),
                           ),

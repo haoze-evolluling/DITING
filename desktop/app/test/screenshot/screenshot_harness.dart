@@ -30,13 +30,20 @@ bool get screenshotsEnabled =>
 /// Family names must match `appFontFamilyFallback` for Windows plus the Material default family, so
 /// Latin text and Han text both resolve. Missing files are skipped: a screenshot with box glyphs is
 /// still useful for layout, and the harness must not fail on a machine without these fonts.
+///
+/// The test engine resolves one face per family and has no per-character fallback, so the family
+/// Material typography asks for must carry Han glyphs itself; the CJK candidate therefore comes
+/// first. YaHei UI's Latin is derived from Segoe UI, so the substitution is close to what the
+/// window draws on a real Windows box.
 Future<void> loadHostFonts() async {
   const wanted = <String, List<String>>{
     // Material 2021 typography on Windows.
     'Segoe UI': [
-      r'C:\Windows\Fonts\segoeui.ttf',
-      '/System/Library/Fonts/SFNS.ttf',
-      '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+      r'C:\Windows\Fonts\msyh.ttc',
+      r'C:\Windows\Fonts\msyh.ttf',
+      r'C:\Windows\Fonts\simhei.ttf',
+      '/System/Library/Fonts/PingFang.ttc',
+      '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
     ],
     // Material 2021 typography on Android; the CJK face also carries Latin glyphs, which is what
     // the reference shots need because Android has no Han fallback family in `appFontFamilyFallback`.
@@ -75,11 +82,17 @@ class ScreenshotSpec {
     required this.app,
     this.size = const Size(1280, 800),
     this.platform,
+    this.prepare,
   });
 
   final String name;
   final Widget app;
   final Size size;
+
+  /// Drives the app into the state to capture: opening a dialog, expanding a panel. Runs after the
+  /// first settle, and the shot is taken after a second one, so the state has to come from a real
+  /// tap rather than from a widget this harness mounts on its own.
+  final Future<void> Function(WidgetTester tester)? prepare;
 
   /// Host platform the app should think it is running on: it drives the theme's font fallbacks and
   /// the page transition. Restored before the test ends, because the framework asserts that no
@@ -107,6 +120,11 @@ Future<void> captureScreenshot(
     await tester.pumpWidget(RepaintBoundary(key: boundary, child: spec.app));
     // A first frame settles the route transition, the card entrance animation and the dock springs.
     await tester.pumpAndSettle();
+
+    if (spec.prepare case final prepare?) {
+      await prepare(tester);
+      await tester.pumpAndSettle();
+    }
 
     await expectLater(
       find.byKey(boundary),

@@ -205,7 +205,7 @@ void main() {
   });
 
   testWidgets('中等宽度按双列瀑布流排布，卡片保持内容高度', (tester) async {
-    await pumpHome(tester, size: const Size(1000, 800));
+    await pumpHome(tester, size: const Size(1280, 900));
 
     final boxes = boardCards(tester);
     expect(boxes.length, greaterThanOrEqualTo(10));

@@ -54,7 +54,12 @@ Future<FakeDesktopBackend> pumpDesktopPage(
 
 /// Taps a control that may sit below the fold. The scaffold's bar floats over the page, so the
 /// element is centered rather than parked at y=0 where the bar would eat the tap.
+///
+/// The settle before [Scrollable.ensureVisible] matters: a caller that just typed into a field has
+/// a frame in flight, and measuring the old layout under-scrolls by exactly the height the field
+/// grew.
 Future<void> tapAt(WidgetTester tester, Finder finder) async {
+  await tester.pumpAndSettle();
   await Scrollable.ensureVisible(
     tester.element(finder),
     alignment: 0.5,

@@ -19,11 +19,13 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-const double _typeWidth = 168;
-const double _ttlWidth = 80;
-const double _actionsWidth = 84;
+const double _typeWidth = 140;
+const double _ttlWidth = 72;
+const double _actionsWidth = 76;
 
-/// Below this the TTL column is dropped; the name, the chips, the target and the actions still fit.
+/// Below this the table becomes a stacked row: domain, type chips and target on their own lines with
+/// the actions beside them. A 400-point card cannot carry five columns, and squeezing them cut the
+/// domain to three characters and the target to eight.
 const double _wideBreakpoint = 560;
 
 class RewriteRulesCard extends ConsumerStatefulWidget {
@@ -191,7 +193,7 @@ class _RewriteRulesCardState extends ConsumerState<RewriteRulesCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Header(wide: wide),
+        if (wide) const _Header(),
         for (final (index, rule) in rules.indexed) ...[
           if (index > 0 || wide) const _Divider(),
           _Row(
@@ -209,9 +211,7 @@ class _RewriteRulesCardState extends ConsumerState<RewriteRulesCard> {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.wide});
-
-  final bool wide;
+  const _Header();
 
   @override
   Widget build(BuildContext context) {
@@ -234,17 +234,16 @@ class _Header extends StatelessWidget {
             flex: 5,
             child: Text(l10n.desktopRewriteTarget, style: style),
           ),
-          if (wide)
-            SizedBox(
-              width: _ttlWidth,
-              child: Text(
-                l10n.desktopRewriteTtl,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: style,
-              ),
+          SizedBox(
+            width: _ttlWidth,
+            child: Text(
+              l10n.desktopRewriteTtl,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: style,
             ),
+          ),
           SizedBox(
             width: _actionsWidth,
             child: Text(
@@ -278,8 +277,47 @@ class _Row extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  List<Widget> _chips(BuildContext context) {
+    final l10n = context.l10n;
+    return [
+      if (rule.typeLabels.isEmpty)
+        DashboardChip(label: l10n.desktopRewriteChipEmpty)
+      else
+        for (final type in rule.typeLabels)
+          DashboardChip(
+            label: desktopRewriteTypeLabel(context, type),
+            tone: desktopRewriteTypeTone(type),
+          ),
+    ];
+  }
+
+  Widget _actions(BuildContext context) {
+    final l10n = context.l10n;
+    return SizedBox(
+      width: _actionsWidth,
+      height: 32,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        spacing: 4,
+        children: [
+          DashboardIconButton(
+            glyph: AppGlyphs.edit,
+            tooltip: l10n.desktopRewriteEdit,
+            onPressed: saving ? null : onEdit,
+          ),
+          DashboardIconButton(
+            glyph: AppGlyphs.delete,
+            tooltip: l10n.desktopRewriteDelete,
+            onPressed: saving ? null : onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!wide) return _stacked(context);
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
@@ -297,73 +335,66 @@ class _Row extends StatelessWidget {
           ),
           SizedBox(
             width: _typeWidth,
-            child: Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                if (rule.typeLabels.isEmpty)
-                  DashboardChip(label: l10n.desktopRewriteChipEmpty)
-                else
-                  for (final type in rule.typeLabels)
-                    DashboardChip(
-                      label: desktopRewriteTypeLabel(context, type),
-                      tone: desktopRewriteTypeTone(type),
-                    ),
-              ],
-            ),
+            child: Wrap(spacing: 4, runSpacing: 4, children: _chips(context)),
           ),
-          Expanded(
-            flex: 5,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 2,
-              children: [
-                _Target(rule: rule),
-                // The wide table has a TTL column; a narrow card keeps the lifetime under the
-                // target instead of dropping it.
-                if (!wide)
-                  Text(
-                    l10n.desktopRewriteSeconds(
-                      desktopRewriteRuleTtl(rule, config),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: DashboardText.label(context),
-                  ),
-              ],
-            ),
-          ),
-          if (wide)
-            SizedBox(
-              width: _ttlWidth,
-              child: Text(
-                l10n.desktopRewriteSeconds(desktopRewriteRuleTtl(rule, config)),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: DashboardText.label(context),
-              ),
-            ),
+          Expanded(flex: 5, child: _Target(rule: rule)),
           SizedBox(
-            width: _actionsWidth,
-            height: 32,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            width: _ttlWidth,
+            child: Text(
+              l10n.desktopRewriteSeconds(desktopRewriteRuleTtl(rule, config)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: DashboardText.label(context),
+            ),
+          ),
+          _actions(context),
+        ],
+      ),
+    );
+  }
+
+  /// Narrow card: the same facts as three short lines instead of five columns, so the domain and
+  /// the target keep their own width instead of both ellipsizing to a few characters.
+  Widget _stacked(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 8,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 4,
               children: [
-                DashboardIconButton(
-                  glyph: AppGlyphs.edit,
-                  tooltip: l10n.desktopRewriteEdit,
-                  onPressed: saving ? null : onEdit,
+                Text(
+                  rule.domain,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DashboardText.rowTitle(context),
                 ),
-                DashboardIconButton(
-                  glyph: AppGlyphs.delete,
-                  tooltip: l10n.desktopRewriteDelete,
-                  onPressed: saving ? null : onDelete,
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ..._chips(context),
+                    Text(
+                      l10n.desktopRewriteSeconds(
+                        desktopRewriteRuleTtl(rule, config),
+                      ),
+                      maxLines: 1,
+                      style: DashboardText.label(context),
+                    ),
+                  ],
                 ),
+                _Target(rule: rule),
               ],
             ),
           ),
+          _actions(context),
         ],
       ),
     );

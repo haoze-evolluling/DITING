@@ -276,7 +276,13 @@ extension AppShapeThemeExt on ThemeData {
         shape: const WidgetStatePropertyAll(AppShape.md),
       ),
     ),
-    inputDecorationTheme: inputDecorationTheme.copyWith(border: AppShape.input),
+    inputDecorationTheme: inputDecorationTheme.copyWith(
+      border: AppShape.input,
+      // A helper line explains the format of a field ("每行一个 IP") and is often a full sentence;
+      // at one line it was cut with an ellipsis on every form that used it.
+      helperMaxLines: 2,
+      errorMaxLines: 2,
+    ),
     floatingActionButtonTheme: floatingActionButtonTheme.copyWith(
       shape: AppShape.md,
     ),

@@ -12,6 +12,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/widgets/desktop_feedback.dart';
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -141,17 +142,17 @@ class _ServiceConnectionCardState extends ConsumerState<ServiceConnectionCard> {
                 ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppGap.xs),
           Text(
             l10n.desktopServiceConnectionBody,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.md),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: AppGap.sm,
+            runSpacing: AppGap.field,
             children: [
               SizedBox(
                 width: 240,
@@ -181,7 +182,7 @@ class _ServiceConnectionCardState extends ConsumerState<ServiceConnectionCard> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.field),
           TextFormField(
             controller: _token,
             obscureText: true,
@@ -193,16 +194,16 @@ class _ServiceConnectionCardState extends ConsumerState<ServiceConnectionCard> {
             onChanged: (_) => setState(() => _reachable = null),
           ),
           if (_invalid) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppGap.xs),
             Text(
               l10n.desktopServiceAddressInvalid,
               style: DashboardText.label(context, color: colorScheme.error),
             ),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.lg),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppGap.xs,
+            runSpacing: AppGap.xs,
             alignment: WrapAlignment.end,
             children: [
               TextButton(
@@ -215,7 +216,7 @@ class _ServiceConnectionCardState extends ConsumerState<ServiceConnectionCard> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppGap.sm),
           Text(
             l10n.desktopServiceConnectionFooter,
             style: DashboardText.label(context),

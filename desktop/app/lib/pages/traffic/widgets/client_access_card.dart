@@ -11,6 +11,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting_desktop/data/api/desktop_traffic_providers.dart';
 import 'package:diting_desktop/widgets/desktop_feedback.dart';
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -119,14 +120,14 @@ class _ClientAccessCardState extends ConsumerState<ClientAccessCard> {
                 ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppGap.xs),
           Text(
             l10n.desktopTrafficAccessBody,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.md),
           TextField(
             controller: _allowed,
             minLines: 3,
@@ -138,12 +139,12 @@ class _ClientAccessCardState extends ConsumerState<ClientAccessCard> {
             ),
             onChanged: (_) => setState(() => _dirty = true),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppGap.hint),
           Text(
             l10n.desktopTrafficAccessAllowedBody,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.field),
           TextField(
             controller: _blocked,
             minLines: 3,
@@ -155,12 +156,12 @@ class _ClientAccessCardState extends ConsumerState<ClientAccessCard> {
             ),
             onChanged: (_) => setState(() => _dirty = true),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppGap.hint),
           Text(
             l10n.desktopTrafficAccessBlockedBody,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.lg),
           Wrap(
             spacing: 8,
             runSpacing: 8,

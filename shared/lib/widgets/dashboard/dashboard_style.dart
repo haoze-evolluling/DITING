@@ -86,29 +86,45 @@ abstract final class DashboardShadows {
 }
 
 /// Corner radii. Larger than AppCorner: the dashboard card sits above every other surface.
+///
+/// Desktop cards are 24 rather than the mobile 34: a window shows several of them at once, and a
+/// card that round reads as a phone widget. The inner block steps down twice so a tile inside a
+/// card never looks like it shares the card's own corner.
 abstract final class DashboardCorner {
-  static const desktopCard = 32.0;
+  static const desktopCard = 24.0;
   static const mobileCard = 34.0;
-  static const block = 20.0;
+  static const block = 14.0;
   static const mobileBlock = 22.0;
   static const tab = 16.0;
   static const badge = 14.0;
 }
 
 /// Dashboard text roles. All figures use tabular digits so rows do not jitter.
+///
+/// A desktop card is read from a distance: its title has to sit clearly above the note under it,
+/// which is why the desktop pair is 15/13 rather than the phone's 15/12. The phone keeps its own
+/// sizes so its cards do not lose five lines to a taller note.
 abstract final class DashboardText {
-  static TextStyle cardTitle(BuildContext context) => AppTextStyle.footnote
-      .of(context, emphasized: true)
-      .copyWith(color: context.colorScheme.onSurfaceVariant);
+  static bool _desktop(BuildContext context) =>
+      DashboardDensityScope.of(context).isDesktop;
 
-  static TextStyle mobileCardTitle(BuildContext context) =>
-      AppTextStyle.subheadline.of(context, emphasized: true);
+  /// The card's own name. Full-strength ink: on a desktop card the title, the note under it and
+  /// the figures all used to sit in the same grey, which left the card without a first line.
+  static TextStyle cardTitle(BuildContext context) =>
+      AppTextStyle.subheadline.of(context, emphasized: true).copyWith(
+        color: context.colorScheme.onSurface,
+      );
 
-  static TextStyle label(BuildContext context, {Color? color}) => AppTextStyle
-      .caption1
-      .of(context)
-      .toTabular
-      .copyWith(color: color ?? context.colorScheme.onSurfaceVariant);
+  static TextStyle label(BuildContext context, {Color? color}) =>
+      (_desktop(context) ? AppTextStyle.footnote : AppTextStyle.caption1)
+          .of(context)
+          .toTabular
+          .copyWith(
+            color: color ?? context.colorScheme.onSurfaceVariant,
+            // A desktop note often wraps to two lines; 13 px text needs more air between them
+            // than the phone's 12 px single-line captions do.
+            height: _desktop(context) ? 1.45 : null,
+          );
 
   static TextStyle figure(
     BuildContext context,
@@ -132,12 +148,12 @@ abstract final class DashboardText {
 
 EdgeInsets dashboardCardPadding(DashboardDensity density) => switch (density) {
   DashboardDensity.standard => const EdgeInsets.symmetric(
-    horizontal: 22,
-    vertical: 20,
+    horizontal: 24,
+    vertical: 22,
   ),
   DashboardDensity.compact => const EdgeInsets.symmetric(
-    horizontal: 20,
-    vertical: 16,
+    horizontal: 22,
+    vertical: 20,
   ),
   DashboardDensity.mobile => const EdgeInsets.symmetric(
     horizontal: 20,
@@ -146,8 +162,8 @@ EdgeInsets dashboardCardPadding(DashboardDensity density) => switch (density) {
 };
 
 /// Vertical gap between dashboard cards; the gap comes from the enclosing
-/// Column(spacing:). 12 rather than less: the shadow drops 12px onto the next corner.
-const double dashboardCardGap = 12;
+/// Column(spacing:). Wide enough that two 24-radius corners never read as one shape.
+const double dashboardCardGap = 16;
 
 double dashboardCardRadius(DashboardDensity density) => density.isDesktop
     ? DashboardCorner.desktopCard

@@ -116,6 +116,26 @@ class DockInsetScope extends InheritedWidget {
   }
 }
 
+/// The horizontal inset a page keeps between the window edge and its content. The shells that draw
+/// a navigation region publish it so the page's toolbar can put its title on the same vertical line
+/// as the cards below it; a page without the scope keeps the Material default.
+class PageGutterScope extends InheritedWidget {
+  final double gutter;
+
+  const PageGutterScope({
+    super.key,
+    required this.gutter,
+    required super.child,
+  });
+
+  static double? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<PageGutterScope>()?.gutter;
+
+  @override
+  bool updateShouldNotify(PageGutterScope oldWidget) =>
+      gutter != oldWidget.gutter;
+}
+
 class ItemPositionProvider extends InheritedWidget {
   final ItemPosition position;
 

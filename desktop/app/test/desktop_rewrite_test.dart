@@ -359,13 +359,14 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('窄窗口收起 TTL 列', (tester) async {
-    await pumpRewrite(tester, size: const Size(720, 900));
+  testWidgets('窄窗口把表格换成三行堆叠，不裁掉域名', (tester) async {
+    await pumpRewrite(tester, size: const Size(620, 900));
     final l10n = l10nOf(tester);
 
-    expect(find.text(l10n.desktopRewriteDomain), findsOneWidget);
-    expect(find.text(l10n.desktopRewriteTtl), findsNothing);
+    // 窄卡片放不下五列，表头消失、域名整行显示，寿命并入类型徽标那一行。
+    expect(find.text(l10n.desktopRewriteDomain), findsNothing);
     expect(find.text('host.lan'), findsOneWidget);
+    expect(find.text(l10n.desktopRewriteSeconds(120)), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

@@ -329,10 +329,13 @@ class _BogusNxDomainCardState extends ConsumerState<BogusNxDomainCard> {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
+            // A wrap, not a row with a leading Spacer: two English labels plus their pill padding
+            // need more width than a two-column card carries, and a row paints them over the edge.
+            Wrap(
               spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
               children: [
-                const Spacer(),
                 if (_dirty)
                   TextButton(
                     onPressed: saving

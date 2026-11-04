@@ -194,6 +194,25 @@ class DesktopClientListCard extends ConsumerWidget {
   }
 }
 
+/// The inset a pill button keeps around its label; the action row cancels it so labels line up.
+const double _actionInset = 16;
+
+Widget _action(
+  BuildContext context, {
+  required VoidCallback? onPressed,
+  required String label,
+  Color? color,
+}) => TextButton(
+  onPressed: onPressed,
+  style: TextButton.styleFrom(
+    padding: EdgeInsets.zero,
+    minimumSize: const Size(0, 32),
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    foregroundColor: color,
+  ),
+  child: Text(label),
+);
+
 class _ClientRow extends StatelessWidget {
   const _ClientRow({
     required this.client,
@@ -290,34 +309,37 @@ class _ClientRow extends StatelessWidget {
               ),
             ],
           ),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              TextButton(
-                onPressed: saving ? null : onAlias,
-                child: Text(l10n.desktopTrafficAlias),
-              ),
-              TextButton(
-                onPressed: saving ? null : onAllowed,
-                child: Text(
-                  allowed
+          // The actions start on the row text's own line: a pill button pads its label by 16, so
+          // the row is shifted back by exactly that instead of leaving the three labels indented
+          // against the block's other lines.
+          Transform.translate(
+            offset: const Offset(-_actionInset, 0),
+            child: Wrap(
+              spacing: _actionInset * 2,
+              runSpacing: 6,
+              children: [
+                _action(
+                  context,
+                  onPressed: saving ? null : onAlias,
+                  label: l10n.desktopTrafficAlias,
+                ),
+                _action(
+                  context,
+                  onPressed: saving ? null : onAllowed,
+                  label: allowed
                       ? l10n.desktopTrafficAllowedRemove
                       : l10n.desktopTrafficAllowedAdd,
                 ),
-              ),
-              TextButton(
-                onPressed: saving ? null : onBlocked,
-                child: Text(
-                  blocked
+                _action(
+                  context,
+                  onPressed: saving ? null : onBlocked,
+                  label: blocked
                       ? l10n.desktopTrafficBlockedRemove
                       : l10n.desktopTrafficBlockedAdd,
-                  style: TextStyle(
-                    color: blocked ? context.colorScheme.error : null,
-                  ),
+                  color: blocked ? context.colorScheme.error : null,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

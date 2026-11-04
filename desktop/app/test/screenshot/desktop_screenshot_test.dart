@@ -133,7 +133,7 @@ void main() {
         ScreenshotSpec(
           name: 'desktop-home-two-column',
           app: app(),
-          size: const Size(1000, 800),
+          size: const Size(1280, 900),
           platform: TargetPlatform.windows,
         ),
       );
@@ -151,6 +151,77 @@ void main() {
       );
     }, skip: skip);
 
+    testWidgets('桌面首页单列宽窗', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-home-single-wide',
+          app: app(),
+          size: const Size(1150, 900),
+          platform: TargetPlatform.windows,
+        ),
+      );
+    }, skip: skip);
+
+    testWidgets('桌面首页全页', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-home-full',
+          app: app(),
+          size: const Size(1280, 1800),
+          platform: TargetPlatform.windows,
+        ),
+      );
+    }, skip: skip);
+
+    // Dialogs are where the densest forms live, and a page shot never shows them. Each one is
+    // opened by the same tap a user makes, so the shot covers the real route into it.
+    testWidgets('桌面重写规则弹窗', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-dialog-rewrite',
+          app: app(location: '/hub/rewrite'),
+          size: window,
+          platform: TargetPlatform.windows,
+          prepare: (tester) async {
+            await tester.tap(find.text('添加重写规则').first);
+          },
+        ),
+      );
+    }, skip: skip);
+
+    testWidgets('桌面规则订阅弹窗', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-dialog-filter-list',
+          app: app(location: '/hub/filter-lists'),
+          size: window,
+          platform: TargetPlatform.windows,
+          prepare: (tester) async {
+            await tester.tap(find.byTooltip('添加规则库').first);
+          },
+        ),
+      );
+    }, skip: skip);
+
+    testWidgets('桌面修改密码弹窗', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-dialog-password',
+          app: app(location: '/hub/lan-web'),
+          size: window,
+          platform: TargetPlatform.windows,
+          prepare: (tester) async {
+            await tester.tap(find.text('修改管理员密码').first);
+          },
+        ),
+      );
+    }, skip: skip);
+
     testWidgets('桌面首页双列宽窗口', (tester) async {
       await captureScreenshot(
         tester,
@@ -163,9 +234,9 @@ void main() {
       );
     }, skip: skip);
 
-    // Every page at both sides of the 760 breakpoint. The 1000-wide window leaves a 764-wide
-    // content column after the sidebar, which is the tightest two-column board; 700 drops to one
-    // column. This is the layout contract the screenshots exist to catch.
+    // Every page at both sides of the two-column breakpoint. 1280 leaves a 1056-wide content
+    // column after the sidebar, which is the tightest two-column board; 700 drops to one column.
+    // This is the layout contract the screenshots exist to catch.
     const allPages = [
       '/',
       '/hub',
@@ -174,6 +245,8 @@ void main() {
       '/hub/cache',
       '/hub/rewrite',
       '/hub/dns64',
+      '/hub/adapters',
+      '/hub/lan-dns',
       '/hub/filter-lists',
       '/hub/filter-rules',
       '/hub/filter-config',
@@ -182,6 +255,8 @@ void main() {
       '/hub/privacy',
       '/hub/encrypted-dns',
       '/home/client-groups',
+      '/hub/client-access',
+      '/hub/query-log',
       '/hub/rule-test',
       '/hub/appearance',
       '/hub/service',
@@ -189,7 +264,7 @@ void main() {
     ];
     for (final location in allPages) {
       for (final (label, size) in [
-        ('two-column', const Size(1000, 800)),
+        ('two-column', const Size(1280, 900)),
         ('single', const Size(700, 800)),
       ]) {
         testWidgets('桌面布局 ${_slug(location)} $label', (tester) async {

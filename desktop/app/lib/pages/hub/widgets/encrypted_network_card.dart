@@ -12,6 +12,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_encrypted_models.dart';
 import 'package:diting_desktop/data/api/desktop_encrypted_providers.dart';
 import 'package:diting_desktop/widgets/desktop_feedback.dart';
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -164,17 +165,17 @@ class _EncryptedNetworkCardState extends ConsumerState<EncryptedNetworkCard> {
                 ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppGap.xs),
           Text(
             l10n.desktopEncryptedServerNameHint,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppGap.md),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: AppGap.sm,
+            runSpacing: AppGap.field,
             children: [
               _Field(
                 label: l10n.desktopEncryptedListenAddress,
@@ -215,7 +216,7 @@ class _EncryptedNetworkCardState extends ConsumerState<EncryptedNetworkCard> {
             ],
           ),
           if (_invalid) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppGap.xs),
             Text(
               l10n.desktopEncryptedPortInvalid,
               style: DashboardText.label(
@@ -224,10 +225,10 @@ class _EncryptedNetworkCardState extends ConsumerState<EncryptedNetworkCard> {
               ),
             ),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.lg),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppGap.xs,
+            runSpacing: AppGap.xs,
             alignment: WrapAlignment.end,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [

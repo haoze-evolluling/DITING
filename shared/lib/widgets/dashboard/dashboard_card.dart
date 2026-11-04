@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -117,13 +119,10 @@ class DashboardCardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mobile = !DashboardDensityScope.of(context).isDesktop;
     final colorScheme = context.colorScheme;
-    final style = mobile
-        ? DashboardText.mobileCardTitle(context)
-        : DashboardText.cardTitle(context);
-    return SizedBox(
-      height: height,
+    final style = DashboardText.cardTitle(context);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: height),
       child: Row(
         spacing: 8,
         children: [
@@ -133,36 +132,36 @@ class DashboardCardHeader extends StatelessWidget {
               size: glyphSize,
               color: colorScheme.onSurfaceVariant,
             ),
-          // The title sits in a left-anchored group, so it truncates on its own and the
-          // badge stays right after it. The trailing Expanded pushes [trailing] to the end.
+          // The title and its badges flow: a title is never cut to make room for a status
+          // chip, the chip moves under it instead. A badge carries a secondary fact, so it
+          // must not decide how much of the name the reader gets.
           Expanded(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Wrap(
               spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Flexible(
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: style,
-                  ),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: style,
                 ),
-                // A chip must be allowed to shrink: on a 390 px window the title's own
-                // minimum plus a fixed chip is wider than the header, and a chip that cannot
-                // ellipsize overflows the row instead of truncating.
-                for (final child in leading) Flexible(child: child),
+                ...leading,
               ],
             ),
           ),
-          ...trailing,
+          // A trailing control keeps the title row's own height instead of growing with a
+          // badge that wrapped: the switch stays a switch, and its overflow box still has a
+          // bounded box to center in.
+          for (final child in trailing)
+            SizedBox(height: height, child: Center(child: child)),
           if (chevron)
             GlyphIcon(
               AppGlyphs.chevronForward,
               size: 16,
               color: colorScheme.onSurfaceVariant,
-            ),
-        ],
+            ),        ],
       ),
     );
   }
@@ -271,11 +270,16 @@ class DashboardMetric extends StatelessWidget {
     required this.label,
     required this.value,
     this.color,
+    this.style = AppTextStyle.headline,
   });
 
   final String label;
   final String value;
   final Color? color;
+
+  /// The figure's role: [AppTextStyle.title2] for a card's headline number, the default
+  /// headline for the figures of a grid.
+  final AppTextStyle style;
 
   @override
   Widget build(BuildContext context) {
@@ -288,11 +292,7 @@ class DashboardMetric extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: DashboardText.figure(
-            context,
-            AppTextStyle.headline,
-            color: color,
-          ),
+          style: DashboardText.figure(context, style, color: color),
         ),
         Text(
           label,
@@ -301,6 +301,48 @@ class DashboardMetric extends StatelessWidget {
           style: DashboardText.label(context),
         ),
       ],
+    );
+  }
+}
+
+/// A grid of [DashboardMetric]s in equal-width cells.
+///
+/// Up to [maxColumns] per row, and never fewer than two when the text is scaled up: four figures
+/// side by side at 1.4x are ellipsized to `12,...`, which is worse than taking two rows.
+class DashboardMetricGrid extends StatelessWidget {
+  const DashboardMetricGrid({
+    super.key,
+    required this.metrics,
+    this.maxColumns = 4,
+    this.gap = 16,
+    this.runGap = 14,
+  });
+
+  final List<DashboardMetric> metrics;
+
+  /// Columns at the normal text size; a narrow card simply uses as many as there are metrics.
+  final int maxColumns;
+
+  final double gap;
+  final double runGap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = MediaQuery.textScalerOf(context).scale(1);
+    final columns = scale >= 1.2 ? math.min(2, maxColumns) : maxColumns;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final count = math.max(1, math.min(columns, metrics.length));
+        final cellWidth = (constraints.maxWidth - gap * (count - 1)) / count;
+        return Wrap(
+          spacing: gap,
+          runSpacing: runGap,
+          children: [
+            for (final metric in metrics)
+              SizedBox(width: cellWidth, child: metric),
+          ],
+        );
+      },
     );
   }
 }

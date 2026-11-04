@@ -5,6 +5,7 @@ library;
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_api_models.dart';
 import 'package:diting_desktop/pages/home/desktop_format.dart';
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -26,7 +27,7 @@ class DnsServiceCard extends StatelessWidget {
       semanticLabel: l10n.desktopDnsServiceTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        spacing: AppGap.sm,
         children: [
           DashboardCardHeader(
             glyph: AppGlyphs.dns,
@@ -39,50 +40,30 @@ class DnsServiceCard extends StatelessWidget {
               ),
             ],
           ),
-          Text(
-            listen.isEmpty ? l10n.statusNotListening : listen,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: DashboardText.figure(
-              context,
-              AppTextStyle.title2,
-              color: context.colorScheme.onSurface,
-            ),
+          DashboardMetric(
+            label: l10n.desktopListeningOn,
+            value: listen.isEmpty ? l10n.statusNotListening : listen,
+            color: context.colorScheme.onSurface,
+            style: AppTextStyle.title2,
           ),
-          Text(
-            l10n.desktopListeningOn,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: DashboardText.label(context),
-          ),
-          Row(
-            spacing: 16,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 3,
-                child: DashboardMetric(
-                  label: l10n.desktopLanAllowed,
-                  value: dns.allowLan
-                      ? l10n.commonEnabled
-                      : l10n.commonDisabled,
-                ),
+          DashboardMetricGrid(
+            maxColumns: 3,
+            metrics: [
+              DashboardMetric(
+                label: l10n.desktopLanAllowed,
+                value: dns.allowLan
+                    ? l10n.commonEnabled
+                    : l10n.commonDisabled,
               ),
-              Expanded(
-                flex: 2,
-                child: DashboardMetric(
-                  label: l10n.desktopTakeoverTitle,
-                  value: status.takeover.active
-                      ? l10n.desktopTakeoverOn
-                      : l10n.desktopTakeoverOff,
-                ),
+              DashboardMetric(
+                label: l10n.desktopTakeoverTitle,
+                value: status.takeover.active
+                    ? l10n.desktopTakeoverOn
+                    : l10n.desktopTakeoverOff,
               ),
-              Expanded(
-                flex: 2,
-                child: DashboardMetric(
-                  label: l10n.statusUptime,
-                  value: desktopUptime(status.uptime),
-                ),
+              DashboardMetric(
+                label: l10n.statusUptime,
+                value: desktopUptime(status.uptime),
               ),
             ],
           ),
@@ -106,7 +87,7 @@ class QueryMetricsCard extends StatelessWidget {
       semanticLabel: l10n.desktopQueriesTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        spacing: AppGap.sm,
         children: [
           DashboardCardHeader(
             glyph: AppGlyphs.dataUsage,
@@ -118,53 +99,31 @@ class QueryMetricsCard extends StatelessWidget {
               ),
             ],
           ),
-          Text(
-            dashboardCount(metrics.total),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: DashboardText.figure(
-              context,
-              AppTextStyle.title2,
-              color: context.colorScheme.onSurface,
-            ),
+          DashboardMetric(
+            label: l10n.desktopQueriesTotal,
+            value: dashboardCount(metrics.total),
+            color: context.colorScheme.onSurface,
+            style: AppTextStyle.title2,
           ),
-          Text(
-            l10n.desktopQueriesTotal,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: DashboardText.label(context),
-          ),
-          Row(
-            spacing: 16,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: DashboardMetric(
-                  label: l10n.desktopQueriesSuccess,
-                  value: dashboardCount(metrics.success),
-                  color: context.colorScheme.success,
-                ),
+          DashboardMetricGrid(
+            metrics: [
+              DashboardMetric(
+                label: l10n.desktopQueriesSuccess,
+                value: dashboardCount(metrics.success),
+                color: context.colorScheme.success,
               ),
-              Expanded(
-                child: DashboardMetric(
-                  label: l10n.desktopQueriesFailed,
-                  value: dashboardCount(metrics.failed),
-                  color: metrics.failed > 0
-                      ? context.colorScheme.warning
-                      : null,
-                ),
+              DashboardMetric(
+                label: l10n.desktopQueriesFailed,
+                value: dashboardCount(metrics.failed),
+                color: metrics.failed > 0 ? context.colorScheme.warning : null,
               ),
-              Expanded(
-                child: DashboardMetric(
-                  label: l10n.statusBlocked,
-                  value: dashboardCount(status.filter.blocked),
-                ),
+              DashboardMetric(
+                label: l10n.statusBlocked,
+                value: dashboardCount(status.filter.blocked),
               ),
-              Expanded(
-                child: DashboardMetric(
-                  label: l10n.statusAverageLatency,
-                  value: desktopLatency(metrics.averageLatencyMs),
-                ),
+              DashboardMetric(
+                label: l10n.statusAverageLatency,
+                value: desktopLatency(metrics.averageLatencyMs),
               ),
             ],
           ),
@@ -181,21 +140,8 @@ class _MetricGrid extends StatelessWidget {
   final List<DashboardMetric> metrics;
 
   @override
-  Widget build(BuildContext context) {
-    Widget row(List<DashboardMetric> row) => Row(
-      spacing: 16,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [for (final metric in row) Expanded(child: metric)],
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 8,
-      children: [
-        row(metrics.take(2).toList()),
-        row(metrics.skip(2).take(2).toList()),
-      ],
-    );
-  }
+  Widget build(BuildContext context) =>
+      DashboardMetricGrid(maxColumns: 2, metrics: metrics);
 }
 
 class CacheCard extends StatelessWidget {
@@ -211,7 +157,7 @@ class CacheCard extends StatelessWidget {
       semanticLabel: l10n.desktopCacheTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        spacing: AppGap.sm,
         children: [
           DashboardCardHeader(
             glyph: AppGlyphs.resources,
@@ -266,7 +212,7 @@ class FilterStatsCard extends StatelessWidget {
       semanticLabel: l10n.desktopFilterTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        spacing: AppGap.sm,
         children: [
           DashboardCardHeader(
             glyph: AppGlyphs.block,
@@ -323,7 +269,7 @@ class PerformanceCard extends StatelessWidget {
       semanticLabel: l10n.desktopPerformanceTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        spacing: AppGap.sm,
         children: [
           DashboardCardHeader(
             glyph: AppGlyphs.speed,
@@ -372,7 +318,7 @@ class RuntimeCard extends StatelessWidget {
       semanticLabel: l10n.desktopRuntimeTitle,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        spacing: AppGap.sm,
         children: [
           DashboardCardHeader(
             glyph: AppGlyphs.info,

@@ -106,7 +106,12 @@ extension CommonScaffoldStateAppBar on CommonScaffoldState {
                     ? null
                     : underField(searchLeading, _leadingUnderSearch),
                 // The leading slot already trails its button by a margin.
-                titleSpacing: leading == null ? null : 0,
+                //
+                // A page without a leading button starts its title at the shell's content gutter,
+                // so the title and the cards underneath share one left edge.
+                titleSpacing: leading == null
+                    ? PageGutterScope.of(context)
+                    : 0,
                 title: hidesBar
                     ? null
                     : underField(

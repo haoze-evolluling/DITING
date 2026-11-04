@@ -7,7 +7,9 @@
 /// tabs into three, and a dock built from the mobile preference would light up the wrong branch.
 library;
 
+import 'package:diting_desktop/widgets/desktop_card_board.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
 import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:go_router/go_router.dart';
@@ -28,6 +30,12 @@ import 'package:material_ui/material_ui.dart';
 class DesktopShell extends StatefulWidget {
   const DesktopShell({super.key, required this.navigationShell});
 
+  /// Widest column of page content, toolbar included. Beyond this the page stops growing and
+  /// centers, so a maximized window on a large monitor keeps a readable measure instead of
+  /// stretching every card across the screen. The toolbar is inside the same column as the cards,
+  /// so the title never drifts away from the board's left edge.
+  static const maxContentWidth = 1320.0;
+
   final StatefulNavigationShell navigationShell;
 
   @override
@@ -35,9 +43,21 @@ class DesktopShell extends StatefulWidget {
 }
 
 class _DesktopShellState extends State<DesktopShell> {
-  /// Wide windows open the labels, as a desktop app should; the toggle is per session, not a
-  /// stored preference, because the window size already says which layout the user wants.
-  bool _expanded = true;
+  /// The window width below which the sidebar starts collapsed: at 800 the labels would take a
+  /// quarter of the window and leave the page one narrow column. A reader who toggles it gets what
+  /// they asked for until the window crosses the line again.
+  static const _autoExpandWidth = 880.0;
+
+  /// Whether the toggle has been used. Null means "follow the window width", which is what a
+  /// window that opens at 800 and is later widened expects, without storing anything.
+  bool? _expandedOverride;
+
+  bool _expandedFor(BuildContext context) =>
+      _expandedOverride ??
+      MediaQuery.sizeOf(context).width >= _autoExpandWidth;
+
+  void _toggleSidebar() =>
+      setState(() => _expandedOverride = !_expandedFor(context));
 
   void _select(int index) {
     final shell = widget.navigationShell;
@@ -91,15 +111,30 @@ class _DesktopShellState extends State<DesktopShell> {
                 ),
             ],
             selectedIndex: widget.navigationShell.currentIndex,
-            expanded: _expanded,
+            expanded: _expandedFor(context),
             onSelected: _select,
-            onToggle: () => setState(() => _expanded = !_expanded),
+            onToggle: _toggleSidebar,
           ),
           // No dock floats over the page here, so pages reserve only the plain bottom gap.
+          // The density scope covers the whole shell, not just the dashboard: every page's cards
+          // must round, pad and size their titles like desktop cards, and a page that forgot its
+          // own scope would silently fall back to the phone metrics.
           Expanded(
             child: DockInsetScope(
               inset: DockInsetScope.pageBottomGap,
-              child: widget.navigationShell,
+              child: PageGutterScope(
+                gutter: desktopPageGutter,
+                child: DashboardDensityScopeHost(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: DesktopShell.maxContentWidth,
+                      ),
+                      child: widget.navigationShell,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
