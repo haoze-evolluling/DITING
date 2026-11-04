@@ -150,37 +150,47 @@ class _ServiceConnectionCardState extends ConsumerState<ServiceConnectionCard> {
             style: DashboardText.label(context),
           ),
           const SizedBox(height: AppGap.md),
-          Wrap(
-            spacing: AppGap.sm,
-            runSpacing: AppGap.field,
-            children: [
-              SizedBox(
-                width: 240,
-                child: TextFormField(
-                  controller: _host,
-                  decoration: InputDecoration(
-                    labelText: l10n.desktopServiceHost,
-                    hintText: '127.0.0.1',
+          // Address and port split the row exactly; a fixed pair of widths left a ragged gap on
+          // the right of the card and stacked unevenly on a narrow one.
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final twoUp = constraints.maxWidth >= 360;
+              final width = twoUp
+                  ? (constraints.maxWidth - AppGap.sm) / 2
+                  : constraints.maxWidth;
+              return Wrap(
+                spacing: AppGap.sm,
+                runSpacing: AppGap.field,
+                children: [
+                  SizedBox(
+                    width: width,
+                    child: TextFormField(
+                      controller: _host,
+                      decoration: InputDecoration(
+                        labelText: l10n.desktopServiceHost,
+                        hintText: '127.0.0.1',
+                      ),
+                      style: AppTextStyle.callout.of(context).toTabular,
+                      onChanged: (_) => setState(() => _reachable = null),
+                    ),
                   ),
-                  style: AppTextStyle.callout.of(context).toTabular,
-                  onChanged: (_) => setState(() => _reachable = null),
-                ),
-              ),
-              SizedBox(
-                width: 150,
-                child: TextFormField(
-                  controller: _port,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: l10n.desktopServicePort,
-                    hintText: '15353',
+                  SizedBox(
+                    width: width,
+                    child: TextFormField(
+                      controller: _port,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        labelText: l10n.desktopServicePort,
+                        hintText: '15353',
+                      ),
+                      style: AppTextStyle.callout.of(context).toTabular,
+                      onChanged: (_) => setState(() => _reachable = null),
+                    ),
                   ),
-                  style: AppTextStyle.callout.of(context).toTabular,
-                  onChanged: (_) => setState(() => _reachable = null),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppGap.field),
           TextFormField(
