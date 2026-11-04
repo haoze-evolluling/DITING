@@ -12,10 +12,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Width of one metric cell; wide enough for `12,345` plus its label, narrow enough that five fit
-/// beside each other in a desktop window and two in a phone-sized one.
-const double _metricWidth = 128;
-
 class LogSummaryCard extends StatelessWidget {
   const LogSummaryCard({
     super.key,
@@ -80,15 +76,14 @@ class _Figures extends StatelessWidget {
         colorScheme.success,
       ),
     ];
-    return Wrap(
-      spacing: 12,
-      runSpacing: 16,
-      children: [
+    // Four equal cells per row: seven figures then sit as 4 + 3 instead of 3 + 3 + a lone
+    // last cell, and the grid narrows to two columns on its own when the text is scaled up.
+    return DashboardMetricGrid(
+      maxColumns: 4,
+      runGap: 16,
+      metrics: [
         for (final (label, value, color) in cells)
-          SizedBox(
-            width: _metricWidth,
-            child: DashboardMetric(label: label, value: value, color: color),
-          ),
+          DashboardMetric(label: label, value: value, color: color),
       ],
     );
   }

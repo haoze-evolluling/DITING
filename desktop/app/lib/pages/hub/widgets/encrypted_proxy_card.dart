@@ -8,6 +8,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_encrypted_models.dart';
 import 'package:diting_desktop/data/api/desktop_encrypted_providers.dart';
@@ -156,7 +157,7 @@ class _EncryptedProxyCardState extends ConsumerState<EncryptedProxyCard> {
             ),
           ],
           if (config.proxyEnabled) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppGap.md),
             Text(
               l10n.desktopEncryptedProxySources,
               style: DashboardText.rowTitle(context),
@@ -172,7 +173,7 @@ class _EncryptedProxyCardState extends ConsumerState<EncryptedProxyCard> {
               ),
               onChanged: (_) => setState(() => _dirty = true),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppGap.field),
             TextFormField(
               controller: _header,
               decoration: InputDecoration(

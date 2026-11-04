@@ -82,6 +82,17 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
             glyph: AppGlyphs.requests,
             title: l10n.desktopLiveTitle,
             leading: [_ConnectionChip(live: live)],
+            // Clearing the buffer is a card-level action, not one more control in the filter row:
+            // as a text button it wrapped onto a line of its own under the pickers.
+            trailing: [
+              DashboardIconButton(
+                glyph: AppGlyphs.delete,
+                tooltip: l10n.desktopLiveClear,
+                onPressed: live.entries.isEmpty
+                    ? null
+                    : ref.read(desktopLiveProvider.notifier).clear,
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           _controls(context, live),
@@ -147,12 +158,6 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
       TextButton(
         onPressed: ref.read(desktopLiveProvider.notifier).togglePaused,
         child: Text(live.paused ? l10n.desktopLiveResume : l10n.desktopLivePause),
-      ),
-      TextButton(
-        onPressed: live.entries.isEmpty
-            ? null
-            : ref.read(desktopLiveProvider.notifier).clear,
-        child: Text(l10n.desktopLiveClear),
       ),
     ];
     return LayoutBuilder(

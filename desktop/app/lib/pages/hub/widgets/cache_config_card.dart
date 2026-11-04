@@ -8,6 +8,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
 import 'package:diting_desktop/data/api/desktop_cache_models.dart';
@@ -134,10 +135,10 @@ class _CacheConfigCardState extends ConsumerState<CacheConfigCard> {
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppGap.field),
             Wrap(
-              spacing: 12,
-              runSpacing: 10,
+              spacing: AppGap.sm,
+              runSpacing: AppGap.field,
               children: [
                 _NumberField(
                   label: l10n.desktopCacheMaxTtl,

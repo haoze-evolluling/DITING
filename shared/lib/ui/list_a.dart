@@ -384,7 +384,11 @@ class ListHeader extends StatelessWidget {
                 title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: context.listCaptionStyle,
+                // Semibold at caption size: a section heading over a card of rows has to win
+                // against the row subtitles below it, which are two steps larger.
+                style: context.listCaptionStyle.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             ?trailing,

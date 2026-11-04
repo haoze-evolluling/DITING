@@ -10,6 +10,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_web_models.dart';
 import 'package:diting_desktop/data/api/desktop_web_providers.dart';
@@ -139,10 +140,10 @@ class _LanWebCardState extends ConsumerState<LanWebCard> {
               const SizedBox(height: 10),
               _ScanRow(url: status.webUrls.first),
             ],
-            const SizedBox(height: 10),
+            const SizedBox(height: AppGap.field),
             Wrap(
-              spacing: 10,
-              runSpacing: 8,
+              spacing: AppGap.sm,
+              runSpacing: AppGap.field,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 SizedBox(

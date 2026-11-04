@@ -7,6 +7,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_cache_models.dart';
 import 'package:diting_desktop/data/api/desktop_cache_providers.dart';
@@ -143,7 +144,7 @@ class _CacheExcludeCardState extends ConsumerState<CacheExcludeCard> {
             overflow: TextOverflow.ellipsis,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppGap.md),
           TextFormField(
             controller: _draft,
             minLines: 4,

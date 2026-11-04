@@ -431,7 +431,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('after.example.com'), findsOneWidget);
 
-    await tapAt(tester, find.text(l10n.desktopLiveClear));
+    // 清空是卡片头部的图标按钮（文字按钮在窄卡片上会被挤到单独一行）。
+    await tapAt(tester, find.byTooltip(l10n.desktopLiveClear));
     expect(find.text('kept.example.com'), findsNothing);
     expect(find.text(l10n.desktopLiveEmpty), findsOneWidget);
     expect(tester.takeException(), isNull);

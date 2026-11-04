@@ -30,6 +30,28 @@ desktop\build_installer.bat both       :: EXE + Linux deb（WSL 组装）
 依赖 Flutter 3.50+、Visual Studio「使用 C++ 的桌面开发」工作负载与 Windows 开发者模式
 （`start ms-settings:developers`，插件符号链接需要）。
 
+## 界面规范
+
+桌面窗口的留白与层次由三处常量决定，改页面时先看它们，不要就地写新数字：
+
+- `app/lib/widgets/desktop_spacing.dart`：4 基准的间距刻度（`AppGap`）。标题与说明、两块内容、
+  两行表单字段、字段与其说明各用哪一档，注释里有对应用法。
+- `app/lib/widgets/desktop_card_board.dart`：页边距 24、卡片间距 16、两列门槛 984（每列至少
+  460 才放得下带状态徽标与开关的标题行）、单卡片页面的最大宽度。页面一律走这张卡板，不要在卡板
+  之外单独放一张满宽卡片。
+- `shared/lib/widgets/dashboard/dashboard_style.dart`：卡片内边距与圆角、标题/说明字号。手机密度
+  保持原值，桌面档的卡片是 24 圆角 + 24/22 内边距、15 号标题、13/1.45 说明。
+
+截图是这类改动的验收方式：`app/test/screenshot/` 会渲染真实页面到 `build/screenshots/`，包含
+两列/单列、深色、窄窗、放大字号与三个弹窗：
+
+```bash
+cd desktop/app
+DITING_SCREENSHOTS=1 flutter test test/screenshot/desktop_screenshot_test.dart --update-goldens
+```
+
+改完间距或断点，先看截图再提交；只看代码判断不出「挤」还是「空」。
+
 ## 桌面窗口需要本机服务
 
 窗口只是客户端，数值全部来自 `diting-service.exe` 的本地 IPC（默认 `127.0.0.1:15353`）；服务未启动

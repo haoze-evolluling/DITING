@@ -138,32 +138,31 @@ class CacheBar extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final colors = DashboardColors.of(context);
     final fill = value.isNaN ? 0.0 : value.clamp(0, 1).toDouble();
+    final shape = AppShape.all(AppCorner.xs);
     return SizedBox(
       height: height,
-      child: LayoutBuilder(
-        builder: (context, constraints) => Stack(
-          fit: StackFit.expand,
-          children: [
-            DecoratedBox(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // The track has to sit one step above the block it is drawn on; `tone` is the block's
+          // own colour, which made the bar invisible inside a tile.
+          DecoratedBox(
+            decoration: ShapeDecoration(color: colors.track, shape: shape),
+          ),
+          // A fraction, not a fixed-width box: a box with no child collapses to zero height and
+          // the fill silently disappeared.
+          FractionallySizedBox(
+            alignment: AlignmentDirectional.centerStart,
+            widthFactor: fill,
+            heightFactor: 1,
+            child: DecoratedBox(
               decoration: ShapeDecoration(
-                color: colors.tone,
-                shape: AppShape.all(AppCorner.xs),
+                color: color ?? colorScheme.primary,
+                shape: shape,
               ),
             ),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: SizedBox(
-                width: constraints.maxWidth * fill,
-                child: DecoratedBox(
-                  decoration: ShapeDecoration(
-                    color: color ?? colorScheme.primary,
-                    shape: AppShape.all(AppCorner.xs),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

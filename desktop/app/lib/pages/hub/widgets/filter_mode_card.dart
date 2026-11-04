@@ -8,6 +8,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting_desktop/data/api/desktop_filter_config_providers.dart';
@@ -262,8 +263,8 @@ class _FilterBlockingParamsCardState
           ),
           const SizedBox(height: 12),
           Wrap(
-            spacing: 12,
-            runSpacing: 10,
+            spacing: AppGap.sm,
+            runSpacing: AppGap.field,
             children: [
               _AddressField(
                 label: l10n.desktopFilterModeBlockingIPv4,

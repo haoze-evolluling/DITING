@@ -96,6 +96,9 @@ class FilterMetric extends StatelessWidget {
       spacing: 2,
       children: [
         Row(
+          // The block sits in a Wrap on a narrow card: a Row sized to its parent would stretch
+          // every counter to the full width and stack the four of them one per line.
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           spacing: 3,

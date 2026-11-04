@@ -59,11 +59,14 @@ class LogRankingCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (items.isEmpty)
+            // Centred with room around it: a lone left-aligned "no data" line under a header
+            // reads as content that failed to load rather than as an empty list.
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
                 emptyLabel ?? context.l10n.commonNoData,
                 maxLines: 2,
+                textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: DashboardText.label(context),
               ),

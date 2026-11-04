@@ -8,6 +8,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
 import 'package:diting_desktop/data/api/desktop_api_models.dart';
@@ -69,10 +70,7 @@ class _LogConfigCardState extends ConsumerState<LogConfigCard> {
     setState(() => _invalid = false);
     unawaited(
       _save(
-        config.copyWith(
-          maxEntries: maxEntries,
-          retentionDays: retentionDays,
-        ),
+        config.copyWith(maxEntries: maxEntries, retentionDays: retentionDays),
       ),
     );
   }
@@ -142,37 +140,42 @@ class _LogConfigCardState extends ConsumerState<LogConfigCard> {
           onChanged: (value) => save(config.copyWith(enabled: value)),
         ),
         if (config.enabled) ...[
-          Wrap(
-            spacing: 12,
-            runSpacing: 10,
-            children: [
-              SizedBox(
-                width: _numberWidth,
-                child: TextFormField(
-                  initialValue: _maxEntries,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: l10n.desktopLogConfigMaxEntries,
+          // The column spaces its children by 10; a field needs more, because its floating label
+          // sits above the border and would otherwise touch the toggle's note.
+          Padding(
+            padding: const EdgeInsets.only(top: AppGap.xs),
+            child: Wrap(
+              spacing: AppGap.sm,
+              runSpacing: AppGap.field,
+              children: [
+                SizedBox(
+                  width: _numberWidth,
+                  child: TextFormField(
+                    initialValue: _maxEntries,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: l10n.desktopLogConfigMaxEntries,
+                    ),
+                    style: AppTextStyle.callout.of(context),
+                    onChanged: (value) => _maxEntries = value,
                   ),
-                  style: AppTextStyle.callout.of(context),
-                  onChanged: (value) => _maxEntries = value,
                 ),
-              ),
-              SizedBox(
-                width: _numberWidth,
-                child: TextFormField(
-                  initialValue: _retentionDays,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    labelText: l10n.desktopLogConfigRetentionDays,
+                SizedBox(
+                  width: _numberWidth,
+                  child: TextFormField(
+                    initialValue: _retentionDays,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      labelText: l10n.desktopLogConfigRetentionDays,
+                    ),
+                    style: AppTextStyle.callout.of(context),
+                    onChanged: (value) => _retentionDays = value,
                   ),
-                  style: AppTextStyle.callout.of(context),
-                  onChanged: (value) => _retentionDays = value,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           if (_invalid)
             Text(

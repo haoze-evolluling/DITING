@@ -7,6 +7,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting_desktop/data/api/desktop_reputation_providers.dart';
@@ -97,8 +98,8 @@ class _PrivacySafeSearchTtlCardState
           ),
           const SizedBox(height: 12),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: AppGap.sm,
+            runSpacing: AppGap.field,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               SizedBox(

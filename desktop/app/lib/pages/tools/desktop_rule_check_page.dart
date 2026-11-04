@@ -7,6 +7,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_rule_check_models.dart';
 import 'package:diting_desktop/data/api/desktop_rule_check_providers.dart';
@@ -145,7 +146,7 @@ class _InputCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: DashboardText.label(context),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.md),
           TextField(
             controller: domain,
             style: AppTextStyle.callout.of(context).toTabular,

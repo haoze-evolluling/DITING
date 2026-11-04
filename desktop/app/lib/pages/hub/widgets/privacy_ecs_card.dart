@@ -6,6 +6,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_providers.dart';
@@ -143,7 +144,7 @@ class _PrivacyEcsCardState extends ConsumerState<PrivacyEcsCard> {
                     ),
                   ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppGap.md),
           TextFormField(
             controller: _subnet,
             enabled: config.ecsEnabled && !saving,

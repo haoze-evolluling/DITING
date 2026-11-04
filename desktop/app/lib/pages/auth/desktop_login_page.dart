@@ -9,6 +9,7 @@ library;
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:diting_desktop/widgets/desktop_spacing.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_desktop/data/api/desktop_auth_providers.dart';
@@ -248,7 +249,7 @@ class _DesktopLoginPageState extends ConsumerState<DesktopLoginPage> {
                                   labelText: l10n.desktopLoginUserLabel,
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: AppGap.field),
                               TextField(
                                 controller: _password,
                                 enabled: !_busy && _lockout <= 0,
@@ -275,7 +276,7 @@ class _DesktopLoginPageState extends ConsumerState<DesktopLoginPage> {
                                 ),
                               ),
                               if (setup) ...[
-                                const SizedBox(height: 10),
+                                const SizedBox(height: AppGap.field),
                                 TextField(
                                   controller: _confirm,
                                   enabled: !_busy && _lockout <= 0,
@@ -288,7 +289,7 @@ class _DesktopLoginPageState extends ConsumerState<DesktopLoginPage> {
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 14),
+                              const SizedBox(height: AppGap.lg),
                               FilledButton(
                                 onPressed: _busy || _lockout > 0
                                     ? null
