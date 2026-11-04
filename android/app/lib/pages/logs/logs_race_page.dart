@@ -1,11 +1,13 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/pages/logs/logs_overview_card.dart';
+import 'package:diting_android/pages/logs/logs_row_marks.dart';
 import 'package:diting_android/pages/logs/logs_shared.dart';
 import 'package:diting_android/state/log_dashboard_providers.dart';
 import 'package:diting_android/state/log_race_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -45,10 +47,7 @@ class LogsRacePage extends ConsumerWidget {
           ),
           ..._statsSlivers(context, asyncStats, range),
           SliverToBoxAdapter(
-            child: ListFooter(
-              text:
-                  context.l10n.logsRaceFooter,
-            ),
+            child: ListFooter(text: context.l10n.logsRaceFooter),
           ),
         ],
       ),
@@ -84,6 +83,7 @@ class LogsRacePage extends ConsumerWidget {
         ),
       ];
     }
+    final l10n = context.l10n;
     final snapshot = asyncStats.requireValue;
     final summary = snapshot.summary;
     final colorScheme = context.colorScheme;
@@ -92,55 +92,80 @@ class LogsRacePage extends ConsumerWidget {
     return [
       SliverToBoxAdapter(
         child: generateSection(
-          title: context.l10n.logsOverview,
+          title: l10n.logsOverview,
           footer: hasData
-              ? context.l10n.logsRaceSummary(
-                  range.label(context.l10n),
+              ? l10n.logsRaceSummary(
+                  range.label(l10n),
                   countOf(summary.requests),
                 )
-              : context.l10n.logsRaceEmptyRange,
+              : l10n.logsRaceEmptyRange,
           items: [
-            StatStrip(
-              stats: [
-                StatItem(label: context.l10n.logsRaceRequests, value: countOf(summary.requests)),
-                StatItem(
-                  label: context.l10n.logsSuccess,
-                  value: hasData ? countOf(summary.successes) : '—',
-                  color: colorScheme.success,
+            LogsOverviewCard(
+              tiles: [
+                LogsOverviewTile(
+                  label: l10n.logsRaceRequests,
+                  value: countOf(summary.requests),
+                  glyph: AppGlyphs.shuffle,
+                  color: colorScheme.primary,
                 ),
-                StatItem(
-                  label: context.l10n.commonFailed,
+                LogsOverviewTile(
+                  label: l10n.logsSuccess,
+                  value: hasData ? countOf(summary.successes) : '—',
+                  glyph: AppGlyphs.check,
+                  color: hasData
+                      ? colorScheme.success
+                      : colorScheme.onSurfaceVariant,
+                ),
+                LogsOverviewTile(
+                  label: l10n.commonFailed,
                   value: hasData ? countOf(summary.failures) : '—',
+                  glyph: AppGlyphs.close,
                   color: hasData && summary.failures > 0
                       ? colorScheme.error
-                      : null,
+                      : colorScheme.onSurfaceVariant,
                 ),
-                StatItem(
-                  label: context.l10n.logsAverageElapsed,
+                LogsOverviewTile(
+                  label: l10n.logsAverageElapsed,
                   value: hasData ? millisOf(summary.averageLatencyMs) : '—',
+                  glyph: AppGlyphs.speed,
                 ),
               ],
+              // The success share only says something once a race ran; before that the bar
+              // would draw an empty track under a meaningless `—`.
+              ratio: hasData
+                  ? LogsRatioBar(
+                      label: l10n.logsSuccessRate,
+                      value: percentOf(summary.successes / summary.requests),
+                      segments: [
+                        (value: summary.successes, color: colorScheme.success),
+                        (value: summary.failures, color: colorScheme.error),
+                      ],
+                    )
+                  : null,
             ),
           ],
         ),
       ),
       if (snapshot.strategyStats.isNotEmpty)
         ...lazySectionSlivers(
-          title: context.l10n.logsStrategyOverview,
+          title: l10n.logsStrategyOverview,
           itemCount: snapshot.strategyStats.length,
-          footer:
-              context.l10n.logsStrategyFooter,
+          footer: l10n.logsStrategyFooter,
           itemBuilder: (context, index) {
             final item = snapshot.strategyStats[index];
             return ListItem(
-              leading: GlyphIcon(_strategyGlyph(item.strategy), size: 20),
-              title: Text(item.label),
-              subtitle: Text(
-                _strategySubtitle(item, context.l10n),
-                maxLines: 2,
+              leading: IconBadge(
+                glyph: _strategyGlyph(item.strategy),
+                color: SurfaceLevel.block.colorOf(colorScheme),
+                foregroundColor: colorScheme.primary,
+                shape: AppShape.circle,
+                size: 34,
+                glyphSize: 17,
               ),
+              title: Text(item.label),
+              subtitle: Text(_strategySubtitle(item, l10n), maxLines: 2),
               trailing: Text(
-                context.l10n.logTimes(countOf(item.requests)),
+                l10n.logTimes(countOf(item.requests)),
                 style: AppTextStyle.subheadline
                     .of(context)
                     .copyWith(color: colorScheme.onSurfaceVariant),
@@ -151,42 +176,50 @@ class LogsRacePage extends ConsumerWidget {
       if (snapshot.entries.isEmpty)
         SliverToBoxAdapter(
           child: generateSection(
-            title: context.l10n.logsWinnerProviders,
+            title: l10n.logsWinnerProviders,
             items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.shuffle),
-                title: Text(context.l10n.logsNoWinners),
-                subtitle: Text(context.l10n.logsNoWinnersBody),
+              LogsSectionEmpty(
+                glyph: AppGlyphs.shuffle,
+                title: l10n.logsNoWinners,
+                description: l10n.logsNoWinnersBody,
               ),
             ],
           ),
         )
       else
         ...lazySectionSlivers(
-          title: context.l10n.logsWinnerProviders,
+          title: l10n.logsWinnerProviders,
           itemCount: snapshot.entries.length,
-          footer: context.l10n.logsWinnerFooter,
+          footer: l10n.logsWinnerFooter,
           itemBuilder: (context, index) {
             final entry = snapshot.entries[index];
+            // The list is sorted by wins, so the first row is the yardstick for every bar.
+            final topWins = snapshot.entries.first.wins;
             return ListItem(
-              leading: SizedBox(
-                width: 24,
-                child: Text(
-                  '${index + 1}',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyle.headline.of(context, emphasized: true),
+              leading: LogsRankBadge(rank: index + 1),
+              title: Text(entry.name),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: 6,
+                  children: [
+                    Text(
+                      l10n.logsAverageWinLatency(
+                        millisOf(entry.averageLatencyMs),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    LogsRowBar(share: topWins <= 0 ? 0 : entry.wins / topWins),
+                  ],
                 ),
               ),
-              title: Text(entry.name),
-              subtitle: Text(
-              context.l10n.logsAverageWinLatency(
-                millisOf(entry.averageLatencyMs),
-              ),
-            ),
               trailing: Text(
-                context.l10n.logTimes(countOf(entry.wins)),
+                l10n.logTimes(countOf(entry.wins)),
                 style: AppTextStyle.subheadline
-                    .of(context)
+                    .of(context, emphasized: true)
+                    .toTabular
                     .copyWith(color: colorScheme.primary),
               ),
             );
@@ -194,24 +227,30 @@ class LogsRacePage extends ConsumerWidget {
         ),
       if (snapshot.smartSelections.isNotEmpty)
         ...lazySectionSlivers(
-          title: context.l10n.logsSmartPrimary,
+          title: l10n.logsSmartPrimary,
           itemCount: snapshot.smartSelections.length,
-          footer:
-              context.l10n.logsSmartPrimaryFooter,
+          footer: l10n.logsSmartPrimaryFooter,
           itemBuilder: (context, index) {
             final item = snapshot.smartSelections[index];
             return ListItem(
-              leading: const GlyphIcon(AppGlyphs.sparkle, size: 20),
+              leading: IconBadge(
+                glyph: AppGlyphs.sparkle,
+                color: SurfaceLevel.block.colorOf(colorScheme),
+                foregroundColor: colorScheme.primary,
+                shape: AppShape.circle,
+                size: 34,
+                glyphSize: 17,
+              ),
               title: Text(item.name),
               subtitle: Text(
-                context.l10n.logsPrimaryHit(
+                l10n.logsPrimaryHit(
                   percentOf(item.selectedSuccessRate),
                   millisOf(item.averageElapsedMs),
                 ),
                 maxLines: 2,
               ),
               trailing: Text(
-                context.l10n.logTimes(countOf(item.selectedCount)),
+                l10n.logTimes(countOf(item.selectedCount)),
                 style: AppTextStyle.subheadline
                     .of(context)
                     .copyWith(color: colorScheme.onSurfaceVariant),

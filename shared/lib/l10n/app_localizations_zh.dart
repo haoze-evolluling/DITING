@@ -3593,6 +3593,9 @@ class AppL10nZh extends AppL10n {
   String get logsAllRecordedRequests => '全部已记录请求';
 
   @override
+  String get logsBlockedRequests => '拦截请求';
+
+  @override
   String get logsAllRecordedFooter => 'DNS 与 HTTPS 日志合计，含通过、屏蔽和失败。';
 
   @override
@@ -3620,7 +3623,7 @@ class AppL10nZh extends AppL10n {
   String get logsLoadingRace => '正在读取竞速记录';
 
   @override
-  String logsRaceSummary(String count, String range) {
+  String logsRaceSummary(String range, String count) {
     return '$range内共 $count 次竞速解析。';
   }
 
@@ -3668,7 +3671,7 @@ class AppL10nZh extends AppL10n {
       '只有智能选择策略下才有意义；首选命中率统计「首选服务商就是胜出者」的比例，兜底救回的查询不计入。';
 
   @override
-  String logsPrimaryHit(String latency, String percent) {
+  String logsPrimaryHit(String percent, String latency) {
     return '首选命中 $percent · 平均首选耗时 $latency';
   }
 
@@ -3746,7 +3749,7 @@ class AppL10nZh extends AppL10n {
   String get logsLoadingBootstrap => '正在读取 Bootstrap 记录';
 
   @override
-  String logsBootstrapSummary(String count, String range) {
+  String logsBootstrapSummary(String range, String count) {
     return '$range内共 $count 次 Bootstrap 探测。';
   }
 
@@ -3868,10 +3871,10 @@ class AppL10nZh extends AppL10n {
 
   @override
   String logsBootstrapRow(
-    String failures,
     String ip,
-    String latency,
     String percent,
+    String latency,
+    String failures,
   ) {
     return '$ip · 成功 $percent · 平均 $latency$failures';
   }
@@ -3887,7 +3890,7 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String logsCacheRow(String count, int size, int ttl) {
+  String logsCacheRow(String ttl, int count, int size) {
     return '$ttl · 命中 $count 次 · $size B';
   }
 
@@ -3902,8 +3905,8 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String logsSubStatsRow(String count, String percent, String status) {
-    return '$status | 拦截 $count 次 | $percent';
+  String logsSubStatsRow(String status, String count) {
+    return '$status · 拦截 $count 次';
   }
 
   @override

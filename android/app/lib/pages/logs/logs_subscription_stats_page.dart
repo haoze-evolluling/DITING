@@ -1,10 +1,11 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/pages/logs/logs_overview_card.dart';
 import 'package:diting_android/pages/logs/logs_shared.dart';
 import 'package:diting_android/state/log_dashboard_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
+import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -44,10 +45,7 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
                     ),
                   ],
                 ),
-                ListFooter(
-                  text:
-                      context.l10n.logsSubStatsFooter,
-                ),
+                ListFooter(text: context.l10n.logsSubStatsFooter),
               ],
             ),
           ),
@@ -86,81 +84,120 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
       ];
     }
     final snapshot = asyncStats.requireValue;
+    final l10n = context.l10n;
     final colorScheme = context.colorScheme;
 
     if (snapshot.missingColumn) {
       return lazySectionSlivers(
-        title: context.l10n.logsBlockingSubs,
+        title: l10n.logsBlockingSubs,
         itemCount: 1,
         itemBuilder: (context, _) => ListItem(
           leading: GlyphIcon(AppGlyphs.warning, color: colorScheme.warning),
-          title: Text(context.l10n.logsMissingSubColumn),
-          subtitle: Text(
-            context.l10n.logsMissingSubColumnBody,
-          ),
+          title: Text(l10n.logsMissingSubColumn),
+          subtitle: Text(l10n.logsMissingSubColumnBody),
         ),
       );
     }
 
+    // The numerator is exactly the per-subscription hit total, so the page never shows two
+    // different block counts side by side.
+    final blocked = snapshot.items.fold(0, (sum, item) => sum + item.hits);
+    final hasData = snapshot.totalRequests > 0;
+    final passed = snapshot.totalRequests - blocked;
+
     return [
       SliverToBoxAdapter(
         child: generateSection(
-          title: context.l10n.logsOverview,
+          title: l10n.logsOverview,
           items: [
-            StatStrip(
-              stats: [
-                StatItem(
-                  label: context.l10n.logsAllRecordedRequests,
+            LogsOverviewCard(
+              tiles: [
+                LogsOverviewTile(
+                  label: l10n.logsAllRecordedRequests,
                   value: countOf(snapshot.totalRequests),
+                  glyph: AppGlyphs.requests,
+                  color: colorScheme.primary,
+                ),
+                LogsOverviewTile(
+                  label: l10n.logsBlockedRequests,
+                  value: countOf(blocked),
+                  glyph: AppGlyphs.block,
+                  color: hasData && blocked > 0
+                      ? colorScheme.error
+                      : colorScheme.onSurfaceVariant,
                 ),
               ],
+              ratio: hasData
+                  ? LogsRatioBar(
+                      label: l10n.trafficStructureBlockRate,
+                      value: percentOf(blocked / snapshot.totalRequests),
+                      segments: [
+                        (value: blocked, color: colorScheme.error),
+                        (
+                          value: passed < 0 ? 0 : passed,
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.35,
+                          ),
+                        ),
+                      ],
+                    )
+                  : null,
             ),
           ],
-          footer: context.l10n.logsAllRecordedFooter,
+          footer: l10n.logsAllRecordedFooter,
         ),
       ),
       if (snapshot.items.isEmpty)
         SliverToBoxAdapter(
           child: generateSection(
-            title: context.l10n.logsBlockingSubs,
+            title: l10n.logsBlockingSubs,
             items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.rules),
-                title: Text(context.l10n.logsNoBlockingSubs),
-                subtitle: Text(context.l10n.logsNoBlockingSubsBody),
+              LogsSectionEmpty(
+                glyph: AppGlyphs.rules,
+                title: l10n.logsNoBlockingSubs,
+                description: l10n.logsNoBlockingSubsBody,
               ),
             ],
           ),
         )
       else
         ...lazySectionSlivers(
-          title: context.l10n.logsBlockingSubs,
+          title: l10n.logsBlockingSubs,
           itemCount: snapshot.items.length,
-          footer: context.l10n.logsBlockingSubsFooter,
+          footer: l10n.logsBlockingSubsFooter,
           itemBuilder: (context, index) {
             final item = snapshot.items[index];
+            final dimmed = item.deleted || !item.enabled;
             return ListItem(
-              leading: GlyphIcon(
-                item.deleted ? AppGlyphs.warning : AppGlyphs.rules,
-                color: item.deleted
+              leading: IconBadge(
+                glyph: item.deleted ? AppGlyphs.warning : AppGlyphs.rules,
+                // The row card owns the card level; the badge needs the next one up.
+                color: SurfaceLevel.block.colorOf(colorScheme),
+                foregroundColor: item.deleted
                     ? colorScheme.onSurfaceVariant
                     : (item.enabled ? colorScheme.primary : null),
+                shape: AppShape.circle,
+                size: 34,
+                glyphSize: 17,
               ),
               title: Text(item.name),
               subtitle: Text(
-                context.l10n.logsSubStatsRow(
-                  item.statusLabel,
-                  countOf(item.hits),
-                  percentOf(item.rate),
-                ),
+                l10n.logsSubStatsRow(item.statusLabel, countOf(item.hits)),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+              // The rate is the page's subject, so it gets the figure slot on the right instead
+              // of repeating the same percentage inside the subtitle.
               trailing: Text(
                 percentOf(item.rate),
                 style: AppTextStyle.subheadline
-                    .of(context)
-                    .copyWith(color: colorScheme.onSurfaceVariant),
+                    .of(context, emphasized: true)
+                    .toTabular
+                    .copyWith(
+                      color: dimmed
+                          ? colorScheme.onSurfaceVariant
+                          : colorScheme.primary,
+                    ),
               ),
             );
           },

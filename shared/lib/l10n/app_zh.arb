@@ -2130,6 +2130,7 @@
   "logsMissingSubColumn": "当前数据库缺少订阅标记列",
   "logsMissingSubColumnBody": "这张库是在加入「订阅拦截统计」之前创建的，日志行里没有记录 blockSubscriptionId。重新产生请求日志后即可统计，历史数据无法补算。",
   "logsAllRecordedRequests": "全部已记录请求",
+  "logsBlockedRequests": "拦截请求",
   "logsAllRecordedFooter": "DNS 与 HTTPS 日志合计，含通过、屏蔽和失败。",
   "logsNoBlockingSubs": "暂无屏蔽订阅",
   "logsNoBlockingSubsBody": "导入屏蔽订阅并产生 DNS 或 HTTPS 请求后，此处将显示其拦截率。",
@@ -2142,10 +2143,10 @@
   "logsRaceSummary": "{range}内共 {count} 次竞速解析。",
   "@logsRaceSummary": {
     "placeholders": {
-      "count": {
+      "range": {
         "type": "String"
       },
-      "range": {
+      "count": {
         "type": "String"
       }
     }
@@ -2173,10 +2174,10 @@
   "logsPrimaryHit": "首选命中 {percent} · 平均首选耗时 {latency}",
   "@logsPrimaryHit": {
     "placeholders": {
-      "latency": {
+      "percent": {
         "type": "String"
       },
-      "percent": {
+      "latency": {
         "type": "String"
       }
     }
@@ -2227,10 +2228,10 @@
   "logsBootstrapSummary": "{range}内共 {count} 次 Bootstrap 探测。",
   "@logsBootstrapSummary": {
     "placeholders": {
-      "count": {
+      "range": {
         "type": "String"
       },
-      "range": {
+      "count": {
         "type": "String"
       }
     }
@@ -2314,16 +2315,16 @@
   "logsBootstrapRow": "{ip} · 成功 {percent} · 平均 {latency}{failures}",
   "@logsBootstrapRow": {
     "placeholders": {
-      "failures": {
+      "ip": {
         "type": "String"
       },
-      "ip": {
+      "percent": {
         "type": "String"
       },
       "latency": {
         "type": "String"
       },
-      "percent": {
+      "failures": {
         "type": "String"
       }
     }
@@ -2347,13 +2348,13 @@
   "logsCacheRow": "{ttl} · 命中 {count} 次 · {size} B",
   "@logsCacheRow": {
     "placeholders": {
-      "count": {
+      "ttl": {
         "type": "String"
       },
-      "size": {
+      "count": {
         "type": "int"
       },
-      "ttl": {
+      "size": {
         "type": "int"
       }
     }
@@ -2374,16 +2375,13 @@
       }
     }
   },
-  "logsSubStatsRow": "{status} | 拦截 {count} 次 | {percent}",
+  "logsSubStatsRow": "{status} · 拦截 {count} 次",
   "@logsSubStatsRow": {
     "placeholders": {
-      "count": {
-        "type": "String"
-      },
-      "percent": {
-        "type": "String"
-      },
       "status": {
+        "type": "String"
+      },
+      "count": {
         "type": "String"
       }
     }

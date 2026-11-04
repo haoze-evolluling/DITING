@@ -3781,6 +3781,9 @@ class AppL10nEn extends AppL10n {
   String get logsAllRecordedRequests => 'All recorded requests';
 
   @override
+  String get logsBlockedRequests => 'Blocked requests';
+
+  @override
   String get logsAllRecordedFooter =>
       'DNS and HTTPS logs combined, including passed, blocked and failed.';
 
@@ -3812,7 +3815,7 @@ class AppL10nEn extends AppL10n {
   String get logsLoadingRace => 'Reading race records';
 
   @override
-  String logsRaceSummary(String count, String range) {
+  String logsRaceSummary(String range, String count) {
     return '$count races in $range.';
   }
 
@@ -3862,7 +3865,7 @@ class AppL10nEn extends AppL10n {
       'Only meaningful for the smart strategy: the primary hit rate counts queries where the primary resolver won; queries rescued by a fallback are excluded.';
 
   @override
-  String logsPrimaryHit(String latency, String percent) {
+  String logsPrimaryHit(String percent, String latency) {
     return 'Primary hit $percent · average $latency';
   }
 
@@ -3944,7 +3947,7 @@ class AppL10nEn extends AppL10n {
   String get logsLoadingBootstrap => 'Reading Bootstrap records';
 
   @override
-  String logsBootstrapSummary(String count, String range) {
+  String logsBootstrapSummary(String range, String count) {
     return '$count Bootstrap probes in $range.';
   }
 
@@ -4071,10 +4074,10 @@ class AppL10nEn extends AppL10n {
 
   @override
   String logsBootstrapRow(
-    String failures,
     String ip,
-    String latency,
     String percent,
+    String latency,
+    String failures,
   ) {
     return '$ip · $percent succeeded · average $latency$failures';
   }
@@ -4090,7 +4093,7 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String logsCacheRow(String count, int size, int ttl) {
+  String logsCacheRow(String ttl, int count, int size) {
     return '$ttl · $count hits · $size B';
   }
 
@@ -4105,8 +4108,8 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String logsSubStatsRow(String count, String percent, String status) {
-    return '$status | $count blocks | $percent';
+  String logsSubStatsRow(String status, String count) {
+    return '$status · $count blocks';
   }
 
   @override

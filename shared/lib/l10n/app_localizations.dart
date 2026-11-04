@@ -6659,6 +6659,12 @@ abstract class AppL10n {
   /// **'全部已记录请求'**
   String get logsAllRecordedRequests;
 
+  /// No description provided for @logsBlockedRequests.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截请求'**
+  String get logsBlockedRequests;
+
   /// No description provided for @logsAllRecordedFooter.
   ///
   /// In zh, this message translates to:
@@ -6717,7 +6723,7 @@ abstract class AppL10n {
   ///
   /// In zh, this message translates to:
   /// **'{range}内共 {count} 次竞速解析。'**
-  String logsRaceSummary(String count, String range);
+  String logsRaceSummary(String range, String count);
 
   /// No description provided for @logsRaceEmptyRange.
   ///
@@ -6801,7 +6807,7 @@ abstract class AppL10n {
   ///
   /// In zh, this message translates to:
   /// **'首选命中 {percent} · 平均首选耗时 {latency}'**
-  String logsPrimaryHit(String latency, String percent);
+  String logsPrimaryHit(String percent, String latency);
 
   /// No description provided for @logsDashboardTitle.
   ///
@@ -6939,7 +6945,7 @@ abstract class AppL10n {
   ///
   /// In zh, this message translates to:
   /// **'{range}内共 {count} 次 Bootstrap 探测。'**
-  String logsBootstrapSummary(String count, String range);
+  String logsBootstrapSummary(String range, String count);
 
   /// No description provided for @logsBootstrapEmptyRange.
   ///
@@ -7150,10 +7156,10 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'{ip} · 成功 {percent} · 平均 {latency}{failures}'**
   String logsBootstrapRow(
-    String failures,
     String ip,
-    String latency,
     String percent,
+    String latency,
+    String failures,
   );
 
   /// No description provided for @logsBootstrapFailures.
@@ -7172,7 +7178,7 @@ abstract class AppL10n {
   ///
   /// In zh, this message translates to:
   /// **'{ttl} · 命中 {count} 次 · {size} B'**
-  String logsCacheRow(String count, int size, int ttl);
+  String logsCacheRow(String ttl, int count, int size);
 
   /// No description provided for @logsLastHitAt.
   ///
@@ -7189,8 +7195,8 @@ abstract class AppL10n {
   /// No description provided for @logsSubStatsRow.
   ///
   /// In zh, this message translates to:
-  /// **'{status} | 拦截 {count} 次 | {percent}'**
-  String logsSubStatsRow(String count, String percent, String status);
+  /// **'{status} · 拦截 {count} 次'**
+  String logsSubStatsRow(String status, String count);
 
   /// No description provided for @aboutTitle.
   ///

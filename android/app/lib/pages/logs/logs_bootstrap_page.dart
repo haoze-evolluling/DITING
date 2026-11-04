@@ -1,4 +1,5 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/pages/logs/logs_overview_card.dart';
 import 'package:diting_android/pages/logs/logs_shared.dart';
 import 'package:diting_android/state/log_dashboard_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
@@ -92,6 +93,7 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage> {
       );
     }
     final snapshot = asyncStats.requireValue;
+    final l10n = context.l10n;
     final colorScheme = context.colorScheme;
     final hasData = snapshot.attempts > 0;
 
@@ -99,75 +101,95 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         generateSection(
-          title: context.l10n.logsOverview,
+          title: l10n.logsOverview,
           footer: hasData
-              ? context.l10n.logsBootstrapSummary(
-                  range.label(context.l10n),
+              ? l10n.logsBootstrapSummary(
+                  range.label(l10n),
                   countOf(snapshot.attempts),
                 )
-              : context.l10n.logsBootstrapEmptyRange,
+              : l10n.logsBootstrapEmptyRange,
           items: [
-            StatStrip(
-              stats: [
-                StatItem(label: context.l10n.logsAttempts, value: countOf(snapshot.attempts)),
-                StatItem(
-                  label: context.l10n.logsSuccess,
+            LogsOverviewCard(
+              tiles: [
+                LogsOverviewTile(
+                  label: l10n.logsAttempts,
+                  value: countOf(snapshot.attempts),
+                  glyph: AppGlyphs.dns,
+                  color: colorScheme.primary,
+                ),
+                LogsOverviewTile(
+                  label: l10n.logsSuccess,
                   value: hasData ? countOf(snapshot.successes) : '—',
-                  color: colorScheme.success,
+                  glyph: AppGlyphs.check,
+                  color: hasData
+                      ? colorScheme.success
+                      : colorScheme.onSurfaceVariant,
                 ),
-                StatItem(
-                  label: context.l10n.logsSuccessRate,
-                  value: hasData ? percentOf(snapshot.successRate) : '—',
+                LogsOverviewTile(
+                  label: l10n.commonFailed,
+                  value: hasData ? countOf(snapshot.failures) : '—',
+                  glyph: AppGlyphs.close,
+                  color: hasData && snapshot.failures > 0
+                      ? colorScheme.error
+                      : colorScheme.onSurfaceVariant,
                 ),
-                StatItem(
-                  label: context.l10n.logsAverageElapsed,
+                LogsOverviewTile(
+                  label: l10n.logsAverageElapsed,
                   value: hasData ? millisOf(snapshot.averageElapsedMs) : '—',
+                  glyph: AppGlyphs.speed,
                 ),
               ],
+              ratio: hasData
+                  ? LogsRatioBar(
+                      label: l10n.logsSuccessRate,
+                      value: percentOf(snapshot.successRate),
+                      segments: [
+                        (value: snapshot.successes, color: colorScheme.success),
+                        (value: snapshot.failures, color: colorScheme.error),
+                      ],
+                    )
+                  : null,
             ),
           ],
         ),
         if (snapshot.ips.isEmpty)
           generateSection(
-            title: context.l10n.logsNodes,
+            title: l10n.logsNodes,
             items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.dns),
-                title: Text(context.l10n.logsNoProbes),
-                subtitle: Text(
-                  context.l10n.logsNoProbesBody,
-                ),
+              LogsSectionEmpty(
+                glyph: AppGlyphs.dns,
+                title: l10n.logsNoProbes,
+                description: l10n.logsNoProbesBody,
               ),
             ],
           )
         else
           generateSection(
-            title: context.l10n.logsNodes,
-            footer: context.l10n.logsNodesFooter,
+            title: l10n.logsNodes,
+            footer: l10n.logsNodesFooter,
             items: [
               for (final ip in snapshot.ips)
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.dns),
                   title: Text(ip.name.isEmpty ? ip.id : ip.name),
                   subtitle: Text(
-                    context.l10n.logsBootstrapRow(
+                    l10n.logsBootstrapRow(
                       ip.ip,
                       percentOf(
                         ip.attempts == 0 ? 0 : ip.successes / ip.attempts,
                       ),
                       millisOf(ip.averageElapsedMs ?? 0),
                       ip.failures > 0
-                          ? context.l10n.logsBootstrapFailures(
-                              countOf(ip.failures),
-                            )
+                          ? l10n.logsBootstrapFailures(countOf(ip.failures))
                           : '',
                     ),
                     maxLines: 2,
                   ),
                   trailing: Text(
-                    context.l10n.logTimes(countOf(ip.attempts)),
+                    l10n.logTimes(countOf(ip.attempts)),
                     style: AppTextStyle.subheadline
-                        .of(context)
+                        .of(context, emphasized: true)
+                        .toTabular
                         .copyWith(color: colorScheme.primary),
                   ),
                 ),
