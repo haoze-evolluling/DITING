@@ -167,6 +167,23 @@ void main() {
       );
     }, skip: skip);
 
+    // The window can be dragged to a phone's width, where the shell falls back to the dock and
+    // every card is one narrow column: the densest forms have to survive it without overflowing.
+    for (final location in ['/hub/client-access', '/hub/encrypted-dns']) {
+      testWidgets('桌面极窄 ${_slug(location)}', (tester) async {
+        await captureScreenshot(
+          tester,
+          ScreenshotSpec(
+            name: 'desktop-narrow-${_slug(location)}',
+            app: app(location: location),
+            size: const Size(390, 844),
+            platform: TargetPlatform.windows,
+          ),
+        );
+        expect(tester.takeException(), isNull);
+      }, skip: skip);
+    }
+
     testWidgets('桌面安全隐私深色', (tester) async {
       await captureScreenshot(
         tester,
