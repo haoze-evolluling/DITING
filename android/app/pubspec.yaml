@@ -3,7 +3,7 @@ description: "谛听 DITING — Android client (Flutter), compatible with the 1.
 publish_to: 'none'
 # versionCode is major*10000 + minor*100 + patch (2.0.1 = 20001) so upgrades are
 # never treated as downgrades.
-version: 2.2.10+20210
+version: 2.2.11+20211
 
 environment:
   sdk: ^3.13.5
