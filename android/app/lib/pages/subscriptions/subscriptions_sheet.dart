@@ -272,12 +272,36 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         children: [
           _SheetCard(
             title: context.l10n.subsInfoSection,
-            footer: isEdit
-                ? context.l10n.subsEditRemoteHint
-                : isLocal
+            footer: isLocal
                 ? context.l10n.subsEditLocalHint
+                : isEdit
+                ? context.l10n.subsEditRemoteHint
                 : context.l10n.subsAddRemoteHint,
             children: [
+              // A new subscription picks how it gets its rules; an existing row keeps the
+              // way it was created, so only its address or file can change.
+              if (!isEdit)
+                ListItem<SubscriptionSourceType>.options(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  title: Text(context.l10n.subsSourceType),
+                  subtitle: Text(
+                    isLocal
+                        ? context.l10n.subsSourceLocalPick
+                        : context.l10n.subsSourceRemoteDownload,
+                  ),
+                  options: SubscriptionSourceType.values,
+                  value: _sourceType,
+                  textBuilder: (type) => type.label(context.l10n),
+                  onChanged: (type) => setState(() {
+                    _sourceType = type;
+                    // Both notices belong to the fields being swapped out.
+                    _formError = null;
+                    _localWarning = null;
+                  }),
+                ),
               if (isLocal) ...[
                 if (isEdit)
                   ListItem(
