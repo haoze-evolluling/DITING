@@ -8,6 +8,7 @@ import 'package:diting_desktop/pages/hub/desktop_services_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/blocked_services_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/blocked_services_groups_card.dart';
 import 'package:diting_desktop/pages/hub/widgets/schedule_editor.dart';
+import 'package:diting_desktop/widgets/masonry_grid.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -215,6 +216,17 @@ void main() {
     );
     expect(find.text(l10n.desktopServicesCount(1, 2)), findsOneWidget);
     await clearMessages(tester);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('宽窗下页面单列且服务在同一行并排多个', (tester) async {
+    await pumpServices(tester);
+
+    expect(find.byType(MasonryGrid), findsNothing, reason: '应用拦截页固定单列');
+    final douyin = tester.getTopLeft(inCard(find.text('抖音')));
+    final youtube = tester.getTopLeft(inCard(find.text('YouTube')));
+    expect(douyin.dy, closeTo(youtube.dy, 0.5), reason: '两个应用应并排在同一行');
+    expect(douyin.dx, lessThan(youtube.dx));
     expect(tester.takeException(), isNull);
   });
 

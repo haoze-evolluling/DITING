@@ -16,7 +16,7 @@ class DesktopCardBoard extends StatelessWidget {
     required this.cards,
     this.maxWidth = 1280,
     this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 0),
-    this.fullWidth = false,
+    this.singleColumn = false,
   });
 
   /// Cards in reading order. Each one is laid out at the column width.
@@ -28,15 +28,16 @@ class DesktopCardBoard extends StatelessWidget {
 
   final EdgeInsetsGeometry padding;
 
-  /// Keeps a page in one column even on a wide board. Only for a page whose single card is itself
-  /// a grid (the appearance card): one card in a two-column board would leave half the page empty.
-  final bool fullWidth;
+  /// Keeps a page in one column even on a wide board, even though the cards would fit side by
+  /// side. Used where a card is itself a grid (the appearance card) and where the cards read top to
+  /// bottom as one flow (app blocking: the group shortcuts above the service catalogue).
+  final bool singleColumn;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = fullWidth
+        final columns = singleColumn
             ? 1
             : dashboardColumnsOf(constraints.maxWidth);
         final board = columns <= 1

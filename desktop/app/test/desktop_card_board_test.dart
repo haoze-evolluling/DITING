@@ -4,7 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 void main() {
-  Future<void> pumpBoard(WidgetTester tester, double width) async {
+  Future<void> pumpBoard(
+    WidgetTester tester,
+    double width, {
+    bool singleColumn = false,
+  }) async {
     tester.view.physicalSize = Size(width, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -13,6 +17,7 @@ void main() {
         home: Scaffold(
           body: SingleChildScrollView(
             child: DesktopCardBoard(
+              singleColumn: singleColumn,
               cards: const [
                 SizedBox(key: ValueKey('short'), height: 40),
                 SizedBox(key: ValueKey('tall'), height: 160),
@@ -55,6 +60,21 @@ void main() {
     expect(widths.single, closeTo(700 - 32, 3));
     final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
     expect(lefts, hasLength(1));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('singleColumn 在宽屏上也只排一列', (tester) async {
+    await pumpBoard(tester, 1000, singleColumn: true);
+
+    expect(find.byType(MasonryGrid), findsNothing);
+    final boxes = [
+      for (final key in ['short', 'tall', 'medium'])
+        tester.renderObject<RenderBox>(find.byKey(ValueKey(key))),
+    ];
+    final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
+    expect(lefts, hasLength(1), reason: '卡片不得并排');
+    expect(lefts.single, closeTo(16, 3));
+    expect(boxes.first.size.width, closeTo(1000 - 32, 3));
     expect(tester.takeException(), isNull);
   });
 }

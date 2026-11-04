@@ -20,9 +20,13 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Three tiles need this much width; two need the lower one; below that they stack.
-const double _threeColumnBreakpoint = 1120;
-const double _twoColumnBreakpoint = 720;
+/// One compact tile carries a name, its rule count and three controls. Narrower than this the
+/// controls no longer fit beside the name, so the tile stacks them under it; narrower still and the
+/// switch itself clips, so the grid drops a column instead.
+const double _minTileWidth = 232;
+const double _wideTileWidth = 320;
+const double _tileGap = 8;
+const int _maxColumns = 5;
 
 class BlockedServicesCard extends ConsumerStatefulWidget {
   const BlockedServicesCard({super.key});
@@ -222,50 +226,74 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
         ),
       );
     }
+    final expanded = filtered.where((item) => item.id == _expanded);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= _threeColumnBreakpoint
-            ? 3
-            : constraints.maxWidth >= _twoColumnBreakpoint
-            ? 2
-            : 1;
-        final tiles = [
-          for (final service in filtered)
-            _ServiceTile(
-              service: service,
-              data: data,
-              saving: saving,
-              expanded: _expanded == service.id,
-              onToggle: (value) =>
-                  unawaited(_toggleService(service, value)),
-              onSchedule: () => unawaited(_editSchedule(service)),
-              onExpand: () => setState(
-                () => _expanded = _expanded == service.id ? '' : service.id,
-              ),
-            ),
-        ];
+        final columns = _columnsOf(constraints.maxWidth);
+        final tileWidth =
+            (constraints.maxWidth - _tileGap * (columns - 1)) / columns;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 8,
+          spacing: _tileGap,
           children: [
-            for (var index = 0; index < tiles.length; index += columns)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8,
-                children: [
-                  for (var column = 0; column < columns; column++)
-                    Expanded(
-                      child: index + column < tiles.length
-                          ? tiles[index + column]
-                          : const SizedBox.shrink(),
-                    ),
-                ],
+            for (var index = 0; index < filtered.length; index += columns)
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: _tileGap,
+                  children: [
+                    for (var column = 0; column < columns; column++)
+                      Expanded(
+                        child: index + column < filtered.length
+                            ? _tile(
+                                filtered[index + column],
+                                data: data,
+                                saving: saving,
+                                wide: tileWidth >= _wideTileWidth,
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                  ],
+                ),
+              ),
+            // The rules of the opened tile are long lines, not tile content: they get the full
+            // width under the grid instead of widening one tile in the middle of a run.
+            if (expanded.isNotEmpty)
+              _RulesPanel(
+                service: expanded.first,
+                data: data,
+                onClose: () => setState(() => _expanded = ''),
               ),
           ],
         );
       },
     );
   }
+
+  /// As many equal columns as the card fits, so one row shows several services at once.
+  int _columnsOf(double width) {
+    final fit = ((width + _tileGap) / (_minTileWidth + _tileGap)).floor();
+    if (fit < 1) return 1;
+    return fit > _maxColumns ? _maxColumns : fit;
+  }
+
+  Widget _tile(
+    DesktopBlockedService service, {
+    required DesktopBlockedServices data,
+    required bool saving,
+    required bool wide,
+  }) => _ServiceTile(
+    service: service,
+    data: data,
+    saving: saving,
+    wide: wide,
+    expanded: _expanded == service.id,
+    onToggle: (value) => unawaited(_toggleService(service, value)),
+    onSchedule: () => unawaited(_editSchedule(service)),
+    onExpand: () => setState(
+      () => _expanded = _expanded == service.id ? '' : service.id,
+    ),
+  );
 }
 
 class _ServiceTile extends StatelessWidget {
@@ -273,6 +301,7 @@ class _ServiceTile extends StatelessWidget {
     required this.service,
     required this.data,
     required this.saving,
+    required this.wide,
     required this.expanded,
     required this.onToggle,
     required this.onSchedule,
@@ -282,6 +311,9 @@ class _ServiceTile extends StatelessWidget {
   final DesktopBlockedService service;
   final DesktopBlockedServices data;
   final bool saving;
+
+  /// True when the tile is wide enough to keep its controls beside the name instead of under it.
+  final bool wide;
   final bool expanded;
   final ValueChanged<bool> onToggle;
   final VoidCallback onSchedule;
@@ -290,59 +322,141 @@ class _ServiceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final colorScheme = context.colorScheme;
     final blocked = data.isBlocked(service);
     final byGroup = data.blockedByGroup(service);
     final schedule = data.stateOf(service.id);
     final hasSchedule = schedule?.hasSchedule ?? false;
+    final info = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 2,
+      children: [
+        Text(
+          service.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: DashboardText.rowTitle(context),
+        ),
+        Wrap(
+          spacing: 5,
+          runSpacing: 3,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              l10n.desktopServicesRuleCount(
+                data.groupName(service.group),
+                service.ruleCount,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: DashboardText.label(context),
+            ),
+            if (byGroup)
+              DashboardChip(
+                label: l10n.desktopServicesByGroup,
+                tone: DashboardChipTone.warn,
+              ),
+            if (hasSchedule)
+              DashboardChip(
+                label: schedule?.active == true
+                    ? l10n.desktopServicesScheduleInside
+                    : l10n.desktopServicesScheduleOutside,
+                tone: schedule?.active == true
+                    ? DashboardChipTone.ok
+                    : DashboardChipTone.idle,
+              ),
+          ],
+        ),
+      ],
+    );
+    final controls = Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 6,
+      children: [
+        SizedBox(
+          height: 26,
+          child: DashboardIconButton(
+            glyph: AppGlyphs.clock,
+            tooltip: l10n.desktopServicesScheduleEdit,
+            size: 26,
+            glyphSize: 14,
+            onPressed: saving ? null : onSchedule,
+          ),
+        ),
+        DashboardSwitch(
+          value: blocked,
+          semanticLabel: service.name,
+          onChanged: saving || byGroup ? null : onToggle,
+        ),
+        SizedBox(
+          height: 26,
+          child: DashboardIconButton(
+            glyph: expanded ? AppGlyphs.eyeOff : AppGlyphs.eye,
+            tooltip: l10n.desktopServicesShowRules,
+            size: 26,
+            glyphSize: 14,
+            onPressed: onExpand,
+          ),
+        ),
+      ],
+    );
     return DashboardBlock(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: wide
+          ? Row(
+              spacing: 6,
+              children: [Expanded(child: info), controls],
+            )
+          // The run stretches every tile to its tallest neighbour, so the controls of a row stay
+          // on one line even when one tile needs a second line for its chips.
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [info, const Spacer(), controls],
+            ),
+    );
+  }
+}
+
+/// The rules of the tile whose eye is on: full width under the grid, one rule per line.
+class _RulesPanel extends StatelessWidget {
+  const _RulesPanel({
+    required this.service,
+    required this.data,
+    required this.onClose,
+  });
+
+  final DesktopBlockedService service;
+  final DesktopBlockedServices data;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final colorScheme = context.colorScheme;
+    return DashboardBlock(
+      padding: const EdgeInsets.fromLTRB(12, 6, 8, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 6,
+        spacing: 2,
         children: [
           Row(
-            spacing: 6,
+            spacing: 8,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 2,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Wrap(
-                      spacing: 5,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          service.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: DashboardText.rowTitle(context),
-                        ),
-                        if (byGroup)
-                          DashboardChip(
-                            label: l10n.desktopServicesByGroup,
-                            tone: DashboardChipTone.warn,
-                          ),
-                        if (hasSchedule)
-                          DashboardChip(
-                            label: schedule?.active == true
-                                ? l10n.desktopServicesScheduleInside
-                                : l10n.desktopServicesScheduleOutside,
-                            tone: schedule?.active == true
-                                ? DashboardChipTone.ok
-                                : DashboardChipTone.idle,
-                          ),
-                      ],
+                    Text(
+                      service.name,
+                      style: DashboardText.rowTitle(context),
                     ),
                     Text(
                       l10n.desktopServicesRuleCount(
                         data.groupName(service.group),
                         service.ruleCount,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: DashboardText.label(context),
                     ),
                   ],
@@ -351,48 +465,24 @@ class _ServiceTile extends StatelessWidget {
               SizedBox(
                 height: 28,
                 child: DashboardIconButton(
-                  glyph: AppGlyphs.clock,
-                  tooltip: l10n.desktopServicesScheduleEdit,
-                  size: 28,
-                  glyphSize: 15,
-                  onPressed: saving ? null : onSchedule,
-                ),
-              ),
-              DashboardSwitch(
-                value: blocked,
-                semanticLabel: service.name,
-                onChanged: saving || byGroup ? null : onToggle,
-              ),
-              SizedBox(
-                height: 28,
-                child: DashboardIconButton(
-                  glyph: expanded
-                      ? AppGlyphs.eyeOff
-                      : AppGlyphs.eye,
+                  glyph: AppGlyphs.eyeOff,
                   tooltip: l10n.desktopServicesShowRules,
                   size: 28,
                   glyphSize: 15,
-                  onPressed: onExpand,
+                  onPressed: onClose,
                 ),
               ),
             ],
           ),
-          if (expanded)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 2,
-              children: [
-                for (final rule in service.rules)
-                  Text(
-                    rule,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.caption1
-                        .of(context)
-                        .toTabular
-                        .copyWith(color: colorScheme.onSurfaceVariant),
-                  ),
-              ],
+          for (final rule in service.rules)
+            Text(
+              rule,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyle.caption1
+                  .of(context)
+                  .toTabular
+                  .copyWith(color: colorScheme.onSurfaceVariant),
             ),
         ],
       ),

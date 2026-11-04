@@ -24,7 +24,7 @@ class DesktopAppearancePage extends StatelessWidget {
       title: l10n.desktopSettingsAppearance,
       body: const PageBody(
         children: [
-          DesktopCardBoard(cards: [AppearanceThemeCard()], fullWidth: true),
+          DesktopCardBoard(cards: [AppearanceThemeCard()], singleColumn: true),
         ],
       ),
     );
