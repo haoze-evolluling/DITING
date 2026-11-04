@@ -175,7 +175,7 @@ class DashboardDetailHero extends StatelessWidget {
     this.color,
     this.chipLabel,
     this.chipColor,
-    this.monospace = false,
+    this.tabular = false,
   });
 
   final Glyph glyph;
@@ -189,8 +189,8 @@ class DashboardDetailHero extends StatelessWidget {
   final String? chipLabel;
   final Color? chipColor;
 
-  /// Addresses and other machine text read better in a monospaced face.
-  final bool monospace;
+  /// Addresses and other machine text: lining digits.
+  final bool tabular;
 
   @override
   Widget build(BuildContext context) {
@@ -240,8 +240,8 @@ class DashboardDetailHero extends StatelessWidget {
                                   AppTextStyle.title1,
                                   color: figure,
                                 ).copyWith(
-                                  fontFamily: monospace
-                                      ? appMonospaceFontFamily
+                                  fontFeatures: tabular
+                                      ? appTabularFigures
                                       : null,
                                 ),
                           ),

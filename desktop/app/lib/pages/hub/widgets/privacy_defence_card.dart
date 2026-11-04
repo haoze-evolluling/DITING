@@ -197,7 +197,7 @@ class _RebindDomainsDialogState extends State<_RebindDomainsDialog> {
               controller: _draft,
               minLines: 6,
               maxLines: 10,
-              style: AppTextStyle.callout.of(context).toMonospace,
+              style: AppTextStyle.callout.of(context).toTabular,
               decoration: InputDecoration(
                 hintText: 'localhost\n.local\n.lan\n.home.arpa',
               ),

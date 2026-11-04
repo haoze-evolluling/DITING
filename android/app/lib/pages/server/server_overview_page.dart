@@ -77,7 +77,7 @@ class ServerOverviewPage extends ConsumerWidget {
                 title: Text(
                   localIpv4.isEmpty ? context.l10n.serverNoNetwork : '$localIpv4:$port',
                   style: context.listTitleStyle.copyWith(
-                    fontFamily: appMonospaceFontFamily,
+                    fontFeatures: appTabularFigures,
                   ),
                 ),
                 subtitle: Text(
@@ -201,7 +201,7 @@ class _PowerArea extends ConsumerWidget {
         Text(
           context.l10n.serverListening('$port'),
           style: context.listCaptionStyle.copyWith(
-            fontFamily: appMonospaceFontFamily,
+            fontFeatures: appTabularFigures,
           ),
         ),
       ],

@@ -94,7 +94,7 @@ class _ConfigTransferWebdavPageState
                     title: context.l10n.webdavPath,
                     value: dav.path,
                     hintText: '/diting/',
-                    monospace: true,
+                    machineText: true,
                     onChanged: (value) =>
                         field.update((state) => state.copyWith(path: value)),
                   ),

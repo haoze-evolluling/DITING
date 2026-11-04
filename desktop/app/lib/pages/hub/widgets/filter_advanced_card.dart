@@ -280,7 +280,7 @@ class _BogusNxDomainCardState extends ConsumerState<BogusNxDomainCard> {
               controller: _networks,
               minLines: 3,
               maxLines: 6,
-              style: AppTextStyle.callout.of(context).toMonospace,
+              style: AppTextStyle.callout.of(context).toTabular,
               decoration: InputDecoration(
                 hintText: desktopBogusPresets.take(2).join('\n'),
               ),

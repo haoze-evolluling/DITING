@@ -355,7 +355,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                       enableSuggestions: false,
                       textInputAction: TextInputAction.next,
                       style: const TextStyle(
-                        fontFamily: appMonospaceFontFamily,
+                        fontFeatures: appTabularFigures,
                       ),
                       decoration: const InputDecoration(
                         hintText: 'https://example.com/rules.txt',
@@ -515,7 +515,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.listCaptionStyle.copyWith(
-                      fontFamily: appMonospaceFontFamily,
+                      fontFeatures: appTabularFigures,
                     ),
                   ),
             options: templates,

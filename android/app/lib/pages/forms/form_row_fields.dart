@@ -19,7 +19,7 @@ class FormRowTextField extends StatelessWidget {
     this.inputFormatters,
     this.obscureText = false,
     this.autofocus = false,
-    this.monospace = false,
+    this.machineText = false,
     this.invalid = false,
     this.trailingAction,
     this.onChanged,
@@ -38,8 +38,8 @@ class FormRowTextField extends StatelessWidget {
   final bool obscureText;
   final bool autofocus;
 
-  /// Monospace for addresses, ports and paths so digits line up.
-  final bool monospace;
+  /// Addresses, ports and paths: lining digits, and no autocorrect or suggestions.
+  final bool machineText;
 
   final bool invalid;
 
@@ -80,8 +80,8 @@ class FormRowTextField extends StatelessWidget {
   Widget _buildField(BuildContext context) {
     final hintText = this.hintText;
     final colorScheme = context.colorScheme;
-    final style = monospace
-        ? context.listTitleStyle.copyWith(fontFamily: appMonospaceFontFamily)
+    final style = machineText
+        ? context.listTitleStyle.copyWith(fontFeatures: appTabularFigures)
         : null;
     return TextFormField(
       controller: controller,
@@ -92,8 +92,8 @@ class FormRowTextField extends StatelessWidget {
       inputFormatters: inputFormatters,
       obscureText: obscureText,
       autofocus: autofocus,
-      autocorrect: !monospace,
-      enableSuggestions: !monospace,
+      autocorrect: !machineText,
+      enableSuggestions: !machineText,
       onChanged: onChanged,
       onFieldSubmitted: onFieldSubmitted,
       textAlign: TextAlign.end,
@@ -115,7 +115,7 @@ class FormRowTextField extends StatelessWidget {
                       .of(context)
                       .copyWith(
                         color: colorScheme.onSurfaceVariant,
-                        fontFamily: monospace ? appMonospaceFontFamily : null,
+                        fontFeatures: machineText ? appTabularFigures : null,
                       ),
                 ),
               ),
@@ -189,7 +189,7 @@ class FormRowValue extends StatelessWidget {
     super.key,
     required this.title,
     required this.value,
-    this.monospace = false,
+    this.tabular = false,
     this.description,
     this.leading,
     this.onPressed,
@@ -197,7 +197,10 @@ class FormRowValue extends StatelessWidget {
 
   final String title;
   final String value;
-  final bool monospace;
+
+  /// Lining digits for version numbers and the like.
+  final bool tabular;
+
   final String? description;
   final Widget? leading;
   final VoidCallback? onPressed;
@@ -216,7 +219,7 @@ class FormRowValue extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: context.listSubtitleStyle.copyWith(
           color: colorScheme.onSurface,
-          fontFamily: monospace ? appMonospaceFontFamily : null,
+          fontFeatures: tabular ? appTabularFigures : null,
         ),
       ),
     );

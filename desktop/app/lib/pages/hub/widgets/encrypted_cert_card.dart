@@ -163,7 +163,7 @@ class EncryptedCertCard extends ConsumerWidget {
                       l10n.desktopEncryptedCertFingerprint(cert.fingerprint),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: DashboardText.label(context).toMonospace,
+                      style: DashboardText.label(context).toTabular,
                     ),
                   ),
                   SizedBox(
@@ -187,7 +187,7 @@ class EncryptedCertCard extends ConsumerWidget {
               const SizedBox(height: 6),
               Text(
                 l10n.desktopEncryptedCertDir(status.certDir),
-                style: DashboardText.label(context).toMonospace,
+                style: DashboardText.label(context).toTabular,
               ),
             ],
           ],
@@ -375,7 +375,7 @@ class _GenerateCertDialogState extends State<_GenerateCertDialog> {
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedCertDnsNames,
               ),
-              style: AppTextStyle.callout.of(context).toMonospace,
+              style: AppTextStyle.callout.of(context).toTabular,
             ),
             TextFormField(
               controller: _ips,
@@ -384,7 +384,7 @@ class _GenerateCertDialogState extends State<_GenerateCertDialog> {
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedCertIpAddresses,
               ),
-              style: AppTextStyle.callout.of(context).toMonospace,
+              style: AppTextStyle.callout.of(context).toTabular,
             ),
             SizedBox(
               width: 190,
@@ -464,7 +464,7 @@ class _ImportCertDialogState extends State<_ImportCertDialog> {
               controller: _cert,
               minLines: 4,
               maxLines: 8,
-              style: AppTextStyle.callout.of(context).toMonospace,
+              style: AppTextStyle.callout.of(context).toTabular,
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedCertPem,
               ),
@@ -473,7 +473,7 @@ class _ImportCertDialogState extends State<_ImportCertDialog> {
               controller: _key,
               minLines: 4,
               maxLines: 8,
-              style: AppTextStyle.callout.of(context).toMonospace,
+              style: AppTextStyle.callout.of(context).toTabular,
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedKeyPem,
               ),

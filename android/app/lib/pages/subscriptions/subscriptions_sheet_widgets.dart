@@ -90,7 +90,7 @@ class _PreviewBox extends StatelessWidget {
               url,
               style: context.listCaptionStyle.copyWith(
                 color: context.colorScheme.onSurface,
-                fontFamily: appMonospaceFontFamily,
+                fontFeatures: appTabularFigures,
               ),
             ),
           ],

@@ -60,7 +60,7 @@ class DnsCacheDetailSheet extends StatelessWidget {
                 KeyValueRow(
                   label: context.l10n.logsRecordType,
                   value: dnsTypeName(entry.queryType),
-                  monospace: true,
+                  tabular: true,
                 ),
                 KeyValueRow(label: context.l10n.logsRemainingTtl, value: remainingLabel(remaining, context.l10n)),
                 KeyValueRow(
@@ -70,12 +70,12 @@ class DnsCacheDetailSheet extends StatelessWidget {
                 KeyValueRow(
                   label: context.l10n.logsExpiry,
                   value: shortDateTimeOf(entry.expiresAt),
-                  monospace: true,
+                  tabular: true,
                 ),
                 KeyValueRow(
                   label: context.l10n.logsHitCount,
                   value: countOf(entry.hitCount),
-                  monospace: true,
+                  tabular: true,
                 ),
                 KeyValueRow(
                   label: context.l10n.logsLastHit,
@@ -83,12 +83,12 @@ class DnsCacheDetailSheet extends StatelessWidget {
                     null => context.l10n.logsNeverHit,
                     final at => shortDateTimeOf(at),
                   },
-                  monospace: lastHitAt != null,
+                  tabular: lastHitAt != null,
                 ),
                 KeyValueRow(
                   label: context.l10n.logsResponseSize,
                   value: '${entry.responseSize} B',
-                  monospace: true,
+                  tabular: true,
                 ),
               ],
             ),

@@ -115,14 +115,14 @@ class KeyValueRow extends StatelessWidget {
     super.key,
     required this.label,
     required this.value,
-    this.monospace = false,
+    this.tabular = false,
   });
 
   final String label;
   final String value;
 
-  /// Monospace for addresses, ports and package names.
-  final bool monospace;
+  /// Lining digits for addresses, ports and package names.
+  final bool tabular;
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +151,7 @@ class KeyValueRow extends StatelessWidget {
                   .of(context)
                   .copyWith(
                     color: colorScheme.onSurface,
-                    fontFamily: monospace ? appMonospaceFontFamily : null,
+                    fontFeatures: tabular ? appTabularFigures : null,
                   ),
             ),
           ),

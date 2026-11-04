@@ -133,7 +133,7 @@ class _ServerSettingsPageState extends ConsumerState<ServerSettingsPage> {
                 trailing: Text(
                   '$port',
                   style: context.listSubtitleStyle.copyWith(
-                    fontFamily: appMonospaceFontFamily,
+                    fontFeatures: appTabularFigures,
                   ),
                 ),
                 onTap: () => editServerPort(context, ref),

@@ -447,7 +447,7 @@ class _FilterListTile extends StatelessWidget {
               list.url,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: DashboardText.label(context).toMonospace,
+              style: DashboardText.label(context).toTabular,
             ),
           ),
           if (list.lastError.isNotEmpty)

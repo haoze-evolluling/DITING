@@ -336,7 +336,7 @@ class _AddressField extends StatelessWidget {
       width: _fieldWidth,
       child: TextFormField(
         controller: controller,
-        style: AppTextStyle.callout.of(context).toMonospace,
+        style: AppTextStyle.callout.of(context).toTabular,
         decoration: InputDecoration(labelText: label),
         onChanged: (_) => onChanged(),
       ),

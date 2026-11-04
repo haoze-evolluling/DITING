@@ -154,7 +154,7 @@ class _LanWebCardState extends ConsumerState<LanWebCard> {
                     decoration: InputDecoration(
                       labelText: l10n.desktopLanWebPort,
                     ),
-                    style: AppTextStyle.callout.of(context).toMonospace,
+                    style: AppTextStyle.callout.of(context).toTabular,
                     onChanged: (_) => setState(() => _portInvalid = false),
                   ),
                 ),
@@ -199,7 +199,7 @@ class _UrlRow extends StatelessWidget {
               url,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: DashboardText.label(context).toMonospace,
+              style: DashboardText.label(context).toTabular,
             ),
           ),
           SizedBox(

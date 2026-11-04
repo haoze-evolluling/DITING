@@ -389,7 +389,7 @@ class _ServiceTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyle.caption1
                         .of(context)
-                        .toMonospace
+                        .toTabular
                         .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
               ],

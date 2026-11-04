@@ -45,7 +45,7 @@ class _RuleRow extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.listTitleStyle.copyWith(
-            fontFamily: appMonospaceFontFamily,
+            fontFeatures: appTabularFigures,
             fontSize: 15,
           ),
         ),

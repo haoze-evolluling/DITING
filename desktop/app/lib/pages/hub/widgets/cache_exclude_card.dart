@@ -149,7 +149,7 @@ class _CacheExcludeCardState extends ConsumerState<CacheExcludeCard> {
             minLines: 4,
             maxLines: 6,
             enabled: config != null && !state.saving,
-            style: AppTextStyle.caption1.of(context).toMonospace,
+            style: AppTextStyle.caption1.of(context).toTabular,
             decoration: InputDecoration(
               labelText: l10n.desktopCacheExcludeLabel,
               hintText: l10n.desktopCacheExcludeHint,

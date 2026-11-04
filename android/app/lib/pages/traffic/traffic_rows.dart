@@ -141,42 +141,42 @@ class _AppTrafficDetailSheet extends StatelessWidget {
                   KeyValueRow(
                     label: context.l10n.trafficPackageName,
                     value: row.packageName,
-                    monospace: true,
+                    tabular: true,
                   ),
                   if (row.appName.isNotEmpty)
                     KeyValueRow(label: context.l10n.trafficAppName, value: row.appName),
                   KeyValueRow(
                     label: context.l10n.trafficDown,
                     value: obsFormatBytes(row.rxBytes),
-                    monospace: true,
+                    tabular: true,
                   ),
                   KeyValueRow(
                     label: context.l10n.trafficUp,
                     value: obsFormatBytes(row.txBytes),
-                    monospace: true,
+                    tabular: true,
                   ),
                   KeyValueRow(
                     label: context.l10n.trafficTotal,
                     value: obsFormatBytes(row.totalBytes),
-                    monospace: true,
+                    tabular: true,
                   ),
                   KeyValueRow(
                     label: context.l10n.trafficShare,
                     value: '${(share * 100).toStringAsFixed(1)} %',
-                    monospace: true,
+                    tabular: true,
                   ),
                   KeyValueRow(
                     label: context.l10n.trafficStartDate,
                     // For dateRange and allHistory, date is the earliest day in the group
                     // (upstream min(date)), not the latest update.
                     value: row.date.isEmpty ? '—' : row.date,
-                    monospace: true,
+                    tabular: true,
                   ),
                   if (row.updatedAt > 0)
                     KeyValueRow(
                       label: context.l10n.trafficLastUpdate,
                       value: _updatedAtLabel(row.updatedAt),
-                      monospace: true,
+                      tabular: true,
                     ),
                 ],
               ),

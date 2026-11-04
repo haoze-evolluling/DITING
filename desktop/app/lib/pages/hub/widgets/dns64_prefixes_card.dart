@@ -129,7 +129,7 @@ class _Dns64PrefixesCardState extends ConsumerState<Dns64PrefixesCard> {
             minLines: 3,
             maxLines: 5,
             keyboardType: TextInputType.multiline,
-            style: AppTextStyle.callout.of(context).toMonospace,
+            style: AppTextStyle.callout.of(context).toTabular,
             decoration: const InputDecoration(
               hintText: desktopDns64WellKnownPrefix,
             ),

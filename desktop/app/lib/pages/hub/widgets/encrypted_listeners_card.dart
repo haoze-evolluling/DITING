@@ -262,7 +262,7 @@ class _UrlRow extends StatelessWidget {
             url,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: DashboardText.label(context).toMonospace,
+            style: DashboardText.label(context).toTabular,
           ),
         ),
         SizedBox(

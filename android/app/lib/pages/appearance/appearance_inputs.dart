@@ -115,7 +115,7 @@ class SliderCardRow extends StatelessWidget {
               Text(
                 percent,
                 style: context.listSubtitleStyle.copyWith(
-                  fontFamily: appMonospaceFontFamily,
+                  fontFeatures: appTabularFigures,
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),

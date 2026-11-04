@@ -1,10 +1,10 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 import 'package:material_ui/material_ui.dart';
 
-/// Family used wherever the UI needs column-aligned digits or code. The app bundles no fonts, so
-/// this resolves to the platform's own monospace face (Android maps `monospace` to Droid Sans Mono);
-/// glyphs it lacks fall back through the system chain like any other family.
-const appMonospaceFontFamily = 'monospace';
+/// Column-aligned digits without leaving the user's family: figures ask the face for its tabular
+/// numerals instead of switching to the platform's monospace face, so the imported font (or the
+/// system default) stays in charge everywhere.
+const appTabularFigures = <FontFeature>[FontFeature.tabularFigures()];
 
 enum _HanVariant { simplified, traditional, japanese, korean }
 

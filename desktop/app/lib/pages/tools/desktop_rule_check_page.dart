@@ -148,7 +148,7 @@ class _InputCard extends StatelessWidget {
           const SizedBox(height: 10),
           TextField(
             controller: domain,
-            style: AppTextStyle.callout.of(context).toMonospace,
+            style: AppTextStyle.callout.of(context).toTabular,
             decoration: InputDecoration(
               labelText: l10n.desktopToolsRuleDomain,
               hintText: l10n.desktopToolsRuleDomainHint,
@@ -202,7 +202,7 @@ class _InputCard extends StatelessWidget {
                     example,
                     style: AppTextStyle.caption1
                         .of(context, emphasized: true)
-                        .toMonospace,
+                        .toTabular,
                   ),
                 ),
             ],
@@ -274,7 +274,7 @@ class _VerdictCard extends StatelessWidget {
               children: [
                 Text(
                   state.domain,
-                  style: DashboardText.rowTitle(context).toMonospace,
+                  style: DashboardText.rowTitle(context).toTabular,
                 ),
                 DashboardChip(label: state.qtype, tone: DashboardChipTone.idle),
               ],
@@ -314,7 +314,7 @@ class _VerdictCard extends StatelessWidget {
                 )
               else
                 for (final record in result.rewritten!.summary)
-                  Text(record, style: DashboardText.label(context).toMonospace),
+                  Text(record, style: DashboardText.label(context).toTabular),
             ],
           ],
           const SizedBox(height: 6),
@@ -361,7 +361,7 @@ class _Field extends StatelessWidget {
             value,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: mono ? style.toMonospace : style,
+            style: mono ? style.toTabular : style,
           ),
         ],
       ),

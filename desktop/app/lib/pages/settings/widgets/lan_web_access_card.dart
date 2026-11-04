@@ -166,7 +166,7 @@ class _CredentialsRow extends StatelessWidget {
                 username.isEmpty
                     ? l10n.desktopLanWebNoUser
                     : l10n.desktopLanWebUser(username),
-                style: DashboardText.label(context).toMonospace,
+                style: DashboardText.label(context).toTabular,
               ),
               Text(
                 initialized

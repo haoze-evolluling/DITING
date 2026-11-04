@@ -152,7 +152,7 @@ class _PrivacyEcsCardState extends ConsumerState<PrivacyEcsCard> {
               helperText: l10n.desktopPrivacyEcsSubnetHelper,
               hintText: '203.0.113.0/24',
             ),
-            style: AppTextStyle.callout.of(context).toMonospace,
+            style: AppTextStyle.callout.of(context).toTabular,
             onChanged: (_) => setState(() => _dirty = true),
           ),
           const SizedBox(height: 10),

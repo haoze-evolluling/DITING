@@ -140,7 +140,7 @@ class _SubscriptionCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: context.listCaptionStyle.copyWith(
-                      fontFamily: appMonospaceFontFamily,
+                      fontFeatures: appTabularFigures,
                     ),
                   ),
                   if (mirror != null)
@@ -149,7 +149,7 @@ class _SubscriptionCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: context.listCaptionStyle.copyWith(
-                        fontFamily: appMonospaceFontFamily,
+                        fontFeatures: appTabularFigures,
                       ),
                     ),
                   if (hasError)

@@ -32,7 +32,7 @@ class DesktopCopyRow extends StatelessWidget {
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: DashboardText.label(context).toMonospace,
+              style: DashboardText.label(context).toTabular,
             ),
           ),
           if (tag != null)

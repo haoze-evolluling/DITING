@@ -125,15 +125,15 @@ class DashboardDetailRow {
   const DashboardDetailRow({
     required this.label,
     required this.value,
-    this.monospace = false,
+    this.tabular = false,
     this.color,
   });
 
   final String label;
   final String value;
 
-  /// Monospace for addresses, ports and package names.
-  final bool monospace;
+  /// Lining digits for addresses, ports and package names.
+  final bool tabular;
 
   /// Value colour for a state that needs to stand out (ok / error).
   final Color? color;
@@ -177,8 +177,8 @@ class DashboardDetailRows extends StatelessWidget {
                         .of(context)
                         .copyWith(
                           color: row.color ?? colorScheme.onSurface,
-                          fontFamily: row.monospace
-                              ? appMonospaceFontFamily
+                          fontFeatures: row.tabular
+                              ? appTabularFigures
                               : null,
                         ),
                   ),

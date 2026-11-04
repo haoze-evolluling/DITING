@@ -66,7 +66,7 @@ class DetailHeroCard extends StatelessWidget {
                             .of(context)
                             .copyWith(
                               color: colorScheme.onSurface,
-                              fontFamily: appMonospaceFontFamily,
+                              fontFeatures: appTabularFigures,
                             ),
                       ),
                       Text(subtitle, style: context.listCaptionStyle),

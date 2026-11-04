@@ -250,7 +250,7 @@ class _ClientRow extends StatelessWidget {
             children: [
               Text(
                 client.ip,
-                style: DashboardText.rowTitle(context).toMonospace,
+                style: DashboardText.rowTitle(context).toTabular,
               ),
               chip,
             ],
@@ -368,7 +368,7 @@ class _AliasDialogState extends State<_AliasDialog> {
           children: [
             Text(
               widget.client.ip,
-              style: DashboardText.rowTitle(context).toMonospace,
+              style: DashboardText.rowTitle(context).toTabular,
             ),
             TextField(
               controller: _name,

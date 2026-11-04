@@ -113,7 +113,7 @@ class AdapterCard extends StatelessWidget {
                       : originalDns,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: DashboardText.label(context).toMonospace,
+                  style: DashboardText.label(context).toTabular,
                 ),
               ],
             ),
@@ -140,7 +140,7 @@ class AdapterCard extends StatelessWidget {
                     color: takenOver
                         ? context.colorScheme.success
                         : context.colorScheme.onSurfaceVariant,
-                  ).toMonospace,
+                  ).toTabular,
                 ),
               ],
             ),
@@ -169,7 +169,7 @@ class _Field extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: DashboardText.rowTitle(context).toMonospace,
+          style: DashboardText.rowTitle(context).toTabular,
         ),
       ],
     );

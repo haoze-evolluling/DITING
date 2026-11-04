@@ -136,7 +136,7 @@ InlineSpan _spanForToken(
     return TextSpan(
       text: ' ${token.substring(1, token.length - 1)} ',
       style: TextStyle(
-        fontFamily: appMonospaceFontFamily,
+        fontFeatures: appTabularFigures,
         backgroundColor: colors.codeBackground,
         color: colors.primary,
         fontWeight: FontWeight.w500,

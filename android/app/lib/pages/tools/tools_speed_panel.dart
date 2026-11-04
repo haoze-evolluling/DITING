@@ -205,7 +205,7 @@ class _SpeedResultRow extends StatelessWidget {
                   style: AppTextStyle.subheadline
                       .of(context, emphasized: true)
                       .copyWith(
-                        fontFamily: appMonospaceFontFamily,
+                        fontFeatures: appTabularFigures,
                         color: isFastest
                             ? colorScheme.primary
                             : colorScheme.onSurfaceVariant,
@@ -239,7 +239,7 @@ class _SpeedResultRow extends StatelessWidget {
               style: AppTextStyle.title3
                   .of(context, emphasized: true)
                   .copyWith(
-                    fontFamily: appMonospaceFontFamily,
+                    fontFeatures: appTabularFigures,
                     color: colorScheme.primary,
                   ),
             ),

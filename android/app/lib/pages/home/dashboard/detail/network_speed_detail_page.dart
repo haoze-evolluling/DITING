@@ -100,19 +100,19 @@ class NetworkSpeedDetailPage extends ConsumerWidget {
                         DashboardDetailRow(
                           label: context.l10n.speedDownload,
                           value: dashboardBinaryBytes(totals.down),
-                          monospace: true,
+                          tabular: true,
                           color: colorScheme.primary,
                         ),
                         DashboardDetailRow(
                           label: context.l10n.speedUpload,
                           value: dashboardBinaryBytes(totals.up),
-                          monospace: true,
+                          tabular: true,
                           color: colors.series2,
                         ),
                         DashboardDetailRow(
                           label: context.l10n.speedTotal,
                           value: dashboardBinaryBytes(totals.total),
-                          monospace: true,
+                          tabular: true,
                         ),
                       ],
                     ),

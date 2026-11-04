@@ -121,7 +121,7 @@ class _SponsorHero extends StatelessWidget {
                             .of(context)
                             .copyWith(
                               color: colorScheme.primary,
-                              fontFamily: appMonospaceFontFamily,
+                              fontFeatures: appTabularFigures,
                             ),
                       ),
                       Text(

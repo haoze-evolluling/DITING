@@ -110,11 +110,11 @@ class _TraceroutePanelState extends ConsumerState<_TraceroutePanel> {
             _ToolNotice(text: context.l10n.toolTraceCancelled, glyph: AppGlyphs.info),
           _ToolSection(
             rows: [
-              KeyValueRow(label: context.l10n.toolTarget, value: result.target, monospace: true),
+              KeyValueRow(label: context.l10n.toolTarget, value: result.target, tabular: true),
               KeyValueRow(
                 label: context.l10n.toolResolvedAddress,
                 value: result.resolvedAddress ?? '—',
-                monospace: true,
+                tabular: true,
               ),
               KeyValueRow(
                 label: context.l10n.toolHopCount,
@@ -122,7 +122,7 @@ class _TraceroutePanelState extends ConsumerState<_TraceroutePanel> {
                   '${result.hops.length}',
                   '$_maxHops',
                 ),
-                monospace: true,
+                tabular: true,
               ),
             ],
           ),
@@ -151,7 +151,7 @@ class _TraceroutePanelState extends ConsumerState<_TraceroutePanel> {
                           style: AppTextStyle.subheadline
                               .of(context)
                               .copyWith(
-                                fontFamily: appMonospaceFontFamily,
+                                fontFeatures: appTabularFigures,
                                 color: hop.responded
                                     ? (hop.reachedTarget
                                           ? colorScheme.success

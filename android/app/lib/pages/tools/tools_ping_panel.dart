@@ -114,34 +114,34 @@ class _PingPanelState extends ConsumerState<_PingPanel> {
             ),
           _ToolSection(
             rows: [
-              KeyValueRow(label: context.l10n.toolTarget, value: result.target, monospace: true),
+              KeyValueRow(label: context.l10n.toolTarget, value: result.target, tabular: true),
               KeyValueRow(
                 label: context.l10n.toolResolvedAddress,
                 value: result.resolvedAddress ?? '—',
-                monospace: true,
+                tabular: true,
               ),
               KeyValueRow(label: context.l10n.toolAddressFamily, value: result.addressFamily ?? '—'),
               KeyValueRow(
                 label: context.l10n.toolSentReceived,
                 value: '${result.transmitted} / ${result.received}',
-                monospace: true,
+                tabular: true,
               ),
               KeyValueRow(
                 label: context.l10n.toolPacketLoss,
                 value: '${result.lossPercent.toStringAsFixed(1)} %',
-                monospace: true,
+                tabular: true,
               ),
               KeyValueRow(
                 label: context.l10n.toolMinAvgMax,
                 value:
                     '${_msText(result.minMs)} / ${_msText(result.avgMs)} / '
                     '${_msText(result.maxMs)}',
-                monospace: true,
+                tabular: true,
               ),
               KeyValueRow(
                 label: context.l10n.toolJitter,
                 value: _msText(result.jitterMs),
-                monospace: true,
+                tabular: true,
               ),
             ],
             footer: result.success ? context.l10n.toolJitterFooter : null,
@@ -160,7 +160,7 @@ class _PingPanelState extends ConsumerState<_PingPanel> {
                         value: reply.ok
                             ? _msText(reply.elapsedMs)
                             : (reply.error ?? context.l10n.toolTimeout),
-                        monospace: true,
+                        tabular: true,
                       ),
                   ],
                 ),

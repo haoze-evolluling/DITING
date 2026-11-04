@@ -61,7 +61,7 @@ class FontSizePage extends ConsumerWidget {
                       Text(
                         '${(scale * 100).round()}%',
                         style: context.listSubtitleStyle.copyWith(
-                          fontFamily: appMonospaceFontFamily,
+                          fontFeatures: appTabularFigures,
                           color: context.colorScheme.primary,
                         ),
                       ),
@@ -172,7 +172,7 @@ class _SizePreview extends StatelessWidget {
                 .of(context)
                 .copyWith(
                   color: colorScheme.onSurfaceVariant,
-                  fontFamily: appMonospaceFontFamily,
+                  fontFeatures: appTabularFigures,
                 ),
           ),
         ],

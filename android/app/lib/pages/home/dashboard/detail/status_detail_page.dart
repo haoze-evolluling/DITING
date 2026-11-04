@@ -80,7 +80,7 @@ class StatusDetailPage extends ConsumerWidget {
                       value: serverStatus == ServerStatus.running
                           ? '$port'
                           : context.l10n.statusNotListening,
-                      monospace: true,
+                      tabular: true,
                       color: serverStatus == ServerStatus.running
                           ? colorScheme.primary
                           : null,
@@ -126,7 +126,7 @@ class StatusDetailPage extends ConsumerWidget {
                                 .of(context)
                                 .copyWith(
                                   color: colorScheme.onSurfaceVariant,
-                                  fontFamily: appMonospaceFontFamily,
+                                  fontFeatures: appTabularFigures,
                                 ),
                           ),
                         ],
@@ -274,7 +274,7 @@ class _LatencyBadge extends StatelessWidget {
           ? colorScheme.primary
           : colorScheme.onSurfaceVariant,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      monospace: true,
+      tabular: true,
     );
   }
 }

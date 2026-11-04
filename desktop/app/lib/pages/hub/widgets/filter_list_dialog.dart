@@ -93,7 +93,7 @@ class _AddFilterListDialogState extends State<_AddFilterListDialog> {
                 labelText: l10n.desktopFilterListUrlLabel,
                 hintText: l10n.desktopFilterListUrlHint,
               ),
-              style: AppTextStyle.callout.of(context).toMonospace,
+              style: AppTextStyle.callout.of(context).toTabular,
               onChanged: (_) {
                 if (_invalid) setState(() => _invalid = false);
               },

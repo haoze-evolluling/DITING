@@ -54,12 +54,6 @@ Future<void> loadHostFonts() async {
       '/System/Library/Fonts/PingFang.ttc',
       '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
     ],
-    // `appMonospaceFontFamily`, used for tabular figures and code.
-    'monospace': [
-      r'C:\Windows\Fonts\consola.ttf',
-      '/System/Library/Fonts/Menlo.ttc',
-      '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf',
-    ],
   };
   for (final entry in wanted.entries) {
     for (final path in entry.value) {

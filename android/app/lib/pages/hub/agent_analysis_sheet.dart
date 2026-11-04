@@ -247,7 +247,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
                 style: AppTextStyle.footnote
                     .of(context)
                     .copyWith(
-                      fontFamily: appMonospaceFontFamily,
+                      fontFeatures: appTabularFigures,
                       color: context.colorScheme.onSurfaceVariant,
                     ),
               ),

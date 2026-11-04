@@ -153,7 +153,7 @@ class _ClientGroupEditorState extends State<ClientGroupEditor> {
             enabled: !disabled,
             minLines: 2,
             maxLines: 5,
-            style: AppTextStyle.callout.of(context).toMonospace,
+            style: AppTextStyle.callout.of(context).toTabular,
             decoration: InputDecoration(
               labelText: l10n.desktopGroupsMembers,
               hintText: l10n.desktopGroupsMembersHint,

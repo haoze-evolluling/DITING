@@ -124,7 +124,7 @@ class _CustomRulesEditorCardState extends ConsumerState<CustomRulesEditorCard> {
               minLines: 14,
               maxLines: 24,
               keyboardType: TextInputType.multiline,
-              style: AppTextStyle.callout.of(context).toMonospace,
+              style: AppTextStyle.callout.of(context).toTabular,
               decoration: InputDecoration(
                 hintText: l10n.desktopFilterRulesPlaceholder,
               ),
@@ -277,7 +277,7 @@ class _GuideBlock extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyle.callout
                 .of(context, emphasized: true)
-                .toMonospace
+                .toTabular
                 .copyWith(color: colors.series2),
           ),
           Text(entry.body, style: DashboardText.label(context)),

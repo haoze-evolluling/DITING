@@ -180,7 +180,7 @@ class SiteLatencyRow extends StatelessWidget {
                           .of(context)
                           .copyWith(
                             color: colorScheme.onSurfaceVariant,
-                            fontFamily: appMonospaceFontFamily,
+                            fontFeatures: appTabularFigures,
                           ),
                     ),
                   ],

@@ -170,7 +170,7 @@ class _ConflictRow extends StatelessWidget {
             children: [
               Text(
                 '${conflict.protocol} :${conflict.port}',
-                style: DashboardText.rowTitle(context).toMonospace,
+                style: DashboardText.rowTitle(context).toTabular,
               ),
               if (conflict.isICS)
                 DashboardChip(
@@ -192,7 +192,7 @@ class _ConflictRow extends StatelessWidget {
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: DashboardText.label(context).toMonospace,
+            style: DashboardText.label(context).toTabular,
           ),
           if (conflict.serviceName.isNotEmpty)
             Text(

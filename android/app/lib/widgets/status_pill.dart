@@ -18,7 +18,7 @@ class StatusPill extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
     this.style = AppTextStyle.caption1,
     this.emphasized = true,
-    this.monospace = false,
+    this.tabular = false,
     this.leading,
     this.leadingSize = 14,
   });
@@ -38,8 +38,8 @@ class StatusPill extends StatelessWidget {
   final AppTextStyle style;
   final bool emphasized;
 
-  /// Numerals read better monospaced, e.g. a latency figure.
-  final bool monospace;
+  /// Lining digits, e.g. a latency figure.
+  final bool tabular;
 
   /// An optional glyph before the label, e.g. a record type.
   final Glyph? leading;
@@ -57,7 +57,7 @@ class StatusPill extends StatelessWidget {
           .of(context, emphasized: emphasized)
           .copyWith(
             color: fore,
-            fontFamily: monospace ? appMonospaceFontFamily : null,
+            fontFeatures: tabular ? appTabularFigures : null,
           ),
     );
     final leading = this.leading;

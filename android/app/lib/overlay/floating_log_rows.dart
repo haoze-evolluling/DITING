@@ -153,7 +153,7 @@ class FloatingLogFilterChip extends StatelessWidget {
                     .of(context)
                     .copyWith(
                       color: foreground.withValues(alpha: 0.75),
-                      fontFamily: appMonospaceFontFamily,
+                      fontFeatures: appTabularFigures,
                     ),
               ),
             ],
@@ -228,7 +228,7 @@ class FloatingLogRow extends StatelessWidget {
                   ),
                   Text(
                     floatingLogTime(request.timestamp),
-                    style: caption.copyWith(fontFamily: appMonospaceFontFamily),
+                    style: caption.copyWith(fontFeatures: appTabularFigures),
                   ),
                 ],
               ),
@@ -254,7 +254,7 @@ class FloatingLogRow extends StatelessWidget {
                       Text(
                         obsFormatLatency(elapsed, context.l10n),
                         style: caption.copyWith(
-                          fontFamily: appMonospaceFontFamily,
+                          fontFeatures: appTabularFigures,
                           color: elapsed >= 600 ? colorScheme.warning : null,
                         ),
                       ),

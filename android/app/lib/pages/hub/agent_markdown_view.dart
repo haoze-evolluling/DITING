@@ -253,7 +253,7 @@ class _CodeBlock extends StatelessWidget {
               style: AppTextStyle.caption1
                   .of(context)
                   .copyWith(
-                    fontFamily: appMonospaceFontFamily,
+                    fontFeatures: appTabularFigures,
                     height: 1.5,
                     color: colorScheme.onSurface,
                   ),

@@ -273,7 +273,7 @@ class _Field extends StatelessWidget {
             ? [FilteringTextInputFormatter.digitsOnly]
             : null,
         decoration: InputDecoration(labelText: label, hintText: hint),
-        style: AppTextStyle.callout.of(context).toMonospace,
+        style: AppTextStyle.callout.of(context).toTabular,
         onChanged: (_) => onChanged(),
       ),
     );

@@ -380,7 +380,7 @@ class _RouterGuideCard extends StatelessWidget {
           else
             Text(
               l10n.desktopLanDnsPlaceholder,
-              style: DashboardText.label(context).toMonospace,
+              style: DashboardText.label(context).toTabular,
             ),
           const SizedBox(height: 8),
           Text(
@@ -427,7 +427,7 @@ class _DeviceGuideCard extends StatelessWidget {
           else
             Text(
               l10n.desktopLanDnsPlaceholder,
-              style: DashboardText.label(context).toMonospace,
+              style: DashboardText.label(context).toTabular,
             ),
           const SizedBox(height: 8),
           Text(

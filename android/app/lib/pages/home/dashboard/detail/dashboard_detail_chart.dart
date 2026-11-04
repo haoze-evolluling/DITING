@@ -169,7 +169,7 @@ class DashboardShareLegend extends StatelessWidget {
                 .of(context, emphasized: true)
                 .copyWith(
                   color: colorScheme.onSurface,
-                  fontFamily: appMonospaceFontFamily,
+                  fontFeatures: appTabularFigures,
                 ),
           ),
         ],

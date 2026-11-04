@@ -48,7 +48,7 @@ class IntranetIpDetailPage extends ConsumerWidget {
           glyph: AppGlyphs.wifi,
           label: context.l10n.intranetLocalAddress,
           value: dnsAddress ?? (network.isLoading ? context.l10n.intranetReading : context.l10n.intranetNoActiveNetwork),
-          monospace: dnsAddress != null,
+          tabular: dnsAddress != null,
           chipLabel: listening ? context.l10n.intranetUsableAsDns : context.l10n.intranetLocalOnly,
           chipColor: listening
               ? colorScheme.success
@@ -92,24 +92,24 @@ class IntranetIpDetailPage extends ConsumerWidget {
               DashboardDetailRow(
                 label: context.l10n.intranetAdapter,
                 value: networkInterfaceLabel(info ?? _emptyInfo),
-                monospace: true,
+                tabular: true,
               ),
               DashboardDetailRow(
                 label: 'IPv4',
                 value: localIp.isEmpty ? '—' : localIp,
-                monospace: true,
+                tabular: true,
               ),
               DashboardDetailRow(
                 label: 'IPv6',
                 value: info?.localIpv6?.isNotEmpty == true
                     ? info!.localIpv6!
                     : '—',
-                monospace: true,
+                tabular: true,
               ),
               DashboardDetailRow(
                 label: context.l10n.intranetGateway,
                 value: info?.gateway?.isNotEmpty == true ? info!.gateway! : '—',
-                monospace: true,
+                tabular: true,
               ),
             ],
           ),
@@ -149,7 +149,7 @@ class IntranetIpDetailPage extends ConsumerWidget {
                             ? context.l10n.intranetPrimaryDns
                             : context.l10n.intranetSecondaryDns(index),
                         value: server,
-                        monospace: true,
+                        tabular: true,
                       ),
                     DashboardDetailRow(
                       label: context.l10n.intranetPrivateDns,
@@ -223,7 +223,7 @@ class _CopyCard extends StatelessWidget {
                       .of(context)
                       .copyWith(
                         color: colorScheme.onSurfaceVariant,
-                        fontFamily: appMonospaceFontFamily,
+                        fontFeatures: appTabularFigures,
                       ),
                 ),
               ],

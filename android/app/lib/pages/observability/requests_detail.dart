@@ -98,18 +98,18 @@ class RequestDetailSheet extends StatelessWidget {
                 KeyValueRow(
                   label: context.l10n.obsTime,
                   value: _stampOf(request.timestamp),
-                  monospace: true,
+                  tabular: true,
                 ),
                 KeyValueRow(label: context.l10n.obsSource, value: request.source.label),
                 if (request.protocol case final protocol?
                     when protocol.isNotEmpty)
-                  KeyValueRow(label: context.l10n.obsProtocol, value: protocol, monospace: true),
+                  KeyValueRow(label: context.l10n.obsProtocol, value: protocol, tabular: true),
                 if (request.packageName case final packageName?
                     when packageName.isNotEmpty)
                   KeyValueRow(
                     label: context.l10n.obsAppPackage,
                     value: packageName,
-                    monospace: true,
+                    tabular: true,
                   ),
                 if (request.packageName case final packageName?
                     when showAppLink && packageName.isNotEmpty)
@@ -127,15 +127,15 @@ class RequestDetailSheet extends StatelessWidget {
                     },
                   ),
                 if (parsed.resolved case final resolved?)
-                  KeyValueRow(label: context.l10n.obsResolved, value: resolved, monospace: true),
+                  KeyValueRow(label: context.l10n.obsResolved, value: resolved, tabular: true),
                 if (request.elapsedMs case final elapsed?)
                   KeyValueRow(
                     label: context.l10n.obsElapsed,
                     value: obsFormatLatency(elapsed, context.l10n),
-                    monospace: true,
+                    tabular: true,
                   ),
                 if (request.blockSubscriptionId case final id?)
-                  KeyValueRow(label: context.l10n.obsBlockingSubscription, value: 'sub_$id', monospace: true),
+                  KeyValueRow(label: context.l10n.obsBlockingSubscription, value: 'sub_$id', tabular: true),
               ],
             ),
           ),
@@ -147,14 +147,14 @@ class RequestDetailSheet extends StatelessWidget {
                 KeyValueRow(
                   label: context.l10n.obsRule,
                   value: requestRuleOf(request, context.l10n),
-                  monospace: true,
+                  tabular: true,
                 ),
                 KeyValueRow(
                   label: context.l10n.obsHandling,
                   value: requestHandlingOf(request, context.l10n),
                 ),
                 if (parsed.error case final error?)
-                  KeyValueRow(label: context.l10n.obsError, value: error, monospace: true),
+                  KeyValueRow(label: context.l10n.obsError, value: error, tabular: true),
               ],
             ),
           ),
@@ -173,7 +173,7 @@ class RequestDetailSheet extends StatelessWidget {
                       .of(context)
                       .copyWith(
                         color: colorScheme.onSurface,
-                        fontFamily: appMonospaceFontFamily,
+                        fontFeatures: appTabularFigures,
                         height: 1.5,
                       ),
                 ),

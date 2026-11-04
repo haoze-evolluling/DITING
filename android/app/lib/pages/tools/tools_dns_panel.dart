@@ -166,7 +166,7 @@ class _DnsLookupPanelState extends ConsumerState<_DnsLookupPanel> {
             ),
           _ToolSection(
             rows: [
-              KeyValueRow(label: context.l10n.toolQueryDomain, value: result.domain, monospace: true),
+              KeyValueRow(label: context.l10n.toolQueryDomain, value: result.domain, tabular: true),
               KeyValueRow(
                 label: context.l10n.toolRecordType,
                 value: _ipv4 ? 'A（IPv4）' : 'AAAA（IPv6）',
@@ -174,18 +174,18 @@ class _DnsLookupPanelState extends ConsumerState<_DnsLookupPanel> {
               KeyValueRow(
                 label: context.l10n.toolDnsServers,
                 value: _serverLabel(flags.dnsLookupViaTunnel),
-                monospace: true,
+                tabular: true,
               ),
               KeyValueRow(label: context.l10n.toolAnswerSource, value: dnsSourceLabel(result.source)),
               KeyValueRow(
                 label: context.l10n.toolElapsed,
                 value: _msText(result.elapsedMs),
-                monospace: true,
+                tabular: true,
               ),
               KeyValueRow(
                 label: context.l10n.toolAnswerCount,
                 value: '${result.answers.length}',
-                monospace: true,
+                tabular: true,
               ),
             ],
             footer: result.source == 'blocked'
@@ -204,7 +204,7 @@ class _DnsLookupPanelState extends ConsumerState<_DnsLookupPanel> {
                       KeyValueRow(
                         label: '${answer.recordType} · TTL ${answer.ttl}s',
                         value: answer.value,
-                        monospace: true,
+                        tabular: true,
                       ),
                   ],
                 ),

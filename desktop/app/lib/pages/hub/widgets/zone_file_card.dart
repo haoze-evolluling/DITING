@@ -285,7 +285,7 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
     final preview = _previews[zone.id];
     final mono = AppTextStyle.callout
         .of(context)
-        .copyWith(fontFamily: appMonospaceFontFamily);
+        .copyWith(fontFeatures: appTabularFigures);
     final chip = SizedBox(
       width: _badgeWidth,
       child: Align(
