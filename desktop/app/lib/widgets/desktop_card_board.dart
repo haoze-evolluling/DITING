@@ -25,8 +25,9 @@ const double desktopTwoColumnWidth =
 const double desktopPageGutter = 24;
 const double desktopBoardTopGap = 16;
 
-/// A board holding a single card keeps it near a comfortable reading width and centers it: a lone
-/// card pinned to the left edge of a wide empty board reads as a loading failure.
+/// A board holding a single card keeps it near a comfortable reading width instead of stretching one
+/// form across the whole window; it stays on the page's left edge so it lines up with the board of
+/// every other page.
 const double desktopSoloCardWidth = 760;
 
 class DesktopCardBoard extends StatelessWidget {
