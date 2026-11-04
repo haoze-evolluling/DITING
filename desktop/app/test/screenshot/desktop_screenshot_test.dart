@@ -167,6 +167,21 @@ void main() {
       );
     }, skip: skip);
 
+    testWidgets('桌面安全隐私深色', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-privacy-dark',
+          app: app(
+            location: '/hub/privacy',
+            settings: {'app_theme_mode': 'dark'},
+          ),
+          size: window,
+          platform: TargetPlatform.windows,
+        ),
+      );
+    }, skip: skip);
+
     testWidgets('桌面服务连不上', (tester) async {
       await captureScreenshot(
         tester,
