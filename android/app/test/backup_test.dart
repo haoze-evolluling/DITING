@@ -452,10 +452,16 @@ void _backupTransfer() {
         'pattern': 'fresh.test',
         'rawLine': 'fresh.test',
         'addedAt': 1,
+        'enabled': 1,
+        'important': 0,
+        'appInverted': 0,
+        'isWildcard': 0,
+        'isRegex': 0,
       });
       await fresh.insert('block_rule_source', {
         'ruleId': 1,
         'source': 'useradd',
+        'enabled': 1,
       });
       final export = await const BackupExporter().export(
         BackupExportSource(settings: LegacySettings(seededStore()), database: fresh),
