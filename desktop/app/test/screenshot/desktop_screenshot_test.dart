@@ -282,6 +282,35 @@ void main() {
       );
     }, skip: skip);
 
+    // 外观页是唯一一张靠缩略图讲事的卡片：宽窗、默认窗和深色各一张，才能看出预览窗口与配色磁贴
+    // 是否真的在两种宽度下都成行。
+    testWidgets('桌面外观宽窗', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-appearance-wide',
+          app: app(location: '/hub/appearance'),
+          size: const Size(1600, 900),
+          platform: TargetPlatform.windows,
+        ),
+      );
+    }, skip: skip);
+
+    testWidgets('桌面外观深色', (tester) async {
+      await captureScreenshot(
+        tester,
+        ScreenshotSpec(
+          name: 'desktop-appearance-dark',
+          app: app(
+            location: '/hub/appearance',
+            settings: {'app_theme_mode': 'dark'},
+          ),
+          size: window,
+          platform: TargetPlatform.windows,
+        ),
+      );
+    }, skip: skip);
+
     // Every page at both sides of the two-column breakpoint. 1280 leaves a 1056-wide content
     // column after the sidebar, which is the tightest two-column board; 700 drops to one column.
     // This is the layout contract the screenshots exist to catch.

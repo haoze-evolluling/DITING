@@ -12280,12 +12280,18 @@ class AppL10nZh extends AppL10n {
   String get desktopSettingsModeBody => '跟随系统时按系统深浅偏好自动同步';
 
   @override
-  String desktopSettingsCurrent(String palette, String mode) {
-    return '当前：$palette · $mode';
-  }
+  String get desktopSettingsAppearanceFooter => '外观偏好与移动端共用同一组键，切换后重启仍生效。';
 
   @override
-  String get desktopSettingsAppearanceFooter => '外观偏好与移动端共用同一组键，切换后重启仍生效。';
+  String get desktopSettingsPreview => '桌面预览';
+
+  @override
+  String get desktopSettingsPreviewBody => '侧栏、工具栏与卡片都按当前配色和深浅模式渲染，所见即所得。';
+
+  @override
+  String desktopSettingsSystemResolved(String mode) {
+    return '$mode（跟随系统）';
+  }
 
   @override
   String get desktopServicePageTitle => '服务与连接';

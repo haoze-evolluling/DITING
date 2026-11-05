@@ -22396,17 +22396,29 @@ abstract class AppL10n {
   /// **'跟随系统时按系统深浅偏好自动同步'**
   String get desktopSettingsModeBody;
 
-  /// No description provided for @desktopSettingsCurrent.
-  ///
-  /// In zh, this message translates to:
-  /// **'当前：{palette} · {mode}'**
-  String desktopSettingsCurrent(String palette, String mode);
-
   /// No description provided for @desktopSettingsAppearanceFooter.
   ///
   /// In zh, this message translates to:
   /// **'外观偏好与移动端共用同一组键，切换后重启仍生效。'**
   String get desktopSettingsAppearanceFooter;
+
+  /// No description provided for @desktopSettingsPreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'桌面预览'**
+  String get desktopSettingsPreview;
+
+  /// No description provided for @desktopSettingsPreviewBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'侧栏、工具栏与卡片都按当前配色和深浅模式渲染，所见即所得。'**
+  String get desktopSettingsPreviewBody;
+
+  /// No description provided for @desktopSettingsSystemResolved.
+  ///
+  /// In zh, this message translates to:
+  /// **'{mode}（跟随系统）'**
+  String desktopSettingsSystemResolved(String mode);
 
   /// No description provided for @desktopServicePageTitle.
   ///

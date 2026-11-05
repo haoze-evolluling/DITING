@@ -13046,13 +13046,20 @@ class AppL10nEn extends AppL10n {
       'Following the system uses the system\'s light/dark preference';
 
   @override
-  String desktopSettingsCurrent(String palette, String mode) {
-    return 'Current: $palette · $mode';
-  }
-
-  @override
   String get desktopSettingsAppearanceFooter =>
       'Appearance shares the mobile app\'s preference keys, so the choice survives a restart.';
+
+  @override
+  String get desktopSettingsPreview => 'Window preview';
+
+  @override
+  String get desktopSettingsPreviewBody =>
+      'The sidebar, toolbar and cards render with the current palette and mode.';
+
+  @override
+  String desktopSettingsSystemResolved(String mode) {
+    return '$mode (system)';
+  }
 
   @override
   String get desktopServicePageTitle => 'Service and connection';

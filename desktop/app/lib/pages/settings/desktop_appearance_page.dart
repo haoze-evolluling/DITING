@@ -6,7 +6,7 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_desktop/pages/settings/widgets/appearance_theme_card.dart';
+import 'package:diting_desktop/pages/settings/widgets/appearance_theme_pane.dart';
 import 'package:diting_desktop/widgets/desktop_card_board.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -24,7 +24,7 @@ class DesktopAppearancePage extends StatelessWidget {
       title: l10n.desktopSettingsAppearance,
       body: const PageBody(
         children: [
-          DesktopCardBoard(cards: [AppearanceThemeCard()], singleColumn: true),
+          DesktopCardBoard(cards: [AppearanceThemePane()], singleColumn: true),
         ],
       ),
     );
