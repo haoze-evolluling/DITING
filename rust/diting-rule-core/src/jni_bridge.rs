@@ -1,10 +1,10 @@
-//! JNI entry point for the Kotlin rule-index compiler (`RustRuleIndexCompiler.kt`).
+//! JNI entry point for the Kotlin rule-index writer (`RustRuleIndexCompiler.kt`).
 //!
 //! Kotlin packs the enabled rules the DB loader hands it into one byte array (format documented on
 //! [`crate::dtri::compile_packed`]), calls [`Java_com_haoze_diting_core_rule_RustRuleIndexCompiler_compile`],
-//! and writes the returned DTRI image to the index file. Every failure path returns null: the
-//! Kotlin side then runs its own compiler, so a missing library, an old `.so` without this symbol
-//! or a malformed payload can never break a rule snapshot.
+//! and writes the returned DTRI image to the index file. Every failure path returns null, which
+//! the Kotlin side turns into an [IllegalStateException]: the writer is the only implementation, so
+//! a missing library or a malformed payload must fail the snapshot build.
 
 use jni::objects::{JByteArray, JObject};
 use jni::sys::jbyteArray;

@@ -35,8 +35,8 @@ const NODE_SIZE: usize = 12;
 const EDGE_SIZE: usize = 12;
 const BLOOM_HASHES: usize = 7;
 
-/// One rule as the Kotlin compiler sees it. `important` is not part of the trie (the caller feeds
-/// the normal and important files separately), so it is not modelled here.
+/// One rule as the Kotlin side packs it. `important` is not part of the trie (the caller feeds the
+/// normal and important files separately), so it is not modelled here.
 #[derive(Debug, Clone)]
 pub struct Rule<'a> {
     pub pattern: &'a str,
@@ -66,7 +66,7 @@ fn is_skipped(rule: &Rule<'_>) -> bool {
 }
 
 /// Compiles `rules` into a DTRI image. An empty input still produces a valid root-only file, which
-/// is what the Kotlin compiler does for an empty page set.
+/// is what a subscription page set with nothing indexable has to look like.
 pub fn compile(rules: &[Rule<'_>]) -> Vec<u8> {
     let mut nodes: Vec<Node<'_>> = vec![Node::default()];
     let mut labels: String = String::new();
@@ -231,7 +231,8 @@ fn intern(
 }
 
 /// Compiles the packed payload the Kotlin side sends over JNI. `None` means the payload is
-/// malformed (or absurdly large) and the caller should fall back to the Kotlin compiler.
+/// malformed (or absurdly large); the JNI bridge reports null and the Kotlin caller fails the
+/// snapshot build instead of writing a partial image.
 ///
 /// ```text
 /// u32 count | count * (u32 patternLen, pattern, u32 sourceLen, source, u8 flags,

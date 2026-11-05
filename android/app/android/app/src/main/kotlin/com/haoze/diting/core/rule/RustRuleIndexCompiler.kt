@@ -1,54 +1,45 @@
 package com.haoze.diting.core.rule
 
-import android.util.Log
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
 /**
- * Native DTRI writer, the Rust side of `MappedSubscriptionRuleIndex.compile`.
+ * Native DTRI writer, the Rust side of `MappedSubscriptionRuleIndex.compileAndLoad`.
  *
  * The rules are packed into one byte array and handed to
  * `diting_rule_core`'s `Java_com_haoze_diting_core_rule_RustRuleIndexCompiler_compile`; the JNI
- * entry point returns the exact same file the Kotlin compiler writes (see
- * `rust/diting-rule-core/src/dtri.rs` and the byte-parity fixtures). Anything unexpected — a build
- * without the library, an older `.so`, a malformed result — returns null and the caller runs the
- * original Kotlin compiler, so rule snapshots keep working exactly as before.
+ * entry point returns the DTRI image (see `rust/diting-rule-core/src/dtri.rs` and the byte-parity
+ * fixtures). The library is required: a build that forgot `python rust/build_android.py` fails
+ * here with an [IllegalStateException] instead of quietly compiling a second writer in Kotlin.
  */
 internal class RustRuleIndexCompiler private constructor() {
     external fun compile(packed: ByteArray): ByteArray?
 
     companion object {
-        private const val TAG = "RustRuleIndex"
-
-        /** Set once a call fails: retrying per snapshot would only repeat the failure. */
-        @Volatile
-        private var disabled = false
-
-        private val instance: RustRuleIndexCompiler? by lazy {
-            runCatching {
+        private val instance: RustRuleIndexCompiler by lazy {
+            try {
                 System.loadLibrary("diting_rule_core")
                 RustRuleIndexCompiler()
-            }.onFailure {
-                Log.i(TAG, "native rule index writer unavailable, using the Kotlin compiler: ${it.message}")
-            }.getOrNull()
+            } catch (error: Throwable) {
+                throw IllegalStateException(
+                    "native rule index writer unavailable; build it with " +
+                        "`python rust/build_android.py`",
+                    error,
+                )
+            }
         }
 
         /**
-         * Compiles everything [forEachRule] yields into a DTRI image, or returns null when the
-         * caller should compile with Kotlin instead. DB/iterator errors propagate: they are not a
-         * native-path problem, and the Kotlin compiler would fail the same way.
+         * Compiles everything [forEachRule] yields into a DTRI image.
+         *
+         * DB/iterator errors propagate, and so does a rejected or empty image: there is no Kotlin
+         * compiler to fall back to.
          */
-        fun compileDocument(forEachRule: ((EnabledRule) -> Unit) -> Unit): ByteArray? {
-            if (disabled) return null
-            val compiler = instance ?: return null
-            val packed = pack(forEachRule)
-            return try {
-                compiler.compile(packed)?.takeIf { it.isNotEmpty() }
-            } catch (error: Throwable) {
-                disabled = true
-                Log.w(TAG, "native rule index compile failed, using the Kotlin compiler for this process", error)
-                null
-            }
+        fun compileDocument(forEachRule: ((EnabledRule) -> Unit) -> Unit): ByteArray {
+            val image = instance.compile(pack(forEachRule))
+            checkNotNull(image) { "native rule index writer returned no image" }
+            check(image.isNotEmpty()) { "native rule index writer returned an empty image" }
+            return image
         }
 
         /**
