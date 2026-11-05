@@ -113,7 +113,7 @@ python desktop/toolbox/app.py
 
 ```cmd
 python desktop\toolbox\core\version_manager.py 2.0.2 -g flutter
-desktop\service\set_version.bat 2.2.9 -g common
+desktop\service\set_version.bat 2.2.11 -g common
 ```
 
 ## 技术栈

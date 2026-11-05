@@ -10,7 +10,7 @@ SetCompressorDictSize 32
 !define INFO_COMPANYNAME    "Diting"
 !define INFO_PRODUCTNAME    "谛听 DNS"
 !ifndef INFO_PRODUCTVERSION
-  !define INFO_PRODUCTVERSION "2.2.9"
+  !define INFO_PRODUCTVERSION "2.2.11"
 !endif
 !define INFO_COPYRIGHT      "Copyright 2026 DITING"
 
