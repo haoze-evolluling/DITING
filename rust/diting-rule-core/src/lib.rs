@@ -12,17 +12,22 @@
 //! * [`hosts`] — hosts and dnsmasq lines.
 //! * [`document`] — per-line entry point plus dedupe/badfilter aggregation.
 //! * [`ffi`] — C ABI and the binary payload Dart decodes.
+//! * [`dtri`] — the mmap-able subscription-rule index writer (`MappedSubscriptionRuleIndex`).
+//! * [`jni_bridge`] — the JNI entry point the Kotlin rule-index loader calls.
 
 pub mod document;
 pub mod domain;
+pub mod dtri;
 pub mod fast_hash;
 pub mod ffi;
 pub mod hosts;
+pub mod jni_bridge;
 pub mod keys;
 pub mod line;
 pub mod models;
 pub mod modifiers;
 
 pub use document::{parse_categorized_line, parse_document};
+pub use dtri::compile as compile_rule_index;
 pub use ffi::ABI_VERSION;
 pub use models::{CategorizedLine, CategorizedRules, ParsedRule};

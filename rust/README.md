@@ -1,14 +1,23 @@
-# Rust 规则内核（试点）
+# Rust 规则内核
 
-`diting-rule-core` 是把 Android 端规则解析链路（AdGuard/ABP 行解析、hosts、dnsmasq、去重与
-`$badfilter` 聚合）移植到 Rust 的**试点**：Dart 实现原样保留，Rust 只是可选快路径。
+`diting-rule-core` 把规则链路上两处纯计算搬到了 Rust，Dart / Kotlin 实现原样保留，Rust 只是
+**可选快路径**：
 
-## 为什么是这块
+| 入口 | 调用方 | Rust 产物 | 回退 |
+|---|---|---|---|
+| 规则文档解析 | Dart（`dart:ffi`） | 归类、去重、`$badfilter` 聚合后的紧凑载荷 | `parseCategorizedInDart` |
+| DTRI 订阅索引编译 | Kotlin（JNI） | 与 Kotlin 写入器逐字节相同的 mmap 索引文件 | `MappedSubscriptionRuleIndex.compile` |
 
-- **纯函数、零 IO**：一行文本进，一组规则出，语义可以逐字段和 Dart 对拍。
-- **真实批量负载**：订阅更新时整份列表在 UI isolate 上同步解析，几万到十几万行会直接卡界面。
-- **影响面可控**：只有 `parseCategorized` 一个入口，失败就回退，规则入库（sqflite）完全不动。
-- **已有测试**：`android/app/test/rule_parse_test.dart` 锁定了语义，加上新的对拍测试。
+## 为什么是这两块
+
+- **规则文档解析**：纯函数、零 IO，一行文本进、一组规则出；订阅更新时整份列表在 UI isolate 上
+  同步解析，几万到十几万行会直接卡界面。只有 `parseCategorized` 一个入口，失败就回退。
+- **DTRI 索引编译**：规则写入后要把整张订阅表重新编译成 Go 引擎 mmap 的 trie，`RuleSnapshotStore`
+  的注释写得很直白——“一个 compile 在大型订阅上要几秒”。这是纯 CPU + 一次文件写，输入是
+  `EnabledRule` 序列，输出是格式固定的二进制；Kotlin 算法（`HashMap` 节点树 + 排序 + bloom）
+  适合用 Rust 重写，且可以用桌面 JVM 参考实现逐字节对拍。
+
+两块都满足：纯计算、真实批量负载、影响面可控（失败回退）、已有可对拍的参考实现。
 
 ## 结构
 
@@ -16,15 +25,24 @@
 rust/
 ├── Cargo.toml                      # workspace
 ├── build_android.py                # NDK 交叉编译 + 拷入 jniLibs
-└── diting-rule-core/
-    ├── src/models.rs               # ParsedRule / CategorizedRules（对应 rule_models.dart）
-    ├── src/domain.rs               # 域名归一化、字面量 IP（对应 rule_domain_utils.dart）
-    ├── src/line.rs                 # 单行 adblock/URL/cosmetic 解析 + 去重键
-    ├── src/hosts.rs                # hosts 与 dnsmasq（对应 hosts_parser.dart）
-    ├── src/document.rs             # 整份文本聚合（对应 rule_parser.dart）
-    ├── src/ffi.rs                  # C ABI + 二进制载荷
-    ├── src/fast_hash.rs            # 去重索引用的随机种子 FxHash
-    └── examples/bench.rs           # 纯 Rust 解析/编码耗时
+├── verify.py                       # fmt / clippy / test / Go 读取 / 基准
+├── diting-rule-core/
+│   ├── src/models.rs               # ParsedRule / CategorizedRules（对应 rule_models.dart）
+│   ├── src/domain.rs               # 域名归一化、字面量 IP（对应 rule_domain_utils.dart）
+│   ├── src/line.rs                 # 单行 adblock/URL/cosmetic 解析 + 去重键
+│   ├── src/hosts.rs                # hosts 与 dnsmasq（对应 hosts_parser.dart）
+│   ├── src/document.rs             # 整份文本聚合（对应 rule_parser.dart）
+│   ├── src/ffi.rs                  # C ABI + 二进制载荷
+│   ├── src/dtri.rs                 # DTRI 写入器（对应 MappedSubscriptionRuleIndex）
+│   ├── src/dtri/tests.rs           # 写入器单测（跳过规则族、排序、载荷解码）
+│   ├── src/jni_bridge.rs           # Kotlin 调用 DTRI 写入器的 JNI 入口
+│   ├── src/fast_hash.rs            # 去重索引用的随机种子 FxHash
+│   ├── examples/bench.rs           # 纯 Rust 解析/编码耗时
+│   ├── examples/dtri_bench.rs      # DTRI 编译耗时（可指定同一份语料）
+│   ├── tests/dtri_golden.rs        # Rust ↔ 参考实现逐字节对拍（镜像 + JNI 载荷）
+│   └── tests/fixtures/             # 共享语料 + 参考实现生成的 .dtri / .pack
+└── tools/dtri-reference/
+    └── DTRIReference.java          # Kotlin compile 的桌面 JVM 复刻（生成 fixtures / 基准）
 ```
 
 Dart 侧：
@@ -36,26 +54,45 @@ Dart 侧：
 | `android/app/test/rule_parse_rust_parity_test.dart` | Dart ↔ Rust 对拍（逐行语料 + 整份文本 + 6000 行随机拼接） |
 | `android/app/tool/rule_core_bench.dart` | 端到端耗时对照（可 AOT 编译） |
 
+Kotlin 侧：
+
+| 文件 | 作用 |
+|---|---|
+| `.../core/rule/RustRuleIndexCompiler.kt` | 打包 `EnabledRule`、加载 `libditing_rule_core.so`、JNI 调用、失败标记 |
+| `.../core/rule/MappedSubscriptionRuleIndex.kt` | 先写 Rust 产物并自校验，任何失败回退原 Kotlin 编译器 |
+
 ## 构建与启用
 
 ```bash
-# 1. 本机（Windows/Linux）构建，供 flutter test 与 bench 使用
+# 1. 本机（Windows/Linux）构建，供 flutter test、Go 兼容测试与 bench 使用
 cd rust && cargo build --release
 
 # 2. Android：交叉编译 arm64-v8a / x86_64 并拷入 app 的 jniLibs
 python rust/build_android.py            # --abi arm64 / x86_64 / all（默认 all）
 ```
 
-不跑第 2 步就照旧走 Dart 实现，功能完全不变。运行时判定见 `RustRuleCore`：
+不跑第 2 步就照旧走 Dart / Kotlin 实现，功能完全不变。运行时判定：
+
+**解析（Dart 侧 `RustRuleCore`）**
 
 1. `DITING_RULE_CORE=off` → 强制 Dart；
 2. 按 `DITING_RULE_CORE_LIB` → 打包名（`libditing_rule_core.so`）→ `rust/target/<profile>/` 依次探测；
 3. ABI 版本必须等于 `ABI_VERSION`（`src/ffi.rs`），不匹配即跳过；
-4. 调用期任何异常（解码失败等）→ 本次及后续都回退 Dart，不影响导入。
+4. 调用期任何异常（解码失败等）→ 本次及后续都回退 Dart。
+
+**DTRI（Kotlin 侧 `RustRuleIndexCompiler`）**
+
+1. `System.loadLibrary("diting_rule_core")` 失败（没编 Rust / 老包）→ null，走 Kotlin；
+2. 调用期任何 `Throwable`（缺少 JNI 符号的旧 `.so`、载荷异常）→ 本进程后续都走 Kotlin；
+3. Rust 返回的镜像先写到临时文件并用 `MappedSubscriptionRuleIndex.load` 自校验，通过才替换正式索引；
+   校验失败同样回退 Kotlin 重编。因此坏产物不会留下一个“读不出但看起来存在”的索引。
+
+JNI 符号 `Java_com_haoze_diting_core_rule_RustRuleIndexCompiler_compile` 由 R8 的
+`-keepclasseswithmembernames ... { native <methods>; }` 规则保住，无需新增混淆规则。
 
 ## 数据流
 
-一次调用解一整份文档，而不是一行一次跨界：
+规则文档解析：一次调用解一整份文档，而不是一行一次跨界：
 
 ```
 Dart: utf8 bytes ──diting_rule_core_parse──> Rust: 解析 + 去重 + 聚合 ──> 二进制载荷
@@ -63,73 +100,102 @@ Dart: utf8 bytes ──diting_rule_core_parse──> Rust: 解析 + 去重 + 聚
 Dart: 顺序读取（ASCII 走 String.fromCharCodes，其余走 utf8）<─────────────┘
 ```
 
-载荷格式在 `src/ffi.rs` 顶部注释里；改布局或改语义就同时改 `ABI_VERSION` 与
-`rust_rule_core.dart` 的 `_abiVersion`，否则加载端会拒绝并回退。
+DTRI 索引编译：一次 JNI 调用搬一整份规则，Rust 返回整份镜像：
 
-### ABI 与打包目标
+```
+Kotlin: EnabledRule 分页读取 ──pack──> u32 计数 + 每条(pattern, source, flags, appScope, denyallow, dnsType)
+        ──JNI──> Rust: 过滤 + trie + bloom ──> DTRI bytes
+Kotlin: 写临时文件 → load() 自校验 → 原子替换 → Go 引擎 mmap
+```
 
-`build_android.py` 默认编 `arm64-v8a` + `x86_64`，但**进不进包由 `android/app` 的 Gradle 策略
-决定**（见 `app/build.gradle.kts` 的“ABI policy”）：
-
-| 构建 | Flutter 参数 | 进包的 Rust `.so` |
-|---|---|---|
-| Release（`build_apk.bat` [3]，默认） | `--target-platform android-arm64 -PditingAbi=arm64` | 仅 `arm64-v8a` |
-| Release（`ditingAbi` 未指定） | `flutter build apk --release` | 仅 `arm64-v8a`（release 固定剔除 x86_64） |
-| Release 上模拟器 / 双 ABI 分发 | `-PditingAbi=all` | `arm64-v8a` + `x86_64` |
-| Debug（`build_apk.bat` [1][2]，默认） | 未指定 `ditingAbi` | `arm64-v8a` + `x86_64` |
-| 按 ABI 拆包 | `--split-per-abi -PditingAbi=all` | 按 `--target-platform` 各自一个 |
-
-也就是说 release 只发 `arm64-v8a`，`rust/build_android.py` 编出来的 x86_64 产物会被
-Gradle 的 `jniLibs.excludes` 剔除，不占体积；它的作用是为 debug 包与模拟器实例准备。
-反过来说，只跑 `python rust/build_android.py --abi arm64` 时，任何带 x86_64 的变体都会因为
-缺库而回退 Dart——功能正常，只是没走快路径。
-
-Android 15+ 的 16 KB 页要求同样覆盖这个库：NDK r27+ 的链接器默认按 `0x4000` 对齐，
-`llvm-readelf -l` 可直接核对。
+载荷与文件布局分别是 `src/ffi.rs`、`src/dtri.rs` 顶部注释；改布局或改语义要同时改
+`ABI_VERSION` / 参考实现与 fixtures。
 
 ## 语义一致性
 
-`rule_parse_rust_parity_test.dart` 里 150 条手写语料 + 4000 行合成列表 + 6000 行随机拼接，
+**解析**：`rule_parse_rust_parity_test.dart` 里 150 条手写语料 + 4000 行合成列表 + 6000 行随机拼接，
 逐字段（pattern / rawLine / important / appScope / appInverted / isWildcard / denyallow /
 isRegex / dnsType / targetType / targetValue / isException）与计数器和 Dart 全等。
 
-已知边界（都在语料内验证过，不影响实际规则列表）：
+**DTRI**：三层对拍，任何一层挂了都会让 `verify.py` 失败。
 
-- 非 ASCII 域名：Dart 走 `Uri.parse` 后百分号编码，逐字复刻其结果（`#`/`?`/`\`/userinfo 之后
-  的 ASCII 部分仍会被接受）。
-- `\uFEFF`（BOM）开头的行：`rawLine` 保留 BOM；Dart 的 `utf8.decode` 会吞掉开头 BOM，故解码端
-  显式补回。
-- 非 ASCII 的 `toLowerCase` 特例（如开尔文符号 → `k`）不逐字节复刻。
-- 正则合法性：Dart 用 `RegExp` 编译校验；Rust 侧只做保守的结构校验（括号/字符类/量词）。
-  多接受的正则会在 Go 引擎加载时被跳过并记日志，不会让引擎加载失败。
+1. `tests/dtri_golden.rs`：同一份语料，Rust 输出与 `DTRIReference.java`（Kotlin `compile` 的
+   桌面复刻，同样的 `Locale.ROOT` 小写、UTF-16 排序、`HashMap` 去重、bloom 位序）逐字节相等；
+   `.pack` fixtures 还钉住了 Kotlin `RustRuleIndexCompiler.pack` 的 JNI 载荷格式，所以改字段顺序
+   或长度写法会直接测试失败，不需要装 Android 构建。覆盖大小写、尾点、Unicode、同 pattern 多
+   source 取最小、以及全部应跳过的规则族。
+2. `android/engine/policy_dtri_rust_test.go`：Go 引擎（真正的消费者）mmap 这些 fixture，
+   按自己的 `find` 语义逐条域名查回语料声明的 source。
+3. 10 万条规则语料额外做过一次性对照：Rust 镜像与 JVM 参考实现 3,548,571 字节完全一致。
 
-## 性能（本机 Windows/amd64，`dart compile exe` AOT 对照）
+已知边界：
 
-语料：真实订阅形态的合成列表（域名规则 / hosts / cosmetic / regex / 重复行混合）。
+- **bloom 的非 ASCII 命名**：Kotlin 写入器按 UTF-16 code unit 低 8 位做 FNV，Go 读取器按 UTF-8
+  字节。纯规则在归一化后是 ASCII，所以不影响实际规则；Rust 复刻**写入器**（逐字节一致），
+  不顺手“修”成 UTF-8，否则就不再是 drop-in 替换。
+- 解析侧的非 ASCII / BOM / 正则校验边界见试点说明，行为未变。
+
+## 性能（本机 Windows/amd64）
+
+规则解析（`dart compile exe` AOT 对照，语料：真实订阅形态的合成列表）：
 
 | 行数 | Dart | Rust（含 FFI + 载荷解码） | 加速 |
 |---|---|---|---|
-| 100,000 | 0.98–1.18 s（85–100k 行/s） | 0.20–0.27 s（370–500k 行/s） | 4.3–5.0x |
+| 100,000 | 0.98–1.18 s | 0.20–0.27 s | 4.3–5.0x |
 | 20,000 | ~0.19 s | ~0.045 s | ~4.3x |
 
-数值取三次运行，波动来自本机（VM）负载；比例比绝对值更值得看。
+DTRI 编译（10 万条合成订阅，同一份语料，输出均为 3,548,571 字节）：
 
-纯 Rust 侧（`cargo run --release --example bench`）10 万行约 0.15–0.21 s，其中载荷编码约 7 ms，
-即绝大多数时间在解析与去重；FFI 与解码只是零头。
+| 实现 | 耗时 |
+|---|---|
+| `DTRIReference.java`（桌面 JVM） | 565–609 ms |
+| Rust `dtri_bench` | 150–153 ms |
+
+桌面 JVM 只是 ART 的近似代理（JIT 冷启动 vs ART 执行），绝对值不能直接搬到手机上；
+**输出逐字节相同**才是这次迁移的核心保证。Rust 侧另外把节点标签放进共享字节池、用
+`(parent, label)` 哈希表代替子节点线性扫描，避免大 fan-out 下的 O(n²)。
 
 复现：
 
 ```bash
+# 解析侧
 cd android/app
 dart compile exe tool/rule_core_bench.dart -o build/rule_core_bench.exe
 build/rule_core_bench.exe
+
+# DTRI 侧（同一份语料喂两边）
+java rust/tools/dtri-reference/DTRIReference.java --generate 100000 /tmp/rules.txt
+java rust/tools/dtri-reference/DTRIReference.java /tmp/rules.txt /tmp/ref.dtri
+cd rust && cargo run --release --example dtri_bench -- /tmp/rules.txt /tmp/rust.dtri
+cmp /tmp/ref.dtri /tmp/rust.dtri && echo 一致
+```
+
+## 验证
+
+```bash
+python rust/verify.py            # fmt + clippy -D warnings + cargo test
+python rust/verify.py --go       # 再加 Go 引擎读取 Rust DTRI fixture
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译
+python rust/verify.py --all      # 全量
+```
+
+fixtures 需要重新生成时（改了写入语义就一定一起改）：
+
+```bash
+for name in basic sources unicode; do
+  java rust/tools/dtri-reference/DTRIReference.java \
+    rust/diting-rule-core/tests/fixtures/$name.rules.txt \
+    rust/diting-rule-core/tests/fixtures/$name.dtri
+done
+cd rust && cargo test --test dtri_golden
 ```
 
 ## 后续可做
 
-- **移出 UI isolate**：现在仍同步解析（100k 行 ≈ 0.2 s）。下一步可以把调用丢进
-  `Isolate.run`，但要接受规则对象跨 isolate 的拷贝成本，或改成 Rust 直接写库。
-- **去重键去字符串化**：目前每条规则拼一个去重键字符串，约占文档解析时间的三成；
+- **去重键去字符串化**：解析侧目前每条规则拼一个去重键字符串，约占文档解析时间的三成；
   改成对字段哈希 + 碰撞时逐字段比较可以再省一截。
-- **扩大范围**：`rule_domain_utils.dart` 之外，日志聚合、备份导入等纯逻辑模块同样适合这条路
-  （同样的 FFI 形态、同样的对拍测试）。
+- **DTRI 增量更新**：现在规则一改就整份重编；按 source 分片、只重编受影响的分片，可以把
+  万级列表的写入后延迟压到一次小编译。
+- **规则检索**：规则页对内存中整张表做 `toLowerCase().contains`，10 万条每键约 25–35 ms
+  （桌面实测）；预小写索引放到 Rust 是下一个最合适的纯计算模块。
+- **备份导入导出**：纯逻辑部分同样适合这条路（同样的 FFI 形态、同样的对拍测试）。

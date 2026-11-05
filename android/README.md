@@ -42,15 +42,17 @@ pwsh -File build_aar.ps1 -Arch all  # 双 ABI（debug 默认）
 报错。三种 AAR 的架构、压缩与体积、排障见
 [`docs/development/aar-build-notes.md`](../docs/development/aar-build-notes.md)。
 
-## 规则解析内核（可选）
+## 规则内核（可选）
 
-规则解析链路有一份 Rust 实现（仓库根 `rust/`），通过 `dart:ffi` 作为快路径接入：
+规则链路有两处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析经 `dart:ffi`，规则写入后的
+DTRI 订阅索引编译经 JNI（Kotlin 调用）；两处都由原实现兜底。
 
 ```bash
 python rust/build_android.py        # arm64-v8a + x86_64，产物拷入 src/main/jniLibs/
+python rust/verify.py --all         # fmt / clippy / 单测 / 对拍 / Go 读取 / 基准
 ```
 
-不生成 `jniLibs/` 里的 `.so` 时行为与以前完全相同（Dart 实现兜底），详见
+不生成 `jniLibs/` 里的 `.so` 时行为与以前完全相同（Dart 解析 + Kotlin 索引编译兜底），详见
 [`rust/README.md`](../rust/README.md)。
 
 ## 签名

@@ -132,7 +132,7 @@ internal class MappedSubscriptionRuleIndex private constructor(
             val temp = File(target.parentFile, "${target.name}.${System.nanoTime()}.tmp")
             temp.delete()
             try {
-                if (!compile(temp, forEachRule)) {
+                if (!writeImage(temp, forEachRule)) {
                     target.delete()
                     return null
                 }
@@ -193,6 +193,34 @@ internal class MappedSubscriptionRuleIndex private constructor(
                 file.close()
                 throw error
             }
+        }
+
+        /**
+         * Writes the trie image: the native writer when it is available, else [compile].
+         *
+         * A native image is validated with [load] before it replaces the target, so a bad Rust
+         * build degrades to the Kotlin compiler in this call instead of leaving an unreadable
+         * index behind (the loaders treat that as "no trie" and fall back to inline rules, which
+         * costs the whole snapshot its mmap fast path).
+         */
+        private fun writeImage(
+            temp: File,
+            forEachRule: ((EnabledRule) -> Unit) -> Unit
+        ): Boolean {
+            val rustImage = RustRuleIndexCompiler.compileDocument(forEachRule)
+            if (rustImage != null) {
+                val usable = runCatching {
+                    temp.outputStream().use { it.write(rustImage) }
+                    load(temp).close()
+                    true
+                }.getOrElse { error ->
+                    Log.w(TAG, "Rust DTRI image rejected, recompiling with Kotlin", error)
+                    false
+                }
+                if (usable) return true
+                temp.delete()
+            }
+            return compile(temp, forEachRule)
         }
 
         private fun compile(

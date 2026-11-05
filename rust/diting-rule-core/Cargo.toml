@@ -8,3 +8,4 @@ publish = false
 crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
+jni = "0.21"
