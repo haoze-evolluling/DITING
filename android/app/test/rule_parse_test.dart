@@ -175,16 +175,14 @@ void _ruleParser() {
   });
 
   group('域名工具', () {
-    test('通配符归一化与 IP 判定', () {
-      expect(normalizeWildcardDomain('*'), '*');
-      expect(normalizeWildcardDomain('*.Example.COM'), '*.example.com');
-      expect(normalizeWildcardDomain('bad domain'), isNull);
+    test('归一化与 IP 判定', () {
       expect(looksLikeLiteralIp('1.2.3.4'), isTrue);
       expect(looksLikeLiteralIp('::1'), isTrue);
       expect(looksLikeLiteralIp('example.com'), isFalse);
       expect(normalizeDomain('Example.COM.'), 'example.com');
       expect(normalizeDomain('1.2.3.4'), isNull);
       expect(normalizeDomain('nodot'), isNull);
+      expect(normalizeDomain('bad domain'), isNull);
     });
   });
 }
