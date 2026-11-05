@@ -66,6 +66,27 @@ Dart: 顺序读取（ASCII 走 String.fromCharCodes，其余走 utf8）<──�
 载荷格式在 `src/ffi.rs` 顶部注释里；改布局或改语义就同时改 `ABI_VERSION` 与
 `rust_rule_core.dart` 的 `_abiVersion`，否则加载端会拒绝并回退。
 
+### ABI 与打包目标
+
+`build_android.py` 默认编 `arm64-v8a` + `x86_64`，但**进不进包由 `android/app` 的 Gradle 策略
+决定**（见 `app/build.gradle.kts` 的“ABI policy”）：
+
+| 构建 | Flutter 参数 | 进包的 Rust `.so` |
+|---|---|---|
+| Release（`build_apk.bat` [3]，默认） | `--target-platform android-arm64 -PditingAbi=arm64` | 仅 `arm64-v8a` |
+| Release（`ditingAbi` 未指定） | `flutter build apk --release` | 仅 `arm64-v8a`（release 固定剔除 x86_64） |
+| Release 上模拟器 / 双 ABI 分发 | `-PditingAbi=all` | `arm64-v8a` + `x86_64` |
+| Debug（`build_apk.bat` [1][2]，默认） | 未指定 `ditingAbi` | `arm64-v8a` + `x86_64` |
+| 按 ABI 拆包 | `--split-per-abi -PditingAbi=all` | 按 `--target-platform` 各自一个 |
+
+也就是说 release 只发 `arm64-v8a`，`rust/build_android.py` 编出来的 x86_64 产物会被
+Gradle 的 `jniLibs.excludes` 剔除，不占体积；它的作用是为 debug 包与模拟器实例准备。
+反过来说，只跑 `python rust/build_android.py --abi arm64` 时，任何带 x86_64 的变体都会因为
+缺库而回退 Dart——功能正常，只是没走快路径。
+
+Android 15+ 的 16 KB 页要求同样覆盖这个库：NDK r27+ 的链接器默认按 `0x4000` 对齐，
+`llvm-readelf -l` 可直接核对。
+
 ## 语义一致性
 
 `rule_parse_rust_parity_test.dart` 里 150 条手写语料 + 4000 行合成列表 + 6000 行随机拼接，
