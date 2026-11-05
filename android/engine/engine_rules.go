@@ -1,6 +1,6 @@
 // engine_rules.go answers "is this domain blocked" for the HTTP/HTTPS (MITM) paths.
 //
-// All domain rules live in the Go policy engine (see policy_engine.go), loaded through
+// All domain rules live in the Rust policy kernel (see policy_engine.go), loaded through
 // ApplyRuleSnapshot. Until a snapshot has been applied, nothing is blocked.
 
 package tunnel

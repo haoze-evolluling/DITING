@@ -1,17 +1,18 @@
 # Rust 内核
 
 两个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
-**Go 隧道引擎的规则判定内核**。四个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配
-或载荷被拒时直接报错，不再有第二套语义可以静默跑起来。
+**Go 隧道引擎的规则判定与决策缓存内核**。四个接入点都只有 Rust 一条实现，原实现已删除：库缺失、
+ABI 不匹配或载荷被拒时直接报错，不再有第二套语义可以静默跑起来。
 
 | 入口 | 调用方 | Rust 产物 | 缺失时 |
 |---|---|---|---|
 | 规则文档解析 | Dart（`dart:ffi`） | 归类、去重、`$badfilter` 聚合后的紧凑载荷 | 导入抛错 |
 | 规则页检索 | Dart（`dart:ffi`，句柄） | 预折叠索引，查询返回命中行号 | 规则页抛错 |
 | DTRI 索引编译 | Kotlin（JNI） | mmap 索引，与 JVM 参考实现逐字节相同 | 快照编译失败 |
-| 策略快照构建 + 判定 | Go（`dlopen` + C ABI） | 规则表、通配索引、DTRI 读取、七级优先级 | 隧道启动失败 |
+| 策略快照构建 + 判定 + 决策缓存 | Go（`dlopen` + C ABI） | 规则表、通配索引、DTRI 读取、七级优先级、归一化与缓存 | 隧道启动失败 |
 
-第四个是**职责划分的迁移**：域名规则判定整体在 Rust，Go 侧只保留快照生命周期、决策缓存与域名归一化。
+第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
+（构建、原子换新、延迟释放）。
 
 ## 结构
 
@@ -28,14 +29,15 @@ rust/
 │   └── fast_hash.rs                # 去重索引用的随机种子 FxHash
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
-│   ├── text.rs                     # Go 语义的 ToLower / TrimSpace / 后缀匹配
+│   ├── text.rs                     # Go 语义的 ToLower / TrimSpace / normalizePolicyDomain
 │   ├── dns_type.rs                 # dns.StringToType（dnsType 修饰符用）
 │   ├── glob.rs wildcard_index.rs   # 通配编译与索引（取代 policy_wildcard_index.go）
 │   ├── dtri_read.rs                # bloom + 标签游走 + mmap 复用（取代 policy_dtri_reader.go）
 │   ├── regex_go.rs                 # Go regexp → Rust regex 翻译与前缀预筛
 │   ├── special.rs                  # specialRule（appScope / denyallow / dnsType / regex / glob）
 │   ├── tables.rs decision.rs       # 桶与 inverted 规则、匹配辅助、判定类型
-│   ├── snapshot.rs                 # policySnapshot：表构建、hasRules、七级判定
+│   ├── cache.rs                    # 分片 CLOCK 决策缓存 + reason 池（取代 policy_decision_cache.go）
+│   ├── snapshot.rs snapshot/query.rs  # policySnapshot：表构建、七级判定 + 归一化/缓存入口、prewarm
 │   └── ffi.rs                      # Go 侧 dlopen 的 C ABI（ABI_VERSION）
 ├── examples/                       # bench.rs / search_bench.rs / dtri_bench.rs / policy_bench.rs
 ├── tests/corpus.rs                 # 解析语料的固定分类用例
@@ -47,8 +49,8 @@ rust/
   `rule_search_index.dart`（表变化即释放）、`rules_providers.dart`。
 - Kotlin：`RustRuleIndexCompiler.kt`（打包 `EnabledRule` + JNI）、
   `MappedSubscriptionRuleIndex.kt`（写镜像 + 头校验）。
-- Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate`、句柄释放）、
-  `policy_snapshot.go`（快照、决策缓存入口）、`policy_engine.go`（应用快照与原子换新）、
+- Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
+  `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
 
 ## 构建与启用
@@ -69,10 +71,12 @@ python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86
 策略内核的调用约定：
 
 - 每次应用快照只建一份 Rust 快照；`hasRules` / `appSensitive` / `qtypeSensitive` 由内核的
-  `snapshot_flags` 提供，Go 不保留第二份规则表；
-- 查询先过 Go 的决策缓存（命中不进内核），未命中时一次 `evaluate` 拿到 `blocked + reason`，
-  reason 是指向快照内字符串的指针 + 长度，Go 立刻拷走；
-- 快照换新后旧句柄延迟 2 秒释放，释放前等待在途调用退出（cgo 调用不可抢占）。
+  `snapshot_flags` 提供，Go 只读 hasRules，不保留第二份规则表，也不再解析快照 JSON；
+- 查询一律一次 `evaluate`：内核做域名归一化（小写、去空白、去尾点）、查决策缓存，未命中才走七级；
+  reason 是指向快照内池化字符串的指针 + 长度，Go 立刻拷走；
+- `evaluate_uncached` 只给固定用例与基准用：同一走法不读不写缓存，用来证明命中不会改变答案；
+- 快照换新后先在后台 `prewarm(新, 旧)`，再延迟 2 秒释放旧句柄；释放前等待在途调用退出
+  （cgo 调用不可抢占），prewarm 期间两个句柄都算在途。
 
 ## 数据流
 
@@ -84,10 +88,10 @@ DTRI：EnabledRule 分页 ──pack──> u32 计数 + 每条(pattern, source,
        查询词 ──search_query(句柄)──> 折叠查询词 + 扫描 ──> 命中行号（Uint32List）
        规则表变化 → search_free_index(句柄)
 
-策略：ApplyRuleSnapshot(json) ──> Rust snapshot_build(json) ──> 句柄（含 4 条路径的 mmap trie）
-     请求 ──normalizePolicyDomain──> 决策缓存 ──命中──> 返回
-                                           └─未命中─> evaluate(句柄, 域名, 应用, qtype)
-                                                      ──> blocked + reason（指向快照内字符串）
+策略：ApplyRuleSnapshot(json) ──> Rust snapshot_build(json) ──> 句柄（含 4 条路径的 mmap trie + 决策缓存）
+     请求 ──evaluate(句柄, 域名, 应用, qtype)──> 归一化 ──> 决策缓存 ──命中──> 返回
+                                                          └─未命中─> 七级走法 ──> blocked + reason
+     规则变更 ──prewarm(新句柄, 旧句柄)──> 旧快照的热键在新快照上重算
 ```
 
 布局与语义的权威注释在 `diting-rule-core/src/ffi.rs`、`search_ffi.rs`、`dtri.rs` 与
@@ -124,8 +128,10 @@ DTRI：EnabledRule 分页 ──pack──> u32 计数 + 每条(pattern, source,
 Rust 复刻写入器（逐字节一致）而不“修”成 UTF-8，否则不再是 drop-in 替换。
 
 **策略内核**：`tests/policy_core.rs` 把 DTRI fixtures 喂给快照，断言每个可索引规则解析到语料声明的
-source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判定 / 释放往返与错误上报；
-`android/engine/policy_native_test.go` 用固定快照覆盖各规则族，至少保证跨边界参数与 reason 拷贝正确。
+source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判定 / 释放往返与错误上报，以及归一化、
+缓存命中与未命中答案一致、换新 prewarm；`cache.rs` 的单测钉住维度折叠、CLOCK 淘汰（热键存活）与
+热键排序；`android/engine/policy_native_test.go` 用固定快照覆盖各规则族，并在 Go 侧逐条对比
+`evaluate` 与 `evaluate_uncached`。
 
 ## 策略内核的已知边界
 
@@ -140,8 +146,12 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
   多花约 0.1 ms。
 - **尾点通配**：`*.foo.` 这类模式在原来的 Go 索引里永远命中不了（residual 预筛要求域名以
   `."+模式结尾`，而域名归一化后不带尾点），Rust 照抄不改。
-- **reason 字符串**：Rust 只回传指向快照内字符串的指针与长度，Go 立刻拷走；字符串本身不跨快照存活。
-- **快照构建成本**：只剩 Rust 一份表，53k 规则的纯构建约 31 ms（`policy_bench`），只在规则变更时
+- **reason 字符串**：Rust 只回传指向快照内字符串的指针与长度，Go 立刻拷走；非空 reason 在快照的
+  reason 池里去重驻留，所以缓存条目被淘汰也不会让刚拿到的指针悬空，池随快照一起释放。池的大小由
+  “出现过的不同 reason”决定（事实上就是规则 pattern），不随查询量增长。
+- **决策缓存**：16 分片 × 512 条（共 8192），CLOCK 淘汰 + 命中计数折半；缓存随快照整体换新，
+  所以规则变更不会读到旧答案。缓存存的是快照内的判定结果，不跨快照共享。
+- **快照构建成本**：只剩 Rust 一份表，53k 规则的纯构建约 30 ms（`policy_bench`），只在规则变更时
   发生，不在查询路径上。
 
 ## 性能（本机 Windows/amd64，迁移时的实测值）
@@ -168,16 +178,18 @@ DTRI 编译（10 万条，输出均为 3,548,571 字节）：
 纯 Rust（不含 FFI）用 `examples/search_bench.rs` 测：100k 行构建 9–15 ms。折叠文本存在连续 arena
 （每条一个 `(start, len)`），100k 行从 200k 个 `String` 变成一次分配；命中行号用 `Uint32List` 回传。
 
-策略判定（53k 规则 + 3.7k 通配 + 30 条正则，1024 个域名轮转，含 FFI 与 reason 拷贝）：
+策略判定（53k 规则 + 3.7k 通配 + 30 条正则，1024 个域名轮转）：
 
-| 实现 | 每查询耗时 |
+| 路径 | 每查询耗时 |
 |---|---|
-| Rust 内核（经 C ABI，含 reason 拷贝） | 1.7–1.8 µs |
-| Rust 纯走法（`policy_bench`，不含 FFI） | 1.1–1.4 µs |
+| 缓存命中（`answer`：归一化 + 缓存查找 + reason） | 0.12 µs |
+| 未命中（`evaluate` 七级走法） | 0.7–0.8 µs |
+| 同上，旧记录：Rust 纯走法 / 经 C ABI（迁移时，含 reason 拷贝） | 1.1–1.4 µs / 1.7–1.8 µs |
 
-本机计时噪声不小（±20%）。**真正的热路径不是它**：命中决策缓存的查询根本不进内核，因此这里的
-目标是不拖慢查询，而不是把决策缓存也搬走。应用一份 53k 规则快照的开销就是一次纯 Rust 构建
-（~31 ms）加上换新与旧句柄延迟释放。
+决策缓存搬进内核后，命中也要过一次 FFI（此前 Go 侧直接返回，不进库）。纯 Rust 命中约 0.12 µs，
+加上 cgo 调用仍远低于一次未命中的走法；目标是不拖慢查询，而不是把缓存留在 Go 里换一次表维护。
+本机计时噪声不小（±20%，冷启动首轮可慢 3–4 倍）。应用一份 53k 规则快照的开销就是一次纯 Rust 构建
+（~30 ms）加上换新与旧句柄延迟释放。
 
 复现：
 
@@ -242,8 +254,7 @@ cd rust && cargo test --test dtri_golden
 
 ## 后续可做
 
-- **策略内核吃下决策缓存**：缓存与判定一起放进 Rust，`prewarm` 也留在同一侧，Go 只剩一次调用。
-- **快照构建提速**：Rust 侧按流式解析 / 并行建表，把 53k 规则的 ~31 ms 压到十几毫秒。
+- **快照构建提速**：Rust 侧按流式解析 / 并行建表，把 53k 规则的 ~30 ms 压到十几毫秒。
 - **正则语义彻底对齐**：字符类里的 `\D\W\S` 也翻成 ASCII 取反，把“已知边界”里那条消掉。
 - **去重键去字符串化**：每条规则拼一个去重键约占解析时间三成，改成字段哈希 + 碰撞时逐字段比较。
 - **DTRI 增量更新**：按 source 分片只重编受影响分片，把万级列表的写入后延迟压到一次小编译。

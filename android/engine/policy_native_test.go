@@ -72,7 +72,8 @@ func TestNativePolicyFixedCases(t *testing.T) {
 		{"other.org", "", dns.TypeA, false, ""},
 	}
 	for _, tc := range cases {
-		// The cached path and the raw kernel call must agree: the cache is the only thing Go adds.
+		// The cached path and the raw walk must agree: the kernel's cache is the only difference
+		// between the two calls.
 		blocked, reason := pe.evaluate(tc.domain, tc.app, tc.qtype)
 		if blocked != tc.blocked || (tc.reason != "" && reason != tc.reason) {
 			t.Errorf("evaluate(%q, %q, %d) = (%v, %q), want (%v, %q)",

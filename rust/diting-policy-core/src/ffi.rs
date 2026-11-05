@@ -7,13 +7,25 @@
 //! snapshot_flags(handle)                          -> u32 (bit0 hasRules, bit1 appSensitive,
 //!                                                        bit2 qtypeSensitive)
 //! evaluate(handle, domain, app, qtype, reason_out, reason_len) -> 0 pass / 1 block / -1 error
+//! evaluate_uncached(handle, domain, app, qtype, reason_out, reason_len) -> same codes
+//! prewarm(handle, previous)
 //! snapshot_free(handle)
 //! ```
 //!
-//! Contract for `evaluate`: the domain is already normalized (`normalizePolicyDomain`) and the app
-//! name already trimmed, exactly like the call site inside the Go snapshot. `reason_out` receives a
-//! pointer into the snapshot's own reason string plus its length; the caller copies it out before
+//! Contract for `evaluate`: the domain and the app name are the raw call-site values. The kernel
+//! normalizes them (`normalize_domain`: lowercase, trim, no trailing dot; the app name trimmed),
+//! answers from the snapshot's decision cache and only walks the tables on a miss, so Go no longer
+//! keeps a cache key, an eviction policy or a normalization helper. `reason_out` receives a pointer
+//! into a reason string owned by the snapshot plus its length; the caller copies it out before
 //! returning, so no ownership crosses the boundary and no allocation happens per query.
+//!
+//! `evaluate_uncached` is the same walk and the same normalization without the cache lookup or
+//! insertion. Prewarming uses it internally; the Go tests and benchmarks use it to prove a cache
+//! hit never changes an answer.
+//!
+//! `prewarm(handle, previous)` re-evaluates the previous snapshot's hottest keys against `handle`,
+//! usually on a background goroutine right after a rule reload. Both handles must stay alive for
+//! the call; the kernel skips the work when either side has nothing to carry over.
 //!
 //! Every entry point catches panics and reports failure instead of unwinding into Go: a fault in
 //! the native kernel fails the snapshot apply, which fails the engine start, never crashes the
@@ -23,10 +35,10 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::slice;
 
 use crate::json::RuleSnapshot;
-use crate::snapshot::Snapshot;
+use crate::snapshot::{Answer, Snapshot};
 
 /// Layout/behaviour version; the Go loader refuses a library that does not speak it.
-pub const ABI_VERSION: u32 = 3;
+pub const ABI_VERSION: u32 = 4;
 
 const CODE_ERROR: i32 = -1;
 const CODE_PASS: i32 = 0;
@@ -107,7 +119,69 @@ pub unsafe extern "C" fn diting_policy_snapshot_flags(handle: *const Snapshot) -
     catch_unwind(AssertUnwindSafe(|| snapshot.flags())).unwrap_or_default()
 }
 
-/// Evaluates one query.
+/// Shared body of [`diting_policy_evaluate`] and [`diting_policy_evaluate_uncached`].
+// The argument list is the C ABI signature, not a design choice.
+#[allow(clippy::too_many_arguments)]
+unsafe fn evaluate_with(
+    handle: *const Snapshot,
+    domain: *const u8,
+    domain_len: usize,
+    app: *const u8,
+    app_len: usize,
+    qtype: u32,
+    reason_out: *mut *const u8,
+    reason_len: *mut usize,
+    cached: bool,
+) -> i32 {
+    if reason_len.is_null() {
+        return CODE_ERROR;
+    }
+    *reason_len = 0;
+    if !reason_out.is_null() {
+        *reason_out = std::ptr::null();
+    }
+    if handle.is_null() {
+        return CODE_ERROR;
+    }
+    let snapshot = &*handle;
+    let domain = bytes_from(domain, domain_len);
+    let app = bytes_from(app, app_len);
+    let (Ok(domain), Ok(app)) = (std::str::from_utf8(domain), std::str::from_utf8(app)) else {
+        return CODE_ERROR;
+    };
+    let qtype = u16::try_from(qtype).unwrap_or(u16::MAX);
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        if cached {
+            snapshot.answer(domain, app, qtype)
+        } else {
+            snapshot.answer_uncached(domain, app, qtype)
+        }
+    }));
+    let Ok(answer) = result else {
+        return CODE_ERROR;
+    };
+    write_answer(answer, reason_out, reason_len)
+}
+
+/// Publishes an answer's reason: the bytes are owned by the snapshot's reason pool, so they stay
+/// valid after this call returns even if the cache entry that produced them is evicted.
+unsafe fn write_answer(answer: Answer, reason_out: *mut *const u8, reason_len: *mut usize) -> i32 {
+    if !answer.reason.is_empty() {
+        let reason = answer.reason.as_str().as_bytes();
+        *reason_len = reason.len();
+        if !reason_out.is_null() {
+            *reason_out = reason.as_ptr();
+        }
+    }
+    if answer.blocked {
+        CODE_BLOCK
+    } else {
+        CODE_PASS
+    }
+}
+
+/// Evaluates one query: normalizes the domain, answers from the decision cache and walks the
+/// tables only on a miss.
 ///
 /// `reason_out`/`reason_len` are only written when the answer carries a reason (a matched rule
 /// pattern, or `__ALLOW__`); a plain pass reports a null pointer and zero length. The bytes stay
@@ -127,38 +201,45 @@ pub unsafe extern "C" fn diting_policy_evaluate(
     reason_out: *mut *const u8,
     reason_len: *mut usize,
 ) -> i32 {
-    if reason_len.is_null() {
-        return CODE_ERROR;
+    evaluate_with(
+        handle, domain, domain_len, app, app_len, qtype, reason_out, reason_len, true,
+    )
+}
+
+/// Same walk and normalization as [`diting_policy_evaluate`], but it neither reads nor fills the
+/// decision cache. Used by the Go tests/benchmarks to compare against the cached path.
+///
+/// # Safety
+/// Same contract as [`diting_policy_evaluate`].
+#[no_mangle]
+pub unsafe extern "C" fn diting_policy_evaluate_uncached(
+    handle: *const Snapshot,
+    domain: *const u8,
+    domain_len: usize,
+    app: *const u8,
+    app_len: usize,
+    qtype: u32,
+    reason_out: *mut *const u8,
+    reason_len: *mut usize,
+) -> i32 {
+    evaluate_with(
+        handle, domain, domain_len, app, app_len, qtype, reason_out, reason_len, false,
+    )
+}
+
+/// Re-evaluates the previous snapshot's hottest keys against `handle`. Both snapshots must stay
+/// alive for the call; mismatched cache dimensions or an empty side make this a no-op.
+///
+/// # Safety
+/// `handle` and `previous` must be pointers returned by [`diting_policy_snapshot_build`] and not
+/// yet freed.
+#[no_mangle]
+pub unsafe extern "C" fn diting_policy_prewarm(handle: *const Snapshot, previous: *const Snapshot) {
+    if handle.is_null() || previous.is_null() {
+        return;
     }
-    *reason_len = 0;
-    if !reason_out.is_null() {
-        *reason_out = std::ptr::null();
-    }
-    if handle.is_null() {
-        return CODE_ERROR;
-    }
-    let snapshot = &*handle;
-    let domain = bytes_from(domain, domain_len);
-    let app = bytes_from(app, app_len);
-    let (Ok(domain), Ok(app)) = (std::str::from_utf8(domain), std::str::from_utf8(app)) else {
-        return CODE_ERROR;
-    };
-    let qtype = u16::try_from(qtype).unwrap_or(u16::MAX);
-    let result = catch_unwind(AssertUnwindSafe(|| snapshot.evaluate(domain, app, qtype)));
-    let Ok(decision) = result else {
-        return CODE_ERROR;
-    };
-    if !decision.reason.is_empty() {
-        *reason_len = decision.reason.len();
-        if !reason_out.is_null() {
-            *reason_out = decision.reason.as_ptr();
-        }
-    }
-    if decision.blocked {
-        CODE_BLOCK
-    } else {
-        CODE_PASS
-    }
+    let (snapshot, previous) = (&*handle, &*previous);
+    let _ = catch_unwind(AssertUnwindSafe(|| snapshot.prewarm_from(previous)));
 }
 
 /// Frees a snapshot; any mapped index stays alive while another snapshot still references it.
@@ -190,10 +271,44 @@ mod tests {
     }
 
     fn evaluate(handle: *const Snapshot, domain: &str, app: &str, qtype: u32) -> (i32, String) {
+        evaluate_code(handle, domain, app, qtype, true)
+    }
+
+    fn evaluate_uncached(
+        handle: *const Snapshot,
+        domain: &str,
+        app: &str,
+        qtype: u32,
+    ) -> (i32, String) {
+        evaluate_code(handle, domain, app, qtype, false)
+    }
+
+    fn evaluate_code(
+        handle: *const Snapshot,
+        domain: &str,
+        app: &str,
+        qtype: u32,
+        cached: bool,
+    ) -> (i32, String) {
+        type EvaluateFn = unsafe extern "C" fn(
+            *const Snapshot,
+            *const u8,
+            usize,
+            *const u8,
+            usize,
+            u32,
+            *mut *const u8,
+            *mut usize,
+        ) -> i32;
+        let function: EvaluateFn = if cached {
+            diting_policy_evaluate
+        } else {
+            diting_policy_evaluate_uncached
+        };
         let mut reason_ptr: *const u8 = std::ptr::null();
         let mut reason_len = 0usize;
         let code = unsafe {
-            diting_policy_evaluate(
+            function(
                 handle,
                 domain.as_ptr(),
                 domain.len(),
@@ -244,5 +359,63 @@ mod tests {
     fn invalid_payload_reports_an_error() {
         let error = build("not json").unwrap_err();
         assert!(error.contains("parse rule snapshot"), "{error}");
+    }
+
+    #[test]
+    fn the_cached_path_matches_the_raw_walk() {
+        let handle = build(
+            r#"{
+                "globalBlock": ["ads.example.com"],
+                "appRules": {"com.a": {"block": ["t.example.com"]}},
+                "specialBlock": [{"pattern": "q.example.com", "dnsType": "AAAA"}]
+            }"#,
+        )
+        .unwrap();
+        unsafe {
+            // Raw input: the kernel folds case and drops the trailing dot itself.
+            let cases = [
+                (
+                    "  Ads.Example.COM. ",
+                    "",
+                    1u32,
+                    CODE_BLOCK,
+                    "ads.example.com",
+                ),
+                ("t.example.com", " com.a ", 1, CODE_BLOCK, "t.example.com"),
+                ("t.example.com", "com.b", 1, CODE_PASS, ""),
+                ("q.example.com", "", 28, CODE_BLOCK, "q.example.com"),
+                ("q.example.com", "", 1, CODE_PASS, ""),
+                ("other.net", "", 1, CODE_PASS, ""),
+            ];
+            for (domain, app, qtype, want_code, want_reason) in cases {
+                // Twice: the second answer comes from the cache and must be identical.
+                for _ in 0..2 {
+                    let (code, reason) = evaluate(handle, domain, app, qtype);
+                    assert_eq!(code, want_code, "cached {domain:?} {app:?} {qtype}");
+                    assert_eq!(reason, want_reason, "cached {domain:?} {app:?} {qtype}");
+                }
+                let (code, reason) = evaluate_uncached(handle, domain, app, qtype);
+                assert_eq!(code, want_code, "uncached {domain:?} {app:?} {qtype}");
+                assert_eq!(reason, want_reason, "uncached {domain:?} {app:?} {qtype}");
+            }
+            diting_policy_snapshot_free(handle);
+        }
+    }
+
+    #[test]
+    fn prewarm_carries_hot_keys_to_the_new_snapshot() {
+        let previous = build(r#"{"globalBlock":["hot.com"]}"#).unwrap();
+        unsafe {
+            for _ in 0..20 {
+                assert_eq!(evaluate(previous, "hot.com", "", 1).0, CODE_BLOCK);
+            }
+            let next = build(r#"{"globalAllow":["hot.com"],"globalBlock":["*.ads.com"]}"#).unwrap();
+            diting_policy_prewarm(next, previous);
+            let (code, reason) = evaluate(next, "hot.com", "", 1);
+            assert_eq!((code, reason.as_str()), (CODE_PASS, "__ALLOW__"));
+            assert_eq!(evaluate_uncached(next, "hot.com", "", 1).0, CODE_PASS);
+            diting_policy_snapshot_free(next);
+            diting_policy_snapshot_free(previous);
+        }
     }
 }

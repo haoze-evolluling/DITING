@@ -12,7 +12,7 @@ package tunnel
 import "errors"
 
 // nativePolicyABIVersion mirrors the real loader so both flavours document the same contract.
-const nativePolicyABIVersion = 3
+const nativePolicyABIVersion = 4
 
 // Snapshot shape bits reported by `diting_policy_snapshot_flags`.
 const (
@@ -31,5 +31,13 @@ func newNativePolicy(string) (*nativePolicy, error) {
 }
 
 func (p *nativePolicy) evaluate(string, string, uint16) (bool, string) { return false, "" }
+
+func (p *nativePolicy) evaluateUncached(string, string, uint16) (bool, string) { return false, "" }
+
+func (p *nativePolicy) prewarm(*nativePolicy) {}
+
+func (p *nativePolicy) pin() {}
+
+func (p *nativePolicy) unpin() {}
 
 func (p *nativePolicy) release() {}

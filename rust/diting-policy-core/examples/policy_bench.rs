@@ -8,6 +8,9 @@
 //! `android/engine/policy_perf_test.go:largePolicySnapshotJSON`, so the numbers are directly
 //! comparable with `go test -bench BenchmarkPolicyEvaluateLargeCold`. Passing a real payload - what
 //! the app sends to `ApplyRuleSnapshot` - measures the rules a device actually runs.
+//!
+//! Two numbers come out of the query loop: the raw walk (`evaluate`, what a cache miss costs) and
+//! `answer`, the FFI entry point, which includes normalization and the decision-cache lookup.
 
 use std::sync::Arc;
 use std::time::Instant;
@@ -57,9 +60,26 @@ fn main() {
     println!("source: {source}");
     println!("build: {build:?}");
     println!(
-        "evaluate: {:.1} ns/op over {iterations} queries ({:.1}% blocked)",
+        "evaluate (raw walk): {:.1} ns/op over {iterations} queries ({:.1}% blocked)",
         elapsed.as_nanos() as f64 / iterations as f64,
         blocked as f64 * 100.0 / iterations as f64
+    );
+
+    // Warm every key, then time the path a Go query actually takes: normalize + cache hit.
+    for domain in &queries {
+        std::hint::black_box(snapshot.answer(domain, "", 1));
+    }
+    let started = Instant::now();
+    let mut cached_blocked = 0usize;
+    for i in 0..iterations {
+        let answer = snapshot.answer(&queries[i % queries.len()], "", 1);
+        cached_blocked += usize::from(answer.blocked);
+    }
+    let cached = started.elapsed();
+    println!(
+        "answer (cached): {:.1} ns/op over {iterations} queries ({:.1}% blocked)",
+        cached.as_nanos() as f64 / iterations as f64,
+        cached_blocked as f64 * 100.0 / iterations as f64
     );
 }
 

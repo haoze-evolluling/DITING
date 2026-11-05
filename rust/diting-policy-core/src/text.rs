@@ -40,6 +40,29 @@ pub fn go_trim_space(s: &str) -> &str {
     s.trim_matches(char::is_whitespace)
 }
 
+/// `normalizePolicyDomain`: lowercase, trim, drop one trailing dot.
+///
+/// The canonical-form check walks bytes exactly like the Go version did, so an already clean
+/// domain costs one scan and no allocation: uppercase, any non-ASCII byte, and any byte `<= ' '`
+/// send it down the slow path (`strings.ToLower(strings.TrimSpace(...))`).
+pub fn normalize_domain(domain: &str) -> Cow<'_, str> {
+    let canonical = !domain
+        .bytes()
+        .any(|byte| byte.is_ascii_uppercase() || byte >= 0x80 || byte <= b' ');
+    let lowered = if canonical {
+        Cow::Borrowed(domain)
+    } else {
+        go_lower(go_trim_space(domain))
+    };
+    match lowered {
+        Cow::Borrowed(value) => Cow::Borrowed(value.strip_suffix('.').unwrap_or(value)),
+        Cow::Owned(value) => match value.strip_suffix('.') {
+            Some(trimmed) => Cow::Owned(trimmed.to_string()),
+            None => Cow::Owned(value),
+        },
+    }
+}
+
 /// `strings.ToLower(strings.TrimSpace(s))`, the shape used for every rule pattern.
 pub fn go_lower_trim(s: &str) -> String {
     go_lower(go_trim_space(s)).into_owned()
@@ -87,6 +110,21 @@ mod tests {
         assert_eq!(go_lower_trim("  Example.COM \t"), "example.com");
         assert_eq!(go_lower_trim_dot(" Example.COM. "), "example.com");
         assert_eq!(go_lower_trim_dot("example.com.."), "example.com.");
+    }
+
+    #[test]
+    fn normalize_domain_matches_the_go_helper() {
+        // Canonical input is borrowed, not rebuilt.
+        assert!(matches!(normalize_domain("example.com"), Cow::Borrowed(_)));
+        assert_eq!(normalize_domain("Example.COM."), "example.com");
+        assert_eq!(normalize_domain("  ads.example.com.\t"), "ads.example.com");
+        // Non-ASCII always takes the folding path (`strings.ToLower`), like the Go guard.
+        assert_eq!(normalize_domain("ΑΣ.com"), "ασ.com");
+        assert_eq!(normalize_domain("\u{130}stanbul.com"), "istanbul.com");
+        // Only one trailing dot is dropped, exactly like `strings.TrimSuffix`.
+        assert_eq!(normalize_domain("example.com.."), "example.com.");
+        assert_eq!(normalize_domain("."), "");
+        assert_eq!(normalize_domain("   "), "");
     }
 
     #[test]

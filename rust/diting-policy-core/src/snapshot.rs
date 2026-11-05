@@ -1,18 +1,23 @@
 //! Snapshot building and the seven-level decision walk.
 //!
-//! This is the part of the Go engine that moved to Rust: Go keeps the lifecycle (decoding
-//! `filterEnabled`, building the snapshot, the atomic swap and the decision cache) and Rust owns
-//! the matching tables, the wildcard index, the DTRI lookup and the priority order. The pieces
-//! live next door: [`crate::tables`] holds the buckets and matching helpers, [`crate::decision`]
-//! the verdict type.
+//! This is the part of the Go engine that moved to Rust: Go keeps the snapshot lifecycle
+//! (building the snapshot, the atomic swap, the delayed release) and Rust owns the matching
+//! tables, the wildcard index, the DTRI lookup, the priority order, the domain normalization and
+//! the decision cache. The pieces live next door: [`crate::tables`] holds the buckets and matching
+//! helpers, [`crate::decision`] the verdict type and [`crate::cache`] the per-snapshot cache.
 //!
-//! The input domain is already normalized by the caller (`normalizePolicyDomain`: lowercase,
-//! trimmed, no trailing dot) and the app name is already trimmed, so nothing here allocates for a
-//! plain miss beyond what a lookup needs.
+//! [`Snapshot::evaluate`] is the raw walk and expects a normalized domain; [`Snapshot::answer`] is
+//! the FFI entry point and does the normalization itself. Neither allocates for a plain miss
+//! beyond what a lookup needs; only a non-empty reason is interned once in the cache.
+
+mod query;
+
+pub use query::Answer;
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::cache::DecisionCache;
 use crate::decision::Decision;
 use crate::dtri_read::DtriReader;
 use crate::json::RuleSnapshot;
@@ -25,10 +30,11 @@ use crate::tables::{
 use crate::text::go_lower_trim;
 use crate::wildcard_index::WildcardIndex;
 
-/// `policySnapshot`, without the Go-side decision cache (that stays in Go).
+/// `policySnapshot`, including the decision cache the Go side used to own.
 pub struct Snapshot {
     filter_enabled: bool,
     has_rules: bool,
+    cache: Option<DecisionCache>,
 
     global_important: HashMap<String, String>,
     global_important_wildcards: Option<WildcardIndex>,
@@ -67,6 +73,7 @@ impl Snapshot {
         let mut snapshot = Snapshot {
             filter_enabled,
             has_rules: false,
+            cache: None,
             global_important: HashMap::new(),
             global_important_wildcards: None,
             important_inverted: Vec::new(),
@@ -242,6 +249,12 @@ impl Snapshot {
             || !snapshot.global_block_special.is_empty();
 
         snapshot.finalize_lookup();
+        if snapshot.filter_enabled && snapshot.has_rules {
+            snapshot.cache = Some(DecisionCache::new(
+                snapshot.app_sensitive,
+                snapshot.qtype_sensitive,
+            ));
+        }
         snapshot
     }
 
@@ -338,7 +351,9 @@ impl Snapshot {
         flags
     }
 
-    /// `evaluateNormalized`: the seven priority levels, in order.
+    /// `evaluateNormalized`: the seven priority levels, in order. The domain must already be
+    /// normalized ([`crate::text::normalize_domain`]); [`Snapshot::answer`] is the entry point
+    /// that does it.
     pub fn evaluate<'a>(&'a self, domain: &str, app_name: &str, qtype: u16) -> Decision<'a> {
         if !self.filter_enabled {
             return Decision::pass();
