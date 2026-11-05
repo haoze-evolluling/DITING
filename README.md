@@ -15,7 +15,8 @@
   内置主流服务商并支持自定义节点；Bootstrap IP 解析加密上游域名，DDR 拦截防绕过。
 - **缓存与容灾**：64 分片并发 LRU 缓存，跟随 TTL / 平衡 / 高命中等策略；上游异常时宽限期复用过期缓存
   （Stale-While-Revalidate）；Singleflight 合并并发请求。
-- **规则引擎**：域名黑白名单与 AdGuard 语法（通配符、正则、Cosmetic），Trie + Bloom 加速；
+- **规则引擎**：域名黑白名单与 AdGuard 语法（通配符、正则、Cosmetic），Trie + Bloom 加速
+  （判定内核可跑在 Rust 上，Go 侧同实现兜底并逐次对拍）；
   远程订阅支持分组、镜像与定时更新；A/AAAA 静态覆写与 CNAME 重定向；四种阻断响应。
 - **Android 专属**：应用分流与白名单、可选 HTTPS 检查（gVisor netstack + 本地 CA、证书绑定旁路、
   QUIC/H3 回退）、SOCKS5/HTTP 出站代理、悬浮窗与流量排行、Ping/Traceroute/DNS 诊断、快捷磁贴、
@@ -57,7 +58,7 @@ DITING/
 │   ├── toolbox/               # Python + PyWebView 维护工具箱
 │   └── build_installer.bat    # 桌面端安装包（Windows EXE / Linux deb）
 ├── shared/                    # 两端共用的设计系统、主题、l10n、配置与 SQLite 读取
-├── rust/                      # 规则内核（Rust：规则解析 + DTRI 索引，可选快路径，见 rust/README.md）
+├── rust/                      # Rust 内核（规则解析 / 检索 / DTRI 索引 + Go 策略判定，见 rust/README.md）
 ├── docs/                      # 开发文档与静态资源
 ├── avatars/                   # 赞助者与共建者头像
 ├── recognition_members.json   # 赞助者与共建者名单（见 docs/development/recognition-members.md）

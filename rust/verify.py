@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
-"""Verify the Rust rule core end to end.
+"""Verify the Rust cores end to end.
 
-Default: formatting, clippy (warnings are errors) and the Rust test suite, including the DTRI
-fixtures that are byte-compared with the Kotlin/JVM reference writer.
+Default: formatting, clippy (warnings are errors) and the Rust test suite of both crates,
+including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference writer.
 
     python rust/verify.py
-    python rust/verify.py --android   # also cross-compile the .so for arm64-v8a
-    python rust/verify.py --go        # also prove the Go engine reads the Rust DTRI fixtures
+    python rust/verify.py --android   # also cross-compile both .so files for arm64-v8a
+    python rust/verify.py --go        # also prove the Go engine agrees with the Rust policy kernel
     python rust/verify.py --dart      # also run the Dart side of the native fast paths
-    python rust/verify.py --bench     # also time the DTRI compile and the rule search
+    python rust/verify.py --bench     # also time the DTRI compile, the rule search and the walk
     python rust/verify.py --all
 
-The Go check exists because the Go engine is the real consumer of the DTRI file: it is the one
-format step that no amount of Rust-side testing can cover. The Dart check is the same idea for the
-parse and search fast paths: it lets the real `String.toLowerCase` decide whether the Rust port
-still matches it.
+The Go checks exist because the Go engine is the real consumer: it mmaps the DTRI files and it calls
+the policy kernel through the same C ABI production uses, so it is the only thing that can prove the
+boundary - the Go walk is the reference the randomized parity test compares against. `--go` needs
+`cgo` plus a C compiler (mingw on Windows, gcc/clang elsewhere); the release library is built first
+because the Go loader probes `rust/target/release/`. The Dart check is the same idea for the parse
+and search fast paths: it lets the real `String.toLowerCase` decide whether the Rust port still
+matches it.
 """
 
 from __future__ import annotations
@@ -62,7 +65,15 @@ def main() -> int:
         ("test", ["cargo", "test"], RUST_DIR),
     ]
     if args.go:
+        steps.append(("release", ["cargo", "build", "--release"], RUST_DIR))
         steps.append(("go", ["go", "test", "-run", "TestRustDTRI", "."], GO_ENGINE_DIR))
+        steps.append(
+            (
+                "go-policy",
+                ["go", "test", "-run", "TestNativePolicy|TestPolicyEngine", "."],
+                GO_ENGINE_DIR,
+            )
+        )
     if args.dart:
         flutter = shutil.which("flutter")
         if flutter is None:
@@ -79,6 +90,25 @@ def main() -> int:
         )
         steps.append(
             ("search-bench", ["cargo", "run", "--release", "--example", "search_bench"], RUST_DIR)
+        )
+        steps.append(
+            (
+                "policy-bench",
+                [
+                    "cargo",
+                    "run",
+                    "--release",
+                    "-p",
+                    "diting-policy-core",
+                    "--example",
+                    "policy_bench",
+                    "--",
+                    "--synthetic",
+                    "50000",
+                    "20000",
+                ],
+                RUST_DIR,
+            )
         )
 
     failed = [label for label, command, cwd in steps if not run(label, command, cwd)]

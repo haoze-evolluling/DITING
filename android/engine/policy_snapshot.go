@@ -140,6 +140,11 @@ type policySnapshot struct {
 	appSensitive   bool
 	qtypeSensitive bool
 	cache          *decisionCache
+
+	// native is the Rust policy kernel for this snapshot (nil when the library is unavailable,
+	// stale, or disagreed with the Go walk while probing). The Go tables above stay built: they
+	// are the fallback and the cross-check reference.
+	native *nativePolicy
 }
 
 // evaluate executes the 7-level rule evaluation priority:
@@ -199,7 +204,20 @@ func normalizePolicyDomain(domain string) string {
 	return strings.TrimSuffix(domain, ".")
 }
 
-func (s *policySnapshot) evaluateNormalized(domain, appName string, qtype uint16) (blocked bool, reason string) {
+// evaluateNormalized runs the seven-level walk. The Rust kernel answers when it is available; the
+// Go walk below (evaluateGo) is the fallback and the reference it was checked against, so a native
+// fault or a disagreement can only ever cost speed, never change an answer.
+func (s *policySnapshot) evaluateNormalized(domain, appName string, qtype uint16) (bool, string) {
+	if s.native != nil {
+		if blocked, reason, ok := s.native.evaluate(domain, appName, qtype); ok {
+			return blocked, reason
+		}
+	}
+	return s.evaluateGo(domain, appName, qtype)
+}
+
+// evaluateGo is the original in-Go walk.
+func (s *policySnapshot) evaluateGo(domain, appName string, qtype uint16) (blocked bool, reason string) {
 	// Level 1: App-specific $important blocking rules
 	if appName != "" && len(s.appBuckets) > 0 {
 		if bucket, ok := s.appBuckets[appName]; ok {

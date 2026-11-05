@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Cross-compile the Rust rule core for Android and drop it into the Flutter app's jniLibs.
+"""Cross-compile the Rust cores for Android and drop them into the Flutter app's jniLibs.
 
-The Rust crate is optional: without `src/main/jniLibs/<abi>/libditing_rule_core.so` the app simply
-keeps using the Dart parser (see `rust_rule_core.dart`). Run this before an APK build that should
-ship the native path:
+Two libraries are built:
+
+* `libditing_rule_core.so` - rule parsing, rule search and the DTRI writer (Dart/Kotlin callers).
+* `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
+  wildcard index, DTRI reader and the seven-level priority walk).
+
+Both are optional at runtime: without the first the app keeps the Dart parser, without the second
+the Go engine keeps its own policy walk. Run this before an APK build that should ship the native
+paths:
 
     python rust/build_android.py              # arm64-v8a + x86_64, release
     python rust/build_android.py --abi arm64  # phones only
@@ -27,7 +33,9 @@ from pathlib import Path
 RUST_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = RUST_DIR.parent
 JNI_LIBS_DIR = PROJECT_ROOT / "android" / "app" / "android" / "app" / "src" / "main" / "jniLibs"
-LIB_NAME = "libditing_rule_core.so"
+# Both crates build with one cargo invocation; each artifact is copied next to the others so the
+# APK ships them in `lib/<abi>/` (which is on the loader search path for the app).
+LIB_NAMES = ("libditing_rule_core.so", "libditing_policy_core.so")
 ANDROID_API = 28
 
 # Gradle ABI name -> Rust target triple.
@@ -38,11 +46,11 @@ TARGETS = {
 
 
 def log(message: str) -> None:
-    print(f"[rust-rule-core] {message}", flush=True)
+    print(f"[rust-native] {message}", flush=True)
 
 
 def fail(message: str) -> int:
-    print(f"[rust-rule-core] 错误: {message}", file=sys.stderr, flush=True)
+    print(f"[rust-native] 错误: {message}", file=sys.stderr, flush=True)
     return 1
 
 
@@ -126,20 +134,20 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
     if built.returncode != 0:
         return None
 
-    artifact = RUST_DIR / "target" / triple / profile / LIB_NAME
-    if not artifact.is_file():
-        log(f"构建产物缺失: {artifact}")
-        return None
-
     destination = JNI_LIBS_DIR / abi_dir
     destination.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(artifact, destination / LIB_NAME)
-    log(f"{artifact.name} -> {destination / LIB_NAME}")
-    return destination / LIB_NAME
+    for library in LIB_NAMES:
+        artifact = RUST_DIR / "target" / triple / profile / library
+        if not artifact.is_file():
+            log(f"构建产物缺失: {artifact}")
+            return None
+        shutil.copy2(artifact, destination / library)
+        log(f"{artifact.name} -> {destination / library}")
+    return destination
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核")
+    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核与策略内核")
     parser.add_argument(
         "--abi",
         choices=["all", "arm64", "x86_64"],

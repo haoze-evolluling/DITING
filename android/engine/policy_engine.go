@@ -477,10 +477,18 @@ func (pe *policyEngine) applySnapshot(jsonStr string) error {
 		len(snap.globalBlockSpecial) > 0
 
 	snap.finalizeLookup()
+	// Build the Rust snapshot and cross-check it against the Go walk before publishing; on any
+	// disagreement this snapshot simply keeps answering from Go.
+	attachNativePolicy(snap, jsonStr, &req)
+
 	prev := pe.snapshot.Swap(snap)
 	pe.initialized.Store(true)
 	if snap.cache != nil && prev != nil && prev.cache != nil {
 		go snap.prewarmFrom(prev)
+	}
+	if prev != nil && prev.native != nil {
+		stale := prev.native
+		time.AfterFunc(2*time.Second, stale.release)
 	}
 
 	for path, reader := range pe.currentTries {
@@ -507,6 +515,8 @@ func (pe *policyEngine) close() {
 		reader.close()
 		delete(pe.currentTries, path)
 	}
+	if prev := pe.snapshot.Swap(&policySnapshot{filterEnabled: true, hasRules: false}); prev != nil && prev.native != nil {
+		prev.native.release()
+	}
 	pe.initialized.Store(false)
-	pe.snapshot.Store(&policySnapshot{filterEnabled: true, hasRules: false})
 }

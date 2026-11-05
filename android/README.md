@@ -42,18 +42,19 @@ pwsh -File build_aar.ps1 -Arch all  # 双 ABI（debug 默认）
 报错。三种 AAR 的架构、压缩与体积、排障见
 [`docs/development/aar-build-notes.md`](../docs/development/aar-build-notes.md)。
 
-## 规则内核（可选）
+## Rust 内核（可选）
 
-规则链路有两处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析经 `dart:ffi`，规则写入后的
-DTRI 订阅索引编译经 JNI（Kotlin 调用）；两处都由原实现兜底。
+规则链路有三处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析经 `dart:ffi`，规则写入后的
+DTRI 订阅索引编译经 JNI（Kotlin 调用），**域名规则判定内核**由 Go 引擎 `dlopen` 后经 C ABI 调用。
+三处都由原实现兜底，且 Go 侧每次应用快照都会把两套判定对拍一遍，不一致就退回 Go。
 
 ```bash
-python rust/build_android.py        # arm64-v8a + x86_64，产物拷入 src/main/jniLibs/
-python rust/verify.py --all         # fmt / clippy / 单测 / 对拍 / Go 读取 / 基准
+python rust/build_android.py        # arm64-v8a + x86_64，两个 .so 拷入 src/main/jniLibs/
+python rust/verify.py --all         # fmt / clippy / 单测 / Go 对拍 / Dart 对拍 / 交叉编译 / 基准
 ```
 
-不生成 `jniLibs/` 里的 `.so` 时行为与以前完全相同（Dart 解析 + Kotlin 索引编译兜底），详见
-[`rust/README.md`](../rust/README.md)。
+不生成 `jniLibs/` 里的 `.so` 时行为与以前完全相同（Dart 解析 + Kotlin 索引编译 + Go 判定兜底），
+详见 [`rust/README.md`](../rust/README.md)。
 
 ## 签名
 

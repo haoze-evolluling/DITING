@@ -47,6 +47,17 @@ gomobile bind `
 双 ABI 包用逗号分隔 target（`-target=android/arm64,android/amd64`），gomobile 会把两个 `jni/`
 架构目录打进同一个 AAR。
 
+## 与 Rust 内核的关系
+
+AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`，把域名规则判定交给 Rust
+（见 `rust/README.md`）。这个 `.so` 与 AAR 无关，它和 Flutter 侧的 `libditing_rule_core.so` 一起由
+`python rust/build_android.py` 拷进 `android/app/android/app/src/main/jniLibs/<abi>/`，最终落在
+APK 的 `lib/<abi>/`，正好在应用命名空间的库搜索路径上。
+
+因此打包顺序是：`python rust/build_android.py` → `build_aar.ps1` → `flutter build`。少了这个
+`.so` 不会构建失败，Go 引擎会打一条日志并全程使用自己的判定实现（功能一致，只是慢一点），
+所以 `rust/verify.py --go` 才是发现“没带上”的地方。
+
 ## 常见问题
 
 - **找不到 Android SDK**：`gomobile` 默认查找 `%LOCALAPPDATA%\Android\sdk`，不存在时需显式设置
