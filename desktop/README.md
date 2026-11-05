@@ -30,6 +30,21 @@ desktop\build_installer.bat both       :: EXE + Linux deb（WSL 组装）
 依赖 Flutter 3.50+、Visual Studio「使用 C++ 的桌面开发」工作负载与 Windows 开发者模式
 （`start ms-settings:developers`，插件符号链接需要）。
 
+## 版本号
+
+`app/pubspec.yaml` 的 `version:` 是桌面端唯一天源 —— Flutter 构建必须从它读，服务端、NSIS 安装包
+与 Linux deb 都由构建脚本在构建期从它取版本号注入，源码里不再存副本：
+
+| 位置 | 版本号从哪来 |
+| --- | --- |
+| `app/pubspec.yaml` | 唯一真源，改这一行（或用 `service\set_version.bat 2.2.12`） |
+| `service/cmd/service/main.go` | `go build -X main.Version=...`，直接 `go build` 显示 `dev` |
+| `service/build/windows/installer/project.nsi` | `makensis -DINFO_PRODUCTVERSION=...`，缺参数直接报错 |
+| `service/build_linux.sh` | 自己读 `../app/pubspec.yaml` |
+
+`python toolbox/core/version_manager.py -s` 会列出真源与各个派生位置；谁把版本字面量写回派生位置，
+这里会直接提醒。Android 客户端（根 `android/app/pubspec.yaml`）是独立版本线，不参与。
+
 ## 界面规范
 
 桌面窗口的留白与层次由三处常量决定，改页面时先看它们，不要就地写新数字：

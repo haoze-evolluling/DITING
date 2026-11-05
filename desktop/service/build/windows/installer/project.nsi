@@ -9,8 +9,10 @@ SetCompressorDictSize 32
 !define INFO_PROJECTNAME    "diting-desktop"
 !define INFO_COMPANYNAME    "Diting"
 !define INFO_PRODUCTNAME    "谛听 DNS"
+# 版本号不在本文件存副本：由 build_installer.bat / build_manager.py 从
+# desktop/app/pubspec.yaml 读取后以 -DINFO_PRODUCTVERSION 传入。
 !ifndef INFO_PRODUCTVERSION
-  !define INFO_PRODUCTVERSION "2.2.11"
+  !error "缺少 -DINFO_PRODUCTVERSION：请用 build_installer.bat 构建（版本号取自 desktop/app/pubspec.yaml）"
 !endif
 !define INFO_COPYRIGHT      "Copyright 2026 DITING"
 

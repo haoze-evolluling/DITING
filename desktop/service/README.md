@@ -23,6 +23,10 @@ go build -o build/bin/diting-service.exe ./cmd/service
 build\bin\diting-service.exe -run      # 管理员权限；前台运行，关掉即停止
 ```
 
+版本号不写在 Go 源码里：`build_installer.bat` / `build_linux.sh` 从 `../app/pubspec.yaml`
+（唯一真源）取值后以 `-ldflags -X main.Version=...` 注入；直接 `go build` 的二进制版本显示为 `dev`，
+仅用于调试。
+
 浏览器打开 `http://127.0.0.1:15353` 即为 Web 控制台；桌面窗口用
 `cd ..\app && flutter run -d windows`，打安装包用 `..\build_installer.bat`。
 

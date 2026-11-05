@@ -20,9 +20,11 @@ import (
 	"github.com/kardianos/service"
 )
 
-// Version 信息（可在编译期通过 -ldflags 注入）
+// Version 信息。版本号不在源码里存副本：构建脚本从 desktop/app/pubspec.yaml
+// （唯一真源）取值，通过 -ldflags -X main.Version=... 注入；直接 go build 时
+// 显示 dev，需要真实版本请用 build_installer.bat 或 build_linux.sh。
 var (
-	Version   = "2.2.11"
+	Version   = "dev"
 	BuildTime = "dev"
 	GitCommit = "dev"
 )

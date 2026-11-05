@@ -8,7 +8,7 @@
 #   用法:
 #     ./build_linux.sh                    # 构建 amd64 二进制
 #     ./build_linux.sh -a arm64           # 构建 arm64 二进制
-#     ./build_linux.sh -v 2.2.11          # 指定版本号
+#     ./build_linux.sh -v 2.3.0           # 手动指定版本号（默认读 ../app/pubspec.yaml）
 #     ./build_linux.sh --package          # 打包为 .deb 发行包
 #     ./build_linux.sh --prebuilt         # 复用 build/bin/diting-service（Windows 交叉编译）
 #     ./build_linux.sh --clean            # 先清理旧产物
@@ -51,8 +51,11 @@ case "$ARCH" in
     *) echo "[错误] 不支持的架构: $ARCH (可选: amd64 / arm64 / arm)" >&2; exit 1 ;;
 esac
 
+# 版本号唯一真源是桌面端 pubspec.yaml（Flutter 强制要求那里有 version 行），
+# 这里只负责读取，不再从 Go 源码里抠字面量。
+PUBSPEC_FILE="$SCRIPT_DIR/../app/pubspec.yaml"
 if [ -z "$VERSION" ]; then
-    VERSION="$(grep -m1 -oE 'Version[[:space:]]*=[[:space:]]*"[^"]+"' cmd/service/main.go 2>/dev/null | grep -oE '"[^"]+"' | tr -d '"' || true)"
+    VERSION="$(sed -n 's/^version:[[:space:]]*\([^+ ]*\).*/\1/p' "$PUBSPEC_FILE" 2>/dev/null | head -n1 || true)"
     VERSION="${VERSION:-0.0.0}"
 fi
 

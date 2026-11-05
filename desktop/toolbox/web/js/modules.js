@@ -380,24 +380,43 @@ window.BuildModule = {
   },
 };
 
-// 版本号维护：Flutter 主力客户端独立维护，其余模块折叠归档。
-const VERSION_COMMON_GROUPS = ['common'];
+// 版本号维护：desktop/app/pubspec.yaml 是桌面端唯一真源，
+// 服务端 / NSIS / deb 都由构建脚本从这里取版本号。
+const VERSION_DESKTOP_GROUPS = ['desktop'];
+const VERSION_ANDROID_GROUPS = ['android'];
 
 function renderVersionRows(tbody, items) {
   UI.clear(tbody);
   items.forEach((item) => {
+    const isSource = item.kind === 'source';
     UI.row(tbody, [
-      { node: UI.el('strong', { text: item.name }) },
-      { node: UI.badge(item.version) },
+      {
+        node: UI.el('span', {},
+          UI.el('strong', { text: item.name }),
+          ' ',
+          UI.badge(isSource ? '真源' : '派生', isSource ? 'badge' : 'badge badge-warn'),
+        ),
+      },
+      {
+        node: item.hardcoded
+          ? UI.el('span', {},
+              UI.badge(item.version || '—'),
+              ' ',
+              UI.badge(`硬编码 ${item.hardcoded}`, 'badge badge-fail'),
+            )
+          : UI.badge(item.version || '—'),
+      },
+      { node: UI.el('span', { className: 'text-muted', text: item.note || '' }) },
       { node: UI.el('span', { className: 'mono', text: item.rel_path }) },
     ]);
   });
 }
 
-function pickLatestVersion(items) {
-  for (const item of items) {
-    const v = item.version;
-    if (v && v !== '未知' && v !== '文件不存在' && v !== '解析失败') return v;
+function pickSourceVersion(items) {
+  const source = (items || []).find(item => item.kind === 'source');
+  if (source && source.version) return source.version;
+  for (const item of items || []) {
+    if (item.version) return item.version;
   }
   return '';
 }
@@ -414,105 +433,117 @@ function bumpSemver(base, type) {
   return parts.join('.');
 }
 
+function markHardcodedDrift(items) {
+  (items || []).forEach((item) => {
+    if (item.hardcoded) {
+      App.log('warn', `${item.name} 仍硬编码 ${item.hardcoded}（${item.rel_path}），应改为构建期注入`);
+    }
+  });
+}
+
 window.VersionModule = {
-  latestDetectedVersion: '',
-  latestFlutterVersion: '',
-
-  async refreshFlutterVersions() {
-    try {
-      const res = await window.pywebview.api.version_inspect(['flutter']);
-      if (!res.success) {
-        App.log('error', `Flutter 版本读取失败: ${res.error || '未知错误'}`);
-        return;
-      }
-      const tbody = document.querySelector('#flutter-version-table tbody');
-      if (tbody) renderVersionRows(tbody, res.items);
-      const latest = pickLatestVersion(res.items);
-      if (latest) this.latestFlutterVersion = latest;
-    } catch (e) {
-      App.log('error', `Flutter 版本读取异常: ${e}`);
-    }
-  },
-
-  bumpFlutterVersion(type) {
-    if (!this.latestFlutterVersion) {
-      App.toast('版本状态尚未加载，请先刷新当前版本', 'warn');
-      return;
-    }
-    const nextVer = bumpSemver(this.latestFlutterVersion, type);
-    const input = document.getElementById('flutter-version-input');
-    if (input) input.value = nextVer;
-    App.toast(`已推导 Flutter 目标版本号: v${nextVer}`, 'ok');
-  },
-
-  async syncFlutterVersion() {
-    const input = document.getElementById('flutter-version-input');
-    const ver = input ? input.value.trim() : '';
-    if (!ver) return App.toast('请输入目标新版本号 (例如 2.0.2)', 'warn');
-
-    const dryRun = document.getElementById('flutter-dry-run').checked;
-    const commit = document.getElementById('flutter-commit').checked;
-
-    App.setBusy(true, `正在同步 Flutter 版本至 v${ver}...`);
-    try {
-      const res = await window.pywebview.api.version_sync(ver, dryRun, false, commit, ['flutter']);
-      if (!res.started) {
-        App.setBusy(false);
-        App.toast(res.message || '版本同步未能启动', 'warn');
-      }
-    } catch (e) {
-      App.setBusy(false);
-      App.log('error', `Flutter 版本同步异常: ${e}`);
-      App.toast(`Flutter 版本同步异常: ${e}`, 'error');
-    }
-  },
+  latestDesktopVersion: '',
+  latestAndroidVersion: '',
 
   async refreshVersions() {
     try {
-      const res = await window.pywebview.api.version_inspect(VERSION_COMMON_GROUPS);
+      const res = await window.pywebview.api.version_inspect(VERSION_DESKTOP_GROUPS);
       if (!res.success) {
-        App.log('error', `版本读取失败: ${res.error || '未知错误'}`);
+        App.log('error', `桌面端版本读取失败: ${res.error || '未知错误'}`);
         return;
       }
-      const tbody = document.querySelector('#version-table tbody');
-      if (tbody) renderVersionRows(tbody, res.items);
-      const latest = pickLatestVersion(res.items);
-      if (latest) this.latestDetectedVersion = latest;
+      renderVersionRows(document.querySelector('#version-table tbody'), res.items);
+      markHardcodedDrift(res.items);
+      const latest = pickSourceVersion(res.items);
+      if (latest) {
+        this.latestDesktopVersion = latest;
+        const buildInput = document.getElementById('build-version');
+        if (buildInput && !buildInput.value) buildInput.value = latest;
+      }
     } catch (e) {
-      App.log('error', `版本读取异常: ${e}`);
+      App.log('error', `桌面端版本读取异常: ${e}`);
+    }
+  },
+
+  async refreshAndroidVersions() {
+    try {
+      const res = await window.pywebview.api.version_inspect(VERSION_ANDROID_GROUPS);
+      if (!res.success) {
+        App.log('error', `Android 版本读取失败: ${res.error || '未知错误'}`);
+        return;
+      }
+      renderVersionRows(document.querySelector('#android-version-table tbody'), res.items);
+      const latest = pickSourceVersion(res.items);
+      if (latest) this.latestAndroidVersion = latest;
+    } catch (e) {
+      App.log('error', `Android 版本读取异常: ${e}`);
     }
   },
 
   bumpVersion(type) {
-    if (!this.latestDetectedVersion) {
-      App.toast('版本状态尚未加载，请先刷新当前版本状态', 'warn');
+    if (!this.latestDesktopVersion) {
+      App.toast('版本状态尚未加载，请先刷新当前版本', 'warn');
       return;
     }
-    const nextVer = bumpSemver(this.latestDetectedVersion, type);
-    const input = document.getElementById('target-version-input');
+    const nextVer = bumpSemver(this.latestDesktopVersion, type);
+    const input = document.getElementById('desktop-version-input');
     if (input) input.value = nextVer;
-    App.toast(`已推导目标版本号: v${nextVer}`, 'ok');
+    App.toast(`已推导桌面端目标版本号: v${nextVer}`, 'ok');
+  },
+
+  bumpAndroidVersion(type) {
+    if (!this.latestAndroidVersion) {
+      App.toast('Android 版本状态尚未加载，请先刷新', 'warn');
+      return;
+    }
+    const nextVer = bumpSemver(this.latestAndroidVersion, type);
+    const input = document.getElementById('android-version-input');
+    if (input) input.value = nextVer;
+    App.toast(`已推导 Android 目标版本号: v${nextVer}`, 'ok');
   },
 
   async syncVersion() {
-    const ver = document.getElementById('target-version-input').value.trim();
-    if (!ver) return App.toast('请输入目标新版本号 (例如 1.4.0)', 'warn');
+    const input = document.getElementById('desktop-version-input');
+    const ver = input ? input.value.trim() : '';
+    if (!ver) return App.toast('请输入目标新版本号 (例如 2.2.12)', 'warn');
 
     const dryRun = document.getElementById('ver-dry-run').checked;
     const verify = document.getElementById('ver-verify').checked;
     const commit = document.getElementById('ver-commit').checked;
 
-    App.setBusy(true, `正在同步其他模块版本至 v${ver}...`);
+    App.setBusy(true, `正在同步桌面端版本至 v${ver}...`);
     try {
-      const res = await window.pywebview.api.version_sync(ver, dryRun, verify, commit, VERSION_COMMON_GROUPS);
+      const res = await window.pywebview.api.version_sync(ver, dryRun, verify, commit, VERSION_DESKTOP_GROUPS);
       if (!res.started) {
         App.setBusy(false);
         App.toast(res.message || '版本同步未能启动', 'warn');
       }
     } catch (e) {
       App.setBusy(false);
-      App.log('error', `版本同步异常: ${e}`);
-      App.toast(`版本同步异常: ${e}`, 'error');
+      App.log('error', `桌面端版本同步异常: ${e}`);
+      App.toast(`桌面端版本同步异常: ${e}`, 'error');
+    }
+  },
+
+  async syncAndroidVersion() {
+    const input = document.getElementById('android-version-input');
+    const ver = input ? input.value.trim() : '';
+    if (!ver) return App.toast('请输入目标新版本号 (例如 2.2.12)', 'warn');
+
+    const dryRun = document.getElementById('android-dry-run').checked;
+    const commit = document.getElementById('android-commit').checked;
+
+    App.setBusy(true, `正在同步 Android 版本至 v${ver}...`);
+    try {
+      const res = await window.pywebview.api.version_sync(ver, dryRun, false, commit, VERSION_ANDROID_GROUPS);
+      if (!res.started) {
+        App.setBusy(false);
+        App.toast(res.message || '版本同步未能启动', 'warn');
+      }
+    } catch (e) {
+      App.setBusy(false);
+      App.log('error', `Android 版本同步异常: ${e}`);
+      App.toast(`Android 版本同步异常: ${e}`, 'error');
     }
   },
 
@@ -521,12 +552,9 @@ window.VersionModule = {
     if (!payload) return;
 
     const groups = Array.isArray(payload.groups) ? payload.groups : [];
-    if (groups.includes('flutter')) {
-      this.refreshFlutterVersions();
-    } else if (groups.includes('common')) {
-      this.refreshVersions();
+    if (groups.includes('android')) {
+      this.refreshAndroidVersions();
     } else {
-      this.refreshFlutterVersions();
       this.refreshVersions();
     }
 
@@ -535,14 +563,12 @@ window.VersionModule = {
       return;
     }
 
-    if (payload.target_version) {
-      if (groups.includes('flutter')) {
-        this.latestFlutterVersion = payload.target_version;
-      } else {
-        this.latestDetectedVersion = payload.target_version;
-        const buildVerInput = document.getElementById('build-version');
-        if (buildVerInput) buildVerInput.value = payload.target_version;
-      }
+    if (groups.includes('android')) {
+      if (payload.target_version) this.latestAndroidVersion = payload.target_version;
+    } else if (payload.target_version) {
+      this.latestDesktopVersion = payload.target_version;
+      const buildInput = document.getElementById('build-version');
+      if (buildInput) buildInput.value = payload.target_version;
     }
 
     const count = payload.modified_files ? payload.modified_files.length : 0;

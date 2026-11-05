@@ -109,16 +109,25 @@ python -m pip install -r desktop/toolbox/requirements.txt
 python desktop/toolbox/app.py
 ```
 
-也可双击 `desktop/toolbox/run_maintenance.bat`（自动补齐依赖）。版本同步的命令行用法：
+也可双击 `desktop/toolbox/run_maintenance.bat`（自动补齐依赖）。
+
+### 版本号
+
+桌面端版本号只有一处字面量：`desktop/app/pubspec.yaml` 的 `version:`（Flutter 工具链强制要求它
+存在）。服务端可执行文件、NSIS 安装包与 Linux deb 都在构建期从它取版本号，不再各存一份：
 
 ```cmd
-python desktop\toolbox\core\version_manager.py 2.0.2 -g flutter
-desktop\service\set_version.bat 2.2.11 -g common
+python desktop\toolbox\core\version_manager.py -s          :: 查看真源与派生位置
+desktop\service\set_version.bat 2.2.12 -d                    :: 预览（不落盘）
+desktop\service\set_version.bat 2.2.12 -c                    :: 写入唯一真源并提交
 ```
+
+Android 客户端（`android/app/pubspec.yaml`）是独立产品线，加 `-g android` 单独升级，
+不影响桌面端。
 
 ## 技术栈
 
-- **客户端**：Flutter / Dart 3 / Riverpod / go_router / sqflite（直接打开 2.2.9 的库）/ Material 3
+- **客户端**：Flutter / Dart 3 / Riverpod / go_router / sqflite（可直接打开旧版数据库）/ Material 3
 - **服务端**：Go 1.25+ / gVisor netstack / miekg/dns / quic-go / Singleflight / Windows Service / systemd
 - **Android 原生**：Kotlin 通道（VpnService、快捷磁贴、悬浮窗）
 - **工具箱**：Python 3 / PyWebView (WebView2)

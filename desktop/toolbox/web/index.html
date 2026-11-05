@@ -300,57 +300,62 @@
       <section class="tab-pane" id="pane-version">
         <header class="pane-header">
           <h2>版本号维护</h2>
-          <p class="desc">Flutter Android / 桌面端版本号日常维护入口；服务端 / NSIS 的版本号维护已折叠归档。</p>
+          <p class="desc">桌面端只有一处版本字面量：<code>desktop/app/pubspec.yaml</code>。服务端、NSIS 安装包与 Linux deb 都在构建期从这里取版本号，改这一处即全局生效。</p>
         </header>
 
-        <!-- 5.1 Flutter 客户端（常用） -->
+        <!-- 5.1 桌面端唯一真源 -->
         <div class="card form-card">
-          <div class="card-title">Flutter 应用版本（android/app、desktop/app 的 pubspec.yaml）</div>
+          <div class="card-title">桌面端版本（唯一真源：desktop/app/pubspec.yaml）</div>
           <p class="hint-text">
-            同步时写入 <code>version: X.Y.Z+构建号</code>，构建号按
+            写入 <code>version: X.Y.Z+构建号</code>，构建号按
             <code>major*10000 + minor*100 + patch</code> 自动推导且只增不减，避免系统判定为降级包。
           </p>
           <div class="form-row">
             <div class="form-group flex-2">
               <label>目标新版本号</label>
               <div class="version-input-wrap">
-                <input type="text" id="flutter-version-input" placeholder="例如 2.0.2">
-                <button type="button" class="btn btn-xs btn-chip" id="btn-flutter-bump-patch">+0.0.1 (Patch)</button>
-                <button type="button" class="btn btn-xs btn-chip" id="btn-flutter-bump-minor">+0.1.0 (Minor)</button>
+                <input type="text" id="desktop-version-input" placeholder="例如 2.2.12">
+                <button type="button" class="btn btn-xs btn-chip" id="btn-ver-bump-patch">+0.0.1 (Patch)</button>
+                <button type="button" class="btn btn-xs btn-chip" id="btn-ver-bump-minor">+0.1.0 (Minor)</button>
               </div>
             </div>
             <div class="form-group flex-1 flex-center">
               <label class="checkbox-label">
-                <input type="checkbox" id="flutter-dry-run"> 仅预览 (DryRun)
+                <input type="checkbox" id="ver-dry-run"> 仅预览 (DryRun)
               </label>
             </div>
             <div class="form-group flex-1 flex-center">
               <label class="checkbox-label">
-                <input type="checkbox" id="flutter-commit"> 自动 Git 提交
+                <input type="checkbox" id="ver-verify"> 校验派生位置
+              </label>
+            </div>
+            <div class="form-group flex-1 flex-center">
+              <label class="checkbox-label">
+                <input type="checkbox" id="ver-commit"> 自动 Git 提交
               </label>
             </div>
           </div>
           <div class="btn-group">
-            <button class="btn btn-primary" id="btn-flutter-sync">同步 Flutter 版本号</button>
-            <button class="btn btn-secondary" id="btn-flutter-refresh">刷新当前版本</button>
+            <button class="btn btn-primary" id="btn-ver-sync">同步桌面端版本号</button>
+            <button class="btn btn-secondary" id="btn-ver-refresh">刷新版本状态</button>
           </div>
         </div>
 
         <div class="card table-card">
-          <div class="card-title">Flutter 应用版本号</div>
-          <table class="data-table" id="flutter-version-table">
+          <div class="card-title">真源与派生位置</div>
+          <table class="data-table" id="version-table">
             <thead>
-              <tr><th>模块组件</th><th>当前记录版本</th><th>文件相对路径</th></tr>
+              <tr><th>位置</th><th>当前版本</th><th>版本号来源</th><th>文件相对路径</th></tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
 
-        <!-- 5.2 其他模块（折叠归档，平时无需展开） -->
-        <details class="card collapsible-card" id="other-version-group">
+        <!-- 5.2 Android（独立产品线，折叠归档） -->
+        <details class="card collapsible-card" id="android-version-group">
           <summary class="collapsible-head">
             <span class="collapsible-arrow"></span>
-            <span class="collapsible-title">其他模块版本号维护（服务端 / NSIS）</span>
+            <span class="collapsible-title">Android 客户端版本（独立产品线）</span>
             <span class="collapsible-hint">
               <span class="hint-closed">低频使用，点击展开</span>
               <span class="hint-open">点击收起</span>
@@ -358,42 +363,37 @@
           </summary>
           <div class="collapsible-body">
             <p class="hint-text">
-              与 Flutter 客户端版本号相互独立演进的其余模块统一探测与同步。
+              Android 有自己的 <code>android/app/pubspec.yaml</code>，与桌面端版本号互不影响。
             </p>
 
             <div class="form-row">
               <div class="form-group flex-2">
                 <label>目标新版本号</label>
                 <div class="version-input-wrap">
-                  <input type="text" id="target-version-input" placeholder="例如 1.4.0">
-                  <button type="button" class="btn btn-xs btn-chip" id="btn-ver-bump-patch">+0.0.1 (Patch)</button>
-                  <button type="button" class="btn btn-xs btn-chip" id="btn-ver-bump-minor">+0.1.0 (Minor)</button>
+                  <input type="text" id="android-version-input" placeholder="例如 2.2.12">
+                  <button type="button" class="btn btn-xs btn-chip" id="btn-android-bump-patch">+0.0.1 (Patch)</button>
+                  <button type="button" class="btn btn-xs btn-chip" id="btn-android-bump-minor">+0.1.0 (Minor)</button>
                 </div>
               </div>
               <div class="form-group flex-1 flex-center">
                 <label class="checkbox-label">
-                  <input type="checkbox" id="ver-dry-run"> 仅预览 (DryRun)
+                  <input type="checkbox" id="android-dry-run"> 仅预览 (DryRun)
                 </label>
               </div>
               <div class="form-group flex-1 flex-center">
                 <label class="checkbox-label">
-                  <input type="checkbox" id="ver-verify"> 同步后验证 (Go Test)
-                </label>
-              </div>
-              <div class="form-group flex-1 flex-center">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="ver-commit"> 自动 Git 提交
+                  <input type="checkbox" id="android-commit"> 自动 Git 提交
                 </label>
               </div>
             </div>
             <div class="btn-group">
-              <button class="btn btn-primary" id="btn-ver-sync">同步并应用版本号</button>
-              <button class="btn btn-secondary" id="btn-ver-refresh">刷新当前版本状态</button>
+              <button class="btn btn-primary" id="btn-android-sync">同步 Android 版本号</button>
+              <button class="btn btn-secondary" id="btn-android-refresh">刷新 Android 版本</button>
             </div>
 
-            <table class="data-table" id="version-table">
+            <table class="data-table" id="android-version-table">
               <thead>
-                <tr><th>模块组件</th><th>当前记录版本</th><th>文件相对路径</th></tr>
+                <tr><th>位置</th><th>当前版本</th><th>版本号来源</th><th>文件相对路径</th></tr>
               </thead>
               <tbody></tbody>
             </table>
