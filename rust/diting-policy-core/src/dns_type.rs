@@ -2,7 +2,7 @@
 //!
 //! `specialRule` parses `dnsType` modifiers (`"AAAA"`, `"~A|AAAA"`) by looking the token up in the
 //! Go map, so the table has to match it entry for entry. Generated from `dns.StringToType`
-//! (miekg/dns v1.1.62) and pinned by a Go parity test that re-dumps the map and compares.
+//! (miekg/dns v1.1.62); the unit tests below pin the entries `dnsType` modifiers actually use.
 
 /// `dns.StringToType`: record type mnemonic -> numeric type.
 const STRING_TO_TYPE: &[(&str, u16)] = &[

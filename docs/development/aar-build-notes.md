@@ -55,8 +55,8 @@ AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`，把�
 APK 的 `lib/<abi>/`，正好在应用命名空间的库搜索路径上。
 
 因此打包顺序是：`python rust/build_android.py` → `build_aar.ps1` → `flutter build`。少了这个
-`.so` 不会构建失败，Go 引擎会打一条日志并全程使用自己的判定实现（功能一致，只是慢一点），
-所以 `rust/verify.py --go` 才是发现“没带上”的地方。
+`.so` APK 依然能装，但 `ApplyRuleSnapshot` 会失败，隧道启动直接报错（Go 侧已没有第二套判定实现），
+所以 `rust/verify.py --go` 是构建前发现“没带上”的地方。
 
 ## 常见问题
 

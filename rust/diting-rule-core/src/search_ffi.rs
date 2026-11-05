@@ -19,8 +19,8 @@
 //! result : magic "DRQ1" | abi | hits  | hits * row index
 //! ```
 //!
-//! Every failure returns 0 / null instead of raising: the Dart side then falls back to the Dart
-//! filter, so a missing symbol, a stale `.so` or a malformed payload can never break the page.
+//! Every failure returns 0 / null instead of raising: the Dart side turns that into an error, so a
+//! missing symbol, a stale `.so` or a malformed payload fails loudly instead of scanning in Dart.
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -30,8 +30,8 @@ use crate::ffi::{into_buffer, write_u32, NONE_LEN};
 use crate::search::RuleSearchIndex;
 
 /// Layout version of the build/result payloads; the Dart loader refuses a library that does not
-/// speak it. Kept separate from [`crate::ffi::ABI_VERSION`] so adding this module does not force a
-/// parse fallback on older artifacts (and vice versa).
+/// speak it. Kept separate from [`crate::ffi::ABI_VERSION`] so the two payloads can move
+/// independently.
 pub const SEARCH_ABI_VERSION: u32 = 1;
 
 const BUILD_MAGIC: u32 = u32::from_le_bytes(*b"DRS1");

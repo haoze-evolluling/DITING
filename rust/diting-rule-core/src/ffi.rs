@@ -163,7 +163,7 @@ pub extern "C" fn diting_rule_core_alloc(size: usize) -> *mut u8 {
 
 /// Parses `len` UTF-8 bytes at `text` and returns a buffer the caller must release with
 /// [`diting_rule_core_free`]. `out_len` receives the buffer length; a null return means the input
-/// was not valid UTF-8 (the Dart side then falls back to the Dart implementation).
+/// was not valid UTF-8 (the Dart caller turns that into an error).
 ///
 /// # Safety
 /// `text` must point to `len` readable bytes and `out_len` must be writable.

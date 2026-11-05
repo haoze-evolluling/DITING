@@ -2,7 +2,7 @@
 //!
 //! Anything undecidable returns `None` so the rule counts as invalid instead of never matching.
 //! The Dart original leans on `dart:io` (`InternetAddress`) and `Uri`; both are mimicked here with
-//! `std` only, including the quirks the parity tests lock down:
+//! `std` only, including the quirks the unit tests lock down:
 //!
 //! * `InternetAddress.address` echoes the input text (no IPv6 compression, case preserved), so a
 //!   literal IP is returned trimmed and otherwise untouched.

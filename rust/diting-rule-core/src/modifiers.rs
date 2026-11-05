@@ -1,6 +1,6 @@
 //! `$modifier` handling for one rule line, plus the conservative regex syntax check.
 //!
-//! The token order below is the order the Dart parser tests them in; a token that is not recognised
+//! The token order below is the order the original parser tested them in; a token that is not recognised
 //! makes the whole line unsupported, so this order is semantic.
 
 use crate::domain::{
@@ -230,10 +230,10 @@ pub(crate) fn apply_modifiers(
     Ok(())
 }
 
-/// Conservative ECMAScript syntax check. Dart validates by compiling with `RegExp`; the Rust side
-/// only rejects patterns that are invalid in any dialect (unbalanced groups/classes, dangling
-/// escape, quantifier with nothing to repeat). A pattern Dart rejects but this accepts is stored
-/// and later dropped by the Go engine, which logs the compile failure instead of failing the load.
+/// Conservative ECMAScript syntax check. The Rust side only rejects patterns that are invalid in
+/// any dialect (unbalanced groups/classes, dangling escape, quantifier with nothing to repeat); a
+/// pattern that is stored but cannot be compiled is dropped when the matcher is built, exactly like
+/// the original parser's invalid rules were.
 pub(crate) fn is_valid_regex(pattern: &str) -> bool {
     if pattern.is_empty() {
         return false;

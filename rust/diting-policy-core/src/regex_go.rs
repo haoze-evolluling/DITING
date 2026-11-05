@@ -7,9 +7,9 @@
 //! input instead of relying on that.
 //!
 //! Unsupported constructs (`(?U)`, `\p{^Greek}`, ...) are translated where it is mechanical and
-//! otherwise left alone: a pattern that then fails to compile is caught by the build-time status
-//! check in [`crate::ffi`] (Go compiled it, Rust did not), and the whole snapshot falls back to the
-//! Go engine. Known, documented differences are listed in `rust/README.md`.
+//! otherwise left alone: a pattern that then fails to compile is dropped, exactly like an invalid
+//! pattern was dropped by the Go engine before the move. Known, documented differences are listed
+//! in `rust/README.md`.
 
 use regex::Regex;
 
@@ -246,7 +246,7 @@ mod tests {
 
     #[test]
     fn anchored_prefix_matches_the_go_reference_cases() {
-        // Same expectations as TestRegexAnchoredPrefixAgreesWithRegex in the Go engine.
+        // The cases the Go prefilter used to be tested with.
         let cases = [
             (r"(?i)^banner7\..*\.cn$", "banner7."),
             (r"(?i)^ad[0-9]+\.", "ad"),

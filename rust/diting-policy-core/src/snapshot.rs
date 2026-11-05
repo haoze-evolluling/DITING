@@ -1,11 +1,10 @@
-//! `policySnapshot`: building the rule tables and running the seven-level decision walk
-//! (`policy_snapshot.go` + `applySnapshot` in `policy_engine.go`).
+//! Snapshot building and the seven-level decision walk.
 //!
-//! This is the part of the Go engine that moved to Rust: Go keeps the lifecycle (decoding the
-//! payload for its error contract, swapping the atomic snapshot, the decision cache and the
-//! fallback copy of this walk) and Rust owns the matching tables, the wildcard index, the DTRI
-//! lookup and the priority order. The pieces live next door: [`crate::tables`] holds the buckets
-//! and matching helpers, [`crate::decision`] the verdict type.
+//! This is the part of the Go engine that moved to Rust: Go keeps the lifecycle (decoding
+//! `filterEnabled`, building the snapshot, the atomic swap and the decision cache) and Rust owns
+//! the matching tables, the wildcard index, the DTRI lookup and the priority order. The pieces
+//! live next door: [`crate::tables`] holds the buckets and matching helpers, [`crate::decision`]
+//! the verdict type.
 //!
 //! The input domain is already normalized by the caller (`normalizePolicyDomain`: lowercase,
 //! trimmed, no trailing dot) and the app name is already trimmed, so nothing here allocates for a

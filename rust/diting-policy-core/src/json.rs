@@ -1,8 +1,8 @@
 //! Serde model of the rule snapshot payload `ApplyRuleSnapshot` receives from Dart.
 //!
-//! Field names, optionality and `null` handling mirror `ruleSnapshotJSON` in
-//! `android/engine/policy_engine.go`, because the Go engine stays the reference implementation and
-//! both sides have to read the same document.
+//! Field names, optionality and `null` handling mirror the payload the Android side builds
+//! (`RuleSnapshotStore.buildSnapshotJson`); Go decodes only `filterEnabled` and hands the document
+//! over unchanged.
 //!
 //! Every collection is `Option`-aligned with Go's nil slices/maps: `null`, a missing key and an
 //! empty array all end up meaning "no rules", exactly like `encoding/json` leaves the zero value.

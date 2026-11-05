@@ -240,7 +240,7 @@ mod tests {
         assert_eq!(cname.rewrite_rules[0].target_type, REWRITE_CNAME);
 
         // `1.2.3.4.5` is not a literal IP but is still a shape-valid domain, so it becomes the
-        // CNAME target — same as the Dart implementation.
+        // CNAME target — same rule the original parser applied.
         let odd = parse_dnsmasq_line("address=/a.example.com/1.2.3.4.5", "x");
         assert_eq!(odd.rewrite_rules[0].target_type, REWRITE_CNAME);
         assert_eq!(odd.rewrite_rules[0].target_value, "1.2.3.4.5");

@@ -1,9 +1,8 @@
-//! Rust core for the Android rule importer: a line-for-line port of the Dart parser in
-//! `android/app/lib/data/rules/`.
+//! Rust core for the Android rule importer: the parser the app and the rule pages use.
 //!
-//! The Dart implementation stays in place as the fallback: `RustRuleCore.instance` loads the
-//! library at runtime and `parseCategorized` only takes the native path when it is available and
-//! its ABI version matches, so a device without the artifact keeps the exact old behaviour.
+//! This is the only implementation. `RustRuleCore.instance` loads the library at runtime and
+//! throws when the artifact is missing or its ABI version differs, so a build that forgot
+//! `python rust/build_android.py` fails the import instead of running a second parser.
 //!
 //! Layout:
 //! * [`models`] — rule shapes, field-for-field with `rule_models.dart`.

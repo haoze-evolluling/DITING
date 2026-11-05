@@ -6,7 +6,7 @@ import java.io.File
 /**
  * Loads and classifies block rules straight from the database, ported from the legacy
  * `BlockRuleCacheLoader` + `BlockRuleCache.exportSnapshot`. The mmap subscription index is only
- * validated here — the Go engine reads the trie file itself — so loaded handles close again.
+ * validated here — the policy kernel maps the trie file itself — so loaded handles close again.
  */
 internal object BlockRuleLoader {
     private const val TAG = "BlockRuleLoader"

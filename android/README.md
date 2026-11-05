@@ -42,19 +42,19 @@ pwsh -File build_aar.ps1 -Arch all  # 双 ABI（debug 默认）
 报错。三种 AAR 的架构、压缩与体积、排障见
 [`docs/development/aar-build-notes.md`](../docs/development/aar-build-notes.md)。
 
-## Rust 内核（可选）
+## Rust 内核（必需）
 
-规则链路有三处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析经 `dart:ffi`，规则写入后的
-DTRI 订阅索引编译经 JNI（Kotlin 调用），**域名规则判定内核**由 Go 引擎 `dlopen` 后经 C ABI 调用。
-三处都由原实现兜底，且 Go 侧每次应用快照都会把两套判定对拍一遍，不一致就退回 Go。
+规则链路有四处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析与规则页检索经 `dart:ffi`，
+规则写入后的 DTRI 订阅索引编译经 JNI（Kotlin 调用），**域名规则判定内核**由 Go 引擎 `dlopen` 后经
+C ABI 调用。四处都只有 Rust 一条实现：库缺失、ABI 不匹配或载荷被拒时，导入报错、索引编译失败、
+`ApplyRuleSnapshot` 失败（隧道启动失败），不会静默退回另一套语义。
 
 ```bash
 python rust/build_android.py        # arm64-v8a + x86_64，两个 .so 拷入 src/main/jniLibs/
-python rust/verify.py --all         # fmt / clippy / 单测 / Go 对拍 / Dart 对拍 / 交叉编译 / 基准
+python rust/verify.py --all         # fmt / clippy / 单测 / Go / Dart / 交叉编译 / 基准
 ```
 
-不生成 `jniLibs/` 里的 `.so` 时行为与以前完全相同（Dart 解析 + Kotlin 索引编译 + Go 判定兜底），
-详见 [`rust/README.md`](../rust/README.md)。
+不生成 `jniLibs/` 里的 `.so` 时导入与隧道启动都会失败，详见 [`rust/README.md`](../rust/README.md)。
 
 ## 签名
 

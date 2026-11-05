@@ -7,9 +7,8 @@ Two libraries are built:
 * `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
   wildcard index, DTRI reader and the seven-level priority walk).
 
-Both are optional at runtime: without the first the app keeps the Dart parser, without the second
-the Go engine keeps its own policy walk. Run this before an APK build that should ship the native
-paths:
+Both are required at runtime: without the first a rule import throws, without the second the tunnel
+refuses to start. Run this before every APK build:
 
     python rust/build_android.py              # arm64-v8a + x86_64, release
     python rust/build_android.py --abi arm64  # phones only
