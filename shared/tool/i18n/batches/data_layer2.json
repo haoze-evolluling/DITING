@@ -17,8 +17,8 @@
     "The root of a backup file must be a JSON object"
   ],
   "backupErrNotDiting": [
-    "这不是谛听的备份文件：既没有 format 标记，也没有 formatVersion 版本号",
-    "This is not a DITING backup: it has neither a format marker nor a formatVersion number"
+    "这不是谛听的备份文件：缺少 format 标记",
+    "This is not a DITING backup: the format marker is missing"
   ],
   "backupErrNoVersion": [
     "备份文件缺少版本号",

@@ -1,12 +1,10 @@
-/// Backup import: parse, validate and merge this app's `{format, version, data}` form and the
-/// legacy flat root read by [LegacyBackupReader].
+/// Backup import: parse, validate and merge this app's `{format, version, data}` document.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:convert';
 
 import 'package:diting_android/data/backup/backup_models.dart';
-import 'package:diting_android/data/backup/legacy_backup_reader.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/db/subscription_repository.dart';
@@ -53,7 +51,6 @@ class BackupImportResult {
     this.cancelled = false,
     this.fatalError,
     this.subscriptionCount = 0,
-    this.legacyFormat = false,
   });
 
   /// The user cancelled file selection; this is not a failure.
@@ -63,8 +60,7 @@ class BackupImportResult {
       cancelled = true,
       fatalError = null,
       occurredAt = null,
-      subscriptionCount = 0,
-      legacyFormat = false;
+      subscriptionCount = 0;
 
   /// The whole file could not be parsed (not a backup, too new, bad JSON).
   const BackupImportResult.failed(String this.fatalError)
@@ -72,8 +68,7 @@ class BackupImportResult {
       sourceName = null,
       cancelled = false,
       occurredAt = null,
-      subscriptionCount = 0,
-      legacyFormat = false;
+      subscriptionCount = 0;
 
   final DateTime? occurredAt;
   final List<BackupGroupOutcome> outcomes;
@@ -85,8 +80,6 @@ class BackupImportResult {
 
   /// Number of subscriptions touched, used to prompt a rule refresh.
   final int subscriptionCount;
-
-  final bool legacyFormat;
 
   bool get failed => fatalError != null;
 
@@ -160,8 +153,8 @@ class BackupImporter {
       }
     }
 
-    // Legacy backups keep the provider selection in separate top-level fields; apply it here so it
-    // stays out of the added/updated counters.
+    // The selection travels inside the providers group so it stays out of the added/updated
+    // counters.
     final providers = data[BackupGroup.providers.key];
     if (providers is Map && providers['selection'] is Map) {
       try {
@@ -176,12 +169,13 @@ class BackupImporter {
       outcomes: outcomes,
       sourceName: sourceName,
       subscriptionCount: subscriptionCount,
-      legacyFormat: parsed.legacyFormat,
     );
   }
 
-  /// Validates and extracts `data` and `exportedAt`. Current files carry the `format` magic; legacy
-  /// files are recognized by `formatVersion`.
+  /// Validates the envelope and returns its `data` object and `exportedAt`.
+  ///
+  /// Only this app's grouped document is accepted; the 1.4.3 flat root (`formatVersion` and the
+  /// rule lists at the top level) is no longer read, which is why the writer stopped emitting it.
   _ParsedBackup _parse(String content) {
     final trimmed = content.trim();
     if (trimmed.isEmpty) {
@@ -198,27 +192,13 @@ class BackupImporter {
     if (decoded is! Map) {
       throw BackupFormatException(currentL10n.backupErrRootNotObject);
     }
+    if (decoded['format'] != BackupFormat.magic) {
+      throw BackupFormatException(currentL10n.backupErrNotDiting);
+    }
     final exportedAt = decoded['exportedAt'];
     final timestamp = exportedAt is int
         ? DateTime.fromMillisecondsSinceEpoch(exportedAt)
         : null;
-    final format = decoded['format'];
-    if (format != BackupFormat.magic) {
-      // Legacy backup: flat root identified by `formatVersion`.
-      if (LegacyBackupReader.looksLegacy(decoded)) {
-        return _ParsedBackup(
-          data: LegacyBackupReader.toGroups(
-            decoded,
-            providerId: _legacyProviderId,
-          ),
-          exportedAt: timestamp,
-          legacyFormat: true,
-        );
-      }
-      throw BackupFormatException(
-        currentL10n.backupErrNotDiting,
-      );
-    }
     final version = decoded['version'];
     if (version is! int) {
       throw BackupFormatException(currentL10n.backupErrNoVersion);
@@ -238,13 +218,8 @@ class BackupImporter {
     return _ParsedBackup(
       data: {for (final entry in data.entries) '${entry.key}': entry.value},
       exportedAt: timestamp,
-      legacyFormat: false,
     );
   }
-
-  /// Legacy providers have no runtime id; derive one from the index so re-importing the same old
-  /// backup yields the same ids.
-  String _legacyProviderId(int index) => 'user_legacy_$index';
 
   Future<BackupGroupOutcome> _applyGroup(
     BackupGroup group,
@@ -275,13 +250,8 @@ class BackupImporter {
 }
 
 class _ParsedBackup {
-  const _ParsedBackup({
-    required this.data,
-    required this.exportedAt,
-    required this.legacyFormat,
-  });
+  const _ParsedBackup({required this.data, required this.exportedAt});
 
   final Map<String, Object?> data;
   final DateTime? exportedAt;
-  final bool legacyFormat;
 }

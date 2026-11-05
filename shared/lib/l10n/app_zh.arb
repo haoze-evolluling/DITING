@@ -5030,7 +5030,7 @@
     }
   },
   "backupErrRootNotObject": "备份文件的根节点必须是 JSON 对象",
-  "backupErrNotDiting": "这不是谛听的备份文件：既没有 format 标记，也没有 formatVersion 版本号",
+  "backupErrNotDiting": "这不是谛听的备份文件：缺少 format 标记",
   "backupErrNoVersion": "备份文件缺少版本号",
   "backupErrVersionTooHigh": "备份版本 {version} 高于本版应用支持的 {max}，请升级应用后再导入",
   "@backupErrVersionTooHigh": {

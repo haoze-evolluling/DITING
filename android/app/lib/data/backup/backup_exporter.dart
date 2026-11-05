@@ -6,7 +6,6 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:convert';
 
 import 'package:diting_android/data/backup/backup_models.dart';
-import 'package:diting_android/data/backup/legacy_backup_writer.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/db/subscription_repository.dart';
@@ -75,14 +74,6 @@ class BackupExporter {
 
   static const _encoder = JsonEncoder.withIndent('  ');
 
-  /// The four groups that share one flat legacy app section.
-  static const _appSectionGroups = {
-    BackupGroup.excluded,
-    BackupGroup.blocked,
-    BackupGroup.allowlist,
-    BackupGroup.httpInspection,
-  };
-
   /// The whole document as one string, for the WebDAV upload and the tests. A large dataset should
   /// go through [exportTo] instead: this variant holds the document in memory by definition.
   Future<BackupExportResult> export(
@@ -104,9 +95,9 @@ class BackupExporter {
   /// and copying it across the platform channel put a subscription-sized rule list in memory several
   /// times at once and crashed the export.
   ///
-  /// Two passes because the flat legacy fields and the grouped `data` object sit in different parts
-  /// of the document; keeping every group's value until the second pass is the cost streaming exists
-  /// to avoid. Only user rules are read, so the second pass is cheap.
+  /// One pass: the document is `format` / `version` / `exportedAt` / `data` / `selection`, so every
+  /// group can be written where it belongs as soon as it is read. (The 1.4.3 flat fields used to sit
+  /// outside `data`, which forced a second read of every group; they are gone.)
   Future<BackupExportResult> exportTo(
     BackupChunkSink sink,
     BackupExportSource source, {
@@ -117,17 +108,12 @@ class BackupExporter {
     final skipped = <String>[];
     final included = <BackupGroup>[];
     final cache = <String, Object?>{};
-    final appValues = <String, Object?>{};
-    final appGroups = _appSectionGroups.where(selected.contains).toSet();
     final now = DateTime.now();
 
     await sink('{\n');
     await sink('  "format": ${_encodeAt(BackupFormat.magic, 1)},\n');
     await sink('  "version": ${_encodeAt(BackupFormat.version, 1)},\n');
     await sink('  "exportedAt": ${_encodeAt(now.millisecondsSinceEpoch, 1)},\n');
-    await sink(
-      '  "formatVersion": ${_encodeAt(LegacyBackupWriter.formatVersion, 1)}',
-    );
 
     for (final group in BackupGroup.values) {
       if (!selected.contains(group)) continue;
@@ -143,46 +129,20 @@ class BackupExporter {
       }
       counts[group] = _countOf(value);
       included.add(group);
-      await _writeEntries(
-        sink,
-        LegacyBackupWriter.legacyOf(group, value, source.settings),
+      await sink(
+        '${included.length == 1 ? '  "data": {\n' : ',\n'}'
+        '    ${_encodeKey(group.key)}: ${_encodeAt(value, 2)}',
       );
-      if (appGroups.contains(group)) {
-        appValues[group.key] = value;
-        if (appValues.length == appGroups.length) {
-          await _writeEntries(
-            sink,
-            LegacyBackupWriter.appSectionsOf(appValues),
-          );
-        }
-      }
       // The encode above is the only synchronous work left; yielding keeps the UI responsive while
       // a big group is serialized.
       await Future<void>.delayed(Duration.zero);
     }
 
-    var firstGroup = true;
-    for (final group in included) {
-      final Object? value;
-      try {
-        value = await _valueOf(group, source, cache: cache);
-      } catch (error) {
-        debugPrint('backup export skipped ${group.key}: $error');
-        continue;
-      }
-      await sink(
-        '${firstGroup ? ',\n  "data": {\n' : ',\n'}'
-        '    ${_encodeKey(group.key)}: ${_encodeAt(value, 2)}',
-      );
-      firstGroup = false;
-      await Future<void>.delayed(Duration.zero);
-    }
-    if (firstGroup) {
-      await sink(',\n  "data": {}');
+    if (included.isEmpty) {
+      await sink('  "data": {},\n');
     } else {
-      await sink('\n  }');
+      await sink('\n  },\n');
     }
-    await sink(',\n');
 
     await sink(
       '  "selection": ${_encodeAt([for (final group in included) group.key], 1)}\n',
@@ -197,15 +157,6 @@ class BackupExporter {
       counts: counts,
       skipped: skipped,
     );
-  }
-
-  Future<void> _writeEntries(
-    BackupChunkSink sink,
-    Map<String, Object?> entries,
-  ) async {
-    for (final entry in entries.entries) {
-      await sink(',\n  ${_encodeKey(entry.key)}: ${_encodeAt(entry.value, 1)}');
-    }
   }
 
   static String _encodeKey(String key) => _encoder.convert(key);

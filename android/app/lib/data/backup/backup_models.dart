@@ -74,10 +74,13 @@ abstract final class BackupFormat {
   /// Top-level `format` value. Changing it invalidates every existing backup.
   static const magic = 'diting-backup';
 
-  static const version = 1;
+  /// Version this build writes. 2 dropped the 1.4.3 flat fields (rules, apps, settings at the top
+  /// level) that every backup used to carry next to `data`; nothing else changed. Version 1 wrote
+  /// the same grouped `data`, so it still restores and only newer files are refused.
+  static const version = 2;
 
   /// Highest version this build parses; newer backups are rejected.
-  static const maxReadableVersion = 1;
+  static const maxReadableVersion = 2;
 
   static const fileNamePrefix = 'DITING-backup';
 

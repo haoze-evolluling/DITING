@@ -15307,7 +15307,7 @@ abstract class AppL10n {
   /// No description provided for @backupErrNotDiting.
   ///
   /// In zh, this message translates to:
-  /// **'这不是谛听的备份文件：既没有 format 标记，也没有 formatVersion 版本号'**
+  /// **'这不是谛听的备份文件：缺少 format 标记'**
   String get backupErrNotDiting;
 
   /// No description provided for @backupErrNoVersion.

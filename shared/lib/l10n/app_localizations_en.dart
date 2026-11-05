@@ -8934,7 +8934,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get backupErrNotDiting =>
-      'This is not a DITING backup: it has neither a format marker nor a formatVersion number';
+      'This is not a DITING backup: the format marker is missing';
 
   @override
   String get backupErrNoVersion => 'The backup file has no version number';

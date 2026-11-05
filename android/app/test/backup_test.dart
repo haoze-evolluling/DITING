@@ -2,13 +2,17 @@
 // store and reports what it did.
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:diting_android/data/backup/backup_exporter.dart';
 import 'package:diting_android/data/backup/backup_importer.dart';
 import 'package:diting_android/data/backup/backup_models.dart';
+import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/legacy_schema.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -156,6 +160,35 @@ void _backupTransfer() {
 
       expect(rules, hasLength(1));
       expect((rules.single as Map)['pattern'], 'user.test');
+    });
+
+    test('文档只有 format / version / exportedAt / data / selection', () async {
+      final export = await const BackupExporter().export(
+        exportSource(seededStore()),
+        groups: {BackupGroup.blocked, BackupGroup.domainRules},
+      );
+      final root = jsonDecode(export.content) as Map<String, Object?>;
+
+      // The 1.4.3 flat root (`formatVersion`, `customBlockRules`, `excludedApps`, ...) is gone:
+      // everything lives under `data`.
+      expect(
+        root.keys,
+        unorderedEquals([
+          'format',
+          'version',
+          'exportedAt',
+          'data',
+          'selection',
+        ]),
+      );
+      expect(root['format'], BackupFormat.magic);
+      expect(root['version'], BackupFormat.version);
+      // Groups are written in [BackupGroup] declaration order, whatever order the caller passed.
+      expect(root['selection'], ['domainRules', 'blocked']);
+      expect(
+        (root['data'] as Map).keys,
+        unorderedEquals(['domainRules', 'blocked']),
+      );
     });
   });
 
@@ -335,7 +368,109 @@ void _backupTransfer() {
       expect(result.failedGroups, hasLength(1));
       expect(result.failedGroups.single.error, contains('规则库'));
     });
+
+    test('1.4.3 的扁平备份不再被接受', () async {
+      final result = await importText(
+        '{"formatVersion":10,"customBlockRules":[{"pattern":"a.test"}]}',
+      );
+      expect(result.failed, isTrue);
+      expect(result.fatalError, contains('不是谛听的备份文件'));
+    });
+
+    test('分组格式的 version 1 备份仍能导入', () async {
+      final result = await importText(
+        '{"format":"diting-backup","version":1,"data":'
+        '{"blocked":{"enabled":true,"packages":["com.a"]}}}',
+      );
+      expect(result.failed, isFalse, reason: result.fatalError);
+      expect(result.failedGroups, isEmpty);
+    });
+  });
+
+  group('重复导入', () {
+    test('同一份备份连导三次，服务商不再反复报「更新」', () async {
+      final store = seededStore();
+      store.putString(
+        LegacySettings.uiContainer,
+        'user_providers_json',
+        '[{"id":"user_a","name":"我的 DoH","protocol":"DOH",'
+            '"url":"https://dns.test/dns-query","host":"","port":853}]',
+      );
+      store.putString(
+        LegacySettings.uiContainer,
+        'selected_provider_id',
+        'user_a',
+      );
+      final export = await const BackupExporter().export(
+        BackupExportSource(settings: LegacySettings(store), database: db),
+      );
+      final into = MemoryLegacyPrefsStore();
+      final target = BackupImportTarget(store: into, database: db);
+
+      final first = await const BackupImporter().import(export.content, target);
+      expect(first.failed, isFalse, reason: first.fatalError);
+      for (var round = 0; round < 2; round++) {
+        final again = await const BackupImporter().import(
+          export.content,
+          target,
+        );
+        expect(again.failed, isFalse, reason: again.fatalError);
+        expect(again.added, 0, reason: '第 ${round + 2} 次导入又新增了内容');
+        final providers = again.outcomes.firstWhere(
+          (outcome) => outcome.group == BackupGroup.providers,
+        );
+        expect(providers.updated, 0, reason: '第 ${round + 2} 次导入仍把服务商标成更新');
+      }
+    });
+  });
+
+  group('全新安装', () {
+    test('没有旧库时自建 schema，整份备份都能落库', () async {
+      // A fresh install has no data set yet; the importer must work against the schema this app
+      // creates, not just the minimal tables the round-trip tests use.
+      final directory = Directory.systemTemp.createTempSync('diting_backup');
+      final path = p.join(directory.path, LegacyDatabase.mainFile);
+      final fresh = await databaseFactory.openDatabase(
+        path,
+        options: OpenDatabaseOptions(
+          version: LegacySchema.versionOf(LegacyDatabase.mainFile),
+          onCreate: (database, version) async {
+            for (final statement in LegacySchema.statementsFor(
+              LegacyDatabase.mainFile,
+            )) {
+              await database.execute(statement);
+            }
+          },
+        ),
+      );
+      addTearDown(() async {
+        await fresh.close();
+        directory.deleteSync(recursive: true);
+      });
+
+      await fresh.insert('block_rule', {
+        'pattern': 'fresh.test',
+        'rawLine': 'fresh.test',
+        'addedAt': 1,
+      });
+      await fresh.insert('block_rule_source', {
+        'ruleId': 1,
+        'source': 'useradd',
+      });
+      final export = await const BackupExporter().export(
+        BackupExportSource(settings: LegacySettings(seededStore()), database: fresh),
+      );
+      await fresh.delete('block_rule');
+      await fresh.delete('block_rule_source');
+
+      final result = await const BackupImporter().import(
+        export.content,
+        BackupImportTarget(store: MemoryLegacyPrefsStore(), database: fresh),
+      );
+      expect(result.failed, isFalse, reason: result.fatalError);
+      expect(result.failedGroups, isEmpty);
+      final rows = await fresh.query('block_rule');
+      expect(rows.single['pattern'], 'fresh.test');
+    });
   });
 }
-
-/// Backup interop with 1.4.3: old flat backups import and new ones still carry the flat keys

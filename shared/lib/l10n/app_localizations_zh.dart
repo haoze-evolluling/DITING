@@ -8392,8 +8392,7 @@ class AppL10nZh extends AppL10n {
   String get backupErrRootNotObject => '备份文件的根节点必须是 JSON 对象';
 
   @override
-  String get backupErrNotDiting =>
-      '这不是谛听的备份文件：既没有 format 标记，也没有 formatVersion 版本号';
+  String get backupErrNotDiting => '这不是谛听的备份文件：缺少 format 标记';
 
   @override
   String get backupErrNoVersion => '备份文件缺少版本号';

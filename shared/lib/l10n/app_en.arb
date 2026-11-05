@@ -2530,7 +2530,7 @@
   "backupErrEmpty": "The file is empty",
   "backupErrInvalidJson": "Not valid JSON: {error}",
   "backupErrRootNotObject": "The root of a backup file must be a JSON object",
-  "backupErrNotDiting": "This is not a DITING backup: it has neither a format marker nor a formatVersion number",
+  "backupErrNotDiting": "This is not a DITING backup: the format marker is missing",
   "backupErrNoVersion": "The backup file has no version number",
   "backupErrVersionTooHigh": "The backup version {version} is higher than the supported {max}; update the app before importing",
   "backupErrNoData": "The backup file has no data section",
