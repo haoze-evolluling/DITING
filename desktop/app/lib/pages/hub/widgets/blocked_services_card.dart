@@ -20,11 +20,11 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// One compact tile carries a name, its rule count and three controls. Narrower than this the
-/// controls no longer fit beside the name, so the tile stacks them under it; narrower still and the
-/// switch itself clips, so the grid drops a column instead.
-const double _minTileWidth = 232;
-const double _wideTileWidth = 320;
+/// One compact tile carries a name, its rule count and three controls. The controls sit on the
+/// name's line, flush with the tile's right edge, so a row of tiles never leaves a dead strip under
+/// the title; the rule count and its chips get the line below. Narrower than this the name would be
+/// squeezed down to a few characters beside the controls, so the grid drops a column instead.
+const double _minTileWidth = 260;
 const double _tileGap = 8;
 const int _maxColumns = 5;
 
@@ -229,9 +229,10 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
     final expanded = filtered.where((item) => item.id == _expanded);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = _columnsOf(constraints.maxWidth);
-        final tileWidth =
-            (constraints.maxWidth - _tileGap * (columns - 1)) / columns;
+        // A short result list (a filter or a narrow catalogue) uses one column per service instead
+        // of leaving the right end of the card empty because the last row is not full.
+        final fit = _columnsOf(constraints.maxWidth);
+        final columns = filtered.length < fit ? filtered.length : fit;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: _tileGap,
@@ -249,7 +250,6 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
                                 filtered[index + column],
                                 data: data,
                                 saving: saving,
-                                wide: tileWidth >= _wideTileWidth,
                               )
                             : const SizedBox.shrink(),
                       ),
@@ -281,12 +281,10 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
     DesktopBlockedService service, {
     required DesktopBlockedServices data,
     required bool saving,
-    required bool wide,
   }) => _ServiceTile(
     service: service,
     data: data,
     saving: saving,
-    wide: wide,
     expanded: _expanded == service.id,
     onToggle: (value) => unawaited(_toggleService(service, value)),
     onSchedule: () => unawaited(_editSchedule(service)),
@@ -301,7 +299,6 @@ class _ServiceTile extends StatelessWidget {
     required this.service,
     required this.data,
     required this.saving,
-    required this.wide,
     required this.expanded,
     required this.onToggle,
     required this.onSchedule,
@@ -311,9 +308,6 @@ class _ServiceTile extends StatelessWidget {
   final DesktopBlockedService service;
   final DesktopBlockedServices data;
   final bool saving;
-
-  /// True when the tile is wide enough to keep its controls beside the name instead of under it.
-  final bool wide;
   final bool expanded;
   final ValueChanged<bool> onToggle;
   final VoidCallback onSchedule;
@@ -326,47 +320,34 @@ class _ServiceTile extends StatelessWidget {
     final byGroup = data.blockedByGroup(service);
     final schedule = data.stateOf(service.id);
     final hasSchedule = schedule?.hasSchedule ?? false;
-    final info = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 2,
+    final meta = Wrap(
+      spacing: 5,
+      runSpacing: 3,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          service.name,
+          l10n.desktopServicesRuleCount(
+            data.groupName(service.group),
+            service.ruleCount,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: DashboardText.rowTitle(context),
+          style: DashboardText.label(context),
         ),
-        Wrap(
-          spacing: 5,
-          runSpacing: 3,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(
-              l10n.desktopServicesRuleCount(
-                data.groupName(service.group),
-                service.ruleCount,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: DashboardText.label(context),
-            ),
-            if (byGroup)
-              DashboardChip(
-                label: l10n.desktopServicesByGroup,
-                tone: DashboardChipTone.warn,
-              ),
-            if (hasSchedule)
-              DashboardChip(
-                label: schedule?.active == true
-                    ? l10n.desktopServicesScheduleInside
-                    : l10n.desktopServicesScheduleOutside,
-                tone: schedule?.active == true
-                    ? DashboardChipTone.ok
-                    : DashboardChipTone.idle,
-              ),
-          ],
-        ),
+        if (byGroup)
+          DashboardChip(
+            label: l10n.desktopServicesByGroup,
+            tone: DashboardChipTone.warn,
+          ),
+        if (hasSchedule)
+          DashboardChip(
+            label: schedule?.active == true
+                ? l10n.desktopServicesScheduleInside
+                : l10n.desktopServicesScheduleOutside,
+            tone: schedule?.active == true
+                ? DashboardChipTone.ok
+                : DashboardChipTone.idle,
+          ),
       ],
     );
     final controls = Row(
@@ -402,17 +383,30 @@ class _ServiceTile extends StatelessWidget {
     );
     return DashboardBlock(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: wide
-          ? Row(
-              spacing: 6,
-              children: [Expanded(child: info), controls],
-            )
-          // The run stretches every tile to its tallest neighbour, so the controls of a row stay
-          // on one line even when one tile needs a second line for its chips.
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [info, const Spacer(), controls],
-            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 2,
+        children: [
+          // The name and its three controls share one line, so the tile's right edge is used
+          // instead of left as a dead strip under a lone title. A long name ellipsizes rather than
+          // pushing the controls onto a line of their own.
+          Row(
+            spacing: 6,
+            children: [
+              Expanded(
+                child: Text(
+                  service.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: DashboardText.rowTitle(context),
+                ),
+              ),
+              controls,
+            ],
+          ),
+          meta,
+        ],
+      ),
     );
   }
 }
