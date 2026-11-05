@@ -49,14 +49,20 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
       return null;
     }
     state = state.copyWith(updatingIds: {id}, clearMessage: true);
-    final result = await _runOne(entry);
-    if (!ref.mounted) {
-      return result;
+    SubscriptionFetchResult? result;
+    // The busy flags are cleared in a `finally`: an update that throws used to leave the card
+    // spinning forever, and every entry point is disabled while busy, so only a restart helped.
+    try {
+      result = await _runSafely(entry);
+    } finally {
+      if (ref.mounted) {
+        state = state.copyWith(
+          updatingIds: const {},
+          lastMessage: result == null ? null : _summarize([result]),
+        );
+        _invalidateEntries();
+      }
     }
-    state = state.copyWith(
-      updatingIds: const {},
-      lastMessage: _summarize([result]),
-    );
     return result;
   }
 
@@ -85,28 +91,57 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
     state = state.copyWith(updatingAll: true, progress: 0, clearMessage: true);
     final results = <SubscriptionFetchResult>[];
-    for (final (index, entry) in targets.indexed) {
-      if (!ref.mounted) {
-        return;
+    try {
+      for (final (index, entry) in targets.indexed) {
+        if (!ref.mounted) {
+          return;
+        }
+        state = state.copyWith(updatingIds: {entry.id});
+        results.add(await _runSafely(entry));
+        if (!ref.mounted) {
+          return;
+        }
+        state = state.copyWith(
+          updatingIds: const {},
+          progress: (index + 1) / targets.length,
+        );
       }
-      state = state.copyWith(updatingIds: {entry.id});
-      results.add(await _runOne(entry));
-      if (!ref.mounted) {
-        return;
+    } finally {
+      // Always settles, so a failure cannot strand the page at a frozen percentage.
+      if (ref.mounted) {
+        state = state.copyWith(
+          updatingAll: false,
+          updatingIds: const {},
+          progress: 0,
+          lastMessage: _summarize(results),
+        );
+        _invalidateEntries();
       }
-      state = state.copyWith(
-        updatingIds: const {},
-        progress: (index + 1) / targets.length,
-      );
     }
+  }
+
+  /// Reloads the list once the update settles. The repository reports every write, but a write
+  /// that throws reports nothing, and the update must still leave the page showing what the
+  /// database now holds.
+  void _invalidateEntries() {
     if (!ref.mounted) {
       return;
     }
-    state = state.copyWith(
-      updatingAll: false,
-      progress: 0,
-      lastMessage: _summarize(results),
-    );
+    ref.read(subscriptionRevisionProvider.notifier).bump();
+  }
+
+  /// `_runOne` with unexpected throws turned into failures: the user gets a failed row instead
+  /// of a silent stall.
+  Future<SubscriptionFetchResult> _runSafely(SubscriptionEntry entry) async {
+    try {
+      return await _runOne(entry);
+    } catch (error, stack) {
+      debugPrint('subscription update failed for ${entry.url}: $error\n$stack');
+      return SubscriptionFetchResult.failed(
+        currentL10n.subscriptionUpdateFailed,
+        requestedUrl: entry.url,
+      );
+    }
   }
 
   /// Runs one update and records the result; exceptions become failures so the UI never stays busy.

@@ -17,6 +17,7 @@ import 'package:diting_android/data/subscriptions/subscription_fetcher.dart';
 import 'package:diting_android/data/subscriptions/subscription_url.dart';
 import 'package:diting_android/state/config_providers_resources.dart';
 import 'package:diting_android/state/global_mirror_providers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
