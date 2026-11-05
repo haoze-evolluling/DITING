@@ -1,5 +1,5 @@
 /// Models for parsed AdGuard, ABP, hosts and dnsmasq rules. Cosmetic rules are parsed but never
-/// stored; see [CategorizedLine.cosmeticRules].
+/// stored; see [CategorizedRules.cosmeticRules].
 library;
 
 class RewriteTargetType {
@@ -78,41 +78,6 @@ class ParsedRewriteRule {
   final String targetType;
   final String targetValue;
   final String rawLine;
-}
-
-/// Result of parsing one line; one line may expand into several rules.
-class CategorizedLine {
-  const CategorizedLine({
-    this.blockRules = const [],
-    this.allowRules = const [],
-    this.rewriteRules = const [],
-    this.urlBlockRules = const [],
-    this.urlAllowRules = const [],
-    this.cosmeticRules = const [],
-    this.badfilterKeys = const {},
-    this.invalidCount = 0,
-    this.unsupportedCount = 0,
-    this.ignoredCount = 0,
-  });
-
-  final List<ParsedRule> blockRules;
-  final List<ParsedRule> allowRules;
-  final List<ParsedRewriteRule> rewriteRules;
-  final List<ParsedUrlRule> urlBlockRules;
-  final List<ParsedUrlRule> urlAllowRules;
-  final List<ParsedCosmeticRule> cosmeticRules;
-  final Set<String> badfilterKeys;
-  final int invalidCount;
-  final int unsupportedCount;
-  final int ignoredCount;
-
-  bool get isEmpty =>
-      blockRules.isEmpty &&
-      allowRules.isEmpty &&
-      rewriteRules.isEmpty &&
-      urlBlockRules.isEmpty &&
-      urlAllowRules.isEmpty &&
-      cosmeticRules.isEmpty;
 }
 
 class CategorizedRules {

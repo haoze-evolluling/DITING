@@ -15,138 +15,86 @@ void main() {
 }
 
 /// Equivalent of 1.4.3's `AdGuardRuleParserTest`: a semantic drift silently blocks too much
-/// or too little
+/// or too little. The parser is the Rust core now, so these are fixed expectations on its
+/// document output; build the library first (`cargo build --release` in `rust/`), exactly like the
+/// app needs it.
 void _ruleParser() {
-  group('域名 / 修饰符', () {
-    test('标准拦截规则与修饰符', () {
-      final standard = parseRule('||example.com^');
-      expect(standard, isNotNull);
-      expect(standard!.pattern, 'example.com');
-      expect(standard.important, isFalse);
-      expect(standard.appScope, isNull);
+  test('域名 / 修饰符 / 放行规则', () {
+    final parsed = parseCategorized(
+      '||ads.net^\$app=com.app1|com.app2,important\n'
+      '@@||*-analytics.google.com^\$app=com.google.android.gms,important\n'
+      '||tracker.com^\$app=~com.android.chrome',
+    );
+    final important = parsed.blockRules.firstWhere(
+      (rule) => rule.pattern == 'ads.net',
+    );
+    expect(important.important, isTrue);
+    expect(important.appScope, 'com.app1|com.app2');
+    expect(important.appInverted, isFalse);
 
-      final appImportant = parseRule(
-        '||ads.net^\$app=com.app1|com.app2,important',
-      );
-      expect(appImportant, isNotNull);
-      expect(appImportant!.pattern, 'ads.net');
-      expect(appImportant.important, isTrue);
-      expect(appImportant.appScope, 'com.app1|com.app2');
-      expect(appImportant.appInverted, isFalse);
+    final allow = parsed.allowRules.single;
+    expect(allow.pattern, '*-analytics.google.com');
+    expect(allow.isWildcard, isTrue);
+    expect(allow.important, isTrue);
+    expect(allow.appScope, 'com.google.android.gms');
 
-      final inverted = parseRule('||tracker.com^\$app=~com.android.chrome');
-      expect(inverted, isNotNull);
-      expect(inverted!.pattern, 'tracker.com');
-      expect(inverted.appScope, 'com.android.chrome');
-      expect(inverted.appInverted, isTrue);
-
-      final wildcard = parseRule(
-        '||*-analytics.google.com^\$app=com.google.android.gms',
-      );
-      expect(wildcard, isNotNull);
-      expect(wildcard!.pattern, '*-analytics.google.com');
-      expect(wildcard.isWildcard, isTrue);
-    });
-
-    test('放行规则与修饰符', () {
-      final allow = parseAllowRule(
-        '@@||*-analytics.google.com^\$app=com.google.android.gms,important',
-      );
-      expect(allow, isNotNull);
-      expect(allow!.pattern, '*-analytics.google.com');
-      expect(allow.isWildcard, isTrue);
-      expect(allow.important, isTrue);
-      expect(allow.appScope, 'com.google.android.gms');
-    });
-
-    test('\$all 与 \$all,important', () {
-      expect(parseRule('||example.com^\$all')!.pattern, 'example.com');
-      expect(parseRule('||example.com^\$all,important')!.important, isTrue);
-    });
-
-    test('只对 HTTP 有意义的修饰符整行忽略', () {
-      expect(
-        parseCategorizedLine('||example.com^\$image,third-party').ignoredCount,
-        1,
-      );
-      expect(
-        parseCategorizedLine('||example.com^\$removeparam=utm_source')
-            .ignoredCount,
-        1,
-      );
-      expect(
-        parseCategorizedLine('||example.com/banner.js\$script,badfilter')
-            .ignoredCount,
-        1,
-      );
-    });
+    final inverted = parsed.blockRules.firstWhere(
+      (rule) => rule.pattern == 'tracker.com',
+    );
+    expect(inverted.appScope, 'com.android.chrome');
+    expect(inverted.appInverted, isTrue);
   });
 
-  group('dnsrewrite', () {
-    test('IPv4 / IPv6 / CNAME 三种目标', () {
-      final ipv4 = parseCategorizedLine('||example.com^\$dnsrewrite=1.2.3.4');
-      expect(ipv4.rewriteRules, hasLength(1));
-      expect(ipv4.rewriteRules.first.pattern, 'example.com');
-      expect(ipv4.rewriteRules.first.targetType, RewriteTargetType.ipv4);
-      expect(ipv4.rewriteRules.first.targetValue, '1.2.3.4');
-
-      final ipv6 = parseCategorizedLine('||ipv6.com^\$dnsrewrite=2001:db8::1');
-      expect(ipv6.rewriteRules, hasLength(1));
-      expect(ipv6.rewriteRules.first.targetType, RewriteTargetType.ipv6);
-      expect(ipv6.rewriteRules.first.targetValue, '2001:db8::1');
-
-      final cname = parseCategorizedLine(
-        '||cname.com^\$dnsrewrite=target.example.org',
-      );
-      expect(cname.rewriteRules, hasLength(1));
-      expect(cname.rewriteRules.first.targetType, RewriteTargetType.cname);
-      expect(cname.rewriteRules.first.targetValue, 'target.example.org');
-    });
-
-    test('NXDOMAIN 与黑洞地址变成拦截规则', () {
-      final nx = parseCategorizedLine('||blocked.com^\$dnsrewrite=NXDOMAIN');
-      expect(nx.blockRules, hasLength(1));
-      expect(nx.blockRules.first.pattern, 'blocked.com');
-
-      final zero = parseCategorizedLine('||sinkhole.com^\$dnsrewrite=0.0.0.0');
-      expect(zero.blockRules, hasLength(1));
-      expect(zero.blockRules.first.pattern, 'sinkhole.com');
-    });
+  test('dnsrewrite：真值变覆写，黑洞变拦截', () {
+    final parsed = parseCategorized(
+      '||ipv4.com^\$dnsrewrite=1.2.3.4\n'
+      '||ipv6.com^\$dnsrewrite=2001:db8::1\n'
+      '||cname.com^\$dnsrewrite=target.example.org\n'
+      '||blocked.com^\$dnsrewrite=NXDOMAIN\n'
+      '||sinkhole.com^\$dnsrewrite=0.0.0.0',
+    );
+    expect(parsed.rewriteRules.map((rule) => rule.pattern), [
+      'ipv4.com',
+      'ipv6.com',
+      'cname.com',
+    ]);
+    expect(parsed.rewriteRules.map((rule) => rule.targetType), [
+      RewriteTargetType.ipv4,
+      RewriteTargetType.ipv6,
+      RewriteTargetType.cname,
+    ]);
+    expect(parsed.rewriteRules.map((rule) => rule.targetValue), [
+      '1.2.3.4',
+      '2001:db8::1',
+      'target.example.org',
+    ]);
+    expect(parsed.blockRules.map((rule) => rule.pattern), [
+      'blocked.com',
+      'sinkhole.com',
+    ]);
   });
 
-  group('hosts 与 dnsmasq', () {
-    test('黑洞 hosts 一行多域名展开成多条拦截', () {
-      final sinkhole = parseCategorizedLine(
-        '0.0.0.0 ads.example.com tracker.example.com # ad hosts',
-      );
-      expect(sinkhole.blockRules, hasLength(2));
-      expect(sinkhole.blockRules[0].pattern, 'ads.example.com');
-      expect(sinkhole.blockRules[1].pattern, 'tracker.example.com');
-      expect(sinkhole.rewriteRules, isEmpty);
-    });
-
-    test('真实 IP 的 hosts 行变成覆写', () {
-      final realIp = parseCategorizedLine(
-        '1.2.3.4 host1.example.com host2.example.com',
-      );
-      expect(realIp.blockRules, isEmpty);
-      expect(realIp.rewriteRules, hasLength(2));
-      expect(realIp.rewriteRules[0].pattern, 'host1.example.com');
-      expect(realIp.rewriteRules[0].targetValue, '1.2.3.4');
-      expect(realIp.rewriteRules[1].pattern, 'host2.example.com');
-    });
-
-    test('dnsmasq 黑洞三种写法都算拦截', () {
-      for (final line in [
-        'address=/blocked.com/',
-        'address=/sink.com/0.0.0.0',
-        'address=/null.com/#',
-      ]) {
-        final parsed = parseCategorizedLine(line);
-        expect(parsed.blockRules, hasLength(1), reason: line);
-        expect(parsed.rewriteRules, isEmpty, reason: line);
-      }
-    });
+  test('hosts 与 dnsmasq 归类', () {
+    final parsed = parseCategorized(
+      '0.0.0.0 ads.example.com tracker.example.com # ad hosts\n'
+      '1.2.3.4 host1.example.com host2.example.com\n'
+      'address=/blocked.com/\n'
+      'address=/sink.com/0.0.0.0\n'
+      'address=/null.com/#\n'
+      'address=/ip.com/10.0.0.3',
+    );
+    expect(parsed.blockRules.map((rule) => rule.pattern), [
+      'ads.example.com',
+      'tracker.example.com',
+      'blocked.com',
+      'sink.com',
+      'null.com',
+    ]);
+    expect(parsed.rewriteRules.map((rule) => rule.pattern), [
+      'host1.example.com',
+      'host2.example.com',
+      'ip.com',
+    ]);
   });
 
   group('整份文本', () {
@@ -166,13 +114,13 @@ void _ruleParser() {
           'address=/masq-block.com/\n'
           'address=/masq-ip.com/10.0.0.3';
       final parsed = parseCategorized(text);
-      expect(parsed.blockRules.map((r) => r.pattern), [
+      expect(parsed.blockRules.map((rule) => rule.pattern), [
         'ad.com',
         'sink.com',
         'masq-block.com',
       ]);
-      expect(parsed.allowRules.map((r) => r.pattern), ['allow.com']);
-      expect(parsed.rewriteRules.map((r) => r.pattern), [
+      expect(parsed.allowRules.map((rule) => rule.pattern), ['allow.com']);
+      expect(parsed.rewriteRules.map((rule) => rule.pattern), [
         'rewrite.com',
         'real.com',
         'masq-ip.com',
@@ -212,23 +160,17 @@ void _ruleParser() {
 
   group('元素隐藏分隔符', () {
     test('#\$@# 例外形式不被降级成整域拦截', () {
-      final line = parseCategorizedLine('example.com#\$@#.ad-banner');
-      expect(line.blockRules, isEmpty);
-      expect(line.cosmeticRules, hasLength(1));
-      expect(line.cosmeticRules.first.isException, isTrue);
-      expect(line.cosmeticRules.first.selector, '.ad-banner');
+      final parsed = parseCategorized('example.com#\$@#.ad-banner');
+      expect(parsed.blockRules, isEmpty);
+      final rule = parsed.cosmeticRules.single;
+      expect(rule.isException, isTrue);
+      expect(rule.selector, '.ad-banner');
     });
 
     test('## / #@# / #?# 都识别为 cosmetic', () {
-      for (final line in [
-        'example.com##.ad',
-        'example.com#@#.ad',
-        'example.com#?#.ad',
-      ]) {
-        final parsed = parseCategorizedLine(line);
-        expect(parsed.cosmeticRules, hasLength(1), reason: line);
-        expect(parsed.blockRules, isEmpty, reason: line);
-      }
+      final parsed = parseCategorized('a.com##.ad\nb.com#@#.ad\nc.com#?#.ad');
+      expect(parsed.cosmeticRules, hasLength(3));
+      expect(parsed.blockRules, isEmpty);
     });
   });
 

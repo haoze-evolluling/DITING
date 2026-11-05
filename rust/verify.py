@@ -13,11 +13,10 @@ including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference
 
 The Go checks exist because the Go engine is the real consumer: it mmaps the DTRI files and it calls
 the policy kernel through the same C ABI production uses, so it is the only thing that can prove the
-boundary - the Go walk is the reference the randomized parity test compares against. `--go` needs
-`cgo` plus a C compiler (mingw on Windows, gcc/clang elsewhere); the release library is built first
-because the Go loader probes `rust/target/release/`. The Dart check is the same idea for the parse
-and search fast paths: it lets the real `String.toLowerCase` decide whether the Rust port still
-matches it.
+boundary. `--go` needs `cgo` plus a C compiler (mingw on Windows, gcc/clang elsewhere); the release
+library is built first because the Go loader probes `rust/target/release/`. `--dart` runs the Dart
+side against the same library: the importer and the rules page have no second implementation left,
+so those tests are fixed expectations on the native output.
 """
 
 from __future__ import annotations
@@ -31,12 +30,7 @@ from pathlib import Path
 RUST_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = RUST_DIR.parent
 GO_ENGINE_DIR = PROJECT_ROOT / "android" / "engine"
-
-# Paths relative to the repo root, for the Flutter test run.
-DART_PARITY_TESTS = [
-    "android/app/test/rule_parse_rust_parity_test.dart",
-    "android/app/test/rule_search_rust_parity_test.dart",
-]
+APP_DIR = PROJECT_ROOT / "android" / "app"
 
 
 def run(label: str, command: list[str], cwd: Path) -> bool:
@@ -52,7 +46,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Rust 规则内核验证")
     parser.add_argument("--android", action="store_true", help="交叉编译 arm64-v8a 并拷入 jniLibs")
     parser.add_argument("--go", action="store_true", help="跑 Go 读取 Rust DTRI 产物的兼容测试")
-    parser.add_argument("--dart", action="store_true", help="跑解析与检索的 Dart ↔ Rust 对拍")
+    parser.add_argument("--dart", action="store_true", help="跑 Dart 侧规则解析与入库用例")
     parser.add_argument("--bench", action="store_true", help="跑 DTRI 编译与规则检索基准")
     parser.add_argument("--all", action="store_true", help="等于 --android --go --dart --bench")
     args = parser.parse_args()
@@ -79,7 +73,7 @@ def main() -> int:
         if flutter is None:
             print("[verify] dart: 找不到 flutter，跳过", file=sys.stderr)
         else:
-            steps.append(("dart", [flutter, "test", *DART_PARITY_TESTS], PROJECT_ROOT))
+            steps.append(("dart", [flutter, "test", "test/rule_parse_test.dart"], APP_DIR))
     if args.android:
         steps.append(
             ("android", [sys.executable, str(RUST_DIR / "build_android.py"), "--abi", "arm64"], RUST_DIR)

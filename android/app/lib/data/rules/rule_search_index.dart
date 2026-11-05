@@ -1,13 +1,12 @@
-/// Native substring index over one rule table, with the Dart filter as the fallback.
+/// Native substring index over one rule table.
 ///
 /// The rules page narrows a whole table on every keystroke: pattern or target, case-insensitive
 /// `contains`. On a subscription-sized table that is 25-35 ms of lowercasing plus scanning on the UI
 /// isolate per key. [`RuleSearchIndex`] hands the rows to Rust once (folded there, exactly like
 /// `String.toLowerCase`, see `rust/diting-rule-core/src/search.rs`) and then asks for row indices.
 ///
-/// Anything that goes wrong — no artifact, an older `.so` without the search symbols, a rejected
-/// payload — makes [`match`] return `null`, and the caller keeps its Dart filter, so the page can
-/// never break or change what it shows. Payload layout lives in `src/search_ffi.rs`.
+/// The library is required: a rejected payload throws out of [`match`] instead of quietly scanning
+/// in Dart. Payload layout lives in `src/search_ffi.rs`.
 library;
 
 import 'dart:convert';
@@ -36,18 +35,13 @@ class RuleSearchIndex {
 
   int? _handle;
 
-  /// Set when the native core refused the table, so later keystrokes do not retry the build.
-  bool _unavailable = false;
-
-  /// Row indices whose pattern or target contains [needle], ascending — the same rows, in the same
-  /// order, as the Dart filter. `null` when the native index cannot serve the query.
+  /// Row indices whose pattern or target contains [needle], ascending. Throws [StateError] when
+  /// the native index cannot serve the query.
   ///
   /// `needle` is folded natively, so it can be passed as typed.
-  Uint32List? match(String needle) {
+  Uint32List match(String needle) {
     final core = RustRuleCore.instance;
-    if (core == null || !core.supportsSearch || _unavailable) return null;
-    final handle = _handle ?? _build(core);
-    if (handle == null) return null;
+    final handle = _handle ??= core.buildSearchIndex(_encode(_entries()));
     return core.matchSearchIndex(handle, needle);
   }
 
@@ -55,16 +49,7 @@ class RuleSearchIndex {
   void dispose() {
     final handle = _handle;
     _handle = null;
-    if (handle != null) RustRuleCore.instance?.freeSearchIndex(handle);
-  }
-
-  int? _build(RustRuleCore core) {
-    final handle = core.buildSearchIndex(_encode(_entries()));
-    if (handle == null) {
-      _unavailable = true;
-      return null;
-    }
-    return _handle = handle;
+    if (handle != null) RustRuleCore.instance.freeSearchIndex(handle);
   }
 }
 

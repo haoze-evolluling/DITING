@@ -313,8 +313,7 @@ class RuleListFilter {
 /// Native search index over one rule kind's table.
 ///
 /// Rebuilt only when that table changes, and folded lazily on the first query: typing is the only
-/// thing that pays for it. The Dart filter stays as the fallback, so a build without the Rust
-/// artifact behaves exactly as before.
+/// thing that pays for it.
 final ruleSearchIndexProvider = Provider.family<RuleSearchIndex, RuleKind>((ref, kind) {
   final rules = ref.watch(rulesOfKindProvider(kind));
   final index = RuleSearchIndex(
@@ -340,16 +339,6 @@ final filteredRulesProvider = Provider.family<List<MockRule>, RuleListFilter>(
       ];
     }
     final hits = ref.watch(ruleSearchIndexProvider(filter.kind)).match(query);
-    if (hits == null) {
-      // No native core, or a table it refused: the original Dart filter, rule by rule.
-      return [
-        for (final rule in rules)
-          if ((source == null || rule.source == source) &&
-              (rule.pattern.toLowerCase().contains(query) ||
-                  (rule.target?.toLowerCase().contains(query) ?? false)))
-            rule,
-      ];
-    }
     // Row indices come back ascending from the same snapshot, so the list keeps the table order
     // and the source chip stays a filter over it.
     return [
