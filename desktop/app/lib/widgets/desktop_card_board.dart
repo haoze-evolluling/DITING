@@ -1,14 +1,25 @@
-/// The one card board every desktop page uses: a two-column masonry for three or more cards once
-/// the board is wide enough, and one column everywhere else.
+/// The one card board every desktop page uses. One rule picks the layout, and every page follows it:
+///
+/// 1. **One or two cards → always one column**, whatever the window width. The column is capped at
+///    [desktopSingleColumnMaxWidth] and centred, so its left and right margins are equal.
+/// 2. **Three or more cards → two-column masonry** once the board is at least
+///    [desktopTwoColumnWidth] wide, and one full-width column below it.
+/// 3. **[singleColumn] true → one full-width column** on any width, for cards that are themselves a
+///    grid or a table and need the whole board.
+///
+/// These branches are the standard: `desktop/README.md` (“界面规范”) restates them for readers who
+/// start from the docs, and `test/desktop_card_board_test.dart` pins each one so changing a branch
+/// here without changing the rule fails a test.
 ///
 /// Every child is one card and always occupies exactly one column. Pages must not place a card
-/// outside the board to make it span the full width; put it in [cards] like the rest.
+/// outside the board to make it span the full width, and must not add a third card only to force
+/// the two-column layout: put the cards in [cards] like the rest.
 ///
 /// A page with one or two cards never gets the masonry. Two columns holding a single row do not
 /// read as a waterfall, they read as a pair of equals with half the page left empty, and the taller
-/// card of the two drags a wide hole under its shorter neighbour. Those pages get one column that
-/// is capped at [desktopSingleColumnMaxWidth] and centred, so on a wide window the card keeps a
-/// readable measure and its left and right margins match instead of the card hugging one edge.
+/// card of the two drags a wide hole under its shorter neighbour. Those pages get the capped,
+/// centred column instead, so on a wide window the card keeps a readable measure and its left and
+/// right margins match instead of the card hugging one edge.
 ///
 /// The two-column threshold is the desktop's own, not the dashboard's mobile one: a desktop card
 /// carries a title row with a chip and a switch, a one-line description and often a form, and below
@@ -42,6 +53,9 @@ const double desktopSingleColumnMaxWidth = 960;
 /// it, used where a card must not stretch to the full half-pane.
 const double desktopSoloCardWidth = 760;
 
+/// The board every desktop page uses. The layout rule it enforces (1–2 cards always single column,
+/// 3+ cards two-column masonry once the board is wide enough) is spelled out in the library
+/// documentation above.
 class DesktopCardBoard extends StatelessWidget {
   const DesktopCardBoard({
     super.key,
