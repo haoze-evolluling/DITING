@@ -9,6 +9,7 @@ import 'package:diting_android/data/db/rule_bootstrap.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_android/data/db/rule_providers.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
+import 'package:diting_android/data/rules/rule_search_index.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -309,21 +310,53 @@ class RuleListFilter {
   int get hashCode => Object.hash(kind, source, query);
 }
 
+/// Native search index over one rule kind's table.
+///
+/// Rebuilt only when that table changes, and folded lazily on the first query: typing is the only
+/// thing that pays for it. The Dart filter stays as the fallback, so a build without the Rust
+/// artifact behaves exactly as before.
+final ruleSearchIndexProvider = Provider.family<RuleSearchIndex, RuleKind>((ref, kind) {
+  final rules = ref.watch(rulesOfKindProvider(kind));
+  final index = RuleSearchIndex(
+    () => [
+      for (final rule in rules) (pattern: rule.pattern, target: rule.target),
+    ],
+  );
+  ref.onDispose(index.dispose);
+  return index;
+});
+
 /// Rows the rule page shows for [filter]. Every row here is also matched by the tallies in
 /// [ruleListTallyProvider], so the counter can never disagree with the list.
 final filteredRulesProvider = Provider.family<List<MockRule>, RuleListFilter>(
-  (ref, filter) => ref
-      .watch(rulesOfKindProvider(filter.kind))
-      .where((rule) {
-        if (filter.source != null && rule.source != filter.source) {
-          return false;
-        }
-        final query = filter.query;
-        return query.isEmpty ||
-            rule.pattern.toLowerCase().contains(query) ||
-            (rule.target?.toLowerCase().contains(query) ?? false);
-      })
-      .toList(growable: false),
+  (ref, filter) {
+    final rules = ref.watch(rulesOfKindProvider(filter.kind));
+    final source = filter.source;
+    final query = filter.query;
+    if (query.isEmpty) {
+      return [
+        for (final rule in rules)
+          if (source == null || rule.source == source) rule,
+      ];
+    }
+    final hits = ref.watch(ruleSearchIndexProvider(filter.kind)).match(query);
+    if (hits == null) {
+      // No native core, or a table it refused: the original Dart filter, rule by rule.
+      return [
+        for (final rule in rules)
+          if ((source == null || rule.source == source) &&
+              (rule.pattern.toLowerCase().contains(query) ||
+                  (rule.target?.toLowerCase().contains(query) ?? false)))
+            rule,
+      ];
+    }
+    // Row indices come back ascending from the same snapshot, so the list keeps the table order
+    // and the source chip stays a filter over it.
+    return [
+      for (final index in hits)
+        if (source == null || rules[index].source == source) rules[index],
+    ];
+  },
   // One entry per keystroke otherwise: the query string is part of the family key.
   isAutoDispose: true,
 );

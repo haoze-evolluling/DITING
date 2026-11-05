@@ -22,22 +22,32 @@ use crate::models::{
 pub const ABI_VERSION: u32 = 1;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DRC1");
-const NONE_LEN: u32 = u32::MAX;
+pub(crate) const NONE_LEN: u32 = u32::MAX;
 
-fn write_u32(buffer: &mut Vec<u8>, value: u32) {
+pub(crate) fn write_u32(buffer: &mut Vec<u8>, value: u32) {
     buffer.extend_from_slice(&value.to_le_bytes());
 }
 
-fn write_str(buffer: &mut Vec<u8>, value: &str) {
+pub(crate) fn write_str(buffer: &mut Vec<u8>, value: &str) {
     write_u32(buffer, value.len() as u32);
     buffer.extend_from_slice(value.as_bytes());
 }
 
-fn write_opt_str(buffer: &mut Vec<u8>, value: Option<&str>) {
+pub(crate) fn write_opt_str(buffer: &mut Vec<u8>, value: Option<&str>) {
     match value {
         Some(text) => write_str(buffer, text),
         None => write_u32(buffer, NONE_LEN),
     }
+}
+
+/// Hands `bytes` to the caller as a pointer/length pair that [`diting_rule_core_free`] can
+/// rebuild; shrinking to fit keeps the length enough to reconstruct the allocation.
+pub(crate) fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
+    let mut boxed = bytes.into_boxed_slice();
+    let length = boxed.len();
+    let pointer = boxed.as_mut_ptr();
+    std::mem::forget(boxed);
+    (pointer, length)
 }
 
 fn encode_rule(buffer: &mut Vec<u8>, rule: &ParsedRule) {
@@ -175,12 +185,7 @@ pub unsafe extern "C" fn diting_rule_core_parse(
     let Ok(text) = std::str::from_utf8(bytes) else {
         return std::ptr::null_mut();
     };
-    let buffer = encode(&parse_document(text));
-    // Shrink to fit so the release path can rebuild the allocation from `len` alone.
-    let mut boxed = buffer.into_boxed_slice();
-    let length = boxed.len();
-    let pointer = boxed.as_mut_ptr();
-    std::mem::forget(boxed);
+    let (pointer, length) = into_buffer(encode(&parse_document(text)));
     *out_len = length;
     pointer
 }

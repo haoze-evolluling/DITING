@@ -21,8 +21,14 @@ import 'package:diting_android/data/rules/rule_models.dart';
 /// Must match `ABI_VERSION` in `rust/diting-rule-core/src/ffi.rs`.
 const _abiVersion = 1;
 
+/// Must match `SEARCH_ABI_VERSION` in `rust/diting-rule-core/src/search_ffi.rs`.
+const _searchAbiVersion = 1;
+
 /// `"DRC1"` read as a little-endian u32; the first field of every payload.
 const _payloadMagic = 0x31435244;
+
+/// `"DRQ1"`, the first field of every search result payload.
+const _searchResultMagic = 0x31515244;
 
 /// Environment switch: `DITING_RULE_CORE=off` keeps the Dart parser even when the library exists.
 const _disableSwitch = 'off';
@@ -38,6 +44,24 @@ typedef _AllocNative = Pointer<Uint8> Function(Size);
 typedef _AllocDart = Pointer<Uint8> Function(int);
 typedef _FreeNative = Void Function(Pointer<Uint8>, Size);
 typedef _FreeDart = void Function(Pointer<Uint8>, int);
+typedef _SearchBuildNative = Uint64 Function(Pointer<Uint8>, Size);
+typedef _SearchBuildDart = int Function(Pointer<Uint8>, int);
+typedef _SearchQueryNative =
+    Pointer<Uint8> Function(Uint64, Pointer<Uint8>, Size, Pointer<Size>);
+typedef _SearchQueryDart =
+    Pointer<Uint8> Function(int, Pointer<Uint8>, int, Pointer<Size>);
+typedef _SearchFreeNative = Uint32 Function(Uint64);
+typedef _SearchFreeDart = int Function(int);
+
+/// The stateful half of the library (`search_ffi.rs`), present only in artifacts that carry it: an
+/// older `.so` keeps serving the parse path, so the two symbols sets are looked up separately.
+class _SearchApi {
+  const _SearchApi(this.build, this.query, this.freeIndex);
+
+  final _SearchBuildDart build;
+  final _SearchQueryDart query;
+  final _SearchFreeDart freeIndex;
+}
 
 /// One quiet diagnostic line: the native core is optional, so a missing or broken artifact is a
 /// fallback, not an error the user has to see.
@@ -46,11 +70,21 @@ void _note(String message) {
 }
 
 class RustRuleCore {
-  RustRuleCore._(this._parse, this._alloc, this._free, this.libraryPath);
+  RustRuleCore._(
+    this._parse,
+    this._alloc,
+    this._free,
+    this.libraryPath,
+    this._search,
+  );
 
   final _ParseDart _parse;
   final _AllocDart _alloc;
   final _FreeDart _free;
+
+  /// `null` when this artifact predates the search index; [`supportsSearch`] then reports false and
+  /// the rules page keeps its Dart filter.
+  final _SearchApi? _search;
 
   /// Resolved library path, surfaced in the benchmark tool and tests.
   final String libraryPath;
@@ -58,6 +92,10 @@ class RustRuleCore {
   static RustRuleCore? _instance;
   static bool _probed = false;
   static bool _disabled = false;
+  static bool _searchDisabled = false;
+
+  /// Whether [`buildSearchIndex`] and [`matchSearchIndex`] can be used.
+  bool get supportsSearch => _search != null && !_searchDisabled;
 
   /// `null` when the native core cannot be used on this device/build.
   static RustRuleCore? get instance {
@@ -90,12 +128,43 @@ class RustRuleCore {
           library.lookupFunction<_AllocNative, _AllocDart>('diting_rule_core_alloc'),
           library.lookupFunction<_FreeNative, _FreeDart>('diting_rule_core_free'),
           candidate,
+          _loadSearch(library),
         );
       } catch (_) {
         // Missing artifact, wrong ABI or a missing symbol: try the next candidate.
       }
     }
     return null;
+  }
+
+  /// Looks up the search symbols separately: an artifact that only speaks the parse ABI still
+  /// serves rule imports, and only the rules page falls back to its Dart filter.
+  static _SearchApi? _loadSearch(DynamicLibrary library) {
+    try {
+      final abiVersion = library.lookupFunction<_AbiVersionNative, _AbiVersionDart>(
+        'diting_rule_core_search_abi_version',
+      )();
+      if (abiVersion != _searchAbiVersion) {
+        _note(
+          'rule search speaks abi $abiVersion, expected $_searchAbiVersion: '
+          'using the Dart filter',
+        );
+        return null;
+      }
+      return _SearchApi(
+        library.lookupFunction<_SearchBuildNative, _SearchBuildDart>(
+          'diting_rule_core_search_build',
+        ),
+        library.lookupFunction<_SearchQueryNative, _SearchQueryDart>(
+          'diting_rule_core_search_query',
+        ),
+        library.lookupFunction<_SearchFreeNative, _SearchFreeDart>(
+          'diting_rule_core_search_free_index',
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Parses a whole rule document, or returns `null` when anything goes wrong: the caller then
@@ -136,8 +205,78 @@ class RustRuleCore {
     }
   }
 
-  static String? _libraryName() {
-    // Cargo turns `diting-rule-core` into `libditing_rule_core.so` / `.dylib` and
+  /// Builds a search index from `payload` (layout in `search_ffi.rs`) and returns its handle.
+  ///
+  /// `null` when the artifact has no search symbols or the payload was rejected; the caller then
+  /// keeps its Dart filter, and a failure disables the native path for the rest of the process so
+  /// a broken artifact cannot make every keystroke retry it.
+  int? buildSearchIndex(Uint8List payload) {
+    final api = _search;
+    if (api == null || _searchDisabled) return null;
+    final inputPtr = payload.isEmpty ? nullptr : _alloc(payload.length);
+    try {
+      if (payload.isNotEmpty) {
+        inputPtr.asTypedList(payload.length).setAll(0, payload);
+      }
+      final handle = api.build(inputPtr, payload.length);
+      if (handle == 0) {
+        _searchDisabled = true;
+        _note('rule search disabled: the index payload was rejected');
+        return null;
+      }
+      return handle;
+    } catch (error) {
+      _searchDisabled = true;
+      _note('rule search disabled after a build failure: $error');
+      return null;
+    } finally {
+      if (inputPtr != nullptr) _free(inputPtr, payload.length);
+    }
+  }
+
+  /// Row indices in `handle` whose pattern or target contains [needle], ascending.
+  ///
+  /// `null` when the native index cannot serve the query (see [buildSearchIndex]); the caller then
+  /// falls back to the Dart filter.
+  Uint32List? matchSearchIndex(int handle, String needle) {
+    final api = _search;
+    if (api == null || _searchDisabled) return null;
+    final bytes = utf8.encode(needle);
+    final inputPtr = bytes.isEmpty ? nullptr : _alloc(bytes.length);
+    final outLenPtr = _alloc(sizeOf<Size>()).cast<Size>();
+    Pointer<Uint8> outputPtr = nullptr;
+    var outputLength = 0;
+    try {
+      if (bytes.isNotEmpty) {
+        inputPtr.asTypedList(bytes.length).setAll(0, bytes);
+      }
+      outputPtr = api.query(handle, inputPtr, bytes.length, outLenPtr);
+      outputLength = outLenPtr.value;
+      if (outputPtr == nullptr || outputLength == 0) {
+        throw StateError('rule search returned no payload');
+      }
+      return _decodeHits(outputPtr.asTypedList(outputLength));
+    } catch (error) {
+      _searchDisabled = true;
+      _note('rule search disabled after a query failure: $error');
+      return null;
+    } finally {
+      if (inputPtr != nullptr) _free(inputPtr, bytes.length);
+      _free(outLenPtr.cast<Uint8>(), sizeOf<Size>());
+      if (outputPtr != nullptr && outputLength > 0) _free(outputPtr, outputLength);
+    }
+  }
+
+  /// Releases an index built by [buildSearchIndex]. Unknown or already freed handles are ignored.
+  void freeSearchIndex(int handle) {
+    try {
+      _search?.freeIndex(handle);
+    } catch (error) {
+      _note('rule search index $handle could not be released: $error');
+    }
+  }
+
+  static String? _libraryName() {    // Cargo turns `diting-rule-core` into `libditing_rule_core.so` / `.dylib` and
     // `diting_rule_core.dll`; see `[lib] name` in the crate manifest.
     if (Platform.isAndroid || Platform.isLinux) return 'libditing_rule_core.so';
     if (Platform.isWindows) return 'diting_rule_core.dll';
@@ -169,6 +308,31 @@ class RustRuleCore {
       directory = parent;
     }
   }
+}
+
+/// Sequential reader over the search result payload (`encode_hits` in `search_ffi.rs`).
+///
+/// The row indices are copied into a `Uint32List` instead of being read one by one: a broad query
+/// matches most of a subscription-sized table, and a boxed `List<int>` of 100k hits costs more than
+/// the scan that produced it.
+Uint32List _decodeHits(Uint8List payload) {
+  final reader = _PayloadReader(payload);
+  if (reader.readU32() != _searchResultMagic) {
+    throw const FormatException('rule search payload magic mismatch');
+  }
+  final abiVersion = reader.readU32();
+  if (abiVersion != _searchAbiVersion) {
+    throw FormatException('rule search payload abi $abiVersion, expected $_searchAbiVersion');
+  }
+  final count = reader.readU32();
+  final start = reader._offset;
+  if (start + count * 4 > payload.length) {
+    throw const FormatException('rule search payload runs past the buffer');
+  }
+  // The payload is what Rust's allocator returned (8-byte aligned) and the index block starts at
+  // offset 12, so the view is aligned; every Flutter target is little-endian, which is the byte
+  // order `encode_hits` writes. Copied because the payload is released by the caller.
+  return Uint32List.fromList(payload.buffer.asUint32List(start, count));
 }
 
 CategorizedRules _decodeRules(Uint8List payload) {
