@@ -3,12 +3,11 @@
 //!
 //! ```text
 //! abi_version()                                   -> u32
-//! snapshot_build(json, len, expect_regex, err, cap) -> handle (0 = failed, err holds a message)
+//! snapshot_build(json, len, err, cap)             -> handle (0 = failed, err holds a message)
 //! snapshot_flags(handle)                          -> u32 (bit0 hasRules, bit1 appSensitive,
 //!                                                        bit2 qtypeSensitive)
 //! evaluate(handle, domain, app, qtype, reason_out, reason_len) -> 0 pass / 1 block / -1 error
 //! snapshot_free(handle)
-//! debug_lower(text, out, cap)                     -> usize (Go `strings.ToLower` parity probe)
 //! ```
 //!
 //! Contract for `evaluate`: the domain is already normalized (`normalizePolicyDomain`) and the app
@@ -17,7 +16,8 @@
 //! returning, so no ownership crosses the boundary and no allocation happens per query.
 //!
 //! Every entry point catches panics and reports failure instead of unwinding into Go: a fault in
-//! the native kernel makes the Go engine drop this snapshot's native path, never crash the tunnel.
+//! the native kernel fails the snapshot apply, which fails the engine start, never crashes the
+//! tunnel.
 
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::slice;
@@ -26,7 +26,7 @@ use crate::json::RuleSnapshot;
 use crate::snapshot::Snapshot;
 
 /// Layout/behaviour version; the Go loader refuses a library that does not speak it.
-pub const ABI_VERSION: u32 = 2;
+pub const ABI_VERSION: u32 = 3;
 
 const CODE_ERROR: i32 = -1;
 const CODE_PASS: i32 = 0;
@@ -60,8 +60,8 @@ pub extern "C" fn diting_policy_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Builds a snapshot. Returns null on any failure (bad payload, trie open error never fails the
-/// build, regex accept-set mismatch) with a message in `err`.
+/// Builds a snapshot. Returns null on any failure (bad payload; a trie that cannot be opened does
+/// not fail the build) with a message in `err`.
 ///
 /// # Safety
 /// `json` must point at `json_len` readable bytes; `err` at `err_cap` writable bytes.
@@ -69,7 +69,6 @@ pub extern "C" fn diting_policy_abi_version() -> u32 {
 pub unsafe extern "C" fn diting_policy_snapshot_build(
     json: *const u8,
     json_len: usize,
-    expect_regex: u32,
     err: *mut u8,
     err_cap: usize,
 ) -> *mut Snapshot {
@@ -79,13 +78,7 @@ pub unsafe extern "C" fn diting_policy_snapshot_build(
             Ok(request) => request,
             Err(error) => return Err(format!("parse rule snapshot: {error}")),
         };
-        let (snapshot, regex_compiled) = Snapshot::build(&request);
-        if regex_compiled as u32 != expect_regex {
-            return Err(format!(
-                "regex accept-set mismatch: go compiled {expect_regex}, rust compiled {regex_compiled}"
-            ));
-        }
-        Ok(Box::into_raw(Box::new(snapshot)) as usize)
+        Ok(Box::into_raw(Box::new(Snapshot::build(&request))) as usize)
     }));
     match result {
         Ok(Ok(handle)) => handle as *mut Snapshot,
@@ -100,7 +93,8 @@ pub unsafe extern "C" fn diting_policy_snapshot_build(
     }
 }
 
-/// Snapshot flags consumed by the Go fallback bookkeeping.
+/// Snapshot flags: hasRules / appSensitive / qtypeSensitive, read once per apply so the Go side
+/// can size its decision cache without a second copy of the rule tables.
 ///
 /// # Safety
 /// `handle` must be a pointer returned by [`diting_policy_snapshot_build`] and not yet freed.
@@ -179,45 +173,14 @@ pub unsafe extern "C" fn diting_policy_snapshot_free(handle: *mut Snapshot) {
     drop(Box::from_raw(handle));
 }
 
-/// `strings.ToLower` for the parity test that pins the fold (`policy_native_test.go`).
-///
-/// # Safety
-/// `text` must point at `text_len` readable bytes, `out` at `out_cap` writable bytes.
-#[no_mangle]
-pub unsafe extern "C" fn diting_policy_debug_lower(
-    text: *const u8,
-    text_len: usize,
-    out: *mut u8,
-    out_cap: usize,
-) -> usize {
-    let input = bytes_from(text, text_len);
-    let Ok(input) = std::str::from_utf8(input) else {
-        return usize::MAX;
-    };
-    let lowered = crate::text::go_lower(input);
-    let bytes = lowered.as_bytes();
-    if !out.is_null() && out_cap > 0 {
-        let length = bytes.len().min(out_cap);
-        std::ptr::copy_nonoverlapping(bytes.as_ptr(), out, length);
-    }
-    bytes.len()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ffi::CString;
 
-    fn build(json: &str, expect_regex: u32) -> Result<*mut Snapshot, String> {
+    fn build(json: &str) -> Result<*mut Snapshot, String> {
         let mut error = [0u8; 256];
         let handle = unsafe {
-            diting_policy_snapshot_build(
-                json.as_ptr(),
-                json.len(),
-                expect_regex,
-                error.as_mut_ptr(),
-                error.len(),
-            )
+            diting_policy_snapshot_build(json.as_ptr(), json.len(), error.as_mut_ptr(), error.len())
         };
         if handle.is_null() {
             let message = unsafe { std::ffi::CStr::from_ptr(error.as_ptr() as *const _) };
@@ -253,7 +216,7 @@ mod tests {
 
     #[test]
     fn build_evaluate_free_round_trip() {
-        let handle = build(r#"{"globalBlock":["ads.example.com","*.tracker.net"]}"#, 0).unwrap();
+        let handle = build(r#"{"globalBlock":["ads.example.com","*.tracker.net"]}"#).unwrap();
         unsafe {
             assert_eq!(diting_policy_snapshot_flags(handle) & 1, 1);
             let (code, reason) = evaluate(handle, "ads.example.com", "", 1);
@@ -266,19 +229,11 @@ mod tests {
     }
 
     #[test]
-    fn a_regex_count_mismatch_refuses_the_snapshot() {
-        let json = r#"{"specialBlock":[{"pattern":"^ads\\.com$","isRegex":true}]}"#;
-        assert!(build(json, 0).is_err());
-        let handle = build(json, 1).expect("go agrees");
-        unsafe { diting_policy_snapshot_free(handle) };
-    }
-
-    #[test]
-    fn an_uncompilable_regex_drops_the_rule_like_go() {
-        // An unbalanced group is invalid in both engines, so both drop the rule and the compiled
-        // counts line up; the rest of the snapshot is still built.
+    fn an_uncompilable_regex_is_dropped() {
+        // An unbalanced group is invalid, so the rule is dropped and the rest of the snapshot is
+        // still built.
         let json = r#"{"specialBlock":[{"pattern":"(?i","isRegex":true}],"globalBlock":["x.com"]}"#;
-        let handle = build(json, 0).expect("both refused the regex");
+        let handle = build(json).expect("the snapshot still builds");
         unsafe {
             assert_eq!(evaluate(handle, "x.com", "", 1).0, CODE_BLOCK);
             diting_policy_snapshot_free(handle);
@@ -287,22 +242,7 @@ mod tests {
 
     #[test]
     fn invalid_payload_reports_an_error() {
-        let error = build("not json", 0).unwrap_err();
+        let error = build("not json").unwrap_err();
         assert!(error.contains("parse rule snapshot"), "{error}");
-    }
-
-    #[test]
-    fn debug_lower_round_trips() {
-        let text = CString::new("\u{0130}STANBUL").unwrap();
-        let mut out = [0u8; 64];
-        let length = unsafe {
-            diting_policy_debug_lower(
-                text.as_ptr() as *const u8,
-                text.as_bytes().len(),
-                out.as_mut_ptr(),
-                out.len(),
-            )
-        };
-        assert_eq!(&out[..length], "istanbul".as_bytes());
     }
 }

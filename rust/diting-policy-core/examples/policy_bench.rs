@@ -6,8 +6,8 @@
 //!
 //! `--synthetic 50000` builds the same shape (and the same query mix) as
 //! `android/engine/policy_perf_test.go:largePolicySnapshotJSON`, so the numbers are directly
-//! comparable with `go test -bench BenchmarkPolicyEvaluateGoWalkLarge`. Passing a real payload -
-//! what the app sends to `ApplyRuleSnapshot` - measures the rules a device actually runs.
+//! comparable with `go test -bench BenchmarkPolicyEvaluateLargeCold`. Passing a real payload - what
+//! the app sends to `ApplyRuleSnapshot` - measures the rules a device actually runs.
 
 use std::sync::Arc;
 use std::time::Instant;
@@ -40,9 +40,8 @@ fn main() {
 
     let started = Instant::now();
     let request = RuleSnapshot::parse(&payload).expect("parse snapshot");
-    let (snapshot, regexes) = Snapshot::build(&request);
+    let snapshot = Arc::new(Snapshot::build(&request));
     let build = started.elapsed();
-    let snapshot = Arc::new(snapshot);
 
     let queries = bench_domains(1024);
     for domain in &queries {
@@ -55,7 +54,7 @@ fn main() {
         blocked += usize::from(decision.blocked);
     }
     let elapsed = started.elapsed();
-    println!("source: {source} (regex rules: {regexes})");
+    println!("source: {source}");
     println!("build: {build:?}");
     println!(
         "evaluate: {:.1} ns/op over {iterations} queries ({:.1}% blocked)",

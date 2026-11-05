@@ -1,21 +1,26 @@
+//go:build cgo
+
 package tunnel
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/miekg/dns"
 )
 
-// The DTRI fixtures under rust/diting-rule-core/tests/fixtures are produced by the Rust writer
-// (and checked byte for byte against the Kotlin/JVM reference in the Rust test suite). This test
-// closes the loop from the consumer side: the Go engine, which is what actually mmaps these files,
-// must resolve every indexable rule in the shared corpus to the source the corpus says.
+// The DTRI fixtures under rust/diting-rule-core/tests/fixtures are produced by the Rust writer (and
+// byte-compared with the Kotlin/JVM reference in the Rust suite). This test closes the loop from
+// the consumer side: the policy kernel the engine calls must resolve every indexable rule of the
+// corpus to the source the corpus says, through the same file the engine hands it.
 //
-// It also runs without a device or the Rust toolchain, and fails loudly if the fixtures are ever
-// regenerated with a different format.
+// It needs the kernel, like the rest of the policy tests: `cargo build --release` in `rust/`.
 
-func TestRustDTRIWriterParsesWithGoReader(t *testing.T) {
+func TestNativePolicyResolvesDTRI(t *testing.T) {
+	requireNativeKernel(t)
 	root := filepath.Join("..", "..", "rust", "diting-rule-core", "tests", "fixtures")
 	for _, name := range []string{"basic", "sources"} {
 		corpus, err := os.ReadFile(filepath.Join(root, name+".rules.txt"))
@@ -30,35 +35,40 @@ func TestRustDTRIWriterParsesWithGoReader(t *testing.T) {
 		if err := os.WriteFile(path, image, 0o600); err != nil {
 			t.Fatalf("%s: write image: %v", name, err)
 		}
-		reader, err := openDTRI(path)
+		payload, err := json.Marshal(map[string]any{"blockTriePath": path})
 		if err != nil {
-			t.Fatalf("%s: openDTRI: %v", name, err)
+			t.Fatal(err)
 		}
-		defer reader.close()
-		index := rustDTRIExpectedSources(t, corpus)
+
+		pe := newPolicyEngine()
+		t.Cleanup(pe.close)
+		if err := pe.applySnapshot(string(payload)); err != nil {
+			t.Fatalf("%s: applySnapshot: %v", name, err)
+		}
+
+		index := dtriExpectedSources(t, corpus)
 		if len(index) < 2 {
 			t.Fatalf("%s: corpus has no indexable rules", name)
 		}
 		for pattern := range index {
-			for _, query := range []string{pattern, strings.ToUpper(pattern), "sub." + pattern} {
-				// The reader returns the first terminal node it meets walking labels from the
-				// TLD down, so a shorter indexed suffix shadows the queried pattern.
-				source, want := rustDTRILookup(index, query)
-				ok, got := reader.containsOrParent(query)
-				if !want || !ok || got != source {
-					t.Errorf("%s: lookup %q = (%q, %v), want (%q, %v)", name, query, got, ok, source, want)
-				}
+			source, want := dtriLookup(index, pattern)
+			if !want {
+				continue
+			}
+			blocked, reason := pe.evaluate(pattern, "", dns.TypeA)
+			if !blocked || reason != source {
+				t.Errorf("%s: lookup %q = (%q, %v), want (%q, true)", name, pattern, reason, blocked, source)
 			}
 		}
-		if ok, got := reader.containsOrParent("not-in-this-fixture.example"); ok {
-			t.Errorf("%s: unexpected match %q for a domain outside the fixture", name, got)
+		if blocked, reason := pe.evaluate("not-in-this-fixture.example", "", dns.TypeA); blocked {
+			t.Errorf("%s: unexpected match %q for a domain outside the fixture", name, reason)
 		}
 	}
 }
 
-// rustDTRIExpectedSources replays the writer's filter on the shared corpus: the smallest source
-// per lowercased, trailing-dot-trimmed pattern, skipping the families a trie cannot hold.
-func rustDTRIExpectedSources(t *testing.T, corpus []byte) map[string]string {
+// dtriExpectedSources replays the writer's filter on the shared corpus: the smallest source per
+// lowercased, trailing-dot-trimmed pattern, skipping the families a trie cannot hold.
+func dtriExpectedSources(t *testing.T, corpus []byte) map[string]string {
 	t.Helper()
 	expected := map[string]string{}
 	for _, line := range strings.Split(string(corpus), "\n") {
@@ -92,10 +102,9 @@ func rustDTRIExpectedSources(t *testing.T, corpus []byte) map[string]string {
 	return expected
 }
 
-// rustDTRILookup mirrors the reader: walk the labels from the TLD down and stop at the first
-// indexed suffix. A missing edge before any terminal is a miss, which for a suffix set means
-// "no indexed suffix of this domain".
-func rustDTRILookup(index map[string]string, domain string) (string, bool) {
+// dtriLookup walks the labels from the TLD down and stops at the first indexed suffix, which is
+// what the trie does: a shorter indexed suffix shadows the queried pattern.
+func dtriLookup(index map[string]string, domain string) (string, bool) {
 	labels := strings.Split(strings.ToLower(strings.TrimRight(domain, ".")), ".")
 	for start := len(labels) - 1; start >= 0; start-- {
 		suffix := strings.Join(labels[start:], ".")

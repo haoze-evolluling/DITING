@@ -108,7 +108,9 @@ class DitingDnsServerService : Service() {
                 val error = created.applyRuleSnapshot(
                     RuleSnapshotStore.buildSnapshotJson(this, RuleDataset.DNS_MODE)
                 )
-                if (error.isNotBlank()) Log.w(TAG, "applyRuleSnapshot: $error")
+                // The policy kernel is the only rule walk: a rejected snapshot must stop the
+                // service instead of serving DNS with filtering silently off.
+                check(error.isBlank()) { "applyRuleSnapshot: $error" }
                 val rewriteRules = RuleSnapshotStore.buildRewriteRulesJson(this, RuleDataset.DNS_MODE)
                 if (rewriteRules.isNotBlank()) {
                     created.setRewriteRules(rewriteRules)

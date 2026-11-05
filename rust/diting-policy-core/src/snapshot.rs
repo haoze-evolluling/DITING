@@ -23,7 +23,7 @@ use crate::tables::{
     parse_inverted, parse_special, skipped_inverted, wildcard_list, AppRuleBucket, GlobSlot,
     InvertedRule,
 };
-use crate::text::{go_lower, go_lower_trim};
+use crate::text::go_lower_trim;
 use crate::wildcard_index::WildcardIndex;
 
 /// `policySnapshot`, without the Go-side decision cache (that stays in Go).
@@ -62,9 +62,8 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
-    /// `applySnapshot`: builds every table, collecting the regex rules the Rust engine compiled.
-    /// The caller compares that count with Go's to detect an accept-set difference.
-    pub fn build(request: &RuleSnapshot) -> (Snapshot, usize) {
+    /// `applySnapshot`: builds every table.
+    pub fn build(request: &RuleSnapshot) -> Snapshot {
         let filter_enabled = request.filter_enabled.unwrap_or(true);
         let mut snapshot = Snapshot {
             filter_enabled,
@@ -188,9 +187,8 @@ impl Snapshot {
             }
         }
 
-        let mut regex_compiled = 0usize;
         for config in request.special_block.as_deref().unwrap_or(&[]) {
-            let Some(rule) = parse_special(config, false, &mut regex_compiled) else {
+            let Some(rule) = parse_special(config, false) else {
                 continue;
             };
             let has_app_scope = !rule.app_scope.is_empty();
@@ -207,7 +205,7 @@ impl Snapshot {
             }
         }
         for config in request.special_allow.as_deref().unwrap_or(&[]) {
-            let Some(rule) = parse_special(config, true, &mut regex_compiled) else {
+            let Some(rule) = parse_special(config, true) else {
                 continue;
             };
             let has_app_scope = !rule.app_scope.is_empty();
@@ -245,7 +243,7 @@ impl Snapshot {
             || !snapshot.global_block_special.is_empty();
 
         snapshot.finalize_lookup();
-        (snapshot, regex_compiled)
+        snapshot
     }
 
     fn collect_global(&mut self, patterns: &[String], slot: GlobSlot<'_>) {
@@ -515,9 +513,4 @@ impl Snapshot {
         // Level 7: default pass.
         Decision::pass()
     }
-}
-
-/// Lowercased rule text, exposed for the parity test that pins `strings.ToLower`.
-pub fn debug_lower(input: &str) -> String {
-    go_lower(input).into_owned()
 }

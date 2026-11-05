@@ -90,7 +90,7 @@ fn snapshot_with_trie(name: &str) -> (Snapshot, HashMap<String, String>) {
     fs::write(&path, image).expect("write image");
     let json = serde_json::json!({ "blockTriePath": path.to_string_lossy() });
     let request = RuleSnapshot::parse(json.to_string().as_bytes()).expect("parse");
-    let (snapshot, _) = Snapshot::build(&request);
+    let snapshot = Snapshot::build(&request);
     (snapshot, expected_sources(&corpus))
 }
 
@@ -170,7 +170,7 @@ fn disabled_rules_fall_through_to_the_parent_suffix() {
         "disabledRules": [pattern.to_uppercase()],
     });
     let request = RuleSnapshot::parse(json.to_string().as_bytes()).expect("parse");
-    let (snapshot, _) = Snapshot::build(&request);
+    let snapshot = Snapshot::build(&request);
     // The disabled rule is skipped; the walk continues with its parent labels.
     let decision = snapshot.evaluate(&pattern, "", 1);
     let parent_hit = pattern

@@ -1,62 +1,16 @@
+// policy_lookup_test.go pins the decision cache that sits between the call sites and the Rust
+// policy kernel: a reload must not serve a stale answer, and the app/qtype dimensions must only be
+// part of the key when the kernel says some rule reads them.
+
 package tunnel
 
 import (
 	"fmt"
-	"math/rand"
-	"regexp"
 	"testing"
+	"time"
 
 	"github.com/miekg/dns"
 )
-
-// linearWildcardMatch is the pre-index behaviour: first matcher in list order.
-func linearWildcardMatch(list []*wildcardMatcher, domain string) (string, bool) {
-	for _, wc := range list {
-		if wc.matches(domain) {
-			return wc.pattern, true
-		}
-	}
-	return "", false
-}
-
-func TestWildcardIndexMatchesLinearScan(t *testing.T) {
-	patterns := []string{
-		"*.example.com", "ads*.example.org", "*tracker.net", "foo.*.com", "*.foo.",
-		"x*", "*-ad.*.cn", "*.b.com", "a*b.c.d", "*.example.com", "*.cn", "*ads",
-		"*.xn--fiqs8s", "*.中国", "img*.cdn.*", "*.a..b",
-	}
-	labels := []string{"a", "b", "com", "example", "org", "ads1", "adsx", "net", "tracker",
-		"mytracker", "foo", "cn", "x-ad", "c", "d", "axb", "img2", "cdn", "xn--fiqs8s", "中国", ""}
-	rng := rand.New(rand.NewSource(1))
-	for round := 0; round < 200; round++ {
-		var list []*wildcardMatcher
-		for _, p := range patterns {
-			if rng.Intn(3) > 0 {
-				list = append(list, newWildcardMatcher(p))
-			}
-		}
-		rng.Shuffle(len(list), func(i, j int) { list[i], list[j] = list[j], list[i] })
-		if round%50 == 0 {
-			list = append(list, newWildcardMatcher("*"))
-		}
-		idx := newWildcardIndex(list)
-		for n := 0; n < 300; n++ {
-			parts := make([]string, 1+rng.Intn(4))
-			for i := range parts {
-				parts[i] = labels[rng.Intn(len(labels))]
-			}
-			domain := parts[0]
-			for _, p := range parts[1:] {
-				domain += "." + p
-			}
-			wantPat, wantHit := linearWildcardMatch(list, domain)
-			gotPat, gotHit := idx.match(domain)
-			if wantHit != gotHit || wantPat != gotPat {
-				t.Fatalf("round %d domain %q: index=(%q,%v) linear=(%q,%v)", round, domain, gotPat, gotHit, wantPat, wantHit)
-			}
-		}
-	}
-}
 
 func TestPolicyDecisionCacheTracksSnapshotReload(t *testing.T) {
 	pe := newPolicyEngine()
@@ -116,35 +70,24 @@ func TestPolicyDecisionCacheEvictionAndPrewarm(t *testing.T) {
 	if _, _, ok := prev.cache.get(decisionKey{domain: "hot.com"}); !ok {
 		t.Fatal("frequently used entry should survive CLOCK eviction")
 	}
-	next := &policySnapshot{filterEnabled: true, hasRules: true, globalAllow: map[string]struct{}{"hot.com": {}}}
-	next.finalizeLookup()
-	next.prewarmFrom(prev)
-	blocked, reason, ok := next.cache.get(decisionKey{domain: "hot.com"})
-	if !ok || blocked || reason != "__ALLOW__" {
-		t.Fatalf("prewarmed entry = (%v,%q,%v), want fresh allow decision", blocked, reason, ok)
-	}
-}
 
-func TestRegexAnchoredPrefixAgreesWithRegex(t *testing.T) {
-	cases := []struct{ pattern, want string }{
-		{`(?i)^banner7\..*\.cn$`, "banner7."},
-		{`(?i)^ad[0-9]+\.`, "ad"},
-		{`(?i)ads\.`, ""},
-		{`(?i)^(ads|track)\.`, ""},
-		{`(?i)^a|^b`, ""},
-		{`(?i)^ab?c`, "a"},
+	if err := pe.applySnapshot(`{"globalAllow":["hot.com"],"globalBlock":["*.ads.com"]}`); err != nil {
+		t.Fatal(err)
 	}
-	domains := []string{"banner7.x.cn", "banner7x.cn", "ad12.com", "a.com", "ac.org", "abc.org", "b.org", "track.io", "ads.io"}
-	for _, c := range cases {
-		if got := regexAnchoredPrefix(c.pattern); got != c.want {
-			t.Errorf("regexAnchoredPrefix(%q) = %q, want %q", c.pattern, got, c.want)
-		}
-		rx := regexp.MustCompile(c.pattern)
-		prefix := regexAnchoredPrefix(c.pattern)
-		for _, d := range domains {
-			if rx.MatchString(d) && !mayMatchPrefix(d, prefix) {
-				t.Errorf("prefilter %q rejected %q, which %q matches", prefix, d, c.pattern)
+	next := pe.snapshot.Load()
+	// Prewarming runs in the background: wait for the hot key to show up instead of racing it.
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		blocked, reason, ok := next.cache.get(decisionKey{domain: "hot.com"})
+		if ok {
+			if blocked || reason != "__ALLOW__" {
+				t.Fatalf("prewarmed entry = (%v,%q), want fresh allow decision", blocked, reason)
 			}
+			return
 		}
+		if time.Now().After(deadline) {
+			t.Fatal("hot key was not prewarmed into the new snapshot")
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 }

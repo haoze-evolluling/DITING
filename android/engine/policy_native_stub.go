@@ -1,35 +1,35 @@
 //go:build !cgo
 
-// policy_native_stub.go keeps the engine buildable without a C toolchain: `CGO_ENABLED=0` (the
-// default when no compiler is installed) simply never takes the Rust policy kernel, so every
-// decision goes through the Go implementation in policy_snapshot.go.
+// policy_native_stub.go keeps the engine buildable without a C toolchain.
 //
-// The Android AAR is built with cgo enabled, which is where the native path is used.
+// The Rust policy kernel is required at runtime, so this build flavour compiles but refuses every
+// snapshot: `ApplyRuleSnapshot` fails, which fails the engine start. Android builds cgo (the
+// shipped AAR and both .so files), so this only affects `go build`/`go vet` on a machine without a
+// C compiler.
 
 package tunnel
 
-// nativePolicyABIVersion mirrors the real loader; it is unused here but keeps the constant
-// documented in one place for both build flavours.
-const nativePolicyABIVersion = 1
+import "errors"
 
+// nativePolicyABIVersion mirrors the real loader so both flavours document the same contract.
+const nativePolicyABIVersion = 3
+
+// Snapshot shape bits reported by `diting_policy_snapshot_flags`.
 const (
 	nativeFlagHasRules       = 1 << 0
 	nativeFlagAppSensitive   = 1 << 1
 	nativeFlagQtypeSensitive = 1 << 2
 )
 
-// nativePolicy is never constructed without cgo, but the shape has to keep policy_native_parity.go
-// compiling.
+var errNativePolicyUnavailable = errors.New("native policy kernel unavailable: this build has no cgo")
+
+// nativePolicy is never constructed without cgo; it exists so the snapshot code type-checks.
 type nativePolicy struct{ flags uint32 }
 
-func newNativePolicy(string, int) (*nativePolicy, error) {
+func newNativePolicy(string) (*nativePolicy, error) {
 	return nil, errNativePolicyUnavailable
 }
 
-func (p *nativePolicy) evaluate(string, string, uint16) (bool, string, bool) {
-	return false, "", false
-}
+func (p *nativePolicy) evaluate(string, string, uint16) (bool, string) { return false, "" }
 
 func (p *nativePolicy) release() {}
-
-func nativeLower(string) (string, bool) { return "", false }

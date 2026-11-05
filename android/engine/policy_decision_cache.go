@@ -1,9 +1,9 @@
 // policy_decision_cache.go keeps a bounded cache of recent policy decisions per rule snapshot,
 // plus hot-domain prewarming across snapshot swaps.
 //
-// Key: normalized domain, plus the app name only when the snapshot has app-dependent rules,
-// and the qtype only when some rule has a dnsType constraint. Otherwise all apps and query
-// types share one entry per domain.
+// Key: normalized domain, plus the app name only when the kernel reports app-dependent rules, and
+// the qtype only when some rule has a dnsType constraint. Otherwise all apps and query types share
+// one entry per domain.
 //
 // Eviction: each shard is a fixed ring swept by a CLOCK hand with frequency aging, so lookups
 // only take a read lock and bump atomics; hit counts drive both eviction and prewarm ranking.
@@ -181,34 +181,5 @@ func (s *policySnapshot) prewarmFrom(prev *policySnapshot) {
 		blocked, reason := s.evaluateUncached(k.domain, k.app, k.qtype)
 		// Carry no hits over, so one reload cannot pin old hot keys forever.
 		s.cache.put(k, blocked, reason, 0)
-	}
-}
-
-// finalizeLookup derives the cache dimensions from the parsed rules and
-// attaches a fresh decision cache. Call it once, before publishing.
-func (s *policySnapshot) finalizeLookup() {
-	s.appSensitive = len(s.appBuckets) > 0
-	for _, list := range [][]invertedRule{s.importantInverted, s.allowInverted, s.blockInverted} {
-		for _, inv := range list {
-			if len(inv.excludedApps) > 0 {
-				s.appSensitive = true
-			}
-		}
-	}
-	for _, list := range [][]*specialRule{
-		s.importantAppBlockSpecial, s.importantGlobalBlockSpecial, s.appAllowSpecial,
-		s.globalAllowSpecial, s.appBlockSpecial, s.globalBlockSpecial,
-	} {
-		for _, r := range list {
-			if len(r.appScope) > 0 {
-				s.appSensitive = true
-			}
-			if len(r.includeQtypes) > 0 || len(r.excludeQtypes) > 0 {
-				s.qtypeSensitive = true
-			}
-		}
-	}
-	if s.filterEnabled && s.hasRules {
-		s.cache = newDecisionCache()
 	}
 }

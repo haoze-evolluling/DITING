@@ -117,16 +117,8 @@ pub(crate) fn parse_inverted(config: &json::InvertedRule) -> Option<InvertedRule
     })
 }
 
-pub(crate) fn parse_special(
-    config: &json::SpecialRule,
-    is_allow: bool,
-    regex_compiled: &mut usize,
-) -> Option<SpecialRule> {
-    let rule = SpecialRule::parse(config, is_allow)?;
-    if rule.is_regex {
-        *regex_compiled += 1;
-    }
-    Some(rule)
+pub(crate) fn parse_special(config: &json::SpecialRule, is_allow: bool) -> Option<SpecialRule> {
+    SpecialRule::parse(config, is_allow)
 }
 
 pub(crate) fn skipped_inverted(rule: &InvertedRule, app_name: &str) -> bool {

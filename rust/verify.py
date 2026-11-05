@@ -60,14 +60,8 @@ def main() -> int:
     ]
     if args.go:
         steps.append(("release", ["cargo", "build", "--release"], RUST_DIR))
-        steps.append(("go", ["go", "test", "-run", "TestRustDTRI", "."], GO_ENGINE_DIR))
-        steps.append(
-            (
-                "go-policy",
-                ["go", "test", "-run", "TestNativePolicy|TestPolicyEngine", "."],
-                GO_ENGINE_DIR,
-            )
-        )
+        # The policy tests need the kernel: the engine has no second walk to fall back to.
+        steps.append(("go", ["go", "test", "-run", "TestNativePolicy|TestPolicyEngine", "."], GO_ENGINE_DIR))
     if args.dart:
         flutter = shutil.which("flutter")
         if flutter is None:
