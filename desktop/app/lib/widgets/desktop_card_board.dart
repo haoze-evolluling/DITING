@@ -1,8 +1,14 @@
-/// The one card board every desktop page uses: one column below [desktopTwoColumnWidth] and a
-/// two-column masonry above it.
+/// The one card board every desktop page uses: a two-column masonry for three or more cards once
+/// the board is wide enough, and one column everywhere else.
 ///
 /// Every child is one card and always occupies exactly one column. Pages must not place a card
 /// outside the board to make it span the full width; put it in [cards] like the rest.
+///
+/// A page with one or two cards never gets the masonry. Two columns holding a single row do not
+/// read as a waterfall, they read as a pair of equals with half the page left empty, and the taller
+/// card of the two drags a wide hole under its shorter neighbour. Those pages get one column that
+/// is capped at [desktopSingleColumnMaxWidth] and centred, so on a wide window the card keeps a
+/// readable measure and its left and right margins match instead of the card hugging one edge.
 ///
 /// The two-column threshold is the desktop's own, not the dashboard's mobile one: a desktop card
 /// carries a title row with a chip and a switch, a one-line description and often a form, and below
@@ -25,9 +31,15 @@ const double desktopTwoColumnWidth =
 const double desktopPageGutter = 24;
 const double desktopBoardTopGap = 16;
 
-/// A board holding a single card keeps it near a comfortable reading width instead of stretching one
-/// form across the whole window; it stays on the page's left edge so it lines up with the board of
-/// every other page.
+/// Widest the automatic single column (one or two cards) gets on a wide window. The column is
+/// centred inside the board, so the margins on both sides stay equal; past this width a form card
+/// would stretch into one very long line per field. A page that asks for
+/// [DesktopCardBoard.singleColumn] keeps the whole board instead, because that card is itself a
+/// grid or a table.
+const double desktopSingleColumnMaxWidth = 960;
+
+/// Comfortable reading width for one form card that sits inside a wider board with a sibling beside
+/// it, used where a card must not stretch to the full half-pane.
 const double desktopSoloCardWidth = 760;
 
 class DesktopCardBoard extends StatelessWidget {
@@ -51,42 +63,46 @@ class DesktopCardBoard extends StatelessWidget {
   /// Keeps a page in one column even on a wide board, even though the cards would fit side by
   /// side. Used where a card is itself a grid (the appearance card), where the cards read top to
   /// bottom as one flow (app blocking: the group shortcuts above the service catalogue) and where a
-  /// card holds a table whose columns need the full width.
+  /// card holds a table whose columns need the full width. Such a page keeps the whole board width
+  /// instead of the capped, centred column of the automatic single layout.
   final bool singleColumn;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns =
-            singleColumn || constraints.maxWidth < desktopTwoColumnWidth
-            ? 1
-            : 2;
-        // A page that asked for one column has a card that is itself a grid or a table (the
-        // appearance palettes), and that card wants the whole board, not a capped measure.
-        final board = cards.length == 1 && !singleColumn
-            ? Align(
-                alignment: AlignmentDirectional.topStart,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: desktopSoloCardWidth,
+        // The masonry is for pages that actually have a waterfall to lay out: three or more cards
+        // and the width to give each one a readable measure.
+        final masonry =
+            !singleColumn &&
+            cards.length > 2 &&
+            constraints.maxWidth >= desktopTwoColumnWidth;
+        final column = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: dashboardCardGap,
+          children: cards,
+        );
+        return Padding(
+          padding: padding,
+          child: masonry
+              ? MasonryGrid(
+                  columns: 2,
+                  spacing: dashboardCardGap,
+                  runSpacing: dashboardCardGap,
+                  children: cards,
+                )
+              : singleColumn
+              ? column
+              : Align(
+                  alignment: AlignmentDirectional.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: desktopSingleColumnMaxWidth,
+                    ),
+                    child: column,
                   ),
-                  child: cards.single,
                 ),
-              )
-            : columns <= 1
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: dashboardCardGap,
-                children: cards,
-              )
-            : MasonryGrid(
-                columns: columns,
-                spacing: dashboardCardGap,
-                runSpacing: dashboardCardGap,
-                children: cards,
-              );
-        return Padding(padding: padding, child: board);
+        );
       },
     );
   }

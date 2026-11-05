@@ -75,6 +75,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('两张卡片在宽屏上也是单列，且限宽居中', (tester) async {
+    await pumpBoard(tester, 1400, cards: 2);
+
+    expect(find.byType(MasonryGrid), findsNothing, reason: '两张卡片不排瀑布流');
+    final boxes = [
+      for (final key in keyed.take(2))
+        tester.renderObject<RenderBox>(find.byKey(ValueKey(key))),
+    ];
+    final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
+    expect(lefts, hasLength(1), reason: '卡片不得并排');
+    expect(boxes.first.size.width, closeTo(desktopSingleColumnMaxWidth, 3));
+    final left = lefts.single;
+    expect(left, closeTo((1400 - desktopSingleColumnMaxWidth) / 2, 3));
+    expect(
+      left,
+      closeTo(1400 - left - boxes.first.size.width, 3),
+      reason: '左右边距应相等',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('单列比限宽还窄时用满内容区，不留多余边距', (tester) async {
+    await pumpBoard(tester, desktopTwoColumnWidth - 40, cards: 2);
+
+    final boxes = [
+      for (final key in keyed.take(2))
+        tester.renderObject<RenderBox>(find.byKey(ValueKey(key))),
+    ];
+    expect(boxes.first.size.width, closeTo(desktopTwoColumnWidth - 40 - 48, 3));
+    expect(boxes.first.localToGlobal(Offset.zero).dx, closeTo(desktopPageGutter, 3));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('singleColumn 在宽屏上也只排一列', (tester) async {
     await pumpBoard(tester, 1400, singleColumn: true);
 
@@ -90,14 +123,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('只有一张卡片时不会拉满整行', (tester) async {
+  testWidgets('只有一张卡片时不会拉满整行，并保持左右边距相等', (tester) async {
     await pumpBoard(tester, 1400, cards: 1);
 
     final box = tester.renderObject<RenderBox>(
       find.byKey(const ValueKey('short')),
     );
-    expect(box.size.width, lessThanOrEqualTo(desktopSoloCardWidth));
-    expect(box.localToGlobal(Offset.zero).dx, closeTo(desktopPageGutter, 3));
+    expect(box.size.width, closeTo(desktopSingleColumnMaxWidth, 3));
+    final left = box.localToGlobal(Offset.zero).dx;
+    expect(left, closeTo((1400 - desktopSingleColumnMaxWidth) / 2, 3));
+    expect(left, closeTo(1400 - left - box.size.width, 3));
     expect(tester.takeException(), isNull);
   });
 }

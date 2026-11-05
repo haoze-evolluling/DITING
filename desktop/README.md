@@ -37,8 +37,8 @@ desktop\build_installer.bat both       :: EXE + Linux deb（WSL 组装）
 - `app/lib/widgets/desktop_spacing.dart`：4 基准的间距刻度（`AppGap`）。标题与说明、两块内容、
   两行表单字段、字段与其说明各用哪一档，注释里有对应用法。
 - `app/lib/widgets/desktop_card_board.dart`：页边距 24、卡片间距 16、两列门槛 984（每列至少
-  460 才放得下带状态徽标与开关的标题行）、单卡片页面的最大宽度。页面一律走这张卡板，不要在卡板
-  之外单独放一张满宽卡片。
+  460 才放得下带状态徽标与开关的标题行）。卡片只有 1–2 张的页面不排瀑布流，改走限宽 960 并
+  居中的单列，左右边距相等；页面一律走这张卡板，不要在卡板之外单独放一张满宽卡片。
 - `shared/lib/widgets/dashboard/dashboard_style.dart`：卡片内边距与圆角、标题/说明字号。手机密度
   保持原值，桌面档的卡片是 24 圆角 + 24/22 内边距、15 号标题、13/1.45 说明。
 

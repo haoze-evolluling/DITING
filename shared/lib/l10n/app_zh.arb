@@ -6460,7 +6460,7 @@
   "desktopToolsRuleRunning": "正在执行规则匹配…",
   "desktopToolsRuleVerdictTitle": "规则诊断与拦截判定",
   "desktopToolsRuleVerdictBody": "规则匹配结果、所属规则库与响应动作",
-  "desktopToolsRuleIdle": "在左侧输入域名并点击「立即模拟检测」以查看规则判定明细",
+  "desktopToolsRuleIdle": "在上方输入域名并点击「立即模拟检测」以查看规则判定明细",
   "desktopToolsRuleBlocked": "已拦截（阻断访问）",
   "desktopToolsRuleRewritten": "已重写（{code}）",
   "@desktopToolsRuleRewritten": {"placeholders": {"code": {"type": "String"}}},

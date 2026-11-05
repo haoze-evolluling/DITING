@@ -12196,7 +12196,7 @@ class AppL10nZh extends AppL10n {
   String get desktopToolsRuleVerdictBody => '规则匹配结果、所属规则库与响应动作';
 
   @override
-  String get desktopToolsRuleIdle => '在左侧输入域名并点击「立即模拟检测」以查看规则判定明细';
+  String get desktopToolsRuleIdle => '在上方输入域名并点击「立即模拟检测」以查看规则判定明细';
 
   @override
   String get desktopToolsRuleBlocked => '已拦截（阻断访问）';

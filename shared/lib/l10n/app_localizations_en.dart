@@ -12956,7 +12956,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopToolsRuleIdle =>
-      'Enter a domain on the left and run the simulation to see the verdict';
+      'Enter a domain above and run the simulation to see the verdict';
 
   @override
   String get desktopToolsRuleBlocked => 'Blocked';

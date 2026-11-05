@@ -3826,7 +3826,7 @@
   "desktopToolsRuleRunning": "Matching rules…",
   "desktopToolsRuleVerdictTitle": "Rule diagnosis and verdict",
   "desktopToolsRuleVerdictBody": "The matched rule, the list it came from and the response",
-  "desktopToolsRuleIdle": "Enter a domain on the left and run the simulation to see the verdict",
+  "desktopToolsRuleIdle": "Enter a domain above and run the simulation to see the verdict",
   "desktopToolsRuleBlocked": "Blocked",
   "desktopToolsRuleRewritten": "Rewritten ({code})",
   "@desktopToolsRuleRewritten": {"placeholders": {"code": {"type": "String"}}},

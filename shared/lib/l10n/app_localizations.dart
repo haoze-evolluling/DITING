@@ -22243,7 +22243,7 @@ abstract class AppL10n {
   /// No description provided for @desktopToolsRuleIdle.
   ///
   /// In zh, this message translates to:
-  /// **'在左侧输入域名并点击「立即模拟检测」以查看规则判定明细'**
+  /// **'在上方输入域名并点击「立即模拟检测」以查看规则判定明细'**
   String get desktopToolsRuleIdle;
 
   /// No description provided for @desktopToolsRuleBlocked.
