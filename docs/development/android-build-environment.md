@@ -80,3 +80,36 @@ Gradle 发行包同理不再走 `services.gradle.org`（1.1 MB/s），wrapper �
   `flutter pub get` 以 `!` 标记这两个版本属正常输出。
 - `test_api` 是 `flutter_test` 的紧邻内部依赖：升级 Flutter 后先用 `flutter test` 复验，再调整或
   删除 override；Flutter 放宽约束后可同时删掉 `shared/pubspec.yaml` 中的版本号。
+
+## 跑测试（native assets 与资源包）
+
+`flutter test` 要在各个 app 目录里跑：
+
+```bash
+cd android/app && flutter test     # Android 全量（含 sqflite 用例）
+cd desktop/app && flutter test     # 桌面全量
+```
+
+从工作区根目录跑 `flutter test android/app` 会踩两个坑，都是 `flutter_tools` 按“当前包的依赖图”
+解析造成的，不是本项目配置写错：
+
+1. **原生依赖不编译**：hook 只为当前包（根包 `diting_workspace`，自身没有依赖）的传递依赖编译，
+   于是日志里是 `No packages with native assets. Skipping native assets compilation.`，
+   `build/native_assets/windows/native_assets.json` 写成空表，所有 sqflite 用例在
+   `Couldn't resolve native function 'sqlite3_initialize'` 上失败。
+2. **资源包不同**：测试资源包（`build/unit_test_assets`）也只装当前包声明的资源，从根跑时
+   `packages/diting_shared/assets/https_passthrough.txt` 加载不到，`bootstrapRules` 的种子白名单
+   用例会失败（日志：`preset whitelist asset missing`）。
+
+sqlite3 的原生库由它自己的 build hook 下载，需要先开一次开关（机器本地设置，不在仓库里）：
+
+```bash
+flutter config --enable-native-assets
+```
+
+没开时 `flutter test` 会直接退出并提示 `Package(s) sqlite3 require the dart assets feature to be
+enabled`。开关打开后，第一次跑测试时 hook 会按根 `pubspec.yaml` 的 `hooks.user_defines`
+（GitHub release 走 `gh-proxy.com` 镜像）下载 `sqlite3.dll` / `libsqlite3.so` 到
+`.dart_tool/hooks_runner/shared/sqlite3/build/`，之后复用；删掉 `.dart_tool/` 会重新下载。
+
+本机验收（2026-11，`cd android/app && flutter test`）：514 通过、3 跳过。
