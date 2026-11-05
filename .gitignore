@@ -13,6 +13,11 @@ captures/
 # Go 隧道引擎 AAR 是构建产物：本地用 android/engine/build_aar.ps1 生成，不入库
 *.aar
 
+# Rust 规则内核：cargo 构建目录与构建后拷入 app 的 .so 都是产物，不入库
+# （生成方式见 rust/README.md：python rust/build_android.py）。
+rust/target/
+android/app/android/app/src/main/jniLibs/
+
 # ====================================================================
 # Flutter / Pub Workspace Build Outputs
 # ====================================================================

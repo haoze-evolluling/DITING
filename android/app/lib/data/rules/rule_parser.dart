@@ -3,6 +3,7 @@ library;
 import 'package:diting_android/data/rules/adblock_line_parser.dart';
 import 'package:diting_android/data/rules/hosts_parser.dart';
 import 'package:diting_android/data/rules/rule_models.dart';
+import 'package:diting_android/data/rules/rust_rule_core.dart';
 
 /// Parses one line without cross-line state (for streaming imports).
 CategorizedLine parseCategorizedLine(String originalLine) {
@@ -46,7 +47,23 @@ Set<String> extractBadfilterKeys(String text) {
 
 /// Parses a document, groups by family, dedupes by key. [badfilterKeys] removes matches; when null
 /// it is scanned first.
+///
+/// Uses the Rust core when it is available (see [RustRuleCore]) and silently falls back to
+/// [parseCategorizedInDart]: a missing artifact, an ABI mismatch or a malformed payload must never
+/// cost the user a rule import. An explicit [badfilterKeys] set skips the native path because the
+/// pre-scan it implies is only implemented in Dart.
 CategorizedRules parseCategorized(String text, {Set<String>? badfilterKeys}) {
+  if (badfilterKeys == null) {
+    final parsed = RustRuleCore.instance?.tryParse(text);
+    if (parsed != null) {
+      return parsed;
+    }
+  }
+  return parseCategorizedInDart(text, badfilterKeys: badfilterKeys);
+}
+
+/// The pure-Dart implementation; the reference behaviour the Rust core is parity-tested against.
+CategorizedRules parseCategorizedInDart(String text, {Set<String>? badfilterKeys}) {
   final keys = badfilterKeys ?? extractBadfilterKeys(text);
   final blockRules = <String, ParsedRule>{};
   final allowRules = <String, ParsedRule>{};

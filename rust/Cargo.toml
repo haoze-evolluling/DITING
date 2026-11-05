@@ -1,0 +1,10 @@
+[workspace]
+members = ["diting-rule-core"]
+resolver = "2"
+
+# The crate is delivered as a shared library inside the APK, so strip symbols and let the linker
+# do a cheap thin-LTO pass: the artifact is bundled, not debugged.
+[profile.release]
+strip = "symbols"
+lto = "thin"
+codegen-units = 1
