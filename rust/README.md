@@ -146,14 +146,18 @@ isRegex / dnsType / targetType / targetValue / isException）与计数器和 Dar
 
 DTRI 编译（10 万条合成订阅，同一份语料，输出均为 3,548,571 字节）：
 
-| 实现 | 耗时 |
+| 环境 / 实现 | 耗时 |
 |---|---|
-| `DTRIReference.java`（桌面 JVM） | 565–609 ms |
-| Rust `dtri_bench` | 150–153 ms |
+| 桌面 JVM，冷启动单次 | 565–609 ms |
+| 桌面 JVM，`--bench` 预热 3 次取最优 | ~306 ms |
+| 本机 Rust `dtri_bench` | ~127 ms |
+| 模拟器 ART（x86_64），Kotlin 算法 `--bench` 5 次取最优 | 430–453 ms |
+| 模拟器原生（同一台），Rust `dtri_bench` | 116–142 ms |
 
-桌面 JVM 只是 ART 的近似代理（JIT 冷启动 vs ART 执行），绝对值不能直接搬到手机上；
-**输出逐字节相同**才是这次迁移的核心保证。Rust 侧另外把节点标签放进共享字节池、用
-`(parent, label)` 哈希表代替子节点线性扫描，避免大 fan-out 下的 O(n²)。
+同一台设备上，原生实现是 ART 上 Kotlin 算法的 **3.0–3.9x**；桌面预热后是 2.4x。
+桌面 JVM 与 ART 都不是发布版的真实时序，**输出逐字节相同**才是这次迁移的核心保证。
+Rust 侧另外把节点标签放进共享字节池、用 `(parent, label)` 哈希表代替子节点线性扫描，
+避免大 fan-out 下的 O(n²)。
 
 复现：
 
@@ -168,6 +172,13 @@ java rust/tools/dtri-reference/DTRIReference.java --generate 100000 /tmp/rules.t
 java rust/tools/dtri-reference/DTRIReference.java /tmp/rules.txt /tmp/ref.dtri
 cd rust && cargo run --release --example dtri_bench -- /tmp/rules.txt /tmp/rust.dtri
 cmp /tmp/ref.dtri /tmp/rust.dtri && echo 一致
+
+# 只比时间：--bench 在同一个进程里编译多次、取最优，冷 JIT 噪声不会被当成 Rust 的收益
+java rust/tools/dtri-reference/DTRIReference.java --bench /tmp/rules.txt 5
+cargo run --release --example dtri_bench -- /tmp/rules.txt
+
+# 同一台设备上比（ART 跑 Kotlin 算法，原生跑 Rust）：javac --release 17 + d8 打成 dex，
+# 再 `dalvikvm -cp classes.dex DTRIReference --bench rules.txt 5`（Rust 侧推 dtri_bench 二进制）
 ```
 
 ## 验证

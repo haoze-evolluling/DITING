@@ -26,7 +26,12 @@ import java.util.TreeSet;
  *   java rust/tools/dtri-reference/DTRIReference.java rules.txt out.dtri
  *   java rust/tools/dtri-reference/DTRIReference.java --pack rules.txt out.pack
  *   java rust/tools/dtri-reference/DTRIReference.java --generate 100000 rules.txt
+ *   java rust/tools/dtri-reference/DTRIReference.java --bench rules.txt [iterations]
  * </pre>
+ *
+ * <p>--bench compiles the corpus several times in one process and prints the best run, so a
+ * warm-JIT number can be compared with the native benchmark on the same box (or on ART via
+ * {@code dalvikvm}).
  *
  * <p>--pack writes the JNI payload `RustRuleIndexCompiler.pack` builds, so the packed format is
  * pinned by committed fixtures instead of only by the Android build.
@@ -53,10 +58,15 @@ public final class DTRIReference {
             writePacked(new File(args[1]), new File(args[2]));
             return;
         }
+        if (args.length >= 2 && args.length <= 3 && args[0].equals("--bench")) {
+            bench(new File(args[1]), args.length == 3 ? Integer.parseInt(args[2]) : 3);
+            return;
+        }
         if (args.length != 2) {
             System.err.println("usage: DTRIReference <rules.txt> <out.dtri>");
             System.err.println("       DTRIReference --pack <rules.txt> <out.pack>");
             System.err.println("       DTRIReference --generate <count> <rules.txt>");
+            System.err.println("       DTRIReference --bench <rules.txt> [iterations]");
             System.exit(2);
         }
         List<Rule> rules = readCorpus(new File(args[0]));
@@ -68,6 +78,25 @@ public final class DTRIReference {
         }
         System.out.printf(
                 Locale.ROOT, "rules=%d bytes=%d compileMs=%.1f%n", rules.size(), image.length, millis);
+    }
+
+    static void bench(File corpus, int iterations) throws IOException {
+        List<Rule> rules = readCorpus(corpus);
+        double best = Double.MAX_VALUE;
+        int bytes = 0;
+        for (int i = 0; i < iterations; i++) {
+            long started = System.nanoTime();
+            byte[] image = compile(rules);
+            best = Math.min(best, (System.nanoTime() - started) / 1_000_000.0);
+            bytes = image.length;
+        }
+        System.out.printf(
+                Locale.ROOT,
+                "rules=%d bytes=%d bestCompileMs=%.1f iterations=%d%n",
+                rules.size(),
+                bytes,
+                best,
+                iterations);
     }
 
     static final class Rule {
