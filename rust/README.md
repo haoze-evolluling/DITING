@@ -4,9 +4,9 @@
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 wire 取值与改写内核**，`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**，
 `diting-filter-core` 负责**桌面服务的规则文本解析与规则索引匹配**，`diting-rewrite-core` 负责
-**桌面服务的重写记录取值解析与校验**，`diting-go-compat` 是各内核共用的
+**桌面服务的重写引擎与重写记录取值解析**，`diting-go-compat` 是各内核共用的
 Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
-九个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+十个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。唯一的例外是 DNS 缓存内核：它只决定“答案能不能复用”，缺库时缓存停用、
 查询直连解析器，回答本身不变。
 
@@ -21,6 +21,7 @@ Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns
 | 规则索引与匹配 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 四层字典树、布隆预检、通配/正则表、判定与重写选择 | 规则索引构建失败 |
 | 规则文本解析 | Go 桌面服务（同一个库，纯 Go 动态加载 + C ABI） | 逐行的模式、标志位、`$dnstype`、排除集合与 `$dnsrewrite` 取值 | 列表加载失败 |
 | 重写记录构造 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 类型表、目标域名判定、A/AAAA/CNAME/NS/PTR/TXT/MX/SRV/HTTPS/SVCB 取值与 SVCB 参数 | 构建 `dns.RR` 失败，该记录/规则被丢弃并写日志 |
+| 重写引擎索引 + 查询 | Go 桌面服务（同一个库，纯 Go 动态加载 + C ABI） | 精确/泛域名索引、PTR 反查、rcode 覆盖、CNAME 链、属主 CNAME 合并、记录列表 | 重写引擎启动失败（配置变更同样报错） |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -36,7 +37,11 @@ Go 侧只留两件仍然属于它的事：`regexp` 与 `buildWildcardRegex` 的�
 `$dnsrewrite` 修饰符走同一条路径，所以两边的取值语法不可能再各写一份。第九个搬的是 Android
 隧道引擎的 **DNS 缓存 wire 层**（`dns_cache_wire.go` 整份删除）：问题键、最小 TTL / SOA 回退、
 TTL 偏移、CNAME/SVCB/HTTPS 目标、A/AAAA 文本化以及命中时的 ID/TTL 改写都在 `wire.rs`。Go 侧只留
-分片 LRU、TTL 策略算术、单飞与清扫，缓存条目里不再有第二份 `dns.Msg` 解包结果。
+分片 LRU、TTL 策略算术、单飞与清扫，缓存条目里不再有第二份 `dns.Msg` 解包结果。第十个把桌面服务的
+**重写引擎本身**搬进同一个 crate（`rewrite.go` / `rewrite_lookup.go` 只剩配置与 `dns.RR` 构造）：
+域名归一化、精确/泛域名索引、PTR 反查、rcode 覆盖、CNAME 链与属主 CNAME 合并都在 `engine.rs`；
+显式记录在快照构建时一次编译（不再每次命中重新解析），命中时回传完整记录列表。Go 侧保留配置本身
+（IPC 的 JSON 形态与增删改），每次变更重建快照并换新，旧句柄在写锁内释放。
 
 Android 侧用 cgo 调策略内核与 DNS 缓存内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
@@ -73,8 +78,9 @@ rust/
 │   └── ffi.rs                      # build / match / parse_rules / parse_rule / free 的 C ABI（ABI_VERSION）
 ├── diting-rewrite-core/src/
 │   ├── record.rs record/tests.rs   # 重写记录：类型表、目标域名判定、各类型取值与 SVCB 参数（原 buildRewriteRR）
-│   ├── payload.rs                  # 请求/回应的二进制布局
-│   └── ffi.rs ffi/tests.rs         # build_record / record_types / free_bytes 的 C ABI（ABI_VERSION）
+│   ├── engine.rs engine/tests.rs   # 重写引擎：精确/泛域名索引、PTR、rcode、CNAME 链与属主合并（原 rewrite.go + rewrite_lookup.go）
+│   ├── payload.rs                  # 记录请求/回应与引擎配置/回应的二进制布局
+│   └── ffi.rs ffi/tests.rs         # build_record / record_types / engine_build / engine_lookup / engine_ptr_lookup / engine_reverse_lookup / engine_free / free_bytes（ABI_VERSION）
 ├── diting-filter-core/tests/fixtures/parse_corpus.tsv  # 迁移时 Go 解析器的 200 行语料快照
 ├── diting-dns-cache-core/src/
 │   ├── wire.rs wire/tests.rs       # 缓存键、记录遍历、TTL 偏移、最小 TTL/SOA、链目标、A/AAAA、ID/TTL 改写
@@ -113,9 +119,12 @@ rust/
   `rule_engine*.go`（配置、加载、计划、统计不变）、
   `filter_native_test.go` / `parse_native_test.go`（载荷布局与失败路径）、
   `rule_parser_bench_test.go`（整份列表的端到端基准）。
-- 桌面服务 Go（重写记录）：`rewrite_native.go`（加载、请求编码、回应解码、`buildRewriteRR`）、
+- 桌面服务 Go（重写引擎 + 重写记录）：`rewrite.go`（`RewriteEngine` 只剩配置、快照换新与 `GetRules` 等生命周期）、
+  `rewrite_lookup.go`（`Lookup*` 一次句柄调用 + PTR 记录构造）、
+  `rewrite_engine_native.go`（引擎配置编码、警告/判定/PTR/反查回应解码）、
+  `rewrite_native.go`（加载、单条记录请求编码、回应解码、`buildRewriteRR`）、
   `rewrite_native_windows.go` / `rewrite_native_unix.go`（两个平台的加载器）、
-  `rewrite_native_test.go`（载荷布局与探测路径）、
+  `rewrite_engine_native_test.go` / `rewrite_native_test.go`（载荷布局与探测路径）、
   `rewrite_records.go`（只剩 `RewriteRecord` 与应答码表）、
   `rewrite_test.go` / `rewrite_records_test.go`（原有用例，现在全部穿过 FFI 跑）。
 - Go（DNS 缓存）：`dns_cache_native.go`（加载、ABI 校验、键构建、元数据解码、改写）、
@@ -158,7 +167,18 @@ DNS 缓存内核只随 Android APK 交付（桌面服务没有 DNS 缓存），�
 - 桌面服务侧 `ParseServerStamp` 返回错误，上游配置构建随之失败，不会退化成“印章当作普通地址”；
   `RuleMatcher.BuildFromRules` 返回错误，规则引擎重建随之失败，不会退化成“规则静默不生效”；
   `buildRewriteRR` 返回错误，重写规则编译失败（自定义规则丢掉那一条，`$dnsrewrite` 丢掉整条规则），
-  不会退化成“配了却不生效的记录”。
+  不会退化成“配了却不生效的记录”；
+  `NewRewriteEngine` / `Configure` / `AddRule` / `DeleteRule` 返回错误，服务启动或配置变更失败，
+  不会以“重写规则静默不生效”的空引擎继续跑。
+
+重写引擎的调用约定：
+
+- 每份配置一个句柄：`engine_build` 一次编完索引、PTR 映射与显式记录，Go 把它藏在写锁后面；
+- 查询一次 `engine_lookup`：内核做归一化、精确/泛域名匹配、七级记录选择、CNAME 链与属主合并，
+  回传 `(matched, rcode, 记录列表)`，Go 只把字段填进 `dns.RR`；
+- PTR 与反向查询传 4/16 字节地址而不是文本：PTR 映射的键是地址字节，两侧不必对 IPv6 的规范文本
+  取得一致；
+- 配置变更重建句柄并在写锁内换新，旧句柄随后释放；重建失败时旧句柄与原配置完全保留。
 
 策略内核的调用约定：
 
@@ -192,6 +212,13 @@ DTRI：EnabledRule 分页 ──pack──> u32 计数 + 每条(pattern, source,
           ──> 二进制载荷（类型号 + 字段）──> Go 填 dns.RR → dns.Msg 应答
           自定义重写规则（编译期与查询期）与 $dnsrewrite 修饰符走同一条入口
 
+重写引擎：RewriteConfig{RewriteRule[]} ──engine_build──> Rust 建精确/泛域名索引 + PTR + 编译显式记录
+          ──> 句柄 ──> Go 原子换新（旧句柄在写锁内释放）
+          查询 ──engine_lookup(句柄, 域名, qtype)──> 归一化 ──> 规则匹配 ──> rcode/CNAME 链/属主合并
+                                                    ──> 记录列表 ──> Go 填 dns.RR
+          PTR ──engine_ptr_lookup(句柄, 4/16 字节地址)──> []域名 ──> Go 填 dns.PTR
+          PTR ──engine_reverse_lookup(句柄, 4/16 字节地址)──> 首个域名
+
 缓存：响应字节 ──parse_response──> Rust 元数据（最小 TTL、各记录 TTL 偏移、链目标、A/AAAA）
       ──> Go 分片 LRU + TTL 策略 ──> 条目（保留上游 wire 原文）
       查询 ──question_key──> 缓存键 ──> 分片查找 ──命中──> patch_response（新 ID + 剩余 TTL）──> 回包
@@ -199,7 +226,7 @@ DTRI：EnabledRule 分页 ──pack──> u32 计数 + 每条(pattern, source,
 
 布局与语义的权威注释在 `diting-rule-core/src/ffi.rs`、`search_ffi.rs`、`dtri.rs` 与
 `diting-policy-core/src/ffi.rs`、`snapshot.rs`、`diting-dns-cache-core/src/{wire,payload,ffi}.rs`、
-`diting-filter-core/src/ffi.rs`、`parse.rs`、`diting-rewrite-core/src/{record,payload,ffi}.rs` 顶部；
+`diting-filter-core/src/ffi.rs`、`parse.rs`、`diting-rewrite-core/src/{record,engine,payload,ffi}.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
 ## 语义一致性
@@ -270,6 +297,14 @@ FFI 跑；`parse_native_test.go` 另钉住请求/回应载荷布局、标志位�
 “无记录”而 CNAME 对任何查询类型都返回；`ffi/tests.rs` 钉住请求/回应载荷布局、拒绝消息与坏参数；
 `rewrite_native_test.go` 另钉住 Go 侧的编码与解码（回应用布局、尾随字节、截断、未知类型号、
 未知参数键）与探测顺序。
+
+**重写引擎（桌面服务）**：`engine/tests.rs` 逐条复刻原 `rewrite.go` / `rewrite_lookup.go` 的行为：
+精确与泛域名、最长后缀优先与同长按配置顺序、精确同名后写覆盖、PTR 多别名与精确规则限定、
+rcode 覆盖与未知名字回落、CNAME 链 / 循环 / 深度上限、快捷 TXT 多字符串、显式记录的类型过滤与
+属主 CNAME 合并；`engine/tests.rs` 同时钉住构建警告（非法记录、未知 rcode）。`ffi/tests.rs` 钉住
+引擎句柄的构建 / 判定 / PTR / 反查 / 释放往返与坏参数；`rewrite_engine_native_test.go` 钉住 Go 侧的
+配置编码与三类回应解码（布局、尾随字节、未知标志）。原 `rewrite_test.go` / `rewrite_records_test.go`
+一条断言未改，现在全部穿过 FFI 跑。
 
 **策略内核**：`tests/policy_core.rs` 把 DTRI fixtures 喂给快照，断言每个可索引规则解析到语料声明的
 source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判定 / 释放往返与错误上报，以及归一化、
@@ -363,10 +398,9 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **`dns.RR` 仍在 Go 构造**：载荷只带类型号与已解析的字段（优先级、目标名、SVCB 参数列表等），
   `dns.RR_Header`、`Class`、`dns.HTTPS` 包装都在 `rewrite_native.go` 里。理由是应答要直接进
   `dns.Msg`，把结构再编码一次反而多一层。
-- **每次构造一次 FFI**：`buildRewriteRR` 是单次调用，没有句柄与缓存。自定义重写规则的显式记录
-  在编译期过一遍，命中时再过一遍（每个 `Records` 项一次）；`$dnsrewrite` 每次命中构造一条。
-  都是一个固定小载荷加一次 `dns.RR` 分配，不在热路径的瓶颈上；rewrite 引擎整体搬入 Rust 时
-  编译期结果会随规则一起缓存。
+- **每次构造一次 FFI（`$dnsrewrite`）**：自定义重写规则的显式记录已在引擎快照构建时编译一次，
+  查询期直接回传；只有 `$dnsrewrite` 修饰符仍在每次命中时调一次 `buildRewriteRR`（它的
+  `RewriteAction` 属于 rewrite 规则子系统那一轮）。都是一个固定小载荷加一次 `dns.RR` 分配。
 - **IDNA 表版本**：目标域名校验用 `idna` crate 的 UTS 46（与 `diting-filter-core` 同一套配置），
   Go 原先用 `idna.Lookup`。已分配的合法域名字符判定一致，差异只在表版本（见「规则文本解析的
   已知边界」）。
@@ -375,13 +409,33 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **地址解析用 Rust**：`Ipv4Addr` / `Ipv6Addr` 与 `net.ParseIP` 在带前导零的 IPv4 上同样拒绝；
   `::ffff:` 映射、`To4` / `To16` 的取舍（AAAA 拒绝 IPv4 字面量、`ipv6hint` 接受并映射）逐条
   按 Go 的行为对齐。
-- **缺库时的表现**：`buildRewriteRR` 返回错误，自定义重写规则的那条记录被丢弃（`compileRewriteRecords`
-  写日志，与“取值非法”同一条路径），`$dnsrewrite` 整条规则被丢弃（与迁移前对非法取值的处理一致）。
-  rewrite 引擎仍在 Go，它的生命周期（`NewRewriteEngine` / `AddRule` / `Configure`）还没有错误返回，
-  因此没有地方把这个失败升级成启动失败；引擎迁移时一并改。
+- **缺库时的表现**：`buildRewriteRR` 返回错误，`$dnsrewrite` 整条规则被丢弃（与迁移前对非法取值的处理
+  一致）；引擎快照构建失败则 `NewRewriteEngine` / `Configure` / `AddRule` / `DeleteRule` 返回错误，
+  服务启动或配置变更随之失败，不会退化成“重写规则静默不生效”。
 - **记录类型表只在 Rust**：Go 侧的 `rewriteRecordTypes` 已删除，`RewriteRecordTypes()` 向内核取值；
   名字→类型号在 Go 侧仍用 `dns.StringToType`（`$dnsrewrite` 本来就用它），支持与否问内核。
 - **产物体积**：新库依赖 `idna` 与 `base64`，release DLL 约 320 KB（filter 内核 1.73 MB 之外）。
+
+## 重写引擎内核的已知边界
+
+- **配置仍归 Go**：`RewriteRule` / `RewriteConfig` 是 IPC 的 JSON 形态，增删改也在 Go。每次变更重建
+  整份快照（与旧实现在 `AddRule` / `DeleteRule` / `Configure` 里做的一样），规则不多，重建不在
+  查询热路径上。若重建失败，旧快照与原配置完全保留。
+- **`dns.RR` 仍在 Go 构造**：内核回传 `(matched, rcode, 记录列表)`，每条带类型号、属主、TTL 与
+  已解好的字段；`dns.RR_Header` / `Class` / `dns.HTTPS` 包装留在 `rewrite_engine_native.go`，
+  与记录构造的理由相同：应答要直接进 `dns.Msg`。
+- **锁粒度**：查询在 Go 的 `RLock` 下做一次 FFI（旧实现整段判定也在同一把 RLock 内），配置变更
+  在写锁内建新句柄并换新；旧句柄在写锁内释放，此时不可能还有读者。
+- **PTR 键是地址字节**：Go 传入 `To4` 规范后的 4 字节或原生 16 字节，两边不必就 IPv6 的规范文本
+  取得一致；映射到 IPv4 的形式在构建与查询两侧同样折叠成 4 字节。
+- **CNAME 链的深度与循环判定逐条复刻**：先检查 `visited.len() > 8`，再归一化、查重、查规则，
+  与旧 `chaseCNAME` 的顺序一致，所以最大链长与循环截断点不变。
+- **无结尾点的泛域名**：归一化会去掉首尾点，`*.` 因此变成精确规则 `*`（旧实现同样如此）；
+  `*.foo.` → `*.foo`。这类边界保留而不“修正”。
+- **单次查询不可达的失败**：句柄构建成功后查询不应失败；若内核返回非 0 状态，Go 记一条日志并按
+  “未命中”处理，让查询流向下一个中间件，而不是让解析器崩掉。构建期失败是硬错误。
+- **警告文案由 Rust 生成**：非法显式记录与无法识别的 rcode 的提示在 `engine.rs` 里拼好，Go 仍用
+  `[Rewrite]` 前缀写日志；含义与迁移前一致，引号风格来自 Rust 的 `{:?}`。
 
 ## 策略内核的已知边界
 
@@ -543,10 +597,6 @@ cd rust && cargo test --test dtri_golden
 - **去重键去字符串化**：每条规则拼一个去重键约占解析时间三成，改成字段哈希 + 碰撞时逐字段比较。
 - **DTRI 增量更新**：按 source 分片只重编受影响分片，把万级列表的写入后延迟压到一次小编译。
 - **检索索引预热**：表稳定后在空闲时预热，把首次折叠的 ~30 ms 从“第一个键”挪开。
-- **桌面服务的 rewrite 引擎**：记录构造已搬到 `diting-rewrite-core`，剩下的 `rewrite.go` /
-  `rewrite_lookup.go` 是引擎本身（精确/泛域名索引、PTR 反查、CNAME 链、应答码覆盖），
-  与记录构造共用同一次载荷即可：规则交给内核建一次索引，命中时回传记录列表，Go 只填 `dns.RR`。
-  搬完它顺带把「显式记录的编译期结果随规则缓存」也带进来，省掉每次命中的多次构造调用。
 - **`$dnsrewrite` 取值解析**：`parseDNSRewriteModifier` 的切分与简写判定（`RewriteAction`）仍在 Go，
   搬进内核后可以和 `RewriteAction.key()` 的取值归一化一起做成单份实现。
 - **正则与通配模式的编译归属**：现在 Go 编译后把源交给内核，两条路径各编一次；把

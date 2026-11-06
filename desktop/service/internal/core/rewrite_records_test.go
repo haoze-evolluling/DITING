@@ -10,7 +10,7 @@ import (
 // recordEngine 构建一个仅含给定重写规则的重写引擎
 func recordEngine(t *testing.T, rules ...RewriteRule) *RewriteEngine {
 	t.Helper()
-	return NewRewriteEngine(RewriteConfig{Enabled: true, TTL: 60, Rules: rules})
+	return newRewriteEngine(t, RewriteConfig{Enabled: true, TTL: 60, Rules: rules})
 }
 
 func TestRewriteRecords_MXAndSRV(t *testing.T) {

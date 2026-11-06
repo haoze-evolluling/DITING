@@ -22,6 +22,11 @@ func loadRewriteLibrary(path string) (*rewriteNativeLib, error) {
 		"diting_rewrite_abi_version",
 		"diting_rewrite_build_record",
 		"diting_rewrite_record_types",
+		"diting_rewrite_engine_build",
+		"diting_rewrite_engine_lookup",
+		"diting_rewrite_engine_ptr_lookup",
+		"diting_rewrite_engine_reverse_lookup",
+		"diting_rewrite_engine_free",
 		"diting_rewrite_free_bytes",
 	}
 	for _, name := range symbols {
@@ -42,6 +47,11 @@ func loadRewriteLibrary(path string) (*rewriteNativeLib, error) {
 	lib := &rewriteNativeLib{}
 	purego.RegisterLibFunc(&lib.buildRecord, handle, "diting_rewrite_build_record")
 	purego.RegisterLibFunc(&lib.recordTypes, handle, "diting_rewrite_record_types")
+	purego.RegisterLibFunc(&lib.engineBuild, handle, "diting_rewrite_engine_build")
+	purego.RegisterLibFunc(&lib.engineLookup, handle, "diting_rewrite_engine_lookup")
+	purego.RegisterLibFunc(&lib.engineLookupPTR, handle, "diting_rewrite_engine_ptr_lookup")
+	purego.RegisterLibFunc(&lib.engineLookupReverse, handle, "diting_rewrite_engine_reverse_lookup")
+	purego.RegisterLibFunc(&lib.engineFree, handle, "diting_rewrite_engine_free")
 	purego.RegisterLibFunc(&lib.freeBytes, handle, "diting_rewrite_free_bytes")
 	return lib, nil
 }

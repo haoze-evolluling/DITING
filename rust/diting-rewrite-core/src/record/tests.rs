@@ -73,11 +73,11 @@ fn name_targets_are_validated_and_qualified() {
 fn txt_keeps_its_text_and_needs_one() {
     assert_eq!(
         record_of("TXT", "v=spf1 ~all"),
-        Record::Txt("v=spf1 ~all".to_string())
+        Record::Txt(vec!["v=spf1 ~all".to_string()])
     );
     assert_eq!(
         record_of("TXT", "  padded  "),
-        Record::Txt("padded".to_string())
+        Record::Txt(vec!["padded".to_string()])
     );
     assert_eq!(rejection("TXT", "   "), "TXT 记录缺少取值");
 }

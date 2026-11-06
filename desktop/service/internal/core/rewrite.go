@@ -2,13 +2,8 @@ package core
 
 import (
 	"fmt"
-	"log"
-	"net"
-	"sort"
 	"strings"
 	"sync"
-
-	"github.com/miekg/dns"
 )
 
 // DefaultRewriteTTL 默认重写记录生存期（秒）
@@ -64,50 +59,36 @@ func NormalizeRewriteConfig(cfg *RewriteConfig) {
 	}
 }
 
-// compiledRule 内部编译后的快速检索结构体
-type compiledRule struct {
-	domain     string
-	isWildcard bool
-	suffix     string // 去除 "*." 后的后缀，全小写，不带前后点
-	v4List     []net.IP
-	v6List     []net.IP
-	cname      string // 标准 FQDN (以点结尾)
-	txt        []string
-	ttl        uint32
-	records    []RewriteRecord
-	rcode      int
-}
-
 // RewriteEngine 自定义 DNS 重写与伪装引擎
 // 深度借鉴自 AdGuard Home (dnsrewrite.go)、Blocky (custom_dns_resolver.go) 与 dnscrypt-proxy (plugin_cloak.go)
+//
+// 索引、匹配与记录构造都在 Rust 内核（rust/diting-rewrite-core）里：Go 只保留配置本身
+// （IPC 的 JSON 形态与增删改），每次变更整体重建一份快照句柄并原子换新。
 type RewriteEngine struct {
-	mu            sync.RWMutex
-	enabled       bool
-	defaultTTL    uint32
-	exactRules    map[string]*compiledRule // domain -> rule
-	wildcardRules []*compiledRule          // 泛域名规则列表（按后缀长度从长到短优先匹配）
-	ptrMap        map[string][]string      // ip.String() -> []FQDN domain (支持多别名反向 PTR 解析)
-	originalRules []RewriteRule
+	mu         sync.RWMutex
+	enabled    bool
+	defaultTTL uint32
+	rules      []RewriteRule
+	native     *rewriteEngineHandle
 }
 
 // NewRewriteEngine 创建并初始化 DNS 重写引擎
-func NewRewriteEngine(cfg RewriteConfig) *RewriteEngine {
+//
+// 内核缺失、ABI 不匹配或载荷被拒都会让构造失败，调用方（服务启动）随之报错；不会退化成
+// “规则静默不生效”的空引擎。
+func NewRewriteEngine(cfg RewriteConfig) (*RewriteEngine, error) {
 	ttl := cfg.TTL
 	if ttl == 0 {
 		ttl = DefaultRewriteTTL
 	}
 	engine := &RewriteEngine{
-		enabled:       cfg.Enabled,
-		defaultTTL:    ttl,
-		exactRules:    make(map[string]*compiledRule),
-		wildcardRules: make([]*compiledRule, 0),
-		ptrMap:        make(map[string][]string),
-		originalRules: make([]RewriteRule, 0),
+		enabled:    cfg.Enabled,
+		defaultTTL: ttl,
 	}
-	for _, rule := range cfg.Rules {
-		engine.addRuleInternal(rule)
+	if err := engine.swap(retainRewriteRules(cfg.Rules), cfg.Enabled, ttl); err != nil {
+		return nil, err
 	}
-	return engine
+	return engine, nil
 }
 
 // normalizeRewriteDomain 规范化域名字符串为无前后点的小写形式
@@ -116,134 +97,40 @@ func normalizeRewriteDomain(domain string) string {
 	return strings.Trim(d, ".")
 }
 
-// addRuleInternal 将一条规则编译并加入索引
-func (e *RewriteEngine) addRuleInternal(rule RewriteRule) {
-	norm := normalizeRewriteDomain(rule.Domain)
-	if norm == "" {
-		return
-	}
-
-	ttl := rule.TTL
-	if ttl == 0 {
-		ttl = e.defaultTTL
-	}
-
-	c := &compiledRule{
-		domain: norm,
-		ttl:    ttl,
-		txt:    rule.TXT,
-	}
-
-	// 显式记录在编译期做一次校验并就地剔除非法项：留到查询期才发现只会
-	// 让用户看到「配了却不生效」，而编译期可以直接把问题写进日志。
-	c.records = compileRewriteRecords(norm, rule.Records)
-
-	// 无法识别的应答码回落到 NOERROR：写错一个单词不该让整条规则变成
-	// 一个「什么都不返回」的空壳，那样更难排查。
-	if rule.RCode != "" && rule.RCode != RewriteRCodeNone {
-		rcode, ok := ParseRewriteRCode(rule.RCode)
-		if !ok {
-			log.Printf("[Rewrite] 规则 %s 的应答码 %q 无法识别，按 NOERROR 处理", norm, rule.RCode)
-		} else {
-			c.rcode = rcode
+// retainRewriteRules 丢掉规范化后为空的规则，与旧 addRuleInternal 的行为一致：
+// 这些规则既不进索引，也不出现在 GetRules 的返回值里。
+func retainRewriteRules(rules []RewriteRule) []RewriteRule {
+	kept := make([]RewriteRule, 0, len(rules))
+	for _, rule := range rules {
+		if normalizeRewriteDomain(rule.Domain) != "" {
+			kept = append(kept, rule)
 		}
-	}
-
-	if strings.HasPrefix(norm, "*.") {
-		c.isWildcard = true
-		c.suffix = strings.TrimPrefix(norm, "*.")
-	}
-
-	if rule.CNAME != "" {
-		cname := strings.TrimSpace(rule.CNAME)
-		if !strings.HasSuffix(cname, ".") {
-			cname += "."
-		}
-		c.cname = cname
-	}
-
-	for _, ipStr := range rule.IPs {
-		ip := net.ParseIP(strings.TrimSpace(ipStr))
-		if ip == nil {
-			continue
-		}
-		if v4 := ip.To4(); v4 != nil {
-			c.v4List = append(c.v4List, v4)
-			// 自动建立反向 PTR 映射（精准域名优先，支持多别名）
-			if !c.isWildcard {
-				e.appendPTR(v4.String(), norm+".")
-			}
-		} else {
-			c.v6List = append(c.v6List, ip)
-			if !c.isWildcard {
-				e.appendPTR(ip.String(), norm+".")
-			}
-		}
-	}
-
-	e.originalRules = append(e.originalRules, rule)
-
-	if c.isWildcard {
-		e.wildcardRules = append(e.wildcardRules, c)
-		// 按后缀长度降序排序，长后缀更精确优先匹配
-		sort.SliceStable(e.wildcardRules, func(i, j int) bool {
-			return len(e.wildcardRules[i].suffix) > len(e.wildcardRules[j].suffix)
-		})
-	} else {
-		e.exactRules[norm] = c
-	}
-}
-
-// compileRewriteRecords 校验并保留合法的显式记录，丢弃非法项并记录日志
-func compileRewriteRecords(domain string, records []RewriteRecord) []RewriteRecord {
-	if len(records) == 0 {
-		return nil
-	}
-
-	kept := make([]RewriteRecord, 0, len(records))
-	for _, rec := range records {
-		if strings.TrimSpace(rec.Type) == "" {
-			continue
-		}
-		// 用一个中性查询名与类型做试构造：此处只关心取值是否可解析，
-		// 与最终返回给哪个查询无关（同名不同类型的记录会在查询期被过滤）。
-		// 名字到类型号用 Go 的表，支持哪些类型由内核决定（“不支持的记录类型”是它的报错）。
-		rrtype, known := dns.StringToType[strings.ToUpper(strings.TrimSpace(rec.Type))]
-		if !known {
-			log.Printf("[Rewrite] 规则 %s 的记录类型 %q 不受支持，已忽略", domain, rec.Type)
-			continue
-		}
-		if _, err := buildRewriteRR("probe.invalid.", rrtype, rec, DefaultRewriteTTL); err != nil {
-			log.Printf("[Rewrite] 规则 %s 的 %s 记录取值非法（%v），已忽略", domain, rec.Type, err)
-			continue
-		}
-		kept = append(kept, rec)
-	}
-	if len(kept) == 0 {
-		return nil
 	}
 	return kept
 }
 
-func (e *RewriteEngine) appendPTR(ipStr, fqdn string) {
-	for _, exist := range e.ptrMap[ipStr] {
-		if exist == fqdn {
-			return
-		}
-	}
-	e.ptrMap[ipStr] = append(e.ptrMap[ipStr], fqdn)
+// rebuild 用当前的启用状态与默认 TTL 编译一份新快照。
+//
+// 调用方必须持有写锁（构造期除外）。旧句柄在换新后释放：写锁已经排除了所有在途的读者。
+func (e *RewriteEngine) rebuild(rules []RewriteRule) error {
+	return e.swap(rules, e.enabled, e.defaultTTL)
 }
 
-func (e *RewriteEngine) findRule(norm string) (*compiledRule, bool) {
-	if cr, ok := e.exactRules[norm]; ok {
-		return cr, true
+// swap 编译 rules 并在成功后整体换新；失败时旧快照与原状态完全保留。
+func (e *RewriteEngine) swap(rules []RewriteRule, enabled bool, ttl uint32) error {
+	handle, err := buildRewriteEngine(RewriteConfig{Enabled: enabled, TTL: ttl, Rules: rules})
+	if err != nil {
+		return err
 	}
-	for _, w := range e.wildcardRules {
-		if norm == w.suffix || strings.HasSuffix(norm, "."+w.suffix) {
-			return w, true
-		}
+	old := e.native
+	e.native = handle
+	e.rules = rules
+	e.enabled = enabled
+	e.defaultTTL = ttl
+	if old != nil {
+		old.free()
 	}
-	return nil, false
+	return nil
 }
 
 // AddRule 动态添加单条规则
@@ -257,66 +144,54 @@ func (e *RewriteEngine) AddRule(rule RewriteRule) error {
 	defer e.mu.Unlock()
 
 	// 检查是否已有同名规则，有则替换
-	newRules := make([]RewriteRule, 0, len(e.originalRules)+1)
-	for _, r := range e.originalRules {
+	newRules := make([]RewriteRule, 0, len(e.rules)+1)
+	for _, r := range e.rules {
 		if normalizeRewriteDomain(r.Domain) != norm {
 			newRules = append(newRules, r)
 		}
 	}
 	newRules = append(newRules, rule)
-
-	e.rebuildRules(newRules)
-	return nil
+	return e.rebuild(newRules)
 }
 
-// DeleteRule 根据域名删除规则
-func (e *RewriteEngine) DeleteRule(domain string) bool {
+// DeleteRule 根据域名删除规则。第二个返回值表示是否找到，失败时快照保持不变。
+func (e *RewriteEngine) DeleteRule(domain string) (bool, error) {
 	norm := normalizeRewriteDomain(domain)
 	if norm == "" {
-		return false
+		return false, nil
 	}
 
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	found := false
-	newRules := make([]RewriteRule, 0, len(e.originalRules))
-	for _, r := range e.originalRules {
+	newRules := make([]RewriteRule, 0, len(e.rules))
+	for _, r := range e.rules {
 		if normalizeRewriteDomain(r.Domain) == norm {
 			found = true
 			continue
 		}
 		newRules = append(newRules, r)
 	}
-
-	if found {
-		e.rebuildRules(newRules)
+	if !found {
+		return false, nil
 	}
-	return found
-}
-
-// rebuildRules 在写锁保护下根据原规则切片全量重建索引
-func (e *RewriteEngine) rebuildRules(rules []RewriteRule) {
-	e.exactRules = make(map[string]*compiledRule)
-	e.wildcardRules = make([]*compiledRule, 0)
-	e.ptrMap = make(map[string][]string)
-	e.originalRules = make([]RewriteRule, 0, len(rules))
-
-	for _, r := range rules {
-		e.addRuleInternal(r)
+	if err := e.rebuild(newRules); err != nil {
+		return false, err
 	}
+	return true, nil
 }
 
 // Configure 整体更新重写配置
-func (e *RewriteEngine) Configure(cfg RewriteConfig) {
+func (e *RewriteEngine) Configure(cfg RewriteConfig) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	e.enabled = cfg.Enabled
+	ttl := e.defaultTTL
 	if cfg.TTL > 0 {
-		e.defaultTTL = cfg.TTL
+		ttl = cfg.TTL
 	}
-	e.rebuildRules(cfg.Rules)
+	return e.swap(retainRewriteRules(cfg.Rules), cfg.Enabled, ttl)
 }
 
 // GetRules 获取当前所有重写规则
@@ -324,8 +199,8 @@ func (e *RewriteEngine) GetRules() []RewriteRule {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	res := make([]RewriteRule, len(e.originalRules))
-	copy(res, e.originalRules)
+	res := make([]RewriteRule, len(e.rules))
+	copy(res, e.rules)
 	return res
 }
 

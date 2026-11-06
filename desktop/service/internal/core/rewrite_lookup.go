@@ -1,62 +1,12 @@
 package core
 
 import (
+	"log"
 	"net"
 	"strings"
 
 	"github.com/miekg/dns"
 )
-
-func (e *RewriteEngine) chaseCNAME(targetFQDN string, qtype uint16, visited map[string]bool) []dns.RR {
-	if len(visited) > 8 {
-		return nil
-	}
-	targetNorm := normalizeRewriteDomain(targetFQDN)
-	if targetNorm == "" || visited[targetNorm] {
-		return nil
-	}
-	visited[targetNorm] = true
-
-	rule, ok := e.findRule(targetNorm)
-	if !ok {
-		return nil
-	}
-
-	var chained []dns.RR
-	switch qtype {
-	case dns.TypeA:
-		if len(rule.v4List) > 0 {
-			for _, ip := range rule.v4List {
-				chained = append(chained, &dns.A{
-					Hdr: dns.RR_Header{Name: dns.Fqdn(targetFQDN), Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: rule.ttl},
-					A:   ip,
-				})
-			}
-		} else if rule.cname != "" {
-			chained = append(chained, &dns.CNAME{
-				Hdr:    dns.RR_Header{Name: dns.Fqdn(targetFQDN), Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: rule.ttl},
-				Target: rule.cname,
-			})
-			chained = append(chained, e.chaseCNAME(rule.cname, qtype, visited)...)
-		}
-	case dns.TypeAAAA:
-		if len(rule.v6List) > 0 {
-			for _, ip := range rule.v6List {
-				chained = append(chained, &dns.AAAA{
-					Hdr:  dns.RR_Header{Name: dns.Fqdn(targetFQDN), Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: rule.ttl},
-					AAAA: ip,
-				})
-			}
-		} else if rule.cname != "" {
-			chained = append(chained, &dns.CNAME{
-				Hdr:    dns.RR_Header{Name: dns.Fqdn(targetFQDN), Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: rule.ttl},
-				Target: rule.cname,
-			})
-			chained = append(chained, e.chaseCNAME(rule.cname, qtype, visited)...)
-		}
-	}
-	return chained
-}
 
 // Lookup 查找匹配的重写规则。
 //
@@ -75,137 +25,17 @@ func (e *RewriteEngine) LookupDetailed(domain string, qtype uint16) (answers []d
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	if !e.enabled {
+	if e.native == nil {
 		return nil, dns.RcodeSuccess, false
 	}
-
-	norm := normalizeRewriteDomain(domain)
-	if norm == "" {
+	answers, rcode, matched, err := e.native.lookup(domain, qtype)
+	if err != nil {
+		// 句柄构建成功之后单次查询不应失败（只有 ABI 错配才会走到这里）。
+		// 放行到下一个中间件比让解析器崩掉安全。
+		log.Printf("[Rewrite] 判定内核失败: %v\n", err)
 		return nil, dns.RcodeSuccess, false
 	}
-
-	cr, ok := e.findRule(norm)
-	if !ok {
-		return nil, dns.RcodeSuccess, false
-	}
-
-	// 匹配成功，标记为已被重写规则捕获
-	matched = true
-	rcode = cr.rcode
-	fqdn := domain
-	if !strings.HasSuffix(fqdn, ".") {
-		fqdn += "."
-	}
-
-	// 非 NOERROR 的重写不产出记录：客户端只应看到失败结论
-	if rcode != dns.RcodeSuccess {
-		return nil, rcode, true
-	}
-
-	answers = append(answers, e.matchShortcutRecords(cr, fqdn, norm, qtype)...)
-	answers = append(answers, e.matchExplicitRecords(cr, fqdn, qtype)...)
-	return mergeOwnerCNAME(answers), rcode, true
-}
-
-// mergeOwnerCNAME 保证同一属主名的 CNAME 与其他记录互斥（RFC 1034 §3.6.2）。
-//
-// 快捷字段与 Records 是两份可并存的配置，旧实现直接串接二者的结果，
-// 同一规则里同时写了 CNAME 与 A 就会返回 [CNAME, A]。存在 CNAME 时
-// 只保留 CNAME 链：它才定义了该名字的解析语义，同时给出其他类型会让
-// 严格的 stub 校验器整包丢弃、宽松的实现则各取所需。
-func mergeOwnerCNAME(answers []dns.RR) []dns.RR {
-	// 按属主名建索引：链式解析里后续的 A 记录属于另一个属主名，必须保留
-	owners := make(map[string]bool)
-	for _, rr := range answers {
-		if rr.Header().Rrtype == dns.TypeCNAME {
-			owners[strings.ToLower(rr.Header().Name)] = true
-		}
-	}
-	if len(owners) == 0 {
-		return answers
-	}
-	out := make([]dns.RR, 0, len(answers))
-	for _, rr := range answers {
-		hdr := rr.Header()
-		if owners[strings.ToLower(hdr.Name)] && hdr.Rrtype != dns.TypeCNAME {
-			continue
-		}
-		out = append(out, rr)
-	}
-	return out
-}
-
-// matchShortcutRecords 处理 IPs / CNAME / TXT 三个快捷字段
-func (e *RewriteEngine) matchShortcutRecords(cr *compiledRule, fqdn, norm string, qtype uint16) []dns.RR {
-	var answers []dns.RR
-
-	switch qtype {
-	case dns.TypeA:
-		if len(cr.v4List) > 0 {
-			for _, ip := range cr.v4List {
-				answers = append(answers, &dns.A{
-					Hdr: dns.RR_Header{Name: fqdn, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: cr.ttl},
-					A:   ip,
-				})
-			}
-		} else if cr.cname != "" {
-			answers = append(answers, e.buildCNAME(cr, fqdn))
-			answers = append(answers, e.chaseCNAME(cr.cname, dns.TypeA, map[string]bool{norm: true})...)
-		}
-	case dns.TypeAAAA:
-		if len(cr.v6List) > 0 {
-			for _, ip := range cr.v6List {
-				answers = append(answers, &dns.AAAA{
-					Hdr:  dns.RR_Header{Name: fqdn, Rrtype: dns.TypeAAAA, Class: dns.ClassINET, Ttl: cr.ttl},
-					AAAA: ip,
-				})
-			}
-		} else if cr.cname != "" {
-			answers = append(answers, e.buildCNAME(cr, fqdn))
-			answers = append(answers, e.chaseCNAME(cr.cname, dns.TypeAAAA, map[string]bool{norm: true})...)
-		}
-	case dns.TypeCNAME:
-		if cr.cname != "" {
-			answers = append(answers, e.buildCNAME(cr, fqdn))
-		}
-	case dns.TypeTXT:
-		if len(cr.txt) > 0 {
-			answers = append(answers, &dns.TXT{
-				Hdr: dns.RR_Header{Name: fqdn, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: cr.ttl},
-				Txt: cr.txt,
-			})
-		}
-	}
-
-	return answers
-}
-
-// matchExplicitRecords 处理 Records 中的显式记录。
-//
-// 取值非法的记录在编译阶段已被剔除，这里遇到只可能是零值占位，
-// 因此静默跳过而不是让整条规则失效。
-func (e *RewriteEngine) matchExplicitRecords(cr *compiledRule, fqdn string, qtype uint16) []dns.RR {
-	if len(cr.records) == 0 {
-		return nil
-	}
-
-	var answers []dns.RR
-	for _, rec := range cr.records {
-		rr, err := buildRewriteRR(fqdn, qtype, rec, cr.ttl)
-		if err != nil || rr == nil {
-			continue
-		}
-		answers = append(answers, rr)
-	}
-	return answers
-}
-
-// buildCNAME 构造快捷字段对应的 CNAME 记录
-func (e *RewriteEngine) buildCNAME(cr *compiledRule, fqdn string) dns.RR {
-	return &dns.CNAME{
-		Hdr:    dns.RR_Header{Name: fqdn, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: cr.ttl},
-		Target: cr.cname,
-	}
+	return answers, rcode, matched
 }
 
 // LookupPTR 根据 IP 反向解析域名（O(1) 精确反查，支持多域名别名）
@@ -213,10 +43,9 @@ func (e *RewriteEngine) LookupPTR(ptrQuery string) (answers []dns.RR, matched bo
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	if !e.enabled {
+	if e.native == nil {
 		return nil, false
 	}
-
 	ip := ParseIPFromArpa(ptrQuery)
 	if ip == nil {
 		return nil, false
@@ -225,19 +54,23 @@ func (e *RewriteEngine) LookupPTR(ptrQuery string) (answers []dns.RR, matched bo
 		ip = v4
 	}
 
-	domains, ok := e.ptrMap[ip.String()]
-	if !ok || len(domains) == 0 {
+	domains, err := e.native.lookupPTR(ip)
+	if err != nil {
+		log.Printf("[Rewrite] PTR 内核失败: %v\n", err)
+		return nil, false
+	}
+	if len(domains) == 0 {
 		return nil, false
 	}
 
 	fqdn := dns.Fqdn(ptrQuery)
+	answers = make([]dns.RR, 0, len(domains))
 	for _, domain := range domains {
 		answers = append(answers, &dns.PTR{
 			Hdr: dns.RR_Header{Name: fqdn, Rrtype: dns.TypePTR, Class: dns.ClassINET, Ttl: e.defaultTTL},
 			Ptr: domain,
 		})
 	}
-
 	return answers, true
 }
 
@@ -249,13 +82,16 @@ func (e *RewriteEngine) LookupReverse(ip net.IP) string {
 	if v4 := ip.To4(); v4 != nil {
 		ip = v4
 	}
+
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	if !e.enabled {
+	if e.native == nil {
 		return ""
 	}
-	if domains, ok := e.ptrMap[ip.String()]; ok && len(domains) > 0 {
-		return strings.TrimSuffix(domains[0], ".")
+	domain, err := e.native.lookupReverse(ip)
+	if err != nil {
+		log.Printf("[Rewrite] 反向查询内核失败: %v\n", err)
+		return ""
 	}
-	return ""
+	return strings.TrimSuffix(domain, ".")
 }

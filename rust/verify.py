@@ -16,7 +16,7 @@ The Go checks exist because the Go engine is the real consumer: it mmaps the DTR
 the policy kernel through the same C ABI production uses, so it is the only thing that can prove the
 boundary. `--go` needs `cgo` plus a C compiler (mingw on Windows, gcc/clang elsewhere); the release
 library is built first because the Go loader probes `rust/target/release/`. `--desktop` needs neither:
-that module loads its three kernels (stamps, the rule index and the rewrite records) through pure Go
+that module loads its three kernels (stamps, the rule index and the rewrite engine/records) through pure Go
 dynamic loading, so `CGO_ENABLED=0` is enough. `--dart` runs the Dart
 side against the same library: the importer and the rules page have no second implementation left,
 so those tests are fixed expectations on the native output.

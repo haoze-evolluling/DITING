@@ -3,6 +3,9 @@ package core
 // rewrite_native.go loads the Rust rewrite-record kernel (rust/diting-rewrite-core) and drives it
 // through the C ABI in that crate's src/ffi.rs.
 //
+// This file covers the single-record entry point. The rewrite engine that answers queries lives in
+// rewrite_engine_native.go and uses the same loaded library (and the same ABI version).
+//
 // Responsibility split: Rust owns the record syntax — the supported type table, the value grammar
 // for A/AAAA/CNAME/NS/PTR/TXT/MX/SRV/HTTPS/SVCB, the SVCB parameter list and the target-domain
 // check — and answers with one typed record. Go keeps the `dns.RR` construction, because the answer
@@ -29,7 +32,7 @@ import (
 )
 
 // rewriteNativeABIVersion must match `ABI_VERSION` in rust/diting-rewrite-core/src/ffi.rs.
-const rewriteNativeABIVersion = 1
+const rewriteNativeABIVersion = 2
 
 // Payload layout and status codes; keep in sync with src/payload.rs and src/ffi.rs.
 const (
@@ -51,11 +54,17 @@ const (
 	rewriteSVCBKeyDoHPath
 )
 
-// rewriteNativeLib is one loaded kernel: the record builder and the type list.
+// rewriteNativeLib is one loaded kernel: the record builder, the type list and the engine entry
+// points.
 type rewriteNativeLib struct {
-	buildRecord func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
-	recordTypes func(out *unsafe.Pointer, outLen *uintptr) uint32
-	freeBytes   func(pointer unsafe.Pointer, length uintptr)
+	buildRecord         func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
+	recordTypes         func(out *unsafe.Pointer, outLen *uintptr) uint32
+	engineBuild         func(input unsafe.Pointer, inputLen uintptr, handle *unsafe.Pointer, out *unsafe.Pointer, outLen *uintptr) uint32
+	engineLookup        func(handle unsafe.Pointer, name unsafe.Pointer, nameLen uintptr, qtype uint16, out *unsafe.Pointer, outLen *uintptr) uint32
+	engineLookupPTR     func(handle unsafe.Pointer, ip unsafe.Pointer, ipLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
+	engineLookupReverse func(handle unsafe.Pointer, ip unsafe.Pointer, ipLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
+	engineFree          func(handle unsafe.Pointer)
+	freeBytes           func(pointer unsafe.Pointer, length uintptr)
 }
 
 var (
@@ -155,6 +164,16 @@ func decodeRewriteRecord(payload []byte) (dns.RR, error) {
 		return nil, fmt.Errorf("rewrite payload has unknown record flag %d", hasRecord)
 	}
 
+	rr, err := decodeRewriteRecordFields(reader)
+	if err != nil {
+		return nil, err
+	}
+	return finishRewriteRecord(reader, rr)
+}
+
+// decodeRewriteRecordFields reads one record (type, owner, TTL and value) without the layout byte,
+// so the engine reply can stream several of them through the same decoder.
+func decodeRewriteRecordFields(reader *payloadReader) (dns.RR, error) {
 	rrtype, err := reader.u16()
 	if err != nil {
 		return nil, err
@@ -207,11 +226,19 @@ func decodeRewriteRecord(payload []byte) (dns.RR, error) {
 		}
 		rr = &dns.PTR{Hdr: header, Ptr: ptr}
 	case dns.TypeTXT:
-		text, err := reader.text32()
+		count, err := reader.u32()
 		if err != nil {
 			return nil, err
 		}
-		rr = &dns.TXT{Hdr: header, Txt: []string{text}}
+		texts := make([]string, 0, count)
+		for i := uint32(0); i < count; i++ {
+			text, err := reader.text32()
+			if err != nil {
+				return nil, err
+			}
+			texts = append(texts, text)
+		}
+		rr = &dns.TXT{Hdr: header, Txt: texts}
 	case dns.TypeMX:
 		preference, err := reader.u16()
 		if err != nil {
@@ -255,7 +282,7 @@ func decodeRewriteRecord(payload []byte) (dns.RR, error) {
 	default:
 		return nil, fmt.Errorf("rewrite kernel returned unsupported record type %d", header.Rrtype)
 	}
-	return finishRewriteRecord(reader, rr)
+	return rr, nil
 }
 
 // finishRewriteRecord rejects a payload with bytes left over, then returns the record.

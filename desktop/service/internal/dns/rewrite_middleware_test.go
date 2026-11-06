@@ -9,8 +9,18 @@ import (
 	"github.com/miekg/dns"
 )
 
+// newCoreRewriteEngine 构造重写引擎；内核缺失时直接失败。
+func newCoreRewriteEngine(t *testing.T, cfg core.RewriteConfig) *core.RewriteEngine {
+	t.Helper()
+	engine, err := core.NewRewriteEngine(cfg)
+	if err != nil {
+		t.Fatalf("NewRewriteEngine: %v", err)
+	}
+	return engine
+}
+
 func TestRewriteMiddleware_Execution(t *testing.T) {
-	engine := core.NewRewriteEngine(core.RewriteConfig{
+	engine := newCoreRewriteEngine(t, core.RewriteConfig{
 		Enabled: true,
 		TTL:     60,
 		Rules: []core.RewriteRule{

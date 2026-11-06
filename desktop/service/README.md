@@ -9,14 +9,15 @@ Windows / Linux 服务端工程：Go 特权核心 `diting-service` 与内嵌的�
 - `rust/diting-stamp-core`（仓库根 `rust/` 下）：`sdns://` 印章解析内核。
 - `rust/diting-filter-core`（同上）：规则索引与判定内核（字典树、布隆预检、通配/正则表、
   `$denyallow=` 排除与 `$dnsrewrite` 选择），每次查询都走。
-- `rust/diting-rewrite-core`（同上）：重写记录的取值解析与校验（类型表、MX/SRV/HTTPS/SVCB
-  取值语法、目标域名判定），自定义重写规则与 `$dnsrewrite` 修饰符共用。
+- `rust/diting-rewrite-core`（同上）：重写引擎（精确/泛域名索引、PTR 反查、rcode 覆盖、CNAME 链）
+  与重写记录的取值解析（类型表、MX/SRV/HTTPS/SVCB 取值语法、目标域名判定），自定义重写规则与
+  `$dnsrewrite` 修饰符共用。
 
 三个内核都由 Go 在运行期用纯 Go 动态加载（Windows `syscall.LazyDLL`，Linux `purego`），因此
 **不需要 cgo，`CGO_ENABLED=0` 的交叉编译照旧**。库必须与二进制一起交付（安装包放到
 `diting-service` 同目录 / `/usr/lib/diting/`），也可以用 `DITING_STAMP_CORE_LIB` /
 `DITING_FILTER_CORE_LIB` / `DITING_REWRITE_CORE_LIB` 指定显式路径；缺库或 ABI 不符时解析印章、
-构建规则索引、构造重写记录都直接报错，没有降级实现。
+构建规则索引、构建重写引擎/记录都直接报错（重写引擎启动即失败），没有降级实现。
 - `frontend/embed.go`：把 `frontend/dist` 嵌入二进制，由服务在 15353 端口提供控制台。
 - `frontend/dist/`：构建产物（不入库），由 `build_frontend.py` 从 `../app` 生成。
 - `build/`：NSIS 安装包与 Linux 打包脚本，产物在 `build/bin/`。

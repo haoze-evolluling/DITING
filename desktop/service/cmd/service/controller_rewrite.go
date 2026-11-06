@@ -49,7 +49,11 @@ func (p *program) DeleteRewriteRule(ctx context.Context, domain string) error {
 	defer p.mu.Unlock()
 
 	if p.rewriteEngine != nil {
-		if !p.rewriteEngine.DeleteRule(domain) {
+		found, err := p.rewriteEngine.DeleteRule(domain)
+		if err != nil {
+			return err
+		}
+		if !found {
 			return fmt.Errorf("未找到对应域名的重写规则: %s", domain)
 		}
 		p.cfg.Rewrite.Rules = p.rewriteEngine.GetRules()
@@ -85,7 +89,9 @@ func (p *program) ConfigureRewrite(ctx context.Context, req ipc.ConfigureRewrite
 	}
 
 	if p.rewriteEngine != nil {
-		p.rewriteEngine.Configure(cfg)
+		if err := p.rewriteEngine.Configure(cfg); err != nil {
+			return err
+		}
 	}
 
 	p.cfg.Rewrite = cfg

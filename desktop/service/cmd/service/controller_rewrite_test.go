@@ -20,7 +20,10 @@ func TestController_RewriteClientAndECS(t *testing.T) {
 		t.Fatalf("save config failed: %v", err)
 	}
 
-	rewriteEngine := core.NewRewriteEngine(cfg.Rewrite)
+	rewriteEngine, err := core.NewRewriteEngine(cfg.Rewrite)
+	if err != nil {
+		t.Fatalf("NewRewriteEngine: %v", err)
+	}
 	clientResolver := core.NewClientResolver(cfg.Client, rewriteEngine)
 	ecsMgr := ditingdns.NewECSManager(cfg.ECS)
 

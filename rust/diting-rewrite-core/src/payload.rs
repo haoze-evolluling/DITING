@@ -14,12 +14,28 @@
 //! rejection: the message as UTF-8, without a layout byte (same shape the other kernels use)
 //! ```
 //!
+//! The rewrite-engine entry points add their own payloads (same layout byte):
+//!
+//! ```text
+//! engine config: u8 layout | u8 enabled | u32 default ttl | u32 rule count
+//!                rule: text domain | u32 ttl | u32 ip count | ip texts
+//!                      | text cname | u32 txt count | txt texts
+//!                      | u32 record count | (text type | text value)×
+//!                      | text rcode
+//! engine build reply: u8 layout | u32 warning count | warning texts
+//! engine lookup reply: u8 layout | u8 matched | u16 rcode | u32 count
+//!                      count × (u16 rrtype | text owner | u32 ttl | body)
+//! engine ptr reply:    u8 layout | u32 count | count × text domain
+//! engine reverse reply: u8 layout | u8 present | text domain
+//! ```
+//!
 //! Body of a record, by type (`A` 1, `NS` 2, `CNAME` 5, `PTR` 12, `MX` 15, `TXT` 16, `AAAA` 28,
 //! `SRV` 33, `SVCB` 64, `HTTPS` 65):
 //!
 //! ```text
 //! A      | 4 bytes                     AAAA  | 16 bytes
-//! CNAME/NS/PTR/TXT | text              MX    | u16 preference | text exchange
+//! CNAME/NS/PTR | text                  TXT   | u32 count | count × text
+//! MX     | u16 preference | text exchange
 //! SRV    | u16 priority | u16 weight | u16 port | text target
 //! SVCB/HTTPS | u16 priority | text target | u16 param count | params
 //! ```
@@ -30,6 +46,7 @@
 
 use std::fmt;
 
+use crate::engine::{Config, LookupResult, RecordSpec, RuleConfig};
 use crate::record::{ParsedRecord, Record, SvcParam};
 
 /// Layout version of every payload below; `rewritePayloadLayoutVersion` in Go must match.
@@ -123,8 +140,12 @@ fn encode_body(out: &mut Vec<u8>, record: &Record) {
     match record {
         Record::A(address) => out.extend_from_slice(address),
         Record::Aaaa(address) => out.extend_from_slice(address),
-        Record::Cname(name) | Record::Ns(name) | Record::Ptr(name) | Record::Txt(name) => {
-            push_text(out, name)
+        Record::Cname(name) | Record::Ns(name) | Record::Ptr(name) => push_text(out, name),
+        Record::Txt(texts) => {
+            out.extend_from_slice(&(texts.len() as u32).to_le_bytes());
+            for text in texts {
+                push_text(out, text);
+            }
         }
         Record::Mx {
             preference,
@@ -200,6 +221,113 @@ fn encode_param(out: &mut Vec<u8>, param: &SvcParam) {
 fn push_text(out: &mut Vec<u8>, value: &str) {
     out.extend_from_slice(&(value.len() as u32).to_le_bytes());
     out.extend_from_slice(value.as_bytes());
+}
+
+/// Decodes the engine configuration `rewrite_engine_native.go` encodes.
+pub fn decode_engine_config(data: &[u8]) -> Result<Config, DecodeError> {
+    let mut reader = Reader::new(data);
+    let layout = reader.u8("layout")?;
+    if layout != LAYOUT_VERSION {
+        return Err(DecodeError::invalid(format!(
+            "engine request layout {layout}, expected {LAYOUT_VERSION}"
+        )));
+    }
+    let enabled = reader.u8("enabled")? != 0;
+    let default_ttl = reader.u32("default ttl")?;
+    let rule_count = reader.u32("rule count")?;
+    // Counts are bounded by the payload itself: every iteration below has to read at least one
+    // field, so a bogus count fails on the first missing byte instead of allocating for it.
+    let mut rules = Vec::new();
+    for _ in 0..rule_count {
+        rules.push(decode_engine_rule(&mut reader)?);
+    }
+    reader.expect_end()?;
+    Ok(Config {
+        enabled,
+        default_ttl,
+        rules,
+    })
+}
+
+fn decode_engine_rule(reader: &mut Reader<'_>) -> Result<RuleConfig, DecodeError> {
+    let domain = reader.text("domain")?;
+    let ttl = reader.u32("ttl")?;
+    let ip_count = reader.u32("ip count")?;
+    let mut ips = Vec::new();
+    for _ in 0..ip_count {
+        ips.push(reader.text("ip")?);
+    }
+    let cname = reader.text("cname")?;
+    let txt_count = reader.u32("txt count")?;
+    let mut txt = Vec::new();
+    for _ in 0..txt_count {
+        txt.push(reader.text("txt")?);
+    }
+    let record_count = reader.u32("record count")?;
+    let mut records = Vec::new();
+    for _ in 0..record_count {
+        let type_name = reader.text("record type")?;
+        let value = reader.text("record value")?;
+        records.push(RecordSpec { type_name, value });
+    }
+    let rcode = reader.text("rcode")?;
+    Ok(RuleConfig {
+        domain,
+        ips,
+        cname,
+        txt,
+        ttl,
+        records,
+        rcode,
+    })
+}
+
+/// Encodes the engine build reply: the warnings Go still logs.
+pub fn encode_engine_build(warnings: &[String]) -> Vec<u8> {
+    let mut out = vec![LAYOUT_VERSION];
+    out.extend_from_slice(&(warnings.len() as u32).to_le_bytes());
+    for warning in warnings {
+        push_text(&mut out, warning);
+    }
+    out
+}
+
+/// Encodes one lookup result, records included.
+pub fn encode_engine_lookup(result: &LookupResult) -> Vec<u8> {
+    let mut out = vec![LAYOUT_VERSION];
+    out.push(u8::from(result.matched));
+    out.extend_from_slice(&result.rcode.to_le_bytes());
+    out.extend_from_slice(&(result.answers.len() as u32).to_le_bytes());
+    for answer in &result.answers {
+        out.extend_from_slice(&answer.record.rrtype().to_le_bytes());
+        push_text(&mut out, &answer.owner);
+        out.extend_from_slice(&answer.ttl.to_le_bytes());
+        encode_body(&mut out, &answer.record);
+    }
+    out
+}
+
+/// Encodes the PTR targets of one address.
+pub fn encode_engine_domains(domains: &[String]) -> Vec<u8> {
+    let mut out = vec![LAYOUT_VERSION];
+    out.extend_from_slice(&(domains.len() as u32).to_le_bytes());
+    for domain in domains {
+        push_text(&mut out, domain);
+    }
+    out
+}
+
+/// Encodes the first PTR target (reverse-name lookup).
+pub fn encode_engine_reverse(domain: Option<&str>) -> Vec<u8> {
+    let mut out = vec![LAYOUT_VERSION];
+    match domain {
+        Some(domain) => {
+            out.push(1);
+            push_text(&mut out, domain);
+        }
+        None => out.push(0),
+    }
+    out
 }
 
 struct Reader<'a> {

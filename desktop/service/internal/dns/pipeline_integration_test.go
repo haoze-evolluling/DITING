@@ -201,7 +201,7 @@ func TestPipeline_RewriteClientAndECSIntegration(t *testing.T) {
 		},
 	}
 
-	rewriteEngine := core.NewRewriteEngine(core.RewriteConfig{
+	rewriteEngine := newCoreRewriteEngine(t, core.RewriteConfig{
 		Enabled: true,
 		Rules: []core.RewriteRule{
 			{Domain: "*.corp.lan", IPs: []string{"10.10.10.10"}},
@@ -350,7 +350,7 @@ func TestPipeline_HostsRewriteWithIPv6Block(t *testing.T) {
 	hr, _ := core.NewHostsResolver(core.HostsConfig{Enabled: true})
 	hr.LoadReader(strings.NewReader("::1 mylocal.lan\n"))
 
-	re := core.NewRewriteEngine(core.RewriteConfig{
+	re := newCoreRewriteEngine(t, core.RewriteConfig{
 		Enabled: true,
 		Rules: []core.RewriteRule{
 			{Domain: "rewrite.lan", IPs: []string{"2001:db8::99"}},

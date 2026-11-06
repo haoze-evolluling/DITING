@@ -106,8 +106,9 @@ pub enum Record {
     Ns(String),
     /// PTR target, a fully qualified name.
     Ptr(String),
-    /// TXT text, one string (the Go value type held `[]string{value}`).
-    Txt(String),
+    /// TXT strings. A configured record holds one; the shortcut `TXT` field can hold several and
+    /// still answers as a single TXT record.
+    Txt(Vec<String>),
     /// MX preference and exchange, the exchange fully qualified.
     Mx {
         /// Preference.
@@ -242,7 +243,7 @@ pub fn build(
             if trimmed.is_empty() {
                 return Err("TXT 记录缺少取值".to_string());
             }
-            Record::Txt(trimmed.to_string())
+            Record::Txt(vec![trimmed.to_string()])
         }
         TYPE_MX => build_mx(value)?,
         TYPE_SRV => build_srv(value)?,
@@ -260,6 +261,12 @@ pub fn build(
 /// The supported record type names, sorted, for the UI dropdown and the `$dnsrewrite` check.
 pub fn type_names() -> &'static [&'static str] {
     &SORTED_TYPE_NAMES
+}
+
+/// The numeric type a configured type name resolves to, or `None` when the kernel does not
+/// support it (the same answer [`build`] gives, exposed for the rewrite engine's compile pass).
+pub fn type_number(type_name: &str) -> Option<u16> {
+    lookup_type(type_name)
 }
 
 /// Resolves a configured type name (`strings.ToUpper(strings.TrimSpace(...))`).
@@ -449,7 +456,7 @@ fn ipv4_literal(value: &str) -> Option<[u8; 4]> {
 }
 
 /// Go's `To4` only converts the `::ffff:a.b.c.d` form, not `::a.b.c.d`.
-fn mapped_ipv4(octets: [u8; 16]) -> Option<[u8; 4]> {
+pub(crate) fn mapped_ipv4(octets: [u8; 16]) -> Option<[u8; 4]> {
     let mapped =
         octets[..10].iter().all(|byte| *byte == 0) && octets[10] == 0xff && octets[11] == 0xff;
     if mapped {
@@ -483,7 +490,7 @@ fn ipv6_hint(value: &str) -> Option<[u8; 16]> {
 }
 
 /// `dns.Fqdn`: one trailing dot, `.` for the empty name.
-fn fqdn(name: &str) -> String {
+pub(crate) fn fqdn(name: &str) -> String {
     if name.is_empty() {
         return ".".to_string();
     }

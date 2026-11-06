@@ -174,7 +174,11 @@ func (p *program) run() error {
 		log.Printf("[DNS64] 初始化 DNS64 合成器警告: %v\n", err)
 	}
 	p.dns64Synth = dns64Synth
-	p.rewriteEngine = core.NewRewriteEngine(cfg.Rewrite)
+	rewriteEngine, err := core.NewRewriteEngine(cfg.Rewrite)
+	if err != nil {
+		return fmt.Errorf("初始化 DNS 重写引擎失败: %w", err)
+	}
+	p.rewriteEngine = rewriteEngine
 	p.zoneEngine = core.NewZoneEngine(cfg.Zone)
 	p.safeSearchEng = core.NewSafeSearchEngine(cfg.SafeSearch)
 	// 声誉查询要向上游发 TXT 问询，解析器此时已就绪

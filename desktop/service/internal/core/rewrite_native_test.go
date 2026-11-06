@@ -81,6 +81,9 @@ func TestDecodeRewriteRecordNamesAndText(t *testing.T) {
 		}},
 	} {
 		payload := rewriteRecordReply(tc.rrtype, "host.lan.", 30)
+		if tc.rrtype == dns.TypeTXT {
+			payload = binary.LittleEndian.AppendUint32(payload, 1) // one text
+		}
 		payload = rewriteText(payload, tc.value)
 		record, err := decodeRewriteRecord(payload)
 		if err != nil {

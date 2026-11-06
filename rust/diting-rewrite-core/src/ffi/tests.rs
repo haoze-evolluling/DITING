@@ -149,3 +149,127 @@ unsafe fn payload_slice(pointer: *mut u8, length: usize) -> &'static [u8] {
     }
     slice::from_raw_parts(pointer, length)
 }
+
+/// One engine config: enabled, TTL 60, one exact rule with one IPv4 shortcut.
+fn engine_request() -> Vec<u8> {
+    fn push_text(out: &mut Vec<u8>, value: &str) {
+        out.extend_from_slice(&(value.len() as u32).to_le_bytes());
+        out.extend_from_slice(value.as_bytes());
+    }
+    let mut out = vec![LAYOUT_VERSION, 1];
+    out.extend_from_slice(&60u32.to_le_bytes());
+    out.extend_from_slice(&1u32.to_le_bytes());
+    push_text(&mut out, "nas.lan");
+    out.extend_from_slice(&0u32.to_le_bytes()); // rule TTL: engine default
+    out.extend_from_slice(&1u32.to_le_bytes()); // one IP
+    push_text(&mut out, "192.168.1.100");
+    push_text(&mut out, ""); // no shortcut CNAME
+    out.extend_from_slice(&0u32.to_le_bytes()); // no shortcut TXT
+    out.extend_from_slice(&0u32.to_le_bytes()); // no explicit records
+    push_text(&mut out, ""); // no rcode override
+    out
+}
+
+#[test]
+fn an_engine_handle_answers_lookup_ptr_and_reverse() {
+    let request = engine_request();
+    let mut handle: *mut Engine = std::ptr::null_mut();
+    let mut out: *mut u8 = std::ptr::null_mut();
+    let mut out_len = 0usize;
+    let status = unsafe {
+        diting_rewrite_engine_build(
+            request.as_ptr(),
+            request.len(),
+            &mut handle,
+            &mut out,
+            &mut out_len,
+        )
+    };
+    assert_eq!(status, STATUS_OK);
+    assert!(!handle.is_null());
+    let warnings = unsafe { payload_slice(out, out_len) };
+    assert_eq!(&warnings[..5], &[LAYOUT_VERSION, 0, 0, 0, 0]);
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+
+    let name = "nas.lan";
+    let status = unsafe {
+        diting_rewrite_engine_lookup(handle, name.as_ptr(), name.len(), 1, &mut out, &mut out_len)
+    };
+    assert_eq!(status, STATUS_OK);
+    let reply = unsafe { payload_slice(out, out_len) };
+    assert_eq!(reply[0], LAYOUT_VERSION);
+    assert_eq!(reply[1], 1, "matched");
+    assert_eq!(&reply[2..4], &0u16.to_le_bytes(), "rcode");
+    assert_eq!(&reply[4..8], &1u32.to_le_bytes(), "one answer");
+    assert_eq!(&reply[8..10], &1u16.to_le_bytes(), "A record");
+    let owner_len = u32::from_le_bytes(reply[10..14].try_into().unwrap()) as usize;
+    assert_eq!(&reply[14..14 + owner_len], b"nas.lan.");
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+
+    let ip = [192u8, 168, 1, 100];
+    let status = unsafe {
+        diting_rewrite_engine_ptr_lookup(handle, ip.as_ptr(), ip.len(), &mut out, &mut out_len)
+    };
+    assert_eq!(status, STATUS_OK);
+    let reply = unsafe { payload_slice(out, out_len) };
+    assert_eq!(&reply[..5], &[LAYOUT_VERSION, 1, 0, 0, 0]);
+    assert_eq!(&reply[9..11], b"na");
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+
+    let status = unsafe {
+        diting_rewrite_engine_reverse_lookup(handle, ip.as_ptr(), ip.len(), &mut out, &mut out_len)
+    };
+    assert_eq!(status, STATUS_OK);
+    let reply = unsafe { payload_slice(out, out_len) };
+    assert_eq!(reply[0], LAYOUT_VERSION);
+    assert_eq!(reply[1], 1, "present");
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+
+    unsafe { diting_rewrite_engine_free(handle) };
+}
+
+#[test]
+fn an_engine_build_rejects_a_mismatched_layout_and_bad_arguments() {
+    let mut handle: *mut Engine = std::ptr::null_mut();
+    let mut out: *mut u8 = std::ptr::null_mut();
+    let mut out_len = 0usize;
+
+    let wrong_layout = [LAYOUT_VERSION + 1, 1, 0, 0, 0];
+    let status = unsafe {
+        diting_rewrite_engine_build(
+            wrong_layout.as_ptr(),
+            wrong_layout.len(),
+            &mut handle,
+            &mut out,
+            &mut out_len,
+        )
+    };
+    assert_eq!(status, STATUS_REJECTED);
+    assert!(handle.is_null());
+    let message = String::from_utf8(unsafe { payload_slice(out, out_len) }.to_vec()).unwrap();
+    assert!(message.contains("layout"), "{message}");
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+
+    let status = unsafe {
+        diting_rewrite_engine_build(
+            std::ptr::null(),
+            0,
+            std::ptr::null_mut(),
+            &mut out,
+            &mut out_len,
+        )
+    };
+    assert_eq!(status, STATUS_BAD_ARGS);
+    let status = unsafe {
+        diting_rewrite_engine_lookup(
+            std::ptr::null_mut(),
+            std::ptr::null(),
+            0,
+            1,
+            &mut out,
+            &mut out_len,
+        )
+    };
+    assert_eq!(status, STATUS_BAD_ARGS);
+    unsafe { diting_rewrite_engine_free(std::ptr::null_mut()) };
+}

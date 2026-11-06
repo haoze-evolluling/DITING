@@ -7,6 +7,16 @@ import (
 	"github.com/miekg/dns"
 )
 
+// newRewriteEngine 构造引擎并在内核缺失时直接失败。
+func newRewriteEngine(t *testing.T, cfg RewriteConfig) *RewriteEngine {
+	t.Helper()
+	engine, err := NewRewriteEngine(cfg)
+	if err != nil {
+		t.Fatalf("NewRewriteEngine: %v", err)
+	}
+	return engine
+}
+
 func TestRewriteEngine_ExactAndWildcard(t *testing.T) {
 	cfg := RewriteConfig{
 		Enabled: true,
@@ -31,7 +41,7 @@ func TestRewriteEngine_ExactAndWildcard(t *testing.T) {
 		},
 	}
 
-	engine := NewRewriteEngine(cfg)
+	engine := newRewriteEngine(t, cfg)
 
 	// 1. 测试精准匹配 A 记录
 	answers, matched := engine.Lookup("nas.lan.", dns.TypeA)
@@ -131,7 +141,7 @@ func TestRewriteEngine_CNAMEChainingAndLoops(t *testing.T) {
 			{Domain: "loop2.lan", CNAME: "loop1.lan"},
 		},
 	}
-	engine := NewRewriteEngine(cfg)
+	engine := newRewriteEngine(t, cfg)
 
 	// 1. 测试深度链式解析：alias1.lan -> alias2.lan -> target.lan -> 192.168.8.8
 	ans, matched := engine.Lookup("alias1.lan", dns.TypeA)
@@ -162,7 +172,7 @@ func TestRewriteEngine_WildcardLongestSuffix(t *testing.T) {
 			{Domain: "*.deep.sub.corp.lan", IPs: []string{"10.0.0.3"}},
 		},
 	}
-	engine := NewRewriteEngine(cfg)
+	engine := newRewriteEngine(t, cfg)
 
 	ans, _ := engine.Lookup("my.deep.sub.corp.lan", dns.TypeA)
 	if len(ans) != 1 || !ans[0].(*dns.A).A.Equal(net.ParseIP("10.0.0.3")) {
@@ -188,7 +198,7 @@ func TestRewriteEngine_MultiAliasPTR(t *testing.T) {
 			{Domain: "storage.lan", IPs: []string{"192.168.1.50"}},
 		},
 	}
-	engine := NewRewriteEngine(cfg)
+	engine := newRewriteEngine(t, cfg)
 
 	ptrQuery, _ := dns.ReverseAddr("192.168.1.50")
 	ans, matched := engine.LookupPTR(ptrQuery)
@@ -198,7 +208,7 @@ func TestRewriteEngine_MultiAliasPTR(t *testing.T) {
 }
 
 func TestRewriteEngine_DynamicRules(t *testing.T) {
-	engine := NewRewriteEngine(DefaultRewriteConfig())
+	engine := newRewriteEngine(t, DefaultRewriteConfig())
 
 	// 初始状态无规则
 	if _, matched := engine.Lookup("dynamic.dev", dns.TypeA); matched {
@@ -220,7 +230,10 @@ func TestRewriteEngine_DynamicRules(t *testing.T) {
 	}
 
 	// 动态删除
-	deleted := engine.DeleteRule("dynamic.dev")
+	deleted, err := engine.DeleteRule("dynamic.dev")
+	if err != nil {
+		t.Fatalf("delete rule error: %v", err)
+	}
 	if !deleted {
 		t.Fatalf("expected DeleteRule to return true")
 	}
@@ -243,7 +256,7 @@ func TestRewriteEngine_ShortcutAndRecordsCNAMEExclusive(t *testing.T) {
 			},
 		}},
 	}
-	engine := NewRewriteEngine(cfg)
+	engine := newRewriteEngine(t, cfg)
 	ans, matched := engine.Lookup("dual.lan", dns.TypeA)
 	if !matched {
 		t.Fatal("规则应命中")
@@ -264,7 +277,7 @@ func TestRewriteEngine_AAAARejectsIPv4Literal(t *testing.T) {
 			Records: []RewriteRecord{{Type: "AAAA", Value: "10.0.0.5"}},
 		}},
 	}
-	engine := NewRewriteEngine(cfg)
+	engine := newRewriteEngine(t, cfg)
 	if ans, _ := engine.Lookup("bad6.lan", dns.TypeAAAA); len(ans) != 0 {
 		t.Fatalf("IPv4 字面量不应被接受为 AAAA: %v", ans)
 	}
