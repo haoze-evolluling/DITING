@@ -6,8 +6,9 @@ Three libraries are built:
 * `libditing_rule_core.so` - rule parsing, rule search and the DTRI writer (Dart/Kotlin callers).
 * `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
   wildcard index, DTRI reader and the seven-level priority walk).
-* `libditing_dns_cache_core.so` - the DNS cache wire kernel the same engine dlopen()s (cache key,
-  response metadata and the ID/TTL patch).
+* `libditing_dns_cache_core.so` - the DNS cache container and wire kernel the same engine
+  dlopen()s (sharded LRU, TTL policy, sweeper, snapshot, cache key, response metadata and the
+  ID/TTL patch).
 
 All three are shipped and used at runtime: without the first a rule import throws, without the
 second the tunnel refuses to start, and without the third the DNS cache stores nothing (answers go

@@ -1,26 +1,34 @@
-// dns_cache_types.go defines the core data structures, configuration options,
-// and telemetry models for the sharded in-memory DNS cache.
+// dns_cache_types.go keeps the Go-visible shapes of the cache: the JSON configuration the Android
+// layer sends, the statistics and snapshot models it reads back, and the chain target the engine
+// uses to filter CNAME/SVCB answers. The entries themselves live in
+// rust/diting-dns-cache-core.
 
 package tunnel
 
-import (
-	"container/list"
-	"sync"
-	"sync/atomic"
-	"time"
+// dnsCacheABIVersion must match `ABI_VERSION` in rust/diting-dns-cache-core/src/ffi.rs.
+const dnsCacheABIVersion = 2
+
+// dnsCachePayloadLayoutVersion must match `LAYOUT_VERSION` in
+// rust/diting-dns-cache-core/src/payload.rs.
+const dnsCachePayloadLayoutVersion = 2
+
+// maxCacheKeyLen bounds a wire-built key: a 255-byte name plus ":65535:65535".
+const maxCacheKeyLen = 256 + 12
+
+// Flag bits of the config payload; must match `FLAG_*` in the crate's policy.rs.
+const (
+	dnsCacheFlagEnabled       = 1 << 0
+	dnsCacheFlagMinTTL        = 1 << 1
+	dnsCacheFlagStaleFallback = 1 << 2
+	dnsCacheFlagNegativeTTL   = 1 << 3
 )
 
+// `diting_dns_cache_get` results; must match the crate's ffi.rs.
 const (
-	numDNSCacheShards      = 64
-	defaultMaxCacheEntries = 4096
-
-	// lruPromoteInterval throttles LRU promotion: a hit only takes the shard
-	// write lock when the entry has not been hit within this window. Hot entries
-	// stay near the front anyway, so recency stays accurate at this granularity.
-	lruPromoteInterval = time.Second
-
-	// maxCacheKeyLen bounds a wire-built key: a 255-byte name plus ":65535:65535".
-	maxCacheKeyLen = 256 + 12
+	dnsCacheGetMiss   = 0
+	dnsCacheGetFresh  = 1
+	dnsCacheGetStale  = 2
+	dnsCacheGetFailed = 3
 )
 
 type dnsCacheConfig struct {
@@ -39,55 +47,6 @@ type dnsCacheConfig struct {
 type chainTarget struct {
 	domain string
 	kind   string
-}
-
-// dnsCacheResponseMeta is what the Rust wire kernel reports for one response: everything putMsg
-// used to read off the unpacked *dns.Msg. Offsets point at the TTL field of each record so a hit
-// can rewrite them without re-parsing.
-type dnsCacheResponseMeta struct {
-	truncated           bool
-	rcode               uint8
-	answerCount         int
-	minTTL              uint32
-	minTTLFound         bool
-	answerTTLOffsets    []uint16
-	authorityTTLOffsets []uint16
-	chainTargets        []chainTarget
-	ipList              []string
-	resolvedIPs         string
-}
-
-type cacheEntry struct {
-	key          string
-	domain       string
-	qtype        uint16
-	qclass       uint16
-	wire         []byte
-	ttlOffsets   []uint16
-	originalTTL  uint32
-	effectiveTTL time.Duration
-	createdAt    time.Time
-	expiresAt    time.Time
-	staleUntil   time.Time
-	isNegative   bool
-	rcode        int
-	chainTargets []chainTarget
-	ipList       []string
-	resolvedIPs  string
-
-	hitCount  atomic.Uint64
-	lastHitAt atomic.Int64
-	// refreshing is set while a stale-while-revalidate refresh is in flight, so
-	// a burst of stale hits starts one background resolve instead of one each.
-	refreshing atomic.Bool
-	elem       *list.Element
-}
-
-type cacheShard struct {
-	mu         sync.RWMutex
-	entries    map[string]*cacheEntry
-	lruList    *list.List
-	maxEntries int
 }
 
 type dnsCacheStats struct {

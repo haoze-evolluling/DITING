@@ -87,15 +87,21 @@ func TestDNSCacheTTLClamping(t *testing.T) {
 	resp.Answer = append(resp.Answer, rr)
 	rawResp, _ := resp.Pack()
 
-	cache.put(rawQuery, rawResp)
-
-	entry := cache.getEntry(cacheKey("clamp.com", dns.TypeA, dns.ClassINET))
-	if entry == nil {
-		t.Fatalf("expected entry to exist")
+	if !cache.put(rawQuery, rawResp) {
+		t.Fatalf("expected put to succeed")
 	}
 
-	if entry.effectiveTTL != 60*time.Second {
-		t.Errorf("expected effective TTL 60s, got %v", entry.effectiveTTL)
+	// The stored lifetime is the clamped one, so the patched TTL of a hit cannot exceed it.
+	fresh, _ := cache.getFast(rawQuery)
+	if fresh == nil {
+		t.Fatalf("expected a fresh hit")
+	}
+	var parsed dns.Msg
+	if err := parsed.Unpack(fresh.wire); err != nil {
+		t.Fatalf("failed to unpack cached response: %v", err)
+	}
+	if ttl := parsed.Answer[0].Header().Ttl; ttl == 0 || ttl > 60 {
+		t.Errorf("expected the TTL capped at 60s, got %d", ttl)
 	}
 }
 
@@ -119,11 +125,11 @@ func TestDNSCacheStaleFallback(t *testing.T) {
 	resp.Answer = append(resp.Answer, rr)
 	rawResp, _ := resp.Pack()
 
-	cache.put(rawQuery, rawResp)
-
-	entry := cache.getEntry(cacheKey("stale.com", dns.TypeA, dns.ClassINET))
-	entry.expiresAt = time.Now().Add(-1 * time.Second)
-	entry.staleUntil = time.Now().Add(10 * time.Second)
+	if !cache.put(rawQuery, rawResp) {
+		t.Fatalf("expected put to succeed")
+	}
+	// The fixed TTL is one second, so the entry turns stale while the test waits.
+	time.Sleep(1100 * time.Millisecond)
 
 	_, hit, staleCandidate := cache.get(rawQuery)
 	if hit {
@@ -132,14 +138,12 @@ func TestDNSCacheStaleFallback(t *testing.T) {
 	if staleCandidate == nil {
 		t.Fatalf("expected stale candidate to be returned")
 	}
-
-	staleRespBytes := cache.buildStaleResponse(rawQuery, staleCandidate)
-	if staleRespBytes == nil {
+	if len(staleCandidate.wire) == 0 {
 		t.Fatalf("expected valid stale response")
 	}
 
 	var staleMsg dns.Msg
-	_ = staleMsg.Unpack(staleRespBytes)
+	_ = staleMsg.Unpack(staleCandidate.wire)
 	if staleMsg.Answer[0].Header().Ttl != 1 {
 		t.Errorf("expected stale TTL=1, got %d", staleMsg.Answer[0].Header().Ttl)
 	}
@@ -176,16 +180,16 @@ func TestNegativeCaching(t *testing.T) {
 	nxQuery2.Id = 1002
 	rawNxQuery2, _ := nxQuery2.Pack()
 
-	cachedBytes, hit, _, _, _, isNegative, _ := cache.getFast(rawNxQuery2)
-	if !hit {
+	freshNx, _ := cache.getFast(rawNxQuery2)
+	if freshNx == nil {
 		t.Fatalf("expected cache hit for NXDOMAIN")
 	}
-	if !isNegative {
+	if !freshNx.isNegative {
 		t.Errorf("expected isNegative=true")
 	}
 
 	var parsedNx dns.Msg
-	if err := parsedNx.Unpack(cachedBytes); err != nil {
+	if err := parsedNx.Unpack(freshNx.wire); err != nil {
 		t.Fatalf("failed to unpack cached NXDOMAIN: %v", err)
 	}
 	if parsedNx.Id != 1002 {
@@ -210,15 +214,15 @@ func TestNegativeCaching(t *testing.T) {
 		t.Fatalf("expected NODATA to be cached")
 	}
 
-	cachedNoDataBytes, hit, _, _, _, isNegative, _ := cache.getFast(rawNoDataQuery)
-	if !hit {
+	freshNoData, _ := cache.getFast(rawNoDataQuery)
+	if freshNoData == nil {
 		t.Fatalf("expected cache hit for NODATA")
 	}
-	if !isNegative {
+	if !freshNoData.isNegative {
 		t.Errorf("expected isNegative=true for NODATA")
 	}
 	var parsedNoData dns.Msg
-	_ = parsedNoData.Unpack(cachedNoDataBytes)
+	_ = parsedNoData.Unpack(freshNoData.wire)
 	if parsedNoData.Rcode != dns.RcodeSuccess || len(parsedNoData.Answer) != 0 {
 		t.Errorf("expected empty answer with NOERROR for NODATA")
 	}
@@ -254,22 +258,22 @@ func TestWireFormatZeroCopy(t *testing.T) {
 	query2.Id = 8888
 	rawQuery2, _ := query2.Pack()
 
-	cachedBytes, hit, targets, ipList, resolvedIPs, _, _ := cache.getFast(rawQuery2)
-	if !hit {
+	fresh, _ := cache.getFast(rawQuery2)
+	if fresh == nil {
 		t.Fatalf("expected hit")
 	}
-	if len(targets) != 0 {
-		t.Errorf("expected 0 CNAME targets, got %d", len(targets))
+	if len(fresh.chainTargets) != 0 {
+		t.Errorf("expected 0 CNAME targets, got %d", len(fresh.chainTargets))
 	}
-	if len(ipList) != 2 {
-		t.Errorf("expected 2 pre-extracted IPs, got %d", len(ipList))
+	if len(fresh.ipList) != 2 {
+		t.Errorf("expected 2 pre-extracted IPs, got %d", len(fresh.ipList))
 	}
-	if resolvedIPs != "1.2.3.4,5.6.7.8" {
-		t.Errorf("expected '1.2.3.4,5.6.7.8', got %q", resolvedIPs)
+	if fresh.resolvedIPs != "1.2.3.4,5.6.7.8" {
+		t.Errorf("expected '1.2.3.4,5.6.7.8', got %q", fresh.resolvedIPs)
 	}
 
 	var parsed dns.Msg
-	if err := parsed.Unpack(cachedBytes); err != nil {
+	if err := parsed.Unpack(fresh.wire); err != nil {
 		t.Fatalf("failed to unpack patched wire: %v", err)
 	}
 	if parsed.Id != 8888 {
@@ -350,7 +354,7 @@ func TestShardedConcurrentAccess(t *testing.T) {
 
 				// Random read or write
 				if q%2 == 0 {
-					_, _, _, _, _, _, _ = cache.getFast(rawQuery)
+					cache.getFast(rawQuery)
 				} else {
 					resp := new(dns.Msg)
 					resp.SetReply(query)
@@ -394,8 +398,8 @@ func BenchmarkDNSCacheGetFast_Hit(b *testing.B) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		_, hit, _, _, _, _, _ := cache.getFast(rawQuery)
-		if !hit {
+		fresh, _ := cache.getFast(rawQuery)
+		if fresh == nil {
 			b.Fatalf("expected hit")
 		}
 	}

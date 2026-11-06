@@ -208,60 +208,57 @@ func (e *Engine) standaloneForward(w dns.ResponseWriter, r *dns.Msg, appName str
 	var resolvedMsg *dns.Msg
 	var isCached bool
 	if dnsCache != nil && dnsCache.isEnabled() {
-		cachedResp, hit, targets, ipList, resolvedIPs, isNegative, staleCandidate := dnsCache.getFast(raw)
-		if hit {
-			if len(targets) > 0 {
-				if chainBlocked, chainReason := e.checkResponseChainTargets(targets, appName, r.Question[0].Qtype); chainBlocked {
+		freshHit, staleHit := dnsCache.getFast(raw)
+		if freshHit != nil {
+			if len(freshHit.chainTargets) > 0 {
+				if chainBlocked, chainReason := e.checkResponseChainTargets(freshHit.chainTargets, appName, r.Question[0].Qtype); chainBlocked {
 					e.standaloneBlock(w, r, chainReason, appName, startTime)
 					return
 				}
 			}
-			_, _ = w.Write(cachedResp)
+			_, _ = w.Write(freshHit.wire)
 			e.totalQueries.Add(1)
-			if !isNegative && len(ipList) > 0 {
-				e.rememberResolvedIPList(r.Question[0].Name, ipList)
+			if !freshHit.isNegative && len(freshHit.ipList) > 0 {
+				e.rememberResolvedIPList(r.Question[0].Name, freshHit.ipList)
 			}
 			// The cached wire bytes are the only DNS answer this flow will see,
 			// so the app-allowlist IP grant has to be derived from them here;
 			// the upstream path does it from respMsg below.
-			e.rememberAppAllowlistWire(uid, cachedResp)
+			e.rememberAppAllowlistWire(uid, freshHit.wire)
 			elapsed := time.Since(startTime).Milliseconds()
-			e.notifyLog(strings.TrimSuffix(r.Question[0].Name, "."), false, r.Question[0].Qtype, elapsed, appName, resolvedIPs, "", "", true)
+			e.notifyLog(strings.TrimSuffix(r.Question[0].Name, "."), false, r.Question[0].Qtype, elapsed, appName, freshHit.resolvedIPs, "", "", true)
 			return
 		}
 
-		if staleCandidate != nil && dnsCache.isStaleFallbackEnabled() {
-			staleResp := dnsCache.buildStaleResponse(raw, staleCandidate)
-			if staleResp != nil {
-				if len(staleCandidate.chainTargets) > 0 {
-					if chainBlocked, chainReason := e.checkResponseChainTargets(staleCandidate.chainTargets, appName, r.Question[0].Qtype); chainBlocked {
-						e.standaloneBlock(w, r, chainReason, appName, startTime)
-						return
-					}
+		if staleHit != nil && dnsCache.isStaleFallbackEnabled() {
+			if len(staleHit.chainTargets) > 0 {
+				if chainBlocked, chainReason := e.checkResponseChainTargets(staleHit.chainTargets, appName, r.Question[0].Qtype); chainBlocked {
+					e.standaloneBlock(w, r, chainReason, appName, startTime)
+					return
 				}
-				_, _ = w.Write(staleResp)
-				e.totalQueries.Add(1)
-				if !staleCandidate.isNegative && len(staleCandidate.ipList) > 0 {
-					e.rememberResolvedIPList(r.Question[0].Name, staleCandidate.ipList)
-				}
-				// Same as the fresh-hit branch: the stale wire response is the
-				// only answer handed to the client, so grant from it as well.
-				e.rememberAppAllowlistWire(uid, staleResp)
-				elapsed := time.Since(startTime).Milliseconds()
-				e.notifyLog(strings.TrimSuffix(r.Question[0].Name, "."), false, r.Question[0].Qtype, elapsed, appName, staleCandidate.resolvedIPs, "", "", true)
-
-				// One background refresh per stale entry: a burst of stale hits
-				// would otherwise spawn a goroutine and copy the query for each.
-				if staleCandidate.refreshing.CompareAndSwap(false, true) {
-					go func() {
-						defer staleCandidate.refreshing.Store(false)
-						_, _, _ = dnsCache.singleFlight(raw, func() ([]byte, error) {
-							return resolver.Resolve(raw)
-						})
-					}()
-				}
-				return
 			}
+			_, _ = w.Write(staleHit.wire)
+			e.totalQueries.Add(1)
+			if !staleHit.isNegative && len(staleHit.ipList) > 0 {
+				e.rememberResolvedIPList(r.Question[0].Name, staleHit.ipList)
+			}
+			// Same as the fresh-hit branch: the stale wire response is the
+			// only answer handed to the client, so grant from it as well.
+			e.rememberAppAllowlistWire(uid, staleHit.wire)
+			elapsed := time.Since(startTime).Milliseconds()
+			e.notifyLog(strings.TrimSuffix(r.Question[0].Name, "."), false, r.Question[0].Qtype, elapsed, appName, staleHit.resolvedIPs, "", "", true)
+
+			// One background refresh per stale entry: a burst of stale hits
+			// would otherwise spawn a goroutine and copy the query for each.
+			if dnsCache.beginStaleRefresh(raw) {
+				go func() {
+					defer dnsCache.endStaleRefresh(raw)
+					_, _, _ = dnsCache.singleFlight(raw, func() ([]byte, error) {
+						return resolver.Resolve(raw)
+					})
+				}()
+			}
+			return
 		}
 
 		respRaw, resolvedMsg, isCached, err = dnsCache.singleFlightMsg(raw, func() ([]byte, *dns.Msg, error) {

@@ -11,6 +11,7 @@
 package tunnel
 
 import (
+	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -52,9 +53,17 @@ const allowlistTestUID = 10188
 // one domain, with a warm cache already holding an answer for that domain.
 func newAllowlistTestEngine(t *testing.T, domain, ip string) (*Engine, *recordingDNSWriter) {
 	t.Helper()
+	return newAllowlistTestEngineWithCache(t, domain, ip,
+		dnsCacheConfig{Enabled: true, Mode: "follow_dns_ttl", MaxTTLSeconds: 3600}, 300)
+}
+
+// newAllowlistTestEngineWithCache is the same fixture with a caller-chosen cache
+// policy and answer TTL, so a test can reach the stale branch by waiting.
+func newAllowlistTestEngineWithCache(t *testing.T, domain, ip string, cacheCfg dnsCacheConfig, ttl uint32) (*Engine, *recordingDNSWriter) {
+	t.Helper()
 
 	e := &Engine{
-		dnsCache:      newDNSCache(dnsCacheConfig{Enabled: true, Mode: "follow_dns_ttl", MaxTTLSeconds: 3600}),
+		dnsCache:      newDNSCache(cacheCfg),
 		ipDomainCache: newIPDomainCache(16),
 		policyEngine:  newPolicyEngine(),
 	}
@@ -75,7 +84,7 @@ func newAllowlistTestEngine(t *testing.T, domain, ip string) (*Engine, *recordin
 
 	resp := new(dns.Msg)
 	resp.SetReply(query)
-	rr, err := dns.NewRR(dns.Fqdn(domain) + " 300 IN A " + ip)
+	rr, err := dns.NewRR(fmt.Sprintf("%s %d IN A %s", dns.Fqdn(domain), ttl, ip))
 	if err != nil {
 		t.Fatalf("build answer: %v", err)
 	}
@@ -130,21 +139,16 @@ func TestServeDNSStaleResponseGrantsAppAllowlistIP(t *testing.T) {
 	const domain = "stale-allowlisted.example"
 	const ip = "203.0.113.8"
 
-	e, w := newAllowlistTestEngine(t, domain, ip)
-	e.dnsCache.updatePolicy(dnsCacheConfig{
+	e, w := newAllowlistTestEngineWithCache(t, domain, ip, dnsCacheConfig{
 		Enabled:              true,
-		Mode:                 "follow_dns_ttl",
-		MaxTTLSeconds:        3600,
+		Mode:                 "fixed_ttl",
+		FixedTTLSeconds:      1,
 		StaleFallbackEnabled: true,
 		StaleFallbackSeconds: 60,
-	})
+	}, 1)
 
-	entry := e.dnsCache.getEntry(cacheKey(domain, dns.TypeA, dns.ClassINET))
-	if entry == nil {
-		t.Fatal("cache entry missing")
-	}
-	entry.expiresAt = time.Now().Add(-1 * time.Second)
-	entry.staleUntil = time.Now().Add(30 * time.Second)
+	// The one second fixed TTL has to lapse before the stale branch is taken.
+	time.Sleep(1100 * time.Millisecond)
 
 	// The stale branch kicks off a background resolve; there is no resolver in
 	// this fixture, so guard against a nil dereference in that goroutine.
@@ -189,7 +193,7 @@ func TestRememberAppAllowlistWireSkipsNegativeAnswersAndFansOutByDomain(t *testi
 	positive := new(dns.Msg)
 	positive.SetQuestion(dns.Fqdn(domain), dns.TypeA)
 	positive.Response = true
-	rr, err := dns.NewRR(dns.Fqdn(domain) + " 300 IN A " + ip)
+	rr, err := dns.NewRR(fmt.Sprintf("%s 300 IN A %s", dns.Fqdn(domain), ip))
 	if err != nil {
 		t.Fatalf("build answer: %v", err)
 	}

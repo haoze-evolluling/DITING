@@ -1,5 +1,8 @@
-// dns_cache_flight.go implements panic-safe single-flight query coalescing
-// for concurrent in-flight DNS queries.
+// dns_cache_flight.go implements panic-safe single-flight query coalescing for concurrent
+// in-flight DNS queries.
+//
+// The coalescer stays in Go because it runs a Go callback (the resolver). Everything it needs
+// from the cache -- the key, the re-check and the store -- goes through the Rust container.
 
 package tunnel
 
@@ -86,8 +89,8 @@ func (c *dnsCache) singleFlightMsg(rawQuery []byte, resolveFn func() ([]byte, *d
 
 	// Re-check without touching the counters: the caller's getFast already
 	// recorded this query as a miss.
-	if entry, cachedResp, stale := c.lookup(rawQuery, false); entry != nil && !stale {
-		return cachedResp, nil, true, nil
+	if hit, stale := c.lookup(rawQuery, false); hit != nil && !stale {
+		return hit.wire, nil, true, nil
 	}
 
 	key := string(keyBytes)
@@ -115,8 +118,8 @@ func (c *dnsCache) singleFlightMsg(rawQuery []byte, resolveFn func() ([]byte, *d
 	}
 
 	if shared {
-		if entry, cachedResp, stale := c.lookup(rawQuery, false); entry != nil && !stale {
-			return cachedResp, nil, true, nil
+		if hit, stale := c.lookup(rawQuery, false); hit != nil && !stale {
+			return hit.wire, nil, true, nil
 		}
 		if len(val) >= 2 {
 			res := make([]byte, len(val))

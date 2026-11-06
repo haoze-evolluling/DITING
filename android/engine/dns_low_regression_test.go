@@ -1,6 +1,5 @@
 // dns_low_regression_test.go covers the Low-severity triage items that live in
-// the Go tunnel: UDP truncation handling (A-019), dnsCache.clear() orphan
-// re-linking (A-069), the unbounded cert
+// the Go tunnel: UDP truncation handling (A-019), the unbounded cert
 // cache (A-071), the connLogSeen dedupe set bound (A-073), ApplyDNSConfig
 // partial-application (A-090) and the InjectingReader carry flush at EOF (A-064).
 
@@ -10,7 +9,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"io"
-	"net"
 	"strings"
 	"testing"
 	"time"
@@ -74,70 +72,6 @@ func TestDNSCacheRejectsTruncatedResponses(t *testing.T) {
 	}
 	if _, hit, _ := cache.get(rawQuery); hit {
 		t.Fatalf("truncated response was served from the cache")
-	}
-}
-
-// --- A-069: dnsCache.clear() must not leave re-linkable orphans --------------
-
-func TestDNSCacheClearUnlinksLruElements(t *testing.T) {
-	cache := newDNSCache(dnsCacheConfig{Enabled: true})
-	defer cache.close()
-
-	query := new(dns.Msg)
-	query.SetQuestion("clear.example.", dns.TypeA)
-	rawQuery, err := query.Pack()
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp := new(dns.Msg)
-	resp.SetReply(query)
-	resp.Answer = append(resp.Answer, &dns.A{
-		Hdr: dns.RR_Header{Name: "clear.example.", Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 300},
-		A:   net.IPv4(1, 2, 3, 4),
-	})
-	rawResp, err := resp.Pack()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !cache.put(rawQuery, rawResp) {
-		t.Fatal("put failed")
-	}
-
-	shard := cache.shard(cacheKey("clear.example", dns.TypeA, dns.ClassINET))
-	shard.mu.Lock()
-	entry := shard.entries[cacheKey("clear.example", dns.TypeA, dns.ClassINET)]
-	if entry == nil || entry.elem == nil {
-		shard.mu.Unlock()
-		t.Fatal("entry/elem missing before clear")
-	}
-	staleElem := entry.elem
-	shard.mu.Unlock()
-
-	cache.clear()
-
-	shard.mu.Lock()
-	lruLen := shard.lruList.Len()
-	entriesLen := len(shard.entries)
-	shard.mu.Unlock()
-	if lruLen != 0 || entriesLen != 0 {
-		t.Fatalf("clear left state behind: lru=%d entries=%d", lruLen, entriesLen)
-	}
-
-	// Walk the list instead of trusting Len(): Init() resets the List's len field
-	// but every Element keeps a live `list` back-pointer, so a racing promotion
-	// re-splices the orphan in *without* incrementing len. A later PushFront then
-	// yields a list whose Len() is 1 while iteration actually visits 2 nodes,
-	// permanently desynchronising the LRU from the entries map.
-	shard.mu.Lock()
-	shard.lruList.MoveToFront(staleElem) // a no-op only if the element was removed
-	shard.lruList.PushFront(&cacheEntry{key: "fresh"})
-	reached := 0
-	for e := shard.lruList.Front(); e != nil && reached < 100; e = e.Next() {
-		reached++
-	}
-	shard.mu.Unlock()
-	if reached != 1 {
-		t.Fatalf("cleared LRU iterates over %d nodes, want 1 (orphan was re-linked)", reached)
 	}
 }
 

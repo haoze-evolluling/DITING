@@ -50,7 +50,7 @@ gomobile bind `
 ## 与 Rust 内核的关系
 
 AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`（域名规则判定）与
-`dlopen("libditing_dns_cache_core.so")`（DNS 缓存取值与改写），把这两块交给 Rust
+`dlopen("libditing_dns_cache_core.so")`（DNS 缓存容器、取值与改写），把这两块交给 Rust
 （见 `rust/README.md`）。这两个 `.so` 与 AAR 无关，它们和 Flutter 侧的 `libditing_rule_core.so`
 一起由 `python rust/build_android.py` 拷进
 `android/app/android/app/src/main/jniLibs/<abi>/`，最终落在 APK 的 `lib/<abi>/`，正好在应用命名

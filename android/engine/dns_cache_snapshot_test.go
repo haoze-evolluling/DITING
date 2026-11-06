@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/miekg/dns"
 )
@@ -47,7 +46,7 @@ func TestDNSCacheSnapshotOrdersByHits(t *testing.T) {
 	putCacheEntry(t, cache, "cold.example.com.", 300, 1)
 	putCacheEntry(t, cache, "hot.example.com.", 300, 5)
 
-	entries := cache.snapshot(time.Now(), 10)
+	entries := cache.snapshot(10)
 	if len(entries) != 2 {
 		t.Fatalf("expected 2 entries, got %d", len(entries))
 	}
@@ -62,21 +61,15 @@ func TestDNSCacheSnapshotOrdersByHits(t *testing.T) {
 	}
 }
 
-func TestDNSCacheSnapshotHonoursLimitAndExpiry(t *testing.T) {
+func TestDNSCacheSnapshotHonoursLimit(t *testing.T) {
 	cache := newDNSCache(dnsCacheConfig{Enabled: true, Mode: "follow_dns_ttl", MaxTTLSeconds: 3600})
 	defer cache.close()
 
 	putCacheEntry(t, cache, "one.example.com.", 300, 3)
 	putCacheEntry(t, cache, "two.example.com.", 300, 2)
 
-	if got := cache.snapshot(time.Now(), 1); len(got) != 1 {
+	if got := cache.snapshot(1); len(got) != 1 {
 		t.Fatalf("expected the limit to cap the snapshot, got %d entries", len(got))
-	}
-
-	// A future "now" is past every TTL, so the projection must be empty: the engine can no
-	// longer serve those answers and the repository filters them out anyway.
-	if got := cache.snapshot(time.Now().Add(time.Hour), 10); len(got) != 0 {
-		t.Fatalf("expected expired entries to be skipped, got %d", len(got))
 	}
 }
 

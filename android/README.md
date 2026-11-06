@@ -46,8 +46,8 @@ pwsh -File build_aar.ps1 -Arch all  # 双 ABI（debug 默认）
 
 规则与 DNS 链路有五处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析与规则页检索经
 `dart:ffi`，规则写入后的 DTRI 订阅索引编译经 JNI（Kotlin 调用），**域名规则判定内核**与
-**DNS 缓存 wire 内核**（缓存键、响应元数据、命中时的 ID/TTL 改写）由 Go 引擎 `dlopen` 后经 C ABI
-调用。前四处都只有 Rust 一条实现：库缺失、ABI 不匹配或载荷被拒时，导入报错、索引编译失败、
+**DNS 缓存内核**（分片 LRU、TTL 策略、清扫、统计与快照，以及缓存键、响应元数据、命中时的 ID/TTL
+改写）由 Go 引擎 `dlopen` 后经 C ABI 调用。前四处都只有 Rust 一条实现：库缺失、ABI 不匹配或载荷被拒时，导入报错、索引编译失败、
 `ApplyRuleSnapshot` 失败（隧道启动失败），不会静默退回另一套语义。DNS 缓存内核缺失时隧道照常
 解析（答案直连上游），只是不再复用缓存，并在首次加载失败时写日志。
 

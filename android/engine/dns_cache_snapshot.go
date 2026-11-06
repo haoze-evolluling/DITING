@@ -1,16 +1,12 @@
-// dns_cache_snapshot.go exposes the in-memory LRU as a JSON snapshot so the Android
-// layer can mirror it into the `dns_cache` table that the Flutter UI reads.
+// dns_cache_snapshot.go exposes the live cache entries as a JSON snapshot so the Android layer can
+// mirror them into the `dns_cache` table that the Flutter UI reads.
 //
-// The cache itself stays authoritative: this is a read-only projection rebuilt on
-// every call, ordered by hit count so the caller can cap the mirrored rows.
+// The Rust container stays authoritative: this is a read-only projection rebuilt on every call,
+// ordered by hit count so the caller can cap the mirrored rows.
 
 package tunnel
 
-import (
-	"encoding/json"
-	"sort"
-	"time"
-)
+import "encoding/json"
 
 // dnsCacheEntrySnapshot mirrors one live cache entry; field names match the
 // `dns_cache` columns the Dart repositories read.
@@ -27,49 +23,26 @@ type dnsCacheEntrySnapshot struct {
 	ResponseSize int    `json:"responseSize"`
 }
 
-// snapshot returns up to limit unexpired entries, hottest first. Entries past
-// their expiry are skipped: the engine cannot serve them any more, and the
-// repository queries filter them out anyway.
-func (c *dnsCache) snapshot(now time.Time, limit int) []dnsCacheEntrySnapshot {
-	if c == nil || limit <= 0 {
+// snapshot returns up to limit unexpired entries, hottest first. The kernel skips entries past
+// their expiry: the engine cannot serve them any more, and the repository queries filter them out
+// anyway.
+func (c *dnsCache) snapshot(limit int) []dnsCacheEntrySnapshot {
+	if c == nil || c.handle == nil || limit <= 0 {
 		return nil
 	}
-	out := make([]dnsCacheEntrySnapshot, 0, limit)
-	for _, shard := range c.shards {
-		shard.mu.RLock()
-		for _, entry := range shard.entries {
-			if entry == nil || !now.Before(entry.expiresAt) {
-				continue
-			}
-			out = append(out, dnsCacheEntrySnapshot{
-				Key:          entry.key,
-				QueryName:    entry.domain,
-				QueryType:    int(entry.qtype),
-				QueryClass:   int(entry.qclass),
-				CreatedAt:    entry.createdAt.UnixMilli(),
-				ExpiresAt:    entry.expiresAt.UnixMilli(),
-				LastHitAt:    entry.lastHitAt.Load() / int64(time.Millisecond),
-				HitCount:     entry.hitCount.Load(),
-				OriginalTTL:  int64(entry.originalTTL),
-				ResponseSize: len(entry.wire),
-			})
-		}
-		shard.mu.RUnlock()
+	entries, err := c.handle.snapshot(uint32(limit))
+	if err != nil {
+		logf("dnsCache: snapshot failed: %v", err)
+		return nil
 	}
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].HitCount != out[j].HitCount {
-			return out[i].HitCount > out[j].HitCount
-		}
-		return out[i].ExpiresAt > out[j].ExpiresAt
-	})
-	if len(out) > limit {
-		out = out[:limit]
-	}
-	return out
+	return entries
 }
 
 func (c *dnsCache) snapshotJSON(limit int) string {
-	entries := c.snapshot(time.Now(), limit)
+	entries := c.snapshot(limit)
+	if entries == nil {
+		return "[]"
+	}
 	b, err := json.Marshal(entries)
 	if err != nil {
 		return "[]"

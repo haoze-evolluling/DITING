@@ -1,16 +1,16 @@
 //go:build cgo
 
-// dns_cache_native.go loads the Rust DNS cache wire kernel (rust/diting-dns-cache-core) and drives
-// it through the C ABI in that crate's src/ffi.rs.
+// dns_cache_native.go loads the Rust DNS cache kernel (rust/diting-dns-cache-core) and drives its
+// C ABI (that crate's src/ffi.rs).
 //
-// Responsibility split: Rust parses the response (minimum TTL, TTL offsets, CNAME/SVCB/HTTPS
-// targets, A/AAAA addresses), builds the question key and patches the ID/TTLs of a cache hit. Go
-// keeps the sharded LRU, the TTL policy arithmetic, single-flight and the background sweeper.
+// Responsibility split: the kernel owns the wire layer, the sharded container, the TTL policy, the
+// background sweeper and the snapshot projection. Go keeps the single-flight coalescer around the
+// resolver callback (it runs a Go function) and marshals the projection to JSON.
 //
 // The kernel is required for the cache to work, but not for the tunnel: if the library is missing
-// or has a stale ABI, `put` refuses to store an answer and every lookup misses, so queries go
-// straight to the resolver. That is the same answer the old Go code produced without a cache, and
-// the failure is logged once instead of silently serving different TTL/ID semantics.
+// or has a stale ABI, `newNativeDNSCache` fails, nothing is stored and every lookup misses, so
+// queries go straight to the resolver. That is the same answer the old Go code produced without a
+// cache, and the failure is logged once instead of silently serving different TTL/ID semantics.
 package tunnel
 
 /*
@@ -43,34 +43,20 @@ static void diting_dnscache_close(diting_dnscache_lib_t lib) { dlclose(lib); }
 typedef uint32_t (*diting_dnscache_abi_fn)(void);
 typedef intptr_t (*diting_dnscache_key_fn)(const void*, size_t, void*, size_t, uint32_t*,
 	uint16_t*, uint16_t*);
-typedef uint32_t (*diting_dnscache_parse_fn)(const void*, size_t, void**, size_t*);
-typedef intptr_t (*diting_dnscache_patch_fn)(const void*, size_t, const void*, size_t, uint16_t,
-	uint32_t, void*, size_t);
-typedef void (*diting_dnscache_free_fn)(void*, size_t);
+typedef void (*diting_dnscache_free_bytes_fn)(void*, size_t);
 
 static uint32_t diting_dnscache_call_abi(void* fn) { return ((diting_dnscache_abi_fn)fn)(); }
 static intptr_t diting_dnscache_call_key(void* fn, const void* wire, size_t wire_len, void* out,
 	size_t out_cap, uint32_t* name_len, uint16_t* qtype, uint16_t* qclass) {
 	return ((diting_dnscache_key_fn)fn)(wire, wire_len, out, out_cap, name_len, qtype, qclass);
 }
-static uint32_t diting_dnscache_call_parse(void* fn, const void* wire, size_t wire_len,
-	void** payload, size_t* payload_len) {
-	return ((diting_dnscache_parse_fn)fn)(wire, wire_len, payload, payload_len);
-}
-static intptr_t diting_dnscache_call_patch(void* fn, const void* wire, size_t wire_len,
-	const void* offsets, size_t offsets_len, uint16_t query_id, uint32_t ttl, void* out,
-	size_t out_cap) {
-	return ((diting_dnscache_patch_fn)fn)(wire, wire_len, offsets, offsets_len, query_id, ttl, out,
-		out_cap);
-}
 static void diting_dnscache_call_free(void* fn, void* pointer, size_t length) {
-	((diting_dnscache_free_fn)fn)(pointer, length);
+	((diting_dnscache_free_bytes_fn)fn)(pointer, length);
 }
 */
 import "C"
 
 import (
-	"encoding/binary"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -78,34 +64,23 @@ import (
 	"unsafe"
 )
 
-// dnsCacheABIVersion must match `ABI_VERSION` in rust/diting-dns-cache-core/src/ffi.rs.
-const dnsCacheABIVersion = 1
-
-// dnsCachePayloadLayoutVersion must match `LAYOUT_VERSION` in
-// rust/diting-dns-cache-core/src/payload.rs.
-const dnsCachePayloadLayoutVersion = 1
-
-// Payload flag bits of `encode_response_meta`.
-const (
-	dnsCacheFlagTruncated = 1 << 0
-	dnsCacheFlagMinTTL    = 1 << 1
-)
-
-// Positions of the fixed prefix of the response payload.
-const (
-	dnsCachePayloadAnswerCount = 1
-	dnsCachePayloadRcode       = 3
-	dnsCachePayloadFlags       = 4
-	dnsCachePayloadMinTTL      = 5
-	dnsCachePayloadBody        = 9
-)
-
 type dnsCacheNativeLib struct {
-	lib           C.diting_dnscache_lib_t
-	questionKey   unsafe.Pointer
-	parseResponse unsafe.Pointer
-	patchResponse unsafe.Pointer
-	freeBytes     unsafe.Pointer
+	lib unsafe.Pointer
+
+	questionKey unsafe.Pointer
+	freeBytes   unsafe.Pointer
+
+	newCache     unsafe.Pointer
+	freeHandle   unsafe.Pointer
+	closeHandle  unsafe.Pointer
+	updatePolicy unsafe.Pointer
+	clear        unsafe.Pointer
+	get          unsafe.Pointer
+	put          unsafe.Pointer
+	refreshBegin unsafe.Pointer
+	refreshDone  unsafe.Pointer
+	stats        unsafe.Pointer
+	snapshot     unsafe.Pointer
 }
 
 var (
@@ -143,13 +118,22 @@ func dnsCacheNativeSymbols(lib *dnsCacheNativeLib) error {
 	}
 	symbols := []symbol{
 		{"diting_dns_cache_question_key", &lib.questionKey},
-		{"diting_dns_cache_parse_response", &lib.parseResponse},
-		{"diting_dns_cache_patch_response", &lib.patchResponse},
 		{"diting_dns_cache_free_bytes", &lib.freeBytes},
+		{"diting_dns_cache_new", &lib.newCache},
+		{"diting_dns_cache_free", &lib.freeHandle},
+		{"diting_dns_cache_close", &lib.closeHandle},
+		{"diting_dns_cache_update_policy", &lib.updatePolicy},
+		{"diting_dns_cache_clear", &lib.clear},
+		{"diting_dns_cache_get", &lib.get},
+		{"diting_dns_cache_put", &lib.put},
+		{"diting_dns_cache_refresh_begin", &lib.refreshBegin},
+		{"diting_dns_cache_refresh_done", &lib.refreshDone},
+		{"diting_dns_cache_stats", &lib.stats},
+		{"diting_dns_cache_snapshot", &lib.snapshot},
 	}
 	for _, entry := range symbols {
 		name := C.CString(entry.name)
-		pointer := C.diting_dnscache_sym(lib.lib, name)
+		pointer := C.diting_dnscache_sym(C.diting_dnscache_lib_t(lib.lib), name)
 		C.free(unsafe.Pointer(name))
 		if pointer == nil {
 			return fmt.Errorf("missing symbol %s", entry.name)
@@ -183,7 +167,7 @@ func loadDNSCacheNative() (*dnsCacheNativeLib, error) {
 			lastErr = fmt.Errorf("%s: abi %d, expected %d", candidate, version, dnsCacheABIVersion)
 			continue
 		}
-		lib := &dnsCacheNativeLib{lib: handle}
+		lib := &dnsCacheNativeLib{lib: unsafe.Pointer(handle)}
 		if err := dnsCacheNativeSymbols(lib); err != nil {
 			C.diting_dnscache_close(handle)
 			lastErr = fmt.Errorf("%s: %w", candidate, err)
@@ -235,204 +219,10 @@ func nativeQuestionKey(rawQuery, dst []byte) (key []byte, nameLen int, qtype, qc
 	return dst[:int(written)], int(length), uint16(kind), uint16(class), true
 }
 
-// nativeParseResponse turns one response into the metadata a cache write stores.
-func nativeParseResponse(rawResponse []byte) (*dnsCacheResponseMeta, bool) {
-	lib, err := dnsCacheKernel()
-	if err != nil {
-		return nil, false
+// freeDNSCachePayload drops a payload the library handed back.
+func freeDNSCachePayload(lib *dnsCacheNativeLib, pointer unsafe.Pointer, length uintptr) {
+	if pointer == nil || length == 0 {
+		return
 	}
-	var payload unsafe.Pointer
-	var payloadLen C.size_t
-	status := C.diting_dnscache_call_parse(
-		lib.parseResponse,
-		unsafe.Pointer(unsafe.SliceData(rawResponse)),
-		C.size_t(len(rawResponse)),
-		&payload,
-		&payloadLen,
-	)
-	if status != 0 || payload == nil || payloadLen == 0 {
-		return nil, false
-	}
-	defer C.diting_dnscache_call_free(lib.freeBytes, payload, payloadLen)
-
-	// Copy before the deferred free: the bytes belong to the library until it frees them.
-	meta, err := decodeDNSCacheResponse(unsafe.Slice((*byte)(payload), int(payloadLen)))
-	if err != nil {
-		return nil, false
-	}
-	return meta, true
-}
-
-// nativePatchResponse copies rawResponse and replaces the ID and every indexed TTL. It returns nil
-// when the kernel is unavailable or rejects the request; callers treat that as a miss.
-func nativePatchResponse(rawResponse []byte, offsets []uint16, queryID uint16, ttl uint32) []byte {
-	lib, err := dnsCacheKernel()
-	if err != nil || len(rawResponse) < 12 {
-		return nil
-	}
-	patched := make([]byte, len(rawResponse))
-	written := C.diting_dnscache_call_patch(
-		lib.patchResponse,
-		unsafe.Pointer(&rawResponse[0]),
-		C.size_t(len(rawResponse)),
-		unsafe.Pointer(unsafe.SliceData(offsets)),
-		C.size_t(len(offsets)),
-		C.uint16_t(queryID),
-		C.uint32_t(ttl),
-		unsafe.Pointer(&patched[0]),
-		C.size_t(len(patched)),
-	)
-	if int(written) != len(patched) {
-		return nil
-	}
-	return patched
-}
-
-// decodeDNSCacheResponse reads the payload rust/diting-dns-cache-core/src/payload.rs encodes.
-func decodeDNSCacheResponse(payload []byte) (*dnsCacheResponseMeta, error) {
-	if len(payload) < dnsCachePayloadBody {
-		return nil, fmt.Errorf("dns cache response payload is truncated (header)")
-	}
-	if payload[0] != dnsCachePayloadLayoutVersion {
-		return nil, fmt.Errorf("dns cache response payload layout %d, expected %d",
-			payload[0], dnsCachePayloadLayoutVersion)
-	}
-	flags := payload[dnsCachePayloadFlags]
-	meta := &dnsCacheResponseMeta{
-		answerCount: int(binary.LittleEndian.Uint16(payload[dnsCachePayloadAnswerCount:])),
-		rcode:       payload[dnsCachePayloadRcode],
-		truncated:   flags&dnsCacheFlagTruncated != 0,
-	}
-	if flags&dnsCacheFlagMinTTL != 0 {
-		meta.minTTL = binary.LittleEndian.Uint32(payload[dnsCachePayloadMinTTL:])
-		meta.minTTLFound = true
-	}
-
-	reader := dnsCachePayloadReader{data: payload, position: dnsCachePayloadBody}
-	var err error
-	if meta.answerTTLOffsets, err = reader.offsetList("answer_ttl_offsets"); err != nil {
-		return nil, err
-	}
-	if meta.authorityTTLOffsets, err = reader.offsetList("authority_ttl_offsets"); err != nil {
-		return nil, err
-	}
-
-	targetCount, err := reader.u16("chain_target_count")
-	if err != nil {
-		return nil, err
-	}
-	if targetCount > 0 {
-		meta.chainTargets = make([]chainTarget, 0, targetCount)
-	}
-	for i := 0; i < int(targetCount); i++ {
-		code, err := reader.u8("chain_target_kind")
-		if err != nil {
-			return nil, err
-		}
-		var kind string
-		switch code {
-		case 0:
-			kind = "cname"
-		case 1:
-			kind = "svcb"
-		default:
-			return nil, fmt.Errorf("dns cache response payload has unknown chain kind %d", code)
-		}
-		domain, err := reader.text("chain_target_domain")
-		if err != nil {
-			return nil, err
-		}
-		meta.chainTargets = append(meta.chainTargets, chainTarget{domain: domain, kind: kind})
-	}
-
-	ipCount, err := reader.u16("ip_count")
-	if err != nil {
-		return nil, err
-	}
-	if ipCount > 0 {
-		meta.ipList = make([]string, 0, ipCount)
-	}
-	for i := 0; i < int(ipCount); i++ {
-		ip, err := reader.text("ip")
-		if err != nil {
-			return nil, err
-		}
-		meta.ipList = append(meta.ipList, ip)
-	}
-
-	if meta.resolvedIPs, err = reader.text("resolved_ips"); err != nil {
-		return nil, err
-	}
-	if reader.remaining() != 0 {
-		return nil, fmt.Errorf("dns cache response payload has %d trailing bytes", reader.remaining())
-	}
-	return meta, nil
-}
-
-type dnsCachePayloadReader struct {
-	data     []byte
-	position int
-}
-
-func (r *dnsCachePayloadReader) remaining() int {
-	return len(r.data) - r.position
-}
-
-func (r *dnsCachePayloadReader) u8(field string) (byte, error) {
-	if r.remaining() < 1 {
-		return 0, fmt.Errorf("dns cache response payload is truncated (%s)", field)
-	}
-	value := r.data[r.position]
-	r.position++
-	return value, nil
-}
-
-func (r *dnsCachePayloadReader) u16(field string) (uint16, error) {
-	if r.remaining() < 2 {
-		return 0, fmt.Errorf("dns cache response payload is truncated (%s)", field)
-	}
-	value := binary.LittleEndian.Uint16(r.data[r.position:])
-	r.position += 2
-	return value, nil
-}
-
-func (r *dnsCachePayloadReader) u32(field string) (uint32, error) {
-	if r.remaining() < 4 {
-		return 0, fmt.Errorf("dns cache response payload is truncated (%s)", field)
-	}
-	value := binary.LittleEndian.Uint32(r.data[r.position:])
-	r.position += 4
-	return value, nil
-}
-
-func (r *dnsCachePayloadReader) offsetList(field string) ([]uint16, error) {
-	count, err := r.u16(field)
-	if err != nil {
-		return nil, err
-	}
-	if count == 0 {
-		return nil, nil
-	}
-	offsets := make([]uint16, 0, count)
-	for i := 0; i < int(count); i++ {
-		offset, err := r.u16(field)
-		if err != nil {
-			return nil, err
-		}
-		offsets = append(offsets, offset)
-	}
-	return offsets, nil
-}
-
-func (r *dnsCachePayloadReader) text(field string) (string, error) {
-	length, err := r.u32(field)
-	if err != nil {
-		return "", err
-	}
-	if length > uint32(r.remaining()) {
-		return "", fmt.Errorf("dns cache response payload is truncated (%s)", field)
-	}
-	value := string(r.data[r.position : r.position+int(length)])
-	r.position += int(length)
-	return value, nil
+	C.diting_dnscache_call_free(lib.freeBytes, pointer, C.size_t(length))
 }
