@@ -77,7 +77,7 @@ func (m *RuleMatcher) BuildFromRules(rules []*ParsedRule) error {
 
 // Match 对域名进行多策略优先级匹配评估 (Important Allow > Important Block > Whitelist Allow > Bloom+Trie Block > Wildcard/Regex)
 func (m *RuleMatcher) Match(domain string, qtype uint16) CheckHostResult {
-	// 归一化仍在 Go 侧：命中重写时构造 dns.RR 需要同一个名字，跨边界再传一次没有意义。
+	// 归一化仍在 Go 侧：命中重写时构造 dns.RR 需要同一个名字。
 	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
 	if domain == "" {
 		return CheckHostResult{Action: "pass"}
