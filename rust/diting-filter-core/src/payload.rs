@@ -34,26 +34,26 @@ impl DecodeError {
         Self(format!("rules payload is truncated ({field})"))
     }
 
-    fn invalid(message: impl Into<String>) -> Self {
+    pub(crate) fn invalid(message: impl Into<String>) -> Self {
         Self(message.into())
     }
 }
 
-struct Reader<'a> {
+pub(crate) struct Reader<'a> {
     data: &'a [u8],
     position: usize,
 }
 
 impl<'a> Reader<'a> {
-    fn new(data: &'a [u8]) -> Self {
+    pub(crate) fn new(data: &'a [u8]) -> Self {
         Self { data, position: 0 }
     }
 
-    fn remaining(&self) -> usize {
+    pub(crate) fn remaining(&self) -> usize {
         self.data.len() - self.position
     }
 
-    fn u8(&mut self, field: &str) -> Result<u8, DecodeError> {
+    pub(crate) fn u8(&mut self, field: &str) -> Result<u8, DecodeError> {
         if self.remaining() < 1 {
             return Err(DecodeError::truncated(field));
         }
@@ -62,7 +62,7 @@ impl<'a> Reader<'a> {
         Ok(value)
     }
 
-    fn u16(&mut self, field: &str) -> Result<u16, DecodeError> {
+    pub(crate) fn u16(&mut self, field: &str) -> Result<u16, DecodeError> {
         if self.remaining() < 2 {
             return Err(DecodeError::truncated(field));
         }
@@ -71,7 +71,7 @@ impl<'a> Reader<'a> {
         Ok(value)
     }
 
-    fn u32(&mut self, field: &str) -> Result<u32, DecodeError> {
+    pub(crate) fn u32(&mut self, field: &str) -> Result<u32, DecodeError> {
         if self.remaining() < 4 {
             return Err(DecodeError::truncated(field));
         }
@@ -81,7 +81,7 @@ impl<'a> Reader<'a> {
         Ok(u32::from_le_bytes(bytes))
     }
 
-    fn text(&mut self, field: &str) -> Result<String, DecodeError> {
+    pub(crate) fn text(&mut self, field: &str) -> Result<String, DecodeError> {
         let length = self.u16(field)? as usize;
         if self.remaining() < length {
             return Err(DecodeError::truncated(field));
@@ -101,7 +101,25 @@ impl<'a> Reader<'a> {
         Ok(out)
     }
 
-    fn expect_end(&self) -> Result<(), DecodeError> {
+    /// Long text: `u32` length, for payloads that carry whole documents (the parser request).
+    pub(crate) fn text32(&mut self, field: &str) -> Result<String, DecodeError> {
+        let slice = self.bytes32(field)?;
+        String::from_utf8(slice.to_vec())
+            .map_err(|_| DecodeError::invalid(format!("{field} is not valid UTF-8")))
+    }
+
+    /// Long bytes: `u32` length, no encoding requirement.
+    pub(crate) fn bytes32(&mut self, field: &str) -> Result<&'a [u8], DecodeError> {
+        let length = self.u32(field)? as usize;
+        if self.remaining() < length {
+            return Err(DecodeError::truncated(field));
+        }
+        let slice = &self.data[self.position..self.position + length];
+        self.position += length;
+        Ok(slice)
+    }
+
+    pub(crate) fn expect_end(&self) -> Result<(), DecodeError> {
         if self.remaining() == 0 {
             Ok(())
         } else {

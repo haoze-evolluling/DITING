@@ -25,7 +25,10 @@ import (
 )
 
 // filterNativeABIVersion must match `ABI_VERSION` in rust/diting-filter-core/src/ffi.rs.
-const filterNativeABIVersion = 1
+//
+// Version 2 added the two parser entry points; a version 1 library has neither, so the loader
+// refuses it instead of the first parse failing at run time.
+const filterNativeABIVersion = 2
 
 // Payload layout and status codes; keep in sync with src/payload.rs and src/ffi.rs.
 const (
@@ -44,6 +47,10 @@ const (
 	filterFlagWildcard  uint8 = 1 << 3
 	filterFlagExact     uint8 = 1 << 4
 	filterFlagRewrite   uint8 = 1 << 5
+
+	// filterKnownFlags is `rule::KNOWN_FLAGS`: a payload with any other bit set is a layout mismatch.
+	filterKnownFlags = filterFlagAllow | filterFlagImportant | filterFlagRegex |
+		filterFlagWildcard | filterFlagExact | filterFlagRewrite
 )
 
 // Decision action codes (src/payload.rs `Action::code`).
@@ -65,12 +72,14 @@ var filterReasonNames = [...]string{
 	"regex_block",
 }
 
-// filterNativeLib is one loaded kernel: the four entry points the Go side needs.
+// filterNativeLib is one loaded kernel: the matcher and the parser entry points.
 type filterNativeLib struct {
-	build     func(input unsafe.Pointer, inputLen uintptr, handleOut *unsafe.Pointer, out *unsafe.Pointer, outLen *uintptr) uint32
-	match     func(handle unsafe.Pointer, domain unsafe.Pointer, domainLen uintptr, qtype uint16, out *unsafe.Pointer, outLen *uintptr) uint32
-	free      func(handle unsafe.Pointer)
-	freeBytes func(pointer unsafe.Pointer, length uintptr)
+	build      func(input unsafe.Pointer, inputLen uintptr, handleOut *unsafe.Pointer, out *unsafe.Pointer, outLen *uintptr) uint32
+	match      func(handle unsafe.Pointer, domain unsafe.Pointer, domainLen uintptr, qtype uint16, out *unsafe.Pointer, outLen *uintptr) uint32
+	parseRules func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
+	parseRule  func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
+	free       func(handle unsafe.Pointer)
+	freeBytes  func(pointer unsafe.Pointer, length uintptr)
 }
 
 var (

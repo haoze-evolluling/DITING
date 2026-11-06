@@ -1,28 +1,34 @@
-//! The C ABI the Go service drives (see `desktop/service/internal/core/filter_native.go`).
+//! The C ABI the Go service drives (see `desktop/service/internal/core/filter_native.go` and
+//! `parse_native.go`).
 //!
-//! Five entry points, all falling back on a status word so a failure is never silent:
+//! Entry points, all falling back on a status word so a failure is never silent:
 //!
 //! | symbol | meaning |
 //! | --- | --- |
 //! | `diting_filter_abi_version` | ABI number the loader validates |
 //! | `diting_filter_build` | build an index from the rule payload, returns a handle + stats |
 //! | `diting_filter_match` | match one normalized domain, returns a decision payload |
+//! | `diting_filter_parse_rules` | parse a whole list, returns the parsed lines |
+//! | `diting_filter_parse_rule` | parse one line, returns zero or one parsed line |
 //! | `diting_filter_free` | drop an index |
 //! | `diting_filter_free_bytes` | drop a payload this library returned |
 //!
 //! Status words: `0` success, `1` rejected (payload carries the reason as UTF-8), `2` bad
 //! arguments (null pointer, wrong length). A handle is an opaque `Box<FilterIndex>`; it is immutable
 //! once built, so concurrent `match` calls need no lock on this side (Go still swaps indexes under
-//! its own mutex, because freeing one must not race with a match in flight).
+//! its own mutex, because freeing one must not race with a match in flight). Parsing keeps no
+//! state: the caller owns the text and the reply is one flat payload.
 
 use std::ffi::c_void;
 use std::slice;
 
 use crate::index::FilterIndex;
+use crate::parse::{parse_document, parse_line};
+use crate::parse_payload::{decode_request, encode_parsed_lines};
 use crate::payload::{decode_rules, encode_decision, encode_stats};
 
 /// Must match `filterNativeABIVersion` in `desktop/service/internal/core/filter_native.go`.
-pub const ABI_VERSION: u32 = 1;
+pub const ABI_VERSION: u32 = 2;
 
 const STATUS_OK: u32 = 0;
 const STATUS_REJECTED: u32 = 1;
@@ -117,6 +123,78 @@ pub unsafe extern "C" fn diting_filter_match(
         payload_len,
     );
     STATUS_OK
+}
+
+/// Parses a whole rule list.
+///
+/// The input is one [`decode_request`] payload; on `STATUS_OK` the reply holds every parsed line in
+/// list order, and on `STATUS_REJECTED` it holds the reason as UTF-8.
+///
+/// # Safety
+///
+/// `input` must be readable for `input_len` bytes; `payload_out`/`payload_len` must be valid for
+/// writes.
+#[no_mangle]
+pub unsafe extern "C" fn diting_filter_parse_rules(
+    input: *const u8,
+    input_len: usize,
+    payload_out: *mut *mut u8,
+    payload_len: *mut usize,
+) -> u32 {
+    run_parse(input, input_len, payload_out, payload_len, true)
+}
+
+/// Parses a single line; the reply holds zero or one parsed line.
+///
+/// # Safety
+///
+/// Same contract as [`diting_filter_parse_rules`].
+#[no_mangle]
+pub unsafe extern "C" fn diting_filter_parse_rule(
+    input: *const u8,
+    input_len: usize,
+    payload_out: *mut *mut u8,
+    payload_len: *mut usize,
+) -> u32 {
+    run_parse(input, input_len, payload_out, payload_len, false)
+}
+
+/// Shared body of the two parser entry points: decode, parse, encode.
+unsafe fn run_parse(
+    input: *const u8,
+    input_len: usize,
+    payload_out: *mut *mut u8,
+    payload_len: *mut usize,
+    document: bool,
+) -> u32 {
+    if payload_out.is_null() || payload_len.is_null() {
+        return STATUS_BAD_ARGS;
+    }
+    if input.is_null() && input_len > 0 {
+        return STATUS_BAD_ARGS;
+    }
+
+    let data = if input_len == 0 {
+        &[][..]
+    } else {
+        slice::from_raw_parts(input, input_len)
+    };
+
+    match decode_request(data) {
+        Ok(text) => {
+            let lines = if document {
+                parse_document(&text)
+            } else {
+                parse_line(&text).into_iter().collect()
+            };
+            write_payload(encode_parsed_lines(&lines), payload_out, payload_len);
+            STATUS_OK
+        }
+        Err(error) => {
+            write_payload(error.0.into_bytes(), payload_out, payload_len);
+            STATUS_REJECTED
+        }
+    }
 }
 
 /// Drops an index built by [`diting_filter_build`].

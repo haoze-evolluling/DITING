@@ -13,17 +13,22 @@
 //! anyway to build rewrite records.
 //!
 //! Layout:
+//! * [`parse`] - rule text parsing (`rule_parser.go` moved here): lines and hosts forms in, a
+//!   normalized pattern plus its flags out.
 //! * [`rule`] - one parsed rule as Go hands it over: pattern, flags, `$dnstype`, exclusions and the
 //!   `$dnsrewrite` fields the matcher needs to rank answers.
 //! * [`trie`] - `DomainTrie`: the reversed-label trie and its suffix/exact walk.
 //! * [`bloom`] - `DomainBloomFilter`: the prefilter in front of the block trie.
 //! * [`index`] - `FilterIndex`: the four tiers, the rewrite buckets and [`index::FilterIndex::match_domain`].
 //! * [`payload`] - the compact binary layout shared with `ffi`.
+//! * [`parse_payload`] - the request/reply layout of the parser entry points.
 //! * [`ffi`] - the C ABI, whose [`ffi::ABI_VERSION`] the Go loader validates.
 
 pub mod bloom;
 pub mod ffi;
 pub mod index;
+pub mod parse;
+pub mod parse_payload;
 pub mod payload;
 pub mod rule;
 pub mod trie;

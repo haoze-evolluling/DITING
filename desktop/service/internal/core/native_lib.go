@@ -138,6 +138,37 @@ func (r *payloadReader) text() (string, error) {
 	return value, nil
 }
 
+// text32 reads a `u32`-length string, the shape the parser payload uses for whole documents.
+func (r *payloadReader) text32() (string, error) {
+	length, err := r.u32()
+	if err != nil {
+		return "", err
+	}
+	if r.remaining() < int(length) {
+		return "", errors.New("payload is truncated (long string)")
+	}
+	value := string(r.data[r.pos : r.pos+int(length)])
+	r.pos += int(length)
+	return value, nil
+}
+
+// texts32 reads a `u16`-counted list of `u32`-length strings.
+func (r *payloadReader) texts32() ([]string, error) {
+	count, err := r.u16()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, count)
+	for i := 0; i < count; i++ {
+		value, err := r.text32()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, value)
+	}
+	return out, nil
+}
+
 func (r *payloadReader) bytes(length int) ([]byte, error) {
 	if r.remaining() < length {
 		return nil, errors.New("payload is truncated (bytes)")

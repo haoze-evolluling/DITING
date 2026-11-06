@@ -21,9 +21,11 @@ func loadFilterLibrary(path string) (*filterNativeLib, error) {
 	abiVersion := dll.NewProc("diting_filter_abi_version")
 	build := dll.NewProc("diting_filter_build")
 	match := dll.NewProc("diting_filter_match")
+	parseRules := dll.NewProc("diting_filter_parse_rules")
+	parseRule := dll.NewProc("diting_filter_parse_rule")
 	free := dll.NewProc("diting_filter_free")
 	freeBytes := dll.NewProc("diting_filter_free_bytes")
-	for _, proc := range []*syscall.LazyProc{abiVersion, build, match, free, freeBytes} {
+	for _, proc := range []*syscall.LazyProc{abiVersion, build, match, parseRules, parseRule, free, freeBytes} {
 		if err := proc.Find(); err != nil {
 			return nil, fmt.Errorf("missing symbol %s", proc.Name)
 		}
@@ -51,6 +53,24 @@ func loadFilterLibrary(path string) (*filterNativeLib, error) {
 				uintptr(domain),
 				domainLen,
 				uintptr(qtype),
+				uintptr(unsafe.Pointer(out)),
+				uintptr(unsafe.Pointer(outLen)),
+			)
+			return uint32(status)
+		},
+		parseRules: func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32 {
+			status, _, _ := parseRules.Call(
+				uintptr(input),
+				inputLen,
+				uintptr(unsafe.Pointer(out)),
+				uintptr(unsafe.Pointer(outLen)),
+			)
+			return uint32(status)
+		},
+		parseRule: func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32 {
+			status, _, _ := parseRule.Call(
+				uintptr(input),
+				inputLen,
 				uintptr(unsafe.Pointer(out)),
 				uintptr(unsafe.Pointer(outLen)),
 			)

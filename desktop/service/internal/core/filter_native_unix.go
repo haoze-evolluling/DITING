@@ -22,6 +22,8 @@ func loadFilterLibrary(path string) (*filterNativeLib, error) {
 		"diting_filter_abi_version",
 		"diting_filter_build",
 		"diting_filter_match",
+		"diting_filter_parse_rules",
+		"diting_filter_parse_rule",
 		"diting_filter_free",
 		"diting_filter_free_bytes",
 	}
@@ -43,6 +45,8 @@ func loadFilterLibrary(path string) (*filterNativeLib, error) {
 	lib := &filterNativeLib{}
 	purego.RegisterLibFunc(&lib.build, handle, "diting_filter_build")
 	purego.RegisterLibFunc(&lib.match, handle, "diting_filter_match")
+	purego.RegisterLibFunc(&lib.parseRules, handle, "diting_filter_parse_rules")
+	purego.RegisterLibFunc(&lib.parseRule, handle, "diting_filter_parse_rule")
 	purego.RegisterLibFunc(&lib.free, handle, "diting_filter_free")
 	purego.RegisterLibFunc(&lib.freeBytes, handle, "diting_filter_free_bytes")
 	return lib, nil

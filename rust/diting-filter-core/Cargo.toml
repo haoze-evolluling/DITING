@@ -9,4 +9,5 @@ crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
 diting-go-compat = { path = "../diting-go-compat" }
+idna = "1"
 regex = "1"
