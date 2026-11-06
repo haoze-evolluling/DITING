@@ -2,6 +2,7 @@ package core
 
 import (
 	"log"
+	"slices"
 	"strings"
 	"time"
 )
@@ -81,7 +82,7 @@ func sortedKeys(m map[string][]BlockingSchedule) []string {
 	for k := range m {
 		keys = append(keys, k)
 	}
-	sortStrings(keys)
+	slices.Sort(keys)
 	return keys
 }
 

@@ -1,10 +1,11 @@
 # Rust 内核
 
-五个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+六个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**，
-`diting-filter-core` 负责**桌面服务的规则文本解析与规则索引匹配**，`diting-go-compat` 是两个内核共用的
+`diting-filter-core` 负责**桌面服务的规则文本解析与规则索引匹配**，`diting-rewrite-core` 负责
+**桌面服务的重写记录取值解析与校验**，`diting-go-compat` 是各内核共用的
 Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
-七个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+八个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。
 
 | 入口 | 调用方 | Rust 产物 | 缺失时 |
@@ -16,6 +17,7 @@ Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns
 | DNS 印章解析 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 解析后的印章记录、`URL()`/`Server()` 派生串 | 上游配置失败 |
 | 规则索引与匹配 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 四层字典树、布隆预检、通配/正则表、判定与重写选择 | 规则索引构建失败 |
 | 规则文本解析 | Go 桌面服务（同一个库，纯 Go 动态加载 + C ABI） | 逐行的模式、标志位、`$dnstype`、排除集合与 `$dnsrewrite` 取值 | 列表加载失败 |
+| 重写记录构造 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 类型表、目标域名判定、A/AAAA/CNAME/NS/PTR/TXT/MX/SRV/HTTPS/SVCB 取值与 SVCB 参数 | 构建 `dns.RR` 失败，该记录/规则被丢弃并写日志 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -24,7 +26,11 @@ Go 侧只留取值类型与证书指纹适配。第六个搬的是每次查询�
 **读文本**这一段也交给了 Rust（`rule_parser.go` 整份删除）：注释与元素隐藏规则、hosts 形式、
 `@@`、`$` 修饰符切分、`$dnstype`、`$denyallow=`/`$to=`、AdGuard 域名形态、通配模式与 IDNA 归一化。
 Go 侧只留两件仍然属于它的事：`regexp` 与 `buildWildcardRegex` 的编译（匹配器要用编译后的源），
-以及 `$dnsrewrite` 取值解析（它连同 `buildRewriteRR` 属于 rewrite 子系统那一轮）。
+以及 `$dnsrewrite` 取值解析（它连同 `buildRewriteRR` 属于 rewrite 子系统那一轮）。第八个把
+**重写记录的取值语法**搬到了 Rust（`rewrite_records.go` 的 `buildRewriteRR` 只剩一层载荷解码）：
+记录类型表、目标域名判定、MX/SRV 的字段切分、HTTPS/SVCB 的参数列表与 AdGuard Home 对齐的取值限制
+都在 `record.rs`，Go 侧只按回传的类型号填 `dns.RR`（应答要直接进 `dns.Msg`）。自定义重写规则与
+`$dnsrewrite` 修饰符走同一条路径，所以两边的取值语法不可能再各写一份。
 
 Android 侧用 cgo 调策略内核；桌面服务侧刻意**不用 cgo**：Windows 走 `syscall.LazyDLL`，Linux 走
 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链一行都不用改。
@@ -43,9 +49,9 @@ rust/
 │   ├── jni_bridge.rs               # Kotlin 调用 DTRI 的 JNI 入口
 │   └── fast_hash.rs                # 去重索引用的随机种子 FxHash
 ├── diting-go-compat/src/
-│   ├── text.rs                     # Go 语义的 ToLower / TrimSpace / 去尾点 / 后缀匹配
+│   ├── text.rs                     # Go 语义的 ToLower / ToUpper / TrimSpace / 去尾点 / 后缀匹配
 │   ├── regex.rs                    # Go regexp → Rust regex 翻译、规则正则编译与前缀预筛
-│   └── dns_type.rs                 # dns.StringToType（两个内核共用的类型表）
+│   └── dns_type.rs                 # dns.StringToType（多个内核共用的类型表）
 ├── diting-stamp-core/src/
 │   ├── stamp.rs stamp/tests.rs     # 印章逐字节解析、地址/主机名校验、URL()/Server() 派生
 │   └── ffi.rs                      # 桌面服务 Go 侧动态加载的 C ABI（ABI_VERSION）+ 载荷布局
@@ -58,6 +64,10 @@ rust/
 │   ├── index.rs index/tests.rs     # 四层优先级、通配/正则表、重写选择（原 RuleMatcher）
 │   ├── payload.rs                  # 与 Go 共享的紧凑二进制布局
 │   └── ffi.rs                      # build / match / parse_rules / parse_rule / free 的 C ABI（ABI_VERSION）
+├── diting-rewrite-core/src/
+│   ├── record.rs record/tests.rs   # 重写记录：类型表、目标域名判定、各类型取值与 SVCB 参数（原 buildRewriteRR）
+│   ├── payload.rs                  # 请求/回应的二进制布局
+│   └── ffi.rs ffi/tests.rs         # build_record / record_types / free_bytes 的 C ABI（ABI_VERSION）
 ├── diting-filter-core/tests/fixtures/parse_corpus.tsv  # 迁移时 Go 解析器的 200 行语料快照
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
@@ -85,13 +95,18 @@ rust/
   `resolver_stamp_test.go`（原有用例，现在全部穿过 FFI 跑）。
 - 桌面服务 Go（规则索引 + 规则解析）：`filter_native.go`（加载、规则载荷编码、判定解码）、
   `filter_native_windows.go` / `filter_native_unix.go`（两个平台的加载器）、
-  `native_lib.go`（两个内核共用的探测顺序与平台文件名）、
+  `native_lib.go`（三个内核共用的探测顺序与平台文件名）、
   `rule_matcher.go`（`RuleMatcher` 只剩句柄生命周期与结果翻译）、
   `parse_native.go`（解析请求编码、解析结果解码、正则编译与 `$dnsrewrite` 取值解析）、
   `rule_parser.go`（`ParsedRule` 定义、两个入口、`buildWildcardRegex`）、
   `rule_engine*.go`（配置、加载、计划、统计不变）、
   `filter_native_test.go` / `parse_native_test.go`（载荷布局与失败路径）、
   `rule_parser_bench_test.go`（整份列表的端到端基准）。
+- 桌面服务 Go（重写记录）：`rewrite_native.go`（加载、请求编码、回应解码、`buildRewriteRR`）、
+  `rewrite_native_windows.go` / `rewrite_native_unix.go`（两个平台的加载器）、
+  `rewrite_native_test.go`（载荷布局与探测路径）、
+  `rewrite_records.go`（只剩 `RewriteRecord` 与应答码表）、
+  `rewrite_test.go` / `rewrite_records_test.go`（原有用例，现在全部穿过 FFI 跑）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -99,18 +114,19 @@ rust/
 ## 构建与启用
 
 ```bash
-cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（含两个桌面内核）
+cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（含三个桌面内核）
 python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
-桌面服务的两个内核按平台单独交付（Android 用不到它们）：
+桌面服务的三个内核按平台单独交付（Android 用不到它们）：
 
-- Windows：`cargo build --release -p diting-stamp-core -p diting-filter-core` 产出
-  `diting_stamp_core.dll` 与 `diting_filter_core.dll`，`build_manager.py` 在打 EXE 时各编一次，
-  NSIS 把两个都装到 `diting-service.exe` 同目录；
-- Linux：`build_linux.sh` 按目标架构编/复用 `libditing_stamp_core.so` 与 `libditing_filter_core.so`，
-  装到 `/usr/lib/diting/`；
-- 探测顺序（两个内核相同）：`DITING_STAMP_CORE_LIB` / `DITING_FILTER_CORE_LIB` → 可执行文件同目录
+- Windows：`cargo build --release -p diting-stamp-core -p diting-filter-core -p diting-rewrite-core`
+  产出 `diting_stamp_core.dll`、`diting_filter_core.dll` 与 `diting_rewrite_core.dll`，
+  `build_manager.py` 在打 EXE 时各编一次，NSIS 把三个都装到 `diting-service.exe` 同目录；
+- Linux：`build_linux.sh` 按目标架构编/复用 `libditing_stamp_core.so`、
+  `libditing_filter_core.so` 与 `libditing_rewrite_core.so`，装到 `/usr/lib/diting/`；
+- 探测顺序（三个内核相同）：`DITING_STAMP_CORE_LIB` / `DITING_FILTER_CORE_LIB` /
+  `DITING_REWRITE_CORE_LIB` → 可执行文件同目录
   → `/usr/lib/diting`、`/usr/local/lib/diting` → `rust/target/{release,debug}/`（`go test` 用）。
 
 没有 `.so` 就是错误，而不是“功能不变地慢一点”：
@@ -121,7 +137,9 @@ python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86
 - Go 侧 `ApplyRuleSnapshot` 返回错误，`EngineRuleLoader` / 独立 DNS 服务把它当作启动失败，
   不会以“过滤静默关闭”的状态起隧道；
 - 桌面服务侧 `ParseServerStamp` 返回错误，上游配置构建随之失败，不会退化成“印章当作普通地址”；
-  `RuleMatcher.BuildFromRules` 返回错误，规则引擎重建随之失败，不会退化成“规则静默不生效”。
+  `RuleMatcher.BuildFromRules` 返回错误，规则引擎重建随之失败，不会退化成“规则静默不生效”；
+  `buildRewriteRR` 返回错误，重写规则编译失败（自定义规则丢掉那一条，`$dnsrewrite` 丢掉整条规则），
+  不会退化成“配了却不生效的记录”。
 
 策略内核的调用约定：
 
@@ -150,10 +168,15 @@ DTRI：EnabledRule 分页 ──pack──> u32 计数 + 每条(pattern, source,
 
 规则文本：列表字节 ──parse_rules──> Rust 逐行解析+归一化 ──> 每行(pattern, flags, dnstype, denyallow, to, rewrite 原文)
           ──> Go 编译正则/通配源 + 解析 $dnsrewrite ──> []*ParsedRule ──> filter_build
+
+重写记录：RewriteRecord{type, value} ──build_record(名称, qtype, ttl)──> Rust 解析/校验/限定类型
+          ──> 二进制载荷（类型号 + 字段）──> Go 填 dns.RR → dns.Msg 应答
+          自定义重写规则（编译期与查询期）与 $dnsrewrite 修饰符走同一条入口
 ```
 
 布局与语义的权威注释在 `diting-rule-core/src/ffi.rs`、`search_ffi.rs`、`dtri.rs` 与
-`diting-policy-core/src/ffi.rs`、`snapshot.rs`、`diting-filter-core/src/ffi.rs`、`parse.rs` 顶部；
+`diting-policy-core/src/ffi.rs`、`snapshot.rs`、`diting-filter-core/src/ffi.rs`、`parse.rs`、
+`diting-rewrite-core/src/{record,payload,ffi}.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
 ## 语义一致性
@@ -215,6 +238,16 @@ IPv6 字面量、非 IP 地址、端口越界、不支持的协议族）；`ffi.
 （`rule_test.go`、`rule_modifiers_test.go`、`rule_modifiers_rewrite_test.go`）一条没改，现在全部穿过
 FFI 跑；`parse_native_test.go` 另钉住请求/回应载荷布局、标志位与失败路径。
 
+**重写记录（桌面服务）**：`rewrite_test.go` / `rewrite_records_test.go` 的断言一条没改，现在全部
+穿过 FFI 取得记录；只有两个只测已删函数的用例跟着搬走了（`TestParseSVCBParams` 的参数语料进了
+`record/tests.rs`，`RewriteRecordTypes` 改为向内核取值并断言完全一致的升序列表）。`record/tests.rs`
+逐条钉住原 `buildRewriteRR` 的分支：MX/SRV 字段切分、目标域名与 `dns.Fqdn`、A/AAAA 的 IPv4 判定
+（含 `::ffff:` 映射与 "IPv4 字面量不能变成 AAAA"）、TXT 的空白拒绝、HTTPS/SVCB 的全部参数
+（含逗号列表、单地址 hint、ech 的 Base64、`mandatory` 的键表、引号取值）、类型不匹配返回
+“无记录”而 CNAME 对任何查询类型都返回；`ffi/tests.rs` 钉住请求/回应载荷布局、拒绝消息与坏参数；
+`rewrite_native_test.go` 另钉住 Go 侧的编码与解码（回应用布局、尾随字节、截断、未知类型号、
+未知参数键）与探测顺序。
+
 **策略内核**：`tests/policy_core.rs` 把 DTRI fixtures 喂给快照，断言每个可索引规则解析到语料声明的
 source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判定 / 释放往返与错误上报，以及归一化、
 缓存命中与未命中答案一致、换新 prewarm；`cache.rs` 的单测钉住维度折叠、CLOCK 淘汰（热键存活）与
@@ -233,7 +266,7 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **`splitStampPort` 在两侧各有一份**：Rust 侧供印章解析用，Go 侧留给按主机名查证书指纹的 `pinHost`
   （处理的是普通 `host:port`，与印章无关）。改切分规则要同时改两处。
 - **依赖**：`desktop/service` 的 `go.mod` 新增 `github.com/ebitengine/purego`（Apache-2.0），只用于
-  Linux/macOS 的纯 Go 动态加载；Windows 走标准库 `syscall.LazyDLL`。两个内核共用这套加载器。
+  Linux/macOS 的纯 Go 动态加载；Windows 走标准库 `syscall.LazyDLL`。三个内核共用这套加载器。
 
 ## 规则索引内核的已知边界
 
@@ -244,7 +277,8 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
   一致），编译通过的源再交给内核翻译编译。若内核拒绝了某条 Go 接受的源，该规则永不命中，
   `BuildFromRules` 会记录条数（`uncompiled_patterns`）而不是静默丢弃整次加载。
 - **应答记录仍在 Go**：内核只回传 `rcode` 与命中规则的下标，`dns.RR` 的构造（含 `$dnsrewrite` 的
-  `TTL`、`dns.Fqdn` 与 SVCB 参数解析）留在 `rewrite_records.go`，等 rewrite 子系统迁移时一起走。
+  `TTL`、`dns.Fqdn` 与 SVCB 参数）留在 `rewrite_native.go`，取值解析与校验在
+  `diting-rewrite-core`。
 - **规则原文与来源仍在 Go**：载荷只带判定字段（标志位、`$dnstype`、排除集合、重写 `key`），
   命中后按下标回查 `[]*ParsedRule`，所以那条切片在匹配器重建前必须保持存活。
 - **布隆过滤器不参与判定**：它只负责在拦截字典树之前挡掉干净域名，位宽与哈希个数与 Go 完全一致，
@@ -252,8 +286,9 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **不可达分支的选择**：`Match` 无法返回错误。若内核在单次调用上返回非 0 状态（句柄提前释放或
   ABI 错配这类不可达状态），Go 侧记录日志后回落 `pass`：DNS 过滤失败时放行比让解析器崩掉安全。
   构建期失败则是硬错误，不会走到这里。
-- **`diting-go-compat` 是三个内核的唯一副本**：策略内核、规则索引与规则解析都用它的大小写折叠、
-  后缀匹配、正则翻译与 `dns.StringToType`，`diting-policy-core` 以 `pub use ... as text/regex_go/dns_type`
+- **`diting-go-compat` 是各内核的唯一副本**：策略内核、规则索引、规则解析与重写记录都用它的
+  大小写折叠（`ToLower` / `ToUpper`）、后缀匹配、正则翻译与 `dns.StringToType`，
+  `diting-policy-core` 以 `pub use ... as text/regex_go/dns_type`
   保留原路径，代码未改动。
 
 ## 规则文本解析的已知边界
@@ -266,8 +301,9 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
   （永远匹配不到任何查询）；这里的 idna 拒绝它，整条规则被丢弃。这是唯一一条接受/拒绝不同的输入。
 - **正则与通配源仍在 Go**：`/regex/` 由 Go `regexp.Compile("(?i)" + 源)` 编译（编译失败即丢规则），
   通配源由 `buildWildcardRegex` 单点推导后随规则交给匹配内核；内核只回传模式文本。
-- **`$dnsrewrite` 取值仍在 Go**：内核回传原文（裸形式为空串），`parseDNSRewriteModifier` 负责取值解析
-  与记录级校验，失败即丢规则（与迁移前一致）。它和 `buildRewriteRR` 属于 rewrite 子系统迁移的一部分。
+- **`$dnsrewrite` 取值解析仍在 Go**：内核回传原文（裸形式为空串），`parseDNSRewriteModifier` 负责
+  切分与取值解析（记录级校验与构造已交给 `diting-rewrite-core` 的 `buildRewriteRR`），失败即丢规则
+  （与迁移前一致）。它连同 rewrite 引擎属于 rewrite 子系统剩下的那一部分。
 - **非 UTF-8 列表**：字节按 UTF-8 有损解码（非法字节变 U+FFFD），与 Go 的 `strings.ToLower` 把非法
   字节折叠成 U+FFFD、IDNA 随即拒绝的结果一致；不会因为一个坏字节让整份列表加载失败。
 - **单行 1 MiB 上限消失**：原实现用 `bufio.Scanner`（上限 1 MiB，超限整份列表报错），现在整份
@@ -276,6 +312,31 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
   订阅列表走整份批量入口。
 - **产物体积**：IDNA 表（`idna` + ICU4X 编译数据）让 `diting_filter_core` 的 release DLL 从 1.52 MB
   涨到 1.73 MB。只有桌面服务加载这个库，Android 的两个 `.so` 不受影响。
+
+## 重写记录内核的已知边界
+
+- **`dns.RR` 仍在 Go 构造**：载荷只带类型号与已解析的字段（优先级、目标名、SVCB 参数列表等），
+  `dns.RR_Header`、`Class`、`dns.HTTPS` 包装都在 `rewrite_native.go` 里。理由是应答要直接进
+  `dns.Msg`，把结构再编码一次反而多一层。
+- **每次构造一次 FFI**：`buildRewriteRR` 是单次调用，没有句柄与缓存。自定义重写规则的显式记录
+  在编译期过一遍，命中时再过一遍（每个 `Records` 项一次）；`$dnsrewrite` 每次命中构造一条。
+  都是一个固定小载荷加一次 `dns.RR` 分配，不在热路径的瓶颈上；rewrite 引擎整体搬入 Rust 时
+  编译期结果会随规则一起缓存。
+- **IDNA 表版本**：目标域名校验用 `idna` crate 的 UTS 46（与 `diting-filter-core` 同一套配置），
+  Go 原先用 `idna.Lookup`。已分配的合法域名字符判定一致，差异只在表版本（见「规则文本解析的
+  已知边界」）。
+- **ech 的 Base64 报错文案**：接受/拒绝的集合与 Go `base64.StdEncoding` 一致（标准字母表、
+  必需填充），但错误文字来自 `base64` crate，不是 Go 的 `illegal base64 data at input byte N`。
+- **地址解析用 Rust**：`Ipv4Addr` / `Ipv6Addr` 与 `net.ParseIP` 在带前导零的 IPv4 上同样拒绝；
+  `::ffff:` 映射、`To4` / `To16` 的取舍（AAAA 拒绝 IPv4 字面量、`ipv6hint` 接受并映射）逐条
+  按 Go 的行为对齐。
+- **缺库时的表现**：`buildRewriteRR` 返回错误，自定义重写规则的那条记录被丢弃（`compileRewriteRecords`
+  写日志，与“取值非法”同一条路径），`$dnsrewrite` 整条规则被丢弃（与迁移前对非法取值的处理一致）。
+  rewrite 引擎仍在 Go，它的生命周期（`NewRewriteEngine` / `AddRule` / `Configure`）还没有错误返回，
+  因此没有地方把这个失败升级成启动失败；引擎迁移时一并改。
+- **记录类型表只在 Rust**：Go 侧的 `rewriteRecordTypes` 已删除，`RewriteRecordTypes()` 向内核取值；
+  名字→类型号在 Go 侧仍用 `dns.StringToType`（`$dnsrewrite` 本来就用它），支持与否问内核。
+- **产物体积**：新库依赖 `idna` 与 `base64`，release DLL 约 320 KB（filter 内核 1.73 MB 之外）。
 
 ## 策略内核的已知边界
 
@@ -400,7 +461,7 @@ go test -run XXX -bench BenchmarkPolicyApplyLargeWithRust -benchtime 3x .
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
 python rust/verify.py --go       # 再加 Go 侧策略内核用例与 DTRI fixture 用例
-python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章解析与规则解析全部经 Rust
+python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则与重写记录全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
 python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（两个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
@@ -409,8 +470,8 @@ python rust/verify.py --all      # 全量
 
 `--go` 会先 `cargo build --release`（Go 侧按约定探测 `rust/target/release/`），并且需要 `cgo` 与
 C 编译器（Windows 用 mingw，Linux/macOS 用 gcc/clang）。`--desktop` 不需要 cgo：桌面内核走纯 Go 动态
-加载，先 `cargo build --release -p diting-stamp-core -p diting-filter-core` 再去 `desktop/service` 跑
-`go test ./...`。`--dart` 同样需要先建好本机产物：Dart 侧
+加载，先 `cargo build --release -p diting-stamp-core -p diting-filter-core -p diting-rewrite-core`
+再去 `desktop/service` 跑 `go test ./...`。`--dart` 同样需要先建好本机产物：Dart 侧
 已经没有第二份解析器可以兜底。
 
 改了写入语义要一起重生成 fixtures：
@@ -437,11 +498,12 @@ cd rust && cargo test --test dtri_golden
 - **去重键去字符串化**：每条规则拼一个去重键约占解析时间三成，改成字段哈希 + 碰撞时逐字段比较。
 - **DTRI 增量更新**：按 source 分片只重编受影响分片，把万级列表的写入后延迟压到一次小编译。
 - **检索索引预热**：表稳定后在空闲时预热，把首次折叠的 ~30 ms 从“第一个键”挪开。
-- **桌面服务的 rewrite 子系统**：`rewrite.go` / `rewrite_lookup.go` /
-  `rewrite_records.go` 是独立于 `$dnsrewrite` 修饰符的另一套入口（自定义重写记录 + SVCB 参数解析），
-  与规则解析共用记录构造。搬完它顺带带走的还有三件留在 Go 的事：`$dnsrewrite` 取值的记录级校验、
-  `RewriteAction.key()` 的取值归一化（现在由 Go 算好再交给匹配内核），以及 `ParsedRule` 上那个
-  `*regexp.Regexp`（正则源届时可以只在 Rust 侧编译）。
-- **正则与通配模式的编译归属**：现在 Go 编译后把源交给内核，两条路径各编一次；rewrite 子系统
-  迁移时把 `ParsedRule.Regex` 一并搬走，`buildWildcardRegex` 就只剩内核里的一份。
+- **桌面服务的 rewrite 引擎**：记录构造已搬到 `diting-rewrite-core`，剩下的 `rewrite.go` /
+  `rewrite_lookup.go` 是引擎本身（精确/泛域名索引、PTR 反查、CNAME 链、应答码覆盖），
+  与记录构造共用同一次载荷即可：规则交给内核建一次索引，命中时回传记录列表，Go 只填 `dns.RR`。
+  搬完它顺带把「显式记录的编译期结果随规则缓存」也带进来，省掉每次命中的多次构造调用。
+- **`$dnsrewrite` 取值解析**：`parseDNSRewriteModifier` 的切分与简写判定（`RewriteAction`）仍在 Go，
+  搬进内核后可以和 `RewriteAction.key()` 的取值归一化一起做成单份实现。
+- **正则与通配模式的编译归属**：现在 Go 编译后把源交给内核，两条路径各编一次；把
+  `ParsedRule.Regex` 一并搬到 Rust 后，`buildWildcardRegex` 就只剩内核里的一份。
 - **备份导入导出**：语义面较大，可先精简备份格式再逐组迁移。

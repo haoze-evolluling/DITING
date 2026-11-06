@@ -4,7 +4,9 @@
 //! `strings.TrimSpace` (Unicode simple case mapping, one rune in - one rune out). Rust's
 //! `str::to_lowercase` applies the full case mapping instead, which differs for exactly one
 //! codepoint (`U+0130` LATIN CAPITAL LETTER I WITH DOT ABOVE becomes `i` + combining dot, where Go
-//! produces a plain `i`), so the fold is done per `char` with that override pinned.
+//! produces a plain `i`), so the fold is done per `char` with that override pinned. `strings.ToUpper`
+//! is the same story in the other direction: no rune is ever expanded (`ß` stays `ß`, it does not
+//! become `SS`), which the rewrite kernel needs for record type names (`$dnsrewrite=NOERROR;MX;...`).
 //!
 //! Domains on the hot path are *not* lowercased here: the Go caller already normalizes them before
 //! the FFI call, so the boundary contract is "domain is lowercase, trimmed, no trailing dot".
@@ -31,6 +33,32 @@ pub fn go_lower(s: &str) -> Cow<'_, str> {
     let mut out = String::with_capacity(s.len());
     for c in s.chars() {
         out.push(go_lower_char(c));
+    }
+    Cow::Owned(out)
+}
+
+/// `unicode.ToUpper` for a single rune: the simple mapping, which never expands a rune.
+fn go_upper_char(c: char) -> char {
+    let mut upper = c.to_uppercase();
+    match (upper.next(), upper.next()) {
+        (Some(single), None) => single,
+        // Where Unicode spells the case mapping with several runes (`ß` -> `SS`, `ﬁ` -> `FI`),
+        // the simple mapping Go uses leaves the rune unchanged.
+        _ => c,
+    }
+}
+
+/// `strings.ToUpper` (Unicode simple case mapping, context-free).
+pub fn go_upper(s: &str) -> Cow<'_, str> {
+    if s.is_ascii() {
+        if s.bytes().any(|byte| byte.is_ascii_lowercase()) {
+            return Cow::Owned(s.to_ascii_uppercase());
+        }
+        return Cow::Borrowed(s);
+    }
+    let mut out = String::with_capacity(s.len());
+    for c in s.chars() {
+        out.push(go_upper_char(c));
     }
     Cow::Owned(out)
 }
@@ -103,6 +131,16 @@ mod tests {
         // Context-free: no final sigma, unlike `str::to_lowercase`.
         assert_eq!(go_lower("ΑΣ"), "ασ");
         assert_eq!(go_lower("Straße"), "straße");
+    }
+
+    #[test]
+    fn upper_matches_go_simple_folding() {
+        assert_eq!(go_upper("aBc"), "ABC");
+        // The simple mapping does not expand `ß` into `SS`, unlike Rust's full mapping.
+        assert_eq!(go_upper("straße"), "STRAßE");
+        assert_eq!(go_upper("ﬁle"), "ﬁLE");
+        // Canonical input is borrowed, not rebuilt.
+        assert!(matches!(go_upper("ABC"), Cow::Borrowed(_)));
     }
 
     #[test]

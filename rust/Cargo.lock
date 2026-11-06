@@ -84,6 +84,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-rewrite-core"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "diting-go-compat",
+ "idna",
+]
+
+[[package]]
 name = "diting-rule-core"
 version = "0.1.0"
 dependencies = [

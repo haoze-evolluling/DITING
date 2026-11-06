@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/miekg/dns"
 )
 
 // DefaultRewriteTTL 默认重写记录生存期（秒）
@@ -205,8 +207,9 @@ func compileRewriteRecords(domain string, records []RewriteRecord) []RewriteReco
 		}
 		// 用一个中性查询名与类型做试构造：此处只关心取值是否可解析，
 		// 与最终返回给哪个查询无关（同名不同类型的记录会在查询期被过滤）。
-		rrtype, ok := rewriteRecordTypes[strings.ToUpper(strings.TrimSpace(rec.Type))]
-		if !ok {
+		// 名字到类型号用 Go 的表，支持哪些类型由内核决定（“不支持的记录类型”是它的报错）。
+		rrtype, known := dns.StringToType[strings.ToUpper(strings.TrimSpace(rec.Type))]
+		if !known {
 			log.Printf("[Rewrite] 规则 %s 的记录类型 %q 不受支持，已忽略", domain, rec.Type)
 			continue
 		}

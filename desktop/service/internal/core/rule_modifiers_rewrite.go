@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
-	"golang.org/x/net/idna"
 )
 
 // ReasonDNSRewrite 命中 $dnsrewrite 修饰符时的判定原因标识
@@ -193,25 +192,13 @@ func parseShorthandRewrite(value string) (*RewriteAction, error) {
 	return &RewriteAction{RCode: dns.RcodeSuccess, RRType: dns.TypeAAAA, Value: value}, nil
 }
 
-// supportedRewriteRRType 判断记录类型是否有对应的构造实现
-func supportedRewriteRRType(rrtype uint16) bool {
-	name, ok := dns.TypeToString[rrtype]
-	if !ok {
-		return false
-	}
-	_, ok = rewriteRecordTypes[name]
-	return ok
-}
-
 // validateRewriteValue 校验取值与记录类型是否匹配。
 //
 // 复用 buildRewriteRR 做实际解析而非另写一套判定：两者若各写一遍，
-// 迟早会出现「校验通过但构造失败」这类只在运行时才暴露的偏差。
+// 迟早会出现「校验通过但构造失败」这类只在运行时才暴露的偏差。支持哪些类型也由内核决定
+// （“不支持的记录类型”就是它的报错）。
 func validateRewriteValue(rrtype uint16, value string) error {
 	typeName := dns.TypeToString[rrtype]
-	if !supportedRewriteRRType(rrtype) {
-		return fmt.Errorf("记录类型 %s 暂不支持重写", typeName)
-	}
 	if strings.TrimSpace(value) == "" {
 		return fmt.Errorf("%s 记录缺少取值", typeName)
 	}
@@ -225,22 +212,4 @@ func validateRewriteValue(rrtype uint16, value string) error {
 		return fmt.Errorf("%s 记录的取值 %q 无法解析", typeName, value)
 	}
 	return nil
-}
-
-// isRewriteTarget 判断取值是否为可用的目标域名。
-//
-// 这里刻意不要求含点：重写目标常是内网单标签主机名（如 nas），
-// 与过滤规则模式必须含点的约束无关。
-func isRewriteTarget(target string) bool {
-	t := strings.TrimSuffix(strings.TrimSpace(target), ".")
-	if t == "" || len(t) > 253 || net.ParseIP(t) != nil {
-		return false
-	}
-	for _, label := range strings.Split(t, ".") {
-		if label == "" || len(label) > 63 {
-			return false
-		}
-	}
-	ascii, err := idna.Lookup.ToASCII(t)
-	return err == nil && ascii != ""
 }

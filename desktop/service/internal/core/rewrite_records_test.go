@@ -187,41 +187,22 @@ func TestRewriteRecords_CoexistWithShortcutFields(t *testing.T) {
 	}
 }
 
-func TestParseSVCBParams(t *testing.T) {
-	params, err := ParseSVCBParams([]string{"alpn=h2,h3", "no-default-alpn", "dohpath=/dns-query{?dns}"})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(params) != 3 {
-		t.Fatalf("参数数量 = %d, want 3", len(params))
-	}
-
-	for _, tc := range []struct {
-		name   string
-		params []string
-	}{
-		{"重复参数", []string{"alpn=h2", "alpn=h3"}},
-		{"未知参数", []string{"bogus=1"}},
-		{"取值列表", []string{"ipv4hint=1.2.3.4,5.6.7.8"}},
-		{"非法端口", []string{"port=99999"}},
-		{"缺失取值", []string{"alpn="}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			if _, err := ParseSVCBParams(tc.params); err == nil {
-				t.Fatalf("非法参数应被拒绝: %v", tc.params)
-			}
-		})
-	}
-}
-
+// 记录类型表由 Rust 内核持有；Go 侧只转发并校验它确实升序、无遗漏。
+//
+// SVCB 参数解析的用例随 `ParseSVCBParams` 一起搬到了
+// rust/diting-rewrite-core/src/record/tests.rs。
 func TestRewriteRecordTypes_SortedAndComplete(t *testing.T) {
-	types := RewriteRecordTypes()
-	if len(types) != len(rewriteRecordTypes) {
-		t.Fatalf("类型数量 = %d, want %d", len(types), len(rewriteRecordTypes))
+	types, err := RewriteRecordTypes()
+	if err != nil {
+		t.Fatalf("取记录类型表: %v", err)
 	}
-	for i := 1; i < len(types); i++ {
-		if types[i-1] > types[i] {
-			t.Fatalf("类型列表未排序: %v", types)
+	want := []string{"A", "AAAA", "CNAME", "HTTPS", "MX", "NS", "PTR", "SRV", "SVCB", "TXT"}
+	if len(types) != len(want) {
+		t.Fatalf("类型列表 = %v, want %v", types, want)
+	}
+	for i := range want {
+		if types[i] != want[i] {
+			t.Fatalf("类型列表 = %v, want %v", types, want)
 		}
 	}
 }

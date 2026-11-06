@@ -5,6 +5,7 @@ members = [
     "diting-policy-core",
     "diting-stamp-core",
     "diting-filter-core",
+    "diting-rewrite-core",
 ]
 resolver = "2"
 
