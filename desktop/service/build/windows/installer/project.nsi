@@ -18,6 +18,8 @@ SetCompressorDictSize 32
 
 !define PRODUCT_EXECUTABLE  "diting_desktop.exe"
 !define SERVICE_EXECUTABLE  "diting-service.exe"
+# 印章内核是 Rust 动态库，服务在运行期按同目录探测加载，必须与服务同目录安装。
+!define STAMP_LIBRARY       "diting_stamp_core.dll"
 !define SERVICE_NAME        "DitingDNSService"
 !define UNINST_KEY_NAME     "DitingDNS"
 !define UNINST_KEY          "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINST_KEY_NAME}"
@@ -27,6 +29,9 @@ SetCompressorDictSize 32
 !endif
 !ifndef ARG_SERVICE_BINARY
   !error "缺少 -DARG_SERVICE_BINARY：diting-service.exe 路径"
+!endif
+!ifndef ARG_STAMP_LIBRARY
+  !error "缺少 -DARG_STAMP_LIBRARY：diting_stamp_core.dll 路径"
 !endif
 
 RequestExecutionLevel admin
@@ -211,8 +216,9 @@ Section
     # 1. 释放 Flutter 桌面端（exe、flutter_windows.dll、data/ 等）
     File /r "${ARG_APP_DIR}\*.*"
 
-    # 2. 释放内核特权服务二进制
+    # 2. 释放内核特权服务二进制与其依赖的印章内核（Rust，运行期动态加载）
     File "/oname=${SERVICE_EXECUTABLE}" "${ARG_SERVICE_BINARY}"
+    File "/oname=${STAMP_LIBRARY}" "${ARG_STAMP_LIBRARY}"
 
     # 3. 自动向系统注册并启动特权服务
     DetailPrint "正在向系统注册 ${INFO_PRODUCTNAME} 内核特权服务..."

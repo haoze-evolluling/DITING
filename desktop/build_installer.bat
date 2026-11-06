@@ -22,6 +22,7 @@ title DITING Installer Build
 ::   - Python 3.10+ on PATH
 ::   - Flutter SDK on PATH (the "Windows (desktop)" device must work)
 ::   - Go 1.25+ on PATH
+::   - Rust (cargo) on PATH: the service loads a Rust stamp kernel
 ::   - NSIS (makensis) for the EXE target
 ::   - Visual Studio "Desktop development with C++" + Windows Developer Mode
 ::   - WSL for the deb target when this runs on Windows
@@ -91,6 +92,8 @@ where flutter >nul 2>&1
 if errorlevel 1 goto ERR_NO_FLUTTER
 where go >nul 2>&1
 if errorlevel 1 goto ERR_NO_GO
+where cargo >nul 2>&1
+if errorlevel 1 goto ERR_NO_CARGO
 
 :: Flutter's windows build needs the MSVC C++ toolchain, which ships with Visual
 :: Studio (not just the Build Tools installer shell). vswhere is the supported probe.
@@ -166,6 +169,11 @@ echo [ERROR] 'flutter' not found on PATH. Add your Flutter SDK bin directory to 
 goto FAIL
 :ERR_NO_GO
 echo [ERROR] 'go' not found on PATH. Install Go 1.25+ and retry.
+goto FAIL
+:ERR_NO_CARGO
+echo [ERROR] 'cargo' not found on PATH.
+echo         diting-service loads a Rust stamp kernel (rust/diting-stamp-core).
+echo         Install the Rust toolchain from https://rustup.rs and retry.
 goto FAIL
 :ERR_NO_MSVC
 echo [ERROR] Visual Studio with "Desktop development with C++" was not found.

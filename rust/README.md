@@ -1,8 +1,9 @@
 # Rust 内核
 
-两个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
-**Go 隧道引擎的规则判定与决策缓存内核**。四个接入点都只有 Rust 一条实现，原实现已删除：库缺失、
-ABI 不匹配或载荷被拒时直接报错，不再有第二套语义可以静默跑起来。
+三个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+**Go 隧道引擎的规则判定与决策缓存内核**，`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**。
+五个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+第二套语义可以静默跑起来。
 
 | 入口 | 调用方 | Rust 产物 | 缺失时 |
 |---|---|---|---|
@@ -10,15 +11,20 @@ ABI 不匹配或载荷被拒时直接报错，不再有第二套语义可以静�
 | 规则页检索 | Dart（`dart:ffi`，句柄） | 预折叠索引，查询返回命中行号 | 规则页抛错 |
 | DTRI 索引编译 | Kotlin（JNI） | mmap 索引，与 JVM 参考实现逐字节相同 | 快照编译失败 |
 | 策略快照构建 + 判定 + 决策缓存 | Go（`dlopen` + C ABI） | 规则表、通配索引、DTRI 读取、七级优先级、归一化与缓存 | 隧道启动失败 |
+| DNS 印章解析 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 解析后的印章记录、`URL()`/`Server()` 派生串 | 上游配置失败 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
-（构建、原子换新、延迟释放）。
+（构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
+Go 侧只留取值类型与证书指纹适配。
+
+Android 侧用 cgo 调策略内核；桌面服务侧刻意**不用 cgo**：Windows 走 `syscall.LazyDLL`，Linux 走
+`purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链一行都不用改。
 
 ## 结构
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译两个 crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译两个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -27,6 +33,9 @@ rust/
 │   ├── dtri.rs dtri/tests.rs       # DTRI 写入器（取代 MappedSubscriptionRuleIndex.compile）
 │   ├── jni_bridge.rs               # Kotlin 调用 DTRI 的 JNI 入口
 │   └── fast_hash.rs                # 去重索引用的随机种子 FxHash
+├── diting-stamp-core/src/
+│   ├── stamp.rs stamp/tests.rs     # 印章逐字节解析、地址/主机名校验、URL()/Server() 派生
+│   └── ffi.rs                      # 桌面服务 Go 侧动态加载的 C ABI（ABI_VERSION）+ 载荷布局
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
 │   ├── text.rs                     # Go 语义的 ToLower / TrimSpace / normalizePolicyDomain
@@ -49,6 +58,10 @@ rust/
   `rule_search_index.dart`（表变化即释放）、`rules_providers.dart`。
 - Kotlin：`RustRuleIndexCompiler.kt`（打包 `EnabledRule` + JNI）、
   `MappedSubscriptionRuleIndex.kt`（写镜像 + 头校验）。
+- 桌面服务 Go：`stamp_native.go`（探测与加载、ABI 校验、`parse` / `free`、载荷解码）、
+  `stamp_native_windows.go`（`syscall.LazyDLL`）、`stamp_native_unix.go`（`purego`）、
+  `resolver_stamp.go`（只留取值类型与 `Pins()` 适配）、`stamp_native_test.go`（载荷布局与探测路径）、
+  `resolver_stamp_test.go`（原有用例，现在全部穿过 FFI 跑）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -56,9 +69,17 @@ rust/
 ## 构建与启用
 
 ```bash
-cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用
+cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（含印章内核）
 python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
+
+桌面服务的印章内核按平台单独交付（Android 用不到它）：
+
+- Windows：`cargo build --release -p diting-stamp-core` 产出 `diting_stamp_core.dll`，
+  `build_manager.py` 在打 EXE 时编一次并让 NSIS 装到 `diting-service.exe` 同目录；
+- Linux：`build_linux.sh` 按目标架构编/复用 `libditing_stamp_core.so`，装到 `/usr/lib/diting/`；
+- 探测顺序：`DITING_STAMP_CORE_LIB` → 可执行文件同目录 → `/usr/lib/diting`、`/usr/local/lib/diting`
+  → `rust/target/{release,debug}/`（`go test` 用）。
 
 没有 `.so` 就是错误，而不是“功能不变地慢一点”：
 
@@ -66,7 +87,8 @@ python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86
   `rust/target/{release,debug}/` 探测）；
 - Kotlin 侧 `System.loadLibrary("diting_rule_core")` 失败即抛 `IllegalStateException`；
 - Go 侧 `ApplyRuleSnapshot` 返回错误，`EngineRuleLoader` / 独立 DNS 服务把它当作启动失败，
-  不会以“过滤静默关闭”的状态起隧道。
+  不会以“过滤静默关闭”的状态起隧道；
+- 桌面服务侧 `ParseServerStamp` 返回错误，上游配置构建随之失败，不会退化成“印章当作普通地址”。
 
 策略内核的调用约定：
 
@@ -127,11 +149,34 @@ DTRI：EnabledRule 分页 ──pack──> u32 计数 + 每条(pattern, source,
 已知边界：bloom 的 Kotlin 打包端按 UTF-16 码元低 8 位做 FNV；纯规则归一化后是 ASCII 故不影响，
 Rust 复刻写入器（逐字节一致）而不“修”成 UTF-8，否则不再是 drop-in 替换。
 
+**印章（桌面服务）**：`resolver_stamp_test.go` 的用例一条都没改，现在全部穿过 FFI 落到 Rust。
+`stamp.rs` 的单测把同一批向量逐条钉住（默认端口补全、props 位图、DoH 默认路径、VLP 截断、
+IPv6 字面量、非 IP 地址、端口越界、不支持的协议族）；`ffi.rs` 的单测钉住载荷布局、拒绝消息与释放往返；
+`stamp_native_test.go` 钉住布局版本不符 / 尾随字节 / 截断载荷必须报错，以及探测顺序。
+
+这一块**不是性能迁移**：印章只在上游配置加载或把 `sdns://` 粘进表单时解析一次，一次调用搬一整条，
+边界开销与解析本身同量级。搬它的目的是把桌面服务接入 Rust 的路（纯 Go 动态加载、ABI 校验、载荷布局、
+`--desktop` 验证入口）先落地，供后面的规则引擎复用；为此 Go 侧不再保留任何印章解析代码。
+
 **策略内核**：`tests/policy_core.rs` 把 DTRI fixtures 喂给快照，断言每个可索引规则解析到语料声明的
 source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判定 / 释放往返与错误上报，以及归一化、
 缓存命中与未命中答案一致、换新 prewarm；`cache.rs` 的单测钉住维度折叠、CLOCK 淘汰（热键存活）与
 热键排序；`android/engine/policy_native_test.go` 用固定快照覆盖各规则族，并在 Go 侧逐条对比
 `evaluate` 与 `evaluate_uncached`。
+
+## 印章内核的已知边界
+
+- **字符串字段必须是 UTF-8**：Rust 用 `String` 保存 lp-string，非法 UTF-8 直接报错；原 Go 实现会把
+  原始字节照样带出。DNS 印章规范里全是 ASCII，只有手工构造的字节才会走到这里，所以选择明确报错。
+- **base64 报错文案**：接受/拒绝的集合与 Go `RawURLEncoding.Strict()` 一致（不接受填充、尾随位必须为 0、
+  长度 `% 4 == 1` 拒绝），但错误文字来自 `base64` crate，不是 Go 的
+  `illegal base64 data at input byte N`。
+- **地址校验用 Rust 的 IP 解析**：`Ipv4Addr`/`Ipv6Addr` 与 `net.ParseIP` 在带前导零的 IPv4、带 zone 的
+  IPv6 上都拒绝，合法集合一致；地址文本按原样保留（只补端口、按需加 IPv6 方括号），不做重排。
+- **`splitStampPort` 在两侧各有一份**：Rust 侧供印章解析用，Go 侧留给按主机名查证书指纹的 `pinHost`
+  （处理的是普通 `host:port`，与印章无关）。改切分规则要同时改两处。
+- **依赖**：`desktop/service` 的 `go.mod` 新增 `github.com/ebitengine/purego`（Apache-2.0），只用于
+  Linux/macOS 的纯 Go 动态加载；Windows 走标准库 `syscall.LazyDLL`。
 
 ## 策略内核的已知边界
 
@@ -217,6 +262,7 @@ go test -run XXX -bench BenchmarkPolicyApplyLargeWithRust -benchtime 3x .
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
 python rust/verify.py --go       # 再加 Go 侧策略内核用例与 DTRI fixture 用例
+python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章解析全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
 python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（两个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
@@ -224,7 +270,8 @@ python rust/verify.py --all      # 全量
 ```
 
 `--go` 会先 `cargo build --release`（Go 侧按约定探测 `rust/target/release/`），并且需要 `cgo` 与
-C 编译器（Windows 用 mingw，Linux/macOS 用 gcc/clang）。`--dart` 同样需要先建好本机产物：Dart 侧
+C 编译器（Windows 用 mingw，Linux/macOS 用 gcc/clang）。`--desktop` 不需要 cgo：印章内核走纯 Go 动态
+加载，先 `cargo build --release -p diting-stamp-core` 再去 `desktop/service` 跑 `go test ./...`。`--dart` 同样需要先建好本机产物：Dart 侧
 已经没有第二份解析器可以兜底。
 
 改了写入语义要一起重生成 fixtures：
@@ -259,4 +306,7 @@ cd rust && cargo test --test dtri_golden
 - **去重键去字符串化**：每条规则拼一个去重键约占解析时间三成，改成字段哈希 + 碰撞时逐字段比较。
 - **DTRI 增量更新**：按 source 分片只重编受影响分片，把万级列表的写入后延迟压到一次小编译。
 - **检索索引预热**：表稳定后在空闲时预热，把首次折叠的 ~30 ms 从“第一个键”挪开。
+- **桌面服务规则引擎**：`desktop/service/internal/core/rule_parser.go` + `rule_matcher.go` +
+  `rule_trie.go` + `rule_bloom.go` 是每次查询都走的最后一块纯 Go 计算，也是桌面侧收益最大的一块；
+  印章内核已经把“纯 Go 动态加载 + 载荷解码 + 规则表跨 FFI”这条路走通，可以直接复用。
 - **备份导入导出**：同样适合这条路，但语义面大得多，需先精简备份格式再逐组迁移。

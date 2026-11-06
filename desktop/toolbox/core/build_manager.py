@@ -151,6 +151,25 @@ def cross_compile_linux_binary(
     return bin_path
 
 
+def build_stamp_kernel(root: str, on_log: Callable[[str, str], None], is_cancelled: Callable[[], bool]) -> Optional[str]:
+    """编译 Rust 印章内核（rust/diting-stamp-core），返回 Windows 动态库路径。
+
+    Go 侧在运行期用纯 Go 动态加载（syscall.LazyDLL），既不链接也不依赖 cgo，
+    因此安装包必须把 diting_stamp_core.dll 放到 diting-service.exe 同目录；
+    缺库时服务启动即失败，没有降级的解析实现。
+    """
+    rust_dir = os.path.join(root, "rust")
+    lib_path = os.path.join(rust_dir, "target", "release", "diting_stamp_core.dll")
+    on_log("info", ">>> 正在编译 Rust 印章内核 (rust/diting-stamp-core)...")
+    cmd = ["cargo", "build", "--release", "-p", "diting-stamp-core"]
+    if not run_cmd_live(cmd, cwd=rust_dir, on_log=on_log, is_cancelled=is_cancelled):
+        return None
+    if not os.path.exists(lib_path):
+        on_log("error", f"Rust 印章内核未生成动态库: {lib_path}")
+        return None
+    return lib_path
+
+
 def build_web_console_assets(
     server_dir: str,
     on_log: Optional[Callable[[str, str], None]] = None,
@@ -252,6 +271,9 @@ def build_pipeline(
             if not tools["nsis"]["found"]:
                 on_log("error", "未找到 makensis，无法打包 NSIS 安装包。")
                 return {"success": False, "message": "缺少 NSIS"}
+            if not tools["cargo"]["found"]:
+                on_log("error", "未找到 Rust 工具链（cargo），特权服务的印章内核需要用 Rust 编译。")
+                return {"success": False, "message": "缺少 Rust 工具链"}
             if sys.platform == "win32" and not tools.get("msvc", {}).get("found"):
                 on_log("error", "未找到 Visual Studio C++ 桌面开发工具链，无法构建 Flutter Windows 窗口。")
                 return {"success": False, "message": "缺少 Visual Studio C++ 工具链"}
@@ -323,12 +345,16 @@ def build_pipeline(
         shutil.copytree(release_dir, app_stage)
         on_log("info", f"     Flutter 产物已暂存: {app_stage}")
 
-        on_log("info", ">>> [2/3] 正在编译 Windows 特权服务 (diting-service.exe)...")
+        on_log("info", ">>> [2/3] 正在编译 Windows 特权服务 (diting-service.exe) 与 Rust 印章内核...")
         svc_ldflags = f"{'-s -w ' if is_rel else ''}-H windowsgui -X 'main.Version={version}' -X 'main.GitCommit={git_commit}' -X 'main.BuildTime={build_time}'"
         cmd_svc = ["go", "build", "-ldflags", svc_ldflags, "-o", service_bin, "./cmd/service"]
         ok = run_cmd_live(cmd_svc, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
         if not ok or not os.path.exists(service_bin):
             return _fail("特权服务编译失败")
+
+        stamp_lib = build_stamp_kernel(root, on_log, is_cancelled)
+        if not stamp_lib:
+            return _fail("Rust 印章内核编译失败")
 
         on_log("info", ">>> [3/3] 正在打包 NSIS 独立安装包...")
         installer_dir = INSTALLER_DIR
@@ -348,6 +374,7 @@ def build_pipeline(
             "UTF8",
             f"-DARG_APP_DIR={app_stage}",
             f"-DARG_SERVICE_BINARY={service_bin}",
+            f"-DARG_STAMP_LIBRARY={stamp_lib}",
             f"-DPRODUCT_VERSION={version}",
             f"-DINFO_PRODUCTVERSION={version}",
             f"-DOUTPUT_FILENAME={installer_path}",

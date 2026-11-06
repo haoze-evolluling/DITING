@@ -30,6 +30,7 @@ fi
 SERVICE_NAME="diting-dnsservice"
 UNIT_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
 INSTALL_BIN="/usr/local/bin/diting-service"
+INSTALL_LIB_DIR="/usr/lib/diting"
 CONFIG_DIR="/etc/diting"
 DATA_DIR="/var/lib/diting"
 
@@ -91,8 +92,9 @@ rm -f "$UNIT_PATH"
 rm -f /etc/default/diting
 systemctl daemon-reload || true
 
-echo "[4/5] 删除可执行文件"
+echo "[4/5] 删除可执行文件与印章内核"
 rm -f "$INSTALL_BIN"
+rm -rf "$INSTALL_LIB_DIR"
 
 echo "[5/5] 清理配置与数据"
 if [ "$PURGE" -eq 1 ]; then

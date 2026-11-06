@@ -1,5 +1,5 @@
 [workspace]
-members = ["diting-rule-core", "diting-policy-core"]
+members = ["diting-rule-core", "diting-policy-core", "diting-stamp-core"]
 resolver = "2"
 
 # The crates are delivered as shared libraries inside the APK, so strip symbols and let the linker

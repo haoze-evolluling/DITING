@@ -32,8 +32,9 @@ from pathlib import Path
 RUST_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = RUST_DIR.parent
 JNI_LIBS_DIR = PROJECT_ROOT / "android" / "app" / "android" / "app" / "src" / "main" / "jniLibs"
-# Both crates build with one cargo invocation; each artifact is copied next to the others so the
-# APK ships them in `lib/<abi>/` (which is on the loader search path for the app).
+# Both Android crates build with one cargo invocation; each artifact is copied next to the others so
+# the APK ships them in `lib/<abi>/` (which is on the loader search path for the app). The desktop
+# stamp kernel is selected out on purpose: it is not part of the APK.
 LIB_NAMES = ("libditing_rule_core.so", "libditing_policy_core.so")
 ANDROID_API = 28
 
@@ -120,6 +121,10 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
     command = [
         "cargo",
         "build",
+        "-p",
+        "diting-rule-core",
+        "-p",
+        "diting-policy-core",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",

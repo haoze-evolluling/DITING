@@ -113,6 +113,53 @@ chmod +x "$BIN_PATH"
 echo "[OK] Linux 二进制就绪: $BIN_PATH ($(du -h "$BIN_PATH" | cut -f1))"
 
 # ---------------------------------------------------------------------------
+# Rust 印章内核（rust/diting-stamp-core）
+#
+# Go 侧在运行期用纯 Go 动态加载它（不链接、不依赖 cgo），所以它必须随二进制一起交付：
+# deb 装到 /usr/lib/diting/，服务按该路径探测；缺库即服务启动失败，没有降级解析实现。
+# ---------------------------------------------------------------------------
+RUST_DIR="$SCRIPT_DIR/../../rust"
+STAMP_LIB_NAME="libditing_stamp_core.so"
+case "$ARCH" in
+    amd64) STAMP_TARGET="x86_64-unknown-linux-gnu" ; STAMP_TARGET_ARCH="x86_64" ;;
+    arm64) STAMP_TARGET="aarch64-unknown-linux-gnu" ; STAMP_TARGET_ARCH="aarch64" ;;
+    arm)   STAMP_TARGET="armv7-unknown-linux-gnueabihf" ; STAMP_TARGET_ARCH="armv7" ;;
+esac
+case "$(uname -m)" in
+    x86_64|amd64)   STAMP_HOST_ARCH="x86_64" ;;
+    aarch64|arm64)  STAMP_HOST_ARCH="aarch64" ;;
+    armv7l|armv8l|arm) STAMP_HOST_ARCH="armv7" ;;
+    *)              STAMP_HOST_ARCH="$(uname -m)" ;;
+esac
+
+if [ "$STAMP_HOST_ARCH" = "$STAMP_TARGET_ARCH" ]; then
+    STAMP_LIB="$RUST_DIR/target/release/$STAMP_LIB_NAME"
+else
+    STAMP_LIB="$RUST_DIR/target/$STAMP_TARGET/release/$STAMP_LIB_NAME"
+fi
+
+if [ ! -f "$STAMP_LIB" ]; then
+    if ! command -v cargo >/dev/null 2>&1; then
+        echo "[错误] 未找到 Rust 工具链（cargo），也没有可复用的印章内核: $STAMP_LIB" >&2
+        echo "       请安装 rustup 后重试；或先在目标架构上执行:" >&2
+        echo "       cargo build --release -p diting-stamp-core${STAMP_TARGET:+ --target $STAMP_TARGET}" >&2
+        exit 1
+    fi
+    echo ">>> 正在编译 Rust 印章内核 (rust/diting-stamp-core, linux/$ARCH)..."
+    if [ "$STAMP_HOST_ARCH" = "$STAMP_TARGET_ARCH" ]; then
+        ( cd "$RUST_DIR" && cargo build --release -p diting-stamp-core )
+    else
+        ( cd "$RUST_DIR" && cargo build --release -p diting-stamp-core --target "$STAMP_TARGET" )
+    fi
+fi
+if [ ! -f "$STAMP_LIB" ]; then
+    echo "[错误] 印章内核编译失败，未生成 $STAMP_LIB" >&2
+    echo "       交叉编译需要 rustup target add $STAMP_TARGET 与对应的交叉链接器。" >&2
+    exit 1
+fi
+echo "[OK] 印章内核就绪: $STAMP_LIB ($(du -h "$STAMP_LIB" | cut -f1))"
+
+# ---------------------------------------------------------------------------
 # 发行包
 # ---------------------------------------------------------------------------
 if [ "$PACKAGE" -eq 1 ]; then
@@ -129,6 +176,7 @@ if [ "$PACKAGE" -eq 1 ]; then
     echo ">>> 正在组装发行包: $PKG_NAME"
     rm -rf "$PKG_DIR"
     mkdir -p "$PKG_DIR/usr/local/bin"
+    mkdir -p "$PKG_DIR/usr/lib/diting"
     mkdir -p "$PKG_DIR/usr/share/diting"
     mkdir -p "$PKG_DIR/lib/systemd/system"
     mkdir -p "$PKG_DIR/etc/diting"
@@ -136,6 +184,9 @@ if [ "$PACKAGE" -eq 1 ]; then
     mkdir -p "$PKG_DIR/usr/share/pixmaps"
 
     cp "$BIN_PATH" "$PKG_DIR/usr/local/bin/$BIN_NAME"
+    # 服务按 /usr/lib/diting 探测印章内核，装在这里无需任何环境变量或 rpath
+    cp "$STAMP_LIB" "$PKG_DIR/usr/lib/diting/$STAMP_LIB_NAME"
+    chmod 0755 "$PKG_DIR/usr/lib/diting/$STAMP_LIB_NAME"
     cp "build/linux/diting-dnsservice.service" "$PKG_DIR/lib/systemd/system/"
     chmod 0644 "$PKG_DIR/lib/systemd/system/diting-dnsservice.service"
     cp "build/linux/install.sh" "$PKG_DIR/usr/share/diting/install.sh"
@@ -221,6 +272,8 @@ if [ "$PACKAGE" -eq 1 ]; then
 else
     echo " 构建完成。安装方式:"
     echo "   sudo install -m 0755 $BIN_PATH /usr/local/bin/$BIN_NAME"
+    echo "   sudo install -d -m 0755 /usr/lib/diting"
+    echo "   sudo install -m 0755 $STAMP_LIB /usr/lib/diting/$STAMP_LIB_NAME"
     echo "   sudo $BIN_NAME -service install && sudo $BIN_NAME -service start"
 fi
 echo "   管理地址: http://127.0.0.1:15353"

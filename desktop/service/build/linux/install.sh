@@ -2,17 +2,19 @@
 # ============================================================================
 #   谛听 (DITING) Linux 端安装脚本
 #
-#   将 diting-service 安装为 systemd 系统服务，创建数据目录与默认配置，
-#   并注册开机自启。需以 root 身份运行。
+#   将 diting-service 及其 Rust 印章内核安装为 systemd 系统服务，创建数据目录
+#   与默认配置，并注册开机自启。需以 root 身份运行。
 #
 #   用法:
-#     sudo ./install.sh [--bin /path/to/diting-service] [--port 53] [--no-start]
+#     sudo ./install.sh [--bin /path/to/diting-service] [--lib /path/to/libditing_stamp_core.so]
+#                       [--port 53] [--no-start]
 # ============================================================================
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_SRC=""
+LIB_SRC=""
 WEB_PORT=15353
 DNS_PORT=53
 AUTO_START=1
@@ -20,6 +22,8 @@ AUTO_START=1
 SERVICE_NAME="diting-dnsservice"
 UNIT_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
 INSTALL_BIN="/usr/local/bin/diting-service"
+INSTALL_LIB_DIR="/usr/lib/diting"
+STAMP_LIB_NAME="libditing_stamp_core.so"
 CONFIG_DIR="/etc/diting"
 DATA_DIR="/var/lib/diting"
 SERVICE_USER="root"
@@ -27,11 +31,12 @@ SERVICE_USER="root"
 while [ $# -gt 0 ]; do
     case "$1" in
         --bin)      BIN_SRC="$2"; shift 2 ;;
+        --lib)      LIB_SRC="$2"; shift 2 ;;
         --port)     DNS_PORT="$2"; shift 2 ;;
         --web-port) WEB_PORT="$2"; shift 2 ;;
         --no-start) AUTO_START=0; shift ;;
         -h|--help)
-            sed -n '2,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+            sed -n '2,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
             exit 0 ;;
         *) echo "[错误] 未知参数: $1" >&2; exit 1 ;;
     esac
@@ -64,15 +69,33 @@ if [ -z "$BIN_SRC" ] || [ ! -f "$BIN_SRC" ]; then
     exit 1
 fi
 
+# 印章内核在运行期动态加载，缺了它服务起不来，因此与二进制一同安装
+if [ -z "$LIB_SRC" ]; then
+    for candidate in \
+        "$SCRIPT_DIR/$STAMP_LIB_NAME" \
+        "$(dirname "$BIN_SRC")/$STAMP_LIB_NAME"; do
+        if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+            LIB_SRC="$candidate"
+            break
+        fi
+    done
+fi
+if [ -z "$LIB_SRC" ] || [ ! -f "$LIB_SRC" ]; then
+    echo "[错误] 未找到 $STAMP_LIB_NAME，请通过 --lib 指定路径（服务缺该库无法启动）。" >&2
+    exit 1
+fi
+
 echo "============================================================"
 echo " 谛听 (DITING) Linux 安装"
 echo " 二进制来源: $BIN_SRC"
 echo " DNS 端口: $DNS_PORT   Web 端口: $WEB_PORT"
 echo "============================================================"
 
-echo "[1/6] 安装可执行文件 -> $INSTALL_BIN"
+echo "[1/6] 安装可执行文件与印章内核"
 install -d -m 0755 "$(dirname "$INSTALL_BIN")"
 install -m 0755 "$BIN_SRC" "$INSTALL_BIN"
+install -d -m 0755 "$INSTALL_LIB_DIR"
+install -m 0755 "$LIB_SRC" "$INSTALL_LIB_DIR/$STAMP_LIB_NAME"
 
 echo "[2/6] 创建配置目录 $CONFIG_DIR 与数据目录 $DATA_DIR"
 install -d -m 0700 "$CONFIG_DIR"
