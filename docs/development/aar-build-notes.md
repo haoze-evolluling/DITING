@@ -49,14 +49,17 @@ gomobile bind `
 
 ## 与 Rust 内核的关系
 
-AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`，把域名规则判定交给 Rust
-（见 `rust/README.md`）。这个 `.so` 与 AAR 无关，它和 Flutter 侧的 `libditing_rule_core.so` 一起由
-`python rust/build_android.py` 拷进 `android/app/android/app/src/main/jniLibs/<abi>/`，最终落在
-APK 的 `lib/<abi>/`，正好在应用命名空间的库搜索路径上。
+AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`（域名规则判定）与
+`dlopen("libditing_dns_cache_core.so")`（DNS 缓存取值与改写），把这两块交给 Rust
+（见 `rust/README.md`）。这两个 `.so` 与 AAR 无关，它们和 Flutter 侧的 `libditing_rule_core.so`
+一起由 `python rust/build_android.py` 拷进
+`android/app/android/app/src/main/jniLibs/<abi>/`，最终落在 APK 的 `lib/<abi>/`，正好在应用命名
+空间的库搜索路径上。
 
-因此打包顺序是：`python rust/build_android.py` → `build_aar.ps1` → `flutter build`。少了这个
-`.so` APK 依然能装，但 `ApplyRuleSnapshot` 会失败，隧道启动直接报错（Go 侧已没有第二套判定实现），
-所以 `rust/verify.py --go` 是构建前发现“没带上”的地方。
+因此打包顺序是：`python rust/build_android.py` → `build_aar.ps1` → `flutter build`。少了策略
+`.so` APK 依然能装，但 `ApplyRuleSnapshot` 会失败，隧道启动直接报错（Go 侧已没有第二套判定实现）；
+少了 DNS 缓存 `.so` 则缓存全部 miss，答案仍然正确。`rust/verify.py --go` 是构建前发现“没带上”的
+地方。
 
 ## 常见问题
 

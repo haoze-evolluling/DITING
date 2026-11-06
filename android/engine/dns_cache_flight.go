@@ -76,7 +76,8 @@ func (c *dnsCache) singleFlight(rawQuery []byte, resolveFn func() ([]byte, error
 // it may be mutated. Shared and cached results return nil and must be unpacked
 // by the caller if needed.
 func (c *dnsCache) singleFlightMsg(rawQuery []byte, resolveFn func() ([]byte, *dns.Msg, error)) ([]byte, *dns.Msg, bool, error) {
-	keyBytes, _, ok := appendQuestionKey(make([]byte, 0, 64), rawQuery)
+	var keyBuf [maxCacheKeyLen]byte
+	keyBytes, _, _, _, ok := nativeQuestionKey(rawQuery, keyBuf[:])
 	if !ok {
 		resp, msg, err := resolveFn()
 		return resp, msg, false, err
@@ -102,7 +103,7 @@ func (c *dnsCache) singleFlightMsg(rawQuery []byte, resolveFn func() ([]byte, *d
 				}
 			}
 			if msg != nil {
-				c.putMsg(rawQuery, res, msg)
+				c.putResponse(rawQuery, res)
 			}
 		}
 		leaderMsg = msg

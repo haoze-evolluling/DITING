@@ -169,7 +169,7 @@ func (c *dnsCache) lookup(rawQuery []byte, count bool) (entry *cacheEntry, respo
 		return nil, nil, false
 	}
 	var buf [maxCacheKeyLen]byte
-	key, _, ok := appendQuestionKey(buf[:0], rawQuery)
+	key, _, _, _, ok := nativeQuestionKey(rawQuery, buf[:])
 	if !ok {
 		return nil, nil, false
 	}
@@ -193,7 +193,7 @@ func (c *dnsCache) lookup(rawQuery []byte, count bool) (entry *cacheEntry, respo
 		if remainingSec == 0 {
 			remainingSec = 1
 		}
-		response = patchWireResponse(entry.wire, entry.ttlOffsets, queryID, remainingSec)
+		response = nativePatchResponse(entry.wire, entry.ttlOffsets, queryID, remainingSec)
 		elem := entry.elem
 		shard.mu.RUnlock()
 
@@ -251,54 +251,63 @@ func (c *dnsCache) buildStaleResponse(rawQuery []byte, entry *cacheEntry) []byte
 		return nil
 	}
 	c.staleHits.Add(1)
-	return patchWireResponse(entry.wire, entry.ttlOffsets, binary.BigEndian.Uint16(rawQuery[0:2]), 1)
+	return nativePatchResponse(entry.wire, entry.ttlOffsets, binary.BigEndian.Uint16(rawQuery[0:2]), 1)
 }
 
 func (c *dnsCache) put(rawQuery, rawResponse []byte) bool {
-	var respMsg dns.Msg
-	if err := respMsg.Unpack(rawResponse); err != nil {
-		return false
-	}
-	return c.putMsg(rawQuery, rawResponse, &respMsg)
+	return c.putResponse(rawQuery, rawResponse)
 }
 
-func (c *dnsCache) putMsg(rawQuery, rawResponse []byte, respMsg *dns.Msg) bool {
-	if respMsg == nil || len(rawResponse) < 12 {
-		return false
-	}
-	// A truncated answer carries no complete records; caching it would replay
-	// the TC=1 header to later clients even after the upstream recovered.
-	if respMsg.Truncated {
+// putResponse stores one answer. The Rust wire kernel reads the metadata the old unpacked
+// *dns.Msg provided, so the cache no longer unpacks every upstream response a second time.
+func (c *dnsCache) putResponse(rawQuery, rawResponse []byte) bool {
+	if len(rawResponse) < 12 {
 		return false
 	}
 	cfg := c.getConfig()
 	if !cfg.Enabled {
 		return false
 	}
+	meta, ok := nativeParseResponse(rawResponse)
+	if !ok || meta == nil {
+		return false
+	}
+	// A truncated answer carries no complete records; caching it would replay
+	// the TC=1 header to later clients even after the upstream recovered.
+	if meta.truncated {
+		return false
+	}
 
-	keyBytes, nameLen, ok := appendQuestionKey(make([]byte, 0, 64), rawQuery)
+	var keyBuf [maxCacheKeyLen]byte
+	keyBytes, nameLen, qtype, qclass, ok := nativeQuestionKey(rawQuery, keyBuf[:])
 	if !ok {
 		return false
 	}
 
-	minTTL, found := extractMinTTL(respMsg)
 	var effectiveTTL time.Duration
 	isNegative := false
 
-	if respMsg.Rcode == dns.RcodeNameError || (respMsg.Rcode == dns.RcodeSuccess && len(respMsg.Answer) == 0) {
+	if meta.rcode == dns.RcodeNameError || (meta.rcode == dns.RcodeSuccess && meta.answerCount == 0) {
 		if !cfg.NegativeTTLEnabled {
 			return false
 		}
 		isNegative = true
-		effectiveTTL = c.calculateNegativeTTL(minTTL, found, cfg)
-	} else if respMsg.Rcode == dns.RcodeSuccess && len(respMsg.Answer) > 0 {
-		effectiveTTL = c.calculateEffectiveTTL(minTTL, cfg)
+		effectiveTTL = c.calculateNegativeTTL(meta.minTTL, meta.minTTLFound, cfg)
+	} else if meta.rcode == dns.RcodeSuccess && meta.answerCount > 0 {
+		effectiveTTL = c.calculateEffectiveTTL(meta.minTTL, cfg)
 	} else {
 		return false
 	}
 
 	if effectiveTTL <= 0 {
 		return false
+	}
+
+	// With no answers the negative path rewrites the authority TTLs; every other path rewrites the
+	// answer TTLs.
+	ttlOffsets := meta.answerTTLOffsets
+	if meta.answerCount == 0 {
+		ttlOffsets = meta.authorityTTLOffsets
 	}
 
 	now := time.Now()
@@ -308,32 +317,27 @@ func (c *dnsCache) putMsg(rawQuery, rawResponse []byte, respMsg *dns.Msg) bool {
 		staleUntil = expiresAt.Add(time.Duration(cfg.StaleFallbackSeconds) * time.Second)
 	}
 
-	ttlOffsets := extractTtlOffsetsFromWire(rawResponse, isNegative)
-	chainTargets := extractChainTargetsFromMsg(respMsg)
-	ipList, resolvedIPs := extractIPsFromMsg(respMsg)
-
 	wireCopy := make([]byte, len(rawResponse))
 	copy(wireCopy, rawResponse)
 
 	key := string(keyBytes)
-	domain, qtype, qclass := parseKeyQuestion(key, nameLen)
 	entry := &cacheEntry{
 		key:          key,
-		domain:       domain,
+		domain:       key[:nameLen],
 		qtype:        qtype,
 		qclass:       qclass,
 		wire:         wireCopy,
 		ttlOffsets:   ttlOffsets,
-		originalTTL:  minTTL,
+		originalTTL:  meta.minTTL,
 		effectiveTTL: effectiveTTL,
 		createdAt:    now,
 		expiresAt:    expiresAt,
 		staleUntil:   staleUntil,
 		isNegative:   isNegative,
-		rcode:        respMsg.Rcode,
-		chainTargets: chainTargets,
-		ipList:       ipList,
-		resolvedIPs:  resolvedIPs,
+		rcode:        int(meta.rcode),
+		chainTargets: meta.chainTargets,
+		ipList:       meta.ipList,
+		resolvedIPs:  meta.resolvedIPs,
 	}
 	entry.lastHitAt.Store(now.UnixNano())
 

@@ -3,6 +3,7 @@ members = [
     "diting-go-compat",
     "diting-rule-core",
     "diting-policy-core",
+    "diting-dns-cache-core",
     "diting-stamp-core",
     "diting-filter-core",
     "diting-rewrite-core",

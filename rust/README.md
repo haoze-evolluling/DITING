@@ -1,12 +1,14 @@
 # Rust 内核
 
-六个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
-**Go 隧道引擎的规则判定与决策缓存内核**，`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**，
+七个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+**Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
+wire 取值与改写内核**，`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**，
 `diting-filter-core` 负责**桌面服务的规则文本解析与规则索引匹配**，`diting-rewrite-core` 负责
 **桌面服务的重写记录取值解析与校验**，`diting-go-compat` 是各内核共用的
 Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
-八个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
-第二套语义可以静默跑起来。
+九个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+第二套语义可以静默跑起来。唯一的例外是 DNS 缓存内核：它只决定“答案能不能复用”，缺库时缓存停用、
+查询直连解析器，回答本身不变。
 
 | 入口 | 调用方 | Rust 产物 | 缺失时 |
 |---|---|---|---|
@@ -14,6 +16,7 @@ Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns
 | 规则页检索 | Dart（`dart:ffi`，句柄） | 预折叠索引，查询返回命中行号 | 规则页抛错 |
 | DTRI 索引编译 | Kotlin（JNI） | mmap 索引，与 JVM 参考实现逐字节相同 | 快照编译失败 |
 | 策略快照构建 + 判定 + 决策缓存 | Go（`dlopen` + C ABI） | 规则表、通配索引、DTRI 读取、七级优先级、归一化与缓存 | 隧道启动失败 |
+| DNS 缓存键 / 响应元数据 / ID-TTL 改写 | Go（`dlopen` + C ABI） | 缓存键、最小 TTL 与 TTL 偏移、链目标、A/AAAA、改写副本 | 缓存不写入、不命中（直连上游） |
 | DNS 印章解析 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 解析后的印章记录、`URL()`/`Server()` 派生串 | 上游配置失败 |
 | 规则索引与匹配 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 四层字典树、布隆预检、通配/正则表、判定与重写选择 | 规则索引构建失败 |
 | 规则文本解析 | Go 桌面服务（同一个库，纯 Go 动态加载 + C ABI） | 逐行的模式、标志位、`$dnstype`、排除集合与 `$dnsrewrite` 取值 | 列表加载失败 |
@@ -30,16 +33,20 @@ Go 侧只留两件仍然属于它的事：`regexp` 与 `buildWildcardRegex` 的�
 **重写记录的取值语法**搬到了 Rust（`rewrite_records.go` 的 `buildRewriteRR` 只剩一层载荷解码）：
 记录类型表、目标域名判定、MX/SRV 的字段切分、HTTPS/SVCB 的参数列表与 AdGuard Home 对齐的取值限制
 都在 `record.rs`，Go 侧只按回传的类型号填 `dns.RR`（应答要直接进 `dns.Msg`）。自定义重写规则与
-`$dnsrewrite` 修饰符走同一条路径，所以两边的取值语法不可能再各写一份。
+`$dnsrewrite` 修饰符走同一条路径，所以两边的取值语法不可能再各写一份。第九个搬的是 Android
+隧道引擎的 **DNS 缓存 wire 层**（`dns_cache_wire.go` 整份删除）：问题键、最小 TTL / SOA 回退、
+TTL 偏移、CNAME/SVCB/HTTPS 目标、A/AAAA 文本化以及命中时的 ID/TTL 改写都在 `wire.rs`。Go 侧只留
+分片 LRU、TTL 策略算术、单飞与清扫，缓存条目里不再有第二份 `dns.Msg` 解包结果。
 
-Android 侧用 cgo 调策略内核；桌面服务侧刻意**不用 cgo**：Windows 走 `syscall.LazyDLL`，Linux 走
-`purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链一行都不用改。
+Android 侧用 cgo 调策略内核与 DNS 缓存内核；桌面服务侧刻意**不用 cgo**：Windows 走
+`syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
+一行都不用改。
 
 ## 结构
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译两个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译三个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -69,6 +76,10 @@ rust/
 │   ├── payload.rs                  # 请求/回应的二进制布局
 │   └── ffi.rs ffi/tests.rs         # build_record / record_types / free_bytes 的 C ABI（ABI_VERSION）
 ├── diting-filter-core/tests/fixtures/parse_corpus.tsv  # 迁移时 Go 解析器的 200 行语料快照
+├── diting-dns-cache-core/src/
+│   ├── wire.rs wire/tests.rs       # 缓存键、记录遍历、TTL 偏移、最小 TTL/SOA、链目标、A/AAAA、ID/TTL 改写
+│   ├── payload.rs                  # 与 Go 共享的响应元数据二进制布局
+│   └── ffi.rs ffi/tests.rs         # question_key / parse_response / patch_response 的 C ABI（ABI_VERSION）
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
 │   ├── glob.rs wildcard_index.rs   # 通配编译与索引（取代 policy_wildcard_index.go）
@@ -107,6 +118,9 @@ rust/
   `rewrite_native_test.go`（载荷布局与探测路径）、
   `rewrite_records.go`（只剩 `RewriteRecord` 与应答码表）、
   `rewrite_test.go` / `rewrite_records_test.go`（原有用例，现在全部穿过 FFI 跑）。
+- Go（DNS 缓存）：`dns_cache_native.go`（加载、ABI 校验、键构建、元数据解码、改写）、
+  `dns_cache_native_stub.go`（无 cgo 时缓存不写入）、`dns_cache.go`（分片 LRU、单飞、统计）、
+  `dns_cache_policy.go`（TTL 策略与清扫）、`dns_cache_native_test.go`（边界与载荷用例）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -114,9 +128,12 @@ rust/
 ## 构建与启用
 
 ```bash
-cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（含三个桌面内核）
-python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
+python rust/build_android.py            # Android：三个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
+
+DNS 缓存内核只随 Android APK 交付（桌面服务没有 DNS 缓存），由 `build_android.py` 与另外两个
+`.so` 一起拷入 `jniLibs`。
 
 桌面服务的三个内核按平台单独交付（Android 用不到它们）：
 
@@ -136,6 +153,8 @@ python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86
 - Kotlin 侧 `System.loadLibrary("diting_rule_core")` 失败即抛 `IllegalStateException`；
 - Go 侧 `ApplyRuleSnapshot` 返回错误，`EngineRuleLoader` / 独立 DNS 服务把它当作启动失败，
   不会以“过滤静默关闭”的状态起隧道；
+- Go 侧 DNS 缓存内核缺失时 `put` 拒绝写入、每次查询都 miss：引擎照常直连解析器，回答不变，只是
+  不再复用；加载失败会写一条日志，不会静默切换成另一套 TTL/ID 语义；
 - 桌面服务侧 `ParseServerStamp` 返回错误，上游配置构建随之失败，不会退化成“印章当作普通地址”；
   `RuleMatcher.BuildFromRules` 返回错误，规则引擎重建随之失败，不会退化成“规则静默不生效”；
   `buildRewriteRR` 返回错误，重写规则编译失败（自定义规则丢掉那一条，`$dnsrewrite` 丢掉整条规则），
@@ -172,11 +191,15 @@ DTRI：EnabledRule 分页 ──pack──> u32 计数 + 每条(pattern, source,
 重写记录：RewriteRecord{type, value} ──build_record(名称, qtype, ttl)──> Rust 解析/校验/限定类型
           ──> 二进制载荷（类型号 + 字段）──> Go 填 dns.RR → dns.Msg 应答
           自定义重写规则（编译期与查询期）与 $dnsrewrite 修饰符走同一条入口
+
+缓存：响应字节 ──parse_response──> Rust 元数据（最小 TTL、各记录 TTL 偏移、链目标、A/AAAA）
+      ──> Go 分片 LRU + TTL 策略 ──> 条目（保留上游 wire 原文）
+      查询 ──question_key──> 缓存键 ──> 分片查找 ──命中──> patch_response（新 ID + 剩余 TTL）──> 回包
 ```
 
 布局与语义的权威注释在 `diting-rule-core/src/ffi.rs`、`search_ffi.rs`、`dtri.rs` 与
-`diting-policy-core/src/ffi.rs`、`snapshot.rs`、`diting-filter-core/src/ffi.rs`、`parse.rs`、
-`diting-rewrite-core/src/{record,payload,ffi}.rs` 顶部；
+`diting-policy-core/src/ffi.rs`、`snapshot.rs`、`diting-dns-cache-core/src/{wire,payload,ffi}.rs`、
+`diting-filter-core/src/ffi.rs`、`parse.rs`、`diting-rewrite-core/src/{record,payload,ffi}.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
 ## 语义一致性
@@ -253,6 +276,28 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 缓存命中与未命中答案一致、换新 prewarm；`cache.rs` 的单测钉住维度折叠、CLOCK 淘汰（热键存活）与
 热键排序；`android/engine/policy_native_test.go` 用固定快照覆盖各规则族，并在 Go 侧逐条对比
 `evaluate` 与 `evaluate_uncached`。
+
+## DNS 缓存内核的已知边界
+
+- **缓存键格式**：`name:qtype:qclass`，ASCII 小写、标签用 `.` 连接、无尾点，压缩指针最多 64 跳；
+  与旧 `appendQuestionKey` 逐字节相同（`question_key` 同时回传各段，Go 不再反向解析键）。键长超过
+  Go 侧 268 字节缓冲区的畸形问题会被拒绝；旧实现会临时扩容，但这类响应过不了名称 255 字节上限，本来
+  也永远不会命中。
+- **名称解码**：与 miekg/dns `UnpackDomainName` 相同——`.`、空格、引号、括号等加反斜杠，非可打印
+  字节写成 `\DDD`，根名是 `.`。链目标要参与规则匹配，所以这里不能“简化”。
+- **按旧解包器的接受面复刻**：空 rdata（`noRdata`）、消息在记录边界结束但头部还声明更多记录、
+  SOA 在字段边界结束时剩余字段为 0，都按旧 `dns.Msg.Unpack` 的行为接受，缓存内容与迁移前一致。
+- **两类放宽/收紧只涉及畸形报文**：未读取类型的 rdata 只按 `rdLength` 跳过（旧实现逐类型校验），
+  因此少数畸形 MX/TXT 会被缓存而旧实现丢弃；问题段被截断的响应不再缓存（旧 `unpackQuestion`
+  会吞掉 qclass 截断错误并返回 `qclass=0`）。合法响应的路径完全一致。
+- **缓存条目不再持有 `dns.Msg`**：解析器仍解包一次用于校验，缓存按 wire 取值；命中时一次分片查找
+  加一次 `patch_response`（拷贝 + 改 ID/TTL），上游原文保留在 `entry.wire` 里供后续命中复用。
+- **容器仍在 Go**：分片 LRU、TTL 策略算术、单飞与后台清扫这一轮没有搬；`dns_cache_native.go`
+  只提供无状态的三个入口，所以并发语义与迁移前完全相同。
+- **缺库时**：`put` 拒绝写入、查询全部 miss，隧道仍可正常解析（答案直连上游），并在首次探测时
+  写一条日志。这是唯一一个“缺库只降级不失败”的内核，因为它只影响复用，不影响回答。
+- **一致性验证**：迁移时用随机语料（5000 条合法响应 + 2000 条截断报文）把旧 Go 实现与内核逐项
+  对比——键、最小 TTL、TTL 偏移、链目标、IP 列表、改写后的整段 wire 全部相同。
 
 ## 印章内核的已知边界
 
@@ -460,10 +505,10 @@ go test -run XXX -bench BenchmarkPolicyApplyLargeWithRust -benchtime 3x .
 
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
-python rust/verify.py --go       # 再加 Go 侧策略内核用例与 DTRI fixture 用例
+python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核与 DTRI fixture 用例
 python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则与重写记录全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
-python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（两个 .so）
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（三个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
 python rust/verify.py --all      # 全量
 ```
@@ -506,4 +551,6 @@ cd rust && cargo test --test dtri_golden
   搬进内核后可以和 `RewriteAction.key()` 的取值归一化一起做成单份实现。
 - **正则与通配模式的编译归属**：现在 Go 编译后把源交给内核，两条路径各编一次；把
   `ParsedRule.Regex` 一并搬到 Rust 后，`buildWildcardRegex` 就只剩内核里的一份。
+- **DNS 缓存容器**：wire 取值已搬进 `diting-dns-cache-core`，剩下的分片 LRU、TTL 策略、单飞与
+  清扫可以整块搬进同一个 crate（句柄 + 条目 + 统计），Go 只留快照换新与查询入口。
 - **备份导入导出**：语义面较大，可先精简备份格式再逐组迁移。

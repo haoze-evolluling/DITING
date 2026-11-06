@@ -41,6 +41,22 @@ type chainTarget struct {
 	kind   string
 }
 
+// dnsCacheResponseMeta is what the Rust wire kernel reports for one response: everything putMsg
+// used to read off the unpacked *dns.Msg. Offsets point at the TTL field of each record so a hit
+// can rewrite them without re-parsing.
+type dnsCacheResponseMeta struct {
+	truncated           bool
+	rcode               uint8
+	answerCount         int
+	minTTL              uint32
+	minTTLFound         bool
+	answerTTLOffsets    []uint16
+	authorityTTLOffsets []uint16
+	chainTargets        []chainTarget
+	ipList              []string
+	resolvedIPs         string
+}
+
 type cacheEntry struct {
 	key          string
 	domain       string

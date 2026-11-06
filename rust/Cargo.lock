@@ -57,6 +57,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-dns-cache-core"
+version = "0.1.0"
+
+[[package]]
 name = "diting-filter-core"
 version = "0.1.0"
 dependencies = [

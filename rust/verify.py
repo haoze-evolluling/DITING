@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Verify the Rust cores end to end.
 
-Default: formatting, clippy (warnings are errors) and the Rust test suite of both crates,
+Default: formatting, clippy (warnings are errors) and the Rust test suite of every crate,
 including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference writer.
 
     python rust/verify.py
-    python rust/verify.py --android   # also cross-compile both .so files for arm64-v8a
+    python rust/verify.py --android   # also cross-compile the three .so files for arm64-v8a
     python rust/verify.py --go        # also prove the Go engine agrees with the Rust policy kernel
     python rust/verify.py --desktop   # also run the desktop service (Go) suite against all three desktop kernels
     python rust/verify.py --dart      # also run the Dart side of the native fast paths
@@ -47,7 +47,7 @@ def run(label: str, command: list[str], cwd: Path) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Rust 规则内核验证")
+    parser = argparse.ArgumentParser(description="Rust 内核验证")
     parser.add_argument("--android", action="store_true", help="交叉编译 arm64-v8a 并拷入 jniLibs")
     parser.add_argument("--go", action="store_true", help="跑 Go 读取 Rust DTRI 产物的兼容测试")
     parser.add_argument("--desktop", action="store_true", help="跑桌面服务（Go）对三个 Rust 内核的用例")
@@ -65,8 +65,21 @@ def main() -> int:
     ]
     if args.go:
         steps.append(("release", ["cargo", "build", "--release"], RUST_DIR))
-        # The policy tests need the kernel: the engine has no second walk to fall back to.
-        steps.append(("go", ["go", "test", "-run", "TestNativePolicy|TestPolicy", "."], GO_ENGINE_DIR))
+        # The policy and DNS cache tests need the kernels: the engine has no second implementation
+        # to fall back to.
+        steps.append(
+            (
+                "go",
+                [
+                    "go",
+                    "test",
+                    "-run",
+                    "TestNativePolicy|TestPolicy|TestNativeDNSCache|TestDNSCache|TestWireFormat|TestNegativeCaching|TestQuestionKey|TestSingleFlight|TestSharded|TestDisablingCache|TestEngineGetDNSCacheEntries",
+                    ".",
+                ],
+                GO_ENGINE_DIR,
+            )
+        )
     if args.desktop:
         # The kernels are loaded at runtime (pure Go dlopen), so `go test` only needs the release
         # artifacts next to the source tree -- no cgo, no installed library.

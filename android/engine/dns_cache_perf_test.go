@@ -1,34 +1,59 @@
 package tunnel
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/miekg/dns"
 )
 
-// The wire-built key must match cacheKey exactly, including case folding and
-// compression pointers, or entries written by put would never be found.
-func TestAppendQuestionKeyMatchesCacheKey(t *testing.T) {
-	for _, name := range []string{"Example.COM.", "a.b.c.d.example.org.", "."} {
+// The key is the documented "name:qtype:qclass" form: lowercased, labels joined
+// with '.', no trailing dot. put and lookup both go through the Rust kernel, so a
+// format change would only show up as permanent misses without this test.
+func TestQuestionKeyFormat(t *testing.T) {
+	cases := []struct {
+		name  string
+		qtype uint16
+		want  string
+	}{
+		{"Example.COM.", dns.TypeAAAA, "example.com:28:1"},
+		{"a.b.c.d.example.org.", dns.TypeA, "a.b.c.d.example.org:1:1"},
+		{".", dns.TypeA, ":1:1"},
+	}
+	for _, tc := range cases {
 		q := new(dns.Msg)
-		q.SetQuestion(name, dns.TypeAAAA)
+		q.SetQuestion(tc.name, tc.qtype)
 		raw, err := q.Pack()
 		if err != nil {
 			t.Fatal(err)
 		}
-		key, nameLen, ok := appendQuestionKey(nil, raw)
+		var buf [maxCacheKeyLen]byte
+		key, nameLen, qtype, qclass, ok := nativeQuestionKey(raw, buf[:])
 		if !ok {
-			t.Fatalf("%q: key build failed", name)
+			t.Fatalf("%q: key build failed", tc.name)
 		}
-		if want := cacheKey(name, dns.TypeAAAA, dns.ClassINET); string(key) != want {
-			t.Fatalf("%q: key %q, want %q", name, key, want)
+		if string(key) != tc.want {
+			t.Fatalf("%q: key %q, want %q", tc.name, key, tc.want)
 		}
-		domain, qtype, qclass := parseKeyQuestion(string(key), nameLen)
-		if domain+":28:1" != string(key) || qtype != dns.TypeAAAA || qclass != dns.ClassINET {
-			t.Fatalf("%q: parsed (%q,%d,%d)", name, domain, qtype, qclass)
+		if got, want := string(key[:nameLen]), strings.TrimSuffix(strings.ToLower(tc.name), "."); got != want {
+			t.Fatalf("%q: name part %q, want %q", tc.name, got, want)
+		}
+		if qtype != tc.qtype || qclass != dns.ClassINET {
+			t.Fatalf("%q: parsed (%d,%d)", tc.name, qtype, qclass)
 		}
 	}
-	if _, _, ok := appendQuestionKey(nil, []byte{0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 5, 'a'}); ok {
+
+	// A destination buffer that cannot hold the key is refused rather than truncated.
+	q := new(dns.Msg)
+	q.SetQuestion("example.com.", dns.TypeA)
+	raw, err := q.Pack()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, _, _, ok := nativeQuestionKey(raw, make([]byte, 4)); ok {
+		t.Fatal("a too-small key buffer must be rejected")
+	}
+	if _, _, _, _, ok := nativeQuestionKey([]byte{0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 5, 'a'}, make([]byte, maxCacheKeyLen)); ok {
 		t.Fatal("truncated question must be rejected")
 	}
 }

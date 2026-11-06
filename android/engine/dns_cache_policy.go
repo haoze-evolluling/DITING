@@ -1,10 +1,9 @@
-// dns_cache_policy.go implements cache policy normalization, key generation,
-// TTL evaluation according to RFC 2181 / RFC 2308, and active background eviction.
+// dns_cache_policy.go implements cache policy normalization, TTL evaluation
+// according to RFC 2181 / RFC 2308, and active background eviction.
 
 package tunnel
 
 import (
-	"strconv"
 	"strings"
 	"time"
 )
@@ -28,18 +27,6 @@ func normalizeDNSCacheConfig(cfg *dnsCacheConfig) {
 	if !cfg.NegativeTTLEnabled && cfg.Enabled {
 		cfg.NegativeTTLEnabled = true
 	}
-}
-
-func cacheKey(domain string, qtype, qclass uint16) string {
-	normalized := strings.ToLower(strings.TrimSuffix(domain, "."))
-	// Same "name:qtype:qclass" format as before, without fmt's reflection and boxing.
-	buf := make([]byte, 0, len(normalized)+12)
-	buf = append(buf, normalized...)
-	buf = append(buf, ':')
-	buf = strconv.AppendUint(buf, uint64(qtype), 10)
-	buf = append(buf, ':')
-	buf = strconv.AppendUint(buf, uint64(qclass), 10)
-	return string(buf)
 }
 
 func fnv32(s string) uint32 {
