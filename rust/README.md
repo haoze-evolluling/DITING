@@ -1,8 +1,10 @@
 # Rust 内核
 
-三个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
-**Go 隧道引擎的规则判定与决策缓存内核**，`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**。
-五个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+五个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+**Go 隧道引擎的规则判定与决策缓存内核**，`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**，
+`diting-filter-core` 负责**桌面服务的规则索引与匹配**，`diting-go-compat` 是两个内核共用的
+Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译）。
+六个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。
 
 | 入口 | 调用方 | Rust 产物 | 缺失时 |
@@ -12,10 +14,12 @@
 | DTRI 索引编译 | Kotlin（JNI） | mmap 索引，与 JVM 参考实现逐字节相同 | 快照编译失败 |
 | 策略快照构建 + 判定 + 决策缓存 | Go（`dlopen` + C ABI） | 规则表、通配索引、DTRI 读取、七级优先级、归一化与缓存 | 隧道启动失败 |
 | DNS 印章解析 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 解析后的印章记录、`URL()`/`Server()` 派生串 | 上游配置失败 |
+| 规则索引与匹配 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 四层字典树、布隆预检、通配/正则表、判定与重写选择 | 规则索引构建失败 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
-Go 侧只留取值类型与证书指纹适配。
+Go 侧只留取值类型与证书指纹适配。第六个搬的是每次查询都走的判定内核：Go 只保留规则文本、
+规则加载与 `$dnsrewrite` 的应答记录构造，判定结果以「命中第几条规则」的形式回传。
 
 Android 侧用 cgo 调策略内核；桌面服务侧刻意**不用 cgo**：Windows 走 `syscall.LazyDLL`，Linux 走
 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链一行都不用改。
@@ -33,16 +37,24 @@ rust/
 │   ├── dtri.rs dtri/tests.rs       # DTRI 写入器（取代 MappedSubscriptionRuleIndex.compile）
 │   ├── jni_bridge.rs               # Kotlin 调用 DTRI 的 JNI 入口
 │   └── fast_hash.rs                # 去重索引用的随机种子 FxHash
+├── diting-go-compat/src/
+│   ├── text.rs                     # Go 语义的 ToLower / TrimSpace / 去尾点 / 后缀匹配
+│   └── regex.rs                    # Go regexp → Rust regex 翻译、规则正则编译与前缀预筛
 ├── diting-stamp-core/src/
 │   ├── stamp.rs stamp/tests.rs     # 印章逐字节解析、地址/主机名校验、URL()/Server() 派生
 │   └── ffi.rs                      # 桌面服务 Go 侧动态加载的 C ABI（ABI_VERSION）+ 载荷布局
+├── diting-filter-core/src/
+│   ├── rule.rs                     # 一条规则的判定字段：标志位、$dnstype、排除集合、重写动作
+│   ├── trie.rs                     # DomainTrie：倒序标签字典树与后缀/精确走法
+│   ├── bloom.rs                    # DomainBloomFilter：拦截字典树前的预检
+│   ├── index.rs index/tests.rs     # 四层优先级、通配/正则表、重写选择（原 RuleMatcher）
+│   ├── payload.rs                  # 与 Go 共享的紧凑二进制布局
+│   └── ffi.rs                      # build / match / free / free_bytes 的 C ABI（ABI_VERSION）
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
-│   ├── text.rs                     # Go 语义的 ToLower / TrimSpace / normalizePolicyDomain
 │   ├── dns_type.rs                 # dns.StringToType（dnsType 修饰符用）
 │   ├── glob.rs wildcard_index.rs   # 通配编译与索引（取代 policy_wildcard_index.go）
 │   ├── dtri_read.rs                # bloom + 标签游走 + mmap 复用（取代 policy_dtri_reader.go）
-│   ├── regex_go.rs                 # Go regexp → Rust regex 翻译与前缀预筛
 │   ├── special.rs                  # specialRule（appScope / denyallow / dnsType / regex / glob）
 │   ├── tables.rs decision.rs       # 桶与 inverted 规则、匹配辅助、判定类型
 │   ├── cache.rs                    # 分片 CLOCK 决策缓存 + reason 池（取代 policy_decision_cache.go）
@@ -58,10 +70,15 @@ rust/
   `rule_search_index.dart`（表变化即释放）、`rules_providers.dart`。
 - Kotlin：`RustRuleIndexCompiler.kt`（打包 `EnabledRule` + JNI）、
   `MappedSubscriptionRuleIndex.kt`（写镜像 + 头校验）。
-- 桌面服务 Go：`stamp_native.go`（探测与加载、ABI 校验、`parse` / `free`、载荷解码）、
+- 桌面服务 Go（印章）：`stamp_native.go`（探测与加载、ABI 校验、`parse` / `free`、载荷解码）、
   `stamp_native_windows.go`（`syscall.LazyDLL`）、`stamp_native_unix.go`（`purego`）、
   `resolver_stamp.go`（只留取值类型与 `Pins()` 适配）、`stamp_native_test.go`（载荷布局与探测路径）、
   `resolver_stamp_test.go`（原有用例，现在全部穿过 FFI 跑）。
+- 桌面服务 Go（规则索引）：`filter_native.go`（加载、规则载荷编码、判定解码）、
+  `filter_native_windows.go` / `filter_native_unix.go`（两个平台的加载器）、
+  `native_lib.go`（两个内核共用的探测顺序与平台文件名）、
+  `rule_matcher.go`（`RuleMatcher` 只剩句柄生命周期与结果翻译）、
+  `rule_engine*.go`（配置、加载、计划、统计不变）、`filter_native_test.go`（载荷布局与失败路径）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -69,17 +86,19 @@ rust/
 ## 构建与启用
 
 ```bash
-cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（含印章内核）
+cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（含两个桌面内核）
 python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
-桌面服务的印章内核按平台单独交付（Android 用不到它）：
+桌面服务的两个内核按平台单独交付（Android 用不到它们）：
 
-- Windows：`cargo build --release -p diting-stamp-core` 产出 `diting_stamp_core.dll`，
-  `build_manager.py` 在打 EXE 时编一次并让 NSIS 装到 `diting-service.exe` 同目录；
-- Linux：`build_linux.sh` 按目标架构编/复用 `libditing_stamp_core.so`，装到 `/usr/lib/diting/`；
-- 探测顺序：`DITING_STAMP_CORE_LIB` → 可执行文件同目录 → `/usr/lib/diting`、`/usr/local/lib/diting`
-  → `rust/target/{release,debug}/`（`go test` 用）。
+- Windows：`cargo build --release -p diting-stamp-core -p diting-filter-core` 产出
+  `diting_stamp_core.dll` 与 `diting_filter_core.dll`，`build_manager.py` 在打 EXE 时各编一次，
+  NSIS 把两个都装到 `diting-service.exe` 同目录；
+- Linux：`build_linux.sh` 按目标架构编/复用 `libditing_stamp_core.so` 与 `libditing_filter_core.so`，
+  装到 `/usr/lib/diting/`；
+- 探测顺序（两个内核相同）：`DITING_STAMP_CORE_LIB` / `DITING_FILTER_CORE_LIB` → 可执行文件同目录
+  → `/usr/lib/diting`、`/usr/local/lib/diting` → `rust/target/{release,debug}/`（`go test` 用）。
 
 没有 `.so` 就是错误，而不是“功能不变地慢一点”：
 
@@ -88,7 +107,8 @@ python rust/build_android.py            # Android：两个 .so，arm64-v8a / x86
 - Kotlin 侧 `System.loadLibrary("diting_rule_core")` 失败即抛 `IllegalStateException`；
 - Go 侧 `ApplyRuleSnapshot` 返回错误，`EngineRuleLoader` / 独立 DNS 服务把它当作启动失败，
   不会以“过滤静默关闭”的状态起隧道；
-- 桌面服务侧 `ParseServerStamp` 返回错误，上游配置构建随之失败，不会退化成“印章当作普通地址”。
+- 桌面服务侧 `ParseServerStamp` 返回错误，上游配置构建随之失败，不会退化成“印章当作普通地址”；
+  `RuleMatcher.BuildFromRules` 返回错误，规则引擎重建随之失败，不会退化成“规则静默不生效”。
 
 策略内核的调用约定：
 
@@ -158,6 +178,21 @@ IPv6 字面量、非 IP 地址、端口越界、不支持的协议族）；`ffi.
 边界开销与解析本身同量级。搬它的目的是把桌面服务接入 Rust 的路（纯 Go 动态加载、ABI 校验、载荷布局、
 `--desktop` 验证入口）先落地，供后面的规则引擎复用；为此 Go 侧不再保留任何印章解析代码。
 
+**规则索引（桌面服务）**：`RuleMatcher` 的对外行为一条没变，原 Go 用例（优先级、通配/正则例外、
+`$denyallow=` 回落、`$dnsrewrite` 的取消 / 求和 / NODATA / 失败码优先 / 父域继承）现在全部穿过 FFI
+跑到 Rust。`index.rs` 的用例逐条复刻了这批断言，`trie.rs` / `bloom.rs` 的单测接管了原 Go 里直接测
+`DomainTrie` / `DomainBloomFilter` 的两条用例。
+
+判定一致性靠三件事钉住：
+
+- **同源的正则**：Go 传给内核的不是规则里的域名模式，而是它自己编译用的那份模式源
+  （`(*regexp.Regexp).String()`），通配源仍由 `buildWildcardRegex` 单点推导，内核用同一套
+  `diting-go-compat::regex` 翻译后编译；
+- **同序的走法**：字典树的深度优先、精确标签优先于 `*`、通配/正则表按规则顺序首个命中即返回，
+  三者共同决定“报哪一条规则”，所以 `MatchedRule` / `ListName` 与迁移前一致；
+- **同形的载荷**：`payload.rs` 与 `filter_native_test.go` 各自钉住同一份布局，字段顺序或宽度一变
+  就是布局版本不符的硬错误。
+
 **策略内核**：`tests/policy_core.rs` 把 DTRI fixtures 喂给快照，断言每个可索引规则解析到语料声明的
 source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判定 / 释放往返与错误上报，以及归一化、
 缓存命中与未命中答案一致、换新 prewarm；`cache.rs` 的单测钉住维度折叠、CLOCK 淘汰（热键存活）与
@@ -176,7 +211,27 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **`splitStampPort` 在两侧各有一份**：Rust 侧供印章解析用，Go 侧留给按主机名查证书指纹的 `pinHost`
   （处理的是普通 `host:port`，与印章无关）。改切分规则要同时改两处。
 - **依赖**：`desktop/service` 的 `go.mod` 新增 `github.com/ebitengine/purego`（Apache-2.0），只用于
-  Linux/macOS 的纯 Go 动态加载；Windows 走标准库 `syscall.LazyDLL`。
+  Linux/macOS 的纯 Go 动态加载；Windows 走标准库 `syscall.LazyDLL`。两个内核共用这套加载器。
+
+## 规则索引内核的已知边界
+
+- **域名归一化仍在 Go 侧**：`RuleMatcher.Match` 先做
+  `strings.TrimSuffix(strings.ToLower(strings.TrimSpace(d)), ".")` 再调内核，因为命中 `$dnsrewrite`
+  时构造 `dns.RR` 需要同一个名字。跨边界契约就是“已归一化”，与策略内核一致。
+- **正则的编译结果由 Go 决定**：规则先由 Go 的 `regexp` 编译（编译失败即丢弃规则，行为与迁移前
+  一致），编译通过的源再交给内核翻译编译。若内核拒绝了某条 Go 接受的源，该规则永不命中，
+  `BuildFromRules` 会记录条数（`uncompiled_patterns`）而不是静默丢弃整次加载。
+- **应答记录仍在 Go**：内核只回传 `rcode` 与命中规则的下标，`dns.RR` 的构造（含 `$dnsrewrite` 的
+  `TTL`、`dns.Fqdn` 与 SVCB 参数解析）留在 `rewrite_records.go`，下一轮搬 rewrite 子系统时一起走。
+- **规则原文与来源仍在 Go**：载荷只带判定字段（标志位、`$dnstype`、排除集合、重写 `key`），
+  命中后按下标回查 `[]*ParsedRule`，所以那条切片在匹配器重建前必须保持存活。
+- **布隆过滤器不参与判定**：它只负责在拦截字典树之前挡掉干净域名，位宽与哈希个数与 Go 完全一致，
+  但即便有差异也只会多走一次字典树——真正的语义在 `trie.rs` / `index.rs`。
+- **不可达分支的选择**：`Match` 无法返回错误。若内核在单次调用上返回非 0 状态（句柄提前释放或
+  ABI 错配这类不可达状态），Go 侧记录日志后回落 `pass`：DNS 过滤失败时放行比让解析器崩掉安全。
+  构建期失败则是硬错误，不会走到这里。
+- **`diting-go-compat` 是两个内核的唯一副本**：策略内核与规则索引都用它的大小写折叠、后缀匹配与
+  正则翻译，`diting-policy-core` 以 `pub use ... as text/regex_go` 保留原路径，代码未改动。
 
 ## 策略内核的已知边界
 
@@ -230,6 +285,25 @@ DTRI 编译（10 万条，输出均为 3,548,571 字节）：
 | 缓存命中（`answer`：归一化 + 缓存查找 + reason） | 0.12 µs |
 | 未命中（`evaluate` 七级走法） | 0.7–0.8 µs |
 | 同上，旧记录：Rust 纯走法 / 经 C ABI（迁移时，含 reason 拷贝） | 1.1–1.4 µs / 1.7–1.8 µs |
+
+桌面规则判定（20k 条合成规则，1024 个域名轮转，`i % 5` 混合干净/字典树/通配/正则/重写）：
+
+| 规则集 | 迁移前（Go） | 迁移后（Rust + FFI） | 纯 Rust |
+|---|---|---|---|
+| 生产比例（99% 纯域名、1% 通配、0.1% 正则） | 139–142 µs | 23.8–23.9 µs（约 5.9x） | 17.8 µs |
+| 最坏情况（10% 通配、10% 正则） | 2.11 ms | 1.45 ms（约 1.45x） | 1.03 ms |
+
+两种规则集的瓶颈不同：生产比例下每次查询要扫过 200 条通配 + 20 条正则（两份实现共有的线性表设计，
+这一轮不改），Rust 的 `regex` 在同一批模式上比 Go 的 `regexp` 快得多，差距就在这里；最坏情况里
+4000 条模式把两边都压到毫秒级，收益只剩正向匹配本身的差距。纯 Rust 与经 FFI 之间的 1–6 µs
+是 ABI 往返、载荷解码与 Go 侧归一化。20k 条规则的索引构建纯 Rust 约 12 ms，只在规则变更时发生。
+
+复现：
+
+```bash
+cd rust && cargo run --release -p diting-filter-core --example filter_bench -- 20000 200000 realistic
+cd desktop/service && go test -run XXX -bench BenchmarkRuleMatcherMatch -benchtime 200000x ./internal/core
+```
 
 决策缓存搬进内核后，命中也要过一次 FFI（此前 Go 侧直接返回，不进库）。纯 Rust 命中约 0.12 µs，
 加上 cgo 调用仍远低于一次未命中的走法；目标是不拖慢查询，而不是把缓存留在 Go 里换一次表维护。
@@ -306,7 +380,10 @@ cd rust && cargo test --test dtri_golden
 - **去重键去字符串化**：每条规则拼一个去重键约占解析时间三成，改成字段哈希 + 碰撞时逐字段比较。
 - **DTRI 增量更新**：按 source 分片只重编受影响分片，把万级列表的写入后延迟压到一次小编译。
 - **检索索引预热**：表稳定后在空闲时预热，把首次折叠的 ~30 ms 从“第一个键”挪开。
-- **桌面服务规则引擎**：`desktop/service/internal/core/rule_parser.go` + `rule_matcher.go` +
-  `rule_trie.go` + `rule_bloom.go` 是每次查询都走的最后一块纯 Go 计算，也是桌面侧收益最大的一块；
-  印章内核已经把“纯 Go 动态加载 + 载荷解码 + 规则表跨 FFI”这条路走通，可以直接复用。
+- **桌面服务的规则解析**：`desktop/service/internal/core/rule_parser.go` 仍在 Go 侧——判定内核只吃
+  已解析的规则。搬它要连 IDNA（`idna.Lookup.ToASCII`）与 `$dnsrewrite` 取值的记录级校验一起搬，
+  两者都是“差一个字符就换一条规则”的语义面，值得单独一轮；搬完 `ParsedRule` 上的 `*regexp.Regexp`
+  与 `rewrite_records.go` 才能一起淡出。
+- **桌面服务的 rewrite 子系统**：`rewrite.go` / `rewrite_lookup.go` / `rewrite_records.go` 是独立于
+  `$dnsrewrite` 修饰符的另一套入口（自定义重写记录 + SVCB 参数解析），与规则索引内核共用记录构造。
 - **备份导入导出**：同样适合这条路，但语义面大得多，需先精简备份格式再逐组迁移。

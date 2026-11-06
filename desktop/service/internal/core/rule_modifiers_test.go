@@ -56,7 +56,10 @@ func TestRuleMatcherDenyAllowExclusion(t *testing.T) {
 		},
 	}
 	matcher := NewRuleMatcher()
-	matcher.BuildFromRules(rules)
+	defer matcher.release()
+	if err := matcher.BuildFromRules(rules); err != nil {
+		t.Fatalf("BuildFromRules: %v", err)
+	}
 
 	if !matcher.hasDenyAllow {
 		t.Fatalf("存在 $denyallow= 规则时 hasDenyAllow 应为 true")
@@ -96,7 +99,10 @@ func TestRuleMatcherDenyAllowPriorityFallback(t *testing.T) {
 		{Raw: "||cdn.example.com^", Pattern: "cdn.example.com"},
 	}
 	matcher := NewRuleMatcher()
-	matcher.BuildFromRules(rules)
+	defer matcher.release()
+	if err := matcher.BuildFromRules(rules); err != nil {
+		t.Fatalf("BuildFromRules: %v", err)
+	}
 
 	// 重要规则被排除后，应回落到常规黑名单规则继续拦截
 	res := matcher.Match("cdn.example.com", dns.TypeA)
@@ -114,27 +120,14 @@ func TestRuleMatcherDenyAllowPriorityFallback(t *testing.T) {
 // TestRuleMatcherNoDenyAllowZeroOverhead 校验无排除修饰符时快速通道标记为 false。
 func TestRuleMatcherNoDenyAllowZeroOverhead(t *testing.T) {
 	matcher := NewRuleMatcher()
-	matcher.BuildFromRules([]*ParsedRule{{Raw: "||ads.com^", Pattern: "ads.com"}})
+	defer matcher.release()
+	if err := matcher.BuildFromRules([]*ParsedRule{{Raw: "||ads.com^", Pattern: "ads.com"}}); err != nil {
+		t.Fatalf("BuildFromRules: %v", err)
+	}
 	if matcher.hasDenyAllow {
 		t.Fatalf("无 $denyallow=/$to= 规则时 hasDenyAllow 应为 false")
 	}
 }
 
-// TestRuleExcludesDomain 校验后缀感知排除判定。
-func TestRuleExcludesDomain(t *testing.T) {
-	rule := &ParsedRule{DenyAllow: []string{"trusted.com"}, To: []string{"partner.net"}}
-	cases := map[string]bool{
-		"trusted.com":       true,
-		"a.trusted.com":     true,
-		"partner.net":       true,
-		"a.partner.net":     true,
-		"untrusted.com":     false,
-		"nottrusted.com":    false, // 后缀边界必须落在标签上
-		"other.example.com": false,
-	}
-	for domain, want := range cases {
-		if got := ruleExcludesDomain(rule, domain); got != want {
-			t.Errorf("ruleExcludesDomain(%q) = %v, 期望 %v", domain, got, want)
-		}
-	}
-}
+// 后缀感知的排除判定（含「后缀边界必须落在标签上」的用例）已随匹配器迁至
+// rust/diting-filter-core/src/rule.rs，这里只保留经内核验证的端到端断言。

@@ -19,7 +19,10 @@ func buildRewriteMatcher(t *testing.T, lines ...string) *RuleMatcher {
 		rules = append(rules, r)
 	}
 	m := NewRuleMatcher()
-	m.BuildFromRules(rules)
+	if err := m.BuildFromRules(rules); err != nil {
+		t.Fatalf("BuildFromRules: %v", err)
+	}
+	t.Cleanup(m.release)
 	return m
 }
 

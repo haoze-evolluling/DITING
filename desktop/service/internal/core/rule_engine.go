@@ -363,7 +363,12 @@ func (e *RuleEngine) compileGroupMatchersUnlocked(customRules, serviceRules, lis
 		}
 
 		m := NewRuleMatcher()
-		m.BuildFromRules(selected)
+		if err := m.BuildFromRules(selected); err != nil {
+			// 单个分组索引构建失败不应连带停掉其它分组：记录后跳过该组，
+			// 该组的查询会回落到默认匹配器（getGroupMatcher 的既有语义）。
+			log.Printf("[RuleEngine] 客户端分组 %s 规则索引构建失败: %v", g.ID, err)
+			continue
+		}
 		e.groupMatchers[g.ID] = m
 		if g.BlockMode != "" {
 			e.groupBlockModes[g.ID] = g.BlockMode

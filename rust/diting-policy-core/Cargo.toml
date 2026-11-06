@@ -8,6 +8,7 @@ publish = false
 crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
+diting-go-compat = { path = "../diting-go-compat" }
 memmap2 = "0.9"
 regex = "1"
 serde = { version = "1", features = ["derive"] }

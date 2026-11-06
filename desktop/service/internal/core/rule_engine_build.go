@@ -34,7 +34,9 @@ func (e *RuleEngine) rebuildUnlocked() error {
 
 	// 构建新的匹配器实例并全量原子切换
 	newMatcher := NewRuleMatcher()
-	newMatcher.BuildFromRules(allRules)
+	if err := newMatcher.BuildFromRules(allRules); err != nil {
+		return err
+	}
 	e.matcher = newMatcher
 
 	// 按客户端分组构建专属匹配器（组数有限，内存可控）

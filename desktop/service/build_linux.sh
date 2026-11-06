@@ -113,51 +113,64 @@ chmod +x "$BIN_PATH"
 echo "[OK] Linux 二进制就绪: $BIN_PATH ($(du -h "$BIN_PATH" | cut -f1))"
 
 # ---------------------------------------------------------------------------
-# Rust 印章内核（rust/diting-stamp-core）
+# Rust 内核（rust/diting-stamp-core、rust/diting-filter-core）
 #
-# Go 侧在运行期用纯 Go 动态加载它（不链接、不依赖 cgo），所以它必须随二进制一起交付：
-# deb 装到 /usr/lib/diting/，服务按该路径探测；缺库即服务启动失败，没有降级解析实现。
+# Go 侧在运行期用纯 Go 动态加载它们（不链接、不依赖 cgo），所以两者都必须随二进制一起交付：
+# deb 装到 /usr/lib/diting/，服务按该路径探测；缺任一库即服务启动失败，没有降级实现。
 # ---------------------------------------------------------------------------
 RUST_DIR="$SCRIPT_DIR/../../rust"
-STAMP_LIB_NAME="libditing_stamp_core.so"
+# crate 名:动态库基名
+RUST_KERNELS="diting-stamp-core:diting_stamp_core diting-filter-core:diting_filter_core"
 case "$ARCH" in
-    amd64) STAMP_TARGET="x86_64-unknown-linux-gnu" ; STAMP_TARGET_ARCH="x86_64" ;;
-    arm64) STAMP_TARGET="aarch64-unknown-linux-gnu" ; STAMP_TARGET_ARCH="aarch64" ;;
-    arm)   STAMP_TARGET="armv7-unknown-linux-gnueabihf" ; STAMP_TARGET_ARCH="armv7" ;;
+    amd64) RUST_TARGET="x86_64-unknown-linux-gnu" ; RUST_TARGET_ARCH="x86_64" ;;
+    arm64) RUST_TARGET="aarch64-unknown-linux-gnu" ; RUST_TARGET_ARCH="aarch64" ;;
+    arm)   RUST_TARGET="armv7-unknown-linux-gnueabihf" ; RUST_TARGET_ARCH="armv7" ;;
 esac
 case "$(uname -m)" in
-    x86_64|amd64)   STAMP_HOST_ARCH="x86_64" ;;
-    aarch64|arm64)  STAMP_HOST_ARCH="aarch64" ;;
-    armv7l|armv8l|arm) STAMP_HOST_ARCH="armv7" ;;
-    *)              STAMP_HOST_ARCH="$(uname -m)" ;;
+    x86_64|amd64)   RUST_HOST_ARCH="x86_64" ;;
+    aarch64|arm64)  RUST_HOST_ARCH="aarch64" ;;
+    armv7l|armv8l|arm) RUST_HOST_ARCH="armv7" ;;
+    *)              RUST_HOST_ARCH="$(uname -m)" ;;
 esac
 
-if [ "$STAMP_HOST_ARCH" = "$STAMP_TARGET_ARCH" ]; then
-    STAMP_LIB="$RUST_DIR/target/release/$STAMP_LIB_NAME"
-else
-    STAMP_LIB="$RUST_DIR/target/$STAMP_TARGET/release/$STAMP_LIB_NAME"
-fi
-
-if [ ! -f "$STAMP_LIB" ]; then
-    if ! command -v cargo >/dev/null 2>&1; then
-        echo "[错误] 未找到 Rust 工具链（cargo），也没有可复用的印章内核: $STAMP_LIB" >&2
-        echo "       请安装 rustup 后重试；或先在目标架构上执行:" >&2
-        echo "       cargo build --release -p diting-stamp-core${STAMP_TARGET:+ --target $STAMP_TARGET}" >&2
-        exit 1
-    fi
-    echo ">>> 正在编译 Rust 印章内核 (rust/diting-stamp-core, linux/$ARCH)..."
-    if [ "$STAMP_HOST_ARCH" = "$STAMP_TARGET_ARCH" ]; then
-        ( cd "$RUST_DIR" && cargo build --release -p diting-stamp-core )
+# rust_lib_path <库基名> —— 本机架构直接取 release 目录，交叉编译取目标三元组目录
+rust_lib_path() {
+    if [ "$RUST_HOST_ARCH" = "$RUST_TARGET_ARCH" ]; then
+        echo "$RUST_DIR/target/release/lib$1.so"
     else
-        ( cd "$RUST_DIR" && cargo build --release -p diting-stamp-core --target "$STAMP_TARGET" )
+        echo "$RUST_DIR/target/$RUST_TARGET/release/lib$1.so"
     fi
-fi
-if [ ! -f "$STAMP_LIB" ]; then
-    echo "[错误] 印章内核编译失败，未生成 $STAMP_LIB" >&2
-    echo "       交叉编译需要 rustup target add $STAMP_TARGET 与对应的交叉链接器。" >&2
-    exit 1
-fi
-echo "[OK] 印章内核就绪: $STAMP_LIB ($(du -h "$STAMP_LIB" | cut -f1))"
+}
+
+build_rust_kernel() {
+    crate="$1"
+    base="$2"
+    lib="$(rust_lib_path "$base")"
+    [ -f "$lib" ] && echo "[OK] Rust 内核就绪: $lib ($(du -h "$lib" | cut -f1))" && return 0
+
+    if ! command -v cargo >/dev/null 2>&1; then
+        echo "[错误] 未找到 Rust 工具链（cargo），也没有可复用的内核: $lib" >&2
+        echo "       请安装 rustup 后重试；或先在目标架构上执行:" >&2
+        echo "       cargo build --release -p $crate --target $RUST_TARGET" >&2
+        return 1
+    fi
+    echo ">>> 正在编译 Rust 内核 ($crate, linux/$ARCH)..."
+    if [ "$RUST_HOST_ARCH" = "$RUST_TARGET_ARCH" ]; then
+        ( cd "$RUST_DIR" && cargo build --release -p "$crate" ) || return 1
+    else
+        ( cd "$RUST_DIR" && cargo build --release -p "$crate" --target "$RUST_TARGET" ) || return 1
+    fi
+    if [ ! -f "$lib" ]; then
+        echo "[错误] Rust 内核编译失败，未生成 $lib" >&2
+        echo "       交叉编译需要 rustup target add $RUST_TARGET 与对应的交叉链接器。" >&2
+        return 1
+    fi
+    echo "[OK] Rust 内核就绪: $lib ($(du -h "$lib" | cut -f1))"
+}
+
+for entry in $RUST_KERNELS; do
+    build_rust_kernel "${entry%%:*}" "${entry##*:}" || exit 1
+done
 
 # ---------------------------------------------------------------------------
 # 发行包
@@ -184,9 +197,13 @@ if [ "$PACKAGE" -eq 1 ]; then
     mkdir -p "$PKG_DIR/usr/share/pixmaps"
 
     cp "$BIN_PATH" "$PKG_DIR/usr/local/bin/$BIN_NAME"
-    # 服务按 /usr/lib/diting 探测印章内核，装在这里无需任何环境变量或 rpath
-    cp "$STAMP_LIB" "$PKG_DIR/usr/lib/diting/$STAMP_LIB_NAME"
-    chmod 0755 "$PKG_DIR/usr/lib/diting/$STAMP_LIB_NAME"
+    # 服务按 /usr/lib/diting 探测两个 Rust 内核，装在这里无需任何环境变量或 rpath
+    for entry in $RUST_KERNELS; do
+        base="${entry##*:}"
+        lib="$(rust_lib_path "$base")"
+        cp "$lib" "$PKG_DIR/usr/lib/diting/lib$base.so"
+        chmod 0755 "$PKG_DIR/usr/lib/diting/lib$base.so"
+    done
     cp "build/linux/diting-dnsservice.service" "$PKG_DIR/lib/systemd/system/"
     chmod 0644 "$PKG_DIR/lib/systemd/system/diting-dnsservice.service"
     cp "build/linux/install.sh" "$PKG_DIR/usr/share/diting/install.sh"
@@ -273,7 +290,10 @@ else
     echo " 构建完成。安装方式:"
     echo "   sudo install -m 0755 $BIN_PATH /usr/local/bin/$BIN_NAME"
     echo "   sudo install -d -m 0755 /usr/lib/diting"
-    echo "   sudo install -m 0755 $STAMP_LIB /usr/lib/diting/$STAMP_LIB_NAME"
+    for entry in $RUST_KERNELS; do
+        base="${entry##*:}"
+        echo "   sudo install -m 0755 $(rust_lib_path "$base") /usr/lib/diting/lib$base.so"
+    done
     echo "   sudo $BIN_NAME -service install && sudo $BIN_NAME -service start"
 fi
 echo "   管理地址: http://127.0.0.1:15353"

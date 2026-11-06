@@ -19,8 +19,6 @@ package core
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 	"runtime"
 	"sync"
 	"unsafe"
@@ -50,51 +48,19 @@ var (
 	stampNativeErr    error
 )
 
+// stampNativeLibraryName is the file name the loader looks for on this platform.
 func stampNativeLibraryName() string {
-	switch runtime.GOOS {
-	case "windows":
-		return "diting_stamp_core.dll"
-	case "darwin":
-		return "libditing_stamp_core.dylib"
-	default:
-		return "libditing_stamp_core.so"
-	}
+	return nativeLibraryFile("diting_stamp_core")
 }
 
 // stampNativeLibraryCandidates probes the packaged locations first, then a local `cargo build`
 // output so `go test` works without installing anything.
 func stampNativeLibraryCandidates() []string {
-	if explicit := os.Getenv("DITING_STAMP_CORE_LIB"); explicit != "" {
-		// An explicit path is the only candidate: a typo must fail loudly, not fall through.
-		return []string{explicit}
-	}
-	name := stampNativeLibraryName()
-	candidates := make([]string, 0, 6)
-	// Packaged layout: next to the service binary (installed by project.nsi / dpkg).
-	if executable, err := os.Executable(); err == nil {
-		candidates = append(candidates, filepath.Join(filepath.Dir(executable), name))
-	}
-	for _, dir := range []string{"/usr/lib/diting", "/usr/local/lib/diting"} {
-		candidates = append(candidates, filepath.Join(dir, name))
-	}
-	for _, profile := range []string{"release", "debug"} {
-		candidates = append(candidates, filepath.Join("..", "..", "..", "..", "rust", "target", profile, name))
-	}
-	return candidates
+	return nativeLibraryCandidates("DITING_STAMP_CORE_LIB", "diting_stamp_core")
 }
 
 func loadStampNativeLibrary() (*stampNativeLib, error) {
-	candidates := stampNativeLibraryCandidates()
-	lastErr := fmt.Errorf("stamp kernel not found in %v", candidates)
-	for _, candidate := range candidates {
-		lib, err := loadStampLibrary(candidate)
-		if err != nil {
-			lastErr = fmt.Errorf("%s: %w", candidate, err)
-			continue
-		}
-		return lib, nil
-	}
-	return nil, lastErr
+	return loadNativeLibrary("DITING_STAMP_CORE_LIB", "diting_stamp_core", "stamp kernel", loadStampLibrary)
 }
 
 // stampKernel returns the loaded library; the failure is kept so every stamp reports the same
@@ -148,69 +114,9 @@ func parseStampNative(text string) ([]byte, error) {
 	}
 }
 
-// stampPayloadReader walks the payload in the order src/ffi.rs writes it.
-type stampPayloadReader struct {
-	data []byte
-	pos  int
-}
-
-func (r *stampPayloadReader) remaining() int { return len(r.data) - r.pos }
-
-func (r *stampPayloadReader) u8() (uint8, error) {
-	if r.remaining() < 1 {
-		return 0, errors.New("stamp payload is truncated (byte)")
-	}
-	value := r.data[r.pos]
-	r.pos++
-	return value, nil
-}
-
-func (r *stampPayloadReader) u16() (int, error) {
-	if r.remaining() < 2 {
-		return 0, errors.New("stamp payload is truncated (u16)")
-	}
-	value := int(r.data[r.pos]) | int(r.data[r.pos+1])<<8
-	r.pos += 2
-	return value, nil
-}
-
-func (r *stampPayloadReader) u64() (uint64, error) {
-	if r.remaining() < 8 {
-		return 0, errors.New("stamp payload is truncated (u64)")
-	}
-	var value uint64
-	for shift := 0; shift < 64; shift += 8 {
-		value |= uint64(r.data[r.pos]) << uint(shift)
-		r.pos++
-	}
-	return value, nil
-}
-
-func (r *stampPayloadReader) text() (string, error) {
-	length, err := r.u16()
-	if err != nil {
-		return "", err
-	}
-	if r.remaining() < length {
-		return "", errors.New("stamp payload is truncated (string)")
-	}
-	value := string(r.data[r.pos : r.pos+length])
-	r.pos += length
-	return value, nil
-}
-
-func (r *stampPayloadReader) bytes(length int) ([]byte, error) {
-	if r.remaining() < length {
-		return nil, errors.New("stamp payload is truncated (bytes)")
-	}
-	value := r.data[r.pos : r.pos+length]
-	r.pos += length
-	return value, nil
-}
-
 // decodeStampPayload turns the kernel payload into the value type the rest of the service uses.
 func decodeStampPayload(payload []byte) (*ServerStamp, error) {
-	reader := &stampPayloadReader{data: payload}
+	reader := &payloadReader{data: payload}
 	layout, err := reader.u8()
 	if err != nil {
 		return nil, err

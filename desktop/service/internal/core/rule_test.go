@@ -57,58 +57,37 @@ func TestRuleParser(t *testing.T) {
 	}
 }
 
-func TestBloomFilter(t *testing.T) {
-	bf := NewDomainBloomFilter(50, 0.001)
-	bf.Add("ad.google.com")
-	bf.Add("track.analytics.com")
-
-	if !bf.MightContain("ad.google.com") {
-		t.Fatalf("BloomFilter must contain ad.google.com")
-	}
-	if !bf.MightContainDomainOrParent("sub.ad.google.com") {
-		t.Fatalf("BloomFilter must contain parent for sub.ad.google.com")
-	}
-	if bf.MightContain("clean-domain-random-12345.org") {
-		t.Fatalf("BloomFilter false positive on random clean domain")
-	}
-}
+// 布隆过滤器与字典树已迁至 rust/diting-filter-core（单测见 src/bloom.rs、src/trie.rs），
+// 这里只保留穿过原生内核的行为断言。
 
 func TestDomainTrie(t *testing.T) {
-	trie := NewDomainTrie()
+	matcher := NewRuleMatcher()
+	defer matcher.release()
 
-	r1, _ := ParseRuleLine("||ad.com^", "test")
-	r2, _ := ParseRuleLine("|exact.com|", "test")
-	trie.Insert(r1)
-	trie.Insert(r2)
+	var rules []*ParsedRule
+	for _, line := range []string{"||ad.com^", "|exact.com|"} {
+		rule, ok := ParseRuleLine(line, "test")
+		if !ok {
+			t.Fatalf("规则未被解析: %q", line)
+		}
+		rules = append(rules, rule)
+	}
+	if err := matcher.BuildFromRules(rules); err != nil {
+		t.Fatalf("BuildFromRules: %v", err)
+	}
 
 	// 子域与自身命中
-	hit, _ := trie.Match("ad.com")
-	if !hit {
-		t.Errorf("Expected match for ad.com")
-	}
-	hit, _ = trie.Match("sub.ad.com")
-	if !hit {
-		t.Errorf("Expected match for sub.ad.com")
-	}
-	hit, _ = trie.Match("a.b.c.ad.com")
-	if !hit {
-		t.Errorf("Expected match for a.b.c.ad.com")
+	for _, domain := range []string{"ad.com", "sub.ad.com", "a.b.c.ad.com", "exact.com"} {
+		if res := matcher.Match(domain, dns.TypeA); !res.Blocked {
+			t.Errorf("Expected match for %s", domain)
+		}
 	}
 
-	// 精确匹配与子域阻断
-	hit, _ = trie.Match("exact.com")
-	if !hit {
-		t.Errorf("Expected match for exact.com")
-	}
-	hit, _ = trie.Match("sub.exact.com")
-	if hit {
-		t.Errorf("Exact rule must NOT match subdomain sub.exact.com")
-	}
-
-	// 不匹配情况
-	hit, _ = trie.Match("notad.com")
-	if hit {
-		t.Errorf("Should not match notad.com")
+	// 精确匹配与子域阻断、不匹配情况
+	for _, domain := range []string{"sub.exact.com", "notad.com"} {
+		if res := matcher.Match(domain, dns.TypeA); res.Blocked {
+			t.Errorf("Should not match %s", domain)
+		}
 	}
 }
 
@@ -122,7 +101,10 @@ func TestRuleMatcherPriority(t *testing.T) {
 	}
 
 	matcher := NewRuleMatcher()
-	matcher.BuildFromRules(rules)
+	defer matcher.release()
+	if err := matcher.BuildFromRules(rules); err != nil {
+		t.Fatalf("BuildFromRules: %v", err)
+	}
 
 	// 1. 常规黑名单
 	res := matcher.Match("blocked.com", dns.TypeA)
@@ -265,7 +247,10 @@ func TestRuleMatcherPriority_WildcardAndRegexExceptions(t *testing.T) {
 	}
 
 	matcher := NewRuleMatcher()
-	matcher.BuildFromRules(rules)
+	defer matcher.release()
+	if err := matcher.BuildFromRules(rules); err != nil {
+		t.Fatalf("BuildFromRules: %v", err)
+	}
 
 	// 1. 常规黑名单命中
 	res := matcher.Match("blocked.com", dns.TypeA)
@@ -292,9 +277,18 @@ func TestRuleMatcherPriority_WildcardAndRegexExceptions(t *testing.T) {
 	}
 
 	// 5. ANY 查询应匹配有 dnstype 限制的规则
-	ruleWithA := &ParsedRule{DNSType: dns.TypeA}
-	if !matchDNSType(ruleWithA, dns.TypeANY) {
-		t.Errorf("Type ANY query must match rule restricted to Type A")
+	restricted := NewRuleMatcher()
+	defer restricted.release()
+	if err := restricted.BuildFromRules([]*ParsedRule{
+		{Raw: "||a-only.test^$dnstype=A", Pattern: "a-only.test", DNSType: dns.TypeA},
+	}); err != nil {
+		t.Fatalf("BuildFromRules: %v", err)
+	}
+	if res := restricted.Match("a-only.test", dns.TypeANY); !res.Blocked {
+		t.Errorf("Type ANY query must match rule restricted to Type A, got %+v", res)
+	}
+	if res := restricted.Match("a-only.test", dns.TypeAAAA); res.Blocked {
+		t.Errorf("AAAA query must not match a rule restricted to Type A, got %+v", res)
 	}
 }
 

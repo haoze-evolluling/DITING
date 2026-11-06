@@ -46,9 +46,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-filter-core"
+version = "0.1.0"
+dependencies = [
+ "diting-go-compat",
+ "regex",
+]
+
+[[package]]
+name = "diting-go-compat"
+version = "0.1.0"
+dependencies = [
+ "regex",
+]
+
+[[package]]
 name = "diting-policy-core"
 version = "0.1.0"
 dependencies = [
+ "diting-go-compat",
  "memmap2",
  "regex",
  "serde",

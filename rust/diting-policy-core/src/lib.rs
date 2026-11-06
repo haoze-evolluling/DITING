@@ -14,7 +14,8 @@
 //! * [`glob`] - `newWildcardMatcher`: `(?i)^glob$` compiled like `regexp.QuoteMeta`.
 //! * [`wildcard_index`] - the first-match-in-order wildcard index.
 //! * [`dtri_read`] - bloom prefilter + label walk over an mmap.
-//! * [`regex_go`] - Go regexp -> Rust regex translation for user regex rules.
+//! * [`regex_go`] / [`text`] - Go `regexp` and `strings` behaviour, shared with the desktop
+//!   kernel through `diting-go-compat`.
 //! * [`special`] - `specialRule` (app scope, denyallow, dnsType, regex/glob body).
 //! * [`tables`] - the buckets, inverted rules and domain-or-suffix helpers of a snapshot.
 //! * [`decision`] - the raw `(blocked, reason)` verdict, reason borrowed from the snapshot.
@@ -29,12 +30,15 @@ pub mod dtri_read;
 pub mod ffi;
 pub mod glob;
 pub mod json;
-pub mod regex_go;
 pub mod snapshot;
 pub mod special;
 pub mod tables;
-pub mod text;
 pub mod wildcard_index;
+
+// The two Go-compat modules live in `diting-go-compat` (shared with the desktop rule kernel) but
+// keep their old paths, so the rest of this crate is unchanged.
+pub use diting_go_compat::regex as regex_go;
+pub use diting_go_compat::text;
 
 pub use cache::Reason;
 pub use decision::Decision;

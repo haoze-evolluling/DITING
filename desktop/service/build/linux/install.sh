@@ -2,11 +2,11 @@
 # ============================================================================
 #   谛听 (DITING) Linux 端安装脚本
 #
-#   将 diting-service 及其 Rust 印章内核安装为 systemd 系统服务，创建数据目录
-#   与默认配置，并注册开机自启。需以 root 身份运行。
+#   将 diting-service 及其两个 Rust 内核（印章解析、规则索引）安装为 systemd 系统服务，
+#   创建数据目录与默认配置，并注册开机自启。需以 root 身份运行。
 #
 #   用法:
-#     sudo ./install.sh [--bin /path/to/diting-service] [--lib /path/to/libditing_stamp_core.so]
+#     sudo ./install.sh [--bin /path/to/diting-service] [--lib-dir /path/to/libs]
 #                       [--port 53] [--no-start]
 # ============================================================================
 
@@ -14,7 +14,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_SRC=""
-LIB_SRC=""
+LIB_DIR=""
 WEB_PORT=15353
 DNS_PORT=53
 AUTO_START=1
@@ -23,7 +23,8 @@ SERVICE_NAME="diting-dnsservice"
 UNIT_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
 INSTALL_BIN="/usr/local/bin/diting-service"
 INSTALL_LIB_DIR="/usr/lib/diting"
-STAMP_LIB_NAME="libditing_stamp_core.so"
+# 两个内核都由服务在运行期动态加载，缺任一库服务都起不来
+RUST_LIB_NAMES="libditing_stamp_core.so libditing_filter_core.so"
 CONFIG_DIR="/etc/diting"
 DATA_DIR="/var/lib/diting"
 SERVICE_USER="root"
@@ -31,12 +32,12 @@ SERVICE_USER="root"
 while [ $# -gt 0 ]; do
     case "$1" in
         --bin)      BIN_SRC="$2"; shift 2 ;;
-        --lib)      LIB_SRC="$2"; shift 2 ;;
+        --lib-dir)  LIB_DIR="$2"; shift 2 ;;
         --port)     DNS_PORT="$2"; shift 2 ;;
         --web-port) WEB_PORT="$2"; shift 2 ;;
         --no-start) AUTO_START=0; shift ;;
         -h|--help)
-            sed -n '2,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+            sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
             exit 0 ;;
         *) echo "[错误] 未知参数: $1" >&2; exit 1 ;;
     esac
@@ -69,21 +70,23 @@ if [ -z "$BIN_SRC" ] || [ ! -f "$BIN_SRC" ]; then
     exit 1
 fi
 
-# 印章内核在运行期动态加载，缺了它服务起不来，因此与二进制一同安装
-if [ -z "$LIB_SRC" ]; then
-    for candidate in \
-        "$SCRIPT_DIR/$STAMP_LIB_NAME" \
-        "$(dirname "$BIN_SRC")/$STAMP_LIB_NAME"; do
+# 内核库在运行期动态加载，缺了它们服务起不来，因此与二进制一同安装。
+# 解析顺序：--lib-dir → 脚本所在目录 → 二进制所在目录。
+LIB_SOURCES=""
+for lib_name in $RUST_LIB_NAMES; do
+    found=""
+    for candidate in "${LIB_DIR:+$LIB_DIR/$lib_name}" "$SCRIPT_DIR/$lib_name" "$(dirname "$BIN_SRC")/$lib_name"; do
         if [ -n "$candidate" ] && [ -f "$candidate" ]; then
-            LIB_SRC="$candidate"
+            found="$candidate"
             break
         fi
     done
-fi
-if [ -z "$LIB_SRC" ] || [ ! -f "$LIB_SRC" ]; then
-    echo "[错误] 未找到 $STAMP_LIB_NAME，请通过 --lib 指定路径（服务缺该库无法启动）。" >&2
-    exit 1
-fi
+    if [ -z "$found" ]; then
+        echo "[错误] 未找到 $lib_name，请通过 --lib-dir 指定目录（服务缺该库无法启动）。" >&2
+        exit 1
+    fi
+    LIB_SOURCES="$LIB_SOURCES $found"
+done
 
 echo "============================================================"
 echo " 谛听 (DITING) Linux 安装"
@@ -91,11 +94,13 @@ echo " 二进制来源: $BIN_SRC"
 echo " DNS 端口: $DNS_PORT   Web 端口: $WEB_PORT"
 echo "============================================================"
 
-echo "[1/6] 安装可执行文件与印章内核"
+echo "[1/6] 安装可执行文件与 Rust 内核"
 install -d -m 0755 "$(dirname "$INSTALL_BIN")"
 install -m 0755 "$BIN_SRC" "$INSTALL_BIN"
 install -d -m 0755 "$INSTALL_LIB_DIR"
-install -m 0755 "$LIB_SRC" "$INSTALL_LIB_DIR/$STAMP_LIB_NAME"
+for lib_src in $LIB_SOURCES; do
+    install -m 0755 "$lib_src" "$INSTALL_LIB_DIR/$(basename "$lib_src")"
+done
 
 echo "[2/6] 创建配置目录 $CONFIG_DIR 与数据目录 $DATA_DIR"
 install -d -m 0700 "$CONFIG_DIR"
