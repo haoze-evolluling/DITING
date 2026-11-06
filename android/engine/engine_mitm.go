@@ -11,7 +11,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 const defaultTunMTU = 1400
@@ -27,10 +26,17 @@ func (e *Engine) StartStackMitm(certDir string) string {
 	certMgr.WarmLocalAssetCert()
 
 	e.mu.Lock()
-	e.stackCertMgr = certMgr
 	if e.stackMitmFilter == nil {
-		e.stackMitmFilter = NewMitmFilter()
+		filter, filterErr := NewMitmFilter()
+		if filterErr != nil {
+			e.mu.Unlock()
+			certMgr.Release()
+			logf("StartStackMitm: MITM filter init failed: %v", filterErr)
+			return ""
+		}
+		e.stackMitmFilter = filter
 	}
+	e.stackCertMgr = certMgr
 	filter := e.stackMitmFilter
 	e.certDir = certDir
 	e.mu.Unlock()
@@ -110,23 +116,9 @@ func (e *Engine) SetMitmAllowedUIDs(uidsCsv string) {
 		return
 	}
 
-	var uids []int
-	for _, s := range strings.Split(uidsCsv, ",") {
-		s = strings.TrimSpace(s)
-		if s == "" {
-			continue
-		}
-		uid := 0
-		for _, c := range s {
-			if c >= '0' && c <= '9' {
-				uid = uid*10 + int(c-'0')
-			}
-		}
-		if uid > 0 {
-			uids = append(uids, uid)
-		}
-	}
-	stackFilter.SetAllowedUIDs(uids)
+	// The kernel parses the CSV (only the digits of each element count), splits the rules per line
+	// and normalizes both lists; nothing is parsed twice.
+	stackFilter.SetAllowedUIDs(uidsCsv)
 }
 
 func (e *Engine) SetHttpsBypassRules(content string) {
@@ -137,7 +129,7 @@ func (e *Engine) SetHttpsBypassRules(content string) {
 		logf("SetHttpsBypassRules: stack MITM not active")
 		return
 	}
-	filter.SetHttpsBypassRules(strings.Split(content, "\n"))
+	filter.SetHttpsBypassRules(content)
 }
 
 func (e *Engine) SetExtraPassthroughSuffixes(content string) {

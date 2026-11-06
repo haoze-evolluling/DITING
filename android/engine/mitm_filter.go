@@ -1,413 +1,204 @@
-// mitm_filter.go implements the multi-layer Smart Filter governing MITM interception decisions.
+// mitm_filter.go keeps the MITM smart-filter surface the engine calls and delegates every decision
+// to the Rust kernel in `rust/diting-mitm-core`.
 //
-// Evaluation Sequence (Checked in Order):
-// 1. UID Check: Restricts MITM interception strictly to user-whitelisted applications (e.g., specific browsers).
-// 2. Auto-Blacklist: Automatically bypasses domains that failed prior TLS handshakes (certificate pinning or mTLS).
-// 3. Bypass Patterns: Evaluates dynamic wildcard and prefix exclusion rules.
-// 4. Sensitive Keywords: Bypasses financial, banking, and authentication endpoints (e.g., bank, pay, auth, login).
-// 5. IP Destinations: Direct IP connections bypass interception.
-// All gates pass -> Intercept (TLS decryption + cosmetic CSS injection).
-
+// Responsibility split: the kernel owns the per-UID allow list, the `path.Match` exclusion
+// patterns, the sensitive-host heuristics (banking, payment, identity endpoints), the automatic
+// blacklist with its failure streaks, and the persistent blacklist file. Go keeps the log lines
+// and the handle lifecycle; there is no second copy of any rule here.
+//
+// The kernel is required for MITM: `NewMitmFilter` fails without it, `StartStackMitm` fails with
+// it, and the engine runs without interception. That is the conservative side of the old
+// behaviour — nothing gets decrypted — and it is loud instead of silently starting to intercept
+// endpoints the filter used to skip.
 package tunnel
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"path"
-	"strconv"
-	"strings"
-	"sync"
+	"runtime"
 	"time"
 )
 
-const defaultBlacklistTTL = 7 * 24 * time.Hour
-
-type blacklistEntry struct {
-	addedAt   time.Time
-	expiresAt time.Time
-	reason    string
-}
-
-type failureRecord struct {
-	count    int
-	lastSeen time.Time
-}
-
+// MitmFilter is the MITM smart filter.
 type MitmFilter struct {
-	mu sync.RWMutex
-
-	allowedUIDs map[int]bool
-
-	blacklist map[string]blacklistEntry
-
-	failureCounts map[string]failureRecord
-
-	httpsBypassPatterns []string
-
-	blacklistPath   string
-	blacklistFileMu sync.Mutex
+	native *nativeMitmFilter
 }
 
-var sniSensitiveKeywords = []string{
-	"bank",
-	"pay",
-	"payment",
-	"auth",
-	"oauth",
-	"login",
-	"signin",
-	"token",
-	"secure",
-	"wallet",
-	"crypto",
-	"trading",
-	"invest",
-	"finance",
-	"insurance",
-	"healthcare",
-	"medical",
-	"gov",
+// mitmReport is one decision report from the kernel; see rust/diting-mitm-core/src/payload.rs.
+type mitmReport struct {
+	// recorded reports that the failure streak was counted.
+	recorded bool
+	count    uint32
+	// threshold is the streak length that blacklists the host.
+	threshold uint32
+	// host is the normalized host the kernel decided on.
+	host string
+	// blacklisted reports that the host is blacklisted after the call, whether this call did it
+	// or an earlier one did.
+	blacklisted bool
+	// added reports that this call wrote the entry, i.e. that there is something to log.
+	added  bool
+	reason string
+	ttlMs  int64
+	// writeError is set when the entry could not be appended to the blacklist file.
+	writeError string
 }
 
-func NewMitmFilter() *MitmFilter {
-	return &MitmFilter{
-		allowedUIDs:         make(map[int]bool),
-		blacklist:           make(map[string]blacklistEntry),
-		failureCounts:       make(map[string]failureRecord),
-		httpsBypassPatterns: make([]string, 0),
+// NewMitmFilter opens a filter handle.
+func NewMitmFilter() (*MitmFilter, error) {
+	native, err := newNativeMitmFilter()
+	if err != nil {
+		return nil, err
+	}
+	filter := &MitmFilter{native: native}
+	// The engine drops its pointer in StopStackMitm; the handle and its state go with it.
+	runtime.SetFinalizer(filter, func(f *MitmFilter) {
+		if f != nil {
+			f.native.free()
+		}
+	})
+	return filter, nil
+}
+
+// mitmNow is the wall clock the kernel compares against; the kernel has no clock of its own.
+func mitmNow() int64 {
+	return time.Now().UnixMilli()
+}
+
+// logMitmBlacklisted prints the two lines the Go implementation printed when a host was
+// blacklisted: the entry itself and, when the file append failed, the durability warning.
+func logMitmBlacklisted(report mitmReport) {
+	logf("MITM Filter: auto-blacklisted '%s' (%s, TTL=%v)",
+		report.host, report.reason, time.Duration(report.ttlMs)*time.Millisecond)
+	if report.writeError != "" {
+		logf("MITM Filter: WARNING — cannot persist blacklist entry '%s': %v",
+			report.host, report.writeError)
 	}
 }
 
-func (f *MitmFilter) SetAllowedUIDs(uids []int) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	f.allowedUIDs = make(map[int]bool, len(uids))
-	for _, uid := range uids {
-		f.allowedUIDs[uid] = true
+// SetAllowedUIDs replaces the allow list from a CSV (the Kotlin side sends comma-separated UIDs)
+// and returns how many apps are now intercepted. Only the digit characters of each element count,
+// which is what the Go parser did.
+func (f *MitmFilter) SetAllowedUIDs(uidsCsv string) int {
+	if f == nil || f.native == nil {
+		return 0
 	}
-	logf("MITM Filter: updated allowed UIDs (%d apps)", len(uids))
+	count := f.native.setAllowedUIDs(uidsCsv)
+	logf("MITM Filter: updated allowed UIDs (%d apps)", count)
+	return count
 }
 
+// IsUIDAllowed reports whether flows of `uid` may be intercepted.
 func (f *MitmFilter) IsUIDAllowed(uid int) bool {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
-	return f.allowedUIDs[uid]
+	if f == nil || f.native == nil {
+		return false
+	}
+	return f.native.isUIDAllowed(int64(uid))
 }
 
+// HasAllowedUIDs reports whether any app is under strict interception.
 func (f *MitmFilter) HasAllowedUIDs() bool {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
-	return len(f.allowedUIDs) > 0
-}
-
-func (f *MitmFilter) SetHttpsBypassRules(rules []string) {
-	clean := make([]string, 0, len(rules))
-	for _, s := range rules {
-		s = strings.TrimSpace(strings.ToLower(s))
-		if s == "" || s[0] == '#' || strings.HasPrefix(s, "//") {
-			continue
-		}
-		clean = append(clean, s)
-	}
-	f.mu.Lock()
-	f.httpsBypassPatterns = clean
-	f.mu.Unlock()
-	logf("MITM Filter: loaded %d HTTPS bypass rules", len(clean))
-}
-
-func (f *MitmFilter) SetExtraPassthroughSuffixes(suffixes []string) {
-	f.SetHttpsBypassRules(suffixes)
-}
-
-func matchHostPattern(pattern, host string) bool {
-	pattern = strings.ToLower(strings.TrimSpace(pattern))
-	host = strings.ToLower(strings.TrimSpace(host))
-	if pattern == "" || host == "" {
+	if f == nil || f.native == nil {
 		return false
 	}
-
-	pattern = strings.TrimPrefix(pattern, "@@")
-	pattern = strings.TrimPrefix(pattern, "||")
-	pattern = strings.TrimRight(pattern, "^")
-
-	if !strings.Contains(pattern, "*") {
-		clean := strings.TrimPrefix(pattern, ".")
-		if host == clean || strings.HasSuffix(host, "."+clean) {
-			return true
-		}
-		return false
-	}
-
-	if strings.HasPrefix(pattern, "*.") && host == pattern[2:] {
-		return true
-	}
-	matched, err := path.Match(pattern, host)
-	return err == nil && matched
+	return f.native.hasAllowedUIDs()
 }
 
-func isSensitiveHost(host string) bool {
-	labels := strings.Split(host, ".")
-	for _, lbl := range labels {
-		if lbl == "" {
-			continue
-		}
-
-		for _, kw := range sniSensitiveKeywords {
-			if lbl == kw {
-				return true
-			}
-		}
-
-		tokens := strings.FieldsFunc(lbl, func(r rune) bool {
-			return r == '-' || r == '_'
-		})
-		for _, tok := range tokens {
-			for _, kw := range sniSensitiveKeywords {
-				if tok == kw {
-					return true
-				}
-			}
-		}
-
-		if strings.HasSuffix(lbl, "bank") && len(lbl) >= 6 {
-			return true
-		}
-		if strings.HasPrefix(lbl, "bank") && len(lbl) >= 6 {
-			return true
-		}
-		switch lbl {
-		case "paypal", "alipay", "tenpay", "wechatpay", "unionpay", "applepay", "googlepay":
-			return true
-		}
-		if strings.Contains(lbl, "alipay") || strings.Contains(lbl, "paypal") || strings.Contains(lbl, "wechatpay") {
-			return true
-		}
+// SetHttpsBypassRules replaces the exclusion patterns from a multi-line text (`#` and `//`
+// comments and blank lines are dropped by the kernel) and returns how many rules were kept.
+func (f *MitmFilter) SetHttpsBypassRules(content string) int {
+	if f == nil || f.native == nil {
+		return 0
 	}
-	return false
+	count := f.native.setBypassRules(content)
+	logf("MITM Filter: loaded %d HTTPS bypass rules", count)
+	return count
 }
 
+// SetExtraPassthroughSuffixes is the entry point the platform channel uses for the same list.
+func (f *MitmFilter) SetExtraPassthroughSuffixes(content string) int {
+	return f.SetHttpsBypassRules(content)
+}
+
+// IsInterceptionAllowed reports whether `host` may be decrypted. A blacklisted or excluded host,
+// a sensitive one (banking, payment, identity) and a bare address are all refused.
 func (f *MitmFilter) IsInterceptionAllowed(host string) bool {
-	host = strings.ToLower(strings.TrimSpace(host))
-
-	if idx := strings.LastIndex(host, ":"); idx != -1 {
-		host = host[:idx]
-	}
-
-	now := time.Now()
-
-	f.mu.RLock()
-	entry, blacklisted := f.blacklist[host]
-	f.mu.RUnlock()
-	if blacklisted {
-		if now.Before(entry.expiresAt) {
-			return false
-		}
-
-		f.mu.Lock()
-		delete(f.blacklist, host)
-		f.mu.Unlock()
-	}
-
-	f.mu.RLock()
-	bypassPatterns := f.httpsBypassPatterns
-	f.mu.RUnlock()
-	for _, pattern := range bypassPatterns {
-		if matchHostPattern(pattern, host) {
-			return false
-		}
-	}
-
-	if isSensitiveHost(host) {
+	if f == nil || f.native == nil {
 		return false
 	}
-
-	if isIPAddress(host) {
-		return false
-	}
-
-	return true
+	return f.native.allowsInterception(host, mitmNow())
 }
 
+// RecordFailure counts a TLS handshake failure and reports whether the host was blacklisted by
+// this call. Three failures in ten minutes are enough, two when the client rejected our
+// certificate.
 func (f *MitmFilter) RecordFailure(host string, err error) bool {
-	host = strings.ToLower(strings.TrimSpace(host))
-	if host == "" || err == nil {
+	if f == nil || f.native == nil || err == nil {
 		return false
 	}
-	errStr := strings.ToLower(err.Error())
-
-	threshold := 3
-	reason := "handshake_failure"
-	if strings.Contains(errStr, "unknown certificate") ||
-		strings.Contains(errStr, "certificate unknown") ||
-		strings.Contains(errStr, "bad certificate") {
-		threshold = 2
-		reason = "cert_rejected"
+	report := f.native.recordFailure(host, err.Error(), mitmNow())
+	if !report.recorded {
+		return false
 	}
-
-	now := time.Now()
-	f.mu.Lock()
-	rec, exists := f.failureCounts[host]
-	if !exists || now.Sub(rec.lastSeen) > 10*time.Minute {
-		rec = failureRecord{count: 1, lastSeen: now}
-	} else {
-		rec.count++
-		rec.lastSeen = now
-	}
-	f.failureCounts[host] = rec
-	count := rec.count
-	f.mu.Unlock()
-
-	if count >= threshold {
-		f.BlacklistDomainWithReason(host, fmt.Sprintf("%s (%d failures)", reason, count))
+	if report.blacklisted {
+		// Only a newly written entry has something new to say; a host that crossed the threshold
+		// earlier is already listed and already logged.
+		if report.added {
+			logMitmBlacklisted(report)
+		}
 		return true
 	}
-	logf("MITM Filter: recorded TLS failure for '%s' (%d/%d): %v", host, count, threshold, err)
+	logf("MITM Filter: recorded TLS failure for '%s' (%d/%d): %v",
+		report.host, report.count, report.threshold, err)
 	return false
 }
 
+// BlacklistDomain keeps a host out of the MITM path for a week.
 func (f *MitmFilter) BlacklistDomain(host string) {
 	f.BlacklistDomainWithReason(host, "pinning")
 }
 
+// BlacklistDomainWithReason is BlacklistDomain with a reason for the log and the file line.
 func (f *MitmFilter) BlacklistDomainWithReason(host, reason string) {
-	host = strings.ToLower(strings.TrimSpace(host))
-	if host == "" {
+	if f == nil || f.native == nil {
 		return
 	}
-
-	now := time.Now()
-	expiresAt := now.Add(defaultBlacklistTTL)
-
-	f.mu.Lock()
-	entry, alreadyKnown := f.blacklist[host]
-	if alreadyKnown && now.Before(entry.expiresAt) {
-		f.mu.Unlock()
+	report, added := f.native.blacklist(host, reason, mitmNow())
+	if !added {
 		return
 	}
-	f.blacklist[host] = blacklistEntry{
-		addedAt:   now,
-		expiresAt: expiresAt,
-		reason:    reason,
-	}
-	path := f.blacklistPath
-	f.mu.Unlock()
-
-	logf("MITM Filter: auto-blacklisted '%s' (%s, TTL=%v)", host, reason, defaultBlacklistTTL)
-
-	if path != "" {
-		f.appendBlacklistLine(path, host, expiresAt, reason)
-	}
+	logMitmBlacklisted(report)
 }
 
+// ClearBlacklist drops every blacklist entry and failure streak, and truncates the file.
 func (f *MitmFilter) ClearBlacklist() {
-	f.mu.Lock()
-	f.blacklist = make(map[string]blacklistEntry)
-	f.failureCounts = make(map[string]failureRecord)
-	path := f.blacklistPath
-	f.mu.Unlock()
-
-	if path != "" {
-		f.blacklistFileMu.Lock()
-		_ = os.WriteFile(path, []byte(""), 0644)
-		f.blacklistFileMu.Unlock()
+	if f == nil || f.native == nil {
+		return
 	}
+	f.native.clear()
 	logf("MITM Filter: cleared auto-blacklist")
 }
 
+// RemoveFromBlacklist forgets one host in memory; the file keeps the line, like before.
 func (f *MitmFilter) RemoveFromBlacklist(host string) {
-	host = strings.ToLower(strings.TrimSpace(host))
-	f.mu.Lock()
-	delete(f.blacklist, host)
-	delete(f.failureCounts, host)
-	f.mu.Unlock()
-}
-
-func (f *MitmFilter) LoadPersistentBlacklist(path string) {
-	now := time.Now()
-	loaded := 0
-	if file, err := os.Open(path); err == nil {
-		sc := bufio.NewScanner(file)
-		f.mu.Lock()
-		for sc.Scan() {
-			line := strings.ToLower(strings.TrimSpace(sc.Text()))
-			if line == "" || line[0] == '#' {
-				continue
-			}
-			parts := strings.Split(line, "|")
-			host := strings.TrimSpace(parts[0])
-			if host == "" {
-				continue
-			}
-			expiresAt := now.Add(defaultBlacklistTTL)
-			reason := "pinning"
-			if len(parts) >= 2 {
-				if expUnix, err := strconv.ParseInt(strings.TrimSpace(parts[1]), 10, 64); err == nil {
-					expTime := time.Unix(expUnix, 0)
-					if now.After(expTime) {
-						continue
-					}
-					expiresAt = expTime
-				}
-			}
-			if len(parts) >= 3 {
-				reason = strings.TrimSpace(parts[2])
-			}
-			f.blacklist[host] = blacklistEntry{
-				addedAt:   now,
-				expiresAt: expiresAt,
-				reason:    reason,
-			}
-			loaded++
-		}
-		f.mu.Unlock()
-		file.Close()
-	}
-
-	f.mu.Lock()
-	f.blacklistPath = path
-	f.mu.Unlock()
-	logf("MITM Filter: persistent blacklist at %s (%d active entries loaded)", path, loaded)
-}
-
-func (f *MitmFilter) appendBlacklistLine(path, host string, expiresAt time.Time, reason string) {
-	f.blacklistFileMu.Lock()
-	defer f.blacklistFileMu.Unlock()
-
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		logf("MITM Filter: WARNING — cannot persist blacklist entry '%s': %v", host, err)
+	if f == nil || f.native == nil {
 		return
 	}
-	defer file.Close()
-	line := fmt.Sprintf("%s|%d|%s\n", host, expiresAt.Unix(), reason)
-	if _, err := file.WriteString(line); err != nil {
-		logf("MITM Filter: WARNING — failed writing blacklist entry '%s': %v", host, err)
-	}
+	f.native.remove(host)
 }
 
+// LoadPersistentBlacklist reads the blacklist file and reports how many live entries it held.
+func (f *MitmFilter) LoadPersistentBlacklist(path string) int {
+	if f == nil || f.native == nil {
+		return 0
+	}
+	loaded := f.native.loadPersistent(path, mitmNow())
+	logf("MITM Filter: persistent blacklist at %s (%d active entries loaded)", path, loaded)
+	return loaded
+}
+
+// GetBlacklistCount returns the live entries, for the settings screen.
 func (f *MitmFilter) GetBlacklistCount() int {
-	now := time.Now()
-	f.mu.RLock()
-	defer f.mu.RUnlock()
-	count := 0
-	for _, entry := range f.blacklist {
-		if now.Before(entry.expiresAt) {
-			count++
-		}
+	if f == nil || f.native == nil {
+		return 0
 	}
-	return count
-}
-
-func isIPAddress(host string) bool {
-	if strings.Contains(host, ":") {
-		return true
-	}
-	for _, c := range host {
-		if c != '.' && (c < '0' || c > '9') {
-			return false
-		}
-	}
-	return len(host) > 0
+	return f.native.blacklistCount(mitmNow())
 }

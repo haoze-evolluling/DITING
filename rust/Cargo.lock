@@ -77,6 +77,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-mitm-core"
+version = "0.1.0"
+dependencies = [
+ "diting-go-compat",
+]
+
+[[package]]
 name = "diting-policy-core"
 version = "0.1.0"
 dependencies = [

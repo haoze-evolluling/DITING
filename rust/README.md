@@ -1,12 +1,14 @@
 # Rust 内核
 
-七个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+八个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
-容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**，
+容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
+**同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
+失败计数、持久化文件），`diting-stamp-core` 负责**桌面服务的 `sdns://` 印章解析**，
 `diting-filter-core` 负责**桌面服务的规则文本解析与规则索引匹配**，`diting-rewrite-core` 负责
 **桌面服务的重写引擎、重写记录取值解析与 `$dnsrewrite` 取值解析**，`diting-go-compat` 是各内核共用的
 Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
-十一个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+十二个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。唯一的例外是 DNS 缓存内核：它只决定“答案能不能复用”，缺库时缓存停用、
 查询直连解析器，回答本身不变。
 
@@ -17,6 +19,7 @@ Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns
 | DTRI 索引编译 | Kotlin（JNI） | mmap 索引，与 JVM 参考实现逐字节相同 | 快照编译失败 |
 | 策略快照构建 + 判定 + 决策缓存 | Go（`dlopen` + C ABI） | 规则表、通配索引、DTRI 读取、七级优先级、归一化与缓存 | 隧道启动失败 |
 | DNS 缓存容器 / 键 / 响应元数据 / ID-TTL 改写 | Go（`dlopen` + C ABI，句柄） | 分片 LRU、TTL 策略、清扫、缓存键、最小 TTL 与 TTL 偏移、链目标、A/AAAA、改写副本、统计与快照 | 缓存停用：不写入、不命中（直连上游） |
+| MITM 拦截过滤 + 自动黑名单 | Go（`dlopen` + C ABI，句柄） | 应用白名单、`path.Match` 排除规则、敏感主机启发式、失败计数与黑名单 TTL、持久化文件 | MITM 启动失败（隧道照常起，只是不解密） |
 | DNS 印章解析 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 解析后的印章记录、`URL()`/`Server()` 派生串 | 上游配置失败 |
 | 规则索引与匹配 | Go 桌面服务（纯 Go 动态加载 + C ABI） | 四层字典树、布隆预检、通配/正则表、判定与重写选择 | 规则索引构建失败 |
 | 规则文本解析 | Go 桌面服务（同一个库，纯 Go 动态加载 + C ABI） | 逐行的模式、标志位、`$dnstype`、排除集合与 `$dnsrewrite` 取值 | 列表加载失败 |
@@ -57,7 +60,14 @@ FNV 分桶、命中晋升节流、TTL 策略算术（跟随 / 上限 / 固定 / 
 供引擎在调用前判断开关。命中路径仍是一次 FFI：内核返回「改写后的 wire + 链目标 + IP 列表」，
 Go 把它们交给原有的应答链与应用放行逻辑。
 
-Android 侧用 cgo 调策略内核与 DNS 缓存内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第十三个把 Android 隧道引擎的 **MITM 智能过滤**搬进 `diting-mitm-core`（`mitm_filter.go` 只剩日志与
+句柄生命周期、`sniSensitiveKeywords` 与 `matchHostPattern` / `isSensitiveHost` / `isIPAddress` 整份删除）：
+应用白名单、排除规则（Go `path.Match` 的逐字节复刻）、敏感主机启发式、失败计数与自动黑名单、
+持久化文件都在内核里。时间从 Go 注入（`now_ms`），内核不读时钟，所以过期与十分钟失败窗口能被
+单测钉死；文件由内核读写，Go 只把路径交给它。日志仍然在 Go：内核回传“失败计数 / 阈值 / 归一化
+主机 / 原因 / 写入错误”，Go 照原格式打印。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核与 MITM 过滤内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -104,6 +114,13 @@ rust/
 │   │                               # 分片 LRU、条目与截止时间、晋升节流、清扫线程、统计、快照（原 dns_cache.go 等四份）
 │   ├── payload.rs                  # 与 Go 共享的配置 / 命中 / 统计 / 快照二进制布局
 │   └── ffi.rs ffi/tests.rs         # 句柄生命周期 + question_key / get / put / refresh / stats / snapshot 的 C ABI（ABI_VERSION）
+├── diting-mitm-core/src/
+│   ├── pattern.rs pattern/tests.rs # Go `path.Match` 的逐字节复刻 + `matchHostPattern`（排除规则）
+│   ├── sensitive.rs sensitive/tests.rs # `isSensitiveHost` / `isIPAddress`（银行、支付、身份端点）
+│   ├── filter.rs filter/tests.rs   # 白名单、失败计数、黑名单 TTL、持久化文件（原 mitm_filter.go）
+│   ├── payload.rs                  # 与 Go 共享的判定报告二进制布局
+│   ├── ffi.rs ffi/tests.rs         # new / free / set_allowed_uids / set_bypass_rules / allows_interception / record_failure / blacklist / load_persistent / free_bytes（ABI_VERSION）
+│   └── tests/fixtures/*.tsv        # 迁移时 Go 原函数生成的 path.Match / host 模式 / 敏感主机语料
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
 │   ├── glob.rs wildcard_index.rs   # 通配编译与索引（取代 policy_wildcard_index.go）
@@ -152,6 +169,10 @@ rust/
   `dns_cache_native_stub.go`（无 cgo 时缓存不写入）、`dns_cache.go`（单飞、句柄 finalizer、
   开关标志与命中包装）、`dns_cache_snapshot.go`（快照的 JSON 投影）、
   `dns_cache_native_test.go`（配置编码与命中载荷解码的布局用例）。
+- Go（MITM 过滤）：`mitm_filter_native.go`（加载、ABI 校验、判定报告解码）、
+  `mitm_filter_native_stub.go`（无 cgo 时建不出句柄）、`mitm_filter.go`（只剩日志与句柄生命周期）、
+  `mitm_filter_native_test.go`（报告载荷布局与坏载荷）、`mitm_filter_test.go`（白名单、排除规则、
+  敏感主机、失败计数、黑名单与持久化文件，全部穿过 FFI 跑）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -160,10 +181,10 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：三个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：四个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
-DNS 缓存内核（容器 + wire）只随 Android APK 交付（桌面服务有自己的一套缓存），由
+DNS 缓存内核（容器 + wire）与 MITM 过滤内核只随 Android APK 交付（桌面服务没有这两块），由
 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的三个内核按平台单独交付（Android 用不到它们）：
@@ -250,10 +271,19 @@ DTRI：EnabledRule 分页 ──pack──> u32 计数 + 每条(pattern, source,
       陈旧 ──dns_cache_get（stale）──> 1 秒 TTL 的改写副本 ──> Go 单飞后台刷新
             ──refresh_begin / refresh_done──> 每个条目同时只允许一个刷新
       UI ──dns_cache_stats / dns_cache_snapshot──> 计数与最热条目
+
+MITM 过滤：白名单 CSV / 排除规则文本 ──set_allowed_uids / set_bypass_rules──> Rust 归一化并保存
+          连接 ──allows_interception(域名, now_ms)──> 黑名单（过期即清）──> 排除规则 ──> 敏感主机/地址
+                                                    ──> 1 拦截 / 0 直连
+          握手失败 ──record_failure(域名, 错误文本, now_ms)──> 失败计数（10 分钟窗口）
+                    ──达到阈值（3 次，证书被拒 2 次）──> 黑名单 7 天 + 追加文件行
+                    ──回传（计数/阈值/主机/原因/写入错误）──> Go 写日志
+          启动 ──load_persistent(路径, now_ms)──> Rust 读文件、丢弃过期行、记住路径
 ```
 
 布局与语义的权威注释在 `diting-rule-core/src/ffi.rs`、`search_ffi.rs`、`dtri.rs` 与
 `diting-policy-core/src/ffi.rs`、`snapshot.rs`、`diting-dns-cache-core/src/{wire,policy,cache,payload,ffi}.rs`、
+`diting-mitm-core/src/{pattern,filter,payload,ffi}.rs`、
 `diting-filter-core/src/ffi.rs`、`parse.rs`、`diting-rewrite-core/src/{action,record,engine,payload,ffi}.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
@@ -356,6 +386,14 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 `calculateNegativeTTL` 的每个分支。Go 侧原有用例除两条只测已删内部结构的（`getEntry` 改时间、
 `shard` 的 LRU 孤儿）以外一条未改，现在全部穿过 FFI 跑；那两条的断言搬进 Rust 单测。
 
+**MITM 过滤**：三份 fixture 是迁移时把原 Go 函数跑出来的结果固化的文件——`pattern/tests.rs` 的
+2964 行 `path.Match` 语料（`ok` / `no` / `bad`）、2765 行 `matchHostPattern` 语料（含 `@@`、`||`、
+尾 `^` 与大小写），`sensitive/tests.rs` 的 73 行敏感主机与地址语料。时间相关分支不靠 fixture：
+`filter/tests.rs` 注入 `now_ms`，逐条钉住黑名单过期、十分钟失败窗口（含“恰好一个窗口仍计数”
+与“多一毫秒重新开始”）、两种阈值、持久化文件的读/写/过期过滤与 `clear` 截断。
+`android/engine/mitm_filter_test.go` 另从 Go 侧走一遍白名单、排除规则、敏感主机、失败计数、
+黑名单与持久化文件；`mitm_filter_native_test.go` 钉住报告载荷布局与两类坏载荷。
+
 ## DNS 缓存内核的已知边界
 
 - **缓存键格式**：`name:qtype:qclass`，ASCII 小写、标签用 `.` 连接、无尾点，压缩指针最多 64 跳；
@@ -385,6 +423,31 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **一致性验证**：wire 层迁移时用随机语料（5000 条合法响应 + 2000 条截断报文）把旧 Go 实现与
   内核逐项对比——键、最小 TTL、TTL 偏移、链目标、IP 列表、改写后的整段 wire 全部相同；容器迁移
   后又用同一批响应把两边的命中结果、命中/未命中计数、淘汰与快照顺序逐项对齐。
+
+## MITM 过滤内核的已知边界
+
+- **时间从 Go 注入**：每个有状态的调用都带 `now_ms`。内核不读时钟，所以“黑名单 7 天”“失败窗口
+  10 分钟”能被单测钉死；代价是 Go 每次决策都要算一次 `time.Now().UnixMilli()`（与旧实现一样）。
+- **持久化文件归内核**：`host|unix_seconds|reason` 的读、写、过期过滤与去重都在 `filter.rs`，
+  Go 只传路径。写入失败不再静默：报告载荷里回传错误文本，Go 照原格式打印那条 `WARNING`。
+  追加在写锁内做，因此不需要第二条文件锁。
+- **非 UTF-8 主机按“不拦截”处理**：Go 字符串可以是任意字节，内核收的是 UTF-8。DNS 名、SNI
+  与 `Host` 头到不了这里，但若到了，拒绝拦截是保守的方向。
+- **64 KiB 行上限消失**：旧实现用 `bufio.Scanner`（单行 64 KiB），超长行会让它停下且不报错；
+  现在整份文件一次读完，超长行只是一行。文件本来就只有几百行。
+- **`getBlacklistCount` 不过期清理**：与旧实现一样只统计未过期的条目，真正的删除发生在
+  `allows_interception` 撞到过期条目时或重新加载时。
+- **移除不重写文件**：`RemoveFromBlacklist` 只删内存条目（与 Go 一样），下次启动那一行还会回来；
+  要彻底清空得用 `ClearBlacklist`（它会截断文件）。
+- **`allows_interception` 锁粒度**：命中黑名单时一次读锁，过期时再拿写锁删除，然后另一次读锁
+  扫排除规则（与 Go 的 RWMutex 走法一致，只是不再分别加锁取切片引用）。
+- **日志仍在 Go**：内核不打印任何东西；句子、格式与顺序由 `mitm_filter.go` 保留，便于与迁移前
+  的日志直接对比。
+- **缺库时**：`NewMitmFilter` 返回错误，`StartStackMitm` 失败（返回空 CA），引擎不起拦截。
+  这是保守侧：不会静默开始解密本来该放行的端点，也不会“过滤静默失效”。
+- **一致性验证**：`pattern` / `host_pattern` / `sensitive_host` 三份 fixture 是迁移时直接跑原 Go
+  函数生成的（2964 + 2765 + 73 行），`filter` 的时间相关分支由注入时钟的单测钉住；`path.Match`
+  的逐字节复刻包含 `/` 规则、字符类、转义与 `ErrBadPattern`。
 
 ## 印章内核的已知边界
 
@@ -644,10 +707,10 @@ go test -run XXX -bench BenchmarkDNSCacheGetFast_Hit -benchtime 200000x .
 
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
-python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核与 DTRI fixture 用例
+python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核与 DTRI fixture 用例
 python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则与重写记录全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
-python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（三个 .so）
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（四个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
 python rust/verify.py --all      # 全量
 ```
