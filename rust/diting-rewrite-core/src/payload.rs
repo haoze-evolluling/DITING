@@ -12,6 +12,14 @@
 //!           has_record: u16 rrtype | text owner | u32 ttl | body
 //! types:    u8 layout | u16 count | count × text name
 //! rejection: the message as UTF-8, without a layout byte (same shape the other kernels use)
+//!
+//! The `$dnsrewrite` action entry points add:
+//!
+//! ```text
+//! action parse request: u8 layout | text value
+//! action fields:        u8 layout | u8 bare | u16 rcode | u16 rrtype | text value
+//! action reply:         u8 layout | u8 bare | u16 rcode | u16 rrtype | text value
+//! action key reply:     u8 layout | text key
 //! ```
 //!
 //! The rewrite-engine entry points add their own payloads (same layout byte):
@@ -46,6 +54,7 @@
 
 use std::fmt;
 
+use crate::action::Action;
 use crate::engine::{Config, LookupResult, RecordSpec, RuleConfig};
 use crate::record::{ParsedRecord, Record, SvcParam};
 
@@ -123,6 +132,66 @@ pub fn encode_reply(record: Option<&ParsedRecord>) -> Vec<u8> {
     push_text(&mut out, &record.owner);
     out.extend_from_slice(&record.ttl.to_le_bytes());
     encode_body(&mut out, &record.record);
+    out
+}
+
+/// Decodes the parse request: the raw text after `$dnsrewrite=`, case preserved.
+pub fn decode_action_text(data: &[u8]) -> Result<String, DecodeError> {
+    let mut reader = Reader::new(data);
+    let layout = reader.u8("layout")?;
+    if layout != LAYOUT_VERSION {
+        return Err(DecodeError::invalid(format!(
+            "action request layout {layout}, expected {LAYOUT_VERSION}"
+        )));
+    }
+    let value = reader.text("value")?;
+    reader.expect_end()?;
+    Ok(value)
+}
+
+/// Decodes the fields of one parsed action (`$dnsrewrite` key requests).
+pub fn decode_action(data: &[u8]) -> Result<Action, DecodeError> {
+    let mut reader = Reader::new(data);
+    let layout = reader.u8("layout")?;
+    if layout != LAYOUT_VERSION {
+        return Err(DecodeError::invalid(format!(
+            "action request layout {layout}, expected {LAYOUT_VERSION}"
+        )));
+    }
+    let bare = match reader.u8("bare")? {
+        0 => false,
+        1 => true,
+        other => {
+            return Err(DecodeError::invalid(format!(
+                "action payload has unknown bare flag {other}"
+            )))
+        }
+    };
+    let rcode = reader.u16("rcode")?;
+    let rrtype = reader.u16("rrtype")?;
+    let value = reader.text("value")?;
+    reader.expect_end()?;
+    Ok(Action {
+        bare,
+        rcode,
+        rrtype,
+        value,
+    })
+}
+
+/// Encodes one parsed action for the Go side.
+pub fn encode_action(action: &Action) -> Vec<u8> {
+    let mut out = vec![LAYOUT_VERSION, u8::from(action.bare)];
+    out.extend_from_slice(&action.rcode.to_le_bytes());
+    out.extend_from_slice(&action.rrtype.to_le_bytes());
+    push_text(&mut out, &action.value);
+    out
+}
+
+/// Encodes the normalized key [`Action::key`] produced.
+pub fn encode_action_key(key: &str) -> Vec<u8> {
+    let mut out = vec![LAYOUT_VERSION];
+    push_text(&mut out, key);
     out
 }
 

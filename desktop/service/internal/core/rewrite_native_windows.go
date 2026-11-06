@@ -20,6 +20,8 @@ func loadRewriteLibrary(path string) (*rewriteNativeLib, error) {
 
 	abiVersion := dll.NewProc("diting_rewrite_abi_version")
 	buildRecord := dll.NewProc("diting_rewrite_build_record")
+	parseAction := dll.NewProc("diting_rewrite_parse_action")
+	actionKey := dll.NewProc("diting_rewrite_action_key")
 	recordTypes := dll.NewProc("diting_rewrite_record_types")
 	engineBuild := dll.NewProc("diting_rewrite_engine_build")
 	engineLookup := dll.NewProc("diting_rewrite_engine_lookup")
@@ -28,8 +30,8 @@ func loadRewriteLibrary(path string) (*rewriteNativeLib, error) {
 	engineFree := dll.NewProc("diting_rewrite_engine_free")
 	freeBytes := dll.NewProc("diting_rewrite_free_bytes")
 	for _, proc := range []*syscall.LazyProc{
-		abiVersion, buildRecord, recordTypes, engineBuild, engineLookup, engineLookupPTR,
-		engineLookupReverse, engineFree, freeBytes,
+		abiVersion, buildRecord, parseAction, actionKey, recordTypes, engineBuild, engineLookup,
+		engineLookupPTR, engineLookupReverse, engineFree, freeBytes,
 	} {
 		if err := proc.Find(); err != nil {
 			return nil, fmt.Errorf("missing symbol %s", proc.Name)
@@ -53,6 +55,24 @@ func loadRewriteLibrary(path string) (*rewriteNativeLib, error) {
 		},
 		recordTypes: func(out *unsafe.Pointer, outLen *uintptr) uint32 {
 			status, _, _ := recordTypes.Call(
+				uintptr(unsafe.Pointer(out)),
+				uintptr(unsafe.Pointer(outLen)),
+			)
+			return uint32(status)
+		},
+		parseAction: func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32 {
+			status, _, _ := parseAction.Call(
+				uintptr(input),
+				inputLen,
+				uintptr(unsafe.Pointer(out)),
+				uintptr(unsafe.Pointer(outLen)),
+			)
+			return uint32(status)
+		},
+		actionKey: func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32 {
+			status, _, _ := actionKey.Call(
+				uintptr(input),
+				inputLen,
 				uintptr(unsafe.Pointer(out)),
 				uintptr(unsafe.Pointer(outLen)),
 			)

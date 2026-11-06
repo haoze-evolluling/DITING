@@ -52,7 +52,11 @@ func NewRuleMatcher() *RuleMatcher {
 // 构建失败来自原生内核（库缺失、ABI 不符、载荷损坏），没有第二套实现可以顶上，
 // 因此一律向上返回错误：调用方（规则引擎重建、配置热更新）据此让加载失败而不是静默放行。
 func (m *RuleMatcher) BuildFromRules(rules []*ParsedRule) error {
-	handle, stats, err := filterBuildIndex(filterEncodeRules(rules))
+	payload, err := filterEncodeRules(rules)
+	if err != nil {
+		return err
+	}
+	handle, stats, err := filterBuildIndex(payload)
 	if err != nil {
 		return err
 	}

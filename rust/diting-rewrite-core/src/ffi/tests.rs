@@ -142,6 +142,130 @@ fn bad_arguments_are_reported() {
     unsafe { diting_rewrite_free_bytes(std::ptr::null_mut(), 0) };
 }
 
+#[test]
+fn a_rewrite_value_crosses_the_boundary_field_by_field() {
+    let mut payload = vec![LAYOUT_VERSION];
+    payload.extend_from_slice(&(9u32).to_le_bytes());
+    payload.extend_from_slice(b"127.0.0.1");
+
+    let mut out: *mut u8 = std::ptr::null_mut();
+    let mut out_len = 0usize;
+    let status = unsafe {
+        diting_rewrite_parse_action(payload.as_ptr(), payload.len(), &mut out, &mut out_len)
+    };
+    assert_eq!(status, STATUS_OK);
+
+    let reply = unsafe { payload_slice(out, out_len) };
+    // layout, bare, rcode, rrtype, value (u32 length + bytes).
+    assert_eq!(reply[0], LAYOUT_VERSION);
+    assert_eq!(reply[1], 0, "not bare");
+    assert_eq!(&reply[2..4], &0u16.to_le_bytes());
+    assert_eq!(&reply[4..6], &1u16.to_le_bytes(), "A record");
+    assert_eq!(&reply[6..10], &9u32.to_le_bytes());
+    assert_eq!(&reply[10..19], b"127.0.0.1");
+    assert_eq!(reply.len(), 19);
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+}
+
+#[test]
+fn a_rejected_rewrite_value_reports_its_message() {
+    let mut payload = vec![LAYOUT_VERSION];
+    payload.extend_from_slice(&(14u32).to_le_bytes());
+    payload.extend_from_slice(b"NOERROR;A;nope");
+
+    let mut out: *mut u8 = std::ptr::null_mut();
+    let mut out_len = 0usize;
+    let status = unsafe {
+        diting_rewrite_parse_action(payload.as_ptr(), payload.len(), &mut out, &mut out_len)
+    };
+    assert_eq!(status, STATUS_REJECTED);
+    let message = String::from_utf8(unsafe { payload_slice(out, out_len) }.to_vec())
+        .expect("message is UTF-8");
+    assert!(message.contains("不是合法的 IPv4 地址"), "{message}");
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+}
+
+#[test]
+fn the_action_key_crosses_the_boundary_normalized() {
+    // An IPv4-mapped literal must key like the plain address it maps to.
+    let mut payload = vec![LAYOUT_VERSION, 0];
+    payload.extend_from_slice(&0u16.to_le_bytes());
+    payload.extend_from_slice(&1u16.to_le_bytes());
+    payload.extend_from_slice(&(15u32).to_le_bytes());
+    payload.extend_from_slice(b"::ffff:10.0.0.1");
+
+    let mut out: *mut u8 = std::ptr::null_mut();
+    let mut out_len = 0usize;
+    let status = unsafe {
+        diting_rewrite_action_key(payload.as_ptr(), payload.len(), &mut out, &mut out_len)
+    };
+    assert_eq!(status, STATUS_OK);
+
+    let reply = unsafe { payload_slice(out, out_len) };
+    assert_eq!(reply[0], LAYOUT_VERSION);
+    assert_eq!(&reply[1..5], &(12u32).to_le_bytes());
+    assert_eq!(&reply[5..17], b"0;1;10.0.0.1");
+    assert_eq!(reply.len(), 17);
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+
+    // A bare action keys as `bare` without touching the value.
+    let mut bare = vec![LAYOUT_VERSION, 1];
+    bare.extend_from_slice(&0u16.to_le_bytes());
+    bare.extend_from_slice(&0u16.to_le_bytes());
+    bare.extend_from_slice(&(4u32).to_le_bytes());
+    bare.extend_from_slice(b"junk");
+    let status =
+        unsafe { diting_rewrite_action_key(bare.as_ptr(), bare.len(), &mut out, &mut out_len) };
+    assert_eq!(status, STATUS_OK);
+    let reply = unsafe { payload_slice(out, out_len) };
+    assert_eq!(&reply[1..5], &(4u32).to_le_bytes());
+    assert_eq!(&reply[5..9], b"bare");
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+}
+
+#[test]
+fn action_requests_reject_a_mismatched_layout() {
+    let mut out: *mut u8 = std::ptr::null_mut();
+    let mut out_len = 0usize;
+
+    let wrong_layout = [LAYOUT_VERSION + 1, 0, 0, 0, 0];
+    let status = unsafe {
+        diting_rewrite_parse_action(
+            wrong_layout.as_ptr(),
+            wrong_layout.len(),
+            &mut out,
+            &mut out_len,
+        )
+    };
+    assert_eq!(status, STATUS_REJECTED);
+    let message = String::from_utf8(unsafe { payload_slice(out, out_len) }.to_vec()).unwrap();
+    assert!(message.contains("layout"), "{message}");
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+
+    // An unknown flag in the action fields is a layout mismatch too.
+    let unknown_flag = [LAYOUT_VERSION, 2, 0, 0, 0, 0];
+    let status = unsafe {
+        diting_rewrite_action_key(
+            unknown_flag.as_ptr(),
+            unknown_flag.len(),
+            &mut out,
+            &mut out_len,
+        )
+    };
+    assert_eq!(status, STATUS_REJECTED);
+    let message = String::from_utf8(unsafe { payload_slice(out, out_len) }.to_vec()).unwrap();
+    assert!(message.contains("bare flag"), "{message}");
+    unsafe { diting_rewrite_free_bytes(out, out_len) };
+
+    let status =
+        unsafe { diting_rewrite_parse_action(std::ptr::null(), 4, &mut out, &mut out_len) };
+    assert_eq!(status, STATUS_BAD_ARGS);
+    let status = unsafe {
+        diting_rewrite_action_key(std::ptr::null(), 0, std::ptr::null_mut(), &mut out_len)
+    };
+    assert_eq!(status, STATUS_BAD_ARGS);
+}
+
 /// Rebuilds the byte slice the library handed out.
 unsafe fn payload_slice(pointer: *mut u8, length: usize) -> &'static [u8] {
     if pointer.is_null() || length == 0 {

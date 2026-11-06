@@ -230,6 +230,32 @@ func TestRewriteModifier_ExceptionCancelsOneValue(t *testing.T) {
 	}
 }
 
+// 例外规则的键由内核归一化：同一个地址的等价写法必须互相取消
+func TestRewriteModifier_ExceptionKeyNormalizesAddresses(t *testing.T) {
+	m := buildRewriteMatcher(t,
+		"||one.test^$dnsrewrite=127.0.0.1",
+		"||one.test^$dnsrewrite=127.0.0.2",
+		"@@||one.test^$dnsrewrite=::ffff:127.0.0.1",
+	)
+
+	got := aValues(t, m.Match("one.test", dns.TypeA))
+	if len(got) != 1 || got[0] != "127.0.0.2" {
+		t.Fatalf("expected only 127.0.0.2, got %v", got)
+	}
+}
+
+// 域名取值的键同样归一化：大小写与末尾点不影响取消
+func TestRewriteModifier_ExceptionKeyNormalizesNames(t *testing.T) {
+	m := buildRewriteMatcher(t,
+		"||alias.test^$dnsrewrite=target.test",
+		"@@||alias.test^$dnsrewrite=TARGET.Test.",
+	)
+
+	if res := m.Match("alias.test", dns.TypeA); res.IsRewrite() {
+		t.Fatalf("expected the rewrite to be cancelled, got %+v", res)
+	}
+}
+
 // 裸 $dnsrewrite 例外取消该域名的全部重写
 func TestRewriteModifier_BareExceptionCancelsAll(t *testing.T) {
 	m := buildRewriteMatcher(t,

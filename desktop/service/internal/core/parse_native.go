@@ -7,8 +7,8 @@ package core
 // cosmetic-rule skipping, the hosts form, `@@` exceptions, the `$` modifier list, `$dnstype`,
 // `$denyallow=`/`$to=`, the AdGuard domain forms, wildcard patterns and the IDNA normalization.
 // Go keeps the compiled regexes (`regexp` for `/regex/`, `buildWildcardRegex` for wildcards, both
-// of which the matcher needs as sources) and the `$dnsrewrite` value parsing, because that pulls in
-// the whole rewrite-record subsystem.
+// of which the matcher needs as sources). The kernel reports `$dnsrewrite` as raw text, and Go hands
+// that text to the rewrite kernel (`rewrite_action_native.go`), which owns the value grammar.
 //
 // The kernel is required: a missing library, a stale ABI or a rejected request fails the parse.
 // `ParseRules` reports that to its caller; `ParseRuleLine` has no error in its signature, so it logs

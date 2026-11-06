@@ -9,9 +9,11 @@ package core
 //
 //   - `buildWildcardRegex`, because the wildcard pattern source the matcher receives is derived
 //     here (`filter_native.go` hands `Regex.String()` over, so both engines see one source);
-//   - `regexp.Compile` for `/regex/` rules, whose compiled form Go itself needs;
-//   - `parseDNSRewriteModifier`, which validates `$dnsrewrite` values through `buildRewriteRR` and
-//     belongs to the rewrite-record subsystem.
+//   - `regexp.Compile` for `/regex/` rules, whose compiled form Go itself needs.
+//
+// The `$dnsrewrite` value grammar is not here either: the parser hands the raw text to the rewrite
+// kernel (`rewrite_action_native.go`), which validates it through the same record builder a
+// configured rewrite rule uses.
 //
 // A rule the kernel accepts can still be dropped here — an uncompilable regex or an unparsable
 // rewrite value — exactly like the Go parser dropped it before the move.

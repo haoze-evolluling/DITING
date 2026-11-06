@@ -211,7 +211,11 @@ func filterTakePayload(lib *filterNativeLib, out unsafe.Pointer, outLen uintptr)
 }
 
 // filterEncodeRules serializes the rules Go wants indexed, in the layout src/payload.rs decodes.
-func filterEncodeRules(rules []*ParsedRule) []byte {
+//
+// The `$dnsrewrite` key is normalized by the rewrite kernel (rewrite_action_native.go), and a
+// missing kernel has to fail the build: an index built with unnormalized keys would still match
+// domains while every cancelling exception silently stopped applying.
+func filterEncodeRules(rules []*ParsedRule) ([]byte, error) {
 	payload := make([]byte, 0, 16*len(rules)+8)
 	payload = append(payload, filterPayloadLayoutVersion)
 	payload = binary.LittleEndian.AppendUint32(payload, uint32(len(rules)))
@@ -225,6 +229,10 @@ func filterEncodeRules(rules []*ParsedRule) []byte {
 		if rule.Rewrite == nil {
 			continue
 		}
+		key, err := rule.Rewrite.key()
+		if err != nil {
+			return nil, err
+		}
 		bare := byte(0)
 		if rule.Rewrite.Bare {
 			bare = 1
@@ -232,9 +240,9 @@ func filterEncodeRules(rules []*ParsedRule) []byte {
 		payload = append(payload, bare)
 		payload = append(payload, byte(rule.Rewrite.RCode))
 		payload = binary.LittleEndian.AppendUint16(payload, rule.Rewrite.RRType)
-		payload = appendFilterText(payload, rule.Rewrite.key())
+		payload = appendFilterText(payload, key)
 	}
-	return payload
+	return payload, nil
 }
 
 // filterRuleFlags packs the booleans the matcher branches on.

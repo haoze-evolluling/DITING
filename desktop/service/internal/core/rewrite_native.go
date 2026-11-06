@@ -3,8 +3,9 @@ package core
 // rewrite_native.go loads the Rust rewrite-record kernel (rust/diting-rewrite-core) and drives it
 // through the C ABI in that crate's src/ffi.rs.
 //
-// This file covers the single-record entry point. The rewrite engine that answers queries lives in
-// rewrite_engine_native.go and uses the same loaded library (and the same ABI version).
+// This file covers the single-record entry point. The `$dnsrewrite` value grammar lives in
+// rewrite_action_native.go and the rewrite engine that answers queries in rewrite_engine_native.go;
+// all three use the same loaded library (and the same ABI version).
 //
 // Responsibility split: Rust owns the record syntax — the supported type table, the value grammar
 // for A/AAAA/CNAME/NS/PTR/TXT/MX/SRV/HTTPS/SVCB, the SVCB parameter list and the target-domain
@@ -12,9 +13,9 @@ package core
 // goes straight into a `dns.Msg`: the reply carries the numeric type plus the unpacked fields.
 //
 // The kernel is required. A missing library, a stale ABI or a rejected payload fails
-// buildRewriteRR, which fails `compileRewriteRecords` for a custom rewrite rule and
-// `validateRewriteValue` for a `$dnsrewrite` modifier. There is no second parser left, and a silent
-// one would only keep working until a value it read differently reached a client.
+// buildRewriteRR, which fails `compileRewriteRecords` for a custom rewrite rule. There is no second
+// parser left, and a silent one would only keep working until a value it read differently reached
+// a client.
 //
 // Loading is pure Go (syscall.LazyDLL on Windows, purego elsewhere), so the module stays
 // CGO_ENABLED=0.
@@ -32,7 +33,10 @@ import (
 )
 
 // rewriteNativeABIVersion must match `ABI_VERSION` in rust/diting-rewrite-core/src/ffi.rs.
-const rewriteNativeABIVersion = 2
+//
+// Version 3 added the two `$dnsrewrite` action entry points; a version 2 library has neither, so the
+// loader refuses it instead of the first parse failing at run time.
+const rewriteNativeABIVersion = 3
 
 // Payload layout and status codes; keep in sync with src/payload.rs and src/ffi.rs.
 const (
@@ -54,10 +58,12 @@ const (
 	rewriteSVCBKeyDoHPath
 )
 
-// rewriteNativeLib is one loaded kernel: the record builder, the type list and the engine entry
-// points.
+// rewriteNativeLib is one loaded kernel: the record builder, the action parser, the type list and
+// the engine entry points.
 type rewriteNativeLib struct {
 	buildRecord         func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
+	parseAction         func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
+	actionKey           func(input unsafe.Pointer, inputLen uintptr, out *unsafe.Pointer, outLen *uintptr) uint32
 	recordTypes         func(out *unsafe.Pointer, outLen *uintptr) uint32
 	engineBuild         func(input unsafe.Pointer, inputLen uintptr, handle *unsafe.Pointer, out *unsafe.Pointer, outLen *uintptr) uint32
 	engineLookup        func(handle unsafe.Pointer, name unsafe.Pointer, nameLen uintptr, qtype uint16, out *unsafe.Pointer, outLen *uintptr) uint32

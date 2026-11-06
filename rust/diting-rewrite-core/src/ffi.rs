@@ -5,6 +5,8 @@
 //! | `diting_rewrite_abi_version` | ABI number the loader validates |
 //! | `diting_rewrite_build_record` | build one record from a [`Request`], returns the reply payload |
 //! | `diting_rewrite_record_types` | the supported type names, sorted |
+//! | `diting_rewrite_parse_action` | parse one `$dnsrewrite` value into its fields |
+//! | `diting_rewrite_action_key` | normalize one action into the exception-comparison key |
 //! | `diting_rewrite_engine_build` | compile an engine snapshot, returns a handle plus warnings |
 //! | `diting_rewrite_engine_lookup` | answer one query from a handle |
 //! | `diting_rewrite_engine_ptr_lookup` | PTR targets for one address |
@@ -13,21 +15,23 @@
 //! | `diting_rewrite_free_bytes` | drop a payload this library returned |
 //!
 //! Status words: `0` success, `1` rejected (payload carries the reason as UTF-8), `2` bad arguments
-//! (null pointer, wrong length). The single-record entry point caches nothing between calls; the
-//! engine entry points cache the compiled rules in a handle Go owns and swaps on configuration
-//! change.
+//! (null pointer, wrong length). The single-record and action entry points cache nothing between
+//! calls; the engine entry points cache the compiled rules in a handle Go owns and swaps on
+//! configuration change.
 
 use std::slice;
 
+use crate::action::Action;
 use crate::engine::Engine;
 use crate::payload::{
-    decode_engine_config, decode_request, encode_engine_build, encode_engine_domains,
-    encode_engine_lookup, encode_engine_reverse, encode_reply, encode_type_names,
+    decode_action, decode_action_text, decode_engine_config, decode_request, encode_action,
+    encode_action_key, encode_engine_build, encode_engine_domains, encode_engine_lookup,
+    encode_engine_reverse, encode_reply, encode_type_names,
 };
 use crate::record;
 
 /// Must match `rewriteNativeABIVersion` in `desktop/service/internal/core/rewrite_native.go`.
-pub const ABI_VERSION: u32 = 2;
+pub const ABI_VERSION: u32 = 3;
 
 const STATUS_OK: u32 = 0;
 const STATUS_REJECTED: u32 = 1;
@@ -55,29 +59,51 @@ pub unsafe extern "C" fn diting_rewrite_build_record(
     payload_out: *mut *mut u8,
     payload_len: *mut usize,
 ) -> u32 {
-    if payload_out.is_null() || payload_len.is_null() {
-        return STATUS_BAD_ARGS;
-    }
-    if input.is_null() && input_len > 0 {
-        return STATUS_BAD_ARGS;
-    }
+    drive(input, input_len, payload_out, payload_len, build_reply)
+}
 
-    let data = if input_len == 0 {
-        &[][..]
-    } else {
-        slice::from_raw_parts(input, input_len)
-    };
+/// Parses one `$dnsrewrite` value (empty text is the bare form).
+///
+/// On `STATUS_OK` the payload is a [`crate::payload::encode_action`] reply; on `STATUS_REJECTED` it
+/// is the message the Go caller logs before dropping the rule.
+///
+/// # Safety
+///
+/// `input` must be readable for `input_len` bytes; `payload_out`/`payload_len` must be valid for
+/// writes.
+#[no_mangle]
+pub unsafe extern "C" fn diting_rewrite_parse_action(
+    input: *const u8,
+    input_len: usize,
+    payload_out: *mut *mut u8,
+    payload_len: *mut usize,
+) -> u32 {
+    drive(
+        input,
+        input_len,
+        payload_out,
+        payload_len,
+        parse_action_reply,
+    )
+}
 
-    match build_reply(data) {
-        Ok(payload) => {
-            write_payload(payload, payload_out, payload_len);
-            STATUS_OK
-        }
-        Err(message) => {
-            write_payload(message.into_bytes(), payload_out, payload_len);
-            STATUS_REJECTED
-        }
-    }
+/// Normalizes one action into the key cancelling exceptions are compared by.
+///
+/// On `STATUS_OK` the payload is a [`crate::payload::encode_action_key`] reply; on `STATUS_REJECTED`
+/// it is the decode error.
+///
+/// # Safety
+///
+/// `input` must be readable for `input_len` bytes; `payload_out`/`payload_len` must be valid for
+/// writes.
+#[no_mangle]
+pub unsafe extern "C" fn diting_rewrite_action_key(
+    input: *const u8,
+    input_len: usize,
+    payload_out: *mut *mut u8,
+    payload_len: *mut usize,
+) -> u32 {
+    drive(input, input_len, payload_out, payload_len, action_key_reply)
 }
 
 /// The supported record type names, sorted, in the [`crate::payload::encode_type_names`] layout.
@@ -285,6 +311,57 @@ fn build_reply(data: &[u8]) -> Result<Vec<u8>, String> {
         request.ttl,
     )?;
     Ok(encode_reply(record.as_ref()))
+}
+
+/// Parses one `$dnsrewrite` value into the fields Go keeps on `RewriteAction`.
+fn parse_action_reply(data: &[u8]) -> Result<Vec<u8>, String> {
+    let text = decode_action_text(data).map_err(|error| error.0)?;
+    let action = Action::parse(&text)?;
+    Ok(encode_action(&action))
+}
+
+/// Normalizes one action into the key the rule index compares exceptions by.
+fn action_key_reply(data: &[u8]) -> Result<Vec<u8>, String> {
+    let action = decode_action(data).map_err(|error| error.0)?;
+    Ok(encode_action_key(&action.key()))
+}
+
+/// Runs one entry point: decode-check the request slice, run `handler`, write its reply.
+///
+/// # Safety
+///
+/// The pointer contract is the one each exported entry point documents.
+unsafe fn drive<F>(
+    input: *const u8,
+    input_len: usize,
+    payload_out: *mut *mut u8,
+    payload_len: *mut usize,
+    handler: F,
+) -> u32
+where
+    F: FnOnce(&[u8]) -> Result<Vec<u8>, String>,
+{
+    if payload_out.is_null() || payload_len.is_null() {
+        return STATUS_BAD_ARGS;
+    }
+    if input.is_null() && input_len > 0 {
+        return STATUS_BAD_ARGS;
+    }
+    let data = if input_len == 0 {
+        &[][..]
+    } else {
+        slice::from_raw_parts(input, input_len)
+    };
+    match handler(data) {
+        Ok(payload) => {
+            write_payload(payload, payload_out, payload_len);
+            STATUS_OK
+        }
+        Err(message) => {
+            write_payload(message.into_bytes(), payload_out, payload_len);
+            STATUS_REJECTED
+        }
+    }
 }
 
 /// Hands a `Vec<u8>` to the caller; the length travels with the pointer so the caller can rebuild

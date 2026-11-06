@@ -21,6 +21,8 @@ func loadRewriteLibrary(path string) (*rewriteNativeLib, error) {
 	symbols := []string{
 		"diting_rewrite_abi_version",
 		"diting_rewrite_build_record",
+		"diting_rewrite_parse_action",
+		"diting_rewrite_action_key",
 		"diting_rewrite_record_types",
 		"diting_rewrite_engine_build",
 		"diting_rewrite_engine_lookup",
@@ -46,6 +48,8 @@ func loadRewriteLibrary(path string) (*rewriteNativeLib, error) {
 
 	lib := &rewriteNativeLib{}
 	purego.RegisterLibFunc(&lib.buildRecord, handle, "diting_rewrite_build_record")
+	purego.RegisterLibFunc(&lib.parseAction, handle, "diting_rewrite_parse_action")
+	purego.RegisterLibFunc(&lib.actionKey, handle, "diting_rewrite_action_key")
 	purego.RegisterLibFunc(&lib.recordTypes, handle, "diting_rewrite_record_types")
 	purego.RegisterLibFunc(&lib.engineBuild, handle, "diting_rewrite_engine_build")
 	purego.RegisterLibFunc(&lib.engineLookup, handle, "diting_rewrite_engine_lookup")

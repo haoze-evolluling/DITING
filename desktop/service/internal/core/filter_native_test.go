@@ -114,7 +114,10 @@ func TestFilterEncodeRulesPinsThePayloadLayout(t *testing.T) {
 		Rewrite:   &RewriteAction{Bare: true},
 		Regex:     nil,
 	}
-	payload := filterEncodeRules([]*ParsedRule{rule})
+	payload, err := filterEncodeRules([]*ParsedRule{rule})
+	if err != nil {
+		t.Fatalf("encode rules: %v", err)
+	}
 
 	want := []byte{filterPayloadLayoutVersion}
 	want = binary.LittleEndian.AppendUint32(want, 1)

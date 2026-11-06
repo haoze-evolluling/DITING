@@ -500,8 +500,8 @@ fn query_fqdn(domain: &str) -> String {
     }
 }
 
-/// `ParseRewriteRCode` over the same six names.
-fn parse_rcode(name: &str) -> Option<u16> {
+/// `ParseRewriteRCode` over the same six names; also the `$dnsrewrite` keyword table.
+pub(crate) fn parse_rcode(name: &str) -> Option<u16> {
     let upper = go_upper(go_trim_space(name));
     match upper.as_ref() {
         "NOERROR" => Some(0),
