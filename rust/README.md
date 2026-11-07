@@ -1,6 +1,6 @@
 # Rust 内核
 
-十二个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+十三个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -12,11 +12,13 @@
 IPv4/IPv6/反查映射、`HasDomain`、`.in-addr.arpa` / `.ip6.arpa` 反查名解析），
 `diting-dns64-core` 负责**桌面服务的 DNS64 合成内核**（`net.ParseCIDR` 语义的前缀解析、RFC 6052
 地址嵌入、RFC 6147 排除集与“应答里是否已有有效 AAAA”），`diting-cosmetic-core` 负责**同一隧道
-引擎的装饰注入内核**（流式 `<head>` 扫描、主机名归一化与 `<link>` 标签），`diting-go-compat` 是
-各内核共用的 Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
-十六个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
-第二套语义可以静默跑起来。唯一的例外是 DNS 缓存内核：它只决定“答案能不能复用”，缺库时缓存停用、
-查询直连解析器，回答本身不变。
+引擎的装饰注入内核**（流式 `<head>` 扫描、主机名归一化与 `<link>` 标签），`diting-resolver-core`
+负责**同一隧道引擎的上游统计与调度评分内核**（SRTT + RTTVAR 估计、失败率 EWMA、连败惩罚、熔断与
+半开探针，以及 hedge / 单次超时 / UDP 重试三种自适应延迟），`diting-go-compat` 是各内核共用的 Go
+标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
+十七个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+第二套语义可以静默跑起来。两个例外都只影响“复用与调度”，不影响回答：DNS 缓存内核缺失时缓存停用、
+查询直连解析器；解析器统计内核缺失时每个上游按冷启动取值参与调度。
 
 | 入口 | 调用方 | Rust 产物 | 缺失时 |
 |---|---|---|---|
@@ -36,6 +38,7 @@ IPv4/IPv6/反查映射、`HasDomain`、`.in-addr.arpa` / `.ip6.arpa` 反查名�
 | 本地 hosts 权威应答 | Go 桌面服务（纯 Go 动态加载 + C ABI，句柄） | hosts 文本解析、各级映射与 PTR 别名、`HasDomain`、反查名解析 | hosts 解析器启动失败 |
 | DNS64 合成 | Go 桌面服务（纯 Go 动态加载 + C ABI，句柄） | 前缀解析与 RFC 6052 嵌入、RFC 6147 排除集、有效 AAAA 判定 | DNS64 合成器启动失败 |
 | 装饰注入（HTML 流式改写） | Go 隧道引擎（`dlopen` + C ABI，句柄） | `<head>` 扫描状态机（carry / pending / 16 KiB 上限）、主机名归一化与 `url.QueryEscape`、`<link>` 标签 | MITM 启动失败（隧道照常起，只是不解密） |
+| 解析器统计（SRTT / 熔断 / 自适应延迟） | Go 隧道引擎（`dlopen` + C ABI，每上游一个句柄） | SRTT + RTTVAR 估计、失败率 EWMA、连败惩罚的半衰期衰减、熔断与半开探针、hedge / 单次超时 / UDP 重试 | 调度退回冷启动取值（默认评分、冷启动延迟、每次尝试都放行），回答不变 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -111,7 +114,16 @@ Go 函数，现在只剩内核一份，`ParseIPFromArpa` 变成一次调用。�
 载荷、`ShouldInjectHTML`（一行 `strings.Contains`，加一次 FFI 只是给谓词多一条错误路径）、
 响应头与 zlib 解压、以及 reader 的 `Close`（释放句柄的唯一时机）。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核与装饰注入内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第十八个把 Android 隧道引擎的 **上游统计与调度评分**搬进新建的 `diting-resolver-core`
+（`resolver_stats.go` 只剩句柄、`time.Duration` 换算与冷启动回退）：RTO 式的 SRTT/RTTVAR 估计、
+失败率 EWMA、连败惩罚的半衰期衰减、指数退避的熔断与半开探针，以及 hedge 延迟、单次尝试超时、
+plain UDP 重试间隔三档自适应取值都在 `stats.rs`。时间从 Go 注入（`now_ns`），内核不读时钟，所以
+迁移时能把原 Go 实现的 76 步操作轨迹逐字段固化成 `tests/fixtures/stats_trace.tsv` 并对拍。Go 侧
+留下的是它自己的类型（每个上游一个 `*providerStats`）、四处 `time.Now()` 与 `time.Duration`
+换算。缺库时每个上游按冷启动取值参与调度（默认评分、冷启动延迟、每次尝试都放行），这正是迁移前
+“没有统计的上游”的既有形态，回答不变。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核与解析器统计内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -119,7 +131,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核与装�
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译四个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译六个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -192,6 +204,10 @@ rust/
 │   ├── payload.rs                  # 文本载荷布局（`<link>` 标签与归一化主机）
 │   ├── ffi.rs ffi/tests.rs         # new / free / pending / process / normalize_host / link_tag / free_bytes（ABI_VERSION）
 │   └── tests/fixtures/*.tsv        # 迁移时 Go 原实现生成的注入对拍、主机归一化与 `<link>` 语料
+├── diting-resolver-core/src/
+│   ├── stats.rs stats/tests.rs     # SRTT/RTTVAR 估计、失败率 EWMA、连败惩罚、熔断与三种自适应延迟（原 resolver_stats.go）
+│   ├── ffi.rs ffi/tests.rs         # new / free / record_* / allow_attempt / score / hedge / attempt / udp / 计数器（ABI_VERSION）
+│   └── tests/fixtures/stats_trace.tsv  # 迁移时 Go 实现生成的 76 步操作轨迹（状态 + 派生值逐行对拍）
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
 │   ├── glob.rs wildcard_index.rs   # 通配编译与索引（取代 policy_wildcard_index.go）
@@ -264,6 +280,10 @@ rust/
   不需要 cgo 就能测解码）、`mitm_cosmetic_inject.go`（规则载荷、`ShouldInjectHTML`、`io.ReadCloser` 包装）、
   `mitm_cosmetic_native_test.go`（载荷布局、探测路径与原有注入用例）、
   `mitm_cosmetic_payload_test.go`（无 cgo 也能跑的载荷解码用例）。
+- Go（解析器统计）：`resolver_stats.go`（`providerStats` 只剩句柄、四处 `time.Now()`、`time.Duration` 换算与
+  冷启动回退）、`resolver_stats_native.go`（加载、ABI 校验、十三个符号的调用包装）、
+  `resolver_stats_native_stub.go`（无 cgo 时全部冷启动）；原有用例
+  （`resolver_test.go` 的 EWMA 用例、`resolver_smart_test.go` 的三条统计用例与四条调度用例）全部穿过 FFI 跑。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -272,11 +292,11 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：五个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：六个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
-DNS 缓存内核（容器 + wire）、MITM 过滤内核与装饰注入内核只随 Android APK 交付（桌面服务没有
-这三块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
+DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核与解析器统计内核只随 Android APK 交付
+（桌面服务没有这四块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的六个内核按平台单独交付（Android 用不到它们）：
 
@@ -302,6 +322,8 @@ DNS 缓存内核（容器 + wire）、MITM 过滤内核与装饰注入内核只�
   不会以“过滤静默关闭”的状态起隧道；
 - Go 侧 DNS 缓存内核缺失时建不出缓存句柄：`put` 拒绝写入、每次查询都 miss，引擎照常直连解析器，
   回答不变，只是不再复用；加载失败会写一条日志，不会静默切换成另一套 TTL/ID 语义；
+- Go 侧解析器统计内核缺失时每个上游都按冷启动取值参与调度（默认评分、冷启动的 hedge / 单次超时 /
+  UDP 重试、每次尝试都放行），回答不变，只是不再自适应；加载失败会写一条日志；
 - 桌面服务侧 `ParseServerStamp` 返回错误，上游配置构建随之失败，不会退化成“印章当作普通地址”；
   `RuleMatcher.BuildFromRules` 返回错误，规则引擎重建随之失败，不会退化成“规则静默不生效”；
   `buildRewriteRR` 返回错误，重写规则编译失败（自定义规则丢掉那一条，`$dnsrewrite` 丢掉整条规则），
@@ -400,6 +422,13 @@ DNS64：配置 ──diting_dns64_new(enabled, 前缀文本列表)──> Rust �
                       ──> 上游错误是否随这一次一起返回（队列没排空就先返回 nil）
           样式表 ──diting_cosmetic_normalize_host(`?h=` 值)──> 与注入时同一个归一化主机
 
+解析器统计：上游返回 ──diting_resolver_record_success(rtt, now)──> 折入 SRTT/RTTVAR、清零熔断
+          失败/策略拒绝 ──record_failure / record_policy_failure(now)──> 失败率与连败计数 ──> 熔断
+          并发落败 ──record_censored(elapsed)──> 作为下界 RTT 样本（不计失败）
+          调度 ──diting_resolver_score(now)──> rankProviders 排序 ──> smart_prediction / parallel_race 的候选顺序
+          primary_backup ──allow_attempt(now)──> 跳过熔断中的上游，冷却到期只放行一个半开探针
+          延迟 ──hedge_delay / attempt_timeout / udp_retry_delay──> 内核回传纳秒，Go 转 time.Duration
+
 声誉查询：配置 ──diting_sb_new / diting_sb_configure──> Rust 建两份前缀缓存（恶意网址库 / 家长控制）
           查询 ──diting_sb_plan(服务, 域名, now_ms)──> Rust 归一化+校验 ──> 各级父域 SHA-256
                                     ──> 前缀查缓存（未命中则回传查询名）──> Go 发 TXT 查询
@@ -413,7 +442,8 @@ DNS64：配置 ──diting_dns64_new(enabled, 前缀文本列表)──> Rust �
 `diting-filter-core/src/ffi.rs`、`parse.rs`、`diting-rewrite-core/src/{action,record,engine,payload,ffi}.rs`、
 `diting-safebrowsing-core/src/{hash,cache,engine,payload,ffi}.rs` 与
 `diting-hosts-core/src/{ip,arpa,hosts,payload,ffi}.rs` 与
-`diting-dns64-core/src/{addr,prefix,engine,payload,ffi}.rs` 顶部；
+`diting-dns64-core/src/{addr,prefix,engine,payload,ffi}.rs` 与
+`diting-cosmetic-core/src/{inject,host,payload,ffi}.rs`、`diting-resolver-core/src/{stats,ffi}.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
 ## 语义一致性
@@ -550,6 +580,13 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 `android/engine/mitm_filter_test.go` 另从 Go 侧走一遍白名单、排除规则、敏感主机、失败计数、
 黑名单与持久化文件；`mitm_filter_native_test.go` 钉住报告载荷布局与两类坏载荷。
 
+**解析器统计**：`tests/fixtures/stats_trace.tsv` 是迁移时直接跑原 Go 实现生成的 76 步操作轨迹（三份
+脚本：EWMA 截断与熔断升级、两端钳位、冷启动下游标样本），每行同时记录完整状态（SRTT / RTTVAR /
+失败率的二进制位 / 连败次数 / 三个时间戳 / 熔断死线 / 半开探针）与四个派生值；`tests/corpus.rs`
+逐行重放并断言完全相等。`stats/tests.rs` 另钉住夹具没有走到的两端钳位、权重下限与冷却上限。
+Go 侧原有用例一条断言未改，现在全部穿过 FFI 跑；只有两处白盒读取从字段改成方法
+（`sampleCount()` / `failureCount()`），因为状态已在核内。
+
 ## DNS 缓存内核的已知边界
 
 - **缓存键格式**：`name:qtype:qclass`，ASCII 小写、标签用 `.` 连接、无尾点，压缩指针最多 64 跳；
@@ -635,6 +672,29 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **测试需要 cgo**：内核是 cgo 加载的，`mitm_cosmetic_native_test.go` 整份带 `//go:build cgo`；
   不值得为它造一个纯 Go 的假内核（那就是第二套实现）。载荷解码在
   `mitm_cosmetic_payload_test.go` 里，不带 cgo 也能跑。
+
+## 解析器统计内核的已知边界
+
+- **时间从 Go 注入**：带状态的调用都带 `now_ns`（unix 纳秒），读取类调用只在需要比较惩罚衰减时才
+  要 `now_ns`。内核不读时钟，所以「惩罚每 30 秒减半」「熔断冷却 5 秒起翻倍」能被单测钉死；代价是
+  Go 每次记录事件都算一次 `time.Now()`（与旧实现一样）。
+- **单位是纳秒整数**：Go 的 `time.Duration` 就是 `int64` 纳秒，内核在每个入口收发纳秒，浮点只在
+  SRTT / RTTVAR 与失败率内部使用。`f64 as i64` 与 Go 的 `time.Duration(float64)` 同样向零截断，
+  语料因此能逐位（含失败率的二进制位）比较。
+- **时钟回拨**：惩罚衰减用 `now_ns - last_failure_ns`，为负时不衰减（与旧实现的 `since > 0` 相同）；
+  熔断冷却比较的是绝对值。跨时钟回拨的行为与迁移前一致，没有额外加固。
+- **锁粒度**：内核内一把 `RwLock`，读路径（评分、三种延迟、计数器）取读锁，记录与半开探针取写锁，
+  与旧 `sync.RWMutex` 相同。「检查并置位探针」仍在一次写锁内完成，并发查询不会同时放行两个半开
+  探针。
+- **句柄随统计对象释放**：`resolver_stats.go` 在创建时注册 finalizer，最后一个引用消失后释放内核
+  句柄；`providerStatsMap` 按上游 ID 复用统计对象，所以换配置时同一上游的历史会被保留（与旧实现
+  完全一致）。
+- **缺库时**：所有上游按冷启动取值参与调度——评分 `defaultEWMA`、hedge `hedgeDelayCold`、单次超时
+  `attemptTimeoutCold`、UDP 重试 `udpRetryDelayCold`、每次尝试都放行。这正是迁移前 `p.stats == nil`
+  的既有分支，回答不变；首次加载失败写一条日志。
+- **调参表在两侧各有一份，由测试钉住**：`resolver_stats.go` 顶部保留六个数值（四个冷启动值供无库
+  回退读，两个钳位与半衰期供用例断言），内核 `stats.rs` 是唯一的执行者。改任何一个值都要同时改两边
+  并重新生成 `stats_trace.tsv`。
 
 ## 印章内核的已知边界
 
@@ -975,10 +1035,10 @@ go test -run XXX -bench BenchmarkDNSCacheGetFast_Hit -benchtime 200000x .
 
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
-python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核与 DTRI fixture 用例
+python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核与 DTRI fixture 用例
 python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则、重写记录、声誉查询、hosts 与 DNS64 全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
-python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（五个 .so）
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（六个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
 python rust/verify.py --all      # 全量
 ```

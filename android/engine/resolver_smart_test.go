@@ -45,8 +45,8 @@ func TestProviderStats_HedgeDelayAndCensored(t *testing.T) {
 		t.Fatalf("short censored sample must not change score")
 	}
 	s.RecordCensored(300 * time.Millisecond)
-	if s.Score() <= before || s.failureCount != 0 {
-		t.Fatalf("long censored sample should raise SRTT without failure, score=%v failures=%d", s.Score(), s.failureCount)
+	if s.Score() <= before || s.failureCount() != 0 {
+		t.Fatalf("long censored sample should raise SRTT without failure, score=%v failures=%d", s.Score(), s.failureCount())
 	}
 }
 
@@ -100,9 +100,7 @@ func TestResolver_SmartPredictionStaggeredHedge(t *testing.T) {
 	var p1Samples int64
 	var p1Failures int
 	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); time.Sleep(5 * time.Millisecond) {
-		p1.mu.RLock()
-		p1Samples, p1Failures = p1.sampleCount, p1.failureCount
-		p1.mu.RUnlock()
+		p1Samples, p1Failures = p1.sampleCount(), p1.failureCount()
 		if p1Samples > 0 || p1Failures > 0 {
 			break
 		}

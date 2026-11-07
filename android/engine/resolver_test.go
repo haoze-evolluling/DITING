@@ -136,14 +136,14 @@ func TestProviderStats_EWMA(t *testing.T) {
 	}
 
 	stats.RecordSuccess(20 * time.Millisecond)
-	if stats.failureCount != 0 {
-		t.Errorf("expected failureCount 0, got %d", stats.failureCount)
+	if stats.failureCount() != 0 {
+		t.Errorf("expected failureCount 0, got %d", stats.failureCount())
 	}
 
 	stats.RecordFailure()
 	stats.RecordFailure()
-	if stats.failureCount != 2 {
-		t.Errorf("expected failureCount 2, got %d", stats.failureCount)
+	if stats.failureCount() != 2 {
+		t.Errorf("expected failureCount 2, got %d", stats.failureCount())
 	}
 	score := stats.Score()
 	if score <= 20*time.Millisecond {
@@ -151,8 +151,8 @@ func TestProviderStats_EWMA(t *testing.T) {
 	}
 
 	stats.RecordSuccess(15 * time.Millisecond)
-	if stats.failureCount != 0 {
-		t.Errorf("expected failureCount reset to 0 after success, got %d", stats.failureCount)
+	if stats.failureCount() != 0 {
+		t.Errorf("expected failureCount reset to 0 after success, got %d", stats.failureCount())
 	}
 }
 

@@ -5,8 +5,8 @@ Default: formatting, clippy (warnings are errors) and the Rust test suite of eve
 including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference writer.
 
     python rust/verify.py
-    python rust/verify.py --android   # also cross-compile the four .so files for arm64-v8a
-    python rust/verify.py --go        # also prove the Go engine agrees with the Rust policy, cache, MITM and cosmetic kernels
+    python rust/verify.py --android   # also cross-compile the six .so files for arm64-v8a
+    python rust/verify.py --go        # also prove the Go engine agrees with the Rust policy, cache, MITM, cosmetic and resolver kernels
     python rust/verify.py --desktop   # also run the desktop service (Go) suite against all four desktop kernels
     python rust/verify.py --dart      # also run the Dart side of the native fast paths
     python rust/verify.py --bench     # also time the DTRI compile, the rule search and the walk
@@ -66,8 +66,10 @@ def main() -> int:
     ]
     if args.go:
         steps.append(("release", ["cargo", "build", "--release"], RUST_DIR))
-        # The policy, DNS cache, MITM filter and cosmetic injection tests need the kernels: the
-        # engine has no second implementation to fall back to.
+        # The policy, DNS cache, MITM filter, cosmetic injection and resolver statistics tests need
+        # the kernels: the engine has no second implementation to fall back to (a missing DNS cache
+        # or resolver kernel only degrades reuse / scheduling, and those tests still assert the
+        # kernel's own values).
         steps.append(
             (
                 "go",
@@ -77,7 +79,7 @@ def main() -> int:
                     # -count=1: the kernels are external files, invisible to Go's test cache.
                     "-count=1",
                     "-run",
-                    "TestNativePolicy|TestPolicy|TestNativeDNSCache|TestDNSCache|TestWireFormat|TestNegativeCaching|TestQuestionKey|TestSingleFlight|TestSharded|TestDisablingCache|TestEngineGetDNSCacheEntries|TestMitm|TestCosmetic|TestServeCss|TestInjected|TestInjection|TestInjectingReader|TestNormalizeCosmetic",
+                    "TestNativePolicy|TestPolicy|TestNativeDNSCache|TestDNSCache|TestWireFormat|TestNegativeCaching|TestQuestionKey|TestSingleFlight|TestSharded|TestDisablingCache|TestEngineGetDNSCacheEntries|TestMitm|TestCosmetic|TestServeCss|TestInjected|TestInjection|TestInjectingReader|TestNormalizeCosmetic|TestProviderStats|TestResolver",
                     ".",
                 ],
                 GO_ENGINE_DIR,

@@ -11,7 +11,8 @@
 
 ## 核心特性
 
-- **解析与调度**：UDP/TCP、DoH、DoT；单一 / 智能优选（EWMA）/ 最快响应 / 依次尝试四种调度；
+- **解析与调度**：UDP/TCP、DoH、DoT；单一 / 智能优选（EWMA）/ 最快响应 / 依次尝试四种调度，
+  上游健康统计（SRTT/RTTVAR、失败率、连败惩罚与熔断，含三种自适应延迟）在 Rust；
   内置主流服务商并支持自定义节点；Bootstrap IP 解析加密上游域名，DDR 拦截防绕过。
 - **缓存与容灾**：64 分片并发 LRU 缓存，跟随 TTL / 平衡 / 高命中等策略；上游异常时宽限期复用过期缓存
   （Stale-While-Revalidate）；Singleflight 合并并发请求。
@@ -58,7 +59,7 @@ DITING/
 │   ├── toolbox/               # Python + PyWebView 维护工具箱
 │   └── build_installer.bat    # 桌面端安装包（Windows EXE / Linux deb）
 ├── shared/                    # 两端共用的设计系统、主题、l10n、配置与 SQLite 读取
-├── rust/                      # Rust 内核（规则解析 / 检索 / DTRI 索引 / 策略判定与缓存，见 rust/README.md）
+├── rust/                      # Rust 内核（规则解析 / 检索 / DTRI 索引 / 策略判定与缓存 / 解析器统计，见 rust/README.md）
 ├── docs/                      # 开发文档与静态资源
 ├── avatars/                   # 赞助者与共建者头像
 ├── recognition_members.json   # 赞助者与共建者名单（见 docs/development/recognition-members.md）

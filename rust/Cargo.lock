@@ -154,6 +154,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-resolver-core"
+version = "0.1.0"
+
+[[package]]
 name = "diting-rewrite-core"
 version = "0.1.0"
 dependencies = [
