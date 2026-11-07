@@ -6,7 +6,7 @@ including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference
 
     python rust/verify.py
     python rust/verify.py --android   # also cross-compile the thirteen .so files for arm64-v8a
-    python rust/verify.py --go        # also prove the Go engine agrees with the Rust policy, cache, MITM, cosmetic, resolver, DNS answer, flow sniffer, bootstrap, app-allowlist, connection-log dedupe, IP → domain cache, outbound-proxy, MITM certificate and config kernels
+    python rust/verify.py --go        # also prove the Go engine agrees with the Rust policy, cache, MITM, cosmetic, resolver, DNS answer, flow sniffer, bootstrap, app-allowlist, connection-log dedupe, IP → domain cache, outbound-proxy, MITM certificate, config and request-filter kernels
     python rust/verify.py --desktop   # also run the desktop service (Go) suite against every desktop kernel
     python rust/verify.py --dart      # also run the Dart side of the native fast paths
     python rust/verify.py --bench     # also time the DTRI compile, the rule search and the walk
@@ -80,7 +80,7 @@ def main() -> int:
                     # -count=1: the kernels are external files, invisible to Go's test cache.
                     "-count=1",
                     "-run",
-                    "TestNativePolicy|TestPolicy|TestNativeDNSCache|TestDNSCache|TestWireFormat|TestNegativeCaching|TestQuestionKey|TestSingleFlight|TestSharded|TestDisablingCache|TestEngineGetDNSCacheEntries|TestMitm|TestCosmetic|TestServeCss|TestInjected|TestInjection|TestInjectingReader|TestNormalizeCosmetic|TestProviderStats|TestResolver|TestDNSCore|TestSniffer|TestClassify|TestFlowClassifier|TestBootstrap|TestAppAllowlist|TestSetAppAllowlist|TestRememberAppAllowlist|TestServeDNSCacheHitGrants|TestServeDNSStaleResponseGrants|TestConnLogSeen|TestIPDomainCache|TestProxy|TestSocks5|TestHTTPConnect|TestCertManager|TestIsExtendedValidation|TestBundledRootsParse|TestUpstreamRootPool|TestConfigPayloadLayout|TestNormalizeDNSConfig|TestNormalizeDomain|TestClassifyRewriteTargets|TestParseDoQURL|TestValueTables|TestCanonicalDNSMode|TestValidateDNSProvider|TestApplyDNSConfig|TestSetRewriteRules|TestRewriteLookup|TestRewriteCNAME|TestRewriteAnswer|TestResolveDomain",
+                    "TestNativePolicy|TestPolicy|TestNativeDNSCache|TestDNSCache|TestWireFormat|TestNegativeCaching|TestQuestionKey|TestSingleFlight|TestSharded|TestDisablingCache|TestEngineGetDNSCacheEntries|TestMitm|TestCosmetic|TestServeCss|TestInjected|TestInjection|TestInjectingReader|TestNormalizeCosmetic|TestProviderStats|TestResolver|TestDNSCore|TestSniffer|TestClassify|TestFlowClassifier|TestBootstrap|TestAppAllowlist|TestSetAppAllowlist|TestRememberAppAllowlist|TestServeDNSCacheHitGrants|TestServeDNSStaleResponseGrants|TestConnLogSeen|TestIPDomainCache|TestProxy|TestSocks5|TestHTTPConnect|TestCertManager|TestIsExtendedValidation|TestBundledRootsParse|TestUpstreamRootPool|TestConfigPayloadLayout|TestNormalizeDNSConfig|TestNormalizeDomain|TestClassifyRewriteTargets|TestParseDoQURL|TestValueTables|TestCanonicalDNSMode|TestValidateDNSProvider|TestApplyDNSConfig|TestSetRewriteRules|TestRewriteLookup|TestRewriteCNAME|TestRewriteAnswer|TestResolveDomain|TestRequestPayloadLayout|TestSetRequestRules",
                     ".",
                 ],
                 GO_ENGINE_DIR,

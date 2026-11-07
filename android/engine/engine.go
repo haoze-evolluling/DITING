@@ -62,7 +62,7 @@ type Engine struct {
 	trafficTracker         *TrafficTracker
 	resolver               *Resolver
 	dnsCache               *dnsCache
-	requestRules           []requestRule
+	requestRules           *nativeRequestRules
 	filterDNS              atomic.Bool
 	rewriteRules           map[string]*rewriteEntry
 	firewallChecker        FirewallChecker

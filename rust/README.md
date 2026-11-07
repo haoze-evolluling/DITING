@@ -1,6 +1,6 @@
 # Rust 内核
 
-二十三个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+二十四个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -31,9 +31,11 @@ IP→域名 LRU 内核**（原地更新并把条目移到最近写入位置、�
 `diting-cert-core` 负责**同一隧道引擎的 MITM 证书内核**（根证书的生成与校验、SEC1 私钥编码、
 叶证书签发的 SAN 规则与链路，以及 EV 策略表），`diting-config-core` 负责**同一隧道引擎的配置归一化
 内核**（DNS 模式别名、动态阻断默认值、上游端点校验、协议与阻断模式取值表、重写目标归类与域名键折叠），
+`diting-request-core` 负责**同一隧道引擎的请求过滤内核**（URL 前缀规则表与每请求的归一化、最长前缀与
+allow 平局判定），
 `diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
 `strings` 辅助、`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠、`net` 地址解析与主机端口切分）。
-二十七个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+二十八个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。六个例外都只影响“复用、调度、判定辅助、取址路径、日志去重与主机名提示”，
 不影响回答：DNS 缓存
 内核缺失时缓存停用、查询直连解析器；解析器统计内核缺失时每个上游按冷启动取值参与调度；DNS 应答
@@ -71,6 +73,7 @@ IP→域名缓存内核缺失时直连 IP 的流没有主机名提示（标签�
 | IP→域名 LRU 缓存 | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 原地更新 + 移到最近写入位置、淘汰最久未写入项、`get` 不提升、非正容量回退 2048 | 主机名提示停用（直连 IP 的流没有域名标签），回答不变 |
 | MITM 根证书 + 叶证书签发 | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 根证书生成与磁盘校验、SEC1 私钥编码、叶证书签发的 SAN 规则、共享私钥、AKI/SKI 链与有效期，EV 策略表 | MITM 启动失败（隧道照常起，只是不解密） |
 | DNS 配置与重写表归一化 | Go 隧道引擎（`dlopen` + C ABI，无句柄） | DNS 模式别名、动态阻断默认值、PLAIN/DOT/DoH/DoQ 端点校验、协议与阻断模式取值表、重写目标归类、域名键折叠、错误优先级 | 推送的 DNS 配置被拒（沿用上一份快照）；取值表退回默认、重写目标被丢弃 |
+| 请求过滤（URL 前缀规则） | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 规则归一化（kind 白名单 + `http(s)://` 前缀）、host 折叠与默认端口剔除、`scheme://host path` 构造、最长前缀与 allow 平局、域名回退用的主机 | URL 规则不生效（每个请求都落到域名规则），其余不变 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -258,7 +261,16 @@ IPv6 字面量判定、DoH 走 `url.ParseRequestURI` 的 https + 非空主机、
 `SplitHostPort` / `IP.String` 这组语义从 `diting-proxy-core` 提到 `diting-go-compat::netaddr`，
 两个内核共用一份。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核、证书签发内核与配置内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第二十九个把 Android 隧道引擎的 **HTTP 请求过滤**搬进新建的 `diting-request-core`
+（`engine_request_filter.go` 只剩 `encoding/json` 解码、句柄换新、域名规则回退与 403 应答）：
+规则归一化（`strings.ToLower(strings.TrimSpace(pattern))`、`block` / `allow` kind 白名单、
+必须带 `http://` / `https://` 前缀，非法规则静默丢弃）与每请求的判定（host 的
+`ToLower(TrimSpace())`、按 scheme 精确比较后剔除 80/443 默认端口、`path == ""` 取 `/`、
+`strings.ToLower(scheme + "://" + host + path)`、最长前缀命中且 allow 赢得平局、域名回退要问的
+主机）都在 `rules.rs` / `match_rule.rs`。规则集是不可变句柄：每次推送换一个新句柄、在引擎锁内关闭
+旧的，所以正在判定的请求不会碰到已释放的句柄；缺库时 URL 规则不生效，请求照旧落到域名规则。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核、证书签发内核、配置内核与请求过滤内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -266,7 +278,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装�
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译十五个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译十六个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -354,6 +366,13 @@ rust/
 │   ├── ffi.rs ffi/tests.rs         # abi_version / call / free_bytes（ABI_VERSION）
 │   └── tests/corpus.rs             # 九份语料回放（114 行）
 ├── diting-config-core/tests/fixtures/  # dns_mode / dynamic_block / provider / doq_url / protocol / response_type / domain / rewrite / apply（9 份 TSV）
+├── diting-request-core/src/
+│   ├── rules.rs rules/tests.rs     # SetRequestRules 的归一化与白名单（原 engine_request_filter.go）
+│   ├── match_rule.rs match_rule/tests.rs # 每请求判定：URL 构造、最长前缀、allow 平局、回退主机
+│   ├── payload.rs payload/tests.rs # 规则集 / 判定请求 / 判定回应的二进制布局
+│   ├── ffi.rs ffi/tests.rs         # new / match / close / free_bytes（ABI_VERSION）
+│   └── tests/corpus.rs             # 两份语料回放（14 + 64 行）
+├── diting-request-core/tests/fixtures/ # rules.tsv / match.tsv
 ├── diting-safebrowsing-core/tests/fixtures/hash_corpus.tsv  # 迁移时 Go 实现生成的主机→摘要→查询名语料
 ├── diting-filter-core/tests/fixtures/parse_corpus.tsv  # 迁移时 Go 解析器的 200 行语料快照
 ├── diting-dns-cache-core/src/
@@ -541,13 +560,13 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：十五个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：十六个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
 DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、
-引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核、证书签发内核与
-配置内核只随 Android APK 交付（桌面服务没有这十三块），由 `build_android.py` 与另外两个 `.so`
-一起拷入 `jniLibs`。
+引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核、证书签发内核、
+配置内核与请求过滤内核只随 Android APK 交付（桌面服务没有这十四块），由 `build_android.py` 与
+另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的七个内核按平台单独交付（Android 用不到它们）：
 
@@ -1436,6 +1455,31 @@ Go 侧原有用例一条断言未改，现在全部穿过 FFI 跑；只有两处
   `" dot "` 不裁剪）、`domain` 11 行、`rewrite` 18 行（含 Go 会丢弃的 JSON 形状）、
   `apply` 7 行（错误优先级）。Rust 的 `tests/corpus.rs` 逐行重放，Go 侧另用
   `config_native_test.go` 走一遍 `ApplyDNSConfig` / `SetRewriteRules` 的端到端路径。
+
+## 请求过滤内核的已知边界
+
+- **只搬判定，不搬 HTTP**：`http.ReadRequest`、`net.Conn` 上的读写、`req.URL.EscapedPath()`
+  的取值、403 应答的构造与写出、`logHTTPEvent` 都还在 Go。内核收的是已经取好的
+  scheme / host / path 三个字符串。
+- **句柄而不是纯函数**：这个判定每个明文 HTTP 请求都要走一次，所以规则集编成一份不可变句柄
+  （每次推送换新、引擎锁内关闭旧的），判定路径不再重新编码规则。`SetRequestRules` 的 JSON 解码
+  仍在 Go，非法 JSON 与迁移前一样只写日志、保留旧表。
+- **scheme 的默认端口判定是精确比较**：`scheme == "https"` 而不是折叠后的比较，所以
+  `HTTPS` + `ads.example:443` 不会剔除端口、构造出的 URL 变成 `https://ads.example:443/spy`
+  而匹配不上；`HTTPS` + `ads.example`（无端口）仍然匹配，因为 URL 构造那一步是
+  `strings.ToLower(scheme + "://" + host + path)`。语料把这两条都钉住了。
+- **path 会被折成小写**：`strings.ToLower(scheme + "://" + host + path)` 连路径一起折叠，
+  所以规则里的 `%2F` 与请求里的 `%2f` 等价。`req.URL.EscapedPath()` 本身的大小写不被保留——
+  迁移前就是如此。
+- **kind 不做任何折叠**：`BLOCK`、`block `、`deny` 一律丢弃（旧循环是精确比较），只有 pattern
+  会被 trim + 小写。语料里每一条都单独钉了一次。
+- **域名回退在 Go**：没命中任何 URL 规则时，内核只回传“该拿哪个主机去问”，真正的
+  `policyEngine.evaluate` 与日志仍在 Go。缺库时 URL 规则全部不生效、回退用的是未折叠的主机名。
+- **一致性验证**：`tests/fixtures/` 的两份语料来自迁移前直接跑原 Go 实现——`rules.tsv` 14 行
+  （kind 白名单、大小写、空白、非 http(s) 前缀）、`match.tsv` 64 行（4 组规则 × 16 个请求：
+  前缀命中、更长前缀覆盖、并排的 allow 平局、大小写 scheme、默认端口、空 path、IPv6 主机、
+  未命中时的回退主机）。Rust 的 `tests/corpus.rs` 逐行重放，Go 侧 `request_native_test.go`
+  走一遍 `SetRequestRules` → `requestFilterDecision` 的端到端路径。
 
 ## 性能（本机 Windows/amd64，迁移时的实测值）
 

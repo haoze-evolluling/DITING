@@ -23,6 +23,7 @@ members = [
     "diting-proxy-core",
     "diting-cert-core",
     "diting-config-core",
+    "diting-request-core",
 ]
 resolver = "2"
 

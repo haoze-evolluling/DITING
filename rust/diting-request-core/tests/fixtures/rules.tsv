@@ -1,0 +1,14 @@
+block	https://ads.example/spy	keep	block	https://ads.example/spy
+allow	https://cdn.example/assets	keep	allow	https://cdn.example/assets
+block	  HTTPS://Ads.Example/Spy  	keep	block	https://ads.example/spy
+block	http://plain.example/x	keep	block	http://plain.example/x
+block	ftp://ads.example/x	drop
+block	ads.example/x	drop
+block	https://	keep	block	https://
+allow		drop
+	https://ads.example/x	drop
+deny	https://ads.example/x	drop
+BLOCK	https://ads.example/x	drop
+block 	https://ads.example/x	drop
+block	https://例子.example/路径	keep	block	https://例子.example/路径
+block	https://ads.example/x?q=1	keep	block	https://ads.example/x?q=1

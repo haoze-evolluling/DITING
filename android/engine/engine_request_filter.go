@@ -1,5 +1,17 @@
 // engine_request_filter.go provides HTTP request-level path and URL-prefix filtering.
 //
+// What is left here after the migration to rust/diting-request-core:
+// - `SetRequestRules`: `encoding/json` decoding, the handle swap under the engine lock and closing
+//   the previous handle (so a request in flight never sees a freed one).
+// - `requestFilterDecision`: one kernel match, then the domain-rule fallback (`policyEngine`) when no
+//   URL rule matched.
+// - `writeBlockedHTTPResponse`: the 403 the relay writes back.
+//
+// What moved to the kernel: the rule normalization (trim, lower-case, the `block` / `allow`
+// whitelist, the mandatory `http(s)://` prefix) and the whole decision (host fold, default-port
+// strip, `path == ""`, the `scheme://host path` URL build, the longest-prefix walk with allow
+// winning ties, and the host the fallback should be asked about).
+//
 // Rule Resolution:
 // - Request rules take precedence over general domain rules.
 // - Evaluation uses longest-prefix matching with allow rules winning ties before falling back to domain filtering.
@@ -27,53 +39,46 @@ func (e *Engine) SetRequestRules(content string) {
 			return
 		}
 	}
-	valid := make([]requestRule, 0, len(rules))
-	for _, rule := range rules {
-		rule.Pattern = strings.ToLower(strings.TrimSpace(rule.Pattern))
-		if (rule.Kind == "block" || rule.Kind == "allow") &&
-			(strings.HasPrefix(rule.Pattern, "http://") || strings.HasPrefix(rule.Pattern, "https://")) {
-			valid = append(valid, rule)
-		}
+
+	// The kernel drops the rules it cannot match (unknown kind, no scheme prefix) silently, exactly
+	// like the old normalization loop did.
+	set, err := newNativeRequestRules(rules)
+	if err != nil {
+		set = nil
 	}
+
 	e.mu.Lock()
-	e.requestRules = valid
+	previous := e.requestRules
+	e.requestRules = set
 	e.mu.Unlock()
+
+	if previous != nil {
+		previous.release()
+	}
 }
 
+// requestFilterDecision answers whether one request is blocked and, if so, by which rule.
+//
+// The kernel match runs under the engine lock: `SetRequestRules` swaps the handle under the same
+// lock, so the handle cannot be freed while this call is inside it.
 func (e *Engine) requestFilterDecision(scheme, host, path, appName string) (blocked bool, matched string) {
-	host = strings.ToLower(strings.TrimSpace(host))
-	if parsedHost, port, err := net.SplitHostPort(host); err == nil {
-		if (scheme == "http" && port == "80") || (scheme == "https" && port == "443") {
-			host = parsedHost
-		}
-	}
-	if path == "" {
-		path = "/"
-	}
-	url := strings.ToLower(scheme + "://" + host + path)
-	// SetRequestRules always installs a fresh slice and never mutates it in
-	// place, so the reference can be read without copying per request.
 	e.mu.Lock()
 	rules := e.requestRules
-	e.mu.Unlock()
-	bestLen := -1
-	bestAllow := false
-	bestPattern := ""
-	for _, rule := range rules {
-		if strings.HasPrefix(url, rule.Pattern) {
-			length := len(rule.Pattern)
-			allow := rule.Kind == "allow"
-			if length > bestLen || (length == bestLen && allow && !bestAllow) {
-				bestLen, bestAllow, bestPattern = length, allow, rule.Pattern
-			}
+	var decision requestDecision
+	decided := false
+	if rules != nil {
+		if result, err := rules.match(scheme, host, path); err == nil {
+			decision, decided = result, true
 		}
 	}
-	if bestLen >= 0 {
-		return !bestAllow, bestPattern
-	}
+	e.mu.Unlock()
+
 	domainHost := host
-	if parsedHost, _, err := net.SplitHostPort(host); err == nil {
-		domainHost = parsedHost
+	if decided {
+		if decision.matched {
+			return decision.blocked, decision.pattern
+		}
+		domainHost = decision.domainHost
 	}
 	if blocked, reason := e.checkDomainBlockedAndReason(domainHost, appName); blocked {
 		return true, reason

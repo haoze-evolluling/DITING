@@ -1,0 +1,64 @@
+empty	0	https	ads.example	/spy	false	false		ads.example
+empty	0	https	ads.example	/spy/allowed	false	false		ads.example
+empty	0	https	ads.example	/spy/allowed/deeper	false	false		ads.example
+empty	0	https	ads.example	/other	false	false		ads.example
+empty	0	https	tie.example	/x	false	false		tie.example
+empty	0	https	a.example	/x	false	false		a.example
+empty	0	https	a.example	/y	false	false		a.example
+empty	0	https	a.example:443	/x	false	false		a.example
+empty	0	http	a.example:80	/x	false	false		a.example
+empty	0	https	a.example:8443	/x	false	false		a.example
+empty	0	https	A.Example	/X	false	false		a.example
+empty	0	https	 a.example 	/y	false	false		a.example
+empty	0	https	b.example		false	false		b.example
+empty	0	https	[::1]:443	/x	false	false		::1
+empty	0	http	ads.example	/Spy	false	false		ads.example
+empty	0	HTTPS	ads.example:443	/spy	false	false		ads.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	ads.example	/spy	true	true	https://ads.example/spy	ads.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	ads.example	/spy/allowed	true	false	https://ads.example/spy/allowed	ads.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	ads.example	/spy/allowed/deeper	true	false	https://ads.example/spy/allowed	ads.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	ads.example	/other	false	false		ads.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	tie.example	/x	false	false		tie.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	a.example	/x	false	false		a.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	a.example	/y	false	false		a.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	a.example:443	/x	false	false		a.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	http	a.example:80	/x	false	false		a.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	a.example:8443	/x	false	false		a.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	A.Example	/X	false	false		a.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	 a.example 	/y	false	false		a.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	b.example		false	false		b.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	https	[::1]:443	/x	false	false		::1
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	http	ads.example	/Spy	false	false		ads.example
+ads	2	block	https://ads.example/spy	allow	https://ads.example/spy/allowed	HTTPS	ads.example:443	/spy	false	false		ads.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	ads.example	/spy	false	false		ads.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	ads.example	/spy/allowed	false	false		ads.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	ads.example	/spy/allowed/deeper	false	false		ads.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	ads.example	/other	false	false		ads.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	tie.example	/x	true	false	https://tie.example/x	tie.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	a.example	/x	false	false		a.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	a.example	/y	false	false		a.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	a.example:443	/x	false	false		a.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	http	a.example:80	/x	false	false		a.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	a.example:8443	/x	false	false		a.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	A.Example	/X	false	false		a.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	 a.example 	/y	false	false		a.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	b.example		false	false		b.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	https	[::1]:443	/x	false	false		::1
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	http	ads.example	/Spy	false	false		ads.example
+tie	2	block	https://tie.example/x	allow	https://tie.example/x	HTTPS	ads.example:443	/spy	false	false		ads.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	ads.example	/spy	false	false		ads.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	ads.example	/spy/allowed	false	false		ads.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	ads.example	/spy/allowed/deeper	false	false		ads.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	ads.example	/other	false	false		ads.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	tie.example	/x	false	false		tie.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	a.example	/x	true	true	https://a.example/x	a.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	a.example	/y	true	false	https://a.example	a.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	a.example:443	/x	true	true	https://a.example/x	a.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	http	a.example:80	/x	false	false		a.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	a.example:8443	/x	true	false	https://a.example	a.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	A.Example	/X	true	true	https://a.example/x	a.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	 a.example 	/y	true	false	https://a.example	a.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	b.example		true	true	https://b.example	b.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	https	[::1]:443	/x	false	false		::1
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	http	ads.example	/Spy	false	false		ads.example
+prefix	3	allow	https://a.example	block	https://a.example/x	block	https://b.example	HTTPS	ads.example:443	/spy	false	false		ads.example
