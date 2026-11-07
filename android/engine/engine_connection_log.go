@@ -5,86 +5,82 @@
 //   to identify the owning Android package, capturing apps connecting directly to hard-coded IPs (e.g. WhatsApp, Telegram).
 // - JNI Memory Safety: UID-to-package resolution uses AppUidResolver (taking int arguments only) rather than
 //   AppResolver to prevent Go runtime cgocheck panics under concurrent hot-path execution.
-// - Deduplication & UI Pipeline: connLogSeen (sync.Map) deduplicates entries by app+dest tuple to avoid log flooding,
-//   and events are dispatched through notifyLog tagged as "connection" or "firewall:<reason>".
+// - Deduplication & UI Pipeline: the Rust connlog kernel deduplicates entries by app+dest tuple to
+//   avoid log flooding, and events are dispatched through notifyLog tagged as "connection" or
+//   "firewall:<reason>". The kernel also builds the key, so Go no longer allocates it for every
+//   flow. Without the library deduplication is disabled (every line is emitted, only more noisy).
 
 package tunnel
 
 import (
 	"fmt"
-	"strconv"
 	"sync"
-	"sync/atomic"
 )
 
-// connLogSeenMaxEntries bounds the per-session connection-log deduplication set.
-// The set was only ever cleared wholesale by StartFull, so a long-running VPN
-// session that talked to many destinations grew it monotonically.
-const connLogSeenMaxEntries = 8192
-
-// connLogSeenDedup holds the dedupe keys for the current session together with
-// the bound above. Entries are dropped on an overflow reset rather than evicted
-// individually: the keys are cheap to rebuild and a stale key only costs one
-// duplicate log line.
+// connLogSeenDedup owns the Rust dedupe handle for the current session. The kernel drops the
+// entries on an overflow reset rather than evicting individually: the keys are cheap to rebuild
+// and a stale key only costs one duplicate log line.
 type connLogSeenDedup struct {
-	mu      sync.Mutex
-	seen    map[string]struct{}
-	cleared atomic.Int64
+	mu     sync.Mutex
+	probed bool
+	kernel *nativeConnLog
 }
 
 var connLogSeen connLogSeenDedup
 
-// markSeen stores key and reports whether it was already present. When the set
-// reaches [connLogSeenMaxEntries] it is emptied first, which trades exactness for
-// a bounded footprint.
-func (d *connLogSeenDedup) markSeen(key string) (dup bool) {
+func (d *connLogSeenDedup) ensureKernel() *nativeConnLog {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	if d.seen == nil {
-		d.seen = make(map[string]struct{}, connLogSeenMaxEntries)
+	if d.kernel != nil {
+		return d.kernel
 	}
-	if _, ok := d.seen[key]; ok {
-		return true
+	if d.probed {
+		return nil
 	}
-	if len(d.seen) >= connLogSeenMaxEntries {
-		d.seen = make(map[string]struct{}, connLogSeenMaxEntries)
-		d.cleared.Add(1)
+	d.probed = true
+	if kernel, err := newNativeConnLog(); err == nil {
+		d.kernel = kernel
 	}
-	d.seen[key] = struct{}{}
-	return false
+	return d.kernel
 }
 
-// reset empties the set; called when a full-tunnel session starts.
+// markSeen builds "[blk|]app|dest|port|proto[|reason]" in the kernel and reports whether it was
+// already present. When the set is full the kernel empties it first, trading exactness for a
+// bounded footprint. Without the kernel every key looks new, so nothing is suppressed.
+func (d *connLogSeenDedup) markSeen(prefix, app, dest string, port, protocol int, reason string) (dup bool) {
+	kernel := d.ensureKernel()
+	if kernel == nil {
+		return false
+	}
+	return kernel.mark(prefix, app, dest, port, protocol, reason)
+}
+
+// reset empties the set; called when a full-tunnel session starts. The kernel keeps its overflow
+// counter across this, exactly like the old Go `cleared` field.
 func (d *connLogSeenDedup) reset() {
-	d.mu.Lock()
-	d.seen = make(map[string]struct{}, connLogSeenMaxEntries)
-	d.mu.Unlock()
+	kernel := d.ensureKernel()
+	if kernel == nil {
+		return
+	}
+	kernel.reset()
 }
 
 // size reports the current entry count (test/telemetry helper).
 func (d *connLogSeenDedup) size() int {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	return len(d.seen)
+	kernel := d.ensureKernel()
+	if kernel == nil {
+		return 0
+	}
+	return kernel.size()
 }
 
-// connLogKey builds the dedupe key ("[blk|]app|dest|port|proto[|reason]")
-// without fmt; it runs for every flow, including the duplicates it filters.
-func connLogKey(prefix, app, dest string, port, protocol int, reason string) string {
-	buf := make([]byte, 0, len(prefix)+len(app)+len(dest)+len(reason)+16)
-	buf = append(buf, prefix...)
-	buf = append(buf, app...)
-	buf = append(buf, '|')
-	buf = append(buf, dest...)
-	buf = append(buf, '|')
-	buf = strconv.AppendInt(buf, int64(port), 10)
-	buf = append(buf, '|')
-	buf = strconv.AppendInt(buf, int64(protocol), 10)
-	if reason != "" {
-		buf = append(buf, '|')
-		buf = append(buf, reason...)
+// clearedCount reports how many overflow resets happened (the old `cleared` atomic).
+func (d *connLogSeenDedup) clearedCount() uint64 {
+	kernel := d.ensureKernel()
+	if kernel == nil {
+		return 0
 	}
-	return string(buf)
+	return kernel.cleared()
 }
 
 func (e *Engine) appNameForFlow(flow flowID, protocol int) string {
@@ -122,7 +118,7 @@ func (e *Engine) logConnection(flow flowID, protocol int) {
 		}
 	}
 	dest := flow.serverIP.String()
-	if connLogSeen.markSeen(connLogKey("", app, dest, flow.serverPort, protocol, "")) {
+	if connLogSeen.markSeen("", app, dest, flow.serverPort, protocol, "") {
 		return
 	}
 	proto := "TCP"
@@ -164,7 +160,7 @@ func (e *Engine) logBlockedConnection(flow flowID, protocol int, reason string) 
 	if protocol == ProtocolUDP {
 		proto = "UDP"
 	}
-	if connLogSeen.markSeen(connLogKey("blk|", app, dest, flow.serverPort, protocol, reason)) {
+	if connLogSeen.markSeen("blk|", app, dest, flow.serverPort, protocol, reason) {
 		return
 	}
 	e.notifyLog(

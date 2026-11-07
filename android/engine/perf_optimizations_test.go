@@ -21,15 +21,6 @@ func TestCacheKeyFormatUnchanged(t *testing.T) {
 	}
 }
 
-func TestConnLogKeyFormatUnchanged(t *testing.T) {
-	if got, want := connLogKey("", "pkg", "1.2.3.4", 443, 6, ""), "pkg|1.2.3.4|443|6"; got != want {
-		t.Fatalf("conn key = %q, want %q", got, want)
-	}
-	if got, want := connLogKey("blk|", "pkg", "::1", 53, 17, "uid_blocked"), "blk|pkg|::1|53|17|uid_blocked"; got != want {
-		t.Fatalf("blocked key = %q, want %q", got, want)
-	}
-}
-
 type countingUIDResolver struct {
 	calls atomic.Int32
 	uid   int

@@ -44,7 +44,7 @@ pwsh -File build_aar.ps1 -Arch all  # 双 ABI（debug 默认）
 
 ## Rust 内核（必需）
 
-规则、DNS 与 MITM 链路有十二处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析与规则页检索经
+规则、DNS 与 MITM 链路有十三处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析与规则页检索经
 `dart:ffi`，规则写入后的 DTRI 订阅索引编译经 JNI（Kotlin 调用），**域名规则判定内核**、
 **DNS 缓存内核**（分片 LRU、TTL 策略、清扫、统计与快照，以及缓存键、响应元数据、命中时的 ID/TTL
 改写）、**MITM 过滤内核**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与失败计数、
@@ -52,18 +52,20 @@ pwsh -File build_aar.ps1 -Arch all  # 双 ABI（debug 默认）
 内核**（SRTT/RTTVAR、失败率 EWMA、连败惩罚、熔断与三种自适应延迟）、**DNS 应答内核**（上游空答案
 判定、唯一地址列表、按域名的 NODATA→NXDOMAIN 动态升级）、**引导解析内核**（端点健康的半衰期衰减、
 EWMA 延迟与抖动、连败惩罚与冷却、带探索率的加权选择与一分钟主机缓存）、**应用白名单内核**（域名
-归一化与逐级父域匹配、按 UID 的 TTL 授权、应答按域名分发与剪枝）与**流嗅探内核**（TLS
+归一化与逐级父域匹配、按 UID 的 TTL 授权、应答按域名分发与剪枝）、**连接日志去重内核**（`connLogKey`
+构造、8192 条键集合与溢出整表清空）与**流嗅探内核**（TLS
 ClientHello 的 SNI 走法、明文 HTTP 请求判定与 `Host` 头取值）由 Go 引擎 `dlopen` 后经 C ABI 调用。除
-DNS 缓存、解析器统计、DNS 应答与引导解析外，其余八处都只有 Rust 一条实现：库缺失、ABI 不匹配或载荷被拒时，
+DNS 缓存、解析器统计、DNS 应答、引导解析与连接日志去重外，其余八处都只有 Rust 一条实现：库缺失、ABI 不匹配或载荷被拒时，
 导入报错、索引编译失败、`ApplyRuleSnapshot` 失败（隧道启动失败）、MITM 启动失败（隧道照常起，只是
 不解密），不会静默退回另一套语义。DNS 缓存内核缺失时隧道照常解析（答案直连上游），只是不再复用
 缓存；解析器统计内核缺失时每个上游按冷启动取值参与调度（默认评分、冷启动延迟、每次尝试都放行）；
 DNS 应答内核缺失时上游空答案按普通应答记日志、动态升级关闭；引导解析内核缺失时加密 DNS 提供商
-主机名走普通系统解析路径。四者都在首次加载失败时写日志。应用白名单内核缺失时，已配置规则时，被选中 UID 的 DNS 与连接一律拒绝（fail-closed，环回仍放行），未选中的应用
+主机名走普通系统解析路径；连接日志去重内核缺失时不再去重（日志更吵，事件不变）。五者都在首次
+加载失败时写日志。应用白名单内核缺失时，已配置规则时，被选中 UID 的 DNS 与连接一律拒绝（fail-closed，环回仍放行），未选中的应用
 与未配置规则时行为不变，不会静默放行严格模式。
 
 ```bash
-python rust/build_android.py        # arm64-v8a + x86_64，十个 .so 拷入 src/main/jniLibs/
+python rust/build_android.py        # arm64-v8a + x86_64，十一个 .so 拷入 src/main/jniLibs/
 python rust/verify.py --all         # fmt / clippy / 单测 / Go / Dart / 交叉编译 / 基准
 ```
 

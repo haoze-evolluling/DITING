@@ -137,35 +137,6 @@ func TestCertCacheStoreDeleteAndReset(t *testing.T) {
 	}
 }
 
-// --- A-073: bounded connLogSeen -------------------------------------------
-
-func TestConnLogSeenDedupIsBounded(t *testing.T) {
-	var dedup connLogSeenDedup
-	dedup.reset()
-
-	if dedup.markSeen("k1") {
-		t.Fatalf("first sighting reported as duplicate")
-	}
-	if !dedup.markSeen("k1") {
-		t.Fatalf("second sighting not reported as duplicate")
-	}
-
-	for i := 0; i < connLogSeenMaxEntries+50; i++ {
-		dedup.markSeen(string(rune('A'+i%26)) + string(rune(0x1000+i)))
-	}
-	if got := dedup.size(); got > connLogSeenMaxEntries {
-		t.Fatalf("dedupe set grew past the bound: %d", got)
-	}
-	if dedup.cleared.Load() == 0 {
-		t.Fatalf("overflow reset never fired")
-	}
-
-	dedup.reset()
-	if dedup.size() != 0 {
-		t.Fatalf("reset left %d entries", dedup.size())
-	}
-}
-
 // --- A-090: ApplyDNSConfig must not partially apply a rejected snapshot -----
 
 func TestApplyDNSConfigDoesNotPartiallyApply(t *testing.T) {
