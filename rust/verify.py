@@ -92,6 +92,7 @@ def main() -> int:
         steps.append(
             ("safebrowsing-release", ["cargo", "build", "--release", "-p", "diting-safebrowsing-core"], RUST_DIR)
         )
+        steps.append(("hosts-release", ["cargo", "build", "--release", "-p", "diting-hosts-core"], RUST_DIR))
         # -count=1: the kernel is an external file, invisible to Go's test cache.
         steps.append(("desktop-service", ["go", "test", "-count=1", "./..."], GO_DESKTOP_DIR))
     if args.dart:

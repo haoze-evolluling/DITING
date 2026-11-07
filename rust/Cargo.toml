@@ -9,6 +9,7 @@ members = [
     "diting-filter-core",
     "diting-rewrite-core",
     "diting-safebrowsing-core",
+    "diting-hosts-core",
 ]
 resolver = "2"
 

@@ -1,6 +1,6 @@
 # Rust 内核
 
-九个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+十个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -8,9 +8,10 @@
 `diting-filter-core` 负责**桌面服务的规则文本解析与规则索引匹配**，`diting-rewrite-core` 负责
 **桌面服务的重写引擎、重写记录取值解析与 `$dnsrewrite` 取值解析**，`diting-safebrowsing-core` 负责
 **桌面服务的声誉查询哈希前缀内核**（主机归一化与校验、各级父域的 SHA-256、前缀查询名、TXT 摘要
-解析、按前缀的 LRU），`diting-go-compat` 是各内核共用的
-Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
-十三个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+解析、按前缀的 LRU），`diting-hosts-core` 负责**桌面服务的本地权威内核**（hosts 文件解析、
+IPv4/IPv6/反查映射、`HasDomain`、`.in-addr.arpa` / `.ip6.arpa` 反查名解析），`diting-go-compat` 是
+各内核共用的 Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
+十四个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。唯一的例外是 DNS 缓存内核：它只决定“答案能不能复用”，缺库时缓存停用、
 查询直连解析器，回答本身不变。
 
@@ -29,6 +30,7 @@ Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns
 | `$dnsrewrite` 取值解析 | Go 桌面服务（同一个库，纯 Go 动态加载 + C ABI） | 应答码关键字、显式/简写切分、取值校验、例外比对键的归一化 | 规则被丢弃（与非法正则一致） |
 | 重写引擎索引 + 查询 | Go 桌面服务（同一个库，纯 Go 动态加载 + C ABI） | 精确/泛域名索引、PTR 反查、rcode 覆盖、CNAME 链、属主 CNAME 合并、记录列表 | 重写引擎启动失败（配置变更同样报错） |
 | 声誉查询哈希前缀 | Go 桌面服务（纯 Go 动态加载 + C ABI，句柄） | 主机归一化与域名校验、各级父域 SHA-256、前缀查询名、TXT 摘要解析、按前缀的 LRU 与 TTL | 声誉查询引擎启动失败 |
+| 本地 hosts 权威应答 | Go 桌面服务（纯 Go 动态加载 + C ABI，句柄） | hosts 文本解析、各级映射与 PTR 别名、`HasDomain`、反查名解析 | hosts 解析器启动失败 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -78,6 +80,14 @@ TXT 摘要解析、按前缀的 LRU 与 TTL 都在 `hash.rs` / `cache.rs` / `eng
 展示的统计。缺库时 `NewSafeBrowsingEngine` 返回错误、服务启动失败，不会以“界面显示已开启、实际
 什么都没查”的状态跑起来。
 
+第十五个把桌面服务的**本地权威 hosts 层**搬进新建的 `diting-hosts-core`（`hosts_resolver.go`
+只剩配置、TTL 与把地址填进 `dns.RR` 的那几行）：行解析（`#` 注释、Unicode 空白分列、接口 zone
+截断、`net.ParseIP` 接受的字面量）、IPv4/IPv6 两张表、反查表与别名顺序、`HasDomain`、以及
+`.in-addr.arpa` / `.ip6.arpa` 的反查名解析都在内核里。反查名解析原本是 hosts 与重写引擎共用的
+Go 函数，现在只剩内核一份，`ParseIPFromArpa` 变成一次调用。文件读取也进了内核（表由「路径 +
+内联文本」的 source 列表构建），`Reload` 重读上次真正读成功的路径，`UpdateConfig` 先建新表再在
+写锁内换指针并释放旧表，热重载窗口里没有「解析不出、也不再是本地权威」的空档（BUG-59）。
+
 Android 侧用 cgo 调策略内核、DNS 缓存内核与 MITM 过滤内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
@@ -123,6 +133,13 @@ rust/
 │   ├── engine.rs engine/tests.rs   # 两个服务的缓存与 plan/apply（原 hashChecker 与 SafeBrowsingEngine 的缓存部分）
 │   ├── payload.rs payload/tests.rs # 计划与应答请求的二进制布局
 │   └── ffi.rs ffi/tests.rs         # new / configure / plan / apply / free / free_bytes（ABI_VERSION）
+├── diting-hosts-core/src/
+│   ├── ip.rs ip/tests.rs           # net.ParseIP 与 To4 折叠、hosts 条目的 zone 截断（原 net.ParseIP 用法）
+│   ├── arpa.rs arpa/tests.rs       # .in-addr.arpa / .ip6.arpa 反查名解析（原 ParseIPFromArpa）
+│   ├── hosts.rs hosts/tests.rs     # hosts 文本解析、三张映射、lookup / has_domain / ptr / reverse
+│   ├── payload.rs payload/tests.rs # source 列表、表信息、查表、反查与反查名的二进制布局
+│   └── ffi.rs ffi/tests.rs         # new / info / lookup / contains / ptr / reverse / parse_arpa（ABI_VERSION）
+├── diting-hosts-core/tests/fixtures/expectations.tsv  # 迁移时 Go 实现生成的地址/反查名/查表语料
 ├── diting-safebrowsing-core/tests/fixtures/hash_corpus.tsv  # 迁移时 Go 实现生成的主机→摘要→查询名语料
 ├── diting-filter-core/tests/fixtures/parse_corpus.tsv  # 迁移时 Go 解析器的 200 行语料快照
 ├── diting-dns-cache-core/src/
@@ -187,6 +204,11 @@ rust/
   `safebrowsing_native_windows.go` / `safebrowsing_native_unix.go`（两个平台的加载器）、
   `safebrowsing_native_test.go`（计划载荷解码、应答请求编码与探测顺序）、
   `safebrowsing_test.go`（主机摘要、查询名、缓存、归因与失败路径，全部穿过 FFI 跑）。
+- 桌面服务 Go（本地 hosts）：`hosts_resolver.go`（配置、TTL、source 列表热重载、地址到 `dns.RR`）、
+  `hosts_native.go`（加载、source 列表编码、四类回应解码、`ParseIPFromArpa`）、
+  `hosts_native_windows.go` / `hosts_native_unix.go`（两个平台的加载器）、
+  `hosts_native_test.go`（四类载荷布局与探测顺序）、
+  `hosts_resolver_test.go`（原有解析/查表/PTR 用例，另加热重载、配置替换与反向查询，全部穿过 FFI 跑）。
 - Go（DNS 缓存）：`dns_cache_native.go`（加载、ABI 校验、键构建）、
   `dns_cache_native_container.go`（句柄生命周期、四个载荷的编解码）、
   `dns_cache_native_stub.go`（无 cgo 时缓存不写入）、`dns_cache.go`（单飞、句柄 finalizer、
@@ -210,18 +232,20 @@ python rust/build_android.py            # Android：四个 .so，arm64-v8a / x86
 DNS 缓存内核（容器 + wire）与 MITM 过滤内核只随 Android APK 交付（桌面服务没有这两块），由
 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
 
-桌面服务的四个内核按平台单独交付（Android 用不到它们）：
+桌面服务的五个内核按平台单独交付（Android 用不到它们）：
 
 - Windows：`cargo build --release -p diting-stamp-core -p diting-filter-core -p diting-rewrite-core
-  -p diting-safebrowsing-core` 产出 `diting_stamp_core.dll`、`diting_filter_core.dll`、
-  `diting_rewrite_core.dll` 与 `diting_safebrowsing_core.dll`，`build_manager.py` 在打 EXE 时各编一次，
-  NSIS 把四个都装到 `diting-service.exe` 同目录；
+  -p diting-safebrowsing-core -p diting-hosts-core` 产出 `diting_stamp_core.dll`、
+  `diting_filter_core.dll`、`diting_rewrite_core.dll`、`diting_safebrowsing_core.dll` 与
+  `diting_hosts_core.dll`，`build_manager.py` 在打 EXE 时各编一次，NSIS 把五个都装到
+  `diting-service.exe` 同目录；
 - Linux：`build_linux.sh` 按目标架构编/复用 `libditing_stamp_core.so`、
-  `libditing_filter_core.so`、`libditing_rewrite_core.so` 与 `libditing_safebrowsing_core.so`，
-  装到 `/usr/lib/diting/`；
-- 探测顺序（四个内核相同）：`DITING_STAMP_CORE_LIB` / `DITING_FILTER_CORE_LIB` /
-  `DITING_REWRITE_CORE_LIB` / `DITING_SAFEBROWSING_CORE_LIB` → 可执行文件同目录
-  → `/usr/lib/diting`、`/usr/local/lib/diting` → `rust/target/{release,debug}/`（`go test` 用）。
+  `libditing_filter_core.so`、`libditing_rewrite_core.so`、`libditing_safebrowsing_core.so` 与
+  `libditing_hosts_core.so`，装到 `/usr/lib/diting/`；
+- 探测顺序（五个内核相同）：`DITING_STAMP_CORE_LIB` / `DITING_FILTER_CORE_LIB` /
+  `DITING_REWRITE_CORE_LIB` / `DITING_SAFEBROWSING_CORE_LIB` / `DITING_HOSTS_CORE_LIB` →
+  可执行文件同目录 → `/usr/lib/diting`、`/usr/local/lib/diting` →
+  `rust/target/{release,debug}/`（`go test` 用）。
 
 没有 `.so` 就是错误，而不是“功能不变地慢一点”：
 
@@ -238,7 +262,8 @@ DNS 缓存内核（容器 + wire）与 MITM 过滤内核只随 Android APK 交�
   不会退化成“配了却不生效的记录”；
   `NewRewriteEngine` / `Configure` / `AddRule` / `DeleteRule` 返回错误，服务启动或配置变更失败，
   不会以“重写规则静默不生效”的空引擎继续跑；
-  `NewSafeBrowsingEngine` 返回错误，服务启动失败，不会以“声誉查询显示已开启、实际什么都没查”的状态跑。
+  `NewSafeBrowsingEngine` 返回错误，服务启动失败，不会以“声誉查询显示已开启、实际什么都没查”的状态跑；
+  `NewHostsResolver` 返回错误，服务启动失败，不会以“内网域名当作公网域名转发出去”的空解析器继续跑。
 
 重写引擎的调用约定：
 
@@ -306,6 +331,13 @@ MITM 过滤：白名单 CSV / 排除规则文本 ──set_allowed_uids / set_by
                     ──回传（计数/阈值/主机/原因/写入错误）──> Go 写日志
           启动 ──load_persistent(路径, now_ms)──> Rust 读文件、丢弃过期行、记住路径
 
+本地 hosts：配置 ──diting_hosts_new（source 列表：系统路径 + 自定义文件 + 内联文本）──> Rust 读文件建表
+          查询 ──diting_hosts_lookup(域名, qtype)──> 归一化 ──> 4/16 字节地址列表 ──> Go 填 dns.A / dns.AAAA
+          权威 NODATA ──diting_hosts_contains(域名)──> 1 / 0
+          反查 ──diting_hosts_ptr(反查名)──> 别名列表（文件顺序）──> Go 填 dns.PTR
+          客户端归属 ──diting_hosts_reverse(4/16 字节地址)──> 首选别名
+          反查名解析 ──diting_hosts_parse_arpa(名字)──> 地址（hosts 与重写引擎共用）
+
 声誉查询：配置 ──diting_sb_new / diting_sb_configure──> Rust 建两份前缀缓存（恶意网址库 / 家长控制）
           查询 ──diting_sb_plan(服务, 域名, now_ms)──> Rust 归一化+校验 ──> 各级父域 SHA-256
                                     ──> 前缀查缓存（未命中则回传查询名）──> Go 发 TXT 查询
@@ -316,8 +348,9 @@ MITM 过滤：白名单 CSV / 排除规则文本 ──set_allowed_uids / set_by
 布局与语义的权威注释在 `diting-rule-core/src/ffi.rs`、`search_ffi.rs`、`dtri.rs` 与
 `diting-policy-core/src/ffi.rs`、`snapshot.rs`、`diting-dns-cache-core/src/{wire,policy,cache,payload,ffi}.rs`、
 `diting-mitm-core/src/{pattern,filter,payload,ffi}.rs`、
-`diting-filter-core/src/ffi.rs`、`parse.rs`、`diting-rewrite-core/src/{action,record,engine,payload,ffi}.rs` 与
-`diting-safebrowsing-core/src/{hash,cache,engine,payload,ffi}.rs` 顶部；
+`diting-filter-core/src/ffi.rs`、`parse.rs`、`diting-rewrite-core/src/{action,record,engine,payload,ffi}.rs`、
+`diting-safebrowsing-core/src/{hash,cache,engine,payload,ffi}.rs` 与
+`diting-hosts-core/src/{ip,arpa,hosts,payload,ffi}.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
 ## 语义一致性
@@ -413,6 +446,15 @@ rcode 覆盖与未知名字回落、CNAME 链 / 循环 / 深度上限、快捷 T
 未知服务号被拒与「有效期变化整份重建」的规则；`ffi/tests.rs` 钉住句柄往返、跳过、坏载荷状态与
 空句柄。Go 侧的原有用例一条断言未改，现在全部穿过 FFI 跑：白盒用例（摘要数、eTLD+1、截断、查询名、
 缓存容量与重建）改为读内核回传的计划与「是否重新外发查询」，行为断言保持不变。
+
+**本地 hosts（桌面服务）**：`tests/fixtures/expectations.tsv` 是迁移时直接跑原 Go 实现生成的：地址字段
+（含 zone、IPv4 映射、前导零、带空格的边界）的接受/拒绝与规范化字节、反查名的解析结果、三份 hosts
+文档上的 `HasDomain` / `Lookup(A/AAAA)` / `LookupPTR` 逐条断言，文件里还留了一条超过 64 KiB 的行来钉住
+`bufio.Scanner` 的截断行为。`ip/tests.rs`、`arpa/tests.rs`、`hosts/tests.rs` 逐分支复刻原实现的
+条件（注释剥离、Unicode 字段切分、`strings.ToLower` 对 `U+0130` 的折叠、重复条目去重与顺序、
+接口 zone 截断）；`ffi/tests.rs` 钉住句柄往返、空表、空句柄与坏参数；`hosts_native_test.go` 钉住
+Go 侧四类载荷的布局与探测顺序。原 `hosts_resolver_test.go` 的断言一条未改，现在全部穿过 FFI 跑，
+另加了三组只属于新边界的行为用例（热重载重读、配置整体替换、地址反查）。
 
 **策略内核**：`tests/policy_core.rs` 把 DTRI fixtures 喂给快照，断言每个可索引规则解析到语料声明的
 source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判定 / 释放往返与错误上报，以及归一化、
@@ -634,6 +676,35 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **单次查询的坏载荷按放行处理**：句柄建好之后 `plan` 不应失败；若内核回传未知状态或坏载荷，Go 记
   一条日志并按“没有结论”放行，与模块整体的 fail-open 方向一致。缺库是硬错误（启动失败）。
 
+## 本地 hosts 内核的已知边界
+
+- **非 UTF-8 字节按 UTF-8 损失转换**：Go 的 `strings.ToLower` 会把每个非法字节换成 `U+FFFD`，
+  内核用 `String::from_utf8_lossy`（一个非法序列一个 `U+FFFD`）。绝大多数非法序列两者一样，
+  差别只在「一个多字节序列里坏在中间」这类输入上。hosts 里出现这种主机名的概率可以忽略，
+  但真遇到时查表键可能不同。
+- **`net.ParseIP` 是复刻，不是等价替换**：`1.2.3.4.5`、`1.2.3`、`01.2.3.4`、`0x7f.0.0.1`、
+  `1::2::3::4`、`::ffff:01.2.3.4` 这些字面量两侧都拒绝，接受的那些也逐字节相同——语料把
+  Go 的判定表整份固化了下来，只是 Rust 的解析器换了实现，未来的 Rust 版本若放宽某条规则，
+  语料会立刻报错。
+- **64 KiB 的行会截断整个文件**：`bufio.Scanner` 在超过 `MaxScanTokenSize` 时永久停止迭代，
+  后面的行一条都不会被解析。这是原实现的既有行为，照抄保留（否则「超过上限后继续读」会让
+  同一个文件在两侧读出不同的表）。
+- **PTR 键用折叠后的地址而不是 `ip.String()`**：Go 用 `ip.String()` 当键，映射形式的 `::ffff:1.2.3.4`
+  会打印成 `1.2.3.4`，与 IPv4 条目重合；内核直接把映射形式折叠成 4 字节，键因此相同，且不再依赖
+  两个语言对 IPv6 压缩形式的打印结果一致。
+- **表是不可变的**：`LoadFile` / `LoadReader` / `Reload` / `UpdateConfig` 都是「建新表 → 换指针 →
+  释放旧表」，读路径在 `RLock` 内调用内核，所以旧表不会在有查询在飞时被释放。代价是热重载会
+  重建整张表（旧实现重填映射也是 O(全部条目)）。
+- **文本来源存在 Go 侧**：`LoadReader` 的输入被当成 source 列表里的一段文本记住，重载时重放；
+  `UpdateConfig` 会丢掉它们（旧实现整体替换映射，同样会丢）。
+- **`dns.PTR` 的目标名仍在 Go 侧补尾点**：内核回传的是文件里那条主机名（已小写、去首尾点），
+  `dns.Fqdn` 由 Go 调用——它同时决定了 `dns.RR_Header.Name` 的形态，留在 Go 更直观。
+- **`ParseIPFromArpa` 现在是一次 FFI 调用**：调用方（hosts 反查、重写引擎反查）签名未变，
+  IPv4 结果从 16 字节的 `net.IP` 变成 4 字节（`String()` 与 `To4()` 的观察结果不变）。
+- **路径经文本往返**：`loadedFiles` 由内核回传 `Path::display()` 的结果，Go 再原样用作下一次
+  重载的路径。Windows 的路径本来就是 UTF-16，Linux 上非法 UTF-8 的路径会被损失转换——那种路径
+  连错误信息都打不出来，因此没有为它保留字节通道。
+
 ## 策略内核的已知边界
 
 - **正则翻译**：规则里的正则由 Go 的 RE2 语法翻成 Rust `regex`。`\d`、`\w`、`\s`、`\b` 被翻译成
@@ -775,7 +846,7 @@ go test -run XXX -bench BenchmarkDNSCacheGetFast_Hit -benchtime 200000x .
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
 python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核与 DTRI fixture 用例
-python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则、重写记录与声誉查询全部经 Rust
+python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则、重写记录、声誉查询与 hosts 全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
 python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（四个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
@@ -786,8 +857,8 @@ python rust/verify.py --all      # 全量
 C 编译器（Windows 用 mingw，Linux/macOS 用 gcc/clang）。这一步的 `go test` 带 `-count=1`：内核是
 Go 看不见的外部文件，缓存会让“重建内核后重跑”变成假跑。`--desktop` 不需要 cgo：桌面内核走纯 Go 动态
 加载，先 `cargo build --release -p diting-stamp-core -p diting-filter-core -p diting-rewrite-core
--p diting-safebrowsing-core` 再去 `desktop/service` 跑 `go test ./...`。`--dart` 同样需要先建好
-本机产物：Dart 侧已经没有第二份解析器可以兜底。
+-p diting-safebrowsing-core -p diting-hosts-core` 再去 `desktop/service` 跑 `go test ./...`。
+`--dart` 同样需要先建好本机产物：Dart 侧已经没有第二份解析器可以兜底。
 
 改了写入语义要一起重生成 fixtures：
 

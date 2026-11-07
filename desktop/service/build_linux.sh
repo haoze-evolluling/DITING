@@ -113,14 +113,14 @@ chmod +x "$BIN_PATH"
 echo "[OK] Linux 二进制就绪: $BIN_PATH ($(du -h "$BIN_PATH" | cut -f1))"
 
 # ---------------------------------------------------------------------------
-# Rust 内核（rust/diting-stamp-core、diting-filter-core、diting-rewrite-core、diting-safebrowsing-core）
+# Rust 内核（rust/diting-stamp-core、diting-filter-core、diting-rewrite-core、diting-safebrowsing-core、diting-hosts-core）
 #
 # Go 侧在运行期用纯 Go 动态加载它们（不链接、不依赖 cgo），所以四者都必须随二进制一起交付：
 # deb 装到 /usr/lib/diting/，服务按该路径探测；缺任一库即服务启动失败，没有降级实现。
 # ---------------------------------------------------------------------------
 RUST_DIR="$SCRIPT_DIR/../../rust"
 # crate 名:动态库基名
-RUST_KERNELS="diting-stamp-core:diting_stamp_core diting-filter-core:diting_filter_core diting-rewrite-core:diting_rewrite_core diting-safebrowsing-core:diting_safebrowsing_core"
+RUST_KERNELS="diting-stamp-core:diting_stamp_core diting-filter-core:diting_filter_core diting-rewrite-core:diting_rewrite_core diting-safebrowsing-core:diting_safebrowsing_core diting-hosts-core:diting_hosts_core"
 case "$ARCH" in
     amd64) RUST_TARGET="x86_64-unknown-linux-gnu" ; RUST_TARGET_ARCH="x86_64" ;;
     arm64) RUST_TARGET="aarch64-unknown-linux-gnu" ; RUST_TARGET_ARCH="aarch64" ;;

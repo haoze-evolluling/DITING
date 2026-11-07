@@ -157,6 +157,7 @@ RUST_KERNELS = (
     ("diting-filter-core", "diting_filter_core.dll"),
     ("diting-rewrite-core", "diting_rewrite_core.dll"),
     ("diting-safebrowsing-core", "diting_safebrowsing_core.dll"),
+    ("diting-hosts-core", "diting_hosts_core.dll"),
 )
 
 
@@ -390,6 +391,7 @@ def build_pipeline(
             f"-DARG_FILTER_LIBRARY={rust_kernels['diting_filter_core.dll']}",
             f"-DARG_REWRITE_LIBRARY={rust_kernels['diting_rewrite_core.dll']}",
             f"-DARG_SAFEBROWSING_LIBRARY={rust_kernels['diting_safebrowsing_core.dll']}",
+            f"-DARG_HOSTS_LIBRARY={rust_kernels['diting_hosts_core.dll']}",
             f"-DPRODUCT_VERSION={version}",
             f"-DINFO_PRODUCTVERSION={version}",
             f"-DOUTPUT_FILENAME={installer_path}",
