@@ -18,14 +18,16 @@ Windows / Linux 服务端工程：Go 特权核心 `diting-service` 与内嵌的�
   `HasDomain`、`.in-addr.arpa` / `.ip6.arpa` 反查名解析）；Go 只填 `dns.A` / `dns.AAAA` / `dns.PTR`。
 - `rust/diting-dns64-core`（同上）：DNS64 内核（RFC 6052 前缀解析与地址嵌入、RFC 6147 排除集、
   “应答里是否已有有效 AAAA”判定）；Go 只发 A 问询、算最小 TTL 并构造 `dns.AAAA`。
+- `rust/diting-ratelimit-core`（同上）：客户端限流内核（配置归一化、豁免解析、按前缀聚合的令牌桶、
+  容量淘汰）；Go 只提供时钟、回收协程与 `IsEnabled` 快路径。
 
-六个内核都由 Go 在运行期用纯 Go 动态加载（Windows `syscall.LazyDLL`，Linux `purego`），因此
+七个内核都由 Go 在运行期用纯 Go 动态加载（Windows `syscall.LazyDLL`，Linux `purego`），因此
 **不需要 cgo，`CGO_ENABLED=0` 的交叉编译照旧**。库必须与二进制一起交付（安装包放到
 `diting-service` 同目录 / `/usr/lib/diting/`），也可以用 `DITING_STAMP_CORE_LIB` /
 `DITING_FILTER_CORE_LIB` / `DITING_REWRITE_CORE_LIB` / `DITING_SAFEBROWSING_CORE_LIB` /
-`DITING_HOSTS_CORE_LIB` / `DITING_DNS64_CORE_LIB` 指定显式路径；
+`DITING_HOSTS_CORE_LIB` / `DITING_DNS64_CORE_LIB` / `DITING_RATELIMIT_CORE_LIB` 指定显式路径；
 缺库或 ABI 不符时解析印章、构建规则索引、构建重写引擎/记录、初始化声誉查询引擎、初始化 hosts
-解析器、初始化 DNS64 合成器都直接报错（全部启动即失败），没有降级实现。DNS64 例外只在
+解析器、初始化 DNS64 合成器、初始化客户端限流引擎都直接报错（全部启动即失败），没有降级实现。DNS64 例外只在
 “前缀写错”：那是一条配置错误，仍然只记警告，服务照常启动。
 - `frontend/embed.go`：把 `frontend/dist` 嵌入二进制，由服务在 15353 端口提供控制台。
 - `frontend/dist/`：构建产物（不入库），由 `build_frontend.py` 从 `../app` 生成。
@@ -52,7 +54,7 @@ build\bin\diting-service.exe -run      # 管理员权限；前台运行，关掉
 浏览器打开 `http://127.0.0.1:15353` 即为 Web 控制台；桌面窗口用
 `cd ..\app && flutter run -d windows`，打安装包用 `..\build_installer.bat`。
 
-要求 Go 1.25+、Rust（`cargo`，编六个内核）；Windows 打包用 Flutter 3.50+ 与 NSIS（可选）。
+要求 Go 1.25+、Rust（`cargo`，编七个内核）；Windows 打包用 Flutter 3.50+ 与 NSIS（可选）。
 `go test ./...` 会在 `rust/target/{release,debug}/` 找内核，先跑一次
 `cd rust && cargo build --release` 即可，不需要安装到系统目录。内核是外部文件，Go 的测试缓存
 看不见它的变化，验证时用 `go test -count=1 ./...`（`python rust/verify.py --desktop` 已经这样做）。

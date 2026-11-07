@@ -21,7 +21,10 @@ func TestController_SecurityAndTransitionConfig(t *testing.T) {
 	}
 
 	ac, _ := core.NewAccessControl(cfg.Access)
-	limiter := core.NewRateLimiter(context.Background(), cfg.RateLimit)
+	limiter, err := core.NewRateLimiter(context.Background(), cfg.RateLimit)
+	if err != nil {
+		t.Fatalf("NewRateLimiter: %v", err)
+	}
 	synth, _ := core.NewDNS64Synthesizer(cfg.DNS64)
 
 	prg := &program{

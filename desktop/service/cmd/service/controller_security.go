@@ -50,7 +50,9 @@ func (p *program) ConfigureRateLimit(ctx context.Context, req ipc.ConfigureRateL
 	}
 
 	if p.rateLimiter != nil {
-		p.rateLimiter.UpdateConfig(cfg)
+		if err := p.rateLimiter.UpdateConfig(cfg); err != nil {
+			return fmt.Errorf("更新限流配置失败: %w", err)
+		}
 	}
 
 	p.cfg.RateLimit = cfg

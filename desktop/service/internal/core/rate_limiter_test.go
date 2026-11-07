@@ -8,11 +8,22 @@ import (
 	"time"
 )
 
+// newTestRateLimiter builds a limiter and closes it with the test. The kernel must be built first
+// (`cargo build --release -p diting-ratelimit-core`, or `python rust/verify.py --desktop`).
+func newTestRateLimiter(t *testing.T, cfg RateLimitConfig) *RateLimiter {
+	t.Helper()
+	limiter, err := NewRateLimiter(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("NewRateLimiter: %v", err)
+	}
+	t.Cleanup(limiter.Close)
+	return limiter
+}
+
 func TestRateLimiter_Disabled(t *testing.T) {
 	cfg := DefaultRateLimitConfig()
 	cfg.Enabled = false
-	limiter := NewRateLimiter(context.Background(), cfg)
-	defer limiter.Close()
+	limiter := newTestRateLimiter(t, cfg)
 
 	ip := net.ParseIP("192.168.1.100")
 	for i := 0; i < 200; i++ {
@@ -33,8 +44,7 @@ func TestRateLimiter_BurstAndRate(t *testing.T) {
 		ExemptIPs:  []string{},
 	}
 
-	limiter := NewRateLimiter(context.Background(), cfg)
-	defer limiter.Close()
+	limiter := newTestRateLimiter(t, cfg)
 	limiter.clock = func() time.Time { return fakeNow }
 
 	ip := net.ParseIP("192.168.1.50")
@@ -74,8 +84,7 @@ func TestRateLimiter_ExemptIPs(t *testing.T) {
 		ExemptIPs:  []string{"127.0.0.1", "10.0.0.0/24"},
 	}
 
-	limiter := NewRateLimiter(context.Background(), cfg)
-	defer limiter.Close()
+	limiter := newTestRateLimiter(t, cfg)
 
 	loopback := net.ParseIP("127.0.0.1")
 	for i := 0; i < 10; i++ {
@@ -102,8 +111,7 @@ func TestRateLimiter_SubnetAggregation(t *testing.T) {
 		ExemptIPs:  []string{},
 	}
 
-	limiter := NewRateLimiter(context.Background(), cfg)
-	defer limiter.Close()
+	limiter := newTestRateLimiter(t, cfg)
 
 	ip1 := net.ParseIP("192.168.1.10")
 	ip2 := net.ParseIP("192.168.1.20")
@@ -136,8 +144,7 @@ func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 		ExemptIPs:  []string{},
 	}
 
-	limiter := NewRateLimiter(context.Background(), cfg)
-	defer limiter.Close()
+	limiter := newTestRateLimiter(t, cfg)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 20; i++ {
@@ -158,8 +165,7 @@ func TestRateLimiter_ZeroConfigDefaults(t *testing.T) {
 	zeroCfg := RateLimitConfig{
 		Enabled: true,
 	}
-	limiter := NewRateLimiter(context.Background(), zeroCfg)
-	defer limiter.Close()
+	limiter := newTestRateLimiter(t, zeroCfg)
 
 	ip := net.ParseIP("192.168.1.100")
 	// 不应因 Rate/Burst 为 0 而直接全部拒绝
@@ -174,8 +180,7 @@ func TestRateLimiter_CapacityEviction(t *testing.T) {
 		Rate:    10.0,
 		Burst:   10,
 	}
-	limiter := NewRateLimiter(context.Background(), cfg)
-	defer limiter.Close()
+	limiter := newTestRateLimiter(t, cfg)
 	limiter.maxBuckets = 3 // 设定测试小容量
 
 	fakeNow := time.Now()
@@ -186,8 +191,8 @@ func TestRateLimiter_CapacityEviction(t *testing.T) {
 	limiter.Allow(net.ParseIP("10.0.0.2"))
 	limiter.Allow(net.ParseIP("10.0.0.3"))
 
-	if len(limiter.buckets) != 3 {
-		t.Fatalf("expected 3 buckets, got %d", len(limiter.buckets))
+	if got := limiter.bucketCount(); got != 3 {
+		t.Fatalf("expected 3 buckets, got %d", got)
 	}
 
 	// 推进 65 秒使旧桶空闲
@@ -205,8 +210,7 @@ func TestRateLimiter_UpdateConfig(t *testing.T) {
 		Rate:    1.0,
 		Burst:   1,
 	}
-	limiter := NewRateLimiter(context.Background(), cfg)
-	defer limiter.Close()
+	limiter := newTestRateLimiter(t, cfg)
 
 	ip := net.ParseIP("192.168.1.200")
 	if !limiter.Allow(ip) {
@@ -217,11 +221,13 @@ func TestRateLimiter_UpdateConfig(t *testing.T) {
 	}
 
 	// 动态更新提升 burst 为 10
-	limiter.UpdateConfig(RateLimitConfig{
+	if err := limiter.UpdateConfig(RateLimitConfig{
 		Enabled: true,
 		Rate:    10.0,
 		Burst:   10,
-	})
+	}); err != nil {
+		t.Fatalf("UpdateConfig: %v", err)
+	}
 
 	// 更新后应立即扩容并允许
 	if !limiter.Allow(ip) {

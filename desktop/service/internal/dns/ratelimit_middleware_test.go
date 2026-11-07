@@ -19,7 +19,10 @@ func TestRateLimitMiddleware(t *testing.T) {
 		ExemptIPs:  []string{"127.0.0.1"},
 	}
 
-	limiter := core.NewRateLimiter(context.Background(), cfg)
+	limiter, err := core.NewRateLimiter(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("NewRateLimiter: %v", err)
+	}
 	defer limiter.Close()
 
 	mw := NewRateLimitMiddleware(limiter)

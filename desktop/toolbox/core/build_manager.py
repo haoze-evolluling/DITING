@@ -159,6 +159,7 @@ RUST_KERNELS = (
     ("diting-safebrowsing-core", "diting_safebrowsing_core.dll"),
     ("diting-hosts-core", "diting_hosts_core.dll"),
     ("diting-dns64-core", "diting_dns64_core.dll"),
+    ("diting-ratelimit-core", "diting_ratelimit_core.dll"),
 )
 
 
@@ -394,6 +395,7 @@ def build_pipeline(
             f"-DARG_SAFEBROWSING_LIBRARY={rust_kernels['diting_safebrowsing_core.dll']}",
             f"-DARG_HOSTS_LIBRARY={rust_kernels['diting_hosts_core.dll']}",
             f"-DARG_DNS64_LIBRARY={rust_kernels['diting_dns64_core.dll']}",
+            f"-DARG_RATELIMIT_LIBRARY={rust_kernels['diting_ratelimit_core.dll']}",
             f"-DPRODUCT_VERSION={version}",
             f"-DINFO_PRODUCTVERSION={version}",
             f"-DOUTPUT_FILENAME={installer_path}",

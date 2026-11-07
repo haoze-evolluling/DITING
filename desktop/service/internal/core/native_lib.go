@@ -4,13 +4,15 @@ package core
 // platform file name, the probe order and the "first loadable candidate wins" loop.
 //
 // The kernels (rust/diting-stamp-core, diting-filter-core, diting-rewrite-core,
-// diting-safebrowsing-core, diting-hosts-core, diting-dns64-core) are shipped next to the service
+// diting-safebrowsing-core, diting-hosts-core, diting-dns64-core, diting-ratelimit-core) are shipped
+// next to the service
 // binary by the Windows installer and into /usr/lib/diting by the deb, and both are loaded with
 // pure Go so the module stays CGO_ENABLED=0. The last probe is the local `cargo build` output, which
 // is what makes `go test` work without installing anything.
 //
 // Each kernel keeps its own environment variable (DITING_STAMP_CORE_LIB, DITING_FILTER_CORE_LIB,
-// DITING_REWRITE_CORE_LIB, DITING_SAFEBROWSING_CORE_LIB, DITING_HOSTS_CORE_LIB, DITING_DNS64_CORE_LIB).
+// DITING_REWRITE_CORE_LIB, DITING_SAFEBROWSING_CORE_LIB, DITING_HOSTS_CORE_LIB, DITING_DNS64_CORE_LIB,
+// DITING_RATELIMIT_CORE_LIB).
 // When one is set it is the *only* candidate: a typo must fail loudly instead of silently falling
 // back to another copy.
 

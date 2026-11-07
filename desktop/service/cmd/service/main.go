@@ -169,7 +169,11 @@ func (p *program) run() error {
 		log.Printf("[Access] 初始化访问控制警告: %v\n", err)
 	}
 	p.accessControl = accessCtrl
-	p.rateLimiter = core.NewRateLimiter(context.Background(), cfg.RateLimit)
+	rateLimiter, err := core.NewRateLimiter(context.Background(), cfg.RateLimit)
+	if err != nil {
+		return fmt.Errorf("初始化客户端限流引擎失败: %w", err)
+	}
+	p.rateLimiter = rateLimiter
 	// 前缀写错只是警告（改配置要经过 UI，服务得先活着）；内核缺失则启动失败
 	dns64Synth, err := core.NewDNS64Synthesizer(cfg.DNS64)
 	if err != nil {

@@ -7,7 +7,7 @@ including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference
     python rust/verify.py
     python rust/verify.py --android   # also cross-compile the twelve .so files for arm64-v8a
     python rust/verify.py --go        # also prove the Go engine agrees with the Rust policy, cache, MITM, cosmetic, resolver, DNS answer, flow sniffer, bootstrap, app-allowlist, connection-log dedupe and IP → domain cache kernels
-    python rust/verify.py --desktop   # also run the desktop service (Go) suite against all four desktop kernels
+    python rust/verify.py --desktop   # also run the desktop service (Go) suite against every desktop kernel
     python rust/verify.py --dart      # also run the Dart side of the native fast paths
     python rust/verify.py --bench     # also time the DTRI compile, the rule search and the walk
     python rust/verify.py --all
@@ -16,9 +16,9 @@ The Go checks exist because the Go engine is the real consumer: it mmaps the DTR
 the policy kernel through the same C ABI production uses, so it is the only thing that can prove the
 boundary. `--go` needs `cgo` plus a C compiler (mingw on Windows, gcc/clang elsewhere); the release
 library is built first because the Go loader probes `rust/target/release/`. `--desktop` needs neither:
-that module loads its four kernels (stamps, the rule index, the rewrite engine/records and the
-safe-browsing hash prefixes) through pure Go
-dynamic loading, so `CGO_ENABLED=0` is enough. `--dart` runs the Dart
+that module loads its seven kernels (stamps, the rule index, the rewrite engine/records, the
+safe-browsing hash prefixes, hosts, DNS64 and the client rate limiter) through pure Go dynamic
+loading, so `CGO_ENABLED=0` is enough. `--dart` runs the Dart
 side against the same library: the importer and the rules page have no second implementation left,
 so those tests are fixed expectations on the native output.
 """
@@ -51,7 +51,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Rust 内核验证")
     parser.add_argument("--android", action="store_true", help="交叉编译 arm64-v8a 并拷入 jniLibs")
     parser.add_argument("--go", action="store_true", help="跑 Go 读取 Rust DTRI 产物的兼容测试")
-    parser.add_argument("--desktop", action="store_true", help="跑桌面服务（Go）对四个 Rust 内核的用例")
+    parser.add_argument("--desktop", action="store_true", help="跑桌面服务（Go）对七个 Rust 内核的用例")
     parser.add_argument("--dart", action="store_true", help="跑 Dart 侧规则解析与入库用例")
     parser.add_argument("--bench", action="store_true", help="跑 DTRI 编译与规则检索基准")
     parser.add_argument("--all", action="store_true", help="等于 --android --go --desktop --dart --bench")
@@ -96,6 +96,7 @@ def main() -> int:
         )
         steps.append(("hosts-release", ["cargo", "build", "--release", "-p", "diting-hosts-core"], RUST_DIR))
         steps.append(("dns64-release", ["cargo", "build", "--release", "-p", "diting-dns64-core"], RUST_DIR))
+        steps.append(("ratelimit-release", ["cargo", "build", "--release", "-p", "diting-ratelimit-core"], RUST_DIR))
         # -count=1: the kernel is an external file, invisible to Go's test cache.
         steps.append(("desktop-service", ["go", "test", "-count=1", "./..."], GO_DESKTOP_DIR))
     if args.dart:

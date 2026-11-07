@@ -60,7 +60,7 @@ DITING/
 │   ├── toolbox/               # Python + PyWebView 维护工具箱
 │   └── build_installer.bat    # 桌面端安装包（Windows EXE / Linux deb）
 ├── shared/                    # 两端共用的设计系统、主题、l10n、配置与 SQLite 读取
-├── rust/                      # Rust 内核（规则解析 / 检索 / DTRI 索引 / 策略判定与缓存 / 解析器统计 / DNS 应答，见 rust/README.md）
+├── rust/                      # Rust 内核（规则解析 / 检索 / DTRI 索引 / 策略判定与缓存 / 解析器统计 / DNS 应答 / 客户端限流，见 rust/README.md）
 ├── docs/                      # 开发文档与静态资源
 ├── avatars/                   # 赞助者与共建者头像
 ├── recognition_members.json   # 赞助者与共建者名单（见 docs/development/recognition-members.md）

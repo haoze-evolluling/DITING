@@ -18,14 +18,15 @@ SetCompressorDictSize 32
 
 !define PRODUCT_EXECUTABLE  "diting_desktop.exe"
 !define SERVICE_EXECUTABLE  "diting-service.exe"
-# 六个 Rust 内核（印章解析、规则索引、重写记录、声誉查询、本地 hosts、DNS64）都是动态库，服务在运行期按同目录
-# 探测加载，必须与服务同目录安装；缺任意一个，服务启动即失败。
+# 七个 Rust 内核（印章解析、规则索引、重写记录、声誉查询、本地 hosts、DNS64、客户端限流）都是动态库，
+# 服务在运行期按同目录探测加载，必须与服务同目录安装；缺任意一个，服务启动即失败。
 !define STAMP_LIBRARY        "diting_stamp_core.dll"
 !define FILTER_LIBRARY       "diting_filter_core.dll"
 !define REWRITE_LIBRARY      "diting_rewrite_core.dll"
 !define SAFEBROWSING_LIBRARY "diting_safebrowsing_core.dll"
 !define HOSTS_LIBRARY        "diting_hosts_core.dll"
 !define DNS64_LIBRARY        "diting_dns64_core.dll"
+!define RATELIMIT_LIBRARY    "diting_ratelimit_core.dll"
 !define SERVICE_NAME        "DitingDNSService"
 !define UNINST_KEY_NAME     "DitingDNS"
 !define UNINST_KEY          "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINST_KEY_NAME}"
@@ -53,6 +54,9 @@ SetCompressorDictSize 32
 !endif
 !ifndef ARG_DNS64_LIBRARY
   !error "缺少 -DARG_DNS64_LIBRARY：diting_dns64_core.dll 路径"
+!endif
+!ifndef ARG_RATELIMIT_LIBRARY
+  !error "缺少 -DARG_RATELIMIT_LIBRARY：diting_ratelimit_core.dll 路径"
 !endif
 
 RequestExecutionLevel admin
@@ -245,6 +249,7 @@ Section
     File "/oname=${SAFEBROWSING_LIBRARY}" "${ARG_SAFEBROWSING_LIBRARY}"
     File "/oname=${HOSTS_LIBRARY}" "${ARG_HOSTS_LIBRARY}"
     File "/oname=${DNS64_LIBRARY}" "${ARG_DNS64_LIBRARY}"
+    File "/oname=${RATELIMIT_LIBRARY}" "${ARG_RATELIMIT_LIBRARY}"
 
     # 3. 自动向系统注册并启动特权服务
     DetailPrint "正在向系统注册 ${INFO_PRODUCTNAME} 内核特权服务..."

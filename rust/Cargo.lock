@@ -180,6 +180,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-ratelimit-core"
+version = "0.1.0"
+
+[[package]]
 name = "diting-resolver-core"
 version = "0.1.0"
 

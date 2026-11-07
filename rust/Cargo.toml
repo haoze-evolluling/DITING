@@ -19,6 +19,7 @@ members = [
     "diting-allowlist-core",
     "diting-connlog-core",
     "diting-ipcache-core",
+    "diting-ratelimit-core",
 ]
 resolver = "2"
 

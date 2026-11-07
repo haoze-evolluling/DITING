@@ -63,7 +63,7 @@ func TestPipeline_FullIntegration(t *testing.T) {
 		t.Fatalf("failed to init AccessControl: %v", err)
 	}
 
-	limiter := core.NewRateLimiter(context.Background(), core.RateLimitConfig{
+	limiter, err := core.NewRateLimiter(context.Background(), core.RateLimitConfig{
 		Enabled:    true,
 		Rate:       10.0,
 		Burst:      2,
@@ -71,6 +71,9 @@ func TestPipeline_FullIntegration(t *testing.T) {
 		IPv6Prefix: 128,
 		ExemptIPs:  []string{"127.0.0.1"},
 	})
+	if err != nil {
+		t.Fatalf("NewRateLimiter: %v", err)
+	}
 	defer limiter.Close()
 
 	rebindMgr := NewRebindProtectionManager(core.RebindConfig{
