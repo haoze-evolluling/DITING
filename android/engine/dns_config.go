@@ -10,8 +10,6 @@ import (
 	"net"
 	"net/url"
 	"strings"
-	"sync"
-	"time"
 )
 
 type dnsProviderConfig struct {
@@ -37,57 +35,6 @@ type dnsEngineConfig struct {
 	Cache           dnsCacheConfig      `json:"cache"`
 	Bootstrap       bootstrapConfig     `json:"bootstrap"`
 	RaceMaxParallel int                 `json:"raceMaxParallel,omitempty"`
-}
-
-type dynamicBlockEntry struct {
-	windowStarted time.Time
-	requestCount  int
-	nxDomainUntil time.Time
-}
-
-type dynamicBlockTracker struct {
-	mu      sync.Mutex
-	entries map[string]*dynamicBlockEntry
-}
-
-func (t *dynamicBlockTracker) reset() {
-	t.mu.Lock()
-	t.entries = make(map[string]*dynamicBlockEntry)
-	t.mu.Unlock()
-}
-
-func (t *dynamicBlockTracker) responseFor(domain string, cfg dynamicBlockConfig, fallback ResponseType) ResponseType {
-	if !cfg.Enabled {
-		return fallback
-	}
-	now := time.Now()
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if t.entries == nil {
-		t.entries = make(map[string]*dynamicBlockEntry)
-	}
-	entry := t.entries[domain]
-	if entry != nil && now.Before(entry.nxDomainUntil) {
-		return ResponseNXDomain
-	}
-	window := time.Duration(cfg.WindowSeconds) * time.Second
-	if entry == nil || now.Sub(entry.windowStarted) >= window {
-		entry = &dynamicBlockEntry{windowStarted: now, requestCount: 1}
-		t.entries[domain] = entry
-	} else {
-		entry.requestCount++
-	}
-	if entry.requestCount > cfg.RequestThreshold {
-		entry.nxDomainUntil = now.Add(time.Duration(cfg.NXDomainSeconds) * time.Second)
-		return ResponseNXDomain
-	}
-	if len(t.entries) > 4096 {
-		for key := range t.entries {
-			delete(t.entries, key)
-			break
-		}
-	}
-	return ResponseNoData
 }
 
 func canonicalDNSMode(mode string) (string, error) {

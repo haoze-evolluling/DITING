@@ -50,7 +50,7 @@ type Engine struct {
 	responseType           atomic.Int32
 	dnsConfig              *dnsEngineConfig
 	dynamicResponse        dynamicBlockConfig
-	dynamicBlocks          dynamicBlockTracker
+	dynamicBlocks          *dynamicBlockTracker
 	logCallback            LogCallback
 	batchLogCallback       BatchLogCallback
 	logAggregator          *logAggregator
@@ -77,7 +77,7 @@ type Engine struct {
 	mu         sync.Mutex
 	callbackMu sync.RWMutex
 	running    bool
-	tunFile *os.File
+	tunFile    *os.File
 
 	// sessionGen is bumped by every Start*/Stop transition under mu.
 	// StartFull releases mu to do its expensive setup (dup, stack allocation,
@@ -128,6 +128,7 @@ func NewEngine() *Engine {
 		logAggregator:  newLogAggregator(),
 		policyEngine:   newPolicyEngine(),
 		ipDomainCache:  newIPDomainCache(2048),
+		dynamicBlocks:  newDynamicBlockTracker(),
 	}
 	e.responseType.Store(int32(ResponseCustomIP))
 	e.filterDNS.Store(true)

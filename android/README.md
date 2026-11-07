@@ -44,20 +44,21 @@ pwsh -File build_aar.ps1 -Arch all  # 双 ABI（debug 默认）
 
 ## Rust 内核（必需）
 
-规则、DNS 与 MITM 链路有八处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析与规则页检索经
+规则、DNS 与 MITM 链路有九处 Rust 实现（仓库根 `rust/`）：订阅导入的规则文档解析与规则页检索经
 `dart:ffi`，规则写入后的 DTRI 订阅索引编译经 JNI（Kotlin 调用），**域名规则判定内核**、
 **DNS 缓存内核**（分片 LRU、TTL 策略、清扫、统计与快照，以及缓存键、响应元数据、命中时的 ID/TTL
 改写）、**MITM 过滤内核**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与失败计数、
-持久化文件）、**装饰注入内核**（流式 `<head>` 扫描、主机名归一化与 `<link>` 标签）与**解析器统计
-内核**（SRTT/RTTVAR、失败率 EWMA、连败惩罚、熔断与三种自适应延迟）由 Go 引擎 `dlopen` 后经 C ABI
-调用。除 DNS 缓存与解析器统计外，其余六处都只有 Rust 一条实现：库缺失、ABI 不匹配或载荷被拒时，
+持久化文件）、**装饰注入内核**（流式 `<head>` 扫描、主机名归一化与 `<link>` 标签）、**解析器统计
+内核**（SRTT/RTTVAR、失败率 EWMA、连败惩罚、熔断与三种自适应延迟）与**DNS 应答内核**（上游空答案
+判定、唯一地址列表、按域名的 NODATA→NXDOMAIN 动态升级）由 Go 引擎 `dlopen` 后经 C ABI 调用。除
+DNS 缓存、解析器统计与 DNS 应答外，其余六处都只有 Rust 一条实现：库缺失、ABI 不匹配或载荷被拒时，
 导入报错、索引编译失败、`ApplyRuleSnapshot` 失败（隧道启动失败）、MITM 启动失败（隧道照常起，只是
 不解密），不会静默退回另一套语义。DNS 缓存内核缺失时隧道照常解析（答案直连上游），只是不再复用
-缓存；解析器统计内核缺失时每个上游按冷启动取值参与调度（默认评分、冷启动延迟、每次尝试都放行）。
-两者都在首次加载失败时写日志。
+缓存；解析器统计内核缺失时每个上游按冷启动取值参与调度（默认评分、冷启动延迟、每次尝试都放行）；
+DNS 应答内核缺失时上游空答案按普通应答记日志、动态升级关闭。三者都在首次加载失败时写日志。
 
 ```bash
-python rust/build_android.py        # arm64-v8a + x86_64，六个 .so 拷入 src/main/jniLibs/
+python rust/build_android.py        # arm64-v8a + x86_64，七个 .so 拷入 src/main/jniLibs/
 python rust/verify.py --all         # fmt / clippy / 单测 / Go / Dart / 交叉编译 / 基准
 ```
 

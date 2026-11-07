@@ -13,6 +13,7 @@ members = [
     "diting-dns64-core",
     "diting-cosmetic-core",
     "diting-resolver-core",
+    "diting-dns-core",
 ]
 resolver = "2"
 

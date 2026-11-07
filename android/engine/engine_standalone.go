@@ -268,7 +268,6 @@ func (e *Engine) standaloneForward(w dns.ResponseWriter, r *dns.Msg, appName str
 		respRaw, resolvedMsg, err = resolver.ResolveMsg(raw)
 	}
 
-
 	if err != nil {
 		logf("DNS resolve failed standalone %s: %v", r.Question[0].Name, err)
 		dns.HandleFailed(w, r)
@@ -291,7 +290,8 @@ func (e *Engine) standaloneForward(w dns.ResponseWriter, r *dns.Msg, appName str
 		return
 	}
 
-	if isUpstreamBlockedMsg(respMsg) {
+	blocked, resolvedAddresses := inspectUpstreamAnswer(respMsg)
+	if blocked {
 		e.totalQueries.Add(1)
 		e.blockedQueries.Add(1)
 		elapsed := time.Since(startTime).Milliseconds()
@@ -303,7 +303,7 @@ func (e *Engine) standaloneForward(w dns.ResponseWriter, r *dns.Msg, appName str
 		}
 		e.totalQueries.Add(1)
 		elapsed := time.Since(startTime).Milliseconds()
-		e.notifyLog(strings.TrimSuffix(r.Question[0].Name, "."), false, r.Question[0].Qtype, elapsed, appName, resolvedAddressesMsg(respMsg), "", "", isCached)
+		e.notifyLog(strings.TrimSuffix(r.Question[0].Name, "."), false, r.Question[0].Qtype, elapsed, appName, resolvedAddresses, "", "", isCached)
 		e.rememberResolvedIPs(r.Question[0].Name, respMsg)
 	}
 
