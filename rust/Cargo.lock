@@ -177,6 +177,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-config-core"
+version = "0.1.0"
+dependencies = [
+ "diting-go-compat",
+]
+
+[[package]]
 name = "diting-connlog-core"
 version = "0.1.0"
 

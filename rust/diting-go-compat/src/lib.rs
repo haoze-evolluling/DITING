@@ -11,8 +11,10 @@
 //! * [`regex`] - Go `regexp` -> Rust `regex` translation and rule-pattern compilation.
 //! * [`dns_type`] - `dns.StringToType`, the table rule modifiers are resolved against.
 //! * [`ip`] - `net.IP` string form, `To4`, `IsLoopback` and zero equality over raw bytes.
+//! * [`netaddr`] - `net.ParseIP`, `SplitHostPort`, `JoinHostPort` and `IP.String` over text.
 
 pub mod dns_type;
 pub mod ip;
+pub mod netaddr;
 pub mod regex;
 pub mod text;

@@ -1,6 +1,6 @@
 # Rust 内核
 
-二十二个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+二十三个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -29,10 +29,11 @@ IP→域名 LRU 内核**（原地更新并把条目移到最近写入位置、�
 回退 2048），`diting-proxy-core` 负责**同一隧道引擎的出站代理内核**（SOCKS5 握手与应答报文、
 地址与 UDP 数据报封装、HTTP CONNECT 请求字节、`net` 地址语义的复刻与代理配置归一化），
 `diting-cert-core` 负责**同一隧道引擎的 MITM 证书内核**（根证书的生成与校验、SEC1 私钥编码、
-叶证书签发的 SAN 规则与链路，以及 EV 策略表），
+叶证书签发的 SAN 规则与链路，以及 EV 策略表），`diting-config-core` 负责**同一隧道引擎的配置归一化
+内核**（DNS 模式别名、动态阻断默认值、上游端点校验、协议与阻断模式取值表、重写目标归类与域名键折叠），
 `diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
-`strings` 辅助、`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠）。
-二十六个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+`strings` 辅助、`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠、`net` 地址解析与主机端口切分）。
+二十七个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。六个例外都只影响“复用、调度、判定辅助、取址路径、日志去重与主机名提示”，
 不影响回答：DNS 缓存
 内核缺失时缓存停用、查询直连解析器；解析器统计内核缺失时每个上游按冷启动取值参与调度；DNS 应答
@@ -69,6 +70,7 @@ IP→域名缓存内核缺失时直连 IP 的流没有主机名提示（标签�
 | 连接日志去重 | Go 隧道引擎（`dlopen` + C ABI，全局一个句柄） | `connLogKey` 的构造、8192 条键集合、溢出整表清空与清空计数 | 不再去重（日志更吵），事件与回答不变 |
 | IP→域名 LRU 缓存 | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 原地更新 + 移到最近写入位置、淘汰最久未写入项、`get` 不提升、非正容量回退 2048 | 主机名提示停用（直连 IP 的流没有域名标签），回答不变 |
 | MITM 根证书 + 叶证书签发 | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 根证书生成与磁盘校验、SEC1 私钥编码、叶证书签发的 SAN 规则、共享私钥、AKI/SKI 链与有效期，EV 策略表 | MITM 启动失败（隧道照常起，只是不解密） |
+| DNS 配置与重写表归一化 | Go 隧道引擎（`dlopen` + C ABI，无句柄） | DNS 模式别名、动态阻断默认值、PLAIN/DOT/DoH/DoQ 端点校验、协议与阻断模式取值表、重写目标归类、域名键折叠、错误优先级 | 推送的 DNS 配置被拒（沿用上一份快照）；取值表退回默认、重写目标被丢弃 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -242,7 +244,21 @@ flow 都分配的拼接字符串——包括随后被丢弃的重复项。Go 侧
 （`now_unix`），所以有效期窗口能被单测钉死；缺库时 `NewCertManager` 失败、MITM 不启动，
 隧道照常跑，绝不会出现“系统已信任某个根证书、却签不出叶证书”的中间态。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核与证书签发内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第二十八个把 Android 隧道引擎的**配置归一化与校验**搬进新建的 `diting-config-core`
+（`dns_config.go` 只剩 JSON 解码与发布、`dns_packet.go` / `resolver.go` / `resolver_doq.go` 的
+取值函数各剩一行、`engine_config.go` 的重写表只剩 `encoding/json` 的 string-vs-array 分派）：
+`canonicalDNSMode` 的四个模式与全部别名、动态阻断的三个 `< 1` 默认值（5 / 60 / 300）、
+`validateDNSProvider` 的端点规则（PLAIN/DOT 走 `net.SplitHostPort` 与“主机里不能还剩冒号”的
+IPv6 字面量判定、DoH 走 `url.ParseRequestURI` 的 https + 非空主机、DoQ 走 `parseDoQURL` 的三前缀
+与 853 回退）、`ParseProtocol` / `ParseResponseType` 两张取值表、`parseRewriteEntry` 的目标归类
+（首个 IPv4 / 首个 IPv6 / 首个域名，空目标跳过）与 `TrimSuffix(ToLower(TrimSpace(d)), ".")` 的
+域名键折叠都在 `mode.rs` / `dynamic.rs` / `endpoint.rs` / `protocol.rs` / `rewrite.rs`。整份 DNS
+配置由一次 `dns_config` 调用归一化并校验，**错误优先级**与原实现一致（模式 → 空列表 → single 数量 →
+逐个 provider 带下标），报错文案逐字保留（`%q` 的引号与转义也照 Go 的来）。`net.ParseIP` /
+`SplitHostPort` / `IP.String` 这组语义从 `diting-proxy-core` 提到 `diting-go-compat::netaddr`，
+两个内核共用一份。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核、证书签发内核与配置内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -250,7 +266,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装�
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译十四个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译十五个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -262,7 +278,9 @@ rust/
 ├── diting-go-compat/src/
 │   ├── text.rs                     # Go 语义的 ToLower / ToUpper / TrimSpace / 去尾点 / 后缀匹配
 │   ├── regex.rs                    # Go regexp → Rust regex 翻译、规则正则编译与前缀预筛
-│   └── dns_type.rs                 # dns.StringToType（多个内核共用的类型表）
+│   ├── dns_type.rs                 # dns.StringToType（多个内核共用的类型表）
+│   ├── ip.rs                       # net.IP.String / To4 / IsLoopback / 零地址比较
+│   └── netaddr.rs netaddr/tests.rs # net.ParseIP / SplitHostPort / JoinHostPort（代理与配置内核共用）
 ├── diting-stamp-core/src/
 │   ├── stamp.rs stamp/tests.rs     # 印章逐字节解析、地址/主机名校验、URL()/Server() 派生
 │   └── ffi.rs                      # 桌面服务 Go 侧动态加载的 C ABI（ABI_VERSION）+ 载荷布局
@@ -309,7 +327,7 @@ rust/
 │   └── ffi.rs ffi/tests.rs         # new / configure / allow / cleanup / info / free_bytes（ABI_VERSION）
 ├── diting-ratelimit-core/tests/fixtures/ratelimit_trace.tsv  # 迁移时 Go 实现生成的 156 步判定轨迹
 ├── diting-proxy-core/src/
-│   ├── addr.rs addr/tests.rs       # net.ParseIP / SplitHostPort / JoinHostPort / net.IP.String（原 flow_outbound.go 的调用点）
+│   ├── addr.rs                     # 转发 diting-go-compat::netaddr（两个内核共用，测试也搬了过去）
 │   ├── config.rs config/tests.rs   # 协议白名单、环回校验、端口/凭据范围、作用域与 UID 去重（原 parseOutboundProxyConfig）
 │   ├── socks5.rs socks5/tests.rs   # greeting / 方法选择 / 子协商 / 请求地址 / 应答增量解析 / UDP 数据报封装
 │   ├── http.rs http/tests.rs       # HTTP CONNECT 请求字节（原 http.Request.Write 输出）
@@ -324,6 +342,18 @@ rust/
 │   ├── ffi.rs ffi/tests.rs         # 八个符号：generate / load / ca_pem / issue / is_ev / free（ABI_VERSION）
 │   └── tests/corpus.rs             # 迁移时 Go 实现生成的根证书 + SAN + EV 语料回放
 ├── diting-cert-core/tests/fixtures/   # legacy_ca.crt / legacy_ca.key / legacy_ca_info.tsv / ev.tsv
+├── diting-config-core/src/
+│   ├── mode.rs mode/tests.rs       # canonicalDNSMode：四个模式与全部别名（原 dns_config.go）
+│   ├── dynamic.rs dynamic/tests.rs # 动态阻断的 5 / 60 / 300 默认值
+│   ├── endpoint.rs endpoint/tests.rs # validateDNSProvider 与 parseDoQURL（含 url.ParseRequestURI 复刻）
+│   ├── protocol.rs protocol/tests.rs # ParseProtocol / ParseResponseType 两张表
+│   ├── rewrite.rs rewrite/tests.rs # parseRewriteEntry 的目标归类与域名键折叠
+│   ├── dns_config.rs dns_config/tests.rs # 整份配置的归一化与错误优先级
+│   ├── quote.rs quote/tests.rs     # fmt 的 %q（错误文案的引号与转义）
+│   ├── payload.rs payload/tests.rs # 六个操作的请求/回应布局
+│   ├── ffi.rs ffi/tests.rs         # abi_version / call / free_bytes（ABI_VERSION）
+│   └── tests/corpus.rs             # 九份语料回放（114 行）
+├── diting-config-core/tests/fixtures/  # dns_mode / dynamic_block / provider / doq_url / protocol / response_type / domain / rewrite / apply（9 份 TSV）
 ├── diting-safebrowsing-core/tests/fixtures/hash_corpus.tsv  # 迁移时 Go 实现生成的主机→摘要→查询名语料
 ├── diting-filter-core/tests/fixtures/parse_corpus.tsv  # 迁移时 Go 解析器的 200 行语料快照
 ├── diting-dns-cache-core/src/
@@ -497,6 +527,12 @@ rust/
   `cert_native_stub.go`（无 cgo 时 MITM 不启动）、`cert_native_payload.go`（文本 / `i64` 载荷解码，
   不需要 cgo 就能测布局）、`cert_native_test.go`（旧实现留下的根证书升级路径、生成/写盘/重载、
   坏密钥对替换、并发单飞与 EV 判定）。`mitm_trust.go` 的 `isExtendedValidation` 只剩一次内核调用。
+- Go（配置）：`dns_config.go`（JSON 解码、`DisallowUnknownFields`、发布与回滚，归一化交给内核）、
+  `config_native.go`（加载、ABI 校验、载荷编解码与七个类型化包装）、`config_native_stub.go`
+  （无 cgo 时配置被拒、取值退回默认）、`config_native_payload.go`（六个操作的载荷布局，
+  不需要 cgo 就能测）、`config_native_test.go`（布局、整份配置的归一化与错误优先级、取值表、
+  DoQ 端点、域名折叠、目标归类与重写表端到端）、`dns_packet.go` / `resolver.go` / `resolver_doq.go`
+  （取值函数各剩一行转发）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -505,12 +541,13 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：十四个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：十五个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
 DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、
-引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核与证书签发内核只随
-Android APK 交付（桌面服务没有这十二块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
+引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核、证书签发内核与
+配置内核只随 Android APK 交付（桌面服务没有这十三块），由 `build_android.py` 与另外两个 `.so`
+一起拷入 `jniLibs`。
 
 桌面服务的七个内核按平台单独交付（Android 用不到它们）：
 
@@ -1366,6 +1403,39 @@ Go 侧原有用例一条断言未改，现在全部穿过 FFI 跑；只有两处
   `ev.tsv` 钉住 EV 表的 8 条 OID 与近邻误判。Rust 侧 `tests/corpus.rs` 逐字段重放，Go 侧
   `cert_native_test.go` 用 `x509.Verify` 证明叶证书确实由持久化私钥签出（并拒绝未覆盖的主机），
   再走一遍“生成 → 写盘 → 重载不变”。
+
+## 配置内核的已知边界
+
+- **只搬“取值”，不搬 JSON**：`dnsEngineConfig` 的解码（`DisallowUnknownFields`、尾随数据检测、
+  `parse DNS config: %w` 的报错）仍在 Go。重写表的 string-vs-array 分派也在 Go：`null` 解到
+  `string` 不报错、所以 `""` 是一个目标，`[1,2]` 两种都失败、所以走“既不是字符串也不是数组”的日志。
+  内核收的是已经分派好的目标列表。
+- **错误优先级是一次调用**：整份 DNS 配置走一个 `dns_config` 操作，模式 → 空列表 → single 数量 →
+  逐个 provider（先协议后端点，带 `provider %d: ` 前缀）的顺序与迁移前一致，报错文案逐字保留；
+  这也是把归一化放进内核而不是 Go 的原因——拆成多次调用就会把顺序留给调用方。
+- **`%q` 是复刻的**：`unsupported DNS mode "nope"`、`invalid DOH URL "dns.google"` 这类文案要进
+  设置页，内核里那份 `quote.rs` 按 Go 的规则转义（`\a \b \f \n \r \t \v`、其余控制字节 `\xNN`、
+  可打印的非 ASCII 原样保留）。
+- **DoH 的 URL 判定是 `url.ParseRequestURI` 的近似**：接受/拒绝的集合按语料钉住（大写 scheme、
+  userinfo、空端口、`#` 片段、非 ASCII 主机名接受；非数字端口、主机里有空格、非法百分号转义、
+  控制字符拒绝），但没有复刻 Go 解析出的每一个字段——内核只需要“能不能用”和最后用到的 scheme
+  与主机。病态输入上的判定可能与 Go 不同，这类输入本来也不会被上游用到。
+- **PLAIN / DOT 只看形状**：`net.SplitHostPort` 成功且主机要么不含冒号、要么是能被 `net.ParseIP`
+  接受的 IPv6 字面量即可。端口不校验范围（`1.1.1.1:053`、`1.1.1.1:65536`、尾冒号都算合法），
+  主机名也合法（`dns.google:853`）——这些都是迁移前的行为，语料逐条固化。
+- **域名折叠每次调用一次 FFI**：`rewriteLookup` 与 `effectiveBlockResponseType` 都在查询路径上，
+  每次多一次 `domain` 调用的开销（与 DNS 应答、ipcache 内核的每查询调用同级）。目标是“只有一份
+  折叠语义”，不是省这一次调用。
+- **缺库时**：`ApplyDNSConfig` 返回内核缺失错误、**沿用上一份快照**（未校验的配置绝不发布）；
+  `ParseProtocol` 退回 PLAIN、`ParseResponseType` 退回 CUSTOM_IP、`parseDoQURL` 返回空主机
+  （调用方报 `invalid DoQ URL`）、重写目标全部丢弃。这些都是“降级”而不是“静默换了另一套语义”。
+- **一致性验证**：`tests/fixtures/` 的九份语料（114 行）都来自迁移前直接跑原 Go 实现——
+  `dns_mode` 16 行（含 `sİngle` 这类 `strings.ToLower` 折叠）、`dynamic_block` 7 行（含 `MinInt32`
+  与 `MaxInt32`）、`provider` 26 行（三种端点的通过与拒绝，含 `[1.1.1.1:53]:53` 与
+  `invalid DOH URL`）、`doq_url` 12 行、`protocol` / `response_type` 17 行（大写敏感、
+  `" dot "` 不裁剪）、`domain` 11 行、`rewrite` 18 行（含 Go 会丢弃的 JSON 形状）、
+  `apply` 7 行（错误优先级）。Rust 的 `tests/corpus.rs` 逐行重放，Go 侧另用
+  `config_native_test.go` 走一遍 `ApplyDNSConfig` / `SetRewriteRules` 的端到端路径。
 
 ## 性能（本机 Windows/amd64，迁移时的实测值）
 

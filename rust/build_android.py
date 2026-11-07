@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cross-compile the Rust cores for Android and drop them into the Flutter app's jniLibs.
 
-Fourteen libraries are built:
+Fifteen libraries are built:
 
 * `libditing_rule_core.so` - rule parsing, rule search and the DTRI writer (Dart/Kotlin callers).
 * `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
@@ -36,8 +36,11 @@ Fourteen libraries are built:
 * `libditing_cert_core.so` - the MITM certificate kernel the same engine dlopen()s (root CA
   generation and validation, the SEC1 key encoding, leaf minting with its SAN rule and the EV
   policy table).
+* `libditing_config_core.so` - the configuration kernel the same engine dlopen()s (the DNS mode
+  aliases, the dynamic-block defaults, the provider endpoint rules, the protocol / block-response
+  name tables, the rewrite-target classification and the domain key fold).
 
-All fourteen are shipped and used at runtime: without the first a rule import throws, without the
+All fifteen are shipped and used at runtime: without the first a rule import throws, without the
 second the tunnel refuses to start, without the third the DNS cache stores nothing (answers go
 straight to the resolver), without the fourth MITM cannot start (the tunnel runs without
 interception), without the fifth the same MITM start fails rather than serving pages without the
@@ -51,7 +54,9 @@ denied) instead of silently allowing everything, without the eleventh connection
 longer deduplicated (more lines, same events), without the twelfth direct-IP flows lose their
 hostname hint, without the thirteenth the outbound proxy cannot be configured or used (proxied
 flows fail, direct flows are untouched), and without the fourteenth MITM cannot start at all (no
-CA to trust, no leaf to serve; the tunnel itself is unaffected). The sixth, seventh, ninth, eleventh and twelfth never
+CA to trust, no leaf to serve; the tunnel itself is unaffected), and without the fifteenth a pushed
+DNS config is rejected (the previous snapshot stays) while the name tables fall back to their defaults
+and rewrite targets are dropped. The sixth, seventh, ninth, eleventh and twelfth never
 change an answer. Run this before every APK build:
 
     python rust/build_android.py              # arm64-v8a + x86_64, release
@@ -94,6 +99,7 @@ LIB_NAMES = (
     "libditing_ipcache_core.so",
     "libditing_proxy_core.so",
     "libditing_cert_core.so",
+    "libditing_config_core.so",
 )
 ANDROID_API = 28
 
@@ -208,6 +214,8 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "diting-proxy-core",
         "-p",
         "diting-cert-core",
+        "-p",
+        "diting-config-core",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",

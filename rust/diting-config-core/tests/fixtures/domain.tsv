@@ -1,0 +1,11 @@
+"Example.COM"	example.com
+" example.com "	example.com
+"example.com."	example.com
+"example.com.."	example.com.
+"."	
+""	
+"  "	
+"例子.Example"	例子.example
+"a.b.c."	a.b.c
+"EXAMPLE.com "	example.com
+"İstanbul.example"	istanbul.example

@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -31,17 +30,10 @@ const (
 	ProtocolDoQ
 )
 
+// ParseProtocol maps the protocol name to its enum. The table (upper-cased, unknown means PLAIN)
+// lives in rust/diting-config-core; without the kernel it falls back to PLAIN.
 func ParseProtocol(s string) DNSProtocol {
-	switch strings.ToUpper(s) {
-	case "DOH":
-		return ProtocolDoH
-	case "DOT":
-		return ProtocolDoT
-	case "DOQ":
-		return ProtocolDoQ
-	default:
-		return ProtocolPlain
-	}
+	return parseProtocolNative(s)
 }
 
 const (

@@ -1,0 +1,12 @@
+"quic://dns.adguard.com:8853"	dns.adguard.com	8853
+"https://dns.adguard.com/dns-query"	dns.adguard.com	853
+"doq://dns.adguard.com"	dns.adguard.com	853
+"dns.adguard.com"	dns.adguard.com	853
+"dns.adguard.com:8853"	dns.adguard.com	8853
+"quic://[2606:4700::1111]:853"	2606:4700::1111	853
+"[2606:4700::1111]"	[2606:4700::1111]	853
+"quic://"		853
+"quic://dns.adguard.com:8853/path?x=1"	dns.adguard.com	8853
+"https://dns.google"	dns.google	853
+""		853
+"doq://::1"	::1	853

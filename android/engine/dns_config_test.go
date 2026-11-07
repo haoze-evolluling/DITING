@@ -26,14 +26,17 @@ func TestCanonicalDNSMode(t *testing.T) {
 		{"", "", true},
 	}
 
+	// The mode table lives in rust/diting-config-core; one plain provider keeps the rest of the
+	// config valid so the mode is what the kernel answers about.
+	providers := []dnsProviderConfig{{Protocol: "PLAIN", Server: "1.1.1.1:53"}}
 	for _, tt := range tests {
-		got, err := canonicalDNSMode(tt.input)
+		normalized, err := normalizeDNSConfig(tt.input, "CUSTOM_IP", dynamicBlockConfig{}, providers)
 		if (err != nil) != tt.wantErr {
-			t.Errorf("canonicalDNSMode(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
+			t.Errorf("mode %q error = %v, wantErr %v", tt.input, err, tt.wantErr)
 			continue
 		}
-		if got != tt.expected {
-			t.Errorf("canonicalDNSMode(%q) = %q, want %q", tt.input, got, tt.expected)
+		if normalized.mode != tt.expected {
+			t.Errorf("mode %q = %q, want %q", tt.input, normalized.mode, tt.expected)
 		}
 	}
 }
@@ -128,9 +131,10 @@ func TestValidateDNSProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateDNSProvider(tt.cfg)
+			// `race` accepts any provider count, so the endpoint rules are what is under test.
+			_, err := normalizeDNSConfig("race", "CUSTOM_IP", dynamicBlockConfig{}, []dnsProviderConfig{tt.cfg})
 			if (err != nil) != tt.wantErr {
-				t.Errorf("validateDNSProvider() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("provider %+v error = %v, wantErr %v", tt.cfg, err, tt.wantErr)
 			}
 		})
 	}

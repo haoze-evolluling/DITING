@@ -71,6 +71,10 @@ type rewriteEntry struct {
 
 // SetRewriteRules accepts a JSON object mapping domains to either a single
 // target (CNAME domain or IP literal) or an array of targets (IPv4 + IPv6).
+//
+// The string-vs-array dispatch is `encoding/json`'s; the key fold, the target
+// classification (first IPv4, first IPv6, first name win; blank targets skipped;
+// names lower-cased with one trailing dot dropped) is rust/diting-config-core's.
 func (e *Engine) SetRewriteRules(content string) {
 	entries := make(map[string]*rewriteEntry)
 	if content != "" {
@@ -80,17 +84,20 @@ func (e *Engine) SetRewriteRules(content string) {
 			return
 		}
 		for domain, value := range raw {
-			domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+			domain = normalizeDomainNative(domain)
 			if domain == "" {
 				continue
 			}
-			if entry := parseRewriteEntry(value); entry != nil {
-				entries[domain] = entry
-			} else {
+			targets, ok := rewriteTargets(value)
+			if !ok {
 				// A value that is neither a string nor an array of strings used to
 				// be dropped without a trace, so a malformed payload looked like a
 				// successful load that simply rewrote nothing.
 				logf("SetRewriteRules: ignoring rewrite target for %q: value is neither a string nor an array of strings", domain)
+				continue
+			}
+			if entry := classifyRewriteTargetsNative(targets); entry != nil {
+				entries[domain] = entry
 			}
 		}
 	}
@@ -99,42 +106,22 @@ func (e *Engine) SetRewriteRules(content string) {
 	e.mu.Unlock()
 }
 
-func parseRewriteEntry(value json.RawMessage) *rewriteEntry {
-	var targets []string
+// rewriteTargets decodes one rewrite value into its effective target list: a
+// JSON string is one target, an array is its elements, anything else is
+// rejected (`ok` false, which is what the caller logs).
+func rewriteTargets(value json.RawMessage) (targets []string, ok bool) {
 	var single string
 	if err := json.Unmarshal(value, &single); err == nil {
-		targets = []string{single}
-	} else if err := json.Unmarshal(value, &targets); err != nil {
-		return nil
+		return []string{single}, true
 	}
-	entry := &rewriteEntry{}
-	for _, target := range targets {
-		target = strings.TrimSpace(target)
-		if target == "" {
-			continue
-		}
-		if ip := net.ParseIP(target); ip != nil {
-			if ip.To4() != nil {
-				if entry.ip4 == nil {
-					entry.ip4 = ip
-				}
-			} else if entry.ip6 == nil {
-				entry.ip6 = ip
-			}
-			continue
-		}
-		if entry.cname == "" {
-			entry.cname = strings.TrimSuffix(strings.ToLower(target), ".")
-		}
+	if err := json.Unmarshal(value, &targets); err != nil {
+		return nil, false
 	}
-	if entry.cname == "" && entry.ip4 == nil && entry.ip6 == nil {
-		return nil
-	}
-	return entry
+	return targets, true
 }
 
 func (e *Engine) rewriteLookup(domain string) *rewriteEntry {
-	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+	domain = normalizeDomainNative(domain)
 	if domain == "" {
 		return nil
 	}
@@ -190,7 +177,7 @@ const rewriteAnswerTTL = 300
 // the configured upstream resolver. Returns JSON with "ips" plus a "source"
 // of "rewrite", "blocked", or "upstream", or an "error" object.
 func (e *Engine) ResolveDomain(domain string, ipv4 bool) string {
-	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+	domain = normalizeDomainNative(domain)
 	if domain == "" {
 		return resolveDomainError("empty domain")
 	}
@@ -425,7 +412,7 @@ func (e *Engine) effectiveBlockResponseType(domain string) ResponseType {
 	if !dynamicConfig.Enabled {
 		return fallback
 	}
-	cleanDomain := strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+	cleanDomain := normalizeDomainNative(domain)
 	if cleanDomain == "" {
 		return fallback
 	}

@@ -15,15 +15,8 @@ const (
 	ResponseNoData
 )
 
+// ParseResponseType maps the block-response name to its mode. The table (case-sensitive, unknown
+// means CUSTOM_IP) lives in rust/diting-config-core; without the kernel it falls back to CUSTOM_IP.
 func ParseResponseType(s string) ResponseType {
-	switch s {
-	case "NXDOMAIN":
-		return ResponseNXDomain
-	case "REFUSED":
-		return ResponseRefused
-	case "NODATA":
-		return ResponseNoData
-	default:
-		return ResponseCustomIP
-	}
+	return parseResponseTypeNative(s)
 }

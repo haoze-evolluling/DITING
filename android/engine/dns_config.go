@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
-	"net/url"
 	"strings"
 )
 
@@ -37,21 +35,10 @@ type dnsEngineConfig struct {
 	RaceMaxParallel int                 `json:"raceMaxParallel,omitempty"`
 }
 
-func canonicalDNSMode(mode string) (string, error) {
-	switch strings.ToLower(strings.TrimSpace(mode)) {
-	case "single":
-		return "single", nil
-	case "primary_backup":
-		return "primary_backup", nil
-	case "parallel_race", "race", "brute_force_parallel":
-		return "parallel_race", nil
-	case "smart_prediction", "prediction":
-		return "smart_prediction", nil
-	default:
-		return "", fmt.Errorf("unsupported DNS mode %q", mode)
-	}
-}
-
+// ApplyDNSConfig decodes one settings snapshot and, when rust/diting-config-core accepts it,
+// publishes it. The kernel owns the mode aliases, the dynamic-block defaults and the endpoint rules,
+// and it reports the first problem in the order this function used to check them (mode, provider
+// count, then each provider), so the error text and its precedence are unchanged.
 func (e *Engine) ApplyDNSConfig(configJSON string) error {
 	var cfg dnsEngineConfig
 	decoder := json.NewDecoder(strings.NewReader(configJSON))
@@ -62,38 +49,19 @@ func (e *Engine) ApplyDNSConfig(configJSON string) error {
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		return fmt.Errorf("parse DNS config: trailing data")
 	}
-	if cfg.DynamicResponse.RequestThreshold < 1 {
-		cfg.DynamicResponse.RequestThreshold = 5
-	}
-	if cfg.DynamicResponse.WindowSeconds < 1 {
-		cfg.DynamicResponse.WindowSeconds = 60
-	}
-	if cfg.DynamicResponse.NXDomainSeconds < 1 {
-		cfg.DynamicResponse.NXDomainSeconds = 300
-	}
 
-	canonMode, err := canonicalDNSMode(cfg.Mode)
+	normalized, err := normalizeDNSConfig(cfg.Mode, cfg.BlockResponse, cfg.DynamicResponse, cfg.Providers)
 	if err != nil {
 		return err
 	}
-	cfg.Mode = canonMode
+	cfg.Mode = normalized.mode
+	cfg.Providers = normalized.providers
+	cfg.DynamicResponse = normalized.dynamic
 
 	e.mu.Lock()
 	resolver := e.resolver
 	e.mu.Unlock()
 
-	if len(cfg.Providers) == 0 {
-		return fmt.Errorf("DNS config has no providers")
-	}
-	if cfg.Mode == "single" && len(cfg.Providers) != 1 {
-		return fmt.Errorf("single DNS mode requires exactly one provider")
-	}
-	for i := range cfg.Providers {
-		cfg.Providers[i].Protocol = strings.ToUpper(cfg.Providers[i].Protocol)
-		if err := validateDNSProvider(cfg.Providers[i]); err != nil {
-			return fmt.Errorf("provider %d: %w", i, err)
-		}
-	}
 	if resolver != nil {
 		resolver.UpdateBootstrap(cfg.Bootstrap)
 		if err := resolver.ConfigureProvidersWithOptions(cfg.Mode, cfg.Providers, cfg.RaceMaxParallel); err != nil {
@@ -108,7 +76,7 @@ func (e *Engine) ApplyDNSConfig(configJSON string) error {
 	// The block response mode and the dynamic block config used to be applied
 	// before the provider checks, so a rejected snapshot still changed how
 	// blocks were answered while the caller saw an error.
-	e.storeBlockResponseType(ParseResponseType(strings.ToUpper(cfg.BlockResponse)))
+	e.storeBlockResponseType(normalized.blockResponse)
 	e.mu.Lock()
 	e.dynamicResponse = cfg.DynamicResponse
 	dyn := cfg.DynamicResponse
@@ -116,34 +84,5 @@ func (e *Engine) ApplyDNSConfig(configJSON string) error {
 	e.dnsConfig = &cfg
 	e.mu.Unlock()
 	e.dynamicBlocks.reset()
-	return nil
-}
-
-func validateDNSProvider(cfg dnsProviderConfig) error {
-	switch cfg.Protocol {
-	case "PLAIN", "DOT":
-		host, _, err := net.SplitHostPort(cfg.Server)
-		if err != nil {
-			return fmt.Errorf("invalid %s endpoint %q: %w", cfg.Protocol, cfg.Server, err)
-		}
-		// SplitHostPort accepts "[1.1.1.1:53]:53" as host "1.1.1.1:53". Only a
-		// real IPv6 literal may contain a colon after splitting, so anything
-		// else means the address itself had a port appended and cannot dial.
-		if host == "" || (strings.Contains(host, ":") && net.ParseIP(host) == nil) {
-			return fmt.Errorf("invalid %s endpoint %q: host is not a valid IP literal", cfg.Protocol, cfg.Server)
-		}
-	case "DOH":
-		u, err := url.ParseRequestURI(cfg.URL)
-		if err != nil || u.Scheme != "https" || u.Host == "" {
-			return fmt.Errorf("invalid DOH URL %q", cfg.URL)
-		}
-	case "DOQ":
-		host, port := parseDoQURL(cfg.URL)
-		if host == "" || port == "" {
-			return fmt.Errorf("invalid DOQ URL %q", cfg.URL)
-		}
-	default:
-		return fmt.Errorf("unsupported protocol %q", cfg.Protocol)
-	}
 	return nil
 }

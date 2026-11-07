@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"strings"
 	"time"
 
 	"github.com/quic-go/quic-go"
@@ -155,19 +154,9 @@ func (r *Resolver) resetQUICConn() {
 	}
 }
 
+// parseDoQURL splits a DoQ endpoint into host and port (853 when the text carries no port). The
+// prefix and path handling lives in rust/diting-config-core; without the kernel the pair is empty and
+// the caller reports an invalid DoQ endpoint instead of dialing a guessed host.
 func parseDoQURL(url string) (host, port string) {
-	s := url
-	for _, prefix := range []string{"quic://", "https://", "doq://"} {
-		s = strings.TrimPrefix(s, prefix)
-	}
-
-	if idx := strings.IndexByte(s, '/'); idx >= 0 {
-		s = s[:idx]
-	}
-
-	host, port, err := net.SplitHostPort(s)
-	if err != nil {
-		return s, "853"
-	}
-	return host, port
+	return parseDoQURLNative(url)
 }
