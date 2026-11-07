@@ -24,7 +24,7 @@ UNIT_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
 INSTALL_BIN="/usr/local/bin/diting-service"
 INSTALL_LIB_DIR="/usr/lib/diting"
 # 四个内核都由服务在运行期动态加载，缺任一库服务都起不来
-RUST_LIB_NAMES="libditing_stamp_core.so libditing_filter_core.so libditing_rewrite_core.so libditing_safebrowsing_core.so libditing_hosts_core.so"
+RUST_LIB_NAMES="libditing_stamp_core.so libditing_filter_core.so libditing_rewrite_core.so libditing_safebrowsing_core.so libditing_hosts_core.so libditing_dns64_core.so"
 CONFIG_DIR="/etc/diting"
 DATA_DIR="/var/lib/diting"
 SERVICE_USER="root"

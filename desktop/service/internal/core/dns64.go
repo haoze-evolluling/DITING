@@ -1,9 +1,8 @@
 package core
 
 import (
-	"fmt"
+	"log"
 	"net"
-	"strings"
 	"sync"
 
 	"github.com/miekg/dns"
@@ -27,72 +26,42 @@ func DefaultDNS64Config() DNS64Config {
 	}
 }
 
-// DNS64Synthesizer 实现 RFC 6052 与 RFC 6147 的 AAAA 记录合成引擎
+// DNS64Synthesizer 实现 RFC 6052 与 RFC 6147 的 AAAA 记录合成引擎。
+//
+// 前缀解析、地址嵌入、排除集与“应答里是否已有有效 AAAA”都在 Rust 内核
+// （rust/diting-dns64-core）里；这里只保留配置、锁，以及把内核回传的地址包成 dns.AAAA。
+// 一个合成器对应一次配置：UpdateConfig 先建新内核实例、再在写锁内换指针并释放旧实例。
 type DNS64Synthesizer struct {
-	mu           sync.RWMutex
-	enabled      bool
-	prefixes     []*net.IPNet
-	exclusionSet []*net.IPNet
+	mu      sync.RWMutex
+	enabled bool
+	kernel  *dns64NativeEngine
 }
 
 // NewDNS64Synthesizer 创建 DNS64 合成引擎
+//
+// 前缀不合法返回 *dns64PrefixConfigError（调用方按配置错误处理，不阻断启动）；
+// 内核缺失或不匹配返回普通错误，服务必须启动失败——没有降级的第二套实现。
 func NewDNS64Synthesizer(cfg DNS64Config) (*DNS64Synthesizer, error) {
-	s := &DNS64Synthesizer{
-		enabled: cfg.Enabled,
+	kernel, err := buildDNS64NativeEngine(cfg.Enabled, cfg.Prefixes)
+	if err != nil {
+		return nil, err
 	}
-
-	// 初始化排除网段 (RFC 6147 Section 5.1.4: 避免回环、链路本地以及重复合成循环)
-	defaultExclusions := []string{
-		"::ffff:0:0/96", // IPv4-mapped
-		"::1/128",       // Loopback
-		"fe80::/10",     // Link-local
-	}
-	for _, excl := range defaultExclusions {
-		_, ipNet, err := net.ParseCIDR(excl)
-		if err == nil {
-			s.exclusionSet = append(s.exclusionSet, ipNet)
-		}
-	}
-
-	prefixes := cfg.Prefixes
-	if len(prefixes) == 0 {
-		prefixes = []string{WellKnownDNS64Prefix}
-	}
-
-	for _, p := range prefixes {
-		p = strings.TrimSpace(p)
-		if p == "" {
-			continue
-		}
-		_, ipNet, err := net.ParseCIDR(p)
-		if err != nil {
-			return nil, fmt.Errorf("解析 DNS64 前缀 %q 失败: %w", p, err)
-		}
-		// 校验前缀是否为 IPv6 且掩码支持 /96
-		ones, bits := ipNet.Mask.Size()
-		if bits != 128 || (ones != 32 && ones != 40 && ones != 48 && ones != 56 && ones != 64 && ones != 96) {
-			return nil, fmt.Errorf("RFC 6052 规范仅支持 /32, /40, /48, /56, /64, /96 前缀长度，不支持 %s", p)
-		}
-		s.prefixes = append(s.prefixes, ipNet)
-		// 按照 RFC 规范将配置的自身前缀加入排除集，防止多次级联递归合成
-		s.exclusionSet = append(s.exclusionSet, ipNet)
-	}
-
-	return s, nil
+	return &DNS64Synthesizer{enabled: cfg.Enabled, kernel: kernel}, nil
 }
 
 // UpdateConfig 动态更新 DNS64 配置
 func (s *DNS64Synthesizer) UpdateConfig(cfg DNS64Config) error {
-	newSynth, err := NewDNS64Synthesizer(cfg)
+	kernel, err := buildDNS64NativeEngine(cfg.Enabled, cfg.Prefixes)
 	if err != nil {
 		return err
 	}
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.enabled = newSynth.enabled
-	s.prefixes = newSynth.prefixes
-	s.exclusionSet = newSynth.exclusionSet
+	old := s.kernel
+	s.enabled = cfg.Enabled
+	s.kernel = kernel
+	s.mu.Unlock()
+	old.free()
 	return nil
 }
 
@@ -106,113 +75,101 @@ func (s *DNS64Synthesizer) IsEnabled() bool {
 	return s.enabled
 }
 
-// EmbedIPv4InIPv6 按照 RFC 6052 第 2.2 节将 IPv4 地址嵌入指定 IPv6 前缀中
+// EmbedIPv4InIPv6 按照 RFC 6052 第 2.2 节将 IPv4 地址嵌入指定 IPv6 前缀中。
+//
+// 前缀按字节交给内核（`IPNet.IP.To16()` + 掩码长度），不走文本往返：`::ffff:0:0/96` 这类
+// 折叠过的网段 `String()` 出来是 `0.0.0.0/0`，再解析就不是同一条前缀了。非 IPv6 掩码
+// 与 RFC 6052 的 /32、/40、/48、/56、/64、/96 之外的长度都返回 nil。
 func EmbedIPv4InIPv6(v4 net.IP, prefix *net.IPNet) net.IP {
-	v4Bytes := v4.To4()
-	if v4Bytes == nil || prefix == nil {
+	if prefix == nil {
 		return nil
 	}
-
+	v4Bytes := v4.To4()
+	if v4Bytes == nil {
+		return nil
+	}
 	prefixIP := prefix.IP.To16()
 	if prefixIP == nil {
 		return nil
 	}
-
 	ones, bits := prefix.Mask.Size()
-	if bits != 128 {
+	if bits != net.IPv6len*8 {
 		return nil
 	}
-
-	v6 := make(net.IP, 16)
-	copy(v6, prefixIP)
-
-	switch ones {
-	case 96:
-		// bits 96-127 (bytes 12-15): Prefix(96) | IPv4(32)
-		copy(v6[12:16], v4Bytes)
-	case 64:
-		// bits 72-103 (bytes 9-12): Prefix(64) | u(8) | IPv4(32) | Suffix(24)
-		copy(v6[9:13], v4Bytes)
-		v6[8] = 0 // 预留字节 u 必须为 0
-	case 56:
-		// bits 56-63 (byte 7) 与 72-95 (bytes 9-11): Prefix(56) | IPv4[0] | u(8) | IPv4[1-3] | Suffix(40)
-		v6[7] = v4Bytes[0]
-		copy(v6[9:12], v4Bytes[1:4])
-		v6[8] = 0
-	case 48:
-		// bits 48-63 (bytes 6-7) 与 72-87 (bytes 9-10): Prefix(48) | IPv4[0-1] | u(8) | IPv4[2-3] | Suffix(56)
-		copy(v6[6:8], v4Bytes[0:2])
-		copy(v6[9:11], v4Bytes[2:4])
-		v6[8] = 0
-	case 40:
-		// bits 40-63 (bytes 5-7) 与 72-79 (byte 9): Prefix(40) | IPv4[0-2] | u(8) | IPv4[3] | Suffix(48)
-		copy(v6[5:8], v4Bytes[0:3])
-		v6[9] = v4Bytes[3]
-		v6[8] = 0
-	case 32:
-		// bits 32-63 (bytes 4-7): Prefix(32) | IPv4(32) | u(8) | Suffix(56)
-		copy(v6[4:8], v4Bytes)
-		v6[8] = 0
-	default:
+	embedded, ok := embedIPv4InPrefix(prefixIP, ones, v4Bytes)
+	if !ok {
 		return nil
 	}
-
-	return v6
+	return net.IP(embedded)
 }
 
-// MapIPv4ToIPv6 按照 RFC 6052 第 2.2 节将 IPv4 地址映射为默认 IPv6 前缀
+// MapIPv4ToIPv6 按照 RFC 6052 第 2.2 节将 IPv4 地址映射为第一个配置前缀下的 IPv6 地址
 func (s *DNS64Synthesizer) MapIPv4ToIPv6(v4 net.IP) net.IP {
-	v4 = v4.To4()
-	if v4 == nil {
+	if s == nil {
+		return nil
+	}
+	v4Bytes := v4.To4()
+	if v4Bytes == nil {
 		return nil
 	}
 
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
-	var prefix *net.IPNet
-	if len(s.prefixes) > 0 {
-		prefix = s.prefixes[0]
-	} else {
-		_, prefix, _ = net.ParseCIDR(WellKnownDNS64Prefix)
+	embedded, ok := s.kernel.embed(v4Bytes)
+	if !ok {
+		return nil
 	}
-
-	return EmbedIPv4InIPv6(v4, prefix)
+	return net.IP(embedded)
 }
 
 // IsExcluded 判断 IPv6 地址是否在 RFC 6147 排除名单中
+//
+// 内核拒绝回答时按“已排除”处理：宁可不合成，也不合成出不该合成的地址。
 func (s *DNS64Synthesizer) IsExcluded(ip net.IP) bool {
 	if ip == nil {
 		return true
 	}
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	if ip.IsUnspecified() {
+	if s == nil {
 		return true
 	}
 
-	for _, subnet := range s.exclusionSet {
-		if subnet.Contains(ip) {
-			return true
-		}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	excluded, err := s.kernel.excluded(ip)
+	if err != nil {
+		log.Printf("[DNS64] 排除集判定失败: %v（本次按已排除处理）\n", err)
+		return true
 	}
-	return false
+	return excluded
 }
 
 // HasValidAAAARecords 检查应答是否包含不在排除名单中的有效 AAAA 记录 (RFC 6147 Section 5.1.1 & 5.1.4)
 func (s *DNS64Synthesizer) HasValidAAAARecords(msg *dns.Msg) bool {
-	if msg == nil || len(msg.Answer) == 0 {
+	if msg == nil || len(msg.Answer) == 0 || s == nil {
 		return false
 	}
+
+	// 地址为空（或 AAAA 记录里没有地址）是旧实现里 IsExcluded(nil) 的情形：不算有效 AAAA。
+	addresses := make([][]byte, 0, len(msg.Answer))
 	for _, rr := range msg.Answer {
-		if aaaa, ok := rr.(*dns.AAAA); ok {
-			if !s.IsExcluded(aaaa.AAAA) {
-				return true
-			}
+		aaaa, ok := rr.(*dns.AAAA)
+		if !ok || aaaa.AAAA == nil {
+			continue
 		}
+		addresses = append(addresses, aaaa.AAAA)
 	}
-	return false
+	if len(addresses) == 0 {
+		return false
+	}
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	valid, err := s.kernel.hasValid(addresses)
+	if err != nil {
+		log.Printf("[DNS64] 有效 AAAA 判定失败: %v（本次按无有效 AAAA 处理）\n", err)
+		return false
+	}
+	return valid
 }
 
 // SynthesizeFromA 根据 A 记录切片合成 AAAA 记录列表（支持全部配置的前缀）
@@ -227,12 +184,7 @@ func (s *DNS64Synthesizer) SynthesizeFromAWithTTL(aRecords []*dns.A, overrideTTL
 	}
 
 	s.mu.RLock()
-	prefixes := s.prefixes
-	if len(prefixes) == 0 {
-		_, defaultNet, _ := net.ParseCIDR(WellKnownDNS64Prefix)
-		prefixes = []*net.IPNet{defaultNet}
-	}
-	s.mu.RUnlock()
+	defer s.mu.RUnlock()
 
 	var res []*dns.AAAA
 	for _, a := range aRecords {
@@ -245,21 +197,21 @@ func (s *DNS64Synthesizer) SynthesizeFromAWithTTL(aRecords []*dns.A, overrideTTL
 			ttl = overrideTTL
 		}
 
-		for _, pfx := range prefixes {
-			v6 := EmbedIPv4InIPv6(a.A, pfx)
-			if v6 == nil {
-				continue
-			}
-			aaaa := &dns.AAAA{
+		addresses, err := s.kernel.synthesize(a.A.To4())
+		if err != nil {
+			log.Printf("[DNS64] 合成 AAAA 失败: %v（跳过该条 A 记录）\n", err)
+			continue
+		}
+		for _, address := range addresses {
+			res = append(res, &dns.AAAA{
 				Hdr: dns.RR_Header{
 					Name:   a.Hdr.Name,
 					Rrtype: dns.TypeAAAA,
 					Class:  dns.ClassINET,
 					Ttl:    ttl,
 				},
-				AAAA: v6,
-			}
-			res = append(res, aaaa)
+				AAAA: net.IP(address),
+			})
 		}
 	}
 	return res

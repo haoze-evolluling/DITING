@@ -14,9 +14,9 @@ Windows / Linux 的打包资源与构建产物。
 
 `project.nsi` 由 `../../toolbox/core/build_manager.py` 调用，需要 `ARG_APP_DIR`（Flutter Windows
 产物目录）、`ARG_SERVICE_BINARY`（`diting-service.exe` 路径）与 `ARG_STAMP_LIBRARY` /
-`ARG_FILTER_LIBRARY` / `ARG_REWRITE_LIBRARY` / `ARG_SAFEBROWSING_LIBRARY` / `ARG_HOSTS_LIBRARY`
-（`diting_stamp_core.dll`、`diting_filter_core.dll`、`diting_rewrite_core.dll`、
-`diting_safebrowsing_core.dll`、`diting_hosts_core.dll`，五个 Rust 内核，
+`ARG_FILTER_LIBRARY` / `ARG_REWRITE_LIBRARY` / `ARG_SAFEBROWSING_LIBRARY` / `ARG_HOSTS_LIBRARY` /
+`ARG_DNS64_LIBRARY`（`diting_stamp_core.dll`、`diting_filter_core.dll`、`diting_rewrite_core.dll`、
+`diting_safebrowsing_core.dll`、`diting_hosts_core.dll`、`diting_dns64_core.dll`，六个 Rust 内核，
 装进 `$INSTDIR` 供服务在运行期动态加载）。安装包注册并启动
 `DitingDNSService`，卸载时停止服务、恢复网卡 DNS 并清理快捷方式。WebView2 不再是运行依赖：桌面窗口
 由 Flutter 原生渲染。
@@ -24,8 +24,8 @@ Windows / Linux 的打包资源与构建产物。
 ## Linux
 
 `build_linux.sh --package` 使用 `linux/` 下的文件组装 `.deb`；安装后由 systemd 托管
-`diting-service`，Web 控制台随二进制内嵌。五个 Rust 内核（`libditing_stamp_core.so`、
+`diting-service`，Web 控制台随二进制内嵌。六个 Rust 内核（`libditing_stamp_core.so`、
 `libditing_filter_core.so`、`libditing_rewrite_core.so`、`libditing_safebrowsing_core.so`、
-`libditing_hosts_core.so`）装到 `/usr/lib/diting/`，服务按该路径探测加载；
+`libditing_hosts_core.so`、`libditing_dns64_core.so`）装到 `/usr/lib/diting/`，服务按该路径探测加载；
 脚本会在缺失时用 cargo
 现编，交叉架构需先 `rustup target add` 并备好交叉链接器。`install.sh --lib-dir` 可显式指定内核所在目录。

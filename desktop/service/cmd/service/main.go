@@ -156,9 +156,10 @@ func (p *program) run() error {
 	// 分组专属上游依赖已装配的主链路，故须在两个前置件就绪之后绑定
 	p.applyGroupUpstreams(clientGroupCfg)
 
+	// 内核缺失时启动失败：没有 hosts 表的内网域名会被当作公网域名转发出去
 	hostsRes, err := core.NewHostsResolver(cfg.Hosts)
 	if err != nil {
-		log.Printf("[Hosts] 初始化 Hosts 解析器警告: %v\n", err)
+		return fmt.Errorf("初始化 Hosts 解析器失败: %w", err)
 	}
 	p.hostsResolver = hostsRes
 	p.rebindMgr = ditingdns.NewRebindProtectionManager(cfg.Rebind)
@@ -169,8 +170,12 @@ func (p *program) run() error {
 	}
 	p.accessControl = accessCtrl
 	p.rateLimiter = core.NewRateLimiter(context.Background(), cfg.RateLimit)
+	// 前缀写错只是警告（改配置要经过 UI，服务得先活着）；内核缺失则启动失败
 	dns64Synth, err := core.NewDNS64Synthesizer(cfg.DNS64)
 	if err != nil {
+		if !core.IsDNS64ConfigError(err) {
+			return fmt.Errorf("初始化 DNS64 合成器失败: %w", err)
+		}
 		log.Printf("[DNS64] 初始化 DNS64 合成器警告: %v\n", err)
 	}
 	p.dns64Synth = dns64Synth
