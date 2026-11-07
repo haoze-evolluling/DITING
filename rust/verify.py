@@ -73,6 +73,8 @@ def main() -> int:
                 [
                     "go",
                     "test",
+                    # -count=1: the kernels are external files, invisible to Go's test cache.
+                    "-count=1",
                     "-run",
                     "TestNativePolicy|TestPolicy|TestNativeDNSCache|TestDNSCache|TestWireFormat|TestNegativeCaching|TestQuestionKey|TestSingleFlight|TestSharded|TestDisablingCache|TestEngineGetDNSCacheEntries|TestMitm",
                     ".",

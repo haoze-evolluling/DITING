@@ -716,7 +716,8 @@ python rust/verify.py --all      # 全量
 ```
 
 `--go` 会先 `cargo build --release`（Go 侧按约定探测 `rust/target/release/`），并且需要 `cgo` 与
-C 编译器（Windows 用 mingw，Linux/macOS 用 gcc/clang）。`--desktop` 不需要 cgo：桌面内核走纯 Go 动态
+C 编译器（Windows 用 mingw，Linux/macOS 用 gcc/clang）。这一步的 `go test` 带 `-count=1`：内核是
+Go 看不见的外部文件，缓存会让“重建内核后重跑”变成假跑。`--desktop` 不需要 cgo：桌面内核走纯 Go 动态
 加载，先 `cargo build --release -p diting-stamp-core -p diting-filter-core -p diting-rewrite-core`
 再去 `desktop/service` 跑 `go test ./...`。`--dart` 同样需要先建好本机产物：Dart 侧
 已经没有第二份解析器可以兜底。
