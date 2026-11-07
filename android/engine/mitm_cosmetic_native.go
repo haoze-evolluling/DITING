@@ -83,7 +83,6 @@ static uint32_t diting_cosmetic_call_process(void* fn, void* handle, void* buffe
 import "C"
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -95,9 +94,6 @@ import (
 
 // cosmeticNativeABIVersion must match `ABI_VERSION` in rust/diting-cosmetic-core/src/ffi.rs.
 const cosmeticNativeABIVersion = 1
-
-// cosmeticPayloadLayoutVersion must match `payload::LAYOUT_VERSION`.
-const cosmeticPayloadLayoutVersion = 1
 
 // Upstream flags; see rust/diting-cosmetic-core/src/inject.rs.
 const (
