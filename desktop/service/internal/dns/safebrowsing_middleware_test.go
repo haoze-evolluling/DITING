@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net"
 	"testing"
 
@@ -57,7 +58,11 @@ func newSBEngine(enabled bool, resolver core.Resolver) *core.SafeBrowsingEngine 
 	cfg := core.DefaultSafeBrowsingConfig()
 	cfg.Enabled = enabled
 	cfg.TimeoutMs = 2000
-	return core.NewSafeBrowsingEngine(cfg, resolver)
+	engine, err := core.NewSafeBrowsingEngine(cfg, resolver)
+	if err != nil {
+		panic(fmt.Sprintf("声誉查询内核不可用: %v", err))
+	}
+	return engine
 }
 
 func sbContext(t *testing.T, name string, qtype uint16) *DNSContext {
@@ -235,7 +240,10 @@ func TestSafeBrowsingMiddleware_ParentalControlAttribution(t *testing.T) {
 	resolver := &sbStubResolver{answers: []string{sbHash("adult.example")}}
 	cfg := core.DefaultSafeBrowsingConfig()
 	cfg.ParentalEnabled = true
-	engine := core.NewSafeBrowsingEngine(cfg, resolver)
+	engine, err := core.NewSafeBrowsingEngine(cfg, resolver)
+	if err != nil {
+		t.Fatalf("声誉查询内核不可用: %v", err)
+	}
 	mw := NewSafeBrowsingMiddleware(engine, nil)
 
 	ctx := sbContext(t, "adult.example.", dns.TypeA)

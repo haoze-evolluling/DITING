@@ -8,6 +8,7 @@ members = [
     "diting-stamp-core",
     "diting-filter-core",
     "diting-rewrite-core",
+    "diting-safebrowsing-core",
 ]
 resolver = "2"
 

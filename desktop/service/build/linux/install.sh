@@ -2,7 +2,7 @@
 # ============================================================================
 #   谛听 (DITING) Linux 端安装脚本
 #
-#   将 diting-service 及其三个 Rust 内核（印章解析、规则索引、重写记录）安装为 systemd 系统服务，
+#   将 diting-service 及其四个 Rust 内核（印章解析、规则索引、重写记录、声誉查询）安装为 systemd 系统服务，
 #   创建数据目录与默认配置，并注册开机自启。需以 root 身份运行。
 #
 #   用法:
@@ -23,8 +23,8 @@ SERVICE_NAME="diting-dnsservice"
 UNIT_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
 INSTALL_BIN="/usr/local/bin/diting-service"
 INSTALL_LIB_DIR="/usr/lib/diting"
-# 三个内核都由服务在运行期动态加载，缺任一库服务都起不来
-RUST_LIB_NAMES="libditing_stamp_core.so libditing_filter_core.so libditing_rewrite_core.so"
+# 四个内核都由服务在运行期动态加载，缺任一库服务都起不来
+RUST_LIB_NAMES="libditing_stamp_core.so libditing_filter_core.so libditing_rewrite_core.so libditing_safebrowsing_core.so"
 CONFIG_DIR="/etc/diting"
 DATA_DIR="/var/lib/diting"
 SERVICE_USER="root"

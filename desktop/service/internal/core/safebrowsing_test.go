@@ -80,16 +80,62 @@ func (m *sbMockResolver) lastQuery() string {
 	return m.requests[len(m.requests)-1]
 }
 
+func (m *sbMockResolver) sawSuffix(suffix string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, q := range m.requests {
+		if strings.HasSuffix(q, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
 func hexHash(host string) string {
 	sum := sha256.Sum256([]byte(host))
 	return hex.EncodeToString(sum[:])
 }
 
-func enabledSB(resolver Resolver) *SafeBrowsingEngine {
+func newSBEngine(t *testing.T, cfg SafeBrowsingConfig, resolver Resolver) *SafeBrowsingEngine {
+	t.Helper()
+	engine, err := NewSafeBrowsingEngine(cfg, resolver)
+	if err != nil {
+		t.Fatalf("声誉查询内核不可用: %v", err)
+	}
+	return engine
+}
+
+func enabledSB(t *testing.T, resolver Resolver) *SafeBrowsingEngine {
 	cfg := DefaultSafeBrowsingConfig()
 	cfg.Enabled = true
 	cfg.TimeoutMs = 2000
-	return NewSafeBrowsingEngine(cfg, resolver)
+	return newSBEngine(t, cfg, resolver)
+}
+
+// sbPlanFor 让内核规划一次恶意网址库查询，返回归一化后的计划。
+//
+// 归一化、摘要与查询名都在 Rust 内核里，所以白盒断言改为读内核的产出。
+func sbPlanFor(t *testing.T, engine *SafeBrowsingEngine, host string) sbPlan {
+	t.Helper()
+	plan, ok := engine.kernel.plan(sbServiceIDMalware, host)
+	if !ok {
+		t.Fatalf("主机名 %q 应产生计划", host)
+	}
+	return plan
+}
+
+// sbHashLabels 数出查询名里携带的前缀标签数，即待核对的摘要数
+func sbHashLabels(t *testing.T, engine *SafeBrowsingEngine, host string) int {
+	t.Helper()
+	plan := sbPlanFor(t, engine, host)
+	trimmed := strings.TrimSuffix(plan.question, SafeBrowsingSuffix)
+	count := 0
+	for _, label := range strings.Split(trimmed, ".") {
+		if label != "" {
+			count++
+		}
+	}
+	return count
 }
 
 func TestSafeBrowsing_HostnameToHashes(t *testing.T) {
@@ -109,9 +155,9 @@ func TestSafeBrowsing_HostnameToHashes(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.host, func(t *testing.T) {
-			hashes := hostnameToHashes(tc.host)
-			if len(hashes) != tc.want {
-				t.Fatalf("%s 期望 %d 个摘要，实得 %d", tc.host, tc.want, len(hashes))
+			engine := enabledSB(t, &sbMockResolver{})
+			if got := sbHashLabels(t, engine, tc.host); got != tc.want {
+				t.Fatalf("%s 期望 %d 个摘要，实得 %d", tc.host, tc.want, got)
 			}
 		})
 	}
@@ -119,7 +165,8 @@ func TestSafeBrowsing_HostnameToHashes(t *testing.T) {
 
 // eTLD+1 必须参与比对，但公共后缀本身不应参与
 func TestSafeBrowsing_ETLDPlusOneIncluded(t *testing.T) {
-	hashes := hostnameToHashes("1.2.3.sub.host.com")
+	engine := enabledSB(t, &sbMockResolver{})
+	hashes := sbPlanFor(t, engine, "1.2.3.sub.host.com").hashes
 	find := func(host string) bool {
 		want := sha256.Sum256([]byte(host))
 		for _, h := range hashes {
@@ -142,8 +189,9 @@ func TestSafeBrowsing_ETLDPlusOneIncluded(t *testing.T) {
 
 // 子域层数超限时只保留末尾 4 层，避免查询名超出 DNS 长度限制
 func TestSafeBrowsing_DeepSubdomainTruncated(t *testing.T) {
-	hashes := hostnameToHashes("a.b.c.d.e.f.example.com")
-	if len(hashes) > hashSubDomainNum {
+	engine := enabledSB(t, &sbMockResolver{})
+	hashes := sbPlanFor(t, engine, "a.b.c.d.e.f.example.com").hashes
+	if len(hashes) > 4 {
 		t.Fatalf("摘要数应受子域层数上限约束，实得 %d", len(hashes))
 	}
 
@@ -161,14 +209,18 @@ func TestSafeBrowsing_DeepSubdomainTruncated(t *testing.T) {
 }
 
 func TestSafeBrowsing_QuestionFormat(t *testing.T) {
-	hashes := hostnameToHashes("sub.host.com")
-	q := buildHashQuestion(hashes, SafeBrowsingSuffix)
+	engine := enabledSB(t, &sbMockResolver{})
+	plan := sbPlanFor(t, engine, "sub.host.com")
+	q := buildHashQuestion(plan.question)
 
 	if len(q.Question) != 1 {
 		t.Fatalf("应只有一个问题，实得 %d", len(q.Question))
 	}
 	if q.Question[0].Qtype != dns.TypeTXT {
 		t.Fatalf("查询类型应为 TXT，实得 %d", q.Question[0].Qtype)
+	}
+	if !q.RecursionDesired {
+		t.Fatal("哈希前缀查询应带递归位")
 	}
 	name := q.Question[0].Name
 	if !strings.HasSuffix(name, SafeBrowsingSuffix) {
@@ -178,12 +230,12 @@ func TestSafeBrowsing_QuestionFormat(t *testing.T) {
 	// 每个前缀都以 4 个十六进制字符的标签出现
 	labels := strings.Split(strings.TrimSuffix(name, SafeBrowsingSuffix), ".")
 	labels = labels[:len(labels)-1]
-	if len(labels) != len(hashes) {
-		t.Fatalf("应给出 %d 个前缀标签，实得 %d", len(hashes), len(labels))
+	if len(labels) != len(plan.hashes) {
+		t.Fatalf("应给出 %d 个前缀标签，实得 %d", len(plan.hashes), len(labels))
 	}
 	for _, l := range labels {
-		if len(l) != hashPrefixLen*2 {
-			t.Fatalf("前缀标签长度应为 %d，实得 %q", hashPrefixLen*2, l)
+		if len(l) != 4 {
+			t.Fatalf("前缀标签长度应为 4，实得 %q", l)
 		}
 	}
 }
@@ -191,7 +243,7 @@ func TestSafeBrowsing_QuestionFormat(t *testing.T) {
 func TestSafeBrowsing_BlockOnMatch(t *testing.T) {
 	// 服务端返回 "host.com" 的完整摘要，而查询的是 sub.host.com
 	resolver := &sbMockResolver{answers: []string{hexHash("host.com")}}
-	engine := enabledSB(resolver)
+	engine := enabledSB(t, resolver)
 
 	v := engine.Check(context.Background(), "sub.host.com")
 	if v.Failed {
@@ -207,7 +259,7 @@ func TestSafeBrowsing_BlockOnMatch(t *testing.T) {
 
 func TestSafeBrowsing_NoMatchPasses(t *testing.T) {
 	resolver := &sbMockResolver{answers: []string{hexHash("unrelated.example")}}
-	engine := enabledSB(resolver)
+	engine := enabledSB(t, resolver)
 
 	v := engine.Check(context.Background(), "sub.host.com")
 	if v.Blocked || v.Failed {
@@ -218,7 +270,7 @@ func TestSafeBrowsing_NoMatchPasses(t *testing.T) {
 // 查询失败必须放行而不是拦截：第三方抖动不该整网断解析
 func TestSafeBrowsing_FailOpen(t *testing.T) {
 	resolver := &sbMockResolver{err: errors.New("upstream down")}
-	engine := enabledSB(resolver)
+	engine := enabledSB(t, resolver)
 
 	v := engine.Check(context.Background(), "host.com")
 	if v.Blocked {
@@ -240,7 +292,7 @@ func TestSafeBrowsing_TimeoutIsFailure(t *testing.T) {
 	cfg := DefaultSafeBrowsingConfig()
 	cfg.Enabled = true
 	cfg.TimeoutMs = 100
-	engine := NewSafeBrowsingEngine(cfg, resolver)
+	engine := newSBEngine(t, cfg, resolver)
 
 	start := time.Now()
 	v := engine.Check(context.Background(), "host.com")
@@ -253,7 +305,7 @@ func TestSafeBrowsing_TimeoutIsFailure(t *testing.T) {
 }
 
 func TestSafeBrowsing_NilResolverIsFailure(t *testing.T) {
-	engine := enabledSB(nil)
+	engine := enabledSB(t, nil)
 
 	v := engine.Check(context.Background(), "host.com")
 	if v.Blocked || !v.Failed {
@@ -263,7 +315,7 @@ func TestSafeBrowsing_NilResolverIsFailure(t *testing.T) {
 
 func TestSafeBrowsing_DisabledSkipsWork(t *testing.T) {
 	resolver := &sbMockResolver{answers: []string{hexHash("host.com")}}
-	engine := NewSafeBrowsingEngine(DefaultSafeBrowsingConfig(), resolver)
+	engine := newSBEngine(t, DefaultSafeBrowsingConfig(), resolver)
 
 	if engine.IsEnabled() {
 		t.Fatal("默认配置应为关闭")
@@ -279,7 +331,7 @@ func TestSafeBrowsing_DisabledSkipsWork(t *testing.T) {
 // 缓存的作用是让同一前缀不重复外发查询
 func TestSafeBrowsing_CacheAvoidsRepeatQueries(t *testing.T) {
 	resolver := &sbMockResolver{answers: []string{hexHash("host.com")}}
-	engine := enabledSB(resolver)
+	engine := enabledSB(t, resolver)
 
 	if v := engine.Check(context.Background(), "host.com"); !v.Blocked {
 		t.Fatal("首次应拦截")
@@ -305,7 +357,7 @@ func TestSafeBrowsing_CacheAvoidsRepeatQueries(t *testing.T) {
 // 服务端明确回了「没收录」也是结论，同样应缓存，否则会反复问同一个问题
 func TestSafeBrowsing_NegativeResultIsCached(t *testing.T) {
 	resolver := &sbMockResolver{answers: nil}
-	engine := enabledSB(resolver)
+	engine := enabledSB(t, resolver)
 
 	engine.Check(context.Background(), "host.com")
 	first := resolver.queryCount()
@@ -321,17 +373,14 @@ func TestSafeBrowsing_CacheExpiry(t *testing.T) {
 	cfg := DefaultSafeBrowsingConfig()
 	cfg.Enabled = true
 	cfg.CacheTTLSeconds = 1
-	engine := NewSafeBrowsingEngine(cfg, resolver)
+	engine := newSBEngine(t, cfg, resolver)
 
 	engine.Check(context.Background(), "host.com")
 	first := resolver.queryCount()
 
-	// 直接改缓存里的过期时刻，避免测试真的睡一秒
-	engine.sb.cache.mu.Lock()
-	for _, el := range engine.sb.cache.items {
-		el.Value.(*hashCacheEntry).expiresAt = time.Now().Add(-time.Second)
-	}
-	engine.sb.cache.mu.Unlock()
+	// 有效期只有 1 秒（配置的最小粒度），过期判定由内核用注入的 now_ms 完成，
+	// 这里只能真的等过去——等的是「Go 把新时刻交给内核」这条路。
+	time.Sleep(1100 * time.Millisecond)
 
 	if v := engine.Check(context.Background(), "host.com"); !v.Blocked {
 		t.Fatal("过期后重新查询仍应得到拦截结论")
@@ -346,18 +395,26 @@ func TestSafeBrowsing_CacheRespectsSizeLimit(t *testing.T) {
 	cfg := DefaultSafeBrowsingConfig()
 	cfg.Enabled = true
 	cfg.CacheSize = 4
-	engine := NewSafeBrowsingEngine(cfg, resolver)
+	engine := newSBEngine(t, cfg, resolver)
 
 	for _, host := range []string{"a.com", "b.com", "c.com", "d.com", "e.com", "f.com"} {
 		engine.Check(context.Background(), host)
 	}
+	if got := resolver.queryCount(); got != 6 {
+		t.Fatalf("每个新前缀都该查一次，实得 %d 次", got)
+	}
 
-	engine.sb.cache.mu.Lock()
-	size := engine.sb.cache.ll.Len()
-	engine.sb.cache.mu.Unlock()
+	// 容量为 4，最早的两个应已被淘汰：再查 a.com 会重新外发
+	engine.Check(context.Background(), "a.com")
+	if got := resolver.queryCount(); got != 7 {
+		t.Fatalf("被淘汰的前缀应重新查询，实得 %d 次", got)
+	}
 
-	if size > 4 {
-		t.Fatalf("缓存条目数 %d 超出上限 4", size)
+	// 最近用过的 f.com 仍在缓存里，不应再查
+	before := resolver.queryCount()
+	engine.Check(context.Background(), "f.com")
+	if resolver.queryCount() != before {
+		t.Fatalf("仍在缓存的前缀不应重新查询，实得 %d 次（原 %d）", resolver.queryCount(), before)
 	}
 }
 
@@ -365,7 +422,7 @@ func TestSafeBrowsing_ParentalControl(t *testing.T) {
 	resolver := &sbMockResolver{answers: []string{hexHash("adult.example")}}
 	cfg := DefaultSafeBrowsingConfig()
 	cfg.ParentalEnabled = true
-	engine := NewSafeBrowsingEngine(cfg, resolver)
+	engine := newSBEngine(t, cfg, resolver)
 
 	v := engine.Check(context.Background(), "adult.example")
 	if !v.Blocked {
@@ -374,7 +431,7 @@ func TestSafeBrowsing_ParentalControl(t *testing.T) {
 	if v.Service != ReasonParentalControl {
 		t.Fatalf("应归因于家长控制，实得 %q", v.Service)
 	}
-	if !strings.Contains(resolver.lastQuery(), ParentalControlSuffix) {
+	if !strings.HasSuffix(resolver.lastQuery(), ParentalControlSuffix) {
 		t.Fatalf("应向家长控制后缀发查询，实得 %q", resolver.lastQuery())
 	}
 }
@@ -385,7 +442,7 @@ func TestSafeBrowsing_MalwareTakesPrecedence(t *testing.T) {
 	cfg := DefaultSafeBrowsingConfig()
 	cfg.Enabled = true
 	cfg.ParentalEnabled = true
-	engine := NewSafeBrowsingEngine(cfg, resolver)
+	engine := newSBEngine(t, cfg, resolver)
 
 	v := engine.Check(context.Background(), "host.com")
 	if !v.Blocked || v.Service != ReasonSafeBrowsing {
@@ -399,32 +456,21 @@ func TestSafeBrowsing_FallsThroughToParental(t *testing.T) {
 	cfg := DefaultSafeBrowsingConfig()
 	cfg.Enabled = true
 	cfg.ParentalEnabled = true
-	engine := NewSafeBrowsingEngine(cfg, resolver)
+	engine := newSBEngine(t, cfg, resolver)
 
 	engine.Check(context.Background(), "host.com")
-	n := resolver.queryCount()
-	if n < 2 {
+	if n := resolver.queryCount(); n < 2 {
 		t.Fatalf("两个服务都应被查询，实得 %d 次", n)
 	}
-
-	// 家长控制那一查应带上自己的后缀
-	sawParental := false
-	resolver.mu.Lock()
-	for _, q := range resolver.requests {
-		if strings.HasSuffix(q, ParentalControlSuffix) {
-			sawParental = true
-		}
-	}
-	resolver.mu.Unlock()
-	if !sawParental {
+	if !resolver.sawSuffix(ParentalControlSuffix) {
 		t.Fatal("家长控制未被查询")
 	}
 }
 
 // 格式不符的 TXT 必须忽略，否则会拼出一个匹配不上的摘要参与比对
 func TestSafeBrowsing_MalformedTXTIgnored(t *testing.T) {
-	resolver := &sbMockResolver{answers: []string{"deadbeef", strings.Repeat("z", hashHexSize)}}
-	engine := enabledSB(resolver)
+	resolver := &sbMockResolver{answers: []string{"deadbeef", strings.Repeat("z", 64)}}
+	engine := enabledSB(t, resolver)
 
 	v := engine.Check(context.Background(), "host.com")
 	if v.Blocked {
@@ -437,7 +483,7 @@ func TestSafeBrowsing_MalformedTXTIgnored(t *testing.T) {
 
 func TestSafeBrowsing_InvalidHostSkipped(t *testing.T) {
 	resolver := &sbMockResolver{}
-	engine := enabledSB(resolver)
+	engine := enabledSB(t, resolver)
 
 	for _, host := range []string{"", "  ", "."} {
 		if v := engine.Check(context.Background(), host); v.Blocked || v.Failed {
@@ -451,38 +497,20 @@ func TestSafeBrowsing_InvalidHostSkipped(t *testing.T) {
 
 func TestSafeBrowsing_ConfigureResetsCacheOnTTLChange(t *testing.T) {
 	resolver := &sbMockResolver{answers: []string{hexHash("host.com")}}
-	engine := enabledSB(resolver)
+	engine := enabledSB(t, resolver)
 
 	engine.Check(context.Background(), "host.com")
-	engine.sb.cache.mu.Lock()
-	before := engine.sb.cache.ll.Len()
-	engine.sb.cache.mu.Unlock()
-	if before == 0 {
-		t.Fatal("缓存应有内容")
-	}
+	first := resolver.queryCount()
 
-	cfg := engine.configForTest()
+	cfg := DefaultSafeBrowsingConfig()
+	cfg.Enabled = true
 	cfg.CacheTTLSeconds = 120
 	engine.Configure(cfg)
 
-	engine.sb.cache.mu.Lock()
-	after := engine.sb.cache.ll.Len()
-	engine.sb.cache.mu.Unlock()
-	if after != 0 {
-		t.Fatalf("有效期变化后缓存应重建，实得 %d 条", after)
-	}
-}
-
-// configForTest 取得当前生效配置的快照，供 Configure 往返测试使用
-func (e *SafeBrowsingEngine) configForTest() SafeBrowsingConfig {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return SafeBrowsingConfig{
-		Enabled:         e.enabled,
-		ParentalEnabled: e.parental,
-		TimeoutMs:       int(e.timeout / time.Millisecond),
-		CacheSize:       e.sb.cache.size,
-		CacheTTLSeconds: int(e.sb.cache.ttl / time.Second),
+	// 有效期变化后缓存由内核整体重建，同一前缀必须重新外发
+	engine.Check(context.Background(), "host.com")
+	if resolver.queryCount() <= first {
+		t.Fatalf("缓存重建后应重新查询，实得 %d 次（原 %d）", resolver.queryCount(), first)
 	}
 }
 
@@ -515,7 +543,7 @@ func TestSafeBrowsing_DefaultDisabled(t *testing.T) {
 }
 
 func TestSafeBrowsing_SetResolver(t *testing.T) {
-	engine := enabledSB(nil)
+	engine := enabledSB(t, nil)
 	if v := engine.Check(context.Background(), "host.com"); !v.Failed {
 		t.Fatal("无解析器应失败")
 	}

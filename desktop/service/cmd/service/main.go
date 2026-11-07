@@ -181,8 +181,13 @@ func (p *program) run() error {
 	p.rewriteEngine = rewriteEngine
 	p.zoneEngine = core.NewZoneEngine(cfg.Zone)
 	p.safeSearchEng = core.NewSafeSearchEngine(cfg.SafeSearch)
-	// 声誉查询要向上游发 TXT 问询，解析器此时已就绪
-	p.safeBrowsing = core.NewSafeBrowsingEngine(cfg.SafeBrowsing, res)
+	// 声誉查询要向上游发 TXT 问询，解析器此时已就绪；
+	// 内核缺失时启动失败，不会以「显示已开启、实际没查」的状态跑起来
+	safeBrowsingEngine, err := core.NewSafeBrowsingEngine(cfg.SafeBrowsing, res)
+	if err != nil {
+		return fmt.Errorf("初始化声誉查询引擎失败: %w", err)
+	}
+	p.safeBrowsing = safeBrowsingEngine
 
 	// 加密 DNS 服务端证书：自签来源在首次启动时补齐一张，
 	// 其余来源直接按配置路径载入。载入失败不阻断启动——
