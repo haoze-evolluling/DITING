@@ -18,6 +18,7 @@ members = [
     "diting-bootstrap-core",
     "diting-allowlist-core",
     "diting-connlog-core",
+    "diting-ipcache-core",
 ]
 resolver = "2"
 

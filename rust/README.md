@@ -1,6 +1,6 @@
 # Rust 内核
 
-十八个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+十九个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -23,15 +23,17 @@ NXDOMAIN 动态升级），`diting-sniffer-core` 负责**同一隧道引擎的 T
 主机缓存），`diting-allowlist-core` 负责**同一隧道引擎的严格应用白名单内核**（域名的 Unicode
 小写 / 去空白 / 去一个尾点归一化、逐级父域后缀走法、按 UID 的 TTL 授权表、应答按域名分发与
 256 条剪枝），`diting-connlog-core` 负责**同一隧道引擎的连接日志去重内核**（`connLogKey`
-的逐字节构造、8192 条上限的键集合、溢出整表清空与清空计数），`diting-go-compat` 是各内核共用的
-Go 标准库语义（大小写折叠、
+的逐字节构造、8192 条上限的键集合、溢出整表清空与清空计数），`diting-ipcache-core` 负责**同一隧道引擎的
+IP→域名 LRU 内核**（原地更新并把条目移到最近写入位置、淘汰最久未写入项、`get` 不提升、非正容量
+回退 2048），`diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
 `strings` 辅助、`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠）。
-二十二个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
-第二套语义可以静默跑起来。五个例外都只影响“复用、调度、判定辅助、取址路径与日志去重”，不影响回答：
-DNS 缓存
+二十三个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+第二套语义可以静默跑起来。六个例外都只影响“复用、调度、判定辅助、取址路径、日志去重与主机名提示”，
+不影响回答：DNS 缓存
 内核缺失时缓存停用、查询直连解析器；解析器统计内核缺失时每个上游按冷启动取值参与调度；DNS 应答
 内核缺失时空答案按普通应答记日志、动态升级关闭（每个阻断沿用配置的应答模式）；引导解析内核缺失时
-加密 DNS 提供商主机名按普通系统解析路径取址；连接日志去重内核缺失时不再去重（日志更吵，事件不变）。流嗅探内核缺失时 MITM 启动失败（隧道照常起，只是
+加密 DNS 提供商主机名按普通系统解析路径取址；连接日志去重内核缺失时不再去重（日志更吵，事件不变）；
+IP→域名缓存内核缺失时直连 IP 的流没有主机名提示（标签缺失，回答不变）。流嗅探内核缺失时 MITM 启动失败（隧道照常起，只是
 不解密），直连回退只是少了 SNI 的主机名提示，也不影响回答。应用白名单内核缺失时，**已配置规则**的
 引擎对被选中的 UID 拒绝 DNS 与连接（fail-closed，环回仍放行），未选中的应用与未配置规则时行为不变；它不会静默放行已开启的严格模式。
 
@@ -59,6 +61,7 @@ DNS 缓存
 | 加密 DNS 引导解析评分 | Go 隧道引擎（`dlopen` + C ABI，每解析器一个句柄） | 端点健康的半衰期衰减、EWMA 延迟与抖动、连败惩罚与冷却、带探索率的加权选择、回退排序与一分钟主机缓存 | 引导解析停用（主机名走普通系统解析路径），回答不变 |
 | 严格应用白名单（域名判定 + IP 授权） | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 域名归一化与逐级父域走法、按 UID 的 TTL 授权表、应答按域名分发、256 条剪枝 | 已配置规则时被选中 UID 转 fail-closed（拒绝 DNS 与连接，环回仍放行）；未选中的应用与未配置时行为不变 |
 | 连接日志去重 | Go 隧道引擎（`dlopen` + C ABI，全局一个句柄） | `connLogKey` 的构造、8192 条键集合、溢出整表清空与清空计数 | 不再去重（日志更吵），事件与回答不变 |
+| IP→域名 LRU 缓存 | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 原地更新 + 移到最近写入位置、淘汰最久未写入项、`get` 不提升、非正容量回退 2048 | 主机名提示停用（直连 IP 的流没有域名标签），回答不变 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -194,7 +197,14 @@ flow 都分配的拼接字符串——包括随后被丢弃的重复项。Go 侧
 端口与协议的来源、日志文案。缺库时 `markSeen` 恒为“没见过的键”，也就是**不再去重**：事件一条
 不少，只是日志更吵；回答不受影响。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核与连接日志去重内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第二十四个把 Android 隧道引擎的 **IP→域名 LRU 缓存**搬进新建的 `diting-ipcache-core`
+（`ip_domain_cache.go` 只剩句柄；调用方照旧传 `net.IP.String()`）：键表、最近写入顺序、命中时
+不提升、原地更新后移到最近写入位置、满容量时淘汰最久未写入项，以及非正容量回退 2048 都在内核里。
+顺序用一个单调递增的 `u128` 戳 + `BTreeMap<戳, IP>` 实现，等价于 Go 的 `container/list`
+`MoveToFront` / `Back()`，淘汰是 `O(log n)` 且没有 unsafe 链表；`get` 不写时间戳，所以“读不提升”
+这条与迁移前完全一致。缺库时每次查询都 miss，直连 IP 的流失去主机名提示，回答与转发不受影响。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核与 IP→域名缓存内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -202,7 +212,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装�
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译十一个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译十二个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -291,6 +301,10 @@ rust/
 │   ├── payload.rs payload/tests.rs # 分类结果的二进制布局（kind + 原始主机名字节）
 │   ├── ffi.rs ffi/tests.rs         # classify / free_bytes（ABI_VERSION）
 │   └── tests/fixtures/*.tsv        # 迁移时 Go 实现生成的 SNI 与 HTTP 语料（含全部前缀与字节腐蚀）
+├── diting-ipcache-core/src/
+│   ├── cache.rs cache/tests.rs     # 键表、最近写入顺序、原地更新、淘汰与默认容量（原 ip_domain_cache.go）
+│   ├── ffi.rs ffi/tests.rs         # new / free / put / get / len（ABI_VERSION）
+│   └── tests/fixtures/lru_trace.tsv  # 迁移时 Go 实现生成的 25 步 LRU 轨迹
 ├── diting-connlog-core/src/
 │   ├── key.rs key/tests.rs         # connLogKey 的逐字节构造（原 connLogKey）
 │   ├── dedup.rs dedup/tests.rs     # 8192 条键集合、溢出整表清空与 cleared 计数（原 connLogSeenDedup）
@@ -396,6 +410,10 @@ rust/
   `mitm_sniffer_payload.go`（分类载荷布局，不需要 cgo 就能测）、
   `mitm_sniffer_native_test.go`（三类流、截断记录与字节级 `EqualFold` 用例）、
   `mitm_sniffer_payload_test.go`（无 cgo 也能跑的载荷解码用例）。
+- Go（IP→域名缓存）：`ip_domain_cache.go`（只剩句柄生命周期与空缓存回退）、
+  `ipcache_native.go`（加载、ABI 校验、读回域的缓冲与五个符号的调用包装）、
+  `ipcache_native_stub.go`（无 cgo 时提示停用）、`ip_domain_cache_test.go`（更新、读不提升、
+  淘汰、空键与无内核回退，全部穿过 FFI 跑）。
 - Go（连接日志去重）：`engine_connection_log.go`（flow → app/dest 推导、日志文本与回调）、
   `connlog_native.go`（加载、ABI 校验、去重载荷编码与六个符号的调用包装）、
   `connlog_native_stub.go`（无 cgo 时不去重）、`connlog_seen_test.go`（有界集合、溢出计数与
@@ -416,12 +434,12 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：十一个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：十二个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
 DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、
-引导解析内核、应用白名单内核与连接日志去重内核只随 Android APK 交付（桌面服务没有这九块），由
-`build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
+引导解析内核、应用白名单内核、连接日志去重内核与 IP→域名缓存内核只随 Android APK 交付（桌面服务
+没有这十块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的六个内核按平台单独交付（Android 用不到它们）：
 
@@ -584,6 +602,10 @@ DNS 应答：上游应答 ──inspect_answer(记录列表)──> Rust 逐条�
           新会话 ──diting_connlog_reset──> 清集合、保留 cleared
           观察 ──diting_connlog_size / diting_connlog_cleared──> 计数
 
+IP→域名缓存：上游应答 ──Go 取 A/AAAA 文本 + 归一化域名──> diting_ipcache_put(IP, 域名)
+              ──> Rust 原地更新并移到最近写入位置；新键在满容量时淘汰最久未写入项
+          直连 IP 流 ──diting_ipcache_get(IP)──> 域名（读不提升）──> MITM 直通的主机名提示
+
 声誉查询：配置 ──diting_sb_new / diting_sb_configure──> Rust 建两份前缀缓存（恶意网址库 / 家长控制）
           查询 ──diting_sb_plan(服务, 域名, now_ms)──> Rust 归一化+校验 ──> 各级父域 SHA-256
                                     ──> 前缀查缓存（未命中则回传查询名）──> Go 发 TXT 查询
@@ -602,7 +624,8 @@ DNS 应答：上游应答 ──inspect_answer(记录列表)──> Rust 逐条�
 `diting-sniffer-core/src/{tls,http,payload,ffi}.rs`、
 `diting-bootstrap-core/src/{health,engine,payload,ffi}.rs`、
 `diting-allowlist-core/src/{domain,engine,payload,ffi}.rs`、
-`diting-connlog-core/src/{key,dedup,payload,ffi}.rs` 与
+`diting-connlog-core/src/{key,dedup,payload,ffi}.rs`、
+`diting-ipcache-core/src/{cache,ffi}.rs` 与
 `diting-go-compat/src/ip.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
@@ -757,6 +780,12 @@ Go 侧原有断言（阻断模式、动态升级、`nil` 引擎默认值、拒�
 `tests/corpus.rs` 逐行重放并断言完全相等；`tls/tests.rs` 与 `http/tests.rs` 另钉住夹具没走到
 的分支（越界 session 长度、空 SNI、`::1` 取值的首个冒号截断、`TrimSpace` 的字节保留）。
 Go 侧原有断言一条未改，现在全部穿过 FFI 跑，另加 `mitm_sniffer_payload_test.go` 的布局用例。
+
+**IP→域名缓存**：`tests/fixtures/lru_trace.tsv` 是迁移时直接跑原 Go 实现生成的 25 步轨迹（容量 3）：
+原地更新、`get` 不提升、淘汰的是最久未写入项而不是最久未读项、同值重复 put 也算一次触碰、空 IP/空域
+被忽略，每行同时记录查表结果与当前条数。`tests/corpus.rs` 逐行重放；`cache/tests.rs` 另钉住容量 1、
+非正容量回退 2048（插满 2048 条再插一条后仍为 2048 且最旧项被淘汰）与 Unicode 域。Go 侧新增
+`ip_domain_cache_test.go`，把边界行为全部穿过 FFI 跑，并钉住无内核时的空缓存回退。
 
 **连接日志去重**：两份语料都是迁移时直接跑原 Go 实现生成的：`keys.tsv` 有 7 行，覆盖空字段、
 Unicode、字段内部含 `|`、负数端口与协议，逐字节比对 `connLogKey`；`dedup_trace.tsv` 是 7 步轨迹
@@ -1270,10 +1299,10 @@ go test -run XXX -bench BenchmarkDNSCacheGetFast_Hit -benchtime 200000x .
 
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
-python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核与 DTRI fixture 用例
+python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核与 DTRI fixture 用例
 python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则、重写记录、声誉查询、hosts 与 DNS64 全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
-python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（十一个 .so）
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（十二个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
 python rust/verify.py --all      # 全量
 ```

@@ -158,6 +158,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-ipcache-core"
+version = "0.1.0"
+
+[[package]]
 name = "diting-mitm-core"
 version = "0.1.0"
 dependencies = [

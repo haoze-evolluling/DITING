@@ -58,8 +58,9 @@ AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`（域�
 `dlopen("libditing_sniffer_core.so")`（TLS ClientHello 的 SNI 走法、HTTP 方法门禁与 `Host` 头）与
 `dlopen("libditing_bootstrap_core.so")`（引导解析的端点健康、加权选择与主机缓存）与
 `dlopen("libditing_allowlist_core.so")`（严格应用白名单的域名走法与 TTL 授权）与
-`dlopen("libditing_connlog_core.so")`（连接日志的键构造与有界去重），
-把这十块交给 Rust（见 `rust/README.md`）。这十个 `.so` 与 AAR 无关，它们和 Flutter 侧的 `libditing_rule_core.so`
+`dlopen("libditing_connlog_core.so")`（连接日志的键构造与有界去重）与
+`dlopen("libditing_ipcache_core.so")`（IP→域名 LRU 与主机名提示），
+把这十一块交给 Rust（见 `rust/README.md`）。这十一个 `.so` 与 AAR 无关，它们和 Flutter 侧的 `libditing_rule_core.so`
 一起由 `python rust/build_android.py` 拷进
 `android/app/android/app/src/main/jniLibs/<abi>/`，最终落在 APK 的 `lib/<abi>/`，正好在应用命名
 空间的库搜索路径上。
@@ -72,8 +73,9 @@ AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`（域�
 应答 `.so` 则上游空答案按普通应答记日志、动态升级关闭；少了流嗅探 `.so` 则 MITM 同样启动报错，
 直连回退只是少了 SNI 的主机名提示；少了引导解析 `.so` 则加密 DNS 主机名走普通系统解析路径；
 少了应用白名单 `.so` 则被选中的 UID 转 fail-closed（拒绝 DNS 与连接），未选中的应用与
-未配置规则时不受影响；少了连接日志去重 `.so` 则不再去重（日志更吵，事件不变）。
-统计、应答、引导解析与去重四个不改变答案。`rust/verify.py --go` 是构建前发现“没带上”的
+未配置规则时不受影响；少了连接日志去重 `.so` 则不再去重（日志更吵，事件不变）；
+少了 IP→域名缓存 `.so` 则直连 IP 的流没有主机名提示。
+统计、应答、引导解析、去重与 IP→域名缓存五个不改变答案。`rust/verify.py --go` 是构建前发现“没带上”的
 地方。
 
 ## 常见问题

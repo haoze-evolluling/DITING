@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cross-compile the Rust cores for Android and drop them into the Flutter app's jniLibs.
 
-Eleven libraries are built:
+Twelve libraries are built:
 
 * `libditing_rule_core.so` - rule parsing, rule search and the DTRI writer (Dart/Kotlin callers).
 * `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
@@ -28,8 +28,10 @@ Eleven libraries are built:
   (normalized domain sets, the suffix walk, TTL-bounded IP grants and the answer fan-out).
 * `libditing_connlog_core.so` - the connection-log dedupe kernel the same engine dlopen()s (the
   bounded key set, the overflow reset and the `connLogKey` builder).
+* `libditing_ipcache_core.so` - the IP → domain LRU kernel the same engine dlopen()s (in-place
+  update, move-to-front, eviction and the default capacity).
 
-All eleven are shipped and used at runtime: without the first a rule import throws, without the
+All twelve are shipped and used at runtime: without the first a rule import throws, without the
 second the tunnel refuses to start, without the third the DNS cache stores nothing (answers go
 straight to the resolver), without the fourth MITM cannot start (the tunnel runs without
 interception), without the fifth the same MITM start fails rather than serving pages without the
@@ -39,9 +41,10 @@ as normal and every block keeps the configured mode, without the eighth MITM can
 passthrough relay loses its SNI hostname hint, without the ninth bootstrap resolution is
 reported as disabled so encrypted provider hostnames go through the normal system path, and without
 the tenth a configured strict allowlist fails closed for its selected UIDs (DNS and connections
-denied) instead of silently allowing everything, and without the eleventh connection logs are no
-longer deduplicated (more lines, same events). The sixth, seventh, ninth and eleventh never change
-an answer. Run this before every APK build:
+denied) instead of silently allowing everything, without the eleventh connection logs are no
+longer deduplicated (more lines, same events), and without the twelfth direct-IP flows lose their
+hostname hint. The sixth, seventh, ninth, eleventh and twelfth never change an answer. Run this
+before every APK build:
 
     python rust/build_android.py              # arm64-v8a + x86_64, release
     python rust/build_android.py --abi arm64  # phones only
@@ -80,6 +83,7 @@ LIB_NAMES = (
     "libditing_bootstrap_core.so",
     "libditing_allowlist_core.so",
     "libditing_connlog_core.so",
+    "libditing_ipcache_core.so",
 )
 ANDROID_API = 28
 
@@ -188,6 +192,8 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "diting-allowlist-core",
         "-p",
         "diting-connlog-core",
+        "-p",
+        "diting-ipcache-core",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",
@@ -214,7 +220,7 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核、策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流量嗅探内核、引导解析内核、应用白名单内核与连接日志去重内核")
+    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核、策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流量嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核与 IP→域名缓存内核")
     parser.add_argument(
         "--abi",
         choices=["all", "arm64", "x86_64"],
