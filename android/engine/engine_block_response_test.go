@@ -1,3 +1,5 @@
+//go:build cgo
+
 // engine_block_response_test.go pins the two defects behind A-018 and A-023:
 //
 //   - A-018: the block response mode was a plain Engine field written by the
@@ -189,5 +191,3 @@ func TestFullTunnelBlockEscalatesViaDynamicBlock(t *testing.T) {
 		t.Fatalf("disabled dynamic blocking must return the configured mode, got %v", got)
 	}
 }
-
-

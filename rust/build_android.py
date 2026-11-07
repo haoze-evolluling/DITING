@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cross-compile the Rust cores for Android and drop them into the Flutter app's jniLibs.
 
-Nine libraries are built:
+Ten libraries are built:
 
 * `libditing_rule_core.so` - rule parsing, rule search and the DTRI writer (Dart/Kotlin callers).
 * `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
@@ -24,17 +24,21 @@ Nine libraries are built:
 * `libditing_bootstrap_core.so` - the encrypted-DNS bootstrap scoring kernel the same engine
   dlopen()s (endpoint health with half-life decay, the weighted primary pick and fallback order,
   and the one-minute host cache).
+* `libditing_allowlist_core.so` - the strict app-allowlist kernel the same engine dlopen()s
+  (normalized domain sets, the suffix walk, TTL-bounded IP grants and the answer fan-out).
 
-All nine are shipped and used at runtime: without the first a rule import throws, without the
+All ten are shipped and used at runtime: without the first a rule import throws, without the
 second the tunnel refuses to start, without the third the DNS cache stores nothing (answers go
 straight to the resolver), without the fourth MITM cannot start (the tunnel runs without
 interception), without the fifth the same MITM start fails rather than serving pages without the
 cosmetic stylesheet, without the sixth every upstream is scheduled with cold values (default score,
 cold delays, every attempt allowed), without the seventh a null-block upstream answer is logged
 as normal and every block keeps the configured mode, without the eighth MITM cannot start and the
-passthrough relay loses its SNI hostname hint, and without the ninth bootstrap resolution is
-reported as disabled so encrypted provider hostnames go through the normal system path. The sixth,
-seventh and ninth never change an answer. Run this before every APK build:
+passthrough relay loses its SNI hostname hint, without the ninth bootstrap resolution is
+reported as disabled so encrypted provider hostnames go through the normal system path, and without
+the tenth a configured strict allowlist fails closed (DNS and connections denied) instead of
+silently allowing everything. The sixth, seventh and ninth never change an answer. Run this before
+every APK build:
 
     python rust/build_android.py              # arm64-v8a + x86_64, release
     python rust/build_android.py --abi arm64  # phones only
@@ -71,6 +75,7 @@ LIB_NAMES = (
     "libditing_dns_core.so",
     "libditing_sniffer_core.so",
     "libditing_bootstrap_core.so",
+    "libditing_allowlist_core.so",
 )
 ANDROID_API = 28
 
@@ -175,6 +180,8 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "diting-sniffer-core",
         "-p",
         "diting-bootstrap-core",
+        "-p",
+        "diting-allowlist-core",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",
@@ -201,7 +208,7 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核、策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流量嗅探内核与引导解析内核")
+    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核、策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流量嗅探内核、引导解析内核与应用白名单内核")
     parser.add_argument(
         "--abi",
         choices=["all", "arm64", "x86_64"],

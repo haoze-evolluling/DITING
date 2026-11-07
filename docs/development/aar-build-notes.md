@@ -56,8 +56,9 @@ AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`（域�
 `dlopen("libditing_resolver_core.so")`（上游统计：SRTT/RTTVAR、失败率、连败惩罚、熔断与三种自适应
 延迟）、`dlopen("libditing_dns_core.so")`（上游空答案判定与按域名的动态阻断升级）与
 `dlopen("libditing_sniffer_core.so")`（TLS ClientHello 的 SNI 走法、HTTP 方法门禁与 `Host` 头）与
-`dlopen("libditing_bootstrap_core.so")`（引导解析的端点健康、加权选择与主机缓存），
-把这八块交给 Rust（见 `rust/README.md`）。这八个 `.so` 与 AAR 无关，它们和 Flutter 侧的 `libditing_rule_core.so`
+`dlopen("libditing_bootstrap_core.so")`（引导解析的端点健康、加权选择与主机缓存）与
+`dlopen("libditing_allowlist_core.so")`（严格应用白名单的域名走法与 TTL 授权），
+把这九块交给 Rust（见 `rust/README.md`）。这九个 `.so` 与 AAR 无关，它们和 Flutter 侧的 `libditing_rule_core.so`
 一起由 `python rust/build_android.py` 拷进
 `android/app/android/app/src/main/jniLibs/<abi>/`，最终落在 APK 的 `lib/<abi>/`，正好在应用命名
 空间的库搜索路径上。
@@ -68,8 +69,10 @@ AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`（域�
 隧道照常运行但不再解密（Go 侧同样没有第二套过滤实现）；少了装饰注入 `.so` 则 MITM 同样启动报错，
 不会退化成“拦截了但页面没拿到样式表”；少了统计 `.so` 则所有上游按冷启动取值参与调度；少了
 应答 `.so` 则上游空答案按普通应答记日志、动态升级关闭；少了流嗅探 `.so` 则 MITM 同样启动报错，
-直连回退只是少了 SNI 的主机名提示；少了引导解析 `.so` 则加密 DNS 主机名走普通系统解析路径。统计、
-应答与引导解析三个不改变答案。`rust/verify.py --go` 是构建前发现“没带上”的
+直连回退只是少了 SNI 的主机名提示；少了引导解析 `.so` 则加密 DNS 主机名走普通系统解析路径；
+少了应用白名单 `.so` 则被选中的 UID 转 fail-closed（拒绝 DNS 与连接），未选中的应用与
+未配置规则时不受影响。
+统计、应答与引导解析三个不改变答案。`rust/verify.py --go` 是构建前发现“没带上”的
 地方。
 
 ## 常见问题

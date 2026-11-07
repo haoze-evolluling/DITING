@@ -1,6 +1,6 @@
 # Rust 内核
 
-十六个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+十七个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -20,14 +20,17 @@ NXDOMAIN 动态升级），`diting-sniffer-core` 负责**同一隧道引擎的 T
 （ClientHello 记录、握手与扩展长度走法、SNI 取值、HTTP 方法门禁、`Host` 头取值与 Go 语义的
 字节级 TrimSpace / EqualFold），`diting-bootstrap-core` 负责**同一隧道引擎的加密 DNS 引导解析内核**
 （端点健康的半衰期衰减、EWMA 延迟与抖动、连败惩罚与冷却、带探索率的加权选择、回退排序与一分钟
-主机缓存），`diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
+主机缓存），`diting-allowlist-core` 负责**同一隧道引擎的严格应用白名单内核**（域名的 Unicode
+小写 / 去空白 / 去一个尾点归一化、逐级父域后缀走法、按 UID 的 TTL 授权表、应答按域名分发与
+256 条剪枝），`diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
 `strings` 辅助、`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠）。
-二十个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+二十一个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。四个例外都只影响“复用、调度、判定辅助与取址路径”，不影响回答：DNS 缓存
 内核缺失时缓存停用、查询直连解析器；解析器统计内核缺失时每个上游按冷启动取值参与调度；DNS 应答
 内核缺失时空答案按普通应答记日志、动态升级关闭（每个阻断沿用配置的应答模式）；引导解析内核缺失时
 加密 DNS 提供商主机名按普通系统解析路径取址。流嗅探内核缺失时 MITM 启动失败（隧道照常起，只是
-不解密），直连回退只是少了 SNI 的主机名提示，也不影响回答。
+不解密），直连回退只是少了 SNI 的主机名提示，也不影响回答。应用白名单内核缺失时，**已配置规则**的
+引擎对被选中的 UID 拒绝 DNS 与连接（fail-closed，环回仍放行），未选中的应用与未配置规则时行为不变；它不会静默放行已开启的严格模式。
 
 | 入口 | 调用方 | Rust 产物 | 缺失时 |
 |---|---|---|---|
@@ -51,6 +54,7 @@ NXDOMAIN 动态升级），`diting-sniffer-core` 负责**同一隧道引擎的 T
 | DNS 应答检查 + 动态阻断升级 | Go 隧道引擎（`dlopen` + C ABI，引擎一个句柄） | 上游空答案判定（全为 `0.0.0.0` / `::` / 回环）、唯一地址列表、按域名的窗口计数与 NODATA→NXDOMAIN 升级 | 空答案按普通应答记日志、升级关闭（阻断沿用配置模式），回答不变 |
 | TLS / 明文 HTTP 流嗅探 | Go 隧道引擎（`dlopen` + C ABI） | ClientHello 记录/握手/扩展长度走法与 SNI、HTTP 方法门禁与 `Host` 头 | MITM 启动失败（隧道照常起，只是不解密）；直连回退丢失 SNI 主机名提示，回答不变 |
 | 加密 DNS 引导解析评分 | Go 隧道引擎（`dlopen` + C ABI，每解析器一个句柄） | 端点健康的半衰期衰减、EWMA 延迟与抖动、连败惩罚与冷却、带探索率的加权选择、回退排序与一分钟主机缓存 | 引导解析停用（主机名走普通系统解析路径），回答不变 |
+| 严格应用白名单（域名判定 + IP 授权） | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 域名归一化与逐级父域走法、按 UID 的 TTL 授权表、应答按域名分发、256 条剪枝 | 已配置规则时被选中 UID 转 fail-closed（拒绝 DNS 与连接，环回仍放行）；未选中的应用与未配置时行为不变 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -166,7 +170,19 @@ Go 的：JSON 形态的配置、`queryBootstrapDNS` 的拨号与 `dns.Msg` 解�
 `newBootstrapResolver` 拿不到句柄，`IsEnabled` 直接为假，调用方按“未配置引导服务器”的既有路径
 用主机名拨号——这正是迁移前没有引导配置时的形态，回答不变。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核与引导解析内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第二十二个把 Android 隧道引擎的**严格应用白名单**搬进新建的 `diting-allowlist-core`
+（`engine_app_allowlist.go` 只剩 JSON 配置、`dns.Msg` 的 A/AAAA 遍历与 `net.IP` 环回快路径）：
+配置项归一化（`strings.TrimSpace` → `strings.ToLower` → 去一个尾点）、查询名的“只小写 + 去一个
+尾点”归一化、逐级父域走法、按 UID 的 IP 授权表与 TTL、应答按域名分发给所有匹配 UID（netd 归属
+的查询也能授权真正的应用），以及超过 256 条时只清理已过期项，全部在内核里。`domainMatches` 的
+`strings.ToLower` 走共用的 Go 语义实现（`U+0130` 折叠为 `i`，Rust 的完整映射会多出组合点），
+语料钉住了这一点。Go 侧保留的是必须留在 Go 的：JSON 形态与 `strconv.Atoi`、`dns.Msg` 的记录
+遍历（A 取 `To4()`、AAAA 取 `To16()`）、`ip.IsLoopback()` 的快路径与日志。时间由 Go 注入
+（`now_ns`），测试用假时钟替代直接改表。缺库时未配置规则不受影响；已配置规则的引擎转到
+fail-closed：被选中 UID 的 `domainAllowed` / `connectionAllowed` 一律拒绝（环回仍放行），未选中的应用不受影响，不会静默把严格模式
+变成全放行。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核与应用白名单内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -174,7 +190,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装�
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译九个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译十个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -263,6 +279,12 @@ rust/
 │   ├── payload.rs payload/tests.rs # 分类结果的二进制布局（kind + 原始主机名字节）
 │   ├── ffi.rs ffi/tests.rs         # classify / free_bytes（ABI_VERSION）
 │   └── tests/fixtures/*.tsv        # 迁移时 Go 实现生成的 SNI 与 HTTP 语料（含全部前缀与字节腐蚀）
+├── diting-allowlist-core/src/
+│   ├── domain.rs domain/tests.rs   # 配置项/查询名归一化与逐级父域走法（原 SetAppAllowlist 归一化 + domainMatches）
+│   ├── engine.rs engine/tests.rs   # 域名集合、按 UID 的 TTL 授权、应答按域名分发与 256 条剪枝（原 appAllowlist）
+│   ├── payload.rs payload/tests.rs # 配置与应答授权的二进制布局
+│   ├── ffi.rs ffi/tests.rs         # new / free / configure / has_uids / domain_allowed / connection_allowed / remember / grant_count（ABI_VERSION）
+│   └── tests/fixtures/domain_matches.tsv  # 迁移时 Go 实现生成的 250 行域名走法语料
 ├── diting-bootstrap-core/src/
 │   ├── health.rs health/tests.rs   # 端点健康：半衰期衰减、EWMA 延迟/抖动、连败惩罚与 30 秒冷却（原 bootstrapIPHealth）
 │   ├── engine.rs engine/tests.rs   # 加权主端点 + 探索率 + 回退排序、一分钟主机缓存、健康表（原 choosePlan / healthMap / cache）
@@ -356,6 +378,10 @@ rust/
   `mitm_sniffer_payload.go`（分类载荷布局，不需要 cgo 就能测）、
   `mitm_sniffer_native_test.go`（三类流、截断记录与字节级 `EqualFold` 用例）、
   `mitm_sniffer_payload_test.go`（无 cgo 也能跑的载荷解码用例）。
+- Go（应用白名单）：`engine_app_allowlist.go`（JSON 配置、`dns.Msg` 遍历、环回快路径与日志）、
+  `allowlist_native.go`（加载、ABI 校验、两套载荷编码与八个符号的调用包装）、
+  `allowlist_native_stub.go`（无 cgo 时被选中 UID fail-closed）、`engine_app_allowlist_test.go`
+  （原有缓存命中/陈旧/负答案/TTL 用例，现在全部穿过 FFI 跑，另加无内核 fail-closed 与配置解析用例）。
 - Go（引导解析）：`bootstrap_resolver.go`（JSON 配置、UDP 查询、日志回调与 `net.IP` 直通）、
   `bootstrap_native.go`（加载、ABI 校验、计划载荷编码/解码与十一个符号的调用包装）、
   `bootstrap_native_stub.go`（无 cgo 时引导解析停用）、`bootstrap_resolver_test.go`
@@ -368,12 +394,12 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：九个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：十个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
-DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核
-与引导解析内核只随 Android APK 交付（桌面服务没有这七块），由 `build_android.py` 与另外两个 `.so`
-一起拷入 `jniLibs`。
+DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、
+引导解析内核与应用白名单内核只随 Android APK 交付（桌面服务没有这八块），由 `build_android.py` 与
+另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的六个内核按平台单独交付（Android 用不到它们）：
 
@@ -521,6 +547,15 @@ DNS 应答：上游应答 ──inspect_answer(记录列表)──> Rust 逐条�
           配置变更 ──diting_bootstrap_clear_cache──> 保留健康；ResetStats ──diting_bootstrap_reset──> 清健康与缓存
           观察 ──diting_bootstrap_score(id, 配置权重, now_ns)──> (weight, cooling, sample_count)
 
+应用白名单：配置 JSON ──Go 解析 uid/域名原文──> diting_allowlist_configure(载荷)
+                ──> Rust 归一化并建集合 ──> 清空全部 IP 授权
+          查询 ──diting_allowlist_domain_allowed(uid, 域名)──> 未选中 UID 放行；选中 UID 走逐级父域
+          连接 ──diting_allowlist_connection_allowed(uid, 地址, now_ns)──> 环回放行 / 未选中放行 / 查 TTL 授权
+          应答 ──Go 遍历 A/AAAA（To4 / To16 + TTL）──> diting_allowlist_remember(uid, 原始问题名, 记录, now_ns)
+                ──> Rust 归一化问题名 ──> 找到所有匹配 UID（空问题只用归属 UID）
+                ──> 过滤零 TTL/未指定地址 ──> 写入授权 ──> 超过 256 条时清理已过期项
+          配置变更 ──diting_allowlist_configure──> 域名集合与授权整体换新
+
 声誉查询：配置 ──diting_sb_new / diting_sb_configure──> Rust 建两份前缀缓存（恶意网址库 / 家长控制）
           查询 ──diting_sb_plan(服务, 域名, now_ms)──> Rust 归一化+校验 ──> 各级父域 SHA-256
                                     ──> 前缀查缓存（未命中则回传查询名）──> Go 发 TXT 查询
@@ -537,7 +572,8 @@ DNS 应答：上游应答 ──inspect_answer(记录列表)──> Rust 逐条�
 `diting-dns64-core/src/{addr,prefix,engine,payload,ffi}.rs` 与
 `diting-cosmetic-core/src/{inject,host,payload,ffi}.rs`、`diting-resolver-core/src/{stats,ffi}.rs`、`diting-dns-core/src/{answer,block,payload,ffi}.rs`、
 `diting-sniffer-core/src/{tls,http,payload,ffi}.rs`、
-`diting-bootstrap-core/src/{health,engine,payload,ffi}.rs` 与
+`diting-bootstrap-core/src/{health,engine,payload,ffi}.rs`、
+`diting-allowlist-core/src/{domain,engine,payload,ffi}.rs` 与
 `diting-go-compat/src/ip.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
@@ -692,6 +728,15 @@ Go 侧原有断言（阻断模式、动态升级、`nil` 引擎默认值、拒�
 `tests/corpus.rs` 逐行重放并断言完全相等；`tls/tests.rs` 与 `http/tests.rs` 另钉住夹具没走到
 的分支（越界 session 长度、空 SNI、`::1` 取值的首个冒号截断、`TrimSpace` 的字节保留）。
 Go 侧原有断言一条未改，现在全部穿过 FFI 跑，另加 `mitm_sniffer_payload_test.go` 的布局用例。
+
+**应用白名单**：`tests/fixtures/domain_matches.tsv` 是迁移时直接跑原 Go `domainMatches` 生成的
+250 行语料（10 组允许集合 × 25 条查询）：精确命中、标签边界、父域项、一个与两个尾点、ASCII 大小写、
+`U+0130` 的 Go 折叠、查询两侧空白（走法不裁剪）与空查询。`tests/corpus.rs` 逐行重放并断言相等；
+`domain/tests.rs` 钉住配置项的“裁剪 → 小写 → 去一个尾点”与查询名的“只小写 + 去一个尾点”两种不同
+归一化；`engine/tests.rs` 钉住选中 UID 的空集合、未选中 UID 放行、环回豁免、TTL 到期边界、
+零 TTL/未指定地址/`::ffff:0.0.0.0` 不授权、空问题只授权归属 UID、重复配置项后写生效、
+重配清空授权与 256 条剪枝。Go 侧原有断言一条未改，现在全部穿过 FFI 跑；只有两处白盒读取换成了
+内核的 `grantCount` 与假时钟。
 
 **引导解析评分**：`tests/fixtures/health_trace.tsv` 是迁移时直接跑原 Go 实现生成的 26 步健康轨迹
 （连续成功压低 EWMA、三连败触发冷却、冷却严格的到期边界、成功清冷却、31 分钟与 2 小时后的半衰期
@@ -1189,10 +1234,10 @@ go test -run XXX -bench BenchmarkDNSCacheGetFast_Hit -benchtime 200000x .
 
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
-python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核与 DTRI fixture 用例
+python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核与 DTRI fixture 用例
 python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则、重写记录、声誉查询、hosts 与 DNS64 全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
-python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（九个 .so）
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（十个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
 python rust/verify.py --all      # 全量
 ```

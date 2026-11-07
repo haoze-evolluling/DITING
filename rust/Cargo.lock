@@ -95,6 +95,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-allowlist-core"
+version = "0.1.0"
+dependencies = [
+ "diting-go-compat",
+]
+
+[[package]]
 name = "diting-bootstrap-core"
 version = "0.1.0"
 

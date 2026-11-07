@@ -1,3 +1,5 @@
+//go:build cgo
+
 // engine_app_allowlist_test.go pins the strict app-allowlist IP authorization
 // across the DNS cache fast paths.
 //
@@ -207,12 +209,65 @@ func TestRememberAppAllowlistWireSkipsNegativeAnswersAndFansOutByDomain(t *testi
 		t.Fatal("netd-attributed query must still authorize the allowlisted UID")
 	}
 
-	// A UID with no allowlist entry must not be authorized.
-	e.appAllowlist.mu.RLock()
-	_, unselectedGranted := e.appAllowlist.ips[10200]
-	e.appAllowlist.mu.RUnlock()
-	if unselectedGranted {
-		t.Fatal("a UID outside the allowlist must never be granted")
+	// A UID with no allowlist entry must not have received any grant.
+	if grants := e.appAllowlist.grantCount(10200); grants != 0 {
+		t.Fatalf("a UID outside the allowlist must never be granted, got %d", grants)
+	}
+}
+
+// A configured allowlist without a kernel must deny rather than silently allow everything.
+func TestAppAllowlistConfiguredWithoutKernelFailsClosed(t *testing.T) {
+	e := &Engine{}
+	e.appAllowlist.mu.Lock()
+	e.appAllowlist.configured = true
+	e.appAllowlist.selected = map[int]struct{}{10188: {}}
+	e.appAllowlist.mu.Unlock()
+
+	if e.appAllowlistDomainAllowed(10188, "example.com") {
+		t.Fatal("a selected UID must be denied DNS without a kernel")
+	}
+	if e.appAllowlistConnectionAllowed(10188, net.ParseIP("203.0.113.7")) {
+		t.Fatal("a selected UID must be denied connections without a kernel")
+	}
+	// Loopback is exempt from strict mode regardless of the kernel.
+	if !e.appAllowlistConnectionAllowed(10188, net.ParseIP("127.0.0.1")) {
+		t.Fatal("loopback must stay reachable")
+	}
+	// Apps outside the selected set keep their old unrestricted path.
+	if !e.appAllowlistDomainAllowed(10200, "example.com") {
+		t.Fatal("an unselected UID must not be denied DNS")
+	}
+	if !e.appAllowlistConnectionAllowed(10200, net.ParseIP("203.0.113.7")) {
+		t.Fatal("an unselected UID must not be denied connections")
+	}
+}
+
+// The JSON side keeps its old leniency: invalid JSON and non-positive UIDs configure nothing, and
+// a UID with an empty domain list is still selected (and therefore may resolve nothing).
+func TestSetAppAllowlistParsesConfig(t *testing.T) {
+	e := &Engine{}
+	e.SetAppAllowlist(`{"bad": ["ignored.example"], "0": ["ignored.example"], "-1": ["ignored.example"]}`)
+	if e.hasAppAllowlistUIDs() {
+		t.Fatal("invalid UID keys must not enable strict mode")
+	}
+	if !e.appAllowlistDomainAllowed(10188, "anything.example") {
+		t.Fatal("without selected UIDs every domain is allowed")
+	}
+
+	e.SetAppAllowlist(`not json`)
+	if e.hasAppAllowlistUIDs() {
+		t.Fatal("malformed JSON must not enable strict mode")
+	}
+
+	e.SetAppAllowlist(`{"10188": ["Example.COM."], "10200": []}`)
+	if !e.hasAppAllowlistUIDs() {
+		t.Fatal("valid UID keys must enable strict mode")
+	}
+	if !e.appAllowlistDomainAllowed(allowlistTestUID, "sub.example.com") {
+		t.Fatal("the normalized entry must cover its subdomains")
+	}
+	if e.appAllowlistDomainAllowed(10200, "example.com") {
+		t.Fatal("a selected UID with an empty domain list may resolve nothing")
 	}
 }
 
@@ -220,6 +275,12 @@ func TestRememberAppAllowlistWireSkipsNegativeAnswersAndFansOutByDomain(t *testi
 func TestRememberAppAllowlistWireHonorsTTL(t *testing.T) {
 	e := &Engine{ipDomainCache: newIPDomainCache(8)}
 	e.SetAppAllowlist(`{"10188": ["short.example"]}`)
+
+	// The grant table lives in the kernel now; drive its clock instead of mutating the map.
+	now := time.Now()
+	e.appAllowlist.mu.Lock()
+	e.appAllowlist.clock = func() time.Time { return now }
+	e.appAllowlist.mu.Unlock()
 
 	resp := new(dns.Msg)
 	resp.SetQuestion("short.example.", dns.TypeA)
@@ -240,9 +301,7 @@ func TestRememberAppAllowlistWireHonorsTTL(t *testing.T) {
 		t.Fatal("grant must be active before the TTL elapses")
 	}
 
-	e.appAllowlist.mu.Lock()
-	e.appAllowlist.ips[allowlistTestUID][ip.String()] = time.Now().Add(-time.Second)
-	e.appAllowlist.mu.Unlock()
+	now = now.Add(2 * time.Second)
 	if e.appAllowlistConnectionAllowed(allowlistTestUID, ip) {
 		t.Fatal("grant must lapse once the TTL expires")
 	}
