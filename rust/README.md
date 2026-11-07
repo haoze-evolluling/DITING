@@ -1,6 +1,6 @@
 # Rust 内核
 
-二十个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+二十一个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -26,9 +26,11 @@ NXDOMAIN 动态升级），`diting-sniffer-core` 负责**同一隧道引擎的 T
 256 条剪枝），`diting-connlog-core` 负责**同一隧道引擎的连接日志去重内核**（`connLogKey`
 的逐字节构造、8192 条上限的键集合、溢出整表清空与清空计数），`diting-ipcache-core` 负责**同一隧道引擎的
 IP→域名 LRU 内核**（原地更新并把条目移到最近写入位置、淘汰最久未写入项、`get` 不提升、非正容量
-回退 2048），`diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
+回退 2048），`diting-proxy-core` 负责**同一隧道引擎的出站代理内核**（SOCKS5 握手与应答报文、
+地址与 UDP 数据报封装、HTTP CONNECT 请求字节、`net` 地址语义的复刻与代理配置归一化），
+`diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
 `strings` 辅助、`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠）。
-二十四个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+二十五个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。六个例外都只影响“复用、调度、判定辅助、取址路径、日志去重与主机名提示”，
 不影响回答：DNS 缓存
 内核缺失时缓存停用、查询直连解析器；解析器统计内核缺失时每个上游按冷启动取值参与调度；DNS 应答
@@ -214,7 +216,18 @@ flow 都分配的拼接字符串——包括随后被丢弃的重复项。Go 侧
 `maxBuckets` 仍是 Go 字段（测试会直接调小），随每次调用传入。缺库时 `NewRateLimiter` 返回错误、
 服务启动失败：限流是用户明确打开的防护，让它在“显示已开启”时静默放行比启动失败更糟。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核与 IP→域名缓存内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第二十六个把 Android 隧道引擎的**出站代理**搬进新建的 `diting-proxy-core`（`flow_outbound.go` 只剩
+拨号、超时、状态通道与 HTTP CONNECT 应答读取）：SOCKS5 的 greeting / 方法选择 / 用户名密码
+子协商 / 请求地址编码 / 应答解析（含“还差几字节”的增量协议）、UDP ASSOCIATE 的定长请求与数据报
+封装解封装、HTTP CONNECT 的请求字节（`http.Request.Write` 的输出，含 `User-Agent` 与
+`Authorization` 的 base64），以及代理配置的归一化与校验（协议白名单、只允许环回地址并按
+`net.IP.String()` 规范化、端口范围、255 字节凭据、`all` / `apps` 作用域与正整数 UID 去重）全部在
+`config.rs` / `addr.rs` / `socks5.rs` / `http.rs`。Go 侧只剩 JSON 解码（配置格式与报错文案是
+`encoding/json` 的）、`net.Conn` / `net.PacketConn` 的读写与截止时间、代理/直连的选择，以及
+`http.ReadResponse`（`bufio` 的既有行为不改）。缺库时代理不可配置也不可用：`ConfigureOutboundProxy`
+返回错误，经代理的流直接失败；直连流量与“关闭代理”不受影响（禁用配置在问内核之前就返回）。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核与出站代理内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -222,7 +235,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装�
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译十二个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译十三个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -280,6 +293,15 @@ rust/
 │   ├── payload.rs payload/tests.rs # 配置与诊断信息的二进制布局
 │   └── ffi.rs ffi/tests.rs         # new / configure / allow / cleanup / info / free_bytes（ABI_VERSION）
 ├── diting-ratelimit-core/tests/fixtures/ratelimit_trace.tsv  # 迁移时 Go 实现生成的 156 步判定轨迹
+├── diting-proxy-core/src/
+│   ├── addr.rs addr/tests.rs       # net.ParseIP / SplitHostPort / JoinHostPort / net.IP.String（原 flow_outbound.go 的调用点）
+│   ├── config.rs config/tests.rs   # 协议白名单、环回校验、端口/凭据范围、作用域与 UID 去重（原 parseOutboundProxyConfig）
+│   ├── socks5.rs socks5/tests.rs   # greeting / 方法选择 / 子协商 / 请求地址 / 应答增量解析 / UDP 数据报封装
+│   ├── http.rs http/tests.rs       # HTTP CONNECT 请求字节（原 http.Request.Write 输出）
+│   ├── payload.rs payload/tests.rs # 十一个操作的请求/回应二进制布局
+│   ├── ffi.rs ffi/tests.rs         # abi_version / call / free_bytes（ABI_VERSION）
+│   └── tests/corpus.rs             # 迁移时 Go 实现生成的六份语料回放
+├── diting-proxy-core/tests/fixtures/   # 握手 / 地址 / 应答 / 数据报 / CONNECT / 配置语料（6 份 TSV）
 ├── diting-safebrowsing-core/tests/fixtures/hash_corpus.tsv  # 迁移时 Go 实现生成的主机→摘要→查询名语料
 ├── diting-filter-core/tests/fixtures/parse_corpus.tsv  # 迁移时 Go 解析器的 200 行语料快照
 ├── diting-dns-cache-core/src/
@@ -443,6 +465,11 @@ rust/
   `bootstrap_native.go`（加载、ABI 校验、计划载荷编码/解码与十一个符号的调用包装）、
   `bootstrap_native_stub.go`（无 cgo 时引导解析停用）、`bootstrap_resolver_test.go`
   （原有健康、分布与解析用例，现在全部穿过 FFI 跑）。
+- Go（出站代理）：`flow_outbound.go`（拨号、截止时间、状态通道、代理/直连选择与
+  `http.ReadResponse`）、`proxy_native.go`（加载、ABI 校验与 `diting_proxy_call` 包装）、
+  `proxy_native_stub.go`（无 cgo 时代理不可用）、`proxy_native_payload.go`（十一个操作的载荷编码/
+  解码与类型化包装，不需要 cgo 就能测布局）、`flow_outbound_native_test.go`（配置语料回放 +
+  真实监听器上的 SOCKS5 / HTTP CONNECT / UDP ASSOCIATE 端到端用例）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -451,12 +478,12 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：十二个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：十三个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
 DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、
-引导解析内核、应用白名单内核、连接日志去重内核与 IP→域名缓存内核只随 Android APK 交付（桌面服务
-没有这十块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
+引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核与出站代理内核只随 Android APK 交付
+（桌面服务没有这十一块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的七个内核按平台单独交付（Android 用不到它们）：
 
@@ -806,6 +833,16 @@ Go 侧原有断言一条未改，现在全部穿过 FFI 跑，另加 `mitm_sniff
 被忽略，每行同时记录查表结果与当前条数。`tests/corpus.rs` 逐行重放；`cache/tests.rs` 另钉住容量 1、
 非正容量回退 2048（插满 2048 条再插一条后仍为 2048 且最旧项被淘汰）与 Unicode 域。Go 侧新增
 `ip_domain_cache_test.go`，把边界行为全部穿过 FFI 跑，并钉住无内核时的空缓存回退。
+
+**出站代理**：六份语料都是迁移时直接跑原 Go 实现生成的：`handshake.tsv` 20 行（无凭据/带凭据
+两种 greeting、方法被拒、版本错、子协商失败、请求码非 0、地址类型非法、截断应答，以及 9 种非法
+target 的报错文本，每行同时给出客户端写出的完整字节流与返回的错误），`address.tsv` 19 行
+（IPv4 / IPv6 / 映射地址 / 域名 / 255 与 256 字节域名 / 无端口 / 坏端口 / 多余冒号 / 未闭合方括号 /
+zone 形态），`reply.tsv` 11 行（三类中继地址、空域名、五种状态码、三处截断），`datagram.tsv` 7 行
+（三类地址、空载荷、非法类型、两处截断），`http.tsv` 5 行（`Request.Write` 的请求字节与 200/407/503
+状态），`config.tsv` 19 行（协议大小写与空白、`::1` 与映射地址归一化、非环回、端口边界、255 字节
+凭据、作用域回退、UID 过滤与禁用原样返回）。`tests/corpus.rs` 逐行重放；Go 侧
+`flow_outbound_native_test.go` 回放同一份配置语料，并用真实监听器跑五条端到端用例。
 
 **连接日志去重**：两份语料都是迁移时直接跑原 Go 实现生成的：`keys.tsv` 有 7 行，覆盖空字段、
 Unicode、字段内部含 `|`、负数端口与协议，逐字节比对 `connLogKey`；`dedup_trace.tsv` 是 7 步轨迹
@@ -1234,6 +1271,47 @@ Go 侧原有用例一条断言未改，现在全部穿过 FFI 跑；只有两处
   映射网段、豁免替换、容量淘汰、max=1/0）；`tests/corpus.rs` 逐行重放，四个模块的单测另钉住
   夹具没走到的分支。
 
+## 出站代理内核的已知边界
+
+- **只搬协议，不搬套接字**：拨号、`net.Conn` / `net.PacketConn` 的读写与截止时间、状态通道、
+  `flowDialTimeout` 与代理/直连的选择都还在 Go。内核是无状态纯函数，每次调用收一段载荷、回一段
+  载荷，没有句柄也没有时钟（这里没有时间相关判定）。
+- **HTTP CONNECT 的应答仍归 Go**：`http.ReadResponse(bufio.NewReader(conn))` 的 `bufio` 行为
+  （可能多读进缓冲、被后续裸连接丢掉）与错误/状态文案是迁移前就有的，重写只会换出一套语义；
+  交给这里的只有 `http.Request.Write` 产出的请求字节。`sent` 请求沿用原来的
+  `URL.Opaque` 形态，所以 `resp` 的解析路径没变。
+- **应答解析是增量协议**：`socks_reply` 只回答「已收齐（给出中继地址）」或「还差 N 字节」。
+  Go 按 `io.ReadFull` 读剩下的部分，因此只有第一次读（缓冲区为空时）的失败被包成
+  `SOCKS5 response: %w`，后续读保持裸 `io` 错误（`EOF` / `unexpected EOF`）——语料把三种截断
+  都固化了下来。
+- **`method_reply` 不看版本先看首字节**：首字节不是 `0x05` 就整条报
+  `invalid SOCKS5 greeting response`（不会去解读方法字节）；`auth_reply` 反过来只看状态字节，
+  子协商版本字节从不检查。两条都是迁移前的行为，照抄不改。
+- **应答状态码取的是 `header[1]`**：版本字节错（例如 `0x04`）时错误文案仍是
+  `SOCKS5 request failed with code 0`，因为旧实现就是拿同一个字节当错误码。
+- **非 IP 主机一律当域名**：`1.2.3.4.5`、`fe80::1%25eth0` 这类 `net.ParseIP` 拒绝的写法按
+  ATYP=域名 编码（长度上限 255 字节，空主机报
+  `SOCKS5 target hostname length is invalid`），与迁移前逐字节一致。
+- **`net.SplitHostPort` 是完整复刻**：包含 `address <addr>: missing port in address` /
+  `too many colons in address` / `missing ']' in address` / `unexpected '[' in address` 的文案
+  与「空地址不加 `address ` 前缀」的细节，语料钉住 19 种写法。
+- **端口用 `strconv.Atoi` 规则**：带正负号接受（`+8` 是端口 8），空格与十六进制拒绝，
+  超范围与无法解析都报 `invalid target port %q`（带原始文本）。
+- **配置里 `enabled: false` 原样返回**：迁移前在任何校验之前就返回，所以非法协议藏在
+  `"enabled": false` 后面不会让配置推送失败；Go 侧也在问内核之前返回，缺库时仍能关掉代理。
+- **端口与 UID 在载荷里是 64 位**：Go 的 `int` 是 64 位，`json.Unmarshal` 接受超过 65535 的端口与
+  超大 UID，收窄成 32 位会在极端值上改变判定（例如 `2^32+1080` 会绕回合法端口）。
+- **非 UTF-8 的中继域名按有损转换**：Go 的 `string(buf)` 可以是任意字节，内核用
+  `from_utf8_lossy`。中继主机在现实中是 ASCII 或 IP，`JoinHostPort` 的方括号规则由内核里那份
+  Go 复刻实现决定。
+- **缺库时**：`ConfigureOutboundProxy` 返回内核缺失错误，经代理的 `DialTCP` / `OpenPacket` 一律
+  失败（错误文案就是那条加载失败原因）。直连流量不受影响，关闭代理也不受影响——这是唯一一个
+  “缺库等于功能不可用但其它一切照旧”的内核。
+- **一致性验证**：`tests/fixtures/` 的六份语料都来自迁移前直接跑原 Go 实现（20 条握手轨迹、
+  19 条地址编码、11 条应答流、7 条数据报、5 条 CONNECT 请求、19 条配置归一化）；`tests/corpus.rs`
+  逐行重放，Go 侧 `flow_outbound_native_test.go` 另用真实监听器跑端到端（带凭据的 SOCKS5 握手、
+  IP 形态的请求、HTTP CONNECT、方法被拒、UDP ASSOCIATE 的双向封装），并回放同一份配置语料。
+
 ## 性能（本机 Windows/amd64，迁移时的实测值）
 
 规则解析（AOT，10 万行合成语料，含 FFI + 载荷解码）：Rust 0.20–0.27 s，原 Dart 实现 0.98–1.18 s，
@@ -1353,10 +1431,10 @@ go test -run XXX -bench BenchmarkDNSCacheGetFast_Hit -benchtime 200000x .
 
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
-python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核与 DTRI fixture 用例
+python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核与 DTRI fixture 用例
 python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则、重写记录、声誉查询、hosts、DNS64 与客户端限流全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
-python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（十二个 .so）
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（十三个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
 python rust/verify.py --all      # 全量
 ```

@@ -180,6 +180,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-proxy-core"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "diting-go-compat",
+]
+
+[[package]]
 name = "diting-ratelimit-core"
 version = "0.1.0"
 

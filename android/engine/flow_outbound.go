@@ -2,15 +2,23 @@
 // SOCKS5 proxies (with optional username/password authentication and UDP associate support),
 // and HTTP CONNECT tunnels (with basic authentication). All outbound connections utilize
 // socket protection functions to bypass the Android VPN routing table.
+//
+// Responsibility split (Rust kernel rust/diting-proxy-core): the config normalization, the SOCKS5
+// greeting / method / auth / request / reply codec, the address and UDP datagram framing and the
+// HTTP CONNECT request bytes all live in the kernel. Go keeps every socket, deadline, the status
+// channel, the `net.Conn` / `net.PacketConn` types and the proxy-vs-direct decision, and it still
+// reads the HTTP CONNECT reply with `http.ReadResponse` (the `bufio` behaviour is part of the
+// contract being preserved).
+//
+// If the kernel is unavailable the proxy feature is unusable: `ConfigureOutboundProxy` reports it
+// and every proxied dial fails with that error. Direct traffic keeps working, and so does
+// disabling the proxy (a disabled config returns before the kernel is asked).
 
 package tunnel
 
 import (
 	"bufio"
-	"bytes"
 	"context"
-	"encoding/base64"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -42,6 +50,21 @@ type outboundProxyConfig struct {
 }
 
 const outboundScopeApps = "apps"
+
+// socksCommandConnect is the SOCKS5 command every proxied TCP dial issues; UDP ASSOCIATE has its
+// own fixed request in the kernel (`socksUDPAssociateNative`).
+const socksCommandConnect byte = 0x01
+
+// socksMethodUserPass is the sub-negotiation method the proxy selects for credentials.
+const socksMethodUserPass byte = 0x02
+
+// socksReplyBufferSize covers the largest reply frame: header + length byte + 255-byte domain +
+// port (`socks5::parse_reply` reports the exact length, this is the ceiling).
+const socksReplyBufferSize = 4 + 1 + 255 + 2
+
+// socksDatagramHeaderSize is the ceiling `ReadFrom` adds on top of a payload: three reserved
+// bytes, an address type, a length byte, a 255-byte domain and the port.
+const socksDatagramHeaderSize = 3 + 1 + 1 + 255 + 2
 
 // perApp reports whether only the selected UIDs are proxied.
 func (c outboundProxyConfig) perApp() bool {
@@ -108,6 +131,9 @@ type proxyFlowOutbound struct {
 	closeOnce   sync.Once
 }
 
+// parseOutboundProxyConfig decodes the config JSON and hands the fields to the kernel for
+// validation and normalization. A disabled config returns before the kernel is consulted, so the
+// proxy can always be switched off.
 func parseOutboundProxyConfig(raw string) (outboundProxyConfig, error) {
 	if strings.TrimSpace(raw) == "" {
 		return outboundProxyConfig{}, nil
@@ -119,30 +145,18 @@ func parseOutboundProxyConfig(raw string) (outboundProxyConfig, error) {
 	if !cfg.Enabled {
 		return cfg, nil
 	}
-	cfg.Protocol = strings.ToLower(strings.TrimSpace(cfg.Protocol))
-	if cfg.Protocol != "socks5" && cfg.Protocol != "http" {
-		return cfg, fmt.Errorf("unsupported outbound proxy protocol %q", cfg.Protocol)
+	normalized, err := normalizeOutboundProxyNative(cfg)
+	if err != nil {
+		return cfg, err
 	}
-	ip := net.ParseIP(strings.TrimSpace(cfg.Host))
-	if ip == nil || !ip.IsLoopback() {
-		return cfg, errors.New("outbound proxy host must be 127.0.0.1 or ::1")
-	}
-	cfg.Host = ip.String()
-	if cfg.Port < 1 || cfg.Port > 65535 {
-		return cfg, errors.New("outbound proxy port must be between 1 and 65535")
-	}
-	if len(cfg.Username) > 255 || len(cfg.Password) > 255 {
-		return cfg, errors.New("SOCKS5 credentials must not exceed 255 bytes")
-	}
-	cfg.Scope = strings.ToLower(strings.TrimSpace(cfg.Scope))
-	if cfg.Scope != outboundScopeApps {
-		cfg.Scope = "all"
-	}
-	cfg.uidSet = make(map[int]struct{}, len(cfg.UIDs))
-	for _, uid := range cfg.UIDs {
-		if uid > 0 {
-			cfg.uidSet[uid] = struct{}{}
-		}
+	cfg.Enabled = normalized.enabled
+	cfg.Protocol = normalized.protocol
+	cfg.Host = normalized.host
+	cfg.Port = normalized.port
+	cfg.Scope = normalized.scope
+	cfg.uidSet = make(map[int]struct{}, len(normalized.uids))
+	for _, uid := range normalized.uids {
+		cfg.uidSet[uid] = struct{}{}
 	}
 	return cfg, nil
 }
@@ -225,7 +239,7 @@ func (p *proxyFlowOutbound) DialTCP(ctx context.Context, target string) (net.Con
 		_ = conn.SetDeadline(time.Now().Add(flowDialTimeout))
 	}
 	if p.config.Protocol == "socks5" {
-		err = p.socksConnect(conn, 0x01, target)
+		err = p.socksConnect(conn, socksCommandConnect, target)
 	} else {
 		err = p.httpConnect(conn, target)
 	}
@@ -280,7 +294,11 @@ func (p *proxyFlowOutbound) OpenPacket(ctx context.Context) (net.PacketConn, err
 		p.status("error", err)
 		return nil, err
 	}
-	if _, err := control.Write([]byte{0x05, 0x03, 0x00, 0x01, 0, 0, 0, 0, 0, 0}); err != nil {
+	request, err := socksUDPAssociateNative()
+	if err == nil {
+		_, err = control.Write(request)
+	}
+	if err != nil {
 		control.Close()
 		err = fmt.Errorf("SOCKS5 UDP associate: %w", err)
 		p.status("error", err)
@@ -323,48 +341,45 @@ func (p *proxyFlowOutbound) Close() error {
 }
 
 func (p *proxyFlowOutbound) socksNegotiate(conn net.Conn) error {
-	methods := []byte{0x00}
-	if p.config.Username != "" || p.config.Password != "" {
-		methods = append(methods, 0x02)
+	request, err := socksGreetingNative(p.config.Username, p.config.Password)
+	if err != nil {
+		return err
 	}
-	request := append([]byte{0x05, byte(len(methods))}, methods...)
 	if _, err := conn.Write(request); err != nil {
 		return fmt.Errorf("SOCKS5 greeting: %w", err)
 	}
 	reply := make([]byte, 2)
-	if _, err := io.ReadFull(conn, reply); err != nil || reply[0] != 0x05 {
+	if _, err := io.ReadFull(conn, reply); err != nil {
 		return errors.New("invalid SOCKS5 greeting response")
 	}
-	if reply[1] == 0xff {
-		return errors.New("SOCKS5 proxy rejected authentication methods")
+	method, err := socksMethodReplyNative(reply)
+	if err != nil {
+		return err
 	}
-	if reply[1] == 0x02 {
-		user, pass := []byte(p.config.Username), []byte(p.config.Password)
-		auth := []byte{0x01, byte(len(user))}
-		auth = append(auth, user...)
-		auth = append(auth, byte(len(pass)))
-		auth = append(auth, pass...)
-		if _, err := conn.Write(auth); err != nil {
-			return fmt.Errorf("SOCKS5 authentication: %w", err)
-		}
-		if _, err := io.ReadFull(conn, reply); err != nil || reply[1] != 0x00 {
-			return errors.New("SOCKS5 authentication failed")
-		}
-	} else if reply[1] != 0x00 {
-		return fmt.Errorf("unsupported SOCKS5 authentication method %d", reply[1])
+	if method != socksMethodUserPass {
+		return nil
 	}
-	return nil
+	auth, err := socksAuthNative(p.config.Username, p.config.Password)
+	if err != nil {
+		return err
+	}
+	if _, err := conn.Write(auth); err != nil {
+		return fmt.Errorf("SOCKS5 authentication: %w", err)
+	}
+	if _, err := io.ReadFull(conn, reply); err != nil {
+		return errors.New("SOCKS5 authentication failed")
+	}
+	return socksAuthReplyNative(reply)
 }
 
 func (p *proxyFlowOutbound) socksConnect(conn net.Conn, command byte, target string) error {
 	if err := p.socksNegotiate(conn); err != nil {
 		return err
 	}
-	addr, err := encodeSocksAddress(target)
+	request, err := socksRequestNative(command, target)
 	if err != nil {
 		return err
 	}
-	request := append([]byte{0x05, command, 0x00}, addr...)
 	if _, err := conn.Write(request); err != nil {
 		return fmt.Errorf("SOCKS5 request: %w", err)
 	}
@@ -373,15 +388,22 @@ func (p *proxyFlowOutbound) socksConnect(conn net.Conn, command byte, target str
 }
 
 func (p *proxyFlowOutbound) httpConnect(conn net.Conn, target string) error {
-	req := &http.Request{Method: http.MethodConnect, URL: &url.URL{Opaque: target}, Host: target, Header: make(http.Header)}
-	if p.config.Username != "" || p.config.Password != "" {
-		token := base64.StdEncoding.EncodeToString([]byte(p.config.Username + ":" + p.config.Password))
-		req.Header.Set("Proxy-Authorization", "Basic "+token)
+	request, err := httpConnectRequestNative(target, p.config.Username, p.config.Password)
+	if err != nil {
+		return err
 	}
-	if err := req.Write(conn); err != nil {
+	if _, err := conn.Write(request); err != nil {
 		return fmt.Errorf("HTTP CONNECT write: %w", err)
 	}
-	resp, err := http.ReadResponse(bufio.NewReader(conn), req)
+	// The reply is still parsed by `net/http`: the request passed here is the same shape the old
+	// code built, so `resp` (status text and body) is unchanged.
+	sent := &http.Request{
+		Method: http.MethodConnect,
+		URL:    &url.URL{Opaque: target},
+		Host:   target,
+		Header: make(http.Header),
+	}
+	resp, err := http.ReadResponse(bufio.NewReader(conn), sent)
 	if err != nil {
 		return fmt.Errorf("HTTP CONNECT response: %w", err)
 	}
@@ -392,74 +414,32 @@ func (p *proxyFlowOutbound) httpConnect(conn net.Conn, target string) error {
 	return nil
 }
 
-func encodeSocksAddress(target string) ([]byte, error) {
-	host, portText, err := net.SplitHostPort(target)
-	if err != nil {
-		return nil, fmt.Errorf("invalid target %q: %w", target, err)
-	}
-	port, err := strconv.Atoi(portText)
-	if err != nil || port < 0 || port > 65535 {
-		return nil, fmt.Errorf("invalid target port %q", portText)
-	}
-	var out []byte
-	if ip := net.ParseIP(host); ip != nil {
-		if v4 := ip.To4(); v4 != nil {
-			out = append([]byte{0x01}, v4...)
-		} else {
-			out = append([]byte{0x04}, ip.To16()...)
-		}
-	} else {
-		if len(host) == 0 || len(host) > 255 {
-			return nil, errors.New("SOCKS5 target hostname length is invalid")
-		}
-		out = append([]byte{0x03, byte(len(host))}, []byte(host)...)
-	}
-	return append(out, byte(port>>8), byte(port)), nil
-}
-
+// readSocksReply reads a reply frame, asking the kernel how many bytes it still needs. Only the
+// first read is wrapped: the address and port reads used to return `io` errors verbatim.
 func readSocksReply(r io.Reader) (string, error) {
-	header := make([]byte, 4)
-	if _, err := io.ReadFull(r, header); err != nil {
-		return "", fmt.Errorf("SOCKS5 response: %w", err)
-	}
-	if header[0] != 0x05 || header[1] != 0x00 {
-		return "", fmt.Errorf("SOCKS5 request failed with code %d", header[1])
-	}
-	host, err := readSocksHost(r, header[3])
-	if err != nil {
-		return "", err
-	}
-	portBytes := make([]byte, 2)
-	if _, err := io.ReadFull(r, portBytes); err != nil {
-		return "", err
-	}
-	return net.JoinHostPort(host, strconv.Itoa(int(binary.BigEndian.Uint16(portBytes)))), nil
-}
-
-func readSocksHost(r io.Reader, atyp byte) (string, error) {
-	var size int
-	switch atyp {
-	case 0x01:
-		size = 4
-	case 0x04:
-		size = 16
-	case 0x03:
-		length := []byte{0}
-		if _, err := io.ReadFull(r, length); err != nil {
+	buf := make([]byte, socksReplyBufferSize)
+	read := 0
+	for {
+		address, needed, err := socksReplyNative(buf[:read])
+		if err != nil {
 			return "", err
 		}
-		size = int(length[0])
-	default:
-		return "", fmt.Errorf("invalid SOCKS5 address type %d", atyp)
+		if needed == 0 {
+			return address, nil
+		}
+		if needed > len(buf) {
+			return "", fmt.Errorf("SOCKS5 reply frame is %d bytes", needed)
+		}
+		first := read == 0
+		got, err := io.ReadFull(r, buf[read:needed])
+		read += got
+		if err != nil {
+			if first {
+				return "", fmt.Errorf("SOCKS5 response: %w", err)
+			}
+			return "", err
+		}
 	}
-	buf := make([]byte, size)
-	if _, err := io.ReadFull(r, buf); err != nil {
-		return "", err
-	}
-	if atyp == 0x03 {
-		return string(buf), nil
-	}
-	return net.IP(buf).String(), nil
 }
 
 type socksPacketConn struct {
@@ -469,12 +449,10 @@ type socksPacketConn struct {
 }
 
 func (c *socksPacketConn) WriteTo(payload []byte, target net.Addr) (int, error) {
-	header, err := encodeSocksAddress(target.String())
+	packet, err := socksDatagramNative(target.String(), payload)
 	if err != nil {
 		return 0, err
 	}
-	packet := append([]byte{0, 0, 0}, header...)
-	packet = append(packet, payload...)
 	if _, err := c.PacketConn.WriteTo(packet, c.relay); err != nil {
 		return 0, err
 	}
@@ -482,7 +460,7 @@ func (c *socksPacketConn) WriteTo(payload []byte, target net.Addr) (int, error) 
 }
 
 func (c *socksPacketConn) ReadFrom(payload []byte) (int, net.Addr, error) {
-	buf := make([]byte, len(payload)+262)
+	buf := make([]byte, len(payload)+socksDatagramHeaderSize)
 	n, _, err := c.PacketConn.ReadFrom(buf)
 	if err != nil {
 		return 0, nil, err
@@ -490,15 +468,14 @@ func (c *socksPacketConn) ReadFrom(payload []byte) (int, net.Addr, error) {
 	if n < 4 || buf[0] != 0 || buf[1] != 0 || buf[2] != 0 {
 		return 0, nil, errors.New("invalid or fragmented SOCKS5 UDP packet")
 	}
-	host, port, offset, err := decodeSocksDatagramAddress(buf[3:n])
+	address, hostIsIP, offset, err := socksDatagramParseNative(buf[3:n])
 	if err != nil {
 		return 0, nil, err
 	}
 	data := buf[3+offset : n]
 	count := copy(payload, data)
-	address := net.JoinHostPort(host, strconv.Itoa(port))
 	var addr net.Addr = unresolvedUDPAddr(address)
-	if net.ParseIP(host) != nil {
+	if hostIsIP {
 		addr, _ = net.ResolveUDPAddr("udp", address)
 	}
 	return count, addr, nil
@@ -507,23 +484,6 @@ func (c *socksPacketConn) ReadFrom(payload []byte) (int, net.Addr, error) {
 func (c *socksPacketConn) Close() error {
 	_ = c.control.Close()
 	return c.PacketConn.Close()
-}
-
-func decodeSocksDatagramAddress(raw []byte) (string, int, int, error) {
-	reader := bytes.NewReader(raw)
-	atyp, err := reader.ReadByte()
-	if err != nil {
-		return "", 0, 0, err
-	}
-	host, err := readSocksHost(reader, atyp)
-	if err != nil {
-		return "", 0, 0, err
-	}
-	portBytes := make([]byte, 2)
-	if _, err := io.ReadFull(reader, portBytes); err != nil {
-		return "", 0, 0, err
-	}
-	return host, int(binary.BigEndian.Uint16(portBytes)), len(raw) - reader.Len(), nil
 }
 
 type packetConnAdapter struct {

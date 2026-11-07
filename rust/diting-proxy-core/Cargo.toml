@@ -1,0 +1,13 @@
+[package]
+name = "diting-proxy-core"
+version = "0.1.0"
+edition = "2021"
+description = "SOCKS5 / HTTP CONNECT outbound-proxy codec and config normalization for the Android tunnel engine"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+diting-go-compat = { path = "../diting-go-compat" }
+base64 = "0.22"
