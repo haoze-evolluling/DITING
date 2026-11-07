@@ -66,8 +66,8 @@ func relayDirectFromFlow(clientConn net.Conn, flow flowID, blocker adBlockChecke
 		peeked, peekedReader, err := peekFlow(clientConn, peekSize, peekTimeout)
 		if err == nil && len(peeked) > 0 {
 			sni := ""
-			if len(peeked) >= 3 && peeked[0] == 0x16 && peeked[1] == 0x03 {
-				sni = parseClientHelloSNI(peeked)
+			if classification, host := classifyFlow(peeked); classification == classTLS {
+				sni = host
 			}
 			relayDirectPeeked(clientConn, peekedReader, flow, sni, blocker, protectFn)
 			return

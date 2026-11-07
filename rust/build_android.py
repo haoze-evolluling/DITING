@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cross-compile the Rust cores for Android and drop them into the Flutter app's jniLibs.
 
-Seven libraries are built:
+Eight libraries are built:
 
 * `libditing_rule_core.so` - rule parsing, rule search and the DTRI writer (Dart/Kotlin callers).
 * `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
@@ -19,15 +19,18 @@ Seven libraries are built:
   breaker behind the four scheduling strategies).
 * `libditing_dns_core.so` - the DNS answer kernel the same engine dlopen()s (the null-block verdict
   on a forwarded answer, the logged address list and the dynamic block escalation).
+* `libditing_sniffer_core.so` - the flow sniffer the same engine dlopen()s (the TLS ClientHello
+  SNI walk, the plaintext HTTP request gate and its `Host` header).
 
-All seven are shipped and used at runtime: without the first a rule import throws, without the
+All eight are shipped and used at runtime: without the first a rule import throws, without the
 second the tunnel refuses to start, without the third the DNS cache stores nothing (answers go
 straight to the resolver), without the fourth MITM cannot start (the tunnel runs without
 interception), without the fifth the same MITM start fails rather than serving pages without the
 cosmetic stylesheet, without the sixth every upstream is scheduled with cold values (default score,
-cold delays, every attempt allowed), and without the seventh a null-block upstream answer is logged
-as normal and every block keeps the configured mode. The last two never change an answer. Run this
-before every APK build:
+cold delays, every attempt allowed), without the seventh a null-block upstream answer is logged
+as normal and every block keeps the configured mode, and without the eighth MITM cannot start and
+the passthrough relay loses its SNI hostname hint. The sixth and seventh never change an answer.
+Run this before every APK build:
 
     python rust/build_android.py              # arm64-v8a + x86_64, release
     python rust/build_android.py --abi arm64  # phones only
@@ -62,6 +65,7 @@ LIB_NAMES = (
     "libditing_cosmetic_core.so",
     "libditing_resolver_core.so",
     "libditing_dns_core.so",
+    "libditing_sniffer_core.so",
 )
 ANDROID_API = 28
 
@@ -162,6 +166,8 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "diting-resolver-core",
         "-p",
         "diting-dns-core",
+        "-p",
+        "diting-sniffer-core",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",
@@ -188,7 +194,7 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核、策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核与 DNS 应答内核")
+    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核、策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核与流量嗅探内核")
     parser.add_argument(
         "--abi",
         choices=["all", "arm64", "x86_64"],

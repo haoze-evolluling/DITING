@@ -91,15 +91,8 @@ func newMitmTcpHandler(
 			return
 		}
 
-		sni := ""
-		var classification flowClass
-		if len(peeked) >= 3 && peeked[0] == 0x16 && peeked[1] == 0x03 {
-			classification = classTLS
-			sni = parseClientHelloSNI(peeked)
-		} else if looksLikeHTTPRequest(peeked) {
-			classification = classHTTP
-			sni = parseHTTPHost(peeked)
-		} else {
+		classification, sni := classifyFlow(peeked)
+		if classification == classUnknown {
 
 			relayDirectPeeked(clientConn, peekedReader, flow, "", blocker, protectFn)
 			return

@@ -1,6 +1,6 @@
 # Rust 内核
 
-十四个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+十五个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -16,12 +16,15 @@ IPv4/IPv6/反查映射、`HasDomain`、`.in-addr.arpa` / `.ip6.arpa` 反查名�
 负责**同一隧道引擎的上游统计与调度评分内核**（SRTT + RTTVAR 估计、失败率 EWMA、连败惩罚、熔断与
 半开探针，以及 hedge / 单次超时 / UDP 重试三种自适应延迟），`diting-dns-core` 负责**同一隧道引擎的
 DNS 应答检查与阻断升级内核**（上游空答案判定、唯一地址列表，以及按域名的请求窗口、NODATA 与
-NXDOMAIN 动态升级），`diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、`strings` 辅助、
-`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠）。
-十八个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+NXDOMAIN 动态升级），`diting-sniffer-core` 负责**同一隧道引擎的 TLS / 明文 HTTP 流嗅探内核**
+（ClientHello 记录、握手与扩展长度走法、SNI 取值、HTTP 方法门禁、`Host` 头取值与 Go 语义的
+字节级 TrimSpace / EqualFold），`diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
+`strings` 辅助、`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠）。
+十九个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。三个例外都只影响“复用、调度与判定辅助”，不影响回答：DNS 缓存内核缺失
 时缓存停用、查询直连解析器；解析器统计内核缺失时每个上游按冷启动取值参与调度；DNS 应答内核缺失
-时空答案按普通应答记日志、动态升级关闭（每个阻断沿用配置的应答模式）。
+时空答案按普通应答记日志、动态升级关闭（每个阻断沿用配置的应答模式）。流嗅探内核缺失时 MITM 启动
+失败（隧道照常起，只是不解密），直连回退只是少了 SNI 的主机名提示，也不影响回答。
 
 | 入口 | 调用方 | Rust 产物 | 缺失时 |
 |---|---|---|---|
@@ -43,6 +46,7 @@ NXDOMAIN 动态升级），`diting-go-compat` 是各内核共用的 Go 标准库
 | 装饰注入（HTML 流式改写） | Go 隧道引擎（`dlopen` + C ABI，句柄） | `<head>` 扫描状态机（carry / pending / 16 KiB 上限）、主机名归一化与 `url.QueryEscape`、`<link>` 标签 | MITM 启动失败（隧道照常起，只是不解密） |
 | 解析器统计（SRTT / 熔断 / 自适应延迟） | Go 隧道引擎（`dlopen` + C ABI，每上游一个句柄） | SRTT + RTTVAR 估计、失败率 EWMA、连败惩罚的半衰期衰减、熔断与半开探针、hedge / 单次超时 / UDP 重试 | 调度退回冷启动取值（默认评分、冷启动延迟、每次尝试都放行），回答不变 |
 | DNS 应答检查 + 动态阻断升级 | Go 隧道引擎（`dlopen` + C ABI，引擎一个句柄） | 上游空答案判定（全为 `0.0.0.0` / `::` / 回环）、唯一地址列表、按域名的窗口计数与 NODATA→NXDOMAIN 升级 | 空答案按普通应答记日志、升级关闭（阻断沿用配置模式），回答不变 |
+| TLS / 明文 HTTP 流嗅探 | Go 隧道引擎（`dlopen` + C ABI） | ClientHello 记录/握手/扩展长度走法与 SNI、HTTP 方法门禁与 `Host` 头 | MITM 启动失败（隧道照常起，只是不解密）；直连回退丢失 SNI 主机名提示，回答不变 |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -136,7 +140,18 @@ plain UDP 重试间隔三档自适应取值都在 `stats.rs`。时间从 Go 注�
 进缓存与应答链）、`dns.Question` → `dns.RR` 的构造、`time.Duration` 换算与 `ipDomainCache` 的写入。
 阻断模式的四个枚举值与其文本拼写（`ParseResponseType`）也留在 Go：它是枚举的字面拼写，不是判定逻辑。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核与 DNS 应答内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第二十个把 Android 隧道引擎的 **TLS / 明文 HTTP 流嗅探**搬进新建的 `diting-sniffer-core`
+（`mitm_sniffer.go` 只剩一次 peek `Read`、回放 reader 与 `intToStr`）：`parseClientHelloSNI`
+的 TLS 记录、握手、session / cipher / compression / extension 长度走法与 SNI 列表取值，
+`looksLikeHTTPRequest` 的 16 字节方法门禁，`parseHTTPHost` 的 CRLF 行走与 `Host` 取值都在内核里。
+剪枝的两处细节也照抄了：`strings.TrimSpace` 按 rune 剪枝但保留原始字节（非法 UTF-8 字节不是空白，
+不能走 `String` 往返），`strings.EqualFold(name, "Host")` 在 ASCII 目标下只多一个 `ſ`（U+017F）
+折叠成 `s`。分类门槛仍是调用方的那个（至少 3 字节、`0x16`、主版本 `0x03`），所以“过了门槛但解析器
+读不出来”仍然是 TLS + 空主机名，回退到 IP，而不是把流当成别的东西直连。Go 侧只留 peek、超时、
+回放 reader 与拨号/中继；MITM 启动时 `ensureSnifferKernel` 失败即启动失败，直连回退用同一个分类调用，
+缺库只是没有主机名提示（与 SNI 解析为空一致）。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核与流嗅探内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -144,7 +159,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装�
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译六个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译八个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -227,6 +242,12 @@ rust/
 │   ├── payload.rs payload/tests.rs # 答案检查请求/回应与阻断判定的二进制布局
 │   ├── ffi.rs ffi/tests.rs         # inspect_answer / blocks_new / reset / response / free / free_bytes（ABI_VERSION）
 │   └── tests/fixtures/*.tsv        # 迁移时 Go 实现生成的 net.IP 文本、答案集与阻断升级语料（3 份）
+├── diting-sniffer-core/src/
+│   ├── tls.rs tls/tests.rs         # TLS 记录/握手/扩展长度走法与 SNI 取值（原 parseClientHelloSNI）
+│   ├── http.rs http/tests.rs       # HTTP 方法门禁、`Host` 行走、字节级 TrimSpace 与 EqualFold（原 looksLikeHTTPRequest + parseHTTPHost）
+│   ├── payload.rs payload/tests.rs # 分类结果的二进制布局（kind + 原始主机名字节）
+│   ├── ffi.rs ffi/tests.rs         # classify / free_bytes（ABI_VERSION）
+│   └── tests/fixtures/*.tsv        # 迁移时 Go 实现生成的 SNI 与 HTTP 语料（含全部前缀与字节腐蚀）
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
 │   ├── glob.rs wildcard_index.rs   # 通配编译与索引（取代 policy_wildcard_index.go）
@@ -308,6 +329,12 @@ rust/
   冷启动回退）、`resolver_stats_native.go`（加载、ABI 校验、十三个符号的调用包装）、
   `resolver_stats_native_stub.go`（无 cgo 时全部冷启动）；原有用例
   （`resolver_test.go` 的 EWMA 用例、`resolver_smart_test.go` 的三条统计用例与四条调度用例）全部穿过 FFI 跑。
+- Go（流嗅探）：`mitm_sniffer.go`（只剩一次 peek `Read`、回放 reader 与 `intToStr`）、
+  `mitm_sniffer_native.go`（加载、ABI 校验、`classifyFlow` 调用与载荷解码）、
+  `mitm_sniffer_native_stub.go`（无 cgo 时 MITM 启动失败、直连回退无主机名提示）、
+  `mitm_sniffer_payload.go`（分类载荷布局，不需要 cgo 就能测）、
+  `mitm_sniffer_native_test.go`（三类流、截断记录与字节级 `EqualFold` 用例）、
+  `mitm_sniffer_payload_test.go`（无 cgo 也能跑的载荷解码用例）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -316,11 +343,11 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：七个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：八个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
-DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核与 DNS 应答内核只随
-Android APK 交付（桌面服务没有这五块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
+DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核与流嗅探内核只随
+Android APK 交付（桌面服务没有这六块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的六个内核按平台单独交付（Android 用不到它们）：
 
@@ -473,7 +500,8 @@ DNS 应答：上游应答 ──inspect_answer(记录列表)──> Rust 逐条�
 `diting-safebrowsing-core/src/{hash,cache,engine,payload,ffi}.rs` 与
 `diting-hosts-core/src/{ip,arpa,hosts,payload,ffi}.rs` 与
 `diting-dns64-core/src/{addr,prefix,engine,payload,ffi}.rs` 与
-`diting-cosmetic-core/src/{inject,host,payload,ffi}.rs`、`diting-resolver-core/src/{stats,ffi}.rs`、`diting-dns-core/src/{answer,block,payload,ffi}.rs` 与
+`diting-cosmetic-core/src/{inject,host,payload,ffi}.rs`、`diting-resolver-core/src/{stats,ffi}.rs`、`diting-dns-core/src/{answer,block,payload,ffi}.rs`、
+`diting-sniffer-core/src/{tls,http,payload,ffi}.rs` 与
 `diting-go-compat/src/ip.rs` 顶部；
 改动要同步对应的 `ABI_VERSION` / `SEARCH_ABI_VERSION` 与 fixtures。
 
@@ -620,6 +648,14 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 回拨与「禁用不记状态」，`payload/tests.rs` 与 `ffi/tests.rs` 钉住布局、坏载荷与空句柄。
 Go 侧原有断言（阻断模式、动态升级、`nil` 引擎默认值、拒绝快照不发布）一条未改，现在全部穿过 FFI 跑，
 另加 `dns_core_payload_test.go` 的布局用例。
+
+**TLS / 明文 HTTP 流嗅探**：两份语料是迁移时直接跑原 Go 实现生成的：`sni.tsv` 覆盖正常/大写/长
+主机名、无 SNI、非 host_name 条目、多条目、扩展顺序、记录/扩展/session 长度越界，另加一份合法
+握手从 0 到整长的每一条前缀与 16 处字节腐蚀；`http.tsv` 覆盖方法门禁的 16 字节边界、大小写与
+`ſ` 折叠、空值与带端口的 `Host`、只认 CRLF、非法 UTF-8 名称/取值，另加一份完整请求的每一条前缀。
+`tests/corpus.rs` 逐行重放并断言完全相等；`tls/tests.rs` 与 `http/tests.rs` 另钉住夹具没走到
+的分支（越界 session 长度、空 SNI、`::1` 取值的首个冒号截断、`TrimSpace` 的字节保留）。
+Go 侧原有断言一条未改，现在全部穿过 FFI 跑，另加 `mitm_sniffer_payload_test.go` 的布局用例。
 
 **解析器统计**：`tests/fixtures/stats_trace.tsv` 是迁移时直接跑原 Go 实现生成的 76 步操作轨迹（三份
 脚本：EWMA 截断与熔断升级、两端钳位、冷启动下游标样本），每行同时记录完整状态（SRTT / RTTVAR /
@@ -1110,10 +1146,10 @@ go test -run XXX -bench BenchmarkDNSCacheGetFast_Hit -benchtime 200000x .
 
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
-python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核与 DTRI fixture 用例
+python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核与 DTRI fixture 用例
 python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则、重写记录、声誉查询、hosts 与 DNS64 全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
-python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（七个 .so）
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（八个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
 python rust/verify.py --all      # 全量
 ```

@@ -42,6 +42,12 @@ func (e *Engine) StartStackMitm(certDir string) string {
 		logf("StartStackMitm: cosmetic injection kernel init failed: %v", cosmeticErr)
 		return ""
 	}
+	if snifferErr := ensureSnifferKernel(); snifferErr != nil {
+		e.mu.Unlock()
+		certMgr.Release()
+		logf("StartStackMitm: flow sniffer kernel init failed: %v", snifferErr)
+		return ""
+	}
 	e.stackCertMgr = certMgr
 	filter := e.stackMitmFilter
 	e.certDir = certDir
