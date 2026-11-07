@@ -11,6 +11,7 @@ members = [
     "diting-safebrowsing-core",
     "diting-hosts-core",
     "diting-dns64-core",
+    "diting-cosmetic-core",
 ]
 resolver = "2"
 

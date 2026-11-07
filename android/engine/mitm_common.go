@@ -62,7 +62,8 @@ func wrapResponseForInjection(resp *http.Response, host string) {
 		return
 	}
 
-	resp.Body = io.NopCloser(NewInjectingReader(bodyReader, host))
+	// The reader is the body: closing it frees the kernel handle the scanner runs on.
+	resp.Body = NewInjectingReader(bodyReader, host)
 	resp.ContentLength = -1
 	resp.Header.Del("Content-Length")
 	resp.Header.Del("Content-Encoding")

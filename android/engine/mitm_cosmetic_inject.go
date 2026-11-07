@@ -6,25 +6,18 @@
 //   avoiding inline injection of 50-100KB CSS payloads and enabling client browser caching.
 // - The stylesheet URL carries the page hostname (`/cosmetic.css?h=<host>`), so the local asset server
 //   can serve the subset of rules scoped to that host plus `#@#` exceptions.
+//
+// Responsibility split: the scanner, the hostname normalization and the `<link>` tag live in the Rust
+// kernel `rust/diting-cosmetic-core` (see mitm_cosmetic_native.go). Go keeps the rule payload, the
+// `io.ReadCloser` the relay hands to net/http, and the log lines. There is no second scanner here.
 
 package tunnel
 
 import (
-	"bytes"
 	"io"
-	"net"
-	"net/url"
 	"strings"
 	"sync"
 )
-
-var headTagBytes = []byte("<head")
-
-const scanLimit = 16 * 1024
-
-// cosmeticAssetPath is the path the injected <link> points at; queries are
-// rebuilt per page hostname, so the constant value is only a fallback.
-const cosmeticAssetPath = "/cosmetic.css"
 
 var (
 	cosmeticMu  sync.RWMutex
@@ -53,204 +46,94 @@ func cosmeticRulesEmpty() bool {
 	return strings.TrimSpace(cosmeticCSS) == ""
 }
 
+// ShouldInjectHTML reports whether a response body is a page worth rewriting.
+//
+// This stays in Go: `strings.Contains(strings.ToLower(ct), "text/html")` needs no state, and the
+// kernel would only add an error path to a predicate the relay asks once per response.
 func ShouldInjectHTML(contentType string) bool {
 	ct := strings.ToLower(contentType)
 	return strings.Contains(ct, "text/html")
 }
 
-// cosmeticLinkTag builds the stylesheet tag for one page hostname.
-func cosmeticLinkTag(host string) string {
-	href := "https://" + LocalAssetHost + cosmeticAssetPath
-	if h := normalizeCosmeticHost(host); h != "" {
-		href += "?h=" + url.QueryEscape(h)
-	}
-	return `<link rel="stylesheet" href="` + href + `">`
-}
-
-// normalizeCosmeticHost lowercases the host, drops any port and strips the
-// trailing root label so it matches the stored rule domains.
+// normalizeCosmeticHost lowercases the host, drops any port and strips the trailing root label so it
+// matches the stored rule domains.
+//
+// The local asset server serves `?h=<host>`, so this is the same normalization the injected link
+// carries; it lives in the kernel and is only wrapped here. A failure (the kernel is loaded by
+// StartStackMitm, so this is unreachable once interception runs) leaves the stylesheet unscoped.
 func normalizeCosmeticHost(host string) string {
-	h := strings.ToLower(strings.TrimSpace(host))
-	if strings.HasPrefix(h, "[") {
-		if idx := strings.LastIndex(h, "]"); idx != -1 {
-			h = h[:idx+1]
-		}
-		return h
+	normalized, err := cosmeticNativeNormalizeHost(host)
+	if err != nil {
+		logf("MITM: cosmetic kernel cannot normalize host %q: %v", host, err)
+		return ""
 	}
-	if idx := strings.LastIndex(h, ":"); idx != -1 {
-		if _, _, err := net.SplitHostPort(h); err == nil {
-			h = h[:idx]
-		}
-	}
-	return strings.TrimSuffix(h, ".")
+	return normalized
 }
 
+// cosmeticLinkTag builds the stylesheet tag for one page hostname.
+//
+// The hostname normalization (`net.SplitHostPort` shape rules, `url.QueryEscape`) happens in the
+// kernel so the tag cannot drift from the rules it is looked up against.
+func cosmeticLinkTag(host string) (string, error) {
+	return cosmeticNativeLinkTag(host)
+}
+
+// injectingReader splices the `<link>` tag into the upstream body as it streams.
+//
+// The scanner state (carry, pending, the 16 KiB scan limit) lives in the kernel; this type only
+// shuffles bytes between net/http and the handle, and frees the handle when the body is closed.
 type injectingReader struct {
-	upstream     io.Reader
-	injected     bool
-	pending      []byte
-	carry        []byte
-	scannedBytes int
-	linkTag      []byte
+	upstream io.Reader
+	kernel   *cosmeticKernel
+	// err is set when the kernel could not be loaded; the first Read reports it instead of
+	// serving the page un-injected.
+	err error
 }
 
-func NewInjectingReader(upstream io.Reader, host string) io.Reader {
-	return &injectingReader{
-		upstream: upstream,
-		linkTag:  []byte(cosmeticLinkTag(host)),
+// NewInjectingReader wraps upstream so the cosmetic stylesheet link is spliced in after `<head>`.
+//
+// The caller owns the returned reader and must close it: that is what frees the kernel handle.
+func NewInjectingReader(upstream io.Reader, host string) io.ReadCloser {
+	reader := &injectingReader{upstream: upstream}
+	if err := ensureCosmeticKernel(); err != nil {
+		reader.err = err
+		return reader
 	}
+	tag, err := cosmeticLinkTag(host)
+	if err != nil {
+		reader.err = err
+		return reader
+	}
+	kernel, err := newCosmeticKernel(tag)
+	if err != nil {
+		reader.err = err
+		return reader
+	}
+	reader.kernel = kernel
+	return reader
 }
 
 func (r *injectingReader) Read(p []byte) (int, error) {
-	if len(r.pending) > 0 {
-		n := copy(p, r.pending)
-		r.pending = r.pending[n:]
+	if r.err != nil {
+		return 0, r.err
+	}
+	// The kernel holds back a partial `<head` marker and the bytes a splice did not fit; it serves
+	// those before the upstream is asked for more.
+	if n := r.kernel.pending(p); n > 0 {
 		return n, nil
 	}
-
 	n, err := r.upstream.Read(p)
-	if n == 0 {
-		// The upstream is exhausted. Any bytes parked in carry are the tail of a
-		// partial `<head` prefix that never completed, so they belong to the
-		// document body and must still be handed to the client; dropping them
-		// truncated the page right at the marker. Flush them before propagating
-		// the terminal error.
-		if len(r.carry) > 0 && err != nil {
-			data := r.carry
-			r.carry = nil
-			nn := copy(p, data)
-			if nn < len(data) {
-				r.pending = data[nn:]
-				return nn, nil
-			}
-			return nn, err
-		}
-		return n, err
-	}
-	if r.injected {
-		return n, err
-	}
-
-	var data []byte
-	if len(r.carry) > 0 {
-		data = make([]byte, len(r.carry)+n)
-		copy(data, r.carry)
-		copy(data[len(r.carry):], p[:n])
-		r.carry = nil
-	} else {
-		data = make([]byte, n)
-		copy(data, p[:n])
-	}
-
-	r.scannedBytes += len(data)
-	if r.scannedBytes > scanLimit {
-		r.injected = true
-		nn := copy(p, data)
-		if nn < len(data) {
-			r.pending = data[nn:]
-		}
-		if err == io.EOF && len(r.pending) > 0 {
-			return nn, nil
-		}
-		return nn, err
-	}
-
-	lower := bytes.ToLower(data)
-	idx := bytes.Index(lower, headTagBytes)
-
-	if idx < 0 {
-
-		carryLen := len(headTagBytes) - 1
-		if carryLen > len(data) {
-			carryLen = len(data)
-		}
-		endBytes := bytes.ToLower(data[len(data)-carryLen:])
-		hasPartial := false
-		for i := 1; i <= carryLen; i++ {
-			if bytes.Equal(endBytes[carryLen-i:], headTagBytes[:i]) {
-				r.carry = make([]byte, i)
-				copy(r.carry, data[len(data)-i:])
-				hasPartial = true
-				outData := data[:len(data)-i]
-				if len(outData) == 0 {
-
-					return 0, err
-				}
-				nn := copy(p, outData)
-				if nn < len(outData) {
-					r.pending = outData[nn:]
-				}
-				if err == io.EOF && len(r.pending) > 0 {
-					return nn, nil
-				}
-				return nn, err
-			}
-		}
-		if !hasPartial {
-			nn := copy(p, data)
-			if nn < len(data) {
-				r.pending = data[nn:]
-			}
-			if err == io.EOF && len(r.pending) > 0 {
-				return nn, nil
-			}
-			return nn, err
-		}
-
-		nn := copy(p, data)
-		return nn, err
-	}
-
-	closeIdx := bytes.IndexByte(lower[idx:], '>')
-	if closeIdx < 0 {
-
-		r.carry = make([]byte, len(data)-idx)
-		copy(r.carry, data[idx:])
-		outData := data[:idx]
-		if len(outData) == 0 {
-			return 0, err
-		}
-		nn := copy(p, outData)
-		if nn < len(outData) {
-			r.pending = outData[nn:]
-		}
-		if err == io.EOF && len(r.pending) > 0 {
-			return nn, nil
-		}
-		return nn, err
-	}
-
-	tagEnd := idx + closeIdx + 1
-	return r.doInject(p, data, tagEnd, err)
+	return r.kernel.process(p, n, err)
 }
 
-func (r *injectingReader) doInject(p []byte, data []byte, tagEnd int, upstreamErr error) (int, error) {
-	r.injected = true
-
-	script := r.linkTag
-
-	before := data[:tagEnd]
-	after := data[tagEnd:]
-
-	total := len(before) + len(script) + len(after)
-
-	if total <= len(p) {
-		n := copy(p, before)
-		n += copy(p[n:], script)
-		n += copy(p[n:], after)
-		return n, upstreamErr
+// Close frees the scanner and, when the upstream can be closed, closes it too.
+func (r *injectingReader) Close() error {
+	if r.kernel != nil {
+		r.kernel.free()
+		r.kernel = nil
 	}
-
-	var combined []byte
-	combined = append(combined, before...)
-	combined = append(combined, script...)
-	combined = append(combined, after...)
-
-	n := copy(p, combined)
-	r.pending = combined[n:]
-
-	if upstreamErr == io.EOF && len(r.pending) > 0 {
-		return n, nil
+	if closer, ok := r.upstream.(io.Closer); ok {
+		return closer.Close()
 	}
-	return n, upstreamErr
+	return nil
 }

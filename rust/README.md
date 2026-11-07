@@ -1,6 +1,6 @@
 # Rust 内核
 
-十一个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+十二个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -11,9 +11,10 @@
 解析、按前缀的 LRU），`diting-hosts-core` 负责**桌面服务的本地权威内核**（hosts 文件解析、
 IPv4/IPv6/反查映射、`HasDomain`、`.in-addr.arpa` / `.ip6.arpa` 反查名解析），
 `diting-dns64-core` 负责**桌面服务的 DNS64 合成内核**（`net.ParseCIDR` 语义的前缀解析、RFC 6052
-地址嵌入、RFC 6147 排除集与“应答里是否已有有效 AAAA”），`diting-go-compat` 是
+地址嵌入、RFC 6147 排除集与“应答里是否已有有效 AAAA”），`diting-cosmetic-core` 负责**同一隧道
+引擎的装饰注入内核**（流式 `<head>` 扫描、主机名归一化与 `<link>` 标签），`diting-go-compat` 是
 各内核共用的 Go 标准库语义（大小写折叠、`strings` 辅助、`regexp` 翻译、`dns.StringToType`）。
-十五个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+十六个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。唯一的例外是 DNS 缓存内核：它只决定“答案能不能复用”，缺库时缓存停用、
 查询直连解析器，回答本身不变。
 
@@ -34,6 +35,7 @@ IPv4/IPv6/反查映射、`HasDomain`、`.in-addr.arpa` / `.ip6.arpa` 反查名�
 | 声誉查询哈希前缀 | Go 桌面服务（纯 Go 动态加载 + C ABI，句柄） | 主机归一化与域名校验、各级父域 SHA-256、前缀查询名、TXT 摘要解析、按前缀的 LRU 与 TTL | 声誉查询引擎启动失败 |
 | 本地 hosts 权威应答 | Go 桌面服务（纯 Go 动态加载 + C ABI，句柄） | hosts 文本解析、各级映射与 PTR 别名、`HasDomain`、反查名解析 | hosts 解析器启动失败 |
 | DNS64 合成 | Go 桌面服务（纯 Go 动态加载 + C ABI，句柄） | 前缀解析与 RFC 6052 嵌入、RFC 6147 排除集、有效 AAAA 判定 | DNS64 合成器启动失败 |
+| 装饰注入（HTML 流式改写） | Go 隧道引擎（`dlopen` + C ABI，句柄） | `<head>` 扫描状态机（carry / pending / 16 KiB 上限）、主机名归一化与 `url.QueryEscape`、`<link>` 标签 | MITM 启动失败（隧道照常起，只是不解密） |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -100,7 +102,16 @@ Go 函数，现在只剩内核一份，`ParseIPFromArpa` 变成一次调用。�
 的部分：A 记录问询、A/CNAME/DNAME 的最小 TTL、把别名补进应答、构造 `dns.AAAA`。缺库时
 `NewDNS64Synthesizer` 返回错误、服务启动失败；前缀写错仍然只是警告（改配置要经过 UI，服务得先活着）。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核与 MITM 过滤内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第十七个把 Android 隧道引擎的**装饰注入**搬进新建的 `diting-cosmetic-core`（`mitm_cosmetic_inject.go`
+只剩规则载荷、日志与 `io.ReadCloser` 包装）：流式扫描器整体在 `inject.rs` —— 尾部半截 `<head`
+标记的 carry、注入后放不下的 pending、16 KiB 扫描上限、`>` 之后拼接的位置都在内核里，
+`normalizeCosmeticHost`（`net.SplitHostPort` 的形状判定 + 一个尾点）、`url.QueryEscape` 与 `<link>`
+标签在 `host.rs`。本地资产服务器服务 `?h=<host>` 时走同一个 FFI（`normalize_host`），
+注入的链接与查到的规则不可能对同一个主机给出两种写法。Go 侧留下的是必须留在 Go 的：规则 JSON
+载荷、`ShouldInjectHTML`（一行 `strings.Contains`，加一次 FFI 只是给谓词多一条错误路径）、
+响应头与 zlib 解压、以及 reader 的 `Close`（释放句柄的唯一时机）。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核与装饰注入内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -108,7 +119,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核与 MITM 过滤内核；桌
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译三个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译四个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -175,6 +186,12 @@ rust/
 │   ├── payload.rs                  # 与 Go 共享的判定报告二进制布局
 │   ├── ffi.rs ffi/tests.rs         # new / free / set_allowed_uids / set_bypass_rules / allows_interception / record_failure / blacklist / load_persistent / free_bytes（ABI_VERSION）
 │   └── tests/fixtures/*.tsv        # 迁移时 Go 原函数生成的 path.Match / host 模式 / 敏感主机语料
+├── diting-cosmetic-core/src/
+│   ├── inject.rs inject/tests.rs   # 流式 `<head>` 扫描：carry / pending / 扫描上限 / 拼接（原 mitm_cosmetic_inject.go）
+│   ├── host.rs host/tests.rs       # 主机名归一化、`net.SplitHostPort` 形状判定、`url.QueryEscape`、`<link>` 标签
+│   ├── payload.rs                  # 文本载荷布局（`<link>` 标签与归一化主机）
+│   ├── ffi.rs ffi/tests.rs         # new / free / pending / process / normalize_host / link_tag / free_bytes（ABI_VERSION）
+│   └── tests/fixtures/*.tsv        # 迁移时 Go 原实现生成的注入对拍、主机归一化与 `<link>` 语料
 ├── diting-policy-core/src/
 │   ├── json.rs                     # 快照载荷（字段与 Android 侧推送的 JSON 一一对应）
 │   ├── glob.rs wildcard_index.rs   # 通配编译与索引（取代 policy_wildcard_index.go）
@@ -201,7 +218,7 @@ rust/
   `resolver_stamp_test.go`（原有用例，现在全部穿过 FFI 跑）。
 - 桌面服务 Go（规则索引 + 规则解析）：`filter_native.go`（加载、规则载荷编码、判定解码）、
   `filter_native_windows.go` / `filter_native_unix.go`（两个平台的加载器）、
-  `native_lib.go`（四个内核对共用的探测顺序与平台文件名）、
+  `native_lib.go`（六个内核对共用的探测顺序与平台文件名）、
   `rule_matcher.go`（`RuleMatcher` 只剩句柄生命周期与结果翻译）、
   `parse_native.go`（解析请求编码、解析结果解码、正则编译）、
   `rule_parser.go`（`ParsedRule` 定义、两个入口、`buildWildcardRegex`）、
@@ -242,6 +259,11 @@ rust/
   `mitm_filter_native_stub.go`（无 cgo 时建不出句柄）、`mitm_filter.go`（只剩日志与句柄生命周期）、
   `mitm_filter_native_test.go`（报告载荷布局与坏载荷）、`mitm_filter_test.go`（白名单、排除规则、
   敏感主机、失败计数、黑名单与持久化文件，全部穿过 FFI 跑）。
+- Go（装饰注入）：`mitm_cosmetic_native.go`（加载、ABI 校验、标签/归一化载荷、`pending` / `process` / 释放）、
+  `mitm_cosmetic_native_stub.go`（无 cgo 时建不出句柄）、`mitm_cosmetic_payload.go`（文本载荷布局，
+  不需要 cgo 就能测解码）、`mitm_cosmetic_inject.go`（规则载荷、`ShouldInjectHTML`、`io.ReadCloser` 包装）、
+  `mitm_cosmetic_native_test.go`（载荷布局、探测路径与原有注入用例）、
+  `mitm_cosmetic_payload_test.go`（无 cgo 也能跑的载荷解码用例）。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -250,11 +272,11 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：四个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：五个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
-DNS 缓存内核（容器 + wire）与 MITM 过滤内核只随 Android APK 交付（桌面服务没有这两块），由
-`build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
+DNS 缓存内核（容器 + wire）、MITM 过滤内核与装饰注入内核只随 Android APK 交付（桌面服务没有
+这三块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的六个内核按平台单独交付（Android 用不到它们）：
 
@@ -369,6 +391,14 @@ DNS64：配置 ──diting_dns64_new(enabled, 前缀文本列表)──> Rust �
        有效判定 ──diting_dns64_has_valid(地址列表)──> 1 / 0
        排除判定 ──diting_dns64_excluded(宽度 + 字节)──> 1 / 0
        单前缀嵌入 ──diting_dns64_embed_net(16 字节前缀, 掩码长度, 4 字节)──> 16 字节（`EmbedIPv4InIPv6`）
+
+装饰注入：规则 JSON ──SetCosmeticRules──> Go 全局（内核不需要它，样式表由 Go 侧编译）
+          响应 ──diting_cosmetic_link_tag(页面主机, 资产主机)──> `<link>` 标签载荷 ──> diting_cosmetic_new(标签)
+                ──> 句柄（carry / pending / 扫描计数各自独立）
+          读取 ──diting_cosmetic_pending(缓冲区)──> 上次没放下或压在 carry 的字节
+               ──diting_cosmetic_process(缓冲区, n, 上游标志)──> 原地改写 + 本次该回多少个字节
+                      ──> 上游错误是否随这一次一起返回（队列没排空就先返回 nil）
+          样式表 ──diting_cosmetic_normalize_host(`?h=` 值)──> 与注入时同一个归一化主机
 
 声誉查询：配置 ──diting_sb_new / diting_sb_configure──> Rust 建两份前缀缓存（恶意网址库 / 家长控制）
           查询 ──diting_sb_plan(服务, 域名, now_ms)──> Rust 归一化+校验 ──> 各级父域 SHA-256
@@ -575,6 +605,37 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
   函数生成的（2964 + 2765 + 73 行），`filter` 的时间相关分支由注入时钟的单测钉住；`path.Match`
   的逐字节复刻包含 `/` 规则、字符类、转义与 `ErrBadPattern`。
 
+## 装饰注入内核的已知边界
+
+- **旧实现在两类输入上会写坏页面，这里没有照抄**：`bytes.ToLower` 是逐 rune 折叠，遇到非法 UTF-8
+  字节会把每个字节换成三字节的 `U+FFFD`、遇到 `İ`(U+0130) 会把两字节折成一字节，于是它算出的
+  `<head` 下标与原始缓冲区对不上——前者直接 `slice bounds out of range` 崩在读 body 的 goroutine
+  里，后者把标签插进标记中间。内核在原地做 ASCII 折叠：多字节字符里不会出现 `<` 或 ASCII 字母，
+  所以匹配结果相同而下标永远指向真实字节。这两类输入不进对拍语料（记录的是崩溃，不是行为），
+  由 `inject.rs` 的单测钉住现在的结论。
+- **`cap == 0` 的 `Read` 不再空转**：旧实现在 pending 非空且 `len(p) == 0` 时每次返回 `(0, nil)`，
+  调用方会死循环；内核在这种调用上直接落到上游（`io.Copy` 与 net/http 都不会传 0 长度缓冲区）。
+- **`carry` 只在“尾部是 `<head` 的前缀”时生效**：与旧实现一致，最多压 4 个字节（`<hea`）。
+  `partial_head` 与完整 `<head` 走的是两条路：后者压整段等 `>`。
+- **`<head` 之后没有 `>` 且同一次读到 EOF 时，那截标记会丢**：这是旧行为（`out` 只有 `<head` 之前
+  的部分），A-064 修的是“数据读完、下一读拿 EOF”那条路径。两条路径都在语料里
+  （`partial_prefix_at_eof` / `partial_prefix_then_eof`），没有顺手改。
+- **`normalize_host` 走损失转换**：Go 的 `strings.ToLower` 逐 rune 折叠非法字节，`&str` 只能
+  `from_utf8_lossy`（一个非法序列换一个 `U+FFFD`，Go 是每个非法字节一个）。主机名在现实中是
+  ASCII 或 IDN UTF-8，语料覆盖了两侧都合法的写法。
+- **`url.QueryEscape` 是按字节复刻**：字母数字与 `-_.~` 保留、空格变 `+`、其余 `%XX` 大写十六进制。
+  `net.SplitHostPort` 只复刻**是否接受**（含 `]` 的形状检查），它从不校验端口值——旧代码也只用了
+  错误是否为空这一个比特。
+- **`ShouldInjectHTML` 留在 Go**：`strings.Contains(strings.ToLower(ct), "text/html")` 一行、
+  每次响应问一次，搬进内核只会给一个纯谓词加一条错误路径。
+- **规则载荷与样式表编译仍在 Go**：`SetCosmeticRules` 存的是原始 JSON，`buildCosmeticCss` 把
+  hide/exception 编译成 CSS 文本——那是另一块（`mitm_local_server.go`），本轮没有搬。
+- **句柄随 body 关闭释放**：`resp.Body` 就是那个 reader（不再是 `io.NopCloser`），`Close` 释放
+  内核句柄并顺带关闭上游；漏关会随 GC 回收 `resp.Body`，但句柄本身要等下次建 reader。
+- **测试需要 cgo**：内核是 cgo 加载的，`mitm_cosmetic_native_test.go` 整份带 `//go:build cgo`；
+  不值得为它造一个纯 Go 的假内核（那就是第二套实现）。载荷解码在
+  `mitm_cosmetic_payload_test.go` 里，不带 cgo 也能跑。
+
 ## 印章内核的已知边界
 
 - **字符串字段必须是 UTF-8**：Rust 用 `String` 保存 lp-string，非法 UTF-8 直接报错；原 Go 实现会把
@@ -587,7 +648,7 @@ source、禁用规则回落到父后缀；`ffi.rs` 的单测钉住构建 / 判�
 - **`splitStampPort` 在两侧各有一份**：Rust 侧供印章解析用，Go 侧留给按主机名查证书指纹的 `pinHost`
   （处理的是普通 `host:port`，与印章无关）。改切分规则要同时改两处。
 - **依赖**：`desktop/service` 的 `go.mod` 新增 `github.com/ebitengine/purego`（Apache-2.0），只用于
-  Linux/macOS 的纯 Go 动态加载；Windows 走标准库 `syscall.LazyDLL`。三个内核共用这套加载器。
+  Linux/macOS 的纯 Go 动态加载；Windows 走标准库 `syscall.LazyDLL`。六个内核共用这套加载器。
 
 ## 规则索引内核的已知边界
 
@@ -914,10 +975,10 @@ go test -run XXX -bench BenchmarkDNSCacheGetFast_Hit -benchtime 200000x .
 
 ```bash
 python rust/verify.py            # fmt + clippy -D warnings + cargo test
-python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核与 DTRI fixture 用例
+python rust/verify.py --go       # 再加 Go 侧策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核与 DTRI fixture 用例
 python rust/verify.py --desktop  # 再加桌面服务（Go）全量用例：印章、规则、重写记录、声誉查询、hosts 与 DNS64 全部经 Rust
 python rust/verify.py --dart     # 再加 Dart 侧规则解析与入库用例
-python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（四个 .so）
+python rust/verify.py --android  # 再加 arm64-v8a 交叉编译（五个 .so）
 python rust/verify.py --bench    # 再加 DTRI / 检索 / 策略判定基准
 python rust/verify.py --all      # 全量
 ```

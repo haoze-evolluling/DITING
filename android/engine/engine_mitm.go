@@ -36,6 +36,12 @@ func (e *Engine) StartStackMitm(certDir string) string {
 		}
 		e.stackMitmFilter = filter
 	}
+	if cosmeticErr := ensureCosmeticKernel(); cosmeticErr != nil {
+		e.mu.Unlock()
+		certMgr.Release()
+		logf("StartStackMitm: cosmetic injection kernel init failed: %v", cosmeticErr)
+		return ""
+	}
 	e.stackCertMgr = certMgr
 	filter := e.stackMitmFilter
 	e.certDir = certDir

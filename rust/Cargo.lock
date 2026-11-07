@@ -95,6 +95,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-cosmetic-core"
+version = "0.1.0"
+dependencies = [
+ "diting-go-compat",
+]
+
+[[package]]
 name = "diting-dns-cache-core"
 version = "0.1.0"
 

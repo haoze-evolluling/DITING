@@ -50,9 +50,10 @@ gomobile bind `
 ## 与 Rust 内核的关系
 
 AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`（域名规则判定）、
-`dlopen("libditing_dns_cache_core.so")`（DNS 缓存容器、取值与改写）与
-`dlopen("libditing_mitm_core.so")`（MITM 拦截过滤、黑名单与失败计数），把这三块交给 Rust
-（见 `rust/README.md`）。这三个 `.so` 与 AAR 无关，它们和 Flutter 侧的 `libditing_rule_core.so`
+`dlopen("libditing_dns_cache_core.so")`（DNS 缓存容器、取值与改写）、
+`dlopen("libditing_mitm_core.so")`（MITM 拦截过滤、黑名单与失败计数）与
+`dlopen("libditing_cosmetic_core.so")`（装饰注入的流式 `<head>` 扫描、主机名归一化与 `<link>` 标签），
+把这四块交给 Rust（见 `rust/README.md`）。这三个 `.so` 与 AAR 无关，它们和 Flutter 侧的 `libditing_rule_core.so`
 一起由 `python rust/build_android.py` 拷进
 `android/app/android/app/src/main/jniLibs/<abi>/`，最终落在 APK 的 `lib/<abi>/`，正好在应用命名
 空间的库搜索路径上。
@@ -60,7 +61,8 @@ AAR 里的 Go 引擎会在运行时 `dlopen("libditing_policy_core.so")`（域�
 因此打包顺序是：`python rust/build_android.py` → `build_aar.ps1` → `flutter build`。少了策略
 `.so` APK 依然能装，但 `ApplyRuleSnapshot` 会失败，隧道启动直接报错（Go 侧已没有第二套判定实现）；
 少了 DNS 缓存 `.so` 则缓存全部 miss，答案仍然正确；少了 MITM 过滤 `.so` 则 MITM 启动报错，
-隧道照常运行但不再解密（Go 侧同样没有第二套过滤实现）。`rust/verify.py --go` 是构建前发现“没带上”的
+隧道照常运行但不再解密（Go 侧同样没有第二套过滤实现）；少了装饰注入 `.so` 则 MITM 同样启动报错，
+不会退化成“拦截了但页面没拿到样式表”。`rust/verify.py --go` 是构建前发现“没带上”的
 地方。
 
 ## 常见问题

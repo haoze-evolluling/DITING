@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cross-compile the Rust cores for Android and drop them into the Flutter app's jniLibs.
 
-Four libraries are built:
+Five libraries are built:
 
 * `libditing_rule_core.so` - rule parsing, rule search and the DTRI writer (Dart/Kotlin callers).
 * `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
@@ -12,11 +12,14 @@ Four libraries are built:
 * `libditing_mitm_core.so` - the MITM filter the same engine dlopen()s (allow list, `path.Match`
   bypass patterns, sensitive-host heuristics, the blacklist with its failure streaks and the
   persistent blacklist file).
+* `libditing_cosmetic_core.so` - the cosmetic injection kernel the same engine dlopen()s (the
+  streaming `<head>` scanner, the hostname normalization and the injected `<link>` tag).
 
-All four are shipped and used at runtime: without the first a rule import throws, without the
+All five are shipped and used at runtime: without the first a rule import throws, without the
 second the tunnel refuses to start, without the third the DNS cache stores nothing (answers go
-straight to the resolver), and without the fourth MITM cannot start (the tunnel runs without
-interception). Run this before every APK build:
+straight to the resolver), without the fourth MITM cannot start (the tunnel runs without
+interception), and without the fifth the same MITM start fails rather than serving pages without the
+cosmetic stylesheet. Run this before every APK build:
 
     python rust/build_android.py              # arm64-v8a + x86_64, release
     python rust/build_android.py --abi arm64  # phones only
@@ -48,6 +51,7 @@ LIB_NAMES = (
     "libditing_policy_core.so",
     "libditing_dns_cache_core.so",
     "libditing_mitm_core.so",
+    "libditing_cosmetic_core.so",
 )
 ANDROID_API = 28
 
@@ -142,6 +146,8 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "diting-dns-cache-core",
         "-p",
         "diting-mitm-core",
+        "-p",
+        "diting-cosmetic-core",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",
@@ -168,7 +174,7 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核、策略内核、DNS 缓存内核与 MITM 过滤内核")
+    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 规则内核、策略内核、DNS 缓存内核、MITM 过滤内核与装饰注入内核")
     parser.add_argument(
         "--abi",
         choices=["all", "arm64", "x86_64"],

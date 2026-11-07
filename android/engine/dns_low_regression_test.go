@@ -1,15 +1,14 @@
 // dns_low_regression_test.go covers the Low-severity triage items that live in
 // the Go tunnel: UDP truncation handling (A-019), the unbounded cert
 // cache (A-071), the connLogSeen dedupe set bound (A-073), ApplyDNSConfig
-// partial-application (A-090) and the InjectingReader carry flush at EOF (A-064).
+// partial-application (A-090). The InjectingReader cases (A-064) moved to
+// mitm_cosmetic_native_test.go with the scanner they exercise.
 
 package tunnel
 
 import (
 	"crypto/tls"
 	"encoding/json"
-	"io"
-	"strings"
 	"testing"
 	"time"
 
@@ -164,47 +163,6 @@ func TestConnLogSeenDedupIsBounded(t *testing.T) {
 	dedup.reset()
 	if dedup.size() != 0 {
 		t.Fatalf("reset left %d entries", dedup.size())
-	}
-}
-
-// --- A-064: InjectingReader must flush carry at EOF ------------------------
-
-func TestInjectingReaderFlushesPartialHeadAtEOF(t *testing.T) {
-	// The document ends in a bare `<head` with no `>`. The reader parks it in
-	// carry hoping the next read completes the tag; at EOF those bytes are still
-	// part of the document and used to be dropped.
-	const body = "<html><body><head"
-	got, err := io.ReadAll(NewInjectingReader(strings.NewReader(body), "example.com"))
-	if err != nil {
-		t.Fatalf("read failed: %v", err)
-	}
-	if string(got) != body {
-		t.Fatalf("carry was dropped at EOF: got %q, want %q", string(got), body)
-	}
-}
-
-func TestInjectingReaderInjectsWhenHeadIsComplete(t *testing.T) {
-	const body = "<html><head><title>t</title></head><body>x</body></html>"
-	out, err := io.ReadAll(NewInjectingReader(strings.NewReader(body), "example.com"))
-	if err != nil {
-		t.Fatalf("read failed: %v", err)
-	}
-	if !strings.Contains(string(out), `rel="stylesheet"`) {
-		t.Fatalf("stylesheet link was not injected: %q", string(out))
-	}
-	if !strings.Contains(string(out), "<title>t</title>") {
-		t.Fatalf("document body was damaged: %q", string(out))
-	}
-}
-
-func TestInjectingReaderPassthroughWhenNoHead(t *testing.T) {
-	const body = "<html><body>no head here at all</body></html>"
-	out, err := io.ReadAll(NewInjectingReader(strings.NewReader(body), "example.com"))
-	if err != nil {
-		t.Fatalf("read failed: %v", err)
-	}
-	if string(out) != body {
-		t.Fatalf("document was altered: got %q, want %q", string(out), body)
 	}
 }
 
