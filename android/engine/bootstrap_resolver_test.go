@@ -1,3 +1,5 @@
+//go:build cgo
+
 // bootstrap_resolver_test.go provides unit tests for bootstrap resolver logic,
 // validating endpoint racing, health score decay, consecutive failure handling, and system resolver fallback.
 
@@ -54,52 +56,66 @@ func (m *mockBootstrapCallback) OnBootstrapResult(
 }
 
 func TestBootstrapIPHealthScoring(t *testing.T) {
-	health := newBootstrapIPHealth()
+	resolver := newBootstrapResolver(nil)
+	if resolver.kernel == nil {
+		t.Fatal("bootstrap kernel must be loadable for this test")
+	}
 	now := time.Now()
-	entry := bootstrapIPConfig{ID: "ip1", Name: "Test 1", IP: "1.1.1.1"}
 
-	initialScore := health.GetScore(entry, now)
-	if initialScore.weight != 1.0 {
-		t.Fatalf("expected initial weight 1.0, got %f", initialScore.weight)
+	initialWeight, cooling, samples, ok := resolver.kernel.score("ip1", 1.0, now.UnixNano())
+	if !ok {
+		t.Fatal("kernel score failed")
+	}
+	if initialWeight != 1.0 {
+		t.Fatalf("expected initial weight 1.0, got %f", initialWeight)
+	}
+	if cooling || samples != 0 {
+		t.Fatalf("a fresh endpoint must not cool down (samples=%f)", samples)
 	}
 
 	for i := 0; i < 5; i++ {
-		health.RecordResult(true, 10, now)
+		resolver.recordResult("ip1", true, 10, now)
 	}
-	fastScore := health.GetScore(entry, now)
-	if fastScore.weight <= 1.0 {
-		t.Fatalf("expected weight > 1.0 for fast responses, got %f", fastScore.weight)
+	fastWeight, _, _, ok := resolver.kernel.score("ip1", 1.0, now.UnixNano())
+	if !ok {
+		t.Fatal("kernel score failed")
+	}
+	if fastWeight <= 1.0 {
+		t.Fatalf("expected weight > 1.0 for fast responses, got %f", fastWeight)
 	}
 
-	health.RecordResult(false, 3000, now)
-	health.RecordResult(false, 3000, now)
-	health.RecordResult(false, 3000, now)
-
-	failedScore := health.GetScore(entry, now)
-	if !failedScore.coolingDown {
+	for i := 0; i < 3; i++ {
+		resolver.recordResult("ip1", false, 3000, now)
+	}
+	failedWeight, failedCooling, _, ok := resolver.kernel.score("ip1", 1.0, now.UnixNano())
+	if !ok {
+		t.Fatal("kernel score failed")
+	}
+	if !failedCooling {
 		t.Fatalf("expected coolingDown to be true after 3 consecutive failures")
 	}
-	if failedScore.weight >= 0.5 {
-		t.Fatalf("expected penalty weight < 0.5 during cooldown, got %f", failedScore.weight)
+	if failedWeight >= 0.5 {
+		t.Fatalf("expected penalty weight < 0.5 during cooldown, got %f", failedWeight)
 	}
 }
 
 func TestBootstrapPlanDistribution(t *testing.T) {
 	resolver := newBootstrapResolver(nil)
+	if resolver.kernel == nil {
+		t.Fatal("bootstrap kernel must be loadable for this test")
+	}
 	ips := []bootstrapIPConfig{
 		{ID: "fast", Name: "Fast IP", IP: "1.1.1.1"},
 		{ID: "slow", Name: "Slow IP", IP: "2.2.2.2"},
 	}
 
 	now := time.Now()
-	fastHealth := resolver.getOrCreateHealth("fast")
 	for i := 0; i < 10; i++ {
-		fastHealth.RecordResult(true, 20, now)
+		resolver.recordResult("fast", true, 20, now)
 	}
 
-	slowHealth := resolver.getOrCreateHealth("slow")
 	for i := 0; i < 10; i++ {
-		slowHealth.RecordResult(true, 800, now)
+		resolver.recordResult("slow", true, 800, now)
 	}
 
 	fastCount := 0
@@ -117,6 +133,25 @@ func TestBootstrapPlanDistribution(t *testing.T) {
 
 	if fastCount <= slowCount*2 {
 		t.Fatalf("expected fast IP count (%d) to be significantly greater than slow IP count (%d)", fastCount, slowCount)
+	}
+}
+
+// A JSON config may omit an endpoint id. The Go health map used to key those under "", and the
+// kernel must accept the empty key rather than silently dropping every sample.
+func TestBootstrapEmptyEndpointIDKeepsHealth(t *testing.T) {
+	resolver := newBootstrapResolver(nil)
+	if resolver.kernel == nil {
+		t.Fatal("bootstrap kernel must be loadable for this test")
+	}
+	now := time.Now()
+	resolver.recordResult("", true, 10, now)
+
+	_, _, samples, ok := resolver.kernel.score("", 1.0, now.UnixNano())
+	if !ok {
+		t.Fatal("kernel score failed")
+	}
+	if samples != 1.0 {
+		t.Fatalf("expected one sample under the empty id, got %f", samples)
 	}
 }
 
@@ -162,10 +197,7 @@ func TestBootstrapResolveHostMock(t *testing.T) {
 	}
 
 	resolver.ResetStats()
-	resolver.healthMu.RLock()
-	healthLen := len(resolver.healthMap)
-	resolver.healthMu.RUnlock()
-	if healthLen != 0 {
+	if healthLen := resolver.kernel.healthCount(); healthLen != 0 {
 		t.Fatalf("expected health map to be empty after ResetStats, got len %d", healthLen)
 	}
 }

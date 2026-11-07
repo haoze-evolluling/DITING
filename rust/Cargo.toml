@@ -15,6 +15,7 @@ members = [
     "diting-resolver-core",
     "diting-dns-core",
     "diting-sniffer-core",
+    "diting-bootstrap-core",
 ]
 resolver = "2"
 

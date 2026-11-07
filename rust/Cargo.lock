@@ -95,6 +95,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-bootstrap-core"
+version = "0.1.0"
+
+[[package]]
 name = "diting-cosmetic-core"
 version = "0.1.0"
 dependencies = [

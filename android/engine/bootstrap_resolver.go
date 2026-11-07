@@ -4,16 +4,21 @@
 // - Server Racing: Dispatches simultaneous UDP queries across multiple public DNS bootstrap servers, selecting the fastest valid response.
 // - Health Scoring: Tracks success latency and consecutive failures per bootstrap endpoint.
 // - System Fallback: Falls back to protected system DNS resolution if all bootstrap racing attempts fail.
+//
+// Responsibility split (Rust kernel rust/diting-bootstrap-core): the per-endpoint health model
+// (half-life decay, EWMA latency, jitter, consecutive-failure penalty, cooldown), the weighted
+// primary pick with its exploration rate, the fallback order and the one-minute host cache all
+// live in the kernel. Go keeps the JSON config, the UDP query, the logging callback and the
+// `net.IP` fast path. Every kernel call passes unix nanoseconds, so the kernel never reads a
+// clock; the two random rolls come from Go as well.
 
 package tunnel
 
 import (
 	"context"
 	"fmt"
-	"math"
 	"math/rand"
 	"net"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -46,160 +51,6 @@ type bootstrapConfig struct {
 	IPs     []bootstrapIPConfig `json:"ips"`
 }
 
-type cachedBootstrapHost struct {
-	ip        string
-	expiresAt time.Time
-}
-
-const (
-	bsDefaultLatencyMs         = 250.0
-	bsMinLatencyMs             = 20.0
-	bsMaxLatencyMs             = 5000.0
-	bsMinWeight                = 0.05
-	bsMaxWeight                = 3.0
-	bsJitterWeight             = 0.5
-	bsCooldownPenalty          = 0.1
-	bsConsecutiveFailPenalty   = 0.2
-	bsEwmaAlpha                = 0.25
-	bsJitterAlpha              = 0.20
-	bsBaseExplorationRate      = 0.02
-	bsLowSampleExplorationRate = 0.08
-	bsRecoveryExplorationRate  = 0.10
-	bsLowSampleThreshold       = 10.0
-	bsCooldownFailureThreshold = 3
-	bsCooldownDuration         = 30 * time.Second
-	bsHealthHalfLifeDuration   = 30 * time.Minute
-)
-
-type bootstrapIPHealth struct {
-	mu                  sync.RWMutex
-	successes           int
-	failures            int
-	ewmaMs              float64
-	jitterMs            float64
-	consecutiveFailures int
-	cooldownUntil       time.Time
-	decayedSuccesses    float64
-	decayedFailures     float64
-	lastUpdatedAt       time.Time
-}
-
-func newBootstrapIPHealth() *bootstrapIPHealth {
-	return &bootstrapIPHealth{
-		ewmaMs:        bsDefaultLatencyMs,
-		lastUpdatedAt: time.Now(),
-	}
-}
-
-func (h *bootstrapIPHealth) applyDecayLocked(now time.Time) {
-	if h.lastUpdatedAt.IsZero() {
-		h.lastUpdatedAt = now
-		return
-	}
-	elapsed := now.Sub(h.lastUpdatedAt)
-	if elapsed <= 0 {
-		return
-	}
-	factor := math.Pow(0.5, float64(elapsed)/float64(bsHealthHalfLifeDuration))
-	h.decayedSuccesses *= factor
-	h.decayedFailures *= factor
-	h.lastUpdatedAt = now
-}
-
-func (h *bootstrapIPHealth) RecordResult(success bool, elapsedMs int64, now time.Time) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	h.applyDecayLocked(now)
-
-	safeElapsed := float64(elapsedMs)
-	if safeElapsed < 1.0 {
-		safeElapsed = 1.0
-	}
-
-	if success {
-		h.successes++
-		h.decayedSuccesses += 1.0
-		h.consecutiveFailures = 0
-		h.cooldownUntil = time.Time{}
-
-		h.ewmaMs = h.ewmaMs*(1.0-bsEwmaAlpha) + safeElapsed*bsEwmaAlpha
-		h.jitterMs = h.jitterMs*(1.0-bsJitterAlpha) + math.Abs(safeElapsed-h.ewmaMs)*bsJitterAlpha
-	} else {
-		h.failures++
-		h.decayedFailures += 1.0
-		h.consecutiveFailures++
-		if h.consecutiveFailures >= bsCooldownFailureThreshold {
-			h.cooldownUntil = now.Add(bsCooldownDuration)
-		}
-	}
-	h.lastUpdatedAt = now
-}
-
-type bootstrapScore struct {
-	entry       bootstrapIPConfig
-	weight      float64
-	coolingDown bool
-	sampleCount float64
-}
-
-func (h *bootstrapIPHealth) GetScore(entry bootstrapIPConfig, now time.Time) bootstrapScore {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	h.applyDecayLocked(now)
-
-	decayedAttempts := h.decayedSuccesses + h.decayedFailures
-	coolingDown := !h.cooldownUntil.IsZero() && now.Before(h.cooldownUntil)
-
-	if decayedAttempts <= 0 {
-		initialWeight := entry.Weight
-		if initialWeight <= 0 {
-			initialWeight = 1.0
-		}
-		return bootstrapScore{
-			entry:       entry,
-			weight:      initialWeight,
-			coolingDown: coolingDown,
-			sampleCount: 0,
-		}
-	}
-
-	correctness := (h.decayedSuccesses + 2.0) / (decayedAttempts + 3.0)
-
-	speed := 1.0
-	if h.successes > 0 {
-		effectiveLatency := h.ewmaMs + h.jitterMs*bsJitterWeight
-		if effectiveLatency < bsMinLatencyMs {
-			effectiveLatency = bsMinLatencyMs
-		} else if effectiveLatency > bsMaxLatencyMs {
-			effectiveLatency = bsMaxLatencyMs
-		}
-		speed = bsDefaultLatencyMs / effectiveLatency
-	}
-
-	cPenalty := 1.0
-	if coolingDown {
-		cPenalty = bsCooldownPenalty
-	}
-
-	fPenalty := 1.0 / (1.0 + float64(h.consecutiveFailures)*bsConsecutiveFailPenalty)
-
-	w := correctness * speed * cPenalty * fPenalty
-	if w < bsMinWeight {
-		w = bsMinWeight
-	} else if w > bsMaxWeight {
-		w = bsMaxWeight
-	}
-
-	return bootstrapScore{
-		entry:       entry,
-		weight:      w,
-		coolingDown: coolingDown,
-		sampleCount: decayedAttempts,
-	}
-}
-
 type bootstrapPlan struct {
 	primary     bootstrapIPConfig
 	fallbacks   []bootstrapIPConfig
@@ -212,22 +63,21 @@ type bootstrapResolver struct {
 	ips       []bootstrapIPConfig
 	protectFn func(fd int) bool
 
-	cacheMu sync.RWMutex
-	cache   map[string]*cachedBootstrapHost
-
 	callbackMu sync.RWMutex
 	callback   BootstrapLogCallback
 
-	healthMu  sync.RWMutex
-	healthMap map[string]*bootstrapIPHealth
+	// kernel is nil when the Rust library is missing or has a stale ABI. Bootstrap is then
+	// reported as disabled, so callers dial the provider hostname through the normal path.
+	// There is no second scoring implementation to fall back to.
+	kernel *nativeBootstrap
 }
 
 func newBootstrapResolver(protectFn func(fd int) bool) *bootstrapResolver {
-	return &bootstrapResolver{
-		protectFn: protectFn,
-		cache:     make(map[string]*cachedBootstrapHost),
-		healthMap: make(map[string]*bootstrapIPHealth),
+	resolver := &bootstrapResolver{protectFn: protectFn}
+	if kernel, err := newNativeBootstrap(); err == nil {
+		resolver.kernel = kernel
 	}
+	return resolver
 }
 
 func (b *bootstrapResolver) SetCallback(cb BootstrapLogCallback) {
@@ -247,69 +97,38 @@ func (b *bootstrapResolver) UpdateConfig(cfg bootstrapConfig) {
 	b.enabled = cfg.Enabled
 	b.ips = make([]bootstrapIPConfig, len(cfg.IPs))
 	copy(b.ips, cfg.IPs)
+	kernel := b.kernel
 	b.mu.Unlock()
 
-	b.cacheMu.Lock()
-	b.cache = make(map[string]*cachedBootstrapHost)
-	b.cacheMu.Unlock()
+	// Health history is keyed by endpoint id and survives a config change; only the resolved
+	// host cache is invalidated.
+	if kernel != nil {
+		kernel.clearCache()
+	}
 }
 
 func (b *bootstrapResolver) ResetStats() {
-	b.healthMu.Lock()
-	b.healthMap = make(map[string]*bootstrapIPHealth)
-	b.healthMu.Unlock()
-
-	b.cacheMu.Lock()
-	b.cache = make(map[string]*cachedBootstrapHost)
-	b.cacheMu.Unlock()
+	if b.kernel != nil {
+		b.kernel.reset()
+	}
 }
 
 func (b *bootstrapResolver) IsEnabled() bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-	return b.enabled && len(b.ips) > 0
+	return b.enabled && len(b.ips) > 0 && b.kernel != nil
 }
 
-func (b *bootstrapResolver) getOrCreateHealth(id string) *bootstrapIPHealth {
-	b.healthMu.RLock()
-	h, ok := b.healthMap[id]
-	b.healthMu.RUnlock()
-	if ok {
-		return h
+// recordResult folds one bootstrap attempt into the endpoint's health.
+func (b *bootstrapResolver) recordResult(id string, success bool, elapsedMs int64, now time.Time) {
+	if b.kernel == nil {
+		return
 	}
-
-	b.healthMu.Lock()
-	defer b.healthMu.Unlock()
-	if h, ok := b.healthMap[id]; ok {
-		return h
-	}
-	h = newBootstrapIPHealth()
-	b.healthMap[id] = h
-	return h
+	b.kernel.recordResult(id, success, elapsedMs, now.UnixNano())
 }
 
-func (b *bootstrapResolver) getCached(host string) (string, bool) {
-	b.cacheMu.RLock()
-	defer b.cacheMu.RUnlock()
-	entry, ok := b.cache[host]
-	if !ok {
-		return "", false
-	}
-	if time.Now().After(entry.expiresAt) {
-		return "", false
-	}
-	return entry.ip, true
-}
-
-func (b *bootstrapResolver) putCached(host string, ip string) {
-	b.cacheMu.Lock()
-	b.cache[host] = &cachedBootstrapHost{
-		ip:        ip,
-		expiresAt: time.Now().Add(60 * time.Second),
-	}
-	b.cacheMu.Unlock()
-}
-
+// choosePlan asks the kernel for the primary endpoint and the fallback order. The index roll is
+// injected so the decision stays testable and the kernel owns no random source.
 func (b *bootstrapResolver) choosePlan(ips []bootstrapIPConfig, now time.Time) bootstrapPlan {
 	if len(ips) == 0 {
 		return bootstrapPlan{}
@@ -317,88 +136,30 @@ func (b *bootstrapResolver) choosePlan(ips []bootstrapIPConfig, now time.Time) b
 	if len(ips) == 1 {
 		return bootstrapPlan{primary: ips[0]}
 	}
-
-	scores := make([]bootstrapScore, len(ips))
-	for i, entry := range ips {
-		health := b.getOrCreateHealth(entry.ID)
-		scores[i] = health.GetScore(entry, now)
+	if b.kernel == nil {
+		return bootstrapPlan{}
 	}
 
-	candidates := make([]bootstrapScore, 0, len(scores))
-	hasCoolingDown := false
-	hasLowSample := false
-	for _, s := range scores {
-		if s.coolingDown {
-			hasCoolingDown = true
-		} else {
-			candidates = append(candidates, s)
-		}
-		if s.sampleCount < bsLowSampleThreshold {
-			hasLowSample = true
-		}
+	result, err := b.kernel.plan(ips, now.UnixNano(), rand.Float64(), rand.Float64(), rand.Uint64())
+	if err != nil {
+		logf("Bootstrap: plan failed: %v", err)
+		return bootstrapPlan{}
 	}
-	if len(candidates) == 0 {
-		candidates = scores
+	if result.primary < 0 || result.primary >= len(ips) {
+		return bootstrapPlan{}
 	}
 
-	explorationRate := bsBaseExplorationRate
-	if hasCoolingDown {
-		explorationRate = bsRecoveryExplorationRate
-	} else if hasLowSample {
-		explorationRate = bsLowSampleExplorationRate
+	plan := bootstrapPlan{
+		primary:     ips[result.primary],
+		fallbacks:   make([]bootstrapIPConfig, 0, len(result.fallbacks)),
+		exploration: result.exploration,
 	}
-
-	exploration := rand.Float64() < explorationRate
-	var primary bootstrapScore
-	if exploration {
-		primary = candidates[rand.Intn(len(candidates))]
-	} else {
-		primary = chooseWeighted(candidates)
-	}
-
-	remaining := make([]bootstrapScore, 0, len(scores)-1)
-	for _, s := range scores {
-		if s.entry.ID != primary.entry.ID {
-			remaining = append(remaining, s)
+	for _, index := range result.fallbacks {
+		if index >= 0 && index < len(ips) {
+			plan.fallbacks = append(plan.fallbacks, ips[index])
 		}
 	}
-	sort.SliceStable(remaining, func(i, j int) bool {
-		return remaining[i].weight > remaining[j].weight
-	})
-
-	fallbacks := make([]bootstrapIPConfig, len(remaining))
-	for i, s := range remaining {
-		fallbacks[i] = s.entry
-	}
-
-	return bootstrapPlan{
-		primary:     primary.entry,
-		fallbacks:   fallbacks,
-		exploration: exploration,
-	}
-}
-
-func chooseWeighted(candidates []bootstrapScore) bootstrapScore {
-	var total float64
-	for _, c := range candidates {
-		if c.weight > 0 {
-			total += c.weight
-		}
-	}
-	if total <= 0 {
-		return candidates[0]
-	}
-
-	r := rand.Float64() * total
-	for _, c := range candidates {
-		if c.weight > 0 {
-			r -= c.weight
-			if r <= 0 {
-				return c
-			}
-		}
-	}
-	return candidates[len(candidates)-1]
+	return plan
 }
 
 func (b *bootstrapResolver) ResolveHost(ctx context.Context, host string) (string, error) {
@@ -414,14 +175,15 @@ func (b *bootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 	ips := make([]bootstrapIPConfig, len(b.ips))
 	copy(ips, b.ips)
 	protectFn := b.protectFn
+	kernel := b.kernel
 	b.mu.RUnlock()
 
-	if !enabled || len(ips) == 0 {
+	if !enabled || len(ips) == 0 || kernel == nil {
 		return host, nil
 	}
 
 	normalizedHost := strings.ToLower(strings.TrimSpace(host))
-	if cachedIP, ok := b.getCached(normalizedHost); ok {
+	if cachedIP, ok := kernel.cacheGet(normalizedHost, time.Now().UnixNano()); ok {
 		return cachedIP, nil
 	}
 
@@ -449,12 +211,11 @@ func (b *bootstrapResolver) ResolveHost(ctx context.Context, host string) (strin
 			elapsedMs = 1
 		}
 
-		health := b.getOrCreateHealth(entry.ID)
 		isSuccess := (err == nil && resolvedIP != "")
-		health.RecordResult(isSuccess, elapsedMs, time.Now())
+		b.recordResult(entry.ID, isSuccess, elapsedMs, time.Now())
 
 		if isSuccess {
-			b.putCached(normalizedHost, resolvedIP)
+			kernel.cachePut(normalizedHost, resolvedIP, time.Now().UnixNano())
 			if cb != nil {
 				msg := ""
 				if plan.exploration && i == 0 {
