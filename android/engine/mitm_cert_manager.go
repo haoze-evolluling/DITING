@@ -1,27 +1,31 @@
-// mitm_cert_manager.go implements the dynamic certificate authority (CertManager) for on-the-fly leaf certificate generation.
+// mitm_cert_manager.go keeps the Go half of the dynamic certificate authority (CertManager).
 //
-// Certificate Minting & Caching:
-// - Root CA: Generates or loads an ECDSA root CA ("DITING HTTPS Inspection Root CA") on persistent storage.
-// - Dynamic Leaf Minting: Signs domain leaf certificates on demand using SAN extensions matching intercepted hostnames.
-// - LRU Cache: Maintains an in-memory certificate cache bounded to [certCacheMaxEntries] entries with 24-hour
-//   validity to minimize signing latency.
+// What is left here after the migration to rust/diting-cert-core:
+// - Root CA persistence: the `ca.crt` / `ca.key` file names, the reads and writes, and the
+//   "load from disk, otherwise generate and save" decision.
+// - Minted leaf cache: a size-bounded LRU of `*tls.Certificate` (a Go type, so it cannot move) with
+//   24-hour validity, plus the per-host single-flight that keeps one handshake storm to one mint.
+// - tls.Config glue: `GetCertificate`, the SNI default and `NextProtos`.
+//
+// What moved to the kernel: the CA template (subject, validity window, key usage, serial, the SEC1
+// `EC PRIVATE KEY` encoding), the load-time validation and its exact error texts, and leaf minting
+// (SAN rule, shared leaf key, AKI/SKI chain, NotAfter). The kernel never reads a clock, so every
+// call passes `time.Now()`'s unix seconds.
+//
+// Without the kernel `NewCertManager` fails, `StartStackMitm` reports it, and the tunnel runs
+// unintercepted instead of asking the OS to trust a root nobody can sign with.
 
 package tunnel
 
 import (
 	"container/list"
 	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"math/big"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 )
@@ -34,29 +38,28 @@ const (
 )
 
 type CertManager struct {
-	mu       sync.RWMutex
-	caCert   *x509.Certificate
-	caKey    *ecdsa.PrivateKey
-	caPEM    []byte
+	// mu guards ca against Release; minting holds it for the whole kernel call so a teardown
+	// cannot free the handle under a handshake in flight.
+	mu sync.RWMutex
+	// ca is the kernel's CA handle, nil once released or when loading failed.
+	ca *nativeCertAuthority
+	// caPEM is the CA certificate PEM. It is cached (not read back from the kernel every time)
+	// and survives Release, because `GetMitmCACert` is still answered after MITM stops.
+	caPEM string
+	// caKeyPEM is only set when this process generated the CA: `initCA` needs it once, to write
+	// `ca.key`. A loaded CA never exposes its key, so it stays empty.
 	caKeyPEM []byte
 
 	certCache certCacheStore
 
 	flightCache sync.Map
 
-	// leafKey is one P-256 key shared by every minted leaf certificate.
-	// Generating a fresh key per host doubled the per-host minting cost and the
-	// key never leaves this process, so per-host keys bought no isolation.
+	// leafKey is the one P-256 key every minted leaf shares, parsed from the kernel's key PEM once.
+	// Generating a fresh key per host doubled the per-host minting cost and the key never leaves
+	// this process, so per-host keys bought no isolation.
 	leafKeyOnce sync.Once
 	leafKey     *ecdsa.PrivateKey
 	leafKeyErr  error
-}
-
-func (cm *CertManager) sharedLeafKey() (*ecdsa.PrivateKey, error) {
-	cm.leafKeyOnce.Do(func() {
-		cm.leafKey, cm.leafKeyErr = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	})
-	return cm.leafKey, cm.leafKeyErr
 }
 
 type cachedCert struct {
@@ -168,19 +171,44 @@ func NewCertManager(certDir string) (*CertManager, error) {
 	return cm, nil
 }
 
-// Release drops every minted leaf certificate. Engine.StopStackMitm calls it so
-// a torn-down MITM session does not keep an engine-lifetime cache alive.
+// Release drops every minted leaf certificate and the kernel's CA handle.
+// Engine.StopStackMitm calls it so a torn-down MITM session does not keep an
+// engine-lifetime cache (or a signing key) alive. It is idempotent, and
+// GetCACertPEM keeps answering from the cached PEM afterwards.
 func (cm *CertManager) Release() {
 	if cm == nil {
 		return
 	}
 	cm.certCache.reset(certCacheMaxEntries)
+	cm.mu.Lock()
+	ca := cm.ca
+	cm.ca = nil
+	cm.mu.Unlock()
+	if ca != nil {
+		ca.release()
+	}
 }
 
 func (cm *CertManager) GetCACertPEM() string {
 	cm.mu.RLock()
 	defer cm.mu.RUnlock()
-	return string(cm.caPEM)
+	return cm.caPEM
+}
+
+// caCertificate parses the cached PEM for logging; nil when nothing is loaded.
+func (cm *CertManager) caCertificate() *x509.Certificate {
+	cm.mu.RLock()
+	certPEM := cm.caPEM
+	cm.mu.RUnlock()
+	block, _ := pem.Decode([]byte(certPEM))
+	if block == nil {
+		return nil
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return nil
+	}
+	return cert
 }
 
 func (cm *CertManager) GetDynamicTLSConfigForHost(defaultHost string) *tls.Config {
@@ -242,9 +270,9 @@ func (cm *CertManager) initCA(certDir string) error {
 		if err := cm.loadCA(certPath, keyPath); err == nil {
 			logf("MITM CA loaded from disk: %s", certDir)
 			return nil
+		} else {
+			logf("MITM CA: failed to load from disk (%v), regenerating...", err)
 		}
-
-		logf("MITM CA: failed to load from disk, regenerating...")
 	}
 
 	if err := cm.generateCA(); err != nil {
@@ -259,6 +287,29 @@ func (cm *CertManager) initCA(certDir string) error {
 	return nil
 }
 
+// adopt publishes a CA handle plus the certificate PEM it was loaded from and, for a freshly
+// generated CA, the key PEM to persist.
+func (cm *CertManager) adopt(ca *nativeCertAuthority, certPEM string, keyPEM []byte) {
+	cert, err := func() (*x509.Certificate, error) {
+		block, _ := pem.Decode([]byte(certPEM))
+		if block == nil {
+			return nil, fmt.Errorf("no PEM block found")
+		}
+		return x509.ParseCertificate(block.Bytes)
+	}()
+
+	cm.mu.Lock()
+	cm.ca = ca
+	cm.caPEM = certPEM
+	cm.caKeyPEM = keyPEM
+	cm.mu.Unlock()
+
+	if err == nil {
+		logf("MITM CA: CN=%s, valid until %s", cert.Subject.CommonName,
+			cert.NotAfter.Format("2006-01-02"))
+	}
+}
+
 func (cm *CertManager) loadCA(certPath, keyPath string) error {
 	certPEM, err := os.ReadFile(certPath)
 	if err != nil {
@@ -269,54 +320,28 @@ func (cm *CertManager) loadCA(certPath, keyPath string) error {
 		return fmt.Errorf("read CA key: %w", err)
 	}
 
-	certBlock, _ := pem.Decode(certPEM)
-	if certBlock == nil {
-		return fmt.Errorf("decode CA cert PEM: no PEM block found")
-	}
-	caCert, err := x509.ParseCertificate(certBlock.Bytes)
+	ca, err := loadCertAuthority(certPEM, keyPEM, time.Now())
 	if err != nil {
-		return fmt.Errorf("parse CA cert: %w", err)
+		return err
+	}
+	// The kernel re-encodes the certificate it holds; reuse the PEM from disk when it matches so
+	// `GetCACertPEM` hands the installed root back byte for byte.
+	decodeErr := func() error {
+		kernelPEM, kernelErr := ca.caPEM()
+		if kernelErr != nil {
+			return kernelErr
+		}
+		if kernelPEM != string(certPEM) {
+			certPEM = []byte(kernelPEM)
+		}
+		return nil
+	}()
+	if decodeErr != nil {
+		ca.release()
+		return decodeErr
 	}
 
-	if !caCert.IsCA {
-		return fmt.Errorf("loaded certificate is not a CA (IsCA=false)")
-	}
-	if caCert.Subject.CommonName != caCommonName ||
-		len(caCert.Subject.Organization) != 1 || caCert.Subject.Organization[0] != caOrganization {
-		return fmt.Errorf("loaded certificate has an outdated subject")
-	}
-
-	now := time.Now()
-	if now.Before(caCert.NotBefore) || now.After(caCert.NotAfter) {
-		return fmt.Errorf("CA certificate expired or not yet valid (NotBefore=%s, NotAfter=%s)",
-			caCert.NotBefore.Format("2006-01-02"), caCert.NotAfter.Format("2006-01-02"))
-	}
-
-	keyBlock, _ := pem.Decode(keyPEM)
-	if keyBlock == nil {
-		return fmt.Errorf("decode CA key PEM: no PEM block found")
-	}
-	caKey, err := x509.ParseECPrivateKey(keyBlock.Bytes)
-	if err != nil {
-		return fmt.Errorf("parse CA key: %w", err)
-	}
-
-	certPubKey, ok := caCert.PublicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return fmt.Errorf("CA certificate public key is not ECDSA")
-	}
-	if caKey.PublicKey.X.Cmp(certPubKey.X) != 0 || caKey.PublicKey.Y.Cmp(certPubKey.Y) != 0 {
-		return fmt.Errorf("CA private key does not match certificate public key")
-	}
-
-	cm.mu.Lock()
-	cm.caCert = caCert
-	cm.caKey = caKey
-	cm.caPEM = certPEM
-	cm.caKeyPEM = keyPEM
-	cm.mu.Unlock()
-
-	logf("MITM CA loaded: CN=%s, valid until %s", caCert.Subject.CommonName, caCert.NotAfter.Format("2006-01-02"))
+	cm.adopt(ca, string(certPEM), nil)
 	return nil
 }
 
@@ -326,7 +351,11 @@ func (cm *CertManager) saveCA(certPath, keyPath string) error {
 	keyPEM := cm.caKeyPEM
 	cm.mu.RUnlock()
 
-	if err := os.WriteFile(certPath, certPEM, 0644); err != nil {
+	if len(certPEM) == 0 || len(keyPEM) == 0 {
+		return fmt.Errorf("CA not initialized")
+	}
+
+	if err := os.WriteFile(certPath, []byte(certPEM), 0644); err != nil {
 		return fmt.Errorf("write CA cert: %w", err)
 	}
 
@@ -337,56 +366,16 @@ func (cm *CertManager) saveCA(certPath, keyPath string) error {
 }
 
 func (cm *CertManager) generateCA() error {
-	caKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	ca, keyPEM, err := generateCertAuthority(time.Now())
 	if err != nil {
-		return fmt.Errorf("generate CA key: %w", err)
+		return err
 	}
-
-	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	certPEM, err := ca.caPEM()
 	if err != nil {
-		return fmt.Errorf("generate serial: %w", err)
+		ca.release()
+		return err
 	}
-
-	caTemplate := &x509.Certificate{
-		SerialNumber: serialNumber,
-		Subject: pkix.Name{
-			Organization: []string{caOrganization},
-			CommonName:   caCommonName,
-		},
-		NotBefore:             time.Now().Add(-24 * time.Hour),
-		NotAfter:              time.Now().Add(10 * 365 * 24 * time.Hour),
-		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-		BasicConstraintsValid: true,
-		IsCA:                  true,
-		MaxPathLen:            1,
-	}
-
-	caCertDER, err := x509.CreateCertificate(rand.Reader, caTemplate, caTemplate, &caKey.PublicKey, caKey)
-	if err != nil {
-		return fmt.Errorf("create CA cert: %w", err)
-	}
-
-	caCert, err := x509.ParseCertificate(caCertDER)
-	if err != nil {
-		return fmt.Errorf("parse CA cert: %w", err)
-	}
-
-	caPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: caCertDER})
-
-	caKeyDER, err := x509.MarshalECPrivateKey(caKey)
-	if err != nil {
-		return fmt.Errorf("marshal CA key: %w", err)
-	}
-	caKeyPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: caKeyDER})
-
-	cm.mu.Lock()
-	cm.caCert = caCert
-	cm.caKey = caKey
-	cm.caPEM = caPEM
-	cm.caKeyPEM = caKeyPEM
-	cm.mu.Unlock()
-
-	logf("MITM CA generated: CN=%s, valid until %s", caCert.Subject.CommonName, caCert.NotAfter.Format("2006-01-02"))
+	cm.adopt(ca, certPEM, []byte(keyPEM))
 	return nil
 }
 
@@ -399,59 +388,71 @@ func (cm *CertManager) getCertForHost(host string) (*tls.Certificate, error) {
 	}
 
 	cm.mu.RLock()
-	caCert := cm.caCert
-	caKey := cm.caKey
-	cm.mu.RUnlock()
-
-	if caCert == nil || caKey == nil {
+	ca := cm.ca
+	if ca == nil {
+		cm.mu.RUnlock()
 		return nil, fmt.Errorf("CA not initialized")
 	}
-
-	leafKey, err := cm.sharedLeafKey()
-	if err != nil {
-		return nil, fmt.Errorf("generate leaf key for %s: %w", host, err)
-	}
-
-	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
-	if err != nil {
-		return nil, fmt.Errorf("generate serial for %s: %w", host, err)
-	}
-
-	dnsNames := []string{host}
-	if parts := strings.SplitN(host, ".", 2); len(parts) == 2 && strings.Contains(parts[1], ".") {
-		wildcard := "*." + parts[1]
-		dnsNames = append(dnsNames, wildcard)
-	}
-
-	leafTemplate := &x509.Certificate{
-		SerialNumber: serialNumber,
-		Subject: pkix.Name{
-			Organization: []string{caOrganization},
-			CommonName:   host,
-		},
-		DNSNames:              dnsNames,
-		NotBefore:             time.Now().Add(-1 * time.Hour),
-		NotAfter:              time.Now().Add(24 * time.Hour),
-		KeyUsage:              x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		BasicConstraintsValid: true,
-	}
-
-	leafCertDER, err := x509.CreateCertificate(rand.Reader, leafTemplate, caCert, &leafKey.PublicKey, caKey)
+	chainPEM, keyPEM, notAfter, err := ca.issue(host, time.Now())
+	cm.mu.RUnlock()
 	if err != nil {
 		return nil, fmt.Errorf("sign leaf cert for %s: %w", host, err)
 	}
 
-	tlsCert := &tls.Certificate{
-		Certificate: [][]byte{leafCertDER, caCert.Raw},
-		PrivateKey:  leafKey,
+	chain, err := certChainDER(chainPEM)
+	if err != nil {
+		return nil, fmt.Errorf("load leaf cert for %s: %w", host, err)
+	}
+	leafKey, err := cm.sharedLeafKey([]byte(keyPEM))
+	if err != nil {
+		return nil, fmt.Errorf("load leaf key for %s: %w", host, err)
 	}
 
+	tlsCert := &tls.Certificate{Certificate: chain, PrivateKey: leafKey}
 	cm.certCache.store(host, &cachedCert{
 		cert:      tlsCert,
-		expiresAt: leafTemplate.NotAfter,
+		expiresAt: notAfter,
 	})
 	return tlsCert, nil
+}
+
+// sharedLeafKey parses the kernel's shared leaf key once; every minted certificate reuses the same
+// key object, so N hosts cost one key rather than N.
+func (cm *CertManager) sharedLeafKey(keyPEM []byte) (*ecdsa.PrivateKey, error) {
+	cm.leafKeyOnce.Do(func() {
+		block, _ := pem.Decode(keyPEM)
+		if block == nil {
+			cm.leafKeyErr = fmt.Errorf("decode leaf key PEM: no PEM block found")
+			return
+		}
+		cm.leafKey, cm.leafKeyErr = x509.ParseECPrivateKey(block.Bytes)
+		if cm.leafKeyErr != nil {
+			cm.leafKeyErr = fmt.Errorf("parse leaf key: %w", cm.leafKeyErr)
+		}
+	})
+	return cm.leafKey, cm.leafKeyErr
+}
+
+// certChainDER turns the kernel's chain PEM (leaf first, then the CA) into the DER list
+// tls.Certificate wants.
+func certChainDER(chainPEM string) ([][]byte, error) {
+	var chain [][]byte
+	rest := []byte(chainPEM)
+	for {
+		var block *pem.Block
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+		if block.Type != "CERTIFICATE" {
+			return nil, fmt.Errorf("unexpected PEM block %q in the leaf chain", block.Type)
+		}
+		chain = append(chain, block.Bytes)
+	}
+	if len(chain) == 0 {
+		return nil, fmt.Errorf("no certificate in the leaf chain")
+	}
+	return chain, nil
 }
 
 func fileExists(path string) bool {

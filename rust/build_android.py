@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Cross-compile the Rust cores for Android and drop them into the Flutter app's jniLibs.
 
-Thirteen libraries are built:
+Fourteen libraries are built:
 
 * `libditing_rule_core.so` - rule parsing, rule search and the DTRI writer (Dart/Kotlin callers).
 * `libditing_policy_core.so` - the policy kernel the Go tunnel engine dlopen()s (rule tables,
@@ -33,8 +33,11 @@ Thirteen libraries are built:
 * `libditing_proxy_core.so` - the outbound proxy kernel the same engine dlopen()s (the SOCKS5
   greeting / method / auth / request / reply codec, the address and UDP datagram framing, the HTTP
   CONNECT request bytes and the proxy config normalization).
+* `libditing_cert_core.so` - the MITM certificate kernel the same engine dlopen()s (root CA
+  generation and validation, the SEC1 key encoding, leaf minting with its SAN rule and the EV
+  policy table).
 
-All thirteen are shipped and used at runtime: without the first a rule import throws, without the
+All fourteen are shipped and used at runtime: without the first a rule import throws, without the
 second the tunnel refuses to start, without the third the DNS cache stores nothing (answers go
 straight to the resolver), without the fourth MITM cannot start (the tunnel runs without
 interception), without the fifth the same MITM start fails rather than serving pages without the
@@ -46,8 +49,9 @@ reported as disabled so encrypted provider hostnames go through the normal syste
 the tenth a configured strict allowlist fails closed for its selected UIDs (DNS and connections
 denied) instead of silently allowing everything, without the eleventh connection logs are no
 longer deduplicated (more lines, same events), without the twelfth direct-IP flows lose their
-hostname hint, and without the thirteenth the outbound proxy cannot be configured or used (proxied
-flows fail, direct flows are untouched). The sixth, seventh, ninth, eleventh and twelfth never
+hostname hint, without the thirteenth the outbound proxy cannot be configured or used (proxied
+flows fail, direct flows are untouched), and without the fourteenth MITM cannot start at all (no
+CA to trust, no leaf to serve; the tunnel itself is unaffected). The sixth, seventh, ninth, eleventh and twelfth never
 change an answer. Run this before every APK build:
 
     python rust/build_android.py              # arm64-v8a + x86_64, release
@@ -89,6 +93,7 @@ LIB_NAMES = (
     "libditing_connlog_core.so",
     "libditing_ipcache_core.so",
     "libditing_proxy_core.so",
+    "libditing_cert_core.so",
 )
 ANDROID_API = 28
 
@@ -201,6 +206,8 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "diting-ipcache-core",
         "-p",
         "diting-proxy-core",
+        "-p",
+        "diting-cert-core",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",

@@ -1,6 +1,6 @@
 # Rust 内核
 
-二十一个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
+二十二个 crate：`diting-rule-core` 负责规则数据的解析与索引，`diting-policy-core` 负责
 **Go 隧道引擎的规则判定与决策缓存内核**，`diting-dns-cache-core` 负责**同一引擎的 DNS 缓存
 容器与查询内核**（wire 取值、分片 LRU、TTL 策略、清扫、统计与快照），`diting-mitm-core` 负责
 **同一引擎的 MITM 拦截过滤**（应用白名单、`path.Match` 排除规则、敏感主机判定、自动黑名单与
@@ -28,9 +28,11 @@ NXDOMAIN 动态升级），`diting-sniffer-core` 负责**同一隧道引擎的 T
 IP→域名 LRU 内核**（原地更新并把条目移到最近写入位置、淘汰最久未写入项、`get` 不提升、非正容量
 回退 2048），`diting-proxy-core` 负责**同一隧道引擎的出站代理内核**（SOCKS5 握手与应答报文、
 地址与 UDP 数据报封装、HTTP CONNECT 请求字节、`net` 地址语义的复刻与代理配置归一化），
+`diting-cert-core` 负责**同一隧道引擎的 MITM 证书内核**（根证书的生成与校验、SEC1 私钥编码、
+叶证书签发的 SAN 规则与链路，以及 EV 策略表），
 `diting-go-compat` 是各内核共用的 Go 标准库语义（大小写折叠、
 `strings` 辅助、`regexp` 翻译、`dns.StringToType`、`net.IP` 文本与折叠）。
-二十五个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
+二十六个接入点都只有 Rust 一条实现，原实现已删除：库缺失、ABI 不匹配或载荷被拒时直接报错，不再有
 第二套语义可以静默跑起来。六个例外都只影响“复用、调度、判定辅助、取址路径、日志去重与主机名提示”，
 不影响回答：DNS 缓存
 内核缺失时缓存停用、查询直连解析器；解析器统计内核缺失时每个上游按冷启动取值参与调度；DNS 应答
@@ -66,6 +68,7 @@ IP→域名缓存内核缺失时直连 IP 的流没有主机名提示（标签�
 | 严格应用白名单（域名判定 + IP 授权） | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 域名归一化与逐级父域走法、按 UID 的 TTL 授权表、应答按域名分发、256 条剪枝 | 已配置规则时被选中 UID 转 fail-closed（拒绝 DNS 与连接，环回仍放行）；未选中的应用与未配置时行为不变 |
 | 连接日志去重 | Go 隧道引擎（`dlopen` + C ABI，全局一个句柄） | `connLogKey` 的构造、8192 条键集合、溢出整表清空与清空计数 | 不再去重（日志更吵），事件与回答不变 |
 | IP→域名 LRU 缓存 | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 原地更新 + 移到最近写入位置、淘汰最久未写入项、`get` 不提升、非正容量回退 2048 | 主机名提示停用（直连 IP 的流没有域名标签），回答不变 |
+| MITM 根证书 + 叶证书签发 | Go 隧道引擎（`dlopen` + C ABI，每引擎一个句柄） | 根证书生成与磁盘校验、SEC1 私钥编码、叶证书签发的 SAN 规则、共享私钥、AKI/SKI 链与有效期，EV 策略表 | MITM 启动失败（隧道照常起，只是不解密） |
 
 第四个是**职责划分的迁移**：域名归一化、规则判定与决策缓存整体在 Rust，Go 侧只保留快照生命周期
 （构建、原子换新、延迟释放）。第五个把地址校验、默认端口省略与 DoH 默认路径也一并搬走了，
@@ -227,7 +230,19 @@ flow 都分配的拼接字符串——包括随后被丢弃的重复项。Go 侧
 `http.ReadResponse`（`bufio` 的既有行为不改）。缺库时代理不可配置也不可用：`ConfigureOutboundProxy`
 返回错误，经代理的流直接失败；直连流量与“关闭代理”不受影响（禁用配置在问内核之前就返回）。
 
-Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核与出站代理内核；桌面服务侧刻意**不用 cgo**：Windows 走
+第二十七个把 Android 隧道引擎的 **MITM 证书颁发**搬进新建的 `diting-cert-core`
+（`mitm_cert_manager.go` 只剩 `ca.crt` / `ca.key` 的文件读写、叶证书 LRU 与单飞，`evPolicyOIDs`
+整份删除）：根证书模板（`O=DITING` + CN、`-24h`/`+10*365d` 有效期、CertSign|CRLSign、
+`MaxPathLen=1`、128 位随机序列号）、磁盘上根证书的校验（IsCA、主题、有效期窗口、
+`EC PRIVATE KEY` 与 PKCS#8、曲线与公私钥匹配，报错文案逐字保留）、SEC1 私钥的编码、
+叶证书签发（`-1h`/`+24h` 有效期、digitalSignature、非关键 serverAuth、AKI=CA 的 SKI、
+主机名加一条 `*.<剩余标签>` 的 SAN 规则、全进程共用的 P-256 叶私钥）都在
+`ca.rs` / `pem.rs` / `ev.rs`。Go 侧只剩文件、`*tls.Certificate`（Go 类型，搬不动）的 512 条 LRU、
+每主机单飞、`tls.Config` 胶水与 EV 徽章的一次查询。内核不读时钟，时间从 Go 传入
+（`now_unix`），所以有效期窗口能被单测钉死；缺库时 `NewCertManager` 失败、MITM 不启动，
+隧道照常跑，绝不会出现“系统已信任某个根证书、却签不出叶证书”的中间态。
+
+Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核与证书签发内核；桌面服务侧刻意**不用 cgo**：Windows 走
 `syscall.LazyDLL`，Linux 走 `purego`，`CGO_ENABLED=0 GOOS=linux GOARCH=... go build` 的交叉编译链
 一行都不用改。
 
@@ -235,7 +250,7 @@ Android 侧用 cgo 调策略内核、DNS 缓存内核、MITM 过滤内核、装�
 
 ```
 rust/
-├── build_android.py                # NDK 交叉编译十三个 Android crate + 拷入 jniLibs
+├── build_android.py                # NDK 交叉编译十四个 Android crate + 拷入 jniLibs
 ├── verify.py                       # fmt / clippy / test / Go / Dart / 基准
 ├── diting-rule-core/src/
 │   ├── models.rs domain.rs line.rs hosts.rs document.rs   # 解析（取代原 rule_parser.dart 等）
@@ -302,6 +317,13 @@ rust/
 │   ├── ffi.rs ffi/tests.rs         # abi_version / call / free_bytes（ABI_VERSION）
 │   └── tests/corpus.rs             # 迁移时 Go 实现生成的六份语料回放
 ├── diting-proxy-core/tests/fixtures/   # 握手 / 地址 / 应答 / 数据报 / CONNECT / 配置语料（6 份 TSV）
+├── diting-cert-core/src/
+│   ├── ca.rs ca/tests.rs           # 根证书生成与校验、叶证书签发、SEC1 编码、时间换算（原 mitm_cert_manager.go）
+│   ├── pem.rs pem/tests.rs         # pem.Decode / pem.EncodeToMemory 的 Go 语义（首个块生效、64 列换行）
+│   ├── ev.rs ev/tests.rs           # EV 策略表与逐段比较（原 evPolicyOIDs + isExtendedValidation）
+│   ├── ffi.rs ffi/tests.rs         # 八个符号：generate / load / ca_pem / issue / is_ev / free（ABI_VERSION）
+│   └── tests/corpus.rs             # 迁移时 Go 实现生成的根证书 + SAN + EV 语料回放
+├── diting-cert-core/tests/fixtures/   # legacy_ca.crt / legacy_ca.key / legacy_ca_info.tsv / ev.tsv
 ├── diting-safebrowsing-core/tests/fixtures/hash_corpus.tsv  # 迁移时 Go 实现生成的主机→摘要→查询名语料
 ├── diting-filter-core/tests/fixtures/parse_corpus.tsv  # 迁移时 Go 解析器的 200 行语料快照
 ├── diting-dns-cache-core/src/
@@ -470,6 +492,11 @@ rust/
   `proxy_native_stub.go`（无 cgo 时代理不可用）、`proxy_native_payload.go`（十一个操作的载荷编码/
   解码与类型化包装，不需要 cgo 就能测布局）、`flow_outbound_native_test.go`（配置语料回放 +
   真实监听器上的 SOCKS5 / HTTP CONNECT / UDP ASSOCIATE 端到端用例）。
+- Go（MITM 证书）：`mitm_cert_manager.go`（`ca.crt` / `ca.key` 的文件读写、叶证书 LRU、
+  每主机单飞、`tls.Config` 胶水与共享叶私钥）、`cert_native.go`（加载、ABI 校验、八个符号的调用包装）、
+  `cert_native_stub.go`（无 cgo 时 MITM 不启动）、`cert_native_payload.go`（文本 / `i64` 载荷解码，
+  不需要 cgo 就能测布局）、`cert_native_test.go`（旧实现留下的根证书升级路径、生成/写盘/重载、
+  坏密钥对替换、并发单飞与 EV 判定）。`mitm_trust.go` 的 `isExtendedValidation` 只剩一次内核调用。
 - Go：`policy_native.go`（`dlopen`、ABI 校验、`evaluate` / `evaluateUncached` / `prewarm`、句柄释放）、
   `policy_snapshot.go`（快照与一次调用入口）、`policy_engine.go`（构建与原子换新）、
   `policy_native_test.go`（固定用例 + 应用基准）。
@@ -478,12 +505,12 @@ rust/
 
 ```bash
 cd rust && cargo build --release        # 本机：供 flutter test、go test、基准使用（工作区全部 crate）
-python rust/build_android.py            # Android：十三个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
+python rust/build_android.py            # Android：十四个 .so，arm64-v8a / x86_64 交叉编译并拷入 jniLibs
 ```
 
 DNS 缓存内核（容器 + wire）、MITM 过滤内核、装饰注入内核、解析器统计内核、DNS 应答内核、流嗅探内核、
-引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核与出站代理内核只随 Android APK 交付
-（桌面服务没有这十一块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
+引导解析内核、应用白名单内核、连接日志去重内核、IP→域名缓存内核、出站代理内核与证书签发内核只随
+Android APK 交付（桌面服务没有这十二块），由 `build_android.py` 与另外两个 `.so` 一起拷入 `jniLibs`。
 
 桌面服务的七个内核按平台单独交付（Android 用不到它们）：
 
@@ -1311,6 +1338,34 @@ Go 侧原有用例一条断言未改，现在全部穿过 FFI 跑；只有两处
   19 条地址编码、11 条应答流、7 条数据报、5 条 CONNECT 请求、19 条配置归一化）；`tests/corpus.rs`
   逐行重放，Go 侧 `flow_outbound_native_test.go` 另用真实监听器跑端到端（带凭据的 SOCKS5 握手、
   IP 形态的请求、HTTP CONNECT、方法被拒、UDP ASSOCIATE 的双向封装），并回放同一份配置语料。
+
+## MITM 证书内核的已知边界
+
+- **只搬证书，不搬 TLS**：`*tls.Certificate` 是 Go 类型，512 条 LRU、每主机单飞、`tls.Config`
+  的 `GetCertificate`（SNI 为空时用 `defaultHost`）与 `NextProtos` 都还在 Go。内核只回答
+  “这张根证书能不能用”“这条链和这把私钥是什么”。
+- **时间从 Go 注入**：根证书的有效期窗口与叶证书的 `NotBefore` / `NotAfter` 都按调用方给的
+  `now_unix` 算（叶证书 `-1h`/`+24h`、根证书 `-24h`/`+10*365d`），内核不读时钟，所以过期、
+  未生效与“提前 5 分钟换新”都能被单测钉死；报错里的日期仍是 Go 的 `2006-01-02` 文案。
+- **根证书逐字节返回**：加载成功时若内核重编码的 PEM 与磁盘一致，就沿用磁盘字节，
+  `GetCACertPEM` 交回的仍是用户已装进系统信任库的那一份（语料直接断言这个等式）。
+- **坏密钥对沿用老行为**：`initCA` 仍是“磁盘上有两个文件就试着加载，失败就重新生成并写盘”，
+  只是现在会把具体原因写进日志（`CA private key does not match certificate public key`、
+  `decode CA key PEM: no PEM block found` 等文案与迁移前逐字一致）。
+- **`Release` 现在还会释放内核句柄**：签发调用全程持有 `cm.mu` 的读锁，拆除时拿写锁再释放，
+  所以不会出现“用到已释放的句柄”；CA PEM 缓存在 Go 侧，`GetMitmCACert` 在 MITM 停止后
+  照旧有答案（没有 manager 时仍从 `ca.crt` 读盘）。
+- **每次签发多两次解析**：证书链要 `pem.Decode` 成 DER 列表、私钥要 `x509.ParseECPrivateKey`
+  （整个进程只解一次，之后所有主机共用同一个 `*ecdsa.PrivateKey`），换来的是内核里只有一条
+  签名路径。签发本来只有一次缓存未命中，命中路径完全不碰内核。
+- **EV 表在 Rust**：`isExtendedValidation` 现在是一次内核调用，缺库时返回 false——只影响
+  “EV” 徽章这个展示项，不影响是否拦截、如何解密。
+- **一致性验证**：`tests/fixtures/` 的四份语料都来自迁移前直接跑原 Go 实现——
+  `legacy_ca.crt` / `legacy_ca.key` 是一份真·旧实现生成的根证书（升级路径：APK 更新不能作废
+  用户已信任的 CA），`legacy_ca_info.tsv` 钉住它的主题、有效期、序列号、SKI 与四个主机的 SAN，
+  `ev.tsv` 钉住 EV 表的 8 条 OID 与近邻误判。Rust 侧 `tests/corpus.rs` 逐字段重放，Go 侧
+  `cert_native_test.go` 用 `x509.Verify` 证明叶证书确实由持久化私钥签出（并拒绝未覆盖的主机），
+  再走一遍“生成 → 写盘 → 重载不变”。
 
 ## 性能（本机 Windows/amd64，迁移时的实测值）
 

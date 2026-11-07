@@ -10,7 +10,6 @@ package tunnel
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/asn1"
 	"sync"
 )
 
@@ -115,27 +114,12 @@ func upstreamTLSConfig(serverName string, clientCertRequested *bool) *tls.Config
 	}
 }
 
-var evPolicyOIDs = []asn1.ObjectIdentifier{
-	{2, 23, 140, 1, 1},
-	{1, 3, 6, 1, 4, 1, 6449, 1, 2, 1, 5, 1},
-	{2, 16, 840, 1, 114412, 2, 1},
-	{2, 16, 840, 1, 114404, 1, 1, 2, 4, 1},
-	{1, 3, 6, 1, 4, 1, 14370, 1, 6},
-	{2, 16, 840, 1, 113733, 1, 7, 23, 6},
-	{1, 3, 6, 1, 4, 1, 4146, 1, 1},
-	{1, 3, 6, 1, 4, 1, 34697, 2, 1},
-}
-
+// isExtendedValidation reports whether the certificate carries an EV policy OID. The table itself
+// lives in rust/diting-cert-core (src/ev.rs) together with the comparison rules, so the two sides
+// cannot drift; a missing kernel answers false, which only downgrades the cosmetic EV badge.
 func isExtendedValidation(cert *x509.Certificate) bool {
 	if cert == nil {
 		return false
 	}
-	for _, p := range cert.PolicyIdentifiers {
-		for _, ev := range evPolicyOIDs {
-			if p.Equal(ev) {
-				return true
-			}
-		}
-	}
-	return false
+	return certIsExtendedValidationNative(cert.PolicyIdentifiers)
 }

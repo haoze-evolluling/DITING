@@ -21,6 +21,7 @@ members = [
     "diting-ipcache-core",
     "diting-ratelimit-core",
     "diting-proxy-core",
+    "diting-cert-core",
 ]
 resolver = "2"
 

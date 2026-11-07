@@ -159,6 +159,7 @@ func TestCertManagerSharedLeafKeyCertsVerify(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer cm.Release()
 	a, err := cm.getCertificateWithDedup("a.example.com")
 	if err != nil {
 		t.Fatal(err)
@@ -170,8 +171,12 @@ func TestCertManagerSharedLeafKeyCertsVerify(t *testing.T) {
 	if a.PrivateKey != b.PrivateKey {
 		t.Fatal("expected a shared leaf key")
 	}
+	caCert := cm.caCertificate()
+	if caCert == nil {
+		t.Fatal("no CA certificate")
+	}
 	roots := x509.NewCertPool()
-	roots.AddCert(cm.caCert)
+	roots.AddCert(caCert)
 	for host, c := range map[string]*tls.Certificate{"a.example.com": a, "b.example.org": b} {
 		leaf, err := x509.ParseCertificate(c.Certificate[0])
 		if err != nil {
