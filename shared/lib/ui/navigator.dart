@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:animations/animations.dart';
 import 'package:diting_shared/ui/context.dart';
 import 'package:diting_shared/ui/keyboard_inset_hold.dart';
+import 'package:diting_shared/ui/page_routes.dart';
 import 'package:diting_shared/ui/sheet_navigator.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,7 +13,12 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 class BaseNavigator {
   static PageRoute<T> _routeOf<T>(BuildContext context, Widget child) {
-    return CommonRoute(builder: (context) => child);
+    final view = KeyboardInsetHold(child: child);
+    // FlClash picks the mobile card slide and the desktop fade; the view width,
+    // not the host platform, decides, so a narrow desktop window matches too.
+    return context.isMobileView
+        ? CardPageRoute<T>(builder: (_) => view)
+        : FadePageRoute<T>(builder: (_) => view);
   }
 
   /// The mobile layout drops a home page's navigator, so a desktop page left open reopens.
@@ -32,8 +38,10 @@ class BaseNavigator {
       });
     }
 
-    final route = CommonRoute<T>(
-      builder: (_) => _DropWatch(onDropped: reopenIfDropped, child: child),
+    final route = FadePageRoute<T>(
+      builder: (_) => KeyboardInsetHold(
+        child: _DropWatch(onDropped: reopenIfDropped, child: child),
+      ),
     );
     unawaited(
       navigator.push<T>(route).then((value) {

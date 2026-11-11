@@ -24,7 +24,6 @@ class DockShell extends ConsumerWidget {
     final destinations = ref.watch(bottomBarProvider);
     final haptic = ref.watch(hapticProvider);
     final style = ref.watch(bottomBarStyleProvider);
-    final transition = ref.watch(tabTransitionProvider);
     final selected = _selectedIndex(destinations, navigationShell.currentIndex);
 
     void onSelected(int index) {
@@ -54,11 +53,7 @@ class DockShell extends ConsumerWidget {
             : fallback
             ? _FallbackBar.insetOf(context)
             : NavigationDock.insetOf(context),
-        child: _TabTransitionHost(
-          transition: transition,
-          branchIndex: navigationShell.currentIndex,
-          child: navigationShell,
-        ),
+        child: navigationShell,
       ),
       bottomNavigationBar: destinations.isEmpty
           ? null
@@ -118,28 +113,44 @@ class _Dock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      for (final destination in destinations)
-        NavigationDockDestination(
-          glyph: destination.glyph,
-          label: destination.label(context.l10n),
-        ),
-    ];
-    if (_wantsFallbackBar(context, destinations, style)) {
-      return _FallbackBar(
+    final fallbackBar = _wantsFallbackBar(context, destinations, style);
+    final Widget bar;
+    if (fallbackBar) {
+      bar = _FallbackBar(
         destinations: destinations,
         selectedIndex: selectedIndex,
         onSelected: onSelected,
       );
+    } else {
+      // No `SafeArea`: the dock already folds the system bottom inset into its own bottom margin
+      // (`NavigationDock._bottomMarginOf`), so wrapping it would pad that inset a second time. The
+      // bar would then sit one inset higher while `insetOf` still reserves bar + margin + gap, and
+      // the reserved gap would be spent on the padding: content would rest against the glass.
+      bar = NavigationDock(
+        destinations: [
+          for (final destination in destinations)
+            NavigationDockDestination(
+              glyph: destination.glyph,
+              label: destination.label(context.l10n),
+            ),
+        ],
+        selectedIndex: selectedIndex,
+        onSelected: onSelected,
+      );
     }
-    // No `SafeArea`: the dock already folds the system bottom inset into its own bottom margin
-    // (`NavigationDock._bottomMarginOf`), so wrapping it would pad that inset a second time. The
-    // bar would then sit one inset higher while `insetOf` still reserves bar + margin + gap, and
-    // the reserved gap would be spent on the padding: content would rest against the glass.
-    return NavigationDock(
-      destinations: items,
-      selectedIndex: selectedIndex,
-      onSelected: onSelected,
+    // Float↔dock swaps animate like FlClash's `AnimatedVisibility`: the leaving bar
+    // slides down and fades while the arriving one slides up into place.
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 260),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) => SlideTransition(
+        position: animation.drive(
+          Tween(begin: const Offset(0, 1), end: Offset.zero),
+        ),
+        child: FadeTransition(opacity: animation, child: child),
+      ),
+      child: KeyedSubtree(key: ValueKey<bool>(fallbackBar), child: bar),
     );
   }
 }
@@ -156,83 +167,8 @@ bool _wantsFallbackBar(
       destinations.length > maxDockDestinations;
 }
 
-/// Tab switch animation. `indexedStack` only changes the index, so this widget replays the entry
-/// itself: one controller outlives the switch, and only its value restarts. Keying the builder by
-/// branch index instead would remount the whole shell on every tab switch, re-running each page's
-/// first build and dropping scroll positions.
-class _TabTransitionHost extends StatefulWidget {
-  const _TabTransitionHost({
-    required this.transition,
-    required this.branchIndex,
-    required this.child,
-  });
-
-  final TabTransition transition;
-  final int branchIndex;
-  final Widget child;
-
-  @override
-  State<_TabTransitionHost> createState() => _TabTransitionHostState();
-}
-
-class _TabTransitionHostState extends State<_TabTransitionHost>
-    with SingleTickerProviderStateMixin {
-  static const _duration = Duration(milliseconds: 220);
-
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: _duration,
-    // The first mount has nothing to animate away from.
-    value: 1,
-  );
-
-  late final Animation<double> _amount = CurvedAnimation(
-    parent: _controller,
-    curve: Curves.easeOutCubic,
-  );
-
-  @override
-  void didUpdateWidget(_TabTransitionHost oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.branchIndex != widget.branchIndex &&
-        widget.transition != TabTransition.none) {
-      _controller.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // With animations off, wrap nothing: an `AnimatedBuilder` would still rebuild the subtree.
-    if (widget.transition == TabTransition.none) {
-      return widget.child;
-    }
-    return AnimatedBuilder(
-      animation: _amount,
-      child: widget.child,
-      builder: (context, child) {
-        final amount = _amount.value;
-        return switch (widget.transition) {
-          TabTransition.fade => Opacity(opacity: amount, child: child),
-          TabTransition.slide => FractionalTranslation(
-            translation: Offset(0.04 * (1 - amount), 0),
-            child: Opacity(opacity: amount, child: child),
-          ),
-          TabTransition.scale => Transform.scale(
-            scale: 0.96 + 0.04 * amount,
-            child: Opacity(opacity: amount, child: child),
-          ),
-          TabTransition.none => child!,
-        };
-      },
-    );
-  }
-}
+/// Tab switch animation lives in the shell route's `navigatorContainerBuilder`
+/// (`BranchTransitionShell`), so the shell body is the branch tree itself.
 
 class _FallbackBar extends StatelessWidget {
   const _FallbackBar({
@@ -265,9 +201,12 @@ class _FallbackBar extends StatelessWidget {
       selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
       onDestinationSelected: onSelected,
       destinations: [
-        for (final destination in destinations)
+        for (final (index, destination) in destinations.indexed)
           NavigationDestination(
-            icon: GlyphIcon(destination.glyph),
+            icon: AnimatedGlyph(
+              glyph: destination.glyph,
+              filled: index == selectedIndex,
+            ),
             label: destination.label(context.l10n),
           ),
       ],

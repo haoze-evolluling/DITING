@@ -12,6 +12,7 @@ import 'package:diting_android/pages/system/unknown_route_page.dart';
 import 'package:diting_android/pages/tools/tools_page.dart';
 import 'package:diting_android/pages/traffic/traffic_page.dart';
 import 'package:diting_shared/routes/branches.dart';
+import 'package:diting_shared/shell/branch_transition_shell.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
 import 'package:diting_android/shell/app_shell.dart';
@@ -53,9 +54,14 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
     navigatorKey: rootNavigatorKey,
     redirect: startupOnboardingRedirect,
     routes: [
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),
+        navigatorContainerBuilder: (context, navigationShell, children) =>
+            BranchTransitionShell(
+              navigationShell: navigationShell,
+              children: children,
+            ),
         branches: [
           StatefulShellBranch(
             routes: [

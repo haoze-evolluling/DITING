@@ -96,6 +96,27 @@ void _appShell() {
     expect(find.text('谛听 · 普通'), findsOneWidget);
   });
 
+  testWidgets('切换 tab 期间新旧两页同时在场', (tester) async {
+    await pumpApp(tester);
+    // Home is the only branch on stage before the switch.
+    expect(find.byType(DashboardBoard), findsOneWidget);
+    expect(find.byType(FeatureHubPage), findsNothing);
+
+    await tester.tap(find.text('功能中心'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 90));
+
+    // Mid-transition the leaving page has not vanished yet: both branches are
+    // on stage, which is what makes the switch a real slide instead of an entry
+    // fade on a single page.
+    expect(find.byType(FeatureHubPage), findsOneWidget);
+    expect(find.byType(DashboardBoard), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(find.byType(FeatureHubPage), findsOneWidget);
+    expect(find.byType(DashboardBoard), findsNothing);
+  });
+
   testWidgets('切换界面语言后功能中心文案立即跟随', (tester) async {
     await pumpApp(tester);
     await tester.tap(find.text('功能中心'));
@@ -417,7 +438,7 @@ void _routeCatalog() {
 void _routeTransition() {
   installGlobalTestHooks();
 
-  testWidgets('二级页 push 出来的是带转场的 MaterialPage', (tester) async {
+  testWidgets('二级页 push 出来的是带转场的全屏页', (tester) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
