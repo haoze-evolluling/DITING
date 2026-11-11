@@ -26,7 +26,7 @@ import os
 import re
 import sys
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 try:  # as a package module
     from . import vector_raster as vr
@@ -53,10 +53,15 @@ ANDROID_DENSITIES = (
 # The SVG's own coordinate system.
 VIEW_BOX = (0.0, 0.0, 64.0, 64.0)
 
-# Adaptive icon foreground: the 108dp layer's guaranteed-visible circle is 66dp wide centred, so a
-# 64dp logo translated by 22 on each side (22..86) stays inside it under every OEM mask.
+# Adaptive icon foreground. The system crops the 108dp layer to roughly the central 72dp mask, so
+# the logo must be sized against that visible edge. The default DITING icon's solid artwork fills
+# about half of the mask; the AdGuard shield is a solid shape, so matching that ratio (rather than
+# filling the whole 64dp-of-108 foreground) keeps the two icons visually consistent.
 FOREGROUND_ARTBOARD = 108.0
-FOREGROUND_LOGO_SIDE = 64.0
+ICON_MASK_EDGE = 72.0  # visible diameter after the launcher mask, in layer units
+LOGO_RATIO = 0.52  # shield bounding box / visible edge
+FOREGROUND_LOGO_SIDE = ICON_MASK_EDGE * LOGO_RATIO
+FOREGROUND_SCALE = FOREGROUND_LOGO_SIDE / 64.0
 FOREGROUND_OFFSET = (FOREGROUND_ARTBOARD - FOREGROUND_LOGO_SIDE) / 2.0
 
 _SHAPES: list | None = None
@@ -123,6 +128,26 @@ def render(size: int, supersample: int = 4) -> Image.Image:
     return vr.render(load_shapes(), size, size, VIEW_BOX, supersample=supersample)
 
 
+def compose_preview(size: int = 512) -> Image.Image:
+    """Square preview that mimics the launcher result: white rounded plate + centred shield.
+
+    The shield is drawn at the same visual ratio as the adaptive icon so the settings thumbnail
+    matches what users see on the home screen.
+    """
+    plate = Image.new("RGBA", (size, size), (255, 255, 255, 255))
+    mask = Image.new("L", (size, size), 0)
+    radius = int(round(size * 0.22))
+    ImageDraw.Draw(mask).rounded_rectangle(
+        [0, 0, size - 1, size - 1], radius=radius, fill=255
+    )
+    plate.putalpha(mask)
+
+    logo_side = int(round(size * LOGO_RATIO))
+    logo = render(logo_side)
+    plate.alpha_composite(logo, ((size - logo.width) // 2, (size - logo.height) // 2))
+    return plate
+
+
 def foreground_vector_xml() -> str:
     """The adaptive-icon foreground as a resolution-independent VectorDrawable (108dp artboard)."""
     lines = [
@@ -135,7 +160,8 @@ def foreground_vector_xml() -> str:
         f'    android:height="{FOREGROUND_ARTBOARD:g}dp"',
         f'    android:viewportWidth="{FOREGROUND_ARTBOARD:g}"',
         f'    android:viewportHeight="{FOREGROUND_ARTBOARD:g}">',
-        f'    <group android:translateX="{FOREGROUND_OFFSET:g}" android:translateY="{FOREGROUND_OFFSET:g}">',
+        f'    <group android:scaleX="{FOREGROUND_SCALE:g}" android:scaleY="{FOREGROUND_SCALE:g}"',
+        f'        android:translateX="{FOREGROUND_OFFSET:g}" android:translateY="{FOREGROUND_OFFSET:g}">',
     ]
     for shape in load_shapes():
         lines.append(
@@ -216,7 +242,7 @@ def export_all(log=print) -> list:
     # 3. In-app preview thumbnail for the appearance page.
     preview = os.path.join(SHARED_DIR, "assets", "images", "icon_adguard.png")
     os.makedirs(os.path.dirname(preview), exist_ok=True)
-    render(512).save(preview, "PNG", optimize=True)
+    compose_preview(512).save(preview, "PNG", optimize=True)
     files.append(preview)
     log(f"PNG 512x512: {preview}")
 
@@ -231,10 +257,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.preview:
-        canvas = Image.new("RGBA", (512, 512), (255, 255, 255, 255))
-        icon = render(512)
-        canvas.alpha_composite(icon)
-        canvas.save(args.preview, "PNG")
+        compose_preview(512).save(args.preview, "PNG")
         print(f"预览已写入 {args.preview}")
         return 0
 
