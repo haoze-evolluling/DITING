@@ -13,6 +13,7 @@ library;
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 /// Must match `ABI_VERSION` in `rust/diting-log-query-core/src/ffi.rs`.
@@ -221,5 +222,22 @@ class RustLogQueryCore {
       throw StateError('log query core: payload is not an object');
     }
     return decoded;
+  }
+}
+
+/// Runs a `derive` on a worker isolate, so an aggregate that grows with the log
+/// dataset cannot stall the frame that receives it. Falls back to this isolate
+/// when a worker cannot be spawned, such as a test host without the built
+/// library on its path.
+Future<Map<String, Object?>> deriveOffThread(
+  String name,
+  Map<String, Object?> request,
+) async {
+  try {
+    return await Isolate.run(
+      () => RustLogQueryCore.instance.derive(name, request),
+    );
+  } catch (_) {
+    return RustLogQueryCore.instance.derive(name, request);
   }
 }

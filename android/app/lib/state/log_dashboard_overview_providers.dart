@@ -303,7 +303,7 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
     );
   }
 
-  final answer = core.derive('overview', {
+  final answer = await deriveOffThread('overview', {
     'filteredMode': filteredMode,
     'off': off,
     'dnsDaily': dnsDaily?.toKernel(),

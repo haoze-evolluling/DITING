@@ -170,6 +170,23 @@ class ServiceStatsNotifier extends Notifier<ServiceStats> {
       uptime: state.uptime + const Duration(seconds: 1),
     );
   }
+
+  /// Advances the uptime off the start clock without a platform round trip, so the status card
+  /// ticks every second while the native counters are polled less often.
+  void refreshUptime() {
+    final startedAt = _startedAt;
+    if (startedAt == null) return;
+    final elapsed = DateTime.now().difference(startedAt);
+    final uptime = elapsed.isNegative ? Duration.zero : elapsed;
+    if (uptime.inSeconds == state.uptime.inSeconds) return;
+    state = ServiceStats(
+      queries: state.queries,
+      cacheHits: state.cacheHits,
+      blocked: state.blocked,
+      averageLatencyMs: state.averageLatencyMs,
+      uptime: uptime,
+    );
+  }
 }
 
 final serviceStatsProvider =

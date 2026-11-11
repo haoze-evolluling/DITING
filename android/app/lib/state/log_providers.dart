@@ -83,7 +83,7 @@ final raceRankingProvider = FutureProvider<RaceRankingBoard>((ref) async {
   final repository = RaceLogRepository(db);
   final entries = await repository.ranking();
   final summary = await repository.summary();
-  final board = RustLogQueryCore.instance.derive('race.board', {
+  final board = await deriveOffThread('race.board', {
     'summary': summary.toKernel(),
     'ranking': [for (final entry in entries) entry.toKernel()],
     'names': names,

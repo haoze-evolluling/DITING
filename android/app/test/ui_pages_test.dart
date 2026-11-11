@@ -244,7 +244,7 @@ void _observabilityPages() {
       );
       expect(reads, [null]);
 
-      await tester.drag(find.byType(ListView), const Offset(0, -20000));
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -20000));
       await tester.pumpAndSettle();
       // One drag can reveal several pages: after a page lands the viewport is still near the end,
       // so the listener asks again. Every follow-up read carries a cursor.
@@ -256,7 +256,7 @@ void _observabilityPages() {
       );
 
       for (var i = 0; i < 4; i++) {
-        await tester.drag(find.byType(ListView), const Offset(0, -20000));
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -20000));
         await tester.pumpAndSettle();
       }
       final feed = container.read(requestFeedProvider).requireValue;

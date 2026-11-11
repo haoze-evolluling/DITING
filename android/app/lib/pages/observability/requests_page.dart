@@ -213,10 +213,11 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
           }
           return false;
         },
-        child: ListView.builder(
+        child: PrismListView(
           padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 16),
           // Header + one row per request + footer.
           itemCount: items.length + 2,
+          estimatedItemExtent: 92,
           itemBuilder: (context, index) {
             if (index == 0) return ListHeader(title: context.l10n.obsRecordsHeader);
             if (index == items.length + 1) {
@@ -239,9 +240,11 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ItemPositionProvider(
                 position: ItemPosition.get(index - 1, items.length),
-                child: RequestRow(
-                  request: request,
-                  onTap: () => _openDetail(request),
+                child: MemoBuilder(
+                  key: ObjectKey(request),
+                  inputs: [request],
+                  builder: (_) =>
+                      RequestRow(request: request, onTap: () => _openDetail(request)),
                 ),
               ),
             );

@@ -464,20 +464,24 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
       }
       return FloatingLogEmptyState(title: title, body: body);
     }
-    return ListView.builder(
+    return PrismListView(
       controller: _scroll,
       padding: const EdgeInsets.fromLTRB(6, 4, 6, 6),
       itemCount: rows.length,
+      estimatedItemExtent: 64,
       itemBuilder: (context, index) {
         final request = rows[index];
-        return FloatingLogRow(
+        return MemoBuilder(
           key: ValueKey(request.key),
-          request: request,
-          expanded: request.key == _expandedKey,
-          onTap: () => setState(() {
-            _expandedKey = _expandedKey == request.key ? null : request.key;
-          }),
-          onCopy: _copy,
+          inputs: [request, request.key == _expandedKey],
+          builder: (_) => FloatingLogRow(
+            request: request,
+            expanded: request.key == _expandedKey,
+            onTap: () => setState(() {
+              _expandedKey = _expandedKey == request.key ? null : request.key;
+            }),
+            onCopy: _copy,
+          ),
         );
       },
     );

@@ -451,26 +451,32 @@ List<Widget> ruleSectionSlivers({
     SliverToBoxAdapter(child: ListHeader(title: source.label(l10n))),
     SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverList.builder(
+      sliver: SliverPrismList(
         itemCount: rules.length,
-        // Rows are cheap to rebuild; keeping thousands alive is what made the old list stutter.
-        addAutomaticKeepAlives: false,
+        estimatedItemExtent: 84,
         itemBuilder: (context, index) {
           final rule = rules[index];
+          final protected = isRuleProtected(
+            rule,
+            kind: kind,
+            allowPresetEditable: allowPresetEditable,
+          );
           return ItemPositionProvider(
             position: ItemPosition.get(index, rules.length),
-            child: _RuleRow(
-              rule: rule,
-              kind: kind,
-              protected: isRuleProtected(
-                rule,
+            // Memoised on the row's own values: toggling one rule, or filtering, no longer rebuilds
+            // every visible row's chips and switch.
+            child: MemoBuilder(
+              key: ValueKey(rule.id),
+              inputs: [rule, kind, protected],
+              builder: (_) => _RuleRow(
+                rule: rule,
                 kind: kind,
-                allowPresetEditable: allowPresetEditable,
+                protected: protected,
+                onToggle: (enabled) => onToggle(rule, enabled),
+                onEdit: () => onEdit(rule),
+                onDelete: () => onDelete(rule),
+                onProtected: onProtected,
               ),
-              onToggle: (enabled) => onToggle(rule, enabled),
-              onEdit: () => onEdit(rule),
-              onDelete: () => onDelete(rule),
-              onProtected: onProtected,
             ),
           );
         },

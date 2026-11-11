@@ -260,28 +260,32 @@ class SubscriptionsPage extends ConsumerWidget {
             // tables did.
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList.separated(
+              sliver: SliverPrismList(
                 itemCount: selectedEntries.length,
-                addAutomaticKeepAlives: false,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
+                gap: 12,
+                estimatedItemExtent: 132,
                 itemBuilder: (context, index) {
                   final entry = selectedEntries[index];
-                  return _SubscriptionCard(
-                    entry: entry,
-                    isUpdating: update.updatingIds.contains(entry.id),
-                    busy: update.isBusy,
-                    onToggle: (value) => ref
-                        .read(subscriptionActionsProvider)
-                        .setEnabled(entry.id, value),
-                    onUpdate: () => ref
-                        .read(subscriptionUpdateProvider.notifier)
-                        .updateOne(entry.id),
-                    onDelete: () => _delete(context, ref, entry),
-                    onEdit: () => _rename(context, ref, entry),
-                    onConfigure: () => showSheet<void>(
-                      context: context,
-                      builder: (_) => _AddSubscriptionSheet(initial: entry),
+                  final isUpdating = update.updatingIds.contains(entry.id);
+                  return MemoBuilder(
+                    key: ValueKey(entry.id),
+                    inputs: [entry, isUpdating, update.isBusy],
+                    builder: (_) => _SubscriptionCard(
+                      entry: entry,
+                      isUpdating: isUpdating,
+                      busy: update.isBusy,
+                      onToggle: (value) => ref
+                          .read(subscriptionActionsProvider)
+                          .setEnabled(entry.id, value),
+                      onUpdate: () => ref
+                          .read(subscriptionUpdateProvider.notifier)
+                          .updateOne(entry.id),
+                      onDelete: () => _delete(context, ref, entry),
+                      onEdit: () => _rename(context, ref, entry),
+                      onConfigure: () => showSheet<void>(
+                        context: context,
+                        builder: (_) => _AddSubscriptionSheet(initial: entry),
+                      ),
                     ),
                   );
                 },

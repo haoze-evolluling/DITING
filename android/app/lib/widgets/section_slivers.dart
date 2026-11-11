@@ -47,8 +47,9 @@ class SliverPageBody extends StatelessWidget {
 /// Header, lazily built rows and an optional footer: the sliver twin of [generateSection].
 ///
 /// Rows are produced on demand, so a section with a hundred thousand entries costs the same first
-/// frame as one with ten. Keep-alives are off on purpose: rows are cheap to rebuild, and holding
-/// thousands of them alive is what made long lists stutter on the way back up.
+/// frame as one with ten. Rows go through [SliverPrismList], so a scrollbar drag skips the rows it
+/// passes at [estimatedItemExtent] instead of laying out each one, and `itemExtent` makes a
+/// fixed-height section O(1) per row.
 List<Widget> lazySectionSlivers({
   String? title,
   List<IconButtonData> actions = const [],
@@ -56,6 +57,8 @@ List<Widget> lazySectionSlivers({
   required NullableIndexedWidgetBuilder itemBuilder,
   String? footer,
   EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 16),
+  double? itemExtent,
+  double estimatedItemExtent = SliverPrismList.defaultEstimatedItemExtent,
 }) {
   return [
     if (itemCount > 0 && title != null)
@@ -64,9 +67,10 @@ List<Widget> lazySectionSlivers({
       ),
     SliverPadding(
       padding: padding,
-      sliver: SliverList.builder(
+      sliver: SliverPrismList(
         itemCount: itemCount,
-        addAutomaticKeepAlives: false,
+        itemExtent: itemExtent,
+        estimatedItemExtent: estimatedItemExtent,
         itemBuilder: (context, index) => ItemPositionProvider(
           position: ItemPosition.get(index, itemCount),
           child: itemBuilder(context, index)!,
@@ -87,6 +91,8 @@ List<Widget> lazySectionOrEmpty({
   required NullableIndexedWidgetBuilder itemBuilder,
   String? footer,
   EdgeInsets padding = const EdgeInsets.symmetric(horizontal: 16),
+  double? itemExtent,
+  double estimatedItemExtent = SliverPrismList.defaultEstimatedItemExtent,
   required Widget empty,
 }) {
   if (itemCount == 0) return [SliverToBoxAdapter(child: empty)];
@@ -97,5 +103,7 @@ List<Widget> lazySectionOrEmpty({
     itemBuilder: itemBuilder,
     footer: footer,
     padding: padding,
+    itemExtent: itemExtent,
+    estimatedItemExtent: estimatedItemExtent,
   );
 }

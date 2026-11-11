@@ -77,10 +77,11 @@ class _RequestAppsPageState extends ConsumerState<RequestAppsPage> {
         description: _query.isEmpty ? context.l10n.obsAppsEmptyBody : null,
         illustration: NullStatusIllustration.requests,
       ),
-      child: ListView.builder(
+      child: PrismListView(
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 16),
         // Header + one row per app + footer.
         itemCount: shown.length + 2,
+        estimatedItemExtent: 72,
         itemBuilder: (context, index) {
           if (index == 0) return ListHeader(title: context.l10n.obsAppsHeader);
           if (index == shown.length + 1) {
@@ -91,7 +92,11 @@ class _RequestAppsPageState extends ConsumerState<RequestAppsPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ItemPositionProvider(
               position: ItemPosition.get(index - 1, shown.length),
-              child: _RequestAppRow(app: app),
+              child: MemoBuilder(
+                key: ValueKey(app.packageName),
+                inputs: [app],
+                builder: (_) => _RequestAppRow(app: app),
+              ),
             ),
           );
         },

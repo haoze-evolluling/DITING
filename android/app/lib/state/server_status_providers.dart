@@ -52,6 +52,7 @@ class ServerStatusNotifier extends Notifier<ServerStatus> {
 
   bool _disposed = false;
   Timer? _statsTimer;
+  Timer? _uptimeTimer;
   Timer? _guardTimer;
 
   /// Last native failure, kept for diagnostics only.
@@ -62,6 +63,7 @@ class ServerStatusNotifier extends Notifier<ServerStatus> {
     ref.onDispose(() {
       _disposed = true;
       _statsTimer?.cancel();
+      _uptimeTimer?.cancel();
       _guardTimer?.cancel();
     });
     // Leaving server mode must not leave a LAN DNS listener behind while the UI shows another mode.
@@ -176,16 +178,22 @@ class ServerStatusNotifier extends Notifier<ServerStatus> {
   }
 
   void _ensureStatsPolling() {
-    // Matches the VPN side: uptime is displayed to the second.
+    // Counters every 3 s; uptime ticks locally every second (see PowerNotifier).
     _statsTimer ??= Timer.periodic(
-      const Duration(seconds: 1),
+      const Duration(seconds: 3),
       (_) => syncStatus(),
+    );
+    _uptimeTimer ??= Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => ref.read(serviceStatsProvider.notifier).refreshUptime(),
     );
   }
 
   void _cancelStatsPolling() {
     _statsTimer?.cancel();
     _statsTimer = null;
+    _uptimeTimer?.cancel();
+    _uptimeTimer = null;
   }
 
   Future<void> _stop() async {

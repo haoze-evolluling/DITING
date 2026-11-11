@@ -21,6 +21,10 @@ dependencies:
   collection: ^1.19.1
   cupertino_icons: ^2.0.0
 
+  # Lazily-built list that keeps a far jump (scrollbar drag) at O(1) per row by
+  # estimating unlaid rows, as FlClash's vendored prism_ui list does.
+  super_sliver_list: ^0.4.1
+
   flutter_riverpod: 3.4.3
   go_router: ^18.1.1
 

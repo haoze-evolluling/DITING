@@ -15,6 +15,7 @@ class PowerNotifier extends Notifier<PowerState> {
   /// that finds it down restarts it instead of clearing the flag.
   bool _restoreOnLaunch = false;
   Timer? _statsTimer;
+  Timer? _uptimeTimer;
   Timer? _guardTimer;
 
   /// Last bridge failure, kept for diagnostics while the UI shows a generic label.
@@ -31,6 +32,7 @@ class PowerNotifier extends Notifier<PowerState> {
     ref.onDispose(() {
       _disposed = true;
       _statsTimer?.cancel();
+      _uptimeTimer?.cancel();
       _guardTimer?.cancel();
     });
     ref.read(vpnControllerProvider).onPrepareResult = _onPrepareResult;
@@ -270,17 +272,23 @@ class PowerNotifier extends Notifier<PowerState> {
   }
 
   void _ensureStatsPolling() {
-    // One second: the status card shows uptime to the second, and a slower tick made the
-    // figure jump in 5-second steps.
+    // Native counters every 3 s; the uptime figure ticks locally every second, so the card no longer
+    // crosses the platform channel once a second just to advance a clock.
     _statsTimer ??= Timer.periodic(
-      const Duration(seconds: 1),
+      const Duration(seconds: 3),
       (_) => syncStatus(),
+    );
+    _uptimeTimer ??= Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => ref.read(serviceStatsProvider.notifier).refreshUptime(),
     );
   }
 
   void _cancelStatsPolling() {
     _statsTimer?.cancel();
     _statsTimer = null;
+    _uptimeTimer?.cancel();
+    _uptimeTimer = null;
   }
 
   Future<void> stop() async {

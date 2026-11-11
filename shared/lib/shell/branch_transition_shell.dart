@@ -133,17 +133,73 @@ class _BranchTransitionShellState extends ConsumerState<BranchTransitionShell>
       opacity = 0;
     }
 
-    final content = Opacity(
+    // Moving a whole page means transforming whatever it paints. Drawing it
+    // from a snapshot while it moves keeps Impeller from re-rasterizing every
+    // glyph and shadow on each step, as FlClash's `_FadeTabPage` does.
+    return _BranchPage(
+      key: ValueKey<int>(index),
+      visible: visible,
+      dx: dx,
       opacity: opacity,
-      child: Transform.scale(scale: scale, child: widget.children[index]),
+      scale: scale,
+      snapshotting: visible && t > 0 && t < 1,
+      child: widget.children[index],
     );
+  }
+}
+
+class _BranchPage extends StatefulWidget {
+  const _BranchPage({
+    super.key,
+    required this.child,
+    required this.visible,
+    required this.dx,
+    required this.opacity,
+    required this.scale,
+    required this.snapshotting,
+  });
+
+  final Widget child;
+  final bool visible;
+  final double dx;
+  final double opacity;
+  final double scale;
+  final bool snapshotting;
+
+  @override
+  State<_BranchPage> createState() => _BranchPageState();
+}
+
+class _BranchPageState extends State<_BranchPage> {
+  final SnapshotController _snapshot = SnapshotController();
+
+  @override
+  void dispose() {
+    _snapshot.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _snapshot.allowSnapshotting = widget.snapshotting;
     return Offstage(
-      offstage: !visible,
+      offstage: !widget.visible,
       child: TickerMode(
-        enabled: visible,
+        enabled: widget.visible,
         child: FractionalTranslation(
-          translation: Offset(dx, 0),
-          child: content,
+          translation: Offset(widget.dx, 0),
+          child: Opacity(
+            opacity: widget.opacity,
+            child: Transform.scale(
+              scale: widget.scale,
+              child: SnapshotWidget(
+                controller: _snapshot,
+                mode: SnapshotMode.permissive,
+                autoresize: true,
+                child: RepaintBoundary(child: widget.child),
+              ),
+            ),
+          ),
         ),
       ),
     );

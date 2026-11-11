@@ -47,6 +47,7 @@ export 'null_status.dart';
 export 'page_visibility.dart';
 export 'pop_scope.dart';
 export 'popup.dart';
+export 'prism_list.dart' hide ListController;
 export 'route_motion_hold.dart';
 export 'scaffold.dart';
 export 'scroll.dart';
