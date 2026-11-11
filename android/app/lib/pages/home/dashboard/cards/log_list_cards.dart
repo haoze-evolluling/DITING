@@ -309,8 +309,8 @@ class RuleBlocksCard extends ConsumerWidget {
           DashboardLogRow(
             title: row.name,
             subtitle: context.l10n.logShareRow(
-              row.statusLabel,
               dashboardPercent(row.rate),
+              row.statusLabel,
             ),
             tag: context.l10n.logTimes(dashboardCount(row.hits)),
             tagColor: colorScheme.error,

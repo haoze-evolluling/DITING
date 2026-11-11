@@ -263,6 +263,8 @@ void _realDataWiring() {
       final blocks = snapshot.subscriptionBlocks;
       expect(blocks, hasLength(2));
       expect(blocks.first.hits, 1);
+      // The overview card must report the subscription's real switch, not always "disabled".
+      expect(blocks.firstWhere((block) => !block.deleted).enabled, isTrue);
       final names = {for (final block in blocks) block.name};
       expect(names, containsAll(['广告拦截', '已删除订阅 #7']));
       final deleted = blocks.firstWhere((block) => block.deleted);

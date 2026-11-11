@@ -5,7 +5,7 @@ use serde_json::{json, Map, Value};
 
 use crate::classify;
 use crate::payload;
-use crate::util::{child, dart_cmp, i, items, n, percent, resolved_name, s};
+use crate::util::{b, child, dart_cmp, i, items, n, percent, resolved_name, s};
 
 /// The request feed: both tables merged newest-first, with the page window applied.
 fn feed(request: &Value) -> Option<Value> {
@@ -240,7 +240,7 @@ fn subscription_stats(request: &Value) -> Option<Value> {
         output.push(json!({
             "id": id,
             "name": subscription.map(|row| s(row, "name")),
-            "enabled": subscription.map(|row| i(row, "enabled") == 1).unwrap_or(false),
+            "enabled": subscription.map(|row| b(row, "enabled")).unwrap_or(false),
             "deleted": subscription.is_none(),
             "hits": count,
             "rate": percent(count, total),
@@ -439,13 +439,14 @@ mod tests {
             "name": "subscription.stats",
             "total": 10,
             "hits": [{ "id": 1, "hits": 4 }, { "id": 2, "hits": 6 }],
-            "subscriptions": [{ "id": 1, "name": "A", "enabled": 1 }],
+            "subscriptions": [{ "id": 1, "name": "A", "enabled": true }],
             "sortByName": true,
         }))
         .unwrap();
         assert_eq!(answer["items"][0]["id"], json!(2));
         assert_eq!(answer["items"][0]["deleted"], json!(true));
         assert_eq!(answer["items"][1]["rate"], json!(0.4));
+        assert_eq!(answer["items"][1]["enabled"], json!(true));
     }
 
     #[test]

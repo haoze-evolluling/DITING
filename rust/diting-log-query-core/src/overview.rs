@@ -56,7 +56,7 @@ pub(crate) fn overview(request: &Value) -> Option<Value> {
         blocks.push(json!({
             "id": id,
             "name": subscription.map(|row| s(row, "name")),
-            "enabled": subscription.map(|row| i(row, "enabled") == 1).unwrap_or(false),
+            "enabled": subscription.map(|row| b(row, "enabled")).unwrap_or(false),
             "deleted": subscription.is_none(),
             "hits": count,
             "rate": percent(*count, total_requests),
