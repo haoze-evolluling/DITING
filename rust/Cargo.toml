@@ -1,0 +1,60 @@
+[workspace]
+members = [
+    "diting-go-compat",
+    "diting-dns-wire",
+    "diting-rule-core",
+    "diting-policy-core",
+    "diting-dns-cache-core",
+    "diting-mitm-core",
+    "diting-stamp-core",
+    "diting-filter-core",
+    "diting-rewrite-core",
+    "diting-safebrowsing-core",
+    "diting-hosts-core",
+    "diting-dns64-core",
+    "diting-cosmetic-core",
+    "diting-resolver-core",
+    "diting-dns-core",
+    "diting-sniffer-core",
+    "diting-bootstrap-core",
+    "diting-allowlist-core",
+    "diting-connlog-core",
+    "diting-ipcache-core",
+    "diting-ratelimit-core",
+    "diting-proxy-core",
+    "diting-cert-core",
+    "diting-config-core",
+    "diting-request-core",
+    "diting-telemetry-core",
+    "diting-upstream-core",
+    "diting-gate-core",
+    "diting-probe-core",
+    "diting-log-core",
+    "diting-agent-core",
+    "diting-dns-config-core",
+    "diting-backup-core",
+    "diting-rule-store-core",
+    "diting-subscription-core",
+    "diting-log-query-core",
+    "diting-cleanup-core",
+    "diting-app-update-core",
+    "diting-recognition-core",
+    "diting-ip-quality-core",
+    "diting-outbound-proxy-core",
+    "diting-vpn-config-core",
+    "diting-notification-core",
+    "diting-engine",
+    "diting-kernels",
+    "diting-netstack-spike",
+    "diting-mitm-spike",
+    "diting-tun-spike",
+    "diting-corpus",
+]
+resolver = "2"
+
+# The crates are delivered as shared libraries inside the APK, so strip symbols and let the linker
+# do a cheap thin-LTO pass: the artifacts are bundled, not debugged.
+[profile.release]
+strip = "symbols"
+lto = "thin"
+codegen-units = 1

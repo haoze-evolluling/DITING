@@ -1,0 +1,9 @@
+[package]
+name = "diting-telemetry-core"
+version = "0.1.0"
+edition = "2021"
+description = "Telemetry and attribution kernels for the Android tunnel engine: batched DNS logs, per-UID traffic counters and the flow/package caches"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]

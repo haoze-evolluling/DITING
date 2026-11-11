@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Quick settings tile, worded exactly like the legacy app. -->
+    <string name="quick_settings_tile_label">谛听</string>
+    <string name="quick_settings_tile_state_on">已开启</string>
+    <string name="quick_settings_tile_state_off">已关闭</string>
+</resources>

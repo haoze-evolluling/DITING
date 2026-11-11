@@ -1,0 +1,15 @@
+{
+  "appearancePaletteTitle": ["主题色配置", "Palette"],
+  "appearancePaletteInfoLabel": ["色板", "Palette"],
+  "appearancePaletteBody": ["色板只提供种子，上屏的是 HCT 推导出的整套角色色。旧版没有自定义取色，因此这里也不提供。", "The palette only supplies a seed; the screen shows the full HCT-derived role set. The legacy app had no custom picker, so there is none here."],
+  "dayNightInfoLabel": ["模式", "Mode"],
+  "appearanceFontSizeLabel": ["字号", "Text size"],
+  "appearanceFontSizeCurrent": ["当前 {percent}%", "{percent}% now"],
+  "appearanceFontSection": ["字体", "Font"],
+  "appearanceFontImported": ["已导入 {name}", "Imported {name}"],
+  "appearanceFontDeleted": ["已删除 {name}", "Deleted {name}"],
+  "appearanceBottomBarMax": ["底栏最多 {max} 项", "At most {max} bottom bar items"],
+  "appearanceBottomBarHeader": ["底栏项（{count}/{max}）", "Bottom bar items ({count}/{max})"],
+  "appearanceBottomBarDragBody": ["按住右侧把手或长按整行拖动排序，顺序即底栏从左到右的顺序。至少 2 项、最多 {max} 项：浮条按项数等比分配宽度，再多就挤到看不清图标。", "Drag by the handle on the right or long-press a row to reorder; the order is the bottom bar order from left to right. Keep 2 to {max} items: the floating bar splits its width evenly and more would squeeze the icons."],
+  "appearanceBottomBarSelected": ["已选 {count} 项，可配置 2–4 项", "{count} selected; 2–4 are allowed"]
+}

@@ -1,0 +1,5 @@
+{
+  "subsPickRuleFile": ["请选择一个规则文件", "Pick a rule file"],
+  "subsChange": ["更换", "Change"],
+  "subsGroupShort": ["+ 分组", "+ Group"]
+}

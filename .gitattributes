@@ -1,0 +1,9 @@
+# Linux 侧交付物（shell 脚本与 systemd 单元）必须保持 LF 换行，
+# 避免 Windows 检出为 CRLF 导致 shebang 失效、无法执行。
+*.sh      text eol=lf
+*.service text eol=lf
+
+# Windows 批处理必须检出为 CRLF：cmd.exe 遇到纯 LF 时会算错 :label 的偏移，
+# 表现为 `goto` 报「系统找不到指定的批处理标签」。
+*.bat     text eol=crlf
+*.cmd     text eol=crlf

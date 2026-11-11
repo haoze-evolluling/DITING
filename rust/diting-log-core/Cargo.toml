@@ -1,0 +1,12 @@
+[package]
+name = "diting-log-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+# The only caller is the Kotlin app, so the boundary is JNI and the payloads are fixed layouts.
+jni = "0.21"

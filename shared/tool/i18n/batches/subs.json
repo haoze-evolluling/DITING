@@ -1,0 +1,198 @@
+{
+  "subsPickTxt": [
+    "请选择扩展名为 .txt 的规则文件",
+    "Pick a rule file with the .txt extension"
+  ],
+  "subsNoPersistPermission": [
+    "系统未授予长期读取权限，更新时需要重新选择文件",
+    "The system did not grant persistent read access, so the file must be picked again on update"
+  ],
+  "subsGroupNameRequired": [
+    "分组名称不能为空",
+    "The group name cannot be empty"
+  ],
+  "subsEdit": [
+    "编辑订阅",
+    "Edit subscription"
+  ],
+  "subsAdd": [
+    "添加订阅",
+    "Add subscription"
+  ],
+  "subsSaveTooltip": [
+    "保存订阅",
+    "Save subscription"
+  ],
+  "subsInfoSection": [
+    "订阅信息",
+    "Subscription details"
+  ],
+  "subsSourceType": [
+    "订阅方式",
+    "Source type"
+  ],
+  "subsSourceLocalPick": [
+    "从存储中选择一个 .txt 文件",
+    "Pick a .txt file from storage"
+  ],
+  "subsSourceRemoteDownload": [
+    "从网络地址下载规则正文",
+    "Download the rule body from a URL"
+  ],
+  "subsLocalRuleFile": [
+    "本地规则文件",
+    "Local rule file"
+  ],
+  "subsLocalFileSubscription": [
+    "本地文件订阅",
+    "Local file subscription"
+  ],
+  "subsPickFile": [
+    "选择规则文件",
+    "Pick a rule file"
+  ],
+  "subsLocalFileHint": [
+    "仅支持 .txt，点击从存储中选择",
+    "Only .txt; tap to pick from storage"
+  ],
+  "subsLocalFileRepick": [
+    "点击可重新选择文件",
+    "Tap to pick another file"
+  ],
+  "subsChoose": [
+    "选择",
+    "Choose"
+  ],
+  "subsNameOptional": [
+    "名称（可选）",
+    "Name (optional)"
+  ],
+  "subsNameEmptyFileName": [
+    "留空则取文件名",
+    "Leave empty to use the file name"
+  ],
+  "subsUrl": [
+    "订阅地址",
+    "Subscription URL"
+  ],
+  "subsNameEmptyUrlTail": [
+    "留空则取链接末段",
+    "Leave empty to use the last part of the URL"
+  ],
+  "subsRuleType": [
+    "规则类型",
+    "Rule type"
+  ],
+  "subsKindHostsHint": [
+    "仅导入 hosts 地址与 CNAME 覆写规则",
+    "Only hosts entries and CNAME rewrites are imported"
+  ],
+  "subsKindDomainHint": [
+    "导入域名规则与黑白名单",
+    "Domain rules and allow/block lists are imported"
+  ],
+  "subsGroupHint": [
+    "分组只影响订阅页的筛选与批量更新，可稍后调整。",
+    "Groups only affect filtering and bulk updates on this page; you can change them later."
+  ],
+  "subsNewGroupShort": [
+    "+ 新建",
+    "+ New"
+  ],
+  "subsMirrorTemplateFooter": [
+    "镜像地址会把原始订阅地址改写成镜像前缀，常用于加速 GitHub 等慢速源。",
+    "A mirror rewrites the subscription URL with its prefix, which speeds up slow sources such as GitHub."
+  ],
+  "subsAddMirrorTemplate": [
+    "添加镜像站模板",
+    "Add a mirror template"
+  ],
+  "subsAddMirrorTemplateSubtitle": [
+    "还没有模板，先去保存一个常用的镜像前缀",
+    "No templates yet; save a commonly used mirror prefix first"
+  ],
+  "subsMirrorFooter": [
+    "下载时先请求镜像地址；镜像失败且开启回退时，再试原始地址。",
+    "Downloads try the mirror first and fall back to the original URL when enabled."
+  ],
+  "subsUseMirrorTemplate": [
+    "使用镜像站模板",
+    "Use a mirror template"
+  ],
+  "subsUseMirrorTemplateSubtitle": [
+    "订阅源较慢或被限速时，改写下载地址",
+    "Rewrite the download URL when the source is slow or rate limited"
+  ],
+  "subsMirrorTemplate": [
+    "镜像模板",
+    "Mirror template"
+  ],
+  "subsMirrorFallback": [
+    "失败后回退直连",
+    "Fall back to direct"
+  ],
+  "subsMirrorFallbackSubtitle": [
+    "镜像请求失败时，改用原始订阅地址",
+    "Use the original URL when the mirror fails"
+  ],
+  "subsEffectiveUrl": [
+    "实际请求地址",
+    "Requested URL"
+  ],
+  "subsNothingToUpdate": [
+    "没有可更新的远程订阅",
+    "No remote subscriptions to update"
+  ],
+  "subsDeleteTitle": [
+    "删除订阅",
+    "Delete subscription"
+  ],
+  "subsRenameTitle": [
+    "重命名订阅",
+    "Rename subscription"
+  ],
+  "subsNameRequired": [
+    "名称不能为空",
+    "The name cannot be empty"
+  ],
+  "subsTitle": [
+    "订阅",
+    "Subscriptions"
+  ],
+  "subsUpdateAll": [
+    "更新全部订阅",
+    "Update all"
+  ],
+  "subsCount": [
+    "订阅数",
+    "Subscriptions"
+  ],
+  "subsRuleCount": [
+    "已入库规则",
+    "Stored rules"
+  ],
+  "subsAbnormal": [
+    "异常",
+    "Errors"
+  ],
+  "subsUpdating": [
+    "正在更新订阅…",
+    "Updating subscriptions…"
+  ],
+  "subsEmptyLabel": [
+    "还没有订阅",
+    "No subscriptions yet"
+  ],
+  "subsEmptyDescription": [
+    "订阅可以批量维护规则；更新会下载正文、解析并写入规则库，拦截随之生效。",
+    "Subscriptions maintain rules in bulk: an update downloads the body, parses it into the rule database and blocking follows."
+  ],
+  "subsUpdateFooter": [
+    "更新会下载正文、解析成黑/白名单与覆写规则并写入规则库，同时替换该订阅上一次贡献的规则；元素隐藏规则本仓不注入，不计入条数。",
+    "An update downloads the body, parses it into block/allow and rewrite rules and stores them, replacing what the subscription contributed last time. Element-hiding rules are not injected by this app and are not counted."
+  ],
+  "subsAllGroups": [
+    "全部",
+    "All"
+  ]
+}

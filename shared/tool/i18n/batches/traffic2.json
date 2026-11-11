@@ -1,0 +1,5 @@
+{
+  "trafficAllHistory": ["全部历史", "All history"],
+  "trafficLiveRateUnavailable": ["「按实时网速」需要每秒速率，本仓的按天表里没有速率列", "The live-rate sort needs per-second rates; the daily table has no rate column"],
+  "trafficHideSystemAppsSubtitle": ["按系统应用标记与厂商预装前缀识别，隐藏后不计入排行", "Recognised by system flag and vendor preinstall prefixes; hidden apps are left out of the ranking"]
+}

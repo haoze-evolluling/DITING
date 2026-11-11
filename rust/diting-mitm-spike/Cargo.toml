@@ -1,0 +1,53 @@
+[package]
+name = "diting-mitm-spike"
+version = "0.1.0"
+edition = "2021"
+description = "Stage 0 spike for the Android engine migration: prove that rustls + hyper can hold the MITM relay semantics the Go engine implemented with crypto/tls + net/http"
+publish = false
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+# The HTTP/1.1 layer: hyper replaces Go's `net/http` message layer without a hand-written
+# state machine, and `http-body-util` is the adapter set between hyper's body trait and streams.
+bytes = "1"
+http = "1"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["http1", "server", "client"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+futures-util = "0.3"
+
+# TLS. `ring` (not `aws-lc-rs`) because it is the provider that cross-compiles for Android's
+# arm64-v8a / x86_64 with no extra C toolchain beyond the NDK the build already uses.
+rustls = { version = "0.23", default-features = false, features = [
+    "ring",
+    "std",
+    "tls12",
+    "logging",
+] }
+rustls-pemfile = "2"
+tokio-rustls = { version = "0.26", default-features = false, features = [
+    "ring",
+    "tls12",
+    "logging",
+] }
+
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "time", "sync"] }
+tokio-util = { version = "0.7", features = ["io"] }
+# Streaming gzip/deflate for injected pages; Go used `compress/gzip` + `compress/flate` inline.
+async-compression = { version = "0.4", features = ["tokio", "gzip", "deflate", "zlib"] }
+
+# Decoding the upstream leaf's certificate-policies extension for the EV refusal, which Go got for
+# free from `crypto/x509`. Same crates `diting-cert-core` already links.
+const-oid = { version = "0.9", features = ["db"] }
+der = "0.7"
+x509-cert = { version = "0.2.5" }
+
+# The kernels the engine already owns: leaf minting and the cosmetic scanner. Direct Rust calls,
+# no C ABI and no dlopen.
+diting-cert-core = { path = "../diting-cert-core" }
+diting-cosmetic-core = { path = "../diting-cosmetic-core" }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

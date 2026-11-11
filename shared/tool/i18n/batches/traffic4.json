@@ -1,0 +1,26 @@
+{
+  "trafficWhyDaemonTitle": [
+    "为什么系统设置将全部流量算给谛听？",
+    "Why do system settings attribute all traffic to DITING?"
+  ],
+  "trafficWhyDaemonBody": [
+    "因 Android VPN 机制，系统将代理出站归属于守护进程。谛听自身不偷跑流量，点按查看统计口径。",
+    "Android's VPN model attributes proxied outbound traffic to the daemon. DITING does not use traffic behind your back; tap to see what is counted."
+  ],
+  "trafficLiveRateTitle": [
+    "实时速率",
+    "Live rate"
+  ],
+  "trafficNoLiveRate": [
+    "本模式不统计实时速率：极速模式的窄路由不经过引擎的流量计数器，本仓也没有它的累计表。上面的 {window} 下行 / 上行与下方排行都是真实数字。",
+    "This mode does not measure a live rate: express mode's narrow route bypasses the engine's traffic counters and there is no cumulative table for it. The {window} download/upload figures and the ranking below are still real numbers."
+  ],
+  "trafficLiveRateBody": [
+    "来自引擎的每秒速率（本次会话），与常驻通知里的读数同源；上面的 {window} 下行 / 上行是 `app_traffic_daily` 的累计字节，两者口径不同，数字不必相等。",
+    "Per-second rates from the engine (this session), the same source as the persistent notification. The {window} download/upload figures are cumulative bytes from `app_traffic_daily`; the two use different scopes and need not match."
+  ],
+  "trafficSearchPlaceholder": [
+    "搜索应用或包名...",
+    "Search app or package..."
+  ]
+}

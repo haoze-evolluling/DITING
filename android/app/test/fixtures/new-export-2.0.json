@@ -1,0 +1,212 @@
+{
+  "format": "diting-backup",
+  "version": 1,
+  "exportedAt": 1792726922284,
+  "selection": [
+    "providers",
+    "bootstrap",
+    "cache",
+    "outbound",
+    "subscriptions",
+    "domainRules",
+    "rewriteDomain",
+    "rewriteCname",
+    "addressRules",
+    "excluded",
+    "blocked",
+    "allowlist",
+    "httpInspection",
+    "appearance",
+    "system"
+  ],
+  "data": {
+    "providers": [
+      {
+        "id": "user_custom_doh",
+        "name": "我的 DoH",
+        "protocol": "DOH",
+        "url": "https://dns.example.com/dns-query",
+        "host": "",
+        "port": 853
+      },
+      {
+        "id": "user_custom_dot",
+        "name": "我的 DoT",
+        "protocol": "DOT",
+        "url": "",
+        "host": "dot.example.com",
+        "port": 853
+      }
+    ],
+    "bootstrap": {
+      "enabled": true,
+      "presetIds": [
+        "preset_volcengine",
+        "preset_dnspod",
+        "preset_alidns"
+      ],
+      "custom": null
+    },
+    "cache": {
+      "enabled": true,
+      "mode": "limit_max_ttl",
+      "maxTtlSeconds": 7200,
+      "fixedTtlSeconds": 3600,
+      "minTtlEnabled": false,
+      "minTtlSeconds": 60,
+      "staleFallbackEnabled": false,
+      "staleFallbackSeconds": 300,
+      "preset": "aggressive"
+    },
+    "outbound": {
+      "enabled": false,
+      "protocol": null,
+      "host": null,
+      "port": null,
+      "proxyAppPackage": null,
+      "credentialsExcluded": true
+    },
+    "subscriptions": {
+      "groups": [
+        {
+          "name": "工作分组",
+          "autoUpdateEnabled": true
+        }
+      ],
+      "items": [
+        {
+          "url": "https://example.com/ad-domain.txt",
+          "name": "广告联盟规则",
+          "kind": "domain",
+          "sourceType": "remote",
+          "enabled": true,
+          "groupName": "工作分组",
+          "mirrorTemplate": null,
+          "mirrorFallback": true
+        },
+        {
+          "url": "https://example.com/hosts.txt",
+          "name": "静态 hosts 源",
+          "kind": "hosts",
+          "sourceType": "remote",
+          "enabled": true,
+          "groupName": "工作分组",
+          "mirrorTemplate": "https://mirror.example.com/{}",
+          "mirrorFallback": true
+        },
+        {
+          "url": "https://example.com/backup-allow.txt",
+          "name": "放行清单",
+          "kind": "domain",
+          "sourceType": "remote",
+          "enabled": false,
+          "groupName": null,
+          "mirrorTemplate": null,
+          "mirrorFallback": true
+        }
+      ]
+    },
+    "domainRules": [
+      {
+        "pattern": "*",
+        "enabled": true,
+        "important": false,
+        "group": null
+      },
+      {
+        "pattern": "*.doubleclick.example",
+        "enabled": true,
+        "important": false,
+        "group": null
+      },
+      {
+        "pattern": "||track.example.net^",
+        "enabled": true,
+        "important": true,
+        "group": null
+      },
+      {
+        "pattern": "||ads.example.com^",
+        "enabled": true,
+        "important": false,
+        "group": null
+      }
+    ],
+    "rewriteDomain": [],
+    "rewriteCname": [
+      {
+        "pattern": "cname.rewrite.example",
+        "targetType": "CNAME",
+        "targetValue": "target.example.com",
+        "enabled": true
+      }
+    ],
+    "addressRules": [
+      {
+        "pattern": "https://api.example.com/allow",
+        "kind": "allow",
+        "enabled": true
+      },
+      {
+        "pattern": "https://api.example.com/block",
+        "kind": "block",
+        "enabled": true
+      }
+    ],
+    "excluded": [
+      "com.example.excluded"
+    ],
+    "blocked": {
+      "enabled": true,
+      "packages": [
+        "com.example.blocked"
+      ]
+    },
+    "allowlist": {
+      "enabled": true,
+      "rules": {
+        "com.example.allowlist": [
+          "cdn.example.org",
+          "example.com"
+        ]
+      }
+    },
+    "httpInspection": {
+      "enabled": true,
+      "packages": [
+        "com.example.inspect"
+      ]
+    },
+    "appearance": {
+      "themeMode": "dark",
+      "palette": "jade",
+      "liquidGlassMode": "none",
+      "bottomBarStyle": "floating",
+      "tabTransition": "slide",
+      "componentOpacity": 0.800000011920929,
+      "hapticEnabled": true,
+      "bottomBarIds": [
+        "home",
+        "feature_hub",
+        "log_dashboard"
+      ],
+      "customBackgroundEnabled": false
+    },
+    "system": {
+      "bypassLan": false,
+      "ipv6Mode": "disabled",
+      "logRetentionDays": 7,
+      "dnsLogMode": "all",
+      "hideFromRecents": false,
+      "floatingLogEnabled": false,
+      "disableStartupUpdateCheck": true,
+      "appLanguageMode": "system",
+      "notificationPersistent": true,
+      "notificationSpeed": false,
+      "domainRulesEnabled": true,
+      "addressRulesEnabled": true,
+      "subscriptionAutoUpdateEnabled": false,
+      "subscriptionAutoUpdateIntervalHours": 24
+    }
+  }
+}

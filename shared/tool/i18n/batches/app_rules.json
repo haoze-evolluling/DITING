@@ -1,0 +1,72 @@
+{
+  "appRulesSaved": ["已保存，启动 DNS VPN 后生效", "Saved; it takes effect once the DNS VPN starts"],
+  "appRulesClearAllTooltip": ["清空全部放行规则", "Clear every allow rule"],
+  "appRulesMasterSection": ["总开关", "Master switch"],
+  "appRulesMasterToggle": ["启用单应用域名放行", "Enable per-app domain allow lists"],
+  "appRulesNoConfigured": ["暂未配置任何应用独立规则", "No per-app rules configured yet"],
+  "appRulesConfiguredSummary": {
+    "zh": "已配置 {apps} 个应用 · 放行 {domains} 个域名",
+    "en": "{apps} apps configured · {domains} domains allowed",
+    "placeholders": {"apps": {"type": "int"}, "domains": {"type": "int"}}
+  },
+  "appRulesMasterFooter": ["为指定应用深度定制网络与解析控制：网络层白名单隔离（只放行列出的域名）、DNS 专属黑/白名单与「默认拦截全部外联」。进入某个应用可分别配置，保存后启动 DNS VPN 时下发。", "Deep customisation of network and resolution control for specific apps: network-level allowlist isolation (only the listed domains pass), DNS-only block and allow lists, and \"block all outbound by default\". Open an app to configure each part; the settings are pushed when the DNS VPN starts."],
+  "appRulesAppsCount": {
+    "zh": "应用（{count}）",
+    "en": "Apps ({count})",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "appRulesNoConfigurableApps": ["设备上没有可配置的应用", "There are no configurable apps on this device"],
+  "appRulesFooterNoApps": ["未读取到任何已安装应用，无法配置应用独立规则。", "No installed apps could be read, so per-app rules cannot be configured."],
+  "appRulesFooterSave": ["保存后写入 app_allowlist_enabled 与 app_allowlist_rules_json，启动 DNS VPN 时下发给引擎。", "Saving writes app_allowlist_enabled and app_allowlist_rules_json, which are pushed to the engine when the DNS VPN starts."],
+  "appRulesAddAllowDomain": ["添加放行域名", "Add an allowed domain"],
+  "appRulesAppSection": ["应用", "App"],
+  "appRulesBackToList": ["返回应用列表", "Back to the app list"],
+  "appRulesClearAllTitle": ["清空全部放行规则？", "Clear every allow rule?"],
+  "appRulesClearAllBody": ["将删除所有应用的专属放行域名。保存后生效，黑名单与全阻断设置不受影响。", "Deletes the allowed domains of every app. It takes effect on save; block lists and full-block settings are untouched."],
+  "appRulesRuleExists": ["规则已存在或规则库不可用", "The rule already exists or the rule database is unavailable"],
+  "appRulesRuleAdded": {
+    "zh": "已添加{kind}规则",
+    "en": "Added a {kind} rule",
+    "placeholders": {"kind": {"type": "String"}}
+  },
+  "appRulesDeleteRuleTitle": ["删除这条规则？", "Delete this rule?"],
+  "appRulesFullBlockOn": ["已开启全外联拦截模式", "Block-all-outbound mode is on"],
+  "appRulesFullBlockOff": ["已关闭全外联拦截模式", "Block-all-outbound mode is off"],
+  "appRulesAddDnsRule": ["添加 DNS 规则", "Add a DNS rule"],
+  "appRulesDnsScopeIntro": ["这些规则写入规则库的 block_rule / allow_rule，带 appScope 只对本应用生效，并随规则快照的 appRules 下发，不会扩大成全局拦截。", "These rules are written to block_rule / allow_rule with an appScope, so they only apply to this app and are pushed with the appRules part of the rule snapshot instead of becoming global blocks."],
+  "appRulesDnsScopeSection": ["DNS 专属黑/白名单", "DNS-only block and allow lists"],
+  "appRulesReadingRules": ["正在读取规则库", "Reading the rule database"],
+  "appRulesWait": ["稍候", "One moment"],
+  "appRulesRuleDbUnreadable": ["读不到规则库", "Cannot read the rule database"],
+  "appRulesRuleDbUnavailable": ["当前环境无法读写规则库", "This environment cannot read or write the rule database"],
+  "appRulesNoScopedRules": ["未配置 DNS 专属规则", "No DNS-only rules configured"],
+  "appRulesNoScopedRulesSubtitle": ["添加后仅对本应用生效，不影响其他应用", "Added rules apply to this app only and never to others"],
+  "appRulesScopedCount": {
+    "zh": "DNS 专属黑/白名单（{count}）",
+    "en": "DNS-only block and allow lists ({count})",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "appRulesAllowDomainTitle": {
+    "zh": "专属放行域名（网络层） ({count})",
+    "en": "Allowed domains (network level) ({count})",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "appRulesNoAllowDomains": ["未配置网络放行域名", "No network allow domains configured"],
+  "appRulesNoAllowDomainsSubtitle": ["网络层白名单为空时，该应用不受额外限制", "While the network allowlist is empty this app is not restricted further"],
+  "appRulesAllowDomainFooter": ["这些域名会写入 app_allowlist_rules_json，由引擎在下一次启动隧道时下发给 setAppAllowlist。", "These domains are written to app_allowlist_rules_json and pushed to setAppAllowlist the next time the tunnel starts."],
+  "appRulesIsolationSection": ["外联与隔离模式", "Outbound and isolation"],
+  "appRulesFullBlockToggle": ["默认拦截全部外联", "Block all outbound by default"],
+  "appRulesFullBlockToggleSubtitle": ["开启后阻断该应用的所有网络连接，仅放行白名单", "Blocks every network connection of this app except the allowlist"],
+  "appRulesFullBlockOnTitle": ["已开启全阻断模式", "Full block is on"],
+  "appRulesFullBlockOnBody": ["请确保已添加必要的放行白名单，否则应用可能无法联网。", "Make sure the necessary allowlist entries exist, or the app may not be able to go online."],
+  "hubAppRules": ["应用独立规则", "Per-app rules"],
+  "commonSaveChangesTitle": ["保存更改？", "Save changes?"],
+  "commonSaveChangesMessageFor": ["「{name}」的选择还没保存。保存后离开，还是放弃这些修改？", "The selection for \"{name}\" has not been saved yet. Save it before leaving, or discard the changes?"],
+  "commonFilter": ["过滤", "Filter"],
+  "uiSort": ["排序", "Sort"],
+  "commonSave": ["保存", "Save"],
+  "uiCancel": ["取消", "Cancel"],
+  "commonDelete": ["删除", "Delete"],
+  "commonClearAll": ["清空", "Clear"],
+  "appSelectionNoMatch": ["未找到匹配应用", "No matching apps"]
+}

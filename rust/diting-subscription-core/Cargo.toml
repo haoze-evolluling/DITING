@@ -1,0 +1,13 @@
+[package]
+name = "diting-subscription-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The boundary payload is JSON like the rule-store and backup kernels: the app hands over rows and
+# URI components and gets typed records, a mirror URL or a due decision back.
+serde_json = "1"

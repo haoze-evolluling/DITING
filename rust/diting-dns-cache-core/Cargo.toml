@@ -1,0 +1,11 @@
+[package]
+name = "diting-dns-cache-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+diting-dns-wire = { path = "../diting-dns-wire" }

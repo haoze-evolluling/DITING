@@ -1,0 +1,12 @@
+[package]
+name = "diting-request-core"
+version = "0.1.0"
+edition = "2021"
+description = "HTTP request-path rule table and URL prefix matching for the Android tunnel engine"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+diting-go-compat = { path = "../diting-go-compat" }

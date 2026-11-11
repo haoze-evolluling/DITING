@@ -1,0 +1,16 @@
+[package]
+name = "diting-outbound-proxy-core"
+version = "0.1.0"
+edition = "2021"
+description = "Outbound-proxy app configuration: validation, target filtering, engine JSON and the Kotlin storage/UID bridge"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+# The protocol/host/port/credential/scope rules are the engine's; this crate only adds the
+# app-facing package checks and the JSON the engine receives.
+diting-proxy-core = { path = "../diting-proxy-core" }
+jni = "0.21"
+serde_json = "1"

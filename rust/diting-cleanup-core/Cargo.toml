@@ -1,0 +1,13 @@
+[package]
+name = "diting-cleanup-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The whole cleanup catalog is one JSON document: table names, WHERE clauses, pref keys and the
+# order `allData` runs its actions in.
+serde_json = "1"

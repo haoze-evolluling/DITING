@@ -1,0 +1,26 @@
+PLAIN	1.1.1.1:53		ok	PLAIN
+PLAIN	[2606:4700:4700::1111]:53		ok	PLAIN
+DOT	dns.google:853		ok	DOT
+PLAIN	1.1.1.1		err	invalid PLAIN endpoint "1.1.1.1": address 1.1.1.1: missing port in address
+PLAIN	1.1.1.1:		ok	PLAIN
+PLAIN	:53		err	invalid PLAIN endpoint ":53": host is not a valid IP literal
+PLAIN			err	invalid PLAIN endpoint "": missing port in address
+PLAIN	[1.1.1.1:53]:53		err	invalid PLAIN endpoint "[1.1.1.1:53]:53": host is not a valid IP literal
+PLAIN	::1:53		err	invalid PLAIN endpoint "::1:53": address ::1:53: too many colons in address
+PLAIN	[::1]		err	invalid PLAIN endpoint "[::1]": address [::1]: missing port in address
+PLAIN	1.1.1.1:053		ok	PLAIN
+PLAIN	1.1.1.1:65536		ok	PLAIN
+DOT	host name:853		ok	DOT
+DOH		https://dns.google/dns-query	ok	DOH
+DOH		https://dns.google:443/dns-query?x=1	ok	DOH
+DOH		http://dns.google/dns-query	err	invalid DOH URL "http://dns.google/dns-query"
+DOH		https:///dns-query	err	invalid DOH URL "https:///dns-query"
+DOH		dns.google	err	invalid DOH URL "dns.google"
+DOH			err	invalid DOH URL ""
+DOQ		quic://dns.adguard.com:8853	ok	DOQ
+DOQ		https://dns.adguard.com/dns-query	ok	DOQ
+DOQ		doq://[2606:4700::1111]:853	ok	DOQ
+DOQ		dns.adguard.com	ok	DOQ
+DOQ			err	invalid DOQ URL ""
+HYPER	1.1.1.1:53		err	unsupported protocol "HYPER"
+	1.1.1.1:53		err	unsupported protocol ""

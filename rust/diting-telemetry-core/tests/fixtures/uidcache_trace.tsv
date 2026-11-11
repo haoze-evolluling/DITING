@@ -1,0 +1,29 @@
+cache	op	app	app_port	server	server_port	protocol	count_or_uid	now_ns	inner_value	result	len
+flow	lookup	4:10.0.0.2	40000	4:1.1.1.1	443	6		0	10123	10123	1
+flow	lookup	4:10.0.0.2	40000	4:1.1.1.1	443	6		1999000000	999	10123	1
+flow	lookup	4:10.0.0.2	40000	4:1.1.1.1	443	6		2000000000	10123	10123	1
+flow	lookup	4:10.0.0.2	40001	4:1.1.1.1	443	6		2500000000	-1	-1	2
+flow	lookup	4:10.0.0.2	40001	4:1.1.1.1	443	6		2999000000	777	-1	2
+flow	lookup	4:10.0.0.2	40001	4:1.1.1.1	443	6		3000000000	888	888	2
+flow	lookup	4:10.0.0.2	40000	4:1.1.1.1	443	17		3100000000	555	555	3
+flow	lookup	16:10.0.0.2	40000	4:1.1.1.1	443	6		3100000000	444	444	4
+flow	lookup	4:10.0.0.2	40000	4:1.1.1.1	443	17		3100000000	666	555	4
+flow	lookup	4:10.0.0.2	105536	4:1.1.1.1	443	6		3100000000	111	10123	4
+flow	lookup	4:10.0.0.2	40000	16:2001:db8::1	53	17		3100000000	222	222	5
+flow	len							3100000000			5
+flow	fill						1024	10000000000	5000		1024
+flow	lookup	4:10.0.0.2	60000	4:1.1.1.1	443	6		13000000000	6000	6000	1
+flow	fill						1024	20000000000	7000		1024
+flow	lookup	4:10.0.0.2	60001	4:1.1.1.1	443	6		21000000000	8000	8000	1
+flow	len							21000000000			1
+package	lookup						10001	100000000000	com.example.app	com.example.app	1
+package	lookup						10001	130000000000	com.changed	com.example.app	1
+package	lookup						10001	160000000000	com.example.app	com.example.app	1
+package	lookup						10001	160500000000	com.example.app	com.example.app	1
+package	len							160500000000			1
+package	lookup						10002	160500000000			1
+package	lookup						10002	160500000000			1
+package	len							160500000000			1
+package	len							160500000000			1
+package	lookup						9000	161000000000	com.late	com.late	2
+package	len							161000000000			2

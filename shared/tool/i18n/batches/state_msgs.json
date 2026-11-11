@@ -1,0 +1,358 @@
+{
+  "rulesDbUnavailable": [
+    "当前环境无法读写规则库",
+    "The rule database is not readable in this environment"
+  ],
+  "agentApiKeyMissing": [
+    "尚未配置可用的 API Key，请先在「AI 厂商管理」里填写并选中该厂商。",
+    "No usable API key yet. Fill one in under AI provider management and select that provider."
+  ],
+  "agentNoExtraInfo": [
+    "（无附加信息）",
+    "(no extra information)"
+  ],
+  "agentNoLegacyDatabase": [
+    "未找到旧版数据库，无法读取 DNS 与 HTTPS 日志；请先启动一次服务。",
+    "The legacy database was not found, so DNS and HTTPS logs cannot be read. Start the service once first."
+  ],
+  "agentExpressNoHttps": [
+    "极速模式只做窄路由 DNS 加速，不产生 HTTPS 检查记录",
+    "Express mode only accelerates DNS on a narrow route and produces no HTTPS inspection records"
+  ],
+  "autoUpdateDisabled": [
+    "自动更新已关闭",
+    "Automatic updates are off"
+  ],
+  "autoUpdateNoSubscriptions": [
+    "没有可自动更新的订阅",
+    "No subscriptions to update automatically"
+  ],
+  "autoUpdateNotDue": [
+    "未到更新时间",
+    "Not due yet"
+  ],
+  "autoUpdateBusy": [
+    "正在手动更新，本轮跳过",
+    "A manual update is running; this round is skipped"
+  ],
+  "cleanupGroupRuntime": [
+    "运行数据",
+    "Runtime data"
+  ],
+  "cleanupGroupWeights": [
+    "权重数据",
+    "Weight data"
+  ],
+  "cleanupGroupRules": [
+    "规则与订阅",
+    "Rules and subscriptions"
+  ],
+  "cleanupGroupStorage": [
+    "存储与安全",
+    "Storage and security"
+  ],
+  "cleanupGroupGuides": [
+    "引导与重置",
+    "Guides and reset"
+  ],
+  "backupReadFileFailed": [
+    "无法读取所选文件",
+    "The selected file cannot be read"
+  ],
+  "caChannelUnavailable": [
+    "证书通道不可用",
+    "The certificate channel is unavailable"
+  ],
+  "caInstallUnavailable": [
+    "无法调起证书安装界面",
+    "The certificate installer cannot be opened"
+  ],
+  "caDownloadDirUnavailable": [
+    "无法写入下载目录",
+    "The download directory is not writable"
+  ],
+  "fontSystemDefault": [
+    "系统默认",
+    "System default"
+  ],
+  "diagnosticsChannelUnavailable": [
+    "诊断通道不可用（当前平台没有原生实现）",
+    "The diagnostics channel is unavailable (no native implementation on this platform)"
+  ],
+  "diagnosticsUnsupported": [
+    "当前环境不支持该诊断能力",
+    "This diagnostic is not supported here"
+  ],
+  "diagnosticsPingUnsupported": [
+    "当前环境不支持 Ping 探测",
+    "Ping probing is not supported here"
+  ],
+  "diagnosticsTraceUnsupported": [
+    "当前环境不支持路由追踪",
+    "Route tracing is not supported here"
+  ],
+  "diagnosticsDnsUnsupported": [
+    "当前环境不支持 DNS 查询",
+    "DNS queries are not supported here"
+  ],
+  "diagnosticsEmptyTarget": [
+    "请输入探测目标",
+    "Enter a target to probe"
+  ],
+  "diagnosticsTargetHasSpace": [
+    "目标不能包含空格",
+    "The target cannot contain spaces"
+  ],
+  "diagnosticsAnswerUpstream": [
+    "上游解析",
+    "Upstream resolution"
+  ],
+  "diagnosticsAnswerCache": [
+    "缓存命中",
+    "Cache hit"
+  ],
+  "diagnosticsAnswerRewrite": [
+    "覆写规则",
+    "Rewrite rule"
+  ],
+  "diagnosticsAnswerBlocked": [
+    "被规则拦截",
+    "Blocked by a rule"
+  ],
+  "diagnosticsAnswerFailed": [
+    "查询失败",
+    "Query failed"
+  ],
+  "diagnosticsNoActiveNetwork": [
+    "无活动网络",
+    "No active network"
+  ],
+  "aiPresetMainland": [
+    "国内厂商",
+    "Mainland providers"
+  ],
+  "aiPresetOverseas": [
+    "海外厂商",
+    "Overseas providers"
+  ],
+  "aiPresetAggregator": [
+    "聚合与本地部署",
+    "Aggregators and local deployments"
+  ],
+  "aiProviderConfigured": [
+    "已配置厂商",
+    "Configured providers"
+  ],
+  "logSubscriptionDeleted": [
+    "已删除订阅",
+    "Deleted subscription"
+  ],
+  "logRaceFastest": [
+    "最快响应",
+    "Fastest response"
+  ],
+  "logRaceSmart": [
+    "智能选择",
+    "Smart selection"
+  ],
+  "logRaceSequential": [
+    "依次尝试",
+    "Try in order"
+  ],
+  "logRaceSingle": [
+    "单服务商",
+    "Single resolver"
+  ],
+  "providerNoProviderSelected": [
+    "未选择服务商",
+    "No resolver selected"
+  ],
+  "onDemandDisabled": [
+    "按需连接已关闭，未做改动",
+    "On-demand connection is off; nothing changed"
+  ],
+  "onDemandServerMode": [
+    "服务器模式不使用隧道，未做改动",
+    "Server mode uses no tunnel; nothing changed"
+  ],
+  "onDemandUnknownSsid": [
+    "无法读取当前 Wi-Fi，未做改动",
+    "The current Wi-Fi cannot be read; nothing changed"
+  ],
+  "onDemandSameNetwork": [
+    "网络未变化，保持当前 VPN 状态",
+    "The network has not changed; the VPN state stays as it is"
+  ],
+  "onDemandNoWifi": [
+    "当前不在 Wi-Fi 上，已断开 VPN",
+    "Not on Wi-Fi, so the VPN was disconnected"
+  ],
+  "onDemandStarted": [
+    "已匹配白名单，VPN 已启动",
+    "Matched the allow list; the VPN was started"
+  ],
+  "onDemandAlreadyRunning": [
+    "已匹配白名单，VPN 正在运行",
+    "Matched the allow list; the VPN is running"
+  ],
+  "onDemandStopped": [
+    "当前网络不在白名单，已断开 VPN",
+    "This network is not on the allow list; the VPN was disconnected"
+  ],
+  "onDemandAlreadyStopped": [
+    "当前网络不在白名单，VPN 未启动",
+    "This network is not on the allow list; the VPN is not running"
+  ],
+  "onDemandBusy": [
+    "VPN 正在切换状态，稍后再试",
+    "The VPN is switching state; try again later"
+  ],
+  "onDemandNeedsConsent": [
+    "已匹配白名单，等待系统 VPN 授权",
+    "Matched the allow list; waiting for system VPN consent"
+  ],
+  "speedTestSelectProvider": [
+    "请先选择至少一个测速服务商",
+    "Select at least one resolver to test"
+  ],
+  "speedTestEmptyDomain": [
+    "请输入用于测速的域名",
+    "Enter a domain to test"
+  ],
+  "imagePickerUnavailable": [
+    "当前设备没有可用的图片选择器",
+    "No image picker is available on this device"
+  ],
+  "serverModeRequired": [
+    "请先切换到服务器模式",
+    "Switch to server mode first"
+  ],
+  "serverStartFailed": [
+    "DNS 服务启动失败",
+    "The DNS service failed to start"
+  ],
+  "serverStartTimeout": [
+    "DNS 服务启动超时",
+    "The DNS service timed out starting"
+  ],
+  "recognitionInvalidConfig": [
+    "云端名单配置无效",
+    "The cloud roster configuration is invalid"
+  ],
+  "recognitionGithubInterrupted": [
+    "与 GitHub 的连接被中断，请稍后重试",
+    "The connection to GitHub was interrupted; try again later"
+  ],
+  "recognitionGithubTimeout": [
+    "连接 GitHub 超时，请检查网络后重试",
+    "Connecting to GitHub timed out; check the network and retry"
+  ],
+  "recognitionNetworkUnavailable": [
+    "网络不可用，无法更新名单",
+    "No network, so the roster cannot be updated"
+  ],
+  "recognitionUpdateFailed": [
+    "名单更新失败",
+    "The roster update failed"
+  ],
+  "subscriptionNotFound": [
+    "订阅不存在或数据库不可用",
+    "The subscription does not exist or the database is unavailable"
+  ],
+  "subscriptionDatabaseUnavailable": [
+    "订阅数据库不可用",
+    "The subscription database is unavailable"
+  ],
+  "subscriptionRuleDbUnavailable": [
+    "规则库不可用，下载的规则无法入库",
+    "The rule database is unavailable, so downloaded rules cannot be stored"
+  ],
+  "subscriptionUpdateFailed": [
+    "更新失败",
+    "Update failed"
+  ],
+  "subscriptionLocalFileUnreadable": [
+    "无法读取本地文件",
+    "The local file cannot be read"
+  ],
+  "subscriptionLocalRuleDbUnavailable": [
+    "规则库不可用，本地规则无法入库",
+    "The rule database is unavailable, so local rules cannot be stored"
+  ],
+  "subscriptionNothingToUpdate": [
+    "没有可更新的订阅",
+    "No subscriptions to update"
+  ],
+  "subscriptionPickRuleFile": [
+    "请选择一个规则文件",
+    "Pick a rule file"
+  ],
+  "subscriptionPickTxtFile": [
+    "请选择扩展名为 .txt 的规则文件",
+    "Pick a rule file with the .txt extension"
+  ],
+  "subscriptionLegacyDatabaseMissing": [
+    "订阅数据库不可用（未找到 1.4.3 数据库）",
+    "The subscription database is unavailable (the 1.4.3 database was not found)"
+  ],
+  "subscriptionThisFile": [
+    "该文件",
+    "This file"
+  ],
+  "subscriptionThisLink": [
+    "该订阅链接",
+    "This subscription link"
+  ],
+  "subscriptionLocalRuleFile": [
+    "本地规则文件",
+    "Local rule file"
+  ],
+  "webdavEmptyCredentials": [
+    "服务器地址与用户名不能为空",
+    "The server address and user name cannot be empty"
+  ],
+  "webdavDirectoryCreated": [
+    "目录不存在，已自动创建",
+    "The directory did not exist and was created"
+  ],
+  "webdavUploaded": [
+    "已上传到云端",
+    "Uploaded to the cloud"
+  ],
+  "webdavNoBackup": [
+    "云端还没有备份文件",
+    "There is no backup file in the cloud yet"
+  ],
+  "webdavDownloaded": [
+    "已从云端取回备份",
+    "The backup was retrieved from the cloud"
+  ],
+  "updateCheckFirst": [
+    "请先检查更新",
+    "Check for updates first"
+  ],
+  "updateDownloadFirst": [
+    "请先下载更新包",
+    "Download the update package first"
+  ],
+  "updateInstallerUnavailable": [
+    "无法调起系统安装器，请稍后重试",
+    "The system installer cannot be opened; try again later"
+  ],
+  "workModeNoDataPlane": [
+    "当前工作模式尚未接入数据面",
+    "This work mode has no data plane yet"
+  ],
+  "workModeNoVpnConsent": [
+    "没有获得 VPN 授权",
+    "VPN consent was not granted"
+  ],
+  "workModeStartTimeout": [
+    "服务启动超时",
+    "The service timed out starting"
+  ],
+  "workModeVpnStartFailed": [
+    "VPN 启动失败",
+    "The VPN failed to start"
+  ]
+}

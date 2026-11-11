@@ -1,0 +1,4 @@
+{
+  "trafficWindowDown": ["{window}下行", "{window} download"],
+  "trafficWindowUp": ["{window}上行", "{window} upload"]
+}

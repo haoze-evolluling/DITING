@@ -1,0 +1,428 @@
+{
+  "ruleControlUrlNotReadyCa": [
+    "未就绪 · 需先安装并验证 CA 根证书",
+    "Not ready · install and verify the CA root certificate first"
+  ],
+  "ruleControlUrlNotReadyInspection": [
+    "未就绪 · 需在 HTTPS 流量检查中开启",
+    "Not ready · turn it on in HTTPS traffic inspection"
+  ],
+  "ruleControlUrlNotReadyApps": [
+    "未就绪 · 需在 HTTPS 流量检查中选择目标应用",
+    "Not ready · pick target apps in HTTPS traffic inspection"
+  ],
+  "ruleControlUrlPaused": [
+    "已暂停 · 未启用解密 URL 过滤与重定向",
+    "Paused · URL filtering and redirects for decrypted traffic are off"
+  ],
+  "ruleControlUrlRunning": [
+    "运行中 · 解密流量匹配 URL 屏蔽、放行及重定向",
+    "Running · decrypted traffic is matched against URL block, allow and redirect rules"
+  ],
+  "ruleControlIntro": [
+    "统一管理域名过滤、URL 规则及规则覆写的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。",
+    "One place for the master switches of domain filtering, URL rules and rule overrides, the block policy and online rule subscriptions. Block, allow and override lists are still managed separately in the hub."
+  ],
+  "ruleControlFilterSection": [
+    "过滤与覆写控制",
+    "Filtering and override control"
+  ],
+  "ruleControlDomainRules": [
+    "启用域名规则",
+    "Enable domain rules"
+  ],
+  "ruleControlDomainRulesOn": [
+    "开启 DNS 阶段域名屏蔽、白名单放行及 IPv4/IPv6 覆写",
+    "Blocks, allows and overrides IPv4/IPv6 at the DNS stage"
+  ],
+  "ruleControlDomainRulesOff": [
+    "已禁用 DNS 域名过滤，查询将直接放行",
+    "DNS domain filtering is off; every query is passed through"
+  ],
+  "ruleControlUrlRules": [
+    "URL 规则与内容过滤",
+    "URL rules and content filtering"
+  ],
+  "ruleControlNotReady": [
+    "未就绪",
+    "Not ready"
+  ],
+  "ruleControlPolicySection": [
+    "拦截策略",
+    "Block policy"
+  ],
+  "ruleControlBlockResponse": [
+    "拦截响应",
+    "Block response"
+  ],
+  "ruleControlDynamicSummary": {
+    "zh": "动态策略：先 NODATA，高频请求后 {mode}",
+    "en": "Dynamic policy: NODATA first, then {mode} for frequent requests",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleControlSubsSection": [
+    "订阅与更新",
+    "Subscriptions and updates"
+  ],
+  "ruleControlSubsSubtitle": [
+    "管理域名规则与 IPv4/IPv6 覆写订阅源及分组",
+    "Manage domain rule and IPv4/IPv6 override sources and groups"
+  ],
+  "ruleControlCount": {
+    "zh": "{count} 个",
+    "en": "{count}",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleControlAutoUpdateOn": {
+    "zh": "已开启 · 每 {hours} 小时自动更新",
+    "en": "On · auto-updates every {hours} hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "ruleControlAutoUpdateOff": [
+    "已关闭自动更新",
+    "Auto-update is off"
+  ],
+  "ruleControlMirrorSubtitle": [
+    "维护订阅下载镜像，可在添加订阅时直接选择",
+    "Manage download mirrors that can be picked when adding a subscription"
+  ],
+  "blockResponseFixedSection": [
+    "固定响应",
+    "Fixed response"
+  ],
+  "blockResponseFixedFooter": [
+    "动态策略开启时会临时覆盖以上选择：先返回 NODATA，高频请求后返回 NXDOMAIN。",
+    "While the dynamic policy is on it overrides the choice above: NODATA first, then NXDOMAIN for frequent requests."
+  ],
+  "blockResponseDynamicSection": [
+    "动态策略",
+    "Dynamic policy"
+  ],
+  "blockResponseEnableDynamic": [
+    "启用动态策略",
+    "Enable dynamic policy"
+  ],
+  "blockResponseEnableDynamicSubtitle": [
+    "同一域名的所有记录类型合并计数",
+    "All record types of a domain share one counter"
+  ],
+  "blockResponseParameters": [
+    "动态参数",
+    "Dynamic parameters"
+  ],
+  "blockResponseParamsSummary": {
+    "zh": "{threshold} 次 / {window} 秒 / 保持 {duration} 秒",
+    "en": "{threshold} requests / {window} s / hold {duration} s",
+    "placeholders": {
+      "threshold": {
+        "type": "int"
+      },
+      "window": {
+        "type": "int"
+      },
+      "duration": {
+        "type": "int"
+      }
+    }
+  },
+  "blockResponseDynamicFooter": [
+    "正常客户端会缓存 NODATA 响应。动态策略主要用于持续重试或忽略负缓存的请求。",
+    "Well-behaved clients cache the NODATA answer. The dynamic policy mainly targets clients that keep retrying or ignore negative caching."
+  ],
+  "blockResponseThresholdError": [
+    "请求次数需在 2–100 之间",
+    "Requests must be between 2 and 100"
+  ],
+  "blockResponseWindowError": [
+    "统计窗口需在 10–300 秒之间",
+    "The counting window must be between 10 and 300 seconds"
+  ],
+  "blockResponseDurationError": [
+    "保持时长需在 60–3600 秒之间",
+    "The hold time must be between 60 and 3600 seconds"
+  ],
+  "blockResponseThresholdLabel": [
+    "请求次数",
+    "Requests"
+  ],
+  "blockResponseThresholdHelper": [
+    "2–100 次；第 N+1 次开始升级",
+    "2–100; upgrades from request N+1"
+  ],
+  "blockResponseWindowLabel": [
+    "统计窗口（秒）",
+    "Counting window (seconds)"
+  ],
+  "blockResponseWindowHelper": [
+    "10–300 秒",
+    "10–300 seconds"
+  ],
+  "blockResponseDurationLabel": [
+    "NXDOMAIN 保持时长（秒）",
+    "NXDOMAIN hold time (seconds)"
+  ],
+  "blockResponseDurationHelper": [
+    "60–3600 秒；首次升级起固定计时",
+    "60–3600 seconds; timed from the first upgrade"
+  ],
+  "httpInspCheckingCa": [
+    "正在检查根证书…",
+    "Checking the root certificate…"
+  ],
+  "httpInspNoAppsHint": [
+    "未选择目标应用，仅保留 DNS 过滤",
+    "No target app selected; only DNS filtering stays on"
+  ],
+  "httpInspSelectedHint": {
+    "zh": "已选 {count} 个应用，其余直接转发",
+    "en": "{count} apps selected; everything else is forwarded directly",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "httpInspScopeSection": [
+    "检查范围",
+    "Scope"
+  ],
+  "httpInspEnable": [
+    "启用 HTTPS 检查",
+    "Enable HTTPS inspection"
+  ],
+  "httpInspTargetApps": [
+    "目标应用",
+    "Target apps"
+  ],
+  "httpInspNoApps": [
+    "未选择任何应用",
+    "No app selected"
+  ],
+  "httpInspSelectedApps": {
+    "zh": "已选择 {count} 个应用",
+    "en": "{count} apps selected",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "httpInspCaCert": [
+    "CA 证书",
+    "CA certificate"
+  ],
+  "httpInspCaReady": [
+    "证书已安装且指纹匹配，可查看或重置",
+    "The certificate is installed and the fingerprint matches; view or reset it"
+  ],
+  "httpInspContentSection": [
+    "解密内容过滤",
+    "Decrypted content filtering"
+  ],
+  "httpInspUrlRules": [
+    "启用 URL 规则与重定向",
+    "Enable URL rules and redirects"
+  ],
+  "httpInspNeedEnable": [
+    "需先启用 HTTPS 检查",
+    "Enable HTTPS inspection first"
+  ],
+  "httpInspUrlPaused": [
+    "已暂停 · 解密请求直接放行，不应用 URL 规则及 CNAME 重定向",
+    "Paused · decrypted requests pass through without URL rules or CNAME redirects"
+  ],
+  "httpInspUrlOn": [
+    "开启解密流量下的 URL 屏蔽、放行及 CNAME 重定向",
+    "Applies URL blocking, allow rules and CNAME redirects to decrypted traffic"
+  ],
+  "httpInspProtocolSection": [
+    "协议与兼容性",
+    "Protocol and compatibility"
+  ],
+  "httpInspBlockHttp3": [
+    "拦截 HTTP/3 (QUIC)",
+    "Block HTTP/3 (QUIC)"
+  ],
+  "httpInspBlockHttp3Subtitle": [
+    "阻断 QUIC 促使回退至 TCP 以便解密；若异常请关闭",
+    "Blocking QUIC pushes traffic back to TCP so it can be decrypted; turn it off if something breaks"
+  ],
+  "httpInspBlockDot": [
+    "阻断加密 DNS (DoT)",
+    "Block encrypted DNS (DoT)"
+  ],
+  "httpInspBlockDotSubtitle": [
+    "阻断 TCP 853 端口，防止绕过域名规则",
+    "Blocks TCP port 853 so domain rules cannot be bypassed"
+  ],
+  "httpInspRequestLogs": [
+    "请求日志",
+    "Request logs"
+  ],
+  "httpInspRequestLogsSubtitle": [
+    "查看解密明细与自动旁路记录",
+    "See decrypted requests and automatic bypasses"
+  ],
+  "httpInspBypassFooter": [
+    "写入 https_bypass_rules，与 assets/https_passthrough.txt 的内置清单合并后交给引擎的 setExtraPassthroughSuffixes。",
+    "Stored in https_bypass_rules and merged with the built-in list in assets/https_passthrough.txt for the engine's setExtraPassthroughSuffixes."
+  ],
+  "httpInspBypassTitle": {
+    "zh": "HTTPS 绕过规则（{count}）",
+    "en": "HTTPS bypass rules ({count})",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "httpInspBypassEmpty": [
+    "未配置自定义绕过规则",
+    "No custom bypass rules"
+  ],
+  "httpInspBypassEmptySubtitle": [
+    "内置放行清单始终生效；这里是额外追加的域名后缀",
+    "The built-in pass list always applies; these are extra domain suffixes"
+  ],
+  "httpInspBypassRowSubtitle": [
+    "不参与解密，直接透传",
+    "Passed through without decryption"
+  ],
+  "httpInspCaRequiredTitle": [
+    "需要先安装根证书",
+    "Install the root certificate first"
+  ],
+  "httpInspGoInstall": [
+    "前往安装",
+    "Go install"
+  ],
+  "httpInspCaReadingBody": [
+    "正在读取根证书状态，请稍后再试。",
+    "The root certificate status is still loading; try again in a moment."
+  ],
+  "httpInspCaRequiredBody": {
+    "zh": "HTTPS 检查要把解密后的明文交回应用，必须由系统的根证书信任链认可谛听的根证书。当前是「{problem}」，所以还不能选择目标应用。\n\n去 CA 证书页生成并安装证书？",
+    "en": "HTTPS inspection hands decrypted plain text back to the app, so the system trust chain must accept DITING's root certificate. The current state is \"{problem}\", so target apps cannot be picked yet.\n\nOpen the CA certificate page to generate and install it?",
+    "placeholders": {
+      "problem": {
+        "type": "String"
+      }
+    }
+  },
+  "httpInspCaMissing": [
+    "尚未生成根证书：前往 CA 证书页生成",
+    "No root certificate yet: generate one on the CA certificate page"
+  ],
+  "httpInspCaNotInstalled": [
+    "证书已生成但未安装到系统信任存储",
+    "The certificate exists but is not in the system trust store"
+  ],
+  "httpInspCaReadyShort": [
+    "证书已就绪",
+    "The certificate is ready"
+  ],
+  "httpInspNeedDomainRulesTitle": [
+    "还需要开启域名规则",
+    "Domain rules also need to be on"
+  ],
+  "httpInspEnableAll": [
+    "全部开启",
+    "Turn both on"
+  ],
+  "httpInspNeedDomainRulesBody": [
+    "HTTPS 检查负责解密，域名规则负责决定解密后的流量怎么处理。当前域名规则是关闭状态，只开检查不会有任何拦截效果。\n\n是否同时开启域名规则？",
+    "HTTPS inspection decrypts traffic and domain rules decide what happens to it. Domain rules are off right now, so inspection alone blocks nothing.\n\nTurn domain rules on as well?"
+  ],
+  "httpInspAppsTitle": [
+    "选择检查应用",
+    "Choose apps to inspect"
+  ],
+  "httpInspSelectVisible": [
+    "全选当前结果",
+    "Select all shown"
+  ],
+  "httpInspDeselectVisible": [
+    "取消当前结果",
+    "Deselect all shown"
+  ],
+  "httpInspAppsIntro": [
+    "Go 隧道接管流量后，HTTPS 流量检查仅检查所选应用的 HTTP(S) 请求，其他应用直接转发。选择应用会取消其「排除应用」「禁止联网」与应用独立规则状态。",
+    "Once the Go tunnel takes over traffic, HTTPS inspection only inspects HTTP(S) requests from the selected apps; others are forwarded directly. Selecting an app clears its excluded, blocked and per-app rule state."
+  ],
+  "httpInspAppsCount": {
+    "zh": "已选择 {selected} 个应用（可见 {visible}）",
+    "en": "{selected} apps selected ({visible} shown)",
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "visible": {
+        "type": "int"
+      }
+    }
+  },
+  "commonLater": [
+    "稍后",
+    "Later"
+  ],
+  "bypassAddTitle": [
+    "添加绕过域名",
+    "Add a bypass domain"
+  ],
+  "uiCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "commonSave": [
+    "保存",
+    "Save"
+  ],
+  "commonDelete": [
+    "删除",
+    "Delete"
+  ],
+  "hubRuleControl": [
+    "规则控制",
+    "Rule control"
+  ],
+  "autoUpdateTitle": [
+    "自动更新设置",
+    "Auto-update settings"
+  ],
+  "mirrorTplTitle": [
+    "镜像站模板",
+    "Mirror templates"
+  ],
+  "hubHttpsInspection": [
+    "HTTPS 流量检查",
+    "HTTPS inspection"
+  ],
+  "stateRunning": [
+    "运行中",
+    "Running"
+  ],
+  "appSelectionNoAppsAvailable": [
+    "设备上没有可选的应用",
+    "There are no selectable apps on this device"
+  ],
+  "appSelectionNoMatch": [
+    "未找到匹配应用",
+    "No matching apps"
+  ],
+  "ruleControlSubsTitle": [
+    "规则订阅",
+    "Rule subscriptions"
+  ]
+}

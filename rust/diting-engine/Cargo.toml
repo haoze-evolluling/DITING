@@ -1,0 +1,99 @@
+[package]
+name = "diting-engine"
+version = "0.1.0"
+edition = "2021"
+description = "The Rust Android tunnel engine: lifecycle, DNS pipeline and the standalone DNS server that replace the Go engine and its AAR"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+# The only caller is the Kotlin app, so the boundary is JNI, like the other Kotlin-side kernels.
+jni = "0.21"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "sync", "io-util", "macros"] }
+
+# The four upstream transports (stage 2). DoH is HTTP/2-first, which RFC 8484 requires, so the
+# client is `hyper` + its pooled legacy client; DoT/DoQ reuse the same `rustls` provider the MITM
+# spike already proves cross-compiles for Android with `ring`.
+bytes = "1"
+http = "1"
+http-body-util = "0.1"
+# `server` / `server-auto` are for the loopback DoH origin of the transport tests: the engine itself
+# only ever speaks the client side.
+hyper = { version = "1", features = ["client", "server", "http1", "http2"] }
+hyper-util = { version = "0.1", features = [
+    "client-legacy",
+    "http1",
+    "http2",
+    "server-auto",
+    "tokio",
+] }
+tower-service = "0.3"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls-pemfile = "2"
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "logging"] }
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring"] }
+# Stage 4b's HTTP relay: `BodyExt`/`StreamExt` on the hyper bodies, `ReaderStream` + the gzip/zlib
+# decoders for the streaming cosmetic injection. All three are what the MITM spike already proved.
+futures-util = "0.3"
+tokio-util = { version = "0.7", features = ["io"] }
+async-compression = { version = "0.4", features = ["tokio", "gzip", "deflate", "zlib"] }
+# The upstream leaf's certificate-policies extension, i.e. the EV refusal `crypto/x509` gave Go.
+const-oid = { version = "0.9", features = ["db"] }
+der = "0.7"
+x509-cert = { version = "0.2.5" }
+# `IPV6_V6ONLY` on the standalone IPv6 sockets: the default dual-stack bind would collide with the
+# IPv4 socket on the same port (Go got this from `net.Listen("tcp6", ...)`). It is also how the
+# data plane creates a socket, protects it (`VpnService.protect`) and only then connects.
+socket2 = "0.6"
+
+# The stage 3 data plane: a transparent TCP/IP stack for the TUN device. The spike proved the two
+# knobs it needs (`Interface::set_any_ip` and one `listen()`ed socket per SYN); this is the same
+# stack with the engine's flow limits, idle expiry and egress queue around it.
+smoltcp = { version = "0.14", default-features = false, features = [
+    "std",
+    "medium-ip",
+    "proto-ipv4",
+    "proto-ipv6",
+    "socket-tcp",
+    "socket-udp",
+] }
+
+# The engine-side kernels are linked directly instead of being dlopen'd through a C ABI: one
+# `libditing_engine.so`, no payload codec, no runtime handle table.
+diting-config-core = { path = "../diting-config-core" }
+diting-dns-cache-core = { path = "../diting-dns-cache-core" }
+diting-dns-core = { path = "../diting-dns-core" }
+diting-dns-wire = { path = "../diting-dns-wire" }
+diting-go-compat = { path = "../diting-go-compat" }
+diting-policy-core = { path = "../diting-policy-core" }
+diting-resolver-core = { path = "../diting-resolver-core" }
+diting-telemetry-core = { path = "../diting-telemetry-core" }
+diting-upstream-core = { path = "../diting-upstream-core" }
+diting-bootstrap-core = { path = "../diting-bootstrap-core" }
+# Stage 3's data plane: the admission plan, the connection-log dedupe and the UID caches the TUN
+# flows go through. All three were already the only implementation of those decisions.
+diting-gate-core = { path = "../diting-gate-core" }
+diting-connlog-core = { path = "../diting-connlog-core" }
+# Stage 4a: the SOCKS5 / HTTP CONNECT codecs and the proxy config normalization.
+diting-proxy-core = { path = "../diting-proxy-core" }
+# Stage 4b: the four MITM decision kernels — the root CA and leaf minting, the smart filter
+# (UID allow list, bypass patterns, blacklist), the cosmetic scanner and local asset server, and
+# the request-path rules. Every decision already lives there; this crate adds the TLS/HTTP plumbing.
+diting-cert-core = { path = "../diting-cert-core" }
+diting-mitm-core = { path = "../diting-mitm-core" }
+diting-cosmetic-core = { path = "../diting-cosmetic-core" }
+diting-sniffer-core = { path = "../diting-sniffer-core" }
+diting-request-core = { path = "../diting-request-core" }
+
+# `dup(2)`, `poll(2)`, `read(2)`/`write(2)` and the errno numbers of the TUN adapter. Only the unix
+# build has the fd path; the host tests drive the stack through an in-memory link instead.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+# The loopback TLS/QUIC servers and the test PKI the transport cases drive.
+tokio = { version = "1", features = ["full"] }

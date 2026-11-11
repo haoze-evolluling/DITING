@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <files-path
+        name="app_update"
+        path="app-update/" />
+    <files-path
+        name="crash_logs"
+        path="crash_logs/" />
+    <external-files-path
+        name="crash_export"
+        path="Download/" />
+    <!-- Fallback export target when getExternalFilesDir() is unavailable (external
+         storage unmounted). Without this mapping getUriForFile() throws and the
+         already written file is orphaned in filesDir. -->
+    <files-path
+        name="crash_export_private"
+        path="downloads/" />
+    <!-- Staging copy of the MITM root CA, handed to the system certificate
+         installer as a content:// URI: it cannot read app-private paths. -->
+    <cache-path
+        name="ca_export"
+        path="ca-export/" />
+</paths>

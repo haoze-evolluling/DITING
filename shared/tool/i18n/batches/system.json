@@ -1,0 +1,478 @@
+{
+  "aboutTitle": [
+    "关于",
+    "About"
+  ],
+  "aboutMore": [
+    "更多",
+    "More"
+  ],
+  "aboutProject": [
+    "项目",
+    "Project"
+  ],
+  "aboutJoinQq": [
+    "加入 QQ 群",
+    "Join the QQ group"
+  ],
+  "aboutQqGroup": [
+    "群号 {number}",
+    "Group {number}"
+  ],
+  "aboutSponsor": [
+    "赞助",
+    "Sponsor"
+  ],
+  "aboutCredits": [
+    "开源致谢",
+    "Open-source credits"
+  ],
+  "aboutCreditsUi": [
+    "界面组件与交互实现复用自该项目",
+    "UI components and interactions are reused from this project"
+  ],
+  "aboutCreditsCore": [
+    "Go 隧道内核最初魔改自该项目",
+    "The Go tunnel core was initially forked from this project"
+  ],
+  "aboutCreditsBody": [
+    "上述两个项目均以 GPL-3.0 协议开源，相关代码与设计的版权归各自作者所有。谛听的界面层大量借鉴了 FlClash 的实现思路，隧道内核也源自 blockads-android 的早期改造；在此向它们的作者与所有贡献者致以诚挚谢意。",
+    "Both projects are open source under GPL-3.0, and the copyright of their code and design belongs to their authors. Diting's UI layer borrows heavily from FlClash, and its tunnel core derives from an early fork of blockads-android; our sincere thanks to their authors and all contributors."
+  ],
+  "aboutSettings": [
+    "设置",
+    "Settings"
+  ],
+  "aboutStartupCheck": [
+    "关闭启动时检查更新",
+    "Skip the update check at startup"
+  ],
+  "aboutStartupCheckOn": [
+    "应用启动时不自动检查，可随时手动检查",
+    "Updates are not checked automatically at startup; you can check manually anytime"
+  ],
+  "aboutStartupCheckOff": [
+    "应用启动时自动检查新版本",
+    "New versions are checked automatically at startup"
+  ],
+  "aboutDisclaimerEntry": [
+    "使用须知与免责声明",
+    "Terms and disclaimer"
+  ],
+  "aboutDisclaimerEntryBody": [
+    "软件说明、运行机制与免责条款全文",
+    "The full software description, how it works and the disclaimer"
+  ],
+  "aboutOtherContributors": [
+    "其他贡献者",
+    "Other contributors"
+  ],
+  "aboutSponsorList": [
+    "赞助者名单",
+    "Sponsors"
+  ],
+  "aboutSponsorListBody": [
+    "鸣谢支持谛听项目的赞助者",
+    "Thanks to everyone who supported Diting"
+  ],
+  "aboutBuilderList": [
+    "共建者名单",
+    "Contributors"
+  ],
+  "aboutBuilderListBody": [
+    "感谢为谛听贡献代码与建议的共建者",
+    "Thanks to everyone who contributed code and ideas"
+  ],
+  "aboutInstallerFailed": [
+    "无法调起系统安装器",
+    "The system installer cannot be launched"
+  ],
+  "aboutAppName": [
+    "谛听",
+    "Diting"
+  ],
+  "aboutTagline": [
+    "基于 Android VpnService 的本地优先 DNS 加速与流量过滤工具，简单易用，开源无广告。",
+    "A local-first DNS accelerator and traffic filter built on Android VpnService: simple, open source and ad-free."
+  ],
+  "aboutChecking": [
+    "检查中…",
+    "Checking…"
+  ],
+  "aboutCheckUpdate": [
+    "检查更新",
+    "Check for updates"
+  ],
+  "aboutDownloading": [
+    "下载中…",
+    "Downloading…"
+  ],
+  "aboutInstall": [
+    "安装",
+    "Install"
+  ],
+  "aboutDownload": [
+    "下载",
+    "Download"
+  ],
+  "aboutCheckingRelease": [
+    "正在检查 GitHub Release",
+    "Checking GitHub Releases"
+  ],
+  "aboutUpToDate": [
+    "当前已是最新版本{version}",
+    "You are on the latest version{version}"
+  ],
+  "aboutVersionSuffix": [
+    "（{version}）",
+    " ({version})"
+  ],
+  "aboutFoundVersion": [
+    "发现 {version}版本",
+    "Version {version} found"
+  ],
+  "aboutCurrentSuffix": [
+    "（当前 {version}）",
+    " (current {version})"
+  ],
+  "aboutNew": [
+    "新",
+    "new "
+  ],
+  "aboutNewVersion": [
+    "新版本",
+    "a new version"
+  ],
+  "aboutUpdatePackage": [
+    "{version} 更新包",
+    "{version} update package"
+  ],
+  "aboutLinkCopyFallback": [
+    "未能打开浏览器，链接已复制：{url}",
+    "The browser could not be opened; the link was copied: {url}"
+  ],
+  "devStressLogs": [
+    "日志压测",
+    "Log stress test"
+  ],
+  "devStressLogsBody": [
+    "向当前模式的日志库真实写入 {count} 条 DNS 日志",
+    "Write {count} DNS logs into the active log database for real"
+  ],
+  "devErrorReport": [
+    "错误上报自检",
+    "Error reporting self-check"
+  ],
+  "devErrorReportBody": [
+    "通过 FlutterError 上报一条测试异常，验证错误链路",
+    "Report a test exception through FlutterError to verify the error pipeline"
+  ],
+  "devClearAll": [
+    "清空全部数据",
+    "Clear all data"
+  ],
+  "devClearAllBody": [
+    "删除配置、规则与日志，恢复出厂状态",
+    "Delete settings, rules and logs to restore the factory state"
+  ],
+  "devVacuum": [
+    "压缩数据库",
+    "Compact databases"
+  ],
+  "devVacuumBody": [
+    "对三个本地库执行 VACUUM，回收已删除记录占用的空间",
+    "Run VACUUM on the three local databases to reclaim space from deleted rows"
+  ],
+  "devCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "devRun": [
+    "执行",
+    "Run"
+  ],
+  "devConfirmBody": [
+    "{action}\n\n该操作会真正改写本机数据，无法撤销。",
+    "{action}\n\nThis operation really rewrites local data and cannot be undone."
+  ],
+  "devActionFailed": [
+    "{action}失败：{error}",
+    "{action} failed: {error}"
+  ],
+  "devStressNoDb": [
+    "日志压测失败：无法打开日志数据库",
+    "Stress test failed: the log database cannot be opened"
+  ],
+  "devStressDone": [
+    "日志压测完成：写入 {count} 条到 {file}",
+    "Stress test finished: {count} rows written to {file}"
+  ],
+  "devTestException": [
+    "开发者选项触发的测试异常",
+    "Test exception triggered from developer options"
+  ],
+  "devErrorReported": [
+    "已上报一条 FlutterError：开发者选项触发的测试异常",
+    "A FlutterError was reported: test exception triggered from developer options"
+  ],
+  "devVacuumNoDb": [
+    "压缩数据库失败：本机还没有数据库文件",
+    "Compaction failed: there are no database files yet"
+  ],
+  "devVacuumDone": [
+    "已压缩 {files}，回收 {kb} KB",
+    "Compacted {files}, reclaimed {kb} KB"
+  ],
+  "devRestartNeeded": [
+    "需要重启",
+    "Restart required"
+  ],
+  "devLater": [
+    "稍后",
+    "Later"
+  ],
+  "devQuitNow": [
+    "立即退出",
+    "Quit now"
+  ],
+  "devClearAllDone": [
+    "全部数据已清空，需要重新启动应用才能从出厂状态进入。",
+    "All data has been cleared; restart the app to start from the factory state."
+  ],
+  "devOptions": [
+    "开发者选项",
+    "Developer options"
+  ],
+  "devDiagnostics": [
+    "诊断与观测",
+    "Diagnostics"
+  ],
+  "devIpQuality": [
+    "IP 质量",
+    "IP quality"
+  ],
+  "devIpQualityBody": [
+    "实测出口地址与三个公开情报源的类型判断",
+    "Probe the egress address and how three public sources classify it"
+  ],
+  "devRequestLogs": [
+    "请求日志",
+    "Request logs"
+  ],
+  "devRequestLogsBody": [
+    "合并 http_request_log 与 dns_log 的实时请求记录",
+    "Live request records merged from http_request_log and dns_log"
+  ],
+  "devLogRetention": [
+    "日志保留",
+    "Log retention"
+  ],
+  "devLogRetentionBody": [
+    "日志容量上限与 DNS 请求日志的记录范围",
+    "Log capacity limits and what DNS request logs record"
+  ],
+  "devTroubleshoot": [
+    "故障排查",
+    "Troubleshooting"
+  ],
+  "devTroubleshootBody": [
+    "导出崩溃日志，手动抓取并导出运行日志",
+    "Export crash logs, or capture and export runtime logs manually"
+  ],
+  "devDataCleanup": [
+    "数据清理",
+    "Data cleanup"
+  ],
+  "devUnlocked": [
+    "实验动作已解锁",
+    "Experimental actions unlocked"
+  ],
+  "devLocked": [
+    "关闭时下面的动作不可用",
+    "The actions below are unavailable while off"
+  ],
+  "devWarning": [
+    "这里的动作会真的改写本机数据（日志库、prefs、数据库文件），其中「清空全部数据」不可撤销，不要在生产环境打开。",
+    "These actions really rewrite local data (log database, prefs, database files), and \"Clear all data\" cannot be undone; do not enable this in production."
+  ],
+  "devRunning": [
+    "执行中…",
+    "Running…"
+  ],
+  "sponsorGithub": [
+    "在 GitHub 查看赞助方式",
+    "See sponsorship options on GitHub"
+  ],
+  "sponsorReadme": [
+    "查看 README 中的赞助说明",
+    "Read the sponsorship section in the README"
+  ],
+  "sponsorReadmeCopied": [
+    "未能打开浏览器，README 地址已复制",
+    "The browser could not be opened; the README link was copied"
+  ],
+  "sponsorThanks": [
+    "致谢名单",
+    "Acknowledgements"
+  ],
+  "sponsorThanksBody": [
+    "感谢每一位支持项目的朋友",
+    "Thanks to everyone who supports the project"
+  ],
+  "sponsorBuildersBody": [
+    "感谢提出建议与帮助测试的伙伴",
+    "Thanks to everyone who shared ideas and helped test"
+  ],
+  "sponsorUsage": [
+    "你的每一笔支持都会用于",
+    "Every contribution goes towards"
+  ],
+  "sponsorUsageNewFeatures": [
+    "持续开发新功能",
+    "Ongoing feature development"
+  ],
+  "sponsorUsageBugs": [
+    "修复 Bug",
+    "Fixing bugs"
+  ],
+  "sponsorUsageTokens": [
+    "购买词元",
+    "Buying tokens"
+  ],
+  "sponsorFreeWays": [
+    "即使不捐赠，也欢迎",
+    "Even without donating, you can"
+  ],
+  "sponsorFreeStar": [
+    "点一个 Star⭐",
+    "Star the project⭐"
+  ],
+  "sponsorFreeIssue": [
+    "提交 Issue",
+    "File an issue"
+  ],
+  "sponsorFreePr": [
+    "提交 PR",
+    "Open a pull request"
+  ],
+  "sponsorFreeShare": [
+    "分享给更多人",
+    "Share it with others"
+  ],
+  "sponsorFooter": [
+    "感谢每一位支持项目的朋友！",
+    "Thanks to everyone who supports the project!"
+  ],
+  "sponsorBuyDrink": [
+    "请作者喝杯蜜雪 🧋",
+    "Buy the author a drink 🧋"
+  ],
+  "sponsorNote": [
+    "如果这个项目帮助到了你，欢迎请作者喝杯蜜雪。付款时请备注昵称，以便同步加入赞助者名单。",
+    "If this project helps you, you are welcome to buy the author a drink. Please add your nickname in the payment note so you can be added to the sponsor list."
+  ],
+  "sponsorAlipay": [
+    "支付宝",
+    "Alipay"
+  ],
+  "sponsorWechat": [
+    "微信支付",
+    "WeChat Pay"
+  ],
+  "sponsorNickname": [
+    "备注昵称",
+    "Add your nickname"
+  ],
+  "sponsorScan": [
+    "扫码赞助",
+    "Scan to sponsor"
+  ],
+  "sponsorQrCode": [
+    "{label} 收款码",
+    "{label} QR code"
+  ],
+  "sponsorClose": [
+    "关闭",
+    "Close"
+  ],
+  "sponsorNoteShort": [
+    "付款时请备注昵称，以便同步加入赞助者名单。",
+    "Please add your nickname in the payment note so you can be added to the sponsor list."
+  ],
+  "aboutQqCopied": [
+    "未检测到 QQ，群号已复制：{number}",
+    "QQ was not found; the group number was copied: {number}"
+  ],
+  "disclaimerTitle": [
+    "免责声明",
+    "Disclaimer"
+  ],
+  "disclaimerTerms": [
+    "条款全文",
+    "Full terms"
+  ],
+  "disclaimerSource": [
+    "正式条款以仓库 NOTICE.md 与随包 LICENSE 为准。",
+    "The authoritative terms are NOTICE.md in the repository and the LICENSE shipped with the app."
+  ],
+  "ipQualityRedetect": [
+    "重新检测",
+    "Check again"
+  ],
+  "ipQualityEgress": [
+    "当前出口地址",
+    "Current egress address"
+  ],
+  "ipQualitySources": [
+    "来源",
+    "Sources"
+  ],
+  "ipQualitySourcesFooter": [
+    "各来源对「住宅 / 机房」的判断经常互相矛盾：命中数越多越可信，但单一来源的「风险」标签不足以作为结论。",
+    "Sources often disagree on residential vs. hosting: more hits means more confidence, but one source's \"risky\" label is not conclusive."
+  ],
+  "ipQualityQuerying": [
+    "正在查询出口 IP 与 3 个情报源…",
+    "Looking up the egress IP and three intelligence sources…"
+  ],
+  "ipQualityChecking": [
+    "检测中…",
+    "Checking…"
+  ],
+  "ipQualityDetecting": [
+    "正在检测",
+    "Detecting"
+  ],
+  "ipQualityFailed": [
+    "检测失败",
+    "Check failed"
+  ],
+  "ipQualityNotYet": [
+    "尚未检测",
+    "Not checked yet"
+  ],
+  "ipQualityDetectingBody": [
+    "正在获取出口 IP 并查询情报源，请稍候",
+    "Fetching the egress IP and querying the sources, please wait"
+  ],
+  "ipQualityStartBody": [
+    "点下方按钮开始检测当前出口 IP 的质量",
+    "Tap the button below to check the quality of the current egress IP"
+  ],
+  "ipQualityStart": [
+    "开始检测",
+    "Start checking"
+  ],
+  "ipQualityJudgedAs": [
+    "判定为{type}",
+    "Classified as {type}"
+  ],
+  "ipQualityNotUsed": [
+    "未采用",
+    "Not used"
+  ],
+  "ipQualityUsed": [
+    "已采用",
+    "Used"
+  ]
+}

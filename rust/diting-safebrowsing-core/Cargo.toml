@@ -1,0 +1,13 @@
+[package]
+name = "diting-safebrowsing-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+diting-go-compat = { path = "../diting-go-compat" }
+psl = "2"
+sha2 = "0.10"

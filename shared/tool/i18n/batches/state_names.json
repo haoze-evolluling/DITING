@@ -1,0 +1,10 @@
+{
+  "aiProviderZhipu": ["智谱 GLM", "Zhipu GLM"],
+  "aiProviderMoonshot": ["Kimi（月之暗面）", "Kimi (Moonshot)"],
+  "aiProviderDashscope": ["阿里云百炼（通义千问）", "Aliyun Bailian (Qwen)"],
+  "aiProviderVolcengine": ["火山方舟（豆包）", "Volcengine Ark (Doubao)"],
+  "aiProviderQianfan": ["百度千帆（ERNIE）", "Baidu Qianfan (ERNIE)"],
+  "aiProviderStepfun": ["阶跃星辰", "StepFun"],
+  "aiProviderSiliconflow": ["硅基流动", "SiliconFlow"],
+  "aiProviderOllamaLocal": ["Ollama（本机）", "Ollama (local)"]
+}

@@ -1,0 +1,10 @@
+# resolved	text	payloadHex
+1.2.3.4	64 bytes from 1.1.1.1: icmp_seq=1 ttl=57 time=12.3 ms\n	000300000007312e312e312e31402899999999999a
+1.2.3.4	From 192.168.1.1 icmp_seq=1 Time to live exceeded\n	01010000000b3139322e3136382e312e31
+1.2.3.4	From 10.0.0.1: icmp_seq=1 Destination Net Unreachable\n	01050000000831302e302e302e31
+1.2.3.4	From 2001:db8::1 icmp_seq=1 Time exceeded: Hop limit\n	01010000000b323030313a6462383a3a31
+1.2.3.4	PING x (1.2.3.4) 56 data bytes\n\n--- 1.2.3.4 ping statistics ---\n1 packets transmitted, 0 received, 100% packet loss\n	03
+1.2.3.4	Usage: ping [-t ttl] destination\n	04
+1.2.3.4	ping: invalid option -- t\n	04
+1.2.3.4	connect: Network is unreachable\n	02
+1.2.3.4		03

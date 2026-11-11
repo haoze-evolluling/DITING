@@ -1,0 +1,427 @@
+{
+  "notifModeSingle": [
+    "单一服务",
+    "Single provider"
+  ],
+  "notifModeSmart": [
+    "智能选择",
+    "Smart pick"
+  ],
+  "notifModeParallel": [
+    "最快响应",
+    "Fastest answer"
+  ],
+  "notifModeBackup": [
+    "依次尝试",
+    "Try in order"
+  ],
+  "notifRunningMode": {
+    "zh": "运行中 · [{mode}] {count} 个服务商",
+    "en": "Running · [{mode}] {count} providers",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notifRunningProvider": {
+    "zh": "运行中 · {name}",
+    "en": "Running · {name}",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notifRunningServer": {
+    "zh": "运行中 · {name} · 端口 {port}",
+    "en": "Running · {name} · port {port}",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "notifRunningServerMode": {
+    "zh": "运行中 · [{mode}] {count} 个服务商 · 端口 {port}",
+    "en": "Running · [{mode}] {count} providers · port {port}",
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "platformNoSaveDialog": {
+    "zh": "无法打开保存对话框：{error}",
+    "en": "Could not open the save dialog: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "platformNoFilePicker": {
+    "zh": "无法打开文件选择器：{error}",
+    "en": "Could not open the file picker: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "platformNoFilePickerShort": [
+    "无法打开文件选择器",
+    "Could not open the file picker"
+  ],
+  "platformNoLocalRead": [
+    "当前环境不支持读取本地文件",
+    "This environment cannot read local files"
+  ],
+  "platformReadFailed": {
+    "zh": "无法读取该文件：{error}",
+    "en": "Could not read that file: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "platformNoSystemPicker": [
+    "当前环境不支持系统文件选择器",
+    "This environment has no system file picker"
+  ],
+  "updateConnectFailed": {
+    "zh": "检查更新失败：无法连接（{error}）",
+    "en": "Update check failed: cannot connect ({error})",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "updateTlsFailed": [
+    "检查更新失败：TLS 证书校验不通过",
+    "Update check failed: TLS certificate verification failed"
+  ],
+  "updateBadJson": [
+    "检查更新失败：服务器返回的内容不是合法 JSON",
+    "Update check failed: the server did not return valid JSON"
+  ],
+  "updateRateLimited": [
+    "检查更新失败：GitHub 接口限流（未认证请求每小时 60 次），请稍后再试或直接访问项目发布页",
+    "Update check failed: the GitHub API is rate limited (60 unauthenticated requests per hour). Try again later or open the releases page directly"
+  ],
+  "updateForbidden": [
+    "检查更新失败：GitHub 拒绝访问（HTTP 403）",
+    "Update check failed: GitHub refused the request (HTTP 403)"
+  ],
+  "updateNotFound": [
+    "检查更新失败：仓库或发布页不存在（HTTP 404）",
+    "Update check failed: the repository or release page does not exist (HTTP 404)"
+  ],
+  "updateServerError": {
+    "zh": "检查更新失败：GitHub 服务异常（HTTP {status}）",
+    "en": "Update check failed: GitHub is having problems (HTTP {status})",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "updateUnexpectedStatus": {
+    "zh": "检查更新失败：GitHub 返回 {status}",
+    "en": "Update check failed: GitHub returned {status}",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "updateResponseNotJson": [
+    "检查更新失败：响应不是合法 JSON",
+    "Update check failed: the response is not valid JSON"
+  ],
+  "updateUnexpectedFormat": [
+    "检查更新失败：响应格式不符合预期",
+    "Update check failed: the response has an unexpected shape"
+  ],
+  "updateMissingTag": [
+    "检查更新失败：最新版本缺少 tag_name",
+    "Update check failed: the latest release has no tag_name"
+  ],
+  "updateNoApk": [
+    "最新版本未提供 Android APK",
+    "The latest release has no Android APK"
+  ],
+  "updateBadDownloadUrl": [
+    "更新包下载地址无效",
+    "The update download URL is invalid"
+  ],
+  "updateApkFileName": {
+    "zh": "谛听-{version}.apk",
+    "en": "DITING-{version}.apk",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "agentApiEmptyEndpoint": [
+    "接口地址为空，请先在「AI 厂商管理」里填写",
+    "The endpoint URL is empty; fill it in under AI provider management first"
+  ],
+  "agentApiNoModelListJson": [
+    "服务端未返回模型列表（响应不是 JSON 对象）",
+    "The server did not return a model list (the response is not a JSON object)"
+  ],
+  "agentApiNoModelListData": [
+    "服务端未返回模型列表（响应中缺少 data 字段）",
+    "The server did not return a model list (the data field is missing)"
+  ],
+  "agentApiNoModels": [
+    "接口未返回任何模型，请手动填写模型名称",
+    "The endpoint returned no models; type the model name by hand"
+  ],
+  "agentApiKeyEmpty": [
+    "API Key 不能为空",
+    "The API key cannot be empty"
+  ],
+  "agentApiKeyEmptyHint": [
+    "API Key 不能为空，请先在 AI 分析设置中配置",
+    "The API key cannot be empty; configure it in the AI analysis settings first"
+  ],
+  "agentApiResponseNotJsonObject": [
+    "服务端响应不是 JSON 对象",
+    "The server response is not a JSON object"
+  ],
+  "agentApiEmptyContent": [
+    "模型返回了空内容，请检查模型名称或稍后重试",
+    "The model returned nothing; check the model name or try again later"
+  ],
+  "agentApiBadUrl": {
+    "zh": "接口地址不合法：{url}",
+    "en": "Invalid endpoint URL: {url}",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "agentApiCancelled": [
+    "分析已取消",
+    "Analysis cancelled"
+  ],
+  "agentApiTimeout": [
+    "请求超时：模型服务在限定时间内没有响应",
+    "Request timed out: the model service did not answer in time"
+  ],
+  "agentApiUnreachable": {
+    "zh": "无法连接模型服务（{error}）",
+    "en": "Could not reach the model service ({error})",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "agentApiTls": [
+    "TLS 握手失败：服务端证书不可信或协议不匹配",
+    "TLS handshake failed: the server certificate is untrusted or the protocol does not match"
+  ],
+  "agentApiInvalidJson": [
+    "服务端响应不是合法 JSON",
+    "The server response is not valid JSON"
+  ],
+  "agentApiBadKey": [
+    "API Key 无效或已过期",
+    "The API key is invalid or expired"
+  ],
+  "agentApiNoAccess": [
+    "密钥无权访问该模型，或该地区被限制",
+    "The key cannot access this model, or the region is restricted"
+  ],
+  "agentApiModelNotFound": [
+    "接口地址或模型名称不存在（404）",
+    "The endpoint or model name does not exist (404)"
+  ],
+  "agentApiRateLimited": [
+    "请求过于频繁或额度用尽（429）",
+    "Too many requests or the quota is exhausted (429)"
+  ],
+  "agentApiUnavailable": {
+    "zh": "模型服务暂时不可用（{status}）",
+    "en": "The model service is unavailable right now ({status})",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "agentApiRequestFailed": {
+    "zh": "请求失败（{status}）",
+    "en": "Request failed ({status})",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "agentApiServerDetail": {
+    "zh": "：{message}",
+    "en": ": {message}",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "davProbeNoWrite": [
+    "服务器可达但无法创建目录，请检查账号是否具备写入权限",
+    "The server is reachable but the folder cannot be created; check that the account may write there"
+  ],
+  "davProbeConnect": {
+    "zh": "无法连接到服务器：{error}",
+    "en": "Could not connect to the server: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "davProbeTls": [
+    "TLS 握手失败：服务器证书不被信任（自签证书需在系统里安装）",
+    "TLS handshake failed: the server certificate is not trusted (self-signed certificates must be installed in the system)"
+  ],
+  "davProbeHttp": [
+    "HTTP 请求失败，请检查服务器是否支持 WebDAV",
+    "The HTTP request failed; check that the server supports WebDAV"
+  ],
+  "davUploadConnect": {
+    "zh": "上传失败：无法连接服务器（{error}）",
+    "en": "Upload failed: could not reach the server ({error})",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "davUploadTls": [
+    "上传失败：TLS 证书不被信任",
+    "Upload failed: the TLS certificate is not trusted"
+  ],
+  "davDownloadHttp": {
+    "zh": "下载失败（HTTP {status}）",
+    "en": "Download failed (HTTP {status})",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "davStatus401": [
+    "认证失败：用户名或密码不正确",
+    "Authentication failed: the username or password is wrong"
+  ],
+  "davStatus403": [
+    "服务器拒绝访问：该账号没有读写此目录的权限",
+    "The server refused access: this account may not read or write that folder"
+  ],
+  "davStatus404": [
+    "服务器上找不到该目录",
+    "That folder does not exist on the server"
+  ],
+  "davStatus405": [
+    "服务器不允许该操作（可能未启用 WebDAV）",
+    "The server does not allow that operation (WebDAV may be off)"
+  ],
+  "davStatus409": [
+    "目标目录不存在，无法写入",
+    "The target folder does not exist, so nothing can be written"
+  ],
+  "davStatus507": [
+    "服务器存储空间不足",
+    "The server is out of storage space"
+  ],
+  "davStatus5xx": {
+    "zh": "服务器内部错误（HTTP {status}）",
+    "en": "Server error (HTTP {status})",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "davStatusOther": {
+    "zh": "服务器返回 HTTP {status}",
+    "en": "The server returned HTTP {status}",
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
+  "ipQualityNoExitIp": [
+    "无法获取当前出口 IP：网络不可达或探测服务超时",
+    "Could not get the current exit IP: the network is unreachable or the probe timed out"
+  ],
+  "ipQualityNoSourceResult": [
+    "所有 IP 情报源均未返回结果，请检查网络后重试",
+    "No IP intelligence source returned a result; check the network and try again"
+  ],
+  "stateRunning": [
+    "运行中",
+    "Running"
+  ],
+  "stateStopped": [
+    "已停止",
+    "Stopped"
+  ],
+  "stateStarting": [
+    "启动中",
+    "Starting"
+  ],
+  "powerStateError": [
+    "启动失败",
+    "Failed to start"
+  ],
+  "homeProviderSingleLabel": [
+    "解析服务商",
+    "Resolver"
+  ],
+  "resolutionModeTitle": [
+    "解析模式",
+    "Resolution mode"
+  ],
+  "statusTitle": [
+    "状态",
+    "Status"
+  ],
+  "speedTitle": [
+    "网络速度",
+    "Network speed"
+  ],
+  "siteLatencyTitle": [
+    "网络测速",
+    "Site latency"
+  ],
+  "memoryTitle": [
+    "内存信息",
+    "Memory"
+  ],
+  "intranetIpTitle": [
+    "内网 IP",
+    "LAN IP"
+  ]
+}

@@ -1,0 +1,7 @@
+"{\"mode\":\"single\",\"providers\":[{\"id\":\"a\",\"protocol\":\"plain\",\"server\":\"1.1.1.1:53\"}],\"blockResponse\":\"nxdomain\",\"dynamicResponse\":{\"enabled\":true,\"requestThreshold\":0,\"windowSeconds\":0,\"nxDomainDurationSeconds\":0},\"cache\":{},\"bootstrap\":{}}"	ok
+"{\"mode\":\"single\",\"providers\":[{\"protocol\":\"plain\",\"server\":\"1.1.1.1:53\"},{\"protocol\":\"doh\",\"url\":\"https://dns.google/dns-query\"}]}"	err	single DNS mode requires exactly one provider
+"{\"mode\":\"race\",\"providers\":[]}"	err	DNS config has no providers
+"{\"mode\":\"nope\",\"providers\":[]}"	err	unsupported DNS mode "nope"
+"{\"mode\":\"race\"}"	err	DNS config has no providers
+"{\"mode\":\"race\",\"providers\":[{\"protocol\":\"plain\",\"server\":\"1.1.1.1\"}]}"	err	provider 0: invalid PLAIN endpoint "1.1.1.1": address 1.1.1.1: missing port in address
+"{\"mode\":\"race\",\"providers\":[{\"protocol\":\"hyper\",\"server\":\"1.1.1.1:53\"}]}"	err	provider 0: unsupported protocol "HYPER"

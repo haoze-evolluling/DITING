@@ -1,0 +1,43 @@
+// Repositories for this build. Note that the mirror list here does NOT reach the Flutter Gradle
+// plugin's included build (see below): that one is configured by $GRADLE_USER_HOME/init.d/
+// diting-maven-mirror.init.gradle.kts, a copy of gradle/maven-mirror.init.gradle.kts.
+pluginManagement {
+    val flutterSdkPath =
+        run {
+            val properties = java.util.Properties()
+            file("local.properties").inputStream().use { properties.load(it) }
+            val flutterSdkPath = properties.getProperty("flutter.sdk")
+            require(flutterSdkPath != null) { "flutter.sdk not set in local.properties" }
+            flutterSdkPath
+        }
+
+    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+    repositories {
+        // Maven Central answers 403 on this network and the mirror carries the same artifacts.
+        maven("https://repo.huaweicloud.com/repository/maven/")
+        maven("https://mirrors.cloud.tencent.com/nexus/repository/maven-public/")
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+// Plugins declare their own `buildscript` repositories; the mirror must be injected first.
+gradle.beforeProject {
+    buildscript.repositories {
+        maven("https://repo.huaweicloud.com/repository/maven/")
+        maven("https://mirrors.cloud.tencent.com/nexus/repository/maven-public/")
+    }
+}
+
+plugins {
+    id("dev.flutter.flutter-plugin-loader") version "1.0.0"
+    id("com.android.application") version "9.3.3" apply false
+    // Not applied anywhere: AGP 9's built-in Kotlin compiles the sources, and this declaration
+    // only pins the compiler version on the build classpath (AGP's own Kotlin is older than
+    // Flutter's minimum). Drop it once AGP ships a new enough Kotlin.
+    id("org.jetbrains.kotlin.android") version "2.4.21" apply false
+}
+
+include(":app")

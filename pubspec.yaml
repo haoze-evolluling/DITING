@@ -1,0 +1,44 @@
+# Pub workspace root: one lockfile for the shared package and the two apps.
+#
+#   flutter pub get                  # resolve everything
+#   flutter analyze                  # analyze from the root
+#   cd android/app && flutter test   # Android suites
+#   cd desktop/app && flutter test   # desktop suites
+#
+# Tests run per package, not from the root: `flutter_tools` resolves native-asset
+# hooks and the test asset bundle against the *current* package's dependency
+# graph, so a root-level `flutter test android/app` compiles no hooks (every
+# sqflite test then dies on `sqlite3_initialize`) and cannot load
+# `packages/diting_shared/...` assets. See `docs/development/`
+# `android-build-environment.md`.
+#
+# Platform apps live in android/app and desktop/app; shared UI, theme, l10n and
+# data shims live in shared. Each app only depends on what it actually imports.
+name: diting_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.13.5
+
+workspace:
+  - shared
+  - android/app
+  - desktop/app
+
+# Native-asset hook configuration is workspace-wide: pub reads `user_defines`
+# from the workspace root, not from an individual member package. The sqlite3
+# hook downloads precompiled binaries from GitHub releases, which is unreachable
+# from this network, so route it through the mirror.
+hooks:
+  user_defines:
+    sqlite3:
+      url_pattern: "https://gh-proxy.com/https://github.com/simolus3/sqlite3.dart/releases/download/$RELEASE_TAG/$FILENAME"
+
+# Flutter pins two packages exactly and both are older than the latest on pub.dev:
+#   flutter       -> material_color_utilities 0.13.0  (flutter/flutter#185017)
+#   flutter_test  -> test_api 0.7.14
+# Overrides are the only way to move them without patching the SDK checkout. Drop the
+# corresponding entry once Flutter's own constraint allows the newer version.
+dependency_overrides:
+  material_color_utilities: 0.13.1
+  test_api: 0.7.15

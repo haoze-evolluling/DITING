@@ -1,0 +1,13 @@
+[package]
+name = "diting-rewrite-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+base64 = "0.22"
+diting-go-compat = { path = "../diting-go-compat" }
+idna = "1"

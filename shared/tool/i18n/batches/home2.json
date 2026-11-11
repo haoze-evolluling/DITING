@@ -1,0 +1,658 @@
+{
+  "dashboardAddCard": [
+    "添加卡片",
+    "Add card"
+  ],
+  "dashboardRestoreDefaults": [
+    "恢复默认",
+    "Restore defaults"
+  ],
+  "dashboardAllCardsAdded": [
+    "卡片都放上来了",
+    "All cards are on the dashboard"
+  ],
+  "dashboardAllCardsAddedDescription": [
+    "想减少卡片，请回到编辑模式点卡片右上角的移除。",
+    "To remove one, go back to edit mode and tap the remove button in its top-right corner."
+  ],
+  "dashboardAvailableCards": [
+    "可添加的卡片",
+    "Available cards"
+  ],
+  "dashboardOrderHint": [
+    "卡片顺序可在编辑模式下拖拽调整。",
+    "Drag cards in edit mode to change their order."
+  ],
+  "dashboardCardProviderDescription": [
+    "当前解析服务商，点开即可切换或调整竞速列表",
+    "The active resolver; open it to switch or adjust the racing list"
+  ],
+  "dashboardCardResolutionDescription": [
+    "解析模式选择、一句话说明与当前生效的 DNS 地址",
+    "Resolution mode, a one-line summary and the DNS address in effect"
+  ],
+  "dashboardCardStatusDescription": [
+    "内核状态、运行时长、当前服务商与今日查询",
+    "Core state, uptime, active resolver and today's queries"
+  ],
+  "dashboardCardSpeedDescription": [
+    "上下行实时速率曲线与今日累计流量",
+    "Live up/down rate curves and today's total traffic"
+  ],
+  "dashboardCardSiteLatencyDescription": [
+    "自定义 4 个站点的实测延迟，详情页可按分类测速",
+    "Measured latency of four custom sites; the detail page tests each category"
+  ],
+  "dashboardCardMemoryDescription": [
+    "本进程 PSS 与 Java / 原生堆构成",
+    "This process's PSS split into Java and native heap"
+  ],
+  "dashboardCardIntranetDescription": [
+    "当前局域网地址、监听状态与复制入口",
+    "Current LAN address, listening state and a copy action"
+  ],
+  "intranetIpTitle": [
+    "内网 IP",
+    "LAN IP"
+  ],
+  "intranetCopyAddress": [
+    "复制地址",
+    "Copy address"
+  ],
+  "intranetReading": [
+    "读取中…",
+    "Reading…"
+  ],
+  "intranetNoActiveNetwork": [
+    "无活动网络",
+    "No active network"
+  ],
+  "intranetLanAccess": [
+    "局域网接入",
+    "LAN access"
+  ],
+  "intranetConnectHint": [
+    "连上 Wi-Fi 或以太网后这里会显示可用地址",
+    "Connect to Wi-Fi or Ethernet to see a usable address here"
+  ],
+  "memoryTitle": [
+    "内存信息",
+    "Memory"
+  ],
+  "memoryJavaHeap": [
+    "Java 堆",
+    "Java heap"
+  ],
+  "memoryNativeHeap": [
+    "原生堆",
+    "Native heap"
+  ],
+  "memorySystemAvailable": [
+    "整机可用",
+    "System available"
+  ],
+  "speedTitle": [
+    "网络速度",
+    "Network speed"
+  ],
+  "speedUpload": [
+    "上传",
+    "Upload"
+  ],
+  "speedDownload": [
+    "下载",
+    "Download"
+  ],
+  "speedExpressNoStats": [
+    "极速模式不统计",
+    "Not measured in express mode"
+  ],
+  "speedNoChannel": [
+    "当前环境无速率通道",
+    "No rate channel in this environment"
+  ],
+  "resolutionModeTitle": [
+    "解析模式",
+    "Resolution mode"
+  ],
+  "resolutionNoProvider": [
+    "未选择服务商",
+    "No resolver selected"
+  ],
+  "resolutionSingleSummary": [
+    "只用当前选中的服务商，最快但可用性取决于它。",
+    "Uses only the selected resolver: fastest, but availability depends on it."
+  ],
+  "resolutionSmartSummary": [
+    "按历史成功率挑一个，失败后自动换下一个。",
+    "Picks one by historical success rate and falls back to the next on failure."
+  ],
+  "resolutionParallelSummary": [
+    "同时向所有服务商发起，取最先返回的结果。",
+    "Asks every resolver at once and takes the first answer."
+  ],
+  "resolutionPrimaryBackupSummary": [
+    "主服务商优先，超时后才动备用。",
+    "Primary first, backups only after a timeout."
+  ],
+  "siteLatencyTesting": [
+    "测速中…",
+    "Testing…"
+  ],
+  "siteLatencyNotTested": [
+    "尚未测速",
+    "Not tested yet"
+  ],
+  "siteLatencyTitle": [
+    "网络测速",
+    "Site latency"
+  ],
+  "siteLatencyRetest": [
+    "重新测速",
+    "Test again"
+  ],
+  "commonFailed": [
+    "失败",
+    "Failed"
+  ],
+  "siteLatencyNoReply": [
+    "无回包",
+    "No reply"
+  ],
+  "statusTitle": [
+    "状态",
+    "Status"
+  ],
+  "statusUptime": [
+    "运行时长",
+    "Uptime"
+  ],
+  "statusActiveProvider": [
+    "当前服务商",
+    "Active resolver"
+  ],
+  "statusNotSelected": [
+    "未选择",
+    "None"
+  ],
+  "statusTodayQueries": [
+    "今日查询",
+    "Queries today"
+  ],
+  "statusDetailTitle": [
+    "状态详情",
+    "Status details"
+  ],
+  "statusNotTiming": [
+    "未计时",
+    "Not counting"
+  ],
+  "statusCoreSection": [
+    "内核",
+    "Core"
+  ],
+  "statusWorkMode": [
+    "工作模式",
+    "Work mode"
+  ],
+  "statusCoreState": [
+    "内核状态",
+    "Core state"
+  ],
+  "statusListenPort": [
+    "监听端口",
+    "Listening port"
+  ],
+  "statusNotListening": [
+    "未监听",
+    "Not listening"
+  ],
+  "statusProviderFooter": [
+    "延迟是该服务商的最近一次实测值，不是本机到目标的往返。",
+    "Latency is the resolver's last measured value, not this device's round trip to the target."
+  ],
+  "statusNoProviderHint": [
+    "还没有选择服务商。在服务商管理里挑一个，解析才会走真实上游。",
+    "No resolver selected yet. Pick one in resolver management so resolution uses a real upstream."
+  ],
+  "statusTodayCounts": [
+    "今日计数",
+    "Today's counts"
+  ],
+  "statusCountsFooter": [
+    "计数从本次内核启动开始累计，重启或切换工作模式后归零；已在服务器模式里做的重置也只清计数，不动规则与缓存。",
+    "Counts accumulate from this core start and reset when it restarts or the work mode changes; the reset in server mode clears only the counts, never rules or cache."
+  ],
+  "statusQueries": [
+    "查询",
+    "Queries"
+  ],
+  "statusBlocked": [
+    "已拦截",
+    "Blocked"
+  ],
+  "statusAverageLatency": [
+    "平均时延",
+    "Average latency"
+  ],
+  "statusCacheHitRate": [
+    "缓存命中率",
+    "Cache hit rate"
+  ],
+  "statusServerPortReady": [
+    "本机 DNS 端口可用，局域网设备可把它当作 DNS",
+    "The local DNS port is available; LAN devices can use it as their DNS"
+  ],
+  "statusTunnelActive": [
+    "本机流量已经过谛听，解析与规则都在生效",
+    "This device's traffic goes through DITING, so resolution and rules are in effect"
+  ],
+  "statusServerPortClosed": [
+    "DNS 端口未监听，服务器模式当前不提供解析",
+    "The DNS port is not listening, so server mode is not serving resolution"
+  ],
+  "statusCoreStopped": [
+    "内核未运行，本机流量按系统默认网络走",
+    "The core is not running, so this device uses the system's default network"
+  ],
+  "siteLatencySheetLatency": [
+    "延迟",
+    "Latency"
+  ],
+  "siteLatencySheetCategory": [
+    "分类",
+    "Category"
+  ],
+  "siteLatencySheetTarget": [
+    "目标",
+    "Target"
+  ],
+  "siteLatencySheetAverage": [
+    "平均往返",
+    "Average RTT"
+  ],
+  "siteLatencySheetMinMax": [
+    "最小 / 最大",
+    "Min / max"
+  ],
+  "siteLatencySheetJitter": [
+    "抖动",
+    "Jitter"
+  ],
+  "siteLatencySheetLoss": [
+    "丢包",
+    "Loss"
+  ],
+  "siteLatencySheetDns": [
+    "解析地址",
+    "Resolved address"
+  ],
+  "siteLatencySheetLastRun": [
+    "最近测速",
+    "Last test"
+  ],
+  "siteLatencySheetNotTested": [
+    "尚未测速。点测速按钮开始测量。",
+    "Not tested yet. Tap the test button to start."
+  ],
+  "siteLatencySheetNoReply": [
+    "三个回显请求都没有收到应答，可能是站点限流或当前网络不通。",
+    "None of the three echo requests was answered: the site may be rate limiting or the network is down."
+  ],
+  "siteLatencySheetFallbackFooter": [
+    "系统 ping 不可用，这次数值来自 TCP 握手 / isReachable，衡量的是建连时延而不是 ICMP 回显，会略高于真实往返。",
+    "System ping is unavailable, so these numbers come from the TCP handshake / isReachable: they measure connection setup, not ICMP echo, and read slightly higher than the real round trip."
+  ],
+  "siteLatencySheetIcmpFooter": [
+    "数值来自系统 ping 的 ICMP 回显（3 次取平均）。本应用自身流量不经过 VPN，测的是物理网络。",
+    "Numbers come from ICMP echo via system ping (average of three). This app's own traffic bypasses the VPN, so the physical network is measured."
+  ],
+  "trafficStructureLive": [
+    "实时汇总",
+    "Live summary"
+  ],
+  "trafficStructureFocused": [
+    "重点流量结构",
+    "Key traffic structure"
+  ],
+  "trafficStructureToday": [
+    "今日流量结构",
+    "Today's traffic structure"
+  ],
+  "trafficStructureBypass": [
+    "旁路",
+    "Bypass"
+  ],
+  "trafficStructureCache": [
+    "缓存",
+    "Cache"
+  ],
+  "trafficStructureRaceRate": [
+    "竞速成功率",
+    "Race success rate"
+  ],
+  "trafficStructureBootstrapRate": [
+    "Bootstrap 成功率",
+    "Bootstrap success rate"
+  ],
+  "trafficStructureBlockedShare": [
+    "拦截占比",
+    "Blocked share"
+  ],
+  "trafficStructureBlockRate": [
+    "拦截率",
+    "Block rate"
+  ],
+  "trafficStructureCacheRate": [
+    "缓存率",
+    "Cache rate"
+  ],
+  "dashboardSitesTitle": [
+    "仪表盘站点",
+    "Dashboard sites"
+  ],
+  "dashboardSitesCardSection": [
+    "仪表盘卡片",
+    "Dashboard card"
+  ],
+  "dashboardSitesAtLeastOne": [
+    "卡片至少保留 1 个站点",
+    "Keep at least one site on the card"
+  ],
+  "dashboardSitesFooter": [
+    "这四张卡片用的是同一个仪表盘卡片，改动立刻生效；测速在详情页按分类手动触发。",
+    "These four cards share one dashboard card, so changes apply immediately; tests run per category from the detail page."
+  ],
+  "trafficMonitorTitle": [
+    "流量监控",
+    "Traffic monitor"
+  ],
+  "trafficMonitorToday": [
+    "今日代理流量",
+    "Proxy traffic today"
+  ],
+  "trafficMonitorLiveRate": [
+    "实时速率",
+    "Live rate"
+  ],
+  "trafficMonitorNoStats": [
+    "本模式不统计",
+    "Not measured in this mode"
+  ],
+  "memoryDetailTitle": [
+    "内存详情",
+    "Memory details"
+  ],
+  "memoryResample": [
+    "重新采样",
+    "Resample"
+  ],
+  "memoryProcessPss": [
+    "本进程 PSS",
+    "This process PSS"
+  ],
+  "memoryUnavailable": [
+    "不可用",
+    "Unavailable"
+  ],
+  "commonNoData": [
+    "无数据",
+    "No data"
+  ],
+  "memoryOther": [
+    "其它",
+    "Other"
+  ],
+  "memoryComposition": [
+    "进程构成",
+    "Process composition"
+  ],
+  "memoryCompositionFooter": [
+    "PSS 按共享页的比例计入本进程，因此 Java 堆与原生堆之和小于 PSS，差额是代码、图形缓冲与共享库。",
+    "PSS counts shared pages proportionally, so the Java and native heaps add up to less than the PSS; the remainder is code, graphics buffers and shared libraries."
+  ],
+  "memoryOtherCode": [
+    "其它（代码 / 共享库）",
+    "Other (code / shared libraries)"
+  ],
+  "memorySystemSection": [
+    "整机内存",
+    "System memory"
+  ],
+  "memorySystemFooter": [
+    "整机占用 = 总量 - 可用量，包含系统与所有应用；本进程只是其中一份。",
+    "System usage = total - available, covering the system and every app; this process is only one part of it."
+  ],
+  "memorySystemUsed": [
+    "整机已用",
+    "System used"
+  ],
+  "memoryRecentPss": [
+    "最近 PSS",
+    "Recent PSS"
+  ],
+  "memorySampling": [
+    "正在采样…",
+    "Sampling…"
+  ],
+  "memoryRecentPssCaption": [
+    "打开本页后每 2 秒采样一次，最多保留 60 个点；曲线持续上扬说明有内存未释放。",
+    "This page samples every 2 seconds and keeps at most 60 points; a curve that keeps climbing means memory is not being released."
+  ],
+  "memorySourceFooter": [
+    "数据来自 ActivityManager 的 MemoryInfo；切到后台或系统回收后数值会明显下降。",
+    "Data comes from ActivityManager's MemoryInfo; the numbers drop noticeably after the app is backgrounded or the system reclaims memory."
+  ],
+  "siteLatencyDetailTitle": [
+    "测速详情",
+    "Latency details"
+  ],
+  "siteLatencyTestAll": [
+    "测全部",
+    "Test all"
+  ],
+  "siteLatencyCustomSites": [
+    "自定义仪表盘站点",
+    "Custom dashboard sites"
+  ],
+  "siteLatencyConnectivity": [
+    "站点连通性",
+    "Site connectivity"
+  ],
+  "siteLatencyTestingShort": [
+    "测速中",
+    "Testing"
+  ],
+  "siteLatencyNoTest": [
+    "未测速",
+    "Not tested"
+  ],
+  "siteLatencyInProgress": [
+    "进行中",
+    "In progress"
+  ],
+  "siteLatencyPending": [
+    "待测",
+    "Pending"
+  ],
+  "siteLatencyAllReachable": [
+    "全部通畅",
+    "All reachable"
+  ],
+  "siteLatencyTestingEach": [
+    "正在逐个站点测速…",
+    "Testing the sites one by one…"
+  ],
+  "siteLatencyPickCategory": [
+    "选一个分类点测速，或点右上角测全部。",
+    "Pick a category and start a test, or tap the top-right corner to test everything."
+  ],
+  "siteLatencyThisRun": [
+    "本次结果",
+    "This run"
+  ],
+  "siteLatencyReachable": [
+    "通畅",
+    "Reachable"
+  ],
+  "siteLatencyMeasuredSites": [
+    "已测站点",
+    "Sites tested"
+  ],
+  "siteLatencyDetailFooter": [
+    "每个站点发 3 个 ICMP 回显，取平均值；系统 ping 不可用时退回 TCP 握手，会标上 * 号，数值略高于真实往返。本应用自身流量不经过 VPN，测的是物理网络。",
+    "Each site gets three ICMP echo requests and the average is used; when system ping is unavailable the TCP handshake is used instead, marked with *, and reads slightly higher than the real round trip. This app's own traffic bypasses the VPN, so the physical network is measured."
+  ],
+  "intranetDetailTitle": [
+    "内网 IP 详情",
+    "LAN IP details"
+  ],
+  "intranetRefresh": [
+    "刷新网络信息",
+    "Refresh network info"
+  ],
+  "intranetLocalAddress": [
+    "本机局域网地址",
+    "Local LAN address"
+  ],
+  "intranetUsableAsDns": [
+    "可作 DNS",
+    "Usable as DNS"
+  ],
+  "intranetLocalOnly": [
+    "仅本机",
+    "Local only"
+  ],
+  "intranetSameSubnetHint": [
+    "同网段设备把 DNS 指到这个地址即可走本机解析。",
+    "Point devices on the same subnet at this address to use local resolution."
+  ],
+  "intranetNetworkOverview": [
+    "网络概况",
+    "Network overview"
+  ],
+  "commonEnabled": [
+    "已启用",
+    "Enabled"
+  ],
+  "commonDisabled": [
+    "未启用",
+    "Disabled"
+  ],
+  "intranetDnsServers": [
+    "DNS 服务器",
+    "DNS servers"
+  ],
+  "intranetInterfaces": [
+    "接口",
+    "Interfaces"
+  ],
+  "intranetNoInterface": [
+    "系统没有报告活动网络接口，可能是飞行模式或未联网。",
+    "The system reports no active network interface: airplane mode may be on or there is no connection."
+  ],
+  "intranetAdapter": [
+    "网卡",
+    "Adapter"
+  ],
+  "intranetGateway": [
+    "网关",
+    "Gateway"
+  ],
+  "intranetPrivateDnsOff": [
+    "系统私人 DNS 未开启，解析请求由本机与代理按模式处理。",
+    "System Private DNS is off, so requests are handled locally and by the proxy according to the mode."
+  ],
+  "intranetNoDnsServer": [
+    "没有读到 DNS 服务器：接口未下发 DNS，或当前环境没有诊断通道。",
+    "No DNS server was read: the interface provides none, or there is no diagnostic channel here."
+  ],
+  "intranetPrimaryDns": [
+    "首选",
+    "Primary"
+  ],
+  "intranetPrivateDns": [
+    "私人 DNS",
+    "Private DNS"
+  ],
+  "intranetPortFooter": [
+    "端口只在服务启动时绑定，改动端口后需要重启服务；把同网段设备的 DNS 指向上面的地址即可让它们走本机解析。",
+    "The port is bound only when the service starts, so restart it after changing the port; point devices on the same subnet at the address above to use local resolution."
+  ],
+  "intranetCopyAddressWithPort": [
+    "复制地址（含端口）",
+    "Copy address (with port)"
+  ],
+  "speedDetailTitle": [
+    "网速详情",
+    "Speed details"
+  ],
+  "speedCurrentDownload": [
+    "当前下载",
+    "Current download"
+  ],
+  "speedSamplingPaused": [
+    "暂停采样",
+    "Sampling paused"
+  ],
+  "speedLive": [
+    "实时",
+    "Live"
+  ],
+  "speedSamplingHint": [
+    "每秒采样一次，下图是最近一分钟。",
+    "Sampled once per second; the chart shows the last minute."
+  ],
+  "speedCurrentUpload": [
+    "当前上传",
+    "Current upload"
+  ],
+  "speedDownloadPeak": [
+    "下行峰值",
+    "Download peak"
+  ],
+  "speedUploadPeak": [
+    "上行峰值",
+    "Upload peak"
+  ],
+  "speedSamples": [
+    "样本",
+    "Samples"
+  ],
+  "speedTodayTotal": [
+    "今日累计",
+    "Today's total"
+  ],
+  "speedNoTrafficToday": [
+    "流量库还没有今天的记录。",
+    "The traffic store has no records for today yet."
+  ],
+  "speedTotal": [
+    "合计",
+    "Total"
+  ],
+  "speedRateFooter": [
+    "速率来自内核数据面的实时计数，只包含经过隧道转发的流量；本应用自身的探测与测速不计入。今日累计来自应用流量统计，与「流量统计」页同一份数据。",
+    "Rates come from the core data plane's live counters and cover only tunneled traffic; this app's own probes and speed tests are excluded. Today's totals come from the app traffic statistics, the same data as the Traffic page."
+  ],
+  "speedExpressSource": [
+    "极速模式不经过内核数据面，因此没有逐秒速率；切回普通模式后恢复。",
+    "Express mode bypasses the core data plane, so there is no per-second rate; switch back to normal mode to restore it."
+  ],
+  "speedNoChannelSource": [
+    "当前环境没有速率通道（桌面环境或纯 Dart 测试），读不到实时速率。",
+    "This environment has no rate channel (desktop or pure Dart tests), so no live rate can be read."
+  ],
+  "speedNoDataInMode": [
+    "当前模式下没有速率数据",
+    "No rate data in this mode"
+  ],
+  "speedWaitingSample": [
+    "正在等待第一个样本",
+    "Waiting for the first sample"
+  ],
+  "dashboardDetailTooltip": [
+    "详情",
+    "Details"
+  ]
+}

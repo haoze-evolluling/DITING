@@ -1,0 +1,13 @@
+[package]
+name = "diting-app-update-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# GitHub's `releases/latest` body crosses the boundary as JSON text; the answer is a small JSON
+# result the Dart caller maps to l10n.
+serde_json = "1"

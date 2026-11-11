@@ -1,0 +1,17 @@
+[package]
+name = "diting-dns-config-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The engine-side name tables (`PLAIN` / `DOH` / `DOT`, the four scheduling modes, the block
+# response spellings) already live there, because the Go engine validates every pushed config
+# against them. The builder must not spell a second copy.
+diting-config-core = { path = "../diting-config-core" }
+# The documents handed to `ApplyDNSConfig` are JSON; the app must emit the keys the engine reads.
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

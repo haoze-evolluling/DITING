@@ -1,0 +1,14 @@
+{
+  "serverHubUpstreamDescription": [
+    "管理解析上游与解析策略",
+    "Manage upstreams and the resolution policy"
+  ],
+  "serverHubCacheDescription": [
+    "调整 DNS 缓存开关、容量与命中策略",
+    "Tune the DNS cache switch, size and hit policy"
+  ],
+  "serverHubRuleControlDescription": [
+    "配置规则总开关与拦截响应策略",
+    "Configure the rule master switch and blocking policy"
+  ]
+}

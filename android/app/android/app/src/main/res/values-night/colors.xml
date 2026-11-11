@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark counterpart of the light value: page background of the default palette
+         (`colorScheme.surface` in dark mode). -->
+    <color name="diting_window_background">#FF131315</color>
+    <!-- Brand icon, dark mode: background #1F1F22, foreground #2E83FF. -->
+    <color name="ic_launcher_foreground">#FF2E83FF</color>
+    <color name="ic_launcher_background">#FF1F1F22</color>
+    <color name="splash_card_stroke">#25FFFFFF</color>
+</resources>

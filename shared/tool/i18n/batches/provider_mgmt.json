@@ -1,0 +1,28 @@
+{
+  "providerMgmtDeleteTitle": ["删除 DNS 服务商", "Delete DNS provider"],
+  "providerMgmtDeleteBody": {
+    "zh": "确定删除「{name}」吗？删除后无法再作为解析服务使用。",
+    "en": "Delete \"{name}\"? It can no longer be used for resolution afterwards.",
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "providerMgmtTitle": ["服务商管理", "Provider management"],
+  "providerMgmtAdd": ["新增 DNS 服务商", "Add DNS provider"],
+  "providerMgmtCurrent": ["当前用于解析 DNS", "Currently resolving DNS"],
+  "providerMgmtBuiltin": ["内置服务商", "Built-in providers"],
+  "providerMgmtCustom": ["自定义服务商", "Custom providers"],
+  "providerMgmtEmptyCustom": ["暂无自定义服务商", "No custom providers yet"],
+  "providerMgmtEmptyCustomSubtitle": ["点击右上角「+」添加 DoH、DoT 或传统 DNS 服务", "Tap \"+\" in the top right to add a DoH, DoT or plain DNS provider"],
+  "providerMgmtFooter": ["内置服务商由应用维护，只能切换；自定义服务商可编辑或删除。", "Built-in providers are maintained by the app and can only be selected; custom ones can be edited or deleted."],
+  "providerMgmtEditTitle": ["编辑 DNS 服务商", "Edit DNS provider"],
+  "providerMgmtAddressLabel": ["地址（host:port）", "Address (host:port)"],
+  "providerMgmtNameRequired": ["请填写名称", "Fill in a name"],
+  "providerMgmtDohRequired": ["DoH 地址需以 https:// 开头", "A DoH address must start with https://"],
+  "providerMgmtHostPortRequired": ["请填写 host:port 形式的地址", "Enter an address in host:port form"],
+  "resolutionNotConfigured": ["未配置", "Not configured"],
+  "serverName": ["名称", "Name"],
+  "serverDohAddress": ["DoH 地址", "DoH address"],
+  "commonEdit": ["编辑", "Edit"],
+  "commonDelete": ["删除", "Delete"],
+  "commonSave": ["保存", "Save"],
+  "uiCancel": ["取消", "Cancel"]
+}

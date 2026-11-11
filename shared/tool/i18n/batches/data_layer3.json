@@ -1,0 +1,7 @@
+{
+  "backupErrProvidersInvalidJson": ["服务商配置不是合法 JSON", "The provider configuration is not valid JSON"],
+  "backupErrBootstrapInvalidJson": ["Bootstrap 配置不是合法 JSON", "The Bootstrap configuration is not valid JSON"],
+  "backupErrAppearanceNotObject": ["外观分组应为对象", "The appearance section must be an object"],
+  "backupErrSystemNotObject": ["系统设置分组应为对象", "The system settings section must be an object"],
+  "caChannelUnavailable": ["证书通道不可用", "The certificate channel is unavailable"]
+}

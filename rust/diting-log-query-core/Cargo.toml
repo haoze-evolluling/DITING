@@ -1,0 +1,13 @@
+[package]
+name = "diting-log-query-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The boundary payload is JSON: the app hands over parameters or raw SQLite rows and gets a
+# statement plan or typed, already-classified rows back.
+serde_json = "1"

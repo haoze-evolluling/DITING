@@ -1,0 +1,28 @@
+[package]
+name = "diting-kernels"
+version = "0.1.0"
+edition = "2021"
+description = "Umbrella cdylib that links the sixteen Flutter/Kotlin UI-side kernels into one libditing_kernels.so (libditing_engine.so stays separate)"
+publish = false
+
+[lib]
+name = "diting_kernels"
+crate-type = ["cdylib"]
+
+[dependencies]
+diting-agent-core = { path = "../diting-agent-core" }
+diting-app-update-core = { path = "../diting-app-update-core" }
+diting-backup-core = { path = "../diting-backup-core" }
+diting-cleanup-core = { path = "../diting-cleanup-core" }
+diting-dns-config-core = { path = "../diting-dns-config-core" }
+diting-ip-quality-core = { path = "../diting-ip-quality-core" }
+diting-log-core = { path = "../diting-log-core" }
+diting-log-query-core = { path = "../diting-log-query-core" }
+diting-notification-core = { path = "../diting-notification-core" }
+diting-outbound-proxy-core = { path = "../diting-outbound-proxy-core" }
+diting-probe-core = { path = "../diting-probe-core" }
+diting-recognition-core = { path = "../diting-recognition-core" }
+diting-rule-core = { path = "../diting-rule-core" }
+diting-rule-store-core = { path = "../diting-rule-store-core" }
+diting-subscription-core = { path = "../diting-subscription-core" }
+diting-vpn-config-core = { path = "../diting-vpn-config-core" }

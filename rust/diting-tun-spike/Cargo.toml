@@ -1,0 +1,21 @@
+[package]
+name = "diting-tun-spike"
+version = "0.1.0"
+edition = "2021"
+description = "Stage 0 spike for the Android engine migration: the JNI facade, TUN fd ownership, VpnService.protect ordering and the callback thread model the TUN data plane will use"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+# The boundary is JNI because the only caller is the Kotlin VpnService.
+jni = "0.21"
+serde_json = "1"
+# Same socket crate the engine already links: it is how `protect(fd)` gets a real descriptor to
+# hand to Kotlin before `connect`.
+socket2 = { version = "0.6", features = ["all"] }
+
+[target.'cfg(unix)'.dependencies]
+# `dup` + `read`/`write` + errno classification of the Android TUN fd.
+libc = "0.2"

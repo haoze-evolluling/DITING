@@ -1,0 +1,342 @@
+{
+  "uaDeleteTitle": [
+    "删除 User-Agent",
+    "Delete User-Agent"
+  ],
+  "uaDeleteBody": [
+    "确定删除这一条吗？只删候选，不影响当前已选中的 UA。",
+    "Delete this entry? Only the candidate is removed; the currently selected UA is unaffected."
+  ],
+  "uaAdd": [
+    "添加 User-Agent",
+    "Add User-Agent"
+  ],
+  "uaEdit": [
+    "编辑 User-Agent",
+    "Edit User-Agent"
+  ],
+  "uaNote": [
+    "UA 会随订阅下载、规则集拉取与订阅测速请求一起发送；部分服务端按 UA 拒绝请求，改这里可以绕过。",
+    "The UA is sent with subscription downloads, ruleset fetches and subscription speed tests; some servers reject requests by UA, and changing it here works around that."
+  ],
+  "uaCurrent": [
+    "当前选择",
+    "Current selection"
+  ],
+  "uaNoOverride": [
+    "不覆写",
+    "No override"
+  ],
+  "uaNoOverrideBody": [
+    "沿用订阅或内核自带的 UA",
+    "Use the UA from the subscription or the core"
+  ],
+  "uaBuiltin": [
+    "内置",
+    "Built-in"
+  ],
+  "uaCustom": [
+    "自定义",
+    "Custom"
+  ],
+  "uaBuiltinNote": [
+    "内置 UA 不可删除：删掉之后内核回落到默认值，用户会误以为「设置没生效」。",
+    "Built-in UAs cannot be deleted: removing one makes the core fall back to its default, which looks like the setting stopped working."
+  ],
+  "uaHint": [
+    "如：clash-verge/v2.0.0",
+    "e.g. clash-verge/v2.0.0"
+  ],
+  "uaEmptyError": [
+    "UA 不能为空",
+    "The UA cannot be empty"
+  ],
+  "uaDuplicateError": [
+    "该 UA 已存在",
+    "That UA already exists"
+  ],
+  "ssidInvalid": [
+    "SSID 不能为空或已存在",
+    "The SSID cannot be empty or already exist"
+  ],
+  "ssidAdd": [
+    "添加 SSID",
+    "Add SSID"
+  ],
+  "ssidEdit": [
+    "编辑 SSID",
+    "Edit SSID"
+  ],
+  "ssidSave": [
+    "保存 SSID",
+    "Save SSID"
+  ],
+  "ssidHint": [
+    "区分大小写，与系统 Wi-Fi 列表里的名字完全一致",
+    "Case sensitive; must match the name in the system Wi-Fi list exactly"
+  ],
+  "ssidExample": [
+    "如：Home-5G",
+    "e.g. Home-5G"
+  ],
+  "ssidEmptyError": [
+    "SSID 不能为空",
+    "The SSID cannot be empty"
+  ],
+  "ssidConnection": [
+    "连接方式",
+    "Connection"
+  ],
+  "ssidCellular": [
+    "蜂窝网络",
+    "Cellular"
+  ],
+  "ssidCellularBody": [
+    "在该网络下也启动 VPN",
+    "Start the VPN on this network too"
+  ],
+  "ssidWifiBody": [
+    "连上该 SSID 时启动 VPN",
+    "Start the VPN when connected to this SSID"
+  ],
+  "ssidBothOff": [
+    "两种都关掉，等于把这条 SSID 从白名单里排除（VPN 不会启动）。",
+    "Turning both off excludes this SSID from the allowlist, so the VPN will not start."
+  ],
+  "ssidDelay": [
+    "延迟",
+    "Delay"
+  ],
+  "ssidStartDelay": [
+    "启动延迟",
+    "Start delay"
+  ],
+  "ssidStartDelayBody": [
+    "等待网络就绪后再启动 VPN",
+    "Wait for the network before starting the VPN"
+  ],
+  "ssidImmediate": [
+    "立即连接",
+    "Connect immediately"
+  ],
+  "odTitle": [
+    "按需连接",
+    "On-demand connection"
+  ],
+  "odApplyNow": [
+    "立即应用",
+    "Apply now"
+  ],
+  "odEnable": [
+    "启用按需连接",
+    "Enable on-demand connection"
+  ],
+  "odEnableBody": [
+    "连上白名单里的 SSID 时自动启动 VPN",
+    "Start the VPN automatically on allowlisted SSIDs"
+  ],
+  "odDisableBody": [
+    "关闭时 VPN 始终在线，不随网络切换",
+    "When off, the VPN stays on and does not follow network changes"
+  ],
+  "odNote": [
+    "开启后，只有连上白名单里的 SSID 时才会自动启动 VPN；其余网络保持断开，省电也更可控。自动判定只在网络变化时启停 VPN，不会覆盖手动开关的结果；点右上角「立即应用」可立即按当前网络重新判定。",
+    "When enabled, the VPN starts automatically only on allowlisted SSIDs and stays off elsewhere, which is both more power-friendly and more predictable. Automatic decisions only act on network changes and never override the manual switch; tap \"Apply now\" to re-evaluate for the current network immediately."
+  ],
+  "odAllowlist": [
+    "SSID 白名单",
+    "SSID allowlist"
+  ],
+  "odNoSsid": [
+    "还没有 SSID",
+    "No SSIDs yet"
+  ],
+  "odNoSsidBody": [
+    "没有白名单时按需连接不会触发",
+    "On-demand connection never triggers without an allowlist"
+  ],
+  "odDelayNote": [
+    "延迟用于等 Wi-Fi 完成认证与 DHCP；过早启动 VPN 会让首个请求落到尚未就绪的网络上。",
+    "The delay lets Wi-Fi finish authentication and DHCP; starting the VPN too early sends the first requests over a network that is not ready."
+  ],
+  "odCellular": [
+    "蜂窝",
+    "Cellular"
+  ],
+  "odKindsNone": [
+    "不启用",
+    "Disabled"
+  ],
+  "odDelayValue": [
+    "延迟 {ms} ms",
+    "Delayed {ms} ms"
+  ],
+  "odStateDisabled": [
+    "按需连接已关闭",
+    "On-demand connection is off"
+  ],
+  "odStateUnknown": [
+    "无法读取当前 Wi-Fi，白名单不会触发",
+    "The current Wi-Fi cannot be read, so the allowlist never triggers"
+  ],
+  "odStateNoWifi": [
+    "当前不在 Wi-Fi 上，VPN 保持断开",
+    "Not on Wi-Fi, so the VPN stays off"
+  ],
+  "odStateMatched": [
+    "已匹配 {ssid}，VPN 会自动启动",
+    "Matched {ssid}; the VPN starts automatically"
+  ],
+  "odStateUnmatched": [
+    "当前 Wi-Fi 不在白名单，VPN 保持断开",
+    "The current Wi-Fi is not allowlisted, so the VPN stays off"
+  ],
+  "odDisabledHint": [
+    "按需连接已关闭，VPN 不再随网络切换",
+    "On-demand connection is off; the VPN no longer follows network changes"
+  ],
+  "odPillDisabled": [
+    "未启用",
+    "Disabled"
+  ],
+  "odPillUnknown": [
+    "无法判断",
+    "Unknown"
+  ],
+  "odPillNoWifi": [
+    "未连接 Wi-Fi",
+    "Not on Wi-Fi"
+  ],
+  "odPillWillStart": [
+    "会启动 VPN",
+    "VPN will start"
+  ],
+  "odPillWillNotStart": [
+    "不会启动 VPN",
+    "VPN will not start"
+  ],
+  "odDecision": [
+    "当前判定",
+    "Current decision"
+  ],
+  "odDecisionFooter": [
+    "判定按当前网络实时计算：切换 Wi-Fi 后重新读取即可看到结果。SSID 区分大小写。",
+    "The decision is computed from the current network: read it again after switching Wi-Fi. SSIDs are case sensitive."
+  ],
+  "odCurrentNetwork": [
+    "当前网络",
+    "Current network"
+  ],
+  "odWifiName": [
+    "Wi-Fi 名称",
+    "Wi-Fi name"
+  ],
+  "odReadAgain": [
+    "重新读取",
+    "Read again"
+  ],
+  "odPermission": [
+    "读取权限",
+    "Read permission"
+  ],
+  "odPermissionBody": [
+    "Android 10 起读取 Wi-Fi 名称需要位置权限",
+    "Reading the Wi-Fi name requires the location permission since Android 10"
+  ],
+  "odNotGranted": [
+    "未授权",
+    "Not granted"
+  ],
+  "odWifiUnreadable": [
+    "本机当前无法读取 Wi-Fi 名称：请在系统设置里授予本应用位置权限后重新读取。",
+    "The Wi-Fi name cannot be read right now: grant the location permission in system settings and read it again."
+  ],
+  "odSsidPrivacy": [
+    "SSID 只用于匹配白名单，不会被上传；手动添加的 SSID 在无法读取时仍然可用。",
+    "SSIDs are only used to match the allowlist and are never uploaded; manually added SSIDs still work when reading fails."
+  ],
+  "odBatteryJoined": [
+    "已加入",
+    "Added"
+  ],
+  "odBatteryNotJoined": [
+    "未加入",
+    "Not added"
+  ],
+  "odBatteryUnavailable": [
+    "不可用",
+    "Unavailable"
+  ],
+  "odPrerequisites": [
+    "前置条件",
+    "Prerequisites"
+  ],
+  "odIgnoreBattery": [
+    "忽略电池优化",
+    "Ignore battery optimisation"
+  ],
+  "odBatteryOk": [
+    "系统不会在后台冻结 VPN 进程",
+    "The system will not freeze the VPN process in the background"
+  ],
+  "odBatteryAsk": [
+    "未加入时后台 VPN 可能被系统冻结，点击申请",
+    "Without it the background VPN may be frozen; tap to request"
+  ],
+  "odBatteryNoChannel": [
+    "当前构建没有提供电池优化通道",
+    "This build has no battery optimisation channel"
+  ],
+  "odBatteryFooter": [
+    "点击「未加入」会打开系统授权页；返回后会重新读取真实状态，取消则保持未加入。",
+    "Tapping \"Not added\" opens the system authorisation page; the real state is re-read on return, and cancelling leaves it unchanged."
+  ],
+  "odBatteryJoinedHint": [
+    "已加入电池优化白名单",
+    "Added to the battery optimisation allowlist"
+  ],
+  "odBatteryStillOff": [
+    "仍未加入，VPN 可能被系统冻结",
+    "Still not added; the VPN may be frozen by the system"
+  ],
+  "odBatteryUnsupportedHint": [
+    "当前构建不支持该授权",
+    "This build does not support that permission"
+  ],
+  "odCapNoPermission": [
+    "无法读取：需要位置权限",
+    "Cannot read: the location permission is required"
+  ],
+  "odCapCurrent": [
+    "当前连接：{name}",
+    "Connected to {name}"
+  ],
+  "customResourcesTitle": [
+    "自定义资源",
+    "Custom resources"
+  ],
+  "customResourcesNote": [
+    "这些资源按名字被引用：改名字等于断开引用，改内容则在下一次加载配置时生效。它们不属于旧版 1.4.3 的界面，保留在此供调试使用。",
+    "These resources are referenced by name: renaming one breaks the reference, while editing content takes effect the next time the configuration loads. They are not part of the 1.4.3 interface and are kept here for debugging."
+  ],
+  "customResourcesSection": [
+    "资源",
+    "Resources"
+  ],
+  "configDelete": [
+    "删除",
+    "Delete"
+  ],
+  "configCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "configNotSet": [
+    "未设置",
+    "Not set"
+  ],
+  "configItemCount": [
+    "共 {count} 项",
+    "{count} items"
+  ]
+}

@@ -1,0 +1,13 @@
+[package]
+name = "diting-backup-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The backup document is JSON and so is the boundary payload: one call in, one call out. A binary
+# layout would only re-encode what the app already has to encode for the file itself.
+serde_json = "1"

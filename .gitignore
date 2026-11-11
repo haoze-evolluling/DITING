@@ -1,0 +1,128 @@
+# ====================================================================
+# Android & Gradle Build Outputs
+# ====================================================================
+/build/
+.gradle/
+.kotlin/
+.cxx/
+.externalNativeBuild/
+captures/
+*.apk
+*.ap_
+*.aab
+# Go 隧道引擎 AAR 已删除（阶段 5）：Android 端只有 Rust 的 libditing_engine.so 与 UI 侧内核。
+# 保留 *.aar 兜底，防止旧的构建产物被误提交。
+*.aar
+
+# Rust 内核：cargo 构建目录与构建后拷入 app 的 .so 都是产物，不入库
+# （生成方式见 rust/README.md：python rust/build_android.py）。
+rust/target/
+# JVM JNI 冒烟测试的 class 产物（python rust/verify.py --smoke）
+rust/tools/log-smoke/out/
+rust/tools/rule-index-smoke/out/
+rust/tools/outbound-proxy-smoke/out/
+rust/tools/vpn-plan-smoke/out/
+rust/tools/notification-smoke/out/
+rust/tools/engine-smoke/out/
+rust/tools/tun-spike-smoke/out/
+android/app/android/app/src/main/jniLibs/
+
+# ====================================================================
+# Flutter / Pub Workspace Build Outputs
+# ====================================================================
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+android/app/build/
+desktop/app/build/
+shared/build/
+coverage/
+app.*.symbols
+app.*.map.json
+
+# ====================================================================
+# Service & Flutter Web Console Build Outputs
+# ====================================================================
+desktop/service/build/bin/
+desktop/service/frontend/dist/
+node_modules/
+
+# Flutter tool generates this registrant for the workspace root's `android/`
+# container when a root-level `flutter analyze` runs. The real Android registrant
+# lives in android/app/android/app/src/main/java/io/flutter/plugins/.
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# ====================================================================
+# Local Configuration & SDK
+# ====================================================================
+local.properties
+
+# ====================================================================
+# Keystores & Signing Credentials
+# ====================================================================
+*.keystore
+*.jks
+*.p12
+# 唯一例外：证书导入单测的 PKCS#12 素材（口令公开，非真实凭据）。
+# 它需保持由真实 OpenSSL 3.x 默认参数导出，才能持续覆盖解析兼容性。
+!desktop/service/internal/core/testdata/dns-lan.p12
+keystore/
+DITING-keystore/
+secrets/
+keystore.properties
+signing.properties
+
+# ====================================================================
+# Python Cache & Bytecode
+# ====================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ====================================================================
+# IDEs, Editors & Developer Tools
+# ====================================================================
+# IntelliJ IDEA / Android Studio
+*.iml
+.idea/
+
+# VS Code
+.vscode/
+
+# AI Coding Assistants & Environments
+.workbuddy/
+.workbuddy-ai/
+.trae/
+.zcode/
+.codebase-memory/
+.agents/
+.codex/
+
+# ====================================================================
+# OS & System Files
+# ====================================================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ====================================================================
+# Temporary Files & Backups
+# ====================================================================
+.tmp/
+*.tmp
+*.bak
+LearningObjects/
+screenshots/
+# adb 真机验收时抓的截图，只作本地证据，不进仓库
+.adb-shots/
+
+# 本地排障用的临时抓取（截图、拉取的数据库/备份样本）
+.tmp-test/
+.tmp_verify/
+
+# 真机 UI 取证产物（截图与几何 dump），不入库
+shared/tool/uiprobe/

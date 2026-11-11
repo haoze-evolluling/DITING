@@ -1,0 +1,368 @@
+{
+  "autoUpdateTitle": [
+    "自动更新设置",
+    "Auto-update settings"
+  ],
+  "autoUpdateSection": [
+    "自动更新",
+    "Auto-update"
+  ],
+  "autoUpdateRulesSwitch": [
+    "自动更新规则订阅",
+    "Auto-update rule subscriptions"
+  ],
+  "autoUpdateRulesSwitchSubtitle": [
+    "启动应用或回到前台时检查是否到期",
+    "Checks for due subscriptions on launch or when returning to the foreground"
+  ],
+  "autoUpdateIntervalSection": [
+    "更新频率",
+    "Update frequency"
+  ],
+  "autoUpdateEveryHours": {
+    "zh": "每 {hours} 小时",
+    "en": "Every {hours} hours",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "autoUpdateCustomInterval": [
+    "自定义更新时间",
+    "Custom interval"
+  ],
+  "autoUpdateCustomHint": [
+    "输入 1 至 168 小时之间的更新时间",
+    "Enter an interval between 1 and 168 hours"
+  ],
+  "autoUpdateIntervalFooter": [
+    "间隔保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。本机没有后台任务队列：应用在前台（含启动与切回前台）时才检查到期并执行，进程被完全关闭期间不会更新。",
+    "The interval is stored in the dataset of the current work mode (normal, speed and server each keep their own). There is no background task queue: due subscriptions are only checked and run while the app is in the foreground (launch and returning to the foreground), never while the process is closed."
+  ],
+  "autoUpdateStatusSection": [
+    "执行状态",
+    "Run status"
+  ],
+  "autoUpdateNext": [
+    "下次预计更新",
+    "Next update"
+  ],
+  "autoUpdateLast": [
+    "上次自动更新",
+    "Last auto-update"
+  ],
+  "autoUpdateNoRunYet": [
+    "本次会话还没有执行过自动更新",
+    "No auto-update has run in this session"
+  ],
+  "autoUpdateRunCount": {
+    "zh": "（{count} 个订阅）",
+    "en": " ({count} subscriptions)",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "autoUpdateStatusFooter": [
+    "判据是每条订阅的「上次尝试时间」与上面的间隔；正在手动更新时本轮会让路。",
+    "The check compares each subscription's last attempt with the interval above; a manual update in progress makes this round step aside."
+  ],
+  "autoUpdateGroupsSection": [
+    "分组自动更新",
+    "Per-group auto-update"
+  ],
+  "autoUpdateReadingGroups": [
+    "读取分组中…",
+    "Reading groups…"
+  ],
+  "autoUpdateNoGroups": [
+    "还没有分组",
+    "No groups yet"
+  ],
+  "autoUpdateNoGroupsSubtitle": [
+    "在规则订阅页新建分组后，可以在这里单独开关",
+    "Create a group on the rule subscription page to toggle it here"
+  ],
+  "autoUpdateGroupsFooter": [
+    "仅会自动更新已开启的分组中的网络订阅；写入 `subscription_group` 表。",
+    "Only remote subscriptions in enabled groups are updated automatically; stored in the `subscription_group` table."
+  ],
+  "autoUpdateReadingSubs": [
+    "正在读取订阅…",
+    "Reading subscriptions…"
+  ],
+  "autoUpdateNoCandidates": [
+    "没有可自动更新的订阅（需为远程、已启用、且所在分组已开启）",
+    "No subscription can be auto-updated (it must be remote, enabled, and in an enabled group)"
+  ],
+  "autoUpdateDueNow": [
+    "已到期：回到前台时会立即执行",
+    "Due now: it runs as soon as the app returns to the foreground"
+  ],
+  "autoUpdateRemainingHours": {
+    "zh": "{hours} 小时 {minutes} 分钟后",
+    "en": "in {hours} h {minutes} min",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "autoUpdateRemainingMinutes": {
+    "zh": "{minutes} 分钟后",
+    "en": "in {minutes} min",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "autoUpdateNextAt": {
+    "zh": "{moment}（{left}）",
+    "en": "{moment} ({left})",
+    "placeholders": {
+      "moment": {
+        "type": "String"
+      },
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "autoUpdateMoment": {
+    "zh": "{month} 月 {day} 日 {time}",
+    "en": "{month}/{day} {time}",
+    "placeholders": {
+      "month": {
+        "type": "int"
+      },
+      "day": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "autoUpdateIntervalLabel": [
+    "更新间隔（小时）",
+    "Update interval (hours)"
+  ],
+  "autoUpdateIntervalHelper": [
+    "1–168 小时",
+    "1–168 hours"
+  ],
+  "mirrorTplTitle": [
+    "镜像站模板",
+    "Mirror templates"
+  ],
+  "mirrorTplAdd": [
+    "添加模板",
+    "Add template"
+  ],
+  "mirrorTplIntro": [
+    "保存常用的下载镜像。开启全局镜像后，订阅与软件更新默认都走所选模板；添加订阅时也可以单独指定模板。",
+    "Save the mirrors you use often. With the global mirror on, subscriptions and app updates use the selected template by default; a single subscription can also pick its own template."
+  ],
+  "mirrorTplActions": [
+    "操作",
+    "Actions"
+  ],
+  "mirrorTplFormatExample": [
+    "镜像站格式示例",
+    "Mirror format example"
+  ],
+  "mirrorTplFormatExampleSubtitle": [
+    "了解占位符如何组成镜像地址",
+    "See how placeholders make up a mirror address"
+  ],
+  "mirrorTplSaved": [
+    "已保存模板",
+    "Saved templates"
+  ],
+  "mirrorTplReadFailed": [
+    "无法读取镜像站模板",
+    "Could not read mirror templates"
+  ],
+  "mirrorTplReadFailedSubtitle": [
+    "旧库尚未就绪或该表不可用",
+    "The legacy database is not ready or the table is unavailable"
+  ],
+  "mirrorTplSavedCount": {
+    "zh": "已保存模板（{count}）",
+    "en": "Saved templates ({count})",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mirrorTplReading": [
+    "正在读取镜像站模板…",
+    "Reading mirror templates…"
+  ],
+  "mirrorTplEmpty": [
+    "暂无模板。点击右上角「添加模板」开始使用。",
+    "No templates yet. Tap \"Add template\" in the top right to start."
+  ],
+  "mirrorTplDuplicate": [
+    "同名模板已存在，请换一个名称",
+    "A template with this name already exists; choose another name"
+  ],
+  "mirrorTplDuplicateSave": [
+    "保存失败：名称与已有模板重复",
+    "Save failed: the name matches an existing template"
+  ],
+  "mirrorTplFormatTitle": [
+    "镜像站格式",
+    "Mirror format"
+  ],
+  "mirrorTplFormatIntro": [
+    "镜像地址由固定前缀与占位符组成，下载订阅时会把占位符替换成真实链接。",
+    "A mirror address is a fixed prefix plus placeholders; the placeholders are replaced with the real link when a subscription is downloaded."
+  ],
+  "mirrorTplFormatUrl": {
+    "zh": "{token}：完整订阅地址",
+    "en": "{token}: full subscription URL",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "mirrorTplFormatScheme": {
+    "zh": "{token}：http 或 https",
+    "en": "{token}: http or https",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "mirrorTplFormatUrlEncoded": {
+    "zh": "{token}：URL 编码后的完整地址",
+    "en": "{token}: full URL-encoded address",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "mirrorTplFormatHost": {
+    "zh": "{token}：订阅域名",
+    "en": "{token}: subscription host",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "mirrorTplFormatPath": {
+    "zh": "{token}：路径部分",
+    "en": "{token}: path part",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "mirrorTplFormatPathAndQuery": {
+    "zh": "{token}：路径与查询参数",
+    "en": "{token}: path and query",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "mirrorTplFormatSample": {
+    "zh": "示例：https://ghproxy.example.com/{token}",
+    "en": "Example: https://ghproxy.example.com/{token}",
+    "placeholders": {
+      "token": {
+        "type": "String"
+      }
+    }
+  },
+  "mirrorTplFormatPlaceholders": {
+    "zh": "可用占位符：{url}、{scheme}、{urlEncoded}、{host}、{path}、{pathAndQuery}",
+    "en": "Available placeholders: {url}, {scheme}, {urlEncoded}, {host}, {path}, {pathAndQuery}",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      },
+      "scheme": {
+        "type": "String"
+      },
+      "urlEncoded": {
+        "type": "String"
+      },
+      "host": {
+        "type": "String"
+      },
+      "path": {
+        "type": "String"
+      },
+      "pathAndQuery": {
+        "type": "String"
+      }
+    }
+  },
+  "mirrorTplNameLabel": [
+    "模板名称",
+    "Template name"
+  ],
+  "mirrorTplNameHint": [
+    "例如：GitHub 镜像",
+    "For example: GitHub mirror"
+  ],
+  "mirrorTplAddressLabel": [
+    "模板地址",
+    "Template address"
+  ],
+  "mirrorTplInvalid": [
+    "必须使用 HTTP(S) 并包含至少一个占位符",
+    "Must use HTTP(S) and contain at least one placeholder"
+  ],
+  "mirrorTplAddTitle": [
+    "添加镜像站模板",
+    "Add mirror template"
+  ],
+  "mirrorTplEditTitle": [
+    "编辑镜像站模板",
+    "Edit mirror template"
+  ],
+  "commonEdit": [
+    "编辑",
+    "Edit"
+  ],
+  "commonSave": [
+    "保存",
+    "Save"
+  ],
+  "uiCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "uiClose": [
+    "关闭",
+    "Close"
+  ],
+  "commonDelete": [
+    "删除",
+    "Delete"
+  ],
+  "autoUpdateDisabled": [
+    "自动更新已关闭",
+    "Automatic updates are off"
+  ],
+  "autoUpdateNoSubscriptions": [
+    "没有可自动更新的订阅",
+    "No subscriptions to update automatically"
+  ]
+}

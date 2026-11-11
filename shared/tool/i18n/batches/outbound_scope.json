@@ -1,0 +1,11 @@
+{
+  "outboundScopeTitle": ["代理范围", "Proxy scope"],
+  "outboundScopeAll": ["全部应用", "All apps"],
+  "outboundScopeApps": ["仅选中应用", "Selected apps"],
+  "outboundScopeAllFooter": ["所有应用的连接以及谛听自身的 DNS 上游查询都经过代理。", "Connections from every app and DITING's own upstream DNS queries go through the proxy."],
+  "outboundScopeAppsFooter": ["只有选中应用的连接经过代理；其他应用、无法识别归属的连接以及谛听自身的 DNS 上游查询直接连接。", "Only connections from the selected apps go through the proxy. Other apps, connections whose owner cannot be identified and DITING's own upstream DNS queries connect directly."],
+  "outboundTargets": ["走代理的应用", "Apps using the proxy"],
+  "outboundTargetsTitle": ["选择走代理的应用", "Choose apps that use the proxy"],
+  "outboundTargetsIntro": ["勾选的应用会经代理连接网络，修改后需重启隧道生效。代理应用本身、谛听以及「排除应用」中的应用不经过隧道，无法走代理，因此不在列表中。", "Checked apps connect through the proxy; restart the tunnel after a change. The proxy app, DITING and apps in Excluded apps bypass the tunnel and cannot use the proxy, so they are not listed."],
+  "outboundProxyTargetsRequired": ["「仅选中应用」模式下请至少选择一个走代理的应用", "Pick at least one app to use the proxy in Selected apps mode"]
+}

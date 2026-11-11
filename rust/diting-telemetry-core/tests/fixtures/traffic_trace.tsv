@@ -1,0 +1,19 @@
+op	uid	tx	rx	result
+record	0	10	10	
+record	-1	10	10	
+record	1000	0	0	
+record	1000	-5	-5	
+tick				
+record	1000	5	0	
+record	1000	0	7	
+record	1000	1	1	
+record	1001	4096	0	
+tick				1000:6:8,1001:4096:0
+totals	1000			6:8
+totals	1001			4096:0
+record	1001	0	512	
+tick				1001:0:512
+tick				
+set_interval	10000			10000
+set_interval	0			10000
+interval				10000

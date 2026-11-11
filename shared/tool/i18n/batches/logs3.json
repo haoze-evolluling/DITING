@@ -1,0 +1,9 @@
+{
+  "logsBootstrapRow": ["{ip} · 成功 {percent} · 平均 {latency}{failures}", "{ip} · {percent} succeeded · average {latency}{failures}"],
+  "logsBootstrapFailures": [" · 失败 {count} 次", " · {count} failed"],
+  "logsEntryCount": ["{count} 条", "{count} entries"],
+  "logsCacheRow": ["{ttl} · 命中 {count} 次 · {size} B", "{ttl} · {count} hits · {size} B"],
+  "logsLastHitAt": ["最后命中 {time}", "Last hit {time}"],
+  "logsCacheFooterCount": ["共 {count} 条，按命中次数与过期时间排序。剩余 TTL 少于 30 秒的条目标橙色。点按一行查看详情，可复制域名、加入黑白名单或用 AI 分析。", "{count} entries sorted by hits and expiry. Entries with less than 30 seconds of TTL are orange. Tap a row for details, to copy the domain, add it to the lists or analyse it with AI."],
+  "logsSubStatsRow": ["{status} | 拦截 {count} 次 | {percent}", "{status} | {count} blocks | {percent}"]
+}

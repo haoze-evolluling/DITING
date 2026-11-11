@@ -1,0 +1,70 @@
+{
+  "settingsModeSubtitle": [
+    "切换普通模式或服务器模式",
+    "Switch between normal and server mode"
+  ],
+  "settingsPerformanceSection": [
+    "性能优化",
+    "Performance"
+  ],
+  "settingsCacheSubtitle": [
+    "缓存已解析的域名，减少重复查询",
+    "Cache resolved domains to avoid repeated lookups"
+  ],
+  "settingsLogModeSubtitle": [
+    "选择 DNS 请求日志的记录范围",
+    "Choose how much of the DNS request log is recorded"
+  ],
+  "settingsRuntimeSection": [
+    "运行行为",
+    "Runtime behaviour"
+  ],
+  "settingsForegroundSubtitle": [
+    "后台隐藏、通知常驻、绕过局域网",
+    "Hide in the background, keep the notification, bypass the LAN"
+  ],
+  "settingsDataSection": [
+    "数据管理",
+    "Data"
+  ],
+  "settingsLanguageSubtitle": [
+    "选择应用界面语言",
+    "Choose the app language"
+  ],
+  "settingsWizardSubtitle": [
+    "查看当前工作模式的架构原理、权限配置与上手指引",
+    "See how the current work mode works, its permissions and a getting-started guide"
+  ],
+  "hubOtherSettings": [
+    "其他设置",
+    "Other settings"
+  ],
+  "devOptions": [
+    "开发者选项",
+    "Developer options"
+  ],
+  "serverRunMode": [
+    "运行模式",
+    "Run mode"
+  ],
+  "cacheSettingsTitle": [
+    "缓存设置",
+    "Cache settings"
+  ],
+  "logRetentionTitle": [
+    "日志模式",
+    "Log mode"
+  ],
+  "foregroundTitle": [
+    "前后台行为",
+    "Foreground and background"
+  ],
+  "languageTitle": [
+    "语言设置",
+    "Language"
+  ],
+  "serverWizard": [
+    "使用向导",
+    "Setup guide"
+  ]
+}
