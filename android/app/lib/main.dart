@@ -12,6 +12,7 @@ import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
+import 'package:diting_android/data/native/launcher_icon_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
@@ -20,6 +21,7 @@ import 'package:diting_android/state/app_version_provider.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
+import 'package:diting_android/state/launcher_icon_providers.dart';
 import 'package:diting_android/state/network_tools_providers.dart';
 import 'package:diting_android/state/outbound_proxy_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,6 +53,14 @@ Future<void> main() async {
   final store = await storeTask;
   stage('prefs');
   final settings = LegacySettings(store);
+  // Keep the home-screen icon in sync with the saved choice. PackageManager normally persists the
+  // enabled activity-alias, but an update that rewrites the manifest resets the component flags.
+  unawaited(
+    reconcileLauncherIcon(
+      LauncherIconBridge(),
+      settings.launcherIconStyleRaw,
+    ),
+  );
   // Existing installs already accepted the agreement and chose a mode before the guide existed;
   // backfill the new flag instead of replaying onboarding after an upgrade. This mirrors legacy
   // `MainWorkModeCoordinator.checkStartupOnboarding`.

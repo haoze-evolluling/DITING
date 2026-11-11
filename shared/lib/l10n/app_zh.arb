@@ -1258,6 +1258,15 @@
   "appearanceMotionFooter": "底栏样式、动画与玻璃只作用于浮条；普通底栏始终是实色。",
   "appearancePaletteGoldLegacy": "落盘值沿用旧版的 indigo",
   "appearancePaletteFooter": "色板只提供种子，上屏的是 HCT 推导出的整套角色色。旧版没有自定义取色，因此这里也不提供。",
+  "launcherIconTitle": "应用图标",
+  "launcherIconInfoLabel": "选择桌面显示的应用图标",
+  "launcherIconDefault": "默认",
+  "launcherIconDefaultDescription": "谛听默认图标",
+  "launcherIconAdguard": "AdGuard",
+  "launcherIconAdguardDescription": "绿色盾牌与白色对勾",
+  "launcherIconFooter": "系统没有在运行时替换图标的接口，切换通过启用对应的启动入口实现。返回桌面即可看到；若桌面缓存未刷新，请稍候或重启桌面。",
+  "launcherIconApplied": "已切换应用图标，返回桌面即可看到",
+  "launcherIconApplyFailed": "切换应用图标失败，请稍后重试",
   "fontFamilySizeSubtitle": "当前 {percent}%",
   "@fontFamilySizeSubtitle": {
     "placeholders": {

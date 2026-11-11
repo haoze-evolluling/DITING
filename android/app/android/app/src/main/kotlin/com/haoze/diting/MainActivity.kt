@@ -51,6 +51,7 @@ class MainActivity : FlutterActivity() {
         backgroundBridge = BackgroundBridge(this).also { it.register(messenger) }
         permissionsBridge = PermissionsBridge(this).also { it.register(messenger) }
         TileBridge(this).register(messenger)
+        LauncherIconBridge(this).register(messenger)
         RecognitionAvatarBridge(applicationContext).register(messenger)
         // Manual runtime-log capture: its own channel, so PlatformBridge stays crash-only.
         RuntimeLogBridge(applicationContext).register(messenger)

@@ -2222,6 +2222,34 @@ class AppL10nZh extends AppL10n {
       '色板只提供种子，上屏的是 HCT 推导出的整套角色色。旧版没有自定义取色，因此这里也不提供。';
 
   @override
+  String get launcherIconTitle => '应用图标';
+
+  @override
+  String get launcherIconInfoLabel => '选择桌面显示的应用图标';
+
+  @override
+  String get launcherIconDefault => '默认';
+
+  @override
+  String get launcherIconDefaultDescription => '谛听默认图标';
+
+  @override
+  String get launcherIconAdguard => 'AdGuard';
+
+  @override
+  String get launcherIconAdguardDescription => '绿色盾牌与白色对勾';
+
+  @override
+  String get launcherIconFooter =>
+      '系统没有在运行时替换图标的接口，切换通过启用对应的启动入口实现。返回桌面即可看到；若桌面缓存未刷新，请稍候或重启桌面。';
+
+  @override
+  String get launcherIconApplied => '已切换应用图标，返回桌面即可看到';
+
+  @override
+  String get launcherIconApplyFailed => '切换应用图标失败，请稍后重试';
+
+  @override
   String fontFamilySizeSubtitle(String percent) {
     return '当前 $percent%';
   }

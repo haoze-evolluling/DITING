@@ -2,6 +2,7 @@ import 'package:diting_android/pages/appearance/appearance_color_page.dart';
 import 'package:diting_android/pages/appearance/appearance_shared_pages.dart';
 import 'package:diting_android/pages/appearance/font_family_page.dart';
 import 'package:diting_android/pages/appearance/font_size_page.dart';
+import 'package:diting_android/pages/appearance/launcher_icon_page.dart';
 import 'package:diting_android/pages/appearance/settings_parity_pages.dart';
 import 'package:diting_android/pages/appearance/theme_page.dart';
 import 'package:diting_android/pages/system/developer_page.dart';
@@ -21,6 +22,9 @@ abstract final class SystemPaths {
   static const homeSentence = '/theme/home-sentence';
   static const notification = '/theme/notification';
   static const background = '/theme/background';
+
+  /// Home-screen launcher icon style.
+  static const launcherIcon = '/theme/launcher-icon';
 
   /// Font family. No upstream equivalent; kept at the user's request.
   static const fontFamily = '/font-family';
@@ -94,6 +98,12 @@ List<RouteBase> systemRoutes() => <RouteBase>[
     parentNavigatorKey: rootNavigatorKey,
     pageBuilder: (context, state) =>
         androidDefaultPage(state, const ThemeBackgroundPage()),
+  ),
+  GoRoute(
+    path: SystemPaths.launcherIcon,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) =>
+        androidDefaultPage(state, const LauncherIconPage()),
   ),
   GoRoute(
     path: SystemPaths.fontFamily,

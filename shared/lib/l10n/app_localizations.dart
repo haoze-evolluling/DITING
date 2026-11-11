@@ -4187,6 +4187,60 @@ abstract class AppL10n {
   /// **'色板只提供种子，上屏的是 HCT 推导出的整套角色色。旧版没有自定义取色，因此这里也不提供。'**
   String get appearancePaletteFooter;
 
+  /// No description provided for @launcherIconTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用图标'**
+  String get launcherIconTitle;
+
+  /// No description provided for @launcherIconInfoLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择桌面显示的应用图标'**
+  String get launcherIconInfoLabel;
+
+  /// No description provided for @launcherIconDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认'**
+  String get launcherIconDefault;
+
+  /// No description provided for @launcherIconDefaultDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'谛听默认图标'**
+  String get launcherIconDefaultDescription;
+
+  /// No description provided for @launcherIconAdguard.
+  ///
+  /// In zh, this message translates to:
+  /// **'AdGuard'**
+  String get launcherIconAdguard;
+
+  /// No description provided for @launcherIconAdguardDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'绿色盾牌与白色对勾'**
+  String get launcherIconAdguardDescription;
+
+  /// No description provided for @launcherIconFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统没有在运行时替换图标的接口，切换通过启用对应的启动入口实现。返回桌面即可看到；若桌面缓存未刷新，请稍候或重启桌面。'**
+  String get launcherIconFooter;
+
+  /// No description provided for @launcherIconApplied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已切换应用图标，返回桌面即可看到'**
+  String get launcherIconApplied;
+
+  /// No description provided for @launcherIconApplyFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换应用图标失败，请稍后重试'**
+  String get launcherIconApplyFailed;
+
   /// No description provided for @fontFamilySizeSubtitle.
   ///
   /// In zh, this message translates to:

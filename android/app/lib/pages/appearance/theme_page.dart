@@ -9,6 +9,7 @@ import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/font_providers.dart';
+import 'package:diting_android/state/launcher_icon_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
@@ -90,6 +91,12 @@ class ThemePage extends ConsumerWidget {
                   ref.watch(selectedFontFamilyProvider),
                 ),
                 onPressed: () => context.push(SystemPaths.fontFamily),
+              ),
+              NavEntryRow(
+                glyph: AppGlyphs.iconTile,
+                title: context.l10n.launcherIconTitle,
+                subtitle: ref.watch(launcherIconProvider).label(context.l10n),
+                onPressed: () => context.push(SystemPaths.launcherIcon),
               ),
             ],
           ),

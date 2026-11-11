@@ -211,4 +211,16 @@ extension LegacyAppearanceSettings on LegacySettings {
     'bottom_bar_haptic_enabled',
     value,
   );
+
+  /// Launcher icon style id (`default` / `adguard`). PackageManager persists the enabled
+  /// activity-alias itself; this mirror lets the app restore the choice after an update and show
+  /// the selected tile without querying the platform synchronously.
+  String get launcherIconStyleRaw =>
+      _string(LegacySettings.uiContainer, 'launcher_icon_style') ?? 'default';
+
+  void setLauncherIconStyleRaw(String storageValue) => _store.putString(
+    LegacySettings.uiContainer,
+    'launcher_icon_style',
+    storageValue,
+  );
 }

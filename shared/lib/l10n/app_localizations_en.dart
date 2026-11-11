@@ -2345,6 +2345,38 @@ class AppL10nEn extends AppL10n {
       'The palette only supplies a seed; the screen shows the full HCT-derived role set. The legacy app had no custom picker, so there is none here.';
 
   @override
+  String get launcherIconTitle => 'App icon';
+
+  @override
+  String get launcherIconInfoLabel =>
+      'Choose the icon shown on your home screen';
+
+  @override
+  String get launcherIconDefault => 'Default';
+
+  @override
+  String get launcherIconDefaultDescription => 'The default DITING icon';
+
+  @override
+  String get launcherIconAdguard => 'AdGuard';
+
+  @override
+  String get launcherIconAdguardDescription =>
+      'A green shield with a white check';
+
+  @override
+  String get launcherIconFooter =>
+      'Android has no runtime API to replace an installed icon, so switching enables the matching launcher entry. Return to your home screen to see it; if the launcher caches the old icon, wait a moment or restart it.';
+
+  @override
+  String get launcherIconApplied =>
+      'Launcher icon switched — return to your home screen to see it';
+
+  @override
+  String get launcherIconApplyFailed =>
+      'Couldn\'t switch the launcher icon. Try again later';
+
+  @override
   String fontFamilySizeSubtitle(String percent) {
     return '$percent% now';
   }

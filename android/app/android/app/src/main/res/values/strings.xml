@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Display name shared by the application and its launcher-icon aliases. -->
+    <string name="app_name">谛听</string>
     <!-- Quick settings tile, worded exactly like the legacy app. -->
     <string name="quick_settings_tile_label">谛听</string>
     <string name="quick_settings_tile_state_on">已开启</string>

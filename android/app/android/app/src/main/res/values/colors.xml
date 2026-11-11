@@ -7,4 +7,6 @@
     <color name="ic_launcher_foreground">#FF007AFE</color>
     <color name="ic_launcher_background">#FFFAF8F9</color>
     <color name="splash_card_stroke">#1F000000</color>
+    <!-- AdGuard alternative launcher icon: the shield sits on a plain white plate. -->
+    <color name="ic_launcher_adguard_background">#FFFFFFFF</color>
 </resources>
