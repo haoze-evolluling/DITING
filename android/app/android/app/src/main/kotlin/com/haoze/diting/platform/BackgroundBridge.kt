@@ -19,8 +19,9 @@ class BackgroundBridge(private val activity: Activity) : MethodChannel.MethodCal
     companion object {
         const val CHANNEL = "com.haoze.diting/background"
 
-        /// Distinct from the VPN and document-picker request codes
-        private const val REQUEST_PICK_IMAGE = 0x5703
+        /// Must not overlap PlatformBridge: it claims 0x5701-0x5704 and is checked first in
+        /// MainActivity.onActivityResult, so a shared code silently swallows the image result.
+        private const val REQUEST_PICK_IMAGE = 0x5705
 
         private const val CACHE_DIR = "background"
 
