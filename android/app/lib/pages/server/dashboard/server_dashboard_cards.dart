@@ -1,5 +1,6 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/server_dashboard_widgets.dart';
+import 'package:diting_android/pages/home/dashboard/cards/dashboard_block_parts.dart';
 import 'package:diting_android/pages/server/server_actions.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
 import 'package:diting_android/state/server_resolution_providers.dart';
@@ -241,9 +242,12 @@ class _ServerStatusCard extends ConsumerWidget {
                     color: colorScheme.error,
                   ),
                   DashboardMetric(
-                    label: context.l10n.serverAverageLatency,
-                    // The engine snapshot has no latency figure, so show a dash rather than 0.
-                    value: '--',
+                    // The engine snapshot has no latency figure; a hit rate is the honest
+                    // "is it working" number at a glance and avoids a permanent dash.
+                    label: context.l10n.statusCacheHitRate,
+                    value: stats.queries == 0
+                        ? '--'
+                        : dashboardPercent(stats.cacheHitRate),
                   ),
                 ],
               );

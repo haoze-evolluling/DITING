@@ -5,7 +5,9 @@ import 'package:diting_android/data/vpn/block_response_settings.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/state/auto_update_providers.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
+import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -21,6 +23,7 @@ class RuleControlPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(legacySettingsProvider);
+    final isNormal = ref.watch(workModeProvider) == AppWorkMode.normal;
     final domainRules = settings.domainRulesEnabled;
     final blockMode = BlockResponseMode.fromStorage(
       settings.blockResponseModeRaw,
@@ -48,7 +51,11 @@ class RuleControlPage extends ConsumerWidget {
       title: context.l10n.hubRuleControl,
       body: PageBody(
         children: [
-          PageIntroCard(text: context.l10n.ruleControlIntro),
+          PageIntroCard(
+            text: isNormal
+                ? context.l10n.ruleControlIntro
+                : context.l10n.ruleControlIntroLimited,
+          ),
           generateSection(
             title: context.l10n.ruleControlFilterSection,
             items: [
@@ -64,22 +71,36 @@ class RuleControlPage extends ConsumerWidget {
                 onChanged: (value) {
                   settings.setDomainRulesEnabled(value);
                   ref.read(legacySettingsRevisionProvider.notifier).bump();
+                  if (ref.read(workModeProvider) == AppWorkMode.server &&
+                      ref.read(serverStatusProvider) == ServerStatus.running) {
+                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                      SnackBar(
+                        content: Text(context.l10n.serverRuleMasterSaved),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(milliseconds: 2200),
+                      ),
+                    );
+                  }
                 },
               ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.target),
-                title: Text(context.l10n.ruleControlUrlRules),
-                subtitle: Text(urlSubtitle),
-                trailing: Text(
-                  settings.httpInspectionEnabled &&
-                          settings.addressRulesEnabled &&
-                          caReady
-                      ? context.l10n.stateRunning
-                      : context.l10n.ruleControlNotReady,
-                  style: footnote,
+              // HTTPS traffic inspection only exists on the normal full tunnel; express is a
+              // DNS-only route and server mode has no tunnel at all, so the URL-rules entry would
+              // open a page whose switches can never take effect.
+              if (isNormal)
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.target),
+                  title: Text(context.l10n.ruleControlUrlRules),
+                  subtitle: Text(urlSubtitle),
+                  trailing: Text(
+                    settings.httpInspectionEnabled &&
+                            settings.addressRulesEnabled &&
+                            caReady
+                        ? context.l10n.stateRunning
+                        : context.l10n.ruleControlNotReady,
+                    style: footnote,
+                  ),
+                  onTap: () => context.push('/hub/https-inspection'),
                 ),
-                onTap: () => context.push('/hub/https-inspection'),
-              ),
             ],
           ),
           generateSection(

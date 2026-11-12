@@ -177,6 +177,50 @@ void _serverMode() {
         'nxDomainDurationSeconds': 60,
       });
     });
+
+    test('共享策略键驱动服务器文档（与普通/极速同源）', () {
+      final settings = serverSettings({
+        'dns_cache_enabled_v2': false,
+        'dns_cache_preset_v3': 'conservative',
+        'domain_rules_enabled': false,
+        'dynamic_block_response_enabled': true,
+        'dynamic_block_request_threshold': 60,
+        'dynamic_block_window_seconds': 20,
+        'dynamic_block_nxdomain_duration_seconds': 90,
+      });
+      final config = buildServerDnsConfig(settings);
+      expect(config.adBlockEnabled, false);
+      final json = config.toJson();
+      expect((json['cache'] as Map)['enabled'], false);
+      expect((json['cache'] as Map)['mode'], 'follow_dns_ttl');
+      expect(json['dynamicResponse'], {
+        'enabled': true,
+        'requestThreshold': 60,
+        'windowSeconds': 20,
+        'nxDomainDurationSeconds': 90,
+      });
+    });
+
+    test('旧服务器策略键仍作为一次性回退读取', () {
+      final settings = serverSettings({
+        'cache_enabled': false,
+        'cache_preset': 'high_hit_rate',
+        'ad_block_enabled': true,
+        'block_response_dynamic_enabled': true,
+        'block_response_dynamic_threshold': 50,
+        'block_response_dynamic_window_seconds': 30,
+        'block_response_dynamic_nxdomain_duration_seconds': 15,
+      });
+      final config = buildServerDnsConfig(settings);
+      expect(config.adBlockEnabled, true);
+      final json = config.toJson();
+      expect((json['cache'] as Map)['enabled'], false);
+      expect((json['cache'] as Map)['maxTtlSeconds'], 21600);
+      expect(
+        (json['dynamicResponse'] as Map)['requestThreshold'],
+        50,
+      );
+    });
   });
 
   group('服务器状态机', () {
@@ -212,7 +256,7 @@ void _serverMode() {
       expect(request.dnsConfig, contains('"mode":"single"'));
       expect(request.dnsConfig, contains('"id":"preset_alidns_dns"'));
       expect(request.dnsConfig, contains('"bootstrap":{"enabled":false'));
-      expect(request.adBlockEnabled, false);
+      expect(request.adBlockEnabled, true);
       expect(c.read(legacySettingsProvider).serverServiceActive, true);
     });
 

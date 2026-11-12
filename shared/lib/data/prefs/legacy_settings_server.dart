@@ -37,20 +37,40 @@ extension LegacyServerSettings on LegacySettings {
     json,
   );
 
-  bool get serverCacheEnabled =>
-      _boolIn(LegacySettings.serverContainer, 'cache_enabled', true);
+  // Cache, rule-master and dynamic-block policy keys are shared with normal/express: the same
+  // settings pages edit them in the active data set, `RuleSnapshotStore` reads
+  // `domain_rules_enabled`, and backups import/export the shared spellings. The old
+  // server-specific keys (`cache_enabled`, `cache_preset`, `ad_block_enabled`,
+  // `block_response_dynamic_*`) stay as one-time fallbacks for legacy installs; there is no UI
+  // that writes them anymore, so new installs simply use the shared keys.
+  bool get serverCacheEnabled => _boolIn(
+    LegacySettings.serverContainer,
+    'dns_cache_enabled_v2',
+    _boolIn(LegacySettings.serverContainer, 'cache_enabled', true),
+  );
 
-  void setServerCacheEnabled(bool value) =>
-      _store.putBool(LegacySettings.serverContainer, 'cache_enabled', value);
+  void setServerCacheEnabled(bool value) => _store.putBool(
+    LegacySettings.serverContainer,
+    'dns_cache_enabled_v2',
+    value,
+  );
 
   String get serverCachePresetRaw =>
-      _stringIn(LegacySettings.serverContainer, 'cache_preset') ?? 'balanced';
+      _stringIn(LegacySettings.serverContainer, 'dns_cache_preset_v3') ??
+      _stringIn(LegacySettings.serverContainer, 'cache_preset') ??
+      'balanced';
 
-  bool get serverAdBlockEnabled =>
-      _boolIn(LegacySettings.serverContainer, 'ad_block_enabled', false);
+  bool get serverAdBlockEnabled => _boolIn(
+    LegacySettings.serverContainer,
+    'domain_rules_enabled',
+    _boolIn(LegacySettings.serverContainer, 'ad_block_enabled', true),
+  );
 
-  void setServerAdBlockEnabled(bool value) =>
-      _store.putBool(LegacySettings.serverContainer, 'ad_block_enabled', value);
+  void setServerAdBlockEnabled(bool value) => _store.putBool(
+    LegacySettings.serverContainer,
+    'domain_rules_enabled',
+    value,
+  );
 
   bool get serverLogQueries =>
       _boolIn(LegacySettings.serverContainer, 'log_queries', false);
@@ -67,26 +87,38 @@ extension LegacyServerSettings on LegacySettings {
 
   bool get serverDynamicBlockEnabled => _boolIn(
     LegacySettings.serverContainer,
-    'block_response_dynamic_enabled',
-    false,
+    'dynamic_block_response_enabled',
+    _boolIn(
+      LegacySettings.serverContainer,
+      'block_response_dynamic_enabled',
+      false,
+    ),
   );
 
   int get serverDynamicBlockThreshold => _intIn(
     LegacySettings.serverContainer,
-    'block_response_dynamic_threshold',
-    5,
+    'dynamic_block_request_threshold',
+    _intIn(LegacySettings.serverContainer, 'block_response_dynamic_threshold', 5),
   );
 
   int get serverDynamicBlockWindowSeconds => _intIn(
     LegacySettings.serverContainer,
-    'block_response_dynamic_window_seconds',
-    60,
+    'dynamic_block_window_seconds',
+    _intIn(
+      LegacySettings.serverContainer,
+      'block_response_dynamic_window_seconds',
+      60,
+    ),
   );
 
   int get serverDynamicBlockNxDomainDurationSeconds => _intIn(
     LegacySettings.serverContainer,
-    'block_response_dynamic_nxdomain_duration_seconds',
-    300,
+    'dynamic_block_nxdomain_duration_seconds',
+    _intIn(
+      LegacySettings.serverContainer,
+      'block_response_dynamic_nxdomain_duration_seconds',
+      300,
+    ),
   );
 
   void setServerLogQueries(bool value) =>

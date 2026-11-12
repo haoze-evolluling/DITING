@@ -30,20 +30,22 @@ void _home() {
     }
   }
 
-  Future<void> pumpServerApp(WidgetTester tester) async {
+  Future<MemoryLegacyPrefsStore> pumpServerApp(
+    WidgetTester tester, {
+    Map<String, Object?> serverPrefs = const {},
+  }) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
+    final store = MemoryLegacyPrefsStore({
+      'diting_settings': {'app_work_mode': 'dns'},
+      'diting_dns_mode_prefs': serverPrefs,
+    });
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           ...appTestOverrides(),
-          legacyPrefsStoreProvider.overrideWithValue(
-            MemoryLegacyPrefsStore({
-              'diting_settings': {'app_work_mode': 'dns'},
-              'diting_dns_mode_prefs': <String, Object?>{},
-            }),
-          ),
+          legacyPrefsStoreProvider.overrideWithValue(store),
           dnsServerControllerProvider.overrideWithValue(
             FakeDnsServerController(),
           ),
@@ -53,6 +55,7 @@ void _home() {
     );
     await tester.pump();
     await settle(tester);
+    return store;
   }
 
   testWidgets('首页以仪表盘小组件展示服务信息与功能入口', (tester) async {
@@ -87,6 +90,41 @@ void _home() {
     await settle(tester);
     expect(find.byType(CacheSettingsPage), findsOneWidget);
     expect(find.byType(BackButton), findsOneWidget);
+  });
+
+  testWidgets('首页缓存小组件读取共享缓存键', (tester) async {
+    await pumpServerApp(
+      tester,
+      serverPrefs: {
+        'dns_cache_enabled_v2': true,
+        'dns_cache_preset_v3': 'high_hit_rate',
+      },
+    );
+    expect(find.textContaining('高命中'), findsOneWidget);
+  });
+
+  testWidgets('服务器模式规则控制隐藏 HTTPS 入口并写入共享键', (tester) async {
+    final store = await pumpServerApp(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ServerHomePage)),
+    );
+    expect(container.read(legacySettingsProvider).domainRulesEnabled, true);
+
+    await tester.ensureVisible(find.text('规则控制'));
+    await settle(tester);
+    await tester.tap(find.text('规则控制'));
+    await settle(tester);
+
+    // Server mode has no tunnel/MITM, so the URL-rules entry must not be offered.
+    expect(find.text('URL 规则与内容过滤'), findsNothing);
+    expect(find.text('启用域名规则'), findsOneWidget);
+
+    await tester.tap(find.text('启用域名规则'));
+    await settle(tester);
+    expect(
+      store.read('diting_dns_mode_prefs', 'domain_rules_enabled'),
+      false,
+    );
   });
 
   testWidgets('模式设置页不再重复功能中心的模块入口', (tester) async {

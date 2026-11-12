@@ -9895,8 +9895,14 @@ abstract class AppL10n {
   /// No description provided for @serverRuleControlOff.
   ///
   /// In zh, this message translates to:
-  /// **'已关闭 · 使用独立的过滤规则库'**
+  /// **'已关闭 · 不执行域名规则过滤'**
   String get serverRuleControlOff;
+
+  /// No description provided for @serverRuleMasterSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则开关已保存，重启 DNS 服务后生效'**
+  String get serverRuleMasterSaved;
 
   /// No description provided for @serverListenPort.
   ///
@@ -10273,7 +10279,7 @@ abstract class AppL10n {
   /// No description provided for @serverStatusErrorText.
   ///
   /// In zh, this message translates to:
-  /// **'服务异常：端口可能已被占用'**
+  /// **'服务启动异常'**
   String get serverStatusErrorText;
 
   /// No description provided for @troubleshootTitle.
@@ -12099,6 +12105,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'统一管理域名过滤、URL 规则及规则覆写的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。'**
   String get ruleControlIntro;
+
+  /// No description provided for @ruleControlIntroLimited.
+  ///
+  /// In zh, this message translates to:
+  /// **'统一管理域名过滤的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。'**
+  String get ruleControlIntroLimited;
 
   /// No description provided for @ruleControlFilterSection.
   ///

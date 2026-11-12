@@ -5674,8 +5674,11 @@ class AppL10nEn extends AppL10n {
       'On · matched rules return the blocking policy';
 
   @override
-  String get serverRuleControlOff =>
-      'Off · a separate filter rule library is used';
+  String get serverRuleControlOff => 'Off · domain rule filtering is disabled';
+
+  @override
+  String get serverRuleMasterSaved =>
+      'Rule switch saved; restart the DNS service to apply';
 
   @override
   String get serverListenPort => 'Local listen port';
@@ -5888,8 +5891,7 @@ class AppL10nEn extends AppL10n {
   String get serverStatusStopping => 'Stopping the service...';
 
   @override
-  String get serverStatusErrorText =>
-      'Service error: the port may already be in use';
+  String get serverStatusErrorText => 'Service failed to start';
 
   @override
   String get troubleshootTitle => 'Troubleshooting';
@@ -6987,6 +6989,10 @@ class AppL10nEn extends AppL10n {
   @override
   String get ruleControlIntro =>
       'One place for the master switches of domain filtering, URL rules and rule overrides, the block policy and online rule subscriptions. Block, allow and override lists are still managed separately in the hub.';
+
+  @override
+  String get ruleControlIntroLimited =>
+      'One place for the domain-filtering master switch, the block policy and online rule subscriptions. Block, allow and override lists are still managed separately in the hub.';
 
   @override
   String get ruleControlFilterSection => 'Filtering and override control';

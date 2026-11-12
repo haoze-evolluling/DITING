@@ -185,6 +185,9 @@ class ServerDnsConfig {
   /// The upstreams in engine attempt order: one for `single`, the picked race list otherwise.
   final List<ServerUpstream> providers;
 
+  /// The domain-rule master switch (`domain_rules_enabled`, read through
+  /// `LegacyServerSettings.serverAdBlockEnabled`). The service hands it to `setFilterDNS`, and the
+  /// rule snapshot uses the same key as its own `filterEnabled`, so the two gates agree.
   final bool adBlockEnabled;
 
   /// The whole document, as the kernel assembled it.

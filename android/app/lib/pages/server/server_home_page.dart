@@ -16,11 +16,45 @@ import 'package:material_ui/material_ui.dart';
 /// Server-mode home: the same dashboard language as the normal/express home (power headline plus
 /// an editable card board), with server-specific widgets for state, upstream, LAN access, cache,
 /// rules and the domain-rule tables. Replaces the legacy single-column overview.
-class ServerHomePage extends ConsumerWidget {
+class ServerHomePage extends ConsumerStatefulWidget {
   const ServerHomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ServerHomePage> createState() => _ServerHomePageState();
+}
+
+class _ServerHomePageState extends ConsumerState<ServerHomePage>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // `ServerStatusNotifier.build` only probes the native side when the persisted `service_active`
+    // flag is set. A direct sync on entry covers the edge where the service is already listening
+    // but the flag was cleared (for example by a failed previous attempt).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(serverStatusProvider.notifier).syncStatus();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Unlike the normal/express home (which observes the same lifecycle), server mode replaced that
+  /// page with this one; without this hook a stop started from the notification or tile while the
+  /// app was backgrounded would leave the UI claiming "running" until the next stats poll.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(serverStatusProvider.notifier).syncStatus();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final editing = ref.watch(serverDashboardEditingProvider);
     return DashboardDensityScopeHost(
       child: CommonScaffold(
@@ -64,6 +98,7 @@ class ServerHomePage extends ConsumerWidget {
   /// the main control never scrolls away behind the cards.
   List<Widget> _headline(BuildContext context, WidgetRef ref) {
     final status = ref.watch(serverStatusProvider);
+    final errorDetail = ref.read(serverStatusProvider.notifier).lastError;
     final port = ref.watch(serverPortProvider);
     final busy =
         status == ServerStatus.starting || status == ServerStatus.stopping;
@@ -85,7 +120,7 @@ class ServerHomePage extends ConsumerWidget {
           fontFeatures: appTabularFigures,
         ),
       ),
-      _StatusText(status: status),
+      _StatusText(status: status, errorDetail: errorDetail),
       const SizedBox(height: 8),
     ];
   }
@@ -102,9 +137,13 @@ class ServerHomePage extends ConsumerWidget {
 /// Five-state status sentence; colour and wording follow the state. A separate line because the
 /// button only conveys "tappable" and a failure needs a readable sentence.
 class _StatusText extends StatelessWidget {
-  const _StatusText({required this.status});
+  const _StatusText({required this.status, this.errorDetail});
 
   final ServerStatus status;
+
+  /// The concrete failure the notifier captured (`lastError`); shown under the generic sentence so
+  /// the user sees e.g. the bind error instead of a guessed "port may be in use".
+  final String? errorDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -131,14 +170,31 @@ class _StatusText extends StatelessWidget {
         colorScheme.error,
       ),
     };
+    final detail =
+        status == ServerStatus.error ? errorDetail?.trim() ?? '' : '';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: AppTextStyle.subheadline
-            .of(context, emphasized: true)
-            .copyWith(color: color),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: AppTextStyle.subheadline
+                .of(context, emphasized: true)
+                .copyWith(color: color),
+          ),
+          if (detail.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              detail,
+              textAlign: TextAlign.center,
+              style: AppTextStyle.footnote.of(context).copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

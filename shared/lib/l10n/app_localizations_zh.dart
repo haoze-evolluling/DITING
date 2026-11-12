@@ -5366,7 +5366,10 @@ class AppL10nZh extends AppL10n {
   String get serverRuleControlOn => '已开启 · 命中规则按拦截策略返回';
 
   @override
-  String get serverRuleControlOff => '已关闭 · 使用独立的过滤规则库';
+  String get serverRuleControlOff => '已关闭 · 不执行域名规则过滤';
+
+  @override
+  String get serverRuleMasterSaved => '规则开关已保存，重启 DNS 服务后生效';
 
   @override
   String get serverListenPort => '本地监听端口';
@@ -5565,7 +5568,7 @@ class AppL10nZh extends AppL10n {
   String get serverStatusStopping => '正在停止服务...';
 
   @override
-  String get serverStatusErrorText => '服务异常：端口可能已被占用';
+  String get serverStatusErrorText => '服务启动异常';
 
   @override
   String get troubleshootTitle => '故障排查';
@@ -6599,6 +6602,10 @@ class AppL10nZh extends AppL10n {
   @override
   String get ruleControlIntro =>
       '统一管理域名过滤、URL 规则及规则覆写的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。';
+
+  @override
+  String get ruleControlIntroLimited =>
+      '统一管理域名过滤的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。';
 
   @override
   String get ruleControlFilterSection => '过滤与覆写控制';
