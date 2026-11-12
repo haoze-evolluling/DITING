@@ -22,12 +22,13 @@ use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, Semaphore};
 
-use crate::engine::Engine;
+use crate::engine::{now_ms, Engine};
 use crate::netstack::{self, TcpKey};
 use crate::outbound::{Outbound, Route};
 use crate::tunnel::dnsflow::Inbound;
 use crate::tunnel::queue::{Event, Events};
 use crate::tunnel::stats::TunnelCounters;
+use diting_telemetry_core::LogItem;
 
 /// The TCP relay buffer (`tcpCopyBufferSize`).
 pub const TCP_BUFFER: usize = 32 * 1024;
@@ -35,6 +36,75 @@ pub const TCP_BUFFER: usize = 32 * 1024;
 pub const UDP_BUFFER: usize = 16 * 1024;
 /// `defaultUDPIdleTimeout`.
 pub const UDP_IDLE: Duration = Duration::from_secs(30);
+
+/// `hostPeekSize`: how much of the first client burst the host sniffer may see.
+const HOST_PEEK_SIZE: usize = 4 * 1024;
+/// `hostPeekTimeout`: a TLS ClientHello / HTTP request arrives immediately; a slow one just relays.
+const HOST_PEEK_TIMEOUT: Duration = Duration::from_secs(3);
+
+/// Ports whose first client burst carries a hostname we can read without decrypting.
+fn is_sniffable_port(port: u16) -> bool {
+    port == 443 || port == 80
+}
+
+/// Peek the first client burst (up to `HOST_PEEK_SIZE`) without losing it, so the caller can write
+/// it upstream after a normal dial. Returns the bytes and whether the client already half-closed.
+async fn peek_client(inbound: &mut mpsc::Receiver<Inbound>, timeout: Duration) -> (Vec<u8>, bool) {
+    let mut peeked = Vec::new();
+    match tokio::time::timeout(timeout, inbound.recv()).await {
+        Ok(Some(Inbound::Data(data))) => peeked.extend_from_slice(&data),
+        Ok(Some(Inbound::Eof)) | Ok(None) => return (peeked, true),
+        // A slow client, or a protocol where the server speaks first: relay without sniffing.
+        Err(_) => return (peeked, false),
+    }
+    // Take whatever else is already queued so a split ClientHello still parses.
+    while peeked.len() < HOST_PEEK_SIZE {
+        match inbound.try_recv() {
+            Ok(Inbound::Data(data)) => peeked.extend_from_slice(&data),
+            Ok(Inbound::Eof) => return (peeked, true),
+            Err(_) => break,
+        }
+    }
+    (peeked, false)
+}
+
+/// The SNI / HTTP `Host` named by a peeked burst, lowercased and trailing-dot trimmed, if any.
+fn sniff_host(bytes: &[u8]) -> Option<String> {
+    if bytes.is_empty() {
+        return None;
+    }
+    let sniffed = diting_sniffer_core::classify(bytes);
+    if sniffed.host.is_empty() {
+        return None;
+    }
+    let host = String::from_utf8_lossy(&sniffed.host)
+        .trim()
+        .trim_end_matches('.')
+        .to_ascii_lowercase();
+    if host.is_empty() {
+        None
+    } else {
+        Some(host)
+    }
+}
+
+/// Records a connection-layer block with the log shape the UI reads (`blocked == true`).
+fn log_conn_block(engine: &Engine, key: &TcpKey, uid: i32, host: &str, reason: &str) {
+    let dest = netstack::socket_addr(key.local);
+    engine.logs().push(LogItem {
+        domain: host.to_string(),
+        blocked: true,
+        query_type: 0,
+        response_time_ms: 0,
+        app_name: engine.display_name(uid),
+        resolved_ips: dest.to_string(),
+        blocked_by: format!("conn:host:{reason}"),
+        error_message: String::new(),
+        cached: false,
+        timestamp_ms: now_ms(),
+        ttl: 0,
+    });
+}
 
 /// One TCP flow: dial, then copy both directions with half-close.
 pub async fn relay_tcp(
@@ -46,6 +116,28 @@ pub async fn relay_tcp(
     mut inbound: mpsc::Receiver<Inbound>,
     credit: Arc<Semaphore>,
 ) {
+    // Connection-layer host blocking: an app that resolved through its own HTTPDNS/DoH or a
+    // hard-coded IP never reaches the DNS pipeline, but its TLS ClientHello / HTTP Host still names
+    // the ad host. Sniff :80/:443 only, only while a rule snapshot is published, and never decrypt —
+    // this is a plain pass/fail gate ahead of the opaque relay. Fail-open: no host, no snapshot or a
+    // slow first byte all relay exactly as before.
+    let (peeked, saw_eof) = if is_sniffable_port(key.local.port) && engine.policy().has_rules() {
+        let (bytes, eof) = peek_client(&mut inbound, HOST_PEEK_TIMEOUT).await;
+        if let Some(host) = sniff_host(&bytes) {
+            let app = engine.app_name(uid);
+            if let Some(verdict) = engine.policy().evaluate(&host, &app, 0) {
+                if verdict.blocked {
+                    log_conn_block(&engine, &key, uid, &host, &verdict.reason);
+                    events.push_command(Event::Abort(key));
+                    return;
+                }
+            }
+        }
+        (bytes, eof)
+    } else {
+        (Vec::new(), false)
+    };
+
     let target = netstack::socket_addr(key.local);
     let outbound = engine.outbound();
     let route = outbound.route_for(uid);
@@ -66,10 +158,16 @@ pub async fn relay_tcp(
     let (mut upstream_read, mut upstream_write) = stream.into_split();
 
     let client_to_upstream = tokio::spawn(async move {
-        // `Some(Inbound::Eof)` is the client's FIN: send ours but keep reading the response.
-        while let Some(Inbound::Data(data)) = inbound.recv().await {
-            if upstream_write.write_all(&data).await.is_err() {
-                return false;
+        // Replay the sniffed bytes first, then keep copying. `Some(Inbound::Eof)` is the client's
+        // FIN: send ours but keep reading the response.
+        if !peeked.is_empty() && upstream_write.write_all(&peeked).await.is_err() {
+            return false;
+        }
+        if !saw_eof {
+            while let Some(Inbound::Data(data)) = inbound.recv().await {
+                if upstream_write.write_all(&data).await.is_err() {
+                    return false;
+                }
             }
         }
         let _ = upstream_write.shutdown().await;
@@ -186,4 +284,29 @@ pub async fn relay_udp(
         }
     }
     events.push_command(Event::UdpExpire(key));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{is_sniffable_port, sniff_host};
+
+    #[test]
+    fn only_80_and_443_are_sniffed() {
+        assert!(is_sniffable_port(80));
+        assert!(is_sniffable_port(443));
+        assert!(!is_sniffable_port(53));
+        assert!(!is_sniffable_port(8080));
+    }
+
+    #[test]
+    fn http_host_is_extracted_and_lowercased() {
+        let request = b"GET /ad.js HTTP/1.1\r\nHost: Ads.Example\r\n\r\n";
+        assert_eq!(sniff_host(request).as_deref(), Some("ads.example"));
+    }
+
+    #[test]
+    fn unknown_and_empty_have_no_host() {
+        assert!(sniff_host(b"").is_none());
+        assert!(sniff_host(b"\x00\x01\x02not-a-handshake").is_none());
+    }
 }
