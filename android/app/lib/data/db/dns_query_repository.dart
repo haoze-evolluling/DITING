@@ -174,6 +174,32 @@ class DnsQueryRepository {
     ];
   }
 
+  /// Newest-first rows for a CSV export, bounded by [limit] and an optional `[since, until]`
+  /// window.
+  ///
+  /// [packages] narrows to those packages; an empty set means every app. The statement itself
+  /// lives in `dns.query.export`, so the status clauses stay shared with the list page.
+  Future<List<DnsLogRow>> export({
+    int limit = 1000,
+    RequestStatus status = RequestStatus.all,
+    int? since,
+    int? until,
+    Set<String> packages = const {},
+  }) async {
+    final plan = RustLogQueryCore.instance.plan('dns.query.export', {
+      'limit': limit,
+      'status': _statusToken(status),
+      if (since != null) 'since': since,
+      if (until != null) 'until': until,
+      if (packages.isNotEmpty) 'packages': packages.toList(),
+    });
+    final rows = await _db.rawQuery(plan.sql, plan.args);
+    return [
+      for (final row in RustLogQueryCore.instance.rows('dns.row', rows))
+        DnsLogRow.fromParsed(row),
+    ];
+  }
+
   /// The kernel's spelling of a bucket; `all` adds no clause.
   static String _statusToken(RequestStatus status) => switch (status) {
     RequestStatus.all => 'all',

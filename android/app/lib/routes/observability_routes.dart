@@ -1,3 +1,4 @@
+import 'package:diting_android/pages/observability/request_export_page.dart';
 import 'package:diting_android/pages/observability/requests_page.dart';
 import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -10,6 +11,9 @@ import 'package:go_router/go_router.dart';
 abstract final class ObservabilityPaths {
   /// Request log: upstream `RequestLogScreen`.
   static const requests = '/requests';
+
+  /// Request-log CSV export configuration.
+  static const requestExport = '/requests/export';
 
   /// Apps found in the request log, each leading to [appRequests].
   static const requestApps = '/requests/apps';
@@ -26,6 +30,12 @@ List<RouteBase> observabilityRoutes() => [
     parentNavigatorKey: rootNavigatorKey,
     pageBuilder: (context, state) =>
         androidDefaultPage(state, const RequestsPage()),
+  ),
+  GoRoute(
+    path: ObservabilityPaths.requestExport,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) =>
+        androidDefaultPage(state, const RequestLogExportPage()),
   ),
   GoRoute(
     path: ObservabilityPaths.requestApps,

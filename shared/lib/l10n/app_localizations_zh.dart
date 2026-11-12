@@ -3586,6 +3586,148 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
+  String get obsExportLogs => '导出日志';
+
+  @override
+  String get obsExportTitle => '导出请求日志';
+
+  @override
+  String get obsExportRangeSection => '时间范围';
+
+  @override
+  String get obsExportRangeAll => '全部时间';
+
+  @override
+  String get obsExportRangeHour => '最近 1 小时';
+
+  @override
+  String get obsExportRangeDay => '最近 24 小时';
+
+  @override
+  String get obsExportRangeWeek => '最近 7 天';
+
+  @override
+  String get obsExportRangeCustom => '自定义';
+
+  @override
+  String get obsExportCustomRange => '选择日期范围';
+
+  @override
+  String get obsExportPickRange => '请选择日期范围';
+
+  @override
+  String get obsExportScopeSection => '筛选条件';
+
+  @override
+  String get obsExportDnsOnlyNote => '当前模式没有 HTTPS 请求日志，导出仅包含 DNS 记录';
+
+  @override
+  String get obsExportApps => '应用';
+
+  @override
+  String get obsExportAllApps => '全部应用';
+
+  @override
+  String obsExportSelectedApps(int count) {
+    return '已选 $count 个应用';
+  }
+
+  @override
+  String get obsExportAppPickerTitle => '选择应用';
+
+  @override
+  String get obsExportAppPickerDone => '完成';
+
+  @override
+  String get obsExportColumnsSection => '包含字段';
+
+  @override
+  String get obsExportColumnTime => '时间';
+
+  @override
+  String get obsExportColumnSource => '来源';
+
+  @override
+  String get obsExportColumnStatus => '状态';
+
+  @override
+  String get obsExportColumnAppName => '应用名称';
+
+  @override
+  String get obsExportColumnPackage => '应用包名';
+
+  @override
+  String get obsExportColumnHost => '主机/查询';
+
+  @override
+  String get obsExportColumnProtocol => '协议';
+
+  @override
+  String get obsExportColumnRule => '匹配规则';
+
+  @override
+  String get obsExportColumnElapsed => '耗时(ms)';
+
+  @override
+  String get obsExportColumnCached => '缓存';
+
+  @override
+  String get obsExportColumnSubscription => '拦截订阅';
+
+  @override
+  String get obsExportColumnMessage => '原始消息';
+
+  @override
+  String get obsExportCachedYes => '是';
+
+  @override
+  String get obsExportCachedNo => '否';
+
+  @override
+  String get obsExportLimit => '条数上限';
+
+  @override
+  String obsExportLimitHint(int max) {
+    return '1–$max';
+  }
+
+  @override
+  String get obsExportAction => '导出 CSV';
+
+  @override
+  String get obsExportBusy => '正在导出…';
+
+  @override
+  String obsExportDone(int count) {
+    return '已导出 $count 条记录';
+  }
+
+  @override
+  String get obsExportEmpty => '没有符合条件的记录，未生成文件';
+
+  @override
+  String get obsExportCancelled => '已取消导出';
+
+  @override
+  String get obsExportFailed => '导出失败';
+
+  @override
+  String obsExportTruncated(int count) {
+    return '已达到 $count 条上限';
+  }
+
+  @override
+  String get obsExportFooter => 'CSV 文件（UTF-8），可用表格软件打开。';
+
+  @override
+  String get obsExportAtLeastOneColumn => '至少选择一个字段';
+
+  @override
+  String obsExportInvalidLimit(int max) {
+    return '请输入 1–$max 之间的条数';
+  }
+
+  @override
   String get logsSubStatsTitle => '订阅拦截率';
 
   @override

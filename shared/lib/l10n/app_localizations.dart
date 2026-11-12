@@ -6647,6 +6647,270 @@ abstract class AppL10n {
   /// **'{count} 次请求'**
   String obsAppRequestCount(int count);
 
+  /// No description provided for @obsExportLogs.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出日志'**
+  String get obsExportLogs;
+
+  /// No description provided for @obsExportTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出请求日志'**
+  String get obsExportTitle;
+
+  /// No description provided for @obsExportRangeSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间范围'**
+  String get obsExportRangeSection;
+
+  /// No description provided for @obsExportRangeAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部时间'**
+  String get obsExportRangeAll;
+
+  /// No description provided for @obsExportRangeHour.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近 1 小时'**
+  String get obsExportRangeHour;
+
+  /// No description provided for @obsExportRangeDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近 24 小时'**
+  String get obsExportRangeDay;
+
+  /// No description provided for @obsExportRangeWeek.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近 7 天'**
+  String get obsExportRangeWeek;
+
+  /// No description provided for @obsExportRangeCustom.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义'**
+  String get obsExportRangeCustom;
+
+  /// No description provided for @obsExportCustomRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择日期范围'**
+  String get obsExportCustomRange;
+
+  /// No description provided for @obsExportPickRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'请选择日期范围'**
+  String get obsExportPickRange;
+
+  /// No description provided for @obsExportScopeSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'筛选条件'**
+  String get obsExportScopeSection;
+
+  /// No description provided for @obsExportDnsOnlyNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前模式没有 HTTPS 请求日志，导出仅包含 DNS 记录'**
+  String get obsExportDnsOnlyNote;
+
+  /// No description provided for @obsExportApps.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用'**
+  String get obsExportApps;
+
+  /// No description provided for @obsExportAllApps.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部应用'**
+  String get obsExportAllApps;
+
+  /// No description provided for @obsExportSelectedApps.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选 {count} 个应用'**
+  String obsExportSelectedApps(int count);
+
+  /// No description provided for @obsExportAppPickerTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择应用'**
+  String get obsExportAppPickerTitle;
+
+  /// No description provided for @obsExportAppPickerDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成'**
+  String get obsExportAppPickerDone;
+
+  /// No description provided for @obsExportColumnsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'包含字段'**
+  String get obsExportColumnsSection;
+
+  /// No description provided for @obsExportColumnTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'时间'**
+  String get obsExportColumnTime;
+
+  /// No description provided for @obsExportColumnSource.
+  ///
+  /// In zh, this message translates to:
+  /// **'来源'**
+  String get obsExportColumnSource;
+
+  /// No description provided for @obsExportColumnStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'状态'**
+  String get obsExportColumnStatus;
+
+  /// No description provided for @obsExportColumnAppName.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用名称'**
+  String get obsExportColumnAppName;
+
+  /// No description provided for @obsExportColumnPackage.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用包名'**
+  String get obsExportColumnPackage;
+
+  /// No description provided for @obsExportColumnHost.
+  ///
+  /// In zh, this message translates to:
+  /// **'主机/查询'**
+  String get obsExportColumnHost;
+
+  /// No description provided for @obsExportColumnProtocol.
+  ///
+  /// In zh, this message translates to:
+  /// **'协议'**
+  String get obsExportColumnProtocol;
+
+  /// No description provided for @obsExportColumnRule.
+  ///
+  /// In zh, this message translates to:
+  /// **'匹配规则'**
+  String get obsExportColumnRule;
+
+  /// No description provided for @obsExportColumnElapsed.
+  ///
+  /// In zh, this message translates to:
+  /// **'耗时(ms)'**
+  String get obsExportColumnElapsed;
+
+  /// No description provided for @obsExportColumnCached.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存'**
+  String get obsExportColumnCached;
+
+  /// No description provided for @obsExportColumnSubscription.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截订阅'**
+  String get obsExportColumnSubscription;
+
+  /// No description provided for @obsExportColumnMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'原始消息'**
+  String get obsExportColumnMessage;
+
+  /// No description provided for @obsExportCachedYes.
+  ///
+  /// In zh, this message translates to:
+  /// **'是'**
+  String get obsExportCachedYes;
+
+  /// No description provided for @obsExportCachedNo.
+  ///
+  /// In zh, this message translates to:
+  /// **'否'**
+  String get obsExportCachedNo;
+
+  /// No description provided for @obsExportLimit.
+  ///
+  /// In zh, this message translates to:
+  /// **'条数上限'**
+  String get obsExportLimit;
+
+  /// No description provided for @obsExportLimitHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'1–{max}'**
+  String obsExportLimitHint(int max);
+
+  /// No description provided for @obsExportAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出 CSV'**
+  String get obsExportAction;
+
+  /// No description provided for @obsExportBusy.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在导出…'**
+  String get obsExportBusy;
+
+  /// No description provided for @obsExportDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已导出 {count} 条记录'**
+  String obsExportDone(int count);
+
+  /// No description provided for @obsExportEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有符合条件的记录，未生成文件'**
+  String get obsExportEmpty;
+
+  /// No description provided for @obsExportCancelled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消导出'**
+  String get obsExportCancelled;
+
+  /// No description provided for @obsExportFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出失败'**
+  String get obsExportFailed;
+
+  /// No description provided for @obsExportTruncated.
+  ///
+  /// In zh, this message translates to:
+  /// **'已达到 {count} 条上限'**
+  String obsExportTruncated(int count);
+
+  /// No description provided for @obsExportFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'CSV 文件（UTF-8），可用表格软件打开。'**
+  String get obsExportFooter;
+
+  /// No description provided for @obsExportAtLeastOneColumn.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少选择一个字段'**
+  String get obsExportAtLeastOneColumn;
+
+  /// No description provided for @obsExportInvalidLimit.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 1–{max} 之间的条数'**
+  String obsExportInvalidLimit(int max);
+
   /// No description provided for @logsSubStatsTitle.
   ///
   /// In zh, this message translates to:

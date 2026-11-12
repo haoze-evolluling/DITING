@@ -3777,6 +3777,149 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String get obsExportLogs => 'Export logs';
+
+  @override
+  String get obsExportTitle => 'Export request logs';
+
+  @override
+  String get obsExportRangeSection => 'Time range';
+
+  @override
+  String get obsExportRangeAll => 'All time';
+
+  @override
+  String get obsExportRangeHour => 'Last hour';
+
+  @override
+  String get obsExportRangeDay => 'Last 24 hours';
+
+  @override
+  String get obsExportRangeWeek => 'Last 7 days';
+
+  @override
+  String get obsExportRangeCustom => 'Custom';
+
+  @override
+  String get obsExportCustomRange => 'Select date range';
+
+  @override
+  String get obsExportPickRange => 'Select a date range';
+
+  @override
+  String get obsExportScopeSection => 'Filters';
+
+  @override
+  String get obsExportDnsOnlyNote =>
+      'This mode has no HTTPS request log; the export only contains DNS records.';
+
+  @override
+  String get obsExportApps => 'Apps';
+
+  @override
+  String get obsExportAllApps => 'All apps';
+
+  @override
+  String obsExportSelectedApps(int count) {
+    return '$count apps selected';
+  }
+
+  @override
+  String get obsExportAppPickerTitle => 'Select apps';
+
+  @override
+  String get obsExportAppPickerDone => 'Done';
+
+  @override
+  String get obsExportColumnsSection => 'Columns';
+
+  @override
+  String get obsExportColumnTime => 'Time';
+
+  @override
+  String get obsExportColumnSource => 'Source';
+
+  @override
+  String get obsExportColumnStatus => 'Status';
+
+  @override
+  String get obsExportColumnAppName => 'App name';
+
+  @override
+  String get obsExportColumnPackage => 'Package';
+
+  @override
+  String get obsExportColumnHost => 'Host / query';
+
+  @override
+  String get obsExportColumnProtocol => 'Protocol';
+
+  @override
+  String get obsExportColumnRule => 'Matched rule';
+
+  @override
+  String get obsExportColumnElapsed => 'Latency (ms)';
+
+  @override
+  String get obsExportColumnCached => 'Cached';
+
+  @override
+  String get obsExportColumnSubscription => 'Blocking subscription';
+
+  @override
+  String get obsExportColumnMessage => 'Raw message';
+
+  @override
+  String get obsExportCachedYes => 'Yes';
+
+  @override
+  String get obsExportCachedNo => 'No';
+
+  @override
+  String get obsExportLimit => 'Max rows';
+
+  @override
+  String obsExportLimitHint(int max) {
+    return '1–$max';
+  }
+
+  @override
+  String get obsExportAction => 'Export CSV';
+
+  @override
+  String get obsExportBusy => 'Exporting…';
+
+  @override
+  String obsExportDone(int count) {
+    return 'Exported $count records';
+  }
+
+  @override
+  String get obsExportEmpty => 'No matching records; no file was created.';
+
+  @override
+  String get obsExportCancelled => 'Export cancelled';
+
+  @override
+  String get obsExportFailed => 'Export failed';
+
+  @override
+  String obsExportTruncated(int count) {
+    return 'Capped at $count rows';
+  }
+
+  @override
+  String get obsExportFooter => 'CSV (UTF-8), opens in spreadsheet apps.';
+
+  @override
+  String get obsExportAtLeastOneColumn => 'Select at least one column';
+
+  @override
+  String obsExportInvalidLimit(int max) {
+    return 'Enter a row count between 1 and $max';
+  }
+
+  @override
   String get logsSubStatsTitle => 'Subscription block rate';
 
   @override

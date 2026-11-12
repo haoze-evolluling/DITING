@@ -52,6 +52,12 @@ fn before_arg(request: &Value) -> Option<i64> {
     payload::integer(request, "before")
 }
 
+/// Inclusive upper bound on `timestamp`, used by the export plans (a bounded window rather than a
+/// paging cursor).
+fn until_arg(request: &Value) -> Option<i64> {
+    payload::integer(request, "until")
+}
+
 fn like_pattern(query: &str) -> String {
     format!("%{}%", query.trim().to_lowercase())
 }
@@ -216,6 +222,54 @@ OR matchedRule LIKE ?)",
             plan.sql.push_str(&format!(
                 " ORDER BY timestamp DESC, id DESC LIMIT {}",
                 limit_of(request, 200)
+            ));
+            plan.answer()
+        }
+        "dns.query.export" | "http.query.export" => {
+            let is_http = query == "http.query.export";
+            let table = if is_http {
+                "http_request_log"
+            } else {
+                "dns_log"
+            };
+            let mut plan = Plan::new(format!("SELECT * FROM {table} WHERE 1=1"));
+            let packages: Vec<&str> = payload::list(request, "packages")
+                .iter()
+                .filter_map(Value::as_str)
+                .filter(|package| !package.is_empty())
+                .collect();
+            if !packages.is_empty() {
+                let placeholders = std::iter::repeat("?")
+                    .take(packages.len())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                plan.sql
+                    .push_str(&format!(" AND packageName IN ({placeholders})"));
+                for package in packages {
+                    plan = plan.arg(Value::String(package.to_owned()));
+                }
+            }
+            let status = payload::text_or_empty(request, "status");
+            let clause = if is_http {
+                http_status_clause(&status)
+            } else {
+                dns_status_clause(&status)
+            };
+            if let Some(clause) = clause {
+                plan.sql.push_str(clause);
+            }
+            if let Some(since) = since_arg(request) {
+                plan = plan.arg(Value::from(since));
+                plan.sql.push_str(" AND timestamp >= ?");
+            }
+            if let Some(until) = until_arg(request) {
+                plan = plan.arg(Value::from(until));
+                plan.sql.push_str(" AND timestamp <= ?");
+            }
+            // The whole table is never read: a bounded window plus a hard cap keeps memory flat.
+            plan.sql.push_str(&format!(
+                " ORDER BY timestamp DESC, id DESC LIMIT {}",
+                limit_of(request, 1000)
             ));
             plan.answer()
         }
@@ -485,6 +539,45 @@ mod tests {
         assert!(dns.sql.contains("outcome IN ('blocked', 'invalid')"));
         let fallback = plan_of(json!({ "name": "subscription.hits" }));
         assert!(fallback.sql.contains("FROM dns_log"));
+    }
+
+    #[test]
+    fn export_plans_carry_every_filter_in_order() {
+        let plan = plan_of(json!({
+            "name": "dns.query.export",
+            "limit": 500,
+            "status": "blocked",
+            "packages": ["com.a", "com.b"],
+            "since": 100,
+            "until": 200,
+        }));
+        assert!(plan
+            .sql
+            .starts_with("SELECT * FROM dns_log WHERE 1=1 AND packageName IN (?, ?)"));
+        assert!(plan.sql.contains("result = 'BLOCKED'"));
+        assert!(plan.sql.ends_with(
+            "AND timestamp >= ? AND timestamp <= ? \
+ORDER BY timestamp DESC, id DESC LIMIT 500"
+        ));
+        // Placeholder order has to match clause order: packages, then since, then until.
+        assert_eq!(
+            plan.args,
+            vec![json!("com.a"), json!("com.b"), json!(100), json!(200)]
+        );
+    }
+
+    #[test]
+    fn export_plan_without_packages_or_status_only_bounds_time() {
+        let plan = plan_of(json!({
+            "name": "http.query.export",
+            "limit": 10,
+            "since": 5,
+        }));
+        assert!(plan
+            .sql
+            .starts_with("SELECT * FROM http_request_log WHERE 1=1 AND timestamp >= ?"));
+        assert!(!plan.sql.contains("packageName IN"));
+        assert_eq!(plan.args, vec![json!(5)]);
     }
 
     #[test]

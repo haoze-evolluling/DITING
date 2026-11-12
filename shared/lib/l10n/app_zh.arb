@@ -2128,6 +2128,85 @@
       }
     }
   },
+  "obsExportLogs": "导出日志",
+  "obsExportTitle": "导出请求日志",
+  "obsExportRangeSection": "时间范围",
+  "obsExportRangeAll": "全部时间",
+  "obsExportRangeHour": "最近 1 小时",
+  "obsExportRangeDay": "最近 24 小时",
+  "obsExportRangeWeek": "最近 7 天",
+  "obsExportRangeCustom": "自定义",
+  "obsExportCustomRange": "选择日期范围",
+  "obsExportPickRange": "请选择日期范围",
+  "obsExportScopeSection": "筛选条件",
+  "obsExportDnsOnlyNote": "当前模式没有 HTTPS 请求日志，导出仅包含 DNS 记录",
+  "obsExportApps": "应用",
+  "obsExportAllApps": "全部应用",
+  "obsExportSelectedApps": "已选 {count} 个应用",
+  "@obsExportSelectedApps": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "obsExportAppPickerTitle": "选择应用",
+  "obsExportAppPickerDone": "完成",
+  "obsExportColumnsSection": "包含字段",
+  "obsExportColumnTime": "时间",
+  "obsExportColumnSource": "来源",
+  "obsExportColumnStatus": "状态",
+  "obsExportColumnAppName": "应用名称",
+  "obsExportColumnPackage": "应用包名",
+  "obsExportColumnHost": "主机/查询",
+  "obsExportColumnProtocol": "协议",
+  "obsExportColumnRule": "匹配规则",
+  "obsExportColumnElapsed": "耗时(ms)",
+  "obsExportColumnCached": "缓存",
+  "obsExportColumnSubscription": "拦截订阅",
+  "obsExportColumnMessage": "原始消息",
+  "obsExportCachedYes": "是",
+  "obsExportCachedNo": "否",
+  "obsExportLimit": "条数上限",
+  "obsExportLimitHint": "1–{max}",
+  "@obsExportLimitHint": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "obsExportAction": "导出 CSV",
+  "obsExportBusy": "正在导出…",
+  "obsExportDone": "已导出 {count} 条记录",
+  "@obsExportDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "obsExportEmpty": "没有符合条件的记录，未生成文件",
+  "obsExportCancelled": "已取消导出",
+  "obsExportFailed": "导出失败",
+  "obsExportTruncated": "已达到 {count} 条上限",
+  "@obsExportTruncated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "obsExportFooter": "CSV 文件（UTF-8），可用表格软件打开。",
+  "obsExportAtLeastOneColumn": "至少选择一个字段",
+  "obsExportInvalidLimit": "请输入 1–{max} 之间的条数",
+  "@obsExportInvalidLimit": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "logsSubStatsTitle": "订阅拦截率",
   "logsRefresh": "刷新",
   "logsTimeRange": "时间范围",

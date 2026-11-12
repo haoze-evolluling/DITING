@@ -194,6 +194,32 @@ class HttpRequestRepository {
     };
   }
 
+  /// Newest-first rows for a CSV export, bounded by [limit] and an optional `[since, until]`
+  /// window.
+  ///
+  /// [packages] narrows to those packages; an empty set means every app. The statement itself
+  /// lives in `http.query.export`, so the status clauses stay shared with the list page.
+  Future<List<HttpRequestRecord>> export({
+    int limit = 1000,
+    RequestStatus status = RequestStatus.all,
+    int? since,
+    int? until,
+    Set<String> packages = const {},
+  }) async {
+    final plan = RustLogQueryCore.instance.plan('http.query.export', {
+      'limit': limit,
+      'status': _statusToken(status),
+      if (since != null) 'since': since,
+      if (until != null) 'until': until,
+      if (packages.isNotEmpty) 'packages': packages.toList(),
+    });
+    final rows = await _db.rawQuery(plan.sql, plan.args);
+    return [
+      for (final row in RustLogQueryCore.instance.rows('http.row', rows))
+        HttpRequestRecord.fromParsed(row),
+    ];
+  }
+
   Future<int> clearAll() => _db.delete('http_request_log');
 
   static DateTime _startOfToday() {

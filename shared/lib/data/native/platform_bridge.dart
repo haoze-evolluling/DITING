@@ -140,10 +140,14 @@ class PlatformBridge {
   /// heap, the channel and a byte array at once, which is what ran the process out of memory on a
   /// subscription-sized dataset. On Android 11+ the app-private external dir is hard to reach even
   /// from a file manager, so the picker is still the way out.
-  Future<DocumentExportHandle> beginExportDocument({required String name}) async {
+  Future<DocumentExportHandle> beginExportDocument({
+    required String name,
+    String mimeType = 'application/json',
+  }) async {
     try {
       final raw = await _channel.invokeMethod<Object?>('beginExportDocument', {
         'name': name,
+        'mimeType': mimeType,
       });
       return DocumentExportHandle.fromMap(raw);
     } on MissingPluginException {

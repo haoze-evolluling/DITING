@@ -103,6 +103,10 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     private fun beginExportDocument(call: MethodCall, result: MethodChannel.Result) {
         val suggested = call.argument<String>("name")?.takeIf { it.isNotBlank() }
             ?: "diting-backup.json"
+        // The backup is JSON; the request-log export sends "text/csv". Defaulting keeps every
+        // existing caller working.
+        val mimeType = call.argument<String>("mimeType")?.takeIf { it.isNotBlank() }
+            ?: "application/json"
         if (pendingExportResult != null) {
             result.error("picker_busy", "另一个文件选择器仍在打开", null)
             return
@@ -110,7 +114,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         pendingExportResult = result
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            type = "application/json"
+            type = mimeType
             putExtra(Intent.EXTRA_TITLE, suggested)
         }
         runCatching { activity.startActivityForResult(intent, REQUEST_EXPORT_DOCUMENT) }

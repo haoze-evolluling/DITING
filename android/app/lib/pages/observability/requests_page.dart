@@ -40,6 +40,11 @@ class RequestsPage extends ConsumerWidget {
           glyph: AppGlyphs.appsList,
           onPressed: () => context.push(ObservabilityPaths.requestApps),
         ),
+        CommonPopupMenuItem(
+          label: context.l10n.obsExportLogs,
+          glyph: AppGlyphs.export,
+          onPressed: () => context.push(ObservabilityPaths.requestExport),
+        ),
       ],
     );
   }
