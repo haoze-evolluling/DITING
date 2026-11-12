@@ -1,6 +1,6 @@
-/// DDL for the three legacy Room databases, verbatim from `sqlite_master`. A mismatch raises no
-/// error; it makes reads look right while writes differ (no unique index lets a rule be inserted
-/// twice).
+/// DDL for the legacy Room databases plus the server-mode log store, verbatim from `sqlite_master`.
+/// A mismatch raises no error; it makes reads look right while writes differ (no unique index lets
+/// a rule be inserted twice).
 library;
 
 abstract final class LegacySchema {
@@ -10,9 +10,14 @@ abstract final class LegacySchema {
 
   static const serverVersion = 3;
 
+  /// Server mode's own log store. It is a new file (never a legacy Room database), so it starts at
+  /// version 1 and holds only the runtime tables the server writes.
+  static const serverLogVersion = 1;
+
   static int versionOf(String fileName) => switch (fileName) {
     'diting_express' => expressVersion,
     'diting_dns_rules' => serverVersion,
+    'diting_server_logs' => serverLogVersion,
     _ => mainVersion,
   };
 
@@ -30,6 +35,12 @@ abstract final class LegacySchema {
       ..._logTables,
       ..._ruleIndexes,
       ..._subscriptionIndexes,
+      ..._logIndexes,
+    ],
+    // A dedicated server log store: no rule or subscription tables, so server-mode logging never
+    // touches the normal/express files.
+    'diting_server_logs' => [
+      ..._logTables,
       ..._logIndexes,
     ],
     _ => [

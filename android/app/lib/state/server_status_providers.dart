@@ -6,6 +6,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:diting_android/data/notifications/notification_status_text.dart';
+import 'package:diting_shared/data/db/legacy_database.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/server/dns_server_bridge.dart';
 import 'package:diting_android/data/server/dns_server_config.dart';
@@ -140,6 +141,13 @@ class ServerStatusNotifier extends Notifier<ServerStatus> {
     // Only one tunnel-like data plane at a time: stop the VPN before binding.
     await ref.read(powerProvider.notifier).stopIfActive();
     if (_disposed) return;
+    // Create the server's own log store before the native writers start; otherwise a first run
+    // would drop every row until a log page happened to open the file.
+    try {
+      await LegacyDatabase.open(LegacyDatabase.serverLogFile);
+    } catch (_) {
+      // A missing schema only costs log rows, not the DNS service itself.
+    }
     state = ServerStatus.starting;
     lastError = null;
     _armGuard();

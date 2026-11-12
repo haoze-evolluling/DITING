@@ -23,6 +23,7 @@ import com.haoze.diting.log.BootstrapLogWriter
 import com.haoze.diting.log.DnsCacheMirror
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineStats
+import com.haoze.diting.log.LogRetention
 import com.haoze.diting.log.RaceLogWriter
 import com.haoze.diting.log.RequestStats
 import com.haoze.diting.normal.SpeedTicker
@@ -134,7 +135,7 @@ class DitingDnsServerService : Service() {
                     override fun onDNSQueryBatch(jsonLogs: String) {
                         DnsLogWriter.writeBatch(
                             this@DitingDnsServerService,
-                            DnsLogWriter.DB_NORMAL,
+                            DnsLogWriter.DB_SERVER,
                             logMode,
                             jsonLogs,
                         )
@@ -158,7 +159,7 @@ class DitingDnsServerService : Service() {
                     ) {
                         RaceLogWriter.write(
                             this@DitingDnsServerService,
-                            DnsLogWriter.DB_NORMAL,
+                            DnsLogWriter.DB_SERVER,
                             queryName = queryName,
                             queryType = queryType.toInt(),
                             strategy = strategy,
@@ -188,7 +189,7 @@ class DitingDnsServerService : Service() {
                     ) {
                         BootstrapLogWriter.write(
                             this@DitingDnsServerService,
-                            DnsLogWriter.DB_NORMAL,
+                            DnsLogWriter.DB_SERVER,
                             ipId = ipID,
                             ipName = ipName,
                             ip = ip,
@@ -211,8 +212,16 @@ class DitingDnsServerService : Service() {
                 engine = created
                 activeEngine = created
                 isRunning = true
+                // Server mode has its own log store; the sweep must target that file, and it has
+                // no HTTP/traffic tables.
+                LogRetention.start(
+                    context = this,
+                    databaseName = DnsLogWriter.DB_SERVER,
+                    prefsName = PREFS_NAME,
+                    includeHttpAndTraffic = false,
+                )
                 // Mirrored periodically: the server has no VpnService data plane to hang it on.
-                cacheMirror = DnsCacheMirror(this, DnsLogWriter.DB_NORMAL, created).also { it.start() }
+                cacheMirror = DnsCacheMirror(this, DnsLogWriter.DB_SERVER, created).also { it.start() }
                 // Authoritative start time for the uptime figure; the UI process can be recreated.
                 startedAt = System.currentTimeMillis()
                 lastError = null
@@ -256,6 +265,7 @@ class DitingDnsServerService : Service() {
                 // A newer start (or another stop) owns the bookkeeping by now.
                 if (generation.get() != token) return@post
                 statsTicker.stop()
+                LogRetention.stop()
                 setServiceActive(this@DitingDnsServerService, false)
                 releaseLocks()
                 stopForegroundCompat()
@@ -270,6 +280,7 @@ class DitingDnsServerService : Service() {
         startedAt = 0L
         activeEngine = null
         closeCacheMirror()
+        LogRetention.stop()
         setServiceActive(this, false)
         releaseLocks()
         stopForegroundCompat()
@@ -288,6 +299,7 @@ class DitingDnsServerService : Service() {
         isRunning = false
         startedAt = 0L
         statsTicker.stop()
+        LogRetention.stop()
         setServiceActive(this, false)
         releaseLocks()
         stopForegroundCompat()

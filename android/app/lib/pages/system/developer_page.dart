@@ -164,6 +164,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
       LegacyDatabase.mainFile,
       LegacyDatabase.expressFile,
       LegacyDatabase.serverFile,
+      LegacyDatabase.serverLogFile,
     ]) {
       final db = await LegacyDatabase.open(fileName, create: false);
       if (db == null) continue;

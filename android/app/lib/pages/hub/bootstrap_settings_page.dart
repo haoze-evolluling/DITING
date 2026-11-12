@@ -5,7 +5,7 @@ import 'package:diting_android/data/db/bootstrap_log_repository.dart';
 import 'package:diting_shared/data/db/legacy_database.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
-import 'package:diting_android/state/work_mode_providers.dart';
+import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -143,16 +143,13 @@ class BootstrapSettingsPage extends ConsumerWidget {
       parseCustomBootstrapEntries(raw);
 }
 
-/// 24-hour aggregate of the legacy `bootstrap_log`; empty on a fresh install or when
-/// bootstrap probing never ran.
+/// 24-hour aggregate of `bootstrap_log` in the active mode's log database; empty on a fresh
+/// install or when bootstrap probing never ran.
 final bootstrapStatsProvider = FutureProvider<List<BootstrapIpStat>>((
   ref,
 ) async {
-  final mode = ref.watch(workModeProvider);
   final db = await LegacyDatabase.open(
-    mode == AppWorkMode.express
-        ? LegacyDatabase.expressFile
-        : LegacyDatabase.mainFile,
+    ref.watch(activeLogDatabaseFileProvider),
   );
   if (db == null) return const [];
   return _readStats(db);

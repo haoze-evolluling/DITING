@@ -16,6 +16,10 @@ object DnsLogWriter {
     const val DB_NORMAL = "diting_database"
     const val DB_EXPRESS = "diting_express"
 
+    /// Server mode's own store. It is created by the Flutter side from `LegacySchema`, so the
+    /// server dashboard no longer shares `dns_log`/`dns_cache` rows with normal or express mode.
+    const val DB_SERVER = "diting_server_logs"
+
     const val MODE_ALL = "all"
     const val MODE_BLOCKED_AND_ERRORS = "blocked_and_errors"
     const val MODE_OFF = "off"

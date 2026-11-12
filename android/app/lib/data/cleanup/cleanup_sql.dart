@@ -35,12 +35,13 @@ class CleanupDatabases {
     return databases;
   }
 
-  /// Databases holding runtime tables (logs, cache); main and express only.
+  /// Databases holding runtime tables (logs, cache): normal, express and the server log store.
   Future<List<Database>> runtimeDatabases() async {
     final databases = <Database>[];
     for (final fileName in [
       LegacyDatabase.mainFile,
       LegacyDatabase.expressFile,
+      LegacyDatabase.serverLogFile,
     ]) {
       final db = await of(fileName);
       if (db != null) databases.add(db);

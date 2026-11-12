@@ -1,4 +1,5 @@
-/// Opens the three legacy SQLite databases, creating missing ones from [LegacySchema].
+/// Opens the legacy SQLite databases and the server-mode log store, creating missing ones from
+/// [LegacySchema].
 library;
 
 import 'package:diting_shared/data/db/legacy_schema.dart';
@@ -17,6 +18,10 @@ class LegacyDatabase {
 
   /// Server-mode rules database, `user_version` 3.
   static const serverFile = 'diting_dns_rules';
+
+  /// Server-mode log store (request/cache/race/bootstrap tables), `user_version` 1. Kept apart from
+  /// [mainFile] and [expressFile] so the server dashboard never shares rows with the tunnel modes.
+  static const serverLogFile = 'diting_server_logs';
 
   /// Null means [fileName] could neither be opened nor created; callers degrade to "no rule
   /// database".

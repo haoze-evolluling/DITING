@@ -13,12 +13,15 @@ import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Normal and server modes share `diting_database`; express has its own file.
+/// Each mode reads its own log file: normal `diting_database`, express `diting_express`, and
+/// server `diting_server_logs` (created from `LegacySchema`).
 final activeLogDatabaseFileProvider = Provider<String>((ref) {
   final mode = ref.watch(workModeProvider);
-  return mode == AppWorkMode.express
-      ? LegacyDatabase.expressFile
-      : LegacyDatabase.mainFile;
+  return switch (mode) {
+    AppWorkMode.express => LegacyDatabase.expressFile,
+    AppWorkMode.server => LegacyDatabase.serverLogFile,
+    AppWorkMode.normal => LegacyDatabase.mainFile,
+  };
 });
 
 /// `null` on fresh installs, where the Dart layer has not created the file yet.

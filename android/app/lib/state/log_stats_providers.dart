@@ -58,14 +58,14 @@ typedef LogStatsData = ({int saved, int uploaded, int downloaded});
 final logStatsRequestsProvider =
     FutureProvider.family<LogStatsRequests, TrafficWindow>((ref, window) async {
       ref.watch(dnsLogRevisionProvider);
-      final express = ref.watch(workModeProvider) == AppWorkMode.express;
+      final normal = ref.watch(workModeProvider) == AppWorkMode.normal;
       final since = logStatsWindowStart(window);
       final db = await ref.watch(activeLogDatabaseProvider.future);
       if (db == null) return (total: 0, blocked: 0, cached: 0);
 
       final dns = await DnsLogRepository(db).dailyStats(since: since);
       var http = const HttpRequestDailyStats.empty();
-      if (!express) {
+      if (normal) {
         final mainDb = await ref.watch(mainLogDatabaseProvider.future);
         if (mainDb != null) {
           try {

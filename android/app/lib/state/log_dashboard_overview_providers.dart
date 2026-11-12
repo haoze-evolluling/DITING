@@ -149,7 +149,7 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
   // Refresh and "clear logs" both bump this, or the overview goes stale.
   ref.watch(dnsLogRevisionProvider);
   final mode = ref.watch(logModeProvider);
-  final express = ref.watch(workModeProvider) == AppWorkMode.express;
+  final normal = ref.watch(workModeProvider) == AppWorkMode.normal;
   final off = mode == LegacyLogMode.off;
   final filteredMode = mode == LegacyLogMode.blockedAndErrors;
   final sinceMs = _dayStartMillis();
@@ -170,10 +170,10 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
         : DnsLogDailyStats.fromParsed(parsed.first);
   }
 
-  // Express, off mode, a missing database and an older schema all mean no HTTPS rows.
+  // Express/server, off mode, a missing database and an older schema all mean no HTTPS rows.
   var httpStats = const HttpRequestDailyStats.empty();
   final mainDb = await ref.watch(mainLogDatabaseProvider.future);
-  if (!off && !express && mainDb != null) {
+  if (!off && normal && mainDb != null) {
     try {
       final parsed = core.rows(
         'http.daily',
@@ -237,7 +237,7 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
     }),
   );
   var recentHttp = const <Map<String, Object?>>[];
-  if (!express && mainDb != null) {
+  if (normal && mainDb != null) {
     try {
       recentHttp = core.rows(
         'http.row',
@@ -274,7 +274,7 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
         'since': sinceMs,
       }),
     );
-    if (!express && mainDb != null) {
+    if (normal && mainDb != null) {
       try {
         httpTotal = _count(
           core.rows(

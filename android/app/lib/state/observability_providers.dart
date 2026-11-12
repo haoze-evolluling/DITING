@@ -215,8 +215,8 @@ class RequestFeed {
 /// them through the kernel and parsed them back — and the 10 s log refresh then paid that again.
 typedef RequestFeedPage = ({List<ObservedRequest> items, bool hasMore, int? cursor});
 
-/// Express keeps its own database without `http_request_log`, so querying it throws `no such
-/// table`.
+/// Express and server modes keep their own database without `http_request_log`, so querying it
+/// throws `no such table`.
 /// [packageName] narrows both tables to one app; null reads every app.
 Future<RequestFeedPage> _loadFeedPage(
   Ref ref,
@@ -228,9 +228,9 @@ Future<RequestFeedPage> _loadFeedPage(
   // [watch] is only set from `build()`: a page read started by `loadMore()` runs outside the build
   // phase, where `ref.watch` is illegal, but the first page still has to re-run when the work mode
   // or the log database changes.
-  final express =
-      (watch ? ref.watch(workModeProvider) : ref.read(workModeProvider)) ==
-      AppWorkMode.express;
+  final noHttp =
+      (watch ? ref.watch(workModeProvider) : ref.read(workModeProvider)) !=
+      AppWorkMode.normal;
   // One extra row per table is enough to tell "there is more" without a second count query.
   final window = requestFeedPageSize + 1;
 
@@ -250,7 +250,7 @@ Future<RequestFeedPage> _loadFeedPage(
           );
         }();
 
-  final httpFuture = query.source == RequestSource.dns || express
+  final httpFuture = query.source == RequestSource.dns || noHttp
       ? Future.value(const <HttpRequestRecord>[])
       : () async {
           final db = await (watch
@@ -444,12 +444,13 @@ class AppRequestCount {
 }
 
 /// Apps that appear in the request log, most requests first. Rows without a package are left out:
-/// they cannot be opened as an app page. Express has no `http_request_log`, as in the feed.
+/// they cannot be opened as an app page. Express and server modes have no `http_request_log`, as
+/// in the feed.
 final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
   ref,
 ) async {
   ref.watch(dnsLogRevisionProvider);
-  final express = ref.watch(workModeProvider) == AppWorkMode.express;
+  final noHttp = ref.watch(workModeProvider) != AppWorkMode.normal;
 
   Future<Map<String, int>> dnsCounts() async {
     final db = await ref.watch(activeLogDatabaseProvider.future);
@@ -457,7 +458,7 @@ final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
   }
 
   Future<Map<String, int>> httpCounts() async {
-    if (express) return const {};
+    if (noHttp) return const {};
     final db = await ref.watch(mainLogDatabaseProvider.future);
     return db == null ? const {} : HttpRequestRepository(db).countByPackage();
   }

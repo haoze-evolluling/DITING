@@ -3,7 +3,9 @@
 
 import 'package:diting_shared/data/db/datasets.dart';
 import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/legacy_schema.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
+import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
@@ -50,6 +52,31 @@ void main() {
       expect(dataSet, DataSet.server);
       expect(dataSet.prefsContainer, LegacySettings.serverContainer);
       expect(dataSet.ruleDatabase, LegacyDatabase.serverFile);
+    });
+
+    test('服务器日志使用独立文件，不与普通/极速共享', () {
+      final c = container();
+      expect(c.read(activeLogDatabaseFileProvider), LegacyDatabase.mainFile);
+
+      c.read(workModeProvider.notifier).select(AppWorkMode.express);
+      expect(c.read(activeLogDatabaseFileProvider), LegacyDatabase.expressFile);
+
+      c.read(workModeProvider.notifier).select(AppWorkMode.server);
+      expect(
+        c.read(activeLogDatabaseFileProvider),
+        LegacyDatabase.serverLogFile,
+      );
+      expect(LegacyDatabase.serverLogFile, isNot(LegacyDatabase.mainFile));
+      expect(LegacyDatabase.serverLogFile, isNot(LegacyDatabase.expressFile));
+
+      final statements = LegacySchema.statementsFor(
+        LegacyDatabase.serverLogFile,
+      ).join('\n');
+      expect(statements, contains('CREATE TABLE `dns_log`'));
+      expect(statements, contains('CREATE TABLE `dns_cache`'));
+      expect(statements, contains('CREATE TABLE `dns_race_log`'));
+      expect(statements, contains('CREATE TABLE `bootstrap_log`'));
+      expect(statements, isNot(contains('http_request_log')));
     });
   });
 

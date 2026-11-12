@@ -1,9 +1,8 @@
-/// Server-mode statistics derived from the shared `dns_log` table.
+/// Server-mode statistics derived from the server's own `dns_log` table.
 ///
 /// The native engine counters reset on every start, so they cannot answer "how much did the
-/// server serve over the last seven days". The log table survives restarts and is already shared
-/// with normal mode, which makes it the honest source for both the home status card and the new
-/// server log dashboard.
+/// server serve over the last seven days". The log table survives restarts; server mode writes it
+/// to its own database (`diting_server_logs`), so these figures never include normal/express rows.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
