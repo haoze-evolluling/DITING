@@ -10204,6 +10204,24 @@ abstract class AppL10n {
   /// **'运行时长'**
   String get serverUptime;
 
+  /// No description provided for @serverStatsLastSevenDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'近 7 天累计'**
+  String get serverStatsLastSevenDays;
+
+  /// No description provided for @serverLogsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器日志仪表盘'**
+  String get serverLogsTitle;
+
+  /// No description provided for @serverLogsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看局域网设备经服务器模式发起的 DNS 请求、拦截、缓存与上游竞速记录。服务器模式不建立 VPN 隧道，因此这里不含上下行流量与 HTTPS 检查数据。'**
+  String get serverLogsBody;
+
   /// No description provided for @serverResetStatsBodyShort.
   ///
   /// In zh, this message translates to:

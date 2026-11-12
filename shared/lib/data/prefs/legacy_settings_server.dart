@@ -72,8 +72,11 @@ extension LegacyServerSettings on LegacySettings {
     value,
   );
 
+  /// Query recording is on by default: the server log dashboard and the seven-day status totals
+  /// read `dns_log`, so a fresh install would otherwise show an empty history with no way to turn
+  /// recording on. Legacy installs that explicitly stored `false` keep it off.
   bool get serverLogQueries =>
-      _boolIn(LegacySettings.serverContainer, 'log_queries', false);
+      _boolIn(LegacySettings.serverContainer, 'log_queries', true);
 
   bool get serverServiceActive =>
       _boolIn(LegacySettings.serverContainer, 'service_active', false);

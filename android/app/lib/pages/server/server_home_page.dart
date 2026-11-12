@@ -4,6 +4,7 @@ import 'package:diting_android/pages/home/widgets/home_power_button.dart';
 import 'package:diting_android/pages/server/dashboard/server_dashboard_board.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_shared/routes/branches.dart';
+import 'package:diting_android/state/log_refresh_providers.dart';
 import 'package:diting_android/state/server_dashboard_layout_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -25,10 +26,16 @@ class ServerHomePage extends ConsumerStatefulWidget {
 
 class _ServerHomePageState extends ConsumerState<ServerHomePage>
     with WidgetsBindingObserver {
+  LogLiveRefreshNotifier? _logRefresh;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // The status card aggregates `dns_log` over seven days; the log pages use the same refresh
+    // revision, so sharing their timer keeps the totals live without a second query loop.
+    _logRefresh = ref.read(logLiveRefreshProvider.notifier);
+    _logRefresh?.attachPolling();
     // `ServerStatusNotifier.build` only probes the native side when the persisted `service_active`
     // flag is set. A direct sync on entry covers the edge where the service is already listening
     // but the flag was cleared (for example by a failed previous attempt).
@@ -39,6 +46,7 @@ class _ServerHomePageState extends ConsumerState<ServerHomePage>
 
   @override
   void dispose() {
+    _logRefresh?.detachPolling();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -170,8 +178,9 @@ class _StatusText extends StatelessWidget {
         colorScheme.error,
       ),
     };
-    final detail =
-        status == ServerStatus.error ? errorDetail?.trim() ?? '' : '';
+    final detail = status == ServerStatus.error
+        ? errorDetail?.trim() ?? ''
+        : '';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
       child: Column(
@@ -189,9 +198,9 @@ class _StatusText extends StatelessWidget {
             Text(
               detail,
               textAlign: TextAlign.center,
-              style: AppTextStyle.footnote.of(context).copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ],

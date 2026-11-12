@@ -5529,6 +5529,16 @@ class AppL10nZh extends AppL10n {
   String get serverUptime => '运行时长';
 
   @override
+  String get serverStatsLastSevenDays => '近 7 天累计';
+
+  @override
+  String get serverLogsTitle => '服务器日志仪表盘';
+
+  @override
+  String get serverLogsBody =>
+      '查看局域网设备经服务器模式发起的 DNS 请求、拦截、缓存与上游竞速记录。服务器模式不建立 VPN 隧道，因此这里不含上下行流量与 HTTPS 检查数据。';
+
+  @override
   String get serverResetStatsBodyShort => '清空本次运行的全部计数，不清规则与缓存';
 
   @override

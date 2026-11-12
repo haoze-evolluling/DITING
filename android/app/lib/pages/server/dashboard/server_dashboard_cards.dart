@@ -4,6 +4,7 @@ import 'package:diting_android/pages/home/dashboard/cards/dashboard_block_parts.
 import 'package:diting_android/pages/server/server_actions.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
 import 'package:diting_android/state/server_resolution_providers.dart';
+import 'package:diting_android/state/server_stats_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/server_upstream_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
@@ -31,7 +32,7 @@ Widget buildServerDashboardCard(
       interactive ? () => context.push(path) : null;
   return switch (widget) {
     ServerDashboardWidget.lanAccess => const _ServerLanAccessCard(),
-    ServerDashboardWidget.status => _ServerStatusCard(interactive: interactive),
+    ServerDashboardWidget.status => const _ServerStatusCard(),
     ServerDashboardWidget.upstream => _ServerUpstreamCard(
       onOpen: push(ServerPaths.upstream),
     ),
@@ -147,11 +148,9 @@ class _ServerLanAccessCard extends ConsumerWidget {
   }
 }
 
-/// Service state, uptime and this run's counters.
+/// Service state, current-run uptime and the last seven days' totals.
 class _ServerStatusCard extends ConsumerWidget {
-  const _ServerStatusCard({required this.interactive});
-
-  final bool interactive;
+  const _ServerStatusCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -186,14 +185,6 @@ class _ServerStatusCard extends ConsumerWidget {
             glyph: AppGlyphs.status,
             title: context.l10n.serverServiceStatus,
             leading: [DashboardChip(label: label, tone: tone, dot: true)],
-            trailing: [
-              if (interactive)
-                DashboardIconButton(
-                  glyph: AppGlyphs.reset,
-                  tooltip: context.l10n.serverResetStats,
-                  onPressed: () => confirmResetServerStats(context, ref),
-                ),
-            ],
           ),
           SizedBox(height: 12 * scale),
           Text(context.l10n.serverUptime, style: DashboardText.label(context)),
@@ -221,33 +212,36 @@ class _ServerStatusCard extends ConsumerWidget {
               ),
             ),
           SizedBox(height: 14 * scale),
+          Text(
+            context.l10n.serverStatsLastSevenDays,
+            style: DashboardText.label(context),
+          ),
+          SizedBox(height: 8 * scale),
           Consumer(
             builder: (context, ref, _) {
-              final stats = ref.watch(serviceStatsProvider);
+              final stats = ref.watch(serverSevenDayStatsProvider).value;
               return DashboardMetricGrid(
                 maxColumns: 2,
                 metrics: [
                   DashboardMetric(
                     label: context.l10n.serverTotalQueries,
-                    value: '${stats.queries}',
+                    value: stats == null ? '—' : '${stats.total}',
                   ),
                   DashboardMetric(
                     label: context.l10n.serverCacheHits,
-                    value: '${stats.cacheHits}',
+                    value: stats == null ? '—' : '${stats.cached}',
                     color: colorScheme.primary,
                   ),
                   DashboardMetric(
                     label: context.l10n.serverBlocked,
-                    value: '${stats.blocked}',
+                    value: stats == null ? '—' : '${stats.blocked}',
                     color: colorScheme.error,
                   ),
                   DashboardMetric(
-                    // The engine snapshot has no latency figure; a hit rate is the honest
-                    // "is it working" number at a glance and avoids a permanent dash.
                     label: context.l10n.statusCacheHitRate,
-                    value: stats.queries == 0
+                    value: stats == null || stats.total == 0
                         ? '--'
-                        : dashboardPercent(stats.cacheHitRate),
+                        : dashboardPercent(stats.cacheHitRateOfQueries),
                   ),
                 ],
               );

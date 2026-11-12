@@ -5850,6 +5850,16 @@ class AppL10nEn extends AppL10n {
   String get serverUptime => 'Uptime';
 
   @override
+  String get serverStatsLastSevenDays => 'Last 7 days';
+
+  @override
+  String get serverLogsTitle => 'Server log dashboard';
+
+  @override
+  String get serverLogsBody =>
+      'DNS requests, blocks, cache hits and upstream races from LAN devices using server mode. Server mode builds no VPN tunnel, so there is no traffic-byte or HTTPS-inspection data here.';
+
+  @override
   String get serverResetStatsBodyShort =>
       'Clear every counter for this run without touching rules or cache';
 

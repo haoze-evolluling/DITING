@@ -1,13 +1,13 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/pages/server/server_feature_hub_page.dart';
 import 'package:diting_android/pages/server/server_home_page.dart';
+import 'package:diting_android/pages/server/server_logs_page.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Tabbed shell for server mode. It replaces the whole `AppShell`, so the six-item dock never
-/// shows. The upstream editor and mode settings used to be tabs of their own; they now live as
-/// cards in the feature center, so the shell keeps two tabs: the dashboard home and the center that
-/// gathers every module entry.
+/// shows. The feature center gathers the module entries; the third tab is the server-specific log
+/// dashboard, sharing the normal/express card language but limited to DNS-side data.
 class ServerModeShell extends StatefulWidget {
   const ServerModeShell({super.key});
 
@@ -27,6 +27,10 @@ class _ServerModeShellState extends State<ServerModeShell> {
     NavigationDockDestination(
       glyph: AppGlyphs.puzzle,
       label: l10n.bottomBarFeatureHub,
+    ),
+    NavigationDockDestination(
+      glyph: AppGlyphs.logs,
+      label: l10n.bottomBarLogDashboard,
     ),
   ];
 
@@ -48,7 +52,11 @@ class _ServerModeShellState extends State<ServerModeShell> {
         inset: NavigationDock.insetOf(context),
         child: IndexedStack(
           index: _index,
-          children: const [ServerHomePage(), ServerFeatureHubPage()],
+          children: [
+            const ServerHomePage(),
+            const ServerFeatureHubPage(),
+            ServerLogsPage(active: _index == 2),
+          ],
         ),
       ),
       // No `SafeArea`, for the same reason as the main shell: the dock folds the system bottom

@@ -10,6 +10,7 @@ import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/server/dns_server_bridge.dart';
 import 'package:diting_android/data/server/dns_server_config.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
+import 'package:diting_android/state/server_stats_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/server_upstream_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -42,6 +43,17 @@ void _serverMode() {
       expect(cache['minTtlEnabled'], true);
       expect(cache['staleFallbackEnabled'], true);
       expect(cache['negativeTtlSeconds'], 30);
+    });
+
+    test('近 7 天窗口从今天零点向前覆盖 7 个自然日', () {
+      final now = DateTime(2026, 11, 12, 15, 30);
+      expect(ServerStatsWindow.sevenDays.startOf(now), DateTime(2026, 11, 6));
+      expect(ServerStatsWindow.today.startOf(now), DateTime(2026, 11, 12));
+      expect(ServerStatsWindow.all.startOf(now).millisecondsSinceEpoch, 0);
+    });
+
+    test('查询日志默认开启，否则 7 天统计与日志仪表盘没有数据可读', () {
+      expect(serverSettings({}).serverLogQueries, true);
     });
 
     test('竞速模式按候选列表生成多上游文档', () {
@@ -216,10 +228,7 @@ void _serverMode() {
       final json = config.toJson();
       expect((json['cache'] as Map)['enabled'], false);
       expect((json['cache'] as Map)['maxTtlSeconds'], 21600);
-      expect(
-        (json['dynamicResponse'] as Map)['requestThreshold'],
-        50,
-      );
+      expect((json['dynamicResponse'] as Map)['requestThreshold'], 50);
     });
   });
 
@@ -418,7 +427,8 @@ void _serverUpstreams() {
   });
 
   test('内置项不可编辑也不可删除', () {
-    final preset = serverPresetUpstreams(lookupAppL10n(const Locale('zh'))).first;
+    final preset = serverPresetUpstreams(lookupAppL10n(const Locale('zh')))
+        .first;
     expect(actions().update(preset), isFalse);
     expect(actions().remove(preset.id), isFalse);
     expect(custom(), isEmpty);

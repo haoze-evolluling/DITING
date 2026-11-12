@@ -2,16 +2,19 @@
 // mode settings page no longer repeats the feature-center module entries.
 
 import 'package:diting_android/app/app.dart';
+import 'package:diting_android/data/db/dns_log_repository.dart';
 import 'package:diting_android/pages/hub/cache_settings_page.dart';
 import 'package:diting_android/pages/home/dashboard/dashboard_board.dart'
     show DashboardRemoveBadge;
 import 'package:diting_android/pages/server/server_feature_hub_page.dart';
 import 'package:diting_android/pages/server/server_home_page.dart';
 import 'package:diting_android/pages/server/server_settings_page.dart';
+import 'package:diting_android/state/server_stats_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -33,6 +36,7 @@ void _home() {
   Future<MemoryLegacyPrefsStore> pumpServerApp(
     WidgetTester tester, {
     Map<String, Object?> serverPrefs = const {},
+    List<Override> extraOverrides = const [],
   }) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
@@ -49,6 +53,7 @@ void _home() {
           dnsServerControllerProvider.overrideWithValue(
             FakeDnsServerController(),
           ),
+          ...extraOverrides,
         ],
         child: const DitingApp(),
       ),
@@ -62,6 +67,7 @@ void _home() {
     await pumpServerApp(tester);
     expect(find.byType(ServerHomePage), findsOneWidget);
     expect(find.text('服务状态'), findsOneWidget);
+    expect(find.text('近 7 天累计'), findsOneWidget);
     expect(find.text('当前上游'), findsOneWidget);
     expect(find.text('局域网接入'), findsOneWidget);
     expect(find.text('缓存设置'), findsOneWidget);
@@ -80,6 +86,30 @@ void _home() {
       tester.widgetList(find.byType(DashboardRemoveBadge)).length,
       badgesBefore - 1,
     );
+  });
+
+  testWidgets('服务状态卡展示近 7 天总量而不是本次运行计数', (tester) async {
+    await pumpServerApp(
+      tester,
+      extraOverrides: [
+        // 20 total, 4 blocked, 3 cached: the ratio is cached/total = 15%, matching the old
+        // status card semantics while the window is now seven days.
+        serverSevenDayStatsProvider.overrideWith(
+          (ref) async => const DnsLogDailyStats(
+            total: 20,
+            passed: 16,
+            blocked: 4,
+            error: 0,
+            cached: 3,
+          ),
+        ),
+      ],
+    );
+    expect(find.text('近 7 天累计'), findsOneWidget);
+    expect(find.text('20'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
+    expect(find.text('15%'), findsOneWidget);
   });
 
   testWidgets('首页缓存小组件打开缓存设置页', (tester) async {
@@ -121,10 +151,7 @@ void _home() {
 
     await tester.tap(find.text('启用域名规则'));
     await settle(tester);
-    expect(
-      store.read('diting_dns_mode_prefs', 'domain_rules_enabled'),
-      false,
-    );
+    expect(store.read('diting_dns_mode_prefs', 'domain_rules_enabled'), false);
   });
 
   testWidgets('模式设置页不再重复功能中心的模块入口', (tester) async {

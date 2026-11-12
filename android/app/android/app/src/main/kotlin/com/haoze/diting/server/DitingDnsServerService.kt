@@ -123,7 +123,7 @@ class DitingDnsServerService : Service() {
                 }
                 created.setFilterDNS(adBlockEnabled)
                 val logMode = if (
-                    getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getBoolean(KEY_LOG_QUERIES, false)
+                    getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getBoolean(KEY_LOG_QUERIES, true)
                 ) {
                     DnsLogWriter.MODE_ALL
                 } else {

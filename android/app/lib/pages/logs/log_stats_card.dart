@@ -10,10 +10,14 @@ import 'package:material_ui/material_ui.dart';
 /// Statistics card: request counts and data usage, each over its own window, with a
 /// proportional bar under each row of figures and a shortcut to the request log between them.
 class LogStatsCard extends StatelessWidget {
-  const LogStatsCard({super.key, this.onRecentActivity});
+  const LogStatsCard({super.key, this.onRecentActivity, this.showData = true});
 
   /// Opens the request log; null (edit mode) leaves the row inert.
   final VoidCallback? onRecentActivity;
+
+  /// Server mode only proxies DNS, so uploaded/downloaded bytes are meaningless there. The card
+  /// keeps the request figures and drops the traffic section instead of showing three zeroes.
+  final bool showData;
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +40,7 @@ class LogStatsCard extends StatelessWidget {
           const _RequestsSection(),
           const SizedBox(height: 16),
           _RecentActivityRow(onTap: onRecentActivity),
-          const SizedBox(height: 16),
-          const _DataSection(),
+          if (showData) ...[const SizedBox(height: 16), const _DataSection()],
           const SizedBox(height: 4),
         ],
       ),

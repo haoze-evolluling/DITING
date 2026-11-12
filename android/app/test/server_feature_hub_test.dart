@@ -84,19 +84,20 @@ void _featureCenter() {
 
   Future<void> openFeatureCenter(WidgetTester tester) async {
     await pumpServerApp(tester);
-    // Server mode has two tabs now: overview and feature center.
+    // Server mode has three tabs: overview, feature center and the server log dashboard.
     expect(find.byType(ServerModeShell), findsOneWidget);
     await tester.tap(find.text('功能中心').last);
     await settle(tester);
     expect(find.byType(ServerFeatureHubPage), findsOneWidget);
   }
 
-  testWidgets('服务器外壳只有首页与功能中心两个 tab', (tester) async {
+  testWidgets('服务器外壳有首页、功能中心与日志仪表盘三个 tab', (tester) async {
     await openFeatureCenter(tester);
     final dock = tester.widget<NavigationDock>(find.byType(NavigationDock));
     expect(dock.destinations.map((destination) => destination.label), [
       '首页',
       '功能中心',
+      '日志仪表盘',
     ]);
   });
 
