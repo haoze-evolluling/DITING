@@ -3610,13 +3610,16 @@ class AppL10nZh extends AppL10n {
   String get obsExportRangeCustom => '自定义';
 
   @override
-  String get obsExportCustomRange => '选择日期范围';
+  String get obsExportCustomRange => '起止日期';
 
   @override
-  String get obsExportPickRange => '请选择日期范围';
+  String get obsExportPickRange => '点击选择起止日期';
 
   @override
   String get obsExportScopeSection => '筛选条件';
+
+  @override
+  String get obsExportIntro => '选择时间范围、请求来源、状态与应用，再勾选需要导出的字段。';
 
   @override
   String get obsExportDnsOnlyNote => '当前模式没有 HTTPS 请求日志，导出仅包含 DNS 记录';
@@ -3630,6 +3633,11 @@ class AppL10nZh extends AppL10n {
   @override
   String obsExportSelectedApps(int count) {
     return '已选 $count 个应用';
+  }
+
+  @override
+  String obsExportSelectedColumns(int count) {
+    return '已选 $count 个字段';
   }
 
   @override

@@ -84,42 +84,46 @@ class _RequestLogExportAppPickerState
                 onChanged: (value) => setState(() => _query = value),
               ),
             ),
-            ListHeader(
-              title: _selected.isEmpty
-                  ? l10n.obsExportAllApps
-                  : l10n.obsExportSelectedApps(_selected.length),
+            if (_selected.isNotEmpty)
+              ListHeader(title: l10n.obsExportSelectedApps(_selected.length)),
+            generateSection(
+              items: [
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.clearAll, size: 20),
+                  title: Text(l10n.obsExportAllApps),
+                  trailing: _selected.isEmpty ? const SelectionCheck() : null,
+                  onTap: () => setState(_selected.clear),
+                ),
+                for (final app in visible)
+                  ListItem(
+                    leading: AppIconAvatar(packageName: app.packageName),
+                    title: Text(
+                      labels[app.packageName] ?? app.packageName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      '${app.packageName} · ${l10n.obsAppRequestCount(app.count)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: CommonCheckBox(
+                      value: _selected.contains(app.packageName),
+                      isCircle: true,
+                      onChanged: (_) => _toggle(app.packageName),
+                    ),
+                    onTap: () => _toggle(app.packageName),
+                  ),
+              ],
+              footer: visible.isEmpty ? l10n.obsAppsEmpty : null,
             ),
-            ListItem(
-              leading: const GlyphIcon(AppGlyphs.clearAll, size: 20),
-              title: Text(l10n.obsExportAllApps),
-              trailing: _selected.isEmpty ? const SelectionCheck() : null,
-              onTap: () => setState(_selected.clear),
-            ),
-            for (final app in visible)
-              ListItem(
-                leading: AppIconAvatar(packageName: app.packageName),
-                title: Text(
-                  labels[app.packageName] ?? app.packageName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  '${app.packageName} · ${l10n.obsAppRequestCount(app.count)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: CommonCheckBox(
-                  value: _selected.contains(app.packageName),
-                  isCircle: true,
-                  onChanged: (_) => _toggle(app.packageName),
-                ),
-                onTap: () => _toggle(app.packageName),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: TonalButton(
+                label: l10n.obsExportAppPickerDone,
+                glyph: AppGlyphs.check,
+                onPressed: () => Navigator.of(context).pop(_selected),
               ),
-            if (visible.isEmpty) ListFooter(text: l10n.obsAppsEmpty),
-            ListItem(
-              leading: const GlyphIcon(AppGlyphs.check, size: 20),
-              title: Text(l10n.obsExportAppPickerDone),
-              onTap: () => Navigator.of(context).pop(_selected),
             ),
           ],
         ],

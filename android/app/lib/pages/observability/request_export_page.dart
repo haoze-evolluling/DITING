@@ -6,6 +6,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/http_request_repository.dart'
     show RequestSource, RequestStatus;
 import 'package:diting_android/data/export/request_log_export_options.dart';
+import 'package:diting_android/pages/forms/custom_issue.dart';
 import 'package:diting_android/pages/forms/form_page.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_android/state/observability_providers.dart'
@@ -15,6 +16,7 @@ import 'package:diting_android/state/work_mode_providers.dart'
     show AppWorkMode, workModeProvider;
 import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:diting_android/widgets/chip_row.dart';
+import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,6 +103,20 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
     }
   }
 
+  void _reset() {
+    setState(() {
+      _source = RequestSource.all;
+      _status = RequestStatus.all;
+      _range = RequestLogExportRange.all;
+      _customRange = null;
+      _packages.clear();
+      _columns
+        ..clear()
+        ..addAll(RequestLogColumn.values);
+      _limitController.text = '$requestLogExportDefaultRows';
+    });
+  }
+
   Future<void> _export(AppL10n l10n) async {
     final error = _validationError(l10n);
     if (error != null) {
@@ -166,27 +182,44 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
     final l10n = context.l10n;
     final normalMode = ref.watch(workModeProvider) == AppWorkMode.normal;
     final error = _validationError(l10n);
+    // A custom range starts out empty by design; the row's own hint explains what
+    // to do, so don't greet the user with a red banner the moment they tap 自定义.
+    final showError =
+        error != null &&
+        !(_range == RequestLogExportRange.custom && _customRange == null);
 
     return CommonScaffold(
       title: l10n.obsExportTitle,
+      iconActions: [
+        IconButtonData(
+          glyph: AppGlyphs.reset,
+          tooltip: l10n.commonReset,
+          onPressed: _busy ? null : _reset,
+        ),
+      ],
       body: PageBody(
         children: [
-          generateSection(
+          PageIntroCard(text: l10n.obsExportIntro),
+          _ExportCard(
             title: l10n.obsExportRangeSection,
-            items: [
-              CommonCard(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                child: _pillWrap([
-                  for (final option in RequestLogExportRange.values)
-                    (
-                      option,
-                      _rangeLabel(l10n, option),
-                      option == _range,
-                      () => setState(() => _range = option),
-                    ),
-                ]),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: ChipRow(
+                  children: [
+                    for (final option in RequestLogExportRange.values)
+                      FilterPill(
+                        label: _rangeLabel(l10n, option),
+                        selected: option == _range,
+                        onPressed: option == _range
+                            ? null
+                            : () => setState(() => _range = option),
+                      ),
+                  ],
+                ),
               ),
-              if (_range == RequestLogExportRange.custom)
+              if (_range == RequestLogExportRange.custom) ...[
+                _divider(context),
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.clock, size: 20),
                   title: Text(l10n.obsExportCustomRange),
@@ -202,46 +235,45 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
                   ),
                   onTap: _pickCustomRange,
                 ),
+              ],
             ],
           ),
-          generateSection(
-            title: l10n.obsSource,
-            items: [
-              CommonCard(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                child: _pillWrap([
-                  for (final option in RequestSource.values)
-                    (
-                      option,
-                      option.label,
-                      option == _source,
-                      () => setState(() => _source = option),
-                    ),
-                ]),
+          _ExportCard(
+            title: l10n.obsExportScopeSection,
+            children: [
+              _ExportField(
+                label: l10n.obsSource,
+                hint: normalMode ? null : l10n.obsExportDnsOnlyNote,
+                child: ChipRow(
+                  children: [
+                    for (final option in RequestSource.values)
+                      FilterPill(
+                        label: option.label,
+                        selected: option == _source,
+                        onPressed: option == _source
+                            ? null
+                            : () => setState(() => _source = option),
+                      ),
+                  ],
+                ),
               ),
-              if (!normalMode) ListFooter(text: l10n.obsExportDnsOnlyNote),
-            ],
-          ),
-          generateSection(
-            title: l10n.obsStatus,
-            items: [
-              CommonCard(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                child: _pillWrap([
-                  for (final option in RequestStatus.values)
-                    (
-                      option,
-                      option.label,
-                      option == _status,
-                      () => setState(() => _status = option),
-                    ),
-                ]),
+              _divider(context),
+              _ExportField(
+                label: l10n.obsStatus,
+                child: ChipRow(
+                  children: [
+                    for (final option in RequestStatus.values)
+                      FilterPill(
+                        label: option.label,
+                        selected: option == _status,
+                        onPressed: option == _status
+                            ? null
+                            : () => setState(() => _status = option),
+                      ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          generateSection(
-            title: l10n.obsExportApps,
-            items: [
+              _divider(context),
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.appsList, size: 20),
                 title: Text(
@@ -256,13 +288,26 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
                 ),
                 onTap: _pickApps,
               ),
+              _divider(context),
+              SurfaceScope(
+                level: SurfaceLevel.page,
+                child: FormRowTextField(
+                  title: l10n.obsExportLimit,
+                  controller: _limitController,
+                  keyboardType: TextInputType.number,
+                  machineText: true,
+                  hintText: l10n.obsExportLimitHint(requestLogExportMaxRows),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
             ],
           ),
-          generateSection(
+          _ExportCard(
             title: l10n.obsExportColumnsSection,
-            items: [
-              CommonCard(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            footer: l10n.obsExportSelectedColumns(_columns.length),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -280,25 +325,10 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
               ),
             ],
           ),
-          generateSection(
-            items: [
-              FormRowTextField(
-                title: l10n.obsExportLimit,
-                controller: _limitController,
-                keyboardType: TextInputType.number,
-                machineText: true,
-                hintText: l10n.obsExportLimitHint(requestLogExportMaxRows),
-                onChanged: (_) => setState(() {}),
-              ),
-            ],
-          ),
-          if (error != null)
+          if (showError)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-              child: Text(
-                error,
-                style: TextStyle(color: context.colorScheme.error),
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: ErrorBanner(message: error!),
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -315,21 +345,12 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
     );
   }
 
-  /// `(value, label, selected, onTap)` chips; a selected chip simply does nothing on tap.
-  Widget _pillWrap(List<(Object, String, bool, VoidCallback)> options) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final (_, label, selected, onTap) in options)
-          FilterPill(
-            label: label,
-            selected: selected,
-            onPressed: selected ? null : onTap,
-          ),
-      ],
-    );
-  }
+  Widget _divider(BuildContext context) => Divider(
+    height: 1,
+    indent: 16,
+    endIndent: 16,
+    color: context.colorScheme.outlineVariant,
+  );
 
   String _rangeLabel(AppL10n l10n, RequestLogExportRange range) =>
       switch (range) {
@@ -347,5 +368,62 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
     }
 
     return '${date(range.start)} ~ ${date(range.end)}';
+  }
+}
+
+/// One titled card: header, a single card holding grouped rows and chips, then an optional note.
+/// The card carries no padding so rows (a tappable [ListItem]) can reach its rounded edge.
+class _ExportCard extends StatelessWidget {
+  const _ExportCard({required this.title, required this.children, this.footer});
+
+  final String title;
+  final List<Widget> children;
+  final String? footer;
+
+  @override
+  Widget build(BuildContext context) {
+    final footer = this.footer;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListHeader(title: title),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: CommonCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
+            ),
+          ),
+        ),
+        if (footer != null) ListFooter(text: footer),
+      ],
+    );
+  }
+}
+
+/// A labelled field inside an [_ExportCard]: caption above the control, optional caption below.
+class _ExportField extends StatelessWidget {
+  const _ExportField({required this.label, required this.child, this.hint});
+
+  final String label;
+  final Widget child;
+  final String? hint;
+
+  @override
+  Widget build(BuildContext context) {
+    final hint = this.hint;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          Text(label, style: context.listCaptionStyle),
+          child,
+          if (hint != null) Text(hint, style: context.listCaptionStyle),
+        ],
+      ),
+    );
   }
 }

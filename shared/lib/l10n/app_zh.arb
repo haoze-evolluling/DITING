@@ -2136,14 +2136,23 @@
   "obsExportRangeDay": "最近 24 小时",
   "obsExportRangeWeek": "最近 7 天",
   "obsExportRangeCustom": "自定义",
-  "obsExportCustomRange": "选择日期范围",
-  "obsExportPickRange": "请选择日期范围",
+  "obsExportCustomRange": "起止日期",
+  "obsExportPickRange": "点击选择起止日期",
   "obsExportScopeSection": "筛选条件",
+  "obsExportIntro": "选择时间范围、请求来源、状态与应用，再勾选需要导出的字段。",
   "obsExportDnsOnlyNote": "当前模式没有 HTTPS 请求日志，导出仅包含 DNS 记录",
   "obsExportApps": "应用",
   "obsExportAllApps": "全部应用",
   "obsExportSelectedApps": "已选 {count} 个应用",
   "@obsExportSelectedApps": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "obsExportSelectedColumns": "已选 {count} 个字段",
+  "@obsExportSelectedColumns": {
     "placeholders": {
       "count": {
         "type": "int"

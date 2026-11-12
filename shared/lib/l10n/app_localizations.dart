@@ -6698,13 +6698,13 @@ abstract class AppL10n {
   /// No description provided for @obsExportCustomRange.
   ///
   /// In zh, this message translates to:
-  /// **'选择日期范围'**
+  /// **'起止日期'**
   String get obsExportCustomRange;
 
   /// No description provided for @obsExportPickRange.
   ///
   /// In zh, this message translates to:
-  /// **'请选择日期范围'**
+  /// **'点击选择起止日期'**
   String get obsExportPickRange;
 
   /// No description provided for @obsExportScopeSection.
@@ -6712,6 +6712,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'筛选条件'**
   String get obsExportScopeSection;
+
+  /// No description provided for @obsExportIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择时间范围、请求来源、状态与应用，再勾选需要导出的字段。'**
+  String get obsExportIntro;
 
   /// No description provided for @obsExportDnsOnlyNote.
   ///
@@ -6736,6 +6742,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'已选 {count} 个应用'**
   String obsExportSelectedApps(int count);
+
+  /// No description provided for @obsExportSelectedColumns.
+  ///
+  /// In zh, this message translates to:
+  /// **'已选 {count} 个字段'**
+  String obsExportSelectedColumns(int count);
 
   /// No description provided for @obsExportAppPickerTitle.
   ///

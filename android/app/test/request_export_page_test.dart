@@ -45,7 +45,7 @@ void main() {
     expect(find.text('导出请求日志'), findsOneWidget);
     expect(find.text('时间范围'), findsOneWidget);
     expect(find.text('全部时间'), findsOneWidget);
-    expect(find.text('筛选条件'), findsNothing);
+    expect(find.text('筛选条件'), findsOneWidget);
     expect(find.text('来源'), findsWidgets);
     expect(find.text('全部应用'), findsOneWidget);
 

@@ -3801,13 +3801,17 @@ class AppL10nEn extends AppL10n {
   String get obsExportRangeCustom => 'Custom';
 
   @override
-  String get obsExportCustomRange => 'Select date range';
+  String get obsExportCustomRange => 'Date range';
 
   @override
-  String get obsExportPickRange => 'Select a date range';
+  String get obsExportPickRange => 'Tap to choose a range';
 
   @override
   String get obsExportScopeSection => 'Filters';
+
+  @override
+  String get obsExportIntro =>
+      'Pick a time range, source, status and apps, then choose the columns to export.';
 
   @override
   String get obsExportDnsOnlyNote =>
@@ -3822,6 +3826,11 @@ class AppL10nEn extends AppL10n {
   @override
   String obsExportSelectedApps(int count) {
     return '$count apps selected';
+  }
+
+  @override
+  String obsExportSelectedColumns(int count) {
+    return '$count columns selected';
   }
 
   @override
