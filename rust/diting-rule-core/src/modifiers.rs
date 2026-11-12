@@ -4,8 +4,8 @@
 //! makes the whole line unsupported, so this order is semantic.
 
 use crate::domain::{
-    is_sinkhole, is_valid_dns_type, is_web_only_modifier, looks_like_literal_ip, normalize_domain,
-    parse_numeric_address_safe,
+    is_content_type_web_token, is_sinkhole, is_valid_dns_type, is_web_only_modifier,
+    looks_like_literal_ip, normalize_domain, parse_numeric_address_safe,
 };
 use crate::models::{REWRITE_CNAME, REWRITE_IPV4, REWRITE_IPV6};
 
@@ -20,6 +20,10 @@ pub(crate) struct ModifierState {
     pub(crate) is_badfilter: bool,
     pub(crate) denyallow: Option<String>,
     pub(crate) dns_type: Option<String>,
+    /// A content-type/party modifier was seen and ignored so the host-level rule can be kept. The
+    /// caller drops it again for allow rules, where broadening to "all types/parties" would loosen
+    /// blocking rather than tighten it.
+    pub(crate) demoted: bool,
 }
 
 enum ModifierOutcome {
@@ -212,6 +216,11 @@ pub(crate) fn apply_modifiers(
             apply_dnsrewrite(token, state)
         } else if lower == "badfilter" {
             state.is_badfilter = true;
+            ModifierOutcome::Accepted
+        } else if is_content_type_web_token(&lower) {
+            // Keep the host-level part: a `$script`/`$third-party` rule still names an ad host that
+            // is worth blocking at the DNS layer. `line.rs` re-drops this for allow rules.
+            state.demoted = true;
             ModifierOutcome::Accepted
         } else if is_web_only_modifier(&lower) {
             return Err(ModifierRejection::Ignored);

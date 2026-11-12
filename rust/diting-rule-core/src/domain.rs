@@ -252,6 +252,45 @@ pub fn is_web_only_modifier(lower: &str) -> bool {
         .any(|prefix| lower.starts_with(prefix))
 }
 
+/// The subset of web-only modifiers that only constrain *which resource* of a host is targeted
+/// (content type / party / case), not *which host* or *what to rewrite*. For a block rule the host
+/// is the useful part at the DNS layer, so a rule carrying only these can be kept as a plain host
+/// block instead of being discarded whole — that is the coverage win. Modifiers that narrow by
+/// referrer/target/header (`domain=`, `to=`, `method=`, `header=`) or that rewrite the request
+/// (`removeparam=`, `redirect=`, …) are NOT here: dropping them would change a rule's meaning, so
+/// those lines stay ignored.
+pub fn is_content_type_web_token(lower: &str) -> bool {
+    matches!(
+        lower,
+        "match-case"
+            | "network"
+            | "document"
+            | "~document"
+            | "subdocument"
+            | "~subdocument"
+            | "script"
+            | "~script"
+            | "stylesheet"
+            | "~stylesheet"
+            | "image"
+            | "~image"
+            | "font"
+            | "~font"
+            | "media"
+            | "~media"
+            | "object"
+            | "~object"
+            | "xmlhttprequest"
+            | "~xmlhttprequest"
+            | "websocket"
+            | "~websocket"
+            | "ping"
+            | "~ping"
+            | "other"
+            | "~other"
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

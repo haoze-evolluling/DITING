@@ -199,6 +199,11 @@ pub fn parse_line_without_state(line: &str, original: &str, allow: bool) -> Cate
             };
         }
     }
+    // A content-type/party modifier was dropped to keep the host rule (a coverage win for block
+    // rules). For an allow rule the same widening would loosen blocking, so still ignore it.
+    if state.demoted && allow {
+        return CategorizedLine::ignored();
+    }
 
     if !is_regex && is_url_or_path_rule(value) {
         let clean_pattern = clean_url_pattern(value);
@@ -241,7 +246,17 @@ pub fn parse_line_without_state(line: &str, original: &str, allow: bool) -> Cate
         if let Some(rest) = candidate.strip_prefix("||") {
             candidate = rest.trim_end_matches('^');
         } else if candidate.starts_with('|') || candidate.ends_with('|') {
-            return CategorizedLine::unsupported();
+            // A single-`|` ABP anchor on a bare host (`|host|`, `|host`, `host|`) is still a
+            // host-level rule; strip the anchors and keep the host. A remaining `/` means it is
+            // really a URL rule, which stays unsupported here.
+            let anchored = candidate
+                .trim_start_matches('|')
+                .trim_end_matches(|c| c == '|' || c == '^')
+                .trim();
+            if anchored.is_empty() || anchored.contains('/') {
+                return CategorizedLine::unsupported();
+            }
+            candidate = anchored;
         } else {
             candidate = candidate.trim_end_matches('^');
         }
@@ -327,5 +342,50 @@ pub fn parse_line_without_state(line: &str, original: &str, allow: bool) -> Cate
             block_rules: vec![rule],
             ..CategorizedLine::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod coverage_tests {
+    use super::parse_line_without_state;
+
+    fn block(line: &str) -> crate::models::CategorizedLine {
+        parse_line_without_state(line, line, false)
+    }
+
+    #[test]
+    fn content_type_modifier_keeps_host_block() {
+        let parsed = block("||ads.example^$script,image");
+        assert_eq!(parsed.block_rules.len(), 1);
+        assert_eq!(parsed.block_rules[0].pattern, "ads.example");
+        assert!(parsed.allow_rules.is_empty());
+    }
+
+    #[test]
+    fn referrer_modifier_is_still_dropped() {
+        // `$domain=` narrows by referrer; ignoring it would change meaning, so the line stays ignored.
+        let parsed = block("||ads.example^$domain=foo.com");
+        assert!(parsed.block_rules.is_empty());
+        assert!(parsed.allow_rules.is_empty());
+    }
+
+    #[test]
+    fn allow_rule_with_content_type_modifier_is_dropped() {
+        let line = "@@||cdn.example^$script";
+        let parsed = parse_line_without_state(line, line, true);
+        assert!(parsed.allow_rules.is_empty());
+        assert!(parsed.block_rules.is_empty());
+    }
+
+    #[test]
+    fn single_pipe_anchor_is_a_host_rule() {
+        assert_eq!(block("|ads.example|").block_rules[0].pattern, "ads.example");
+        assert_eq!(block("ads.example|").block_rules[0].pattern, "ads.example");
+        assert_eq!(block("|ads.example").block_rules[0].pattern, "ads.example");
+    }
+
+    #[test]
+    fn single_pipe_url_anchor_stays_unsupported() {
+        assert!(block("|ads.example/path").block_rules.is_empty());
     }
 }
