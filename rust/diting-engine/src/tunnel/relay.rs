@@ -121,7 +121,7 @@ pub async fn relay_tcp(
     // the ad host. Sniff :80/:443 only, only while a rule snapshot is published, and never decrypt —
     // this is a plain pass/fail gate ahead of the opaque relay. Fail-open: no host, no snapshot or a
     // slow first byte all relay exactly as before.
-    let (peeked, saw_eof) = if is_sniffable_port(key.local.port) && engine.policy().has_rules() {
+    let (peeked, saw_eof) = if is_sniffable_port(key.local.port) && engine.policy().filtering_active() {
         let (bytes, eof) = peek_client(&mut inbound, HOST_PEEK_TIMEOUT).await;
         if let Some(host) = sniff_host(&bytes) {
             let app = engine.app_name(uid);

@@ -55,6 +55,15 @@ impl Policy {
         self.read().is_some()
     }
 
+    /// True when a snapshot is published, the user enabled filtering, and it carries rules. Used to
+    /// skip optional work (the connection-layer host filter) when filtering is off or empty.
+    pub fn filtering_active(&self) -> bool {
+        match self.read().as_ref() {
+            Some(snapshot) => snapshot.filtering_active(),
+            None => false,
+        }
+    }
+
     /// `policyEngine.evaluate`: the seven-level walk. `None` when no snapshot is published, so the
     /// caller can tell "no rules" from "not blocked".
     pub fn evaluate(&self, domain: &str, app_name: &str, qtype: u16) -> Option<Verdict> {

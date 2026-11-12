@@ -336,6 +336,13 @@ impl Snapshot {
         }
     }
 
+    /// True when the walk would actually run: filtering is enabled by the user *and* rules exist.
+    /// `flags()` bit0 is only "rules present", so this is the right gate for optional callers (the
+    /// connection-layer host filter) that should not pay their cost when filtering is switched off.
+    pub fn filtering_active(&self) -> bool {
+        self.filter_enabled && self.has_rules
+    }
+
     /// Flags used by the Go caller: bit0 `hasRules`, bit1 `appSensitive`, bit2 `qtypeSensitive`.
     pub fn flags(&self) -> u32 {
         let mut flags = 0;
