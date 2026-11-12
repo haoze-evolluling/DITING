@@ -1,4 +1,4 @@
-import 'package:diting_shared/ui/page_routes.dart';
+import 'package:diting_shared/ui/navigator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -11,8 +11,8 @@ void main() {
         home: Builder(
           builder: (context) => Scaffold(
             body: Center(
-              child: TextButton(
-                onPressed: () => Navigator.of(context).push(
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).push(
                   CardPageRoute<void>(
                     builder: (_) => const Scaffold(body: Text('detail')),
                   ),

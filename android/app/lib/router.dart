@@ -55,8 +55,11 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
     redirect: startupOnboardingRedirect,
     routes: [
       StatefulShellRoute(
-        builder: (context, state, navigationShell) =>
-            AppShell(navigationShell: navigationShell),
+        pageBuilder: (context, state, navigationShell) => RootShellPage<void>(
+          key: state.pageKey,
+          name: state.name,
+          child: AppShell(navigationShell: navigationShell),
+        ),
         navigatorContainerBuilder: (context, navigationShell, children) =>
             BranchTransitionShell(
               navigationShell: navigationShell,

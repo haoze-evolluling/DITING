@@ -6,6 +6,7 @@ library;
 import 'dart:io';
 
 import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_shared/ui/page_background.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -41,29 +42,34 @@ class _AppBackgroundLayerState extends ConsumerState<AppBackgroundLayer> {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        FutureBuilder<String?>(
-          future: _path,
-          builder: (context, snapshot) {
-            final path = snapshot.data;
-            if (path == null) return const SizedBox.shrink();
-            // A full-screen wallpaper must not be re-rastered whenever the transparent page above
-            // it repaints; keep it on its own cached layer.
-            return RepaintBoundary(
-              child: Image.file(
-                File(path),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+    return FutureBuilder<String?>(
+      future: _path,
+      builder: (context, snapshot) {
+        final path = snapshot.data;
+        return PageBackgroundScope(
+          path: path,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (path != null)
+                // A full-screen wallpaper must not be re-rastered whenever the transparent page
+                // above it repaints; keep it on its own cached layer.
+                RepaintBoundary(
+                  child: Image.file(
+                    File(path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                  ),
+                ),
+              // Scrim keeps text legible on bright wallpapers.
+              ColoredBox(
+                color: Colors.black.withValues(alpha: dark ? 0.34 : 0.16),
               ),
-            );
-          },
-        ),
-        // Scrim keeps text legible on bright wallpapers.
-        ColoredBox(color: Colors.black.withValues(alpha: dark ? 0.34 : 0.16)),
-        widget.child,
-      ],
+              widget.child,
+            ],
+          ),
+        );
+      },
     );
   }
 }

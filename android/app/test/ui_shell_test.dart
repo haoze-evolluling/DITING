@@ -3,7 +3,6 @@
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/app/app.dart';
-import 'package:diting_shared/app/theme/manager.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_android/pages/about/about_page.dart';
@@ -125,9 +124,9 @@ void _appShell() {
 
     // Regression: the categories were cached in a provider that only watched the work mode and
     // the hidden set, so the hub kept the previous language until the app restarted.
-    ProviderScope.containerOf(
-      tester.element(find.byType(FeatureHubPage)),
-    ).read(languageModeProvider.notifier).select(AppLanguageMode.english);
+    ProviderScope.containerOf(tester.element(find.byType(FeatureHubPage)))
+        .read(languageModeProvider.notifier)
+        .select(AppLanguageMode.english);
     await tester.pumpAndSettle();
 
     expect(find.text('DNS services'), findsWidgets);
@@ -433,8 +432,7 @@ void _routeCatalog() {
   });
 }
 
-/// Guards second-level pages are full-screen with the Android transition: `builder:`-only routes
-/// get `NoTransitionPage`, and a theme without `TargetPlatform.android` falls back to zoom
+/// Guards second-level pages are full-screen pages that carry FlClash's card transition.
 void _routeTransition() {
   installGlobalTestHooks();
 
@@ -481,23 +479,6 @@ void _routeTransition() {
       reason:
           '路由用了 `builder:` 而不是 `pageBuilder`：go_router 的 '
           '`isMaterialApp` 认不出 material_ui 的 MaterialApp，会退化成无转场页',
-    );
-  });
-
-  test('安卓的转场就是系统默认的那个 builder', () {
-    final theme = buildAppTheme(
-      const AppThemeSpec(
-        seedColor: Color(0xFF007AFF),
-        brightness: Brightness.light,
-      ),
-    );
-    final builder = theme.pageTransitionsTheme.builders[TargetPlatform.android];
-    expect(
-      builder,
-      isA<FadeForwardsPageTransitionsBuilder>(),
-      reason:
-          '安卓统一用系统默认的 Activity 转场且不带预测性返回；缺省会兜底到 '
-          'ZoomPageTransitionsBuilder，那是 Android 10 的动画',
     );
   });
 }

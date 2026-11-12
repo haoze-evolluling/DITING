@@ -44,6 +44,8 @@ export 'navigation_dock.dart';
 export 'sidebar.dart';
 export 'navigator.dart';
 export 'null_status.dart';
+export 'page_background.dart';
+export 'page_transition.dart';
 export 'page_visibility.dart';
 export 'pop_scope.dart';
 export 'popup.dart';

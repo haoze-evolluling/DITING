@@ -1,10 +1,12 @@
-// Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
+// Portions derived from FlClash (https://github.com/chen08209/FlClash), Copyright (c) the FlClash authors, GPL-3.0-or-later.
 import 'dart:async';
 
-import 'package:animations/animations.dart';
 import 'package:diting_shared/ui/context.dart';
+import 'package:diting_shared/ui/deferred_push.dart';
+import 'package:diting_shared/ui/drag_back.dart';
 import 'package:diting_shared/ui/keyboard_inset_hold.dart';
-import 'package:diting_shared/ui/page_routes.dart';
+import 'package:diting_shared/ui/page_background.dart';
+import 'package:diting_shared/ui/page_transition.dart';
 import 'package:diting_shared/ui/sheet_navigator.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
@@ -141,13 +143,160 @@ Future<void> _whenStill(Animation<double> animation) {
   return completer.future;
 }
 
-const commonSharedXPageTransitions = SharedAxisPageTransitionsBuilder(
-  transitionType: SharedAxisTransitionType.horizontal,
-  fillColor: Colors.transparent,
-);
+/// A navigator's first page: it never animates itself, and a card route pushed
+/// over it drives how it recedes through its delegated transition.
+class RootPage<T> extends Page<T> {
+  const RootPage({required this.child, super.key, super.name});
 
-/// A pushed page; the theme's [PageTransitionsTheme] supplies the transition.
-class CommonRoute<T> extends MaterialPageRoute<T> {
-  CommonRoute({required Widget Function(BuildContext context) builder})
-    : super(builder: (context) => KeyboardInsetHold(child: builder(context)));
+  final Widget child;
+
+  @override
+  Route<T> createRoute(BuildContext context) => _RootPageRoute<T>(page: this);
+}
+
+class _RootPageRoute<T> extends PageRoute<T> {
+  _RootPageRoute({required RootPage<T> page}) : super(settings: page);
+
+  @override
+  Color? get barrierColor => null;
+
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  bool get maintainState => true;
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  bool canTransitionTo(TransitionRoute<dynamic> nextRoute) =>
+      nextRoute is CardRouteMixin &&
+      (nextRoute is! PageRoute<dynamic> || !nextRoute.fullscreenDialog);
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return AnimatedBuilder(
+      animation: secondaryAnimation,
+      child: child,
+      builder: (context, child) {
+        final covered = secondaryAnimation.value;
+        if (covered == 0) {
+          return child!;
+        }
+        final path = PageBackgroundScope.pathOf(context);
+        final content = path == null
+            ? child!
+            : PageCardSurface(path: path, child: child!);
+        final width = MediaQuery.sizeOf(context).width;
+        return Transform.translate(
+          offset: Offset(-cardCoveredSlide * width * covered, 0),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              content,
+              ColoredBox(
+                color: cardCoveredDim.withValues(
+                  alpha: cardCoveredDim.a * covered,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
+    return Semantics(
+      scopesRoute: true,
+      explicitChildNodes: true,
+      child: (settings as RootPage<T>).child,
+    );
+  }
+}
+
+class FadePageRoute<T> extends PageRoute<T>
+    with DragBackRouteMixin<T>, DeferredPushRouteMixin<T> {
+  FadePageRoute({required this.builder, super.settings});
+
+  final Widget Function(BuildContext context) builder;
+
+  @override
+  Color? get barrierColor => null;
+
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
+    return Semantics(
+      scopesRoute: true,
+      explicitChildNodes: true,
+      child: KeyboardInsetHold(child: builder(context)),
+    );
+  }
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return dragBackDetector(
+      isDragBackActive
+          ? dragBackSlide(context, animation, child)
+          : FadeTransition(opacity: animation, child: child),
+    );
+  }
+
+  @override
+  bool get maintainState => true;
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 200);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 200);
+}
+
+class CardPageRoute<T> extends PageRoute<T>
+    with DragBackRouteMixin<T>, DeferredPushRouteMixin<T>, CardRouteMixin<T> {
+  CardPageRoute({required this.builder, super.settings});
+
+  final Widget Function(BuildContext context) builder;
+
+  // HeroController would hold the first frame offstage. Painted at rest off
+  // screen instead, the page takes its costly first paint and snapshots there
+  // rather than in the first frames it moves in.
+  @override
+  set offstage(bool value) {}
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
+    return Semantics(
+      scopesRoute: true,
+      explicitChildNodes: true,
+      child: KeyboardInsetHold(child: builder(context)),
+    );
+  }
 }
