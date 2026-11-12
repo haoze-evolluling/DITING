@@ -42,13 +42,9 @@ object RuleSnapshotStore {
             )
         }
 
-        val indexDirectory = if (dataset == RuleDataset.DNS_MODE) {
-            // Legacy DNS server mode never used index files: it keeps every rule inline and is
-            // applied in-process, which is safe because nothing crosses Binder here either.
-            null
-        } else {
-            RuleIndexLayout.rootDirectory(context.filesDir, dataset)
-        }
+        // Every dataset now keeps DTRI artifacts under its own root, so the server mode builds and
+        // mmaps the same way the two tunnel modes do.
+        val indexDirectory: File? = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
 
         return try {
             val triesFresh = indexDirectory?.let { isStampCurrent(it, dao) } ?: false
@@ -117,7 +113,6 @@ object RuleSnapshotStore {
      * still matches. Called after rule writes so the next service start mmaps instead of compiling.
      */
     fun refreshIndexes(context: Context, dataset: RuleDataset) {
-        if (dataset == RuleDataset.DNS_MODE) return
         val indexDirectory = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
         val dao = RuleSnapshotDao.open(context, dataset.databaseName()) ?: return
         try {

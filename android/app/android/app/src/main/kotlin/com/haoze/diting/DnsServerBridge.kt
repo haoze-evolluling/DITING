@@ -27,6 +27,11 @@ class DnsServerBridge(
                 result.success(true)
             }
             "status" -> result.success(DitingDnsServerService.status(context))
+            // Re-applies the rule snapshot to a running server; no-op when stopped.
+            "reloadRules" -> {
+                DitingDnsServerService.requestReload(context)
+                result.success(true)
+            }
             "clearCache" -> result.success(clearCache())
             else -> result.notImplemented()
         }

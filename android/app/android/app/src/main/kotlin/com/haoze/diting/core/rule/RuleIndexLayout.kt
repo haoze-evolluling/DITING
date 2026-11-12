@@ -12,6 +12,7 @@ import java.io.File
  *   domain/allow.trie                  # whitelist, non-important
  *   domain/allow.important.trie
  * filesDir/rule-index/express/         # EXPRESS dataset, same structure
+ * filesDir/rule-index/dns/             # DNS_MODE dataset, same structure
  * ```
  *
  * Every artifact here is pure derived data (rebuildable from the database at any time). The names
@@ -22,10 +23,13 @@ import java.io.File
 internal object RuleIndexLayout {
     /// The dataset-independent tails, taken once (only `root` varies per dataset).
     private val normalPaths: RuleIndexPaths by lazy { RuleIndexNative.paths(RuleDataset.NORMAL) }
+    private val expressPaths: RuleIndexPaths by lazy { RuleIndexNative.paths(RuleDataset.EXPRESS) }
+    private val dnsPaths: RuleIndexPaths by lazy { RuleIndexNative.paths(RuleDataset.DNS_MODE) }
 
     private fun paths(dataset: RuleDataset): RuleIndexPaths = when (dataset) {
-        RuleDataset.NORMAL, RuleDataset.DNS_MODE -> normalPaths
-        RuleDataset.EXPRESS -> RuleIndexNative.paths(RuleDataset.EXPRESS)
+        RuleDataset.NORMAL -> normalPaths
+        RuleDataset.EXPRESS -> expressPaths
+        RuleDataset.DNS_MODE -> dnsPaths
     }
 
     /** Files root holding rule index artifacts. */

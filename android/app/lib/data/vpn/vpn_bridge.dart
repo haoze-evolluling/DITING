@@ -6,12 +6,18 @@ import 'package:flutter/services.dart';
 
 const vpnChannelName = 'com.haoze.diting/vpn';
 const expressVpnChannelName = 'com.haoze.diting/express_vpn';
+const dnsServerChannelName = 'com.haoze.diting/dns_server';
 
-/// Best-effort in-place rule reload for whichever tunnel is running, after a subscription or rule
-/// change. The non-running mode's channel simply no-ops; a missing platform (desktop/tests) throws
-/// `MissingPluginException` and is swallowed — reloading rules must never fail a rule edit.
+/// Best-effort in-place rule reload for whichever data plane is running, after a subscription or
+/// rule change. Covers the normal and express tunnels plus the LAN DNS server; the non-running
+/// mode's channel simply no-ops. A missing platform (desktop/tests) throws `MissingPluginException`
+/// and is swallowed — reloading rules must never fail a rule edit.
 Future<void> requestVpnRuleReload() async {
-  for (final name in const [vpnChannelName, expressVpnChannelName]) {
+  for (final name in const [
+    vpnChannelName,
+    expressVpnChannelName,
+    dnsServerChannelName,
+  ]) {
     try {
       await MethodChannel(name).invokeMethod<bool>('reloadRules');
     } catch (_) {

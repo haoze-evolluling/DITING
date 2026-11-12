@@ -6,7 +6,7 @@
 /// The artifact names of one dataset, relative to `filesDir` (the root) or to the root itself.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Layout {
-    /// `rule-index` for the normal and DNS-mode datasets, `rule-index/express` for express.
+    /// `rule-index` for normal, `rule-index/express` for express, `rule-index/dns` for DNS mode.
     pub root: &'static str,
     /// `domain`, the folder holding the four tries.
     pub domain: &'static str,
@@ -29,8 +29,9 @@ const ALLOW_IMPORTANT: &str = "allow.important.trie";
 /// `RuleDataset` tags: NORMAL (0), EXPRESS (1), DNS_MODE (2).
 pub fn layout(dataset: u8) -> Option<Layout> {
     let root = match dataset {
-        0 | 2 => "rule-index",
+        0 => "rule-index",
         1 => "rule-index/express",
+        2 => "rule-index/dns",
         _ => return None,
     };
     Some(Layout {
@@ -49,12 +50,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_normal_and_dns_mode_datasets_share_a_root() {
-        let normal = layout(0).unwrap();
-        assert_eq!(normal.root, "rule-index");
-        // DNS_MODE never writes artifacts, but the legacy root was the same folder.
-        assert_eq!(layout(2).unwrap().root, normal.root);
+    fn each_dataset_gets_its_own_root() {
+        // Every dataset writes its own artifacts under filesDir; sharing a root would make the
+        // three rule databases overwrite each other's tries.
+        assert_eq!(layout(0).unwrap().root, "rule-index");
         assert_eq!(layout(1).unwrap().root, "rule-index/express");
+        assert_eq!(layout(2).unwrap().root, "rule-index/dns");
     }
 
     #[test]

@@ -8,7 +8,7 @@
 /// How one index file ended up, in `IndexOutcome`'s tag order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Outcome {
-    /// No index file for this dataset (DNS mode, or no directory).
+    /// No index directory was configured for this build.
     NotIndexed,
     /// An existing file passed validation and was mmap'd.
     Loaded,
@@ -226,7 +226,7 @@ mod tests {
         assert!(Half::new(Outcome::Compiled, Outcome::Loaded).special_rows_only());
         assert!(!Half::new(Outcome::Compiled, Outcome::NotIndexed).special_rows_only());
         assert!(!Half::new(Outcome::Failed, Outcome::Loaded).special_rows_only());
-        // DNS mode: no files at all, so every row stays inline.
+        // No index directory: no files at all, so every row stays inline.
         assert!(!Half::new(Outcome::NotIndexed, Outcome::NotIndexed).special_rows_only());
     }
 

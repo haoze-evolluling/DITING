@@ -1,9 +1,8 @@
 library;
 
-import 'package:diting_android/data/vpn/vpn_bridge.dart' show epochMillis;
+import 'package:diting_android/data/vpn/vpn_bridge.dart'
+    show dnsServerChannelName, epochMillis;
 import 'package:flutter/services.dart';
-
-const dnsServerChannelName = 'com.haoze.diting/dns_server';
 
 class DnsServerStartRequest {
   const DnsServerStartRequest({

@@ -17,8 +17,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.haoze.diting.MainActivity
 import com.haoze.diting.R
+import com.haoze.diting.core.rule.EngineRuleLoader
 import com.haoze.diting.core.rule.RuleDataset
-import com.haoze.diting.core.rule.RuleSnapshotStore
 import com.haoze.diting.log.BootstrapLogWriter
 import com.haoze.diting.log.DnsCacheMirror
 import com.haoze.diting.log.DnsLogWriter
@@ -69,6 +69,10 @@ class DitingDnsServerService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         promoteToForeground(intent?.getIntExtra(EXTRA_PORT, DEFAULT_PORT) ?: DEFAULT_PORT)
+        if (intent?.action == ACTION_RELOAD_RULES) {
+            reloadRules()
+            return START_NOT_STICKY
+        }
         if (intent?.action == ACTION_STOP) {
             stopEngine()
             return START_NOT_STICKY
@@ -110,18 +114,11 @@ class DitingDnsServerService : Service() {
             try {
                 val created = Engine()
                 created.applyDNSConfig(dnsConfig)
-                // DNS_MODE keeps every rule inline (no trie files, like the legacy server mode);
-                // built here in-process, so the rule set size never crosses the Binder limit.
-                val error = created.applyRuleSnapshot(
-                    RuleSnapshotStore.buildSnapshotJson(this, RuleDataset.DNS_MODE)
-                )
-                // The policy kernel is the only rule walk: a rejected snapshot must stop the
-                // service instead of serving DNS with filtering silently off.
-                check(error.isBlank()) { "applyRuleSnapshot: $error" }
-                val rewriteRules = RuleSnapshotStore.buildRewriteRulesJson(this, RuleDataset.DNS_MODE)
-                if (rewriteRules.isNotBlank()) {
-                    created.setRewriteRules(rewriteRules)
-                }
+                // Same builder as the tunnel modes: the snapshot is built in this process (never
+                // through the Binder) and now also mmaps the DTRI index files of `rule-index/dns`.
+                // A rejected snapshot throws and stops the service instead of serving DNS with
+                // filtering silently off.
+                EngineRuleLoader.apply(this, created, RuleDataset.DNS_MODE, TAG)
                 created.setFilterDNS(adBlockEnabled)
                 val logMode = if (
                     getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getBoolean(KEY_LOG_QUERIES, true)
@@ -235,6 +232,25 @@ class DitingDnsServerService : Service() {
                 }
             }
         }, "diting-dns-server").start()
+    }
+
+    /// Rebuilds the rule snapshot and re-applies it to the running engine so a newly imported or
+    /// updated subscription takes effect without dropping the DNS server. A failure keeps the
+    /// previous rules instead of killing the service.
+    private fun reloadRules() {
+        val current = engine
+        if (current == null || !isRunning) {
+            Log.i(TAG, "rule reload requested but the server is not running")
+            return
+        }
+        Thread({
+            try {
+                EngineRuleLoader.apply(this, current, RuleDataset.DNS_MODE, TAG)
+                Log.i(TAG, "rule snapshot hot-reloaded")
+            } catch (t: Throwable) {
+                Log.e(TAG, "rule hot-reload failed; keeping previous rules", t)
+            }
+        }, "diting-dns-rule-reload").start()
     }
 
     /// Stops the server without blocking the caller's thread for the shutdown.
@@ -418,6 +434,9 @@ class DitingDnsServerService : Service() {
         const val ACTION_START = "com.haoze.diting.server.START"
         const val ACTION_STOP = "com.haoze.diting.server.STOP"
 
+        /// Re-applies the rule snapshot to the already-running server (no stop/rebind).
+        const val ACTION_RELOAD_RULES = "com.haoze.diting.server.RELOAD_RULES"
+
         const val EXTRA_PORT = "port"
         const val EXTRA_DNS_CONFIG = "dns_config"
         const val EXTRA_AD_BLOCK_ENABLED = "ad_block_enabled"
@@ -527,6 +546,16 @@ class DitingDnsServerService : Service() {
 
         fun stopIntent(context: Context): Intent =
             Intent(context, DitingDnsServerService::class.java).setAction(ACTION_STOP)
+
+        /// Asks a running server to rebuild its rules in place. A no-op when it is not running:
+        /// starting the service just to reload would post a foreground notification with no server.
+        fun requestReload(context: Context) {
+            if (!isRunning) return
+            runCatching { context.startService(reloadIntent(context)) }
+        }
+
+        fun reloadIntent(context: Context): Intent =
+            Intent(context, DitingDnsServerService::class.java).setAction(ACTION_RELOAD_RULES)
 
         /// Rebuilds the last start intent from preferences; null when none was ever stored,
         /// which means the service ran in a build without config persistence.
