@@ -8,13 +8,17 @@ import 'package:diting_shared/data/db/rule_index_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../vpn/vpn_bridge.dart';
+
 /// Legacy SQLite file of the active data set.
 final activeRuleDatabaseProvider = Provider<String>(
   (ref) => ref.watch(activeDataSetProvider).ruleDatabase,
 );
 
-/// Recompiles the native rule tries of the active data set. Fire-and-forget like every other
-/// refresh: a missed call only costs one compile at the next service start.
+/// Recompiles the native rule tries of the active data set, then asks a running tunnel to re-apply
+/// its rule snapshot so the new rules take effect without a reconnect. Fire-and-forget like every
+/// other refresh: a missed call only costs one compile at the next service start.
 void refreshRuleIndexesForCurrentMode(Ref ref) {
   unawaited(refreshRuleIndexes(ref.read(activeDataSetProvider).ruleIndex));
+  unawaited(requestVpnRuleReload());
 }

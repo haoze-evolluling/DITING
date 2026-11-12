@@ -46,6 +46,11 @@ class ExpressVpnBridge(
                     call.argument<String>("dnsConfig").orEmpty(),
                 )
             )
+            // Re-applies the rule snapshot to a running tunnel; no-op when stopped.
+            "reloadRules" -> {
+                ExpressVpnService.requestReload(activity)
+                result.success(true)
+            }
             else -> result.notImplemented()
         }
     }

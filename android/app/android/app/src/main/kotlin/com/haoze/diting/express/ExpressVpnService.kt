@@ -86,6 +86,10 @@ class ExpressVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         promoteToForeground()
+        if (intent?.action == ACTION_RELOAD_RULES) {
+            reloadRules()
+            return START_NOT_STICKY
+        }
         if (intent?.action == ACTION_STOP) {
             stopTunnel()
             return START_NOT_STICKY
@@ -261,6 +265,25 @@ class ExpressVpnService : VpnService() {
         }, "diting-express-tunnel").also { it.start() }
     }
 
+    /// Rebuilds the rule snapshot and re-applies it to the running engine so a newly imported or
+    /// updated subscription takes effect without dropping the tunnel. A failure keeps the previous
+    /// rules instead of killing the VPN.
+    private fun reloadRules() {
+        val current = engine
+        if (current == null || !isRunning) {
+            Log.i(TAG, "rule reload requested but the tunnel is not running")
+            return
+        }
+        Thread({
+            try {
+                EngineRuleLoader.apply(this, current, RuleDataset.EXPRESS, TAG)
+                Log.i(TAG, "rule snapshot hot-reloaded")
+            } catch (t: Throwable) {
+                Log.e(TAG, "rule hot-reload failed; keeping previous rules", t)
+            }
+        }, "diting-rule-reload").start()
+    }
+
     /// Stops the tunnel without blocking the caller's thread for the shutdown.
     ///
     /// `engine.stop()` takes hundreds of ms and a service runs on the app's main thread - which is
@@ -429,6 +452,9 @@ class ExpressVpnService : VpnService() {
         const val ACTION_START = "com.haoze.diting.express.START_VPN"
         const val ACTION_STOP = "com.haoze.diting.express.STOP_VPN"
 
+        /// Re-applies the rule snapshot to the already-running tunnel (no drop/reconnect).
+        const val ACTION_RELOAD_RULES = "com.haoze.diting.express.RELOAD_RULES"
+
         const val EXTRA_DNS_CONFIG = "dns_config"
         const val EXTRA_OUTBOUND_PROXY = "outbound_proxy"
 
@@ -564,6 +590,15 @@ class ExpressVpnService : VpnService() {
 
         fun stopIntent(context: Context): Intent =
             Intent(context, ExpressVpnService::class.java).setAction(ACTION_STOP)
+
+        /// Asks a running tunnel to rebuild its rules in place. A no-op when it is not running.
+        fun requestReload(context: Context) {
+            if (!isRunning) return
+            runCatching { context.startService(reloadIntent(context)) }
+        }
+
+        fun reloadIntent(context: Context): Intent =
+            Intent(context, ExpressVpnService::class.java).setAction(ACTION_RELOAD_RULES)
 
         /// Rebuilds the last start intent so the tile can restart the tunnel without Dart, which
         /// is where the DNS config is computed. Null until the service was started at least once.

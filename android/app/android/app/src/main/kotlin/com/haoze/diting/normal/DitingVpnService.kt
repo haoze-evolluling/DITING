@@ -80,6 +80,10 @@ class DitingVpnService : VpnService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         promoteToForeground()
+        if (intent?.action == ACTION_RELOAD_RULES) {
+            reloadRules()
+            return START_NOT_STICKY
+        }
         if (intent?.action == ACTION_STOP) {
             stopTunnel()
             return START_NOT_STICKY
@@ -290,6 +294,25 @@ class DitingVpnService : VpnService() {
         }, "diting-tunnel").also { it.start() }
     }
 
+    /// Rebuilds the rule snapshot and re-applies it to the running engine so a newly imported or
+    /// updated subscription takes effect without dropping the tunnel. A failure keeps the previous
+    /// rules (the policy swap only happens once the new snapshot builds) instead of killing the VPN.
+    private fun reloadRules() {
+        val current = engine
+        if (current == null || !isRunning) {
+            Log.i(TAG, "rule reload requested but the tunnel is not running")
+            return
+        }
+        Thread({
+            try {
+                EngineRuleLoader.apply(this, current, RuleDataset.NORMAL, TAG)
+                Log.i(TAG, "rule snapshot hot-reloaded")
+            } catch (t: Throwable) {
+                Log.e(TAG, "rule hot-reload failed; keeping previous rules", t)
+            }
+        }, "diting-rule-reload").start()
+    }
+
     /// Stops the tunnel without blocking the caller's thread for the shutdown.
     ///
     /// `engine.stop()` alone takes 200 ms and more (plus the queued-row flush), and a service
@@ -474,6 +497,9 @@ class DitingVpnService : VpnService() {
         const val ACTION_START = "com.haoze.diting.START_VPN"
         const val ACTION_STOP = "com.haoze.diting.STOP_VPN"
 
+        /// Re-applies the rule snapshot to the already-running tunnel (no drop/reconnect).
+        const val ACTION_RELOAD_RULES = "com.haoze.diting.RELOAD_RULES"
+
         const val EXTRA_DNS_CONFIG = "dns_config"
         const val EXTRA_OUTBOUND_PROXY = "outbound_proxy"
 
@@ -598,6 +624,16 @@ class DitingVpnService : VpnService() {
 
         fun stopIntent(context: Context): Intent =
             Intent(context, DitingVpnService::class.java).setAction(ACTION_STOP)
+
+        /// Asks a running tunnel to rebuild its rules in place. A no-op when it is not running:
+        /// starting the service just to reload would post a foreground notification with no tunnel.
+        fun requestReload(context: Context) {
+            if (!isRunning) return
+            runCatching { context.startService(reloadIntent(context)) }
+        }
+
+        fun reloadIntent(context: Context): Intent =
+            Intent(context, DitingVpnService::class.java).setAction(ACTION_RELOAD_RULES)
 
         /// Rebuilds the last start intent so the tile can restart the tunnel without Dart, which
         /// is where the DNS config is computed. Null until the service was started at least once.
