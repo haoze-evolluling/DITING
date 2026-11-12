@@ -65,12 +65,11 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 
 ## 应用侧依赖
 
-- `material_ui 1.9.0`、`qr 4.0.1`。
+- `material_ui ^1.11.0`、`qr ^4.0.1`（其余依赖均使用 caret 范围，见各包 `pubspec.yaml`）。
 - Flutter SDK 把 `material_color_utilities`（`0.13.0`，上游 flutter/flutter#185017）与 `test_api`
-  （`0.7.14`）钉在旧版，工作区根 `pubspec.yaml` 用 `dependency_overrides` 提到 `0.13.1` / `0.7.15`。
-  `flutter pub get` 以 `!` 标记这两个版本属正常输出。
-- `test_api` 是 `flutter_test` 的紧邻内部依赖：升级 Flutter 后先用 `flutter test` 复验，再调整或
-  删除 override；Flutter 放宽约束后可同时删掉 `shared/pubspec.yaml` 中的版本号。
+  （`0.7.14`）钉在旧版；本工作区不再用 `dependency_overrides` 强行提升，直接跟随 SDK 的锁定版本。
+- `test_api` 是 `flutter_test` 的紧邻内部依赖：升级 Flutter 后先用 `flutter test` 复验；一旦 SDK
+  放宽了对这两个包的约束，再按需提升 `shared/pubspec.yaml` 中的 `material_color_utilities` 约束。
 
 ## 跑测试（native assets 与资源包）
 

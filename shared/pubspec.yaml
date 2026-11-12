@@ -14,7 +14,7 @@ dependencies:
 
   # Design system dependencies.
   material_ui: ^1.11.0                   # Material3 widgets (superellipse, Easing)
-  material_color_utilities: ^0.13.1      # HCT / DynamicColor (Flutter SDK pins 0.13.0)
+  material_color_utilities: ^0.13.0      # HCT / DynamicColor (Flutter SDK pins 0.13.0)
   material_new_shapes: ^1.0.0            # Morph / toPath (material_ui 1.8 does not export them)
   animations: ^3.0.0                     # FadeThrough / OpenContainer
   path_parsing: ^1.1.0                   # Parses Glyph SVG paths

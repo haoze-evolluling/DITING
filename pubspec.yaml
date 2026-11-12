@@ -34,11 +34,3 @@ hooks:
     sqlite3:
       url_pattern: "https://gh-proxy.com/https://github.com/simolus3/sqlite3.dart/releases/download/$RELEASE_TAG/$FILENAME"
 
-# Flutter pins two packages exactly and both are older than the latest on pub.dev:
-#   flutter       -> material_color_utilities 0.13.0  (flutter/flutter#185017)
-#   flutter_test  -> test_api 0.7.14
-# Overrides are the only way to move them without patching the SDK checkout. Drop the
-# corresponding entry once Flutter's own constraint allows the newer version.
-dependency_overrides:
-  material_color_utilities: 0.13.1
-  test_api: 0.7.15

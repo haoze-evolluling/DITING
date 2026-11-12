@@ -278,13 +278,13 @@ packages:
     source: hosted
     version: "0.12.20"
   material_color_utilities:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: material_color_utilities
-      sha256: cda64b65529b9737e5c9bf7ef386c907f2a58707039a3033788030da927133d0
+      sha256: "9c337007e82b1889149c82ed242ed1cb24a66044e30979c44912381e9be4c48b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.13.1"
+    version: "0.13.0"
   material_new_shapes:
     dependency: transitive
     description:
@@ -611,13 +611,13 @@ packages:
     source: hosted
     version: "1.2.2"
   test_api:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: test_api
-      sha256: "47481c58bb92d0b1d218f0510ff5647e768f8e1256d07077a151fb520923b51d"
+      sha256: "0a10344e901e5b2e63819567951cb6a06673ed6b84f40462188ff5a0c41f371f"
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.15"
+    version: "0.7.14"
   typed_data:
     dependency: transitive
     description:
