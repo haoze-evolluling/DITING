@@ -11,6 +11,7 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:diting_android/widgets/app_list_error_state.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
+import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -129,14 +130,17 @@ class _OutboundProxyTargetsPageState
             ),
           ),
           if (!snapshot.isLoading && snapshot.value?.error == null)
-            ...appListSlivers(
+            ...lazySectionOrEmpty(
               title: context.l10n.appSelectionCount('${current.length}'),
               itemCount: visible.length,
-              footer: visible.isEmpty
-                  ? (apps.isEmpty
-                        ? context.l10n.appSelectionNoAppsAvailable
-                        : context.l10n.appSelectionNoMatch)
-                  : null,
+              empty: AppListEmptyState(
+                label: apps.isEmpty
+                    ? context.l10n.appSelectionNoAppsAvailable
+                    : context.l10n.appSelectionNoMatch,
+                illustration: apps.isEmpty
+                    ? NullStatusIllustration.apps
+                    : NullStatusIllustration.search,
+              ),
               itemBuilder: (context, index) {
                 final app = visible[index];
                 void toggle() => update(

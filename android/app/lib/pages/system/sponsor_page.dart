@@ -116,7 +116,7 @@ class _SponsorHero extends StatelessWidget {
                     spacing: 2,
                     children: [
                       Text(
-                        '// SUPPORT THE PROJECT',
+                        context.l10n.sponsorSupportKicker,
                         style: AppTextStyle.caption2
                             .of(context)
                             .copyWith(

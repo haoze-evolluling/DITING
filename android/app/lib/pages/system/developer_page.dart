@@ -443,17 +443,14 @@ class _ActionRow extends StatelessWidget {
       title: Text(
         action.title(context.l10n),
         style: action.destructive && enabled
-            ? TextStyle(color: colorScheme.error)
+            ? context.listTitleStyle.copyWith(color: colorScheme.error)
             : null,
       ),
       subtitle: Text(
         running ? context.l10n.devRunning : action.subtitle(context.l10n),
       ),
       leading: running
-          ? const SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+          ? const CommonCircleLoading(size: 20)
           : GlyphIcon(glyphByName(action.glyphName), color: glyphColor),
       trailing: running
           ? null

@@ -150,7 +150,7 @@ class _ProviderVisibilityPageState
             : context.l10n.providerVisibilityCount('$selectedCount'),
       ),
       trailing: CommonCheckBox(
-        value: protocolVisible && selectedCount > 0,
+        value: protocolVisible,
         onChanged: (_) => _setProtocol(protocol, !protocolVisible),
       ),
       onTap: () => _setProtocol(protocol, !protocolVisible),

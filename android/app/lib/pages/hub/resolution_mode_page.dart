@@ -335,6 +335,11 @@ class _ResolutionModeConfigPageState
               ResolutionMode.primaryBackup => context.l10n.resolutionSectionBackup,
             },
             items: [
+              if (providers.isEmpty)
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.info),
+                  title: Text(context.l10n.resolutionNoProviders),
+                ),
               for (final provider in [...ordered, ...rest])
                 ListItem(
                   leading: GlyphIcon(
@@ -360,7 +365,6 @@ class _ResolutionModeConfigPageState
                   onTap: () => _select(provider),
                 ),
             ],
-            footer: providers.isEmpty ? context.l10n.resolutionNoProviders : null,
           ),
           const SizedBox(height: 24),
         ],

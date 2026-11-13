@@ -98,3 +98,33 @@ class _AppListErrorStateState extends ConsumerState<AppListErrorState>
     );
   }
 }
+
+/// The "nothing to pick" state every app picker shares: an empty inventory, or a
+/// search/filter that matched no app. Kept beside [AppListErrorState] so the two states
+/// stay in one place and every picker renders them identically.
+class AppListEmptyState extends StatelessWidget {
+  const AppListEmptyState({
+    super.key,
+    required this.label,
+    this.description,
+    this.illustration = NullStatusIllustration.apps,
+    this.minHeight = 240,
+  });
+
+  final String label;
+  final String? description;
+  final NullStatusIllustration illustration;
+  final double minHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return EmptyStateBox(
+      minHeight: minHeight,
+      child: NullStatus(
+        label: label,
+        description: description,
+        illustration: illustration,
+      ),
+    );
+  }
+}

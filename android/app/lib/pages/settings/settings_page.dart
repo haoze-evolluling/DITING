@@ -93,7 +93,7 @@ class SettingsPage extends StatelessWidget {
             ],
           ),
           _SettingsGroup(
-            title: context.l10n.hubOtherSettings,
+            title: context.l10n.settingsGuideSection,
             items: [
               NavEntryRow(
                 glyph: AppGlyphs.puzzle,

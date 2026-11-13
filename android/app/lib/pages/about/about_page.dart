@@ -65,7 +65,7 @@ class AboutPage extends ConsumerWidget {
             items: [
               _LinkRow(
                 glyph: AppGlyphs.palette,
-                title: '       ',
+                title: 'FlClash',
                 label: context.l10n.aboutCreditsUi,
                 url: flClashRepositoryUrl,
               ),
@@ -290,7 +290,7 @@ class _AboutHero extends StatelessWidget {
         text: [
           context.l10n.aboutFoundVersion(latest ?? context.l10n.aboutNew),
           if (current != null) context.l10n.aboutCurrentSuffix(current),
-          if (update.error != null) '，${update.error}',
+          if (update.error != null) ' · ${update.error}',
         ].join(),
         color: update.error == null ? colorScheme.primary : colorScheme.error,
       ),

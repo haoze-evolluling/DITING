@@ -260,12 +260,17 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
             ),
           ),
           if (!snapshot.isLoading && snapshot.value?.error == null)
-            ...appListSlivers(
+            ...lazySectionOrEmpty(
               title: context.l10n.appRulesAppsCount(visible.length),
               itemCount: visible.length,
-              footer: visible.isEmpty
-                  ? (apps.isEmpty ? context.l10n.appRulesNoConfigurableApps : context.l10n.appSelectionNoMatch)
-                  : null,
+              empty: AppListEmptyState(
+                label: apps.isEmpty
+                    ? context.l10n.appRulesNoConfigurableApps
+                    : context.l10n.appSelectionNoMatch,
+                illustration: apps.isEmpty
+                    ? NullStatusIllustration.apps
+                    : NullStatusIllustration.search,
+              ),
               itemBuilder: (context, index) {
                 final item = visible[index];
                 return AppRuleAppRow(

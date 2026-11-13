@@ -8,6 +8,7 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:diting_android/widgets/app_list_error_state.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
+import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_android/widgets/unsaved_changes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -337,12 +338,17 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
               ),
             ),
             if (!snapshot.isLoading && snapshot.value?.error == null)
-              ...appListSlivers(
+              ...lazySectionOrEmpty(
                 title: '${widget.selectionTitle}（${_selected.length}）',
                 itemCount: visible.length,
-                footer: visible.isEmpty
-                    ? (apps.isEmpty ? context.l10n.appSelectionNoAppsAvailable : context.l10n.appSelectionNoMatch)
-                    : null,
+                empty: AppListEmptyState(
+                  label: apps.isEmpty
+                      ? context.l10n.appSelectionNoAppsAvailable
+                      : context.l10n.appSelectionNoMatch,
+                  illustration: apps.isEmpty
+                      ? NullStatusIllustration.apps
+                      : NullStatusIllustration.search,
+                ),
                 itemBuilder: (context, index) {
                   final app = visible[index];
                   return ListItem(

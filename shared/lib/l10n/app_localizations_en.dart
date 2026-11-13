@@ -4620,6 +4620,9 @@ class AppL10nEn extends AppL10n {
   String get sponsorBuyDrink => 'Buy the author a drink 🧋';
 
   @override
+  String get sponsorSupportKicker => '// SUPPORT THE PROJECT';
+
+  @override
   String get sponsorNote =>
       'If this project helps you, you are welcome to buy the author a drink. Please add your nickname in the payment note so you can be added to the sponsor list.';
 
@@ -9124,6 +9127,9 @@ class AppL10nEn extends AppL10n {
   @override
   String get settingsWizardSubtitle =>
       'See how the current work mode works, its permissions and a getting-started guide';
+
+  @override
+  String get settingsGuideSection => 'Getting started';
 
   @override
   String get backupErrEmpty => 'The file is empty';

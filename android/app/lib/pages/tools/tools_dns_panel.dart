@@ -99,7 +99,7 @@ class _DnsLookupPanelState extends ConsumerState<_DnsLookupPanel> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: SegmentedControl<bool>(
-            segments: const [(true, 'IPv4 (A)'), (false, 'IPv6 (AAAA)')],
+            segments: const [(true, 'A (IPv4)'), (false, 'AAAA (IPv6)')],
             value: _ipv4,
             onChanged: (value) {
               if (!_running) {
@@ -169,7 +169,7 @@ class _DnsLookupPanelState extends ConsumerState<_DnsLookupPanel> {
               KeyValueRow(label: context.l10n.toolQueryDomain, value: result.domain, tabular: true),
               KeyValueRow(
                 label: context.l10n.toolRecordType,
-                value: _ipv4 ? 'A（IPv4）' : 'AAAA（IPv6）',
+                value: _ipv4 ? 'A (IPv4)' : 'AAAA (IPv6)',
               ),
               KeyValueRow(
                 label: context.l10n.toolDnsServers,
@@ -210,7 +210,7 @@ class _DnsLookupPanelState extends ConsumerState<_DnsLookupPanel> {
                 ),
               ),
             )
-          else
+          else if (result.error == null)
             _ToolNotice(
               text: context.l10n.toolDnsNoAnswers,
               glyph: AppGlyphs.warning,

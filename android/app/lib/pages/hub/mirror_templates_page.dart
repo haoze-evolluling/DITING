@@ -50,40 +50,46 @@ class MirrorTemplatesPage extends ConsumerWidget {
             generateSection(
               title: context.l10n.mirrorTplSavedCount(rows?.length ?? 0),
               items: [
-                for (final row in rows ?? const <MirrorTemplateRecord>[])
+                if (rows == null)
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.layers, size: 20),
-                    title: Text(row.name),
-                    subtitle: Text(row.template),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: context.l10n.commonEdit,
-                          onPressed: () => _edit(context, ref, row),
-                          icon: const GlyphIcon(AppGlyphs.edit, size: 20),
-                        ),
-                        IconButton(
-                          tooltip: context.l10n.commonDelete,
-                          onPressed: () async {
-                            await ref
-                                .read(mirrorTemplateActionsProvider)
-                                .remove(row.id);
-                            ref
-                                .read(globalMirrorProvider.notifier)
-                                .templateRemoved(row.template);
-                          },
-                          icon: const GlyphIcon(AppGlyphs.delete, size: 20),
-                        ),
-                      ],
+                    leading: const GlyphIcon(AppGlyphs.info),
+                    title: Text(context.l10n.mirrorTplReading),
+                  )
+                else if (rows.isEmpty)
+                  ListItem(
+                    leading: const GlyphIcon(AppGlyphs.info),
+                    title: Text(context.l10n.mirrorTplEmpty),
+                  )
+                else
+                  for (final row in rows)
+                    ListItem(
+                      leading: const GlyphIcon(AppGlyphs.layers, size: 20),
+                      title: Text(row.name),
+                      subtitle: Text(row.template),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: context.l10n.commonEdit,
+                            onPressed: () => _edit(context, ref, row),
+                            icon: const GlyphIcon(AppGlyphs.edit, size: 20),
+                          ),
+                          IconButton(
+                            tooltip: context.l10n.commonDelete,
+                            onPressed: () async {
+                              await ref
+                                  .read(mirrorTemplateActionsProvider)
+                                  .remove(row.id);
+                              ref
+                                  .read(globalMirrorProvider.notifier)
+                                  .templateRemoved(row.template);
+                            },
+                            icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
               ],
-              footer: rows == null
-                  ? context.l10n.mirrorTplReading
-                  : rows.isEmpty
-                  ? context.l10n.mirrorTplEmpty
-                  : null,
             ),
           const SizedBox(height: 24),
         ],

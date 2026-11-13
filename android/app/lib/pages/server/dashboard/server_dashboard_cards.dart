@@ -204,7 +204,7 @@ class _ServerStatusCard extends ConsumerWidget {
             )
           else
             Text(
-              '--',
+              '—',
               style: DashboardText.figure(
                 context,
                 AppTextStyle.title1,
@@ -225,22 +225,22 @@ class _ServerStatusCard extends ConsumerWidget {
                 metrics: [
                   DashboardMetric(
                     label: context.l10n.serverTotalQueries,
-                    value: stats == null ? '—' : '${stats.total}',
+                    value: stats == null ? '—' : dashboardCount(stats.total),
                   ),
                   DashboardMetric(
                     label: context.l10n.serverCacheHits,
-                    value: stats == null ? '—' : '${stats.cached}',
+                    value: stats == null ? '—' : dashboardCount(stats.cached),
                     color: colorScheme.primary,
                   ),
                   DashboardMetric(
                     label: context.l10n.serverBlocked,
-                    value: stats == null ? '—' : '${stats.blocked}',
+                    value: stats == null ? '—' : dashboardCount(stats.blocked),
                     color: colorScheme.error,
                   ),
                   DashboardMetric(
                     label: context.l10n.statusCacheHitRate,
                     value: stats == null || stats.total == 0
-                        ? '--'
+                        ? '—'
                         : dashboardPercent(stats.cacheHitRateOfQueries),
                   ),
                 ],

@@ -54,7 +54,9 @@ class DataCleanupPage extends ConsumerWidget {
                     ),
                     title: Text(
                       action.title(context.l10n),
-                      style: TextStyle(color: context.colorScheme.error),
+                      style: context.listTitleStyle.copyWith(
+                        color: context.colorScheme.error,
+                      ),
                     ),
                     subtitle: Text(_descriptionOf(context.l10n, action)),
                     // The whole list is disabled while running: two actions deleting the

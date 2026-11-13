@@ -260,7 +260,10 @@ class _FontRow extends StatelessWidget {
               ),
         ),
       ),
-      title: Text(label, style: TextStyle(fontFamily: family)),
+      title: Text(
+        label,
+        style: context.listTitleStyle.copyWith(fontFamily: family),
+      ),
       subtitle: Text(description),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -314,11 +317,7 @@ class _ImportCard extends StatelessWidget {
             ),
           ),
           if (isImporting)
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+            const CommonCircleLoading(size: 20)
           else
             const GlyphIcon(AppGlyphs.chevronForward, size: 20),
         ],

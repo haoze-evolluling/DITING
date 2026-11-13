@@ -72,7 +72,7 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.speed,
+            glyph: AppGlyphs.target,
             title: context.l10n.siteLatencyTitle,
             leading: [
               DashboardChip(

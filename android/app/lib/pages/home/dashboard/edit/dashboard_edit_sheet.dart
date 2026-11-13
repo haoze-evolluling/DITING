@@ -65,7 +65,7 @@ class DashboardEditSheet extends ConsumerWidget {
     DashboardWidget.resolution => AppGlyphs.shuffle,
     DashboardWidget.status => AppGlyphs.status,
     DashboardWidget.networkSpeed => AppGlyphs.speed,
-    DashboardWidget.siteLatency => AppGlyphs.speed,
+    DashboardWidget.siteLatency => AppGlyphs.target,
     DashboardWidget.memoryInfo => AppGlyphs.memory,
     DashboardWidget.intranetIp => AppGlyphs.devices,
   };

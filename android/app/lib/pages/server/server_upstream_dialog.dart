@@ -120,7 +120,12 @@ class _UpstreamDialogState extends State<UpstreamDialog> {
               ),
             ),
           if (_error != null)
-            Text(_error!, style: TextStyle(color: context.colorScheme.error)),
+            Text(
+              _error!,
+              style: context.listCaptionStyle.copyWith(
+                color: context.colorScheme.error,
+              ),
+            ),
         ],
       ),
     );

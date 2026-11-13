@@ -123,7 +123,9 @@ class CaCertificatePage extends ConsumerWidget {
                 ),
                 title: Text(
                   context.l10n.caCertRegenerate,
-                  style: TextStyle(color: context.colorScheme.error),
+                  style: context.listTitleStyle.copyWith(
+                    color: context.colorScheme.error,
+                  ),
                 ),
                 subtitle: Text(context.l10n.caCertRegenerateSubtitle),
                 onTap: () => _regenerate(context, ref),

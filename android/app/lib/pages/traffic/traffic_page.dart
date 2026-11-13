@@ -124,8 +124,11 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
       search,
       hideSystemApps: hideSystemApps,
     );
-    final hiddenCount =
-        snapshot.rows.length - _ranked(snapshot.rows, sort, search).length;
+    final hiddenCount = hideSystemApps
+        ? snapshot.rows
+              .where((row) => isKnownSystemPackagePrefix(row.packageName))
+              .length
+        : 0;
 
     return AppListScrollView(
       slivers: [
@@ -224,7 +227,7 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                   child: NullStatus(
-                    label: search.isEmpty && !hideSystemApps
+                    label: search.isEmpty
                         ? context.l10n.trafficNoData
                         : context.l10n.trafficNoMatchingApps,
                     description: _emptyDescription(

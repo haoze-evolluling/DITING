@@ -45,9 +45,9 @@ class UnknownRoutePage extends StatelessWidget {
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 4),
-                FilledButton(
+                TonalButton(
+                  label: context.l10n.unknownRouteBack,
                   onPressed: () => Navigator.of(context).maybePop(),
-                  child: Text(context.l10n.unknownRouteBack),
                 ),
               ],
             ),

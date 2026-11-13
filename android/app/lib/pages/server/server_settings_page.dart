@@ -123,7 +123,6 @@ class _ServerSettingsPageState extends ConsumerState<ServerSettingsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
           generateSection(
             title: context.l10n.serverDataReset,
             items: [
@@ -142,13 +141,11 @@ class _ServerSettingsPageState extends ConsumerState<ServerSettingsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
           generateSection(
             title: context.l10n.serverBackground,
             items: [_batteryRow(context)],
             footer: context.l10n.serverBackgroundBody,
           ),
-          const SizedBox(height: 6),
           generateSection(
             title: context.l10n.serverRunMode,
             items: [

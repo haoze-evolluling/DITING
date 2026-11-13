@@ -46,7 +46,6 @@ class _RuleRow extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: context.listTitleStyle.copyWith(
             fontFeatures: appTabularFigures,
-            fontSize: 15,
           ),
         ),
         // The subtitle holds four chips plus the source label, and ListTile leaves about 160px on

@@ -12,6 +12,7 @@ import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/pages/home/dashboard/edit/dashboard_edit_sheet.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
+import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -132,30 +133,12 @@ class _EditingBoard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: dashboardCardGap,
         children: [
-          Container(
+          InlineNotice(
+            message: context.l10n.dashboardEditHint,
+            glyph: AppGlyphs.info,
+            color: colorScheme.primaryContainer,
+            foregroundColor: colorScheme.onPrimaryContainer,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: ShapeDecoration(
-              color: colorScheme.primaryContainer,
-              shape: AppShape.all(AppCorner.md),
-            ),
-            child: Row(
-              spacing: 8,
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: colorScheme.onPrimaryContainer,
-                ),
-                Expanded(
-                  child: Text(
-                    context.l10n.dashboardEditHint,
-                    style: AppTextStyle.caption1
-                        .of(context)
-                        .copyWith(color: colorScheme.onPrimaryContainer),
-                  ),
-                ),
-              ],
-            ),
           ),
           if (widgets.isEmpty)
             Padding(
@@ -240,8 +223,8 @@ class DashboardRemoveBadge extends StatelessWidget {
         child: SizedBox(
           width: 28,
           height: 28,
-          child: Icon(
-            Icons.close,
+          child: GlyphIcon(
+            AppGlyphs.close,
             size: 16,
             color: colorScheme.onErrorContainer,
           ),
@@ -290,7 +273,7 @@ class _AddCardRow extends ConsumerWidget {
           context: context,
           builder: (_) => const DashboardEditSheet(),
         ),
-        icon: Icon(Icons.add, size: 18, color: colorScheme.primary),
+        icon: GlyphIcon(AppGlyphs.add, size: 18, color: colorScheme.primary),
         label: Text(context.l10n.dashboardAddCard),
         style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
       ),

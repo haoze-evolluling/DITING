@@ -142,10 +142,9 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
                 minLines: null,
                 textAlignVertical: TextAlignVertical.top,
                 keyboardType: TextInputType.multiline,
-                style: const TextStyle(
-                  fontFeatures: appTabularFigures,
-                  fontSize: 14,
-                ),
+                style: AppTextStyle.subheadline
+                    .of(context)
+                    .copyWith(fontFeatures: appTabularFigures),
                 decoration: InputDecoration(
                   hintText: context.l10n.batchPlaceholder,
                 ),
@@ -181,14 +180,9 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
           const SizedBox(height: 12),
           // Submit sits at the end of the body, not the app bar: the item count is the last
           // confirmation point before the user commits, and an icon cannot show it.
-          SizedBox(
-            height: 48,
-            child: FilledButton(
-              onPressed: canSubmit ? _submit : null,
-              child: Text(
-                context.l10n.ruleBatchImportCount(parsed.accepted.length),
-              ),
-            ),
+          TonalButton(
+            label: context.l10n.ruleBatchImportCount(parsed.accepted.length),
+            onPressed: canSubmit ? _submit : null,
           ),
           if (parsed.rejected.isNotEmpty)
             Padding(

@@ -30,26 +30,24 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
       body: SliverPageBody(
         slivers: [
           SliverToBoxAdapter(
-            child: Column(
-              children: [
-                generateSection(
-                  title: context.l10n.logsTimeRange,
-                  items: [
-                    LogStatsRangeSelector<SubscriptionStatsRange>(
-                      values: SubscriptionStatsRange.values,
-                      labelOf: (option) => option.label(context.l10n),
-                      value: range,
-                      onChanged: (value) => ref
-                          .read(subscriptionStatsRangeProvider.notifier)
-                          .select(value),
-                    ),
-                  ],
+            child: generateSection(
+              title: context.l10n.logsTimeRange,
+              items: [
+                LogStatsRangeSelector<SubscriptionStatsRange>(
+                  values: SubscriptionStatsRange.values,
+                  labelOf: (option) => option.label(context.l10n),
+                  value: range,
+                  onChanged: (value) => ref
+                      .read(subscriptionStatsRangeProvider.notifier)
+                      .select(value),
                 ),
-                ListFooter(text: context.l10n.logsSubStatsFooter),
               ],
             ),
           ),
           ..._statsSlivers(context, asyncStats),
+          SliverToBoxAdapter(
+            child: ListFooter(text: context.l10n.logsSubStatsFooter),
+          ),
         ],
       ),
     );

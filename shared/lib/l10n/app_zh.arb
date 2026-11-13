@@ -2668,6 +2668,7 @@
   "sponsorFreeShare": "分享给更多人",
   "sponsorFooter": "感谢每一位支持项目的朋友！",
   "sponsorBuyDrink": "请作者喝杯蜜雪 🧋",
+  "sponsorSupportKicker": "// 支持项目",
   "sponsorNote": "如果这个项目帮助到了你，欢迎请作者喝杯蜜雪。付款时请备注昵称，以便同步加入赞助者名单。",
   "sponsorAlipay": "支付宝",
   "sponsorWechat": "微信支付",
@@ -5136,6 +5137,7 @@
   "settingsDataSection": "数据管理",
   "settingsLanguageSubtitle": "选择应用界面语言",
   "settingsWizardSubtitle": "查看当前工作模式的架构原理、权限配置与上手指引",
+  "settingsGuideSection": "上手引导",
   "backupErrEmpty": "文件内容为空",
   "backupErrInvalidJson": "不是合法的 JSON：{error}",
   "@backupErrInvalidJson": {

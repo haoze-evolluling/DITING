@@ -219,8 +219,9 @@ class DashboardRateRow extends StatelessWidget {
   final String label;
   final String value;
 
-  /// 0..1; clamped, never asserts.
-  final double progress;
+  /// 0..1; clamped, never asserts. `null` renders the value alone, with no bar,
+  /// for figures that are not a ratio (e.g. average latency).
+  final double? progress;
 
   @override
   Widget build(BuildContext context) {
@@ -256,19 +257,20 @@ class DashboardRateRow extends StatelessWidget {
             ),
           ],
         ),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: Container(
-            height: 9 * scale,
-            color: color.tone,
-            alignment: AlignmentDirectional.centerStart,
-            child: FractionallySizedBox(
-              widthFactor: progress.clamp(0.0, 1.0),
-              heightFactor: 1,
-              child: ColoredBox(color: colorScheme.primary),
+        if (progress case final progress?)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: Container(
+              height: 9 * scale,
+              color: color.tone,
+              alignment: AlignmentDirectional.centerStart,
+              child: FractionallySizedBox(
+                widthFactor: progress.clamp(0.0, 1.0),
+                heightFactor: 1,
+                child: ColoredBox(color: colorScheme.primary),
+              ),
             ),
           ),
-        ),
       ],
     );
   }

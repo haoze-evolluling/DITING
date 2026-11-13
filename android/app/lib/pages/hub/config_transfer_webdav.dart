@@ -53,11 +53,6 @@ class _ConfigTransferWebdavPageState
               child: FormPage(
                 title: '',
                 padding: EdgeInsets.zero,
-                onSave: dav.isConfigured
-                    ? () => ref.read(davProvider.notifier).test()
-                    : null,
-                saving: dav.status == DavStatus.connecting,
-                saveLabel: context.l10n.webdavTest,
                 children: [
                   FormRowTextField(
                     title: context.l10n.webdavServer,
@@ -104,30 +99,13 @@ class _ConfigTransferWebdavPageState
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              spacing: 10,
-              children: [
-                Expanded(
-                  child: TonalButton(
-                    label: context.l10n.webdavTest,
-                    glyph: AppGlyphs.sync,
-                    size: TonalButtonSize.section,
-                    onPressed: _busy
-                        ? null
-                        : () => ref.read(davProvider.notifier).test(),
-                  ),
-                ),
-                Expanded(
-                  child: TonalButton(
-                    label: context.l10n.commonClearAll,
-                    glyph: AppGlyphs.broom,
-                    size: TonalButtonSize.section,
-                    onPressed: _busy
-                        ? null
-                        : () => ref.read(davProvider.notifier).reset(),
-                  ),
-                ),
-              ],
+            child: TonalButton(
+              label: context.l10n.webdavTest,
+              glyph: AppGlyphs.sync,
+              size: TonalButtonSize.section,
+              onPressed: _busy || !dav.isConfigured
+                  ? null
+                  : () => ref.read(davProvider.notifier).test(),
             ),
           ),
           Padding(
@@ -260,7 +238,12 @@ class _DavImportDialog extends StatelessWidget {
         spacing: 8,
         children: [
           if (result.failed)
-            Text(result.fatalError!, style: TextStyle(color: colorScheme.error))
+            Text(
+              result.fatalError!,
+              style: context.listCaptionStyle.copyWith(
+                color: colorScheme.error,
+              ),
+            )
           else ...[
             Text(
               context.l10n.webdavRestoreSummary(
@@ -284,7 +267,9 @@ class _DavImportDialog extends StatelessWidget {
                   outcome.group.title(context.l10n),
                   outcome.error ?? '',
                 ),
-                style: TextStyle(color: colorScheme.error),
+                style: context.listCaptionStyle.copyWith(
+                  color: colorScheme.error,
+                ),
               ),
             if (result.changed.isEmpty && result.failedGroups.isEmpty)
               Text(context.l10n.webdavNothingChanged),

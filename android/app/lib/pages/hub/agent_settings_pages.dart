@@ -56,29 +56,29 @@ class AgentParamsPage extends ConsumerWidget {
                 ),
                 onTap: () => _editPrompt(context, notifier, state.systemPrompt),
               ),
+              ListItem(
+                title: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final (index, label)
+                        in _templateLabels(context.l10n).indexed)
+                      TonalChip(
+                        label: label,
+                        color: context.raisedSurfaceLevel.colorOf(
+                          context.colorScheme,
+                        ),
+                        foregroundColor: context.colorScheme.onSurfaceVariant,
+                        onPressed: () => notifier.setSystemPrompt(
+                          _templatePrompts[index],
+                        ),
+                      ),
+                  ],
+                ),
+                minVerticalPadding: 10,
+              ),
             ],
             footer: context.l10n.agentParamsPromptFooter,
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final (index, label)
-                    in _templateLabels(context.l10n).indexed)
-                  TonalChip(
-                    label: label,
-                    color: context.raisedSurfaceLevel.colorOf(
-                      context.colorScheme,
-                    ),
-                    foregroundColor: context.colorScheme.onSurfaceVariant,
-                    onPressed: () => notifier.setSystemPrompt(
-                      _templatePrompts[index],
-                    ),
-                  ),
-              ],
-            ),
           ),
           generateSection(
             title: context.l10n.agentParamsTemperatureSection,
@@ -94,18 +94,18 @@ class AgentParamsPage extends ConsumerWidget {
                       .copyWith(color: context.colorScheme.primary),
                 ),
               ),
+              ListItem(
+                title: Slider(
+                  value: state.temperature.clamp(0, 2),
+                  min: 0,
+                  max: 2,
+                  divisions: 20,
+                  onChanged: notifier.setTemperature,
+                ),
+                minVerticalPadding: 4,
+              ),
             ],
             footer: context.l10n.agentParamsTemperatureFooter,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Slider(
-              value: state.temperature.clamp(0, 2),
-              min: 0,
-              max: 2,
-              divisions: 20,
-              onChanged: notifier.setTemperature,
-            ),
           ),
           const SizedBox(height: 24),
         ],

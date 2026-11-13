@@ -295,7 +295,9 @@ class _ImportResultDialog extends StatelessWidget {
           if (result.failed) ...[
             Text(
               result.fatalError!,
-              style: TextStyle(color: colorScheme.error),
+              style: context.listCaptionStyle.copyWith(
+                color: colorScheme.error,
+              ),
             ),
           ] else ...[
             Text(
@@ -329,7 +331,9 @@ class _ImportResultDialog extends StatelessWidget {
                   outcome.group.title(context.l10n),
                   outcome.error ?? '',
                 ),
-                style: TextStyle(color: colorScheme.error),
+                style: context.listCaptionStyle.copyWith(
+                color: colorScheme.error,
+              ),
               ),
             if (result.changed.isEmpty && result.failedGroups.isEmpty)
               Text(context.l10n.transferNothingChanged),

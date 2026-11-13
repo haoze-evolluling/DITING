@@ -218,10 +218,7 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
       tooltip: context.l10n.providerMgmtProbeTooltip,
       onPressed: _testing ? null : _test,
       icon: _testing
-          ? const SizedBox.square(
-              dimension: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+          ? const CommonCircleLoading(size: 18)
           : const GlyphIcon(AppGlyphs.bolt, size: 20),
     );
   }
@@ -230,7 +227,7 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     final probe = _probe;
     if (probe == null) return null;
     final color = probe.ok
-        ? context.colorScheme.primary
+        ? context.colorScheme.success
         : context.colorScheme.error;
     return Row(
       spacing: 6,

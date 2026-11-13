@@ -4391,6 +4391,9 @@ class AppL10nZh extends AppL10n {
   String get sponsorBuyDrink => '请作者喝杯蜜雪 🧋';
 
   @override
+  String get sponsorSupportKicker => '// 支持项目';
+
+  @override
   String get sponsorNote => '如果这个项目帮助到了你，欢迎请作者喝杯蜜雪。付款时请备注昵称，以便同步加入赞助者名单。';
 
   @override
@@ -8579,6 +8582,9 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get settingsWizardSubtitle => '查看当前工作模式的架构原理、权限配置与上手指引';
+
+  @override
+  String get settingsGuideSection => '上手引导';
 
   @override
   String get backupErrEmpty => '文件内容为空';

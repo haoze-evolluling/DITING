@@ -75,16 +75,10 @@ class _TrafficFilterBar extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: FilledInputTheme(
-            child: TextField(
-              controller: searchController,
-              autocorrect: false,
-              onChanged: onSearchChanged,
-              decoration: InputDecoration(
-                hintText: context.l10n.trafficSearchPlaceholder,
-                prefixIcon: GlyphIcon(AppGlyphs.search),
-              ),
-            ),
+          child: SearchField(
+            controller: searchController,
+            hintText: context.l10n.trafficSearchPlaceholder,
+            onChanged: onSearchChanged,
           ),
         ),
         Padding(

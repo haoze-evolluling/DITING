@@ -169,7 +169,9 @@ class _TroubleshootingLogDetailSheetState
                 ),
                 title: Text(
                   l10n.commonDelete,
-                  style: TextStyle(color: colorScheme.error),
+                  style: context.listTitleStyle.copyWith(
+                    color: colorScheme.error,
+                  ),
                 ),
                 onTap: _busy ? null : _delete,
               ),

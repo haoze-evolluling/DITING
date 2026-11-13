@@ -8080,6 +8080,12 @@ abstract class AppL10n {
   /// **'请作者喝杯蜜雪 🧋'**
   String get sponsorBuyDrink;
 
+  /// No description provided for @sponsorSupportKicker.
+  ///
+  /// In zh, this message translates to:
+  /// **'// 支持项目'**
+  String get sponsorSupportKicker;
+
   /// No description provided for @sponsorNote.
   ///
   /// In zh, this message translates to:
@@ -15651,6 +15657,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'查看当前工作模式的架构原理、权限配置与上手指引'**
   String get settingsWizardSubtitle;
+
+  /// No description provided for @settingsGuideSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'上手引导'**
+  String get settingsGuideSection;
 
   /// No description provided for @backupErrEmpty.
   ///

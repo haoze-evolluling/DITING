@@ -5,6 +5,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/dns_cache_repository.dart';
 import 'package:diting_android/pages/logs/logs_shared.dart';
 import 'package:diting_android/pages/observability/domain_detail_parts.dart';
+import 'package:diting_android/pages/observability/observability_common.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:material_ui/material_ui.dart';
@@ -87,7 +88,7 @@ class DnsCacheDetailSheet extends StatelessWidget {
                 ),
                 KeyValueRow(
                   label: context.l10n.logsResponseSize,
-                  value: '${entry.responseSize} B',
+                  value: obsFormatBytes(entry.responseSize),
                   tabular: true,
                 ),
               ],

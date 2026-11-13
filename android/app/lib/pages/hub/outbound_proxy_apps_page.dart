@@ -92,12 +92,17 @@ class _OutboundProxyAppsPageState extends ConsumerState<OutboundProxyAppsPage> {
             ),
           ),
           if (!snapshot.isLoading && snapshot.value?.error == null)
-            ...appListSlivers(
+            ...lazySectionOrEmpty(
               title: context.l10n.outboundAppsCount(visible.length),
               itemCount: visible.length,
-              footer: visible.isEmpty
-                  ? (apps.isEmpty ? context.l10n.outboundAppsEmpty : context.l10n.appSelectionNoMatch)
-                  : null,
+              empty: AppListEmptyState(
+                label: apps.isEmpty
+                    ? context.l10n.outboundAppsEmpty
+                    : context.l10n.appSelectionNoMatch,
+                illustration: apps.isEmpty
+                    ? NullStatusIllustration.apps
+                    : NullStatusIllustration.search,
+              ),
               itemBuilder: (context, index) {
                 final app = visible[index];
                 final isSelected = selected == app.packageName;

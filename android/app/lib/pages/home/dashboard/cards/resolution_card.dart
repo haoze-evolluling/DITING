@@ -29,14 +29,6 @@ class ResolutionCard extends ConsumerWidget {
           DashboardCardHeader(
             glyph: AppGlyphs.shuffle,
             title: context.l10n.resolutionModeTitle,
-            trailing: [
-              Text(
-                resolution.label(context.l10n),
-                style: AppTextStyle.footnote
-                    .of(context, emphasized: true)
-                    .copyWith(color: colorScheme.primary),
-              ),
-            ],
           ),
           SizedBox(height: 10 * scale),
           IgnorePointer(

@@ -383,8 +383,8 @@ class ResolutionPerfCard extends ConsumerWidget {
                     dashboardLatency(latency),
                     dashboardCount(quality.latencySamples),
                   ),
-            // Latency is not a ratio, so pass 0 to render text only (no bar at progress 0).
-            progress: 0,
+            // Latency is not a ratio, so it renders the value alone with no bar.
+            progress: null,
           ),
           SizedBox(height: 14 * scale),
           DashboardRateRow(
@@ -394,7 +394,7 @@ class ResolutionPerfCard extends ConsumerWidget {
                 : context.l10n.logCacheHitRateValue(
                     dashboardPercent(quality.cacheHitRate),
                   ),
-            progress: quality?.cacheHitRate ?? 0,
+            progress: quality?.cacheHitRate,
           ),
           SizedBox(height: 14 * scale),
           DashboardRateRow(
@@ -406,7 +406,7 @@ class ResolutionPerfCard extends ConsumerWidget {
                     dashboardCount(race.requests),
                     dashboardLatency(race.averageElapsedMs),
                   ),
-            progress: race?.successRate ?? 0,
+            progress: race?.successRate,
           ),
           SizedBox(height: 14 * scale),
           DashboardRateRow(
@@ -418,7 +418,7 @@ class ResolutionPerfCard extends ConsumerWidget {
                     dashboardCount(bootstrap.attempts),
                     dashboardLatency(bootstrap.averageElapsedMs),
                   ),
-            progress: bootstrap?.successRate ?? 0,
+            progress: bootstrap?.successRate,
           ),
           SizedBox(height: 2 * scale),
         ],

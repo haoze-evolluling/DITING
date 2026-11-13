@@ -481,13 +481,8 @@ class SettingsLanguagePage extends ConsumerWidget {
               for (final option in AppLanguageMode.values)
                 ListItem(
                   title: Text(option.label(context.l10n)),
-                  leading: GlyphIcon(
-                    option == mode ? AppGlyphs.check : AppGlyphs.language,
-                    color: option == mode ? context.colorScheme.primary : null,
-                  ),
-                  trailing: option == mode
-                      ? const Icon(Icons.check, size: 18)
-                      : null,
+                  leading: const GlyphIcon(AppGlyphs.language),
+                  trailing: option == mode ? const SelectionCheck() : null,
                   onTap: () =>
                       ref.read(languageModeProvider.notifier).select(option),
                 ),

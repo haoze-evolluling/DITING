@@ -77,6 +77,11 @@ class BootstrapSettingsPage extends ConsumerWidget {
           generateSection(
             title: context.l10n.bootstrapCustom,
             items: [
+              if (custom.isEmpty)
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.info),
+                  title: Text(context.l10n.bootstrapNoCustom),
+                ),
               for (final entry in custom)
                 _BootstrapRow(
                   entry: entry,
@@ -100,7 +105,6 @@ class BootstrapSettingsPage extends ConsumerWidget {
                   ]),
                 ),
             ],
-            footer: custom.isEmpty ? context.l10n.bootstrapNoCustom : null,
           ),
           const SizedBox(height: 24),
         ],

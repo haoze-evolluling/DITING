@@ -362,7 +362,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                       autocorrect: false,
                       enableSuggestions: false,
                       textInputAction: TextInputAction.next,
-                      style: const TextStyle(
+                      style: context.listTitleStyle.copyWith(
                         fontFeatures: appTabularFigures,
                       ),
                       decoration: const InputDecoration(
