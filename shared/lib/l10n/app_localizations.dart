@@ -24460,6 +24460,48 @@ abstract class AppL10n {
   /// **'日志内容'**
   String get troubleshootLogsLogContent;
 
+  /// No description provided for @troubleshootLogsDetailInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'日志信息'**
+  String get troubleshootLogsDetailInfo;
+
+  /// No description provided for @troubleshootLogsFileName.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件名'**
+  String get troubleshootLogsFileName;
+
+  /// No description provided for @troubleshootLogsFileType.
+  ///
+  /// In zh, this message translates to:
+  /// **'类型'**
+  String get troubleshootLogsFileType;
+
+  /// No description provided for @troubleshootLogsFileSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'大小'**
+  String get troubleshootLogsFileSize;
+
+  /// No description provided for @troubleshootLogsModifiedAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改时间'**
+  String get troubleshootLogsModifiedAt;
+
+  /// No description provided for @troubleshootLogsViewContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看日志内容'**
+  String get troubleshootLogsViewContent;
+
+  /// No description provided for @troubleshootLogsViewContentBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'进入下一层查看完整日志'**
+  String get troubleshootLogsViewContentBody;
+
   /// No description provided for @troubleshootLogsEmptyContent.
   ///
   /// In zh, this message translates to:

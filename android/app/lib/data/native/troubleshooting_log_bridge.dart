@@ -116,11 +116,18 @@ class TroubleshootingLogBridge {
     }
   }
 
-  Future<TroubleshootLogRead> read(TroubleshootLogEntry entry) async {
+  Future<TroubleshootLogRead> read(TroubleshootLogEntry entry) =>
+      readByName(kind: entry.kind, name: entry.name);
+
+  /// Reads by identity alone, so the content page can be reached by route without the full entry.
+  Future<TroubleshootLogRead> readByName({
+    required TroubleshootLogKind kind,
+    required String name,
+  }) async {
     try {
       final raw = await _channel.invokeMethod<Object?>('read', {
-        'kind': entry.kind.tag,
-        'name': entry.name,
+        'kind': kind.tag,
+        'name': name,
       });
       if (raw is! Map) return TroubleshootLogRead.empty;
       final content = raw['content'];
@@ -136,9 +143,15 @@ class TroubleshootingLogBridge {
   }
 
   Future<bool> delete(TroubleshootLogEntry entry) =>
-      _entryCall('delete', entry);
+      _entryCall('delete', entry.kind, entry.name);
 
-  Future<bool> share(TroubleshootLogEntry entry) => _entryCall('share', entry);
+  Future<bool> share(TroubleshootLogEntry entry) =>
+      _entryCall('share', entry.kind, entry.name);
+
+  Future<bool> shareByName({
+    required TroubleshootLogKind kind,
+    required String name,
+  }) => _entryCall('share', kind, name);
 
   Future<bool> shareAll() async {
     try {
@@ -165,11 +178,15 @@ class TroubleshootingLogBridge {
     }
   }
 
-  Future<bool> _entryCall(String method, TroubleshootLogEntry entry) async {
+  Future<bool> _entryCall(
+    String method,
+    TroubleshootLogKind kind,
+    String name,
+  ) async {
     try {
       return await _channel.invokeMethod<bool>(method, {
-            'kind': entry.kind.tag,
-            'name': entry.name,
+            'kind': kind.tag,
+            'name': name,
           }) ??
           false;
     } on MissingPluginException {

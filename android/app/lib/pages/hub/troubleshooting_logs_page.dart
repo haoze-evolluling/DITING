@@ -6,11 +6,13 @@ library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
 import 'package:diting_android/pages/hub/troubleshooting_log_detail_sheet.dart';
+import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/troubleshooting_log_providers.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class TroubleshootingLogsPage extends ConsumerStatefulWidget {
@@ -109,6 +111,12 @@ class _TroubleshootingLogsPageState
     if (!mounted) return;
     await _refresh();
     if (!mounted) return;
+    if (action == 'content') {
+      await context.push(
+        HubPaths.troubleshootingLogContent(entry.kind.tag, entry.name),
+      );
+      return;
+    }
     if (action == 'deleted') _toast(context.l10n.troubleshootLogsDeleted);
     if (action == 'shared') _toast(context.l10n.troubleshootLogsShared);
   }

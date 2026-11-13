@@ -1,5 +1,6 @@
-/// Full text of one log file, with per-file share and delete. Pops with `'shared'` or
-/// `'deleted'` so [TroubleshootingLogsPage] can toast and refresh once the sheet is gone.
+/// First level of one log file: file information, an entry card to its full text, and the
+/// per-file share/delete actions. Pops with `'shared'`, `'deleted'`, or `'content'` so
+/// [TroubleshootingLogsPage] can toast, refresh, or open the text page once the sheet is gone.
 library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
@@ -22,14 +23,9 @@ class TroubleshootingLogDetailSheet extends ConsumerStatefulWidget {
 
 class _TroubleshootingLogDetailSheetState
     extends ConsumerState<TroubleshootingLogDetailSheet> {
-  late final Future<TroubleshootLogRead> _read;
   bool _busy = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _read = ref.read(troubleshootingLogBridgeProvider).read(widget.entry);
-  }
+  void _openContent() => Navigator.of(context).pop('content');
 
   Future<void> _share() async {
     if (_busy) return;
@@ -99,57 +95,62 @@ class _TroubleshootingLogDetailSheetState
       body: PageBody(
         children: [
           SectionBlock(
-            title: l10n.troubleshootLogsLogContent,
-            footer:
-                '${_kindLabel()} · ${widget.entry.sizeLabel} · ${widget.entry.timeLabel}',
+            title: l10n.troubleshootLogsDetailInfo,
             child: CommonCard(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(vertical: 4),
               inert: true,
-              child: FutureBuilder<TroubleshootLogRead>(
-                future: _read,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState != ConnectionState.done) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: CommonCircleLoading(),
-                      ),
-                    );
-                  }
-                  final result = snapshot.data ?? TroubleshootLogRead.empty;
-                  final text = result.content;
-                  if (text == null || text.isEmpty) {
-                    return Text(
-                      l10n.troubleshootLogsEmptyContent,
-                      style: AppTextStyle.footnote
-                          .of(context)
-                          .copyWith(color: colorScheme.onSurfaceVariant),
-                    );
-                  }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: 8,
-                    children: [
-                      SelectableText(
-                        text,
-                        style: AppTextStyle.footnote
-                            .of(context)
-                            .copyWith(
-                              color: colorScheme.onSurface,
-                              fontFeatures: appTabularFigures,
-                              height: 1.5,
-                            ),
-                      ),
-                      if (result.truncated)
+              child: Column(
+                children: [
+                  KeyValueRow(
+                    label: l10n.troubleshootLogsFileName,
+                    value: widget.entry.name,
+                  ),
+                  KeyValueRow(
+                    label: l10n.troubleshootLogsFileType,
+                    value: _kindLabel(),
+                  ),
+                  KeyValueRow(
+                    label: l10n.troubleshootLogsFileSize,
+                    value: widget.entry.sizeLabel,
+                    tabular: true,
+                  ),
+                  KeyValueRow(
+                    label: l10n.troubleshootLogsModifiedAt,
+                    value: widget.entry.timeLabel,
+                    tabular: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SectionBlock(
+            child: CommonCard(
+              onPressed: _busy ? null : _openContent,
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                spacing: 12,
+                children: [
+                  const GlyphIcon(AppGlyphs.textShort, size: 22),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 2,
+                      children: [
                         Text(
-                          l10n.troubleshootLogsTruncated,
-                          style: AppTextStyle.caption2
+                          l10n.troubleshootLogsViewContent,
+                          style: context.listTitleStyle,
+                        ),
+                        Text(
+                          l10n.troubleshootLogsViewContentBody,
+                          style: AppTextStyle.caption1
                               .of(context)
                               .copyWith(color: colorScheme.onSurfaceVariant),
                         ),
-                    ],
-                  );
-                },
+                      ],
+                    ),
+                  ),
+                  const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                ],
               ),
             ),
           ),

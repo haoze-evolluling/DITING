@@ -6905,6 +6905,13 @@
   "troubleshootLogsClearedAll": "已清空 {runtime} 个运行日志与 {crash} 份崩溃日志",
   "@troubleshootLogsClearedAll": {"placeholders": {"runtime": {"type": "int"}, "crash": {"type": "int"}}},
   "troubleshootLogsLogContent": "日志内容",
+  "troubleshootLogsDetailInfo": "日志信息",
+  "troubleshootLogsFileName": "文件名",
+  "troubleshootLogsFileType": "类型",
+  "troubleshootLogsFileSize": "大小",
+  "troubleshootLogsModifiedAt": "修改时间",
+  "troubleshootLogsViewContent": "查看日志内容",
+  "troubleshootLogsViewContentBody": "进入下一层查看完整日志",
   "troubleshootLogsEmptyContent": "无法读取该日志内容",
   "troubleshootLogsTruncated": "内容过长，仅显示开头部分",
   "troubleshootLogsFooter": "日志只保存在本机，分享前请确认其中不含敏感信息。"

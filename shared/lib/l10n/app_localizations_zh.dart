@@ -13372,6 +13372,27 @@ class AppL10nZh extends AppL10n {
   String get troubleshootLogsLogContent => '日志内容';
 
   @override
+  String get troubleshootLogsDetailInfo => '日志信息';
+
+  @override
+  String get troubleshootLogsFileName => '文件名';
+
+  @override
+  String get troubleshootLogsFileType => '类型';
+
+  @override
+  String get troubleshootLogsFileSize => '大小';
+
+  @override
+  String get troubleshootLogsModifiedAt => '修改时间';
+
+  @override
+  String get troubleshootLogsViewContent => '查看日志内容';
+
+  @override
+  String get troubleshootLogsViewContentBody => '进入下一层查看完整日志';
+
+  @override
   String get troubleshootLogsEmptyContent => '无法读取该日志内容';
 
   @override

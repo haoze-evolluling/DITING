@@ -14202,6 +14202,28 @@ class AppL10nEn extends AppL10n {
   String get troubleshootLogsLogContent => 'Log content';
 
   @override
+  String get troubleshootLogsDetailInfo => 'Log details';
+
+  @override
+  String get troubleshootLogsFileName => 'File name';
+
+  @override
+  String get troubleshootLogsFileType => 'Type';
+
+  @override
+  String get troubleshootLogsFileSize => 'Size';
+
+  @override
+  String get troubleshootLogsModifiedAt => 'Modified';
+
+  @override
+  String get troubleshootLogsViewContent => 'View log content';
+
+  @override
+  String get troubleshootLogsViewContentBody =>
+      'Open the next page to read the full log';
+
+  @override
   String get troubleshootLogsEmptyContent => 'Cannot read this log\'s content';
 
   @override

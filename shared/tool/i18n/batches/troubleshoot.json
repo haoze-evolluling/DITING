@@ -87,6 +87,13 @@
     "placeholders": {"runtime": {"type": "int"}, "crash": {"type": "int"}}
   },
   "troubleshootLogsLogContent": ["日志内容", "Log content"],
+  "troubleshootLogsDetailInfo": ["日志信息", "Log details"],
+  "troubleshootLogsFileName": ["文件名", "File name"],
+  "troubleshootLogsFileType": ["类型", "Type"],
+  "troubleshootLogsFileSize": ["大小", "Size"],
+  "troubleshootLogsModifiedAt": ["修改时间", "Modified"],
+  "troubleshootLogsViewContent": ["查看日志内容", "View log content"],
+  "troubleshootLogsViewContentBody": ["进入下一层查看完整日志", "Open the next page to read the full log"],
   "troubleshootLogsEmptyContent": ["无法读取该日志内容", "Cannot read this log's content"],
   "troubleshootLogsTruncated": ["内容过长，仅显示开头部分", "Content is too long; showing the beginning only"],
   "troubleshootLogsFooter": ["日志只保存在本机，分享前请确认其中不含敏感信息。", "Logs stay on this device; check for sensitive information before sharing."]

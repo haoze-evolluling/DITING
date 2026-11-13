@@ -1,3 +1,4 @@
+import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
 import 'package:diting_android/pages/hub/agent_api_page.dart';
 import 'package:diting_android/pages/hub/agent_providers_page.dart';
 import 'package:diting_android/pages/hub/agent_settings_pages.dart';
@@ -20,6 +21,7 @@ import 'package:diting_android/pages/hub/recognition_pages.dart';
 import 'package:diting_android/pages/hub/resolution_mode_page.dart';
 import 'package:diting_android/pages/hub/rule_control_page.dart';
 import 'package:diting_android/pages/hub/subscription_tools_pages.dart';
+import 'package:diting_android/pages/hub/troubleshooting_log_content_page.dart';
 import 'package:diting_android/pages/hub/troubleshooting_logs_page.dart';
 import 'package:diting_android/pages/hub/troubleshooting_page.dart';
 import 'package:diting_shared/routes/page.dart';
@@ -61,6 +63,10 @@ abstract final class HubPaths {
   static const coBuilders = '/hub/co-builders';
 
   static String resolutionMode(String id) => '$resolution/$id';
+
+  static String troubleshootingLogContent(String kind, String name) =>
+      '$troubleshootingLogs/${Uri.encodeComponent(kind)}/'
+      '${Uri.encodeComponent(name)}';
 }
 
 List<RouteBase> hubRoutes() => [
@@ -229,6 +235,19 @@ List<RouteBase> hubRoutes() => [
     parentNavigatorKey: rootNavigatorKey,
     pageBuilder: (context, state) =>
         androidDefaultPage(state, const TroubleshootingLogsPage()),
+  ),
+  GoRoute(
+    path: '${HubPaths.troubleshootingLogs}/:kind/:name',
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) => androidDefaultPage(
+      state,
+      TroubleshootingLogContentPage(
+        kind:
+            TroubleshootLogKind.fromTag(state.pathParameters['kind']) ??
+            TroubleshootLogKind.runtime,
+        name: state.pathParameters['name'] ?? '',
+      ),
+    ),
   ),
   GoRoute(
     path: HubPaths.dataCleanup,

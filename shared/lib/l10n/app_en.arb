@@ -4216,6 +4216,13 @@
   "troubleshootLogsClearedAll": "Cleared {runtime} runtime logs and {crash} crash logs",
   "@troubleshootLogsClearedAll": {"placeholders": {"runtime": {"type": "int"}, "crash": {"type": "int"}}},
   "troubleshootLogsLogContent": "Log content",
+  "troubleshootLogsDetailInfo": "Log details",
+  "troubleshootLogsFileName": "File name",
+  "troubleshootLogsFileType": "Type",
+  "troubleshootLogsFileSize": "Size",
+  "troubleshootLogsModifiedAt": "Modified",
+  "troubleshootLogsViewContent": "View log content",
+  "troubleshootLogsViewContentBody": "Open the next page to read the full log",
   "troubleshootLogsEmptyContent": "Cannot read this log's content",
   "troubleshootLogsTruncated": "Content is too long; showing the beginning only",
   "troubleshootLogsFooter": "Logs stay on this device; check for sensitive information before sharing."
