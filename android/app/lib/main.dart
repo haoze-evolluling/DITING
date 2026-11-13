@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/app/debug_probe.dart';
 import 'package:diting_android/app/upgrade_resets.dart';
+import 'package:diting_android/data/native/runtime_events.dart';
 import 'package:diting_shared/data/db/datasets.dart';
 import 'package:diting_android/data/db/rule_bootstrap.dart';
 import 'package:diting_android/data/db/rule_providers.dart';
@@ -38,14 +40,20 @@ const _startupTrace = bool.fromEnvironment('DITING_STARTUP_TRACE');
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   installDebugProbe();
+  _installErrorHandlers();
   _capImageCache();
   final watch = Stopwatch()..start();
   var last = 0;
   void stage(String label) {
-    if (!_startupTrace) return;
-    debugPrint('startup $label +${watch.elapsedMilliseconds - last}ms');
-    last = watch.elapsedMilliseconds;
+    final now = watch.elapsedMilliseconds;
+    // Always recorded: the always-on black box is how a slow or failed startup is diagnosed
+    // afterwards, even in a release build where the opt-in trace below is compiled out.
+    RuntimeEvents.startup(label, now - last);
+    last = now;
+    if (_startupTrace) debugPrint('startup $label +${now}ms');
   }
+
+  RuntimeEvents.startup('begin', 0);
 
   // The two loads share the wait; the rules bootstrap needs both results, so it stays last.
   final storeTask = loadLegacyPrefsStore();
@@ -119,9 +127,37 @@ Future<void> main() async {
       ),
     ],
   );
+  // First frame: the milestone a user actually feels. Reported from the post-frame callback so it
+  // includes layout/paint, not just the synchronous `runApp` call.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    RuntimeEvents.startup('first_frame', watch.elapsedMilliseconds);
+  });
   runApp(
     UncontrolledProviderScope(container: container, child: const DitingApp()),
   );
+  stage('runApp');
+}
+
+/// Aggregates the two Dart error paths into the always-on black box.
+///
+/// `FlutterError.onError` covers widget/build/frame errors; `PlatformDispatcher.onError` covers an
+/// uncaught asynchronous exception that would otherwise only reach the console. Installed after
+/// [installDebugProbe] so the debug presenter still runs (the previous handler is chained).
+void _installErrorHandlers() {
+  final previousFlutterError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    RuntimeEvents.error('flutter', details.exceptionAsString());
+    if (previousFlutterError != null) {
+      previousFlutterError(details);
+    } else {
+      FlutterError.presentError(details);
+    }
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    RuntimeEvents.error('dart', error, stack: stack);
+    // false keeps the default reporting (a console line) instead of silently swallowing it.
+    return false;
+  };
 }
 
 /// Default `ImageCache` is 100 MB / 1000 images. This app paints a full-screen wallpaper plus a

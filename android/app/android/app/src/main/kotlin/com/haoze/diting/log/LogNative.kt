@@ -75,10 +75,14 @@ internal class LogNative private constructor() {
 
     external fun storeIndex(packed: ByteArray): ByteArray?
     external fun storeDocument(packed: ByteArray): ByteArray?
-    external fun capturePlan(pid: Int): ByteArray?
+    external fun capturePlan(pid: Int, uid: Int, detailed: Int): ByteArray?
     external fun captureSessionNew(): Long
     external fun captureSessionFree(handle: Long)
     external fun captureLine(handle: Long, packed: ByteArray): ByteArray?
+    external fun runtimeEventNew(minLevelTag: Int, dedupWindowMs: Long): Long
+    external fun runtimeEventFree(handle: Long)
+    external fun runtimeEventSetLevel(handle: Long, minLevelTag: Int)
+    external fun runtimeEventLine(handle: Long, packed: ByteArray, nowMs: Long): ByteArray?
     external fun mirrorLayout(): ByteArray?
     external fun mirrorRows(packed: ByteArray): ByteArray?
 
@@ -486,10 +490,11 @@ internal class LogNative private constructor() {
             return if (reader.u8() == 1) reader.string() else null
         }
 
-        /// The `logcat` attempts and the watchdog cadence for a capture of `pid`.
-        fun capturePlan(pid: Int): LogCapturePlan {
+        /// The `logcat` attempts and the watchdog cadence for a capture of `pid`/`uid`; detailed
+        /// mode asks for the single `-b all` reader.
+        fun capturePlan(pid: Int, uid: Int, detailed: Boolean): LogCapturePlan {
             val reader = LogPayload.Reader(
-                requireNotNull(instance.capturePlan(pid)) {
+                requireNotNull(instance.capturePlan(pid, uid, if (detailed) 1 else 0)) {
                     "native log capture rejected the plan request"
                 },
             )
@@ -514,6 +519,46 @@ internal class LogNative private constructor() {
                 },
             )
             return LogCaptureLine(written = reader.i64(), rotate = reader.u8() == 1)
+        }
+
+        /// Opens the runtime-event gate (minimum level plus the de-duplication window).
+        fun runtimeEventNew(minLevelTag: Int, dedupWindowMs: Long): Long =
+            requireHandle(instance.runtimeEventNew(minLevelTag, dedupWindowMs), "runtime event gate")
+
+        fun runtimeEventFree(handle: Long) = instance.runtimeEventFree(handle)
+
+        fun runtimeEventSetLevel(handle: Long, minLevelTag: Int) =
+            instance.runtimeEventSetLevel(handle, minLevelTag)
+
+        /// Formats one event through the kernel's level/dedup gate; `wrote == false` means the
+        /// writer must not append anything.
+        fun runtimeEventLine(
+            handle: Long,
+            timeText: String,
+            levelTag: Int,
+            module: String,
+            code: String,
+            fields: List<Pair<String, String>>,
+            nowMs: Long,
+        ): LogRuntimeEventLine {
+            val packed = LogPayload.pack { out ->
+                LogPayload.writeString(out, timeText)
+                out.writeByte(levelTag)
+                LogPayload.writeString(out, module)
+                LogPayload.writeString(out, code)
+                out.writeInt(fields.size)
+                for ((key, value) in fields) {
+                    LogPayload.writeString(out, key)
+                    LogPayload.writeString(out, value)
+                }
+            }
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.runtimeEventLine(handle, packed, nowMs)) {
+                    "native runtime event rejected the call"
+                },
+            )
+            val wrote = reader.u8() == 1
+            return LogRuntimeEventLine(wrote = wrote, line = reader.string())
         }
 
         /// How much of the engine's cache is projected, and how often.

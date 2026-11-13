@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.Process
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -44,6 +45,10 @@ class RuntimeLogService : Service() {
     @Volatile
     private var targetPid = 0
 
+    /// Standard (`--uid`) or detailed (`-b all`) capture.
+    @Volatile
+    private var detailed = false
+
     /// Set by the watchdog once the followed process disappears.
     @Volatile
     private var targetGone = false
@@ -66,6 +71,7 @@ class RuntimeLogService : Service() {
         }
         promoteToForeground()
         val pid = intent?.getIntExtra(EXTRA_TARGET_PID, 0) ?: 0
+        detailed = intent?.getBooleanExtra(EXTRA_DETAILED, false) ?: false
         RuntimeLogStore.markCapturing(this, true)
         if (capturing && pid == targetPid) {
             Log.i(TAG, "capture already running; ignoring duplicate start")
@@ -88,7 +94,7 @@ class RuntimeLogService : Service() {
     /// the read, so one long session never unbounded-grows a single file.
     private fun captureLoop(token: Long, pid: Int) {
         // The command attempts and the byte budget are the kernel's; the pid does not change here.
-        val plan = LogNative.capturePlan(pid)
+        val plan = LogNative.capturePlan(pid, Process.myUid(), detailed)
         while (capturing && generation.get() == token) {
             val file = RuntimeLogStore.newFile(this)
             RuntimeLogStore.trim(this)
@@ -268,13 +274,15 @@ class RuntimeLogService : Service() {
         private const val NOTIFICATION_ID = 2003
         private const val ACTION_STOP = "com.haoze.diting.action.STOP_RUNTIME_LOG"
         private const val EXTRA_TARGET_PID = "target_pid"
+        private const val EXTRA_DETAILED = "detailed"
 
         /// Starts (or re-arms) the capture for [targetPid]: the app's main process, which is the one
         /// whose logs the developer needs.
-        fun start(context: Context, targetPid: Int) {
+        fun start(context: Context, targetPid: Int, detailed: Boolean = false) {
             RuntimeLogStore.markCapturing(context, true)
             val intent = Intent(context, RuntimeLogService::class.java)
                 .putExtra(EXTRA_TARGET_PID, targetPid)
+                .putExtra(EXTRA_DETAILED, detailed)
             runCatching { ContextCompat.startForegroundService(context, intent) }
                 .onFailure {
                     RuntimeLogStore.markCapturing(context, false)

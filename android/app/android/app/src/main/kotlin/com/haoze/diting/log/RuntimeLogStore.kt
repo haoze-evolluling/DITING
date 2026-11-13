@@ -64,13 +64,21 @@ object RuntimeLogStore {
 
     /// Everything recorded so far, oldest first, with a header the developer can read.
     ///
-    /// The crash buffer is appended even when no file exists: a capture cannot record the death of
-    /// its own process, so the one crash worth having is only readable afterwards.
+    /// An environment header, the structured event black box and the system crash buffer are
+    /// included even when no capture file exists: a capture cannot record the death of its own
+    /// process, and the structured events are always on, so the crash and the startup/service
+    /// events worth having are readable afterwards. The crash tail is filtered to this package, so
+    /// another app's tombstone never leaks in.
     fun read(context: Context): String {
+        val sections = ArrayList<LogStoreSection>()
+        sections.add(LogStoreSection("环境信息", RuntimeEventLog.environmentSnapshot(context)))
         // Oldest first, so the export reads chronologically.
-        val sections = index(context).files.asReversed().map { entry ->
+        index(context).files.asReversed().forEach { entry ->
             val file = File(dir(context), entry.name)
-            LogStoreSection(entry.name, runCatching { file.readText() }.getOrNull())
+            sections.add(LogStoreSection(entry.name, runCatching { file.readText() }.getOrNull()))
+        }
+        RuntimeEventLog.files(context).forEach { file ->
+            sections.add(LogStoreSection("运行事件/${file.name}", runCatching { file.readText() }.getOrNull()))
         }
         return LogNative.storeDocument(
             sections = sections,
@@ -82,6 +90,9 @@ object RuntimeLogStore {
     fun clear(context: Context): Int {
         var removed = 0
         files(context).forEach { file -> if (runCatching { file.delete() }.getOrDefault(false)) removed++ }
+        // The always-on event black box is the other half of "运行日志", so clearing here clears it
+        // too; otherwise the troubleshooting page would keep showing events after a clear.
+        removed += RuntimeEventLog.clear(context)
         return removed
     }
 

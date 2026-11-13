@@ -12,26 +12,50 @@ use crate::store::MAX_FILE_BYTES;
 /// How often the watchdog checks whether the followed process still exists.
 pub const WATCH_INTERVAL_MS: i64 = 1_000;
 
-/// `--pid` keeps the capture to this app: less noise for the developer and a lower cost for the
-/// user, which is what the confirmation dialog promises.
-pub fn commands(pid: i32) -> Vec<Vec<String>> {
-    let mut attempts: Vec<Vec<String>> = Vec::with_capacity(2);
-    if pid > 0 {
-        attempts.push(
-            ["logcat", "-v", "time", "--pid", &pid.to_string()]
-                .iter()
-                .map(|part| (*part).to_string())
-                .collect(),
-        );
+/// One `logcat` attempt: the argv the service runs, in order, until one starts.
+pub type Attempt = Vec<String>;
+
+fn argv(parts: &[&str]) -> Vec<String> {
+    parts.iter().map(|part| (*part).to_string()).collect()
+}
+
+/// The `logcat` attempts for one capture, most useful first.
+///
+/// * `--uid <uid>` - every process the app owns, and (because `--uid` filters every default
+///   buffer) the app's own `main`/`system`/`crash` lines. This is what replaces `--pid`: a
+///   `--pid` reader can never see the system-side `am_anr` / `am_kill` / `am_proc_died` lines,
+///   which is exactly where a silent "service stopped" shows up.
+/// * `--pid <pid>` - the fallback for devices that reject `--uid`.
+/// * unfiltered `logcat` - the last resort; a noisy capture beats none.
+/// * detailed mode - one `-b all` reader for deep debugging (every buffer, every process).
+///
+/// The crash and `events` buffers are also read once at export by
+/// `RuntimeLogStore.read`, filtered to this package, so another app's tombstone never reaches
+/// this app's file and a crash that happened before capture started is still visible.
+pub fn attempts(pid: i32, uid: i32, detailed: bool) -> Vec<Attempt> {
+    if detailed {
+        return vec![argv(&["logcat", "-v", "time", "-b", "all"])];
     }
-    // The unfiltered fallback: some devices refuse `--pid`, and a noisy capture beats none.
-    attempts.push(
-        ["logcat", "-v", "time"]
-            .iter()
-            .map(|part| (*part).to_string())
-            .collect(),
-    );
-    attempts
+    let mut out: Vec<Attempt> = Vec::with_capacity(3);
+    if uid > 0 {
+        out.push(vec![
+            "logcat".to_string(),
+            "-v".to_string(),
+            "time".to_string(),
+            "--uid".to_string(),
+            uid.to_string(),
+        ]);
+    } else if pid > 0 {
+        out.push(vec![
+            "logcat".to_string(),
+            "-v".to_string(),
+            "time".to_string(),
+            "--pid".to_string(),
+            pid.to_string(),
+        ]);
+    }
+    out.push(argv(&["logcat", "-v", "time"]));
+    out
 }
 
 /// What one appended line did to the budget.
@@ -97,27 +121,39 @@ impl Session {
 mod tests {
     use super::*;
 
+    fn args(parts: &[&str]) -> Vec<String> {
+        parts.iter().map(|part| (*part).to_string()).collect()
+    }
+
     #[test]
-    fn the_pid_filter_comes_first_with_an_unfiltered_fallback() {
+    fn the_uid_filter_comes_first_then_the_unfiltered_fallback() {
+        let attempts = attempts(4242, 10123, false);
+        assert_eq!(attempts.len(), 2);
         assert_eq!(
-            commands(4242),
-            vec![
-                vec!["logcat", "-v", "time", "--pid", "4242"],
-                vec!["logcat", "-v", "time"],
-            ]
-            .into_iter()
-            .map(|attempt| attempt.into_iter().map(str::to_string).collect::<Vec<_>>())
-            .collect::<Vec<_>>()
+            attempts[0],
+            args(&["logcat", "-v", "time", "--uid", "10123"])
         );
-        // Without a pid there is nothing to filter on.
-        assert_eq!(
-            commands(0),
-            vec![vec!["logcat", "-v", "time"]]
-                .into_iter()
-                .map(|attempt| attempt.into_iter().map(str::to_string).collect::<Vec<_>>())
-                .collect::<Vec<_>>()
-        );
-        assert_eq!(commands(-1).len(), 1);
+        assert_eq!(attempts[1], args(&["logcat", "-v", "time"]));
+    }
+
+    #[test]
+    fn an_unknown_uid_falls_back_to_the_pid_and_then_unfiltered() {
+        let got = attempts(4242, 0, false);
+        assert_eq!(got.len(), 2);
+        assert_eq!(got[0], args(&["logcat", "-v", "time", "--pid", "4242"]));
+        assert_eq!(got[1], args(&["logcat", "-v", "time"]));
+
+        // No pid and no uid: only the unfiltered reader is left.
+        let none = attempts(0, -1, false);
+        assert_eq!(none.len(), 1);
+        assert_eq!(none[0], args(&["logcat", "-v", "time"]));
+    }
+
+    #[test]
+    fn detailed_mode_is_a_single_all_buffer_reader() {
+        let attempts = attempts(4242, 10123, true);
+        assert_eq!(attempts.len(), 1);
+        assert_eq!(attempts[0], args(&["logcat", "-v", "time", "-b", "all"]));
     }
 
     #[test]

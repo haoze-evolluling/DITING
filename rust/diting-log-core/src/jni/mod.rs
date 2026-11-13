@@ -49,6 +49,22 @@ pub(super) unsafe fn with_handle<T, R>(handle: jlong, run: impl FnOnce(&T) -> R)
     Some(run(&*(handle as *const T)))
 }
 
+/// Mutable variant for the stateful gates (`EventGate`).
+///
+/// # Safety
+///
+/// The handle must come from the matching `*_new` and must not have been freed; the caller owns it
+/// exclusively for the duration of the call (Kotlin holds one gate per process).
+pub(super) unsafe fn with_handle_mut<T, R>(
+    handle: jlong,
+    run: impl FnOnce(&mut T) -> R,
+) -> Option<R> {
+    if handle == 0 {
+        return None;
+    }
+    Some(run(&mut *(handle as *mut T)))
+}
+
 fn answer_bytes(env: &JNIEnv<'_>, value: Option<Vec<u8>>) -> jbyteArray {
     match value.and_then(|bytes| env.byte_array_from_slice(&bytes).ok()) {
         Some(array) => array.into_raw(),

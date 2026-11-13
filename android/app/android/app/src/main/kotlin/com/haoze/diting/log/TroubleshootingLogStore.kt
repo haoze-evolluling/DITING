@@ -26,7 +26,7 @@ internal object TroubleshootingLogStore {
 
     /// Both kinds in one newest-first timeline, so the page can merge them directly.
     fun list(context: Context): List<TroubleshootLogFile> {
-        val runtime = RuntimeLogStore.files(context).map {
+        val runtime = (RuntimeLogStore.files(context) + RuntimeEventLog.files(context)).map {
             TroubleshootLogFile(KIND_RUNTIME, it.name, it)
         }
         val crash = crashDirs(context).flatMap { dir ->
@@ -57,7 +57,7 @@ internal object TroubleshootingLogStore {
             return null
         }
         val dirs = when (kind) {
-            KIND_RUNTIME -> listOf(RuntimeLogStore.dir(context))
+            KIND_RUNTIME -> listOf(RuntimeLogStore.dir(context), RuntimeEventLog.dir(context))
             KIND_CRASH -> crashDirs(context)
             else -> return null
         }

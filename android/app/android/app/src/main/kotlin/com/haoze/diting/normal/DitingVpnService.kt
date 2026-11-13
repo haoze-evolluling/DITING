@@ -22,6 +22,7 @@ import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.EngineLogCallbacks
 import com.haoze.diting.log.EngineStats
+import com.haoze.diting.log.RuntimeEventLog
 import com.haoze.diting.log.LogRetention
 import com.haoze.diting.log.PackageUids
 import com.haoze.diting.log.RequestStats
@@ -75,6 +76,7 @@ class DitingVpnService : VpnService() {
 
     override fun onCreate() {
         super.onCreate()
+        RuntimeEventLog.info("vpn", "service.create")
         createNotificationChannel()
     }
 
@@ -93,6 +95,7 @@ class DitingVpnService : VpnService() {
         val dnsConfig = intent?.getStringExtra(EXTRA_DNS_CONFIG)
         if (dnsConfig.isNullOrBlank()) {
             Log.w(TAG, "start intent without DNS config")
+            RuntimeEventLog.warn("vpn", "start.no_config")
             stopTunnel()
             return START_NOT_STICKY
         }
@@ -162,6 +165,7 @@ class DitingVpnService : VpnService() {
             Engine()
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to load the engine", t)
+            RuntimeEventLog.error("vpn", "engine.load_fail", "error" to (t.message ?: t.javaClass.simpleName))
             releaseResources()
             fail("引擎加载失败：${t.message ?: t.javaClass.simpleName}")
             return
@@ -243,6 +247,7 @@ class DitingVpnService : VpnService() {
             }
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to configure the engine", t)
+            RuntimeEventLog.error("vpn", "engine.config_fail", "error" to (t.message ?: t.javaClass.simpleName))
             releaseResources()
             fail("隧道配置失败：${t.message ?: t.javaClass.simpleName}")
             return
@@ -271,6 +276,7 @@ class DitingVpnService : VpnService() {
                     EngineRuleLoader.apply(this, rustEngine, RuleDataset.NORMAL, TAG)
                 } catch (t: Throwable) {
                     Log.e(TAG, "Unable to build rule snapshot", t)
+            RuntimeEventLog.error("vpn", "rule.snapshot_fail", "error" to (t.message ?: t.javaClass.simpleName))
                     if (!stopping) {
                         fail("规则加载失败：${t.message ?: t.javaClass.simpleName}")
                         return@Thread
@@ -287,6 +293,7 @@ class DitingVpnService : VpnService() {
                 Log.i(TAG, "tunnel exited")
             } catch (t: Throwable) {
                 Log.e(TAG, "tunnel crashed", t)
+            RuntimeEventLog.error("vpn", "tunnel.crashed", "error" to (t.message ?: t.javaClass.simpleName))
                 if (!stopping) {
                     fail("隧道运行异常：${t.message ?: t.javaClass.simpleName}")
                 }
@@ -309,6 +316,7 @@ class DitingVpnService : VpnService() {
                 Log.i(TAG, "rule snapshot hot-reloaded")
             } catch (t: Throwable) {
                 Log.e(TAG, "rule hot-reload failed; keeping previous rules", t)
+            RuntimeEventLog.warn("vpn", "rule.reload_fail", "error" to (t.message ?: t.javaClass.simpleName))
             }
         }, "diting-rule-reload").start()
     }
@@ -401,6 +409,7 @@ class DitingVpnService : VpnService() {
     }
 
     private fun fail(message: String) {
+        RuntimeEventLog.error("vpn", "tunnel.fail", "message" to message)
         lastError = message
         isRunning = false
         startedAt = 0L
@@ -413,6 +422,7 @@ class DitingVpnService : VpnService() {
     }
 
     override fun onRevoke() {
+        RuntimeEventLog.warn("vpn", "revoked")
         if (reclaimer.shouldFollow()) {
             // The service stays started and in the foreground so it is alive when the slot
             // frees up; the persisted flag keeps saying "the user wants this running".
@@ -429,6 +439,7 @@ class DitingVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        RuntimeEventLog.info("vpn", "service.destroy")
         reclaimer.cancel()
         if (engine != null || isRunning || dataPlane != null) {
             teardown()
@@ -453,6 +464,7 @@ class DitingVpnService : VpnService() {
         } catch (t: Throwable) {
             // Android 12+ requires foreground promotion inside onStartCommand; failing is a crash.
             Log.e(TAG, "startForeground failed", t)
+            RuntimeEventLog.error("vpn", "foreground.fail", "error" to (t.message ?: t.javaClass.simpleName))
         }
     }
 

@@ -23,6 +23,7 @@ import com.haoze.diting.log.BootstrapLogWriter
 import com.haoze.diting.log.DnsCacheMirror
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineStats
+import com.haoze.diting.log.RuntimeEventLog
 import com.haoze.diting.log.LogRetention
 import com.haoze.diting.log.RaceLogWriter
 import com.haoze.diting.log.RequestStats
@@ -64,6 +65,7 @@ class DitingDnsServerService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        RuntimeEventLog.info("dns", "service.create")
         createNotificationChannel()
     }
 
@@ -80,6 +82,7 @@ class DitingDnsServerService : Service() {
         val dnsConfig = intent?.getStringExtra(EXTRA_DNS_CONFIG)
         if (dnsConfig.isNullOrBlank()) {
             Log.w(TAG, "start intent without DNS config")
+            RuntimeEventLog.warn("dns", "start.no_config")
             stopEngine()
             return START_NOT_STICKY
         }
@@ -227,6 +230,7 @@ class DitingDnsServerService : Service() {
                 Log.i(TAG, "standalone DNS server listening on 0.0.0.0:$port (UDP & TCP)")
             } catch (t: Throwable) {
                 Log.e(TAG, "Unable to start standalone DNS server", t)
+            RuntimeEventLog.error("dns", "server.start_fail", "error" to (t.message ?: t.javaClass.simpleName))
                 if (generation.get() == token) {
                     fail("DNS 服务启动失败：${t.message ?: t.javaClass.simpleName}")
                 }
@@ -249,6 +253,7 @@ class DitingDnsServerService : Service() {
                 Log.i(TAG, "rule snapshot hot-reloaded")
             } catch (t: Throwable) {
                 Log.e(TAG, "rule hot-reload failed; keeping previous rules", t)
+            RuntimeEventLog.warn("dns", "rule.reload_fail", "error" to (t.message ?: t.javaClass.simpleName))
             }
         }, "diting-dns-rule-reload").start()
     }
@@ -291,6 +296,7 @@ class DitingDnsServerService : Service() {
     }
 
     private fun fail(message: String) {
+        RuntimeEventLog.error("dns", "server.fail", "message" to message)
         lastError = message
         isRunning = false
         startedAt = 0L
@@ -304,6 +310,7 @@ class DitingDnsServerService : Service() {
     }
 
     override fun onDestroy() {
+        RuntimeEventLog.info("dns", "service.destroy")
         generation.incrementAndGet()
         val current = engine
         engine = null
@@ -390,6 +397,7 @@ class DitingDnsServerService : Service() {
             }
         } catch (t: Throwable) {
             Log.e(TAG, "startForeground failed", t)
+            RuntimeEventLog.error("dns", "foreground.fail", "error" to (t.message ?: t.javaClass.simpleName))
         }
     }
 

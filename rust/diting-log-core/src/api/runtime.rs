@@ -7,6 +7,7 @@
 use crate::capture::{self, Session};
 use crate::mirror::{self, Entry as MirrorEntry};
 use crate::payload::{Reader, Writer};
+use crate::runtime_event::{Event, Gate, Level};
 use crate::store::{self, Entry, Section};
 
 /// `u32 count | rows(string name, i64 last_modified, i64 length)`.
@@ -76,11 +77,13 @@ pub fn store_document(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// The two constants the capture loop needs before it starts a `logcat`.
-pub fn capture_plan(pid: i32) -> Vec<u8> {
+/// The watchdog cadence and the `logcat` attempts a capture needs before it starts.
+///
+/// Answers `i64 watch | u32 count | rows(u32 argc, strings...)`.
+pub fn capture_plan(pid: i32, uid: i32, detailed: bool) -> Vec<u8> {
     let mut writer = Writer::new();
     writer.i64(capture::WATCH_INTERVAL_MS);
-    let attempts = capture::commands(pid);
+    let attempts = capture::attempts(pid, uid, detailed);
     writer.u32(attempts.len() as u32);
     for attempt in &attempts {
         writer.u32(attempt.len() as u32);
@@ -102,6 +105,45 @@ pub fn capture_line(session: &Session, payload: &[u8]) -> Option<Vec<u8>> {
     let mut writer = Writer::new();
     writer.i64(cost.written);
     writer.u8(if cost.rotate { 1 } else { 0 });
+    Some(writer.into_vec())
+}
+
+/// `string timeText | u8 levelTag | string module | string code | u32 fieldCount | rows(string key, string value)`.
+///
+/// Answers `u8 wrote | string line`: `line` is empty when the level filtered the event or the
+/// de-duplication window swallowed it, so the Kotlin writer only appends on `wrote == 1`.
+pub fn runtime_event_line(gate: &mut Gate, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let mut reader = Reader::new(payload);
+    let time_text = reader.string()?;
+    let level = Level::from_tag(reader.u8()?)?;
+    let module = reader.string()?;
+    let code = reader.string()?;
+    let count = reader.u32()? as usize;
+    let mut fields = Vec::with_capacity(count.min(64));
+    for _ in 0..count {
+        fields.push((reader.string()?, reader.string()?));
+    }
+    if !reader.finish() {
+        return None;
+    }
+    let event = Event {
+        time_text,
+        level,
+        module,
+        code,
+        fields,
+    };
+    let mut writer = Writer::new();
+    match gate.admit(&event, now_ms) {
+        None => {
+            writer.u8(0);
+            writer.string("");
+        }
+        Some(line) => {
+            writer.u8(1);
+            writer.string(&line);
+        }
+    }
     Some(writer.into_vec())
 }
 
@@ -230,13 +272,13 @@ mod tests {
     }
 
     #[test]
-    fn the_capture_plan_carries_the_commands_and_the_cadence() {
-        let plan = capture_plan(4242);
+    fn the_capture_plan_carries_the_attempts_and_the_cadence() {
+        let plan = capture_plan(4242, 10123, false);
         let mut reader = Reader::new(&plan);
         assert_eq!(reader.i64(), Some(1_000));
         assert_eq!(reader.u32(), Some(2));
         assert_eq!(reader.u32(), Some(5));
-        for expected in ["logcat", "-v", "time", "--pid", "4242"] {
+        for expected in ["logcat", "-v", "time", "--uid", "10123"] {
             assert_eq!(reader.string().as_deref(), Some(expected));
         }
         assert_eq!(reader.u32(), Some(3));
@@ -244,6 +286,66 @@ mod tests {
             assert_eq!(reader.string().as_deref(), Some(expected));
         }
         assert!(reader.finish());
+    }
+
+    fn event_payload(
+        time: &str,
+        level: u8,
+        module: &str,
+        code: &str,
+        fields: &[(&str, &str)],
+    ) -> Vec<u8> {
+        let mut writer = Writer::new();
+        writer.string(time);
+        writer.u8(level);
+        writer.string(module);
+        writer.string(code);
+        writer.u32(fields.len() as u32);
+        for (key, value) in fields {
+            writer.string(key);
+            writer.string(value);
+        }
+        writer.into_vec()
+    }
+
+    #[test]
+    fn the_event_gate_writes_a_line_and_the_answer_carries_it() {
+        let mut gate = Gate::new(Level::Info, 0);
+        let payload = event_payload(
+            "2026-01-02 03:04:05.000",
+            Level::Warn.tag(),
+            "service",
+            "engine.stop",
+            &[("reason", "user")],
+        );
+        let answer = runtime_event_line(&mut gate, &payload, 0).unwrap();
+        let mut reader = Reader::new(&answer);
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(
+            reader.string().as_deref(),
+            Some("2026-01-02 03:04:05.000 WARN service engine.stop reason=user")
+        );
+        assert!(reader.finish());
+    }
+
+    #[test]
+    fn a_filtered_event_answers_with_no_line() {
+        let mut gate = Gate::new(Level::Error, 0);
+        let payload = event_payload("t", Level::Info.tag(), "m", "c", &[]);
+        let answer = runtime_event_line(&mut gate, &payload, 0).unwrap();
+        let mut reader = Reader::new(&answer);
+        assert_eq!(reader.u8(), Some(0));
+        assert_eq!(reader.string().as_deref(), Some(""));
+        assert!(reader.finish());
+    }
+
+    #[test]
+    fn an_unknown_level_tag_is_drift() {
+        let mut gate = Gate::new(Level::Debug, 0);
+        assert_eq!(
+            runtime_event_line(&mut gate, &event_payload("t", 9, "m", "c", &[]), 0),
+            None
+        );
     }
 
     #[test]

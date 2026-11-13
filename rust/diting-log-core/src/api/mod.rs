@@ -18,7 +18,8 @@ pub mod state;
 pub use policy::{crash_select, retention_plan};
 pub use queue::{queue_requeue, queue_settings, queue_submit, queue_take};
 pub use runtime::{
-    capture_line, capture_plan, mirror_layout, mirror_rows, store_document, store_index,
+    capture_line, capture_plan, mirror_layout, mirror_rows, runtime_event_line, store_document,
+    store_index,
 };
 pub use state::{
     attr_package_lookup, attr_uid_lookup, attr_uid_store, health_dropped, health_snapshot,

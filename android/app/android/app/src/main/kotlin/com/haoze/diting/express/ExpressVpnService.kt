@@ -25,6 +25,7 @@ import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.EngineLogCallbacks
 import com.haoze.diting.log.EngineStats
+import com.haoze.diting.log.RuntimeEventLog
 import com.haoze.diting.log.LogRetention
 import com.haoze.diting.log.RequestStats
 import com.haoze.diting.normal.SpeedTicker
@@ -81,6 +82,7 @@ class ExpressVpnService : VpnService() {
 
     override fun onCreate() {
         super.onCreate()
+        RuntimeEventLog.info("express", "service.create")
         createNotificationChannel()
     }
 
@@ -99,6 +101,7 @@ class ExpressVpnService : VpnService() {
         val dnsConfig = intent?.getStringExtra(EXTRA_DNS_CONFIG)
         if (dnsConfig.isNullOrBlank()) {
             Log.w(TAG, "start intent without DNS config")
+            RuntimeEventLog.warn("express", "start.no_config")
             stopTunnel()
             return START_NOT_STICKY
         }
@@ -171,6 +174,7 @@ class ExpressVpnService : VpnService() {
             Engine()
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to load the engine", t)
+            RuntimeEventLog.error("express", "engine.load_fail", "error" to (t.message ?: t.javaClass.simpleName))
             releaseResources()
             fail("引擎加载失败：${t.message ?: t.javaClass.simpleName}")
             return
@@ -215,6 +219,7 @@ class ExpressVpnService : VpnService() {
             plane.attachCacheMirror(rustEngine)
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to configure the engine", t)
+            RuntimeEventLog.error("express", "engine.config_fail", "error" to (t.message ?: t.javaClass.simpleName))
             releaseResources()
             fail("极速模式配置失败：${t.message ?: t.javaClass.simpleName}")
             return
@@ -241,6 +246,7 @@ class ExpressVpnService : VpnService() {
                     EngineRuleLoader.apply(this, rustEngine, RuleDataset.EXPRESS, TAG)
                 } catch (t: Throwable) {
                     Log.e(TAG, "Unable to build rule snapshot", t)
+            RuntimeEventLog.error("express", "rule.snapshot_fail", "error" to (t.message ?: t.javaClass.simpleName))
                     if (!stopping) {
                         fail("规则加载失败：${t.message ?: t.javaClass.simpleName}")
                         return@Thread
@@ -258,6 +264,7 @@ class ExpressVpnService : VpnService() {
                 Log.i(TAG, "express tunnel exited")
             } catch (t: Throwable) {
                 Log.e(TAG, "express tunnel crashed", t)
+            RuntimeEventLog.error("express", "tunnel.crashed", "error" to (t.message ?: t.javaClass.simpleName))
                 if (!stopping) {
                     fail("极速模式运行异常：${t.message ?: t.javaClass.simpleName}")
                 }
@@ -280,6 +287,7 @@ class ExpressVpnService : VpnService() {
                 Log.i(TAG, "rule snapshot hot-reloaded")
             } catch (t: Throwable) {
                 Log.e(TAG, "rule hot-reload failed; keeping previous rules", t)
+            RuntimeEventLog.warn("express", "rule.reload_fail", "error" to (t.message ?: t.javaClass.simpleName))
             }
         }, "diting-rule-reload").start()
     }
@@ -363,6 +371,7 @@ class ExpressVpnService : VpnService() {
     }
 
     private fun fail(message: String) {
+        RuntimeEventLog.error("express", "tunnel.fail", "message" to message)
         lastError = message
         isRunning = false
         startedAt = 0L
@@ -375,6 +384,7 @@ class ExpressVpnService : VpnService() {
     }
 
     override fun onRevoke() {
+        RuntimeEventLog.warn("express", "revoked")
         if (reclaimer.shouldFollow()) {
             // Stays started and in the foreground until the slot frees up; the persisted flag
             // keeps saying "the user wants this running".
@@ -391,6 +401,7 @@ class ExpressVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        RuntimeEventLog.info("express", "service.destroy")
         reclaimer.cancel()
         if (engine != null || isRunning || dataPlane != null) {
             teardown()
@@ -414,6 +425,7 @@ class ExpressVpnService : VpnService() {
             }
         } catch (t: Throwable) {
             Log.e(TAG, "startForeground failed", t)
+            RuntimeEventLog.error("express", "foreground.fail", "error" to (t.message ?: t.javaClass.simpleName))
         }
     }
 

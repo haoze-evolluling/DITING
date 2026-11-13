@@ -80,6 +80,10 @@ internal data class LogCapturePlan(val watchIntervalMs: Long, val attempts: List
 /// What one captured line did to the current file's budget.
 internal data class LogCaptureLine(val written: Long, val rotate: Boolean)
 
+/// One structured runtime event after the kernel's level/dedup gate: `wrote` is false when it was
+/// filtered or swallowed as a repeat, and `line` is then empty.
+internal data class LogRuntimeEventLine(val wrote: Boolean, val line: String)
+
 /// The projection's caps and cadence.
 internal data class LogMirrorLayout(val maxRows: Long, val initialDelayMs: Long, val intervalMs: Long)
 
