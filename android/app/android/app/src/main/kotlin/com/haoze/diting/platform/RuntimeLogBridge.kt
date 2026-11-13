@@ -133,7 +133,9 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
     private fun shareText(call: MethodCall): Boolean = runCatching {
         val text = call.argument<String>("text") ?: return false
         val name = call.argument<String>("name")?.takeIf { it.isNotBlank() } ?: "runtime-events.txt"
-        val dir = File(context.cacheDir, "runtime-share").apply { mkdirs() }
+        // Must live under a cache dir the FileProvider already maps (`troubleshooting-share/` in
+        // res/xml/file_paths.xml); an unmapped path makes getUriForFile throw and the export fail.
+        val dir = File(context.cacheDir, "troubleshooting-share").apply { mkdirs() }
         val file = File(dir, name).apply { writeText(text) }
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
         val intent = Intent(Intent.ACTION_SEND).apply {
