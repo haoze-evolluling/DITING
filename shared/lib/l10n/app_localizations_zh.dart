@@ -13442,6 +13442,15 @@ class AppL10nZh extends AppL10n {
   String get troubleshootEventsExport => '导出当前筛选';
 
   @override
+  String get troubleshootEventsStatTotal => '事件总数';
+
+  @override
+  String get troubleshootEventsStatError => '错误';
+
+  @override
+  String get troubleshootEventsNoMatch => '没有符合筛选条件的事件';
+
+  @override
   String get troubleshootEventsLevel => '级别';
 
   @override

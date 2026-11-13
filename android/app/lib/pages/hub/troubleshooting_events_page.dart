@@ -6,6 +6,8 @@ library;
 import 'package:diting_android/data/native/runtime_event.dart';
 import 'package:diting_android/state/runtime_event_providers.dart';
 import 'package:diting_android/state/runtime_log_providers.dart';
+import 'package:diting_android/widgets/chip_row.dart';
+import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -65,12 +67,19 @@ class _TroubleshootingEventsPageState
     final summary = RuntimeEventSummary(events);
     final modules = (<String>{for (final event in events) event.module}.toList()
       ..sort());
-    final filtered = events.where((event) {
-      if (_level == _LevelFilter.warnPlus && !event.isWarnOrAbove) return false;
-      if (_level == _LevelFilter.errorOnly && !event.isError) return false;
-      if (_module != null && event.module != _module) return false;
-      return true;
-    }).toList(growable: false);
+    final filtered = events
+        .where((event) {
+          if (_level == _LevelFilter.warnPlus && !event.isWarnOrAbove) {
+            return false;
+          }
+          if (_level == _LevelFilter.errorOnly && !event.isError) return false;
+          if (_module != null && event.module != _module) return false;
+          return true;
+        })
+        .toList(growable: false);
+    final rows = [
+      for (final event in filtered.reversed) _EventRow(event: event),
+    ];
 
     return CommonScaffold(
       title: l10n.troubleshootEventsTitle,
@@ -83,9 +92,7 @@ class _TroubleshootingEventsPageState
         CommonPopupMenuItem(
           label: l10n.troubleshootEventsExport,
           glyph: AppGlyphs.send,
-          onPressed: filtered.isEmpty || _busy
-              ? null
-              : () => _export(filtered),
+          onPressed: filtered.isEmpty || _busy ? null : () => _export(filtered),
         ),
       ],
       body: NullStatusSwitcher(
@@ -102,59 +109,78 @@ class _TroubleshootingEventsPageState
         ),
         child: PageBody(
           children: [
-            if (summary.hasAnomaly)
-              CommonCard(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  spacing: 10,
-                  children: [
-                    GlyphIcon(
-                      AppGlyphs.logs,
-                      size: 20,
-                      color: colorScheme.error,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: CommonCard(
+                child: StatStrip(
+                  stats: [
+                    StatItem(
+                      label: l10n.troubleshootEventsStatTotal,
+                      value: '${summary.count}',
                     ),
-                    Expanded(
-                      child: Text(
-                        l10n.troubleshootEventsAnomaly(summary.anomalyCount),
-                        style: AppTextStyle.footnote.of(context).copyWith(
-                          color: colorScheme.error,
-                        ),
-                      ),
+                    StatItem(
+                      label: l10n.troubleshootEventsWarnPlus,
+                      value: '${summary.warnOrAbove}',
+                      color: colorScheme.warning,
+                    ),
+                    StatItem(
+                      label: l10n.troubleshootEventsStatError,
+                      value: '${summary.errors}',
+                      color: colorScheme.error,
                     ),
                   ],
                 ),
               ),
-            _FilterRow(
-              label: l10n.troubleshootEventsLevel,
-              choices: [
-                MapEntry(l10n.troubleshootEventsAll, _LevelFilter.all),
-                MapEntry(l10n.troubleshootEventsWarnPlus, _LevelFilter.warnPlus),
-                MapEntry(l10n.troubleshootEventsErrorOnly, _LevelFilter.errorOnly),
-              ],
-              selected: _level,
-              onSelected: (value) => setState(() => _level = value),
             ),
-            if (modules.length > 1)
-              _FilterRow<String?>(
-                label: l10n.troubleshootEventsModule,
-                choices: [
-                  MapEntry<String, String?>(
-                    l10n.troubleshootEventsModuleAll,
-                    null,
-                  ),
-                  for (final module in modules)
-                    MapEntry<String, String?>(module, module),
-                ],
-                selected: _module,
-                onSelected: (value) => setState(() => _module = value),
+            if (summary.hasAnomaly)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: InlineNotice(
+                  message: l10n.troubleshootEventsAnomaly(summary.anomalyCount),
+                  glyph: AppGlyphs.warning,
+                  color: colorScheme.errorContainer,
+                  foregroundColor: colorScheme.onErrorContainer,
+                ),
               ),
-            generateSection(
-              title: l10n.troubleshootEventsTitle,
-              items: [
-                for (final event in filtered.reversed) _EventRow(event: event),
+            _FilterPanel(
+              levelLabel: l10n.troubleshootEventsLevel,
+              levelChoices: [
+                MapEntry(l10n.troubleshootEventsAll, _LevelFilter.all),
+                MapEntry(
+                  l10n.troubleshootEventsWarnPlus,
+                  _LevelFilter.warnPlus,
+                ),
+                MapEntry(
+                  l10n.troubleshootEventsErrorOnly,
+                  _LevelFilter.errorOnly,
+                ),
               ],
-              footer: l10n.troubleshootEventsCount(filtered.length),
+              level: _level,
+              onLevel: (value) => setState(() => _level = value),
+              moduleLabel: l10n.troubleshootEventsModule,
+              moduleChoices: modules.length > 1
+                  ? [
+                      MapEntry<String, String?>(
+                        l10n.troubleshootEventsModuleAll,
+                        null,
+                      ),
+                      for (final module in modules)
+                        MapEntry<String, String?>(module, module),
+                    ]
+                  : null,
+              module: _module,
+              onModule: (value) => setState(() => _module = value),
             ),
+            if (rows.isEmpty) ...[
+              ListHeader(title: l10n.troubleshootEventsRecentTitle),
+              _NoMatch(message: l10n.troubleshootEventsNoMatch),
+              ListFooter(text: l10n.troubleshootEventsCount(0)),
+            ] else
+              generateSection(
+                title: l10n.troubleshootEventsRecentTitle,
+                items: rows,
+                footer: l10n.troubleshootEventsCount(filtered.length),
+              ),
             const SizedBox(height: 24),
           ],
         ),
@@ -163,34 +189,113 @@ class _TroubleshootingEventsPageState
   }
 }
 
-class _FilterRow<T> extends StatelessWidget {
-  const _FilterRow({
-    required this.label,
-    required this.choices,
-    required this.selected,
-    required this.onSelected,
+/// The two chip filters. A caption over each row keeps the page's grouped look while the app-wide
+/// [FilterPill] replaces the Material `ChoiceChip` used nowhere else.
+class _FilterPanel extends StatelessWidget {
+  const _FilterPanel({
+    required this.levelLabel,
+    required this.levelChoices,
+    required this.level,
+    required this.onLevel,
+    required this.moduleLabel,
+    required this.moduleChoices,
+    required this.module,
+    required this.onModule,
   });
 
-  final String label;
-  final List<MapEntry<String, T>> choices;
-  final T selected;
-  final ValueChanged<T> onSelected;
+  final String levelLabel;
+  final List<MapEntry<String, _LevelFilter>> levelChoices;
+  final _LevelFilter level;
+  final ValueChanged<_LevelFilter> onLevel;
+
+  final String moduleLabel;
+
+  /// `null` when the timeline only has one module, so the second row is hidden.
+  final List<MapEntry<String, String?>>? moduleChoices;
+  final String? module;
+  final ValueChanged<String?> onModule;
 
   @override
   Widget build(BuildContext context) {
-    return SectionBlock(
-      title: label,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+    final moduleChoices = this.moduleChoices;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _FilterCaption(levelLabel),
+          const SizedBox(height: 8),
+          ChipRow(
+            children: [
+              for (final choice in levelChoices)
+                FilterPill(
+                  label: choice.key,
+                  selected: choice.value == level,
+                  onPressed: choice.value == level
+                      ? null
+                      : () => onLevel(choice.value),
+                ),
+            ],
+          ),
+          if (moduleChoices != null) ...[
+            const SizedBox(height: 16),
+            _FilterCaption(moduleLabel),
+            const SizedBox(height: 8),
+            ChipRow(
+              children: [
+                for (final choice in moduleChoices)
+                  FilterPill(
+                    label: choice.key,
+                    selected: choice.value == module,
+                    onPressed: choice.value == module
+                        ? null
+                        : () => onModule(choice.value),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterCaption extends StatelessWidget {
+  const _FilterCaption(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: context.listCaptionStyle.copyWith(fontWeight: FontWeight.w600),
+    );
+  }
+}
+
+/// Shown when the filters hide every event: a quiet card rather than a blank stretch of page.
+class _NoMatch extends StatelessWidget {
+  const _NoMatch({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: CommonCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           spacing: 8,
           children: [
-            for (final choice in choices)
-              ChoiceChip(
-                label: Text(choice.key),
-                selected: choice.value == selected,
-                onSelected: (_) => onSelected(choice.value),
-              ),
+            GlyphIcon(
+              AppGlyphs.filter,
+              size: 18,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            Flexible(child: Text(message, style: context.listSubtitleStyle)),
           ],
         ),
       ),
@@ -206,16 +311,26 @@ class _EventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final color = event.isError
-        ? colorScheme.error
-        : event.levelTag >= 2
-        ? colorScheme.warning
-        : colorScheme.onSurfaceVariant;
+    // The leading glyph mirrors severity; the time column drops the milliseconds the log line
+    // carries but a timeline reader never needs.
+    final (glyph, color) = event.isError
+        ? (AppGlyphs.error, colorScheme.error)
+        : event.isWarnOrAbove
+        ? (AppGlyphs.warning, colorScheme.warning)
+        : (AppGlyphs.info, colorScheme.onSurfaceVariant);
+    final timeText = event.timeText.length >= 19
+        ? event.timeText.substring(11, 19)
+        : event.timeText;
     return ListItem(
-      leading: GlyphIcon(AppGlyphs.logs, size: 18, color: color),
+      leading: GlyphIcon(glyph, size: 18, color: color),
       title: Text(
         '${event.levelName} · ${event.module}',
-        style: AppTextStyle.footnote.of(context).copyWith(color: color),
+        style: AppTextStyle.footnote
+            .of(context)
+            .copyWith(
+              color: event.isWarnOrAbove ? color : colorScheme.onSurfaceVariant,
+              fontWeight: event.isWarnOrAbove ? FontWeight.w600 : null,
+            ),
       ),
       subtitle: Text(
         event.detail.isEmpty ? event.code : '${event.code}  ${event.detail}',
@@ -223,11 +338,13 @@ class _EventRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Text(
-        event.timeText.length >= 12 ? event.timeText.substring(11) : event.timeText,
-        style: AppTextStyle.caption2.of(context).copyWith(
-          color: colorScheme.onSurfaceVariant,
-          fontFeatures: appTabularFigures,
-        ),
+        timeText,
+        style: AppTextStyle.caption2
+            .of(context)
+            .copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontFeatures: appTabularFigures,
+            ),
       ),
     );
   }

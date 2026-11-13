@@ -14277,6 +14277,15 @@ class AppL10nEn extends AppL10n {
   String get troubleshootEventsExport => 'Export filtered';
 
   @override
+  String get troubleshootEventsStatTotal => 'Total events';
+
+  @override
+  String get troubleshootEventsStatError => 'Errors';
+
+  @override
+  String get troubleshootEventsNoMatch => 'No events match the filters';
+
+  @override
   String get troubleshootEventsLevel => 'Level';
 
   @override

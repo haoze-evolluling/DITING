@@ -24592,6 +24592,24 @@ abstract class AppL10n {
   /// **'导出当前筛选'**
   String get troubleshootEventsExport;
 
+  /// No description provided for @troubleshootEventsStatTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'事件总数'**
+  String get troubleshootEventsStatTotal;
+
+  /// No description provided for @troubleshootEventsStatError.
+  ///
+  /// In zh, this message translates to:
+  /// **'错误'**
+  String get troubleshootEventsStatError;
+
+  /// No description provided for @troubleshootEventsNoMatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有符合筛选条件的事件'**
+  String get troubleshootEventsNoMatch;
+
   /// No description provided for @troubleshootEventsLevel.
   ///
   /// In zh, this message translates to:
