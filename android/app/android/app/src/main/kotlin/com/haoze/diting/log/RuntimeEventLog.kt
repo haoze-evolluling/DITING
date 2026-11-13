@@ -109,7 +109,7 @@ object RuntimeEventLog {
                     levelTag = levelTag,
                     module = module,
                     code = event,
-                    fields = fields.take(MAX_FIELDS).map { it.first to it.second },
+                    fields = fields.take(MAX_FIELDS).map { it.first to Redaction.redact(it.second) },
                     nowMs = now,
                 )
                 if (answer.wrote) appendLocked(answer.line)
@@ -224,7 +224,7 @@ object RuntimeEventLog {
             .append(module.replace(' ', '_')).append(' ')
             .append(event.replace(' ', '_'))
         for ((key, value) in fields.take(MAX_FIELDS)) {
-            val clean = value.replace('\n', ' ').replace('\r', ' ')
+            val clean = Redaction.redact(value).replace('\n', ' ').replace('\r', ' ')
             builder.append(' ').append(key).append('=')
             if (clean.any { it.isWhitespace() || it == '=' || it == '"' }) {
                 builder.append('"').append(clean.replace("\"", "\\\"")).append('"')

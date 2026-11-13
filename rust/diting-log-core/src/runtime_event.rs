@@ -104,11 +104,159 @@ fn sanitize_token(text: &str) -> String {
     out
 }
 
-/// One field value: trimmed of line breaks, truncated, and quoted only when a bare token would
-/// misread. A newline inside an exception message becomes a space so the file stays line-oriented.
+/// Keys whose value must never reach the black box: subscription URLs, proxy credentials, tokens.
+/// Matched case-insensitively as `key=value` pairs (URL query or `k=v` prose).
+const SENSITIVE_KEYS: &[&str] = &[
+    "token",
+    "access_token",
+    "refresh_token",
+    "password",
+    "passwd",
+    "pwd",
+    "secret",
+    "api_key",
+    "apikey",
+    "auth",
+    "authorization",
+    "subscribe",
+    "subscription",
+    "session",
+    "cookie",
+    "sig",
+    "signature",
+];
+
+fn is_word_byte(byte: u8) -> bool {
+    byte.is_ascii_alphanumeric() || byte == b'_'
+}
+
+/// A value ends at a query separator, whitespace or a closing bracket/quote.
+fn is_delim(byte: u8) -> bool {
+    matches!(
+        byte,
+        b'&' | b';'
+            | b','
+            | b' '
+            | b'\t'
+            | b'\n'
+            | b'\r'
+            | b'"'
+            | b'\''
+            | b')'
+            | b']'
+            | b'}'
+            | b'#'
+    )
+}
+
+/// `Bearer <token>` -> `Bearer ***`.
+fn mask_bearer(input: &str) -> String {
+    let lower = input.to_ascii_lowercase();
+    let bytes = input.as_bytes();
+    let mut out = String::with_capacity(input.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if index + 7 <= bytes.len()
+            && &lower[index..index + 6] == "bearer"
+            && (index == 0 || !is_word_byte(bytes[index - 1]))
+            && bytes[index + 6].is_ascii_whitespace()
+        {
+            out.push_str(&input[index..index + 6]);
+            let mut cursor = index + 6;
+            while cursor < bytes.len() && bytes[cursor].is_ascii_whitespace() {
+                out.push(' ');
+                cursor += 1;
+            }
+            while cursor < bytes.len()
+                && !bytes[cursor].is_ascii_whitespace()
+                && !is_delim(bytes[cursor])
+            {
+                cursor += 1;
+            }
+            out.push_str("***");
+            index = cursor;
+            continue;
+        }
+        let ch = input[index..].chars().next().unwrap();
+        out.push(ch);
+        index += ch.len_utf8();
+    }
+    out
+}
+
+/// `scheme://user:pass@host/...` -> `scheme://***@host/...`.
+fn mask_userinfo(input: &str) -> String {
+    let Some(scheme_end) = input.find("://") else {
+        return input.to_string();
+    };
+    let start = scheme_end + 3;
+    let rest = &input[start..];
+    let authority_end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
+    let authority = &rest[..authority_end];
+    let Some(at) = authority.rfind('@') else {
+        return input.to_string();
+    };
+    let mut out = String::with_capacity(input.len());
+    out.push_str(&input[..start]);
+    out.push_str("***");
+    out.push_str(&authority[at..]);
+    out.push_str(&rest[authority_end..]);
+    out
+}
+
+/// `token=abc123`, `password=x`, `sub=...` -> `token=***`, etc., preserving every other byte.
+fn mask_key_values(input: &str) -> String {
+    let lower = input.to_ascii_lowercase();
+    let bytes = input.as_bytes();
+    let mut out = String::with_capacity(input.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        let mut matched: Option<usize> = None;
+        for key in SENSITIVE_KEYS {
+            let length = key.len();
+            if index + length < bytes.len()
+                && &lower[index..index + length] == *key
+                && bytes[index + length] == b'='
+                && (index == 0 || !is_word_byte(bytes[index - 1]))
+            {
+                matched = Some(length);
+                break;
+            }
+        }
+        if let Some(length) = matched {
+            out.push_str(&input[index..index + length]);
+            out.push('=');
+            let mut cursor = index + length + 1;
+            while cursor < bytes.len() && !is_delim(bytes[cursor]) {
+                cursor += 1;
+            }
+            out.push_str("***");
+            index = cursor;
+        } else {
+            let ch = input[index..].chars().next().unwrap();
+            out.push(ch);
+            index += ch.len_utf8();
+        }
+    }
+    out
+}
+
+/// Masks the three shapes of secret that can leak into an event value: an `Authorization: Bearer`
+/// token, URL userinfo, and a sensitive `key=value`. Idempotent and purely textual, so it can run on
+/// every value without a regex dependency.
+pub fn redact(text: &str) -> String {
+    let after_bearer = mask_bearer(text);
+    let after_userinfo = mask_userinfo(&after_bearer);
+    mask_key_values(&after_userinfo)
+}
+
+/// One field value: secret-masked, trimmed of line breaks, truncated, and quoted only when a bare
+/// token would misread. A newline inside an exception message becomes a space so the file stays
+/// line-oriented.
 fn render_value(text: &str) -> String {
-    let mut cleaned = String::with_capacity(text.len().min(MAX_FIELD_VALUE_CHARS));
-    for ch in text.chars() {
+    let redacted = redact(text);
+    let mut cleaned = String::with_capacity(redacted.len().min(MAX_FIELD_VALUE_CHARS));
+    for ch in redacted.chars() {
         if cleaned.chars().count() >= MAX_FIELD_VALUE_CHARS {
             cleaned.push('…');
             break;
@@ -354,5 +502,52 @@ mod tests {
             assert!(gate.admit(&ev, index as i64).is_some());
         }
         assert!(gate.last_seen.len() <= MAX_DEDUP_ENTRIES);
+    }
+
+    #[test]
+    fn redaction_masks_url_userinfo_and_sensitive_query_values() {
+        let raw = "https://user:p@ssw0rd!@example.com/path?token=s3cr3t-abc&x=1";
+        let masked = redact(raw);
+        assert!(
+            masked.starts_with("https://***@example.com/path"),
+            "{masked}"
+        );
+        assert!(masked.contains("token=***"), "{masked}");
+        assert!(masked.contains("x=1"), "{masked}");
+        assert!(!masked.contains("s3cr3t"), "{masked}");
+        assert!(!masked.contains("p@ssw0rd"), "{masked}");
+    }
+
+    #[test]
+    fn redaction_masks_a_bearer_token_and_bare_kv_secrets() {
+        assert_eq!(redact("Bearer abc.def-ghi"), "Bearer ***");
+        assert_eq!(
+            redact("password=hunter2 host=1.1.1.1"),
+            "password=*** host=1.1.1.1"
+        );
+        // The key has to be a whole word: `apikeyx` is not `apikey`.
+        assert_eq!(redact("apikeyx=keep"), "apikeyx=keep");
+    }
+
+    #[test]
+    fn redaction_leaves_ordinary_text_alone_and_is_idempotent() {
+        assert_eq!(
+            redact("connect timeout after 3s"),
+            "connect timeout after 3s"
+        );
+        let once = redact("https://u:p@h/p?sub=xyz");
+        assert_eq!(redact(&once), once);
+    }
+
+    #[test]
+    fn format_event_masks_a_secret_field_value() {
+        let mut ev = event(Level::Warn, "sub", "refresh.fail");
+        ev.fields.push((
+            "url".into(),
+            "https://api.example.com/sub?token=abc123".into(),
+        ));
+        let line = format_event(&ev);
+        assert!(line.contains("token=***"), "{line}");
+        assert!(!line.contains("abc123"), "{line}");
     }
 }
