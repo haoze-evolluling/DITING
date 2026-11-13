@@ -9,11 +9,13 @@ import 'dart:async';
 import 'package:diting_android/data/native/db_health_bridge.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_android/data/native/runtime_log_bridge.dart';
+import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/db_health_providers.dart';
 import 'package:diting_android/state/runtime_log_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class TroubleshootingPage extends ConsumerStatefulWidget {
@@ -114,6 +116,18 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
       title: context.l10n.troubleshootTitle,
       body: PageBody(
         children: [
+          generateSection(
+            title: context.l10n.troubleshootLogsTitle,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.logs, size: 20),
+                title: Text(context.l10n.troubleshootLogsViewLogs),
+                subtitle: Text(context.l10n.troubleshootLogsViewLogsBody),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                onTap: () => context.push(HubPaths.troubleshootingLogs),
+              ),
+            ],
+          ),
           generateSection(
             title: context.l10n.troubleshootRuntimeLogs,
             items: [

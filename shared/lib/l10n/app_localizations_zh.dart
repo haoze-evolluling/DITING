@@ -13292,4 +13292,91 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get deepLinkImportInvalid => '深链地址无效，无法导入订阅';
+
+  @override
+  String get troubleshootLogsTitle => '日志管理';
+
+  @override
+  String get troubleshootLogsViewLogs => '查看并管理日志';
+
+  @override
+  String get troubleshootLogsViewLogsBody => '按时间查看运行日志与崩溃日志，可删除或分享';
+
+  @override
+  String get troubleshootLogsAll => '全部日志';
+
+  @override
+  String troubleshootLogsCount(int count) {
+    return '共 $count 个日志文件';
+  }
+
+  @override
+  String get troubleshootLogsReading => '正在读取日志…';
+
+  @override
+  String get troubleshootLogsEmpty => '当前设备没有日志';
+
+  @override
+  String get troubleshootLogsEmptyBody => '开启运行日志记录或发生崩溃后，日志会出现在这里。';
+
+  @override
+  String get troubleshootLogKindRuntime => '运行日志';
+
+  @override
+  String get troubleshootLogKindCrash => '崩溃日志';
+
+  @override
+  String get troubleshootLogsRefresh => '刷新';
+
+  @override
+  String get troubleshootLogsShare => '分享';
+
+  @override
+  String get troubleshootLogsShareAll => '分享全部';
+
+  @override
+  String get troubleshootLogsClearAll => '清空全部';
+
+  @override
+  String get troubleshootLogsShared => '已打开系统分享';
+
+  @override
+  String get troubleshootLogsShareFailed => '分享失败';
+
+  @override
+  String get troubleshootLogsDeleted => '已删除该日志';
+
+  @override
+  String get troubleshootLogsDeleteFailed => '删除失败';
+
+  @override
+  String get troubleshootLogsDeleteTitle => '删除日志';
+
+  @override
+  String troubleshootLogsDeleteBody(String name) {
+    return '确认删除“$name”吗？该操作不可恢复。';
+  }
+
+  @override
+  String get troubleshootLogsClearAllTitle => '清空全部日志';
+
+  @override
+  String get troubleshootLogsClearAllBody => '确认删除全部运行日志与崩溃日志吗？该操作不可恢复。';
+
+  @override
+  String troubleshootLogsClearedAll(int runtime, int crash) {
+    return '已清空 $runtime 个运行日志与 $crash 份崩溃日志';
+  }
+
+  @override
+  String get troubleshootLogsLogContent => '日志内容';
+
+  @override
+  String get troubleshootLogsEmptyContent => '无法读取该日志内容';
+
+  @override
+  String get troubleshootLogsTruncated => '内容过长，仅显示开头部分';
+
+  @override
+  String get troubleshootLogsFooter => '日志只保存在本机，分享前请确认其中不含敏感信息。';
 }

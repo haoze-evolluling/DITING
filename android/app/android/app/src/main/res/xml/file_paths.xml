@@ -20,4 +20,20 @@
     <cache-path
         name="ca_export"
         path="ca-export/" />
+    <!-- Per-file sharing from 故障排查 → 日志管理: runtime captures live under the
+         external files dir, crash reports under files/crash (and the legacy dir). -->
+    <external-files-path
+        name="runtime_logs"
+        path="runtime_logs/" />
+    <!-- Fallback when getExternalFilesDir() is unavailable: RuntimeLogStore falls back to
+         filesDir/runtime_logs, which needs its own provider mapping. -->
+    <files-path
+        name="runtime_logs_private"
+        path="runtime_logs/" />
+    <files-path
+        name="crash"
+        path="crash/" />
+    <cache-path
+        name="troubleshooting_share"
+        path="troubleshooting-share/" />
 </paths>

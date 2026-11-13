@@ -14119,4 +14119,96 @@ class AppL10nEn extends AppL10n {
   @override
   String get deepLinkImportInvalid =>
       'Invalid deep link; the subscription could not be imported';
+
+  @override
+  String get troubleshootLogsTitle => 'Log management';
+
+  @override
+  String get troubleshootLogsViewLogs => 'View and manage logs';
+
+  @override
+  String get troubleshootLogsViewLogsBody =>
+      'View runtime and crash logs in time order; delete or share them';
+
+  @override
+  String get troubleshootLogsAll => 'All logs';
+
+  @override
+  String troubleshootLogsCount(int count) {
+    return '$count log files';
+  }
+
+  @override
+  String get troubleshootLogsReading => 'Reading logs…';
+
+  @override
+  String get troubleshootLogsEmpty => 'There are no logs on this device';
+
+  @override
+  String get troubleshootLogsEmptyBody =>
+      'Runtime logs appear here after you start recording, and crash logs after a crash.';
+
+  @override
+  String get troubleshootLogKindRuntime => 'Runtime log';
+
+  @override
+  String get troubleshootLogKindCrash => 'Crash log';
+
+  @override
+  String get troubleshootLogsRefresh => 'Refresh';
+
+  @override
+  String get troubleshootLogsShare => 'Share';
+
+  @override
+  String get troubleshootLogsShareAll => 'Share all';
+
+  @override
+  String get troubleshootLogsClearAll => 'Clear all';
+
+  @override
+  String get troubleshootLogsShared => 'Opened the system share sheet';
+
+  @override
+  String get troubleshootLogsShareFailed => 'Share failed';
+
+  @override
+  String get troubleshootLogsDeleted => 'Log deleted';
+
+  @override
+  String get troubleshootLogsDeleteFailed => 'Delete failed';
+
+  @override
+  String get troubleshootLogsDeleteTitle => 'Delete log';
+
+  @override
+  String troubleshootLogsDeleteBody(String name) {
+    return 'Delete \"$name\"? This cannot be undone.';
+  }
+
+  @override
+  String get troubleshootLogsClearAllTitle => 'Clear all logs';
+
+  @override
+  String get troubleshootLogsClearAllBody =>
+      'Delete all runtime and crash logs? This cannot be undone.';
+
+  @override
+  String troubleshootLogsClearedAll(int runtime, int crash) {
+    return 'Cleared $runtime runtime logs and $crash crash logs';
+  }
+
+  @override
+  String get troubleshootLogsLogContent => 'Log content';
+
+  @override
+  String get troubleshootLogsEmptyContent => 'Cannot read this log\'s content';
+
+  @override
+  String get troubleshootLogsTruncated =>
+      'Content is too long; showing the beginning only';
+
+  @override
+  String get troubleshootLogsFooter =>
+      'Logs stay on this device; check for sensitive information before sharing.';
 }

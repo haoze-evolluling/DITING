@@ -24315,6 +24315,168 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'深链地址无效，无法导入订阅'**
   String get deepLinkImportInvalid;
+
+  /// No description provided for @troubleshootLogsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'日志管理'**
+  String get troubleshootLogsTitle;
+
+  /// No description provided for @troubleshootLogsViewLogs.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看并管理日志'**
+  String get troubleshootLogsViewLogs;
+
+  /// No description provided for @troubleshootLogsViewLogsBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'按时间查看运行日志与崩溃日志，可删除或分享'**
+  String get troubleshootLogsViewLogsBody;
+
+  /// No description provided for @troubleshootLogsAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部日志'**
+  String get troubleshootLogsAll;
+
+  /// No description provided for @troubleshootLogsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'共 {count} 个日志文件'**
+  String troubleshootLogsCount(int count);
+
+  /// No description provided for @troubleshootLogsReading.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在读取日志…'**
+  String get troubleshootLogsReading;
+
+  /// No description provided for @troubleshootLogsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前设备没有日志'**
+  String get troubleshootLogsEmpty;
+
+  /// No description provided for @troubleshootLogsEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启运行日志记录或发生崩溃后，日志会出现在这里。'**
+  String get troubleshootLogsEmptyBody;
+
+  /// No description provided for @troubleshootLogKindRuntime.
+  ///
+  /// In zh, this message translates to:
+  /// **'运行日志'**
+  String get troubleshootLogKindRuntime;
+
+  /// No description provided for @troubleshootLogKindCrash.
+  ///
+  /// In zh, this message translates to:
+  /// **'崩溃日志'**
+  String get troubleshootLogKindCrash;
+
+  /// No description provided for @troubleshootLogsRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新'**
+  String get troubleshootLogsRefresh;
+
+  /// No description provided for @troubleshootLogsShare.
+  ///
+  /// In zh, this message translates to:
+  /// **'分享'**
+  String get troubleshootLogsShare;
+
+  /// No description provided for @troubleshootLogsShareAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'分享全部'**
+  String get troubleshootLogsShareAll;
+
+  /// No description provided for @troubleshootLogsClearAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空全部'**
+  String get troubleshootLogsClearAll;
+
+  /// No description provided for @troubleshootLogsShared.
+  ///
+  /// In zh, this message translates to:
+  /// **'已打开系统分享'**
+  String get troubleshootLogsShared;
+
+  /// No description provided for @troubleshootLogsShareFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'分享失败'**
+  String get troubleshootLogsShareFailed;
+
+  /// No description provided for @troubleshootLogsDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'已删除该日志'**
+  String get troubleshootLogsDeleted;
+
+  /// No description provided for @troubleshootLogsDeleteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除失败'**
+  String get troubleshootLogsDeleteFailed;
+
+  /// No description provided for @troubleshootLogsDeleteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除日志'**
+  String get troubleshootLogsDeleteTitle;
+
+  /// No description provided for @troubleshootLogsDeleteBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除“{name}”吗？该操作不可恢复。'**
+  String troubleshootLogsDeleteBody(String name);
+
+  /// No description provided for @troubleshootLogsClearAllTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空全部日志'**
+  String get troubleshootLogsClearAllTitle;
+
+  /// No description provided for @troubleshootLogsClearAllBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'确认删除全部运行日志与崩溃日志吗？该操作不可恢复。'**
+  String get troubleshootLogsClearAllBody;
+
+  /// No description provided for @troubleshootLogsClearedAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'已清空 {runtime} 个运行日志与 {crash} 份崩溃日志'**
+  String troubleshootLogsClearedAll(int runtime, int crash);
+
+  /// No description provided for @troubleshootLogsLogContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'日志内容'**
+  String get troubleshootLogsLogContent;
+
+  /// No description provided for @troubleshootLogsEmptyContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法读取该日志内容'**
+  String get troubleshootLogsEmptyContent;
+
+  /// No description provided for @troubleshootLogsTruncated.
+  ///
+  /// In zh, this message translates to:
+  /// **'内容过长，仅显示开头部分'**
+  String get troubleshootLogsTruncated;
+
+  /// No description provided for @troubleshootLogsFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'日志只保存在本机，分享前请确认其中不含敏感信息。'**
+  String get troubleshootLogsFooter;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

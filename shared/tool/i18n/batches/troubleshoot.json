@@ -50,5 +50,44 @@
   "troubleshootNoExportableCrashes": ["没有可导出的崩溃日志", "There are no crash logs to export"],
   "troubleshootClearCrashesConfirm": ["确认清空所有已保存的崩溃日志吗？", "Clear all saved crash logs?"],
   "troubleshootClearedCrashes": ["已清空 {count} 份崩溃日志", "Cleared {count} crash logs"],
-  "troubleshootNoClearableCrashes": ["没有可清空的崩溃日志", "There are no crash logs to clear"]
+  "troubleshootNoClearableCrashes": ["没有可清空的崩溃日志", "There are no crash logs to clear"],
+  "troubleshootLogsTitle": ["日志管理", "Log management"],
+  "troubleshootLogsViewLogs": ["查看并管理日志", "View and manage logs"],
+  "troubleshootLogsViewLogsBody": ["按时间查看运行日志与崩溃日志，可删除或分享", "View runtime and crash logs in time order; delete or share them"],
+  "troubleshootLogsAll": ["全部日志", "All logs"],
+  "troubleshootLogsCount": {
+    "zh": "共 {count} 个日志文件",
+    "en": "{count} log files",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "troubleshootLogsReading": ["正在读取日志…", "Reading logs…"],
+  "troubleshootLogsEmpty": ["当前设备没有日志", "There are no logs on this device"],
+  "troubleshootLogsEmptyBody": ["开启运行日志记录或发生崩溃后，日志会出现在这里。", "Runtime logs appear here after you start recording, and crash logs after a crash."],
+  "troubleshootLogKindRuntime": ["运行日志", "Runtime log"],
+  "troubleshootLogKindCrash": ["崩溃日志", "Crash log"],
+  "troubleshootLogsRefresh": ["刷新", "Refresh"],
+  "troubleshootLogsShare": ["分享", "Share"],
+  "troubleshootLogsShareAll": ["分享全部", "Share all"],
+  "troubleshootLogsClearAll": ["清空全部", "Clear all"],
+  "troubleshootLogsShared": ["已打开系统分享", "Opened the system share sheet"],
+  "troubleshootLogsShareFailed": ["分享失败", "Share failed"],
+  "troubleshootLogsDeleted": ["已删除该日志", "Log deleted"],
+  "troubleshootLogsDeleteFailed": ["删除失败", "Delete failed"],
+  "troubleshootLogsDeleteTitle": ["删除日志", "Delete log"],
+  "troubleshootLogsDeleteBody": {
+    "zh": "确认删除“{name}”吗？该操作不可恢复。",
+    "en": "Delete \"{name}\"? This cannot be undone.",
+    "placeholders": {"name": {"type": "String"}}
+  },
+  "troubleshootLogsClearAllTitle": ["清空全部日志", "Clear all logs"],
+  "troubleshootLogsClearAllBody": ["确认删除全部运行日志与崩溃日志吗？该操作不可恢复。", "Delete all runtime and crash logs? This cannot be undone."],
+  "troubleshootLogsClearedAll": {
+    "zh": "已清空 {runtime} 个运行日志与 {crash} 份崩溃日志",
+    "en": "Cleared {runtime} runtime logs and {crash} crash logs",
+    "placeholders": {"runtime": {"type": "int"}, "crash": {"type": "int"}}
+  },
+  "troubleshootLogsLogContent": ["日志内容", "Log content"],
+  "troubleshootLogsEmptyContent": ["无法读取该日志内容", "Cannot read this log's content"],
+  "troubleshootLogsTruncated": ["内容过长，仅显示开头部分", "Content is too long; showing the beginning only"],
+  "troubleshootLogsFooter": ["日志只保存在本机，分享前请确认其中不含敏感信息。", "Logs stay on this device; check for sensitive information before sharing."]
 }
