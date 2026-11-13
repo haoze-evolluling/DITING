@@ -7,7 +7,6 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:diting_android/data/native/db_health_bridge.dart';
-import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_android/data/native/runtime_log_bridge.dart';
 import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/db_health_providers.dart';
@@ -28,9 +27,6 @@ class TroubleshootingPage extends ConsumerStatefulWidget {
 
 class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     with WidgetsBindingObserver {
-  /// The real crash log count; `null` while it loads, so the first frame shows no number.
-  int? _crashLogCount;
-
   /// Blocks a second tap while the start/stop round trip runs, so two services cannot race.
   bool _busy = false;
 
@@ -42,7 +38,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _refreshCrashCount();
     // The provider outlives the page, so a reopen would otherwise show the size from last time.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _refreshRuntimeStatus();
@@ -64,7 +59,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     // Both sources change outside the page — crashes are collected by the app, and the capture
     // keeps running behind the notification — so re-read on resume.
     if (state == AppLifecycleState.resumed) {
-      _refreshCrashCount();
       _refreshRuntimeStatus(force: true);
       _refreshDbHealth();
     }
@@ -73,12 +67,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
   /// Log-write counters change while the tunnel runs, so every open and resume re-reads them.
   Future<void> _refreshDbHealth() async {
     await ref.read(dbWriteHealthProvider.notifier).refresh();
-  }
-
-  Future<void> _refreshCrashCount() async {
-    final count = await PlatformBridge().crashLogCount();
-    if (!mounted) return;
-    setState(() => _crashLogCount = count);
   }
 
   /// Re-reads the native capture status and keeps the live size ticking only while it is on.
@@ -104,14 +92,10 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
 
   @override
   Widget build(BuildContext context) {
-    final crashCount = _crashLogCount;
-    final hasCrashes = (crashCount ?? 0) > 0;
     final status = ref.watch(runtimeLogStatusProvider).value;
     final capturing = status?.capturing ?? false;
-    final hasRuntimeLogs = status?.hasLogs ?? false;
     final dbHealth = ref.watch(dbWriteHealthProvider).value;
     final error = context.colorScheme.error;
-    final muted = context.colorScheme.onSurfaceVariant;
     return CommonScaffold(
       title: context.l10n.troubleshootTitle,
       body: PageBody(
@@ -141,24 +125,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
                 value: capturing,
                 onChanged: _busy ? null : (value) => _onToggle(value),
               ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.export),
-                title: Text(context.l10n.troubleshootExportLogs),
-                subtitle: Text(_exportSubtitle(status)),
-                onTap: hasRuntimeLogs ? _exportRuntimeLogs : null,
-              ),
-              ListItem(
-                leading: GlyphIcon(
-                  AppGlyphs.delete,
-                  color: hasRuntimeLogs ? error : muted,
-                ),
-                title: Text(
-                  context.l10n.troubleshootClearLogs,
-                  style: hasRuntimeLogs ? TextStyle(color: error) : null,
-                ),
-                subtitle: Text(context.l10n.troubleshootClearLogsBody),
-                onTap: hasRuntimeLogs ? _clearRuntimeLogs : null,
-              ),
             ],
             footer:
                 context.l10n.troubleshootRecordNote,
@@ -182,31 +148,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
             footer:
                 context.l10n.troubleshootWriteStatusNote,
           ),
-          generateSection(
-            title: context.l10n.troubleshootCrashLogs,
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.wrench),
-                title: Text(context.l10n.troubleshootExportCrashes),
-                subtitle: Text(_crashSubtitle(crashCount)),
-                onTap: hasCrashes ? _exportCrashes : null,
-              ),
-              ListItem(
-                leading: GlyphIcon(
-                  AppGlyphs.delete,
-                  color: hasCrashes ? error : muted,
-                ),
-                title: Text(
-                  context.l10n.troubleshootClearCrashes,
-                  style: hasCrashes ? TextStyle(color: error) : null,
-                ),
-                subtitle: Text(context.l10n.troubleshootClearCrashesBody),
-                onTap: hasCrashes ? _clearCrashes : null,
-              ),
-            ],
-            footer:
-                context.l10n.troubleshootCrashNote,
-          ),
           ListFooter(
             text:
                 context.l10n.troubleshootCaptureWarning,
@@ -225,15 +166,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     return status.hasLogs
         ? context.l10n.troubleshootStoppedWithLogs(status.sizeLabel)
         : context.l10n.troubleshootStoppedNoLogs;
-  }
-
-  String _exportSubtitle(RuntimeLogStatus? status) {
-    if (status == null) return context.l10n.troubleshootReadingLogs;
-    if (!status.hasLogs) return context.l10n.troubleshootNoLogs;
-    return context.l10n.troubleshootLogCount(
-      status.fileCount,
-      status.sizeLabel,
-    );
   }
 
   /// The subtitle reflects the real count; an unreadable count says so instead of inventing one.
@@ -278,12 +210,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     return parts.isEmpty ? '' : '（${parts.join(' · ')}）';
   }
 
-  String _crashSubtitle(int? count) => switch (count) {
-    null => context.l10n.troubleshootReadingCrashes,
-    0 => context.l10n.troubleshootNoCrashes,
-    _ => context.l10n.troubleshootCrashCount(count),
-  };
-
   /// Turning on is the risky direction, so it asks first; turning off just stops.
   Future<void> _onToggle(bool value) async {
     if (!value) {
@@ -323,118 +249,9 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     _toast(started ? context.l10n.troubleshootStartedToast : context.l10n.troubleshootStartFailedToast);
   }
 
-  Future<void> _exportRuntimeLogs() async {
-    final content = await ref.read(runtimeLogBridgeProvider).read();
-    if (!mounted) return;
-    if (content.isEmpty) {
-      _toast(context.l10n.troubleshootNoExportableLogs);
-      return;
-    }
-    final path = await PlatformBridge().exportText(
-      name: 'DITING-runtime-logs-${_stamp()}.txt',
-      content: content,
-    );
-    if (!mounted) return;
-    _toast(
-      path == null
-          ? context.l10n.troubleshootExportFailed
-          : context.l10n.troubleshootExported(path),
-    );
-  }
-
-  Future<void> _clearRuntimeLogs() async {
-    final confirmed = await showFloatingDialog<bool>(
-      context: context,
-      child: CommonDialog(
-        title: context.l10n.troubleshootClearLogs,
-        destructive: true,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.l10n.troubleshootCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.l10n.troubleshootConfirm),
-          ),
-        ],
-        child: Text(context.l10n.troubleshootClearLogsConfirm),
-      ),
-    );
-    if (confirmed != true) return;
-    final removed = await ref.read(runtimeLogBridgeProvider).clear();
-    if (!mounted) return;
-    await ref.read(runtimeLogStatusProvider.notifier).refresh();
-    if (!mounted) return;
-    _toast(
-      removed > 0
-          ? context.l10n.troubleshootClearedLogs('$removed')
-          : context.l10n.troubleshootNoClearableLogs,
-    );
-  }
-
-  /// Reads the real files, joins them and writes the text to the app's external private
-  /// directory; failures report a reason instead of a fake success.
-  Future<void> _exportCrashes() async {
-    final content = await PlatformBridge().readCrashLogs();
-    if (!mounted) return;
-    if (content.isEmpty) {
-      _toast(context.l10n.troubleshootNoExportableCrashes);
-      return;
-    }
-    final path = await PlatformBridge().exportText(
-      name: 'DITING-crash-logs-${_stamp()}.txt',
-      content: content,
-    );
-    if (!mounted) return;
-    _toast(
-      path == null
-          ? context.l10n.troubleshootExportFailed
-          : context.l10n.troubleshootExported(path),
-    );
-  }
-
-  String _stamp() => DateTime.now()
-      .toIso8601String()
-      .replaceAll(RegExp(r'[^0-9]'), '')
-      .substring(0, 14);
-
   void _toast(String message) {
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
-  }
-
-  Future<void> _clearCrashes() async {
-    final confirmed = await showFloatingDialog<bool>(
-      context: context,
-      child: CommonDialog(
-        title: context.l10n.troubleshootClearCrashes,
-        destructive: true,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.l10n.troubleshootCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.l10n.troubleshootConfirm),
-          ),
-        ],
-        child: Text(context.l10n.troubleshootClearCrashesConfirm),
-      ),
-    );
-    if (confirmed != true) return;
-    final removed = await PlatformBridge().clearCrashLogs();
-    if (!mounted) return;
-    // Re-read after clearing instead of zeroing: the native side may fail to delete a file,
-    // and the number shown must be the real one afterwards.
-    await _refreshCrashCount();
-    if (!mounted) return;
-    _toast(
-      removed > 0
-          ? context.l10n.troubleshootClearedCrashes('$removed')
-          : context.l10n.troubleshootNoClearableCrashes,
     );
   }
 }
