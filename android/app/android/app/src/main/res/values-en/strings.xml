@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Diting</string>
+    <string name="quick_settings_tile_label">Diting</string>
+    <string name="quick_settings_tile_state_on">On</string>
+    <string name="quick_settings_tile_state_off">Off</string>
+    <string name="widget_protected">Protected</string>
+    <string name="widget_unprotected">Unprotected</string>
+    <string name="widget_blocked_today">blocked today</string>
+    <string name="widget_value_unknown">—</string>
+    <string name="widget_toggle_desc">Turn protection on or off</string>
+    <string name="widget_description">Protection status and today\'s blocked count, with a one-tap toggle</string>
+</resources>

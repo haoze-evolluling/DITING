@@ -14075,4 +14075,48 @@ class AppL10nEn extends AppL10n {
   @override
   String get serverDashboardLanDescription =>
       'LAN address, port and copy shortcut';
+
+  @override
+  String get integrationSection => 'System integration';
+
+  @override
+  String get integrationTitle => 'Widget & automation';
+
+  @override
+  String get integrationSubtitle =>
+      'Home widget, deep-link import and automation';
+
+  @override
+  String get integrationWidgetTitle => 'Home screen widget';
+
+  @override
+  String get integrationWidgetBody =>
+      'Long-press an empty area of the home screen, open Widgets and choose Diting. The widget shows the protection state and today\'s blocked count; tap the button to toggle.';
+
+  @override
+  String get integrationDeepLinkTitle => 'Deep-link import';
+
+  @override
+  String get integrationDeepLinkBody =>
+      'Open diting://install-config?url=<subscription URL> in a browser or another app to import a subscription directly (the first-run agreement must be accepted first). install-sub is an alias.';
+
+  @override
+  String get integrationAutomationTitle => 'Automation';
+
+  @override
+  String get integrationAutomationBody =>
+      'Send one of these actions from Tasker, MacroDroid or adb to start, stop or toggle the current mode:';
+
+  @override
+  String get integrationAutomationStart => 'Start';
+
+  @override
+  String get integrationAutomationStop => 'Stop';
+
+  @override
+  String get integrationAutomationToggle => 'Toggle';
+
+  @override
+  String get deepLinkImportInvalid =>
+      'Invalid deep link; the subscription could not be imported';
 }

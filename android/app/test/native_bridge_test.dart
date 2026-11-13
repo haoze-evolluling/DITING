@@ -5,6 +5,7 @@ import 'package:diting_shared/data/fonts/font_repository.dart';
 import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/data/native/db_health_bridge.dart';
+import 'package:diting_android/data/native/deep_link_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_android/data/native/tile_bridge.dart';
@@ -19,6 +20,7 @@ part 'native_bridge_test_extras.dart';
 void main() {
   group('原生通道', _nativeBridge);
   group('快捷开关启动请求', _tileBridge);
+  group('深链通道', _deepLinkBridge);
   group('导入字体', _fontRepository);
   group('数据库写入健康度', _dbHealthBridge);
 }

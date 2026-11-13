@@ -6864,5 +6864,18 @@
   "serverDomainRules": "域名规则",
   "serverDomainRulesDescription": "黑名单、白名单与 Hosts 覆写的快捷入口",
   "serverDashboardStatusDescription": "服务运行状态、运行时长与本次运行统计",
-  "serverDashboardLanDescription": "局域网接入地址、端口与复制入口"
+  "serverDashboardLanDescription": "局域网接入地址、端口与复制入口",
+  "integrationSection": "系统集成",
+  "integrationTitle": "小组件与自动化",
+  "integrationSubtitle": "桌面小组件、深链导入与自动化控制",
+  "integrationWidgetTitle": "桌面小组件",
+  "integrationWidgetBody": "长按桌面空白处，进入「小组件」，选择「谛听」即可添加。组件显示保护状态与今日拦截数，点右侧按钮可一键开启或关闭。",
+  "integrationDeepLinkTitle": "深链导入订阅",
+  "integrationDeepLinkBody": "在浏览器或其它应用中打开 diting://install-config?url=<订阅地址>，即可直接导入订阅（需先接受首次使用协议）。install-sub 为等价写法。",
+  "integrationAutomationTitle": "自动化控制",
+  "integrationAutomationBody": "通过 Tasker、MacroDroid 或 adb 发送以下动作，可启动、停止或切换当前模式：",
+  "integrationAutomationStart": "启动",
+  "integrationAutomationStop": "停止",
+  "integrationAutomationToggle": "切换",
+  "deepLinkImportInvalid": "深链地址无效，无法导入订阅"
 }

@@ -5,9 +5,12 @@ part of 'subscriptions_page.dart';
 /// `importState = importing`, then a real download settles it. With [initial] the sheet edits that
 /// row instead; the source type and a local row's file stay fixed.
 class _AddSubscriptionSheet extends ConsumerStatefulWidget {
-  const _AddSubscriptionSheet({this.initial});
+  const _AddSubscriptionSheet({this.initial, this.prefillUrl});
 
   final SubscriptionEntry? initial;
+
+  /// Address carried by a `diting://` deep link; prefills a fresh remote subscription.
+  final String? prefillUrl;
 
   @override
   ConsumerState<_AddSubscriptionSheet> createState() =>
@@ -55,6 +58,11 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         _localUri = record.url;
         _localName = _SubscriptionCard._fileNameOf(record.url);
       }
+    } else if (widget.prefillUrl case final url?) {
+      // A deep link always opens a fresh remote subscription with the address and name prefilled.
+      _url.text = url;
+      _sourceType = SubscriptionSourceType.remote;
+      if (_name.text.trim().isEmpty) _name.text = extractNameFromUrl(url);
     }
     // The mirror preview follows the address while it is typed.
     _url.addListener(_rebuild);

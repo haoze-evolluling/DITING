@@ -53,6 +53,33 @@
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES"/>
             </intent-filter>
+            <!-- Subscription deep link, FlClash style: diting://install-config?url=<encoded>.
+                 Dart parses it and opens the add-subscription sheet pre-filled. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="diting" android:host="install-config"/>
+                <data android:scheme="diting" android:host="install-sub"/>
+            </intent-filter>
+        </activity>
+        <!-- Headless automation entry: adb / Tasker send START, STOP or TOGGLE. -->
+        <activity
+            android:name=".QuickActionActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="com.haoze.diting.action.START"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.haoze.diting.action.STOP"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.haoze.diting.action.TOGGLE"/>
+            </intent-filter>
         </activity>
         <!-- Launcher icon styles. Android cannot repaint an installed activity's icon at runtime,
              so each style is an activity-alias pointing at MainActivity and the native
@@ -163,6 +190,23 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <!-- Home screen widget: protection state, today's blocked count and a one-tap toggle.
+             The provider must be exported for the system's update broadcasts; the toggle receiver
+             is a separate, unexported component so no other app can flip the tunnel. -->
+        <receiver
+            android:name=".widget.DitingWidgetProvider"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/diting_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.DitingWidgetToggleReceiver"
+            android:exported="false" />
         <!-- Quick settings tile: toggles whichever data plane the current mode uses. -->
         <service
             android:name=".tile.DitingTileService"

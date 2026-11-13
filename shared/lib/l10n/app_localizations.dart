@@ -24237,6 +24237,84 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'局域网接入地址、端口与复制入口'**
   String get serverDashboardLanDescription;
+
+  /// No description provided for @integrationSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统集成'**
+  String get integrationSection;
+
+  /// No description provided for @integrationTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'小组件与自动化'**
+  String get integrationTitle;
+
+  /// No description provided for @integrationSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'桌面小组件、深链导入与自动化控制'**
+  String get integrationSubtitle;
+
+  /// No description provided for @integrationWidgetTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'桌面小组件'**
+  String get integrationWidgetTitle;
+
+  /// No description provided for @integrationWidgetBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'长按桌面空白处，进入「小组件」，选择「谛听」即可添加。组件显示保护状态与今日拦截数，点右侧按钮可一键开启或关闭。'**
+  String get integrationWidgetBody;
+
+  /// No description provided for @integrationDeepLinkTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'深链导入订阅'**
+  String get integrationDeepLinkTitle;
+
+  /// No description provided for @integrationDeepLinkBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在浏览器或其它应用中打开 diting://install-config?url=<订阅地址>，即可直接导入订阅（需先接受首次使用协议）。install-sub 为等价写法。'**
+  String get integrationDeepLinkBody;
+
+  /// No description provided for @integrationAutomationTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动化控制'**
+  String get integrationAutomationTitle;
+
+  /// No description provided for @integrationAutomationBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'通过 Tasker、MacroDroid 或 adb 发送以下动作，可启动、停止或切换当前模式：'**
+  String get integrationAutomationBody;
+
+  /// No description provided for @integrationAutomationStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动'**
+  String get integrationAutomationStart;
+
+  /// No description provided for @integrationAutomationStop.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止'**
+  String get integrationAutomationStop;
+
+  /// No description provided for @integrationAutomationToggle.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换'**
+  String get integrationAutomationToggle;
+
+  /// No description provided for @deepLinkImportInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'深链地址无效，无法导入订阅'**
+  String get deepLinkImportInvalid;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

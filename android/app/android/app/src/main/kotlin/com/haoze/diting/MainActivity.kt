@@ -3,6 +3,7 @@ package com.haoze.diting
 import android.content.Intent
 import com.haoze.diting.apps.AppsBridge
 import com.haoze.diting.cert.CaInspectionBridge
+import com.haoze.diting.deeplink.DeepLinkBridge
 import com.haoze.diting.net.DiagnosticsBridge
 import com.haoze.diting.net.DnsLatencyBridge
 import com.haoze.diting.overlay.FloatingLogOverlay
@@ -29,6 +30,7 @@ class MainActivity : FlutterActivity() {
     private var platformBridge: PlatformBridge? = null
     private var backgroundBridge: BackgroundBridge? = null
     private var permissionsBridge: PermissionsBridge? = null
+    private var deepLinkBridge: DeepLinkBridge? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -51,6 +53,7 @@ class MainActivity : FlutterActivity() {
         backgroundBridge = BackgroundBridge(this).also { it.register(messenger) }
         permissionsBridge = PermissionsBridge(this).also { it.register(messenger) }
         TileBridge(this).register(messenger)
+        deepLinkBridge = DeepLinkBridge(this).also { it.register(messenger) }
         LauncherIconBridge(this).register(messenger)
         RecognitionAvatarBridge(applicationContext).register(messenger)
         // Manual runtime-log capture: its own channel, so PlatformBridge stays crash-only.
@@ -82,6 +85,8 @@ class MainActivity : FlutterActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        // A warm `diting://` link is pushed to Dart; a cold one is pulled by DeepLinkBridge.
+        deepLinkBridge?.handleNewIntent(intent)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

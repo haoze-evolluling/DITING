@@ -4175,5 +4175,18 @@
   "serverDomainRules": "Domain rules",
   "serverDomainRulesDescription": "Shortcuts to the blocklist, allowlist and host overrides",
   "serverDashboardStatusDescription": "Service state, uptime and this run's counters",
-  "serverDashboardLanDescription": "LAN address, port and copy shortcut"
+  "serverDashboardLanDescription": "LAN address, port and copy shortcut",
+  "integrationSection": "System integration",
+  "integrationTitle": "Widget & automation",
+  "integrationSubtitle": "Home widget, deep-link import and automation",
+  "integrationWidgetTitle": "Home screen widget",
+  "integrationWidgetBody": "Long-press an empty area of the home screen, open Widgets and choose Diting. The widget shows the protection state and today's blocked count; tap the button to toggle.",
+  "integrationDeepLinkTitle": "Deep-link import",
+  "integrationDeepLinkBody": "Open diting://install-config?url=<subscription URL> in a browser or another app to import a subscription directly (the first-run agreement must be accepted first). install-sub is an alias.",
+  "integrationAutomationTitle": "Automation",
+  "integrationAutomationBody": "Send one of these actions from Tasker, MacroDroid or adb to start, stop or toggle the current mode:",
+  "integrationAutomationStart": "Start",
+  "integrationAutomationStop": "Stop",
+  "integrationAutomationToggle": "Toggle",
+  "deepLinkImportInvalid": "Invalid deep link; the subscription could not be imported"
 }

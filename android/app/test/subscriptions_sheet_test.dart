@@ -2,16 +2,26 @@
 // 地址，本地文件订阅再也建不出来。这里守住「新增可选本地文件、编辑不可改订阅方式」。
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/pages/subscriptions/subscriptions_page.dart';
+import 'package:diting_android/state/deep_link_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// `Override` is only exported from `misc.dart`, not `flutter_riverpod.dart`.
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/app_host.dart';
+
+/// Starts with a deep-linked address already pending, as `DitingApp` would set it before navigation.
+class _SeededImportNotifier extends PendingSubscriptionImportNotifier {
+  @override
+  String? build() => 'https://example.com/rules.txt';
+}
 
 void main() {
   Future<void> pumpPage(
     WidgetTester tester, {
     List<SubscriptionEntry> entries = const [],
+    List<Override> extraOverrides = const [],
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -19,6 +29,7 @@ void main() {
           subscriptionEntriesProvider.overrideWith((ref) async => entries),
           subscriptionGroupsProvider.overrideWith((ref) async => const []),
           mirrorTemplatesProvider.overrideWith((ref) async => const []),
+          ...extraOverrides,
         ],
         child: const AppHost(child: SubscriptionsPage()),
       ),
@@ -72,5 +83,18 @@ void main() {
     expect(find.text('编辑订阅'), findsOneWidget);
     expect(find.text('订阅地址'), findsOneWidget);
     expect(find.text('订阅方式'), findsNothing);
+  });
+
+  testWidgets('深链待导入地址会自动预填到新增表单', (tester) async {
+    await pumpPage(
+      tester,
+      extraOverrides: [
+        pendingSubscriptionImportProvider.overrideWith(_SeededImportNotifier.new),
+      ],
+    );
+
+    // The page opened the add sheet by itself and prefilled the address (the field and the mirror
+    // preview both show it, hence `findsWidgets`).
+    expect(find.text('https://example.com/rules.txt'), findsWidgets);
   });
 }

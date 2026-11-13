@@ -3,6 +3,7 @@ import 'package:diting_android/data/db/mirror_template_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/subscriptions/subscription_url.dart';
 import 'package:diting_android/routes/routes.dart';
+import 'package:diting_android/state/deep_link_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/chip_row.dart';
@@ -22,8 +23,34 @@ part 'subscriptions_sheet_widgets.dart';
 /// Subscriptions page: group filter, summary and card list. Groups sit at the top because
 /// users usually watch one group; data comes from the legacy `subscription_group` table
 /// ordered by `addedAt`.
-class SubscriptionsPage extends ConsumerWidget {
+class SubscriptionsPage extends ConsumerStatefulWidget {
   const SubscriptionsPage({super.key});
+
+  @override
+  ConsumerState<SubscriptionsPage> createState() => _SubscriptionsPageState();
+}
+
+class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
+  @override
+  void initState() {
+    super.initState();
+    // The deep link set the pending address before navigating here, so the initial value is not a
+    // state change `ref.listen` would report; read it once after the first frame instead.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final url = ref.read(pendingSubscriptionImportProvider);
+      if (url != null) _openPendingImport(url);
+    });
+  }
+
+  /// Opens the add-subscription sheet with the deep-linked address filled in.
+  Future<void> _openPendingImport(String url) async {
+    if (!mounted) return;
+    ref.read(pendingSubscriptionImportProvider.notifier).clear();
+    await showSheet<void>(
+      context: context,
+      builder: (_) => _AddSubscriptionSheet(prefillUrl: url),
+    );
+  }
 
   Future<void> _updateAll(BuildContext context, WidgetRef ref) async {
     final entries = ref.read(subscriptionEntriesProvider).value ?? const [];
@@ -107,7 +134,11 @@ class SubscriptionsPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    // A link that arrives while this page is already mounted changes the provider instead.
+    ref.listen(pendingSubscriptionImportProvider, (_, url) {
+      if (url != null) _openPendingImport(url);
+    });
     final colorScheme = context.colorScheme;
     final asyncEntries = ref.watch(subscriptionEntriesProvider);
     final entries = asyncEntries.value ?? const <SubscriptionEntry>[];

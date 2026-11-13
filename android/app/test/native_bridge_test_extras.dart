@@ -208,3 +208,68 @@ void _dbHealthBridge() {
     expect(health.probeJournalMode, isEmpty);
   });
 }
+
+/// Guards the one-shot cold-start contract and the warm-start push of the `diting://` channel.
+void _deepLinkBridge() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  const channel = MethodChannel(deepLinkChannelName);
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null);
+  });
+
+  void mockResult(Object? Function(MethodCall call) handler) {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async => handler(call));
+  }
+
+  test('读取冷启动链接', () async {
+    mockResult(
+      (call) => call.method == 'consumeInitialLink'
+          ? 'diting://install-config?url=https%3A%2F%2Fa.com%2Fr.txt'
+          : null,
+    );
+    expect(
+      await DeepLinkBridge().consumeInitialLink(),
+      'diting://install-config?url=https%3A%2F%2Fa.com%2Fr.txt',
+    );
+  });
+
+  test('无链接时为 null', () async {
+    mockResult((_) => null);
+    expect(await DeepLinkBridge().consumeInitialLink(), isNull);
+  });
+
+  test('通道缺失（桌面端）降级为 null', () async {
+    expect(await DeepLinkBridge().consumeInitialLink(), isNull);
+  });
+
+  test('native 报错降级为 null', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          channel,
+          (call) async => throw PlatformException(code: 'boom'),
+        );
+    expect(await DeepLinkBridge().consumeInitialLink(), isNull);
+  });
+
+  test('热启动链接经 onLink 回调', () async {
+    final bridge = DeepLinkBridge();
+    String? received;
+    bridge.listen((link) => received = link);
+
+    const incoming = 'diting://install-sub?url=https%3A%2F%2Fb.com%2Fr.txt';
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .handlePlatformMessage(
+          deepLinkChannelName,
+          const StandardMethodCodec().encodeMethodCall(
+            const MethodCall('onLink', incoming),
+          ),
+          (_) {},
+        );
+
+    expect(received, incoming);
+  });
+}

@@ -6,13 +6,16 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/app/l10n/ui_strings.dart';
 import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/manager.dart';
+import 'package:diting_android/data/native/deep_link_bridge.dart';
 import 'package:diting_android/data/native/tile_bridge.dart';
+import 'package:diting_android/data/subscriptions/subscription_deeplink.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/auto_update_providers.dart';
 import 'package:diting_android/state/auto_update_runner.dart';
 import 'package:diting_android/state/db_health_providers.dart';
+import 'package:diting_android/state/deep_link_providers.dart';
 import 'package:diting_android/state/on_demand_runner.dart';
 import 'package:diting_android/state/rules_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
@@ -71,6 +74,9 @@ class _DitingAppState extends ConsumerState<DitingApp> {
   /// Only once per app run; a stuck database would otherwise re-toast on every resume.
   bool _dbHealthReported = false;
 
+  /// A deep-linked subscription address kept until the first-run agreement is accepted.
+  String? _deferredImportUrl;
+
   @override
   void initState() {
     super.initState();
@@ -78,8 +84,11 @@ class _DitingAppState extends ConsumerState<DitingApp> {
       onResume: _onResume,
       onPause: _cancelAutoUpdateDue,
     );
+    // Warm deep links arrive as channel calls while the app is already running.
+    ref.read(deepLinkBridgeProvider).listen(_handleDeepLink);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeApplyTileStart();
+      _maybeApplyDeepLink();
       _maybeRunAutoUpdate();
       _maybeApplyOnDemand();
       _maybeReportDbHealth();
@@ -88,6 +97,7 @@ class _DitingAppState extends ConsumerState<DitingApp> {
 
   void _onResume() {
     _maybeApplyTileStart();
+    _maybeApplyDeepLink();
     _maybeRunAutoUpdate();
     _maybeApplyOnDemand();
     _maybeReportDbHealth();
@@ -124,6 +134,39 @@ class _DitingAppState extends ConsumerState<DitingApp> {
     if (ref.read(powerProvider) == PowerState.stopped) {
       await ref.read(powerProvider.notifier).toggle();
     }
+  }
+
+  /// A `diting://` link that launched or resumed the app. The initial link is pulled once here; a
+  /// warm link is pushed through the channel listener registered in `initState`.
+  Future<void> _maybeApplyDeepLink() async {
+    if (!mounted) return;
+    final link = await ref.read(deepLinkBridgeProvider).consumeInitialLink();
+    if (link != null) _handleDeepLink(link);
+  }
+
+  void _handleDeepLink(String link) {
+    if (!mounted) return;
+    final url = parseSubscriptionDeepLink(link);
+    if (url == null) {
+      _messengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text(currentL10n.deepLinkImportInvalid),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (!_agreementAccepted) {
+      // A deep link must not bypass the first-run gate; import once it is accepted.
+      _deferredImportUrl = url;
+      return;
+    }
+    _importSubscription(url);
+  }
+
+  void _importSubscription(String url) {
+    ref.read(pendingSubscriptionImportProvider.notifier).set(url);
+    _router.go(Routes.subscriptions);
   }
 
   /// A locked `diting_database` used to fail silently: log pages stayed empty and nothing said so.
@@ -214,6 +257,11 @@ class _DitingAppState extends ConsumerState<DitingApp> {
     ref.listen(initialAgreementProvider, (_, accepted) {
       if (accepted) {
         _router.refresh();
+        final deferred = _deferredImportUrl;
+        if (deferred != null) {
+          _deferredImportUrl = null;
+          _importSubscription(deferred);
+        }
       }
     });
     // A new schedule moves the next due moment; re-check so the foreground timer follows it.

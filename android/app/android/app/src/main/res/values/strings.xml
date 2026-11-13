@@ -6,4 +6,11 @@
     <string name="quick_settings_tile_label">谛听</string>
     <string name="quick_settings_tile_state_on">已开启</string>
     <string name="quick_settings_tile_state_off">已关闭</string>
+    <!-- Home screen widget: same state wording as the tile, plus the daily blocked figure. -->
+    <string name="widget_protected">已开启</string>
+    <string name="widget_unprotected">已关闭</string>
+    <string name="widget_blocked_today">今日拦截</string>
+    <string name="widget_value_unknown">—</string>
+    <string name="widget_toggle_desc">开启或关闭</string>
+    <string name="widget_description">显示保护状态与今日拦截数，一键开启或关闭</string>
 </resources>

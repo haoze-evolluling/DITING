@@ -82,6 +82,17 @@ class SettingsPage extends StatelessWidget {
             ],
           ),
           _SettingsGroup(
+            title: context.l10n.integrationSection,
+            items: [
+              NavEntryRow(
+                glyph: AppGlyphs.puzzle,
+                title: context.l10n.integrationTitle,
+                subtitle: context.l10n.integrationSubtitle,
+                onPressed: () => context.push(SystemPaths.integration),
+              ),
+            ],
+          ),
+          _SettingsGroup(
             title: context.l10n.hubOtherSettings,
             items: [
               NavEntryRow(
