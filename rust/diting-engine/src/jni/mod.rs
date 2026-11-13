@@ -163,6 +163,9 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeNew(
     mut env: JNIEnv<'_>,
     _class: JObject<'_>,
 ) -> jlong {
+    // One line on logcat before any unwind, so a caught engine panic is still visible in the
+    // captured runtime log instead of vanishing into an IllegalStateException.
+    crate::panic_log::install();
     let result = catch_unwind(AssertUnwindSafe(|| {
         let engine = Arc::new(Engine::new());
         // Without a JVM reference no callback can ever be delivered, but the engine still answers
