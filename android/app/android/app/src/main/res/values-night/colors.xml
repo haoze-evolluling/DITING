@@ -7,4 +7,17 @@
     <color name="ic_launcher_foreground">#FF2E83FF</color>
     <color name="ic_launcher_background">#FF1F1F22</color>
     <color name="splash_card_stroke">#25FFFFFF</color>
+
+    <!-- Dark variants of the widget palette, from the same seeded scheme (`surfaceContainer` card,
+         lifted container tones for chips, lifted primary for the accent). -->
+    <color name="widget_card">#252628</color>
+    <color name="widget_card_stroke">#1FFFFFFF</color>
+    <color name="widget_on_surface">#F5F6FF</color>
+    <color name="widget_on_surface_variant">#C1C6D7</color>
+    <color name="widget_accent">#2F83FF</color>
+    <color name="widget_on_accent">#FFFFFFFF</color>
+    <color name="widget_success">#78DC77</color>
+    <color name="widget_chip_bg">#323235</color>
+    <color name="widget_tile_bg">#323235</color>
+    <color name="widget_divider">#404042</color>
 </resources>

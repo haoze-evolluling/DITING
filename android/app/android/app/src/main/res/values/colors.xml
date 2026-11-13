@@ -9,4 +9,23 @@
     <color name="splash_card_stroke">#1F000000</color>
     <!-- AdGuard alternative launcher icon: the shield sits on a plain white plate. -->
     <color name="ic_launcher_adguard_background">#FFFFFFFF</color>
+
+    <!-- Home screen widget palette, taken from the app's default (Apple blue) seeded scheme in
+         `shared/lib/ui/color.dart`. Cards use the same surfaces as the in-app dashboard cards, so
+         the widget reads as part of the same product rather than a separate generic tile. -->
+    <!-- surfaceBright: the dashboard card colour in light mode. -->
+    <color name="widget_card">#FCF8F9</color>
+    <color name="widget_card_stroke">#1F000000</color>
+    <!-- onSurface / onSurfaceVariant. -->
+    <color name="widget_on_surface">#181C23</color>
+    <color name="widget_on_surface_variant">#414755</color>
+    <!-- primary / onPrimary. -->
+    <color name="widget_accent">#007AFF</color>
+    <color name="widget_on_accent">#FFFFFFFF</color>
+    <!-- ColourScheme.success, used for the running dot. -->
+    <color name="widget_success">#006E1C</color>
+    <!-- Block tone (surfaceContainer) for chips and the large widget's inset tiles. -->
+    <color name="widget_chip_bg">#EFEDF0</color>
+    <color name="widget_tile_bg">#EFEDF0</color>
+    <color name="widget_divider">#33C7C6CA</color>
 </resources>

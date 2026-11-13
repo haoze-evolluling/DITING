@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Inset tile behind one figure on the large widget, mirroring DashboardBlock. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_tile_bg" />
+    <corners android:radius="20dp" />
+</shape>

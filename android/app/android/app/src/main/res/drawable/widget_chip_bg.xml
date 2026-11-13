@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status pill: a fully rounded block-tone container, the same shape as DashboardChip. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/widget_chip_bg" />
+    <corners android:radius="100dp" />
+</shape>

@@ -10,7 +10,13 @@
     <string name="widget_protected">已开启</string>
     <string name="widget_unprotected">已关闭</string>
     <string name="widget_blocked_today">今日拦截</string>
+    <string name="widget_today_queries">今日查询</string>
+    <string name="widget_block_rate">拦截率</string>
+    <string name="widget_work_mode">工作模式</string>
+    <string name="widget_mode_normal">普通模式</string>
+    <string name="widget_mode_express">极速模式</string>
+    <string name="widget_mode_server">服务器模式</string>
     <string name="widget_value_unknown">—</string>
     <string name="widget_toggle_desc">开启或关闭</string>
-    <string name="widget_description">显示保护状态与今日拦截数，一键开启或关闭</string>
+    <string name="widget_description">显示保护状态与今日拦截数，支持大中小三种尺寸，一键开启或关闭</string>
 </resources>
