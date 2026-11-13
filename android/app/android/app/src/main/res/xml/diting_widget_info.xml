@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One provider, three size classes: the layout is chosen at render time from the widget
-     options, so the same entry resizes from a 2x1 capsule to a 4x4 board. -->
+     options, so the same entry resizes from a 2x1 capsule to a 4x3 board. The large board is
+     optimised for a 4:3 shape, which is the default placement. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:description="@string/widget_description"
-    android:initialLayout="@layout/diting_widget_medium"
+    android:initialLayout="@layout/diting_widget_large"
     android:minHeight="40dp"
     android:minResizeHeight="40dp"
     android:minResizeWidth="110dp"
     android:minWidth="110dp"
-    android:previewLayout="@layout/diting_widget_medium"
+    android:previewLayout="@layout/diting_widget_large"
     android:resizeMode="horizontal|vertical"
-    android:targetCellHeight="2"
+    android:targetCellHeight="3"
     android:targetCellWidth="4"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen"

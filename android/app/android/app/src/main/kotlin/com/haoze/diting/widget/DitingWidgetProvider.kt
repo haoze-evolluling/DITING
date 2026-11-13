@@ -178,7 +178,7 @@ class DitingWidgetProvider : AppWidgetProvider() {
 
     /// Size classes. Thresholds are in dp and deliberately generous: launchers report the minimum
     /// size the widget can take while it is being resized, and a widget that is too short for the
-    /// large layout would clip its footer.
+    /// large layout would clip its footer. The large board is designed for a 4x3 shape.
     private enum class WidgetSize(val layoutRes: Int) {
         SMALL(R.layout.diting_widget_small),
         MEDIUM(R.layout.diting_widget_medium),
@@ -201,8 +201,8 @@ class DitingWidgetProvider : AppWidgetProvider() {
 
     companion object {
         private const val TAG = "DitingWidgetProvider"
-        private const val LARGE_MIN_WIDTH = 220
-        private const val LARGE_MIN_HEIGHT = 240
+        private const val LARGE_MIN_WIDTH = 260
+        private const val LARGE_MIN_HEIGHT = 235
         private const val MEDIUM_MIN_WIDTH = 140
         private const val MEDIUM_MIN_HEIGHT = 100
 
