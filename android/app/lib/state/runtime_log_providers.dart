@@ -23,7 +23,11 @@ class RuntimeLogStatusNotifier extends AsyncNotifier<RuntimeLogStatus> {
 
   /// True when capture really started. A refused start leaves the previous state untouched.
   Future<bool> start() async {
-    final started = await ref.read(runtimeLogBridgeProvider).start();
+    // Honor a mode chosen while capture was off: the switch reflects the persisted tier.
+    final detailed = state.value?.detailed ?? false;
+    final started = await ref
+        .read(runtimeLogBridgeProvider)
+        .start(detailed: detailed);
     await refresh();
     return started;
   }
@@ -31,6 +35,14 @@ class RuntimeLogStatusNotifier extends AsyncNotifier<RuntimeLogStatus> {
   Future<void> stop() async {
     await ref.read(runtimeLogBridgeProvider).stop();
     await refresh();
+  }
+
+  /// Switches standard/detailed capture; the native side re-arms a running capture.
+  Future<void> setMode(bool detailed) async {
+    final next = await ref
+        .read(runtimeLogBridgeProvider)
+        .setMode(detailed: detailed);
+    if (ref.mounted) state = AsyncData(next);
   }
 }
 

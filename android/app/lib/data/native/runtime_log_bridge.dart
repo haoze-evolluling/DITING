@@ -181,4 +181,22 @@ class RuntimeLogBridge {
       return 0;
     }
   }
+
+  /// Hands a (filtered) text export to the system share sheet. Never throws.
+  Future<bool> shareText({
+    required String text,
+    String name = 'runtime-events.txt',
+  }) async {
+    try {
+      return await _channel.invokeMethod<bool>('shareText', {
+            'text': text,
+            'name': name,
+          }) ??
+          false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
 }

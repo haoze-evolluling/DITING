@@ -21,6 +21,7 @@ import 'package:diting_android/pages/hub/recognition_pages.dart';
 import 'package:diting_android/pages/hub/resolution_mode_page.dart';
 import 'package:diting_android/pages/hub/rule_control_page.dart';
 import 'package:diting_android/pages/hub/subscription_tools_pages.dart';
+import 'package:diting_android/pages/hub/troubleshooting_events_page.dart';
 import 'package:diting_android/pages/hub/troubleshooting_log_content_page.dart';
 import 'package:diting_android/pages/hub/troubleshooting_logs_page.dart';
 import 'package:diting_android/pages/hub/troubleshooting_page.dart';
@@ -56,6 +57,7 @@ abstract final class HubPaths {
   static const logRetention = '/hub/log-retention';
   static const troubleshooting = '/hub/troubleshooting';
   static const troubleshootingLogs = '/hub/troubleshooting/logs';
+  static const troubleshootingEvents = '/hub/troubleshooting/events';
   static const dataCleanup = '/hub/data-cleanup';
   static const configTransfer = '/hub/config-transfer';
   static const configTransferWebdav = '/hub/config-transfer/webdav';
@@ -235,6 +237,12 @@ List<RouteBase> hubRoutes() => [
     parentNavigatorKey: rootNavigatorKey,
     pageBuilder: (context, state) =>
         androidDefaultPage(state, const TroubleshootingLogsPage()),
+  ),
+  GoRoute(
+    path: HubPaths.troubleshootingEvents,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) =>
+        androidDefaultPage(state, const TroubleshootingEventsPage()),
   ),
   GoRoute(
     path: '${HubPaths.troubleshootingLogs}/:kind/:name',

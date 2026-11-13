@@ -1,14 +1,17 @@
 package com.haoze.diting.platform
 
 import android.content.Context
+import android.content.Intent
 import android.os.Process
 import android.util.Log
+import androidx.core.content.FileProvider
 import com.haoze.diting.log.RuntimeEventLog
 import com.haoze.diting.log.RuntimeLogService
 import com.haoze.diting.log.RuntimeLogStore
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 
 /// Troubleshooting logs: the on-demand `logcat` capture (on/off, live state, export, clear) and the
 /// always-on structured event black box (append from Dart, read back, clear).
@@ -22,6 +25,16 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
         const val CHANNEL = "com.haoze.diting/runtime_log"
         private const val PREFS = "diting_runtime_log"
         private const val KEY_DETAILED = "detailed"
+
+        /// Re-arms a capture the user left running before a process restart. Called from the
+        /// Activity's engine setup, where the app is foreground, so the foreground-service start is
+        /// allowed; any platform restriction simply leaves the switch off.
+        fun restore(context: Context) {
+            if (!RuntimeLogStore.isCapturing(context)) return
+            val detailed = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .getBoolean(KEY_DETAILED, false)
+            runCatching { RuntimeLogService.start(context, Process.myPid(), detailed) }
+        }
     }
 
     fun register(messenger: BinaryMessenger) {
@@ -61,6 +74,7 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
                 result.success(true)
             }
             "clear" -> result.success(RuntimeLogStore.clear(context))
+            "shareText" -> result.success(shareText(call))
             else -> result.notImplemented()
         }
     }
@@ -113,4 +127,23 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putBoolean(KEY_DETAILED, detailed).apply()
     }
+
+    /// Shares a Dart-filtered export: the page decides level/module, this only stages the text for
+    /// the FileProvider so the share sheet can hand it over without touching the user's folder.
+    private fun shareText(call: MethodCall): Boolean = runCatching {
+        val text = call.argument<String>("text") ?: return false
+        val name = call.argument<String>("name")?.takeIf { it.isNotBlank() } ?: "runtime-events.txt"
+        val dir = File(context.cacheDir, "runtime-share").apply { mkdirs() }
+        val file = File(dir, name).apply { writeText(text) }
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(
+            Intent.createChooser(intent, "DITING").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+        true
+    }.getOrDefault(false)
 }

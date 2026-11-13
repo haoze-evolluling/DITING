@@ -24519,6 +24519,114 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'日志只保存在本机，分享前请确认其中不含敏感信息。'**
   String get troubleshootLogsFooter;
+
+  /// No description provided for @troubleshootEventsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'运行事件'**
+  String get troubleshootEventsTitle;
+
+  /// No description provided for @troubleshootEventsRecentTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近运行事件'**
+  String get troubleshootEventsRecentTitle;
+
+  /// No description provided for @troubleshootEventsRecentBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'常开记录应用启动、服务与引擎的异常事件，可事后排查。'**
+  String get troubleshootEventsRecentBody;
+
+  /// No description provided for @troubleshootEventsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无运行事件'**
+  String get troubleshootEventsEmpty;
+
+  /// No description provided for @troubleshootEventsEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用启动、服务或引擎发生异常时会自动记录。'**
+  String get troubleshootEventsEmptyBody;
+
+  /// No description provided for @troubleshootEventsAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部'**
+  String get troubleshootEventsAll;
+
+  /// No description provided for @troubleshootEventsWarnPlus.
+  ///
+  /// In zh, this message translates to:
+  /// **'警告及以上'**
+  String get troubleshootEventsWarnPlus;
+
+  /// No description provided for @troubleshootEventsErrorOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅错误'**
+  String get troubleshootEventsErrorOnly;
+
+  /// No description provided for @troubleshootEventsModuleAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部模块'**
+  String get troubleshootEventsModuleAll;
+
+  /// No description provided for @troubleshootEventsCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'共 {count} 条'**
+  String troubleshootEventsCount(int count);
+
+  /// No description provided for @troubleshootEventsAnomaly.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测到 {count} 条异常'**
+  String troubleshootEventsAnomaly(int count);
+
+  /// No description provided for @troubleshootEventsExport.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出当前筛选'**
+  String get troubleshootEventsExport;
+
+  /// No description provided for @troubleshootEventsLevel.
+  ///
+  /// In zh, this message translates to:
+  /// **'级别'**
+  String get troubleshootEventsLevel;
+
+  /// No description provided for @troubleshootEventsModule.
+  ///
+  /// In zh, this message translates to:
+  /// **'模块'**
+  String get troubleshootEventsModule;
+
+  /// No description provided for @troubleshootEventsOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看运行事件'**
+  String get troubleshootEventsOpen;
+
+  /// No description provided for @troubleshootEventsOpenBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'按级别与模块筛选启动、服务与异常事件'**
+  String get troubleshootEventsOpenBody;
+
+  /// No description provided for @troubleshootDetailMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'详细模式'**
+  String get troubleshootDetailMode;
+
+  /// No description provided for @troubleshootDetailModeNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'详细模式记录所有进程与缓冲区的完整 logcat，更全面但更耗电。'**
+  String get troubleshootDetailModeNote;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -59,6 +59,8 @@ class MainActivity : FlutterActivity() {
         RecognitionAvatarBridge(applicationContext).register(messenger)
         // Manual runtime-log capture: its own channel, so PlatformBridge stays crash-only.
         RuntimeLogBridge(applicationContext).register(messenger)
+        // Bring back a capture that was on when the process died, without visiting 故障排查.
+        RuntimeLogBridge.restore(applicationContext)
         // Per-file log management behind 故障排查 → 日志管理.
         TroubleshootingLogBridge(applicationContext).register(messenger)
         // Notification repaints after a Dart-side settings edit: same reasoning.

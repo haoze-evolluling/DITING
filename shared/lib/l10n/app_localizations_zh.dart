@@ -13400,4 +13400,62 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get troubleshootLogsFooter => '日志只保存在本机，分享前请确认其中不含敏感信息。';
+
+  @override
+  String get troubleshootEventsTitle => '运行事件';
+
+  @override
+  String get troubleshootEventsRecentTitle => '最近运行事件';
+
+  @override
+  String get troubleshootEventsRecentBody => '常开记录应用启动、服务与引擎的异常事件，可事后排查。';
+
+  @override
+  String get troubleshootEventsEmpty => '暂无运行事件';
+
+  @override
+  String get troubleshootEventsEmptyBody => '应用启动、服务或引擎发生异常时会自动记录。';
+
+  @override
+  String get troubleshootEventsAll => '全部';
+
+  @override
+  String get troubleshootEventsWarnPlus => '警告及以上';
+
+  @override
+  String get troubleshootEventsErrorOnly => '仅错误';
+
+  @override
+  String get troubleshootEventsModuleAll => '全部模块';
+
+  @override
+  String troubleshootEventsCount(int count) {
+    return '共 $count 条';
+  }
+
+  @override
+  String troubleshootEventsAnomaly(int count) {
+    return '检测到 $count 条异常';
+  }
+
+  @override
+  String get troubleshootEventsExport => '导出当前筛选';
+
+  @override
+  String get troubleshootEventsLevel => '级别';
+
+  @override
+  String get troubleshootEventsModule => '模块';
+
+  @override
+  String get troubleshootEventsOpen => '查看运行事件';
+
+  @override
+  String get troubleshootEventsOpenBody => '按级别与模块筛选启动、服务与异常事件';
+
+  @override
+  String get troubleshootDetailMode => '详细模式';
+
+  @override
+  String get troubleshootDetailModeNote => '详细模式记录所有进程与缓冲区的完整 logcat，更全面但更耗电。';
 }

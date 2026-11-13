@@ -14233,4 +14233,66 @@ class AppL10nEn extends AppL10n {
   @override
   String get troubleshootLogsFooter =>
       'Logs stay on this device; check for sensitive information before sharing.';
+
+  @override
+  String get troubleshootEventsTitle => 'Runtime events';
+
+  @override
+  String get troubleshootEventsRecentTitle => 'Recent runtime events';
+
+  @override
+  String get troubleshootEventsRecentBody =>
+      'Always-on record of startup, service and engine problems for later diagnosis.';
+
+  @override
+  String get troubleshootEventsEmpty => 'No runtime events yet';
+
+  @override
+  String get troubleshootEventsEmptyBody =>
+      'Events are recorded automatically when startup, a service or the engine misbehaves.';
+
+  @override
+  String get troubleshootEventsAll => 'All';
+
+  @override
+  String get troubleshootEventsWarnPlus => 'Warnings & errors';
+
+  @override
+  String get troubleshootEventsErrorOnly => 'Errors only';
+
+  @override
+  String get troubleshootEventsModuleAll => 'All modules';
+
+  @override
+  String troubleshootEventsCount(int count) {
+    return '$count events';
+  }
+
+  @override
+  String troubleshootEventsAnomaly(int count) {
+    return '$count anomalies detected';
+  }
+
+  @override
+  String get troubleshootEventsExport => 'Export filtered';
+
+  @override
+  String get troubleshootEventsLevel => 'Level';
+
+  @override
+  String get troubleshootEventsModule => 'Module';
+
+  @override
+  String get troubleshootEventsOpen => 'View runtime events';
+
+  @override
+  String get troubleshootEventsOpenBody =>
+      'Filter startup, service and error events by level and module';
+
+  @override
+  String get troubleshootDetailMode => 'Detailed mode';
+
+  @override
+  String get troubleshootDetailModeNote =>
+      'Detailed mode records the full logcat of every process and buffer; broader but uses more power.';
 }

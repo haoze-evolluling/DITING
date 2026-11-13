@@ -7,9 +7,11 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:diting_android/data/native/db_health_bridge.dart';
+import 'package:diting_android/data/native/runtime_event.dart';
 import 'package:diting_android/data/native/runtime_log_bridge.dart';
 import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/db_health_providers.dart';
+import 'package:diting_android/state/runtime_event_providers.dart';
 import 'package:diting_android/state/runtime_log_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -95,6 +97,9 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     final status = ref.watch(runtimeLogStatusProvider).value;
     final capturing = status?.capturing ?? false;
     final dbHealth = ref.watch(dbWriteHealthProvider).value;
+    final events = ref.watch(runtimeEventsProvider).value ?? const <RuntimeEvent>[];
+    final eventSummary = RuntimeEventSummary(events);
+    final detailed = status?.detailed ?? false;
     final error = context.colorScheme.error;
     return CommonScaffold(
       title: context.l10n.troubleshootTitle,
@@ -125,9 +130,33 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
                 value: capturing,
                 onChanged: _busy ? null : (value) => _onToggle(value),
               ),
+              ListItem.toggle(
+                leading: const GlyphIcon(AppGlyphs.logs, size: 20),
+                title: Text(context.l10n.troubleshootDetailMode),
+                subtitle: Text(context.l10n.troubleshootDetailModeNote),
+                value: detailed,
+                onChanged: _busy ? null : _onModeToggle,
+              ),
             ],
             footer:
                 context.l10n.troubleshootRecordNote,
+          ),
+          generateSection(
+            title: context.l10n.troubleshootEventsTitle,
+            items: [
+              ListItem(
+                leading: GlyphIcon(
+                  eventSummary.hasAnomaly ? AppGlyphs.warning : AppGlyphs.logs,
+                  size: 20,
+                  color: eventSummary.hasAnomaly ? error : null,
+                ),
+                title: Text(context.l10n.troubleshootEventsOpen),
+                subtitle: Text(_eventsSubtitle(eventSummary)),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                onTap: () => context.push(HubPaths.troubleshootingEvents),
+              ),
+            ],
+            footer: context.l10n.troubleshootEventsRecentBody,
           ),
           generateSection(
             title: context.l10n.troubleshootLocalDb,
@@ -247,6 +276,23 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     setState(() => _busy = false);
     _syncPolling(started);
     _toast(started ? context.l10n.troubleshootStartedToast : context.l10n.troubleshootStartFailedToast);
+  }
+
+  /// The recent-events row: empty, an anomaly count, or the plain total.
+  String _eventsSubtitle(RuntimeEventSummary summary) {
+    if (summary.count == 0) return context.l10n.troubleshootEventsEmpty;
+    if (summary.hasAnomaly) {
+      return context.l10n.troubleshootEventsAnomaly(summary.anomalyCount);
+    }
+    return context.l10n.troubleshootEventsCount(summary.count);
+  }
+
+  /// Switches the capture tier; the native side persists it and re-arms a running capture.
+  Future<void> _onModeToggle(bool detailed) async {
+    setState(() => _busy = true);
+    await ref.read(runtimeLogStatusProvider.notifier).setMode(detailed);
+    if (!mounted) return;
+    setState(() => _busy = false);
   }
 
   void _toast(String message) {
