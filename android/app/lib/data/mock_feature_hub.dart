@@ -35,6 +35,10 @@ class MockFeatureCategory {
 }
 
 /// Routes are literals here; `test/route_catalog_test.dart` keeps them in sync.
+///
+/// Reading order is the module order the hub shows. Each category covers one kind of work so no
+/// single page (previously 规则控制) has to host every new entry point:
+/// edits the hub taxonomy in one place only.
 List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
     <MockFeatureCategory>[
   MockFeatureCategory(
@@ -142,6 +146,148 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
     ],
   ),
   MockFeatureCategory(
+    title: l10n.hubCategoryNetworkTools,
+    cards: [
+      MockFeatureCard(
+        title: l10n.flowTitle,
+        description: l10n.flowEntrySubtitle,
+        glyphName: 'cloudSync',
+        route: '/network/flow',
+        featureKey: 'flow_view',
+        expressVisible: false,
+      ),
+      MockFeatureCard(
+        title: l10n.hubDnsLeak,
+        description: l10n.networkDiagnosticsIntro,
+        glyphName: 'speed',
+        route: '/network/diagnostics',
+        featureKey: 'network_diagnostics',
+        expressVisible: false,
+      ),
+      MockFeatureCard(
+        title: l10n.appInsightsTitle,
+        description: l10n.appInsightsIntro,
+        glyphName: 'dataUsage',
+        route: '/network/insights',
+        featureKey: 'app_insights',
+        expressVisible: false,
+      ),
+      MockFeatureCard(
+        title: l10n.privacySuiteTitle,
+        description: l10n.privacySuiteIntro,
+        glyphName: 'eyeOff',
+        route: '/network/privacy',
+        featureKey: 'privacy_suite',
+      ),
+      MockFeatureCard(
+        title: l10n.dns64Title,
+        description: l10n.dns64Intro,
+        glyphName: 'link',
+        route: '/network/dns64',
+        featureKey: 'dns64',
+      ),
+      MockFeatureCard(
+        title: l10n.devIpQuality,
+        description: l10n.devIpQualityBody,
+        glyphName: 'target',
+        route: '/ip-quality',
+        featureKey: 'ip_quality',
+      ),
+    ],
+  ),
+  MockFeatureCategory(
+    title: l10n.hubCategoryAutomation,
+    cards: [
+      MockFeatureCard(
+        title: l10n.automationTitle,
+        description: l10n.automationSubtitle,
+        glyphName: 'connections',
+        route: '/automation',
+        featureKey: 'automation',
+      ),
+      MockFeatureCard(
+        title: l10n.profilesTitle,
+        description: l10n.profilesSubtitle,
+        glyphName: 'profiles',
+        route: '/automation/profiles',
+        featureKey: 'automation_profiles',
+      ),
+      MockFeatureCard(
+        title: l10n.timetableTitle,
+        description: l10n.timetableSubtitle,
+        glyphName: 'clock',
+        route: '/automation/timetable',
+        featureKey: 'timetable',
+      ),
+      MockFeatureCard(
+        title: l10n.netProfileTitle,
+        description: l10n.netProfileSubtitle,
+        glyphName: 'wifi',
+        route: '/network/profiles',
+        featureKey: 'network_profile',
+      ),
+    ],
+  ),
+  MockFeatureCategory(
+    title: l10n.hubCategorySubscription,
+    cards: [
+      MockFeatureCard(
+        title: l10n.ruleControlSubsTitle,
+        description: l10n.ruleControlSubsSubtitle,
+        glyphName: 'cloudSync',
+        route: '/subscriptions',
+        featureKey: 'subscriptions',
+      ),
+      MockFeatureCard(
+        title: l10n.autoUpdateTitle,
+        description: l10n.hubAutoUpdateDescription,
+        glyphName: 'refresh',
+        route: '/hub/rules/auto-update',
+        featureKey: 'auto_update',
+      ),
+      MockFeatureCard(
+        title: l10n.mirrorTplTitle,
+        description: l10n.ruleControlMirrorSubtitle,
+        glyphName: 'layers',
+        route: '/hub/rules/mirrors',
+        featureKey: 'mirror_templates',
+      ),
+    ],
+  ),
+  MockFeatureCategory(
+    title: l10n.hubCategoryIntegration,
+    cards: [
+      MockFeatureCard(
+        title: l10n.localApiTitle,
+        description: l10n.localApiIntro,
+        glyphName: 'key',
+        route: '/network/local-api',
+        featureKey: 'local_api',
+      ),
+      MockFeatureCard(
+        title: l10n.webhookTitle,
+        description: l10n.webhookIntro,
+        glyphName: 'send',
+        route: '/hub/rules/webhook',
+        featureKey: 'webhook',
+      ),
+      MockFeatureCard(
+        title: l10n.lanRateLimitTitle,
+        description: l10n.lanRateLimitIntro,
+        glyphName: 'speed',
+        route: '/network/lan-rate-limit',
+        featureKey: 'lan_rate_limit',
+      ),
+      MockFeatureCard(
+        title: l10n.customResourcesTitle,
+        description: l10n.devCustomResourcesBody,
+        glyphName: 'resources',
+        route: '/config/custom-resources',
+        featureKey: 'custom_resources',
+      ),
+    ],
+  ),
+  MockFeatureCategory(
     title: l10n.hubCategoryAdvanced,
     cards: [
       MockFeatureCard(
@@ -220,6 +366,13 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         route: '/logs',
         featureKey: 'logs',
         longPressRoute: '/hub/log-retention',
+      ),
+      MockFeatureCard(
+        title: l10n.devRequestLogs,
+        description: l10n.devRequestLogsBody,
+        glyphName: 'requests',
+        route: '/requests',
+        featureKey: 'request_logs',
       ),
       MockFeatureCard(
         title: l10n.hubBackup,

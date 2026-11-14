@@ -2,11 +2,8 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/block_response_settings.dart';
-import 'package:diting_android/router.dart';
-import 'package:diting_android/state/auto_update_providers.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
-import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/page_intro.dart';
@@ -15,8 +12,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Rule control (upstream `RuleControlScreen`): master switch, URL rules, block response
-/// and subscription updates; block, allow and override lists stay in their own hub cards.
+/// Rule control (upstream `RuleControlScreen`): the master switch, URL rules, rule testing,
+/// temporary pause and the block response. Subscriptions, automation, network-privacy and
+/// interface entries each moved to their own feature-hub category so this page stays focused.
 class RuleControlPage extends ConsumerWidget {
   const RuleControlPage({super.key});
 
@@ -32,9 +30,6 @@ class RuleControlPage extends ConsumerWidget {
     // `CaCertificateService.inspect()`, so an installed certificate is not reported as missing.
     final caReady = ref.watch(caReadyProvider);
     final inspectionApps = settings.httpInspectionPackages;
-    final subscriptions = ref.watch(subscriptionEntriesProvider).value;
-    final mirrors = ref.watch(mirrorTemplatesProvider).value;
-    final autoUpdate = ref.watch(autoUpdateSettingsProvider);
     final footnote = AppTextStyle.footnote
         .of(context)
         .copyWith(color: context.colorScheme.onSurfaceVariant);
@@ -125,12 +120,6 @@ class RuleControlPage extends ConsumerWidget {
                 onTap: () => context.push('/logs/hit-ranking'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.cloudSync),
-                title: Text(context.l10n.flowTitle),
-                subtitle: Text(context.l10n.flowEntrySubtitle),
-                onTap: () => context.push('/network/flow'),
-              ),
-              ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
                 title: Text(context.l10n.ruleControlBlockResponse),
                 subtitle: Text(
@@ -144,148 +133,10 @@ class RuleControlPage extends ConsumerWidget {
               ),
             ],
           ),
-          generateSection(
-            title: context.l10n.automationHubSection,
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.connections),
-                title: Text(context.l10n.automationTitle),
-                subtitle: Text(context.l10n.automationSubtitle),
-                onTap: () => context.push('/automation'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.profiles),
-                title: Text(context.l10n.profilesTitle),
-                subtitle: Text(context.l10n.profilesSubtitle),
-                onTap: () => context.push('/automation/profiles'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.clock),
-                title: Text(context.l10n.timetableTitle),
-                subtitle: Text(context.l10n.timetableSubtitle),
-                onTap: () => context.push('/automation/timetable'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.connections),
-                title: Text(context.l10n.netProfileTitle),
-                subtitle: Text(context.l10n.netProfileSubtitle),
-                onTap: () => context.push('/network/profiles'),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.ruleControlNetworkPrivacySection,
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.eyeOff),
-                title: Text(context.l10n.privacySuiteTitle),
-                subtitle: Text(context.l10n.privacySuiteIntro),
-                onTap: () => context.push('/network/privacy'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.link),
-                title: Text(context.l10n.dns64Title),
-                subtitle: Text(context.l10n.dns64Intro),
-                onTap: () => context.push('/network/dns64'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.speed),
-                title: Text(context.l10n.networkDiagnosticsTitle),
-                subtitle: Text(context.l10n.networkDiagnosticsIntro),
-                onTap: () => context.push('/network/diagnostics'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.dataUsage),
-                title: Text(context.l10n.appInsightsTitle),
-                subtitle: Text(context.l10n.appInsightsIntro),
-                onTap: () => context.push('/network/insights'),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.ruleControlInterfacesSection,
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.key),
-                title: Text(context.l10n.localApiTitle),
-                subtitle: Text(context.l10n.localApiIntro),
-                onTap: () => context.push('/network/local-api'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.send),
-                title: Text(context.l10n.webhookTitle),
-                subtitle: Text(context.l10n.webhookIntro),
-                onTap: () => context.push('/hub/rules/webhook'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.speed),
-                title: Text(context.l10n.lanRateLimitTitle),
-                subtitle: Text(context.l10n.lanRateLimitIntro),
-                onTap: () => context.push('/network/lan-rate-limit'),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.ruleControlSubsSection,
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.cloudSync),
-                title: Text(context.l10n.ruleControlSubsTitle),
-                subtitle: Text(context.l10n.ruleControlSubsSubtitle),
-                trailing: Text(
-                  subscriptions == null
-                      ? '—'
-                      : context.l10n.ruleControlCount(subscriptions.length),
-                  style: footnote,
-                ),
-                onTap: () => context.push(Routes.subscriptions),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.refresh),
-                title: Text(context.l10n.autoUpdateTitle),
-                subtitle: Text(
-                  !autoUpdate.enabled
-                      ? context.l10n.ruleControlAutoUpdateOff
-                      : switch (autoUpdate.schedule) {
-                          AutoUpdateSchedule.interval =>
-                            context.l10n.ruleControlAutoUpdateOn(
-                              autoUpdate.intervalHours,
-                            ),
-                          AutoUpdateSchedule.daily =>
-                            context.l10n.ruleControlAutoUpdateDaily(
-                              _clock(autoUpdate.timeMinutes),
-                            ),
-                          AutoUpdateSchedule.everyOtherDay =>
-                            context.l10n.ruleControlAutoUpdateEveryOtherDay(
-                              _clock(autoUpdate.timeMinutes),
-                            ),
-                        },
-                ),
-                onTap: () => context.push('/hub/rules/auto-update'),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.layers),
-                title: Text(context.l10n.mirrorTplTitle),
-                subtitle: Text(context.l10n.ruleControlMirrorSubtitle),
-                trailing: Text(
-                  mirrors == null
-                      ? '—'
-                      : context.l10n.ruleControlCount(mirrors.length),
-                  style: footnote,
-                ),
-                onTap: () => context.push('/hub/rules/mirrors'),
-              ),
-            ],
-          ),
           const SizedBox(height: 24),
         ],
       ),
     );
-  }
-
-  static String _clock(int minutes) {
-    String two(int value) => value.toString().padLeft(2, '0');
-    return '${two(minutes ~/ 60)}:${two(minutes % 60)}';
   }
 }
 

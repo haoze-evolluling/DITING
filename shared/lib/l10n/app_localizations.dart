@@ -4244,7 +4244,7 @@ abstract class AppL10n {
   /// No description provided for @hubCategoryNetwork.
   ///
   /// In zh, this message translates to:
-  /// **'网络控制'**
+  /// **'应用管理'**
   String get hubCategoryNetwork;
 
   /// No description provided for @hubAppTraffic.
@@ -4456,6 +4456,42 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'导出崩溃日志，手动抓取并导出运行日志发给开发者'**
   String get hubTroubleshootingDescription;
+
+  /// No description provided for @hubCategoryNetworkTools.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络工具与隐私'**
+  String get hubCategoryNetworkTools;
+
+  /// No description provided for @hubCategoryAutomation.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动化与场景'**
+  String get hubCategoryAutomation;
+
+  /// No description provided for @hubCategoryIntegration.
+  ///
+  /// In zh, this message translates to:
+  /// **'接口与联动'**
+  String get hubCategoryIntegration;
+
+  /// No description provided for @hubCategorySubscription.
+  ///
+  /// In zh, this message translates to:
+  /// **'订阅与更新'**
+  String get hubCategorySubscription;
+
+  /// No description provided for @hubDnsLeak.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 泄漏检测'**
+  String get hubDnsLeak;
+
+  /// No description provided for @hubAutoUpdateDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'按固定间隔或每天固定时刻自动更新规则订阅'**
+  String get hubAutoUpdateDescription;
 
   /// No description provided for @hubCategoryAbout.
   ///
@@ -8895,6 +8931,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'以上「诊断与观测」「配置与资源」「界面与外观保留项」里的页面都不属于旧版 1.4.3 的界面，保留供调试与组件验收；旧版对应的功能仍按旧版菜单进入，不经过本页。'**
   String get devFooterLegacy;
+
+  /// No description provided for @devFooterMoved.
+  ///
+  /// In zh, this message translates to:
+  /// **'IP 质量、请求日志、自定义资源等入口已统一收纳到「功能中心」对应分类，开发者选项在此仅保留以下实验动作。'**
+  String get devFooterMoved;
 
   /// No description provided for @ipTypeResidential.
   ///

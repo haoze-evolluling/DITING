@@ -53,6 +53,20 @@ void main() {
     expect(find.text('URL 规则与内容过滤'), findsOneWidget);
   });
 
+  // The page used to carry automation, network-privacy, interface and subscription sections. They
+  // now live in their own feature-hub categories, so the page must not offer them again.
+  testWidgets('规则控制页只保留规则相关入口，其它模块已拆分到功能中心', (tester) async {
+    await pump(tester, AppWorkMode.normal.storageValue);
+    expect(find.text('规则测试'), findsOneWidget);
+    expect(find.text('临时暂停'), findsOneWidget);
+    expect(find.text('命中排行'), findsOneWidget);
+    expect(find.text('拦截响应'), findsOneWidget);
+    expect(find.text('自动化'), findsNothing);
+    expect(find.text('规则订阅'), findsNothing);
+    expect(find.text('本地 API'), findsNothing);
+    expect(find.text('隐私套件'), findsNothing);
+  });
+
   testWidgets('极速模式不提供 URL 规则与内容过滤入口', (tester) async {
     await pump(tester, AppWorkMode.express.storageValue);
     expect(find.text('启用域名规则'), findsOneWidget);

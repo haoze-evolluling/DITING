@@ -2364,7 +2364,7 @@ class AppL10nEn extends AppL10n {
       'Point custom domains at a specific IPv4/IPv6 address or CNAME';
 
   @override
-  String get hubCategoryNetwork => 'Network control';
+  String get hubCategoryNetwork => 'App management';
 
   @override
   String get hubAppTraffic => 'App traffic';
@@ -2486,6 +2486,25 @@ class AppL10nEn extends AppL10n {
   @override
   String get hubTroubleshootingDescription =>
       'Export crash logs and capture runtime logs to send to the developer';
+
+  @override
+  String get hubCategoryNetworkTools => 'Network tools and privacy';
+
+  @override
+  String get hubCategoryAutomation => 'Automation and scenes';
+
+  @override
+  String get hubCategoryIntegration => 'Interfaces and integration';
+
+  @override
+  String get hubCategorySubscription => 'Subscriptions and updates';
+
+  @override
+  String get hubDnsLeak => 'DNS leak check';
+
+  @override
+  String get hubAutoUpdateDescription =>
+      'Update rule subscriptions on a fixed interval or at a daily time';
 
   @override
   String get hubCategoryAbout => 'About DITING';
@@ -5073,6 +5092,10 @@ class AppL10nEn extends AppL10n {
   @override
   String get devFooterLegacy =>
       'The pages under Diagnostics, Configuration and resources, and UI and appearance do not belong to the 1.4.3 interface; they are kept for debugging and component review. Legacy features are still reached through the legacy menus, not this page.';
+
+  @override
+  String get devFooterMoved =>
+      'IP quality, request logs and custom resources now live under their own categories in the feature hub; the developer options keep only the experimental actions below.';
 
   @override
   String get ipTypeResidential => 'Residential';

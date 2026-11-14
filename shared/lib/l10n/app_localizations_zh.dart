@@ -2251,7 +2251,7 @@ class AppL10nZh extends AppL10n {
   String get hubRewriteDescription => '自定义域名覆写指向特定 IPv4/IPv6 或 CNAME';
 
   @override
-  String get hubCategoryNetwork => '网络控制';
+  String get hubCategoryNetwork => '应用管理';
 
   @override
   String get hubAppTraffic => '应用流量统计';
@@ -2358,6 +2358,24 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get hubTroubleshootingDescription => '导出崩溃日志，手动抓取并导出运行日志发给开发者';
+
+  @override
+  String get hubCategoryNetworkTools => '网络工具与隐私';
+
+  @override
+  String get hubCategoryAutomation => '自动化与场景';
+
+  @override
+  String get hubCategoryIntegration => '接口与联动';
+
+  @override
+  String get hubCategorySubscription => '订阅与更新';
+
+  @override
+  String get hubDnsLeak => 'DNS 泄漏检测';
+
+  @override
+  String get hubAutoUpdateDescription => '按固定间隔或每天固定时刻自动更新规则订阅';
 
   @override
   String get hubCategoryAbout => '关于谛听';
@@ -4814,6 +4832,10 @@ class AppL10nZh extends AppL10n {
   @override
   String get devFooterLegacy =>
       '以上「诊断与观测」「配置与资源」「界面与外观保留项」里的页面都不属于旧版 1.4.3 的界面，保留供调试与组件验收；旧版对应的功能仍按旧版菜单进入，不经过本页。';
+
+  @override
+  String get devFooterMoved =>
+      'IP 质量、请求日志、自定义资源等入口已统一收纳到「功能中心」对应分类，开发者选项在此仅保留以下实验动作。';
 
   @override
   String get ipTypeResidential => '住宅';

@@ -57,41 +57,6 @@ List<GlobalSearchEntry> _extraCommands(AppL10n l10n) => [
     route: '/hub/rules/pause',
     group: l10n.searchGroupTools,
   ),
-  GlobalSearchEntry(
-    title: l10n.privacySuiteTitle,
-    route: '/network/privacy',
-    group: l10n.searchGroupTools,
-  ),
-  GlobalSearchEntry(
-    title: l10n.dns64Title,
-    route: '/network/dns64',
-    group: l10n.searchGroupTools,
-  ),
-  GlobalSearchEntry(
-    title: l10n.networkDiagnosticsTitle,
-    route: '/network/diagnostics',
-    group: l10n.searchGroupTools,
-  ),
-  GlobalSearchEntry(
-    title: l10n.appInsightsTitle,
-    route: '/network/insights',
-    group: l10n.searchGroupTools,
-  ),
-  GlobalSearchEntry(
-    title: l10n.localApiTitle,
-    route: '/network/local-api',
-    group: l10n.searchGroupTools,
-  ),
-  GlobalSearchEntry(
-    title: l10n.webhookTitle,
-    route: '/hub/rules/webhook',
-    group: l10n.searchGroupTools,
-  ),
-  GlobalSearchEntry(
-    title: l10n.lanRateLimitTitle,
-    route: '/network/lan-rate-limit',
-    group: l10n.searchGroupTools,
-  ),
 ];
 
 /// 全量索引：功能中心全部卡片（按分类分组）+ 常用命令。

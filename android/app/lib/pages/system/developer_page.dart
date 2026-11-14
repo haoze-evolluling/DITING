@@ -8,21 +8,15 @@ import 'dart:math';
 
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
 import 'package:diting_shared/data/db/legacy_database.dart';
-import 'package:diting_android/routes/config_routes.dart';
-import 'package:diting_android/routes/hub_routes.dart';
-import 'package:diting_android/routes/observability_routes.dart';
-import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
-import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Rows in the stress action; one batch, so the UI never freezes mid-way.
@@ -231,106 +225,6 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
             children: [
               const _DeveloperModeCard(),
               generateSection(
-                title: context.l10n.devDiagnostics,
-                items: [
-                  NavEntryRow(
-                    glyph: AppGlyphs.target,
-                    leadingSize: 20,
-                    title: context.l10n.devIpQuality,
-                    subtitle: context.l10n.devIpQualityBody,
-                    onPressed: () => context.push(SystemPaths.ipQuality),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.requests,
-                    leadingSize: 20,
-                    title: context.l10n.devRequestLogs,
-                    subtitle: context.l10n.devRequestLogsBody,
-                    onPressed: () => context.push(ObservabilityPaths.requests),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.logs,
-                    leadingSize: 20,
-                    title: context.l10n.devLogRetention,
-                    subtitle: context.l10n.devLogRetentionBody,
-                    onPressed: () => context.push(HubPaths.logRetention),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.wrench,
-                    leadingSize: 20,
-                    title: context.l10n.devTroubleshoot,
-                    subtitle: context.l10n.devTroubleshootBody,
-                    onPressed: () => context.push(HubPaths.troubleshooting),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.broom,
-                    leadingSize: 20,
-                    title: context.l10n.devDataCleanup,
-                    subtitle: context.l10n.devDataCleanupBody,
-                    onPressed: () => context.push(HubPaths.dataCleanup),
-                  ),
-                ],
-              ),
-              generateSection(
-                title: context.l10n.devConfigSection,
-                items: [
-                  NavEntryRow(
-                    glyph: AppGlyphs.resources,
-                    leadingSize: 20,
-                    title: context.l10n.devCustomResources,
-                    subtitle: context.l10n.devCustomResourcesBody,
-                    onPressed: () => context.push(ConfigPaths.customResources),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.account,
-                    leadingSize: 20,
-                    title: 'User-Agent',
-                    subtitle: context.l10n.devUserAgentBody,
-                    onPressed: () => context.push(ConfigPaths.userAgents),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.wifi,
-                    leadingSize: 20,
-                    title: context.l10n.devOnDemand,
-                    subtitle: context.l10n.devOnDemandBody,
-                    onPressed: () => context.push(ConfigPaths.onDemand),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.cloudSync,
-                    leadingSize: 20,
-                    title: context.l10n.devWebdav,
-                    subtitle: context.l10n.devWebdavBody,
-                    onPressed: () =>
-                        context.push(HubPaths.configTransferWebdav),
-                  ),
-                ],
-              ),
-              generateSection(
-                title: context.l10n.devUiSection,
-                items: [
-                  NavEntryRow(
-                    glyph: AppGlyphs.font,
-                    leadingSize: 20,
-                    title: context.l10n.devFontFamily,
-                    subtitle: context.l10n.devFontFamilyBody,
-                    onPressed: () => context.push(SystemPaths.fontFamily),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.textSize,
-                    leadingSize: 20,
-                    title: context.l10n.devFontSize,
-                    subtitle: context.l10n.devFontSizeBody,
-                    onPressed: () => context.push(SystemPaths.theme),
-                  ),
-                  NavEntryRow(
-                    glyph: AppGlyphs.motion,
-                    leadingSize: 20,
-                    title: context.l10n.devTabAnimation,
-                    subtitle: context.l10n.devTabAnimationBody,
-                    onPressed: () => context.push(SystemPaths.theme),
-                  ),
-                ],
-              ),
-              generateSection(
                 title: context.l10n.devExperimental,
                 items: [
                   for (final action in _DeveloperAction.values)
@@ -348,7 +242,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
               ),
               ListFooter(
                 text:
-                    context.l10n.devFooterLegacy,
+                    context.l10n.devFooterMoved,
               ),
               const DockSpacer(),
             ],

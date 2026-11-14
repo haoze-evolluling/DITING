@@ -11,10 +11,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Feature hub migrated from upstream `FeatureHubScreen.kt`: 7 categories, 28 cards,
-/// two-column grid. Only layout and modules are ported; express mode filters the same data
-/// through the upstream 18-item gate. The grid widgets live in `feature_hub_grid.dart` so the
-/// server-mode feature center can share the same layout.
+/// Feature hub migrated from upstream `FeatureHubScreen.kt`: the card grid groups the same
+/// modules into focused categories, so no single page (notably 规则控制) hosts every entry point.
+/// Express mode filters the same data through the upstream 18-item gate. The grid widgets live in
+/// `feature_hub_grid.dart` so the server-mode feature center can share the same layout.
 class FeatureHubPage extends ConsumerWidget {
   const FeatureHubPage({super.key});
 
