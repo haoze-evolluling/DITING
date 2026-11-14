@@ -129,14 +129,22 @@ class _NumberItem extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconButton(
-            icon: const Icon(Icons.remove),
-            onPressed: value <= min ? null : () => onChanged(value - step),
+          Semantics(
+            label: '$label −',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.remove),
+              onPressed: value <= min ? null : () => onChanged(value - step),
+            ),
           ),
           Text('$value'),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: value >= max ? null : () => onChanged(value + step),
+          Semantics(
+            label: '$label +',
+            button: true,
+            child: IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: value >= max ? null : () => onChanged(value + step),
+            ),
           ),
         ],
       ),

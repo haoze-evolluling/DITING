@@ -80,6 +80,7 @@ class _WebhookPageState extends ConsumerState<WebhookPage> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     suffixIcon: IconButton(
+                      tooltip: l10n.webhookSecret,
                       icon: const GlyphIcon(AppGlyphs.eyeOff, size: 20),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
