@@ -21,6 +21,7 @@ class FlowPage extends ConsumerStatefulWidget {
 
 class _FlowPageState extends ConsumerState<FlowPage> {
   Timer? _timer;
+  String? _selectedApp;
 
   @override
   void initState() {
@@ -50,29 +51,83 @@ class _FlowPageState extends ConsumerState<FlowPage> {
     for (final row in state.rows) {
       groups.putIfAbsent(row.appLabel, () => []).add(row);
     }
+    final actions = [
+      IconButton(
+        tooltip: context.l10n.flowRefresh,
+        onPressed: () => _refresh(full: true),
+        icon: const GlyphIcon(AppGlyphs.refresh),
+      ),
+    ];
+    if (state.rows.isEmpty) {
+      return CommonScaffold(
+        title: context.l10n.flowTitle,
+        actions: actions,
+        body: PageBody(
+          children: [PageIntroCard(text: context.l10n.flowEmptyBody)],
+        ),
+      );
+    }
+
+    // U9: on a tablet the app list becomes a left pane and the selected app's connections the right,
+    // so a busy device does not force one long mixed scroll.
+    final wide = MediaQuery.sizeOf(context).width >= 720;
+    final apps = groups.keys.toList();
+    final selected = (_selectedApp != null && groups.containsKey(_selectedApp))
+        ? _selectedApp!
+        : apps.first;
+    if (!wide) {
+      return CommonScaffold(
+        title: context.l10n.flowTitle,
+        actions: actions,
+        body: PageBody(
+          children: [
+            for (final entry in groups.entries)
+              _groupSection(entry.key, entry.value),
+          ],
+        ),
+      );
+    }
     return CommonScaffold(
       title: context.l10n.flowTitle,
-      actions: [
-        IconButton(
-          tooltip: context.l10n.flowRefresh,
-          onPressed: () => _refresh(full: true),
-          icon: const GlyphIcon(AppGlyphs.refresh),
-        ),
-      ],
+      actions: actions,
       body: PageBody(
         children: [
-          if (state.rows.isEmpty)
-            PageIntroCard(text: context.l10n.flowEmptyBody)
-          else
-            for (final group in groups.entries)
-              generateSection(
-                title: group.key,
-                items: [
-                  for (final row in group.value) _FlowTile(row: row),
-                ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 280,
+                child: generateSection(
+                  items: [
+                    for (final app in apps)
+                      ListItem(
+                        leading: const GlyphIcon(AppGlyphs.appsList),
+                        title: Text(
+                          app,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: app == selected
+                            ? const GlyphIcon(AppGlyphs.checkCircle)
+                            : null,
+                        onTap: () => setState(() => _selectedApp = app),
+                      ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
+              Expanded(child: _groupSection(selected, groups[selected]!)),
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _groupSection(String title, List<FlowRow> rows) {
+    return generateSection(
+      title: title,
+      items: [for (final row in rows) _FlowTile(row: row)],
     );
   }
 }
