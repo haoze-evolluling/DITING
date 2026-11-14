@@ -76,6 +76,38 @@ class AppL10nZh extends AppL10n {
   String get subscriptionHealthFailed => '更新失败';
 
   @override
+  String get blockPauseTitle => '临时暂停';
+
+  @override
+  String get blockPauseEntrySubtitle => '临时跳过拦截 / 仅白名单';
+
+  @override
+  String get blockPauseIntro => '暂停后跳过全部拦截，DNS 仍照常解析，到期自动恢复。仅白名单模式只放行显式允许的域名。';
+
+  @override
+  String get blockPauseRunningLabel => '暂停中，剩余';
+
+  @override
+  String get blockPauseInactive => '当前未暂停，拦截正常生效';
+
+  @override
+  String get blockPauseResume => '立即恢复';
+
+  @override
+  String blockPausePresetButton(int minutes) {
+    return '暂停 $minutes 分钟';
+  }
+
+  @override
+  String get blockPauseAllowlistTitle => '仅白名单模式';
+
+  @override
+  String get blockPauseAllowlistSubtitle => '只放行显式允许的域名，其余全部拦截';
+
+  @override
+  String get blockPauseFailed => '设置失败，请稍后重试';
+
+  @override
   String get appTitle => '谛听 DITING';
 
   @override

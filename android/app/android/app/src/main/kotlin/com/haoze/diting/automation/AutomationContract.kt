@@ -42,6 +42,9 @@ object AutomationContract {
     /// 自动化平台层的本地偏好（不参与 Dart/legacy 设置同步）。
     const val PREFS_NAME: String = "automation_prefs"
     const val KEY_PAUSED_UNTIL_MS: String = "paused_until_ms"
+
+    /// R4：仅白名单模式（只放行显式 allow，其余一律拦截）。
+    const val KEY_ALLOWLIST_ONLY: String = "allowlist_only"
     const val KEY_NEXT_DUE_AT_MS: String = "next_due_at_ms"
     const val KEY_LAST_TICK_AT_MS: String = "last_tick_at_ms"
 }

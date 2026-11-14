@@ -42,6 +42,7 @@ class MainActivity : FlutterActivity() {
         DnsServerBridge(applicationContext, messenger)
         RuleIndexBridge(applicationContext, messenger)
         RuleTestBridge(applicationContext, messenger)
+        BlockPauseBridge(applicationContext, messenger)
 
         AppsBridge(applicationContext).register(messenger)
         CaInspectionBridge(applicationContext).register(messenger)

@@ -208,6 +208,8 @@ class ExpressVpnService : VpnService() {
             // Same rule as the full tunnel: no IPv6 in the narrow TUN means no AAAA answers, so a
             // client whose physical IPv6 is broken does not wait on a doomed IPv6 attempt.
             rustEngine.setBlockIpv6(!ipv6Enabled)
+            // R4: replay the persisted pause / allowlist-only onto this freshly started engine.
+            com.haoze.diting.control.BlockPauseLink.apply(this)
 
             // Resolvers only: no user traffic crosses the narrow TUN and there is no MITM stage.
             // The log tables live in the express database, so bootstrap rows and the cache

@@ -83,6 +83,16 @@ class Engine : TunnelEngine, AutoCloseable {
         nativeSetFilterDns(handle, enabled)
     }
 
+    /// R4: skip every policy block until `untilMs`; the pause expires by wall clock on its own.
+    override fun setBlockPause(untilMs: Long) {
+        nativeSetBlockPause(handle, untilMs)
+    }
+
+    /// R4: strict allowlist-only mode.
+    override fun setAllowlistOnly(enabled: Boolean) {
+        nativeSetAllowlistOnly(handle, enabled)
+    }
+
     /// `CUSTOM_IP` / `NXDOMAIN` / `REFUSED` / `NODATA`, matched case-sensitively.
     fun setBlockResponseType(responseType: String) {
         nativeSetBlockResponseType(handle, responseType)
@@ -266,6 +276,10 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeSetRewriteRules(handle: Long, json: String)
 
     private external fun nativeSetFilterDns(handle: Long, enabled: Boolean)
+
+    private external fun nativeSetBlockPause(handle: Long, untilMs: Long)
+
+    private external fun nativeSetAllowlistOnly(handle: Long, enabled: Boolean)
 
     private external fun nativeSetBlockResponseType(handle: Long, responseType: String)
 

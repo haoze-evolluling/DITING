@@ -229,6 +229,66 @@ abstract class AppL10n {
   /// **'更新失败'**
   String get subscriptionHealthFailed;
 
+  /// No description provided for @blockPauseTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'临时暂停'**
+  String get blockPauseTitle;
+
+  /// No description provided for @blockPauseEntrySubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'临时跳过拦截 / 仅白名单'**
+  String get blockPauseEntrySubtitle;
+
+  /// No description provided for @blockPauseIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停后跳过全部拦截，DNS 仍照常解析，到期自动恢复。仅白名单模式只放行显式允许的域名。'**
+  String get blockPauseIntro;
+
+  /// No description provided for @blockPauseRunningLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停中，剩余'**
+  String get blockPauseRunningLabel;
+
+  /// No description provided for @blockPauseInactive.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前未暂停，拦截正常生效'**
+  String get blockPauseInactive;
+
+  /// No description provided for @blockPauseResume.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即恢复'**
+  String get blockPauseResume;
+
+  /// No description provided for @blockPausePresetButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停 {minutes} 分钟'**
+  String blockPausePresetButton(int minutes);
+
+  /// No description provided for @blockPauseAllowlistTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅白名单模式'**
+  String get blockPauseAllowlistTitle;
+
+  /// No description provided for @blockPauseAllowlistSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'只放行显式允许的域名，其余全部拦截'**
+  String get blockPauseAllowlistSubtitle;
+
+  /// No description provided for @blockPauseFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置失败，请稍后重试'**
+  String get blockPauseFailed;
+
   /// No description provided for @appTitle.
   ///
   /// In zh, this message translates to:

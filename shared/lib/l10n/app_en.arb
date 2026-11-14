@@ -22,6 +22,23 @@
   "subscriptionHealthUnchanged": "Unchanged",
   "subscriptionHealthCached": "Using cache",
   "subscriptionHealthFailed": "Update failed",
+  "blockPauseTitle": "Temporary pause",
+  "blockPauseEntrySubtitle": "Skip blocking / allowlist-only",
+  "blockPauseIntro": "While paused every policy block is skipped (DNS still resolves) and blocking resumes automatically when the timer ends. Allowlist-only passes only domains that are explicitly allowed.",
+  "blockPauseRunningLabel": "Paused, remaining",
+  "blockPauseInactive": "Not paused, blocking is active",
+  "blockPauseResume": "Resume now",
+  "blockPausePresetButton": "Pause {minutes} min",
+  "@blockPausePresetButton": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "blockPauseAllowlistTitle": "Allowlist-only mode",
+  "blockPauseAllowlistSubtitle": "Pass only explicitly allowed domains; block everything else",
+  "blockPauseFailed": "Failed to apply, please retry",
   "appTitle": "DITING",
   "uiBack": "Back",
   "uiCancel": "Cancel",

@@ -116,6 +116,12 @@ interface TunnelEngine {
 
     fun setFilterDNS(enabled: Boolean)
 
+    /// R4: skip every policy block until `untilMs` (epoch ms); `0` clears the pause.
+    fun setBlockPause(untilMs: Long)
+
+    /// R4: block anything that is not an explicit allow.
+    fun setAllowlistOnly(enabled: Boolean)
+
     fun clearDNSCache()
 
     /// `{"total":…,"blocked":…,"dropped_logs":…}`.

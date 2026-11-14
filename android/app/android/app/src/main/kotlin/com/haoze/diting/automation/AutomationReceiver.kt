@@ -58,12 +58,14 @@ class AutomationReceiver : BroadcastReceiver() {
             .coerceAtLeast(0)
         val untilMs: Long = System.currentTimeMillis() + minutes.toLong() * 60_000L
         prefs(context).edit().putLong(AutomationContract.KEY_PAUSED_UNTIL_MS, untilMs).apply()
+        com.haoze.diting.control.BlockPauseLink.apply(context)
         return HandleResult(true, "paused_until=$untilMs")
     }
 
     /// 取消暂停：把截止时间清 0，等于立刻恢复。
     private fun cancelPause(context: Context): HandleResult {
         prefs(context).edit().putLong(AutomationContract.KEY_PAUSED_UNTIL_MS, 0L).apply()
+        com.haoze.diting.control.BlockPauseLink.apply(context)
         return HandleResult(true, "resumed")
     }
 

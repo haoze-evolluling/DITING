@@ -123,16 +123,13 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
 
     if engine.policy().is_active() && engine.policy().has_rules() {
         if let Some(verdict) = engine.policy().evaluate(&domain, app_name, qtype) {
-            if verdict.blocked {
-                return block(
-                    engine,
-                    query,
-                    &domain,
-                    qtype,
-                    &verdict.reason,
-                    started,
-                    app_name,
-                );
+            if let Some(reason) = crate::pause::effective_block(
+                verdict.blocked,
+                &verdict.reason,
+                engine.block_paused(),
+                engine.allowlist_only(),
+            ) {
+                return block(engine, query, &domain, qtype, &reason, started, app_name);
             }
         }
     }

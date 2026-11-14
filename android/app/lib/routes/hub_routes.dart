@@ -20,6 +20,7 @@ import 'package:diting_android/pages/hub/provider_visibility_page.dart';
 import 'package:diting_android/pages/hub/recognition_pages.dart';
 import 'package:diting_android/pages/hub/resolution_mode_page.dart';
 import 'package:diting_android/pages/hub/rule_control_page.dart';
+import 'package:diting_android/pages/rules/block_pause_page.dart';
 import 'package:diting_android/pages/rules/rule_test_page.dart';
 import 'package:diting_android/pages/hub/subscription_tools_pages.dart';
 import 'package:diting_android/pages/hub/troubleshooting_events_page.dart';
@@ -38,6 +39,7 @@ abstract final class HubPaths {
   static const cache = '/hub/cache';
   static const ruleControl = '/hub/rules';
   static const ruleTest = '/hub/rules/test';
+  static const blockPause = '/hub/rules/pause';
   static const blockResponse = '/hub/rules/block-response';
   static const autoUpdate = '/hub/rules/auto-update';
   static const mirrorTemplates = '/hub/rules/mirrors';
@@ -119,6 +121,12 @@ List<RouteBase> hubRoutes() => [
     parentNavigatorKey: rootNavigatorKey,
     pageBuilder: (context, state) =>
         androidDefaultPage(state, const RuleTestPage()),
+  ),
+  GoRoute(
+    path: HubPaths.blockPause,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) =>
+        androidDefaultPage(state, const BlockPausePage()),
   ),
   GoRoute(
     path: HubPaths.blockResponse,

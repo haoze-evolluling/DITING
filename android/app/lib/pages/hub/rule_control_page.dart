@@ -114,6 +114,12 @@ class RuleControlPage extends ConsumerWidget {
               ),
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
+                title: Text(context.l10n.blockPauseTitle),
+                subtitle: Text(context.l10n.blockPauseEntrySubtitle),
+                onTap: () => context.push('/hub/rules/pause'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.block),
                 title: Text(context.l10n.ruleControlBlockResponse),
                 subtitle: Text(
                   settings.dynamicBlockEnabled

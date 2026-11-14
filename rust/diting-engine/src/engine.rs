@@ -20,7 +20,7 @@
 //! | `resolveDomain` | [`Engine::resolve_domain`] |
 //! | `startStandalone` / `stopStandalone` / `stop` | [`Engine::start_standalone`] |
 
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -103,6 +103,12 @@ pub struct Engine {
     /// Only set when the tunnel carries no IPv6.
     block_ipv6: AtomicBool,
     block_response: AtomicU32,
+    /// R4: temporary pause. While `now_ms() < pause_until_ms` every policy block is skipped, so DNS
+    /// still resolves but nothing is filtered. `0` means not paused.
+    pause_until_ms: AtomicI64,
+    /// R4: allowlist-only. When set, a name that is not explicitly allow-listed is blocked even if no
+    /// block rule matches — a strict "only these pass" mode.
+    allowlist_only: AtomicBool,
     dynamic_config: RwLock<BlockConfig>,
     config: RwLock<Option<DnsConfig>>,
     resolver: RwLock<Arc<Resolver>>,
@@ -178,6 +184,8 @@ impl Engine {
             filter_dns: AtomicBool::new(false),
             block_ipv6: AtomicBool::new(false),
             block_response: AtomicU32::new(0),
+            pause_until_ms: AtomicI64::new(0),
+            allowlist_only: AtomicBool::new(false),
             dynamic_config: RwLock::new(BlockConfig {
                 enabled: false,
                 request_threshold: 0,
@@ -416,6 +424,32 @@ impl Engine {
 
     pub fn block_ipv6(&self) -> bool {
         self.block_ipv6.load(Ordering::Acquire)
+    }
+
+    /// `setBlockPause(untilMs)`: skip every policy block until `until_ms` (epoch ms). `0` clears it.
+    /// The pause naturally expires against the wall clock, so no timer clears it.
+    pub fn set_block_pause_until(&self, until_ms: i64) {
+        self.pause_until_ms.store(until_ms, Ordering::Release);
+    }
+
+    /// Whether blocking is currently paused.
+    pub fn block_paused(&self) -> bool {
+        let until = self.pause_until_ms.load(Ordering::Acquire);
+        until > 0 && now_ms() < until
+    }
+
+    /// The raw pause deadline (0 when not paused); surfaced for diagnostics.
+    pub fn block_pause_until(&self) -> i64 {
+        self.pause_until_ms.load(Ordering::Acquire)
+    }
+
+    /// `setAllowlistOnly(enabled)`: block anything that is not an explicit allow.
+    pub fn set_allowlist_only(&self, enabled: bool) {
+        self.allowlist_only.store(enabled, Ordering::Release);
+    }
+
+    pub fn allowlist_only(&self) -> bool {
+        self.allowlist_only.load(Ordering::Acquire)
     }
 
     pub fn set_block_response_type(&self, response_type: &str) {

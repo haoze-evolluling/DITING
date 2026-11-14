@@ -211,6 +211,8 @@ class DitingDnsServerService : Service() {
                 }
                 engine = created
                 activeEngine = created
+                // R4: replay the persisted pause / allowlist-only onto this freshly started engine.
+                com.haoze.diting.control.BlockPauseLink.apply(this@DitingDnsServerService)
                 isRunning = true
                 // Server mode has its own log store; the sweep must target that file, and it has
                 // no HTTP/traffic tables.

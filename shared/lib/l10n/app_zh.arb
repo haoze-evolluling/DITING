@@ -22,6 +22,23 @@
   "subscriptionHealthUnchanged": "无变化",
   "subscriptionHealthCached": "使用缓存",
   "subscriptionHealthFailed": "更新失败",
+  "blockPauseTitle": "临时暂停",
+  "blockPauseEntrySubtitle": "临时跳过拦截 / 仅白名单",
+  "blockPauseIntro": "暂停后跳过全部拦截，DNS 仍照常解析，到期自动恢复。仅白名单模式只放行显式允许的域名。",
+  "blockPauseRunningLabel": "暂停中，剩余",
+  "blockPauseInactive": "当前未暂停，拦截正常生效",
+  "blockPauseResume": "立即恢复",
+  "blockPausePresetButton": "暂停 {minutes} 分钟",
+  "@blockPausePresetButton": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "blockPauseAllowlistTitle": "仅白名单模式",
+  "blockPauseAllowlistSubtitle": "只放行显式允许的域名，其余全部拦截",
+  "blockPauseFailed": "设置失败，请稍后重试",
   "appTitle": "谛听 DITING",
   "uiBack": "返回",
   "uiCancel": "取消",

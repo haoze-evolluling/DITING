@@ -333,6 +333,32 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetFilterDns(
     });
 }
 
+/// `setBlockPause(untilMs)`
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockPause(
+    mut env: JNIEnv<'_>,
+    _class: JObject<'_>,
+    handle: jlong,
+    until_ms: jlong,
+) {
+    with_engine(&mut env, handle, (), |engine| {
+        engine.set_block_pause_until(until_ms)
+    });
+}
+
+/// `setAllowlistOnly(enabled)`
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetAllowlistOnly(
+    mut env: JNIEnv<'_>,
+    _class: JObject<'_>,
+    handle: jlong,
+    enabled: jboolean,
+) {
+    with_engine(&mut env, handle, (), |engine| {
+        engine.set_allowlist_only(enabled != 0)
+    });
+}
+
 /// `setBlockResponseType(name)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockResponseType(

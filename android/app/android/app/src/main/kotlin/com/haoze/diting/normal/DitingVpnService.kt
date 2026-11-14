@@ -202,6 +202,8 @@ class DitingVpnService : VpnService() {
             // The tunnel resolved `ipv6Mode` against the link (AUTO probe included). When it is
             // carrying no IPv6, answer AAAA with NODATA so traffic does not stall on IPv6.
             rustEngine.setBlockIpv6(!ipv6Enabled)
+            // R4: replay the persisted pause / allowlist-only onto this freshly started engine.
+            com.haoze.diting.control.BlockPauseLink.apply(this)
 
             // Attached before startFull and assigned first, so a throw still reaches cleanup.
             val plane = EngineDataPlane(this, logMode)

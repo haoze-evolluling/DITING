@@ -63,6 +63,7 @@ pub mod mitm;
 pub mod netstack;
 pub mod outbound;
 pub mod panic_log;
+pub mod pause;
 pub mod policy;
 pub mod protect;
 pub mod resolver;

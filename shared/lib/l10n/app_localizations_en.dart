@@ -78,6 +78,40 @@ class AppL10nEn extends AppL10n {
   String get subscriptionHealthFailed => 'Update failed';
 
   @override
+  String get blockPauseTitle => 'Temporary pause';
+
+  @override
+  String get blockPauseEntrySubtitle => 'Skip blocking / allowlist-only';
+
+  @override
+  String get blockPauseIntro =>
+      'While paused every policy block is skipped (DNS still resolves) and blocking resumes automatically when the timer ends. Allowlist-only passes only domains that are explicitly allowed.';
+
+  @override
+  String get blockPauseRunningLabel => 'Paused, remaining';
+
+  @override
+  String get blockPauseInactive => 'Not paused, blocking is active';
+
+  @override
+  String get blockPauseResume => 'Resume now';
+
+  @override
+  String blockPausePresetButton(int minutes) {
+    return 'Pause $minutes min';
+  }
+
+  @override
+  String get blockPauseAllowlistTitle => 'Allowlist-only mode';
+
+  @override
+  String get blockPauseAllowlistSubtitle =>
+      'Pass only explicitly allowed domains; block everything else';
+
+  @override
+  String get blockPauseFailed => 'Failed to apply, please retry';
+
+  @override
   String get appTitle => 'DITING';
 
   @override
