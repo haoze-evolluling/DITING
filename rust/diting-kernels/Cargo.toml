@@ -15,6 +15,8 @@ diting-app-update-core = { path = "../diting-app-update-core" }
 diting-backup-core = { path = "../diting-backup-core" }
 diting-cleanup-core = { path = "../diting-cleanup-core" }
 diting-dns-config-core = { path = "../diting-dns-config-core" }
+diting-event-core = { path = "../diting-event-core" }
+diting-hit-core = { path = "../diting-hit-core" }
 diting-ip-quality-core = { path = "../diting-ip-quality-core" }
 diting-log-core = { path = "../diting-log-core" }
 diting-log-query-core = { path = "../diting-log-query-core" }
@@ -23,6 +25,7 @@ diting-outbound-proxy-core = { path = "../diting-outbound-proxy-core" }
 diting-probe-core = { path = "../diting-probe-core" }
 diting-recognition-core = { path = "../diting-recognition-core" }
 diting-rule-core = { path = "../diting-rule-core" }
+diting-schedule-core = { path = "../diting-schedule-core" }
 diting-rule-store-core = { path = "../diting-rule-store-core" }
 diting-subscription-core = { path = "../diting-subscription-core" }
 diting-vpn-config-core = { path = "../diting-vpn-config-core" }

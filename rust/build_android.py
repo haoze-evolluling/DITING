@@ -2,7 +2,7 @@
 """Cross-compile the Rust libraries for Android and drop them into the Flutter app's jniLibs.
 
 Two libraries are built: `libditing_engine.so` (the tunnel data plane, unchanged) plus
-`libditing_kernels.so` — the sixteen kernels Dart and Kotlin call directly, linked into one cdylib
+`libditing_kernels.so` — the UI-side kernels Dart and Kotlin call directly, linked into one cdylib
 by the `diting-kernels` umbrella crate. The engine stays its own `.so` on purpose: it has no
 duplicated std/dependency bytes to share and is kept isolated from the UI-side kernels.
 
@@ -14,7 +14,7 @@ duplicated std/dependency bytes to share and is kept isolated from the UI-side k
   filter, cosmetic injection, sniffer, request rules, config, telemetry), so none of them ships as
   its own `.so` any more - they are regular Rust dependencies instead of `dlopen`'d libraries.
 
-The sixteen kernels below are the components of `libditing_kernels.so` (the `diting-kernels`
+The UI-side kernels below are the components of `libditing_kernels.so` (the `diting-kernels`
 umbrella cdylib links them into one library; the names below are their former per-kernel `.so`
 names). Each keeps its own C ABI / JNI entry points, and Dart/Kotlin now load every one of them from
 that single `.so`.

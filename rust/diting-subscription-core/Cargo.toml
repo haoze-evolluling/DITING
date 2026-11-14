@@ -11,3 +11,5 @@ crate-type = ["cdylib", "staticlib", "lib"]
 # The boundary payload is JSON like the rule-store and backup kernels: the app hands over rows and
 # URI components and gets typed records, a mirror URL or a due decision back.
 serde_json = "1"
+# The auto-update schedule itself lives in the shared scheduling kernel; this crate is the adapter.
+diting-schedule-core = { path = "../diting-schedule-core" }

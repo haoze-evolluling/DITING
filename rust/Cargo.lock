@@ -468,6 +468,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-event-core"
+version = "0.1.0"
+dependencies = [
+ "jni",
+ "serde_json",
+]
+
+[[package]]
 name = "diting-filter-core"
 version = "0.1.0"
 dependencies = [
@@ -488,6 +496,13 @@ name = "diting-go-compat"
 version = "0.1.0"
 dependencies = [
  "regex",
+]
+
+[[package]]
+name = "diting-hit-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
@@ -517,6 +532,8 @@ dependencies = [
  "diting-backup-core",
  "diting-cleanup-core",
  "diting-dns-config-core",
+ "diting-event-core",
+ "diting-hit-core",
  "diting-ip-quality-core",
  "diting-log-core",
  "diting-log-query-core",
@@ -526,6 +543,7 @@ dependencies = [
  "diting-recognition-core",
  "diting-rule-core",
  "diting-rule-store-core",
+ "diting-schedule-core",
  "diting-subscription-core",
  "diting-vpn-config-core",
 ]
@@ -684,6 +702,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-schedule-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "diting-sniffer-core"
 version = "0.1.0"
 
@@ -698,6 +723,7 @@ dependencies = [
 name = "diting-subscription-core"
 version = "0.1.0"
 dependencies = [
+ "diting-schedule-core",
  "serde_json",
 ]
 

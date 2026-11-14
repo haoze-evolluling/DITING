@@ -1,0 +1,14 @@
+[package]
+name = "diting-schedule-core"
+version = "0.1.0"
+edition = "2021"
+description = "Pure scheduling kernel: interval/daily/cron/window/pause evaluation with an injected clock"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The boundary is JSON like the subscription kernel: the app hands over a plan/records and gets
+# `{due, nextDueAt, windowActive}` back.
+serde_json = "1"
