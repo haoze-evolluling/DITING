@@ -13,6 +13,7 @@ part 'legacy_settings_parity.dart';
 part 'legacy_settings_sites.dart';
 part 'legacy_settings_server.dart';
 part 'legacy_settings_appearance.dart';
+part 'legacy_settings_webhook.dart';
 
 class LegacySettings {
   LegacySettings(this._store, {String? dnsContainer})

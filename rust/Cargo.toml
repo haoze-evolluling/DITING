@@ -49,6 +49,7 @@ members = [
     "diting-notification-core",
     "diting-netprofile-core",
     "diting-services-core",
+"diting-webhook-core",
     "diting-leak-core",
     "diting-captive-core",
     "diting-rule-version-core",

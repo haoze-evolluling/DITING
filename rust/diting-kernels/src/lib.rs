@@ -28,6 +28,7 @@ pub use diting_netprofile_core;
 pub use diting_leak_core;
 pub use diting_captive_core;
 pub use diting_rule_version_core;
+pub use diting_webhook_core;
 pub use diting_response_core;
 pub use diting_localapi_core;
 pub use diting_outbound_proxy_core;

@@ -1,0 +1,12 @@
+[package]
+name = "diting-webhook-core"
+version = "0.1.0"
+edition = "2021"
+description = "Outbound webhook signing (HMAC-SHA256) and retry policy for automation/audit events (A11). Pure: no clock, no network, no database."
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+serde_json = "1"
