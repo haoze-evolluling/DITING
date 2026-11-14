@@ -10,6 +10,7 @@ import 'package:diting_shared/data/db/legacy_database.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_android/data/db/mirror_template_repository.dart';
+import 'package:diting_android/data/db/rule_version_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/db/subscription_repository.dart';
 import 'package:diting_android/data/rules/rule_importer.dart';
@@ -83,6 +84,14 @@ final subscriptionRepositoryProvider = FutureProvider<SubscriptionRepository?>((
     db,
     onChanged: () => ref.read(subscriptionRevisionProvider.notifier).bump(),
   );
+});
+
+/// R6 rule-set version history; null without a legacy database.
+final ruleVersionRepositoryProvider = FutureProvider<RuleVersionRepository?>((
+  ref,
+) async {
+  final db = await ref.watch(subscriptionDatabaseProvider.future);
+  return db == null ? null : RuleVersionRepository(db);
 });
 
 /// A subscription as rendered (model plus group name and derived labels).

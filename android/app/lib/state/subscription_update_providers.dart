@@ -183,10 +183,11 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
         }
         await repository.markImported(
           entry.id,
-          ruleCount: imported.insertedCount,
+          ruleCount: imported.summary.insertedCount,
           lastUpdated: now,
           etag: result.etag,
           lastModified: result.lastModified,
+          ruleSetHash: imported.hash,
         );
       case SubscriptionFetchOutcome.failed:
         await repository.markUpdateFailed(
@@ -229,11 +230,12 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
     await repository.markImported(
       entry.id,
-      ruleCount: imported.insertedCount,
+      ruleCount: imported.summary.insertedCount,
       lastUpdated: now,
       // A local file has no ETag or Last-Modified to remember.
       etag: null,
       lastModified: null,
+      ruleSetHash: imported.hash,
     );
     return SubscriptionFetchResult(
       outcome: SubscriptionFetchOutcome.content,
@@ -243,8 +245,8 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
   }
 
   /// Parses the body and rewrites the rule tables for `sub_<id>` only; null without a rule
-  /// database.
-  Future<RuleImportSummary?> _importContent(
+  /// database. On success also records an R6 version snapshot and returns its content hash.
+  Future<({RuleImportSummary summary, String hash})?> _importContent(
     SubscriptionEntry entry,
     String content,
   ) async {
@@ -254,19 +256,43 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
     final source = subscriptionSourceTag(entry.id);
     final parsed = parseCategorized(content);
+    final rules = canonicalRules(parsed);
+    final hash = ruleSetHash(rules);
     await importer.removeRulesBySource(source);
     try {
-      if (parsed.isEmpty) {
-        return const RuleImportSummary();
-      }
-      return await importer.import(
-        parsed,
-        source: source,
-        kind: entry.kind.storageValue,
-        enabled: entry.enabled,
-      );
+      final summary = parsed.isEmpty
+          ? const RuleImportSummary()
+          : await importer.import(
+              parsed,
+              source: source,
+              kind: entry.kind.storageValue,
+              enabled: entry.enabled,
+            );
+      // The rules are written now, so the recorded snapshot matches what the engine will load.
+      await _recordVersion(entry, rules, hash, summary.insertedCount);
+      return (summary: summary, hash: hash);
     } finally {
       refreshRuleIndexesForCurrentMode(ref);
+    }
+  }
+
+  /// Best-effort R6 snapshot; a version-history failure must never fail the import itself.
+  Future<void> _recordVersion(
+    SubscriptionEntry entry,
+    List<String> rules,
+    String hash,
+    int ruleCount,
+  ) async {
+    try {
+      final repository = await ref.read(ruleVersionRepositoryProvider.future);
+      await repository?.recordVersion(
+        groupId: 'sub_${entry.id}',
+        hash: hash,
+        ruleCount: ruleCount,
+        rules: rules,
+      );
+    } catch (error, stack) {
+      debugPrint('rule version record failed for ${entry.url}: $error\n$stack');
     }
   }
 

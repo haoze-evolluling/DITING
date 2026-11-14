@@ -240,13 +240,15 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// Records a successful import; `ruleSetHash` stays null because nothing computes it.
+  /// Records a successful import. `ruleSetHash` is the content hash of the stored rules, so the
+  /// version history (R6) and the subscription row agree on which snapshot is current.
   Future<void> markImported(
     int id, {
     required int ruleCount,
     required int lastUpdated,
     required String? etag,
     required String? lastModified,
+    String? ruleSetHash,
   }) async {
     await _db.update(
       'subscription',
@@ -257,7 +259,7 @@ class SubscriptionRepository {
         'importError': null,
         'httpEtag': etag,
         'httpLastModified': lastModified,
-        'ruleSetHash': null,
+        'ruleSetHash': ruleSetHash,
         'lastAttemptAt': lastUpdated,
         'consecutiveFailureCount': 0,
       },
