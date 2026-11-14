@@ -113,6 +113,24 @@ pub struct Dns64Json {
     pub enabled: bool,
 }
 
+/// `rateLimit` block (N9): LAN client throttling. `rate` is requests per second.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RateLimitJson {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub rate: i64,
+    #[serde(default)]
+    pub burst: i64,
+    #[serde(default)]
+    pub ipv4_prefix: i64,
+    #[serde(default)]
+    pub ipv6_prefix: i64,
+    #[serde(default)]
+    pub exempt: Vec<String>,
+}
+
 /// `bootstrapConfig`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -143,6 +161,8 @@ pub struct DnsConfigJson {
     pub privacy: PrivacyJson,
     #[serde(default)]
     pub dns64: Dns64Json,
+    #[serde(default)]
+    pub rate_limit: RateLimitJson,
     #[serde(default)]
     pub race_max_parallel: Option<i64>,
 }
@@ -183,6 +203,8 @@ pub struct DnsConfig {
     pub privacy: PrivacyPolicy,
     /// N8: whether DNS64 synthesizes AAAA for IPv6-only clients.
     pub dns64: bool,
+    /// N9: the LAN client rate limiter configuration.
+    pub rate_limit: diting_ratelimit_core::Config,
     /// `raceMaxParallel`, zero when the payload did not set it.
     pub race_max_parallel: i64,
 }
@@ -273,6 +295,7 @@ impl DnsConfig {
             bootstrap: document.bootstrap.clone(),
             privacy: privacy_policy(&document.privacy),
             dns64: document.dns64.enabled,
+            rate_limit: rate_limit_config(&document.rate_limit),
             race_max_parallel: document.race_max_parallel.unwrap_or(0),
         })
     }
@@ -295,6 +318,19 @@ fn privacy_policy(document: &PrivacyJson) -> PrivacyPolicy {
     PrivacyPolicy {
         blocked_qtypes,
         rebinding_protection: document.rebinding_protection,
+    }
+}
+
+/// Maps the `rateLimit` block onto the kernel's config. Zero/absent numeric fields fall back to the
+/// kernel defaults during its own normalisation.
+fn rate_limit_config(document: &RateLimitJson) -> diting_ratelimit_core::Config {
+    diting_ratelimit_core::Config {
+        enabled: document.enabled,
+        rate: document.rate as f64,
+        burst: document.burst,
+        ipv4_prefix: document.ipv4_prefix,
+        ipv6_prefix: document.ipv6_prefix,
+        exempt: document.exempt.clone(),
     }
 }
 
@@ -382,6 +418,17 @@ mod tests {
         let json = r#"{"mode":"single","providers":[{"id":"p1","protocol":"PLAIN","server":"8.8.8.8:53","url":"","weight":1}],"blockResponse":"NXDOMAIN","dns64":{"enabled":true}}"#;
         let config = DnsConfig::from_json(json).expect("ok");
         assert!(config.dns64);
+    }
+
+    #[test]
+    fn decodes_the_rate_limit_block() {
+        let json = r#"{"mode":"single","providers":[{"id":"p1","protocol":"PLAIN","server":"8.8.8.8:53","url":"","weight":1}],"blockResponse":"NXDOMAIN","rateLimit":{"enabled":true,"rate":20,"burst":40,"ipv4Prefix":24,"ipv6Prefix":56,"exempt":["192.168.0.1"]}}"#;
+        let config = DnsConfig::from_json(json).expect("ok");
+        assert!(config.rate_limit.enabled);
+        assert_eq!(config.rate_limit.rate, 20.0);
+        assert_eq!(config.rate_limit.burst, 40);
+        assert_eq!(config.rate_limit.ipv4_prefix, 24);
+        assert_eq!(config.rate_limit.exempt, vec!["192.168.0.1".to_string()]);
     }
 
     #[test]

@@ -311,6 +311,7 @@ fn server_settings() -> ServerSettings {
         custom_upstreams_json: None,
         privacy: PrivacyInput::default(),
         dns64: Dns64Input::default(),
+        rate_limit: RateLimitInput::default(),
     }
 }
 
@@ -443,4 +444,23 @@ fn dns64_switch_reaches_the_tunnel_document() {
     input.dns64 = Dns64Input { enabled: true };
     let json = document_of(&build_tunnel(&input, &preset_providers(), &preset_bootstrap()));
     assert_eq!(json["dns64"]["enabled"], true);
+}
+
+#[test]
+fn rate_limit_reaches_the_server_document() {
+    let mut input = server_settings();
+    input.rate_limit = RateLimitInput {
+        enabled: true,
+        rate: 20,
+        burst: 40,
+        ipv4_prefix: 24,
+        ipv6_prefix: 56,
+        exempt: vec!["192.168.0.1".to_string()],
+    };
+    let config = build_server(&input, &preset_upstreams()).expect("config");
+    let json: serde_json::Value = serde_json::from_str(&config.document).unwrap();
+    assert_eq!(json["rateLimit"]["enabled"], true);
+    assert_eq!(json["rateLimit"]["rate"], 20);
+    assert_eq!(json["rateLimit"]["burst"], 40);
+    assert_eq!(json["rateLimit"]["exempt"][0], "192.168.0.1");
 }

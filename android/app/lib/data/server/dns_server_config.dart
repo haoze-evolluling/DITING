@@ -244,6 +244,12 @@ ServerDnsConfig buildServerDnsConfig(LegacySettings settings) {
     blockHttpsSvcb: settings.blockHttpsSvcbRecordTypes,
     rebindingProtection: settings.dnsRebindingProtection,
     dns64Enabled: settings.dns64Enabled,
+    rateLimitEnabled: settings.lanRateLimitEnabled,
+    rateLimitRate: settings.lanRateLimitRate,
+    rateLimitBurst: settings.lanRateLimitBurst,
+    rateLimitIpv4Prefix: settings.lanRateLimitIpv4Prefix,
+    rateLimitIpv6Prefix: settings.lanRateLimitIpv6Prefix,
+    rateLimitExemptCsv: settings.lanRateLimitExemptCsv,
     presetUpstreams: [
       for (final upstream in serverPresetUpstreams(currentL10n))
         serverUpstreamRowOf(upstream),

@@ -375,6 +375,7 @@ impl Engine {
         if let Err(error) = self.set_dns64(config.dns64, &[]) {
             self.log_error(&error);
         }
+        self.set_rate_limit(&config.rate_limit);
         *self
             .dynamic_config
             .write()

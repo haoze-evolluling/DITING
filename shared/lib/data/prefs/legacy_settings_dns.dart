@@ -377,6 +377,43 @@ extension LegacyDnsSettings on LegacySettings {
   void setDns64Enabled(bool value) =>
       _store.putBool(LegacySettings.uiContainer, 'dns64_enabled', value);
 
+  /// N9 LAN 客户端限速（服务器模式）：每秒令牌数、突发量、前缀聚合与非限速名单。
+  bool get lanRateLimitEnabled =>
+      _bool(LegacySettings.uiContainer, 'lan_rate_limit_enabled', false);
+
+  void setLanRateLimitEnabled(bool value) =>
+      _store.putBool(LegacySettings.uiContainer, 'lan_rate_limit_enabled', value);
+
+  int get lanRateLimitRate =>
+      _int(LegacySettings.uiContainer, 'lan_rate_limit_rate', 0);
+
+  void setLanRateLimitRate(int value) =>
+      _store.putInt(LegacySettings.uiContainer, 'lan_rate_limit_rate', value);
+
+  int get lanRateLimitBurst =>
+      _int(LegacySettings.uiContainer, 'lan_rate_limit_burst', 0);
+
+  void setLanRateLimitBurst(int value) =>
+      _store.putInt(LegacySettings.uiContainer, 'lan_rate_limit_burst', value);
+
+  int get lanRateLimitIpv4Prefix =>
+      _int(LegacySettings.uiContainer, 'lan_rate_limit_ipv4_prefix', 0);
+
+  void setLanRateLimitIpv4Prefix(int value) =>
+      _store.putInt(LegacySettings.uiContainer, 'lan_rate_limit_ipv4_prefix', value);
+
+  int get lanRateLimitIpv6Prefix =>
+      _int(LegacySettings.uiContainer, 'lan_rate_limit_ipv6_prefix', 0);
+
+  void setLanRateLimitIpv6Prefix(int value) =>
+      _store.putInt(LegacySettings.uiContainer, 'lan_rate_limit_ipv6_prefix', value);
+
+  String get lanRateLimitExemptCsv =>
+      _string(LegacySettings.uiContainer, 'lan_rate_limit_exempt') ?? '';
+
+  void setLanRateLimitExemptCsv(String value) =>
+      _store.putString(LegacySettings.uiContainer, 'lan_rate_limit_exempt', value);
+
   /// Written by the native CA flow; pages only read it.
   bool get httpsInspectionReady =>
       _bool(LegacySettings.uiContainer, 'https_inspection_ready', false);

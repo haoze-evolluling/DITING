@@ -59,6 +59,18 @@ pub struct Dns64Input {
     pub enabled: bool,
 }
 
+/// N9 LAN client rate limiting (server mode): tokens per second per client, burst, prefix masking and
+/// exempt IPs/CIDRs. `rate` is requests per second.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct RateLimitInput {
+    pub enabled: bool,
+    pub rate: i32,
+    pub burst: i32,
+    pub ipv4_prefix: i32,
+    pub ipv6_prefix: i32,
+    pub exempt: Vec<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CacheInput {
     pub enabled: bool,
@@ -115,6 +127,7 @@ pub struct ServerSettings {
     pub custom_upstreams_json: Option<String>,
     pub privacy: PrivacyInput,
     pub dns64: Dns64Input,
+    pub rate_limit: RateLimitInput,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -166,6 +179,17 @@ struct Dns64Document {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RateLimitDocument {
+    enabled: bool,
+    rate: i32,
+    burst: i32,
+    ipv4_prefix: i32,
+    ipv6_prefix: i32,
+    exempt: Vec<String>,
+}
+
+#[derive(Serialize)]
 struct ProviderDocument<'a> {    id: &'a str,
     protocol: &'a str,
     server: String,
@@ -196,6 +220,8 @@ struct TunnelDocument<'a> {
     bootstrap: BootstrapDocument<'a>,
     privacy: PrivacyDocument,
     dns64: Dns64Document,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rate_limit: Option<RateLimitDocument>,
 }
 
 fn clamp(value: i32, low: i32, high: i32) -> i32 {
@@ -275,6 +301,17 @@ fn privacy_document(input: &PrivacyInput) -> PrivacyDocument {
     PrivacyDocument {
         block_record_types: input.block_record_types.clone(),
         rebinding_protection: input.rebinding_protection,
+    }
+}
+
+fn rate_limit_document(input: &RateLimitInput) -> RateLimitDocument {
+    RateLimitDocument {
+        enabled: input.enabled,
+        rate: input.rate,
+        burst: input.burst,
+        ipv4_prefix: input.ipv4_prefix,
+        ipv6_prefix: input.ipv6_prefix,
+        exempt: input.exempt.clone(),
     }
 }
 
@@ -386,6 +423,7 @@ pub fn build_tunnel(
         dns64: Dns64Document {
             enabled: settings.dns64.enabled,
         },
+        rate_limit: None,
     };
     let document = serde_json::to_string(&document).unwrap_or_else(|_| String::from("{}"));
     TunnelConfig {
@@ -477,6 +515,7 @@ pub fn build_server(
         dns64: Dns64Document {
             enabled: settings.dns64.enabled,
         },
+        rate_limit: Some(rate_limit_document(&settings.rate_limit)),
     };
     let document = serde_json::to_string(&document).unwrap_or_else(|_| String::from("{}"));
     Some(ServerConfig {

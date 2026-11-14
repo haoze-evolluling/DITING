@@ -21,7 +21,7 @@ use std::net::{
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use socket2::{Domain, Protocol, Socket, Type};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -216,13 +216,28 @@ fn to_async_tcp(runtime: &tokio::runtime::Runtime, tcp: StdTcpListener) -> TcpLi
     TcpListener::from_std(tcp).expect("a bound TCP listener is usable")
 }
 
+/// N9: the client address the limiter keys on, in the 4- or 16-byte form it expects.
+fn rate_addr(peer: SocketAddr) -> Option<diting_ratelimit_core::Addr> {
+    match peer.ip() {
+        IpAddr::V4(v4) => diting_ratelimit_core::Addr::from_bytes(&v4.octets()),
+        IpAddr::V6(v6) => diting_ratelimit_core::Addr::from_bytes(&v6.octets()),
+    }
+}
+
+/// The monotonic-enough wall clock the token bucket refills against.
+fn now_ns() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_nanos() as i64)
+        .unwrap_or(0)
+}
+
 fn spawn_udp(
     engine: Arc<Engine>,
     socket: UdpSocket,
     permits: Arc<Semaphore>,
     stopped: Arc<AtomicBool>,
-) -> JoinHandle<()> {
-    let receiver = engine.runtime().handle().clone();
+) -> JoinHandle<()> {    let receiver = engine.runtime().handle().clone();
     receiver.spawn(async move {
         let socket = Arc::new(socket);
         // A per-request buffer would allocate on every datagram; one buffer per read loop is enough
@@ -236,6 +251,10 @@ fn spawn_udp(
                 Ok(received) => received,
                 Err(_) => continue,
             };
+            // N9: a rate-limited client's datagram is dropped before it costs a task slot.
+            if !engine.allow_client(rate_addr(peer).as_ref(), now_ns()) {
+                continue;
+            }
             let query = buffer[..read].to_vec();
             let engine = Arc::clone(&engine);
             let socket = Arc::clone(&socket);
@@ -266,10 +285,14 @@ fn spawn_tcp(
             if stopped.load(Ordering::Acquire) {
                 return;
             }
-            let (stream, _peer) = match listener.accept().await {
+            let (stream, peer) = match listener.accept().await {
                 Ok(accepted) => accepted,
                 Err(_) => continue,
             };
+            // N9: gate the whole connection per client address (a TCP client reuses one).
+            if !engine.allow_client(rate_addr(peer).as_ref(), now_ns()) {
+                continue;
+            }
             let Ok(permit) = permits.clone().try_acquire_owned() else {
                 continue;
             };

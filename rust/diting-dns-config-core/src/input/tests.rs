@@ -113,6 +113,11 @@ fn server_settings_decode() {
     writer.i32(30);
     writer.i32(120);
     writer.opt_string(Some("[]"));
+    writer.i32(20);
+    writer.i32(40);
+    writer.i32(24);
+    writer.i32(56);
+    writer.string("192.168.0.1,10.0.0.0/8");
     let bytes = writer.finish();
     let mut reader = Reader::new(&bytes);
     let settings = server_settings(&mut reader).expect("settings");
@@ -137,6 +142,15 @@ fn server_settings_decode() {
     assert_eq!(settings.dynamic.window_seconds, 30);
     assert_eq!(settings.dynamic.nxdomain_seconds, 120);
     assert_eq!(settings.custom_upstreams_json.as_deref(), Some("[]"));
+    assert!(!settings.rate_limit.enabled);
+    assert_eq!(settings.rate_limit.rate, 20);
+    assert_eq!(settings.rate_limit.burst, 40);
+    assert_eq!(settings.rate_limit.ipv4_prefix, 24);
+    assert_eq!(settings.rate_limit.ipv6_prefix, 56);
+    assert_eq!(
+        settings.rate_limit.exempt,
+        ["192.168.0.1", "10.0.0.0/8"]
+    );
 }
 
 #[test]

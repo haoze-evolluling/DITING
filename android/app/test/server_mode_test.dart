@@ -21,6 +21,24 @@ import 'support/fake_dns_server_controller.dart';
 void main() {
   group('服务器模式配置与状态机', _serverMode);
   group('自定义上游增删改', _serverUpstreams);
+
+  test('LAN 限速写入 rateLimit 文档（N9）', () {
+    final settings = serverSettings({});
+    settings.setLanRateLimitEnabled(true);
+    settings.setLanRateLimitRate(20);
+    settings.setLanRateLimitBurst(40);
+    settings.setLanRateLimitIpv4Prefix(24);
+    settings.setLanRateLimitIpv6Prefix(56);
+    settings.setLanRateLimitExemptCsv('192.168.0.1, 10.0.0.0/8');
+    final rateLimit =
+        buildServerDnsConfig(settings).toJson()['rateLimit'] as Map;
+    expect(rateLimit['enabled'], true);
+    expect(rateLimit['rate'], 20);
+    expect(rateLimit['burst'], 40);
+    expect(rateLimit['ipv4Prefix'], 24);
+    expect(rateLimit['ipv6Prefix'], 56);
+    expect(rateLimit['exempt'], ['192.168.0.1', '10.0.0.0/8']);
+  });
 }
 
 void _serverMode() {

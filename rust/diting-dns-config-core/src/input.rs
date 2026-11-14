@@ -5,8 +5,8 @@
 
 use crate::bootstrap::BootstrapRow;
 use crate::document::{
-    BootstrapEntry, CacheInput, Dns64Input, DynamicInput, PrivacyInput, ServerSettings,
-    TunnelSettings,
+    BootstrapEntry, CacheInput, Dns64Input, DynamicInput, PrivacyInput, RateLimitInput,
+    ServerSettings, TunnelSettings,
 };
 use crate::protocol::{self, Protocol};
 use crate::providers::Provider;
@@ -174,6 +174,21 @@ pub fn server_settings(reader: &mut Reader<'_>) -> Option<ServerSettings> {
         enabled: flags & 0b100000 != 0,
     };
     let custom_upstreams_json = reader.opt_string()?;
+    // N9: LAN rate limiting follows the custom upstreams so the tunnel payload is unchanged.
+    let rate_limit = RateLimitInput {
+        enabled: flags & 0b1000000 != 0,
+        rate: reader.i32()?,
+        burst: reader.i32()?,
+        ipv4_prefix: reader.i32()?,
+        ipv6_prefix: reader.i32()?,
+        exempt: reader
+            .string()?
+            .split(',')
+            .map(str::trim)
+            .filter(|entry| !entry.is_empty())
+            .map(str::to_string)
+            .collect(),
+    };
     Some(ServerSettings {
         resolution_mode_raw,
         selected_upstream_id,
@@ -189,6 +204,7 @@ pub fn server_settings(reader: &mut Reader<'_>) -> Option<ServerSettings> {
         custom_upstreams_json,
         privacy,
         dns64,
+        rate_limit,
     })
 }
 

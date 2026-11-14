@@ -98,6 +98,11 @@ fn server_entry_returns_port_mode_document_and_upstreams() {
     writer.i32(60);
     writer.i32(300);
     writer.opt_string(None);
+    writer.i32(0);
+    writer.i32(0);
+    writer.i32(0);
+    writer.i32(0);
+    writer.string("");
     writer.u32(2);
     writer.string("preset_alidns_dns");
     writer.string("阿里云");
