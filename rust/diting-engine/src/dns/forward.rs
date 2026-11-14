@@ -13,7 +13,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use diting_dns_core::message::extract;
+use diting_dns_core::message::{extract, TYPE_AAAA};
 use diting_dns_wire::ChainTarget;
 
 use super::{block, row, servfail};
@@ -30,7 +30,11 @@ pub async fn forward(
 ) -> Option<Vec<u8>> {
     let cache = engine.cache();
 
-    if cache.is_enabled() {
+    // N8: with DNS64 on, an AAAA answer must never come from cache — an empty AAAA cached before the
+    // switch was flipped would shadow synthesis for its whole TTL.
+    let dns64_active = qtype == TYPE_AAAA && engine.dns64().is_some();
+
+    if cache.is_enabled() && !dns64_active {
         if let Some(hit) = cache.get(query) {
             if !hit.stale {
                 if let Some(reason) = blocked_chain(engine, &hit.chain_targets, qtype, app_name) {
@@ -124,6 +128,18 @@ pub async fn forward(
                         started,
                         app_name,
                     );
+                }
+                if let Some((wire, synthesized)) =
+                    super::dns64::maybe_synthesize(engine, query, domain, qtype, &extracted.ips)
+                        .await
+                {
+                    engine.note_query(false);
+                    engine.log_row(
+                        row(domain, false, qtype, started, app_name)
+                            .resolved_ips(synthesized)
+                            .cached(shared),
+                    );
+                    return Some(with_client_id(wire, query));
                 }
                 engine.note_query(false);
                 engine.log_row(

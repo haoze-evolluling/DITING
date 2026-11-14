@@ -5,7 +5,8 @@
 
 use crate::bootstrap::BootstrapRow;
 use crate::document::{
-    BootstrapEntry, CacheInput, DynamicInput, PrivacyInput, ServerSettings, TunnelSettings,
+    BootstrapEntry, CacheInput, Dns64Input, DynamicInput, PrivacyInput, ServerSettings,
+    TunnelSettings,
 };
 use crate::protocol::{self, Protocol};
 use crate::providers::Provider;
@@ -131,6 +132,9 @@ pub fn tunnel_settings(reader: &mut Reader<'_>) -> Option<TunnelSettings> {
         nxdomain_seconds: reader.i32()?,
     };
     let privacy = privacy_from_flags(flags, 0b100000, 0b1000000);
+    let dns64 = Dns64Input {
+        enabled: flags & 0b10000000 != 0,
+    };
     Some(TunnelSettings {
         mode_raw,
         selected_provider_id,
@@ -145,6 +149,7 @@ pub fn tunnel_settings(reader: &mut Reader<'_>) -> Option<TunnelSettings> {
         cache,
         dynamic,
         privacy,
+        dns64,
     })
 }
 
@@ -165,6 +170,9 @@ pub fn server_settings(reader: &mut Reader<'_>) -> Option<ServerSettings> {
         nxdomain_seconds: reader.i32()?,
     };
     let privacy = privacy_from_flags(flags, 0b1000, 0b10000);
+    let dns64 = Dns64Input {
+        enabled: flags & 0b100000 != 0,
+    };
     let custom_upstreams_json = reader.opt_string()?;
     Some(ServerSettings {
         resolution_mode_raw,
@@ -180,6 +188,7 @@ pub fn server_settings(reader: &mut Reader<'_>) -> Option<ServerSettings> {
         dynamic,
         custom_upstreams_json,
         privacy,
+        dns64,
     })
 }
 

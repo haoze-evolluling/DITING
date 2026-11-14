@@ -105,6 +105,14 @@ pub struct PrivacyJson {
     pub rebinding_protection: bool,
 }
 
+/// `dns64` block (N8): the IPv6-only AAAA synthesizer switch.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Dns64Json {
+    #[serde(default)]
+    pub enabled: bool,
+}
+
 /// `bootstrapConfig`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -133,6 +141,8 @@ pub struct DnsConfigJson {
     pub bootstrap: BootstrapJson,
     #[serde(default)]
     pub privacy: PrivacyJson,
+    #[serde(default)]
+    pub dns64: Dns64Json,
     #[serde(default)]
     pub race_max_parallel: Option<i64>,
 }
@@ -171,6 +181,8 @@ pub struct DnsConfig {
     pub bootstrap: BootstrapJson,
     /// U10: which query types to suppress and whether to reject private-address answers.
     pub privacy: PrivacyPolicy,
+    /// N8: whether DNS64 synthesizes AAAA for IPv6-only clients.
+    pub dns64: bool,
     /// `raceMaxParallel`, zero when the payload did not set it.
     pub race_max_parallel: i64,
 }
@@ -260,6 +272,7 @@ impl DnsConfig {
             cache: cache_config(&document.cache),
             bootstrap: document.bootstrap.clone(),
             privacy: privacy_policy(&document.privacy),
+            dns64: document.dns64.enabled,
             race_max_parallel: document.race_max_parallel.unwrap_or(0),
         })
     }
@@ -361,6 +374,14 @@ mod tests {
         assert!(document.cache.mode.is_empty());
         assert!(!document.bootstrap.enabled);
         assert!(document.privacy.block_record_types.is_empty());
+        assert!(!document.dns64.enabled);
+    }
+
+    #[test]
+    fn decodes_the_dns64_switch() {
+        let json = r#"{"mode":"single","providers":[{"id":"p1","protocol":"PLAIN","server":"8.8.8.8:53","url":"","weight":1}],"blockResponse":"NXDOMAIN","dns64":{"enabled":true}}"#;
+        let config = DnsConfig::from_json(json).expect("ok");
+        assert!(config.dns64);
     }
 
     #[test]

@@ -107,6 +107,8 @@ pub struct Engine {
     blocked_qtypes: RwLock<Vec<u16>>,
     /// U10: reject an upstream answer that points a public name at a private/loopback address.
     rebinding_protection: AtomicBool,
+    /// N8: the DNS64 synthesizer, `None` when the suite is disabled.
+    dns64: RwLock<Option<Arc<diting_dns64_core::Engine>>>,
     block_response: AtomicU32,
     /// R4: temporary pause. While `now_ms() < pause_until_ms` every policy block is skipped, so DNS
     /// still resolves but nothing is filtered. `0` means not paused.
@@ -192,6 +194,7 @@ impl Engine {
             block_ipv6: AtomicBool::new(false),
             blocked_qtypes: RwLock::new(Vec::new()),
             rebinding_protection: AtomicBool::new(false),
+            dns64: RwLock::new(None),
             block_response: AtomicU32::new(0),
             pause_until_ms: AtomicI64::new(0),
             allowlist_only: AtomicBool::new(false),
@@ -366,6 +369,9 @@ impl Engine {
             .unwrap_or_else(|error| error.into_inner()) = config.privacy.blocked_qtypes.clone();
         self.rebinding_protection
             .store(config.privacy.rebinding_protection, Ordering::Release);
+        if let Err(error) = self.set_dns64(config.dns64, &[]) {
+            self.log_error(&error);
+        }
         *self
             .dynamic_config
             .write()
@@ -453,6 +459,29 @@ impl Engine {
     /// U10: whether private-address answers are rejected (DNS rebinding protection).
     pub fn rebinding_protection(&self) -> bool {
         self.rebinding_protection.load(Ordering::Acquire)
+    }
+
+    /// N8: reconfigures the DNS64 synthesizer. `None` when `enabled` is false; empty `prefixes` uses
+    /// the RFC 6052 well-known prefix `64:ff9b::/96`.
+    pub fn set_dns64(&self, enabled: bool, prefixes: &[String]) -> Result<(), String> {
+        let engine = if enabled {
+            Some(Arc::new(
+                diting_dns64_core::Engine::new(true, prefixes)
+                    .map_err(|error| format!("dns64 prefix rejected: {error:?}"))?,
+            ))
+        } else {
+            None
+        };
+        *self.dns64.write().unwrap_or_else(|error| error.into_inner()) = engine;
+        Ok(())
+    }
+
+    /// N8: the active DNS64 synthesizer, or `None` when disabled.
+    pub fn dns64(&self) -> Option<Arc<diting_dns64_core::Engine>> {
+        self.dns64
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .clone()
     }
 
     /// `setBlockPause(untilMs)`: skip every policy block until `until_ms` (epoch ms). `0` clears it.

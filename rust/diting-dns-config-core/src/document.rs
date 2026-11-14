@@ -53,6 +53,12 @@ pub struct PrivacyInput {
     pub rebinding_protection: bool,
 }
 
+/// N8 IPv6-only AAAA synthesis switch, carried in the same DNS document as the rest of the config.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Dns64Input {
+    pub enabled: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CacheInput {
     pub enabled: bool,
@@ -80,6 +86,7 @@ pub struct TunnelSettings {
     pub cache: CacheInput,
     pub dynamic: DynamicInput,
     pub privacy: PrivacyInput,
+    pub dns64: Dns64Input,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -107,6 +114,7 @@ pub struct ServerSettings {
     pub dynamic: DynamicInput,
     pub custom_upstreams_json: Option<String>,
     pub privacy: PrivacyInput,
+    pub dns64: Dns64Input,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -152,8 +160,13 @@ struct PrivacyDocument {
 }
 
 #[derive(Serialize)]
-struct ProviderDocument<'a> {
-    id: &'a str,
+#[serde(rename_all = "camelCase")]
+struct Dns64Document {
+    enabled: bool,
+}
+
+#[derive(Serialize)]
+struct ProviderDocument<'a> {    id: &'a str,
     protocol: &'a str,
     server: String,
     url: &'a str,
@@ -182,6 +195,7 @@ struct TunnelDocument<'a> {
     providers: Vec<ProviderDocument<'a>>,
     bootstrap: BootstrapDocument<'a>,
     privacy: PrivacyDocument,
+    dns64: Dns64Document,
 }
 
 fn clamp(value: i32, low: i32, high: i32) -> i32 {
@@ -369,6 +383,9 @@ pub fn build_tunnel(
                 .collect(),
         },
         privacy: privacy_document(&settings.privacy),
+        dns64: Dns64Document {
+            enabled: settings.dns64.enabled,
+        },
     };
     let document = serde_json::to_string(&document).unwrap_or_else(|_| String::from("{}"));
     TunnelConfig {
@@ -457,6 +474,9 @@ pub fn build_server(
             ips: Vec::new(),
         },
         privacy: privacy_document(&settings.privacy),
+        dns64: Dns64Document {
+            enabled: settings.dns64.enabled,
+        },
     };
     let document = serde_json::to_string(&document).unwrap_or_else(|_| String::from("{}"));
     Some(ServerConfig {

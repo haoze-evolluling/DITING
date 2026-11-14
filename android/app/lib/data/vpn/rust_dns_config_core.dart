@@ -210,6 +210,7 @@ class RustDnsConfigCore {
     required List<BootstrapEntryRow> presetBootstrap,
     bool blockHttpsSvcb = false,
     bool rebindingProtection = false,
+    bool dns64Enabled = false,
   }) {
     final writer = _PayloadWriter()
       ..u8(
@@ -219,7 +220,8 @@ class RustDnsConfigCore {
             (cacheStaleFallbackEnabled ? 0x8 : 0) |
             (dynamicBlockEnabled ? 0x10 : 0) |
             (blockHttpsSvcb ? 0x20 : 0) |
-            (rebindingProtection ? 0x40 : 0),
+            (rebindingProtection ? 0x40 : 0) |
+            (dns64Enabled ? 0x80 : 0),
       )
       ..utf8(modeRaw)
       ..utf8(selectedProviderId)
@@ -275,6 +277,7 @@ class RustDnsConfigCore {
     required List<ServerUpstreamRow> presetUpstreams,
     bool blockHttpsSvcb = false,
     bool rebindingProtection = false,
+    bool dns64Enabled = false,
   }) {
     final writer = _PayloadWriter()
       ..u8(
@@ -282,7 +285,8 @@ class RustDnsConfigCore {
             (cacheEnabled ? 0x2 : 0) |
             (dynamicBlockEnabled ? 0x4 : 0) |
             (blockHttpsSvcb ? 0x8 : 0) |
-            (rebindingProtection ? 0x10 : 0),
+            (rebindingProtection ? 0x10 : 0) |
+            (dns64Enabled ? 0x20 : 0),
       )
       ..utf8(resolutionModeRaw)
       ..utf8(selectedUpstreamId)

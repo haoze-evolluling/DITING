@@ -370,6 +370,13 @@ extension LegacyDnsSettings on LegacySettings {
   void setDnsRebindingProtection(bool value) =>
       _store.putBool(LegacySettings.uiContainer, 'dns_rebinding_protection', value);
 
+  /// N8 DNS64：IPv6-only 网络下用固定前缀 64:ff9b::/96 从 A 记录合成 AAAA。
+  bool get dns64Enabled =>
+      _bool(LegacySettings.uiContainer, 'dns64_enabled', false);
+
+  void setDns64Enabled(bool value) =>
+      _store.putBool(LegacySettings.uiContainer, 'dns64_enabled', value);
+
   /// Written by the native CA flow; pages only read it.
   bool get httpsInspectionReady =>
       _bool(LegacySettings.uiContainer, 'https_inspection_ready', false);

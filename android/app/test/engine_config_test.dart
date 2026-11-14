@@ -393,6 +393,13 @@ void _vpnConfig() {
       expect(privacy['blockRecordTypes'], ['HTTPS', 'SVCB']);
       expect(privacy['rebindingProtection'], true);
     });
+
+    test('DNS64 开关写入 dns64 文档（N8）', () {
+      final settings = settingsWith({});
+      settings.setDns64Enabled(true);
+      final dns64 = buildDnsConfig(settings).toJson(settings)['dns64'] as Map;
+      expect(dns64['enabled'], true);
+    });
   });
 }
 

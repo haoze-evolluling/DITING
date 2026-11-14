@@ -17,6 +17,7 @@
 //! Every branch logs exactly one row, and every branch that produces a reply counts exactly one
 //! query, which is what `getStats` reports.
 
+pub mod dns64;
 pub mod flight;
 pub mod forward;
 

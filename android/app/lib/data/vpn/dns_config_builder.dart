@@ -298,6 +298,7 @@ TunnelDocument tunnelDocument(LegacySettings settings) =>
           settings.dynamicBlockNxDomainDurationSeconds,
       blockHttpsSvcb: settings.blockHttpsSvcbRecordTypes,
       rebindingProtection: settings.dnsRebindingProtection,
+      dns64Enabled: settings.dns64Enabled,
       presetProviders: [
         for (final provider in defaultDnsProviders(currentL10n))
           providerRowOf(provider),

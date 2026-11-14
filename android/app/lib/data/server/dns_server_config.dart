@@ -243,6 +243,7 @@ ServerDnsConfig buildServerDnsConfig(LegacySettings settings) {
     customUpstreamsJson: settings.serverCustomUpstreamsJson,
     blockHttpsSvcb: settings.blockHttpsSvcbRecordTypes,
     rebindingProtection: settings.dnsRebindingProtection,
+    dns64Enabled: settings.dns64Enabled,
     presetUpstreams: [
       for (final upstream in serverPresetUpstreams(currentL10n))
         serverUpstreamRowOf(upstream),
