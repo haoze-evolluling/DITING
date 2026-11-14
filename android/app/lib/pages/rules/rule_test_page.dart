@@ -14,7 +14,10 @@ import 'package:material_ui/material_ui.dart';
 /// `diting-policy-core` through the native bridge; this widget only collects input and renders the
 /// answer, so a simulator result is always the engine's own.
 class RuleTestPage extends ConsumerStatefulWidget {
-  const RuleTestPage({super.key});
+  const RuleTestPage({super.key, this.initialDomain});
+
+  /// 从命中排行「一键解释」带过来的域名；非空时自动跑一次。
+  final String? initialDomain;
 
   @override
   ConsumerState<RuleTestPage> createState() => _RuleTestPageState();
@@ -26,6 +29,19 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
   var _loading = false;
   RuleTestResult? _result;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialDomain?.trim() ?? '';
+    if (initial.isNotEmpty) {
+      _domain.text = initial;
+      // 一键解释：进来就直接给出判定，省去再点一次「运行」。
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _run();
+      });
+    }
+  }
 
   @override
   void dispose() {

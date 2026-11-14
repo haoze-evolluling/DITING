@@ -112,6 +112,45 @@ class AppL10nEn extends AppL10n {
   String get blockPauseFailed => 'Failed to apply, please retry';
 
   @override
+  String get hitRankingTitle => 'Hit ranking';
+
+  @override
+  String get hitRankingEntrySubtitle =>
+      'Top blocked domains and why they were blocked';
+
+  @override
+  String get hitRankingDomains => 'Most-blocked domains';
+
+  @override
+  String get hitRankingDomainsFooter =>
+      'Tap a domain to explain its verdict with rule test';
+
+  @override
+  String get hitRankingExplainHint => 'Open rule test';
+
+  @override
+  String get hitRankingReasons => 'Matched reasons (attribution)';
+
+  @override
+  String get hitRankingEmpty => 'No blocked records in the selected range';
+
+  @override
+  String get hitRankingEmptyBody =>
+      'Switch the range, or enable rule blocking first.';
+
+  @override
+  String get hitRankingLoadFailed => 'Failed to load hit ranking';
+
+  @override
+  String get hitRankingFooter =>
+      'Aggregated from local dns_log by blocked results.';
+
+  @override
+  String hitRankingTotal(int count) {
+    return '$count blocked in total';
+  }
+
+  @override
   String get appTitle => 'DITING';
 
   @override

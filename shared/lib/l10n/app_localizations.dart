@@ -289,6 +289,72 @@ abstract class AppL10n {
   /// **'设置失败，请稍后重试'**
   String get blockPauseFailed;
 
+  /// No description provided for @hitRankingTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中排行'**
+  String get hitRankingTitle;
+
+  /// No description provided for @hitRankingEntrySubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看被拦截最多的域名与命中原因'**
+  String get hitRankingEntrySubtitle;
+
+  /// No description provided for @hitRankingDomains.
+  ///
+  /// In zh, this message translates to:
+  /// **'被拦截最多的域名'**
+  String get hitRankingDomains;
+
+  /// No description provided for @hitRankingDomainsFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击域名用规则测试解释其判定'**
+  String get hitRankingDomainsFooter;
+
+  /// No description provided for @hitRankingExplainHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击查看规则测试'**
+  String get hitRankingExplainHint;
+
+  /// No description provided for @hitRankingReasons.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中原因（归因）'**
+  String get hitRankingReasons;
+
+  /// No description provided for @hitRankingEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'所选时间范围内没有拦截记录'**
+  String get hitRankingEmpty;
+
+  /// No description provided for @hitRankingEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换时间范围，或先开启规则拦截。'**
+  String get hitRankingEmptyBody;
+
+  /// No description provided for @hitRankingLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中排行加载失败'**
+  String get hitRankingLoadFailed;
+
+  /// No description provided for @hitRankingFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'统计来自本机 dns_log，按被拦截结果聚合。'**
+  String get hitRankingFooter;
+
+  /// No description provided for @hitRankingTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'共拦截 {count} 次'**
+  String hitRankingTotal(int count);
+
   /// No description provided for @appTitle.
   ///
   /// In zh, this message translates to:

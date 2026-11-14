@@ -119,8 +119,10 @@ List<RouteBase> hubRoutes() => [
   GoRoute(
     path: HubPaths.ruleTest,
     parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const RuleTestPage()),
+    pageBuilder: (context, state) => androidDefaultPage(
+      state,
+      RuleTestPage(initialDomain: state.uri.queryParameters['domain']),
+    ),
   ),
   GoRoute(
     path: HubPaths.blockPause,

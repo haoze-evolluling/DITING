@@ -33,6 +33,7 @@ final Map<String, String> topLevelRoutes = {
   '竞速排行': LogPaths.race,
   'Bootstrap DNS': LogPaths.bootstrap,
   '订阅拦截统计': LogPaths.subscriptionStats,
+  '命中排行': LogPaths.hitRanking,
   'User-Agent': ConfigPaths.userAgents,
   '按需连接': ConfigPaths.onDemand,
   '自定义资源': ConfigPaths.customResources,

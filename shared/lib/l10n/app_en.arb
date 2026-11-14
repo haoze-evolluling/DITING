@@ -39,6 +39,24 @@
   "blockPauseAllowlistTitle": "Allowlist-only mode",
   "blockPauseAllowlistSubtitle": "Pass only explicitly allowed domains; block everything else",
   "blockPauseFailed": "Failed to apply, please retry",
+  "hitRankingTitle": "Hit ranking",
+  "hitRankingEntrySubtitle": "Top blocked domains and why they were blocked",
+  "hitRankingDomains": "Most-blocked domains",
+  "hitRankingDomainsFooter": "Tap a domain to explain its verdict with rule test",
+  "hitRankingExplainHint": "Open rule test",
+  "hitRankingReasons": "Matched reasons (attribution)",
+  "hitRankingEmpty": "No blocked records in the selected range",
+  "hitRankingEmptyBody": "Switch the range, or enable rule blocking first.",
+  "hitRankingLoadFailed": "Failed to load hit ranking",
+  "hitRankingFooter": "Aggregated from local dns_log by blocked results.",
+  "hitRankingTotal": "{count} blocked in total",
+  "@hitRankingTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "appTitle": "DITING",
   "uiBack": "Back",
   "uiCancel": "Cancel",

@@ -39,6 +39,24 @@
   "blockPauseAllowlistTitle": "仅白名单模式",
   "blockPauseAllowlistSubtitle": "只放行显式允许的域名，其余全部拦截",
   "blockPauseFailed": "设置失败，请稍后重试",
+  "hitRankingTitle": "命中排行",
+  "hitRankingEntrySubtitle": "查看被拦截最多的域名与命中原因",
+  "hitRankingDomains": "被拦截最多的域名",
+  "hitRankingDomainsFooter": "点击域名用规则测试解释其判定",
+  "hitRankingExplainHint": "点击查看规则测试",
+  "hitRankingReasons": "命中原因（归因）",
+  "hitRankingEmpty": "所选时间范围内没有拦截记录",
+  "hitRankingEmptyBody": "切换时间范围，或先开启规则拦截。",
+  "hitRankingLoadFailed": "命中排行加载失败",
+  "hitRankingFooter": "统计来自本机 dns_log，按被拦截结果聚合。",
+  "hitRankingTotal": "共拦截 {count} 次",
+  "@hitRankingTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "appTitle": "谛听 DITING",
   "uiBack": "返回",
   "uiCancel": "取消",

@@ -191,6 +191,37 @@ ORDER BY timestamp DESC, id DESC LIMIT {}",
             limit_of(request, 5)
         ))
         .answer(),
+        // R2 命中统计：按域名聚合被拦截次数（Top 排行）。
+        "dns.topDomains" => Plan::new(
+            "SELECT queryName AS domain, COUNT(*) AS count FROM dns_log \
+WHERE result = 'BLOCKED' AND timestamp >= ? \
+GROUP BY queryName ORDER BY count DESC, domain ASC LIMIT ?",
+        )
+        .arg(Value::from(since_arg(request).unwrap_or(0)))
+        .arg(Value::from(limit_of(request, 20)))
+        .answer(),
+        // R2 归因：从 message 的 `blocked_by=<原因>` 里抽出原因并聚合。`blocked_by=` 占 11 个
+        // 字符；原因到下一个空格为止，没有空格则取到结尾。没有该字段的行归为 `unknown`。
+        "dns.topReasons" => Plan::new(
+            "SELECT reason, COUNT(*) AS count FROM (SELECT CASE \
+WHEN instr(message, 'blocked_by=') > 0 THEN CASE \
+WHEN instr(substr(message, instr(message, 'blocked_by=') + 11), ' ') > 0 THEN \
+substr(message, instr(message, 'blocked_by=') + 11, \
+instr(substr(message, instr(message, 'blocked_by=') + 11), ' ') - 1) \
+ELSE substr(message, instr(message, 'blocked_by=') + 11) END \
+ELSE 'unknown' END AS reason \
+FROM dns_log WHERE result = 'BLOCKED' AND timestamp >= ?) \
+WHERE reason != '' GROUP BY reason ORDER BY count DESC, reason ASC LIMIT ?",
+        )
+        .arg(Value::from(since_arg(request).unwrap_or(0)))
+        .arg(Value::from(limit_of(request, 20)))
+        .answer(),
+        // R2 总拦截数（与排行同一时间窗），用于页面概览的分母。
+        "dns.blockedCount" => Plan::new(
+            "SELECT COUNT(*) AS n FROM dns_log WHERE result = 'BLOCKED' AND timestamp >= ?",
+        )
+        .arg(Value::from(since_arg(request).unwrap_or(0)))
+        .answer(),
         "http.query.countByPackage" => Plan::new(
             "SELECT packageName, COUNT(*) AS count FROM http_request_log \
 WHERE packageName != '' GROUP BY packageName",
@@ -454,6 +485,25 @@ mod tests {
             sql: answer["sql"].as_str().unwrap().to_owned(),
             args: answer["args"].as_array().unwrap().clone(),
         }
+    }
+
+    #[test]
+    fn hit_ranking_plans_group_blocked_rows() {
+        let domains = plan_of(json!({ "name": "dns.topDomains", "since": 5, "limit": 10 }));
+        assert!(domains.sql.contains("result = 'BLOCKED'"));
+        assert!(domains.sql.contains("GROUP BY queryName"));
+        assert!(domains.sql.ends_with("LIMIT ?"));
+        assert_eq!(domains.args, vec![json!(5), json!(10)]);
+
+        // No `since` binds epoch 0, so "all time" is one code path.
+        let reasons = plan_of(json!({ "name": "dns.topReasons", "limit": 20 }));
+        assert!(reasons.sql.contains("instr(message, 'blocked_by=')"));
+        assert!(reasons.sql.contains("GROUP BY reason"));
+        assert_eq!(reasons.args[0], json!(0));
+
+        let total = plan_of(json!({ "name": "dns.blockedCount", "since": 7 }));
+        assert!(total.sql.contains("COUNT(*) AS n"));
+        assert_eq!(total.args, vec![json!(7)]);
     }
 
     #[test]

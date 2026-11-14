@@ -2,6 +2,7 @@ import 'package:diting_android/pages/logs/logs_bootstrap_page.dart';
 import 'package:diting_android/pages/logs/logs_cache_page.dart';
 import 'package:diting_android/pages/logs/logs_race_page.dart';
 import 'package:diting_android/pages/logs/logs_subscription_stats_page.dart';
+import 'package:diting_android/pages/logs/hit_ranking_page.dart';
 import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +20,9 @@ abstract final class LogPaths {
 
   /// Subscription interception stats (upstream `SubscriptionInterceptionStatsScreen`).
   static const subscriptionStats = '/logs/subscription-stats';
+
+  /// R2 命中排行：被拦截最多的域名与命中原因。
+  static const hitRanking = '/logs/hit-ranking';
 }
 
 /// Log drill-down routes. All hang off `rootNavigatorKey`, otherwise the
@@ -47,5 +51,11 @@ List<RouteBase> logsRoutes() => [
     parentNavigatorKey: rootNavigatorKey,
     pageBuilder: (context, state) =>
         androidDefaultPage(state, const LogsSubscriptionStatsPage()),
+  ),
+  GoRoute(
+    path: LogPaths.hitRanking,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) =>
+        androidDefaultPage(state, const HitRankingPage()),
   ),
 ];

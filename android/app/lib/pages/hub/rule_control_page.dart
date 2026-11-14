@@ -119,6 +119,12 @@ class RuleControlPage extends ConsumerWidget {
                 onTap: () => context.push('/hub/rules/pause'),
               ),
               ListItem(
+                leading: const GlyphIcon(AppGlyphs.rules),
+                title: Text(context.l10n.hitRankingTitle),
+                subtitle: Text(context.l10n.hitRankingEntrySubtitle),
+                onTap: () => context.push('/logs/hit-ranking'),
+              ),
+              ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
                 title: Text(context.l10n.ruleControlBlockResponse),
                 subtitle: Text(

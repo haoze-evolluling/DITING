@@ -108,6 +108,41 @@ class AppL10nZh extends AppL10n {
   String get blockPauseFailed => '设置失败，请稍后重试';
 
   @override
+  String get hitRankingTitle => '命中排行';
+
+  @override
+  String get hitRankingEntrySubtitle => '查看被拦截最多的域名与命中原因';
+
+  @override
+  String get hitRankingDomains => '被拦截最多的域名';
+
+  @override
+  String get hitRankingDomainsFooter => '点击域名用规则测试解释其判定';
+
+  @override
+  String get hitRankingExplainHint => '点击查看规则测试';
+
+  @override
+  String get hitRankingReasons => '命中原因（归因）';
+
+  @override
+  String get hitRankingEmpty => '所选时间范围内没有拦截记录';
+
+  @override
+  String get hitRankingEmptyBody => '切换时间范围，或先开启规则拦截。';
+
+  @override
+  String get hitRankingLoadFailed => '命中排行加载失败';
+
+  @override
+  String get hitRankingFooter => '统计来自本机 dns_log，按被拦截结果聚合。';
+
+  @override
+  String hitRankingTotal(int count) {
+    return '共拦截 $count 次';
+  }
+
+  @override
   String get appTitle => '谛听 DITING';
 
   @override
