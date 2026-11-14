@@ -270,8 +270,7 @@ OR matchedRule LIKE ?)",
                 .filter(|package| !package.is_empty())
                 .collect();
             if !packages.is_empty() {
-                let placeholders = std::iter::repeat("?")
-                    .take(packages.len())
+                let placeholders = std::iter::repeat_n("?", packages.len())
                     .collect::<Vec<_>>()
                     .join(", ");
                 plan.sql
@@ -521,7 +520,9 @@ mod tests {
         assert!(plan
             .sql
             .contains(" AND (result = 'BLOCKED' OR message LIKE"));
-        assert!(plan.sql.ends_with("ORDER BY timestamp DESC, id DESC LIMIT 50"));
+        assert!(plan
+            .sql
+            .ends_with("ORDER BY timestamp DESC, id DESC LIMIT 50"));
         assert_eq!(plan.args[0], json!("com.x"));
         assert_eq!(plan.args[1], json!("%ads%"));
         assert_eq!(plan.args.len(), 4);
@@ -535,9 +536,9 @@ mod tests {
             "packageName": "com.x",
             "before": 1_700_000_000_000i64,
         }));
-        assert!(plan.sql.ends_with(
-            "AND timestamp <= ? ORDER BY timestamp DESC, id DESC LIMIT 50"
-        ));
+        assert!(plan
+            .sql
+            .ends_with("AND timestamp <= ? ORDER BY timestamp DESC, id DESC LIMIT 50"));
         // packageName first, cursor last: the placeholder order has to match the clause order.
         assert_eq!(plan.args, vec![json!("com.x"), json!(1_700_000_000_000i64)]);
     }
@@ -551,9 +552,9 @@ mod tests {
             "status": "blocked",
             "before": 42,
         }));
-        assert!(plan.sql.ends_with(
-            "AND timestamp <= ? ORDER BY timestamp DESC, id DESC LIMIT 50"
-        ));
+        assert!(plan
+            .sql
+            .ends_with("AND timestamp <= ? ORDER BY timestamp DESC, id DESC LIMIT 50"));
         assert_eq!(plan.args.len(), 4);
         assert_eq!(plan.args[3], json!(42));
     }
@@ -563,7 +564,9 @@ mod tests {
         let plan = plan_of(json!({ "name": "dns.query.recent", "limit": 50 }));
         assert!(!plan.sql.contains("timestamp <="));
         assert!(plan.args.is_empty());
-        assert!(plan.sql.ends_with("ORDER BY timestamp DESC, id DESC LIMIT 50"));
+        assert!(plan
+            .sql
+            .ends_with("ORDER BY timestamp DESC, id DESC LIMIT 50"));
     }
 
     #[test]

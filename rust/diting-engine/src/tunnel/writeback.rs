@@ -29,6 +29,7 @@ use crate::netstack::{Netstack, TcpKey};
 /// Bytes one flow may buffer while the client is not reading.
 pub const MAX_PENDING_WRITE: usize = 1 << 20;
 
+#[derive(Default)]
 struct Entry {
     data: Vec<u8>,
     at: usize,
@@ -36,17 +37,6 @@ struct Entry {
     /// The reservation to refund as bytes leave `data` for the socket. `None` for producers that
     /// never reserved (intercepted/DNS), which fall back to the bounded-abort safety net.
     credit: Option<Arc<Semaphore>>,
-}
-
-impl Default for Entry {
-    fn default() -> Self {
-        Self {
-            data: Vec::new(),
-            at: 0,
-            close_after_pending: false,
-            credit: None,
-        }
-    }
 }
 
 /// Every flow's unwritten bytes, drained as the smoltcp send window reopens.

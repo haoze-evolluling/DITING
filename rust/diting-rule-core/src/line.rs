@@ -251,7 +251,7 @@ pub fn parse_line_without_state(line: &str, original: &str, allow: bool) -> Cate
             // really a URL rule, which stays unsupported here.
             let anchored = candidate
                 .trim_start_matches('|')
-                .trim_end_matches(|c| c == '|' || c == '^')
+                .trim_end_matches(['|', '^'])
                 .trim();
             if anchored.is_empty() || anchored.contains('/') {
                 return CategorizedLine::unsupported();

@@ -45,7 +45,7 @@ pub fn sha256(data: &[u8]) -> [u8; 32] {
     }
     msg.extend_from_slice(&bit_len.to_be_bytes());
 
-    for chunk in msg.chunks_exact(64) {
+    for chunk in msg.as_chunks::<64>().0 {
         let mut w = [0u32; 64];
         for i in 0..16 {
             w[i] = u32::from_be_bytes([
@@ -153,7 +153,10 @@ pub fn hex(bytes: &[u8]) -> String {
 /// signature; a plain body-only MAC could be replayed forever.
 pub fn sign(secret: &str, body: &str, timestamp: i64) -> String {
     let signed = format!("{timestamp}.{body}");
-    format!("sha256={}", hex(&hmac_sha256(secret.as_bytes(), signed.as_bytes())))
+    format!(
+        "sha256={}",
+        hex(&hmac_sha256(secret.as_bytes(), signed.as_bytes()))
+    )
 }
 
 /// One retry decision.
@@ -179,7 +182,10 @@ pub fn retry_after(
     let cap = max_ms.max(base);
     let limit = max_attempts.max(1);
     if attempt >= limit {
-        return RetryDecision { retry: false, delay_ms: 0 };
+        return RetryDecision {
+            retry: false,
+            delay_ms: 0,
+        };
     }
     let retryable = match status {
         None => true,
@@ -188,11 +194,17 @@ pub fn retry_after(
         Some(_) => false,
     };
     if !retryable {
-        return RetryDecision { retry: false, delay_ms: 0 };
+        return RetryDecision {
+            retry: false,
+            delay_ms: 0,
+        };
     }
     let shift = (attempt - 1).clamp(0, 30) as u32;
     let delay = base.saturating_mul(1i64 << shift).min(cap);
-    RetryDecision { retry: true, delay_ms: delay }
+    RetryDecision {
+        retry: true,
+        delay_ms: delay,
+    }
 }
 
 #[cfg(test)]
@@ -215,7 +227,10 @@ mod tests {
     fn hmac_sha256_matches_known_vector() {
         // RFC-style test: key="key", data="The quick brown fox jumps over the lazy dog".
         assert_eq!(
-            hex(&hmac_sha256(b"key", b"The quick brown fox jumps over the lazy dog")),
+            hex(&hmac_sha256(
+                b"key",
+                b"The quick brown fox jumps over the lazy dog"
+            )),
             "f7bc83f430538424b13298e6aa6fb143ef4d59a14946175997479dbc2d1a3cd8"
         );
     }
@@ -232,7 +247,13 @@ mod tests {
     #[test]
     fn retry_backoff_doubles_and_caps() {
         let d1 = retry_after(1, Some(500), 1000, 5000, 4);
-        assert_eq!(d1, RetryDecision { retry: true, delay_ms: 1000 });
+        assert_eq!(
+            d1,
+            RetryDecision {
+                retry: true,
+                delay_ms: 1000
+            }
+        );
         let d2 = retry_after(2, Some(503), 1000, 5000, 4);
         assert_eq!(d2.delay_ms, 2000);
         let d3 = retry_after(3, None, 1000, 5000, 4);

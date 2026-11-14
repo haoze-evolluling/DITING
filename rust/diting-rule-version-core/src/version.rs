@@ -203,7 +203,7 @@ mod tests {
     fn record_caps_history() {
         let mut history = Vec::new();
         for i in 0..20 {
-            history = record(&history, &format!("h{i}"), i, i as i64, Some(5));
+            history = record(&history, &format!("h{i}"), i, i, Some(5));
         }
         assert_eq!(history.len(), 5);
         assert_eq!(history.first().unwrap().hash, "h19");
