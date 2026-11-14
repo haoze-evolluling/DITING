@@ -64,7 +64,7 @@ List<ServerFeatureCategory> serverFeatureCategories(AppL10n l10n) => [
     ],
   ),
   ServerFeatureCategory(
-    title: l10n.serverHubCategoryRules,
+    title: l10n.hubCategoryRules,
     cards: [
       ServerFeatureCard(
         title: l10n.hubRuleControl,
@@ -93,7 +93,7 @@ List<ServerFeatureCategory> serverFeatureCategories(AppL10n l10n) => [
     ],
   ),
   ServerFeatureCategory(
-    title: l10n.serverHubCategoryData,
+    title: l10n.hubCategoryData,
     cards: [
       ServerFeatureCard(
         title: l10n.transferTitle,

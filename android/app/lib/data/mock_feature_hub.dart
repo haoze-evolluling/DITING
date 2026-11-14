@@ -20,6 +20,7 @@ class MockFeatureCard {
   /// Empty means the card is fixed.
   final String? featureKey;
 
+  /// Whether express mode (the narrow DNS-only route) shows the card.
   final bool expressVisible;
 
   final String? longPressRoute;
@@ -36,18 +37,29 @@ class MockFeatureCategory {
 
 /// Routes are literals here; `test/route_catalog_test.dart` keeps them in sync.
 ///
-/// Reading order is the module order the hub shows. The hub is the single entry point for the
-/// most-used modules (currently 24 cards in 6 categories, 4 per category so every two-column row
-/// stays full and every mode has an even count per category). Low-frequency functions are folded
-/// into a parent page's secondary entries instead of taking a card of their own:
-///   - 服务商管理 → 引导解析 / 服务显示
-///   - 规则控制 → 域名黑名单 / 域名白名单 / 域名覆写
-///   - 规则订阅 → 自动更新 / 镜像模板
+/// Information architecture — the hub is grouped by **what the feature does and when a user
+/// reaches for it**, not by where the code lives. Seven purpose-based sections, four cards each,
+/// so the two-column grid never leaves a blank cell and the three work modes share one layout:
+///
+///   1. DNS 解析       服务商 / 策略 / 缓存 / DNS64
+///   2. 规则与控制     拦截策略 / 规则订阅 / 应用规则 / 隐私套件
+///   3. 应用与网络     实时连接 / 应用洞察 / 网络工具 / LAN 限速
+///   4. 高级与诊断     网络诊断 / HTTPS 检查 / 出站代理 / AI 分析
+///   5. 接口与联动     自动化 / 本地 API / Webhook / 自定义资源
+///   6. 数据与维护     备份迁移 / 数据清理 / 故障排查 / 日志模式
+///   7. 界面与数据     外观 / 隐藏功能 / 其他设置 / 关于
+///
+/// Low-frequency functions stay folded into a parent page's secondary "更多功能" section instead
+/// of taking a first-class card, which keeps every section at four cards:
+///   - 解析服务商 → 引导解析 / 服务显示
+///   - 规则控制 → 域名黑名单 / 域名白名单 / 域名覆写 / 规则测试 / 临时暂停 / 拦截响应
+///   - 规则订阅 → 自动更新 / 镜像模板 / 版本回滚
 ///   - 自动化 → 配置档案 / 分时规则 / 网络档案
-///   - 应用规则 → 断网应用 / 直连应用
-///   - 数据与维护 → 数据清理 / 故障排查
-///   - 关于 → 赞助
-///   - 日志/流量/设置/请求日志/镜像模板 仍可从对应底栏 Tab 或既有页面进入。
+///   - 应用规则 → 禁止联网应用 / 排除应用
+///   - 应用流量/日志/网络工具/设置 are also full-screen entries from the dock.
+///
+/// Express mode (DNS-only) keeps the five sections that still apply and hides the tunnel-bound
+/// ones (应用与网络 / 高级与诊断), so it never offers an entry whose switches cannot take effect.
 List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
     <MockFeatureCategory>[
   MockFeatureCategory(
@@ -101,83 +113,18 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         featureKey: 'subscriptions',
       ),
       MockFeatureCard(
+        title: l10n.hubAppRules,
+        description: l10n.hubAppRulesDescription,
+        glyphName: 'appsList',
+        route: '/hub/app-rules',
+        featureKey: 'app_rules',
+      ),
+      MockFeatureCard(
         title: l10n.privacySuiteTitle,
         description: l10n.privacySuiteIntro,
         glyphName: 'eyeOff',
         route: '/network/privacy',
         featureKey: 'privacy_suite',
-      ),
-      MockFeatureCard(
-        title: l10n.automationTitle,
-        description: l10n.automationSubtitle,
-        glyphName: 'connections',
-        route: '/automation',
-        featureKey: 'automation',
-      ),
-    ],
-  ),
-  MockFeatureCategory(
-    title: l10n.hubCategoryIntegration,
-    cards: [
-      MockFeatureCard(
-        title: l10n.localApiTitle,
-        description: l10n.localApiIntro,
-        glyphName: 'key',
-        route: '/network/local-api',
-        featureKey: 'local_api',
-      ),
-      MockFeatureCard(
-        title: l10n.webhookTitle,
-        description: l10n.webhookIntro,
-        glyphName: 'send',
-        route: '/hub/rules/webhook',
-        featureKey: 'webhook',
-      ),
-      MockFeatureCard(
-        title: l10n.lanRateLimitTitle,
-        description: l10n.lanRateLimitIntro,
-        glyphName: 'speed',
-        route: '/network/lan-rate-limit',
-        featureKey: 'lan_rate_limit',
-      ),
-      MockFeatureCard(
-        title: l10n.customResourcesTitle,
-        description: l10n.devCustomResourcesBody,
-        glyphName: 'resources',
-        route: '/config/custom-resources',
-        featureKey: 'custom_resources',
-      ),
-    ],
-  ),
-  MockFeatureCategory(
-    title: l10n.hubCategoryInterface,
-    cards: [
-      MockFeatureCard(
-        title: l10n.hubAppearance,
-        description: l10n.hubAppearanceDescription,
-        glyphName: 'palette',
-        route: '/theme',
-        featureKey: 'appearance',
-      ),
-      MockFeatureCard(
-        title: l10n.hubHiddenFeatures,
-        description: l10n.hubHiddenFeaturesDescription,
-        glyphName: 'eyeOff',
-        route: '/hub/hidden-features',
-      ),
-      MockFeatureCard(
-        title: l10n.hubBackup,
-        description: l10n.hubBackupDescription,
-        glyphName: 'export',
-        route: '/hub/config-transfer',
-        featureKey: 'data_management',
-      ),
-      MockFeatureCard(
-        title: l10n.hubAbout,
-        description: l10n.hubAboutDescription,
-        glyphName: 'info',
-        route: '/about',
-        featureKey: 'app_info',
       ),
     ],
   ),
@@ -185,17 +132,9 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
     title: l10n.hubCategoryNetwork,
     cards: [
       MockFeatureCard(
-        title: l10n.hubAppRules,
-        description: l10n.hubAppRulesDescription,
-        glyphName: 'appsList',
-        route: '/hub/app-rules',
-        featureKey: 'app_rules',
-        expressVisible: false,
-      ),
-      MockFeatureCard(
         title: l10n.flowTitle,
         description: l10n.flowEntrySubtitle,
-        glyphName: 'cloudSync',
+        glyphName: 'connections',
         route: '/network/flow',
         featureKey: 'flow_view',
         expressVisible: false,
@@ -209,11 +148,19 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         expressVisible: false,
       ),
       MockFeatureCard(
-        title: l10n.hubDnsLeak,
-        description: l10n.networkDiagnosticsIntro,
+        title: l10n.bottomBarNetworkTools,
+        description: l10n.hubDiagnosticsDescription,
+        glyphName: 'tools',
+        route: '/tools',
+        featureKey: 'network_tools',
+        expressVisible: false,
+      ),
+      MockFeatureCard(
+        title: l10n.lanRateLimitTitle,
+        description: l10n.lanRateLimitIntro,
         glyphName: 'speed',
-        route: '/network/diagnostics',
-        featureKey: 'network_diagnostics',
+        route: '/network/lan-rate-limit',
+        featureKey: 'lan_rate_limit',
         expressVisible: false,
       ),
     ],
@@ -222,9 +169,17 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
     title: l10n.hubCategoryAdvanced,
     cards: [
       MockFeatureCard(
+        title: l10n.hubDiagnostics,
+        description: l10n.networkDiagnosticsIntro,
+        glyphName: 'target',
+        route: '/network/diagnostics',
+        featureKey: 'network_diagnostics',
+        expressVisible: false,
+      ),
+      MockFeatureCard(
         title: l10n.hubHttpsInspection,
         description: l10n.hubHttpsInspectionDescription,
-        glyphName: 'target',
+        glyphName: 'lock',
         route: '/hub/https-inspection',
         featureKey: 'https_inspection',
         expressVisible: false,
@@ -245,13 +200,103 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         featureKey: 'agent_api',
         expressVisible: false,
       ),
+    ],
+  ),
+  MockFeatureCategory(
+    title: l10n.hubCategoryIntegration,
+    cards: [
       MockFeatureCard(
-        title: l10n.hubDiagnostics,
-        description: l10n.hubDiagnosticsDescription,
-        glyphName: 'speed',
-        route: '/tools',
-        featureKey: 'network_tools',
-        expressVisible: false,
+        title: l10n.automationTitle,
+        description: l10n.automationSubtitle,
+        glyphName: 'motion',
+        route: '/automation',
+        featureKey: 'automation',
+      ),
+      MockFeatureCard(
+        title: l10n.localApiTitle,
+        description: l10n.localApiIntro,
+        glyphName: 'key',
+        route: '/network/local-api',
+        featureKey: 'local_api',
+      ),
+      MockFeatureCard(
+        title: l10n.webhookTitle,
+        description: l10n.webhookIntro,
+        glyphName: 'send',
+        route: '/hub/rules/webhook',
+        featureKey: 'webhook',
+      ),
+      MockFeatureCard(
+        title: l10n.customResourcesTitle,
+        description: l10n.devCustomResourcesBody,
+        glyphName: 'resources',
+        route: '/config/custom-resources',
+        featureKey: 'custom_resources',
+      ),
+    ],
+  ),
+  MockFeatureCategory(
+    title: l10n.hubCategoryData,
+    cards: [
+      MockFeatureCard(
+        title: l10n.transferTitle,
+        description: l10n.hubBackupDescription,
+        glyphName: 'export',
+        route: '/hub/config-transfer',
+        featureKey: 'data_management',
+      ),
+      MockFeatureCard(
+        title: l10n.hubDataCleanup,
+        description: l10n.hubDataCleanupDescription,
+        glyphName: 'broom',
+        route: '/hub/data-cleanup',
+        featureKey: 'data_cleanup',
+      ),
+      MockFeatureCard(
+        title: l10n.hubTroubleshooting,
+        description: l10n.hubTroubleshootingDescription,
+        glyphName: 'wrench',
+        route: '/hub/troubleshooting',
+        featureKey: 'troubleshooting',
+      ),
+      MockFeatureCard(
+        title: l10n.logRetentionTitle,
+        description: l10n.settingsLogModeSubtitle,
+        glyphName: 'clock',
+        route: '/hub/log-retention',
+        featureKey: 'log_retention',
+      ),
+    ],
+  ),
+  MockFeatureCategory(
+    title: l10n.hubCategoryInterface,
+    cards: [
+      MockFeatureCard(
+        title: l10n.hubAppearance,
+        description: l10n.hubAppearanceDescription,
+        glyphName: 'palette',
+        route: '/theme',
+        featureKey: 'appearance',
+      ),
+      MockFeatureCard(
+        title: l10n.hubHiddenFeatures,
+        description: l10n.hubHiddenFeaturesDescription,
+        glyphName: 'eyeOff',
+        route: '/hub/hidden-features',
+      ),
+      MockFeatureCard(
+        title: l10n.hubOtherSettings,
+        description: l10n.hubOtherSettingsDescription,
+        glyphName: 'settings',
+        route: '/settings',
+        featureKey: 'other_settings',
+      ),
+      MockFeatureCard(
+        title: l10n.hubAbout,
+        description: l10n.hubAboutDescription,
+        glyphName: 'info',
+        route: '/about',
+        featureKey: 'app_info',
       ),
     ],
   ),

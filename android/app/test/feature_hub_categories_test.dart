@@ -1,6 +1,6 @@
-// Guards the feature-hub taxonomy after the ~24-module consolidation: six small categories, four
-// cards each (even, so the two-column grid never leaves a blank cell), and no card reachable from
-// two places.
+// Guards the feature-hub taxonomy: seven purpose-based sections, four cards each (even, so the
+// two-column grid never leaves a blank cell), a balanced total and no card reachable from two
+// places. Express mode keeps only the sections that still apply and every one stays even.
 
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,12 +11,20 @@ void main() {
   final l10n = lookupAppL10n(const Locale('zh'));
   final categories = mockFeatureCategories(l10n);
 
-  test('6 个分类、每类 4 张、共 24 张且每类偶数', () {
+  test('7 个分类、每类 4 张、共 28 张且每类偶数', () {
     expect(
       categories.map((category) => category.title).toList(),
-      ['DNS 解析', '规则与控制', '接口与联动', '界面与数据', '应用与网络', '高级与诊断'],
+      [
+        'DNS 解析',
+        '规则与控制',
+        '应用与网络',
+        '高级与诊断',
+        '接口与联动',
+        '数据与维护',
+        '界面与数据',
+      ],
     );
-    expect(categories.length, 6);
+    expect(categories.length, 7);
     for (final category in categories) {
       expect(category.cards, isNotEmpty, reason: '${category.title} 不应为空分类');
       expect(
@@ -30,7 +38,7 @@ void main() {
       0,
       (sum, category) => sum + category.cards.length,
     );
-    expect(total, 24);
+    expect(total, 28);
   });
 
   test('极速模式每个非空分类仍为偶数', () {
@@ -89,12 +97,9 @@ void main() {
       'excluded_apps',
       'request_logs',
       'logs',
-      'data_cleanup',
-      'troubleshooting',
       'sponsor',
       'sponsor_list',
       'contributors',
-      'other_settings',
       'ip_quality',
     };
     expect(keys.toSet().intersection(folded), isEmpty);

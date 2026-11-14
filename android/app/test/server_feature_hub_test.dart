@@ -37,7 +37,7 @@ void _featureCenter() {
 
     expect(
       categories.map((category) => category.title),
-      containsAll(['DNS 解析', '域名规则', '数据与维护', '界面与数据']),
+      containsAll(['DNS 解析', '规则与控制', '数据与维护', '界面与数据']),
     );
     for (final category in categories) {
       expect(category.cards.length, 4, reason: '${category.title} 应为 4 张');
@@ -112,7 +112,19 @@ void _featureCenter() {
 
   testWidgets('功能中心的备份与迁移打开配置导入导出页', (tester) async {
     await openFeatureCenter(tester);
-    await tester.tap(find.text('备份与迁移'));
+    final card = find.text('备份与迁移');
+    final hubScrollable = find
+        .descendant(
+          of: find.byType(ServerFeatureHubPage),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(card, 300, scrollable: hubScrollable);
+    // The floating dock overlaps the bottom of the scroll viewport, so nudge the card clear of
+    // it before tapping.
+    await tester.drag(hubScrollable, const Offset(0, -200));
+    await settle(tester);
+    await tester.tap(card);
     await settle(tester);
 
     expect(find.byType(ConfigTransferPage), findsOneWidget);

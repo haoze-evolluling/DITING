@@ -243,7 +243,12 @@ void _appShell() {
     // Entering a tab page from the feature hub opens it standalone: no dock, and a way back.
     testWidgets('功能中心里指向其它 tab 的卡片以全屏页打开并给出返回键', (tester) async {
       await pumpApp(tester, initialLocation: Routes.hub, dock: userDock);
-      final card = find.text('网络诊断');
+      // The 网络工具 card opens the tools branch root; the dock also carries that label, so scope
+      // the finder to the hub grid.
+      final card = find.descendant(
+        of: find.byType(FeatureHubPage),
+        matching: find.text('网络工具'),
+      );
       await tester.scrollUntilVisible(
         card,
         400,

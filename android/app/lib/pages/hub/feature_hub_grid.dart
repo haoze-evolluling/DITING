@@ -2,7 +2,7 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// One card in the feature-hub grid. Both the normal-mode hub and the server-mode feature center
-/// build these so the two screens keep the same two-column layout and press feedback.
+/// build these so the two screens keep the same card layout and press feedback.
 class FeatureHubCardData {
   const FeatureHubCardData({
     required this.title,
@@ -31,8 +31,8 @@ class FeatureHubCategoryData {
   final List<FeatureHubCardData> cards;
 }
 
-/// One titled category: heading plus a two-column grid of cards. Shared by the normal-mode feature
-/// hub and the server-mode feature center.
+/// One titled category: heading plus a grid of cards. Shared by the normal-mode feature hub and
+/// the server-mode feature center so the three work modes share one visual language.
 class FeatureHubCategorySection extends StatelessWidget {
   const FeatureHubCategorySection({super.key, required this.category});
 
@@ -63,35 +63,43 @@ class _CardGrid extends StatelessWidget {
 
   static const _gap = 10.0;
 
-  /// Base card height at text scale 1.0; it scales with the text because icon, title and
-  /// subtitle exceed 92dp by about 6dp at 1.4x. A linear `textScaler` matches `clampTextScale`.
-  static const _cardHeight = 92.0;
+  /// Base card height at text scale 1.0; the tinted icon badge, title and subtitle need a little
+  /// more room than a bare icon row. A linear `textScaler` matches `clampTextScale`.
+  static const _cardHeight = 104.0;
+
+  /// Phone width keeps two columns; a tablet/desktop window fits three, the same count the
+  /// settings-style grids use elsewhere. The column count changes the reserve the scrolling body
+  /// lays out, not the card presentation.
+  static int _columnsFor(double width) => width >= 560 ? 3 : 2;
 
   @override
   Widget build(BuildContext context) {
-    // Two equal columns via Row/Column rather than GridView: a handful of cards, and
-    // GridView inside a Column needs shrinkWrap.
-    final rows = <Widget>[];
-    for (var i = 0; i < cards.length; i += 2) {
-      final left = cards[i];
-      final right = i + 1 < cards.length ? cards[i + 1] : null;
-      rows.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: _gap),
-          child: Row(
-            spacing: _gap,
-            children: [
-              Expanded(child: _FeatureCard(card: left)),
-              if (right != null)
-                Expanded(child: _FeatureCard(card: right))
-              else
-                const Spacer(),
-            ],
-          ),
-        ),
-      );
-    }
-    return Column(children: rows);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = _columnsFor(constraints.maxWidth);
+        final rows = <Widget>[];
+        for (var i = 0; i < cards.length; i += columns) {
+          final row = <Widget>[];
+          for (var c = 0; c < columns; c++) {
+            final index = i + c;
+            row.add(
+              Expanded(
+                child: index < cards.length
+                    ? _FeatureCard(card: cards[index])
+                    : const SizedBox.shrink(),
+              ),
+            );
+          }
+          rows.add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: _gap),
+              child: Row(spacing: _gap, children: row),
+            ),
+          );
+        }
+        return Column(children: rows);
+      },
+    );
   }
 }
 
@@ -129,12 +137,12 @@ class _FeatureCardState extends State<_FeatureCard> {
         },
         onLongPress: card.onLongPress,
         child: AnimatedScale(
-          scale: _pressed ? 0.90 : 1,
+          scale: _pressed ? 0.92 : 1,
           duration: const Duration(milliseconds: 140),
           curve: Curves.easeOut,
           child: Container(
             height: _CardGrid._cardHeight * _heightScale(context),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             decoration: ShapeDecoration(
               shape: AppShape.md,
               color: SurfaceLevel.card.colorOf(colorScheme),
@@ -143,11 +151,27 @@ class _FeatureCardState extends State<_FeatureCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
-              spacing: 4,
               children: [
                 Row(
                   children: [
-                    GlyphIcon(card.glyph, size: 20, color: colorScheme.primary),
+                    // Tinted icon badge: the same rounded-square language as the settings rows,
+                    // so a card reads as an icon tile with a label rather than a bare glyph.
+                    DecoratedBox(
+                      decoration: ShapeDecoration(
+                        shape: AppShape.sm,
+                        color: colorScheme.primary.withValues(alpha: 0.12),
+                      ),
+                      child: SizedBox.square(
+                        dimension: 34,
+                        child: Center(
+                          child: GlyphIcon(
+                            card.glyph,
+                            size: 19,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
                     const Spacer(),
                     if (card.hint != null)
                       Text(
@@ -158,6 +182,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                       ),
                   ],
                 ),
+                const SizedBox(height: 8),
                 Text(
                   card.title,
                   maxLines: 1,
@@ -166,6 +191,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                       .of(context, emphasized: true)
                       .copyWith(color: colorScheme.onSurface),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   card.description,
                   maxLines: 1,
