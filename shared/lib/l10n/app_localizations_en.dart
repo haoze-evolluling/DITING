@@ -151,6 +151,84 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String get healthTitle => 'Protection health';
+
+  @override
+  String get healthEntrySubtitle =>
+      'See the four-dimension score and suggestions';
+
+  @override
+  String get healthIntro =>
+      'Assesses whether protection is actually effective across permissions, DNS, filter and cache, and suggests the next step.';
+
+  @override
+  String get healthIntroShort =>
+      'Four-dimension assessment of protection effectiveness';
+
+  @override
+  String get healthScoreLabel => 'Health score';
+
+  @override
+  String get healthLevelOk => 'Good';
+
+  @override
+  String get healthLevelWarning => 'Attention';
+
+  @override
+  String get healthLevelCritical => 'Action needed';
+
+  @override
+  String get healthDimensionsTitle => 'Dimensions';
+
+  @override
+  String get healthDimPermissions => 'Permissions';
+
+  @override
+  String get healthDimDns => 'DNS';
+
+  @override
+  String get healthDimFilter => 'Filter';
+
+  @override
+  String get healthDimCache => 'Cache';
+
+  @override
+  String get healthAdviceTitle => 'Suggestions';
+
+  @override
+  String get healthAdviceGrantPermissions =>
+      'Grant VPN / notification permissions for protection to work';
+
+  @override
+  String get healthAdviceStartProtection =>
+      'Protection is not running, please start it';
+
+  @override
+  String get healthAdviceImportRules =>
+      'No rules imported yet, blocking has no effect';
+
+  @override
+  String get healthAdviceUpdateSubscriptions =>
+      'Some subscriptions failed to update, retry on the subscriptions page';
+
+  @override
+  String get healthAdviceLowCache =>
+      'Cache hit rate is low, check upstream or enable cache';
+
+  @override
+  String get healthAdviceNoBlocking =>
+      'No recent blocks, confirm rules are active';
+
+  @override
+  String get healthAdviceAllGood => 'Protection looks healthy, nothing to do';
+
+  @override
+  String get healthLoading => 'Assessing…';
+
+  @override
+  String get healthLoadFailed => 'Assessment failed, please retry';
+
+  @override
   String get appTitle => 'DITING';
 
   @override

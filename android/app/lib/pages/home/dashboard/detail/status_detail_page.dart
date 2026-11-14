@@ -13,6 +13,7 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:diting_android/widgets/status_pill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Status detail: the card only fits run time, the provider name and today's query count. This
@@ -48,6 +49,22 @@ class StatusDetailPage extends ConsumerWidget {
           hint: core.isRunning
               ? health.summary
               : context.l10n.statusPausedSummary(mode.title(context.l10n), core.label(context.l10n)),
+        ),
+        DashboardDetailCard(
+          glyph: AppGlyphs.checkCircle,
+          title: context.l10n.healthTitle,
+          child: InkWell(
+            onTap: () => context.push('/health'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                context.l10n.healthEntrySubtitle,
+                style: AppTextStyle.subheadline
+                    .of(context)
+                    .copyWith(color: colorScheme.primary),
+              ),
+            ),
+          ),
         ),
         DashboardDetailCard(
           glyph: AppGlyphs.status,

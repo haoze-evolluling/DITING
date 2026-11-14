@@ -355,6 +355,144 @@ abstract class AppL10n {
   /// **'共拦截 {count} 次'**
   String hitRankingTotal(int count);
 
+  /// No description provided for @healthTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'保护健康'**
+  String get healthTitle;
+
+  /// No description provided for @healthEntrySubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看四维评分与改进建议'**
+  String get healthEntrySubtitle;
+
+  /// No description provided for @healthIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'从权限、DNS、过滤器、缓存四个维度评估保护是否真正生效，并给出下一步建议。'**
+  String get healthIntro;
+
+  /// No description provided for @healthIntroShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'四维综合评估保护是否有效'**
+  String get healthIntroShort;
+
+  /// No description provided for @healthScoreLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'健康评分'**
+  String get healthScoreLabel;
+
+  /// No description provided for @healthLevelOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'良好'**
+  String get healthLevelOk;
+
+  /// No description provided for @healthLevelWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'注意'**
+  String get healthLevelWarning;
+
+  /// No description provided for @healthLevelCritical.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要处理'**
+  String get healthLevelCritical;
+
+  /// No description provided for @healthDimensionsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'评分维度'**
+  String get healthDimensionsTitle;
+
+  /// No description provided for @healthDimPermissions.
+  ///
+  /// In zh, this message translates to:
+  /// **'权限'**
+  String get healthDimPermissions;
+
+  /// No description provided for @healthDimDns.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS'**
+  String get healthDimDns;
+
+  /// No description provided for @healthDimFilter.
+  ///
+  /// In zh, this message translates to:
+  /// **'过滤器'**
+  String get healthDimFilter;
+
+  /// No description provided for @healthDimCache.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存'**
+  String get healthDimCache;
+
+  /// No description provided for @healthAdviceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'建议'**
+  String get healthAdviceTitle;
+
+  /// No description provided for @healthAdviceGrantPermissions.
+  ///
+  /// In zh, this message translates to:
+  /// **'授予 VPN / 通知权限，保护才能生效'**
+  String get healthAdviceGrantPermissions;
+
+  /// No description provided for @healthAdviceStartProtection.
+  ///
+  /// In zh, this message translates to:
+  /// **'保护未运行，请启动'**
+  String get healthAdviceStartProtection;
+
+  /// No description provided for @healthAdviceImportRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未导入规则，拦截不会生效'**
+  String get healthAdviceImportRules;
+
+  /// No description provided for @healthAdviceUpdateSubscriptions.
+  ///
+  /// In zh, this message translates to:
+  /// **'有订阅更新失败，请到订阅页重试'**
+  String get healthAdviceUpdateSubscriptions;
+
+  /// No description provided for @healthAdviceLowCache.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存命中偏低，检查上游或启用缓存'**
+  String get healthAdviceLowCache;
+
+  /// No description provided for @healthAdviceNoBlocking.
+  ///
+  /// In zh, this message translates to:
+  /// **'近期没有拦截记录，确认规则已生效'**
+  String get healthAdviceNoBlocking;
+
+  /// No description provided for @healthAdviceAllGood.
+  ///
+  /// In zh, this message translates to:
+  /// **'保护状态良好，无需处理'**
+  String get healthAdviceAllGood;
+
+  /// No description provided for @healthLoading.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在评估…'**
+  String get healthLoading;
+
+  /// No description provided for @healthLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'评估失败，请稍后重试'**
+  String get healthLoadFailed;
+
   /// No description provided for @appTitle.
   ///
   /// In zh, this message translates to:

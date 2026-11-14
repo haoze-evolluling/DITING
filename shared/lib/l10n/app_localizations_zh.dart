@@ -143,6 +143,75 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
+  String get healthTitle => '保护健康';
+
+  @override
+  String get healthEntrySubtitle => '查看四维评分与改进建议';
+
+  @override
+  String get healthIntro => '从权限、DNS、过滤器、缓存四个维度评估保护是否真正生效，并给出下一步建议。';
+
+  @override
+  String get healthIntroShort => '四维综合评估保护是否有效';
+
+  @override
+  String get healthScoreLabel => '健康评分';
+
+  @override
+  String get healthLevelOk => '良好';
+
+  @override
+  String get healthLevelWarning => '注意';
+
+  @override
+  String get healthLevelCritical => '需要处理';
+
+  @override
+  String get healthDimensionsTitle => '评分维度';
+
+  @override
+  String get healthDimPermissions => '权限';
+
+  @override
+  String get healthDimDns => 'DNS';
+
+  @override
+  String get healthDimFilter => '过滤器';
+
+  @override
+  String get healthDimCache => '缓存';
+
+  @override
+  String get healthAdviceTitle => '建议';
+
+  @override
+  String get healthAdviceGrantPermissions => '授予 VPN / 通知权限，保护才能生效';
+
+  @override
+  String get healthAdviceStartProtection => '保护未运行，请启动';
+
+  @override
+  String get healthAdviceImportRules => '尚未导入规则，拦截不会生效';
+
+  @override
+  String get healthAdviceUpdateSubscriptions => '有订阅更新失败，请到订阅页重试';
+
+  @override
+  String get healthAdviceLowCache => '缓存命中偏低，检查上游或启用缓存';
+
+  @override
+  String get healthAdviceNoBlocking => '近期没有拦截记录，确认规则已生效';
+
+  @override
+  String get healthAdviceAllGood => '保护状态良好，无需处理';
+
+  @override
+  String get healthLoading => '正在评估…';
+
+  @override
+  String get healthLoadFailed => '评估失败，请稍后重试';
+
+  @override
   String get appTitle => '谛听 DITING';
 
   @override
