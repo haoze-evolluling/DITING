@@ -25468,6 +25468,12 @@ abstract class AppL10n {
   /// **'上游集'**
   String get profilesUpstreamSet;
 
+  /// No description provided for @profilesWorkMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'工作模式'**
+  String get profilesWorkMode;
+
   /// No description provided for @profilesCancel.
   ///
   /// In zh, this message translates to:

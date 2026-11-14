@@ -98,20 +98,18 @@ class ProfilesPage extends ConsumerWidget {
           title: Text(context.l10n.profilesAdd),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: name,
                 decoration: InputDecoration(labelText: context.l10n.profilesName),
               ),
               const SizedBox(height: 12),
-              DropdownButton<String>(
+              PopupSelectField<String>(
                 value: mode,
-                isExpanded: true,
-                onChanged: (value) => setState(() => mode = value ?? mode),
-                items: [
-                  for (final item in _modes)
-                    DropdownMenuItem(value: item, child: Text(item)),
-                ],
+                label: context.l10n.profilesWorkMode,
+                items: [for (final item in _modes) (item, item)],
+                onChanged: (value) => setState(() => mode = value),
               ),
               const SizedBox(height: 12),
               TextField(

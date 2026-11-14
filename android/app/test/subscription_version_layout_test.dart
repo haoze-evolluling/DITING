@@ -5,6 +5,7 @@ import 'package:diting_android/data/db/rule_version_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/pages/hub/subscription_version_page.dart';
 import 'package:diting_android/state/subscription_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -87,20 +88,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('平板宽度：订阅列表与版本历史并排（无下拉）', (tester) async {
+  testWidgets('平板宽度：订阅列表与版本历史并排（无选择菜单）', (tester) async {
     await pump(tester, const Size(1200, 900));
 
     expect(find.text('订阅 A'), findsOneWidget);
     expect(find.text('订阅 B'), findsOneWidget);
-    // Two-pane keeps every subscription visible; no dropdown menu is needed.
-    expect(find.byType(DropdownButton<int>), findsNothing);
+    // Two-pane keeps every subscription visible; no picker menu is needed.
+    expect(find.byType(PopupSelectButton<int>), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('手机宽度：用下拉且不溢出', (tester) async {
+  testWidgets('手机宽度：用选择菜单且不溢出', (tester) async {
     await pump(tester, const Size(400, 800));
 
-    expect(find.byType(DropdownButton<int>), findsOneWidget);
+    expect(find.byType(PopupSelectButton<int>), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

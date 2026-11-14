@@ -95,17 +95,11 @@ class _SubscriptionVersionPageState
                   ListItem(
                     leading: const GlyphIcon(AppGlyphs.link),
                     title: Text(l10n.ruleVersionsPick),
-                    trailing: DropdownButton<int>(
+                    trailing: PopupSelectButton<int>(
                       value: selectedId,
-                      underline: const SizedBox.shrink(),
-                      items: [
-                        for (final e in entries)
-                          DropdownMenuItem(value: e.id, child: Text(e.name)),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => _selectedId = value);
-                      },
+                      semanticLabel: l10n.ruleVersionsPick,
+                      items: [for (final e in entries) (e.id, e.name)],
+                      onChanged: (value) => setState(() => _selectedId = value),
                     ),
                   ),
                 ],

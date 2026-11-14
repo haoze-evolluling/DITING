@@ -13889,6 +13889,9 @@ class AppL10nZh extends AppL10n {
   String get profilesUpstreamSet => '上游集';
 
   @override
+  String get profilesWorkMode => '工作模式';
+
+  @override
   String get profilesCancel => '取消';
 
   @override

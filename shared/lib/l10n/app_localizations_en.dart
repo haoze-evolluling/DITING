@@ -14754,6 +14754,9 @@ class AppL10nEn extends AppL10n {
   String get profilesUpstreamSet => 'Upstream set';
 
   @override
+  String get profilesWorkMode => 'Work mode';
+
+  @override
   String get profilesCancel => 'Cancel';
 
   @override

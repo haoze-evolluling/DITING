@@ -57,6 +57,7 @@ export 'scroll_activity.dart';
 export 'scroll_behavior.dart';
 export 'search_field.dart';
 export 'segmented_control.dart';
+export 'select_field.dart';
 export 'selection_mark.dart';
 export 'setting.dart';
 export 'shape.dart';

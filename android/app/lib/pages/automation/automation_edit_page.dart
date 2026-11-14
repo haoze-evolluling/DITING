@@ -223,16 +223,14 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
 
   Widget _triggerSection(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DropdownButton<String>(
+        LabeledSelectField<String>(
           value: _trigger,
-          isExpanded: true,
-          onChanged: (value) => setState(() => _trigger = value ?? _trigger),
           items: [
-            for (final entry in _triggerOptions(context))
-              DropdownMenuItem(value: entry.$1, child: Text(entry.$2)),
+            for (final entry in _triggerOptions(context)) (entry.$1, entry.$2),
           ],
+          onChanged: (value) => setState(() => _trigger = value),
         ),
         if (_trigger == AutomationSpec.triggerSchedule) ...[
           const SizedBox(height: 8),
@@ -331,21 +329,13 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
             ),
           ),
         const SizedBox(height: 8),
-        DropdownButton<String?>(
+        LabeledSelectField<String?>(
           value: _switchProfile,
-          isExpanded: true,
-          onChanged: (value) => setState(() => _switchProfile = value),
           items: [
-            DropdownMenuItem<String?>(
-              value: null,
-              child: Text(context.l10n.automationSwitchProfileNone),
-            ),
-            for (final profile in _profiles)
-              DropdownMenuItem<String?>(
-                value: profile.id,
-                child: Text(profile.name),
-              ),
+            (null, context.l10n.automationSwitchProfileNone),
+            for (final profile in _profiles) (profile.id, profile.name),
           ],
+          onChanged: (value) => setState(() => _switchProfile = value),
         ),
       ],
     );
@@ -394,7 +384,7 @@ class _Section extends StatelessWidget {
     return _paddedCard(
       context,
       Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
