@@ -43,6 +43,8 @@ pub const DOH_ALPN: [&[u8]; 2] = [b"h2", b"http/1.1"];
 pub const DOT_ALPN: [&[u8]; 0] = [];
 /// `NextProtos: []string{"doq"}`.
 pub const DOQ_ALPN: [&[u8]; 1] = [b"doq"];
+/// HTTP/3 ALPN (`RFC 9114`), used by the N7 DoH3 transport.
+pub const H3_ALPN: [&[u8]; 1] = [b"h3"];
 
 /// What the platform read produced, for the log line Go printed (`bundled roots added=%d`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -136,6 +138,17 @@ impl UpstreamTrust {
             .with_root_certificates((*self.roots).clone())
             .with_no_client_auth();
         config.alpn_protocols = DOQ_ALPN.iter().map(|protocol| protocol.to_vec()).collect();
+        Arc::new(config)
+    }
+
+    /// The DoH3 client config: TLS 1.3 only, `h3` ALPN (N7).
+    pub fn h3_client_config(&self) -> Arc<ClientConfig> {
+        let mut config = ClientConfig::builder_with_provider(Arc::clone(&self.provider))
+            .with_protocol_versions(&[&rustls::version::TLS13])
+            .expect("the ring provider supports TLS 1.3")
+            .with_root_certificates((*self.roots).clone())
+            .with_no_client_auth();
+        config.alpn_protocols = H3_ALPN.iter().map(|protocol| protocol.to_vec()).collect();
         Arc::new(config)
     }
 }

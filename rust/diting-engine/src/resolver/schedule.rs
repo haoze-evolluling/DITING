@@ -141,7 +141,35 @@ async fn attempt(
                 None => Err("DoT transport is not configured".to_string()),
             },
             Protocol::Doh => match (&inner.doh, &provider.doh_uri) {
-                (Some(doh), Some(uri)) => doh.query(uri, query).await,
+                (Some(doh), Some(uri)) => {
+                    // N7: upgrade to HTTP/3 once the origin advertised it, and fall back to DoH on
+                    // any failure (recording it so a broken H3 path is abandoned).
+                    if doh.doh3_ready() {
+                        if let Some(h3) = &inner.doh3 {
+                            let port = doh
+                                .doh3_port()
+                                .unwrap_or_else(|| uri.port_u16().unwrap_or(443));
+                            let path = uri
+                                .path_and_query()
+                                .map(|value| value.as_str())
+                                .unwrap_or("/dns-query");
+                            match h3.query(&inner.dial, &provider.host, port, path, query).await {
+                                Ok(answer) => {
+                                    doh.note_h3_success();
+                                    Ok(answer)
+                                }
+                                Err(_) => {
+                                    doh.note_h3_failure();
+                                    doh.query(uri, query).await
+                                }
+                            }
+                        } else {
+                            doh.query(uri, query).await
+                        }
+                    } else {
+                        doh.query(uri, query).await
+                    }
+                }
                 _ => Err("DoH transport is not configured".to_string()),
             },
             Protocol::Doq => match &inner.doq {

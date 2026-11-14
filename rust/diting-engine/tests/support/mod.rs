@@ -263,6 +263,7 @@ pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mute
     let acceptor = TlsAcceptor::from(pki.server_config(&[b"h2", b"http/1.1"]));
     let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind DoH");
     let address = listener.local_addr().expect("local addr");
+    let h3_port = address.port();
     let connections = Arc::new(AtomicUsize::new(0));
     let versions = Arc::new(Mutex::new(Vec::new()));
     let counter = Arc::clone(&connections);
@@ -299,7 +300,7 @@ pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mute
                                 .status(StatusCode::OK)
                                 .header(http::header::CONTENT_TYPE, DNS_MESSAGE)
                                 // N7: advertise an HTTP/3 endpoint the way a real DoH origin does.
-                                .header("alt-svc", "h3=\":443\"; ma=60")
+                                .header("alt-svc", format!("h3=\":{h3_port}\"; ma=60"))
                                 .body(Full::new(Bytes::from(answer_wire(
                                     &query,
                                     [4, 3, 2, 1],
@@ -319,8 +320,113 @@ pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mute
     (address, connections, versions)
 }
 
-// ---- DoQ origin ---------------------------------------------------------------------------------
+// ---- DoH3 origin --------------------------------------------------------------------------------
 
+/// A minimal DoH-over-HTTP/3 origin: it accepts a bidirectional stream, skips the client's HEADERS
+/// frame, takes the DATA payload as the query and answers with an empty HEADERS frame plus the
+/// answer in a DATA frame.
+pub async fn spawn_doh3(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
+    let bind: SocketAddr = "127.0.0.1:0".parse().expect("a valid bind");
+    spawn_doh3_on(pki, bind).await
+}
+
+/// The same origin on a chosen address, so it can share a port with the DoH/TCP origin.
+pub async fn spawn_doh3_on(pki: &TestPki, bind: SocketAddr) -> (SocketAddr, Arc<AtomicUsize>) {
+    let tls = pki.server_config(&[b"h3"]);
+    let crypto = quinn::crypto::rustls::QuicServerConfig::try_from((*tls).clone())
+        .expect("the DoH3 server config is valid");
+    let server_config = quinn::ServerConfig::with_crypto(Arc::new(crypto));
+    let endpoint = quinn::Endpoint::server(server_config, bind).expect("bind DoH3");
+    let address = endpoint.local_addr().expect("local addr");
+    let connections = Arc::new(AtomicUsize::new(0));
+    let counter = Arc::clone(&connections);
+
+    tokio::spawn(async move {
+        while let Some(incoming) = endpoint.accept().await {
+            let counter = Arc::clone(&counter);
+            tokio::spawn(async move {
+                let Ok(connection) = incoming.await else {
+                    return;
+                };
+                counter.fetch_add(1, Ordering::Relaxed);
+                while let Ok((mut send, mut recv)) = connection.accept_bi().await {
+                    let Ok(request) = recv.read_to_end(65_535).await else {
+                        return;
+                    };
+                    let Some(query) = h3_data(&request) else {
+                        continue;
+                    };
+                    let answer = answer_wire(&query, [4, 3, 2, 1], 60);
+                    let mut out = Vec::new();
+                    h3_frame(&mut out, 0x01, &[0x00, 0x00]); // empty HEADERS field section
+                    h3_frame(&mut out, 0x00, &answer); // DATA
+                    if send.write_all(&out).await.is_err() {
+                        return;
+                    }
+                    let _ = send.finish();
+                }
+            });
+        }
+    });
+
+    (address, connections)
+}
+
+/// Concatenates the DATA frames of a client request (HEADERS are skipped).
+fn h3_data(bytes: &[u8]) -> Option<Vec<u8>> {
+    let mut rest = bytes;
+    let mut data = Vec::new();
+    while !rest.is_empty() {
+        let (kind, used) = h3_varint_read(rest)?;
+        rest = &rest[used..];
+        let (len, used) = h3_varint_read(rest)?;
+        rest = &rest[used..];
+        let len = len as usize;
+        if rest.len() < len {
+            return None;
+        }
+        if kind == 0x00 {
+            data.extend_from_slice(&rest[..len]);
+        }
+        rest = &rest[len..];
+    }
+    (!data.is_empty()).then_some(data)
+}
+
+fn h3_frame(out: &mut Vec<u8>, kind: u64, payload: &[u8]) {
+    h3_varint(out, kind);
+    h3_varint(out, payload.len() as u64);
+    out.extend_from_slice(payload);
+}
+
+fn h3_varint(out: &mut Vec<u8>, value: u64) {
+    if value < 64 {
+        out.push(value as u8);
+    } else if value < 16_384 {
+        out.push((0x40 | (value >> 8)) as u8);
+        out.push(value as u8);
+    } else {
+        out.push((0x80 | (value >> 24)) as u8);
+        out.push((value >> 16) as u8);
+        out.push((value >> 8) as u8);
+        out.push(value as u8);
+    }
+}
+
+fn h3_varint_read(buf: &[u8]) -> Option<(u64, usize)> {
+    let first = *buf.first()?;
+    let len = 1usize << (first >> 6);
+    if buf.len() < len {
+        return None;
+    }
+    let mut value = (first & 0x3f) as u64;
+    for byte in &buf[1..len] {
+        value = (value << 8) | *byte as u64;
+    }
+    Some((value, len))
+}
+
+// ---- DoQ origin ---------------------------------------------------------------------------------
 /// A DoQ server: one bidirectional stream per query, connections counted.
 pub async fn spawn_doq(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
     let tls = pki.server_config(&[b"doq"]);

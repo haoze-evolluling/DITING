@@ -55,7 +55,15 @@ pub struct DohClient {
     /// Set once a response advertises an HTTP/3 endpoint (`Alt-Svc: h3=…`). N7's H3 upgrade and its
     /// fallback consult this instead of re-parsing every response.
     doh3_advertised: std::sync::atomic::AtomicBool,
+    /// Consecutive failed H3 attempts; after [`H3_MAX_FAILURES`] the upgrade is abandoned so a broken
+    /// H3 path cannot keep adding latency to every query.
+    h3_failures: std::sync::atomic::AtomicU32,
+    /// The port the last `Alt-Svc: h3=…` advertisement named, so the upgrade dials the right one.
+    doh3_port: std::sync::atomic::AtomicU16,
 }
+
+/// How many consecutive H3 failures disable the upgrade for this client.
+const H3_MAX_FAILURES: u32 = 3;
 
 impl DohClient {
     pub fn new(trust: Arc<UpstreamTrust>, dialer: Dialer) -> Self {
@@ -73,14 +81,37 @@ impl DohClient {
         Self {
             client,
             doh3_advertised: std::sync::atomic::AtomicBool::new(false),
+            h3_failures: std::sync::atomic::AtomicU32::new(0),
+            doh3_port: std::sync::atomic::AtomicU16::new(0),
         }
     }
 
-    /// Whether a DoH server has advertised an HTTP/3 endpoint. The resolver uses this as N7's
-    /// negotiation signal; the H3 attempt itself is gated behind the `h3` transport.
+    /// Whether a DoH server has advertised an HTTP/3 endpoint and the upgrade has not been disabled
+    /// by repeated failures. The resolver uses this as N7's negotiation signal.
     pub fn doh3_ready(&self) -> bool {
         self.doh3_advertised
             .load(std::sync::atomic::Ordering::Relaxed)
+            && self.h3_failures.load(std::sync::atomic::Ordering::Relaxed) < H3_MAX_FAILURES
+    }
+
+    /// Records a successful H3 exchange, which resets the failure streak.
+    pub fn note_h3_success(&self) {
+        self.h3_failures
+            .store(0, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Records a failed H3 exchange; after [`H3_MAX_FAILURES`] the next query stays on HTTP/2.
+    pub fn note_h3_failure(&self) {
+        self.h3_failures
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// The HTTP/3 port from the last advertisement, if any.
+    pub fn doh3_port(&self) -> Option<u16> {
+        match self.doh3_port.load(std::sync::atomic::Ordering::Relaxed) {
+            0 => None,
+            port => Some(port),
+        }
     }
 
     /// `queryDoHContext`: the request, the one-shot `EOF` retry, the status table and the body.
@@ -126,7 +157,9 @@ impl DohClient {
             .get("alt-svc")
             .and_then(|value| value.to_str().ok())
         {
-            if diting_upstream_core::alt_svc::parse_alt_svc(value).is_some() {
+            if let Some(alt) = diting_upstream_core::alt_svc::parse_alt_svc(value) {
+                self.doh3_port
+                    .store(alt.port, std::sync::atomic::Ordering::Relaxed);
                 self.doh3_advertised
                     .store(true, std::sync::atomic::Ordering::Relaxed);
             }

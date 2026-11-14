@@ -33,6 +33,7 @@
 pub mod bootstrap;
 pub mod dial;
 pub mod doh;
+pub mod doh3;
 pub mod doq;
 pub mod dot;
 pub mod plain;
@@ -123,6 +124,7 @@ pub(crate) struct Inner {
     pub skipped: Vec<String>,
     pub dial: Dialer,
     pub doh: Option<doh::DohClient>,
+    pub doh3: Option<doh3::Doh3Client>,
     pub dot: Option<dot::DotClient>,
     pub doq: Option<doq::DoqClient>,
 }
@@ -146,6 +148,7 @@ impl Resolver {
                 dial: Dialer::new(deps.bootstrap, deps.protector),
                 // `empty` runs before any config, so there is nothing to route yet.
                 doh: None,
+                doh3: None,
                 dot: None,
                 doq: None,
             }),
@@ -169,6 +172,11 @@ impl Resolver {
         let dial = Dialer::new(deps.bootstrap, deps.protector).with_outbound(deps.outbound.clone());
         let doh = wants(Protocol::Doh)
             .then(|| doh::DohClient::new(Arc::clone(&deps.trust), dial.clone()));
+        // N7: the H3 transport is opportunistic. A failure to build it only disables the upgrade;
+        // every DoH provider still resolves over HTTP/2.
+        let doh3 = wants(Protocol::Doh)
+            .then(|| doh3::Doh3Client::new(&deps.trust).ok())
+            .flatten();
         let dot = wants(Protocol::Dot).then(|| dot::DotClient::new(&deps.trust));
         let doq = if wants(Protocol::Doq) {
             match doq::DoqClient::new(&deps.trust) {
@@ -193,6 +201,7 @@ impl Resolver {
                 skipped,
                 dial,
                 doh,
+                doh3,
                 dot,
                 doq,
             }),
@@ -250,11 +259,13 @@ impl Resolver {
     /// Whether any DoH provider has advertised an HTTP/3 endpoint (`Alt-Svc: h3`). N7's upgrade
     /// signal; `false` when no DoH transport is configured.
     pub fn doh3_ready(&self) -> bool {
-        self.inner
-            .doh
-            .as_ref()
-            .map(|doh| doh.doh3_ready())
-            .unwrap_or(false)
+        self.inner.doh3.is_some()
+            && self
+                .inner
+                .doh
+                .as_ref()
+                .map(|doh| doh.doh3_ready())
+                .unwrap_or(false)
     }
 
     /// `Shutdown`: closes the pooled DoT connections and the DoQ sessions.
