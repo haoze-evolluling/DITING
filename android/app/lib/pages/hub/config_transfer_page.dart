@@ -157,6 +157,23 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
                 ],
               ),
             ),
+          generateSection(
+            title: context.l10n.hubModuleMore,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.broom),
+                title: Text(context.l10n.hubDataCleanup),
+                subtitle: Text(context.l10n.hubDataCleanupDescription),
+                onTap: () => context.push(HubPaths.dataCleanup),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.wrench),
+                title: Text(context.l10n.hubTroubleshooting),
+                subtitle: Text(context.l10n.hubTroubleshootingDescription),
+                onTap: () => context.push(HubPaths.troubleshooting),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
         ],
       ),

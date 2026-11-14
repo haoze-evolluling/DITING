@@ -248,7 +248,7 @@ class AppL10nEn extends AppL10n {
   String get searchGroupTools => 'Commands';
 
   @override
-  String get flowTitle => 'Live connections';
+  String get flowTitle => 'Connection monitor';
 
   @override
   String get flowEntrySubtitle => 'See live connections and remotes by app';
@@ -2302,10 +2302,19 @@ class AppL10nEn extends AppL10n {
       'The certificate must be regenerated and installed again';
 
   @override
-  String get hubCategoryDns => 'DNS services';
+  String get hubCategoryDns => 'DNS resolution';
 
   @override
-  String get hubProviderManagement => 'Resolver management';
+  String get hubModuleMore => 'More features';
+
+  @override
+  String get serverHubCategoryRules => 'Domain rules';
+
+  @override
+  String get serverHubCategoryData => 'Data and maintenance';
+
+  @override
+  String get hubProviderManagement => 'DNS resolvers';
 
   @override
   String get hubProviderManagementDescription =>
@@ -2319,52 +2328,52 @@ class AppL10nEn extends AppL10n {
       'Configure the bootstrap DNS nodes used to resolve encrypted upstream hostnames';
 
   @override
-  String get hubResolution => 'Resolution mode';
+  String get hubResolution => 'Resolution strategy';
 
   @override
   String get hubResolutionDescription =>
       'Pick single, smart, fastest-response or try-in-order resolution';
 
   @override
-  String get hubCache => 'Cache settings';
+  String get hubCache => 'DNS cache';
 
   @override
   String get hubCacheDescription =>
       'Configure the DNS cache switch, policy and TTL bounds';
 
   @override
-  String get hubCategoryRules => 'Policy and rules';
+  String get hubCategoryRules => 'Rules and controls';
 
   @override
-  String get hubRuleControl => 'Rule control';
+  String get hubRuleControl => 'Blocking strategy';
 
   @override
   String get hubRuleControlDescription =>
       'Manage the blocking switches and online rule subscriptions in one place';
 
   @override
-  String get hubBlocklist => 'Block list';
+  String get hubBlocklist => 'Domain block list';
 
   @override
   String get hubBlocklistDescription =>
       'Your own blocked domains; matches get the block response';
 
   @override
-  String get hubAllowlist => 'Allow list';
+  String get hubAllowlist => 'Domain allow list';
 
   @override
   String get hubAllowlistDescription =>
       'Your own allowed domains, exempt from every rule';
 
   @override
-  String get hubRewrite => 'Rewrite list';
+  String get hubRewrite => 'Domain rewrite';
 
   @override
   String get hubRewriteDescription =>
       'Point custom domains at a specific IPv4/IPv6 address or CNAME';
 
   @override
-  String get hubCategoryNetwork => 'App management';
+  String get hubCategoryNetwork => 'Apps and network';
 
   @override
   String get hubAppTraffic => 'App traffic';
@@ -2374,7 +2383,7 @@ class AppL10nEn extends AppL10n {
       'Connection counts and up/down traffic per app';
 
   @override
-  String get hubAppRules => 'Per-app rules';
+  String get hubAppRules => 'App rules';
 
   @override
   String get hubAppRulesDescription =>
@@ -2426,7 +2435,7 @@ class AppL10nEn extends AppL10n {
       'Configure an LLM endpoint and key for log review and traffic analysis';
 
   @override
-  String get hubCategoryInterface => 'Interface and settings';
+  String get hubCategoryInterface => 'Interface and data';
 
   @override
   String get hubAppearance => 'Appearance';
@@ -2467,7 +2476,7 @@ class AppL10nEn extends AppL10n {
       'Live resolution statistics, request details and log export';
 
   @override
-  String get hubBackup => 'Backup and migration';
+  String get hubBackup => 'Data and maintenance';
 
   @override
   String get hubBackupDescription =>
@@ -2500,7 +2509,7 @@ class AppL10nEn extends AppL10n {
   String get hubCategorySubscription => 'Subscriptions and updates';
 
   @override
-  String get hubDnsLeak => 'DNS leak check';
+  String get hubDnsLeak => 'DNS leak';
 
   @override
   String get hubAutoUpdateDescription =>
@@ -7163,7 +7172,7 @@ class AppL10nEn extends AppL10n {
   String get commonUnknownReason => 'Unknown reason';
 
   @override
-  String get autoUpdateTitle => 'Auto-update settings';
+  String get autoUpdateTitle => 'Auto-update';
 
   @override
   String get autoUpdateSection => 'Auto-update';
@@ -14964,7 +14973,7 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get privacySuiteTitle => 'Privacy suite';
+  String get privacySuiteTitle => 'Privacy protection';
 
   @override
   String get privacySuiteIntro =>
@@ -15002,7 +15011,7 @@ class AppL10nEn extends AppL10n {
       'When the upstream has no usable AAAA, synthesize one from the A record behind the well-known prefix 64:ff9b::/96. Enable only on IPv6-only links; on dual-stack it can break access.';
 
   @override
-  String get lanRateLimitTitle => 'LAN client rate limiting';
+  String get lanRateLimitTitle => 'LAN rate limiting';
 
   @override
   String get lanRateLimitIntro =>
@@ -15095,7 +15104,7 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get webhookTitle => 'Webhook notifications';
+  String get webhookTitle => 'Webhook';
 
   @override
   String get webhookIntro =>

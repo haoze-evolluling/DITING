@@ -37,8 +37,12 @@ void _featureCenter() {
 
     expect(
       categories.map((category) => category.title),
-      containsAll(['DNS 服务', '策略与规则', '数据与维护', '界面与设置']),
+      containsAll(['DNS 解析', '域名规则', '数据与维护', '界面与数据']),
     );
+    for (final category in categories) {
+      expect(category.cards.length, 4, reason: '${category.title} 应为 4 张');
+      expect(category.cards.length.isEven, isTrue);
+    }
     // 上游与设置不再占用底栏 tab，而是作为功能中心里的路由入口。
     expect(
       routes,

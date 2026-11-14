@@ -337,6 +337,25 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
               ),
             ),
           SliverToBoxAdapter(
+            child: generateSection(
+              title: context.l10n.hubModuleMore,
+              items: [
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.refresh),
+                  title: Text(context.l10n.autoUpdateTitle),
+                  subtitle: Text(context.l10n.hubAutoUpdateDescription),
+                  onTap: () => context.push('/hub/rules/auto-update'),
+                ),
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.layers),
+                  title: Text(context.l10n.mirrorTplTitle),
+                  subtitle: Text(context.l10n.ruleControlMirrorSubtitle),
+                  onTap: () => context.push('/hub/rules/mirrors'),
+                ),
+              ],
+            ),
+          ),
+          SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
               child: ListFooter(

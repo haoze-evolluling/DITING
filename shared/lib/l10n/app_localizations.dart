@@ -532,7 +532,7 @@ abstract class AppL10n {
   /// No description provided for @flowTitle.
   ///
   /// In zh, this message translates to:
-  /// **'实时连接'**
+  /// **'连接监控'**
   String get flowTitle;
 
   /// No description provided for @flowEntrySubtitle.
@@ -4136,13 +4136,31 @@ abstract class AppL10n {
   /// No description provided for @hubCategoryDns.
   ///
   /// In zh, this message translates to:
-  /// **'DNS 服务'**
+  /// **'DNS 解析'**
   String get hubCategoryDns;
+
+  /// No description provided for @hubModuleMore.
+  ///
+  /// In zh, this message translates to:
+  /// **'更多功能'**
+  String get hubModuleMore;
+
+  /// No description provided for @serverHubCategoryRules.
+  ///
+  /// In zh, this message translates to:
+  /// **'域名规则'**
+  String get serverHubCategoryRules;
+
+  /// No description provided for @serverHubCategoryData.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据与维护'**
+  String get serverHubCategoryData;
 
   /// No description provided for @hubProviderManagement.
   ///
   /// In zh, this message translates to:
-  /// **'服务商管理'**
+  /// **'解析服务商'**
   String get hubProviderManagement;
 
   /// No description provided for @hubProviderManagementDescription.
@@ -4166,7 +4184,7 @@ abstract class AppL10n {
   /// No description provided for @hubResolution.
   ///
   /// In zh, this message translates to:
-  /// **'解析模式'**
+  /// **'解析策略'**
   String get hubResolution;
 
   /// No description provided for @hubResolutionDescription.
@@ -4178,7 +4196,7 @@ abstract class AppL10n {
   /// No description provided for @hubCache.
   ///
   /// In zh, this message translates to:
-  /// **'缓存设置'**
+  /// **'DNS 缓存'**
   String get hubCache;
 
   /// No description provided for @hubCacheDescription.
@@ -4190,13 +4208,13 @@ abstract class AppL10n {
   /// No description provided for @hubCategoryRules.
   ///
   /// In zh, this message translates to:
-  /// **'策略与规则'**
+  /// **'规则与控制'**
   String get hubCategoryRules;
 
   /// No description provided for @hubRuleControl.
   ///
   /// In zh, this message translates to:
-  /// **'规则控制'**
+  /// **'拦截策略'**
   String get hubRuleControl;
 
   /// No description provided for @hubRuleControlDescription.
@@ -4208,7 +4226,7 @@ abstract class AppL10n {
   /// No description provided for @hubBlocklist.
   ///
   /// In zh, this message translates to:
-  /// **'黑名单'**
+  /// **'域名黑名单'**
   String get hubBlocklist;
 
   /// No description provided for @hubBlocklistDescription.
@@ -4220,7 +4238,7 @@ abstract class AppL10n {
   /// No description provided for @hubAllowlist.
   ///
   /// In zh, this message translates to:
-  /// **'白名单'**
+  /// **'域名白名单'**
   String get hubAllowlist;
 
   /// No description provided for @hubAllowlistDescription.
@@ -4232,7 +4250,7 @@ abstract class AppL10n {
   /// No description provided for @hubRewrite.
   ///
   /// In zh, this message translates to:
-  /// **'覆写名单'**
+  /// **'域名覆写'**
   String get hubRewrite;
 
   /// No description provided for @hubRewriteDescription.
@@ -4244,7 +4262,7 @@ abstract class AppL10n {
   /// No description provided for @hubCategoryNetwork.
   ///
   /// In zh, this message translates to:
-  /// **'应用管理'**
+  /// **'应用与网络'**
   String get hubCategoryNetwork;
 
   /// No description provided for @hubAppTraffic.
@@ -4262,7 +4280,7 @@ abstract class AppL10n {
   /// No description provided for @hubAppRules.
   ///
   /// In zh, this message translates to:
-  /// **'应用独立规则'**
+  /// **'应用规则'**
   String get hubAppRules;
 
   /// No description provided for @hubAppRulesDescription.
@@ -4304,7 +4322,7 @@ abstract class AppL10n {
   /// No description provided for @hubHttpsInspection.
   ///
   /// In zh, this message translates to:
-  /// **'HTTPS 流量检查'**
+  /// **'HTTPS 检查'**
   String get hubHttpsInspection;
 
   /// No description provided for @hubHttpsInspectionDescription.
@@ -4352,13 +4370,13 @@ abstract class AppL10n {
   /// No description provided for @hubCategoryInterface.
   ///
   /// In zh, this message translates to:
-  /// **'界面与设置'**
+  /// **'界面与数据'**
   String get hubCategoryInterface;
 
   /// No description provided for @hubAppearance.
   ///
   /// In zh, this message translates to:
-  /// **'外观调整'**
+  /// **'外观'**
   String get hubAppearance;
 
   /// No description provided for @hubAppearanceDescription.
@@ -4424,7 +4442,7 @@ abstract class AppL10n {
   /// No description provided for @hubBackup.
   ///
   /// In zh, this message translates to:
-  /// **'备份与迁移'**
+  /// **'数据与维护'**
   String get hubBackup;
 
   /// No description provided for @hubBackupDescription.
@@ -4484,7 +4502,7 @@ abstract class AppL10n {
   /// No description provided for @hubDnsLeak.
   ///
   /// In zh, this message translates to:
-  /// **'DNS 泄漏检测'**
+  /// **'DNS 泄漏'**
   String get hubDnsLeak;
 
   /// No description provided for @hubAutoUpdateDescription.
@@ -12492,7 +12510,7 @@ abstract class AppL10n {
   /// No description provided for @autoUpdateTitle.
   ///
   /// In zh, this message translates to:
-  /// **'自动更新设置'**
+  /// **'自动更新'**
   String get autoUpdateTitle;
 
   /// No description provided for @autoUpdateSection.
@@ -25855,7 +25873,7 @@ abstract class AppL10n {
   /// No description provided for @privacySuiteTitle.
   ///
   /// In zh, this message translates to:
-  /// **'隐私套件'**
+  /// **'隐私保护'**
   String get privacySuiteTitle;
 
   /// No description provided for @privacySuiteIntro.
@@ -25921,7 +25939,7 @@ abstract class AppL10n {
   /// No description provided for @lanRateLimitTitle.
   ///
   /// In zh, this message translates to:
-  /// **'LAN 客户端限速'**
+  /// **'局域网限速'**
   String get lanRateLimitTitle;
 
   /// No description provided for @lanRateLimitIntro.
@@ -26083,7 +26101,7 @@ abstract class AppL10n {
   /// No description provided for @webhookTitle.
   ///
   /// In zh, this message translates to:
-  /// **'Webhook 通知'**
+  /// **'Webhook'**
   String get webhookTitle;
 
   /// No description provided for @webhookIntro.

@@ -61,6 +61,10 @@ void main() {
     expect(find.text('临时暂停'), findsOneWidget);
     expect(find.text('命中排行'), findsOneWidget);
     expect(find.text('拦截响应'), findsOneWidget);
+    // 低频域名规则列表已下沉到本页，仍可从这里进入。
+    expect(find.text('域名黑名单'), findsOneWidget);
+    expect(find.text('域名白名单'), findsOneWidget);
+    expect(find.text('域名覆写'), findsOneWidget);
     expect(find.text('自动化'), findsNothing);
     expect(find.text('规则订阅'), findsNothing);
     expect(find.text('本地 API'), findsNothing);

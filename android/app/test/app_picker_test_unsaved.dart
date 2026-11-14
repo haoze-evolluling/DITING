@@ -7,7 +7,7 @@ void _unsavedChanges() {
 
   late MemoryLegacyPrefsStore store;
 
-  Future<void> pumpPicker(WidgetTester tester, String cardTitle) async {
+  Future<void> pumpPicker(WidgetTester tester, String entryTitle) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -24,16 +24,27 @@ void _unsavedChanges() {
     );
     await tester.pump();
     await tester.pumpAndSettle();
-    // Open the picker from the hub, so the route really has a page below it and the bar draws a
-    // back arrow (an initial route would not).
-    final card = find.text(cardTitle);
+    // The blocked/excluded pickers are secondary entries on the per-app rules page, so open that
+    // card from the hub first (the route then really has a page below it and the bar draws a back
+    // arrow; an initial route would not).
+    final appRulesCard = find.text('应用规则');
     await tester.scrollUntilVisible(
-      card,
+      appRulesCard,
       200,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    await tester.tap(card);
+    await tester.tap(appRulesCard);
+    await tester.pumpAndSettle();
+
+    final entry = find.text(entryTitle);
+    await tester.scrollUntilVisible(
+      entry,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(entry);
     await tester.pumpAndSettle();
   }
 
@@ -45,8 +56,8 @@ void _unsavedChanges() {
     await tester.pumpAndSettle();
   }
 
-  /// Dialog buttons only: the page has its own 保存 button and the hub a 排除应用 card, so a bare
-  /// text finder would be ambiguous.
+  /// Dialog buttons only: the page has its own 保存 button and the app-rules page a 排除应用
+  /// entry, so a bare text finder would be ambiguous.
   Finder inDialog(String label) =>
       find.descendant(of: find.byType(Dialog), matching: find.text(label));
 
@@ -75,8 +86,11 @@ void _unsavedChanges() {
     await tapApp(tester, '地图');
     await leaveWith(tester, '保存');
 
-    expect(find.byType(BackButton), findsNothing);
     expect(blocked(), {'com.example.maps'});
+    // Leaving the picker returns to the per-app rules page; one more back returns to the hub.
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(BackButton), findsNothing);
   });
 
   testWidgets('没有改动时返回不弹窗', (tester) async {
@@ -85,6 +99,9 @@ void _unsavedChanges() {
     await tester.pumpAndSettle();
 
     expect(find.text('保存更改？'), findsNothing);
+    // Now on the per-app rules page; leave it to confirm the picker itself closed.
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
     expect(find.byType(BackButton), findsNothing);
   });
 }

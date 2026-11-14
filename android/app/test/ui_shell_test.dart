@@ -120,7 +120,7 @@ void _appShell() {
     await pumpApp(tester);
     await tester.tap(find.text('功能中心'));
     await tester.pumpAndSettle();
-    expect(find.text('DNS 服务'), findsWidgets);
+    expect(find.text('DNS 解析'), findsWidgets);
 
     // Regression: the categories were cached in a provider that only watched the work mode and
     // the hidden set, so the hub kept the previous language until the app restarted.
@@ -129,9 +129,9 @@ void _appShell() {
         .select(AppLanguageMode.english);
     await tester.pumpAndSettle();
 
-    expect(find.text('DNS services'), findsWidgets);
-    expect(find.text('Resolver management'), findsWidgets);
-    expect(find.text('DNS 服务'), findsNothing);
+    expect(find.text('DNS resolution'), findsWidgets);
+    expect(find.text('DNS resolvers'), findsWidgets);
+    expect(find.text('DNS 解析'), findsNothing);
   });
 
   testWidgets('浮层（面板）在 scopes 之上可弹出', (tester) async {
@@ -243,18 +243,22 @@ void _appShell() {
     // Entering a tab page from the feature hub opens it standalone: no dock, and a way back.
     testWidgets('功能中心里指向其它 tab 的卡片以全屏页打开并给出返回键', (tester) async {
       await pumpApp(tester, initialLocation: Routes.hub, dock: userDock);
-      final card = find.text('应用流量统计');
-      await tester.drag(find.byType(Scrollable).first, const Offset(0, -420));
+      final card = find.text('网络诊断');
+      await tester.scrollUntilVisible(
+        card,
+        400,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
       await tester.tap(card);
       await tester.pumpAndSettle();
-      expect(find.byType(TrafficPage), findsOneWidget);
+      expect(find.byType(ToolsPage), findsOneWidget);
       expect(find.byType(NavigationDock), findsNothing);
       expect(find.byType(BackButton), findsOneWidget);
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
       expect(find.byType(NavigationDock), findsOneWidget);
-      expect(find.byType(TrafficPage), findsNothing);
+      expect(find.byType(ToolsPage), findsNothing);
       expect(find.text('功能中心'), findsWidgets);
     });
 
@@ -498,7 +502,7 @@ void _featureHub() {
       hiddenKeys: hidden,
       l10n: _zh,
     );
-    expect(categories.any((category) => category.title == 'DNS 服务'), isFalse);
+    expect(categories.any((category) => category.title == 'DNS 解析'), isFalse);
     expect(categories.length, _featureCategories.length - 1);
 
     final allHidden = {

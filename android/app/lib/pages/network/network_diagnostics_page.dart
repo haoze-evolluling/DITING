@@ -5,11 +5,13 @@
 library;
 
 import 'package:diting_android/state/network_diagnostics_providers.dart';
+import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -84,6 +86,17 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
                 label: l10n.captiveRun,
                 busy: state.captiveBusy,
                 onPressed: notifier.runCaptiveCheck,
+              ),
+            ],
+          ),
+          generateSection(
+            title: l10n.hubModuleMore,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.target),
+                title: Text(l10n.devIpQuality),
+                subtitle: Text(l10n.devIpQualityBody),
+                onTap: () => context.push(SystemPaths.ipQuality),
               ),
             ],
           ),

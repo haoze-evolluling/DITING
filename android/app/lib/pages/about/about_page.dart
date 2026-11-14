@@ -7,6 +7,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/pages/hub/recognition_pages.dart';
 import 'package:diting_android/pages/system/app_info.dart';
 import 'package:diting_android/pages/system/disclaimer_page.dart';
+import 'package:diting_android/pages/system/sponsor_page.dart';
 import 'package:diting_android/state/app_version_provider.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
@@ -98,6 +99,12 @@ class AboutPage extends ConsumerWidget {
                 subtitle: Text(context.l10n.aboutDisclaimerEntryBody),
                 // Acceptance happens in the first-run dialog; this only re-reads it.
                 widget: const DisclaimerPage(),
+              ),
+              ListItem.next(
+                leading: const GlyphIcon(AppGlyphs.star),
+                title: Text(context.l10n.hubSponsor),
+                subtitle: Text(context.l10n.hubSponsorDescription),
+                widget: const SponsorPage(),
               ),
             ],
           ),

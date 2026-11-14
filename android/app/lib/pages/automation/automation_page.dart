@@ -7,6 +7,7 @@ library;
 
 import 'package:diting_android/data/db/automation_models.dart';
 import 'package:diting_android/routes/automation_routes.dart';
+import 'package:diting_android/routes/network_profile_routes.dart';
 import 'package:diting_android/state/automation_providers.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -71,6 +72,29 @@ class AutomationPage extends ConsumerWidget {
             ),
             loading: () => const SizedBox.shrink(),
             error: (error, _) => PageIntroCard(text: '$error'),
+          ),
+          generateSection(
+            title: context.l10n.hubModuleMore,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.profiles),
+                title: Text(context.l10n.profilesTitle),
+                subtitle: Text(context.l10n.profilesSubtitle),
+                onTap: () => context.push(AutomationPaths.profiles),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.clock),
+                title: Text(context.l10n.timetableTitle),
+                subtitle: Text(context.l10n.timetableSubtitle),
+                onTap: () => context.push(AutomationPaths.timetable),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.wifi),
+                title: Text(context.l10n.netProfileTitle),
+                subtitle: Text(context.l10n.netProfileSubtitle),
+                onTap: () => context.push(NetworkProfilePaths.root),
+              ),
+            ],
           ),
         ],
       ),

@@ -230,7 +230,7 @@ class AppL10nZh extends AppL10n {
   String get searchGroupTools => '常用命令';
 
   @override
-  String get flowTitle => '实时连接';
+  String get flowTitle => '连接监控';
 
   @override
   String get flowEntrySubtitle => '按应用查看实时连接与远端';
@@ -2197,10 +2197,19 @@ class AppL10nZh extends AppL10n {
   String get cleanupCaNeedsReimport => '需重新生成并导入系统证书';
 
   @override
-  String get hubCategoryDns => 'DNS 服务';
+  String get hubCategoryDns => 'DNS 解析';
 
   @override
-  String get hubProviderManagement => '服务商管理';
+  String get hubModuleMore => '更多功能';
+
+  @override
+  String get serverHubCategoryRules => '域名规则';
+
+  @override
+  String get serverHubCategoryData => '数据与维护';
+
+  @override
+  String get hubProviderManagement => '解析服务商';
 
   @override
   String get hubProviderManagementDescription => '配置与管理 DoH、DoT 与传统 DNS 解析服务商';
@@ -2212,46 +2221,46 @@ class AppL10nZh extends AppL10n {
   String get hubBootstrapDescription => '配置用于首次解析加密上游域名的引导 DNS 节点';
 
   @override
-  String get hubResolution => '解析模式';
+  String get hubResolution => '解析策略';
 
   @override
   String get hubResolutionDescription => '选择单一服务、智能选择、最快响应或依次尝试策略';
 
   @override
-  String get hubCache => '缓存设置';
+  String get hubCache => 'DNS 缓存';
 
   @override
   String get hubCacheDescription => '配置 DNS 缓存开关、缓存策略与最大最小生存时间 (TTL)';
 
   @override
-  String get hubCategoryRules => '策略与规则';
+  String get hubCategoryRules => '规则与控制';
 
   @override
-  String get hubRuleControl => '规则控制';
+  String get hubRuleControl => '拦截策略';
 
   @override
   String get hubRuleControlDescription => '统一管理拦截策略开关与在线网络规则订阅';
 
   @override
-  String get hubBlocklist => '黑名单';
+  String get hubBlocklist => '域名黑名单';
 
   @override
   String get hubBlocklistDescription => '自定义屏蔽域名列表，匹配时返回拦截响应';
 
   @override
-  String get hubAllowlist => '白名单';
+  String get hubAllowlist => '域名白名单';
 
   @override
   String get hubAllowlistDescription => '自定义放行域名列表，豁免所有规则直接放行';
 
   @override
-  String get hubRewrite => '覆写名单';
+  String get hubRewrite => '域名覆写';
 
   @override
   String get hubRewriteDescription => '自定义域名覆写指向特定 IPv4/IPv6 或 CNAME';
 
   @override
-  String get hubCategoryNetwork => '应用管理';
+  String get hubCategoryNetwork => '应用与网络';
 
   @override
   String get hubAppTraffic => '应用流量统计';
@@ -2260,7 +2269,7 @@ class AppL10nZh extends AppL10n {
   String get hubAppTrafficDescription => '统计各应用的网络连接数、上传与下载流量明细';
 
   @override
-  String get hubAppRules => '应用独立规则';
+  String get hubAppRules => '应用规则';
 
   @override
   String get hubAppRulesDescription => '为特定应用单独指定专属域名放行与网络规则';
@@ -2281,7 +2290,7 @@ class AppL10nZh extends AppL10n {
   String get hubCategoryAdvanced => '高级与诊断';
 
   @override
-  String get hubHttpsInspection => 'HTTPS 流量检查';
+  String get hubHttpsInspection => 'HTTPS 检查';
 
   @override
   String get hubHttpsInspectionDescription =>
@@ -2306,10 +2315,10 @@ class AppL10nZh extends AppL10n {
   String get hubAiAnalysisDescription => '配置大语言模型接口与密钥，用于日志研判与网络流量分析';
 
   @override
-  String get hubCategoryInterface => '界面与设置';
+  String get hubCategoryInterface => '界面与数据';
 
   @override
-  String get hubAppearance => '外观调整';
+  String get hubAppearance => '外观';
 
   @override
   String get hubAppearanceDescription => '自定义日夜模式、主题色彩、组件透明度与软件壁纸背景';
@@ -2342,7 +2351,7 @@ class AppL10nZh extends AppL10n {
   String get hubLogsDescription => '实时解析统计、请求明细查询与日志导出';
 
   @override
-  String get hubBackup => '备份与迁移';
+  String get hubBackup => '数据与维护';
 
   @override
   String get hubBackupDescription => '导出与导入服务商、规则订阅及个性化设置';
@@ -2372,7 +2381,7 @@ class AppL10nZh extends AppL10n {
   String get hubCategorySubscription => '订阅与更新';
 
   @override
-  String get hubDnsLeak => 'DNS 泄漏检测';
+  String get hubDnsLeak => 'DNS 泄漏';
 
   @override
   String get hubAutoUpdateDescription => '按固定间隔或每天固定时刻自动更新规则订阅';
@@ -6771,7 +6780,7 @@ class AppL10nZh extends AppL10n {
   String get commonUnknownReason => '未知原因';
 
   @override
-  String get autoUpdateTitle => '自动更新设置';
+  String get autoUpdateTitle => '自动更新';
 
   @override
   String get autoUpdateSection => '自动更新';
@@ -14090,7 +14099,7 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get privacySuiteTitle => '隐私套件';
+  String get privacySuiteTitle => '隐私保护';
 
   @override
   String get privacySuiteIntro =>
@@ -14127,7 +14136,7 @@ class AppL10nZh extends AppL10n {
       '当上游没有可用 AAAA 时，用固定前缀 64:ff9b::/96 从 A 记录合成 AAAA。仅在 IPv6-only 网络开启，双栈网络开启可能导致访问异常。';
 
   @override
-  String get lanRateLimitTitle => 'LAN 客户端限速';
+  String get lanRateLimitTitle => '局域网限速';
 
   @override
   String get lanRateLimitIntro =>
@@ -14216,7 +14225,7 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get webhookTitle => 'Webhook 通知';
+  String get webhookTitle => 'Webhook';
 
   @override
   String get webhookIntro =>

@@ -14,6 +14,7 @@ import 'package:diting_android/widgets/app_list_view.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:diting_android/widgets/unsaved_changes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 part 'app_rules_detail.dart';
@@ -241,6 +242,23 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                     ),
                   ],
                   footer: context.l10n.appRulesMasterFooter,
+                ),
+                generateSection(
+                  title: context.l10n.hubModuleMore,
+                  items: [
+                    ListItem(
+                      leading: const GlyphIcon(AppGlyphs.wifiOff),
+                      title: Text(context.l10n.hubBlockedApps),
+                      subtitle: Text(context.l10n.hubBlockedAppsDescription),
+                      onTap: () => context.push('/hub/blocked-apps'),
+                    ),
+                    ListItem(
+                      leading: const GlyphIcon(AppGlyphs.appsList),
+                      title: Text(context.l10n.hubExcludedApps),
+                      subtitle: Text(context.l10n.hubExcludedAppsDescription),
+                      onTap: () => context.push('/hub/excluded-apps'),
+                    ),
+                  ],
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

@@ -2,11 +2,13 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/pages/hub/provider_editor.dart';
+import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Provider management (upstream `ProviderManagementScreen`): current provider summary,
@@ -201,6 +203,23 @@ class _ProviderManagementPageState
                   ),
               ],
             ),
+          generateSection(
+            title: context.l10n.hubModuleMore,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.language),
+                title: Text(context.l10n.hubBootstrap),
+                subtitle: Text(context.l10n.hubBootstrapDescription),
+                onTap: () => context.push(HubPaths.bootstrap),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.eye),
+                title: Text(context.l10n.hubProviderVisibility),
+                subtitle: Text(context.l10n.hubProviderVisibilityDescription),
+                onTap: () => context.push(HubPaths.providerVisibility),
+              ),
+            ],
+          ),
           ListFooter(text: context.l10n.providerMgmtFooter),
           const SizedBox(height: 24),
         ],
