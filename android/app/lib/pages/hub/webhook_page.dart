@@ -49,10 +49,12 @@ class _WebhookPageState extends ConsumerState<WebhookPage> {
       body: PageBody(
         children: [
           PageIntroCard(text: l10n.webhookIntro),
-          generateSection(
+          _sectionCard(
+            context,
             title: l10n.webhookSection,
-            items: [
+            children: [
               ListItem(
+                padding: EdgeInsets.zero,
                 leading: const GlyphIcon(AppGlyphs.send),
                 title: Text(l10n.webhookEnable),
                 subtitle: Text(l10n.webhookEnableDesc),
@@ -64,35 +66,28 @@ class _WebhookPageState extends ConsumerState<WebhookPage> {
                   ),
                 ),
               ),
-              _Field(
+              LabeledInputField(
                 label: l10n.webhookUrl,
-                hint: l10n.webhookUrlHint,
-                child: TextField(
-                  controller: _url,
-                  keyboardType: TextInputType.url,
-                  decoration: const InputDecoration(border: InputBorder.none),
-                  onChanged: notifier.setUrl,
-                ),
+                controller: _url,
+                hintText: l10n.webhookUrlHint,
+                keyboardType: TextInputType.url,
+                onChanged: notifier.setUrl,
               ),
-              _Field(
+              LabeledInputField(
                 label: l10n.webhookSecret,
-                hint: l10n.webhookSecretDesc,
-                child: TextField(
-                  controller: _secret,
-                  obscureText: _obscure,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    suffixIcon: IconButton(
-                      tooltip: l10n.webhookSecret,
-                      icon: const GlyphIcon(AppGlyphs.eyeOff, size: 20),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
-                  ),
-                  onChanged: notifier.setSecret,
+                controller: _secret,
+                helperText: l10n.webhookSecretDesc,
+                obscureText: _obscure,
+                suffixIcon: IconButton(
+                  tooltip: l10n.webhookSecret,
+                  icon: const GlyphIcon(AppGlyphs.eyeOff, size: 20),
+                  onPressed: () => setState(() => _obscure = !_obscure),
                 ),
+                onChanged: notifier.setSecret,
               ),
             ],
           ),
+          const ListSectionGap(),
           generateSection(
             items: [
               ListItem(
@@ -136,27 +131,28 @@ class _WebhookPageState extends ConsumerState<WebhookPage> {
   }
 }
 
-class _Field extends StatelessWidget {
-  const _Field({required this.label, required this.hint, required this.child});
-
-  final String label;
-  final String hint;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 4),
-          CommonCard(child: child),
-          const SizedBox(height: 4),
-          Text(hint, style: Theme.of(context).textTheme.bodySmall),
-        ],
+/// A titled card: a section header over one card holding its rows and labelled fields. The
+/// header carries its own side inset; the card is inset 16 and padded 16.
+Widget _sectionCard(
+  BuildContext context, {
+  required String title,
+  required List<Widget> children,
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      ListHeader(title: title),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: CommonCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 16,
+            children: children,
+          ),
+        ),
       ),
-    );
-  }
+    ],
+  );
 }

@@ -44,6 +44,7 @@ class _LanRateLimitPageState extends ConsumerState<LanRateLimitPage> {
       body: PageBody(
         children: [
           PageIntroCard(text: l10n.lanRateLimitIntro),
+          const ListSectionGap(),
           generateSection(
             items: [
               ListItem(
@@ -93,12 +94,19 @@ class _LanRateLimitPageState extends ConsumerState<LanRateLimitPage> {
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
                 title: Text(l10n.lanRateLimitExempt),
-                subtitle: TextField(
-                  controller: _exempt,
-                  decoration: InputDecoration(
-                    hintText: l10n.lanRateLimitExemptHint,
+                subtitle: FilledInputTheme(
+                  borderRadius: AppRadius.md,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
                   ),
-                  onChanged: notifier.setExemptCsv,
+                  child: TextField(
+                    controller: _exempt,
+                    decoration: InputDecoration(
+                      hintText: l10n.lanRateLimitExemptHint,
+                    ),
+                    onChanged: notifier.setExemptCsv,
+                  ),
                 ),
               ),
             ],

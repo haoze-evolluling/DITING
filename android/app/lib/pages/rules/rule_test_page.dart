@@ -101,15 +101,13 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 12,
               children: [
-                TextField(
+                LabeledInputField(
+                  label: context.l10n.ruleTestDomainLabel,
                   controller: _domain,
+                  hintText: context.l10n.ruleTestDomainHint,
+                  keyboardType: TextInputType.url,
                   textInputAction: TextInputAction.search,
                   autocorrect: false,
-                  keyboardType: TextInputType.url,
-                  decoration: InputDecoration(
-                    labelText: context.l10n.ruleTestDomainLabel,
-                    hintText: context.l10n.ruleTestDomainHint,
-                  ),
                   onSubmitted: (_) => _run(),
                 ),
                 Row(
@@ -246,6 +244,6 @@ class _ResultRow extends StatelessWidget {
 }
 
 Widget _paddedCard(BuildContext context, Widget child) => Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 16),
+  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
   child: CommonCard(padding: const EdgeInsets.all(16), child: child),
 );

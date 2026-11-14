@@ -275,24 +275,23 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 8,
               children: [
                 Expanded(
                   flex: 2,
-                  child: TextField(
+                  child: LabeledInputField(
+                    label: context.l10n.outboundHostLabel,
                     controller: _host,
                     autocorrect: false,
-                    decoration: InputDecoration(
-                      labelText: context.l10n.outboundHostLabel,
-                      helperText: context.l10n.outboundHostHelper,
-                    ),
+                    helperText: context.l10n.outboundHostHelper,
                   ),
                 ),
                 Expanded(
-                  child: TextField(
+                  child: LabeledInputField(
+                    label: context.l10n.serverPort,
                     controller: _port,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: context.l10n.serverPort),
                   ),
                 ),
               ],
@@ -300,18 +299,18 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: TextField(
+            child: LabeledInputField(
+              label: context.l10n.outboundUsernameLabel,
               controller: _username,
               autocorrect: false,
-              decoration: InputDecoration(labelText: context.l10n.outboundUsernameLabel),
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: TextField(
+            child: LabeledInputField(
+              label: context.l10n.outboundPasswordLabel,
               controller: _password,
               obscureText: true,
-              decoration: InputDecoration(labelText: context.l10n.outboundPasswordLabel),
             ),
           ),
           Padding(

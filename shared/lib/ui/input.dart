@@ -352,3 +352,83 @@ class FilledInputTheme extends StatelessWidget {
     );
   }
 }
+
+/// A standalone labelled field for a page or form: the label sits above a filled input.
+///
+/// [FilledInputTheme] turns floating labels off, so the label cannot live in
+/// `InputDecoration.labelText`; a bare `TextField` would otherwise fall back to the outlined
+/// Material default and clash with the card it sits in. Optional [helperText] renders below the
+/// field as a caption, and [hintText] stays inside the field as its placeholder.
+class LabeledInputField extends StatelessWidget {
+  const LabeledInputField({
+    super.key,
+    required this.label,
+    required this.controller,
+    this.onChanged,
+    this.hintText,
+    this.helperText,
+    this.keyboardType,
+    this.textInputAction,
+    this.obscureText = false,
+    this.minLines = 1,
+    this.maxLines = 1,
+    this.suffixIcon,
+    this.autofocus = false,
+    this.enabled = true,
+    this.autocorrect = true,
+    this.onSubmitted,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final ValueChanged<String>? onChanged;
+  final String? hintText;
+  final String? helperText;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final bool obscureText;
+  final int minLines;
+  final int maxLines;
+  final Widget? suffixIcon;
+  final bool autofocus;
+  final bool enabled;
+  final bool autocorrect;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    final helperText = this.helperText;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 6,
+      children: [
+        Text(label, style: context.listTitleStyle),
+        FilledInputTheme(
+          borderRadius: AppRadius.md,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+          child: TextField(
+            controller: controller,
+            enabled: enabled,
+            onChanged: onChanged,
+            keyboardType: keyboardType,
+            textInputAction: textInputAction,
+            obscureText: obscureText,
+            minLines: obscureText ? 1 : minLines,
+            maxLines: obscureText ? 1 : maxLines,
+            autofocus: autofocus,
+            autocorrect: autocorrect,
+            onSubmitted: onSubmitted,
+            decoration: InputDecoration(
+              hintText: hintText,
+              suffixIcon: suffixIcon,
+            ),
+          ),
+        ),
+        if (helperText != null) Text(helperText, style: context.listCaptionStyle),
+      ],
+    );
+  }
+}

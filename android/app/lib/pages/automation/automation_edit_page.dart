@@ -199,16 +199,16 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
             context,
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 16,
               children: [
-                TextField(
+                LabeledInputField(
+                  label: context.l10n.automationRuleName,
                   controller: _name,
-                  decoration: InputDecoration(labelText: context.l10n.automationRuleName),
                 ),
-                const SizedBox(height: 12),
-                TextField(
+                LabeledInputField(
+                  label: context.l10n.automationPriority,
                   controller: _priority,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: context.l10n.automationPriority),
                 ),
               ],
             ),
@@ -290,10 +290,10 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
         if (_pause)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: TextField(
+            child: LabeledInputField(
+              label: context.l10n.automationMinutes,
               controller: _minutes,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: context.l10n.automationMinutes),
             ),
           ),
         SwitchListTile(
@@ -351,9 +351,10 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     );
   }
 
-  Widget _clockField(TextEditingController controller, String label) => TextField(
+  Widget _clockField(TextEditingController controller, String label) => LabeledInputField(
+    label: label,
     controller: controller,
-    decoration: InputDecoration(labelText: label, hintText: 'HH:mm'),
+    hintText: 'HH:mm',
   );
 
   static List<(String, String)> _triggerOptions(BuildContext context) => [
@@ -405,6 +406,6 @@ class _Section extends StatelessWidget {
 }
 
 Widget _paddedCard(BuildContext context, Widget child) => Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 16),
+  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
   child: CommonCard(padding: const EdgeInsets.all(16), child: child),
 );
