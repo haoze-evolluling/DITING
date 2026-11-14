@@ -56,6 +56,37 @@ class _SubscriptionVersionPageState
           }
           final selectedId = _resolveSelection(entries);
           final entry = entries.firstWhere((e) => e.id == selectedId);
+          final history = _VersionHistory(
+            subscriptionId: entry.id,
+            onCompare: _compare,
+            onRollback: (version) => _rollback(entry, version),
+            busy: _busy,
+          );
+          // U9: on a tablet, keep the subscription list beside the history instead of hiding it in a
+          // dropdown, so switching versions never costs a second tap through a menu.
+          final wide = MediaQuery.sizeOf(context).width >= 720;
+          if (wide) {
+            return PageBody(
+              children: [
+                PageIntroCard(text: l10n.ruleVersionsIntro),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 320,
+                      child: _SubscriptionPicker(
+                        entries: entries,
+                        selectedId: selectedId,
+                        onSelect: (id) => setState(() => _selectedId = id),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: history),
+                  ],
+                ),
+              ],
+            );
+          }
           return PageBody(
             children: [
               PageIntroCard(text: l10n.ruleVersionsIntro),
@@ -79,12 +110,7 @@ class _SubscriptionVersionPageState
                   ),
                 ],
               ),
-              _VersionHistory(
-                subscriptionId: entry.id,
-                onCompare: _compare,
-                onRollback: (version) => _rollback(entry, version),
-                busy: _busy,
-              ),
+              history,
             ],
           );
         },
@@ -205,6 +231,35 @@ class _SubscriptionVersionPageState
     if (!mounted) return;
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _SubscriptionPicker extends StatelessWidget {
+  const _SubscriptionPicker({
+    required this.entries,
+    required this.selectedId,
+    required this.onSelect,
+  });
+
+  final List<SubscriptionEntry> entries;
+  final int selectedId;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return generateSection(
+      title: l10n.ruleVersionsPick,
+      items: [
+        for (final entry in entries)
+          ListItem(
+            leading: const GlyphIcon(AppGlyphs.link),
+            title: Text(entry.name),
+            trailing: entry.id == selectedId ? const SelectionCheck() : null,
+            onTap: () => onSelect(entry.id),
+          ),
+      ],
+    );
   }
 }
 
