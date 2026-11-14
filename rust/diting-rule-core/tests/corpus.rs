@@ -147,7 +147,19 @@ fn corpus_classification_is_pinned() {
     assert_eq!(parsed.duplicate_count, 22);
     assert_eq!(parsed.invalid_count, 23);
     assert_eq!(parsed.unsupported_count, 9);
-    assert_eq!(parsed.ignored_count, 8);
+    // `||example.com/banner.js$script,badfilter` is a bad-filter declaration for a URL rule: the
+    // content-type modifier is demoted and the line registers a bad-filter key instead of being
+    // ignored, so it is no longer counted in `ignored_count` (it also emits no rule of its own).
+    assert_eq!(parsed.ignored_count, 7);
+}
+
+#[test]
+fn a_badfilter_url_line_registers_a_key_without_emitting_a_rule() {
+    let line = diting_rule_core::parse_categorized_line("||example.com/banner.js$script,badfilter");
+    assert!(line.block_rules.is_empty());
+    assert!(line.url_block_rules.is_empty());
+    assert_eq!(line.badfilter_keys.len(), 1);
+    assert_eq!(line.ignored_count, 0);
 }
 
 #[test]
