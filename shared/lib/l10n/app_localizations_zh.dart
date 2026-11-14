@@ -13988,4 +13988,27 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get networkDiagnosticsFailed => '检测失败，请稍后重试。';
+
+  @override
+  String get appInsightsTitle => '应用洞察';
+
+  @override
+  String get appInsightsIntro => '基于实时连接按应用汇总流量、拦截与连接地图。';
+
+  @override
+  String get appInsightsEmpty => '暂无可展示的连接，请先启动隧道并产生流量。';
+
+  @override
+  String get appInsightsReports => '应用报告卡';
+
+  @override
+  String get appInsightsMap => '连接地图';
+
+  @override
+  String appInsightsStat(int connections, int blocked, String bytes) {
+    return '$connections 连接 · $blocked 拦截 · $bytes';
+  }
+
+  @override
+  String get appInsightsNoDomains => '暂无域名';
 }

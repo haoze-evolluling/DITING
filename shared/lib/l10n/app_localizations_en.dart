@@ -14856,4 +14856,29 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get networkDiagnosticsFailed => 'Check failed, please try again.';
+
+  @override
+  String get appInsightsTitle => 'App insights';
+
+  @override
+  String get appInsightsIntro =>
+      'Aggregates live connections per app: traffic, blocks and a connection map.';
+
+  @override
+  String get appInsightsEmpty =>
+      'No connections yet. Start the tunnel and generate some traffic.';
+
+  @override
+  String get appInsightsReports => 'App report cards';
+
+  @override
+  String get appInsightsMap => 'Connection map';
+
+  @override
+  String appInsightsStat(int connections, int blocked, String bytes) {
+    return '$connections connections · $blocked blocked · $bytes';
+  }
+
+  @override
+  String get appInsightsNoDomains => 'No domains';
 }

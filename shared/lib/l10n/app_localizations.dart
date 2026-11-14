@@ -25665,6 +25665,48 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'检测失败，请稍后重试。'**
   String get networkDiagnosticsFailed;
+
+  /// No description provided for @appInsightsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用洞察'**
+  String get appInsightsTitle;
+
+  /// No description provided for @appInsightsIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'基于实时连接按应用汇总流量、拦截与连接地图。'**
+  String get appInsightsIntro;
+
+  /// No description provided for @appInsightsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无可展示的连接，请先启动隧道并产生流量。'**
+  String get appInsightsEmpty;
+
+  /// No description provided for @appInsightsReports.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用报告卡'**
+  String get appInsightsReports;
+
+  /// No description provided for @appInsightsMap.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接地图'**
+  String get appInsightsMap;
+
+  /// No description provided for @appInsightsStat.
+  ///
+  /// In zh, this message translates to:
+  /// **'{connections} 连接 · {blocked} 拦截 · {bytes}'**
+  String appInsightsStat(int connections, int blocked, String bytes);
+
+  /// No description provided for @appInsightsNoDomains.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无域名'**
+  String get appInsightsNoDomains;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

@@ -161,6 +161,7 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       ...hubRoutes(),
       ...healthRoutes(),
       ...flowRoutes(),
+      ...appInsightsRoutes(),
       ...networkDiagnosticsRoutes(),
       ...automationRoutes(),
       ...networkProfileRoutes(),

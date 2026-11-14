@@ -7959,5 +7959,19 @@
   "captivePortal": "需要登录门户",
   "captiveUnknown": "无法判定",
   "captiveOpenPortal": "打开登录页",
-  "networkDiagnosticsFailed": "检测失败，请稍后重试。"
+  "networkDiagnosticsFailed": "检测失败，请稍后重试。",
+  "appInsightsTitle": "应用洞察",
+  "appInsightsIntro": "基于实时连接按应用汇总流量、拦截与连接地图。",
+  "appInsightsEmpty": "暂无可展示的连接，请先启动隧道并产生流量。",
+  "appInsightsReports": "应用报告卡",
+  "appInsightsMap": "连接地图",
+  "appInsightsStat": "{connections} 连接 · {blocked} 拦截 · {bytes}",
+  "@appInsightsStat": {
+    "placeholders": {
+      "connections": { "type": "int" },
+      "blocked": { "type": "int" },
+      "bytes": { "type": "String" }
+    }
+  },
+  "appInsightsNoDomains": "暂无域名"
 }
