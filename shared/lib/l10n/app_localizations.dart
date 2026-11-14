@@ -26025,6 +26025,90 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'回滚失败：{message}'**
   String ruleVersionsRollbackFailed(String message);
+
+  /// No description provided for @webhookTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'Webhook 通知'**
+  String get webhookTitle;
+
+  /// No description provided for @webhookIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'把自动化与审计事件推送到你自己的 Webhook。请求体为 JSON，并用 HMAC-SHA256 对「时间戳.请求体」签名，可在服务端校验来源。'**
+  String get webhookIntro;
+
+  /// No description provided for @webhookSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'推送配置'**
+  String get webhookSection;
+
+  /// No description provided for @webhookEnable.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用 Webhook'**
+  String get webhookEnable;
+
+  /// No description provided for @webhookEnableDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认关闭。关闭时不发送任何请求。'**
+  String get webhookEnableDesc;
+
+  /// No description provided for @webhookUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'接收地址'**
+  String get webhookUrl;
+
+  /// No description provided for @webhookUrlHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'https://example.com/diting/hook'**
+  String get webhookUrlHint;
+
+  /// No description provided for @webhookSecret.
+  ///
+  /// In zh, this message translates to:
+  /// **'签名密钥'**
+  String get webhookSecret;
+
+  /// No description provided for @webhookSecretDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'用于 HMAC-SHA256 签名，请求头 X-Diting-Signature 形如 sha256=...'**
+  String get webhookSecretDesc;
+
+  /// No description provided for @webhookTest.
+  ///
+  /// In zh, this message translates to:
+  /// **'发送测试事件'**
+  String get webhookTest;
+
+  /// No description provided for @webhookTestHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'向已配置地址发送一条 test 事件，验证签名与连通性'**
+  String get webhookTestHint;
+
+  /// No description provided for @webhookTesting.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在发送…'**
+  String get webhookTesting;
+
+  /// No description provided for @webhookTestOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'发送成功：{result}'**
+  String webhookTestOk(String result);
+
+  /// No description provided for @webhookTestFail.
+  ///
+  /// In zh, this message translates to:
+  /// **'发送失败：{result}'**
+  String webhookTestFail(String result);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

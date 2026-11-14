@@ -15062,4 +15062,54 @@ class AppL10nEn extends AppL10n {
   String ruleVersionsRollbackFailed(String message) {
     return 'Rollback failed: $message';
   }
+
+  @override
+  String get webhookTitle => 'Webhook notifications';
+
+  @override
+  String get webhookIntro =>
+      'Push automation and audit events to your own webhook. The body is JSON and is signed with HMAC-SHA256 over \"timestamp.body\" so your server can verify the source.';
+
+  @override
+  String get webhookSection => 'Delivery';
+
+  @override
+  String get webhookEnable => 'Enable webhook';
+
+  @override
+  String get webhookEnableDesc =>
+      'Off by default. When off, no requests are sent.';
+
+  @override
+  String get webhookUrl => 'Endpoint URL';
+
+  @override
+  String get webhookUrlHint => 'https://example.com/diting/hook';
+
+  @override
+  String get webhookSecret => 'Signing secret';
+
+  @override
+  String get webhookSecretDesc =>
+      'Used for HMAC-SHA256; header X-Diting-Signature looks like sha256=...';
+
+  @override
+  String get webhookTest => 'Send a test event';
+
+  @override
+  String get webhookTestHint =>
+      'POST a test event to the configured endpoint to verify signing and reachability';
+
+  @override
+  String get webhookTesting => 'Sending…';
+
+  @override
+  String webhookTestOk(String result) {
+    return 'Sent: $result';
+  }
+
+  @override
+  String webhookTestFail(String result) {
+    return 'Failed: $result';
+  }
 }

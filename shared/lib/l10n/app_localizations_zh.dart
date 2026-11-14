@@ -14186,4 +14186,52 @@ class AppL10nZh extends AppL10n {
   String ruleVersionsRollbackFailed(String message) {
     return '回滚失败：$message';
   }
+
+  @override
+  String get webhookTitle => 'Webhook 通知';
+
+  @override
+  String get webhookIntro =>
+      '把自动化与审计事件推送到你自己的 Webhook。请求体为 JSON，并用 HMAC-SHA256 对「时间戳.请求体」签名，可在服务端校验来源。';
+
+  @override
+  String get webhookSection => '推送配置';
+
+  @override
+  String get webhookEnable => '启用 Webhook';
+
+  @override
+  String get webhookEnableDesc => '默认关闭。关闭时不发送任何请求。';
+
+  @override
+  String get webhookUrl => '接收地址';
+
+  @override
+  String get webhookUrlHint => 'https://example.com/diting/hook';
+
+  @override
+  String get webhookSecret => '签名密钥';
+
+  @override
+  String get webhookSecretDesc =>
+      '用于 HMAC-SHA256 签名，请求头 X-Diting-Signature 形如 sha256=...';
+
+  @override
+  String get webhookTest => '发送测试事件';
+
+  @override
+  String get webhookTestHint => '向已配置地址发送一条 test 事件，验证签名与连通性';
+
+  @override
+  String get webhookTesting => '正在发送…';
+
+  @override
+  String webhookTestOk(String result) {
+    return '发送成功：$result';
+  }
+
+  @override
+  String webhookTestFail(String result) {
+    return '发送失败：$result';
+  }
 }

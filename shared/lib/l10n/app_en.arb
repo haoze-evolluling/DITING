@@ -5332,5 +5332,29 @@
     "placeholders": {
       "message": { "type": "String" }
     }
+  },
+  "webhookTitle": "Webhook notifications",
+  "webhookIntro": "Push automation and audit events to your own webhook. The body is JSON and is signed with HMAC-SHA256 over \"timestamp.body\" so your server can verify the source.",
+  "webhookSection": "Delivery",
+  "webhookEnable": "Enable webhook",
+  "webhookEnableDesc": "Off by default. When off, no requests are sent.",
+  "webhookUrl": "Endpoint URL",
+  "webhookUrlHint": "https://example.com/diting/hook",
+  "webhookSecret": "Signing secret",
+  "webhookSecretDesc": "Used for HMAC-SHA256; header X-Diting-Signature looks like sha256=...",
+  "webhookTest": "Send a test event",
+  "webhookTestHint": "POST a test event to the configured endpoint to verify signing and reachability",
+  "webhookTesting": "Sending…",
+  "webhookTestOk": "Sent: {result}",
+  "@webhookTestOk": {
+    "placeholders": {
+      "result": { "type": "String" }
+    }
+  },
+  "webhookTestFail": "Failed: {result}",
+  "@webhookTestFail": {
+    "placeholders": {
+      "result": { "type": "String" }
+    }
   }
 }
