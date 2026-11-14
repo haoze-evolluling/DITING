@@ -25,6 +25,7 @@
 pub mod adapters;
 pub mod callbacks;
 pub mod mitm;
+pub mod rule_test;
 
 use std::collections::HashMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};

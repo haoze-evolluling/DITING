@@ -45,6 +45,7 @@ final Map<String, String> topLevelRoutes = {
   '依次尝试配置': HubPaths.resolutionMode('backup'),
   '缓存设置': HubPaths.cache,
   '规则控制': HubPaths.ruleControl,
+  '规则测试': HubPaths.ruleTest,
   '拦截响应': HubPaths.blockResponse,
   '自动更新设置': HubPaths.autoUpdate,
   '镜像站模板': HubPaths.mirrorTemplates,

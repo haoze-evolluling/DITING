@@ -10,6 +10,62 @@ class AppL10nEn extends AppL10n {
   AppL10nEn([String locale = 'en']) : super(locale);
 
   @override
+  String get ruleTestTitle => 'Rule test';
+
+  @override
+  String get ruleTestEnterSubtitle =>
+      'Enter a domain to see why it is blocked or allowed';
+
+  @override
+  String get ruleTestIntro =>
+      'Enter a domain to see the verdict, the matched rule and any rewrite. The logic is exactly the engine\'s.';
+
+  @override
+  String get ruleTestDomainLabel => 'Domain';
+
+  @override
+  String get ruleTestDomainHint => 'e.g. ads.example.com';
+
+  @override
+  String get ruleTestQtype => 'Query type';
+
+  @override
+  String get ruleTestRun => 'Run test';
+
+  @override
+  String get ruleTestResultTitle => 'Verdict';
+
+  @override
+  String get ruleTestActionBlock => 'Blocked';
+
+  @override
+  String get ruleTestActionAllow => 'Allowed (allowlist)';
+
+  @override
+  String get ruleTestActionPass => 'Passed';
+
+  @override
+  String get ruleTestMatchedRule => 'Matched rule';
+
+  @override
+  String get ruleTestReason => 'Reason';
+
+  @override
+  String get ruleTestRewriteTitle => 'Rewrite';
+
+  @override
+  String get ruleTestNoRewrite => 'No rewrite';
+
+  @override
+  String get ruleTestInvalidDomain => 'Enter a valid domain';
+
+  @override
+  String get ruleTestFailed => 'Rule test failed, please try again';
+
+  @override
+  String get ruleTestEmptyHint => 'The result will appear here';
+
+  @override
   String get appTitle => 'DITING';
 
   @override

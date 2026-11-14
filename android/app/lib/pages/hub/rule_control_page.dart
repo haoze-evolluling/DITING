@@ -107,6 +107,12 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.ruleControlPolicySection,
             items: [
               ListItem(
+                leading: const GlyphIcon(AppGlyphs.search),
+                title: Text(context.l10n.ruleTestTitle),
+                subtitle: Text(context.l10n.ruleTestEnterSubtitle),
+                onTap: () => context.push('/hub/rules/test'),
+              ),
+              ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
                 title: Text(context.l10n.ruleControlBlockResponse),
                 subtitle: Text(

@@ -10,6 +10,60 @@ class AppL10nZh extends AppL10n {
   AppL10nZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get ruleTestTitle => '规则测试';
+
+  @override
+  String get ruleTestEnterSubtitle => '输入域名查看为何被拦截或放行';
+
+  @override
+  String get ruleTestIntro => '输入域名，立即查看判定结果、命中规则与改写结果。判定逻辑与引擎完全一致。';
+
+  @override
+  String get ruleTestDomainLabel => '域名';
+
+  @override
+  String get ruleTestDomainHint => '例如 ads.example.com';
+
+  @override
+  String get ruleTestQtype => '查询类型';
+
+  @override
+  String get ruleTestRun => '开始测试';
+
+  @override
+  String get ruleTestResultTitle => '判定结果';
+
+  @override
+  String get ruleTestActionBlock => '拦截';
+
+  @override
+  String get ruleTestActionAllow => '白名单放行';
+
+  @override
+  String get ruleTestActionPass => '放行';
+
+  @override
+  String get ruleTestMatchedRule => '命中规则';
+
+  @override
+  String get ruleTestReason => '原因';
+
+  @override
+  String get ruleTestRewriteTitle => '改写结果';
+
+  @override
+  String get ruleTestNoRewrite => '无改写';
+
+  @override
+  String get ruleTestInvalidDomain => '请输入有效域名';
+
+  @override
+  String get ruleTestFailed => '规则测试失败，请稍后重试';
+
+  @override
+  String get ruleTestEmptyHint => '测试结果会显示在这里';
+
+  @override
   String get appTitle => '谛听 DITING';
 
   @override

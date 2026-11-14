@@ -97,6 +97,114 @@ abstract class AppL10n {
     Locale('zh'),
   ];
 
+  /// No description provided for @ruleTestTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则测试'**
+  String get ruleTestTitle;
+
+  /// No description provided for @ruleTestEnterSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入域名查看为何被拦截或放行'**
+  String get ruleTestEnterSubtitle;
+
+  /// No description provided for @ruleTestIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入域名，立即查看判定结果、命中规则与改写结果。判定逻辑与引擎完全一致。'**
+  String get ruleTestIntro;
+
+  /// No description provided for @ruleTestDomainLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'域名'**
+  String get ruleTestDomainLabel;
+
+  /// No description provided for @ruleTestDomainHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如 ads.example.com'**
+  String get ruleTestDomainHint;
+
+  /// No description provided for @ruleTestQtype.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询类型'**
+  String get ruleTestQtype;
+
+  /// No description provided for @ruleTestRun.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始测试'**
+  String get ruleTestRun;
+
+  /// No description provided for @ruleTestResultTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'判定结果'**
+  String get ruleTestResultTitle;
+
+  /// No description provided for @ruleTestActionBlock.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截'**
+  String get ruleTestActionBlock;
+
+  /// No description provided for @ruleTestActionAllow.
+  ///
+  /// In zh, this message translates to:
+  /// **'白名单放行'**
+  String get ruleTestActionAllow;
+
+  /// No description provided for @ruleTestActionPass.
+  ///
+  /// In zh, this message translates to:
+  /// **'放行'**
+  String get ruleTestActionPass;
+
+  /// No description provided for @ruleTestMatchedRule.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中规则'**
+  String get ruleTestMatchedRule;
+
+  /// No description provided for @ruleTestReason.
+  ///
+  /// In zh, this message translates to:
+  /// **'原因'**
+  String get ruleTestReason;
+
+  /// No description provided for @ruleTestRewriteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'改写结果'**
+  String get ruleTestRewriteTitle;
+
+  /// No description provided for @ruleTestNoRewrite.
+  ///
+  /// In zh, this message translates to:
+  /// **'无改写'**
+  String get ruleTestNoRewrite;
+
+  /// No description provided for @ruleTestInvalidDomain.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入有效域名'**
+  String get ruleTestInvalidDomain;
+
+  /// No description provided for @ruleTestFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则测试失败，请稍后重试'**
+  String get ruleTestFailed;
+
+  /// No description provided for @ruleTestEmptyHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试结果会显示在这里'**
+  String get ruleTestEmptyHint;
+
   /// No description provided for @appTitle.
   ///
   /// In zh, this message translates to:
