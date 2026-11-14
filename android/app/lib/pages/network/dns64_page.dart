@@ -22,6 +22,9 @@ class Dns64Page extends ConsumerWidget {
       body: PageBody(
         children: [
           PageIntroCard(text: l10n.dns64Intro),
+          // The card below has no section header to carry the gap, so it would butt straight
+          // against the intro card; add the same 24 the header would.
+          const ListSectionGap(),
           generateSection(
             items: [
               ListItem(

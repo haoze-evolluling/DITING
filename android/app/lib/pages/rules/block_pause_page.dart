@@ -137,7 +137,7 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
           ),
           if (_error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(
                 _error!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -209,6 +209,8 @@ String _formatRemaining(Duration remaining) {
 }
 
 Widget _paddedCard(BuildContext context, Widget child) => Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 16),
+  // A top inset so stacked cards read as separate surfaces; without it they butt
+  // together and pinch into one column.
+  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
   child: CommonCard(padding: const EdgeInsets.all(16), child: child),
 );

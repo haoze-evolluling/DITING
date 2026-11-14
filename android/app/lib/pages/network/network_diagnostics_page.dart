@@ -4,8 +4,8 @@
 /// probes, shows the three-state result and, for a portal, offers to open the login page.
 library;
 
-import 'package:diting_android/state/network_diagnostics_providers.dart';
 import 'package:diting_android/routes/system_routes.dart';
+import 'package:diting_android/state/network_diagnostics_providers.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -23,27 +23,17 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
     final state = ref.watch(networkDiagnosticsProvider);
     final notifier = ref.read(networkDiagnosticsProvider.notifier);
     final l10n = context.l10n;
+
     return CommonScaffold(
       title: l10n.networkDiagnosticsTitle,
       body: PageBody(
         children: [
           PageIntroCard(text: l10n.networkDiagnosticsIntro),
           if (state.error != null)
-            PageIntroCard(text: l10n.networkDiagnosticsFailed),
-          generateSection(
+            _ErrorNotice(text: l10n.networkDiagnosticsFailed),
+          _DiagnosticsSection(
             title: l10n.dnsLeakSection,
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.speed),
-                title: Text(l10n.dnsLeakSection),
-                subtitle: Text(
-                  switch (state.vpnActive) {
-                    true => l10n.dnsLeakVpnActive,
-                    false => l10n.dnsLeakVpnInactive,
-                    null => l10n.networkDiagnosticsIntro,
-                  },
-                ),
-              ),
+            rows: [
               if (state.leak != null)
                 _VerdictItem(
                   icon: state.leak!.status == 'leak'
@@ -53,16 +43,17 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
                   title: _leakLabel(context, state.leak!.status),
                   detail: _leakReason(context, state.leak!.reason),
                 ),
-              _ActionButton(
-                label: l10n.dnsLeakRun,
-                busy: state.leakBusy,
-                onPressed: notifier.runLeakCheck,
-              ),
             ],
+            action: _ActionButton(
+              label: l10n.dnsLeakRun,
+              glyph: AppGlyphs.speed,
+              busy: state.leakBusy,
+              onPressed: notifier.runLeakCheck,
+            ),
           ),
-          generateSection(
+          _DiagnosticsSection(
             title: l10n.captiveSection,
-            items: [
+            rows: [
               if (state.captive != null)
                 _VerdictItem(
                   icon: state.captive!.state == 'portal'
@@ -71,24 +62,25 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
                   error: state.captive!.state == 'portal',
                   title: _captiveLabel(context, state.captive!.state),
                   detail: state.captive!.portalUrl ?? '',
-                  action: state.captive!.portalUrl != null
-                      ? _ActionButton(
-                          label: l10n.captiveOpenPortal,
-                          busy: false,
-                          onPressed: () => launchUrl(
-                            Uri.parse(state.captive!.portalUrl!),
-                            mode: LaunchMode.externalApplication,
-                          ),
-                        )
-                      : null,
                 ),
-              _ActionButton(
-                label: l10n.captiveRun,
-                busy: state.captiveBusy,
-                onPressed: notifier.runCaptiveCheck,
-              ),
             ],
+            action: _ActionButton(
+              label: l10n.captiveRun,
+              glyph: AppGlyphs.wifi,
+              busy: state.captiveBusy,
+              onPressed: notifier.runCaptiveCheck,
+            ),
           ),
+          if (state.captive?.portalUrl != null)
+            _ActionButton(
+              label: l10n.captiveOpenPortal,
+              glyph: AppGlyphs.openExternal,
+              busy: false,
+              onPressed: () => launchUrl(
+                Uri.parse(state.captive!.portalUrl!),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
           generateSection(
             title: l10n.hubModuleMore,
             items: [
@@ -129,20 +121,51 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
       };
 }
 
+/// A diagnostics block: a section header, the optional verdict card, then the run action.
+///
+/// The action is a **sibling** of the rows — never an item inside the card. A non-row child in a
+/// card group leaves the preceding rows with square bottom corners and a stray divider, which is
+/// what made the old layout look like a clipped card with a button floating below it.
+class _DiagnosticsSection extends StatelessWidget {
+  const _DiagnosticsSection({
+    required this.title,
+    required this.rows,
+    required this.action,
+  });
+
+  final String title;
+  final List<Widget> rows;
+  final Widget action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListHeader(title: title),
+        if (rows.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: generateGroup(rows),
+          ),
+        action,
+      ],
+    );
+  }
+}
+
 class _VerdictItem extends StatelessWidget {
   const _VerdictItem({
     required this.icon,
     required this.error,
     required this.title,
     required this.detail,
-    this.action,
   });
 
   final Glyph icon;
   final bool error;
   final String title;
   final String detail;
-  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -153,37 +176,67 @@ class _VerdictItem extends StatelessWidget {
       leading: GlyphIcon(icon, color: color),
       title: Text(title),
       subtitle: detail.isEmpty ? null : Text(detail),
-      trailing: action,
     );
   }
 }
 
+/// A full-width section action. Kept outside the card group so the card keeps its rounded shape;
+/// the tonal fill matches the actions on the other tool pages.
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.label,
+    required this.glyph,
     required this.busy,
     required this.onPressed,
   });
 
   final String label;
+  final Glyph glyph;
   final bool busy;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: FilledButton(
-          onPressed: busy ? null : onPressed,
-          child: busy
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(label),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: TonalButton(
+        glyph: busy ? null : glyph,
+        label: label,
+        size: TonalButtonSize.section,
+        onPressed: busy ? null : onPressed,
+      ),
+    );
+  }
+}
+
+/// A page-level failure, in the error palette rather than the neutral intro card surface.
+class _ErrorNotice extends StatelessWidget {
+  const _ErrorNotice({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: CommonCard(
+        isError: true,
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 8,
+          children: [
+            GlyphIcon(AppGlyphs.error, size: 18, color: colorScheme.error),
+            Expanded(
+              child: Text(
+                text,
+                style: context.listCaptionStyle.copyWith(
+                  color: colorScheme.error,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

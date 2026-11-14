@@ -43,6 +43,7 @@ class _SubscriptionVersionPageState
             return PageBody(
               children: [
                 PageIntroCard(text: l10n.ruleVersionsIntro),
+                const ListSectionGap(),
                 generateSection(
                   items: [
                     ListItem(
@@ -90,6 +91,7 @@ class _SubscriptionVersionPageState
           return PageBody(
             children: [
               PageIntroCard(text: l10n.ruleVersionsIntro),
+              const ListSectionGap(),
               generateSection(
                 items: [
                   ListItem(
@@ -104,6 +106,7 @@ class _SubscriptionVersionPageState
                   ),
                 ],
               ),
+              const ListSectionGap(),
               history,
             ],
           );
