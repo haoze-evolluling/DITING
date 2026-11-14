@@ -25131,6 +25131,414 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'详细模式记录所有进程与缓冲区的完整 logcat，更全面但更耗电。'**
   String get troubleshootDetailModeNote;
+
+  /// No description provided for @automationTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动化'**
+  String get automationTitle;
+
+  /// No description provided for @automationSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'条件-动作规则编排场景'**
+  String get automationSubtitle;
+
+  /// No description provided for @automationHubSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'场景与自动化'**
+  String get automationHubSection;
+
+  /// No description provided for @automationIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'用触发、条件与动作把零散入口组合成场景（到家 / 会议 / 游戏 / 低电）。'**
+  String get automationIntro;
+
+  /// No description provided for @automationEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有自动化规则，点击右上角新增一条开始编排场景。'**
+  String get automationEmpty;
+
+  /// No description provided for @automationRulesSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则'**
+  String get automationRulesSection;
+
+  /// No description provided for @automationHistory.
+  ///
+  /// In zh, this message translates to:
+  /// **'审计时间线'**
+  String get automationHistory;
+
+  /// No description provided for @automationHistoryEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无自动化事件。'**
+  String get automationHistoryEmpty;
+
+  /// No description provided for @automationRuleFallbackName.
+  ///
+  /// In zh, this message translates to:
+  /// **'未命名规则'**
+  String get automationRuleFallbackName;
+
+  /// No description provided for @automationPriorityShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'优先级 {value}'**
+  String automationPriorityShort(int value);
+
+  /// No description provided for @automationActionCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{value} 个动作'**
+  String automationActionCount(int value);
+
+  /// No description provided for @automationTriggerSchedule.
+  ///
+  /// In zh, this message translates to:
+  /// **'定时'**
+  String get automationTriggerSchedule;
+
+  /// No description provided for @automationTriggerNetwork.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络'**
+  String get automationTriggerNetwork;
+
+  /// No description provided for @automationTriggerState.
+  ///
+  /// In zh, this message translates to:
+  /// **'状态'**
+  String get automationTriggerState;
+
+  /// No description provided for @automationTriggerManual.
+  ///
+  /// In zh, this message translates to:
+  /// **'手动'**
+  String get automationTriggerManual;
+
+  /// No description provided for @automationNewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'新建规则'**
+  String get automationNewTitle;
+
+  /// No description provided for @automationEditTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'编辑规则'**
+  String get automationEditTitle;
+
+  /// No description provided for @automationDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get automationDelete;
+
+  /// No description provided for @automationSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get automationSave;
+
+  /// No description provided for @automationEditIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择触发方式与动作；保存后由自动化引擎在对应时机执行。'**
+  String get automationEditIntro;
+
+  /// No description provided for @automationRuleName.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则名称'**
+  String get automationRuleName;
+
+  /// No description provided for @automationPriority.
+  ///
+  /// In zh, this message translates to:
+  /// **'优先级'**
+  String get automationPriority;
+
+  /// No description provided for @automationTrigger.
+  ///
+  /// In zh, this message translates to:
+  /// **'触发方式'**
+  String get automationTrigger;
+
+  /// No description provided for @automationMatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'条件组合'**
+  String get automationMatch;
+
+  /// No description provided for @automationMatchAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'满足全部条件'**
+  String get automationMatchAll;
+
+  /// No description provided for @automationMatchAny.
+  ///
+  /// In zh, this message translates to:
+  /// **'满足任一条件'**
+  String get automationMatchAny;
+
+  /// No description provided for @automationActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'动作'**
+  String get automationActions;
+
+  /// No description provided for @automationActionPause.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停拦截'**
+  String get automationActionPause;
+
+  /// No description provided for @automationMinutes.
+  ///
+  /// In zh, this message translates to:
+  /// **'分钟'**
+  String get automationMinutes;
+
+  /// No description provided for @automationActionBlockServices.
+  ///
+  /// In zh, this message translates to:
+  /// **'屏蔽服务'**
+  String get automationActionBlockServices;
+
+  /// No description provided for @automationServicesUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务目录内核不可用'**
+  String get automationServicesUnavailable;
+
+  /// No description provided for @automationSwitchProfileNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'不切换档案'**
+  String get automationSwitchProfileNone;
+
+  /// No description provided for @automationScheduleStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始'**
+  String get automationScheduleStart;
+
+  /// No description provided for @automationScheduleEnd.
+  ///
+  /// In zh, this message translates to:
+  /// **'结束'**
+  String get automationScheduleEnd;
+
+  /// No description provided for @profilesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置档案'**
+  String get profilesTitle;
+
+  /// No description provided for @profilesSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键切换配置快照'**
+  String get profilesSubtitle;
+
+  /// No description provided for @profilesAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增档案'**
+  String get profilesAdd;
+
+  /// No description provided for @profilesIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'一键切换工作模式 / 上游集 / 规则组与开关的快照。'**
+  String get profilesIntro;
+
+  /// No description provided for @profilesEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有配置档案。'**
+  String get profilesEmpty;
+
+  /// No description provided for @profilesListSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'档案'**
+  String get profilesListSection;
+
+  /// No description provided for @profilesApply.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用'**
+  String get profilesApply;
+
+  /// No description provided for @profilesDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get profilesDelete;
+
+  /// No description provided for @profilesName.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称'**
+  String get profilesName;
+
+  /// No description provided for @profilesUpstreamSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'上游集'**
+  String get profilesUpstreamSet;
+
+  /// No description provided for @profilesCancel.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消'**
+  String get profilesCancel;
+
+  /// No description provided for @profilesSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get profilesSave;
+
+  /// No description provided for @profilesApplied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已应用 {name}'**
+  String profilesApplied(String name);
+
+  /// No description provided for @timetableTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'分时规则'**
+  String get timetableTitle;
+
+  /// No description provided for @timetableSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'按周编排拦截时段'**
+  String get timetableSubtitle;
+
+  /// No description provided for @timetableAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增时段'**
+  String get timetableAdd;
+
+  /// No description provided for @timetableIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'按周编排分时拦截时段，到点自动收紧或恢复。'**
+  String get timetableIntro;
+
+  /// No description provided for @timetableEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有分时时段。'**
+  String get timetableEmpty;
+
+  /// No description provided for @netProfileTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络档案'**
+  String get netProfileTitle;
+
+  /// No description provided for @netProfileSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'按网络差异化策略'**
+  String get netProfileSubtitle;
+
+  /// No description provided for @netProfileAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增网络档案'**
+  String get netProfileAdd;
+
+  /// No description provided for @netProfileIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'按当前网络（Wi‑Fi / 蜂窝 / 漫游 / 计费）自动选择生效的上游集与规则组。'**
+  String get netProfileIntro;
+
+  /// No description provided for @netProfileCurrentNet.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前网络'**
+  String get netProfileCurrentNet;
+
+  /// No description provided for @netProfileResolved.
+  ///
+  /// In zh, this message translates to:
+  /// **'生效档案'**
+  String get netProfileResolved;
+
+  /// No description provided for @netProfileNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'无匹配档案'**
+  String get netProfileNone;
+
+  /// No description provided for @netProfileEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有网络档案，新增一条开始按网络切换策略。'**
+  String get netProfileEmpty;
+
+  /// No description provided for @netProfileList.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络档案'**
+  String get netProfileList;
+
+  /// No description provided for @netProfileDelete.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get netProfileDelete;
+
+  /// No description provided for @netProfileName.
+  ///
+  /// In zh, this message translates to:
+  /// **'名称'**
+  String get netProfileName;
+
+  /// No description provided for @netProfileUpstreamSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'上游集'**
+  String get netProfileUpstreamSet;
+
+  /// No description provided for @netProfilePriority.
+  ///
+  /// In zh, this message translates to:
+  /// **'优先级'**
+  String get netProfilePriority;
+
+  /// No description provided for @netProfileCancel.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消'**
+  String get netProfileCancel;
+
+  /// No description provided for @netProfileSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get netProfileSave;
+
+  /// No description provided for @automationAdd.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增规则'**
+  String get automationAdd;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

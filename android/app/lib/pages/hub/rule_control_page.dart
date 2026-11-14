@@ -145,6 +145,35 @@ class RuleControlPage extends ConsumerWidget {
             ],
           ),
           generateSection(
+            title: context.l10n.automationHubSection,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.connections),
+                title: Text(context.l10n.automationTitle),
+                subtitle: Text(context.l10n.automationSubtitle),
+                onTap: () => context.push('/automation'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.profiles),
+                title: Text(context.l10n.profilesTitle),
+                subtitle: Text(context.l10n.profilesSubtitle),
+                onTap: () => context.push('/automation/profiles'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.clock),
+                title: Text(context.l10n.timetableTitle),
+                subtitle: Text(context.l10n.timetableSubtitle),
+                onTap: () => context.push('/automation/timetable'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.connections),
+                title: Text(context.l10n.netProfileTitle),
+                subtitle: Text(context.l10n.netProfileSubtitle),
+                onTap: () => context.push('/network/profiles'),
+              ),
+            ],
+          ),
+          generateSection(
             title: context.l10n.ruleControlSubsSection,
             items: [
               ListItem(

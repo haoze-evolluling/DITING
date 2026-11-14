@@ -13714,4 +13714,214 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get troubleshootDetailModeNote => '详细模式记录所有进程与缓冲区的完整 logcat，更全面但更耗电。';
+
+  @override
+  String get automationTitle => '自动化';
+
+  @override
+  String get automationSubtitle => '条件-动作规则编排场景';
+
+  @override
+  String get automationHubSection => '场景与自动化';
+
+  @override
+  String get automationIntro => '用触发、条件与动作把零散入口组合成场景（到家 / 会议 / 游戏 / 低电）。';
+
+  @override
+  String get automationEmpty => '还没有自动化规则，点击右上角新增一条开始编排场景。';
+
+  @override
+  String get automationRulesSection => '规则';
+
+  @override
+  String get automationHistory => '审计时间线';
+
+  @override
+  String get automationHistoryEmpty => '暂无自动化事件。';
+
+  @override
+  String get automationRuleFallbackName => '未命名规则';
+
+  @override
+  String automationPriorityShort(int value) {
+    return '优先级 $value';
+  }
+
+  @override
+  String automationActionCount(int value) {
+    return '$value 个动作';
+  }
+
+  @override
+  String get automationTriggerSchedule => '定时';
+
+  @override
+  String get automationTriggerNetwork => '网络';
+
+  @override
+  String get automationTriggerState => '状态';
+
+  @override
+  String get automationTriggerManual => '手动';
+
+  @override
+  String get automationNewTitle => '新建规则';
+
+  @override
+  String get automationEditTitle => '编辑规则';
+
+  @override
+  String get automationDelete => '删除';
+
+  @override
+  String get automationSave => '保存';
+
+  @override
+  String get automationEditIntro => '选择触发方式与动作；保存后由自动化引擎在对应时机执行。';
+
+  @override
+  String get automationRuleName => '规则名称';
+
+  @override
+  String get automationPriority => '优先级';
+
+  @override
+  String get automationTrigger => '触发方式';
+
+  @override
+  String get automationMatch => '条件组合';
+
+  @override
+  String get automationMatchAll => '满足全部条件';
+
+  @override
+  String get automationMatchAny => '满足任一条件';
+
+  @override
+  String get automationActions => '动作';
+
+  @override
+  String get automationActionPause => '暂停拦截';
+
+  @override
+  String get automationMinutes => '分钟';
+
+  @override
+  String get automationActionBlockServices => '屏蔽服务';
+
+  @override
+  String get automationServicesUnavailable => '服务目录内核不可用';
+
+  @override
+  String get automationSwitchProfileNone => '不切换档案';
+
+  @override
+  String get automationScheduleStart => '开始';
+
+  @override
+  String get automationScheduleEnd => '结束';
+
+  @override
+  String get profilesTitle => '配置档案';
+
+  @override
+  String get profilesSubtitle => '一键切换配置快照';
+
+  @override
+  String get profilesAdd => '新增档案';
+
+  @override
+  String get profilesIntro => '一键切换工作模式 / 上游集 / 规则组与开关的快照。';
+
+  @override
+  String get profilesEmpty => '还没有配置档案。';
+
+  @override
+  String get profilesListSection => '档案';
+
+  @override
+  String get profilesApply => '应用';
+
+  @override
+  String get profilesDelete => '删除';
+
+  @override
+  String get profilesName => '名称';
+
+  @override
+  String get profilesUpstreamSet => '上游集';
+
+  @override
+  String get profilesCancel => '取消';
+
+  @override
+  String get profilesSave => '保存';
+
+  @override
+  String profilesApplied(String name) {
+    return '已应用 $name';
+  }
+
+  @override
+  String get timetableTitle => '分时规则';
+
+  @override
+  String get timetableSubtitle => '按周编排拦截时段';
+
+  @override
+  String get timetableAdd => '新增时段';
+
+  @override
+  String get timetableIntro => '按周编排分时拦截时段，到点自动收紧或恢复。';
+
+  @override
+  String get timetableEmpty => '还没有分时时段。';
+
+  @override
+  String get netProfileTitle => '网络档案';
+
+  @override
+  String get netProfileSubtitle => '按网络差异化策略';
+
+  @override
+  String get netProfileAdd => '新增网络档案';
+
+  @override
+  String get netProfileIntro => '按当前网络（Wi‑Fi / 蜂窝 / 漫游 / 计费）自动选择生效的上游集与规则组。';
+
+  @override
+  String get netProfileCurrentNet => '当前网络';
+
+  @override
+  String get netProfileResolved => '生效档案';
+
+  @override
+  String get netProfileNone => '无匹配档案';
+
+  @override
+  String get netProfileEmpty => '还没有网络档案，新增一条开始按网络切换策略。';
+
+  @override
+  String get netProfileList => '网络档案';
+
+  @override
+  String get netProfileDelete => '删除';
+
+  @override
+  String get netProfileName => '名称';
+
+  @override
+  String get netProfileUpstreamSet => '上游集';
+
+  @override
+  String get netProfilePriority => '优先级';
+
+  @override
+  String get netProfileCancel => '取消';
+
+  @override
+  String get netProfileSave => '保存';
+
+  @override
+  String get automationAdd => '新增规则';
 }

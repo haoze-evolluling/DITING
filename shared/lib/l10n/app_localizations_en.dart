@@ -14570,4 +14570,223 @@ class AppL10nEn extends AppL10n {
   @override
   String get troubleshootDetailModeNote =>
       'Detailed mode records the full logcat of every process and buffer; broader but uses more power.';
+
+  @override
+  String get automationTitle => 'Automation';
+
+  @override
+  String get automationSubtitle =>
+      'Compose scenarios from conditions and actions';
+
+  @override
+  String get automationHubSection => 'Scenarios & automation';
+
+  @override
+  String get automationIntro =>
+      'Combine triggers, conditions and actions into scenes (home / meeting / gaming / low battery).';
+
+  @override
+  String get automationEmpty =>
+      'No automation rules yet. Add one from the top-right to start composing scenes.';
+
+  @override
+  String get automationRulesSection => 'Rules';
+
+  @override
+  String get automationHistory => 'Audit timeline';
+
+  @override
+  String get automationHistoryEmpty => 'No automation events yet.';
+
+  @override
+  String get automationRuleFallbackName => 'Untitled rule';
+
+  @override
+  String automationPriorityShort(int value) {
+    return 'Priority $value';
+  }
+
+  @override
+  String automationActionCount(int value) {
+    return '$value actions';
+  }
+
+  @override
+  String get automationTriggerSchedule => 'Schedule';
+
+  @override
+  String get automationTriggerNetwork => 'Network';
+
+  @override
+  String get automationTriggerState => 'State';
+
+  @override
+  String get automationTriggerManual => 'Manual';
+
+  @override
+  String get automationNewTitle => 'New rule';
+
+  @override
+  String get automationEditTitle => 'Edit rule';
+
+  @override
+  String get automationDelete => 'Delete';
+
+  @override
+  String get automationSave => 'Save';
+
+  @override
+  String get automationEditIntro =>
+      'Pick a trigger and actions; the automation engine runs them when the trigger fires.';
+
+  @override
+  String get automationRuleName => 'Rule name';
+
+  @override
+  String get automationPriority => 'Priority';
+
+  @override
+  String get automationTrigger => 'Trigger';
+
+  @override
+  String get automationMatch => 'Match conditions';
+
+  @override
+  String get automationMatchAll => 'Match all conditions';
+
+  @override
+  String get automationMatchAny => 'Match any condition';
+
+  @override
+  String get automationActions => 'Actions';
+
+  @override
+  String get automationActionPause => 'Pause blocking';
+
+  @override
+  String get automationMinutes => 'Minutes';
+
+  @override
+  String get automationActionBlockServices => 'Block services';
+
+  @override
+  String get automationServicesUnavailable =>
+      'Service catalog core unavailable';
+
+  @override
+  String get automationSwitchProfileNone => 'Do not switch profile';
+
+  @override
+  String get automationScheduleStart => 'Start';
+
+  @override
+  String get automationScheduleEnd => 'End';
+
+  @override
+  String get profilesTitle => 'Profiles';
+
+  @override
+  String get profilesSubtitle => 'One-tap configuration snapshots';
+
+  @override
+  String get profilesAdd => 'Add profile';
+
+  @override
+  String get profilesIntro =>
+      'One-tap snapshots of work mode / upstream set / rule groups and toggles.';
+
+  @override
+  String get profilesEmpty => 'No profiles yet.';
+
+  @override
+  String get profilesListSection => 'Profiles';
+
+  @override
+  String get profilesApply => 'Apply';
+
+  @override
+  String get profilesDelete => 'Delete';
+
+  @override
+  String get profilesName => 'Name';
+
+  @override
+  String get profilesUpstreamSet => 'Upstream set';
+
+  @override
+  String get profilesCancel => 'Cancel';
+
+  @override
+  String get profilesSave => 'Save';
+
+  @override
+  String profilesApplied(String name) {
+    return 'Applied $name';
+  }
+
+  @override
+  String get timetableTitle => 'Timetable';
+
+  @override
+  String get timetableSubtitle => 'Weekly blocking windows';
+
+  @override
+  String get timetableAdd => 'Add slot';
+
+  @override
+  String get timetableIntro =>
+      'Lay out timed blocking windows across the week; they tighten or restore on schedule.';
+
+  @override
+  String get timetableEmpty => 'No timetable slots yet.';
+
+  @override
+  String get netProfileTitle => 'Network profiles';
+
+  @override
+  String get netProfileSubtitle => 'Per-network policy';
+
+  @override
+  String get netProfileAdd => 'Add network profile';
+
+  @override
+  String get netProfileIntro =>
+      'Automatically pick the upstream set and rule groups by the current network (Wi‑Fi / cellular / roaming / metered).';
+
+  @override
+  String get netProfileCurrentNet => 'Current network';
+
+  @override
+  String get netProfileResolved => 'Effective profile';
+
+  @override
+  String get netProfileNone => 'No matching profile';
+
+  @override
+  String get netProfileEmpty =>
+      'No network profiles yet. Add one to switch policy by network.';
+
+  @override
+  String get netProfileList => 'Network profiles';
+
+  @override
+  String get netProfileDelete => 'Delete';
+
+  @override
+  String get netProfileName => 'Name';
+
+  @override
+  String get netProfileUpstreamSet => 'Upstream set';
+
+  @override
+  String get netProfilePriority => 'Priority';
+
+  @override
+  String get netProfileCancel => 'Cancel';
+
+  @override
+  String get netProfileSave => 'Save';
+
+  @override
+  String get automationAdd => 'Add rule';
 }

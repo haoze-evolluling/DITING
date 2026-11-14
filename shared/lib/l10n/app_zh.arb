@@ -5494,12 +5494,12 @@
   "desktopCacheHits": "命中",
   "desktopCacheEvictions": "淘汰",
   "desktopFilterTitle": "规则拦截",
-  "desktopFilterRules": "规则总数",
-  "desktopFilterBlockRate": "拦截率",
+  "desktopFilterRules": "有效防护规则",
+  "desktopFilterBlockRate": "拦截比例",
   "desktopTakeoverTitle": "系统 DNS 接管",
   "desktopTakeoverOn": "已接管",
   "desktopTakeoverOff": "未接管",
-  "desktopFilterPauseTitle": "暂停拦截",
+  "desktopFilterPauseTitle": "临时暂停拦截",
   "desktopFilterPaused": "已暂停",
   "desktopFilterActive": "生效中",
   "desktopServiceHostTitle": "后台服务",
@@ -5655,7 +5655,13 @@
   "desktopUpstreamNodesTitle": "已配置的 DNS 服务器",
   "desktopUpstreamNodesBody": "管理用于解析域名的 DNS 服务器，支持加密传输与智能容灾测速",
   "desktopUpstreamNodesCount": "{count} 个节点",
-  "@desktopUpstreamNodesCount": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopUpstreamNodesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopUpstreamAdd": "添加 DNS 服务器",
   "desktopUpstreamAddTitle": "添加 DNS 服务器",
   "desktopUpstreamEditTitle": "编辑 DNS 服务器",
@@ -5674,21 +5680,51 @@
   "desktopUpstreamStampParsing": "解析中…",
   "desktopUpstreamStampEmpty": "请先粘贴 sdns:// 印章",
   "desktopUpstreamStampFailed": "印章解析失败：{message}",
-  "@desktopUpstreamStampFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopUpstreamStampFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopUpstreamStampParsed": "已解析为 {proto}",
-  "@desktopUpstreamStampParsed": {"placeholders": {"proto": {"type": "String"}}},
+  "@desktopUpstreamStampParsed": {
+    "placeholders": {
+      "proto": {
+        "type": "String"
+      }
+    }
+  },
   "desktopUpstreamInvalid": "服务器名称与地址不得为空",
   "desktopUpstreamDeleteTitle": "确认删除",
   "desktopUpstreamDeleteBody": "确定删除上游 DNS 服务器 [{name}] 吗？",
-  "@desktopUpstreamDeleteBody": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopUpstreamDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopUpstreamKeepOne": "请至少保留一个 DNS 服务器以维持正常的域名解析服务。",
   "desktopUpstreamEmpty": "暂无配置 DNS 服务器",
   "desktopUpstreamEmptyBody": "请添加主备 DNS 服务器后保存。",
   "desktopUpstreamTest": "测试延迟",
   "desktopUpstreamTestFailed": "测试失败：{message}",
-  "@desktopUpstreamTestFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopUpstreamTestFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopUpstreamSaveFailed": "更新 DNS 配置失败：{message}",
-  "@desktopUpstreamSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopUpstreamSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopUpstreamSaved": "DNS 服务器配置已更新并即时生效",
   "desktopUpstreamLoadFailed": "读取上游配置失败",
   "desktopUpstreamBootstrapTitle": "Bootstrap 引导解析",
@@ -5702,7 +5738,13 @@
   "desktopUpstreamBootstrapAddress": "IP 地址 (可带端口)",
   "desktopUpstreamBootstrapInvalid": "请填写名称与 IP 地址",
   "desktopUpstreamBootstrapDeleteBody": "确定删除引导服务器 [{name}] 吗？",
-  "@desktopUpstreamBootstrapDeleteBody": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopUpstreamBootstrapDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopUpstreamRoutesTitle": "条件分流路由",
   "desktopUpstreamRoutesBody": "为内部私有域名定向指定专用 DNS 服务器，支持 *.internal 这类泛域名",
   "desktopUpstreamRoutesAdd": "添加分流规则",
@@ -5711,7 +5753,13 @@
   "desktopUpstreamRouteServer": "定向 DNS 服务器地址",
   "desktopUpstreamRouteInvalid": "请填写匹配域名与目标 DNS 地址",
   "desktopUpstreamRouteDeleteBody": "确定删除匹配域名 [{domain}] 的分流规则吗？",
-  "@desktopUpstreamRouteDeleteBody": {"placeholders": {"domain": {"type": "String"}}},
+  "@desktopUpstreamRouteDeleteBody": {
+    "placeholders": {
+      "domain": {
+        "type": "String"
+      }
+    }
+  },
   "desktopUpstreamFallbackPolicyTitle": "回退触发条件",
   "desktopUpstreamFallbackPolicyBody": "何时改用备用上游：超时、应答码与解析失败",
   "desktopUpstreamFallbackPolicyOff": "备用链未开启，触发条件暂不生效。",
@@ -5719,7 +5767,13 @@
   "desktopUpstreamFallbackBody": "主链路整体失效后整链切换的备用解析链路",
   "desktopUpstreamFallbackOff": "未启用",
   "desktopUpstreamFallbackCount": "{count} 个回退节点",
-  "@desktopUpstreamFallbackCount": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopUpstreamFallbackCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopUpstreamFallbackNote": "与主链路是两条独立链路：主链路先以独立超时尝试整条链，失败或命中下列响应码后，才整链切换到回退上游。",
   "desktopUpstreamFallbackEmpty": "未配置回退上游，DNS 查询量不会因此增加。",
   "desktopUpstreamFallbackAdd": "添加回退节点",
@@ -5729,7 +5783,13 @@
   "desktopUpstreamFallbackRcodeHint": "默认仅 SERVFAIL 与 REFUSED。NXDOMAIN 是权威有效判定，勾选它会让「域名不存在」也去问备用上游。",
   "desktopUpstreamFallbackOnError": "超时、连接失败等链路故障同样触发回退",
   "desktopUpstreamWeight": "权重 {weight}",
-  "@desktopUpstreamWeight": {"placeholders": {"weight": {"type": "int"}}},
+  "@desktopUpstreamWeight": {
+    "placeholders": {
+      "weight": {
+        "type": "int"
+      }
+    }
+  },
   "desktopUpstreamPinSet": "指纹固定",
   "desktopUpstreamPresetMissing": "该服务商未提供此协议的公开端点，请手动填写",
   "desktopUpstreamProbeFailed": "测试失败",
@@ -5746,13 +5806,34 @@
   "desktopCacheClear": "一键清空缓存",
   "desktopCacheClearTitle": "确定清空所有加速缓存？",
   "desktopCacheClearBody": "此操作将清空当前全部已缓存的网址记录（共 {count} 条）。清空后后续访问将重新通过网络解析。",
-  "@desktopCacheClearBody": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopCacheClearBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCacheClearDone": "加速缓存已全部清空",
   "desktopCacheClearFailed": "清空缓存失败：{message}",
-  "@desktopCacheClearFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopCacheClearFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopCacheTelemetryTitle": "缓存遥测指标",
   "desktopCacheTelemetryCapacity": "容量 {used} / {max}",
-  "@desktopCacheTelemetryCapacity": {"placeholders": {"used": {"type": "int"}, "max": {"type": "int"}}},
+  "@desktopCacheTelemetryCapacity": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCacheMisses": "实时联网解析",
   "desktopCacheStaleHits": "弱网应急保障",
   "desktopCacheNegativeHits": "无效网址拦截",
@@ -5761,7 +5842,13 @@
   "desktopCacheTopBody": "本地缓存命中次数最高的前 10 个域名",
   "desktopCacheTopEmpty": "暂无高频网址访问记录",
   "desktopCacheTopHits": "{count} 次",
-  "@desktopCacheTopHits": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopCacheTopHits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCacheConfigTitle": "加速策略设置",
   "desktopCacheConfigBody": "有效期规则、弱网容灾与热点预取",
   "desktopCacheConfigSave": "保存策略",
@@ -5792,7 +5879,13 @@
   "desktopCachePrefetchBeforeHint": "剩余有效期低于该值时触发刷新",
   "desktopCacheInvalidNumbers": "秒数与阈值需为正整数",
   "desktopCacheSaveFailed": "保存缓存配置失败：{message}",
-  "@desktopCacheSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopCacheSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopCacheLoadFailed": "读不到缓存配置",
   "desktopCachePersistTitle": "缓存落盘持久化",
   "desktopCachePersistBody": "把内存中的解析结果定期写入磁盘，服务重启后可直接读回。默认关闭：读取上次的应答会让「上游已变更但仍命中旧记录」更难察觉。",
@@ -5802,21 +5895,57 @@
   "desktopCachePersistIntervalHint": "取值范围 30–86400；留空或 0 使用默认值 300。服务退出时总会额外写一次。",
   "desktopCachePersistPath": "落盘文件",
   "desktopCachePersistLastError": "最近一次落盘失败：{message}",
-  "@desktopCachePersistLastError": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopCachePersistLastError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopCachePersistRecords": "当前 {count} 条可落盘记录",
   "desktopCacheSnapshotTitle": "磁盘快照",
   "desktopCacheSnapshotBody": "把当前缓存立即写入落盘文件，或从文件读回上次的记录",
-  "@desktopCachePersistRecords": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopCachePersistRecords": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCachePersistDump": "立即落盘",
   "desktopCachePersistLoad": "从文件恢复",
   "desktopCachePersistDumpDone": "已落盘 {count} 条缓存记录",
-  "@desktopCachePersistDumpDone": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopCachePersistDumpDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCachePersistLoadDone": "已从落盘文件恢复 {count} 条缓存记录",
-  "@desktopCachePersistLoadDone": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopCachePersistLoadDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCachePersistDumpFailed": "落盘失败：{message}",
-  "@desktopCachePersistDumpFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopCachePersistDumpFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopCachePersistLoadFailed": "恢复失败：{message}",
-  "@desktopCachePersistLoadFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopCachePersistLoadFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopCachePersistLoadTitle": "确定从落盘文件恢复缓存？",
   "desktopCachePersistLoadBody": "文件中仍有效的记录会被读入当前缓存，覆盖同名的现有条目；已过期的记录会被自动忽略。",
   "desktopCachePersistToggleOn": "缓存落盘已开启",
@@ -5826,22 +5955,61 @@
   "desktopCacheExcludeBody": "命中规则的域名既不读取也不写入缓存，每次都实时回源。适用于内网域名、动态 IP 探测等「缓存反而出错」的场景。",
   "desktopCacheExcludeOff": "未启用",
   "desktopCacheExcludeCount": "{count} 条规则",
-  "@desktopCacheExcludeCount": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopCacheExcludeCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCacheExcludeLabel": "正则表达式（一行一条，Go RE2 语法）",
   "desktopCacheExcludeHint": "例如：\\.local$",
   "desktopCacheExcludeSave": "保存规则",
   "desktopCacheExcludeSaved": "已保存 {count} 条排除规则",
-  "@desktopCacheExcludeSaved": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopCacheExcludeSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCacheExcludeCleared": "已清空排除规则，全部域名重新参与缓存",
   "desktopCacheExcludeFailed": "保存排除规则失败：{message}",
-  "@desktopCacheExcludeFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopCacheExcludeFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopCacheExcludeHits": "已拦截 {count} 次缓存读写",
-  "@desktopCacheExcludeHits": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopCacheExcludeHits": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCacheExcludeReset": "撤销修改",
   "desktopCacheExcludeTooMany": "规则超过 {max} 条，超出部分不会被保存",
-  "@desktopCacheExcludeTooMany": {"placeholders": {"max": {"type": "int"}}},
+  "@desktopCacheExcludeTooMany": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCacheExcludeTooLong": "{count} 条规则超过 {max} 字符，保存时会被忽略",
-  "@desktopCacheExcludeTooLong": {"placeholders": {"count": {"type": "int"}, "max": {"type": "int"}}},
+  "@desktopCacheExcludeTooLong": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "desktopCacheExcludePresetLocal": "内网单标签域",
   "desktopCacheExcludePresetPtr": "PTR 反查",
   "desktopCacheExcludePresetProbe": "临时探测域",
@@ -5882,12 +6050,24 @@
   "desktopRewriteToggleOn": "自定义 DNS 重写已开启",
   "desktopRewriteToggleOff": "自定义 DNS 重写已关闭",
   "desktopRewriteSaveFailed": "保存重写配置失败：{message}",
-  "@desktopRewriteSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopRewriteSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopRewriteLoadFailed": "读不到 DNS 重写配置",
   "desktopRewriteRulesTitle": "DNS 重写规则列表",
   "desktopRewriteRulesBody": "当前生效的自定义伪装映射",
   "desktopRewriteRulesCount": "{count} 条规则",
-  "@desktopRewriteRulesCount": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopRewriteRulesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopRewriteAdd": "添加重写规则",
   "desktopRewriteSearch": "搜索域名、目标 IP 或别名…",
   "desktopRewriteEmpty": "暂未添加任何 DNS 重写规则，点击上方按钮即可添加",
@@ -5901,21 +6081,63 @@
   "desktopRewriteEdit": "编辑重写规则",
   "desktopRewriteDelete": "删除规则",
   "desktopRewriteSeconds": "{count} 秒",
-  "@desktopRewriteSeconds": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopRewriteSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopRewriteNoTarget": "无目标",
   "desktopRewriteRcodeOnly": "仅返回 {rcode}，不返回任何记录",
-  "@desktopRewriteRcodeOnly": {"placeholders": {"rcode": {"type": "String"}}},
+  "@desktopRewriteRcodeOnly": {
+    "placeholders": {
+      "rcode": {
+        "type": "String"
+      }
+    }
+  },
   "desktopRewriteDeleteTitle": "删除 DNS 重写规则",
   "desktopRewriteDeleteBody": "确定要删除域名「{domain}」的 DNS 重写规则吗？",
-  "@desktopRewriteDeleteBody": {"placeholders": {"domain": {"type": "String"}}},
+  "@desktopRewriteDeleteBody": {
+    "placeholders": {
+      "domain": {
+        "type": "String"
+      }
+    }
+  },
   "desktopRewriteRuleSaved": "重写规则「{domain}」已保存并生效",
-  "@desktopRewriteRuleSaved": {"placeholders": {"domain": {"type": "String"}}},
+  "@desktopRewriteRuleSaved": {
+    "placeholders": {
+      "domain": {
+        "type": "String"
+      }
+    }
+  },
   "desktopRewriteRuleDeleted": "重写规则「{domain}」已删除",
-  "@desktopRewriteRuleDeleted": {"placeholders": {"domain": {"type": "String"}}},
+  "@desktopRewriteRuleDeleted": {
+    "placeholders": {
+      "domain": {
+        "type": "String"
+      }
+    }
+  },
   "desktopRewriteRuleFailed": "保存重写规则失败：{message}",
-  "@desktopRewriteRuleFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopRewriteRuleFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopRewriteDeleteFailed": "删除规则失败：{message}",
-  "@desktopRewriteDeleteFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopRewriteDeleteFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopRewriteAddTitle": "添加 DNS 重写与伪装规则",
   "desktopRewriteEditTitle": "编辑 DNS 重写规则",
   "desktopRewriteDomainLabel": "匹配域名",
@@ -5954,7 +6176,19 @@
   "desktopZoneTitle": "本地权威区（zone 文件）",
   "desktopZoneBody": "整段声明一个名字空间由本机负责，区内未收录的名字返回权威 NODATA 而非转发上游；适合内网域名与局域网服务发现",
   "desktopZoneBadge": "{zones} / {maxZones} 区 · {records} 个名字",
-  "@desktopZoneBadge": {"placeholders": {"zones": {"type": "int"}, "maxZones": {"type": "int"}, "records": {"type": "int"}}},
+  "@desktopZoneBadge": {
+    "placeholders": {
+      "zones": {
+        "type": "int"
+      },
+      "maxZones": {
+        "type": "int"
+      },
+      "records": {
+        "type": "int"
+      }
+    }
+  },
   "desktopZoneRules": "区顶点及其以下所有名字都由本地负责：区里没有的名字会被权威地判为「不存在」，不会漏到公网，同名时也优先于 hosts 条目。因此顶点要写成完整后缀（如 lan.），而不是单条域名。区文件语法遵循 RFC 1035，INCLUDE 指令出于安全考虑一律拒绝。",
   "desktopZoneDefaultTtl": "默认 TTL（秒）",
   "desktopZoneTtlSaved": "本地权威区默认 TTL 已保存",
@@ -5962,27 +6196,63 @@
   "desktopZoneToggleOn": "本地权威区已启用",
   "desktopZoneToggleOff": "本地权威区已停用",
   "desktopZoneSaveFailed": "保存本地权威区配置失败：{message}",
-  "@desktopZoneSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopZoneSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopZoneLoadFailed": "读不到本地权威区配置",
   "desktopZoneLimit": "合计上限 {records} 条记录；超出部分会被截断并在区上标注。",
-  "@desktopZoneLimit": {"placeholders": {"records": {"type": "int"}}},
+  "@desktopZoneLimit": {
+    "placeholders": {
+      "records": {
+        "type": "int"
+      }
+    }
+  },
   "desktopZoneAdd": "添加区",
   "desktopZoneSaveAll": "保存全部",
   "desktopZoneSaved": "本地权威区配置已保存并生效",
   "desktopZoneEmpty": "尚未配置任何本地权威区",
   "desktopZoneMaxZones": "最多支持 {max} 个区，请先删除不再使用的区",
-  "@desktopZoneMaxZones": {"placeholders": {"max": {"type": "int"}}},
+  "@desktopZoneMaxZones": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "desktopZoneOriginHint": "区顶点，如 lan.",
   "desktopZoneDeleted": "区「{origin}」已删除",
-  "@desktopZoneDeleted": {"placeholders": {"origin": {"type": "String"}}},
+  "@desktopZoneDeleted": {
+    "placeholders": {
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
   "desktopZoneUnnamed": "（未命名）",
   "desktopZoneStateDisabled": "已停用",
   "desktopZoneStatePending": "待构建",
   "desktopZoneStateFailed": "解析失败",
   "desktopZoneStateTruncated": "已加载 {count} 条（截断）",
-  "@desktopZoneStateTruncated": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopZoneStateTruncated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopZoneStateLoaded": "已加载 {count} 条",
-  "@desktopZoneStateLoaded": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopZoneStateLoaded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopZoneFailedReason": "该区未被加载",
   "desktopZoneExpand": "展开编辑",
   "desktopZoneCollapse": "收起",
@@ -5992,7 +6262,13 @@
   "desktopZonePreviewNote": "用与后端一致的解析路径试跑一次；改动需点「保存全部」才会生效。",
   "desktopZonePreviewEmpty": "（空区，无记录）",
   "desktopZonePreviewMore": "… 其余 {count} 条已省略",
-  "@desktopZonePreviewMore": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopZonePreviewMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopHubDns64": "IPv6 / DNS64",
   "desktopHubDns64Body": "为纯 IPv6 网络把仅有 IPv4 记录的目标合成为 AAAA",
   "desktopDns64Title": "IPv6 / DNS64",
@@ -6014,7 +6290,13 @@
   "desktopDns64ToggleOn": "DNS64 过渡合成已开启",
   "desktopDns64ToggleOff": "DNS64 过渡合成已关闭",
   "desktopDns64SaveFailed": "更新 DNS64 配置失败：{message}",
-  "@desktopDns64SaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopDns64SaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopDns64LoadFailed": "读不到 DNS64 配置",
   "desktopHubFilterLists": "规则订阅",
   "desktopHubFilterListsBody": "在线规则库与本地规则文件，按订阅批量生效",
@@ -6026,52 +6308,134 @@
   "desktopFilterPausedChip": "已暂停",
   "desktopFilterBlocked": "已拦截请求",
   "desktopFilterTimes": "次",
-  "desktopFilterBlockRate": "拦截比例",
-  "desktopFilterRules": "有效防护规则",
   "desktopFilterRulesUnit": "条",
   "desktopFilterActiveLists": "已启用规则库",
   "desktopFilterListsUnit": "个",
   "desktopFilterPausedRemaining": "拦截已暂停，剩余 {remaining} 后自动恢复",
-  "@desktopFilterPausedRemaining": {"placeholders": {"remaining": {"type": "String"}}},
+  "@desktopFilterPausedRemaining": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterPauseDays": "{days} 天",
-  "@desktopFilterPauseDays": {"placeholders": {"days": {"type": "int"}}},
+  "@desktopFilterPauseDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterPauseHours": "{hours} 小时 {minutes} 分",
-  "@desktopFilterPauseHours": {"placeholders": {"hours": {"type": "int"}, "minutes": {"type": "int"}}},
+  "@desktopFilterPauseHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterPauseMinutes": "{minutes} 分 {seconds} 秒",
-  "@desktopFilterPauseMinutes": {"placeholders": {"minutes": {"type": "int"}, "seconds": {"type": "int"}}},
+  "@desktopFilterPauseMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterPauseSeconds": "{seconds} 秒",
-  "@desktopFilterPauseSeconds": {"placeholders": {"seconds": {"type": "int"}}},
+  "@desktopFilterPauseSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterListsTitle": "规则订阅库",
   "desktopFilterListsBody": "支持在线订阅链接与本地规则文本文件；每个规则库独立开关，全部更新会逐个重新拉取。",
   "desktopFilterListsCount": "{count} 个规则库",
-  "@desktopFilterListsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopFilterListsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterListUpdateAll": "全部更新",
   "desktopFilterListAdd": "添加规则库",
   "desktopFilterListsEmpty": "暂无规则订阅库",
   "desktopFilterListsEmptyBody": "添加 AdGuard 语法规则链接或本地 Hosts 规则文件后，规则会随订阅自动下载并生效。",
   "desktopFilterListDefaultName": "订阅列表 {index}",
-  "@desktopFilterListDefaultName": {"placeholders": {"index": {"type": "int"}}},
+  "@desktopFilterListDefaultName": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterListAdded": "规则库已添加并开始下载",
   "desktopFilterListAllUpdated": "全部规则库已更新完成",
   "desktopFilterListUpdated": "规则库已更新",
   "desktopFilterActionFailed": "操作失败：{message}",
-  "@desktopFilterActionFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopFilterActionFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterListToggleOn": "已启用规则库：{name}",
-  "@desktopFilterListToggleOn": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopFilterListToggleOn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterListToggleOff": "已停用规则库：{name}",
-  "@desktopFilterListToggleOff": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopFilterListToggleOff": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterListDeleteTitle": "删除规则库",
   "desktopFilterListDeleteBody": "确定要删除规则库「{name}」吗？删除后其包含的拦截规则将不再生效。",
-  "@desktopFilterListDeleteBody": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopFilterListDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterListDeleteConfirm": "确定删除",
   "desktopFilterListDeleted": "规则库已删除",
   "desktopFilterListRules": "{count} 条规则",
-  "@desktopFilterListRules": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopFilterListRules": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterListEnabled": "规则拦截生效中",
   "desktopFilterListDisabled": "已暂停拦截",
   "desktopFilterListNeverUpdated": "最后更新：未更新",
   "desktopFilterListUpdatedAt": "最后更新：{time}",
-  "@desktopFilterListUpdatedAt": {"placeholders": {"time": {"type": "String"}}},
+  "@desktopFilterListUpdatedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterListRefreshOne": "立即更新此规则库",
   "desktopFilterListDelete": "删除此规则库",
   "desktopFilterListHealthOk": "已同步",
@@ -6101,11 +6465,23 @@
   "desktopFilterRulesSaving": "保存中…",
   "desktopFilterRulesSaved": "自定义规则已保存生效",
   "desktopFilterRulesSaveFailed": "保存自定义规则失败：{message}",
-  "@desktopFilterRulesSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopFilterRulesSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterRulesLoadFailed": "读不到自定义规则",
   "desktopFilterRulesPlaceholder": "在此输入自定义拦截或信任规则，每行一条…",
   "desktopFilterRulesLineCount": "行数统计：{count} 条规则",
-  "@desktopFilterRulesLineCount": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopFilterRulesLineCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterRulesHint": "每行一条规则，以 ! 开头的行为注释；修改后点击保存立即热重载生效。",
   "desktopFilterGuideTitle": "AdGuard 语法速查指南",
   "desktopFilterGuideBody": "主流广告过滤与信任规则编写格式",
@@ -6131,7 +6507,13 @@
   "desktopFilterConfigRefresh": "刷新拦截配置",
   "desktopFilterConfigLoadFailed": "读不到拦截配置",
   "desktopFilterConfigSaveFailed": "保存拦截配置失败：{message}",
-  "@desktopFilterConfigSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopFilterConfigSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterEngineOnMessage": "规则拦截防护已开启",
   "desktopFilterEngineOffMessage": "规则拦截防护已关闭",
   "desktopFilterModeTitle": "拦截响应处理方式",
@@ -6169,14 +6551,25 @@
   "desktopFilterAdvancedBogusOff": "伪应答纠正已关闭",
   "desktopFilterAdvancedBogusListLabel": "劫持地址清单（一行一条，支持 IP 与 CIDR 网段）",
   "desktopFilterAdvancedBogusSuspicious": "以下条目格式可疑，保存时若无法解析将被服务忽略：{entries}",
-  "@desktopFilterAdvancedBogusSuspicious": {"placeholders": {"entries": {"type": "String"}}},
+  "@desktopFilterAdvancedBogusSuspicious": {
+    "placeholders": {
+      "entries": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterAdvancedBogusPresets": "快捷填入：",
   "desktopFilterAdvancedBogusReset": "撤销修改",
   "desktopFilterAdvancedBogusSave": "保存地址清单",
   "desktopFilterAdvancedBogusSaved": "已保存 {count} 条劫持地址",
-  "@desktopFilterAdvancedBogusSaved": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopFilterAdvancedBogusSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterAdvancedBogusCleared": "劫持地址清单已清空",
-  "desktopFilterPauseTitle": "临时暂停拦截",
   "desktopFilterPauseBody": "在指定时长内整体放行全部查询，到期自动恢复（重启服务亦恢复）。",
   "desktopFilterPauseDuration": "暂停时长",
   "desktopFilterPauseAction": "暂停",
@@ -6185,9 +6578,21 @@
   "desktopFilterPauseResumed": "拦截已恢复",
   "desktopFilterPauseActiveTitle": "拦截已暂停",
   "desktopFilterPauseActiveBody": "剩余 {remaining} 后自动恢复拦截",
-  "@desktopFilterPauseActiveBody": {"placeholders": {"remaining": {"type": "String"}}},
+  "@desktopFilterPauseActiveBody": {
+    "placeholders": {
+      "remaining": {
+        "type": "String"
+      }
+    }
+  },
   "desktopFilterPauseMinutesOnly": "{minutes} 分钟",
-  "@desktopFilterPauseMinutesOnly": {"placeholders": {"minutes": {"type": "int"}}},
+  "@desktopFilterPauseMinutesOnly": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "desktopFilterPauseOneHour": "1 小时",
   "desktopFilterPauseEightHours": "8 小时",
   "desktopHubFilterSchedule": "时间计划",
@@ -6207,7 +6612,13 @@
   "desktopScheduleSaving": "保存中…",
   "desktopScheduleSaved": "时间计划已保存并生效",
   "desktopScheduleSaveFailed": "保存时间计划失败：{message}",
-  "@desktopScheduleSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopScheduleSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopScheduleAdd": "新增时间计划",
   "desktopScheduleName": "计划名称",
   "desktopScheduleEnabled": "启用该计划",
@@ -6237,52 +6648,148 @@
   "desktopServicesTitle": "应用与网站拦截",
   "desktopServicesBody": "一键拦截常见应用与网站，规则随程序内置、无需联网拉取；可与订阅规则、自定义规则叠加生效。",
   "desktopServicesCount": "{blocked} / {total} 项已拦截",
-  "@desktopServicesCount": {"placeholders": {"blocked": {"type": "int"}, "total": {"type": "int"}}},
+  "@desktopServicesCount": {
+    "placeholders": {
+      "blocked": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "desktopServicesClearAll": "全部取消",
   "desktopServicesCleared": "已取消全部应用拦截",
   "desktopServicesSearchHint": "搜索应用名称、域名或规则…",
   "desktopServicesGroupFilter": "分组筛选",
   "desktopServicesAllGroups": "全部分组",
   "desktopServicesGroupItem": "{name} ({count})",
-  "@desktopServicesGroupItem": {"placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}},
+  "@desktopServicesGroupItem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopServicesGroupChip": "{name} · {count}",
-  "@desktopServicesGroupChip": {"placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}},
+  "@desktopServicesGroupChip": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopServicesActiveRules": "展开 {count} 条规则",
-  "@desktopServicesActiveRules": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopServicesActiveRules": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopServicesEmpty": "内置服务目录为空",
   "desktopServicesNoMatch": "未找到符合条件的应用",
   "desktopServicesBlocked": "已拦截：{name}",
-  "@desktopServicesBlocked": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopServicesBlocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopServicesUnblocked": "已取消拦截：{name}",
-  "@desktopServicesUnblocked": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopServicesUnblocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopServicesActionFailed": "操作失败：{message}",
-  "@desktopServicesActionFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopServicesActionFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopServicesGroupOn": "已整组拦截：{name}",
-  "@desktopServicesGroupOn": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopServicesGroupOn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopServicesGroupOff": "已取消整组拦截：{name}",
-  "@desktopServicesGroupOff": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopServicesGroupOff": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopServicesByGroup": "随分组",
   "desktopServicesScheduleInside": "计划内",
   "desktopServicesScheduleOutside": "计划外",
   "desktopServicesRuleCount": "{group} · {count} 条规则",
-  "@desktopServicesRuleCount": {"placeholders": {"group": {"type": "String"}, "count": {"type": "int"}}},
+  "@desktopServicesRuleCount": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopServicesScheduleEdit": "编辑每周生效计划",
   "desktopServicesShowRules": "查看或收起规则",
   "desktopServicesScheduleTitle": "{name} 的每周生效计划",
-  "@desktopServicesScheduleTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopServicesScheduleTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopServicesScheduleBody": "仅在命中的时间窗口内拦截该应用，其余时间正常放行。未配置任何计划时恒为拦截；需要某段时间完全不限制时，取消勾选该服务比清空计划更直观。",
   "desktopServicesScheduleSave": "保存计划",
   "desktopServicesScheduleSaved": "「{name}」的每周生效计划已保存",
-  "@desktopServicesScheduleSaved": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopServicesScheduleSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopServicesScheduleRemoved": "「{name}」已恢复为始终拦截",
-  "@desktopServicesScheduleRemoved": {"placeholders": {"name": {"type": "String"}}},
+  "@desktopServicesScheduleRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "desktopHubPrivacy": "安全隐私",
   "desktopHubPrivacyBody": "协议加固、ECS 子网隐私与内置重绑定 / hosts 防御",
   "desktopPrivacyPageTitle": "安全隐私",
   "desktopPrivacyRefresh": "刷新安全隐私配置",
   "desktopPrivacyLoadFailed": "读不到安全隐私配置",
   "desktopPrivacySaveFailed": "保存失败：{message}",
-  "@desktopPrivacySaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopPrivacySaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopPrivacyProtocolTitle": "协议隐私与外泄防御",
   "desktopPrivacyProtocolBody": "阻断局域网私有 PTR 与单标签域名泄露，防御 ECH 加密绕过与报文侧信道嗅探",
   "desktopPrivacyBlockTitle": "记录类型拦截",
@@ -6320,7 +6827,13 @@
   "desktopPrivacyPaddingTitle": "EDNS0 报文填充大小",
   "desktopPrivacyPaddingBody": "对加密 DNS 填充至固定块，防范报文长度指纹侧信道分析。",
   "desktopPrivacyPaddingValue": "{size} 字节",
-  "@desktopPrivacyPaddingValue": {"placeholders": {"size": {"type": "int"}}},
+  "@desktopPrivacyPaddingValue": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
   "desktopPrivacyPaddingSaved": "EDNS0 填充大小已保存",
   "desktopPrivacyEcsTitle": "EDNS Client Subnet（ECS 策略）",
   "desktopPrivacyEcsBody": "ECS 允许向递归解析器携带客户端所在子网以优化 CDN 调度，但未经处理的原生 ECS 会向上游泄露家庭或企业内网真实网段。",
@@ -6343,7 +6856,13 @@
   "desktopPrivacyRebindOn": "DNS 重绑定防御已开启",
   "desktopPrivacyRebindOff": "DNS 重绑定防御已关闭",
   "desktopPrivacyRebindCount": "{count} 个白名单域名",
-  "@desktopPrivacyRebindCount": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopPrivacyRebindCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopPrivacyRebindAllowlist": "白名单设置",
   "desktopPrivacyRebindDialogTitle": "DNS 重绑定防御白名单域名",
   "desktopPrivacyRebindDialogBody": "名单内的域名允许解析为局域网私有 IP（如 192.168.x.x、10.x.x.x、127.0.0.1），支持后缀通配（如 .lan、.local）。每行一个。",
@@ -6355,7 +6874,13 @@
   "desktopPrivacyHostsOff": "本地 Hosts 解析已关闭",
   "desktopPrivacyHostsSystem": "联动系统 hosts 文件",
   "desktopPrivacyHostsTtl": "TTL {seconds}s",
-  "@desktopPrivacyHostsTtl": {"placeholders": {"seconds": {"type": "int"}}},
+  "@desktopPrivacyHostsTtl": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "desktopPrivacyHostsSystemOn": "已联动系统 hosts",
   "desktopPrivacyHostsSystemOff": "已停止联动系统 hosts",
   "desktopHubPrivacySection": "隐私与加密",
@@ -6363,7 +6888,13 @@
   "desktopSafeSearchTitle": "强制安全搜索",
   "desktopSafeSearchBody": "把主流搜索引擎重写为强制过滤入口，从 DNS 层确保无法关闭安全搜索。属新增拦截能力，默认关闭。",
   "desktopSafeSearchEnabled": "已生效 · {count} 家",
-  "@desktopSafeSearchEnabled": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopSafeSearchEnabled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopSafeSearchOff": "未启用",
   "desktopSafeSearchOn": "强制安全搜索已开启",
   "desktopSafeSearchOffMessage": "强制安全搜索已关闭",
@@ -6376,7 +6907,13 @@
   "desktopSafeSearchTtlCardTitle": "安全搜索改写有效期",
   "desktopSafeSearchTtlCardBody": "强制安全搜索的改写记录在本地保留多久，到期后重新向上游确认。",
   "desktopSafeSearchTtlChip": "当前 {seconds}s",
-  "@desktopSafeSearchTtlChip": {"placeholders": {"seconds": {"type": "int"}}},
+  "@desktopSafeSearchTtlChip": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "desktopSafeSearchBing": "Bing",
   "desktopSafeSearchDuckDuckGo": "DuckDuckGo",
   "desktopSafeSearchEcosia": "Ecosia",
@@ -6415,7 +6952,13 @@
   "desktopEncryptedRefresh": "刷新加密 DNS 状态",
   "desktopEncryptedLoadFailed": "读不到加密 DNS 服务状态",
   "desktopEncryptedSaveFailed": "操作失败：{message}",
-  "@desktopEncryptedSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopEncryptedSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopEncryptedListenersTitle": "加密 DNS 服务",
   "desktopEncryptedListenersBody": "在局域网内以 DoT / DoH / DoQ 提供解析，终端无需明文查询",
   "desktopEncryptedEnabled": "已启用",
@@ -6425,15 +6968,42 @@
   "desktopEncryptedNoProtocol": "服务总开关已打开，但三种协议都没选中，因此不会有任何监听。",
   "desktopEncryptedDot": "DoT · DNS over TLS",
   "desktopEncryptedDotBody": "端口 {port}，客户端用 tls:// 连接",
-  "@desktopEncryptedDotBody": {"placeholders": {"port": {"type": "int"}}},
+  "@desktopEncryptedDotBody": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
   "desktopEncryptedDoh": "DoH · DNS over HTTPS",
   "desktopEncryptedDohBody": "端口 {port}，路径 {path}",
-  "@desktopEncryptedDohBody": {"placeholders": {"port": {"type": "int"}, "path": {"type": "String"}}},
+  "@desktopEncryptedDohBody": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "desktopEncryptedDoq": "DoQ · DNS over QUIC",
   "desktopEncryptedDoqBody": "端口 {port}，UDP 上的加密解析",
-  "@desktopEncryptedDoqBody": {"placeholders": {"port": {"type": "int"}}},
+  "@desktopEncryptedDoqBody": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
   "desktopEncryptedListening": "正在监听 {address}",
-  "@desktopEncryptedListening": {"placeholders": {"address": {"type": "String"}}},
+  "@desktopEncryptedListening": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
   "desktopEncryptedNotListening": "未在监听（服务未启动、证书不可用或端口被占用）",
   "desktopEncryptedDotOn": "DoT 已启用",
   "desktopEncryptedDotOff": "DoT 已停用",
@@ -6468,13 +7038,31 @@
   "desktopEncryptedCertNotAfter": "有效期至",
   "desktopEncryptedCertDays": "剩余天数",
   "desktopEncryptedCertDaysValue": "{days} 天",
-  "@desktopEncryptedCertDaysValue": {"placeholders": {"days": {"type": "int"}}},
+  "@desktopEncryptedCertDaysValue": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "desktopEncryptedCertDns": "覆盖域名",
   "desktopEncryptedCertIps": "覆盖 IP",
   "desktopEncryptedCertFingerprint": "SHA-256：{fingerprint}",
-  "@desktopEncryptedCertFingerprint": {"placeholders": {"fingerprint": {"type": "String"}}},
+  "@desktopEncryptedCertFingerprint": {
+    "placeholders": {
+      "fingerprint": {
+        "type": "String"
+      }
+    }
+  },
   "desktopEncryptedCertDir": "证书目录：{dir}",
-  "@desktopEncryptedCertDir": {"placeholders": {"dir": {"type": "String"}}},
+  "@desktopEncryptedCertDir": {
+    "placeholders": {
+      "dir": {
+        "type": "String"
+      }
+    }
+  },
   "desktopEncryptedCertGenerate": "重新签发",
   "desktopEncryptedCertImport": "导入 PEM",
   "desktopEncryptedCertGenerated": "证书已生成",
@@ -6520,18 +7108,42 @@
   "desktopTrafficRefresh": "刷新设备与访问控制",
   "desktopTrafficLoadFailed": "读不到设备与访问控制状态",
   "desktopTrafficSaveFailed": "操作失败：{message}",
-  "@desktopTrafficSaveFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopTrafficSaveFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopTrafficClientsTitle": "已识别的局域网客户端",
   "desktopTrafficClientsBody": "通过 rDNS 或自定义别名识别发起查询的设备",
   "desktopTrafficClientCount": "{count} 个活跃设备",
-  "@desktopTrafficClientCount": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopTrafficClientCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopTrafficClientsEmpty": "暂未识别到来自外部或局域网的 DNS 查询设备。",
   "desktopTrafficClientUnnamed": "未设置（未知设备）",
   "desktopTrafficClientQueries": "累计查询 {count} 次",
-  "@desktopTrafficClientQueries": {"placeholders": {"count": {"type": "int"}}},
+  "@desktopTrafficClientQueries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "desktopTrafficClientNever": "最近活跃：从未",
   "desktopTrafficClientLastSeen": "最近活跃 {time}",
-  "@desktopTrafficClientLastSeen": {"placeholders": {"time": {"type": "String"}}},
+  "@desktopTrafficClientLastSeen": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "desktopTrafficStateBlocked": "已阻断",
   "desktopTrafficStateAllowed": "白名单",
   "desktopTrafficStateNotAllowed": "未在白名单",
@@ -6543,21 +7155,57 @@
   "desktopTrafficAliasBody": "留空保存将清除自定义别名。",
   "desktopTrafficAliasSave": "保存别名",
   "desktopTrafficAliasSaved": "客户端 [{ip}] 别名已更新",
-  "@desktopTrafficAliasSaved": {"placeholders": {"ip": {"type": "String"}}},
+  "@desktopTrafficAliasSaved": {
+    "placeholders": {
+      "ip": {
+        "type": "String"
+      }
+    }
+  },
   "desktopTrafficAliasCleared": "客户端 [{ip}] 别名已清除",
-  "@desktopTrafficAliasCleared": {"placeholders": {"ip": {"type": "String"}}},
+  "@desktopTrafficAliasCleared": {
+    "placeholders": {
+      "ip": {
+        "type": "String"
+      }
+    }
+  },
   "desktopTrafficAllowedAdd": "白名单",
   "desktopTrafficAllowedRemove": "已放行",
   "desktopTrafficAllowedAdded": "客户端 [{ip}] 已加入白名单",
-  "@desktopTrafficAllowedAdded": {"placeholders": {"ip": {"type": "String"}}},
+  "@desktopTrafficAllowedAdded": {
+    "placeholders": {
+      "ip": {
+        "type": "String"
+      }
+    }
+  },
   "desktopTrafficAllowedRemoved": "客户端 [{ip}] 已移出白名单",
-  "@desktopTrafficAllowedRemoved": {"placeholders": {"ip": {"type": "String"}}},
+  "@desktopTrafficAllowedRemoved": {
+    "placeholders": {
+      "ip": {
+        "type": "String"
+      }
+    }
+  },
   "desktopTrafficBlockedAdd": "阻断",
   "desktopTrafficBlockedRemove": "已阻断",
   "desktopTrafficBlockedAdded": "客户端 [{ip}] 已加入黑名单阻断",
-  "@desktopTrafficBlockedAdded": {"placeholders": {"ip": {"type": "String"}}},
+  "@desktopTrafficBlockedAdded": {
+    "placeholders": {
+      "ip": {
+        "type": "String"
+      }
+    }
+  },
   "desktopTrafficBlockedRemoved": "客户端 [{ip}] 已移出黑名单",
-  "@desktopTrafficBlockedRemoved": {"placeholders": {"ip": {"type": "String"}}},
+  "@desktopTrafficBlockedRemoved": {
+    "placeholders": {
+      "ip": {
+        "type": "String"
+      }
+    }
+  },
   "desktopTrafficAccessTitle": "客户端访问控制（ACL）",
   "desktopTrafficAccessBody": "限制特定 IP 或 CIDR 网段设备的 DNS 查询权限",
   "desktopTrafficAccessOpen": "未限制",
@@ -6592,7 +7240,16 @@
   "desktopGroupsTitle": "客户端分组 · 精细策略",
   "desktopGroupsBody": "为不同设备组绑定专属订阅规则集与拦截方式，实现精细化管控",
   "desktopGroupsCount": "{enabled} / {total} 个启用分组",
-  "@desktopGroupsCount": {"placeholders": {"enabled": {"type": "int"}, "total": {"type": "int"}}},
+  "@desktopGroupsCount": {
+    "placeholders": {
+      "enabled": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "desktopGroupsOn": "分组生效中",
   "desktopGroupsOff": "分组未启用",
   "desktopGroupsSave": "保存策略",
@@ -6631,7 +7288,13 @@
   "desktopGroupsUpstreamsInherited": "未勾选任何上游 → 沿用主链路调度策略。",
   "desktopGroupsUpstreamsSelected": "该组的查询直接由所选上游解析，不参与全局回退链。",
   "desktopGroupsNewName": "新分组 {index}",
-  "@desktopGroupsNewName": {"placeholders": {"index": {"type": "int"}}},
+  "@desktopGroupsNewName": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
   "desktopGroupsListEnabled": "该订阅已启用",
   "desktopGroupsListDisabled": "该订阅已停用",
   "desktopToolsPortTitle": "网络诊断与修复",
@@ -6645,13 +7308,37 @@
   "desktopToolsFixBody": "将停止占用 53 端口的系统监听（Windows ICS 共享 / systemd-resolved stub），不会启动或重启 DNS 服务。",
   "desktopToolsFixed": "端口冲突已修复",
   "desktopToolsFailed": "操作失败：{message}",
-  "@desktopToolsFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopToolsFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopToolsSystemListener": "系统占用",
   "desktopToolsSelfListener": "谛听自身",
   "desktopToolsConflictOwner": "{process} · PID {pid} · {address}",
-  "@desktopToolsConflictOwner": {"placeholders": {"process": {"type": "String"}, "pid": {"type": "int"}, "address": {"type": "String"}}},
+  "@desktopToolsConflictOwner": {
+    "placeholders": {
+      "process": {
+        "type": "String"
+      },
+      "pid": {
+        "type": "int"
+      },
+      "address": {
+        "type": "String"
+      }
+    }
+  },
   "desktopToolsConflictService": "服务：{service}",
-  "@desktopToolsConflictService": {"placeholders": {"service": {"type": "String"}}},
+  "@desktopToolsConflictService": {
+    "placeholders": {
+      "service": {
+        "type": "String"
+      }
+    }
+  },
   "desktopToolsPortFooter": "探测只临时占用端口以确认可用性；诊断文本与处置建议来自系统探测本身。",
   "desktopToolsRulePageTitle": "规则检测",
   "desktopHubDiagnoseSection": "诊断与恢复",
@@ -6665,7 +7352,13 @@
   "desktopToolsRuleDomainHint": "例如: ad.example.com 或 tracker.domain.com",
   "desktopToolsRuleQtype": "DNS 记录类型",
   "desktopToolsRuleQtypeOption": "{type} 记录",
-  "@desktopToolsRuleQtypeOption": {"placeholders": {"type": {"type": "String"}}},
+  "@desktopToolsRuleQtypeOption": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
   "desktopToolsRuleExamples": "快速填充示例：",
   "desktopToolsRuleRun": "立即模拟检测",
   "desktopToolsRuleRunning": "正在执行规则匹配…",
@@ -6674,7 +7367,13 @@
   "desktopToolsRuleIdle": "在上方输入域名并点击「立即模拟检测」以查看规则判定明细",
   "desktopToolsRuleBlocked": "已拦截（阻断访问）",
   "desktopToolsRuleRewritten": "已重写（{code}）",
-  "@desktopToolsRuleRewritten": {"placeholders": {"code": {"type": "String"}}},
+  "@desktopToolsRuleRewritten": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "desktopToolsRuleAllowed": "已放行（信任名单）",
   "desktopToolsRulePassed": "未命中（正常解析）",
   "desktopToolsRuleMatched": "命中的防护规则",
@@ -6684,11 +7383,23 @@
   "desktopToolsRuleReason": "处置判定原因",
   "desktopToolsRuleNoReason": "正常直连解析",
   "desktopToolsRuleRewrite": "$dnsrewrite 应答：{code}",
-  "@desktopToolsRuleRewrite": {"placeholders": {"code": {"type": "String"}}},
+  "@desktopToolsRuleRewrite": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
   "desktopToolsRuleRewriteEmpty": "不返回任何记录（权威 NODATA）",
   "desktopToolsRuleFooter": "支持 AdGuard、Hosts 及自定义规则即时模拟测试。",
   "desktopToolsRuleFailed": "检测失败：{message}",
-  "@desktopToolsRuleFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopToolsRuleFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopHubAppSection": "应用与服务",
   "desktopAboutProjectSection": "项目与链接",
   "desktopAboutDisclaimerSection": "软件说明与免责声明",
@@ -6704,7 +7415,13 @@
   "desktopSettingsPreview": "桌面预览",
   "desktopSettingsPreviewBody": "侧栏、工具栏与卡片都按当前配色和深浅模式渲染，所见即所得。",
   "desktopSettingsSystemResolved": "{mode}（跟随系统）",
-  "@desktopSettingsSystemResolved": {"placeholders": {"mode": {"type": "String"}}},
+  "@desktopSettingsSystemResolved": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "desktopServicePageTitle": "服务与连接",
   "desktopServiceEntryBody": "后台连接设置、核心服务与开机自启状态",
   "desktopServiceConnectionTitle": "后台服务连接设置",
@@ -6725,13 +7442,11 @@
   "desktopServiceCoreBody": "宿主机上负责 DNS 与拦截的核心服务状态",
   "desktopServiceCoreFooter": "安装、启动与开机自启由宿主机托管，本页只读取并显示其真实状态。",
   "desktopServiceState": "服务状态",
-  "desktopServiceAutoStart": "开机自启",
   "desktopServiceAutoStartOn": "已开启",
   "desktopServiceAutoStartOff": "未开启",
   "desktopServiceAutoStartUnknown": "服务未上报",
   "desktopServiceRunning": "运行中",
   "desktopServiceStopped": "已停止",
-  "desktopServiceNotInstalled": "未安装",
   "desktopServiceUnknown": "未知",
   "desktopServiceRefresh": "刷新核心服务状态",
   "desktopLanWebPageTitle": "局域网控制台",
@@ -6751,7 +7466,13 @@
   "desktopLanWebOn": "局域网 Web 管理已开启",
   "desktopLanWebOff": "局域网 Web 管理已关闭",
   "desktopLanWebFailed": "操作失败：{message}",
-  "@desktopLanWebFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopLanWebFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLanWebUrls": "局域网访问网址（浏览器直连）",
   "desktopLanWebNoUrls": "未探测到可用的局域网网卡 IPv4 地址",
   "desktopLanWebPort": "Web 端口",
@@ -6764,7 +7485,13 @@
   "desktopLanWebNoFirewall": "系统未检测到防火墙管理器，端口本就对外开放，无需放行规则。",
   "desktopLanWebCredentials": "控制台凭据",
   "desktopLanWebUser": "管理员：{user}",
-  "@desktopLanWebUser": {"placeholders": {"user": {"type": "String"}}},
+  "@desktopLanWebUser": {
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLanWebNoUser": "尚未设置管理员",
   "desktopLanWebProtected": "密码保护已启用",
   "desktopLanWebUnprotected": "尚未初始化密码，首次进入需设置",
@@ -6773,9 +7500,21 @@
   "desktopLanWebPasswordSave": "保存",
   "desktopLanWebPasswordSaved": "管理员密码已保存",
   "desktopLanWebChangeBody": "修改 {user} 的密码，保存后已有外部会话将失效。",
-  "@desktopLanWebChangeBody": {"placeholders": {"user": {"type": "String"}}},
+  "@desktopLanWebChangeBody": {
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLanWebSetupBody": "为 {user} 设置初始密码，之后访问控制台需要登录。",
-  "@desktopLanWebSetupBody": {"placeholders": {"user": {"type": "String"}}},
+  "@desktopLanWebSetupBody": {
+    "placeholders": {
+      "user": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLanWebOldPassword": "当前密码",
   "desktopLanWebNewPassword": "新密码",
   "desktopLanWebConfirmPassword": "确认新密码",
@@ -6813,11 +7552,26 @@
   "desktopAdaptersAllOn": "已接管全部物理网卡",
   "desktopAdaptersAllOff": "已恢复系统默认 DNS",
   "desktopAdaptersAdapterToggled": "{name}：{state}",
-  "@desktopAdaptersAdapterToggled": {"placeholders": {"name": {"type": "String"}, "state": {"type": "String"}}},
+  "@desktopAdaptersAdapterToggled": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "state": {
+        "type": "String"
+      }
+    }
+  },
   "desktopAdaptersAdapterOn": "已接管",
   "desktopAdaptersAdapterOff": "已恢复",
   "desktopAdaptersActionFailed": "操作失败：{message}",
-  "@desktopAdaptersActionFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopAdaptersActionFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLanDnsPageTitle": "局域网 DNS 服务",
   "desktopLanDnsRefresh": "刷新局域网 DNS 状态",
   "desktopLanDnsLoadFailed": "读不到局域网 DNS 状态",
@@ -6836,7 +7590,13 @@
   "desktopLanDnsIpv4": "IPv4",
   "desktopLanDnsIpv6": "IPv6",
   "desktopLanDnsRouterHint": "把 {address} 填进路由器的 DNS 设置即可覆盖全屋设备。",
-  "@desktopLanDnsRouterHint": {"placeholders": {"address": {"type": "String"}}},
+  "@desktopLanDnsRouterHint": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLanDnsFirewallTitle": "防火墙入站放行",
   "desktopLanDnsFirewallAllowed": "53 端口已放行",
   "desktopLanDnsFirewallBlocked": "未放行",
@@ -6859,7 +7619,13 @@
   "desktopLanDnsDeviceFoot": "适用于没有路由器管理权限，或只想让单台设备体验的场景。",
   "desktopLanDnsPlaceholder": "192.168.x.x",
   "desktopLanDnsFailed": "操作失败：{message}",
-  "@desktopLanDnsFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopLanDnsFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopLoginTitle": "谛听 DNS 控制台",
   "desktopLoginSubtitle": "局域网远程管理服务 · 请验证管理员凭据",
   "desktopLoginSetupSubtitle": "初始化管理员密码，守护局域网远程管理安全",
@@ -6881,7 +7647,13 @@
   "desktopLoginSuccess": "身份验证成功，正在进入控制台…",
   "desktopLoginSetupSuccess": "管理员密码设置成功，正在进入系统…",
   "desktopLoginLockout": "安全频控锁定中，请等待 {seconds} 秒后再试",
-  "@desktopLoginLockout": {"placeholders": {"seconds": {"type": "int"}}},
+  "@desktopLoginLockout": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "desktopLoginUnreachable": "连不上本机服务",
   "desktopLoginRetry": "重试",
   "desktopLoginThemeCycle": "切换深浅模式",
@@ -6905,7 +7677,13 @@
   "desktopLoginBackgroundPassword": "管理员密码",
   "desktopLoginBackgroundPasswordBody": "局域网远程修改登录背景需要验证管理员密码。",
   "desktopLoginBackgroundFailed": "操作失败：{message}",
-  "@desktopLoginBackgroundFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopLoginBackgroundFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopSettingsSessionSection": "当前会话",
   "desktopSettingsLogout": "退出登录",
   "desktopSettingsLogoutBody": "清除本机保存的管理员会话，返回登录页",
@@ -6919,7 +7697,13 @@
   "desktopToolsEmergencyConfirmBody": "将按接管前落盘的快照还原系统 DNS，兜底清理指向本机的残留回环 DNS，再清空系统 DNS 缓存。",
   "desktopToolsEmergencyDone": "网络设置已恢复默认",
   "desktopToolsEmergencyFailed": "恢复失败：{message}",
-  "@desktopToolsEmergencyFailed": {"placeholders": {"message": {"type": "String"}}},
+  "@desktopToolsEmergencyFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "desktopToolsEmergencyFooter": "恢复依据是接管前落盘的快照，不会改动网卡驱动本身。",
   "desktopLanWebQrCaption": "手机与电脑连同一 Wi-Fi，用相机扫码直达控制台",
   "desktopLoginBackgroundPreparing": "正在压缩图片…",
@@ -6978,7 +7762,13 @@
   "troubleshootLogsViewLogsBody": "按时间查看运行日志与崩溃日志，可删除或分享",
   "troubleshootLogsAll": "全部日志",
   "troubleshootLogsCount": "共 {count} 个日志文件",
-  "@troubleshootLogsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@troubleshootLogsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "troubleshootLogsReading": "正在读取日志…",
   "troubleshootLogsEmpty": "当前设备没有日志",
   "troubleshootLogsEmptyBody": "开启运行日志记录或发生崩溃后，日志会出现在这里。",
@@ -6994,11 +7784,26 @@
   "troubleshootLogsDeleteFailed": "删除失败",
   "troubleshootLogsDeleteTitle": "删除日志",
   "troubleshootLogsDeleteBody": "确认删除“{name}”吗？该操作不可恢复。",
-  "@troubleshootLogsDeleteBody": {"placeholders": {"name": {"type": "String"}}},
+  "@troubleshootLogsDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "troubleshootLogsClearAllTitle": "清空全部日志",
   "troubleshootLogsClearAllBody": "确认删除全部运行日志与崩溃日志吗？该操作不可恢复。",
   "troubleshootLogsClearedAll": "已清空 {runtime} 个运行日志与 {crash} 份崩溃日志",
-  "@troubleshootLogsClearedAll": {"placeholders": {"runtime": {"type": "int"}, "crash": {"type": "int"}}},
+  "@troubleshootLogsClearedAll": {
+    "placeholders": {
+      "runtime": {
+        "type": "int"
+      },
+      "crash": {
+        "type": "int"
+      }
+    }
+  },
   "troubleshootLogsLogContent": "日志内容",
   "troubleshootLogsDetailInfo": "日志信息",
   "troubleshootLogsFileName": "文件名",
@@ -7020,9 +7825,21 @@
   "troubleshootEventsErrorOnly": "仅错误",
   "troubleshootEventsModuleAll": "全部模块",
   "troubleshootEventsCount": "共 {count} 条",
-  "@troubleshootEventsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@troubleshootEventsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "troubleshootEventsAnomaly": "检测到 {count} 条异常",
-  "@troubleshootEventsAnomaly": {"placeholders": {"count": {"type": "int"}}},
+  "@troubleshootEventsAnomaly": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "troubleshootEventsExport": "导出当前筛选",
   "troubleshootEventsStatTotal": "事件总数",
   "troubleshootEventsStatError": "错误",
@@ -7032,5 +7849,94 @@
   "troubleshootEventsOpen": "查看运行事件",
   "troubleshootEventsOpenBody": "按级别与模块筛选启动、服务与异常事件",
   "troubleshootDetailMode": "详细模式",
-  "troubleshootDetailModeNote": "详细模式记录所有进程与缓冲区的完整 logcat，更全面但更耗电。"
+  "troubleshootDetailModeNote": "详细模式记录所有进程与缓冲区的完整 logcat，更全面但更耗电。",
+  "automationTitle": "自动化",
+  "automationSubtitle": "条件-动作规则编排场景",
+  "automationHubSection": "场景与自动化",
+  "automationIntro": "用触发、条件与动作把零散入口组合成场景（到家 / 会议 / 游戏 / 低电）。",
+  "automationEmpty": "还没有自动化规则，点击右上角新增一条开始编排场景。",
+  "automationRulesSection": "规则",
+  "automationHistory": "审计时间线",
+  "automationHistoryEmpty": "暂无自动化事件。",
+  "automationRuleFallbackName": "未命名规则",
+  "automationPriorityShort": "优先级 {value}",
+  "@automationPriorityShort": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "automationActionCount": "{value} 个动作",
+  "@automationActionCount": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "automationTriggerSchedule": "定时",
+  "automationTriggerNetwork": "网络",
+  "automationTriggerState": "状态",
+  "automationTriggerManual": "手动",
+  "automationNewTitle": "新建规则",
+  "automationEditTitle": "编辑规则",
+  "automationDelete": "删除",
+  "automationSave": "保存",
+  "automationEditIntro": "选择触发方式与动作；保存后由自动化引擎在对应时机执行。",
+  "automationRuleName": "规则名称",
+  "automationPriority": "优先级",
+  "automationTrigger": "触发方式",
+  "automationMatch": "条件组合",
+  "automationMatchAll": "满足全部条件",
+  "automationMatchAny": "满足任一条件",
+  "automationActions": "动作",
+  "automationActionPause": "暂停拦截",
+  "automationMinutes": "分钟",
+  "automationActionBlockServices": "屏蔽服务",
+  "automationServicesUnavailable": "服务目录内核不可用",
+  "automationSwitchProfileNone": "不切换档案",
+  "automationScheduleStart": "开始",
+  "automationScheduleEnd": "结束",
+  "profilesTitle": "配置档案",
+  "profilesSubtitle": "一键切换配置快照",
+  "profilesAdd": "新增档案",
+  "profilesIntro": "一键切换工作模式 / 上游集 / 规则组与开关的快照。",
+  "profilesEmpty": "还没有配置档案。",
+  "profilesListSection": "档案",
+  "profilesApply": "应用",
+  "profilesDelete": "删除",
+  "profilesName": "名称",
+  "profilesUpstreamSet": "上游集",
+  "profilesCancel": "取消",
+  "profilesSave": "保存",
+  "profilesApplied": "已应用 {name}",
+  "@profilesApplied": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "timetableTitle": "分时规则",
+  "timetableSubtitle": "按周编排拦截时段",
+  "timetableAdd": "新增时段",
+  "timetableIntro": "按周编排分时拦截时段，到点自动收紧或恢复。",
+  "timetableEmpty": "还没有分时时段。",
+  "netProfileTitle": "网络档案",
+  "netProfileSubtitle": "按网络差异化策略",
+  "netProfileAdd": "新增网络档案",
+  "netProfileIntro": "按当前网络（Wi‑Fi / 蜂窝 / 漫游 / 计费）自动选择生效的上游集与规则组。",
+  "netProfileCurrentNet": "当前网络",
+  "netProfileResolved": "生效档案",
+  "netProfileNone": "无匹配档案",
+  "netProfileEmpty": "还没有网络档案，新增一条开始按网络切换策略。",
+  "netProfileList": "网络档案",
+  "netProfileDelete": "删除",
+  "netProfileName": "名称",
+  "netProfileUpstreamSet": "上游集",
+  "netProfilePriority": "优先级",
+  "netProfileCancel": "取消",
+  "netProfileSave": "保存",
+  "automationAdd": "新增规则"
 }
