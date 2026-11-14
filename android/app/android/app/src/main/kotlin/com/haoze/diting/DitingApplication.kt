@@ -1,6 +1,8 @@
 package com.haoze.diting
 
 import android.app.Application
+import android.util.Log
+import com.haoze.diting.automation.ScheduleController
 import com.haoze.diting.log.CrashLogWriter
 import com.haoze.diting.log.RuntimeEventLog
 
@@ -17,6 +19,13 @@ class DitingApplication : Application() {
         RuntimeEventLog.install(this)
         RuntimeEventLog.info("app", "create")
         installUncaughtHandler()
+        // 安装定时心跳任务；WorkManager 不可用时不能拖垮应用启动。
+        runCatching { ScheduleController.install(this) }
+            .onFailure { Log.w(TAG, "安装定时心跳任务失败", it) }
+    }
+
+    companion object {
+        private const val TAG = "DitingApplication"
     }
 
     private fun installUncaughtHandler() {

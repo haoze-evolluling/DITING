@@ -8,6 +8,8 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.haoze.diting.MainActivity
 import com.haoze.diting.R
+import com.haoze.diting.automation.AutomationContract
+import com.haoze.diting.automation.AutomationReceiver
 import com.haoze.diting.platform.NotificationMode
 import com.haoze.diting.platform.NotificationSettings
 import com.haoze.diting.platform.NotificationStatsLine
@@ -36,6 +38,17 @@ object VpnNotification {
             Intent(context, DitingVpnService::class.java).setAction(stopAction),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        // “暂停 1 小时”：广播给 AutomationReceiver（签名权限 CONTROL 保护），只写暂停截止时间。
+        val pauseIntent = PendingIntent.getBroadcast(
+            context,
+            2,
+            Intent(context, AutomationReceiver::class.java).apply {
+                action = AutomationContract.ACTION_PAUSE
+                putExtra(AutomationContract.EXTRA_PAUSE_MINUTES, AutomationContract.DEFAULT_PAUSE_MINUTES)
+                setPackage(context.packageName)
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         val label = context.applicationInfo.loadLabel(context.packageManager).toString()
 
         val status = NotificationSettings.runningText(
@@ -53,6 +66,7 @@ object VpnNotification {
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(openIntent)
             .addAction(0, "停止", stopIntent)
+            .addAction(0, "暂停1小时", pauseIntent)
             .setOngoing(NotificationSettings.persistent(context))
             .setOnlyAlertOnce(true)
             .setShowWhen(false)

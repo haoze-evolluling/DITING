@@ -230,3 +230,8 @@ if (!splitPerAbi) {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // 自动化定时（A7）：一次性兜底任务 + 周期心跳任务。
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
+}
