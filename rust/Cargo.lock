@@ -436,6 +436,7 @@ dependencies = [
  "diting-dns-cache-core",
  "diting-dns-core",
  "diting-dns-wire",
+ "diting-flow-core",
  "diting-gate-core",
  "diting-go-compat",
  "diting-mitm-core",

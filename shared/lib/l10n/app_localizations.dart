@@ -529,6 +529,48 @@ abstract class AppL10n {
   /// **'常用命令'**
   String get searchGroupTools;
 
+  /// No description provided for @flowTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'实时连接'**
+  String get flowTitle;
+
+  /// No description provided for @flowEntrySubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'按应用查看实时连接与远端'**
+  String get flowEntrySubtitle;
+
+  /// No description provided for @flowRefresh.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新'**
+  String get flowRefresh;
+
+  /// No description provided for @flowEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'保护运行且有流量时，这里按应用→域名→远端显示实时连接。'**
+  String get flowEmptyBody;
+
+  /// No description provided for @flowStatusActive.
+  ///
+  /// In zh, this message translates to:
+  /// **'活跃'**
+  String get flowStatusActive;
+
+  /// No description provided for @flowStatusFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'已拦截'**
+  String get flowStatusFailed;
+
+  /// No description provided for @flowStatusClosed.
+  ///
+  /// In zh, this message translates to:
+  /// **'已结束'**
+  String get flowStatusClosed;
+
   /// No description provided for @appTitle.
   ///
   /// In zh, this message translates to:

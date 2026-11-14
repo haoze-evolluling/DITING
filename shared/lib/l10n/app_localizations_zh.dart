@@ -230,6 +230,27 @@ class AppL10nZh extends AppL10n {
   String get searchGroupTools => '常用命令';
 
   @override
+  String get flowTitle => '实时连接';
+
+  @override
+  String get flowEntrySubtitle => '按应用查看实时连接与远端';
+
+  @override
+  String get flowRefresh => '刷新';
+
+  @override
+  String get flowEmptyBody => '保护运行且有流量时，这里按应用→域名→远端显示实时连接。';
+
+  @override
+  String get flowStatusActive => '活跃';
+
+  @override
+  String get flowStatusFailed => '已拦截';
+
+  @override
+  String get flowStatusClosed => '已结束';
+
+  @override
   String get appTitle => '谛听 DITING';
 
   @override

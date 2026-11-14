@@ -248,6 +248,28 @@ class AppL10nEn extends AppL10n {
   String get searchGroupTools => 'Commands';
 
   @override
+  String get flowTitle => 'Live connections';
+
+  @override
+  String get flowEntrySubtitle => 'See live connections and remotes by app';
+
+  @override
+  String get flowRefresh => 'Refresh';
+
+  @override
+  String get flowEmptyBody =>
+      'While protection runs with traffic, live connections show here grouped by app → domain → remote.';
+
+  @override
+  String get flowStatusActive => 'Active';
+
+  @override
+  String get flowStatusFailed => 'Blocked';
+
+  @override
+  String get flowStatusClosed => 'Closed';
+
+  @override
   String get appTitle => 'DITING';
 
   @override

@@ -429,6 +429,23 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetDnsCacheEntr
     answer(&env, document)
 }
 
+/// `flowSnapshot(sinceSeq, limit)`: incremental live-connection document for the flow view.
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFlowSnapshot(
+    mut env: JNIEnv<'_>,
+    _class: JObject<'_>,
+    handle: jlong,
+    since_seq: jlong,
+    limit: jlong,
+) -> jstring {
+    let document = with_engine(&mut env, handle, Some("{}".to_string()), |engine| {
+        let since = if since_seq <= 0 { 0 } else { since_seq as u64 };
+        let cap = if limit <= 0 { 0 } else { limit as usize };
+        Some(engine.flow_snapshot_json(since, cap))
+    });
+    answer(&env, document)
+}
+
 /// `resolveDomain(domain, ipv4)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeResolveDomain(

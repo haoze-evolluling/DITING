@@ -25,6 +25,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use diting_connlog_core::ConnLogDedup;
+use diting_flow_core::{FlowEvent, FlowKey, FlowStatus, FlowTable};
 use diting_dns_cache_core::policy::Config as CacheConfig;
 use diting_dns_core::block::{BlockConfig, DynamicBlocks};
 use diting_dns_core::message::{query_info, TYPE_A, TYPE_AAAA};
@@ -138,6 +139,8 @@ pub struct Engine {
     attribution: Attribution,
     /// `connLogSeen`: one row per `app|dest|port|proto` per session.
     connlog: ConnLogDedup,
+    /// The live connection table behind the UI's 实时连接视图 (incremental snapshot).
+    flows: Mutex<FlowTable>,
     /// `SetBlockedUIDs`; empty until the UI pushes the list.
     blocked_uids: RwLock<Arc<BlockedUids>>,
     /// `SetFilterHttp3`: drop `UDP :443` so HTTP/3 falls back to TCP (needs the MITM UID set).
@@ -214,6 +217,7 @@ impl Engine {
             running: AtomicBool::new(false),
             attribution: Attribution::new(),
             connlog: ConnLogDedup::new(),
+            flows: Mutex::new(FlowTable::new(4096)),
             blocked_uids: RwLock::new(Arc::new(BlockedUids::parse_csv(""))),
             quic_drop: AtomicBool::new(false),
             block_encrypted_dns: AtomicBool::new(false),
@@ -595,6 +599,33 @@ impl Engine {
         &self.connlog
     }
 
+    /// Records one admitted/blocked flow into the live table (best-effort: a poisoned lock drops it).
+    pub fn record_flow(&self, key: FlowKey, app: &str, domain: &str, status: FlowStatus) {
+        if let Ok(mut table) = self.flows.lock() {
+            table.record(FlowEvent {
+                key,
+                domain: domain.to_string(),
+                package: app.to_string(),
+                up_delta: 0,
+                down_delta: 0,
+                status,
+                at_ms: now_ms(),
+            });
+        }
+    }
+
+    /// Incremental connection snapshot as JSON; an empty document when the lock is poisoned.
+    pub fn flow_snapshot_json(&self, since_seq: u64, limit: usize) -> String {
+        match self.flows.lock() {
+            Ok(table) => table.snapshot(since_seq, limit).to_json(),
+            Err(_) => concat!(
+                "{\"baseSeq\":0,\"nextSeq\":0,\"total\":0,",
+                "\"truncated\":false,\"sessions\":[]}"
+            )
+            .to_string(),
+        }
+    }
+
     /// `resolveFlowUID`: app endpoint first, destination second (Android's direction).
     pub fn flow_uid(&self, protocol: i32, app: IpEndpoint, server: IpEndpoint) -> i32 {
         self.attribution
@@ -697,6 +728,9 @@ impl Engine {
         }
         // A new session logs every flow once, like `connLogSeen.reset()` in `StartFull`.
         self.connlog.reset();
+        if let Ok(mut flows) = self.flows.lock() {
+            flows.reset();
+        }
         // `StartFull` also restarted the query counters for the new session.
         self.total_queries.store(0, Ordering::Relaxed);
         self.blocked_queries.store(0, Ordering::Relaxed);

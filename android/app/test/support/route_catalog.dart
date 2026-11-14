@@ -36,6 +36,7 @@ final Map<String, String> topLevelRoutes = {
   '命中排行': LogPaths.hitRanking,
   '保护健康': HealthPaths.root,
   '全局搜索': SearchPaths.root,
+  '实时连接': FlowPaths.root,
   'User-Agent': ConfigPaths.userAgents,
   '按需连接': ConfigPaths.onDemand,
   '自定义资源': ConfigPaths.customResources,

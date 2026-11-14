@@ -110,6 +110,9 @@ class Engine : TunnelEngine, AutoCloseable {
 
     override fun getDNSCacheEntries(limit: Long): String = nativeGetDnsCacheEntries(handle, limit)
 
+    override fun flowSnapshot(sinceSeq: Long, limit: Long): String =
+        nativeFlowSnapshot(handle, sinceSeq, limit)
+
     override fun resolveDomain(domain: String, ipv4: Boolean): String =
         nativeResolveDomain(handle, domain, ipv4)
 
@@ -290,6 +293,8 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeGetDnsCacheStats(handle: Long): String
 
     private external fun nativeGetDnsCacheEntries(handle: Long, limit: Long): String
+
+    private external fun nativeFlowSnapshot(handle: Long, sinceSeq: Long, limit: Long): String
 
     private external fun nativeResolveDomain(handle: Long, domain: String, ipv4: Boolean): String
 

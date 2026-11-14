@@ -43,6 +43,7 @@ class MainActivity : FlutterActivity() {
         RuleIndexBridge(applicationContext, messenger)
         RuleTestBridge(applicationContext, messenger)
         BlockPauseBridge(applicationContext, messenger)
+        FlowViewBridge(messenger)
 
         AppsBridge(applicationContext).register(messenger)
         CaInspectionBridge(applicationContext).register(messenger)

@@ -5,6 +5,7 @@ library;
 
 export 'config_routes.dart';
 export 'dashboard_routes.dart';
+export 'flow_routes.dart';
 export 'health_routes.dart';
 export 'home_detail_routes.dart';
 export 'hub_routes.dart';

@@ -133,6 +133,9 @@ interface TunnelEngine {
     /// A JSON array of live cache entries, hottest first.
     fun getDNSCacheEntries(limit: Long): String
 
+    /// N4: incremental live-connection document `{baseSeq,nextSeq,total,truncated,sessions[]}`.
+    fun flowSnapshot(sinceSeq: Long, limit: Long): String
+
     /// `{"ips":…,"source":…}` or `{"source":"","error":…}`.
     fun resolveDomain(domain: String, ipv4: Boolean): String
 

@@ -125,6 +125,12 @@ class RuleControlPage extends ConsumerWidget {
                 onTap: () => context.push('/logs/hit-ranking'),
               ),
               ListItem(
+                leading: const GlyphIcon(AppGlyphs.cloudSync),
+                title: Text(context.l10n.flowTitle),
+                subtitle: Text(context.l10n.flowEntrySubtitle),
+                onTap: () => context.push('/network/flow'),
+              ),
+              ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
                 title: Text(context.l10n.ruleControlBlockResponse),
                 subtitle: Text(

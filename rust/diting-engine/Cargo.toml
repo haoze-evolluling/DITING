@@ -78,6 +78,7 @@ diting-bootstrap-core = { path = "../diting-bootstrap-core" }
 # flows go through. All three were already the only implementation of those decisions.
 diting-gate-core = { path = "../diting-gate-core" }
 diting-connlog-core = { path = "../diting-connlog-core" }
+diting-flow-core = { path = "../diting-flow-core" }
 # Stage 4a: the SOCKS5 / HTTP CONNECT codecs and the proxy config normalization.
 diting-proxy-core = { path = "../diting-proxy-core" }
 # Stage 4b: the four MITM decision kernels — the root CA and leaf minting, the smart filter

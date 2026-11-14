@@ -120,6 +120,8 @@ fn decide(
         PROTOCOL_TCP
     };
 
+    record_flow(engine, protocol, key, context, port, decision.action);
+
     if decision.log_connection {
         log_connection(engine, protocol, key, context);
     }
@@ -148,6 +150,36 @@ fn decide(
 pub const PORT_DOT: u16 = 853;
 /// `PORT_DNS`.
 pub const PORT_DNS: u16 = 53;
+
+/// Records the flow into the engine's live connection table (U 实时连接视图). Bytes accrue later
+/// through the traffic path; here we pin the identity, owner, destination and initial status.
+fn record_flow(
+    engine: &Arc<Engine>,
+    protocol: i32,
+    key: &TcpKey,
+    context: &FlowContext,
+    port: u16,
+    action: u8,
+) {
+    let blocked = matches!(
+        action,
+        ACTION_BLOCK_UID | ACTION_BLOCK_ENCRYPTED_DNS | ACTION_BLOCK_QUIC
+    );
+    let flow_key = diting_flow_core::FlowKey {
+        protocol: if protocol == PROTOCOL_UDP { "udp" } else { "tcp" }.to_string(),
+        src_ip: crate::netstack::address_text(key.remote.addr),
+        src_port: key.remote.port,
+        dst_ip: crate::netstack::address_text(key.local.addr),
+        dst_port: port,
+        uid: context.uid,
+    };
+    let status = if blocked {
+        diting_flow_core::FlowStatus::Failed
+    } else {
+        diting_flow_core::FlowStatus::Active
+    };
+    engine.record_flow(flow_key, &context.app, "", status);
+}
 
 fn log_connection(engine: &Engine, protocol: i32, key: &TcpKey, context: &FlowContext) {
     connection_row(engine, protocol, key, context, false, "connection");

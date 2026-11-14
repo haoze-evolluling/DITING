@@ -1,8 +1,6 @@
 //! The C ABI the JNI/FFI caller loads. A handle owns one [`FlowTable`]; snapshots are JSON with the
 //! fixed `magic "DFL1" | abi` header so a loader refuses a mismatched library.
 
-use std::slice;
-
 use serde_json::Value;
 
 use crate::payload;
@@ -162,6 +160,7 @@ pub unsafe extern "C" fn diting_flow_free_bytes(pointer: *mut u8, size: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::slice;
 
     fn snapshot(handle: *const FlowTable, since: u64) -> Value {
         let request = format!("{{\"sinceSeq\":{since},\"limit\":0}}");
