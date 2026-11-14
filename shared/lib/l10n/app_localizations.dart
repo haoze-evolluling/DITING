@@ -12940,6 +12940,18 @@ abstract class AppL10n {
   /// **'动态策略：先 NODATA，高频请求后 {mode}'**
   String ruleControlDynamicSummary(String mode);
 
+  /// No description provided for @ruleControlNetworkPrivacySection.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络隐私与诊断'**
+  String get ruleControlNetworkPrivacySection;
+
+  /// No description provided for @ruleControlInterfacesSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'对外接口与联动'**
+  String get ruleControlInterfacesSection;
+
   /// No description provided for @ruleControlSubsSection.
   ///
   /// In zh, this message translates to:

@@ -7451,6 +7451,14 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String get ruleControlNetworkPrivacySection =>
+      'Network privacy and diagnostics';
+
+  @override
+  String get ruleControlInterfacesSection =>
+      'External interfaces and integrations';
+
+  @override
   String get ruleControlSubsSection => 'Subscriptions and updates';
 
   @override

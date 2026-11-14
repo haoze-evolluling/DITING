@@ -174,6 +174,58 @@ class RuleControlPage extends ConsumerWidget {
             ],
           ),
           generateSection(
+            title: context.l10n.ruleControlNetworkPrivacySection,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.eyeOff),
+                title: Text(context.l10n.privacySuiteTitle),
+                subtitle: Text(context.l10n.privacySuiteIntro),
+                onTap: () => context.push('/network/privacy'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.link),
+                title: Text(context.l10n.dns64Title),
+                subtitle: Text(context.l10n.dns64Intro),
+                onTap: () => context.push('/network/dns64'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.speed),
+                title: Text(context.l10n.networkDiagnosticsTitle),
+                subtitle: Text(context.l10n.networkDiagnosticsIntro),
+                onTap: () => context.push('/network/diagnostics'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.dataUsage),
+                title: Text(context.l10n.appInsightsTitle),
+                subtitle: Text(context.l10n.appInsightsIntro),
+                onTap: () => context.push('/network/insights'),
+              ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.ruleControlInterfacesSection,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.key),
+                title: Text(context.l10n.localApiTitle),
+                subtitle: Text(context.l10n.localApiIntro),
+                onTap: () => context.push('/network/local-api'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.send),
+                title: Text(context.l10n.webhookTitle),
+                subtitle: Text(context.l10n.webhookIntro),
+                onTap: () => context.push('/hub/rules/webhook'),
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.speed),
+                title: Text(context.l10n.lanRateLimitTitle),
+                subtitle: Text(context.l10n.lanRateLimitIntro),
+                onTap: () => context.push('/network/lan-rate-limit'),
+              ),
+            ],
+          ),
+          generateSection(
             title: context.l10n.ruleControlSubsSection,
             items: [
               ListItem(

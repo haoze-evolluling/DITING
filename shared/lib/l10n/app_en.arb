@@ -2150,6 +2150,8 @@
   "ruleControlPolicySection": "Block policy",
   "ruleControlBlockResponse": "Block response",
   "ruleControlDynamicSummary": "Dynamic policy: NODATA first, then {mode} for frequent requests",
+  "ruleControlNetworkPrivacySection": "Network privacy and diagnostics",
+  "ruleControlInterfacesSection": "External interfaces and integrations",
   "ruleControlSubsSection": "Subscriptions and updates",
   "ruleControlSubsSubtitle": "Manage domain rule and IPv4/IPv6 override sources and groups",
   "ruleControlCount": "{count}",

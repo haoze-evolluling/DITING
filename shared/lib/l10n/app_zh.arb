@@ -4117,6 +4117,8 @@
       }
     }
   },
+  "ruleControlNetworkPrivacySection": "网络隐私与诊断",
+  "ruleControlInterfacesSection": "对外接口与联动",
   "ruleControlSubsSection": "订阅与更新",
   "ruleControlSubsSubtitle": "管理域名规则与 IPv4/IPv6 覆写订阅源及分组",
   "ruleControlCount": "{count} 个",

@@ -7041,6 +7041,12 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
+  String get ruleControlNetworkPrivacySection => '网络隐私与诊断';
+
+  @override
+  String get ruleControlInterfacesSection => '对外接口与联动';
+
+  @override
   String get ruleControlSubsSection => '订阅与更新';
 
   @override
