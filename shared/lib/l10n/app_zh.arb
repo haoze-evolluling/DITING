@@ -8019,5 +8019,38 @@
   "lanRateLimitIpv4Prefix": "IPv4 聚合前缀（位）",
   "lanRateLimitIpv6Prefix": "IPv6 聚合前缀（位）",
   "lanRateLimitExempt": "不限速名单",
-  "lanRateLimitExemptHint": "逗号分隔，如 192.168.0.1, 10.0.0.0/8"
+  "lanRateLimitExemptHint": "逗号分隔，如 192.168.0.1, 10.0.0.0/8",
+  "ruleVersionsTitle": "订阅版本回滚",
+  "ruleVersionsIntro": "每次订阅更新都会记录规则快照。可从历史版本对比差异或一键回滚，避免被误更新或投毒规则影响。",
+  "ruleVersionsPick": "选择订阅",
+  "ruleVersionsEmpty": "该订阅还没有版本记录，更新一次后即可查看。",
+  "ruleVersionsNone": "没有可选订阅",
+  "ruleVersionsUnavailable": "规则数据库不可用",
+  "ruleVersionsCurrent": "当前",
+  "ruleVersionsRuleCount": "{count} 条规则",
+  "@ruleVersionsRuleCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "ruleVersionsCompare": "对比",
+  "ruleVersionsRollback": "回滚",
+  "ruleVersionsDiffTitle": "版本差异",
+  "ruleVersionsDiffSummary": "新增 {added} 条，移除 {removed} 条",
+  "@ruleVersionsDiffSummary": {
+    "placeholders": {
+      "added": { "type": "int" },
+      "removed": { "type": "int" }
+    }
+  },
+  "ruleVersionsAdded": "新增",
+  "ruleVersionsRemoved": "移除",
+  "ruleVersionsRollbackConfirm": "回滚到该版本？当前规则将被替换。",
+  "ruleVersionsRollbackDone": "已回滚到所选版本",
+  "ruleVersionsRollbackFailed": "回滚失败：{message}",
+  "@ruleVersionsRollbackFailed": {
+    "placeholders": {
+      "message": { "type": "String" }
+    }
+  }
 }

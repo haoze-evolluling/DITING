@@ -14128,4 +14128,62 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get lanRateLimitExemptHint => '逗号分隔，如 192.168.0.1, 10.0.0.0/8';
+
+  @override
+  String get ruleVersionsTitle => '订阅版本回滚';
+
+  @override
+  String get ruleVersionsIntro =>
+      '每次订阅更新都会记录规则快照。可从历史版本对比差异或一键回滚，避免被误更新或投毒规则影响。';
+
+  @override
+  String get ruleVersionsPick => '选择订阅';
+
+  @override
+  String get ruleVersionsEmpty => '该订阅还没有版本记录，更新一次后即可查看。';
+
+  @override
+  String get ruleVersionsNone => '没有可选订阅';
+
+  @override
+  String get ruleVersionsUnavailable => '规则数据库不可用';
+
+  @override
+  String get ruleVersionsCurrent => '当前';
+
+  @override
+  String ruleVersionsRuleCount(int count) {
+    return '$count 条规则';
+  }
+
+  @override
+  String get ruleVersionsCompare => '对比';
+
+  @override
+  String get ruleVersionsRollback => '回滚';
+
+  @override
+  String get ruleVersionsDiffTitle => '版本差异';
+
+  @override
+  String ruleVersionsDiffSummary(int added, int removed) {
+    return '新增 $added 条，移除 $removed 条';
+  }
+
+  @override
+  String get ruleVersionsAdded => '新增';
+
+  @override
+  String get ruleVersionsRemoved => '移除';
+
+  @override
+  String get ruleVersionsRollbackConfirm => '回滚到该版本？当前规则将被替换。';
+
+  @override
+  String get ruleVersionsRollbackDone => '已回滚到所选版本';
+
+  @override
+  String ruleVersionsRollbackFailed(String message) {
+    return '回滚失败：$message';
+  }
 }

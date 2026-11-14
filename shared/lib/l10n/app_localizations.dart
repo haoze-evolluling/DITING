@@ -25923,6 +25923,108 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'逗号分隔，如 192.168.0.1, 10.0.0.0/8'**
   String get lanRateLimitExemptHint;
+
+  /// No description provided for @ruleVersionsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'订阅版本回滚'**
+  String get ruleVersionsTitle;
+
+  /// No description provided for @ruleVersionsIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'每次订阅更新都会记录规则快照。可从历史版本对比差异或一键回滚，避免被误更新或投毒规则影响。'**
+  String get ruleVersionsIntro;
+
+  /// No description provided for @ruleVersionsPick.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择订阅'**
+  String get ruleVersionsPick;
+
+  /// No description provided for @ruleVersionsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'该订阅还没有版本记录，更新一次后即可查看。'**
+  String get ruleVersionsEmpty;
+
+  /// No description provided for @ruleVersionsNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可选订阅'**
+  String get ruleVersionsNone;
+
+  /// No description provided for @ruleVersionsUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则数据库不可用'**
+  String get ruleVersionsUnavailable;
+
+  /// No description provided for @ruleVersionsCurrent.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前'**
+  String get ruleVersionsCurrent;
+
+  /// No description provided for @ruleVersionsRuleCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条规则'**
+  String ruleVersionsRuleCount(int count);
+
+  /// No description provided for @ruleVersionsCompare.
+  ///
+  /// In zh, this message translates to:
+  /// **'对比'**
+  String get ruleVersionsCompare;
+
+  /// No description provided for @ruleVersionsRollback.
+  ///
+  /// In zh, this message translates to:
+  /// **'回滚'**
+  String get ruleVersionsRollback;
+
+  /// No description provided for @ruleVersionsDiffTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本差异'**
+  String get ruleVersionsDiffTitle;
+
+  /// No description provided for @ruleVersionsDiffSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增 {added} 条，移除 {removed} 条'**
+  String ruleVersionsDiffSummary(int added, int removed);
+
+  /// No description provided for @ruleVersionsAdded.
+  ///
+  /// In zh, this message translates to:
+  /// **'新增'**
+  String get ruleVersionsAdded;
+
+  /// No description provided for @ruleVersionsRemoved.
+  ///
+  /// In zh, this message translates to:
+  /// **'移除'**
+  String get ruleVersionsRemoved;
+
+  /// No description provided for @ruleVersionsRollbackConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'回滚到该版本？当前规则将被替换。'**
+  String get ruleVersionsRollbackConfirm;
+
+  /// No description provided for @ruleVersionsRollbackDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已回滚到所选版本'**
+  String get ruleVersionsRollbackDone;
+
+  /// No description provided for @ruleVersionsRollbackFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'回滚失败：{message}'**
+  String ruleVersionsRollbackFailed(String message);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

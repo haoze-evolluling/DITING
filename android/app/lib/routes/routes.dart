@@ -20,6 +20,7 @@ export 'network_diagnostics_routes.dart';
 export 'network_profile_routes.dart';
 export 'observability_routes.dart';
 export 'search_routes.dart';
+export 'subscription_version_routes.dart';
 
 export 'package:diting_shared/routes/page.dart';
 

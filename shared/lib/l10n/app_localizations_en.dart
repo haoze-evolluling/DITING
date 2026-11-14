@@ -15002,4 +15002,64 @@ class AppL10nEn extends AppL10n {
   @override
   String get lanRateLimitExemptHint =>
       'Comma separated, e.g. 192.168.0.1, 10.0.0.0/8';
+
+  @override
+  String get ruleVersionsTitle => 'Subscription version rollback';
+
+  @override
+  String get ruleVersionsIntro =>
+      'Every subscription update records a rule-set snapshot. Compare against older versions or roll back in one tap, so a bad or poisoned update cannot stick.';
+
+  @override
+  String get ruleVersionsPick => 'Choose a subscription';
+
+  @override
+  String get ruleVersionsEmpty =>
+      'No versions recorded yet. Update the subscription once to see history here.';
+
+  @override
+  String get ruleVersionsNone => 'No subscriptions available';
+
+  @override
+  String get ruleVersionsUnavailable => 'Rule database unavailable';
+
+  @override
+  String get ruleVersionsCurrent => 'Current';
+
+  @override
+  String ruleVersionsRuleCount(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String get ruleVersionsCompare => 'Compare';
+
+  @override
+  String get ruleVersionsRollback => 'Roll back';
+
+  @override
+  String get ruleVersionsDiffTitle => 'Version diff';
+
+  @override
+  String ruleVersionsDiffSummary(int added, int removed) {
+    return '$added added, $removed removed';
+  }
+
+  @override
+  String get ruleVersionsAdded => 'Added';
+
+  @override
+  String get ruleVersionsRemoved => 'Removed';
+
+  @override
+  String get ruleVersionsRollbackConfirm =>
+      'Roll back to this version? Current rules will be replaced.';
+
+  @override
+  String get ruleVersionsRollbackDone => 'Rolled back to the selected version';
+
+  @override
+  String ruleVersionsRollbackFailed(String message) {
+    return 'Rollback failed: $message';
+  }
 }

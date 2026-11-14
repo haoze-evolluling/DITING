@@ -5299,5 +5299,38 @@
   "lanRateLimitIpv4Prefix": "IPv4 aggregate prefix (bits)",
   "lanRateLimitIpv6Prefix": "IPv6 aggregate prefix (bits)",
   "lanRateLimitExempt": "Exempt list",
-  "lanRateLimitExemptHint": "Comma separated, e.g. 192.168.0.1, 10.0.0.0/8"
+  "lanRateLimitExemptHint": "Comma separated, e.g. 192.168.0.1, 10.0.0.0/8",
+  "ruleVersionsTitle": "Subscription version rollback",
+  "ruleVersionsIntro": "Every subscription update records a rule-set snapshot. Compare against older versions or roll back in one tap, so a bad or poisoned update cannot stick.",
+  "ruleVersionsPick": "Choose a subscription",
+  "ruleVersionsEmpty": "No versions recorded yet. Update the subscription once to see history here.",
+  "ruleVersionsNone": "No subscriptions available",
+  "ruleVersionsUnavailable": "Rule database unavailable",
+  "ruleVersionsCurrent": "Current",
+  "ruleVersionsRuleCount": "{count} rules",
+  "@ruleVersionsRuleCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "ruleVersionsCompare": "Compare",
+  "ruleVersionsRollback": "Roll back",
+  "ruleVersionsDiffTitle": "Version diff",
+  "ruleVersionsDiffSummary": "{added} added, {removed} removed",
+  "@ruleVersionsDiffSummary": {
+    "placeholders": {
+      "added": { "type": "int" },
+      "removed": { "type": "int" }
+    }
+  },
+  "ruleVersionsAdded": "Added",
+  "ruleVersionsRemoved": "Removed",
+  "ruleVersionsRollbackConfirm": "Roll back to this version? Current rules will be replaced.",
+  "ruleVersionsRollbackDone": "Rolled back to the selected version",
+  "ruleVersionsRollbackFailed": "Rollback failed: {message}",
+  "@ruleVersionsRollbackFailed": {
+    "placeholders": {
+      "message": { "type": "String" }
+    }
+  }
 }

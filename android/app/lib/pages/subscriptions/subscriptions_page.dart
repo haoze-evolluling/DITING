@@ -175,6 +175,11 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
             builder: (_) => const _AddSubscriptionSheet(),
           ),
         ),
+        IconButtonData(
+          glyph: AppGlyphs.clock,
+          tooltip: context.l10n.ruleVersionsTitle,
+          onPressed: () => context.push(SubscriptionVersionPaths.root),
+        ),
       ],
       body: SliverPageBody(
         slivers: [
