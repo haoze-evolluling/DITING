@@ -37,6 +37,7 @@ class AutomationReceiver : BroadcastReceiver() {
             AutomationContract.ACTION_TOGGLE -> fromDataPlane(DataPlaneControl.toggle(context))
             AutomationContract.ACTION_PAUSE -> pause(context, intent)
             AutomationContract.ACTION_CANCEL_PAUSE -> cancelPause(context)
+            AutomationContract.ACTION_RUN_RULES -> runRules(context, intent)
             else -> HandleResult(false, "未知动作：$action")
         }
         broadcastResult(context, action, result)
@@ -69,6 +70,14 @@ class AutomationReceiver : BroadcastReceiver() {
         return HandleResult(true, "resumed")
     }
 
+    /// A1：外部（Tasker / adb）手动触发一次自动化求值，事件类型默认 manual。
+    private fun runRules(context: Context, intent: Intent): HandleResult {
+        val eventType: String = intent
+            .getStringExtra(AutomationContract.EXTRA_EVENT_TYPE) ?: "manual"
+        val applied: List<String> = AutomationEngine.evaluate(context, eventType)
+        return HandleResult(true, "rules=${applied.size}")
+    }
+
     private fun broadcastResult(context: Context, action: String, result: HandleResult) {
         val intent: Intent = Intent(AutomationContract.ACTION_RESULT)
             .putExtra(AutomationContract.EXTRA_OK, result.ok)
@@ -93,6 +102,7 @@ class AutomationReceiver : BroadcastReceiver() {
             AutomationContract.ACTION_TOGGLE,
             AutomationContract.ACTION_PAUSE,
             AutomationContract.ACTION_CANCEL_PAUSE,
+            AutomationContract.ACTION_RUN_RULES,
         )
     }
 }

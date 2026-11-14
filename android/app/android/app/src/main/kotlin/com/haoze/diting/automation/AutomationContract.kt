@@ -47,4 +47,14 @@ object AutomationContract {
     const val KEY_ALLOWLIST_ONLY: String = "allowlist_only"
     const val KEY_NEXT_DUE_AT_MS: String = "next_due_at_ms"
     const val KEY_LAST_TICK_AT_MS: String = "last_tick_at_ms"
+
+    /// A1 场景引擎的动作落点：各动作把结果写进这些偏好键，由服务在启动/下一次读取时生效。
+    const val KEY_ACTIVE_PROFILE: String = "active_profile_id"
+    const val KEY_ACTIVE_UPSTREAM: String = "active_upstream"
+    const val KEY_ACTIVE_RULE_GROUP: String = "active_rule_group"
+    const val KEY_BLOCKED_SERVICES: String = "blocked_services"
+
+    /// 手动/外部触发一次自动化求值（签名权限保护）；事件类型见 EXTRA_EVENT_TYPE。
+    const val ACTION_RUN_RULES: String = "com.haoze.diting.automation.RUN_RULES"
+    const val EXTRA_EVENT_TYPE: String = "event_type"
 }

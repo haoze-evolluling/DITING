@@ -23,6 +23,9 @@ class ScheduleAlarmReceiver : BroadcastReceiver() {
                 AutomationContract.PERMISSION_RECEIVE_EVENTS,
             )
         }.onFailure { Log.w(TAG, "发送定时到点广播失败", it) }
+        // A1：定时到点后求值一次 schedule 触发的自动化规则。
+        runCatching { AutomationEngine.evaluate(appContext, "schedule") }
+            .onFailure { Log.w(TAG, "求值定时自动化失败", it) }
         val nextDueAtMs: Long = prefs.getLong(AutomationContract.KEY_NEXT_DUE_AT_MS, 0L)
         if (nextDueAtMs > now) ScheduleController.sync(appContext, nextDueAtMs)
     }

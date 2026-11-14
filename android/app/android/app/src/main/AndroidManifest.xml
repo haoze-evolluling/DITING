@@ -241,6 +241,7 @@
                 <action android:name="com.haoze.diting.automation.TOGGLE" />
                 <action android:name="com.haoze.diting.automation.PAUSE" />
                 <action android:name="com.haoze.diting.automation.CANCEL_PAUSE" />
+                <action android:name="com.haoze.diting.automation.RUN_RULES" />
             </intent-filter>
         </receiver>
         <!-- 定时到点，仅应用内 alarm 触发。 -->

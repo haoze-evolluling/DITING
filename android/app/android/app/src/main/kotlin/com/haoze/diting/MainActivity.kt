@@ -44,6 +44,7 @@ class MainActivity : FlutterActivity() {
         RuleTestBridge(applicationContext, messenger)
         BlockPauseBridge(applicationContext, messenger)
         FlowViewBridge(messenger)
+        NetworkProfileBridge(applicationContext, messenger)
 
         AppsBridge(applicationContext).register(messenger)
         CaInspectionBridge(applicationContext).register(messenger)
