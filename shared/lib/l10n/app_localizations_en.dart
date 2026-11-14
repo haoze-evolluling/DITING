@@ -14717,6 +14717,9 @@ class AppL10nEn extends AppL10n {
   String get automationSwitchProfileNone => 'Do not switch profile';
 
   @override
+  String get automationSwitchProfile => 'Switch profile';
+
+  @override
   String get automationScheduleStart => 'Start';
 
   @override
@@ -14752,9 +14755,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get profilesUpstreamSet => 'Upstream set';
-
-  @override
-  String get profilesWorkMode => 'Work mode';
 
   @override
   String get profilesCancel => 'Cancel';

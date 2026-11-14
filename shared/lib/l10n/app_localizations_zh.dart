@@ -13853,6 +13853,9 @@ class AppL10nZh extends AppL10n {
   String get automationSwitchProfileNone => '不切换档案';
 
   @override
+  String get automationSwitchProfile => '切换档案';
+
+  @override
   String get automationScheduleStart => '开始';
 
   @override
@@ -13887,9 +13890,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get profilesUpstreamSet => '上游集';
-
-  @override
-  String get profilesWorkMode => '工作模式';
 
   @override
   String get profilesCancel => '取消';

@@ -88,63 +88,21 @@ class ProfilesPage extends ConsumerWidget {
   }
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final name = TextEditingController();
-    final upstream = TextEditingController();
-    var mode = _modes.first;
-    final created = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setState) => AlertDialog(
-          title: Text(context.l10n.profilesAdd),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                controller: name,
-                decoration: InputDecoration(labelText: context.l10n.profilesName),
-              ),
-              const SizedBox(height: 12),
-              PopupSelectField<String>(
-                value: mode,
-                label: context.l10n.profilesWorkMode,
-                items: [for (final item in _modes) (item, item)],
-                onChanged: (value) => setState(() => mode = value),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: upstream,
-                decoration: InputDecoration(
-                  labelText: context.l10n.profilesUpstreamSet,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(context.l10n.profilesCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(context.l10n.profilesSave),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (created != true || !context.mounted) return;
+    final result = await showFloatingDialog<
+      ({String name, String upstream, String mode})
+    >(context: context, child: const _ProfileDialog());
+    if (result == null || !context.mounted) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     await ref
         .read(automationControllerProvider)
         .saveProfile(
           AutomationProfile(
             id: newAutomationId('profile'),
-            name: name.text.trim().isEmpty ? 'profile' : name.text.trim(),
+            name: result.name.isEmpty ? 'profile' : result.name,
             payload: {
               'kind': 'config',
-              'workMode': mode,
-              'upstreamSet': upstream.text.trim(),
+              'workMode': result.mode,
+              'upstreamSet': result.upstream,
               'ruleGroupStates': const <String>[],
               'featureToggles': const <String, Object?>{},
             },
@@ -174,5 +132,83 @@ class ProfilesPage extends ConsumerWidget {
         SnackBar(content: Text(context.l10n.profilesApplied(profile.name))),
       );
     }
+  }
+}
+
+class _ProfileDialog extends StatefulWidget {
+  const _ProfileDialog();
+
+  @override
+  State<_ProfileDialog> createState() => _ProfileDialogState();
+}
+
+class _ProfileDialogState extends State<_ProfileDialog> {
+  final _name = TextEditingController();
+  final _upstream = TextEditingController();
+  String _mode = ProfilesPage._modes.first;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _upstream.dispose();
+    super.dispose();
+  }
+
+  static String _modeLabel(BuildContext context, String mode) => switch (mode) {
+    'normal' => context.l10n.workModeNormalTitle,
+    'express' => context.l10n.workModeExpressTitle,
+    'server' || 'dns' => context.l10n.workModeServerTitle,
+    _ => mode,
+  };
+
+  void _submit() {
+    Navigator.of(context).pop((
+      name: _name.text.trim(),
+      upstream: _upstream.text.trim(),
+      mode: _mode,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonDialog(
+      title: context.l10n.profilesAdd,
+      hasFields: true,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.profilesCancel),
+        ),
+        TextButton(
+          onPressed: _submit,
+          child: Text(context.l10n.profilesSave),
+        ),
+      ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 10,
+        children: [
+          TextField(
+            controller: _name,
+            decoration: InputDecoration(labelText: context.l10n.profilesName),
+          ),
+          SegmentedControl<String>(
+            segments: [
+              for (final mode in ProfilesPage._modes)
+                (mode, _modeLabel(context, mode)),
+            ],
+            value: _mode,
+            onChanged: (value) => setState(() => _mode = value),
+          ),
+          TextField(
+            controller: _upstream,
+            decoration: InputDecoration(
+              labelText: context.l10n.profilesUpstreamSet,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

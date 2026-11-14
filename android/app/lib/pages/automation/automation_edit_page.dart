@@ -213,7 +213,18 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
               ],
             ),
           ),
-          _Section(title: context.l10n.automationTrigger, child: _triggerSection(context)),
+          _Section(
+            title: context.l10n.automationTrigger,
+            trailing: PopupSelectButton<String>(
+              value: _trigger,
+              semanticLabel: context.l10n.automationTrigger,
+              items: [
+                for (final entry in _triggerOptions(context)) (entry.$1, entry.$2),
+              ],
+              onChanged: (value) => setState(() => _trigger = value),
+            ),
+            child: _triggerDetail(context),
+          ),
           _Section(title: context.l10n.automationMatch, child: _matchSection(context)),
           _Section(title: context.l10n.automationActions, child: _actionsSection(context)),
         ],
@@ -221,17 +232,10 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     );
   }
 
-  Widget _triggerSection(BuildContext context) {
+  Widget _triggerDetail(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LabeledSelectField<String>(
-          value: _trigger,
-          items: [
-            for (final entry in _triggerOptions(context)) (entry.$1, entry.$2),
-          ],
-          onChanged: (value) => setState(() => _trigger = value),
-        ),
         if (_trigger == AutomationSpec.triggerSchedule) ...[
           const SizedBox(height: 8),
           Row(
@@ -329,13 +333,24 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
             ),
           ),
         const SizedBox(height: 8),
-        LabeledSelectField<String?>(
-          value: _switchProfile,
-          items: [
-            (null, context.l10n.automationSwitchProfileNone),
-            for (final profile in _profiles) (profile.id, profile.name),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                context.l10n.automationSwitchProfile,
+                style: context.listTitleStyle,
+              ),
+            ),
+            PopupSelectButton<String?>(
+              value: _switchProfile,
+              semanticLabel: context.l10n.automationSwitchProfile,
+              items: [
+                (null, context.l10n.automationSwitchProfileNone),
+                for (final profile in _profiles) (profile.id, profile.name),
+              ],
+              onChanged: (value) => setState(() => _switchProfile = value),
+            ),
           ],
-          onChanged: (value) => setState(() => _switchProfile = value),
         ),
       ],
     );
@@ -374,19 +389,31 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.child});
+  const _Section({required this.title, required this.child, this.trailing});
 
   final String title;
   final Widget child;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    final trailing = this.trailing;
     return _paddedCard(
       context,
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleSmall),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              ?trailing,
+            ],
+          ),
           const SizedBox(height: 8),
           child,
         ],

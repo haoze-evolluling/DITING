@@ -25396,6 +25396,12 @@ abstract class AppL10n {
   /// **'不切换档案'**
   String get automationSwitchProfileNone;
 
+  /// No description provided for @automationSwitchProfile.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换档案'**
+  String get automationSwitchProfile;
+
   /// No description provided for @automationScheduleStart.
   ///
   /// In zh, this message translates to:
@@ -25467,12 +25473,6 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'上游集'**
   String get profilesUpstreamSet;
-
-  /// No description provided for @profilesWorkMode.
-  ///
-  /// In zh, this message translates to:
-  /// **'工作模式'**
-  String get profilesWorkMode;
 
   /// No description provided for @profilesCancel.
   ///
