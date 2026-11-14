@@ -39,7 +39,19 @@ class LegacyDatabase {
       return _create(path, fileName);
     }
     try {
-      return await openDatabase(path, onConfigure: _configure);
+      // Pass the schema version so an existing file at an older `user_version` runs `onUpgrade`
+      // and picks up tables added since it was created. Without this, opening an already-existing
+      // database skipped every migration and a stage that added tables (e.g. `automation_rule`,
+      // `automation_profile`, `automation_event`) failed on upgraded installs with
+      // "no such table" while fresh installs worked.
+      return await openDatabase(
+        path,
+        version: LegacySchema.versionOf(fileName),
+        onConfigure: _configure,
+        onUpgrade: (db, from, to) async {
+          await _createIfMissing(db, LegacySchema.statementsFor(fileName));
+        },
+      );
     } on DatabaseException catch (error) {
       debugPrint('legacy database open failed: $fileName ($error)');
       return null;
