@@ -109,6 +109,8 @@ pub struct Engine {
     rebinding_protection: AtomicBool,
     /// N8: the DNS64 synthesizer, `None` when the suite is disabled.
     dns64: RwLock<Option<Arc<diting_dns64_core::Engine>>>,
+    /// N9: the LAN client rate limiter, `None` when limiting is off.
+    rate_limit: RwLock<Option<diting_ratelimit_core::RateLimiter>>,
     block_response: AtomicU32,
     /// R4: temporary pause. While `now_ms() < pause_until_ms` every policy block is skipped, so DNS
     /// still resolves but nothing is filtered. `0` means not paused.
@@ -195,6 +197,7 @@ impl Engine {
             blocked_qtypes: RwLock::new(Vec::new()),
             rebinding_protection: AtomicBool::new(false),
             dns64: RwLock::new(None),
+            rate_limit: RwLock::new(None),
             block_response: AtomicU32::new(0),
             pause_until_ms: AtomicI64::new(0),
             allowlist_only: AtomicBool::new(false),
@@ -482,6 +485,35 @@ impl Engine {
             .read()
             .unwrap_or_else(|error| error.into_inner())
             .clone()
+    }
+
+    /// N9: installs the LAN client rate limiter. A disabled config clears it so the server path
+    /// keeps a single cheap branch. Replaces any previous limiter (the Go side swaps the handle).
+    pub fn set_rate_limit(&self, config: &diting_ratelimit_core::Config) {
+        let limiter = if config.enabled {
+            Some(diting_ratelimit_core::RateLimiter::new(config))
+        } else {
+            None
+        };
+        *self
+            .rate_limit
+            .write()
+            .unwrap_or_else(|error| error.into_inner()) = limiter;
+    }
+
+    /// N9: whether a LAN client packet from `address` may proceed. Always true when limiting is off.
+    pub fn allow_client(&self, address: Option<&diting_ratelimit_core::Addr>, now_ns: i64) -> bool {
+        match self
+            .rate_limit
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .as_ref()
+        {
+            None => true,
+            Some(limiter) => {
+                limiter.allow(address, now_ns, diting_ratelimit_core::DEFAULT_MAX_BUCKETS)
+            }
+        }
     }
 
     /// `setBlockPause(untilMs)`: skip every policy block until `until_ms` (epoch ms). `0` clears it.
