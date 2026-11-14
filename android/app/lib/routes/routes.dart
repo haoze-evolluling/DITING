@@ -10,6 +10,7 @@ export 'home_detail_routes.dart';
 export 'hub_routes.dart';
 export 'logs_routes.dart';
 export 'observability_routes.dart';
+export 'search_routes.dart';
 
 export 'package:diting_shared/routes/page.dart';
 

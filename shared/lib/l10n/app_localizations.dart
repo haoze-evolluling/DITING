@@ -493,6 +493,42 @@ abstract class AppL10n {
   /// **'评估失败，请稍后重试'**
   String get healthLoadFailed;
 
+  /// No description provided for @searchTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'全局搜索'**
+  String get searchTitle;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索功能、设置与命令'**
+  String get searchHint;
+
+  /// No description provided for @searchEmptyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入关键词开始搜索'**
+  String get searchEmptyTitle;
+
+  /// No description provided for @searchEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'可搜索全部功能中心页面与常用命令'**
+  String get searchEmptyBody;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有找到匹配项'**
+  String get searchNoResults;
+
+  /// No description provided for @searchGroupTools.
+  ///
+  /// In zh, this message translates to:
+  /// **'常用命令'**
+  String get searchGroupTools;
+
   /// No description provided for @appTitle.
   ///
   /// In zh, this message translates to:

@@ -8,6 +8,7 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Feature hub migrated from upstream `FeatureHubScreen.kt`: 7 categories, 28 cards,
@@ -28,6 +29,13 @@ class FeatureHubPage extends ConsumerWidget {
     final showLongPressHint = ref.watch(logLongPressHintProvider);
     return CommonScaffold(
       title: context.l10n.bottomBarFeatureHub,
+      actions: [
+        IconButton(
+          tooltip: context.l10n.searchTitle,
+          onPressed: () => context.push('/search'),
+          icon: const GlyphIcon(AppGlyphs.search),
+        ),
+      ],
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),

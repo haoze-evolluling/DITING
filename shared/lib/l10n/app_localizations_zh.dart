@@ -212,6 +212,24 @@ class AppL10nZh extends AppL10n {
   String get healthLoadFailed => '评估失败，请稍后重试';
 
   @override
+  String get searchTitle => '全局搜索';
+
+  @override
+  String get searchHint => '搜索功能、设置与命令';
+
+  @override
+  String get searchEmptyTitle => '输入关键词开始搜索';
+
+  @override
+  String get searchEmptyBody => '可搜索全部功能中心页面与常用命令';
+
+  @override
+  String get searchNoResults => '没有找到匹配项';
+
+  @override
+  String get searchGroupTools => '常用命令';
+
+  @override
   String get appTitle => '谛听 DITING';
 
   @override

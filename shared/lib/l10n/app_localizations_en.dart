@@ -229,6 +229,25 @@ class AppL10nEn extends AppL10n {
   String get healthLoadFailed => 'Assessment failed, please retry';
 
   @override
+  String get searchTitle => 'Global search';
+
+  @override
+  String get searchHint => 'Search features, settings and commands';
+
+  @override
+  String get searchEmptyTitle => 'Type to search';
+
+  @override
+  String get searchEmptyBody =>
+      'Searches every feature-center page and common commands';
+
+  @override
+  String get searchNoResults => 'No matches';
+
+  @override
+  String get searchGroupTools => 'Commands';
+
+  @override
   String get appTitle => 'DITING';
 
   @override
