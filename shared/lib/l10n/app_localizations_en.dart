@@ -14789,4 +14789,71 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get automationAdd => 'Add rule';
+
+  @override
+  String get networkDiagnosticsTitle => 'Network diagnostics';
+
+  @override
+  String get networkDiagnosticsIntro =>
+      'Check whether DNS goes through the configured upstream and detect captive portals that need a login.';
+
+  @override
+  String get dnsLeakSection => 'DNS leak check';
+
+  @override
+  String get dnsLeakRun => 'Run check';
+
+  @override
+  String get dnsLeakPass => 'Pass';
+
+  @override
+  String get dnsLeakLeak => 'Leak detected';
+
+  @override
+  String get dnsLeakUnknown => 'Cannot determine';
+
+  @override
+  String get dnsLeakReasonBypass =>
+      'The tunnel is not running, so queries bypass the configured upstream.';
+
+  @override
+  String get dnsLeakReasonProxied =>
+      'Queries are proxied through the tunnel to the configured upstream.';
+
+  @override
+  String get dnsLeakReasonMismatch =>
+      'The exit resolver differs from the configured upstream.';
+
+  @override
+  String get dnsLeakReasonPlaintext => 'Plaintext DNS egress was observed.';
+
+  @override
+  String get dnsLeakReasonInsufficient => 'Not enough probe data to decide.';
+
+  @override
+  String get dnsLeakVpnActive => 'Tunnel active';
+
+  @override
+  String get dnsLeakVpnInactive => 'Tunnel inactive';
+
+  @override
+  String get captiveSection => 'Captive portal';
+
+  @override
+  String get captiveRun => 'Check portal';
+
+  @override
+  String get captiveOpen => 'Network open';
+
+  @override
+  String get captivePortal => 'Login portal detected';
+
+  @override
+  String get captiveUnknown => 'Cannot determine';
+
+  @override
+  String get captiveOpenPortal => 'Open login page';
+
+  @override
+  String get networkDiagnosticsFailed => 'Check failed, please try again.';
 }

@@ -11,6 +11,7 @@ export 'health_routes.dart';
 export 'home_detail_routes.dart';
 export 'hub_routes.dart';
 export 'logs_routes.dart';
+export 'network_diagnostics_routes.dart';
 export 'network_profile_routes.dart';
 export 'observability_routes.dart';
 export 'search_routes.dart';

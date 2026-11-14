@@ -13924,4 +13924,68 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get automationAdd => '新增规则';
+
+  @override
+  String get networkDiagnosticsTitle => '网络诊断';
+
+  @override
+  String get networkDiagnosticsIntro =>
+      '检查 DNS 是否经过配置上游，并识别需要登录的 Captive Portal。';
+
+  @override
+  String get dnsLeakSection => 'DNS 泄漏检测';
+
+  @override
+  String get dnsLeakRun => '开始检测';
+
+  @override
+  String get dnsLeakPass => '通过';
+
+  @override
+  String get dnsLeakLeak => '发现泄漏';
+
+  @override
+  String get dnsLeakUnknown => '无法判定';
+
+  @override
+  String get dnsLeakReasonBypass => '隧道未运行，查询未经过配置上游。';
+
+  @override
+  String get dnsLeakReasonProxied => '查询经隧道转发至配置上游。';
+
+  @override
+  String get dnsLeakReasonMismatch => '出口解析器与配置上游不一致。';
+
+  @override
+  String get dnsLeakReasonPlaintext => '发现明文 DNS 出站。';
+
+  @override
+  String get dnsLeakReasonInsufficient => '探测数据不足，无法判定。';
+
+  @override
+  String get dnsLeakVpnActive => '隧道运行中';
+
+  @override
+  String get dnsLeakVpnInactive => '隧道未运行';
+
+  @override
+  String get captiveSection => 'Captive Portal';
+
+  @override
+  String get captiveRun => '检测门户';
+
+  @override
+  String get captiveOpen => '网络正常';
+
+  @override
+  String get captivePortal => '需要登录门户';
+
+  @override
+  String get captiveUnknown => '无法判定';
+
+  @override
+  String get captiveOpenPortal => '打开登录页';
+
+  @override
+  String get networkDiagnosticsFailed => '检测失败，请稍后重试。';
 }

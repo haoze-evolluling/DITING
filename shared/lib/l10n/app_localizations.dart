@@ -25539,6 +25539,132 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'新增规则'**
   String get automationAdd;
+
+  /// No description provided for @networkDiagnosticsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络诊断'**
+  String get networkDiagnosticsTitle;
+
+  /// No description provided for @networkDiagnosticsIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查 DNS 是否经过配置上游，并识别需要登录的 Captive Portal。'**
+  String get networkDiagnosticsIntro;
+
+  /// No description provided for @dnsLeakSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 泄漏检测'**
+  String get dnsLeakSection;
+
+  /// No description provided for @dnsLeakRun.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始检测'**
+  String get dnsLeakRun;
+
+  /// No description provided for @dnsLeakPass.
+  ///
+  /// In zh, this message translates to:
+  /// **'通过'**
+  String get dnsLeakPass;
+
+  /// No description provided for @dnsLeakLeak.
+  ///
+  /// In zh, this message translates to:
+  /// **'发现泄漏'**
+  String get dnsLeakLeak;
+
+  /// No description provided for @dnsLeakUnknown.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法判定'**
+  String get dnsLeakUnknown;
+
+  /// No description provided for @dnsLeakReasonBypass.
+  ///
+  /// In zh, this message translates to:
+  /// **'隧道未运行，查询未经过配置上游。'**
+  String get dnsLeakReasonBypass;
+
+  /// No description provided for @dnsLeakReasonProxied.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询经隧道转发至配置上游。'**
+  String get dnsLeakReasonProxied;
+
+  /// No description provided for @dnsLeakReasonMismatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'出口解析器与配置上游不一致。'**
+  String get dnsLeakReasonMismatch;
+
+  /// No description provided for @dnsLeakReasonPlaintext.
+  ///
+  /// In zh, this message translates to:
+  /// **'发现明文 DNS 出站。'**
+  String get dnsLeakReasonPlaintext;
+
+  /// No description provided for @dnsLeakReasonInsufficient.
+  ///
+  /// In zh, this message translates to:
+  /// **'探测数据不足，无法判定。'**
+  String get dnsLeakReasonInsufficient;
+
+  /// No description provided for @dnsLeakVpnActive.
+  ///
+  /// In zh, this message translates to:
+  /// **'隧道运行中'**
+  String get dnsLeakVpnActive;
+
+  /// No description provided for @dnsLeakVpnInactive.
+  ///
+  /// In zh, this message translates to:
+  /// **'隧道未运行'**
+  String get dnsLeakVpnInactive;
+
+  /// No description provided for @captiveSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'Captive Portal'**
+  String get captiveSection;
+
+  /// No description provided for @captiveRun.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测门户'**
+  String get captiveRun;
+
+  /// No description provided for @captiveOpen.
+  ///
+  /// In zh, this message translates to:
+  /// **'网络正常'**
+  String get captiveOpen;
+
+  /// No description provided for @captivePortal.
+  ///
+  /// In zh, this message translates to:
+  /// **'需要登录门户'**
+  String get captivePortal;
+
+  /// No description provided for @captiveUnknown.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法判定'**
+  String get captiveUnknown;
+
+  /// No description provided for @captiveOpenPortal.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开登录页'**
+  String get captiveOpenPortal;
+
+  /// No description provided for @networkDiagnosticsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测失败，请稍后重试。'**
+  String get networkDiagnosticsFailed;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
