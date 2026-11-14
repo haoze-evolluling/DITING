@@ -66,10 +66,7 @@ pub fn parse_portal_url(option: &str) -> Option<String> {
 ///   match is `portal`, with blocking suspended;
 /// * anything else, or a missing status, is `unknown`.
 pub fn evaluate(probe: &Probe) -> PortalVerdict {
-    let portal_url = probe
-        .redirect_url
-        .as_deref()
-        .and_then(parse_portal_url);
+    let portal_url = probe.redirect_url.as_deref().and_then(parse_portal_url);
 
     match probe.status_code {
         Some(204) if probe.body_matches_expected != Some(false) => PortalVerdict {
@@ -108,7 +105,11 @@ pub struct GateDecision {
 }
 
 /// `gate`: combines Kotlin's capability bits with the probe verdict.
-pub fn gate(network_validated: bool, captive_capability: bool, verdict: &PortalVerdict) -> GateDecision {
+pub fn gate(
+    network_validated: bool,
+    captive_capability: bool,
+    verdict: &PortalVerdict,
+) -> GateDecision {
     if verdict.state == PortalState::Portal || captive_capability {
         return GateDecision {
             suspend_blocking: true,
@@ -154,7 +155,10 @@ mod tests {
         let verdict = evaluate(&probe(302, Some("http://wifi.portal/login"), None));
         assert_eq!(verdict.state, PortalState::Portal);
         assert!(verdict.suspend_blocking);
-        assert_eq!(verdict.portal_url.as_deref(), Some("http://wifi.portal/login"));
+        assert_eq!(
+            verdict.portal_url.as_deref(),
+            Some("http://wifi.portal/login")
+        );
     }
 
     #[test]
@@ -192,7 +196,10 @@ mod tests {
         assert!(gate(false, true, &open).suspend_blocking);
         let portal = evaluate(&probe(302, Some("http://p"), None));
         assert!(gate(true, false, &portal).suspend_blocking);
-        assert_eq!(gate(true, false, &portal).portal_url.as_deref(), Some("http://p"));
+        assert_eq!(
+            gate(true, false, &portal).portal_url.as_deref(),
+            Some("http://p")
+        );
     }
 
     #[test]

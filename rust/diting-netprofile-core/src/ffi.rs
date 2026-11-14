@@ -155,9 +155,8 @@ mod tests {
         })
         .to_string();
         let mut out_len = 0usize;
-        let pointer = unsafe {
-            diting_netprofile_core_call(request.as_ptr(), request.len(), &mut out_len)
-        };
+        let pointer =
+            unsafe { diting_netprofile_core_call(request.as_ptr(), request.len(), &mut out_len) };
         assert!(!pointer.is_null());
         let bytes = unsafe { std::slice::from_raw_parts(pointer, out_len) };
         assert_eq!(&bytes[0..4], b"DNP1");

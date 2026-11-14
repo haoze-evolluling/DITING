@@ -38,8 +38,8 @@ pub async fn maybe_synthesize(
     let v4 = first_ipv4(&a_extract.ips)?;
     let synthesized = Ipv6Addr::from(dns64.map(v4)).to_string();
 
-    let wire = reply::rewrite_ip(query, &synthesized)
-        .and_then(|plan| reply::render(query, &plan))?;
+    let wire =
+        reply::rewrite_ip(query, &synthesized).and_then(|plan| reply::render(query, &plan))?;
     Some((wire, synthesized))
 }
 
@@ -59,10 +59,11 @@ fn ip_bytes(text: &str) -> Option<Vec<u8>> {
 }
 
 fn first_ipv4(ips: &[String]) -> Option<[u8; 4]> {
-    ips.iter().find_map(|text| match text.trim().parse::<IpAddr>() {
-        Ok(IpAddr::V4(v4)) => Some(v4.octets()),
-        _ => None,
-    })
+    ips.iter()
+        .find_map(|text| match text.trim().parse::<IpAddr>() {
+            Ok(IpAddr::V4(v4)) => Some(v4.octets()),
+            _ => None,
+        })
 }
 
 #[cfg(test)]

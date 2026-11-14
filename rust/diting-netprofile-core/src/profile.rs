@@ -144,11 +144,7 @@ fn resolution_of(profile: &Profile, matched: bool, reason: String) -> Resolution
 /// tie the first one in input order wins (a stable, explainable rule the editor can show). When no
 /// profile matches, the profile named by `fallback_id` (if enabled) is returned with
 /// `matched == false`; otherwise an empty resolution says "no profile matched".
-pub fn resolve(
-    context: &NetworkContext,
-    profiles: &[Profile],
-    fallback_id: &str,
-) -> Resolution {
+pub fn resolve(context: &NetworkContext, profiles: &[Profile], fallback_id: &str) -> Resolution {
     let mut best: Option<&Profile> = None;
     for profile in profiles.iter().filter(|profile| profile.enabled) {
         if !profile.network_match.matches(context) {
@@ -311,7 +307,9 @@ mod tests {
         let mut profile = wifi_profile("home", 10);
         profile.enabled = false;
         let profiles = vec![profile];
-        assert!(resolve(&ctx("wifi"), &profiles, "home").profile_id.is_empty());
+        assert!(resolve(&ctx("wifi"), &profiles, "home")
+            .profile_id
+            .is_empty());
     }
 
     #[test]

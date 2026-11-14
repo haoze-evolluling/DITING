@@ -25,12 +25,12 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use diting_connlog_core::ConnLogDedup;
-use diting_flow_core::{FlowEvent, FlowKey, FlowStatus, FlowTable};
 use diting_dns_cache_core::policy::Config as CacheConfig;
 use diting_dns_core::block::{BlockConfig, DynamicBlocks};
 use diting_dns_core::message::{query_info, TYPE_A, TYPE_AAAA};
 use diting_dns_core::reply::REWRITE_ANSWER_TTL;
 use diting_dns_wire::format_ipv4;
+use diting_flow_core::{FlowEvent, FlowKey, FlowStatus, FlowTable};
 use diting_gate_core::BlockedUids;
 use diting_telemetry_core::{LogItem, TrafficTracker};
 use smoltcp::wire::IpEndpoint;
@@ -476,7 +476,10 @@ impl Engine {
         } else {
             None
         };
-        *self.dns64.write().unwrap_or_else(|error| error.into_inner()) = engine;
+        *self
+            .dns64
+            .write()
+            .unwrap_or_else(|error| error.into_inner()) = engine;
         Ok(())
     }
 

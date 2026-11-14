@@ -190,7 +190,8 @@ struct RateLimitDocument {
 }
 
 #[derive(Serialize)]
-struct ProviderDocument<'a> {    id: &'a str,
+struct ProviderDocument<'a> {
+    id: &'a str,
     protocol: &'a str,
     server: String,
     url: &'a str,

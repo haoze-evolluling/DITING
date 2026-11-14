@@ -191,8 +191,14 @@ mod tests {
     #[test]
     fn routes_are_get_only_and_known_paths_only() {
         assert_eq!(route("GET", "/status"), RouteOutcome::Found(Route::Status));
-        assert_eq!(route("get", "/api/v1/status?x=1"), RouteOutcome::Found(Route::Status));
-        assert_eq!(route("GET", "/version/"), RouteOutcome::Found(Route::Version));
+        assert_eq!(
+            route("get", "/api/v1/status?x=1"),
+            RouteOutcome::Found(Route::Status)
+        );
+        assert_eq!(
+            route("GET", "/version/"),
+            RouteOutcome::Found(Route::Version)
+        );
         assert_eq!(route("POST", "/status"), RouteOutcome::MethodNotAllowed);
         assert_eq!(route("GET", "/admin"), RouteOutcome::NotFound);
     }

@@ -22,7 +22,10 @@ fn an_installed_limiter_enforces_the_burst() {
         ..Config::default()
     };
     engine.set_rate_limit(&config);
-    assert!(engine.allow_client(Some(&addr), 0), "first packet fits the burst");
+    assert!(
+        engine.allow_client(Some(&addr), 0),
+        "first packet fits the burst"
+    );
     assert!(
         !engine.allow_client(Some(&addr), 0),
         "a second packet at the same instant exceeds burst 1"
@@ -43,5 +46,8 @@ fn disabling_again_clears_the_limiter() {
     assert!(engine.allow_client(Some(&addr), 0));
     assert!(!engine.allow_client(Some(&addr), 0));
     engine.set_rate_limit(&Config::default());
-    assert!(engine.allow_client(Some(&addr), 0), "a disabled config clears the limiter");
+    assert!(
+        engine.allow_client(Some(&addr), 0),
+        "a disabled config clears the limiter"
+    );
 }

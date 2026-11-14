@@ -42,6 +42,6 @@ pub use diting_go_compat::text;
 
 pub use cache::Reason;
 pub use decision::Decision;
-pub use route::{evaluate as evaluate_route, MatchKind, RouteDecision, RouteRule};
 pub use ffi::ABI_VERSION;
+pub use route::{evaluate as evaluate_route, MatchKind, RouteDecision, RouteRule};
 pub use snapshot::{Answer, Snapshot};

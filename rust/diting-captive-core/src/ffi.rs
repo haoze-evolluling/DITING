@@ -26,9 +26,7 @@ fn decode_probe(request: &Value) -> Probe {
             .and_then(Value::as_u64)
             .map(|n| n as u16),
         redirect_url: opt_string(source.get("redirectUrl")),
-        body_matches_expected: source
-            .get("bodyMatchesExpected")
-            .and_then(Value::as_bool),
+        body_matches_expected: source.get("bodyMatchesExpected").and_then(Value::as_bool),
     }
 }
 

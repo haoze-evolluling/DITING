@@ -166,7 +166,12 @@ fn record_flow(
         ACTION_BLOCK_UID | ACTION_BLOCK_ENCRYPTED_DNS | ACTION_BLOCK_QUIC
     );
     let flow_key = diting_flow_core::FlowKey {
-        protocol: if protocol == PROTOCOL_UDP { "udp" } else { "tcp" }.to_string(),
+        protocol: if protocol == PROTOCOL_UDP {
+            "udp"
+        } else {
+            "tcp"
+        }
+        .to_string(),
         src_ip: crate::netstack::address_text(key.remote.addr),
         src_port: key.remote.port,
         dst_ip: crate::netstack::address_text(key.local.addr),

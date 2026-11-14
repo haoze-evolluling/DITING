@@ -23,8 +23,14 @@ fn handle_operation(request: &Value) -> Option<Value> {
         "webhook.retry" => {
             let attempt = request.get("attempt").and_then(Value::as_i64).unwrap_or(1);
             let status = request.get("status").and_then(Value::as_i64);
-            let base_ms = request.get("baseMs").and_then(Value::as_i64).unwrap_or(1000);
-            let max_ms = request.get("maxMs").and_then(Value::as_i64).unwrap_or(30000);
+            let base_ms = request
+                .get("baseMs")
+                .and_then(Value::as_i64)
+                .unwrap_or(1000);
+            let max_ms = request
+                .get("maxMs")
+                .and_then(Value::as_i64)
+                .unwrap_or(30000);
             let max_attempts = request
                 .get("maxAttempts")
                 .and_then(Value::as_i64)

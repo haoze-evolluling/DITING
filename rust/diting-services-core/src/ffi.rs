@@ -145,7 +145,8 @@ mod tests {
 
     #[test]
     fn expand_round_trip() {
-        let request = json!({ "op": "services.expand", "serviceIds": ["youtube"], "kind": "block" });
+        let request =
+            json!({ "op": "services.expand", "serviceIds": ["youtube"], "kind": "block" });
         let answer = handle_operation(&request).unwrap();
         assert_eq!(answer["kind"], json!("block"));
         assert_eq!(answer["count"], json!(8));

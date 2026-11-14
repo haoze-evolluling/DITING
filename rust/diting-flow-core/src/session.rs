@@ -186,7 +186,8 @@ impl FlowTable {
     pub fn prune_idle(&mut self, now_ms: i64, idle_ms: i64) -> usize {
         let before = self.by_key.len();
         self.by_key.retain(|_, session| {
-            session.status == FlowStatus::Active && now_ms.saturating_sub(session.last_seen_ms) <= idle_ms
+            session.status == FlowStatus::Active
+                && now_ms.saturating_sub(session.last_seen_ms) <= idle_ms
         });
         before - self.by_key.len()
     }
@@ -321,7 +322,13 @@ mod tests {
     fn snapshot_limit_reports_truncation() {
         let mut table = FlowTable::new(8);
         for i in 0..5u16 {
-            table.record(event(key("tcp", "1.1.1.1", 1000 + i, 1), 1, 1, FlowStatus::Active, 1));
+            table.record(event(
+                key("tcp", "1.1.1.1", 1000 + i, 1),
+                1,
+                1,
+                FlowStatus::Active,
+                1,
+            ));
         }
         let snapshot = table.snapshot(0, 2);
         assert_eq!(snapshot.total, 5);
@@ -332,9 +339,27 @@ mod tests {
     #[test]
     fn new_key_at_capacity_evicts_oldest() {
         let mut table = FlowTable::new(2);
-        table.record(event(key("tcp", "1.1.1.1", 443, 1), 1, 1, FlowStatus::Active, 1));
-        table.record(event(key("tcp", "2.2.2.2", 443, 2), 1, 1, FlowStatus::Active, 2));
-        table.record(event(key("tcp", "3.3.3.3", 443, 3), 1, 1, FlowStatus::Active, 3));
+        table.record(event(
+            key("tcp", "1.1.1.1", 443, 1),
+            1,
+            1,
+            FlowStatus::Active,
+            1,
+        ));
+        table.record(event(
+            key("tcp", "2.2.2.2", 443, 2),
+            1,
+            1,
+            FlowStatus::Active,
+            2,
+        ));
+        table.record(event(
+            key("tcp", "3.3.3.3", 443, 3),
+            1,
+            1,
+            FlowStatus::Active,
+            3,
+        ));
         assert_eq!(table.len(), 2);
         assert_eq!(table.dropped(), 1);
         let ips: Vec<String> = table

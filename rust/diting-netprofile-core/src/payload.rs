@@ -90,10 +90,7 @@ pub fn decode_profiles(request: &Value) -> Vec<Profile> {
                     }
                 },
                 priority: item.get("priority").and_then(Value::as_i64).unwrap_or(100),
-                enabled: item
-                    .get("enabled")
-                    .and_then(Value::as_bool)
-                    .unwrap_or(true),
+                enabled: item.get("enabled").and_then(Value::as_bool).unwrap_or(true),
                 network_match: decode_match(item),
                 upstream_set: text(item, "upstreamSet"),
                 rule_group_states: text_list(item.get("ruleGroupStates")),

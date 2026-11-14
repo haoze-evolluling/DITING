@@ -67,7 +67,9 @@ fn domain_matches(pattern: &str, host: &str) -> bool {
     }
     if let Some(rest) = pattern.strip_prefix("*.") {
         // `*.example.com` matches `a.example.com` (and deeper) but not `example.com` itself.
-        return host.len() > rest.len() && host.ends_with(rest) && host.as_bytes()[host.len() - rest.len() - 1] == b'.';
+        return host.len() > rest.len()
+            && host.ends_with(rest)
+            && host.as_bytes()[host.len() - rest.len() - 1] == b'.';
     }
     if let Some(rest) = pattern.strip_prefix('.') {
         return host.ends_with(rest) && host.len() > rest.len();

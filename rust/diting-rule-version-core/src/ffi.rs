@@ -74,8 +74,14 @@ fn handle_operation(request: &Value) -> Option<Value> {
         "ruleversion.record" => {
             let existing = decode_versions(request.get("versions"));
             let hash = request.get("hash")?.as_str()?;
-            let rule_count = request.get("ruleCount").and_then(Value::as_i64).unwrap_or(0);
-            let created_at = request.get("createdAt").and_then(Value::as_i64).unwrap_or(0);
+            let rule_count = request
+                .get("ruleCount")
+                .and_then(Value::as_i64)
+                .unwrap_or(0);
+            let created_at = request
+                .get("createdAt")
+                .and_then(Value::as_i64)
+                .unwrap_or(0);
             let max = request
                 .get("max")
                 .and_then(Value::as_u64)
@@ -222,9 +228,8 @@ mod tests {
         })
         .to_string();
         let mut out_len = 0usize;
-        let pointer = unsafe {
-            diting_rule_version_core_call(request.as_ptr(), request.len(), &mut out_len)
-        };
+        let pointer =
+            unsafe { diting_rule_version_core_call(request.as_ptr(), request.len(), &mut out_len) };
         assert!(!pointer.is_null());
         let bytes = unsafe { std::slice::from_raw_parts(pointer, out_len) };
         assert_eq!(&bytes[0..4], b"DRV1");

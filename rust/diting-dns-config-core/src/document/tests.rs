@@ -420,14 +420,19 @@ fn privacy_settings_reach_the_tunnel_document() {
         block_record_types: vec!["HTTPS".to_string(), "SVCB".to_string()],
         rebinding_protection: true,
     };
-    let json = document_of(&build_tunnel(&input, &preset_providers(), &preset_bootstrap()));
+    let json = document_of(&build_tunnel(
+        &input,
+        &preset_providers(),
+        &preset_bootstrap(),
+    ));
     assert_eq!(json["privacy"]["blockRecordTypes"][0], "HTTPS");
     assert_eq!(json["privacy"]["blockRecordTypes"][1], "SVCB");
     assert_eq!(json["privacy"]["rebindingProtection"], true);
 }
 
 #[test]
-fn privacy_settings_reach_the_server_document() {    let mut input = server_settings();
+fn privacy_settings_reach_the_server_document() {
+    let mut input = server_settings();
     input.privacy = PrivacyInput {
         block_record_types: vec!["HTTPS".to_string()],
         rebinding_protection: false,
@@ -442,7 +447,11 @@ fn privacy_settings_reach_the_server_document() {    let mut input = server_sett
 fn dns64_switch_reaches_the_tunnel_document() {
     let mut input = settings();
     input.dns64 = Dns64Input { enabled: true };
-    let json = document_of(&build_tunnel(&input, &preset_providers(), &preset_bootstrap()));
+    let json = document_of(&build_tunnel(
+        &input,
+        &preset_providers(),
+        &preset_bootstrap(),
+    ));
     assert_eq!(json["dns64"]["enabled"], true);
 }
 

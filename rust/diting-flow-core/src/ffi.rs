@@ -165,9 +165,8 @@ mod tests {
     fn snapshot(handle: *const FlowTable, since: u64) -> Value {
         let request = format!("{{\"sinceSeq\":{since},\"limit\":0}}");
         let mut out_len = 0usize;
-        let pointer = unsafe {
-            diting_flow_snapshot(handle, request.as_ptr(), request.len(), &mut out_len)
-        };
+        let pointer =
+            unsafe { diting_flow_snapshot(handle, request.as_ptr(), request.len(), &mut out_len) };
         assert!(!pointer.is_null());
         let bytes = unsafe { slice::from_raw_parts(pointer, out_len) };
         assert_eq!(&bytes[0..4], b"DFL1");

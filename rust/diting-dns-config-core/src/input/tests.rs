@@ -147,10 +147,7 @@ fn server_settings_decode() {
     assert_eq!(settings.rate_limit.burst, 40);
     assert_eq!(settings.rate_limit.ipv4_prefix, 24);
     assert_eq!(settings.rate_limit.ipv6_prefix, 56);
-    assert_eq!(
-        settings.rate_limit.exempt,
-        ["192.168.0.1", "10.0.0.0/8"]
-    );
+    assert_eq!(settings.rate_limit.exempt, ["192.168.0.1", "10.0.0.0/8"]);
 }
 
 #[test]

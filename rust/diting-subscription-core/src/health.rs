@@ -66,7 +66,10 @@ pub fn classify_request(request: &Value) -> Value {
         .get("importState")
         .and_then(Value::as_str)
         .unwrap_or("ready");
-    let rule_count = request.get("ruleCount").and_then(Value::as_i64).unwrap_or(0);
+    let rule_count = request
+        .get("ruleCount")
+        .and_then(Value::as_i64)
+        .unwrap_or(0);
     let last_updated = request
         .get("lastUpdated")
         .and_then(Value::as_i64)
@@ -84,7 +87,10 @@ pub fn summary_request(request: &Value) -> Value {
     let mut failed = 0u32;
     if let Some(rows) = request.get("rows").and_then(Value::as_array) {
         for row in rows {
-            let state = row.get("importState").and_then(Value::as_str).unwrap_or("ready");
+            let state = row
+                .get("importState")
+                .and_then(Value::as_str)
+                .unwrap_or("ready");
             let rule_count = row.get("ruleCount").and_then(Value::as_i64).unwrap_or(0);
             let last_updated = row.get("lastUpdated").and_then(Value::as_i64).unwrap_or(0);
             match classify(state, rule_count, last_updated, None) {

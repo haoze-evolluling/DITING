@@ -237,7 +237,8 @@ fn spawn_udp(
     socket: UdpSocket,
     permits: Arc<Semaphore>,
     stopped: Arc<AtomicBool>,
-) -> JoinHandle<()> {    let receiver = engine.runtime().handle().clone();
+) -> JoinHandle<()> {
+    let receiver = engine.runtime().handle().clone();
     receiver.spawn(async move {
         let socket = Arc::new(socket);
         // A per-request buffer would allocate on every datagram; one buffer per read loop is enough

@@ -68,8 +68,8 @@ pub mod policy;
 pub mod privacy;
 pub mod protect;
 pub mod resolver;
-pub mod standalone;
 pub mod stage3;
+pub mod standalone;
 pub mod stats;
 pub mod tunnel;
 
