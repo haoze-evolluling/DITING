@@ -4,7 +4,7 @@
 library;
 
 abstract final class LegacySchema {
-  static const mainVersion = 3;
+  static const mainVersion = 4;
 
   static const expressVersion = 2;
 
@@ -54,6 +54,8 @@ abstract final class LegacySchema {
       ..._ruleIndexes,
       ..._subscriptionIndexes,
       ..._logIndexes,
+      ..._automationTables,
+      ..._automationIndexes,
     ],
   };
 
@@ -203,5 +205,29 @@ CREATE TABLE `app_traffic_daily` (`date` TEXT NOT NULL, `package_name` TEXT NOT 
   static const _appTrafficDailyIndexes = <String>[
     'CREATE INDEX `index_app_traffic_daily_date` ON `app_traffic_daily` (`date`)',
     'CREATE INDEX `index_app_traffic_daily_package_name` ON `app_traffic_daily` (`package_name`)',
+  ];
+
+  // 自动化（A1/A3/A14）：规则、档案与审计事件，主库独有的用户配置表。`spec_json` / `payload_json`
+  // 承载条件-动作与档案快照，结构归自动化引擎校验，这里只保证落库与迁移（新增列用 ADD COLUMN、新表
+  // 用 IF NOT EXISTS，可回滚）。
+  static const _automationRule = '''
+CREATE TABLE `automation_rule` (`id` TEXT PRIMARY KEY NOT NULL, `name` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1, `priority` INTEGER NOT NULL DEFAULT 100, `match` TEXT NOT NULL DEFAULT 'all', `spec_json` TEXT NOT NULL, `last_run_at` INTEGER NOT NULL DEFAULT 0, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)''';
+
+  static const _automationProfile = '''
+CREATE TABLE `automation_profile` (`id` TEXT PRIMARY KEY NOT NULL, `name` TEXT NOT NULL, `payload_json` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)''';
+
+  static const _automationEvent = '''
+CREATE TABLE `automation_event` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `ts` INTEGER NOT NULL, `rule_id` TEXT, `event` TEXT NOT NULL, `outcome` TEXT, `detail_json` TEXT)''';
+
+  static const _automationTables = <String>[
+    _automationRule,
+    _automationProfile,
+    _automationEvent,
+  ];
+
+  static const _automationIndexes = <String>[
+    'CREATE INDEX `index_automation_rule_enabled_priority` ON `automation_rule` (`enabled`, `priority`)',
+    'CREATE INDEX `index_automation_event_ts` ON `automation_event` (`ts`)',
+    'CREATE INDEX `index_automation_event_rule_id_ts` ON `automation_event` (`rule_id`, `ts`)',
   ];
 }
