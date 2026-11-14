@@ -64,7 +64,8 @@ impl Doh3Client {
         send.write_all(&request)
             .await
             .map_err(|error| format!("DoH3 write: {error}"))?;
-        send.finish().map_err(|error| format!("DoH3 write: {error}"))?;
+        send.finish()
+            .map_err(|error| format!("DoH3 write: {error}"))?;
         let response = recv
             .read_to_end(1 << 20)
             .await
@@ -106,8 +107,7 @@ impl Doh3Client {
                         last_error = error;
                         continue;
                     }
-                    self.lock_sessions()
-                        .insert(key.clone(), connection.clone());
+                    self.lock_sessions().insert(key.clone(), connection.clone());
                     return Ok(connection);
                 }
                 Ok(Err(error)) => last_error = format!("DoH3 connection: {error}"),

@@ -153,7 +153,10 @@ async fn attempt(
                                 .path_and_query()
                                 .map(|value| value.as_str())
                                 .unwrap_or("/dns-query");
-                            match h3.query(&inner.dial, &provider.host, port, path, query).await {
+                            match h3
+                                .query(&inner.dial, &provider.host, port, path, query)
+                                .await
+                            {
                                 Ok(answer) => {
                                     doh.note_h3_success();
                                     Ok(answer)

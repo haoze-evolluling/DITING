@@ -48,7 +48,10 @@ pub fn parse_alt_svc(header: &str) -> Option<AltSvc> {
             continue;
         }
         let authority = value.trim().trim_matches('"');
-        let port = authority.rsplit(':').next().and_then(|p| p.parse::<u16>().ok());
+        let port = authority
+            .rsplit(':')
+            .next()
+            .and_then(|p| p.parse::<u16>().ok());
         let Some(port) = port else {
             continue;
         };

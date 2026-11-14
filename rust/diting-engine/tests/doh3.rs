@@ -6,8 +6,8 @@ mod support;
 use std::sync::Arc;
 
 use diting_engine::protect::ProtectorHandle;
-use diting_engine::resolver::doh3::Doh3Client;
 use diting_engine::resolver::dial::Dialer;
+use diting_engine::resolver::doh3::Doh3Client;
 use diting_engine::resolver::trust::UpstreamTrust;
 use diting_engine::resolver::Bootstrap;
 
@@ -26,7 +26,10 @@ async fn an_advertised_origin_upgrades_to_doh3_and_keeps_the_answer() {
     let url = format!("https://localhost:{}/dns-query", upstream.port());
     let config = config_json("single", &[provider_json("p1", "DOH", "", &url)], None);
     let resolver = resolver(&config, Some(&pki.ca_pem), Arc::new(Recorder::default()));
-    assert!(!resolver.doh3_ready(), "nothing advertised before the first answer");
+    assert!(
+        !resolver.doh3_ready(),
+        "nothing advertised before the first answer"
+    );
 
     let first = query_wire("first.test", 1);
     assert_eq!(
@@ -62,13 +65,7 @@ async fn doh3_answers_and_reuses_the_quic_connection() {
     for id in [1u16, 2] {
         let query = query_wire("doh3.test", id);
         let answer = client
-            .query(
-                &dialer,
-                "localhost",
-                upstream.port(),
-                "/dns-query",
-                &query,
-            )
+            .query(&dialer, "localhost", upstream.port(), "/dns-query", &query)
             .await
             .expect("a DoH3 answer");
         // The same answer the DoH/DoQ origins give: DoH3 must not change the resolution result.

@@ -23,8 +23,8 @@
 //! kernel is required for resolution: without the library a query fails instead of running on a
 //! second, quieter implementation, exactly like the DNS answer kernel.
 
-pub mod doh;
 pub mod alt_svc;
+pub mod doh;
 pub mod endpoint;
 pub mod ffi;
 pub mod framing;

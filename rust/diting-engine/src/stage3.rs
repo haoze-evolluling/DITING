@@ -44,7 +44,11 @@ mod tests {
     fn safebrowsing_kernel_is_reachable() {
         let engine = safebrowsing_engine(16, 60_000);
         let plan = engine
-            .plan(diting_safebrowsing_core::SERVICE_SAFE_BROWSING, "example.com", 0)
+            .plan(
+                diting_safebrowsing_core::SERVICE_SAFE_BROWSING,
+                "example.com",
+                0,
+            )
             .expect("a domain has a plan");
         // Whether the cache was warm or not, the plan is a valid Safe Browsing decision.
         assert!(plan.empty || !plan.question.is_empty() || plan.found);
