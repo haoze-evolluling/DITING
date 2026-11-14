@@ -1,6 +1,6 @@
 //! The frozen event envelope (`diting.event/1`).
 //!
-//! ```
+//! ```json
 //! { "schema": "diting.event/1", "event": "state_changed", "ts": 1710000000000,
 //!   "source": "android",
 //!   "data": { "workMode": "normal", "running": true, "reclaiming": false, "persisted": true,
