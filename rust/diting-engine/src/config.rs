@@ -95,6 +95,16 @@ pub struct BootstrapIpJson {
     pub weight: f64,
 }
 
+/// `privacy` block (U10): the privacy suite carried in the DNS document.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PrivacyJson {
+    #[serde(default)]
+    pub block_record_types: Vec<String>,
+    #[serde(default)]
+    pub rebinding_protection: bool,
+}
+
 /// `bootstrapConfig`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -121,6 +131,8 @@ pub struct DnsConfigJson {
     pub cache: CacheJson,
     #[serde(default)]
     pub bootstrap: BootstrapJson,
+    #[serde(default)]
+    pub privacy: PrivacyJson,
     #[serde(default)]
     pub race_max_parallel: Option<i64>,
 }
@@ -157,8 +169,18 @@ pub struct DnsConfig {
     pub dynamic_response: BlockConfig,
     pub cache: CacheConfig,
     pub bootstrap: BootstrapJson,
+    /// U10: which query types to suppress and whether to reject private-address answers.
+    pub privacy: PrivacyPolicy,
     /// `raceMaxParallel`, zero when the payload did not set it.
     pub race_max_parallel: i64,
+}
+
+/// The privacy suite after mapping the document's record-type names onto qtypes.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PrivacyPolicy {
+    /// Query types answered with an empty NOERROR (`HTTPS`=65, `SVCB`=64).
+    pub blocked_qtypes: Vec<u16>,
+    pub rebinding_protection: bool,
 }
 
 impl DnsConfig {
@@ -237,8 +259,29 @@ impl DnsConfig {
             },
             cache: cache_config(&document.cache),
             bootstrap: document.bootstrap.clone(),
+            privacy: privacy_policy(&document.privacy),
             race_max_parallel: document.race_max_parallel.unwrap_or(0),
         })
+    }
+}
+
+/// Maps the document's record-type names onto qtypes, dropping anything else. Names are the ones
+/// the config kernel writes (`HTTPS` / `SVCB`); numeric spellings are accepted for robustness.
+fn privacy_policy(document: &PrivacyJson) -> PrivacyPolicy {
+    let mut blocked_qtypes: Vec<u16> = document
+        .block_record_types
+        .iter()
+        .filter_map(|name| match name.trim().to_ascii_uppercase().as_str() {
+            "HTTPS" | "TYPE65" => Some(65),
+            "SVCB" | "TYPE64" => Some(64),
+            _ => None,
+        })
+        .collect();
+    blocked_qtypes.sort_unstable();
+    blocked_qtypes.dedup();
+    PrivacyPolicy {
+        blocked_qtypes,
+        rebinding_protection: document.rebinding_protection,
     }
 }
 
@@ -317,5 +360,14 @@ mod tests {
         assert!(document.providers.is_empty());
         assert!(document.cache.mode.is_empty());
         assert!(!document.bootstrap.enabled);
+        assert!(document.privacy.block_record_types.is_empty());
+    }
+
+    #[test]
+    fn maps_privacy_record_types_onto_qtypes() {
+        let json = r#"{"mode":"single","providers":[{"id":"p1","protocol":"PLAIN","server":"8.8.8.8:53","url":"","weight":1}],"blockResponse":"NXDOMAIN","privacy":{"blockRecordTypes":["HTTPS","svcb","bogus"],"rebindingProtection":true}}"#;
+        let config = DnsConfig::from_json(json).expect("ok");
+        assert_eq!(config.privacy.blocked_qtypes, vec![64, 65]);
+        assert!(config.privacy.rebinding_protection);
     }
 }

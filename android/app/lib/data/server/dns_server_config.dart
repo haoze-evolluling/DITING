@@ -241,6 +241,8 @@ ServerDnsConfig buildServerDnsConfig(LegacySettings settings) {
     dynamicBlockNxDomainDurationSeconds:
         settings.serverDynamicBlockNxDomainDurationSeconds,
     customUpstreamsJson: settings.serverCustomUpstreamsJson,
+    blockHttpsSvcb: settings.blockHttpsSvcbRecordTypes,
+    rebindingProtection: settings.dnsRebindingProtection,
     presetUpstreams: [
       for (final upstream in serverPresetUpstreams(currentL10n))
         serverUpstreamRowOf(upstream),

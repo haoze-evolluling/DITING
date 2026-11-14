@@ -383,6 +383,16 @@ void _vpnConfig() {
         '180.184.1.1',
       ]);
     });
+
+    test('隐私套件开关写入 privacy 文档（U10）', () {
+      final settings = settingsWith({});
+      settings.setBlockHttpsSvcbRecordTypes(true);
+      settings.setDnsRebindingProtection(true);
+      final privacy =
+          buildDnsConfig(settings).toJson(settings)['privacy'] as Map;
+      expect(privacy['blockRecordTypes'], ['HTTPS', 'SVCB']);
+      expect(privacy['rebindingProtection'], true);
+    });
   });
 }
 

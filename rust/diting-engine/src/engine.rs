@@ -103,6 +103,10 @@ pub struct Engine {
     /// link whose IPv6 is unusable falls back to IPv4 instead of stalling on a dual-stack retry.
     /// Only set when the tunnel carries no IPv6.
     block_ipv6: AtomicBool,
+    /// U10: query types answered with an empty NOERROR (currently `HTTPS` / `SVCB`).
+    blocked_qtypes: RwLock<Vec<u16>>,
+    /// U10: reject an upstream answer that points a public name at a private/loopback address.
+    rebinding_protection: AtomicBool,
     block_response: AtomicU32,
     /// R4: temporary pause. While `now_ms() < pause_until_ms` every policy block is skipped, so DNS
     /// still resolves but nothing is filtered. `0` means not paused.
@@ -186,6 +190,8 @@ impl Engine {
             dynamic_blocks: DynamicBlocks::new(),
             filter_dns: AtomicBool::new(false),
             block_ipv6: AtomicBool::new(false),
+            blocked_qtypes: RwLock::new(Vec::new()),
+            rebinding_protection: AtomicBool::new(false),
             block_response: AtomicU32::new(0),
             pause_until_ms: AtomicI64::new(0),
             allowlist_only: AtomicBool::new(false),
@@ -355,6 +361,12 @@ impl Engine {
         self.block_response
             .store(config.block_response, Ordering::Release);
         *self
+            .blocked_qtypes
+            .write()
+            .unwrap_or_else(|error| error.into_inner()) = config.privacy.blocked_qtypes.clone();
+        self.rebinding_protection
+            .store(config.privacy.rebinding_protection, Ordering::Release);
+        *self
             .dynamic_config
             .write()
             .unwrap_or_else(|error| error.into_inner()) = config.dynamic_response;
@@ -428,6 +440,19 @@ impl Engine {
 
     pub fn block_ipv6(&self) -> bool {
         self.block_ipv6.load(Ordering::Acquire)
+    }
+
+    /// U10: whether [qtype] is suppressed by the privacy suite (HTTPS/SVCB).
+    pub fn records_blocked(&self, qtype: u16) -> bool {
+        self.blocked_qtypes
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .contains(&qtype)
+    }
+
+    /// U10: whether private-address answers are rejected (DNS rebinding protection).
+    pub fn rebinding_protection(&self) -> bool {
+        self.rebinding_protection.load(Ordering::Acquire)
     }
 
     /// `setBlockPause(untilMs)`: skip every policy block until `until_ms` (epoch ms). `0` clears it.

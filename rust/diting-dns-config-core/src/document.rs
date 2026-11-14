@@ -43,6 +43,16 @@ pub struct DynamicInput {
     pub nxdomain_seconds: i32,
 }
 
+/// U10 privacy suite (K10): carried in the same DNS document so the engine reads it with the rest of
+/// the config instead of a second, drifting channel.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct PrivacyInput {
+    /// Record types answered with NODATA (currently `HTTPS` / `SVCB`).
+    pub block_record_types: Vec<String>,
+    /// Reject upstream answers that point a public name at a private/loopback address.
+    pub rebinding_protection: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CacheInput {
     pub enabled: bool,
@@ -69,6 +79,7 @@ pub struct TunnelSettings {
     pub block_response_mode: String,
     pub cache: CacheInput,
     pub dynamic: DynamicInput,
+    pub privacy: PrivacyInput,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -95,6 +106,7 @@ pub struct ServerSettings {
     pub block_response_mode: String,
     pub dynamic: DynamicInput,
     pub custom_upstreams_json: Option<String>,
+    pub privacy: PrivacyInput,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,6 +145,13 @@ struct DynamicDocument {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PrivacyDocument {
+    block_record_types: Vec<String>,
+    rebinding_protection: bool,
+}
+
+#[derive(Serialize)]
 struct ProviderDocument<'a> {
     id: &'a str,
     protocol: &'a str,
@@ -162,6 +181,7 @@ struct TunnelDocument<'a> {
     cache: CacheDocument,
     providers: Vec<ProviderDocument<'a>>,
     bootstrap: BootstrapDocument<'a>,
+    privacy: PrivacyDocument,
 }
 
 fn clamp(value: i32, low: i32, high: i32) -> i32 {
@@ -234,6 +254,13 @@ fn cache_document(input: &CacheInput) -> CacheDocument {
         // 1.4.3 has no negative-TTL UI; the Go defaults are kept explicitly.
         negative_ttl_enabled: true,
         negative_ttl_seconds: 30,
+    }
+}
+
+fn privacy_document(input: &PrivacyInput) -> PrivacyDocument {
+    PrivacyDocument {
+        block_record_types: input.block_record_types.clone(),
+        rebinding_protection: input.rebinding_protection,
     }
 }
 
@@ -341,6 +368,7 @@ pub fn build_tunnel(
                 })
                 .collect(),
         },
+        privacy: privacy_document(&settings.privacy),
     };
     let document = serde_json::to_string(&document).unwrap_or_else(|_| String::from("{}"));
     TunnelConfig {
@@ -428,6 +456,7 @@ pub fn build_server(
             enabled: false,
             ips: Vec::new(),
         },
+        privacy: privacy_document(&settings.privacy),
     };
     let document = serde_json::to_string(&document).unwrap_or_else(|_| String::from("{}"));
     Some(ServerConfig {

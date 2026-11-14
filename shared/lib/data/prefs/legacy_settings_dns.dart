@@ -356,6 +356,20 @@ extension LegacyDnsSettings on LegacySettings {
     );
   }
 
+  /// U10 隐私套件：阻断 HTTPS(65) / SVCB(64) 记录类型，避免通过这些记录泄露访问意图。
+  bool get blockHttpsSvcbRecordTypes =>
+      _bool(LegacySettings.uiContainer, 'block_https_svcb_record_types', false);
+
+  void setBlockHttpsSvcbRecordTypes(bool value) =>
+      _store.putBool(LegacySettings.uiContainer, 'block_https_svcb_record_types', value);
+
+  /// U10 隐私套件：DNS 重绑定保护，拒绝把公网域名解析到私有/回环地址。
+  bool get dnsRebindingProtection =>
+      _bool(LegacySettings.uiContainer, 'dns_rebinding_protection', false);
+
+  void setDnsRebindingProtection(bool value) =>
+      _store.putBool(LegacySettings.uiContainer, 'dns_rebinding_protection', value);
+
   /// Written by the native CA flow; pages only read it.
   bool get httpsInspectionReady =>
       _bool(LegacySettings.uiContainer, 'https_inspection_ready', false);

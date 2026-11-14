@@ -208,6 +208,8 @@ class RustDnsConfigCore {
     required int dynamicBlockNxDomainDurationSeconds,
     required List<ProviderRow> presetProviders,
     required List<BootstrapEntryRow> presetBootstrap,
+    bool blockHttpsSvcb = false,
+    bool rebindingProtection = false,
   }) {
     final writer = _PayloadWriter()
       ..u8(
@@ -215,7 +217,9 @@ class RustDnsConfigCore {
             (cacheEnabled ? 0x2 : 0) |
             (cacheMinTtlEnabled ? 0x4 : 0) |
             (cacheStaleFallbackEnabled ? 0x8 : 0) |
-            (dynamicBlockEnabled ? 0x10 : 0),
+            (dynamicBlockEnabled ? 0x10 : 0) |
+            (blockHttpsSvcb ? 0x20 : 0) |
+            (rebindingProtection ? 0x40 : 0),
       )
       ..utf8(modeRaw)
       ..utf8(selectedProviderId)
@@ -269,12 +273,16 @@ class RustDnsConfigCore {
     required int dynamicBlockNxDomainDurationSeconds,
     required String? customUpstreamsJson,
     required List<ServerUpstreamRow> presetUpstreams,
+    bool blockHttpsSvcb = false,
+    bool rebindingProtection = false,
   }) {
     final writer = _PayloadWriter()
       ..u8(
         (adBlockEnabled ? 0x1 : 0) |
             (cacheEnabled ? 0x2 : 0) |
-            (dynamicBlockEnabled ? 0x4 : 0),
+            (dynamicBlockEnabled ? 0x4 : 0) |
+            (blockHttpsSvcb ? 0x8 : 0) |
+            (rebindingProtection ? 0x10 : 0),
       )
       ..utf8(resolutionModeRaw)
       ..utf8(selectedUpstreamId)

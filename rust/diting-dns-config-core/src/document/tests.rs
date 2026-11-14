@@ -71,6 +71,7 @@ fn settings() -> TunnelSettings {
             window_seconds: 60,
             nxdomain_seconds: 300,
         },
+        privacy: PrivacyInput::default(),
     }
 }
 
@@ -307,6 +308,7 @@ fn server_settings() -> ServerSettings {
             nxdomain_seconds: 300,
         },
         custom_upstreams_json: None,
+        privacy: PrivacyInput::default(),
     }
 }
 
@@ -406,4 +408,30 @@ fn server_falls_back_when_the_selected_upstream_is_gone() {
 #[test]
 fn server_without_any_catalog_is_rejected() {
     assert!(build_server(&server_settings(), &[]).is_none());
+}
+
+#[test]
+fn privacy_settings_reach_the_tunnel_document() {
+    let mut input = settings();
+    input.privacy = PrivacyInput {
+        block_record_types: vec!["HTTPS".to_string(), "SVCB".to_string()],
+        rebinding_protection: true,
+    };
+    let json = document_of(&build_tunnel(&input, &preset_providers(), &preset_bootstrap()));
+    assert_eq!(json["privacy"]["blockRecordTypes"][0], "HTTPS");
+    assert_eq!(json["privacy"]["blockRecordTypes"][1], "SVCB");
+    assert_eq!(json["privacy"]["rebindingProtection"], true);
+}
+
+#[test]
+fn privacy_settings_reach_the_server_document() {
+    let mut input = server_settings();
+    input.privacy = PrivacyInput {
+        block_record_types: vec!["HTTPS".to_string()],
+        rebinding_protection: false,
+    };
+    let config = build_server(&input, &preset_upstreams()).expect("config");
+    let json: serde_json::Value = serde_json::from_str(&config.document).unwrap();
+    assert_eq!(json["privacy"]["blockRecordTypes"][0], "HTTPS");
+    assert_eq!(json["privacy"]["rebindingProtection"], false);
 }

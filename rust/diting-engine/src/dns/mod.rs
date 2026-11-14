@@ -117,6 +117,20 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
         return reply::render(query, &plan);
     }
 
+    // U10: the privacy suite suppresses selected record types (HTTPS / SVCB) with an empty NOERROR,
+    // so a client that would otherwise reveal browsing intent through those records gets nothing —
+    // the same shape as `block_ipv6`. It runs before the filter switch because it is not a domain
+    // rule.
+    if engine.records_blocked(qtype) {
+        let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
+        engine.note_query(true);
+        engine.log_row(
+            row(&domain, true, qtype, started, app_name)
+                .blocked_by("record_type_blocked".to_string()),
+        );
+        return reply::render(query, &plan);
+    }
+
     if !engine.filter_dns() {
         return forward::forward(engine, query, &domain, qtype, started, app_name).await;
     }
@@ -347,6 +361,28 @@ mod tests {
             0,
             "NODATA carries no answer records"
         );
+    }
+
+    /// U10: the privacy suite answers a blocked record type (HTTPS) with an empty NOERROR and counts
+    /// it as blocked, regardless of the domain-filter switch.
+    #[test]
+    fn https_is_nodata_when_record_type_blocked() {
+        let engine = Arc::new(Engine::new());
+        let payload = r#"{"mode":"single","providers":[{"id":"p1","protocol":"PLAIN","server":"8.8.8.8:53","url":"","weight":1}],"blockResponse":"NXDOMAIN","privacy":{"blockRecordTypes":["HTTPS","SVCB"]}}"#;
+        engine.apply_dns_config(payload).expect("config");
+        let query = crate::resolver::build_query("example.com", 65);
+
+        let response = engine
+            .runtime()
+            .block_on(serve_for_app(&engine, &query, "test"))
+            .expect("a blocked record type still gets a reply");
+        assert_eq!(response[3] & 0x0f, 0, "rcode must be NOERROR");
+        assert_eq!(
+            u16::from_be_bytes([response[6], response[7]]),
+            0,
+            "NODATA carries no answer records"
+        );
+        assert_eq!(engine.blocked_queries(), 1);
     }
 
     /// The policy walk must see the flow's app; passing a constant would make app-scoped rules

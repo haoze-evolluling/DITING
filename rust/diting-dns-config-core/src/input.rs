@@ -4,7 +4,9 @@
 //! rejected call (a null pointer) rather than a half-read config.
 
 use crate::bootstrap::BootstrapRow;
-use crate::document::{BootstrapEntry, CacheInput, DynamicInput, ServerSettings, TunnelSettings};
+use crate::document::{
+    BootstrapEntry, CacheInput, DynamicInput, PrivacyInput, ServerSettings, TunnelSettings,
+};
 use crate::protocol::{self, Protocol};
 use crate::providers::Provider;
 use crate::upstreams::ServerUpstream;
@@ -13,6 +15,19 @@ use crate::wire::Reader;
 fn read_protocol(reader: &mut Reader<'_>) -> Option<Protocol> {
     let storage = reader.string()?;
     Some(protocol::from_storage(&storage).unwrap_or(Protocol::Plain))
+}
+
+/// U10 privacy flags: two spare bits of the settings byte carry the suite, so the payload layout is
+/// unchanged. Blocking HTTPS/SVCB is stored as the record-type names the document carries.
+fn privacy_from_flags(flags: u8, block_bit: u8, rebinding_bit: u8) -> PrivacyInput {
+    PrivacyInput {
+        block_record_types: if flags & block_bit != 0 {
+            vec!["HTTPS".to_string(), "SVCB".to_string()]
+        } else {
+            Vec::new()
+        },
+        rebinding_protection: flags & rebinding_bit != 0,
+    }
 }
 
 pub fn read_providers(reader: &mut Reader<'_>) -> Option<Vec<Provider>> {
@@ -115,6 +130,7 @@ pub fn tunnel_settings(reader: &mut Reader<'_>) -> Option<TunnelSettings> {
         window_seconds: reader.i32()?,
         nxdomain_seconds: reader.i32()?,
     };
+    let privacy = privacy_from_flags(flags, 0b100000, 0b1000000);
     Some(TunnelSettings {
         mode_raw,
         selected_provider_id,
@@ -128,6 +144,7 @@ pub fn tunnel_settings(reader: &mut Reader<'_>) -> Option<TunnelSettings> {
         block_response_mode,
         cache,
         dynamic,
+        privacy,
     })
 }
 
@@ -147,6 +164,7 @@ pub fn server_settings(reader: &mut Reader<'_>) -> Option<ServerSettings> {
         window_seconds: reader.i32()?,
         nxdomain_seconds: reader.i32()?,
     };
+    let privacy = privacy_from_flags(flags, 0b1000, 0b10000);
     let custom_upstreams_json = reader.opt_string()?;
     Some(ServerSettings {
         resolution_mode_raw,
@@ -161,6 +179,7 @@ pub fn server_settings(reader: &mut Reader<'_>) -> Option<ServerSettings> {
         block_response_mode,
         dynamic,
         custom_upstreams_json,
+        privacy,
     })
 }
 

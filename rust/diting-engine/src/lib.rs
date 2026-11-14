@@ -65,6 +65,7 @@ pub mod outbound;
 pub mod panic_log;
 pub mod pause;
 pub mod policy;
+pub mod privacy;
 pub mod protect;
 pub mod resolver;
 pub mod standalone;

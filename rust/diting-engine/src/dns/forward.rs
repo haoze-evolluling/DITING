@@ -36,6 +36,19 @@ pub async fn forward(
                 if let Some(reason) = blocked_chain(engine, &hit.chain_targets, qtype, app_name) {
                     return block(engine, query, domain, qtype, &reason, started, app_name);
                 }
+                if engine.rebinding_protection()
+                    && crate::privacy::any_private(hit.resolved_ips.split(',').map(str::trim))
+                {
+                    return block(
+                        engine,
+                        query,
+                        domain,
+                        qtype,
+                        "rebinding_protected",
+                        started,
+                        app_name,
+                    );
+                }
                 engine.note_query(false);
                 engine.log_row(
                     row(domain, false, qtype, started, app_name)
@@ -98,6 +111,19 @@ pub async fn forward(
                     blocked_chain(engine, &extracted.chain_targets, qtype, app_name)
                 {
                     return block(engine, query, domain, qtype, &reason, started, app_name);
+                }
+                if engine.rebinding_protection()
+                    && crate::privacy::any_private(extracted.ips.iter().map(String::as_str))
+                {
+                    return block(
+                        engine,
+                        query,
+                        domain,
+                        qtype,
+                        "rebinding_protected",
+                        started,
+                        app_name,
+                    );
                 }
                 engine.note_query(false);
                 engine.log_row(
