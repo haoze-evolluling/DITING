@@ -28,6 +28,7 @@ pub mod dtri_read;
 pub mod ffi;
 pub mod glob;
 pub mod json;
+pub mod route;
 pub mod snapshot;
 pub mod special;
 pub mod tables;
@@ -41,5 +42,6 @@ pub use diting_go_compat::text;
 
 pub use cache::Reason;
 pub use decision::Decision;
+pub use route::{evaluate as evaluate_route, MatchKind, RouteDecision, RouteRule};
 pub use ffi::ABI_VERSION;
 pub use snapshot::{Answer, Snapshot};
