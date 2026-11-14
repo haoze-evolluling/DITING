@@ -96,6 +96,7 @@ diting-request-core = { path = "../diting-request-core" }
 diting-safebrowsing-core = { path = "../diting-safebrowsing-core" }
 diting-dns64-core = { path = "../diting-dns64-core" }
 diting-ratelimit-core = { path = "../diting-ratelimit-core" }
+diting-response-core = { path = "../diting-response-core" }
 
 # `dup(2)`, `poll(2)`, `read(2)`/`write(2)` and the errno numbers of the TUN adapter. Only the unix
 # build has the fd path; the host tests drive the stack through an in-memory link instead.

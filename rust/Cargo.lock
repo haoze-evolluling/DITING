@@ -453,6 +453,7 @@ dependencies = [
  "diting-ratelimit-core",
  "diting-request-core",
  "diting-resolver-core",
+ "diting-response-core",
  "diting-safebrowsing-core",
  "diting-sniffer-core",
  "diting-telemetry-core",

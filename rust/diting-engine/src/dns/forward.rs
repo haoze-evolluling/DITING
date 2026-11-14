@@ -119,7 +119,9 @@ pub async fn forward(
 /// The policy re-evaluation of a CNAME/SVCB chain target (`checkResponseChainTargets`).
 ///
 /// Every target is evaluated as the query's own type, and the first block wins: a block page served
-/// through a CNAME is still a block.
+/// through a CNAME is still a block. The chain is attacker controlled, so `diting-response-core`
+/// bounds it first — unique, cycle-aware, at most eight deep — instead of walking an arbitrarily long
+/// alias list.
 fn blocked_chain(
     engine: &Arc<Engine>,
     targets: &[ChainTarget],
@@ -132,8 +134,10 @@ fn blocked_chain(
     if !engine.policy().is_active() || !engine.policy().has_rules() {
         return None;
     }
-    for target in targets {
-        if let Some(verdict) = engine.policy().evaluate(&target.domain, app_name, qtype) {
+    let names: Vec<String> = targets.iter().map(|target| target.domain.clone()).collect();
+    let plan = diting_response_core::plan(&names, diting_response_core::DEFAULT_MAX_DEPTH);
+    for domain in &plan.targets {
+        if let Some(verdict) = engine.policy().evaluate(domain, app_name, qtype) {
             if verdict.blocked {
                 return Some(verdict.reason);
             }
