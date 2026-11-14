@@ -55,6 +55,37 @@ void main() {
     }
   });
 
+  testWidgets('简中 / 英文 / 繁中三种 locale 均无溢出', (tester) async {
+    tester.view.physicalSize = const Size(360, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    // `zh` and `zh_TW` both resolve to the bundled Chinese ARB; `en` to English. Three locales,
+    // each rendered through the real shell, must stay overflow-free.
+    for (final locale in const [Locale('zh'), Locale('en'), Locale('zh', 'TW')]) {
+      for (final key in keys) {
+        final route = topLevelRoutes[key]!;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              ...appTestOverrides(),
+              appLocaleProvider.overrideWithValue(locale),
+            ],
+            child: DitingApp(initialLocation: route),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 30));
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: '$key（$route）在 $locale 下溢出',
+        );
+        expect(find.byType(UnknownRoutePage), findsNothing, reason: '$key 未注册');
+      }
+    }
+  });
+
   testWidgets('平板宽度：阶段三页面自适应双栏且不溢出', (tester) async {
     tester.view.physicalSize = const Size(1000, 800);
     tester.view.devicePixelRatio = 1;
