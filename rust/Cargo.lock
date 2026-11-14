@@ -327,6 +327,13 @@ name = "diting-bootstrap-core"
 version = "0.1.0"
 
 [[package]]
+name = "diting-captive-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "diting-cert-core"
 version = "0.1.0"
 dependencies = [
@@ -538,11 +545,13 @@ dependencies = [
  "diting-agent-core",
  "diting-app-update-core",
  "diting-backup-core",
+ "diting-captive-core",
  "diting-cleanup-core",
  "diting-dns-config-core",
  "diting-event-core",
  "diting-hit-core",
  "diting-ip-quality-core",
+ "diting-leak-core",
  "diting-log-core",
  "diting-log-query-core",
  "diting-netprofile-core",
@@ -550,12 +559,21 @@ dependencies = [
  "diting-outbound-proxy-core",
  "diting-probe-core",
  "diting-recognition-core",
+ "diting-response-core",
  "diting-rule-core",
  "diting-rule-store-core",
+ "diting-rule-version-core",
  "diting-schedule-core",
  "diting-services-core",
  "diting-subscription-core",
  "diting-vpn-config-core",
+]
+
+[[package]]
+name = "diting-leak-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
@@ -684,6 +702,13 @@ name = "diting-resolver-core"
 version = "0.1.0"
 
 [[package]]
+name = "diting-response-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "diting-rewrite-core"
 version = "0.1.0"
 dependencies = [
@@ -704,6 +729,13 @@ dependencies = [
 
 [[package]]
 name = "diting-rule-store-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
+name = "diting-rule-version-core"
 version = "0.1.0"
 dependencies = [
  "serde_json",

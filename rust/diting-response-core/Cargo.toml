@@ -1,0 +1,13 @@
+[package]
+name = "diting-response-core"
+version = "0.1.0"
+edition = "2021"
+description = "Response-side CNAME/HTTPS alias-chain recheck planner: bounded (depth <= 8) unique target extraction with cycle detection, so a deep alias chain cannot bypass blocking (R8 / K8)"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The request/answer crosses the dart:ffi boundary as JSON, matching the other UI-side kernels.
+serde_json = "1"

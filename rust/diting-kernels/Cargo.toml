@@ -31,3 +31,7 @@ diting-subscription-core = { path = "../diting-subscription-core" }
 diting-vpn-config-core = { path = "../diting-vpn-config-core" }
 diting-netprofile-core = { path = "../diting-netprofile-core" }
 diting-services-core = { path = "../diting-services-core" }
+diting-leak-core = { path = "../diting-leak-core" }
+diting-captive-core = { path = "../diting-captive-core" }
+diting-rule-version-core = { path = "../diting-rule-version-core" }
+diting-response-core = { path = "../diting-response-core" }
