@@ -35,3 +35,4 @@ diting-leak-core = { path = "../diting-leak-core" }
 diting-captive-core = { path = "../diting-captive-core" }
 diting-rule-version-core = { path = "../diting-rule-version-core" }
 diting-response-core = { path = "../diting-response-core" }
+diting-localapi-core = { path = "../diting-localapi-core" }

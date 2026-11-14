@@ -53,6 +53,7 @@ members = [
     "diting-captive-core",
     "diting-rule-version-core",
     "diting-response-core",
+    "diting-localapi-core",
     "diting-engine",
     "diting-kernels",
     "diting-netstack-spike",
