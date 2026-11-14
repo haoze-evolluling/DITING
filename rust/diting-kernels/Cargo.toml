@@ -29,3 +29,5 @@ diting-schedule-core = { path = "../diting-schedule-core" }
 diting-rule-store-core = { path = "../diting-rule-store-core" }
 diting-subscription-core = { path = "../diting-subscription-core" }
 diting-vpn-config-core = { path = "../diting-vpn-config-core" }
+diting-netprofile-core = { path = "../diting-netprofile-core" }
+diting-services-core = { path = "../diting-services-core" }

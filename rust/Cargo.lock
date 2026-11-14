@@ -545,6 +545,7 @@ dependencies = [
  "diting-ip-quality-core",
  "diting-log-core",
  "diting-log-query-core",
+ "diting-netprofile-core",
  "diting-notification-core",
  "diting-outbound-proxy-core",
  "diting-probe-core",
@@ -552,6 +553,7 @@ dependencies = [
  "diting-rule-core",
  "diting-rule-store-core",
  "diting-schedule-core",
+ "diting-services-core",
  "diting-subscription-core",
  "diting-vpn-config-core",
 ]
@@ -598,6 +600,13 @@ dependencies = [
  "tokio-rustls",
  "tokio-util",
  "x509-cert",
+]
+
+[[package]]
+name = "diting-netprofile-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
 ]
 
 [[package]]
@@ -711,6 +720,13 @@ dependencies = [
 
 [[package]]
 name = "diting-schedule-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
+name = "diting-services-core"
 version = "0.1.0"
 dependencies = [
  "serde_json",

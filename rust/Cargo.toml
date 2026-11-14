@@ -47,6 +47,8 @@ members = [
     "diting-outbound-proxy-core",
     "diting-vpn-config-core",
     "diting-notification-core",
+    "diting-netprofile-core",
+    "diting-services-core",
     "diting-engine",
     "diting-kernels",
     "diting-netstack-spike",

@@ -24,12 +24,14 @@ pub use diting_ip_quality_core;
 pub use diting_log_core;
 pub use diting_log_query_core;
 pub use diting_notification_core;
+pub use diting_netprofile_core;
 pub use diting_outbound_proxy_core;
 pub use diting_probe_core;
 pub use diting_recognition_core;
 pub use diting_rule_core;
 pub use diting_rule_store_core;
 pub use diting_schedule_core;
+pub use diting_services_core;
 pub use diting_subscription_core;
 pub use diting_vpn_config_core;
 
