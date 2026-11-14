@@ -1,0 +1,12 @@
+[package]
+name = "diting-flow-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The incremental snapshot crosses the JNI/FFI boundary as JSON, matching the other kernels.
+serde_json = "1"

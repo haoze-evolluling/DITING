@@ -38,6 +38,7 @@ members = [
     "diting-schedule-core",
     "diting-hit-core",
     "diting-event-core",
+    "diting-flow-core",
     "diting-log-query-core",
     "diting-cleanup-core",
     "diting-app-update-core",

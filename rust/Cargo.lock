@@ -485,6 +485,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-flow-core"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "diting-gate-core"
 version = "0.1.0"
 dependencies = [
