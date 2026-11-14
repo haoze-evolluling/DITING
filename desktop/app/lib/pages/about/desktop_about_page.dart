@@ -176,8 +176,8 @@ class _AboutHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final logoAsset = colorScheme.brightness == Brightness.dark
-        ? 'packages/diting_shared/assets/images/icon_dark.png'
-        : 'packages/diting_shared/assets/images/icon.png';
+        ? 'packages/diting_shared/assets/images/icon_dark.webp'
+        : 'packages/diting_shared/assets/images/icon.webp';
     return DashboardCard(
       semanticLabel: context.l10n.aboutAppName,
       child: Column(

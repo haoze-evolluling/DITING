@@ -52,9 +52,13 @@ members = [
 ]
 resolver = "2"
 
-# The crates are delivered as shared libraries inside the APK, so strip symbols and let the linker
-# do a cheap thin-LTO pass: the artifacts are bundled, not debugged.
+# The crates are delivered as shared libraries inside the APK, so strip symbols and optimize the
+# bundled artifact for size: one LTO partition (fat LTO) plus `opt-level = "s"`. `strip = "symbols"`
+# keeps the dynamic symbols the JNI/`dart:ffi` entry points need. `panic` deliberately stays
+# `unwind` (the default) because the FFI layer relies on `catch_unwind` to turn a kernel panic into
+# an error return instead of aborting the whole process.
 [profile.release]
 strip = "symbols"
-lto = "thin"
+lto = true
 codegen-units = 1
+opt-level = "s"

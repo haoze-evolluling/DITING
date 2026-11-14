@@ -28,10 +28,10 @@ class LauncherIconPage extends ConsumerWidget {
     Widget thumb(LauncherIconStyle style) => _IconThumb(
       asset: switch (style) {
         LauncherIconStyle.standard => dark
-            ? 'packages/diting_shared/assets/images/icon_dark.png'
-            : 'packages/diting_shared/assets/images/icon.png',
+            ? 'packages/diting_shared/assets/images/icon_dark.webp'
+            : 'packages/diting_shared/assets/images/icon.webp',
         LauncherIconStyle.adguard =>
-          'packages/diting_shared/assets/images/icon_adguard.png',
+          'packages/diting_shared/assets/images/icon_adguard.webp',
       },
     );
     return CommonScaffold(

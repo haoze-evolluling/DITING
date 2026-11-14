@@ -64,7 +64,7 @@ class _Splash extends StatelessWidget {
           spacing: 12,
           children: [
             Image.asset(
-              dark ? 'packages/diting_shared/assets/images/icon_dark.png' : 'packages/diting_shared/assets/images/icon.png',
+              dark ? 'packages/diting_shared/assets/images/icon_dark.webp' : 'packages/diting_shared/assets/images/icon.webp',
               width: 40,
               height: 40,
             ),

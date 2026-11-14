@@ -22,6 +22,12 @@ title DITING Flutter APK Build Tool
 :: All debug builds share one output name (app-debug.apk), so the artifact on
 :: disk always comes from the LAST build - check the "ABIs in package" lines.
 ::
+:: Release builds pass `--split-debug-info=build\symbols`, which moves the Dart
+:: AOT symbol/debug metadata out of libapp.so into build\symbols\*.symbols: the
+:: APK shrinks by ~1 MB with zero change to the compiled code. Keep those
+:: .symbols files to symbolicate release crash reports; losing them only makes
+:: stack traces unreadable, it does not change app behaviour.
+::
 :: NOTE: intentionally pure ASCII; cmd.exe parses batch files in the OEM code
 :: page. Chinese docs live in docs/development/rust-engine-build.md.
 
@@ -114,7 +120,7 @@ goto START_BUILD
 if not exist "android\key.properties" goto ERR_NO_KEYSTORE
 set "BUILD_TYPE=release"
 set "BUILD_TYPE_NAME=Release (ARM64, Release Key)"
-set "FLUTTER_ARGS=build apk --release --target-platform android-arm64 -PditingAbi=arm64"
+set "FLUTTER_ARGS=build apk --release --target-platform android-arm64 -PditingAbi=arm64 --split-debug-info=build\symbols\arm64"
 set "APK_DIR=build\app\outputs\flutter-apk"
 set "APK_NAME=app-release.apk"
 set "IS_EMULATOR_BUILD="
@@ -127,7 +133,7 @@ goto START_BUILD
 if not exist "android\key.properties" goto ERR_NO_KEYSTORE
 set "BUILD_TYPE=release"
 set "BUILD_TYPE_NAME=Release (x86_64, Release Key, EMULATOR)"
-set "FLUTTER_ARGS=build apk --release --target-platform android-x64 -PditingAbi=x86_64"
+set "FLUTTER_ARGS=build apk --release --target-platform android-x64 -PditingAbi=x86_64 --split-debug-info=build\symbols\x86_64"
 set "APK_DIR=build\app\outputs\flutter-apk"
 set "APK_NAME=app-release.apk"
 set "IS_EMULATOR_BUILD=1"

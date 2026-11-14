@@ -58,8 +58,8 @@ class FloatingLogBall extends StatelessWidget {
                     padding: const EdgeInsets.all(6),
                     child: Image.asset(
                       dark
-                          ? 'packages/diting_shared/assets/images/icon_dark.png'
-                          : 'packages/diting_shared/assets/images/icon.png',
+                          ? 'packages/diting_shared/assets/images/icon_dark.webp'
+                          : 'packages/diting_shared/assets/images/icon.webp',
                       filterQuality: FilterQuality.medium,
                     ),
                   ),

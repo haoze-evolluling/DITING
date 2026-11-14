@@ -168,8 +168,8 @@ class _AboutHero extends StatelessWidget {
     final stage = update.stage;
     // The brand mark ships in both modes: #FAF8F9/#007AFE for light, #1F1F22/#2E83FF for dark.
     final logoAsset = colorScheme.brightness == Brightness.dark
-        ? 'packages/diting_shared/assets/images/icon_dark.png'
-        : 'packages/diting_shared/assets/images/icon.png';
+        ? 'packages/diting_shared/assets/images/icon_dark.webp'
+        : 'packages/diting_shared/assets/images/icon.webp';
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Column(

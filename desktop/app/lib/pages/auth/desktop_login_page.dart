@@ -380,7 +380,7 @@ class _Header extends StatelessWidget {
         spacing: 10,
         children: [
           Image.asset(
-            dark ? 'packages/diting_shared/assets/images/icon_dark.png' : 'packages/diting_shared/assets/images/icon.png',
+            dark ? 'packages/diting_shared/assets/images/icon_dark.webp' : 'packages/diting_shared/assets/images/icon.webp',
             width: 28,
             height: 28,
           ),

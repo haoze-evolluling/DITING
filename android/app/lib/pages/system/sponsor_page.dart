@@ -172,14 +172,14 @@ class _PaymentSection extends StatelessWidget {
             children: [
               Expanded(
                 child: _PaymentCard(
-                  asset: 'packages/diting_shared/assets/pay/alipay_code.png',
+                  asset: 'packages/diting_shared/assets/pay/alipay_code.webp',
                   label: context.l10n.sponsorAlipay,
                   glyph: AppGlyphs.qrCode,
                 ),
               ),
               Expanded(
                 child: _PaymentCard(
-                  asset: 'packages/diting_shared/assets/pay/wechatpay_code.png',
+                  asset: 'packages/diting_shared/assets/pay/wechatpay_code.webp',
                   label: context.l10n.sponsorWechat,
                   glyph: AppGlyphs.qrCode,
                 ),
