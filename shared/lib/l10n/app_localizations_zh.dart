@@ -14097,4 +14097,35 @@ class AppL10nZh extends AppL10n {
   @override
   String get dns64EnableDesc =>
       '当上游没有可用 AAAA 时，用固定前缀 64:ff9b::/96 从 A 记录合成 AAAA。仅在 IPv6-only 网络开启，双栈网络开启可能导致访问异常。';
+
+  @override
+  String get lanRateLimitTitle => 'LAN 客户端限速';
+
+  @override
+  String get lanRateLimitIntro =>
+      '服务器模式面向局域网提供 DNS。这里为每个客户端设置令牌桶限速，防止单个设备耗尽解析能力。';
+
+  @override
+  String get lanRateLimitEnable => '启用客户端限速';
+
+  @override
+  String get lanRateLimitEnableDesc => '按客户端地址聚合后限制每秒查询数；关闭时不做任何限速。';
+
+  @override
+  String get lanRateLimitRate => '每秒请求数';
+
+  @override
+  String get lanRateLimitBurst => '突发上限';
+
+  @override
+  String get lanRateLimitIpv4Prefix => 'IPv4 聚合前缀（位）';
+
+  @override
+  String get lanRateLimitIpv6Prefix => 'IPv6 聚合前缀（位）';
+
+  @override
+  String get lanRateLimitExempt => '不限速名单';
+
+  @override
+  String get lanRateLimitExemptHint => '逗号分隔，如 192.168.0.1, 10.0.0.0/8';
 }

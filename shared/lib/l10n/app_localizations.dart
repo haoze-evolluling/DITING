@@ -25863,6 +25863,66 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'当上游没有可用 AAAA 时，用固定前缀 64:ff9b::/96 从 A 记录合成 AAAA。仅在 IPv6-only 网络开启，双栈网络开启可能导致访问异常。'**
   String get dns64EnableDesc;
+
+  /// No description provided for @lanRateLimitTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'LAN 客户端限速'**
+  String get lanRateLimitTitle;
+
+  /// No description provided for @lanRateLimitIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器模式面向局域网提供 DNS。这里为每个客户端设置令牌桶限速，防止单个设备耗尽解析能力。'**
+  String get lanRateLimitIntro;
+
+  /// No description provided for @lanRateLimitEnable.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用客户端限速'**
+  String get lanRateLimitEnable;
+
+  /// No description provided for @lanRateLimitEnableDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'按客户端地址聚合后限制每秒查询数；关闭时不做任何限速。'**
+  String get lanRateLimitEnableDesc;
+
+  /// No description provided for @lanRateLimitRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'每秒请求数'**
+  String get lanRateLimitRate;
+
+  /// No description provided for @lanRateLimitBurst.
+  ///
+  /// In zh, this message translates to:
+  /// **'突发上限'**
+  String get lanRateLimitBurst;
+
+  /// No description provided for @lanRateLimitIpv4Prefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv4 聚合前缀（位）'**
+  String get lanRateLimitIpv4Prefix;
+
+  /// No description provided for @lanRateLimitIpv6Prefix.
+  ///
+  /// In zh, this message translates to:
+  /// **'IPv6 聚合前缀（位）'**
+  String get lanRateLimitIpv6Prefix;
+
+  /// No description provided for @lanRateLimitExempt.
+  ///
+  /// In zh, this message translates to:
+  /// **'不限速名单'**
+  String get lanRateLimitExempt;
+
+  /// No description provided for @lanRateLimitExemptHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'逗号分隔，如 192.168.0.1, 10.0.0.0/8'**
+  String get lanRateLimitExemptHint;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

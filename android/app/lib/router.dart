@@ -165,6 +165,7 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       ...localApiRoutes(),
       ...privacySuiteRoutes(),
       ...dns64Routes(),
+      ...lanRateLimitRoutes(),
       ...networkDiagnosticsRoutes(),
       ...automationRoutes(),
       ...networkProfileRoutes(),

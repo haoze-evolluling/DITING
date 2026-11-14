@@ -14969,4 +14969,37 @@ class AppL10nEn extends AppL10n {
   @override
   String get dns64EnableDesc =>
       'When the upstream has no usable AAAA, synthesize one from the A record behind the well-known prefix 64:ff9b::/96. Enable only on IPv6-only links; on dual-stack it can break access.';
+
+  @override
+  String get lanRateLimitTitle => 'LAN client rate limiting';
+
+  @override
+  String get lanRateLimitIntro =>
+      'Server mode answers DNS for the LAN. Set a per-client token bucket here so one device cannot drain resolution capacity.';
+
+  @override
+  String get lanRateLimitEnable => 'Enable client rate limiting';
+
+  @override
+  String get lanRateLimitEnableDesc =>
+      'Throttle queries per second after aggregating by client address; nothing is limited when off.';
+
+  @override
+  String get lanRateLimitRate => 'Requests per second';
+
+  @override
+  String get lanRateLimitBurst => 'Burst limit';
+
+  @override
+  String get lanRateLimitIpv4Prefix => 'IPv4 aggregate prefix (bits)';
+
+  @override
+  String get lanRateLimitIpv6Prefix => 'IPv6 aggregate prefix (bits)';
+
+  @override
+  String get lanRateLimitExempt => 'Exempt list';
+
+  @override
+  String get lanRateLimitExemptHint =>
+      'Comma separated, e.g. 192.168.0.1, 10.0.0.0/8';
 }

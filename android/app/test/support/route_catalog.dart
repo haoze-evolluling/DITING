@@ -41,6 +41,7 @@ final Map<String, String> topLevelRoutes = {
   '本地 API': LocalApiPaths.root,
   '隐私套件': PrivacySuitePaths.root,
   'DNS64': Dns64Paths.root,
+  'LAN 客户端限速': LanRateLimitPaths.root,
   '网络诊断': NetworkDiagnosticsPaths.root,
   'User-Agent': ConfigPaths.userAgents,
   '按需连接': ConfigPaths.onDemand,

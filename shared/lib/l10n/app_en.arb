@@ -5289,5 +5289,15 @@
   "dns64Title": "DNS64",
   "dns64Intro": "On an IPv6-only network many sites still publish only IPv4 addresses. DNS64 synthesizes AAAA from the A record so those sites keep working.",
   "dns64Enable": "Enable DNS64 synthesis",
-  "dns64EnableDesc": "When the upstream has no usable AAAA, synthesize one from the A record behind the well-known prefix 64:ff9b::/96. Enable only on IPv6-only links; on dual-stack it can break access."
+  "dns64EnableDesc": "When the upstream has no usable AAAA, synthesize one from the A record behind the well-known prefix 64:ff9b::/96. Enable only on IPv6-only links; on dual-stack it can break access.",
+  "lanRateLimitTitle": "LAN client rate limiting",
+  "lanRateLimitIntro": "Server mode answers DNS for the LAN. Set a per-client token bucket here so one device cannot drain resolution capacity.",
+  "lanRateLimitEnable": "Enable client rate limiting",
+  "lanRateLimitEnableDesc": "Throttle queries per second after aggregating by client address; nothing is limited when off.",
+  "lanRateLimitRate": "Requests per second",
+  "lanRateLimitBurst": "Burst limit",
+  "lanRateLimitIpv4Prefix": "IPv4 aggregate prefix (bits)",
+  "lanRateLimitIpv6Prefix": "IPv6 aggregate prefix (bits)",
+  "lanRateLimitExempt": "Exempt list",
+  "lanRateLimitExemptHint": "Comma separated, e.g. 192.168.0.1, 10.0.0.0/8"
 }
