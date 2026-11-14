@@ -124,6 +124,27 @@ async fn doh_speaks_http2_and_reuses_the_session() {
 }
 
 #[tokio::test]
+async fn doh_surfaces_the_alt_svc_h3_advertisement() {
+    let pki = TestPki::new("localhost");
+    let (upstream, _, _) = spawn_doh(&pki).await;
+
+    let url = format!("https://localhost:{}/dns-query", upstream.port());
+    let config = config_json("single", &[provider_json("p1", "DOH", "", &url)], None);
+    let resolver = resolver(&config, Some(&pki.ca_pem), Arc::new(Recorder::default()));
+
+    assert!(!resolver.doh3_ready(), "no answer yet, so no advertisement");
+    resolver
+        .resolve(&query_wire("doh.test", 7))
+        .await
+        .0
+        .expect("a DoH answer");
+    assert!(
+        resolver.doh3_ready(),
+        "the Alt-Svc: h3 header makes N7's HTTP/3 upgrade eligible"
+    );
+}
+
+#[tokio::test]
 async fn doh_reports_the_rate_limit_status() {
     let pki = TestPki::new("localhost");
     let (upstream, _, _) = spawn_doh(&pki).await;

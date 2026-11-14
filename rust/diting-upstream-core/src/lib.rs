@@ -24,6 +24,7 @@
 //! second, quieter implementation, exactly like the DNS answer kernel.
 
 pub mod doh;
+pub mod alt_svc;
 pub mod endpoint;
 pub mod ffi;
 pub mod framing;

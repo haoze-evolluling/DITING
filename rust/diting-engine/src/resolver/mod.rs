@@ -247,6 +247,16 @@ impl Resolver {
             .collect()
     }
 
+    /// Whether any DoH provider has advertised an HTTP/3 endpoint (`Alt-Svc: h3`). N7's upgrade
+    /// signal; `false` when no DoH transport is configured.
+    pub fn doh3_ready(&self) -> bool {
+        self.inner
+            .doh
+            .as_ref()
+            .map(|doh| doh.doh3_ready())
+            .unwrap_or(false)
+    }
+
     /// `Shutdown`: closes the pooled DoT connections and the DoQ sessions.
     pub fn shutdown(&self) {
         if let Some(dot) = &self.inner.dot {

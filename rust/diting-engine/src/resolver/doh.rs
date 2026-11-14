@@ -52,6 +52,9 @@ pub const DNS_MESSAGE: &str = "application/dns-message";
 /// The DoH transport: one pooled HTTP client per resolver.
 pub struct DohClient {
     client: Client<DohConnector, Full<Bytes>>,
+    /// Set once a response advertises an HTTP/3 endpoint (`Alt-Svc: h3=…`). N7's H3 upgrade and its
+    /// fallback consult this instead of re-parsing every response.
+    doh3_advertised: std::sync::atomic::AtomicBool,
 }
 
 impl DohClient {
@@ -67,7 +70,17 @@ impl DohClient {
             ))
             .pool_max_idle_per_host(TUNING.doh_max_idle_conns_per_host.max(1) as usize)
             .build(connector);
-        Self { client }
+        Self {
+            client,
+            doh3_advertised: std::sync::atomic::AtomicBool::new(false),
+        }
+    }
+
+    /// Whether a DoH server has advertised an HTTP/3 endpoint. The resolver uses this as N7's
+    /// negotiation signal; the H3 attempt itself is gated behind the `h3` transport.
+    pub fn doh3_ready(&self) -> bool {
+        self.doh3_advertised
+            .load(std::sync::atomic::Ordering::Relaxed)
     }
 
     /// `queryDoHContext`: the request, the one-shot `EOF` retry, the status table and the body.
@@ -105,6 +118,18 @@ impl DohClient {
             StatusKind::Ok => {}
             StatusKind::RateLimited => return Err("DoH rate limited (403)".to_string()),
             StatusKind::Other => return Err(format!("DoH status {}", response.status().as_u16())),
+        }
+
+        // N7 negotiation: remember an HTTP/3 advertisement for the next query.
+        if let Some(value) = response
+            .headers()
+            .get("alt-svc")
+            .and_then(|value| value.to_str().ok())
+        {
+            if diting_upstream_core::alt_svc::parse_alt_svc(value).is_some() {
+                self.doh3_advertised
+                    .store(true, std::sync::atomic::Ordering::Relaxed);
+            }
         }
 
         let body = response

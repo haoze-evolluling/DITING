@@ -298,6 +298,8 @@ pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mute
                             Response::builder()
                                 .status(StatusCode::OK)
                                 .header(http::header::CONTENT_TYPE, DNS_MESSAGE)
+                                // N7: advertise an HTTP/3 endpoint the way a real DoH origin does.
+                                .header("alt-svc", "h3=\":443\"; ma=60")
                                 .body(Full::new(Bytes::from(answer_wire(
                                     &query,
                                     [4, 3, 2, 1],
