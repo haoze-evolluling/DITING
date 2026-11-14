@@ -14060,4 +14060,27 @@ class AppL10nZh extends AppL10n {
   String localApiError(String message) {
     return '启动失败：$message';
   }
+
+  @override
+  String get privacySuiteTitle => '隐私套件';
+
+  @override
+  String get privacySuiteIntro =>
+      '在不影响正常解析的前提下收紧 DNS 隐私：减少可用于追踪的记录类型，并阻止域名重绑定到内网地址。';
+
+  @override
+  String get privacyDnsSection => 'DNS 隐私';
+
+  @override
+  String get privacyBlockHttpsSvcb => '阻断 HTTPS / SVCB 记录';
+
+  @override
+  String get privacyBlockHttpsSvcbDesc =>
+      '对 HTTPS(65) 与 SVCB(64) 查询返回空应答，避免通过这些记录暴露访问意图。';
+
+  @override
+  String get privacyRebinding => 'DNS 重绑定保护';
+
+  @override
+  String get privacyRebindingDesc => '拒绝把公网域名解析到私有、回环或链路本地地址，防止借 DNS 访问内网服务。';
 }

@@ -14931,4 +14931,28 @@ class AppL10nEn extends AppL10n {
   String localApiError(String message) {
     return 'Failed to start: $message';
   }
+
+  @override
+  String get privacySuiteTitle => 'Privacy suite';
+
+  @override
+  String get privacySuiteIntro =>
+      'Tighten DNS privacy without disturbing normal resolution: cut down trackable record types and stop domains from rebinding to internal addresses.';
+
+  @override
+  String get privacyDnsSection => 'DNS privacy';
+
+  @override
+  String get privacyBlockHttpsSvcb => 'Block HTTPS / SVCB records';
+
+  @override
+  String get privacyBlockHttpsSvcbDesc =>
+      'Answer HTTPS(65) and SVCB(64) queries with an empty reply so these records cannot reveal browsing intent.';
+
+  @override
+  String get privacyRebinding => 'DNS rebinding protection';
+
+  @override
+  String get privacyRebindingDesc =>
+      'Refuse public names that resolve to private, loopback or link-local addresses, blocking DNS-based access to internal services.';
 }

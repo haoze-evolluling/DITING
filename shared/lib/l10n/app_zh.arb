@@ -7998,5 +7998,12 @@
     "placeholders": {
       "message": { "type": "String" }
     }
-  }
+  },
+  "privacySuiteTitle": "隐私套件",
+  "privacySuiteIntro": "在不影响正常解析的前提下收紧 DNS 隐私：减少可用于追踪的记录类型，并阻止域名重绑定到内网地址。",
+  "privacyDnsSection": "DNS 隐私",
+  "privacyBlockHttpsSvcb": "阻断 HTTPS / SVCB 记录",
+  "privacyBlockHttpsSvcbDesc": "对 HTTPS(65) 与 SVCB(64) 查询返回空应答，避免通过这些记录暴露访问意图。",
+  "privacyRebinding": "DNS 重绑定保护",
+  "privacyRebindingDesc": "拒绝把公网域名解析到私有、回环或链路本地地址，防止借 DNS 访问内网服务。"
 }

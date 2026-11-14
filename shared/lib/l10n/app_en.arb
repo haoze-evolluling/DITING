@@ -5278,5 +5278,12 @@
   "localApiEndpointStatus": "GET /status",
   "localApiEndpointVersion": "GET /version",
   "localApiHeaderHint": "Header: X-Diting-Token: <token>",
-  "localApiError": "Failed to start: {message}"
+  "localApiError": "Failed to start: {message}",
+  "privacySuiteTitle": "Privacy suite",
+  "privacySuiteIntro": "Tighten DNS privacy without disturbing normal resolution: cut down trackable record types and stop domains from rebinding to internal addresses.",
+  "privacyDnsSection": "DNS privacy",
+  "privacyBlockHttpsSvcb": "Block HTTPS / SVCB records",
+  "privacyBlockHttpsSvcbDesc": "Answer HTTPS(65) and SVCB(64) queries with an empty reply so these records cannot reveal browsing intent.",
+  "privacyRebinding": "DNS rebinding protection",
+  "privacyRebindingDesc": "Refuse public names that resolve to private, loopback or link-local addresses, blocking DNS-based access to internal services."
 }

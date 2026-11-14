@@ -25797,6 +25797,48 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'启动失败：{message}'**
   String localApiError(String message);
+
+  /// No description provided for @privacySuiteTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐私套件'**
+  String get privacySuiteTitle;
+
+  /// No description provided for @privacySuiteIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'在不影响正常解析的前提下收紧 DNS 隐私：减少可用于追踪的记录类型，并阻止域名重绑定到内网地址。'**
+  String get privacySuiteIntro;
+
+  /// No description provided for @privacyDnsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 隐私'**
+  String get privacyDnsSection;
+
+  /// No description provided for @privacyBlockHttpsSvcb.
+  ///
+  /// In zh, this message translates to:
+  /// **'阻断 HTTPS / SVCB 记录'**
+  String get privacyBlockHttpsSvcb;
+
+  /// No description provided for @privacyBlockHttpsSvcbDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'对 HTTPS(65) 与 SVCB(64) 查询返回空应答，避免通过这些记录暴露访问意图。'**
+  String get privacyBlockHttpsSvcbDesc;
+
+  /// No description provided for @privacyRebinding.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS 重绑定保护'**
+  String get privacyRebinding;
+
+  /// No description provided for @privacyRebindingDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'拒绝把公网域名解析到私有、回环或链路本地地址，防止借 DNS 访问内网服务。'**
+  String get privacyRebindingDesc;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

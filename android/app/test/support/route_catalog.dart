@@ -39,6 +39,7 @@ final Map<String, String> topLevelRoutes = {
   '实时连接': FlowPaths.root,
   '应用洞察': AppInsightsPaths.root,
   '本地 API': LocalApiPaths.root,
+  '隐私套件': PrivacySuitePaths.root,
   '网络诊断': NetworkDiagnosticsPaths.root,
   'User-Agent': ConfigPaths.userAgents,
   '按需连接': ConfigPaths.onDemand,
