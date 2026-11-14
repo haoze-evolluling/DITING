@@ -8,6 +8,7 @@ export 'dashboard_routes.dart';
 export 'automation_routes.dart';
 export 'app_insights_routes.dart';
 export 'flow_routes.dart';
+export 'dns64_routes.dart';
 export 'local_api_routes.dart';
 export 'privacy_suite_routes.dart';
 export 'health_routes.dart';

@@ -14083,4 +14083,18 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get privacyRebindingDesc => '拒绝把公网域名解析到私有、回环或链路本地地址，防止借 DNS 访问内网服务。';
+
+  @override
+  String get dns64Title => 'DNS64';
+
+  @override
+  String get dns64Intro =>
+      '在只有 IPv6 的网络里，许多站点仍只提供 IPv4 地址。DNS64 会用 A 记录合成 AAAA，让这些站点照常访问。';
+
+  @override
+  String get dns64Enable => '启用 DNS64 合成';
+
+  @override
+  String get dns64EnableDesc =>
+      '当上游没有可用 AAAA 时，用固定前缀 64:ff9b::/96 从 A 记录合成 AAAA。仅在 IPv6-only 网络开启，双栈网络开启可能导致访问异常。';
 }

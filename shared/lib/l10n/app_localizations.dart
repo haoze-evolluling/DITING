@@ -25839,6 +25839,30 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'拒绝把公网域名解析到私有、回环或链路本地地址，防止借 DNS 访问内网服务。'**
   String get privacyRebindingDesc;
+
+  /// No description provided for @dns64Title.
+  ///
+  /// In zh, this message translates to:
+  /// **'DNS64'**
+  String get dns64Title;
+
+  /// No description provided for @dns64Intro.
+  ///
+  /// In zh, this message translates to:
+  /// **'在只有 IPv6 的网络里，许多站点仍只提供 IPv4 地址。DNS64 会用 A 记录合成 AAAA，让这些站点照常访问。'**
+  String get dns64Intro;
+
+  /// No description provided for @dns64Enable.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用 DNS64 合成'**
+  String get dns64Enable;
+
+  /// No description provided for @dns64EnableDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'当上游没有可用 AAAA 时，用固定前缀 64:ff9b::/96 从 A 记录合成 AAAA。仅在 IPv6-only 网络开启，双栈网络开启可能导致访问异常。'**
+  String get dns64EnableDesc;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

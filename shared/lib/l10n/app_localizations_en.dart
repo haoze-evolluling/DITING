@@ -14955,4 +14955,18 @@ class AppL10nEn extends AppL10n {
   @override
   String get privacyRebindingDesc =>
       'Refuse public names that resolve to private, loopback or link-local addresses, blocking DNS-based access to internal services.';
+
+  @override
+  String get dns64Title => 'DNS64';
+
+  @override
+  String get dns64Intro =>
+      'On an IPv6-only network many sites still publish only IPv4 addresses. DNS64 synthesizes AAAA from the A record so those sites keep working.';
+
+  @override
+  String get dns64Enable => 'Enable DNS64 synthesis';
+
+  @override
+  String get dns64EnableDesc =>
+      'When the upstream has no usable AAAA, synthesize one from the A record behind the well-known prefix 64:ff9b::/96. Enable only on IPv6-only links; on dual-stack it can break access.';
 }
