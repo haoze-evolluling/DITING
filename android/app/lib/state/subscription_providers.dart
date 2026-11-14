@@ -115,6 +115,9 @@ class SubscriptionEntry {
   bool get isImporting =>
       record.importState == SubscriptionImportState.importing;
 
+  /// R3 health, classified in Rust from the stored fields.
+  SubscriptionHealth get health => record.health();
+
   /// Group chip key; a null group is shown as ungrouped.
   String get groupKey => groupName ?? ungroupedLabel;
 

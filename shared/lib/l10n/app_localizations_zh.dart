@@ -64,6 +64,18 @@ class AppL10nZh extends AppL10n {
   String get ruleTestEmptyHint => '测试结果会显示在这里';
 
   @override
+  String get subscriptionHealthOk => '正常';
+
+  @override
+  String get subscriptionHealthUnchanged => '无变化';
+
+  @override
+  String get subscriptionHealthCached => '使用缓存';
+
+  @override
+  String get subscriptionHealthFailed => '更新失败';
+
+  @override
   String get appTitle => '谛听 DITING';
 
   @override

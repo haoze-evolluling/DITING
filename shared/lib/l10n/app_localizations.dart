@@ -205,6 +205,30 @@ abstract class AppL10n {
   /// **'测试结果会显示在这里'**
   String get ruleTestEmptyHint;
 
+  /// No description provided for @subscriptionHealthOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'正常'**
+  String get subscriptionHealthOk;
+
+  /// No description provided for @subscriptionHealthUnchanged.
+  ///
+  /// In zh, this message translates to:
+  /// **'无变化'**
+  String get subscriptionHealthUnchanged;
+
+  /// No description provided for @subscriptionHealthCached.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用缓存'**
+  String get subscriptionHealthCached;
+
+  /// No description provided for @subscriptionHealthFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'更新失败'**
+  String get subscriptionHealthFailed;
+
   /// No description provided for @appTitle.
   ///
   /// In zh, this message translates to:

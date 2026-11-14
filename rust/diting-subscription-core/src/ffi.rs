@@ -6,6 +6,7 @@
 use serde_json::{json, Value};
 
 use crate::fetch;
+use crate::health;
 use crate::model;
 use crate::payload;
 use crate::schedule;
@@ -126,6 +127,8 @@ fn handle_operation(request: &Value) -> Option<Value> {
         "fetch.targets" => fetch::targets(request),
         "fetch.verdict" => fetch::verdict(request),
         "fetch.headers" => fetch::headers(request),
+        "health.classify" => health::classify_request(request),
+        "health.summary" => health::summary_request(request),
         "schedule.evaluate" => schedule::evaluate(request)?,
         _ => return None,
     };

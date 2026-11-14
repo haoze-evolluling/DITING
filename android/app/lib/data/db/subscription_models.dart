@@ -79,6 +79,27 @@ enum SubscriptionImportState {
   };
 }
 
+/// R3 health status, classified by `rust/diting-subscription-core::health` so the page never grows a
+/// second set of rules. `unchanged` only appears during a live update (a `304` is not persisted);
+/// otherwise the stored `importState` / `ruleCount` / `lastUpdated` decide.
+enum SubscriptionHealth {
+  ok('ok'),
+  unchanged('unchanged'),
+  cached('cached'),
+  failed('failed');
+
+  const SubscriptionHealth(this.storageValue);
+
+  final String storageValue;
+
+  static SubscriptionHealth fromStorage(String? value) => switch (value) {
+    'ok' => ok,
+    'unchanged' => unchanged,
+    'cached' => cached,
+    _ => failed,
+  };
+}
+
 enum SubscriptionAutoUpdateStatus {
   pendingRetry('pending_retry'),
   success('success'),
@@ -148,6 +169,19 @@ class SubscriptionRecord {
   final int? groupId;
 
   bool get isRemote => sourceType == SubscriptionSourceType.remote;
+
+  /// Health from the native classifier. [lastResult] (`ok` / `unchanged` / `failed`) is passed only
+  /// during a live update so a `304` can be shown; the card omits it.
+  SubscriptionHealth health({String? lastResult}) {
+    final answer = RustSubscriptionCore.instance.call({
+      'op': 'health.classify',
+      'importState': importState.storageValue,
+      'ruleCount': ruleCount,
+      'lastUpdated': lastUpdated,
+      'lastResult': ?lastResult,
+    });
+    return SubscriptionHealth.fromStorage(answer['status'] as String?);
+  }
 
   /// Builds a record from the native core's normalised fields (no defaults are applied here).
   factory SubscriptionRecord.fromParsed(Map<String, Object?> row) =>

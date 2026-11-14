@@ -118,6 +118,8 @@ class _SubscriptionCard extends StatelessWidget {
                     children: [
                       MetaChip(label: _lineCountLabel(entry, context.l10n)),
                       MetaChip(label: _updatedLabel(entry, context.l10n)),
+                      if (entry.health != SubscriptionHealth.ok)
+                        MetaChip(label: _healthLabel(context.l10n, entry.health)),
                       if (entry.consecutiveFailureCount > 0)
                         MetaChip(
                           label: context.l10n.subsConsecutiveFailures(
@@ -209,6 +211,14 @@ class _SubscriptionCard extends StatelessWidget {
     }
     return _formatTimestamp(entry.lastUpdated);
   }
+
+  static String _healthLabel(AppL10n l10n, SubscriptionHealth health) =>
+      switch (health) {
+        SubscriptionHealth.ok => l10n.subscriptionHealthOk,
+        SubscriptionHealth.unchanged => l10n.subscriptionHealthUnchanged,
+        SubscriptionHealth.cached => l10n.subscriptionHealthCached,
+        SubscriptionHealth.failed => l10n.subscriptionHealthFailed,
+      };
 }
 
 /// Epoch milliseconds to `MM-dd HH:mm`. Minutes are enough because updates happen on an

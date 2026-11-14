@@ -153,6 +153,9 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
       (sum, entry) => sum + entry.ruleCount,
     );
     final failedCount = entries.where((entry) => entry.isFailed).length;
+    final cachedCount = entries
+        .where((entry) => entry.health == SubscriptionHealth.cached)
+        .length;
 
     return CommonScaffold(
       title: context.l10n.subsTitle,
@@ -198,6 +201,12 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                             label: context.l10n.subsAbnormal,
                             value: '$failedCount',
                             color: colorScheme.destructive,
+                          ),
+                        if (cachedCount > 0)
+                          StatItem(
+                            label: context.l10n.subscriptionHealthCached,
+                            value: '$cachedCount',
+                            color: colorScheme.warning,
                           ),
                       ],
                     ),

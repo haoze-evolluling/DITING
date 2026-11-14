@@ -66,6 +66,18 @@ class AppL10nEn extends AppL10n {
   String get ruleTestEmptyHint => 'The result will appear here';
 
   @override
+  String get subscriptionHealthOk => 'OK';
+
+  @override
+  String get subscriptionHealthUnchanged => 'Unchanged';
+
+  @override
+  String get subscriptionHealthCached => 'Using cache';
+
+  @override
+  String get subscriptionHealthFailed => 'Update failed';
+
+  @override
   String get appTitle => 'DITING';
 
   @override
