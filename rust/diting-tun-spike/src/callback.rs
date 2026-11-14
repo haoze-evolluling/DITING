@@ -178,7 +178,9 @@ mod tests {
         let seen = Arc::new(AtomicUsize::new(0));
         let recorded = threads.clone();
         let counter = seen.clone();
-        let dispatcher = Dispatcher::spawn("diting-test-callback", 512, move || {
+        // The queue must hold every payload this test produces (4 x 250) so the assertion of "no
+        // payload was lost" is about the single-thread callback, not about back-pressure drops.
+        let dispatcher = Dispatcher::spawn("diting-test-callback", 2048, move || {
             move |_payload: &str| {
                 recorded
                     .lock()
