@@ -48,7 +48,7 @@ async fn an_advertised_origin_upgrades_to_doh3_and_keeps_the_answer() {
 }
 
 #[tokio::test]
-async fn doh3_answers_a_dns_message_over_quic() {
+async fn doh3_answers_and_reuses_the_quic_connection() {
     let pki = TestPki::new("localhost");
     let (upstream, connections) = spawn_doh3(&pki).await;
 
@@ -59,18 +59,25 @@ async fn doh3_answers_a_dns_message_over_quic() {
         ProtectorHandle::new(),
     );
 
-    let query = query_wire("doh3.test", 1);
-    let answer = client
-        .query(
-            &dialer,
-            "localhost",
-            upstream.port(),
-            "/dns-query",
-            &query,
-        )
-        .await
-        .expect("a DoH3 answer");
-    // The same answer the DoH/DoQ origins give: DoH3 must not change the resolution result.
-    assert_eq!(answer, answer_wire(&query, [4, 3, 2, 1], 60));
-    assert_eq!(connections.load(std::sync::atomic::Ordering::Relaxed), 1);
+    for id in [1u16, 2] {
+        let query = query_wire("doh3.test", id);
+        let answer = client
+            .query(
+                &dialer,
+                "localhost",
+                upstream.port(),
+                "/dns-query",
+                &query,
+            )
+            .await
+            .expect("a DoH3 answer");
+        // The same answer the DoH/DoQ origins give: DoH3 must not change the resolution result.
+        assert_eq!(answer, answer_wire(&query, [4, 3, 2, 1], 60));
+    }
+    // N7 connection reuse: both queries ride one QUIC connection.
+    assert_eq!(
+        connections.load(std::sync::atomic::Ordering::Relaxed),
+        1,
+        "the QUIC connection is reused across queries"
+    );
 }
