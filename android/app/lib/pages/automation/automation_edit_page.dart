@@ -270,13 +270,13 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     );
   }
 
-  Widget _matchSection(BuildContext context) => SegmentedButton<String>(
+  Widget _matchSection(BuildContext context) => SegmentedControl<String>(
     segments: [
-      ButtonSegment(value: 'all', label: Text(context.l10n.automationMatchAll)),
-      ButtonSegment(value: 'any', label: Text(context.l10n.automationMatchAny)),
+      ('all', context.l10n.automationMatchAll),
+      ('any', context.l10n.automationMatchAny),
     ],
-    selected: {_match},
-    onSelectionChanged: (value) => setState(() => _match = value.first),
+    value: _match,
+    onChanged: (value) => setState(() => _match = value),
   );
 
   Widget _actionsSection(BuildContext context) {
