@@ -28,7 +28,10 @@ class Dns64Page extends ConsumerWidget {
                 leading: const GlyphIcon(AppGlyphs.link),
                 title: Text(l10n.dns64Enable),
                 subtitle: Text(l10n.dns64EnableDesc),
-                trailing: Switch(value: enabled, onChanged: notifier.setEnabled),
+                trailing: Semantics(
+                  label: l10n.dns64Enable,
+                  child: Switch(value: enabled, onChanged: notifier.setEnabled),
+                ),
               ),
             ],
           ),

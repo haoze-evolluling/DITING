@@ -56,9 +56,12 @@ class _WebhookPageState extends ConsumerState<WebhookPage> {
                 leading: const GlyphIcon(AppGlyphs.send),
                 title: Text(l10n.webhookEnable),
                 subtitle: Text(l10n.webhookEnableDesc),
-                trailing: Switch(
-                  value: settings.enabled,
-                  onChanged: notifier.setEnabled,
+                trailing: Semantics(
+                  label: l10n.webhookEnable,
+                  child: Switch(
+                    value: settings.enabled,
+                    onChanged: notifier.setEnabled,
+                  ),
                 ),
               ),
               _Field(

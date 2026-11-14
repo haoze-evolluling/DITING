@@ -29,18 +29,24 @@ class PrivacySuitePage extends ConsumerWidget {
                 leading: const GlyphIcon(AppGlyphs.eyeOff),
                 title: Text(l10n.privacyBlockHttpsSvcb),
                 subtitle: Text(l10n.privacyBlockHttpsSvcbDesc),
-                trailing: Switch(
-                  value: state.blockHttpsSvcb,
-                  onChanged: notifier.setBlockHttpsSvcb,
+                trailing: Semantics(
+                  label: l10n.privacyBlockHttpsSvcb,
+                  child: Switch(
+                    value: state.blockHttpsSvcb,
+                    onChanged: notifier.setBlockHttpsSvcb,
+                  ),
                 ),
               ),
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.lock),
                 title: Text(l10n.privacyRebinding),
                 subtitle: Text(l10n.privacyRebindingDesc),
-                trailing: Switch(
-                  value: state.rebindingProtection,
-                  onChanged: notifier.setRebindingProtection,
+                trailing: Semantics(
+                  label: l10n.privacyRebinding,
+                  child: Switch(
+                    value: state.rebindingProtection,
+                    onChanged: notifier.setRebindingProtection,
+                  ),
                 ),
               ),
             ],

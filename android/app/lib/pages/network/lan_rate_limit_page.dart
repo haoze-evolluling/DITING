@@ -50,7 +50,13 @@ class _LanRateLimitPageState extends ConsumerState<LanRateLimitPage> {
                 leading: const GlyphIcon(AppGlyphs.speed),
                 title: Text(l10n.lanRateLimitEnable),
                 subtitle: Text(l10n.lanRateLimitEnableDesc),
-                trailing: Switch(value: state.enabled, onChanged: notifier.setEnabled),
+                trailing: Semantics(
+                  label: l10n.lanRateLimitEnable,
+                  child: Switch(
+                    value: state.enabled,
+                    onChanged: notifier.setEnabled,
+                  ),
+                ),
               ),
               _NumberItem(
                 label: l10n.lanRateLimitRate,
