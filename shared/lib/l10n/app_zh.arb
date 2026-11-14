@@ -7973,5 +7973,30 @@
       "bytes": { "type": "String" }
     }
   },
-  "appInsightsNoDomains": "暂无域名"
+  "appInsightsNoDomains": "暂无域名",
+  "localApiTitle": "本地 API",
+  "localApiIntro": "仅绑定 127.0.0.1 且需要令牌校验的只读 HTTP 接口，供本机脚本读取运行状态。",
+  "localApiEnable": "启用本地 API",
+  "localApiToken": "访问令牌",
+  "localApiRegenerate": "重新生成",
+  "localApiCopy": "复制",
+  "localApiCopied": "已复制",
+  "localApiPort": "端口",
+  "localApiRunning": "运行中：http://127.0.0.1:{port}",
+  "@localApiRunning": {
+    "placeholders": {
+      "port": { "type": "int" }
+    }
+  },
+  "localApiStopped": "已停止",
+  "localApiEndpoints": "接口",
+  "localApiEndpointStatus": "GET /status",
+  "localApiEndpointVersion": "GET /version",
+  "localApiHeaderHint": "请求头：X-Diting-Token: <令牌>",
+  "localApiError": "启动失败：{message}",
+  "@localApiError": {
+    "placeholders": {
+      "message": { "type": "String" }
+    }
+  }
 }

@@ -14011,4 +14011,53 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get appInsightsNoDomains => '暂无域名';
+
+  @override
+  String get localApiTitle => '本地 API';
+
+  @override
+  String get localApiIntro => '仅绑定 127.0.0.1 且需要令牌校验的只读 HTTP 接口，供本机脚本读取运行状态。';
+
+  @override
+  String get localApiEnable => '启用本地 API';
+
+  @override
+  String get localApiToken => '访问令牌';
+
+  @override
+  String get localApiRegenerate => '重新生成';
+
+  @override
+  String get localApiCopy => '复制';
+
+  @override
+  String get localApiCopied => '已复制';
+
+  @override
+  String get localApiPort => '端口';
+
+  @override
+  String localApiRunning(int port) {
+    return '运行中：http://127.0.0.1:$port';
+  }
+
+  @override
+  String get localApiStopped => '已停止';
+
+  @override
+  String get localApiEndpoints => '接口';
+
+  @override
+  String get localApiEndpointStatus => 'GET /status';
+
+  @override
+  String get localApiEndpointVersion => 'GET /version';
+
+  @override
+  String get localApiHeaderHint => '请求头：X-Diting-Token: <令牌>';
+
+  @override
+  String localApiError(String message) {
+    return '启动失败：$message';
+  }
 }

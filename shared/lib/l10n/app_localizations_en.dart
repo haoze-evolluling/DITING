@@ -14881,4 +14881,54 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get appInsightsNoDomains => 'No domains';
+
+  @override
+  String get localApiTitle => 'Local API';
+
+  @override
+  String get localApiIntro =>
+      'A read-only HTTP API bound to 127.0.0.1 and guarded by a token, for local scripts to read status.';
+
+  @override
+  String get localApiEnable => 'Enable local API';
+
+  @override
+  String get localApiToken => 'Access token';
+
+  @override
+  String get localApiRegenerate => 'Regenerate';
+
+  @override
+  String get localApiCopy => 'Copy';
+
+  @override
+  String get localApiCopied => 'Copied';
+
+  @override
+  String get localApiPort => 'Port';
+
+  @override
+  String localApiRunning(int port) {
+    return 'Running: http://127.0.0.1:$port';
+  }
+
+  @override
+  String get localApiStopped => 'Stopped';
+
+  @override
+  String get localApiEndpoints => 'Endpoints';
+
+  @override
+  String get localApiEndpointStatus => 'GET /status';
+
+  @override
+  String get localApiEndpointVersion => 'GET /version';
+
+  @override
+  String get localApiHeaderHint => 'Header: X-Diting-Token: <token>';
+
+  @override
+  String localApiError(String message) {
+    return 'Failed to start: $message';
+  }
 }

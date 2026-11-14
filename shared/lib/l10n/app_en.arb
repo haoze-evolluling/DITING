@@ -5263,5 +5263,20 @@
   "appInsightsReports": "App report cards",
   "appInsightsMap": "Connection map",
   "appInsightsStat": "{connections} connections · {blocked} blocked · {bytes}",
-  "appInsightsNoDomains": "No domains"
+  "appInsightsNoDomains": "No domains",
+  "localApiTitle": "Local API",
+  "localApiIntro": "A read-only HTTP API bound to 127.0.0.1 and guarded by a token, for local scripts to read status.",
+  "localApiEnable": "Enable local API",
+  "localApiToken": "Access token",
+  "localApiRegenerate": "Regenerate",
+  "localApiCopy": "Copy",
+  "localApiCopied": "Copied",
+  "localApiPort": "Port",
+  "localApiRunning": "Running: http://127.0.0.1:{port}",
+  "localApiStopped": "Stopped",
+  "localApiEndpoints": "Endpoints",
+  "localApiEndpointStatus": "GET /status",
+  "localApiEndpointVersion": "GET /version",
+  "localApiHeaderHint": "Header: X-Diting-Token: <token>",
+  "localApiError": "Failed to start: {message}"
 }

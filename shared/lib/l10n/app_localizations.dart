@@ -25707,6 +25707,96 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'暂无域名'**
   String get appInsightsNoDomains;
+
+  /// No description provided for @localApiTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地 API'**
+  String get localApiTitle;
+
+  /// No description provided for @localApiIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅绑定 127.0.0.1 且需要令牌校验的只读 HTTP 接口，供本机脚本读取运行状态。'**
+  String get localApiIntro;
+
+  /// No description provided for @localApiEnable.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用本地 API'**
+  String get localApiEnable;
+
+  /// No description provided for @localApiToken.
+  ///
+  /// In zh, this message translates to:
+  /// **'访问令牌'**
+  String get localApiToken;
+
+  /// No description provided for @localApiRegenerate.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新生成'**
+  String get localApiRegenerate;
+
+  /// No description provided for @localApiCopy.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制'**
+  String get localApiCopy;
+
+  /// No description provided for @localApiCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已复制'**
+  String get localApiCopied;
+
+  /// No description provided for @localApiPort.
+  ///
+  /// In zh, this message translates to:
+  /// **'端口'**
+  String get localApiPort;
+
+  /// No description provided for @localApiRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'运行中：http://127.0.0.1:{port}'**
+  String localApiRunning(int port);
+
+  /// No description provided for @localApiStopped.
+  ///
+  /// In zh, this message translates to:
+  /// **'已停止'**
+  String get localApiStopped;
+
+  /// No description provided for @localApiEndpoints.
+  ///
+  /// In zh, this message translates to:
+  /// **'接口'**
+  String get localApiEndpoints;
+
+  /// No description provided for @localApiEndpointStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'GET /status'**
+  String get localApiEndpointStatus;
+
+  /// No description provided for @localApiEndpointVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'GET /version'**
+  String get localApiEndpointVersion;
+
+  /// No description provided for @localApiHeaderHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求头：X-Diting-Token: <令牌>'**
+  String get localApiHeaderHint;
+
+  /// No description provided for @localApiError.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动失败：{message}'**
+  String localApiError(String message);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {
