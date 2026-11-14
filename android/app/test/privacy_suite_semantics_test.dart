@@ -3,6 +3,7 @@
 
 import 'package:diting_android/pages/network/privacy_suite_page.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,7 +31,7 @@ void main() {
         .toList();
     expect(labels, contains(l10n.privacyBlockHttpsSvcb));
     expect(labels, contains(l10n.privacyRebinding));
-    expect(find.byType(Switch), findsNWidgets(2));
+    expect(find.byType(CommonSwitch), findsNWidgets(2));
     handle.dispose();
   });
 }

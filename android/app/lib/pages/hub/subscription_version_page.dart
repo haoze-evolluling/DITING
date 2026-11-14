@@ -127,43 +127,45 @@ class _SubscriptionVersionPageState
     final l10n = context.l10n;
     final diff = RustRuleVersionCore.instance.diff(other.rules, current.rules);
     if (!mounted) return;
-    await showDialog<void>(
+    await showFloatingDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.ruleVersionsDiffTitle),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n.ruleVersionsDiffSummary(diff.addedCount, diff.removedCount),
-              ),
-              if (diff.added.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  l10n.ruleVersionsAdded,
-                  style: Theme.of(dialogContext).textTheme.labelLarge,
-                ),
-                Text(diff.added.take(50).join('\n')),
-              ],
-              if (diff.removed.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(
-                  l10n.ruleVersionsRemoved,
-                  style: Theme.of(dialogContext).textTheme.labelLarge,
-                ),
-                Text(diff.removed.take(50).join('\n')),
-              ],
-            ],
-          ),
-        ),
+      child: CommonDialog(
+        title: l10n.ruleVersionsDiffTitle,
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: () => popFloatingDialog(context),
             child: Text(l10n.uiClose),
           ),
         ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.ruleVersionsDiffSummary(diff.addedCount, diff.removedCount),
+            ),
+            if (diff.added.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                l10n.ruleVersionsAdded,
+                style: AppTextStyle.footnote
+                    .of(context)
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              Text(diff.added.take(50).join('\n')),
+            ],
+            if (diff.removed.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                l10n.ruleVersionsRemoved,
+                style: AppTextStyle.footnote
+                    .of(context)
+                    .copyWith(fontWeight: FontWeight.w600),
+              ),
+              Text(diff.removed.take(50).join('\n')),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -173,20 +175,21 @@ class _SubscriptionVersionPageState
     StoredRuleVersion version,
   ) async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showFloatingDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        content: Text(l10n.ruleVersionsRollbackConfirm),
+      child: CommonDialog(
+        title: l10n.ruleVersionsRollback,
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+            onPressed: () => popFloatingDialog(context, false),
             child: Text(l10n.uiCancel),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
+          TextButton(
+            onPressed: () => popFloatingDialog(context, true),
             child: Text(l10n.ruleVersionsRollback),
           ),
         ],
+        child: Text(l10n.ruleVersionsRollbackConfirm),
       ),
     );
     if (confirmed != true) return;

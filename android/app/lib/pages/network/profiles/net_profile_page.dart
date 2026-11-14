@@ -6,6 +6,7 @@ library;
 import 'package:diting_android/data/db/automation_models.dart';
 import 'package:diting_android/state/automation_providers.dart';
 import 'package:diting_android/state/net_profile_providers.dart';
+import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -113,84 +114,24 @@ class NetProfilePage extends ConsumerWidget {
   }
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final name = TextEditingController();
-    final upstream = TextEditingController();
-    final priority = TextEditingController(text: '100');
-    final types = <String>{'wifi'};
-    final created = await showDialog<bool>(
+    final draft = await showFloatingDialog<_NetProfileDraft>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setState) => AlertDialog(
-          title: Text(context.l10n.netProfileAdd),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: name,
-                decoration: InputDecoration(labelText: context.l10n.netProfileName),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: [
-                  for (final type in const ['wifi', 'cellular', 'ethernet'])
-                    FilterChip(
-                      label: Text(type),
-                      selected: types.contains(type),
-                      onSelected: (selected) => setState(() {
-                        if (selected) {
-                          types.add(type);
-                        } else {
-                          types.remove(type);
-                        }
-                      }),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: upstream,
-                decoration: InputDecoration(
-                  labelText: context.l10n.netProfileUpstreamSet,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: priority,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: context.l10n.netProfilePriority,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(context.l10n.netProfileCancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(context.l10n.netProfileSave),
-            ),
-          ],
-        ),
-      ),
+      child: const _NetProfileDialog(),
     );
-    if (created != true || !context.mounted) return;
+    if (draft == null || !context.mounted) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     await ref
         .read(automationControllerProvider)
         .saveProfile(
           AutomationProfile(
             id: newAutomationId('net'),
-            name: name.text.trim().isEmpty ? 'network' : name.text.trim(),
+            name: draft.name.isEmpty ? 'network' : draft.name,
             payload: {
               'kind': 'network',
-              'priority': int.tryParse(priority.text.trim()) ?? 100,
+              'priority': draft.priority,
               'enabled': true,
-              'networkMatch': {'types': types.toList()},
-              'upstreamSet': upstream.text.trim(),
+              'networkMatch': {'types': draft.types},
+              'upstreamSet': draft.upstream,
               'ruleGroupStates': const <String>[],
               'featureToggles': const <String, Object?>{},
             },
@@ -198,5 +139,95 @@ class NetProfilePage extends ConsumerWidget {
             updatedAt: now,
           ),
         );
+  }
+}
+
+typedef _NetProfileDraft = ({
+  String name,
+  String upstream,
+  int priority,
+  List<String> types,
+});
+
+class _NetProfileDialog extends StatefulWidget {
+  const _NetProfileDialog();
+
+  @override
+  State<_NetProfileDialog> createState() => _NetProfileDialogState();
+}
+
+class _NetProfileDialogState extends State<_NetProfileDialog> {
+  final _name = TextEditingController();
+  final _upstream = TextEditingController();
+  final _priority = TextEditingController(text: '100');
+  final _types = <String>{'wifi'};
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _upstream.dispose();
+    _priority.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    Navigator.of(context).pop<_NetProfileDraft>((
+      name: _name.text.trim(),
+      upstream: _upstream.text.trim(),
+      priority: int.tryParse(_priority.text.trim()) ?? 100,
+      types: _types.toList(),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return CommonDialog(
+      title: l10n.netProfileAdd,
+      hasFields: true,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.netProfileCancel),
+        ),
+        TextButton(onPressed: _submit, child: Text(l10n.netProfileSave)),
+      ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          TextField(
+            controller: _name,
+            decoration: InputDecoration(labelText: l10n.netProfileName),
+          ),
+          ChipRow(
+            children: [
+              for (final type in const ['wifi', 'cellular', 'ethernet'])
+                FilterPill(
+                  label: type,
+                  selected: _types.contains(type),
+                  onPressed: () => setState(() {
+                    if (_types.contains(type)) {
+                      _types.remove(type);
+                    } else {
+                      _types.add(type);
+                    }
+                  }),
+                ),
+            ],
+          ),
+          TextField(
+            controller: _upstream,
+            decoration: InputDecoration(labelText: l10n.netProfileUpstreamSet),
+          ),
+          TextField(
+            controller: _priority,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: l10n.netProfilePriority),
+          ),
+        ],
+      ),
+    );
   }
 }

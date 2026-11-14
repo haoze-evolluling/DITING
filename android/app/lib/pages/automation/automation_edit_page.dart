@@ -9,6 +9,7 @@ library;
 import 'package:diting_android/data/db/automation_models.dart';
 import 'package:diting_android/data/db/rust_services_core.dart';
 import 'package:diting_android/state/automation_providers.dart';
+import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -247,19 +248,18 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
           ),
         ],
         if (_trigger == AutomationSpec.triggerNetwork) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
+          const SizedBox(height: 12),
+          ChipRow(
             children: [
               for (final type in const ['wifi', 'cellular', 'ethernet'])
-                FilterChip(
-                  label: Text(type),
+                FilterPill(
+                  label: type,
                   selected: _networkTypes.contains(type),
-                  onSelected: (selected) => setState(() {
-                    if (selected) {
-                      _networkTypes.add(type);
-                    } else {
+                  onPressed: () => setState(() {
+                    if (_networkTypes.contains(type)) {
                       _networkTypes.remove(type);
+                    } else {
+                      _networkTypes.add(type);
                     }
                   }),
                 ),
@@ -283,8 +283,8 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
+        ListItem.toggle(
+          padding: EdgeInsets.zero,
           title: Text(context.l10n.automationActionPause),
           value: _pause,
           onChanged: (value) => setState(() => _pause = value),
@@ -298,8 +298,8 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
               keyboardType: TextInputType.number,
             ),
           ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
+        ListItem.toggle(
+          padding: EdgeInsets.zero,
           title: Text(context.l10n.automationActionBlockServices),
           subtitle: _servicesUnavailable
               ? Text(context.l10n.automationServicesUnavailable)
@@ -312,20 +312,18 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
         if (_blockServices)
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 4,
+            child: ChipRow(
               children: [
                 for (final service in _catalog)
-                  FilterChip(
-                    label: Text('${service['name']}'),
+                  FilterPill(
+                    label: '${service['name']}',
                     selected: _services.contains(service['id']),
-                    onSelected: (selected) => setState(() {
+                    onPressed: () => setState(() {
                       final id = '${service['id']}';
-                      if (selected) {
-                        _services.add(id);
-                      } else {
+                      if (_services.contains(id)) {
                         _services.remove(id);
+                      } else {
+                        _services.add(id);
                       }
                     }),
                   ),

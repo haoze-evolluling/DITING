@@ -154,7 +154,7 @@ class _EditingBoard extends ConsumerWidget {
             context: context,
             builder: (_) => LogDashboardAddSheet(mode: mode),
           ),
-          icon: Icon(Icons.add, size: 18, color: colorScheme.primary),
+          icon: GlyphIcon(AppGlyphs.add, size: 18, color: colorScheme.primary),
           label: Text(context.l10n.dashboardAddCard),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(48),

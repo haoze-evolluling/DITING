@@ -125,8 +125,8 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
           ),
           _paddedCard(
             context,
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
+            ListItem.toggle(
+              padding: EdgeInsets.zero,
               title: Text(context.l10n.blockPauseAllowlistTitle),
               subtitle: Text(context.l10n.blockPauseAllowlistSubtitle),
               value: state?.allowlistOnly ?? false,

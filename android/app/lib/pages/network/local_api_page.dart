@@ -82,7 +82,7 @@ class LocalApiPage extends ConsumerWidget {
                       ? l10n.localApiRunning(state.port ?? 0)
                       : l10n.localApiStopped,
                 ),
-                trailing: Switch(
+                trailing: CommonSwitch(
                   value: state.running,
                   onChanged: notifier.setEnabled,
                 ),

@@ -51,12 +51,10 @@ class _LanRateLimitPageState extends ConsumerState<LanRateLimitPage> {
                 leading: const GlyphIcon(AppGlyphs.speed),
                 title: Text(l10n.lanRateLimitEnable),
                 subtitle: Text(l10n.lanRateLimitEnableDesc),
-                trailing: Semantics(
-                  label: l10n.lanRateLimitEnable,
-                  child: Switch(
-                    value: state.enabled,
-                    onChanged: notifier.setEnabled,
-                  ),
+                trailing: CommonSwitch(
+                  value: state.enabled,
+                  onChanged: notifier.setEnabled,
+                  semanticLabel: l10n.lanRateLimitEnable,
                 ),
               ),
               _NumberItem(
@@ -147,7 +145,7 @@ class _NumberItem extends StatelessWidget {
             label: '$label −',
             button: true,
             child: IconButton(
-              icon: const Icon(Icons.remove),
+              icon: const GlyphIcon(AppGlyphs.remove),
               onPressed: value <= min ? null : () => onChanged(value - step),
             ),
           ),
@@ -156,7 +154,7 @@ class _NumberItem extends StatelessWidget {
             label: '$label +',
             button: true,
             child: IconButton(
-              icon: const Icon(Icons.add),
+              icon: const GlyphIcon(AppGlyphs.add),
               onPressed: value >= max ? null : () => onChanged(value + step),
             ),
           ),

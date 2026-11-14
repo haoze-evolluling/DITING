@@ -80,8 +80,8 @@ class _EditingBoard extends ConsumerWidget {
           child: Row(
             spacing: 8,
             children: [
-              Icon(
-                Icons.info_outline,
+              GlyphIcon(
+                AppGlyphs.info,
                 size: 16,
                 color: colorScheme.onPrimaryContainer,
               ),
@@ -161,7 +161,7 @@ class _EditingBoard extends ConsumerWidget {
             context: context,
             builder: (_) => const ServerDashboardAddSheet(),
           ),
-          icon: Icon(Icons.add, size: 18, color: colorScheme.primary),
+          icon: GlyphIcon(AppGlyphs.add, size: 18, color: colorScheme.primary),
           label: Text(context.l10n.dashboardAddCard),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(48),

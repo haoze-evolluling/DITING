@@ -133,7 +133,7 @@ class _RuleTile extends StatelessWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: Switch(value: rule.enabled, onChanged: onToggle),
+      trailing: CommonSwitch(value: rule.enabled, onChanged: onToggle),
       onTap: onTap,
     );
   }
