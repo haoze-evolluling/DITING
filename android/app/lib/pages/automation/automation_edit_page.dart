@@ -195,8 +195,9 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
       body: PageBody(
         children: [
           PageIntroCard(text: context.l10n.automationEditIntro),
-          CommonCard(
-            child: Column(
+          _paddedCard(
+            context,
+            Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextField(
@@ -288,7 +289,7 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
         ),
         if (_pause)
           Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8),
+            padding: const EdgeInsets.only(bottom: 8),
             child: TextField(
               controller: _minutes,
               keyboardType: TextInputType.number,
@@ -308,7 +309,7 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
         ),
         if (_blockServices)
           Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Wrap(
               spacing: 8,
               runSpacing: 4,
@@ -389,8 +390,9 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CommonCard(
-      child: Column(
+    return _paddedCard(
+      context,
+      Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: Theme.of(context).textTheme.titleSmall),
@@ -401,3 +403,8 @@ class _Section extends StatelessWidget {
     );
   }
 }
+
+Widget _paddedCard(BuildContext context, Widget child) => Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  child: CommonCard(padding: const EdgeInsets.all(16), child: child),
+);

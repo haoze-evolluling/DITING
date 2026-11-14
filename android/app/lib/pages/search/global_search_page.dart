@@ -19,21 +19,23 @@ class GlobalSearchPage extends ConsumerWidget {
     final results = ref.watch(globalSearchResultsProvider);
     return CommonScaffold(
       title: context.l10n.searchTitle,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: SearchField(
-              autofocus: true,
-              hintText: context.l10n.searchHint,
-              glyph: AppGlyphs.search,
-              onChanged: (value) =>
-                  ref.read(globalSearchQueryProvider.notifier).set(value),
+      body: AppBarClearance(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: SearchField(
+                autofocus: true,
+                hintText: context.l10n.searchHint,
+                glyph: AppGlyphs.search,
+                onChanged: (value) =>
+                    ref.read(globalSearchQueryProvider.notifier).set(value),
+              ),
             ),
-          ),
-          Expanded(child: _results(context, query, results)),
-        ],
+            Expanded(child: _results(context, query, results)),
+          ],
+        ),
       ),
     );
   }

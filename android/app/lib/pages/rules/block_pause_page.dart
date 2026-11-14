@@ -109,8 +109,9 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
             busy: _busy,
             onResume: () => _run((bridge) => bridge.clear()),
           ),
-          CommonCard(
-            child: Wrap(
+          _paddedCard(
+            context,
+            Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
@@ -122,8 +123,9 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
               ],
             ),
           ),
-          CommonCard(
-            child: SwitchListTile(
+          _paddedCard(
+            context,
+            SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(context.l10n.blockPauseAllowlistTitle),
               subtitle: Text(context.l10n.blockPauseAllowlistSubtitle),
@@ -135,7 +137,7 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
           ),
           if (_error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _error!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -166,8 +168,9 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
     final color = paused ? scheme.warning : scheme.success;
-    return CommonCard(
-      child: Row(
+    return _paddedCard(
+      context,
+      Row(
         children: [
           GlyphIcon(
             paused ? AppGlyphs.block : AppGlyphs.checkCircle,
@@ -204,3 +207,8 @@ String _formatRemaining(Duration remaining) {
       ? '$hours:${two(minutes)}:${two(seconds)}'
       : '$minutes:${two(seconds)}';
 }
+
+Widget _paddedCard(BuildContext context, Widget child) => Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  child: CommonCard(padding: const EdgeInsets.all(16), child: child),
+);

@@ -95,8 +95,9 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
       body: PageBody(
         children: [
           PageIntroCard(text: context.l10n.ruleTestIntro),
-          CommonCard(
-            child: Column(
+          _paddedCard(
+            context,
+            Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 12,
               children: [
@@ -132,7 +133,7 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
           ),
           if (_error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _error!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -143,8 +144,9 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
           if (_result != null)
             _ResultCard(result: _result!)
           else if (_error == null)
-            CommonCard(
-              child: Text(
+            _paddedCard(
+              context,
+              Text(
                 context.l10n.ruleTestEmptyHint,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
@@ -174,8 +176,9 @@ class _ResultCard extends StatelessWidget {
       RuleTestAction.pass => (context.l10n.ruleTestActionPass, scheme.success),
     };
     final matched = result.matchedRule;
-    return CommonCard(
-      child: Column(
+    return _paddedCard(
+      context,
+      Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 10,
         children: [
@@ -241,3 +244,8 @@ class _ResultRow extends StatelessWidget {
     );
   }
 }
+
+Widget _paddedCard(BuildContext context, Widget child) => Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  child: CommonCard(padding: const EdgeInsets.all(16), child: child),
+);

@@ -22,9 +22,9 @@ class HealthPage extends ConsumerWidget {
         children: [
           PageIntroCard(text: context.l10n.healthIntro),
           asyncReport.when(
-            loading: () => CommonCard(child: Text(context.l10n.healthLoading)),
+            loading: () => _paddedCard(context, Text(context.l10n.healthLoading)),
             error: (error, _) =>
-                CommonCard(child: Text(context.l10n.healthLoadFailed)),
+                _paddedCard(context, Text(context.l10n.healthLoadFailed)),
             data: (report) => Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 12,
@@ -93,8 +93,9 @@ class _ScoreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _severityColor(context, report.level);
-    return CommonCard(
-      child: Row(
+    return _paddedCard(
+      context,
+      Row(
         spacing: 16,
         children: [
           Column(
@@ -184,3 +185,8 @@ class _AdviceRow extends StatelessWidget {
     );
   }
 }
+
+Widget _paddedCard(BuildContext context, Widget child) => Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  child: CommonCard(padding: const EdgeInsets.all(16), child: child),
+);
