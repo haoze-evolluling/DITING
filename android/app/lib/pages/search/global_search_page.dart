@@ -1,10 +1,13 @@
-/// U2 全局搜索/命令面板页面：一个搜索框 + 过滤后的功能与命令列表，点条目直达。
+/// U2 全局搜索/命令面板页面：一个搜索框 + 按功能中心分类分组的直达列表，点条目直达。
 library;
 
 import 'package:diting_android/data/global_search_index.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
 import 'package:diting_android/state/global_search_providers.dart';
+import 'package:diting_android/widgets/empty_state.dart';
+import 'package:diting_android/widgets/glyph_lookup.dart';
+import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +27,7 @@ class GlobalSearchPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: SearchField(
                 autofocus: true,
                 hintText: context.l10n.searchHint,
@@ -40,66 +43,67 @@ class GlobalSearchPage extends ConsumerWidget {
     );
   }
 
+  /// Empty prompt, no-result prompt, or the hits grouped by their feature-hub category. Grouping
+  /// matches the feature center's section cards, so a row carries only its own title/description
+  /// and the destination's own glyph instead of repeating the same search icon on every line.
   Widget _results(
     BuildContext context,
     String query,
     List<GlobalSearchEntry> results,
   ) {
     if (query.trim().isEmpty) {
-      return _centered(
+      return _emptyState(
         context.l10n.searchEmptyTitle,
         context.l10n.searchEmptyBody,
       );
     }
     if (results.isEmpty) {
-      return _centered(context.l10n.searchNoResults, context.l10n.searchHint);
+      return _emptyState(context.l10n.searchNoResults, context.l10n.searchHint);
     }
-    return ListView.builder(
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        final entry = results[index];
-        return ListItem(
-          leading: const GlyphIcon(AppGlyphs.search),
-          title: Text(entry.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text(
-            entry.subtitle.isEmpty
-                ? entry.group
-                : '${entry.group} · ${entry.subtitle}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 24),
+      children: [
+        for (final group in _group(results))
+          generateSection(
+            title: group.key,
+            items: [
+              for (final entry in group.value)
+                NavEntryRow(
+                  glyph: glyphByName(entry.glyphName),
+                  title: entry.title,
+                  subtitle: entry.subtitle.isEmpty ? null : entry.subtitle,
+                  subtitleMaxLines: 1,
+                  onPressed: () => _open(context, entry),
+                ),
+            ],
           ),
-          onTap: () => _open(context, entry),
-        );
-      },
+      ],
     );
   }
 
-  Widget _centered(String title, String body) {
-    return Builder(
-      builder: (context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 8,
-            children: [
-              const GlyphIcon(AppGlyphs.search, size: 28),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              Text(
-                body,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+  /// Preserves index order: the seven feature-hub categories, then 「常用命令」.
+  List<MapEntry<String, List<GlobalSearchEntry>>> _group(
+    List<GlobalSearchEntry> results,
+  ) {
+    final groups = <String, List<GlobalSearchEntry>>{};
+    for (final entry in results) {
+      groups.putIfAbsent(entry.group, () => []).add(entry);
+    }
+    return groups.entries.toList(growable: false);
+  }
+
+  Widget _emptyState(String title, String body) {
+    return ListView(
+      padding: const EdgeInsets.only(top: 32, bottom: 24),
+      children: [
+        EmptyStateBox(
+          child: NullStatus(
+            label: title,
+            description: body,
+            illustration: NullStatusIllustration.search,
           ),
         ),
-      ),
+      ],
     );
   }
 

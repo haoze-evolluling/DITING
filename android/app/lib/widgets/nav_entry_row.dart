@@ -17,11 +17,16 @@ class NavEntryRow extends StatelessWidget {
     this.chevronSize = 20,
     this.enabled = true,
     this.busy = false,
+    this.subtitleMaxLines,
   });
 
   final Glyph glyph;
   final String title;
   final String? subtitle;
+
+  /// Caps the subtitle at this many lines with an ellipsis; `null` lets it wrap, which is what the
+  /// short settings subtitles want. Denser lists (search hits) pass 1 so rows keep one height.
+  final int? subtitleMaxLines;
 
   /// `null` renders a row that cannot be tapped, e.g. one gated on a granted permission.
   final VoidCallback? onPressed;
@@ -46,7 +51,15 @@ class NavEntryRow extends StatelessWidget {
         color: enabled ? null : colorScheme.onSurface.withValues(alpha: 0.3),
       ),
       title: Text(title),
-      subtitle: subtitle == null ? null : Text(subtitle!),
+      subtitle: subtitle == null
+          ? null
+          : Text(
+              subtitle!,
+              maxLines: subtitleMaxLines,
+              overflow: subtitleMaxLines == null
+                  ? null
+                  : TextOverflow.ellipsis,
+            ),
       trailing: busy
           ? const CommonCircleLoading(size: 18)
           : GlyphIcon(

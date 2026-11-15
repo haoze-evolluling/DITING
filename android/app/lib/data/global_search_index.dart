@@ -12,6 +12,7 @@ class GlobalSearchEntry {
     required this.route,
     required this.group,
     this.subtitle = '',
+    this.glyphName = 'search',
     this.keywords = const [],
   });
 
@@ -21,6 +22,9 @@ class GlobalSearchEntry {
 
   /// 分组名（功能中心分类名，或「常用命令」），面板里用作小标题。
   final String group;
+
+  /// 目标页图标名（与功能中心卡片同一套 `AppGlyphs` 名称），列表行用它替代旧的统一搜索图标。
+  final String glyphName;
 
   final List<String> keywords;
 
@@ -41,21 +45,29 @@ List<GlobalSearchEntry> _extraCommands(AppL10n l10n) => [
     title: l10n.healthTitle,
     route: '/health',
     group: l10n.searchGroupTools,
+    subtitle: l10n.healthIntro,
+    glyphName: 'verified',
   ),
   GlobalSearchEntry(
     title: l10n.hitRankingTitle,
     route: '/logs/hit-ranking',
     group: l10n.searchGroupTools,
+    subtitle: l10n.hitRankingEntrySubtitle,
+    glyphName: 'rules',
   ),
   GlobalSearchEntry(
     title: l10n.ruleTestTitle,
     route: '/hub/rules/test',
     group: l10n.searchGroupTools,
+    subtitle: l10n.ruleTestEnterSubtitle,
+    glyphName: 'search',
   ),
   GlobalSearchEntry(
     title: l10n.blockPauseTitle,
     route: '/hub/rules/pause',
     group: l10n.searchGroupTools,
+    subtitle: l10n.blockPauseEntrySubtitle,
+    glyphName: 'block',
   ),
 ];
 
@@ -68,6 +80,7 @@ List<GlobalSearchEntry> buildGlobalSearchIndex(AppL10n l10n) => [
         subtitle: card.description,
         route: card.route,
         group: category.title,
+        glyphName: card.glyphName,
         keywords: [card.description],
       ),
   ..._extraCommands(l10n),
