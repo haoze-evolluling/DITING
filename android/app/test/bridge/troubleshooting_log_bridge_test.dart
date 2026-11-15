@@ -97,6 +97,30 @@ void main() {
     expect(result.total, 5);
   });
 
+  test('download 转发 kind 和 name 并带回落地路径', () async {
+    mock((call) async {
+      expect(call.method, 'download');
+      expect(call.arguments, {'kind': 'runtime', 'name': 'runtime.log'});
+      return {'saved': 1, 'path': 'Download/runtime.log'};
+    });
+
+    final result = await TroubleshootingLogBridge().download(_runtimeEntry);
+    expect(result.ok, isTrue);
+    expect(result.path, 'Download/runtime.log');
+  });
+
+  test('downloadAll 读取成功与失败计数', () async {
+    mock((call) async {
+      expect(call.method, 'downloadAll');
+      return {'saved': 2, 'failed': 1};
+    });
+
+    final result = await TroubleshootingLogBridge().downloadAll();
+    expect(result.saved, 2);
+    expect(result.failed, 1);
+    expect(result.path, isNull);
+  });
+
   test('没有原生实现时安全降级', () async {
     final bridge = TroubleshootingLogBridge();
     expect(await bridge.list(), isEmpty);
@@ -104,6 +128,8 @@ void main() {
     expect(await bridge.delete(_runtimeEntry), isFalse);
     expect(await bridge.shareAll(), isFalse);
     expect((await bridge.clearAll()).total, 0);
+    expect((await bridge.download(_runtimeEntry)).ok, isFalse);
+    expect((await bridge.downloadAll()).ok, isFalse);
   });
 }
 

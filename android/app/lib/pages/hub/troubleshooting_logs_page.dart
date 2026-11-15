@@ -1,7 +1,7 @@
 /// 日志管理: one merged, newest-first timeline of runtime captures and crash reports. Per-file
-/// rows open a viewer that can share or delete that file; the app bar also shares or clears
-/// everything. The heavy lifting (listing, reading, deleting, sharing) stays in
-/// [TroubleshootingLogBridge] on the native side.
+/// rows open a viewer that can share, download or delete that file; the app bar also shares,
+/// downloads or clears everything. The heavy lifting (listing, reading, deleting, sharing,
+/// downloading) stays in [TroubleshootingLogBridge] on the native side.
 library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
@@ -26,7 +26,7 @@ class TroubleshootingLogsPage extends ConsumerStatefulWidget {
 class _TroubleshootingLogsPageState
     extends ConsumerState<TroubleshootingLogsPage>
     with WidgetsBindingObserver {
-  /// Blocks a second tap while a delete or share round trip runs.
+  /// Blocks a second tap while a delete, share or download round trip runs.
   bool _busy = false;
 
   @override
@@ -66,6 +66,22 @@ class _TroubleshootingLogsPageState
     );
   }
 
+  /// One file per log into Download, so the names match the timeline instead of a merged dump.
+  Future<void> _downloadAll() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final result = await ref
+        .read(troubleshootingLogBridgeProvider)
+        .downloadAll();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    _toast(
+      result.ok
+          ? context.l10n.troubleshootLogsDownloadedCount(result.saved)
+          : context.l10n.troubleshootLogsDownloadFailed,
+    );
+  }
+
   Future<void> _clearAll() async {
     if (_busy) return;
     final confirmed = await showFloatingDialog<bool>(
@@ -102,23 +118,32 @@ class _TroubleshootingLogsPageState
     );
   }
 
-  /// Opens the viewer; a deleted or shared file refreshes the timeline and confirms with a toast.
+  /// Opens the viewer, then refreshes the timeline and confirms whatever the sheet did with a
+  /// toast once it is gone.
   Future<void> _open(TroubleshootLogEntry entry) async {
-    final action = await showSheet<String>(
+    final result = await showSheet<TroubleshootLogSheetResult>(
       context: context,
       builder: (_) => TroubleshootingLogDetailSheet(entry: entry),
     );
     if (!mounted) return;
     await _refresh();
-    if (!mounted) return;
-    if (action == 'content') {
-      await context.push(
-        HubPaths.troubleshootingLogContent(entry.kind.tag, entry.name),
-      );
-      return;
+    if (!mounted || result == null) return;
+    switch (result.action) {
+      case TroubleshootLogSheetAction.content:
+        await context.push(
+          HubPaths.troubleshootingLogContent(entry.kind.tag, entry.name),
+        );
+      case TroubleshootLogSheetAction.deleted:
+        _toast(context.l10n.troubleshootLogsDeleted);
+      case TroubleshootLogSheetAction.shared:
+        _toast(context.l10n.troubleshootLogsShared);
+      case TroubleshootLogSheetAction.downloaded:
+        _toast(
+          context.l10n.troubleshootLogsDownloaded(
+            result.path ?? context.l10n.troubleshootLogsDownloadsDir,
+          ),
+        );
     }
-    if (action == 'deleted') _toast(context.l10n.troubleshootLogsDeleted);
-    if (action == 'shared') _toast(context.l10n.troubleshootLogsShared);
   }
 
   void _toast(String message) {
@@ -165,6 +190,11 @@ class _TroubleshootingLogsPageState
           label: l10n.troubleshootLogsShareAll,
           glyph: AppGlyphs.send,
           onPressed: hasEntries && !_busy ? _shareAll : null,
+        ),
+        CommonPopupMenuItem(
+          label: l10n.troubleshootLogsDownloadAll,
+          glyph: AppGlyphs.cloudDownload,
+          onPressed: hasEntries && !_busy ? _downloadAll : null,
         ),
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsClearAll,

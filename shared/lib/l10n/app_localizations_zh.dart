@@ -14254,4 +14254,26 @@ class AppL10nZh extends AppL10n {
   String ruleVersionsRollbackFailed(String message) {
     return '回滚失败：$message';
   }
+
+  @override
+  String get troubleshootLogsDownload => '下载';
+
+  @override
+  String get troubleshootLogsDownloadAll => '下载全部';
+
+  @override
+  String get troubleshootLogsDownloadsDir => '下载目录';
+
+  @override
+  String troubleshootLogsDownloaded(String path) {
+    return '已保存到 $path';
+  }
+
+  @override
+  String troubleshootLogsDownloadedCount(int count) {
+    return '已保存 $count 个日志到下载目录';
+  }
+
+  @override
+  String get troubleshootLogsDownloadFailed => '下载失败';
 }

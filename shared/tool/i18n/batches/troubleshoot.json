@@ -96,5 +96,19 @@
   "troubleshootLogsViewContentBody": ["进入下一层查看完整日志", "Open the next page to read the full log"],
   "troubleshootLogsEmptyContent": ["无法读取该日志内容", "Cannot read this log's content"],
   "troubleshootLogsTruncated": ["内容过长，仅显示开头部分", "Content is too long; showing the beginning only"],
-  "troubleshootLogsFooter": ["日志只保存在本机，分享前请确认其中不含敏感信息。", "Logs stay on this device; check for sensitive information before sharing."]
+  "troubleshootLogsFooter": ["日志只保存在本机，分享前请确认其中不含敏感信息。", "Logs stay on this device; check for sensitive information before sharing."],
+  "troubleshootLogsDownload": ["下载", "Download"],
+  "troubleshootLogsDownloadAll": ["下载全部", "Download all"],
+  "troubleshootLogsDownloadsDir": ["下载目录", "Downloads"],
+  "troubleshootLogsDownloaded": {
+    "zh": "已保存到 {path}",
+    "en": "Saved to {path}",
+    "placeholders": {"path": {"type": "String"}}
+  },
+  "troubleshootLogsDownloadedCount": {
+    "zh": "已保存 {count} 个日志到下载目录",
+    "en": "Saved {count} logs to Downloads",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "troubleshootLogsDownloadFailed": ["下载失败", "Download failed"]
 }

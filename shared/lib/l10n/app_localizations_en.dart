@@ -15136,4 +15136,26 @@ class AppL10nEn extends AppL10n {
   String ruleVersionsRollbackFailed(String message) {
     return 'Rollback failed: $message';
   }
+
+  @override
+  String get troubleshootLogsDownload => 'Download';
+
+  @override
+  String get troubleshootLogsDownloadAll => 'Download all';
+
+  @override
+  String get troubleshootLogsDownloadsDir => 'Downloads';
+
+  @override
+  String troubleshootLogsDownloaded(String path) {
+    return 'Saved to $path';
+  }
+
+  @override
+  String troubleshootLogsDownloadedCount(int count) {
+    return 'Saved $count logs to Downloads';
+  }
+
+  @override
+  String get troubleshootLogsDownloadFailed => 'Download failed';
 }

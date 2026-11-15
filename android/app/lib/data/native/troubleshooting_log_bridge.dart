@@ -69,6 +69,35 @@ class TroubleshootLogRead {
   static const empty = TroubleshootLogRead(content: null, truncated: false);
 }
 
+/// Where a download landed: one exact path for a single file, counts for a batch.
+class TroubleshootDownloadResult {
+  const TroubleshootDownloadResult({
+    this.saved = 0,
+    this.failed = 0,
+    this.path,
+  });
+
+  final int saved;
+  final int failed;
+
+  /// `Download/<name>` for a single file; null when a batch has no single path to report.
+  final String? path;
+
+  bool get ok => saved > 0;
+
+  static const empty = TroubleshootDownloadResult();
+
+  static TroubleshootDownloadResult fromMap(Object? raw) {
+    if (raw is! Map) return empty;
+    final path = raw['path'];
+    return TroubleshootDownloadResult(
+      saved: (raw['saved'] as num?)?.toInt() ?? 0,
+      failed: (raw['failed'] as num?)?.toInt() ?? 0,
+      path: path is String && path.isNotEmpty ? path : null,
+    );
+  }
+}
+
 class TroubleshootClearResult {
   const TroubleshootClearResult({this.runtime = 0, this.crash = 0});
 
@@ -193,6 +222,28 @@ class TroubleshootingLogBridge {
       return false;
     } on PlatformException {
       return false;
+    }
+  }
+
+  /// Copies one file into the Download folder; the result carries the exact path it landed at.
+  Future<TroubleshootDownloadResult> download(TroubleshootLogEntry entry) =>
+      _downloadCall('download', {'kind': entry.kind.tag, 'name': entry.name});
+
+  /// Copies every listed file into the Download folder, one file per log.
+  Future<TroubleshootDownloadResult> downloadAll() =>
+      _downloadCall('downloadAll');
+
+  Future<TroubleshootDownloadResult> _downloadCall(
+    String method, [
+    Map<String, Object?> arguments = const {},
+  ]) async {
+    try {
+      final raw = await _channel.invokeMethod<Object?>(method, arguments);
+      return TroubleshootDownloadResult.fromMap(raw);
+    } on MissingPluginException {
+      return TroubleshootDownloadResult.empty;
+    } on PlatformException {
+      return TroubleshootDownloadResult.empty;
     }
   }
 }

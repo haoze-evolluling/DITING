@@ -55,6 +55,7 @@ void main() {
     expect(find.text('日志信息'), findsOneWidget);
     expect(find.text('文件名'), findsOneWidget);
     expect(find.text('查看日志内容'), findsOneWidget);
+    expect(find.text('下载'), findsOneWidget);
 
     await tester.tap(find.text('查看日志内容'));
     await tester.pumpAndSettle();

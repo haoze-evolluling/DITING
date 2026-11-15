@@ -26151,6 +26151,42 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'回滚失败：{message}'**
   String ruleVersionsRollbackFailed(String message);
+
+  /// No description provided for @troubleshootLogsDownload.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载'**
+  String get troubleshootLogsDownload;
+
+  /// No description provided for @troubleshootLogsDownloadAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载全部'**
+  String get troubleshootLogsDownloadAll;
+
+  /// No description provided for @troubleshootLogsDownloadsDir.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载目录'**
+  String get troubleshootLogsDownloadsDir;
+
+  /// No description provided for @troubleshootLogsDownloaded.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存到 {path}'**
+  String troubleshootLogsDownloaded(String path);
+
+  /// No description provided for @troubleshootLogsDownloadedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存 {count} 个日志到下载目录'**
+  String troubleshootLogsDownloadedCount(int count);
+
+  /// No description provided for @troubleshootLogsDownloadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载失败'**
+  String get troubleshootLogsDownloadFailed;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

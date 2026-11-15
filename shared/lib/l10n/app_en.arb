@@ -5370,5 +5370,11 @@
     "placeholders": {
       "message": { "type": "String" }
     }
-  }
+  },
+  "troubleshootLogsDownload": "Download",
+  "troubleshootLogsDownloadAll": "Download all",
+  "troubleshootLogsDownloadsDir": "Downloads",
+  "troubleshootLogsDownloaded": "Saved to {path}",
+  "troubleshootLogsDownloadedCount": "Saved {count} logs to Downloads",
+  "troubleshootLogsDownloadFailed": "Download failed"
 }

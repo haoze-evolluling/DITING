@@ -8094,5 +8094,25 @@
     "placeholders": {
       "message": { "type": "String" }
     }
-  }
+  },
+  "troubleshootLogsDownload": "下载",
+  "troubleshootLogsDownloadAll": "下载全部",
+  "troubleshootLogsDownloadsDir": "下载目录",
+  "troubleshootLogsDownloaded": "已保存到 {path}",
+  "@troubleshootLogsDownloaded": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "troubleshootLogsDownloadedCount": "已保存 {count} 个日志到下载目录",
+  "@troubleshootLogsDownloadedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "troubleshootLogsDownloadFailed": "下载失败"
 }

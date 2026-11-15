@@ -17,7 +17,7 @@ import java.util.Date
 import java.util.Locale
 
 /// Per-file management for the troubleshooting log page: list, read one, delete one, share one,
-/// share everything and clear everything.
+/// download one, share or download everything, and clear everything.
 ///
 /// Runtime captures stay on [RuntimeLogStore]; crash reports reuse [AppStorageCleaner]'s document
 /// reader and the same crash/legacy-crash directories the existing 故障排查 page already counts.
@@ -43,6 +43,8 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
             "delete" -> result.success(delete(call))
             "share" -> result.success(share(call))
             "shareAll" -> result.success(shareAll())
+            "download" -> result.success(download(call))
+            "downloadAll" -> result.success(downloadAll())
             "clearAll" -> result.success(clearAll())
             else -> result.notImplemented()
         }
@@ -102,6 +104,35 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
         if (files.isEmpty()) return false
         shareFiles(files, "DITING")
     }.getOrDefault(false)
+
+    /// One file straight into Download, keeping the name the timeline shows.
+    private fun download(call: MethodCall): Map<String, Any?> {
+        val file = TroubleshootingLogStore.resolve(
+            context,
+            call.argument<String>("kind").orEmpty(),
+            call.argument<String>("name").orEmpty(),
+        ) ?: return DownloadWrite.failed().toMap()
+        val bytes = runCatching { file.readBytes() }.getOrNull()
+            ?: return DownloadWrite.failed().toMap()
+        return DownloadFolderWriter.write(context, file.name, MIME_TEXT, bytes).toMap()
+    }
+
+    /// Every listed file, one per download: the page names them, so saving them apart keeps that
+    /// mapping; the share path merges instead because an intent payload is capped.
+    private fun downloadAll(): Map<String, Any?> {
+        var saved = 0
+        var failed = 0
+        TroubleshootingLogStore.list(context).forEach { entry ->
+            val bytes = runCatching { entry.file.readBytes() }.getOrNull()
+            val write = if (bytes == null) {
+                DownloadWrite.failed()
+            } else {
+                DownloadFolderWriter.write(context, entry.name, MIME_TEXT, bytes)
+            }
+            if (write.saved) saved++ else failed++
+        }
+        return mapOf("saved" to saved, "failed" to failed)
+    }
 
     private fun clearAll(): Map<String, Int> {
         val runtime = RuntimeLogStore.clear(context)

@@ -1,5 +1,5 @@
 /// First level of one log file: file information, an entry card to its full text, and the
-/// per-file share/delete actions. Pops with `'shared'`, `'deleted'`, or `'content'` so
+/// per-file share/download/delete actions. Pops with a [TroubleshootLogSheetResult] so
 /// [TroubleshootingLogsPage] can toast, refresh, or open the text page once the sheet is gone.
 library;
 
@@ -10,6 +10,30 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+
+/// What the sheet did before it closed; the timeline turns it into a toast, a refresh or a push.
+enum TroubleshootLogSheetAction { content, shared, downloaded, deleted }
+
+/// The sheet's answer. [path] only carries a value for [TroubleshootLogSheetAction.downloaded],
+/// where it is the exact `Download/<name>` the file landed at (MediaStore may rename a duplicate).
+class TroubleshootLogSheetResult {
+  const TroubleshootLogSheetResult._(this.action, this.path);
+
+  const TroubleshootLogSheetResult.content()
+    : this._(TroubleshootLogSheetAction.content, null);
+
+  const TroubleshootLogSheetResult.shared()
+    : this._(TroubleshootLogSheetAction.shared, null);
+
+  const TroubleshootLogSheetResult.deleted()
+    : this._(TroubleshootLogSheetAction.deleted, null);
+
+  const TroubleshootLogSheetResult.downloaded(this.path)
+    : action = TroubleshootLogSheetAction.downloaded;
+
+  final TroubleshootLogSheetAction action;
+  final String? path;
+}
 
 class TroubleshootingLogDetailSheet extends ConsumerStatefulWidget {
   const TroubleshootingLogDetailSheet({super.key, required this.entry});
@@ -25,7 +49,8 @@ class _TroubleshootingLogDetailSheetState
     extends ConsumerState<TroubleshootingLogDetailSheet> {
   bool _busy = false;
 
-  void _openContent() => Navigator.of(context).pop('content');
+  void _openContent() =>
+      Navigator.of(context).pop(const TroubleshootLogSheetResult.content());
 
   Future<void> _share() async {
     if (_busy) return;
@@ -39,7 +64,24 @@ class _TroubleshootingLogDetailSheetState
       _toast(context.l10n.troubleshootLogsShareFailed);
       return;
     }
-    Navigator.of(context).pop('shared');
+    Navigator.of(context).pop(const TroubleshootLogSheetResult.shared());
+  }
+
+  /// Writes the file into Download and hands the exact path back to the page for the toast.
+  Future<void> _download() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final result = await ref
+        .read(troubleshootingLogBridgeProvider)
+        .download(widget.entry);
+    if (!mounted) return;
+    if (!result.ok) {
+      setState(() => _busy = false);
+      _toast(context.l10n.troubleshootLogsDownloadFailed);
+      return;
+    }
+    Navigator.of(context)
+        .pop(TroubleshootLogSheetResult.downloaded(result.path));
   }
 
   Future<void> _delete() async {
@@ -73,7 +115,7 @@ class _TroubleshootingLogDetailSheetState
       _toast(context.l10n.troubleshootLogsDeleteFailed);
       return;
     }
-    Navigator.of(context).pop('deleted');
+    Navigator.of(context).pop(const TroubleshootLogSheetResult.deleted());
   }
 
   void _toast(String message) {
@@ -160,6 +202,11 @@ class _TroubleshootingLogDetailSheetState
                 leading: const GlyphIcon(AppGlyphs.send, size: 20),
                 title: Text(l10n.troubleshootLogsShare),
                 onTap: _busy ? null : _share,
+              ),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.cloudDownload, size: 20),
+                title: Text(l10n.troubleshootLogsDownload),
+                onTap: _busy ? null : _download,
               ),
               ListItem(
                 leading: GlyphIcon(
