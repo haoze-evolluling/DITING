@@ -259,6 +259,19 @@ extension AppShapeThemeExt on ThemeData {
     progressIndicatorTheme: progressIndicatorTheme.copyWith(
       borderRadius: AppRadius.standard,
     ),
+    // The date and time pickers are the only Material dialogs the app does not build itself.
+    // Their outer shape comes from their own theme slots, not `dialogTheme`, so without these
+    // they keep M3 defaults (a 28 date dialog, a square range dialog, a 28 time dialog) and
+    // break the standard. `hourMinuteShape` is a real surface too; the tiny day-period toggle
+    // and the Checkbox deliberately keep their compact radii and are not standardised here.
+    datePickerTheme: datePickerTheme.copyWith(
+      shape: AppShape.standard,
+      rangePickerShape: AppShape.standard,
+    ),
+    timePickerTheme: timePickerTheme.copyWith(
+      shape: AppShape.standard,
+      hourMinuteShape: AppShape.standard,
+    ),
     filledButtonTheme: FilledButtonThemeData(
       style: filledButtonTheme.style?.merge(_standardButton) ?? _standardButton,
     ),

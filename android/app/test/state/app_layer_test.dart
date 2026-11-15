@@ -69,6 +69,10 @@ void _appLayer() {
       );
       // Without withAppShapes the Card radius stays the M3 default.
       expect(theme.cardTheme.shape, isNotNull);
+      // The Material date/time pickers get the token too, not their M3 28/square defaults.
+      expect(theme.timePickerTheme.shape, isNotNull);
+      expect(theme.datePickerTheme.shape, isNotNull);
+      expect(theme.datePickerTheme.rangePickerShape, isNotNull);
       expect(theme.textTheme.bodyMedium?.fontFamilyFallback, isNotNull);
     });
   });

@@ -25,6 +25,8 @@ class CommonCheckBox extends StatelessWidget {
     return Checkbox(
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
+      // A checkbox is far smaller than AppCorner.standard (24 would clamp to a circle); only the
+      // explicit circular variant opts into the token, the box keeps Material's compact default.
       shape: isCircle ? AppShape.standard : null,
       value: value,
       onChanged: onChanged,
