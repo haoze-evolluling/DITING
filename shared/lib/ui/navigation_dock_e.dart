@@ -334,7 +334,7 @@ class _RenderLensTint extends RenderProxyBox {
       return;
     }
     final reach = moved(rest).expandToInclude(bounds).inflate(_labelInset);
-    final lens = AppShape.standard.getOuterPath(lensBounds);
+    final lens = _dockShape.getOuterPath(lensBounds);
     if (outside) {
       _outside.layer = context.pushClipPath(
         needsCompositing,

@@ -16,7 +16,7 @@ import 'package:material_ui/material_ui.dart';
 /// of a grouped list where only the first/last row rounds.
 abstract final class AppCorner {
   /// The one standard corner radius, in logical pixels.
-  static const double standard = 20;
+  static const double standard = 24;
 
   /// No rounding. Reserved for structural edges that must stay square.
   static const double none = 0;

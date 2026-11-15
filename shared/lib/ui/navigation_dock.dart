@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:diting_shared/ui/context.dart';
 import 'package:diting_shared/ui/icons/icons.dart';
-import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
 import 'package:diting_shared/ui/typography.dart';
 import 'package:flutter/foundation.dart';
@@ -26,6 +25,11 @@ part 'navigation_dock_f.dart';
 
 const double _barHeight = 62;
 const double _barPadding = 4;
+
+/// The floating dock is a pill, not the app's standard corner: its outer surface
+/// and every inner highlight (hover, lens, focus, clip) must share this exact
+/// shape so their corner curvature stays concentric and never looks disjointed.
+const _dockShape = StadiumBorder();
 const double _edgeMargin = 21;
 const double _shadowRoom = 8;
 
