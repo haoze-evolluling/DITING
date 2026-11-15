@@ -259,11 +259,29 @@ abstract class AppL10n {
   /// **'当前未暂停，拦截正常生效'**
   String get blockPauseInactive;
 
+  /// No description provided for @blockPauseStatusActiveHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'如需临时放行，在下方选择暂停时长'**
+  String get blockPauseStatusActiveHint;
+
+  /// No description provided for @blockPauseStatusPausedHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'到期自动恢复拦截，DNS 仍照常解析'**
+  String get blockPauseStatusPausedHint;
+
   /// No description provided for @blockPauseResume.
   ///
   /// In zh, this message translates to:
   /// **'立即恢复'**
   String get blockPauseResume;
+
+  /// No description provided for @blockPauseControlSectionTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停控制'**
+  String get blockPauseControlSectionTitle;
 
   /// No description provided for @blockPauseDurationTitle.
   ///

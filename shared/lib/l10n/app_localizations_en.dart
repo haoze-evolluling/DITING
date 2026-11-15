@@ -94,7 +94,18 @@ class AppL10nEn extends AppL10n {
   String get blockPauseInactive => 'Not paused, blocking is active';
 
   @override
+  String get blockPauseStatusActiveHint =>
+      'To step away, pick a pause length below';
+
+  @override
+  String get blockPauseStatusPausedHint =>
+      'Blocking resumes automatically when the timer ends; DNS still resolves';
+
+  @override
   String get blockPauseResume => 'Resume now';
+
+  @override
+  String get blockPauseControlSectionTitle => 'Pause controls';
 
   @override
   String get blockPauseDurationTitle => 'Pause duration';

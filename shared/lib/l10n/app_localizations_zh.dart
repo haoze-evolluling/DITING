@@ -91,7 +91,16 @@ class AppL10nZh extends AppL10n {
   String get blockPauseInactive => '当前未暂停，拦截正常生效';
 
   @override
+  String get blockPauseStatusActiveHint => '如需临时放行，在下方选择暂停时长';
+
+  @override
+  String get blockPauseStatusPausedHint => '到期自动恢复拦截，DNS 仍照常解析';
+
+  @override
   String get blockPauseResume => '立即恢复';
+
+  @override
+  String get blockPauseControlSectionTitle => '暂停控制';
 
   @override
   String get blockPauseDurationTitle => '暂停时长';
