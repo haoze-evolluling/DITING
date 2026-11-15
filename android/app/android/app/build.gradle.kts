@@ -59,6 +59,14 @@ val targetAbi: String = project.findProperty("ditingAbi")?.toString()?.lowercase
 val compressNativeLibs: Boolean =
     project.findProperty("ditingCompressNativeLibs")?.toString()?.toBoolean() ?: true
 
+// AGP keeps `classes.dex` uncompressed (page-aligned, mmap-able, marginally faster
+// cold start), which leaves ~0.55 MB of deflate headroom on the table. Legacy dex
+// packaging deflates it again (extracted at install) for a smaller download, exactly
+// like the native-library switch above. Release only: debug keeps the uncompressed
+// dex so `flutter run` is not slowed down. Disable with -PditingCompressDex=false.
+val compressDex: Boolean =
+    project.findProperty("ditingCompressDex")?.toString()?.toBoolean() ?: true
+
 android {
     namespace = "com.haoze.diting"
     compileSdk = flutter.compileSdkVersion
@@ -160,6 +168,10 @@ androidComponents {
             )
         }
         variant.packaging.jniLibs.useLegacyPackaging.set(compressNativeLibs)
+        // Deflate classes.dex for release only (see compressDex above).
+        if (variant.name == "release") {
+            variant.packaging.dex.useLegacyPackaging.set(compressDex)
+        }
 
         // `libditing_engine.so` (the data plane) and `libditing_kernels.so` (the merged UI-side
         // kernels) are both required: without the engine every mode dies at runtime with an
