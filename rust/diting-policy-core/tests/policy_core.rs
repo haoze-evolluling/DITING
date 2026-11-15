@@ -179,3 +179,25 @@ fn disabled_rules_fall_through_to_the_parent_suffix() {
         .any(|suffix| expected.contains_key(suffix));
     assert_eq!(decision.blocked, parent_hit, "got {decision:?}");
 }
+
+#[test]
+fn subscription_special_rules_report_their_source_tag() {
+    // A subscription match must report `sub_<id>` as its reason so the log layer can attribute the
+    // block to that subscription; a custom rule keeps its readable pattern.
+    let json = serde_json::json!({
+        "specialBlock": [
+            {"pattern": "*.ads.example", "source": "sub_7", "isWildcard": true},
+            {"pattern": "^custom-\\d+$", "source": "custom", "isRegex": true},
+        ],
+    });
+    let request = RuleSnapshot::parse(json.to_string().as_bytes()).expect("parse");
+    let snapshot = Snapshot::build(&request);
+
+    let subscription = snapshot.evaluate("x.ads.example", "", 1);
+    assert!(subscription.blocked);
+    assert_eq!(subscription.reason, "sub_7");
+
+    let custom = snapshot.evaluate("custom-12", "", 1);
+    assert!(custom.blocked);
+    assert_eq!(custom.reason, "^custom-\\d+$");
+}

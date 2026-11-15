@@ -69,8 +69,8 @@ pub struct SnapshotInput {
 
 /// Builds the `applyRuleSnapshot` document.
 pub fn build(input: &SnapshotInput) -> String {
-    let block = load(&input.block).block_export();
-    let allow = load(&input.allow).allow_export();
+    let block = load(&input.block, true).block_export();
+    let allow = load(&input.allow, false).allow_export();
     let app_rules = app_rules_json(&block, &allow, &input.app_allowlist);
     let document = SnapshotJson {
         filter_enabled: input.filter_enabled,
@@ -229,7 +229,7 @@ fn excluded_apps(packages: &[String]) -> Vec<String> {
 
 /// Classifies one list of rows. `plain_gate` is `Some((index_usable, important_usable))` for
 /// subscription rows, whose plain entries are already in the DTRI trie; custom rows pass `None`.
-fn classify(rows: &[Row], plain_gate: Option<(bool, bool)>) -> Part {
+fn classify(rows: &[Row], plain_gate: Option<(bool, bool)>, is_block: bool) -> Part {
     let mut part = Part::default();
     for row in rows {
         if row.is_regex || present(&row.denyallow) || present(&row.dns_type) {
@@ -277,7 +277,23 @@ fn classify(rows: &[Row], plain_gate: Option<(bool, bool)>) -> Part {
             continue;
         }
         if wildcard {
-            if row.important {
+            // A subscription wildcard keeps its source tag by travelling as a special rule: the
+            // wildcard tables store bare patterns, so a block there could never be attributed to
+            // the subscription that produced it. Special rules carry the source and match with the
+            // same glob matcher, so subscription wildcard blocks stay attributable.
+            if is_block && plain_gate.is_some() {
+                part.special.push(Special {
+                    pattern: row.pattern.clone(),
+                    source: row.source.clone(),
+                    important: row.important,
+                    app_scope: None,
+                    app_inverted: false,
+                    is_wildcard: true,
+                    denyallow: None,
+                    is_regex: false,
+                    dns_type: None,
+                });
+            } else if row.important {
                 part.important_wildcards.push(row.pattern.clone());
             } else {
                 part.wildcards.push(row.pattern.clone());
@@ -377,12 +393,13 @@ impl Loaded {
     }
 }
 
-fn load(input: &LoadInput) -> Loaded {
+fn load(input: &LoadInput, is_block: bool) -> Loaded {
     Loaded {
-        custom: classify(&input.custom, None),
+        custom: classify(&input.custom, None, is_block),
         subscription: classify(
             &input.subscription,
             Some((input.index_usable, input.important_usable)),
+            is_block,
         ),
     }
 }

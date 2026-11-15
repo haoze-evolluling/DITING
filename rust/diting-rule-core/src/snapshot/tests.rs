@@ -141,11 +141,9 @@ fn block_lists_keep_the_kotlin_export_order() {
     // A null path is omitted, not serialized as null.
     assert!(json.get("importantAllowTriePath").is_none());
 
-    // custom exact, custom wildcards, subscription exact (skipped: the trie holds it), wildcards.
-    assert_eq!(
-        strings(&json["globalBlock"]),
-        vec!["a.com", "*.w.com", "*.sub-wc.com"]
-    );
+    // custom exact, custom wildcards. The subscription wildcard keeps its source by going out as a
+    // special rule, and the subscription exact is skipped because the trie holds it.
+    assert_eq!(strings(&json["globalBlock"]), vec!["a.com", "*.w.com"]);
     assert_eq!(strings(&json["globalImportant"]), vec!["b.com", "*.iw.com"]);
     assert!(strings(&json["disabledRules"]).is_empty());
 }
@@ -158,7 +156,7 @@ fn plain_subscription_rules_are_inlined_when_the_trie_is_missing() {
     let json = document(&input);
     assert_eq!(
         strings(&json["globalBlock"]),
-        vec!["a.com", "*.w.com", "plain-sub.com", "*.sub-wc.com"]
+        vec!["a.com", "*.w.com", "plain-sub.com"]
     );
     assert_eq!(
         strings(&json["globalImportant"]),
@@ -246,7 +244,7 @@ fn special_rules_carry_source_only_on_the_block_side() {
         .collect();
     assert_eq!(
         patterns,
-        vec!["^regex$", "deny.com", "aaaa.com", "sub-deny.com"]
+        vec!["^regex$", "deny.com", "aaaa.com", "*.sub-wc.com", "sub-deny.com"]
     );
     assert_eq!(block[0]["source"], "custom");
     assert_eq!(block[0]["isWildcard"], Value::Bool(false));
@@ -325,7 +323,7 @@ fn the_policy_kernel_decodes_the_document() {
         parsed.block_trie_path.as_deref(),
         Some("/data/rule-index/domain/block.trie")
     );
-    assert_eq!(parsed.strings(&parsed.global_block).len(), 3);
+    assert_eq!(parsed.strings(&parsed.global_block).len(), 2);
     assert_eq!(parsed.strings(&parsed.global_important).len(), 2);
     assert_eq!(parsed.strings(&parsed.global_allow).len(), 4);
     let app = &parsed.app_rules.as_ref().expect("app rules")["com.a"];
@@ -346,7 +344,7 @@ fn the_policy_kernel_decodes_the_document() {
         &vec!["com.c".to_string()]
     );
     let special = parsed.special_block.as_ref().expect("special rules");
-    assert_eq!(special.len(), 4);
+    assert_eq!(special.len(), 5);
     assert_eq!(special[1].denyallow.as_deref(), Some("keep.com"));
     let special_allow = parsed.special_allow.as_ref().expect("special allow");
     assert!(special_allow[0].source.is_none());

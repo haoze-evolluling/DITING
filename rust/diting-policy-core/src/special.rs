@@ -34,6 +34,18 @@ pub struct SpecialRule {
 }
 
 impl SpecialRule {
+    /// The reason a block reports. A subscription rule reports its source tag (`sub_<id>`), which
+    /// is what the log layer parses to attribute the block to that subscription; a custom rule
+    /// reports the readable pattern instead. Plain subscription rules already come back from the
+    /// trie with the tag as their reason, so every subscription match is attributable the same way.
+    pub fn block_reason(&self) -> &str {
+        if self.source.starts_with("sub_") {
+            &self.source
+        } else {
+            &self.pattern
+        }
+    }
+
     /// `parseSpecialRule`. `None` means "drop the rule", the same outcome as Go returning nil
     /// (a regex that does not compile is logged there and dropped here).
     pub fn parse(cfg: &json::SpecialRule, is_allow: bool) -> Option<SpecialRule> {

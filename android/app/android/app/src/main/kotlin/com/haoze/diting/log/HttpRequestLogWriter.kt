@@ -177,6 +177,7 @@ class HttpRequestLogWriter(
             protocol = reader.string(),
             outcome = reader.string(),
             matchedRule = reader.optionalString(),
+            blockSubscriptionId = reader.optionalLong(),
         )
     }
 
@@ -187,9 +188,10 @@ class HttpRequestLogWriter(
         val protocol: String,
         val outcome: String,
         val matchedRule: String?,
+        val blockSubscriptionId: Long?,
     ) {
-        /// Binds in [INSERT_SQL] order; `blockSubscriptionId` stays NULL there, it needs a rule
-        /// snapshot this port does not keep.
+        /// Binds in [INSERT_SQL] order. A domain rule hit carries its subscription source tag, which
+        /// the kernel turns into `blockSubscriptionId`; a request-rule hit leaves it NULL.
         fun bindTo(statement: SQLiteStatement) {
             statement.clearBindings()
             statement.bindLong(1, timestamp)
@@ -198,6 +200,11 @@ class HttpRequestLogWriter(
             statement.bindString(4, protocol)
             statement.bindString(5, outcome)
             if (matchedRule == null) statement.bindNull(6) else statement.bindString(6, matchedRule)
+            if (blockSubscriptionId == null) {
+                statement.bindNull(7)
+            } else {
+                statement.bindLong(7, blockSubscriptionId)
+            }
         }
     }
 
@@ -209,6 +216,6 @@ class HttpRequestLogWriter(
 
         const val INSERT_SQL = "INSERT OR IGNORE INTO http_request_log " +
             "(timestamp, packageName, authority, protocol, outcome, matchedRule, blockSubscriptionId) " +
-            "VALUES (?, ?, ?, ?, ?, ?, NULL)"
+            "VALUES (?, ?, ?, ?, ?, ?, ?)"
     }
 }

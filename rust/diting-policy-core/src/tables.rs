@@ -28,8 +28,21 @@ pub(crate) struct AppRuleBucket {
 /// `invertedRule`.
 pub(crate) struct InvertedRule {
     pub(crate) pattern: String,
+    /// The source tag (`sub_<id>` for a subscription, `custom`/`useradd` otherwise); a block
+    /// reports it so a subscription match stays attributable.
+    pub(crate) source: String,
     pub(crate) excluded_apps: HashMap<String, ()>,
     pub(crate) wildcard: Option<WildcardMatcher>,
+}
+
+impl InvertedRule {
+    pub(crate) fn block_reason(&self) -> &str {
+        if self.source.starts_with("sub_") {
+            &self.source
+        } else {
+            &self.pattern
+        }
+    }
 }
 
 /// `matchDomainOrSuffix`: the value of the longest matching suffix in map order.
@@ -112,6 +125,7 @@ pub(crate) fn parse_inverted(config: &json::InvertedRule) -> Option<InvertedRule
     };
     Some(InvertedRule {
         pattern,
+        source: config.source.clone().unwrap_or_default(),
         excluded_apps,
         wildcard,
     })

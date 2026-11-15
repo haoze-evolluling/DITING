@@ -168,15 +168,27 @@ pub fn dns_row(input: &DnsInput, mode: LogMode, now_ms: i64) -> Option<DnsRow> {
 }
 
 /// `subscriptionIdOf`: walk the comma-separated `blocked_by` tokens and take the first `sub_<id>`.
+///
+/// The source tag is not always the whole token. DNS rule hits carry it bare (`sub_5`), but the
+/// connection-layer SNI/Host gate prefixes its reason with a marker (`conn:host:sub_5`), and a
+/// firewall reason can be followed by it (`firewall:1, sub_9`). The tag therefore also counts when
+/// it is the tail after the last `:`, so a subscription block is attributed no matter which log
+/// path recorded it.
 pub fn subscription_id(blocked_by: &str) -> Option<i64> {
-    blocked_by
-        .split(',')
-        .map(|token| token.trim())
-        .find_map(|token| {
+    blocked_by.split(',').map(str::trim).find_map(|token| {
+        parse_sub_id(token).or_else(|| {
             token
-                .strip_prefix("sub_")
-                .and_then(|rest| rest.parse::<i64>().ok())
+                .rsplit_once(':')
+                .and_then(|(_, tail)| parse_sub_id(tail.trim()))
         })
+    })
+}
+
+/// `sub_<id>` → the id when the whole token is exactly one source tag.
+fn parse_sub_id(token: &str) -> Option<i64> {
+    token
+        .strip_prefix("sub_")
+        .and_then(|rest| rest.parse::<i64>().ok())
 }
 
 /// One decoded MITM HTTP event.
@@ -198,6 +210,7 @@ pub struct HttpRow {
     pub protocol: String,
     pub outcome: String,
     pub matched_rule: Option<String>,
+    pub block_subscription_id: Option<i64>,
 }
 
 /// `HttpRequestLogWriter.onEvent`'s row; None when the mode hides the event.
@@ -224,6 +237,9 @@ pub fn http_row(input: &HttpInput, mode: LogMode, now_ms: i64) -> Option<HttpRow
         protocol: input.protocol.clone(),
         outcome,
         matched_rule: optional_text(&input.matched_rule),
+        // A domain rule hit stores its source tag (`sub_<id>`) in the matched rule; a request-rule
+        // pattern has no tag, so this stays NULL and the row is not attributed to a subscription.
+        block_subscription_id: subscription_id(&input.matched_rule),
     })
 }
 
@@ -450,6 +466,27 @@ mod tests {
         assert_eq!(subscription_id("sub_abc,sub_3"), Some(3));
         assert_eq!(subscription_id(""), None);
         assert_eq!(subscription_id("sub_99999999999999999999"), None);
+        // The connection-layer SNI/Host gate prefixes its reason; the tag is the tail.
+        assert_eq!(subscription_id("conn:host:sub_5"), Some(5));
+        assert_eq!(subscription_id("conn:host:sub_5, sub_9"), Some(5));
+        // A bare destination or a firewall reason carries no subscription.
+        assert_eq!(subscription_id("conn:host:ads.example.com"), None);
+        assert_eq!(subscription_id("firewall:uid_blocked"), None);
+    }
+
+    #[test]
+    fn a_connection_layer_rule_block_keeps_its_subscription() {
+        // The SNI/Host gate records `conn:host:<source>`; the DNS row must still attribute it.
+        let input = DnsInput {
+            domain: "ads.example.com".into(),
+            query_type: 0,
+            blocked: true,
+            blocked_by: "conn:host:sub_5".into(),
+            ..DnsInput::default()
+        };
+        let row = dns_row(&input, LogMode::All, 0).unwrap();
+        assert_eq!(row.result, DnsResult::Blocked);
+        assert_eq!(row.block_subscription_id, Some(5));
     }
 
     #[test]
@@ -466,6 +503,7 @@ mod tests {
         assert_eq!(row.authority, None);
         assert_eq!(row.outcome, "error");
         assert_eq!(row.matched_rule, None);
+        assert_eq!(row.block_subscription_id, None);
 
         // The filter compares the raw outcome, so a blank one is not "allowed".
         let blank_outcome = HttpInput::default();
@@ -483,6 +521,32 @@ mod tests {
             ..HttpInput::default()
         };
         assert!(http_row(&cased, LogMode::BlockedAndErrors, 0).is_some());
+    }
+
+    #[test]
+    fn http_domain_rule_blocks_are_attributed_to_their_subscription() {
+        let blocked = HttpInput {
+            package_name: "com.app".into(),
+            authority: "ads.example.com".into(),
+            protocol: "https".into(),
+            outcome: "blocked".into(),
+            matched_rule: "sub_12".into(),
+        };
+        let row = http_row(&blocked, LogMode::All, 0).unwrap();
+        assert_eq!(row.outcome, "blocked");
+        assert_eq!(row.block_subscription_id, Some(12));
+
+        // A request-rule pattern is not a subscription source tag.
+        let by_request_rule = HttpInput {
+            matched_rule: "||ads^".into(),
+            ..blocked
+        };
+        assert_eq!(
+            http_row(&by_request_rule, LogMode::All, 0)
+                .unwrap()
+                .block_subscription_id,
+            None
+        );
     }
 
     #[test]

@@ -386,7 +386,7 @@ impl Snapshot {
         }
         for rule in &self.important_app_block_special {
             if rule.matches(domain, app_name, qtype) {
-                return Decision::block(&rule.pattern);
+                return Decision::block(rule.block_reason());
             }
         }
 
@@ -396,12 +396,12 @@ impl Snapshot {
                 continue;
             }
             if inverted_matches(rule, domain) {
-                return Decision::block(&rule.pattern);
+                return Decision::block(rule.block_reason());
             }
         }
         for rule in &self.important_global_block_special {
             if rule.matches(domain, app_name, qtype) {
-                return Decision::block(&rule.pattern);
+                return Decision::block(rule.block_reason());
             }
         }
         if let Some(reason) = match_domain_or_suffix(domain, &self.global_important) {
@@ -497,7 +497,7 @@ impl Snapshot {
         }
         for rule in &self.app_block_special {
             if rule.matches(domain, app_name, qtype) {
-                return Decision::block(&rule.pattern);
+                return Decision::block(rule.block_reason());
             }
         }
 
@@ -507,12 +507,12 @@ impl Snapshot {
                 continue;
             }
             if inverted_matches(rule, domain) {
-                return Decision::block(&rule.pattern);
+                return Decision::block(rule.block_reason());
             }
         }
         for rule in &self.global_block_special {
             if rule.matches(domain, app_name, qtype) {
-                return Decision::block(&rule.pattern);
+                return Decision::block(rule.block_reason());
             }
         }
         if let Some(reason) = match_domain_or_suffix(domain, &self.global_block) {

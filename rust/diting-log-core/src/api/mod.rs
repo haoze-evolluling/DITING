@@ -176,6 +176,7 @@ fn write_http_row(writer: &mut Writer, row: &HttpRow) {
     writer.string(&row.protocol);
     writer.string(&row.outcome);
     write_optional(writer, row.matched_rule.as_deref());
+    write_optional_i64(writer, row.block_subscription_id);
 }
 
 /// One race result; answers with the row, or nothing when there is no query name.
@@ -404,6 +405,7 @@ mod tests {
         assert_eq!(reader.string().as_deref(), Some(""));
         assert_eq!(reader.string().as_deref(), Some("allowed"));
         assert_eq!(read_optional(&mut reader), Some(None));
+        assert_eq!(read_optional_i(&mut reader), Some(None));
         assert!(reader.finish());
     }
 
