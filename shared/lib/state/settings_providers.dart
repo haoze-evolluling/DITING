@@ -232,8 +232,10 @@ enum AppLanguageMode {
 
   final String storageValue;
 
-  /// `null` lets the platform decide (`MaterialApp.locale`), which resolves to the first of
-  /// [AppL10n.supportedLocales] for languages the app has no resources for (Chinese).
+  /// `null` lets the platform decide (`MaterialApp.locale`). For a language the app ships no
+  /// resources for — and while the engine has not reported the device locale yet — the default
+  /// resolver falls back to the first of [AppL10n.supportedLocales], which
+  /// `preferred-supported-locales` in `l10n.yaml` pins to Chinese.
   Locale? get locale => switch (this) {
     AppLanguageMode.system => null,
     AppLanguageMode.chinese => const Locale('zh'),

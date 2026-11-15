@@ -93,8 +93,8 @@ abstract class AppL10n {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
-    Locale('en'),
     Locale('zh'),
+    Locale('en'),
   ];
 
   /// No description provided for @ruleTestTitle.

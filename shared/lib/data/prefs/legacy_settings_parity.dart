@@ -65,7 +65,8 @@ extension LegacySettingsParity on LegacySettings {
   void setIpv6ModeRaw(String storageValue) =>
       _store.putString(dnsContainer, 'ipv6_mode', storageValue);
 
-  /// `system` / `chinese`. Persisted only; it does not switch the runtime locale.
+  /// `system` / `chinese` / `english`; `system` hands the choice to the platform, which keeps
+  /// the interface Chinese unless the device language is English (see `AppLanguageMode`).
   String get appLanguageModeRaw =>
       _string(_ui, 'app_language_mode') ?? 'system';
 

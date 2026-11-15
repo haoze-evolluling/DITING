@@ -1,10 +1,19 @@
 # Flutter gen-l10n configuration for the shared package. Run `flutter gen-l10n`
 # in shared to regenerate lib/l10n/app_localizations*.dart.
 #
-# Adding a language: create lib/l10n/app_<code>.arb, add the Locale to AppLanguageMode
-# (lib/state/settings_providers.dart) and to the `supportedLocales` list it exposes.
+# Adding a language: create lib/l10n/app_<code>.arb and add its Locale to AppLanguageMode
+# (lib/state/settings_providers.dart). `AppL10n.supportedLocales` is generated from the ARB
+# files, so nothing else has to list them.
 arb-dir: lib/l10n
 template-arb-file: app_zh.arb
 output-localization-file: app_localizations.dart
 output-class: AppL10n
 nullable-getter: false
+# Chinese is the fallback language on purpose: `MaterialApp.locale == null` ("follow system")
+# resolves through `basicLocaleListResolution`, whose last resort is `supportedLocales.first`.
+# That branch is taken when the device reports no locale yet, an unknown one, or a language the
+# app ships no resources for, and the product rule is that those show Chinese — see
+# `languageInterfaceFooter` in app_zh.arb ("非中文或英文的系统显示中文"). Without this option
+# gen-l10n sorts the list alphabetically (en, zh) and every such device gets English instead.
+preferred-supported-locales:
+  - zh
