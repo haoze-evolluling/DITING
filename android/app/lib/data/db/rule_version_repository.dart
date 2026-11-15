@@ -41,19 +41,32 @@ class StoredRuleVersion {
 
 /// A stable, content-only hash of a rule set (FNV-1a 32-bit). It is only an identity: equality of
 /// two sets is decided by the kernel's diff, so a rare collision cannot corrupt a rollback.
-String ruleSetHash(List<String> rules) {
-  var hash = 0x811c9dc5;
+///
+/// Split into seed/update/hex so a streaming import can fold each chunk in as it arrives instead of
+/// holding the whole rule list.
+const int _ruleSetHashSeed = 0x811c9dc5;
+const int _ruleSetHashPrime = 0x01000193;
+
+int ruleSetHashSeed() => _ruleSetHashSeed;
+
+int ruleSetHashUpdate(int hash, Iterable<String> rules) {
+  var state = hash;
   for (final rule in rules) {
     for (final unit in rule.codeUnits) {
-      hash ^= unit;
-      hash = (hash * 0x01000193) & 0xffffffff;
+      state ^= unit;
+      state = (state * _ruleSetHashPrime) & 0xffffffff;
     }
     // Separate rules with '\n' so ["ab","c"] and ["a","bc"] differ.
-    hash ^= 0x0a;
-    hash = (hash * 0x01000193) & 0xffffffff;
+    state ^= 0x0a;
+    state = (state * _ruleSetHashPrime) & 0xffffffff;
   }
-  return hash.toRadixString(16).padLeft(8, '0');
+  return state;
 }
+
+String ruleSetHashHex(int hash) => hash.toRadixString(16).padLeft(8, '0');
+
+String ruleSetHash(List<String> rules) =>
+    ruleSetHashHex(ruleSetHashUpdate(ruleSetHashSeed(), rules));
 
 class RuleVersionRepository {
   RuleVersionRepository(this._db);

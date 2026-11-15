@@ -18,8 +18,9 @@ use crate::models::{
 };
 
 /// Bumped whenever the payload layout or the parsing semantics change; the Dart loader refuses a
-/// library whose value does not match what it was compiled against.
-pub const ABI_VERSION: u32 = 1;
+/// library whose value does not match what it was compiled against. `2` added the streaming parse
+/// entry points (`diting_rule_core_stream_*`) that hand the caller bounded DRC1 chunks.
+pub const ABI_VERSION: u32 = 2;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DRC1");
 pub(crate) const NONE_LEN: u32 = u32::MAX;

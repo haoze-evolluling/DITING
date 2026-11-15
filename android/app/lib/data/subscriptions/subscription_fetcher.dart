@@ -31,6 +31,7 @@ class SubscriptionFetchResult {
     this.requestedUrl,
     this.usedMirror = false,
     this.content,
+    this.bodyBytes,
   });
 
   const SubscriptionFetchResult.notModified({
@@ -42,7 +43,8 @@ class SubscriptionFetchResult {
        lineCount = 0,
        byteLength = 0,
        error = null,
-       content = null;
+       content = null,
+       bodyBytes = null;
 
   const SubscriptionFetchResult.failed(
     String message, {
@@ -54,7 +56,8 @@ class SubscriptionFetchResult {
        etag = null,
        lastModified = null,
        error = message,
-       content = null;
+       content = null,
+       bodyBytes = null;
 
   /// The download succeeded but the user declined to import an oversized body. Nothing was written,
   /// so the previous rules stay in place; this only marks the row as intentionally skipped.
@@ -67,7 +70,8 @@ class SubscriptionFetchResult {
        etag = null,
        lastModified = null,
        error = null,
-       content = null;
+       content = null,
+       bodyBytes = null;
 
   final SubscriptionFetchOutcome outcome;
 
@@ -86,6 +90,10 @@ class SubscriptionFetchResult {
   final bool usedMirror;
 
   final String? content;
+
+  /// Raw UTF-8 body of a successful remote download, handed to the streaming parser without a
+  /// `String` → bytes re-encode. Null for local files and non-content outcomes.
+  final Uint8List? bodyBytes;
 
   bool get isSuccess => outcome == SubscriptionFetchOutcome.content;
   bool get isNotModified => outcome == SubscriptionFetchOutcome.notModified;
@@ -296,16 +304,25 @@ class HttpSubscriptionFetcher implements SubscriptionFetcher {
         usedMirror: usedMirror,
       );
     }
-    final content = const Utf8Decoder(allowMalformed: true).convert(body);
+    // A large body is imported straight from these bytes, so only decode it to a String (for the
+    // display line count) when it is small enough to keep: retaining a second full-text copy of a
+    // multi-megabyte subscription is exactly the copy the streaming import avoids.
+    final large = body.length > maxSubscriptionBytes;
+    final content = large
+        ? null
+        : const Utf8Decoder(allowMalformed: true).convert(body);
     return SubscriptionFetchResult(
       outcome: SubscriptionFetchOutcome.content,
-      lineCount: countEffectiveRuleLines(content),
+      lineCount: content != null
+          ? countEffectiveRuleLines(content)
+          : _countEffectiveLinesBytes(body),
       byteLength: body.length,
       etag: etag,
       lastModified: lastModified,
       requestedUrl: requestedUrl,
       usedMirror: usedMirror,
       content: content,
+      bodyBytes: body,
     );
   }
 
@@ -340,6 +357,37 @@ class HttpSubscriptionFetcher implements SubscriptionFetcher {
         : currentL10n.subsErrUnreachableCode(code);
   }
 }
+
+/// Byte-level effective-line count for a large body that is not decoded to a String: non-empty after
+/// trimming ASCII whitespace, and not a `!` / `#` / `//` comment. Matches `countEffectiveRuleLines`
+/// closely enough for the display figure without materialising a second full-text copy.
+int _countEffectiveLinesBytes(Uint8List bytes) {
+  var count = 0;
+  var start = 0;
+  for (var i = 0; i <= bytes.length; i++) {
+    if (i != bytes.length && bytes[i] != 0x0a) continue;
+    var first = start;
+    var last = i;
+    while (first < last && _isAsciiSpace(bytes[first])) {
+      first++;
+    }
+    while (last > first && _isAsciiSpace(bytes[last - 1])) {
+      last--;
+    }
+    if (last > first) {
+      final lead = bytes[first];
+      final comment = lead == 0x21 /* ! */ ||
+          lead == 0x23 /* # */ ||
+          (lead == 0x2f /* / */ && first + 1 < last && bytes[first + 1] == 0x2f);
+      if (!comment) count++;
+    }
+    start = i + 1;
+  }
+  return count;
+}
+
+bool _isAsciiSpace(int byte) =>
+    byte == 0x20 || byte == 0x09 || byte == 0x0a || byte == 0x0d || byte == 0x0b || byte == 0x0c;
 
 /// Fallback when no implementation is injected: reports "unavailable" instead of throwing.
 class UnavailableSubscriptionFetcher implements SubscriptionFetcher {

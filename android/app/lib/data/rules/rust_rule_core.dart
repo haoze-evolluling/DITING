@@ -18,7 +18,7 @@ import 'dart:typed_data';
 import 'package:diting_android/data/rules/rule_models.dart';
 
 /// Must match `ABI_VERSION` in `rust/diting-rule-core/src/ffi.rs`.
-const _abiVersion = 1;
+const _abiVersion = 2;
 
 /// Must match `SEARCH_ABI_VERSION` in `rust/diting-rule-core/src/search_ffi.rs`.
 const _searchAbiVersion = 1;
@@ -48,6 +48,12 @@ typedef _SearchQueryDart =
     Pointer<Uint8> Function(int, Pointer<Uint8>, int, Pointer<Size>);
 typedef _SearchFreeNative = Uint32 Function(Uint64);
 typedef _SearchFreeDart = int Function(int);
+typedef _StreamBeginNative = Uint64 Function(Pointer<Uint8>, Size, Size);
+typedef _StreamBeginDart = int Function(Pointer<Uint8>, int, int);
+typedef _StreamNextNative = Pointer<Uint8> Function(Uint64, Pointer<Size>);
+typedef _StreamNextDart = Pointer<Uint8> Function(int, Pointer<Size>);
+typedef _StreamFreeNative = Void Function(Uint64);
+typedef _StreamFreeDart = void Function(int);
 
 class RustRuleCore {
   RustRuleCore._(
@@ -57,6 +63,9 @@ class RustRuleCore {
     this._searchBuild,
     this._searchQuery,
     this._searchFree,
+    this._streamBegin,
+    this._streamNext,
+    this._streamFree,
     this.libraryPath,
   );
 
@@ -66,6 +75,9 @@ class RustRuleCore {
   final _SearchBuildDart _searchBuild;
   final _SearchQueryDart _searchQuery;
   final _SearchFreeDart _searchFree;
+  final _StreamBeginDart _streamBegin;
+  final _StreamNextDart _streamNext;
+  final _StreamFreeDart _streamFree;
 
   /// Resolved library path, surfaced in the benchmark tool and diagnostics.
   final String libraryPath;
@@ -109,6 +121,15 @@ class RustRuleCore {
           ),
           library.lookupFunction<_SearchFreeNative, _SearchFreeDart>(
             'diting_rule_core_search_free_index',
+          ),
+          library.lookupFunction<_StreamBeginNative, _StreamBeginDart>(
+            'diting_rule_core_stream_begin',
+          ),
+          library.lookupFunction<_StreamNextNative, _StreamNextDart>(
+            'diting_rule_core_stream_next',
+          ),
+          library.lookupFunction<_StreamFreeNative, _StreamFreeDart>(
+            'diting_rule_core_stream_free',
           ),
           candidate,
         );
@@ -196,6 +217,33 @@ class RustRuleCore {
     _searchFree(handle);
   }
 
+  /// Lines per streaming chunk. Large enough to amortize the per-call FFI/setup cost, small enough
+  /// that one chunk's `CategorizedRules` plus its import plan stays a bounded working set.
+  static const int _streamChunkLines = 2048;
+
+  /// Streams [text] as bounded [CategorizedRules] chunks (see [RuleStreamParse]).
+  RuleStreamParse streamParse(String text) => streamParseBytes(utf8.encode(text));
+
+  /// Streams raw document bytes, skipping the String → bytes re-encode a decoded body would need.
+  ///
+  /// The bytes are copied into the native session, so this releases its input buffer before
+  /// returning the session.
+  RuleStreamParse streamParseBytes(Uint8List bytes) {
+    final inputPtr = bytes.isEmpty ? nullptr : _alloc(bytes.length);
+    try {
+      if (bytes.isNotEmpty) {
+        inputPtr.asTypedList(bytes.length).setAll(0, bytes);
+      }
+      final handle = _streamBegin(inputPtr, bytes.length, _streamChunkLines);
+      if (handle == 0) {
+        throw StateError('rule core rejected the document');
+      }
+      return RuleStreamParse._(this, handle);
+    } finally {
+      if (inputPtr != nullptr) _free(inputPtr, bytes.length);
+    }
+  }
+
   static String? _libraryName() {
     // Cargo turns `diting-rule-core` into `libditing_rule_core.so` / `.dylib` and
     // `diting_rule_core.dll`; see `[lib] name` in the crate manifest.
@@ -229,6 +277,49 @@ class RustRuleCore {
       }
       directory = parent;
     }
+  }
+}
+
+/// A pull session over a streaming document parse. Each [next] returns the next bounded chunk and
+/// decodes it into a short-lived [CategorizedRules]; call [dispose] (ideally in a `finally`) to
+/// release the native session.
+class RuleStreamParse {
+  RuleStreamParse._(this._core, this._handle);
+
+  final RustRuleCore _core;
+  int _handle;
+  bool _done = false;
+
+  /// The next chunk, or null once the document is exhausted. Throws [FormatException] on a payload
+  /// that does not decode.
+  CategorizedRules? next() {
+    if (_done) return null;
+    final outLenPtr = _core._alloc(sizeOf<Size>()).cast<Size>();
+    Pointer<Uint8> outputPtr = nullptr;
+    var outputLength = 0;
+    try {
+      outputPtr = _core._streamNext(_handle, outLenPtr);
+      outputLength = outLenPtr.value;
+      if (outputPtr == nullptr || outputLength == 0) {
+        _done = true;
+        return null;
+      }
+      return _decodeRules(outputPtr.asTypedList(outputLength));
+    } finally {
+      _core._free(outLenPtr.cast<Uint8>(), sizeOf<Size>());
+      if (outputPtr != nullptr && outputLength > 0) {
+        _core._free(outputPtr, outputLength);
+      }
+    }
+  }
+
+  /// Releases the native session. Idempotent.
+  void dispose() {
+    if (_handle != 0) {
+      _core._streamFree(_handle);
+      _handle = 0;
+    }
+    _done = true;
   }
 }
 

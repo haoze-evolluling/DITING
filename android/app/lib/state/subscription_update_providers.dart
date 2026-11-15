@@ -198,7 +198,11 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
             byteLength: result.byteLength,
           );
         }
-        final imported = await _importContent(entry, result.content ?? '');
+        final imported = await _importContent(
+          entry,
+          bytes: result.bodyBytes,
+          text: result.content,
+        );
         if (imported == null) {
           // A download that cannot be stored must report failure, not "updated".
           await repository.markUpdateFailed(
@@ -280,7 +284,7 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
         byteLength: content.length,
       );
     }
-    final imported = await _importContent(entry, content);
+    final imported = await _importContent(entry, text: content);
     if (imported == null) {
       final reason = currentL10n.subscriptionLocalRuleDbUnavailable;
       await repository.markUpdateFailed(
@@ -307,36 +311,72 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     );
   }
 
-  /// Parses the body and rewrites the rule tables for `sub_<id>` only; null without a rule
-  /// database. On success also records an R6 version snapshot and returns its content hash.
+  /// Parses and imports the body for `sub_<id>` only; null without a rule database. The document is
+  /// parsed and imported one bounded chunk at a time, so a large subscription never exists as a
+  /// whole-rule-object graph. On success also records an R6 version snapshot and returns its hash.
   Future<({RuleImportSummary summary, String hash})?> _importContent(
-    SubscriptionEntry entry,
-    String content,
-  ) async {
+    SubscriptionEntry entry, {
+    Uint8List? bytes,
+    String? text,
+  }) async {
     final importer = await ref.read(ruleImporterProvider.future);
     if (importer == null) {
       return null;
     }
     final source = subscriptionSourceTag(entry.id);
-    final parsed = parseCategorized(content);
-    final rules = canonicalRules(parsed);
-    final hash = ruleSetHash(rules);
+    final kind = entry.kind.storageValue;
+    final enabled = entry.enabled;
+    // Raw download bytes go straight to the native parser; only local files (already a String) take
+    // the encode path.
+    final stream = bytes != null
+        ? streamParseCategorizedBytes(bytes)
+        : streamParseCategorized(text ?? '');
     await importer.removeRulesBySource(source);
+    var hashState = ruleSetHashSeed();
+    var summary = const RuleImportSummary();
+    final versionRules = <String>[];
+    var collectVersion = true;
+    var totalRules = 0;
     try {
-      final summary = parsed.isEmpty
-          ? const RuleImportSummary()
-          : await importer.import(
-              parsed,
+      for (var chunk = stream.next(); chunk != null; chunk = stream.next()) {
+        final lines = canonicalRules(chunk);
+        hashState = ruleSetHashUpdate(hashState, lines);
+        totalRules += lines.length;
+        // Keep the rollback snapshot only while it is small; past the cap the list is dropped so a
+        // huge subscription is never held in memory a second time.
+        if (collectVersion) {
+          if (totalRules > maxVersionSnapshotRules) {
+            collectVersion = false;
+            versionRules.clear();
+          } else {
+            versionRules.addAll(lines);
+          }
+        }
+        if (!chunk.isEmpty) {
+          summary = summary.merge(
+            await importer.import(
+              chunk,
               source: source,
-              kind: entry.kind.storageValue,
-              enabled: entry.enabled,
-            );
-      // The rules are written now, so the recorded snapshot matches what the engine will load.
-      await _recordVersion(entry, rules, hash, summary.insertedCount);
-      return (summary: summary, hash: hash);
+              kind: kind,
+              enabled: enabled,
+            ),
+          );
+        }
+      }
     } finally {
+      stream.dispose();
       refreshRuleIndexesForCurrentMode(ref);
     }
+    final hash = ruleSetHashHex(hashState);
+    if (collectVersion) {
+      await _recordVersion(entry, versionRules, hash, summary.insertedCount);
+    } else {
+      debugPrint(
+        'rule version skipped for ${entry.url}: $totalRules rules over '
+        '$maxVersionSnapshotRules',
+      );
+    }
+    return (summary: summary, hash: hash);
   }
 
   /// Rule sets above this many lines skip the full-text version snapshot: writing the whole body a

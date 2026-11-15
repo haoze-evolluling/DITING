@@ -35,6 +35,7 @@ pub mod payload;
 pub mod search;
 pub mod search_ffi;
 pub mod snapshot;
+pub mod stream;
 
 pub use document::{parse_categorized_line, parse_document};
 pub use dtri::compile as compile_rule_index;
@@ -43,3 +44,4 @@ pub use models::{CategorizedLine, CategorizedRules, ParsedRule};
 pub use search::RuleSearchIndex;
 pub use search_ffi::SEARCH_ABI_VERSION;
 pub use snapshot::{build as build_rule_snapshot, SnapshotInput};
+pub use stream::StreamParse;

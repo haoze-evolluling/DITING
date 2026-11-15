@@ -45,6 +45,21 @@ class RuleImportSummary {
   int get notAppliedCount => cosmeticCount;
 
   bool get isEmpty => insertedCount == 0;
+
+  /// Sum of two summaries, so a document applied chunk by chunk reports whole-document totals.
+  RuleImportSummary merge(RuleImportSummary other) => RuleImportSummary(
+    blockCount: blockCount + other.blockCount,
+    allowCount: allowCount + other.allowCount,
+    rewriteCount: rewriteCount + other.rewriteCount,
+    urlBlockCount: urlBlockCount + other.urlBlockCount,
+    urlAllowCount: urlAllowCount + other.urlAllowCount,
+    cosmeticCount: cosmeticCount + other.cosmeticCount,
+    duplicateCount: duplicateCount + other.duplicateCount,
+    invalidCount: invalidCount + other.invalidCount,
+    unsupportedCount: unsupportedCount + other.unsupportedCount,
+    typeSkippedCount: typeSkippedCount + other.typeSkippedCount,
+    badfilteredCount: badfilteredCount + other.badfilteredCount,
+  );
 }
 
 String subscriptionSourceTag(int subscriptionId) => 'sub_$subscriptionId';
