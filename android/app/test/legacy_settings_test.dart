@@ -392,13 +392,9 @@ void _settingsCatalog() {
         [for (final mode in LegacyIpv6Mode.values) mode.storageValue],
         ['auto', 'disable', 'prefer'],
       );
-      // 旧版 Kotlin / 1.4.3 备份用 enabled/disabled 落盘，升级后必须映射到对应档位，
-      // 否则用户设过的“始终禁用”会被静默重置为自动探测。
-      expect(
-        LegacyIpv6Mode.fromStorageValue('disabled'),
-        LegacyIpv6Mode.disable,
-      );
-      expect(LegacyIpv6Mode.fromStorageValue('enabled'), LegacyIpv6Mode.prefer);
+      // 旧版 Kotlin / 1.4.3 备份的 enabled/disabled 已不再兼容，按未知值安全回退 auto。
+      expect(LegacyIpv6Mode.fromStorageValue('enabled'), LegacyIpv6Mode.auto);
+      expect(LegacyIpv6Mode.fromStorageValue('disabled'), LegacyIpv6Mode.auto);
       expect(
         LegacyIpv6Mode.fromStorageValue(' disable '),
         LegacyIpv6Mode.disable,

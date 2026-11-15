@@ -103,22 +103,18 @@ void _settingsPersistence() {
       expect(reopened, contains(DashboardWidget.status));
     });
 
-    test('旧版布局升级时补上搬到看板的两张卡', () {
+    test('已存布局原样读取，不再补插新版卡片，未知卡片被跳过', () {
       store.putString(
         'dns_vpn_prefs',
         'dashboard_widget_order',
-        '["status","networkSpeed"]',
+        '["status","NoSuchCard","networkSpeed"]',
       );
       final layout = container().read(dashboardWidgetsProvider);
-      expect(layout.take(2), [
-        DashboardWidget.provider,
-        DashboardWidget.resolution,
-      ]);
-      expect(
-        layout,
-        containsAll([DashboardWidget.status, DashboardWidget.networkSpeed]),
-      );
-      // Migrated once: reopening reads the same board instead of inserting again.
+      // 旧布局不再被迁移或补插 provider/resolution，只按当前卡片集过滤未知名字。
+      expect(layout, [DashboardWidget.status, DashboardWidget.networkSpeed]);
+      expect(layout, isNot(contains(DashboardWidget.provider)));
+      // 残留的旧版本号键被忽略，不影响读取。
+      store.putInt('dns_vpn_prefs', 'dashboard_widget_layout_version', 0);
       expect(container().read(dashboardWidgetsProvider), layout);
     });
 

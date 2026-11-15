@@ -3,7 +3,6 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/app/debug_probe.dart';
-import 'package:diting_android/app/upgrade_resets.dart';
 import 'package:diting_android/data/native/runtime_events.dart';
 import 'package:diting_shared/data/db/datasets.dart';
 import 'package:diting_android/data/db/rule_bootstrap.dart';
@@ -69,17 +68,6 @@ Future<void> main() async {
       settings.launcherIconStyleRaw,
     ),
   );
-  // Existing installs already accepted the agreement and chose a mode before the guide existed;
-  // backfill the new flag instead of replaying onboarding after an upgrade. This mirrors legacy
-  // `MainWorkModeCoordinator.checkStartupOnboarding`.
-  if (settings.initialAgreementAccepted &&
-      settings.workModeSelected &&
-      !settings.modeOnboardingCompleted) {
-    settings.setModeOnboardingCompleted(true);
-  }
-  // One-time resets from `upgradeResets`; before any provider reads the store, so a reset key
-  // is never read with its old value.
-  runUpgradeResets(store, upgradeResets);
   // Single source of truth: `pubspec.yaml`. The value feeds preset seeding,
   // cleanup actions and page display.
   final version = await versionTask;

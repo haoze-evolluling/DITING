@@ -147,18 +147,12 @@ enum LegacyIpv6Mode {
     LegacyIpv6Mode.prefer => l10n.ipv6PreferDescription,
   };
 
-  /// Reads the stored value, accepting the two spellings the app has used.
-  ///
-  /// The legacy Kotlin agent and 1.4.3 backups store `enabled` / `disabled`; this Flutter build
-  /// stores `prefer` / `disable` for the same two choices. Without the aliases an upgrading user
-  /// who had picked "always disabled" would silently fall back to `auto` and get IPv6 back on a
-  /// weak (e.g. China Telecom WiFi) link.
+  /// Reads the stored value; only the current spellings are accepted, anything else falls back to
+  /// [auto]. The legacy Kotlin / 1.4.3 `enabled` / `disabled` spellings are no longer adapted.
   static LegacyIpv6Mode fromStorageValue(String? value) {
     switch (value?.trim().toLowerCase()) {
-      case 'enabled':
       case 'prefer':
         return LegacyIpv6Mode.prefer;
-      case 'disabled':
       case 'disable':
         return LegacyIpv6Mode.disable;
       default:

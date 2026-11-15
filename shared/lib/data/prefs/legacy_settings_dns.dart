@@ -414,10 +414,6 @@ extension LegacyDnsSettings on LegacySettings {
   void setLanRateLimitExemptCsv(String value) =>
       _store.putString(LegacySettings.uiContainer, 'lan_rate_limit_exempt', value);
 
-  /// Written by the native CA flow; pages only read it.
-  bool get httpsInspectionReady =>
-      _bool(LegacySettings.uiContainer, 'https_inspection_ready', false);
-
   /// View over the express data set's container. Production code selects the active data set via
   /// `activeDataSetProvider`; this stays for data-set-scoped reads and tests.
   LegacySettings forExpress() =>

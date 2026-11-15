@@ -2,7 +2,7 @@ part of 'legacy_settings.dart';
 
 // Appearance and home-screen settings, all in the global `dns_vpn_prefs` container.
 
-/// Key of one log mode's stored card order; also removed by the upgrade reset registry.
+/// Key of one log mode's stored card order.
 String logDashboardWidgetOrderKey(String mode) =>
     'log_dashboard_widget_order_$mode';
 
@@ -147,18 +147,6 @@ extension LegacyAppearanceSettings on LegacySettings {
     LegacySettings.uiContainer,
     'server_dashboard_widget_order',
     jsonEncode(names),
-  );
-
-  /// Which card set [dashboardWidgetOrder] was written with. A missing value means the order
-  /// predates a card that has since moved from a fixed block onto the board, so the notifier
-  /// inserts that card once and stamps the current version.
-  int get dashboardWidgetLayoutVersion =>
-      _int(LegacySettings.uiContainer, 'dashboard_widget_layout_version', 0);
-
-  void setDashboardWidgetLayoutVersion(int version) => _store.putInt(
-    LegacySettings.uiContainer,
-    'dashboard_widget_layout_version',
-    version,
   );
 
   double get componentOpacity => LegacySettings._clampedOpacity(

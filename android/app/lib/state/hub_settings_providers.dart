@@ -237,8 +237,7 @@ class AgentApiState {
   );
 }
 
-/// Reads the legacy keys plus provider JSON; missing JSON seeds one migrated or keyless example
-/// entry.
+/// Reads the legacy keys plus provider JSON; missing JSON seeds a keyless example entry.
 AgentApiState loadAgentApiState(LegacySettings settings) {
   final rawProviders = settings.agentAiProvidersJson;
   final providers = decodeAiProviders(rawProviders);
@@ -247,9 +246,7 @@ AgentApiState loadAgentApiState(LegacySettings settings) {
     activeProviderId: settings.agentAiActiveProviderId.isEmpty
         ? (providers.isEmpty ? '' : providers.first.id)
         : settings.agentAiActiveProviderId,
-    providers: providers.isEmpty
-        ? seedProviders(settings, rawProviders == null)
-        : providers,
+    providers: providers.isEmpty ? seedProviders() : providers,
     systemPrompt: settings.agentApiSystemPrompt,
     temperature: settings.agentApiTemperature,
   );
@@ -272,23 +269,9 @@ List<AiProviderConfig> decodeAiProviders(String? raw) {
   }
 }
 
-List<AiProviderConfig> seedProviders(LegacySettings settings, bool firstRun) {
-  final hasLegacyConfig =
-      settings.agentApiKey.isNotEmpty ||
-      settings.agentApiBaseUrl != 'https://api.deepseek.com/v1';
-  if (firstRun && hasLegacyConfig) {
-    return [
-      AiProviderConfig(
-        id: 'migrated_default',
-        name: currentL10n.aiProviderConfigured,
-        baseUrl: settings.agentApiBaseUrl,
-        model: settings.agentApiModel,
-        sealedKey: sealApiKey(settings.agentApiKey),
-      ),
-    ];
-  }
-  // A placeholder showing what each field looks like, not a real vendor; AI entries stay hidden
-  // until the user fills in a key.
+/// A keyless placeholder showing what each field looks like, not a real vendor; AI entries stay
+/// hidden until the user fills in a key.
+List<AiProviderConfig> seedProviders() {
   return [
     AiProviderConfig(
       id: 'example',
@@ -411,7 +394,7 @@ class AgentApiNotifier extends Notifier<AgentApiState> {
     _bump();
     state = loadAgentApiState(settings);
     if (state.providers.isEmpty) {
-      state = state.copyWith(providers: seedProviders(settings, true));
+      state = state.copyWith(providers: seedProviders());
     }
   }
 }

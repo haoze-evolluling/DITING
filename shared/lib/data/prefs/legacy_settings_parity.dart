@@ -313,7 +313,7 @@ extension LegacySettingsParity on LegacySettings {
   void setAgentApiSystemPrompt(String value) =>
       _store.putString(_ui, 'agent_api_system_prompt', value);
 
-  /// Null means first launch, where the legacy migration rules seed or migrate the list.
+  /// Null on first launch, where a keyless example provider is seeded.
   String? get agentAiProvidersJson => _string(_ui, 'agent_ai_providers_json');
 
   void setAgentAiProvidersJson(String value) =>
