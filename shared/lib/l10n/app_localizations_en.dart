@@ -126,6 +126,11 @@ class AppL10nEn extends AppL10n {
   String get blockPauseCustomTitle => 'Custom pause duration';
 
   @override
+  String blockPauseMinutesValue(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
   String get blockPauseMinutesLabel => 'Minutes';
 
   @override

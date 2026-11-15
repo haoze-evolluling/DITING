@@ -120,6 +120,11 @@ class AppL10nZh extends AppL10n {
   String get blockPauseCustomTitle => '自定义暂停时长';
 
   @override
+  String blockPauseMinutesValue(int minutes) {
+    return '$minutes 分钟';
+  }
+
+  @override
   String get blockPauseMinutesLabel => '分钟';
 
   @override

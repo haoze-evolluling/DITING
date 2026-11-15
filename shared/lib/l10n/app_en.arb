@@ -43,6 +43,14 @@
   },
   "blockPauseCustomOption": "Custom duration…",
   "blockPauseCustomTitle": "Custom pause duration",
+  "blockPauseMinutesValue": "{minutes} min",
+  "@blockPauseMinutesValue": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "blockPauseMinutesLabel": "Minutes",
   "blockPauseMinutesHelper": "1–1440 minutes (up to 24 hours)",
   "blockPauseMinutesInvalid": "Enter a number between 1 and 1440",

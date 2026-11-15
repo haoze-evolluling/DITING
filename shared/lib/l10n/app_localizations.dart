@@ -313,6 +313,12 @@ abstract class AppL10n {
   /// **'自定义暂停时长'**
   String get blockPauseCustomTitle;
 
+  /// No description provided for @blockPauseMinutesValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'{minutes} 分钟'**
+  String blockPauseMinutesValue(int minutes);
+
   /// No description provided for @blockPauseMinutesLabel.
   ///
   /// In zh, this message translates to:

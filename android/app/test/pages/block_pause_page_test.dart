@@ -66,6 +66,8 @@ void main() {
   testWidgets('暂停时长以弹出菜单呈现预设，点击即暂停', (tester) async {
     final fake = await pump(tester);
     expect(find.text('暂停时长'), findsOneWidget);
+    // The picker shows a concrete value, not only an arrow.
+    expect(find.text('15 分钟'), findsOneWidget);
     expect(find.text('暂停 15 分钟'), findsNothing);
 
     await tester.tap(find.text('暂停时长'));
@@ -78,6 +80,8 @@ void main() {
     await tester.tap(find.text('暂停 30 分钟'));
     await tester.pumpAndSettle();
     expect(fake.pauses, [30]);
+    // The row's value follows the picked length.
+    expect(find.text('30 分钟'), findsOneWidget);
   });
 
   testWidgets('自定义时长先校验范围，再以输入的分钟数暂停', (tester) async {

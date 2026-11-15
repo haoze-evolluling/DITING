@@ -43,6 +43,14 @@
   },
   "blockPauseCustomOption": "自定义时长…",
   "blockPauseCustomTitle": "自定义暂停时长",
+  "blockPauseMinutesValue": "{minutes} 分钟",
+  "@blockPauseMinutesValue": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "blockPauseMinutesLabel": "分钟",
   "blockPauseMinutesHelper": "1–1440 分钟（最长 24 小时）",
   "blockPauseMinutesInvalid": "请输入 1–1440 之间的分钟数",

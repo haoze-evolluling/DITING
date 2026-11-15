@@ -38,6 +38,10 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
   bool _busy = false;
   Timer? _ticker;
 
+  /// The length the picker shows as its current value, so the row states a concrete time instead of
+  /// just an arrow. It follows the last chosen preset or custom value.
+  int _selectedMinutes = _presetMinutes.first;
+
   @override
   void initState() {
     super.initState();
@@ -103,7 +107,10 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
     }
   }
 
-  Future<void> _pause(int minutes) => _run((bridge) => bridge.pause(minutes));
+  Future<void> _pause(int minutes) {
+    setState(() => _selectedMinutes = minutes);
+    return _run((bridge) => bridge.pause(minutes));
+  }
 
   /// The custom entry in the menu: collect a minute count first, then pause. The popup has already
   /// dismissed by the time its item runs, so the dialog opens over the page.
@@ -141,6 +148,7 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
             items: [
               _PauseDurationRow(
                 busy: _busy,
+                selectedMinutes: _selectedMinutes,
                 onPause: (minutes) => _pause(minutes),
                 onCustom: _pickCustomMinutes,
               ),
@@ -241,11 +249,13 @@ class _StatusHero extends StatelessWidget {
 class _PauseDurationRow extends StatelessWidget {
   const _PauseDurationRow({
     required this.busy,
+    required this.selectedMinutes,
     required this.onPause,
     required this.onCustom,
   });
 
   final bool busy;
+  final int selectedMinutes;
   final ValueChanged<int> onPause;
   final VoidCallback onCustom;
 
@@ -265,9 +275,18 @@ class _PauseDurationRow extends StatelessWidget {
             onPressed: busy ? null : open,
             style: TextButton.styleFrom(
               foregroundColor: context.colorScheme.onSurfaceVariant,
+              textStyle: context.listTitleStyle,
               padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
-            child: const GlyphIcon(AppGlyphs.picker),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 4,
+              children: [
+                // The chosen length, so the row states a concrete time and not just an arrow.
+                Text(l10n.blockPauseMinutesValue(selectedMinutes)),
+                const GlyphIcon(AppGlyphs.picker),
+              ],
+            ),
           );
         },
         popupBuilder: (_) => CommonPopupMenu(
