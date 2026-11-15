@@ -5339,6 +5339,14 @@
   },
   "subsErrTls": "TLS 握手失败，请检查证书或镜像地址",
   "subsErrEmptyResponse": "订阅响应为空",
+  "subsLargeWarning": "该订阅内容较大（超过 {maxMb} MB），导入和运行可能变慢，或引发其他问题",
+  "@subsLargeWarning": {
+    "placeholders": {
+      "maxMb": {
+        "type": "int"
+      }
+    }
+  },
   "subsErrUnreachable": "网络不可达",
   "subsErrUnreachableCode": "网络不可达：{code}",
   "@subsErrUnreachableCode": {

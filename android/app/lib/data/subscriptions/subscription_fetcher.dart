@@ -5,11 +5,19 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/http/request_user_agent.dart';
 import 'package:diting_android/data/subscriptions/rust_subscription_core.dart';
 import 'package:diting_android/data/subscriptions/subscription_url.dart';
+
+/// Threshold above which a subscription body is considered large, in bytes. A larger body is still
+/// imported — the rule importer streams it a chunk at a time so the resident plan stays flat — but
+/// the update flow warns the user it may slow the app down or cause other problems. The import path
+/// materialises several full copies (decoded Dart objects, request/plan JSON, native buffers), so
+/// the warning is the user's cue that a very large subscription is heavier than usual.
+const int maxSubscriptionBytes = 2 * 1024 * 1024;
 
 /// Result of one download. A non-null [error] means failure and the other fields are meaningless.
 class SubscriptionFetchResult {
@@ -298,14 +306,17 @@ class HttpSubscriptionFetcher implements SubscriptionFetcher {
     return failure;
   }
 
-  Future<List<int>> _readBody(HttpClientResponse response) async {
+  /// Collects the body into a single packed `Uint8List`. A growable `List<int>` holds one boxed
+  /// element per byte; for a multi-megabyte subscription that alone is several times the file
+  /// size, and it was one of the full copies that pushed the process to its memory ceiling.
+  Future<Uint8List> _readBody(HttpClientResponse response) async {
     final total = response.contentLength;
-    final body = <int>[];
+    final builder = BytesBuilder(copy: false);
     await for (final chunk in response.timeout(readTimeout)) {
-      body.addAll(chunk);
-      onProgress?.call(body.length, total);
+      builder.add(chunk);
+      onProgress?.call(builder.length, total);
     }
-    return body;
+    return builder.takeBytes();
   }
 
   static String _networkErrorText(SocketException error) {

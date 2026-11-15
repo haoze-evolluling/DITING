@@ -139,6 +139,20 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
     ref.listen(pendingSubscriptionImportProvider, (_, url) {
       if (url != null) _openPendingImport(url);
     });
+    // Warn once when an oversized subscription was imported: it still imports (streamed in
+    // chunks), but may slow the app down or cause other problems, so the user is told.
+    ref.listen(subscriptionUpdateProvider, (previous, next) {
+      final warning = next.lastWarning;
+      if (warning != null && warning != previous?.lastWarning) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(warning),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(milliseconds: 4000),
+          ),
+        );
+      }
+    });
     final colorScheme = context.colorScheme;
     final asyncEntries = ref.watch(subscriptionEntriesProvider);
     final entries = asyncEntries.value ?? const <SubscriptionEntry>[];

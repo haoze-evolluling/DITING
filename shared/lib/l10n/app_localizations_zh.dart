@@ -9021,6 +9021,11 @@ class AppL10nZh extends AppL10n {
   String get subsErrEmptyResponse => '订阅响应为空';
 
   @override
+  String subsLargeWarning(int maxMb) {
+    return '该订阅内容较大（超过 $maxMb MB），导入和运行可能变慢，或引发其他问题';
+  }
+
+  @override
   String get subsErrUnreachable => '网络不可达';
 
   @override

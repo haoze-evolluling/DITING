@@ -82,37 +82,89 @@ class RuleImporter {
     required String kind,
     required bool enabled,
   }) async {
-    final plan = RustRuleStoreCore.instance.plan({
-      'op': 'import',
-      'source': source,
-      'kind': kind,
-      'enabled': enabled,
-      'chunkSize': chunkSize,
-      'nowMs': DateTime.now().millisecondsSinceEpoch,
-      'parsed': _parsedJson(parsed),
-    });
-
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final domainOnly = kind != 'hosts';
     final counts = <String, int>{};
-    for (final batch in plan['batches'] as List? ?? const []) {
-      if (batch is! Map) continue;
-      final family = '${batch['family']}';
-      counts[family] =
-          (counts[family] ?? 0) + await _runBatch(batch['steps'] as List? ?? const []);
+
+    /// Plans and runs one family, one `chunkSize`-rule chunk at a time.
+    ///
+    /// The old import planned the whole subscription in one native call and decoded three SQL
+    /// statements per rule into a single map. That decoded plan was the largest allocation in the
+    /// pipeline (far larger than the rule text itself) and the one that exhausted memory on a large
+    /// subscription. Bounding each native call to one chunk keeps the resident plan flat regardless
+    /// of subscription size; the SQL still dedupes across chunks because each runs in its own
+    /// transaction and `WHERE NOT EXISTS` sees the rows earlier chunks committed.
+    Future<void> runFamily<P>(
+      String family,
+      String familyKey,
+      List<P> rules,
+      Map<String, Object?> Function(P) toJson, {
+      bool Function(P)? keep,
+    }) async {
+      for (var start = 0; start < rules.length; start += chunkSize) {
+        final end = start + chunkSize < rules.length ? start + chunkSize : rules.length;
+        final chunk = <Map<String, Object?>>[
+          for (var i = start; i < end; i++)
+            if (keep == null || keep(rules[i])) toJson(rules[i]),
+        ];
+        if (chunk.isEmpty) continue;
+        final plan = RustRuleStoreCore.instance.plan({
+          'op': 'import',
+          'source': source,
+          'kind': kind,
+          'enabled': enabled,
+          'chunkSize': chunkSize,
+          'nowMs': now,
+          'parsed': {familyKey: chunk},
+        });
+        for (final batch in plan['batches'] as List? ?? const []) {
+          if (batch is! Map) continue;
+          counts[family] =
+              (counts[family] ?? 0) + await _runBatch(batch['steps'] as List? ?? const []);
+        }
+      }
     }
 
-    final summary = (plan['summary'] as Map?) ?? const {};
+    await runFamily('block', 'blockRules', parsed.blockRules, _ruleJson);
+    if (domainOnly) {
+      await runFamily('allow', 'allowRules', parsed.allowRules, _ruleJson);
+    }
+    await runFamily('rewrite', 'rewriteRules', parsed.rewriteRules, _rewriteJson);
+    if (domainOnly) {
+      await runFamily(
+        'urlBlock',
+        'urlBlockRules',
+        parsed.urlBlockRules,
+        _urlJson,
+        keep: _keepUrlRule,
+      );
+      await runFamily(
+        'urlAllow',
+        'urlAllowRules',
+        parsed.urlAllowRules,
+        _urlJson,
+        keep: _keepUrlRule,
+      );
+    }
+
+    // Counters that are not statement results. The native plan used to report these over the whole
+    // document; with per-chunk planning they are computed here from the parsed summary.
     return RuleImportSummary(
       blockCount: counts['block'] ?? 0,
       allowCount: counts['allow'] ?? 0,
       rewriteCount: counts['rewrite'] ?? 0,
       urlBlockCount: counts['urlBlock'] ?? 0,
       urlAllowCount: counts['urlAllow'] ?? 0,
-      cosmeticCount: summary['cosmetic'] as int? ?? 0,
-      duplicateCount: summary['duplicate'] as int? ?? 0,
-      invalidCount: summary['invalid'] as int? ?? 0,
-      unsupportedCount: summary['unsupported'] as int? ?? 0,
-      typeSkippedCount: summary['typeSkipped'] as int? ?? 0,
-      badfilteredCount: summary['badfiltered'] as int? ?? 0,
+      cosmeticCount: domainOnly ? parsed.cosmeticRules.length : 0,
+      duplicateCount: parsed.duplicateCount,
+      invalidCount: parsed.invalidCount,
+      unsupportedCount: parsed.unsupportedCount,
+      typeSkippedCount: domainOnly
+          ? 0
+          : parsed.allowRules.length +
+                parsed.urlBlockRules.length +
+                parsed.urlAllowRules.length,
+      badfilteredCount: parsed.badfilteredCount,
     );
   }
 
@@ -224,30 +276,20 @@ class RuleImporter {
     return inserted;
   }
 
-  /// The parsed document, field for field; the core reads these snake-free names.
-  static Map<String, Object?> _parsedJson(CategorizedRules parsed) => {
-    'blockRules': [for (final rule in parsed.blockRules) _ruleJson(rule)],
-    'allowRules': [for (final rule in parsed.allowRules) _ruleJson(rule)],
-    'rewriteRules': [
-      for (final rule in parsed.rewriteRules)
-        {
-          'pattern': rule.pattern,
-          'targetType': rule.targetType,
-          'targetValue': rule.targetValue,
-          'rawLine': rule.rawLine,
-        },
-    ],
-    'urlBlockRules': [for (final rule in parsed.urlBlockRules) _urlJson(rule)],
-    'urlAllowRules': [for (final rule in parsed.urlAllowRules) _urlJson(rule)],
-    'cosmeticRules': [
-      for (final rule in parsed.cosmeticRules)
-        {'domain': rule.domain, 'selector': rule.selector},
-    ],
-    'duplicateCount': parsed.duplicateCount,
-    'invalidCount': parsed.invalidCount,
-    'unsupportedCount': parsed.unsupportedCount,
-    'badfilteredCount': parsed.badfilteredCount,
+  /// The rewrite-rule shape `import_plan` reads; the core reads these snake-free names.
+  static Map<String, Object?> _rewriteJson(ParsedRewriteRule rule) => {
+    'pattern': rule.pattern,
+    'targetType': rule.targetType,
+    'targetValue': rule.targetValue,
+    'rawLine': rule.rawLine,
   };
+
+  /// Mirrors the native `keep_url_rule`: `go_url_rule` has no `appScope` column, so a scoped url
+  /// rule is skipped rather than stored as a global block.
+  static bool _keepUrlRule(ParsedUrlRule rule) {
+    final scope = rule.appScope;
+    return scope == null || scope.trim().isEmpty;
+  }
 
   static Map<String, Object?> _ruleJson(ParsedRule rule) => {
     'pattern': rule.pattern,

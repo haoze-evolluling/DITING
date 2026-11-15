@@ -2750,6 +2750,7 @@
   "subsErrTimeout": "Download timed out (read {seconds} s)",
   "subsErrTls": "TLS handshake failed; check the certificate or the mirror address",
   "subsErrEmptyResponse": "The subscription response was empty",
+  "subsLargeWarning": "This subscription is large (over {maxMb} MB); importing and running it may slow the app down or cause other problems",
   "subsErrUnreachable": "Network unreachable",
   "subsErrUnreachableCode": "Network unreachable: {code}",
   "subsErrUnsupported": "This environment cannot update online subscriptions",

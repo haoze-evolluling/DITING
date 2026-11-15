@@ -7,6 +7,7 @@ class SubscriptionUpdateState {
     this.updatingAll = false,
     this.progress = 0,
     this.lastMessage,
+    this.lastWarning,
   });
 
   final Set<int> updatingIds;
@@ -18,6 +19,11 @@ class SubscriptionUpdateState {
   /// Summary of the last bulk update, e.g. "3 updated, 1 unchanged, 1 failed".
   final String? lastMessage;
 
+  /// Set when a subscription over [maxSubscriptionBytes] was imported: it still imports (the
+  /// importer streams it in chunks), but the user is warned it may slow the app down or cause
+  /// other problems. Cleared when the next update starts.
+  final String? lastWarning;
+
   bool get isBusy => updatingAll || updatingIds.isNotEmpty;
 
   SubscriptionUpdateState copyWith({
@@ -25,12 +31,15 @@ class SubscriptionUpdateState {
     bool? updatingAll,
     double? progress,
     String? lastMessage,
+    String? lastWarning,
     bool clearMessage = false,
+    bool clearWarning = false,
   }) => SubscriptionUpdateState(
     updatingIds: updatingIds ?? this.updatingIds,
     updatingAll: updatingAll ?? this.updatingAll,
     progress: progress ?? this.progress,
     lastMessage: clearMessage ? null : (lastMessage ?? this.lastMessage),
+    lastWarning: clearWarning ? null : (lastWarning ?? this.lastWarning),
   );
 }
 
@@ -48,7 +57,7 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     if (entry == null) {
       return null;
     }
-    state = state.copyWith(updatingIds: {id}, clearMessage: true);
+    state = state.copyWith(updatingIds: {id}, clearMessage: true, clearWarning: true);
     SubscriptionFetchResult? result;
     // The busy flags are cleared in a `finally`: an update that throws used to leave the card
     // spinning forever, and every entry point is disabled while busy, so only a restart helped.
@@ -59,6 +68,9 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
         state = state.copyWith(
           updatingIds: const {},
           lastMessage: result == null ? null : _summarize([result]),
+          lastWarning: (result?.byteLength ?? 0) > maxSubscriptionBytes
+              ? currentL10n.subsLargeWarning(maxSubscriptionBytes ~/ (1024 * 1024))
+              : null,
         );
         _invalidateEntries();
       }
@@ -89,7 +101,7 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     if (state.isBusy || targets.isEmpty) {
       return;
     }
-    state = state.copyWith(updatingAll: true, progress: 0, clearMessage: true);
+    state = state.copyWith(updatingAll: true, progress: 0, clearMessage: true, clearWarning: true);
     final results = <SubscriptionFetchResult>[];
     try {
       for (final (index, entry) in targets.indexed) {
@@ -114,6 +126,9 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           updatingIds: const {},
           progress: 0,
           lastMessage: _summarize(results),
+          lastWarning: results.any((r) => r.byteLength > maxSubscriptionBytes)
+              ? currentL10n.subsLargeWarning(maxSubscriptionBytes ~/ (1024 * 1024))
+              : null,
         );
         _invalidateEntries();
       }
@@ -170,6 +185,8 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           lastModified: result.lastModified ?? entry.record.httpLastModified,
         );
       case SubscriptionFetchOutcome.content:
+        // Oversized subscriptions are still imported (the importer streams them in chunks); the
+        // caller warns the user after the fact via `lastWarning` when the body is over the cap.
         // Parse and import; the count is rows actually written.
         final imported = await _importContent(entry, result.content ?? '');
         if (imported == null) {
@@ -218,7 +235,10 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
       );
       return SubscriptionFetchResult.failed(reason, requestedUrl: entry.url);
     }
-    final imported = await _importContent(entry, read.text!);
+    // Local `.txt` is ASCII-heavy, so its length tracks byte size; the importer streams it in
+    // chunks, so a large file imports without the old whole-document blow-up.
+    final content = read.text!;
+    final imported = await _importContent(entry, content);
     if (imported == null) {
       final reason = currentL10n.subscriptionLocalRuleDbUnavailable;
       await repository.markUpdateFailed(
@@ -240,6 +260,7 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     return SubscriptionFetchResult(
       outcome: SubscriptionFetchOutcome.content,
       content: read.text,
+      byteLength: content.length,
       requestedUrl: entry.url,
     );
   }
@@ -276,6 +297,11 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
   }
 
+  /// Rule sets above this many lines skip the full-text version snapshot: writing the whole body a
+  /// second time is exactly the duplication that made a large import exhaust memory, and the
+  /// snapshot is only a best-effort rollback aid. The import itself still records its hash.
+  static const int maxVersionSnapshotRules = 60000;
+
   /// Best-effort R6 snapshot; a version-history failure must never fail the import itself.
   Future<void> _recordVersion(
     SubscriptionEntry entry,
@@ -283,6 +309,13 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     String hash,
     int ruleCount,
   ) async {
+    if (rules.length > maxVersionSnapshotRules) {
+      debugPrint(
+        'rule version skipped for ${entry.url}: ${rules.length} rules over '
+        '$maxVersionSnapshotRules',
+      );
+      return;
+    }
     try {
       final repository = await ref.read(ruleVersionRepositoryProvider.future);
       await repository?.recordVersion(

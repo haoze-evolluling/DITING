@@ -9609,6 +9609,11 @@ class AppL10nEn extends AppL10n {
   String get subsErrEmptyResponse => 'The subscription response was empty';
 
   @override
+  String subsLargeWarning(int maxMb) {
+    return 'This subscription is large (over $maxMb MB); importing and running it may slow the app down or cause other problems';
+  }
+
+  @override
   String get subsErrUnreachable => 'Network unreachable';
 
   @override

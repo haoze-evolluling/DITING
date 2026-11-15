@@ -16498,6 +16498,12 @@ abstract class AppL10n {
   /// **'订阅响应为空'**
   String get subsErrEmptyResponse;
 
+  /// No description provided for @subsLargeWarning.
+  ///
+  /// In zh, this message translates to:
+  /// **'该订阅内容较大（超过 {maxMb} MB），导入和运行可能变慢，或引发其他问题'**
+  String subsLargeWarning(int maxMb);
+
   /// No description provided for @subsErrUnreachable.
   ///
   /// In zh, this message translates to:
