@@ -28,14 +28,21 @@
   "blockPauseRunningLabel": "暂停中，剩余",
   "blockPauseInactive": "当前未暂停，拦截正常生效",
   "blockPauseResume": "立即恢复",
-  "blockPausePresetButton": "暂停 {minutes} 分钟",
-  "@blockPausePresetButton": {
+  "blockPauseDurationTitle": "暂停时长",
+  "blockPauseDurationSubtitle": "选择预设或自定义时长",
+  "blockPausePresetOption": "暂停 {minutes} 分钟",
+  "@blockPausePresetOption": {
     "placeholders": {
       "minutes": {
         "type": "int"
       }
     }
   },
+  "blockPauseCustomOption": "自定义时长…",
+  "blockPauseCustomTitle": "自定义暂停时长",
+  "blockPauseMinutesLabel": "分钟",
+  "blockPauseMinutesHelper": "1–1440 分钟（最长 24 小时）",
+  "blockPauseMinutesInvalid": "请输入 1–1440 之间的分钟数",
   "blockPauseAllowlistTitle": "仅白名单模式",
   "blockPauseAllowlistSubtitle": "只放行显式允许的域名，其余全部拦截",
   "blockPauseFailed": "设置失败，请稍后重试",

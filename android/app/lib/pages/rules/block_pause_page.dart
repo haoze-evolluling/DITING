@@ -16,6 +16,14 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// Quick presets shown above the custom entry in the duration menu. Any other length is typed into
+/// the custom dialog, so the pause is no longer limited to these three values.
+const _presetMinutes = <int>[15, 30, 60];
+
+/// Bounds of a custom pause: one minute up to a full day.
+const _minPauseMinutes = 1;
+const _maxPauseMinutes = 1440;
+
 class BlockPausePage extends ConsumerStatefulWidget {
   const BlockPausePage({super.key});
 
@@ -94,6 +102,19 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
     }
   }
 
+  Future<void> _pause(int minutes) => _run((bridge) => bridge.pause(minutes));
+
+  /// The custom entry in the menu: collect a minute count first, then pause. The popup has already
+  /// dismissed by the time its item runs, so the dialog opens over the page.
+  Future<void> _pickCustomMinutes() async {
+    final minutes = await showFloatingDialog<int>(
+      context: context,
+      child: const _CustomPauseDialog(),
+    );
+    if (minutes == null || !mounted) return;
+    await _pause(minutes);
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = _state;
@@ -109,19 +130,10 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
             busy: _busy,
             onResume: () => _run((bridge) => bridge.clear()),
           ),
-          _paddedCard(
-            context,
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (final minutes in const [15, 30, 60])
-                  FilledButton.tonal(
-                    onPressed: _busy ? null : () => _run((b) => b.pause(minutes)),
-                    child: Text(context.l10n.blockPausePresetButton(minutes)),
-                  ),
-              ],
-            ),
+          _PauseDurationCard(
+            busy: _busy,
+            onPause: (minutes) => _pause(minutes),
+            onCustom: _pickCustomMinutes,
           ),
           _paddedCard(
             context,
@@ -146,6 +158,127 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// The pause control: one tappable row that opens the duration menu, instead of a row of preset
+/// buttons. The row fills its card so the pressed ink follows the card's rounded corners.
+class _PauseDurationCard extends StatelessWidget {
+  const _PauseDurationCard({
+    required this.busy,
+    required this.onPause,
+    required this.onCustom,
+  });
+
+  final bool busy;
+  final ValueChanged<int> onPause;
+  final VoidCallback onCustom;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    PopupOpen? openMenu;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: CommonCard(
+        child: ListItem(
+          padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+          leading: const GlyphIcon(AppGlyphs.clock, size: 22),
+          title: Text(l10n.blockPauseDurationTitle),
+          subtitle: Text(l10n.blockPauseDurationSubtitle),
+          onTap: busy ? null : () => openMenu?.call(),
+          trailing: CommonPopupBox(
+            targetBuilder: (open) {
+              openMenu = open;
+              return TextButton(
+                onPressed: busy ? null : open,
+                style: TextButton.styleFrom(
+                  foregroundColor: context.colorScheme.onSurfaceVariant,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                child: const GlyphIcon(AppGlyphs.picker),
+              );
+            },
+            popupBuilder: (_) => CommonPopupMenu(
+              items: [
+                for (final minutes in _presetMinutes)
+                  CommonPopupMenuItem(
+                    label: l10n.blockPausePresetOption(minutes),
+                    glyph: AppGlyphs.clock,
+                    onPressed: busy ? null : () => onPause(minutes),
+                  ),
+                CommonPopupMenuItem(
+                  label: l10n.blockPauseCustomOption,
+                  glyph: AppGlyphs.edit,
+                  // Set the custom entry apart below a divider, as an iOS menu does.
+                  section: const CommonPopupMenuSection(),
+                  onPressed: busy ? null : onCustom,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Asks for a pause length in whole minutes, bounded to a day. Kept alive across the dialog's exit
+/// animation; disposing the controller right after `await` trips a framework assertion.
+class _CustomPauseDialog extends StatefulWidget {
+  const _CustomPauseDialog();
+
+  @override
+  State<_CustomPauseDialog> createState() => _CustomPauseDialogState();
+}
+
+class _CustomPauseDialogState extends State<_CustomPauseDialog> {
+  final _controller = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final value = int.tryParse(_controller.text.trim());
+    if (value == null || value < _minPauseMinutes || value > _maxPauseMinutes) {
+      setState(() => _error = context.l10n.blockPauseMinutesInvalid);
+      return;
+    }
+    Navigator.of(context).pop(value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonDialog(
+      title: context.l10n.blockPauseCustomTitle,
+      hasFields: true,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.uiCancel),
+        ),
+        TextButton(
+          onPressed: _submit,
+          child: Text(context.l10n.commonSave),
+        ),
+      ],
+      child: TextField(
+        controller: _controller,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _submit(),
+        decoration: InputDecoration(
+          labelText: context.l10n.blockPauseMinutesLabel,
+          helperText: context.l10n.blockPauseMinutesHelper,
+          errorText: _error,
+        ),
       ),
     );
   }

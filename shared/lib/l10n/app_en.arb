@@ -28,14 +28,21 @@
   "blockPauseRunningLabel": "Paused, remaining",
   "blockPauseInactive": "Not paused, blocking is active",
   "blockPauseResume": "Resume now",
-  "blockPausePresetButton": "Pause {minutes} min",
-  "@blockPausePresetButton": {
+  "blockPauseDurationTitle": "Pause duration",
+  "blockPauseDurationSubtitle": "Pick a preset or enter a custom length",
+  "blockPausePresetOption": "Pause {minutes} min",
+  "@blockPausePresetOption": {
     "placeholders": {
       "minutes": {
         "type": "int"
       }
     }
   },
+  "blockPauseCustomOption": "Custom duration…",
+  "blockPauseCustomTitle": "Custom pause duration",
+  "blockPauseMinutesLabel": "Minutes",
+  "blockPauseMinutesHelper": "1–1440 minutes (up to 24 hours)",
+  "blockPauseMinutesInvalid": "Enter a number between 1 and 1440",
   "blockPauseAllowlistTitle": "Allowlist-only mode",
   "blockPauseAllowlistSubtitle": "Pass only explicitly allowed domains; block everything else",
   "blockPauseFailed": "Failed to apply, please retry",

@@ -265,11 +265,53 @@ abstract class AppL10n {
   /// **'立即恢复'**
   String get blockPauseResume;
 
-  /// No description provided for @blockPausePresetButton.
+  /// No description provided for @blockPauseDurationTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停时长'**
+  String get blockPauseDurationTitle;
+
+  /// No description provided for @blockPauseDurationSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择预设或自定义时长'**
+  String get blockPauseDurationSubtitle;
+
+  /// No description provided for @blockPausePresetOption.
   ///
   /// In zh, this message translates to:
   /// **'暂停 {minutes} 分钟'**
-  String blockPausePresetButton(int minutes);
+  String blockPausePresetOption(int minutes);
+
+  /// No description provided for @blockPauseCustomOption.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义时长…'**
+  String get blockPauseCustomOption;
+
+  /// No description provided for @blockPauseCustomTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义暂停时长'**
+  String get blockPauseCustomTitle;
+
+  /// No description provided for @blockPauseMinutesLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'分钟'**
+  String get blockPauseMinutesLabel;
+
+  /// No description provided for @blockPauseMinutesHelper.
+  ///
+  /// In zh, this message translates to:
+  /// **'1–1440 分钟（最长 24 小时）'**
+  String get blockPauseMinutesHelper;
+
+  /// No description provided for @blockPauseMinutesInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 1–1440 之间的分钟数'**
+  String get blockPauseMinutesInvalid;
 
   /// No description provided for @blockPauseAllowlistTitle.
   ///

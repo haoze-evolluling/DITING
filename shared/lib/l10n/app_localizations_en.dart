@@ -97,9 +97,31 @@ class AppL10nEn extends AppL10n {
   String get blockPauseResume => 'Resume now';
 
   @override
-  String blockPausePresetButton(int minutes) {
+  String get blockPauseDurationTitle => 'Pause duration';
+
+  @override
+  String get blockPauseDurationSubtitle =>
+      'Pick a preset or enter a custom length';
+
+  @override
+  String blockPausePresetOption(int minutes) {
     return 'Pause $minutes min';
   }
+
+  @override
+  String get blockPauseCustomOption => 'Custom duration…';
+
+  @override
+  String get blockPauseCustomTitle => 'Custom pause duration';
+
+  @override
+  String get blockPauseMinutesLabel => 'Minutes';
+
+  @override
+  String get blockPauseMinutesHelper => '1–1440 minutes (up to 24 hours)';
+
+  @override
+  String get blockPauseMinutesInvalid => 'Enter a number between 1 and 1440';
 
   @override
   String get blockPauseAllowlistTitle => 'Allowlist-only mode';

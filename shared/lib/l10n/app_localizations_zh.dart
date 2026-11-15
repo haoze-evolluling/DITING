@@ -94,9 +94,30 @@ class AppL10nZh extends AppL10n {
   String get blockPauseResume => '立即恢复';
 
   @override
-  String blockPausePresetButton(int minutes) {
+  String get blockPauseDurationTitle => '暂停时长';
+
+  @override
+  String get blockPauseDurationSubtitle => '选择预设或自定义时长';
+
+  @override
+  String blockPausePresetOption(int minutes) {
     return '暂停 $minutes 分钟';
   }
+
+  @override
+  String get blockPauseCustomOption => '自定义时长…';
+
+  @override
+  String get blockPauseCustomTitle => '自定义暂停时长';
+
+  @override
+  String get blockPauseMinutesLabel => '分钟';
+
+  @override
+  String get blockPauseMinutesHelper => '1–1440 分钟（最长 24 小时）';
+
+  @override
+  String get blockPauseMinutesInvalid => '请输入 1–1440 之间的分钟数';
 
   @override
   String get blockPauseAllowlistTitle => '仅白名单模式';
