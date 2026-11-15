@@ -32,8 +32,6 @@ const hiddenFeatureKeysInFile = <String>[
   'https_inspection',
   'outbound_proxy',
   'agent_api',
-  'automation',
-  'custom_resources',
   'data_management',
   'data_cleanup',
   'troubleshooting',

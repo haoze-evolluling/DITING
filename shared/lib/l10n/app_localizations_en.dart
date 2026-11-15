@@ -7478,6 +7478,15 @@ class AppL10nEn extends AppL10n {
   String get ruleControlPolicySection => 'Block policy';
 
   @override
+  String get ruleControlDiagnosticsSection => 'Rule diagnostics';
+
+  @override
+  String get ruleControlControlSection => 'Blocking controls';
+
+  @override
+  String get ruleControlDomainSection => 'Domain lists & rewrite';
+
+  @override
   String get ruleControlBlockResponse => 'Block response';
 
   @override

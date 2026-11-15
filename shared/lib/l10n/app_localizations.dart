@@ -12994,6 +12994,24 @@ abstract class AppL10n {
   /// **'拦截策略'**
   String get ruleControlPolicySection;
 
+  /// No description provided for @ruleControlDiagnosticsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则诊断'**
+  String get ruleControlDiagnosticsSection;
+
+  /// No description provided for @ruleControlControlSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截控制'**
+  String get ruleControlControlSection;
+
+  /// No description provided for @ruleControlDomainSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'域名名单与覆写'**
+  String get ruleControlDomainSection;
+
   /// No description provided for @ruleControlBlockResponse.
   ///
   /// In zh, this message translates to:

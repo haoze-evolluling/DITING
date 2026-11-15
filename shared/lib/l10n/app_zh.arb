@@ -4119,6 +4119,9 @@
   "ruleControlUrlRules": "URL 规则与内容过滤",
   "ruleControlNotReady": "未就绪",
   "ruleControlPolicySection": "拦截策略",
+  "ruleControlDiagnosticsSection": "规则诊断",
+  "ruleControlControlSection": "拦截控制",
+  "ruleControlDomainSection": "域名名单与覆写",
   "ruleControlBlockResponse": "拦截响应",
   "ruleControlDynamicSummary": "动态策略：先 NODATA，高频请求后 {mode}",
   "@ruleControlDynamicSummary": {

@@ -53,9 +53,9 @@ void main() {
     expect(find.text('URL 规则与内容过滤'), findsOneWidget);
   });
 
-  // The page used to carry automation, network-privacy, interface and subscription sections. They
-  // now live in their own feature-hub categories, so the page must not offer them again.
-  testWidgets('规则控制页只保留规则相关入口，其它模块已拆分到功能中心', (tester) async {
+  // The blocking policy group is split into several sub-sections, and scenario automation now
+  // lives here as a secondary entry. Subscriptions and network-privacy stay in the feature hub.
+  testWidgets('规则控制页按子类拆分拦截策略并包含场景自动化入口', (tester) async {
     await pump(tester, AppWorkMode.normal.storageValue);
     expect(find.text('规则测试'), findsOneWidget);
     expect(find.text('临时暂停'), findsOneWidget);
@@ -65,7 +65,13 @@ void main() {
     expect(find.text('域名黑名单'), findsOneWidget);
     expect(find.text('域名白名单'), findsOneWidget);
     expect(find.text('域名覆写'), findsOneWidget);
-    expect(find.text('自动化'), findsNothing);
+    // 场景自动化入口在页面底部，需要滚动到可视区。
+    await tester.scrollUntilVisible(
+      find.text('场景自动化'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('场景自动化'), findsOneWidget);
     expect(find.text('规则订阅'), findsNothing);
     expect(find.text('隐私套件'), findsNothing);
   });

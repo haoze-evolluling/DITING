@@ -7067,6 +7067,15 @@ class AppL10nZh extends AppL10n {
   String get ruleControlPolicySection => '拦截策略';
 
   @override
+  String get ruleControlDiagnosticsSection => '规则诊断';
+
+  @override
+  String get ruleControlControlSection => '拦截控制';
+
+  @override
+  String get ruleControlDomainSection => '域名名单与覆写';
+
+  @override
   String get ruleControlBlockResponse => '拦截响应';
 
   @override

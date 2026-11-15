@@ -12,9 +12,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Rule control (upstream `RuleControlScreen`): the master switch, URL rules, rule testing,
-/// temporary pause and the block response. Subscriptions, automation, network-privacy and
-/// interface entries each moved to their own feature-hub category so this page stays focused.
+/// Rule control (upstream `RuleControlScreen`): the master switch, URL rules, and the blocking
+/// policy group split into rule diagnostics, blocking controls and domain lists. Subscriptions,
+/// network-privacy and interface entries each live in their own feature-hub category; the scenario
+/// automation entry sits here because it decides how blocking rules are driven.
 class RuleControlPage extends ConsumerWidget {
   const RuleControlPage({super.key});
 
@@ -99,7 +100,7 @@ class RuleControlPage extends ConsumerWidget {
             ],
           ),
           generateSection(
-            title: context.l10n.ruleControlPolicySection,
+            title: context.l10n.ruleControlDiagnosticsSection,
             items: [
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.search),
@@ -108,16 +109,21 @@ class RuleControlPage extends ConsumerWidget {
                 onTap: () => context.push('/hub/rules/test'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.block),
-                title: Text(context.l10n.blockPauseTitle),
-                subtitle: Text(context.l10n.blockPauseEntrySubtitle),
-                onTap: () => context.push('/hub/rules/pause'),
-              ),
-              ListItem(
                 leading: const GlyphIcon(AppGlyphs.rules),
                 title: Text(context.l10n.hitRankingTitle),
                 subtitle: Text(context.l10n.hitRankingEntrySubtitle),
                 onTap: () => context.push('/logs/hit-ranking'),
+              ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.ruleControlControlSection,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.block),
+                title: Text(context.l10n.blockPauseTitle),
+                subtitle: Text(context.l10n.blockPauseEntrySubtitle),
+                onTap: () => context.push('/hub/rules/pause'),
               ),
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
@@ -131,6 +137,11 @@ class RuleControlPage extends ConsumerWidget {
                 ),
                 onTap: () => context.push('/hub/rules/block-response'),
               ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.ruleControlDomainSection,
+            items: [
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
                 title: Text(context.l10n.hubBlocklist),
@@ -148,6 +159,17 @@ class RuleControlPage extends ConsumerWidget {
                 title: Text(context.l10n.hubRewrite),
                 subtitle: Text(context.l10n.hubRewriteDescription),
                 onTap: () => context.push('/rules/rewrite'),
+              ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.hubModuleMore,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.motion),
+                title: Text(context.l10n.automationTitle),
+                subtitle: Text(context.l10n.automationSubtitle),
+                onTap: () => context.push('/automation'),
               ),
             ],
           ),

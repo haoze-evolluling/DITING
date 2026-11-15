@@ -352,6 +352,12 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                   subtitle: Text(context.l10n.ruleControlMirrorSubtitle),
                   onTap: () => context.push('/hub/rules/mirrors'),
                 ),
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.account),
+                  title: Text(context.l10n.customResourcesTitle),
+                  subtitle: Text(context.l10n.devUserAgentBody),
+                  onTap: () => context.push('/config/user-agents'),
+                ),
               ],
             ),
           ),
