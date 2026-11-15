@@ -25318,11 +25318,35 @@ abstract class AppL10n {
   /// **'用触发、条件与动作把零散入口组合成场景（到家 / 会议 / 游戏 / 低电）。'**
   String get automationIntro;
 
-  /// No description provided for @automationEmpty.
+  /// No description provided for @automationOverviewEmptyTitle.
   ///
   /// In zh, this message translates to:
-  /// **'还没有自动化规则，点击右上角新增一条开始编排场景。'**
-  String get automationEmpty;
+  /// **'还没有自动化规则'**
+  String get automationOverviewEmptyTitle;
+
+  /// No description provided for @automationOverviewEmptyHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'把零散入口编排成场景。'**
+  String get automationOverviewEmptyHint;
+
+  /// No description provided for @automationOverviewSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'{total} 条规则 · {enabled} 条启用'**
+  String automationOverviewSummary(int total, int enabled);
+
+  /// No description provided for @automationOverviewHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'场景会按触发条件自动执行。'**
+  String get automationOverviewHint;
+
+  /// No description provided for @automationSettingsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'场景设置'**
+  String get automationSettingsSection;
 
   /// No description provided for @automationRulesSection.
   ///

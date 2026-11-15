@@ -13812,7 +13812,21 @@ class AppL10nZh extends AppL10n {
   String get automationIntro => '用触发、条件与动作把零散入口组合成场景（到家 / 会议 / 游戏 / 低电）。';
 
   @override
-  String get automationEmpty => '还没有自动化规则，点击右上角新增一条开始编排场景。';
+  String get automationOverviewEmptyTitle => '还没有自动化规则';
+
+  @override
+  String get automationOverviewEmptyHint => '把零散入口编排成场景。';
+
+  @override
+  String automationOverviewSummary(int total, int enabled) {
+    return '$total 条规则 · $enabled 条启用';
+  }
+
+  @override
+  String get automationOverviewHint => '场景会按触发条件自动执行。';
+
+  @override
+  String get automationSettingsSection => '场景设置';
 
   @override
   String get automationRulesSection => '规则';

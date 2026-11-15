@@ -7888,7 +7888,21 @@
   "automationSubtitle": "条件-动作编排 · 按需连接",
   "automationHubSection": "场景与自动化",
   "automationIntro": "用触发、条件与动作把零散入口组合成场景（到家 / 会议 / 游戏 / 低电）。",
-  "automationEmpty": "还没有自动化规则，点击右上角新增一条开始编排场景。",
+  "automationOverviewEmptyTitle": "还没有自动化规则",
+  "automationOverviewEmptyHint": "把零散入口编排成场景。",
+  "automationOverviewSummary": "{total} 条规则 · {enabled} 条启用",
+  "@automationOverviewSummary": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "enabled": {
+        "type": "int"
+      }
+    }
+  },
+  "automationOverviewHint": "场景会按触发条件自动执行。",
+  "automationSettingsSection": "场景设置",
   "automationRulesSection": "规则",
   "automationHistory": "审计时间线",
   "automationHistoryEmpty": "暂无自动化事件。",

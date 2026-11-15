@@ -5185,7 +5185,21 @@
   "automationSubtitle": "Compose condition-action scenarios and on-demand connection",
   "automationHubSection": "Scenarios & automation",
   "automationIntro": "Combine triggers, conditions and actions into scenes (home / meeting / gaming / low battery).",
-  "automationEmpty": "No automation rules yet. Add one from the top-right to start composing scenes.",
+  "automationOverviewEmptyTitle": "No automation rules yet",
+  "automationOverviewEmptyHint": "Turn scattered entries into scenarios.",
+  "automationOverviewSummary": "{total} rules · {enabled} enabled",
+  "@automationOverviewSummary": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      },
+      "enabled": {
+        "type": "int"
+      }
+    }
+  },
+  "automationOverviewHint": "Scenarios run automatically on their triggers.",
+  "automationSettingsSection": "Scenario settings",
   "automationRulesSection": "Rules",
   "automationHistory": "Audit timeline",
   "automationHistoryEmpty": "No automation events yet.",

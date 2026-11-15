@@ -14676,8 +14676,23 @@ class AppL10nEn extends AppL10n {
       'Combine triggers, conditions and actions into scenes (home / meeting / gaming / low battery).';
 
   @override
-  String get automationEmpty =>
-      'No automation rules yet. Add one from the top-right to start composing scenes.';
+  String get automationOverviewEmptyTitle => 'No automation rules yet';
+
+  @override
+  String get automationOverviewEmptyHint =>
+      'Turn scattered entries into scenarios.';
+
+  @override
+  String automationOverviewSummary(int total, int enabled) {
+    return '$total rules · $enabled enabled';
+  }
+
+  @override
+  String get automationOverviewHint =>
+      'Scenarios run automatically on their triggers.';
+
+  @override
+  String get automationSettingsSection => 'Scenario settings';
 
   @override
   String get automationRulesSection => 'Rules';
