@@ -41,7 +41,7 @@ class MockFeatureCategory {
 /// reaches for it**, not by where the code lives. Seven purpose-based sections, four cards each,
 /// so the two-column grid never leaves a blank cell and the three work modes share one layout:
 ///
-///   1. DNS 解析       服务商 / 策略 / 缓存 / DNS64
+///   1. DNS 解析       服务商 / 策略 / 缓存 / 服务显示
 ///   2. 规则与控制     拦截策略 / 规则订阅 / 应用规则 / 隐私套件
 ///   3. 应用与网络     实时连接 / 应用洞察 / 网络工具 / LAN 限速
 ///   4. 高级与诊断     网络诊断 / HTTPS 检查 / 出站代理 / AI 分析
@@ -51,7 +51,8 @@ class MockFeatureCategory {
 ///
 /// Low-frequency functions stay folded into a parent page's secondary "更多功能" section instead
 /// of taking a first-class card, which keeps every section at four cards:
-///   - 解析服务商 → 引导解析 / 服务显示
+///   - 解析服务商 → 引导解析
+///   - 解析策略 → DNS64
 ///   - 规则控制 → 域名黑名单 / 域名白名单 / 域名覆写 / 规则测试 / 临时暂停 / 拦截响应
 ///   - 规则订阅 → 自动更新 / 镜像模板 / 版本回滚
 ///   - 自动化 → 配置档案 / 分时规则 / 网络档案
@@ -87,11 +88,11 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         featureKey: 'cache_settings',
       ),
       MockFeatureCard(
-        title: l10n.dns64Title,
-        description: l10n.dns64Intro,
-        glyphName: 'link',
-        route: '/network/dns64',
-        featureKey: 'dns64',
+        title: l10n.hubProviderVisibility,
+        description: l10n.hubProviderVisibilityDescription,
+        glyphName: 'eye',
+        route: '/hub/provider-visibility',
+        featureKey: 'service_display',
       ),
     ],
   ),

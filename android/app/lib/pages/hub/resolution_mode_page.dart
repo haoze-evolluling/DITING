@@ -1,5 +1,6 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
+import 'package:diting_android/routes/dns64_routes.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -364,6 +365,18 @@ class _ResolutionModeConfigPageState
                       : null,
                   onTap: () => _select(provider),
                 ),
+            ],
+          ),
+          // DNS64 只影响 IPv6-only 网络下的 AAAA 合成，单列一张一级卡过于零碎，收进解析策略页。
+          generateSection(
+            title: context.l10n.hubModuleMore,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.link),
+                title: Text(context.l10n.dns64Title),
+                subtitle: Text(context.l10n.dns64Intro),
+                onTap: () => context.push(Dns64Paths.root),
+              ),
             ],
           ),
           const SizedBox(height: 24),

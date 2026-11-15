@@ -212,12 +212,6 @@ class _ProviderManagementPageState
                 subtitle: Text(context.l10n.hubBootstrapDescription),
                 onTap: () => context.push(HubPaths.bootstrap),
               ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.eye),
-                title: Text(context.l10n.hubProviderVisibility),
-                subtitle: Text(context.l10n.hubProviderVisibilityDescription),
-                onTap: () => context.push(HubPaths.providerVisibility),
-              ),
             ],
           ),
           ListFooter(text: context.l10n.providerMgmtFooter),

@@ -83,7 +83,7 @@ void main() {
     // 低频功能已下沉为父页面二级入口，不再占用一级卡片。
     const folded = {
       'bootstrap_settings',
-      'service_display',
+      'dns64',
       'blacklist',
       'whitelist',
       'rewrite_list',

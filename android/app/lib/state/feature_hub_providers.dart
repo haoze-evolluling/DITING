@@ -19,7 +19,7 @@ const hiddenFeatureKeysInFile = <String>[
   'provider_management',
   'resolution_mode',
   'cache_settings',
-  'dns64',
+  'service_display',
   'rule_control',
   'subscriptions',
   'app_rules',
