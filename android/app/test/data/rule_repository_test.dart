@@ -65,6 +65,28 @@ void _ruleDataSets() {
       isNull,
     );
   });
+
+  // The startup timeout path re-opens on a fresh connection when the reusable single instance is
+  // wedged; a second, independent handle is what that recovery relies on.
+  test('singleInstance=false 可在已有连接之外另开一条独立连接', () async {
+    addTearDown(() async {
+      final path = await databaseFactory.getDatabasesPath();
+      await databaseFactory.deleteDatabase('$path/${LegacyDatabase.mainFile}');
+    });
+
+    final first = await LegacyDatabase.open(LegacyDatabase.mainFile);
+    expect(first, isNotNull);
+
+    final second = await LegacyDatabase.open(
+      LegacyDatabase.mainFile,
+      singleInstance: false,
+    );
+    expect(second, isNotNull);
+    expect(identical(first, second), isFalse);
+
+    await first!.close();
+    await second!.close();
+  });
 }
 
 /// Exercises the SQL against the exact 1.4.3 layout, a subset of `AppDatabase` v3

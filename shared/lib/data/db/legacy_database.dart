@@ -25,7 +25,18 @@ class LegacyDatabase {
 
   /// Null means [fileName] could neither be opened nor created; callers degrade to "no rule
   /// database".
-  static Future<Database?> open(String fileName, {bool create = true}) async {
+  ///
+  /// [singleInstance] defaults to sqflite's process-wide reuse. Pass `false` to force a brand-new
+  /// connection: sqflite keeps its open-database registry in a `static` map shared by every
+  /// `FlutterEngine` in the process, so a connection left behind by a previous engine (the app runs
+  /// a fresh engine for each re-entered activity while a tunnel service keeps the process alive) is
+  /// otherwise handed back to the next one. The Android startup path uses this to recover from a
+  /// wedged connection (see `bootstrapRules`).
+  static Future<Database?> open(
+    String fileName, {
+    bool create = true,
+    bool singleInstance = true,
+  }) async {
     final String path;
     try {
       path = p.join(await getDatabasesPath(), fileName);
@@ -48,6 +59,7 @@ class LegacyDatabase {
         path,
         version: LegacySchema.versionOf(fileName),
         onConfigure: _configure,
+        singleInstance: singleInstance,
         onUpgrade: (db, from, to) async {
           await _createIfMissing(db, LegacySchema.statementsFor(fileName));
         },
