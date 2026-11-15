@@ -2503,7 +2503,7 @@ class AppL10nEn extends AppL10n {
   String get hubCategoryAutomation => 'Automation and scenes';
 
   @override
-  String get hubCategoryIntegration => 'Interfaces and integration';
+  String get hubCategoryIntegration => 'Automation and resources';
 
   @override
   String get hubCategorySubscription => 'Subscriptions and updates';
@@ -5688,6 +5688,9 @@ class AppL10nEn extends AppL10n {
   String get uaCurrent => 'Current selection';
 
   @override
+  String get uaAll => 'All User-Agents';
+
+  @override
   String get uaNoOverride => 'No override';
 
   @override
@@ -5940,14 +5943,7 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get customResourcesTitle => 'Custom resources';
-
-  @override
-  String get customResourcesNote =>
-      'These resources are referenced by name: renaming one breaks the reference, while editing content takes effect the next time the configuration loads. They are not part of the 1.4.3 interface and are kept here for debugging.';
-
-  @override
-  String get customResourcesSection => 'Resources';
+  String get customResourcesTitle => 'User-Agent management';
 
   @override
   String get configDelete => 'Delete';
@@ -14619,11 +14615,11 @@ class AppL10nEn extends AppL10n {
       'Detailed mode records the full logcat of every process and buffer; broader but uses more power.';
 
   @override
-  String get automationTitle => 'Automation';
+  String get automationTitle => 'Scenario automation';
 
   @override
   String get automationSubtitle =>
-      'Compose scenarios from conditions and actions';
+      'Compose condition-action scenarios and on-demand connection';
 
   @override
   String get automationHubSection => 'Scenarios & automation';
@@ -14933,56 +14929,6 @@ class AppL10nEn extends AppL10n {
   String get appInsightsNoDomains => 'No domains';
 
   @override
-  String get localApiTitle => 'Local API';
-
-  @override
-  String get localApiIntro =>
-      'A read-only HTTP API bound to 127.0.0.1 and guarded by a token, for local scripts to read status.';
-
-  @override
-  String get localApiEnable => 'Enable local API';
-
-  @override
-  String get localApiToken => 'Access token';
-
-  @override
-  String get localApiRegenerate => 'Regenerate';
-
-  @override
-  String get localApiCopy => 'Copy';
-
-  @override
-  String get localApiCopied => 'Copied';
-
-  @override
-  String get localApiPort => 'Port';
-
-  @override
-  String localApiRunning(int port) {
-    return 'Running: http://127.0.0.1:$port';
-  }
-
-  @override
-  String get localApiStopped => 'Stopped';
-
-  @override
-  String get localApiEndpoints => 'Endpoints';
-
-  @override
-  String get localApiEndpointStatus => 'GET /status';
-
-  @override
-  String get localApiEndpointVersion => 'GET /version';
-
-  @override
-  String get localApiHeaderHint => 'Header: X-Diting-Token: <token>';
-
-  @override
-  String localApiError(String message) {
-    return 'Failed to start: $message';
-  }
-
-  @override
   String get privacySuiteTitle => 'Privacy protection';
 
   @override
@@ -15111,55 +15057,5 @@ class AppL10nEn extends AppL10n {
   @override
   String ruleVersionsRollbackFailed(String message) {
     return 'Rollback failed: $message';
-  }
-
-  @override
-  String get webhookTitle => 'Webhook';
-
-  @override
-  String get webhookIntro =>
-      'Push automation and audit events to your own webhook. The body is JSON and is signed with HMAC-SHA256 over \"timestamp.body\" so your server can verify the source.';
-
-  @override
-  String get webhookSection => 'Delivery';
-
-  @override
-  String get webhookEnable => 'Enable webhook';
-
-  @override
-  String get webhookEnableDesc =>
-      'Off by default. When off, no requests are sent.';
-
-  @override
-  String get webhookUrl => 'Endpoint URL';
-
-  @override
-  String get webhookUrlHint => 'https://example.com/diting/hook';
-
-  @override
-  String get webhookSecret => 'Signing secret';
-
-  @override
-  String get webhookSecretDesc =>
-      'Used for HMAC-SHA256; header X-Diting-Signature looks like sha256=...';
-
-  @override
-  String get webhookTest => 'Send a test event';
-
-  @override
-  String get webhookTestHint =>
-      'POST a test event to the configured endpoint to verify signing and reachability';
-
-  @override
-  String get webhookTesting => 'Sending…';
-
-  @override
-  String webhookTestOk(String result) {
-    return 'Sent: $result';
-  }
-
-  @override
-  String webhookTestFail(String result) {
-    return 'Failed: $result';
   }
 }

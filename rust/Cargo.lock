@@ -556,7 +556,6 @@ dependencies = [
  "diting-hit-core",
  "diting-ip-quality-core",
  "diting-leak-core",
- "diting-localapi-core",
  "diting-log-core",
  "diting-log-query-core",
  "diting-netprofile-core",
@@ -572,18 +571,10 @@ dependencies = [
  "diting-services-core",
  "diting-subscription-core",
  "diting-vpn-config-core",
- "diting-webhook-core",
 ]
 
 [[package]]
 name = "diting-leak-core"
-version = "0.1.0"
-dependencies = [
- "serde_json",
-]
-
-[[package]]
-name = "diting-localapi-core"
 version = "0.1.0"
 dependencies = [
  "serde_json",
@@ -822,13 +813,6 @@ name = "diting-vpn-config-core"
 version = "0.1.0"
 dependencies = [
  "jni",
- "serde_json",
-]
-
-[[package]]
-name = "diting-webhook-core"
-version = "0.1.0"
-dependencies = [
  "serde_json",
 ]
 

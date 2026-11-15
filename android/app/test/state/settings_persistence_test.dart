@@ -31,7 +31,7 @@ import '../support/app_host.dart';
 
 void main() {
   group('重新打开后仍在', _settingsPersistence);
-  group('自定义资源表', _configResources);
+  group('User-Agent 与按需连接', _configResources);
 }
 
 /// Settings that used to reset on restart: appearance, dashboard order, on-demand matching and the

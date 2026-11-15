@@ -1,4 +1,5 @@
-/// User-Agent page (upstream `views/config/user_agents.dart`).
+/// User-Agent management (upstream `views/config/user_agents.dart`), reached directly from the
+/// feature hub after the former 自定义资源 wrapper was removed.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -39,8 +40,16 @@ class UserAgentsConfigPage extends ConsumerWidget {
     final agents = resources.userAgents;
     final selected = resources.selectedUserAgent;
     final notifier = ref.read(configResourcesProvider.notifier);
+    // The selected row is looked up once so the summary and the list agree on the label.
+    MockUserAgent? selectedAgent;
+    for (final agent in agents) {
+      if (agent.value == selected) {
+        selectedAgent = agent;
+        break;
+      }
+    }
     return CommonScaffold(
-      title: 'User-Agent',
+      title: context.l10n.customResourcesTitle,
       iconActions: [
         IconButtonData(
           glyph: AppGlyphs.add,
@@ -50,13 +59,35 @@ class UserAgentsConfigPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          NoteCard(
-            text:
-                context.l10n.uaNote,
-            glyph: AppGlyphs.account,
-          ),
+          NoteCard(text: context.l10n.uaNote, glyph: AppGlyphs.account),
+          // A read-only summary first: it answers "what is being sent right now" without the user
+          // having to scan the whole candidate list for the selected row.
           generateSection(
             title: context.l10n.uaCurrent,
+            items: [
+              ListItem(
+                leading: GlyphIcon(
+                  selectedAgent == null
+                      ? AppGlyphs.account
+                      : AppGlyphs.checkCircle,
+                ),
+                title: Text(
+                  selectedAgent?.displayName ?? context.l10n.uaNoOverride,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  selectedAgent == null
+                      ? context.l10n.uaNoOverrideBody
+                      : selectedAgent.isDefault
+                      ? context.l10n.uaBuiltin
+                      : context.l10n.uaCustom,
+                ),
+              ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.uaAll,
             items: [
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.checkCircle),
@@ -73,7 +104,11 @@ class UserAgentsConfigPage extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  subtitle: Text(agent.isDefault ? context.l10n.uaBuiltin : context.l10n.uaCustom),
+                  subtitle: Text(
+                    agent.isDefault
+                        ? context.l10n.uaBuiltin
+                        : context.l10n.uaCustom,
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     spacing: 4,
@@ -99,8 +134,7 @@ class UserAgentsConfigPage extends ConsumerWidget {
                   onTap: () => notifier.selectUserAgent(agent.value),
                 ),
             ],
-            footer:
-                context.l10n.uaBuiltinNote,
+            footer: context.l10n.uaBuiltinNote,
           ),
         ],
       ),

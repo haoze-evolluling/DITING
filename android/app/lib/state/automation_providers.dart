@@ -7,7 +7,6 @@ import 'dart:async';
 import 'package:diting_android/data/db/automation_models.dart';
 import 'package:diting_android/data/db/automation_repository.dart';
 import 'package:diting_shared/data/db/legacy_database.dart';
-import 'package:diting_android/state/webhook_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -70,8 +69,6 @@ class AutomationController {
   Future<void> logEvent(AutomationEvent event) async {
     await (await _repository(_ref))?.logEvent(event);
     _bump();
-    // A11: mirror the audit event to the user's webhook, fire-and-forget.
-    unawaited(_ref.read(webhookActionsProvider).dispatch(event));
   }
 }
 

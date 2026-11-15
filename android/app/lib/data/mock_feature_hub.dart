@@ -38,14 +38,15 @@ class MockFeatureCategory {
 /// Routes are literals here; `test/route_catalog_test.dart` keeps them in sync.
 ///
 /// Information architecture — the hub is grouped by **what the feature does and when a user
-/// reaches for it**, not by where the code lives. Seven purpose-based sections, four cards each,
-/// so the two-column grid never leaves a blank cell and the three work modes share one layout:
+/// reaches for it**, not by where the code lives. Seven purpose-based sections, an even number of
+/// cards each, so the two-column grid never leaves a blank cell and the three work modes share one
+/// layout:
 ///
 ///   1. DNS 解析       服务商 / 策略 / 缓存 / 服务显示
 ///   2. 规则与控制     拦截策略 / 规则订阅 / 应用规则 / 隐私套件
 ///   3. 应用与网络     实时连接 / 应用洞察 / 网络工具 / LAN 限速
 ///   4. 高级与诊断     网络诊断 / HTTPS 检查 / 出站代理 / AI 分析
-///   5. 接口与联动     自动化 / 本地 API / Webhook / 自定义资源
+///   5. 自动化与资源   场景自动化 / User-Agent 管理
 ///   6. 数据与维护     备份迁移 / 数据清理 / 故障排查 / 日志模式
 ///   7. 界面与数据     外观 / 隐藏功能 / 其他设置 / 关于
 ///
@@ -55,7 +56,7 @@ class MockFeatureCategory {
 ///   - 解析策略 → DNS64
 ///   - 规则控制 → 域名黑名单 / 域名白名单 / 域名覆写 / 规则测试 / 临时暂停 / 拦截响应
 ///   - 规则订阅 → 自动更新 / 镜像模板 / 版本回滚
-///   - 自动化 → 配置档案 / 分时规则 / 网络档案
+///   - 场景自动化 → 按需连接 / 配置档案 / 分时规则 / 网络档案
 ///   - 应用规则 → 禁止联网应用 / 排除应用
 ///   - 应用流量/日志/网络工具/设置 are also full-screen entries from the dock.
 ///
@@ -214,24 +215,10 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         featureKey: 'automation',
       ),
       MockFeatureCard(
-        title: l10n.localApiTitle,
-        description: l10n.localApiIntro,
-        glyphName: 'key',
-        route: '/network/local-api',
-        featureKey: 'local_api',
-      ),
-      MockFeatureCard(
-        title: l10n.webhookTitle,
-        description: l10n.webhookIntro,
-        glyphName: 'send',
-        route: '/hub/rules/webhook',
-        featureKey: 'webhook',
-      ),
-      MockFeatureCard(
         title: l10n.customResourcesTitle,
-        description: l10n.devCustomResourcesBody,
+        description: l10n.devUserAgentBody,
         glyphName: 'resources',
-        route: '/config/custom-resources',
+        route: '/config/user-agents',
         featureKey: 'custom_resources',
       ),
     ],

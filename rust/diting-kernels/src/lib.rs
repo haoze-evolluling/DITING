@@ -23,7 +23,6 @@ pub use diting_event_core;
 pub use diting_hit_core;
 pub use diting_ip_quality_core;
 pub use diting_leak_core;
-pub use diting_localapi_core;
 pub use diting_log_core;
 pub use diting_log_query_core;
 pub use diting_netprofile_core;
@@ -39,7 +38,6 @@ pub use diting_schedule_core;
 pub use diting_services_core;
 pub use diting_subscription_core;
 pub use diting_vpn_config_core;
-pub use diting_webhook_core;
 
 /// The umbrella library's own ABI version (K9). Every kernel already exports its per-payload
 /// `ABI_VERSION`; this one lets a loader assert it opened the bundle it expects before probing the

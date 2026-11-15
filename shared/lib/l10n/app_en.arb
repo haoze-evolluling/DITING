@@ -745,7 +745,7 @@
   "hubTroubleshootingDescription": "Export crash logs and capture runtime logs to send to the developer",
   "hubCategoryNetworkTools": "Network tools and privacy",
   "hubCategoryAutomation": "Automation and scenes",
-  "hubCategoryIntegration": "Interfaces and integration",
+  "hubCategoryIntegration": "Automation and resources",
   "hubCategorySubscription": "Subscriptions and updates",
   "hubDnsLeak": "DNS leak",
   "hubAutoUpdateDescription": "Update rule subscriptions on a fixed interval or at a daily time",
@@ -1658,6 +1658,7 @@
   "uaEdit": "Edit User-Agent",
   "uaNote": "The UA is sent with subscription downloads, ruleset fetches and subscription speed tests; some servers reject requests by UA, and changing it here works around that.",
   "uaCurrent": "Current selection",
+  "uaAll": "All User-Agents",
   "uaNoOverride": "No override",
   "uaNoOverrideBody": "Use the UA from the subscription or the core",
   "uaBuiltin": "Built-in",
@@ -1732,9 +1733,7 @@
   "odBatteryUnsupportedHint": "This build does not support that permission",
   "odCapNoPermission": "Cannot read: the location permission is required",
   "odCapCurrent": "Connected to {name}",
-  "customResourcesTitle": "Custom resources",
-  "customResourcesNote": "These resources are referenced by name: renaming one breaks the reference, while editing content takes effect the next time the configuration loads. They are not part of the 1.4.3 interface and are kept here for debugging.",
-  "customResourcesSection": "Resources",
+  "customResourcesTitle": "User-Agent management",
   "configDelete": "Delete",
   "configCancel": "Cancel",
   "configNotSet": "Not set",
@@ -5161,8 +5160,8 @@
   "troubleshootEventsOpenBody": "Filter startup, service and error events by level and module",
   "troubleshootDetailMode": "Detailed mode",
   "troubleshootDetailModeNote": "Detailed mode records the full logcat of every process and buffer; broader but uses more power.",
-  "automationTitle": "Automation",
-  "automationSubtitle": "Compose scenarios from conditions and actions",
+  "automationTitle": "Scenario automation",
+  "automationSubtitle": "Compose condition-action scenarios and on-demand connection",
   "automationHubSection": "Scenarios & automation",
   "automationIntro": "Combine triggers, conditions and actions into scenes (home / meeting / gaming / low battery).",
   "automationEmpty": "No automation rules yet. Add one from the top-right to start composing scenes.",
@@ -5207,6 +5206,7 @@
   "automationActionBlockServices": "Block services",
   "automationServicesUnavailable": "Service catalog core unavailable",
   "automationSwitchProfileNone": "Do not switch profile",
+  "automationSwitchProfile": "Switch profile",
   "automationScheduleStart": "Start",
   "automationScheduleEnd": "End",
   "profilesTitle": "Profiles",
@@ -5278,21 +5278,6 @@
   "appInsightsMap": "Connection map",
   "appInsightsStat": "{connections} connections · {blocked} blocked · {bytes}",
   "appInsightsNoDomains": "No domains",
-  "localApiTitle": "Local API",
-  "localApiIntro": "A read-only HTTP API bound to 127.0.0.1 and guarded by a token, for local scripts to read status.",
-  "localApiEnable": "Enable local API",
-  "localApiToken": "Access token",
-  "localApiRegenerate": "Regenerate",
-  "localApiCopy": "Copy",
-  "localApiCopied": "Copied",
-  "localApiPort": "Port",
-  "localApiRunning": "Running: http://127.0.0.1:{port}",
-  "localApiStopped": "Stopped",
-  "localApiEndpoints": "Endpoints",
-  "localApiEndpointStatus": "GET /status",
-  "localApiEndpointVersion": "GET /version",
-  "localApiHeaderHint": "Header: X-Diting-Token: <token>",
-  "localApiError": "Failed to start: {message}",
   "privacySuiteTitle": "Privacy protection",
   "privacySuiteIntro": "Tighten DNS privacy without disturbing normal resolution: cut down trackable record types and stop domains from rebinding to internal addresses.",
   "privacyDnsSection": "DNS privacy",
@@ -5345,30 +5330,6 @@
   "@ruleVersionsRollbackFailed": {
     "placeholders": {
       "message": { "type": "String" }
-    }
-  },
-  "webhookTitle": "Webhook",
-  "webhookIntro": "Push automation and audit events to your own webhook. The body is JSON and is signed with HMAC-SHA256 over \"timestamp.body\" so your server can verify the source.",
-  "webhookSection": "Delivery",
-  "webhookEnable": "Enable webhook",
-  "webhookEnableDesc": "Off by default. When off, no requests are sent.",
-  "webhookUrl": "Endpoint URL",
-  "webhookUrlHint": "https://example.com/diting/hook",
-  "webhookSecret": "Signing secret",
-  "webhookSecretDesc": "Used for HMAC-SHA256; header X-Diting-Signature looks like sha256=...",
-  "webhookTest": "Send a test event",
-  "webhookTestHint": "POST a test event to the configured endpoint to verify signing and reachability",
-  "webhookTesting": "Sending…",
-  "webhookTestOk": "Sent: {result}",
-  "@webhookTestOk": {
-    "placeholders": {
-      "result": { "type": "String" }
-    }
-  },
-  "webhookTestFail": "Failed: {result}",
-  "@webhookTestFail": {
-    "placeholders": {
-      "result": { "type": "String" }
     }
   }
 }

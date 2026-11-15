@@ -18,14 +18,14 @@ void main() {
 
   // The phase-3 surfaces, deliberately the densest ones (toggle rows, count steppers, history lists).
   const keys = [
-    '本地 API',
     '隐私套件',
     'DNS64',
     'LAN 客户端限速',
     '订阅版本回滚',
-    'Webhook 通知',
     '应用洞察',
     '实时连接',
+    '按需连接',
+    'User-Agent',
   ];
 
   testWidgets('英语 + 320dp + 1.3 倍字号：阶段三页面无溢出', (tester) async {

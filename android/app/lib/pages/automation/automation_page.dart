@@ -1,14 +1,17 @@
-/// Automation centre (A1 / A14): the rule list plus the audit timeline.
+/// Automation centre (A1 / A14): the rule list, the scenario settings (including the merged
+/// on-demand connection) and the audit timeline.
 ///
 /// The list is a view over `automation_rule`; opening a row edits its condition-action document,
 /// tapping the switch enables or pauses it. The timeline is the append-only `automation_event` log,
-/// so "when and why did it fire" is answerable without the log tables.
+/// so "when and why did it fire" is answerable without the log tables. On-demand used to live under
+/// 自定义资源; it is now a section here because it is another way a scenario decides the tunnel.
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';
 import 'package:diting_android/routes/automation_routes.dart';
 import 'package:diting_android/routes/network_profile_routes.dart';
 import 'package:diting_android/state/automation_providers.dart';
+import 'package:diting_android/state/config_providers_resources.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -24,6 +27,7 @@ class AutomationPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rules = ref.watch(automationRulesProvider);
     final events = ref.watch(automationEventsProvider);
+    final resources = ref.watch(configResourcesProvider);
     return CommonScaffold(
       title: context.l10n.automationTitle,
       actions: [
@@ -48,30 +52,32 @@ class AutomationPage extends ConsumerWidget {
                           onToggle: (value) => ref
                               .read(automationControllerProvider)
                               .setRuleEnabled(rule.id, value),
-                          onTap: () => context.push(
-                            AutomationPaths.edit(rule.id),
-                          ),
+                          onTap: () =>
+                              context.push(AutomationPaths.edit(rule.id)),
                         ),
                     ],
                   ),
             loading: () => const SizedBox.shrink(),
             error: (error, _) => PageIntroCard(text: '$error'),
           ),
-          events.when(
-            data: (list) => generateSection(
-              title: context.l10n.automationHistory,
-              items: [
-                if (list.isEmpty)
-                  ListItem(
-                    leading: const GlyphIcon(AppGlyphs.clock),
-                    title: Text(context.l10n.automationHistoryEmpty),
-                  )
-                else
-                  for (final event in list.take(30)) _EventTile(event: event),
-              ],
-            ),
-            loading: () => const SizedBox.shrink(),
-            error: (error, _) => PageIntroCard(text: '$error'),
+          // The on-demand connection moved here from the former 自定义资源 page: it is another
+          // scenario input, so it now sits between the rules and the other scenario settings.
+          generateSection(
+            title: context.l10n.odTitle,
+            items: [
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.wifi),
+                title: Text(context.l10n.odTitle),
+                subtitle: Text(
+                  resources.onDemand
+                      ? '${context.l10n.odAllowlist} · '
+                            '${context.l10n.configItemCount(resources.ssidRules.length)}'
+                      : context.l10n.odDisableBody,
+                ),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                onTap: () => context.push(AutomationPaths.onDemand),
+              ),
+            ],
           ),
           generateSection(
             title: context.l10n.hubModuleMore,
@@ -95,6 +101,22 @@ class AutomationPage extends ConsumerWidget {
                 onTap: () => context.push(NetworkProfilePaths.root),
               ),
             ],
+          ),
+          events.when(
+            data: (list) => generateSection(
+              title: context.l10n.automationHistory,
+              items: [
+                if (list.isEmpty)
+                  ListItem(
+                    leading: const GlyphIcon(AppGlyphs.clock),
+                    title: Text(context.l10n.automationHistoryEmpty),
+                  )
+                else
+                  for (final event in list.take(30)) _EventTile(event: event),
+              ],
+            ),
+            loading: () => const SizedBox.shrink(),
+            error: (error, _) => PageIntroCard(text: '$error'),
           ),
         ],
       ),
@@ -138,12 +160,14 @@ class _RuleTile extends StatelessWidget {
     );
   }
 
-  static String _triggerLabel(BuildContext context, String type) => switch (type) {
-    AutomationSpec.triggerSchedule => context.l10n.automationTriggerSchedule,
-    AutomationSpec.triggerNetwork => context.l10n.automationTriggerNetwork,
-    AutomationSpec.triggerState => context.l10n.automationTriggerState,
-    _ => context.l10n.automationTriggerManual,
-  };
+  static String _triggerLabel(BuildContext context, String type) =>
+      switch (type) {
+        AutomationSpec.triggerSchedule =>
+          context.l10n.automationTriggerSchedule,
+        AutomationSpec.triggerNetwork => context.l10n.automationTriggerNetwork,
+        AutomationSpec.triggerState => context.l10n.automationTriggerState,
+        _ => context.l10n.automationTriggerManual,
+      };
 }
 
 class _EventTile extends StatelessWidget {

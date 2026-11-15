@@ -67,7 +67,6 @@ void main() {
     expect(find.text('域名覆写'), findsOneWidget);
     expect(find.text('自动化'), findsNothing);
     expect(find.text('规则订阅'), findsNothing);
-    expect(find.text('本地 API'), findsNothing);
     expect(find.text('隐私套件'), findsNothing);
   });
 

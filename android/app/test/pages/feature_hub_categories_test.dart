@@ -1,6 +1,7 @@
-// Guards the feature-hub taxonomy: seven purpose-based sections, four cards each (even, so the
-// two-column grid never leaves a blank cell), a balanced total and no card reachable from two
-// places. Express mode keeps only the sections that still apply and every one stays even.
+// Guards the feature-hub taxonomy: seven purpose-based sections, four cards each except the
+// deliberately slimmed 自动化与资源 section (two cards), an even count per section and no card
+// reachable from two places. Express mode keeps only the sections that still apply and every one
+// stays even.
 
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,34 +12,39 @@ void main() {
   final l10n = lookupAppL10n(const Locale('zh'));
   final categories = mockFeatureCategories(l10n);
 
-  test('7 个分类、每类 4 张、共 28 张且每类偶数', () {
-    expect(
-      categories.map((category) => category.title).toList(),
-      [
-        'DNS 解析',
-        '规则与控制',
-        '应用与网络',
-        '高级与诊断',
-        '接口与联动',
-        '数据与维护',
-        '界面与数据',
-      ],
-    );
+  test('7 个分类、共 26 张、每类偶数且仅「自动化与资源」为 2 张', () {
+    expect(categories.map((category) => category.title).toList(), [
+      'DNS 解析',
+      '规则与控制',
+      '应用与网络',
+      '高级与诊断',
+      '自动化与资源',
+      '数据与维护',
+      '界面与数据',
+    ]);
     expect(categories.length, 7);
     for (final category in categories) {
       expect(category.cards, isNotEmpty, reason: '${category.title} 不应为空分类');
       expect(
-        category.cards.length,
-        4,
-        reason: '${category.title} 应为 4 张卡片',
+        category.cards.length.isEven,
+        isTrue,
+        reason: '${category.title} 卡片数应为偶数',
       );
-      expect(category.cards.length.isEven, isTrue);
+    }
+    // 本地 API 与 Webhook 删除后，该分类只剩场景自动化与 User-Agent 管理两张卡片。
+    final integration = categories.firstWhere(
+      (category) => category.title == '自动化与资源',
+    );
+    expect(integration.cards.length, 2);
+    for (final category in categories) {
+      if (category.title == '自动化与资源') continue;
+      expect(category.cards.length, 4, reason: '${category.title} 应为 4 张卡片');
     }
     final total = categories.fold<int>(
       0,
       (sum, category) => sum + category.cards.length,
     );
-    expect(total, 28);
+    expect(total, 26);
   });
 
   test('极速模式每个非空分类仍为偶数', () {

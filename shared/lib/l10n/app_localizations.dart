@@ -4490,7 +4490,7 @@ abstract class AppL10n {
   /// No description provided for @hubCategoryIntegration.
   ///
   /// In zh, this message translates to:
-  /// **'接口与联动'**
+  /// **'自动化与资源'**
   String get hubCategoryIntegration;
 
   /// No description provided for @hubCategorySubscription.
@@ -9970,6 +9970,12 @@ abstract class AppL10n {
   /// **'当前选择'**
   String get uaCurrent;
 
+  /// No description provided for @uaAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部 User-Agent'**
+  String get uaAll;
+
   /// No description provided for @uaNoOverride.
   ///
   /// In zh, this message translates to:
@@ -10417,20 +10423,8 @@ abstract class AppL10n {
   /// No description provided for @customResourcesTitle.
   ///
   /// In zh, this message translates to:
-  /// **'自定义资源'**
+  /// **'User-Agent 管理'**
   String get customResourcesTitle;
-
-  /// No description provided for @customResourcesNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'这些资源按名字被引用：改名字等于断开引用，改内容则在下一次加载配置时生效。它们不属于旧版 1.4.3 的界面，保留在此供调试使用。'**
-  String get customResourcesNote;
-
-  /// No description provided for @customResourcesSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'资源'**
-  String get customResourcesSection;
 
   /// No description provided for @configDelete.
   ///
@@ -25219,13 +25213,13 @@ abstract class AppL10n {
   /// No description provided for @automationTitle.
   ///
   /// In zh, this message translates to:
-  /// **'自动化'**
+  /// **'场景自动化'**
   String get automationTitle;
 
   /// No description provided for @automationSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'条件-动作规则编排场景'**
+  /// **'条件-动作编排 · 按需连接'**
   String get automationSubtitle;
 
   /// No description provided for @automationHubSection.
@@ -25798,96 +25792,6 @@ abstract class AppL10n {
   /// **'暂无域名'**
   String get appInsightsNoDomains;
 
-  /// No description provided for @localApiTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'本地 API'**
-  String get localApiTitle;
-
-  /// No description provided for @localApiIntro.
-  ///
-  /// In zh, this message translates to:
-  /// **'仅绑定 127.0.0.1 且需要令牌校验的只读 HTTP 接口，供本机脚本读取运行状态。'**
-  String get localApiIntro;
-
-  /// No description provided for @localApiEnable.
-  ///
-  /// In zh, this message translates to:
-  /// **'启用本地 API'**
-  String get localApiEnable;
-
-  /// No description provided for @localApiToken.
-  ///
-  /// In zh, this message translates to:
-  /// **'访问令牌'**
-  String get localApiToken;
-
-  /// No description provided for @localApiRegenerate.
-  ///
-  /// In zh, this message translates to:
-  /// **'重新生成'**
-  String get localApiRegenerate;
-
-  /// No description provided for @localApiCopy.
-  ///
-  /// In zh, this message translates to:
-  /// **'复制'**
-  String get localApiCopy;
-
-  /// No description provided for @localApiCopied.
-  ///
-  /// In zh, this message translates to:
-  /// **'已复制'**
-  String get localApiCopied;
-
-  /// No description provided for @localApiPort.
-  ///
-  /// In zh, this message translates to:
-  /// **'端口'**
-  String get localApiPort;
-
-  /// No description provided for @localApiRunning.
-  ///
-  /// In zh, this message translates to:
-  /// **'运行中：http://127.0.0.1:{port}'**
-  String localApiRunning(int port);
-
-  /// No description provided for @localApiStopped.
-  ///
-  /// In zh, this message translates to:
-  /// **'已停止'**
-  String get localApiStopped;
-
-  /// No description provided for @localApiEndpoints.
-  ///
-  /// In zh, this message translates to:
-  /// **'接口'**
-  String get localApiEndpoints;
-
-  /// No description provided for @localApiEndpointStatus.
-  ///
-  /// In zh, this message translates to:
-  /// **'GET /status'**
-  String get localApiEndpointStatus;
-
-  /// No description provided for @localApiEndpointVersion.
-  ///
-  /// In zh, this message translates to:
-  /// **'GET /version'**
-  String get localApiEndpointVersion;
-
-  /// No description provided for @localApiHeaderHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'请求头：X-Diting-Token: <令牌>'**
-  String get localApiHeaderHint;
-
-  /// No description provided for @localApiError.
-  ///
-  /// In zh, this message translates to:
-  /// **'启动失败：{message}'**
-  String localApiError(String message);
-
   /// No description provided for @privacySuiteTitle.
   ///
   /// In zh, this message translates to:
@@ -26115,90 +26019,6 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'回滚失败：{message}'**
   String ruleVersionsRollbackFailed(String message);
-
-  /// No description provided for @webhookTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'Webhook'**
-  String get webhookTitle;
-
-  /// No description provided for @webhookIntro.
-  ///
-  /// In zh, this message translates to:
-  /// **'把自动化与审计事件推送到你自己的 Webhook。请求体为 JSON，并用 HMAC-SHA256 对「时间戳.请求体」签名，可在服务端校验来源。'**
-  String get webhookIntro;
-
-  /// No description provided for @webhookSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'推送配置'**
-  String get webhookSection;
-
-  /// No description provided for @webhookEnable.
-  ///
-  /// In zh, this message translates to:
-  /// **'启用 Webhook'**
-  String get webhookEnable;
-
-  /// No description provided for @webhookEnableDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'默认关闭。关闭时不发送任何请求。'**
-  String get webhookEnableDesc;
-
-  /// No description provided for @webhookUrl.
-  ///
-  /// In zh, this message translates to:
-  /// **'接收地址'**
-  String get webhookUrl;
-
-  /// No description provided for @webhookUrlHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'https://example.com/diting/hook'**
-  String get webhookUrlHint;
-
-  /// No description provided for @webhookSecret.
-  ///
-  /// In zh, this message translates to:
-  /// **'签名密钥'**
-  String get webhookSecret;
-
-  /// No description provided for @webhookSecretDesc.
-  ///
-  /// In zh, this message translates to:
-  /// **'用于 HMAC-SHA256 签名，请求头 X-Diting-Signature 形如 sha256=...'**
-  String get webhookSecretDesc;
-
-  /// No description provided for @webhookTest.
-  ///
-  /// In zh, this message translates to:
-  /// **'发送测试事件'**
-  String get webhookTest;
-
-  /// No description provided for @webhookTestHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'向已配置地址发送一条 test 事件，验证签名与连通性'**
-  String get webhookTestHint;
-
-  /// No description provided for @webhookTesting.
-  ///
-  /// In zh, this message translates to:
-  /// **'正在发送…'**
-  String get webhookTesting;
-
-  /// No description provided for @webhookTestOk.
-  ///
-  /// In zh, this message translates to:
-  /// **'发送成功：{result}'**
-  String webhookTestOk(String result);
-
-  /// No description provided for @webhookTestFail.
-  ///
-  /// In zh, this message translates to:
-  /// **'发送失败：{result}'**
-  String webhookTestFail(String result);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

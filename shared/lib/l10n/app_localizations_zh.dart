@@ -2375,7 +2375,7 @@ class AppL10nZh extends AppL10n {
   String get hubCategoryAutomation => '自动化与场景';
 
   @override
-  String get hubCategoryIntegration => '接口与联动';
+  String get hubCategoryIntegration => '自动化与资源';
 
   @override
   String get hubCategorySubscription => '订阅与更新';
@@ -5387,6 +5387,9 @@ class AppL10nZh extends AppL10n {
   String get uaCurrent => '当前选择';
 
   @override
+  String get uaAll => '全部 User-Agent';
+
+  @override
   String get uaNoOverride => '不覆写';
 
   @override
@@ -5402,7 +5405,8 @@ class AppL10nZh extends AppL10n {
   String get uaBuiltinNote => '内置 UA 不可删除：删掉之后内核回落到默认值，用户会误以为「设置没生效」。';
 
   @override
-  String get uaHint => '如：Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+  String get uaHint =>
+      '如：Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 
   @override
   String get uaNameLabel => 'UA 名称';
@@ -5616,14 +5620,7 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get customResourcesTitle => '自定义资源';
-
-  @override
-  String get customResourcesNote =>
-      '这些资源按名字被引用：改名字等于断开引用，改内容则在下一次加载配置时生效。它们不属于旧版 1.4.3 的界面，保留在此供调试使用。';
-
-  @override
-  String get customResourcesSection => '资源';
+  String get customResourcesTitle => 'User-Agent 管理';
 
   @override
   String get configDelete => '删除';
@@ -13759,10 +13756,10 @@ class AppL10nZh extends AppL10n {
   String get troubleshootDetailModeNote => '详细模式记录所有进程与缓冲区的完整 logcat，更全面但更耗电。';
 
   @override
-  String get automationTitle => '自动化';
+  String get automationTitle => '场景自动化';
 
   @override
-  String get automationSubtitle => '条件-动作规则编排场景';
+  String get automationSubtitle => '条件-动作编排 · 按需连接';
 
   @override
   String get automationHubSection => '场景与自动化';
@@ -14059,55 +14056,6 @@ class AppL10nZh extends AppL10n {
   String get appInsightsNoDomains => '暂无域名';
 
   @override
-  String get localApiTitle => '本地 API';
-
-  @override
-  String get localApiIntro => '仅绑定 127.0.0.1 且需要令牌校验的只读 HTTP 接口，供本机脚本读取运行状态。';
-
-  @override
-  String get localApiEnable => '启用本地 API';
-
-  @override
-  String get localApiToken => '访问令牌';
-
-  @override
-  String get localApiRegenerate => '重新生成';
-
-  @override
-  String get localApiCopy => '复制';
-
-  @override
-  String get localApiCopied => '已复制';
-
-  @override
-  String get localApiPort => '端口';
-
-  @override
-  String localApiRunning(int port) {
-    return '运行中：http://127.0.0.1:$port';
-  }
-
-  @override
-  String get localApiStopped => '已停止';
-
-  @override
-  String get localApiEndpoints => '接口';
-
-  @override
-  String get localApiEndpointStatus => 'GET /status';
-
-  @override
-  String get localApiEndpointVersion => 'GET /version';
-
-  @override
-  String get localApiHeaderHint => '请求头：X-Diting-Token: <令牌>';
-
-  @override
-  String localApiError(String message) {
-    return '启动失败：$message';
-  }
-
-  @override
   String get privacySuiteTitle => '隐私保护';
 
   @override
@@ -14231,53 +14179,5 @@ class AppL10nZh extends AppL10n {
   @override
   String ruleVersionsRollbackFailed(String message) {
     return '回滚失败：$message';
-  }
-
-  @override
-  String get webhookTitle => 'Webhook';
-
-  @override
-  String get webhookIntro =>
-      '把自动化与审计事件推送到你自己的 Webhook。请求体为 JSON，并用 HMAC-SHA256 对「时间戳.请求体」签名，可在服务端校验来源。';
-
-  @override
-  String get webhookSection => '推送配置';
-
-  @override
-  String get webhookEnable => '启用 Webhook';
-
-  @override
-  String get webhookEnableDesc => '默认关闭。关闭时不发送任何请求。';
-
-  @override
-  String get webhookUrl => '接收地址';
-
-  @override
-  String get webhookUrlHint => 'https://example.com/diting/hook';
-
-  @override
-  String get webhookSecret => '签名密钥';
-
-  @override
-  String get webhookSecretDesc =>
-      '用于 HMAC-SHA256 签名，请求头 X-Diting-Signature 形如 sha256=...';
-
-  @override
-  String get webhookTest => '发送测试事件';
-
-  @override
-  String get webhookTestHint => '向已配置地址发送一条 test 事件，验证签名与连通性';
-
-  @override
-  String get webhookTesting => '正在发送…';
-
-  @override
-  String webhookTestOk(String result) {
-    return '发送成功：$result';
-  }
-
-  @override
-  String webhookTestFail(String result) {
-    return '发送失败：$result';
   }
 }
