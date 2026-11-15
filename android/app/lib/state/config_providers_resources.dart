@@ -57,17 +57,21 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
 
   void _put(ConfigResources next) => state = next;
 
-  /// Returns false for an empty or duplicate value; the caller shows a message.
-  bool addUserAgent(String value) {
+  /// Adds a custom agent. [name] is the card label; when omitted (older callers)
+  /// the card falls back to showing [value].
+  bool addUserAgent(String value, {String? name}) {
     final trimmed = value.trim();
+    final label = (name ?? '').trim();
     if (trimmed.isEmpty ||
-        state.userAgents.any((item) => item.value == trimmed)) {
+        state.userAgents.any((item) => item.value == trimmed) ||
+        (label.isNotEmpty &&
+            state.userAgents.any((item) => item.name == label))) {
       return false;
     }
     final next = state.copyWith(
       userAgents: [
         ...state.userAgents,
-        MockUserAgent(value: trimmed),
+        MockUserAgent(value: trimmed, name: label),
       ],
     );
     _put(next);
@@ -75,12 +79,18 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
     return true;
   }
 
-  bool updateUserAgent(String original, String value) {
+  bool updateUserAgent(String original, String value, {String? name}) {
     final trimmed = value.trim();
+    final label = name?.trim();
     if (trimmed.isEmpty ||
         state.userAgents.any(
           (item) => item.value == trimmed && item.value != original,
-        )) {
+        ) ||
+        (label != null &&
+            label.isNotEmpty &&
+            state.userAgents.any(
+              (item) => item.name == label && item.value != original,
+            ))) {
       return false;
     }
     // Read the selection before `_put`: afterwards it already holds the new value.
@@ -89,7 +99,11 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
       userAgents: [
         for (final item in state.userAgents)
           item.value == original
-              ? MockUserAgent(value: trimmed, isDefault: item.isDefault)
+              ? MockUserAgent(
+                  value: trimmed,
+                  name: label ?? item.name,
+                  isDefault: item.isDefault,
+                )
               : item,
       ],
       // Follow the rename when the edited entry was selected, or it points at nothing.

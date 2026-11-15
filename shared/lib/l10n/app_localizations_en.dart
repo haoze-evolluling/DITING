@@ -5704,7 +5704,14 @@ class AppL10nEn extends AppL10n {
       'Built-in UAs cannot be deleted: removing one makes the core fall back to its default, which looks like the setting stopped working.';
 
   @override
-  String get uaHint => 'e.g. clash-verge/v2.0.0';
+  String get uaHint =>
+      'e.g. Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+  @override
+  String get uaNameLabel => 'UA name';
+
+  @override
+  String get uaNameHint => 'e.g. Chrome / Windows';
 
   @override
   String get uaEmptyError => 'The UA cannot be empty';

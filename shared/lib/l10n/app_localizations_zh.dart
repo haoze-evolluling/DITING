@@ -5402,7 +5402,13 @@ class AppL10nZh extends AppL10n {
   String get uaBuiltinNote => '内置 UA 不可删除：删掉之后内核回落到默认值，用户会误以为「设置没生效」。';
 
   @override
-  String get uaHint => '如：clash-verge/v2.0.0';
+  String get uaHint => '如：Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+
+  @override
+  String get uaNameLabel => 'UA 名称';
+
+  @override
+  String get uaNameHint => '如：Chrome / Windows';
 
   @override
   String get uaEmptyError => 'UA 不能为空';

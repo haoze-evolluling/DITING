@@ -10003,8 +10003,20 @@ abstract class AppL10n {
   /// No description provided for @uaHint.
   ///
   /// In zh, this message translates to:
-  /// **'如：clash-verge/v2.0.0'**
+  /// **'如：Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'**
   String get uaHint;
+
+  /// No description provided for @uaNameLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'UA 名称'**
+  String get uaNameLabel;
+
+  /// No description provided for @uaNameHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'如：Chrome / Windows'**
+  String get uaNameHint;
 
   /// No description provided for @uaEmptyError.
   ///

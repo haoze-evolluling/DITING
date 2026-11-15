@@ -44,8 +44,16 @@
     "Built-in UAs cannot be deleted: removing one makes the core fall back to its default, which looks like the setting stopped working."
   ],
   "uaHint": [
-    "如：clash-verge/v2.0.0",
-    "e.g. clash-verge/v2.0.0"
+    "如：Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "e.g. Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  ],
+  "uaNameLabel": [
+    "UA 名称",
+    "UA name"
+  ],
+  "uaNameHint": [
+    "如：Chrome / Windows",
+    "e.g. Chrome / Windows"
   ],
   "uaEmptyError": [
     "UA 不能为空",

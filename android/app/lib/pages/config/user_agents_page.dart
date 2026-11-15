@@ -69,8 +69,8 @@ class UserAgentsConfigPage extends ConsumerWidget {
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.account),
                   title: Text(
-                    agent.value,
-                    maxLines: 2,
+                    agent.displayName,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: Text(agent.isDefault ? context.l10n.uaBuiltin : context.l10n.uaCustom),
@@ -86,7 +86,7 @@ class UserAgentsConfigPage extends ConsumerWidget {
                           onPressed: () => showUserAgentDialog(
                             context,
                             ref,
-                            existing: agent.value,
+                            existing: agent,
                           ),
                         ),
                       if (!agent.isDefault)

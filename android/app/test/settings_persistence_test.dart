@@ -343,11 +343,15 @@ void _configResources() {
   group('写入后能在新容器里读回', () {
     test('User-Agent 与选中项', () {
       final notifier = container().read(configResourcesProvider.notifier);
-      expect(notifier.addUserAgent('MyAgent/1.0'), isTrue);
+      expect(notifier.addUserAgent('MyAgent/1.0', name: '我的 UA'), isTrue);
       notifier.selectUserAgent('MyAgent/1.0');
 
       final reopened = container().read(configResourcesProvider);
       expect(reopened.userAgents.map((a) => a.value), contains('MyAgent/1.0'));
+      expect(
+        reopened.userAgents.firstWhere((a) => a.value == 'MyAgent/1.0').name,
+        '我的 UA',
+      );
       expect(reopened.selectedUserAgent, 'MyAgent/1.0');
     });
 
@@ -375,6 +379,7 @@ void _configResources() {
     });
 
     test('删光 UA 列表后不会回落到演示值', () {
+      final builtins = mockUserAgents.where((agent) => agent.isDefault).length;
       final notifier = container().read(configResourcesProvider.notifier);
       for (final agent in mockUserAgents) {
         if (!agent.isDefault) notifier.removeUserAgent(agent.value);
@@ -383,8 +388,8 @@ void _configResources() {
       notifier.removeUserAgent('Only/1.0');
 
       final reopened = container().read(configResourcesProvider);
-      expect(reopened.userAgents, hasLength(1));
-      expect(reopened.userAgents.single.isDefault, isTrue);
+      expect(reopened.userAgents, hasLength(builtins));
+      expect(reopened.userAgents.every((agent) => agent.isDefault), isTrue);
     });
   });
 
@@ -416,6 +421,44 @@ void _configResources() {
       expect(state.userAgents, hasLength(mockUserAgents.length));
       expect(state.ssidRules, hasLength(1));
       expect(state.ssidRules.single.ssid, 'Kept');
+    });
+  });
+
+  group('旧数据升级', () {
+    test('退役内置项被移除、新内置项补齐、失效选中项清空', () {
+      store.putString(
+        ConfigResourceStore.container,
+        'user_agents_json',
+        jsonEncode([
+          {'value': 'clash-verge/v2.0.0', 'isDefault': true},
+          {
+            'value':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                'AppleWebKit/537.36 (KHTML, like Gecko) '
+                'Chrome/126.0.0.0 Safari/537.36',
+            'isDefault': false,
+          },
+        ]),
+      );
+      store.putString(
+        ConfigResourceStore.container,
+        'selected_user_agent',
+        'clash-verge/v2.0.0',
+      );
+
+      final state = container().read(configResourcesProvider);
+      expect(
+        state.userAgents.any((a) => a.value == 'clash-verge/v2.0.0'),
+        isFalse,
+      );
+      expect(
+        state.userAgents.where((a) => a.isDefault).length,
+        mockUserAgents.where((a) => a.isDefault).length,
+      );
+      expect(state.selectedUserAgent, isNull);
+      // Legacy rows without a name get a short inferred label instead of the raw UA.
+      final custom = state.userAgents.firstWhere((a) => !a.isDefault);
+      expect(custom.name, 'Chrome / Windows');
     });
   });
 }

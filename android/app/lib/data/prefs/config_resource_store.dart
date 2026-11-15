@@ -23,18 +23,44 @@ class ConfigResourceStore {
 
   /// Each group falls back to its defaults independently, so one corrupt blob resets nothing else.
   ConfigResourceSnapshot load() {
-    final userAgents = _decodeList(_userAgentsKey, _userAgentFromMap);
+    final stored = _decodeList(_userAgentsKey, _userAgentFromMap);
+    final userAgents = _reconcileUserAgents(stored);
     final ssidRules = _decodeList(_ssidRulesKey, _ssidFromMap);
     final rawSelected = _store.read(container, _selectedUaKey);
     final selected = rawSelected is String ? rawSelected : null;
+    final selectedValue = selected == null || selected.isEmpty
+        ? null
+        : selected;
     return ConfigResourceSnapshot(
-      userAgents: userAgents ?? mockUserAgents,
-      // An empty string means "no override" was chosen, a missing key was never set. Both read as
-      // null.
-      selectedUserAgent: selected == null || selected.isEmpty ? null : selected,
+      userAgents: userAgents,
+      // A stale selection (a retired preset, say) points at nothing, so it reads as no override.
+      selectedUserAgent: userAgents.any((agent) => agent.value == selectedValue)
+          ? selectedValue
+          : null,
       ssidRules: ssidRules ?? mockSsidRules,
       onDemand: _store.read(container, _onDemandKey) == true,
     );
+  }
+
+  /// Keeps persisted custom entries, drops retired built-ins and adds newly shipped ones.
+  /// Without this, an upgrade would never surface new presets once the list reached disk.
+  List<MockUserAgent> _reconcileUserAgents(List<MockUserAgent>? stored) {
+    if (stored == null) return mockUserAgents;
+    final builtinValues = <String>{
+      for (final agent in mockUserAgents)
+        if (agent.isDefault) agent.value,
+    };
+    final kept = <MockUserAgent>[
+      for (final agent in stored)
+        if (!agent.isDefault || builtinValues.contains(agent.value)) agent,
+    ];
+    final present = <String>{for (final agent in kept) agent.value};
+    for (final agent in mockUserAgents) {
+      if (agent.isDefault && !present.contains(agent.value)) {
+        kept.add(agent);
+      }
+    }
+    return kept;
   }
 
   void saveUserAgents(List<MockUserAgent> agents) => _store.putString(
@@ -42,7 +68,11 @@ class ConfigResourceStore {
     _userAgentsKey,
     jsonEncode([
       for (final agent in agents)
-        {'value': agent.value, 'isDefault': agent.isDefault},
+        {
+          'value': agent.value,
+          'name': agent.name,
+          'isDefault': agent.isDefault,
+        },
     ]),
   );
 
@@ -110,7 +140,33 @@ class ConfigResourceStore {
   MockUserAgent? _userAgentFromMap(Map<String, Object?> map) {
     final value = map['value'];
     if (value is! String || value.trim().isEmpty) return null;
-    return MockUserAgent(value: value, isDefault: map['isDefault'] == true);
+    final name = map['name'];
+    final label = name is String ? name.trim() : '';
+    // Rows saved before names existed get a short inferred label, never the raw UA on the card.
+    return MockUserAgent(
+      value: value,
+      name: label.isNotEmpty ? label : _inferName(value),
+      isDefault: map['isDefault'] == true,
+    );
+  }
+
+  /// A short label for a legacy row that shipped without a name. Best-effort for
+  /// the common UA shapes; anything unrecognised is truncated.
+  String _inferName(String value) {
+    if (value.startsWith('curl/')) return 'curl';
+    if (value.contains('Edg/')) return 'Edge';
+    if (value.contains('Firefox/')) return 'Firefox';
+    if (value.contains('Chrome/')) {
+      return value.contains('Mobile') || value.contains('Android')
+          ? 'Chrome / Android'
+          : 'Chrome / Windows';
+    }
+    if (value.contains('Safari/')) {
+      return value.contains('iPhone') || value.contains('Mobile')
+          ? 'Safari / iPhone'
+          : 'Safari / macOS';
+    }
+    return value.length <= 32 ? value : '${value.substring(0, 32)}…';
   }
 
   MockSsidRule? _ssidFromMap(Map<String, Object?> map) {
