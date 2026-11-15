@@ -8113,7 +8113,7 @@ abstract class AppL10n {
   /// No description provided for @aboutCreditsBody.
   ///
   /// In zh, this message translates to:
-  /// **'上述两个项目均以 GPL-3.0 协议开源，相关代码与设计的版权归各自作者所有。谛听的界面层大量借鉴了 FlClash 的实现思路，隧道内核也源自 blockads-android 的早期改造；在此向它们的作者与所有贡献者致以诚挚谢意。'**
+  /// **'上述两个项目均以 GPL-3.0 协议开源，相关代码与设计的版权归各自作者所有。谛听的界面层大量借鉴了前述界面项目的实现思路，隧道内核也源自 blockads-android 的早期改造；在此向它们的作者与所有贡献者致以诚挚谢意。'**
   String get aboutCreditsBody;
 
   /// No description provided for @aboutSettings.

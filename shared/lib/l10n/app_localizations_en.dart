@@ -4617,7 +4617,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get aboutCreditsBody =>
-      'Both projects are open source under GPL-3.0, and the copyright of their code and design belongs to their authors. Diting\'s UI layer borrows heavily from FlClash, and its tunnel core derives from an early fork of blockads-android; our sincere thanks to their authors and all contributors.';
+      'Both projects are open source under GPL-3.0, and the copyright of their code and design belongs to their authors. Diting\'s UI layer borrows heavily from the aforementioned UI project, and its tunnel core derives from an early fork of blockads-android; our sincere thanks to their authors and all contributors.';
 
   @override
   String get aboutSettings => 'Settings';

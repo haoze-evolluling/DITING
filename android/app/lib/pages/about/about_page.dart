@@ -66,7 +66,9 @@ class AboutPage extends ConsumerWidget {
             items: [
               _LinkRow(
                 glyph: AppGlyphs.palette,
-                title: 'FlClash',
+                // 该开源项目对外敏感，按要求不在界面中展示其名称：标题留空，
+                // 仅保留下方通用的复用说明（aboutCreditsUi）。
+                title: '',
                 label: context.l10n.aboutCreditsUi,
                 url: flClashRepositoryUrl,
               ),

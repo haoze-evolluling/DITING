@@ -121,7 +121,9 @@ class DesktopAboutPage extends ConsumerWidget {
                   _linkRow(
                     context,
                     glyph: AppGlyphs.palette,
-                    title: 'FlClash',
+                    // 该开源项目对外敏感，按要求不在界面中展示其名称：标题留空，
+                    // 仅保留下方通用的复用说明（aboutCreditsUi）。
+                    title: '',
                     label: l10n.aboutCreditsUi,
                     onTap: () => openDesktopLink(context, flClashRepositoryUrl),
                   ),
