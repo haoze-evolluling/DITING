@@ -190,10 +190,16 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
           ),
         );
       case AddSubscriptionOk(:final id):
-        // Start the download before closing so the list spins as the sheet disappears.
+        // Start the download before closing so the list spins as the sheet disappears. The
+        // confirmation for an oversized body uses the root navigator overlay, since this sheet's
+        // context is gone by the time the download finishes.
         final updated = ref.read(subscriptionUpdateProvider.notifier);
         Navigator.of(context).pop();
-        await updated.updateOne(id);
+        await updated.updateOne(
+          id,
+          confirmLarge: (_, byteLength) =>
+              _confirmLargeSubscription(null, byteLength),
+        );
     }
   }
 
@@ -227,7 +233,11 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         Navigator.of(context).pop();
         // The stored rules came from the old address or kind, so replace them now.
         if (needsReimport) {
-          await updater.updateOne(entry.id);
+          await updater.updateOne(
+            entry.id,
+            confirmLarge: (_, byteLength) =>
+                _confirmLargeSubscription(null, byteLength),
+          );
         }
     }
   }

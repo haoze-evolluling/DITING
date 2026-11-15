@@ -56,6 +56,19 @@ class SubscriptionFetchResult {
        error = message,
        content = null;
 
+  /// The download succeeded but the user declined to import an oversized body. Nothing was written,
+  /// so the previous rules stay in place; this only marks the row as intentionally skipped.
+  const SubscriptionFetchResult.skipped({
+    this.requestedUrl,
+    this.usedMirror = false,
+    this.byteLength = 0,
+  }) : outcome = SubscriptionFetchOutcome.skipped,
+       lineCount = 0,
+       etag = null,
+       lastModified = null,
+       error = null,
+       content = null;
+
   final SubscriptionFetchOutcome outcome;
 
   /// Lexical line count, not imported rules (see [countEffectiveRuleLines]).
@@ -77,9 +90,10 @@ class SubscriptionFetchResult {
   bool get isSuccess => outcome == SubscriptionFetchOutcome.content;
   bool get isNotModified => outcome == SubscriptionFetchOutcome.notModified;
   bool get isFailure => outcome == SubscriptionFetchOutcome.failed;
+  bool get isSkipped => outcome == SubscriptionFetchOutcome.skipped;
 }
 
-enum SubscriptionFetchOutcome { content, notModified, failed }
+enum SubscriptionFetchOutcome { content, notModified, failed, skipped }
 
 /// Replaceable so pages and tests never hit the network.
 abstract class SubscriptionFetcher {

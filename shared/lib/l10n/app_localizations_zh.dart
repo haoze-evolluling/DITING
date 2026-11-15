@@ -2039,6 +2039,11 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
+  String subscriptionSkippedCount(int count) {
+    return '跳过 $count 项（较大订阅未确认）';
+  }
+
+  @override
   String subscriptionAlreadyExistsNamed(String kind, String name, String what) {
     return '$what已作为$kind存在（「$name」）';
   }
@@ -9021,9 +9026,15 @@ class AppL10nZh extends AppL10n {
   String get subsErrEmptyResponse => '订阅响应为空';
 
   @override
-  String subsLargeWarning(int maxMb) {
-    return '该订阅内容较大（超过 $maxMb MB），导入和运行可能变慢，或引发其他问题';
+  String get subsLargeConfirmTitle => '导入较大的订阅';
+
+  @override
+  String subsLargeConfirmMessage(String mb) {
+    return '该订阅约 $mb MB。导入和运行可能变慢，或引发其他问题，是否继续导入？';
   }
+
+  @override
+  String get subsLargeConfirmAction => '仍要导入';
 
   @override
   String get subsErrUnreachable => '网络不可达';

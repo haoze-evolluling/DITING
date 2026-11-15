@@ -1165,6 +1165,14 @@
       }
     }
   },
+  "subscriptionSkippedCount": "跳过 {count} 项（较大订阅未确认）",
+  "@subscriptionSkippedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "subscriptionAlreadyExistsNamed": "{what}已作为{kind}存在（「{name}」）",
   "@subscriptionAlreadyExistsNamed": {
     "placeholders": {
@@ -5339,14 +5347,16 @@
   },
   "subsErrTls": "TLS 握手失败，请检查证书或镜像地址",
   "subsErrEmptyResponse": "订阅响应为空",
-  "subsLargeWarning": "该订阅内容较大（超过 {maxMb} MB），导入和运行可能变慢，或引发其他问题",
-  "@subsLargeWarning": {
+  "subsLargeConfirmTitle": "导入较大的订阅",
+  "subsLargeConfirmMessage": "该订阅约 {mb} MB。导入和运行可能变慢，或引发其他问题，是否继续导入？",
+  "@subsLargeConfirmMessage": {
     "placeholders": {
-      "maxMb": {
-        "type": "int"
+      "mb": {
+        "type": "String"
       }
     }
   },
+  "subsLargeConfirmAction": "仍要导入",
   "subsErrUnreachable": "网络不可达",
   "subsErrUnreachableCode": "网络不可达：{code}",
   "@subsErrUnreachableCode": {

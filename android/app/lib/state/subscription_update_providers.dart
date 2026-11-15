@@ -1,5 +1,11 @@
 part of 'subscription_providers.dart';
 
+/// Asks the user whether to import a subscription body over [maxSubscriptionBytes]. Returns true to
+/// proceed. Supplied by the UI so the notifier stays free of widget code; a null confirmer (e.g. a
+/// background auto-update with no screen) means the import proceeds without asking.
+typedef LargeSubscriptionConfirmer =
+    Future<bool> Function(SubscriptionEntry entry, int byteLength);
+
 /// Update progress and busy flags in one notifier, so they change in the same frame.
 class SubscriptionUpdateState {
   const SubscriptionUpdateState({
@@ -7,7 +13,6 @@ class SubscriptionUpdateState {
     this.updatingAll = false,
     this.progress = 0,
     this.lastMessage,
-    this.lastWarning,
   });
 
   final Set<int> updatingIds;
@@ -19,11 +24,6 @@ class SubscriptionUpdateState {
   /// Summary of the last bulk update, e.g. "3 updated, 1 unchanged, 1 failed".
   final String? lastMessage;
 
-  /// Set when a subscription over [maxSubscriptionBytes] was imported: it still imports (the
-  /// importer streams it in chunks), but the user is warned it may slow the app down or cause
-  /// other problems. Cleared when the next update starts.
-  final String? lastWarning;
-
   bool get isBusy => updatingAll || updatingIds.isNotEmpty;
 
   SubscriptionUpdateState copyWith({
@@ -31,15 +31,12 @@ class SubscriptionUpdateState {
     bool? updatingAll,
     double? progress,
     String? lastMessage,
-    String? lastWarning,
     bool clearMessage = false,
-    bool clearWarning = false,
   }) => SubscriptionUpdateState(
     updatingIds: updatingIds ?? this.updatingIds,
     updatingAll: updatingAll ?? this.updatingAll,
     progress: progress ?? this.progress,
     lastMessage: clearMessage ? null : (lastMessage ?? this.lastMessage),
-    lastWarning: clearWarning ? null : (lastWarning ?? this.lastWarning),
   );
 }
 
@@ -49,7 +46,10 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
 
   /// Updates one subscription; re-entry returns immediately. Reads a live snapshot, as `insert`
   /// leaves the cache stale.
-  Future<SubscriptionFetchResult?> updateOne(int id) async {
+  Future<SubscriptionFetchResult?> updateOne(
+    int id, {
+    LargeSubscriptionConfirmer? confirmLarge,
+  }) async {
     if (state.isBusy) {
       return null;
     }
@@ -57,20 +57,17 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     if (entry == null) {
       return null;
     }
-    state = state.copyWith(updatingIds: {id}, clearMessage: true, clearWarning: true);
+    state = state.copyWith(updatingIds: {id}, clearMessage: true);
     SubscriptionFetchResult? result;
     // The busy flags are cleared in a `finally`: an update that throws used to leave the card
     // spinning forever, and every entry point is disabled while busy, so only a restart helped.
     try {
-      result = await _runSafely(entry);
+      result = await _runSafely(entry, confirmLarge);
     } finally {
       if (ref.mounted) {
         state = state.copyWith(
           updatingIds: const {},
           lastMessage: result == null ? null : _summarize([result]),
-          lastWarning: (result?.byteLength ?? 0) > maxSubscriptionBytes
-              ? currentL10n.subsLargeWarning(maxSubscriptionBytes ~/ (1024 * 1024))
-              : null,
         );
         _invalidateEntries();
       }
@@ -97,11 +94,14 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
   }
 
   /// Updates all serially like upstream's single WorkManager queue.
-  Future<void> updateAll(List<SubscriptionEntry> targets) async {
+  Future<void> updateAll(
+    List<SubscriptionEntry> targets, {
+    LargeSubscriptionConfirmer? confirmLarge,
+  }) async {
     if (state.isBusy || targets.isEmpty) {
       return;
     }
-    state = state.copyWith(updatingAll: true, progress: 0, clearMessage: true, clearWarning: true);
+    state = state.copyWith(updatingAll: true, progress: 0, clearMessage: true);
     final results = <SubscriptionFetchResult>[];
     try {
       for (final (index, entry) in targets.indexed) {
@@ -109,7 +109,7 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           return;
         }
         state = state.copyWith(updatingIds: {entry.id});
-        results.add(await _runSafely(entry));
+        results.add(await _runSafely(entry, confirmLarge));
         if (!ref.mounted) {
           return;
         }
@@ -126,9 +126,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           updatingIds: const {},
           progress: 0,
           lastMessage: _summarize(results),
-          lastWarning: results.any((r) => r.byteLength > maxSubscriptionBytes)
-              ? currentL10n.subsLargeWarning(maxSubscriptionBytes ~/ (1024 * 1024))
-              : null,
         );
         _invalidateEntries();
       }
@@ -147,9 +144,12 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
 
   /// `_runOne` with unexpected throws turned into failures: the user gets a failed row instead
   /// of a silent stall.
-  Future<SubscriptionFetchResult> _runSafely(SubscriptionEntry entry) async {
+  Future<SubscriptionFetchResult> _runSafely(
+    SubscriptionEntry entry,
+    LargeSubscriptionConfirmer? confirmLarge,
+  ) async {
     try {
-      return await _runOne(entry);
+      return await _runOne(entry, confirmLarge);
     } catch (error, stack) {
       debugPrint('subscription update failed for ${entry.url}: $error\n$stack');
       return SubscriptionFetchResult.failed(
@@ -160,13 +160,16 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
   }
 
   /// Runs one update and records the result; exceptions become failures so the UI never stays busy.
-  Future<SubscriptionFetchResult> _runOne(SubscriptionEntry entry) async {
+  Future<SubscriptionFetchResult> _runOne(
+    SubscriptionEntry entry,
+    LargeSubscriptionConfirmer? confirmLarge,
+  ) async {
     final repository = await ref.read(subscriptionRepositoryProvider.future);
     if (repository == null) {
       return SubscriptionFetchResult.failed(currentL10n.subscriptionDatabaseUnavailable);
     }
     if (!entry.isRemote) {
-      return _runLocal(entry, repository);
+      return _runLocal(entry, repository, confirmLarge);
     }
     await repository.setImportState(
       entry.id,
@@ -185,9 +188,16 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           lastModified: result.lastModified ?? entry.record.httpLastModified,
         );
       case SubscriptionFetchOutcome.content:
-        // Oversized subscriptions are still imported (the importer streams them in chunks); the
-        // caller warns the user after the fact via `lastWarning` when the body is over the cap.
-        // Parse and import; the count is rows actually written.
+        // The body is already downloaded (and streamed into the importer in chunks); before parsing
+        // an oversized one, ask the user — importing it may slow the app down or cause other
+        // problems. Declining leaves the previous rules untouched.
+        if (await _skipLargeImport(entry, result.byteLength, confirmLarge, repository)) {
+          return SubscriptionFetchResult.skipped(
+            requestedUrl: entry.url,
+            usedMirror: result.usedMirror,
+            byteLength: result.byteLength,
+          );
+        }
         final imported = await _importContent(entry, result.content ?? '');
         if (imported == null) {
           // A download that cannot be stored must report failure, not "updated".
@@ -212,8 +222,33 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           error: result.error ?? currentL10n.subscriptionUpdateFailed,
           attemptedAt: now,
         );
+      case SubscriptionFetchOutcome.skipped:
+        break;
     }
     return result;
+  }
+
+  /// Decides whether to skip a large import before parsing. Over [maxSubscriptionBytes] and with a
+  /// confirmer present, it asks the user; a decline restores the row so it is not left stuck
+  /// `importing`. A null confirmer (background auto-update, no screen) proceeds without asking.
+  Future<bool> _skipLargeImport(
+    SubscriptionEntry entry,
+    int byteLength,
+    LargeSubscriptionConfirmer? confirmLarge,
+    SubscriptionRepository repository,
+  ) async {
+    if (byteLength <= maxSubscriptionBytes || confirmLarge == null) {
+      return false;
+    }
+    final allowed = await confirmLarge(entry, byteLength);
+    if (allowed) {
+      return false;
+    }
+    final restore = entry.record.importState == SubscriptionImportState.importing
+        ? SubscriptionImportState.ready
+        : entry.record.importState;
+    await repository.setImportState(entry.id, restore);
+    return true;
   }
 
   /// Re-imports a local rule file through its persisted SAF grant. The `url` column holds the
@@ -221,6 +256,7 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
   Future<SubscriptionFetchResult> _runLocal(
     SubscriptionEntry entry,
     SubscriptionRepository repository,
+    LargeSubscriptionConfirmer? confirmLarge,
   ) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     final read = await ref
@@ -238,6 +274,12 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     // Local `.txt` is ASCII-heavy, so its length tracks byte size; the importer streams it in
     // chunks, so a large file imports without the old whole-document blow-up.
     final content = read.text!;
+    if (await _skipLargeImport(entry, content.length, confirmLarge, repository)) {
+      return SubscriptionFetchResult.skipped(
+        requestedUrl: entry.url,
+        byteLength: content.length,
+      );
+    }
     final imported = await _importContent(entry, content);
     if (imported == null) {
       final reason = currentL10n.subscriptionLocalRuleDbUnavailable;
@@ -336,9 +378,11 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     final updated = results.where((result) => result.isSuccess).length;
     final unchanged = results.where((result) => result.isNotModified).length;
     final failed = results.where((result) => result.isFailure).length;
+    final skipped = results.where((result) => result.isSkipped).length;
     final parts = <String>[
       if (updated > 0) currentL10n.subscriptionUpdatedCount(updated),
       if (unchanged > 0) currentL10n.subscriptionUnchangedCount(unchanged),
+      if (skipped > 0) currentL10n.subscriptionSkippedCount(skipped),
       if (failed > 0) currentL10n.subscriptionFailedCount(failed),
     ];
     return parts.isEmpty ? currentL10n.subscriptionNothingToUpdate : parts.join('，');

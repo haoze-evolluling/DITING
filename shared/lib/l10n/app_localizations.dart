@@ -3845,6 +3845,12 @@ abstract class AppL10n {
   /// **'{count} 个失败'**
   String subscriptionFailedCount(int count);
 
+  /// No description provided for @subscriptionSkippedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳过 {count} 项（较大订阅未确认）'**
+  String subscriptionSkippedCount(int count);
+
   /// No description provided for @subscriptionAlreadyExistsNamed.
   ///
   /// In zh, this message translates to:
@@ -16498,11 +16504,23 @@ abstract class AppL10n {
   /// **'订阅响应为空'**
   String get subsErrEmptyResponse;
 
-  /// No description provided for @subsLargeWarning.
+  /// No description provided for @subsLargeConfirmTitle.
   ///
   /// In zh, this message translates to:
-  /// **'该订阅内容较大（超过 {maxMb} MB），导入和运行可能变慢，或引发其他问题'**
-  String subsLargeWarning(int maxMb);
+  /// **'导入较大的订阅'**
+  String get subsLargeConfirmTitle;
+
+  /// No description provided for @subsLargeConfirmMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'该订阅约 {mb} MB。导入和运行可能变慢，或引发其他问题，是否继续导入？'**
+  String subsLargeConfirmMessage(String mb);
+
+  /// No description provided for @subsLargeConfirmAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'仍要导入'**
+  String get subsLargeConfirmAction;
 
   /// No description provided for @subsErrUnreachable.
   ///

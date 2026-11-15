@@ -2141,6 +2141,11 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String subscriptionSkippedCount(int count) {
+    return '$count skipped (large subscription not confirmed)';
+  }
+
+  @override
   String subscriptionAlreadyExistsNamed(String kind, String name, String what) {
     return '$what already exists as $kind (\"$name\")';
   }
@@ -9609,9 +9614,15 @@ class AppL10nEn extends AppL10n {
   String get subsErrEmptyResponse => 'The subscription response was empty';
 
   @override
-  String subsLargeWarning(int maxMb) {
-    return 'This subscription is large (over $maxMb MB); importing and running it may slow the app down or cause other problems';
+  String get subsLargeConfirmTitle => 'Import large subscription';
+
+  @override
+  String subsLargeConfirmMessage(String mb) {
+    return 'This subscription is about $mb MB. Importing and running it may slow the app down or cause other problems. Import it anyway?';
   }
+
+  @override
+  String get subsLargeConfirmAction => 'Import anyway';
 
   @override
   String get subsErrUnreachable => 'Network unreachable';

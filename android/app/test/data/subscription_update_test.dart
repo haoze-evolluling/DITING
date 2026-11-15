@@ -118,6 +118,42 @@ void main() {
     expect(after.single.lastAttemptAt, greaterThan(0));
     expect(container.read(subscriptionUpdateProvider).isBusy, isFalse);
   });
+
+  test('超大订阅在确认框拒绝后跳过导入，不写规则也不标记失败', () async {
+    final container = ProviderContainer(
+      overrides: [
+        subscriptionDatabaseProvider.overrideWith((ref) async => db),
+        subscriptionFetcherProvider.overrideWithValue(_LargeContentFetcher()),
+      ],
+    );
+    addTearDown(container.dispose);
+    final id = await insertRemote(container);
+
+    var asked = 0;
+    final result = await container
+        .read(subscriptionUpdateProvider.notifier)
+        .updateOne(
+          id,
+          confirmLarge: (entry, byteLength) async {
+            asked++;
+            expect(byteLength, greaterThan(maxSubscriptionBytes));
+            return false;
+          },
+        );
+
+    expect(asked, 1);
+    expect(result?.isSkipped, isTrue);
+    expect(result?.isFailure, isFalse);
+    expect(container.read(subscriptionUpdateProvider).isBusy, isFalse);
+    // The row is restored, not left stuck `importing`, and no rules were written.
+    final rows = await db.query(
+      'subscription',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    expect(rows.single['importState'], 'ready');
+    expect(rows.single['ruleCount'], 0);
+  });
 }
 
 class _ThrowingFetcher implements SubscriptionFetcher {
@@ -136,4 +172,19 @@ class _NotModifiedFetcher implements SubscriptionFetcher {
     SubscriptionRecord record, {
     bool useValidators = true,
   }) async => const SubscriptionFetchResult.notModified();
+}
+
+/// Reports a body just over the size cap without needing the native importer: a declined confirm
+/// must skip before parsing, so no rule database is touched.
+class _LargeContentFetcher implements SubscriptionFetcher {
+  @override
+  Future<SubscriptionFetchResult> fetch(
+    SubscriptionRecord record, {
+    bool useValidators = true,
+  }) async => SubscriptionFetchResult(
+    outcome: SubscriptionFetchOutcome.content,
+    content: 'example.com\n',
+    byteLength: maxSubscriptionBytes + 1,
+    requestedUrl: record.url,
+  );
 }

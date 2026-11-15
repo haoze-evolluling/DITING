@@ -20,6 +20,43 @@ part 'subscriptions_groups_sheet.dart';
 part 'subscriptions_sheet.dart';
 part 'subscriptions_sheet_widgets.dart';
 
+/// Pre-import confirmation for a subscription body over `maxSubscriptionBytes`. The import is
+/// allowed but may slow the app down or cause other problems, so the user decides. Returns false
+/// when there is no usable context (nothing to ask on), so the caller skips the import.
+Future<bool> _confirmLargeSubscription(
+  BuildContext? context,
+  int byteLength,
+) async {
+  final ctx = context ?? rootNavigatorKey.currentState?.overlay?.context;
+  if (ctx == null || !ctx.mounted) {
+    return false;
+  }
+  final l10n = ctx.l10n;
+  const megabyte = 1024 * 1024;
+  final confirmed = await showFloatingDialog<bool>(
+    context: ctx,
+    child: CommonDialog(
+      title: l10n.subsLargeConfirmTitle,
+      actions: [
+        TextButton(
+          onPressed: () => popFloatingDialog(ctx, false),
+          child: Text(l10n.commonCancel),
+        ),
+        TextButton(
+          onPressed: () => popFloatingDialog(ctx, true),
+          child: Text(l10n.subsLargeConfirmAction),
+        ),
+      ],
+      child: Text(
+        l10n.subsLargeConfirmMessage(
+          (byteLength / megabyte).toStringAsFixed(1),
+        ),
+      ),
+    ),
+  );
+  return confirmed ?? false;
+}
+
 /// Subscriptions page: group filter, summary and card list. Groups sit at the top because
 /// users usually watch one group; data comes from the legacy `subscription_group` table
 /// ordered by `addedAt`.
@@ -68,7 +105,11 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
       );
       return;
     }
-    await ref.read(subscriptionUpdateProvider.notifier).updateAll(targets);
+    await ref.read(subscriptionUpdateProvider.notifier).updateAll(
+      targets,
+      confirmLarge: (_, byteLength) =>
+          _confirmLargeSubscription(context, byteLength),
+    );
     if (!context.mounted) {
       return;
     }
@@ -138,20 +179,6 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
     // A link that arrives while this page is already mounted changes the provider instead.
     ref.listen(pendingSubscriptionImportProvider, (_, url) {
       if (url != null) _openPendingImport(url);
-    });
-    // Warn once when an oversized subscription was imported: it still imports (streamed in
-    // chunks), but may slow the app down or cause other problems, so the user is told.
-    ref.listen(subscriptionUpdateProvider, (previous, next) {
-      final warning = next.lastWarning;
-      if (warning != null && warning != previous?.lastWarning) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(warning),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 4000),
-          ),
-        );
-      }
     });
     final colorScheme = context.colorScheme;
     final asyncEntries = ref.watch(subscriptionEntriesProvider);
@@ -338,7 +365,11 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                           .setEnabled(entry.id, value),
                       onUpdate: () => ref
                           .read(subscriptionUpdateProvider.notifier)
-                          .updateOne(entry.id),
+                          .updateOne(
+                            entry.id,
+                            confirmLarge: (_, byteLength) =>
+                                _confirmLargeSubscription(context, byteLength),
+                          ),
                       onDelete: () => _delete(context, ref, entry),
                       onEdit: () => _rename(context, ref, entry),
                       onConfigure: () => showSheet<void>(
