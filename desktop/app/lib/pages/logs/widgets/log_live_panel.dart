@@ -355,7 +355,7 @@ class _LiveRow extends StatelessWidget {
                 height: 6,
                 decoration: ShapeDecoration(
                   color: statusColor,
-                  shape: const CircleBorder(),
+                  shape: AppShape.standard,
                 ),
               ),
               Text(statusLabel, maxLines: 1, style: label.copyWith(color: statusColor)),

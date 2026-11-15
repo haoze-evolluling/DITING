@@ -84,14 +84,14 @@ class _RenderAlertGlass extends RenderProxyBox {
       _pane.paint(
         context,
         rect,
-        shape: LiquidGlassCorners.circular(AppCorner.alert),
+        shape: LiquidGlassCorners.circular(AppCorner.standard),
         style: _style,
         shadows: _shadows,
         hold: rect.inflate(_pressGrowth + _pressPull),
         steadyFrost: true,
         rim: _rim,
       );
-      _rim.paintLine(context.canvas, rect, AppCorner.alert);
+      _rim.paintLine(context.canvas, rect, AppCorner.standard);
     }
     super.paint(context, offset);
   }
@@ -205,7 +205,7 @@ class CommonDialog extends StatelessWidget {
           child: hasFields
               ? FilledInputTheme(
                   fillColor: fill,
-                  borderRadius: AppRadius.all(_actionHeight / 2),
+                  borderRadius: AppRadius.standard,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: _textInset - _actionInset - _fieldInputGap,
                     vertical: 12,
@@ -444,7 +444,7 @@ class _AlertAction extends StatelessWidget {
                         .copyWith(fontWeight: FontWeight.w500),
               minimumSize: const Size(0, _actionHeight),
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: AppShape.full,
+              shape: AppShape.standard,
               visualDensity: VisualDensity.standard,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               splashFactory: NoSplash.splashFactory,

@@ -28,7 +28,7 @@ class SheetDragHandle extends StatelessWidget {
         width: _width,
         decoration: ShapeDecoration(
           color: context.colorScheme.onSurfaceVariant,
-          shape: AppShape.all(_thickness / 2),
+          shape: AppShape.standard,
         ),
       ),
     );

@@ -43,7 +43,7 @@ class SelectionBadge extends StatelessWidget {
       dimension: size,
       child: DecoratedBox(
         decoration: ShapeDecoration(
-          shape: AppShape.circle,
+          shape: AppShape.standard,
           color: tonal
               ? colorScheme.primary.withValues(alpha: 0.14)
               : colorScheme.primary,

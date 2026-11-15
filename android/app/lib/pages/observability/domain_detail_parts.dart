@@ -229,7 +229,7 @@ class _QuickAction extends StatelessWidget {
               glyphSize: 20,
               color: tint.withValues(alpha: 0.14),
               foregroundColor: tint,
-              shape: AppShape.circle,
+              shape: AppShape.standard,
             ),
             Text(
               label,
@@ -309,7 +309,7 @@ class AgentAnalysisEntryCard extends StatelessWidget {
             glyphSize: 20,
             color: colorScheme.primaryContainer,
             foregroundColor: colorScheme.onPrimaryContainer,
-            shape: AppShape.circle,
+            shape: AppShape.standard,
           ),
           Expanded(
             child: Column(

@@ -28,7 +28,7 @@ const _indicatorWidth = 3.0;
 const _indicatorHeight = 16.0;
 const _expandDuration = Duration(milliseconds: 250);
 const _indicatorDuration = Duration(milliseconds: 320);
-final _itemShape = AppShape.all(10);
+final _itemShape = AppShape.standard;
 
 class SidebarDestination {
   const SidebarDestination({required this.glyph, required this.label});
@@ -587,7 +587,7 @@ class _SelectionIndicatorState extends State<_SelectionIndicator>
         child: DecoratedBox(
           decoration: ShapeDecoration(
             color: widget.color,
-            shape: AppShape.full,
+            shape: AppShape.standard,
           ),
         ),
       ),

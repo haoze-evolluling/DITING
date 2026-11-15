@@ -337,7 +337,7 @@ class _WallpaperThumbnailState extends State<_WallpaperThumbnail> {
       child: AspectRatio(
         aspectRatio: widget.aspectRatio,
         child: ClipRSuperellipse(
-          borderRadius: AppRadius.md,
+          borderRadius: AppRadius.standard,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -362,7 +362,7 @@ class _WallpaperThumbnailState extends State<_WallpaperThumbnail> {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: ShapeDecoration(
-                      shape: AppShape.circle,
+                      shape: AppShape.standard,
                       color: colorScheme.primary,
                     ),
                     child: GlyphIcon(

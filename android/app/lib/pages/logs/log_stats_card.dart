@@ -280,7 +280,7 @@ class _ProportionBar extends StatelessWidget {
         if (segment.value > 0) segment,
     ];
     final total = shown.fold(0, (sum, segment) => sum + segment.value);
-    const shape = StadiumBorder();
+    const shape = AppShape.standard;
     if (total == 0) {
       return Container(
         height: _height,
@@ -329,7 +329,7 @@ class _WindowPicker extends ConsumerWidget {
         button: true,
         label: l10n.logStatsWindow,
         child: InkWell(
-          customBorder: AppShape.all(AppCorner.sm),
+          customBorder: AppShape.standard,
           onTap: open,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -388,7 +388,7 @@ class _RecentActivityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return InkWell(
-      customBorder: AppShape.all(AppCorner.md),
+      customBorder: AppShape.standard,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 14),

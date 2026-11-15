@@ -181,7 +181,7 @@ class DashboardLegendRow extends StatelessWidget {
           height: 7,
           decoration: ShapeDecoration(
             color: color,
-            shape: const CircleBorder(),
+            shape: AppShape.standard,
           ),
         ),
         Expanded(
@@ -259,7 +259,7 @@ class DashboardRateRow extends StatelessWidget {
         ),
         if (progress case final progress?)
           ClipRRect(
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: AppRadius.standard,
             child: Container(
               height: 9 * scale,
               color: color.tone,
@@ -327,7 +327,7 @@ class DashboardLogRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
               decoration: ShapeDecoration(
                 color: tagColor.withValues(alpha: 0.12),
-                shape: AppShape.all(DashboardCorner.badge - 4),
+                shape: AppShape.standard,
               ),
               child: Text(
                 tag,
@@ -345,7 +345,7 @@ class DashboardLogRow extends StatelessWidget {
     );
     if (onTap == null) return content;
     return InkWell(
-      customBorder: AppShape.all(AppCorner.sm),
+      customBorder: AppShape.standard,
       onTap: onTap,
       child: content,
     );

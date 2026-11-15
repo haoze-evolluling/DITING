@@ -46,7 +46,7 @@ class FloatingLogBall extends StatelessWidget {
           children: [
             Material(
               color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
-              shape: const CircleBorder(),
+              shape: AppShape.standard,
               elevation: 3,
               shadowColor: Colors.black54,
               clipBehavior: Clip.antiAlias,
@@ -78,7 +78,7 @@ class FloatingLogBall extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: ShapeDecoration(
                       color: colorScheme.error,
-                      shape: AppShape.full,
+                      shape: AppShape.standard,
                     ),
                     child: Text(
                       badge > 99 ? '99+' : '$badge',
@@ -125,7 +125,7 @@ class FloatingLogFilterChip extends StatelessWidget {
       color: selected
           ? colorScheme.secondaryContainer
           : context.raisedSurfaceLevel.colorOf(colorScheme),
-      shape: AppShape.full,
+      shape: AppShape.standard,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -202,7 +202,7 @@ class FloatingLogRow extends StatelessWidget {
       color: expanded
           ? context.raisedSurfaceLevel.colorOf(colorScheme)
           : Colors.transparent,
-      shape: AppShape.md,
+      shape: AppShape.standard,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -403,7 +403,7 @@ class FloatingLogNewRowsPill extends StatelessWidget {
       child: Center(
         child: Material(
           color: colorScheme.primary,
-          shape: AppShape.full,
+          shape: AppShape.standard,
           elevation: 2,
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -453,7 +453,7 @@ class FloatingLogToast extends StatelessWidget {
           child: DecoratedBox(
             decoration: ShapeDecoration(
               color: colorScheme.inverseSurface,
-              shape: AppShape.full,
+              shape: AppShape.standard,
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),

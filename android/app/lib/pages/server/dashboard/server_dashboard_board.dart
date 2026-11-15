@@ -75,7 +75,7 @@ class _EditingBoard extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: ShapeDecoration(
             color: colorScheme.primaryContainer,
-            shape: AppShape.all(AppCorner.md),
+            shape: AppShape.standard,
           ),
           child: Row(
             spacing: 8,

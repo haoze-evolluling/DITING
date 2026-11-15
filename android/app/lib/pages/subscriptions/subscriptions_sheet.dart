@@ -351,7 +351,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                 _SheetField(
                   label: context.l10n.subsUrl,
                   child: FilledInputTheme(
-                    borderRadius: AppRadius.md,
+                    borderRadius: AppRadius.standard,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 12,
@@ -460,7 +460,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
 
   Widget _nameField(String hintText) {
     return FilledInputTheme(
-      borderRadius: AppRadius.md,
+      borderRadius: AppRadius.standard,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: TextFormField(
         controller: _name,

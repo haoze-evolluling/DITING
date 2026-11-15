@@ -306,7 +306,7 @@ class _TitleMenuButton extends StatelessWidget {
     // bar, and a press turns the title into its menu at once.
     return InkWell(
       onTap: onPressed,
-      customBorder: AppShape.sm,
+      customBorder: AppShape.standard,
       hoverColor: Colors.transparent,
       highlightColor: Colors.transparent,
       splashFactory: NoSplash.splashFactory,

@@ -242,7 +242,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                         LinearProgressIndicator(
                           value: update.progress,
                           minHeight: 4,
-                          borderRadius: AppRadius.full,
+                          borderRadius: AppRadius.standard,
                         ),
                       ],
                     ),

@@ -186,7 +186,7 @@ class _AboutHero extends StatelessWidget {
           DecoratedBox(
             decoration: ShapeDecoration(
               color: context.raisedSurfaceLevel.colorOf(colorScheme),
-              shape: AppShape.all(AppCorner.fit(_logoSize)),
+              shape: AppShape.standard,
             ),
             child: Padding(
               padding: const EdgeInsets.all(_logoInset),
@@ -356,7 +356,7 @@ class _LinkRow extends StatelessWidget {
       leading: DecoratedBox(
         decoration: ShapeDecoration(
           color: context.raisedSurfaceLevel.colorOf(colorScheme),
-          shape: AppShape.md,
+          shape: AppShape.standard,
         ),
         child: SizedBox.square(
           dimension: 40,

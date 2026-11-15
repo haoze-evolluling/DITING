@@ -216,7 +216,7 @@ class DashboardRemoveBadge extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return Material(
       color: colorScheme.errorContainer,
-      shape: const CircleBorder(),
+      shape: AppShape.standard,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
@@ -243,7 +243,7 @@ class DashboardDragBadge extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return Material(
       color: colorScheme.surfaceContainerHighest,
-      shape: const CircleBorder(),
+      shape: AppShape.standard,
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
         width: 28,

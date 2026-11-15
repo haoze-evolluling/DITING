@@ -182,7 +182,7 @@ class _Heading extends StatelessWidget {
                   margin: const EdgeInsets.only(top: 2),
                   decoration: BoxDecoration(
                     color: colors.primary,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: AppRadius.standard,
                   ),
                 ),
                 Expanded(child: label),
@@ -210,7 +210,7 @@ class _CodeBlock extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.codeBackground.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.standard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -314,7 +314,7 @@ class _Table extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.standard,
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,

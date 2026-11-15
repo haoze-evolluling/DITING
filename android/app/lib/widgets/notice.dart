@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 /// A tinted inline notice: a glyph and a paragraph on a rounded warning or error fill.
 ///
 /// Used where a card would be too heavy — inside another card, or right under a switch that needs a
-/// caveat. The 10-inset / 8-gap / `AppShape.md` geometry was copy-pasted between the developer page
+/// caveat. The 10-inset / 8-gap / `AppShape.standard` geometry was copy-pasted between the developer page
 /// and the disclaimer, so it lives here now.
 class InlineNotice extends StatelessWidget {
   const InlineNotice({
@@ -33,7 +33,7 @@ class InlineNotice extends StatelessWidget {
     final foreground = foregroundColor ?? colorScheme.onWarningContainer;
     return Container(
       padding: padding,
-      decoration: ShapeDecoration(shape: AppShape.md, color: background),
+      decoration: ShapeDecoration(shape: AppShape.standard, color: background),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,

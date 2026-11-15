@@ -270,7 +270,7 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
         color: glass
             ? Colors.transparent
             : SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
-        shape: AppShape.full,
+        shape: AppShape.standard,
         // Raw pointers rather than recognizers: a tap waiting on the arena lifts the lens late.
         child: Listener(
           behavior: HitTestBehavior.opaque,

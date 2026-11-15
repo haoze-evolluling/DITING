@@ -217,7 +217,7 @@ class _PaymentCard extends StatelessWidget {
             AspectRatio(
               aspectRatio: 1,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.standard,
                 // A code needs a static light background and must not follow dark theme
                 // inversion, or it cannot be scanned.
                 child: ColoredBox(
@@ -262,7 +262,7 @@ class _PaymentCard extends StatelessWidget {
           spacing: 12,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.standard,
               child: ColoredBox(
                 color: Colors.white,
                 child: Image.asset(asset, fit: BoxFit.contain),

@@ -343,7 +343,7 @@ class _Preview extends StatelessWidget {
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           );
     return ClipRRect(
-      borderRadius: AppRadius.md,
+      borderRadius: AppRadius.standard,
       child: SizedBox(
         height: 140,
         child: Stack(

@@ -88,7 +88,7 @@ class _SkeletonPillState extends State<SkeletonPill>
     final bar = DecoratedBox(
       decoration: ShapeDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        shape: AppShape.full,
+        shape: AppShape.standard,
       ),
     );
     return ExcludeSemantics(

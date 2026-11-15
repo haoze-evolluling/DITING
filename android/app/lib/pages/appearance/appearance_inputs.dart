@@ -12,7 +12,7 @@ class FieldGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CommonCard(
-      shape: AppShape.all(AppCorner.xl),
+      shape: AppShape.standard,
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -49,7 +49,7 @@ class LabeledTextField extends StatelessWidget {
       children: [
         Text(label, style: context.listTitleStyle),
         FilledInputTheme(
-          borderRadius: AppRadius.md,
+          borderRadius: AppRadius.standard,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 12,

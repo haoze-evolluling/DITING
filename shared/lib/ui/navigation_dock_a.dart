@@ -144,7 +144,7 @@ class _DockSurface extends StatelessWidget {
     }
     return DecoratedBox(
       decoration: ShapeDecoration(
-        shape: AppShape.full,
+        shape: AppShape.standard,
         shadows: dockShadows(colorScheme),
       ),
       child: child,

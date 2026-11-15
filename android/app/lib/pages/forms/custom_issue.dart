@@ -57,7 +57,7 @@ class InfoBanner extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         decoration: ShapeDecoration(
-          shape: AppShape.xl,
+          shape: AppShape.standard,
           color: tint.withValues(alpha: color == null ? 1 : 0.14),
         ),
         child: Row(
@@ -114,7 +114,7 @@ class CustomIssuesBanner extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
         decoration: ShapeDecoration(
-          shape: AppShape.xl,
+          shape: AppShape.standard,
           color: colorScheme.errorContainer,
         ),
         child: Column(

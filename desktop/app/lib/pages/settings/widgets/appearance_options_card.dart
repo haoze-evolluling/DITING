@@ -124,7 +124,7 @@ class _PaletteTile extends StatelessWidget {
     final primary = colorScheme.primary;
     return CommonCard(
       isSelected: selected,
-      shape: AppShape.all(DashboardCorner.block).copyWith(
+      shape: AppShape.standard.copyWith(
         side: selected
             ? BorderSide(color: primary, width: 1.5)
             : BorderSide.none,
@@ -137,7 +137,7 @@ class _PaletteTile extends StatelessWidget {
           Stack(
             children: [
               ClipRSuperellipse(
-                borderRadius: AppRadius.xs,
+                borderRadius: AppRadius.standard,
                 child: ExcludeSemantics(
                   child: DesktopWindowPreview(colorScheme: colorScheme),
                 ),
@@ -151,7 +151,7 @@ class _PaletteTile extends StatelessWidget {
                     height: 18,
                     decoration: ShapeDecoration(
                       color: primary,
-                      shape: const CircleBorder(),
+                      shape: AppShape.standard,
                     ),
                     child: Center(
                       child: GlyphIcon(

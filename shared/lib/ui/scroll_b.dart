@@ -17,7 +17,7 @@ class _ScrollbarHintPill extends StatelessWidget {
       key: const ValueKey('scrollbarHintPill'),
       decoration: ShapeDecoration(
         color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
-        shape: AppShape.sm,
+        shape: AppShape.standard,
         shadows: kElevationToShadow[2],
       ),
       child: Padding(

@@ -108,7 +108,7 @@ class _TopRow extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: ShapeDecoration(
                   color: leading ? colorScheme.primary : colors.tone,
-                  shape: AppShape.all(AppCorner.xs),
+                  shape: AppShape.standard,
                 ),
                 child: Text(
                   '$rank',

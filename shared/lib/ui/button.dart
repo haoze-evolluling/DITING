@@ -35,7 +35,7 @@ class MoreActionButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: CommonCard(
-        radius: AppCorner.xl,
+        radius: AppCorner.standard,
         onPressed: onPressed,
         child: ListTile(
           minTileHeight: listRowMinHeight,
@@ -137,7 +137,7 @@ class _TonalButtonGroupState extends State<TonalButtonGroup>
           : DecoratedBox(
               decoration: ShapeDecoration(
                 color: context.raisedSurfaceLevel.colorOf(colorScheme),
-                shape: AppShape.full,
+                shape: AppShape.standard,
               ),
               child: buttons,
             ),
@@ -170,7 +170,7 @@ class TonalButton extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
-          shape: AppShape.full,
+          shape: AppShape.standard,
         ),
         child: TonalButtonTheme(
           grouped: true,
@@ -295,7 +295,7 @@ class TonalButtonTheme extends StatelessWidget {
               disabledForegroundColor: grouped ? disabledForeground : null,
               minimumSize: Size.square(size.button),
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              shape: AppShape.full,
+              shape: AppShape.standard,
               visualDensity: VisualDensity.standard,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),

@@ -285,7 +285,7 @@ class _BarSearch extends StatelessWidget {
                           key: fieldKey,
                           child: GooPane(
                             child: ClipRSuperellipse(
-                              borderRadius: AppRadius.full,
+                              borderRadius: AppRadius.standard,
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [

@@ -65,7 +65,7 @@ class StatusPill extends StatelessWidget {
       padding: padding,
       decoration: ShapeDecoration(
         color: alpha == null ? color : color.withValues(alpha: alpha),
-        shape: AppShape.full,
+        shape: AppShape.standard,
       ),
       child: leading == null
           ? label

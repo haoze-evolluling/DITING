@@ -195,7 +195,7 @@ class _CopyCard extends StatelessWidget {
             height: 36,
             decoration: ShapeDecoration(
               color: colors.tone,
-              shape: AppShape.all(AppCorner.sm),
+              shape: AppShape.standard,
             ),
             child: Center(
               child: GlyphIcon(

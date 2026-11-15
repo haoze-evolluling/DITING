@@ -136,7 +136,7 @@ class _FeatureCardState extends State<_FeatureCard> {
             height: _CardGrid._cardHeight * _heightScale(context),
             padding: const EdgeInsets.all(12),
             decoration: ShapeDecoration(
-              shape: AppShape.md,
+              shape: AppShape.standard,
               color: SurfaceLevel.card.colorOf(colorScheme),
             ),
             child: Column(

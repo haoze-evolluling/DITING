@@ -139,7 +139,7 @@ class SiteLatencyRow extends StatelessWidget {
       button: true,
       label: '${target.name} $status',
       child: InkWell(
-        customBorder: AppShape.all(AppCorner.sm),
+        customBorder: AppShape.standard,
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -151,7 +151,7 @@ class SiteLatencyRow extends StatelessWidget {
                 height: 30,
                 decoration: ShapeDecoration(
                   color: DashboardColors.of(context).tone,
-                  shape: AppShape.all(AppCorner.sm),
+                  shape: AppShape.standard,
                 ),
                 child: Center(
                   child: GlyphIcon(target.glyph, size: 17, color: statusColor),

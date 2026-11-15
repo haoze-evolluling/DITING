@@ -230,7 +230,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
       padding: const EdgeInsets.all(2),
       child: Material(
         color: SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
-        shape: AppShape.xl.copyWith(
+        shape: AppShape.standard.copyWith(
           side: BorderSide(
             color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),

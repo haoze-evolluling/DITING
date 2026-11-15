@@ -160,7 +160,7 @@ class _SpeedTile extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           decoration: ShapeDecoration(
             color: DashboardColors.of(context).tone,
-            shape: AppShape.all(DashboardCorner.mobileBlock),
+            shape: AppShape.standard,
           ),
           child: Stack(
             children: [

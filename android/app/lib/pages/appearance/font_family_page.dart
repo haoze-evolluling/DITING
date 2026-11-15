@@ -247,7 +247,7 @@ class _FontRow extends StatelessWidget {
         height: 34,
         alignment: Alignment.center,
         decoration: ShapeDecoration(
-          shape: AppShape.sm,
+          shape: AppShape.standard,
           color: context.raisedSurfaceLevel.colorOf(colorScheme),
         ),
         child: Text(

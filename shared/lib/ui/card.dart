@@ -199,7 +199,7 @@ class CommonCard extends StatelessWidget {
         style:
             FilledButton.styleFrom(
               padding: padding ?? EdgeInsets.zero,
-              shape: shape ?? AppShape.all(radius ?? AppCorner.md),
+              shape: shape ?? AppShape.all(radius ?? AppCorner.standard),
               iconSize: commonCardIconSize,
               iconColor: iconColor,
               foregroundColor: foregroundColor,

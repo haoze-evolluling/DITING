@@ -253,7 +253,7 @@ class _ThemePreviewState extends ConsumerState<_ThemePreview>
             child: AspectRatio(
               aspectRatio: 9 / 17,
               child: ClipRSuperellipse(
-                borderRadius: AppRadius.all(AppCorner.fit(_phoneWidth)),
+                borderRadius: AppRadius.standard,
                 child: AnimatedBuilder(
                   animation: _controller,
                   builder: (_, _) => MiniScreen(

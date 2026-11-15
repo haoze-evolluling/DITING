@@ -97,7 +97,7 @@ class DashboardShareBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = segments.fold<double>(0, (sum, part) => sum + part.value);
     return ClipRRect(
-      borderRadius: BorderRadius.circular(height / 2),
+      borderRadius: AppRadius.standard,
       child: SizedBox(
         height: height,
         child: total <= 0
@@ -152,7 +152,7 @@ class DashboardShareLegend extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: ShapeDecoration(color: color, shape: AppShape.circle),
+            decoration: ShapeDecoration(color: color, shape: AppShape.standard),
           ),
           Expanded(
             child: Text(

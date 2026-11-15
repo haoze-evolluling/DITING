@@ -74,7 +74,7 @@ class SegmentedControl<T> extends StatelessWidget {
           padding: const EdgeInsets.all(_inset),
           decoration: ShapeDecoration(
             color: context.raisedSurfaceLevel.colorOf(colorScheme),
-            shape: AppShape.full,
+            shape: AppShape.standard,
           ),
           child: Stack(
             children: [
@@ -92,7 +92,7 @@ class SegmentedControl<T> extends StatelessWidget {
                     child: DecoratedBox(
                       decoration: ShapeDecoration(
                         color: colorScheme.primary,
-                        shape: AppShape.full,
+                        shape: AppShape.standard,
                       ),
                     ),
                   ),
@@ -105,14 +105,14 @@ class SegmentedControl<T> extends StatelessWidget {
                         selected: option == value,
                         button: true,
                         child: FocusRing(
-                          shape: AppShape.full,
+                          shape: AppShape.standard,
                           standsOff: option == value,
                           child: Material(
                             type: MaterialType.transparency,
-                            shape: AppShape.full,
+                            shape: AppShape.standard,
                             clipBehavior: Clip.antiAlias,
                             child: InkWell(
-                              customBorder: AppShape.full,
+                              customBorder: AppShape.standard,
                               mouseCursor: option == value
                                   ? SystemMouseCursors.basic
                                   : null,

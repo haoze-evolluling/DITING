@@ -23,7 +23,7 @@ class CommonChip extends StatelessWidget {
     return SizedBox(
       height: TonalButtonSize.section.button,
       child: CommonCard(
-        shape: AppShape.full,
+        shape: AppShape.standard,
         inert: !deletable,
         padding: EdgeInsets.only(left: 16, right: deletable ? 12 : 16),
         onPressed: onDeleted,
@@ -92,7 +92,7 @@ class TonalChip extends StatelessWidget {
     );
     return Material(
       color: color,
-      shape: AppShape.sm,
+      shape: AppShape.standard,
       clipBehavior: Clip.antiAlias,
       child: onPressed == null
           ? content
@@ -203,7 +203,7 @@ class MetaChip extends StatelessWidget {
     return DecoratedBox(
       decoration: ShapeDecoration(
         color: context.raisedSurfaceLevel.colorOf(colorScheme),
-        shape: AppShape.sm,
+        shape: AppShape.standard,
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),

@@ -144,7 +144,7 @@ class _StepIndicator extends StatelessWidget {
                 curve: Curves.easeOut,
                 height: 4,
                 decoration: ShapeDecoration(
-                  shape: AppShape.full,
+                  shape: AppShape.standard,
                   color: index == current
                       ? colorScheme.primary
                       : index < current

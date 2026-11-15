@@ -86,7 +86,7 @@ class DashboardDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = AppShape.all(DashboardCorner.mobileBlock);
+    final shape = AppShape.standard;
     final content = Padding(
       padding: padding,
       child: Column(

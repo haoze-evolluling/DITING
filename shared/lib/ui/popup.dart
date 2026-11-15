@@ -47,9 +47,11 @@ const _avoidGap = 8.0;
 
 const _cardInset = 8.0;
 
-const _itemRadius = AppCorner.md;
+const _itemRadius = AppCorner.standard;
 
-const _cardRadius = _itemRadius + _cardInset;
+// The popup card shares the one product-standard corner; [_cardInset] now only
+// pads the item rows, it no longer enlarges the card's own radius.
+const _cardRadius = AppCorner.standard;
 
 const _itemIconSize = 20.0;
 const _submenuArrowSize = 16.0;

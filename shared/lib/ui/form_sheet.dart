@@ -106,7 +106,7 @@ class _FormSheet extends StatelessWidget {
                   color:
                       backgroundColor ??
                       SurfaceLevel.page.colorOf(theme.colorScheme),
-                  shape: theme.dialogTheme.shape ?? AppShape.xxl,
+                  shape: theme.dialogTheme.shape ?? AppShape.standard,
                   clipBehavior: Clip.antiAlias,
                   child: MediaQuery.removeViewInsets(
                     context: context,

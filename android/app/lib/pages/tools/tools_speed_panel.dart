@@ -244,7 +244,7 @@ class _SpeedResultRow extends StatelessWidget {
                   ),
             ),
             ClipRRect(
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: AppRadius.standard,
               child: SizedBox(
                 height: 6,
                 child: Stack(

@@ -56,8 +56,8 @@ class _DecorationListItemState extends State<DecorationListItem> {
       ItemPosition.startAndEnd,
     ].contains(position);
     final borderRadius = AppRadius.vertical(
-      top: isStart ? AppCorner.xl : AppCorner.none,
-      bottom: isEnd ? AppCorner.xl : AppCorner.none,
+      top: isStart ? AppCorner.standard : AppCorner.none,
+      bottom: isEnd ? AppCorner.standard : AppCorner.none,
     );
     final row = _ListRowSeparator(
       separated: !proxyDecorator && !isEnd,
@@ -107,7 +107,7 @@ class _DecorationListItemState extends State<DecorationListItem> {
     // A change of the card's shape eases over the button's own duration, which would trail the
     // lift.
     return ClipRSuperellipse(
-      borderRadius: AppRadius.all(AppCorner.xl * proxy!.lift),
+      borderRadius: AppRadius.all(AppCorner.standard * proxy!.lift),
       child: row,
     );
   }

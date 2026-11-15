@@ -4,54 +4,32 @@ import 'dart:ui' show ClipOp, lerpDouble;
 
 import 'package:material_ui/material_ui.dart';
 
+/// The single corner-radius standard for the whole product.
+///
+/// Every rounded surface — cards, sheets, dialogs, inputs, popups, chips,
+/// buttons, badges, avatars, switches, progress bars — must reference
+/// [AppCorner.standard] directly, or through [AppRadius.standard] /
+/// [AppShape.standard]. Changing this one constant restyles the entire app.
+///
+/// [none] (0) is the only other permitted value, reserved for structural edges
+/// that must stay square: a sheet flush with the screen edge, or the inner edge
+/// of a grouped list where only the first/last row rounds.
 abstract final class AppCorner {
+  /// The one standard corner radius, in logical pixels.
+  static const double standard = 20;
+
+  /// No rounding. Reserved for structural edges that must stay square.
   static const double none = 0;
-  static const double xs = 4;
-  static const double sm = 8;
-  static const double md = 16;
-  static const double lg = 20;
-  static const double xl = 24;
-  static const double xxl = 28;
-
-  /// UIAlertController's corner on iOS 27, rounder than a sheet's.
-  static const double alert = 34;
-  static const double full = 1000;
-
-  static double fit(double shortestSide) {
-    final limit = shortestSide / 3;
-    if (limit >= xxl) return xxl;
-    if (limit >= xl) return xl;
-    if (limit >= lg) return lg;
-    if (limit >= md) return md;
-    if (limit >= sm) return sm;
-    if (limit >= xs) return xs;
-    return none;
-  }
 }
 
 abstract final class AppRadius {
+  /// The standard [BorderRadius] (all corners at [AppCorner.standard]).
+  static const BorderRadius standard = BorderRadius.all(
+    Radius.circular(AppCorner.standard),
+  );
+
+  /// Square corners for structural edges only.
   static const BorderRadius none = BorderRadius.zero;
-  static const BorderRadius xs = BorderRadius.all(
-    Radius.circular(AppCorner.xs),
-  );
-  static const BorderRadius sm = BorderRadius.all(
-    Radius.circular(AppCorner.sm),
-  );
-  static const BorderRadius md = BorderRadius.all(
-    Radius.circular(AppCorner.md),
-  );
-  static const BorderRadius lg = BorderRadius.all(
-    Radius.circular(AppCorner.lg),
-  );
-  static const BorderRadius xl = BorderRadius.all(
-    Radius.circular(AppCorner.xl),
-  );
-  static const BorderRadius xxl = BorderRadius.all(
-    Radius.circular(AppCorner.xxl),
-  );
-  static const BorderRadius full = BorderRadius.all(
-    Radius.circular(AppCorner.full),
-  );
 
   static BorderRadius all(double corner) => BorderRadius.circular(corner);
 
@@ -68,29 +46,14 @@ abstract final class AppRadius {
 }
 
 abstract final class AppShape {
+  /// The standard superellipse shape (all corners at [AppCorner.standard]).
+  static const RoundedSuperellipseBorder standard = RoundedSuperellipseBorder(
+    borderRadius: AppRadius.standard,
+  );
+
+  /// Square corners for structural edges only.
   static const RoundedSuperellipseBorder none = RoundedSuperellipseBorder();
-  static const RoundedSuperellipseBorder xs = RoundedSuperellipseBorder(
-    borderRadius: AppRadius.xs,
-  );
-  static const RoundedSuperellipseBorder sm = RoundedSuperellipseBorder(
-    borderRadius: AppRadius.sm,
-  );
-  static const RoundedSuperellipseBorder md = RoundedSuperellipseBorder(
-    borderRadius: AppRadius.md,
-  );
-  static const RoundedSuperellipseBorder lg = RoundedSuperellipseBorder(
-    borderRadius: AppRadius.lg,
-  );
-  static const RoundedSuperellipseBorder xl = RoundedSuperellipseBorder(
-    borderRadius: AppRadius.xl,
-  );
-  static const RoundedSuperellipseBorder xxl = RoundedSuperellipseBorder(
-    borderRadius: AppRadius.xxl,
-  );
-  static const RoundedSuperellipseBorder full = RoundedSuperellipseBorder(
-    borderRadius: AppRadius.full,
-  );
-  static const CircleBorder circle = CircleBorder();
+
   static const AppInputBorder input = AppInputBorder();
 
   static RoundedSuperellipseBorder all(double corner) =>
@@ -113,7 +76,7 @@ abstract final class AppShape {
 class AppInputBorder extends InputBorder {
   const AppInputBorder({
     super.borderSide = const BorderSide(),
-    this.borderRadius = AppRadius.md,
+    this.borderRadius = AppRadius.standard,
     this.gapPadding = 4.0,
   });
 
@@ -253,27 +216,28 @@ class AppInputBorder extends InputBorder {
 
 extension AppShapeThemeExt on ThemeData {
   ThemeData get withAppShapes => copyWith(
-    cardTheme: cardTheme.copyWith(shape: AppShape.md),
-    dialogTheme: dialogTheme.copyWith(shape: AppShape.all(AppCorner.alert)),
+    cardTheme: cardTheme.copyWith(shape: AppShape.standard),
+    dialogTheme: dialogTheme.copyWith(shape: AppShape.standard),
+    // A bottom sheet is flush with the bottom edge, so only its top corners round.
     bottomSheetTheme: bottomSheetTheme.copyWith(
-      shape: AppShape.top(AppCorner.xxl),
+      shape: AppShape.top(AppCorner.standard),
     ),
-    snackBarTheme: snackBarTheme.copyWith(shape: AppShape.xs),
+    snackBarTheme: snackBarTheme.copyWith(shape: AppShape.standard),
     tooltipTheme: tooltipTheme.copyWith(
       // A decoration replaces Material's tooltip colours too, so restate them.
       decoration: ShapeDecoration(
-        shape: AppShape.xs,
+        shape: AppShape.standard,
         color: switch (brightness) {
           Brightness.dark => Colors.white.withAlpha(230),
           Brightness.light => Colors.grey[700]!.withAlpha(230),
         },
       ),
     ),
-    chipTheme: chipTheme.copyWith(shape: AppShape.sm),
-    popupMenuTheme: popupMenuTheme.copyWith(shape: AppShape.md),
+    chipTheme: chipTheme.copyWith(shape: AppShape.standard),
+    popupMenuTheme: popupMenuTheme.copyWith(shape: AppShape.standard),
     menuTheme: MenuThemeData(
       style: (menuTheme.style ?? const MenuStyle()).copyWith(
-        shape: const WidgetStatePropertyAll(AppShape.md),
+        shape: const WidgetStatePropertyAll(AppShape.standard),
       ),
     ),
     inputDecorationTheme: inputDecorationTheme.copyWith(
@@ -284,33 +248,37 @@ extension AppShapeThemeExt on ThemeData {
       errorMaxLines: 2,
     ),
     floatingActionButtonTheme: floatingActionButtonTheme.copyWith(
-      shape: AppShape.md,
+      shape: AppShape.standard,
     ),
     navigationBarTheme: navigationBarTheme.copyWith(
-      indicatorShape: AppShape.full,
+      indicatorShape: AppShape.standard,
     ),
     navigationRailTheme: navigationRailTheme.copyWith(
-      indicatorShape: AppShape.full,
+      indicatorShape: AppShape.standard,
     ),
     progressIndicatorTheme: progressIndicatorTheme.copyWith(
-      borderRadius: AppRadius.full,
+      borderRadius: AppRadius.standard,
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: filledButtonTheme.style?.merge(_pillButton) ?? _pillButton,
+      style: filledButtonTheme.style?.merge(_standardButton) ?? _standardButton,
     ),
     textButtonTheme: TextButtonThemeData(
-      style: textButtonTheme.style?.merge(_pillButton) ?? _pillButton,
+      style: textButtonTheme.style?.merge(_standardButton) ?? _standardButton,
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: outlinedButtonTheme.style?.merge(_pillButton) ?? _pillButton,
+      style:
+          outlinedButtonTheme.style?.merge(_standardButton) ?? _standardButton,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
-      style: elevatedButtonTheme.style?.merge(_pillButton) ?? _pillButton,
+      style:
+          elevatedButtonTheme.style?.merge(_standardButton) ?? _standardButton,
     ),
     iconButtonTheme: IconButtonThemeData(
-      style: iconButtonTheme.style?.merge(_pillButton) ?? _pillButton,
+      style: iconButtonTheme.style?.merge(_standardButton) ?? _standardButton,
     ),
   );
 }
 
-const _pillButton = ButtonStyle(shape: WidgetStatePropertyAll(AppShape.full));
+const _standardButton = ButtonStyle(
+  shape: WidgetStatePropertyAll(AppShape.standard),
+);

@@ -263,7 +263,7 @@ class _MiniScreenPainter extends CustomPainter {
         canvas,
         bar,
         fill,
-        AppShape.full,
+        AppShape.standard,
         shadows: [
           BoxShadow(
             color: colorScheme.shadow.withValues(alpha: 0.12),
@@ -281,7 +281,7 @@ class _MiniScreenPainter extends CustomPainter {
   void _paintGlassBar(Canvas canvas, _MiniGeometry geometry) {
     final bar = geometry.bar;
     final unit = geometry.unit;
-    final path = AppShape.full.getOuterPath(bar);
+    final path = AppShape.standard.getOuterPath(bar);
     final rim = unit * 0.12;
     canvas
       ..save()
@@ -306,7 +306,7 @@ class _MiniScreenPainter extends CustomPainter {
           ),
       )
       ..drawPath(
-        AppShape.full.getOuterPath(bar.deflate(rim / 2)),
+        AppShape.standard.getOuterPath(bar.deflate(rim / 2)),
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = rim
@@ -354,7 +354,7 @@ class _MiniScreenPainter extends CustomPainter {
     canvas,
     rect,
     color,
-    AppShape.all(math.min(rect.shortestSide / 2, rect.width / 9)),
+    AppShape.standard,
   );
 
   void _pill(
@@ -364,7 +364,7 @@ class _MiniScreenPainter extends CustomPainter {
     double width,
     double height,
     Color color,
-  ) => _fill(canvas, Rect.fromLTWH(x, y, width, height), color, AppShape.full);
+  ) => _fill(canvas, Rect.fromLTWH(x, y, width, height), color, AppShape.standard);
 
   void _dot(Canvas canvas, double x, double y, double radius, Color color) =>
       canvas.drawCircle(Offset(x, y), radius, Paint()..color = color);

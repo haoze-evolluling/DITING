@@ -85,20 +85,9 @@ abstract final class DashboardShadows {
   static final _e2Dark = [_shadow(0x80, 2, 6), _shadow(0xB3, 32, 64, -12)];
 }
 
-/// Corner radii. Larger than AppCorner: the dashboard card sits above every other surface.
-///
-/// Desktop cards are 24 rather than the mobile 34: a window shows several of them at once, and a
-/// card that round reads as a phone widget. The inner block steps down twice so a tile inside a
-/// card never looks like it shares the card's own corner.
-abstract final class DashboardCorner {
-  static const desktopCard = 24.0;
-  static const mobileCard = 34.0;
-  static const block = 14.0;
-  static const mobileBlock = 22.0;
-  static const tab = 16.0;
-  static const badge = 14.0;
-}
-
+/// Corner radii for the dashboard come from the single product standard
+/// [AppCorner.standard]. Dashboard cards are no longer a special, larger case so
+/// a card here reads as the same surface as everywhere else.
 /// Dashboard text roles. All figures use tabular digits so rows do not jitter.
 ///
 /// A desktop card is read from a distance: its title has to sit clearly above the note under it,
@@ -162,12 +151,8 @@ EdgeInsets dashboardCardPadding(DashboardDensity density) => switch (density) {
 };
 
 /// Vertical gap between dashboard cards; the gap comes from the enclosing
-/// Column(spacing:). Wide enough that two 24-radius corners never read as one shape.
+/// Column(spacing:).
 const double dashboardCardGap = 16;
-
-double dashboardCardRadius(DashboardDensity density) => density.isDesktop
-    ? DashboardCorner.desktopCard
-    : DashboardCorner.mobileCard;
 
 /// Bytes to `1.2 MB`, base 1000 to match the traffic page.
 String dashboardTraffic(num bytes) {

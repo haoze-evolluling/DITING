@@ -130,11 +130,11 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
           ),
           const SizedBox(height: 12),
           // Fixed height 360 shows a screenful without pushing the button off-screen.
-          // borderRadius must be explicit: FilledInputTheme defaults to AppRadius.full.
+          // borderRadius must be explicit: FilledInputTheme defaults to AppRadius.standard.
           SizedBox(
             height: 360,
             child: FilledInputTheme(
-              borderRadius: AppRadius.lg,
+              borderRadius: AppRadius.standard,
               child: TextField(
                 controller: _controller,
                 expands: true,

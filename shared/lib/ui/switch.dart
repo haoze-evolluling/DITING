@@ -225,7 +225,7 @@ class _CommonSwitchState extends State<CommonSwitch>
     final thumb = DecoratedBox(
       decoration: ShapeDecoration(
         color: thumbFill,
-        shape: AppShape.full,
+        shape: AppShape.standard,
         shadows: lens ? null : shadows,
       ),
     );
@@ -237,7 +237,7 @@ class _CommonSwitchState extends State<CommonSwitch>
           child: DecoratedBox(
             decoration: ShapeDecoration(
               color: trackColor,
-              shape: AppShape.full,
+              shape: AppShape.standard,
             ),
           ),
         ),
@@ -256,7 +256,7 @@ class _CommonSwitchState extends State<CommonSwitch>
             rect: track,
             child: DecoratedBox(
               decoration: ShapeDecoration(
-                shape: AppShape.full.copyWith(
+                shape: AppShape.standard.copyWith(
                   side: focusRingSide(colorScheme, standsOff: true),
                 ),
               ),

@@ -141,7 +141,7 @@ class _HoverMarkPainter extends CustomPainter {
       return;
     }
     canvas.drawPath(
-      AppShape.full.getOuterPath(rect),
+      AppShape.standard.getOuterPath(rect),
       Paint()
         ..color = color.withValues(
           alpha: _markAlpha * math.min(mark._shown.value, 1),

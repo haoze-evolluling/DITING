@@ -7,8 +7,8 @@ import 'package:material_ui/material_ui.dart';
 
 part 'dashboard_connected_buttons.dart';
 
-/// Dashboard card, after upstream views/dashboard/widgets/card.dart. Adds elevation tiers
-/// and a larger radius than [CommonCard]: 32+ here against 16-20 for list cards.
+/// Dashboard card, after upstream views/dashboard/widgets/card.dart. Adds elevation tiers;
+/// corners follow [AppCorner.standard] like every other surface in the app.
 class DashboardCard extends StatelessWidget {
   const DashboardCard({
     super.key,
@@ -31,7 +31,7 @@ class DashboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final density = DashboardDensityScope.of(context);
-    final shape = AppShape.all(dashboardCardRadius(density));
+    final shape = AppShape.standard;
     final editBar = DashboardEditBar.of(context);
     // Each card owns its own layer: the 1 s speed/traffic and 2 s memory figures rebuild a single
     // card, and without a boundary here that dirty child promotes the whole scroll body (every card
@@ -187,16 +187,11 @@ class DashboardBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final density = DashboardDensityScope.of(context);
     return Container(
       padding: padding,
       decoration: ShapeDecoration(
         color: color ?? DashboardColors.of(context).tone,
-        shape: AppShape.all(
-          density.isDesktop
-              ? DashboardCorner.block
-              : DashboardCorner.mobileBlock,
-        ),
+        shape: AppShape.standard,
       ),
       child: child,
     );
@@ -236,7 +231,7 @@ class DashboardChip extends StatelessWidget {
       ),
       decoration: ShapeDecoration(
         color: background,
-        shape: AppShape.all(AppCorner.sm),
+        shape: AppShape.standard,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -248,7 +243,7 @@ class DashboardChip extends StatelessWidget {
               height: 6,
               decoration: ShapeDecoration(
                 color: foreground,
-                shape: const CircleBorder(),
+                shape: AppShape.standard,
               ),
             ),
           Flexible(

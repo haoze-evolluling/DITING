@@ -93,7 +93,7 @@ class _LanRateLimitPageState extends ConsumerState<LanRateLimitPage> {
                 leading: const GlyphIcon(AppGlyphs.block),
                 title: Text(l10n.lanRateLimitExempt),
                 subtitle: FilledInputTheme(
-                  borderRadius: AppRadius.md,
+                  borderRadius: AppRadius.standard,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 10,

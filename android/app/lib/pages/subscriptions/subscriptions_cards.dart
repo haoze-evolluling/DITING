@@ -176,7 +176,7 @@ class _SubscriptionCard extends StatelessWidget {
                   if (entry.isImporting || isUpdating)
                     LinearProgressIndicator(
                       minHeight: 3,
-                      borderRadius: AppRadius.full,
+                      borderRadius: AppRadius.standard,
                     ),
                   Text(
                     context.l10n.subsRulesStored(

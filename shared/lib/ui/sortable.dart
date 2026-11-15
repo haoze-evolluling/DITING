@@ -209,7 +209,7 @@ class _SortHandleState extends State<SortHandle> {
                   width: dimension - 8,
                   height: dimension - 8,
                   decoration: ShapeDecoration(
-                    shape: AppShape.circle,
+                    shape: AppShape.standard,
                     color: colorScheme.onSurface.withValues(
                       alpha: _lifted
                           ? 0.16

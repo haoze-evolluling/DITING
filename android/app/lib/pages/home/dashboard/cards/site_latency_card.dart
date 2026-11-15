@@ -211,7 +211,7 @@ class _SiteCell extends StatelessWidget {
           9 * scale,
         ),
         child: InkWell(
-          customBorder: AppShape.all(AppCorner.md),
+          customBorder: AppShape.standard,
           onTap: onTap,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +287,7 @@ class _Badge extends StatelessWidget {
             height: size,
             decoration: ShapeDecoration(
               color: DashboardColors.of(context).card,
-              shape: AppShape.all(AppCorner.sm),
+              shape: AppShape.standard,
             ),
             child: Center(
               child: GlyphIcon(
@@ -304,7 +304,7 @@ class _Badge extends StatelessWidget {
             child: Container(
               width: 8,
               height: 8,
-              decoration: ShapeDecoration(color: dot, shape: AppShape.circle),
+              decoration: ShapeDecoration(color: dot, shape: AppShape.standard),
             ),
           ),
         ],

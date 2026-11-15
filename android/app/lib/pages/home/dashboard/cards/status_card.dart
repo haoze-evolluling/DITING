@@ -121,7 +121,7 @@ class _UptimePlaceholder extends StatelessWidget {
           decoration: BoxDecoration(
             // Same tone as the chart tracks, so the card stays one family.
             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.22),
-            borderRadius: BorderRadius.circular(3 * scale),
+            borderRadius: AppRadius.standard,
           ),
         ),
       ),

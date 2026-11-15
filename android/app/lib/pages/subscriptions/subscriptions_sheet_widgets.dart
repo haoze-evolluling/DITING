@@ -76,7 +76,7 @@ class _PreviewBox extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: ShapeDecoration(
           color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
-          shape: AppShape.md,
+          shape: AppShape.standard,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

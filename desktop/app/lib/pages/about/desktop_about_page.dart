@@ -189,7 +189,7 @@ class _AboutHero extends StatelessWidget {
             child: DecoratedBox(
               decoration: ShapeDecoration(
                 color: context.raisedSurfaceLevel.colorOf(colorScheme),
-                shape: AppShape.all(AppCorner.fit(_logoSize)),
+                shape: AppShape.standard,
               ),
               child: Padding(
                 padding: const EdgeInsets.all(_logoInset),

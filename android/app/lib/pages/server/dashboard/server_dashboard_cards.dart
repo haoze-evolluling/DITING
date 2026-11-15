@@ -493,7 +493,7 @@ class _RuleEntry extends StatelessWidget {
           ),
         InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppCorner.sm),
+          borderRadius: AppRadius.standard,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
             child: Row(

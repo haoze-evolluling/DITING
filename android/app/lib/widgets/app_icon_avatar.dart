@@ -5,9 +5,8 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// 40 dp tile with a 14 dp corner, matching 1.4.3 `AppIconShape`.
+/// 40 dp tile; its corner follows the global [AppCorner.standard].
 const appIconTileSize = 40.0;
-const appIconTileRadius = 14.0;
 
 /// Real launcher icon for one package, cached by [appIconsProvider]. Only a tile that is about to
 /// paint asks for its icon, so a long list fetches what is on screen instead of the whole
@@ -62,7 +61,7 @@ class _AppIconAvatarState extends ConsumerState<AppIconAvatar> {
         width: size,
         height: size,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(appIconTileRadius),
+          borderRadius: AppRadius.standard,
           child: ColoredBox(
             color: colors.surfaceContainerHighest,
             child: bytes == null

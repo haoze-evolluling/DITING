@@ -174,7 +174,7 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
                 foregroundColor: item.deleted
                     ? colorScheme.onSurfaceVariant
                     : (item.enabled ? colorScheme.primary : null),
-                shape: AppShape.circle,
+                shape: AppShape.standard,
                 size: 34,
                 glyphSize: 17,
               ),

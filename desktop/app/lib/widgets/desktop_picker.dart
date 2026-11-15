@@ -33,7 +33,7 @@ class DesktopPicker extends StatelessWidget {
         button: true,
         label: semanticLabel,
         child: InkWell(
-          customBorder: AppShape.all(AppCorner.sm),
+          customBorder: AppShape.standard,
           onTap: open,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

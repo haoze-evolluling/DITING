@@ -101,7 +101,7 @@ class _Tile extends StatelessWidget {
       decoration: ShapeDecoration(
         // One step above the card, so the grid stays visible in both themes.
         color: context.raisedSurfaceLevel.colorOf(colorScheme),
-        shape: AppShape.all(AppCorner.md),
+        shape: AppShape.standard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +198,7 @@ class _Ratio extends StatelessWidget {
               ? DecoratedBox(
                   decoration: ShapeDecoration(
                     color: colorScheme.surfaceContainerHighest,
-                    shape: const StadiumBorder(),
+                    shape: AppShape.standard,
                   ),
                 )
               : Row(
@@ -213,7 +213,7 @@ class _Ratio extends StatelessWidget {
                         child: DecoratedBox(
                           decoration: ShapeDecoration(
                             color: segment.color,
-                            shape: const StadiumBorder(),
+                            shape: AppShape.standard,
                           ),
                         ),
                       ),
@@ -257,7 +257,7 @@ class LogsSectionEmpty extends StatelessWidget {
               // nearly the same colour, and the mark disappeared into the empty state.
               color: colorScheme.surfaceContainerHighest,
               foregroundColor: colorScheme.onSurfaceVariant,
-              shape: AppShape.circle,
+              shape: AppShape.standard,
               size: 44,
               glyphSize: 20,
             ),

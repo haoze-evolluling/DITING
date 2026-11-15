@@ -405,7 +405,7 @@ class CommonScaffoldState extends State<CommonScaffold>
     return AppBarInsetScope(
       child: form.hasDragHandle
           ? ClipRSuperellipse(
-              borderRadius: AppRadius.top(AppCorner.xxl),
+              borderRadius: AppRadius.top(AppCorner.standard),
               child: hugging,
             )
           : hugging,

@@ -441,7 +441,7 @@ class _FilterListTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: ShapeDecoration(
               color: DashboardColors.of(context).tone2,
-              shape: AppShape.all(AppCorner.sm),
+              shape: AppShape.standard,
             ),
             child: Text(
               list.url,

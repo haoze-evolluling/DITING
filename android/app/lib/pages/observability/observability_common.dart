@@ -190,7 +190,7 @@ class ChainStepRow extends StatelessWidget {
                     color: isLast
                         ? colorScheme.primary
                         : colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                    shape: AppShape.circle,
+                    shape: AppShape.standard,
                   ),
                   child: const SizedBox.square(dimension: 7),
                 ),

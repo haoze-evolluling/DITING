@@ -4,8 +4,7 @@ import 'package:material_ui/material_ui.dart';
 /// A glyph on a rounded tile: the leading mark of a hero card, a mode option or a dashboard stat.
 ///
 /// The callers differ in side, corner and fill, not in structure, so those are parameters. [shape]
-/// takes [AppShape.circle] for the round variant; the square one is [AppShape.md] at [size] 44,
-/// which is the size most pages use.
+/// defaults to the product's standard corner; callers that need another outline pass it explicitly.
 class IconBadge extends StatelessWidget {
   const IconBadge({
     super.key,
@@ -14,7 +13,7 @@ class IconBadge extends StatelessWidget {
     this.foregroundColor,
     this.size = 44,
     this.glyphSize = 22,
-    this.shape = AppShape.md,
+    this.shape = AppShape.standard,
   });
 
   final Glyph glyph;

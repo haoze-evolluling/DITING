@@ -186,7 +186,7 @@ class _Legend extends StatelessWidget {
         Container(
           width: 7,
           height: 7,
-          decoration: ShapeDecoration(color: color, shape: AppShape.circle),
+          decoration: ShapeDecoration(color: color, shape: AppShape.standard),
         ),
         Text(label, style: DashboardText.label(context)),
         Text(
@@ -211,7 +211,7 @@ class _CompositionBar extends StatelessWidget {
     final total = segments.fold<int>(0, (sum, segment) => sum + segment.bytes);
     final height = 9.0 * scale;
     return ClipRSuperellipse(
-      borderRadius: BorderRadius.circular(height / 2),
+      borderRadius: AppRadius.standard,
       child: SizedBox(
         height: height,
         child: total <= 0

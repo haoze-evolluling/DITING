@@ -57,7 +57,7 @@ class ProgressLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRSuperellipse(
-      borderRadius: AppRadius.full,
+      borderRadius: AppRadius.standard,
       child: LinearProgressIndicator(
         value: value,
         minHeight: minHeight,

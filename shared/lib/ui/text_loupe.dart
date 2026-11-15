@@ -126,7 +126,7 @@ class _TextLoupeState extends State<TextLoupe>
               ),
               decoration: MagnifierDecoration(
                 opacity: t,
-                shape: AppShape.full.copyWith(
+                shape: AppShape.standard.copyWith(
                   side: BorderSide(color: widget.borderColor, width: 2),
                 ),
                 shadows: const [

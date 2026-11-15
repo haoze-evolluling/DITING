@@ -178,7 +178,7 @@ class _Tile extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return Material(
       color: DashboardColors.of(context).card,
-      shape: AppShape.all(AppCorner.sm),
+      shape: AppShape.standard,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

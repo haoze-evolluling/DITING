@@ -1,7 +1,6 @@
 /// Mini home preview (upstream `views/theme_preview.dart`), painted in a part file.
 library;
 
-import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
 import 'package:diting_shared/state/appearance_extra_providers.dart';
@@ -117,7 +116,7 @@ class MiniScreenThumb extends StatelessWidget {
       height: height,
       width: height * _logicalSize.width / _logicalSize.height,
       child: ClipRSuperellipse(
-        borderRadius: AppRadius.xs,
+        borderRadius: AppRadius.standard,
         child: FittedBox(
           child: SizedBox(
             width: _logicalSize.width,

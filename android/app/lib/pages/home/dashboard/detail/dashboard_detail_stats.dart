@@ -68,7 +68,7 @@ class _MetricTile extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: ShapeDecoration(
         color: DashboardColors.of(context).tone,
-        shape: AppShape.all(AppCorner.md),
+        shape: AppShape.standard,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

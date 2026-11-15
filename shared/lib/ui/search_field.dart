@@ -72,7 +72,7 @@ class _SearchFieldState extends State<SearchField> {
     final localizations = UiLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final remote = RemoteFocusAdapter.isEnabledOf(context);
-    final pill = AppShape.input.copyWith(borderRadius: AppRadius.full);
+    final pill = AppShape.input.copyWith(borderRadius: AppRadius.standard);
     final trailing = widget.trailing;
     // On goo the surface behind the field is its fill; anywhere else the field
     // draws its own, as iOS does when a field stands on a page.

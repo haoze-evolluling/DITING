@@ -25,7 +25,7 @@ class CommonCheckBox extends StatelessWidget {
     return Checkbox(
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
-      shape: isCircle ? AppShape.circle : null,
+      shape: isCircle ? AppShape.standard : null,
       value: value,
       onChanged: onChanged,
     );
@@ -313,7 +313,7 @@ class NoInputBorder extends InputBorder {
 class FilledInputTheme extends StatelessWidget {
   const FilledInputTheme({
     super.key,
-    this.borderRadius = AppRadius.full,
+    this.borderRadius = AppRadius.standard,
     this.contentPadding,
     this.fillColor,
     required this.child,
@@ -404,7 +404,7 @@ class LabeledInputField extends StatelessWidget {
       children: [
         Text(label, style: context.listTitleStyle),
         FilledInputTheme(
-          borderRadius: AppRadius.md,
+          borderRadius: AppRadius.standard,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 12,

@@ -138,7 +138,7 @@ class CacheBar extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final colors = DashboardColors.of(context);
     final fill = value.isNaN ? 0.0 : value.clamp(0, 1).toDouble();
-    final shape = AppShape.all(AppCorner.xs);
+    final shape = AppShape.standard;
     return SizedBox(
       height: height,
       child: Stack(

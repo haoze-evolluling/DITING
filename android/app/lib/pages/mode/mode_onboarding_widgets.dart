@@ -34,7 +34,7 @@ class _StepScaffold extends StatelessWidget {
                     glyphSize: 40,
                     color: colorScheme.primary.withValues(alpha: 0.12),
                     foregroundColor: colorScheme.primary,
-                    shape: AppShape.full,
+                    shape: AppShape.standard,
                   ),
                 ),
                 const SizedBox(height: 16),

@@ -29,7 +29,7 @@ class _HoverHighlight extends StatelessWidget {
       child: DecoratedBox(
         decoration: ShapeDecoration(
           color: context.colorScheme.onSurface.withValues(alpha: alpha),
-          shape: AppShape.full,
+          shape: AppShape.standard,
         ),
       ),
     );
@@ -67,7 +67,7 @@ class _Lens extends StatelessWidget {
                   SurfaceLevel.floatingOf(colorScheme).next
                       .colorOf(colorScheme),
                 ),
-          shape: AppShape.full,
+          shape: AppShape.standard,
         ),
       ),
     );
@@ -180,7 +180,7 @@ class _LensClip extends CustomClipper<Path> {
   final TextDirection textDirection;
 
   @override
-  Path getClip(Size size) => AppShape.full.getOuterPath(
+  Path getClip(Size size) => AppShape.standard.getOuterPath(
     textDirection == TextDirection.ltr
         ? rect
         : Rect.fromLTRB(
@@ -320,7 +320,7 @@ class _FloatingBarItemState extends State<_FloatingBarItem> {
             color: _focused
                 ? colorScheme.onSurface.withValues(alpha: 0.1)
                 : Colors.transparent,
-            shape: AppShape.full.copyWith(
+            shape: AppShape.standard.copyWith(
               side: _focused ? focusRingSide(colorScheme) : BorderSide.none,
             ),
           ),

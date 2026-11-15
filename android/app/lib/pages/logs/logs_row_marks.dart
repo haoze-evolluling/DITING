@@ -27,7 +27,7 @@ class LogsRankBadge extends StatelessWidget {
       width: _size,
       height: _size,
       alignment: Alignment.center,
-      decoration: ShapeDecoration(color: background, shape: AppShape.circle),
+      decoration: ShapeDecoration(color: background, shape: AppShape.standard),
       child: Text(
         '$rank',
         maxLines: 1,
@@ -55,7 +55,7 @@ class LogsRowBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(_height / 2),
+      borderRadius: AppRadius.standard,
       child: SizedBox(
         height: _height,
         child: Stack(

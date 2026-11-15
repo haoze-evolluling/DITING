@@ -66,7 +66,7 @@ class AppearancePreviewCard extends ConsumerWidget {
           DecoratedBox(
             decoration: ShapeDecoration(
               color: DashboardColors.of(context).tone2,
-              shape: AppShape.all(DashboardCorner.block),
+              shape: AppShape.standard,
             ),
             child: Padding(
               padding: const EdgeInsets.all(AppGap.sm),

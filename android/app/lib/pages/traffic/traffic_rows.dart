@@ -79,7 +79,7 @@ class ShareBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(3),
+      borderRadius: AppRadius.standard,
       child: SizedBox(
         height: 6,
         child: Stack(

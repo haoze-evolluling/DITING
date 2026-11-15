@@ -1,7 +1,7 @@
 part of 'dashboard_card.dart';
 
-/// M3 Expressive connected button group: round ends, sharp inner edges, the selected
-/// segment inflates into a full pill. A plain Row suffices where upstream uses RenderFlex.
+/// M3 Expressive connected button group. Every segment shares the product's
+/// standard corner; a plain Row suffices where upstream uses RenderFlex.
 class DashboardConnectedGroup extends StatelessWidget {
   const DashboardConnectedGroup({
     super.key,
@@ -114,8 +114,8 @@ class DashboardSegmentedControl<T> extends StatelessWidget {
     required this.segments,
     required this.value,
     required this.onChanged,
-    this.outer = 26,
-    this.inner = 12,
+    this.outer = AppCorner.standard,
+    this.inner = AppCorner.standard,
     this.height = 52,
   });
 

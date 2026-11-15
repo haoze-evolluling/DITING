@@ -171,7 +171,7 @@ class _AppScrollbar extends RawScrollbar {
     this.onScrub,
   }) : super(
          interactive: true,
-         shape: AppShape.full,
+         shape: AppShape.standard,
          minThumbLength: _minThumbLength,
          crossAxisMargin: _crossAxisMargin,
          fadeDuration: const Duration(milliseconds: 250),

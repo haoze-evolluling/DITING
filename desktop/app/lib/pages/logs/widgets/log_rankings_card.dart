@@ -181,7 +181,7 @@ class _RankBadge extends StatelessWidget {
       alignment: Alignment.center,
       decoration: ShapeDecoration(
         color: background,
-        shape: AppShape.all(AppCorner.sm),
+        shape: AppShape.standard,
       ),
       child: Text(
         '$rank',
@@ -204,7 +204,7 @@ class _ProportionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: AppShape.all(AppCorner.sm).borderRadius,
+      borderRadius: AppShape.standard.borderRadius,
       child: SizedBox(
         height: 4,
         child: ColoredBox(

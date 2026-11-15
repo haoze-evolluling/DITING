@@ -83,7 +83,7 @@ class _IconThumb extends StatelessWidget {
       width: 44,
       height: 44,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: AppRadius.standard,
         child: Image.asset(asset, width: 44, height: 44, fit: BoxFit.cover),
       ),
     );

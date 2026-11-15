@@ -115,7 +115,7 @@ class _SliverCollapsibleSectionState extends State<SliverCollapsibleSection>
             padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
             child: DecoratedBox(
               decoration: ShapeDecoration(
-                shape: AppShape.md.copyWith(
+                shape: AppShape.standard.copyWith(
                   side: focused ? focusRingSide(colorScheme) : BorderSide.none,
                 ),
               ),

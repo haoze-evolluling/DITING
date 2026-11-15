@@ -240,7 +240,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
               padding: const EdgeInsets.all(10),
               decoration: ShapeDecoration(
                 color: context.raisedSurfaceLevel.colorOf(context.colorScheme),
-                shape: AppShape.md,
+                shape: AppShape.standard,
               ),
               child: SelectableText(
                 digest,
@@ -329,7 +329,7 @@ class _Header extends StatelessWidget {
             glyphSize: 20,
             color: colorScheme.primaryContainer,
             foregroundColor: colorScheme.onPrimaryContainer,
-            shape: AppShape.circle,
+            shape: AppShape.standard,
           ),
           Expanded(
             child: Column(
