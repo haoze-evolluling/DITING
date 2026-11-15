@@ -1,8 +1,10 @@
 package com.haoze.diting.platform
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.FileProvider
 import com.haoze.diting.log.RuntimeLogStore
 import com.haoze.diting.log.TroubleshootingLogStore
@@ -25,6 +27,7 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
         const val CHANNEL = "com.haoze.diting/troubleshooting_logs"
         private const val SHARE_DIR = "troubleshooting-share"
         private const val MIME_TEXT = "text/plain"
+        private const val TAG = "TroubleshootingLogBridge"
     }
 
     private val crashStore = AppStorageCleaner(context)
@@ -110,21 +113,36 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
         val uris = files.map {
             FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it)
         }
+        // QQ (and WeChat) read the shared URI out of ClipData. With only EXTRA_STREAM set they
+        // report "文件不存在" for a perfectly valid FileProvider URI, so a ClipData carrying every
+        // URI is part of the contract, not an optional nicety.
+        val clip = ClipData.newRawUri(title, uris.first())
+        uris.drop(1).forEach { clip.addItem(ClipData.Item(it)) }
         val intent = if (uris.size == 1) {
             Intent(Intent.ACTION_SEND).apply {
                 type = MIME_TEXT
                 putExtra(Intent.EXTRA_STREAM, uris.single())
+                clipData = clip
             }
         } else {
             Intent(Intent.ACTION_SEND_MULTIPLE).apply {
                 type = MIME_TEXT
                 putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList<Uri>(uris))
+                clipData = clip
             }
         }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        context.startActivity(
-            Intent.createChooser(intent, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+        // The grant has to sit on the chooser too: some OEM choosers only forward the flags they
+        // were launched with, and the target then cannot open the content URI.
+        val chooser = Intent.createChooser(intent, title).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(chooser)
         true
+    }.onFailure {
+        // A swallowed exception here used to be invisible (only a generic "分享失败" toast), so
+        // there was no way to tell a missing file from a bad grant. Keep the reason in logcat.
+        Log.w(TAG, "share failed: ${files.joinToString { it.name }}", it)
     }.getOrDefault(false)
 }

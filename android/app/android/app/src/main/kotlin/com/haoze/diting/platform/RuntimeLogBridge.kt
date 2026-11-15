@@ -1,5 +1,6 @@
 package com.haoze.diting.platform
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.os.Process
@@ -138,14 +139,21 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
         val dir = File(context.cacheDir, "troubleshooting-share").apply { mkdirs() }
         val file = File(dir, name).apply { writeText(text) }
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        // QQ / WeChat read the shared URI from ClipData; with only EXTRA_STREAM they answer
+        // "文件不存在". Keep the same contract as TroubleshootingLogBridge.shareFiles.
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, uri)
+            clipData = ClipData.newRawUri(name, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(
-            Intent.createChooser(intent, "DITING").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
+        val chooser = Intent.createChooser(intent, "DITING").apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(chooser)
         true
+    }.onFailure {
+        Log.w("RuntimeLogBridge", "share text failed", it)
     }.getOrDefault(false)
 }
