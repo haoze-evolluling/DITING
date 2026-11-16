@@ -152,6 +152,38 @@ Future<bool> storageV2FilesReady() async {
   return true;
 }
 
+/// True when at least one pre-V2 store is still on disk, i.e. this install may need a real copy.
+Future<bool> hasLegacyStores() async {
+  final String directory;
+  try {
+    directory = await getDatabasesPath();
+  } on StateError {
+    // No database directory on this host.
+    return false;
+  }
+  for (final name in LegacyStorageSource.allOldDatabases) {
+    if (await File(p.join(directory, name)).exists()) return true;
+  }
+  return false;
+}
+
+/// Whether startup must show the migration gate instead of opening the stores silently.
+///
+/// Neither a fresh install (no marker, no V2 files, no old files) nor a marker lost while the V2
+/// files are intact has rows to copy, so both finish before the first frame. A real upgrade and an
+/// interrupted run keep the gate so the user sees progress, failures and the stop prompt.
+bool storageV2GateRequired({
+  required int state,
+  required bool filesReady,
+  required bool legacyStoresPresent,
+}) {
+  if (StorageContract.isReadyState(state) && filesReady) return false;
+  if (state == StorageContract.stateIdle) {
+    return !filesReady && legacyStoresPresent;
+  }
+  return true;
+}
+
 /// Runs the copy and verification. Safe to call on every launch: a completed marker returns
 /// immediately. [dataPlaneRunning] defers the copy because the old files are still in use.
 Future<StorageV2Result> ensureStorageV2(

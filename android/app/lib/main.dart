@@ -49,8 +49,9 @@ void _stage(String label) {
   if (_startupTrace) debugPrint('startup $label +${now}ms');
 }
 
-/// App entry point. The V2 storage gate runs before any provider opens a database: a first launch
-/// after the upgrade copies the old stores, verifies them and only then starts the real app.
+/// App entry point. The V2 storage gate runs before any provider opens a database. A real upgrade
+/// copies the old stores behind the gate; a fresh install or a lost marker finishes silently before
+/// the first frame.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   installDebugProbe();
@@ -77,13 +78,25 @@ Future<void> main() async {
   final version = await versionTask;
   _stage('version');
 
-  final ready =
-      StorageContract.isReadyState(settings.storageV2State) &&
-      await storageV2FilesReady();
-  if (ready && settings.storageV2State < StorageContract.stateVerified) {
-    // A preferences restore can lose the marker while the V2 files are intact.
-    await settings.commitStorageV2State(StorageContract.stateVerified);
-    settings.setStorageV2CompletedAt(DateTime.now());
+  final state = settings.storageV2State;
+  final filesReady = await storageV2FilesReady();
+  var ready = StorageContract.isReadyState(state) && filesReady;
+  if (!ready) {
+    final gateRequired = storageV2GateRequired(
+      state: state,
+      filesReady: filesReady,
+      legacyStoresPresent: await hasLegacyStores(),
+    );
+    if (!gateRequired) {
+      // A fresh install has nothing to copy, and a restored preferences file can lose the marker
+      // while the V2 files stay intact. Both complete silently; only a real upgrade or an
+      // interrupted run shows the gate.
+      final result = await ensureStorageV2(
+        store,
+        dataPlaneRunning: await anyDataPlaneRunning(),
+      );
+      ready = result.ready;
+    }
   }
   _stage('storage-check');
   if (!ready) {

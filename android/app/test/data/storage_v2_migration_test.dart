@@ -346,6 +346,58 @@ void main() {
     expect(await count(DatabaseKind.normalLogs, 'dns_log'), 0);
   });
 
+  test('全新安装与标记丢失不显示迁移门禁', () async {
+    expect(await hasLegacyStores(), isFalse);
+    expect(
+      storageV2GateRequired(
+        state: StorageContract.stateIdle,
+        filesReady: false,
+        legacyStoresPresent: false,
+      ),
+      isFalse,
+    );
+
+    await ensureStorageV2(store, native: const NoopStorageV2Native());
+    LegacySettings(store).setStorageV2State(StorageContract.stateIdle);
+    expect(
+      storageV2GateRequired(
+        state: StorageContract.stateIdle,
+        filesReady: await storageV2FilesReady(),
+        legacyStoresPresent: await hasLegacyStores(),
+      ),
+      isFalse,
+    );
+  });
+
+  test('存在旧库或迁移中断时显示迁移门禁', () async {
+    await seedAllLegacy();
+    expect(await hasLegacyStores(), isTrue);
+    expect(
+      storageV2GateRequired(
+        state: StorageContract.stateIdle,
+        filesReady: false,
+        legacyStoresPresent: true,
+      ),
+      isTrue,
+    );
+    expect(
+      storageV2GateRequired(
+        state: StorageContract.stateCopying,
+        filesReady: false,
+        legacyStoresPresent: true,
+      ),
+      isTrue,
+    );
+    expect(
+      storageV2GateRequired(
+        state: StorageContract.stateVerified,
+        filesReady: false,
+        legacyStoresPresent: true,
+      ),
+      isTrue,
+    );
+  });
+
   test('旧库损坏时不进入已验证状态', () async {
     final path = p.join(directory.path, LegacyStorageSource.normalDatabase);
     await File(path).writeAsString('not a database');
