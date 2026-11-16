@@ -16,12 +16,9 @@ object BootstrapLogWriter {
         "(timestamp, ipId, ipName, ip, host, success, elapsedMs, fallbackUsed, message) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-    /// `packed` is `u32 count | rows(bootstrap input)`; the kernel answers the writer rows in one
-    /// call, so a burst of probes costs one JNI pair instead of one per host.
+    /// `packed` is `u32 count | rows(bootstrap input)`; the kernel classifies and enqueues the
+    /// writer rows in one call, so a burst of probes costs one crossing instead of one per host.
     fun writeBatch(context: Context, databaseName: String, packed: ByteArray) {
-        if (packed.size <= Int.SIZE_BYTES) return
-        val rows = LogNative.bootstrapRows(packed)
-        if (rows.isEmpty()) return
         LogTableWriters.of(
             context,
             databaseName,
@@ -29,7 +26,9 @@ object BootstrapLogWriter {
             "diting-bootstrap-log",
             INSERT_SQL,
             ::bindRow,
-        ).submitAll(rows)
+        ).submitKernelBatch(packed) { queue, rows ->
+            LogNative.bootstrapRowsSubmit(queue, rows)
+        }
     }
 
     /// The kernel's row layout, bound straight into the compiled statement.

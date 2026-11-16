@@ -75,6 +75,24 @@ private fun readBatchOutcome(payload: ByteArray?, what: String): LogBatchOutcome
     }
 }
 
+/// One engine race batch: classification and the writer queue in a single crossing.
+internal fun LogNative.Companion.raceRowsSubmit(
+    queue: Long,
+    packed: ByteArray,
+): LogBatchOutcome = readBatchOutcome(
+    instance.raceRowsSubmit(queue, packed, System.currentTimeMillis()),
+    "race batch",
+)
+
+/// One engine bootstrap batch, classified and enqueued like [raceRowsSubmit].
+internal fun LogNative.Companion.bootstrapRowsSubmit(
+    queue: Long,
+    packed: ByteArray,
+): LogBatchOutcome = readBatchOutcome(
+    instance.bootstrapRowsSubmit(queue, packed, System.currentTimeMillis()),
+    "bootstrap batch",
+)
+
 /// `u32 count | rows(race input)`; the answer is the writer rows in the same framing.
 internal fun LogNative.Companion.raceRows(packed: ByteArray): List<ByteArray> =
     readRowBatch(

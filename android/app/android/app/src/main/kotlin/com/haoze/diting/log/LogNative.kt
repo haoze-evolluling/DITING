@@ -26,7 +26,9 @@ internal class LogNative private constructor() {
         nowMs: Long,
     ): ByteArray?
     external fun raceRows(packed: ByteArray, nowMs: Long): ByteArray?
+    external fun raceRowsSubmit(queue: Long, packed: ByteArray, nowMs: Long): ByteArray?
     external fun bootstrapRows(packed: ByteArray, nowMs: Long): ByteArray?
+    external fun bootstrapRowsSubmit(queue: Long, packed: ByteArray, nowMs: Long): ByteArray?
     external fun retentionPlan(packed: ByteArray): ByteArray?
     external fun crashSelect(packed: ByteArray): ByteArray?
 

@@ -61,9 +61,9 @@ public final class LogSmoke {
         check(snapshot.i64() == 0, "nothing rewritten");
         check(snapshot.i64() == 0, "nothing failed");
 
-        // An off-mode batch still counts but answers no rows.
+        // An off-mode batch still counts but answers an empty row batch (`u32 count = 0`).
         byte[] off = native_.dnsBatch(handle, 2, batch, now);
-        check(off != null && off.length == 0, "mode off answers nothing");
+        check(off != null && new Reader(off).count() == 0, "mode off answers nothing");
         Reader afterOff = new Reader(native_.statsSnapshot(handle));
         check(afterOff.i64() == 2, "mode off still counts");
 
@@ -221,6 +221,19 @@ public final class LogSmoke {
         Reader firstBootstrap = new Reader(bootstrapBatchAnswer.blob());
         firstBootstrap.i64();
         check(firstBootstrap.string().equals("unknown"), "bootstrap batch ip id");
+
+        // The submit forms classify and enqueue in one call, so no row crosses back to the JVM.
+        long raceQueue = native_.queueNew(0);
+        Reader raceSubmit = new Reader(native_.raceRowsSubmit(raceQueue, raceBatch, now));
+        check(raceSubmit.u8() == 2, "race batch enqueued directly");
+        check(native_.queuePendingLen(raceQueue) == 2, "race batch rows queued");
+        native_.queueFree(raceQueue);
+        long bootstrapQueue = native_.queueNew(0);
+        Reader bootstrapSubmit =
+                new Reader(native_.bootstrapRowsSubmit(bootstrapQueue, bootstrapBatch, now));
+        check(bootstrapSubmit.u8() == 2, "bootstrap batch enqueued directly");
+        check(native_.queuePendingLen(bootstrapQueue) == 1, "bootstrap batch rows queued");
+        native_.queueFree(bootstrapQueue);
         native_.statsFree(stats);
     }
 

@@ -19,14 +19,11 @@ object RaceLogWriter {
         "winnerProviderName, winnerElapsedMs, fallbackUsed, fallbackSuccess, message) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-    /// `packed` is `u32 count | rows(race input)`; the kernel answers the same framing with the
-    /// `dns_race_log` rows, and the queue takes them all at once.
+    /// `packed` is `u32 count | rows(race input)`; the kernel classifies the batch and enqueues
+    /// the `dns_race_log` rows itself, so no row crosses the boundary twice.
     fun writeBatch(context: Context, databaseName: String, packed: ByteArray) {
-        if (packed.size <= Int.SIZE_BYTES) return
-        val rows = LogNative.raceRows(packed)
-        if (rows.isEmpty()) return
         LogTableWriters.of(context, databaseName, TABLE, "diting-race-log", INSERT_SQL, ::bindRow)
-            .submitAll(rows)
+            .submitKernelBatch(packed) { queue, rows -> LogNative.raceRowsSubmit(queue, rows) }
     }
 
     /// The kernel's row layout, bound straight into the compiled statement.

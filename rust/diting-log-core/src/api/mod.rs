@@ -144,10 +144,14 @@ pub fn http_event_batch(
             rows.push(writer.into_vec());
         }
     }
-    if rows.is_empty() {
-        return Some(vec![1]);
-    }
+    Some(submit_classified(queue, rows, now_ms))
+}
 
+/// Enqueues rows the kernel already classified; the answer is the shared batch status.
+pub(crate) fn submit_classified(queue: &Queue, rows: Vec<Vec<u8>>, now_ms: i64) -> Vec<u8> {
+    if rows.is_empty() {
+        return vec![1];
+    }
     let mut writer = Writer::new();
     match queue.submit_many(rows, now_ms) {
         None => writer.u8(0),
@@ -158,7 +162,7 @@ pub fn http_event_batch(
             writer.i64(submit.flush_delay_ms(queue.settings()));
         }
     }
-    Some(writer.into_vec())
+    writer.into_vec()
 }
 
 fn write_http_row(writer: &mut Writer, row: &HttpRow) {
@@ -210,6 +214,22 @@ pub fn race(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
 /// `u32 count` then one race input per event; answers with `u32 count | rows(u32 length | bytes)`,
 /// the same row layout [`race`] answers, so the writer submits the whole batch in one call.
 pub fn race_batch(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let rows = race_rows(payload, now_ms)?;
+    Some(rows_payload(&rows))
+}
+
+/// Classifies one race batch and enqueues it in a single crossing, the same shape
+/// [`dns_batch_submit`](super::dns::dns_batch_submit) uses for DNS.
+///
+/// Kotlin used to call [`race_batch`], unpack every row into a `ByteArray`, hand the list back to
+/// `queueSubmitMany` for a re-pack and let this crate decode the blobs again. The rows never need
+/// to leave the kernel.
+pub fn race_batch_submit(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let rows = race_rows(payload, now_ms)?;
+    Some(submit_classified(queue, rows, now_ms))
+}
+
+fn race_rows(payload: &[u8], now_ms: i64) -> Option<Vec<Vec<u8>>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
     let mut inputs = Vec::with_capacity(count.min(4096));
@@ -219,16 +239,17 @@ pub fn race_batch(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     if !reader.finish() {
         return None;
     }
-    let rows: Vec<Vec<u8>> = inputs
-        .iter()
-        .filter_map(|input| {
-            let row = race_row(input, now_ms)?;
-            let mut writer = Writer::new();
-            write_race_row(&mut writer, &row);
-            Some(writer.into_vec())
-        })
-        .collect();
-    Some(rows_payload(&rows))
+    Some(
+        inputs
+            .iter()
+            .filter_map(|input| {
+                let row = race_row(input, now_ms)?;
+                let mut writer = Writer::new();
+                write_race_row(&mut writer, &row);
+                Some(writer.into_vec())
+            })
+            .collect(),
+    )
 }
 
 /// The `u32 count | rows(u32 length | bytes)` framing the Kotlin writer queue accepts.
@@ -291,6 +312,17 @@ pub fn bootstrap(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
 
 /// The bootstrap counterpart of [`race_batch`].
 pub fn bootstrap_batch(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let rows = bootstrap_rows(payload, now_ms)?;
+    Some(rows_payload(&rows))
+}
+
+/// Classifies one bootstrap batch and enqueues it in a single crossing.
+pub fn bootstrap_batch_submit(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let rows = bootstrap_rows(payload, now_ms)?;
+    Some(submit_classified(queue, rows, now_ms))
+}
+
+fn bootstrap_rows(payload: &[u8], now_ms: i64) -> Option<Vec<Vec<u8>>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
     let mut inputs = Vec::with_capacity(count.min(4096));
@@ -300,16 +332,17 @@ pub fn bootstrap_batch(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     if !reader.finish() {
         return None;
     }
-    let rows: Vec<Vec<u8>> = inputs
-        .iter()
-        .filter_map(|input| {
-            let row = bootstrap_row(input, now_ms)?;
-            let mut writer = Writer::new();
-            write_bootstrap_row(&mut writer, &row);
-            Some(writer.into_vec())
-        })
-        .collect();
-    Some(rows_payload(&rows))
+    Some(
+        inputs
+            .iter()
+            .filter_map(|input| {
+                let row = bootstrap_row(input, now_ms)?;
+                let mut writer = Writer::new();
+                write_bootstrap_row(&mut writer, &row);
+                Some(writer.into_vec())
+            })
+            .collect(),
+    )
 }
 
 fn write_bootstrap_row(writer: &mut Writer, row: &BootstrapRow) {
@@ -423,6 +456,59 @@ mod tests {
         hidden.string("");
         let answer = http_event_batch(&stats, &queue, LogMode::Off, &hidden.into_vec(), 5).unwrap();
         assert_eq!(answer, vec![1]);
+    }
+
+    #[test]
+    fn race_and_bootstrap_batches_enqueue_without_a_round_trip() {
+        use crate::queue::{Queue, LOG_TABLE};
+
+        let mut race = Writer::new();
+        race.u32(2);
+        for name in ["a.test", "  "] {
+            race.string(name);
+            race.i32(28);
+            race.string("race");
+            race.i32(2);
+            race.u8(1);
+            race.i64(9);
+            race.string("p1");
+            race.i64(4);
+            race.string("");
+            race.i64(0);
+            race.u8(0);
+            race.u8(0);
+            race.string("");
+        }
+        let queue = Queue::new(LOG_TABLE);
+        let answer = race_batch_submit(&queue, &race.into_vec(), 3).unwrap();
+        let mut reader = Reader::new(&answer);
+        assert_eq!(reader.u8(), Some(2), "race rows were enqueued");
+        assert_eq!(reader.u32(), Some(0));
+        assert_eq!(reader.u8(), Some(0));
+        assert_eq!(reader.i64(), Some(LOG_TABLE.flush_interval_ms));
+        assert!(reader.finish());
+        assert_eq!(queue.pending_len(), 1, "the blank row is skipped");
+
+        let mut bootstrap = Writer::new();
+        bootstrap.u32(2);
+        for host in ["dns.example", ""] {
+            bootstrap.string("cloudflare");
+            bootstrap.string("Cloudflare");
+            bootstrap.string("1.1.1.1");
+            bootstrap.string(host);
+            bootstrap.u8(1);
+            bootstrap.i64(12);
+            bootstrap.u8(0);
+            bootstrap.string("");
+        }
+        let answer = bootstrap_batch_submit(&queue, &bootstrap.into_vec(), 3).unwrap();
+        let mut reader = Reader::new(&answer);
+        assert_eq!(reader.u8(), Some(2), "bootstrap rows were enqueued");
+        assert_eq!(reader.u32(), Some(0));
+        assert_eq!(reader.u8(), Some(0));
+        assert_eq!(reader.i64(), Some(LOG_TABLE.flush_interval_ms));
+        assert!(reader.finish());
+        assert_eq!(queue.pending_len(), 2, "the blank host is skipped");
     }
 
     #[test]

@@ -95,21 +95,7 @@ pub fn dns_batch_submit(
     now_ms: i64,
 ) -> Option<Vec<u8>> {
     let rows = classify_dns_batch(stats, mode, payload, now_ms)?;
-    if rows.is_empty() {
-        return Some(vec![1]);
-    }
-
-    let mut writer = Writer::new();
-    match queue.submit_many(rows, now_ms) {
-        None => writer.u8(0),
-        Some(submit) => {
-            writer.u8(2);
-            writer.u32(submit.overflow);
-            writer.u8(if submit.batch_full { 1 } else { 0 });
-            writer.i64(submit.flush_delay_ms(queue.settings()));
-        }
-    }
-    Some(writer.into_vec())
+    Some(super::submit_classified(queue, rows, now_ms))
 }
 
 fn pack_dns_row(row: &DnsRow) -> Vec<u8> {

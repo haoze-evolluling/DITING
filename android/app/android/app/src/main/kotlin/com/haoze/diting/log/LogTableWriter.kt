@@ -57,7 +57,23 @@ internal class LogTableWriter(
     /// rows never come back to Kotlin for a re-pack. Only the timer and the overflow counter are
     /// left here, exactly like [submitAll].
     fun submitDnsBatch(stats: Long, mode: String, packed: ByteArray) {
-        when (val outcome = LogNative.dnsBatchSubmit(stats, queue, mode, packed)) {
+        applyOutcome(LogNative.dnsBatchSubmit(stats, queue, mode, packed))
+    }
+
+    /// One race/bootstrap batch: the kernel classifies it and hands it straight to this queue.
+    ///
+    /// The alternative (`raceRows`/`bootstrapRows` → [submitAll]) copied every row out of the
+    /// answer, re-packed the list and decoded the blobs again inside the kernel.
+    fun submitKernelBatch(
+        packed: ByteArray,
+        submit: (queue: Long, packed: ByteArray) -> LogBatchOutcome,
+    ) {
+        if (packed.size <= Int.SIZE_BYTES) return
+        applyOutcome(submit(queue, packed))
+    }
+
+    private fun applyOutcome(outcome: LogBatchOutcome) {
+        when (outcome) {
             LogBatchOutcome.Closed, LogBatchOutcome.Hidden -> return
             is LogBatchOutcome.Enqueued -> {
                 DbWriteHealth.onDropped(outcome.overflow, DropReason.OVERFLOW, table)

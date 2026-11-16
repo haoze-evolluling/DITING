@@ -167,6 +167,49 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_bootstrapRows<'local>
     answer_bytes(&env, answer)
 }
 
+/// `LogNative.raceRowsSubmit(queue, packed, nowMs): ByteArray?`
+///
+/// Classifies the engine's race batch and enqueues the rows in one crossing, so the JVM never
+/// copies a row out of the answer only to pack it back into `queueSubmitMany`.
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_raceRowsSubmit<'local>(
+    mut env: JNIEnv<'local>,
+    _this: JObject<'local>,
+    queue: jlong,
+    packed: JByteArray<'local>,
+    now_ms: jlong,
+) -> jbyteArray {
+    let answer = guarded(|| {
+        with_bytes(&mut env, &packed, |payload| unsafe {
+            with_handle(queue, |queue: &crate::queue::Queue| {
+                api::race_batch_submit(queue, payload, now_ms)
+            })
+            .flatten()
+        })
+    });
+    answer_bytes(&env, answer)
+}
+
+/// `LogNative.bootstrapRowsSubmit(queue, packed, nowMs): ByteArray?`
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_bootstrapRowsSubmit<'local>(
+    mut env: JNIEnv<'local>,
+    _this: JObject<'local>,
+    queue: jlong,
+    packed: JByteArray<'local>,
+    now_ms: jlong,
+) -> jbyteArray {
+    let answer = guarded(|| {
+        with_bytes(&mut env, &packed, |payload| unsafe {
+            with_handle(queue, |queue: &crate::queue::Queue| {
+                api::bootstrap_batch_submit(queue, payload, now_ms)
+            })
+            .flatten()
+        })
+    });
+    answer_bytes(&env, answer)
+}
+
 /// `LogNative.retentionPlan(packed): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_retentionPlan<'local>(
