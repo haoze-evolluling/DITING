@@ -7,13 +7,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import com.haoze.diting.core.rule.EngineRuleLoader
-import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.engine.Engine
-import com.haoze.diting.engine.SocketProtector
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
-import com.haoze.diting.log.EngineStats
 import com.haoze.diting.log.RuntimeEventLog
 import com.haoze.diting.log.LogRetention
 import com.haoze.diting.log.TrafficRateMonitor
@@ -202,58 +198,24 @@ class DitingVpnService : VpnService() {
             prefsName = LOG_PREFS,
             includeHttpAndTraffic = true,
         )
-        worker = Thread({
-            try {
-                // Rules are built here, off the main thread: a stale index means a trie compile
-                // that can take seconds, and onStartCommand would otherwise ANR the service.
-                // Applied before startFull so the tunnel comes up with filtering already armed.
-                try {
-                    EngineRuleLoader.apply(this, rustEngine, RuleDataset.NORMAL, TAG)
-                } catch (t: Throwable) {
-                    Log.e(TAG, "Unable to build rule snapshot", t)
-            RuntimeEventLog.error("vpn", "rule.snapshot_fail", "error" to (t.message ?: t.javaClass.simpleName))
-                    if (!stopping) {
-                        fail("规则加载失败：${t.message ?: t.javaClass.simpleName}")
-                        return@Thread
-                    }
-                }
-                rustEngine.startFull(pfd.fd.toLong(), object : SocketProtector {
-                    override fun protect(fd: Long): Boolean = protect(fd.toInt())
-                })
-                // `startFull` returns once the session is up (the old Go method blocked until `stop`).
-                // Polling keeps this thread the one place a self-terminated session is reported.
-                while (!stopping && rustEngine.isFullRunning()) {
-                    Thread.sleep(SESSION_POLL_MS)
-                }
-                Log.i(TAG, "tunnel exited")
-            } catch (t: Throwable) {
-                Log.e(TAG, "tunnel crashed", t)
-            RuntimeEventLog.error("vpn", "tunnel.crashed", "error" to (t.message ?: t.javaClass.simpleName))
-                if (!stopping) {
-                    fail("隧道运行异常：${t.message ?: t.javaClass.simpleName}")
-                }
-            }
-        }, "diting-tunnel").also { it.start() }
+        worker = NormalTunnelRunner.start(
+            service = this,
+            engine = rustEngine,
+            tunFd = pfd.fd,
+            isStopping = { stopping },
+            onFatal = { fail(it) },
+        )
     }
 
-    /// Rebuilds the rule snapshot and re-applies it to the running engine so a newly imported or
-    /// updated subscription takes effect without dropping the tunnel. A failure keeps the previous
-    /// rules (the policy swap only happens once the new snapshot builds) instead of killing the VPN.
+    /// Rebuilds the rule snapshot and re-applies it to the running engine without dropping the
+    /// tunnel. See [NormalTunnelRunner.reload] for the failure semantics.
     private fun reloadRules() {
         val current = engine
         if (current == null || !isRunning) {
             Log.i(TAG, "rule reload requested but the tunnel is not running")
             return
         }
-        Thread({
-            try {
-                EngineRuleLoader.apply(this, current, RuleDataset.NORMAL, TAG)
-                Log.i(TAG, "rule snapshot hot-reloaded")
-            } catch (t: Throwable) {
-                Log.e(TAG, "rule hot-reload failed; keeping previous rules", t)
-            RuntimeEventLog.warn("vpn", "rule.reload_fail", "error" to (t.message ?: t.javaClass.simpleName))
-            }
-        }, "diting-rule-reload").start()
+        NormalTunnelRunner.reload(this, current)
     }
 
     /// Stops the tunnel without blocking the caller's thread for the shutdown.
@@ -434,8 +396,7 @@ class DitingVpnService : VpnService() {
         private const val CHANNEL_ID = "diting_vpn"
         private const val NOTIFICATION_ID = 1001
 
-        internal const val PREFS_NAME = "dns_vpn_prefs"
-        private const val KEY_VPN_RUNNING = "vpn_running"
+        internal const val PREFS_NAME = NormalVpnRuntime.PREFS_NAME
         private const val KEY_LOG_MODE = "dns_log_mode"
 
         // Last start configuration, replayed by the quick settings tile.
@@ -444,69 +405,56 @@ class DitingVpnService : VpnService() {
         /// `https_bypass_rules` in `dns_vpn_prefs`: the custom MITM bypass list, one suffix per row
         private const val KEY_HTTPS_BYPASS_RULES = "https_bypass_rules"
 
-        /// How often the tunnel thread checks whether the session it started is still running.
-        private const val SESSION_POLL_MS = 200L
+        /// Runtime state lives in [NormalVpnRuntime]; these accessors keep external call sites
+        /// (`DitingVpnService.isRunning` and friends) stable.
+        var isRunning: Boolean
+            get() = NormalVpnRuntime.isRunning
+            set(value) {
+                NormalVpnRuntime.isRunning = value
+            }
 
-        @Volatile
-        var isRunning: Boolean = false
+        var startedAt: Long
+            get() = NormalVpnRuntime.startedAt
+            set(value) {
+                NormalVpnRuntime.startedAt = value
+            }
 
-        /// Epoch millis of the last successful start; 0 while stopped. The UI process can be
-        /// recreated at any time, so the only trustworthy origin for the uptime figure is here.
-        @Volatile
-        var startedAt: Long = 0L
-
-        @Volatile
-        private var activeEngine: Engine? = null
+        private var activeEngine: Engine?
+            get() = NormalVpnRuntime.engine
+            set(value) {
+                NormalVpnRuntime.engine = value
+            }
 
         /// Read-only handle for the diagnostics channel
         internal fun engineForDiagnostics(): Engine? = activeEngine
 
-        @Volatile
-        var lastError: String? = null
+        var lastError: String?
+            get() = NormalVpnRuntime.lastError
+            set(value) {
+                NormalVpnRuntime.lastError = value
+            }
 
         /// Displaced by another VPN and waiting to reconnect; [isRunning] is false meanwhile.
-        @Volatile
-        var reclaiming: Boolean = false
+        var reclaiming: Boolean
+            get() = NormalVpnRuntime.reclaiming
+            set(value) {
+                NormalVpnRuntime.reclaiming = value
+            }
 
         fun isPersistedRunning(context: Context): Boolean =
-            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .getBoolean(KEY_VPN_RUNNING, false)
+            NormalVpnRuntime.isPersistedRunning(context)
 
-        private fun Context.setRunningFlag(value: Boolean) {
-            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean(KEY_VPN_RUNNING, value)
-                .apply()
-        }
-
-        fun setPersistedRunning(context: Context, value: Boolean) {
-            context.setRunningFlag(value)
-            // The tile lives in another UI surface; it only repaints when told to re-read.
-            QuickSettingsTileUpdater.requestTileUpdate(context)
-        }
+        fun setPersistedRunning(context: Context, value: Boolean) =
+            NormalVpnRuntime.setPersistedRunning(context, value)
 
         /// Rebuilds the posted notification after a settings change; false when nothing is posted
         fun refreshNotification(context: Context): Boolean =
             isRunning && VpnNotification.rerender(context, CHANNEL_ID, NOTIFICATION_ID, ACTION_STOP)
 
-        fun status(context: Context): Map<String, Any?> = mapOf(
-            "running" to isRunning,
-            "reclaiming" to reclaiming,
-            "persisted" to isPersistedRunning(context),
-            "error" to lastError,
-            // Milliseconds since the tunnel came up; Dart uses it instead of its own clock.
-            "startedAt" to startedAt,
-            "stats" to EngineStats.snapshot(activeEngine),
-        )
+        fun status(context: Context): Map<String, Any?> = NormalVpnRuntime.status(context)
 
         /// Second-resolution TX/RX rates; zeros while stopped, or the last tick if racing the stop
-        fun trafficRates(): Map<String, Any?> {
-            if (!isRunning) {
-                return mapOf("running" to false, "txBps" to 0L, "rxBps" to 0L)
-            }
-            val (tx, rx) = TrafficRateMonitor.snapshot()
-            return mapOf("running" to true, "txBps" to tx, "rxBps" to rx)
-        }
+        fun trafficRates(): Map<String, Any?> = NormalVpnRuntime.trafficRates()
 
         fun startIntent(
             context: Context,
