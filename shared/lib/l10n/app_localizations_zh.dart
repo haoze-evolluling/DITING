@@ -4933,7 +4933,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      '三种模式共用一套规则与缓存，区别在接管方式：普通模式走全隧道，服务器模式只做局域网 DNS，极速模式把路由收窄到只接管 DNS。';
+      '每种模式使用独立的规则、缓存与日志，区别在接管方式：普通模式走全隧道，服务器模式只做局域网 DNS，极速模式把路由收窄到只接管 DNS。';
 
   @override
   String get modeNormalFeature1 => '全隧道接管';
@@ -4972,10 +4972,10 @@ class AppL10nZh extends AppL10n {
   String get modeServerFeature2Body => '本机不建立隧道，可与其它 VPN 共存';
 
   @override
-  String get modeServerFeature3 => '共享规则与缓存';
+  String get modeServerFeature3 => '独立规则与缓存';
 
   @override
-  String get modeServerFeature3Body => '与普通模式共用同一套规则库';
+  String get modeServerFeature3Body => '服务器模式维护独立的规则库与 DNS 缓存';
 
   @override
   String get modeServerFeature4 => '低功耗';
@@ -5034,10 +5034,10 @@ class AppL10nZh extends AppL10n {
   String get onboardingChangeableBody => '设置 → 重新选择工作模式，随时可以切换。切换会先停止当前模式的服务。';
 
   @override
-  String get onboardingSharedRules => '规则与缓存共用';
+  String get onboardingSharedRules => '规则与缓存独立';
 
   @override
-  String get onboardingSharedRulesBody => '三种模式共享同一套黑白名单与 DNS 缓存，不必为每个模式重配一遍。';
+  String get onboardingSharedRulesBody => '每种模式保留独立的黑白名单与 DNS 缓存，互不影响。';
 
   @override
   String get onboardingExclusive => '模式互斥';

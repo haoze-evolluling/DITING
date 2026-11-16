@@ -9121,7 +9121,7 @@ abstract class AppL10n {
   /// No description provided for @modeSharedNote.
   ///
   /// In zh, this message translates to:
-  /// **'三种模式共用一套规则与缓存，区别在接管方式：普通模式走全隧道，服务器模式只做局域网 DNS，极速模式把路由收窄到只接管 DNS。'**
+  /// **'每种模式使用独立的规则、缓存与日志，区别在接管方式：普通模式走全隧道，服务器模式只做局域网 DNS，极速模式把路由收窄到只接管 DNS。'**
   String get modeSharedNote;
 
   /// No description provided for @modeNormalFeature1.
@@ -9199,13 +9199,13 @@ abstract class AppL10n {
   /// No description provided for @modeServerFeature3.
   ///
   /// In zh, this message translates to:
-  /// **'共享规则与缓存'**
+  /// **'独立规则与缓存'**
   String get modeServerFeature3;
 
   /// No description provided for @modeServerFeature3Body.
   ///
   /// In zh, this message translates to:
-  /// **'与普通模式共用同一套规则库'**
+  /// **'服务器模式维护独立的规则库与 DNS 缓存'**
   String get modeServerFeature3Body;
 
   /// No description provided for @modeServerFeature4.
@@ -9319,13 +9319,13 @@ abstract class AppL10n {
   /// No description provided for @onboardingSharedRules.
   ///
   /// In zh, this message translates to:
-  /// **'规则与缓存共用'**
+  /// **'规则与缓存独立'**
   String get onboardingSharedRules;
 
   /// No description provided for @onboardingSharedRulesBody.
   ///
   /// In zh, this message translates to:
-  /// **'三种模式共享同一套黑白名单与 DNS 缓存，不必为每个模式重配一遍。'**
+  /// **'每种模式保留独立的黑白名单与 DNS 缓存，互不影响。'**
   String get onboardingSharedRulesBody;
 
   /// No description provided for @onboardingExclusive.

@@ -5197,7 +5197,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      'All three modes share one set of rules and cache; they differ in how they take over traffic: normal mode uses a full tunnel, server mode only serves LAN DNS, and express mode narrows the route to DNS only.';
+      'Each mode keeps its own rules, cache and logs; they differ in how they take over traffic: normal mode uses a full tunnel, server mode only serves LAN DNS, and express mode narrows the route to DNS only.';
 
   @override
   String get modeNormalFeature1 => 'Full tunnel';
@@ -5242,11 +5242,11 @@ class AppL10nEn extends AppL10n {
       'No tunnel is created locally, so other VPNs can run at the same time';
 
   @override
-  String get modeServerFeature3 => 'Shared rules and cache';
+  String get modeServerFeature3 => 'Independent rules and cache';
 
   @override
   String get modeServerFeature3Body =>
-      'Uses the same rule library as normal mode';
+      'Server mode keeps its own rule library and DNS cache';
 
   @override
   String get modeServerFeature4 => 'Low power';
@@ -5311,11 +5311,11 @@ class AppL10nEn extends AppL10n {
       'Settings → choose the work mode again at any time. Switching stops the current mode\'s service first.';
 
   @override
-  String get onboardingSharedRules => 'Rules and cache are shared';
+  String get onboardingSharedRules => 'Rules and cache are independent';
 
   @override
   String get onboardingSharedRulesBody =>
-      'All three modes share one set of lists and DNS cache, so nothing needs to be configured twice.';
+      'Each mode keeps its own lists and DNS cache without affecting the others.';
 
   @override
   String get onboardingExclusive => 'Modes are exclusive';
