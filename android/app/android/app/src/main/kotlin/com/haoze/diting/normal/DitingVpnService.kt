@@ -1,39 +1,27 @@
 package com.haoze.diting.normal
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.net.VpnService
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import com.haoze.diting.R
 import com.haoze.diting.core.rule.EngineRuleLoader
 import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.engine.Engine
-import com.haoze.diting.engine.OutboundProxyStatusCallback
 import com.haoze.diting.engine.SocketProtector
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
-import com.haoze.diting.log.EngineLogCallbacks
 import com.haoze.diting.log.EngineStats
 import com.haoze.diting.log.RuntimeEventLog
 import com.haoze.diting.log.LogRetention
-import com.haoze.diting.log.PackageUids
-import com.haoze.diting.log.RequestStats
 import com.haoze.diting.log.TrafficRateMonitor
 import com.haoze.diting.overlay.FloatingLogOverlay
-import com.haoze.diting.proxy.OutboundProxyBridge
-import com.haoze.diting.proxy.OutboundProxyScope
 import com.haoze.diting.tile.QuickSettingsTileUpdater
 import com.haoze.diting.vpn.VpnPlanNative
+import com.haoze.diting.vpn.VpnServiceForeground
 import com.haoze.diting.watchdog.VpnReclaimer
-import java.io.File
 
 /// Full-tunnel VpnService on the Rust engine: applies the config, then hands the TUN fd to
 /// `Engine.startFull`. HTTPS inspection (MITM) runs inside the same engine since stage 4b.
@@ -77,7 +65,7 @@ class DitingVpnService : VpnService() {
     override fun onCreate() {
         super.onCreate()
         RuntimeEventLog.info("vpn", "service.create")
-        createNotificationChannel()
+        VpnServiceForeground.createChannel(this, CHANNEL_ID, "VPN 服务", "保持 VPN 隧道运行")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -174,79 +162,24 @@ class DitingVpnService : VpnService() {
         activeEngine = rustEngine
 
         try {
-            val proxyError = rustEngine.configureOutboundProxy(
-                OutboundProxyScope.resolve(this, proxyJson.ifBlank { VpnPlanNative.startDefaults.outboundProxy })
-            )
-            if (proxyError.isNotBlank()) {
-                // Persisted before failing so the page shows the reason, as the legacy app did.
-                OutboundProxyBridge.publishStatus(this@DitingVpnService, "error", proxyError)
-            }
-            require(proxyError.isBlank()) { proxyError }
-            // Registered before startFull, which already emits `connecting`; without this the
-            // engine's ready/error result never reaches `dns_vpn_prefs` and the page stays on
-            // "正在连接" forever.
-            rustEngine.setOutboundProxyStatusCallback(object : OutboundProxyStatusCallback {
-                override fun onOutboundProxyStatus(state: String, message: String) {
-                    OutboundProxyBridge.publishStatus(this@DitingVpnService, state, message)
-                }
-            })
-            // Throws with the engine's rejection text.
-            rustEngine.applyDNSConfig(dnsConfig)
             val logMode = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                 .getString(KEY_LOG_MODE, DnsLogWriter.MODE_ALL)
                 ?: DnsLogWriter.MODE_ALL
-            // Counts belong to this run; the notification shows them since the tunnel came up.
-            RequestStats.reset()
-            EngineLogCallbacks.attach(rustEngine, this, DnsLogWriter.DB_NORMAL, logMode)
-            rustEngine.setFilterDNS(true)
-            // The tunnel resolved `ipv6Mode` against the link (AUTO probe included). When it is
-            // carrying no IPv6, answer AAAA with NODATA so traffic does not stall on IPv6.
-            rustEngine.setBlockIpv6(!ipv6Enabled)
-            // R4: replay the persisted pause / allowlist-only onto this freshly started engine.
-            com.haoze.diting.control.BlockPauseLink.apply(this)
-
-            // Attached before startFull and assigned first, so a throw still reaches cleanup.
-            val plane = EngineDataPlane(this, logMode)
-            dataPlane = plane
-            plane.attachResolvers(rustEngine)
-            plane.attachBootstrap(rustEngine)
-            plane.attachCacheMirror(rustEngine)
-            plane.attachTraffic(rustEngine)
-            plane.attachHttp(rustEngine)
-
-            // Per-app firewall: the engine matches UIDs, not package names.
-            val blockedUidCsv = PackageUids.csv(this, blockedPackages)
-            if (blockedUidCsv.isNotEmpty()) {
-                rustEngine.setBlockedUIDs(blockedUidCsv)
-            }
-
-            // Order matters: reversed, the UID list from setMitmAllowedUIDs is silently dropped.
-            if (inspectionEnabled) {
-                val mitmDir = File(filesDir, MITM_DIR).apply { mkdirs() }
-                val caPem = runCatching { rustEngine.startStackMitm(mitmDir.absolutePath) }
-                    .getOrDefault("")
-                if (caPem.isBlank()) {
-                    // No CA means no filter, so startFull builds a plain passthrough stack.
-                    Log.w(TAG, "startStackMitm produced no CA; HTTPS inspection stays off")
-                } else {
-                    rustEngine.setMitmAllowedUIDs(PackageUids.csv(this, inspectionPackages))
-                    // The custom half of the bypass list is persisted by the inspection page as
-                    // one suffix per row. The old Go engine never received it (its setter had no
-                    // caller), so this is where the list finally reaches the filter.
-                    val bypass = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                        .getStringSet(KEY_HTTPS_BYPASS_RULES, null)
-                        .orEmpty()
-                    if (bypass.isNotEmpty()) {
-                        rustEngine.setHttpsBypassRules(bypass.joinToString("\n"))
-                    }
-                    // Drop QUIC for the inspected apps only, so HTTP/3 falls back to TCP and the
-                    // flows the user selected actually reach the MITM path.
-                    rustEngine.setFilterHttp3(true)
-                }
-            } else {
-                // Inspect nobody: the setter logs "stack MITM is not active" - expected.
-                rustEngine.setMitmAllowedUIDs("")
-            }
+            val httpsBypassRules = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getStringSet(KEY_HTTPS_BYPASS_RULES, null)
+                .orEmpty()
+            dataPlane = NormalEngineConfig.configure(
+                service = this,
+                engine = rustEngine,
+                dnsConfig = dnsConfig,
+                proxyJson = proxyJson,
+                ipv6Enabled = ipv6Enabled,
+                blockedPackages = blockedPackages,
+                inspectionPackages = inspectionPackages,
+                inspectionEnabled = inspectionEnabled,
+                logMode = logMode,
+                httpsBypassRules = httpsBypassRules,
+            )
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to configure the engine", t)
             RuntimeEventLog.error("vpn", "engine.config_fail", "error" to (t.message ?: t.javaClass.simpleName))
@@ -357,7 +290,7 @@ class DitingVpnService : VpnService() {
                 if (generation != tunnelGeneration) return@post
                 releaseResources()
                 setPersistedRunning(this@DitingVpnService, false)
-                stopForegroundCompat()
+                VpnServiceForeground.stop(this@DitingVpnService)
                 stopSelf()
             }
         }, "diting-teardown").start()
@@ -419,7 +352,7 @@ class DitingVpnService : VpnService() {
         closeDataPlane()
         setPersistedRunning(this, false)
         releaseResources()
-        stopForegroundCompat()
+        VpnServiceForeground.stop(this)
         stopSelf()
     }
 
@@ -446,59 +379,25 @@ class DitingVpnService : VpnService() {
         if (engine != null || isRunning || dataPlane != null) {
             teardown()
             setPersistedRunning(this, false)
-            stopForegroundCompat()
+            VpnServiceForeground.stop(this)
         }
         super.onDestroy()
     }
 
     private fun promoteToForeground() {
-        val notification = buildNotification()
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(
-                    NOTIFICATION_ID,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
-                )
-            } else {
-                startForeground(NOTIFICATION_ID, notification)
-            }
-        } catch (t: Throwable) {
-            // Android 12+ requires foreground promotion inside onStartCommand; failing is a crash.
-            Log.e(TAG, "startForeground failed", t)
-            RuntimeEventLog.error("vpn", "foreground.fail", "error" to (t.message ?: t.javaClass.simpleName))
-        }
+        val error = VpnServiceForeground.promote(
+            this,
+            NOTIFICATION_ID,
+            VpnNotification.build(this, CHANNEL_ID, NOTIFICATION_ID, ACTION_STOP),
+        ) ?: return
+        // Android 12+ requires foreground promotion inside onStartCommand; failing is a crash.
+        Log.e(TAG, "startForeground failed", error)
+        RuntimeEventLog.error("vpn", "foreground.fail", "error" to (error.message ?: error.javaClass.simpleName))
     }
-
-    private fun buildNotification(): Notification =
-        VpnNotification.build(this, CHANNEL_ID, NOTIFICATION_ID, ACTION_STOP)
 
     private fun startSpeedTicker() = speedTicker.start()
 
     private fun stopSpeedTicker() = speedTicker.stop()
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val manager = getSystemService(NotificationManager::class.java) ?: return
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "VPN 服务",
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = "保持 VPN 隧道运行"
-            setShowBadge(false)
-        }
-        manager.createNotificationChannel(channel)
-    }
-
-    private fun stopForegroundCompat() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
-    }
 
     companion object {
         private const val TAG = "DitingVpnService"
@@ -541,9 +440,6 @@ class DitingVpnService : VpnService() {
 
         // Last start configuration, replayed by the quick settings tile.
         internal const val KEY_LAST_DNS_CONFIG = "last_dns_config"
-
-        /// Same directory the legacy app used: an upgraded install keeps its trusted root CA
-        private const val MITM_DIR = "go-mitm"
 
         /// `https_bypass_rules` in `dns_vpn_prefs`: the custom MITM bypass list, one suffix per row
         private const val KEY_HTTPS_BYPASS_RULES = "https_bypass_rules"

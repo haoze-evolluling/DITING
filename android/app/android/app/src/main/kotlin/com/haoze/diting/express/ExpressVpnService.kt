@@ -1,41 +1,26 @@
 package com.haoze.diting.express
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.net.VpnService
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import com.haoze.diting.MainActivity
-import com.haoze.diting.R
 import com.haoze.diting.core.rule.EngineRuleLoader
 import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.engine.Engine
-import com.haoze.diting.engine.OutboundProxyStatusCallback
 import com.haoze.diting.engine.SocketProtector
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
-import com.haoze.diting.log.EngineLogCallbacks
 import com.haoze.diting.log.EngineStats
 import com.haoze.diting.log.RuntimeEventLog
 import com.haoze.diting.log.LogRetention
-import com.haoze.diting.log.RequestStats
 import com.haoze.diting.normal.SpeedTicker
-import com.haoze.diting.platform.NotificationMode
 import com.haoze.diting.platform.NotificationSettings
-import com.haoze.diting.platform.NotificationStatsLine
-import com.haoze.diting.proxy.OutboundProxyBridge
-import com.haoze.diting.proxy.OutboundProxyScope
 import com.haoze.diting.tile.QuickSettingsTileUpdater
 import com.haoze.diting.vpn.VpnPlanNative
+import com.haoze.diting.vpn.VpnServiceForeground
 import com.haoze.diting.watchdog.VpnReclaimer
 
 /// Express-mode VpnService on the Rust engine: the TUN only owns DNS routes, so the engine sees the
@@ -83,7 +68,7 @@ class ExpressVpnService : VpnService() {
     override fun onCreate() {
         super.onCreate()
         RuntimeEventLog.info("express", "service.create")
-        createNotificationChannel()
+        VpnServiceForeground.createChannel(this, CHANNEL_ID, "极速模式", "保持 DNS 窄路由 VPN 运行")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -108,7 +93,8 @@ class ExpressVpnService : VpnService() {
         val defaults = VpnPlanNative.startDefaults
         // Persisted so the quick settings tile can rebuild the same start intent: Dart computes
         // the config, the intent extras do not survive anywhere else.
-        rememberStartConfig(
+        ExpressStartConfig.remember(
+            context = this,
             dnsConfig = dnsConfig,
             proxyJson = intent.getStringExtra(EXTRA_OUTBOUND_PROXY).orEmpty(),
             proxyAppPackage = intent.getStringExtra(EXTRA_PROXY_APP).orEmpty(),
@@ -123,23 +109,6 @@ class ExpressVpnService : VpnService() {
             excludedPackages = intent.getStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES).orEmpty().toSet(),
         )
         return START_NOT_STICKY
-    }
-
-    /// Stores the configuration of the current start so `restoreIntent` can replay it.
-    private fun rememberStartConfig(
-        dnsConfig: String,
-        proxyJson: String,
-        proxyAppPackage: String,
-        ipv6Mode: String,
-        excludedPackages: Set<String>,
-    ) {
-        getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
-            .putString(KEY_LAST_DNS_CONFIG, dnsConfig)
-            .putString(KEY_LAST_OUTBOUND_PROXY, proxyJson)
-            .putString(KEY_LAST_PROXY_APP, proxyAppPackage)
-            .putString(KEY_LAST_IPV6_MODE, ipv6Mode)
-            .putStringSet(KEY_LAST_EXCLUDED_PACKAGES, excludedPackages)
-            .apply()
     }
 
     @Synchronized
@@ -183,42 +152,17 @@ class ExpressVpnService : VpnService() {
         activeEngine = rustEngine
 
         try {
-            val proxyError = rustEngine.configureOutboundProxy(
-                OutboundProxyScope.resolve(this, proxyJson.ifBlank { VpnPlanNative.startDefaults.outboundProxy })
-            )
-            if (proxyError.isNotBlank()) {
-                // Persisted before failing so the page shows the reason, as the legacy app did.
-                OutboundProxyBridge.publishStatus(this@ExpressVpnService, "error", proxyError)
-            }
-            require(proxyError.isBlank()) { proxyError }
-            // Emits `connecting` inside startFull; without this callback nothing ever writes the
-            // final ready/error state back to `dns_vpn_prefs`.
-            rustEngine.setOutboundProxyStatusCallback(object : OutboundProxyStatusCallback {
-                override fun onOutboundProxyStatus(state: String, message: String) {
-                    OutboundProxyBridge.publishStatus(this@ExpressVpnService, state, message)
-                }
-            })
-            rustEngine.applyDNSConfig(dnsConfig)
             val logMode = getSharedPreferences(SETTINGS_PREFS, MODE_PRIVATE)
                 .getString(KEY_LOG_MODE, DnsLogWriter.MODE_ALL)
                 ?: DnsLogWriter.MODE_ALL
-            RequestStats.reset()
-            EngineLogCallbacks.attach(rustEngine, this, DnsLogWriter.DB_EXPRESS, logMode)
-            rustEngine.setFilterDNS(true)
-            // Same rule as the full tunnel: no IPv6 in the narrow TUN means no AAAA answers, so a
-            // client whose physical IPv6 is broken does not wait on a doomed IPv6 attempt.
-            rustEngine.setBlockIpv6(!ipv6Enabled)
-            // R4: replay the persisted pause / allowlist-only onto this freshly started engine.
-            com.haoze.diting.control.BlockPauseLink.apply(this)
-
-            // Resolvers only: no user traffic crosses the narrow TUN and there is no MITM stage.
-            // The log tables live in the express database, so bootstrap rows and the cache
-            // mirror must target it too.
-            val plane = EngineDataPlane(this, logMode, DnsLogWriter.DB_EXPRESS)
-            dataPlane = plane
-            plane.attachResolvers(rustEngine)
-            plane.attachBootstrap(rustEngine)
-            plane.attachCacheMirror(rustEngine)
+            dataPlane = ExpressEngineConfig.configure(
+                service = this,
+                engine = rustEngine,
+                dnsConfig = dnsConfig,
+                proxyJson = proxyJson,
+                ipv6Enabled = ipv6Enabled,
+                logMode = logMode,
+            )
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to configure the engine", t)
             RuntimeEventLog.error("express", "engine.config_fail", "error" to (t.message ?: t.javaClass.simpleName))
@@ -305,8 +249,8 @@ class ExpressVpnService : VpnService() {
         reclaimer.cancel()
         // Detached before handing off: nothing can append to the plane while it flushes, the poll
         // loop on the tunnel thread sees `stopping` at once, and a start that races this stop
-        // cannot pick up half-dead resources. Re-entering is harmless: a second call finds nulls
-        // and only repeats the service bookkeeping.
+        // cannot pick up half-dead resources. Re-entering here is harmless: a second call finds
+        // nulls and only repeats the service bookkeeping.
         stopping = true
         val generation = tunnelGeneration
         val current = engine
@@ -326,7 +270,7 @@ class ExpressVpnService : VpnService() {
                 if (generation != tunnelGeneration) return@post
                 releaseResources()
                 setPersistedRunning(this@ExpressVpnService, false)
-                stopForegroundCompat()
+                VpnServiceForeground.stop(this@ExpressVpnService)
                 stopSelf()
             }
         }, "diting-express-teardown").start()
@@ -381,7 +325,7 @@ class ExpressVpnService : VpnService() {
         closeDataPlane()
         setPersistedRunning(this, false)
         releaseResources()
-        stopForegroundCompat()
+        VpnServiceForeground.stop(this)
         stopSelf()
     }
 
@@ -408,50 +352,19 @@ class ExpressVpnService : VpnService() {
         if (engine != null || isRunning || dataPlane != null) {
             teardown()
             setPersistedRunning(this, false)
-            stopForegroundCompat()
+            VpnServiceForeground.stop(this)
         }
         super.onDestroy()
     }
 
     private fun promoteToForeground() {
-        val notification = buildNotification(this)
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(
-                    NOTIFICATION_ID,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
-                )
-            } else {
-                startForeground(NOTIFICATION_ID, notification)
-            }
-        } catch (t: Throwable) {
-            Log.e(TAG, "startForeground failed", t)
-            RuntimeEventLog.error("express", "foreground.fail", "error" to (t.message ?: t.javaClass.simpleName))
-        }
-    }
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        val manager = getSystemService(NotificationManager::class.java) ?: return
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "极速模式",
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = "保持 DNS 窄路由 VPN 运行"
-            setShowBadge(false)
-        }
-        manager.createNotificationChannel(channel)
-    }
-
-    private fun stopForegroundCompat() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
+        val error = VpnServiceForeground.promote(
+            this,
+            NOTIFICATION_ID,
+            ExpressNotification.build(this, CHANNEL_ID, ACTION_STOP),
+        ) ?: return
+        Log.e(TAG, "startForeground failed", error)
+        RuntimeEventLog.error("express", "foreground.fail", "error" to (error.message ?: error.javaClass.simpleName))
     }
 
     companion object {
@@ -486,10 +399,6 @@ class ExpressVpnService : VpnService() {
 
         // Last start configuration, replayed by the quick settings tile.
         internal const val KEY_LAST_DNS_CONFIG = "last_dns_config"
-        private const val KEY_LAST_OUTBOUND_PROXY = "last_outbound_proxy"
-        private const val KEY_LAST_PROXY_APP = "last_outbound_proxy_app"
-        private const val KEY_LAST_IPV6_MODE = "last_ipv6_mode"
-        private const val KEY_LAST_EXCLUDED_PACKAGES = "last_excluded_packages"
 
         /// How often the tunnel thread checks whether the session it started is still running.
         private const val SESSION_POLL_MS = 200L
@@ -504,7 +413,6 @@ class ExpressVpnService : VpnService() {
         @Volatile
         private var activeEngine: Engine? = null
 
-        
         internal fun engineForDiagnostics(): Engine? = activeEngine
 
         @Volatile
@@ -536,55 +444,9 @@ class ExpressVpnService : VpnService() {
             "stats" to EngineStats.snapshot(activeEngine),
         )
 
-        /// Builds the foreground notification from the current settings; the body prefers the
-        /// user's custom text over the legacy-style line Dart composed.
-        private fun buildNotification(context: Context): Notification {
-            val openIntent = PendingIntent.getActivity(
-                context,
-                0,
-                Intent(context, MainActivity::class.java),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-            val stopIntent = PendingIntent.getService(
-                context,
-                1,
-                Intent(context, ExpressVpnService::class.java).setAction(ACTION_STOP),
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            )
-            val label = context.applicationInfo.loadLabel(context.packageManager).toString()
-            val status = NotificationSettings.runningText(
-                context,
-                NotificationMode.EXPRESS,
-                "运行中",
-            )
-            // No traffic monitor runs in express mode, so the speed item is left out here.
-            val detail = NotificationStatsLine.compose(context, withSpeed = false)
-            val body = if (detail == null) status else "$status\n$detail"
-            return NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("$label · 极速模式")
-                .setContentText(body)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-                .setContentIntent(openIntent)
-                .addAction(0, "停止", stopIntent)
-                .setOngoing(true)
-                .setOnlyAlertOnce(true)
-                .setShowWhen(false)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-                .build()
-        }
-
         /// Rebuilds the posted notification after a settings change; false when nothing is posted
-        fun refreshNotification(context: Context): Boolean {
-            if (!isRunning) return false
-            return runCatching {
-                val manager = context.getSystemService(NotificationManager::class.java)
-                    ?: return@runCatching false
-                manager.notify(NOTIFICATION_ID, buildNotification(context))
-                true
-            }.getOrDefault(false)
-        }
+        fun refreshNotification(context: Context): Boolean =
+            isRunning && ExpressNotification.rerender(context, CHANNEL_ID, NOTIFICATION_ID, ACTION_STOP)
 
         fun startIntent(
             context: Context,
@@ -616,21 +478,6 @@ class ExpressVpnService : VpnService() {
 
         /// Rebuilds the last start intent so the tile can restart the tunnel without Dart, which
         /// is where the DNS config is computed. Null until the service was started at least once.
-        fun restoreIntent(context: Context): Intent? {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val dnsConfig = prefs.getString(KEY_LAST_DNS_CONFIG, null)
-            if (dnsConfig.isNullOrBlank()) return null
-            val defaults = VpnPlanNative.startDefaults
-            return startIntent(
-                context = context,
-                dnsConfig = dnsConfig,
-                proxyJson = prefs.getString(KEY_LAST_OUTBOUND_PROXY, null)
-                    ?: defaults.outboundProxy,
-                ipv6Mode = prefs.getString(KEY_LAST_IPV6_MODE, null) ?: defaults.ipv6Mode,
-                excludedPackages = prefs.getStringSet(KEY_LAST_EXCLUDED_PACKAGES, null)
-                    .orEmpty().toList(),
-                proxyAppPackage = prefs.getString(KEY_LAST_PROXY_APP, null).orEmpty(),
-            )
-        }
+        fun restoreIntent(context: Context): Intent? = ExpressStartConfig.restoreIntent(context)
     }
 }
