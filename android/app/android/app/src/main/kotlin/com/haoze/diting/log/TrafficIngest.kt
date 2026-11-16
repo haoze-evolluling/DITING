@@ -4,8 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteStatement
 import android.util.Log
 import com.haoze.diting.log.DbWriteHealth.DropReason
-import org.json.JSONArray
-import java.io.DataOutputStream
+import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -17,12 +16,12 @@ import java.util.concurrent.TimeUnit
 /// Writes per-UID traffic into `app_traffic_daily`, batched every 15s or 1MB; deltas are ADDED.
 ///
 /// The buckets, the flush threshold, the overflow drop, the requeue of a failed write and the
-/// 2 s → 60 s backoff live in the log kernel (`rust/diting-log-core/src/traffic.rs`); the JSON
-/// decode, the UID → package lookup, the SQL and the timers stay here.
+/// 2 s → 60 s backoff live in the log kernel (`rust/diting-log-core/src/traffic.rs`); the SQL and
+/// the timers stay here. The engine already resolved each UID to a package name, so this class only
+/// prepends the device's date to the packed tick and forwards it — no JSON, no binder lookups.
 class TrafficIngest(
     private val context: Context,
     private val databaseName: String,
-    private val uidPackageCache: UidPackageCache,
 ) {
     private val executor: ScheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor { runnable ->
@@ -40,22 +39,24 @@ class TrafficIngest(
         TimeUnit.MILLISECONDS,
     )
 
-    fun onTick(jsonDeltas: String) {
-        if (jsonDeltas.isBlank() || closed) return
-        val array = runCatching { JSONArray(jsonDeltas) }.getOrNull() ?: return
-        if (array.length() == 0) {
-            // An idle engine still ticks every second with `[]`: feed the rate clock a zero tick so
-            // a stalled link decays to 0 B/s instead of freezing its last value. No row, no DB.
+    /// `rows` is the engine's packed tick: `u32 count | (uid, tx, rx, package)`. Prepending the
+    /// date is the only work left; the log kernel owns the bucketing.
+    fun onTick(rows: ByteArray) {
+        if (closed || rows.size < Int.SIZE_BYTES) return
+        val count = ByteBuffer.wrap(rows, 0, Int.SIZE_BYTES).int
+        if (count == 0) {
+            // An idle engine still ticks every second: feed the rate clock a zero tick so a stalled
+            // link decays to 0 B/s instead of freezing its last value. No row, no DB.
             TrafficRateMonitor.onTick(0, 0)
             return
         }
 
-        val rows = collect(array)
-        val packed = LogPayload.pack { out ->
-            LogPayload.writeString(out, todayString())
-            out.writeInt(rows.size)
-            for (row in rows) writeRow(out, row)
-        }
+        val date = todayString().toByteArray(Charsets.UTF_8)
+        val packed = ByteArray(Int.SIZE_BYTES + date.size + rows.size)
+        ByteBuffer.wrap(packed).putInt(0, date.size)
+        date.copyInto(packed, Int.SIZE_BYTES)
+        rows.copyInto(packed, Int.SIZE_BYTES + date.size)
+
         val outcome = LogNative.trafficOnTick(traffic, packed)
         if (outcome.droppedDate != null) {
             Log.w(TAG, "Traffic buffer overflowed; dropped ${outcome.droppedDate}")
@@ -64,28 +65,6 @@ class TrafficIngest(
         // Outside any lock: the monitor only stores two numbers.
         TrafficRateMonitor.onTick(outcome.tickTx, outcome.tickRx)
         if (outcome.flush) submitFlush()
-    }
-
-    /// The rows the kernel will bucket: the same cheap filter, so a row that cannot count never
-    /// reaches `PackageManager`. The kernel re-checks it, this only avoids the binder call.
-    private fun collect(array: JSONArray): List<Delta> {
-        val rows = ArrayList<Delta>(array.length())
-        for (index in 0 until array.length()) {
-            val obj = array.optJSONObject(index) ?: continue
-            val uid = obj.optInt("uid", -1)
-            val tx = obj.optLong("tx", 0L)
-            val rx = obj.optLong("rx", 0L)
-            if (uid <= 0 || (tx <= 0 && rx <= 0)) continue
-            rows += Delta(uid, tx, rx, uidPackageCache.packageForUid(uid))
-        }
-        return rows
-    }
-
-    private fun writeRow(out: DataOutputStream, row: Delta) {
-        out.writeInt(row.uid)
-        out.writeLong(row.tx)
-        out.writeLong(row.rx)
-        LogPayload.writeString(out, row.packageName)
     }
 
     /// Force-writes the buffer and stops the executor, so the 15s timer cannot drop the tail
@@ -243,14 +222,6 @@ class TrafficIngest(
 
     private fun todayString(): String =
         SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-
-    /// One row of the engine's traffic tick, after the UID → package lookup.
-    private data class Delta(
-        val uid: Int,
-        val tx: Long,
-        val rx: Long,
-        val packageName: String,
-    )
 
     private companion object {
         const val TAG = "TrafficIngest"

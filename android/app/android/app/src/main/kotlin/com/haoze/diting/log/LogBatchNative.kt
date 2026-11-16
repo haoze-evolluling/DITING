@@ -3,14 +3,16 @@ package com.haoze.diting.log
 /// The batched entry points of the log kernel, kept apart from [LogNative] so that file stays a
 /// flat list of JNI declarations.
 ///
-/// Both calls replace a loop of per-row JNI crossings with one payload:
+/// These calls replace a loop of per-row JNI crossings with one payload:
 ///
 /// * [queueSubmitMany] takes the `dns_log` rows of one engine batch and enqueues all of them under
 ///   a single queue lock;
 /// * [httpEvents] takes one packed batch of MITM relay decisions, feeds the request counters,
 ///   classifies the rows and enqueues them — the three steps that used to be three JNI calls per
 ///   request (`httpEvent` plus `queueSubmit`, with Kotlin unpacking and repacking the row between
-///   them).
+///   them);
+/// * [raceRows] / [bootstrapRows] classify one engine batch of race or bootstrap inputs and answer
+///   the rows the writer queue takes, so a burst costs one call instead of one pair per event.
 ///
 /// Payload layouts are the ones documented in `rust/diting-log-core/src/api/`.
 
@@ -53,6 +55,27 @@ internal fun LogNative.Companion.httpEvents(
         )
         else -> throw IllegalStateException("native HTTP event batch returned no status")
     }
+}
+
+/// `u32 count | rows(race input)`; the answer is the writer rows in the same framing.
+internal fun LogNative.Companion.raceRows(packed: ByteArray): List<ByteArray> =
+    readRowBatch(
+        requireNotNull(instance.raceRows(packed, System.currentTimeMillis())) {
+            "native race batch rejected the payload"
+        },
+    )
+
+/// `u32 count | rows(bootstrap input)`; the answer is the writer rows in the same framing.
+internal fun LogNative.Companion.bootstrapRows(packed: ByteArray): List<ByteArray> =
+    readRowBatch(
+        requireNotNull(instance.bootstrapRows(packed, System.currentTimeMillis())) {
+            "native bootstrap batch rejected the payload"
+        },
+    )
+
+private fun readRowBatch(payload: ByteArray): List<ByteArray> {
+    val reader = LogPayload.Reader(payload)
+    return List(reader.count()) { reader.blob() }
 }
 
 private fun readSubmit(reader: LogPayload.Reader): LogQueueSubmit {

@@ -37,6 +37,12 @@ public final class Engine {
         nativeStopStandalone(handle);
     }
 
+    /// Delivers the buffered DNS / race / bootstrap batches on the calling thread.
+    public void flushLogs() {
+        requireHandle();
+        nativeFlushLogs(handle);
+    }
+
     /// Null on success, otherwise the error text (Go returned an `error` here).
     public String startStandalone(long port) {
         requireHandle();
@@ -277,40 +283,19 @@ public final class Engine {
         }
     }
 
-    /// `tunnel.BatchLogCallback.onDNSQueryBatch`.
+    /// `tunnel.BatchLogCallback.onDNSQueryBatch(byte[])`: one packed DNS batch.
     public interface BatchLogCallback {
-        void onDNSQueryBatch(String jsonLogs);
+        void onDNSQueryBatch(byte[] rows);
     }
 
-    /// `tunnel.RaceLogCallback.onRaceResult`: thirteen arguments, in this order.
+    /// `tunnel.RaceLogCallback.onRaceEvents(byte[])`: one packed race batch.
     public interface RaceLogCallback {
-        void onRaceResult(
-                String queryName,
-                long queryType,
-                String strategy,
-                long providerCount,
-                boolean success,
-                long elapsedMs,
-                String selectedProviderID,
-                long selectedElapsedMs,
-                String winnerProviderID,
-                long winnerElapsedMs,
-                boolean fallbackUsed,
-                boolean fallbackSuccess,
-                String errorMessage);
+        void onRaceEvents(byte[] rows);
     }
 
-    /// `tunnel.BootstrapLogCallback.onBootstrapResult`.
+    /// `tunnel.BootstrapLogCallback.onBootstrapEvents(byte[])`: one packed bootstrap batch.
     public interface BootstrapLogCallback {
-        void onBootstrapResult(
-                String ipID,
-                String ipName,
-                String ip,
-                String host,
-                boolean success,
-                long elapsedMs,
-                boolean fallbackUsed,
-                String errorMessage);
+        void onBootstrapEvents(byte[] rows);
     }
 
     /// `OutboundProxyStatusCallback.onOutboundProxyStatus(String, String)`.
@@ -334,9 +319,9 @@ public final class Engine {
         String packageForUid(long uid);
     }
 
-    /// `TrafficCallback.onTrafficStatsTick(String)`.
+    /// `TrafficCallback.onTrafficStatsTick(byte[])`: one packed per-UID tick.
     public interface TrafficCallback {
-        void onTrafficStatsTick(String jsonDeltas);
+        void onTrafficStatsTick(byte[] rows);
     }
 
     /// `HttpLogCallback.onHttpEvents(byte[])`: a packed batch of relay decisions.
@@ -351,6 +336,8 @@ public final class Engine {
     private native void nativeStop(long handle);
 
     private native void nativeStopStandalone(long handle);
+
+    private native void nativeFlushLogs(long handle);
 
     private native String nativeStartStandalone(long handle, long port);
 

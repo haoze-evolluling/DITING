@@ -7,7 +7,7 @@
 //! | `SocketProtector.protect(long): boolean` | `(J)Z` |
 //! | `UIDResolver.resolveUID(long, String, long, String, long): long` | `(JLjava/lang/String;JLjava/lang/String;J)J` |
 //! | `AppUidResolver.packageForUid(long): String` | `(J)Ljava/lang/String;` |
-//! | `TrafficCallback.onTrafficStatsTick(String)` | `(Ljava/lang/String;)V` |
+//! | `TrafficCallback.onTrafficStatsTick(byte[])` | `([B)V` |
 //!
 //! # Threads
 //!
@@ -38,8 +38,8 @@ pub const PROTECT_SIGNATURE: &str = "(J)Z";
 pub const UID_SIGNATURE: &str = "(JLjava/lang/String;JLjava/lang/String;J)J";
 /// `AppUidResolver.packageForUid(long): String`.
 pub const APP_SIGNATURE: &str = "(J)Ljava/lang/String;";
-/// `TrafficCallback.onTrafficStatsTick(String)`.
-pub const TRAFFIC_SIGNATURE: &str = "(Ljava/lang/String;)V";
+/// `TrafficCallback.onTrafficStatsTick(byte[])`.
+pub const TRAFFIC_SIGNATURE: &str = "([B)V";
 
 /// Captures the JVM and one callback object.
 fn capture(
@@ -198,16 +198,16 @@ impl JniTrafficSink {
 }
 
 impl TrafficSink for JniTrafficSink {
-    fn tick(&self, json: &str) {
+    fn tick(&self, payload: &[u8]) {
         with_env(
             &self.vm,
             |env| {
-                let payload = JObject::from(env.new_string(json).ok()?);
+                let rows = JObject::from(env.byte_array_from_slice(payload).ok()?);
                 env.call_method(
                     self.target.as_obj(),
                     "onTrafficStatsTick",
                     TRAFFIC_SIGNATURE,
-                    &[JValue::Object(&payload)],
+                    &[JValue::Object(&rows)],
                 )
                 .ok()?;
                 Some(())

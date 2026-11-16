@@ -52,10 +52,10 @@ use crate::tunnel::{PacketLink, Session, TunFd};
 /// The Android MTU the Go engine used (`defaultTunMTU`): 1500 minus the VPN's own headers.
 pub const DEFAULT_TUN_MTU: usize = 1400;
 
-/// `TrafficCallback.onTrafficStatsTick(String)`, installed by Kotlin.
+/// `TrafficCallback.onTrafficStatsTick(byte[])`, installed by Kotlin.
 pub trait TrafficSink: Send + Sync + 'static {
-    /// One JSON array of `{"uid":…,"tx":…,"rx":…}` rows.
-    fn tick(&self, json: &str);
+    /// One packed tick, see [`crate::tunnel::stats::traffic_payload`].
+    fn tick(&self, payload: &[u8]);
 }
 
 /// The tokio runtime, shut down without blocking.
@@ -890,11 +890,27 @@ impl Engine {
                     return;
                 }
                 let deltas = engine.traffic.tick();
-                // Always tick, even with no data: the empty `[]` still ages the rate to zero, so a
-                // dashboard curve falls back to 0 when traffic stops instead of freezing its last
-                // value. The cost is one small JSON callback per interval while the tunnel is up.
+                // Always tick, even with no data: the empty row count still ages the rate to zero,
+                // so a dashboard curve falls back to 0 when traffic stops instead of freezing its
+                // last value. The cost is one small callback per interval while the tunnel is up.
                 if let Some(sink) = engine.traffic_sink() {
-                    sink.tick(&crate::tunnel::stats::traffic_json(&deltas));
+                    // The package names are resolved here, on the ticker thread through the same
+                    // 60 s attribution cache the rest of the engine uses. Kotlin then only has to
+                    // prepend the date and hand the buffer to the log kernel, instead of looking
+                    // up every UID and rebuilding the payload.
+                    let now = crate::resolver::now_ns();
+                    let rows: Vec<(i32, i64, i64, String)> = deltas
+                        .iter()
+                        .map(|delta| {
+                            (
+                                delta.uid,
+                                delta.tx as i64,
+                                delta.rx as i64,
+                                engine.attribution().package_for(delta.uid, now),
+                            )
+                        })
+                        .collect();
+                    sink.tick(&crate::tunnel::stats::traffic_payload(&rows));
                 }
             }
         });

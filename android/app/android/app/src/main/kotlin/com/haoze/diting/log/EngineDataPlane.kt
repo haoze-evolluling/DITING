@@ -22,7 +22,7 @@ class EngineDataPlane(
 
     // Lazy: express mode must not start writer threads it never feeds.
     private val traffic: TrafficIngest by lazy {
-        TrafficIngest(context, databaseName, uidCache)
+        TrafficIngest(context, databaseName)
     }
     private val http: HttpRequestLogWriter by lazy {
         HttpRequestLogWriter(context, databaseName) { logMode }
@@ -30,10 +30,11 @@ class EngineDataPlane(
     private var trafficAttached = false
     private var httpAttached = false
     private var cacheMirror: DnsCacheMirror? = null
-    private var httpEngine: Engine? = null
+    private var engineRef: Engine? = null
 
     /// UID -> package lookup for DNS/HTTP attribution and the firewall
     fun attachResolvers(engine: Engine) {
+        engineRef = engine
         engine.setUIDResolver(object : UIDResolver {
             override fun resolveUID(
                 protocol: Long,
@@ -50,17 +51,9 @@ class EngineDataPlane(
 
     /// Bootstrap race results into `bootstrap_log`; the dashboard card reads only this table
     fun attachBootstrap(engine: Engine) {
+        engineRef = engine
         engine.setBootstrapLogCallback(object : BootstrapLogCallback {
-            override fun onBootstrapResult(
-                ipID: String,
-                ipName: String,
-                ip: String,
-                host: String,
-                success: Boolean,
-                elapsedMs: Long,
-                fallbackUsed: Boolean,
-                errorMessage: String,
-            ) = onBootstrap(ipID, ipName, ip, host, success, elapsedMs, fallbackUsed, errorMessage)
+            override fun onBootstrapEvents(rows: ByteArray) = onBootstrapBatch(rows)
         })
     }
 
@@ -73,20 +66,21 @@ class EngineDataPlane(
 
     /// Per-UID byte deltas into `app_traffic_daily` (buffered 15s / 1MB). Full tunnel only
     fun attachTraffic(engine: Engine) {
+        engineRef = engine
         // Flag first: touching `traffic` starts its executor; a throw must leave it reachable.
         val writer = traffic
         trafficAttached = true
         engine.setTrafficCallback(object : TrafficCallback {
-            override fun onTrafficStatsTick(jsonDeltas: String) = writer.onTick(jsonDeltas)
+            override fun onTrafficStatsTick(rows: ByteArray) = writer.onTick(rows)
         })
     }
 
     /// MITM events into `http_request_log` (10 rows / 500ms); only normal mode with HTTPS
     /// inspection on installs a filter, so any other mode simply never sees a row.
     fun attachHttp(engine: Engine) {
+        engineRef = engine
         val writer = http
         httpAttached = true
-        httpEngine = engine
         engine.setHttpLogCallback(object : HttpLogCallback {
             override fun onHttpEvents(rows: ByteArray) = writer.onEvents(rows)
         })
@@ -94,14 +88,24 @@ class EngineDataPlane(
 
     /// Flushes what was attached and releases the callback targets; called after the engine stops
     fun close() {
+        val engine = engineRef
+        engineRef = null
         val mirror = cacheMirror
         cacheMirror = null
         runCatching { mirror?.close() }
-        if (trafficAttached) runCatching { traffic.close() }
+        // Deliver the engine's own buffers first: its DNS flusher and the race/bootstrap event
+        // flusher may still hold a partial batch that would otherwise arrive after the queues close.
+        runCatching { engine?.flushLogs() }
+        // Stop every callback before the queues close. Clearing the last one joins the engine's
+        // flushers, so nothing can call into a writer below.
+        runCatching { engine?.setBatchLogCallback(null) }
+        runCatching { engine?.setRaceLogCallback(null) }
+        runCatching { engine?.setBootstrapLogCallback(null) }
+        runCatching { engine?.setTrafficCallback(null) }
         // Dropping the callback joins the engine's HTTP flusher, which delivers the buffered tail
         // here, while the writer is still open and can queue it.
-        runCatching { httpEngine?.setHttpLogCallback(null) }
-        httpEngine = null
+        runCatching { engine?.setHttpLogCallback(null) }
+        if (trafficAttached) runCatching { traffic.close() }
         if (httpAttached) runCatching { http.close() }
         // Queued DNS / race / bootstrap rows are flushed here: the engine has already stopped, so
         // nothing appends while they are written.
@@ -121,28 +125,7 @@ class EngineDataPlane(
 
     private fun packageForUid(uid: Long): String = uidCache.packageForUid(uid.toInt())
 
-    @Suppress("LongParameterList")
-    private fun onBootstrap(
-        ipID: String,
-        ipName: String,
-        ip: String,
-        host: String,
-        success: Boolean,
-        elapsedMs: Long,
-        fallbackUsed: Boolean,
-        errorMessage: String,
-    ) {
-        BootstrapLogWriter.write(
-            context,
-            databaseName,
-            ipId = ipID,
-            ipName = ipName,
-            ip = ip,
-            host = host,
-            success = success,
-            elapsedMs = elapsedMs,
-            fallbackUsed = fallbackUsed,
-            errorMessage = errorMessage,
-        )
+    private fun onBootstrapBatch(rows: ByteArray) {
+        BootstrapLogWriter.writeBatch(context, databaseName, rows)
     }
 }

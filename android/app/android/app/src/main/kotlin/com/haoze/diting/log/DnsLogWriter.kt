@@ -2,13 +2,11 @@ package com.haoze.diting.log
 
 import android.content.ContentValues
 import android.content.Context
-import java.io.DataOutputStream
-import org.json.JSONArray
-import org.json.JSONObject
 
-/// Writes the engine's batch DNS log JSON into `dns_log`, a table the Flutter side also reads.
+/// Writes the engine's packed DNS batch into `dns_log`, a table the Flutter side also reads.
 ///
-/// The JSON decode stays here (the engine's field letters are its own contract); the
+/// The engine hands over the exact payload `LogNative.dnsBatch` decodes, so this object only skips
+/// an empty batch and forwards the bytes: no JSON parse and no repack on the JVM side. The
 /// classification — result, log-mode filter, `message`, subscription id, blank defaults — happens in
 /// the log kernel (`rust/diting-log-core/src/row.rs`). The insert is queued so a locked database
 /// retries instead of dropping the batch, and so the engine thread never waits on disk.
@@ -26,17 +24,10 @@ object DnsLogWriter {
 
     private const val TABLE = "dns_log"
 
-    fun writeBatch(context: Context, databaseName: String, mode: String, jsonLogs: String) {
-        if (jsonLogs.isBlank()) return
-        val array = runCatching { JSONArray(jsonLogs) }.getOrNull() ?: return
-        if (array.length() == 0) return
-        val packed = LogPayload.pack { out ->
-            out.writeInt(array.length())
-            for (index in 0 until array.length()) {
-                // A non-object entry keeps its defaults, which the kernel skips like a blank domain.
-                writeEntry(out, array.optJSONObject(index) ?: JSONObject())
-            }
-        }
+    /// `packed` is the engine's batch: `u32 count` then the `dnsBatch` input rows. A zero count is
+    /// the only shortcut; everything else is the kernel's.
+    fun writeBatch(context: Context, databaseName: String, mode: String, packed: ByteArray) {
+        if (packed.size <= Int.SIZE_BYTES) return
         // Counted before the mode check: the notification shows requests with logging off too.
         val rows = LogNative.dnsBatch(RequestStats.kernel, mode, packed)
         if (rows.isEmpty()) return
@@ -44,19 +35,6 @@ object DnsLogWriter {
         val writer = LogTableWriters.of(context, databaseName, TABLE, "diting-dns-log", ::values)
         // One call for the whole batch: the queue lock and the flush decision are taken once.
         writer.submitAll(rows)
-    }
-
-    private fun writeEntry(out: DataOutputStream, obj: JSONObject) {
-        out.writeLong(obj.optLong("ts"))
-        LogPayload.writeString(out, obj.optString("d"))
-        out.writeInt(obj.optInt("t"))
-        out.writeByte(if (obj.optBoolean("b")) 1 else 0)
-        LogPayload.writeString(out, obj.optString("k"))
-        LogPayload.writeString(out, obj.optString("e"))
-        out.writeByte(if (obj.optBoolean("c")) 1 else 0)
-        LogPayload.writeString(out, obj.optString("a"))
-        LogPayload.writeString(out, obj.optString("i"))
-        out.writeLong(obj.optLong("r"))
     }
 
     /// The kernel's row layout, unpacked into the `dns_log` columns.

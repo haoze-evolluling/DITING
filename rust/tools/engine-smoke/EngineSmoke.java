@@ -18,8 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 /// It proves three things the Rust tests cannot:
 ///
 /// 1. the exported symbols match the names and argument orders the Kotlin facade declares;
-/// 2. the callbacks are called from engine threads into a real JVM object, with the gomobile
-///    argument list intact (thirteen arguments for the race log, eight for bootstrap);
+/// 2. the callbacks are called from engine threads into a real JVM object, with one packed
+///    `byte[]` per DNS, race, bootstrap and traffic batch;
 /// 3. the standalone server answers a real UDP and a real TCP client, end to end, with a fake
 ///    upstream written here in Java.
 ///
@@ -59,27 +59,32 @@ public final class EngineSmoke {
         engine.setFilterDNS(true);
 
         AtomicInteger batches = new AtomicInteger();
-        AtomicReference<String> batch = new AtomicReference<>();
+        AtomicReference<byte[]> batch = new AtomicReference<>();
         AtomicReference<String> race = new AtomicReference<>();
         CountDownLatch logged = new CountDownLatch(1);
         CountDownLatch raced = new CountDownLatch(1);
-        engine.setBatchLogCallback(json -> {
-            batch.set(json);
+        engine.setBatchLogCallback(rows -> {
+            batch.set(rows);
             batches.incrementAndGet();
             logged.countDown();
         });
-        engine.setRaceLogCallback(
-                (queryName, queryType, strategy, providerCount, success, elapsedMs,
-                        selectedProviderID, selectedElapsedMs, winnerProviderID, winnerElapsedMs,
-                        fallbackUsed, fallbackSuccess, errorMessage) -> {
-                    race.set(queryName + "|" + queryType + "|" + strategy + "|" + success + "|"
-                            + selectedProviderID + "|" + fallbackUsed);
-                    raced.countDown();
-                });
-        engine.setBootstrapLogCallback(
-                (ipID, ipName, ip, host, success, elapsedMs, fallbackUsed, errorMessage) -> {
-                    throw new IllegalStateException("no bootstrap event is expected in stage 1");
-                });
+        engine.setRaceLogCallback(rows -> {
+            Payload payload = new Payload(rows);
+            payload.u32(); // count
+            String queryName = payload.text();
+            int queryType = payload.i32();
+            String strategy = payload.text();
+            payload.i32(); // provider count
+            boolean success = payload.u8() != 0;
+            payload.i64(); // elapsed
+            String selectedProviderID = payload.text();
+            race.set(queryName + "|" + queryType + "|" + strategy + "|" + success + "|"
+                    + selectedProviderID);
+            raced.countDown();
+        });
+        engine.setBootstrapLogCallback(rows -> {
+            throw new IllegalStateException("no bootstrap event is expected in stage 1");
+        });
 
         String startError = engine.startStandalone(0);
         check(startError == null, "startStandalone accepted: " + startError);
@@ -95,11 +100,21 @@ public final class EngineSmoke {
 
         check(logged.await(3, TimeUnit.SECONDS), "batch log delivered");
         check(batches.get() >= 1, "one batch delivered");
-        String batchJson = batch.get();
-        check(batchJson.contains("\"d\":\"forward.test\""), "batch row carries the domain");
-        check(batchJson.contains("\"i\":\"1.2.3.4\""), "batch row carries the addresses");
+        Payload batchPayload = new Payload(batch.get());
+        check(batchPayload.u32() >= 1, "one row in the batch");
+        batchPayload.i64(); // timestamp
+        String domain = batchPayload.text();
+        batchPayload.i32(); // query type
+        batchPayload.u8(); // blocked
+        batchPayload.text(); // blocked by
+        batchPayload.text(); // error
+        batchPayload.u8(); // cached
+        batchPayload.text(); // app
+        String resolvedIps = batchPayload.text();
+        check(domain.equals("forward.test"), "batch row carries the domain: " + domain);
+        check(resolvedIps.contains("1.2.3.4"), "batch row carries the addresses: " + resolvedIps);
         check(raced.await(3, TimeUnit.SECONDS), "race log delivered");
-        check(race.get().startsWith("forward.test|1|single|true|p1|"), "race row: " + race.get());
+        check(race.get().startsWith("forward.test|1|single|true|p1"), "race row: " + race.get());
 
         // The cache answers the second query without a second upstream round trip.
         udp(port(engine), query("forward.test", 12));
@@ -151,7 +166,7 @@ public final class EngineSmoke {
             return 10123L;
         });
         engine.setAppUidResolver(uid -> uid == 10123L ? "com.test.app" : "");
-        engine.setTrafficCallback(json -> trafficTicks.incrementAndGet());
+        engine.setTrafficCallback(rows -> trafficTicks.incrementAndGet());
         engine.setBlockedUIDs("10123, 20234,bogus");
         engine.setFilterHttp3(true);
         engine.setBlockEncryptedDns(true);
@@ -224,6 +239,8 @@ public final class EngineSmoke {
                 "the root survives stopStackMitm");
         check(httpEvents.get() == 0, "no HTTP events without a relayed flow");
 
+        // Teardown flushes the buffered DNS / race / bootstrap batches on the calling thread.
+        engine.flushLogs();
         engine.stopStandalone();
         check(!engine.isRunning(), "stopped");
         engine.stop();
@@ -257,6 +274,39 @@ public final class EngineSmoke {
         checks++;
         if (!condition) {
             throw new IllegalStateException("check failed: " + message);
+        }
+    }
+
+    /// Reads one packed payload, big-endian, like `rust/diting-log-core/src/payload.rs`.
+    static final class Payload {
+        private final byte[] bytes;
+        private int offset;
+
+        Payload(byte[] bytes) {
+            this.bytes = bytes;
+        }
+
+        int u8() {
+            return bytes[offset++] & 0xFF;
+        }
+
+        int u32() {
+            return (u8() << 24) | (u8() << 16) | (u8() << 8) | u8();
+        }
+
+        int i32() {
+            return u32();
+        }
+
+        long i64() {
+            return ((long) u32() << 32) | (u32() & 0xFFFFFFFFL);
+        }
+
+        String text() {
+            int length = u32();
+            String value = new String(bytes, offset, length, StandardCharsets.UTF_8);
+            offset += length;
+            return value;
         }
     }
 

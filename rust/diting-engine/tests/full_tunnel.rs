@@ -446,10 +446,10 @@ fn the_traffic_ticker_reports_the_flow_uid() {
             "com.test.app".to_string()
         }
     }
-    struct Recorder(std::sync::Mutex<Vec<String>>);
+    struct Recorder(std::sync::Mutex<Vec<Vec<u8>>>);
     impl TrafficSink for Recorder {
-        fn tick(&self, json: &str) {
-            self.0.lock().expect("recorder").push(json.to_string());
+        fn tick(&self, payload: &[u8]) {
+            self.0.lock().expect("recorder").push(payload.to_vec());
         }
     }
 
@@ -481,14 +481,16 @@ fn the_traffic_ticker_reports_the_flow_uid() {
     let mut seen = false;
     while Instant::now() < deadline && !seen {
         std::thread::sleep(Duration::from_millis(50));
-        seen = recorder
-            .0
-            .lock()
-            .expect("recorder")
-            .iter()
-            .any(|json| json.contains("\"uid\":10086"));
+        seen = recorder.0.lock().expect("recorder").iter().any(|payload| {
+            payload.len() >= 4
+                && u32::from_be_bytes(payload[0..4].try_into().unwrap()) > 0
+                && payload
+                    .windows(4)
+                    .any(|bytes| bytes == 10086i32.to_be_bytes())
+                && payload.windows(12).any(|bytes| bytes == b"com.test.app")
+        });
     }
-    assert!(seen, "a tick mentioned UID 10086: {:?}", recorder.0);
+    assert!(seen, "a tick mentioned UID 10086 and its package");
 
     engine.stop_full();
 }

@@ -3,49 +3,24 @@ package com.haoze.diting.log
 import android.content.ContentValues
 import android.content.Context
 
-/// Writes the race callback into `dns_race_log`; provider names stay null, Dart resolves ids.
+/// Writes the engine's packed race batches into `dns_race_log`; provider names stay null, Dart
+/// resolves ids.
 ///
-/// The row is shaped in the log kernel (`rust/diting-log-core/src/row.rs`) and queued, not written
+/// The rows are shaped in the log kernel (`rust/diting-log-core/src/row.rs`) and queued, not written
 /// here: this callback runs on an engine thread, and a locked database used to fail the open
-/// (dropping the row) or, worse, park the DNS hot path.
+/// (dropping the row) or, worse, park the DNS hot path. One batch is two JNI calls (classify, then
+/// enqueue) instead of one pair per race result.
 object RaceLogWriter {
     private const val TABLE = "dns_race_log"
 
-    fun write(
-        context: Context,
-        databaseName: String,
-        queryName: String,
-        queryType: Int,
-        strategy: String,
-        providerCount: Int,
-        success: Boolean,
-        elapsedMs: Long,
-        selectedProviderId: String,
-        selectedElapsedMs: Long,
-        winnerProviderId: String,
-        winnerElapsedMs: Long,
-        fallbackUsed: Boolean,
-        fallbackSuccess: Boolean,
-        errorMessage: String,
-    ) {
-        val packed = LogPayload.pack { out ->
-            LogPayload.writeString(out, queryName)
-            out.writeInt(queryType)
-            LogPayload.writeString(out, strategy)
-            out.writeInt(providerCount)
-            out.writeByte(if (success) 1 else 0)
-            out.writeLong(elapsedMs)
-            LogPayload.writeString(out, selectedProviderId)
-            out.writeLong(selectedElapsedMs)
-            LogPayload.writeString(out, winnerProviderId)
-            out.writeLong(winnerElapsedMs)
-            out.writeByte(if (fallbackUsed) 1 else 0)
-            out.writeByte(if (fallbackSuccess) 1 else 0)
-            LogPayload.writeString(out, errorMessage)
-        }
-        val row = LogNative.raceRow(packed) ?: return
+    /// `packed` is `u32 count | rows(race input)`; the kernel answers the same framing with the
+    /// `dns_race_log` rows, and the queue takes them all at once.
+    fun writeBatch(context: Context, databaseName: String, packed: ByteArray) {
+        if (packed.size <= Int.SIZE_BYTES) return
+        val rows = LogNative.raceRows(packed)
+        if (rows.isEmpty()) return
         val writer = LogTableWriters.of(context, databaseName, TABLE, "diting-race-log", ::values)
-        writer.submit(row)
+        writer.submitAll(rows)
     }
 
     /// The kernel's row layout, unpacked into the `dns_race_log` columns.

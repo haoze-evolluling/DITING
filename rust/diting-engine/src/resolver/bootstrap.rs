@@ -378,10 +378,10 @@ mod tests {
     }
 
     impl EventSink for Recorder {
-        fn batch(&self, _json: &str) {}
-        fn race(&self, _event: &crate::logs::RaceEvent) {}
-        fn bootstrap(&self, event: &BootstrapEvent) {
-            BootstrapSink::bootstrap(self, event);
+        fn batch(&self, _payload: &[u8]) {}
+        fn race(&self, _event: crate::logs::RaceEvent) {}
+        fn bootstrap(&self, event: BootstrapEvent) {
+            BootstrapSink::bootstrap(self, &event);
         }
     }
 

@@ -19,8 +19,8 @@ internal class LogNative private constructor() {
         packed: ByteArray,
         nowMs: Long,
     ): ByteArray?
-    external fun raceRow(packed: ByteArray, nowMs: Long): ByteArray?
-    external fun bootstrapRow(packed: ByteArray, nowMs: Long): ByteArray?
+    external fun raceRows(packed: ByteArray, nowMs: Long): ByteArray?
+    external fun bootstrapRows(packed: ByteArray, nowMs: Long): ByteArray?
     external fun retentionPlan(packed: ByteArray): ByteArray?
     external fun crashSelect(packed: ByteArray): ByteArray?
 
@@ -134,18 +134,6 @@ internal class LogNative private constructor() {
             val reader = LogPayload.Reader(payload)
             return List(reader.count()) { reader.blob() }
         }
-
-        /// One race result; null when the callback carried no query name.
-        fun raceRow(packed: ByteArray): ByteArray? =
-            requireNotNull(instance.raceRow(packed, System.currentTimeMillis())) {
-                "native race row rejected the payload"
-            }.takeIf { it.isNotEmpty() }
-
-        /// One bootstrap probe; null when the callback carried no host.
-        fun bootstrapRow(packed: ByteArray): ByteArray? =
-            requireNotNull(instance.bootstrapRow(packed, System.currentTimeMillis())) {
-                "native bootstrap row rejected the payload"
-            }.takeIf { it.isNotEmpty() }
 
         /// The two retention windows and the tables one sweep visits.
         fun retentionPlan(

@@ -37,6 +37,7 @@ use jni::sys::{jboolean, jlong, jstring};
 use jni::JNIEnv;
 
 use crate::engine::Engine;
+use crate::logs::EventSink;
 
 use callbacks::CallbackSink;
 
@@ -206,6 +207,20 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStop(
     handle: jlong,
 ) {
     with_engine(&mut env, handle, (), |engine| engine.stop());
+}
+
+/// `flushLogs()`: delivers the buffered DNS batch and the buffered race/bootstrap events on the
+/// calling thread. Kotlin calls it during teardown, before the writer queues close.
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFlushLogs(
+    mut env: JNIEnv<'_>,
+    _this: JObject<'_>,
+    handle: jlong,
+) {
+    with_instance(&mut env, handle, (), |instance| {
+        instance.engine.logs().flush();
+        instance.sink.flush();
+    });
 }
 
 /// `stopStandalone()`

@@ -1,4 +1,4 @@
-//! The contract corpus: every JSON document Kotlin parses, frozen field by field.
+//! The contract corpus: every document Kotlin parses, frozen field by field.
 //!
 //! These are the documents the migration had to keep byte for byte: the Kotlin
 //! readers (`EngineStats.kt`, `DnsCacheMirror.kt`, `DnsLogWriter`, `TrafficIngest`) read fixed field
@@ -6,10 +6,9 @@
 //!
 //! * **produced** entries are recomputed on every replay and compared as exact strings, so renaming a
 //!   field or changing an error text fails the test (`getStats`, cache stats/entries, `resolveDomain`,
-//!   the DNS log batch);
+//!   the packed DNS log batch);
 //! * **declared** entries have no producer inside this crate and freeze the shape the engine and
-//!   Kotlin already implement: the
-//!   traffic tick (`[{"uid":..,"tx":..,"rx":..}]`, assembled by Kotlin `TrafficIngest`) and the
+//!   Kotlin already implement: the packed traffic tick and the
 //!   `logHTTPEvent(flow, host, protocol, status, reason)` tuple used by the MITM relay logs.
 //!
 //! Timestamps are the one exception, matching the repo rule "时间相关分支靠注入时钟的单测": the cache
@@ -17,9 +16,18 @@
 
 use serde_json::{json, Value};
 
-use diting_engine::logs::batch_json;
+use diting_engine::logs::batch_payload;
 use diting_engine::Engine;
 use diting_telemetry_core::LogItem;
+
+/// The packed batch as hex: the fixture is JSON, the payload is binary.
+fn hex(bytes: &[u8]) -> String {
+    let mut text = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        text.push_str(&format!("{byte:02x}"));
+    }
+    text
+}
 
 /// The query/answer pair used to put one entry into the cache.
 const CACHE_NAME: &str = "cached.example.test";
@@ -81,17 +89,17 @@ fn produced() -> Value {
         "cacheEntryFields": fields,
         "resolveDomainEmpty": engine.resolve_domain_blocking("", true),
         "resolveDomainNotRunning": engine.resolve_domain_blocking("example.com", true),
-        "dnsLogBatch": batch_json(&log_rows()),
-        "dnsLogRowFields": row_fields(),
+        "dnsLogBatchHex": hex(&batch_payload(&log_rows())),
+        "dnsLogBatchLength": batch_payload(&log_rows()).len(),
     })
 }
 
 fn declared() -> Value {
     json!({
         "trafficTick": {
-            "producer": "Kotlin TrafficIngest (delta rows from diting-telemetry-core::TrafficTracker)",
-            "shape": "[{\"uid\":<int>,\"tx\":<long>,\"rx\":<long>}]",
-            "fields": ["uid", "tx", "rx"]
+            "producer": "the engine ticker (diting-telemetry-core::TrafficTracker, packages resolved by diting-engine)",
+            "shape": "u32 count | (i32 uid, i64 tx, i64 rx, string package)",
+            "fields": ["uid", "tx", "rx", "package"]
         },
         "httpEvent": {
             "producer": "the MITM relay (logHTTPEvent)",
@@ -102,10 +110,10 @@ fn declared() -> Value {
                 "handshake_failed", "upstream_failed"
             ]
         },
-        "batchLogSignature": "(Ljava/lang/String;)V",
-        "raceLogArguments": 13,
-        "bootstrapLogArguments": 8,
-        "dnsLogRowFields": ["d", "b", "t", "r", "a", "i", "k", "e", "c", "ts", "ttl"],
+        "batchLogSignature": "([B)V",
+        "raceLogSignature": "([B)V",
+        "bootstrapLogSignature": "([B)V",
+        "dnsLogBatchShape": "u32 count | (i64 ts, string domain, i32 type, u8 blocked, string blocked_by, string error, u8 cached, string app, string resolved, i64 elapsed)",
     })
 }
 
@@ -154,20 +162,6 @@ fn log_rows() -> Vec<LogItem> {
     ]
 }
 
-/// The keys of one batch row, sorted: the renamed-field guard on its own.
-fn row_fields() -> Vec<String> {
-    let document: Value = serde_json::from_str(&batch_json(&log_rows()[..1]))
-        .unwrap_or_else(|_| Value::Array(Vec::new()));
-    let mut fields: Vec<String> = document
-        .as_array()
-        .and_then(|rows| rows.first())
-        .and_then(Value::as_object)
-        .map(|row| row.keys().cloned().collect())
-        .unwrap_or_default();
-    fields.sort();
-    fields
-}
-
 /// Replays the fixture: every produced entry has to match exactly.
 pub fn replay(document: &str) -> Result<usize, String> {
     let frozen: Value =
@@ -187,8 +181,8 @@ pub fn replay(document: &str) -> Result<usize, String> {
         "cacheEntryFields",
         "resolveDomainEmpty",
         "resolveDomainNotRunning",
-        "dnsLogBatch",
-        "dnsLogRowFields",
+        "dnsLogBatchHex",
+        "dnsLogBatchLength",
     ] {
         if frozen_produced[key] != current_produced[key] {
             return Err(format!(
@@ -203,24 +197,6 @@ pub fn replay(document: &str) -> Result<usize, String> {
             frozen["declared"], current["declared"]
         ));
     }
-    // The declared DNS row fields must agree with what the producer emits, not just with themselves.
-    // The declared list is in the order the engine documents (`d`, `b`, `t`, …); the produced list is
-    // sorted because it comes from a JSON object, so compare them as sets.
-    let mut declared_fields = current["declared"]["dnsLogRowFields"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
-    let mut produced_fields = current["produced"]["dnsLogRowFields"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
-    declared_fields.sort_by_key(|field| field.as_str().map(str::to_string));
-    produced_fields.sort_by_key(|field| field.as_str().map(str::to_string));
-    if declared_fields != produced_fields {
-        return Err(format!(
-            "the declared DNS row fields {declared_fields:?} disagree with the producer {produced_fields:?}"
-        ));
-    }
     Ok(10)
 }
 
@@ -229,16 +205,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_batch_document_uses_the_short_field_names() {
-        let document = batch_json(&log_rows());
-        let rows: Value = serde_json::from_str(&document).expect("json");
-        let row = rows.as_array().expect("an array")[0]
-            .as_object()
-            .expect("an object");
-        assert_eq!(row.len(), 11);
-        for field in ["d", "b", "t", "r", "a", "i", "k", "e", "c", "ts", "ttl"] {
-            assert!(row.contains_key(field), "missing {field}");
-        }
+    fn the_batch_payload_leads_with_the_count_and_the_first_domain() {
+        let payload = batch_payload(&log_rows());
+        assert_eq!(
+            u32::from_be_bytes(payload[0..4].try_into().expect("count")),
+            3,
+            "three rows"
+        );
+        let length = u32::from_be_bytes(payload[12..16].try_into().expect("domain length"));
+        assert_eq!(&payload[16..16 + length as usize], b"blocked.example");
     }
 
     #[test]

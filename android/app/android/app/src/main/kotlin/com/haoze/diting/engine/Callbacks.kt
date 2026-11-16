@@ -7,42 +7,22 @@ package com.haoze.diting.engine
 /// descriptors, and `rust/tools/engine-smoke/com/haoze/diting/engine/Engine.java` declares the same
 /// three interfaces, so a changed argument list fails on the host rather than on a phone.
 ///
-/// Every callback arrives on an engine thread (the log flusher for batches, a tokio worker for the
-/// race and bootstrap rows), never on the thread that installed it.
+/// Every callback arrives on an engine thread (the log flusher for DNS batches, the event flusher
+/// for race/bootstrap batches), never on the thread that installed it.
 interface BatchLogCallback {
-    /// One JSON array of `d`/`b`/`t`/`r`/`a`/`i`/`k`/`e`/`c`/`ts`/`ttl` rows.
-    fun onDNSQueryBatch(jsonLogs: String)
+    /// One packed `dns_log` batch in the log kernel's input layout; forward it to `LogNative.dnsBatch`.
+    fun onDNSQueryBatch(rows: ByteArray)
 }
 
+/// One packed race batch: `u32 count | rows(u32 length | bytes)`, each row in the layout
+/// `rust/diting-log-core/src/api/mod.rs` documents for a race input.
 interface RaceLogCallback {
-    fun onRaceResult(
-        queryName: String,
-        queryType: Long,
-        strategy: String,
-        providerCount: Long,
-        success: Boolean,
-        elapsedMs: Long,
-        selectedProviderID: String,
-        selectedElapsedMs: Long,
-        winnerProviderID: String,
-        winnerElapsedMs: Long,
-        fallbackUsed: Boolean,
-        fallbackSuccess: Boolean,
-        errorMessage: String,
-    )
+    fun onRaceEvents(rows: ByteArray)
 }
 
+/// One packed bootstrap batch, shaped like [RaceLogCallback.onRaceEvents].
 interface BootstrapLogCallback {
-    fun onBootstrapResult(
-        ipID: String,
-        ipName: String,
-        ip: String,
-        host: String,
-        success: Boolean,
-        elapsedMs: Long,
-        fallbackUsed: Boolean,
-        errorMessage: String,
-    )
+    fun onBootstrapEvents(rows: ByteArray)
 }
 
 /// `VpnService.protect(int)`: the socket must bypass the tunnel before it connects.
@@ -74,9 +54,11 @@ interface AppUidResolver {
     fun packageForUid(uid: Long): String
 }
 
-/// Per-UID byte deltas, one JSON array per tick: `[{"uid":…,"tx":…,"rx":…}]`.
+/// Per-UID byte deltas, one packed batch per tick:
+/// `u32 count | (i32 uid, i64 tx, i64 rx, string package)`. The package name is resolved by the
+/// engine, so the JVM only prepends the date and forwards the buffer.
 interface TrafficCallback {
-    fun onTrafficStatsTick(jsonDeltas: String)
+    fun onTrafficStatsTick(rows: ByteArray)
 }
 
 /// `OutboundProxyStatusCallback.onOutboundProxyStatus`: `disabled` / `connecting` / `ready` /

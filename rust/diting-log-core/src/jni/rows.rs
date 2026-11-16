@@ -101,6 +101,42 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_bootstrapRow<'local>(
     answer_bytes(&env, answer)
 }
 
+/// `LogNative.raceRows(packed, nowMs): ByteArray?`
+///
+/// One call covers a whole engine race batch: the rows are classified here and answered in the
+/// `u32 count | rows(u32 length | bytes)` layout the writer queue accepts, so the JVM no longer
+/// classifies and submits one race result at a time.
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_raceRows<'local>(
+    mut env: JNIEnv<'local>,
+    _this: JObject<'local>,
+    packed: JByteArray<'local>,
+    now_ms: jlong,
+) -> jbyteArray {
+    let answer = guarded(|| {
+        with_bytes(&mut env, &packed, |payload| {
+            api::race_batch(payload, now_ms)
+        })
+    });
+    answer_bytes(&env, answer)
+}
+
+/// `LogNative.bootstrapRows(packed, nowMs): ByteArray?`
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_bootstrapRows<'local>(
+    mut env: JNIEnv<'local>,
+    _this: JObject<'local>,
+    packed: JByteArray<'local>,
+    now_ms: jlong,
+) -> jbyteArray {
+    let answer = guarded(|| {
+        with_bytes(&mut env, &packed, |payload| {
+            api::bootstrap_batch(payload, now_ms)
+        })
+    });
+    answer_bytes(&env, answer)
+}
+
 /// `LogNative.retentionPlan(packed): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_retentionPlan<'local>(

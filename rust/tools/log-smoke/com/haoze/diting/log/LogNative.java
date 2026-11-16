@@ -16,7 +16,11 @@ public final class LogNative {
 
     public native byte[] raceRow(byte[] packed, long nowMs);
 
+    public native byte[] raceRows(byte[] packed, long nowMs);
+
     public native byte[] bootstrapRow(byte[] packed, long nowMs);
+
+    public native byte[] bootstrapRows(byte[] packed, long nowMs);
 
     public native byte[] retentionPlan(byte[] packed);
 

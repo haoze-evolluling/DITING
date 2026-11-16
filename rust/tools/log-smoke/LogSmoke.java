@@ -194,7 +194,63 @@ public final class LogSmoke {
         check(bootstrapRow.i64() == 7, "bootstrap elapsed");
         check(bootstrapRow.u8() == 0, "fallback flag");
         check(bootstrapRow.optional() == null, "bootstrap message");
+
+        // One batch carries the rows; the blank entries are skipped by the same classifier.
+        byte[] raceBatch = pack(out -> {
+            out.writeInt(3);
+            writeRace(out, " Example.COM ");
+            writeRace(out, "  ");
+            writeRace(out, "Second.test");
+        });
+        Reader raceBatchAnswer = new Reader(native_.raceRows(raceBatch, now));
+        check(raceBatchAnswer.count() == 2, "blank race rows are skipped in a batch");
+        Reader firstRace = new Reader(raceBatchAnswer.blob());
+        check(firstRace.i64() == now, "race batch timestamp");
+        check(firstRace.string().equals(" example.com "), "race batch query name");
+        Reader secondRace = new Reader(raceBatchAnswer.blob());
+        secondRace.i64();
+        check(secondRace.string().equals("second.test"), "second race row");
+
+        byte[] bootstrapBatch = pack(out -> {
+            out.writeInt(2);
+            writeBootstrap(out, "DNS.Google");
+            writeBootstrap(out, "");
+        });
+        Reader bootstrapBatchAnswer = new Reader(native_.bootstrapRows(bootstrapBatch, now));
+        check(bootstrapBatchAnswer.count() == 1, "blank bootstrap rows are skipped in a batch");
+        Reader firstBootstrap = new Reader(bootstrapBatchAnswer.blob());
+        firstBootstrap.i64();
+        check(firstBootstrap.string().equals("unknown"), "bootstrap batch ip id");
         native_.statsFree(stats);
+    }
+
+    /// One complete race input, in the log kernel's layout.
+    static void writeRace(DataOutputStream out, String queryName) throws IOException {
+        writeString(out, queryName);
+        out.writeInt(28);
+        writeString(out, "smart_prediction");
+        out.writeInt(3);
+        out.writeByte(1);
+        out.writeLong(40);
+        writeString(out, "p1");
+        out.writeLong(0);
+        writeString(out, "");
+        out.writeLong(12);
+        out.writeByte(0);
+        out.writeByte(0);
+        writeString(out, "");
+    }
+
+    /// One complete bootstrap input, in the log kernel's layout.
+    static void writeBootstrap(DataOutputStream out, String host) throws IOException {
+        writeString(out, "");
+        writeString(out, "Cloudflare");
+        writeString(out, "1.1.1.1");
+        writeString(out, host);
+        out.writeByte(1);
+        out.writeLong(7);
+        out.writeByte(0);
+        writeString(out, "");
     }
 
     private static void retention(LogNative native_, long now) {

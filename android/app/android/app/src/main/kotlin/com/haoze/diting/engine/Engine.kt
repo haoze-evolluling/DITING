@@ -48,6 +48,12 @@ class Engine : TunnelEngine, AutoCloseable {
         nativeStopStandalone(handle)
     }
 
+    /// Delivers the log batches the engine still holds (DNS, race, bootstrap) on this thread.
+    /// Teardown calls it before the writer queues close, so nothing is dropped or delivered late.
+    fun flushLogs() {
+        nativeFlushLogs(handle)
+    }
+
     /// Binds UDP and TCP on IPv4 (and IPv6 when the device has it); throws with the bind error.
     fun startStandalone(port: Long) {
         val error = nativeStartStandalone(handle, port)
@@ -265,6 +271,8 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeStop(handle: Long)
 
     private external fun nativeStopStandalone(handle: Long)
+
+    private external fun nativeFlushLogs(handle: Long)
 
     private external fun nativeStartStandalone(handle: Long, port: Long): String?
 

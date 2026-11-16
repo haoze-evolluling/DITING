@@ -120,20 +120,29 @@ fn snapshot_json(block: &[&str]) -> String {
 
 #[derive(Default)]
 struct Recorder {
-    batches: Mutex<Vec<String>>,
+    batches: Mutex<Vec<Vec<u8>>>,
     races: Mutex<Vec<RaceEvent>>,
 }
 
 impl EventSink for Recorder {
-    fn batch(&self, json: &str) {
-        self.batches.lock().unwrap().push(json.to_string());
+    fn batch(&self, payload: &[u8]) {
+        self.batches.lock().unwrap().push(payload.to_vec());
     }
 
-    fn race(&self, event: &RaceEvent) {
-        self.races.lock().unwrap().push(event.clone());
+    fn race(&self, event: RaceEvent) {
+        self.races.lock().unwrap().push(event);
     }
 
-    fn bootstrap(&self, _event: &BootstrapEvent) {}
+    fn bootstrap(&self, _event: BootstrapEvent) {}
+}
+
+/// Reads one `u32 length | UTF-8` field of a packed batch.
+fn take_text(payload: &[u8], offset: &mut usize) -> String {
+    let length = u32::from_be_bytes(payload[*offset..*offset + 4].try_into().unwrap()) as usize;
+    *offset += 4;
+    let value = String::from_utf8_lossy(&payload[*offset..*offset + length]).into_owned();
+    *offset += length;
+    value
 }
 
 fn engine_with(config: &str) -> Arc<Engine> {
@@ -333,13 +342,29 @@ fn log_rows_reach_the_sink() {
     until(|| !recorder.batches.lock().unwrap().is_empty());
 
     let batches = recorder.batches.lock().unwrap();
-    let rows: serde_json::Value = serde_json::from_str(&batches[0]).expect("json");
-    let row = &rows[0];
-    assert_eq!(row["d"], serde_json::json!("logged.test"));
-    assert_eq!(row["b"], serde_json::json!(false));
-    assert_eq!(row["i"], serde_json::json!("1.2.3.4"));
-    assert_eq!(row["c"], serde_json::json!(false));
-    assert_eq!(row["a"], serde_json::json!("RootProxy"));
+    let payload = &batches[0];
+    assert_eq!(
+        u32::from_be_bytes(payload[0..4].try_into().unwrap()),
+        1,
+        "one row in the batch"
+    );
+    let mut offset = 4;
+    offset += 8; // timestamp
+    let domain = take_text(payload, &mut offset);
+    offset += 4; // query type
+    let blocked = payload[offset];
+    offset += 1;
+    let _blocked_by = take_text(payload, &mut offset);
+    let _error = take_text(payload, &mut offset);
+    let cached = payload[offset];
+    offset += 1;
+    let app = take_text(payload, &mut offset);
+    let resolved = take_text(payload, &mut offset);
+    assert_eq!(domain, "logged.test");
+    assert_eq!(blocked, 0);
+    assert_eq!(resolved, "1.2.3.4");
+    assert_eq!(cached, 0);
+    assert_eq!(app, "RootProxy");
 
     let races = recorder.races.lock().unwrap();
     assert_eq!(races.len(), 1, "one race event per upstream resolution");

@@ -1,7 +1,7 @@
-//! The data plane's counters and the two JSON documents it produces.
+//! The data plane's counters and the two documents it produces.
 //!
-//! * [`traffic_json`] — the `TrafficCallback.onTrafficStatsTick` payload,
-//!   `[{"uid":10086,"tx":123,"rx":456}]`, byte-identical to Go's `json.Marshal(uidDeltaJson)`.
+//! * [`traffic_payload`] — the `TrafficCallback.onTrafficStatsTick` payload, one packed `byte[]`
+//!   with `(uid, tx, rx, package)` rows in the log kernel's input layout.
 //! * [`TunnelCounters::document`] — the extra `"tun"` object `getStats` carries while the TUN runs.
 //!   The three fields `EngineStats.kt` reads (`total`, `blocked`, `dropped_logs`) are untouched; a
 //!   UI that ignores unknown keys keeps working, and a support log finally says whether the queue
@@ -11,8 +11,6 @@
 //! this module never borrows the stack.
 
 use std::sync::atomic::{AtomicU64, Ordering};
-
-use diting_telemetry_core::Delta;
 
 /// The session's counters, shared by the reader, the writer, the stack thread and the handlers.
 #[derive(Debug, Default)]
@@ -72,27 +70,26 @@ impl TunnelCounters {
     }
 }
 
-/// One per-UID delta in the tick document.
-#[derive(serde::Serialize)]
-struct TrafficRow {
-    uid: i32,
-    tx: u64,
-    rx: u64,
-}
+/// One per-UID delta in the tick payload, with the package name already resolved.
+pub type TrafficRow = (i32, i64, i64, String);
 
-/// `TrafficCallback.onTrafficStatsTick`: the per-UID deltas since the last tick.
+/// `TrafficCallback.onTrafficStatsTick`: `u32 count | (i32 uid, i64 tx, i64 rx, string package)`.
 ///
-/// The field names are read by `TrafficIngest`, so they cannot change: `uid`, `tx`, `rx`.
-pub fn traffic_json(deltas: &[Delta]) -> String {
-    let rows: Vec<TrafficRow> = deltas
-        .iter()
-        .map(|delta| TrafficRow {
-            uid: delta.uid,
-            tx: delta.tx,
-            rx: delta.rx,
-        })
-        .collect();
-    serde_json::to_string(&rows).unwrap_or_else(|_| "[]".to_string())
+/// This is exactly the row section `diting_log_core::api::traffic_on_tick` decodes. Kotlin only
+/// prepends the date string and forwards the same buffer, so the tick is encoded once here instead
+/// of being serialized to JSON, parsed back into `JSONArray` and packed again on the JVM side.
+pub fn traffic_payload(rows: &[TrafficRow]) -> Vec<u8> {
+    let strings: usize = rows.iter().map(|row| row.3.len()).sum();
+    let mut out = Vec::with_capacity(4 + rows.len() * 24 + strings + rows.len() * 4);
+    out.extend_from_slice(&(rows.len() as u32).to_be_bytes());
+    for (uid, tx, rx, package) in rows {
+        out.extend_from_slice(&uid.to_be_bytes());
+        out.extend_from_slice(&tx.to_be_bytes());
+        out.extend_from_slice(&rx.to_be_bytes());
+        out.extend_from_slice(&(package.len() as u32).to_be_bytes());
+        out.extend_from_slice(package.as_bytes());
+    }
+    out
 }
 
 #[cfg(test)]
@@ -100,31 +97,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_traffic_tick_is_the_array_the_kotlin_ingest_parses() {
-        let json = traffic_json(&[
-            Delta {
-                uid: 10086,
-                tx: 12,
-                rx: 34,
-            },
-            Delta {
-                uid: 1000,
-                tx: 0,
-                rx: 8,
-            },
+    fn a_traffic_tick_is_the_log_kernel_input_layout() {
+        let payload = traffic_payload(&[
+            (10086, 12, 34, "com.example".to_string()),
+            (1000, 0, 8, String::new()),
         ]);
         assert_eq!(
-            json,
-            r#"[{"uid":10086,"tx":12,"rx":34},{"uid":1000,"tx":0,"rx":8}]"#
+            u32::from_be_bytes(payload[0..4].try_into().unwrap()),
+            2,
+            "the count leads the payload"
         );
-        let parsed: serde_json::Value = serde_json::from_str(&json).expect("json");
-        assert_eq!(parsed[0]["uid"], serde_json::json!(10086));
-        assert_eq!(parsed[1]["rx"], serde_json::json!(8));
+        assert_eq!(
+            i32::from_be_bytes(payload[4..8].try_into().unwrap()),
+            10086,
+            "the first uid"
+        );
+        assert_eq!(i64::from_be_bytes(payload[8..16].try_into().unwrap()), 12);
+        assert_eq!(i64::from_be_bytes(payload[16..24].try_into().unwrap()), 34);
+        let length = u32::from_be_bytes(payload[24..28].try_into().unwrap()) as usize;
+        assert_eq!(&payload[28..28 + length], b"com.example");
     }
 
     #[test]
-    fn no_traffic_is_an_empty_array_not_null() {
-        assert_eq!(traffic_json(&[]), "[]");
+    fn no_traffic_is_a_zero_count_not_null() {
+        assert_eq!(traffic_payload(&[]), vec![0, 0, 0, 0]);
     }
 
     #[test]

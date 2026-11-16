@@ -241,10 +241,8 @@ fn write_http_row(writer: &mut Writer, row: &HttpRow) {
     write_optional_i64(writer, row.block_subscription_id);
 }
 
-/// One race result; answers with the row, or nothing when there is no query name.
-pub fn race(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
-    let mut reader = Reader::new(payload);
-    let input = RaceInput {
+fn decode_race_input(reader: &mut Reader<'_>) -> Option<RaceInput> {
+    Some(RaceInput {
         query_name: reader.string()?,
         query_type: reader.i32()?,
         strategy: reader.string()?,
@@ -258,7 +256,13 @@ pub fn race(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
         fallback_used: reader.u8()? != 0,
         fallback_success: reader.u8()? != 0,
         error_message: reader.string()?,
-    };
+    })
+}
+
+/// One race result; answers with the row, or nothing when there is no query name.
+pub fn race(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let mut reader = Reader::new(payload);
+    let input = decode_race_input(&mut reader)?;
     if !reader.finish() {
         return None;
     }
@@ -271,6 +275,40 @@ pub fn race(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
             Some(writer.into_vec())
         }
     }
+}
+
+/// `u32 count` then one race input per event; answers with `u32 count | rows(u32 length | bytes)`,
+/// the same row layout [`race`] answers, so the writer submits the whole batch in one call.
+pub fn race_batch(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let mut reader = Reader::new(payload);
+    let count = reader.u32()? as usize;
+    let mut inputs = Vec::with_capacity(count.min(4096));
+    for _ in 0..count {
+        inputs.push(decode_race_input(&mut reader)?);
+    }
+    if !reader.finish() {
+        return None;
+    }
+    let rows: Vec<Vec<u8>> = inputs
+        .iter()
+        .filter_map(|input| {
+            let row = race_row(input, now_ms)?;
+            let mut writer = Writer::new();
+            write_race_row(&mut writer, &row);
+            Some(writer.into_vec())
+        })
+        .collect();
+    Some(rows_payload(&rows))
+}
+
+/// The `u32 count | rows(u32 length | bytes)` framing the Kotlin writer queue accepts.
+fn rows_payload(rows: &[Vec<u8>]) -> Vec<u8> {
+    let mut writer = Writer::new();
+    writer.u32(rows.len() as u32);
+    for row in rows {
+        writer.blob(row);
+    }
+    writer.into_vec()
 }
 
 fn write_race_row(writer: &mut Writer, row: &RaceRow) {
@@ -290,10 +328,8 @@ fn write_race_row(writer: &mut Writer, row: &RaceRow) {
     write_optional(writer, row.message.as_deref());
 }
 
-/// One bootstrap probe; answers with the row, or nothing when the host is blank.
-pub fn bootstrap(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
-    let mut reader = Reader::new(payload);
-    let input = BootstrapInput {
+fn decode_bootstrap_input(reader: &mut Reader<'_>) -> Option<BootstrapInput> {
+    Some(BootstrapInput {
         ip_id: reader.string()?,
         ip_name: reader.string()?,
         ip: reader.string()?,
@@ -302,7 +338,13 @@ pub fn bootstrap(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
         elapsed_ms: reader.i64()?,
         fallback_used: reader.u8()? != 0,
         error_message: reader.string()?,
-    };
+    })
+}
+
+/// One bootstrap probe; answers with the row, or nothing when the host is blank.
+pub fn bootstrap(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let mut reader = Reader::new(payload);
+    let input = decode_bootstrap_input(&mut reader)?;
     if !reader.finish() {
         return None;
     }
@@ -315,6 +357,29 @@ pub fn bootstrap(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
             Some(writer.into_vec())
         }
     }
+}
+
+/// The bootstrap counterpart of [`race_batch`].
+pub fn bootstrap_batch(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let mut reader = Reader::new(payload);
+    let count = reader.u32()? as usize;
+    let mut inputs = Vec::with_capacity(count.min(4096));
+    for _ in 0..count {
+        inputs.push(decode_bootstrap_input(&mut reader)?);
+    }
+    if !reader.finish() {
+        return None;
+    }
+    let rows: Vec<Vec<u8>> = inputs
+        .iter()
+        .filter_map(|input| {
+            let row = bootstrap_row(input, now_ms)?;
+            let mut writer = Writer::new();
+            write_bootstrap_row(&mut writer, &row);
+            Some(writer.into_vec())
+        })
+        .collect();
+    Some(rows_payload(&rows))
 }
 
 fn write_bootstrap_row(writer: &mut Writer, row: &BootstrapRow) {

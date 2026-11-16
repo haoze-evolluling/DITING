@@ -132,72 +132,30 @@ class DitingDnsServerService : Service() {
                 }
                 RequestStats.reset()
                 created.setBatchLogCallback(object : BatchLogCallback {
-                    override fun onDNSQueryBatch(jsonLogs: String) {
+                    override fun onDNSQueryBatch(rows: ByteArray) {
                         DnsLogWriter.writeBatch(
                             this@DitingDnsServerService,
                             DnsLogWriter.DB_SERVER,
                             logMode,
-                            jsonLogs,
+                            rows,
                         )
                     }
                 })
                 created.setRaceLogCallback(object : RaceLogCallback {
-                    override fun onRaceResult(
-                        queryName: String,
-                        queryType: Long,
-                        strategy: String,
-                        providerCount: Long,
-                        success: Boolean,
-                        elapsedMs: Long,
-                        selectedProviderID: String,
-                        selectedElapsedMs: Long,
-                        winnerProviderID: String,
-                        winnerElapsedMs: Long,
-                        fallbackUsed: Boolean,
-                        fallbackSuccess: Boolean,
-                        errorMessage: String,
-                    ) {
-                        RaceLogWriter.write(
+                    override fun onRaceEvents(rows: ByteArray) {
+                        RaceLogWriter.writeBatch(
                             this@DitingDnsServerService,
                             DnsLogWriter.DB_SERVER,
-                            queryName = queryName,
-                            queryType = queryType.toInt(),
-                            strategy = strategy,
-                            providerCount = providerCount.toInt(),
-                            success = success,
-                            elapsedMs = elapsedMs,
-                            selectedProviderId = selectedProviderID,
-                            selectedElapsedMs = selectedElapsedMs,
-                            winnerProviderId = winnerProviderID,
-                            winnerElapsedMs = winnerElapsedMs,
-                            fallbackUsed = fallbackUsed,
-                            fallbackSuccess = fallbackSuccess,
-                            errorMessage = errorMessage,
+                            rows,
                         )
                     }
                 })
                 created.setBootstrapLogCallback(object : BootstrapLogCallback {
-                    override fun onBootstrapResult(
-                        ipID: String,
-                        ipName: String,
-                        ip: String,
-                        host: String,
-                        success: Boolean,
-                        elapsedMs: Long,
-                        fallbackUsed: Boolean,
-                        errorMessage: String,
-                    ) {
-                        BootstrapLogWriter.write(
+                    override fun onBootstrapEvents(rows: ByteArray) {
+                        BootstrapLogWriter.writeBatch(
                             this@DitingDnsServerService,
                             DnsLogWriter.DB_SERVER,
-                            ipId = ipID,
-                            ipName = ipName,
-                            ip = ip,
-                            host = host,
-                            success = success,
-                            elapsedMs = elapsedMs,
-                            fallbackUsed = fallbackUsed,
-                            errorMessage = errorMessage,
+                            rows,
                         )
                     }
                 })
