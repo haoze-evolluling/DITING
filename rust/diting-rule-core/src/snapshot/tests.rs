@@ -244,7 +244,13 @@ fn special_rules_carry_source_only_on_the_block_side() {
         .collect();
     assert_eq!(
         patterns,
-        vec!["^regex$", "deny.com", "aaaa.com", "*.sub-wc.com", "sub-deny.com"]
+        vec![
+            "^regex$",
+            "deny.com",
+            "aaaa.com",
+            "*.sub-wc.com",
+            "sub-deny.com"
+        ]
     );
     assert_eq!(block[0]["source"], "custom");
     assert_eq!(block[0]["isWildcard"], Value::Bool(false));

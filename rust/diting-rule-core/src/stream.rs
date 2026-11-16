@@ -190,7 +190,10 @@ impl StreamParse {
             return None;
         }
         let start = self.cursor;
-        match self.text.as_bytes()[start..].iter().position(|byte| *byte == b'\n') {
+        match self.text.as_bytes()[start..]
+            .iter()
+            .position(|byte| *byte == b'\n')
+        {
             Some(offset) => {
                 let end = start + offset;
                 self.cursor = end + 1;
@@ -333,8 +336,14 @@ mod tests {
                     ||broken\n";
         let whole = parse_document(text);
         let streamed = stream_all(text, 1000);
-        assert_eq!(sorted_patterns(&streamed.block_rules), sorted_patterns(&whole.block_rules));
-        assert_eq!(sorted_patterns(&streamed.allow_rules), sorted_patterns(&whole.allow_rules));
+        assert_eq!(
+            sorted_patterns(&streamed.block_rules),
+            sorted_patterns(&whole.block_rules)
+        );
+        assert_eq!(
+            sorted_patterns(&streamed.allow_rules),
+            sorted_patterns(&whole.allow_rules)
+        );
         assert_eq!(streamed.rewrite_rules.len(), whole.rewrite_rules.len());
         assert_eq!(streamed.url_block_rules.len(), whole.url_block_rules.len());
         assert_eq!(streamed.cosmetic_rules.len(), whole.cosmetic_rules.len());
@@ -350,7 +359,10 @@ mod tests {
         // The `$badfilter` line lands several chunks after the rule it disables.
         let text = "||ads.example.com^\n||keep.example.com^\n||ads.example.com^$badfilter\n";
         let streamed = stream_all(text, 1);
-        assert_eq!(sorted_patterns(&streamed.block_rules), vec!["keep.example.com"]);
+        assert_eq!(
+            sorted_patterns(&streamed.block_rules),
+            vec!["keep.example.com"]
+        );
         assert_eq!(streamed.badfiltered_count, 1);
     }
 
