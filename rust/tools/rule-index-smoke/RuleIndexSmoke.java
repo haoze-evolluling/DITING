@@ -50,8 +50,14 @@ public final class RuleIndexSmoke {
             check(express.string().equals(normalTails.string()), "express tail " + index);
         }
 
+        // DNS mode writes its own artifacts (server mode hot-reloads them), so it has its own root.
         Reader dnsMode = new Reader(native_.paths(2));
-        check(dnsMode.string().equals("rule-index"), "dns mode shares the normal root");
+        check(dnsMode.string().equals("rule-index/dns"), "dns mode root");
+        Reader dnsTails = new Reader(native_.paths(0));
+        dnsTails.string();
+        for (int index = 0; index < 6; index++) {
+            check(dnsMode.string().equals(dnsTails.string()), "dns tail " + index);
+        }
         check(native_.paths(9) == null, "unknown dataset is rejected");
     }
 
