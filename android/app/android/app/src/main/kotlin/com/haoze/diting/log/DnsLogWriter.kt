@@ -42,7 +42,8 @@ object DnsLogWriter {
         if (rows.isEmpty()) return
 
         val writer = LogTableWriters.of(context, databaseName, TABLE, "diting-dns-log", ::values)
-        rows.forEach(writer::submit)
+        // One call for the whole batch: the queue lock and the flush decision are taken once.
+        writer.submitAll(rows)
     }
 
     private fun writeEntry(out: DataOutputStream, obj: JSONObject) {

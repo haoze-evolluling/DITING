@@ -85,19 +85,16 @@ interface OutboundProxyStatusCallback {
     fun onOutboundProxyStatus(state: String, message: String)
 }
 
-/// `HttpLogCallback.onHttpEvent`: one row per MITM relay decision.
+/// `HttpLogCallback.onHttpEvents`: one packed batch of MITM relay decisions.
 ///
+/// The engine buffers rows and hands them over in batches, because the relay path can produce
+/// dozens of decisions per page. Each event is `(package, authority, protocol, outcome,
+/// matchedRule)` with the payload layout `rust/diting-engine/src/jni/adapters.rs` documents;
 /// `outcome` is one of `allowed`, `blocked`, `passthrough`, `rewritten`, `error`,
-/// `handshake_failed`, `upstream_failed`, `decryption_failed`; `matchedRule` carries the rule, the
-/// refusal reason or the rewrite target, and is empty for `allowed`.
+/// `handshake_failed`, `upstream_failed`, `decryption_failed`, and `matchedRule` is empty for
+/// `allowed`.
 interface HttpLogCallback {
-    fun onHttpEvent(
-        packageName: String,
-        authority: String,
-        protocol: String,
-        outcome: String,
-        matchedRule: String,
-    )
+    fun onHttpEvents(rows: ByteArray)
 }
 
 /// The subset of the engine that the shared log/diagnostics code uses.

@@ -37,9 +37,13 @@ internal class LogTableWriter(
     private var scheduled = false
     private var closed = false
 
-    /// Cheap enough for a per-query callback: it only packs, appends and arms a timer.
-    fun submit(row: ByteArray) {
-        val decision = LogNative.queueSubmit(queue, row)
+    /// One row for the low-volume tables (bootstrap and race); the DNS batch uses [submitAll].
+    fun submit(row: ByteArray) = submitAll(listOf(row))
+
+    /// Cheap enough for a per-batch callback: one JNI call packs, appends and arms a timer.
+    fun submitAll(rows: List<ByteArray>) {
+        if (rows.isEmpty()) return
+        val decision = LogNative.queueSubmitMany(queue, rows)
         if (!decision.accepted) return
         // Counted outside any lock: the health counter may log.
         DbWriteHealth.onDropped(decision.overflow, DropReason.OVERFLOW, table)

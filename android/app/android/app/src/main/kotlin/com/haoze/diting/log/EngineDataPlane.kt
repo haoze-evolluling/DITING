@@ -30,6 +30,7 @@ class EngineDataPlane(
     private var trafficAttached = false
     private var httpAttached = false
     private var cacheMirror: DnsCacheMirror? = null
+    private var httpEngine: Engine? = null
 
     /// UID -> package lookup for DNS/HTTP attribution and the firewall
     fun attachResolvers(engine: Engine) {
@@ -85,16 +86,9 @@ class EngineDataPlane(
     fun attachHttp(engine: Engine) {
         val writer = http
         httpAttached = true
+        httpEngine = engine
         engine.setHttpLogCallback(object : HttpLogCallback {
-            override fun onHttpEvent(
-                packageName: String,
-                authority: String,
-                protocol: String,
-                outcome: String,
-                matchedRule: String,
-            ) {
-                writer.onEvent(packageName, authority, protocol, outcome, matchedRule)
-            }
+            override fun onHttpEvents(rows: ByteArray) = writer.onEvents(rows)
         })
     }
 
@@ -104,6 +98,10 @@ class EngineDataPlane(
         cacheMirror = null
         runCatching { mirror?.close() }
         if (trafficAttached) runCatching { traffic.close() }
+        // Dropping the callback joins the engine's HTTP flusher, which delivers the buffered tail
+        // here, while the writer is still open and can queue it.
+        runCatching { httpEngine?.setHttpLogCallback(null) }
+        httpEngine = null
         if (httpAttached) runCatching { http.close() }
         // Queued DNS / race / bootstrap rows are flushed here: the engine has already stopped, so
         // nothing appends while they are written.

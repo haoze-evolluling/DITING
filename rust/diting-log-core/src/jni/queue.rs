@@ -63,6 +63,25 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueSubmit<'local>(
     answer_bytes(&env, answer)
 }
 
+/// `LogNative.queueSubmitMany(handle, packed, nowMs): ByteArray?`
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueSubmitMany<'local>(
+    mut env: JNIEnv<'local>,
+    _this: JObject<'local>,
+    handle: jlong,
+    packed: JByteArray<'local>,
+    now_ms: jlong,
+) -> jbyteArray {
+    let answer = guarded(|| {
+        with_bytes(&mut env, &packed, |payload| unsafe {
+            with_handle(handle, |queue: &Queue| {
+                api::queue_submit_many(queue, payload, now_ms)
+            })
+        }?)
+    });
+    answer_bytes(&env, answer)
+}
+
 /// `LogNative.queueTake(handle): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueTake<'local>(

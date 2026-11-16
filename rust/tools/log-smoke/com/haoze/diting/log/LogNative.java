@@ -11,6 +11,9 @@ public final class LogNative {
 
     public native byte[] httpEvent(long stats, int modeTag, byte[] packed, long nowMs);
 
+    public native byte[] httpEvents(
+            long stats, long queue, int modeTag, byte[] packed, long nowMs);
+
     public native byte[] raceRow(byte[] packed, long nowMs);
 
     public native byte[] bootstrapRow(byte[] packed, long nowMs);
@@ -83,6 +86,8 @@ public final class LogNative {
 
     public native byte[] queueSubmit(long handle, byte[] packed, long nowMs);
 
+    public native byte[] queueSubmitMany(long handle, byte[] packed, long nowMs);
+
     public native byte[] queueTake(long handle);
 
     public native int queueRequeue(long handle, byte[] packed);
@@ -111,7 +116,7 @@ public final class LogNative {
 
     public native byte[] storeDocument(byte[] packed);
 
-    public native byte[] capturePlan(int pid);
+    public native byte[] capturePlan(int pid, int uid, int detailed);
 
     public native long captureSessionNew();
 

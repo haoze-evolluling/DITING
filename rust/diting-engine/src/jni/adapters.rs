@@ -20,7 +20,10 @@
 //! throwing Kotlin callback degrades to "unknown"/"denied" instead of poisoning the JNI environment
 //! for the next call. This mirrors the log callbacks in [`super::callbacks`].
 
-use std::sync::Arc;
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender};
+use std::sync::{Arc, Mutex};
+use std::thread::{self, JoinHandle};
+use std::time::{Duration, Instant};
 
 use jni::objects::{GlobalRef, JObject, JValue};
 use jni::{JNIEnv, JavaVM};
@@ -258,49 +261,136 @@ impl crate::outbound::StatusSink for JniOutboundStatus {
     }
 }
 
-/// `HttpLogCallback.onHttpEvent(String, String, String, String, String)`.
-pub const HTTP_LOG_SIGNATURE: &str =
-    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V";
+/// `HttpLogCallback.onHttpEvents(byte[])`.
+pub const HTTP_LOG_SIGNATURE: &str = "([B)V";
+
+/// Events one batch may carry before the flusher hands them to Kotlin.
+const HTTP_BATCH_SIZE: usize = 64;
+/// How long a partial batch waits for more relay decisions.
+const HTTP_FLUSH_INTERVAL: Duration = Duration::from_millis(200);
+/// Events the relay may buffer ahead of the flusher before rows start being dropped.
+const HTTP_CHANNEL_CAPACITY: usize = 1_024;
+/// `package`, `authority`, `protocol`, `outcome`, `rule`.
+const HTTP_FIELDS: usize = 5;
+
+/// One relay decision, buffered on the relay thread and batched on the flusher thread.
+struct HttpEvent {
+    package: String,
+    authority: String,
+    protocol: String,
+    outcome: String,
+    rule: String,
+}
 
 /// The MITM relay's decision rows: `(package, authority, protocol, outcome, matched rule)`.
+///
+/// The relay produces dozens of decisions per page load, so the callback is fed through a
+/// dedicated flusher: each relay call only appends to a channel, and one JNI call carries a whole
+/// batch as a packed `byte[]`. That removes two crossings and five Java strings per decision while
+/// keeping [`crate::mitm::HttpLogSink`] unchanged for the engine and its host tests.
 pub struct JniHttpLog {
-    vm: JavaVM,
-    target: GlobalRef,
+    sender: Option<SyncSender<HttpEvent>>,
+    flusher: Mutex<Option<JoinHandle<()>>>,
 }
 
 impl JniHttpLog {
     pub fn new(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
         let (vm, target) = capture(env, callback)?;
-        Ok(Self { vm, target })
+        let vm = Arc::new(vm);
+        let (sender, receiver) = mpsc::sync_channel(HTTP_CHANNEL_CAPACITY);
+        let flusher = thread::Builder::new()
+            .name("diting-http-log".to_string())
+            .spawn(move || flush_http_events(&vm, &target, receiver))
+            .map_err(|_| jni::errors::Error::JniCall(jni::errors::JniError::Unknown))?;
+        Ok(Self {
+            sender: Some(sender),
+            flusher: Mutex::new(Some(flusher)),
+        })
     }
 }
 
 impl crate::mitm::HttpLogSink for JniHttpLog {
     fn event(&self, package: &str, authority: &str, protocol: &str, outcome: &str, rule: &str) {
-        with_env(
-            &self.vm,
-            |env| {
-                let package = JObject::from(env.new_string(package).ok()?);
-                let authority = JObject::from(env.new_string(authority).ok()?);
-                let protocol = JObject::from(env.new_string(protocol).ok()?);
-                let outcome = JObject::from(env.new_string(outcome).ok()?);
-                let rule = JObject::from(env.new_string(rule).ok()?);
-                env.call_method(
-                    self.target.as_obj(),
-                    "onHttpEvent",
-                    HTTP_LOG_SIGNATURE,
-                    &[
-                        JValue::Object(&package),
-                        JValue::Object(&authority),
-                        JValue::Object(&protocol),
-                        JValue::Object(&outcome),
-                        JValue::Object(&rule),
-                    ],
-                )
-                .ok()?;
-                Some(())
-            },
-            (),
-        );
+        let Some(sender) = &self.sender else {
+            return;
+        };
+        // A full channel drops the row rather than stalling the TLS relay.
+        let _ = sender.try_send(HttpEvent {
+            package: package.to_string(),
+            authority: authority.to_string(),
+            protocol: protocol.to_string(),
+            outcome: outcome.to_string(),
+            rule: rule.to_string(),
+        });
     }
+}
+
+impl Drop for JniHttpLog {
+    fn drop(&mut self) {
+        // Closing the channel ends the flusher after its final batch.
+        self.sender.take();
+        let flusher = self
+            .flusher
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .take();
+        if let Some(handle) = flusher {
+            let _ = handle.join();
+        }
+    }
+}
+
+fn flush_http_events(vm: &Arc<JavaVM>, target: &GlobalRef, receiver: Receiver<HttpEvent>) {
+    let mut batch = Vec::with_capacity(HTTP_BATCH_SIZE);
+    // Block until the first row of a batch, then drain everything already queued.
+    while let Ok(event) = receiver.recv() {
+        batch.push(event);
+        let deadline = Instant::now() + HTTP_FLUSH_INTERVAL;
+        while batch.len() < HTTP_BATCH_SIZE {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining.is_zero() {
+                break;
+            }
+            match receiver.recv_timeout(remaining) {
+                Ok(event) => batch.push(event),
+                Err(RecvTimeoutError::Timeout | RecvTimeoutError::Disconnected) => break,
+            }
+        }
+        deliver_http_events(vm, target, &batch);
+        batch.clear();
+    }
+}
+
+/// `u32 count` then, per event, the five `u32 length | UTF-8` fields.
+fn deliver_http_events(vm: &JavaVM, target: &GlobalRef, batch: &[HttpEvent]) {
+    let mut payload = Vec::with_capacity(4 + batch.len() * HTTP_FIELDS * 16);
+    payload.extend_from_slice(&(batch.len() as u32).to_be_bytes());
+    for event in batch {
+        for field in [
+            &event.package,
+            &event.authority,
+            &event.protocol,
+            &event.outcome,
+            &event.rule,
+        ] {
+            payload.extend_from_slice(&(field.len() as u32).to_be_bytes());
+            payload.extend_from_slice(field.as_bytes());
+        }
+    }
+    with_env(
+        vm,
+        |env| {
+            let rows = env.byte_array_from_slice(&payload).ok()?;
+            let rows = JObject::from(rows);
+            env.call_method(
+                target.as_obj(),
+                "onHttpEvents",
+                HTTP_LOG_SIGNATURE,
+                &[JValue::Object(&rows)],
+            )
+            .ok()?;
+            Some(())
+        },
+        (),
+    );
 }

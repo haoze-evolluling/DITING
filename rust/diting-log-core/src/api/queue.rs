@@ -44,8 +44,23 @@ pub fn queue_submit(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8
     if !reader.finish() {
         return None;
     }
+    Some(submit_answer(queue, queue.submit(row, now_ms)))
+}
+
+/// One `submitMany`: the same layout as `submit`, with the rows counted in a single call so the
+/// Kotlin DNS writer no longer crosses the JNI boundary once per row.
+pub fn queue_submit_many(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
+    let mut reader = Reader::new(payload);
+    let rows = read_rows(&mut reader)?;
+    if !reader.finish() {
+        return None;
+    }
+    Some(submit_answer(queue, queue.submit_many(rows, now_ms)))
+}
+
+fn submit_answer(queue: &Queue, outcome: Option<crate::queue::Submit>) -> Vec<u8> {
     let mut writer = Writer::new();
-    match queue.submit(row, now_ms) {
+    match outcome {
         None => writer.u8(0),
         Some(submit) => {
             writer.u8(1);
@@ -54,7 +69,7 @@ pub fn queue_submit(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8
             writer.i64(submit.flush_delay_ms(queue.settings()));
         }
     }
-    Some(writer.into_vec())
+    writer.into_vec()
 }
 
 /// The next transaction's rows, or `u8 0` when nothing is queued.
@@ -107,6 +122,55 @@ mod tests {
         assert_eq!(reader.u8(), Some(0)); // batch not full
         assert_eq!(reader.i64(), Some(LOG_TABLE.flush_interval_ms));
         assert!(reader.finish());
+    }
+
+    #[test]
+    fn submit_many_queues_every_row_with_one_answer() {
+        let queue = Queue::new(LOG_TABLE);
+        let rows: Vec<Vec<u8>> = (0..LOG_TABLE.batch_size)
+            .map(|index| row(&index.to_string()))
+            .collect();
+        let answer = queue_submit_many(&queue, &rows_payload(&rows), 0).unwrap();
+        let mut reader = Reader::new(&answer);
+        assert_eq!(reader.u8(), Some(1)); // accepted
+        assert_eq!(reader.u32(), Some(0)); // no overflow
+        assert_eq!(reader.u8(), Some(1)); // the batch is full
+        assert_eq!(reader.i64(), Some(0));
+        assert!(reader.finish());
+        assert_eq!(queue.pending_len(), LOG_TABLE.batch_size as u32);
+
+        let taken = queue_take(&queue);
+        let mut reader = Reader::new(&taken);
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u32(), Some(LOG_TABLE.batch_size as u32));
+        let mut blobs = Vec::new();
+        for _ in 0..LOG_TABLE.batch_size {
+            blobs.push(reader.blob().expect("a row").to_vec());
+        }
+        assert_eq!(blobs.first().map(Vec::as_slice), Some(&row("0")[..]));
+        assert_eq!(
+            blobs.last().map(Vec::as_slice),
+            Some(&row(&(LOG_TABLE.batch_size - 1).to_string())[..])
+        );
+    }
+
+    #[test]
+    fn submit_many_rejects_drift_and_a_closed_queue() {
+        let queue = Queue::new(LOG_TABLE);
+        assert_eq!(queue_submit_many(&queue, &[0, 0, 0, 1], 0), None);
+        queue.mark_closed();
+        let payload = rows_payload(&[row("a")]);
+        assert_eq!(queue_submit_many(&queue, &payload, 0), Some(vec![0]));
+        assert_eq!(queue.pending_len(), 0);
+    }
+
+    fn rows_payload(rows: &[Vec<u8>]) -> Vec<u8> {
+        let mut writer = Writer::new();
+        writer.u32(rows.len() as u32);
+        for row in rows {
+            writer.blob(row);
+        }
+        writer.into_vec()
     }
 
     #[test]

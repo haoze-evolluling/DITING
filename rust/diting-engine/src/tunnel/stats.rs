@@ -72,21 +72,27 @@ impl TunnelCounters {
     }
 }
 
+/// One per-UID delta in the tick document.
+#[derive(serde::Serialize)]
+struct TrafficRow {
+    uid: i32,
+    tx: u64,
+    rx: u64,
+}
+
 /// `TrafficCallback.onTrafficStatsTick`: the per-UID deltas since the last tick.
 ///
 /// The field names are read by `TrafficIngest`, so they cannot change: `uid`, `tx`, `rx`.
 pub fn traffic_json(deltas: &[Delta]) -> String {
-    let rows: Vec<serde_json::Value> = deltas
+    let rows: Vec<TrafficRow> = deltas
         .iter()
-        .map(|delta| {
-            serde_json::json!({
-                "uid": delta.uid,
-                "tx": delta.tx,
-                "rx": delta.rx,
-            })
+        .map(|delta| TrafficRow {
+            uid: delta.uid,
+            tx: delta.tx,
+            rx: delta.rx,
         })
         .collect();
-    serde_json::Value::Array(rows).to_string()
+    serde_json::to_string(&rows).unwrap_or_else(|_| "[]".to_string())
 }
 
 #[cfg(test)]
@@ -109,10 +115,11 @@ mod tests {
         ]);
         assert_eq!(
             json,
-            r#"[{"rx":34,"tx":12,"uid":10086},{"rx":8,"tx":0,"uid":1000}]"#
+            r#"[{"uid":10086,"tx":12,"rx":34},{"uid":1000,"tx":0,"rx":8}]"#
         );
         let parsed: serde_json::Value = serde_json::from_str(&json).expect("json");
         assert_eq!(parsed[0]["uid"], serde_json::json!(10086));
+        assert_eq!(parsed[1]["rx"], serde_json::json!(8));
     }
 
     #[test]

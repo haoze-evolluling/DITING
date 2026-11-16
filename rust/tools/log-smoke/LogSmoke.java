@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 
 /// Host-JVM smoke test for the log kernel's JNI boundary.
 ///
-/// It proves the 50 exported symbols match the signatures Kotlin declares (name and argument
+/// It proves the exported symbols match the signatures Kotlin declares (name and argument
 /// order) and that every payload round trips. The semantics belong to the Rust tests; this only
 /// checks the boundary, so it needs nothing but a JVM and `diting_log_core.dll`/`.so`.
 public final class LogSmoke {
@@ -102,7 +102,30 @@ public final class LogSmoke {
         check(httpReader.string().equals(""), "protocol passes through");
         check(httpReader.string().equals("allowed"), "outcome");
         check(httpReader.optional() == null, "blank rule is null");
+        check(httpReader.optionalLong() == null, "blank block subscription is null");
         check(!httpReader.remaining(), "http row fully read");
+
+        long queue = native_.queueNew(1);
+        byte[] httpBatch = pack(out -> {
+            out.writeInt(2);
+            writeString(out, "com.app");
+            writeString(out, "a.test");
+            writeString(out, "https");
+            writeString(out, "allowed");
+            writeString(out, "");
+            writeString(out, "com.app");
+            writeString(out, "b.test");
+            writeString(out, "https");
+            writeString(out, "blocked");
+            writeString(out, "");
+        });
+        Reader batchAnswer = new Reader(native_.httpEvents(stats, queue, 0, httpBatch, now));
+        check(batchAnswer.u8() == 2, "http batch enqueued");
+        check(batchAnswer.count() == 0, "http batch has no overflow");
+        check(batchAnswer.u8() == 0, "http batch below ten");
+        check(batchAnswer.i64() == 500, "http batch timer");
+        check(native_.queuePendingLen(queue) == 2, "http batch rows queued");
+        native_.queueFree(queue);
 
         byte[] race = pack(out -> {
             writeString(out, " Example.COM ");
@@ -371,6 +394,23 @@ public final class LogSmoke {
         native_.queueLatchMissing(http, now);
         check(!native_.queueMissingLatched(http, now), "http never latches");
         native_.queueFree(http);
+
+        long batchQueue = native_.queueNew(0);
+        check(batchQueue != 0, "batch queue");
+        byte[] manyRows = pack(out -> {
+            out.writeInt(2);
+            out.writeInt(row.length);
+            out.write(row);
+            out.writeInt(row.length);
+            out.write(row);
+        });
+        Reader many = new Reader(native_.queueSubmitMany(batchQueue, manyRows, now));
+        check(many.u8() == 1, "batch rows accepted");
+        check(many.count() == 0, "batch has no overflow");
+        check(many.u8() == 0, "batch below full");
+        check(many.i64() == 1_000, "batch timer");
+        check(native_.queuePendingLen(batchQueue) == 2, "batch rows queued");
+        native_.queueFree(batchQueue);
 
         check(native_.queueNew(2) == 0, "unknown settings tag is rejected");
     }

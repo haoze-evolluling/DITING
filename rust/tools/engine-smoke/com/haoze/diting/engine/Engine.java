@@ -339,10 +339,9 @@ public final class Engine {
         void onTrafficStatsTick(String jsonDeltas);
     }
 
-    /// `HttpLogCallback.onHttpEvent(String, String, String, String, String)`.
+    /// `HttpLogCallback.onHttpEvents(byte[])`: a packed batch of relay decisions.
     public interface HttpLogCallback {
-        void onHttpEvent(String packageName, String authority, String protocol, String outcome,
-                String matchedRule);
+        void onHttpEvents(byte[] rows);
     }
 
     private native long nativeNew();

@@ -65,6 +65,22 @@ internal data class LogQueueSubmit(
     val flushDelayMs: Long,
 )
 
+/// What one batch of MITM events did in the log kernel.
+internal sealed interface LogHttpBatchOutcome {
+    /// The writer queue was closed; nothing was enqueued.
+    data object Closed : LogHttpBatchOutcome
+
+    /// The log mode hid every row; the counters were still fed.
+    data object Hidden : LogHttpBatchOutcome
+
+    /// At least one row reached the writer queue.
+    data class Enqueued(
+        val overflow: Int,
+        val batchFull: Boolean,
+        val flushDelayMs: Long,
+    ) : LogHttpBatchOutcome
+}
+
 /// One directory entry of the capture folder.
 internal data class LogStoreFile(val name: String, val lastModified: Long, val length: Long)
 

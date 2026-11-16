@@ -214,8 +214,7 @@ public final class EngineSmoke {
         engine.setCosmeticRules("{\"globalHide\":[\"#ad\"],\"globalException\":[],\"domains\":{}}");
         engine.setRequestRules("[{\"pattern\":\"https://ads.test/p\",\"kind\":\"block\"}]");
         AtomicInteger httpEvents = new AtomicInteger();
-        engine.setHttpLogCallback((packageName, authority, protocol, outcome, rule) ->
-                httpEvents.incrementAndGet());
+        engine.setHttpLogCallback(rows -> httpEvents.incrementAndGet());
         check(engine.getMitmBlacklistCount() == 0, "a fresh session has no blacklist entries");
         engine.clearMitmBlacklist();
         engine.setHttpLogCallback(null);

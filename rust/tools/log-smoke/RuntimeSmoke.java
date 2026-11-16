@@ -54,7 +54,7 @@ public final class RuntimeSmoke {
     LogSmoke.check(text.contains("(无法读取该文件)"), "unreadable marker");
     LogSmoke.check(text.endsWith("---- 系统 crash 缓冲区 ----\n*** *** ***\npid: 1"), "crash section");
 
-    byte[] plan = native_.capturePlan(4242);
+    byte[] plan = native_.capturePlan(4242, 0, 0);
     LogSmoke.Reader capturePlan = new LogSmoke.Reader(plan);
     LogSmoke.check(capturePlan.i64() == 1_000, "watchdog cadence");
     LogSmoke.check(capturePlan.count() == 2, "two logcat attempts");

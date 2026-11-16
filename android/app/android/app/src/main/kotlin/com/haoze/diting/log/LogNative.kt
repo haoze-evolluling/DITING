@@ -12,7 +12,13 @@ package com.haoze.diting.log
 /// is owned by exactly one Kotlin object and freed where that object used to be cleared.
 internal class LogNative private constructor() {
     external fun dnsBatch(stats: Long, modeTag: Int, packed: ByteArray, nowMs: Long): ByteArray?
-    external fun httpEvent(stats: Long, modeTag: Int, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun httpEvents(
+        stats: Long,
+        queue: Long,
+        modeTag: Int,
+        packed: ByteArray,
+        nowMs: Long,
+    ): ByteArray?
     external fun raceRow(packed: ByteArray, nowMs: Long): ByteArray?
     external fun bootstrapRow(packed: ByteArray, nowMs: Long): ByteArray?
     external fun retentionPlan(packed: ByteArray): ByteArray?
@@ -59,7 +65,7 @@ internal class LogNative private constructor() {
 
     external fun queueNew(settingsTag: Int): Long
     external fun queueFree(handle: Long)
-    external fun queueSubmit(handle: Long, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun queueSubmitMany(handle: Long, packed: ByteArray, nowMs: Long): ByteArray?
     external fun queueTake(handle: Long): ByteArray?
     external fun queueRequeue(handle: Long, packed: ByteArray): Int
     external fun queueBackoff(handle: Long, nowMs: Long): Long
@@ -96,7 +102,7 @@ internal class LogNative private constructor() {
         const val QUEUE_LOG_TABLE = 0
         const val QUEUE_HTTP = 1
 
-        private val instance: LogNative by lazy {
+        internal val instance: LogNative by lazy {
             try {
                 System.loadLibrary("diting_kernels")
                 LogNative()
@@ -119,7 +125,7 @@ internal class LogNative private constructor() {
 
         /// Counters are fed and rows classified; the answer is the packed `dns_log` rows.
         ///
-        /// The bytes are exactly what [queueSubmit] takes, so a row the kernel classified never
+        /// The bytes are exactly what [queueSubmitMany] takes, so a row the kernel classified never
         /// gets rebuilt in Kotlin: `DnsLogWriter` only unpacks them into `ContentValues`.
         fun dnsBatch(stats: Long, mode: String, packed: ByteArray): List<ByteArray> {
             val payload = requireNotNull(
@@ -128,11 +134,6 @@ internal class LogNative private constructor() {
             val reader = LogPayload.Reader(payload)
             return List(reader.count()) { reader.blob() }
         }
-
-        /// One MITM event; null when the log mode hides it (the counters were already fed).
-        fun httpEvent(stats: Long, mode: String, packed: ByteArray): ByteArray? = requireNotNull(
-            instance.httpEvent(stats, modeTag(mode), packed, System.currentTimeMillis()),
-        ) { "native HTTP event rejected the payload" }.takeIf { it.isNotEmpty() }
 
         /// One race result; null when the callback carried no query name.
         fun raceRow(packed: ByteArray): ByteArray? =
@@ -380,26 +381,6 @@ internal class LogNative private constructor() {
             requireHandle(instance.queueNew(settingsTag), "writer queue")
 
         fun queueFree(handle: Long) = instance.queueFree(handle)
-
-        fun queueSubmit(handle: Long, row: ByteArray): LogQueueSubmit {
-            val packed = LogPayload.pack { out -> LogPayload.writeBlob(out, row) }
-            val reader = LogPayload.Reader(
-                requireNotNull(instance.queueSubmit(handle, packed, System.currentTimeMillis())) {
-                    "native writer queue rejected the row"
-                },
-            )
-            if (reader.u8() == 0) {
-                return LogQueueSubmit(accepted = false, overflow = 0, batchFull = false, flushDelayMs = 0)
-            }
-            val overflow = reader.count()
-            val batchFull = reader.u8() != 0
-            return LogQueueSubmit(
-                accepted = true,
-                overflow = overflow,
-                batchFull = batchFull,
-                flushDelayMs = reader.i64(),
-            )
-        }
 
         /// The next transaction's rows, or null when the queue is empty.
         fun queueTake(handle: Long): List<ByteArray>? {

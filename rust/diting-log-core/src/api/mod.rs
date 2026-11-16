@@ -16,7 +16,7 @@ pub mod runtime;
 pub mod state;
 
 pub use policy::{crash_select, retention_plan};
-pub use queue::{queue_requeue, queue_settings, queue_submit, queue_take};
+pub use queue::{queue_requeue, queue_settings, queue_submit, queue_submit_many, queue_take};
 pub use runtime::{
     capture_line, capture_plan, mirror_layout, mirror_rows, runtime_event_line, store_document,
     store_index,
@@ -27,6 +27,7 @@ pub use state::{
 };
 
 use crate::payload::{Reader, Writer};
+use crate::queue::Queue;
 use crate::row::{
     bootstrap_row, dns_row, http_row, normalized_outcome, race_row, BootstrapInput, BootstrapRow,
     DnsInput, DnsRow, HttpInput, HttpRow, LogMode, RaceInput, RaceRow,
@@ -167,6 +168,67 @@ pub fn http_event(stats: &Stats, mode: LogMode, payload: &[u8], now_ms: i64) -> 
             Some(writer.into_vec())
         }
     }
+}
+
+/// One batch of MITM events: counters, classification and the writer queue in a single call.
+///
+/// The engine hands Kotlin a packed batch of `(package, authority, protocol, outcome, rule)`
+/// tuples; this entry point decodes all of them before touching the counters, records the outcome
+/// of every row, turns the rows the log mode keeps into queue entries and enqueues them under one
+/// lock. Answers:
+///
+/// ```text
+/// u8 0  queue closed, nothing enqueued
+/// u8 1  nothing enqueued (the mode hid every row)
+/// u8 2  u32 overflow | u8 batch_full | i64 flush_delay_ms
+/// ```
+pub fn http_event_batch(
+    stats: &Stats,
+    queue: &Queue,
+    mode: LogMode,
+    payload: &[u8],
+    now_ms: i64,
+) -> Option<Vec<u8>> {
+    let mut reader = Reader::new(payload);
+    let count = reader.u32()? as usize;
+    let mut inputs = Vec::with_capacity(count.min(4096));
+    for _ in 0..count {
+        inputs.push(HttpInput {
+            package_name: reader.string()?,
+            authority: reader.string()?,
+            protocol: reader.string()?,
+            outcome: reader.string()?,
+            matched_rule: reader.string()?,
+        });
+    }
+    if !reader.finish() {
+        return None;
+    }
+
+    let mut rows = Vec::with_capacity(inputs.len());
+    for input in &inputs {
+        stats.record_http(&normalized_outcome(&input.outcome));
+        if let Some(row) = http_row(input, mode, now_ms) {
+            let mut writer = Writer::new();
+            write_http_row(&mut writer, &row);
+            rows.push(writer.into_vec());
+        }
+    }
+    if rows.is_empty() {
+        return Some(vec![1]);
+    }
+
+    let mut writer = Writer::new();
+    match queue.submit_many(rows, now_ms) {
+        None => writer.u8(0),
+        Some(submit) => {
+            writer.u8(2);
+            writer.u32(submit.overflow);
+            writer.u8(if submit.batch_full { 1 } else { 0 });
+            writer.i64(submit.flush_delay_ms(queue.settings()));
+        }
+    }
+    Some(writer.into_vec())
 }
 
 fn write_http_row(writer: &mut Writer, row: &HttpRow) {
@@ -407,6 +469,59 @@ mod tests {
         assert_eq!(read_optional(&mut reader), Some(None));
         assert_eq!(read_optional_i(&mut reader), Some(None));
         assert!(reader.finish());
+    }
+
+    #[test]
+    fn http_event_batch_classifies_and_enqueues_in_one_pass() {
+        use crate::queue::{Queue, HTTP};
+
+        let stats = Stats::new();
+        let queue = Queue::new(HTTP);
+        let mut writer = Writer::new();
+        writer.u32(2);
+        for (outcome, authority) in [("allowed", "a.test"), ("blocked", "b.test")] {
+            writer.string("com.app");
+            writer.string(authority);
+            writer.string("https");
+            writer.string(outcome);
+            writer.string("");
+        }
+        let payload = writer.into_vec();
+
+        let answer = http_event_batch(&stats, &queue, LogMode::All, &payload, 5).unwrap();
+        let mut reader = Reader::new(&answer);
+        assert_eq!(reader.u8(), Some(2), "rows were enqueued");
+        assert_eq!(reader.u32(), Some(0), "no overflow");
+        assert_eq!(reader.u8(), Some(0), "two rows are below the http batch");
+        assert_eq!(reader.i64(), Some(HTTP.flush_interval_ms));
+        assert!(reader.finish());
+        assert_eq!(queue.pending_len(), 2);
+        assert_eq!(stats.request_snapshot().total, 2);
+
+        // The mode filter still applies inside the batch, and the counters still see every row.
+        let stats = Stats::new();
+        let queue = Queue::new(HTTP);
+        let answer =
+            http_event_batch(&stats, &queue, LogMode::BlockedAndErrors, &payload, 5).unwrap();
+        let mut reader = Reader::new(&answer);
+        assert_eq!(reader.u8(), Some(2));
+        assert_eq!(reader.u32(), Some(0));
+        assert_eq!(reader.u8(), Some(0));
+        assert_eq!(reader.i64(), Some(HTTP.flush_interval_ms));
+        assert!(reader.finish());
+        assert_eq!(queue.pending_len(), 1);
+        assert_eq!(stats.request_snapshot().total, 2);
+
+        // Nothing to enqueue: the answer is the "hidden" status, no queue write happens.
+        let mut hidden = Writer::new();
+        hidden.u32(1);
+        hidden.string("com.app");
+        hidden.string("a.test");
+        hidden.string("https");
+        hidden.string("allowed");
+        hidden.string("");
+        let answer = http_event_batch(&stats, &queue, LogMode::Off, &hidden.into_vec(), 5).unwrap();
+        assert_eq!(answer, vec![1]);
     }
 
     #[test]

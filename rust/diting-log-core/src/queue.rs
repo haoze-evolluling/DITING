@@ -112,15 +112,25 @@ impl Queue {
 
     /// `submit`: None once the writer is closed, otherwise the overflow and the flush decision.
     pub fn submit(&self, row: Vec<u8>, _now_ms: i64) -> Option<Submit> {
+        self.submit_many(vec![row], _now_ms)
+    }
+
+    /// `submitMany`: one lock and one capacity pass for a whole batch of rows.
+    ///
+    /// The overflow is the total dropped across the batch, and `batch_full` describes the queue
+    /// after the last row, which is exactly what the caller needs to arm (or skip) its timer.
+    pub fn submit_many(&self, rows: Vec<Vec<u8>>, _now_ms: i64) -> Option<Submit> {
         let mut inner = self.lock();
         if inner.closed {
             return None;
         }
-        inner.pending.push_back(row);
         let mut overflow = 0u32;
-        while inner.pending.len() > self.settings.max_pending {
-            inner.pending.pop_front();
-            overflow = overflow.saturating_add(1);
+        for row in rows {
+            inner.pending.push_back(row);
+            if inner.pending.len() > self.settings.max_pending {
+                inner.pending.pop_front();
+                overflow = overflow.saturating_add(1);
+            }
         }
         Some(Submit {
             overflow,
@@ -236,6 +246,56 @@ mod tests {
             .iter()
             .map(|row| String::from_utf8_lossy(row).into_owned())
             .collect()
+    }
+
+    #[test]
+    fn a_batch_submit_keeps_the_single_row_semantics() {
+        let queue = Queue::new(LOG_TABLE);
+        let submit = queue
+            .submit_many(
+                (0..(LOG_TABLE.batch_size - 1))
+                    .map(|i| row(&i.to_string()))
+                    .collect(),
+                0,
+            )
+            .unwrap();
+        assert!(!submit.batch_full);
+        assert_eq!(submit.overflow, 0);
+        assert_eq!(queue.pending_len(), LOG_TABLE.batch_size as u32 - 1);
+
+        // One row past the batch size flushes immediately and the order is preserved.
+        let submit = queue.submit_many(vec![row("last")], 0).unwrap();
+        assert!(submit.batch_full);
+        let taken = names(&queue.take().unwrap());
+        assert_eq!(taken.first().map(String::as_str), Some("0"));
+        assert_eq!(taken.last().map(String::as_str), Some("last"));
+    }
+
+    #[test]
+    fn a_batch_submit_reports_every_dropped_row() {
+        let queue = Queue::new(HTTP);
+        for index in 0..(HTTP.max_pending - 1) {
+            queue.submit(row(&index.to_string()), 0);
+        }
+        let submit = queue
+            .submit_many(vec![row("a"), row("b"), row("c")], 0)
+            .unwrap();
+        // Two rows had to go for the three new ones to fit.
+        assert_eq!(submit.overflow, 2);
+        assert_eq!(queue.pending_len(), HTTP.max_pending as u32);
+        let taken = names(&queue.take().unwrap());
+        assert_eq!(taken.first().map(String::as_str), Some("2"));
+        let last = taken.last().map(String::as_str);
+        assert_eq!(last, Some("c"));
+    }
+
+    #[test]
+    fn a_closed_queue_refuses_a_whole_batch() {
+        let queue = Queue::new(HTTP);
+        assert!(queue.submit_many(Vec::new(), 0).is_some());
+        queue.mark_closed();
+        assert_eq!(queue.submit_many(vec![row("a")], 0), None);
+        assert_eq!(queue.pending_len(), 0);
     }
 
     #[test]

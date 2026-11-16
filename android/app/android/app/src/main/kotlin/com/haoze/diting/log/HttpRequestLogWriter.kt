@@ -31,28 +31,19 @@ class HttpRequestLogWriter(
     @Volatile
     private var closed = false
 
-    /// The DNS log mode governs HTTP rows too, so off and blocked_and_errors keep their meaning
-    fun onEvent(
-        packageName: String,
-        authority: String,
-        protocol: String,
-        outcome: String,
-        matchedRule: String,
-    ) {
+    /// The DNS log mode governs HTTP rows too, so off and blocked_and_errors keep their meaning.
+    ///
+    /// `rows` is the engine's packed batch: counters, classification and the writer queue are
+    /// all handled by one native call instead of one crossing per relay decision.
+    fun onEvents(rows: ByteArray) {
         if (closed) return
-        val packed = LogPayload.pack { out ->
-            LogPayload.writeString(out, packageName)
-            LogPayload.writeString(out, authority)
-            LogPayload.writeString(out, protocol)
-            LogPayload.writeString(out, outcome)
-            LogPayload.writeString(out, matchedRule)
+        when (val outcome = LogNative.httpEvents(RequestStats.kernel, queue, modeProvider(), rows)) {
+            LogHttpBatchOutcome.Closed, LogHttpBatchOutcome.Hidden -> return
+            is LogHttpBatchOutcome.Enqueued -> {
+                DbWriteHealth.onDropped(outcome.overflow, DropReason.OVERFLOW, TABLE)
+                if (outcome.batchFull) submitFlush() else scheduleDelayedFlush(outcome.flushDelayMs)
+            }
         }
-        // Null when the log mode hides the event; the counters were fed either way.
-        val row = LogNative.httpEvent(RequestStats.kernel, modeProvider(), packed) ?: return
-        val decision = LogNative.queueSubmit(queue, row)
-        if (!decision.accepted) return
-        DbWriteHealth.onDropped(decision.overflow, DropReason.OVERFLOW, TABLE)
-        if (decision.batchFull) submitFlush() else scheduleDelayedFlush(decision.flushDelayMs)
     }
 
     /// Final flush, then stop. `closed` gates the entry points only; the flush runs after it is set

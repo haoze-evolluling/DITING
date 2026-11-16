@@ -263,27 +263,44 @@ fn emit(
     rows.len()
 }
 
+/// One row of the batch document, borrowed so a batch does not copy its strings.
+#[derive(serde::Serialize)]
+struct BatchRow<'a> {
+    d: &'a str,
+    b: bool,
+    t: i32,
+    r: i64,
+    a: &'a str,
+    i: &'a str,
+    k: &'a str,
+    e: &'a str,
+    c: bool,
+    ts: i64,
+    ttl: i64,
+}
+
 /// `json.Marshal([]logItem)`: field names are read by `DnsLogWriter.writeBatch` and cannot change.
+///
+/// Serializing the borrowed rows directly avoids the per-row `serde_json::Value` map that used to
+/// duplicate every string and then re-serialize it into the final document.
 pub fn batch_json(rows: &[LogItem]) -> String {
-    let document: Vec<serde_json::Value> = rows
+    let document: Vec<BatchRow<'_>> = rows
         .iter()
-        .map(|row| {
-            serde_json::json!({
-                "d": row.domain,
-                "b": row.blocked,
-                "t": row.query_type,
-                "r": row.response_time_ms,
-                "a": row.app_name,
-                "i": row.resolved_ips,
-                "k": row.blocked_by,
-                "e": row.error_message,
-                "c": row.cached,
-                "ts": row.timestamp_ms,
-                "ttl": row.ttl,
-            })
+        .map(|row| BatchRow {
+            d: &row.domain,
+            b: row.blocked,
+            t: row.query_type,
+            r: row.response_time_ms,
+            a: &row.app_name,
+            i: &row.resolved_ips,
+            k: &row.blocked_by,
+            e: &row.error_message,
+            c: row.cached,
+            ts: row.timestamp_ms,
+            ttl: row.ttl,
         })
         .collect();
-    serde_json::Value::Array(document).to_string()
+    serde_json::to_string(&document).unwrap_or_else(|_| "[]".to_string())
 }
 
 #[cfg(test)]

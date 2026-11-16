@@ -47,6 +47,35 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_httpEvent<'local>(
     answer_bytes(&env, answer)
 }
 
+/// `LogNative.httpEvents(stats, queue, modeTag, packed, nowMs): ByteArray?`
+///
+/// One call covers a batch of MITM events: the counters, the row classification and the writer
+/// queue are all fed here instead of one `httpEvent` + one `queueSubmit` per request.
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_httpEvents<'local>(
+    mut env: JNIEnv<'local>,
+    _this: JObject<'local>,
+    stats: jlong,
+    queue: jlong,
+    mode_tag: jint,
+    packed: JByteArray<'local>,
+    now_ms: jlong,
+) -> jbyteArray {
+    let answer = guarded(|| {
+        let mode = mode_from_tag(mode_tag)?;
+        with_bytes(&mut env, &packed, |payload| unsafe {
+            with_handle(stats, |stats: &crate::stats::Stats| {
+                with_handle(queue, |queue: &crate::queue::Queue| {
+                    api::http_event_batch(stats, queue, mode, payload, now_ms)
+                })
+                .flatten()
+            })
+            .flatten()
+        })
+    });
+    answer_bytes(&env, answer)
+}
+
 /// `LogNative.raceRow(packed, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_raceRow<'local>(
