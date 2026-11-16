@@ -10,7 +10,8 @@ package com.haoze.diting.engine
 /// Every callback arrives on an engine thread (the log flusher for DNS batches, the event flusher
 /// for race/bootstrap batches), never on the thread that installed it.
 interface BatchLogCallback {
-    /// One packed `dns_log` batch in the log kernel's input layout; forward it to `LogNative.dnsBatch`.
+    /// One packed `dns_log` batch in the log kernel's input layout; forward it to
+    /// `LogNative.dnsBatchSubmit`.
     fun onDNSQueryBatch(rows: ByteArray)
 }
 
@@ -88,8 +89,9 @@ interface TunnelEngine {
     /// Throws when the config document is rejected.
     fun applyDNSConfig(json: String)
 
-    /// Empty on success, otherwise the rejection text.
-    fun applyRuleSnapshot(json: String): String
+    /// Empty on success, otherwise the rejection text. The document is passed as the UTF-8 bytes
+    /// the rule kernel built, so a large snapshot is never widened to a Java `String`.
+    fun applyRuleSnapshot(payload: ByteArray): String
 
     fun setRewriteRules(json: String)
 
@@ -109,8 +111,8 @@ interface TunnelEngine {
     /// `{"enabled":…,"totalHits":…,"entryCount":…}`.
     fun getDNSCacheStats(): String
 
-    /// A JSON array of live cache entries, hottest first.
-    fun getDNSCacheEntries(limit: Long): String
+    /// The hottest live cache entries, packed in the log kernel's mirror input layout.
+    fun getDNSCacheSnapshot(limit: Long): ByteArray
 
     /// N4: incremental live-connection document `{baseSeq,nextSeq,total,truncated,sessions[]}`.
     fun flowSnapshot(sinceSeq: Long, limit: Long): String

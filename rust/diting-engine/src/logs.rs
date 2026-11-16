@@ -103,6 +103,9 @@ pub trait EventSink: Send + Sync {
 pub struct Logs {
     aggregator: Arc<LogAggregator>,
     sink: Arc<RwLock<Option<Arc<dyn EventSink>>>>,
+    /// `sink.wants_batch()`, cached: [`Logs::push`] runs on every DNS query and must not take the
+    /// sink lock or a dynamic call just to learn that no batch callback is installed.
+    wanted: Arc<AtomicBool>,
     wake: Sender<Wake>,
     stopped: Arc<AtomicBool>,
     flusher: Option<JoinHandle<()>>,
@@ -122,6 +125,7 @@ impl Logs {
         // The sink is installed later (Kotlin calls `setBatchLogCallback` after the config), so the
         // flusher reads it through this shared cell instead of capturing one value.
         let sink: Arc<RwLock<Option<Arc<dyn EventSink>>>> = Arc::new(RwLock::new(None));
+        let wanted = Arc::new(AtomicBool::new(false));
         let flusher = {
             let aggregator = aggregator.clone();
             let sink = sink.clone();
@@ -134,6 +138,7 @@ impl Logs {
         Self {
             aggregator,
             sink,
+            wanted,
             wake,
             stopped,
             flusher: Some(flusher),
@@ -142,16 +147,7 @@ impl Logs {
 
     /// Posts one row, mirroring `notifyLog`'s "batch callback first, then the single callback".
     pub fn push(&self, item: LogItem) {
-        let wanted = self
-            .sink
-            .read()
-            .map(|sink| {
-                sink.as_ref()
-                    .map(|sink| sink.wants_batch())
-                    .unwrap_or(false)
-            })
-            .unwrap_or(false);
-        if !wanted {
+        if !self.wanted.load(Ordering::Acquire) {
             return;
         }
         if self.aggregator.push(item) == PushOutcome::Dropped {
@@ -166,6 +162,10 @@ impl Logs {
 
     /// Installs (or replaces) the sink. Null on the Kotlin side clears it.
     pub fn set_sink(&self, sink: Option<Arc<dyn EventSink>>) {
+        // Cached before the sink becomes visible, so a racing `push` either sees the old answer or
+        // the new one, never a published sink with the cache still false.
+        let wanted = sink.as_ref().is_some_and(|sink| sink.wants_batch());
+        self.wanted.store(wanted, Ordering::Release);
         if let Ok(mut current) = self.sink.write() {
             *current = sink;
         }

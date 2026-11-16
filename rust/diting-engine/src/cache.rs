@@ -2,9 +2,10 @@
 //!
 //! The container, the TTL policy, the negative cache, the stale window, the sweeper and the
 //! projection are [`diting_dns_cache_core::Cache`]. What lives here is only what the Go engine kept:
-//! the policy hand-off from `ApplyDNSConfig`, the `getDNSCacheStats` / `getDNSCacheEntries`
-//! documents (field names are read directly by `EngineStats.kt` and `DnsCacheMirror.kt`, so they
-//! cannot change) and the single-flight shape (`begin_stale_refresh` / `refresh_done`).
+//! the policy hand-off from `ApplyDNSConfig`, the `getDNSCacheStats` document (its field names are
+//! read directly by `EngineStats.kt`, so they cannot change), the packed snapshot the cache mirror
+//! consumes (`entries_packed`), and the single-flight shape (`begin_stale_refresh` /
+//! `refresh_done`).
 //!
 //! Single flight itself stays in [`crate::dns`]: coalescing needs an async wait, which the cache
 //! kernel deliberately does not have.
@@ -103,6 +104,36 @@ pub fn stats_json(stats: Stats) -> String {
     document.to_string()
 }
 
+/// `getDNSCacheSnapshot`: the hot entries in the packed layout `LogNative.mirrorRows` decodes.
+///
+/// This is the mirror's path. It used to be `entries_json` → `JSONArray` on the JVM → one
+/// `LogMirrorEntry` per row → a re-packed request to the log kernel: four conversions and a JSON
+/// document per snapshot. The bytes below are the log kernel's own mirror input, so Kotlin forwards
+/// them untouched and the kernel projects them into `dns_cache` rows.
+pub fn entries_packed(entries: &[SnapshotEntry]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(4 + entries.len() * 64);
+    out.extend_from_slice(&(entries.len() as u32).to_be_bytes());
+    for entry in entries {
+        push_bytes(&mut out, &entry.key);
+        push_bytes(&mut out, &entry.query_name);
+        out.extend_from_slice(&i32::from(entry.query_type).to_be_bytes());
+        out.extend_from_slice(&i32::from(entry.query_class).to_be_bytes());
+        out.extend_from_slice(&entry.created_at_ms.to_be_bytes());
+        out.extend_from_slice(&entry.expires_at_ms.to_be_bytes());
+        out.extend_from_slice(&entry.last_hit_at_ms.to_be_bytes());
+        out.extend_from_slice(&(entry.hit_count as i64).to_be_bytes());
+        out.extend_from_slice(&i64::from(entry.original_ttl).to_be_bytes());
+        out.extend_from_slice(&(entry.response_size as i32).to_be_bytes());
+    }
+    out
+}
+
+/// `u32 length | bytes`, the string framing the log payloads use.
+fn push_bytes(out: &mut Vec<u8>, value: &[u8]) {
+    out.extend_from_slice(&(value.len() as u32).to_be_bytes());
+    out.extend_from_slice(value);
+}
+
 /// `getDNSCacheEntries`: the array `DnsCacheMirror.kt` writes into the `dns_cache` table.
 ///
 /// The names are the ones the old Go projection used, so the mirror keeps working unchanged;
@@ -199,6 +230,52 @@ mod tests {
             first["responseSize"],
             serde_json::json!(46),
             "the stored wire is the upstream answer, verbatim"
+        );
+    }
+
+    #[test]
+    fn the_packed_snapshot_is_the_mirror_input_layout() {
+        let entries = vec![SnapshotEntry {
+            key: b"example.test:1:1".to_vec(),
+            query_name: b"example.test".to_vec(),
+            query_type: 1,
+            query_class: 1,
+            created_at_ms: 1_000,
+            expires_at_ms: 301_000,
+            last_hit_at_ms: 2_000,
+            hit_count: 7,
+            original_ttl: 300,
+            response_size: 46,
+        }];
+        let payload = entries_packed(&entries);
+        let count = u32::from_be_bytes(payload[0..4].try_into().unwrap()) as usize;
+        assert_eq!(count, 1);
+        let mut offset = 4;
+        let text = |offset: &mut usize| {
+            let length =
+                u32::from_be_bytes(payload[*offset..*offset + 4].try_into().unwrap()) as usize;
+            *offset += 4;
+            let value = String::from_utf8(payload[*offset..*offset + length].to_vec()).unwrap();
+            *offset += length;
+            value
+        };
+        assert_eq!(text(&mut offset), "example.test:1:1");
+        assert_eq!(text(&mut offset), "example.test");
+        let query_type = i32::from_be_bytes(payload[offset..offset + 4].try_into().unwrap());
+        assert_eq!(query_type, 1);
+        offset += 4;
+        let query_class = i32::from_be_bytes(payload[offset..offset + 4].try_into().unwrap());
+        assert_eq!(query_class, 1);
+        offset += 4;
+        // The five timestamps/counters plus `responseSize` stay in the order the kernel decodes.
+        offset += 8 * 5;
+        let response_size = i32::from_be_bytes(payload[offset..offset + 4].try_into().unwrap());
+        assert_eq!(response_size, 46);
+        offset += 4;
+        assert_eq!(
+            offset,
+            payload.len(),
+            "the packed entry has no trailing bytes"
         );
     }
 

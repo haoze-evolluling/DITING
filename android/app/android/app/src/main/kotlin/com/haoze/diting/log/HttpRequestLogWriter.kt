@@ -38,8 +38,8 @@ class HttpRequestLogWriter(
     fun onEvents(rows: ByteArray) {
         if (closed) return
         when (val outcome = LogNative.httpEvents(RequestStats.kernel, queue, modeProvider(), rows)) {
-            LogHttpBatchOutcome.Closed, LogHttpBatchOutcome.Hidden -> return
-            is LogHttpBatchOutcome.Enqueued -> {
+            LogBatchOutcome.Closed, LogBatchOutcome.Hidden -> return
+            is LogBatchOutcome.Enqueued -> {
                 DbWriteHealth.onDropped(outcome.overflow, DropReason.OVERFLOW, TABLE)
                 if (outcome.batchFull) submitFlush() else scheduleDelayedFlush(outcome.flushDelayMs)
             }

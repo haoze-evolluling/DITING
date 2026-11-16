@@ -65,20 +65,20 @@ internal data class LogQueueSubmit(
     val flushDelayMs: Long,
 )
 
-/// What one batch of MITM events did in the log kernel.
-internal sealed interface LogHttpBatchOutcome {
+/// What one classified batch did in the log kernel: the DNS and MITM event paths answer alike.
+internal sealed interface LogBatchOutcome {
     /// The writer queue was closed; nothing was enqueued.
-    data object Closed : LogHttpBatchOutcome
+    data object Closed : LogBatchOutcome
 
     /// The log mode hid every row; the counters were still fed.
-    data object Hidden : LogHttpBatchOutcome
+    data object Hidden : LogBatchOutcome
 
     /// At least one row reached the writer queue.
     data class Enqueued(
         val overflow: Int,
         val batchFull: Boolean,
         val flushDelayMs: Long,
-    ) : LogHttpBatchOutcome
+    ) : LogBatchOutcome
 }
 
 /// One directory entry of the capture folder.
@@ -102,17 +102,3 @@ internal data class LogRuntimeEventLine(val wrote: Boolean, val line: String)
 
 /// The projection's caps and cadence.
 internal data class LogMirrorLayout(val maxRows: Long, val initialDelayMs: Long, val intervalMs: Long)
-
-/// One engine cache entry, as `Engine.getDNSCacheEntries` reported it.
-internal data class LogMirrorEntry(
-    val key: String,
-    val queryName: String,
-    val queryType: Int,
-    val queryClass: Int,
-    val createdAt: Long,
-    val expiresAt: Long,
-    val lastHitAt: Long,
-    val hitCount: Long,
-    val originalTtlSeconds: Long,
-    val responseSize: Int,
-)

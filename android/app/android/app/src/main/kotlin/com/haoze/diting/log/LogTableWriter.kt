@@ -1,6 +1,5 @@
 package com.haoze.diting.log
 
-import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteStatement
@@ -23,7 +22,11 @@ internal class LogTableWriter(
     private val databaseName: String,
     private val table: String,
     threadName: String,
-    private val toValues: (ByteArray) -> ContentValues,
+    /// The complete `INSERT OR IGNORE` for this table, compiled once per transaction.
+    private val insertSql: String,
+    /// Binds one packed kernel row straight into the compiled statement. No `ContentValues` is
+    /// built: a DNS batch used to allocate one hash map per row just to read it back out.
+    private val bind: (SQLiteStatement, ByteArray) -> Unit,
 ) {
     private val appContext = context.applicationContext
     private val lock = Any()
@@ -48,6 +51,19 @@ internal class LogTableWriter(
         // Counted outside any lock: the health counter may log.
         DbWriteHealth.onDropped(decision.overflow, DropReason.OVERFLOW, table)
         schedule(decision.flushDelayMs)
+    }
+
+    /// One DNS batch: the kernel counts, classifies and enqueues it in a single crossing, so the
+    /// rows never come back to Kotlin for a re-pack. Only the timer and the overflow counter are
+    /// left here, exactly like [submitAll].
+    fun submitDnsBatch(stats: Long, mode: String, packed: ByteArray) {
+        when (val outcome = LogNative.dnsBatchSubmit(stats, queue, mode, packed)) {
+            LogBatchOutcome.Closed, LogBatchOutcome.Hidden -> return
+            is LogBatchOutcome.Enqueued -> {
+                DbWriteHealth.onDropped(outcome.overflow, DropReason.OVERFLOW, table)
+                schedule(outcome.flushDelayMs)
+            }
+        }
     }
 
     /// Final flush on the caller's thread (the engine is already stopped), then stops the timer.
@@ -140,54 +156,24 @@ internal class LogTableWriter(
         }
     }
 
-    /// One compiled `INSERT OR IGNORE` per transaction. `insertWithOnConflict` rebuilt and
-    /// recompiled the SQL for every row, which dominated the write time of a DNS batch.
+    /// One compiled `INSERT OR IGNORE` per transaction, bound row by row from the kernel's bytes.
+    ///
+    /// The previous version materialised a `ContentValues` (a hash map plus boxed numbers) for
+    /// every row before it could bind anything. The SQL is now fixed per table, since every row
+    /// of these four streams has the same columns anyway.
     private fun insertAll(db: SQLiteDatabase, rows: List<ByteArray>) {
-        val batch = rows.map(toValues)
-        val columns = batch.first().keySet().sorted()
-        val sql = buildString {
-            append("INSERT OR IGNORE INTO ").append(table).append(" (")
-            columns.joinTo(this, ", ")
-            append(") VALUES (")
-            columns.indices.joinTo(this, ", ") { "?" }
-            append(")")
-        }
         db.beginTransaction()
         try {
-            db.compileStatement(sql).use { statement ->
-                for (values in batch) {
-                    if (values.size() == columns.size && values.keySet().containsAll(columns)) {
-                        statement.bindRow(columns, values)
-                        statement.executeInsert()
-                    } else {
-                        // A row with another column set; rare, so the slow path is fine.
-                        db.insertWithOnConflict(table, null, values, SQLiteDatabase.CONFLICT_IGNORE)
-                    }
+            db.compileStatement(insertSql).use { statement ->
+                for (row in rows) {
+                    statement.clearBindings()
+                    bind(statement, row)
+                    statement.executeInsert()
                 }
             }
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
-        }
-    }
-
-    private fun SQLiteStatement.bindRow(columns: List<String>, values: ContentValues) {
-        clearBindings()
-        for ((index, column) in columns.withIndex()) {
-            val position = index + 1
-            when (val value = values.get(column)) {
-                null -> bindNull(position)
-                is String -> bindString(position, value)
-                is Long -> bindLong(position, value)
-                is Int -> bindLong(position, value.toLong())
-                is Short -> bindLong(position, value.toLong())
-                is Byte -> bindLong(position, value.toLong())
-                is Boolean -> bindLong(position, if (value) 1L else 0L)
-                is Double -> bindDouble(position, value)
-                is Float -> bindDouble(position, value.toDouble())
-                is ByteArray -> bindBlob(position, value)
-                else -> bindString(position, value.toString())
-            }
         }
     }
 
@@ -212,10 +198,11 @@ internal object LogTableWriters {
         databaseName: String,
         table: String,
         threadName: String,
-        toValues: (ByteArray) -> ContentValues,
+        insertSql: String,
+        bind: (SQLiteStatement, ByteArray) -> Unit,
     // computeIfAbsent, not getOrPut: two racing callbacks must not each start a writer thread.
     ): LogTableWriter = writers.computeIfAbsent("$databaseName/$table") {
-        LogTableWriter(context, databaseName, table, threadName, toValues)
+        LogTableWriter(context, databaseName, table, threadName, insertSql, bind)
     }
 
     /// Flushes and stops every queue; called when the data plane closes.

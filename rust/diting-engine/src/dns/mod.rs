@@ -37,6 +37,8 @@ pub const LOCAL_ASSET_HOST: &str = "local.pwhs.app";
 pub const APP_NAME: &str = "RootProxy";
 /// `_dns.resolver.arpa` and its `*.…` children.
 const DDR_HOST: &str = "_dns.resolver.arpa";
+/// `.{DDR_HOST}`, without building the format string on every query.
+const DDR_SUFFIX: &str = ".dns.resolver.arpa";
 
 /// Answers one query with the standalone app name. `None` means "drop it": a query that is not a
 /// query, or a kernel that could not build a reply at all. Everything else leaves a log row.
@@ -61,7 +63,7 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
         return reply::render(query, &plan);
     }
 
-    if domain == DDR_HOST || domain.ends_with(&format!(".{DDR_HOST}")) {
+    if domain == DDR_HOST || domain.ends_with(DDR_SUFFIX) {
         let plan = reply::ddr(query)?;
         engine.note_query(true);
         engine.log_row(row(&domain, true, qtype, started, app_name).blocked_by("ddr_blocked"));

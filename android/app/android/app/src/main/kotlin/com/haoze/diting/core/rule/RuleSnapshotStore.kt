@@ -6,7 +6,11 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Builds the `Engine.applyRuleSnapshot` JSON and the rewrite-rule map for one data set.
+ * Builds the `Engine.applyRuleSnapshot` document and the rewrite-rule map for one data set.
+ *
+ * The snapshot is returned as UTF-8 bytes and handed to the engine unchanged: both ends are Rust
+ * kernels, so making it a Java `String` only added a transcode of what can be a multi-megabyte
+ * document.
  *
  * Kotlin owns the SQLite reads (`RuleSnapshotDao`), the DTRI compile call
  * (`MappedSubscriptionRuleIndex`), the stamp file's I/O and the `File` lookups. The classification
@@ -28,7 +32,7 @@ object RuleSnapshotStore {
     private const val APP_ALLOWLIST_PREFS = "dns_vpn_prefs"
     private const val KEY_APP_ALLOWLIST_RULES = "app_allowlist_rules_json"
 
-    fun buildSnapshotJson(context: Context, dataset: RuleDataset): String {
+    fun buildSnapshot(context: Context, dataset: RuleDataset): ByteArray {
         val started = System.nanoTime()
         val prefs = context.getSharedPreferences(dataset.prefsName(), Context.MODE_PRIVATE)
         val filterEnabled = prefs.getBoolean(KEY_DOMAIN_RULES_ENABLED, true)
@@ -37,7 +41,7 @@ object RuleSnapshotStore {
         val dao = RuleSnapshotDao.open(context, dataset.databaseName())
         if (dao == null) {
             Log.w(TAG, "Rule database ${dataset.databaseName()} unavailable; snapshot is empty")
-            return RuleSnapshotNative.buildSnapshot(
+            return RuleSnapshotNative.buildSnapshotBytes(
                 RuleSnapshotPayload.encode(emptyInput(filterEnabled)),
             )
         }
@@ -55,7 +59,7 @@ object RuleSnapshotStore {
             if (indexDirectory != null && plan.settled) {
                 writeStamp(indexDirectory, dao)
             }
-            val json = RuleSnapshotNative.buildSnapshot(
+            val document = RuleSnapshotNative.buildSnapshotBytes(
                 RuleSnapshotPayload.encode(
                     RuleSnapshotInput(
                         filterEnabled = filterEnabled,
@@ -84,14 +88,18 @@ object RuleSnapshotStore {
             // of which path the start took.
             Log.i(
                 TAG,
-                "[${dataset.name}] snapshot ${json.length}B in ${(System.nanoTime() - started) / 1_000_000}ms " +
+                "[${dataset.name}] snapshot ${document.size}B in ${(System.nanoTime() - started) / 1_000_000}ms " +
                     "tries=${if (triesFresh) "fresh" else "stale"} compiled=${plan.compiled}",
             )
-            json
+            document
         } finally {
             dao.close()
         }
     }
+
+    /// Text form of [buildSnapshot], for the rule-test simulator's JSON answer to Dart.
+    fun buildSnapshotJson(context: Context, dataset: RuleDataset): String =
+        buildSnapshot(context, dataset).toString(Charsets.UTF_8)
 
     /** `Engine.setRewriteRules` flat domain -> target map; '' when empty, matching the Dart encoder. */
     fun buildRewriteRulesJson(context: Context, dataset: RuleDataset): String {

@@ -3,7 +3,7 @@ package com.haoze.diting.core.rule
 import java.io.ByteArrayOutputStream
 
 /**
- * Everything one `buildSnapshotJson` call hands to the Rust snapshot builder
+ * Everything one `buildSnapshot` call hands to the Rust snapshot builder
  * (`rust/diting-rule-core/src/snapshot.rs`).
  *
  * Kotlin owns the SQLite rows, the DTRI compile/validate step and the stamp file; the

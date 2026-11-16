@@ -51,7 +51,7 @@ internal object LogPayload {
 
     /// Big-endian reader; a short read throws like the kernel's `None` does, and the entry point
     /// turns that into an [IllegalStateException].
-    class Reader(payload: ByteArray) {
+    class Reader(private val payload: ByteArray) {
         private val buffer: ByteBuffer = ByteBuffer.wrap(payload)
 
         fun u8(): Int = buffer.get().toInt() and 0xFF
@@ -64,17 +64,21 @@ internal object LogPayload {
 
         fun count(): Int = u32().toInt()
 
+        /// Decodes straight out of the payload: copying the range into a fresh `ByteArray` first
+        /// doubled the allocation of every string in a DNS batch.
         fun string(): String {
             val length = count()
-            val bytes = ByteArray(length)
-            buffer.get(bytes)
-            return String(bytes, Charsets.UTF_8)
+            val start = buffer.position()
+            val text = String(payload, start, length, Charsets.UTF_8)
+            buffer.position(start + length)
+            return text
         }
 
         fun blob(): ByteArray {
             val length = count()
-            val bytes = ByteArray(length)
-            buffer.get(bytes)
+            val start = buffer.position()
+            val bytes = payload.copyOfRange(start, start + length)
+            buffer.position(start + length)
             return bytes
         }
 

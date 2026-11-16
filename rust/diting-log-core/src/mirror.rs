@@ -1,9 +1,9 @@
 //! `DnsCacheMirror`'s pure half: how much of the engine's cache is projected, how often, and the
 //! `dns_cache` row shape.
 //!
-//! The engine handle, the JSON decode, the timer and the `DELETE` + `INSERT` transaction stay in
-//! Kotlin; the caps, the cadence and the two constant columns (`ttlOffsets`, `response`) live here,
-//! because those are the parts a reader of `dns_cache` depends on.
+//! The engine handle, the packed snapshot, the timer and the `DELETE` + `INSERT` transaction stay
+//! in Kotlin; the caps, the cadence and the two constant columns (`ttlOffsets`, `response`) live
+//! here, because those are the parts a reader of `dns_cache` depends on.
 
 /// Rows requested from `Engine.getDNSCacheEntries` (the hottest ones).
 pub const MAX_ROWS: i64 = 200;

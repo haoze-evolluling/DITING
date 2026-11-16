@@ -12,7 +12,8 @@ object EngineRuleLoader {
     /// Every mode implements [`TunnelEngine`], which is all this needs (`applyRuleSnapshot` and
     /// `setRewriteRules`).
     fun apply(context: Context, engine: TunnelEngine, dataset: RuleDataset, tag: String) {
-        val snapshot = RuleSnapshotStore.buildSnapshotJson(context, dataset)
+        // Bytes end to end: the rule kernel built the document, the engine consumes it.
+        val snapshot = RuleSnapshotStore.buildSnapshot(context, dataset)
         val snapshotError = engine.applyRuleSnapshot(snapshot)
         check(snapshotError.isBlank()) { "$tag: applyRuleSnapshot failed: $snapshotError" }
         val rewriteRules = RuleSnapshotStore.buildRewriteRulesJson(context, dataset)

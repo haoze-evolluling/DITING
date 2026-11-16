@@ -26,6 +26,7 @@ pub mod adapters;
 pub mod callbacks;
 pub mod mitm;
 pub mod rule_test;
+pub mod snapshot;
 
 use std::collections::HashMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -98,7 +99,7 @@ pub fn live_engines() -> usize {
 
 /// Runs `run` with the handle's engine, returning `default` when the handle is stale or the entry
 /// point panicked (the panic is raised in Java so it is not silent).
-fn with_engine<R>(
+pub(super) fn with_engine<R>(
     env: &mut JNIEnv<'_>,
     handle: jlong,
     default: R,
@@ -150,7 +151,7 @@ fn text(env: &mut JNIEnv<'_>, value: &JString<'_>) -> String {
         .unwrap_or_default()
 }
 
-fn answer(env: &JNIEnv<'_>, value: Option<String>) -> jstring {
+pub(super) fn answer(env: &JNIEnv<'_>, value: Option<String>) -> jstring {
     match value.and_then(|value| env.new_string(value).ok()) {
         Some(text) => text.into_raw(),
         None => std::ptr::null_mut(),

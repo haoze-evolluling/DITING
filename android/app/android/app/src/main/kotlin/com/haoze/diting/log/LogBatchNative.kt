@@ -5,8 +5,9 @@ package com.haoze.diting.log
 ///
 /// These calls replace a loop of per-row JNI crossings with one payload:
 ///
-/// * [queueSubmitMany] takes the `dns_log` rows of one engine batch and enqueues all of them under
-///   a single queue lock;
+/// * [dnsBatchSubmit] takes the engine's DNS batch and runs the counters, the classification and
+///   the writer queue in one call — the rows never come back to Kotlin for a re-pack;
+/// * [queueSubmitMany] enqueues an already-classified race/bootstrap batch under one queue lock;
 /// * [httpEvents] takes one packed batch of MITM relay decisions, feeds the request counters,
 ///   classifies the rows and enqueues them — the three steps that used to be three JNI calls per
 ///   request (`httpEvent` plus `queueSubmit`, with Kotlin unpacking and repacking the row between
@@ -39,21 +40,38 @@ internal fun LogNative.Companion.httpEvents(
     queue: Long,
     mode: String,
     packed: ByteArray,
-): LogHttpBatchOutcome {
+): LogBatchOutcome = readBatchOutcome(
+    instance.httpEvents(stats, queue, modeTag(mode), packed, System.currentTimeMillis()),
+    "HTTP event batch",
+)
+
+/// One DNS batch: counters, classification and the writer queue in a single crossing.
+///
+/// `packed` is the engine's own batch. The kernel classifies and enqueues it itself, so neither
+/// the rows nor a re-packed `queueSubmitMany` payload cross the boundary.
+internal fun LogNative.Companion.dnsBatchSubmit(
+    stats: Long,
+    queue: Long,
+    mode: String,
+    packed: ByteArray,
+): LogBatchOutcome = readBatchOutcome(
+    instance.dnsBatchSubmit(stats, queue, modeTag(mode), packed, System.currentTimeMillis()),
+    "DNS batch",
+)
+
+private fun readBatchOutcome(payload: ByteArray?, what: String): LogBatchOutcome {
     val reader = LogPayload.Reader(
-        requireNotNull(
-            instance.httpEvents(stats, queue, modeTag(mode), packed, System.currentTimeMillis()),
-        ) { "native HTTP event batch rejected the payload" },
+        requireNotNull(payload) { "native $what rejected the payload" },
     )
     return when (reader.u8()) {
-        0 -> LogHttpBatchOutcome.Closed
-        1 -> LogHttpBatchOutcome.Hidden
-        2 -> LogHttpBatchOutcome.Enqueued(
+        0 -> LogBatchOutcome.Closed
+        1 -> LogBatchOutcome.Hidden
+        2 -> LogBatchOutcome.Enqueued(
             overflow = reader.count(),
             batchFull = reader.u8() != 0,
             flushDelayMs = reader.i64(),
         )
-        else -> throw IllegalStateException("native HTTP event batch returned no status")
+        else -> throw IllegalStateException("native $what returned no status")
     }
 }
 

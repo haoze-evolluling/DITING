@@ -79,7 +79,8 @@ class Engine : TunnelEngine, AutoCloseable {
         if (error != null) throw IllegalStateException(error)
     }
 
-    override fun applyRuleSnapshot(json: String): String = nativeApplyRuleSnapshot(handle, json)
+    override fun applyRuleSnapshot(payload: ByteArray): String =
+        nativeApplyRuleSnapshotBytes(handle, payload)
 
     override fun setRewriteRules(json: String) {
         nativeSetRewriteRules(handle, json)
@@ -114,7 +115,8 @@ class Engine : TunnelEngine, AutoCloseable {
 
     override fun getDNSCacheStats(): String = nativeGetDnsCacheStats(handle)
 
-    override fun getDNSCacheEntries(limit: Long): String = nativeGetDnsCacheEntries(handle, limit)
+    override fun getDNSCacheSnapshot(limit: Long): ByteArray =
+        nativeGetDnsCacheSnapshot(handle, limit) ?: EMPTY_CACHE_SNAPSHOT
 
     override fun flowSnapshot(sinceSeq: Long, limit: Long): String =
         nativeFlowSnapshot(handle, sinceSeq, limit)
@@ -282,7 +284,7 @@ class Engine : TunnelEngine, AutoCloseable {
 
     private external fun nativeApplyDnsConfig(handle: Long, json: String): String?
 
-    private external fun nativeApplyRuleSnapshot(handle: Long, json: String): String
+    private external fun nativeApplyRuleSnapshotBytes(handle: Long, payload: ByteArray): String
 
     private external fun nativeSetRewriteRules(handle: Long, json: String)
 
@@ -300,7 +302,7 @@ class Engine : TunnelEngine, AutoCloseable {
 
     private external fun nativeGetDnsCacheStats(handle: Long): String
 
-    private external fun nativeGetDnsCacheEntries(handle: Long, limit: Long): String
+    private external fun nativeGetDnsCacheSnapshot(handle: Long, limit: Long): ByteArray?
 
     private external fun nativeFlowSnapshot(handle: Long, sinceSeq: Long, limit: Long): String
 
@@ -370,6 +372,9 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeSetHttpLogCallback(handle: Long, callback: HttpLogCallback?)
 
     private companion object {
+        /// An answer for a released handle: `u32 count = 0`, the mirror's empty snapshot.
+        val EMPTY_CACHE_SNAPSHOT = ByteArray(Int.SIZE_BYTES)
+
         /// Engines dropped without `close()` land here for the cleanup thread.
         private val deadEngines = ReferenceQueue<Engine>()
 

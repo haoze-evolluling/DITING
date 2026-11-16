@@ -1,7 +1,7 @@
 package com.haoze.diting.log
 
-import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteStatement
 
 /// `bootstrap_log` writer: the engine's packed bootstrap batches.
 ///
@@ -12,35 +12,38 @@ import android.content.Context
 object BootstrapLogWriter {
     private const val TABLE = "bootstrap_log"
 
+    private const val INSERT_SQL = "INSERT OR IGNORE INTO bootstrap_log " +
+        "(timestamp, ipId, ipName, ip, host, success, elapsedMs, fallbackUsed, message) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+
     /// `packed` is `u32 count | rows(bootstrap input)`; the kernel answers the writer rows in one
     /// call, so a burst of probes costs one JNI pair instead of one per host.
     fun writeBatch(context: Context, databaseName: String, packed: ByteArray) {
         if (packed.size <= Int.SIZE_BYTES) return
         val rows = LogNative.bootstrapRows(packed)
         if (rows.isEmpty()) return
-        val writer = LogTableWriters.of(
+        LogTableWriters.of(
             context,
             databaseName,
             TABLE,
             "diting-bootstrap-log",
-            ::values,
-        )
-        writer.submitAll(rows)
+            INSERT_SQL,
+            ::bindRow,
+        ).submitAll(rows)
     }
 
-    /// The kernel's row layout, unpacked into the `bootstrap_log` columns.
-    private fun values(row: ByteArray): ContentValues {
+    /// The kernel's row layout, bound straight into the compiled statement.
+    private fun bindRow(statement: SQLiteStatement, row: ByteArray) {
         val reader = LogPayload.Reader(row)
-        return ContentValues().apply {
-            put("timestamp", reader.i64())
-            put("ipId", reader.string())
-            put("ipName", reader.string())
-            put("ip", reader.string())
-            put("host", reader.string())
-            put("success", if (reader.u8() != 0) 1 else 0)
-            put("elapsedMs", reader.i64())
-            put("fallbackUsed", if (reader.u8() != 0) 1 else 0)
-            put("message", reader.optionalString())
-        }
+        statement.bindLong(1, reader.i64())
+        statement.bindString(2, reader.string())
+        statement.bindString(3, reader.string())
+        statement.bindString(4, reader.string())
+        statement.bindString(5, reader.string())
+        statement.bindLong(6, if (reader.u8() != 0) 1 else 0)
+        statement.bindLong(7, reader.i64())
+        statement.bindLong(8, if (reader.u8() != 0) 1 else 0)
+        val message = reader.optionalString()
+        if (message == null) statement.bindNull(9) else statement.bindString(9, message)
     }
 }

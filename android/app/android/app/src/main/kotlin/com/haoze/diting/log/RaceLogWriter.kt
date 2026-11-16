@@ -1,7 +1,7 @@
 package com.haoze.diting.log
 
-import android.content.ContentValues
 import android.content.Context
+import android.database.sqlite.SQLiteStatement
 
 /// Writes the engine's packed race batches into `dns_race_log`; provider names stay null, Dart
 /// resolves ids.
@@ -13,36 +13,49 @@ import android.content.Context
 object RaceLogWriter {
     private const val TABLE = "dns_race_log"
 
+    private const val INSERT_SQL = "INSERT OR IGNORE INTO dns_race_log " +
+        "(timestamp, queryName, queryType, strategy, providerCount, success, elapsedMs, " +
+        "selectedProviderId, selectedProviderName, selectedElapsedMs, winnerProviderId, " +
+        "winnerProviderName, winnerElapsedMs, fallbackUsed, fallbackSuccess, message) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+
     /// `packed` is `u32 count | rows(race input)`; the kernel answers the same framing with the
     /// `dns_race_log` rows, and the queue takes them all at once.
     fun writeBatch(context: Context, databaseName: String, packed: ByteArray) {
         if (packed.size <= Int.SIZE_BYTES) return
         val rows = LogNative.raceRows(packed)
         if (rows.isEmpty()) return
-        val writer = LogTableWriters.of(context, databaseName, TABLE, "diting-race-log", ::values)
-        writer.submitAll(rows)
+        LogTableWriters.of(context, databaseName, TABLE, "diting-race-log", INSERT_SQL, ::bindRow)
+            .submitAll(rows)
     }
 
-    /// The kernel's row layout, unpacked into the `dns_race_log` columns.
-    private fun values(row: ByteArray): ContentValues {
+    /// The kernel's row layout, bound straight into the compiled statement.
+    private fun bindRow(statement: SQLiteStatement, row: ByteArray) {
         val reader = LogPayload.Reader(row)
-        return ContentValues().apply {
-            put("timestamp", reader.i64())
-            put("queryName", reader.string())
-            put("queryType", reader.i32())
-            put("strategy", reader.string())
-            put("providerCount", reader.i32())
-            put("success", if (reader.u8() != 0) 1 else 0)
-            put("elapsedMs", reader.i64())
-            put("selectedProviderId", reader.optionalString())
-            put("selectedProviderName", null as String?)
-            put("selectedElapsedMs", reader.optionalLong())
-            put("winnerProviderId", reader.optionalString())
-            put("winnerProviderName", null as String?)
-            put("winnerElapsedMs", reader.optionalLong())
-            put("fallbackUsed", if (reader.u8() != 0) 1 else 0)
-            put("fallbackSuccess", if (reader.u8() != 0) 1 else 0)
-            put("message", reader.optionalString())
-        }
+        statement.bindLong(1, reader.i64())
+        statement.bindString(2, reader.string())
+        statement.bindLong(3, reader.i32().toLong())
+        statement.bindString(4, reader.string())
+        statement.bindLong(5, reader.i32().toLong())
+        statement.bindLong(6, if (reader.u8() != 0) 1 else 0)
+        statement.bindLong(7, reader.i64())
+        bindOptionalString(statement, 8, reader.optionalString())
+        // Provider names are resolved by Dart from the ids above.
+        statement.bindNull(9)
+        bindOptionalLong(statement, 10, reader.optionalLong())
+        bindOptionalString(statement, 11, reader.optionalString())
+        statement.bindNull(12)
+        bindOptionalLong(statement, 13, reader.optionalLong())
+        statement.bindLong(14, if (reader.u8() != 0) 1 else 0)
+        statement.bindLong(15, if (reader.u8() != 0) 1 else 0)
+        bindOptionalString(statement, 16, reader.optionalString())
+    }
+
+    private fun bindOptionalString(statement: SQLiteStatement, position: Int, value: String?) {
+        if (value == null) statement.bindNull(position) else statement.bindString(position, value)
+    }
+
+    private fun bindOptionalLong(statement: SQLiteStatement, position: Int, value: Long?) {
+        if (value == null) statement.bindNull(position) else statement.bindLong(position, value)
     }
 }

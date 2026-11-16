@@ -28,6 +28,36 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_dnsBatch<'local>(
     answer_bytes(&env, answer)
 }
 
+/// `LogNative.dnsBatchSubmit(stats, queue, modeTag, packed, nowMs): ByteArray?`
+///
+/// The DNS counterpart of [`Java_com_haoze_diting_log_LogNative_httpEvents`]: the counters, the
+/// row classification and the writer queue are fed in one crossing, so the rows never travel back
+/// to Kotlin just to be re-packed into another `queueSubmitMany` payload.
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_dnsBatchSubmit<'local>(
+    mut env: JNIEnv<'local>,
+    _this: JObject<'local>,
+    stats: jlong,
+    queue: jlong,
+    mode_tag: jint,
+    packed: JByteArray<'local>,
+    now_ms: jlong,
+) -> jbyteArray {
+    let answer = guarded(|| {
+        let mode = mode_from_tag(mode_tag)?;
+        with_bytes(&mut env, &packed, |payload| unsafe {
+            with_handle(stats, |stats: &crate::stats::Stats| {
+                with_handle(queue, |queue: &crate::queue::Queue| {
+                    api::dns_batch_submit(stats, queue, mode, payload, now_ms)
+                })
+                .flatten()
+            })
+            .flatten()
+        })
+    });
+    answer_bytes(&env, answer)
+}
+
 /// `LogNative.httpEvent(stats, modeTag, packed, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_httpEvent<'local>(

@@ -2,7 +2,7 @@
 //! packed rows plus the policy around it (when a batch is worth writing, what to drop when the
 //! database stays busy, how long to back off).
 //!
-//! The SQL, the compiled statements, the `ContentValues` and the timers stay in Kotlin; what moves
+//! The SQL, the compiled statements, the row binding and the timers stay in Kotlin; what moves
 //! here is every number and every ordering decision, so the four tables and the HTTP writer cannot
 //! end up with four different ideas of "full".
 

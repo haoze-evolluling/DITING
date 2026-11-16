@@ -11,7 +11,13 @@ package com.haoze.diting.log
 /// The `Long` handles are boxed kernels (`Stats`, `Traffic`, `Health`, `Attr`, `Queue`); each one
 /// is owned by exactly one Kotlin object and freed where that object used to be cleared.
 internal class LogNative private constructor() {
-    external fun dnsBatch(stats: Long, modeTag: Int, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun dnsBatchSubmit(
+        stats: Long,
+        queue: Long,
+        modeTag: Int,
+        packed: ByteArray,
+        nowMs: Long,
+    ): ByteArray?
     external fun httpEvents(
         stats: Long,
         queue: Long,
@@ -121,18 +127,6 @@ internal class LogNative private constructor() {
             DnsLogWriter.MODE_BLOCKED_AND_ERRORS -> MODE_TAG_BLOCKED_AND_ERRORS
             DnsLogWriter.MODE_OFF -> MODE_TAG_OFF
             else -> MODE_TAG_ALL
-        }
-
-        /// Counters are fed and rows classified; the answer is the packed `dns_log` rows.
-        ///
-        /// The bytes are exactly what [queueSubmitMany] takes, so a row the kernel classified never
-        /// gets rebuilt in Kotlin: `DnsLogWriter` only unpacks them into `ContentValues`.
-        fun dnsBatch(stats: Long, mode: String, packed: ByteArray): List<ByteArray> {
-            val payload = requireNotNull(
-                instance.dnsBatch(stats, modeTag(mode), packed, System.currentTimeMillis()),
-            ) { "native DNS batch rejected the payload" }
-            val reader = LogPayload.Reader(payload)
-            return List(reader.count()) { reader.blob() }
         }
 
         /// The two retention windows and the tables one sweep visits.
@@ -544,25 +538,14 @@ internal class LogNative private constructor() {
             )
         }
 
-        /// The `dns_cache` rows for one engine snapshot; the bytes are what `DnsCacheMirror` binds.
-        fun mirrorRows(entries: List<LogMirrorEntry>): List<ByteArray> {
-            val packed = LogPayload.pack { out ->
-                out.writeInt(entries.size)
-                for (entry in entries) {
-                    LogPayload.writeString(out, entry.key)
-                    LogPayload.writeString(out, entry.queryName)
-                    out.writeInt(entry.queryType)
-                    out.writeInt(entry.queryClass)
-                    out.writeLong(entry.createdAt)
-                    out.writeLong(entry.expiresAt)
-                    out.writeLong(entry.lastHitAt)
-                    out.writeLong(entry.hitCount)
-                    out.writeLong(entry.originalTtlSeconds)
-                    out.writeInt(entry.responseSize)
-                }
-            }
+        /// The `dns_cache` rows for one engine snapshot.
+        ///
+        /// `snapshot` is `Engine.getDNSCacheSnapshot`'s packed entries, which are already in this
+        /// kernel's mirror input layout, so the bytes are forwarded without a JSON parse or a
+        /// Kotlin-side repack.
+        fun mirrorRows(snapshot: ByteArray): List<ByteArray> {
             val reader = LogPayload.Reader(
-                requireNotNull(instance.mirrorRows(packed)) {
+                requireNotNull(instance.mirrorRows(snapshot)) {
                     "native cache mirror rejected the snapshot"
                 },
             )

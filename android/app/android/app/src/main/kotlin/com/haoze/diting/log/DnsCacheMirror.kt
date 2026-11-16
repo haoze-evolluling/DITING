@@ -1,10 +1,7 @@
 package com.haoze.diting.log
 
-import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import org.json.JSONArray
-import org.json.JSONObject
+import android.database.sqlite.SQLiteStatement
 import com.haoze.diting.engine.TunnelEngine
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -15,10 +12,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 /// Mirrors the engine's in-memory DNS cache into the `dns_cache` table.
 ///
 /// The engine cache is a sharded LRU with no persistence, so the Flutter cache views had nothing to
-/// read: rows only ever existed in the legacy build. `Engine.getDNSCacheEntries` now exposes a
-/// snapshot, and this class copies it on a timer. The table is a read-only projection: response
-/// bytes are not needed by any Dart reader, so they are stored empty — that decision, the row cap
-/// and the cadence live in the log kernel (`rust/diting-log-core/src/mirror.rs`).
+/// read: rows only ever existed in the legacy build. `Engine.getDNSCacheSnapshot` now returns the
+/// hottest entries as packed bytes in the log kernel's mirror input layout, so this class forwards
+/// them untouched: no JSON document, no per-entry model and no re-pack cross the boundary. The
+/// table is a read-only projection: response bytes are not needed by any Dart reader, so they are
+/// stored empty — that decision, the row cap and the cadence live in the log kernel
+/// (`rust/diting-log-core/src/mirror.rs`).
 class DnsCacheMirror(
     private val context: Context,
     private val databaseName: String,
@@ -53,8 +52,9 @@ class DnsCacheMirror(
 
     private fun publish() {
         if (closed.get()) return
-        val entries = try {
-            JSONArray(engine.getDNSCacheEntries(layout.maxRows))
+        val rows = try {
+            // Engine bytes -> kernel rows: one crossing, no intermediate model.
+            LogNative.mirrorRows(engine.getDNSCacheSnapshot(layout.maxRows))
         } catch (t: Throwable) {
             DbWriteHealth.warn(TAG, "Unable to read engine cache snapshot", t)
             return
@@ -67,19 +67,18 @@ class DnsCacheMirror(
             is LegacyDb.Open.Unavailable -> return
         }
         if (!LegacyDb.hasTable(db, TABLE)) return
-        val rows = LogNative.mirrorRows(readEntries(entries))
         db.beginTransaction()
         try {
             // Replace the projection wholesale: entries the engine evicted or expired must
-            // disappear, and the snapshot is already capped to the hottest rows.
+            // disappear, and the snapshot is already capped to the hottest rows. One compiled
+            // `INSERT OR REPLACE` for the whole snapshot, bound straight from the kernel bytes.
             db.delete(TABLE, null, null)
-            for (row in rows) {
-                db.insertWithOnConflict(
-                    TABLE,
-                    null,
-                    toValues(row),
-                    SQLiteDatabase.CONFLICT_REPLACE,
-                )
+            db.compileStatement(INSERT_SQL).use { statement ->
+                for (row in rows) {
+                    statement.clearBindings()
+                    bindRow(statement, row)
+                    statement.executeInsert()
+                }
             }
             db.setTransactionSuccessful()
         } catch (t: Throwable) {
@@ -89,51 +88,31 @@ class DnsCacheMirror(
         }
     }
 
-    /// `Engine.getDNSCacheEntries`' JSON, in the order the kernel expects.
-    private fun readEntries(entries: JSONArray): List<LogMirrorEntry> {
-        val rows = ArrayList<LogMirrorEntry>(entries.length())
-        for (index in 0 until entries.length()) {
-            val obj = entries.optJSONObject(index) ?: continue
-            rows += toEntry(obj)
-        }
-        return rows
-    }
-
-    private fun toEntry(obj: JSONObject): LogMirrorEntry = LogMirrorEntry(
-        key = obj.optString("key"),
-        queryName = obj.optString("queryName"),
-        queryType = obj.optInt("queryType"),
-        queryClass = obj.optInt("queryClass"),
-        createdAt = obj.optLong("createdAt"),
-        expiresAt = obj.optLong("expiresAt"),
-        lastHitAt = obj.optLong("lastHitAt"),
-        hitCount = obj.optLong("hitCount"),
-        originalTtlSeconds = obj.optLong("originalTtlSeconds"),
-        responseSize = obj.optInt("responseSize"),
-    )
-
-    /// The kernel's row layout, unpacked into the `dns_cache` columns.
-    private fun toValues(row: ByteArray): ContentValues {
+    /// The kernel's row layout, bound in [INSERT_SQL] order.
+    private fun bindRow(statement: SQLiteStatement, row: ByteArray) {
         val reader = LogPayload.Reader(row)
-        return ContentValues().apply {
-            put("key", reader.string())
-            put("queryName", reader.string())
-            put("queryType", reader.i32())
-            put("queryClass", reader.i32())
-            put("createdAt", reader.i64())
-            put("expiresAt", reader.i64())
-            put("lastHitAt", reader.i64())
-            put("hitCount", reader.i64())
-            put("originalTtlSeconds", reader.i64())
-            // NOT NULL columns the Dart readers never touch: the projection has no wire bytes.
-            put("ttlOffsets", reader.string())
-            put("response", reader.blob())
-            put("responseSize", reader.i32())
-        }
+        statement.bindString(1, reader.string())
+        statement.bindString(2, reader.string())
+        statement.bindLong(3, reader.i32().toLong())
+        statement.bindLong(4, reader.i32().toLong())
+        statement.bindLong(5, reader.i64())
+        statement.bindLong(6, reader.i64())
+        statement.bindLong(7, reader.i64())
+        statement.bindLong(8, reader.i64())
+        statement.bindLong(9, reader.i64())
+        // NOT NULL columns the Dart readers never touch: the projection has no wire bytes.
+        statement.bindString(10, reader.string())
+        statement.bindBlob(11, reader.blob())
+        statement.bindLong(12, reader.i32().toLong())
     }
 
     private companion object {
         const val TAG = "DnsCacheMirror"
         const val TABLE = "dns_cache"
+
+        const val INSERT_SQL = "INSERT OR REPLACE INTO dns_cache " +
+            "(key, queryName, queryType, queryClass, createdAt, expiresAt, lastHitAt, hitCount, " +
+            "originalTtlSeconds, ttlOffsets, response, responseSize) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     }
 }
