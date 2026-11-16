@@ -38,9 +38,9 @@ object RuleSnapshotStore {
         val filterEnabled = prefs.getBoolean(KEY_DOMAIN_RULES_ENABLED, true)
         val appAllowlist = if (dataset == RuleDataset.NORMAL) readAppAllowlist(context) else emptyMap()
 
-        val dao = RuleSnapshotDao.open(context, dataset.databaseName())
+        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase(context))
         if (dao == null) {
-            Log.w(TAG, "Rule database ${dataset.databaseName()} unavailable; snapshot is empty")
+            Log.w(TAG, "Rule database ${dataset.rulesDatabase(context)} unavailable; snapshot is empty")
             return RuleSnapshotNative.buildSnapshotBytes(
                 RuleSnapshotPayload.encode(emptyInput(filterEnabled)),
             )
@@ -103,7 +103,7 @@ object RuleSnapshotStore {
 
     /** `Engine.setRewriteRules` flat domain -> target map; '' when empty, matching the Dart encoder. */
     fun buildRewriteRulesJson(context: Context, dataset: RuleDataset): String {
-        val dao = RuleSnapshotDao.open(context, dataset.databaseName()) ?: return ""
+        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase(context)) ?: return ""
         return try {
             // Trimmed, blank-free and one row per pattern (oldest wins), then the flat JSON map.
             val targets = JSONObject()
@@ -122,7 +122,7 @@ object RuleSnapshotStore {
      */
     fun refreshIndexes(context: Context, dataset: RuleDataset) {
         val indexDirectory = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
-        val dao = RuleSnapshotDao.open(context, dataset.databaseName()) ?: return
+        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase(context)) ?: return
         try {
             val triesFresh = isStampCurrent(indexDirectory, dao)
             val block = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.BLOCK)

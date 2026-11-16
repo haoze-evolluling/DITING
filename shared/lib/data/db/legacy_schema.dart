@@ -1,7 +1,9 @@
-/// DDL for the legacy Room databases plus the server-mode log store, verbatim from `sqlite_master`.
-/// A mismatch raises no error; it makes reads look right while writes differ (no unique index lets
-/// a rule be inserted twice).
+/// DDL for the legacy combined databases, the split-layout stores and the global app database.
+/// The legacy DDL is verbatim from `sqlite_master`. A mismatch raises no error; it makes reads look
+/// right while writes differ (no unique index lets a rule be inserted twice).
 library;
+
+import 'package:diting_shared/data/db/storage_contract.dart';
 
 abstract final class LegacySchema {
   static const mainVersion = 4;
@@ -10,40 +12,32 @@ abstract final class LegacySchema {
 
   static const serverVersion = 3;
 
-  /// Server mode's own log store. It is a new file (never a legacy Room database), so it starts at
-  /// version 1 and holds only the runtime tables the server writes.
+  /// Legacy server log store and every split-layout store start at version 1: they are new files,
+  /// never upgraded legacy Room databases.
   static const serverLogVersion = 1;
 
+  static const splitVersion = 1;
+
+  /// Explicit registry: an unknown file name must fail at development time instead of silently
+  /// inheriting the full legacy schema.
   static int versionOf(String fileName) => switch (fileName) {
-    'diting_express' => expressVersion,
-    'diting_dns_rules' => serverVersion,
-    'diting_server_logs' => serverLogVersion,
-    _ => mainVersion,
+    StorageContract.legacyNormalDatabase => mainVersion,
+    StorageContract.legacyExpressDatabase => expressVersion,
+    StorageContract.serverRulesDatabase => serverVersion,
+    StorageContract.legacyServerLogsDatabase => serverLogVersion,
+    StorageContract.normalRulesDatabase => splitVersion,
+    StorageContract.normalLogsDatabase => splitVersion,
+    StorageContract.expressRulesDatabase => splitVersion,
+    StorageContract.expressLogsDatabase => splitVersion,
+    StorageContract.serverLogsDatabase => splitVersion,
+    StorageContract.appDatabase => splitVersion,
+    _ => throw ArgumentError.value(fileName, 'fileName', 'unknown database'),
   };
 
   /// Order matters: `*_source` tables reference the main tables, so parents come first to keep
   /// `PRAGMA foreign_key_check` output readable.
   static List<String> statementsFor(String fileName) => switch (fileName) {
-    'diting_dns_rules' => [
-      ..._ruleTables,
-      ..._subscriptionTables,
-      ..._ruleIndexes,
-    ],
-    'diting_express' => [
-      ..._ruleTables,
-      ..._subscriptionTables,
-      ..._logTables,
-      ..._ruleIndexes,
-      ..._subscriptionIndexes,
-      ..._logIndexes,
-    ],
-    // A dedicated server log store: no rule or subscription tables, so server-mode logging never
-    // touches the normal/express files.
-    'diting_server_logs' => [
-      ..._logTables,
-      ..._logIndexes,
-    ],
-    _ => [
+    StorageContract.legacyNormalDatabase => [
       ..._ruleTables,
       ..._subscriptionTables,
       ..._logTables,
@@ -57,6 +51,42 @@ abstract final class LegacySchema {
       ..._automationTables,
       ..._automationIndexes,
     ],
+    StorageContract.legacyExpressDatabase => [
+      ..._ruleTables,
+      ..._subscriptionTables,
+      ..._logTables,
+      ..._ruleIndexes,
+      ..._subscriptionIndexes,
+      ..._logIndexes,
+    ],
+    StorageContract.serverRulesDatabase => [
+      ..._ruleTables,
+      ..._subscriptionTables,
+      ..._ruleIndexes,
+    ],
+    StorageContract.legacyServerLogsDatabase ||
+    StorageContract.serverLogsDatabase => [..._logTables, ..._logIndexes],
+    StorageContract.normalRulesDatabase ||
+    StorageContract.expressRulesDatabase => [
+      ..._ruleTables,
+      ..._subscriptionTables,
+      ..._ruleIndexes,
+      ..._subscriptionIndexes,
+    ],
+    StorageContract.normalLogsDatabase => [
+      ..._logTables,
+      _httpRequestLog,
+      ..._httpRequestLogIndexes,
+      _appTrafficDaily,
+      ..._appTrafficDailyIndexes,
+      ..._logIndexes,
+    ],
+    StorageContract.expressLogsDatabase => [..._logTables, ..._logIndexes],
+    StorageContract.appDatabase => [
+      ..._automationTables,
+      ..._automationIndexes,
+    ],
+    _ => throw ArgumentError.value(fileName, 'fileName', 'unknown database'),
   };
 
   static const _blockRule = '''
@@ -107,6 +137,46 @@ CREATE TABLE `mirror_template` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     _cosmeticRule,
     _cosmeticRuleSource,
     _mirrorTemplate,
+  ];
+
+  /// Table names of the rule/subscription/log groups, used by the storage migrator. Keep in sync
+  /// with the DDL above; the schema tests assert the copies exist.
+  static const ruleTableNames = <String>[
+    'block_rule',
+    'block_rule_source',
+    'allow_rule',
+    'allow_rule_source',
+    'rewrite_rule',
+    'rewrite_rule_source',
+    'go_url_rule',
+    'go_url_rule_source',
+    'cosmetic_rule',
+    'cosmetic_rule_source',
+    'mirror_template',
+  ];
+
+  static const subscriptionTableNames = <String>[
+    'subscription',
+    'subscription_group',
+    'subscription_auto_update_item',
+  ];
+
+  static const logTableNames = <String>[
+    'dns_cache',
+    'dns_log',
+    'dns_race_log',
+    'bootstrap_log',
+  ];
+
+  static const httpTrafficTableNames = <String>[
+    'http_request_log',
+    'app_traffic_daily',
+  ];
+
+  static const automationTableNames = <String>[
+    'automation_rule',
+    'automation_profile',
+    'automation_event',
   ];
 
   static const _subscription = '''

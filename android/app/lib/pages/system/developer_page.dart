@@ -8,6 +8,7 @@ import 'dart:math';
 
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
 import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
@@ -154,12 +155,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
   Future<String> _vacuum() async {
     var freed = 0;
     final touched = <String>[];
-    for (final fileName in const [
-      LegacyDatabase.mainFile,
-      LegacyDatabase.expressFile,
-      LegacyDatabase.serverFile,
-      LegacyDatabase.serverLogFile,
-    ]) {
+    for (final fileName in StorageContract.allKnownDatabases) {
       final db = await LegacyDatabase.open(fileName, create: false);
       if (db == null) continue;
       try {

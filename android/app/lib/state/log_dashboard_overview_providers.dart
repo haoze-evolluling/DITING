@@ -172,18 +172,21 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
 
   // Express/server, off mode, a missing database and an older schema all mean no HTTPS rows.
   var httpStats = const HttpRequestDailyStats.empty();
-  final mainDb = await ref.watch(mainLogDatabaseProvider.future);
-  if (!off && normal && mainDb != null) {
-    try {
-      final parsed = core.rows(
-        'http.daily',
-        await _raw(mainDb, 'http.daily', {'since': sinceMs}),
-      );
-      if (parsed.isNotEmpty) {
-        httpStats = HttpRequestDailyStats.fromParsed(parsed.first);
+  Database? mainDb;
+  if (!off && normal) {
+    mainDb = await ref.watch(normalLogDatabaseProvider.future);
+    if (mainDb != null) {
+      try {
+        final parsed = core.rows(
+          'http.daily',
+          await _raw(mainDb, 'http.daily', {'since': sinceMs}),
+        );
+        if (parsed.isNotEmpty) {
+          httpStats = HttpRequestDailyStats.fromParsed(parsed.first);
+        }
+      } on DatabaseException {
+        httpStats = const HttpRequestDailyStats.empty();
       }
-    } on DatabaseException {
-      httpStats = const HttpRequestDailyStats.empty();
     }
   }
 

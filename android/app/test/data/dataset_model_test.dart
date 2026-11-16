@@ -15,12 +15,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  ProviderContainer container({String workMode = 'normal'}) {
+  ProviderContainer container({String workMode = 'normal', int layout = 0}) {
     final c = ProviderContainer(
       overrides: [
         legacyPrefsStoreProvider.overrideWithValue(
           MemoryLegacyPrefsStore({
-            'diting_settings': {'app_work_mode': workMode},
+            'diting_settings': {
+              'app_work_mode': workMode,
+              'storage_layout_version': layout,
+            },
             'dns_vpn_prefs': const {},
             'diting_express_prefs': const {},
             'diting_dns_mode_prefs': const {},
@@ -33,25 +36,75 @@ void main() {
   }
 
   group('数据集映射', () {
-    test('普通模式：dns_vpn_prefs + diting_database', () {
+    test('普通模式：dns_vpn_prefs + 拆分布局规则库', () {
       final dataSet = DataSet.fromWorkModeValue('normal');
       expect(dataSet, DataSet.normal);
       expect(dataSet.prefsContainer, LegacySettings.uiContainer);
-      expect(dataSet.ruleDatabase, LegacyDatabase.mainFile);
+      expect(dataSet.ruleDatabase, LegacyDatabase.normalRulesFile);
+      expect(dataSet.legacyRuleDatabase, LegacyDatabase.mainFile);
+      expect(dataSet.logsDatabase, LegacyDatabase.normalLogsFile);
+      expect(dataSet.legacyLogsDatabase, LegacyDatabase.mainFile);
     });
 
-    test('极速模式：diting_express_prefs + diting_express', () {
+    test('极速模式：diting_express_prefs + 拆分布局规则库', () {
       final dataSet = DataSet.fromWorkModeValue('express');
       expect(dataSet, DataSet.express);
       expect(dataSet.prefsContainer, LegacySettings.expressContainer);
-      expect(dataSet.ruleDatabase, LegacyDatabase.expressFile);
+      expect(dataSet.ruleDatabase, LegacyDatabase.expressRulesFile);
+      expect(dataSet.legacyRuleDatabase, LegacyDatabase.expressFile);
+      expect(dataSet.logsDatabase, LegacyDatabase.expressLogsFile);
+      expect(dataSet.legacyLogsDatabase, LegacyDatabase.expressFile);
     });
 
-    test('服务器模式沿用旧版 dns 值：diting_dns_mode_prefs + diting_dns_rules', () {
+    test('服务器模式沿用旧版 dns 值：规则库不变，日志库拆分', () {
       final dataSet = DataSet.fromWorkModeValue('dns');
       expect(dataSet, DataSet.server);
       expect(dataSet.prefsContainer, LegacySettings.serverContainer);
       expect(dataSet.ruleDatabase, LegacyDatabase.serverFile);
+      expect(dataSet.legacyRuleDatabase, LegacyDatabase.serverFile);
+      expect(dataSet.logsDatabase, LegacyDatabase.serverLogsFile);
+      expect(dataSet.legacyLogsDatabase, LegacyDatabase.serverLogFile);
+    });
+
+    test('迁移完成前仍读旧布局', () {
+      final c = container();
+      expect(c.read(activeRuleDatabaseProvider), LegacyDatabase.mainFile);
+      expect(c.read(activeLogDatabaseFileProvider), LegacyDatabase.mainFile);
+
+      c.read(workModeProvider.notifier).select(AppWorkMode.server);
+      expect(
+        c.read(activeLogDatabaseFileProvider),
+        LegacyDatabase.serverLogFile,
+      );
+    });
+
+    test('迁移完成后每个模式读自己的规则库与日志库', () {
+      final c = container(layout: 1);
+      expect(
+        c.read(activeRuleDatabaseProvider),
+        LegacyDatabase.normalRulesFile,
+      );
+      expect(
+        c.read(activeLogDatabaseFileProvider),
+        LegacyDatabase.normalLogsFile,
+      );
+
+      c.read(workModeProvider.notifier).select(AppWorkMode.express);
+      expect(
+        c.read(activeRuleDatabaseProvider),
+        LegacyDatabase.expressRulesFile,
+      );
+      expect(
+        c.read(activeLogDatabaseFileProvider),
+        LegacyDatabase.expressLogsFile,
+      );
+
+      c.read(workModeProvider.notifier).select(AppWorkMode.server);
+      expect(c.read(activeRuleDatabaseProvider), LegacyDatabase.serverFile);
+      expect(
+        c.read(activeLogDatabaseFileProvider),
+        LegacyDatabase.serverLogsFile,
+      );
     });
 
     test('服务器日志使用独立文件，不与普通/极速共享', () {

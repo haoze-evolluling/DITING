@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import com.haoze.diting.control.BlockPauseLink
+import com.haoze.diting.core.rule.StorageContract
 import com.haoze.diting.log.LegacyDb
 import com.haoze.diting.net.NetworkContextProbe
 import org.json.JSONArray
@@ -19,7 +20,6 @@ import java.util.Calendar
 /// 重复触发。规则存储结构见 `automation_models.dart` 的 `AutomationSpec`。
 object AutomationEngine {
     private const val TAG = "AutomationEngine"
-    private const val DB_NAME = "diting_database"
     private const val COOLDOWN_MS = 60_000L
 
     private data class Rule(
@@ -63,7 +63,7 @@ object AutomationEngine {
         context.getSharedPreferences(AutomationContract.PREFS_NAME, Context.MODE_PRIVATE)
 
     private fun loadRules(context: Context): List<Rule> {
-        val open = LegacyDb.open(context, DB_NAME)
+        val open = LegacyDb.open(context, StorageContract.appDatabase(context))
         val db = (open as? LegacyDb.Open.Ready)?.db ?: return emptyList()
         val rules = ArrayList<Rule>()
         runCatching {
@@ -209,7 +209,7 @@ object AutomationEngine {
         outcome: String,
         now: Long,
     ) {
-        val open = LegacyDb.open(context, DB_NAME)
+        val open = LegacyDb.open(context, StorageContract.appDatabase(context))
         val db = (open as? LegacyDb.Open.Ready)?.db ?: return
         runCatching {
             db.insert(

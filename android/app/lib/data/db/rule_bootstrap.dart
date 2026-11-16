@@ -39,13 +39,14 @@ Future<RuleBootstrap> bootstrapRules(
   LegacySettings settings, {
   required int versionCode,
 }) async {
-  final opened = await _openRuleDatabase(dataSet.ruleDatabase);
+  final databaseFile = dataSet.ruleDatabaseFor(settings.storageLayout);
+  final opened = await _openRuleDatabase(databaseFile);
   final db = opened.database;
   if (db == null) {
     return (repository: null);
   }
 
-  final repository = RuleRepository(db, sourceFile: dataSet.ruleDatabase);
+  final repository = RuleRepository(db, sourceFile: databaseFile);
   // A recovered connection is read-only in spirit: re-running the preset seed on it could block on
   // the very transaction that wedged the original open, so only seed a normal open.
   if (dataSet.seedsPresetWhitelist && !opened.recovered) {

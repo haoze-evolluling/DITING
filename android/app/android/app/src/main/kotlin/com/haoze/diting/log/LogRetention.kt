@@ -128,7 +128,7 @@ internal object LogRetention {
         /// the default and the bounds, so an absent preference is not spelled again here.
         fun logRetentionDaysOrNull(): Int? = read(prefsName, KEY_LOG_RETENTION_DAYS)
 
-        /// The traffic window is global: those tables exist in diting_database only.
+        /// The traffic window is global: only normal mode's log database has those tables.
         fun trafficRetentionDaysOrNull(): Int? = read(PREFS_GLOBAL, KEY_TRAFFIC_RETENTION_DAYS)
 
         private fun read(prefsName: String, key: String): Int? = runCatching {

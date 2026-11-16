@@ -5,7 +5,9 @@ library;
 import 'package:diting_android/data/db/dns_query_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
+import 'package:diting_shared/data/db/datasets.dart';
 import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -254,8 +256,8 @@ Future<RequestFeedPage> _loadFeedPage(
       ? Future.value(const <HttpRequestRecord>[])
       : () async {
           final db = await (watch
-              ? ref.watch(mainLogDatabaseProvider.future)
-              : ref.read(mainLogDatabaseProvider.future));
+              ? ref.watch(normalLogDatabaseProvider.future)
+              : ref.read(normalLogDatabaseProvider.future));
           if (db == null) return const <HttpRequestRecord>[];
           return HttpRequestRepository(db).recent(
             limit: window,
@@ -459,7 +461,7 @@ final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
 
   Future<Map<String, int>> httpCounts() async {
     if (noHttp) return const {};
-    final db = await ref.watch(mainLogDatabaseProvider.future);
+    final db = await ref.watch(normalLogDatabaseProvider.future);
     return db == null ? const {} : HttpRequestRepository(db).countByPackage();
   }
 
@@ -483,9 +485,13 @@ final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
   ];
 });
 
-/// The main `diting_database`, the only one with `http_request_log` and `app_traffic_daily`.
-final mainLogDatabaseProvider = FutureProvider<Database?>(
-  (ref) => LegacyDatabase.open(LegacyDatabase.mainFile),
+/// Normal mode's log database, the only one with `http_request_log` and `app_traffic_daily`.
+final normalLogDatabaseFileProvider = Provider<String>((ref) {
+  return DataSet.normal.logsDatabaseFor(ref.watch(storageLayoutProvider));
+});
+
+final normalLogDatabaseProvider = FutureProvider<Database?>(
+  (ref) => LegacyDatabase.open(ref.watch(normalLogDatabaseFileProvider)),
 );
 
 /// Empty result reused for normal empty states.

@@ -131,11 +131,12 @@ class DitingDnsServerService : Service() {
                     DnsLogWriter.MODE_OFF
                 }
                 RequestStats.reset()
+                val logDatabase = RuleDataset.DNS_MODE.logsDatabase(this@DitingDnsServerService)
                 created.setBatchLogCallback(object : BatchLogCallback {
                     override fun onDNSQueryBatch(rows: ByteArray) {
                         DnsLogWriter.writeBatch(
                             this@DitingDnsServerService,
-                            DnsLogWriter.DB_SERVER,
+                            logDatabase,
                             logMode,
                             rows,
                         )
@@ -145,7 +146,7 @@ class DitingDnsServerService : Service() {
                     override fun onRaceEvents(rows: ByteArray) {
                         RaceLogWriter.writeBatch(
                             this@DitingDnsServerService,
-                            DnsLogWriter.DB_SERVER,
+                            logDatabase,
                             rows,
                         )
                     }
@@ -154,7 +155,7 @@ class DitingDnsServerService : Service() {
                     override fun onBootstrapEvents(rows: ByteArray) {
                         BootstrapLogWriter.writeBatch(
                             this@DitingDnsServerService,
-                            DnsLogWriter.DB_SERVER,
+                            logDatabase,
                             rows,
                         )
                     }
@@ -176,12 +177,12 @@ class DitingDnsServerService : Service() {
                 // no HTTP/traffic tables.
                 LogRetention.start(
                     context = this,
-                    databaseName = DnsLogWriter.DB_SERVER,
+                    databaseName = logDatabase,
                     prefsName = PREFS_NAME,
                     includeHttpAndTraffic = false,
                 )
                 // Mirrored periodically: the server has no VpnService data plane to hang it on.
-                cacheMirror = DnsCacheMirror(this, DnsLogWriter.DB_SERVER, created).also { it.start() }
+                cacheMirror = DnsCacheMirror(this, logDatabase, created).also { it.start() }
                 // Authoritative start time for the uptime figure; the UI process can be recreated.
                 startedAt = System.currentTimeMillis()
                 lastError = null
@@ -392,6 +393,7 @@ class DitingDnsServerService : Service() {
         private const val DEFAULT_PORT = 1053
         private const val PREFS_NAME = "diting_dns_mode_prefs"
         private const val KEY_SERVICE_ACTIVE = "service_active"
+        // Log database name is resolved from RuleDataset.DNS_MODE + the storage layout marker.
         private const val KEY_LOCAL_PORT = "local_listen_port"
         private const val KEY_LOG_QUERIES = "log_queries"
 

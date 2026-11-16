@@ -9,19 +9,15 @@ import 'package:diting_android/data/db/race_log_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
-import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Each mode reads its own log file: normal `diting_database`, express `diting_express`, and
-/// server `diting_server_logs` (created from `LegacySchema`).
+/// Each mode reads its own log database. The layout decides whether that is the split log store or
+/// the pre-migration combined file; the mode decides which data set owns it.
 final activeLogDatabaseFileProvider = Provider<String>((ref) {
-  final mode = ref.watch(workModeProvider);
-  return switch (mode) {
-    AppWorkMode.express => LegacyDatabase.expressFile,
-    AppWorkMode.server => LegacyDatabase.serverLogFile,
-    AppWorkMode.normal => LegacyDatabase.mainFile,
-  };
+  return ref
+      .watch(activeDataSetProvider)
+      .logsDatabaseFor(ref.watch(storageLayoutProvider));
 });
 
 /// `null` on fresh installs, where the Dart layer has not created the file yet.

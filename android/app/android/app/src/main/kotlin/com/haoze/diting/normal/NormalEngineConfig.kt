@@ -2,9 +2,9 @@ package com.haoze.diting.normal
 
 import android.util.Log
 import com.haoze.diting.control.BlockPauseLink
+import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.engine.Engine
 import com.haoze.diting.engine.OutboundProxyStatusCallback
-import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.EngineLogCallbacks
 import com.haoze.diting.log.PackageUids
@@ -55,7 +55,8 @@ internal object NormalEngineConfig {
         engine.applyDNSConfig(dnsConfig)
         // Counts belong to this run; the notification shows them since the tunnel came up.
         RequestStats.reset()
-        EngineLogCallbacks.attach(engine, service, DnsLogWriter.DB_NORMAL, logMode)
+        val logDatabase = RuleDataset.NORMAL.logsDatabase(service)
+        EngineLogCallbacks.attach(engine, service, logDatabase, logMode)
         engine.setFilterDNS(true)
         // The tunnel resolved `ipv6Mode` against the link (AUTO probe included). When it is
         // carrying no IPv6, answer AAAA with NODATA so traffic does not stall on IPv6.
@@ -63,7 +64,7 @@ internal object NormalEngineConfig {
         // R4: replay the persisted pause / allowlist-only onto this freshly started engine.
         BlockPauseLink.apply(service)
 
-        val plane = EngineDataPlane(service, logMode)
+        val plane = EngineDataPlane(service, logMode, logDatabase)
         try {
             plane.attachResolvers(engine)
             plane.attachBootstrap(engine)

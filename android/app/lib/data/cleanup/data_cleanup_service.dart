@@ -9,6 +9,7 @@ import 'package:diting_android/data/cleanup/cleanup_sql.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
@@ -25,6 +26,7 @@ class DataCleanupService {
     required OutboundProxyStore outboundProxy,
     required Future<Database?> Function(String fileName) openDatabase,
     required int appVersionCode,
+    StorageLayout layout = StorageLayout.legacy,
     CaCertificateService? caCertificate,
     Future<String> Function()? loadPresetAsset,
   }) : _prefs = prefs,
@@ -33,7 +35,7 @@ class DataCleanupService {
        _appVersionCode = appVersionCode,
        _ca = caCertificate ?? const UnavailableCaCertificateService(),
        _loadPresetAsset = loadPresetAsset,
-       _databases = CleanupDatabases(openDatabase);
+       _databases = CleanupDatabases(openDatabase, layout: layout);
 
   final LegacyPrefsStore _prefs;
   final PlatformBridge _platform;
@@ -309,9 +311,8 @@ class DataCleanupService {
     for (final name in _plan.allDataOrder) {
       removed += (await run(CleanupAction.values.byName(name))).removed;
     }
-    // Also clears mirror templates and the recognition members cache.
-    final db = await _databases.main;
-    if (db != null) {
+    // Also clears mirror templates (one copy per rule database) and the recognition cache.
+    for (final db in await _databases.ruleDatabases()) {
       for (final table in _plan.allDataTables) {
         removed += await deleteAllRows(db, table);
       }

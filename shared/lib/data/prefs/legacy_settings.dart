@@ -3,8 +3,10 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
+
 import 'dart:convert';
 
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 
 part 'legacy_settings_dns.dart';
@@ -148,6 +150,20 @@ class LegacySettings {
       jsonEncode(finalIds),
     );
   }
+
+  /// 0 until the storage migration succeeds; the split layout is used from
+  /// [StorageLayout.splitVersion] on. A failed migration leaves the legacy layout active.
+  int get storageLayoutVersion =>
+      _int(workModeContainer, StorageContract.layoutVersionKey, 0);
+
+  StorageLayout get storageLayout =>
+      StorageLayout.fromVersion(storageLayoutVersion);
+
+  void setStorageLayoutVersion(int version) => _store.putInt(
+    workModeContainer,
+    StorageContract.layoutVersionKey,
+    version,
+  );
 
   String get workModeRaw =>
       _string(workModeContainer, 'app_work_mode') ?? 'normal';

@@ -66,7 +66,7 @@ final logStatsRequestsProvider =
       final dns = await DnsLogRepository(db).dailyStats(since: since);
       var http = const HttpRequestDailyStats.empty();
       if (normal) {
-        final mainDb = await ref.watch(mainLogDatabaseProvider.future);
+        final mainDb = await ref.watch(normalLogDatabaseProvider.future);
         if (mainDb != null) {
           try {
             http = await HttpRequestRepository(mainDb).dailyStats(since: since);

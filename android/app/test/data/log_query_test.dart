@@ -56,7 +56,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeLogDatabaseProvider.overrideWith((ref) async => db),
-        mainLogDatabaseProvider.overrideWith((ref) async => db),
+        normalLogDatabaseProvider.overrideWith((ref) async => db),
       ],
     );
     addTearDown(container.dispose);
@@ -234,7 +234,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         activeLogDatabaseProvider.overrideWith((ref) async => db),
-        mainLogDatabaseProvider.overrideWith((ref) async => db),
+        normalLogDatabaseProvider.overrideWith((ref) async => db),
       ],
     );
     addTearDown(container.dispose);

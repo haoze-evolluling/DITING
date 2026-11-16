@@ -24,9 +24,17 @@ class FloatingLogSnapshot {
   final bool available;
 }
 
-/// Reads the normal-mode database. The handle is shared with the app through sqflite's
+/// Reads one mode's log database. The handle is shared with the app through sqflite's
 /// single-instance map, so it is never closed here: closing it would close the app's too.
 class FloatingLogSource {
+  FloatingLogSource({String? databaseName, this.httpEnabled = true})
+    : databaseName = databaseName ?? LegacyDatabase.mainFile;
+
+  final String databaseName;
+
+  /// Only normal mode's log database has `http_request_log`.
+  final bool httpEnabled;
+
   Database? _db;
   bool _opening = false;
 
@@ -36,7 +44,7 @@ class FloatingLogSource {
     _opening = true;
     try {
       // Never create: the app owns the schema, and a fresh install has nothing to show yet.
-      _db = await LegacyDatabase.open(LegacyDatabase.mainFile, create: false);
+      _db = await LegacyDatabase.open(databaseName, create: false);
       return _db;
     } finally {
       _opening = false;
@@ -69,7 +77,7 @@ class FloatingLogSource {
                   DnsQueryRepository(db)
                       .recent(limit: floatingLogWindowSize, query: query),
             ),
-      source == RequestSource.dns
+      source == RequestSource.dns || !httpEnabled
           ? Future.value(const <HttpRequestRecord>[])
           : guard(
               () =>
@@ -91,12 +99,14 @@ class FloatingLogSource {
     final db = await _open();
     if (db == null) return 0;
     var total = 0;
-    for (final sql in const [
+    final queries = [
       'SELECT COUNT(*) AS n FROM dns_log WHERE timestamp > ? AND '
           "(result = 'BLOCKED' OR message LIKE '%blocked_by=firewall:%')",
-      'SELECT COUNT(*) AS n FROM http_request_log WHERE timestamp > ? AND '
-          "outcome IN ('blocked', 'invalid')",
-    ]) {
+      if (httpEnabled)
+        'SELECT COUNT(*) AS n FROM http_request_log WHERE timestamp > ? AND '
+            "outcome IN ('blocked', 'invalid')",
+    ];
+    for (final sql in queries) {
       try {
         final rows = await db.rawQuery(sql, [since]);
         total += (rows.firstOrNull?['n'] as num?)?.toInt() ?? 0;

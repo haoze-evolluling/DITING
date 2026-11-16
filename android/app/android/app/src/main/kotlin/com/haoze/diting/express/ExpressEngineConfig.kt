@@ -1,9 +1,9 @@
 package com.haoze.diting.express
 
 import com.haoze.diting.control.BlockPauseLink
+import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.engine.Engine
 import com.haoze.diting.engine.OutboundProxyStatusCallback
-import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.EngineLogCallbacks
 import com.haoze.diting.log.RequestStats
@@ -40,7 +40,8 @@ internal object ExpressEngineConfig {
         })
         engine.applyDNSConfig(dnsConfig)
         RequestStats.reset()
-        EngineLogCallbacks.attach(engine, service, DnsLogWriter.DB_EXPRESS, logMode)
+        val logDatabase = RuleDataset.EXPRESS.logsDatabase(service)
+        EngineLogCallbacks.attach(engine, service, logDatabase, logMode)
         engine.setFilterDNS(true)
         // Same rule as the full tunnel: no IPv6 in the narrow TUN means no AAAA answers, so a
         // client whose physical IPv6 is broken does not wait on a doomed IPv6 attempt.
@@ -51,7 +52,7 @@ internal object ExpressEngineConfig {
         // Resolvers only: no user traffic crosses the narrow TUN and there is no MITM stage.
         // The log tables live in the express database, so bootstrap rows and the cache mirror
         // must target it too.
-        val plane = EngineDataPlane(service, logMode, DnsLogWriter.DB_EXPRESS)
+        val plane = EngineDataPlane(service, logMode, logDatabase)
         try {
             plane.attachResolvers(engine)
             plane.attachBootstrap(engine)

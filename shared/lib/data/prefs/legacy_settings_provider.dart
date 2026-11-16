@@ -1,4 +1,5 @@
 import 'package:diting_shared/data/db/datasets.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +39,13 @@ class ActiveDataSet extends Notifier<DataSet> {
 final activeDataSetProvider = NotifierProvider<ActiveDataSet, DataSet>(
   ActiveDataSet.new,
 );
+
+/// Which physical layout every database provider reads. The storage migrator writes the version
+/// only after the split files verify, so an interrupted upgrade keeps the legacy layout.
+final storageLayoutProvider = Provider<StorageLayout>((ref) {
+  ref.watch(legacySettingsRevisionProvider);
+  return LegacySettings(ref.watch(legacyPrefsStoreProvider)).storageLayout;
+});
 
 /// DNS-domain settings of the active data set. UI keys stay global: only the dataset container
 /// switches, so theme, background and notification settings never duplicate per mode.

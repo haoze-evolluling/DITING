@@ -2,7 +2,7 @@
 ///
 /// The native engine counters reset on every start, so they cannot answer "how much did the
 /// server serve over the last seven days". The log table survives restarts; server mode writes it
-/// to its own database (`diting_server_logs`), so these figures never include normal/express rows.
+/// to its own log database, so these figures never include normal/express rows.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

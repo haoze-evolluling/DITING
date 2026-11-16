@@ -29,6 +29,7 @@ final dataCleanupServiceProvider = Provider<DataCleanupService>((ref) {
     outboundProxy: ref.watch(outboundProxyStoreProvider),
     caCertificate: ref.watch(caCertificateServiceProvider),
     appVersionCode: ref.watch(appVersionProvider).code,
+    layout: ref.watch(storageLayoutProvider),
     openDatabase: LegacyDatabase.open,
   );
 });

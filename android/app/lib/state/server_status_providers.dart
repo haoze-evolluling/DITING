@@ -6,6 +6,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:diting_android/data/notifications/notification_status_text.dart';
+import 'package:diting_shared/data/db/datasets.dart';
 import 'package:diting_shared/data/db/legacy_database.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/server/dns_server_bridge.dart';
@@ -144,7 +145,10 @@ class ServerStatusNotifier extends Notifier<ServerStatus> {
     // Create the server's own log store before the native writers start; otherwise a first run
     // would drop every row until a log page happened to open the file.
     try {
-      await LegacyDatabase.open(LegacyDatabase.serverLogFile);
+      final logsFile = DataSet.server.logsDatabaseFor(
+        ref.read(storageLayoutProvider),
+      );
+      await LegacyDatabase.open(logsFile);
     } catch (_) {
       // A missing schema only costs log rows, not the DNS service itself.
     }

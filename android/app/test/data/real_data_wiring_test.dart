@@ -72,7 +72,7 @@ void _realDataWiring() {
     final container = ProviderContainer(
       overrides: [
         activeLogDatabaseProvider.overrideWith((ref) async => db),
-        mainLogDatabaseProvider.overrideWith((ref) async => db),
+        normalLogDatabaseProvider.overrideWith((ref) async => db),
         if (filtered) logModeProvider.overrideWith(_FilteredLogMode.new),
       ],
     );
@@ -333,7 +333,7 @@ void _realDataWiring() {
       final container = ProviderContainer(
         overrides: [
           activeLogDatabaseProvider.overrideWith((ref) async => db),
-          mainLogDatabaseProvider.overrideWith((ref) async => db),
+          normalLogDatabaseProvider.overrideWith((ref) async => db),
           logModeProvider.overrideWith(_OffLogMode.new),
         ],
       );

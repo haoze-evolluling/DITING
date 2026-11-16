@@ -179,7 +179,7 @@ class ExpressVpnService : VpnService() {
         // Express has its own log file, so no HTTP or traffic tables.
         LogRetention.start(
             context = this,
-            databaseName = LOG_DATABASE,
+            databaseName = RuleDataset.EXPRESS.logsDatabase(this),
             prefsName = LOG_PREFS,
             includeHttpAndTraffic = false,
         )
@@ -369,9 +369,6 @@ class ExpressVpnService : VpnService() {
 
     companion object {
         private const val TAG = "ExpressVpnService"
-
-        /// Log database of this mode (RuleDataset.EXPRESS, version 2)
-        private const val LOG_DATABASE = "diting_express"
 
         /// Separate retention window; not shared with normal mode
         private const val LOG_PREFS = "diting_express_prefs"

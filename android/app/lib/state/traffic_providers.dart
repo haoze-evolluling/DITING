@@ -9,13 +9,16 @@ import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Read-only repository; null before the database exists, so callers render an empty state.
+/// Read-only repository; null before the database exists or outside normal mode, whose log
+/// database is the only one carrying `app_traffic_daily`.
 final appTrafficRepositoryProvider = FutureProvider<AppTrafficRepository?>((
   ref,
 ) async {
-  final db = await ref.watch(mainLogDatabaseProvider.future);
+  if (ref.watch(workModeProvider) != AppWorkMode.normal) return null;
+  final db = await ref.watch(normalLogDatabaseProvider.future);
   return db == null ? null : AppTrafficRepository(db);
 });
 

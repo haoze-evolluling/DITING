@@ -1,6 +1,7 @@
 library;
 
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/datasets.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_android/data/db/preset_whitelist.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -9,53 +10,46 @@ import 'package:sqflite/sqflite.dart';
 /// Opens each database file once per session: "clear all local data" runs a dozen actions and
 /// `LegacyDatabase.open` re-checks the file every call.
 class CleanupDatabases {
-  CleanupDatabases(this._open);
+  CleanupDatabases(this._open, {this.layout = StorageLayout.legacy});
 
   final Future<Database?> Function(String fileName) _open;
+  final StorageLayout layout;
   final Map<String, Database?> _cache = {};
 
   Future<Database?> of(String fileName) async => _cache.containsKey(fileName)
       ? _cache[fileName]
       : (_cache[fileName] = await _open(fileName));
 
-  Future<Database?> get main => of(LegacyDatabase.mainFile);
+  String get normalRulesFile => DataSet.normal.ruleDatabaseFor(layout);
 
-  Future<Database?> get express => of(LegacyDatabase.expressFile);
+  String get normalLogsFile => DataSet.normal.logsDatabaseFor(layout);
 
-  Future<Database?> get server => of(LegacyDatabase.serverFile);
+  /// Normal mode's log database: the only one with `app_traffic_daily`.
+  Future<Database?> get main => of(normalLogsFile);
 
-  /// Existing rule databases in a fixed order (main, express, server), so map iteration order
+  /// Existing rule databases in a fixed order (normal, express, server), so map iteration order
   /// cannot make tests flaky.
   Future<List<Database>> ruleDatabases() async {
     final databases = <Database>[];
-    for (final fileName in _ruleFiles) {
-      final db = await of(fileName);
+    for (final dataSet in DataSet.values) {
+      final db = await of(dataSet.ruleDatabaseFor(layout));
       if (db != null) databases.add(db);
     }
     return databases;
   }
 
-  /// Databases holding runtime tables (logs, cache): normal, express and the server log store.
+  /// Databases holding runtime tables (logs, cache) in a fixed mode order.
   Future<List<Database>> runtimeDatabases() async {
     final databases = <Database>[];
-    for (final fileName in [
-      LegacyDatabase.mainFile,
-      LegacyDatabase.expressFile,
-      LegacyDatabase.serverLogFile,
-    ]) {
-      final db = await of(fileName);
+    for (final dataSet in DataSet.values) {
+      final db = await of(dataSet.logsDatabaseFor(layout));
       if (db != null) databases.add(db);
     }
     return databases;
   }
 
-  bool isMain(Database db) => db.path == _cache[LegacyDatabase.mainFile]?.path;
-
-  static const _ruleFiles = [
-    LegacyDatabase.mainFile,
-    LegacyDatabase.expressFile,
-    LegacyDatabase.serverFile,
-  ];
+  /// Whether [db] is the normal data set's rule database, the only one cleanup re-seeds.
+  bool isMain(Database db) => db.path == _cache[normalRulesFile]?.path;
 }
 
 /// Deletes all rows; a missing table returns 0 and logs why.

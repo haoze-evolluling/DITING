@@ -1,6 +1,8 @@
 package com.haoze.diting.platform
 
 import android.content.Context
+import com.haoze.diting.control.DataPlaneControl
+import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.log.DbWriteHealth
 import com.haoze.diting.log.LegacyDb
 import io.flutter.plugin.common.BinaryMessenger
@@ -18,8 +20,15 @@ class DbHealthBridge(private val context: Context) : MethodChannel.MethodCallHan
     companion object {
         const val CHANNEL = "com.haoze.diting/db_health"
 
-        /// The main app database; `diting_express` is the express-mode variant of the same file.
-        private const val MAIN_DATABASE = "diting_database"
+        /// The active mode's log store: the only database the log writers touch.
+        private fun logDatabase(context: Context): String {
+            val dataset = when (DataPlaneControl.workMode(context)) {
+                DataPlaneControl.WORK_MODE_DNS -> RuleDataset.DNS_MODE
+                DataPlaneControl.WORK_MODE_EXPRESS -> RuleDataset.EXPRESS
+                else -> RuleDataset.NORMAL
+            }
+            return dataset.logsDatabase(context)
+        }
     }
 
     fun register(messenger: BinaryMessenger) {
@@ -33,13 +42,16 @@ class DbHealthBridge(private val context: Context) : MethodChannel.MethodCallHan
         }
     }
 
-    private fun probe(): Map<String, Any> = runCatching {
-        LegacyDb.probe(context.applicationContext, MAIN_DATABASE)
-    }.getOrElse { error ->
-        mapOf(
-            "probeDatabase" to MAIN_DATABASE,
-            "probeOk" to false,
-            "probeCause" to "${error.javaClass.simpleName}: ${error.message}",
-        )
+    private fun probe(): Map<String, Any> {
+        val database = logDatabase(context.applicationContext)
+        return runCatching {
+            LegacyDb.probe(context.applicationContext, database)
+        }.getOrElse { error ->
+            mapOf(
+                "probeDatabase" to database,
+                "probeOk" to false,
+                "probeCause" to "${error.javaClass.simpleName}: ${error.message}",
+            )
+        }
     }
 }

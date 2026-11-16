@@ -28,8 +28,10 @@ class RuleRepositoriesNotifier extends Notifier<Map<String, RuleRepository>> {
   }
 
   Future<void> ensure(DataSet dataSet) async {
-    if (state.containsKey(dataSet.ruleDatabase) ||
-        !_opening.add(dataSet.ruleDatabase)) {
+    final databaseFile = dataSet.ruleDatabaseFor(
+      ref.read(storageLayoutProvider),
+    );
+    if (state.containsKey(databaseFile) || !_opening.add(databaseFile)) {
       return;
     }
     try {
@@ -43,9 +45,9 @@ class RuleRepositoriesNotifier extends Notifier<Map<String, RuleRepository>> {
       );
       final repository = bootstrap.repository;
       if (repository == null || _disposed) return;
-      state = {...state, dataSet.ruleDatabase: repository};
+      state = {...state, databaseFile: repository};
     } finally {
-      _opening.remove(dataSet.ruleDatabase);
+      _opening.remove(databaseFile);
     }
   }
 }
@@ -59,8 +61,11 @@ final ruleRepositoriesProvider =
 /// opening (the first switch to a mode pays one open, later switches are immediate).
 final ruleRepositoryProvider = Provider<RuleRepository?>((ref) {
   final dataSet = ref.watch(activeDataSetProvider);
+  final databaseFile = dataSet.ruleDatabaseFor(
+    ref.watch(storageLayoutProvider),
+  );
   final repositories = ref.watch(ruleRepositoriesProvider);
-  final repository = repositories[dataSet.ruleDatabase];
+  final repository = repositories[databaseFile];
   if (repository == null) {
     unawaited(ref.read(ruleRepositoriesProvider.notifier).ensure(dataSet));
   }

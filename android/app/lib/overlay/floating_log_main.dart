@@ -12,6 +12,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/app/l10n/ui_strings.dart';
 import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/manager.dart';
+import 'package:diting_shared/data/db/datasets.dart';
 import 'package:diting_shared/data/fonts/font_repository.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
@@ -136,10 +137,20 @@ class _FloatingLogAppState extends State<FloatingLogApp> {
       home: FloatingLogHost(
         settings: settings,
         window: widget.window ?? FloatingLogWindowChannel(),
-        source: widget.source ?? FloatingLogSource(),
+        source: widget.source ?? _defaultSource(settings),
       ),
     );
   }
+}
+
+/// The window runs in its own engine, so it resolves the active mode and storage layout from the
+/// same prefs snapshot the rest of the app reads rather than from a provider tree.
+FloatingLogSource _defaultSource(LegacySettings settings) {
+  final dataSet = DataSet.fromWorkModeValue(settings.workModeRaw);
+  return FloatingLogSource(
+    databaseName: dataSet.logsDatabaseFor(settings.storageLayout),
+    httpEnabled: dataSet == DataSet.normal,
+  );
 }
 
 /// Panel sizes in dp, indexed by the legacy `floating_log_panel_size` value.

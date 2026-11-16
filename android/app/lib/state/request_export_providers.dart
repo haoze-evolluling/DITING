@@ -8,7 +8,7 @@ import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/observability_providers.dart'
-    show mainLogDatabaseProvider;
+    show normalLogDatabaseProvider;
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,7 +83,7 @@ class RequestLogExportActions {
       final dnsDb = await _ref.read(activeLogDatabaseProvider.future);
       // Express and server modes keep their own database without `http_request_log`.
       final httpDb = mode == AppWorkMode.normal
-          ? await _ref.read(mainLogDatabaseProvider.future)
+          ? await _ref.read(normalLogDatabaseProvider.future)
           : null;
       final installed = _ref.read(installedAppListProvider);
       final appLabels = <String, String>{};

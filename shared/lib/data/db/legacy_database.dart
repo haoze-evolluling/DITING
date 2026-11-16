@@ -3,6 +3,7 @@
 library;
 
 import 'package:diting_shared/data/db/legacy_schema.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
@@ -10,18 +11,33 @@ import 'package:sqflite/sqflite.dart';
 class LegacyDatabase {
   LegacyDatabase._();
 
-  /// Full-tunnel database, `user_version` 3.
-  static const mainFile = 'diting_database';
+  /// Legacy full-tunnel database (rules + logs), `user_version` 4. Read only by the migrator and
+  /// the legacy layout; new installs use [normalRulesFile] and [normalLogsFile].
+  static const mainFile = StorageContract.legacyNormalDatabase;
 
-  /// Express-mode database, `user_version` 2.
-  static const expressFile = 'diting_express';
+  /// Legacy express database (rules + logs), `user_version` 2.
+  static const expressFile = StorageContract.legacyExpressDatabase;
 
-  /// Server-mode rules database, `user_version` 3.
-  static const serverFile = 'diting_dns_rules';
+  /// Server-mode rules database, `user_version` 3. The name did not change in the split layout.
+  static const serverFile = StorageContract.serverRulesDatabase;
 
-  /// Server-mode log store (request/cache/race/bootstrap tables), `user_version` 1. Kept apart from
-  /// [mainFile] and [expressFile] so the server dashboard never shares rows with the tunnel modes.
-  static const serverLogFile = 'diting_server_logs';
+  /// Legacy server log store, `user_version` 1.
+  static const serverLogFile = StorageContract.legacyServerLogsDatabase;
+
+  /// Split layout: one rules database per mode.
+  static const normalRulesFile = StorageContract.normalRulesDatabase;
+
+  static const expressRulesFile = StorageContract.expressRulesDatabase;
+
+  /// Split layout: one log database per mode.
+  static const normalLogsFile = StorageContract.normalLogsDatabase;
+
+  static const expressLogsFile = StorageContract.expressLogsDatabase;
+
+  static const serverLogsFile = StorageContract.serverLogsDatabase;
+
+  /// Global data shared by every work mode (automation rules, profiles and events).
+  static const appFile = StorageContract.appDatabase;
 
   /// Null means [fileName] could neither be opened nor created; callers degrade to "no rule
   /// database".

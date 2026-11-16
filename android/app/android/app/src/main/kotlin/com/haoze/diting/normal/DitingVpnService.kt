@@ -8,6 +8,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.haoze.diting.engine.Engine
+import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.RuntimeEventLog
@@ -194,7 +195,7 @@ class DitingVpnService : VpnService() {
         // The window only matters while logs are written, and this service outlives the UI.
         LogRetention.start(
             context = this,
-            databaseName = LOG_DATABASE,
+            databaseName = RuleDataset.NORMAL.logsDatabase(this),
             prefsName = LOG_PREFS,
             includeHttpAndTraffic = true,
         )
@@ -363,8 +364,6 @@ class DitingVpnService : VpnService() {
 
     companion object {
         private const val TAG = "DitingVpnService"
-
-        private const val LOG_DATABASE = "diting_database"
 
         /// `RuleDataset.NORMAL.prefsName()`: `log_retention_days` is dataset-scoped
         private const val LOG_PREFS = "dns_vpn_prefs"

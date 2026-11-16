@@ -16,7 +16,7 @@ import com.haoze.diting.engine.UIDResolver
 class EngineDataPlane(
     private val context: Context,
     private val logMode: String,
-    private val databaseName: String = DnsLogWriter.DB_NORMAL,
+    private val databaseName: String,
 ) {
     private val uidCache = UidPackageCache(context)
 
