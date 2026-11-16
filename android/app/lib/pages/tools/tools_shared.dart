@@ -1,6 +1,6 @@
 part of 'tools_page.dart';
 
-/// Shared input field wrapper for the panels. `FilledInputTheme` because a bare `TextField`
+/// Shared input field wrapper for the tool pages. `FilledInputTheme` because a bare `TextField`
 /// falls back to the outlined Material default, which clashes with the cards.
 class _ToolField extends StatelessWidget {
   const _ToolField({
@@ -37,6 +37,22 @@ class _ToolField extends StatelessWidget {
           prefixIcon: GlyphIcon(glyph),
         ),
       ),
+    );
+  }
+}
+
+/// The card every tool's target field sits on. Without it the field's own fill floats straight on
+/// the page background, unlike every other control on these pages.
+class _ToolInputCard extends StatelessWidget {
+  const _ToolInputCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: CommonCard(padding: const EdgeInsets.all(12), child: child),
     );
   }
 }
@@ -111,9 +127,12 @@ class _ToolNotice extends StatelessWidget {
   }
 }
 
+/// A titled `label: value` card. The header is optional but every tool uses it, so results are
+/// announced rather than appearing as loose rows.
 class _ToolSection extends StatelessWidget {
-  const _ToolSection({required this.rows, this.footer});
+  const _ToolSection({this.title, required this.rows, this.footer});
 
+  final String? title;
   final List<KeyValueRow> rows;
   final String? footer;
 
@@ -122,8 +141,9 @@ class _ToolSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (title case final title?) ListHeader(title: title),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: CommonCard(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Column(
@@ -161,7 +181,51 @@ class _RunButton extends StatelessWidget {
       child: TonalButton(
         glyph: glyph,
         label: running ? runningLabel : label,
+        size: TonalButtonSize.section,
         onPressed: running ? null : onPressed,
+      ),
+    );
+  }
+}
+
+/// The idle state every tool shows before its first run: a filled card, not bare caption text.
+class _ToolEmptyCard extends StatelessWidget {
+  const _ToolEmptyCard({
+    required this.glyph,
+    required this.title,
+    required this.body,
+  });
+
+  final Glyph glyph;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: CommonCard(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Column(
+          children: [
+            GlyphIcon(glyph, size: 28, color: colorScheme.primary),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: AppTextStyle.subheadline
+                  .of(context, emphasized: true)
+                  .copyWith(color: colorScheme.onSurface),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: context.listCaptionStyle,
+            ),
+          ],
+        ),
       ),
     );
   }

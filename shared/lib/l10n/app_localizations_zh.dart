@@ -5160,7 +5160,58 @@ class AppL10nZh extends AppL10n {
   String get toolTraceroute => '路由追踪';
 
   @override
+  String get toolSpeedTestDesc => '向选中的 DNS 服务商发送真实查询，比较查询耗时，找出当前网络下最快的解析服务。';
+
+  @override
+  String get toolPingDesc => '向目标发送 ICMP 探测，查看往返时延、丢包率与抖动。';
+
+  @override
+  String get toolDnsLookupDesc => '查询域名的 A / AAAA 记录，可使用系统解析器、指定服务器或经隧道解析。';
+
+  @override
+  String get toolTracerouteDesc => '逐跳追踪到目标的路由，定位延迟突增或没有任何回应的一跳。';
+
+  @override
   String get toolDiagnostics => '网络诊断';
+
+  @override
+  String get toolToolsSection => '诊断工具';
+
+  @override
+  String get toolOverviewTitle => '当前网络';
+
+  @override
+  String get toolNotRunTitle => '尚未运行';
+
+  @override
+  String get toolSpeedEmptyTitle => '等待测速';
+
+  @override
+  String get toolPingEmpty => '输入目标并开始 Ping，探测结果会显示在这里。';
+
+  @override
+  String get toolDnsEmpty => '输入域名并开始查询，解析结果会显示在这里。';
+
+  @override
+  String get toolTraceEmpty => '输入目标并开始追踪，逐跳结果会显示在这里。';
+
+  @override
+  String get toolPingResults => '探测结果';
+
+  @override
+  String get toolPingReplies => '逐包明细';
+
+  @override
+  String get toolDnsResults => '查询结果';
+
+  @override
+  String get toolDnsAnswers => '应答记录';
+
+  @override
+  String get toolTraceResults => '追踪结果';
+
+  @override
+  String get toolTraceHops => '路由跳点';
 
   @override
   String get toolRefreshInfo => '刷新网络信息';

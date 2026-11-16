@@ -267,6 +267,18 @@ void _appShell() {
       expect(find.text('功能中心'), findsWidgets);
     });
 
+    testWidgets('网络工具入口以全屏二级页打开并可返回', (tester) async {
+      await pumpApp(tester, initialLocation: Routes.tools);
+      await tester.tap(find.text('Ping 测试'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PingTestPage), findsOneWidget);
+      expect(find.byType(NavigationDock), findsNothing);
+      expect(find.byType(BackButton), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(ToolsPage), findsOneWidget);
+    });
+
     testWidgets('首页网络速度卡进入网速详情后可返回并切回其它 tab', (tester) async {
       await pumpApp(tester, dock: userDock);
       final detail = find.descendant(

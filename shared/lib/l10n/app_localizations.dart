@@ -9556,11 +9556,113 @@ abstract class AppL10n {
   /// **'路由追踪'**
   String get toolTraceroute;
 
+  /// No description provided for @toolSpeedTestDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'向选中的 DNS 服务商发送真实查询，比较查询耗时，找出当前网络下最快的解析服务。'**
+  String get toolSpeedTestDesc;
+
+  /// No description provided for @toolPingDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'向目标发送 ICMP 探测，查看往返时延、丢包率与抖动。'**
+  String get toolPingDesc;
+
+  /// No description provided for @toolDnsLookupDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询域名的 A / AAAA 记录，可使用系统解析器、指定服务器或经隧道解析。'**
+  String get toolDnsLookupDesc;
+
+  /// No description provided for @toolTracerouteDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'逐跳追踪到目标的路由，定位延迟突增或没有任何回应的一跳。'**
+  String get toolTracerouteDesc;
+
   /// No description provided for @toolDiagnostics.
   ///
   /// In zh, this message translates to:
   /// **'网络诊断'**
   String get toolDiagnostics;
+
+  /// No description provided for @toolToolsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'诊断工具'**
+  String get toolToolsSection;
+
+  /// No description provided for @toolOverviewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前网络'**
+  String get toolOverviewTitle;
+
+  /// No description provided for @toolNotRunTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'尚未运行'**
+  String get toolNotRunTitle;
+
+  /// No description provided for @toolSpeedEmptyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'等待测速'**
+  String get toolSpeedEmptyTitle;
+
+  /// No description provided for @toolPingEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入目标并开始 Ping，探测结果会显示在这里。'**
+  String get toolPingEmpty;
+
+  /// No description provided for @toolDnsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入域名并开始查询，解析结果会显示在这里。'**
+  String get toolDnsEmpty;
+
+  /// No description provided for @toolTraceEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入目标并开始追踪，逐跳结果会显示在这里。'**
+  String get toolTraceEmpty;
+
+  /// No description provided for @toolPingResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'探测结果'**
+  String get toolPingResults;
+
+  /// No description provided for @toolPingReplies.
+  ///
+  /// In zh, this message translates to:
+  /// **'逐包明细'**
+  String get toolPingReplies;
+
+  /// No description provided for @toolDnsResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询结果'**
+  String get toolDnsResults;
+
+  /// No description provided for @toolDnsAnswers.
+  ///
+  /// In zh, this message translates to:
+  /// **'应答记录'**
+  String get toolDnsAnswers;
+
+  /// No description provided for @toolTraceResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'追踪结果'**
+  String get toolTraceResults;
+
+  /// No description provided for @toolTraceHops.
+  ///
+  /// In zh, this message translates to:
+  /// **'路由跳点'**
+  String get toolTraceHops;
 
   /// No description provided for @toolRefreshInfo.
   ///

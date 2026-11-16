@@ -87,11 +87,6 @@ void _diagnostics() {
   });
 
   group('Ping 面板', () {
-    Future<void> openPing(WidgetTester tester) async {
-      await tester.tap(find.text('Ping 测试'));
-      await tester.pumpAndSettle();
-    }
-
     Future<void> pumpPanel(
       WidgetTester tester,
       DiagnosticsRunner runner,
@@ -102,11 +97,10 @@ void _diagnostics() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [diagnosticsRunnerProvider.overrideWithValue(runner)],
-          child: const AppHost(child: ToolsPage()),
+          child: const AppHost(child: PingTestPage()),
         ),
       );
       await tester.pumpAndSettle();
-      await openPing(tester);
     }
 
     testWidgets('成功态渲染 min/avg/max、丢包与逐条 reply', (tester) async {
@@ -161,11 +155,9 @@ void _diagnostics() {
               _FakeRunner(pingResult: _successfulPing),
             ),
           ],
-          child: const AppHost(child: ToolsPage()),
+          child: const AppHost(child: PingTestPage()),
         ),
       );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Ping 测试'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('通过 Go 隧道解析'));
@@ -195,11 +187,9 @@ void _diagnostics() {
               legacyPrefsStoreProvider.overrideWithValue(store),
             diagnosticsRunnerProvider.overrideWithValue(runner),
           ],
-          child: const AppHost(child: ToolsPage()),
+          child: const AppHost(child: DnsLookupPage()),
         ),
       );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('DNS 解析'));
       await tester.pumpAndSettle();
     }
 

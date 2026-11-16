@@ -15,6 +15,7 @@ import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/shell/branch_transition_shell.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
+import 'package:diting_android/routes/tools_routes.dart';
 import 'package:diting_android/shell/app_shell.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
@@ -167,6 +168,7 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       ...lanRateLimitRoutes(),
       ...subscriptionVersionRoutes(),
       ...networkDiagnosticsRoutes(),
+      ...toolsRoutes(),
       ...automationRoutes(),
       ...networkProfileRoutes(),
       ...logsRoutes(),

@@ -5455,7 +5455,65 @@ class AppL10nEn extends AppL10n {
   String get toolTraceroute => 'Traceroute';
 
   @override
+  String get toolSpeedTestDesc =>
+      'Send real queries to the selected DNS providers, compare their times and find the fastest resolver on this network.';
+
+  @override
+  String get toolPingDesc =>
+      'Send ICMP probes to a target and inspect round-trip latency, packet loss and jitter.';
+
+  @override
+  String get toolDnsLookupDesc =>
+      'Look up A / AAAA records through the system resolver, a custom server or the tunnel.';
+
+  @override
+  String get toolTracerouteDesc =>
+      'Trace the route to a target hop by hop and spot the hop that slows down or stops answering.';
+
+  @override
   String get toolDiagnostics => 'Network diagnostics';
+
+  @override
+  String get toolToolsSection => 'Diagnostic tools';
+
+  @override
+  String get toolOverviewTitle => 'Current network';
+
+  @override
+  String get toolNotRunTitle => 'Not run yet';
+
+  @override
+  String get toolSpeedEmptyTitle => 'Waiting to test';
+
+  @override
+  String get toolPingEmpty =>
+      'Enter a target and start pinging; probe results appear here.';
+
+  @override
+  String get toolDnsEmpty =>
+      'Enter a domain and start the lookup; answers appear here.';
+
+  @override
+  String get toolTraceEmpty =>
+      'Enter a target and start tracing; hops appear here.';
+
+  @override
+  String get toolPingResults => 'Probe results';
+
+  @override
+  String get toolPingReplies => 'Packet details';
+
+  @override
+  String get toolDnsResults => 'Lookup results';
+
+  @override
+  String get toolDnsAnswers => 'Answers';
+
+  @override
+  String get toolTraceResults => 'Trace results';
+
+  @override
+  String get toolTraceHops => 'Route hops';
 
   @override
   String get toolRefreshInfo => 'Refresh network info';
