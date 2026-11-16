@@ -60,6 +60,26 @@ class DashboardWidgetsNotifier extends Notifier<List<DashboardWidget>> {
     _commit(next);
   }
 
+  /// Moves a card within [visible], the list the board shows. [newIndex] is already adjusted,
+  /// as `ReorderableListView.onReorderItem` passes it. Cards hidden by the current mode keep
+  /// their stored slots, so a reorder never loses them.
+  void moveVisible(List<DashboardWidget> visible, int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= visible.length) {
+      return;
+    }
+    if (newIndex < 0 || newIndex >= visible.length || newIndex == oldIndex) {
+      return;
+    }
+    final reordered = [...visible];
+    reordered.insert(newIndex, reordered.removeAt(oldIndex));
+    final shown = visible.toSet();
+    final pending = reordered.iterator;
+    _commit([
+      for (final widget in state)
+        if (shown.contains(widget)) (pending..moveNext()).current else widget,
+    ]);
+  }
+
   void reset() => _commit(defaultDashboardWidgets);
 
   List<DashboardWidget> get available => [

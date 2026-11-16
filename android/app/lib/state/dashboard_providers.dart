@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:diting_android/data/dashboard_models.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
+import 'package:diting_android/state/dashboard_layout_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
@@ -18,6 +19,21 @@ export 'package:diting_android/state/dashboard_layout_providers.dart';
 /// Tests must set it to false: an endless periodic rebuild keeps a frame scheduled and
 /// `pumpAndSettle` times out.
 bool debugDisableDashboardLiveUpdates = false;
+
+/// Whether [widget] belongs on the home board in [mode]. Express mode collects no traffic
+/// rates, so empty speed tiles would claim a zero rate; the card stays in the stored layout and
+/// returns in place when the mode switches back.
+bool dashboardWidgetVisibleIn(DashboardWidget widget, AppWorkMode mode) =>
+    mode != AppWorkMode.express || widget != DashboardWidget.networkSpeed;
+
+/// The stored layout minus the cards the current mode cannot fill.
+final visibleDashboardWidgetsProvider = Provider<List<DashboardWidget>>((ref) {
+  final mode = ref.watch(workModeProvider);
+  return [
+    for (final widget in ref.watch(dashboardWidgetsProvider))
+      if (dashboardWidgetVisibleIn(widget, mode)) widget,
+  ];
+});
 
 /// Why speed data is missing: express mode is a product fact, a missing channel a host fact.
 enum SpeedSource {

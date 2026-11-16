@@ -70,7 +70,9 @@ class DashboardBoard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final widgets = ref.watch(dashboardWidgetsProvider);
+    // Express mode has no traffic stats, so the speed card is filtered out here; the stored
+    // layout keeps it, which is why reordering goes through moveVisible.
+    final widgets = ref.watch(visibleDashboardWidgetsProvider);
     final editing = ref.watch(dashboardEditingProvider);
     final side = dashboardMobileSideOf(MediaQuery.sizeOf(context).width);
     if (editing) {
@@ -158,7 +160,7 @@ class _EditingBoard extends ConsumerWidget {
               itemCount: widgets.length,
               onReorderItem: (oldIndex, newIndex) => ref
                   .read(dashboardWidgetsProvider.notifier)
-                  .move(oldIndex, newIndex),
+                  .moveVisible(widgets, oldIndex, newIndex),
               proxyDecorator: (child, index, animation) => Material(
                 color: Colors.transparent,
                 child: ScaleTransition(
