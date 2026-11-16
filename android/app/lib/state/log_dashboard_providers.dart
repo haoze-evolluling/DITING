@@ -206,11 +206,11 @@ class SubscriptionInterceptionSnapshot {
   final int totalRequests;
   final List<SubscriptionInterceptionItem> items;
 
-  /// The legacy database lacks `blockSubscriptionId`, so no rate can be computed.
+  /// An older store may lack `blockSubscriptionId`, so no rate can be computed.
   final bool missingColumn;
 }
 
-/// Legacy SQL: the denominator is every row of both tables, the numerator only `result = BLOCKED`
+/// SQL: the denominator is every row of both tables, the numerator only `result = BLOCKED`
 /// rows.
 final subscriptionInterceptionProvider =
     FutureProvider<SubscriptionInterceptionSnapshot>((ref) async {

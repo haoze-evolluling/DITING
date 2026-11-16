@@ -1,6 +1,6 @@
 /// Dart side of `com.haoze.diting/db_health`: what the native log writers had to drop and why.
 ///
-/// The 2.1.7 failure mode was silent — a locked `diting_database` left every log page empty and
+/// The 2.1.7 failure mode was silent — a locked log database left every log page empty and
 /// nothing said so. These counters make "no logs at all" visible from 故障排查.
 library;
 

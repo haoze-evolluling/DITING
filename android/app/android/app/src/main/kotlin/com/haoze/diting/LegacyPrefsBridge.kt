@@ -23,7 +23,7 @@ class LegacyPrefsBridge(private val context: Context) :
             "diting_dns_mode_prefs",
             "express_vpn_prefs",
             "diting_settings",
-            // Automation rules live in `diting_app`, their cooldowns and last-run stamps here.
+            // Automation rules live in the global database, their cooldowns and last-run stamps here.
             "automation_prefs",
             "permission_disclosures",
             "mode_permission_preferences",

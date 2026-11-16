@@ -6,22 +6,19 @@ import 'dart:async';
 
 import 'package:diting_android/data/db/automation_models.dart';
 import 'package:diting_android/data/db/automation_repository.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_shared/data/db/app_database.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Automation is global, not per mode. Before the storage migration it still lives in the legacy
-/// main file; afterwards it has its own database.
+/// Automation is global, not per mode, so it has its own database.
 final automationDatabaseFileProvider = Provider<String>((ref) {
-  return ref.watch(storageLayoutProvider).isSplit
-      ? LegacyDatabase.appFile
-      : LegacyDatabase.mainFile;
+  return StorageContract.globalDatabase;
 });
 
 /// `null` on a fresh install before the Dart schema exists.
 final automationDatabaseProvider = FutureProvider<Database?>(
-  (ref) => LegacyDatabase.open(ref.watch(automationDatabaseFileProvider)),
+  (ref) => AppDatabase.open(ref.watch(automationDatabaseFileProvider)),
 );
 
 /// Bumped after every write so every read provider reloads.

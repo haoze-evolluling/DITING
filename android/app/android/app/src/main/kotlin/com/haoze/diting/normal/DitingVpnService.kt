@@ -9,6 +9,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.haoze.diting.engine.Engine
 import com.haoze.diting.core.rule.RuleDataset
+import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.RuntimeEventLog
@@ -73,6 +74,11 @@ class DitingVpnService : VpnService() {
         }
         if (intent?.action == ACTION_STOP) {
             stopTunnel()
+            return START_NOT_STICKY
+        }
+        if (StorageGate.blocksDataPlane(this)) {
+            Log.w(TAG, "storage upgrade in progress; refusing to start")
+            stopSelf(startId)
             return START_NOT_STICKY
         }
         // A start, manual or replayed by the watchdog, ends any wait for the slot.
@@ -195,7 +201,7 @@ class DitingVpnService : VpnService() {
         // The window only matters while logs are written, and this service outlives the UI.
         LogRetention.start(
             context = this,
-            databaseName = RuleDataset.NORMAL.logsDatabase(this),
+            databaseName = RuleDataset.NORMAL.logsDatabase(),
             prefsName = LOG_PREFS,
             includeHttpAndTraffic = true,
         )

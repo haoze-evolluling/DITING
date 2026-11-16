@@ -3,9 +3,11 @@ import 'dart:ui' show PlatformDispatcher;
 
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/app/debug_probe.dart';
+import 'package:diting_android/app/storage_v2_gate.dart';
 import 'package:diting_android/data/native/runtime_events.dart';
 import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/storage_migration.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
+import 'package:diting_shared/data/db/storage_v2_migration.dart';
 import 'package:diting_android/data/db/rule_bootstrap.dart';
 import 'package:diting_android/data/db/rule_providers.dart';
 import 'package:diting_shared/data/fonts/font_repository.dart';
@@ -17,7 +19,6 @@ import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
 import 'package:diting_android/data/native/launcher_icon_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
-import 'package:diting_shared/data/db/storage_reclaim.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/overlay/floating_log_main.dart';
@@ -36,32 +37,32 @@ import 'package:material_ui/material_ui.dart';
 /// build. Off by default, so the strings and the Stopwatch are tree-shaken away.
 const _startupTrace = bool.fromEnvironment('DITING_STARTUP_TRACE');
 
-/// App entry point, the only `runApp`. Legacy settings and rules load before the first
-/// frame so providers see stored values instead of flashing defaults. Native channels are
-/// injected here as a group: defaults are stubs, so a missing override degrades a feature.
+final _startupWatch = Stopwatch()..start();
+int _lastStageMs = 0;
+
+void _stage(String label) {
+  final now = _startupWatch.elapsedMilliseconds;
+  // Always recorded: the always-on black box is how a slow or failed startup is diagnosed
+  // afterwards, even in a release build where the opt-in trace below is compiled out.
+  RuntimeEvents.startup(label, now - _lastStageMs);
+  _lastStageMs = now;
+  if (_startupTrace) debugPrint('startup $label +${now}ms');
+}
+
+/// App entry point. The V2 storage gate runs before any provider opens a database: a first launch
+/// after the upgrade copies the old stores, verifies them and only then starts the real app.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   installDebugProbe();
   _installErrorHandlers();
   _capImageCache();
-  final watch = Stopwatch()..start();
-  var last = 0;
-  void stage(String label) {
-    final now = watch.elapsedMilliseconds;
-    // Always recorded: the always-on black box is how a slow or failed startup is diagnosed
-    // afterwards, even in a release build where the opt-in trace below is compiled out.
-    RuntimeEvents.startup(label, now - last);
-    last = now;
-    if (_startupTrace) debugPrint('startup $label +${now}ms');
-  }
-
   RuntimeEvents.startup('begin', 0);
 
   // The two loads share the wait; the rules bootstrap needs both results, so it stays last.
   final storeTask = loadLegacyPrefsStore();
   final versionTask = loadAppVersion();
   final store = await storeTask;
-  stage('prefs');
+  _stage('prefs');
   final settings = LegacySettings(store);
   // Keep the home-screen icon in sync with the saved choice. PackageManager normally persists the
   // enabled activity-alias, but an update that rewrites the manifest resets the component flags.
@@ -74,23 +75,31 @@ Future<void> main() async {
   // Single source of truth: `pubspec.yaml`. The value feeds preset seeding,
   // cleanup actions and page display.
   final version = await versionTask;
-  stage('version');
-  // Copy the pre-split databases once. A failure leaves the marker unset and the legacy files in
-  // use, so startup continues instead of losing rules or logs.
-  final migration = await ensureSplitStorage(
-    store,
-    dataPlaneRunning: await anyDataPlaneRunning(),
-  );
-  stage('storage');
-  if (!migration.split && !migration.deferred) {
-    RuntimeEvents.error('db', 'storage.migration_failed: ${migration.error}');
-  } else if (migration.deferred) {
-    RuntimeEvents.report(
-      'db',
-      'storage.migration_deferred',
-      fields: {'reason': migration.error},
-    );
+  _stage('version');
+
+  final ready =
+      StorageContract.isReadyState(settings.storageV2State) &&
+      await storageV2FilesReady();
+  if (ready && settings.storageV2State < StorageContract.stateVerified) {
+    // A preferences restore can lose the marker while the V2 files are intact.
+    await settings.commitStorageV2State(StorageContract.stateVerified);
+    settings.setStorageV2CompletedAt(DateTime.now());
   }
+  _stage('storage-check');
+  if (!ready) {
+    runApp(
+      StorageV2GateApp(
+        store: store,
+        onReady: () => _startApp(store, version),
+      ),
+    );
+    return;
+  }
+  await _startApp(store, version);
+}
+
+Future<void> _startApp(LegacyPrefsStore store, AppVersion version) async {
+  final settings = LegacySettings(store);
   // Open the data set the app starts in: the persisted work mode decides the rule database, and a
   // later mode switch opens its own database on demand.
   final dataSet = DataSet.fromWorkModeValue(settings.workModeRaw);
@@ -99,11 +108,11 @@ Future<void> main() async {
     LegacySettings(store, dnsContainer: dataSet.prefsContainer),
     versionCode: version.code,
   );
-  stage('rules');
+  _stage('rules');
   // Imported fonts must be registered before the first frame: the theme resolves `fontFamily` when
   // it is built, and an unknown family silently falls back to the system default.
   await FontRepository(settings: settings).registerAll();
-  stage('fonts');
+  _stage('fonts');
   final container = ProviderContainer(
     overrides: [
       legacyPrefsStoreProvider.overrideWithValue(store),
@@ -137,32 +146,32 @@ Future<void> main() async {
   // First frame: the milestone a user actually feels. Reported from the post-frame callback so it
   // includes layout/paint, not just the synchronous `runApp` call.
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    RuntimeEvents.startup('first_frame', watch.elapsedMilliseconds);
+    RuntimeEvents.startup('first_frame', _startupWatch.elapsedMilliseconds);
+    unawaited(_cleanupOldStorage(store));
   });
   runApp(
     UncontrolledProviderScope(container: container, child: const DitingApp()),
   );
-  stage('runApp');
-  // Stale legacy copies are only deleted after the split's grace period; keep that I/O off the
-  // launch path and let it fail silently (the files are harmless, just duplicated).
-  unawaited(_reclaimLegacyStorage(store));
+  _stage('runApp');
 }
 
-Future<void> _reclaimLegacyStorage(LegacyPrefsStore store) async {
+/// After the app has started on the V2 stores, remove the old files. A running data plane delays
+/// the deletion; the same pass also removes old files restored from an Android backup.
+Future<void> _cleanupOldStorage(LegacyPrefsStore store) async {
   try {
-    final freed = await reclaimLegacyStorageIfDue(
-      store,
-      dataPlaneRunning: await anyDataPlaneRunning(),
-    );
-    if (freed > 0) {
-      RuntimeEvents.report(
-        'db',
-        'storage.reclaimed',
-        fields: {'bytes': freed},
+    final running = await anyDataPlaneRunning();
+    if (running) return;
+    if (LegacySettings(store).storageV2State == StorageContract.stateVerified) {
+      final result = await cleanupStorageV2(
+        store,
+        dataPlaneRunning: false,
       );
+      if (!result.ready) return;
+      RuntimeEvents.report('db', 'storage.v2.cleaned');
     }
+    await sweepLegacyDatabases(dataPlaneRunning: false);
   } catch (error) {
-    debugPrint('legacy storage reclaim skipped: $error');
+    debugPrint('storage cleanup skipped: $error');
   }
 }
 
@@ -202,4 +211,3 @@ void _capImageCache() {
 /// pragma keeps it out of tree shaking, since nothing in Dart calls it.
 @pragma('vm:entry-point')
 Future<void> floatingLogMain() => runFloatingLog();
-

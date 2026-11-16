@@ -15,8 +15,8 @@ import java.util.concurrent.ConcurrentHashMap
 /// held the write lock every open threw `SQLiteDatabaseLockedException` and the event was dropped
 /// (183 attempts, zero successes, four minutes). One long-lived connection plus `busy_timeout`
 /// turns that into a short wait on the same connection the writers already share.
-internal object LegacyDb {
-    private const val TAG = "LegacyDb"
+internal object AppDatabase {
+    private const val TAG = "AppDatabase"
     private const val BUSY_TIMEOUT_MS = 5_000
 
     /// Outcome of [open]. Writers must tell [Absent] (nothing to write to yet) from [Unavailable]
@@ -93,7 +93,7 @@ internal object LegacyDb {
     private fun SQLiteDatabase.setBusyTimeout(timeoutMs: Int) {
         runCatching {
             rawQuery("PRAGMA busy_timeout = $timeoutMs", null).use { it.moveToFirst() }
-        }.onFailure { DbWriteHealth.warn("LegacyDb", "busy_timeout not applied", it) }
+        }.onFailure { DbWriteHealth.warn("AppDatabase", "busy_timeout not applied", it) }
     }
 
     private fun SQLiteDatabase.pragmaString(sql: String): String = runCatching {
@@ -141,7 +141,7 @@ internal object LegacyDb {
     fun closeAll() {
         for ((name, db) in connections) {
             runCatching { db.close() }
-                .onFailure { DbWriteHealth.warn("LegacyDb", "close $name failed", it) }
+                .onFailure { DbWriteHealth.warn("AppDatabase", "close $name failed", it) }
         }
         connections.clear()
     }

@@ -3,7 +3,6 @@
 
 import 'package:diting_android/data/cleanup/cleanup_plan.dart';
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
@@ -120,8 +119,7 @@ void _dataCleanup() {
     platform: PlatformBridge(),
     outboundProxy: MemoryOutboundProxyStore(),
     appVersionCode: seedVersionCode,
-    openDatabase: (fileName) async =>
-        fileName == LegacyDatabase.mainFile ? main : null,
+    openDatabase: (fileName) async => main,
     // The preset whitelist asset is absent: an empty table means skip seeding, not clear all
     loadPresetAsset: () async => '',
   );

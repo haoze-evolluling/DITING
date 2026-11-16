@@ -9,6 +9,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.haoze.diting.core.rule.EngineRuleLoader
 import com.haoze.diting.core.rule.RuleDataset
+import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.engine.Engine
 import com.haoze.diting.engine.SocketProtector
 import com.haoze.diting.log.DnsLogWriter
@@ -79,6 +80,11 @@ class ExpressVpnService : VpnService() {
         }
         if (intent?.action == ACTION_STOP) {
             stopTunnel()
+            return START_NOT_STICKY
+        }
+        if (StorageGate.blocksDataPlane(this)) {
+            Log.w(TAG, "storage upgrade in progress; refusing to start")
+            stopSelf(startId)
             return START_NOT_STICKY
         }
         // A start, manual or replayed by the watchdog, ends any wait for the slot.
@@ -179,7 +185,7 @@ class ExpressVpnService : VpnService() {
         // Express has its own log file, so no HTTP or traffic tables.
         LogRetention.start(
             context = this,
-            databaseName = RuleDataset.EXPRESS.logsDatabase(this),
+            databaseName = RuleDataset.EXPRESS.logsDatabase(),
             prefsName = LOG_PREFS,
             includeHttpAndTraffic = false,
         )

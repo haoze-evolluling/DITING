@@ -4549,62 +4549,71 @@ class AppL10nZh extends AppL10n {
   String get devVacuum => '压缩数据库';
 
   @override
-  String get devVacuumBody => '对三个本地库执行 VACUUM，回收已删除记录占用的空间';
+  String get devVacuumBody => '对七个本地库执行 VACUUM，回收已删除记录占用的空间';
 
   @override
-  String get devStorageTitle => '存储布局';
+  String get devStorageTitle => '存储状态';
 
   @override
-  String get devStorageSplit => '拆分布局：每个模式独立规则库与日志库';
+  String get devStorageV2Ready => 'V2 存储已就绪：每个模式独立规则库与日志库';
 
   @override
-  String get devStorageLegacy => '旧布局：迁移尚未完成';
+  String get devStorageV2Pending => 'V2 存储尚未完成';
 
   @override
-  String devStorageDetail(int version, String date) {
-    return '标记 v$version · 完成于 $date';
+  String devStorageV2Detail(String state, String date) {
+    return '状态 $state · 完成于 $date';
   }
 
   @override
-  String devStoragePending(String reason) {
-    return '待迁移：$reason';
+  String devStorageV2Error(String error) {
+    return '迁移错误：$error';
   }
 
   @override
-  String devStorageLastError(String error) {
-    return '上次迁移失败：$error';
+  String devStorageV2Files(int kb) {
+    return '7 个数据库共 $kb KB';
   }
 
   @override
-  String devStorageFiles(int kb) {
-    return '旧库残留 $kb KB';
+  String get storageV2Title => '正在升级本地数据';
+
+  @override
+  String get storageV2Preparing => '正在准备数据库…';
+
+  @override
+  String storageV2Progress(String database, int current, int total) {
+    return '正在迁移 $database（$current/$total）';
   }
 
   @override
-  String get devRetryMigration => '重试存储迁移';
+  String get storageV2Verifying => '正在校验数据…';
 
   @override
-  String get devRetryMigrationBody => '在数据面停止时把旧库复制到拆分布局';
+  String get storageV2Cleaning => '正在清理旧数据…';
 
   @override
-  String get devReclaimLegacy => '释放旧库空间';
+  String get storageV2NeedStop => '网络连接正在使用旧数据库。请先停止当前连接，再继续升级。';
 
   @override
-  String get devReclaimLegacyBody => '删除迁移后残留的旧规则与日志数据库';
+  String get storageV2StopAndRetry => '停止连接并继续';
 
   @override
-  String get devMigrationDone => '存储迁移已完成，后续启动使用拆分布局';
+  String get storageV2Retry => '重试';
 
   @override
-  String get devMigrationDeferred => '数据面正在运行，停止隧道后再重试';
+  String get storageV2Discard => '放弃旧数据并继续';
 
   @override
-  String get devReclaimNone => '没有可回收的旧库文件';
-
-  @override
-  String devReclaimDone(String files, int kb) {
-    return '已删除 $files，回收 $kb KB';
+  String storageV2Failed(String error) {
+    return '本地数据升级失败：$error';
   }
+
+  @override
+  String get storageV2DiscardTitle => '放弃旧数据？';
+
+  @override
+  String get storageV2DiscardConfirm => '无法读取的旧数据将被丢弃，应用会以空数据库启动。此操作无法撤销。';
 
   @override
   String get devCancel => '取消';

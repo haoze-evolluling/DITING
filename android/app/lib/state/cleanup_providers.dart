@@ -6,7 +6,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_shared/data/db/rule_index_bridge.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
@@ -29,8 +29,7 @@ final dataCleanupServiceProvider = Provider<DataCleanupService>((ref) {
     outboundProxy: ref.watch(outboundProxyStoreProvider),
     caCertificate: ref.watch(caCertificateServiceProvider),
     appVersionCode: ref.watch(appVersionProvider).code,
-    layout: ref.watch(storageLayoutProvider),
-    openDatabase: LegacyDatabase.open,
+    openDatabase: AppDatabase.open,
   );
 });
 

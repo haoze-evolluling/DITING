@@ -4790,67 +4790,74 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get devVacuumBody =>
-      'Run VACUUM on the three local databases to reclaim space from deleted rows';
+      'Run VACUUM on the seven local databases to reclaim space from deleted rows';
 
   @override
-  String get devStorageTitle => 'Storage layout';
+  String get devStorageTitle => 'Storage status';
 
   @override
-  String get devStorageSplit =>
-      'Split layout: one rules and one logs database per mode';
+  String get devStorageV2Ready =>
+      'V2 storage is ready: every mode has its own rules and logs database';
 
   @override
-  String get devStorageLegacy => 'Legacy layout: migration not completed';
+  String get devStorageV2Pending => 'V2 storage is not complete';
 
   @override
-  String devStorageDetail(int version, String date) {
-    return 'Marker v$version · committed $date';
+  String devStorageV2Detail(String state, String date) {
+    return 'State $state · completed $date';
   }
 
   @override
-  String devStoragePending(String reason) {
-    return 'Pending: $reason';
+  String devStorageV2Error(String error) {
+    return 'Migration error: $error';
   }
 
   @override
-  String devStorageLastError(String error) {
-    return 'Last migration failed: $error';
+  String devStorageV2Files(int kb) {
+    return '7 databases, $kb KB';
   }
 
   @override
-  String devStorageFiles(int kb) {
-    return 'Legacy files: $kb KB';
+  String get storageV2Title => 'Upgrading local data';
+
+  @override
+  String get storageV2Preparing => 'Preparing databases…';
+
+  @override
+  String storageV2Progress(String database, int current, int total) {
+    return 'Migrating $database ($current/$total)';
   }
 
   @override
-  String get devRetryMigration => 'Retry storage migration';
+  String get storageV2Verifying => 'Verifying data…';
 
   @override
-  String get devRetryMigrationBody =>
-      'Copy the legacy data into the split layout while no data plane runs';
+  String get storageV2Cleaning => 'Cleaning up old data…';
 
   @override
-  String get devReclaimLegacy => 'Release legacy storage';
+  String get storageV2NeedStop =>
+      'A network connection is using the old databases. Stop it before upgrading.';
 
   @override
-  String get devReclaimLegacyBody =>
-      'Delete the legacy rules and logs databases left after migration';
+  String get storageV2StopAndRetry => 'Stop connection and continue';
 
   @override
-  String get devMigrationDone =>
-      'Storage migration completed; later launches use the split layout';
+  String get storageV2Retry => 'Retry';
 
   @override
-  String get devMigrationDeferred =>
-      'A data plane is running; stop the tunnel and retry';
+  String get storageV2Discard => 'Discard old data and continue';
 
   @override
-  String get devReclaimNone => 'No legacy database files to reclaim';
-
-  @override
-  String devReclaimDone(String files, int kb) {
-    return 'Deleted $files, reclaimed $kb KB';
+  String storageV2Failed(String error) {
+    return 'Local data upgrade failed: $error';
   }
+
+  @override
+  String get storageV2DiscardTitle => 'Discard old data?';
+
+  @override
+  String get storageV2DiscardConfirm =>
+      'Unreadable old data will be dropped and the app will start with empty databases. This cannot be undone.';
 
   @override
   String get devCancel => 'Cancel';

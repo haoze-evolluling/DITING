@@ -213,12 +213,12 @@ mod tests {
         let health = Health::new();
         let line = health
             .on_open_failure(
-                "unable to open diting_database",
+                "unable to open diting_normal_logs_v2",
                 Some("SQLiteDatabaseLockedException: locked"),
                 5_000_000,
             )
             .unwrap();
-        assert_eq!(line, "unable to open diting_database");
+        assert_eq!(line, "unable to open diting_normal_logs_v2");
         let snapshot = health.snapshot();
         assert_eq!(snapshot.open_failures, 1);
         assert_eq!(snapshot.last_cause, "SQLiteDatabaseLockedException: locked");
@@ -226,7 +226,7 @@ mod tests {
         // The cause of a suppressed line is still remembered.
         assert_eq!(
             health.on_open_failure(
-                "unable to open diting_express",
+                "unable to open diting_express_logs_v2",
                 Some("IOException: gone"),
                 5_001_000
             ),

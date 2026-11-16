@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_android/data/db/preset_whitelist.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_android/data/mock_data.dart';
@@ -39,7 +39,7 @@ Future<RuleBootstrap> bootstrapRules(
   LegacySettings settings, {
   required int versionCode,
 }) async {
-  final databaseFile = dataSet.ruleDatabaseFor(settings.storageLayout);
+  final databaseFile = dataSet.ruleDatabase;
   final opened = await _openRuleDatabase(databaseFile);
   final db = opened.database;
   if (db == null) {
@@ -65,14 +65,14 @@ Future<({Database? database, bool recovered})> _openRuleDatabase(
   String fileName,
 ) async {
   try {
-    final db = await LegacyDatabase.open(fileName).timeout(_openBudget);
+    final db = await AppDatabase.open(fileName).timeout(_openBudget);
     return (database: db, recovered: false);
   } on TimeoutException {
     debugPrint('rule database open timed out: $fileName; retrying fresh');
     RuntimeEvents.error('db', 'rule.open_timeout file=$fileName');
   }
   try {
-    final db = await LegacyDatabase.open(
+    final db = await AppDatabase.open(
       fileName,
       singleInstance: false,
     ).timeout(_openBudget);

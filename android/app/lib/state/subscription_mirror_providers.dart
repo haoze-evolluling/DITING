@@ -2,7 +2,7 @@ part of 'subscription_providers.dart';
 
 // Mirror templates (the mirror_template table).
 
-/// Template repository; null without a legacy database.
+/// Template repository; null without a rules database.
 final mirrorTemplateRepositoryProvider =
     FutureProvider<MirrorTemplateRepository?>((ref) async {
       final db = await ref.watch(subscriptionDatabaseProvider.future);

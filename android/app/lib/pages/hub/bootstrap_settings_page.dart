@@ -2,7 +2,7 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 
 import 'package:diting_android/data/db/bootstrap_log_repository.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/state/log_providers.dart';
@@ -152,7 +152,7 @@ class BootstrapSettingsPage extends ConsumerWidget {
 final bootstrapStatsProvider = FutureProvider<List<BootstrapIpStat>>((
   ref,
 ) async {
-  final db = await LegacyDatabase.open(
+  final db = await AppDatabase.open(
     ref.watch(activeLogDatabaseFileProvider),
   );
   if (db == null) return const [];

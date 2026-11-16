@@ -2712,63 +2712,53 @@
   "devClearAll": "清空全部数据",
   "devClearAllBody": "删除配置、规则与日志，恢复出厂状态",
   "devVacuum": "压缩数据库",
-  "devVacuumBody": "对三个本地库执行 VACUUM，回收已删除记录占用的空间",
-  "devStorageTitle": "存储布局",
-  "devStorageSplit": "拆分布局：每个模式独立规则库与日志库",
-  "devStorageLegacy": "旧布局：迁移尚未完成",
-  "devStorageDetail": "标记 v{version} · 完成于 {date}",
-  "@devStorageDetail": {
+  "devVacuumBody": "对七个本地库执行 VACUUM，回收已删除记录占用的空间",
+  "devStorageTitle": "存储状态",
+  "devStorageV2Ready": "V2 存储已就绪：每个模式独立规则库与日志库",
+  "devStorageV2Pending": "V2 存储尚未完成",
+  "devStorageV2Detail": "状态 {state} · 完成于 {date}",
+  "@devStorageV2Detail": {
     "placeholders": {
-      "version": {
-        "type": "int"
-      },
-      "date": {
-        "type": "String"
-      }
+      "state": { "type": "String" },
+      "date": { "type": "String" }
     }
   },
-  "devStoragePending": "待迁移：{reason}",
-  "@devStoragePending": {
+  "devStorageV2Error": "迁移错误：{error}",
+  "@devStorageV2Error": {
     "placeholders": {
-      "reason": {
-        "type": "String"
-      }
+      "error": { "type": "String" }
     }
   },
-  "devStorageLastError": "上次迁移失败：{error}",
-  "@devStorageLastError": {
+  "devStorageV2Files": "7 个数据库共 {kb} KB",
+  "@devStorageV2Files": {
     "placeholders": {
-      "error": {
-        "type": "String"
-      }
+      "kb": { "type": "int" }
     }
   },
-  "devStorageFiles": "旧库残留 {kb} KB",
-  "@devStorageFiles": {
+  "storageV2Title": "正在升级本地数据",
+  "storageV2Preparing": "正在准备数据库…",
+  "storageV2Progress": "正在迁移 {database}（{current}/{total}）",
+  "@storageV2Progress": {
     "placeholders": {
-      "kb": {
-        "type": "int"
-      }
+      "database": { "type": "String" },
+      "current": { "type": "int" },
+      "total": { "type": "int" }
     }
   },
-  "devRetryMigration": "重试存储迁移",
-  "devRetryMigrationBody": "在数据面停止时把旧库复制到拆分布局",
-  "devReclaimLegacy": "释放旧库空间",
-  "devReclaimLegacyBody": "删除迁移后残留的旧规则与日志数据库",
-  "devMigrationDone": "存储迁移已完成，后续启动使用拆分布局",
-  "devMigrationDeferred": "数据面正在运行，停止隧道后再重试",
-  "devReclaimNone": "没有可回收的旧库文件",
-  "devReclaimDone": "已删除 {files}，回收 {kb} KB",
-  "@devReclaimDone": {
+  "storageV2Verifying": "正在校验数据…",
+  "storageV2Cleaning": "正在清理旧数据…",
+  "storageV2NeedStop": "网络连接正在使用旧数据库。请先停止当前连接，再继续升级。",
+  "storageV2StopAndRetry": "停止连接并继续",
+  "storageV2Retry": "重试",
+  "storageV2Discard": "放弃旧数据并继续",
+  "storageV2Failed": "本地数据升级失败：{error}",
+  "@storageV2Failed": {
     "placeholders": {
-      "files": {
-        "type": "String"
-      },
-      "kb": {
-        "type": "int"
-      }
+      "error": { "type": "String" }
     }
   },
+  "storageV2DiscardTitle": "放弃旧数据？",
+  "storageV2DiscardConfirm": "无法读取的旧数据将被丢弃，应用会以空数据库启动。此操作无法撤销。",
   "devCancel": "取消",
   "devRun": "执行",
   "devConfirmBody": "{action}\n\n该操作会真正改写本机数据，无法撤销。",

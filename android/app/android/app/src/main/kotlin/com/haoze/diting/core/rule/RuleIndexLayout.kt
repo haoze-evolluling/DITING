@@ -39,7 +39,7 @@ internal object RuleIndexLayout {
     /** Domain (blacklist / whitelist) artifacts of one data set. */
     fun domainDirectory(indexDirectory: File): File = File(indexDirectory, normalPaths.domain)
 
-    /** Hosts (address / CNAME rewriting) artifacts; kept for path parity with the legacy layout. */
+    /** Hosts (address / CNAME rewriting) artifacts; kept for path parity with the historical layout. */
     fun hostsDirectory(indexDirectory: File): File = File(indexDirectory, normalPaths.hosts)
 
     fun blockIndex(indexDirectory: File): File = File(domainDirectory(indexDirectory), normalPaths.block)

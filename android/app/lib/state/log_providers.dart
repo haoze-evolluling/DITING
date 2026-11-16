@@ -4,7 +4,7 @@ library;
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/dns_cache_repository.dart';
 import 'package:diting_android/data/db/dns_log_repository.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_android/data/db/race_log_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
@@ -12,17 +12,14 @@ import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Each mode reads its own log database. The layout decides whether that is the split log store or
-/// the pre-migration combined file; the mode decides which data set owns it.
+/// Each mode reads its own log database.
 final activeLogDatabaseFileProvider = Provider<String>((ref) {
-  return ref
-      .watch(activeDataSetProvider)
-      .logsDatabaseFor(ref.watch(storageLayoutProvider));
+  return ref.watch(activeDataSetProvider).logsDatabase;
 });
 
 /// `null` on fresh installs, where the Dart layer has not created the file yet.
 final activeLogDatabaseProvider = FutureProvider<Database?>(
-  (ref) => LegacyDatabase.open(ref.watch(activeLogDatabaseFileProvider)),
+  (ref) => AppDatabase.open(ref.watch(activeLogDatabaseFileProvider)),
 );
 
 /// All three dashboard views read the same file; "refresh" and "clear" bump the revision so one

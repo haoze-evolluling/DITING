@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 class _FakeSource extends FloatingLogSource {
-  _FakeSource(this.items);
+  _FakeSource(this.items) : super(databaseName: 'test');
 
   final List<ObservedRequest> items;
   String? lastQuery;

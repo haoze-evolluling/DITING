@@ -53,7 +53,7 @@ class _DitingAppState extends ConsumerState<DitingApp> {
   bool _autoUpdateChecking = false;
 
   /// The update rewrites rule tables in long transactions; running it alongside the first frame's
-  /// queries let a big subscription lock `diting_database` while the tunnel's log writers were
+  /// queries let a big subscription lock the mode database while the tunnel's log writers were
   /// opening it (2.1.7: 183 failed opens, zero successes). A few seconds of head start is enough.
   static const _autoUpdateDelay = Duration(seconds: 5);
 
@@ -169,7 +169,7 @@ class _DitingAppState extends ConsumerState<DitingApp> {
     _router.go(Routes.subscriptions);
   }
 
-  /// A locked `diting_database` used to fail silently: log pages stayed empty and nothing said so.
+  /// A locked mode database used to fail silently: log pages stayed empty and nothing said so.
   /// The native writers count what they dropped, so the first frame can say it out loud.
   Future<void> _maybeReportDbHealth() async {
     if (_dbHealthReported || !mounted || !_agreementAccepted) return;

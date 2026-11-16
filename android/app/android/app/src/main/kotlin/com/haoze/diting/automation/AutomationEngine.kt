@@ -6,7 +6,8 @@ import android.content.SharedPreferences
 import android.util.Log
 import com.haoze.diting.control.BlockPauseLink
 import com.haoze.diting.core.rule.StorageContract
-import com.haoze.diting.log.LegacyDb
+import com.haoze.diting.core.rule.StorageGate
+import com.haoze.diting.log.AppDatabase
 import com.haoze.diting.net.NetworkContextProbe
 import org.json.JSONArray
 import org.json.JSONObject
@@ -63,8 +64,9 @@ object AutomationEngine {
         context.getSharedPreferences(AutomationContract.PREFS_NAME, Context.MODE_PRIVATE)
 
     private fun loadRules(context: Context): List<Rule> {
-        val open = LegacyDb.open(context, StorageContract.appDatabase(context))
-        val db = (open as? LegacyDb.Open.Ready)?.db ?: return emptyList()
+        if (StorageGate.blocksDataPlane(context)) return emptyList()
+        val open = AppDatabase.open(context, StorageContract.GLOBAL)
+        val db = (open as? AppDatabase.Open.Ready)?.db ?: return emptyList()
         val rules = ArrayList<Rule>()
         runCatching {
             db.query(
@@ -209,8 +211,8 @@ object AutomationEngine {
         outcome: String,
         now: Long,
     ) {
-        val open = LegacyDb.open(context, StorageContract.appDatabase(context))
-        val db = (open as? LegacyDb.Open.Ready)?.db ?: return
+        val open = AppDatabase.open(context, StorageContract.GLOBAL)
+        val db = (open as? AppDatabase.Open.Ready)?.db ?: return
         runCatching {
             db.insert(
                 "automation_event",

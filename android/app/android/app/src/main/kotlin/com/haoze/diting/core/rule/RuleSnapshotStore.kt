@@ -38,13 +38,10 @@ object RuleSnapshotStore {
         val filterEnabled = prefs.getBoolean(KEY_DOMAIN_RULES_ENABLED, true)
         val appAllowlist = if (dataset == RuleDataset.NORMAL) readAppAllowlist(context) else emptyMap()
 
-        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase(context))
-        if (dao == null) {
-            Log.w(TAG, "Rule database ${dataset.rulesDatabase(context)} unavailable; snapshot is empty")
-            return RuleSnapshotNative.buildSnapshotBytes(
-                RuleSnapshotPayload.encode(emptyInput(filterEnabled)),
+        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase())
+            ?: throw IllegalStateException(
+                "rule database ${dataset.rulesDatabase()} unavailable",
             )
-        }
 
         // Every dataset now keeps DTRI artifacts under its own root, so the server mode builds and
         // mmaps the same way the two tunnel modes do.
@@ -103,7 +100,7 @@ object RuleSnapshotStore {
 
     /** `Engine.setRewriteRules` flat domain -> target map; '' when empty, matching the Dart encoder. */
     fun buildRewriteRulesJson(context: Context, dataset: RuleDataset): String {
-        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase(context)) ?: return ""
+        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase()) ?: return ""
         return try {
             // Trimmed, blank-free and one row per pattern (oldest wins), then the flat JSON map.
             val targets = JSONObject()
@@ -122,7 +119,7 @@ object RuleSnapshotStore {
      */
     fun refreshIndexes(context: Context, dataset: RuleDataset) {
         val indexDirectory = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
-        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase(context)) ?: return
+        val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase()) ?: return
         try {
             val triesFresh = isStampCurrent(indexDirectory, dao)
             val block = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.BLOCK)
@@ -135,19 +132,8 @@ object RuleSnapshotStore {
         }
     }
 
-    private fun emptyInput(filterEnabled: Boolean) = RuleSnapshotInput(
-        filterEnabled = filterEnabled,
-        blockIndexUsable = false,
-        importantBlockUsable = false,
-        allowIndexUsable = false,
-        importantAllowUsable = false,
-        triePaths = listOf(null, null, null, null),
-        appAllowlist = emptyMap(),
-        blockCustom = emptyList(),
-        blockSubscription = emptyList(),
-        allowCustom = emptyList(),
-        allowSubscription = emptyList(),
-    )
+
+
 
     /** Loads (validating) the two tries of one half, compiling the stale or missing ones. */
     private fun loadIndexes(
@@ -169,7 +155,7 @@ object RuleSnapshotStore {
         // The DTRI writer skips the rows a trie cannot hold (wildcards, regexes, app-scoped and
         // `denyallow`/`dnsType` rows) with the same predicate the old Kotlin filter used, so only
         // the `important` split still happens here. `important` is not part of the DTRI payload
-        // either: the two files split it, exactly like the legacy loaders.
+        // either: the two files split it, exactly like the historical loaders.
         val normal = ensureIndex(normalFile, triesFresh) { consume ->
             val importantFilter = if (kind == RuleSnapshotDao.RuleKind.BLOCK) false else null
             dao.forEachSubscriptionRulePage(kind, importantFilter) { rule ->

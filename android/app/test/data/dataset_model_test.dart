@@ -1,9 +1,7 @@
-// The data set model: one prefs container and one rule database per work mode, like the legacy
-// `RuleDataset`. The UI, the engine config and the API all read the same one.
+// The data set model: one prefs container, one rules database and one logs database per work mode.
 
 import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
-import 'package:diting_shared/data/db/legacy_schema.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
@@ -15,15 +13,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  ProviderContainer container({String workMode = 'normal', int layout = 0}) {
+  ProviderContainer container({String workMode = 'normal'}) {
     final c = ProviderContainer(
       overrides: [
         legacyPrefsStoreProvider.overrideWithValue(
           MemoryLegacyPrefsStore({
-            'diting_settings': {
-              'app_work_mode': workMode,
-              'storage_layout_version': layout,
-            },
+            'diting_settings': {'app_work_mode': workMode},
             'dns_vpn_prefs': const {},
             'diting_express_prefs': const {},
             'diting_dns_mode_prefs': const {},
@@ -36,100 +31,71 @@ void main() {
   }
 
   group('数据集映射', () {
-    test('普通模式：dns_vpn_prefs + 拆分布局规则库', () {
+    test('普通模式使用独立的规则库与日志库', () {
       final dataSet = DataSet.fromWorkModeValue('normal');
       expect(dataSet, DataSet.normal);
       expect(dataSet.prefsContainer, LegacySettings.uiContainer);
-      expect(dataSet.ruleDatabase, LegacyDatabase.normalRulesFile);
-      expect(dataSet.legacyRuleDatabase, LegacyDatabase.mainFile);
-      expect(dataSet.logsDatabase, LegacyDatabase.normalLogsFile);
-      expect(dataSet.legacyLogsDatabase, LegacyDatabase.mainFile);
+      expect(dataSet.ruleDatabase, StorageContract.normalRulesDatabase);
+      expect(dataSet.logsDatabase, StorageContract.normalLogsDatabase);
     });
 
-    test('极速模式：diting_express_prefs + 拆分布局规则库', () {
+    test('极速模式使用独立的规则库与日志库', () {
       final dataSet = DataSet.fromWorkModeValue('express');
       expect(dataSet, DataSet.express);
       expect(dataSet.prefsContainer, LegacySettings.expressContainer);
-      expect(dataSet.ruleDatabase, LegacyDatabase.expressRulesFile);
-      expect(dataSet.legacyRuleDatabase, LegacyDatabase.expressFile);
-      expect(dataSet.logsDatabase, LegacyDatabase.expressLogsFile);
-      expect(dataSet.legacyLogsDatabase, LegacyDatabase.expressFile);
+      expect(dataSet.ruleDatabase, StorageContract.expressRulesDatabase);
+      expect(dataSet.logsDatabase, StorageContract.expressLogsDatabase);
     });
 
-    test('服务器模式沿用旧版 dns 值：规则库不变，日志库拆分', () {
+    test('服务器模式沿用 dns 存储值并使用独立库', () {
       final dataSet = DataSet.fromWorkModeValue('dns');
       expect(dataSet, DataSet.server);
       expect(dataSet.prefsContainer, LegacySettings.serverContainer);
-      expect(dataSet.ruleDatabase, LegacyDatabase.serverFile);
-      expect(dataSet.legacyRuleDatabase, LegacyDatabase.serverFile);
-      expect(dataSet.logsDatabase, LegacyDatabase.serverLogsFile);
-      expect(dataSet.legacyLogsDatabase, LegacyDatabase.serverLogFile);
+      expect(dataSet.ruleDatabase, StorageContract.serverRulesDatabase);
+      expect(dataSet.logsDatabase, StorageContract.serverLogsDatabase);
     });
 
-    test('迁移完成前仍读旧布局', () {
+    test('三种模式的库名互不相同', () {
+      final files = {
+        for (final dataSet in DataSet.values) ...[
+          dataSet.ruleDatabase,
+          dataSet.logsDatabase,
+        ],
+      };
+      expect(files, hasLength(6));
+    });
+
+    test('provider 跟随工作模式切换数据库', () {
       final c = container();
-      expect(c.read(activeRuleDatabaseProvider), LegacyDatabase.mainFile);
-      expect(c.read(activeLogDatabaseFileProvider), LegacyDatabase.mainFile);
-
-      c.read(workModeProvider.notifier).select(AppWorkMode.server);
+      expect(c.read(activeRuleDatabaseProvider), StorageContract.normalRulesDatabase);
       expect(
         c.read(activeLogDatabaseFileProvider),
-        LegacyDatabase.serverLogFile,
-      );
-    });
-
-    test('迁移完成后每个模式读自己的规则库与日志库', () {
-      final c = container(layout: 1);
-      expect(
-        c.read(activeRuleDatabaseProvider),
-        LegacyDatabase.normalRulesFile,
-      );
-      expect(
-        c.read(activeLogDatabaseFileProvider),
-        LegacyDatabase.normalLogsFile,
+        StorageContract.normalLogsDatabase,
       );
 
       c.read(workModeProvider.notifier).select(AppWorkMode.express);
       expect(
         c.read(activeRuleDatabaseProvider),
-        LegacyDatabase.expressRulesFile,
+        StorageContract.expressRulesDatabase,
       );
       expect(
         c.read(activeLogDatabaseFileProvider),
-        LegacyDatabase.expressLogsFile,
+        StorageContract.expressLogsDatabase,
+      );
+      expect(
+        c.read(subscriptionDatabaseFileProvider),
+        StorageContract.expressRulesDatabase,
       );
 
       c.read(workModeProvider.notifier).select(AppWorkMode.server);
-      expect(c.read(activeRuleDatabaseProvider), LegacyDatabase.serverFile);
+      expect(
+        c.read(activeRuleDatabaseProvider),
+        StorageContract.serverRulesDatabase,
+      );
       expect(
         c.read(activeLogDatabaseFileProvider),
-        LegacyDatabase.serverLogsFile,
+        StorageContract.serverLogsDatabase,
       );
-    });
-
-    test('服务器日志使用独立文件，不与普通/极速共享', () {
-      final c = container();
-      expect(c.read(activeLogDatabaseFileProvider), LegacyDatabase.mainFile);
-
-      c.read(workModeProvider.notifier).select(AppWorkMode.express);
-      expect(c.read(activeLogDatabaseFileProvider), LegacyDatabase.expressFile);
-
-      c.read(workModeProvider.notifier).select(AppWorkMode.server);
-      expect(
-        c.read(activeLogDatabaseFileProvider),
-        LegacyDatabase.serverLogFile,
-      );
-      expect(LegacyDatabase.serverLogFile, isNot(LegacyDatabase.mainFile));
-      expect(LegacyDatabase.serverLogFile, isNot(LegacyDatabase.expressFile));
-
-      final statements = LegacySchema.statementsFor(
-        LegacyDatabase.serverLogFile,
-      ).join('\n');
-      expect(statements, contains('CREATE TABLE `dns_log`'));
-      expect(statements, contains('CREATE TABLE `dns_cache`'));
-      expect(statements, contains('CREATE TABLE `dns_race_log`'));
-      expect(statements, contains('CREATE TABLE `bootstrap_log`'));
-      expect(statements, isNot(contains('http_request_log')));
     });
   });
 
@@ -158,7 +124,6 @@ void main() {
       final c = container(workMode: 'express');
       final settings = c.read(legacySettingsProvider);
       settings.setThemeModeRaw('dark');
-      // `_ui` stays `dns_vpn_prefs`: the whole app shares one theme.
       expect(
         c
             .read(legacyPrefsStoreProvider)
@@ -170,7 +135,7 @@ void main() {
     test('切换工作模式后设置视图与规则库一起切换', () {
       final c = container();
       expect(c.read(activeDataSetProvider), DataSet.normal);
-      expect(c.read(activeRuleDatabaseProvider), LegacyDatabase.mainFile);
+      expect(c.read(activeRuleDatabaseProvider), StorageContract.normalRulesDatabase);
 
       c.read(workModeProvider.notifier).select(AppWorkMode.express);
 
@@ -180,10 +145,9 @@ void main() {
         c.read(legacySettingsProvider).dnsContainer,
         LegacySettings.expressContainer,
       );
-      expect(c.read(activeRuleDatabaseProvider), LegacyDatabase.expressFile);
       expect(
-        c.read(subscriptionDatabaseFileProvider),
-        LegacyDatabase.expressFile,
+        c.read(activeRuleDatabaseProvider),
+        StorageContract.expressRulesDatabase,
       );
     });
 
@@ -195,7 +159,7 @@ void main() {
         c.read(legacySettingsProvider).dnsContainer,
         LegacySettings.uiContainer,
       );
-      expect(c.read(activeRuleDatabaseProvider), LegacyDatabase.mainFile);
+      expect(c.read(activeRuleDatabaseProvider), StorageContract.normalRulesDatabase);
     });
 
     test('服务器模式读写自己的数据集', () {
@@ -205,7 +169,7 @@ void main() {
         c.read(legacySettingsProvider).dnsContainer,
         LegacySettings.serverContainer,
       );
-      expect(c.read(activeRuleDatabaseProvider), LegacyDatabase.serverFile);
+      expect(c.read(activeRuleDatabaseProvider), StorageContract.serverRulesDatabase);
 
       c.read(resolutionModeProvider.notifier).select(ResolutionMode.parallel);
       expect(

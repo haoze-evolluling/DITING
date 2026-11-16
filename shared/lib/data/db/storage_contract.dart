@@ -1,126 +1,81 @@
-/// Names and versioning of the work-mode data stores.
+/// Names, application ids and lifecycle markers of the work-mode data stores.
 ///
-/// The app used to keep one combined database per tunnel mode (rules + logs in the same file) and
-/// a separate log store for server mode. The split layout gives every mode a rules database and a
-/// logs database of its own, and moves global automation data into [appDatabase].
-///
-/// Both layouts are supported while the one-time migration runs:
-/// [StorageLayout.legacy] keeps reading/writing the legacy files, [StorageLayout.split] uses the
-/// per-mode stores. Nothing here decides when the switch happens; `storage_layout_version` in the
-/// settings container does, and the migrator writes it only after every copy verifies.
+/// Each work mode owns a rules database and a logs database. Global automation data lives in its
+/// own store because it must survive a mode switch. The V2 stores were created together with this
+/// layout; the only code that may know the pre-V2 file names is `legacy_storage_source.dart`.
 library;
 
-enum StorageLayout {
-  legacy,
-  split;
+/// The seven database files of the current layout.
+enum DatabaseKind {
+  normalRules(StorageContract.normalRulesDatabase, 0x44495431),
+  normalLogs(StorageContract.normalLogsDatabase, 0x44495432),
+  expressRules(StorageContract.expressRulesDatabase, 0x44495433),
+  expressLogs(StorageContract.expressLogsDatabase, 0x44495434),
+  serverRules(StorageContract.serverRulesDatabase, 0x44495435),
+  serverLogs(StorageContract.serverLogsDatabase, 0x44495436),
+  global(StorageContract.globalDatabase, 0x44495437);
 
-  /// `storage_layout_version` at or above this value means the split layout is in use.
-  static const splitVersion = 1;
+  const DatabaseKind(this.fileName, this.applicationId);
 
-  static StorageLayout fromVersion(int version) =>
-      version >= splitVersion ? split : legacy;
+  final String fileName;
 
-  bool get isSplit => this == split;
+  /// Stored in the SQLite header. A file at this path with another id is not ours and is rebuilt.
+  final int applicationId;
+
+  static DatabaseKind? fromFileName(String fileName) {
+    for (final kind in values) {
+      if (kind.fileName == fileName) return kind;
+    }
+    return null;
+  }
 }
 
 abstract final class StorageContract {
-  /// Mode selection and the layout marker share the global settings container.
+  static const normalRulesDatabase = 'diting_normal_rules_v2';
+  static const normalLogsDatabase = 'diting_normal_logs_v2';
+  static const expressRulesDatabase = 'diting_express_rules_v2';
+  static const expressLogsDatabase = 'diting_express_logs_v2';
+  static const serverRulesDatabase = 'diting_dns_rules_v2';
+  static const serverLogsDatabase = 'diting_dns_logs_v2';
+  static const globalDatabase = 'diting_global_v2';
+
+  /// Version stored in every V2 file's `user_version`.
+  static const schemaVersion = 1;
+
+  /// Mode selection and the storage lifecycle marker share the global settings container.
   static const settingsContainer = 'diting_settings';
 
-  static const layoutVersionKey = 'storage_layout_version';
+  static const stateKey = 'storage_v2_state';
 
-  /// When the split layout was committed. Starts the grace period before the legacy files are
-  /// reclaimed; absent on installs that split before this key existed (the migrator backfills it).
-  static const layoutCompletedAtKey = 'storage_split_completed_at';
+  static const completedAtKey = 'storage_v2_completed_at';
 
-  /// Last reason the migration deferred or failed, shown in the storage diagnostics. Cleared on a
-  /// successful run.
-  static const migrationErrorKey = 'storage_migration_error';
+  static const errorKey = 'storage_v2_error';
 
-  // ---- Legacy files; these names are an upgrade contract, never rename them in place ----
+  /// JSON summary of the last migration: copied tables, dropped rows and verification results.
+  static const reportKey = 'storage_v2_report';
 
-  static const legacyNormalDatabase = 'diting_database';
+  static const stateIdle = 0;
 
-  static const legacyExpressDatabase = 'diting_express';
+  static const stateCopying = 1;
 
-  static const legacyServerRulesDatabase = 'diting_dns_rules';
+  static const stateVerified = 2;
 
-  static const legacyServerLogsDatabase = 'diting_server_logs';
+  static const stateCleaned = 3;
 
-  // ---- Split layout: one rules and one logs database per mode ----
+  /// File created by the migrator so native services do not open a half-copied store.
+  static const migrationLockName = '.storage_v2_migrating';
 
-  static const normalRulesDatabase = 'diting_normal_rules';
-
-  static const normalLogsDatabase = 'diting_normal_logs';
-
-  static const expressRulesDatabase = 'diting_express_rules';
-
-  static const expressLogsDatabase = 'diting_express_logs';
-
-  /// Server rules keep their legacy name: the file was already rule-only.
-  static const serverRulesDatabase = 'diting_dns_rules';
-
-  static const serverLogsDatabase = 'diting_dns_logs';
-
-  /// Global data that must outlive a mode switch (automation rules, profiles and events).
-  static const appDatabase = 'diting_app';
-
-  static const splitRuleDatabases = <String>[
+  static const allDatabases = <String>[
     normalRulesDatabase,
-    expressRulesDatabase,
-    serverRulesDatabase,
-  ];
-
-  static const splitLogDatabases = <String>[
     normalLogsDatabase,
+    expressRulesDatabase,
     expressLogsDatabase,
+    serverRulesDatabase,
     serverLogsDatabase,
+    globalDatabase,
   ];
 
-  static const splitDatabases = <String>[
-    ...splitRuleDatabases,
-    ...splitLogDatabases,
-    appDatabase,
-  ];
+  static Iterable<DatabaseKind> get kinds => DatabaseKind.values;
 
-  static const legacyDatabases = <String>[
-    legacyNormalDatabase,
-    legacyExpressDatabase,
-    legacyServerRulesDatabase,
-    legacyServerLogsDatabase,
-  ];
-
-  static List<String> databasesFor(StorageLayout layout) =>
-      layout.isSplit ? splitDatabases : legacyDatabases;
-
-  static List<String> ruleDatabasesFor(StorageLayout layout) => layout.isSplit
-      ? splitRuleDatabases
-      : const [
-          legacyNormalDatabase,
-          legacyExpressDatabase,
-          legacyServerRulesDatabase,
-        ];
-
-  static List<String> logDatabasesFor(StorageLayout layout) => layout.isSplit
-      ? splitLogDatabases
-      : const [
-          legacyNormalDatabase,
-          legacyExpressDatabase,
-          legacyServerLogsDatabase,
-        ];
-
-  /// Every file this build may read, including leftovers from the legacy layout. Used by
-  /// diagnostics and cleanup so a migrated install can still inspect or remove the old files.
-  static List<String> get allKnownDatabases =>
-      [...legacyDatabases, ...splitDatabases].toSet().toList(growable: false);
-
-  /// Legacy files that become stale copies once the split layout is active.
-  ///
-  /// [serverRulesDatabase] is deliberately excluded: the server rules file kept its legacy name, so
-  /// it is a live store in both layouts, not a leftover.
-  static const reclaimableLegacyDatabases = <String>[
-    legacyNormalDatabase,
-    legacyExpressDatabase,
-    legacyServerLogsDatabase,
-  ];
+  static bool isReadyState(int state) => state >= stateVerified;
 }

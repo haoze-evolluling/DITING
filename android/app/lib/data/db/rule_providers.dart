@@ -28,9 +28,7 @@ class RuleRepositoriesNotifier extends Notifier<Map<String, RuleRepository>> {
   }
 
   Future<void> ensure(DataSet dataSet) async {
-    final databaseFile = dataSet.ruleDatabaseFor(
-      ref.read(storageLayoutProvider),
-    );
+    final databaseFile = dataSet.ruleDatabase;
     if (state.containsKey(databaseFile) || !_opening.add(databaseFile)) {
       return;
     }
@@ -61,9 +59,7 @@ final ruleRepositoriesProvider =
 /// opening (the first switch to a mode pays one open, later switches are immediate).
 final ruleRepositoryProvider = Provider<RuleRepository?>((ref) {
   final dataSet = ref.watch(activeDataSetProvider);
-  final databaseFile = dataSet.ruleDatabaseFor(
-    ref.watch(storageLayoutProvider),
-  );
+  final databaseFile = dataSet.ruleDatabase;
   final repositories = ref.watch(ruleRepositoriesProvider);
   final repository = repositories[databaseFile];
   if (repository == null) {

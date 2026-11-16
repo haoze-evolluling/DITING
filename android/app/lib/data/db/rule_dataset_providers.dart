@@ -10,11 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../vpn/vpn_bridge.dart';
 
-/// Rule-only SQLite file of the active data set in the layout the migration selected.
+/// Rule-only SQLite file of the active data set.
 final activeRuleDatabaseProvider = Provider<String>((ref) {
-  return ref
-      .watch(activeDataSetProvider)
-      .ruleDatabaseFor(ref.watch(storageLayoutProvider));
+  return ref.watch(activeDataSetProvider).ruleDatabase;
 });
 
 /// Recompiles the native rule tries of the active data set, then asks a running tunnel to re-apply

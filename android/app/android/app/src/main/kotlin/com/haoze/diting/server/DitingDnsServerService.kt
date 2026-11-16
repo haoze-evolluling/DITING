@@ -19,6 +19,7 @@ import com.haoze.diting.MainActivity
 import com.haoze.diting.R
 import com.haoze.diting.core.rule.EngineRuleLoader
 import com.haoze.diting.core.rule.RuleDataset
+import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.log.BootstrapLogWriter
 import com.haoze.diting.log.DnsCacheMirror
 import com.haoze.diting.log.DnsLogWriter
@@ -79,6 +80,11 @@ class DitingDnsServerService : Service() {
             stopEngine()
             return START_NOT_STICKY
         }
+        if (StorageGate.blocksDataPlane(this)) {
+            Log.w(TAG, "storage upgrade in progress; refusing to start")
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
         val dnsConfig = intent?.getStringExtra(EXTRA_DNS_CONFIG)
         if (dnsConfig.isNullOrBlank()) {
             Log.w(TAG, "start intent without DNS config")
@@ -131,7 +137,7 @@ class DitingDnsServerService : Service() {
                     DnsLogWriter.MODE_OFF
                 }
                 RequestStats.reset()
-                val logDatabase = RuleDataset.DNS_MODE.logsDatabase(this@DitingDnsServerService)
+                val logDatabase = RuleDataset.DNS_MODE.logsDatabase()
                 created.setBatchLogCallback(object : BatchLogCallback {
                     override fun onDNSQueryBatch(rows: ByteArray) {
                         DnsLogWriter.writeBatch(

@@ -8401,98 +8401,116 @@ abstract class AppL10n {
   /// No description provided for @devVacuumBody.
   ///
   /// In zh, this message translates to:
-  /// **'对三个本地库执行 VACUUM，回收已删除记录占用的空间'**
+  /// **'对七个本地库执行 VACUUM，回收已删除记录占用的空间'**
   String get devVacuumBody;
 
   /// No description provided for @devStorageTitle.
   ///
   /// In zh, this message translates to:
-  /// **'存储布局'**
+  /// **'存储状态'**
   String get devStorageTitle;
 
-  /// No description provided for @devStorageSplit.
+  /// No description provided for @devStorageV2Ready.
   ///
   /// In zh, this message translates to:
-  /// **'拆分布局：每个模式独立规则库与日志库'**
-  String get devStorageSplit;
+  /// **'V2 存储已就绪：每个模式独立规则库与日志库'**
+  String get devStorageV2Ready;
 
-  /// No description provided for @devStorageLegacy.
+  /// No description provided for @devStorageV2Pending.
   ///
   /// In zh, this message translates to:
-  /// **'旧布局：迁移尚未完成'**
-  String get devStorageLegacy;
+  /// **'V2 存储尚未完成'**
+  String get devStorageV2Pending;
 
-  /// No description provided for @devStorageDetail.
+  /// No description provided for @devStorageV2Detail.
   ///
   /// In zh, this message translates to:
-  /// **'标记 v{version} · 完成于 {date}'**
-  String devStorageDetail(int version, String date);
+  /// **'状态 {state} · 完成于 {date}'**
+  String devStorageV2Detail(String state, String date);
 
-  /// No description provided for @devStoragePending.
+  /// No description provided for @devStorageV2Error.
   ///
   /// In zh, this message translates to:
-  /// **'待迁移：{reason}'**
-  String devStoragePending(String reason);
+  /// **'迁移错误：{error}'**
+  String devStorageV2Error(String error);
 
-  /// No description provided for @devStorageLastError.
+  /// No description provided for @devStorageV2Files.
   ///
   /// In zh, this message translates to:
-  /// **'上次迁移失败：{error}'**
-  String devStorageLastError(String error);
+  /// **'7 个数据库共 {kb} KB'**
+  String devStorageV2Files(int kb);
 
-  /// No description provided for @devStorageFiles.
+  /// No description provided for @storageV2Title.
   ///
   /// In zh, this message translates to:
-  /// **'旧库残留 {kb} KB'**
-  String devStorageFiles(int kb);
+  /// **'正在升级本地数据'**
+  String get storageV2Title;
 
-  /// No description provided for @devRetryMigration.
+  /// No description provided for @storageV2Preparing.
   ///
   /// In zh, this message translates to:
-  /// **'重试存储迁移'**
-  String get devRetryMigration;
+  /// **'正在准备数据库…'**
+  String get storageV2Preparing;
 
-  /// No description provided for @devRetryMigrationBody.
+  /// No description provided for @storageV2Progress.
   ///
   /// In zh, this message translates to:
-  /// **'在数据面停止时把旧库复制到拆分布局'**
-  String get devRetryMigrationBody;
+  /// **'正在迁移 {database}（{current}/{total}）'**
+  String storageV2Progress(String database, int current, int total);
 
-  /// No description provided for @devReclaimLegacy.
+  /// No description provided for @storageV2Verifying.
   ///
   /// In zh, this message translates to:
-  /// **'释放旧库空间'**
-  String get devReclaimLegacy;
+  /// **'正在校验数据…'**
+  String get storageV2Verifying;
 
-  /// No description provided for @devReclaimLegacyBody.
+  /// No description provided for @storageV2Cleaning.
   ///
   /// In zh, this message translates to:
-  /// **'删除迁移后残留的旧规则与日志数据库'**
-  String get devReclaimLegacyBody;
+  /// **'正在清理旧数据…'**
+  String get storageV2Cleaning;
 
-  /// No description provided for @devMigrationDone.
+  /// No description provided for @storageV2NeedStop.
   ///
   /// In zh, this message translates to:
-  /// **'存储迁移已完成，后续启动使用拆分布局'**
-  String get devMigrationDone;
+  /// **'网络连接正在使用旧数据库。请先停止当前连接，再继续升级。'**
+  String get storageV2NeedStop;
 
-  /// No description provided for @devMigrationDeferred.
+  /// No description provided for @storageV2StopAndRetry.
   ///
   /// In zh, this message translates to:
-  /// **'数据面正在运行，停止隧道后再重试'**
-  String get devMigrationDeferred;
+  /// **'停止连接并继续'**
+  String get storageV2StopAndRetry;
 
-  /// No description provided for @devReclaimNone.
+  /// No description provided for @storageV2Retry.
   ///
   /// In zh, this message translates to:
-  /// **'没有可回收的旧库文件'**
-  String get devReclaimNone;
+  /// **'重试'**
+  String get storageV2Retry;
 
-  /// No description provided for @devReclaimDone.
+  /// No description provided for @storageV2Discard.
   ///
   /// In zh, this message translates to:
-  /// **'已删除 {files}，回收 {kb} KB'**
-  String devReclaimDone(String files, int kb);
+  /// **'放弃旧数据并继续'**
+  String get storageV2Discard;
+
+  /// No description provided for @storageV2Failed.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地数据升级失败：{error}'**
+  String storageV2Failed(String error);
+
+  /// No description provided for @storageV2DiscardTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'放弃旧数据？'**
+  String get storageV2DiscardTitle;
+
+  /// No description provided for @storageV2DiscardConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法读取的旧数据将被丢弃，应用会以空数据库启动。此操作无法撤销。'**
+  String get storageV2DiscardConfirm;
 
   /// No description provided for @devCancel.
   ///

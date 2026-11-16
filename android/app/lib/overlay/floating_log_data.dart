@@ -4,7 +4,7 @@ library;
 
 import 'package:diting_android/data/db/dns_query_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_android/state/observability_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
@@ -27,8 +27,7 @@ class FloatingLogSnapshot {
 /// Reads one mode's log database. The handle is shared with the app through sqflite's
 /// single-instance map, so it is never closed here: closing it would close the app's too.
 class FloatingLogSource {
-  FloatingLogSource({String? databaseName, this.httpEnabled = true})
-    : databaseName = databaseName ?? LegacyDatabase.mainFile;
+  FloatingLogSource({required this.databaseName, this.httpEnabled = true});
 
   final String databaseName;
 
@@ -44,7 +43,7 @@ class FloatingLogSource {
     _opening = true;
     try {
       // Never create: the app owns the schema, and a fresh install has nothing to show yet.
-      _db = await LegacyDatabase.open(databaseName, create: false);
+      _db = await AppDatabase.open(databaseName, create: false);
       return _db;
     } finally {
       _opening = false;

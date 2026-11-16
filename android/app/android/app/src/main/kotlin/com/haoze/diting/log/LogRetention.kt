@@ -75,13 +75,13 @@ internal object LogRetention {
             nowMs = System.currentTimeMillis(),
         )
 
-        val db = LegacyDb.writable(context, databaseName) ?: return 0
+        val db = AppDatabase.writable(context, databaseName) ?: return 0
         var deleted = 0
         for (table in plan.tables) {
-            if (!LegacyDb.hasTable(db, table)) continue
+            if (!AppDatabase.hasTable(db, table)) continue
             deleted += pruneTable(db, table, plan.logCutoffMs, plan.batchRows)
         }
-        if (includeHttpAndTraffic && LegacyDb.hasTable(db, plan.trafficTable)) {
+        if (includeHttpAndTraffic && AppDatabase.hasTable(db, plan.trafficTable)) {
             // `date` is `yyyy-MM-dd`, so the cutoff is a date: millis would delete all.
             val cutoffDate = dayStringAt(plan.trafficCutoffMs)
             deleted += runCatching {

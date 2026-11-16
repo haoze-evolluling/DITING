@@ -105,14 +105,14 @@ class TrafficIngest(
             return
         }
 
-        val db = when (val opened = LegacyDb.open(context, databaseName)) {
-            is LegacyDb.Open.Ready -> opened.db
-            LegacyDb.Open.Absent -> {
+        val db = when (val opened = AppDatabase.open(context, databaseName)) {
+            is AppDatabase.Open.Ready -> opened.db
+            AppDatabase.Open.Absent -> {
                 // Fresh install or server mode: retrying would buffer every tick forever.
                 DbWriteHealth.onDropped(rowCount(snapshot), DropReason.NO_DATABASE, TABLE)
                 return
             }
-            is LegacyDb.Open.Unavailable -> {
+            is AppDatabase.Open.Unavailable -> {
                 requeue(snapshot)
                 LogNative.trafficBackoff(traffic)
                 return
@@ -120,14 +120,14 @@ class TrafficIngest(
         }
 
         // Express has no app_traffic_daily: a wrong database must be a no-op.
-        when (LegacyDb.tableState(db, TABLE)) {
-            LegacyDb.TableState.PRESENT -> Unit
-            LegacyDb.TableState.MISSING -> {
+        when (AppDatabase.tableState(db, TABLE)) {
+            AppDatabase.TableState.PRESENT -> Unit
+            AppDatabase.TableState.MISSING -> {
                 DbWriteHealth.warn(TAG, "$databaseName has no $TABLE; dropping traffic buffer")
                 DbWriteHealth.onDropped(rowCount(snapshot), DropReason.TABLE_MISSING, TABLE)
                 return
             }
-            LegacyDb.TableState.ERROR -> {
+            AppDatabase.TableState.ERROR -> {
                 // A failed lookup is a busy database, not a missing table: keep the deltas.
                 requeue(snapshot)
                 LogNative.trafficBackoff(traffic)

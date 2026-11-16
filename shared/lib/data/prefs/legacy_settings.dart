@@ -152,53 +152,64 @@ class LegacySettings {
     );
   }
 
-  /// 0 until the storage migration succeeds; the split layout is used from
-  /// [StorageLayout.splitVersion] on. A failed migration leaves the legacy layout active.
-  int get storageLayoutVersion =>
-      _int(workModeContainer, StorageContract.layoutVersionKey, 0);
+  /// V2 storage lifecycle: idle, copying, verified or cleaned.
+  int get storageV2State =>
+      _int(workModeContainer, StorageContract.stateKey, StorageContract.stateIdle);
 
-  StorageLayout get storageLayout =>
-      StorageLayout.fromVersion(storageLayoutVersion);
-
-  void setStorageLayoutVersion(int version) => _store.putInt(
+  void setStorageV2State(int state) => _store.putInt(
     workModeContainer,
-    StorageContract.layoutVersionKey,
-    version,
+    StorageContract.stateKey,
+    state,
   );
 
   /// Acknowledged write for the migration's commit point; see [LegacyPrefsStore.putIntAwaiting].
-  Future<void> commitStorageLayoutVersion(int version) => _store.putIntAwaiting(
+  Future<void> commitStorageV2State(int state) => _store.putIntAwaiting(
     workModeContainer,
-    StorageContract.layoutVersionKey,
-    version,
+    StorageContract.stateKey,
+    state,
   );
 
-  /// Start of the grace period before the legacy files are reclaimed.
-  DateTime? get storageSplitCompletedAt {
-    final millis = _int(workModeContainer, StorageContract.layoutCompletedAtKey, 0);
+  DateTime? get storageV2CompletedAt {
+    final millis =
+        _int(workModeContainer, StorageContract.completedAtKey, 0);
     return millis > 0 ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
   }
 
   /// Epoch millis exceed 32 bits, so this must use the long channel or it truncates to a negative
-  /// int and the grace-period check silently disables itself.
-  void setStorageSplitCompletedAt(DateTime time) => _store.putLong(
+  /// int.
+  void setStorageV2CompletedAt(DateTime time) => _store.putLong(
     workModeContainer,
-    StorageContract.layoutCompletedAtKey,
+    StorageContract.completedAtKey,
     time.millisecondsSinceEpoch,
   );
 
   /// Last deferral or failure reason; null after a successful migration.
-  String? get storageMigrationError =>
-      _string(workModeContainer, StorageContract.migrationErrorKey);
+  String? get storageV2Error =>
+      _string(workModeContainer, StorageContract.errorKey);
 
-  void setStorageMigrationError(String? message) {
+  void setStorageV2Error(String? message) {
     if (message == null || message.isEmpty) {
-      _store.remove(workModeContainer, StorageContract.migrationErrorKey);
+      _store.remove(workModeContainer, StorageContract.errorKey);
     } else {
       _store.putString(
         workModeContainer,
-        StorageContract.migrationErrorKey,
+        StorageContract.errorKey,
         message,
+      );
+    }
+  }
+
+  String? get storageV2Report =>
+      _string(workModeContainer, StorageContract.reportKey);
+
+  void setStorageV2Report(String? report) {
+    if (report == null || report.isEmpty) {
+      _store.remove(workModeContainer, StorageContract.reportKey);
+    } else {
+      _store.putString(
+        workModeContainer,
+        StorageContract.reportKey,
+        report,
       );
     }
   }

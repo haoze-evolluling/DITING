@@ -1403,22 +1403,53 @@
   "devClearAll": "Clear all data",
   "devClearAllBody": "Delete settings, rules and logs to restore the factory state",
   "devVacuum": "Compact databases",
-  "devVacuumBody": "Run VACUUM on the three local databases to reclaim space from deleted rows",
-  "devStorageTitle": "Storage layout",
-  "devStorageSplit": "Split layout: one rules and one logs database per mode",
-  "devStorageLegacy": "Legacy layout: migration not completed",
-  "devStorageDetail": "Marker v{version} · committed {date}",
-  "devStoragePending": "Pending: {reason}",
-  "devStorageLastError": "Last migration failed: {error}",
-  "devStorageFiles": "Legacy files: {kb} KB",
-  "devRetryMigration": "Retry storage migration",
-  "devRetryMigrationBody": "Copy the legacy data into the split layout while no data plane runs",
-  "devReclaimLegacy": "Release legacy storage",
-  "devReclaimLegacyBody": "Delete the legacy rules and logs databases left after migration",
-  "devMigrationDone": "Storage migration completed; later launches use the split layout",
-  "devMigrationDeferred": "A data plane is running; stop the tunnel and retry",
-  "devReclaimNone": "No legacy database files to reclaim",
-  "devReclaimDone": "Deleted {files}, reclaimed {kb} KB",
+  "devVacuumBody": "Run VACUUM on the seven local databases to reclaim space from deleted rows",
+  "devStorageTitle": "Storage status",
+  "devStorageV2Ready": "V2 storage is ready: every mode has its own rules and logs database",
+  "devStorageV2Pending": "V2 storage is not complete",
+  "devStorageV2Detail": "State {state} · completed {date}",
+  "@devStorageV2Detail": {
+    "placeholders": {
+      "state": { "type": "String" },
+      "date": { "type": "String" }
+    }
+  },
+  "devStorageV2Error": "Migration error: {error}",
+  "@devStorageV2Error": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "devStorageV2Files": "7 databases, {kb} KB",
+  "@devStorageV2Files": {
+    "placeholders": {
+      "kb": { "type": "int" }
+    }
+  },
+  "storageV2Title": "Upgrading local data",
+  "storageV2Preparing": "Preparing databases…",
+  "storageV2Progress": "Migrating {database} ({current}/{total})",
+  "@storageV2Progress": {
+    "placeholders": {
+      "database": { "type": "String" },
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "storageV2Verifying": "Verifying data…",
+  "storageV2Cleaning": "Cleaning up old data…",
+  "storageV2NeedStop": "A network connection is using the old databases. Stop it before upgrading.",
+  "storageV2StopAndRetry": "Stop connection and continue",
+  "storageV2Retry": "Retry",
+  "storageV2Discard": "Discard old data and continue",
+  "storageV2Failed": "Local data upgrade failed: {error}",
+  "@storageV2Failed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "storageV2DiscardTitle": "Discard old data?",
+  "storageV2DiscardConfirm": "Unreadable old data will be dropped and the app will start with empty databases. This cannot be undone.",
   "devCancel": "Cancel",
   "devRun": "Run",
   "devConfirmBody": "{action}\n\nThis operation really rewrites local data and cannot be undone.",

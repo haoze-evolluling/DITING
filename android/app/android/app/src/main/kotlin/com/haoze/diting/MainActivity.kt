@@ -14,6 +14,7 @@ import com.haoze.diting.platform.PermissionsBridge
 import com.haoze.diting.platform.PlatformBridge
 import com.haoze.diting.platform.RecognitionAvatarBridge
 import com.haoze.diting.platform.RuntimeLogBridge
+import com.haoze.diting.platform.StorageMaintenanceBridge
 import com.haoze.diting.platform.TroubleshootingLogBridge
 import com.haoze.diting.platform.UpdateBridge
 import com.haoze.diting.proxy.OutboundProxyBridge
@@ -70,6 +71,7 @@ class MainActivity : FlutterActivity() {
         // Notification repaints after a Dart-side settings edit: same reasoning.
         NotificationBridge(applicationContext).register(messenger)
         DbHealthBridge(applicationContext).register(messenger)
+        StorageMaintenanceBridge(applicationContext).register(messenger)
     }
 
     /// The floating log window only shows while the app is in the background.

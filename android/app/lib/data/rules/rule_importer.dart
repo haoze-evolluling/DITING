@@ -188,7 +188,7 @@ class RuleImporter {
   /// Two short steps instead of one long transaction: the source rows go in a single statement set,
   /// then the orphans are swept in bounded id-range batches. A `DELETE ... WHERE id NOT IN
   /// (SELECT ...)` over a subscription-sized table held the write lock for minutes, which starved
-  /// every other reader and writer of `diting_database` (see the 2026-10-27 log: 183 failed
+  /// every other reader and writer of the mode database (see the 2026-10-27 log: 183 failed
   /// `PRAGMA journal_mode` probes, no successful open at all).
   Future<void> removeRulesBySource(String source) async {
     final plan = RustRuleStoreCore.instance.plan({

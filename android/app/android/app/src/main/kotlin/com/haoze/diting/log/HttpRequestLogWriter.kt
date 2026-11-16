@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 ///
 /// The row, the mode filter and the counters live in the log kernel
 /// (`rust/diting-log-core/src/row.rs`), as does the batch policy (10 rows, 5k queued, 2 s → 30 s
-/// backoff, `queue::HTTP`). The timer, the SQL and the `LegacyDb` handling stay here.
+/// backoff, `queue::HTTP`). The timer, the SQL and the `AppDatabase` handling stay here.
 class HttpRequestLogWriter(
     private val context: Context,
     private val databaseName: String,
@@ -96,13 +96,13 @@ class HttpRequestLogWriter(
             return
         }
 
-        val db = when (val opened = LegacyDb.open(context, databaseName)) {
-            is LegacyDb.Open.Ready -> opened.db
-            LegacyDb.Open.Absent -> {
+        val db = when (val opened = AppDatabase.open(context, databaseName)) {
+            is AppDatabase.Open.Ready -> opened.db
+            AppDatabase.Open.Absent -> {
                 DbWriteHealth.onDropped(batch.size, DropReason.NO_DATABASE, TABLE)
                 return
             }
-            is LegacyDb.Open.Unavailable -> {
+            is AppDatabase.Open.Unavailable -> {
                 requeue(batch)
                 LogNative.queueBackoff(queue)
                 return
@@ -110,14 +110,14 @@ class HttpRequestLogWriter(
         }
 
         // Guard anyway: an INSERT into a missing table would throw per batch.
-        when (LegacyDb.tableState(db, TABLE)) {
-            LegacyDb.TableState.PRESENT -> Unit
-            LegacyDb.TableState.MISSING -> {
+        when (AppDatabase.tableState(db, TABLE)) {
+            AppDatabase.TableState.PRESENT -> Unit
+            AppDatabase.TableState.MISSING -> {
                 DbWriteHealth.warn(TAG, "$databaseName has no $TABLE; dropping HTTP rows")
                 DbWriteHealth.onDropped(batch.size, DropReason.TABLE_MISSING, TABLE)
                 return
             }
-            LegacyDb.TableState.ERROR -> {
+            AppDatabase.TableState.ERROR -> {
                 // A failed lookup is a busy database, not a missing table: keep the rows.
                 LogNative.queueBackoff(queue)
                 requeue(batch)

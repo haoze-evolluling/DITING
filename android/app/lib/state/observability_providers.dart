@@ -6,8 +6,7 @@ import 'package:diting_android/data/db/dns_query_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -487,11 +486,11 @@ final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
 
 /// Normal mode's log database, the only one with `http_request_log` and `app_traffic_daily`.
 final normalLogDatabaseFileProvider = Provider<String>((ref) {
-  return DataSet.normal.logsDatabaseFor(ref.watch(storageLayoutProvider));
+  return DataSet.normal.logsDatabase;
 });
 
 final normalLogDatabaseProvider = FutureProvider<Database?>(
-  (ref) => LegacyDatabase.open(ref.watch(normalLogDatabaseFileProvider)),
+  (ref) => AppDatabase.open(ref.watch(normalLogDatabaseFileProvider)),
 );
 
 /// Empty result reused for normal empty states.

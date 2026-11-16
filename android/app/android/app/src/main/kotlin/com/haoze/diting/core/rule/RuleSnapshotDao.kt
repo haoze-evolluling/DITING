@@ -2,7 +2,7 @@ package com.haoze.diting.core.rule
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import com.haoze.diting.log.LegacyDb
+import com.haoze.diting.log.AppDatabase
 
 /** A rule row projected exactly as the legacy Room `EnabledRule`/`EnabledRuleKeyset`. */
 data class EnabledRule(
@@ -37,7 +37,7 @@ data class EnabledRuleKeyset(
 /**
  * Raw-SQLite port of the legacy Room rule DAO surface the snapshot builder needs. The rule tables
  * live in the sqflite-created database; this reader only reads, and the connection it borrows is
- * the process-wide one from [LegacyDb], so a snapshot build never competes with the log writers
+ * the process-wide one from [AppDatabase], so a snapshot build never competes with the log writers
  * for the file lock.
  */
 class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
@@ -139,7 +139,7 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         result.map { (pattern, target) -> pattern to target }
     }
 
-    /// The connection belongs to [LegacyDb] and is shared with the log writers; closing it here
+    /// The connection belongs to [AppDatabase] and is shared with the log writers; closing it here
     /// would pull the file out from under them, so this only drops the reference.
     fun close() = Unit
 
@@ -165,7 +165,7 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
 
     /** Rows plus the id/source sums catch edits and toggles, not only inserts and deletes. */
     private fun countFingerprint(table: String): Triple<Long, Long, Long>? {
-        if (!LegacyDb.hasTable(db, table)) return null
+        if (!AppDatabase.hasTable(db, table)) return null
         val columns = if (table.endsWith("_source")) "SUM(ruleId), SUM(enabled)" else "SUM(id), SUM(enabled)"
         return db.rawQuery("SELECT COUNT(*), $columns FROM $table", null).use { cursor ->
             // `COUNT(*)` without a `GROUP BY` always yields one row; an empty table sums to 0.
@@ -182,10 +182,10 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
     companion object {
         private const val PAGE_SIZE = 2000
 
-        /** Opens the legacy database through the shared connection; null when it has no rule tables. */
+        /** Opens the mode database through the shared connection; null when it has no rule tables. */
         fun open(context: Context, databaseName: String): RuleSnapshotDao? {
-            val db = LegacyDb.writable(context, databaseName) ?: return null
-            if (!LegacyDb.hasTable(db, "block_rule") || !LegacyDb.hasTable(db, "allow_rule")) {
+            val db = AppDatabase.writable(context, databaseName) ?: return null
+            if (!AppDatabase.hasTable(db, "block_rule") || !AppDatabase.hasTable(db, "allow_rule")) {
                 return null
             }
             return RuleSnapshotDao(db)

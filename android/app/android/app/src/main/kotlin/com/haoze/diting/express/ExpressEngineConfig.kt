@@ -40,7 +40,7 @@ internal object ExpressEngineConfig {
         })
         engine.applyDNSConfig(dnsConfig)
         RequestStats.reset()
-        val logDatabase = RuleDataset.EXPRESS.logsDatabase(service)
+        val logDatabase = RuleDataset.EXPRESS.logsDatabase()
         EngineLogCallbacks.attach(engine, service, logDatabase, logMode)
         engine.setFilterDNS(true)
         // Same rule as the full tunnel: no IPv6 in the narrow TUN means no AAAA answers, so a

@@ -7,8 +7,8 @@ import 'dart:io';
 import 'package:diting_android/data/backup/backup_exporter.dart';
 import 'package:diting_android/data/backup/backup_importer.dart';
 import 'package:diting_android/data/backup/backup_models.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
-import 'package:diting_shared/data/db/legacy_schema.dart';
+import 'package:diting_shared/data/db/database_schema.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -429,15 +429,14 @@ void _backupTransfer() {
       // A fresh install has no data set yet; the importer must work against the schema this app
       // creates, not just the minimal tables the round-trip tests use.
       final directory = Directory.systemTemp.createTempSync('diting_backup');
-      final path = p.join(directory.path, LegacyDatabase.mainFile);
+      const kind = DatabaseKind.normalRules;
+      final path = p.join(directory.path, kind.fileName);
       final fresh = await databaseFactory.openDatabase(
         path,
         options: OpenDatabaseOptions(
-          version: LegacySchema.versionOf(LegacyDatabase.mainFile),
+          version: StorageContract.schemaVersion,
           onCreate: (database, version) async {
-            for (final statement in LegacySchema.statementsFor(
-              LegacyDatabase.mainFile,
-            )) {
+            for (final statement in DatabaseSchema.statementsFor(kind)) {
               await database.execute(statement);
             }
           },

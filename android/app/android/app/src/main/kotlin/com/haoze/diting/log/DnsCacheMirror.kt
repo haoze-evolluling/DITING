@@ -60,13 +60,13 @@ class DnsCacheMirror(
             return
         }
 
-        val db = when (val opened = LegacyDb.open(context, databaseName)) {
-            is LegacyDb.Open.Ready -> opened.db
+        val db = when (val opened = AppDatabase.open(context, databaseName)) {
+            is AppDatabase.Open.Ready -> opened.db
             // No database yet, or locked right now: the next tick is 10s away, so just skip.
-            LegacyDb.Open.Absent -> return
-            is LegacyDb.Open.Unavailable -> return
+            AppDatabase.Open.Absent -> return
+            is AppDatabase.Open.Unavailable -> return
         }
-        if (!LegacyDb.hasTable(db, TABLE)) return
+        if (!AppDatabase.hasTable(db, TABLE)) return
         db.beginTransaction()
         try {
             // Replace the projection wholesale: entries the engine evicted or expired must

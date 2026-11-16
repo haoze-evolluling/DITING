@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 /// hot path, which is why 2.1.7 opened a connection per event there. The queue and its policy (200
 /// rows or 1 s, 10k queued, 500 per transaction, 1 s → 30 s backoff) live in the log kernel
 /// (`rust/diting-log-core/src/queue.rs`); this class keeps the timer, the SQL, the compiled
-/// statement and every `LegacyDb` decision.
+/// statement and every `AppDatabase` decision.
 internal class LogTableWriter(
     context: Context,
     private val databaseName: String,
@@ -128,14 +128,14 @@ internal class LogTableWriter(
 
     /// True when the rows are either written or permanently unpersistable (so no requeue).
     private fun write(rows: List<ByteArray>): Boolean {
-        val db = when (val open = LegacyDb.open(appContext, databaseName)) {
-            is LegacyDb.Open.Ready -> open.db
-            LegacyDb.Open.Absent -> {
+        val db = when (val open = AppDatabase.open(appContext, databaseName)) {
+            is AppDatabase.Open.Ready -> open.db
+            AppDatabase.Open.Absent -> {
                 // No database yet on a fresh install; Dart creates the schema. Counted, not silent.
                 DbWriteHealth.onDropped(rows.size, DropReason.NO_DATABASE, table)
                 return true
             }
-            is LegacyDb.Open.Unavailable -> {
+            is AppDatabase.Open.Unavailable -> {
                 requeue(rows)
                 LogNative.queueBackoff(queue)
                 return false
@@ -145,15 +145,15 @@ internal class LogTableWriter(
             DbWriteHealth.onDropped(rows.size, DropReason.TABLE_MISSING, table)
             return true
         }
-        when (LegacyDb.tableState(db, table)) {
-            LegacyDb.TableState.PRESENT -> Unit
-            LegacyDb.TableState.MISSING -> {
+        when (AppDatabase.tableState(db, table)) {
+            AppDatabase.TableState.PRESENT -> Unit
+            AppDatabase.TableState.MISSING -> {
                 LogNative.queueLatchMissing(queue)
                 DbWriteHealth.warn(TAG, "$databaseName has no $table; dropping rows")
                 DbWriteHealth.onDropped(rows.size, DropReason.TABLE_MISSING, table)
                 return true
             }
-            LegacyDb.TableState.ERROR -> {
+            AppDatabase.TableState.ERROR -> {
                 // Locked or I/O: the table is almost certainly there, so keep the rows.
                 requeue(rows)
                 LogNative.queueBackoff(queue)

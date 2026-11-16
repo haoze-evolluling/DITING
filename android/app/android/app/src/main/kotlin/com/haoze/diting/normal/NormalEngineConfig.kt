@@ -55,7 +55,7 @@ internal object NormalEngineConfig {
         engine.applyDNSConfig(dnsConfig)
         // Counts belong to this run; the notification shows them since the tunnel came up.
         RequestStats.reset()
-        val logDatabase = RuleDataset.NORMAL.logsDatabase(service)
+        val logDatabase = RuleDataset.NORMAL.logsDatabase()
         EngineLogCallbacks.attach(engine, service, logDatabase, logMode)
         engine.setFilterDNS(true)
         // The tunnel resolved `ipv6Mode` against the link (AUTO probe included). When it is

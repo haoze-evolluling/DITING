@@ -6,7 +6,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 
 import 'dart:async';
 
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_android/data/db/mirror_template_repository.dart';
@@ -34,9 +34,9 @@ final subscriptionDatabaseFileProvider = Provider<String>(
   (ref) => ref.watch(activeRuleDatabaseProvider),
 );
 
-/// Null on a fresh install (no legacy file yet), giving an empty list.
+/// Null on a fresh install (no rules database yet), giving an empty list.
 final subscriptionDatabaseProvider = FutureProvider<Database?>(
-  (ref) => LegacyDatabase.open(ref.watch(subscriptionDatabaseFileProvider)),
+  (ref) => AppDatabase.open(ref.watch(subscriptionDatabaseFileProvider)),
 );
 
 /// Bumped by every write so all subscription readers rebuild together.
@@ -72,7 +72,7 @@ final ruleImporterProvider = FutureProvider<RuleImporter?>((ref) async {
   return db == null ? null : RuleImporter(db);
 });
 
-/// Subscription repository; null without a legacy database.
+/// Subscription repository; null without a rules database.
 final subscriptionRepositoryProvider = FutureProvider<SubscriptionRepository?>((
   ref,
 ) async {
@@ -86,7 +86,7 @@ final subscriptionRepositoryProvider = FutureProvider<SubscriptionRepository?>((
   );
 });
 
-/// R6 rule-set version history; null without a legacy database.
+/// R6 rule-set version history; null without a rules database.
 final ruleVersionRepositoryProvider = FutureProvider<RuleVersionRepository?>((
   ref,
 ) async {

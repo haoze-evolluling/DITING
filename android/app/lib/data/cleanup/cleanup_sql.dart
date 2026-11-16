@@ -1,7 +1,6 @@
 library;
 
 import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_android/data/db/preset_whitelist.dart';
 import 'package:flutter/foundation.dart';
@@ -9,36 +8,33 @@ import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// Opens each database file once per session: "clear all local data" runs a dozen actions and
-/// `LegacyDatabase.open` re-checks the file every call.
+/// `AppDatabase.open` re-checks the file every call.
 class CleanupDatabases {
-  CleanupDatabases(this._open, {this.layout = StorageLayout.legacy});
+  CleanupDatabases(this._open);
 
   final Future<Database?> Function(String fileName) _open;
-  final StorageLayout layout;
   final Map<String, Database?> _cache = {};
 
   Future<Database?> of(String fileName) async => _cache.containsKey(fileName)
       ? _cache[fileName]
       : (_cache[fileName] = await _open(fileName));
 
-  String get normalRulesFile => DataSet.normal.ruleDatabaseFor(layout);
+  String get normalRulesFile => DataSet.normal.ruleDatabase;
 
-  String get normalLogsFile => DataSet.normal.logsDatabaseFor(layout);
+  String get normalLogsFile => DataSet.normal.logsDatabase;
 
   /// Normal mode's log database: the only one with `app_traffic_daily`.
   Future<Database?> get main => of(normalLogsFile);
 
-  /// Global automation store. It only exists after the split; before that the tables live in the
-  /// normal mode's legacy file and are removed there by the rule-database pass.
-  Future<Database?> get app =>
-      layout.isSplit ? of(LegacyDatabase.appFile) : Future.value(null);
+  /// Global automation store, shared by every mode.
+  Future<Database?> get app => of(StorageContract.globalDatabase);
 
   /// Existing rule databases in a fixed order (normal, express, server), so map iteration order
   /// cannot make tests flaky.
   Future<List<Database>> ruleDatabases() async {
     final databases = <Database>[];
     for (final dataSet in DataSet.values) {
-      final db = await of(dataSet.ruleDatabaseFor(layout));
+      final db = await of(dataSet.ruleDatabase);
       if (db != null) databases.add(db);
     }
     return databases;
@@ -48,7 +44,7 @@ class CleanupDatabases {
   Future<List<Database>> runtimeDatabases() async {
     final databases = <Database>[];
     for (final dataSet in DataSet.values) {
-      final db = await of(dataSet.logsDatabaseFor(layout));
+      final db = await of(dataSet.logsDatabase);
       if (db != null) databases.add(db);
     }
     return databases;

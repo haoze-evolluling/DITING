@@ -9,6 +9,26 @@ import 'package:diting_android/data/vpn/vpn_bridge.dart'
     show vpnChannelName, expressVpnChannelName, dnsServerChannelName;
 import 'package:flutter/services.dart';
 
+/// Asks every tunnel-like service to stop and waits briefly for the native state to settle.
+Future<bool> stopAllDataPlanes() async {
+  for (final name in const [
+    vpnChannelName,
+    expressVpnChannelName,
+    dnsServerChannelName,
+  ]) {
+    try {
+      await MethodChannel(name).invokeMethod<void>('stop');
+    } catch (_) {
+      // A stopped or unavailable service has nothing to stop.
+    }
+  }
+  for (var attempt = 0; attempt < 20; attempt++) {
+    if (!await anyDataPlaneRunning()) return true;
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
+  return !await anyDataPlaneRunning();
+}
+
 Future<bool> anyDataPlaneRunning() async {
   for (final name in const [
     vpnChannelName,

@@ -32,8 +32,8 @@ abstract class LegacyPrefsStore {
   ///
   /// Every other write is fire-and-forget, which is fine for UI settings: the in-memory snapshot
   /// already changed. The storage-layout marker is different — native services resolve database
-  /// names from the same prefs file, so a dropped write would leave Dart on the split layout while
-  /// the tunnel keeps writing the legacy file. Callers use this for that one commit point only.
+  /// names from the same prefs file, so a dropped write would leave Dart on the old stores while
+  /// the tunnel keeps writing the new ones. Callers use this for that one commit point only.
   Future<void> putIntAwaiting(String container, String key, int value);
 }
 

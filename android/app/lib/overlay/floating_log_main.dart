@@ -143,12 +143,12 @@ class _FloatingLogAppState extends State<FloatingLogApp> {
   }
 }
 
-/// The window runs in its own engine, so it resolves the active mode and storage layout from the
-/// same prefs snapshot the rest of the app reads rather than from a provider tree.
+/// The window runs in its own engine, so it resolves the active mode from the same prefs snapshot
+/// the rest of the app reads rather than from a provider tree.
 FloatingLogSource _defaultSource(LegacySettings settings) {
   final dataSet = DataSet.fromWorkModeValue(settings.workModeRaw);
   return FloatingLogSource(
-    databaseName: dataSet.logsDatabaseFor(settings.storageLayout),
+    databaseName: dataSet.logsDatabase,
     httpEnabled: dataSet == DataSet.normal,
   );
 }

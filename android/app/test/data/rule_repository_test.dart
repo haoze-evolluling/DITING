@@ -2,7 +2,8 @@
 // global, and an unavailable rule library must report itself as unavailable.
 
 import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/app_database.dart';
+import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_android/data/db/preset_whitelist.dart';
 import 'package:diting_android/data/db/rule_bootstrap.dart';
 import 'package:diting_android/data/db/rule_providers.dart';
@@ -24,7 +25,7 @@ void main() {
   group('数据集规则库', _ruleDataSets);
 }
 
-/// Every work mode opens its own legacy database and records the seed marker in its own container.
+/// Every work mode opens its own rules database and records the seed marker in its own container.
 void _ruleDataSets() {
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +42,7 @@ void _ruleDataSets() {
     addTearDown(() async {
       final path = await databaseFactory.getDatabasesPath();
       await databaseFactory.deleteDatabase(
-        '$path/${LegacyDatabase.expressFile}',
+        '$path/${StorageContract.expressRulesDatabase}',
       );
     });
 
@@ -52,7 +53,7 @@ void _ruleDataSets() {
     );
 
     expect(boot.repository, isNotNull);
-    expect(boot.repository!.sourceFile, LegacyDatabase.expressFile);
+    expect(boot.repository!.sourceFile, StorageContract.expressRulesDatabase);
     expect(
       store.read(
         LegacySettings.expressContainer,
@@ -71,14 +72,14 @@ void _ruleDataSets() {
   test('singleInstance=false 可在已有连接之外另开一条独立连接', () async {
     addTearDown(() async {
       final path = await databaseFactory.getDatabasesPath();
-      await databaseFactory.deleteDatabase('$path/${LegacyDatabase.mainFile}');
+      await databaseFactory.deleteDatabase('$path/${StorageContract.normalRulesDatabase}');
     });
 
-    final first = await LegacyDatabase.open(LegacyDatabase.mainFile);
+    final first = await AppDatabase.open(StorageContract.normalRulesDatabase);
     expect(first, isNotNull);
 
-    final second = await LegacyDatabase.open(
-      LegacyDatabase.mainFile,
+    final second = await AppDatabase.open(
+      StorageContract.normalRulesDatabase,
       singleInstance: false,
     );
     expect(second, isNotNull);

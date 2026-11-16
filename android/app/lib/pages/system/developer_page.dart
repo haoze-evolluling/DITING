@@ -7,11 +7,8 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
-import 'package:diting_android/data/native/data_plane_status.dart';
-import 'package:diting_shared/data/db/legacy_database.dart';
+import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
-import 'package:diting_shared/data/db/storage_migration.dart';
-import 'package:diting_shared/data/db/storage_reclaim.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
@@ -21,6 +18,8 @@ import 'package:diting_android/widgets/glyph_lookup.dart';
 import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart' show getDatabasesPath;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -32,9 +31,7 @@ enum _DeveloperAction {
   stressLogs(glyphName: 'logs'),
   reportError(glyphName: 'error'),
   clearAllData(glyphName: 'clearAll', destructive: true),
-  vacuum(glyphName: 'memory'),
-  retryMigration(glyphName: 'refresh'),
-  reclaimLegacy(glyphName: 'delete', destructive: true);
+  vacuum(glyphName: 'memory');
 
   const _DeveloperAction({required this.glyphName, this.destructive = false});
 
@@ -46,8 +43,6 @@ enum _DeveloperAction {
     reportError => l10n.devErrorReport,
     clearAllData => l10n.devClearAll,
     vacuum => l10n.devVacuum,
-    retryMigration => l10n.devRetryMigration,
-    reclaimLegacy => l10n.devReclaimLegacy,
   };
 
   String subtitle(AppL10n l10n) => switch (this) {
@@ -55,8 +50,6 @@ enum _DeveloperAction {
     reportError => l10n.devErrorReportBody,
     clearAllData => l10n.devClearAllBody,
     vacuum => l10n.devVacuumBody,
-    retryMigration => l10n.devRetryMigrationBody,
-    reclaimLegacy => l10n.devReclaimLegacyBody,
   };
 }
 
@@ -106,8 +99,6 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
         _DeveloperAction.reportError => _reportError(),
         _DeveloperAction.clearAllData => await _clearAllData(),
         _DeveloperAction.vacuum => await _vacuum(),
-        _DeveloperAction.retryMigration => await _retryMigration(),
-        _DeveloperAction.reclaimLegacy => await _reclaimLegacy(),
       };
     } catch (error) {
       message = context.l10n.devActionFailed(action.title(context.l10n), '$error');
@@ -131,7 +122,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
   /// Writes real rows into the active `dns_log`; the revision bump makes the log pages re-query.
   Future<String> _stressLogs() async {
     final fileName = ref.read(activeLogDatabaseFileProvider);
-    final db = await LegacyDatabase.open(fileName);
+    final db = await AppDatabase.open(fileName);
     if (db == null) return context.l10n.devStressNoDb;
     final now = DateTime.now().millisecondsSinceEpoch;
     final random = Random();
@@ -176,8 +167,8 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
   Future<String> _vacuum() async {
     var freed = 0;
     final touched = <String>[];
-    for (final fileName in StorageContract.allKnownDatabases) {
-      final db = await LegacyDatabase.open(fileName, create: false);
+    for (final fileName in StorageContract.allDatabases) {
+      final db = await AppDatabase.open(fileName, create: false);
       if (db == null) continue;
       try {
         final file = File(db.path);
@@ -192,46 +183,6 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
     if (touched.isEmpty) return context.l10n.devVacuumNoDb;
     final kb = (freed / 1024).round();
     return context.l10n.devVacuumDone(touched.join('、'), kb < 0 ? 0 : kb);
-  }
-
-  /// Re-runs the startup migration on demand. A running data plane defers it, as on launch.
-  Future<String> _retryMigration() async {
-    // Captured before the awaits: the message is formatted after the work, and a disposed page
-    // must not dereference its context.
-    final l10n = context.l10n;
-    final result = await ensureSplitStorage(
-      ref.read(legacyPrefsStoreProvider),
-      dataPlaneRunning: await anyDataPlaneRunning(),
-    );
-    // Every reader resolving database names watches this revision; bump it even on failure so the
-    // card shows the reason that was just recorded.
-    ref.read(legacySettingsRevisionProvider.notifier).bump();
-    if (result.split) return l10n.devMigrationDone;
-    if (result.deferred) return l10n.devMigrationDeferred;
-    return l10n.devActionFailed(l10n.devRetryMigration, result.error ?? '');
-  }
-
-  /// Deletes the stale pre-split copies. Never touches the server rules file: it kept its legacy
-  /// name and is still the live store for DNS mode (see [StorageContract.reclaimableLegacyDatabases]).
-  Future<String> _reclaimLegacy() async {
-    final l10n = context.l10n;
-    if (!ref.read(storageLayoutProvider).isSplit) {
-      return l10n.devReclaimNone;
-    }
-    final sizes = await legacyDatabaseSizes();
-    if (sizes.isEmpty) return l10n.devReclaimNone;
-    if (await anyDataPlaneRunning()) {
-      return l10n.devMigrationDeferred;
-    }
-    final freed = await reclaimLegacyDatabases(
-      split: true,
-      dataPlaneRunning: false,
-    );
-    if (freed <= 0) return l10n.devReclaimNone;
-    return l10n.devReclaimDone(
-      sizes.keys.join('、'),
-      (freed / 1024).round(),
-    );
   }
 
   Future<void> _offerRestart() async {
@@ -370,7 +321,7 @@ class _DeveloperModeCard extends ConsumerWidget {
   }
 }
 
-/// Read-only summary of the storage layout, followed by the retry/reclaim actions in the list.
+/// Read-only summary of the V2 stores.
 class _StorageCard extends ConsumerWidget {
   const _StorageCard({required this.revision});
 
@@ -379,9 +330,9 @@ class _StorageCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final layout = ref.watch(storageLayoutProvider);
     final settings = ref.watch(legacySettingsProvider);
-    final error = settings.storageMigrationError;
+    final state = settings.storageV2State;
+    final error = settings.storageV2Error;
     final colorScheme = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -408,35 +359,33 @@ class _StorageCard extends ConsumerWidget {
               ],
             ),
             Text(
-              layout.isSplit
-                  ? context.l10n.devStorageSplit
-                  : context.l10n.devStorageLegacy,
+              state >= StorageContract.stateVerified
+                  ? context.l10n.devStorageV2Ready
+                  : context.l10n.devStorageV2Pending,
               style: context.listCaptionStyle,
             ),
             Text(
-              context.l10n.devStorageDetail(
-                settings.storageLayoutVersion,
-                _formatDate(settings.storageSplitCompletedAt),
+              context.l10n.devStorageV2Detail(
+                '$state',
+                _formatDate(settings.storageV2CompletedAt),
               ),
               style: context.listCaptionStyle,
             ),
-            if (error != null && !layout.isSplit)
+            if (error != null && state < StorageContract.stateVerified)
               Text(
-                context.l10n.devStoragePending(error),
+                context.l10n.devStorageV2Error(error),
                 style: context.listCaptionStyle.copyWith(
                   color: colorScheme.error,
                 ),
               ),
-            FutureBuilder<Map<String, int>>(
+            FutureBuilder<int>(
               key: ValueKey(revision),
-              future: legacyDatabaseSizes(),
+              future: _databaseBytes(),
               builder: (context, snapshot) {
-                final bytes =
-                    snapshot.data?.values.fold<int>(0, (sum, size) => sum + size) ??
-                    0;
+                final bytes = snapshot.data ?? 0;
                 if (bytes <= 0) return const SizedBox.shrink();
                 return Text(
-                  context.l10n.devStorageFiles((bytes / 1024).round()),
+                  context.l10n.devStorageV2Files((bytes / 1024).round()),
                   style: context.listCaptionStyle,
                 );
               },
@@ -445,6 +394,18 @@ class _StorageCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static Future<int> _databaseBytes() async {
+    final directory = await getDatabasesPath();
+    var total = 0;
+    for (final name in StorageContract.allDatabases) {
+      for (final suffix in const ['', '-wal', '-shm']) {
+        final file = File(p.join(directory, '$name$suffix'));
+        if (await file.exists()) total += await file.length();
+      }
+    }
+    return total;
   }
 }
 

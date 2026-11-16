@@ -1,96 +1,50 @@
-/// DDL for the legacy combined databases, the split-layout stores and the global app database.
-/// The legacy DDL is verbatim from `sqlite_master`. A mismatch raises no error; it makes reads look
-/// right while writes differ (no unique index lets a rule be inserted twice).
+/// DDL for the V2 work-mode stores. Table and column names are shared with the Rust SQL planners
+/// and the Kotlin log writers, so they must stay identical to the historical definitions.
 library;
 
 import 'package:diting_shared/data/db/storage_contract.dart';
 
-abstract final class LegacySchema {
-  static const mainVersion = 4;
-
-  static const expressVersion = 2;
-
-  /// 4 adds the subscription indexes the original server file never declared. Bumping the version
-  /// is the only way an existing file picks them up: `onUpgrade` runs `_createIfMissing`, whose
-  /// `IF NOT EXISTS` statements are all safe to replay.
-  static const serverVersion = 4;
-
-  /// Legacy server log store and every split-layout store start at version 1: they are new files,
-  /// never upgraded legacy Room databases.
-  static const serverLogVersion = 1;
-
-  static const splitVersion = 1;
-
-  /// Explicit registry: an unknown file name must fail at development time instead of silently
-  /// inheriting the full legacy schema.
-  static int versionOf(String fileName) => switch (fileName) {
-    StorageContract.legacyNormalDatabase => mainVersion,
-    StorageContract.legacyExpressDatabase => expressVersion,
-    StorageContract.serverRulesDatabase => serverVersion,
-    StorageContract.legacyServerLogsDatabase => serverLogVersion,
-    StorageContract.normalRulesDatabase => splitVersion,
-    StorageContract.normalLogsDatabase => splitVersion,
-    StorageContract.expressRulesDatabase => splitVersion,
-    StorageContract.expressLogsDatabase => splitVersion,
-    StorageContract.serverLogsDatabase => splitVersion,
-    StorageContract.appDatabase => splitVersion,
-    _ => throw ArgumentError.value(fileName, 'fileName', 'unknown database'),
+abstract final class DatabaseSchema {
+  static List<String> statementsFor(DatabaseKind kind) => switch (kind) {
+    DatabaseKind.normalRules ||
+    DatabaseKind.expressRules ||
+    DatabaseKind.serverRules => [
+      ..._ruleTables,
+      ..._subscriptionTables,
+      _ruleVersion,
+      ..._ruleIndexes,
+      ..._subscriptionIndexes,
+      _ruleVersionIndex,
+    ],
+    DatabaseKind.normalLogs => [
+      ..._logTables,
+      _httpRequestLog,
+      ..._httpRequestLogIndexes,
+      _appTrafficDaily,
+      ..._appTrafficDailyIndexes,
+      ..._logIndexes,
+    ],
+    DatabaseKind.expressLogs ||
+    DatabaseKind.serverLogs => [..._logTables, ..._logIndexes],
+    DatabaseKind.global => [..._automationTables, ..._automationIndexes],
   };
 
-  /// Order matters: `*_source` tables reference the main tables, so parents come first to keep
-  /// `PRAGMA foreign_key_check` output readable.
-  static List<String> statementsFor(String fileName) => switch (fileName) {
-    StorageContract.legacyNormalDatabase => [
-      ..._ruleTables,
-      ..._subscriptionTables,
-      ..._logTables,
-      _httpRequestLog,
-      ..._httpRequestLogIndexes,
-      _appTrafficDaily,
-      ..._appTrafficDailyIndexes,
-      ..._ruleIndexes,
-      ..._subscriptionIndexes,
-      ..._logIndexes,
-      ..._automationTables,
-      ..._automationIndexes,
-    ],
-    StorageContract.legacyExpressDatabase => [
-      ..._ruleTables,
-      ..._subscriptionTables,
-      ..._logTables,
-      ..._ruleIndexes,
-      ..._subscriptionIndexes,
-      ..._logIndexes,
-    ],
-    StorageContract.serverRulesDatabase => [
-      ..._ruleTables,
-      ..._subscriptionTables,
-      ..._ruleIndexes,
-      ..._subscriptionIndexes,
-    ],
-    StorageContract.legacyServerLogsDatabase ||
-    StorageContract.serverLogsDatabase => [..._logTables, ..._logIndexes],
-    StorageContract.normalRulesDatabase ||
-    StorageContract.expressRulesDatabase => [
-      ..._ruleTables,
-      ..._subscriptionTables,
-      ..._ruleIndexes,
-      ..._subscriptionIndexes,
-    ],
-    StorageContract.normalLogsDatabase => [
-      ..._logTables,
-      _httpRequestLog,
-      ..._httpRequestLogIndexes,
-      _appTrafficDaily,
-      ..._appTrafficDailyIndexes,
-      ..._logIndexes,
-    ],
-    StorageContract.expressLogsDatabase => [..._logTables, ..._logIndexes],
-    StorageContract.appDatabase => [
-      ..._automationTables,
-      ..._automationIndexes,
-    ],
-    _ => throw ArgumentError.value(fileName, 'fileName', 'unknown database'),
+  /// Every table a store must contain. Used by the migrator's schema verification.
+  static Set<String> tableNamesFor(DatabaseKind kind) => switch (kind) {
+    DatabaseKind.normalRules ||
+    DatabaseKind.expressRules ||
+    DatabaseKind.serverRules => {
+      ...ruleTableNames,
+      ...subscriptionTableNames,
+      ruleVersionTableName,
+    },
+    DatabaseKind.normalLogs => {
+      ...logTableNames,
+      ...httpTrafficTableNames,
+    },
+    DatabaseKind.expressLogs ||
+    DatabaseKind.serverLogs => {...logTableNames},
+    DatabaseKind.global => {...automationTableNames},
   };
 
   static const _blockRule = '''
@@ -99,8 +53,6 @@ CREATE TABLE `block_rule` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pat
   static const _blockRuleSource = '''
 CREATE TABLE `block_rule_source` (`ruleId` INTEGER NOT NULL, `source` TEXT NOT NULL, `enabled` INTEGER NOT NULL, PRIMARY KEY(`ruleId`, `source`), FOREIGN KEY(`ruleId`) REFERENCES `block_rule`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )''';
 
-  /// `important` sits at a different position than in `block_rule`: Room emits columns in
-  /// declaration order, and a wrong order shifts `SELECT *`.
   static const _allowRule = '''
 CREATE TABLE `allow_rule` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pattern` TEXT NOT NULL, `rawLine` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `groupName` TEXT, `appScope` TEXT, `appInverted` INTEGER NOT NULL, `isWildcard` INTEGER NOT NULL, `important` INTEGER NOT NULL, `denyallow` TEXT, `isRegex` INTEGER NOT NULL, `dnsType` TEXT)''';
 
@@ -122,7 +74,7 @@ CREATE TABLE `go_url_rule_source` (`ruleId` INTEGER NOT NULL, `source` TEXT NOT 
   static const _cosmeticRule = '''
 CREATE TABLE `cosmetic_rule` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `domain` TEXT NOT NULL, `selector` TEXT NOT NULL, `rawLine` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `isException` INTEGER NOT NULL)''';
 
-  /// The only source table without a foreign key: the legacy entity had none.
+  /// The only source table without a foreign key: the historical entity had none.
   static const _cosmeticRuleSource = '''
 CREATE TABLE `cosmetic_rule_source` (`ruleId` INTEGER NOT NULL, `source` TEXT NOT NULL, `enabled` INTEGER NOT NULL, PRIMARY KEY(`ruleId`, `source`))''';
 
@@ -143,8 +95,6 @@ CREATE TABLE `mirror_template` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     _mirrorTemplate,
   ];
 
-  /// Table names of the rule/subscription/log groups, used by the storage migrator. Keep in sync
-  /// with the DDL above; the schema tests assert the copies exist.
   static const ruleTableNames = <String>[
     'block_rule',
     'block_rule_source',
@@ -172,11 +122,7 @@ CREATE TABLE `mirror_template` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     'bootstrap_log',
   ];
 
-  /// Log tables worth copying during the one-time split.
-  ///
-  /// `dns_cache` is excluded on purpose: it stores every response as a BLOB, is the largest table
-  /// on a heavy install, and is a pure cache the engine repopulates after the restart the migration
-  /// requires. Copying it would only lengthen the pre-first-frame wait and double its disk cost.
+  /// Log tables worth copying. `dns_cache` is a rebuildable blob cache and is created empty.
   static const migrationLogTableNames = <String>[
     'dns_log',
     'dns_race_log',
@@ -194,6 +140,8 @@ CREATE TABLE `mirror_template` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     'automation_event',
   ];
 
+  static const ruleVersionTableName = 'rule_version';
+
   static const _subscription = '''
 CREATE TABLE `subscription` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `url` TEXT NOT NULL, `name` TEXT NOT NULL, `sourceType` TEXT NOT NULL, `kind` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `ruleCount` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, `addedAt` INTEGER NOT NULL, `importState` TEXT NOT NULL, `importError` TEXT, `httpEtag` TEXT, `httpLastModified` TEXT, `ruleSetHash` TEXT, `lastAttemptAt` INTEGER NOT NULL, `consecutiveFailureCount` INTEGER NOT NULL, `mirrorTemplate` TEXT, `mirrorFallback` INTEGER NOT NULL, `groupId` INTEGER)''';
 
@@ -208,6 +156,11 @@ CREATE TABLE `subscription_auto_update_item` (`batchId` TEXT NOT NULL, `subscrip
     _subscriptionGroup,
     _subscriptionAutoUpdateItem,
   ];
+
+  /// Subscription rollback history. It used to be created lazily; the V2 schema owns it so a new
+  /// mode database is complete on creation.
+  static const _ruleVersion = '''
+CREATE TABLE `rule_version` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `group_id` TEXT NOT NULL, `hash` TEXT NOT NULL, `rule_count` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `rules_json` TEXT NOT NULL)''';
 
   static const _dnsCache = '''
 CREATE TABLE `dns_cache` (`key` TEXT NOT NULL, `queryName` TEXT NOT NULL, `queryType` INTEGER NOT NULL, `queryClass` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `expiresAt` INTEGER NOT NULL, `lastHitAt` INTEGER, `hitCount` INTEGER NOT NULL DEFAULT 0, `originalTtlSeconds` INTEGER NOT NULL, `ttlOffsets` TEXT NOT NULL, `response` BLOB NOT NULL, `responseSize` INTEGER NOT NULL, PRIMARY KEY(`key`))''';
@@ -260,6 +213,9 @@ CREATE TABLE `app_traffic_daily` (`date` TEXT NOT NULL, `package_name` TEXT NOT 
     'CREATE INDEX `index_subscription_auto_update_item_subscriptionId` ON `subscription_auto_update_item` (`subscriptionId`)',
   ];
 
+  static const _ruleVersionIndex =
+      'CREATE INDEX `index_rule_version_group` ON `rule_version` (`group_id`, `created_at` DESC)';
+
   static const _logIndexes = <String>[
     'CREATE INDEX `index_dns_cache_expiresAt` ON `dns_cache` (`expiresAt`)',
     'CREATE INDEX `index_dns_cache_lastHitAt` ON `dns_cache` (`lastHitAt`)',
@@ -292,9 +248,8 @@ CREATE TABLE `app_traffic_daily` (`date` TEXT NOT NULL, `package_name` TEXT NOT 
     'CREATE INDEX `index_app_traffic_daily_package_name` ON `app_traffic_daily` (`package_name`)',
   ];
 
-  // 自动化（A1/A3/A14）：规则、档案与审计事件，主库独有的用户配置表。`spec_json` / `payload_json`
-  // 承载条件-动作与档案快照，结构归自动化引擎校验，这里只保证落库与迁移（新增列用 ADD COLUMN、新表
-  // 用 IF NOT EXISTS，可回滚）。
+  // 自动化（A1/A3/A14）：规则、档案与审计事件。`spec_json` / `payload_json` 承载条件-动作与
+  // 档案快照，结构归自动化引擎校验，这里只保证落库与迁移。
   static const _automationRule = '''
 CREATE TABLE `automation_rule` (`id` TEXT PRIMARY KEY NOT NULL, `name` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1, `priority` INTEGER NOT NULL DEFAULT 100, `match` TEXT NOT NULL DEFAULT 'all', `spec_json` TEXT NOT NULL, `last_run_at` INTEGER NOT NULL DEFAULT 0, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)''';
 

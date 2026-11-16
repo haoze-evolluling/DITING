@@ -3,7 +3,7 @@ package com.haoze.diting.platform
 import android.content.Context
 import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.log.DbWriteHealth
-import com.haoze.diting.log.LegacyDb
+import com.haoze.diting.log.AppDatabase
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -11,7 +11,7 @@ import io.flutter.plugin.common.MethodChannel
 /// Native side of `com.haoze.diting/db_health`: how many log rows the writers had to drop, why, and
 /// whether the shared connection really is WAL with a busy timeout.
 ///
-/// Without this the failure mode was silent — a locked `diting_database` produced empty log pages
+/// Without this the failure mode was silent — a locked log database produced empty log pages
 /// and nothing else. The troubleshooting page shows these counters so "no logs at all" is
 /// diagnosable from the device, and the probe distinguishes "no failures yet" from "no writes".
 class DbHealthBridge(private val context: Context) : MethodChannel.MethodCallHandler {
@@ -21,7 +21,7 @@ class DbHealthBridge(private val context: Context) : MethodChannel.MethodCallHan
 
         /// The active mode's log store: the only database the log writers touch.
         private fun logDatabase(context: Context): String =
-            RuleDataset.active(context).logsDatabase(context)
+            RuleDataset.active(context).logsDatabase()
     }
 
     fun register(messenger: BinaryMessenger) {
@@ -38,7 +38,7 @@ class DbHealthBridge(private val context: Context) : MethodChannel.MethodCallHan
     private fun probe(): Map<String, Any> {
         val database = logDatabase(context.applicationContext)
         return runCatching {
-            LegacyDb.probe(context.applicationContext, database)
+            AppDatabase.probe(context.applicationContext, database)
         }.getOrElse { error ->
             mapOf(
                 "probeDatabase" to database,
