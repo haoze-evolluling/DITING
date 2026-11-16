@@ -1,11 +1,11 @@
-//! Rust policy kernel for the Go tunnel engine.
+//! Rust policy kernel for the Android tunnel engine.
 //!
-//! The Go engine (`android/engine`) keeps the network stack, the resolver, the DNS cache and the
-//! snapshot lifecycle, but no longer decides *which rule matches a query* nor remembers recent
-//! answers: this crate owns the rule tables, the wildcard index, the `.dtri` subscription trie
-//! lookup, the seven-level priority walk, the domain normalization and the per-snapshot decision
-//! cache. Go keeps no copy of the tables, no second walk and no second cache: this crate is the only
-//! implementation, and a snapshot it cannot build is an engine start failure.
+//! The engine keeps the network stack, the resolver, the DNS cache and the snapshot lifecycle, but
+//! delegates *which rule matches a query* and recent answers to this crate: it owns the rule tables,
+//! the wildcard index, the `.dtri` subscription trie lookup, the seven-level priority walk, the
+//! domain normalization and the per-snapshot decision cache. The engine keeps no copy of the
+//! tables, no second walk and no second cache: this crate is the only implementation, and a
+//! snapshot it cannot build is an engine start failure.
 //!
 //! Layout:
 //! * [`json`] - the snapshot payload `ApplyRuleSnapshot` receives from Dart.
@@ -20,7 +20,7 @@
 //! * [`decision`] - the raw `(blocked, reason)` verdict, reason borrowed from the snapshot.
 //! * [`cache`] - the sharded CLOCK decision cache and its reason pool.
 //! * [`snapshot`] - the tables, `hasRules`, the priority walk, `answer` and prewarming.
-//! * [`ffi`] - the C ABI [`ffi::ABI_VERSION`] the Go loader validates.
+//! * [`ffi`] - the C ABI [`ffi::ABI_VERSION`] external loaders validate.
 
 pub mod cache;
 pub mod decision;

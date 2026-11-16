@@ -19,7 +19,7 @@ class CaCertificatePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncState = ref.watch(caCertificateStateProvider);
     final state = asyncState.value;
-    // The first inspect loads the Go engine and may take hundreds of milliseconds, so a
+    // The first inspect loads the Rust engine and may take hundreds of milliseconds, so a
     // "checking" row shows meanwhile rather than a fake "not installed".
     if (state == null) {
       return CommonScaffold(

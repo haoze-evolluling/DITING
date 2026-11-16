@@ -1,4 +1,4 @@
-/// Builds the exact JSON for `Engine.applyDNSConfig`; the Go side rejects unknown fields. Below two
+/// Builds the exact JSON for `Engine.applyDNSConfig`; the Rust engine rejects unknown fields. Below two
 /// providers, resolution falls back to the selected one.
 ///
 /// The document itself — mode selection, the provider pick, the cache / block / dynamic keys and

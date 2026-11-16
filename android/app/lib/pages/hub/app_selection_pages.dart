@@ -15,7 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Blocked apps (upstream `BlockedAppsScreen`). Writes `blocked_app_packages` and
-/// `blocked_apps_enabled` into `dns_vpn_prefs`; normal mode hands the UIDs to the Go engine.
+/// `blocked_apps_enabled` into `dns_vpn_prefs`; normal mode hands the UIDs to the Rust engine.
 class BlockedAppsPage extends ConsumerWidget {
   const BlockedAppsPage({super.key});
 

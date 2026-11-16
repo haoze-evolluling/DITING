@@ -1,9 +1,9 @@
 //! Snapshot building and the seven-level decision walk.
 //!
-//! This is the part of the Go engine that moved to Rust: Go keeps the snapshot lifecycle
-//! (building the snapshot, the atomic swap, the delayed release) and Rust owns the matching
-//! tables, the wildcard index, the DTRI lookup, the priority order, the domain normalization and
-//! the decision cache. The pieces live next door: [`crate::tables`] holds the buckets and matching
+//! The engine keeps the snapshot lifecycle (building the snapshot, the atomic swap, the delayed
+//! release) and this crate owns the matching tables, the wildcard index, the DTRI lookup, the
+//! priority order, the domain normalization and the decision cache. The pieces live next door:
+//! [`crate::tables`] holds the buckets and matching
 //! helpers, [`crate::decision`] the verdict type and [`crate::cache`] the per-snapshot cache.
 //!
 //! [`Snapshot::evaluate`] is the raw walk and expects a normalized domain; [`Snapshot::answer`] is

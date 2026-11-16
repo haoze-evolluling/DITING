@@ -11,7 +11,7 @@ import 'package:diting_android/data/db/rust_outbound_proxy_core.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:flutter/services.dart';
 
-/// Matches 1.4.3 `OutboundProxyProtocol`; `storageValue` is parsed by the Go engine.
+/// Matches 1.4.3 `OutboundProxyProtocol`; `storageValue` is parsed by the Rust engine.
 enum OutboundProxyProtocol {
   socks5('socks5', 'SOCKS5'),
   http('http', 'HTTP CONNECT');
@@ -143,10 +143,10 @@ class OutboundProxyConfig {
     ...RustOutboundProxyCore.instance.effectiveTargets(_coreConfig()),
   };
 
-  /// JSON handed to `Engine.configureOutboundProxy`. `port` must be a JSON number: Go unmarshals
-  /// into `Port int` (`tunnel/flow_outbound.go:29`), and a string leaves the proxy silently
-  /// disabled. Per-app scope adds `scope` and `packages`; the VPN service turns `packages` into
-  /// the `uids` the engine matches on.
+  /// JSON handed to `Engine.configureOutboundProxy`. `port` must be a JSON number: the engine's
+  /// `RawConfig` decodes it into `port: i64` (`rust/diting-engine/src/outbound/mod.rs`), and a
+  /// string fails deserialization, so the proxy is not applied. Per-app scope adds `scope` and
+  /// `packages`; the VPN service turns `packages` into the `uids` the engine matches on.
   String toEngineJson() =>
       RustOutboundProxyCore.instance.engineJson(_coreConfig());
 

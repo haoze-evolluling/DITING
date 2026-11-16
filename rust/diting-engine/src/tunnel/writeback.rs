@@ -1,4 +1,4 @@
-//! The downstream half of the Go stack connection's backpressure.
+//! Downstream backpressure for the tunnel connection.
 //!
 //! Go blocked the relay goroutine in `Write` until the client's receive window reopened. The Rust
 //! relay reads upstream at its own pace and sends [`Event::Write`](super::queue::Event::Write)

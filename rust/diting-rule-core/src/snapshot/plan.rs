@@ -38,7 +38,7 @@ impl Outcome {
         }
     }
 
-    /// A file the Go engine can mmap.
+    /// A file the policy kernel can mmap.
     pub fn usable(self) -> bool {
         matches!(self, Self::Loaded | Self::Compiled)
     }

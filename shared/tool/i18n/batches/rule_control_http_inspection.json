@@ -358,8 +358,8 @@
     "Deselect all shown"
   ],
   "httpInspAppsIntro": [
-    "Go 隧道接管流量后，HTTPS 流量检查仅检查所选应用的 HTTP(S) 请求，其他应用直接转发。选择应用会取消其「排除应用」「禁止联网」与应用独立规则状态。",
-    "Once the Go tunnel takes over traffic, HTTPS inspection only inspects HTTP(S) requests from the selected apps; others are forwarded directly. Selecting an app clears its excluded, blocked and per-app rule state."
+    "隧道接管流量后，HTTPS 流量检查仅检查所选应用的 HTTP(S) 请求，其他应用直接转发。选择应用会取消其「排除应用」「禁止联网」与应用独立规则状态。",
+    "Once the tunnel takes over traffic, HTTPS inspection only inspects HTTP(S) requests from the selected apps; others are forwarded directly. Selecting an app clears its excluded, blocked and per-app rule state."
   ],
   "httpInspAppsCount": {
     "zh": "已选择 {selected} 个应用（可见 {visible}）",

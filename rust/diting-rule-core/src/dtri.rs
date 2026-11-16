@@ -1,4 +1,4 @@
-//! DTRI writer: the mmap-able subscription-rule index the Go tunnel engine reads.
+//! DTRI writer: the mmap-able subscription-rule index the Rust tunnel engine reads.
 //!
 //! A byte-for-byte port of the legacy `MappedSubscriptionRuleIndex.compile`; the Kotlin writer is
 //! gone (the app reaches this module through `RustRuleIndexCompiler`), and the byte-parity fixtures

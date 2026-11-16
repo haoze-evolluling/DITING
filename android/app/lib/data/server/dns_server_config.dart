@@ -1,5 +1,5 @@
 /// DNS snapshot for server mode (`DnsServerEngine.applyDnsConfig`), read from
-/// `diting_dns_mode_prefs`; the Go engine rejects unknown fields.
+/// `diting_dns_mode_prefs`; the Rust engine rejects unknown fields.
 ///
 /// The document — the picked upstream row(s) in engine attempt order, the cache preset's nine
 /// values, the block/dynamic keys and their clamps — is assembled in

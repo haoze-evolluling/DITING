@@ -32,8 +32,8 @@
     "UI components and interactions are reused from this project"
   ],
   "aboutCreditsCore": [
-    "Go 隧道内核最初魔改自该项目",
-    "The Go tunnel core was initially forked from this project"
+    "早期隧道内核魔改自该项目",
+    "The early tunnel core was initially forked from this project"
   ],
   "aboutCreditsBody": [
     "上述两个项目均以 GPL-3.0 协议开源，相关代码与设计的版权归各自作者所有。谛听的界面层大量借鉴了前述界面项目的实现思路，隧道内核也源自 blockads-android 的早期改造；在此向它们的作者与所有贡献者致以诚挚谢意。",

@@ -164,7 +164,7 @@ void _diagnostics() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('通过 Go 隧道解析'));
+      await tester.tap(find.text('通过隧道解析'));
       await tester.pumpAndSettle();
 
       expect(

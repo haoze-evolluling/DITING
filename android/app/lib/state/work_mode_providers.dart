@@ -22,8 +22,8 @@ export 'package:diting_android/state/provider_catalog_providers.dart';
 
 part 'work_mode_power.dart';
 
-/// The three work modes: `normal` (full-tunnel Go), `server` (DNS-only LAN), `express` (narrow
-/// Kotlin route).
+/// The three work modes: `normal` (full-tunnel Rust engine), `server` (DNS-only LAN), `express`
+/// (narrow Rust route).
 enum AppWorkMode {
   normal('normal'),
   server('dns'),
@@ -128,7 +128,7 @@ class ServiceStatsNotifier extends Notifier<ServiceStats> {
     state = zero;
   }
 
-  /// Replaces the mock counters with the Go engine's real ones.
+  /// Replaces the mock counters with the engine's real ones.
   ///
   /// [startedAt] is the service's own start time. It wins over the locally observed one so a
   /// recreated UI process shows the real uptime instead of starting again from zero.

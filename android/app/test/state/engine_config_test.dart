@@ -1,4 +1,4 @@
-// The DNS config handed to the Go engine: provider catalog, cache presets, block
+// The DNS config handed to the Rust engine: provider catalog, cache presets, block
 // response and the race list all come from 1.4.3 keys.
 
 import 'dart:convert';

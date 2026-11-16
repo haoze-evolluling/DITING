@@ -484,7 +484,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get agreementMessage =>
-      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式（全隧道深度管控）、极速模式（Go 引擎 + DNS 窄路由）与独立服务器模式（局域网免 VPN 服务）。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通模式与极速模式依赖 Android 本地 VPN 接口接管 DNS 解析，不连接任何远程 VPN 服务器；独立服务器模式无需 VPN 权限，直接监听本地 1053 端口供局域网设备接入。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
+      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式（全隧道深度管控）、极速模式（Rust 引擎 + DNS 窄路由）与独立服务器模式（局域网免 VPN 服务）。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通模式与极速模式依赖 Android 本地 VPN 接口接管 DNS 解析，不连接任何远程 VPN 服务器；独立服务器模式无需 VPN 权限，直接监听本地 1053 端口供局域网设备接入。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
 
   @override
   String get homeProviderSingleLabel => '解析服务商';
@@ -4422,7 +4422,7 @@ class AppL10nZh extends AppL10n {
   String get aboutCreditsUi => '界面组件与交互实现复用自该项目';
 
   @override
-  String get aboutCreditsCore => 'Go 隧道内核最初魔改自该项目';
+  String get aboutCreditsCore => '早期隧道内核魔改自该项目';
 
   @override
   String get aboutCreditsBody =>
@@ -4939,7 +4939,7 @@ class AppL10nZh extends AppL10n {
   String get modeNormalFeature1 => '全隧道接管';
 
   @override
-  String get modeNormalFeature1Body => 'Go 栈接管全部流量，可按应用分流';
+  String get modeNormalFeature1Body => 'Rust 引擎接管全部流量，可按应用分流';
 
   @override
   String get modeNormalFeature2 => '全功能规则';
@@ -4984,7 +4984,7 @@ class AppL10nZh extends AppL10n {
   String get modeServerFeature4Body => '只处理 DNS 查询，无流量转发';
 
   @override
-  String get modeExpressFeature1 => 'Go 引擎 + 窄路由';
+  String get modeExpressFeature1 => 'Rust 引擎 + 窄路由';
 
   @override
   String get modeExpressFeature1Body => '只接管 DNS 端口，其余流量直连物理网络';
@@ -5249,10 +5249,10 @@ class AppL10nZh extends AppL10n {
   String get toolPingOptions => '探测选项';
 
   @override
-  String get toolViaTunnel => '通过 Go 隧道解析';
+  String get toolViaTunnel => '通过隧道解析';
 
   @override
-  String get toolViaTunnelPingBody => '域名经运行中的 Go 隧道解析（应用覆写与过滤规则），探测仍走物理网络';
+  String get toolViaTunnelPingBody => '域名经运行中的隧道解析（应用覆写与过滤规则），探测仍走物理网络';
 
   @override
   String get toolStartPing => '开始 Ping';
@@ -7399,7 +7399,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get httpInspAppsIntro =>
-      'Go 隧道接管流量后，HTTPS 流量检查仅检查所选应用的 HTTP(S) 请求，其他应用直接转发。选择应用会取消其「排除应用」「禁止联网」与应用独立规则状态。';
+      '隧道接管流量后，HTTPS 流量检查仅检查所选应用的 HTTP(S) 请求，其他应用直接转发。选择应用会取消其「排除应用」「禁止联网」与应用独立规则状态。';
 
   @override
   String httpInspAppsCount(int selected, int visible) {

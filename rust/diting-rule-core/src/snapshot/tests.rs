@@ -319,7 +319,7 @@ fn an_empty_app_scope_is_preserved_on_a_special_rule() {
 
 #[test]
 fn the_policy_kernel_decodes_the_document() {
-    // The Go engine hands this exact document to `diting-policy-core`; parse it with that kernel's
+    // The Rust engine hands this exact document to `diting-policy-core`; parse it with that kernel's
     // model so a renamed or reshaped field fails here instead of silently dropping rules.
     let document = build(&classified());
     let parsed = diting_policy_core::json::RuleSnapshot::parse(document.as_bytes())

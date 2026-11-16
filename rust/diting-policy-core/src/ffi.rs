@@ -1,5 +1,5 @@
-//! C ABI for the policy kernel, called from the Go engine through `dlopen`/`dlsym`
-//! (`android/engine/policy_native.go`).
+//! C ABI for the policy kernel. The Android engine links this crate and calls the Rust API
+//! directly; the exported symbols remain the stable FFI surface for external loaders.
 //!
 //! ```text
 //! abi_version()                                   -> u32
@@ -14,13 +14,13 @@
 //!
 //! Contract for `evaluate`: the domain and the app name are the raw call-site values. The kernel
 //! normalizes them (`normalize_domain`: lowercase, trim, no trailing dot; the app name trimmed),
-//! answers from the snapshot's decision cache and only walks the tables on a miss, so Go no longer
-//! keeps a cache key, an eviction policy or a normalization helper. `reason_out` receives a pointer
+//! answers from the snapshot's decision cache and only walks the tables on a miss, so the engine
+//! keeps no cache key, eviction policy or normalization helper. `reason_out` receives a pointer
 //! into a reason string owned by the snapshot plus its length; the caller copies it out before
 //! returning, so no ownership crosses the boundary and no allocation happens per query.
 //!
 //! `evaluate_uncached` is the same walk and the same normalization without the cache lookup or
-//! insertion. Prewarming uses it internally; the Go tests and benchmarks use it to prove a cache
+//! insertion. Prewarming uses it internally; the Rust tests and benchmarks use it to prove a cache
 //! hit never changes an answer.
 //!
 //! `prewarm(handle, previous)` re-evaluates the previous snapshot's hottest keys against `handle`,

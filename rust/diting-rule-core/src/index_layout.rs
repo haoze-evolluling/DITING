@@ -1,7 +1,7 @@
 //! `RuleIndexLayout`: where one dataset keeps its DTRI artifacts.
 //!
 //! The paths are relative to `filesDir`; Kotlin joins them with `File`. They live here so the
-//! layout, the stamp check and the Go engine's mmap target cannot disagree about a file name.
+//! layout, the stamp check and the engine's mmap target cannot disagree about a file name.
 
 /// The artifact names of one dataset, relative to `filesDir` (the root) or to the root itself.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

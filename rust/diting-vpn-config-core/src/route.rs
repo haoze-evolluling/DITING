@@ -6,7 +6,7 @@
 
 use serde_json::{json, Value};
 
-/// Both modes use the same TUN subnet and MTU; the Go engine's `defaultTunMTU` must match.
+/// Both modes use the same TUN subnet and MTU; the engine's `DEFAULT_TUN_MTU` must match.
 pub const VPN_ADDRESS_V4: &str = "10.0.0.2";
 pub const DNS_SERVER_V4: &str = "10.0.0.1";
 pub const VPN_ADDRESS_V6: &str = "fd00:abcd::2";

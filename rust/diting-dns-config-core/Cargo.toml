@@ -9,7 +9,7 @@ crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
 # The engine-side name tables (`PLAIN` / `DOH` / `DOT`, the four scheduling modes, the block
-# response spellings) already live there, because the Go engine validates every pushed config
+# response spellings) already live there, because the tunnel engine validates every pushed config
 # against them. The builder must not spell a second copy.
 diting-config-core = { path = "../diting-config-core" }
 # The documents handed to `ApplyDNSConfig` are JSON; the app must emit the keys the engine reads.

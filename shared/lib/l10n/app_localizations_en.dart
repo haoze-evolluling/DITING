@@ -508,7 +508,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agreementMessage =>
-      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: Normal (full-tunnel control), Turbo (a DNS-only narrow route on the same Go engine) and Standalone server (a LAN service that needs no VPN). Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and Turbo modes take over DNS resolution through the Android local VPN interface and never connect to a remote VPN server; Standalone server mode needs no VPN permission and listens on local port 1053 for LAN devices. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
+      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: Normal (full-tunnel control), Turbo (a DNS-only narrow route on the same Rust engine) and Standalone server (a LAN service that needs no VPN). Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and Turbo modes take over DNS resolution through the Android local VPN interface and never connect to a remote VPN server; Standalone server mode needs no VPN permission and listens on local port 1053 for LAN devices. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
 
   @override
   String get homeProviderSingleLabel => 'Resolver';
@@ -4656,7 +4656,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get aboutCreditsCore =>
-      'The Go tunnel core was initially forked from this project';
+      'The early tunnel core was initially forked from this project';
 
   @override
   String get aboutCreditsBody =>
@@ -5204,7 +5204,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get modeNormalFeature1Body =>
-      'The Go stack handles all traffic, with per-app routing';
+      'The Rust engine handles all traffic, with per-app routing';
 
   @override
   String get modeNormalFeature2 => 'All rule features';
@@ -5256,7 +5256,7 @@ class AppL10nEn extends AppL10n {
       'Handles DNS queries only, without forwarding traffic';
 
   @override
-  String get modeExpressFeature1 => 'Go engine, narrow route';
+  String get modeExpressFeature1 => 'Rust engine, narrow route';
 
   @override
   String get modeExpressFeature1Body =>
@@ -5552,11 +5552,11 @@ class AppL10nEn extends AppL10n {
   String get toolPingOptions => 'Probe options';
 
   @override
-  String get toolViaTunnel => 'Resolve through the Go tunnel';
+  String get toolViaTunnel => 'Resolve through the tunnel';
 
   @override
   String get toolViaTunnelPingBody =>
-      'Domains are resolved by the running Go tunnel (rewrites and filter rules apply), while probes still use the physical network';
+      'Domains are resolved by the running tunnel (rewrites and filter rules apply), while probes still use the physical network';
 
   @override
   String get toolStartPing => 'Start ping';
@@ -7840,7 +7840,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get httpInspAppsIntro =>
-      'Once the Go tunnel takes over traffic, HTTPS inspection only inspects HTTP(S) requests from the selected apps; others are forwarded directly. Selecting an app clears its excluded, blocked and per-app rule state.';
+      'Once the tunnel takes over traffic, HTTPS inspection only inspects HTTP(S) requests from the selected apps; others are forwarded directly. Selecting an app clears its excluded, blocked and per-app rule state.';
 
   @override
   String httpInspAppsCount(int selected, int visible) {

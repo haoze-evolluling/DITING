@@ -8,7 +8,7 @@
 //! second, drifting document.
 //!
 //! The engine-side name tables (protocol, scheduling mode, block response) come from
-//! [`diting_config_core`], the kernel the Go engine validates every pushed config against, so the
+//! [`diting_config_core`], the kernel the tunnel engine validates every pushed config against, so the
 //! app cannot spell `PLAIN` differently from the reader.
 //!
 //! Layout:

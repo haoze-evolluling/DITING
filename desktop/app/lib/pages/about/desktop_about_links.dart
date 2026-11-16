@@ -22,7 +22,7 @@ const sponsorReadmeUrl = '$projectRepositoryUrl#sponsorship';
 /// Upstream whose UI components were reused; credited on the about page.
 const flClashRepositoryUrl = 'https://github.com/chen08209/FlClash';
 
-/// Upstream the original Go tunnel kernel was forked from; credited on the about page.
+/// Upstream the early tunnel kernel was forked from; credited on the about page.
 const blockAdsRepositoryUrl =
     'https://github.com/pass-with-high-score/blockads-android';
 
