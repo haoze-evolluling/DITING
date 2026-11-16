@@ -1,11 +1,15 @@
 // Network-tool judging rules and panels: host sanitizing, a sparse `fromMap`,
 // and every probe state.
 
+import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
+import 'package:diting_android/data/native/dns_latency_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/pages/tools/tools_page.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
+import 'package:diting_android/state/network_tools_providers.dart';
+import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -167,6 +171,38 @@ void _diagnostics() {
         store.read(networkToolsContainer, pingViaTunnelKey),
         isTrue,
         reason: '开关必须落到 network_tools_settings 容器的 ping_via_tunnel 键',
+      );
+    });
+  });
+
+  group('测速服务商目录', () {
+    test('新增自定义服务商后无需重启即可参与测速', () {
+      final store = MemoryLegacyPrefsStore();
+      final container = ProviderContainer(
+        overrides: [legacyPrefsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final before = container.read(latencyTestCatalogProvider);
+
+      container
+          .read(dnsProviderCatalogProvider.notifier)
+          .addCustom(
+            name: '我的 DNS',
+            protocol: ProviderProtocol.dns,
+            address: '9.9.9.9:53',
+          );
+
+      final added = container
+          .read(latencyTestCatalogProvider)
+          .where((spec) => spec.name == '我的 DNS')
+          .toList();
+      expect(added, hasLength(1));
+      expect(added.single.protocol, DnsLatencyProtocol.dns);
+      expect(added.single.host, '9.9.9.9');
+      expect(added.single.port, 53);
+      expect(
+        container.read(latencyTestCatalogProvider).length,
+        before.length + 1,
       );
     });
   });

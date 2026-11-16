@@ -83,19 +83,31 @@ class ProviderCatalogNotifier extends Notifier<List<MockProvider>> {
   void _refresh() =>
       state = buildProviderCatalog(ref.read(legacySettingsProvider));
 
+  /// Writes through [LegacySettings] and then refreshes every reader of it.
+  ///
+  /// This notifier is not what the speed-test catalog watches: that provider rebuilds on
+  /// [legacySettingsRevisionProvider], so without the bump a provider added here only shows up
+  /// after a restart.
+  void _commit(void Function(LegacySettings settings) write) {
+    write(ref.read(legacySettingsProvider));
+    ref.read(legacySettingsRevisionProvider.notifier).bump();
+    _refresh();
+  }
+
   /// Persists one custom provider; presets are read-only.
   void addCustom({
     required String name,
     required ProviderProtocol protocol,
     required String address,
   }) {
-    addUserProvider(
-      ref.read(legacySettingsProvider),
-      name: name,
-      protocol: _dnsProtocolOf(protocol),
-      address: address,
+    _commit(
+      (settings) => addUserProvider(
+        settings,
+        name: name,
+        protocol: _dnsProtocolOf(protocol),
+        address: address,
+      ),
     );
-    _refresh();
   }
 
   void updateCustom({
@@ -104,21 +116,21 @@ class ProviderCatalogNotifier extends Notifier<List<MockProvider>> {
     required ProviderProtocol protocol,
     required String address,
   }) {
-    updateUserProvider(
-      ref.read(legacySettingsProvider),
-      id: id,
-      name: name,
-      protocol: _dnsProtocolOf(protocol),
-      address: address,
+    _commit(
+      (settings) => updateUserProvider(
+        settings,
+        id: id,
+        name: name,
+        protocol: _dnsProtocolOf(protocol),
+        address: address,
+      ),
     );
-    _refresh();
     ref.invalidate(selectedProviderProvider);
     ref.invalidate(raceProvidersProvider);
   }
 
   void deleteCustom(String id) {
-    deleteUserProvider(ref.read(legacySettingsProvider), id);
-    _refresh();
+    _commit((settings) => deleteUserProvider(settings, id));
     ref.invalidate(selectedProviderProvider);
     ref.invalidate(raceProvidersProvider);
   }
