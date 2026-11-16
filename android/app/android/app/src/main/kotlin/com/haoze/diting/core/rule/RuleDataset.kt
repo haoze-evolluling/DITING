@@ -1,6 +1,7 @@
 package com.haoze.diting.core.rule
 
 import android.content.Context
+import com.haoze.diting.control.DataPlaneControl
 
 /**
  * Identifies which isolated data set a caller operates on, ported from the legacy app.
@@ -57,4 +58,17 @@ enum class RuleDataset {
     /** Log database in the layout the migration selected. */
     fun logsDatabase(context: Context): String =
         StorageContract.logsDatabase(context, this)
+
+    companion object {
+        /// Dataset of the persisted work mode.
+        ///
+        /// Services, the widget and the DB health probe all need this mapping; keeping one copy
+        /// means a new work mode cannot make one reader look at another mode's file.
+        fun active(context: Context): RuleDataset =
+            when (DataPlaneControl.workMode(context)) {
+                DataPlaneControl.WORK_MODE_DNS -> DNS_MODE
+                DataPlaneControl.WORK_MODE_EXPRESS -> EXPRESS
+                else -> NORMAL
+            }
+    }
 }

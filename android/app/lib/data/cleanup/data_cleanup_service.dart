@@ -8,8 +8,11 @@ import 'package:diting_android/data/cleanup/cleanup_plan.dart';
 import 'package:diting_android/data/cleanup/cleanup_sql.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
+import 'package:diting_android/data/native/data_plane_status.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
+import 'package:diting_shared/data/db/legacy_schema.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
+import 'package:diting_shared/data/db/storage_reclaim.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
@@ -305,6 +308,10 @@ class DataCleanupService {
     return _result(CleanupAction.settingsGuides, removed);
   }
 
+  /// Automation is global and, after the split, lives outside the rule databases. Before the split
+  /// the tables sit in the normal legacy file, which the rule-database loop already has open.
+  static const _automationPrefsContainer = 'automation_prefs';
+
   /// Every action in order, summing counts; a failing step does not stop the rest.
   Future<CleanupResult> _clearAllLocalData() async {
     var removed = 0;
@@ -316,9 +323,34 @@ class DataCleanupService {
       for (final table in _plan.allDataTables) {
         removed += await deleteAllRows(db, table);
       }
+      // Legacy layout keeps automation in the normal rule file; in the split layout these tables
+      // are absent there and return 0.
+      for (final table in LegacySchema.automationTableNames) {
+        removed += await deleteAllRows(db, table);
+      }
+    }
+    final automation = await _databases.app;
+    if (automation != null) {
+      for (final table in LegacySchema.automationTableNames) {
+        removed += await deleteAllRows(automation, table);
+      }
+    }
+    // Cooldown and last-run keys live here and would otherwise outlive the rules they describe.
+    for (final key in _prefs.readAll(_automationPrefsContainer).keys.toList()) {
+      if (_removeKey(_automationPrefsContainer, key)) removed++;
     }
     for (final entry in _plan.allDataPrefs) {
       if (_removeKey(entry.container, entry.key)) removed++;
+    }
+    // The user asked for a full wipe, so the pre-split copies go too. They are not the live stores
+    // here (the split layout is active); a running service still makes deletion unsafe.
+    if (_databases.layout.isSplit && !await anyDataPlaneRunning()) {
+      final legacyFiles = await legacyDatabaseSizes();
+      final freed = await reclaimLegacyDatabases(
+        split: true,
+        dataPlaneRunning: false,
+      );
+      if (freed > 0) removed += legacyFiles.length;
     }
     return _result(CleanupAction.allData, removed);
   }

@@ -27,6 +27,14 @@ abstract class LegacyPrefsStore {
   void putStringSet(String container, String key, Set<String> value);
 
   void remove(String container, String key);
+
+  /// Writes an int and completes only after the platform acknowledged it.
+  ///
+  /// Every other write is fire-and-forget, which is fine for UI settings: the in-memory snapshot
+  /// already changed. The storage-layout marker is different — native services resolve database
+  /// names from the same prefs file, so a dropped write would leave Dart on the split layout while
+  /// the tunnel keeps writing the legacy file. Callers use this for that one commit point only.
+  Future<void> putIntAwaiting(String container, String key, int value);
 }
 
 /// Used on non-Android hosts, in tests and when the channel is unavailable.
@@ -61,6 +69,10 @@ class MemoryLegacyPrefsStore implements LegacyPrefsStore {
   @override
   void putInt(String container, String key, int value) =>
       _write(container, key, value);
+
+  @override
+  Future<void> putIntAwaiting(String container, String key, int value) async =>
+      putInt(container, key, value);
 
   @override
   void putLong(String container, String key, int value) =>
@@ -138,6 +150,19 @@ class MethodChannelLegacyPrefsStore implements LegacyPrefsStore {
   @override
   void putStringSet(String container, String key, Set<String> value) =>
       _write(container, key, 'string_set', value.toList());
+
+  /// Acknowledged variant used for the one-time layout marker. The snapshot changes only after the
+  /// platform accepted the value, so a thrown call leaves this store exactly as native sees it.
+  @override
+  Future<void> putIntAwaiting(String container, String key, int value) async {
+    await channel.invokeMethod<void>('put', {
+      'container': container,
+      'key': key,
+      'type': 'int',
+      'value': value,
+    });
+    (_snapshot[container] ??= {})[key] = value;
+  }
 
   @override
   void remove(String container, String key) {

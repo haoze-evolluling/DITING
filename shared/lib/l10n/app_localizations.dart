@@ -8404,6 +8404,96 @@ abstract class AppL10n {
   /// **'对三个本地库执行 VACUUM，回收已删除记录占用的空间'**
   String get devVacuumBody;
 
+  /// No description provided for @devStorageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'存储布局'**
+  String get devStorageTitle;
+
+  /// No description provided for @devStorageSplit.
+  ///
+  /// In zh, this message translates to:
+  /// **'拆分布局：每个模式独立规则库与日志库'**
+  String get devStorageSplit;
+
+  /// No description provided for @devStorageLegacy.
+  ///
+  /// In zh, this message translates to:
+  /// **'旧布局：迁移尚未完成'**
+  String get devStorageLegacy;
+
+  /// No description provided for @devStorageDetail.
+  ///
+  /// In zh, this message translates to:
+  /// **'标记 v{version} · 完成于 {date}'**
+  String devStorageDetail(int version, String date);
+
+  /// No description provided for @devStoragePending.
+  ///
+  /// In zh, this message translates to:
+  /// **'待迁移：{reason}'**
+  String devStoragePending(String reason);
+
+  /// No description provided for @devStorageLastError.
+  ///
+  /// In zh, this message translates to:
+  /// **'上次迁移失败：{error}'**
+  String devStorageLastError(String error);
+
+  /// No description provided for @devStorageFiles.
+  ///
+  /// In zh, this message translates to:
+  /// **'旧库残留 {kb} KB'**
+  String devStorageFiles(int kb);
+
+  /// No description provided for @devRetryMigration.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试存储迁移'**
+  String get devRetryMigration;
+
+  /// No description provided for @devRetryMigrationBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'在数据面停止时把旧库复制到拆分布局'**
+  String get devRetryMigrationBody;
+
+  /// No description provided for @devReclaimLegacy.
+  ///
+  /// In zh, this message translates to:
+  /// **'释放旧库空间'**
+  String get devReclaimLegacy;
+
+  /// No description provided for @devReclaimLegacyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除迁移后残留的旧规则与日志数据库'**
+  String get devReclaimLegacyBody;
+
+  /// No description provided for @devMigrationDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'存储迁移已完成，后续启动使用拆分布局'**
+  String get devMigrationDone;
+
+  /// No description provided for @devMigrationDeferred.
+  ///
+  /// In zh, this message translates to:
+  /// **'数据面正在运行，停止隧道后再重试'**
+  String get devMigrationDeferred;
+
+  /// No description provided for @devReclaimNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可回收的旧库文件'**
+  String get devReclaimNone;
+
+  /// No description provided for @devReclaimDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已删除 {files}，回收 {kb} KB'**
+  String devReclaimDone(String files, int kb);
+
   /// No description provided for @devCancel.
   ///
   /// In zh, this message translates to:

@@ -7,8 +7,12 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
+import 'package:diting_android/data/native/data_plane_status.dart';
 import 'package:diting_shared/data/db/legacy_database.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
+import 'package:diting_shared/data/db/storage_migration.dart';
+import 'package:diting_shared/data/db/storage_reclaim.dart';
+import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
@@ -28,7 +32,9 @@ enum _DeveloperAction {
   stressLogs(glyphName: 'logs'),
   reportError(glyphName: 'error'),
   clearAllData(glyphName: 'clearAll', destructive: true),
-  vacuum(glyphName: 'memory');
+  vacuum(glyphName: 'memory'),
+  retryMigration(glyphName: 'refresh'),
+  reclaimLegacy(glyphName: 'delete', destructive: true);
 
   const _DeveloperAction({required this.glyphName, this.destructive = false});
 
@@ -40,6 +46,8 @@ enum _DeveloperAction {
     reportError => l10n.devErrorReport,
     clearAllData => l10n.devClearAll,
     vacuum => l10n.devVacuum,
+    retryMigration => l10n.devRetryMigration,
+    reclaimLegacy => l10n.devReclaimLegacy,
   };
 
   String subtitle(AppL10n l10n) => switch (this) {
@@ -47,6 +55,8 @@ enum _DeveloperAction {
     reportError => l10n.devErrorReportBody,
     clearAllData => l10n.devClearAllBody,
     vacuum => l10n.devVacuumBody,
+    retryMigration => l10n.devRetryMigrationBody,
+    reclaimLegacy => l10n.devReclaimLegacyBody,
   };
 }
 
@@ -60,6 +70,10 @@ class DeveloperPage extends ConsumerStatefulWidget {
 class _DeveloperPageState extends ConsumerState<DeveloperPage> {
   /// Non-null while an action runs; disables the whole list instead of only one row.
   _DeveloperAction? _running;
+
+  /// Bumped after every action. The storage card re-stats the files, and a `const` child would be
+  /// skipped by the element tree's identical-widget fast path, leaving the old sizes on screen.
+  int _storageRevision = 0;
 
   Future<void> _handle(_DeveloperAction action) async {
     if (_running != null) return;
@@ -92,11 +106,18 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
         _DeveloperAction.reportError => _reportError(),
         _DeveloperAction.clearAllData => await _clearAllData(),
         _DeveloperAction.vacuum => await _vacuum(),
+        _DeveloperAction.retryMigration => await _retryMigration(),
+        _DeveloperAction.reclaimLegacy => await _reclaimLegacy(),
       };
     } catch (error) {
       message = context.l10n.devActionFailed(action.title(context.l10n), '$error');
     } finally {
-      if (mounted) setState(() => _running = null);
+      if (mounted) {
+        setState(() {
+          _running = null;
+          _storageRevision++;
+        });
+      }
     }
     if (!mounted) return;
     _toast(message);
@@ -173,6 +194,46 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
     return context.l10n.devVacuumDone(touched.join('、'), kb < 0 ? 0 : kb);
   }
 
+  /// Re-runs the startup migration on demand. A running data plane defers it, as on launch.
+  Future<String> _retryMigration() async {
+    // Captured before the awaits: the message is formatted after the work, and a disposed page
+    // must not dereference its context.
+    final l10n = context.l10n;
+    final result = await ensureSplitStorage(
+      ref.read(legacyPrefsStoreProvider),
+      dataPlaneRunning: await anyDataPlaneRunning(),
+    );
+    // Every reader resolving database names watches this revision; bump it even on failure so the
+    // card shows the reason that was just recorded.
+    ref.read(legacySettingsRevisionProvider.notifier).bump();
+    if (result.split) return l10n.devMigrationDone;
+    if (result.deferred) return l10n.devMigrationDeferred;
+    return l10n.devActionFailed(l10n.devRetryMigration, result.error ?? '');
+  }
+
+  /// Deletes the stale pre-split copies. Never touches the server rules file: it kept its legacy
+  /// name and is still the live store for DNS mode (see [StorageContract.reclaimableLegacyDatabases]).
+  Future<String> _reclaimLegacy() async {
+    final l10n = context.l10n;
+    if (!ref.read(storageLayoutProvider).isSplit) {
+      return l10n.devReclaimNone;
+    }
+    final sizes = await legacyDatabaseSizes();
+    if (sizes.isEmpty) return l10n.devReclaimNone;
+    if (await anyDataPlaneRunning()) {
+      return l10n.devMigrationDeferred;
+    }
+    final freed = await reclaimLegacyDatabases(
+      split: true,
+      dataPlaneRunning: false,
+    );
+    if (freed <= 0) return l10n.devReclaimNone;
+    return l10n.devReclaimDone(
+      sizes.keys.join('、'),
+      (freed / 1024).round(),
+    );
+  }
+
   Future<void> _offerRestart() async {
     final confirmed = await showFloatingDialog<bool>(
       context: context,
@@ -220,6 +281,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const _DeveloperModeCard(),
+              _StorageCard(revision: _storageRevision),
               generateSection(
                 title: context.l10n.devExperimental,
                 items: [
@@ -306,6 +368,92 @@ class _DeveloperModeCard extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Read-only summary of the storage layout, followed by the retry/reclaim actions in the list.
+class _StorageCard extends ConsumerWidget {
+  const _StorageCard({required this.revision});
+
+  /// Changes after every action so the size probe runs again.
+  final int revision;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final layout = ref.watch(storageLayoutProvider);
+    final settings = ref.watch(legacySettingsProvider);
+    final error = settings.storageMigrationError;
+    final colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: CommonCard(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 6,
+          children: [
+            Row(
+              spacing: 10,
+              children: [
+                GlyphIcon(
+                  AppGlyphs.layers,
+                  size: 22,
+                  color: colorScheme.primary,
+                ),
+                Expanded(
+                  child: Text(
+                    context.l10n.devStorageTitle,
+                    style: context.listTitleStyle,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              layout.isSplit
+                  ? context.l10n.devStorageSplit
+                  : context.l10n.devStorageLegacy,
+              style: context.listCaptionStyle,
+            ),
+            Text(
+              context.l10n.devStorageDetail(
+                settings.storageLayoutVersion,
+                _formatDate(settings.storageSplitCompletedAt),
+              ),
+              style: context.listCaptionStyle,
+            ),
+            if (error != null && !layout.isSplit)
+              Text(
+                context.l10n.devStoragePending(error),
+                style: context.listCaptionStyle.copyWith(
+                  color: colorScheme.error,
+                ),
+              ),
+            FutureBuilder<Map<String, int>>(
+              key: ValueKey(revision),
+              future: legacyDatabaseSizes(),
+              builder: (context, snapshot) {
+                final bytes =
+                    snapshot.data?.values.fold<int>(0, (sum, size) => sum + size) ??
+                    0;
+                if (bytes <= 0) return const SizedBox.shrink();
+                return Text(
+                  context.l10n.devStorageFiles((bytes / 1024).round()),
+                  style: context.listCaptionStyle,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _formatDate(DateTime? value) {
+  if (value == null) return '—';
+  final local = value.toLocal();
+  final month = local.month.toString().padLeft(2, '0');
+  final day = local.day.toString().padLeft(2, '0');
+  return '${local.year}-$month-$day';
 }
 
 class _ActionRow extends StatelessWidget {

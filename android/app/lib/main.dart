@@ -12,12 +12,12 @@ import 'package:diting_shared/data/fonts/font_repository.dart';
 import 'package:diting_android/data/native/app_version.dart';
 import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
+import 'package:diting_android/data/native/data_plane_status.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
 import 'package:diting_android/data/native/launcher_icon_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
-import 'package:diting_android/data/vpn/vpn_bridge.dart'
-    show vpnChannelName, expressVpnChannelName, dnsServerChannelName;
+import 'package:diting_shared/data/db/storage_reclaim.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/overlay/floating_log_main.dart';
@@ -28,7 +28,6 @@ import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_android/state/launcher_icon_providers.dart';
 import 'package:diting_android/state/network_tools_providers.dart';
 import 'package:diting_android/state/outbound_proxy_providers.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -36,24 +35,6 @@ import 'package:material_ui/material_ui.dart';
 /// `startup <stage> +Nms` lines on, so ADB (`adb logcat -s flutter`) can time the pre-frame work in a release
 /// build. Off by default, so the strings and the Stopwatch are tree-shaken away.
 const _startupTrace = bool.fromEnvironment('DITING_STARTUP_TRACE');
-
-/// Whether a service is alive in this process right now. The persisted running flags can survive a
-/// force-stop, so the migration asks the native status calls instead.
-Future<bool> _anyDataPlaneRunning() async {
-  for (final name in const [
-    vpnChannelName,
-    expressVpnChannelName,
-    dnsServerChannelName,
-  ]) {
-    try {
-      final status = await MethodChannel(name).invokeMethod<Object?>('status');
-      if (status is Map && status['running'] == true) return true;
-    } catch (_) {
-      // No native channel (desktop/tests) or the service is stopped.
-    }
-  }
-  return false;
-}
 
 /// App entry point, the only `runApp`. Legacy settings and rules load before the first
 /// frame so providers see stored values instead of flashing defaults. Native channels are
@@ -98,11 +79,17 @@ Future<void> main() async {
   // use, so startup continues instead of losing rules or logs.
   final migration = await ensureSplitStorage(
     store,
-    dataPlaneRunning: await _anyDataPlaneRunning(),
+    dataPlaneRunning: await anyDataPlaneRunning(),
   );
   stage('storage');
   if (!migration.split && !migration.deferred) {
     RuntimeEvents.error('db', 'storage.migration_failed: ${migration.error}');
+  } else if (migration.deferred) {
+    RuntimeEvents.report(
+      'db',
+      'storage.migration_deferred',
+      fields: {'reason': migration.error},
+    );
   }
   // Open the data set the app starts in: the persisted work mode decides the rule database, and a
   // later mode switch opens its own database on demand.
@@ -156,6 +143,27 @@ Future<void> main() async {
     UncontrolledProviderScope(container: container, child: const DitingApp()),
   );
   stage('runApp');
+  // Stale legacy copies are only deleted after the split's grace period; keep that I/O off the
+  // launch path and let it fail silently (the files are harmless, just duplicated).
+  unawaited(_reclaimLegacyStorage(store));
+}
+
+Future<void> _reclaimLegacyStorage(LegacyPrefsStore store) async {
+  try {
+    final freed = await reclaimLegacyStorageIfDue(
+      store,
+      dataPlaneRunning: await anyDataPlaneRunning(),
+    );
+    if (freed > 0) {
+      RuntimeEvents.report(
+        'db',
+        'storage.reclaimed',
+        fields: {'bytes': freed},
+      );
+    }
+  } catch (error) {
+    debugPrint('legacy storage reclaim skipped: $error');
+  }
 }
 
 /// Aggregates the two Dart error paths into the always-on black box.

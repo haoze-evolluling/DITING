@@ -2,10 +2,12 @@
 // counts verify, and running it twice cannot duplicate rows or touch the legacy files.
 
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:diting_shared/data/db/legacy_database.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_shared/data/db/storage_migration.dart';
+import 'package:diting_shared/data/db/storage_reclaim.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,6 +80,19 @@ void main() {
       'result': 'BLOCKED',
       'cached': 0,
     });
+    await main.insert('dns_cache', {
+      'key': 'cache-1',
+      'queryName': 'ads.example',
+      'queryType': 1,
+      'queryClass': 1,
+      'createdAt': 1,
+      'expiresAt': 2,
+      'hitCount': 0,
+      'originalTtlSeconds': 60,
+      'ttlOffsets': '[]',
+      'response': Uint8List.fromList(const [1, 2, 3]),
+      'responseSize': 3,
+    });
     await main.insert('http_request_log', {
       'timestamp': 11,
       'packageName': 'com.example',
@@ -145,6 +160,9 @@ void main() {
       ),
       StorageLayout.splitVersion,
     );
+    final settings = LegacySettings(store);
+    expect(settings.storageSplitCompletedAt, isNotNull);
+    expect(settings.storageMigrationError, isNull);
 
     final normalRules = await openLegacy(LegacyDatabase.normalRulesFile);
     expect(await _count(normalRules, 'block_rule'), 1);
@@ -156,6 +174,8 @@ void main() {
     expect(await _count(normalLogs, 'dns_log'), 1);
     expect(await _count(normalLogs, 'http_request_log'), 1);
     expect(await _count(normalLogs, 'app_traffic_daily'), 1);
+    // The disposable cache table is created but deliberately not copied.
+    expect(await _count(normalLogs, 'dns_cache'), 0);
     expect(await _hasTable(normalLogs, 'block_rule'), isFalse);
     await normalLogs.close();
 
@@ -201,6 +221,59 @@ void main() {
       ),
       isNull,
     );
+    expect(
+      LegacySettings(store).storageMigrationError,
+      contains('data plane'),
+    );
+  });
+
+  test('拆分完成后可回收旧库，但保留服务端规则库', () async {
+    for (final name in const [
+      LegacyDatabase.mainFile,
+      LegacyDatabase.expressFile,
+      LegacyDatabase.serverLogFile,
+      LegacyDatabase.serverFile,
+    ]) {
+      final db = await openLegacy(name);
+      await db.close();
+    }
+    final migrated = await ensureSplitStorage(store);
+    expect(migrated.split, isTrue, reason: migrated.error);
+
+    // The grace period keeps the fallback intact right after the split.
+    expect(
+      await reclaimLegacyStorageIfDue(store, dataPlaneRunning: false),
+      0,
+    );
+    // A live data plane blocks deletion even when the grace period has passed.
+    expect(
+      await reclaimLegacyDatabases(split: true, dataPlaneRunning: true),
+      0,
+    );
+    expect(
+      await reclaimLegacyDatabases(split: false, dataPlaneRunning: false),
+      0,
+    );
+    final freed = await reclaimLegacyStorageIfDue(
+      store,
+      dataPlaneRunning: false,
+      gracePeriod: Duration.zero,
+    );
+    expect(freed, greaterThan(0));
+
+    for (final name in StorageContract.reclaimableLegacyDatabases) {
+      expect(
+        await LegacyDatabase.open(name, create: false),
+        isNull,
+        reason: '$name should be deleted',
+      );
+    }
+    final serverRules = await LegacyDatabase.open(
+      LegacyDatabase.serverFile,
+      create: false,
+    );
+    expect(serverRules, isNotNull);
+    await serverRules?.close();
   });
 
   test('没有旧库时建立空的拆分库并写入标记', () async {

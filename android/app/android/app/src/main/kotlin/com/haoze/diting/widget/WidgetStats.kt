@@ -1,7 +1,6 @@
 package com.haoze.diting.widget
 
 import android.content.Context
-import com.haoze.diting.control.DataPlaneControl
 import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.log.LegacyDb
 import java.util.Calendar
@@ -20,12 +19,7 @@ internal object WidgetStats {
     data class Snapshot(val blockedToday: Int?, val totalToday: Int?)
 
     fun snapshot(context: Context): Snapshot {
-        val dataset = when (DataPlaneControl.workMode(context)) {
-            DataPlaneControl.WORK_MODE_DNS -> RuleDataset.DNS_MODE
-            DataPlaneControl.WORK_MODE_EXPRESS -> RuleDataset.EXPRESS
-            else -> RuleDataset.NORMAL
-        }
-        val databaseName = dataset.logsDatabase(context)
+        val databaseName = RuleDataset.active(context).logsDatabase(context)
         val db = LegacyDb.writable(context, databaseName) ?: return Snapshot(null, null)
         if (!LegacyDb.hasTable(db, TABLE)) return Snapshot(null, null)
         return runCatching {

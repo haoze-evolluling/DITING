@@ -1,7 +1,6 @@
 package com.haoze.diting.platform
 
 import android.content.Context
-import com.haoze.diting.control.DataPlaneControl
 import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.log.DbWriteHealth
 import com.haoze.diting.log.LegacyDb
@@ -21,14 +20,8 @@ class DbHealthBridge(private val context: Context) : MethodChannel.MethodCallHan
         const val CHANNEL = "com.haoze.diting/db_health"
 
         /// The active mode's log store: the only database the log writers touch.
-        private fun logDatabase(context: Context): String {
-            val dataset = when (DataPlaneControl.workMode(context)) {
-                DataPlaneControl.WORK_MODE_DNS -> RuleDataset.DNS_MODE
-                DataPlaneControl.WORK_MODE_EXPRESS -> RuleDataset.EXPRESS
-                else -> RuleDataset.NORMAL
-            }
-            return dataset.logsDatabase(context)
-        }
+        private fun logDatabase(context: Context): String =
+            RuleDataset.active(context).logsDatabase(context)
     }
 
     fun register(messenger: BinaryMessenger) {

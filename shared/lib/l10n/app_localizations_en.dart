@@ -4793,6 +4793,66 @@ class AppL10nEn extends AppL10n {
       'Run VACUUM on the three local databases to reclaim space from deleted rows';
 
   @override
+  String get devStorageTitle => 'Storage layout';
+
+  @override
+  String get devStorageSplit =>
+      'Split layout: one rules and one logs database per mode';
+
+  @override
+  String get devStorageLegacy => 'Legacy layout: migration not completed';
+
+  @override
+  String devStorageDetail(int version, String date) {
+    return 'Marker v$version · committed $date';
+  }
+
+  @override
+  String devStoragePending(String reason) {
+    return 'Pending: $reason';
+  }
+
+  @override
+  String devStorageLastError(String error) {
+    return 'Last migration failed: $error';
+  }
+
+  @override
+  String devStorageFiles(int kb) {
+    return 'Legacy files: $kb KB';
+  }
+
+  @override
+  String get devRetryMigration => 'Retry storage migration';
+
+  @override
+  String get devRetryMigrationBody =>
+      'Copy the legacy data into the split layout while no data plane runs';
+
+  @override
+  String get devReclaimLegacy => 'Release legacy storage';
+
+  @override
+  String get devReclaimLegacyBody =>
+      'Delete the legacy rules and logs databases left after migration';
+
+  @override
+  String get devMigrationDone =>
+      'Storage migration completed; later launches use the split layout';
+
+  @override
+  String get devMigrationDeferred =>
+      'A data plane is running; stop the tunnel and retry';
+
+  @override
+  String get devReclaimNone => 'No legacy database files to reclaim';
+
+  @override
+  String devReclaimDone(String files, int kb) {
+    return 'Deleted $files, reclaimed $kb KB';
+  }
+
+  @override
   String get devCancel => 'Cancel';
 
   @override

@@ -49,6 +49,11 @@ class SharedPreferencesLegacyPrefsStore implements LegacyPrefsStore {
   }
 
   @override
+  Future<void> putIntAwaiting(String container, String key, int value) async {
+    await _preferences.setInt(storageKey(container, key), value);
+  }
+
+  @override
   void putLong(String container, String key, int value) {
     // Web local storage and the legacy Android channel both carry this as an integer.
     _preferences.setInt(storageKey(container, key), value);

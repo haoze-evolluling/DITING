@@ -10,7 +10,10 @@ abstract final class LegacySchema {
 
   static const expressVersion = 2;
 
-  static const serverVersion = 3;
+  /// 4 adds the subscription indexes the original server file never declared. Bumping the version
+  /// is the only way an existing file picks them up: `onUpgrade` runs `_createIfMissing`, whose
+  /// `IF NOT EXISTS` statements are all safe to replay.
+  static const serverVersion = 4;
 
   /// Legacy server log store and every split-layout store start at version 1: they are new files,
   /// never upgraded legacy Room databases.
@@ -63,6 +66,7 @@ abstract final class LegacySchema {
       ..._ruleTables,
       ..._subscriptionTables,
       ..._ruleIndexes,
+      ..._subscriptionIndexes,
     ],
     StorageContract.legacyServerLogsDatabase ||
     StorageContract.serverLogsDatabase => [..._logTables, ..._logIndexes],
@@ -163,6 +167,17 @@ CREATE TABLE `mirror_template` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 
   static const logTableNames = <String>[
     'dns_cache',
+    'dns_log',
+    'dns_race_log',
+    'bootstrap_log',
+  ];
+
+  /// Log tables worth copying during the one-time split.
+  ///
+  /// `dns_cache` is excluded on purpose: it stores every response as a BLOB, is the largest table
+  /// on a heavy install, and is a pure cache the engine repopulates after the restart the migration
+  /// requires. Copying it would only lengthen the pre-first-frame wait and double its disk cost.
+  static const migrationLogTableNames = <String>[
     'dns_log',
     'dns_race_log',
     'bootstrap_log',

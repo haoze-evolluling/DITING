@@ -2713,6 +2713,62 @@
   "devClearAllBody": "删除配置、规则与日志，恢复出厂状态",
   "devVacuum": "压缩数据库",
   "devVacuumBody": "对三个本地库执行 VACUUM，回收已删除记录占用的空间",
+  "devStorageTitle": "存储布局",
+  "devStorageSplit": "拆分布局：每个模式独立规则库与日志库",
+  "devStorageLegacy": "旧布局：迁移尚未完成",
+  "devStorageDetail": "标记 v{version} · 完成于 {date}",
+  "@devStorageDetail": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "devStoragePending": "待迁移：{reason}",
+  "@devStoragePending": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "devStorageLastError": "上次迁移失败：{error}",
+  "@devStorageLastError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "devStorageFiles": "旧库残留 {kb} KB",
+  "@devStorageFiles": {
+    "placeholders": {
+      "kb": {
+        "type": "int"
+      }
+    }
+  },
+  "devRetryMigration": "重试存储迁移",
+  "devRetryMigrationBody": "在数据面停止时把旧库复制到拆分布局",
+  "devReclaimLegacy": "释放旧库空间",
+  "devReclaimLegacyBody": "删除迁移后残留的旧规则与日志数据库",
+  "devMigrationDone": "存储迁移已完成，后续启动使用拆分布局",
+  "devMigrationDeferred": "数据面正在运行，停止隧道后再重试",
+  "devReclaimNone": "没有可回收的旧库文件",
+  "devReclaimDone": "已删除 {files}，回收 {kb} KB",
+  "@devReclaimDone": {
+    "placeholders": {
+      "files": {
+        "type": "String"
+      },
+      "kb": {
+        "type": "int"
+      }
+    }
+  },
   "devCancel": "取消",
   "devRun": "执行",
   "devConfirmBody": "{action}\n\n该操作会真正改写本机数据，无法撤销。",

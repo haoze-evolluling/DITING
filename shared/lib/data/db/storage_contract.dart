@@ -29,6 +29,14 @@ abstract final class StorageContract {
 
   static const layoutVersionKey = 'storage_layout_version';
 
+  /// When the split layout was committed. Starts the grace period before the legacy files are
+  /// reclaimed; absent on installs that split before this key existed (the migrator backfills it).
+  static const layoutCompletedAtKey = 'storage_split_completed_at';
+
+  /// Last reason the migration deferred or failed, shown in the storage diagnostics. Cleared on a
+  /// successful run.
+  static const migrationErrorKey = 'storage_migration_error';
+
   // ---- Legacy files; these names are an upgrade contract, never rename them in place ----
 
   static const legacyNormalDatabase = 'diting_database';
@@ -105,4 +113,14 @@ abstract final class StorageContract {
   /// diagnostics and cleanup so a migrated install can still inspect or remove the old files.
   static List<String> get allKnownDatabases =>
       [...legacyDatabases, ...splitDatabases].toSet().toList(growable: false);
+
+  /// Legacy files that become stale copies once the split layout is active.
+  ///
+  /// [serverRulesDatabase] is deliberately excluded: the server rules file kept its legacy name, so
+  /// it is a live store in both layouts, not a leftover.
+  static const reclaimableLegacyDatabases = <String>[
+    legacyNormalDatabase,
+    legacyExpressDatabase,
+    legacyServerLogsDatabase,
+  ];
 }

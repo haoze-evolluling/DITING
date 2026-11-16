@@ -54,15 +54,24 @@ Future<StorageMigrationResult> ensureSplitStorage(
   bool dataPlaneRunning = false,
 }) async {
   final settings = LegacySettings(store);
+  final stopwatch = Stopwatch()..start();
   if (settings.storageLayout.isSplit) {
+    // Installs that split before the completion key existed get the timestamp backfilled, so the
+    // legacy-reclaim grace period starts now instead of never.
+    if (settings.storageSplitCompletedAt == null) {
+      settings.setStorageSplitCompletedAt(DateTime.now());
+    }
+    if (settings.storageMigrationError != null) {
+      settings.setStorageMigrationError(null);
+    }
     return const StorageMigrationResult.ready();
   }
   // A running data plane keeps its legacy file handles until restart. Copying now would leave the
   // rows it writes during this session only in the old file, so defer to a later launch.
   if (dataPlaneRunning) {
-    return StorageMigrationResult.deferred(
-      'a running data plane keeps the legacy databases in use',
-    );
+    const reason = 'a running data plane keeps the legacy databases in use';
+    settings.setStorageMigrationError(reason);
+    return StorageMigrationResult.deferred(reason);
   }
   try {
     final directory = await getDatabasesPath();
@@ -77,7 +86,7 @@ Future<StorageMigrationResult> ensureSplitStorage(
       LegacyDatabase.normalLogsFile: (
         source: LegacyDatabase.mainFile,
         tables: [
-          ...LegacySchema.logTableNames,
+          ...LegacySchema.migrationLogTableNames,
           ...LegacySchema.httpTrafficTableNames,
         ],
       ),
@@ -90,11 +99,11 @@ Future<StorageMigrationResult> ensureSplitStorage(
       ),
       LegacyDatabase.expressLogsFile: (
         source: LegacyDatabase.expressFile,
-        tables: LegacySchema.logTableNames,
+        tables: LegacySchema.migrationLogTableNames,
       ),
       LegacyDatabase.serverLogsFile: (
         source: LegacyDatabase.serverLogFile,
-        tables: LegacySchema.logTableNames,
+        tables: LegacySchema.migrationLogTableNames,
       ),
       LegacyDatabase.appFile: (
         source: LegacyDatabase.mainFile,
@@ -119,10 +128,21 @@ Future<StorageMigrationResult> ensureSplitStorage(
       throw StateError('cannot open ${LegacyDatabase.serverFile}');
     }
 
-    settings.setStorageLayoutVersion(StorageLayout.splitVersion);
+    // Commit point: wait for the platform to accept the marker before reporting the split layout.
+    // Native services resolve file names from this same store, so a fire-and-forget write could
+    // leave Dart on the new files while a tunnel started in this session keeps writing the old one.
+    await settings.commitStorageLayoutVersion(StorageLayout.splitVersion);
+    if (settings.storageSplitCompletedAt == null) {
+      settings.setStorageSplitCompletedAt(DateTime.now());
+    }
+    settings.setStorageMigrationError(null);
+    debugPrint(
+      'storage migration complete in ${stopwatch.elapsedMilliseconds}ms',
+    );
     return const StorageMigrationResult.ready();
   } catch (error) {
     debugPrint('storage migration skipped; keeping legacy layout: $error');
+    settings.setStorageMigrationError('$error');
     return StorageMigrationResult.skipped(error);
   }
 }

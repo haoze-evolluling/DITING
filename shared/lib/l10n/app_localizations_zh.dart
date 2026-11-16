@@ -4552,6 +4552,61 @@ class AppL10nZh extends AppL10n {
   String get devVacuumBody => '对三个本地库执行 VACUUM，回收已删除记录占用的空间';
 
   @override
+  String get devStorageTitle => '存储布局';
+
+  @override
+  String get devStorageSplit => '拆分布局：每个模式独立规则库与日志库';
+
+  @override
+  String get devStorageLegacy => '旧布局：迁移尚未完成';
+
+  @override
+  String devStorageDetail(int version, String date) {
+    return '标记 v$version · 完成于 $date';
+  }
+
+  @override
+  String devStoragePending(String reason) {
+    return '待迁移：$reason';
+  }
+
+  @override
+  String devStorageLastError(String error) {
+    return '上次迁移失败：$error';
+  }
+
+  @override
+  String devStorageFiles(int kb) {
+    return '旧库残留 $kb KB';
+  }
+
+  @override
+  String get devRetryMigration => '重试存储迁移';
+
+  @override
+  String get devRetryMigrationBody => '在数据面停止时把旧库复制到拆分布局';
+
+  @override
+  String get devReclaimLegacy => '释放旧库空间';
+
+  @override
+  String get devReclaimLegacyBody => '删除迁移后残留的旧规则与日志数据库';
+
+  @override
+  String get devMigrationDone => '存储迁移已完成，后续启动使用拆分布局';
+
+  @override
+  String get devMigrationDeferred => '数据面正在运行，停止隧道后再重试';
+
+  @override
+  String get devReclaimNone => '没有可回收的旧库文件';
+
+  @override
+  String devReclaimDone(String files, int kb) {
+    return '已删除 $files，回收 $kb KB';
+  }
+
+  @override
   String get devCancel => '取消';
 
   @override

@@ -4,6 +4,7 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:diting_shared/data/db/storage_contract.dart';
@@ -164,6 +165,43 @@ class LegacySettings {
     StorageContract.layoutVersionKey,
     version,
   );
+
+  /// Acknowledged write for the migration's commit point; see [LegacyPrefsStore.putIntAwaiting].
+  Future<void> commitStorageLayoutVersion(int version) => _store.putIntAwaiting(
+    workModeContainer,
+    StorageContract.layoutVersionKey,
+    version,
+  );
+
+  /// Start of the grace period before the legacy files are reclaimed.
+  DateTime? get storageSplitCompletedAt {
+    final millis = _int(workModeContainer, StorageContract.layoutCompletedAtKey, 0);
+    return millis > 0 ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
+  }
+
+  /// Epoch millis exceed 32 bits, so this must use the long channel or it truncates to a negative
+  /// int and the grace-period check silently disables itself.
+  void setStorageSplitCompletedAt(DateTime time) => _store.putLong(
+    workModeContainer,
+    StorageContract.layoutCompletedAtKey,
+    time.millisecondsSinceEpoch,
+  );
+
+  /// Last deferral or failure reason; null after a successful migration.
+  String? get storageMigrationError =>
+      _string(workModeContainer, StorageContract.migrationErrorKey);
+
+  void setStorageMigrationError(String? message) {
+    if (message == null || message.isEmpty) {
+      _store.remove(workModeContainer, StorageContract.migrationErrorKey);
+    } else {
+      _store.putString(
+        workModeContainer,
+        StorageContract.migrationErrorKey,
+        message,
+      );
+    }
+  }
 
   String get workModeRaw =>
       _string(workModeContainer, 'app_work_mode') ?? 'normal';
