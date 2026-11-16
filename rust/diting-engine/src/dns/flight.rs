@@ -95,8 +95,10 @@ async fn run_resolver(engine: &Arc<Engine>, query: &[u8]) -> Result<Vec<u8>, Str
     let resolver = engine.resolver();
     let (result, race) = resolver.resolve(query).await;
     if let Some(mut event) = race {
-        event.query_name = engine.query_name(query);
-        event.query_type = engine.query_type(query);
+        // One parse for both fields: `query_name`/`query_type` each walked the wire message again.
+        let info = diting_dns_core::message::query_info(query);
+        event.query_name = info.name;
+        event.query_type = info.qtype;
         engine.logs().race(event);
     }
     result

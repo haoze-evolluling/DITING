@@ -38,11 +38,11 @@ class EngineDataPlane(
         engine.setUIDResolver(object : UIDResolver {
             override fun resolveUID(
                 protocol: Long,
-                localIP: String,
+                localAddress: ByteArray,
                 localPort: Long,
-                remoteIP: String,
+                remoteAddress: ByteArray,
                 remotePort: Long,
-            ): Long = resolveUid(protocol, localIP, localPort, remoteIP, remotePort)
+            ): Long = resolveUid(protocol, localAddress, localPort, remoteAddress, remotePort)
         })
         engine.setAppUidResolver(object : AppUidResolver {
             override fun packageForUid(uid: Long): String = this@EngineDataPlane.packageForUid(uid)
@@ -110,18 +110,17 @@ class EngineDataPlane(
         // Queued DNS / race / bootstrap rows are flushed here: the engine has already stopped, so
         // nothing appends while they are written.
         runCatching { LogTableWriters.closeAll() }
-        uidCache.clear()
     }
 
     // ---- payload handling, shared by every callback -----------------------------------------
 
     private fun resolveUid(
         protocol: Long,
-        localIP: String,
+        localAddress: ByteArray,
         localPort: Long,
-        remoteIP: String,
+        remoteAddress: ByteArray,
         remotePort: Long,
-    ): Long = uidCache.resolveUid(protocol, localIP, localPort, remoteIP, remotePort).toLong()
+    ): Long = uidCache.resolveUid(protocol, localAddress, localPort, remoteAddress, remotePort).toLong()
 
     private fun packageForUid(uid: Long): String = uidCache.packageForUid(uid.toInt())
 

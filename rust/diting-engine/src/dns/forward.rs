@@ -176,8 +176,12 @@ fn blocked_chain(
     if !engine.policy().is_active() || !engine.policy().has_rules() {
         return None;
     }
-    let names: Vec<String> = targets.iter().map(|target| target.domain.clone()).collect();
-    let plan = diting_response_core::plan(&names, diting_response_core::DEFAULT_MAX_DEPTH);
+    // Borrowed: this runs on every cache hit and every forwarded answer, and the previous version
+    // cloned every chain target into a `Vec<String>` only for the planner to clone them again.
+    let plan = diting_response_core::plan_strs(
+        targets.iter().map(|target| target.domain.as_str()),
+        diting_response_core::DEFAULT_MAX_DEPTH,
+    );
     for domain in &plan.targets {
         if let Some(verdict) = engine.policy().evaluate(domain, app_name, qtype) {
             if verdict.blocked {

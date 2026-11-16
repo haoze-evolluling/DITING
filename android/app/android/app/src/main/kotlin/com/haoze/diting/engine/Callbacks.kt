@@ -37,15 +37,16 @@ interface SocketProtector {
 
 /// `ConnectivityManager.getConnectionOwnerUid` behind the engine's caches.
 ///
-/// `localIP`/`localPort` are the **app** endpoint and `remoteIP`/`remotePort` the destination the
-/// app dialed, which is the pair Android's API wants (and the reverse of what the stack's naming
-/// might suggest).
+/// `localAddress`/`localPort` are the **app** endpoint and `remoteAddress`/`remotePort` the
+/// destination the app dialed, which is the pair Android's API wants (and the reverse of what the
+/// stack's naming might suggest). The addresses are the raw 4- or 16-byte wire form, so the caller
+/// hands them straight to `InetAddress.getByAddress` instead of parsing two strings.
 interface UIDResolver {
     fun resolveUID(
         protocol: Long,
-        localIP: String,
+        localAddress: ByteArray,
         localPort: Long,
-        remoteIP: String,
+        remoteAddress: ByteArray,
         remotePort: Long,
     ): Long
 }
@@ -110,6 +111,10 @@ interface TunnelEngine {
 
     /// `{"enabled":…,"totalHits":…,"entryCount":…}`.
     fun getDNSCacheStats(): String
+
+    /// Six big-endian `u64`s: `total | blocked | droppedLogs | cacheHits | cacheMisses |
+    /// cacheEntries`. One crossing replaces the two JSON documents above on the polling path.
+    fun statsSnapshot(): ByteArray
 
     /// The hottest live cache entries, packed in the log kernel's mirror input layout.
     fun getDNSCacheSnapshot(limit: Long): ByteArray

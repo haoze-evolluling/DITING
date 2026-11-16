@@ -1,23 +1,37 @@
 package com.haoze.diting.log
 
 import com.haoze.diting.engine.TunnelEngine
-import org.json.JSONObject
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
-/// Reads the engine's counters in the shape the Dart layer expects; both engines answer
+/// Reads the engine's counters in the shape the Dart layer expects; both engines answer.
+///
+/// The engine packs six big-endian `u64`s (`statsSnapshot`), so a poll is one JNI crossing and no
+/// JSON document: the status channel used to build and parse two separate JSON objects here every
+/// few seconds for the whole life of the tunnel.
 object EngineStats {
+    private const val FIELDS = 6
+
     fun snapshot(engine: TunnelEngine?): Map<String, Any?> {
         if (engine == null) return emptyMap()
         return runCatching {
-            val stats = JSONObject(engine.getStats())
-            val cache = JSONObject(engine.getDNSCacheStats())
+            val buffer = ByteBuffer.wrap(engine.statsSnapshot()).order(ByteOrder.BIG_ENDIAN)
+            val values = LongArray(FIELDS)
+            for (index in values.indices) {
+                if (buffer.remaining() < Long.SIZE_BYTES) break
+                values[index] = buffer.long
+            }
+            val hits = values[3]
+            val misses = values[4]
+            val lookups = hits + misses
             mapOf(
-                "queries" to stats.optLong("total"),
-                "blocked" to stats.optLong("blocked"),
-                "droppedLogs" to stats.optLong("dropped_logs"),
-                "cacheHits" to cache.optLong("totalHits"),
-                "cacheMisses" to cache.optLong("totalMisses"),
-                "cacheEntries" to cache.optInt("entryCount"),
-                "cacheHitRatio" to cache.optDouble("hitRatio", 0.0),
+                "queries" to values[0],
+                "blocked" to values[1],
+                "droppedLogs" to values[2],
+                "cacheHits" to hits,
+                "cacheMisses" to misses,
+                "cacheEntries" to values[5].toInt(),
+                "cacheHitRatio" to if (lookups > 0) hits.toDouble() / lookups else 0.0,
             )
         }.getOrDefault(emptyMap())
     }

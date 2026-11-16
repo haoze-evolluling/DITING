@@ -178,9 +178,9 @@ fn a_blocked_uid_never_reaches_the_stack() {
         fn resolve(
             &self,
             _protocol: i32,
-            _app_ip: &str,
+            _app_ip: &[u8],
             _app_port: u16,
-            _server_ip: &str,
+            _server_ip: &[u8],
             _server_port: u16,
         ) -> i32 {
             self.0
@@ -432,9 +432,9 @@ fn the_traffic_ticker_reports_the_flow_uid() {
         fn resolve(
             &self,
             _protocol: i32,
-            _app_ip: &str,
+            _app_ip: &[u8],
             _app_port: u16,
-            _server_ip: &str,
+            _server_ip: &[u8],
             _server_port: u16,
         ) -> i32 {
             self.0

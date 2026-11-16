@@ -81,13 +81,16 @@ pub struct FlowEvent {
 
 /// One incremental snapshot. `base_seq` is the caller's cursor, `next_seq` the table's cursor after
 /// this snapshot; `truncated` means the caller should snapshot again from `next_seq`'s delta.
+///
+/// The sessions are borrowed: the snapshot is encoded and dropped while the table lock is still
+/// held, so cloning every row (and its three strings) first was pure overhead.
 #[derive(Clone, Debug)]
-pub struct Snapshot {
+pub struct Snapshot<'a> {
     pub base_seq: u64,
     pub next_seq: u64,
     pub total: usize,
     pub truncated: bool,
-    pub sessions: Vec<FlowSession>,
+    pub sessions: Vec<&'a FlowSession>,
 }
 
 /// The bounded session table.
@@ -197,7 +200,7 @@ impl FlowTable {
     }
 
     /// Sessions touched after `since_seq`, oldest change first, capped at `limit` (0 = no cap).
-    pub fn snapshot(&self, since_seq: u64, limit: usize) -> Snapshot {
+    pub fn snapshot(&self, since_seq: u64, limit: usize) -> Snapshot<'_> {
         let mut items: Vec<&FlowSession> = self
             .by_key
             .values()
@@ -207,49 +210,97 @@ impl FlowTable {
         let total = items.len();
         let cap = if limit == 0 { total } else { limit };
         let truncated = total > cap;
-        let sessions = items.into_iter().take(cap).cloned().collect();
         Snapshot {
             base_seq: since_seq,
             next_seq: self.next_seq,
             total,
             truncated,
-            sessions,
+            sessions: items.into_iter().take(cap).collect(),
         }
     }
 }
 
-impl Snapshot {
+impl Snapshot<'_> {
     /// Encodes the snapshot as the JSON the JNI/FFI caller parses.
+    ///
+    /// The document is written straight into one buffer. Building a `serde_json::Value` map per
+    /// session (fourteen heap-allocated entries plus a boxed array) on every two-second poll was
+    /// the largest remaining cost of the flow view.
     pub fn to_json(&self) -> String {
-        let sessions: Vec<serde_json::Value> = self.sessions.iter().map(session_json).collect();
-        serde_json::json!({
-            "baseSeq": self.base_seq,
-            "nextSeq": self.next_seq,
-            "total": self.total,
-            "truncated": self.truncated,
-            "sessions": sessions,
-        })
-        .to_string()
+        use std::fmt::Write;
+
+        let mut out = String::with_capacity(96 + self.sessions.len() * 224);
+        let _ = write!(
+            out,
+            "{{\"baseSeq\":{},\"nextSeq\":{},\"total\":{},\"truncated\":{},\"sessions\":[",
+            self.base_seq, self.next_seq, self.total, self.truncated
+        );
+        for (index, session) in self.sessions.iter().enumerate() {
+            if index > 0 {
+                out.push(',');
+            }
+            write_session(&mut out, session);
+        }
+        out.push_str("]}");
+        out
     }
 }
 
-fn session_json(session: &FlowSession) -> serde_json::Value {
-    serde_json::json!({
-        "protocol": session.key.protocol,
-        "srcIp": session.key.src_ip,
-        "srcPort": session.key.src_port,
-        "dstIp": session.key.dst_ip,
-        "dstPort": session.key.dst_port,
-        "uid": session.key.uid,
-        "package": session.package,
-        "domain": session.domain,
-        "upBytes": session.up_bytes,
-        "downBytes": session.down_bytes,
-        "status": session.status.as_str(),
-        "firstSeenMs": session.first_seen_ms,
-        "lastSeenMs": session.last_seen_ms,
-        "seq": session.seq,
-    })
+fn write_session(out: &mut String, session: &FlowSession) {
+    use std::fmt::Write;
+
+    let key = &session.key;
+    out.push('{');
+    write_string_field(out, "protocol", &key.protocol);
+    out.push(',');
+    write_string_field(out, "srcIp", &key.src_ip);
+    let _ = write!(out, ",\"srcPort\":{}", key.src_port);
+    out.push(',');
+    write_string_field(out, "dstIp", &key.dst_ip);
+    let _ = write!(out, ",\"dstPort\":{},\"uid\":{}", key.dst_port, key.uid);
+    out.push(',');
+    write_string_field(out, "package", &session.package);
+    out.push(',');
+    write_string_field(out, "domain", &session.domain);
+    let _ = write!(
+        out,
+        ",\"upBytes\":{},\"downBytes\":{},\"status\":",
+        session.up_bytes, session.down_bytes
+    );
+    write_json_string(out, session.status.as_str());
+    let _ = write!(
+        out,
+        ",\"firstSeenMs\":{},\"lastSeenMs\":{},\"seq\":{}}}",
+        session.first_seen_ms, session.last_seen_ms, session.seq
+    );
+}
+
+fn write_string_field(out: &mut String, name: &str, value: &str) {
+    out.push('"');
+    out.push_str(name);
+    out.push_str("\":");
+    write_json_string(out, value);
+}
+
+/// Appends one JSON string, escaping the characters JSON forbids inside a string.
+fn write_json_string(out: &mut String, value: &str) {
+    use std::fmt::Write;
+
+    out.push('"');
+    for character in value.chars() {
+        match character {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            control if (control as u32) < 0x20 => {
+                let _ = write!(out, "\\u{:04x}", control as u32);
+            }
+            other => out.push(other),
+        }
+    }
+    out.push('"');
 }
 
 #[cfg(test)]
@@ -400,5 +451,19 @@ mod tests {
         assert_eq!(value["sessions"][0]["status"], "active");
         assert_eq!(value["sessions"][0]["uid"], 7);
         assert_eq!(value["total"], 1);
+    }
+
+    #[test]
+    fn the_direct_writer_escapes_string_fields() {
+        let mut table = FlowTable::new(8);
+        let mut e = event(key("tcp", "1.1.1.1", 443, 7), 3, 4, FlowStatus::Active, 42);
+        e.package = "com.ex\tample".to_string();
+        e.domain = "odd\"name\ntrailing\\".to_string();
+        table.record(e);
+        let value: serde_json::Value =
+            serde_json::from_str(&table.snapshot(0, 0).to_json()).unwrap();
+        assert_eq!(value["sessions"][0]["package"], "com.ex\tample");
+        assert_eq!(value["sessions"][0]["domain"], "odd\"name\ntrailing\\");
+        assert_eq!(value["sessions"][0]["upBytes"], 3);
     }
 }

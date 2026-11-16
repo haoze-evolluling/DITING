@@ -1,4 +1,4 @@
-//! The two entry points that carry the larger engine documents as bytes instead of strings.
+//! The entry points that carry engine documents as bytes instead of strings.
 
 use jni::objects::{JByteArray, JObject};
 use jni::sys::{jbyteArray, jlong, jstring};
@@ -11,6 +11,22 @@ fn answer_bytes(env: &JNIEnv<'_>, value: Option<Vec<u8>>) -> jbyteArray {
         Some(array) => array.into_raw(),
         None => std::ptr::null_mut(),
     }
+}
+
+/// `statsSnapshot()`: the six counters the status card reads, as big-endian `u64`s.
+///
+/// The dashboard polls the status channel every three seconds; this is one crossing and no JSON
+/// instead of `getStats` + `getDNSCacheStats` and two object parses.
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStatsSnapshot<'local>(
+    mut env: JNIEnv<'local>,
+    _class: JObject<'local>,
+    handle: jlong,
+) -> jbyteArray {
+    let payload = with_engine(&mut env, handle, None, |engine| {
+        Some(crate::stats::engine_stats_snapshot(engine))
+    });
+    answer_bytes(&env, payload)
 }
 
 /// `getDNSCacheSnapshot(limit)`: the same entries as `getDNSCacheEntries`, packed for the log

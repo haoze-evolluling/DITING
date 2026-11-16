@@ -27,7 +27,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use diting_connlog_core::ConnLogDedup;
 use diting_dns_cache_core::policy::Config as CacheConfig;
 use diting_dns_core::block::{BlockConfig, DynamicBlocks};
-use diting_dns_core::message::{query_info, TYPE_A, TYPE_AAAA};
+use diting_dns_core::message::{TYPE_A, TYPE_AAAA};
 use diting_dns_core::reply::REWRITE_ANSWER_TTL;
 use diting_dns_wire::format_ipv4;
 use diting_flow_core::{FlowEvent, FlowKey, FlowStatus, FlowTable};
@@ -605,14 +605,6 @@ impl Engine {
         }
         let row: LogItem = LogRow::error_row(message, now_ms());
         self.logs.push(row);
-    }
-
-    pub fn query_name(&self, query: &[u8]) -> String {
-        query_info(query).name
-    }
-
-    pub fn query_type(&self, query: &[u8]) -> u16 {
-        query_info(query).qtype
     }
 
     // ---- lifecycle -----------------------------------------------------------------------

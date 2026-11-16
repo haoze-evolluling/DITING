@@ -5,7 +5,7 @@
 //! | Kotlin | descriptor |
 //! |---|---|
 //! | `SocketProtector.protect(long): boolean` | `(J)Z` |
-//! | `UIDResolver.resolveUID(long, String, long, String, long): long` | `(JLjava/lang/String;JLjava/lang/String;J)J` |
+//! | `UIDResolver.resolveUID(long, byte[], long, byte[], long): long` | `(J[BJ[BJ)J` |
 //! | `AppUidResolver.packageForUid(long): String` | `(J)Ljava/lang/String;` |
 //! | `TrafficCallback.onTrafficStatsTick(byte[])` | `([B)V` |
 //!
@@ -34,8 +34,8 @@ use crate::protect::Protector;
 
 /// `SocketProtector.protect(long): boolean`.
 pub const PROTECT_SIGNATURE: &str = "(J)Z";
-/// `UIDResolver.resolveUID(long, String, long, String, long): long`.
-pub const UID_SIGNATURE: &str = "(JLjava/lang/String;JLjava/lang/String;J)J";
+/// `UIDResolver.resolveUID(long, byte[], long, byte[], long): long`.
+pub const UID_SIGNATURE: &str = "(J[BJ[BJ)J";
 /// `AppUidResolver.packageForUid(long): String`.
 pub const APP_SIGNATURE: &str = "(J)Ljava/lang/String;";
 /// `TrafficCallback.onTrafficStatsTick(byte[])`.
@@ -113,16 +113,18 @@ impl UidResolver for JniUidResolver {
     fn resolve(
         &self,
         protocol: i32,
-        app_ip: &str,
+        app_ip: &[u8],
         app_port: u16,
-        server_ip: &str,
+        server_ip: &[u8],
         server_port: u16,
     ) -> i32 {
         with_env(
             &self.vm,
             |env| {
-                let app = JObject::from(env.new_string(app_ip).ok()?);
-                let server = JObject::from(env.new_string(server_ip).ok()?);
+                // Raw wire bytes: the JVM builds `InetAddress.getByAddress(...)` from them, so the
+                // old format-to-String / parse-back pair on every miss is gone.
+                let app = JObject::from(env.byte_array_from_slice(app_ip).ok()?);
+                let server = JObject::from(env.byte_array_from_slice(server_ip).ok()?);
                 let uid = env
                     .call_method(
                         self.target.as_obj(),

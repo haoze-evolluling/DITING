@@ -115,6 +115,9 @@ class Engine : TunnelEngine, AutoCloseable {
 
     override fun getDNSCacheStats(): String = nativeGetDnsCacheStats(handle)
 
+    override fun statsSnapshot(): ByteArray =
+        nativeStatsSnapshot(handle) ?: EMPTY_STATS_SNAPSHOT
+
     override fun getDNSCacheSnapshot(limit: Long): ByteArray =
         nativeGetDnsCacheSnapshot(handle, limit) ?: EMPTY_CACHE_SNAPSHOT
 
@@ -302,6 +305,8 @@ class Engine : TunnelEngine, AutoCloseable {
 
     private external fun nativeGetDnsCacheStats(handle: Long): String
 
+    private external fun nativeStatsSnapshot(handle: Long): ByteArray?
+
     private external fun nativeGetDnsCacheSnapshot(handle: Long, limit: Long): ByteArray?
 
     private external fun nativeFlowSnapshot(handle: Long, sinceSeq: Long, limit: Long): String
@@ -374,6 +379,9 @@ class Engine : TunnelEngine, AutoCloseable {
     private companion object {
         /// An answer for a released handle: `u32 count = 0`, the mirror's empty snapshot.
         val EMPTY_CACHE_SNAPSHOT = ByteArray(Int.SIZE_BYTES)
+
+        /// An answer for a released handle: every counter zero (six big-endian `u64`s).
+        private val EMPTY_STATS_SNAPSHOT = ByteArray(6 * Long.SIZE_BYTES)
 
         /// Engines dropped without `close()` land here for the cleanup thread.
         private val deadEngines = ReferenceQueue<Engine>()

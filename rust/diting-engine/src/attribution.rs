@@ -32,15 +32,19 @@ pub const PROTOCOL_UDP: i32 = 17;
 /// `UIDUnknown`: an unattributable flow never matches an explicit rule.
 pub const UID_UNKNOWN: i32 = -1;
 
-/// `UIDResolver.resolveUID(protocol, localIP, localPort, remoteIP, remotePort)`.
+/// `UIDResolver.resolveUID(protocol, localAddress, localPort, remoteAddress, remotePort)`.
 pub trait UidResolver: Send + Sync + 'static {
     /// The UID that owns the app endpoint, or a non-positive value when it cannot be resolved.
+    ///
+    /// The addresses cross as the 4- or 16-byte wire form: Kotlin hands `getConnectionOwnerUid` an
+    /// `InetAddress`, so formatting two strings here and parsing them back in the JVM was pure
+    /// work on every attribution miss.
     fn resolve(
         &self,
         protocol: i32,
-        app_ip: &str,
+        app_ip: &[u8],
         app_port: u16,
-        server_ip: &str,
+        server_ip: &[u8],
         server_port: u16,
     ) -> i32;
 }
@@ -99,9 +103,13 @@ impl Attribution {
 
     /// The UID owning `app`, resolving and caching it on a miss.
     pub fn uid_for(&self, protocol: i32, app: IpEndpoint, server: IpEndpoint, now_ns: i64) -> i32 {
+        let (app_bytes, server_bytes) = (
+            crate::netstack::address_bytes(app.addr),
+            crate::netstack::address_bytes(server.addr),
+        );
         let (Some(app_addr), Some(server_addr)) = (
-            Addr::from_bytes(&crate::netstack::address_bytes(app.addr)),
-            Addr::from_bytes(&crate::netstack::address_bytes(server.addr)),
+            Addr::from_bytes(&app_bytes),
+            Addr::from_bytes(&server_bytes),
         ) else {
             return UID_UNKNOWN;
         };
@@ -118,13 +126,7 @@ impl Attribution {
         let Some(resolver) = self.uid_slot().clone() else {
             return UID_UNKNOWN;
         };
-        let uid = resolver.resolve(
-            protocol,
-            &address_text(app),
-            app.port,
-            &address_text(server),
-            server.port,
-        );
+        let uid = resolver.resolve(protocol, &app_bytes, app.port, &server_bytes, server.port);
         self.flows.store(key, uid, now_ns);
         uid
     }
@@ -170,11 +172,6 @@ impl Attribution {
     }
 }
 
-/// `net.IP.String()` for the two families the stack sees.
-fn address_text(endpoint: IpEndpoint) -> String {
-    crate::netstack::address_text(endpoint.addr)
-}
-
 /// The monotonic clock the caches want (they never read one themselves).
 pub fn now_ns() -> i64 {
     crate::resolver::now_ns()
@@ -190,9 +187,9 @@ mod tests {
         fn resolve(
             &self,
             _protocol: i32,
-            _app: &str,
+            _app: &[u8],
             _app_port: u16,
-            _server: &str,
+            _server: &[u8],
             _port: u16,
         ) -> i32 {
             self.1.fetch_add(1, Ordering::Relaxed);
@@ -256,6 +253,6 @@ mod tests {
     #[test]
     fn the_ipv6_text_is_the_go_spelling() {
         let endpoint: IpEndpoint = "[2001:db8::1]:853".parse().expect("v6");
-        assert_eq!(address_text(endpoint), "2001:db8::1");
+        assert_eq!(crate::netstack::address_text(endpoint.addr), "2001:db8::1");
     }
 }

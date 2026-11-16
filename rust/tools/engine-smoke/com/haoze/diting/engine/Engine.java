@@ -102,6 +102,11 @@ public final class Engine {
         return nativeGetDnsCacheStats(handle);
     }
 
+    public byte[] statsSnapshot() {
+        requireHandle();
+        return nativeStatsSnapshot(handle);
+    }
+
     public String getDNSCacheEntries(long limit) {
         requireHandle();
         return nativeGetDnsCacheEntries(handle, limit);
@@ -308,9 +313,9 @@ public final class Engine {
         boolean protect(long fd);
     }
 
-    /// `UIDResolver.resolveUID(long, String, long, String, long): long`.
+    /// `UIDResolver.resolveUID(long, byte[], long, byte[], long): long`.
     public interface UIDResolver {
-        long resolveUID(long protocol, String localIP, long localPort, String remoteIP,
+        long resolveUID(long protocol, byte[] localAddress, long localPort, byte[] remoteAddress,
                 long remotePort);
     }
 
@@ -360,6 +365,8 @@ public final class Engine {
     private native String nativeGetStats(long handle);
 
     private native String nativeGetDnsCacheStats(long handle);
+
+    private native byte[] nativeStatsSnapshot(long handle);
 
     private native String nativeGetDnsCacheEntries(long handle, long limit);
 

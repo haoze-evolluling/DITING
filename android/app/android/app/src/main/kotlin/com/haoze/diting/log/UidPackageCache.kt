@@ -8,26 +8,29 @@ import android.os.Process
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
-/// Packet-origin UID -> package, two LRU levels; below API 29 resolveUid answers INVALID_UID.
+/// Packet-origin UID -> package, resolved on a miss only.
 ///
-/// The TTLs, the capacities and the LRU order live in the log kernel
-/// (`rust/diting-log-core/src/attr.rs`); the `getConnectionOwnerUid` binder call and the
-/// `PackageManager` lookup stay here, because only they can answer a miss.
+/// The engine already keeps the two TTL caches (2 s for a flow, 60 s for a package) in
+/// `rust/diting-engine/src/attribution.rs`, and it only calls these two methods when its own lookup
+/// misses. The old second-level cache in `diting-log-core/src/attr.rs` therefore never hit, while
+/// every flow miss still packed a key, crossed JNI twice and stored the answer again; the binder
+/// call and the `PackageManager` lookup are the only work that has to stay here, because only they
+/// can answer a miss.
 class UidPackageCache(context: Context) {
     private val connectivityManager: ConnectivityManager? =
         context.getSystemService(ConnectivityManager::class.java)
     private val packageManager: PackageManager = context.packageManager
-    private val handle: Long = LogNative.attrNew()
 
     private val ownerUidSupported: Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
-    /// UIDResolver payload: protocol is the IPPROTO number
+    /// UIDResolver payload: protocol is the IPPROTO number and the two addresses are their raw
+    /// wire bytes (4 for IPv4, 16 for IPv6), ready for `InetAddress.getByAddress`.
     fun resolveUid(
         protocol: Long,
-        localIP: String,
+        localAddress: ByteArray,
         localPort: Long,
-        remoteIP: String,
+        remoteAddress: ByteArray,
         remotePort: Long,
     ): Int {
         // Android 9 (API < 29) has no `getConnectionOwnerUid`, so per-UID attribution — and with it
@@ -36,50 +39,21 @@ class UidPackageCache(context: Context) {
         // `NetworkStatsManager`/`/proc` fallback.
         if (!ownerUidSupported) return Process.INVALID_UID
         val cm = connectivityManager ?: return Process.INVALID_UID
-        val key = flowKey(protocol, localIP, localPort, remoteIP, remotePort)
-        LogNative.attrUidLookup(handle, key)?.let { return it }
 
-        // The engine passes the app endpoint as localIP, matching getConnectionOwnerUid's `local`.
-        val uid = runCatching {
-            val app = InetAddress.getByName(localIP)
-            val server = InetAddress.getByName(remoteIP)
+        // The engine passes the app endpoint as the local side, matching `getConnectionOwnerUid`.
+        return runCatching {
+            val app = InetAddress.getByAddress(localAddress)
+            val server = InetAddress.getByAddress(remoteAddress)
             cm.getConnectionOwnerUid(
                 protocol.toInt(),
                 InetSocketAddress(app, localPort.toInt()),
                 InetSocketAddress(server, remotePort.toInt()),
             )
         }.getOrDefault(Process.INVALID_UID)
-
-        LogNative.attrUidStore(handle, key, uid)
-        return uid
     }
 
-    /// AppUidResolver payload. Empty means unknown; DnsLogWriter turns a blank value into NULL
-    fun packageForUid(uid: Int): String = when (val cached = LogNative.attrPackageLookup(handle, uid)) {
-        is LogPackageLookup.Hit -> cached.packageName
-        LogPackageLookup.NotKnown -> ""
-        LogPackageLookup.Miss -> {
-            val resolved = runCatching {
-                packageManager.getPackagesForUid(uid)?.firstOrNull()
-            }.getOrNull().orEmpty()
-            if (resolved.isNotEmpty()) LogNative.attrPackageStore(handle, uid, resolved)
-            resolved
-        }
-    }
-
-    fun clear() = LogNative.attrClear(handle)
-
-    private fun flowKey(
-        protocol: Long,
-        localIP: String,
-        localPort: Long,
-        remoteIP: String,
-        remotePort: Long,
-    ): ByteArray = LogPayload.pack { out ->
-        out.writeLong(protocol)
-        LogPayload.writeString(out, localIP)
-        out.writeLong(localPort)
-        LogPayload.writeString(out, remoteIP)
-        out.writeLong(remotePort)
-    }
+    /// AppUidResolver payload. Empty means unknown; DnsLogWriter turns a blank value into NULL.
+    fun packageForUid(uid: Int): String = runCatching {
+        packageManager.getPackagesForUid(uid)?.firstOrNull()
+    }.getOrNull().orEmpty()
 }

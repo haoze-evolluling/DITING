@@ -30,6 +30,12 @@ fn normalize(name: &str) -> Option<String> {
 /// Duplicates are dropped in first-seen order; encountering an already-seen name means a loop, so
 /// the walk stops and marks [`RecheckPlan::cycle`].
 pub fn plan(names: &[String], max_depth: usize) -> RecheckPlan {
+    plan_strs(names.iter().map(String::as_str), max_depth)
+}
+
+/// The borrowed form of [`plan`]: an engine holding `ChainTarget`s can pass the domains directly
+/// instead of cloning every one into a `Vec<String>` first.
+pub fn plan_strs<'a>(names: impl IntoIterator<Item = &'a str>, max_depth: usize) -> RecheckPlan {
     let depth = max_depth.clamp(1, DEFAULT_MAX_DEPTH);
     let mut seen = std::collections::HashSet::new();
     let mut targets = Vec::new();
@@ -95,6 +101,13 @@ mod tests {
         let plan = plan(&names(&["a.example", "b.example", "a.example"]), 8);
         assert_eq!(plan.targets, vec!["a.example", "b.example"]);
         assert!(plan.cycle);
+    }
+
+    #[test]
+    fn the_borrowed_form_matches_the_owned_one() {
+        let borrowed = ["A.example.", "b.example", "b.example"];
+        let owned = names(&["A.example.", "b.example", "b.example"]);
+        assert_eq!(plan_strs(borrowed.iter().copied(), 8), plan(&owned, 8));
     }
 
     #[test]

@@ -139,6 +139,9 @@ public final class EngineSmoke {
         String cacheStats = engine.getDNSCacheStats();
         check(cacheStats.contains("\"totalHits\":"), "cache stats: " + cacheStats);
         check(cacheStats.contains("\"evictionCount\":"), "cache stats carries evictions");
+        byte[] statsSnapshot = engine.statsSnapshot();
+        check(statsSnapshot.length == 6 * 8, "stats snapshot is six u64s");
+        check(java.nio.ByteBuffer.wrap(statsSnapshot).getLong(0) >= 3, "stats snapshot total");
         String entries = engine.getDNSCacheEntries(10);
         check(entries.startsWith("["), "cache entries: " + entries);
         check(entries.contains("\"queryName\""), "cache entry carries the query name");
@@ -161,8 +164,10 @@ public final class EngineSmoke {
             lastFd.set((int) fd);
             return true;
         });
-        engine.setUIDResolver((protocol, localIP, localPort, remoteIP, remotePort) -> {
-            check(localIP.equals("10.0.0.2"), "uid resolver sees the app endpoint: " + localIP);
+        engine.setUIDResolver((protocol, localAddress, localPort, remoteAddress, remotePort) -> {
+            check(
+                    java.util.Arrays.equals(localAddress, new byte[] {10, 0, 0, 2}),
+                    "uid resolver sees the app endpoint as raw bytes");
             return 10123L;
         });
         engine.setAppUidResolver(uid -> uid == 10123L ? "com.test.app" : "");
