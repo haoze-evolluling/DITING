@@ -7,6 +7,7 @@ import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/log_race_providers.dart';
 import 'package:diting_android/state/log_stats_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
+import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -57,6 +58,7 @@ void main() {
       overrides: [
         activeLogDatabaseProvider.overrideWith((ref) async => db),
         normalLogDatabaseProvider.overrideWith((ref) async => db),
+        subscriptionDatabaseProvider.overrideWith((ref) async => db),
       ],
     );
     addTearDown(container.dispose);

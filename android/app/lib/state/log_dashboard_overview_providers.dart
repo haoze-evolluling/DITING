@@ -13,6 +13,7 @@ import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
+import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter/foundation.dart' show listEquals;
@@ -157,6 +158,10 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
 
   final db = await ref.watch(activeLogDatabaseProvider.future);
   if (db == null) return const LogDashboardSnapshot.empty();
+  // Logs live in the mode's logs store; the subscription catalog lives in its rules store.
+  final subscriptionDb = off
+      ? null
+      : await ref.watch(subscriptionDatabaseProvider.future);
   final core = RustLogQueryCore.instance;
 
   DnsLogDailyStats? dnsDaily;
@@ -300,10 +305,12 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
         httpHits = const [];
       }
     }
-    subscriptions = core.rows(
-      'subscription.row',
-      await _raw(db, 'subscription.rows'),
-    );
+    if (subscriptionDb != null) {
+      subscriptions = core.rows(
+        'subscription.row',
+        await _raw(subscriptionDb, 'subscription.rows'),
+      );
+    }
   }
 
   final answer = await deriveOffThread('overview', {

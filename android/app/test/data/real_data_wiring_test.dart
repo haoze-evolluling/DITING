@@ -7,6 +7,7 @@ import 'package:diting_android/state/log_dashboard_overview_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/log_refresh_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
+import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -73,6 +74,7 @@ void _realDataWiring() {
       overrides: [
         activeLogDatabaseProvider.overrideWith((ref) async => db),
         normalLogDatabaseProvider.overrideWith((ref) async => db),
+        subscriptionDatabaseProvider.overrideWith((ref) async => db),
         if (filtered) logModeProvider.overrideWith(_FilteredLogMode.new),
       ],
     );

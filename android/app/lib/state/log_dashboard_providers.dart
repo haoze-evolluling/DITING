@@ -5,6 +5,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/bootstrap_log_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_android/state/log_providers.dart';
+import 'package:diting_android/state/subscription_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -218,6 +219,10 @@ final subscriptionInterceptionProvider =
       final range = ref.watch(subscriptionStatsRangeProvider);
       final db = await ref.watch(activeLogDatabaseProvider.future);
       if (db == null) return const SubscriptionInterceptionSnapshot.empty();
+      // Logs live in the mode's logs store; the subscription catalog lives in its rules store.
+      final subscriptionDb = await ref.watch(
+        subscriptionDatabaseProvider.future,
+      );
       final since = range.startOf(DateTime.now())?.millisecondsSinceEpoch;
       final core = RustLogQueryCore.instance;
 
@@ -282,10 +287,12 @@ final subscriptionInterceptionProvider =
           return const SubscriptionInterceptionSnapshot.empty();
         }
 
-        final subscriptions = core.rows(
-          'subscription.row',
-          await raw(db, 'subscription.rows'),
-        );
+        final subscriptions = subscriptionDb == null
+            ? const <Map<String, Object?>>[]
+            : core.rows(
+                'subscription.row',
+                await raw(subscriptionDb, 'subscription.rows'),
+              );
         final answer = core.derive('subscription.stats', {
           'total': total,
           'hits': hits,
