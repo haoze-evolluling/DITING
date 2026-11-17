@@ -91,30 +91,39 @@ class DitingVpnService : VpnService() {
             return START_NOT_STICKY
         }
         val defaults = VpnPlanNative.startDefaults
+        val proxyJson = intent.getStringExtra(EXTRA_OUTBOUND_PROXY).orEmpty()
+        val proxyAppPackage = intent.getStringExtra(EXTRA_PROXY_APP).orEmpty()
+        val bypassLan = intent.getBooleanExtra(EXTRA_BYPASS_LAN, defaults.bypassLan)
+        val ipv6Mode = intent.getStringExtra(EXTRA_IPV6_MODE) ?: defaults.ipv6Mode
+        val excludedPackages = intent.getStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES).orEmpty().toSet()
+        val blockedPackages = intent.getStringArrayListExtra(EXTRA_BLOCKED_PACKAGES).orEmpty().toSet()
+        val inspectionPackages = intent.getStringArrayListExtra(EXTRA_INSPECTION_PACKAGES).orEmpty().toSet()
+        val inspectionEnabled =
+            intent.getBooleanExtra(EXTRA_INSPECTION_ENABLED, defaults.inspectionEnabled)
         // Persisted so the quick settings tile (and a future reboot restore) can rebuild the same
         // start intent: Dart computes the config, the extras do not survive elsewhere.
         VpnStartConfig.remember(
             context = this,
             dnsConfig = dnsConfig,
-            proxyJson = intent.getStringExtra(EXTRA_OUTBOUND_PROXY).orEmpty(),
-            proxyAppPackage = intent.getStringExtra(EXTRA_PROXY_APP).orEmpty(),
-            bypassLan = intent.getBooleanExtra(EXTRA_BYPASS_LAN, defaults.bypassLan),
-            ipv6Mode = intent.getStringExtra(EXTRA_IPV6_MODE) ?: defaults.ipv6Mode,
-            excludedPackages = intent.getStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES).orEmpty().toSet(),
-            blockedPackages = intent.getStringArrayListExtra(EXTRA_BLOCKED_PACKAGES).orEmpty().toSet(),
-            inspectionPackages = intent.getStringArrayListExtra(EXTRA_INSPECTION_PACKAGES).orEmpty().toSet(),
-            inspectionEnabled = intent.getBooleanExtra(EXTRA_INSPECTION_ENABLED, defaults.inspectionEnabled),
+            proxyJson = proxyJson,
+            proxyAppPackage = proxyAppPackage,
+            bypassLan = bypassLan,
+            ipv6Mode = ipv6Mode,
+            excludedPackages = excludedPackages,
+            blockedPackages = blockedPackages,
+            inspectionPackages = inspectionPackages,
+            inspectionEnabled = inspectionEnabled,
         )
         startTunnel(
             dnsConfig = dnsConfig,
-            proxyJson = intent.getStringExtra(EXTRA_OUTBOUND_PROXY).orEmpty(),
-            proxyAppPackage = intent.getStringExtra(EXTRA_PROXY_APP).orEmpty(),
-            bypassLan = intent.getBooleanExtra(EXTRA_BYPASS_LAN, defaults.bypassLan),
-            ipv6Mode = intent.getStringExtra(EXTRA_IPV6_MODE) ?: defaults.ipv6Mode,
-            excludedPackages = intent.getStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES).orEmpty().toSet(),
-            blockedPackages = intent.getStringArrayListExtra(EXTRA_BLOCKED_PACKAGES).orEmpty().toSet(),
-            inspectionPackages = intent.getStringArrayListExtra(EXTRA_INSPECTION_PACKAGES).orEmpty().toSet(),
-            inspectionEnabled = intent.getBooleanExtra(EXTRA_INSPECTION_ENABLED, defaults.inspectionEnabled),
+            proxyJson = proxyJson,
+            proxyAppPackage = proxyAppPackage,
+            bypassLan = bypassLan,
+            ipv6Mode = ipv6Mode,
+            excludedPackages = excludedPackages,
+            blockedPackages = blockedPackages,
+            inspectionPackages = inspectionPackages,
+            inspectionEnabled = inspectionEnabled,
         )
         return START_NOT_STICKY
     }
@@ -196,7 +205,7 @@ class DitingVpnService : VpnService() {
         // Android recreates it, which used to restart the uptime counter at zero.
         startedAt = System.currentTimeMillis()
         setPersistedRunning(this, true)
-        startSpeedTicker()
+        speedTicker.start()
         FloatingLogOverlay.setVpnRunning(this, true)
         // The window only matters while logs are written, and this service outlives the UI.
         LogRetention.start(
@@ -304,7 +313,7 @@ class DitingVpnService : VpnService() {
         tun = null
         worker = null
         // Stopped too: the failure path returns before `isRunning` is set, leaking a ticker.
-        stopSpeedTicker()
+        speedTicker.stop()
         // Covers the failure paths, which never reach teardown().
         FloatingLogOverlay.setVpnRunning(this, false)
         TrafficRateMonitor.reset()
@@ -357,16 +366,12 @@ class DitingVpnService : VpnService() {
         val error = VpnServiceForeground.promote(
             this,
             NOTIFICATION_ID,
-            VpnNotification.build(this, CHANNEL_ID, NOTIFICATION_ID, ACTION_STOP),
+            VpnNotification.build(this, CHANNEL_ID, ACTION_STOP),
         ) ?: return
         // Android 12+ requires foreground promotion inside onStartCommand; failing is a crash.
         Log.e(TAG, "startForeground failed", error)
         RuntimeEventLog.error("vpn", "foreground.fail", "error" to (error.message ?: error.javaClass.simpleName))
     }
-
-    private fun startSpeedTicker() = speedTicker.start()
-
-    private fun stopSpeedTicker() = speedTicker.stop()
 
     companion object {
         private const val TAG = "DitingVpnService"

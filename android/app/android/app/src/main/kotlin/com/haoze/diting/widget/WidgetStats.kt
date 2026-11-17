@@ -39,13 +39,7 @@ internal object WidgetStats {
     /// Thousands-separated count; above 100k switches to compact form, like `dashboardCount`.
     fun formatCount(value: Int): String {
         if (value >= 100_000) return "${value / 1000}k"
-        val digits = value.toString()
-        val builder = StringBuilder(digits.length + digits.length / 3)
-        for ((index, char) in digits.withIndex()) {
-            if (index > 0 && (digits.length - index) % 3 == 0) builder.append(',')
-            builder.append(char)
-        }
-        return builder.toString()
+        return String.format(Locale.US, "%,d", value)
     }
 
     /// One-decimal percentage, or null when there is nothing to divide by.

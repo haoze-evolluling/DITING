@@ -191,11 +191,8 @@ class HttpRequestLogWriter(
             statement.bindString(4, protocol)
             statement.bindString(5, outcome)
             if (matchedRule == null) statement.bindNull(6) else statement.bindString(6, matchedRule)
-            if (blockSubscriptionId == null) {
-                statement.bindNull(7)
-            } else {
-                statement.bindLong(7, blockSubscriptionId)
-            }
+            if (blockSubscriptionId == null) statement.bindNull(7)
+            else statement.bindLong(7, blockSubscriptionId)
         }
     }
 

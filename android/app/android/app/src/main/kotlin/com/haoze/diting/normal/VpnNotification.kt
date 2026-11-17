@@ -21,7 +21,6 @@ object VpnNotification {
     fun build(
         context: Context,
         channelId: String,
-        notificationId: Int,
         stopAction: String,
     ): Notification {
         val openIntent = PendingIntent.getActivity(
@@ -96,7 +95,7 @@ object VpnNotification {
     ): Boolean = runCatching {
         val manager = context.getSystemService(NotificationManager::class.java)
             ?: return@runCatching false
-        manager.notify(notificationId, build(context, channelId, notificationId, stopAction))
+        manager.notify(notificationId, build(context, channelId, stopAction))
         true
     }.getOrDefault(false)
 }

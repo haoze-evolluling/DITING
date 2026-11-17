@@ -1,6 +1,7 @@
 package com.haoze.diting
 
 import android.content.Context
+import android.util.Log
 import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.core.rule.RuleSnapshotStore
 import io.flutter.plugin.common.BinaryMessenger
@@ -36,7 +37,7 @@ class RuleIndexBridge(
                 }
                 executor.execute {
                     runCatching { RuleSnapshotStore.refreshIndexes(context.applicationContext, dataset) }
-                        .onFailure { android.util.Log.w("RuleIndexBridge", "refresh failed", it) }
+                        .onFailure { Log.w("RuleIndexBridge", "refresh failed", it) }
                 }
                 result.success(true)
             }

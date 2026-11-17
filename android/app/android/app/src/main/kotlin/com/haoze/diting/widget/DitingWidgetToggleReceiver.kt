@@ -23,11 +23,8 @@ class DitingWidgetToggleReceiver : BroadcastReceiver() {
             try {
                 if (!DataPlaneControl.isAgreementAccepted(context)) {
                     openApp(context, requestStart = false)
-                } else {
-                    when (DataPlaneControl.toggle(context)) {
-                        DataPlaneControl.Result.NeedsApp -> openApp(context, requestStart = true)
-                        else -> Unit
-                    }
+                } else if (DataPlaneControl.toggle(context) == DataPlaneControl.Result.NeedsApp) {
+                    openApp(context, requestStart = true)
                 }
             } catch (error: Throwable) {
                 Log.w(TAG, "Failed to toggle from widget", error)

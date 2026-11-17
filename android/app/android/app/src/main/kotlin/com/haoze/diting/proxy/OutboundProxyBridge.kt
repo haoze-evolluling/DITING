@@ -56,15 +56,12 @@ class OutboundProxyBridge(private val context: Context) :
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "read" -> worker.execute { runCatching { read() }.ship(result) }
-            "write" -> {
-                val config = configFrom(call)
-                worker.execute { runCatching { write(config) }.ship(result) }
-            }
+            "write" -> worker.execute { runCatching { write(call) }.ship(result) }
             "reset" -> worker.execute { runCatching { reset() }.ship(result) }
             "setStatus" -> {
                 val state = call.argument<String>("state") ?: DEFAULT_STATUS
                 val message = call.argument<String>("message").orEmpty()
-                worker.execute { runCatching { setStatus(state, message) }.ship(result) }
+                worker.execute { runCatching { publishStatus(context, state, message) }.ship(result) }
             }
             else -> result.notImplemented()
         }
@@ -82,7 +79,6 @@ class OutboundProxyBridge(private val context: Context) :
             "host" to (preferences.getString(KEY_HOST, DEFAULT_HOST) ?: DEFAULT_HOST),
             "port" to preferences.getInt(KEY_PORT, DEFAULT_PORT),
             // Decryption failure yields "": the page asks again, as the old password is gone.
-            
             "username" to ProxySecretCodec.decrypt(
                 preferences.getString(KEY_USERNAME, null),
             ),
@@ -98,27 +94,26 @@ class OutboundProxyBridge(private val context: Context) :
     }
 
     /// Leaves the two `status` keys alone, so a write never blanks the last error.
-    
-    private fun write(config: Map<String, Any?>) {
+    private fun write(call: MethodCall) {
         prefs().edit()
-            .putBoolean(KEY_ENABLED, config["enabled"] == true)
-            .putString(KEY_PROTOCOL, OutboundProxyNative.protocolOf(config["protocol"] as? String))
-            .putString(KEY_HOST, config["host"] as? String ?: DEFAULT_HOST)
-            .putInt(KEY_PORT, (config["port"] as? Number)?.toInt() ?: DEFAULT_PORT)
+            .putBoolean(KEY_ENABLED, call.argument<Boolean>("enabled") ?: false)
+            .putString(KEY_PROTOCOL, OutboundProxyNative.protocolOf(call.argument<String>("protocol")))
+            .putString(KEY_HOST, call.argument<String>("host") ?: DEFAULT_HOST)
+            .putInt(KEY_PORT, call.argument<Int>("port") ?: DEFAULT_PORT)
             .putString(
                 KEY_USERNAME,
-                ProxySecretCodec.encrypt(config["username"] as? String ?: ""),
+                ProxySecretCodec.encrypt(call.argument<String>("username") ?: ""),
             )
             .putString(
                 KEY_PASSWORD,
-                ProxySecretCodec.encrypt(config["password"] as? String ?: ""),
+                ProxySecretCodec.encrypt(call.argument<String>("password") ?: ""),
             )
-            .putString(KEY_APP, config["proxyAppPackage"] as? String ?: "")
-            .putString(KEY_SCOPE, OutboundProxyNative.scopeOf(config["scope"] as? String))
+            .putString(KEY_APP, call.argument<String>("proxyAppPackage") ?: "")
+            .putString(KEY_SCOPE, OutboundProxyNative.scopeOf(call.argument<String>("scope")))
             .putStringSet(
                 KEY_TARGET_APPS,
                 OutboundProxyNative.targetsOf(
-                    (config["targetPackages"] as? List<*>).orEmpty()
+                    call.argument<List<*>>("targetPackages").orEmpty()
                         .filterIsInstance<String>(),
                 ).toSet(),
             )
@@ -140,21 +135,6 @@ class OutboundProxyBridge(private val context: Context) :
             .remove(KEY_STATUS_MESSAGE)
             .apply()
     }
-
-    private fun setStatus(state: String, message: String) =
-        publishStatus(context, state, message)
-
-    private fun configFrom(call: MethodCall): Map<String, Any?> = mapOf(
-        "enabled" to (call.argument<Boolean>("enabled") ?: false),
-        "protocol" to call.argument<String>("protocol"),
-        "host" to call.argument<String>("host"),
-        "port" to call.argument<Int>("port"),
-        "username" to call.argument<String>("username"),
-        "password" to call.argument<String>("password"),
-        "proxyAppPackage" to call.argument<String>("proxyAppPackage"),
-        "scope" to call.argument<String>("scope"),
-        "targetPackages" to call.argument<List<String>>("targetPackages"),
-    )
 
     private fun prefs() = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 

@@ -2,8 +2,8 @@ package com.haoze.diting.platform
 
 import android.content.Context
 import com.haoze.diting.core.rule.RuleDataset
-import com.haoze.diting.log.DbWriteHealth
 import com.haoze.diting.log.AppDatabase
+import com.haoze.diting.log.DbWriteHealth
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel

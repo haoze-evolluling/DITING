@@ -75,25 +75,23 @@ class DitingWidgetProvider : AppWidgetProvider() {
 
         val views = RemoteViews(context.packageName, size.layoutRes)
         bindStatus(context, views, running)
-        when (size) {
-            WidgetSize.SMALL -> Unit
-            WidgetSize.MEDIUM -> bindBlockedCount(context, views, snapshot)
-            WidgetSize.LARGE -> {
-                bindBlockedCount(context, views, snapshot)
-                views.setTextViewText(
-                    R.id.widget_total_count,
-                    countText(context, snapshot.totalToday),
-                )
-                views.setTextViewText(
-                    R.id.widget_rate_value,
-                    WidgetStats.formatRate(snapshot.blockedToday, snapshot.totalToday)
-                        ?: context.getString(R.string.widget_value_unknown),
-                )
-                views.setTextViewText(
-                    R.id.widget_mode_value,
-                    modeLabel(context, DataPlaneControl.workMode(context)),
-                )
-            }
+        if (size != WidgetSize.SMALL) {
+            bindBlockedCount(context, views, snapshot)
+        }
+        if (size == WidgetSize.LARGE) {
+            views.setTextViewText(
+                R.id.widget_total_count,
+                countText(context, snapshot.totalToday),
+            )
+            views.setTextViewText(
+                R.id.widget_rate_value,
+                WidgetStats.formatRate(snapshot.blockedToday, snapshot.totalToday)
+                    ?: context.getString(R.string.widget_value_unknown),
+            )
+            views.setTextViewText(
+                R.id.widget_mode_value,
+                modeLabel(context, DataPlaneControl.workMode(context)),
+            )
         }
         bindClicks(context, views)
         appWidgetManager.updateAppWidget(appWidgetId, views)

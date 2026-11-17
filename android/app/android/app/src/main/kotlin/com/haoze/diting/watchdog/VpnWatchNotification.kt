@@ -25,11 +25,10 @@ object VpnWatchNotification {
         stopIntent: Intent,
         phase: Phase,
     ) {
-        val needsConsent = phase == Phase.NEEDS_CONSENT
         // Opening with the tile's start request lets the app run the consent dialog and start.
         val open = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            if (needsConsent) putExtra(MainActivity.EXTRA_AUTO_START_VPN, true)
+            if (phase == Phase.NEEDS_CONSENT) putExtra(MainActivity.EXTRA_AUTO_START_VPN, true)
         }
         val openPending = PendingIntent.getActivity(
             context,

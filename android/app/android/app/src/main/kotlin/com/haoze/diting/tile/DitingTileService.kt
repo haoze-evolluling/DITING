@@ -40,22 +40,22 @@ class DitingTileService : TileService() {
     private fun performTileAction() {
         if (!DataPlaneControl.isAgreementAccepted(this)) {
             // The app owns the consent flow; opening it is the only correct action here.
-            openMainActivity(requestStart = true)
+            openMainActivity()
             return
         }
         when (DataPlaneControl.toggle(this)) {
             DataPlaneControl.Result.Started -> updateTileState(running = true)
             DataPlaneControl.Result.Stopped -> updateTileState(running = false)
             // No VPN consent, or no persisted start config yet: Dart builds it.
-            DataPlaneControl.Result.NeedsApp -> openMainActivity(requestStart = true)
+            DataPlaneControl.Result.NeedsApp -> openMainActivity()
         }
     }
 
-    private fun openMainActivity(requestStart: Boolean) {
+    private fun openMainActivity() {
         val launch = Runnable {
             val intent = Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                if (requestStart) putExtra(MainActivity.EXTRA_AUTO_START_VPN, true)
+                putExtra(MainActivity.EXTRA_AUTO_START_VPN, true)
             }
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

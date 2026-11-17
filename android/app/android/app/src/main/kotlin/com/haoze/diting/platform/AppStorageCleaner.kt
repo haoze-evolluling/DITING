@@ -2,6 +2,9 @@ package com.haoze.diting.platform
 
 import android.content.Context
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /// Crash records and file-system caches sqflite cannot reach (it only sees `databases/`).
 internal class AppStorageCleaner(private val context: Context) {
@@ -52,18 +55,15 @@ internal class AppStorageCleaner(private val context: Context) {
     }
 
     /// Reports from both directories, newest first
-    private fun crashFiles(): List<File> {
-        val files = mutableListOf<File>()
+    private fun crashFiles(): List<File> = buildList {
         for (dir in arrayOf(crashDir(), File(context.filesDir, LEGACY_CRASH_DIR))) {
             if (!dir.exists()) continue
-            dir.listFiles()?.forEach { if (it.isFile) files.add(it) }
+            dir.listFiles()?.forEach { if (it.isFile) add(it) }
         }
-        return files.sortedByDescending { it.lastModified() }
-    }
+    }.sortedByDescending { it.lastModified() }
 
     private fun timestamp(): String =
-        java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
-            .format(java.util.Date())
+        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
 
     /// Clears the crash records and resets the streak keys, or the crash-loop threshold trips again
     fun clearCrashLogs(): Int {

@@ -44,12 +44,8 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
         when (call.method) {
             "states" -> result.success(states())
             "request" -> request(call.argument<String>("permission").orEmpty(), result)
-            "openNotificationSettings" -> {
-                result.success(openNotificationSettings())
-            }
-            "openAppSettings" -> {
-                result.success(openAppSettings())
-            }
+            "openNotificationSettings" -> result.success(openNotificationSettings())
+            "openAppSettings" -> result.success(openAppSettings())
             else -> result.notImplemented()
         }
     }
@@ -184,9 +180,7 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
             .setData(Uri.parse("package:${activity.packageName}"))
         val fallback = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
         // The direct intent is a dialog only where the ROM allows it; the list is always there.
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-            activity.packageManager.resolveActivity(direct, 0) != null
-        ) {
+        val intent = if (activity.packageManager.resolveActivity(direct, 0) != null) {
             direct
         } else {
             fallback

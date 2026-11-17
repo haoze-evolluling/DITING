@@ -115,10 +115,7 @@ object AutomationEngine {
         val days = window.optJSONArray("days") ?: return true
         if (days.length() == 0) return true
         val isoDay = ((calendar.get(Calendar.DAY_OF_WEEK) + 5) % 7) + 1
-        for (index in 0 until days.length()) {
-            if (days.optInt(index, -1) == isoDay) return true
-        }
-        return false
+        return (0 until days.length()).any { days.optInt(it, -1) == isoDay }
     }
 
     private fun conditionsMatch(
@@ -128,10 +125,8 @@ object AutomationEngine {
     ): Boolean {
         val conditions = spec.optJSONArray("conditions") ?: return true
         if (conditions.length() == 0) return true
-        val results = ArrayList<Boolean>()
-        for (index in 0 until conditions.length()) {
-            val condition = conditions.optJSONObject(index) ?: continue
-            results.add(conditionMatches(condition, network))
+        val results = (0 until conditions.length()).mapNotNull { index ->
+            conditions.optJSONObject(index)?.let { conditionMatches(it, network) }
         }
         if (results.isEmpty()) return true
         return if (match == "any") results.any { it } else results.all { it }
@@ -161,6 +156,11 @@ object AutomationEngine {
         val actions = spec.optJSONArray("actions") ?: return "none"
         val editor = prefs.edit()
         val applied = ArrayList<String>()
+        fun setString(key: String, value: String, label: String) {
+            if (value.isEmpty()) return
+            editor.putString(key, value)
+            applied.add("$label=$value")
+        }
         for (index in 0 until actions.length()) {
             val action = actions.optJSONObject(index) ?: continue
             when (action.optString("type")) {
@@ -172,27 +172,21 @@ object AutomationEngine {
                     )
                     applied.add("paused_${minutes}m")
                 }
-                AutomationSpecKeys.ACTION_SWITCH_PROFILE -> {
-                    val id = action.optString("profileId")
-                    if (id.isNotEmpty()) {
-                        editor.putString(AutomationContract.KEY_ACTIVE_PROFILE, id)
-                        applied.add("profile=$id")
-                    }
-                }
-                AutomationSpecKeys.ACTION_SWITCH_UPSTREAM -> {
-                    val tag = action.optString("upstreamTag")
-                    if (tag.isNotEmpty()) {
-                        editor.putString(AutomationContract.KEY_ACTIVE_UPSTREAM, tag)
-                        applied.add("upstream=$tag")
-                    }
-                }
-                AutomationSpecKeys.ACTION_TOGGLE_RULE_GROUP -> {
-                    val group = action.optString("group")
-                    if (group.isNotEmpty()) {
-                        editor.putString(AutomationContract.KEY_ACTIVE_RULE_GROUP, group)
-                        applied.add("group=$group")
-                    }
-                }
+                AutomationSpecKeys.ACTION_SWITCH_PROFILE -> setString(
+                    AutomationContract.KEY_ACTIVE_PROFILE,
+                    action.optString("profileId"),
+                    "profile",
+                )
+                AutomationSpecKeys.ACTION_SWITCH_UPSTREAM -> setString(
+                    AutomationContract.KEY_ACTIVE_UPSTREAM,
+                    action.optString("upstreamTag"),
+                    "upstream",
+                )
+                AutomationSpecKeys.ACTION_TOGGLE_RULE_GROUP -> setString(
+                    AutomationContract.KEY_ACTIVE_RULE_GROUP,
+                    action.optString("group"),
+                    "group",
+                )
                 AutomationSpecKeys.ACTION_BLOCK_SERVICES -> {
                     val services = action.optJSONArray("services") ?: JSONArray()
                     editor.putString(AutomationContract.KEY_BLOCKED_SERVICES, services.toString())

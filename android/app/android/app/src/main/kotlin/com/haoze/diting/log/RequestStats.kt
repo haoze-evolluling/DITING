@@ -7,11 +7,8 @@ package com.haoze.diting.log
 /// passed, cached counts only passed answers, and bypassed HTTPS flows count toward the total only.
 /// The handle is process-wide like the old singleton, and it is never freed: the process ends with it.
 object RequestStats {
-    private val handle: Long = LogNative.statsNew()
-
     /// The kernel's handle, shared with `DnsLogWriter` and `HttpRequestLogWriter`.
-    internal val kernel: Long
-        get() = handle
+    internal val kernel: Long = LogNative.statsNew()
 
     data class Snapshot(
         val total: Long,
@@ -22,9 +19,9 @@ object RequestStats {
         val failed: Long,
     )
 
-    fun reset() = LogNative.statsRequestReset(handle)
+    fun reset() = LogNative.statsRequestReset(kernel)
 
-    fun snapshot(): Snapshot = LogNative.statsSnapshot(handle).let { counters ->
+    fun snapshot(): Snapshot = LogNative.statsSnapshot(kernel).let { counters ->
         Snapshot(
             total = counters.total,
             passed = counters.passed,

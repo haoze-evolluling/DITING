@@ -92,11 +92,7 @@ internal class LogTableWriter(
         LogNative.queueMarkClosed(queue)
         executor.shutdownNow()
         // One pass that ignores the backoff window: nothing retries after this.
-        while (true) {
-            val batch = LogNative.queueTake(queue) ?: break
-            // A failed write requeued its rows; they are counted below.
-            if (!write(batch)) break
-        }
+        drainQueue()
         val left = LogNative.queueClose(queue)
         DbWriteHealth.onDropped(left, DropReason.CLOSED, table)
         LogNative.queueFree(queue)
@@ -117,12 +113,17 @@ internal class LogTableWriter(
 
     private fun drain() {
         synchronized(lock) { scheduled = false }
-        while (true) {
-            val batch = LogNative.queueTake(queue) ?: return
-            if (!write(batch)) break
-        }
+        drainQueue()
         if (LogNative.queuePendingLen(queue) > 0) {
             schedule(LogNative.queueRetryWait(queue))
+        }
+    }
+
+    /// Writes until the queue is empty or a write must wait; a failed write already requeued its rows.
+    private fun drainQueue() {
+        while (true) {
+            val batch = LogNative.queueTake(queue) ?: return
+            if (!write(batch)) return
         }
     }
 

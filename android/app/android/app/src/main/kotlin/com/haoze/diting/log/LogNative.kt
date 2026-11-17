@@ -374,14 +374,11 @@ internal class LogNative private constructor() {
                 },
             )
             if (reader.u8() == 0) return null
-            return List(reader.count()) { reader.blob() }
+            return reader.blobs()
         }
 
         fun queueRequeue(handle: Long, rows: List<ByteArray>): Int {
-            val packed = LogPayload.pack { out ->
-                out.writeInt(rows.size)
-                rows.forEach { LogPayload.writeBlob(out, it) }
-            }
+            val packed = LogPayload.pack { out -> LogPayload.writeBlobs(out, rows) }
             return instance.queueRequeue(handle, packed)
         }
 
@@ -551,7 +548,7 @@ internal class LogNative private constructor() {
                     "native cache mirror rejected the snapshot"
                 },
             )
-            return List(reader.count()) { reader.blob() }
+            return reader.blobs()
         }
 
         private fun readWarnLine(payload: ByteArray): String? {

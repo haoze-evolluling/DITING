@@ -1,13 +1,13 @@
 package com.haoze.diting.platform
 
+import android.content.Context
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
 /// Avatar disk cache outside the APK; Dart has no path_provider, writes use a `.part` file.
-
-class RecognitionAvatarBridge(private val context: android.content.Context) :
+class RecognitionAvatarBridge(private val context: Context) :
     MethodChannel.MethodCallHandler {
 
     companion object {

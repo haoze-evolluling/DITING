@@ -159,8 +159,12 @@ class TrafficIngest(
                 failed += batch
             }
         }
-        if (failed.isEmpty()) LogNative.trafficResetBackoff(traffic) else LogNative.trafficBackoff(traffic)
-        if (failed.isNotEmpty()) requeue(failed)
+        if (failed.isEmpty()) {
+            LogNative.trafficResetBackoff(traffic)
+        } else {
+            LogNative.trafficBackoff(traffic)
+            requeue(failed)
+        }
     }
 
     /// Puts unwritten deltas back under their original date for the next flush

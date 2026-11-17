@@ -88,12 +88,10 @@ object RuntimeLogStore {
     }
 
     fun clear(context: Context): Int {
-        var removed = 0
-        files(context).forEach { file -> if (runCatching { file.delete() }.getOrDefault(false)) removed++ }
+        val removed = files(context).count { runCatching { it.delete() }.getOrDefault(false) }
         // The always-on event black box is the other half of "运行日志", so clearing here clears it
         // too; otherwise the troubleshooting page would keep showing events after a clear.
-        removed += RuntimeEventLog.clear(context)
-        return removed
+        return removed + RuntimeEventLog.clear(context)
     }
 
     /// The capture folder as the kernel ordered it, with the trim's survivor count.

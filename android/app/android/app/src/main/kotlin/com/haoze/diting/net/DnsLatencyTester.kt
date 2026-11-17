@@ -102,20 +102,12 @@ object DnsLatencyTester {
         val query = buildQuery(domain)
         val started = System.currentTimeMillis()
         return try {
-            when (spec.protocol) {
-                Protocol.DNS -> {
-                    val response = queryPlain(spec, query)
-                    finish(spec, response, started, isSuccess(response))
-                }
-                Protocol.DOH -> {
-                    val response = queryDoh(spec, query)
-                    finish(spec, response, started, isSuccess(response))
-                }
-                Protocol.DOT -> {
-                    val response = queryDot(spec, query)
-                    finish(spec, response, started, isSuccess(response))
-                }
+            val response = when (spec.protocol) {
+                Protocol.DNS -> queryPlain(spec, query)
+                Protocol.DOH -> queryDoh(spec, query)
+                Protocol.DOT -> queryDot(spec, query)
             }
+            finish(spec, started, isSuccess(response))
         } catch (e: Exception) {
             Sample(
                 providerId = spec.id,
@@ -131,12 +123,7 @@ object DnsLatencyTester {
         }
     }
 
-    private fun finish(
-        spec: Spec,
-        response: ByteArray,
-        started: Long,
-        success: Boolean,
-    ): Sample {
+    private fun finish(spec: Spec, started: Long, success: Boolean): Sample {
         val elapsed = (System.currentTimeMillis() - started).coerceAtLeast(1L)
         return Sample(
             providerId = spec.id,
@@ -166,8 +153,7 @@ object DnsLatencyTester {
 
     private fun queryDot(spec: Spec, query: ByteArray): ByteArray {
         val port = if (spec.port > 0) spec.port else DEFAULT_DOT_PORT
-        val factory = SSLSocketFactory.getDefault() as SSLSocketFactory
-        val socket = factory.createSocket() as SSLSocket
+        val socket = SSLSocketFactory.getDefault().createSocket() as SSLSocket
         socket.use {
             it.soTimeout = TIMEOUT_MS
             it.connect(InetSocketAddress(spec.host, port), TIMEOUT_MS)

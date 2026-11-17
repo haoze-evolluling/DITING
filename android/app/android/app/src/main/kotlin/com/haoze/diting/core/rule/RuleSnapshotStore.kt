@@ -43,17 +43,16 @@ object RuleSnapshotStore {
                 "rule database ${dataset.rulesDatabase()} unavailable",
             )
 
-        // Every dataset now keeps DTRI artifacts under its own root, so the server mode builds and
-        // mmaps the same way the two tunnel modes do.
-        val indexDirectory: File? = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
+        // Every dataset keeps DTRI artifacts under its own root, so all modes build and mmap alike.
+        val indexDirectory = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
 
         return try {
-            val triesFresh = indexDirectory?.let { isStampCurrent(it, dao) } ?: false
+            val triesFresh = isStampCurrent(indexDirectory, dao)
             val block = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.BLOCK)
             val allow = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.ALLOW)
             // The stamp, the usable flags and the inline-row decision all come from one answer.
             val plan = RuleIndexNative.plan(block, allow)
-            if (indexDirectory != null && plan.settled) {
+            if (plan.settled) {
                 writeStamp(indexDirectory, dao)
             }
             val document = RuleSnapshotNative.buildSnapshotBytes(
@@ -132,32 +131,30 @@ object RuleSnapshotStore {
         }
     }
 
-
-
-
     /** Loads (validating) the two tries of one half, compiling the stale or missing ones. */
     private fun loadIndexes(
         dao: RuleSnapshotDao,
-        indexDirectory: File?,
+        indexDirectory: File,
         triesFresh: Boolean,
         kind: RuleSnapshotDao.RuleKind,
     ): RuleIndexHalf {
-        val normalFile = indexDirectory?.let {
-            if (kind == RuleSnapshotDao.RuleKind.BLOCK) RuleIndexLayout.blockIndex(it) else RuleIndexLayout.allowIndex(it)
+        val isBlock = kind == RuleSnapshotDao.RuleKind.BLOCK
+        val normalFile = if (isBlock) {
+            RuleIndexLayout.blockIndex(indexDirectory)
+        } else {
+            RuleIndexLayout.allowIndex(indexDirectory)
         }
-        val importantFile = indexDirectory?.let {
-            if (kind == RuleSnapshotDao.RuleKind.BLOCK) {
-                RuleIndexLayout.blockImportantIndex(it)
-            } else {
-                RuleIndexLayout.allowImportantIndex(it)
-            }
+        val importantFile = if (isBlock) {
+            RuleIndexLayout.blockImportantIndex(indexDirectory)
+        } else {
+            RuleIndexLayout.allowImportantIndex(indexDirectory)
         }
         // The DTRI writer skips the rows a trie cannot hold (wildcards, regexes, app-scoped and
         // `denyallow`/`dnsType` rows) with the same predicate the old Kotlin filter used, so only
         // the `important` split still happens here. `important` is not part of the DTRI payload
         // either: the two files split it, exactly like the historical loaders.
         val normal = ensureIndex(normalFile, triesFresh) { consume ->
-            val importantFilter = if (kind == RuleSnapshotDao.RuleKind.BLOCK) false else null
+            val importantFilter = if (isBlock) false else null
             dao.forEachSubscriptionRulePage(kind, importantFilter) { rule ->
                 if (!rule.important) consume(rule)
             }
@@ -196,11 +193,10 @@ object RuleSnapshotStore {
     /** Loads (validating) an existing trie or compiles a fresh one; `FAILED` means the compile
      *  ran but produced nothing usable, so callers must not refresh the stamp. */
     private fun ensureIndex(
-        file: File?,
+        file: File,
         triesFresh: Boolean,
         compile: ((EnabledRule) -> Unit) -> Unit,
     ): IndexOutcome {
-        if (file == null) return IndexOutcome.NOT_INDEXED
         if (triesFresh && file.exists() && file.length() > 0) {
             val loaded = runCatching { MappedSubscriptionRuleIndex.load(file) }
                 .onFailure { Log.w(TAG, "Existing subscription index invalid, will recompile", it) }
@@ -218,19 +214,15 @@ object RuleSnapshotStore {
     }
 
     /** The four trie paths, exported only when the file exists and is non-empty. */
-    private fun triePaths(indexDirectory: File?): List<String?> {
-        val files = if (indexDirectory == null) {
-            List(4) { "" to (false to 0L) }
-        } else {
-            listOf(
-                RuleIndexLayout.blockIndex(indexDirectory),
-                RuleIndexLayout.blockImportantIndex(indexDirectory),
-                RuleIndexLayout.allowIndex(indexDirectory),
-                RuleIndexLayout.allowImportantIndex(indexDirectory),
-            ).map { file -> file.absolutePath to (file.exists() to file.length()) }
-        }
+    private fun triePaths(indexDirectory: File): List<String?> {
+        val files = listOf(
+            RuleIndexLayout.blockIndex(indexDirectory),
+            RuleIndexLayout.blockImportantIndex(indexDirectory),
+            RuleIndexLayout.allowIndex(indexDirectory),
+            RuleIndexLayout.allowImportantIndex(indexDirectory),
+        ).map { file -> file.absolutePath to (file.exists() to file.length()) }
         return RuleIndexNative.triePaths(
-            indexDirectoryOk = indexDirectory != null && indexDirectory.isDirectory,
+            indexDirectoryOk = indexDirectory.isDirectory,
             files = files,
         )
     }
@@ -241,7 +233,7 @@ object RuleSnapshotStore {
             context.getSharedPreferences(APP_ALLOWLIST_PREFS, Context.MODE_PRIVATE)
                 .getString(KEY_APP_ALLOWLIST_RULES, null)
         }.getOrNull() ?: return emptyMap()
-        if (raw.isNullOrBlank()) return emptyMap()
+        if (raw.isBlank()) return emptyMap()
         val parsed = runCatching { JSONObject(raw) }.getOrNull() ?: return emptyMap()
         val packages = ArrayList<Pair<String, List<String>>>(parsed.length())
         for (key in parsed.keys()) {

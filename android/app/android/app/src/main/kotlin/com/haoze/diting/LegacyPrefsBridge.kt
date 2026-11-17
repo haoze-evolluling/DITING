@@ -2,9 +2,7 @@ package com.haoze.diting
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
+import com.haoze.diting.platform.ChannelResults
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -78,29 +76,22 @@ class LegacyPrefsBridge(private val context: Context) :
     private fun versionInfo(): Map<String, Any> {
         @Suppress("DEPRECATION")
         val info = context.packageManager.getPackageInfo(context.packageName, 0)
-        val code = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            info.longVersionCode
-        } else {
-            @Suppress("DEPRECATION")
-            info.versionCode.toLong()
-        }
         return mapOf(
             "name" to (info.versionName ?: ""),
-            "code" to code,
+            "code" to info.longVersionCode,
         )
     }
 
     /// Snapshot of every container, read off the main thread so the XML parses do not stall
     /// the first frames; the reply hops back to the main looper, as the channel requires.
     private fun readAllAll(result: MethodChannel.Result) {
-        val main = Handler(Looper.getMainLooper())
         Thread {
             val snapshot = HashMap<String, Map<String, Any?>>()
             for (container in CONTAINERS) {
                 val prefs = context.getSharedPreferences(container, Context.MODE_PRIVATE)
                 snapshot[container] = readable(prefs.all)
             }
-            main.post { result.success(snapshot) }
+            ChannelResults.success(result, snapshot)
         }.start()
     }
 
@@ -136,14 +127,8 @@ class LegacyPrefsBridge(private val context: Context) :
     }
 
     /// `getAll` can return `Set<String>`, which the standard codec cannot carry
-    private fun readable(values: Map<String, *>): Map<String, Any?> {
-        val output = HashMap<String, Any?>(values.size)
-        values.forEach { (key, value) ->
-            output[key] = when (value) {
-                is Set<*> -> value.map { it.toString() }
-                else -> value
-            }
+    private fun readable(values: Map<String, *>): Map<String, Any?> =
+        values.mapValues { (_, value) ->
+            if (value is Set<*>) value.map { it.toString() } else value
         }
-        return output
-    }
 }

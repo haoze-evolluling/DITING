@@ -30,15 +30,15 @@ internal object NetInfoProbe {
         }
 
         val active = manager.activeNetwork
-        val candidate = when {
-            active != null && isPhysical(manager, active) -> active
-            else -> networks
-                .filter { it != active && isPhysical(manager, it) }
-                .firstOrNull {
-                    manager.getNetworkCapabilities(it)
+        val candidate = if (active != null && isPhysical(manager, active)) {
+            active
+        } else {
+            networks.firstOrNull { network ->
+                network != active &&
+                    isPhysical(manager, network) &&
+                    manager.getNetworkCapabilities(network)
                         ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-                }
-                ?: networks.firstOrNull { isPhysical(manager, it) }
+            } ?: networks.firstOrNull { isPhysical(manager, it) }
         } ?: return empty(vpnActive = vpnActive)
 
         val link = manager.getLinkProperties(candidate) ?: return empty(vpnActive = vpnActive)

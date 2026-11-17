@@ -41,6 +41,8 @@ internal object PingProbe {
 
     private fun runBinaryPing(address: InetAddress, count: Int, timeoutSeconds: Int): String? {
         val host = address.hostAddress ?: return null
+        // The reply wait plus process spawn and a slow readLine.
+        val capMs = count * (timeoutSeconds + 2) * 1000L + 5_000L
         return if (address is Inet6Address) {
             ProcessProbe.runFirst(
                 listOf(
@@ -48,12 +50,12 @@ internal object PingProbe {
                     // Newer toybox/iputils merged IPv6 into `ping` itself.
                     listOf("ping", "-6", "-c", "$count", "-W", "$timeoutSeconds", host),
                 ),
-                capMs = count * (timeoutSeconds + 2) * 1000L + 5_000L,
+                capMs = capMs,
             )
         } else {
             ProcessProbe.run(
                 listOf("ping", "-c", "$count", "-W", "$timeoutSeconds", host),
-                capMs = count * (timeoutSeconds + 2) * 1000L + 5_000L,
+                capMs = capMs,
             )
         }
     }
@@ -102,19 +104,16 @@ internal object PingProbe {
         val ports = intArrayOf(53, 443, 80)
         repeat(count) { index ->
             val start = System.nanoTime()
-            var ok = runCatching { address.isReachable(REACHABLE_TIMEOUT_MS) }
-                .getOrDefault(false)
-            if (!ok) {
-                for (port in ports) {
-                    ok = runCatching {
+            val ok = runCatching { address.isReachable(REACHABLE_TIMEOUT_MS) }
+                .getOrDefault(false) ||
+                ports.any { port ->
+                    runCatching {
                         Socket().use { socket ->
                             socket.connect(InetSocketAddress(address, port), TCP_TIMEOUT_MS)
                         }
                         true
                     }.getOrDefault(false)
-                    if (ok) break
                 }
-            }
             val elapsed = (System.nanoTime() - start) / 1_000_000.0
             if (ok) {
                 samples.add(elapsed)

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
+import com.haoze.diting.control.BlockPauseLink
 import com.haoze.diting.control.DataPlaneControl
 
 /// 签名权限控制入口（A9）：adb / Tasker / 通知动作通过它启动、停止、切换或暂停数据面。
@@ -58,16 +59,19 @@ class AutomationReceiver : BroadcastReceiver() {
             .getIntExtra(AutomationContract.EXTRA_PAUSE_MINUTES, AutomationContract.DEFAULT_PAUSE_MINUTES)
             .coerceAtLeast(0)
         val untilMs: Long = System.currentTimeMillis() + minutes.toLong() * 60_000L
-        prefs(context).edit().putLong(AutomationContract.KEY_PAUSED_UNTIL_MS, untilMs).apply()
-        com.haoze.diting.control.BlockPauseLink.apply(context)
+        setPausedUntil(context, untilMs)
         return HandleResult(true, "paused_until=$untilMs")
     }
 
     /// 取消暂停：把截止时间清 0，等于立刻恢复。
     private fun cancelPause(context: Context): HandleResult {
-        prefs(context).edit().putLong(AutomationContract.KEY_PAUSED_UNTIL_MS, 0L).apply()
-        com.haoze.diting.control.BlockPauseLink.apply(context)
+        setPausedUntil(context, 0L)
         return HandleResult(true, "resumed")
+    }
+
+    private fun setPausedUntil(context: Context, untilMs: Long) {
+        prefs(context).edit().putLong(AutomationContract.KEY_PAUSED_UNTIL_MS, untilMs).apply()
+        BlockPauseLink.apply(context)
     }
 
     /// A1：外部（Tasker / adb）手动触发一次自动化求值，事件类型默认 manual。

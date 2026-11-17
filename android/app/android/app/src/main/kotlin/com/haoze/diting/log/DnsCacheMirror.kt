@@ -63,8 +63,7 @@ class DnsCacheMirror(
         val db = when (val opened = AppDatabase.open(context, databaseName)) {
             is AppDatabase.Open.Ready -> opened.db
             // No database yet, or locked right now: the next tick is 10s away, so just skip.
-            AppDatabase.Open.Absent -> return
-            is AppDatabase.Open.Unavailable -> return
+            else -> return
         }
         if (!AppDatabase.hasTable(db, TABLE)) return
         db.beginTransaction()

@@ -17,11 +17,11 @@ internal object TraceProbe {
 
     fun trace(target: String, maxHops: Int): Map<String, Any?> {
         val host = NetHost.sanitize(target)
-        if (host.isEmpty()) return failed("", maxHops, "请输入追踪目标")
+        if (host.isEmpty()) return failed("", "请输入追踪目标")
         val limit = maxHops.coerceIn(MIN_HOPS, MAX_HOPS)
 
         val address = runCatching { InetAddress.getByName(host) }.getOrNull()
-            ?: return failed(host, limit, "无法解析目标地址")
+            ?: return failed(host, "无法解析目标地址")
         val resolved = address.hostAddress
         val hops = mutableListOf<Map<String, Any?>>()
 
@@ -85,11 +85,7 @@ internal object TraceProbe {
             )
         }
         // The first-response stamp needs the streaming output, so ProcessProbe.run is not reused.
-        for (command in candidates) {
-            val output = streamingProbe(command) ?: continue
-            return output
-        }
-        return null
+        return candidates.firstNotNullOfOrNull(::streamingProbe)
     }
 
     private fun streamingProbe(command: List<String>): ProbeOutput? {
@@ -135,7 +131,7 @@ internal object TraceProbe {
         "reachedTarget" to reachedTarget,
     )
 
-    private fun failed(target: String, maxHops: Int, message: String): Map<String, Any?> =
+    private fun failed(target: String, message: String): Map<String, Any?> =
         result(target, null, emptyList(), false, message)
 
     private fun result(

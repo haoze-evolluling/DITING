@@ -52,8 +52,8 @@ class MainActivity : FlutterActivity() {
         OutboundProxyBridge(applicationContext).register(messenger)
         DiagnosticsBridge(applicationContext).register(messenger)
 
-        // Needs an Activity: starts intents and reaches ActivityManager.appTasks.
         DnsLatencyBridge(applicationContext).register(messenger)
+        // Needs an Activity: starts pickers and reaches ActivityManager.appTasks.
         platformBridge = PlatformBridge(this).also { it.register(messenger) }
         UpdateBridge(this).register(messenger)
         backgroundBridge = BackgroundBridge(this).also { it.register(messenger) }

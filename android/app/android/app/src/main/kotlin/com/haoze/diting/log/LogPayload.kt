@@ -30,6 +30,12 @@ internal object LogPayload {
         out.write(value)
     }
 
+    /// `u32 count | blobs`, the framing of the writer queue's batch payloads.
+    fun writeBlobs(out: DataOutputStream, rows: List<ByteArray>) {
+        out.writeInt(rows.size)
+        rows.forEach { writeBlob(out, it) }
+    }
+
     /// Presence byte plus value; null becomes a clear byte with no payload.
     fun writeOptional(out: DataOutputStream, value: String?) {
         if (value == null) {
@@ -81,6 +87,9 @@ internal object LogPayload {
             buffer.position(start + length)
             return bytes
         }
+
+        /// A `u32 count` followed by that many blobs.
+        fun blobs(): List<ByteArray> = List(count()) { blob() }
 
         fun optionalString(): String? = when (u8()) {
             0 -> null

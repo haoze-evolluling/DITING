@@ -11,12 +11,14 @@ import android.content.pm.ServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
+import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.haoze.diting.MainActivity
 import com.haoze.diting.R
+import com.haoze.diting.control.BlockPauseLink
 import com.haoze.diting.core.rule.EngineRuleLoader
 import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.core.rule.StorageGate
@@ -62,7 +64,7 @@ class DitingDnsServerService : Service() {
         },
     )
 
-    override fun onBind(intent: Intent?): android.os.IBinder? = null
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -96,18 +98,20 @@ class DitingDnsServerService : Service() {
             Log.i(TAG, "server already running; ignoring duplicate start")
             return START_NOT_STICKY
         }
+        val port = intent.getIntExtra(EXTRA_PORT, DEFAULT_PORT)
+        val adBlockEnabled = intent.getBooleanExtra(EXTRA_AD_BLOCK_ENABLED, false)
         // Persisted so a reboot can rebuild the same intent; the extras themselves die with it.
         // Rules are not part of it: the engine snapshot is rebuilt from the rule database
         // (legacy behavior), so a persisted snapshot would only go stale after rule edits.
         rememberStartConfig(
-            port = intent.getIntExtra(EXTRA_PORT, DEFAULT_PORT),
+            port = port,
             dnsConfig = dnsConfig,
-            adBlockEnabled = intent.getBooleanExtra(EXTRA_AD_BLOCK_ENABLED, false),
+            adBlockEnabled = adBlockEnabled,
         )
         startEngine(
-            port = intent.getIntExtra(EXTRA_PORT, DEFAULT_PORT),
+            port = port,
             dnsConfig = dnsConfig,
-            adBlockEnabled = intent.getBooleanExtra(EXTRA_AD_BLOCK_ENABLED, false),
+            adBlockEnabled = adBlockEnabled,
         )
         return START_NOT_STICKY
     }
@@ -177,7 +181,7 @@ class DitingDnsServerService : Service() {
                 engine = created
                 activeEngine = created
                 // R4: replay the persisted pause / allowlist-only onto this freshly started engine.
-                com.haoze.diting.control.BlockPauseLink.apply(this@DitingDnsServerService)
+                BlockPauseLink.apply(this@DitingDnsServerService)
                 isRunning = true
                 // Server mode has its own log store; the sweep must target that file, and it has
                 // no HTTP/traffic tables.

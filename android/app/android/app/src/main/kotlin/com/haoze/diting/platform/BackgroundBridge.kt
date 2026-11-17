@@ -29,7 +29,6 @@ class BackgroundBridge(private val activity: Activity) : MethodChannel.MethodCal
         private const val MAX_DIMENSION = 2048
     }
 
-    private val context: Activity get() = activity
     private var pendingPickResult: MethodChannel.Result? = null
 
     fun register(messenger: BinaryMessenger) {
@@ -125,7 +124,7 @@ class BackgroundBridge(private val activity: Activity) : MethodChannel.MethodCal
         result.success(runCatching { cacheFileFor(uri).delete() }.getOrDefault(false))
     }
 
-    private fun cacheDir(): File = File(context.filesDir, CACHE_DIR).apply { mkdirs() }
+    private fun cacheDir(): File = File(activity.filesDir, CACHE_DIR).apply { mkdirs() }
 
     private fun cacheFileFor(uri: String): File =
         File(cacheDir(), "bg_" + sha1(uri).take(20) + ".png")

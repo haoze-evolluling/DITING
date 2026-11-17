@@ -3,7 +3,6 @@ package com.haoze.diting.log
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
-import java.io.File
 import java.util.Collections
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -50,7 +49,7 @@ internal object AppDatabase {
             connections.remove(databaseName)
         }
         val path = context.getDatabasePath(databaseName)
-        if (!File(path.path).exists()) return Open.Absent
+        if (!path.exists()) return Open.Absent
         return runCatching {
             SQLiteDatabase.openDatabase(
                 path.path,
@@ -106,31 +105,30 @@ internal object AppDatabase {
 
     /// Live read-back for the troubleshooting page: whether the connection is actually WAL and
     /// actually has a busy timeout. Counters alone cannot tell "no failures yet" from "no writes".
-    fun probe(context: Context, databaseName: String): Map<String, Any> {
-        val opened = open(context, databaseName)
-        if (opened !is Open.Ready) {
-            val cause = (opened as? Open.Unavailable)?.cause
-            val text = cause?.let { "${it.javaClass.simpleName}: ${it.message}" }
-                ?: "database file missing"
-            return mapOf(
+    fun probe(context: Context, databaseName: String): Map<String, Any> =
+        when (val opened = open(context, databaseName)) {
+            is Open.Ready -> mapOf(
                 "probeDatabase" to databaseName,
-                "probeOk" to false,
-                // A missing file is normal before the first run creates the schema.
-                "probeAbsent" to (opened is Open.Absent),
-                "probeCause" to text,
+                "probeOk" to true,
+                "probeAbsent" to false,
+                "probeJournalMode" to opened.db.pragmaString("PRAGMA journal_mode"),
+                "probeBusyTimeoutMs" to opened.db.pragmaLong("PRAGMA busy_timeout"),
+                "probeUserVersion" to opened.db.version,
+                "probeCause" to "",
             )
+            else -> {
+                val cause = (opened as? Open.Unavailable)?.cause
+                val text = cause?.let { "${it.javaClass.simpleName}: ${it.message}" }
+                    ?: "database file missing"
+                mapOf(
+                    "probeDatabase" to databaseName,
+                    "probeOk" to false,
+                    // A missing file is normal before the first run creates the schema.
+                    "probeAbsent" to (opened is Open.Absent),
+                    "probeCause" to text,
+                )
+            }
         }
-        val db = opened.db
-        return mapOf(
-            "probeDatabase" to databaseName,
-            "probeOk" to true,
-            "probeAbsent" to false,
-            "probeJournalMode" to db.pragmaString("PRAGMA journal_mode"),
-            "probeBusyTimeoutMs" to db.pragmaLong("PRAGMA busy_timeout"),
-            "probeUserVersion" to db.version,
-            "probeCause" to "",
-        )
-    }
 
     /// For readers that only need "the database, or null".
     fun writable(context: Context, databaseName: String): SQLiteDatabase? =

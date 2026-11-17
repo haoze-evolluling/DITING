@@ -24,6 +24,17 @@ class DiagnosticsBridge(private val context: Context) :
         MethodChannel(messenger, CHANNEL).setMethodCallHandler(this)
     }
 
+    /// Runs one blocking probe on the pool; a throwing probe is reported as an error result.
+    private fun runProbe(
+        result: MethodChannel.Result,
+        errorCode: String,
+        probe: () -> Any?,
+    ) {
+        workers.execute {
+            ChannelResults.ship(result, runCatching(probe), errorCode)
+        }
+    }
+
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "ping" -> {
@@ -31,18 +42,12 @@ class DiagnosticsBridge(private val context: Context) :
                 val count = call.argument<Int>("count") ?: PingProbe.DEFAULT_COUNT
                 val timeout = call.argument<Int>("timeoutSeconds")
                     ?: PingProbe.DEFAULT_TIMEOUT_SECONDS
-                workers.execute {
-                    val value = runCatching { PingProbe.ping(target, count, timeout) }
-                    ChannelResults.ship(result, value, "ping_failed")
-                }
+                runProbe(result, "ping_failed") { PingProbe.ping(target, count, timeout) }
             }
             "traceRoute" -> {
                 val target = call.argument<String>("target").orEmpty()
                 val maxHops = call.argument<Int>("maxHops") ?: TraceProbe.DEFAULT_MAX_HOPS
-                workers.execute {
-                    val value = runCatching { TraceProbe.trace(target, maxHops) }
-                    ChannelResults.ship(result, value, "traceroute_failed")
-                }
+                runProbe(result, "traceroute_failed") { TraceProbe.trace(target, maxHops) }
             }
             "lookupDns" -> {
                 val domain = call.argument<String>("domain").orEmpty()
@@ -50,16 +55,13 @@ class DiagnosticsBridge(private val context: Context) :
                 val ipv4 = call.argument<Boolean>("ipv4") ?: true
                 // Empty = system resolver, non-empty = custom server: one argument serves both.
                 val server = call.argument<String>("server").orEmpty().trim()
-                workers.execute {
+                runProbe(result, "lookup_failed") {
                     // A bad domain never throws: failures come back as source=error.
-                    val value = runCatching {
-                        if (!viaTunnel && server.isNotEmpty()) {
-                            DnsLookupProbe.customServerLookup(domain, server, ipv4)
-                        } else {
-                            DnsLookupProbe.lookup(domain, viaTunnel, ipv4)
-                        }
+                    if (!viaTunnel && server.isNotEmpty()) {
+                        DnsLookupProbe.customServerLookup(domain, server, ipv4)
+                    } else {
+                        DnsLookupProbe.lookup(domain, viaTunnel, ipv4)
                     }
-                    ChannelResults.ship(result, value, "lookup_failed")
                 }
             }
             // One synchronous ConnectivityManager read; no pool hop needed.

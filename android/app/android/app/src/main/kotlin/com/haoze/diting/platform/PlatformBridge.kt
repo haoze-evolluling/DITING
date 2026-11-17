@@ -5,7 +5,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import io.flutter.plugin.common.BinaryMessenger
@@ -87,7 +86,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             "appendExportChunk" -> appendExportChunk(call, result)
             "endExportDocument" -> endExportDocument(call, result)
             "abortExportDocument" -> abortExportDocument(result)
-            "importDocument" -> importDocument(call, result)
+            "importDocument" -> importDocument(result)
             // Local-file subscriptions: the grant must outlive the picker dialog, so these are
             // separate from importDocument, which only reads the text once.
             "pickPersistableTextFile" -> pickPersistableTextFile(result)
@@ -99,6 +98,27 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         }
     }
 
+    /// Claims [pending] for this picker flow and opens [intent]; a second request while one is
+    /// already open gets `picker_busy` instead of overwriting the first result.
+    private fun startPicker(
+        result: MethodChannel.Result,
+        pending: MethodChannel.Result?,
+        requestCode: Int,
+        intent: Intent,
+        setPending: (MethodChannel.Result?) -> Unit,
+    ) {
+        if (pending != null) {
+            result.error("picker_busy", "另一个文件选择器仍在打开", null)
+            return
+        }
+        setPending(result)
+        runCatching { activity.startActivityForResult(intent, requestCode) }
+            .onFailure {
+                setPending(null)
+                result.error("picker_failed", it.message, null)
+            }
+    }
+
     /// Opens the save picker and keeps the chosen document open for [appendExportChunk].
     private fun beginExportDocument(call: MethodCall, result: MethodChannel.Result) {
         val suggested = call.argument<String>("name")?.takeIf { it.isNotBlank() }
@@ -107,21 +127,14 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         // existing caller working.
         val mimeType = call.argument<String>("mimeType")?.takeIf { it.isNotBlank() }
             ?: "application/json"
-        if (pendingExportResult != null) {
-            result.error("picker_busy", "另一个文件选择器仍在打开", null)
-            return
-        }
-        pendingExportResult = result
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = mimeType
             putExtra(Intent.EXTRA_TITLE, suggested)
         }
-        runCatching { activity.startActivityForResult(intent, REQUEST_EXPORT_DOCUMENT) }
-            .onFailure {
-                pendingExportResult = null
-                result.error("picker_failed", it.message, null)
-            }
+        startPicker(result, pendingExportResult, REQUEST_EXPORT_DOCUMENT, intent) {
+            pendingExportResult = it
+        }
     }
 
     /// Appends one chunk of the exported document.
@@ -166,7 +179,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
                     "saved" to false,
                     "name" to null,
                     "cancelled" to false,
-                    "error" to (error.message ?: error.javaClass.simpleName),
+                    "error" to error.reason(),
                 )
             },
         )
@@ -186,22 +199,15 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         if (delete) runCatching { activity.contentResolver.delete(session.uri, null, null) }
     }
 
-    private fun importDocument(call: MethodCall, result: MethodChannel.Result) {
-        if (pendingImportResult != null) {
-            result.error("picker_busy", "另一个文件选择器仍在打开", null)
-            return
-        }
-        pendingImportResult = result
+    private fun importDocument(result: MethodChannel.Result) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             // `application/json` alone hides files a file manager labelled `text/plain`.
             type = "*/*"
         }
-        runCatching { activity.startActivityForResult(intent, REQUEST_IMPORT_DOCUMENT) }
-            .onFailure {
-                pendingImportResult = null
-                result.error("picker_failed", it.message, null)
-            }
+        startPicker(result, pendingImportResult, REQUEST_IMPORT_DOCUMENT, intent) {
+            pendingImportResult = it
+        }
     }
 
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean =
@@ -241,7 +247,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
                     "saved" to false,
                     "name" to null,
                     "cancelled" to false,
-                    "error" to (error.message ?: error.javaClass.simpleName),
+                    "error" to error.reason(),
                 )
             },
         )
@@ -271,7 +277,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
                     "text" to null,
                     "name" to null,
                     "cancelled" to false,
-                    "error" to (error.message ?: error.javaClass.simpleName),
+                    "error" to error.reason(),
                 )
             },
         )
@@ -281,21 +287,14 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     /// Opens the document picker and keeps the returned grant, so a local subscription can be
     /// re-imported later without asking the user to pick the file again.
     private fun pickPersistableTextFile(result: MethodChannel.Result) {
-        if (pendingTextResult != null) {
-            result.error("picker_busy", "另一个文件选择器仍在打开", null)
-            return
-        }
-        pendingTextResult = result
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             // Rule files are plain text but file managers label them inconsistently.
             type = "text/*"
         }
-        runCatching { activity.startActivityForResult(intent, REQUEST_PICK_TEXT_FILE) }
-            .onFailure {
-                pendingTextResult = null
-                result.error("picker_failed", it.message, null)
-            }
+        startPicker(result, pendingTextResult, REQUEST_PICK_TEXT_FILE, intent) {
+            pendingTextResult = it
+        }
     }
 
     private fun finishPickTextFile(resultCode: Int, data: Intent?): Boolean {
@@ -329,7 +328,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             }.getOrElse { error ->
                 mapOf(
                     "cancelled" to false,
-                    "error" to (error.message ?: error.javaClass.simpleName),
+                    "error" to error.reason(),
                 )
             },
         )
@@ -339,22 +338,15 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     /// Opens the document picker for a font file. The bytes are copied into `filesDir/fonts` right
     /// away, so Dart can register them with `loadFontFromList` without holding a URI grant forever.
     private fun pickFontFile(result: MethodChannel.Result) {
-        if (pendingFontResult != null) {
-            result.error("picker_busy", "另一个文件选择器仍在打开", null)
-            return
-        }
-        pendingFontResult = result
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             // `font/*` matches almost nothing on Android, and plenty of file managers label a TTF
             // `application/octet-stream`, so accept anything and validate by content.
             type = "*/*"
         }
-        runCatching { activity.startActivityForResult(intent, REQUEST_PICK_FONT_FILE) }
-            .onFailure {
-                pendingFontResult = null
-                result.error("picker_failed", it.message, null)
-            }
+        startPicker(result, pendingFontResult, REQUEST_PICK_FONT_FILE, intent) {
+            pendingFontResult = it
+        }
     }
 
     private fun finishPickFontFile(resultCode: Int, data: Intent?): Boolean {
@@ -372,14 +364,11 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
                 require(bytes.size >= MIN_FONT_BYTES) { "这不是有效的字体文件" }
                 // `00 01` (TrueType) / `OTTO` (CFF) / `true` / `ttcf` (collection).
                 val magic = bytes.copyOfRange(0, 4)
-                val sfnt = magic.size == 4 &&
-                    (
-                        (magic[0].toInt() == 0 && magic[1].toInt() == 1) ||
-                            (magic[0] == 'O'.code.toByte() && magic[1] == 'T'.code.toByte()) ||
-                            (magic[0] == 't'.code.toByte() && magic[1] == 'r'.code.toByte()) ||
-                            (magic[0] == 't'.code.toByte() && magic[1] == 't'.code.toByte() &&
-                                magic[2] == 'c'.code.toByte())
-                        )
+                val sfnt = (magic[0].toInt() == 0 && magic[1].toInt() == 1) ||
+                    (magic[0] == 'O'.code.toByte() && magic[1] == 'T'.code.toByte()) ||
+                    (magic[0] == 't'.code.toByte() && magic[1] == 'r'.code.toByte()) ||
+                    (magic[0] == 't'.code.toByte() && magic[1] == 't'.code.toByte() &&
+                        magic[2] == 'c'.code.toByte())
                 require(sfnt) { "只支持 TTF / OTF 字体文件" }
                 val dir = File(context.filesDir, FONT_DIR).apply { mkdirs() }
                 val digest = MessageDigest.getInstance("SHA-1")
@@ -397,7 +386,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             }.getOrElse { error ->
                 mapOf(
                     "cancelled" to false,
-                    "error" to (error.message ?: error.javaClass.simpleName),
+                    "error" to error.reason(),
                 )
             },
         )
@@ -427,15 +416,16 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             result.error("invalid_uri", "缺少文件地址", null)
             return
         }
+        val uri = Uri.parse(raw)
         result.success(
             runCatching {
                 // A revoked or non-persistable grant falls back to the private copy.
-                val text = runCatching { readUriText(Uri.parse(raw)) }.getOrNull()
-                    ?: ruleCache.read(Uri.parse(raw))
+                val text = runCatching { readUriText(uri) }.getOrNull()
+                    ?: ruleCache.read(uri)
                     ?: error("无法读取该文件")
                 mapOf("text" to text, "error" to null)
             }.getOrElse { error ->
-                mapOf("text" to null, "error" to (error.message ?: error.javaClass.simpleName))
+                mapOf("text" to null, "error" to error.reason())
             },
         )
     }
@@ -517,13 +507,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
             .setData(Uri.parse("package:${context.packageName}"))
         val fallback = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-        val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-            direct.resolveActivity(context.packageManager) != null
-        ) {
-            direct
-        } else {
-            fallback
-        }
+        val intent = if (direct.resolveActivity(context.packageManager) != null) direct else fallback
         val ok = runCatching { activity.startActivity(intent) }.isSuccess
         result.success(ok)
     }
@@ -552,9 +536,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         )
     }
 
-    /// Writes `content` to `getExternalFilesDir/exports/<name>`; no SAF picker, USB can read it
-    
-    
+    /// Writes `content` to `getExternalFilesDir/exports/<name>`; no SAF picker, USB can read it.
     private fun exportText(call: MethodCall, result: MethodChannel.Result) {
         val name = call.argument<String>("name")
             ?.takeIf { it.isNotBlank() }
@@ -570,3 +552,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         )
     }
 }
+
+/// Human-readable failure text for a channel error payload.
+private fun Throwable.reason(): String = message ?: javaClass.simpleName

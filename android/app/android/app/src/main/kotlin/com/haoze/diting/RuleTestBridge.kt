@@ -57,16 +57,20 @@ class RuleTestBridge(
                 val snapshot = RuleSnapshotStore.buildSnapshotJson(context.applicationContext, dataset)
                 val rewrite = RuleSnapshotStore.buildRewriteRulesJson(context.applicationContext, dataset)
                 val answer = JSONObject(RuleTestNative.check(snapshot, rewrite, domain, app, qtype))
-                val map = HashMap<String, Any?>()
-                map["action"] = answer.getString("action")
-                map["blocked"] = answer.getBoolean("blocked")
-                map["reason"] = answer.getString("reason")
                 val rewriteEntry = answer.optJSONObject("rewrite")
-                map["rewrite"] = rewriteEntry?.let {
-                    hashMapOf(
-                        "cname" to it.optString("cname"),
-                        "ip4" to it.optString("ip4"),
-                        "ip6" to it.optString("ip6"),
+                val map = HashMap<String, Any?>().apply {
+                    put("action", answer.getString("action"))
+                    put("blocked", answer.getBoolean("blocked"))
+                    put("reason", answer.getString("reason"))
+                    put(
+                        "rewrite",
+                        rewriteEntry?.let {
+                            hashMapOf(
+                                "cname" to it.optString("cname"),
+                                "ip4" to it.optString("ip4"),
+                                "ip6" to it.optString("ip6"),
+                            )
+                        },
                     )
                 }
                 result.success(map)

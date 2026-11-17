@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.os.IBinder
 import android.os.Process
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -57,7 +58,7 @@ class RuntimeLogService : Service() {
     @Volatile
     private var logcat: java.lang.Process? = null
 
-    override fun onBind(intent: Intent?): android.os.IBinder? = null
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -179,11 +180,7 @@ class RuntimeLogService : Service() {
         capturing = false
         RuntimeLogStore.markCapturing(this, false)
         generation.incrementAndGet()
-        runCatching { logcat?.destroy() }
-        logcat = null
-        val thread = worker
-        worker = null
-        runCatching { thread?.interrupt() }
+        release()
         stopForegroundCompat()
         stopSelf()
     }
@@ -191,11 +188,17 @@ class RuntimeLogService : Service() {
     override fun onDestroy() {
         capturing = false
         generation.incrementAndGet()
+        release()
+        super.onDestroy()
+    }
+
+    /// Unblocks the running `logcat` and joins the loop's resources; the callers own the flags.
+    private fun release() {
         runCatching { logcat?.destroy() }
         logcat = null
-        runCatching { worker?.interrupt() }
+        val thread = worker
         worker = null
-        super.onDestroy()
+        runCatching { thread?.interrupt() }
     }
 
     private fun promoteToForeground() {
@@ -213,15 +216,9 @@ class RuntimeLogService : Service() {
         }.onFailure { Log.e(TAG, "startForeground failed", it) }
     }
 
+    // `STOP_FOREGROUND_REMOVE` exists since API 24 and minSdk is 28, so no legacy branch is needed.
     private fun stopForegroundCompat() {
-        runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                stopForeground(STOP_FOREGROUND_REMOVE)
-            } else {
-                @Suppress("DEPRECATION")
-                stopForeground(true)
-            }
-        }
+        runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
     }
 
     private fun buildNotification(): Notification {
@@ -254,7 +251,6 @@ class RuntimeLogService : Service() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = getSystemService(NotificationManager::class.java) ?: return
         manager.createNotificationChannel(
             NotificationChannel(

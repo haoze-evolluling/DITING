@@ -22,10 +22,7 @@ internal fun LogNative.Companion.queueSubmitMany(
     handle: Long,
     rows: List<ByteArray>,
 ): LogQueueSubmit {
-    val packed = LogPayload.pack { out ->
-        out.writeInt(rows.size)
-        rows.forEach { LogPayload.writeBlob(out, it) }
-    }
+    val packed = LogPayload.pack { out -> LogPayload.writeBlobs(out, rows) }
     val reader = LogPayload.Reader(
         requireNotNull(instance.queueSubmitMany(handle, packed, System.currentTimeMillis())) {
             "native writer queue rejected the batch"
@@ -109,10 +106,8 @@ internal fun LogNative.Companion.bootstrapRows(packed: ByteArray): List<ByteArra
         },
     )
 
-private fun readRowBatch(payload: ByteArray): List<ByteArray> {
-    val reader = LogPayload.Reader(payload)
-    return List(reader.count()) { reader.blob() }
-}
+private fun readRowBatch(payload: ByteArray): List<ByteArray> =
+    LogPayload.Reader(payload).blobs()
 
 private fun readSubmit(reader: LogPayload.Reader): LogQueueSubmit {
     if (reader.u8() == 0) {

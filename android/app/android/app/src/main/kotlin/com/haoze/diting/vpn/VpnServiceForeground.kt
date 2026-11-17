@@ -13,7 +13,6 @@ import android.os.Build
 /// tunnel lifecycle.
 internal object VpnServiceForeground {
     fun createChannel(context: Context, channelId: String, name: String, description: String) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         val channel = NotificationChannel(channelId, name, NotificationManager.IMPORTANCE_LOW)
         channel.description = description
@@ -40,11 +39,6 @@ internal object VpnServiceForeground {
         }
 
     fun stop(service: Service) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            service.stopForeground(Service.STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            service.stopForeground(true)
-        }
+        service.stopForeground(Service.STOP_FOREGROUND_REMOVE)
     }
 }

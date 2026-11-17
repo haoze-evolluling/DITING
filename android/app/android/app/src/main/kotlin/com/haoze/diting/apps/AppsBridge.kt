@@ -87,7 +87,6 @@ class AppsBridge(private val context: Context) : MethodChannel.MethodCallHandler
         apps
     }
 
-    
     private fun listInstalled(): List<Map<String, Any?>> {
         val packageManager = context.packageManager
         @Suppress("DEPRECATION")

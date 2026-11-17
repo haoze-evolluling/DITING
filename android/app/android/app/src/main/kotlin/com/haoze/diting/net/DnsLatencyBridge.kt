@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 /// Native side of `com.haoze.diting/dns_latency`. Dart owns the provider catalog and
 /// passes host/port/protocol down. Probes block for seconds, so they run on a worker
 /// pool and every answer is posted back to the platform thread.
-class DnsLatencyBridge(private val context: Context) :
+class DnsLatencyBridge(context: Context) :
     MethodChannel.MethodCallHandler {
 
     companion object {
@@ -21,9 +21,6 @@ class DnsLatencyBridge(private val context: Context) :
             Thread(runnable, "diting-dns-latency").apply { isDaemon = true }
         }
     }
-
-    @Suppress("unused")
-    private val appContext: Context = context.applicationContext
 
     fun register(messenger: BinaryMessenger) {
         MethodChannel(messenger, CHANNEL).setMethodCallHandler(this)
@@ -44,7 +41,7 @@ class DnsLatencyBridge(private val context: Context) :
         }
         val domain = call.argument<String>("domain").orEmpty().ifBlank { "www.google.com" }
         val attempts = call.argument<Int>("attempts") ?: 3
-        val specs = rawProviders.mapNotNull { toSpec(it) }
+        val specs = rawProviders.mapNotNull(::toSpec)
         if (specs.isEmpty()) {
             result.error("invalid_args", "providers 里没有合法条目", null)
             return

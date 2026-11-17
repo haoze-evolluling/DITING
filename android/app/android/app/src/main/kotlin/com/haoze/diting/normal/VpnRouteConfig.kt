@@ -100,13 +100,13 @@ object VpnRouteConfig {
                 }
                 if (!hasGlobalIpv6) return@any false
 
-                val hasIpv6Route = lp.routes.any { route ->
+                lp.routes.any { route ->
                     val destAddr = route.destination.address
-                    (destAddr is Inet6Address && route.isDefaultRoute) ||
-                        (destAddr is Inet6Address && route.hasGateway()) ||
-                        (destAddr is Inet6Address && route.destination.prefixLength == 0)
+                    destAddr is Inet6Address &&
+                        (route.isDefaultRoute ||
+                            route.hasGateway() ||
+                            route.destination.prefixLength == 0)
                 }
-                hasGlobalIpv6 && hasIpv6Route
             }
         }.getOrDefault(false)
     }

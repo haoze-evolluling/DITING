@@ -13,13 +13,11 @@ object EngineStats {
     private const val FIELDS = 6
 
     fun snapshot(engine: TunnelEngine?): Map<String, Any?> {
-        if (engine == null) return emptyMap()
+        val source = engine ?: return emptyMap()
         return runCatching {
-            val buffer = ByteBuffer.wrap(engine.statsSnapshot()).order(ByteOrder.BIG_ENDIAN)
-            val values = LongArray(FIELDS)
-            for (index in values.indices) {
-                if (buffer.remaining() < Long.SIZE_BYTES) break
-                values[index] = buffer.long
+            val buffer = ByteBuffer.wrap(source.statsSnapshot()).order(ByteOrder.BIG_ENDIAN)
+            val values = LongArray(FIELDS) {
+                if (buffer.remaining() < Long.SIZE_BYTES) 0L else buffer.long
             }
             val hits = values[3]
             val misses = values[4]

@@ -37,6 +37,9 @@ object RuntimeEventLog {
     private const val DEFAULT_DEDUP_MS = 5_000L
     private const val MAX_FIELDS = 24
 
+    /// Oldest first: both the export and [readRecent] read the archive before the active file.
+    private val FILE_NAMES = listOf(ARCHIVE, ACTIVE)
+
     private val lock = Any()
     private var appContext: Context? = null
     private var gate = 0L
@@ -121,7 +124,7 @@ object RuntimeEventLog {
     fun readRecent(limit: Int): String = synchronized(lock) {
         val lines = ArrayList<String>()
         runCatching {
-            for (name in listOf(ARCHIVE, ACTIVE)) {
+            for (name in FILE_NAMES) {
                 val file = File(ensureDir(), name)
                 if (file.exists()) lines.addAll(file.readLines())
             }
@@ -132,7 +135,7 @@ object RuntimeEventLog {
     /// The event files, oldest first, for the troubleshooting list and the export.
     fun files(context: Context): List<File> = synchronized(lock) {
         val directory = dir(context)
-        listOf(ARCHIVE, ACTIVE)
+        FILE_NAMES
             .map { File(directory, it) }
             .filter { it.exists() && it.length() > 0 }
     }
@@ -145,7 +148,7 @@ object RuntimeEventLog {
         writer = null
         writtenBytes = 0
         var removed = 0
-        for (name in listOf(ARCHIVE, ACTIVE)) {
+        for (name in FILE_NAMES) {
             val file = File(dir(context), name)
             if (file.exists() && runCatching { file.delete() }.getOrDefault(false)) removed++
         }
@@ -184,11 +187,7 @@ object RuntimeEventLog {
     }
 
     private fun appendLocked(line: String) {
-        var current = writer
-        if (current == null) {
-            current = FileWriter(File(ensureDir(), ACTIVE), true)
-            writer = current
-        }
+        val current = writer ?: FileWriter(File(ensureDir(), ACTIVE), true).also { writer = it }
         current.append(line).append('\n')
         current.flush()
         writtenBytes += line.toByteArray(Charsets.UTF_8).size + 1

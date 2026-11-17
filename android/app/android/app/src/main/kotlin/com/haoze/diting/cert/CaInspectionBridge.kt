@@ -7,8 +7,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import android.security.KeyChain
 import android.provider.Settings
+import android.security.KeyChain
 import androidx.core.content.FileProvider
 import com.haoze.diting.engine.Engine
 import com.haoze.diting.platform.ChannelResults
@@ -56,30 +56,27 @@ class CaInspectionBridge(private val context: Context) :
         when (call.method) {
             "inspectCa" -> {
                 val regenerate = call.argument<Boolean>("regenerate") ?: false
-                worker.execute {
-                    val value = runCatching { inspect(regenerate) }
-                    ChannelResults.ship(result, value, "ca_inspect_failed")
-                }
+                runAsync(result, "ca_inspect_failed") { inspect(regenerate) }
             }
             "exportCa" -> {
                 val uri = call.argument<String>("uri").orEmpty()
-                worker.execute {
-                    val value = runCatching { export(Uri.parse(uri)) }
-                    ChannelResults.ship(result, value, "ca_export_failed")
-                }
+                runAsync(result, "ca_export_failed") { export(Uri.parse(uri)) }
             }
             // File system + intent work: never on the platform thread for the write, and the
             // installer must be launched from a thread it can see the grant from.
-            "installCa" -> worker.execute {
-                val value = runCatching { installCertificate() }
-                ChannelResults.ship(result, value, "ca_install_failed")
-            }
-            "saveCa" -> worker.execute {
-                val value = runCatching { saveToDownloads() }
-                ChannelResults.ship(result, value, "ca_save_failed")
-            }
+            "installCa" -> runAsync(result, "ca_install_failed") { installCertificate() }
+            "saveCa" -> runAsync(result, "ca_save_failed") { saveToDownloads() }
             else -> result.notImplemented()
         }
+    }
+
+    /// Runs [block] on the worker and answers on the platform thread.
+    private fun runAsync(
+        result: MethodChannel.Result,
+        errorCode: String,
+        block: () -> Any?,
+    ) {
+        worker.execute { ChannelResults.ship(result, runCatching(block), errorCode) }
     }
 
     private fun inspect(regenerate: Boolean): Map<String, Any?> {
@@ -89,26 +86,11 @@ class CaInspectionBridge(private val context: Context) :
         // exists to mint the pair, not to serve it back. Only a missing file pays the cost (and
         // only then can a missing/ABI-mismatched `libditing_engine.so` surface).
         val cached = if (regenerate) null else readCachedPem()
-        val outcome = if (cached != null) Success(cached) else generate()
-        if (outcome is Failure) {
-            return mapOf(
-                "available" to false,
-                "installed" to false,
-                "fingerprintSha256" to null,
-                "pem" to null,
-                "error" to outcome.message,
-            )
+        val text = when (val outcome = if (cached != null) Success(cached) else generate()) {
+            is Failure -> return unavailable(outcome.message)
+            is Success -> outcome.value
         }
-        val text = (outcome as Success).value
-        if (text.isEmpty()) {
-            return mapOf(
-                "available" to false,
-                "installed" to false,
-                "fingerprintSha256" to null,
-                "pem" to null,
-                "error" to "证书引擎未返回根证书",
-            )
-        }
+        if (text.isEmpty()) return unavailable("证书引擎未返回根证书")
 
         val fingerprint = runCatching { fingerprintOfPem(text) }.getOrNull()
         return mapOf(
@@ -120,6 +102,14 @@ class CaInspectionBridge(private val context: Context) :
             "error" to if (fingerprint == null) "根证书无法解析" else null,
         )
     }
+
+    private fun unavailable(error: String?): Map<String, Any?> = mapOf(
+        "available" to false,
+        "installed" to false,
+        "fingerprintSha256" to null,
+        "pem" to null,
+        "error" to error,
+    )
 
     /// Hands the PEM to the system certificate installer through a `content://` URI. Without
     /// this the only thing the app could do was open the security settings screen, which is why
@@ -136,33 +126,30 @@ class CaInspectionBridge(private val context: Context) :
         // KeyChain.createInstallIntent() is the only hand-off the platform installer accepts for
         // a CA: ACTION_VIEW on the file merely opens CertInstaller's "install this from Settings"
         // notice, which has a single Close button and installs nothing.
-        val bundleInstaller = runCatching {
-            val intent = KeyChain.createInstallIntent().apply {
-                putExtra(KeyChain.EXTRA_CERTIFICATE, pem.toByteArray(Charsets.UTF_8))
-                putExtra(KeyChain.EXTRA_NAME, CA_DISPLAY_NAME)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(intent)
-        }
-        if (bundleInstaller.isSuccess) {
-            return installResult("installer", file.absolutePath, null)
-        }
-
-        // Older ROMs only understand the file-based ACTION_VIEW hand-off.
-        val launchInstaller = runCatching {
+        val installerStarted = runCatching {
+            context.startActivity(
+                KeyChain.createInstallIntent().apply {
+                    putExtra(KeyChain.EXTRA_CERTIFICATE, pem.toByteArray(Charsets.UTF_8))
+                    putExtra(KeyChain.EXTRA_NAME, CA_DISPLAY_NAME)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                },
+            )
+        }.isSuccess || runCatching {
+            // Older ROMs only understand the file-based ACTION_VIEW hand-off.
             val uri: Uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
                 file,
             )
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/x-x509-ca-cert")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            context.startActivity(intent)
-        }
-        if (launchInstaller.isSuccess) {
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/x-x509-ca-cert")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                },
+            )
+        }.isSuccess
+        if (installerStarted) {
             return installResult("installer", file.absolutePath, null)
         }
 
@@ -233,10 +220,7 @@ class CaInspectionBridge(private val context: Context) :
     }
 
     /// Cached PEM first; the engine is the generator of record, not a read path.
-    private fun currentPem(): String? = readCachedPem() ?: when (val result = generate()) {
-        is Success -> result.value
-        is Failure -> null
-    }
+    private fun currentPem(): String? = readCachedPem() ?: (generate() as? Success)?.value
 
     private fun readCachedPem(): String? = runCatching {
         File(certificateDirectory(), CA_CERT_FILE)
@@ -262,14 +246,10 @@ class CaInspectionBridge(private val context: Context) :
     )
 
     private fun reset() {
-        certificateDirectory().listFiles()?.forEach { file ->
-            if (file.name == CA_CERT_FILE ||
-                file.name == CA_KEY_FILE ||
-                file.name == MITM_BLACKLIST_FILE
-            ) {
-                runCatching { file.delete() }
-            }
-        }
+        val managed = setOf(CA_CERT_FILE, CA_KEY_FILE, MITM_BLACKLIST_FILE)
+        certificateDirectory().listFiles()
+            ?.filter { it.name in managed }
+            ?.forEach { runCatching { it.delete() } }
     }
 
     private fun certificateDirectory(): File =
@@ -306,13 +286,9 @@ class CaInspectionBridge(private val context: Context) :
     }
 
     /// Tiny sealed result so `inspect()` can tell "engine failed" from "engine gave nothing".
-    private sealed interface Outcome {
-        val message: String
-    }
+    private sealed interface Outcome
 
-    private class Success(val value: String) : Outcome {
-        override val message: String get() = value
-    }
+    private class Success(val value: String) : Outcome
 
-    private class Failure(override val message: String) : Outcome
+    private class Failure(val message: String) : Outcome
 }

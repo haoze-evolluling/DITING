@@ -77,10 +77,12 @@ object ScheduleController {
         val pendingIntent: PendingIntent = alarmPendingIntent(context)
         runCatching {
             // Android 12+ 精确闹钟需要用户授权；没有授权就不能用精确接口。
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !manager.canScheduleExactAlarms()) {
-                manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, pendingIntent)
-            } else {
+            val useExact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                manager.canScheduleExactAlarms()
+            if (useExact) {
                 manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, pendingIntent)
+            } else {
+                manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMs, pendingIntent)
             }
         }.onFailure { error ->
             Log.w(TAG, "精确闹钟不可用，退回非精确闹钟", error)

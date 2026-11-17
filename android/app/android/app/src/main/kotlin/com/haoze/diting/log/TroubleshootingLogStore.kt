@@ -42,7 +42,7 @@ internal object TroubleshootingLogStore {
         val file = resolve(context, kind, name) ?: return null to false
         val text = runCatching { file.readText() }.getOrNull() ?: return null to false
         val truncated = text.length > MAX_READ_CHARS
-        return (if (truncated) text.take(MAX_READ_CHARS) else text) to truncated
+        return text.take(MAX_READ_CHARS) to truncated
     }
 
     fun delete(context: Context, kind: String, name: String): Boolean =

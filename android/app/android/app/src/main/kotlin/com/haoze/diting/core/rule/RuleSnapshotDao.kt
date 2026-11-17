@@ -84,24 +84,20 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
     /** Enabled custom (non-subscription) rules, mirroring `enabledCustomRules`. */
     fun enabledCustomRules(kind: RuleKind): List<EnabledRule> =
         queryRules(
-            "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
-                "r.appScope AS appScope, r.appInverted AS appInverted, r.isWildcard AS isWildcard, " +
-                "r.denyallow AS denyallow, r.isRegex AS isRegex, r.dnsType AS dnsType FROM ${kind.ruleTable} r " +
+            RULE_COLUMNS + "${kind.ruleTable} r " +
                 "JOIN ${kind.sourceTable} s ON s.ruleId = r.id " +
-                "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source NOT LIKE 'sub_%' AND s.source NOT LIKE 'staging_sub_%' " +
-                "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard, r.denyallow, r.isRegex, r.dnsType"
+                "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source NOT LIKE 'sub_%' AND s.source NOT LIKE 'staging_sub_%'" +
+                GROUP_BY_RULE
         )
 
     /** Enabled subscription rules needing per-rule snapshot entries, mirroring the special query. */
     fun enabledSpecialSubscriptionRules(kind: RuleKind): List<EnabledRule> =
         queryRules(
-            "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
-                "r.appScope AS appScope, r.appInverted AS appInverted, r.isWildcard AS isWildcard, " +
-                "r.denyallow AS denyallow, r.isRegex AS isRegex, r.dnsType AS dnsType FROM ${kind.ruleTable} r " +
+            RULE_COLUMNS + "${kind.ruleTable} r " +
                 "JOIN ${kind.sourceTable} s ON s.ruleId = r.id " +
                 "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source LIKE 'sub_%' " +
-                "AND (r.isWildcard = 1 OR r.pattern LIKE '%*%' OR r.appScope IS NOT NULL OR r.appInverted = 1 OR r.isRegex = 1 OR r.denyallow IS NOT NULL OR r.dnsType IS NOT NULL) " +
-                "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard, r.denyallow, r.isRegex, r.dnsType"
+                "AND (r.isWildcard = 1 OR r.pattern LIKE '%*%' OR r.appScope IS NOT NULL OR r.appInverted = 1 OR r.isRegex = 1 OR r.denyallow IS NOT NULL OR r.dnsType IS NOT NULL)" +
+                GROUP_BY_RULE
         )
 
     private fun queryRules(sql: String): List<EnabledRule> = db.rawQuery(sql, null).use { cursor ->
@@ -181,6 +177,15 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
 
     companion object {
         private const val PAGE_SIZE = 2000
+
+        private const val RULE_COLUMNS =
+            "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +
+                "r.appScope AS appScope, r.appInverted AS appInverted, r.isWildcard AS isWildcard, " +
+                "r.denyallow AS denyallow, r.isRegex AS isRegex, r.dnsType AS dnsType FROM "
+
+        private const val GROUP_BY_RULE =
+            " GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard, " +
+                "r.denyallow, r.isRegex, r.dnsType"
 
         /** Opens the mode database through the shared connection; null when it has no rule tables. */
         fun open(context: Context, databaseName: String): RuleSnapshotDao? {

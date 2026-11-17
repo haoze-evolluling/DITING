@@ -35,8 +35,6 @@ internal object ProxySecretCodec {
         return runCatching {
             val payload = Base64.decode(value, Base64.NO_WRAP)
             // Check the range first: copyOfRange would throw outside runCatching on truncation.
-            
-            
             require(payload.size > IV_LENGTH) { "payload too short" }
             val iv = payload.copyOfRange(0, IV_LENGTH)
             val cipher = Cipher.getInstance(TRANSFORMATION)

@@ -1,8 +1,12 @@
 package com.haoze.diting.platform
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.net.wifi.WifiManager
 import android.os.Build
+import androidx.core.content.ContextCompat
 
 /// Reads the SSID of the joined Wi-Fi for on-demand connection rules.
 internal class WifiSsidReader(private val context: Context) {
@@ -13,18 +17,18 @@ internal class WifiSsidReader(private val context: Context) {
     /// to return a real SSID, and Android 13+ additionally gates it behind NEARBY_WIFI_DEVICES.
     fun currentSsid(): String? {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            !hasPermission(android.Manifest.permission.NEARBY_WIFI_DEVICES) &&
-            !hasPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            !hasPermission(Manifest.permission.NEARBY_WIFI_DEVICES) &&
+            !hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
         ) {
             return null
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-            !hasPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            !hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
         ) {
             return null
         }
         // Location services off also blanks the SSID, so report "unknown" instead of "".
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && !isLocationEnabled()) {
+        if (!isLocationEnabled()) {
             return null
         }
         val wifi = context.applicationContext
@@ -43,19 +47,12 @@ internal class WifiSsidReader(private val context: Context) {
     }
 
     private fun hasPermission(permission: String): Boolean =
-        androidx.core.content.ContextCompat.checkSelfPermission(context, permission) ==
-            android.content.pm.PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(context, permission) ==
+            PackageManager.PERMISSION_GRANTED
 
     private fun isLocationEnabled(): Boolean = runCatching {
-        val manager = context.getSystemService(Context.LOCATION_SERVICE)
-            as? android.location.LocationManager ?: return false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            manager.isLocationEnabled
-        } else {
-            @Suppress("DEPRECATION")
-            manager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ||
-                @Suppress("DEPRECATION")
-                manager.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)
-        }
+        val manager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+            ?: return false
+        manager.isLocationEnabled
     }.getOrDefault(false)
 }

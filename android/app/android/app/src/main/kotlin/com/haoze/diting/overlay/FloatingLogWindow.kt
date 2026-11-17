@@ -150,7 +150,7 @@ internal class FloatingLogWindow(context: Context) {
                 result.success(null)
                 FloatingLogOverlay.dismissForBackground()
             }
-            "opacity" -> result.success(prefs.getFloat(KEY_OPACITY, 1f).toDouble())
+            "opacity" -> result.success(opacity().toDouble())
             else -> result.notImplemented()
         }
     }
@@ -161,11 +161,11 @@ internal class FloatingLogWindow(context: Context) {
     private fun setExpanded(expand: Boolean, widthDp: Int, heightDp: Int, dragStripDp: Int) {
         snapAnimator?.cancel()
         val (screenW, screenH) = screenSize()
-        if (expand && !expanded) {
+        val opening = expand && !expanded
+        if (opening) {
             ballX = params.x
             ballY = params.y
         }
-        val opening = expand && !expanded
         expanded = expand
         this.dragStripDp = dragStripDp
         if (expand) {
@@ -181,7 +181,7 @@ internal class FloatingLogWindow(context: Context) {
                 params.x = oldRight - params.width
             }
             clampInto(screenW, screenH)
-            root?.alpha = prefs.getFloat(KEY_OPACITY, 1f).coerceIn(0.3f, 1f)
+            root?.alpha = opacity().coerceIn(0.3f, 1f)
         } else {
             setFocusable(false)
             params.width = dp(BALL_DP)
@@ -285,6 +285,8 @@ internal class FloatingLogWindow(context: Context) {
     }
 
     private fun dp(value: Int): Int = (value * density).roundToInt()
+
+    private fun opacity(): Float = prefs.getFloat(KEY_OPACITY, 1f)
 
     /// Intercepts a drag before Flutter sees it: anywhere on the ball, or on the panel's header
     /// strip. A press that stays within the touch slop is left to Flutter as a tap.

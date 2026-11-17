@@ -97,22 +97,26 @@ class ExpressVpnService : VpnService() {
             return START_NOT_STICKY
         }
         val defaults = VpnPlanNative.startDefaults
+        val proxyJson = intent.getStringExtra(EXTRA_OUTBOUND_PROXY).orEmpty()
+        val proxyAppPackage = intent.getStringExtra(EXTRA_PROXY_APP).orEmpty()
+        val ipv6Mode = intent.getStringExtra(EXTRA_IPV6_MODE) ?: defaults.ipv6Mode
+        val excludedPackages = intent.getStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES).orEmpty().toSet()
         // Persisted so the quick settings tile can rebuild the same start intent: Dart computes
         // the config, the intent extras do not survive anywhere else.
         ExpressStartConfig.remember(
             context = this,
             dnsConfig = dnsConfig,
-            proxyJson = intent.getStringExtra(EXTRA_OUTBOUND_PROXY).orEmpty(),
-            proxyAppPackage = intent.getStringExtra(EXTRA_PROXY_APP).orEmpty(),
-            ipv6Mode = intent.getStringExtra(EXTRA_IPV6_MODE) ?: defaults.ipv6Mode,
-            excludedPackages = intent.getStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES).orEmpty().toSet(),
+            proxyJson = proxyJson,
+            proxyAppPackage = proxyAppPackage,
+            ipv6Mode = ipv6Mode,
+            excludedPackages = excludedPackages,
         )
         startTunnel(
             dnsConfig = dnsConfig,
-            proxyJson = intent.getStringExtra(EXTRA_OUTBOUND_PROXY).orEmpty(),
-            proxyAppPackage = intent.getStringExtra(EXTRA_PROXY_APP).orEmpty(),
-            ipv6Mode = intent.getStringExtra(EXTRA_IPV6_MODE) ?: defaults.ipv6Mode,
-            excludedPackages = intent.getStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES).orEmpty().toSet(),
+            proxyJson = proxyJson,
+            proxyAppPackage = proxyAppPackage,
+            ipv6Mode = ipv6Mode,
+            excludedPackages = excludedPackages,
         )
         return START_NOT_STICKY
     }
@@ -198,7 +202,11 @@ class ExpressVpnService : VpnService() {
                     EngineRuleLoader.apply(this, rustEngine, RuleDataset.EXPRESS, TAG)
                 } catch (t: Throwable) {
                     Log.e(TAG, "Unable to build rule snapshot", t)
-            RuntimeEventLog.error("express", "rule.snapshot_fail", "error" to (t.message ?: t.javaClass.simpleName))
+                    RuntimeEventLog.error(
+                        "express",
+                        "rule.snapshot_fail",
+                        "error" to (t.message ?: t.javaClass.simpleName),
+                    )
                     if (!stopping) {
                         fail("规则加载失败：${t.message ?: t.javaClass.simpleName}")
                         return@Thread
@@ -216,7 +224,11 @@ class ExpressVpnService : VpnService() {
                 Log.i(TAG, "express tunnel exited")
             } catch (t: Throwable) {
                 Log.e(TAG, "express tunnel crashed", t)
-            RuntimeEventLog.error("express", "tunnel.crashed", "error" to (t.message ?: t.javaClass.simpleName))
+                RuntimeEventLog.error(
+                    "express",
+                    "tunnel.crashed",
+                    "error" to (t.message ?: t.javaClass.simpleName),
+                )
                 if (!stopping) {
                     fail("极速模式运行异常：${t.message ?: t.javaClass.simpleName}")
                 }
@@ -239,7 +251,11 @@ class ExpressVpnService : VpnService() {
                 Log.i(TAG, "rule snapshot hot-reloaded")
             } catch (t: Throwable) {
                 Log.e(TAG, "rule hot-reload failed; keeping previous rules", t)
-            RuntimeEventLog.warn("express", "rule.reload_fail", "error" to (t.message ?: t.javaClass.simpleName))
+                RuntimeEventLog.warn(
+                    "express",
+                    "rule.reload_fail",
+                    "error" to (t.message ?: t.javaClass.simpleName),
+                )
             }
         }, "diting-rule-reload").start()
     }

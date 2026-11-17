@@ -52,7 +52,7 @@ class LauncherIconBridge(private val activity: Activity) : MethodChannel.MethodC
         }
     }
 
-    private fun componentName(alias: String) =
+    private fun componentName(alias: String): ComponentName =
         ComponentName(activity.packageName, alias)
 
     /// The AdGuard alias is the only one ever explicitly enabled, so a non-enabled value means the
