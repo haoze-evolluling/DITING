@@ -180,6 +180,36 @@ impl OptBuilder {
         self
     }
 
+    /// The advertised UDP payload size (CLASS field).
+    pub fn udp_size(&self) -> u16 {
+        self.udp_size
+    }
+
+    /// The DNSSEC OK bit.
+    pub fn do_bit(&self) -> bool {
+        self.do_bit
+    }
+
+    /// The high eight bits of the extended rcode.
+    pub fn ext_rcode(&self) -> u8 {
+        self.ext_rcode
+    }
+
+    /// The EDNS version.
+    pub fn version(&self) -> u8 {
+        self.version
+    }
+
+    /// The 15 reserved bits of the TTL.
+    pub fn z(&self) -> u16 {
+        self.z
+    }
+
+    /// The EDNS option list.
+    pub fn options(&self) -> &[EdnsOption] {
+        &self.options
+    }
+
     pub fn push_option(mut self, option: EdnsOption) -> Self {
         self.options.push(option);
         self
@@ -420,7 +450,7 @@ fn walk(wire: &[u8]) -> Option<Walk> {
     })
 }
 
-fn decode_options(data: &[u8]) -> Option<Vec<EdnsOption>> {
+pub(crate) fn decode_options(data: &[u8]) -> Option<Vec<EdnsOption>> {
     let mut options = Vec::new();
     let mut data = data;
     while !data.is_empty() {

@@ -221,7 +221,7 @@ impl MessageBuilder {
     }
 }
 
-fn encode_record(
+pub(crate) fn encode_record(
     record: &ResourceRecord,
     names: &mut NameWriter,
     out: &mut Vec<u8>,
