@@ -577,6 +577,7 @@ dependencies = [
  "diting-desktop-core",
  "diting-dns-core",
  "diting-dns-wire",
+ "diting-dns64-core",
  "serde",
  "serde_json",
  "tokio",
