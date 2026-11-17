@@ -156,7 +156,7 @@ class RecognitionController extends AsyncNotifier<RecognitionState> {
   static String _describe(Object error) {
     final text = error.toString();
     if (error is FormatException) {
-      return currentL10n.recognitionInvalidConfigKept('${error.message}');
+      return currentL10n.recognitionInvalidConfigKept(error.message);
     }
     if (text.contains('HandshakeException')) {
       return currentL10n.recognitionGithubInterrupted;

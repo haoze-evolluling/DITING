@@ -11,7 +11,6 @@ import 'package:diting_android/pages/home/dashboard/cards/site_latency_card.dart
 import 'package:diting_android/pages/home/dashboard/detail/site_latency_detail_page.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
-import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

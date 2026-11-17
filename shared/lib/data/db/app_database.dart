@@ -58,11 +58,13 @@ class AppDatabase {
       await db.close();
       if (!create) return null;
       await deleteDatabase(path);
-      return _create(path, kind);
     } on DatabaseException catch (error) {
       debugPrint('database open failed: $fileName ($error)');
       return null;
     }
+    // Outside the `try`, so an asynchronous failure inside `_create` still propagates to the
+    // caller instead of being caught here and folded into a null result.
+    return _create(path, kind);
   }
 
   /// Opens an existing database read-only without running a schema upgrade. Used by the one-time

@@ -160,9 +160,9 @@ class HttpRequestRepository {
       'limit': limit,
       'status': _statusToken(status),
       'query': query,
-      if (packageName != null) 'packageName': packageName,
+      'packageName': ?packageName,
       // Inclusive `timestamp` cursor: the merged feed pages by time, not by row offset.
-      if (before != null) 'before': before,
+      'before': ?before,
     });
     final rows = await _db.rawQuery(plan.sql, plan.args);
     return [
@@ -209,8 +209,8 @@ class HttpRequestRepository {
     final plan = RustLogQueryCore.instance.plan('http.query.export', {
       'limit': limit,
       'status': _statusToken(status),
-      if (since != null) 'since': since,
-      if (until != null) 'until': until,
+      'since': ?since,
+      'until': ?until,
       if (packages.isNotEmpty) 'packages': packages.toList(),
     });
     final rows = await _db.rawQuery(plan.sql, plan.args);

@@ -179,8 +179,9 @@ class RecognitionMembersRepository {
       var total = 0;
       await for (final chunk in response.timeout(timeout)) {
         total += chunk.length;
-        if (total > _plan.maxAvatarBytes)
+        if (total > _plan.maxAvatarBytes) {
           throw HttpException(currentL10n.recognitionAvatarTooLarge);
+        }
         builder.add(chunk);
       }
       return builder.takeBytes();
@@ -197,8 +198,9 @@ class RecognitionMembersRepository {
     var total = 0;
     await for (final chunk in response) {
       total += chunk.length;
-      if (total > limit)
+      if (total > limit) {
         throw HttpException(currentL10n.recognitionConfigTooLarge);
+      }
       builder.add(chunk);
     }
     return utf8.decode(builder.takeBytes());

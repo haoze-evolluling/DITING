@@ -142,7 +142,7 @@ class _PermissionStep extends ConsumerWidget {
 }
 
 class _FinishStep extends StatelessWidget {
-  _FinishStep({required this.mode});
+  const _FinishStep({required this.mode});
 
   final AppWorkMode mode;
 

@@ -177,7 +177,7 @@ class RaceLogRepository {
   Future<List<RaceRankingEntry>> ranking({int limit = 20, int? since}) async {
     final plan = RustLogQueryCore.instance.plan('race.ranking', {
       'limit': limit,
-      if (since != null) 'since': since,
+      'since': ?since,
     });
     final rows = await _db.rawQuery(plan.sql, plan.args);
     return [
@@ -193,7 +193,7 @@ class RaceLogRepository {
 
   Future<RaceLogSummary> summary({int? since}) async {
     final plan = RustLogQueryCore.instance.plan('race.summary', {
-      if (since != null) 'since': since,
+      'since': ?since,
     });
     final rows = await _db.rawQuery(plan.sql, plan.args);
     final parsed = RustLogQueryCore.instance.rows('race.summary', rows);
@@ -204,7 +204,7 @@ class RaceLogRepository {
 
   Future<List<RaceStrategyStatRow>> strategyStats({int? since}) async {
     final plan = RustLogQueryCore.instance.plan('race.strategy', {
-      if (since != null) 'since': since,
+      'since': ?since,
     });
     final rows = await _db.rawQuery(plan.sql, plan.args);
     return [
@@ -231,7 +231,7 @@ class RaceLogRepository {
   }) async {
     final plan = RustLogQueryCore.instance.plan('race.smart', {
       'strategy': strategy,
-      if (since != null) 'since': since,
+      'since': ?since,
     });
     final rows = await _db.rawQuery(plan.sql, plan.args);
     return [

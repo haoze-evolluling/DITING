@@ -67,8 +67,7 @@ void main() {
 
     final keys = [
       for (final category in categories)
-        for (final card in category.cards)
-          if (card.featureKey case final key?) key,
+        for (final card in category.cards) ?card.featureKey,
     ];
     expect(keys.toSet().length, keys.length, reason: '隐藏键必须唯一');
 

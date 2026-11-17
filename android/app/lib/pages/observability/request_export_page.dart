@@ -328,7 +328,7 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
           if (showError)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: ErrorBanner(message: error!),
+              child: ErrorBanner(message: error),
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

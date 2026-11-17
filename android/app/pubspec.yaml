@@ -22,6 +22,9 @@ dependencies:
   flutter_riverpod: ^3.5.0
   go_router: ^18.1.1
   sqflite: ^2.4.5
+  # Imported from lib/ (developer_page joins database paths), so it cannot live under
+  # dev_dependencies.
+  path: ^1.9.1
   url_launcher: ^6.3.3
 
 dev_dependencies:
@@ -31,7 +34,6 @@ dev_dependencies:
   sqflite_common_ffi: ^2.4.5
   # Drives the timers behind the power-key timeout in power_guard_test.
   fake_async: ^1.3.3
-  path: ^1.9.1
 
 # The sqlite3 hook mirror is configured once in the workspace root pubspec.yaml
 # (`hooks.user_defines`), because pub reads it from the workspace root.

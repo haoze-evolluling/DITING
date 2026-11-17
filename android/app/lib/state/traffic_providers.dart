@@ -60,15 +60,15 @@ class TrafficSnapshot {
     required this.endDate,
     int? txBytes,
     int? rxBytes,
-  }) : _txBytes = txBytes,
-       _rxBytes = rxBytes;
+  }) : _kernelTxBytes = txBytes,
+       _kernelRxBytes = rxBytes;
 
   const TrafficSnapshot.empty()
     : rows = const [],
       startDate = '',
       endDate = '',
-      _txBytes = 0,
-      _rxBytes = 0;
+      _kernelTxBytes = 0,
+      _kernelRxBytes = 0;
 
   /// Sorted by total bytes, matching the SQL `ORDER BY`.
   final List<AppTrafficDaily> rows;
@@ -78,12 +78,12 @@ class TrafficSnapshot {
   final String endDate;
 
   /// Kernel totals; null on hand-built snapshots in tests, which fold the rows.
-  final int? _txBytes;
-  final int? _rxBytes;
+  final int? _kernelTxBytes;
+  final int? _kernelRxBytes;
 
-  int get txBytes => _txBytes ?? rows.fold(0, (sum, row) => sum + row.txBytes);
+  int get txBytes => _kernelTxBytes ?? rows.fold(0, (sum, row) => sum + row.txBytes);
 
-  int get rxBytes => _rxBytes ?? rows.fold(0, (sum, row) => sum + row.rxBytes);
+  int get rxBytes => _kernelRxBytes ?? rows.fold(0, (sum, row) => sum + row.rxBytes);
 
   int get totalBytes => txBytes + rxBytes;
 

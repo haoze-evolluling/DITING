@@ -244,7 +244,7 @@ final subscriptionInterceptionProvider =
             'count',
             await raw(db, 'subscription.total', {
               'table': 'dns',
-              if (since != null) 'since': since,
+              'since': ?since,
             }),
           ),
         );
@@ -253,7 +253,7 @@ final subscriptionInterceptionProvider =
             'subscriptionHit',
             await raw(db, 'subscription.hits', {
               'table': 'dns',
-              if (since != null) 'since': since,
+              'since': ?since,
             }),
           ),
         ];
@@ -266,7 +266,7 @@ final subscriptionInterceptionProvider =
               'count',
               await raw(db, 'subscription.total', {
                 'table': 'http',
-                if (since != null) 'since': since,
+                'since': ?since,
               }),
             ),
           );
@@ -275,7 +275,7 @@ final subscriptionInterceptionProvider =
               'subscriptionHit',
               await raw(db, 'subscription.hits', {
                 'table': 'http',
-                if (since != null) 'since': since,
+                'since': ?since,
               }),
             ),
           );

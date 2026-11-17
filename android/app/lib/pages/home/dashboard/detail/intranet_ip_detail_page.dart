@@ -118,7 +118,7 @@ class IntranetIpDetailPage extends ConsumerWidget {
           glyph: AppGlyphs.dns,
           title: 'DNS',
           footer: info != null && info.privateDns != 'off'
-              ? context.l10n.intranetPrivateDnsOn('${info.privateDns}')
+              ? context.l10n.intranetPrivateDnsOn(info.privateDns)
               : context.l10n.intranetPrivateDnsOff,
           child: dnsServers.isEmpty
               ? Row(

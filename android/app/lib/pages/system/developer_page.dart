@@ -70,23 +70,26 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
 
   Future<void> _handle(_DeveloperAction action) async {
     if (_running != null) return;
+    // Captured before the dialogs: the l10n lookup is still valid after `await`, while the
+    // analyzer cannot tell that `context` stays mounted across the async gaps.
+    final l10n = context.l10n;
     if (action.destructive) {
       final confirmed = await showFloatingDialog<bool>(
         context: context,
         child: CommonDialog(
-          title: action.title(context.l10n),
+          title: action.title(l10n),
           destructive: true,
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text(context.l10n.devCancel),
+              child: Text(l10n.devCancel),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: Text(context.l10n.devRun),
+              child: Text(l10n.devRun),
             ),
           ],
-          child: Text(context.l10n.devConfirmBody(action.subtitle(context.l10n))),
+          child: Text(l10n.devConfirmBody(action.subtitle(l10n))),
         ),
       );
       if (confirmed != true || !mounted) return;
@@ -101,7 +104,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
         _DeveloperAction.vacuum => await _vacuum(),
       };
     } catch (error) {
-      message = context.l10n.devActionFailed(action.title(context.l10n), '$error');
+      message = l10n.devActionFailed(action.title(l10n), '$error');
     } finally {
       if (mounted) {
         setState(() {
@@ -121,9 +124,10 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
 
   /// Writes real rows into the active `dns_log`; the revision bump makes the log pages re-query.
   Future<String> _stressLogs() async {
+    final l10n = context.l10n;
     final fileName = ref.read(activeLogDatabaseFileProvider);
     final db = await AppDatabase.open(fileName);
-    if (db == null) return context.l10n.devStressNoDb;
+    if (db == null) return l10n.devStressNoDb;
     final now = DateTime.now().millisecondsSinceEpoch;
     final random = Random();
     final batch = db.batch();
@@ -140,7 +144,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
     }
     final inserted = (await batch.commit(noResult: true)).length;
     ref.read(dnsLogRevisionProvider.notifier).bump();
-    return context.l10n.devStressDone('$inserted', fileName);
+    return l10n.devStressDone('$inserted', fileName);
   }
 
   /// Goes through the same handler the framework uses, so it exercises a real error path without
@@ -165,6 +169,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
 
   /// `VACUUM` on every existing database file; the difference in file size is the real gain.
   Future<String> _vacuum() async {
+    final l10n = context.l10n;
     var freed = 0;
     final touched = <String>[];
     for (final fileName in StorageContract.allDatabases) {
@@ -180,9 +185,9 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
         await db.close();
       }
     }
-    if (touched.isEmpty) return context.l10n.devVacuumNoDb;
+    if (touched.isEmpty) return l10n.devVacuumNoDb;
     final kb = (freed / 1024).round();
-    return context.l10n.devVacuumDone(touched.join('、'), kb < 0 ? 0 : kb);
+    return l10n.devVacuumDone(touched.join('、'), kb < 0 ? 0 : kb);
   }
 
   Future<void> _offerRestart() async {

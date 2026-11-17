@@ -402,7 +402,6 @@ Future<StorageV2Result> cleanupStorageV2(
     await native.closeConnections();
     await _deleteOldDatabases();
     await native.clearRuleIndexes();
-    final directory = await getDatabasesPath();
     for (final key in LegacyStorageSource.oldPreferenceKeys) {
       store.remove(StorageContract.settingsContainer, key);
     }

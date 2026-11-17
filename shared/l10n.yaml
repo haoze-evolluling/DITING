@@ -17,3 +17,7 @@ nullable-getter: false
 # gen-l10n sorts the list alphabetically (en, zh) and every such device gets English instead.
 preferred-supported-locales:
   - zh
+# The SDK's gen-l10n template still imports `package:flutter_localizations`, whose
+# Global{Material,Cupertino}Localizations are deprecated in Flutter 3.50. The generated files
+# only ignore `type=lint`, so add a deprecation ignore until the template itself migrates.
+header: "// ignore_for_file: deprecated_member_use"

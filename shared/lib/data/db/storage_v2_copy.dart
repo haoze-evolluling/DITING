@@ -6,7 +6,6 @@ library;
 
 import 'dart:io';
 
-import 'package:diting_shared/data/db/database_schema.dart';
 import 'package:diting_shared/data/db/legacy_storage_source.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:flutter/foundation.dart';

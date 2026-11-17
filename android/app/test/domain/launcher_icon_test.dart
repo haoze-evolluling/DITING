@@ -10,20 +10,20 @@ import 'package:flutter_test/flutter_test.dart';
 class _FakeLauncherIconBridge extends LauncherIconBridge {
   _FakeLauncherIconBridge({
     LauncherIconStyle current = LauncherIconStyle.standard,
-  }) : _current = current;
+  }) : _style = current;
 
-  LauncherIconStyle _current;
+  LauncherIconStyle _style;
   final List<LauncherIconStyle> applied = [];
   bool reject = false;
 
   @override
-  Future<LauncherIconStyle> current() async => _current;
+  Future<LauncherIconStyle> current() async => _style;
 
   @override
   Future<bool> apply(LauncherIconStyle style) async {
     applied.add(style);
     if (reject) return false;
-    _current = style;
+    _style = style;
     return true;
   }
 }
