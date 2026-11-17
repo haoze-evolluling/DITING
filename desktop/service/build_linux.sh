@@ -56,8 +56,8 @@ if [ -z "$VERSION" ]; then
     VERSION="${VERSION:-0.0.0}"
 fi
 
-GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
-BUILD_TIME="$(date -Iseconds)"
+# 版本、构建时间与提交号由 rust/diting-desktop-api/build.rs 在编译期注入，
+# 这里无需再采集，避免与 cargo 重新构建时读到的值不一致。
 
 BIN_NAME="diting-service"
 BIN_PATH="$OUTPUT_DIR/$BIN_NAME"

@@ -4,7 +4,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use diting_desktop_api::config::security::{CertConfig, CERT_SOURCE_FILE, CERT_SOURCE_SELF_SIGNED};
+use diting_desktop_api::config::security::{
+    CertConfig, CERT_SOURCE_FILE, CERT_SOURCE_PKCS12, CERT_SOURCE_SELF_SIGNED,
+};
 
 use super::generate::generate_self_signed;
 use super::manager::CertManager;
@@ -181,15 +183,62 @@ fn import_pem_switches_to_file_source() {
     assert_eq!(manager.config().source, CERT_SOURCE_FILE);
 }
 
+/// PKCS#12 fixture inherited from the former Go service's tests (`dns-lan.p12`, password
+/// `s3cret`).
+const PKCS12_FIXTURE: &[u8] = include_bytes!("../../tests/data/dns-lan.p12");
+const PKCS12_PASSWORD: &str = "s3cret";
+
 #[test]
-fn import_pkcs12_reports_the_gap() {
+fn import_pkcs12_writes_a_pem_pair() {
     let temp = TempDir::new("pkcs12");
     let manager = CertManager::new(temp.path(), config());
+
+    manager
+        .import_pkcs12(PKCS12_FIXTURE, PKCS12_PASSWORD)
+        .expect("import");
+
+    let cert = fs::read(temp.path().join(IMPORTED_CERT_FILE)).expect("cert");
+    let key = fs::read(temp.path().join(IMPORTED_KEY_FILE)).expect("key");
+    assert!(String::from_utf8_lossy(&cert).contains("BEGIN CERTIFICATE"));
+    assert!(String::from_utf8_lossy(&key).contains("BEGIN PRIVATE KEY"));
+    let info = manager.info();
+    assert!(info.loaded, "{}", info.error);
+    assert_eq!(info.source, CERT_SOURCE_FILE);
+}
+
+#[test]
+fn import_pkcs12_rejects_wrong_password_and_garbage() {
+    let temp = TempDir::new("pkcs12-invalid");
+    let manager = CertManager::new(temp.path(), config());
+
     let error = manager
-        .import_pkcs12(&[], "secret")
-        .expect_err("unsupported");
+        .import_pkcs12(PKCS12_FIXTURE, "wrong")
+        .expect_err("wrong password");
     assert!(error.contains("PKCS#12"), "{error}");
-    assert!(error.contains("PEM"), "{error}");
+
+    let error = manager
+        .import_pkcs12(b"not a p12", PKCS12_PASSWORD)
+        .expect_err("garbage");
+    assert!(error.contains("PKCS#12"), "{error}");
+    assert!(!temp.path().join(IMPORTED_CERT_FILE).exists());
+}
+
+#[test]
+fn pkcs12_source_loads_the_archive_in_place() {
+    let temp = TempDir::new("pkcs12-source");
+    let archive = temp.path().join("bundle.p12");
+    fs::write(&archive, PKCS12_FIXTURE).unwrap();
+
+    let mut config = config();
+    config.source = CERT_SOURCE_PKCS12.to_string();
+    config.cert_file = archive.to_string_lossy().into_owned();
+    config.pkcs12_password = PKCS12_PASSWORD.to_string();
+
+    let manager = CertManager::new(temp.path(), config);
+    let info = manager.info();
+    assert!(info.loaded, "{}", info.error);
+    assert_eq!(info.source, CERT_SOURCE_PKCS12);
+    assert!(info.dns_names.iter().any(|name| name == "dns.lan"));
 }
 
 #[test]

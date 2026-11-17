@@ -40,7 +40,9 @@ deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
   `restore-dns.*` 的位置；
 - `querylog-YYYYMMDD.jsonl` 文件名与行字段、24 小时本地时区桶与 Top-N；
 - 缓存落盘文件的 v1 格式（旧缓存可读，Rust 写出的缓存旧版本同样可读）；
-- HTTP/WebSocket API、JSON 信封、鉴权/CORS、事件类型与状态码。
+- HTTP/WebSocket API、JSON 信封、鉴权/CORS、事件类型与状态码；
+- 加密 DNS 证书支持自签生成（ECDSA P-256 与 RSA-3072），并支持 PEM 与 PKCS#12
+  （PBES2/AES，兼容传统 3DES/RC2）导入。
 
 有意变化：
 
@@ -55,8 +57,6 @@ deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
 
 ## 已知限制
 
-- 加密 DNS 证书的 PKCS#12 导入返回明确错误（请使用 PEM）；Rust 生态缺少可直接解码
-  PBES2/AES 归档的轻量依赖，宁可拒绝也不接受可能解析错误的口令。
 - 证书 SAN 沿用 Go 的派生规则：`CertConfig` 默认已含 `serverName`，因此默认不会追加监听 IP；
   需要 IP 直连 DoT 时请在证书配置里显式填写 `ipAddresses`。
 

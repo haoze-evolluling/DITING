@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use super::generate::generate_self_signed;
 use super::health::{days_remaining, within_renewal_window, CertHealth};
 use super::material::{
-    load_material, parse_chain, parse_pair, parse_private_key, resolve_paths, same_file_path,
-    write_private, Material, PKCS12_UNSUPPORTED,
+    decode_pkcs12, load_material, parse_chain, parse_pair, parse_private_key, resolve_paths,
+    same_file_path, write_private, Material,
 };
 use super::{IMPORTED_CERT_FILE, IMPORTED_KEY_FILE, SELF_SIGNED_CERT_FILE, SELF_SIGNED_KEY_FILE};
 
@@ -284,13 +284,13 @@ impl CertManager {
         Ok(())
     }
 
-    /// Import a PKCS#12 archive.
+    /// Decode a PKCS#12 archive and import its leaf certificate and private key as PEM.
     ///
-    /// Returning an explicit error is better than a partial implementation: Go used
-    /// `software.sslmate.com/src/go-pkcs12` because the common real-world exports (OpenSSL 3.x,
-    /// Windows certutil, public CAs) are PBES2 + AES, which no dependency here can decode.
-    pub fn import_pkcs12(&self, _pfx: &[u8], _password: &str) -> Result<(), String> {
-        Err(PKCS12_UNSUPPORTED.to_string())
+    /// Mirrors Go's `ImportPKCS12`, which also normalizes the archive into the imported PEM pair
+    /// so later loads never depend on the original archive or its password again.
+    pub fn import_pkcs12(&self, pfx: &[u8], password: &str) -> Result<(), String> {
+        let (cert_pem, key_pem) = decode_pkcs12(pfx, password)?;
+        self.import_pem(&cert_pem, &key_pem)
     }
 
     /// Paths of the certificate and private key currently in effect.

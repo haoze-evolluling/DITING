@@ -1,7 +1,8 @@
 //! Self-signed certificate generation, ported from `cert_generate.go`.
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-use std::time::Duration;
+use std::str::FromStr;
+use std::time::{Duration, SystemTime};
 
 use diting_desktop_api::config::security::{
     normalize_cert_config, CertConfig, DEFAULT_SERVER_NAME,
@@ -10,8 +11,26 @@ use rcgen::string::Ia5String;
 use rcgen::{
     date_time_ymd, BasicConstraints, CertificateParams, DistinguishedName, DnType,
     ExtendedKeyUsagePurpose, IsCa, KeyPair, KeyUsagePurpose, SanType, SerialNumber,
-    PKCS_ECDSA_P256_SHA256, PKCS_RSA_SHA256,
+    PKCS_ECDSA_P256_SHA256,
 };
+use x509_cert::builder::{Builder, CertificateBuilder, Profile};
+use x509_cert::der::asn1::Ia5String as DerIa5String;
+use x509_cert::der::oid::ObjectIdentifier;
+use x509_cert::der::Encode;
+use x509_cert::ext::pkix::name::GeneralName;
+use x509_cert::ext::pkix::{
+    BasicConstraints as X509BasicConstraints, ExtendedKeyUsage, KeyUsage as X509KeyUsage,
+    KeyUsages, SubjectAltName,
+};
+use x509_cert::name::Name;
+use x509_cert::serial_number::SerialNumber as X509SerialNumber;
+use x509_cert::spki::SubjectPublicKeyInfoOwned;
+use x509_cert::time::{Time, Validity};
+
+use super::material::pem_encode;
+
+/// `serverAuth` (RFC 5280 §4.2.1.12), the only EKU the former Go service embedded.
+const SERVER_AUTH_OID: &str = "1.3.6.1.5.5.7.3.1";
 
 /// A freshly generated certificate and its PKCS#8 private key, both PEM encoded.
 #[derive(Debug, Clone)]
@@ -30,12 +49,15 @@ pub fn generate_self_signed(config: &CertConfig) -> Result<SelfSignedCert, Strin
     let mut config = config.clone();
     normalize_cert_config(&mut config);
 
-    let key = generate_key(&config.key_type)?;
     let valid_days = if config.valid_days > 0 {
         config.valid_days
     } else {
         DEFAULT_VALID_DAYS
     };
+    if config.key_type == "rsa" {
+        return generate_rsa_self_signed(&config, valid_days);
+    }
+    let key = generate_ecdsa_key()?;
 
     let mut params = CertificateParams::default();
     let mut distinguished_name = DistinguishedName::new();
@@ -77,22 +99,118 @@ pub fn generate_self_signed(config: &CertConfig) -> Result<SelfSignedCert, Strin
     })
 }
 
-/// Generate a P-256 (default) or RSA-3072 key.
+fn generate_ecdsa_key() -> Result<KeyPair, String> {
+    KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256)
+        .map_err(|error| format!("生成 ECDSA 私钥失败: {error}"))
+}
+
+/// RSA-3072 self-signed certificate, matching Go's `rsa.GenerateKey(rand.Reader, 3072)`.
 ///
-/// This build enables `rcgen`'s `ring` backend, which deliberately cannot generate RSA keys
-/// (`Error::KeyGenerationUnavailable`). RSA therefore returns a clear error instead of silently
-/// falling back to ECDSA; operators who need RSA can import a PEM pair.
-fn generate_key(key_type: &str) -> Result<KeyPair, String> {
-    if key_type == "rsa" {
-        KeyPair::generate_for(&PKCS_RSA_SHA256).map_err(|error| {
-            format!(
-                "生成 RSA 私钥失败: {error}（当前构建的 rcgen ring 后端不支持 RSA 密钥生成，请改用 ECDSA 或导入 PEM）"
-            )
-        })
-    } else {
-        KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256)
-            .map_err(|error| format!("生成 ECDSA 私钥失败: {error}"))
+/// `rcgen`'s ring backend cannot generate or sign with RSA, so this path builds the X.509
+/// structure with `x509-cert` and signs it through the pure-Rust `rsa` crate. The profile is
+/// deliberately `Manual`: Go's template used DS + KeyEncipherment + KeyCertSign, which neither
+/// the Root nor the Leaf preset reproduces.
+fn generate_rsa_self_signed(
+    config: &CertConfig,
+    valid_days: i32,
+) -> Result<SelfSignedCert, String> {
+    use rsa::pkcs1v15::SigningKey;
+    use rsa::pkcs8::{EncodePrivateKey, LineEnding};
+    use rsa::rand_core::OsRng;
+    use rsa::signature::Keypair;
+    use rsa::RsaPrivateKey;
+    use sha2::Sha256;
+
+    let private_key = RsaPrivateKey::new(&mut OsRng, 3072)
+        .map_err(|error| format!("生成 RSA 私钥失败: {error}"))?;
+    let key_pem = private_key
+        .to_pkcs8_pem(LineEnding::LF)
+        .map_err(|error| format!("编码 RSA 私钥失败: {error}"))?;
+
+    let signing_key = SigningKey::<Sha256>::new(private_key.clone());
+    let subject = Name::from_str(&format!("O=DITING,CN={}", common_name(config)))
+        .map_err(|error| format!("构建证书主题失败: {error}"))?;
+    let public_key = SubjectPublicKeyInfoOwned::from_key(signing_key.verifying_key())
+        .map_err(|error| format!("编码 RSA 公钥失败: {error}"))?;
+
+    let mut serial = rand::random::<[u8; 16]>();
+    while serial.iter().all(|byte| *byte == 0) {
+        serial = rand::random();
     }
+    let serial =
+        X509SerialNumber::new(&serial).map_err(|error| format!("生成证书序列号失败: {error}"))?;
+
+    let now = SystemTime::now();
+    let validity = Validity {
+        not_before: Time::try_from(now - Duration::from_secs(86_400))
+            .map_err(|error| format!("设置证书生效时间失败: {error}"))?,
+        not_after: Time::try_from(now + Duration::from_secs(valid_days as u64 * 86_400))
+            .map_err(|error| format!("设置证书过期时间失败: {error}"))?,
+    };
+
+    let mut builder = CertificateBuilder::new(
+        Profile::Manual { issuer: None },
+        serial,
+        validity,
+        subject,
+        public_key,
+        &signing_key,
+    )
+    .map_err(|error| format!("生成自签证书失败: {error}"))?;
+    builder
+        .add_extension(&X509BasicConstraints {
+            ca: true,
+            path_len_constraint: None,
+        })
+        .map_err(|error| format!("写入证书扩展失败: {error}"))?;
+    builder
+        .add_extension(&X509KeyUsage(
+            KeyUsages::DigitalSignature | KeyUsages::KeyEncipherment | KeyUsages::KeyCertSign,
+        ))
+        .map_err(|error| format!("写入证书扩展失败: {error}"))?;
+    builder
+        .add_extension(&ExtendedKeyUsage(vec![ObjectIdentifier::new_unwrap(
+            SERVER_AUTH_OID,
+        )]))
+        .map_err(|error| format!("写入证书扩展失败: {error}"))?;
+    builder
+        .add_extension(&SubjectAltName(x509_subject_alt_names(config)?))
+        .map_err(|error| format!("写入证书扩展失败: {error}"))?;
+
+    let certificate = builder
+        .build::<rsa::pkcs1v15::Signature>()
+        .map_err(|error| format!("生成自签证书失败: {error}"))?;
+    let der = certificate
+        .to_der()
+        .map_err(|error| format!("编码证书失败: {error}"))?;
+
+    Ok(SelfSignedCert {
+        cert_pem: String::from_utf8(pem_encode("CERTIFICATE", &der))
+            .expect("PEM is ASCII by construction"),
+        key_pem: String::from_utf8(key_pem.as_bytes().to_vec())
+            .map_err(|error| format!("编码 RSA 私钥失败: {error}"))?,
+    })
+}
+
+/// SAN list for the `x509-cert` RSA path, mirroring [`subject_alt_names`].
+fn x509_subject_alt_names(config: &CertConfig) -> Result<Vec<GeneralName>, String> {
+    let mut names = Vec::new();
+    for name in &config.dns_names {
+        let value =
+            DerIa5String::new(name).map_err(|_| format!("证书 SAN 中的域名无效: {name:?}"))?;
+        names.push(GeneralName::DnsName(value));
+    }
+    for raw in &config.ip_addresses {
+        let ip: IpAddr = raw
+            .parse()
+            .map_err(|_| format!("证书 SAN 中的 IP 地址无效: {raw:?}"))?;
+        names.push(GeneralName::from(ip));
+    }
+    if names.is_empty() {
+        names.push(GeneralName::from(IpAddr::V4(Ipv4Addr::LOCALHOST)));
+        names.push(GeneralName::from(IpAddr::V6(Ipv6Addr::LOCALHOST)));
+    }
+    Ok(names)
 }
 
 /// Common name resolution, matching `certCommonName`.
@@ -253,19 +371,54 @@ mod tests {
     }
 
     #[test]
-    fn rsa_either_generates_or_reports_backend_limitation() {
+    fn rsa_generates_a_3072_bit_pkcs8_pair() {
+        use rsa::pkcs8::DecodePrivateKey;
+        use rsa::traits::PublicKeyParts;
+
         let mut config = config();
         config.key_type = "rsa".to_string();
-        match generate_self_signed(&config) {
-            Ok(generated) => {
-                // Only reachable if the rcgen backend can generate RSA keys.
-                let key =
-                    rustls_pemfile::private_key(&mut BufReader::new(generated.key_pem.as_bytes()))
-                        .unwrap()
-                        .unwrap();
-                assert!(matches!(key, rustls::pki_types::PrivateKeyDer::Pkcs8(_)));
-            }
-            Err(error) => assert!(error.contains("RSA"), "{error}"),
-        }
+        let generated = generate_self_signed(&config).expect("generate RSA");
+        assert!(generated
+            .cert_pem
+            .starts_with("-----BEGIN CERTIFICATE-----"));
+        assert!(generated.key_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
+
+        let key = rsa::RsaPrivateKey::from_pkcs8_pem(&generated.key_pem).expect("PKCS#8 key");
+        assert_eq!(key.n().bits(), 3072);
+        super::super::material::parse_pair(
+            generated.cert_pem.as_bytes(),
+            generated.key_pem.as_bytes(),
+        )
+        .expect("certificate matches key");
+
+        let certificate = parse_certificate(&generated.cert_pem);
+        assert_eq!(
+            certificate.tbs_certificate.subject.to_string(),
+            "O=DITING,CN=dns.lan"
+        );
+        let (dns, ips) = sans(&certificate);
+        assert_eq!(dns, vec!["dns.lan", "alt.lan"]);
+        assert_eq!(ips, vec!["127.0.0.1", "::1"]);
+
+        let extensions = certificate
+            .tbs_certificate
+            .extensions
+            .as_deref()
+            .unwrap_or(&[]);
+        let key_usage = extensions
+            .iter()
+            .find(|extension| extension.extn_id.to_string() == "2.5.29.15")
+            .expect("key usage");
+        let usage = x509_cert::ext::pkix::KeyUsage::from_der(key_usage.extn_value.as_bytes())
+            .expect("parse key usage");
+        assert!(usage
+            .0
+            .contains(x509_cert::ext::pkix::KeyUsages::DigitalSignature));
+        assert!(usage
+            .0
+            .contains(x509_cert::ext::pkix::KeyUsages::KeyEncipherment));
+        assert!(usage
+            .0
+            .contains(x509_cert::ext::pkix::KeyUsages::KeyCertSign));
     }
 }

@@ -50,6 +50,46 @@ pub fn try_run_as_service(cli: &Cli) -> Option<Result<(), String>> {
     }
 }
 
+/// Ensures stdout/stderr point at a writable handle.
+///
+/// A UAC-elevated child (and a double-clicked executable) has no console, so `GetStdHandle`
+/// returns an invalid handle and the standard print macros would panic on the first write. The
+/// CLI verbs must stay silent instead: their exit code is what the elevating parent checks.
+pub fn ensure_std_output() {
+    use windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE;
+    use windows_sys::Win32::System::Console::{
+        GetStdHandle, SetStdHandle, STD_ERROR_HANDLE, STD_OUTPUT_HANDLE,
+    };
+
+    let usable = |handle: windows_sys::Win32::Foundation::HANDLE| {
+        !handle.is_null() && handle != INVALID_HANDLE_VALUE
+    };
+    // SAFETY: both calls only read the process standard handles.
+    let (stdout, stderr) = unsafe {
+        (
+            GetStdHandle(STD_OUTPUT_HANDLE),
+            GetStdHandle(STD_ERROR_HANDLE),
+        )
+    };
+    if usable(stdout) && usable(stderr) {
+        return;
+    }
+    let Ok(null) = OpenOptions::new().write(true).open("NUL") else {
+        return;
+    };
+    let handle = null.as_raw_handle();
+    // SAFETY: the handle stays valid for the process lifetime because the file is leaked.
+    unsafe {
+        if !usable(stdout) {
+            SetStdHandle(STD_OUTPUT_HANDLE, handle);
+        }
+        if !usable(stderr) {
+            SetStdHandle(STD_ERROR_HANDLE, handle);
+        }
+    }
+    std::mem::forget(null);
+}
+
 fn service_main(arguments: Vec<OsString>) {
     let _ = arguments;
     let stop = Arc::new(tokio::sync::Notify::new());

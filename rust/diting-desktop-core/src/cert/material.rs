@@ -9,10 +9,12 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use base64::Engine;
 use chrono::{DateTime, SecondsFormat, Utc};
 use diting_desktop_api::config::security::{
     CertConfig, CERT_SOURCE_PKCS12, CERT_SOURCE_SELF_SIGNED,
 };
+use p12_keystore::{KeyStore, Pkcs12ImportPolicy};
 use rustls::pki_types::CertificateDer;
 use rustls_pemfile::{certs, private_key};
 use sha2::{Digest, Sha256};
@@ -22,10 +24,6 @@ use x509_cert::ext::pkix::SubjectAltName;
 use x509_cert::Certificate as X509Certificate;
 
 use super::{SELF_SIGNED_CERT_FILE, SELF_SIGNED_KEY_FILE};
-
-/// PKCS#12 is intentionally unsupported: no decoder is part of this crate's dependency set and
-/// adding one is out of scope. Both import and load report the same actionable message.
-pub(crate) const PKCS12_UNSUPPORTED: &str = "暂不支持 PKCS#12 导入：请使用 PEM 格式";
 
 /// Parsed view of the end-entity certificate.
 #[derive(Debug, Clone)]
@@ -59,13 +57,15 @@ pub(crate) struct ResolvedPaths {
 
 /// Read the configured pair from disk and validate it.
 pub(crate) fn load_material(dir: &Path, config: &CertConfig) -> Result<Material, String> {
-    if config.source == CERT_SOURCE_PKCS12 {
-        return Err(PKCS12_UNSUPPORTED.to_string());
-    }
-
     let paths = resolve_paths(dir, config)?;
-    let cert_pem = fs::read(&paths.cert).map_err(|error| format!("读取证书失败: {error}"))?;
-    let key_pem = fs::read(&paths.key).map_err(|error| format!("读取私钥失败: {error}"))?;
+    let (cert_pem, key_pem) = if config.source == CERT_SOURCE_PKCS12 {
+        let pfx = fs::read(&paths.cert).map_err(|error| format!("读取证书失败: {error}"))?;
+        decode_pkcs12(&pfx, &config.pkcs12_password)?
+    } else {
+        let cert_pem = fs::read(&paths.cert).map_err(|error| format!("读取证书失败: {error}"))?;
+        let key_pem = fs::read(&paths.key).map_err(|error| format!("读取私钥失败: {error}"))?;
+        (cert_pem, key_pem)
+    };
 
     let chain = parse_pair(&cert_pem, &key_pem)?;
     let leaf = summarize(&chain)?;
@@ -74,6 +74,35 @@ pub(crate) fn load_material(dir: &Path, config: &CertConfig) -> Result<Material,
         key_pem,
         leaf,
     })
+}
+
+/// Decrypts a PKCS#12 archive into a PEM certificate (leaf only, like the former Go service) and
+/// a PKCS#8 PEM private key.
+pub(crate) fn decode_pkcs12(data: &[u8], password: &str) -> Result<(Vec<u8>, Vec<u8>), String> {
+    let store = KeyStore::from_pkcs12(data, password, Pkcs12ImportPolicy::Strict)
+        .map_err(|error| format!("解析 PKCS#12 失败（口令是否正确）: {error}"))?;
+    let (_, chain) = store
+        .private_key_chain()
+        .ok_or_else(|| "PKCS#12 中缺少私钥或证书".to_string())?;
+    let leaf = chain
+        .certs()
+        .first()
+        .ok_or_else(|| "PKCS#12 中缺少私钥或证书".to_string())?;
+    Ok((
+        pem_encode("CERTIFICATE", leaf.as_der()),
+        pem_encode("PRIVATE KEY", chain.key().as_der()),
+    ))
+}
+
+pub(crate) fn pem_encode(label: &str, der: &[u8]) -> Vec<u8> {
+    let encoded = base64::engine::general_purpose::STANDARD.encode(der);
+    let mut pem = format!("-----BEGIN {label}-----\n").into_bytes();
+    for line in encoded.as_bytes().chunks(64) {
+        pem.extend_from_slice(line);
+        pem.push(b'\n');
+    }
+    pem.extend_from_slice(format!("-----END {label}-----\n").as_bytes());
+    pem
 }
 
 /// Derive the effective certificate/key paths from the configuration.

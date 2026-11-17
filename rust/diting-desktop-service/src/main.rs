@@ -35,6 +35,9 @@ impl Restorer for ManagerRestorer {
 
 #[tokio::main]
 async fn main() {
+    // Must run before the first print: elevated and double-clicked launches have no console.
+    #[cfg(windows)]
+    windows_host::ensure_std_output();
     let cli = match cli::parse(std::env::args()) {
         Ok(cli) => cli,
         Err(error) => {
