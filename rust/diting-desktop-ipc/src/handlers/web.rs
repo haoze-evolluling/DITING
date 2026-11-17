@@ -25,7 +25,12 @@ pub async fn handle_configure(server: &Server, ctx: &Ctx<'_>) -> Resp {
         Err(response) => return response,
     };
     match server.runtime().configure_web(request).await {
-        Ok(()) => ok_message("局域网 Web 远程管理配置已保存并生效"),
+        Ok(()) => match server.restart_listener().await {
+            Ok(address) => ok_message(&format!(
+                "局域网 Web 远程管理配置已保存并生效，服务已监听 {address}"
+            )),
+            Err(error) => internal_error(format!("Web 配置已保存，但重启 IPC 服务失败: {error}")),
+        },
         Err(error) => internal_error(error.message),
     }
 }

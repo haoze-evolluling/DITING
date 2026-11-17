@@ -564,6 +564,7 @@ dependencies = [
  "diting-filter-core",
  "diting-go-compat",
  "diting-ratelimit-core",
+ "diting-resolver-core",
  "diting-response-core",
  "diting-rewrite-core",
  "diting-safebrowsing-core",

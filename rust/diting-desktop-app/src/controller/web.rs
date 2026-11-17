@@ -191,11 +191,10 @@ impl AppRuntime {
         }
     }
 
-    /// `ConfigureWeb`.
+    /// `ConfigureWeb`: persists the target and lets the IPC layer rebind the listener.
     ///
-    /// The listen address is persisted; applying it to the already-running IPC socket requires a
-    /// restart, which the service performs on the next start (the Go server did an in-process
-    /// rebind, which the Rust supervisor does not attempt from inside a request handler).
+    /// The rebind itself lives in `diting-desktop-ipc` (the handler owns the server handle), which
+    /// keeps this crate independent of the HTTP layer.
     pub async fn configure_web(&self, request: ConfigureWebRequest) -> Result<(), ControllerError> {
         let port = if request.port > 0 {
             request.port

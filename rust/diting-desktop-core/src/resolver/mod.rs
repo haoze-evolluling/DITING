@@ -62,6 +62,11 @@ impl ResolverSet {
         self.provider_count
     }
 
+    /// Per-provider statistics of the primary chain, keyed by configured provider id.
+    pub fn provider_stats(&self) -> Vec<(String, diting_resolver_core::stats::Snapshot)> {
+        self.primary.provider_stats()
+    }
+
     /// Resolves one wire query. `group` is the client group id; empty or `default` means the main
     /// chain. Conditional routes are consulted only when no group owns the query.
     pub async fn resolve(&self, query: &[u8], group: &str) -> Result<Vec<u8>, String> {
@@ -275,6 +280,11 @@ impl DesktopResolver {
 
     pub async fn resolve(&self, query: &[u8], group: &str) -> Result<Vec<u8>, String> {
         self.current().resolve(query, group).await
+    }
+
+    /// Per-provider statistics keyed by configured id; empty before the first configure.
+    pub fn provider_stats(&self) -> Vec<(String, diting_resolver_core::stats::Snapshot)> {
+        self.current().provider_stats()
     }
 
     fn deps(&self, trust: &Arc<diting_engine::resolver::UpstreamTrust>) -> ResolverDeps {

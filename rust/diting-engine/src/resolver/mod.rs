@@ -287,6 +287,16 @@ impl Resolver {
             .collect()
     }
 
+    /// The same snapshots paired with their provider ids, for consumers that address providers by
+    /// configured id (the desktop status endpoint) rather than by position.
+    pub fn provider_stats(&self) -> Vec<(String, diting_resolver_core::stats::Snapshot)> {
+        self.inner
+            .providers
+            .iter()
+            .map(|provider| (provider.id.clone(), provider.stats.snapshot()))
+            .collect()
+    }
+
     /// Whether any DoH provider has advertised an HTTP/3 endpoint (`Alt-Svc: h3`). N7's upgrade
     /// signal; `false` when no DoH transport is configured.
     pub fn doh3_ready(&self) -> bool {

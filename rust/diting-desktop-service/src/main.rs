@@ -124,7 +124,7 @@ async fn run(cli: &Cli) -> Result<(), String> {
     if let Err(error) = runtime.load_cache() {
         eprintln!("[缓存] 恢复缓存失败，将以空缓存启动: {error}");
     }
-    let ipc = diting_desktop_ipc::Server::new(Arc::clone(&runtime));
+    let ipc = Arc::new(diting_desktop_ipc::Server::new(Arc::clone(&runtime)));
     runtime.set_observer(ipc.query_observer());
     let maintenance = diting_desktop_app::maintenance::Maintenance::spawn(Arc::clone(&runtime));
 

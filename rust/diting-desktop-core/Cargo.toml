@@ -8,6 +8,7 @@ publish = false
 [dependencies]
 diting-desktop-api = { path = "../diting-desktop-api" }
 diting-engine = { path = "../diting-engine" }
+diting-resolver-core = { path = "../diting-resolver-core" }
 diting-dns-cache-core = { path = "../diting-dns-cache-core" }
 diting-dns-core = { path = "../diting-dns-core" }
 diting-dns-wire = { path = "../diting-dns-wire" }

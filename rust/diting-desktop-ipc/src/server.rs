@@ -2,7 +2,7 @@
 
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock, Weak};
 
 use base64::Engine;
 use http_body_util::{BodyExt, Full};
@@ -42,6 +42,8 @@ pub struct Server {
     shutdown: Mutex<Option<oneshot::Sender<()>>>,
     join: Mutex<Option<JoinHandle<()>>>,
     started: AtomicBool,
+    /// Weak self-reference so a request handler can rebind the listener from inside a connection.
+    self_ref: OnceLock<Weak<Server>>,
 }
 
 impl Server {
@@ -56,6 +58,7 @@ impl Server {
             shutdown: Mutex::new(None),
             join: Mutex::new(None),
             started: AtomicBool::new(false),
+            self_ref: OnceLock::new(),
         }
     }
 
@@ -71,6 +74,7 @@ impl Server {
             shutdown: Mutex::new(None),
             join: Mutex::new(None),
             started: AtomicBool::new(false),
+            self_ref: OnceLock::new(),
         }
     }
 
@@ -100,10 +104,54 @@ impl Server {
     }
 
     /// Binds the configured address and serves until [`Server::shutdown`].
-    pub async fn start(&self) -> Result<(), String> {
+    pub async fn start(self: &Arc<Self>) -> Result<(), String> {
         if self.started.swap(true, Ordering::SeqCst) {
             return Err("IPC 服务已启动".to_string());
         }
+        let _ = self.self_ref.set(Arc::downgrade(self));
+        let (listener, local) = self.bind_configured().await?;
+        *self.listener_addr.lock().await = Some(local);
+        let (sender, receiver) = oneshot::channel::<()>();
+        *self.shutdown.lock().await = Some(sender);
+        *self.join.lock().await = Some(spawn_accept_loop(Arc::clone(self), listener, receiver));
+        Ok(())
+    }
+
+    /// Rebinds to the current configuration without dropping existing connections.
+    ///
+    /// The old accept loop is stopped before the new socket is bound (a wildcard bind conflicts
+    /// with the previous loopback socket). Connections already accepted keep running on their own
+    /// tasks until the client closes them, which is what lets the triggering request answer at
+    /// all.
+    pub async fn restart(self: &Arc<Self>) -> Result<SocketAddr, String> {
+        if let Some(sender) = self.shutdown.lock().await.take() {
+            let _ = sender.send(());
+        }
+        if let Some(handle) = self.join.lock().await.take() {
+            let _ = tokio::time::timeout(std::time::Duration::from_secs(1), handle).await;
+        }
+        // Give the OS a moment to release the port; the Go server slept 100 ms before rebinding.
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        let (listener, local) = self.bind_configured().await?;
+        let (sender, receiver) = oneshot::channel::<()>();
+        *self.shutdown.lock().await = Some(sender);
+        *self.join.lock().await = Some(spawn_accept_loop(Arc::clone(self), listener, receiver));
+        *self.listener_addr.lock().await = Some(local);
+        Ok(local)
+    }
+
+    /// Rebinds the live listener; used by the Web-console configuration endpoint.
+    ///
+    /// Handlers only see `&Server`, so the upgrade to `Arc<Server>` goes through the weak
+    /// self-reference installed by [`Server::start`].
+    pub async fn restart_listener(&self) -> Result<SocketAddr, String> {
+        let Some(server) = self.self_ref.get().and_then(Weak::upgrade) else {
+            return Err("IPC 服务尚未启动".to_string());
+        };
+        server.restart().await
+    }
+
+    async fn bind_configured(&self) -> Result<(TcpListener, SocketAddr), String> {
         let address = self.runtime.config().ipc.listen_address;
         let address = if address.is_empty() {
             "127.0.0.1:15353".to_string()
@@ -116,38 +164,7 @@ impl Server {
         let local = listener
             .local_addr()
             .map_err(|error| format!("读取 IPC 监听地址失败: {error}"))?;
-        *self.listener_addr.lock().await = Some(local);
-
-        let (sender, mut receiver) = oneshot::channel::<()>();
-        *self.shutdown.lock().await = Some(sender);
-
-        let runtime = Arc::clone(&self.runtime);
-        let auth = Arc::clone(&self.auth);
-        let hub = Arc::clone(&self.hub);
-        let handle = tokio::spawn(async move {
-            loop {
-                tokio::select! {
-                    _ = &mut receiver => break,
-                    accepted = listener.accept() => {
-                        let Ok((stream, remote)) = accepted else { continue };
-                        let runtime = Arc::clone(&runtime);
-                        let auth = Arc::clone(&auth);
-                        let hub = Arc::clone(&hub);
-                        tokio::spawn(async move {
-                            let service = hyper::service::service_fn(move |request| {
-                                serve_request(request, remote, Arc::clone(&runtime), Arc::clone(&auth), Arc::clone(&hub))
-                            });
-                            let builder = Builder::new(TokioExecutor::new());
-                            let _ = builder
-                                .serve_connection_with_upgrades(TokioIo::new(stream), service)
-                                .await;
-                        });
-                    }
-                }
-            }
-        });
-        *self.join.lock().await = Some(handle);
-        Ok(())
+        Ok((listener, local))
     }
 
     pub async fn shutdown(&self) {
@@ -193,22 +210,39 @@ impl Server {
     }
 }
 
+/// Accepts connections until the shutdown signal fires, handing each connection to its own task.
+fn spawn_accept_loop(
+    server: Arc<Server>,
+    listener: TcpListener,
+    mut receiver: oneshot::Receiver<()>,
+) -> JoinHandle<()> {
+    tokio::spawn(async move {
+        loop {
+            tokio::select! {
+                _ = &mut receiver => break,
+                accepted = listener.accept() => {
+                    let Ok((stream, remote)) = accepted else { continue };
+                    let server = Arc::clone(&server);
+                    tokio::spawn(async move {
+                        let service = hyper::service::service_fn(move |request| {
+                            serve_request(request, remote, Arc::clone(&server))
+                        });
+                        let builder = Builder::new(TokioExecutor::new());
+                        let _ = builder
+                            .serve_connection_with_upgrades(TokioIo::new(stream), service)
+                            .await;
+                    });
+                }
+            }
+        }
+    })
+}
+
 async fn serve_request(
     request: Request<Incoming>,
     remote: SocketAddr,
-    runtime: Arc<AppRuntime>,
-    auth: Arc<AuthManager>,
-    hub: Arc<WsHub>,
+    server: Arc<Server>,
 ) -> Result<Response<Full<Bytes>>, hyper::Error> {
-    let server = Server {
-        runtime,
-        auth,
-        hub,
-        listener_addr: Mutex::new(None),
-        shutdown: Mutex::new(None),
-        join: Mutex::new(None),
-        started: AtomicBool::new(false),
-    };
     let response = handle_request(&server, request, remote).await;
     Ok(response)
 }

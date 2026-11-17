@@ -148,6 +148,14 @@ impl DesktopCache {
             .is_excluded(domain)
     }
 
+    /// How many queries the exclusion patterns have kept out of the cache so far.
+    pub fn exclude_hits(&self) -> u64 {
+        self.excluder
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .hits()
+    }
+
     pub fn key_for(&self, query: &[u8], group: &str) -> Option<Vec<u8>> {
         let key = diting_dns_wire::question_key(query)?;
         Some(tag_key(&key.key, group))

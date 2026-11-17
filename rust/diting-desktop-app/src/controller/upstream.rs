@@ -4,9 +4,9 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
-use tokio::net::UdpSocket;
 
 use diting_desktop_api::config::{BootstrapConfig, ProviderConfig, ResolverConfig};
+use diting_desktop_core::resolver::{DesktopResolver, ProviderSettings, ResolverSettings};
 
 use crate::controller::ControllerError;
 use crate::AppRuntime;
@@ -210,8 +210,8 @@ impl AppRuntime {
 
     /// `TestUpstream`.
     ///
-    /// Only plain UDP is implemented in the Rust backend; encrypted transports return a clear
-    /// error instead of a fabricated latency.
+    /// The probe runs through the same engine transports as production queries, so a successful
+    /// test proves the protocol, TLS setup and bootstrap path, not just that a socket opened.
     pub async fn test_upstream(&self, request: TestUpstreamRequest) -> TestUpstreamResponse {
         let target = if !request.server.trim().is_empty() {
             request.server.trim().to_string()
@@ -219,82 +219,130 @@ impl AppRuntime {
             request.url.trim().to_string()
         };
         if target.is_empty() {
-            return TestUpstreamResponse {
-                success: false,
-                error: "未指定服务器地址".to_string(),
-                ..TestUpstreamResponse::default()
-            };
+            return failed("未指定服务器地址".to_string(), 0.0);
         }
         let protocol = if request.protocol.trim().is_empty() {
             "PLAIN".to_string()
         } else {
             request.protocol.trim().to_ascii_uppercase()
         };
-        if protocol != "PLAIN" {
-            return TestUpstreamResponse {
-                success: false,
-                error: format!("当前 Rust 后端仅支持 PLAIN 上游连通性测试，{protocol} 暂未实现"),
-                ..TestUpstreamResponse::default()
-            };
+        let provider = match probe_provider(protocol.as_str(), target.as_str(), request.url.trim())
+        {
+            Ok(provider) => provider,
+            Err(error) => return failed(error, 0.0),
+        };
+
+        let resolver = DesktopResolver::new();
+        resolver.configure(
+            &ResolverSettings {
+                mode: "single".to_string(),
+                providers: vec![provider],
+                ..ResolverSettings::default()
+            },
+            &[],
+        );
+        if resolver.current().provider_count() == 0 {
+            return failed(format!("{protocol} 地址无效，无法建立上游连接"), 0.0);
         }
 
-        let address = if target.contains(':') {
-            target.clone()
-        } else {
-            format!("{target}:53")
-        };
         let query = plain_query("dns.alidns.com", 1);
         let started = Instant::now();
         let result =
-            tokio::time::timeout(Duration::from_secs(3), udp_exchange(&address, &query)).await;
+            tokio::time::timeout(Duration::from_secs(3), resolver.resolve(&query, "")).await;
         let latency = started.elapsed().as_secs_f64() * 1000.0;
+        // Dropping the temporary resolver closes its pooled connections.
+        drop(resolver);
         match result {
-            Ok(Ok(())) => TestUpstreamResponse {
+            Ok(Ok(_)) => TestUpstreamResponse {
                 success: true,
                 latency_ms: latency,
                 error: String::new(),
             },
-            Ok(Err(error)) => TestUpstreamResponse {
-                success: false,
-                latency_ms: latency,
-                error,
-            },
-            Err(_) => TestUpstreamResponse {
-                success: false,
-                latency_ms: latency,
-                error: "请求超时".to_string(),
-            },
+            Ok(Err(error)) => failed(error, latency),
+            Err(_) => failed("请求超时".to_string(), latency),
         }
     }
 }
 
-async fn udp_exchange(address: &str, query: &[u8]) -> Result<(), String> {
-    let target = tokio::net::lookup_host(address)
-        .await
-        .map_err(|error| error.to_string())?
-        .next()
-        .ok_or_else(|| "无法解析服务地址".to_string())?;
-    let bind = if target.is_ipv4() {
-        "0.0.0.0:0"
-    } else {
-        "[::]:0"
-    };
-    let socket = UdpSocket::bind(bind)
-        .await
-        .map_err(|error| error.to_string())?;
-    socket
-        .send_to(query, target)
-        .await
-        .map_err(|error| error.to_string())?;
-    let mut buffer = [0u8; 4096];
-    let (len, _) = socket
-        .recv_from(&mut buffer)
-        .await
-        .map_err(|error| error.to_string())?;
-    if len < 12 {
-        return Err("DNS 应答长度异常".to_string());
+fn failed(message: impl Into<String>, latency_ms: f64) -> TestUpstreamResponse {
+    TestUpstreamResponse {
+        success: false,
+        latency_ms,
+        error: message.into(),
     }
-    Ok(())
+}
+
+/// Builds a single-provider test configuration, defaulting the port/path like the Go probe did.
+fn probe_provider(protocol: &str, target: &str, url: &str) -> Result<ProviderSettings, String> {
+    let provider = ProviderSettings {
+        id: "upstream-test".to_string(),
+        protocol: protocol.to_string(),
+        weight: 1,
+        ..ProviderSettings::default()
+    };
+    match protocol {
+        "PLAIN" => Ok(ProviderSettings {
+            server: with_default_port(target, 53),
+            ..provider
+        }),
+        "DOT" => Ok(ProviderSettings {
+            server: with_default_port(target, 853),
+            ..provider
+        }),
+        "DOH" => Ok(ProviderSettings {
+            url: doh_url(target, url),
+            ..provider
+        }),
+        "DOQ" => Ok(ProviderSettings {
+            url: if url.is_empty() {
+                format!("quic://{}", with_default_port(target, 853))
+            } else {
+                url.to_string()
+            },
+            ..provider
+        }),
+        other => Err(format!("不支持的上游协议: {other}")),
+    }
+}
+
+fn with_default_port(target: &str, port: u16) -> String {
+    let trimmed = target.trim();
+    let bracketed = trimmed.starts_with('[');
+    let has_port = if bracketed {
+        trimmed.contains("]:")
+    } else {
+        trimmed
+            .rsplit_once(':')
+            .map(|(host, value)| {
+                !host.is_empty()
+                    && !host.contains(':')
+                    && !value.is_empty()
+                    && value.chars().all(|character| character.is_ascii_digit())
+            })
+            .unwrap_or(false)
+    };
+    if has_port {
+        trimmed.to_string()
+    } else if trimmed.contains(':') {
+        // A bare IPv6 literal is not bracketed yet.
+        format!("[{trimmed}]:{port}")
+    } else {
+        format!("{trimmed}:{port}")
+    }
+}
+
+fn doh_url(target: &str, url: &str) -> String {
+    let mut value = if !url.is_empty() {
+        url.to_string()
+    } else if target.starts_with("http://") || target.starts_with("https://") {
+        target.to_string()
+    } else {
+        format!("https://{target}")
+    };
+    if !value.contains("/dns-query") {
+        value = format!("{}/dns-query", value.trim_end_matches('/'));
+    }
+    value
 }
 
 /// Builds a minimal single-question DNS query.
@@ -318,4 +366,40 @@ fn plain_query(name: &str, qtype: u16) -> Vec<u8> {
     out.extend_from_slice(&qtype.to_be_bytes());
     out.extend_from_slice(&1u16.to_be_bytes());
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn probe_endpoints_get_their_default_ports() {
+        let plain = probe_provider("PLAIN", "1.1.1.1", "").unwrap();
+        assert_eq!(plain.server, "1.1.1.1:53");
+        let dot = probe_provider("DOT", "dns.alidns.com", "").unwrap();
+        assert_eq!(dot.server, "dns.alidns.com:853");
+        // An explicit port wins, and a bare IPv6 literal is bracketed.
+        assert_eq!(with_default_port("1.1.1.1:5353", 53), "1.1.1.1:5353");
+        assert_eq!(with_default_port("::1", 53), "[::1]:53");
+    }
+
+    #[test]
+    fn doh_urls_always_carry_the_query_path() {
+        assert_eq!(
+            doh_url("dns.alidns.com", ""),
+            "https://dns.alidns.com/dns-query"
+        );
+        assert_eq!(
+            doh_url("https://dns.alidns.com", ""),
+            "https://dns.alidns.com/dns-query"
+        );
+        assert_eq!(
+            doh_url("ignored", "https://example.com/resolve"),
+            "https://example.com/resolve/dns-query"
+        );
+        assert_eq!(
+            doh_url("ignored", "https://example.com/dns-query"),
+            "https://example.com/dns-query"
+        );
+    }
 }

@@ -187,25 +187,45 @@ impl AppRuntime {
         let lan_addresses = self.lan_addresses();
         let effective_udp = effective_listen_addresses(&config.dns).0;
 
+        let stats: std::collections::HashMap<String, _> =
+            self.resolver.provider_stats().into_iter().collect();
+        let now_ns = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_nanos().min(i64::MAX as u128) as i64)
+            .unwrap_or(0);
         let upstreams = config
             .upstream
             .providers
             .iter()
-            .map(|provider| UpstreamInfo {
-                id: provider.id.clone(),
-                protocol: provider.protocol.to_ascii_uppercase(),
-                server: provider.server.clone(),
-                url: provider.url.clone(),
-                weight: if provider.weight > 0 {
-                    provider.weight
-                } else {
-                    1
-                },
-                active: true,
-                success_count: 0,
-                failure_count: 0,
-                avg_latency_ms: 0.0,
-                pin_set: !provider.pin.trim().is_empty(),
+            .map(|provider| {
+                let snapshot = stats.get(&provider.id);
+                UpstreamInfo {
+                    id: provider.id.clone(),
+                    protocol: provider.protocol.to_ascii_uppercase(),
+                    server: provider.server.clone(),
+                    url: provider.url.clone(),
+                    weight: if provider.weight > 0 {
+                        provider.weight
+                    } else {
+                        1
+                    },
+                    // A provider whose circuit breaker is open is not selectable right now.
+                    active: snapshot
+                        .map(|stats| stats.circuit_open_until_ns <= now_ns)
+                        .unwrap_or(true),
+                    // `sample_count` counts successful RTT samples; without one the panel shows a
+                    // cold provider rather than a fabricated success.
+                    success_count: snapshot
+                        .map(|stats| stats.sample_count.max(0) as u64)
+                        .unwrap_or(0),
+                    failure_count: snapshot
+                        .map(|stats| u64::from(stats.failure_count))
+                        .unwrap_or(0),
+                    avg_latency_ms: snapshot
+                        .map(|stats| stats.ewma_rtt_ns.max(0) as f64 / 1_000_000.0)
+                        .unwrap_or(0.0),
+                    pin_set: !provider.pin.trim().is_empty(),
+                }
             })
             .collect();
 

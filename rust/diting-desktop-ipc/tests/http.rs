@@ -37,7 +37,7 @@ fn test_config(root: &Path) -> Config {
     config
 }
 
-async fn start(tag: &str, config: Config) -> (Server, PathBuf) {
+async fn start(tag: &str, config: Config) -> (Arc<Server>, PathBuf) {
     let root = temp_root(tag);
     std::fs::create_dir_all(&root).unwrap();
     let path = root.join("config.json");
@@ -46,7 +46,7 @@ async fn start(tag: &str, config: Config) -> (Server, PathBuf) {
         path.clone(),
         PlatformHandles::default(),
     ));
-    let server = Server::new(runtime);
+    let server = Arc::new(Server::new(runtime));
     server.start().await.unwrap();
     (server, root)
 }
@@ -174,6 +174,28 @@ async fn representative_handler_persists_a_temporary_config() {
     if let Some(parent) = runtime_path.parent() {
         let _ = std::fs::remove_dir_all(parent);
     }
+}
+
+#[tokio::test]
+async fn restart_rebinds_to_the_configured_address() {
+    let (server, root) = start("webrebind", test_config(Path::new("."))).await;
+    let before = server.addr().await.unwrap();
+
+    // Reserve an ephemeral port, release it, then point the configuration at it.
+    let probe = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let target = probe.local_addr().unwrap();
+    drop(probe);
+    server
+        .runtime()
+        .update_config_in_memory(|config| config.ipc.listen_address = target.to_string());
+    let after = server.restart().await.unwrap();
+    assert_eq!(after, target);
+    assert_ne!(before, after);
+    let (status, text) = get(after, "/api/v1/health").await;
+    assert_eq!(status, 200, "{text}");
+
+    server.shutdown().await;
+    let _ = std::fs::remove_dir_all(root);
 }
 
 #[tokio::test]

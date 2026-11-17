@@ -193,7 +193,7 @@ impl AppRuntime {
             interval_sec: config.cache.persist_interval_seconds,
             last_error: String::new(),
             exclude_rules: config.cache.exclude_patterns.clone(),
-            exclude_hits: 0,
+            exclude_hits: self.cache.exclude_hits(),
         }
     }
 
