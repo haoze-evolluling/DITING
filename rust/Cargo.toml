@@ -60,6 +60,7 @@ members = [
     "diting-tun-spike",
     "diting-corpus",
     "diting-desktop-api",
+    "diting-desktop-app",
     "diting-desktop-core",
     "diting-desktop-dns",
     "diting-desktop-ipc",

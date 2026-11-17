@@ -70,7 +70,9 @@ mod tests {
     use diting_dns_wire::build::MessageBuilder;
 
     fn context(qtype: u16) -> DnsContext {
-        let query = MessageBuilder::query("ads.example", qtype, 1).finish().unwrap();
+        let query = MessageBuilder::query("ads.example", qtype, 1)
+            .finish()
+            .unwrap();
         DnsContext::new(query, None, crate::context::Transport::Udp).unwrap()
     }
 

@@ -9,32 +9,34 @@
 //! Stages that consult hot-reloaded configuration hold a [`ConfigHandle`] and copy only the
 //! fields they need while holding the read lock — never across an `.await`.
 
+pub mod access;
 pub mod any;
 pub mod block;
+pub mod bogus;
+pub mod cache;
+pub mod client;
+pub mod ddr;
 pub mod dns64;
 pub mod ech;
 pub mod ecs;
 pub mod ede;
 pub mod filter;
+pub mod filter_response;
+pub mod forward;
+pub mod hosts;
 pub mod ipv6;
+pub mod metrics;
 pub mod private_ptr;
+pub mod ratelimit;
 pub mod rebind;
 pub mod records;
+pub mod rewrite;
+pub mod safebrowsing;
+pub mod safesearch;
 pub mod sudn;
 pub mod unqualified;
-pub mod metrics;
 pub mod util;
-pub mod safesearch;
 pub mod zone;
-pub mod rewrite;
-pub mod hosts;
-pub mod ratelimit;
-pub mod access;
-pub mod client;
-pub mod bogus;
-pub mod filter_response;
-pub mod cache;
-pub mod forward;
 
 use std::sync::{Arc, RwLock};
 

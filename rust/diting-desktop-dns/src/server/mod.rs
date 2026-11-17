@@ -154,9 +154,29 @@ impl DnsServer {
         client: Option<std::net::SocketAddr>,
         transport: Transport,
     ) -> Vec<u8> {
+        self.handle_with_identity(request, client, transport, None)
+            .await
+    }
+
+    /// The encrypted-entry variant of [`handle_wire`](Self::handle_wire): the caller supplies the
+    /// ClientID it extracted from the SNI or the DoH path, which is written to the context and its
+    /// `client_id` attribute before the pipeline runs.
+    pub async fn handle_with_identity(
+        &self,
+        request: Vec<u8>,
+        client: Option<std::net::SocketAddr>,
+        transport: Transport,
+        client_id: Option<String>,
+    ) -> Vec<u8> {
         let Some(mut ctx) = DnsContext::new(request, client, transport) else {
             return fallback_servfail(&[]);
         };
+        if let Some(client_id) = client_id {
+            if !client_id.is_empty() {
+                ctx.client_id = client_id.clone();
+                ctx.set("client_id", client_id);
+            }
+        }
         let request_copy = ctx.request.clone();
         if !is_standard_query(&request_copy) {
             return fallback_servfail(&request_copy);

@@ -16,5 +16,6 @@ pub mod querylog;
 pub mod ratelimit;
 pub mod resolver;
 pub mod rewrite;
+pub mod safebrowsing;
 pub mod safesearch;
 pub mod zone;

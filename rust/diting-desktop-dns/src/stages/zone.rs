@@ -34,9 +34,7 @@ impl Stage for ZoneStage {
         if !self.engine.enabled() {
             return StageResult::Continue;
         }
-        let answer = self
-            .engine
-            .lookup(&ctx.question.name, ctx.question.qtype);
+        let answer = self.engine.lookup(&ctx.question.name, ctx.question.qtype);
         if !answer.matched {
             return StageResult::Continue;
         }
@@ -53,10 +51,7 @@ impl Stage for ZoneStage {
         let nodata = answer.answers.is_empty();
         respond(ctx, builder);
         ctx.set("source", "zone");
-        ctx.set(
-            "cache_hit",
-            if nodata { "zone_nodata" } else { "zone" },
-        );
+        ctx.set("cache_hit", if nodata { "zone_nodata" } else { "zone" });
         StageResult::Stop
     }
 }
@@ -75,7 +70,12 @@ fn to_wire(record: &ZoneRecord) -> ResourceRecord {
             preference: *preference,
             exchange: exchange.clone(),
         },
-        ZoneRData::Txt(values) => RData::Txt(values.iter().map(|value| value.as_bytes().to_vec()).collect()),
+        ZoneRData::Txt(values) => RData::Txt(
+            values
+                .iter()
+                .map(|value| value.as_bytes().to_vec())
+                .collect(),
+        ),
         ZoneRData::Srv {
             priority,
             weight,
@@ -104,11 +104,7 @@ fn to_wire(record: &ZoneRecord) -> ResourceRecord {
             expire: *expire,
             minimum: *minimum,
         },
-        ZoneRData::Caa {
-            flags,
-            tag,
-            value,
-        } => RData::Caa {
+        ZoneRData::Caa { flags, tag, value } => RData::Caa {
             flags: *flags,
             tag: tag.clone(),
             value: value.as_bytes().to_vec(),

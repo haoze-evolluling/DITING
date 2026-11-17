@@ -42,12 +42,8 @@ impl Stage for FilterStage {
         if domain.is_empty() {
             return StageResult::Continue;
         }
-        let verdict = self
-            .engine
-            .check(&domain, ctx.question.qtype, &ctx.group);
-        if verdict.action == VerdictAction::Pass
-            && verdict.reason == REASON_SCHEDULE_INACTIVE
-        {
+        let verdict = self.engine.check(&domain, ctx.question.qtype, &ctx.group);
+        if verdict.action == VerdictAction::Pass && verdict.reason == REASON_SCHEDULE_INACTIVE {
             ctx.set("filter_action", "pass");
             ctx.set("filter_blocked", "false");
             ctx.set("filter_reason", &verdict.reason);

@@ -24,7 +24,10 @@ pub struct FilterResponseStage {
 
 impl FilterResponseStage {
     pub fn new(engine: RuleEngine) -> Self {
-        Self { engine, cache: None }
+        Self {
+            engine,
+            cache: None,
+        }
     }
 
     pub fn with_cache(mut self, cache: Arc<DesktopCache>) -> Self {

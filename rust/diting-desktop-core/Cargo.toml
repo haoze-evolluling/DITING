@@ -19,6 +19,7 @@ diting-go-compat = { path = "../diting-go-compat" }
 diting-config-core = { path = "../diting-config-core" }
 diting-ratelimit-core = { path = "../diting-ratelimit-core" }
 diting-cert-core = { path = "../diting-cert-core" }
+diting-safebrowsing-core = { path = "../diting-safebrowsing-core" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

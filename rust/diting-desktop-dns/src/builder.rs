@@ -15,6 +15,7 @@ use diting_desktop_core::metrics::MetricsTracker;
 use diting_desktop_core::ratelimit::RateLimiter;
 use diting_desktop_core::resolver::DesktopResolver;
 use diting_desktop_core::rewrite::RewriteEngine;
+use diting_desktop_core::safebrowsing::SafeBrowsingEngine;
 use diting_desktop_core::safesearch::SafeSearchEngine;
 use diting_desktop_core::zone::ZoneEngine;
 
@@ -25,6 +26,7 @@ use crate::stages::{
     bogus::BogusNxDomainStage,
     cache::CacheStage,
     client::ClientStage,
+    ddr::{DdrProvider, DdrStage},
     dns64::Dns64Stage,
     ech::EchStage,
     ecs::EcsStage,
@@ -39,6 +41,7 @@ use crate::stages::{
     ratelimit::RateLimitStage,
     rebind::RebindStage,
     rewrite::RewriteStage,
+    safebrowsing::SafeBrowsingStage,
     safesearch::SafeSearchStage,
     sudn::SudnStage,
     unqualified::UnqualifiedStage,
@@ -55,25 +58,29 @@ pub struct PipelineParts {
     pub rewrite: Arc<RewriteEngine>,
     pub zone: Arc<ZoneEngine>,
     pub safesearch: Arc<SafeSearchEngine>,
+    pub safebrowsing: Arc<SafeBrowsingEngine>,
     pub clients: Arc<ClientDirectory>,
     pub access: Arc<AccessControl>,
     pub ratelimit: Arc<RateLimiter>,
     pub metrics: Arc<MetricsTracker>,
     pub observer: Option<Arc<dyn QueryObserver>>,
+    /// `None` disables DDR even when the configuration asks for it (no encrypted listener).
+    pub ddr: Option<Arc<dyn DdrProvider>>,
 }
 
 impl PipelineParts {
     pub fn build(self) -> Arc<Pipeline> {
-        let mut stages: Vec<Arc<dyn Stage>> = Vec::new();
-        stages.push(Arc::new(MetricsStage::new(
-            self.metrics,
-            self.observer.clone(),
-        )));
-        stages.push(Arc::new(EdeStage::new(self.config.clone())));
-        stages.push(Arc::new(EchStage::new(self.config.clone())));
-        stages.push(Arc::new(ClientStage::new(self.clients)));
-        stages.push(Arc::new(AccessStage::new(self.access)));
-        stages.push(Arc::new(RateLimitStage::new(self.ratelimit)));
+        let mut stages: Vec<Arc<dyn Stage>> = vec![
+            Arc::new(MetricsStage::new(self.metrics, self.observer.clone())),
+            Arc::new(EdeStage::new(self.config.clone())),
+            Arc::new(EchStage::new(self.config.clone())),
+            Arc::new(ClientStage::new(self.clients)),
+            Arc::new(AccessStage::new(self.access)),
+            Arc::new(RateLimitStage::new(self.ratelimit)),
+        ];
+        if let Some(provider) = self.ddr.clone() {
+            stages.push(Arc::new(DdrStage::new(self.config.clone(), provider)));
+        }
         stages.push(Arc::new(SudnStage));
         stages.push(Arc::new(ZoneStage::new(self.zone)));
         stages.push(Arc::new(HostsStage::new(self.hosts)));
@@ -84,6 +91,11 @@ impl PipelineParts {
         stages.push(Arc::new(UnqualifiedStage::new(self.config.clone())));
         stages.push(Arc::new(AnyStage::new(self.config.clone())));
         stages.push(Arc::new(FilterStage::new(self.filter.clone())));
+        stages.push(Arc::new(SafeBrowsingStage::new(
+            self.safebrowsing,
+            self.resolver.clone(),
+            self.filter.clone(),
+        )));
         stages.push(Arc::new(
             RebindStage::new(self.config.clone()).with_cache(self.cache.clone()),
         ));

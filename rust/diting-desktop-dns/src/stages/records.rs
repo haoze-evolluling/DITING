@@ -27,7 +27,12 @@ pub fn to_wire_rdata(record: &KernelRecord) -> RData {
         KernelRecord::Cname(name) => RData::Cname(name.clone()),
         KernelRecord::Ns(name) => RData::Ns(name.clone()),
         KernelRecord::Ptr(name) => RData::Ptr(name.clone()),
-        KernelRecord::Txt(values) => RData::Txt(values.iter().map(|value| value.as_bytes().to_vec()).collect()),
+        KernelRecord::Txt(values) => RData::Txt(
+            values
+                .iter()
+                .map(|value| value.as_bytes().to_vec())
+                .collect(),
+        ),
         KernelRecord::Mx {
             preference,
             exchange,
@@ -69,9 +74,7 @@ pub fn to_wire_rdata(record: &KernelRecord) -> RData {
 fn to_wire_svc_param(param: &KernelSvcParam) -> SvcParam {
     let key = param.key();
     let value = match param {
-        KernelSvcParam::Mandatory(keys) => {
-            keys.iter().flat_map(|key| key.to_be_bytes()).collect()
-        }
+        KernelSvcParam::Mandatory(keys) => keys.iter().flat_map(|key| key.to_be_bytes()).collect(),
         KernelSvcParam::Alpn(protocols) => {
             let mut value = Vec::new();
             for protocol in protocols {
@@ -125,7 +128,9 @@ pub fn response_records(message: &ParsedMessage) -> Vec<ResponseRecord> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use diting_dns_wire::build::{MessageBuilder, RData as WireRData, ResourceRecord as WireRecord};
+    use diting_dns_wire::build::{
+        MessageBuilder, RData as WireRData, ResourceRecord as WireRecord,
+    };
 
     #[test]
     fn response_records_preserve_alias_targets() {
@@ -171,7 +176,10 @@ mod tests {
             panic!("expected HTTPS");
         };
         assert_eq!(svcb.params.len(), 2);
-        assert_eq!(svcb.params[0].value, vec![2, b'h', b'2', 8, b'h', b't', b't', b'p', b'/', b'1', b'.', b'1']);
+        assert_eq!(
+            svcb.params[0].value,
+            vec![2, b'h', b'2', 8, b'h', b't', b't', b'p', b'/', b'1', b'.', b'1']
+        );
         assert_eq!(svcb.params[1].value, 8443u16.to_be_bytes());
     }
 }

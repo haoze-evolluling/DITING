@@ -5,6 +5,7 @@
 //! the same [`CertConfig`](diting_desktop_api::config::security::CertConfig) can travel over IPC
 //! or be written to `config.json` unchanged.
 
+pub mod derive;
 pub mod generate;
 pub mod health;
 pub mod manager;
@@ -14,6 +15,7 @@ mod material;
 #[cfg(test)]
 mod tests;
 
+pub use derive::derive_cert_names;
 pub use health::CertHealth;
 pub use manager::{CertInfo, CertManager};
 

@@ -535,6 +535,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "diting-desktop-app"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "diting-desktop-api",
+ "diting-desktop-core",
+ "diting-desktop-dns",
+ "diting-desktop-platform",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "diting-desktop-core"
 version = "0.1.0"
 dependencies = [
@@ -552,6 +566,7 @@ dependencies = [
  "diting-ratelimit-core",
  "diting-response-core",
  "diting-rewrite-core",
+ "diting-safebrowsing-core",
  "diting-services-core",
  "dns-lookup",
  "rand 0.10.3",
@@ -574,15 +589,24 @@ name = "diting-desktop-dns"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "base64 0.22.1",
  "diting-desktop-api",
  "diting-desktop-core",
  "diting-dns-core",
  "diting-dns-wire",
  "diting-dns64-core",
  "diting-rewrite-core",
+ "diting-safebrowsing-core",
+ "futures-util",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "quinn",
+ "rustls",
  "serde",
  "serde_json",
  "tokio",
+ "tokio-rustls",
 ]
 
 [[package]]
@@ -592,16 +616,21 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "diting-desktop-api",
+ "diting-desktop-app",
  "diting-desktop-core",
  "diting-desktop-dns",
  "diting-desktop-platform",
+ "diting-services-core",
+ "diting-stamp-core",
  "futures-util",
  "http-body-util",
  "hyper",
  "hyper-util",
+ "mime_guess",
  "rand 0.10.3",
  "serde",
  "serde_json",
+ "sha1",
  "sha2",
  "tokio",
  "tokio-tungstenite",
@@ -628,7 +657,9 @@ dependencies = [
 name = "diting-desktop-service"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "diting-desktop-api",
+ "diting-desktop-app",
  "diting-desktop-core",
  "diting-desktop-dns",
  "diting-desktop-ipc",
@@ -1710,6 +1741,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b0ca1155a9ecc25aa12e8313a119f32edf0255fea2f44839c4ac0a12b2ac157"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "mime"
+version = "0.3.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5848f5a9e8117cf94f2f90faac24a87ff81600ff8628c1e3deaab572e76bfa1"
+
+[[package]]
+name = "mime_guess"
+version = "2.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7c44f8e672c00fe5308fa235f821cb4198414e1c77935c1ab6948d3fd78550e"
+dependencies = [
+ "mime",
+ "unicase",
 ]
 
 [[package]]
@@ -2825,6 +2872,12 @@ name = "typenum"
 version = "1.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20"
+
+[[package]]
+name = "unicase"
+version = "2.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "357cc3acc6a036009fd6c973ed009037c732d60d0b4f6c673e9041497482a28f"
 
 [[package]]
 name = "unicode-ident"

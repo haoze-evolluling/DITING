@@ -59,12 +59,10 @@ impl Stage for SafeSearchStage {
                 let rdata = match (result.ip_type, ip) {
                     (TYPE_A, std::net::IpAddr::V4(ip)) => RData::A(ip),
                     (TYPE_AAAA, std::net::IpAddr::V6(ip)) => RData::Aaaa(ip),
-                    (TYPE_A, std::net::IpAddr::V6(ip)) => RData::A(
-                        match ip.to_ipv4_mapped() {
-                            Some(v4) => v4,
-                            None => std::net::Ipv4Addr::UNSPECIFIED,
-                        },
-                    ),
+                    (TYPE_A, std::net::IpAddr::V6(ip)) => RData::A(match ip.to_ipv4_mapped() {
+                        Some(v4) => v4,
+                        None => std::net::Ipv4Addr::UNSPECIFIED,
+                    }),
                     _ => return StageResult::Continue,
                 };
                 builder = builder.push_answer(ResourceRecord::new(

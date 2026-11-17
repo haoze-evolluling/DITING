@@ -122,8 +122,7 @@ mod tests {
             ))
             .finish();
         stage.after(&mut ctx).await;
-        let mut second =
-            DnsContext::new(query, None, crate::context::Transport::Udp).unwrap();
+        let mut second = DnsContext::new(query, None, crate::context::Transport::Udp).unwrap();
         assert_eq!(stage.before(&mut second).await, StageResult::Stop);
         assert_eq!(second.get("cache_hit"), Some("fresh"));
         assert!(second.response.is_some());

@@ -46,8 +46,7 @@ impl Stage for MetricsStage {
                 .and_then(|wire| diting_dns_wire::parse_header(wire))
                 .map(|header| header.flags & 0x000f == 2)
                 .unwrap_or(true);
-        self.tracker
-            .record_query(ctx.started.elapsed(), !failed);
+        self.tracker.record_query(ctx.started.elapsed(), !failed);
         if let Some(observer) = &self.observer {
             observer.observe(ctx);
         }
