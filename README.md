@@ -152,6 +152,7 @@ Android 客户端（`android/app/pubspec.yaml`）是独立产品线，加 `-g an
 
 ## 开发文档
 
+- [桌面端 Rust 迁移](docs/development/desktop-rust-migration.md) — 新代码布局、构建方式、兼容性与有意变化。
 - [Android 构建环境](docs/development/android-build-environment.md) — 工具链版本上限、Maven 镜像与测试注意事项。
 - [云控贡献者名单维护](docs/development/recognition-members.md) — 名单机制、JSON 规范与头像规范。
 
