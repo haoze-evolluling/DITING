@@ -590,6 +590,12 @@ class AppL10nEn extends AppL10n {
       'In racing mode every query is sent to all selected resolvers concurrently.';
 
   @override
+  String get providerSheetSearchHint => 'Search resolvers';
+
+  @override
+  String get providerSheetDone => 'Done';
+
+  @override
   String get powerButtonStop => 'Stop';
 
   @override

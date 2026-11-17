@@ -255,6 +255,8 @@
   "providerSheetVisibility": "服务显示...",
   "providerSheetSingleFooter": "延迟取自上一次解析的健康记录，不是实时值。",
   "providerSheetRaceFooter": "竞速模式下每个查询会并发发往所有选中服务商。",
+  "providerSheetSearchHint": "搜索服务商",
+  "providerSheetDone": "完成",
   "powerButtonStop": "停止",
   "powerButtonStart": "开启",
   "powerButtonStarting": "启动中",

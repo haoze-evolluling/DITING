@@ -196,6 +196,8 @@
   "providerSheetVisibility": "Resolver visibility...",
   "providerSheetSingleFooter": "Latency comes from the last resolution health record, not a live measurement.",
   "providerSheetRaceFooter": "In racing mode every query is sent to all selected resolvers concurrently.",
+  "providerSheetSearchHint": "Search resolvers",
+  "providerSheetDone": "Done",
   "powerButtonStop": "Stop",
   "powerButtonStart": "Start",
   "powerButtonStarting": "Starting",

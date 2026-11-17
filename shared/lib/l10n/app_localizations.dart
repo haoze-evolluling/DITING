@@ -1148,6 +1148,18 @@ abstract class AppL10n {
   /// **'竞速模式下每个查询会并发发往所有选中服务商。'**
   String get providerSheetRaceFooter;
 
+  /// No description provided for @providerSheetSearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索服务商'**
+  String get providerSheetSearchHint;
+
+  /// No description provided for @providerSheetDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成'**
+  String get providerSheetDone;
+
   /// No description provided for @powerButtonStop.
   ///
   /// In zh, this message translates to:

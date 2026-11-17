@@ -561,6 +561,12 @@ class AppL10nZh extends AppL10n {
   String get providerSheetRaceFooter => '竞速模式下每个查询会并发发往所有选中服务商。';
 
   @override
+  String get providerSheetSearchHint => '搜索服务商';
+
+  @override
+  String get providerSheetDone => '完成';
+
+  @override
   String get powerButtonStop => '停止';
 
   @override
