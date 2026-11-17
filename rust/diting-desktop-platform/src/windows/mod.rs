@@ -18,6 +18,7 @@ mod adapter_native;
 mod adapter_registry;
 mod portcheck_ics;
 mod portcheck_native;
+mod service_scm;
 
 pub use adapter::WindowsAdapterScanner;
 pub use autostart::WindowsAutoStart;

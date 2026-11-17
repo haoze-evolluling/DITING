@@ -46,6 +46,9 @@ deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
 
 - 服务实现由 Go 改为 Rust；不再安装或加载七个内核动态库（`libditing_*.so` / `diting_*_core.dll`），
   相关环境变量（如 `DITING_FILTER_CORE_LIB`）不再生效；
+- Windows 系统服务由原生 SCM API 直接注册，服务命令行为 `"diting-service.exe" -run`（安装时附加的
+  `-config`/`-port`/`-ipc-addr`/`-token` 会一并写入）；SCM 托管的服务没有控制台，运行日志追加到数据目录的
+  `service.log`，文件超过 2 MiB 时在下次启动前轮换；
 - `diting-service -v` 的「DNS engine」一栏显示为原生 Rust；
 - Linux 安装脚本会清理旧的 `/usr/lib/diting` 目录；
 - 日志内部格式变化，不影响管理 API 与 Web 控制台。

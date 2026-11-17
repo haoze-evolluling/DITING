@@ -131,7 +131,7 @@ fn run_elevated_native(exe: &str, parameters: &str) -> PlatformResult<()> {
 
 /// Quotes one argument using the Windows command-line rules. Required whenever an argument can
 /// contain spaces, which adapter and installation paths routinely do.
-fn quote_argument(argument: &str) -> String {
+pub(crate) fn quote_argument(argument: &str) -> String {
     if !argument.is_empty() && !argument.contains([' ', '\t', '"']) {
         return argument.to_string();
     }

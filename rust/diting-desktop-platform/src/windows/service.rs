@@ -1,11 +1,12 @@
 //! Windows service lifecycle for the privileged DNS core.
 //!
-//! Status queries go straight to the SCM. Mutations try the native SCM path when the process is
-//! already elevated and otherwise re-launch the service executable with `-service <verb>`, which
-//! triggers UAC. This mirrors the Go manager and keeps one binary as both service host and CLI.
+//! Status queries and mutations go straight to the SCM when the process is already elevated.
+//! Otherwise mutations re-launch the service executable with `-service <verb>`, which triggers
+//! UAC; the elevated child then performs the native call and never re-execs again. Installation
+//! registers the executable itself for auto-start with `-run` as its command line, so the SCM
+//! hosts the same binary that the user can also start in the foreground.
 
 use std::path::{Path, PathBuf};
-use std::ptr;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -16,17 +17,7 @@ use diting_desktop_api::platform_types::{
     SERVICE_STATE_START_PENDING, SERVICE_STATE_STOPPED, SERVICE_STATE_STOP_PENDING,
     SERVICE_STATE_UNKNOWN,
 };
-use windows_sys::Win32::Foundation::{
-    GetLastError, ERROR_INSUFFICIENT_BUFFER, ERROR_SERVICE_ALREADY_RUNNING,
-    ERROR_SERVICE_DOES_NOT_EXIST, ERROR_SERVICE_NOT_ACTIVE,
-};
-use windows_sys::Win32::System::Services::{
-    CloseServiceHandle, ControlService, DeleteService, OpenSCManagerW, OpenServiceW,
-    QueryServiceConfigW, QueryServiceStatus, StartServiceW, QUERY_SERVICE_CONFIGW, SC_HANDLE,
-    SC_MANAGER_CONNECT, SERVICE_AUTO_START, SERVICE_CONTROL_STOP, SERVICE_DISABLED,
-    SERVICE_QUERY_CONFIG, SERVICE_QUERY_STATUS, SERVICE_RUNNING, SERVICE_START,
-    SERVICE_START_PENDING, SERVICE_STATUS, SERVICE_STOP, SERVICE_STOPPED, SERVICE_STOP_PENDING,
-};
+use windows_sys::Win32::System::Services::{SERVICE_AUTO_START, SERVICE_DISABLED};
 
 use crate::error::{PlatformError, PlatformResult};
 use crate::exec::CommandExecutor;
@@ -35,10 +26,11 @@ use crate::traits::{PrivilegedExecutor, ServiceManager};
 use super::adapter_registry::{expand_env, read_machine_string};
 use super::autostart::login_item_enabled;
 use super::elevate::WindowsPrivilegedExecutor;
+use super::service_scm::{
+    delete_service_native, install_service_native, query_scm, query_start_type,
+    start_service_native, stop_service_native,
+};
 use super::SERVICE_NAME;
-
-/// `DELETE` access right (0x00010000), used to remove a service object.
-const SERVICE_DELETE_ACCESS: u32 = 0x0001_0000;
 
 pub struct WindowsServiceManager {
     service_name: String,
@@ -138,8 +130,10 @@ impl ServiceManager for WindowsServiceManager {
     }
 
     async fn start(&self) -> PlatformResult<()> {
-        if self.privileged.is_elevated() && start_service_native(&self.service_name).is_ok() {
-            return Ok(());
+        // An elevated process performs the native call only. Re-execing here would make the
+        // elevated child call itself forever, because `run_elevated` executes directly.
+        if self.privileged.is_elevated() {
+            return start_service_native(&self.service_name);
         }
         let exe = self.locate_executable()?;
         self.privileged
@@ -148,8 +142,8 @@ impl ServiceManager for WindowsServiceManager {
     }
 
     async fn stop(&self) -> PlatformResult<()> {
-        if self.privileged.is_elevated() && stop_service_native(&self.service_name).is_ok() {
-            return Ok(());
+        if self.privileged.is_elevated() {
+            return stop_service_native(&self.service_name);
         }
         let exe = self.locate_executable()?;
         self.privileged
@@ -159,11 +153,7 @@ impl ServiceManager for WindowsServiceManager {
 
     async fn restart(&self) -> PlatformResult<()> {
         if self.privileged.is_elevated() {
-            if let Err(error) = stop_service_native(&self.service_name) {
-                // A failed stop must surface immediately: waiting three seconds and starting a
-                // half-stopped service only hides the root cause.
-                return Err(PlatformError::message(format!("停止核心服务失败: {error}")));
-            }
+            stop_service_native(&self.service_name)?;
             for _ in 0..30 {
                 tokio::time::sleep(Duration::from_millis(100)).await;
                 let running = query_scm(&self.service_name)
@@ -173,9 +163,7 @@ impl ServiceManager for WindowsServiceManager {
                     break;
                 }
             }
-            if start_service_native(&self.service_name).is_ok() {
-                return Ok(());
-            }
+            return start_service_native(&self.service_name);
         }
         let exe = self.locate_executable()?;
         self.privileged
@@ -184,27 +172,38 @@ impl ServiceManager for WindowsServiceManager {
     }
 
     async fn install(&self, exe_path: &str) -> PlatformResult<()> {
-        let exe = self.resolve_exe(exe_path)?;
-        self.privileged
-            .run_elevated(&exe, &["-service".to_string(), "install".to_string()])
-            .await
+        self.install_with_args(exe_path, &[]).await
     }
 
     async fn install_and_start(&self, exe_path: &str) -> PlatformResult<()> {
+        self.install_and_start_with_args(exe_path, &[]).await
+    }
+
+    async fn install_with_args(&self, exe_path: &str, args: &[String]) -> PlatformResult<()> {
+        let exe = self.resolve_exe(exe_path)?;
+        if self.privileged.is_elevated() {
+            return install_service_native(&self.service_name, &exe, args);
+        }
+        // Forward the flags so the elevated child registers the same command line; the child is
+        // elevated and therefore installs natively instead of elevating again.
+        let mut command = vec!["-service".to_string(), "install".to_string()];
+        command.extend(args.iter().cloned());
+        self.privileged.run_elevated(&exe, &command).await
+    }
+
+    async fn install_and_start_with_args(
+        &self,
+        exe_path: &str,
+        args: &[String],
+    ) -> PlatformResult<()> {
         // If already installed the install verb fails; starting is still the desired outcome.
-        let _ = self.install(exe_path).await;
+        let _ = self.install_with_args(exe_path, args).await;
         self.start().await
     }
 
     async fn uninstall(&self) -> PlatformResult<()> {
         if self.privileged.is_elevated() {
             let _ = stop_service_native(&self.service_name);
-            if let Ok(exe) = self.locate_executable() {
-                let _ = self
-                    .privileged
-                    .run_elevated(&exe, &["-service".to_string(), "uninstall".to_string()])
-                    .await;
-            }
             return delete_service_native(&self.service_name);
         }
         let exe = self.locate_executable()?;
@@ -308,205 +307,6 @@ fn state_text_and_message(state: &str) -> (&'static str, &'static str) {
         SERVICE_STATE_NOT_INSTALLED => ("未安装", "后台核心服务尚未安装到系统中。"),
         _ => ("已停止", "核心服务未运行。"),
     }
-}
-
-fn last_error() -> u32 {
-    unsafe { GetLastError() }
-}
-
-fn wide(text: &str) -> Vec<u16> {
-    text.encode_utf16().chain(std::iter::once(0)).collect()
-}
-
-fn open_scm() -> PlatformResult<SC_HANDLE> {
-    // SAFETY: null machine/database means the local SCM; the handle is returned to the caller.
-    let scm = unsafe { OpenSCManagerW(ptr::null(), ptr::null(), SC_MANAGER_CONNECT) };
-    if scm.is_null() {
-        Err(PlatformError::message(format!(
-            "打开服务控制管理器失败: Windows 错误码 {}",
-            last_error()
-        )))
-    } else {
-        Ok(scm)
-    }
-}
-
-fn open_service(scm: SC_HANDLE, service_name: &str, access: u32) -> PlatformResult<SC_HANDLE> {
-    let name = wide(service_name);
-    // SAFETY: `scm` is valid and `name` is NUL-terminated.
-    let service = unsafe { OpenServiceW(scm, name.as_ptr(), access) };
-    if service.is_null() {
-        Err(PlatformError::message(format!(
-            "打开服务 [{service_name}] 失败: Windows 错误码 {}",
-            last_error()
-        )))
-    } else {
-        Ok(service)
-    }
-}
-
-fn query_start_type(service_name: &str) -> PlatformResult<u32> {
-    let scm = open_scm()?;
-    let service = match open_service(scm, service_name, SERVICE_QUERY_CONFIG) {
-        Ok(service) => service,
-        Err(error) => {
-            unsafe { CloseServiceHandle(scm) };
-            return Err(error);
-        }
-    };
-
-    let mut needed = 0u32;
-    // SAFETY: the first call only asks for the required size.
-    unsafe {
-        QueryServiceConfigW(service, ptr::null_mut(), 0, &mut needed);
-        let error = GetLastError();
-        if error != ERROR_INSUFFICIENT_BUFFER || needed == 0 {
-            CloseServiceHandle(service);
-            CloseServiceHandle(scm);
-            return Err(PlatformError::message(format!(
-                "服务配置查询未返回所需缓冲区大小: Windows 错误码 {error}"
-            )));
-        }
-        let mut buffer = vec![0u8; needed as usize];
-        let result = QueryServiceConfigW(
-            service,
-            buffer.as_mut_ptr() as *mut QUERY_SERVICE_CONFIGW,
-            needed,
-            &mut needed,
-        );
-        if result == 0 {
-            let error = GetLastError();
-            CloseServiceHandle(service);
-            CloseServiceHandle(scm);
-            return Err(PlatformError::message(format!(
-                "查询服务配置失败: Windows 错误码 {error}"
-            )));
-        }
-        let config = ptr::read_unaligned(buffer.as_ptr() as *const QUERY_SERVICE_CONFIGW);
-        CloseServiceHandle(service);
-        CloseServiceHandle(scm);
-        Ok(config.dwStartType)
-    }
-}
-
-fn query_scm(service_name: &str) -> PlatformResult<(bool, bool, String)> {
-    let scm = open_scm()?;
-    let name = wide(service_name);
-    // SAFETY: `scm` is valid and `name` is NUL-terminated.
-    let service = unsafe { OpenServiceW(scm, name.as_ptr(), SERVICE_QUERY_STATUS) };
-    unsafe { CloseServiceHandle(scm) };
-    if service.is_null() {
-        let error = last_error();
-        if error == ERROR_SERVICE_DOES_NOT_EXIST {
-            return Ok((false, false, SERVICE_STATE_NOT_INSTALLED.to_string()));
-        }
-        return Err(PlatformError::message(format!(
-            "打开服务 [{service_name}] 失败: Windows 错误码 {error}"
-        )));
-    }
-
-    let mut status: SERVICE_STATUS = unsafe { std::mem::zeroed() };
-    // SAFETY: `service` is valid and `status` is a valid out-pointer.
-    let result = unsafe { QueryServiceStatus(service, &mut status) };
-    unsafe { CloseServiceHandle(service) };
-    if result == 0 {
-        return Err(PlatformError::message(format!(
-            "查询服务 [{service_name}] 状态失败: Windows 错误码 {}",
-            last_error()
-        )));
-    }
-
-    let state = match status.dwCurrentState {
-        SERVICE_RUNNING => SERVICE_STATE_RUNNING,
-        SERVICE_STOPPED => SERVICE_STATE_STOPPED,
-        SERVICE_START_PENDING => SERVICE_STATE_START_PENDING,
-        SERVICE_STOP_PENDING => SERVICE_STATE_STOP_PENDING,
-        _ => SERVICE_STATE_STOPPED,
-    };
-    Ok((
-        true,
-        status.dwCurrentState == SERVICE_RUNNING,
-        state.to_string(),
-    ))
-}
-
-fn start_service_native(service_name: &str) -> PlatformResult<()> {
-    let scm = open_scm()?;
-    let service = match open_service(scm, service_name, SERVICE_START) {
-        Ok(service) => service,
-        Err(error) => {
-            unsafe { CloseServiceHandle(scm) };
-            return Err(error);
-        }
-    };
-    // SAFETY: no service arguments are passed.
-    let result = unsafe { StartServiceW(service, 0, ptr::null()) };
-    let error = last_error();
-    unsafe {
-        CloseServiceHandle(service);
-        CloseServiceHandle(scm);
-    }
-    if result == 0 && error != ERROR_SERVICE_ALREADY_RUNNING {
-        return Err(PlatformError::message(format!(
-            "启动服务 [{service_name}] 失败: Windows 错误码 {error}"
-        )));
-    }
-    Ok(())
-}
-
-fn stop_service_native(service_name: &str) -> PlatformResult<()> {
-    let scm = open_scm()?;
-    let service = match open_service(scm, service_name, SERVICE_STOP | SERVICE_QUERY_STATUS) {
-        Ok(service) => service,
-        Err(error) => {
-            unsafe { CloseServiceHandle(scm) };
-            return Err(error);
-        }
-    };
-    let mut status: SERVICE_STATUS = unsafe { std::mem::zeroed() };
-    // SAFETY: `service` is valid and `status` is a valid out-pointer.
-    let result = unsafe { ControlService(service, SERVICE_CONTROL_STOP, &mut status) };
-    let error = last_error();
-    unsafe {
-        CloseServiceHandle(service);
-        CloseServiceHandle(scm);
-    }
-    if result == 0 && error != ERROR_SERVICE_NOT_ACTIVE {
-        return Err(PlatformError::message(format!(
-            "停止服务 [{service_name}] 失败: Windows 错误码 {error}"
-        )));
-    }
-    Ok(())
-}
-
-fn delete_service_native(service_name: &str) -> PlatformResult<()> {
-    let scm = open_scm()?;
-    let name = wide(service_name);
-    // SAFETY: `scm` and `name` are valid.
-    let service = unsafe { OpenServiceW(scm, name.as_ptr(), SERVICE_DELETE_ACCESS) };
-    if service.is_null() {
-        let error = last_error();
-        unsafe { CloseServiceHandle(scm) };
-        if error == ERROR_SERVICE_DOES_NOT_EXIST {
-            return Ok(());
-        }
-        return Err(PlatformError::message(format!(
-            "删除服务 [{service_name}] 失败: Windows 错误码 {error}"
-        )));
-    }
-    // SAFETY: `service` is valid; the handle is closed afterwards.
-    let result = unsafe { DeleteService(service) };
-    let error = last_error();
-    unsafe {
-        CloseServiceHandle(service);
-        CloseServiceHandle(scm);
-    }
-    if result == 0 {
-        return Err(PlatformError::message(format!(
-            "删除服务 [{service_name}] 失败: Windows 错误码 {error}"
-        )));
-    }
-    Ok(())
 }
 
 #[cfg(test)]

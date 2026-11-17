@@ -96,6 +96,24 @@ pub trait ServiceManager: Send + Sync {
     async fn install_and_start(&self, exe_path: &str) -> PlatformResult<()>;
     async fn uninstall(&self) -> PlatformResult<()>;
     fn locate_executable(&self) -> PlatformResult<String>;
+
+    /// Installs the service with extra command-line flags forwarded by the hosted process (for
+    /// example `-config`/`-port`). Platforms whose unit file is fixed ignore them.
+    async fn install_with_args(&self, exe_path: &str, args: &[String]) -> PlatformResult<()> {
+        let _ = args;
+        self.install(exe_path).await
+    }
+
+    async fn install_and_start_with_args(
+        &self,
+        exe_path: &str,
+        args: &[String],
+    ) -> PlatformResult<()> {
+        // Installation may legitimately fail when the service already exists; starting is the
+        // desired outcome in that case.
+        let _ = self.install_with_args(exe_path, args).await;
+        self.start().await
+    }
 }
 
 pub trait AutoStartManager: Send + Sync {

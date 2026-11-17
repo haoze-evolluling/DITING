@@ -8,6 +8,8 @@
 
 mod cli;
 mod platform_backend;
+#[cfg(windows)]
+mod windows_host;
 
 use std::sync::Arc;
 
@@ -47,8 +49,8 @@ async fn main() {
         }
         Command::PortCheck => run_port_check().await,
         Command::Restore => run_restore(&cli).await,
-        Command::Service(action) => run_service_action(action).await,
-        Command::Run => run(&cli).await,
+        Command::Service(action) => run_service_action(action, &cli).await,
+        Command::Run => run_command(&cli).await,
     };
     if let Err(error) = result {
         eprintln!("[错误] {error}");
@@ -96,7 +98,19 @@ fn load_cli_config(cli: &Cli) -> diting_desktop_api::config::Config {
     config
 }
 
-async fn run(cli: &Cli) -> Result<(), String> {
+/// Runs `-run` either under the SCM or in the foreground.
+async fn run_command(cli: &Cli) -> Result<(), String> {
+    #[cfg(windows)]
+    if let Some(result) = windows_host::try_run_as_service(cli) {
+        return result;
+    }
+    run(cli, wait_for_shutdown()).await
+}
+
+pub(crate) async fn run(
+    cli: &Cli,
+    shutdown: impl std::future::Future<Output = ()>,
+) -> Result<(), String> {
     let config = load_cli_config(cli);
     let config_path = if cli.config_path.is_empty() {
         paths::default_config_path()
@@ -158,7 +172,7 @@ async fn run(cli: &Cli) -> Result<(), String> {
         }
     }
 
-    wait_for_shutdown().await;
+    shutdown.await;
 
     // Shutdown order matters: stop accepting management calls, stop background upkeep, then the
     // data plane, then flush the cache and finally release any system DNS takeover.
@@ -251,7 +265,32 @@ async fn run_restore(cli: &Cli) -> Result<(), String> {
     Ok(())
 }
 
-async fn run_service_action(action: ServiceAction) -> Result<(), String> {
+/// Flags that must be baked into the registered service command line, mirroring the former Go
+/// service's `Arguments` list (`-run` plus the install-time overrides).
+fn service_install_args(cli: &Cli) -> Vec<String> {
+    let mut args = Vec::new();
+    if !cli.config_path.is_empty() {
+        let path = std::path::absolute(&cli.config_path)
+            .unwrap_or_else(|_| std::path::PathBuf::from(&cli.config_path));
+        args.push("-config".to_string());
+        args.push(path.to_string_lossy().into_owned());
+    }
+    if cli.dns_port > 0 {
+        args.push("-port".to_string());
+        args.push(cli.dns_port.to_string());
+    }
+    if !cli.ipc_addr.is_empty() {
+        args.push("-ipc-addr".to_string());
+        args.push(cli.ipc_addr.clone());
+    }
+    if !cli.token.is_empty() {
+        args.push("-token".to_string());
+        args.push(cli.token.clone());
+    }
+    args
+}
+
+async fn run_service_action(action: ServiceAction, cli: &Cli) -> Result<(), String> {
     let manager = platform_backend::service_manager();
     match action {
         ServiceAction::Install => {
@@ -259,7 +298,7 @@ async fn run_service_action(action: ServiceAction) -> Result<(), String> {
                 .locate_executable()
                 .map_err(|error| format!("定位可执行文件失败: {error}"))?;
             manager
-                .install_and_start(&exe)
+                .install_and_start_with_args(&exe, &service_install_args(cli))
                 .await
                 .map_err(|error| error.to_string())?;
         }
@@ -270,4 +309,44 @@ async fn run_service_action(action: ServiceAction) -> Result<(), String> {
     }
     println!("服务控制操作 [{}] 成功完成", action.as_str());
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn service_install_args_forward_cli_overrides() {
+        let cli = Cli {
+            command: Command::Service(ServiceAction::Install),
+            config_path: "config.json".to_string(),
+            dns_port: 5353,
+            ipc_addr: "127.0.0.1:15354".to_string(),
+            token: "secret".to_string(),
+        };
+        let args = service_install_args(&cli);
+        assert_eq!(args[0], "-config");
+        assert!(std::path::Path::new(&args[1]).is_absolute());
+        let rest: Vec<&str> = args[2..].iter().map(String::as_str).collect();
+        assert_eq!(
+            rest,
+            [
+                "-port",
+                "5353",
+                "-ipc-addr",
+                "127.0.0.1:15354",
+                "-token",
+                "secret"
+            ]
+        );
+    }
+
+    #[test]
+    fn service_install_args_are_empty_without_overrides() {
+        let cli = Cli {
+            command: Command::Service(ServiceAction::Install),
+            ..Cli::default()
+        };
+        assert!(service_install_args(&cli).is_empty());
+    }
 }
