@@ -48,6 +48,8 @@ pub struct DnsContext {
     pub group: String,
     pub started: Instant,
     pub response: Option<Vec<u8>>,
+    /// A stale cache entry kept for fallback when the upstream path fails.
+    pub stale_response: Option<Vec<u8>>,
     pub error: Option<String>,
     attributes: Vec<(String, String)>,
 }
@@ -69,6 +71,7 @@ impl DnsContext {
             group: "default".to_string(),
             started: Instant::now(),
             response: None,
+            stale_response: None,
             error: None,
             attributes: Vec::new(),
         })

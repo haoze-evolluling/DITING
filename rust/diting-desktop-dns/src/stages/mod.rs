@@ -10,16 +10,31 @@
 //! fields they need while holding the read lock — never across an `.await`.
 
 pub mod any;
+pub mod block;
 pub mod dns64;
 pub mod ech;
 pub mod ecs;
 pub mod ede;
+pub mod filter;
 pub mod ipv6;
 pub mod private_ptr;
 pub mod rebind;
+pub mod records;
 pub mod sudn;
 pub mod unqualified;
+pub mod metrics;
 pub mod util;
+pub mod safesearch;
+pub mod zone;
+pub mod rewrite;
+pub mod hosts;
+pub mod ratelimit;
+pub mod access;
+pub mod client;
+pub mod bogus;
+pub mod filter_response;
+pub mod cache;
+pub mod forward;
 
 use std::sync::{Arc, RwLock};
 

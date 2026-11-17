@@ -85,8 +85,12 @@ pub fn save(cache: &Cache, path: &Path) -> Result<PersistStatus, String> {
         config_hash: String::new(),
         entries,
     };
-    let data = serde_json::to_vec(&payload).map_err(|error| format!("cache persist: marshal: {error}"))?;
-    if let Some(parent) = path.parent().filter(|parent| !parent.as_os_str().is_empty()) {
+    let data =
+        serde_json::to_vec(&payload).map_err(|error| format!("cache persist: marshal: {error}"))?;
+    if let Some(parent) = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
         std::fs::create_dir_all(parent)
             .map_err(|error| format!("cache persist: create dir: {error}"))?;
     }

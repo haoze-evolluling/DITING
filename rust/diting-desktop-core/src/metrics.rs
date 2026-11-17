@@ -41,8 +41,10 @@ impl MetricsTracker {
         } else {
             self.failed.fetch_add(1, Ordering::Relaxed);
         }
-        self.total_latency_ns
-            .fetch_add(duration.as_nanos().min(u64::MAX as u128) as u64, Ordering::Relaxed);
+        self.total_latency_ns.fetch_add(
+            duration.as_nanos().min(u64::MAX as u128) as u64,
+            Ordering::Relaxed,
+        );
     }
 
     pub fn uptime_seconds(&self) -> i64 {
@@ -61,7 +63,11 @@ impl MetricsTracker {
             0.0
         };
         let uptime = self.started.elapsed().as_secs_f64();
-        let qps = if uptime > 0.0 { total as f64 / uptime } else { 0.0 };
+        let qps = if uptime > 0.0 {
+            total as f64 / uptime
+        } else {
+            0.0
+        };
 
         MetricsSnapshot {
             total_queries: total,

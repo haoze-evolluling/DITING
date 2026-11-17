@@ -208,7 +208,9 @@ impl DesktopCache {
             .filter(|entry| {
                 needle.is_empty()
                     || entry.domain.to_ascii_lowercase().contains(&needle)
-                    || qtype_name(entry.qtype).to_ascii_lowercase().contains(&needle)
+                    || qtype_name(entry.qtype)
+                        .to_ascii_lowercase()
+                        .contains(&needle)
             })
             .collect();
         entries.sort_by_key(|entry| std::cmp::Reverse(entry.hit_count));
@@ -290,8 +292,13 @@ impl DesktopCache {
             let group = group_of_key(&entry.key, &domain, entry.qtype, entry.qclass);
             let result = resolver.resolve(&query, &group).await;
             if let Ok(response) = result {
-                self.cache
-                    .put_keyed_meta(&entry.key, &entry.domain, entry.qtype, entry.qclass, &response);
+                self.cache.put_keyed_meta(
+                    &entry.key,
+                    &entry.domain,
+                    entry.qtype,
+                    entry.qclass,
+                    &response,
+                );
                 self.prefetch_count.fetch_add(1, Ordering::Relaxed);
                 refreshed += 1;
             }

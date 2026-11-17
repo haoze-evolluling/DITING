@@ -396,7 +396,9 @@ fn parse_route(upstream: &str, pattern: &str) -> Option<ProviderSettings> {
 fn provider_host(provider: &ProviderSettings) -> Option<String> {
     let upper = provider.protocol.trim().to_ascii_uppercase();
     match upper.as_str() {
-        "DOH" | "DOH3" | "H3" => host_of_url(&provider.url).or_else(|| host_of_target(&provider.server)),
+        "DOH" | "DOH3" | "H3" => {
+            host_of_url(&provider.url).or_else(|| host_of_target(&provider.server))
+        }
         "DOQ" | "QUIC" => host_of_url(&provider.url).or_else(|| host_of_target(&provider.server)),
         _ => host_of_target(&provider.server),
     }

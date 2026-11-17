@@ -29,7 +29,9 @@ impl CacheExcluder {
                 continue;
             }
             if accepted.len() >= MAX_PATTERNS {
-                problems.push(format!("exclude patterns over the limit {MAX_PATTERNS}; rest ignored"));
+                problems.push(format!(
+                    "exclude patterns over the limit {MAX_PATTERNS}; rest ignored"
+                ));
                 break;
             }
             if pattern.len() > MAX_PATTERN_LEN {
