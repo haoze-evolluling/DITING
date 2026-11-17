@@ -32,7 +32,7 @@ pub mod policy;
 // message; re-exporting it here keeps every existing `crate::wire::...` path valid.
 pub use diting_dns_wire as wire;
 
-pub use cache::{Cache, Hit, SnapshotEntry, Stats};
+pub use cache::{Cache, Hit, PersistEntry, SnapshotEntry, Stats};
 pub use ffi::ABI_VERSION;
 pub use policy::{Config, TtlMode};
 pub use wire::{question_key, ChainKind, ChainTarget, QuestionKey, ResponseMeta};

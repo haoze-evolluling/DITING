@@ -39,6 +39,12 @@ pub struct ProviderJson {
     pub url: String,
     #[serde(default)]
     pub weight: i64,
+    /// Desktop-only: `SHA-256(RawTBSCertificate)` hex pin. Android never sends it.
+    #[serde(default)]
+    pub pin: String,
+    /// Desktop-only: use HTTP/3 for this DoH provider instead of the opportunistic upgrade.
+    #[serde(default)]
+    pub force_h3: bool,
 }
 
 /// `dynamicBlockConfig`.
@@ -175,16 +181,22 @@ pub struct Provider {
     pub server: String,
     pub url: String,
     pub weight: i64,
+    /// Desktop-only certificate pin, kept as the user's text until the resolver parses it.
+    pub pin: String,
+    /// Desktop-only: this DoH provider is DoH3-only.
+    pub force_h3: bool,
 }
 
-impl From<&NormalizedProvider> for Provider {
-    fn from(provider: &NormalizedProvider) -> Self {
+impl Provider {
+    fn from_parts(provider: &NormalizedProvider, source: &ProviderJson) -> Self {
         Self {
             id: provider.id.clone(),
             protocol: provider.protocol,
             server: provider.server.clone(),
             url: provider.url.clone(),
             weight: provider.weight,
+            pin: source.pin.clone(),
+            force_h3: source.force_h3,
         }
     }
 }
@@ -277,7 +289,12 @@ impl DnsConfig {
 
         Ok(DnsConfig {
             mode: normalized.mode,
-            providers: normalized.providers.iter().map(Provider::from).collect(),
+            providers: normalized
+                .providers
+                .iter()
+                .zip(document.providers.iter())
+                .map(|(provider, source)| Provider::from_parts(provider, source))
+                .collect(),
             block_response: normalized.block_response.code() as u32,
             dynamic_response: BlockConfig {
                 enabled: normalized.dynamic.enabled,

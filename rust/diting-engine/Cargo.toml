@@ -45,6 +45,8 @@ async-compression = { version = "0.4", features = ["tokio", "gzip", "deflate", "
 const-oid = { version = "0.9", features = ["db"] }
 der = "0.7"
 x509-cert = { version = "0.2.5" }
+# Desktop TLS pins hash the DER TBS certificate (SHA-256); Android simply leaves the pin map empty.
+sha2 = "0.10"
 # `IPV6_V6ONLY` on the standalone IPv6 sockets: the default dual-stack bind would collide with the
 # IPv4 socket on the same port (Go got this from `net.Listen("tcp6", ...)`). It is also how the
 # data plane creates a socket, protects it (`VpnService.protect`) and only then connects.

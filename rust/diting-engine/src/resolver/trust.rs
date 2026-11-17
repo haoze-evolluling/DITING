@@ -66,6 +66,7 @@ pub struct RootStoreReport {
 pub struct UpstreamTrust {
     roots: Arc<RootCertStore>,
     provider: Arc<CryptoProvider>,
+    pins: Arc<crate::resolver::pin::PinStore>,
     report: RootStoreReport,
 }
 
@@ -97,8 +98,48 @@ impl UpstreamTrust {
         Self {
             roots: Arc::new(roots),
             provider: Arc::new(rustls::crypto::ring::default_provider()),
+            pins: Arc::new(crate::resolver::pin::PinStore::default()),
             report,
         }
+    }
+
+    /// Returns a copy of this store with the given `(host, pin)` entries. A provider pinned to a
+    /// certificate accepts that certificate even when its CA is not in the root pool; every other
+    /// host keeps the normal webpki check. Android never calls this.
+    pub fn with_pins<I, H, P>(&self, pairs: I) -> Result<Self, String>
+    where
+        I: IntoIterator<Item = (H, P)>,
+        H: AsRef<str>,
+        P: AsRef<str>,
+    {
+        Ok(Self {
+            roots: Arc::clone(&self.roots),
+            provider: Arc::clone(&self.provider),
+            pins: Arc::new(crate::resolver::pin::PinStore::from_pairs(pairs)?),
+            report: self.report,
+        })
+    }
+
+    /// Same as [`with_pins`](Self::with_pins) but with hashes the caller already validated.
+    pub fn with_pin_hashes<I, H>(&self, pairs: I) -> Self
+    where
+        I: IntoIterator<Item = (H, [u8; 32])>,
+        H: AsRef<str>,
+    {
+        let mut store = crate::resolver::pin::PinStore::default();
+        for (host, pin) in pairs {
+            store.insert_hash(host.as_ref(), pin);
+        }
+        Self {
+            roots: Arc::clone(&self.roots),
+            provider: Arc::clone(&self.provider),
+            pins: Arc::new(store),
+            report: self.report,
+        }
+    }
+
+    pub fn has_pins(&self) -> bool {
+        !self.pins.is_empty()
     }
 
     pub fn report(&self) -> RootStoreReport {
@@ -121,35 +162,35 @@ impl UpstreamTrust {
     /// narrows it to TLS 1.3 itself, as `quic-go` requires). Resumption keeps Go's 64-entry DoT
     /// session cache (`dotSessionCache`).
     pub fn client_config(&self, alpn: &[&[u8]]) -> Arc<ClientConfig> {
-        let mut config = ClientConfig::builder_with_provider(Arc::clone(&self.provider))
-            .with_protocol_versions(&[&rustls::version::TLS12, &rustls::version::TLS13])
-            .expect("the ring provider supports TLS 1.2 and 1.3")
-            .with_root_certificates((*self.roots).clone())
-            .with_no_client_auth();
-        config.alpn_protocols = alpn.iter().map(|protocol| protocol.to_vec()).collect();
-        Arc::new(config)
+        crate::resolver::pin::client_config(
+            &self.roots,
+            Arc::clone(&self.provider),
+            Arc::clone(&self.pins),
+            alpn,
+            false,
+        )
     }
 
     /// The DoQ client config: TLS 1.3 only, `doq` ALPN.
     pub fn quic_client_config(&self) -> Arc<ClientConfig> {
-        let mut config = ClientConfig::builder_with_provider(Arc::clone(&self.provider))
-            .with_protocol_versions(&[&rustls::version::TLS13])
-            .expect("the ring provider supports TLS 1.3")
-            .with_root_certificates((*self.roots).clone())
-            .with_no_client_auth();
-        config.alpn_protocols = DOQ_ALPN.iter().map(|protocol| protocol.to_vec()).collect();
-        Arc::new(config)
+        crate::resolver::pin::client_config(
+            &self.roots,
+            Arc::clone(&self.provider),
+            Arc::clone(&self.pins),
+            &DOQ_ALPN,
+            true,
+        )
     }
 
     /// The DoH3 client config: TLS 1.3 only, `h3` ALPN (N7).
     pub fn h3_client_config(&self) -> Arc<ClientConfig> {
-        let mut config = ClientConfig::builder_with_provider(Arc::clone(&self.provider))
-            .with_protocol_versions(&[&rustls::version::TLS13])
-            .expect("the ring provider supports TLS 1.3")
-            .with_root_certificates((*self.roots).clone())
-            .with_no_client_auth();
-        config.alpn_protocols = H3_ALPN.iter().map(|protocol| protocol.to_vec()).collect();
-        Arc::new(config)
+        crate::resolver::pin::client_config(
+            &self.roots,
+            Arc::clone(&self.provider),
+            Arc::clone(&self.pins),
+            &H3_ALPN,
+            true,
+        )
     }
 }
 

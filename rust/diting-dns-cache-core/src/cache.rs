@@ -18,7 +18,7 @@
 //!   never read, so its memory is released right away).
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -72,6 +72,30 @@ pub struct SnapshotEntry {
     pub hit_count: u64,
     pub original_ttl: u32,
     pub response_size: u32,
+}
+
+/// One entry as the desktop service writes it to `cache.json`.
+///
+/// This is deliberately richer than [`SnapshotEntry`]: a restored cache must answer queries with
+/// the exact upstream bytes, TTL offsets and negative/chain metadata.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PersistEntry {
+    pub key: Vec<u8>,
+    pub domain: Vec<u8>,
+    pub qtype: u16,
+    pub qclass: u16,
+    pub wire: Vec<u8>,
+    pub ttl_offsets: Vec<u16>,
+    pub original_ttl: u32,
+    pub created_at_ms: i64,
+    pub expires_at_ms: i64,
+    pub stale_until_ms: i64,
+    pub is_negative: bool,
+    pub chain_targets: Vec<ChainTarget>,
+    pub ip_list: Vec<String>,
+    pub resolved_ips: String,
+    pub hit_count: u64,
+    pub last_hit_at_ms: i64,
 }
 
 struct Entry {
@@ -129,6 +153,9 @@ struct Cleaner {
 pub struct Cache {
     config: RwLock<Config>,
     shards: Vec<RwLock<Shard>>,
+    /// Desktop configures a capacity independently of the Android constant; 0 means the
+    /// compiled-in default. Android never calls `set_capacity`.
+    capacity: AtomicUsize,
     hits: AtomicU64,
     misses: AtomicU64,
     stale_hits: AtomicU64,
@@ -154,6 +181,7 @@ impl Cache {
         let cache = Arc::new(Self {
             config: RwLock::new(config),
             shards,
+            capacity: AtomicUsize::new(DEFAULT_MAX_ENTRIES),
             hits: AtomicU64::new(0),
             misses: AtomicU64::new(0),
             stale_hits: AtomicU64::new(0),
@@ -241,9 +269,19 @@ impl Cache {
             return None;
         }
         let (buffer, parts) = build_key(query)?;
-        let key = &buffer[..parts.key_len];
-        let index = shard_index(key);
         let query_id = u16::from_be_bytes([query[0], query[1]]);
+        self.get_keyed(&buffer[..parts.key_len], query_id, count)
+    }
+
+    /// Looks up a caller-built key. The desktop cache appends a client-group/ECS tag to the key,
+    /// which `question_key` alone cannot express; the query ID still comes from the request so a
+    /// hit can be returned to its caller.
+    pub fn get_keyed(&self, key: &[u8], query_id: u16, count: bool) -> Option<Hit> {
+        let config = self.config();
+        if !config.enabled || key.is_empty() {
+            return None;
+        }
+        let index = shard_index(key);
         let now = Instant::now();
         let now_ms = now_wall_ms();
 
@@ -312,7 +350,33 @@ impl Cache {
 
     /// Stores one answer; `false` means "this answer must not be cached".
     pub fn put(&self, query: &[u8], response: &[u8]) -> bool {
-        if response.len() < 12 {
+        let Some((buffer, parts)) = build_key(query) else {
+            return false;
+        };
+        self.put_keyed(&buffer[..parts.key_len], response)
+    }
+
+    /// Stores an answer under a caller-built key. The key must remain `name:qtype:qclass` (with an
+    /// optional tag suffix), because the entry projects the name and type for the cache UI.
+    pub fn put_keyed(&self, key: &[u8], response: &[u8]) -> bool {
+        let Some((domain, qtype, qclass)) = parse_key_parts(key) else {
+            return false;
+        };
+        self.put_keyed_meta(key, &domain, qtype, qclass, response)
+    }
+
+    /// Same as [`put_keyed`](Self::put_keyed) with the entry metadata already known. The desktop
+    /// cache uses this because its group suffix (`:group`) may itself be numeric and cannot be
+    /// split reliably from the key alone.
+    pub fn put_keyed_meta(
+        &self,
+        key: &[u8],
+        domain: &[u8],
+        qtype: u16,
+        qclass: u16,
+        response: &[u8],
+    ) -> bool {
+        if response.len() < 12 || key.is_empty() {
             return false;
         }
         let config = self.config();
@@ -327,10 +391,7 @@ impl Cache {
         if meta.truncated {
             return false;
         }
-        let Some((buffer, parts)) = build_key(query) else {
-            return false;
-        };
-        let key = &buffer[..parts.key_len];
+        let domain = domain.to_vec();
 
         let (is_negative, effective) = if meta.rcode == RCODE_NAME_ERROR
             || (meta.rcode == RCODE_SUCCESS && meta.answer_count == 0)
@@ -370,9 +431,9 @@ impl Cache {
 
         let entry = Entry {
             key: key.to_vec(),
-            domain: key[..parts.name_len].to_vec(),
-            qtype: parts.qtype,
-            qclass: parts.qclass,
+            domain,
+            qtype,
+            qclass,
             wire: response.to_vec(),
             ttl_offsets,
             original_ttl: meta.min_ttl.unwrap_or(0),
@@ -423,7 +484,10 @@ impl Cache {
         let Some((buffer, parts)) = build_key(query) else {
             return false;
         };
-        let key = &buffer[..parts.key_len];
+        self.refresh_begin_keyed(&buffer[..parts.key_len])
+    }
+
+    pub fn refresh_begin_keyed(&self, key: &[u8]) -> bool {
         let shard = read_guard(&self.shards[shard_index(key)]);
         let Some(entry) = shard.entries.get(key) else {
             return false;
@@ -439,11 +503,157 @@ impl Cache {
         let Some((buffer, parts)) = build_key(query) else {
             return;
         };
-        let key = &buffer[..parts.key_len];
+        self.refresh_done_keyed(&buffer[..parts.key_len]);
+    }
+
+    pub fn refresh_done_keyed(&self, key: &[u8]) {
         let shard = read_guard(&self.shards[shard_index(key)]);
         if let Some(entry) = shard.entries.get(key) {
             entry.refreshing.store(false, Ordering::Release);
         }
+    }
+
+    /// Drops one entry by key. Used by the desktop exclusion path and by `/cache/clear` for a
+    /// single entry; Android has no caller.
+    pub fn remove_keyed(&self, key: &[u8]) -> bool {
+        let mut shard = write_guard(&self.shards[shard_index(key)]);
+        shard.entries.remove(key).is_some()
+    }
+
+    /// Replaces the total capacity and trims every shard to its new share. Zero restores the
+    /// compiled-in default.
+    pub fn set_capacity(&self, max_entries: usize) {
+        let max_entries = if max_entries == 0 {
+            DEFAULT_MAX_ENTRIES
+        } else {
+            max_entries.max(NUM_SHARDS)
+        };
+        self.capacity.store(max_entries, Ordering::Relaxed);
+        let per_shard = (max_entries / NUM_SHARDS).max(1);
+        for shard in &self.shards {
+            let mut guard = write_guard(shard);
+            guard.max_entries = per_shard;
+            while guard.entries.len() > per_shard {
+                let victim = guard
+                    .entries
+                    .iter()
+                    .min_by_key(|(_, entry)| entry.lru_seq)
+                    .map(|(key, _)| key.clone());
+                let Some(victim) = victim else {
+                    break;
+                };
+                guard.entries.remove(&victim);
+                self.evictions.fetch_add(1, Ordering::Relaxed);
+            }
+        }
+    }
+
+    pub fn capacity(&self) -> usize {
+        self.capacity.load(Ordering::Relaxed)
+    }
+
+    /// Every live entry, for the desktop persistence writer. Android's cache never calls this:
+    /// its own cache lives in the SQLite mirror, not in a restartable file.
+    pub fn export(&self) -> Vec<PersistEntry> {
+        let now = Instant::now();
+        let now_ms = now_wall_ms();
+        let mut out = Vec::new();
+        for shard in &self.shards {
+            let guard = read_guard(shard);
+            for entry in guard.entries.values() {
+                if entry.stale_until <= now {
+                    continue;
+                }
+                out.push(PersistEntry {
+                    key: entry.key.clone(),
+                    domain: entry.domain.clone(),
+                    qtype: entry.qtype,
+                    qclass: entry.qclass,
+                    wire: entry.wire.clone(),
+                    ttl_offsets: entry.ttl_offsets.clone(),
+                    original_ttl: entry.original_ttl,
+                    created_at_ms: entry.created_at_ms,
+                    expires_at_ms: entry.expires_at_ms,
+                    stale_until_ms: now_ms
+                        + entry
+                            .stale_until
+                            .saturating_duration_since(now)
+                            .as_millis()
+                            .min(i64::MAX as u128) as i64,
+                    is_negative: entry.is_negative,
+                    chain_targets: entry.chain_targets.clone(),
+                    ip_list: entry.ip_list.clone(),
+                    resolved_ips: entry.resolved_ips.clone(),
+                    hit_count: entry.hit_count.load(Ordering::Relaxed),
+                    last_hit_at_ms: entry.last_hit_at_ms.load(Ordering::Relaxed),
+                });
+            }
+        }
+        out
+    }
+
+    /// Restores entries written by [`export`](Self::export). Entries past their stale window are
+    /// dropped; capacity trimming is the same LRU eviction a normal insert performs.
+    pub fn import(&self, entries: Vec<PersistEntry>) -> usize {
+        let now = Instant::now();
+        let now_ms = now_wall_ms();
+        let mut restored = 0usize;
+        for entry in entries {
+            if entry.key.is_empty() || entry.wire.len() < 12 || entry.stale_until_ms <= now_ms {
+                continue;
+            }
+            let expires_at = now
+                + Duration::from_millis(
+                    entry.expires_at_ms.saturating_sub(now_ms).max(1) as u64,
+                );
+            let stale_until = now
+                + Duration::from_millis(
+                    entry.stale_until_ms.saturating_sub(now_ms).max(1) as u64,
+                );
+            let restored_entry = Entry {
+                key: entry.key.clone(),
+                domain: entry.domain,
+                qtype: entry.qtype,
+                qclass: entry.qclass,
+                wire: entry.wire,
+                ttl_offsets: entry.ttl_offsets,
+                original_ttl: entry.original_ttl,
+                created_at_ms: entry.created_at_ms,
+                expires_at_ms: entry.expires_at_ms,
+                expires_at,
+                stale_until,
+                is_negative: entry.is_negative,
+                chain_targets: entry.chain_targets,
+                ip_list: entry.ip_list,
+                resolved_ips: entry.resolved_ips,
+                lru_seq: 0,
+                hit_count: AtomicU64::new(entry.hit_count),
+                last_hit_at_ms: AtomicI64::new(entry.last_hit_at_ms),
+                refreshing: AtomicBool::new(false),
+            };
+            let index = shard_index(&restored_entry.key);
+            let mut shard = write_guard(&self.shards[index]);
+            if shard.entries.contains_key(&restored_entry.key) {
+                shard.entries.remove(&restored_entry.key);
+            } else if shard.entries.len() >= shard.max_entries {
+                let victim = shard
+                    .entries
+                    .iter()
+                    .min_by_key(|(_, candidate)| candidate.lru_seq)
+                    .map(|(key, _)| key.clone());
+                if let Some(victim) = victim {
+                    shard.entries.remove(&victim);
+                    self.evictions.fetch_add(1, Ordering::Relaxed);
+                }
+            }
+            shard.next_seq += 1;
+            let seq = shard.next_seq;
+            shard
+                .entries
+                .insert(restored_entry.key.clone(), Entry { lru_seq: seq, ..restored_entry });
+            restored += 1;
+        }
+        restored
     }
 
     pub fn stats(&self) -> Stats {
@@ -460,7 +670,7 @@ impl Cache {
             negative_hits: self.negative_hits.load(Ordering::Relaxed),
             evictions: self.evictions.load(Ordering::Relaxed),
             entry_count: entry_count.min(u32::MAX as usize) as u32,
-            max_entries: DEFAULT_MAX_ENTRIES as u32,
+            max_entries: self.capacity().min(u32::MAX as usize) as u32,
         }
     }
 
@@ -516,6 +726,30 @@ fn build_key(query: &[u8]) -> Option<([u8; wire::MAX_KEY_LEN], wire::KeyParts)> 
     let mut buffer = [0u8; wire::MAX_KEY_LEN];
     let parts = wire::write_question_key(query, &mut buffer)?;
     Some((buffer, parts))
+}
+
+/// Splits `name:qtype:qclass[:tag]` without assuming the name is UTF-8: the name is returned as
+/// the raw lowercased bytes the key builder wrote.
+fn parse_key_parts(key: &[u8]) -> Option<(Vec<u8>, u16, u16)> {
+    let last = key.iter().rposition(|byte| *byte == b':')?;
+    let previous = key[..last].iter().rposition(|byte| *byte == b':')?;
+    let qclass = parse_decimal(&key[last + 1..])?;
+    let qtype = parse_decimal(&key[previous + 1..last])?;
+    Some((key[..previous].to_vec(), qtype, qclass))
+}
+
+fn parse_decimal(bytes: &[u8]) -> Option<u16> {
+    if bytes.is_empty() || bytes.len() > 5 {
+        return None;
+    }
+    let mut value = 0u32;
+    for byte in bytes {
+        if !byte.is_ascii_digit() {
+            return None;
+        }
+        value = value * 10 + u32::from(byte - b'0');
+    }
+    u16::try_from(value).ok()
 }
 
 fn shard_index(key: &[u8]) -> usize {

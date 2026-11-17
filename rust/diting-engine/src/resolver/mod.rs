@@ -36,6 +36,7 @@ pub mod doh;
 pub mod doh3;
 pub mod doq;
 pub mod dot;
+pub mod pin;
 pub mod plain;
 pub mod schedule;
 pub mod trust;
@@ -106,6 +107,10 @@ pub(crate) struct Provider {
     pub port: String,
     /// The DoH URL, parsed once; `None` for the other protocols.
     pub doh_uri: Option<Uri>,
+    /// Desktop-only certificate pin, already validated at configure time.
+    pub pin: Option<[u8; 32]>,
+    /// Desktop-only: this DoH provider must use HTTP/3.
+    pub force_h3: bool,
     pub stats: Arc<ProviderStats>,
 }
 
@@ -168,18 +173,37 @@ impl Resolver {
             }
         }
 
-        let wants = |protocol: Protocol| providers.iter().any(|entry| entry.protocol == protocol);
+        // Pins are per configuration, while `deps.trust` is the engine's shared store. Derive a
+        // store that adds this config's pins; Android publishes none, so the derived store is the
+        // shared one and the query path is byte-for-byte unchanged there.
+        let trust = if providers.iter().any(|provider| provider.pin.is_some()) {
+            Arc::new(deps.trust.with_pin_hashes(
+                providers
+                    .iter()
+                    .filter_map(|provider| provider.pin.map(|pin| (provider.host.as_str(), pin))),
+            ))
+        } else {
+            Arc::clone(&deps.trust)
+        };
+
+        let wants_doh = providers.iter().any(|entry| entry.protocol == Protocol::Doh);
+        let wants_dot = providers.iter().any(|entry| entry.protocol == Protocol::Dot);
+        let wants_doq = providers.iter().any(|entry| entry.protocol == Protocol::Doq);
         let dial = Dialer::new(deps.bootstrap, deps.protector).with_outbound(deps.outbound.clone());
-        let doh = wants(Protocol::Doh)
-            .then(|| doh::DohClient::new(Arc::clone(&deps.trust), dial.clone()));
+        let doh = wants_doh.then(|| doh::DohClient::new(Arc::clone(&trust), dial.clone()));
         // N7: the H3 transport is opportunistic. A failure to build it only disables the upgrade;
-        // every DoH provider still resolves over HTTP/2.
-        let doh3 = wants(Protocol::Doh)
-            .then(|| doh3::Doh3Client::new(&deps.trust).ok())
+        // every DoH provider still resolves over HTTP/2. A provider with `force_h3` never falls
+        // back, so a missing client makes those providers unusable.
+        let doh3 = wants_doh
+            .then(|| doh3::Doh3Client::new(&trust).ok())
             .flatten();
-        let dot = wants(Protocol::Dot).then(|| dot::DotClient::new(&deps.trust));
-        let doq = if wants(Protocol::Doq) {
-            match doq::DoqClient::new(&deps.trust) {
+        if doh3.is_none() && providers.iter().any(|provider| provider.force_h3) {
+            skipped.push("DoH3 transport unavailable".to_string());
+            providers.retain(|provider| !provider.force_h3);
+        }
+        let dot = wants_dot.then(|| dot::DotClient::new(&trust));
+        let doq = if wants_doq {
+            match doq::DoqClient::new(&trust) {
                 Ok(client) => Some(client),
                 Err(error) => {
                     // A DoQ client that cannot be built makes every DoQ provider unusable; say so
@@ -293,6 +317,17 @@ fn build_provider(provider: &ConfigProvider, stats: &StatsStore) -> Result<Provi
         provider.id.clone()
     };
     let stats = stats.get(&key);
+    let pin = if provider.pin.trim().is_empty() {
+        None
+    } else {
+        Some(
+            crate::resolver::pin::parse_pin(&provider.pin)
+                .map_err(|error| format!("provider {key}: {error}"))?,
+        )
+    };
+    if provider.force_h3 && provider.protocol != Protocol::Doh {
+        return Err(format!("provider {key}: force_h3 is only valid for DoH"));
+    }
 
     let (host, port, doh_uri) = match provider.protocol {
         Protocol::Plain => {
@@ -330,6 +365,8 @@ fn build_provider(provider: &ConfigProvider, stats: &StatsStore) -> Result<Provi
         host,
         port,
         doh_uri,
+        pin,
+        force_h3: provider.force_h3,
         stats,
     })
 }
