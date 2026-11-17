@@ -3,9 +3,7 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use super::*;
-use crate::{
-    parse_answer_records, parse_header, parse_question, parse_response, ChainKind,
-};
+use crate::{parse_answer_records, parse_header, parse_question, parse_response, ChainKind};
 
 fn name_wire(name: &str) -> Vec<u8> {
     let mut out = Vec::new();
@@ -92,7 +90,10 @@ fn reply_to_copies_cd_and_rejects_non_queries() {
         .set_checking_disabled(true)
         .finish()
         .unwrap();
-    let reply = MessageBuilder::reply_to(&query).expect("reply").finish().unwrap();
+    let reply = MessageBuilder::reply_to(&query)
+        .expect("reply")
+        .finish()
+        .unwrap();
     let header = parse_header(&reply).unwrap();
     assert_eq!(header.flags & 0x0010, 0x0010, "CD copied");
     assert!(header.is_response());
@@ -222,7 +223,10 @@ fn rdata_encoders_emit_expected_wire_bytes() {
         naptr
     );
 
-    assert_eq!(encode_rdata(&RData::Raw(vec![0xde, 0xad])), vec![0xde, 0xad]);
+    assert_eq!(
+        encode_rdata(&RData::Raw(vec![0xde, 0xad])),
+        vec![0xde, 0xad]
+    );
 }
 
 #[test]
@@ -232,7 +236,10 @@ fn svc_param_helpers_and_svcb_encoding() {
         b"\x02h2\x02h3".to_vec()
     );
     assert_eq!(SvcParam::port(443).value, vec![0x01, 0xbb]);
-    assert_eq!(SvcParam::dohpath("/dns-query").value, b"/dns-query".to_vec());
+    assert_eq!(
+        SvcParam::dohpath("/dns-query").value,
+        b"/dns-query".to_vec()
+    );
     assert_eq!(
         SvcParam::ipv4hint(&[Ipv4Addr::new(1, 2, 3, 4)]).value,
         vec![1, 2, 3, 4]
@@ -280,9 +287,7 @@ fn synthesized_response_parses_with_existing_readers() {
         .push_answer(record(
             "edge.example.net.",
             TYPE_HTTPS,
-            RData::Https(
-                SvcbRData::new(1, "alt.example.net.").push(SvcParam::alpn(&["h2"])),
-            ),
+            RData::Https(SvcbRData::new(1, "alt.example.net.").push(SvcParam::alpn(&["h2"]))),
         ))
         .finish()
         .expect("wire");

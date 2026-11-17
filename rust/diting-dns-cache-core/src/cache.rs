@@ -603,13 +603,9 @@ impl Cache {
                 continue;
             }
             let expires_at = now
-                + Duration::from_millis(
-                    entry.expires_at_ms.saturating_sub(now_ms).max(1) as u64,
-                );
+                + Duration::from_millis(entry.expires_at_ms.saturating_sub(now_ms).max(1) as u64);
             let stale_until = now
-                + Duration::from_millis(
-                    entry.stale_until_ms.saturating_sub(now_ms).max(1) as u64,
-                );
+                + Duration::from_millis(entry.stale_until_ms.saturating_sub(now_ms).max(1) as u64);
             let restored_entry = Entry {
                 key: entry.key.clone(),
                 domain: entry.domain,
@@ -648,9 +644,13 @@ impl Cache {
             }
             shard.next_seq += 1;
             let seq = shard.next_seq;
-            shard
-                .entries
-                .insert(restored_entry.key.clone(), Entry { lru_seq: seq, ..restored_entry });
+            shard.entries.insert(
+                restored_entry.key.clone(),
+                Entry {
+                    lru_seq: seq,
+                    ..restored_entry
+                },
+            );
             restored += 1;
         }
         restored

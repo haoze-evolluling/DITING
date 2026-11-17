@@ -328,8 +328,7 @@ pub fn pad_to_block(message: &mut Vec<u8>, block: usize) -> bool {
     out.extend_from_slice(&(pad_len as u16).to_be_bytes());
     out.resize(out.len() + pad_len, 0);
     out.extend_from_slice(&message[opt.rdata_end..]);
-    out[opt.rdlen_offset..opt.rdlen_offset + 2]
-        .copy_from_slice(&(new_rdlen as u16).to_be_bytes());
+    out[opt.rdlen_offset..opt.rdlen_offset + 2].copy_from_slice(&(new_rdlen as u16).to_be_bytes());
 
     debug_assert_eq!(out.len() % block, 0);
     *message = out;
@@ -412,8 +411,7 @@ fn walk(wire: &[u8]) -> Option<Walk> {
     }
     let question_end = offset;
 
-    let additional_start =
-        usize::from(header.answer_count) + usize::from(header.authority_count);
+    let additional_start = usize::from(header.answer_count) + usize::from(header.authority_count);
     let total = additional_start + usize::from(header.additional_count);
     let mut opt = None;
 

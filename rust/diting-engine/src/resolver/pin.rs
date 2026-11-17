@@ -26,7 +26,11 @@ pub fn parse_pin(text: &str) -> Result<[u8; 32], String> {
         .chars()
         .filter(|character| !matches!(character, ':' | ' ' | '\t' | '\n' | '\r'))
         .collect();
-    if cleaned.len() != 64 || !cleaned.chars().all(|character| character.is_ascii_hexdigit()) {
+    if cleaned.len() != 64
+        || !cleaned
+            .chars()
+            .all(|character| character.is_ascii_hexdigit())
+    {
         return Err("certificate pin must be 64 hex characters (SHA-256)".to_string());
     }
     let mut bytes = [0u8; 32];
@@ -127,8 +131,9 @@ impl ServerCertVerifier for PinnedVerifier {
             _ => String::new(),
         };
         if let Some(expected) = self.pins.get(&host) {
-            let actual = certificate_pin(end_entity.as_ref())
-                .ok_or_else(|| Error::General("certificate pin: malformed server certificate".into()))?;
+            let actual = certificate_pin(end_entity.as_ref()).ok_or_else(|| {
+                Error::General("certificate pin: malformed server certificate".into())
+            })?;
             if actual != expected {
                 return Err(Error::General(format!(
                     "certificate pin mismatch for {host}"

@@ -204,7 +204,13 @@ mod tests {
 
     #[test]
     fn rejects_names_unpack_name_could_not_produce() {
-        for name in ["", ".leading.", "double..dot.", "trailing\\", "a\\300.example."] {
+        for name in [
+            "",
+            ".leading.",
+            "double..dot.",
+            "trailing\\",
+            "a\\300.example.",
+        ] {
             let mut out = Vec::new();
             assert!(!encode_name(&mut out, name), "{name:?}");
             assert!(out.is_empty());

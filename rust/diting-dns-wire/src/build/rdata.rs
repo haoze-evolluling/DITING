@@ -10,9 +10,8 @@ use std::net::{Ipv4Addr, Ipv6Addr};
 use crate::build::name::NameWriter;
 use crate::build::types::{
     SVCB_KEY_ALPN, SVCB_KEY_DOHPATH, SVCB_KEY_IPV4HINT, SVCB_KEY_IPV6HINT,
-    SVCB_KEY_NO_DEFAULT_ALPN, SVCB_KEY_PORT, TYPE_A, TYPE_AAAA, TYPE_CAA, TYPE_CNAME,
-    TYPE_HINFO, TYPE_HTTPS, TYPE_MX, TYPE_NAPTR, TYPE_NS, TYPE_PTR, TYPE_SOA, TYPE_SRV,
-    TYPE_SVCB, TYPE_TXT,
+    SVCB_KEY_NO_DEFAULT_ALPN, SVCB_KEY_PORT, TYPE_A, TYPE_AAAA, TYPE_CAA, TYPE_CNAME, TYPE_HINFO,
+    TYPE_HTTPS, TYPE_MX, TYPE_NAPTR, TYPE_NS, TYPE_PTR, TYPE_SOA, TYPE_SRV, TYPE_SVCB, TYPE_TXT,
 };
 
 /// The payload of one resource record.
@@ -70,7 +69,12 @@ pub enum RData {
 impl RData {
     /// Builds a multi-string TXT payload from any byte-like iterator.
     pub fn txt<T: AsRef<[u8]>>(values: impl IntoIterator<Item = T>) -> Self {
-        RData::Txt(values.into_iter().map(|value| value.as_ref().to_vec()).collect())
+        RData::Txt(
+            values
+                .into_iter()
+                .map(|value| value.as_ref().to_vec())
+                .collect(),
+        )
     }
 
     /// The DNS type this variant normally belongs to (`None` for [`RData::Raw`]).

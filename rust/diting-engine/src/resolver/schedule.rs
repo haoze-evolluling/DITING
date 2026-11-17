@@ -152,7 +152,8 @@ async fn attempt(
                             .path_and_query()
                             .map(|value| value.as_str())
                             .unwrap_or("/dns-query");
-                        h3.query(&inner.dial, &provider.host, port, path, query).await
+                        h3.query(&inner.dial, &provider.host, port, path, query)
+                            .await
                     // N7: upgrade to HTTP/3 once the origin advertised it, and fall back to DoH on
                     // any failure (recording it so a broken H3 path is abandoned).
                     } else if doh.doh3_ready() {

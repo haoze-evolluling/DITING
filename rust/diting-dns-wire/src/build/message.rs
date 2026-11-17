@@ -30,13 +30,7 @@ pub struct ResourceRecord {
 }
 
 impl ResourceRecord {
-    pub fn new(
-        name: impl Into<String>,
-        rtype: u16,
-        class: u16,
-        ttl: u32,
-        rdata: RData,
-    ) -> Self {
+    pub fn new(name: impl Into<String>, rtype: u16, class: u16, ttl: u32, rdata: RData) -> Self {
         Self {
             name: name.into(),
             rtype,
@@ -172,10 +166,8 @@ impl MessageBuilder {
         let question_count = u16::try_from(self.questions.len()).ok()?;
         let answer_count = u16::try_from(self.answers.len()).ok()?;
         let authority_count = u16::try_from(self.authorities.len()).ok()?;
-        let additional_count = u16::try_from(
-            self.additionals.len() + usize::from(self.opt.is_some()),
-        )
-        .ok()?;
+        let additional_count =
+            u16::try_from(self.additionals.len() + usize::from(self.opt.is_some())).ok()?;
 
         let mut out = Vec::with_capacity(512);
         out.extend_from_slice(&self.id.to_be_bytes());

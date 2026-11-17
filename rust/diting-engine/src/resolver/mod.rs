@@ -176,19 +176,26 @@ impl Resolver {
         // Pins are per configuration, while `deps.trust` is the engine's shared store. Derive a
         // store that adds this config's pins; Android publishes none, so the derived store is the
         // shared one and the query path is byte-for-byte unchanged there.
-        let trust = if providers.iter().any(|provider| provider.pin.is_some()) {
-            Arc::new(deps.trust.with_pin_hashes(
-                providers
-                    .iter()
-                    .filter_map(|provider| provider.pin.map(|pin| (provider.host.as_str(), pin))),
-            ))
-        } else {
-            Arc::clone(&deps.trust)
-        };
+        let trust =
+            if providers.iter().any(|provider| provider.pin.is_some()) {
+                Arc::new(deps.trust.with_pin_hashes(
+                    providers.iter().filter_map(|provider| {
+                        provider.pin.map(|pin| (provider.host.as_str(), pin))
+                    }),
+                ))
+            } else {
+                Arc::clone(&deps.trust)
+            };
 
-        let wants_doh = providers.iter().any(|entry| entry.protocol == Protocol::Doh);
-        let wants_dot = providers.iter().any(|entry| entry.protocol == Protocol::Dot);
-        let wants_doq = providers.iter().any(|entry| entry.protocol == Protocol::Doq);
+        let wants_doh = providers
+            .iter()
+            .any(|entry| entry.protocol == Protocol::Doh);
+        let wants_dot = providers
+            .iter()
+            .any(|entry| entry.protocol == Protocol::Dot);
+        let wants_doq = providers
+            .iter()
+            .any(|entry| entry.protocol == Protocol::Doq);
         let dial = Dialer::new(deps.bootstrap, deps.protector).with_outbound(deps.outbound.clone());
         let doh = wants_doh.then(|| doh::DohClient::new(Arc::clone(&trust), dial.clone()));
         // N7: the H3 transport is opportunistic. A failure to build it only disables the upgrade;
