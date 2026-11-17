@@ -1,6 +1,6 @@
 //! Go-compatible configuration model for the desktop service.
 //!
-//! Every struct mirrors a Go config type from `desktop/service/internal/{config,core,querylog}`:
+//! Every struct mirrors a Go config type from the former Go service's `internal/{config,core,querylog}`:
 //! field names, defaults, `omitempty` markers and normalization behaviour. The top-level
 //! [`Config`] is the on-disk `config.json` shape, so an existing Go-generated file can be read,
 //! normalized and written back without a semantic change.

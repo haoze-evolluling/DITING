@@ -1,4 +1,4 @@
-//! Desktop rule/filter engine (`desktop/service/internal/core/rule_engine*.go`).
+//! Desktop rule/filter engine (the former Go service's `internal/core/rule_engine*.go`).
 //!
 //! The facade keeps what Go kept outside the Rust kernels: configuration ownership, subscription
 //! cache management, pause and weekly schedules, client-group rule selection, statistics and the

@@ -3,7 +3,7 @@
 //! * a missing file is not an error: the default configuration is returned;
 //! * a malformed file *is* an error so a typo cannot silently reset user settings;
 //! * saving is atomic (write `config.json.tmp`, remove the old file, rename) and best-effort
-//!   `0644`, matching `SaveConfig` in `desktop/service/internal/config/store.go`.
+//!   `0644`, matching `SaveConfig` in the former Go service's `internal/config/store.go`.
 
 use std::fs;
 use std::io;

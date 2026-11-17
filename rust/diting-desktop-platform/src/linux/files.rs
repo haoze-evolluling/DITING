@@ -1,6 +1,6 @@
 //! Small filesystem helpers shared by the Linux backends.
 //!
-//! Mirrors `desktop/service/internal/platform/linux/files.go`: parent directories are created
+//! Mirrors the former Go service's `internal/platform/linux/files.go`: parent directories are created
 //! with 0700, and file modes only apply on creation so an existing file keeps its permissions.
 
 use std::fs::{self, OpenOptions};

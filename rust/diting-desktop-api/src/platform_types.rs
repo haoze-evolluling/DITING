@@ -1,4 +1,4 @@
-//! Platform value types mirrored from `desktop/service/internal/platform/types.go`.
+//! Platform value types mirrored from the former Go service's `internal/platform/types.go`.
 //!
 //! These are JSON/state-file DTOs only; the OS work lives in `diting-desktop-platform`. Field
 //! names, `omitempty` markers and string constants match the Go definitions so IPC payloads and

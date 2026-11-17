@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build the Flutter web console (desktop/app) into `desktop/service/frontend/dist`.
 
-The Go service embeds `frontend/dist` (`frontend/embed.go`), so the same Flutter desktop UI is also
-served to browsers as the LAN web console. Run this before `go build ./cmd/service`.
+`diting-desktop-ipc` embeds `frontend/dist` at compile time (see its `build.rs`), so the same Flutter
+desktop UI is also served to browsers as the LAN web console. Run this before building the service.
 
 The build is what lands in `dist`: the script wipes it first so a stale bundle can never be served.
 """

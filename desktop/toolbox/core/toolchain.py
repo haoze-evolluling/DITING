@@ -3,8 +3,8 @@
 
 """谛听 (DITING) 构建工具链探测。
 
-与 `desktop/build_installer.bat` 的预检保持同一口径：除了 Go / Flutter / NSIS / Rust（cargo，
-特权服务的印章内核是 Rust 库），Windows 上打 EXE 还必须具备 MSVC C++ 工具链，打 DEB 则依赖 WSL。
+与 `desktop/build_installer.bat` 的预检保持同一口径：除了 Flutter / NSIS / Rust（cargo，
+特权服务由纯 Rust 实现），Windows 上打 EXE 还必须具备 MSVC C++ 工具链，打 DEB 则依赖 WSL。
 结果带短时缓存，避免每次切换页面都重新执行 `flutter --version`（约 5-8 秒）。
 """
 
@@ -113,7 +113,6 @@ def check_toolchain(force: bool = False) -> Dict[str, dict]:
 
     nsis_extra = ["C:\\Program Files (x86)\\NSIS", "C:\\Program Files\\NSIS"]
     tools: Dict[str, dict] = {
-        "go": {"found": False, "version": "", "cmd": shutil.which("go")},
         "git": {"found": False, "version": "", "cmd": shutil.which("git")},
         "flutter": {"found": False, "version": "", "cmd": shutil.which("flutter")},
         "nsis": {"found": False, "version": "", "cmd": find_tool("makensis", nsis_extra)},
@@ -122,11 +121,6 @@ def check_toolchain(force: bool = False) -> Dict[str, dict]:
     if sys.platform == "win32":
         tools["msvc"] = _detect_msvc()
         tools["wsl"] = _detect_wsl()
-
-    if tools["go"]["cmd"]:
-        version = _probe_version(tools["go"]["cmd"], ["version"], "go version ")
-        if version:
-            tools["go"].update(found=True, version=version)
 
     if tools["git"]["cmd"]:
         version = _probe_version(tools["git"]["cmd"], ["--version"])

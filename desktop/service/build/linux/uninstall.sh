@@ -92,8 +92,9 @@ rm -f "$UNIT_PATH"
 rm -f /etc/default/diting
 systemctl daemon-reload || true
 
-echo "[4/5] 删除可执行文件与印章内核"
+echo "[4/5] 删除可执行文件（含旧版动态内核库）"
 rm -f "$INSTALL_BIN"
+# 旧版本安装的七个动态内核库；纯 Rust 版本已静态链接，仅作升级清理。
 rm -rf "$INSTALL_LIB_DIR"
 
 echo "[5/5] 清理配置与数据"

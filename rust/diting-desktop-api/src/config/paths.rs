@@ -1,4 +1,4 @@
-//! Default filesystem locations, mirroring `desktop/service/internal/platform/paths*.go`.
+//! Default filesystem locations, mirroring the former Go service's `internal/platform/paths*.go`.
 //!
 //! The logic lives here rather than in a platform helper because `diting-desktop-api` is the
 //! dependency-free model crate: it must not depend on `diting-desktop-platform`, and the rest of

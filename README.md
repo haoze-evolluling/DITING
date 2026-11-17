@@ -7,9 +7,9 @@
 - 📱 **Android**：Flutter 客户端 + Rust 隧道引擎（`rust/diting-engine`），随包交付两个原生库
   `libditing_engine.so`（隧道数据面与 DNS 管线）与 `libditing_kernels.so`（合并后的 UI 内核）；提供极速、
   普通（用户态 TCP/IP 全隧道）与服务器（局域网 DNS）三种模式，要求 Android 9.0+（API 28+）。
-- 💻 **Windows**：Go 特权服务 `diting-service.exe` + Flutter 桌面端 + 内嵌于服务的 Web 控制台，支持物理网卡
-  双栈 DNS 接管与离线恢复脚本。
-- 🐧 **Linux**：Go 可执行文件 `diting-service`（内嵌 Web 控制台）+ 七个 Rust 内核 `.so`，由 systemd 托管，
+- 💻 **Windows**：纯 Rust 特权服务 `diting-service.exe` + Flutter 桌面端 + 内嵌于服务的 Web 控制台，支持
+  物理网卡双栈 DNS 接管与离线恢复脚本。
+- 🐧 **Linux**：纯 Rust 可执行文件 `diting-service`（静态链接全部内核，内嵌 Web 控制台），由 systemd 托管，
   自动适配多种系统 DNS 后端。
 - 🧰 **维护工具箱**：Python + PyWebView，涵盖 DNS 压测、代码扫描、Logo 导出、跨端构建与版本同步。
 
@@ -27,7 +27,7 @@
 - **Android 专属**：应用分流与白名单、可选 HTTPS 检查（本地 CA、按应用选择、HTTP/3 开关与域名旁路）、
   SOCKS5/HTTP 出站代理、悬浮窗与流量排行、Ping/Traceroute/DNS 诊断、快捷磁贴、Material 3 主题、
   配置导入导出、可选 BYOK LLM 助手（需自备 API Key）。
-- **Windows 专属**：Go 特权服务 + 免 UAC 的 Flutter 桌面端（本地 IPC）；物理网卡双栈 DNS 接管、
+- **Windows 专属**：Rust 特权服务 + 免 UAC 的 Flutter 桌面端（本地 IPC）；物理网卡双栈 DNS 接管、
   接管状态持久化与离线 `restore-dns.bat`；53 端口冲突检测与进程定位；局域网 DNS 与防火墙放行；
   15353 端口 Web 控制台（账号鉴权）；服务注册、开机启动与系统托盘。
 - **Linux 专属**：systemd 托管；按 systemd-resolved → NetworkManager → `/etc/resolv.conf` 顺序自动适配
@@ -57,7 +57,7 @@ DITING/
 ├── android/app/             # Flutter Android 客户端：lib、test、android 原生壳、build_apk.bat
 ├── desktop/
 │   ├── app/                 # Flutter 桌面端（Windows 窗口 + web/ 供 Web 控制台使用的前端）
-│   ├── service/             # Go 特权服务 diting-service：IPC、DNS 管线、内嵌前端产物（frontend/dist）
+│   ├── service/             # 构建/打包资产与内嵌前端产物（frontend/dist）；服务已迁移至 rust/diting-desktop-*
 │   ├── toolbox/             # Python + PyWebView 维护工具箱
 │   └── build_installer.bat  # Windows EXE / Linux deb 安装包构建入口
 ├── shared/                  # 两端共用：设计系统、主题、l10n、配置与 SQLite 读取
@@ -112,11 +112,11 @@ desktop\build_installer.bat both       :: EXE + Linux deb（经 WSL）
 ```
 
 构建管线由 `desktop\toolbox\core\build_manager.py` 驱动：Flutter Web 控制台 → Flutter Windows 程序 →
-`diting-service.exe` → NSIS 安装包，最终产物在 `desktop\service\build\bin`。依赖 Flutter 3.50+、Go 1.25+、
-Rust（cargo）、Python 3.10+、Visual Studio「使用 C++ 的桌面开发」工作负载、Windows 开发者模式，EXE 目标
-另需 NSIS，deb 目标需 WSL。`desktop\service\build.bat`、`desktop\service\build_deb.bat` 是同一条管线的
-入口；仅构建 Linux 二进制或 `.deb` 也可直接用 `desktop/service/build_linux.sh`（`--package` 打包 deb、
-`-a arm64` 选架构）。
+`diting-service.exe` → NSIS 安装包，最终产物在 `desktop\service\build\bin`。服务端由 `cargo build -p
+diting-desktop-service` 编译为单一静态二进制，依赖 Flutter 3.50+、Rust（cargo）、Python 3.10+、Visual Studio
+「使用 C++ 的桌面开发」工作负载、Windows 开发者模式，EXE 目标另需 NSIS，deb 目标需 WSL（并在 WSL 内安装
+Rust 工具链）。`desktop\service\build.bat`、`desktop\service\build_deb.bat` 是同一条管线的入口；仅构建
+Linux 二进制或 `.deb` 也可直接用 `desktop/service/build_linux.sh`（`--package` 打包 deb、`-a arm64` 选架构）。
 
 ### 维护工具箱
 
@@ -145,9 +145,8 @@ Android 客户端（`android/app/pubspec.yaml`）是独立产品线，加 `-g an
 - **客户端**：Flutter / Dart 3 / Riverpod / go_router / sqflite / Material 3
 - **Android 引擎**：Rust（tokio / rustls / hyper / quinn / smoltcp），经 JNI 由 Kotlin `VpnService` 驱动；
   UI 侧内核合并为单个 `libditing_kernels.so`
-- **桌面服务端**：Go 1.25+（miekg/dns、quic-go、kardianos/service、gorilla/websocket），通过 `purego`
-  在运行期动态加载 Rust 内核（stamp / filter / rewrite / safebrowsing / hosts / dns64 / ratelimit），
-  保持 `CGO_ENABLED=0`；Flutter 桌面端与 Web 控制台复用同一套 UI
+- **桌面服务端**：纯 Rust（tokio / rustls / hyper / quinn / rcgen），复用 Android 端的解析器、缓存与决策
+  内核并静态链接为单一二进制；HTTP/WebSocket 管理 API 与 Flutter 桌面端、Web 控制台共用同一套契约
 - **Android 原生**：Kotlin 通道（VpnService、快捷磁贴、悬浮窗）
 - **工具箱**：Python 3 / PyWebView（Windows 上使用 WebView2）
 

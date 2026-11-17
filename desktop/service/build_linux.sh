@@ -2,15 +2,14 @@
 # ============================================================================
 #   谛听 (DITING) Linux 端构建脚本
 #
-#   在 Linux 主机本地（或在 WSL 中）构建 diting-service 单二进制，
-#   可选打包为 .deb 发行包。
+#   在 Linux 主机本地（或在 WSL 中）用 cargo 构建纯 Rust 的 diting-service 单二进制，
+#   可选打包为 .deb 发行包。二进制静态链接全部内核，不再附带 .so。
 #
 #   用法:
 #     ./build_linux.sh                    # 构建 amd64 二进制
 #     ./build_linux.sh -a arm64           # 构建 arm64 二进制
-#     ./build_linux.sh -v 2.3.0           # 手动指定版本号（默认读 ../app/pubspec.yaml）
+#     ./build_linux.sh -v 2.3.0           # 指定 deb 版本号（二进制版本读 ../app/pubspec.yaml）
 #     ./build_linux.sh --package          # 打包为 .deb 发行包
-#     ./build_linux.sh --prebuilt         # 复用 build/bin/diting-service（Windows 交叉编译）
 #     ./build_linux.sh --clean            # 先清理旧产物
 # ============================================================================
 
@@ -24,7 +23,6 @@ VERSION=""
 BUILD_TYPE="release"
 CLEAN=0
 PACKAGE=0
-PREBUILT=0
 OUTPUT_DIR="$SCRIPT_DIR/build/bin"
 
 usage() {
@@ -40,7 +38,6 @@ while [ $# -gt 0 ]; do
         -o|--output)  OUTPUT_DIR="$2"; shift 2 ;;
         --clean)      CLEAN=1; shift ;;
         --package)    PACKAGE=1; shift ;;
-        --prebuilt)   PREBUILT=1; shift ;;
         -h|--help)    usage ;;
         *) echo "[错误] 未知参数: $1" >&2; usage 1 ;;
     esac
@@ -68,59 +65,18 @@ BIN_PATH="$OUTPUT_DIR/$BIN_NAME"
 if [ "$CLEAN" -eq 1 ]; then
     # 仅清理本脚本自身的 Linux 产物（二进制 / 旧 .deb / 临时目录），保留同目录下的 Windows 安装包
     echo ">>> 清理旧构建产物 (仅 Linux 侧): $OUTPUT_DIR"
-    if [ "$PREBUILT" -eq 0 ]; then
-        rm -f "$OUTPUT_DIR/$BIN_NAME"
-    fi
+    rm -f "$OUTPUT_DIR/$BIN_NAME"
     rm -rf "$OUTPUT_DIR"/diting_*_linux_*
 fi
 mkdir -p "$OUTPUT_DIR"
-
-if [ "$BUILD_TYPE" = "release" ]; then
-    LDFLAGS="-s -w -X main.Version=$VERSION -X main.GitCommit=$GIT_COMMIT -X main.BuildTime=$BUILD_TIME"
-else
-    LDFLAGS="-X main.Version=$VERSION -X main.GitCommit=$GIT_COMMIT -X main.BuildTime=$BUILD_TIME"
-fi
 
 echo "============================================================"
 echo " 谛听 (DITING) Linux 构建"
 echo " 目标架构: linux/$ARCH   版本: $VERSION   类型: $BUILD_TYPE"
 echo "============================================================"
 
-if [ "$PREBUILT" -eq 1 ]; then
-    if [ ! -f "$BIN_PATH" ]; then
-        echo "[错误] --prebuilt 需要已存在的 Linux 二进制: $BIN_PATH" >&2
-        exit 1
-    fi
-    echo ">>> 复用预编译 Linux 二进制: $BIN_PATH"
-else
-    if ! command -v go >/dev/null 2>&1; then
-        if [ -x /usr/local/go/bin/go ]; then
-            export PATH="$PATH:/usr/local/go/bin"
-        else
-            echo "[错误] 未找到 Go 工具链，请先安装 Go 1.25+，或在 Windows 侧交叉编译后使用 --prebuilt。" >&2
-            exit 1
-        fi
-    fi
-    echo ">>> 正在编译 $BIN_NAME ..."
-    CGO_ENABLED=0 GOOS=linux GOARCH="$ARCH" go build -trimpath -ldflags "$LDFLAGS" -o "$BIN_PATH" ./cmd/service
-
-    if [ ! -f "$BIN_PATH" ]; then
-        echo "[错误] 编译失败，未生成 $BIN_PATH" >&2
-        exit 1
-    fi
-fi
-chmod +x "$BIN_PATH"
-echo "[OK] Linux 二进制就绪: $BIN_PATH ($(du -h "$BIN_PATH" | cut -f1))"
-
-# ---------------------------------------------------------------------------
-# Rust 内核（rust/diting-stamp-core、diting-filter-core、diting-rewrite-core、diting-safebrowsing-core、diting-hosts-core、diting-dns64-core、diting-ratelimit-core）
-#
-# Go 侧在运行期用纯 Go 动态加载它们（不链接、不依赖 cgo），所以它们都必须随二进制一起交付：
-# deb 装到 /usr/lib/diting/，服务按该路径探测；缺任一库即服务启动失败，没有降级实现。
-# ---------------------------------------------------------------------------
+# 纯 Rust 服务：所有内核静态链接进单一二进制，产物不再需要任何 .so。
 RUST_DIR="$SCRIPT_DIR/../../rust"
-# crate 名:动态库基名
-RUST_KERNELS="diting-stamp-core:diting_stamp_core diting-filter-core:diting_filter_core diting-rewrite-core:diting_rewrite_core diting-safebrowsing-core:diting_safebrowsing_core diting-hosts-core:diting_hosts_core diting-dns64-core:diting_dns64_core diting-ratelimit-core:diting_ratelimit_core"
 case "$ARCH" in
     amd64) RUST_TARGET="x86_64-unknown-linux-gnu" ; RUST_TARGET_ARCH="x86_64" ;;
     arm64) RUST_TARGET="aarch64-unknown-linux-gnu" ; RUST_TARGET_ARCH="aarch64" ;;
@@ -133,44 +89,41 @@ case "$(uname -m)" in
     *)              RUST_HOST_ARCH="$(uname -m)" ;;
 esac
 
-# rust_lib_path <库基名> —— 本机架构直接取 release 目录，交叉编译取目标三元组目录
-rust_lib_path() {
-    if [ "$RUST_HOST_ARCH" = "$RUST_TARGET_ARCH" ]; then
-        echo "$RUST_DIR/target/release/lib$1.so"
+if ! command -v cargo >/dev/null 2>&1; then
+    if [ -x "$HOME/.cargo/bin/cargo" ]; then
+        export PATH="$PATH:$HOME/.cargo/bin"
     else
-        echo "$RUST_DIR/target/$RUST_TARGET/release/lib$1.so"
+        echo "[错误] 未找到 Rust 工具链（cargo），请先安装 rustup: https://rustup.rs" >&2
+        exit 1
     fi
-}
+fi
 
-build_rust_kernel() {
-    crate="$1"
-    base="$2"
-    lib="$(rust_lib_path "$base")"
-    [ -f "$lib" ] && echo "[OK] Rust 内核就绪: $lib ($(du -h "$lib" | cut -f1))" && return 0
+CARGO_ARGS=(build -p diting-desktop-service)
+if [ "$BUILD_TYPE" = "release" ]; then
+    CARGO_ARGS=(build --release -p diting-desktop-service)
+fi
+if [ "$RUST_HOST_ARCH" = "$RUST_TARGET_ARCH" ]; then
+    CARGO_PROFILE_DIR="$RUST_DIR/target"
+else
+    CARGO_ARGS+=(--target "$RUST_TARGET")
+    CARGO_PROFILE_DIR="$RUST_DIR/target/$RUST_TARGET"
+fi
+if [ "$BUILD_TYPE" = "release" ]; then
+    BIN_SRC="$CARGO_PROFILE_DIR/release/$BIN_NAME"
+else
+    BIN_SRC="$CARGO_PROFILE_DIR/debug/$BIN_NAME"
+fi
 
-    if ! command -v cargo >/dev/null 2>&1; then
-        echo "[错误] 未找到 Rust 工具链（cargo），也没有可复用的内核: $lib" >&2
-        echo "       请安装 rustup 后重试；或先在目标架构上执行:" >&2
-        echo "       cargo build --release -p $crate --target $RUST_TARGET" >&2
-        return 1
-    fi
-    echo ">>> 正在编译 Rust 内核 ($crate, linux/$ARCH)..."
-    if [ "$RUST_HOST_ARCH" = "$RUST_TARGET_ARCH" ]; then
-        ( cd "$RUST_DIR" && cargo build --release -p "$crate" ) || return 1
-    else
-        ( cd "$RUST_DIR" && cargo build --release -p "$crate" --target "$RUST_TARGET" ) || return 1
-    fi
-    if [ ! -f "$lib" ]; then
-        echo "[错误] Rust 内核编译失败，未生成 $lib" >&2
-        echo "       交叉编译需要 rustup target add $RUST_TARGET 与对应的交叉链接器。" >&2
-        return 1
-    fi
-    echo "[OK] Rust 内核就绪: $lib ($(du -h "$lib" | cut -f1))"
-}
-
-for entry in $RUST_KERNELS; do
-    build_rust_kernel "${entry%%:*}" "${entry##*:}" || exit 1
-done
+echo ">>> 正在编译 $BIN_NAME (cargo ${CARGO_ARGS[*]}) ..."
+( cd "$RUST_DIR" && cargo "${CARGO_ARGS[@]}" ) || exit 1
+if [ ! -f "$BIN_SRC" ]; then
+    echo "[错误] 编译失败，未生成 $BIN_SRC" >&2
+    echo "       交叉编译需要 rustup target add $RUST_TARGET 与对应的交叉链接器。" >&2
+    exit 1
+fi
+cp "$BIN_SRC" "$BIN_PATH"
+chmod +x "$BIN_PATH"
+echo "[OK] Linux 二进制就绪: $BIN_PATH ($(du -h "$BIN_PATH" | cut -f1))"
 
 # ---------------------------------------------------------------------------
 # 发行包
@@ -189,7 +142,6 @@ if [ "$PACKAGE" -eq 1 ]; then
     echo ">>> 正在组装发行包: $PKG_NAME"
     rm -rf "$PKG_DIR"
     mkdir -p "$PKG_DIR/usr/local/bin"
-    mkdir -p "$PKG_DIR/usr/lib/diting"
     mkdir -p "$PKG_DIR/usr/share/diting"
     mkdir -p "$PKG_DIR/lib/systemd/system"
     mkdir -p "$PKG_DIR/etc/diting"
@@ -197,13 +149,7 @@ if [ "$PACKAGE" -eq 1 ]; then
     mkdir -p "$PKG_DIR/usr/share/pixmaps"
 
     cp "$BIN_PATH" "$PKG_DIR/usr/local/bin/$BIN_NAME"
-    # 服务按 /usr/lib/diting 探测七个 Rust 内核，装在这里无需任何环境变量或 rpath
-    for entry in $RUST_KERNELS; do
-        base="${entry##*:}"
-        lib="$(rust_lib_path "$base")"
-        cp "$lib" "$PKG_DIR/usr/lib/diting/lib$base.so"
-        chmod 0755 "$PKG_DIR/usr/lib/diting/lib$base.so"
-    done
+    chmod 0755 "$PKG_DIR/usr/local/bin/$BIN_NAME"
     cp "build/linux/diting-dnsservice.service" "$PKG_DIR/lib/systemd/system/"
     chmod 0644 "$PKG_DIR/lib/systemd/system/diting-dnsservice.service"
     cp "build/linux/install.sh" "$PKG_DIR/usr/share/diting/install.sh"
@@ -289,11 +235,6 @@ if [ "$PACKAGE" -eq 1 ]; then
 else
     echo " 构建完成。安装方式:"
     echo "   sudo install -m 0755 $BIN_PATH /usr/local/bin/$BIN_NAME"
-    echo "   sudo install -d -m 0755 /usr/lib/diting"
-    for entry in $RUST_KERNELS; do
-        base="${entry##*:}"
-        echo "   sudo install -m 0755 $(rust_lib_path "$base") /usr/lib/diting/lib$base.so"
-    done
     echo "   sudo $BIN_NAME -service install && sudo $BIN_NAME -service start"
 fi
 echo "   管理地址: http://127.0.0.1:15353"

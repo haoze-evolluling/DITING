@@ -1,6 +1,6 @@
 //! Rolling 24-hour, per-hour statistics collector.
 //!
-//! Port of `desktop/service/internal/querylog/stats.go`. Hour boundaries are computed in local
+//! Port of the former Go service's `internal/querylog/stats.go`. Hour boundaries are computed in local
 //! time (`chrono::Local`) because the UI renders wall-clock hours, exactly like Go's
 //! `time.Date(..., t.Location())`.
 

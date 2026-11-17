@@ -1,6 +1,6 @@
 //! Fixed-capacity overwrite ring for recent query records.
 //!
-//! Port of `desktop/service/internal/querylog/ring.go`: once full, appends overwrite the oldest
+//! Port of the former Go service's `internal/querylog/ring.go`: once full, appends overwrite the oldest
 //! entry, logical order is always oldest → newest, and searches walk backwards (newest first).
 
 use std::sync::RwLock;

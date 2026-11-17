@@ -7,7 +7,6 @@
 """
 
 import argparse
-import datetime
 import os
 import re
 import shutil
@@ -107,82 +106,35 @@ def run_cmd_live(cmd: list, cwd: str, on_log: Callable[[str, str], None], is_can
     return stream_process_output(cmd=cmd, cwd=cwd, on_log=on_log, is_cancelled=is_cancelled, env=env) == 0
 
 
-def cross_compile_linux_binary(
-    server_dir: str,
-    bin_dir: str,
-    arch: str,
-    version: str,
+def build_windows_service(
+    root: str,
+    service_bin: str,
     build_type: str,
-    git_commit: str,
-    build_time: str,
     on_log: Callable[[str, str], None],
     is_cancelled: Callable[[], bool],
-) -> Optional[str]:
-    """用本机 Go 交叉编译 Linux 服务二进制，供 WSL 仅做 deb 组装。
+) -> bool:
+    """用 cargo 编译纯 Rust 的 Windows 特权服务并复制到暂存目录。
 
-    WSL 内不必安装 Go，避免 Windows 与 WSL 两套工具链版本漂移。
-    """
-    bin_path = os.path.join(bin_dir, "diting-service")
-    ldflags = []
-    if build_type.lower() == "release":
-        ldflags += ["-s", "-w"]
-    ldflags += [
-        "-X", f"main.Version={version}",
-        "-X", f"main.GitCommit={git_commit}",
-        "-X", f"main.BuildTime={build_time}",
-    ]
-    env = os.environ.copy()
-    env.update({"GOOS": "linux", "GOARCH": arch, "CGO_ENABLED": "0"})
-    on_log("info", f">>> 正在使用本机 Go 交叉编译 Linux 二进制 (linux/{arch})...")
-    cmd = ["go", "build", "-trimpath", "-ldflags", " ".join(ldflags), "-o", bin_path, "./cmd/service"]
-    if not run_cmd_live(cmd, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled, env=env):
-        return None
-    if not os.path.exists(bin_path):
-        on_log("error", f"交叉编译未生成二进制: {bin_path}")
-        return None
-    try:
-        with open(bin_path, "rb") as f:
-            if f.read(4) != b"\x7fELF":
-                on_log("error", f"交叉编译产物不是 Linux ELF 文件: {bin_path}")
-                return None
-    except OSError as e:
-        on_log("error", f"无法校验交叉编译产物: {e}")
-        return None
-    return bin_path
-
-
-# 桌面服务在运行期用纯 Go 动态加载的 Rust 内核：crate 名 → Windows 动态库名。
-RUST_KERNELS = (
-    ("diting-stamp-core", "diting_stamp_core.dll"),
-    ("diting-filter-core", "diting_filter_core.dll"),
-    ("diting-rewrite-core", "diting_rewrite_core.dll"),
-    ("diting-safebrowsing-core", "diting_safebrowsing_core.dll"),
-    ("diting-hosts-core", "diting_hosts_core.dll"),
-    ("diting-dns64-core", "diting_dns64_core.dll"),
-    ("diting-ratelimit-core", "diting_ratelimit_core.dll"),
-)
-
-
-def build_rust_kernels(root: str, on_log: Callable[[str, str], None], is_cancelled: Callable[[], bool]) -> Optional[dict]:
-    """编译桌面服务的 Rust 内核，返回 {库文件名: 动态库路径}。
-
-    Go 侧在运行期用纯 Go 动态加载（syscall.LazyDLL），既不链接也不依赖 cgo，
-    因此安装包必须把这些 DLL 放到 diting-service.exe 同目录；
-    缺库时服务启动即失败，没有降级的第二套实现。
+    版本号、构建时间与提交号由 `diting-desktop-api/build.rs` 从 `desktop/app/pubspec.yaml`
+    与 git 注入，因此 cargo 构建本身就是版本真源，不再需要 `-ldflags`。
     """
     rust_dir = os.path.join(root, "rust")
-    libs: dict = {}
-    for crate, lib_name in RUST_KERNELS:
-        lib_path = os.path.join(rust_dir, "target", "release", lib_name)
-        on_log("info", f">>> 正在编译 Rust 内核 (rust/{crate})...")
-        cmd = ["cargo", "build", "--release", "-p", crate]
-        if not run_cmd_live(cmd, cwd=rust_dir, on_log=on_log, is_cancelled=is_cancelled):
-            return None
-        if not os.path.exists(lib_path):
-            on_log("error", f"Rust 内核 {crate} 未生成动态库: {lib_path}")
-            return None
-        libs[lib_name] = lib_path
-    return libs
+    is_release = build_type.lower() == "release"
+    on_log("info", f">>> 正在编译 Windows 特权服务 (cargo, {build_type})...")
+    cmd = ["cargo", "build"]
+    if is_release:
+        cmd.append("--release")
+    cmd += ["-p", "diting-desktop-service"]
+    if not run_cmd_live(cmd, cwd=rust_dir, on_log=on_log, is_cancelled=is_cancelled):
+        return False
+    profile = "release" if is_release else "debug"
+    built = os.path.join(rust_dir, "target", profile, "diting-service.exe")
+    if not os.path.exists(built):
+        on_log("error", f"未找到编译产物: {built}")
+        return False
+    os.makedirs(os.path.dirname(service_bin), exist_ok=True)
+    shutil.copy2(built, service_bin)
+    return True
 
 
 def build_web_console_assets(
@@ -190,7 +142,7 @@ def build_web_console_assets(
     on_log: Optional[Callable[[str, str], None]] = None,
     is_cancelled: Optional[Callable[[], bool]] = None,
 ) -> bool:
-    """把 Flutter 桌面端构建为 Web 控制台产物，供 Go 服务 embed。"""
+    """把 Flutter 桌面端构建为 Web 控制台产物，供 IPC 服务在编译期嵌入。"""
     script = os.path.join(server_dir, "build_frontend.py")
     if not os.path.exists(script):
         if on_log:
@@ -277,9 +229,6 @@ def build_pipeline(
 
     if not skip_check:
         if need_win:
-            if not tools["go"]["found"]:
-                on_log("error", "未找到 Go 环境，无法继续编译。")
-                return {"success": False, "message": "缺少 Go 环境"}
             if not tools["flutter"]["found"]:
                 on_log("error", "未找到 Flutter SDK，请把 flutter 加入 PATH。")
                 return {"success": False, "message": "缺少 Flutter SDK"}
@@ -287,22 +236,21 @@ def build_pipeline(
                 on_log("error", "未找到 makensis，无法打包 NSIS 安装包。")
                 return {"success": False, "message": "缺少 NSIS"}
             if not tools["cargo"]["found"]:
-                on_log("error", "未找到 Rust 工具链（cargo），特权服务的印章内核需要用 Rust 编译。")
+                on_log("error", "未找到 Rust 工具链（cargo），纯 Rust 特权服务需要 cargo 编译。")
                 return {"success": False, "message": "缺少 Rust 工具链"}
             if sys.platform == "win32" and not tools.get("msvc", {}).get("found"):
                 on_log("error", "未找到 Visual Studio C++ 桌面开发工具链，无法构建 Flutter Windows 窗口。")
                 return {"success": False, "message": "缺少 Visual Studio C++ 工具链"}
 
         if need_deb:
-            if not tools["go"]["found"]:
-                on_log("error", "未找到 Go 环境，无法交叉编译 Linux 服务。")
-                return {"success": False, "message": "缺少 Go 环境"}
             if not tools["flutter"]["found"]:
                 on_log("error", "未找到 Flutter SDK，无法构建内嵌 Web 控制台。")
                 return {"success": False, "message": "缺少 Flutter SDK"}
             if sys.platform == "win32" and not tools.get("wsl", {}).get("found"):
                 on_log("error", "未检测到 WSL 环境。在 Windows 上打包 deb 安装包需要 WSL 支持。")
                 return {"success": False, "message": "缺少 WSL 环境"}
+            if sys.platform == "win32":
+                on_log("info", "提示: deb 构建会在 WSL 内直接编译 Rust，WSL 需已安装 rustup。")
 
     if is_cancelled():
         on_log("warn", "构建已在启动前取消。")
@@ -317,13 +265,7 @@ def build_pipeline(
     if not build_web_console_assets(server_dir, on_log=on_log, is_cancelled=is_cancelled):
         return _fail("Web 控制台构建失败")
 
-    git_commit = "unknown"
-    try:
-        git_commit = subprocess.check_output(["git", "-C", root, "rev-parse", "--short", "HEAD"], text=True).strip()
-    except Exception:
-        pass
-    build_time = datetime.datetime.now().astimezone().isoformat()
-
+    # 版本、构建时间与提交号由 cargo 的 build.rs 注入，这里不再需要 git 查询。
     is_rel = build_type.lower() == "release"
 
     built_artifacts = []
@@ -360,16 +302,9 @@ def build_pipeline(
         shutil.copytree(release_dir, app_stage)
         on_log("info", f"     Flutter 产物已暂存: {app_stage}")
 
-        on_log("info", ">>> [2/3] 正在编译 Windows 特权服务 (diting-service.exe) 与 Rust 内核...")
-        svc_ldflags = f"{'-s -w ' if is_rel else ''}-H windowsgui -X 'main.Version={version}' -X 'main.GitCommit={git_commit}' -X 'main.BuildTime={build_time}'"
-        cmd_svc = ["go", "build", "-ldflags", svc_ldflags, "-o", service_bin, "./cmd/service"]
-        ok = run_cmd_live(cmd_svc, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
-        if not ok or not os.path.exists(service_bin):
+        on_log("info", ">>> [2/3] 正在编译 Windows 特权服务 (纯 Rust, diting-service.exe)...")
+        if not build_windows_service(root, service_bin, build_type, on_log, is_cancelled):
             return _fail("特权服务编译失败")
-
-        rust_kernels = build_rust_kernels(root, on_log, is_cancelled)
-        if not rust_kernels:
-            return _fail("Rust 内核编译失败")
 
         on_log("info", ">>> [3/3] 正在打包 NSIS 独立安装包...")
         installer_dir = INSTALLER_DIR
@@ -389,13 +324,6 @@ def build_pipeline(
             "UTF8",
             f"-DARG_APP_DIR={app_stage}",
             f"-DARG_SERVICE_BINARY={service_bin}",
-            f"-DARG_STAMP_LIBRARY={rust_kernels['diting_stamp_core.dll']}",
-            f"-DARG_FILTER_LIBRARY={rust_kernels['diting_filter_core.dll']}",
-            f"-DARG_REWRITE_LIBRARY={rust_kernels['diting_rewrite_core.dll']}",
-            f"-DARG_SAFEBROWSING_LIBRARY={rust_kernels['diting_safebrowsing_core.dll']}",
-            f"-DARG_HOSTS_LIBRARY={rust_kernels['diting_hosts_core.dll']}",
-            f"-DARG_DNS64_LIBRARY={rust_kernels['diting_dns64_core.dll']}",
-            f"-DARG_RATELIMIT_LIBRARY={rust_kernels['diting_ratelimit_core.dll']}",
             f"-DPRODUCT_VERSION={version}",
             f"-DINFO_PRODUCTVERSION={version}",
             f"-DOUTPUT_FILENAME={installer_path}",
@@ -434,16 +362,12 @@ def build_pipeline(
         if arch not in ("amd64", "arm64", "arm"):
             return {"success": False, "message": f"不支持的 Linux 架构: {arch}"}
         on_log("info", f">>> 正在打包 Linux 发行包 (.deb, linux/{arch})...")
-        # 始终以 bash 显式执行，避免脚本缺失可执行位（如 Windows 克隆检出）导致失败
+        # 始终以 bash 显式执行，避免脚本缺失可执行位（如 Windows 克隆检出）导致失败。
+        # 纯 Rust 服务由 Linux 侧 cargo 直接编译，不再从 Windows 交叉编译后传入二进制；
+        # 因此 WSL 内需要已安装 rustup（脚本会在缺失时给出明确提示）。
         if sys.platform == "win32":
-            bin_path = cross_compile_linux_binary(
-                server_dir, bin_dir, arch, version, build_type, git_commit, build_time,
-                on_log=on_log, is_cancelled=is_cancelled,
-            )
-            if not bin_path:
-                return _fail("Linux 二进制交叉编译失败")
             wsl_dir = server_dir.replace("\\", "/")
-            cmd_pkg = ["wsl.exe", "-e", "bash", "-c", f"cd \"$(wslpath '{wsl_dir}')\" && exec bash ./build_linux.sh --package --prebuilt -a {arch} -v {version} -b {build_type}"]
+            cmd_pkg = ["wsl.exe", "-e", "bash", "-c", f"cd \"$(wslpath '{wsl_dir}')\" && exec bash ./build_linux.sh --package -a {arch} -v {version} -b {build_type}"]
             ok = run_cmd_live(cmd_pkg, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
         else:
             cmd_pkg = ["bash", "./build_linux.sh", "--package", "-a", arch, "-v", version, "-b", build_type]

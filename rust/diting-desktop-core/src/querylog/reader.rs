@@ -1,6 +1,6 @@
 //! Reverse JSON-Lines reader for persisted query history.
 //!
-//! Port of `desktop/service/internal/querylog/reader.go`: files are scanned newest-date first,
+//! Port of the former Go service's `internal/querylog/reader.go`: files are scanned newest-date first,
 //! each file is read backwards in 64 KiB blocks, corrupt lines are skipped, and counting mode
 //! keeps scanning after the candidate page is full so `Total` stays stable across offsets.
 

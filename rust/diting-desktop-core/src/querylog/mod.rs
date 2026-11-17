@@ -1,6 +1,6 @@
 //! Query history and runtime statistics.
 //!
-//! Port of `desktop/service/internal/querylog`:
+//! Port of the former Go service's `internal/querylog`:
 //!   - a fixed-capacity in-memory ring for fast recent lookups;
 //!   - 24-hour rolling per-hour statistics (totals, blocked, cache hits, Top-N);
 //!   - daily JSON-Lines persistence with retention cleanup.

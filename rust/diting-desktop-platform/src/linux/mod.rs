@@ -1,5 +1,5 @@
 #![cfg(unix)]
-//! Linux platform backend, ported from `desktop/service/internal/platform/linux`.
+//! Linux platform backend, ported from the former Go service's `internal/platform/linux`.
 //!
 //! The implementations shell out to `resolvectl`, `nmcli`, `systemctl`, firewall tools and parse
 //! `/proc`; shared value types and the capability traits live in the crate root.

@@ -6,7 +6,7 @@
 `desktop/app/pubspec.yaml` 的 `version: X.Y.Z+构建号` 是桌面端唯一的版本字面量
 （Flutter 工具链强制要求它存在），其余位置一律在构建期从它派生，不再各存一份：
 
-  * `diting-service.exe` / Linux 二进制：`go build -X main.Version=<pubspec 版本名>`
+  * `diting-service.exe` / Linux 二进制：`rust/diting-desktop-api/build.rs` 在 cargo 构建期读取它
   * Windows 安装包：`makensis -DINFO_PRODUCTVERSION=<pubspec 版本名>`
   * Linux `.deb`：`build_linux.sh` 自己从 pubspec 读
 
@@ -77,7 +77,7 @@ def source_targets() -> List[Dict[str, str]]:
             "group": GROUP_DESKTOP,
             "name": "桌面端（唯一真源）",
             "path": DESKTOP_PUBSPEC,
-            "note": "go build / NSIS / deb 全部从这里派生",
+            "note": "cargo build / NSIS / deb 全部从这里派生",
         },
         {
             "group": GROUP_ANDROID,
@@ -92,10 +92,10 @@ def derived_targets() -> List[Dict[str, str]]:
     """不存版本字面量、由构建脚本注入版本号的位置。"""
     return [
         {
-            "name": "Windows 特权服务",
-            "path": os.path.join(SERVICE_DIR, "cmd", "service", "main.go"),
-            "type": "go",
-            "via": "go build -X main.Version",
+            "name": "桌面特权服务",
+            "path": os.path.join(ROOT_DIR, "rust", "diting-desktop-api", "build.rs"),
+            "type": "rs",
+            "via": "cargo build（build.rs 读取 pubspec.yaml）",
         },
         {
             "name": "Windows 安装包",
@@ -161,17 +161,15 @@ def _derived_literal(item: Dict[str, str]) -> Optional[str]:
         return None
     content = read_file(path)
     ftype = item["type"]
-    if ftype == "go":
-        m = re.search(r'(?m)^\s*Version\s*=\s*"([^"]*)"', content)
-        if m and m.group(1).strip().lower() not in ("", "dev"):
-            return m.group(1)
-        return None
+    if ftype == "rs":
+        # build.rs 只允许引用 pubspec；出现硬编码版本字面量就说明派生链断了
+        return None if "pubspec.yaml" in content else "build.rs 里的版本字面量"
     if ftype == "nsi":
         m = re.search(r'(?m)^\s*!define INFO_PRODUCTVERSION\s+"([^"]*)"', content)
         return m.group(1) if m else None
     if ftype == "sh":
         # 构建脚本本身不存版本，但它若回去 grep 源码字面量就说明派生链断了
-        return None if "pubspec.yaml" in content else "cmd/service/main.go 里的 Version 字面量"
+        return None if "pubspec.yaml" in content else "构建脚本里的版本字面量"
     return None
 
 

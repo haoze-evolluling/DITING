@@ -1,6 +1,6 @@
 //! Asynchronous daily JSON-Lines writer.
 //!
-//! Port of `desktop/service/internal/querylog/writer.go`. The DNS hot path only performs a
+//! Port of the former Go service's `internal/querylog/writer.go`. The DNS hot path only performs a
 //! non-blocking enqueue; one background thread owns the file handle, rotates by local date,
 //! flushes every second (or every 256 lines) and performs retention cleanup on start.
 

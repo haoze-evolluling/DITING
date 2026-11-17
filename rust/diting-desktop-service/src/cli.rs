@@ -1,4 +1,4 @@
-//! Command-line surface, matching `desktop/service/cmd/service/cli.go`.
+//! Command-line surface, matching the former Go service's `cmd/service/cli.go`.
 //!
 //! The service manager launches the binary with `-run`; interactive invocations without arguments
 //! print the version, which is also what a user double-clicking the executable expects.

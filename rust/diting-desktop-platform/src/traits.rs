@@ -1,6 +1,6 @@
 //! Platform capability traits.
 //!
-//! These mirror `desktop/service/internal/platform/interfaces.go`. The service composes one
+//! These mirror the former Go service's `internal/platform/interfaces.go`. The service composes one
 //! implementation per OS and the IPC layer talks only to these traits, which keeps the handlers
 //! testable with in-memory fakes.
 

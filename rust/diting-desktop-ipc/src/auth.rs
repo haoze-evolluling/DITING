@@ -1,6 +1,6 @@
 //! Administrator credentials, login throttling and sessions.
 //!
-//! Mirrors `desktop/service/internal/auth/auth.go`: SHA-256(salt ‖ password) hex digests, five
+//! Mirrors the former Go service's `internal/auth/auth.go`: SHA-256(salt ‖ password) hex digests, five
 //! failures lock an address for five minutes and sessions expire after the configured timeout.
 
 use std::collections::HashMap;

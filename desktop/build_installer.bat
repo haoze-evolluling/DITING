@@ -21,8 +21,8 @@ title DITING Installer Build
 :: Requirements:
 ::   - Python 3.10+ on PATH
 ::   - Flutter SDK on PATH (the "Windows (desktop)" device must work)
-::   - Go 1.25+ on PATH
-::   - Rust (cargo) on PATH: the service loads a Rust stamp kernel
+::   - Rust (cargo) on PATH: diting-service is compiled from rust/diting-desktop-service
+::     (the deb target needs cargo inside WSL as well)
 ::   - NSIS (makensis) for the EXE target
 ::   - Visual Studio "Desktop development with C++" + Windows Developer Mode
 ::   - WSL for the deb target when this runs on Windows
@@ -67,7 +67,7 @@ goto PARSE_ARGS
 :ARGS_READY
 
 if not exist "app\pubspec.yaml" goto ERR_NO_PROJECT
-if not exist "service\go.mod" goto ERR_NO_SERVICE
+if not exist "..\rust\diting-desktop-service\Cargo.toml" goto ERR_NO_SERVICE
 if not exist "toolbox\core\build_manager.py" goto ERR_NO_ENGINE
 
 where python >nul 2>&1
@@ -90,8 +90,6 @@ if not defined NEED_WIN goto CHECK_DEB
 
 where flutter >nul 2>&1
 if errorlevel 1 goto ERR_NO_FLUTTER
-where go >nul 2>&1
-if errorlevel 1 goto ERR_NO_GO
 where cargo >nul 2>&1
 if errorlevel 1 goto ERR_NO_CARGO
 
@@ -118,8 +116,6 @@ if not defined NEED_DEB goto PREFLIGHT_OK
 if not defined NEED_WIN (
     where flutter >nul 2>&1
     if errorlevel 1 goto ERR_NO_FLUTTER
-    where go >nul 2>&1
-    if errorlevel 1 goto ERR_NO_GO
 )
 if /i not "%OS%"=="Windows_NT" goto PREFLIGHT_OK
 :: The deb is assembled by WSL so the Windows host needs no extra Linux toolchain.
@@ -155,8 +151,8 @@ echo [ERROR] app\pubspec.yaml not found.
 echo         Run this script from the desktop directory.
 goto FAIL
 :ERR_NO_SERVICE
-echo [ERROR] service\go.mod not found.
-echo         The installer bundles diting-service, so the service module must exist.
+echo [ERROR] rust\diting-desktop-service\Cargo.toml not found.
+echo         The installer bundles diting-service, so the Rust service crate must exist.
 goto FAIL
 :ERR_NO_ENGINE
 echo [ERROR] toolbox\core\build_manager.py not found.
@@ -167,12 +163,9 @@ goto FAIL
 :ERR_NO_FLUTTER
 echo [ERROR] 'flutter' not found on PATH. Add your Flutter SDK bin directory to PATH.
 goto FAIL
-:ERR_NO_GO
-echo [ERROR] 'go' not found on PATH. Install Go 1.25+ and retry.
-goto FAIL
 :ERR_NO_CARGO
 echo [ERROR] 'cargo' not found on PATH.
-echo         diting-service loads a Rust stamp kernel (rust/diting-stamp-core).
+echo         diting-service is a pure Rust binary (rust/diting-desktop-service).
 echo         Install the Rust toolchain from https://rustup.rs and retry.
 goto FAIL
 :ERR_NO_MSVC

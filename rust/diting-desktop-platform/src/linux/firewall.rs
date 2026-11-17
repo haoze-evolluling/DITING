@@ -1,6 +1,6 @@
 //! Firewall detection and port opening for firewalld, ufw, nftables and iptables.
 //!
-//! Detection order and commands match `desktop/service/internal/platform/linux/firewall.go`.
+//! Detection order and commands match the former Go service's `internal/platform/linux/firewall.go`.
 
 use std::sync::Arc;
 

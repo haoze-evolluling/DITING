@@ -6,7 +6,7 @@ including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference
 
     python rust/verify.py
     python rust/verify.py --android   # also cross-compile the engine and the merged kernel library for arm64-v8a (2 .so files)
-    python rust/verify.py --desktop   # also run the desktop service (Go) suite against every desktop kernel
+    python rust/verify.py --desktop   # also run the desktop service suite (pure Rust, API through service)
     python rust/verify.py --engine    # also run the tunnel engine's own suite (DNS pipeline, transports, JNI contract)
     python rust/verify.py --smoke     # also load the log, rule-index, outbound-proxy, VPN-plan, VPN-watchdog, engine and notification kernels in a JVM
     python rust/verify.py --dart      # also run the Dart side of the native fast paths
@@ -14,11 +14,10 @@ including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference
     python rust/verify.py --all
 
 The Android engine is `libditing_engine.so`: it links the engine-side kernels statically, so there
-is no Go side left to compare against and no `--go` step. `--desktop` is the only Go check that
-remains, and it belongs to the desktop service, not to Android: that module loads its seven kernels
-(stamps, the rule index, the rewrite engine/records, the safe-browsing hash prefixes, hosts, DNS64
-and the client rate limiter) through pure Go dynamic loading, so `CGO_ENABLED=0` is enough.
-`--dart` runs the Dart side against the same libraries: the importer, the rules page, the AI
+is no Go side left to compare against and no `--go` step. `--desktop` exercises the pure-Rust
+desktop backend end to end: config/DTOs, the engine facades, the DNS data plane (including the real
+DoT loopback round trip), the management HTTP/WebSocket API and the service binary. `--dart` runs
+the Dart side against the same libraries: the importer, the rules page, the AI
 analysis assistant, the two DNS configuration documents, the backup plan, the subscription
 URL/fetch/schedule rules and the IP quality sources, the outbound-proxy app configuration, the VPN
 route/start plans and the revoke watchdog have no second implementation left, so those tests are
@@ -35,7 +34,6 @@ from pathlib import Path
 
 RUST_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = RUST_DIR.parent
-GO_DESKTOP_DIR = PROJECT_ROOT / "desktop" / "service"
 APP_DIR = PROJECT_ROOT / "android" / "app"
 
 
@@ -152,19 +150,33 @@ def main() -> int:
             ("engine", ["cargo", "test", "-p", "diting-engine", "--all-targets"], RUST_DIR)
         )
     if args.desktop:
-        # The kernels are loaded at runtime (pure Go dlopen), so `go test` only needs the release
-        # artifacts next to the source tree -- no cgo, no installed library.
-        steps.append(("stamp-release", ["cargo", "build", "--release", "-p", "diting-stamp-core"], RUST_DIR))
-        steps.append(("filter-release", ["cargo", "build", "--release", "-p", "diting-filter-core"], RUST_DIR))
-        steps.append(("rewrite-release", ["cargo", "build", "--release", "-p", "diting-rewrite-core"], RUST_DIR))
+        # Everything below the binary is pure Rust now: the integration tests bind real loopback
+        # sockets (UDP/TCP/DoT, HTTP/WebSocket) and the service tests cover the CLI surface.
         steps.append(
-            ("safebrowsing-release", ["cargo", "build", "--release", "-p", "diting-safebrowsing-core"], RUST_DIR)
+            (
+                "desktop",
+                [
+                    "cargo",
+                    "test",
+                    "--all-targets",
+                    "-p",
+                    "diting-desktop-api",
+                    "-p",
+                    "diting-desktop-core",
+                    "-p",
+                    "diting-desktop-dns",
+                    "-p",
+                    "diting-desktop-platform",
+                    "-p",
+                    "diting-desktop-app",
+                    "-p",
+                    "diting-desktop-ipc",
+                    "-p",
+                    "diting-desktop-service",
+                ],
+                RUST_DIR,
+            )
         )
-        steps.append(("hosts-release", ["cargo", "build", "--release", "-p", "diting-hosts-core"], RUST_DIR))
-        steps.append(("dns64-release", ["cargo", "build", "--release", "-p", "diting-dns64-core"], RUST_DIR))
-        steps.append(("ratelimit-release", ["cargo", "build", "--release", "-p", "diting-ratelimit-core"], RUST_DIR))
-        # -count=1: the kernel is an external file, invisible to Go's test cache.
-        steps.append(("desktop-service", ["go", "test", "-count=1", "./..."], GO_DESKTOP_DIR))
     if args.dart:
         flutter = shutil.which("flutter")
         if flutter is None:

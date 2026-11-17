@@ -1,6 +1,6 @@
 //! Query-log value types.
 //!
-//! These mirror `desktop/service/internal/querylog/types.go` exactly: the serde field names match
+//! These mirror the former Go service's `internal/querylog/types.go` exactly: the serde field names match
 //! the Go JSON tags (`clientIP`, `durationMs`, …) and the `omitempty` rules are reproduced so the
 //! JSON-Lines files and IPC payloads stay interchangeable.
 

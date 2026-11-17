@@ -1,6 +1,6 @@
 //! Encrypted-DNS server certificate management.
 //!
-//! Mirrors `desktop/service/internal/core/cert_*.go`: the certificate material lives on disk and
+//! Mirrors the former Go service's `internal/core/cert_*.go`: the certificate material lives on disk and
 //! only the parsed summary is ever exposed. Configuration never carries private-key material, so
 //! the same [`CertConfig`](diting_desktop_api::config::security::CertConfig) can travel over IPC
 //! or be written to `config.json` unchanged.
