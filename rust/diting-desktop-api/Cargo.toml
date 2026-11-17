@@ -1,0 +1,10 @@
+[package]
+name = "diting-desktop-api"
+version = "0.1.0"
+edition = "2021"
+description = "Pure data models shared by the DITING desktop Rust service: config, IPC DTOs and platform types"
+publish = false
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
