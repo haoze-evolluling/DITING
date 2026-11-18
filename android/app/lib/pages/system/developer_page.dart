@@ -14,6 +14,7 @@ import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
 import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -114,7 +115,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
       }
     }
     if (!mounted) return;
-    _toast(message);
+    showAppSnack(context, message);
     // "Clear all data" also wipes the first-run agreement, so the app must restart; staying alive
     // would leave "running" split from "must agree again" (same rule as the cleanup page).
     if (action == _DeveloperAction.clearAllData) {
@@ -210,16 +211,6 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
       ),
     );
     if (confirmed == true) await SystemNavigator.pop();
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-      ),
-    );
   }
 
   @override

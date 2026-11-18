@@ -7,6 +7,7 @@ import 'package:diting_android/pages/forms/form_page.dart';
 import 'package:diting_android/state/backup_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -174,12 +175,13 @@ class _ConfigTransferWebdavPageState
     final export = await actions.export(BackupGroup.values.toSet());
     if (!mounted) return;
     if (export.isEmpty) {
-      _toast(context.l10n.webdavNoConfig);
+      showAppSnack(context, context.l10n.webdavNoConfig);
       return;
     }
     final result = await ref.read(davProvider.notifier).upload(export.content);
     if (!mounted) return;
-    _toast(
+    showAppSnack(
+      context,
       result.succeeded
           ? context.l10n.webdavUploadedCount(
               export.included.length,
@@ -193,7 +195,10 @@ class _ConfigTransferWebdavPageState
     final text = await ref.read(davProvider.notifier).download();
     if (!mounted) return;
     if (text == null) {
-      _toast(ref.read(davProvider).message ?? context.l10n.webdavNoCloudBackup);
+      showAppSnack(
+        context,
+        ref.read(davProvider).message ?? context.l10n.webdavNoCloudBackup,
+      );
       return;
     }
     final result = await ref
@@ -205,12 +210,6 @@ class _ConfigTransferWebdavPageState
       child: _DavImportDialog(result: result),
     );
   });
-
-  void _toast(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
-  }
 }
 
 class _DavImportDialog extends StatelessWidget {

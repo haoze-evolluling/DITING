@@ -7,12 +7,11 @@
 library;
 
 import 'package:diting_android/data/native/launcher_icon_bridge.dart';
-import 'package:diting_android/pages/appearance/appearance_shared_pages.dart'
-    show showSettingHint;
 import 'package:diting_android/pages/appearance/preview_choice.dart';
 import 'package:diting_android/state/launcher_icon_providers.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -27,9 +26,10 @@ class LauncherIconPage extends ConsumerWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     Widget thumb(LauncherIconStyle style) => _IconThumb(
       asset: switch (style) {
-        LauncherIconStyle.standard => dark
-            ? 'packages/diting_shared/assets/images/icon_dark.webp'
-            : 'packages/diting_shared/assets/images/icon.webp',
+        LauncherIconStyle.standard =>
+          dark
+              ? 'packages/diting_shared/assets/images/icon_dark.webp'
+              : 'packages/diting_shared/assets/images/icon.webp',
         LauncherIconStyle.adguard =>
           'packages/diting_shared/assets/images/icon_adguard.webp',
       },
@@ -55,11 +55,12 @@ class LauncherIconPage extends ConsumerWidget {
                   .read(launcherIconProvider.notifier)
                   .select(style);
               if (!context.mounted) return;
-              showSettingHint(
+              showAppSnack(
                 context,
                 applied
                     ? l10n.launcherIconApplied
                     : l10n.launcherIconApplyFailed,
+                duration: const Duration(milliseconds: 1800),
               );
             },
             footer: l10n.launcherIconFooter,

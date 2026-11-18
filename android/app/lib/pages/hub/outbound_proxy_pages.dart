@@ -8,6 +8,7 @@ import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_android/state/outbound_proxy_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_icon_avatar.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/app_list_error_state.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
@@ -118,16 +119,16 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
           )
         : null;
     if (error != null) {
-      _toast(error);
+      showAppSnack(context, error);
       return;
     }
     setState(() => _saving = true);
     try {
       await _persist(draft, status: draft.enabled ? 'connecting' : 'disabled');
       _loaded = draft;
-      _toast(l10n.outboundSaved);
+      if (mounted) showAppSnack(context, l10n.outboundSaved);
     } on Object catch (error) {
-      _toast(l10n.outboundSaveFailed('$error'));
+      if (mounted) showAppSnack(context, l10n.outboundSaveFailed('$error'));
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -169,7 +170,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
       _username.clear();
       _password.clear();
     });
-    _toast(context.l10n.outboundResetDone);
+    showAppSnack(context, context.l10n.outboundResetDone);
   }
 
   Set<String>? _installedPackages() {
@@ -179,12 +180,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
     return snapshot == null || snapshot.error != null
         ? null
         : snapshot.packageNames;
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
   }
 
   @override

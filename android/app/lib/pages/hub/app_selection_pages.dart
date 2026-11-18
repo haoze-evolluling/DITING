@@ -8,6 +8,7 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:diting_android/widgets/app_list_error_state.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_android/widgets/unsaved_changes.dart';
@@ -221,12 +222,7 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
     setState(() {
       _initial = {..._selected};
     });
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.appSelectionSaved),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showAppSnack(context, context.l10n.appSelectionSaved);
   }
 
   /// True while the draft differs from what is stored. Drives both the save button and the
@@ -308,7 +304,8 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
                           title: Text(widget.enableToggleTitle!),
                           subtitle: Text(
                             _selected.isEmpty
-                                ? (widget.enableToggleEmptyHint ?? context.l10n.appSelectionNoAppsYet)
+                                ? (widget.enableToggleEmptyHint ??
+                                      context.l10n.appSelectionNoAppsYet)
                                 : context.l10n.appSelectionCount(
                                     '${_selected.length}',
                                   ),

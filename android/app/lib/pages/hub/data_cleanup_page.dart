@@ -3,6 +3,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/cleanup/cleanup_models.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
@@ -103,12 +104,7 @@ class DataCleanupPage extends ConsumerWidget {
 
     // Failures and "nothing to clean" both explain themselves in a SnackBar: a silent
     // success is the worst outcome, since the data would still be there next time.
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(result.message),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showAppSnack(context, result.message);
 
     // The legacy version exits the app for these two: they clear the first-run agreement
     // flag, and staying alive would split "running" from "must agree again".

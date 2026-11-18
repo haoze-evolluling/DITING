@@ -15,6 +15,7 @@ import 'package:diting_android/state/request_export_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart'
     show AppWorkMode, workModeProvider;
 import 'package:diting_android/widgets/app_icon_avatar.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -120,7 +121,7 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
   Future<void> _export(AppL10n l10n) async {
     final error = _validationError(l10n);
     if (error != null) {
-      _toast(error);
+      showAppSnack(context, error);
       return;
     }
     final range = _customRange;
@@ -150,31 +151,26 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
       final outcome = await ref.read(requestLogExportRunnerProvider)(options);
       if (!mounted) return;
       if (outcome.cancelled) {
-        _toast(l10n.obsExportCancelled);
+        showAppSnack(context, l10n.obsExportCancelled);
         return;
       }
       if (outcome.error != null) {
-        _toast(outcome.error!);
+        showAppSnack(context, outcome.error!);
         return;
       }
       final result = outcome.result;
       if (result == null) {
-        _toast(l10n.obsExportEmpty);
+        showAppSnack(context, l10n.obsExportEmpty);
         return;
       }
-      _toast(
+      showAppSnack(
+        context,
         '${l10n.obsExportDone(result.count)}'
         '${result.truncated ? ' · ${l10n.obsExportTruncated(_maxRows)}' : ''}',
       );
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
   }
 
   @override

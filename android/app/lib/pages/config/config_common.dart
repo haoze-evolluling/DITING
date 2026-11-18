@@ -1,19 +1,14 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// Immediate feedback for a config change: these switches apply at once, so a rejection
 /// would otherwise show only as the switch bouncing back.
 void showConfigHint(BuildContext context, String message) {
-  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(milliseconds: 1600),
-    ),
-  );
+  showAppSnack(context, message, duration: const Duration(milliseconds: 1600));
 }
 
 Future<bool> confirmConfigAction(

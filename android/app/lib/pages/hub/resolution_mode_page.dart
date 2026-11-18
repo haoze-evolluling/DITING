@@ -4,6 +4,7 @@ import 'package:diting_android/routes/dns64_routes.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -33,12 +34,7 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
         .read(powerProvider.notifier)
         .applyDnsConfigIfRunning();
     if (error == null || !mounted) return;
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.resolutionProtocolSavedError(error)),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showAppSnack(context, context.l10n.resolutionProtocolSavedError(error));
   }
 
   @override
@@ -228,12 +224,7 @@ class _ResolutionModeConfigPageState
     final before = ref.read(raceProvidersProvider);
     if (before.contains(provider.id) &&
         before.length <= RaceProvidersNotifier.minCount) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.resolutionMinProviders),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      showAppSnack(context, context.l10n.resolutionMinProviders);
       return;
     }
     // The notifier owns the order: it appends new ids and keeps the stored sequence.

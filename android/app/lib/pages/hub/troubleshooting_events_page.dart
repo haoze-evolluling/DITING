@@ -6,6 +6,7 @@ library;
 import 'package:diting_android/data/native/runtime_event.dart';
 import 'package:diting_android/state/runtime_event_providers.dart';
 import 'package:diting_android/state/runtime_log_providers.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -46,15 +47,11 @@ class _TroubleshootingEventsPageState
         );
     if (!mounted) return;
     setState(() => _busy = false);
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(
-          shared
-              ? context.l10n.troubleshootLogsShared
-              : context.l10n.troubleshootLogsShareFailed,
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
+    showAppSnack(
+      context,
+      shared
+          ? context.l10n.troubleshootLogsShared
+          : context.l10n.troubleshootLogsShareFailed,
     );
   }
 

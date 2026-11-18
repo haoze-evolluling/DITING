@@ -10,6 +10,7 @@ import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_icon_avatar.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -308,17 +309,12 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
 
   /// Disabled option explanation. A hint bar rather than silence: a tap must answer.
   void _explainUnavailable(String label, String? reason) {
-    _showSnack(
+    showAppSnack(
+      context,
       context.l10n.trafficOptionUnavailable(
         label,
         reason ?? context.l10n.trafficNoSourceReason,
       ),
-    );
-  }
-
-  void _showSnack(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -349,10 +345,10 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
           .read(trafficClearHistoryProvider.notifier)
           .clear();
       if (!context.mounted) return;
-      _showSnack(context.l10n.trafficCleared(deleted));
+      showAppSnack(context, context.l10n.trafficCleared(deleted));
     } catch (error) {
       if (!context.mounted) return;
-      _showSnack(context.l10n.trafficClearFailed('$error'));
+      showAppSnack(context, context.l10n.trafficClearFailed('$error'));
     }
   }
 

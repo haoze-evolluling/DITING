@@ -145,12 +145,10 @@ class _PermissionRow extends ConsumerWidget {
     if (!context.mounted || !opened) {
       return;
     }
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.permStillDenied(name)),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(milliseconds: 2600),
-      ),
+    showAppSnack(
+      context,
+      context.l10n.permStillDenied(name),
+      duration: const Duration(milliseconds: 2600),
     );
   }
 

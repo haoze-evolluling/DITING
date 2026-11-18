@@ -327,7 +327,6 @@ typedef AppScopedRuleInput = ({RuleKind kind, String pattern});
 /// never match in `block_rule` / `allow_rule`. The controller is owned by the dialog.
 Future<AppScopedRuleInput?> showAppScopedRuleDialog(
   BuildContext context,
-  String packageName,
 ) async {
   return showFloatingDialog<AppScopedRuleInput>(
     context: context,

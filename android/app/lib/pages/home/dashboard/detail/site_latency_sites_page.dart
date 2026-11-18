@@ -8,6 +8,7 @@ import 'package:diting_android/data/site_latency_targets.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/state/site_latency_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -71,7 +72,7 @@ class SiteLatencySitesPage extends ConsumerWidget {
                       selected: selectedIds.contains(target.id),
                       onTap: () {
                         if (!notifier.toggle(target.id)) {
-                          _hint(
+                          showAppSnack(
                             context,
                             selectedIds.contains(target.id)
                                 ? context.l10n.dashboardSitesAtLeastOne
@@ -91,13 +92,6 @@ class SiteLatencySitesPage extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// Explains a refused tap, so the selection never bounces back without a reason.
-void _hint(BuildContext context, String message) {
-  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-  );
 }
 
 class _SelectedRow extends StatelessWidget {

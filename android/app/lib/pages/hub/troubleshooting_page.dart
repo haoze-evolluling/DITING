@@ -13,6 +13,7 @@ import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/db_health_providers.dart';
 import 'package:diting_android/state/runtime_event_providers.dart';
 import 'package:diting_android/state/runtime_log_providers.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -237,7 +238,7 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
       if (!mounted) return;
       setState(() => _busy = false);
       _syncPolling(false);
-      _toast(context.l10n.troubleshootStoppedToast);
+      showAppSnack(context, context.l10n.troubleshootStoppedToast);
       return;
     }
     final confirmed = await showFloatingDialog<bool>(
@@ -263,7 +264,8 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     if (!mounted) return;
     setState(() => _busy = false);
     _syncPolling(started);
-    _toast(
+    showAppSnack(
+      context,
       started
           ? context.l10n.troubleshootStartedToast
           : context.l10n.troubleshootStartFailedToast,
@@ -285,11 +287,5 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     await ref.read(runtimeLogStatusProvider.notifier).setMode(detailed);
     if (!mounted) return;
     setState(() => _busy = false);
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
   }
 }

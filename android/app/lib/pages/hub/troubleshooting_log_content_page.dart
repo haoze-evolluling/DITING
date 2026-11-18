@@ -5,6 +5,7 @@ library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
 import 'package:diting_android/state/troubleshooting_log_providers.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -47,15 +48,11 @@ class _TroubleshootingLogContentPageState
         .shareByName(kind: widget.kind, name: widget.name);
     if (!mounted) return;
     setState(() => _busy = false);
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(
-          shared
-              ? context.l10n.troubleshootLogsShared
-              : context.l10n.troubleshootLogsShareFailed,
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
+    showAppSnack(
+      context,
+      shared
+          ? context.l10n.troubleshootLogsShared
+          : context.l10n.troubleshootLogsShareFailed,
     );
   }
 

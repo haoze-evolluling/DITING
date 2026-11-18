@@ -10,6 +10,7 @@ import 'package:diting_android/state/app_rules_providers.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_list_error_state.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:diting_android/widgets/unsaved_changes.dart';
@@ -83,7 +84,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
       draft.commit();
       _lastKey = draft.baselineKey;
     });
-    _tip(context.l10n.appRulesSaved);
+    showAppSnack(context, context.l10n.appRulesSaved);
   }
 
   @override
@@ -384,7 +385,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
   }
 
   Future<void> _addScopedRule(InstalledApp app) async {
-    final result = await showAppScopedRuleDialog(context, app.packageName);
+    final result = await showAppScopedRuleDialog(context);
     if (result == null || !mounted) {
       return;
     }
@@ -398,10 +399,13 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
       return;
     }
     if (!ok) {
-      _tip(context.l10n.appRulesRuleExists);
+      showAppSnack(context, context.l10n.appRulesRuleExists);
       return;
     }
-    _tip(context.l10n.appRulesRuleAdded(result.kind.title(context.l10n)));
+    showAppSnack(
+      context,
+      context.l10n.appRulesRuleAdded(result.kind.title(context.l10n)),
+    );
   }
 
   Future<void> _toggleScopedRule(
@@ -462,16 +466,11 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
     if (!mounted) {
       return;
     }
-    _tip(
+    showAppSnack(
+      context,
       next
           ? context.l10n.appRulesFullBlockOn
           : context.l10n.appRulesFullBlockOff,
-    );
-  }
-
-  void _tip(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 }

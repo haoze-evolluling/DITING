@@ -12,6 +12,7 @@ import 'package:diting_android/state/app_version_provider.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/widgets/note_card.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -138,18 +139,15 @@ class AboutPage extends ConsumerWidget {
   /// Install through the system installer; failures are reported, usually a missing install
   /// permission.
   Future<void> _install(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final ok = await ref.read(updateProvider.notifier).install();
     if (!context.mounted) return;
     if (!ok) {
       final reason =
           ref.read(updateProvider).error ?? context.l10n.aboutInstallerFailed;
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text(reason),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(milliseconds: 2200),
-        ),
+      showAppSnack(
+        context,
+        reason,
+        duration: const Duration(milliseconds: 2200),
       );
     }
   }

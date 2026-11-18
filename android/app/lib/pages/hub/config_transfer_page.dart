@@ -5,6 +5,7 @@ import 'package:diting_android/data/backup/backup_models.dart';
 import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/backup_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -224,19 +225,20 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
           .exportToDocument(_selected);
       if (!mounted) return;
       if (outcome.cancelled) {
-        _toast(context.l10n.transferExportCancelled);
+        showAppSnack(context, context.l10n.transferExportCancelled);
         return;
       }
       if (outcome.error != null) {
-        _toast(outcome.error!);
+        showAppSnack(context, outcome.error!);
         return;
       }
       final export = outcome.result;
       if (export == null) {
-        _toast(context.l10n.transferExportEmpty);
+        showAppSnack(context, context.l10n.transferExportEmpty);
         return;
       }
-      _toast(
+      showAppSnack(
+        context,
         '${context.l10n.transferExportDone(export.included.length, export.totalItems)}'
         '${export.skipped.isEmpty ? '' : context.l10n.transferExportSkipped(export.skipped.length)}',
       );
@@ -257,18 +259,12 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
     }
     if (!mounted) return;
     if (result.cancelled) {
-      _toast(context.l10n.transferImportCancelled);
+      showAppSnack(context, context.l10n.transferImportCancelled);
       return;
     }
     await showFloatingDialog<void>(
       context: context,
       child: _ImportResultDialog(result: result),
-    );
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 }

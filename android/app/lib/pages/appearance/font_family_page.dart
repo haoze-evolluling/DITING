@@ -8,12 +8,12 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/fonts/font_repository.dart';
-import 'package:diting_android/pages/appearance/appearance_shared_pages.dart';
 import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/font_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -101,7 +101,10 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(context.l10n.fontFamilyLocalOnly, style: context.listCaptionStyle),
+            child: Text(
+              context.l10n.fontFamilyLocalOnly,
+              style: context.listCaptionStyle,
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -125,15 +128,20 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
     }
     final font = result.font;
     if (font == null) {
-      showSettingHint(context, result.error ?? context.l10n.fontFamilyImportFailed);
+      showAppSnack(
+        context,
+        result.error ?? context.l10n.fontFamilyImportFailed,
+        duration: const Duration(milliseconds: 1800),
+      );
       return;
     }
     // Refresh the list, then switch to the new font so the user sees it applied.
     ref.invalidate(importedFontsProvider);
     _select(font.family);
-    showSettingHint(
+    showAppSnack(
       context,
       context.l10n.appearanceFontImported(font.label),
+      duration: const Duration(milliseconds: 1800),
     );
   }
 
@@ -169,9 +177,10 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
       return;
     }
     ref.invalidate(importedFontsProvider);
-    showSettingHint(
+    showAppSnack(
       context,
       context.l10n.appearanceFontDeleted(font.label),
+      duration: const Duration(milliseconds: 1800),
     );
   }
 }
@@ -307,10 +316,15 @@ class _ImportCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(context.l10n.fontFamilyImport, style: context.listTitleStyle),
+                Text(
+                  context.l10n.fontFamilyImport,
+                  style: context.listTitleStyle,
+                ),
                 const SizedBox(height: 2),
                 Text(
-                  isImporting ? context.l10n.fontFamilyReading : context.l10n.fontFamilyPickFile,
+                  isImporting
+                      ? context.l10n.fontFamilyReading
+                      : context.l10n.fontFamilyPickFile,
                   style: context.listSubtitleStyle,
                 ),
               ],

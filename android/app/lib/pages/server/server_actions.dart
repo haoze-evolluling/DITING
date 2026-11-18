@@ -4,6 +4,7 @@ library;
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,11 +91,5 @@ Future<void> confirmResetServerStats(
 }
 
 void showServerHint(BuildContext context, String message) {
-  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(milliseconds: 1800),
-    ),
-  );
+  showAppSnack(context, message, duration: const Duration(milliseconds: 1800));
 }

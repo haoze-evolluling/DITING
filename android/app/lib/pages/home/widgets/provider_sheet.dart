@@ -4,6 +4,7 @@ import 'package:diting_android/routes/routes.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -36,12 +37,7 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
       return;
     }
     // The last two providers stay selected; say why instead of dropping the tap silently.
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.resolutionMinProviders),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    showAppSnack(context, context.l10n.resolutionMinProviders);
   }
 
   List<MockProvider> _filter(List<MockProvider> providers) {

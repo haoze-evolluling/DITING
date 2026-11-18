@@ -6,6 +6,7 @@ import 'package:diting_android/state/diagnostics_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -262,12 +263,10 @@ class _CopyCard extends StatelessWidget {
   static Future<void> _copy(BuildContext context, String text) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.commonCopied(text)),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(milliseconds: 1600),
-      ),
+    showAppSnack(
+      context,
+      context.l10n.commonCopied(text),
+      duration: const Duration(milliseconds: 1600),
     );
   }
 }

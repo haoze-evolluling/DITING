@@ -8,6 +8,7 @@ import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
 import 'package:diting_android/pages/hub/troubleshooting_log_detail_sheet.dart';
 import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/troubleshooting_log_providers.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -59,7 +60,8 @@ class _TroubleshootingLogsPageState
     final shared = await ref.read(troubleshootingLogBridgeProvider).shareAll();
     if (!mounted) return;
     setState(() => _busy = false);
-    _toast(
+    showAppSnack(
+      context,
       shared
           ? context.l10n.troubleshootLogsShared
           : context.l10n.troubleshootLogsShareFailed,
@@ -75,7 +77,8 @@ class _TroubleshootingLogsPageState
         .downloadAll();
     if (!mounted) return;
     setState(() => _busy = false);
-    _toast(
+    showAppSnack(
+      context,
       result.ok
           ? context.l10n.troubleshootLogsDownloadedCount(result.saved)
           : context.l10n.troubleshootLogsDownloadFailed,
@@ -108,7 +111,8 @@ class _TroubleshootingLogsPageState
     await _refresh();
     if (!mounted) return;
     setState(() => _busy = false);
-    _toast(
+    showAppSnack(
+      context,
       result.total > 0
           ? context.l10n.troubleshootLogsClearedAll(
               result.runtime,
@@ -134,22 +138,17 @@ class _TroubleshootingLogsPageState
           HubPaths.troubleshootingLogContent(entry.kind.tag, entry.name),
         );
       case TroubleshootLogSheetAction.deleted:
-        _toast(context.l10n.troubleshootLogsDeleted);
+        showAppSnack(context, context.l10n.troubleshootLogsDeleted);
       case TroubleshootLogSheetAction.shared:
-        _toast(context.l10n.troubleshootLogsShared);
+        showAppSnack(context, context.l10n.troubleshootLogsShared);
       case TroubleshootLogSheetAction.downloaded:
-        _toast(
+        showAppSnack(
+          context,
           context.l10n.troubleshootLogsDownloaded(
             result.path ?? context.l10n.troubleshootLogsDownloadsDir,
           ),
         );
     }
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
   }
 
   String _kindLabel(TroubleshootLogKind kind) =>

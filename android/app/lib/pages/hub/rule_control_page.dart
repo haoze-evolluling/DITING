@@ -6,6 +6,7 @@ import 'package:diting_android/state/ca_inspection_providers.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,12 +77,10 @@ class RuleControlPage extends ConsumerWidget {
                   ref.read(legacySettingsRevisionProvider.notifier).bump();
                   if (ref.read(workModeProvider) == AppWorkMode.server &&
                       ref.read(serverStatusProvider) == ServerStatus.running) {
-                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                      SnackBar(
-                        content: Text(context.l10n.serverRuleMasterSaved),
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(milliseconds: 2200),
-                      ),
+                    showAppSnack(
+                      context,
+                      context.l10n.serverRuleMasterSaved,
+                      duration: const Duration(milliseconds: 2200),
                     );
                   }
                 },

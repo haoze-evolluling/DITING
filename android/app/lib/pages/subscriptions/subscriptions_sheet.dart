@@ -176,7 +176,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       case AddSubscriptionFailure(:final message):
         setState(() => _submitting = false);
         // A duplicate address keeps the sheet open so the pasted text stays editable.
-        _showSnack(
+        showAppSnack(
           context,
           message,
           duration: const Duration(milliseconds: 2600),
@@ -213,7 +213,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
     switch (result) {
       case EditSubscriptionFailure(:final message):
         setState(() => _submitting = false);
-        _showSnack(
+        showAppSnack(
           context,
           message,
           duration: const Duration(milliseconds: 2600),

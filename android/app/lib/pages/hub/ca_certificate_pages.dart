@@ -3,6 +3,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,7 +154,7 @@ class CaCertificatePage extends ConsumerWidget {
     CaCertificateState state,
   ) async {
     if (!state.available || state.pem == null) {
-      _toast(context, context.l10n.caCertNoCertificate);
+      showAppSnack(context, context.l10n.caCertNoCertificate);
       return;
     }
     final confirmed = await showFloatingDialog<bool>(
@@ -192,7 +193,7 @@ class CaCertificatePage extends ConsumerWidget {
         : context.l10n.caCertSaveFailed(
             saved.error ?? context.l10n.commonUnknownReason,
           );
-    _toast(
+    showAppSnack(
       context,
       '${switch (result.target) {
         CaInstallTarget.installer => context.l10n.caCertOpenedInstaller,
@@ -211,7 +212,7 @@ class CaCertificatePage extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
-    _toast(
+    showAppSnack(
       context,
       result.saved
           ? context.l10n.caCertSavedHint(
@@ -249,7 +250,7 @@ class CaCertificatePage extends ConsumerWidget {
     if (!context.mounted) {
       return;
     }
-    _toast(
+    showAppSnack(
       context,
       next.error != null
           ? context.l10n.caCertGenerateFailed(next.error!)
@@ -308,7 +309,7 @@ class CaCertificatePage extends ConsumerWidget {
               await Clipboard.setData(ClipboardData(text: text));
               if (context.mounted) {
                 Navigator.of(context).pop();
-                _toast(context, copiedMessage);
+                showAppSnack(context, copiedMessage);
               }
             },
             child: Text(context.l10n.commonCopy),
@@ -319,12 +320,6 @@ class CaCertificatePage extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  static void _toast(BuildContext context, String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 }

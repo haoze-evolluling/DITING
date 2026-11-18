@@ -4,6 +4,7 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -77,11 +78,5 @@ Future<void> copyToClipboard(
 ) async {
   await Clipboard.setData(ClipboardData(text: text));
   if (!context.mounted) return;
-  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(milliseconds: 2000),
-    ),
-  );
+  showAppSnack(context, message, duration: const Duration(milliseconds: 2000));
 }

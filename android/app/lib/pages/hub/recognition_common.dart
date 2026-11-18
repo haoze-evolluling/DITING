@@ -5,6 +5,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/recognition/recognition_members.dart';
 import 'package:diting_android/state/recognition_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/empty_state.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_android/widgets/status_pill.dart';
@@ -163,7 +164,11 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
     await ref.read(recognitionMembersProvider.notifier).refresh();
     if (!mounted) return;
     final state = ref.read(recognitionMembersProvider).value;
-    _toast(context, state?.error ?? context.l10n.recognitionUpdated);
+    showAppSnack(
+      context,
+      state?.error ?? context.l10n.recognitionUpdated,
+      duration: const Duration(milliseconds: 2000),
+    );
   }
 
   @override
@@ -292,14 +297,4 @@ class _StatusFooter extends StatelessWidget {
     return '${local.year}-${two(local.month)}-${two(local.day)} '
         '${two(local.hour)}:${two(local.minute)}';
   }
-}
-
-void _toast(BuildContext context, String text) {
-  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(
-      content: Text(text),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(milliseconds: 2000),
-    ),
-  );
 }

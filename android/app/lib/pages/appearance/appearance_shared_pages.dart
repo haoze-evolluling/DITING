@@ -5,6 +5,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/layout.dart';
 import 'package:diting_android/pages/appearance/appearance_inputs.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/widgets/appearance/mini_screen.dart';
 import 'package:diting_android/pages/appearance/preview_choice.dart';
 import 'package:diting_shared/widgets/appearance/theme_preview.dart';
@@ -155,11 +156,12 @@ class ThemeBottomBarPage extends ConsumerWidget {
     void toggle(BottomBarDestination destination) {
       final selected = destinations.contains(destination);
       if (!notifier.toggle(destination)) {
-        showSettingHint(
+        showAppSnack(
           context,
           selected
               ? context.l10n.bottomBarMinimumHint
               : context.l10n.appearanceBottomBarMax(maxDockDestinations),
+          duration: const Duration(milliseconds: 1800),
         );
       }
     }
@@ -341,16 +343,4 @@ class _ThemeHomeSentencePageState extends ConsumerState<ThemeHomeSentencePage> {
       ),
     );
   }
-}
-
-/// One-shot SnackBar notice for rule rejections, which otherwise leave no trace
-/// beyond the switch bouncing back.
-void showSettingHint(BuildContext context, String message) {
-  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(milliseconds: 1800),
-    ),
-  );
 }

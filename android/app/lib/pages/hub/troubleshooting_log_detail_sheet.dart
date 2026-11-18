@@ -5,6 +5,7 @@ library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
 import 'package:diting_android/state/troubleshooting_log_providers.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -61,7 +62,7 @@ class _TroubleshootingLogDetailSheetState
     if (!mounted) return;
     if (!shared) {
       setState(() => _busy = false);
-      _toast(context.l10n.troubleshootLogsShareFailed);
+      showAppSnack(context, context.l10n.troubleshootLogsShareFailed);
       return;
     }
     Navigator.of(context).pop(const TroubleshootLogSheetResult.shared());
@@ -77,7 +78,7 @@ class _TroubleshootingLogDetailSheetState
     if (!mounted) return;
     if (!result.ok) {
       setState(() => _busy = false);
-      _toast(context.l10n.troubleshootLogsDownloadFailed);
+      showAppSnack(context, context.l10n.troubleshootLogsDownloadFailed);
       return;
     }
     Navigator.of(context)
@@ -112,16 +113,10 @@ class _TroubleshootingLogDetailSheetState
     if (!mounted) return;
     if (!deleted) {
       setState(() => _busy = false);
-      _toast(context.l10n.troubleshootLogsDeleteFailed);
+      showAppSnack(context, context.l10n.troubleshootLogsDeleteFailed);
       return;
     }
     Navigator.of(context).pop(const TroubleshootLogSheetResult.deleted());
-  }
-
-  void _toast(String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
   }
 
   String _kindLabel() => widget.entry.isRuntime

@@ -106,7 +106,7 @@ class MirrorTemplatesPage extends ConsumerWidget {
     if (id == null && context.mounted) {
       // The unique index on the name rejects the insert; report it instead of silently
       // doing nothing.
-      _showDuplicate(context, context.l10n.mirrorTplDuplicate);
+      showAppSnack(context, context.l10n.mirrorTplDuplicate);
     }
   }
 
@@ -125,19 +125,13 @@ class MirrorTemplatesPage extends ConsumerWidget {
         .update(id: row.id, name: result.name, template: result.template);
     if (!ok) {
       if (context.mounted) {
-        _showDuplicate(context, context.l10n.mirrorTplDuplicateSave);
+        showAppSnack(context, context.l10n.mirrorTplDuplicateSave);
       }
       return;
     }
     ref
         .read(globalMirrorProvider.notifier)
         .templateChanged(row.template, result.template);
-  }
-
-  static void _showDuplicate(BuildContext context, String message) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
-    );
   }
 
   Future<({String name, String template})?> _editTemplate(

@@ -14,6 +14,7 @@ import 'package:diting_android/state/notification_stats_providers.dart';
 import 'package:diting_android/state/permission_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -146,17 +147,6 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
   }
 }
 
-/// Inline edit row; `ListItem.input` opens a dialog on tap instead.
-void _hint(BuildContext context, String message) {
-  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(milliseconds: 2200),
-    ),
-  );
-}
-
 /// App background. Picking goes through the native `PickVisualMedia` channel; without
 /// it the page still works and only "add image" reports that it is unavailable.
 class ThemeBackgroundPage extends ConsumerWidget {
@@ -191,7 +181,13 @@ class ThemeBackgroundPage extends ConsumerWidget {
                 subtitle: context.l10n.backgroundAddImageSubtitle,
                 onPressed: () async {
                   final error = await notifier.pickAndAdd();
-                  if (error != null && context.mounted) _hint(context, error);
+                  if (error != null && context.mounted) {
+                    showAppSnack(
+                      context,
+                      error,
+                      duration: const Duration(milliseconds: 2200),
+                    );
+                  }
                 },
               ),
             ],

@@ -6,6 +6,7 @@ import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/state/deep_link_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/empty_state.dart';
 import 'package:diting_android/widgets/notice.dart';
@@ -87,21 +88,6 @@ Future<bool> _confirm(
   return confirmed ?? false;
 }
 
-/// Transient floating SnackBar, used across the subscription pages.
-void _showSnack(
-  BuildContext context,
-  String message, {
-  Duration duration = const Duration(seconds: 4),
-}) {
-  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-    SnackBar(
-      content: Text(message),
-      behavior: SnackBarBehavior.floating,
-      duration: duration,
-    ),
-  );
-}
-
 /// Prompts for a group name, either when creating or renaming.
 Future<String?> _askGroupName(
   BuildContext context, {
@@ -159,7 +145,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
         if (entry.enabled && entry.isRemote) entry,
     ];
     if (targets.isEmpty) {
-      _showSnack(
+      showAppSnack(
         context,
         context.l10n.subsNothingToUpdate,
         duration: const Duration(milliseconds: 1600),
@@ -178,7 +164,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
     }
     final message = ref.read(subscriptionUpdateProvider).lastMessage;
     if (message != null) {
-      _showSnack(
+      showAppSnack(
         context,
         message,
         duration: const Duration(milliseconds: 2400),

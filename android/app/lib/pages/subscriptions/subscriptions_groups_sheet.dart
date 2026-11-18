@@ -34,7 +34,7 @@ class _GroupManageSheet extends ConsumerWidget {
         .renameGroup(group.id, name);
     if (!ok && context.mounted) {
       // The unique index on the name rejects the update; say so instead of doing nothing.
-      _showSnack(context, context.l10n.subsGroupDuplicate);
+      showAppSnack(context, context.l10n.subsGroupDuplicate);
     }
   }
 
