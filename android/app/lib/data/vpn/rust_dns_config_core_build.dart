@@ -64,7 +64,7 @@ extension DocumentBuilders on RustDnsConfigCore {
       ..i32(dynamicBlockNxDomainDurationSeconds)
       ..providerRows(presetProviders)
       ..bootstrapEntryRows(presetBootstrap);
-    final reader = _call(_tunnel, writer);
+    final reader = _call('tunnel', writer);
     final mode = reader.string();
     final document = reader.string();
     final providers = reader.providerRows();
@@ -135,7 +135,7 @@ extension DocumentBuilders on RustDnsConfigCore {
       ..i32(rateLimitIpv6Prefix)
       ..utf8(rateLimitExemptCsv)
       ..upstreamRows(presetUpstreams);
-    final reader = _call(_server, writer);
+    final reader = _call('server', writer);
     final resolvedPort = reader.i32();
     final mode = reader.string();
     final document = reader.string();

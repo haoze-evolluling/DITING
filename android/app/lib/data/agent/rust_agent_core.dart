@@ -11,9 +11,9 @@
 library;
 
 import 'dart:convert';
-import 'dart:ffi';
-import 'dart:io';
 import 'dart:typed_data';
+
+import 'package:diting_android/data/db/kernel_core.dart';
 
 part 'rust_agent_core_models.dart';
 part 'rust_agent_core_payload.dart';
@@ -24,146 +24,33 @@ const _abiVersion = 1;
 /// `"DAG1"` read as a little-endian u32; the first field of every payload.
 const _payloadMagic = 0x31474144;
 
-/// Explicit library path, for a dev build or a test runner outside the app bundle.
-const _pathVariable = 'DITING_AGENT_CORE_LIB';
-
-typedef _AbiVersionNative = Uint32 Function();
-typedef _AbiVersionDart = int Function();
-typedef _EntryNative = Pointer<Uint8> Function(
-  Pointer<Uint8>,
-  Size,
-  Pointer<Size>,
-);
-typedef _EntryDart = Pointer<Uint8> Function(
-  Pointer<Uint8>,
-  int,
-  Pointer<Size>,
-);
-typedef _AllocNative = Pointer<Uint8> Function(Size);
-typedef _AllocDart = Pointer<Uint8> Function(int);
-typedef _FreeNative = Void Function(Pointer<Uint8>, Size);
-typedef _FreeDart = void Function(Pointer<Uint8>, int);
-
 class RustAgentCore {
-  RustAgentCore._(
-    this._paste,
-    this._secret,
-    this._prompt,
-    this._summary,
-    this._api,
-    this._alloc,
-    this._free,
-    this.libraryPath,
-  );
+  RustAgentCore._(this._core);
 
-  final _EntryDart _paste;
-  final _EntryDart _secret;
-  final _EntryDart _prompt;
-  final _EntryDart _summary;
-  final _EntryDart _api;
-  final _AllocDart _alloc;
-  final _FreeDart _free;
+  final KernelCore _core;
 
   /// Resolved library path, surfaced in diagnostics.
-  final String libraryPath;
+  String get libraryPath => _core.libraryPath;
 
   static RustAgentCore? _instance;
 
   /// The loaded core; throws [StateError] when no usable artifact was found.
   static RustAgentCore get instance => _instance ??= _load();
 
-  static RustAgentCore _load() {
-    final failures = <String>[];
-    for (final candidate in _libraryCandidates()) {
-      try {
-        final library = DynamicLibrary.open(candidate);
-        final abiVersion = library
-            .lookupFunction<_AbiVersionNative, _AbiVersionDart>(
-              'diting_agent_core_abi_version',
-            )();
-        if (abiVersion != _abiVersion) {
-          failures.add('$candidate: abi $abiVersion, expected $_abiVersion');
-          continue;
-        }
-        return RustAgentCore._(
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_agent_core_paste',
-          ),
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_agent_core_secret',
-          ),
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_agent_core_prompt',
-          ),
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_agent_core_summary',
-          ),
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_agent_core_api',
-          ),
-          library.lookupFunction<_AllocNative, _AllocDart>(
-            'diting_agent_core_alloc',
-          ),
-          library.lookupFunction<_FreeNative, _FreeDart>(
-            'diting_agent_core_free',
-          ),
-          candidate,
-        );
-      } catch (error) {
-        failures.add('$candidate: $error');
-      }
-    }
-    throw StateError(
-      'agent core unavailable '
-      '(${failures.isEmpty ? 'no candidate for this platform' : failures.join('; ')}): '
-      'build it with `python rust/build_android.py`',
-    );
-  }
-
-  static String? _libraryName() {
-    // Cargo turns `diting-agent-core` into `libditing_agent_core.so` / `.dylib` and
-    // `diting_agent_core.dll`.
-    if (Platform.isAndroid) {
-      // 方案 B: all sixteen UI-side kernels share one Android library.
-      return 'libditing_kernels.so';
-    }
-    if (Platform.isLinux) {
-      return 'libditing_agent_core.so';
-    }
-    if (Platform.isWindows) return 'diting_agent_core.dll';
-    if (Platform.isMacOS) return 'libditing_agent_core.dylib';
-    return null;
-  }
-
-  /// Probe order: explicit path, the packaged library name, then repo build output — the last one
-  /// lets `flutter test` on the desktop host exercise the real native path without an APK.
-  static Iterable<String> _libraryCandidates() sync* {
-    final explicit = Platform.environment[_pathVariable];
-    if (explicit != null && explicit.isNotEmpty) {
-      yield explicit;
-    }
-    final libraryName = _libraryName();
-    if (libraryName == null) {
-      return;
-    }
-    yield libraryName;
-    var directory = Directory.current;
-    for (var depth = 0; depth < 6; depth++) {
-      for (final profile in const ['release', 'debug']) {
-        yield '${directory.path}/rust/target/$profile/$libraryName';
-      }
-      final parent = directory.parent;
-      if (parent.path == directory.path) {
-        return;
-      }
-      directory = parent;
-    }
-  }
+  static RustAgentCore _load() => RustAgentCore._(
+    KernelCore.load(
+      crate: 'diting-agent-core',
+      payloadMagic: _payloadMagic,
+      abiVersion: _abiVersion,
+      errorPrefix: 'agent core',
+      entries: const ['paste', 'secret', 'prompt', 'summary', 'api'],
+    ),
+  );
 
   /// Clipboard recognition: JSON → URL + key → bare URL → bare key.
   AgentPaste parsePaste(String raw) {
     // The paste entry takes the raw text, without a length prefix: it is not a payload.
-    final reader = _call(_paste, _PayloadWriter()..rawUtf8(raw));
+    final reader = _call('paste', _PayloadWriter()..rawUtf8(raw));
     final kindIndex = reader.u8();
     final kind = kindIndex < AgentPasteKind.values.length
         ? AgentPasteKind.values[kindIndex]
@@ -179,7 +66,7 @@ class RustAgentCore {
   /// Seals a plaintext key with the legacy XOR masks; blank input stays blank.
   String sealKey(String plain) {
     final reader = _call(
-      _secret,
+      'secret',
       _PayloadWriter()
         ..u8(0)
         ..utf8(plain),
@@ -190,7 +77,7 @@ class RustAgentCore {
   /// Restores a sealed key; undecodable input yields `''` rather than throwing.
   String openKey(String sealed) {
     final reader = _call(
-      _secret,
+      'secret',
       _PayloadWriter()
         ..u8(1)
         ..utf8(sealed),
@@ -209,7 +96,7 @@ class RustAgentCore {
       ..utf8(domain)
       ..utf8(systemPrompt)
       ..optionalUtf8(context);
-    final reader = _call(_prompt, writer);
+    final reader = _call('prompt', writer);
     return (systemPrompt: reader.string(), userPrompt: reader.string());
   }
 
@@ -222,7 +109,7 @@ class RustAgentCore {
       ..u8(1)
       ..utf8(systemPrompt);
     _writeSummary(writer, summary);
-    final reader = _call(_prompt, writer);
+    final reader = _call('prompt', writer);
     return (systemPrompt: reader.string(), userPrompt: reader.string());
   }
 
@@ -246,7 +133,7 @@ class RustAgentCore {
     for (final outcome in httpOutcomes) {
       writer.utf8(outcome);
     }
-    final reader = _call(_summary, writer);
+    final reader = _call('summary', writer);
     final dnsSamples = reader.u32();
     final blockedDns = reader.u32();
     final rewrittenDns = reader.u32();
@@ -272,13 +159,13 @@ class RustAgentCore {
   String renderSummary(RecentTrafficSummary summary) {
     final writer = _PayloadWriter()..u8(1);
     _writeSummary(writer, summary);
-    return _call(_summary, writer).string();
+    return _call('summary', writer).string();
   }
 
   /// `/chat/completions` for a base URL. Throws [AgentKernelException] when it is blank.
   String chatEndpoint(String baseUrl) {
     final reader = _call(
-      _api,
+      'api',
       _PayloadWriter()
         ..u8(0)
         ..utf8(baseUrl),
@@ -289,7 +176,7 @@ class RustAgentCore {
   /// `/models` for a base URL. Throws [AgentKernelException] when it is blank.
   String modelsEndpoint(String baseUrl) {
     final reader = _call(
-      _api,
+      'api',
       _PayloadWriter()
         ..u8(1)
         ..utf8(baseUrl),
@@ -313,7 +200,7 @@ class RustAgentCore {
         ..utf8(message.role)
         ..utf8(message.content);
     }
-    return _call(_api, writer).string();
+    return _call('api', writer).string();
   }
 
   /// Reads content, model and usage out of a completion response.
@@ -326,7 +213,7 @@ class RustAgentCore {
   })
   parseChat(String body, {required String fallbackModel}) {
     final reader = _call(
-      _api,
+      'api',
       _PayloadWriter()
         ..u8(3)
         ..utf8(body)
@@ -348,7 +235,7 @@ class RustAgentCore {
   /// Model ids from `data` / `models` / `result`, trimmed, de-duplicated and sorted.
   List<String> parseModels(String body) {
     final reader = _call(
-      _api,
+      'api',
       _PayloadWriter()
         ..u8(4)
         ..utf8(body),
@@ -365,7 +252,7 @@ class RustAgentCore {
     String body,
   ) {
     final reader = _call(
-      _api,
+      'api',
       _PayloadWriter()
         ..u8(5)
         ..u32(status)
@@ -415,41 +302,22 @@ class RustAgentCore {
     }
   }
 
-  /// Copies `payload` in, calls `entry`, copies the answer out and releases both buffers.
-  _PayloadReader _call(_EntryDart entry, _PayloadWriter writer) {
-    final bytes = writer.finish();
-    final inputPtr = bytes.isEmpty ? nullptr : _alloc(bytes.length);
-    final outLenPtr = _alloc(sizeOf<Size>()).cast<Size>();
-    Pointer<Uint8> outputPtr = nullptr;
-    var outputLength = 0;
-    try {
-      if (bytes.isNotEmpty) {
-        inputPtr.asTypedList(bytes.length).setAll(0, bytes);
-      }
-      outputPtr = entry(inputPtr, bytes.length, outLenPtr);
-      outputLength = outLenPtr.value;
-      if (outputPtr == nullptr || outputLength == 0) {
-        throw StateError('agent core rejected the payload');
-      }
-      final reader = _PayloadReader(
-        Uint8List.fromList(outputPtr.asTypedList(outputLength)),
-      );
-      if (reader.u32() != _payloadMagic) {
-        throw const FormatException('agent core payload magic mismatch');
-      }
-      final abiVersion = reader.u32();
-      if (abiVersion != _abiVersion) {
-        throw FormatException(
-          'agent core payload abi $abiVersion, expected $_abiVersion',
-        );
-      }
-      return reader;
-    } finally {
-      if (inputPtr != nullptr) _free(inputPtr, bytes.length);
-      _free(outLenPtr.cast<Uint8>(), sizeOf<Size>());
-      if (outputPtr != nullptr && outputLength > 0) {
-        _free(outputPtr, outputLength);
-      }
+  /// Sends one payload to [entry] and checks the reply header.
+  _PayloadReader _call(String entry, _PayloadWriter writer) {
+    final reply = _core.invoke(writer.finish(), entry: entry);
+    if (reply.isEmpty) {
+      throw StateError('agent core rejected the payload');
     }
+    final reader = _PayloadReader(reply);
+    if (reader.u32() != _payloadMagic) {
+      throw const FormatException('agent core payload magic mismatch');
+    }
+    final abiVersion = reader.u32();
+    if (abiVersion != _abiVersion) {
+      throw FormatException(
+        'agent core payload abi $abiVersion, expected $_abiVersion',
+      );
+    }
+    return reader;
   }
 }

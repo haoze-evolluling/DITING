@@ -11,9 +11,9 @@
 library;
 
 import 'dart:convert';
-import 'dart:ffi';
-import 'dart:io';
 import 'dart:typed_data';
+
+import 'package:diting_android/data/db/kernel_core.dart';
 
 part 'rust_dns_config_core_build.dart';
 part 'rust_dns_config_core_payload.dart';
@@ -24,9 +24,6 @@ const _abiVersion = 2;
 
 /// `"DDC1"` read as a little-endian u32; the first field of every payload.
 const _payloadMagic = 0x31434444;
-
-/// Explicit library path, for a dev build or a test runner outside the app bundle.
-const _pathVariable = 'DITING_DNS_CONFIG_CORE_LIB';
 
 // Operation bytes, mirroring the Rust constants.
 const _opSplitAddress = 0;
@@ -50,138 +47,28 @@ const _opServerHostPort = 4;
 /// `6` is "valid" on the wire; the rejection kinds are `0..5`.
 const _upstreamOk = 6;
 
-typedef _AbiVersionNative = Uint32 Function();
-typedef _AbiVersionDart = int Function();
-typedef _EntryNative = Pointer<Uint8> Function(
-  Pointer<Uint8>,
-  Size,
-  Pointer<Size>,
-);
-typedef _EntryDart = Pointer<Uint8> Function(
-  Pointer<Uint8>,
-  int,
-  Pointer<Size>,
-);
-typedef _AllocNative = Pointer<Uint8> Function(Size);
-typedef _AllocDart = Pointer<Uint8> Function(int);
-typedef _FreeNative = Void Function(Pointer<Uint8>, Size);
-typedef _FreeDart = void Function(Pointer<Uint8>, int);
-
 class RustDnsConfigCore {
-  RustDnsConfigCore._(
-    this._tunnel,
-    this._server,
-    this._providers,
-    this._presets,
-    this._upstreams,
-    this._alloc,
-    this._free,
-    this.libraryPath,
-  );
+  RustDnsConfigCore._(this._core);
 
-  final _EntryDart _tunnel;
-  final _EntryDart _server;
-  final _EntryDart _providers;
-  final _EntryDart _presets;
-  final _EntryDart _upstreams;
-  final _AllocDart _alloc;
-  final _FreeDart _free;
+  final KernelCore _core;
 
   /// Resolved library path, surfaced in diagnostics.
-  final String libraryPath;
+  String get libraryPath => _core.libraryPath;
 
   static RustDnsConfigCore? _instance;
 
   /// The loaded core; throws [StateError] when no usable artifact was found.
   static RustDnsConfigCore get instance => _instance ??= _load();
 
-  static RustDnsConfigCore _load() {
-    final failures = <String>[];
-    for (final candidate in _libraryCandidates()) {
-      try {
-        final library = DynamicLibrary.open(candidate);
-        final abiVersion = library
-            .lookupFunction<_AbiVersionNative, _AbiVersionDart>(
-              'diting_dns_config_core_abi_version',
-            )();
-        if (abiVersion != _abiVersion) {
-          failures.add('$candidate: abi $abiVersion, expected $_abiVersion');
-          continue;
-        }
-        return RustDnsConfigCore._(
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_dns_config_core_tunnel',
-          ),
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_dns_config_core_server',
-          ),
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_dns_config_core_providers',
-          ),
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_dns_config_core_presets',
-          ),
-          library.lookupFunction<_EntryNative, _EntryDart>(
-            'diting_dns_config_core_upstreams',
-          ),
-          library.lookupFunction<_AllocNative, _AllocDart>(
-            'diting_dns_config_core_alloc',
-          ),
-          library.lookupFunction<_FreeNative, _FreeDart>(
-            'diting_dns_config_core_free',
-          ),
-          candidate,
-        );
-      } catch (error) {
-        failures.add('$candidate: $error');
-      }
-    }
-    throw StateError(
-      'dns config core unavailable '
-      '(${failures.isEmpty ? 'no candidate for this platform' : failures.join('; ')}): '
-      'build it with `python rust/build_android.py`',
-    );
-  }
-
-  static String? _libraryName() {
-    // Cargo turns `diting-dns-config-core` into `libditing_dns_config_core.so` / `.dylib` and
-    // `diting_dns_config_core.dll`.
-    if (Platform.isAndroid) {
-      // 方案 B: all sixteen UI-side kernels share one Android library.
-      return 'libditing_kernels.so';
-    }
-    if (Platform.isLinux) {
-      return 'libditing_dns_config_core.so';
-    }
-    if (Platform.isWindows) return 'diting_dns_config_core.dll';
-    if (Platform.isMacOS) return 'libditing_dns_config_core.dylib';
-    return null;
-  }
-
-  /// Probe order: explicit path, the packaged library name, then repo build output — the last one
-  /// lets `flutter test` on the desktop host exercise the real native path without an APK.
-  static Iterable<String> _libraryCandidates() sync* {
-    final explicit = Platform.environment[_pathVariable];
-    if (explicit != null && explicit.isNotEmpty) {
-      yield explicit;
-    }
-    final libraryName = _libraryName();
-    if (libraryName == null) {
-      return;
-    }
-    yield libraryName;
-    var directory = Directory.current;
-    for (var depth = 0; depth < 6; depth++) {
-      for (final profile in const ['release', 'debug']) {
-        yield '${directory.path}/rust/target/$profile/$libraryName';
-      }
-      final parent = directory.parent;
-      if (parent.path == directory.path) {
-        return;
-      }
-      directory = parent;
-    }
-  }
+  static RustDnsConfigCore _load() => RustDnsConfigCore._(
+    KernelCore.load(
+      crate: 'diting-dns-config-core',
+      payloadMagic: _payloadMagic,
+      abiVersion: _abiVersion,
+      errorPrefix: 'dns config core',
+      entries: const ['tunnel', 'server', 'providers', 'presets', 'upstreams'],
+    ),
+  );
 
   /// `_splitAddress`: DoH keeps the text as its URL, everything else becomes host + port.
   ({String url, String host, int port}) splitProviderAddress(
@@ -189,7 +76,7 @@ class RustDnsConfigCore {
     String address,
   ) {
     final reader = _call(
-      _providers,
+      'providers',
       _PayloadWriter()
         ..u8(_opSplitAddress)
         ..utf8(protocolStorage)
@@ -202,7 +89,7 @@ class RustDnsConfigCore {
 
   List<ProviderRow> parseUserProviders(String? raw) {
     final reader = _call(
-      _providers,
+      'providers',
       _PayloadWriter()
         ..u8(_opParseProviders)
         ..optionalUtf8(raw),
@@ -212,7 +99,7 @@ class RustDnsConfigCore {
 
   String encodeUserProviders(List<ProviderRow> rows) {
     final reader = _call(
-      _providers,
+      'providers',
       _PayloadWriter()
         ..u8(_opEncodeProviders)
         ..providerRows(rows),
@@ -234,13 +121,13 @@ class RustDnsConfigCore {
       ..utf8(name)
       ..utf8(protocolStorage)
       ..utf8(address);
-    return _call(_providers, writer).providerRows();
+    return _call('providers', writer).providerRows();
   }
 
   /// `host:port`, bracketing a bare IPv6 host so the engine can parse the result.
   String joinHostPort(String host, int port) {
     final reader = _call(
-      _providers,
+      'providers',
       _PayloadWriter()
         ..u8(_opJoinHostPort)
         ..utf8(host)
@@ -252,7 +139,7 @@ class RustDnsConfigCore {
   /// `bootstrap_custom_json` rows, including the `enabled` flag the settings page toggles.
   List<BootstrapRow> parseCustomBootstrap(String? raw) {
     final reader = _call(
-      _providers,
+      'providers',
       _PayloadWriter()
         ..u8(_opParseBootstrap)
         ..optionalUtf8(raw),
@@ -262,7 +149,7 @@ class RustDnsConfigCore {
 
   String encodeCustomBootstrap(List<BootstrapRow> rows) {
     final reader = _call(
-      _providers,
+      'providers',
       _PayloadWriter()
         ..u8(_opEncodeBootstrap)
         ..bootstrapCustomRows(rows),
@@ -330,13 +217,13 @@ class RustDnsConfigCore {
       ..i32(minTtlSeconds)
       ..flag(staleFallbackEnabled)
       ..i32(staleFallbackSeconds);
-    return _call(_presets, writer).u8();
+    return _call('presets', writer).u8();
   }
 
   /// The nine values a preset writes into the prefs.
   CacheValues presetValues(int index) => _readCacheValues(
     _call(
-      _presets,
+      'presets',
       _PayloadWriter()
         ..u8(_opPresetValues)
         ..u8(index),
@@ -346,7 +233,7 @@ class RustDnsConfigCore {
   /// Server mode's cache document: the preset's values plus its negative TTL.
   ({CacheValues values, int negativeTtlSeconds}) serverCache(String presetRaw) {
     final reader = _call(
-      _presets,
+      'presets',
       _PayloadWriter()
         ..u8(_opServerCache)
         ..utf8(presetRaw),
@@ -356,7 +243,7 @@ class RustDnsConfigCore {
 
   /// The prefs spelling of a preset index.
   String presetStorage(int index) => _call(
-    _presets,
+    'presets',
     _PayloadWriter()
       ..u8(_opPresetStorage)
       ..u8(index),
@@ -382,7 +269,7 @@ class RustDnsConfigCore {
 
   List<ServerUpstreamRow> parseCustomUpstreams(String? raw) {
     final reader = _call(
-      _upstreams,
+      'upstreams',
       _PayloadWriter()
         ..u8(_opParseUpstreams)
         ..optionalUtf8(raw),
@@ -392,7 +279,7 @@ class RustDnsConfigCore {
 
   String encodeCustomUpstreams(List<ServerUpstreamRow> rows) {
     final reader = _call(
-      _upstreams,
+      'upstreams',
       _PayloadWriter()
         ..u8(_opEncodeUpstreams)
         ..upstreamRows(rows),
@@ -408,7 +295,7 @@ class RustDnsConfigCore {
     required int port,
   }) {
     final reader = _call(
-      _upstreams,
+      'upstreams',
       _PayloadWriter()
         ..u8(_opValidateUpstream)
         ..utf8(name)
@@ -426,7 +313,7 @@ class RustDnsConfigCore {
   /// Non-DoH addresses are stored bare, so an IPv6 paste keeps its brackets only in the UI.
   String normalizeUpstreamAddress(String protocolStorage, String address) {
     final reader = _call(
-      _upstreams,
+      'upstreams',
       _PayloadWriter()
         ..u8(_opNormalizeAddress)
         ..utf8(protocolStorage)
@@ -438,7 +325,7 @@ class RustDnsConfigCore {
   /// The document's `server` field for a server-mode upstream.
   String serverHostPort(String address, int port) {
     final reader = _call(
-      _upstreams,
+      'upstreams',
       _PayloadWriter()
         ..u8(_opServerHostPort)
         ..utf8(address)
@@ -447,41 +334,22 @@ class RustDnsConfigCore {
     return reader.string();
   }
 
-  /// Copies `payload` in, calls `entry`, copies the answer out and releases both buffers.
-  _PayloadReader _call(_EntryDart entry, _PayloadWriter writer) {
-    final bytes = writer.finish();
-    final inputPtr = bytes.isEmpty ? nullptr : _alloc(bytes.length);
-    final outLenPtr = _alloc(sizeOf<Size>()).cast<Size>();
-    Pointer<Uint8> outputPtr = nullptr;
-    var outputLength = 0;
-    try {
-      if (bytes.isNotEmpty) {
-        inputPtr.asTypedList(bytes.length).setAll(0, bytes);
-      }
-      outputPtr = entry(inputPtr, bytes.length, outLenPtr);
-      outputLength = outLenPtr.value;
-      if (outputPtr == nullptr || outputLength == 0) {
-        throw StateError('dns config core rejected the payload');
-      }
-      final reader = _PayloadReader(
-        Uint8List.fromList(outputPtr.asTypedList(outputLength)),
-      );
-      if (reader.u32() != _payloadMagic) {
-        throw const FormatException('dns config core payload magic mismatch');
-      }
-      final abiVersion = reader.u32();
-      if (abiVersion != _abiVersion) {
-        throw FormatException(
-          'dns config core payload abi $abiVersion, expected $_abiVersion',
-        );
-      }
-      return reader;
-    } finally {
-      if (inputPtr != nullptr) _free(inputPtr, bytes.length);
-      _free(outLenPtr.cast<Uint8>(), sizeOf<Size>());
-      if (outputPtr != nullptr && outputLength > 0) {
-        _free(outputPtr, outputLength);
-      }
+  /// Sends one payload to [entry] and checks the reply header.
+  _PayloadReader _call(String entry, _PayloadWriter writer) {
+    final reply = _core.invoke(writer.finish(), entry: entry);
+    if (reply.isEmpty) {
+      throw StateError('dns config core rejected the payload');
     }
+    final reader = _PayloadReader(reply);
+    if (reader.u32() != _payloadMagic) {
+      throw const FormatException('dns config core payload magic mismatch');
+    }
+    final abiVersion = reader.u32();
+    if (abiVersion != _abiVersion) {
+      throw FormatException(
+        'dns config core payload abi $abiVersion, expected $_abiVersion',
+      );
+    }
+    return reader;
   }
 }

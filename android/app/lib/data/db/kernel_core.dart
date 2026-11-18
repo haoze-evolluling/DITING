@@ -44,11 +44,13 @@ class KernelCore {
   KernelCore._({
     required this.libraryPath,
     required int payloadMagic,
+    required int abiVersion,
     required String errorPrefix,
     required Map<String, _EntryDart> entries,
     required _AllocDart alloc,
     required _FreeDart free,
   }) : _payloadMagic = payloadMagic,
+       _abiVersion = abiVersion,
        _errorPrefix = errorPrefix,
        _entries = entries,
        _alloc = alloc,
@@ -59,6 +61,7 @@ class KernelCore {
 
   final Map<String, _EntryDart> _entries;
   final int _payloadMagic;
+  final int _abiVersion;
   final String _errorPrefix;
   final _AllocDart _alloc;
   final _FreeDart _free;
@@ -67,11 +70,13 @@ class KernelCore {
   ///
   /// [entries] are the symbol suffixes after the crate's name, e.g. `call` for
   /// `diting_leak_core_call`. [payloadMagic] is the reply header's first field, e.g. `"DLK1"` read
-  /// as a little-endian u32.
+  /// as a little-endian u32. [abiVersion] overrides the shared header ABI for the few kernels that
+  /// version their payloads independently.
   static KernelCore load({
     required String crate,
     required int payloadMagic,
     required String errorPrefix,
+    int abiVersion = kernelAbiVersion,
     List<String> entries = const ['call'],
   }) {
     final symbolBase = crate.replaceAll('-', '_');
@@ -79,19 +84,20 @@ class KernelCore {
     for (final candidate in _libraryCandidates(symbolBase)) {
       try {
         final library = DynamicLibrary.open(candidate);
-        final abiVersion = library
+        final foundAbiVersion = library
             .lookupFunction<_AbiVersionNative, _AbiVersionDart>(
               '${symbolBase}_abi_version',
             )();
-        if (abiVersion != kernelAbiVersion) {
+        if (foundAbiVersion != abiVersion) {
           failures.add(
-            '$candidate: abi $abiVersion, expected $kernelAbiVersion',
+            '$candidate: abi $foundAbiVersion, expected $abiVersion',
           );
           continue;
         }
         return KernelCore._(
           libraryPath: candidate,
           payloadMagic: payloadMagic,
+          abiVersion: abiVersion,
           errorPrefix: errorPrefix,
           entries: {
             for (final entry in entries)
@@ -117,39 +123,49 @@ class KernelCore {
     );
   }
 
-  /// One JSON request in, one decoded JSON object out; [entry] names the symbol suffix.
-  Map<String, Object?> call(
-    Map<String, Object?> request, {
-    String entry = 'call',
-  }) {
-    final invoke = _entries[entry];
-    if (invoke == null) {
+  /// Raw round trip: [payload] in, the core's reply bytes out (header included).
+  ///
+  /// An empty list means the core returned no payload; callers decide whether that is an error.
+  Uint8List invoke(Uint8List payload, {String entry = 'call'}) {
+    final entryPoint = _entries[entry];
+    if (entryPoint == null) {
       throw StateError('$_errorPrefix: no "$entry" entry point');
     }
-    final bytes = utf8.encode(jsonEncode(request));
-    final input = _alloc(bytes.length);
-    if (input == nullptr) {
+    final input = payload.isEmpty ? nullptr : _alloc(payload.length);
+    if (payload.isNotEmpty && input == nullptr) {
       throw StateError(
-        '$_errorPrefix: native allocation of ${bytes.length} bytes failed',
+        '$_errorPrefix: native allocation of ${payload.length} bytes failed',
       );
     }
     final outLength = _alloc(sizeOf<Size>()).cast<Size>();
     try {
-      input.asTypedList(bytes.length).setAll(0, bytes);
-      final output = invoke(input, bytes.length, outLength);
-      if (output == nullptr) {
-        throw StateError('$_errorPrefix: native call rejected the payload');
+      if (payload.isNotEmpty) {
+        input.asTypedList(payload.length).setAll(0, payload);
       }
+      final output = entryPoint(input, payload.length, outLength);
       final length = outLength.value;
+      if (output == nullptr || length == 0) return Uint8List(0);
       try {
-        return _decode(output.asTypedList(length));
+        return Uint8List.fromList(output.asTypedList(length));
       } finally {
         _free(output, length);
       }
     } finally {
       _free(outLength.cast<Uint8>(), sizeOf<Size>());
-      _free(input, bytes.length);
+      if (payload.isNotEmpty) _free(input, payload.length);
     }
+  }
+
+  /// One JSON request in, one decoded JSON object out; [entry] names the symbol suffix.
+  Map<String, Object?> call(
+    Map<String, Object?> request, {
+    String entry = 'call',
+  }) {
+    final reply = invoke(utf8.encode(jsonEncode(request)), entry: entry);
+    if (reply.isEmpty) {
+      throw StateError('$_errorPrefix: native call rejected the payload');
+    }
+    return _decode(reply);
   }
 
   Map<String, Object?> _decode(Uint8List payload) {
@@ -162,7 +178,7 @@ class KernelCore {
     if (header.getUint32(0, Endian.little) != _payloadMagic) {
       throw StateError('$_errorPrefix: unexpected payload magic');
     }
-    if (header.getUint32(4, Endian.little) != kernelAbiVersion) {
+    if (header.getUint32(4, Endian.little) != _abiVersion) {
       throw StateError('$_errorPrefix: payload abi mismatch');
     }
     final decoded = jsonDecode(utf8.decode(payload.sublist(_headerBytes)));
