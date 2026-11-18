@@ -16451,29 +16451,17 @@ abstract class AppL10n {
   /// **'切换普通模式或服务器模式'**
   String get settingsModeSubtitle;
 
-  /// No description provided for @settingsPerformanceSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'性能优化'**
-  String get settingsPerformanceSection;
-
-  /// No description provided for @settingsCacheSubtitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'缓存已解析的域名，减少重复查询'**
-  String get settingsCacheSubtitle;
-
   /// No description provided for @settingsLogModeSubtitle.
   ///
   /// In zh, this message translates to:
   /// **'选择 DNS 请求日志的记录范围'**
   String get settingsLogModeSubtitle;
 
-  /// No description provided for @settingsRuntimeSection.
+  /// No description provided for @settingsRunSection.
   ///
   /// In zh, this message translates to:
-  /// **'运行行为'**
-  String get settingsRuntimeSection;
+  /// **'运行设置'**
+  String get settingsRunSection;
 
   /// No description provided for @settingsForegroundSubtitle.
   ///
@@ -16505,11 +16493,11 @@ abstract class AppL10n {
   /// **'VPN 通道被其他应用占用时持续监测，释放后自动重新连接'**
   String get settingsVpnWatchdogSubtitle;
 
-  /// No description provided for @settingsDataSection.
+  /// No description provided for @settingsSystemSection.
   ///
   /// In zh, this message translates to:
-  /// **'数据管理'**
-  String get settingsDataSection;
+  /// **'应用与系统'**
+  String get settingsSystemSection;
 
   /// No description provided for @settingsLanguageSubtitle.
   ///
@@ -25132,12 +25120,6 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'局域网接入地址、端口与复制入口'**
   String get serverDashboardLanDescription;
-
-  /// No description provided for @integrationSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'系统集成'**
-  String get integrationSection;
 
   /// No description provided for @integrationTitle.
   ///

@@ -9575,18 +9575,11 @@ class AppL10nEn extends AppL10n {
   String get settingsModeSubtitle => 'Switch between normal and server mode';
 
   @override
-  String get settingsPerformanceSection => 'Performance';
-
-  @override
-  String get settingsCacheSubtitle =>
-      'Cache resolved domains to avoid repeated lookups';
-
-  @override
   String get settingsLogModeSubtitle =>
       'Choose how much of the DNS request log is recorded';
 
   @override
-  String get settingsRuntimeSection => 'Runtime behaviour';
+  String get settingsRunSection => 'Run';
 
   @override
   String get settingsForegroundSubtitle =>
@@ -9607,7 +9600,7 @@ class AppL10nEn extends AppL10n {
       'Watch the VPN slot while another app holds it and reconnect once it is free';
 
   @override
-  String get settingsDataSection => 'Data';
+  String get settingsSystemSection => 'App & system';
 
   @override
   String get settingsLanguageSubtitle => 'Choose the app language';
@@ -14580,9 +14573,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get serverDashboardLanDescription =>
       'LAN address, port and copy shortcut';
-
-  @override
-  String get integrationSection => 'System integration';
 
   @override
   String get integrationTitle => 'Widget & automation';

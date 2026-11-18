@@ -1,9 +1,8 @@
-/// Settings page: the legacy "other settings" list of five groups and six rows.
+/// Settings page: the legacy "other settings" list condensed into three groups and five rows.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/router.dart';
-import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
@@ -12,7 +11,8 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The only app-bar action (wrench) opens the developer options hub, the single entry point for
-/// pages the legacy app had no menu for. The list stays at the legacy five groups and six rows.
+/// pages the legacy app had no menu for. Cards already offered by the feature hub (cache, log
+/// retention) are not repeated here; what remains is grouped by run, app/system and guidance.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -29,9 +29,8 @@ class SettingsPage extends StatelessWidget {
       ],
       body: PageBody(
         children: [
-          // Each section maps to a legacy `SettingsSection`; empty groups are skipped.
           generateSection(
-            title: context.l10n.serverRunMode,
+            title: context.l10n.settingsRunSection,
             items: [
               NavEntryRow(
                 glyph: AppGlyphs.layers,
@@ -39,28 +38,6 @@ class SettingsPage extends StatelessWidget {
                 subtitle: context.l10n.settingsModeSubtitle,
                 onPressed: () => context.push(Routes.modeSelect),
               ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.settingsPerformanceSection,
-            items: [
-              NavEntryRow(
-                glyph: AppGlyphs.cpu,
-                title: context.l10n.cacheSettingsTitle,
-                subtitle: context.l10n.settingsCacheSubtitle,
-                onPressed: () => context.push(HubPaths.cache),
-              ),
-              NavEntryRow(
-                glyph: AppGlyphs.clock,
-                title: context.l10n.logRetentionTitle,
-                subtitle: context.l10n.settingsLogModeSubtitle,
-                onPressed: () => context.push(HubPaths.logRetention),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.settingsRuntimeSection,
-            items: [
               NavEntryRow(
                 glyph: AppGlyphs.eyeOff,
                 title: context.l10n.foregroundTitle,
@@ -69,9 +46,9 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
-          // Appearance (order 3) is an empty group upstream: its entries moved to the feature hub.
+          // Cache and log retention are first-class feature-hub cards, so they are not repeated.
           generateSection(
-            title: context.l10n.settingsDataSection,
+            title: context.l10n.settingsSystemSection,
             items: [
               NavEntryRow(
                 glyph: AppGlyphs.language,
@@ -79,11 +56,6 @@ class SettingsPage extends StatelessWidget {
                 subtitle: context.l10n.settingsLanguageSubtitle,
                 onPressed: () => context.push(SystemPaths.language),
               ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.integrationSection,
-            items: [
               NavEntryRow(
                 glyph: AppGlyphs.puzzle,
                 title: context.l10n.integrationTitle,
@@ -96,7 +68,7 @@ class SettingsPage extends StatelessWidget {
             title: context.l10n.settingsGuideSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.puzzle,
+                glyph: AppGlyphs.info,
                 title: context.l10n.serverWizard,
                 subtitle: context.l10n.settingsWizardSubtitle,
                 onPressed: () => context.push(Routes.modeOnboarding),

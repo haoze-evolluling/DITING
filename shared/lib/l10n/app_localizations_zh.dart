@@ -9001,16 +9001,10 @@ class AppL10nZh extends AppL10n {
   String get settingsModeSubtitle => '切换普通模式或服务器模式';
 
   @override
-  String get settingsPerformanceSection => '性能优化';
-
-  @override
-  String get settingsCacheSubtitle => '缓存已解析的域名，减少重复查询';
-
-  @override
   String get settingsLogModeSubtitle => '选择 DNS 请求日志的记录范围';
 
   @override
-  String get settingsRuntimeSection => '运行行为';
+  String get settingsRunSection => '运行设置';
 
   @override
   String get settingsForegroundSubtitle => '后台隐藏、通知常驻、绕过局域网';
@@ -9028,7 +9022,7 @@ class AppL10nZh extends AppL10n {
   String get settingsVpnWatchdogSubtitle => 'VPN 通道被其他应用占用时持续监测，释放后自动重新连接';
 
   @override
-  String get settingsDataSection => '数据管理';
+  String get settingsSystemSection => '应用与系统';
 
   @override
   String get settingsLanguageSubtitle => '选择应用界面语言';
@@ -13720,9 +13714,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverDashboardLanDescription => '局域网接入地址、端口与复制入口';
-
-  @override
-  String get integrationSection => '系统集成';
 
   @override
   String get integrationTitle => '小组件与自动化';
