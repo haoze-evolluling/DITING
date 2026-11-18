@@ -25,6 +25,7 @@ use quinn::crypto::rustls::QuicClientConfig;
 use quinn::{Endpoint, EndpointConfig, IdleTimeout, RecvStream, SendStream, TransportConfig};
 
 use crate::resolver::dial::{self, Dialer};
+use crate::resolver::session::take_live_session;
 use crate::resolver::trust::UpstreamTrust;
 
 /// The DoQ transport: a lazily created endpoint per family plus the cached sessions.
@@ -100,11 +101,8 @@ impl DoqClient {
         host: &str,
         addresses: &[SocketAddr],
     ) -> Result<quinn::Connection, String> {
-        if let Some(connection) = self.lock_sessions().get(key).cloned() {
-            if connection.close_reason().is_none() {
-                return Ok(connection);
-            }
-            self.forget(key);
+        if let Some(connection) = self.live_session(key) {
+            return Ok(connection);
         }
 
         let budget = Duration::from_nanos(TUNING.connect_timeout_ns.max(1) as u64);
@@ -125,6 +123,18 @@ impl DoqClient {
             }
         }
         Err(last_error)
+    }
+
+    /// The cached session for `key` when it is still alive; a closed one is evicted.
+    ///
+    /// Lookup and eviction share one guard through [`take_live_session`]: re-locking
+    /// `sessions` from inside an `if let` that already holds its guard would deadlock the
+    /// calling task permanently.
+    fn live_session(&self, key: &str) -> Option<quinn::Connection> {
+        let mut sessions = self.lock_sessions();
+        take_live_session(&mut sessions, key, |connection| {
+            connection.close_reason().is_some()
+        })
     }
 
     /// `resetQUICConn`: drop the session so the next query dials a fresh one.

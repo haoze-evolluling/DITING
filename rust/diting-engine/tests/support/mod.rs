@@ -372,6 +372,30 @@ pub async fn spawn_doh3_on(pki: &TestPki, bind: SocketAddr) -> (SocketAddr, Arc<
     (address, connections)
 }
 
+/// A DoH3 origin that completes the QUIC handshake but never answers a request, so an HTTP/3
+/// attempt can only end through the client's own timeout.
+pub async fn spawn_doh3_silent_on(pki: &TestPki, bind: SocketAddr) -> SocketAddr {
+    let tls = pki.server_config(&[b"h3"]);
+    let crypto = quinn::crypto::rustls::QuicServerConfig::try_from((*tls).clone())
+        .expect("the DoH3 server config is valid");
+    let server_config = quinn::ServerConfig::with_crypto(Arc::new(crypto));
+    let endpoint = quinn::Endpoint::server(server_config, bind).expect("bind DoH3");
+    let address = endpoint.local_addr().expect("local addr");
+
+    tokio::spawn(async move {
+        // Keep the connections alive but never accept a stream: the request is read by nobody,
+        // which is exactly the stalled exchange the fallback has to survive.
+        let mut connections = Vec::new();
+        while let Some(incoming) = endpoint.accept().await {
+            if let Ok(connection) = incoming.await {
+                connections.push(connection);
+            }
+        }
+    });
+
+    address
+}
+
 /// Concatenates the DATA frames of a client request (HEADERS are skipped).
 fn h3_data(bytes: &[u8]) -> Option<Vec<u8>> {
     let mut rest = bytes;

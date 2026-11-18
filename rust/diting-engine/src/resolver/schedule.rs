@@ -28,6 +28,13 @@ use tokio::time::Instant as TokioInstant;
 
 use super::{elapsed_ns, now_ns, plain, Inner, RaceEvent, NO_PROVIDER};
 
+/// How long one HTTP/3 exchange may take before the query falls back to DoH/HTTP-2.
+///
+/// It must stay well below the per-attempt budget the scheduler hands to [`attempt`]: the outer
+/// `timeout` cancels the whole attempt, so a stalled H3 exchange would otherwise never reach the
+/// `Err` arm — no fallback, no `note_h3_failure`, and the dead path would stay enabled forever.
+const DOH3_ATTEMPT_TIMEOUT: Duration = Duration::from_secs(2);
+
 /// One finished attempt.
 struct Attempt {
     provider: u32,
@@ -165,15 +172,21 @@ async fn attempt(
                                 .path_and_query()
                                 .map(|value| value.as_str())
                                 .unwrap_or("/dns-query");
-                            match h3
-                                .query(&inner.dial, &provider.host, port, path, query)
-                                .await
+                            // The timeout is what makes the fallback reachable: without it a
+                            // stalled QUIC exchange is cancelled by the outer attempt budget
+                            // before this match runs, so neither the HTTP/2 retry nor the
+                            // failure streak would happen.
+                            match tokio::time::timeout(
+                                DOH3_ATTEMPT_TIMEOUT,
+                                h3.query(&inner.dial, &provider.host, port, path, query),
+                            )
+                            .await
                             {
-                                Ok(answer) => {
+                                Ok(Ok(answer)) => {
                                     doh.note_h3_success();
                                     Ok(answer)
                                 }
-                                Err(_) => {
+                                Ok(Err(_)) | Err(_) => {
                                     doh.note_h3_failure();
                                     doh.query(uri, query).await
                                 }

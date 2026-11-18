@@ -13,7 +13,7 @@ use diting_engine::resolver::Bootstrap;
 
 use support::{
     answer_wire, config_json, provider_json, query_wire, resolver, spawn_doh, spawn_doh3,
-    spawn_doh3_on, Recorder, TestPki,
+    spawn_doh3_on, spawn_doh3_silent_on, Recorder, TestPki,
 };
 
 #[tokio::test]
@@ -76,5 +76,47 @@ async fn doh3_answers_and_reuses_the_quic_connection() {
         connections.load(std::sync::atomic::Ordering::Relaxed),
         1,
         "the QUIC connection is reused across queries"
+    );
+}
+
+#[tokio::test]
+async fn a_stalled_http3_exchange_falls_back_and_is_abandoned() {
+    let pki = TestPki::new("localhost");
+    let (upstream, _, _) = spawn_doh(&pki).await;
+    // Same port the Alt-Svc advertisement names, but this origin never answers a stream.
+    spawn_doh3_silent_on(&pki, upstream).await;
+
+    let url = format!("https://localhost:{}/dns-query", upstream.port());
+    let config = config_json("single", &[provider_json("p1", "DOH", "", &url)], None);
+    let resolver = resolver(&config, Some(&pki.ca_pem), Arc::new(Recorder::default()));
+
+    let first = query_wire("first.test", 1);
+    assert_eq!(
+        resolver.resolve(&first).await.0.expect("a DoH answer"),
+        answer_wire(&first, [4, 3, 2, 1], 60)
+    );
+    assert!(resolver.doh3_ready(), "the DoH answer advertised h3");
+
+    // Each stalled HTTP/3 exchange must end at its own timeout and hand the query to HTTP/2.
+    for id in [2u16, 3, 4] {
+        let query = query_wire("fallback.test", id);
+        let started = std::time::Instant::now();
+        let answer =
+            tokio::time::timeout(std::time::Duration::from_secs(4), resolver.resolve(&query))
+                .await
+                .expect("the fallback must not outlive the query budget")
+                .0
+                .expect("the HTTP/2 fallback answers");
+        assert_eq!(answer, answer_wire(&query, [4, 3, 2, 1], 60));
+        if id == 2 {
+            assert!(
+                started.elapsed() >= std::time::Duration::from_millis(1_500),
+                "the HTTP/3 timeout must have been exercised"
+            );
+        }
+    }
+    assert!(
+        !resolver.doh3_ready(),
+        "three stalled exchanges abandon the H3 path"
     );
 }

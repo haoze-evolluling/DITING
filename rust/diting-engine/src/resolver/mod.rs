@@ -39,6 +39,7 @@ pub mod dot;
 pub mod pin;
 pub mod plain;
 pub mod schedule;
+mod session;
 pub mod trust;
 
 use std::collections::HashMap;
