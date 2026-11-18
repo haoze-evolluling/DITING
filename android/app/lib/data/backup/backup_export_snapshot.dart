@@ -27,14 +27,7 @@ extension _BackupExportSnapshot on BackupExporter {
         BackupGroup.outbound => _outbound(source),
         BackupGroup.subscriptions => await _subscriptions(source.database),
         BackupGroup.domainRules => await _domainRules(source.database),
-        BackupGroup.rewriteDomain => {
-          'rows': rewriteRows ??= await _userRuleRows(
-            source.database,
-            table: 'rewrite_rule',
-            sourceTable: 'rewrite_rule_source',
-          ),
-        },
-        BackupGroup.rewriteCname => {
+        BackupGroup.rewriteDomain || BackupGroup.rewriteCname => {
           'rows': rewriteRows ??= await _userRuleRows(
             source.database,
             table: 'rewrite_rule',
@@ -238,7 +231,9 @@ extension _BackupExportSnapshot on BackupExporter {
       'hapticEnabled': settings.hapticEnabled,
       'bottomBarIds': settings.bottomBarIds,
       'customBackgroundEnabled': settings.customBackgroundEnabled,
-      'homePowerButtonOpacity': settings.homeOpacity('home_power_button_opacity'),
+      'homePowerButtonOpacity': settings.homeOpacity(
+        'home_power_button_opacity',
+      ),
       'homeProviderSelectorOpacity': settings.homeOpacity(
         'home_provider_selector_opacity',
       ),

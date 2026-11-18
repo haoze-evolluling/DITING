@@ -10,6 +10,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 LegacySettings _settings(Ref ref) => ref.read(legacySettingsProvider);
 
+/// [newIndex] is already adjusted by `ReorderableListView.onReorderItem`; only bounds and no-op
+/// moves are rejected.
+bool _isValidMove(int oldIndex, int newIndex, int length) =>
+    oldIndex >= 0 &&
+    oldIndex < length &&
+    newIndex >= 0 &&
+    newIndex < length &&
+    newIndex != oldIndex;
+
 /// Dashboard card layout (add, remove, reorder in edit mode), persisted by `DashboardWidget.name`
 /// so an app upgrade keeps the board while an unknown name is simply skipped.
 final dashboardWidgetsProvider =
@@ -43,16 +52,17 @@ class DashboardWidgetsNotifier extends Notifier<List<DashboardWidget>> {
   }
 
   void toggle(DashboardWidget widget) {
-    state.contains(widget) ? remove(widget) : add(widget);
+    if (state.contains(widget)) {
+      remove(widget);
+    } else {
+      add(widget);
+    }
   }
 
   /// Moves a card; [ReorderableListView.onReorderItem]'s `newIndex` is already adjusted, so insert
   /// as-is.
   void move(int oldIndex, int newIndex) {
-    if (oldIndex < 0 || oldIndex >= state.length) {
-      return;
-    }
-    if (newIndex < 0 || newIndex >= state.length || newIndex == oldIndex) {
+    if (!_isValidMove(oldIndex, newIndex, state.length)) {
       return;
     }
     final next = [...state];
@@ -64,10 +74,7 @@ class DashboardWidgetsNotifier extends Notifier<List<DashboardWidget>> {
   /// as `ReorderableListView.onReorderItem` passes it. Cards hidden by the current mode keep
   /// their stored slots, so a reorder never loses them.
   void moveVisible(List<DashboardWidget> visible, int oldIndex, int newIndex) {
-    if (oldIndex < 0 || oldIndex >= visible.length) {
-      return;
-    }
-    if (newIndex < 0 || newIndex >= visible.length || newIndex == oldIndex) {
+    if (!_isValidMove(oldIndex, newIndex, visible.length)) {
       return;
     }
     final reordered = [...visible];

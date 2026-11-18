@@ -387,18 +387,10 @@ class RustAgentCore {
   }
 
   AgentKernelFailure _failureOf(int kind) {
-    // Rust `ParseError` discriminants 1..6 line up with these names.
-    const failures = [
-      AgentKernelFailure.invalidJson,
-      AgentKernelFailure.notJsonObject,
-      AgentKernelFailure.emptyContent,
-      AgentKernelFailure.noModelListJson,
-      AgentKernelFailure.noModelListData,
-      AgentKernelFailure.noModels,
-    ];
-    final index = kind - 1;
-    return index >= 0 && index < failures.length
-        ? failures[index]
+    // Rust `ParseError` discriminants 1..6 are the declaration order shifted by one
+    // (`emptyEndpoint` occupies 0), so the kind indexes the enum directly.
+    return kind > 0 && kind < AgentKernelFailure.values.length
+        ? AgentKernelFailure.values[kind]
         : AgentKernelFailure.invalidJson;
   }
 

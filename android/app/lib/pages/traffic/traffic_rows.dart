@@ -1,5 +1,13 @@
 part of 'traffic_page.dart';
 
+/// Bytes for the active sort field. The share bar follows it: sorting by upload while drawing
+/// the total would put bar length and rank out of step.
+int _highlightedBytes(AppTrafficDaily row, TrafficSort sort) => switch (sort) {
+  TrafficSort.total => row.totalBytes,
+  TrafficSort.download => row.rxBytes,
+  TrafficSort.upload => row.txBytes,
+};
+
 /// One app row: name, package, share bar, up/down bytes. The share bar is hand-drawn from
 /// two DecoratedBox widgets, since a LinearProgressIndicator vanishes on the card color.
 class AppTrafficRow extends StatelessWidget {
@@ -22,11 +30,7 @@ class AppTrafficRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final highlighted = switch (sort) {
-      TrafficSort.total => row.totalBytes,
-      TrafficSort.download => row.rxBytes,
-      TrafficSort.upload => row.txBytes,
-    };
+    final highlighted = _highlightedBytes(row, sort);
 
     return ListItem(
       leading: AppIconAvatar(packageName: row.packageName),
@@ -119,11 +123,7 @@ class _AppTrafficDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final share = row.shareOf(total);
-    final highlighted = switch (sort) {
-      TrafficSort.total => row.totalBytes,
-      TrafficSort.download => row.rxBytes,
-      TrafficSort.upload => row.txBytes,
-    };
+    final highlighted = _highlightedBytes(row, sort);
 
     return CommonScaffold(
       title: row.appName.isEmpty ? row.packageName : row.appName,
@@ -144,7 +144,10 @@ class _AppTrafficDetailSheet extends StatelessWidget {
                     tabular: true,
                   ),
                   if (row.appName.isNotEmpty)
-                    KeyValueRow(label: context.l10n.trafficAppName, value: row.appName),
+                    KeyValueRow(
+                      label: context.l10n.trafficAppName,
+                      value: row.appName,
+                    ),
                   KeyValueRow(
                     label: context.l10n.trafficDown,
                     value: obsFormatBytes(row.rxBytes),
@@ -186,10 +189,7 @@ class _AppTrafficDetailSheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: ShareBar(share: share),
           ),
-          ListFooter(
-            text:
-                context.l10n.trafficAttributionFooter,
-          ),
+          ListFooter(text: context.l10n.trafficAttributionFooter),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
             child: Text(
@@ -222,7 +222,6 @@ class _AttributionSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     return CommonScaffold(
       title: context.l10n.trafficAttributionTitle,
       body: ListView(
@@ -236,55 +235,62 @@ class _AttributionSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 spacing: 10,
                 children: [
-                  Text(context.l10n.trafficScopeTitle, style: context.listTitleStyle),
-                  Text(
-                    context.l10n.trafficScopeBody,
-                    style: AppTextStyle.subheadline
-                        .of(context)
-                        .copyWith(color: colorScheme.onSurfaceVariant),
+                  _AttributionSection(
+                    title: context.l10n.trafficScopeTitle,
+                    body: context.l10n.trafficScopeBody,
                   ),
                   const Divider(height: 1),
-                  Text(context.l10n.trafficWhyLowerTitle, style: context.listTitleStyle),
-                  Text(
-                    context.l10n.trafficWhyLowerBody,
-                    style: AppTextStyle.subheadline
-                        .of(context)
-                        .copyWith(color: colorScheme.onSurfaceVariant),
+                  _AttributionSection(
+                    title: context.l10n.trafficWhyLowerTitle,
+                    body: context.l10n.trafficWhyLowerBody,
                   ),
                   const Divider(height: 1),
-                  Text(context.l10n.trafficWhyNoRateTitle, style: context.listTitleStyle),
-                  Text(
-                    context.l10n.trafficWhyNoRateBody,
-                    style: AppTextStyle.subheadline
-                        .of(context)
-                        .copyWith(color: colorScheme.onSurfaceVariant),
+                  _AttributionSection(
+                    title: context.l10n.trafficWhyNoRateTitle,
+                    body: context.l10n.trafficWhyNoRateBody,
                   ),
                   const Divider(height: 1),
-                  Text(context.l10n.trafficRetentionTitle, style: context.listTitleStyle),
-                  Text(
-                    context.l10n.trafficRetentionBody,
-                    style: AppTextStyle.subheadline
-                        .of(context)
-                        .copyWith(color: colorScheme.onSurfaceVariant),
+                  _AttributionSection(
+                    title: context.l10n.trafficRetentionTitle,
+                    body: context.l10n.trafficRetentionBody,
                   ),
                   const Divider(height: 1),
-                  Text(context.l10n.trafficSystemAppsTitle, style: context.listTitleStyle),
-                  Text(
-                    context.l10n.trafficSystemAppsBody,
-                    style: AppTextStyle.subheadline
-                        .of(context)
-                        .copyWith(color: colorScheme.onSurfaceVariant),
+                  _AttributionSection(
+                    title: context.l10n.trafficSystemAppsTitle,
+                    body: context.l10n.trafficSystemAppsBody,
                   ),
                 ],
               ),
             ),
           ),
-          ListFooter(
-            text:
-                context.l10n.trafficUpstreamFooter,
-          ),
+          ListFooter(text: context.l10n.trafficUpstreamFooter),
         ],
       ),
+    );
+  }
+}
+
+/// One title/body pair of the attribution sheet.
+class _AttributionSection extends StatelessWidget {
+  const _AttributionSection({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 10,
+      children: [
+        Text(title, style: context.listTitleStyle),
+        Text(
+          body,
+          style: AppTextStyle.subheadline
+              .of(context)
+              .copyWith(color: context.colorScheme.onSurfaceVariant),
+        ),
+      ],
     );
   }
 }

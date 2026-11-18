@@ -12,6 +12,7 @@ import 'package:diting_android/state/app_version_provider.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/widgets/note_card.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:diting_android/widgets/status_pill.dart';
@@ -79,8 +80,7 @@ class AboutPage extends ConsumerWidget {
                 url: blockAdsRepositoryUrl,
               ),
             ],
-            footer:
-                context.l10n.aboutCreditsBody,
+            footer: context.l10n.aboutCreditsBody,
           ),
           generateSection(
             title: context.l10n.aboutSettings,
@@ -89,7 +89,9 @@ class AboutPage extends ConsumerWidget {
                 leading: const GlyphIcon(AppGlyphs.clock),
                 title: Text(context.l10n.aboutStartupCheck),
                 subtitle: Text(
-                  disableStartupCheck ? context.l10n.aboutStartupCheckOn : context.l10n.aboutStartupCheckOff,
+                  disableStartupCheck
+                      ? context.l10n.aboutStartupCheckOn
+                      : context.l10n.aboutStartupCheckOff,
                 ),
                 value: disableStartupCheck,
                 onChanged: (value) =>
@@ -140,7 +142,8 @@ class AboutPage extends ConsumerWidget {
     final ok = await ref.read(updateProvider.notifier).install();
     if (!context.mounted) return;
     if (!ok) {
-      final reason = ref.read(updateProvider).error ?? context.l10n.aboutInstallerFailed;
+      final reason =
+          ref.read(updateProvider).error ?? context.l10n.aboutInstallerFailed;
       messenger?.showSnackBar(
         SnackBar(
           content: Text(reason),
@@ -198,7 +201,10 @@ class _AboutHero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Text(context.l10n.aboutAppName, style: AppTextStyle.title2.of(context, emphasized: true)),
+          Text(
+            context.l10n.aboutAppName,
+            style: AppTextStyle.title2.of(context, emphasized: true),
+          ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -232,7 +238,9 @@ class _AboutHero extends StatelessWidget {
           TonalButton(
             size: TonalButtonSize.bar,
             glyph: AppGlyphs.sync,
-            label: stage == UpdateStage.checking ? context.l10n.aboutChecking : context.l10n.aboutCheckUpdate,
+            label: stage == UpdateStage.checking
+                ? context.l10n.aboutChecking
+                : context.l10n.aboutCheckUpdate,
             onPressed: onCheck,
           ),
           if (stage == UpdateStage.downloading ||
@@ -353,21 +361,12 @@ class _LinkRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return ListItem(
-      leading: DecoratedBox(
-        decoration: ShapeDecoration(
-          color: context.raisedSurfaceLevel.colorOf(colorScheme),
-          shape: AppShape.standard,
-        ),
-        child: SizedBox.square(
-          dimension: 40,
-          child: Center(
-            child: GlyphIcon(
-              glyph,
-              size: 20,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
+      leading: IconBadge(
+        glyph: glyph,
+        size: 40,
+        glyphSize: 20,
+        color: context.raisedSurfaceLevel.colorOf(colorScheme),
+        foregroundColor: colorScheme.onSurfaceVariant,
       ),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),

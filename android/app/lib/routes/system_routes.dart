@@ -11,6 +11,7 @@ import 'package:diting_android/pages/system/ip_quality_page.dart';
 import 'package:diting_android/pages/system/sponsor_page.dart';
 import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/ui/navigator.dart';
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 /// Appearance, settings sub pages and system routes.
@@ -54,112 +55,30 @@ abstract final class SystemPaths {
 /// Appearance, settings and system routes, assembled by `lib/router.dart`. All set
 /// `parentNavigatorKey: rootNavigatorKey`: they are full pages covering the whole tree, so the
 /// nested navigator would keep the bottom dock visible.
-List<RouteBase> systemRoutes() => <RouteBase>[
-  GoRoute(
-    path: SystemPaths.theme,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const ThemePage()),
-  ),
-  GoRoute(
-    path: SystemPaths.dayNight,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const ThemeDayNightPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.colorStyle,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const ThemeColorPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.homeOpacity,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const ThemeHomeOpacityPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.bottomBar,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const ThemeBottomBarPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.homeSentence,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const ThemeHomeSentencePage()),
-  ),
-  GoRoute(
-    path: SystemPaths.notification,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const ThemeNotificationPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.background,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const ThemeBackgroundPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.launcherIcon,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const LauncherIconPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.fontFamily,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const FontFamilyPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.fontSize,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const FontSizePage()),
-  ),
+/// A full-screen system page on the root navigator, the shape every leaf route shares.
+GoRoute _route(String path, Widget page) => GoRoute(
+  path: path,
+  parentNavigatorKey: rootNavigatorKey,
+  pageBuilder: (context, state) => androidDefaultPage(state, page),
+);
 
-  GoRoute(
-    path: SystemPaths.foregroundBackground,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const SettingsBackgroundPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.language,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const SettingsLanguagePage()),
-  ),
-
-  GoRoute(
-    path: SystemPaths.integration,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const IntegrationPage()),
-  ),
-
-  GoRoute(
-    path: SystemPaths.developer,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const DeveloperPage()),
-  ),
-  GoRoute(
-    path: SystemPaths.sponsor,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const SponsorPage()),
-  ),
-
+List<RouteBase> systemRoutes() => [
+  _route(SystemPaths.theme, const ThemePage()),
+  _route(SystemPaths.dayNight, const ThemeDayNightPage()),
+  _route(SystemPaths.colorStyle, const ThemeColorPage()),
+  _route(SystemPaths.homeOpacity, const ThemeHomeOpacityPage()),
+  _route(SystemPaths.bottomBar, const ThemeBottomBarPage()),
+  _route(SystemPaths.homeSentence, const ThemeHomeSentencePage()),
+  _route(SystemPaths.notification, const ThemeNotificationPage()),
+  _route(SystemPaths.background, const ThemeBackgroundPage()),
+  _route(SystemPaths.launcherIcon, const LauncherIconPage()),
+  _route(SystemPaths.fontFamily, const FontFamilyPage()),
+  _route(SystemPaths.fontSize, const FontSizePage()),
+  _route(SystemPaths.foregroundBackground, const SettingsBackgroundPage()),
+  _route(SystemPaths.language, const SettingsLanguagePage()),
+  _route(SystemPaths.integration, const IntegrationPage()),
+  _route(SystemPaths.developer, const DeveloperPage()),
+  _route(SystemPaths.sponsor, const SponsorPage()),
   // Retained page.
-  GoRoute(
-    path: SystemPaths.ipQuality,
-    parentNavigatorKey: rootNavigatorKey,
-    pageBuilder: (context, state) =>
-        androidDefaultPage(state, const IpQualityPage()),
-  ),
+  _route(SystemPaths.ipQuality, const IpQualityPage()),
 ];

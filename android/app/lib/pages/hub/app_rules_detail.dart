@@ -19,57 +19,27 @@ extension _AppRulesDetail on _AppRulesPageState {
     final footer = context.l10n.appRulesDnsScopeIntro;
     final rules = ref.watch(appScopedRulesProvider(app.packageName));
     if (rules.isLoading) {
-      return [
-        SliverToBoxAdapter(
-          child: generateSection(
-            title: context.l10n.appRulesDnsScopeSection,
-            actions: actions,
-            items: [
-              ListItem(
-                leading: GlyphIcon(AppGlyphs.info),
-                title: Text(context.l10n.appRulesReadingRules),
-                subtitle: Text(context.l10n.appRulesWait),
-              ),
-            ],
-          ),
-        ),
-      ];
+      return _scopedNotice(
+        actions,
+        context.l10n.appRulesReadingRules,
+        context.l10n.appRulesWait,
+      );
     }
     final value = rules.value;
     if (value == null || !value.available) {
-      return [
-        SliverToBoxAdapter(
-          child: generateSection(
-            title: context.l10n.appRulesDnsScopeSection,
-            actions: actions,
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.info),
-                title: Text(context.l10n.appRulesRuleDbUnreadable),
-                subtitle: Text(value?.error ?? context.l10n.appRulesRuleDbUnavailable),
-              ),
-            ],
-          ),
-        ),
-      ];
+      return _scopedNotice(
+        actions,
+        context.l10n.appRulesRuleDbUnreadable,
+        value?.error ?? context.l10n.appRulesRuleDbUnavailable,
+      );
     }
     final scoped = [...value.block, ...value.allow];
     if (scoped.isEmpty) {
-      return [
-        SliverToBoxAdapter(
-          child: generateSection(
-            title: context.l10n.appRulesDnsScopeSection,
-            actions: actions,
-            items: [
-              ListItem(
-                leading: GlyphIcon(AppGlyphs.info),
-                title: Text(context.l10n.appRulesNoScopedRules),
-                subtitle: Text(context.l10n.appRulesNoScopedRulesSubtitle),
-              ),
-            ],
-          ),
-        ),
-      ];
+      return _scopedNotice(
+        actions,
+        context.l10n.appRulesNoScopedRules,
+        context.l10n.appRulesNoScopedRulesSubtitle,
+      );
     }
     return lazySectionSlivers(
       title: context.l10n.appRulesScopedCount(scoped.length),
@@ -85,6 +55,29 @@ extension _AppRulesDetail on _AppRulesPageState {
         );
       },
     );
+  }
+
+  /// A single info row for the loading, unreadable and empty states of the scoped-rule section.
+  List<Widget> _scopedNotice(
+    List<IconButtonData> actions,
+    String title,
+    String subtitle,
+  ) {
+    return [
+      SliverToBoxAdapter(
+        child: generateSection(
+          title: context.l10n.appRulesDnsScopeSection,
+          actions: actions,
+          items: [
+            ListItem(
+              leading: const GlyphIcon(AppGlyphs.info),
+              title: Text(title),
+              subtitle: Text(subtitle),
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 
   /// Header-only when there is nothing to list; the rows themselves are built by a lazy sliver, so

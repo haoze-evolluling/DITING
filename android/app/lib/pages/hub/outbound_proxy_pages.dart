@@ -74,7 +74,19 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
     if (config == null || !config.enabled || config.status != 'connecting') {
       return;
     }
-    ref.read(outboundProxyRevisionProvider.notifier).bump();
+    _bump();
+  }
+
+  void _bump() => ref.read(outboundProxyRevisionProvider.notifier).bump();
+
+  /// Persists a config change and, when given, the matching engine status.
+  Future<void> _persist(OutboundProxyConfig config, {String? status}) async {
+    final store = ref.read(outboundProxyStoreProvider);
+    await store.write(config);
+    if (status != null) {
+      await store.setStatus(status, '');
+    }
+    _bump();
   }
 
   void _adopt(OutboundProxyConfig config) {
@@ -111,11 +123,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
     }
     setState(() => _saving = true);
     try {
-      await ref.read(outboundProxyStoreProvider).write(draft);
-      await ref
-          .read(outboundProxyStoreProvider)
-          .setStatus(draft.enabled ? 'connecting' : 'disabled', '');
-      ref.read(outboundProxyRevisionProvider.notifier).bump();
+      await _persist(draft, status: draft.enabled ? 'connecting' : 'disabled');
       _loaded = draft;
       _toast(l10n.outboundSaved);
     } on Object catch (error) {
@@ -150,7 +158,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
       return;
     }
     await ref.read(outboundProxyStoreProvider).reset();
-    ref.read(outboundProxyRevisionProvider.notifier).bump();
+    _bump();
     if (!mounted) {
       return;
     }
@@ -231,22 +239,20 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
                 value: config.enabled,
                 onChanged: _saving
                     ? null
-                    : (value) async {
+                    : (value) => _persist(
                         // As upstream: the switch persists immediately and moves to
                         // connecting or disabled; other fields wait for save.
-                        final next = config.copyWith(enabled: value);
-                        await ref.read(outboundProxyStoreProvider).write(next);
-                        await ref
-                            .read(outboundProxyStoreProvider)
-                            .setStatus(value ? 'connecting' : 'disabled', '');
-                        ref.read(outboundProxyRevisionProvider.notifier).bump();
-                      },
+                        config.copyWith(enabled: value),
+                        status: value ? 'connecting' : 'disabled',
+                      ),
               ),
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.appsList),
                 title: Text(context.l10n.outboundApp),
                 subtitle: Text(
-                  config.proxyAppPackage.isEmpty ? context.l10n.outboundNoApp : appLabel,
+                  config.proxyAppPackage.isEmpty
+                      ? context.l10n.outboundNoApp
+                      : appLabel,
                 ),
                 onTap: () => context.push('/hub/outbound-proxy/apps'),
               ),
@@ -264,12 +270,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
               value: config.protocol,
               onChanged: _saving
                   ? (_) {}
-                  : (value) async {
-                      await ref
-                          .read(outboundProxyStoreProvider)
-                          .write(config.copyWith(protocol: value));
-                      ref.read(outboundProxyRevisionProvider.notifier).bump();
-                    },
+                  : (value) => _persist(config.copyWith(protocol: value)),
             ),
           ),
           Padding(
@@ -367,12 +368,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
             value: config.scope,
             onChanged: _saving
                 ? (_) {}
-                : (value) async {
-                    await ref
-                        .read(outboundProxyStoreProvider)
-                        .write(config.copyWith(scope: value));
-                    ref.read(outboundProxyRevisionProvider.notifier).bump();
-                  },
+                : (value) => _persist(config.copyWith(scope: value)),
           ),
         ),
         if (perApp)
@@ -392,7 +388,9 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
             ]),
           ),
         ListFooter(
-          text: perApp ? l10n.outboundScopeAppsFooter : l10n.outboundScopeAllFooter,
+          text: perApp
+              ? l10n.outboundScopeAppsFooter
+              : l10n.outboundScopeAllFooter,
         ),
       ],
     );
@@ -407,9 +405,10 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
     return switch (config.status) {
       'connecting' => l10n.outboundStatusConnecting,
       'ready' => l10n.outboundStatusReady,
-      'error' => config.statusMessage.isEmpty
-          ? l10n.outboundStatusFailed
-          : config.statusMessage,
+      'error' =>
+        config.statusMessage.isEmpty
+            ? l10n.outboundStatusFailed
+            : config.statusMessage,
       _ => l10n.outboundStatusOff,
     };
   }

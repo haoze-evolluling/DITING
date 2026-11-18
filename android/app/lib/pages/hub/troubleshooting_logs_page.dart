@@ -177,6 +177,7 @@ class _TroubleshootingLogsPageState
     final asyncLogs = ref.watch(troubleshootingLogsProvider);
     final entries = asyncLogs.value ?? const <TroubleshootLogEntry>[];
     final hasEntries = entries.isNotEmpty;
+    final canAct = hasEntries && !_busy;
     final l10n = context.l10n;
     return CommonScaffold(
       title: l10n.troubleshootLogsTitle,
@@ -189,18 +190,18 @@ class _TroubleshootingLogsPageState
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsShareAll,
           glyph: AppGlyphs.send,
-          onPressed: hasEntries && !_busy ? _shareAll : null,
+          onPressed: canAct ? _shareAll : null,
         ),
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsDownloadAll,
           glyph: AppGlyphs.cloudDownload,
-          onPressed: hasEntries && !_busy ? _downloadAll : null,
+          onPressed: canAct ? _downloadAll : null,
         ),
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsClearAll,
           glyph: AppGlyphs.delete,
           danger: true,
-          onPressed: hasEntries && !_busy ? _clearAll : null,
+          onPressed: canAct ? _clearAll : null,
         ),
       ],
       body: NullStatusSwitcher(

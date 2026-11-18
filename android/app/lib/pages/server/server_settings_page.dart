@@ -189,6 +189,17 @@ class _ServerSettingsPageState extends ConsumerState<ServerSettingsPage> {
         false,
       ),
     };
+    Widget? trailing;
+    if (!_batteryLoaded) {
+      trailing = const CommonCircleLoading(size: 18);
+    } else if (value != null) {
+      trailing = Text(
+        value,
+        style: context.listCaptionStyle.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
     return ListItem(
       title: Text(context.l10n.serverIgnoreBattery),
       subtitle: Text(subtitle),
@@ -196,16 +207,7 @@ class _ServerSettingsPageState extends ConsumerState<ServerSettingsPage> {
         AppGlyphs.bolt,
         color: enabled ? null : colorScheme.onSurface.withValues(alpha: 0.4),
       ),
-      trailing: !_batteryLoaded
-          ? const CommonCircleLoading(size: 18)
-          : value == null
-          ? null
-          : Text(
-              value,
-              style: context.listCaptionStyle.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
+      trailing: trailing,
       onTap: enabled ? _requestBattery : null,
     );
   }

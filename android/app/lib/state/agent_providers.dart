@@ -99,13 +99,7 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
       startedAt: DateTime.now(),
     );
     if (config == null || !config.hasKey) {
-      state = AgentAnalysisState(
-        sessionId: session,
-        target: target,
-        phase: AgentAnalysisPhase.failure,
-        error: currentL10n.agentApiKeyMissing,
-        startedAt: state.startedAt,
-      );
+      _fail(session, target, currentL10n.agentApiKeyMissing);
       return session;
     }
     // Fire and forget: the UI watches the state, and the guard below keeps a stale answer out.
@@ -119,11 +113,7 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
     state = const AgentAnalysisState();
   }
 
-  void clear() {
-    _cancelToken?.cancel();
-    _cancelToken = null;
-    state = const AgentAnalysisState();
-  }
+  void clear() => cancel();
 
   Future<void> _run(
     int session,
@@ -156,27 +146,25 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
         startedAt: state.startedAt,
       );
     } on AgentApiException catch (error) {
-      if (state.sessionId != session) return;
-      state = AgentAnalysisState(
-        sessionId: session,
-        target: target,
-        phase: AgentAnalysisPhase.failure,
-        error: error.message,
-        promptDigest: state.promptDigest,
-        startedAt: state.startedAt,
-      );
+      _fail(session, target, error.message);
     } on Object catch (error) {
       // Never leave the UI spinning: turn unknown errors into a readable message.
-      if (state.sessionId != session) return;
-      state = AgentAnalysisState(
-        sessionId: session,
-        target: target,
-        phase: AgentAnalysisPhase.failure,
-        error: currentL10n.agentAnalysisFailed('$error'),
-        promptDigest: state.promptDigest,
-        startedAt: state.startedAt,
-      );
+      _fail(session, target, currentL10n.agentAnalysisFailed('$error'));
     }
+  }
+
+  /// Records a failure for [session] only; a superseded run's error must not replace the state of
+  /// the run that replaced it.
+  void _fail(int session, AgentAnalysisTarget target, String error) {
+    if (state.sessionId != session) return;
+    state = AgentAnalysisState(
+      sessionId: session,
+      target: target,
+      phase: AgentAnalysisPhase.failure,
+      error: error,
+      promptDigest: state.promptDigest,
+      startedAt: state.startedAt,
+    );
   }
 
   Future<AgentAnalysisRequest> _buildRequest(
@@ -211,9 +199,7 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
       case AgentTrafficTarget():
         if (db == null) {
           // Without the legacy DB this feature is unavailable, not "no traffic".
-          throw AgentApiException(
-            currentL10n.agentNoLegacyDatabase,
-          );
+          throw AgentApiException(currentL10n.agentNoLegacyDatabase);
         }
         final summary = await summarizeRecentTraffic(
           dnsRepository: DnsLogRepository(db),

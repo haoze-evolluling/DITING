@@ -44,45 +44,12 @@ class AgentProvidersPage extends ConsumerWidget {
                   leading: GlyphIcon(AppGlyphs.info),
                 ),
               for (final provider in state.providers)
-                ListItem(
-                  leading: GlyphIcon(
-                    provider.id == state.activeProviderId
-                        ? AppGlyphs.checkCircle
-                        : AppGlyphs.devices,
-                    size: 20,
-                    color: provider.id == state.activeProviderId
-                        ? context.colorScheme.primary
-                        : null,
-                  ),
-                  title: Text(provider.name),
-                  subtitle: Text(
-                    context.l10n.agentProvidersRow(
-                      provider.model.isEmpty
-                          ? context.l10n.agentApiNoModel
-                          : provider.model,
-                      provider.baseUrl,
-                      provider.hasKey
-                          ? context.l10n.agentApiKeyConfigured
-                          : context.l10n.agentProvidersKeyMissing,
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: context.l10n.commonEdit,
-                        onPressed: () =>
-                            _edit(context, ref, existing: provider),
-                        icon: const GlyphIcon(AppGlyphs.edit, size: 20),
-                      ),
-                      IconButton(
-                        tooltip: context.l10n.commonDelete,
-                        onPressed: () => _delete(context, notifier, provider),
-                        icon: const GlyphIcon(AppGlyphs.delete, size: 20),
-                      ),
-                    ],
-                  ),
-                  onTap: () => notifier.selectProvider(provider.id),
+                _providerRow(
+                  context,
+                  ref,
+                  notifier,
+                  provider,
+                  active: provider.id == state.activeProviderId,
                 ),
             ],
             footer: state.providers.isEmpty
@@ -94,34 +61,87 @@ class AgentProvidersPage extends ConsumerWidget {
               title: entry.key,
               items: [
                 for (final preset in entry.value)
-                  ListItem(
-                    leading: GlyphIcon(
-                      added.contains(preset.id)
-                          ? AppGlyphs.checkCircle
-                          : AppGlyphs.addCircle,
-                      size: 20,
-                    ),
-                    title: Text(preset.name),
-                    subtitle: Text(preset.baseUrl),
-                    trailing: TonalChip(
-                      label: added.contains(preset.id) ? context.l10n.agentProvidersAdded : context.l10n.formAdd,
-                      color: added.contains(preset.id)
-                          ? context.raisedSurfaceLevel.colorOf(
-                              context.colorScheme,
-                            )
-                          : context.colorScheme.primary,
-                      foregroundColor: added.contains(preset.id)
-                          ? context.colorScheme.onSurfaceVariant
-                          : context.colorScheme.onPrimary,
-                      onPressed: added.contains(preset.id)
-                          ? null
-                          : () => _edit(context, ref, preset: preset),
-                    ),
+                  _presetRow(
+                    context,
+                    ref,
+                    preset,
+                    added: added.contains(preset.id),
                   ),
               ],
             ),
           const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _providerRow(
+    BuildContext context,
+    WidgetRef ref,
+    AgentApiNotifier notifier,
+    AiProviderConfig provider, {
+    required bool active,
+  }) {
+    return ListItem(
+      leading: GlyphIcon(
+        active ? AppGlyphs.checkCircle : AppGlyphs.devices,
+        size: 20,
+        color: active ? context.colorScheme.primary : null,
+      ),
+      title: Text(provider.name),
+      subtitle: Text(
+        context.l10n.agentProvidersRow(
+          provider.model.isEmpty
+              ? context.l10n.agentApiNoModel
+              : provider.model,
+          provider.baseUrl,
+          provider.hasKey
+              ? context.l10n.agentApiKeyConfigured
+              : context.l10n.agentProvidersKeyMissing,
+        ),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: context.l10n.commonEdit,
+            onPressed: () => _edit(context, ref, existing: provider),
+            icon: const GlyphIcon(AppGlyphs.edit, size: 20),
+          ),
+          IconButton(
+            tooltip: context.l10n.commonDelete,
+            onPressed: () => _delete(context, notifier, provider),
+            icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+          ),
+        ],
+      ),
+      onTap: () => notifier.selectProvider(provider.id),
+    );
+  }
+
+  Widget _presetRow(
+    BuildContext context,
+    WidgetRef ref,
+    AiProviderPreset preset, {
+    required bool added,
+  }) {
+    final colorScheme = context.colorScheme;
+    return ListItem(
+      leading: GlyphIcon(
+        added ? AppGlyphs.checkCircle : AppGlyphs.addCircle,
+        size: 20,
+      ),
+      title: Text(preset.name),
+      subtitle: Text(preset.baseUrl),
+      trailing: TonalChip(
+        label: added ? context.l10n.agentProvidersAdded : context.l10n.formAdd,
+        color: added
+            ? context.raisedSurfaceLevel.colorOf(colorScheme)
+            : colorScheme.primary,
+        foregroundColor: added
+            ? colorScheme.onSurfaceVariant
+            : colorScheme.onPrimary,
+        onPressed: added ? null : () => _edit(context, ref, preset: preset),
       ),
     );
   }
@@ -138,10 +158,7 @@ class AgentProvidersPage extends ConsumerWidget {
     );
     if (result == null) return;
     final notifier = ref.read(agentApiProvider.notifier);
-    final stamp = DateTime.now().millisecondsSinceEpoch;
-    final id =
-        existing?.id ??
-        (preset != null ? 'preset_${preset.id}_$stamp' : 'provider_$stamp');
+    final id = existing?.id ?? _newProviderId(preset);
     notifier.saveProvider(
       AiProviderConfig(
         id: id,
@@ -155,6 +172,12 @@ class AgentProvidersPage extends ConsumerWidget {
     );
   }
 
+  static String _newProviderId(AiProviderPreset? preset) {
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    if (preset == null) return 'provider_$stamp';
+    return 'preset_${preset.id}_$stamp';
+  }
+
   Future<void> _delete(
     BuildContext context,
     AgentApiNotifier notifier,
@@ -165,9 +188,7 @@ class AgentProvidersPage extends ConsumerWidget {
       child: CommonDialog(
         title: context.l10n.agentProvidersDeleteTitle,
         destructive: true,
-        child: Text(
-          context.l10n.agentProvidersDeleteBody(provider.name),
-        ),
+        child: Text(context.l10n.agentProvidersDeleteBody(provider.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

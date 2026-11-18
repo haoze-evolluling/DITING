@@ -48,9 +48,6 @@ String subscriptionFormErrorText(String kind) => switch (kind) {
   _ => _urlErrorText(kind),
 };
 
-/// URI components for address rules; the path stays exactly what [Uri] normalised.
-Map<String, Object?> _partsOf(Uri? uri) => uriParts(uri);
-
 /// URI components for mirror building: an empty path is `/`, matching the legacy path join. The
 /// downloader also uses this, so the request it plans and the preview it shows agree.
 Map<String, Object?> mirrorUrlParts(Uri? uri) {
@@ -112,7 +109,7 @@ String? validateSubscriptionUrl(String url) {
   final answer = _core.call({
     'op': 'url.validate',
     'url': trimmed,
-    'urlParts': _partsOf(Uri.tryParse(trimmed)),
+    'urlParts': uriParts(Uri.tryParse(trimmed)),
   });
   final error = _errorOf(answer);
   return error == null ? null : _urlErrorText(error);

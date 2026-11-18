@@ -143,9 +143,15 @@ class _OutboundProxyTargetsPageState
               ),
               itemBuilder: (context, index) {
                 final app = visible[index];
-                void toggle() => update(
-                  (s) => s.remove(app.packageName) ? s : (s..add(app.packageName)),
-                );
+                void toggle() {
+                  update((selected) {
+                    if (!selected.remove(app.packageName)) {
+                      selected.add(app.packageName);
+                    }
+                    return selected;
+                  });
+                }
+
                 return ListItem(
                   leading: AppIconAvatar(packageName: app.packageName),
                   title: Text(

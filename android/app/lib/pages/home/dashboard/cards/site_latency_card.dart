@@ -61,11 +61,22 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
     final alive = sites
         .where((site) => _results[site.id]?.success ?? false)
         .length;
-    final verdict = _probing
-        ? context.l10n.siteLatencyTesting
-        : measured == 0
-        ? context.l10n.siteLatencyNotTested
-        : context.l10n.siteLatencyAliveRatio(alive, sites.length);
+    final String verdict;
+    if (_probing) {
+      verdict = context.l10n.siteLatencyTesting;
+    } else if (measured == 0) {
+      verdict = context.l10n.siteLatencyNotTested;
+    } else {
+      verdict = context.l10n.siteLatencyAliveRatio(alive, sites.length);
+    }
+    final DashboardChipTone tone;
+    if (_probing || measured == 0) {
+      tone = DashboardChipTone.idle;
+    } else if (alive == sites.length) {
+      tone = DashboardChipTone.ok;
+    } else {
+      tone = DashboardChipTone.warn;
+    }
     return DashboardCard(
       semanticLabel: context.l10n.siteLatencyTitle,
       child: Column(
@@ -74,17 +85,7 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
           DashboardCardHeader(
             glyph: AppGlyphs.target,
             title: context.l10n.siteLatencyTitle,
-            leading: [
-              DashboardChip(
-                label: verdict,
-                tone: _probing || measured == 0
-                    ? DashboardChipTone.idle
-                    : alive == sites.length
-                    ? DashboardChipTone.ok
-                    : DashboardChipTone.warn,
-                dot: true,
-              ),
-            ],
+            leading: [DashboardChip(label: verdict, tone: tone, dot: true)],
             trailing: [
               if (widget.onDetail != null)
                 DashboardIconButton(
@@ -123,7 +124,7 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
                         ),
                       ),
                     ),
-                  if (sites.skip(i).length < _columns) const Spacer(),
+                  if (sites.length - i < _columns) const Spacer(),
                 ],
               ),
             ),
@@ -189,13 +190,19 @@ class _SiteCell extends StatelessWidget {
     final scale = DashboardDensityScope.scaleOf(context);
     final failed = summary != null && !summary!.success;
     final pending = probing || summary == null;
-    final dotColor = pending
-        ? colorScheme.outline
-        : failed
-        ? colorScheme.error
-        : colorScheme.success;
+    final Color dotColor;
+    if (pending) {
+      dotColor = colorScheme.outline;
+    } else if (failed) {
+      dotColor = colorScheme.error;
+    } else {
+      dotColor = colorScheme.success;
+    }
     final (status, statusColor) = switch (summary) {
-      _ when probing => (context.l10n.siteLatencyTesting, colorScheme.onSurfaceVariant),
+      _ when probing => (
+        context.l10n.siteLatencyTesting,
+        colorScheme.onSurfaceVariant,
+      ),
       null => (context.l10n.siteLatencyNotTested, colorScheme.onSurfaceVariant),
       final s when !s.success => (context.l10n.commonFailed, colorScheme.error),
       final s => (_latencyLabel(s, context.l10n), colorScheme.success),

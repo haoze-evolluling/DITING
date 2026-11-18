@@ -124,31 +124,28 @@ class MethodChannelCaCertificateService implements CaCertificateService {
 
   final MethodChannel _channel;
 
+  /// A rejected or empty answer becomes an empty map, so every caller keeps the "nothing
+  /// installed" defaults instead of throwing.
+  static Map<Object?, Object?> _snapshot(Object? raw) =>
+      raw is Map ? Map<Object?, Object?>.from(raw) : const {};
+
   @override
   Future<CaCertificateState> inspect({bool regenerate = false}) async {
     final raw = await _channel.invokeMethod<Object?>('inspectCa', {
       'regenerate': regenerate,
     });
-    return CaCertificateState.fromMap(
-      raw is Map ? Map<Object?, Object?>.from(raw) : const {},
-    );
+    return CaCertificateState.fromMap(_snapshot(raw));
   }
 
   @override
-  Future<CaInstallResult> install() async {
-    final raw = await _channel.invokeMethod<Object?>('installCa');
-    return CaInstallResult.fromMap(
-      raw is Map ? Map<Object?, Object?>.from(raw) : const {},
-    );
-  }
+  Future<CaInstallResult> install() async => CaInstallResult.fromMap(
+    _snapshot(await _channel.invokeMethod<Object?>('installCa')),
+  );
 
   @override
-  Future<CaSaveResult> saveToDownloads() async {
-    final raw = await _channel.invokeMethod<Object?>('saveCa');
-    return CaSaveResult.fromMap(
-      raw is Map ? Map<Object?, Object?>.from(raw) : const {},
-    );
-  }
+  Future<CaSaveResult> saveToDownloads() async => CaSaveResult.fromMap(
+    _snapshot(await _channel.invokeMethod<Object?>('saveCa')),
+  );
 }
 
 class UnavailableCaCertificateService implements CaCertificateService {
@@ -164,8 +161,5 @@ class UnavailableCaCertificateService implements CaCertificateService {
 
   @override
   Future<CaSaveResult> saveToDownloads() async =>
-      CaSaveResult(
-        saved: false,
-        error: currentL10n.caChannelUnavailable,
-      );
+      CaSaveResult(saved: false, error: currentL10n.caChannelUnavailable);
 }

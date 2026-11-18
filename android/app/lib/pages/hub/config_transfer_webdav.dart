@@ -157,56 +157,54 @@ class _ConfigTransferWebdavPageState
     return cached;
   }
 
-  /// Generates the JSON with the backup page's generator, then `PUT`s it. One generator
-  /// keeps file export and cloud upload byte-equivalent.
-  Future<void> _upload() async {
+  /// Runs one transfer with [_busy] set, clearing it when the action finishes.
+  Future<void> _run(Future<void> Function() action) async {
     setState(() => _busy = true);
     try {
-      final actions = ref.read(backupActionsProvider);
-      final export = await actions.export(BackupGroup.values.toSet());
-      if (!mounted) return;
-      if (export.isEmpty) {
-        _toast(context.l10n.webdavNoConfig);
-        return;
-      }
-      final result = await ref
-          .read(davProvider.notifier)
-          .upload(export.content);
-      if (!mounted) return;
-      _toast(
-        result.succeeded
-            ? context.l10n.webdavUploadedCount(
-                export.included.length,
-                export.totalItems,
-              )
-            : (result.error ?? context.l10n.webdavUploadFailed),
-      );
+      await action();
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  Future<void> _download() async {
-    setState(() => _busy = true);
-    try {
-      final text = await ref.read(davProvider.notifier).download();
-      if (!mounted) return;
-      if (text == null) {
-        _toast(ref.read(davProvider).message ?? context.l10n.webdavNoCloudBackup);
-        return;
-      }
-      final result = await ref
-          .read(backupActionsProvider)
-          .importText(text, sourceName: DavNotifier.remoteFileName);
-      if (!mounted) return;
-      await showFloatingDialog<void>(
-        context: context,
-        child: _DavImportDialog(result: result),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
+  /// Generates the JSON with the backup page's generator, then `PUT`s it. One generator
+  /// keeps file export and cloud upload byte-equivalent.
+  Future<void> _upload() => _run(() async {
+    final actions = ref.read(backupActionsProvider);
+    final export = await actions.export(BackupGroup.values.toSet());
+    if (!mounted) return;
+    if (export.isEmpty) {
+      _toast(context.l10n.webdavNoConfig);
+      return;
     }
-  }
+    final result = await ref.read(davProvider.notifier).upload(export.content);
+    if (!mounted) return;
+    _toast(
+      result.succeeded
+          ? context.l10n.webdavUploadedCount(
+              export.included.length,
+              export.totalItems,
+            )
+          : (result.error ?? context.l10n.webdavUploadFailed),
+    );
+  });
+
+  Future<void> _download() => _run(() async {
+    final text = await ref.read(davProvider.notifier).download();
+    if (!mounted) return;
+    if (text == null) {
+      _toast(ref.read(davProvider).message ?? context.l10n.webdavNoCloudBackup);
+      return;
+    }
+    final result = await ref
+        .read(backupActionsProvider)
+        .importText(text, sourceName: DavNotifier.remoteFileName);
+    if (!mounted) return;
+    await showFloatingDialog<void>(
+      context: context,
+      child: _DavImportDialog(result: result),
+    );
+  });
 
   void _toast(String message) {
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
@@ -225,7 +223,11 @@ class _DavImportDialog extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return CommonDialog(
       title: context.l10n.webdavRestoreTitle,
-      trailing: MetaChip(label: result.failed ? context.l10n.webdavRestoreFailed : context.l10n.webdavRestoreDone),
+      trailing: MetaChip(
+        label: result.failed
+            ? context.l10n.webdavRestoreFailed
+            : context.l10n.webdavRestoreDone,
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),

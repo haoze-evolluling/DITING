@@ -156,14 +156,11 @@ final mockBlockRules = <MockRule>[
       id: 'block-$i',
       pattern: _blockPatterns[i],
       kind: RuleKind.block,
-      source: i < 9
-          ? RuleSource.user
-          : i < 12
-          ? RuleSource.subscription
-          : RuleSource.preset,
+      // The pattern list has twelve entries, so the last three are subscription rules.
+      source: i < 9 ? RuleSource.user : RuleSource.subscription,
       enabled: i % 7 != 3,
       important: i % 5 == 0,
-      subscriptionName: i >= 9 && i < 12 ? 'AdGuard 基础' : null,
+      subscriptionName: i >= 9 ? 'AdGuard 基础' : null,
       group: i % 4 == 0 ? '广告' : null,
     ),
 ];

@@ -58,11 +58,13 @@ class AutoUpdateActions {
 
   final Ref _ref;
 
+  void _bump() => _ref.read(legacySettingsRevisionProvider.notifier).bump();
+
   void setEnabled(bool enabled) {
     final settings = _ref.read(legacySettingsProvider);
     settings.setSubscriptionAutoUpdateEnabled(enabled);
     // 1.4.3 keeps the chosen interval when the master switch is turned off.
-    _ref.read(legacySettingsRevisionProvider.notifier).bump();
+    _bump();
   }
 
   /// Rejects intervals outside 1-168 and returns false so the caller can warn. Choosing an
@@ -77,7 +79,7 @@ class AutoUpdateActions {
     settings.setSubscriptionAutoUpdateScheduleRaw(
       AutoUpdateSchedule.interval.storageValue,
     );
-    _ref.read(legacySettingsRevisionProvider.notifier).bump();
+    _bump();
     return true;
   }
 
@@ -91,7 +93,7 @@ class AutoUpdateActions {
     settings.setSubscriptionAutoUpdateSinceMs(
       DateTime.now().millisecondsSinceEpoch,
     );
-    _ref.read(legacySettingsRevisionProvider.notifier).bump();
+    _bump();
   }
 
   /// Group switch, stored in the `subscription_group.autoUpdateEnabled` column.

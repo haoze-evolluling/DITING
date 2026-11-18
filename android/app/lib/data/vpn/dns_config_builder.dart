@@ -70,10 +70,7 @@ class DnsProviderEntry {
           DnsProtocol.doh => ProviderProtocol.doh,
           DnsProtocol.dot => ProviderProtocol.dot,
         },
-        address: switch (protocol) {
-          DnsProtocol.doh => url,
-          _ => hostPort,
-        },
+        address: address,
         latencyMs: latencyMs,
         isPreset: isPreset,
       );

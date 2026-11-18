@@ -88,10 +88,7 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
         IconButtonData(
           glyph: AppGlyphs.info,
           tooltip: context.l10n.trafficAttribution,
-          onPressed: () => showSheet<void>(
-            context: context,
-            builder: (_) => const _AttributionSheet(),
-          ),
+          onPressed: _openAttributionSheet,
         ),
       ],
       body: _body(context, asyncSnapshot, window, sort, search, hideSystemApps),
@@ -134,123 +131,123 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
       slivers: [
         // The header is a box adapter, which gets no repaint boundary of its own.
         SliverToBoxAdapter(
-          child: RepaintBoundary(child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: StatStrip(
-                  stats: [
-                    StatItem(
-                      label: context.l10n.trafficWindowDown(
-                        window.label(context.l10n),
-                      ),
-                      value: obsFormatBytes(snapshot.rxBytes),
-                      color: context.colorScheme.primary,
-                    ),
-                    StatItem(
-                      label: context.l10n.trafficWindowUp(
-                        window.label(context.l10n),
-                      ),
-                      value: obsFormatBytes(snapshot.txBytes),
-                    ),
-                    StatItem(
-                      label: context.l10n.trafficAppCount,
-                      value: '${visible.length}',
-                      unit: context.l10n.trafficAppCountUnit,
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                // Range chips go through ChipRow: a bare Wrap gives no cross-axis constraint
-                // and wraps, pushing every card below it down.
-                child: ChipRow(
-                  children: [
-                    for (final option in _rangeOptions(context.l10n))
-                      FilterPill(
-                        label: option.label,
-                        selected: option.window == window,
-                        disabled: option.unavailableReason != null,
-                        onPressed: () {
-                          final target = option.window;
-                          if (target == null) {
-                            _explainUnavailable(
-                              option.label,
-                              option.unavailableReason,
-                            );
-                          } else {
-                            ref
-                                .read(trafficWindowProvider.notifier)
-                                .select(target);
-                          }
-                        },
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              _LiveRateCard(
-                windowLabel: window.label(context.l10n),
-                showNote: _showTips,
-              ),
-              if (_showTips) ...[
-                const SizedBox(height: 10),
-                _AttributionBanner(
-                  onTap: () => showSheet<void>(
-                    context: context,
-                    builder: (_) => const _AttributionSheet(),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              _TrafficFilterBar(
-                searchController: _search,
-                sort: sort,
-                hideSystemApps: hideSystemApps,
-                onSearchChanged: (value) => ref
-                    .read(trafficSearchProvider.notifier)
-                    .setQuery(value.trim()),
-                onSortSelected: (option) {
-                  final target = option.sort;
-                  if (target == null) {
-                    _explainUnavailable(option.label, option.unavailableReason);
-                  } else {
-                    ref.read(trafficSortProvider.notifier).select(target);
-                  }
-                },
-                onHideSystemAppsChanged: (value) => ref
-                    .read(trafficHideSystemAppsProvider.notifier)
-                    .setValue(value),
-              ),
-              if (visible.isEmpty)
+          child: RepaintBoundary(
+            child: Column(
+              children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-                  child: NullStatus(
-                    label: search.isEmpty
-                        ? context.l10n.trafficNoData
-                        : context.l10n.trafficNoMatchingApps,
-                    description: _emptyDescription(
-                      l10n: context.l10n,
-                      search: search,
-                      hideSystemApps: hideSystemApps,
-                      hiddenCount: hiddenCount,
-                      window: window,
-                    ),
-                    illustration: NullStatusIllustration.data,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: StatStrip(
+                    stats: [
+                      StatItem(
+                        label: context.l10n.trafficWindowDown(
+                          window.label(context.l10n),
+                        ),
+                        value: obsFormatBytes(snapshot.rxBytes),
+                        color: context.colorScheme.primary,
+                      ),
+                      StatItem(
+                        label: context.l10n.trafficWindowUp(
+                          window.label(context.l10n),
+                        ),
+                        value: obsFormatBytes(snapshot.txBytes),
+                      ),
+                      StatItem(
+                        label: context.l10n.trafficAppCount,
+                        value: '${visible.length}',
+                        unit: context.l10n.trafficAppCountUnit,
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          )),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  // Range chips go through ChipRow: a bare Wrap gives no cross-axis constraint
+                  // and wraps, pushing every card below it down.
+                  child: ChipRow(
+                    children: [
+                      for (final option in _rangeOptions(context.l10n))
+                        FilterPill(
+                          label: option.label,
+                          selected: option.window == window,
+                          disabled: option.unavailableReason != null,
+                          onPressed: () {
+                            final target = option.window;
+                            if (target == null) {
+                              _explainUnavailable(
+                                option.label,
+                                option.unavailableReason,
+                              );
+                            } else {
+                              ref
+                                  .read(trafficWindowProvider.notifier)
+                                  .select(target);
+                            }
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _LiveRateCard(
+                  windowLabel: window.label(context.l10n),
+                  showNote: _showTips,
+                ),
+                if (_showTips) ...[
+                  const SizedBox(height: 10),
+                  _AttributionBanner(onTap: _openAttributionSheet),
+                ],
+                const SizedBox(height: 12),
+                _TrafficFilterBar(
+                  searchController: _search,
+                  sort: sort,
+                  hideSystemApps: hideSystemApps,
+                  onSearchChanged: (value) => ref
+                      .read(trafficSearchProvider.notifier)
+                      .setQuery(value.trim()),
+                  onSortSelected: (option) {
+                    final target = option.sort;
+                    if (target == null) {
+                      _explainUnavailable(
+                        option.label,
+                        option.unavailableReason,
+                      );
+                    } else {
+                      ref.read(trafficSortProvider.notifier).select(target);
+                    }
+                  },
+                  onHideSystemAppsChanged: (value) => ref
+                      .read(trafficHideSystemAppsProvider.notifier)
+                      .setValue(value),
+                ),
+                if (visible.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                    child: NullStatus(
+                      label: search.isEmpty
+                          ? context.l10n.trafficNoData
+                          : context.l10n.trafficNoMatchingApps,
+                      description: _emptyDescription(
+                        l10n: context.l10n,
+                        search: search,
+                        hideSystemApps: hideSystemApps,
+                        hiddenCount: hiddenCount,
+                        window: window,
+                      ),
+                      illustration: NullStatusIllustration.data,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
         if (visible.isNotEmpty)
           ...appListSlivers(
             title: context.l10n.trafficRankingTitle,
             itemCount: visible.length,
             footer: context.l10n.trafficShareWindow(
-                  window.label(context.l10n),
-                  _windowLabel(snapshot, context.l10n),
-                ),
+              window.label(context.l10n),
+              _windowLabel(snapshot, context.l10n),
+            ),
             itemBuilder: (context, index) {
               final row = visible[index];
               return AppTrafficRow(
@@ -302,18 +299,26 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
     return l10n.trafficNoRecordsForWindow(window.label(l10n));
   }
 
+  void _openAttributionSheet() {
+    showSheet<void>(
+      context: context,
+      builder: (_) => const _AttributionSheet(),
+    );
+  }
+
   /// Disabled option explanation. A hint bar rather than silence: a tap must answer.
   void _explainUnavailable(String label, String? reason) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(
-          context.l10n.trafficOptionUnavailable(
-            label,
-            reason ?? context.l10n.trafficNoSourceReason,
-          ),
-        ),
-        behavior: SnackBarBehavior.floating,
+    _showSnack(
+      context.l10n.trafficOptionUnavailable(
+        label,
+        reason ?? context.l10n.trafficNoSourceReason,
       ),
+    );
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -344,20 +349,10 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
           .read(trafficClearHistoryProvider.notifier)
           .clear();
       if (!context.mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.trafficCleared(deleted)),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showSnack(context.l10n.trafficCleared(deleted));
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.trafficClearFailed('$error')),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showSnack(context.l10n.trafficClearFailed('$error'));
     }
   }
 

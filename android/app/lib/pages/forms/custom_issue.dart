@@ -46,11 +46,14 @@ class InfoBanner extends StatelessWidget {
       _ => (colorScheme.secondaryContainer, colorScheme.onSecondaryContainer),
     };
     final tint = color ?? resolvedColor;
-    final foreground =
-        foregroundColor ??
-        (color == null
-            ? resolvedForeground
-            : (tint.computeLuminance() > 0.55 ? Colors.black : Colors.white));
+    final Color foreground;
+    if (foregroundColor != null) {
+      foreground = foregroundColor!;
+    } else if (color == null) {
+      foreground = resolvedForeground;
+    } else {
+      foreground = tint.computeLuminance() > 0.55 ? Colors.black : Colors.white;
+    }
     final actions = this.actions;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -94,11 +97,7 @@ class ErrorBanner extends StatelessWidget {
 
 /// Per-row hints live on `FormRow.invalid`; a submit finding four fields needs one place.
 class CustomIssuesBanner extends StatelessWidget {
-  const CustomIssuesBanner({
-    super.key,
-    required this.issues,
-    this.title,
-  });
+  const CustomIssuesBanner({super.key, required this.issues, this.title});
 
   final List<String> issues;
   final String? title;

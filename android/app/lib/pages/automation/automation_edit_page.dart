@@ -100,7 +100,9 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     final trigger = rule.spec['trigger'];
     if (trigger is Map && trigger['window'] is Map) {
       final window = Map<String, Object?>.from(trigger['window'] as Map);
-      _start.text = _minutesToClock((window['startMin'] as num?)?.toInt() ?? 540);
+      _start.text = _minutesToClock(
+        (window['startMin'] as num?)?.toInt() ?? 540,
+      );
       _end.text = _minutesToClock((window['endMin'] as num?)?.toInt() ?? 1380);
     }
     for (final condition in rule.conditions) {
@@ -135,11 +137,20 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
   Future<void> _save() async {
     final actions = <Map<String, Object?>>[
       if (_pause)
-        {'type': AutomationSpec.actionPause, 'minutes': _parseMinutes(_minutes.text)},
+        {
+          'type': AutomationSpec.actionPause,
+          'minutes': _parseMinutes(_minutes.text),
+        },
       if (_blockServices && _services.isNotEmpty)
-        {'type': AutomationSpec.actionBlockServices, 'services': _services.toList()},
+        {
+          'type': AutomationSpec.actionBlockServices,
+          'services': _services.toList(),
+        },
       if (_switchProfile != null)
-        {'type': AutomationSpec.actionSwitchProfile, 'profileId': _switchProfile},
+        {
+          'type': AutomationSpec.actionSwitchProfile,
+          'profileId': _switchProfile,
+        },
     ];
     final trigger = <String, Object?>{'type': _trigger};
     if (_trigger == AutomationSpec.triggerSchedule) {
@@ -180,7 +191,9 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
-      title: _isNew ? context.l10n.automationNewTitle : context.l10n.automationEditTitle,
+      title: _isNew
+          ? context.l10n.automationNewTitle
+          : context.l10n.automationEditTitle,
       actions: [
         if (!_isNew)
           IconButton(
@@ -197,7 +210,6 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
         children: [
           PageIntroCard(text: context.l10n.automationEditIntro),
           _paddedCard(
-            context,
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 16,
@@ -219,15 +231,19 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
             trailing: PopupSelectButton<String>(
               value: _trigger,
               semanticLabel: context.l10n.automationTrigger,
-              items: [
-                for (final entry in _triggerOptions(context)) (entry.$1, entry.$2),
-              ],
+              items: _triggerOptions(context),
               onChanged: (value) => setState(() => _trigger = value),
             ),
             child: _triggerDetail(context),
           ),
-          _Section(title: context.l10n.automationMatch, child: _matchSection(context)),
-          _Section(title: context.l10n.automationActions, child: _actionsSection(context)),
+          _Section(
+            title: context.l10n.automationMatch,
+            child: _matchSection(context),
+          ),
+          _Section(
+            title: context.l10n.automationActions,
+            child: _actionsSection(context),
+          ),
         ],
       ),
     );
@@ -241,9 +257,16 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _clockField(_start, context.l10n.automationScheduleStart)),
+              Expanded(
+                child: _clockField(
+                  _start,
+                  context.l10n.automationScheduleStart,
+                ),
+              ),
               const SizedBox(width: 12),
-              Expanded(child: _clockField(_end, context.l10n.automationScheduleEnd)),
+              Expanded(
+                child: _clockField(_end, context.l10n.automationScheduleEnd),
+              ),
             ],
           ),
         ],
@@ -255,13 +278,8 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
                 FilterPill(
                   label: type,
                   selected: _networkTypes.contains(type),
-                  onPressed: () => setState(() {
-                    if (_networkTypes.contains(type)) {
-                      _networkTypes.remove(type);
-                    } else {
-                      _networkTypes.add(type);
-                    }
-                  }),
+                  onPressed: () =>
+                      setState(() => _toggleValue(_networkTypes, type)),
                 ),
             ],
           ),
@@ -318,14 +336,9 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
                   FilterPill(
                     label: '${service['name']}',
                     selected: _services.contains(service['id']),
-                    onPressed: () => setState(() {
-                      final id = '${service['id']}';
-                      if (_services.contains(id)) {
-                        _services.remove(id);
-                      } else {
-                        _services.add(id);
-                      }
-                    }),
+                    onPressed: () => setState(
+                      () => _toggleValue(_services, '${service['id']}'),
+                    ),
                   ),
               ],
             ),
@@ -354,11 +367,12 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     );
   }
 
-  Widget _clockField(TextEditingController controller, String label) => LabeledInputField(
-    label: label,
-    controller: controller,
-    hintText: 'HH:mm',
-  );
+  Widget _clockField(TextEditingController controller, String label) =>
+      LabeledInputField(
+        label: label,
+        controller: controller,
+        hintText: 'HH:mm',
+      );
 
   static List<(String, String)> _triggerOptions(BuildContext context) => [
     (AutomationSpec.triggerManual, context.l10n.automationTriggerManual),
@@ -366,6 +380,14 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     (AutomationSpec.triggerNetwork, context.l10n.automationTriggerNetwork),
     (AutomationSpec.triggerState, context.l10n.automationTriggerState),
   ];
+
+  static void _toggleValue(Set<String> values, String value) {
+    if (values.contains(value)) {
+      values.remove(value);
+    } else {
+      values.add(value);
+    }
+  }
 
   static int _parseClock(String text) {
     final parts = text.trim().split(':');
@@ -397,7 +419,6 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     final trailing = this.trailing;
     return _paddedCard(
-      context,
       Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -420,7 +441,7 @@ class _Section extends StatelessWidget {
   }
 }
 
-Widget _paddedCard(BuildContext context, Widget child) => Padding(
+Widget _paddedCard(Widget child) => Padding(
   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
   child: CommonCard(padding: const EdgeInsets.all(16), child: child),
 );

@@ -232,10 +232,13 @@ String sanitizeProbeHost(String input) {
     final endIndex = value.indexOf(']');
     return endIndex > 0 ? value.substring(1, endIndex) : value;
   }
-  if (!value.contains('::') && ':'.allMatches(value).length == 1) {
-    final afterColon = value.substring(value.indexOf(':') + 1);
+  final colonIndex = value.indexOf(':');
+  final hasSingleColon =
+      colonIndex >= 0 && colonIndex == value.lastIndexOf(':');
+  if (!value.contains('::') && hasSingleColon) {
+    final afterColon = value.substring(colonIndex + 1);
     if (afterColon.isNotEmpty && int.tryParse(afterColon) != null) {
-      value = value.substring(0, value.indexOf(':'));
+      value = value.substring(0, colonIndex);
     }
   }
   return value;
@@ -274,7 +277,9 @@ String dnsSourceLabel(String source) => switch (source) {
 
 /// An empty interface name means there is no active network.
 String networkInterfaceLabel(NetworkInfoSnapshot snapshot) =>
-    snapshot.interfaceName.isEmpty ? currentL10n.diagnosticsNoActiveNetwork : snapshot.interfaceName;
+    snapshot.interfaceName.isEmpty
+    ? currentL10n.diagnosticsNoActiveNetwork
+    : snapshot.interfaceName;
 
 /// Formats a latency value; null is rendered as a dash by the caller.
 String latencyText(double? value) =>

@@ -10,7 +10,7 @@ class TraceroutePage extends ConsumerStatefulWidget {
 }
 
 class _TraceroutePageState extends ConsumerState<TraceroutePage> {
-  final _target = TextEditingController(text: '');
+  final _target = TextEditingController();
   var _maxHops = 15;
   var _running = false;
   TraceResult? _result;

@@ -24,9 +24,10 @@ class ServerSelectedUpstreamNotifier extends Notifier<ServerUpstream> {
   void select(String id) {
     final match = ref
         .read(serverUpstreamListProvider)
-        .where((upstream) => upstream.id == id);
-    if (match.isEmpty) return;
-    state = match.first;
+        .where((upstream) => upstream.id == id)
+        .firstOrNull;
+    if (match == null) return;
+    state = match;
     ref.read(legacySettingsProvider).setServerSelectedUpstreamId(id);
     ref.read(legacySettingsRevisionProvider.notifier).bump();
   }

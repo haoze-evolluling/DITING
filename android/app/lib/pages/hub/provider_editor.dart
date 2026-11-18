@@ -95,17 +95,12 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
         return;
       }
     } else {
-      final host = _stripBrackets(_host.text.trim());
-      final port = int.tryParse(_port.text.trim()) ?? 0;
-      if (host.isEmpty) {
-        setState(() => _error = context.l10n.providerMgmtAddressRequired);
+      final hostPort = _readHostPort();
+      if (hostPort.error case final error?) {
+        setState(() => _error = error);
         return;
       }
-      if (port < 1 || port > 65535) {
-        setState(() => _error = context.l10n.providerMgmtPortRange);
-        return;
-      }
-      address = joinHostPort(host, port);
+      address = joinHostPort(hostPort.host, hostPort.port);
     }
     Navigator.of(context)
         .pop(ProviderDraft(name: name, protocol: _protocol, address: address));
@@ -147,25 +142,41 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
         url: url,
       );
     }
-    final host = _stripBrackets(_host.text.trim());
-    final port = int.tryParse(_port.text.trim()) ?? 0;
-    if (host.isEmpty) {
-      _setProbeError(context.l10n.providerMgmtAddressRequired);
-      return null;
-    }
-    if (port < 1 || port > 65535) {
-      _setProbeError(context.l10n.providerMgmtPortRange);
+    final hostPort = _readHostPort();
+    if (hostPort.error case final error?) {
+      _setProbeError(error);
       return null;
     }
     return DnsLatencyProviderSpec(
       id: 'draft',
       name: name.isEmpty ? 'draft' : name,
-      host: host,
-      port: port,
+      host: hostPort.host,
+      port: hostPort.port,
       protocol: _protocol == ProviderProtocol.dot
           ? DnsLatencyProtocol.dot
           : DnsLatencyProtocol.dns,
     );
+  }
+
+  /// Trims the host field and parses the port, reporting which one is unusable.
+  ({String host, int port, String? error}) _readHostPort() {
+    final host = _stripBrackets(_host.text.trim());
+    final port = int.tryParse(_port.text.trim()) ?? 0;
+    if (host.isEmpty) {
+      return (
+        host: host,
+        port: port,
+        error: context.l10n.providerMgmtAddressRequired,
+      );
+    }
+    if (port < 1 || port > 65535) {
+      return (
+        host: host,
+        port: port,
+        error: context.l10n.providerMgmtPortRange,
+      );
+    }
+    return (host: host, port: port, error: null);
   }
 
   /// Probes the typed endpoint once: this only answers "does it work", the latency test page keeps
@@ -252,7 +263,9 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     final isDoh = _protocol == ProviderProtocol.doh;
     final probeLine = _probeLine(context);
     return CommonDialog(
-      title: widget.initial == null ? context.l10n.providerMgmtAdd : context.l10n.providerMgmtEditTitle,
+      title: widget.initial == null
+          ? context.l10n.providerMgmtAdd
+          : context.l10n.providerMgmtEditTitle,
       hasFields: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,

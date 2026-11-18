@@ -10,7 +10,6 @@ import 'package:diting_android/data/dns_type_name.dart';
 import 'package:diting_android/data/log_dashboard_models.dart';
 import 'package:diting_android/data/log_dashboard_rows.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
@@ -204,21 +203,11 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
       : raceSummaryRows.first;
   final raceRanking = core.rows(
     'race.ranking',
-    await _raw(db, 'race.ranking', {
-      'since': sinceMs,
-      'limit': _topListLimit,
-    }),
+    await _raw(db, 'race.ranking', {'since': sinceMs, 'limit': _topListLimit}),
   );
 
   // Share the catalog with the race page, or one provider appears under two names.
-  final settings = ref.watch(legacySettingsProvider);
-  final names = {
-    for (final provider in [
-      ...defaultDnsProviders(currentL10n),
-      ...parseUserProviders(settings.userProvidersJson),
-    ])
-      provider.id: provider.name,
-  };
+  final names = providerDisplayNames(ref.watch(legacySettingsProvider));
 
   final bootstrapRows = core.rows(
     'bootstrap.stat',
@@ -230,10 +219,7 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
   final cacheHits = _count(core.rows('count', await _raw(db, 'cache.hits')));
   final cacheRows = core.rows(
     'cache.entry',
-    await _raw(db, 'cache.entries', {
-      'now': nowMs,
-      'limit': _recentCacheLimit,
-    }),
+    await _raw(db, 'cache.entries', {'now': nowMs, 'limit': _recentCacheLimit}),
     nowMs: nowMs,
   );
 
@@ -277,10 +263,7 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
     );
     dnsHits = core.rows(
       'subscriptionHit',
-      await _raw(db, 'subscription.hits', {
-        'table': 'dns',
-        'since': sinceMs,
-      }),
+      await _raw(db, 'subscription.hits', {'table': 'dns', 'since': sinceMs}),
     );
     if (normal && mainDb != null) {
       try {
@@ -433,11 +416,13 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
 /// 11–13 ms build spike for a screen where nothing visible moved. Each slice is compared with the
 /// model's own `==`, so a card rebuilds only when its own figures differ.
 final logOverviewBreakdownProvider = Provider<LogTrafficBreakdown?>(
-  (ref) => ref.watch(logDashboardProvider.select((async) => async.value?.breakdown)),
+  (ref) =>
+      ref.watch(logDashboardProvider.select((async) => async.value?.breakdown)),
 );
 
 final logOverviewQualityProvider = Provider<LogDnsQuality?>(
-  (ref) => ref.watch(logDashboardProvider.select((async) => async.value?.quality)),
+  (ref) =>
+      ref.watch(logDashboardProvider.select((async) => async.value?.quality)),
 );
 
 final logOverviewRaceProvider = Provider<LogRaceSummary?>(
@@ -445,42 +430,55 @@ final logOverviewRaceProvider = Provider<LogRaceSummary?>(
 );
 
 final logOverviewBootstrapProvider = Provider<LogBootstrapSummary?>(
-  (ref) => ref.watch(logDashboardProvider.select((async) => async.value?.bootstrap)),
+  (ref) =>
+      ref.watch(logDashboardProvider.select((async) => async.value?.bootstrap)),
 );
 
 final logOverviewOffModeProvider = Provider<LogOffModeStats?>(
-  (ref) => ref.watch(logDashboardProvider.select((async) => async.value?.offMode)),
+  (ref) =>
+      ref.watch(logDashboardProvider.select((async) => async.value?.offMode)),
 );
 
 final logOverviewRecentRequestsProvider = Provider<List<LogRecentRequest>>(
   (ref) => ref.watch(
-    logDashboardProvider.select((async) => async.value?.recentRequests ?? const []),
+    logDashboardProvider.select(
+      (async) => async.value?.recentRequests ?? const [],
+    ),
   ),
 );
 
 final logOverviewCacheHotspotsProvider = Provider<List<LogCacheHotspot>>(
   (ref) => ref.watch(
-    logDashboardProvider.select((async) => async.value?.cacheHotspots ?? const []),
+    logDashboardProvider.select(
+      (async) => async.value?.cacheHotspots ?? const [],
+    ),
   ),
 );
 
 final logOverviewRaceWinnersProvider = Provider<List<LogRaceWinner>>(
   (ref) => ref.watch(
-    logDashboardProvider.select((async) => async.value?.raceWinners ?? const []),
+    logDashboardProvider.select(
+      (async) => async.value?.raceWinners ?? const [],
+    ),
   ),
 );
 
 final logOverviewBootstrapIpsProvider = Provider<List<LogBootstrapIp>>(
   (ref) => ref.watch(
-    logDashboardProvider.select((async) => async.value?.bootstrapIps ?? const []),
+    logDashboardProvider.select(
+      (async) => async.value?.bootstrapIps ?? const [],
+    ),
   ),
 );
 
-final logOverviewSubscriptionBlocksProvider = Provider<List<LogSubscriptionBlock>>(
-  (ref) => ref.watch(
-    logDashboardProvider.select((async) => async.value?.subscriptionBlocks ?? const []),
-  ),
-);
+final logOverviewSubscriptionBlocksProvider =
+    Provider<List<LogSubscriptionBlock>>(
+      (ref) => ref.watch(
+        logDashboardProvider.select(
+          (async) => async.value?.subscriptionBlocks ?? const [],
+        ),
+      ),
+    );
 
 /// `null` until the first read lands, which is what the cards use to show a dash instead of `0`.
 final logOverviewReadyProvider = Provider<bool>(

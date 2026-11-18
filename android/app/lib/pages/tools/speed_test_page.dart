@@ -120,8 +120,8 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
               body: l10n.toolSpeedEmpty,
             ),
           if (state.results.isNotEmpty) ...[
-            /// Rows go through `generateSection`: each result is a `ListItem`, so the group gets
-            /// the same card fill, rounded corners and separators as every other list in the app.
+            // Rows go through `generateSection`: each result is a `ListItem`, so the group gets
+            // the same card fill, rounded corners and separators as every other list in the app.
             generateSection(
               title: l10n.toolSpeedResults,
               items: [

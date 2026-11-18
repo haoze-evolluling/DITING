@@ -52,7 +52,7 @@ class DashboardSiteIdsNotifier extends Notifier<List<String>> {
     return true;
   }
 
-  void reset() => _commit(List.of(defaultDashboardSiteIds));
+  void reset() => _commit(defaultDashboardSiteIds);
 
   /// Updates the provider and the store together. The list may hold fewer than
   /// [dashboardSiteCount] entries — the card pads it at draw time — so removing a site always

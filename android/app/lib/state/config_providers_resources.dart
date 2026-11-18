@@ -55,8 +55,6 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
     );
   }
 
-  void _put(ConfigResources next) => state = next;
-
   /// Adds a custom agent. [name] is the card label; when omitted (older callers)
   /// the card falls back to showing [value].
   bool addUserAgent(String value, {String? name}) {
@@ -74,7 +72,7 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
         MockUserAgent(value: trimmed, name: label),
       ],
     );
-    _put(next);
+    state = next;
     _store.saveUserAgents(next.userAgents);
     return true;
   }
@@ -109,7 +107,7 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
       // Follow the rename when the edited entry was selected, or it points at nothing.
       selectedUserAgent: selectedWasOriginal ? trimmed : null,
     );
-    _put(next);
+    state = next;
     _store.saveUserAgents(next.userAgents);
     if (selectedWasOriginal) _store.saveSelectedUserAgent(trimmed);
     return true;
@@ -128,24 +126,22 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
       ],
       clearSelectedUserAgent: selectedWasRemoved,
     );
-    _put(next);
+    state = next;
     _store.saveUserAgents(next.userAgents);
     // Persist the cleared selection too, or a restart shows "selected" for a missing agent.
     if (selectedWasRemoved) _store.saveSelectedUserAgent(null);
   }
 
   void selectUserAgent(String? value) {
-    _put(
-      state.copyWith(
-        selectedUserAgent: value,
-        clearSelectedUserAgent: value == null,
-      ),
+    state = state.copyWith(
+      selectedUserAgent: value,
+      clearSelectedUserAgent: value == null,
     );
     _store.saveSelectedUserAgent(value);
   }
 
   void setOnDemand(bool value) {
-    _put(state.copyWith(onDemand: value));
+    state = state.copyWith(onDemand: value);
     _store.saveOnDemand(value);
   }
 
@@ -171,7 +167,7 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
                 item.ssid == original ? normalized : item,
             ],
     );
-    _put(next);
+    state = next;
     _store.saveSsidRules(next.ssidRules);
     return true;
   }
@@ -183,7 +179,7 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
           if (item.ssid != ssid) item,
       ],
     );
-    _put(next);
+    state = next;
     _store.saveSsidRules(next.ssidRules);
   }
 
@@ -196,7 +192,7 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
               : item,
       ],
     );
-    _put(next);
+    state = next;
     _store.saveSsidRules(next.ssidRules);
   }
 }

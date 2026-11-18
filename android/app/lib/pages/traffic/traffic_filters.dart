@@ -109,7 +109,7 @@ class _TrafficFilterBar extends StatelessWidget {
               title: Text(context.l10n.trafficHideSystemApps),
               subtitle: Text(context.l10n.trafficHideSystemAppsSubtitle),
               value: hideSystemApps,
-              onChanged: (value) => onHideSystemAppsChanged(value),
+              onChanged: onHideSystemAppsChanged,
             ),
           ),
         ),
@@ -261,7 +261,6 @@ const _knownSystemPrefixes = <String>[
 
 bool isKnownSystemPackagePrefix(String packageName) {
   if (packageName.trim().isEmpty) return false;
-  if (packageName == 'android') return true;
   for (final prefix in _knownSystemPrefixes) {
     if (packageName.startsWith(prefix)) return true;
   }

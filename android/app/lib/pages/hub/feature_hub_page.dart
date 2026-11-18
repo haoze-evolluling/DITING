@@ -56,7 +56,11 @@ class FeatureHubPage extends ConsumerWidget {
                           onTap: () => _open(context, card),
                           onLongPress: card.longPressRoute == null
                               ? null
-                              : () => _longPress(context, ref, card),
+                              : () => _longPress(
+                                  context,
+                                  ref,
+                                  card.longPressRoute!,
+                                ),
                           hint: card.longPressRoute != null && showLongPressHint
                               ? context.l10n.featureHubLongPress
                               : null,
@@ -75,17 +79,12 @@ class FeatureHubPage extends ConsumerWidget {
   /// Tab pages (logs, traffic, tools, settings) open full screen so the bottom bar stays out of the
   /// way and the title bar offers a back arrow; everything else is a normal push.
   void _open(BuildContext context, MockFeatureCard card) {
-    if (pushStandalone(context, card.route)) {
-      return;
+    if (!pushStandalone(context, card.route)) {
+      openLocation(context, card.route);
     }
-    openLocation(context, card.route);
   }
 
-  void _longPress(BuildContext context, WidgetRef ref, MockFeatureCard card) {
-    final route = card.longPressRoute;
-    if (route == null) {
-      return;
-    }
+  void _longPress(BuildContext context, WidgetRef ref, String route) {
     ref.read(logLongPressHintProvider.notifier).acknowledge();
     openLocation(context, route);
   }

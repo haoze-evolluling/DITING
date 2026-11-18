@@ -28,7 +28,14 @@ class _RuleRow extends StatelessWidget {
     final colorScheme = context.colorScheme;
     // Read-only rows drop to 0.75 opacity and disabled rows further still: the two
     // "cannot press" states must be distinguishable, or the switch looks broken.
-    final opacity = protected ? 0.75 : (rule.enabled ? 1.0 : 0.5);
+    final double opacity;
+    if (protected) {
+      opacity = 0.75;
+    } else if (rule.enabled) {
+      opacity = 1.0;
+    } else {
+      opacity = 0.5;
+    }
     final pattern = rule.target == null
         ? rule.pattern
         : '${rule.pattern} → ${rule.target}';

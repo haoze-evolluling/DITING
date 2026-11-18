@@ -178,7 +178,7 @@ class ServerFeatureHubPage extends StatelessWidget {
                           title: card.title,
                           description: card.description,
                           glyph: card.glyph,
-                          onTap: () => _open(context, card),
+                          onTap: () => openLocation(context, card.route),
                         ),
                     ],
                   ),
@@ -189,9 +189,5 @@ class ServerFeatureHubPage extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  void _open(BuildContext context, ServerFeatureCard card) {
-    openLocation(context, card.route);
   }
 }

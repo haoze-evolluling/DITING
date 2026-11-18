@@ -2,11 +2,11 @@
 /// database, native channels or the cleanup service; nothing is simulated.
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
+import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
@@ -117,7 +117,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
     _toast(message);
     // "Clear all data" also wipes the first-run agreement, so the app must restart; staying alive
     // would leave "running" split from "must agree again" (same rule as the cleanup page).
-    if (action == _DeveloperAction.clearAllData && mounted) {
+    if (action == _DeveloperAction.clearAllData) {
       await _offerRestart();
     }
   }
@@ -232,34 +232,32 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
       body: AppBarClearance(
         // The rows are built eagerly; a boundary under the scroll view lets scrolling move one
         // layer instead of re-recording every row each frame.
-        child: _ScrollLayer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _DeveloperModeCard(),
-              _StorageCard(revision: _storageRevision),
-              generateSection(
-                title: context.l10n.devExperimental,
-                items: [
-                  for (final action in _DeveloperAction.values)
-                    _ActionRow(
-                      action: action,
-                      enabled: enabled && _running == null,
-                      running: _running == action,
-                      onTap: enabled && _running == null
-                          ? () => _handle(action)
-                          : null,
-                    ),
-                ],
-                footer:
-                    context.l10n.devFooterWarning(_stressRowCount),
-              ),
-              ListFooter(
-                text:
-                    context.l10n.devFooterMoved,
-              ),
-              const DockSpacer(),
-            ],
+        child: SingleChildScrollView(
+          child: RepaintBoundary(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _DeveloperModeCard(),
+                _StorageCard(revision: _storageRevision),
+                generateSection(
+                  title: context.l10n.devExperimental,
+                  items: [
+                    for (final action in _DeveloperAction.values)
+                      _ActionRow(
+                        action: action,
+                        enabled: enabled && _running == null,
+                        running: _running == action,
+                        onTap: enabled && _running == null
+                            ? () => _handle(action)
+                            : null,
+                      ),
+                  ],
+                  footer: context.l10n.devFooterWarning(_stressRowCount),
+                ),
+                ListFooter(text: context.l10n.devFooterMoved),
+                const DockSpacer(),
+              ],
+            ),
           ),
         ),
       ),
@@ -302,7 +300,9 @@ class _DeveloperModeCard extends ConsumerWidget {
                         style: context.listTitleStyle,
                       ),
                       Text(
-                        enabled ? context.l10n.devUnlocked : context.l10n.devLocked,
+                        enabled
+                            ? context.l10n.devUnlocked
+                            : context.l10n.devLocked,
                         style: context.listCaptionStyle,
                       ),
                     ],
@@ -315,10 +315,7 @@ class _DeveloperModeCard extends ConsumerWidget {
                 ),
               ],
             ),
-            InlineNotice(
-              message:
-                  context.l10n.devWarning,
-            ),
+            InlineNotice(message: context.l10n.devWarning),
           ],
         ),
       ),
@@ -438,11 +435,14 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final glyphColor = !enabled
-        ? colorScheme.onSurfaceVariant.withValues(alpha: 0.4)
-        : action.destructive
-        ? colorScheme.error
-        : colorScheme.onSurfaceVariant;
+    final Color glyphColor;
+    if (!enabled) {
+      glyphColor = colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
+    } else if (action.destructive) {
+      glyphColor = colorScheme.error;
+    } else {
+      glyphColor = colorScheme.onSurfaceVariant;
+    }
     return ListItem(
       title: Text(
         action.title(context.l10n),
@@ -462,15 +462,4 @@ class _ActionRow extends StatelessWidget {
       onTap: onTap,
     );
   }
-}
-
-/// [SingleChildScrollView] with its content on its own layer.
-class _ScrollLayer extends StatelessWidget {
-  const _ScrollLayer({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) =>
-      SingleChildScrollView(child: RepaintBoundary(child: child));
 }

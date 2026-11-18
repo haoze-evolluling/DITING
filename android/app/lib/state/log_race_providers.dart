@@ -6,8 +6,8 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/race_log_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_android/data/vpn/dns_config_builder.dart';
-import 'package:diting_android/state/log_dashboard_providers.dart' show LogStatsRange;
+import 'package:diting_android/state/log_dashboard_providers.dart'
+    show LogStatsRange;
 import 'package:diting_android/state/log_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
@@ -31,7 +31,9 @@ final raceStatsRangeProvider =
 /// Maps a stored strategy to its display name; old aliases (`race`, `prediction`) are read, so no
 /// row shows a raw value.
 String raceStrategyLabel(String strategy) => switch (strategy) {
-  'parallel_race' || 'race' || 'brute_force_parallel' => currentL10n.logRaceFastest,
+  'parallel_race' ||
+  'race' ||
+  'brute_force_parallel' => currentL10n.logRaceFastest,
   'smart_prediction' || 'prediction' => currentL10n.logRaceSmart,
   'primary_backup' => currentL10n.logRaceSequential,
   'single' => currentL10n.logRaceSingle,
@@ -137,14 +139,7 @@ final raceStatsProvider = FutureProvider<RaceStatsSnapshot>((ref) async {
 
   // Resolve names from the same catalog as `raceRankingProvider`, or one provider shows two names
   // across pages.
-  final settings = ref.watch(legacySettingsProvider);
-  final names = {
-    for (final provider in [
-      ...defaultDnsProviders(currentL10n),
-      ...parseUserProviders(settings.userProvidersJson),
-    ])
-      provider.id: provider.name,
-  };
+  final names = providerDisplayNames(ref.watch(legacySettingsProvider));
 
   final answer = RustLogQueryCore.instance.derive('race.stats', {
     'summary': summary.toKernel(),
@@ -163,8 +158,7 @@ final raceStatsProvider = FutureProvider<RaceStatsSnapshot>((ref) async {
         (
           name: (row as Map)['name'] as String? ?? '',
           wins: (row['wins'] as num?)?.toInt() ?? 0,
-          averageLatencyMs:
-              (row['averageLatencyMs'] as num?)?.toInt() ?? 0,
+          averageLatencyMs: (row['averageLatencyMs'] as num?)?.toInt() ?? 0,
         ),
     ],
     strategyStats: [
@@ -175,8 +169,7 @@ final raceStatsProvider = FutureProvider<RaceStatsSnapshot>((ref) async {
           requests: (row['requests'] as num?)?.toInt() ?? 0,
           successes: (row['successes'] as num?)?.toInt() ?? 0,
           failures: (row['failures'] as num?)?.toInt() ?? 0,
-          averageElapsedMs:
-              (row['averageElapsedMs'] as num?)?.toDouble() ?? 0,
+          averageElapsedMs: (row['averageElapsedMs'] as num?)?.toDouble() ?? 0,
           fallbackUses: (row['fallbackUses'] as num?)?.toInt() ?? 0,
           primaryWins: (row['primaryWins'] as num?)?.toInt() ?? 0,
         ),
@@ -187,8 +180,7 @@ final raceStatsProvider = FutureProvider<RaceStatsSnapshot>((ref) async {
           name: (row as Map)['name'] as String? ?? '',
           selectedCount: (row['selectedCount'] as num?)?.toInt() ?? 0,
           selectedSuccesses: (row['selectedSuccesses'] as num?)?.toInt() ?? 0,
-          averageElapsedMs:
-              (row['averageElapsedMs'] as num?)?.toDouble() ?? 0,
+          averageElapsedMs: (row['averageElapsedMs'] as num?)?.toDouble() ?? 0,
         ),
     ],
   );

@@ -2,9 +2,9 @@
 /// last two persist.
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:convert';
 
+import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
@@ -255,20 +255,12 @@ class LatencyTestNotifier extends Notifier<LatencyTestState> {
         if (selected.contains(spec.id)) spec,
     ];
     if (providers.isEmpty) {
-      state = LatencyTestState(
-        results: state.results,
-        unavailable: state.unavailable,
-        error: currentL10n.speedTestSelectProvider,
-      );
+      _fail(currentL10n.speedTestSelectProvider);
       return;
     }
     final domain = ref.read(latencyDomainProvider);
     if (domain.isEmpty) {
-      state = LatencyTestState(
-        results: state.results,
-        unavailable: state.unavailable,
-        error: currentL10n.speedTestEmptyDomain,
-      );
+      _fail(currentL10n.speedTestEmptyDomain);
       return;
     }
     state = LatencyTestState(running: true, results: const []);
@@ -284,6 +276,16 @@ class LatencyTestNotifier extends Notifier<LatencyTestState> {
     } on DnsLatencyUnavailable catch (error) {
       state = LatencyTestState(unavailable: true, error: error.message);
     }
+  }
+
+  /// Records an error while keeping the previous results and availability, so a rejected run does
+  /// not wipe what is on screen.
+  void _fail(String message) {
+    state = LatencyTestState(
+      results: state.results,
+      unavailable: state.unavailable,
+      error: message,
+    );
   }
 
   void clearError() {

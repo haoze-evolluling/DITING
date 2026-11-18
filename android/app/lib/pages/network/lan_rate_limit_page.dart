@@ -7,8 +7,8 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../state/lan_rate_limit_providers.dart';
-import '../../widgets/page_intro.dart';
+import 'package:diting_android/state/lan_rate_limit_providers.dart';
+import 'package:diting_android/widgets/page_intro.dart';
 
 class LanRateLimitPage extends ConsumerStatefulWidget {
   const LanRateLimitPage({super.key});

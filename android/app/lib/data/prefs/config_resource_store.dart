@@ -27,10 +27,9 @@ class ConfigResourceStore {
     final userAgents = _reconcileUserAgents(stored);
     final ssidRules = _decodeList(_ssidRulesKey, _ssidFromMap);
     final rawSelected = _store.read(container, _selectedUaKey);
-    final selected = rawSelected is String ? rawSelected : null;
-    final selectedValue = selected == null || selected.isEmpty
-        ? null
-        : selected;
+    final selectedValue = rawSelected is String && rawSelected.isNotEmpty
+        ? rawSelected
+        : null;
     return ConfigResourceSnapshot(
       userAgents: userAgents,
       // A stale selection (a retired preset, say) points at nothing, so it reads as no override.

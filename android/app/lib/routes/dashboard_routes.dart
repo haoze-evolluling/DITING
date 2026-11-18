@@ -23,21 +23,15 @@ List<RouteBase> dashboardRoutes() => [
     path: DashboardPaths.edit,
     parentNavigatorKey: rootNavigatorKey,
     redirect: (context, state) {
-      _setEditing(context, true);
+      _enterEditing(context);
       return DashboardPaths.dashboard;
     },
   ),
 ];
 
-/// Sets the editing provider from a redirect. Redirect callbacks get no `WidgetRef`, so the
-/// container is read from the `BuildContext`; without a `ProviderScope` ancestor navigation
-/// still succeeds.
-void _setEditing(BuildContext context, bool value) {
+/// Enters edit mode from a redirect. Redirect callbacks get no `WidgetRef`, so the container is
+/// read from the `BuildContext`; without a `ProviderScope` ancestor navigation still succeeds.
+void _enterEditing(BuildContext context) {
   final container = ProviderScope.containerOf(context, listen: false);
-  final notifier = container.read(dashboardEditingProvider.notifier);
-  if (value) {
-    notifier.enter();
-  } else {
-    notifier.exit();
-  }
+  container.read(dashboardEditingProvider.notifier).enter();
 }

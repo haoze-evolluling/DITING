@@ -35,26 +35,27 @@ class SiteLatencyCategorySection extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final measured = [for (final target in targets) ?results[target.id]];
     final alive = measured.where((result) => result.success).length;
-    final verdict = probing
-        ? context.l10n.siteLatencyTesting
-        : measured.isEmpty
-        ? context.l10n.siteLatencySitesCount(targets.length)
-        : context.l10n.siteLatencyAliveRatio(alive, targets.length);
+    final String verdict;
+    if (probing) {
+      verdict = context.l10n.siteLatencyTesting;
+    } else if (measured.isEmpty) {
+      verdict = context.l10n.siteLatencySitesCount(targets.length);
+    } else {
+      verdict = context.l10n.siteLatencyAliveRatio(alive, targets.length);
+    }
+    final Color verdictColor;
+    if (measured.isEmpty) {
+      verdictColor = colorScheme.onSurfaceVariant;
+    } else if (alive == targets.length) {
+      verdictColor = colorScheme.success;
+    } else {
+      verdictColor = colorScheme.warning;
+    }
     return DashboardDetailCard(
       glyph: category.glyph,
       title: category.label(context.l10n),
       trailing: [
-        Text(
-          verdict,
-          style: DashboardText.label(
-            context,
-            color: measured.isEmpty
-                ? colorScheme.onSurfaceVariant
-                : alive == targets.length
-                ? colorScheme.success
-                : colorScheme.warning,
-          ),
-        ),
+        Text(verdict, style: DashboardText.label(context, color: verdictColor)),
         // `DashboardIconButton` overflows on purpose and needs a bounded height, which the
         // unbounded column of a detail page does not give it.
         IconButton(
@@ -123,18 +124,24 @@ class SiteLatencyRow extends StatelessWidget {
     final summary = this.summary;
     final pending = probing || summary == null;
     final ok = summary?.success ?? false;
-    final statusColor = pending
-        ? colorScheme.onSurfaceVariant
-        : ok
-        ? colorScheme.success
-        : colorScheme.error;
-    final status = probing
-        ? context.l10n.siteLatencyTesting
-        : summary == null
-        ? context.l10n.siteLatencyNotTested
-        : summary.success
-        ? _latency(summary, context.l10n)
-        : context.l10n.commonFailed;
+    final Color statusColor;
+    if (pending) {
+      statusColor = colorScheme.onSurfaceVariant;
+    } else if (ok) {
+      statusColor = colorScheme.success;
+    } else {
+      statusColor = colorScheme.error;
+    }
+    final String status;
+    if (probing) {
+      status = context.l10n.siteLatencyTesting;
+    } else if (summary == null) {
+      status = context.l10n.siteLatencyNotTested;
+    } else if (summary.success) {
+      status = _latency(summary, context.l10n);
+    } else {
+      status = context.l10n.commonFailed;
+    }
     return Semantics(
       button: true,
       label: '${target.name} $status',

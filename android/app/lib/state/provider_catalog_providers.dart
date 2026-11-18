@@ -272,19 +272,13 @@ class RaceProvidersNotifier extends Notifier<Set<String>> {
   }
 
   void reset() {
-    final settings = ref.read(legacySettingsProvider);
-    final mode = ref.read(resolutionModeProvider);
     final defaults = {
       for (final provider in ref.read(dnsProviderCatalogProvider).take(2))
         provider.id,
     };
+    // `_persist` already writes the active mode's key, including single mode's parallel list.
     _persist(defaults);
     state = defaults;
-    if (!mode.isSingle) {
-      // `_persist` already wrote the active mode's key.
-      return;
-    }
-    settings.setParallelRaceProviderIds(defaults.toList());
   }
 
   /// Persists an explicit order; primary-backup keeps the sequence, the modes are sets.

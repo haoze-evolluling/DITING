@@ -19,18 +19,28 @@ class RuleRepository {
   /// Legacy database file this handle was opened from; null for ad-hoc handles (tests, cleanup).
   final String? sourceFile;
 
-  /// Table pair per kind, read from the core so the names exist in exactly one place.
+  /// Table pairs per kind and the user-source names, both read from the core so they exist in
+  /// exactly one place.
+  static final ({
+    Map<RuleKind, ({String table, String sourceTable})> tables,
+    List<String> userSources,
+  })
+  _core = _coreTables();
+
   static final Map<RuleKind, ({String table, String sourceTable})> _tables =
-      _tablesFromCore();
+      _core.tables;
 
   /// Sources that [clearUser] may delete; `preset` and `sub_*` are kept.
-  static final List<String> userSources = _userSourcesFromCore();
+  static final List<String> userSources = _core.userSources;
 
   /// Rows per [loadAllPaged] page: 100k rules is ~125 queries, and one page never dominates the
   /// heap.
   static const loadPageSize = 800;
 
-  static ({Map<RuleKind, ({String table, String sourceTable})> tables, List<String> userSources})
+  static ({
+    Map<RuleKind, ({String table, String sourceTable})> tables,
+    List<String> userSources,
+  })
   _coreTables() {
     final answer = RustRuleStoreCore.instance.plan({'op': 'tables'});
     ({String table, String sourceTable}) pair(String key) {
@@ -42,7 +52,8 @@ class RuleRepository {
     }
 
     final sources = [
-      for (final source in answer['userSources'] as List? ?? const []) '$source',
+      for (final source in answer['userSources'] as List? ?? const [])
+        '$source',
     ];
     return (
       tables: {
@@ -54,11 +65,6 @@ class RuleRepository {
     );
   }
 
-  static Map<RuleKind, ({String table, String sourceTable})> _tablesFromCore() =>
-      _coreTables().tables;
-
-  static List<String> _userSourcesFromCore() => _coreTables().userSources;
-
   static String _kindKey(RuleKind kind) => switch (kind) {
     RuleKind.block => 'block',
     RuleKind.allow => 'allow',
@@ -69,12 +75,12 @@ class RuleRepository {
     final subscriptions = await _subscriptionNames();
     return {
       for (final kind in RuleKind.values)
-        kind: await _loadKind(kind, subscriptions),
+        kind: await _loadKindPage(kind, subscriptions),
     };
   }
 
   Future<List<MockRule>> loadKind(RuleKind kind) async =>
-      _loadKind(kind, await _subscriptionNames());
+      _loadKindPage(kind, await _subscriptionNames());
 
   /// Full-table load in `id` pages, one [onPage] call per page.
   ///
@@ -108,11 +114,6 @@ class RuleRepository {
     return {for (final row in rows) row['id'] as int: row['name'] as String};
   }
 
-  Future<List<MockRule>> _loadKind(
-    RuleKind kind,
-    Map<int, String> subscriptionNames,
-  ) => _loadKindPage(kind, subscriptionNames);
-
   /// One `id` range of a rule table, or the whole table when [limit] is null.
   ///
   /// The `*_source` rows are joined in rather than fetched as their own full table: the two reads
@@ -129,10 +130,7 @@ class RuleRepository {
       'beforeId': ?beforeId,
       'limit': ?limit,
     });
-    final rows = await _db.rawQuery(
-      '${query['sql']}',
-      sqlArgs(query['args']),
-    );
+    final rows = await _db.rawQuery('${query['sql']}', sqlArgs(query['args']));
     return _rowsToRules(kind, rows, subscriptionNames);
   }
 
@@ -193,6 +191,17 @@ class RuleRepository {
   static Map<String, Object?> _row(Map<String, Object?> identity) =>
       ((identity['row'] as Map?) ?? const {}).cast<String, Object?>();
 
+  /// Adds the `useradd` provenance row for [ruleId], leaving an existing one alone.
+  static Future<void> _ensureUserAdd(
+    DatabaseExecutor txn,
+    String sourceTable,
+    int ruleId,
+  ) => txn.insert(sourceTable, {
+    'ruleId': ruleId,
+    'source': 'useradd',
+    'enabled': 1,
+  }, conflictAlgorithm: ConflictAlgorithm.ignore);
+
   /// Inserts a user rule and its `useradd` source, reusing a row with the same identity.
   Future<MockRule> add(RuleKind kind, String pattern, {String? target}) async {
     final tables = _tables[kind]!;
@@ -213,11 +222,7 @@ class RuleRepository {
       final ruleId = existing.isEmpty
           ? await txn.insert(tables.table, row)
           : existing.first['id'] as int;
-      await txn.insert(tables.sourceTable, {
-        'ruleId': ruleId,
-        'source': 'useradd',
-        'enabled': 1,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      await _ensureUserAdd(txn, tables.sourceTable, ruleId);
       return ruleId;
     });
     return MockRule(
@@ -280,20 +285,13 @@ class RuleRepository {
           where: 'ruleId = ? AND source = ?',
           whereArgs: [id, 'preset'],
         );
-        await txn.insert(tables.sourceTable, {
-          'ruleId': id,
-          'source': 'useradd',
-          'enabled': 1,
-        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        await _ensureUserAdd(txn, tables.sourceTable, id);
       }
     });
   }
 
-  Future<void> delete(RuleKind kind, int id) => _db.delete(
-    _tables[kind]!.table,
-    where: 'id = ?',
-    whereArgs: [id],
-  );
+  Future<void> delete(RuleKind kind, int id) =>
+      _db.delete(_tables[kind]!.table, where: 'id = ?', whereArgs: [id]);
 
   /// Removes user-owned sources and any rules left without a source.
   Future<int> clearUser(RuleKind kind) async {

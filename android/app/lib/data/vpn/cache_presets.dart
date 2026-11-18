@@ -68,17 +68,17 @@ enum DnsCachePreset {
       )];
 
   void applyTo(LegacySettings settings, {required bool enabled}) {
-    final values = RustDnsConfigCore.instance.presetValues(index);
+    final preset = RustDnsConfigCore.instance.presetValues(index);
     settings.applyCachePreset(
       storageValue: storageValue,
       enabled: enabled,
-      mode: values.mode,
-      maxTtlSeconds: values.maxTtlSeconds,
-      fixedTtlSeconds: values.fixedTtlSeconds,
-      minTtlEnabled: values.minTtlEnabled,
-      minTtlSeconds: values.minTtlSeconds,
-      staleFallbackEnabled: values.staleFallbackEnabled,
-      staleFallbackSeconds: values.staleFallbackSeconds,
+      mode: preset.mode,
+      maxTtlSeconds: preset.maxTtlSeconds,
+      fixedTtlSeconds: preset.fixedTtlSeconds,
+      minTtlEnabled: preset.minTtlEnabled,
+      minTtlSeconds: preset.minTtlSeconds,
+      staleFallbackEnabled: preset.staleFallbackEnabled,
+      staleFallbackSeconds: preset.staleFallbackSeconds,
     );
   }
 }

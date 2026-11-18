@@ -25,22 +25,23 @@ class DnsLogRow {
   factory DnsLogRow.fromParsed(Map<String, Object?> row) {
     final message = row['message'] as String?;
     return DnsLogRow(
-      id: (row['id'] as num?)?.toInt() ?? 0,
-      timestamp: (row['timestamp'] as num?)?.toInt() ?? 0,
-      queryName: row['queryName'] as String? ?? '',
-      queryType: (row['queryType'] as num?)?.toInt() ?? 0,
-      result: row['result'] as String? ?? '',
-      cached: row['cached'] as bool? ?? false,
-      message: message,
-      packageName: row['packageName'] as String?,
-      blockSubscriptionId: (row['blockSubscriptionId'] as num?)?.toInt(),
-    ).._classification = {
-      'isConnection': row['isConnection'],
-      'isBlocked': row['isBlocked'],
-      'isRewritten': row['isRewritten'],
-      'status': row['status'],
-      'messageFields': row['messageFields'],
-    };
+        id: (row['id'] as num?)?.toInt() ?? 0,
+        timestamp: (row['timestamp'] as num?)?.toInt() ?? 0,
+        queryName: row['queryName'] as String? ?? '',
+        queryType: (row['queryType'] as num?)?.toInt() ?? 0,
+        result: row['result'] as String? ?? '',
+        cached: row['cached'] as bool? ?? false,
+        message: message,
+        packageName: row['packageName'] as String?,
+        blockSubscriptionId: (row['blockSubscriptionId'] as num?)?.toInt(),
+      )
+      .._classification = {
+        'isConnection': row['isConnection'],
+        'isBlocked': row['isBlocked'],
+        'isRewritten': row['isRewritten'],
+        'status': row['status'],
+        'messageFields': row['messageFields'],
+      };
   }
 
   final int id;
@@ -58,8 +59,8 @@ class DnsLogRow {
   /// tests construct by hand.
   Map<String, Object?>? _classification;
 
-  Map<String, Object?> get _flags => _classification ??= RustLogQueryCore.instance
-      .classify('dnsRow', {
+  Map<String, Object?> get _flags =>
+      _classification ??= RustLogQueryCore.instance.classify('dnsRow', {
         'queryType': queryType,
         'queryName': queryName,
         'result': result,
@@ -146,8 +147,7 @@ class DnsQueryRepository {
     final rows = await _db.rawQuery(plan.sql, plan.args);
     return {
       for (final row in RustLogQueryCore.instance.rows('packageCount', rows))
-        row['packageName'] as String:
-            (row['count'] as num?)?.toInt() ?? 0,
+        row['packageName'] as String: (row['count'] as num?)?.toInt() ?? 0,
     };
   }
 
@@ -161,7 +161,7 @@ class DnsQueryRepository {
   }) async {
     final plan = RustLogQueryCore.instance.plan('dns.query.recent', {
       'limit': limit,
-      'status': _statusToken(status),
+      'status': status.token,
       'query': query,
       'packageName': ?packageName,
       // Inclusive `timestamp` cursor: the merged feed pages by time, not by row offset.
@@ -188,7 +188,7 @@ class DnsQueryRepository {
   }) async {
     final plan = RustLogQueryCore.instance.plan('dns.query.export', {
       'limit': limit,
-      'status': _statusToken(status),
+      'status': status.token,
       'since': ?since,
       'until': ?until,
       if (packages.isNotEmpty) 'packages': packages.toList(),
@@ -199,14 +199,4 @@ class DnsQueryRepository {
         DnsLogRow.fromParsed(row),
     ];
   }
-
-  /// The kernel's spelling of a bucket; `all` adds no clause.
-  static String _statusToken(RequestStatus status) => switch (status) {
-    RequestStatus.all => 'all',
-    RequestStatus.passed => 'passed',
-    RequestStatus.rewritten => 'rewritten',
-    RequestStatus.blocked => 'blocked',
-    RequestStatus.error => 'error',
-    RequestStatus.bypassed => 'bypassed',
-  };
 }

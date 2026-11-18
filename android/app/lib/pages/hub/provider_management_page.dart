@@ -25,16 +25,8 @@ class _ProviderManagementPageState
     extends ConsumerState<ProviderManagementPage> {
   ProviderProtocol _protocol = ProviderProtocol.doh;
 
-  List<MockProvider> get _all => ref.watch(dnsProviderCatalogProvider);
-
-  MockProvider? get _selected {
-    final selectedId = ref.watch(selectedProviderProvider);
-    return _all.where((provider) => provider.id == selectedId).firstOrNull;
-  }
-
   void _select(MockProvider provider) {
     ref.read(selectedProviderProvider.notifier).select(provider.id);
-    setState(() {});
   }
 
   Future<void> _add() async {
@@ -98,19 +90,21 @@ class _ProviderManagementPageState
       return;
     }
     ref.read(dnsProviderCatalogProvider.notifier).deleteCustom(provider.id);
-    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final list = _all
+    final all = ref.watch(dnsProviderCatalogProvider);
+    final selectedId = ref.watch(selectedProviderProvider);
+    final selected = all
+        .where((provider) => provider.id == selectedId)
+        .firstOrNull;
+    final list = all
         .where((provider) => provider.protocol == _protocol)
         .toList(growable: false);
     final presets = list.where((provider) => provider.isPreset).toList();
     final customs = list.where((provider) => !provider.isPreset).toList();
-    final selected = _selected;
-    final selectedId = ref.watch(selectedProviderProvider);
     return CommonScaffold(
       title: context.l10n.providerMgmtTitle,
       iconActions: [
@@ -139,7 +133,10 @@ class _ProviderManagementPageState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 2,
                       children: [
-                        Text(context.l10n.providerMgmtCurrent, style: context.listTitleStyle),
+                        Text(
+                          context.l10n.providerMgmtCurrent,
+                          style: context.listTitleStyle,
+                        ),
                         Text(
                           selected == null
                               ? context.l10n.resolutionNotConfigured

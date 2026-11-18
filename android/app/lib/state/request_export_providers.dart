@@ -86,12 +86,9 @@ class RequestLogExportActions {
           ? await _ref.read(normalLogDatabaseProvider.future)
           : null;
       final installed = _ref.read(installedAppListProvider);
-      final appLabels = <String, String>{};
-      if (installed != null) {
-        for (final app in installed) {
-          appLabels[app.packageName] = app.label;
-        }
-      }
+      final appLabels = installed == null
+          ? const <String, String>{}
+          : {for (final app in installed) app.packageName: app.label};
       final result = await _ref
           .read(requestLogExporterProvider)
           .exportTo(

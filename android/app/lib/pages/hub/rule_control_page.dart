@@ -34,15 +34,22 @@ class RuleControlPage extends ConsumerWidget {
     final footnote = AppTextStyle.footnote
         .of(context)
         .copyWith(color: context.colorScheme.onSurfaceVariant);
-    final urlSubtitle = !caReady
-        ? context.l10n.ruleControlUrlNotReadyCa
-        : !settings.httpInspectionEnabled
-        ? context.l10n.ruleControlUrlNotReadyInspection
-        : inspectionApps.isEmpty
-        ? context.l10n.ruleControlUrlNotReadyApps
-        : !domainRules
-        ? context.l10n.ruleControlUrlPaused
-        : context.l10n.ruleControlUrlRunning;
+    String urlSubtitle() {
+      if (!caReady) {
+        return context.l10n.ruleControlUrlNotReadyCa;
+      }
+      if (!settings.httpInspectionEnabled) {
+        return context.l10n.ruleControlUrlNotReadyInspection;
+      }
+      if (inspectionApps.isEmpty) {
+        return context.l10n.ruleControlUrlNotReadyApps;
+      }
+      if (!domainRules) {
+        return context.l10n.ruleControlUrlPaused;
+      }
+      return context.l10n.ruleControlUrlRunning;
+    }
+
     return CommonScaffold(
       title: context.l10n.hubRuleControl,
       body: PageBody(
@@ -86,7 +93,7 @@ class RuleControlPage extends ConsumerWidget {
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.target),
                   title: Text(context.l10n.ruleControlUrlRules),
-                  subtitle: Text(urlSubtitle),
+                  subtitle: Text(urlSubtitle()),
                   trailing: Text(
                     settings.httpInspectionEnabled &&
                             settings.addressRulesEnabled &&

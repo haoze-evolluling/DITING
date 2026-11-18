@@ -30,7 +30,7 @@ class OnDemandConfigPage extends ConsumerWidget {
         IconButtonData(
           glyph: AppGlyphs.refresh,
           tooltip: context.l10n.odApplyNow,
-          onPressed: () => _applyNow(context, ref),
+          onPressed: () => _applyAndHint(context, ref),
         ),
         IconButtonData(
           glyph: AppGlyphs.add,
@@ -54,8 +54,7 @@ class OnDemandConfigPage extends ConsumerWidget {
                 onChanged: (value) => _setEnabled(context, ref, value),
               ),
             ],
-            footer:
-                context.l10n.odNote,
+            footer: context.l10n.odNote,
           ),
           if (resources.onDemand) _DecisionCard(decision: decision),
           if (resources.onDemand)
@@ -96,7 +95,9 @@ class OnDemandConfigPage extends ConsumerWidget {
                                 showSsidForm(context, ref, existing: rule.ssid),
                           ),
                           ConfigRemoveButton(
-                            tooltip: context.l10n.odDeleteSsidTooltip(rule.ssid),
+                            tooltip: context.l10n.odDeleteSsidTooltip(
+                              rule.ssid,
+                            ),
                             onPressed: () => notifier.removeSsid(rule.ssid),
                           ),
                         ],
@@ -105,8 +106,7 @@ class OnDemandConfigPage extends ConsumerWidget {
                           showSsidForm(context, ref, existing: rule.ssid),
                     ),
               ],
-              footer:
-                  context.l10n.odDelayNote,
+              footer: context.l10n.odDelayNote,
             ),
           const _NetworkSection(),
           const _BatterySection(),
@@ -134,9 +134,7 @@ String _decisionSummary(SsidDecision decision, AppL10n l10n) =>
       SsidMatchState.disabled => l10n.odStateDisabled,
       SsidMatchState.unknown => l10n.odStateUnknown,
       SsidMatchState.noWifi => l10n.odStateNoWifi,
-      SsidMatchState.matched => l10n.odStateMatched(
-        decision.rule?.ssid ?? '',
-      ),
+      SsidMatchState.matched => l10n.odStateMatched(decision.rule?.ssid ?? ''),
       SsidMatchState.unmatched => l10n.odStateUnmatched,
     };
 
@@ -152,14 +150,12 @@ Future<void> _setEnabled(
     showConfigHint(context, context.l10n.odDisabledHint);
     return;
   }
-  final outcome = await ref.read(onDemandRunnerProvider).apply(force: true);
-  if (!context.mounted) return;
-  showConfigHint(context, outcome.label(context.l10n));
+  await _applyAndHint(context, ref);
 }
 
 /// Re-evaluates the whitelist against the current network; the page has no network callback, so
 /// this is how a user applies it after switching Wi-Fi.
-Future<void> _applyNow(BuildContext context, WidgetRef ref) async {
+Future<void> _applyAndHint(BuildContext context, WidgetRef ref) async {
   final outcome = await ref.read(onDemandRunnerProvider).apply(force: true);
   if (!context.mounted) return;
   showConfigHint(context, outcome.label(context.l10n));
@@ -181,7 +177,11 @@ class _DecisionCard extends StatelessWidget {
         context.l10n.odPillDisabled,
         colorScheme.onSurfaceVariant,
       ),
-      SsidMatchState.unknown => (AppGlyphs.locate, context.l10n.odPillUnknown, colorScheme.warning),
+      SsidMatchState.unknown => (
+        AppGlyphs.locate,
+        context.l10n.odPillUnknown,
+        colorScheme.warning,
+      ),
       SsidMatchState.noWifi => (
         AppGlyphs.wifiOff,
         context.l10n.odPillNoWifi,
@@ -215,8 +215,7 @@ class _DecisionCard extends StatelessWidget {
           ),
         ),
       ],
-      footer:
-          context.l10n.odDecisionFooter,
+      footer: context.l10n.odDecisionFooter,
     );
   }
 }
@@ -276,10 +275,22 @@ class _BatterySection extends ConsumerWidget {
     final async = ref.watch(batteryOptimizationProvider);
     final state = async.asData?.value;
     final (label, color) = switch (state) {
-      BatteryOptimizationState.ignored => (context.l10n.odBatteryJoined, colorScheme.primary),
-      BatteryOptimizationState.notIgnored => (context.l10n.odBatteryNotJoined, colorScheme.warning),
+      BatteryOptimizationState.ignored => (
+        context.l10n.odBatteryJoined,
+        colorScheme.primary,
+      ),
+      BatteryOptimizationState.notIgnored => (
+        context.l10n.odBatteryNotJoined,
+        colorScheme.warning,
+      ),
       BatteryOptimizationState.unavailable ||
-      null => (context.l10n.odBatteryUnavailable, context.colorScheme.onSurfaceVariant),
+      null => (context.l10n.odBatteryUnavailable, colorScheme.onSurfaceVariant),
+    };
+    final subtitle = switch (state) {
+      BatteryOptimizationState.ignored => context.l10n.odBatteryOk,
+      BatteryOptimizationState.notIgnored => context.l10n.odBatteryAsk,
+      BatteryOptimizationState.unavailable ||
+      null => context.l10n.odBatteryNoChannel,
     };
     return generateSection(
       title: context.l10n.odPrerequisites,
@@ -287,13 +298,7 @@ class _BatterySection extends ConsumerWidget {
         ListItem(
           leading: const GlyphIcon(AppGlyphs.bolt, size: 20),
           title: Text(context.l10n.odIgnoreBattery),
-          subtitle: Text(
-            state == BatteryOptimizationState.ignored
-                ? context.l10n.odBatteryOk
-                : state == BatteryOptimizationState.notIgnored
-                ? context.l10n.odBatteryAsk
-                : context.l10n.odBatteryNoChannel,
-          ),
+          subtitle: Text(subtitle),
           trailing: Text(
             label,
             style: context.listCaptionStyle.copyWith(color: color),
@@ -313,7 +318,8 @@ class _BatterySection extends ConsumerWidget {
     showConfigHint(context, switch (state) {
       BatteryOptimizationState.ignored => context.l10n.odBatteryJoinedHint,
       BatteryOptimizationState.notIgnored => context.l10n.odBatteryStillOff,
-      BatteryOptimizationState.unavailable => context.l10n.odBatteryUnsupportedHint,
+      BatteryOptimizationState.unavailable =>
+        context.l10n.odBatteryUnsupportedHint,
     });
   }
 }

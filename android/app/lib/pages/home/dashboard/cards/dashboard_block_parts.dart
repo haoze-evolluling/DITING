@@ -179,10 +179,7 @@ class DashboardLegendRow extends StatelessWidget {
         Container(
           width: 7,
           height: 7,
-          decoration: ShapeDecoration(
-            color: color,
-            shape: AppShape.standard,
-          ),
+          decoration: ShapeDecoration(color: color, shape: AppShape.standard),
         ),
         Expanded(
           child: Text(
@@ -402,7 +399,7 @@ class DashboardLogListCard extends StatelessWidget {
               if (index > 0) Container(height: 1, color: separator),
               row,
             ],
-          SizedBox(height: 2),
+          const SizedBox(height: 2),
         ],
       ),
     );

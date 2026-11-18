@@ -127,14 +127,15 @@ class ThemeHomeOpacityPage extends ConsumerWidget {
 }
 
 /// One-line description per dock destination; the enum has no such field.
-Map<BottomBarDestination, String> _destinationSubtitles(AppL10n l10n) => {
-  BottomBarDestination.home: l10n.bottomBarHomeSubtitle,
-  BottomBarDestination.featureHub: l10n.bottomBarFeatureHubSubtitle,
-  BottomBarDestination.logDashboard: l10n.bottomBarLogDashboardSubtitle,
-  BottomBarDestination.appTraffic: l10n.bottomBarAppTrafficSubtitle,
-  BottomBarDestination.networkTools: l10n.bottomBarNetworkToolsSubtitle,
-  BottomBarDestination.settings: l10n.bottomBarSettingsSubtitle,
-};
+String _destinationSubtitle(AppL10n l10n, BottomBarDestination destination) =>
+    switch (destination) {
+      BottomBarDestination.home => l10n.bottomBarHomeSubtitle,
+      BottomBarDestination.featureHub => l10n.bottomBarFeatureHubSubtitle,
+      BottomBarDestination.logDashboard => l10n.bottomBarLogDashboardSubtitle,
+      BottomBarDestination.appTraffic => l10n.bottomBarAppTrafficSubtitle,
+      BottomBarDestination.networkTools => l10n.bottomBarNetworkToolsSubtitle,
+      BottomBarDestination.settings => l10n.bottomBarSettingsSubtitle,
+    };
 
 /// Dock customization: at least 2 and at most 4 enabled ([maxDockDestinations]), and enabled
 /// rows drag into dock order. Rejections must explain themselves.
@@ -210,7 +211,7 @@ class ThemeBottomBarPage extends ConsumerWidget {
                 ListItem.toggle(
                   title: Text(destination.label(context.l10n)),
                   subtitle: Text(
-                    _destinationSubtitles(context.l10n)[destination] ?? '',
+                    _destinationSubtitle(context.l10n, destination),
                   ),
                   leading: GlyphIcon(destination.glyph),
                   value: false,
@@ -254,9 +255,7 @@ class _DockDestinationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListItem(
       title: Text(destination.label(context.l10n)),
-      subtitle: Text(
-                    _destinationSubtitles(context.l10n)[destination] ?? '',
-                  ),
+      subtitle: Text(_destinationSubtitle(context.l10n, destination)),
       leading: GlyphIcon(destination.glyph),
       padding: const EdgeInsets.only(left: 16, right: 4),
       onTap: onToggle,

@@ -28,12 +28,27 @@ class IntranetIpDetailPage extends ConsumerWidget {
     final localIp = info?.localIpv4 ?? '';
     final listening =
         mode == AppWorkMode.server && serverStatus == ServerStatus.running;
-    final dnsAddress = localIp.isEmpty
-        ? null
-        : listening
-        ? '$localIp:$port'
-        : localIp;
+    final String? dnsAddress;
+    if (localIp.isEmpty) {
+      dnsAddress = null;
+    } else {
+      dnsAddress = listening ? '$localIp:$port' : localIp;
+    }
+    final placeholder = network.isLoading
+        ? context.l10n.intranetReading
+        : context.l10n.intranetNoActiveNetwork;
+    final String hint;
+    if (listening) {
+      hint = context.l10n.intranetSameSubnetHint;
+    } else if (localIp.isEmpty) {
+      hint = context.l10n.intranetConnectHintSentence;
+    } else {
+      hint = context.l10n.intranetModeNotListeningSentence(
+        mode.title(context.l10n),
+      );
+    }
     final dnsServers = info?.dnsServers ?? const <String>[];
+    final vpnActive = info?.vpnActive == true;
     return DashboardDetailScaffold(
       title: context.l10n.intranetDetailTitle,
       actions: [
@@ -47,17 +62,15 @@ class IntranetIpDetailPage extends ConsumerWidget {
         DashboardDetailHero(
           glyph: AppGlyphs.wifi,
           label: context.l10n.intranetLocalAddress,
-          value: dnsAddress ?? (network.isLoading ? context.l10n.intranetReading : context.l10n.intranetNoActiveNetwork),
+          value: dnsAddress ?? placeholder,
           tabular: dnsAddress != null,
-          chipLabel: listening ? context.l10n.intranetUsableAsDns : context.l10n.intranetLocalOnly,
+          chipLabel: listening
+              ? context.l10n.intranetUsableAsDns
+              : context.l10n.intranetLocalOnly,
           chipColor: listening
               ? colorScheme.success
               : colorScheme.onSurfaceVariant,
-          hint: listening
-              ? context.l10n.intranetSameSubnetHint
-              : localIp.isEmpty
-              ? context.l10n.intranetConnectHintSentence
-              : context.l10n.intranetModeNotListeningSentence(mode.title(context.l10n)),
+          hint: hint,
         ),
         if (dnsAddress != null)
           _CopyCard(address: dnsAddress, withPort: listening),
@@ -69,10 +82,15 @@ class IntranetIpDetailPage extends ConsumerWidget {
               StatItem(label: 'IPv4', value: localIp.isEmpty ? '—' : localIp),
               StatItem(
                 label: 'VPN',
-                value: info?.vpnActive == true ? context.l10n.commonEnabled : context.l10n.commonDisabled,
-                color: info?.vpnActive == true ? colorScheme.primary : null,
+                value: vpnActive
+                    ? context.l10n.commonEnabled
+                    : context.l10n.commonDisabled,
+                color: vpnActive ? colorScheme.primary : null,
               ),
-              StatItem(label: context.l10n.intranetDnsServers, value: '${dnsServers.length}'),
+              StatItem(
+                label: context.l10n.intranetDnsServers,
+                value: '${dnsServers.length}',
+              ),
               StatItem(
                 label: context.l10n.statusListenPort,
                 value: listening ? '$port' : context.l10n.statusNotListening,
@@ -212,7 +230,9 @@ class _CopyCard extends StatelessWidget {
               spacing: 2,
               children: [
                 Text(
-                  withPort ? context.l10n.intranetCopyAddressWithPort : context.l10n.intranetCopyAddress,
+                  withPort
+                      ? context.l10n.intranetCopyAddressWithPort
+                      : context.l10n.intranetCopyAddress,
                   style: AppTextStyle.subheadline.of(context, emphasized: true),
                 ),
                 Text(

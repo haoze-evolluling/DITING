@@ -95,14 +95,12 @@ final cacheLastHitProvider = FutureProvider<Map<String, int?>>((ref) async {
   ref.watch(dnsLogRevisionProvider);
   final db = await ref.watch(activeLogDatabaseProvider.future);
   if (db == null) return const {};
+  final core = RustLogQueryCore.instance;
   final now = DateTime.now().millisecondsSinceEpoch;
-  final plan = RustLogQueryCore.instance.plan('cache.lastHit', {
-    'now': now,
-    'limit': 200,
-  });
+  final plan = core.plan('cache.lastHit', {'now': now, 'limit': 200});
   final rows = await db.rawQuery(plan.sql, plan.args);
   return {
-    for (final row in RustLogQueryCore.instance.rows('cacheLastHit', rows))
+    for (final row in core.rows('cacheLastHit', rows))
       '${row['queryName'] as String? ?? ''}|'
               '${(row['queryType'] as num?)?.toInt() ?? 1}':
           (row['lastHitAt'] as num?)?.toInt(),
@@ -158,8 +156,7 @@ final bootstrapStatsProvider = FutureProvider<BootstrapStatsSnapshot>((
     attempts: (summary['attempts'] as num?)?.toInt() ?? 0,
     successes: (summary['successes'] as num?)?.toInt() ?? 0,
     failures: (summary['failures'] as num?)?.toInt() ?? 0,
-    averageElapsedMs:
-        (summary['averageElapsedMs'] as num?)?.toDouble() ?? 0,
+    averageElapsedMs: (summary['averageElapsedMs'] as num?)?.toDouble() ?? 0,
     ips: ips,
   );
 });
@@ -187,7 +184,9 @@ class SubscriptionInterceptionItem {
 
   String get statusLabel {
     if (deleted) return currentL10n.subscriptionDeleted;
-    return enabled ? currentL10n.commonEnabled : currentL10n.subscriptionDisabled;
+    return enabled
+        ? currentL10n.commonEnabled
+        : currentL10n.subscriptionDisabled;
   }
 }
 
@@ -209,6 +208,18 @@ class SubscriptionInterceptionSnapshot {
 
   /// An older store may lack `blockSubscriptionId`, so no rate can be computed.
   final bool missingColumn;
+}
+
+SubscriptionInterceptionItem _interceptionItemOf(Map<String, Object?> row) {
+  final id = (row['id'] as num?)?.toInt() ?? 0;
+  return SubscriptionInterceptionItem(
+    id: id,
+    name: row['name'] as String? ?? currentL10n.subscriptionDeletedWithId(id),
+    enabled: row['enabled'] as bool? ?? false,
+    deleted: row['deleted'] as bool? ?? false,
+    hits: (row['hits'] as num?)?.toInt() ?? 0,
+    rate: (row['rate'] as num?)?.toDouble() ?? 0,
+  );
 }
 
 /// SQL: the denominator is every row of both tables, the numerator only `result = BLOCKED`
@@ -299,27 +310,14 @@ final subscriptionInterceptionProvider =
           'subscriptions': subscriptions,
           'sortByName': true,
         });
-        final items = [
-          for (final row in answer['items'] as List? ?? const [])
-            () {
-              final map = (row as Map).cast<String, Object?>();
-              final deleted = map['deleted'] as bool? ?? false;
-              final id = (map['id'] as num?)?.toInt() ?? 0;
-              return SubscriptionInterceptionItem(
-                id: id,
-                name:
-                    map['name'] as String? ??
-                    currentL10n.subscriptionDeletedWithId(id),
-                enabled: map['enabled'] as bool? ?? false,
-                deleted: deleted,
-                hits: (map['hits'] as num?)?.toInt() ?? 0,
-                rate: (map['rate'] as num?)?.toDouble() ?? 0,
-              );
-            }(),
-        ]..sort((a, b) {
-          final byHits = b.hits.compareTo(a.hits);
-          return byHits != 0 ? byHits : a.name.compareTo(b.name);
-        });
+        final items =
+            [
+              for (final row in answer['items'] as List? ?? const [])
+                _interceptionItemOf((row as Map).cast<String, Object?>()),
+            ]..sort((a, b) {
+              final byHits = b.hits.compareTo(a.hits);
+              return byHits != 0 ? byHits : a.name.compareTo(b.name);
+            });
 
         return SubscriptionInterceptionSnapshot(
           totalRequests: total,

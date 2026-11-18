@@ -14,19 +14,21 @@ part of 'requests_page.dart';
   };
 }
 
+String _twoDigits(int value) => value.toString().padLeft(2, '0');
+
 /// Time of day as `HH:mm:ss`; the date belongs to the header card.
 String _timeOfDay(int timestamp) {
   final time = DateTime.fromMillisecondsSinceEpoch(timestamp);
-  String two(int value) => value.toString().padLeft(2, '0');
-  return '${two(time.hour)}:${two(time.minute)}:${two(time.second)}';
+  return '${_twoDigits(time.hour)}:${_twoDigits(time.minute)}:'
+      '${_twoDigits(time.second)}';
 }
 
 /// Full timestamp as `yyyy-MM-dd HH:mm:ss`, same format as upstream.
 String _stampOf(int timestamp) {
   final time = DateTime.fromMillisecondsSinceEpoch(timestamp);
-  String two(int value) => value.toString().padLeft(2, '0');
-  return '${time.year}-${two(time.month)}-${two(time.day)} '
-      '${two(time.hour)}:${two(time.minute)}:${two(time.second)}';
+  return '${time.year}-${_twoDigits(time.month)}-${_twoDigits(time.day)} '
+      '${_twoDigits(time.hour)}:${_twoDigits(time.minute)}:'
+      '${_twoDigits(time.second)}';
 }
 
 class RequestRow extends StatelessWidget {
@@ -38,7 +40,10 @@ class RequestRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final (statusColor, statusGlyph) = requestStatusStyle(context, request.status);
+    final (statusColor, statusGlyph) = requestStatusStyle(
+      context,
+      request.status,
+    );
     // authority can be null when TLS fails early, and title is then an empty string.
     // An empty Text renders as a hole, so fall back to a dash.
     final title = request.title.isEmpty ? '—' : request.title;

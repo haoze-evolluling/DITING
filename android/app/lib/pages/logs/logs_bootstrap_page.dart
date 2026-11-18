@@ -100,7 +100,7 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
         );
       }
       return Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
+        padding: const EdgeInsets.symmetric(vertical: 32),
         child: LogsPageLoading(label: context.l10n.logsLoadingBootstrap),
       );
     }

@@ -27,12 +27,9 @@ class _ServerUpstreamPageState extends ConsumerState<ServerUpstreamPage> {
   DnsProtocol _protocol = DnsProtocol.dns;
 
   /// Single mode: the tap picks the sole upstream. Effective after a restart.
-  Future<void> _selectSingle(ServerUpstream upstream) async {
+  void _selectSingle(ServerUpstream upstream) {
     ref.read(serverSelectedUpstreamProvider.notifier).select(upstream.id);
     final running = ref.read(serverStatusProvider) == ServerStatus.running;
-    if (!mounted) {
-      return;
-    }
     showServerHint(
       context,
       running
@@ -117,9 +114,6 @@ class _ServerUpstreamPageState extends ConsumerState<ServerUpstreamPage> {
           )
         : (actions.update(result) ? result : null);
     if (saved == null) {
-      return;
-    }
-    if (!mounted) {
       return;
     }
     // Switch to the new entry's protocol segment, otherwise it stays out of sight.
@@ -218,7 +212,10 @@ class _ServerUpstreamPageState extends ConsumerState<ServerUpstreamPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 2,
                       children: [
-                        Text(mode.label(context.l10n), style: context.listTitleStyle),
+                        Text(
+                          mode.label(context.l10n),
+                          style: context.listTitleStyle,
+                        ),
                         Text(
                           _modeDescription(mode, context.l10n),
                           style: context.listSubtitleStyle,
@@ -454,11 +451,7 @@ class _UpstreamRow extends StatelessWidget {
       ),
       trailing: trailing.isEmpty
           ? null
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 4,
-              children: trailing,
-            ),
+          : Row(mainAxisSize: MainAxisSize.min, spacing: 4, children: trailing),
       onTap: onTap,
     );
   }

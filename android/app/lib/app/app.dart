@@ -86,16 +86,13 @@ class _DitingAppState extends ConsumerState<DitingApp> {
     );
     // Warm deep links arrive as channel calls while the app is already running.
     ref.read(deepLinkBridgeProvider).listen(_handleDeepLink);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _maybeApplyTileStart();
-      _maybeApplyDeepLink();
-      _maybeRunAutoUpdate();
-      _maybeApplyOnDemand();
-      _maybeReportDbHealth();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _runStartupChecks());
   }
 
-  void _onResume() {
+  void _onResume() => _runStartupChecks();
+
+  /// Work that has to happen both on the first frame and after every resume.
+  void _runStartupChecks() {
     _maybeApplyTileStart();
     _maybeApplyDeepLink();
     _maybeRunAutoUpdate();
@@ -179,10 +176,7 @@ class _DitingAppState extends ConsumerState<DitingApp> {
     _messengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Text(
-          currentL10n.dbWriteUnhealthy(
-            health.droppedRows,
-            health.openFailures,
-          ),
+          currentL10n.dbWriteUnhealthy(health.droppedRows, health.openFailures),
         ),
         behavior: SnackBarBehavior.floating,
       ),

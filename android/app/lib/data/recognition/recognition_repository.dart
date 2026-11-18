@@ -2,19 +2,18 @@
 /// validation never overwrites the cache.
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:diting_android/data/db/rust_recognition_core.dart';
 import 'package:diting_android/data/http/request_user_agent.dart';
 import 'package:diting_android/data/native/recognition_avatar_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_android/data/recognition/recognition_members.dart';
-import 'package:diting_android/data/db/rust_recognition_core.dart';
 import 'package:diting_android/data/recognition/recognition_plan.dart';
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:flutter/foundation.dart';
 
 class RecognitionMembersRepository {

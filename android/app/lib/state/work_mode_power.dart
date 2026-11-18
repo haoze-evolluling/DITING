@@ -300,10 +300,7 @@ class PowerNotifier extends Notifier<PowerState> {
     // The stop channel answers immediately; a deadline catches a wedge.
     _armGuard(_launchTimeout);
     try {
-      await (express
-              ? ref.read(expressVpnControllerProvider)
-              : ref.read(vpnControllerProvider))
-          .stop();
+      await _controller.stop();
     } catch (error) {
       lastError = _messageOf(error);
     }

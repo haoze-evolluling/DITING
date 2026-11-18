@@ -23,7 +23,8 @@ class BootstrapSettingsPage extends ConsumerWidget {
     final settings = ref.watch(legacySettingsProvider);
     final enabled = settings.bootstrapEnabled;
     final selected = settings.bootstrapPresetIds.toSet();
-    final custom = _readCustom(settings.bootstrapCustomJson);
+    // `bootstrap_custom_json` holds a `{id,name,ip,enabled}` array; parsing lives in the kernel.
+    final custom = parseCustomBootstrapEntries(settings.bootstrapCustomJson);
     final stats = ref.watch(bootstrapStatsProvider);
     final statById = {
       for (final row in stats.value ?? const <BootstrapIpStat>[])
@@ -67,7 +68,11 @@ class BootstrapSettingsPage extends ConsumerWidget {
                   stat: statById[entry.id],
                   onChanged: (value) {
                     final next = {...selected};
-                    value ? next.add(entry.id) : next.remove(entry.id);
+                    if (value) {
+                      next.add(entry.id);
+                    } else {
+                      next.remove(entry.id);
+                    }
                     settings.setBootstrapPresetIds(next);
                     ref.read(legacySettingsRevisionProvider.notifier).bump();
                   },
@@ -140,11 +145,6 @@ class BootstrapSettingsPage extends ConsumerWidget {
         .setBootstrapCustomJson(encodeCustomBootstrapEntries(entries));
     ref.read(legacySettingsRevisionProvider.notifier).bump();
   }
-
-  /// `bootstrap_custom_json` is a JSON array of `{id,name,ip,enabled}`; the row shape and the
-  /// fallbacks live in the kernel.
-  static List<BootstrapEntry> _readCustom(String? raw) =>
-      parseCustomBootstrapEntries(raw);
 }
 
 /// 24-hour aggregate of `bootstrap_log` in the active mode's log database; empty on a fresh
@@ -152,9 +152,7 @@ class BootstrapSettingsPage extends ConsumerWidget {
 final bootstrapStatsProvider = FutureProvider<List<BootstrapIpStat>>((
   ref,
 ) async {
-  final db = await AppDatabase.open(
-    ref.watch(activeLogDatabaseFileProvider),
-  );
+  final db = await AppDatabase.open(ref.watch(activeLogDatabaseFileProvider));
   if (db == null) return const [];
   return _readStats(db);
 });
@@ -241,6 +239,10 @@ class _BootstrapEditor extends StatefulWidget {
 }
 
 class _BootstrapEditorState extends State<_BootstrapEditor> {
+  static final _addressPattern = RegExp(
+    r'^((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)$|^[0-9a-fA-F:]+$',
+  );
+
   final _name = TextEditingController();
   final _ip = TextEditingController();
   String? _error;
@@ -254,10 +256,7 @@ class _BootstrapEditorState extends State<_BootstrapEditor> {
 
   void _save() {
     final ip = _ip.text.trim();
-    final valid = RegExp(
-      r'^((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)$|^[0-9a-fA-F:]+$',
-    ).hasMatch(ip);
-    if (!valid) {
+    if (!_addressPattern.hasMatch(ip)) {
       setState(() => _error = currentL10n.bootstrapInvalidIp);
       return;
     }

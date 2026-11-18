@@ -3,9 +3,9 @@
 /// so it covers overlay routes too. Wording is verbatim from `ui/MainActivityDialogs.kt`.
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:ui' show ImageFilter;
 
+import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

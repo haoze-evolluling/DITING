@@ -3,7 +3,6 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'dart:async';
 
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_android/data/db/rule_providers.dart';
@@ -73,9 +72,11 @@ class AppScopedRulesController {
 
   RuleRepository? get _repository => _ref.read(ruleRepositoryProvider);
 
-  /// Keeps the native rule tries in step with app-scoped writes (the active data set's database).
-  void _refreshIndexes() {
+  /// Keeps the native rule tries in step with app-scoped writes (the active data set's database),
+  /// then reloads the affected page.
+  void _afterWrite(String packageName) {
     refreshRuleIndexesForCurrentMode(_ref);
+    _ref.invalidate(appScopedRulesProvider(packageName));
   }
 
   /// Adds a block / allow rule. Returns false if the DB is unavailable or the rule already exists.
@@ -94,8 +95,7 @@ class AppScopedRulesController {
       important: important,
     );
     if (created != null) {
-      _refreshIndexes();
-      _ref.invalidate(appScopedRulesProvider(packageName));
+      _afterWrite(packageName);
     }
     return created != null;
   }
@@ -105,8 +105,7 @@ class AppScopedRulesController {
     final id = int.tryParse(rule.id);
     if (repository == null || id == null) return;
     await repository.setEnabled(rule.kind, id, enabled);
-    _refreshIndexes();
-    _ref.invalidate(appScopedRulesProvider(packageName));
+    _afterWrite(packageName);
   }
 
   Future<void> delete(String packageName, MockRule rule) async {
@@ -114,8 +113,7 @@ class AppScopedRulesController {
     final id = int.tryParse(rule.id);
     if (repository == null || id == null) return;
     await repository.delete(rule.kind, id);
-    _refreshIndexes();
-    _ref.invalidate(appScopedRulesProvider(packageName));
+    _afterWrite(packageName);
   }
 
   /// Toggles "block all outbound" and returns the new state.
@@ -123,8 +121,7 @@ class AppScopedRulesController {
     final repository = _repository;
     if (repository == null) return false;
     final next = await repository.setFullBlock(packageName, enabled);
-    _refreshIndexes();
-    _ref.invalidate(appScopedRulesProvider(packageName));
+    _afterWrite(packageName);
     return next;
   }
 }

@@ -272,6 +272,10 @@ class MethodChannelDiagnosticsRunner implements DiagnosticsRunner {
 
   final MethodChannel _channel;
 
+  /// A rejected or empty answer becomes an empty map, so every result falls back to its defaults.
+  static Map<Object?, Object?> _snapshot(Object? raw) =>
+      raw is Map ? Map<Object?, Object?>.from(raw) : const {};
+
   @override
   Future<PingSummary> ping(
     String target, {
@@ -283,9 +287,7 @@ class MethodChannelDiagnosticsRunner implements DiagnosticsRunner {
       'count': count,
       'timeoutSeconds': timeoutSeconds,
     });
-    return PingSummary.fromMap(
-      raw is Map ? Map<Object?, Object?>.from(raw) : const {},
-    );
+    return PingSummary.fromMap(_snapshot(raw));
   }
 
   @override
@@ -294,9 +296,7 @@ class MethodChannelDiagnosticsRunner implements DiagnosticsRunner {
       'target': target,
       'maxHops': maxHops,
     });
-    return TraceResult.fromMap(
-      raw is Map ? Map<Object?, Object?>.from(raw) : const {},
-    );
+    return TraceResult.fromMap(_snapshot(raw));
   }
 
   @override
@@ -314,16 +314,12 @@ class MethodChannelDiagnosticsRunner implements DiagnosticsRunner {
       // a separate case.
       'server': server ?? '',
     });
-    return DnsLookupResult.fromMap(
-      raw is Map ? Map<Object?, Object?>.from(raw) : const {},
-    );
+    return DnsLookupResult.fromMap(_snapshot(raw));
   }
 
   @override
   Future<NetworkInfoSnapshot> networkInfo() async {
     final raw = await _channel.invokeMethod<Object?>('networkInfo');
-    return NetworkInfoSnapshot.fromMap(
-      raw is Map ? Map<Object?, Object?>.from(raw) : const {},
-    );
+    return NetworkInfoSnapshot.fromMap(_snapshot(raw));
   }
 }

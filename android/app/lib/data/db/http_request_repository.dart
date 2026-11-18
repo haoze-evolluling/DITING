@@ -19,6 +19,16 @@ enum RequestStatus {
 
   final String label;
   final String explanation;
+
+  /// Kernel spelling used in SQL plan requests; `all` adds no clause.
+  String get token => switch (this) {
+    RequestStatus.all => 'all',
+    RequestStatus.passed => 'passed',
+    RequestStatus.rewritten => 'rewritten',
+    RequestStatus.blocked => 'blocked',
+    RequestStatus.error => 'error',
+    RequestStatus.bypassed => 'bypassed',
+  };
 }
 
 enum RequestSource {
@@ -103,9 +113,9 @@ RequestStatus _statusOfToken(String token) => switch (token) {
 
 RequestStatus statusOfOutcome(String outcome) => _statusOfToken(
   RustLogQueryCore.instance.classify('httpRequestStatus', {
-        'outcome': outcome,
-      })['status']
-      as String? ??
+            'outcome': outcome,
+          })['status']
+          as String? ??
       'error',
 );
 
@@ -158,7 +168,7 @@ class HttpRequestRepository {
   }) async {
     final plan = RustLogQueryCore.instance.plan('http.query.recent', {
       'limit': limit,
-      'status': _statusToken(status),
+      'status': status.token,
       'query': query,
       'packageName': ?packageName,
       // Inclusive `timestamp` cursor: the merged feed pages by time, not by row offset.
@@ -189,8 +199,7 @@ class HttpRequestRepository {
     final rows = await _db.rawQuery(plan.sql, plan.args);
     return {
       for (final row in RustLogQueryCore.instance.rows('packageCount', rows))
-        row['packageName'] as String:
-            (row['count'] as num?)?.toInt() ?? 0,
+        row['packageName'] as String: (row['count'] as num?)?.toInt() ?? 0,
     };
   }
 
@@ -208,7 +217,7 @@ class HttpRequestRepository {
   }) async {
     final plan = RustLogQueryCore.instance.plan('http.query.export', {
       'limit': limit,
-      'status': _statusToken(status),
+      'status': status.token,
       'since': ?since,
       'until': ?until,
       if (packages.isNotEmpty) 'packages': packages.toList(),
@@ -226,13 +235,4 @@ class HttpRequestRepository {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
   }
-
-  static String _statusToken(RequestStatus status) => switch (status) {
-    RequestStatus.all => 'all',
-    RequestStatus.passed => 'passed',
-    RequestStatus.rewritten => 'rewritten',
-    RequestStatus.blocked => 'blocked',
-    RequestStatus.error => 'error',
-    RequestStatus.bypassed => 'bypassed',
-  };
 }

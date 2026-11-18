@@ -136,10 +136,7 @@ class _SponsorHero extends StatelessWidget {
                 ),
               ],
             ),
-            Text(
-              context.l10n.sponsorNote,
-              style: context.listSubtitleStyle,
-            ),
+            Text(context.l10n.sponsorNote, style: context.listSubtitleStyle),
             Wrap(
               spacing: 6,
               runSpacing: 6,
@@ -174,14 +171,13 @@ class _PaymentSection extends StatelessWidget {
                 child: _PaymentCard(
                   asset: 'packages/diting_shared/assets/pay/alipay_code.webp',
                   label: context.l10n.sponsorAlipay,
-                  glyph: AppGlyphs.qrCode,
                 ),
               ),
               Expanded(
                 child: _PaymentCard(
-                  asset: 'packages/diting_shared/assets/pay/wechatpay_code.webp',
+                  asset:
+                      'packages/diting_shared/assets/pay/wechatpay_code.webp',
                   label: context.l10n.sponsorWechat,
-                  glyph: AppGlyphs.qrCode,
                 ),
               ),
             ],
@@ -194,15 +190,10 @@ class _PaymentSection extends StatelessWidget {
 
 /// One QR code card: white background, since a code needs a light surround to scan, plus its name.
 class _PaymentCard extends StatelessWidget {
-  const _PaymentCard({
-    required this.asset,
-    required this.label,
-    required this.glyph,
-  });
+  const _PaymentCard({required this.asset, required this.label});
 
   final String asset;
   final String label;
-  final Glyph glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +227,11 @@ class _PaymentCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               spacing: 6,
               children: [
-                GlyphIcon(glyph, size: 16, color: context.colorScheme.primary),
+                GlyphIcon(
+                  AppGlyphs.qrCode,
+                  size: 16,
+                  color: context.colorScheme.primary,
+                ),
                 Text(label, style: context.listSubtitleStyle),
               ],
             ),

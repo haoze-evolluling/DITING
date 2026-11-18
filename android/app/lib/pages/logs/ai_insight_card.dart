@@ -22,11 +22,12 @@ class AiInsightCard extends ConsumerWidget {
     final report = state.success && state.target is AgentTrafficTarget
         ? state.content
         : null;
+    final hasReport = report != null;
     final headline = report == null ? null : _headlineOf(report);
 
     return DashboardCard(
       semanticLabel: context.l10n.logsAiInsight,
-      onTap: () => _open(context, state.sessionId, report != null),
+      onTap: () => _open(context, state.sessionId, hasReport),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -35,10 +36,10 @@ class AiInsightCard extends ConsumerWidget {
             title: context.l10n.logsAiInsight,
             trailing: [
               DashboardChip(
-                label: report == null ? context.l10n.logsNotAnalysed : context.l10n.logsHasReport,
-                tone: report == null
-                    ? DashboardChipTone.idle
-                    : DashboardChipTone.ok,
+                label: hasReport
+                    ? context.l10n.logsHasReport
+                    : context.l10n.logsNotAnalysed,
+                tone: hasReport ? DashboardChipTone.ok : DashboardChipTone.idle,
               ),
             ],
           ),
@@ -74,11 +75,11 @@ class AiInsightCard extends ConsumerWidget {
             alignment: Alignment.centerLeft,
             child: TonalButton(
               size: TonalButtonSize.compact,
-              glyph: report == null
-                  ? AppGlyphs.sparkle
-                  : AppGlyphs.chevronForward,
-              label: report == null ? context.l10n.logsAnalyseTraffic : context.l10n.logsViewFullReport,
-              onPressed: () => _open(context, state.sessionId, report != null),
+              glyph: hasReport ? AppGlyphs.chevronForward : AppGlyphs.sparkle,
+              label: hasReport
+                  ? context.l10n.logsViewFullReport
+                  : context.l10n.logsAnalyseTraffic,
+              onPressed: () => _open(context, state.sessionId, hasReport),
             ),
           ),
         ],

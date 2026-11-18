@@ -32,11 +32,7 @@ class AgentParamsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(agentApiProvider);
     final notifier = ref.read(agentApiProvider.notifier);
-    final temperatureLabel = state.temperature <= 0.3
-        ? context.l10n.agentParamsTemperatureStrict
-        : state.temperature <= 0.8
-        ? context.l10n.agentParamsTemperatureBalanced
-        : context.l10n.agentParamsTemperatureWild;
+    final temperatureLabel = _temperatureLabel(context.l10n, state.temperature);
     return CommonScaffold(
       title: context.l10n.agentParamsTitle,
       body: PageBody(
@@ -61,17 +57,17 @@ class AgentParamsPage extends ConsumerWidget {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    for (final (index, label)
-                        in _templateLabels(context.l10n).indexed)
+                    for (final (index, label) in _templateLabels(
+                      context.l10n,
+                    ).indexed)
                       TonalChip(
                         label: label,
                         color: context.raisedSurfaceLevel.colorOf(
                           context.colorScheme,
                         ),
                         foregroundColor: context.colorScheme.onSurfaceVariant,
-                        onPressed: () => notifier.setSystemPrompt(
-                          _templatePrompts[index],
-                        ),
+                        onPressed: () =>
+                            notifier.setSystemPrompt(_templatePrompts[index]),
                       ),
                   ],
                 ),
@@ -111,6 +107,12 @@ class AgentParamsPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  static String _temperatureLabel(AppL10n l10n, double temperature) {
+    if (temperature <= 0.3) return l10n.agentParamsTemperatureStrict;
+    if (temperature <= 0.8) return l10n.agentParamsTemperatureBalanced;
+    return l10n.agentParamsTemperatureWild;
   }
 
   Future<void> _editPrompt(

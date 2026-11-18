@@ -70,9 +70,9 @@ class _ModeOnboardingPageState extends ConsumerState<ModeOnboardingPage> {
           },
         ),
       ],
-      // The app bar floats over the body (extendBodyBehindAppBar) and this page uses a bare Column,
-      // so
-      // without this clearance the progress bar and hero icon would be drawn under the status bar.
+      // The app bar floats over the body (extendBodyBehindAppBar) and this page uses a bare
+      // Column, so without this clearance the progress bar and hero icon would be drawn under
+      // the status bar.
       body: AppBarClearance(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -108,7 +108,9 @@ class _ModeOnboardingPageState extends ConsumerState<ModeOnboardingPage> {
                     child: TonalButton(
                       size: TonalButtonSize.bar,
                       glyph: last ? AppGlyphs.check : AppGlyphs.chevronForward,
-                      label: last ? context.l10n.onboardingStart : context.l10n.onboardingNext,
+                      label: last
+                          ? context.l10n.onboardingStart
+                          : context.l10n.onboardingNext,
                       onPressed: last ? _finish : () => _goTo(_index + 1),
                     ),
                   ),
@@ -132,6 +134,14 @@ class _StepIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
+    Color colorFor(int index) {
+      if (index == current) return colorScheme.primary;
+      if (index < current) {
+        return colorScheme.primary.withValues(alpha: 0.4);
+      }
+      return colorScheme.surfaceContainerHighest;
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       child: Row(
@@ -145,11 +155,7 @@ class _StepIndicator extends StatelessWidget {
                 height: 4,
                 decoration: ShapeDecoration(
                   shape: AppShape.standard,
-                  color: index == current
-                      ? colorScheme.primary
-                      : index < current
-                      ? colorScheme.primary.withValues(alpha: 0.4)
-                      : colorScheme.surfaceContainerHighest,
+                  color: colorFor(index),
                 ),
               ),
             ),

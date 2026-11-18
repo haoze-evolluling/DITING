@@ -42,6 +42,45 @@ class _SiteLatencyDetailPageState extends ConsumerState<SiteLatencyDetailPage> {
     final average = averages.isEmpty
         ? null
         : averages.reduce((a, b) => a + b) / averages.length;
+    final String connectivityValue;
+    if (_anyProbing) {
+      connectivityValue = context.l10n.siteLatencyTestingShort;
+    } else if (measured.isEmpty) {
+      connectivityValue = context.l10n.siteLatencyNoTest;
+    } else {
+      connectivityValue = '$alive / ${measured.length}';
+    }
+    final String chipLabel;
+    if (_anyProbing) {
+      chipLabel = context.l10n.siteLatencyInProgress;
+    } else if (measured.isEmpty) {
+      chipLabel = context.l10n.siteLatencyPending;
+    } else if (failed == 0) {
+      chipLabel = context.l10n.siteLatencyAllReachable;
+    } else {
+      chipLabel = context.l10n.siteLatencyFailedCount(failed);
+    }
+    final Color chipColor;
+    if (measured.isEmpty) {
+      chipColor = colorScheme.onSurfaceVariant;
+    } else if (failed == 0) {
+      chipColor = colorScheme.success;
+    } else {
+      chipColor = colorScheme.warning;
+    }
+    final String hint;
+    if (_anyProbing) {
+      hint = context.l10n.siteLatencyTestingEach;
+    } else if (measured.isEmpty) {
+      hint = context.l10n.siteLatencyPickCategory;
+    } else {
+      final providerSuffix = primary == null
+          ? ''
+          : context.l10n.siteLatencyProviderSuffix(primary.name);
+      hint =
+          '${context.l10n.siteLatencyLastRun(elapsedAgoLabel(_lastRunAt))}'
+          '$providerSuffix';
+    }
     return DashboardDetailScaffold(
       title: context.l10n.siteLatencyDetailTitle,
       actions: [
@@ -60,29 +99,10 @@ class _SiteLatencyDetailPageState extends ConsumerState<SiteLatencyDetailPage> {
         DashboardDetailHero(
           glyph: AppGlyphs.target,
           label: context.l10n.siteLatencyConnectivity,
-          value: _anyProbing
-              ? context.l10n.siteLatencyTestingShort
-              : measured.isEmpty
-              ? context.l10n.siteLatencyNoTest
-              : '$alive / ${measured.length}',
-          chipLabel: _anyProbing
-              ? context.l10n.siteLatencyInProgress
-              : measured.isEmpty
-              ? context.l10n.siteLatencyPending
-              : failed == 0
-              ? context.l10n.siteLatencyAllReachable
-              : context.l10n.siteLatencyFailedCount(failed),
-          chipColor: measured.isEmpty
-              ? colorScheme.onSurfaceVariant
-              : failed == 0
-              ? colorScheme.success
-              : colorScheme.warning,
-          hint: _anyProbing
-              ? context.l10n.siteLatencyTestingEach
-              : measured.isEmpty
-              ? context.l10n.siteLatencyPickCategory
-              : '${context.l10n.siteLatencyLastRun(elapsedAgoLabel(_lastRunAt))}'
-                    '${primary == null ? '' : context.l10n.siteLatencyProviderSuffix(primary.name)}',
+          value: connectivityValue,
+          chipLabel: chipLabel,
+          chipColor: chipColor,
+          hint: hint,
         ),
         DashboardDetailCard(
           glyph: AppGlyphs.speed,
@@ -104,7 +124,10 @@ class _SiteLatencyDetailPageState extends ConsumerState<SiteLatencyDetailPage> {
                 value: average == null ? '—' : '${average.round()}',
                 unit: average == null ? null : 'ms',
               ),
-              StatItem(label: context.l10n.siteLatencyMeasuredSites, value: '${measured.length}'),
+              StatItem(
+                label: context.l10n.siteLatencyMeasuredSites,
+                value: '${measured.length}',
+              ),
             ],
           ),
         ),
@@ -125,14 +148,17 @@ class _SiteLatencyDetailPageState extends ConsumerState<SiteLatencyDetailPage> {
   /// Probes one category, or every category when [category] is null. Groups already running are
   /// skipped, so tapping another group's button while one is in flight does not restart it.
   Future<void> _probe(SiteCategory? category) async {
-    final pending = category == null
-        ? [
-            for (final item in SiteCategory.values)
-              if (!_probing.contains(item)) item,
-          ]
-        : _probing.contains(category)
-        ? <SiteCategory>[]
-        : [category];
+    final List<SiteCategory> pending;
+    if (category == null) {
+      pending = [
+        for (final item in SiteCategory.values)
+          if (!_probing.contains(item)) item,
+      ];
+    } else if (_probing.contains(category)) {
+      pending = const [];
+    } else {
+      pending = [category];
+    }
     if (pending.isEmpty) return;
     final targets = [
       for (final item in pending) ...siteLatencyInCategory(item),

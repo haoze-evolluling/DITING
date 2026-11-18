@@ -63,27 +63,18 @@ class AppRulesDraft {
     }
   }
 
-  void clearDomains(String packageName) => _rules.remove(packageName);
-
   void clearAll() => _rules.clear();
 
   bool get dirty {
-    if (master != _baselineMaster) {
+    if (master != _baselineMaster || _rules.length != _baseline.length) {
       return true;
     }
-    if (_rules.length != _baseline.length) {
-      return true;
-    }
-    for (final entry in _rules.entries) {
+    return _rules.entries.any((entry) {
       final baseline = _baseline[entry.key];
-      if (baseline == null || baseline.length != entry.value.length) {
-        return true;
-      }
-      if (!baseline.containsAll(entry.value)) {
-        return true;
-      }
-    }
-    return false;
+      return baseline == null ||
+          baseline.length != entry.value.length ||
+          !baseline.containsAll(entry.value);
+    });
   }
 
   void commit() {
@@ -179,7 +170,8 @@ class AppRuleAppRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 6,
               children: [
-                if (configured) MetaChip(label: context.l10n.appRulesConfigured),
+                if (configured)
+                  MetaChip(label: context.l10n.appRulesConfigured),
                 if (app.isSystem) MetaChip(label: context.l10n.appRulesSystem),
               ],
             )
@@ -299,13 +291,19 @@ class AppScopedRuleRow extends StatelessWidget {
             : context.colorScheme.error,
       ),
       title: Text(rule.pattern, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(isAllow ? context.l10n.appRulesAllowlistRow : context.l10n.appRulesBlocklistRow),
+      subtitle: Text(
+        isAllow
+            ? context.l10n.appRulesAllowlistRow
+            : context.l10n.appRulesBlocklistRow,
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (rule.important) MetaChip(label: context.l10n.appRulesImportant),
           IconButton(
-            tooltip: rule.enabled ? context.l10n.appRulesDisable : context.l10n.appRulesEnable,
+            tooltip: rule.enabled
+                ? context.l10n.appRulesDisable
+                : context.l10n.appRulesEnable,
             onPressed: () => onToggle(!rule.enabled),
             icon: GlyphIcon(
               rule.enabled ? AppGlyphs.check : AppGlyphs.close,
@@ -379,7 +377,10 @@ class _ScopedRuleDialogState extends State<_ScopedRuleDialog> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SegmentedControl<RuleKind>(
-            segments: [(RuleKind.block, context.l10n.appRulesBlocklist), (RuleKind.allow, context.l10n.appRulesAllowlist)],
+            segments: [
+              (RuleKind.block, context.l10n.appRulesBlocklist),
+              (RuleKind.allow, context.l10n.appRulesAllowlist),
+            ],
             value: _kind,
             onChanged: (value) => setState(() => _kind = value),
           ),

@@ -23,6 +23,9 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
     final state = ref.watch(networkDiagnosticsProvider);
     final notifier = ref.read(networkDiagnosticsProvider.notifier);
     final l10n = context.l10n;
+    final leak = state.leak;
+    final captive = state.captive;
+    final portalUrl = captive?.portalUrl;
 
     return CommonScaffold(
       title: l10n.networkDiagnosticsTitle,
@@ -34,14 +37,14 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
           _DiagnosticsSection(
             title: l10n.dnsLeakSection,
             rows: [
-              if (state.leak != null)
+              if (leak != null)
                 _VerdictItem(
-                  icon: state.leak!.status == 'leak'
+                  icon: leak.status == 'leak'
                       ? AppGlyphs.block
                       : AppGlyphs.checkCircle,
-                  error: state.leak!.status == 'leak',
-                  title: _leakLabel(context, state.leak!.status),
-                  detail: _leakReason(context, state.leak!.reason),
+                  error: leak.status == 'leak',
+                  title: _leakLabel(context, leak.status),
+                  detail: _leakReason(context, leak.reason),
                 ),
             ],
             action: _ActionButton(
@@ -54,14 +57,14 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
           _DiagnosticsSection(
             title: l10n.captiveSection,
             rows: [
-              if (state.captive != null)
+              if (captive != null)
                 _VerdictItem(
-                  icon: state.captive!.state == 'portal'
+                  icon: captive.state == 'portal'
                       ? AppGlyphs.wifiOff
                       : AppGlyphs.checkCircle,
-                  error: state.captive!.state == 'portal',
-                  title: _captiveLabel(context, state.captive!.state),
-                  detail: state.captive!.portalUrl ?? '',
+                  error: captive.state == 'portal',
+                  title: _captiveLabel(context, captive.state),
+                  detail: captive.portalUrl ?? '',
                 ),
             ],
             action: _ActionButton(
@@ -71,13 +74,13 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
               onPressed: notifier.runCaptiveCheck,
             ),
           ),
-          if (state.captive?.portalUrl != null)
+          if (portalUrl != null)
             _ActionButton(
               label: l10n.captiveOpenPortal,
               glyph: AppGlyphs.openExternal,
               busy: false,
               onPressed: () => launchUrl(
-                Uri.parse(state.captive!.portalUrl!),
+                Uri.parse(portalUrl),
                 mode: LaunchMode.externalApplication,
               ),
             ),

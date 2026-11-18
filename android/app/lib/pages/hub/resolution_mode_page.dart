@@ -73,7 +73,10 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 2,
                       children: [
-                        Text(mode.label(context.l10n), style: context.listTitleStyle),
+                        Text(
+                          mode.label(context.l10n),
+                          style: context.listTitleStyle,
+                        ),
                         Text(
                           _descriptionOf(mode, context.l10n),
                           style: context.listSubtitleStyle,
@@ -93,7 +96,10 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 6,
               children: [
-                Text(context.l10n.resolutionBuiltinProtocol, style: context.listTitleStyle),
+                Text(
+                  context.l10n.resolutionBuiltinProtocol,
+                  style: context.listTitleStyle,
+                ),
                 SegmentedControl<ProviderProtocol>(
                   segments: [
                     for (final protocol in ProviderProtocol.values)
@@ -119,7 +125,12 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
                   title: Text(option.label(context.l10n)),
                   subtitle: Text(_descriptionOf(option, context.l10n)),
                   trailing: Text(
-                    _summaryOf(context.l10n, option, singleProvider, raceIds.length),
+                    _summaryOf(
+                      context.l10n,
+                      option,
+                      singleProvider,
+                      raceIds.length,
+                    ),
                     style: AppTextStyle.footnote
                         .of(context)
                         .copyWith(color: colorScheme.onSurfaceVariant),
@@ -147,7 +158,8 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
     MockProvider? singleProvider,
     int raceCount,
   ) => switch (mode) {
-    ResolutionMode.single => singleProvider?.name ?? l10n.resolutionNotConfigured,
+    ResolutionMode.single =>
+      singleProvider?.name ?? l10n.resolutionNotConfigured,
     _ => l10n.resolutionProviderCount(raceCount),
   };
 
@@ -295,14 +307,16 @@ class _ResolutionModeConfigPageState
                   ),
                   Expanded(
                     child: Text(
-                      _mode == ResolutionMode.single
+                      _single
                           ? context.l10n.resolutionSingleHint
                           : context.l10n.resolutionRaceHint(selectedCount),
                       style: context.listSubtitleStyle,
                     ),
                   ),
                   TonalChip(
-                    label: valid ? context.l10n.resolutionReady : context.l10n.resolutionPending,
+                    label: valid
+                        ? context.l10n.resolutionReady
+                        : context.l10n.resolutionPending,
                     color: valid
                         ? context.colorScheme.primary
                         : context.raisedSurfaceLevel.colorOf(
@@ -333,7 +347,8 @@ class _ResolutionModeConfigPageState
               ResolutionMode.single => context.l10n.resolutionSectionSingle,
               ResolutionMode.smart => context.l10n.resolutionSectionSmart,
               ResolutionMode.parallel => context.l10n.resolutionSectionParallel,
-              ResolutionMode.primaryBackup => context.l10n.resolutionSectionBackup,
+              ResolutionMode.primaryBackup =>
+                context.l10n.resolutionSectionBackup,
             },
             items: [
               if (providers.isEmpty)
@@ -344,13 +359,11 @@ class _ResolutionModeConfigPageState
               for (final provider in [...ordered, ...rest])
                 ListItem(
                   leading: GlyphIcon(
-                    _single
-                        ? (provider.id == selectedId
-                              ? AppGlyphs.checkCircle
-                              : AppGlyphs.dns)
-                        : (raceIds.contains(provider.id)
-                              ? AppGlyphs.checkCircle
-                              : AppGlyphs.dns),
+                    (_single
+                            ? provider.id == selectedId
+                            : raceIds.contains(provider.id))
+                        ? AppGlyphs.checkCircle
+                        : AppGlyphs.dns,
                     size: 20,
                   ),
                   title: Text(provider.name),

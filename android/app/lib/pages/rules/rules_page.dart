@@ -1,6 +1,6 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
+import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/state/rules_providers.dart';
@@ -153,11 +153,10 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       title: context.l10n.ruleDelete,
       message: switch (rule.source) {
         RuleSource.preset => context.l10n.ruleDeletePresetMessage(rule.pattern),
-        RuleSource.subscription =>
-          context.l10n.ruleDeleteSubscriptionMessage(
-            rule.pattern,
-            rule.subscriptionName ?? context.l10n.ruleSourceSubscription,
-          ),
+        RuleSource.subscription => context.l10n.ruleDeleteSubscriptionMessage(
+          rule.pattern,
+          rule.subscriptionName ?? context.l10n.ruleSourceSubscription,
+        ),
         RuleSource.user => context.l10n.ruleDeleteUserMessage(rule.pattern),
       },
       confirmLabel: context.l10n.formDelete,
@@ -208,9 +207,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
           child: Text(UiLocalizations.of(context).close),
         ),
       ],
-      child: Text(
-        context.l10n.rulePresetProtectedMessage,
-      ),
+      child: Text(context.l10n.rulePresetProtectedMessage),
     ),
   );
 
@@ -222,8 +219,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     final confirmed = await _confirm(
       context,
       title: context.l10n.ruleAllowEditTitle,
-      message:
-          context.l10n.ruleAllowEditMessage,
+      message: context.l10n.ruleAllowEditMessage,
       confirmLabel: context.l10n.ruleAllowEditConfirm,
     );
     if (!confirmed || !mounted) {
@@ -234,7 +230,9 @@ class _RulesPageState extends ConsumerState<RulesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final kind = _kind;
+    final kindTitle = kind.title(l10n);
     final allowPresetEditable = ref.watch(allowPresetEditableProvider);
     final filter = RuleListFilter(
       kind: kind,
@@ -247,31 +245,29 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     final searching = _query.isNotEmpty || _sourceFilter != null;
 
     return CommonScaffold(
-      title: kind.title(context.l10n),
+      title: kindTitle,
       iconActions: [
         IconButtonData(
           glyph: AppGlyphs.add,
-          tooltip: context.l10n.ruleAddForKind(kind.title(context.l10n)),
+          tooltip: l10n.ruleAddForKind(kindTitle),
           onPressed: _addRule,
         ),
         IconButtonData(
           glyph: AppGlyphs.listAdd,
-          tooltip: context.l10n.batchAddTitle,
+          tooltip: l10n.batchAddTitle,
           onPressed: () => context.push(Routes.batchEditor),
         ),
       ],
       menuItems: [
         CommonPopupMenuItem(
-          label: context.l10n.ruleClearCustomForKind(
-            kind.title(context.l10n),
-          ),
+          label: l10n.ruleClearCustomForKind(kindTitle),
           glyph: AppGlyphs.broom,
           danger: true,
           onPressed: tally.custom == 0 ? null : _clearCustom,
         ),
         if (kind == RuleKind.allow)
           CommonPopupMenuItem(
-            label: context.l10n.ruleResetDefault,
+            label: l10n.ruleResetDefault,
             glyph: AppGlyphs.reset,
             onPressed: _resetPreset,
           ),
@@ -286,14 +282,19 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                   child: CommonCard(
                     child: StatStrip(
                       stats: [
-                        StatItem(label: context.l10n.ruleTotal, value: '${tally.total}'),
                         StatItem(
-                          label: context.l10n.ruleEnabled,
+                          label: l10n.ruleTotal,
+                          value: '${tally.total}',
+                        ),
+                        StatItem(
+                          label: l10n.ruleEnabled,
                           value: '${tally.enabled}',
                           color: context.colorScheme.success,
                         ),
                         StatItem(
-                          label: kind == RuleKind.rewrite ? context.l10n.ruleRewriteEntries : context.l10n.ruleCustom,
+                          label: kind == RuleKind.rewrite
+                              ? l10n.ruleRewriteEntries
+                              : l10n.ruleCustom,
                           value: '${tally.custom}',
                         ),
                       ],
@@ -305,8 +306,8 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: CommonCard(
                       child: ListItem.toggle(
-                        title: Text(context.l10n.ruleAllowEditDefault),
-                        subtitle: Text(context.l10n.ruleAllowEditDefaultSubtitle),
+                        title: Text(l10n.ruleAllowEditDefault),
+                        subtitle: Text(l10n.ruleAllowEditDefaultSubtitle),
                         value: allowPresetEditable,
                         onChanged: _togglePresetEditing,
                       ),
@@ -331,7 +332,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                   child: Text(
                     // The counter always reports a number, even zero: the empty state already
                     // says there are no matching rules, and repeating it reads as double render.
-                    context.l10n.ruleTally(tally.matched, tally.matchedEnabled),
+                    l10n.ruleTally(tally.matched, tally.matchedEnabled),
                     style: context.listCaptionStyle,
                   ),
                 ),
@@ -344,21 +345,17 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                 minHeight: 320,
                 child: NullStatus(
                   label: searching
-                      ? context.l10n.ruleNoMatch
-                      : context.l10n.ruleNoRulesForKind(
-                          kind.title(context.l10n),
-                        ),
-                  description: searching ? context.l10n.ruleNoMatchDescription : kind.summary(context.l10n),
+                      ? l10n.ruleNoMatch
+                      : l10n.ruleNoRulesForKind(kindTitle),
+                  description: searching
+                      ? l10n.ruleNoMatchDescription
+                      : kind.summary(l10n),
                   illustration: NullStatusIllustration.rules,
                   action: searching
                       ? null
                       : FilledButton(
                           onPressed: _addRule,
-                          child: Text(
-                            context.l10n.ruleAddForKind(
-                              kind.title(context.l10n),
-                            ),
-                          ),
+                          child: Text(l10n.ruleAddForKind(kindTitle)),
                         ),
                 ),
               ),
@@ -372,7 +369,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                 rules: section.rules,
                 kind: kind,
                 allowPresetEditable: allowPresetEditable,
-                l10n: context.l10n,
+                l10n: l10n,
                 onToggle: (rule, enabled) => ref
                     .read(rulesProvider.notifier)
                     .toggle(kind, rule.id, enabled),
@@ -398,7 +395,8 @@ class _SourceChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final options = <(RuleSourceFilter, String)>[
       (null, context.l10n.ruleAll),
-      for (final source in RuleSource.values) (source, source.label(context.l10n)),
+      for (final source in RuleSource.values)
+        (source, source.label(context.l10n)),
     ];
     return ChipRow(
       children: [

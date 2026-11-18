@@ -126,14 +126,8 @@ class DomainActionRow extends ConsumerWidget {
     showObsTip(
       context,
       added
-          ? context.l10n.obsAddedToKind(
-              domain,
-              kind.title(context.l10n),
-            )
-          : context.l10n.obsAlreadyInKind(
-              domain,
-              kind.title(context.l10n),
-            ),
+          ? context.l10n.obsAddedToKind(domain, kind.title(context.l10n))
+          : context.l10n.obsAlreadyInKind(domain, kind.title(context.l10n)),
     );
   }
 
@@ -161,7 +155,9 @@ class DomainActionRow extends ConsumerWidget {
               Expanded(
                 child: _QuickAction(
                   glyph: AppGlyphs.copy,
-                  label: host != null && domain == null ? context.l10n.obsCopyAddress : context.l10n.obsCopyDomain,
+                  label: host != null && domain == null
+                      ? context.l10n.obsCopyAddress
+                      : context.l10n.obsCopyDomain,
                   color: colorScheme.primary,
                   onPressed: host == null ? null : () => _copy(context, host),
                 ),
@@ -169,7 +165,9 @@ class DomainActionRow extends ConsumerWidget {
               Expanded(
                 child: _QuickAction(
                   glyph: AppGlyphs.block,
-                  label: inBlock ? context.l10n.obsInBlocklist : context.l10n.obsAddToBlocklist,
+                  label: inBlock
+                      ? context.l10n.obsInBlocklist
+                      : context.l10n.obsAddToBlocklist,
                   color: colorScheme.error,
                   onPressed: domain == null || inBlock
                       ? null
@@ -179,7 +177,9 @@ class DomainActionRow extends ConsumerWidget {
               Expanded(
                 child: _QuickAction(
                   glyph: AppGlyphs.checkCircle,
-                  label: inAllow ? context.l10n.obsInAllowlist : context.l10n.obsAddToAllowlist,
+                  label: inAllow
+                      ? context.l10n.obsInAllowlist
+                      : context.l10n.obsAddToAllowlist,
                   color: colorScheme.success,
                   onPressed: domain == null || inAllow
                       ? null
@@ -285,11 +285,7 @@ class AgentAnalysisSection extends ConsumerWidget {
 
 /// Tappable card that opens the AI report for [domain] above the current sheet.
 class AgentAnalysisEntryCard extends StatelessWidget {
-  const AgentAnalysisEntryCard({
-    super.key,
-    required this.domain,
-    this.title,
-  });
+  const AgentAnalysisEntryCard({super.key, required this.domain, this.title});
 
   final String domain;
   final String? title;
@@ -320,7 +316,10 @@ class AgentAnalysisEntryCard extends StatelessWidget {
                   title ?? context.l10n.obsAnalyzeRequest,
                   style: context.listTitleStyle,
                 ),
-                Text(context.l10n.obsAnalyzeRequestBody, style: context.listCaptionStyle),
+                Text(
+                  context.l10n.obsAnalyzeRequestBody,
+                  style: context.listCaptionStyle,
+                ),
               ],
             ),
           ),

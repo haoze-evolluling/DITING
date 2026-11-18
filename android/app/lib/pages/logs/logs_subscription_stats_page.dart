@@ -75,7 +75,7 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
       return [
         SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 32),
+            padding: const EdgeInsets.symmetric(vertical: 32),
             child: LogsPageLoading(label: context.l10n.logsLoadingStats),
           ),
         ),

@@ -38,133 +38,19 @@ class ServerUpstream {
       RustDnsConfigCore.instance.serverHostPort(address, port);
 }
 
-List<ServerUpstream> serverPresetUpstreams(AppL10n l10n) => <ServerUpstream>[
-  ServerUpstream(
-    id: 'preset_alidns_dns',
-    name: l10n.upstreamPresetAliyun,
-    protocol: DnsProtocol.dns,
-    address: '223.5.5.5',
-    port: 53,
-  ),
-  ServerUpstream(
-    id: 'preset_dnspod_dns',
-    name: l10n.upstreamPresetTencent,
-    protocol: DnsProtocol.dns,
-    address: '119.29.29.29',
-    port: 53,
-  ),
-  ServerUpstream(
-    id: 'preset_360_dns',
-    name: '360',
-    protocol: DnsProtocol.dns,
-    address: '101.226.4.6',
-    port: 53,
-  ),
-  ServerUpstream(
-    id: 'preset_onedns_dns',
-    name: 'OneDNS',
-    protocol: DnsProtocol.dns,
-    address: '117.50.10.10',
-    port: 53,
-  ),
-  ServerUpstream(
-    id: 'preset_cloudflare_dns',
-    name: 'Cloudflare',
-    protocol: DnsProtocol.dns,
-    address: '1.1.1.1',
-    port: 53,
-  ),
-  ServerUpstream(
-    id: 'preset_google_dns',
-    name: 'Google',
-    protocol: DnsProtocol.dns,
-    address: '8.8.8.8',
-    port: 53,
-  ),
-  ServerUpstream(
-    id: 'preset_alidns_doh',
-    name: l10n.upstreamPresetAliyun,
-    protocol: DnsProtocol.doh,
-    address: 'https://dns.alidns.com/dns-query',
-    port: 443,
-  ),
-  ServerUpstream(
-    id: 'preset_dnspod_doh',
-    name: l10n.upstreamPresetTencent,
-    protocol: DnsProtocol.doh,
-    address: 'https://doh.pub/dns-query',
-    port: 443,
-  ),
-  ServerUpstream(
-    id: 'preset_360_doh',
-    name: '360',
-    protocol: DnsProtocol.doh,
-    address: 'https://doh.360.cn/dns-query',
-    port: 443,
-  ),
-  ServerUpstream(
-    id: 'preset_onedns_doh',
-    name: 'OneDNS',
-    protocol: DnsProtocol.doh,
-    address: 'https://doh.onedns.net/dns-query',
-    port: 443,
-  ),
-  ServerUpstream(
-    id: 'preset_cloudflare_doh',
-    name: 'Cloudflare',
-    protocol: DnsProtocol.doh,
-    address: 'https://cloudflare-dns.com/dns-query',
-    port: 443,
-  ),
-  ServerUpstream(
-    id: 'preset_google_doh',
-    name: 'Google',
-    protocol: DnsProtocol.doh,
-    address: 'https://dns.google/dns-query',
-    port: 443,
-  ),
-  ServerUpstream(
-    id: 'preset_alidns_dot',
-    name: l10n.upstreamPresetAliyun,
-    protocol: DnsProtocol.dot,
-    address: 'dns.alidns.com',
-    port: 853,
-  ),
-  ServerUpstream(
-    id: 'preset_dnspod_dot',
-    name: l10n.upstreamPresetTencent,
-    protocol: DnsProtocol.dot,
-    address: 'dot.pub',
-    port: 853,
-  ),
-  ServerUpstream(
-    id: 'preset_360_dot',
-    name: '360',
-    protocol: DnsProtocol.dot,
-    address: 'dot.360.cn',
-    port: 853,
-  ),
-  ServerUpstream(
-    id: 'preset_onedns_dot',
-    name: 'OneDNS',
-    protocol: DnsProtocol.dot,
-    address: 'dot.onedns.net',
-    port: 853,
-  ),
-  ServerUpstream(
-    id: 'preset_cloudflare_dot',
-    name: 'Cloudflare',
-    protocol: DnsProtocol.dot,
-    address: 'one.one.one.one',
-    port: 853,
-  ),
-  ServerUpstream(
-    id: 'preset_google_dot',
-    name: 'Google',
-    protocol: DnsProtocol.dot,
-    address: 'dns.google',
-    port: 853,
-  ),
+/// Server mode reuses the tunnel catalog: the preset ids, names and hosts are the same. A DoH
+/// entry keeps its URL and the TLS port; the other protocols keep host and port.
+List<ServerUpstream> serverPresetUpstreams(AppL10n l10n) => [
+  for (final provider in defaultDnsProviders(l10n))
+    ServerUpstream(
+      id: provider.id,
+      name: provider.name,
+      protocol: provider.protocol,
+      address: provider.protocol == DnsProtocol.doh
+          ? provider.url
+          : provider.host,
+      port: provider.protocol == DnsProtocol.doh ? 443 : provider.port,
+    ),
 ];
 
 class ServerDnsConfig {
@@ -198,8 +84,7 @@ class ServerDnsConfig {
 
   int get providerCount => providers.length;
 
-  Map<String, Object?> toJson() =>
-      jsonDecode(document) as Map<String, Object?>;
+  Map<String, Object?> toJson() => jsonDecode(document) as Map<String, Object?>;
 
   String encode() => document;
 }
@@ -258,9 +143,7 @@ ServerDnsConfig buildServerDnsConfig(LegacySettings settings) {
   return ServerDnsConfig(
     port: document.port,
     mode: document.mode,
-    providers: [
-      for (final row in document.providers) serverUpstreamOf(row),
-    ],
+    providers: [for (final row in document.providers) serverUpstreamOf(row)],
     adBlockEnabled: settings.serverAdBlockEnabled,
     document: document.document,
   );

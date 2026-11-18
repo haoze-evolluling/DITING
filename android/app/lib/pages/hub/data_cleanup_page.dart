@@ -112,7 +112,7 @@ class DataCleanupPage extends ConsumerWidget {
 
     // The legacy version exits the app for these two: they clear the first-run agreement
     // flag, and staying alive would split "running" from "must agree again".
-    if (action.exitsApp && context.mounted) {
+    if (action.exitsApp) {
       await _exitApp(context);
     }
   }

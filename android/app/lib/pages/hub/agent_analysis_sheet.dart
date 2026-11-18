@@ -115,6 +115,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
     final state = ref.watch(agentAnalysisProvider);
     final api = ref.watch(agentApiProvider);
     final mine = state.sessionId == _sessionId && _sessionId != 0;
+    final status = _statusSection(api: api, state: state, mine: mine);
     return CommonScaffold(
       title: widget.target.title(context.l10n),
       body: ListView(
@@ -122,7 +123,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
         children: [
           _Header(target: widget.target),
-          ..._statusSections(context, api: api, state: state, mine: mine),
+          ?status,
           if (mine && state.success && state.content != null) ...[
             _ResultMeta(state: state),
             Padding(
@@ -143,78 +144,72 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
     );
   }
 
-  List<Widget> _statusSections(
-    BuildContext context, {
+  /// The single mutually exclusive state panel, or null once the result is shown.
+  Widget? _statusSection({
     required AgentApiState api,
     required AgentAnalysisState state,
     required bool mine,
   }) {
     if (!api.enabled) {
-      return [
-        _Notice(
-          glyph: AppGlyphs.lock,
-          title: context.l10n.agentSheetDisabledTitle,
-          description: context.l10n.agentSheetDisabledBody,
-          actionLabel: context.l10n.agentSheetEnableAndStart,
-          onPressed: _enableAndStart,
-        ),
-      ];
+      return _Notice(
+        glyph: AppGlyphs.lock,
+        title: context.l10n.agentSheetDisabledTitle,
+        description: context.l10n.agentSheetDisabledBody,
+        actionLabel: context.l10n.agentSheetEnableAndStart,
+        onPressed: _enableAndStart,
+      );
     }
     if (!api.ready) {
-      return [
-        _Notice(
-          glyph: AppGlyphs.key,
-          title: context.l10n.agentSheetNoKeyTitle,
-          description: context.l10n.agentSheetNoKeyBody,
-          actionLabel: context.l10n.agentSheetGoConfigure,
-          onPressed: () => context.push(HubPaths.agentProviders),
-        ),
-      ];
+      return _Notice(
+        glyph: AppGlyphs.key,
+        title: context.l10n.agentSheetNoKeyTitle,
+        description: context.l10n.agentSheetNoKeyBody,
+        actionLabel: context.l10n.agentSheetGoConfigure,
+        onPressed: () => context.push(HubPaths.agentProviders),
+      );
     }
     if (mine && state.running) {
-      return [
-        _Notice(
-          glyph: AppGlyphs.sparkle,
-          title: context.l10n.agentSheetRunning,
-          description: context.l10n.agentSheetModel(
-            api.activeProvider?.model ?? context.l10n.agentSheetUnknown,
-          ),
-          loading: true,
-          actionLabel: context.l10n.uiCancel,
-          onPressed: () {
-            ref.read(agentAnalysisProvider.notifier).cancel();
-            setState(() => _sessionId = 0);
-          },
+      return _Notice(
+        glyph: AppGlyphs.sparkle,
+        title: context.l10n.agentSheetRunning,
+        description: context.l10n.agentSheetModel(
+          api.activeProvider?.model ?? context.l10n.agentSheetUnknown,
         ),
-      ];
+        loading: true,
+        actionLabel: context.l10n.uiCancel,
+        onPressed: () {
+          ref.read(agentAnalysisProvider.notifier).cancel();
+          setState(() => _sessionId = 0);
+        },
+      );
     }
     if (mine && state.failed) {
-      return [
-        _Notice(
-          glyph: AppGlyphs.error,
-          title: context.l10n.agentSheetFailed,
-          description: state.error ?? context.l10n.agentSheetUnknownError,
-          isError: true,
-          actionLabel: context.l10n.obsRetry,
-          onPressed: _start,
-          secondaryLabel: context.l10n.agentSheetCheckSettings,
-          onSecondaryPressed: () => context.push(HubPaths.agentProviders),
-        ),
-      ];
-    }
-    if (mine && state.success) return const [];
-    // Nothing running for this sheet: either it was superseded or it never started.
-    return [
-      _Notice(
-        glyph: AppGlyphs.sparkle,
-        title: _sessionId == 0 ? context.l10n.agentSheetNotStarted : context.l10n.agentSheetSuperseded,
-        description: _sessionId == 0
-            ? context.l10n.agentSheetStartHint
-            : context.l10n.agentSheetSupersededHint,
-        actionLabel: context.l10n.agentSheetStart,
+      return _Notice(
+        glyph: AppGlyphs.error,
+        title: context.l10n.agentSheetFailed,
+        description: state.error ?? context.l10n.agentSheetUnknownError,
+        isError: true,
+        actionLabel: context.l10n.obsRetry,
         onPressed: _start,
-      ),
-    ];
+        secondaryLabel: context.l10n.agentSheetCheckSettings,
+        onSecondaryPressed: () => context.push(HubPaths.agentProviders),
+      );
+    }
+    if (mine && state.success) {
+      return null;
+    }
+    // Nothing running for this sheet: either it was superseded or it never started.
+    return _Notice(
+      glyph: AppGlyphs.sparkle,
+      title: _sessionId == 0
+          ? context.l10n.agentSheetNotStarted
+          : context.l10n.agentSheetSuperseded,
+      description: _sessionId == 0
+          ? context.l10n.agentSheetStartHint
+          : context.l10n.agentSheetSupersededHint,
+      actionLabel: context.l10n.agentSheetStart,
+      onPressed: _start,
+    );
   }
 
   Widget _digestSection(AgentAnalysisState state) {
@@ -229,7 +224,11 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
             alignment: Alignment.centerLeft,
             child: TextButton(
               onPressed: () => setState(() => _showDigest = !_showDigest),
-              child: Text(_showDigest ? context.l10n.agentSheetHideDigest : context.l10n.agentSheetShowDigest),
+              child: Text(
+                _showDigest
+                    ? context.l10n.agentSheetHideDigest
+                    : context.l10n.agentSheetShowDigest,
+              ),
             ),
           ),
         ),

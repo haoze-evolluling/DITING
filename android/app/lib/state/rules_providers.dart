@@ -117,8 +117,7 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
     if (trimmed.isEmpty) {
       return;
     }
-    final matches = rulesOf(kind).where((rule) => rule.id == id);
-    final current = matches.isEmpty ? null : matches.first;
+    final current = rulesOf(kind).where((rule) => rule.id == id).firstOrNull;
     final repo = _repo;
     final dbId = int.tryParse(id);
     if (repo != null && dbId != null) {
@@ -273,13 +272,13 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
   }
 }
 
-MockRule _copy(MockRule rule, {bool? enabled, bool? important}) => MockRule(
+MockRule _copy(MockRule rule, {bool? enabled}) => MockRule(
   id: rule.id,
   pattern: rule.pattern,
   kind: rule.kind,
   source: rule.source,
   enabled: enabled ?? rule.enabled,
-  important: important ?? rule.important,
+  important: rule.important,
   group: rule.group,
   subscriptionName: rule.subscriptionName,
   target: rule.target,
@@ -324,7 +323,10 @@ class RuleListFilter {
 ///
 /// Rebuilt only when that table changes, and folded lazily on the first query: typing is the only
 /// thing that pays for it.
-final ruleSearchIndexProvider = Provider.family<RuleSearchIndex, RuleKind>((ref, kind) {
+final ruleSearchIndexProvider = Provider.family<RuleSearchIndex, RuleKind>((
+  ref,
+  kind,
+) {
   final rules = ref.watch(rulesOfKindProvider(kind));
   final index = RuleSearchIndex(
     () => [

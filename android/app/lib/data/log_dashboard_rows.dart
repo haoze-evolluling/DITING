@@ -34,7 +34,8 @@ bool isConnectionLog({
 /// move into `DnsLogRepository.dailyStats`.
 String dnsResultLabelOf(String result, {required bool isConnection}) =>
     switch (result) {
-      'PASSED' => isConnection ? currentL10n.commonBypass : currentL10n.logPassed,
+      'PASSED' =>
+        isConnection ? currentL10n.commonBypass : currentL10n.logPassed,
       'REWRITTEN' => currentL10n.commonRewrite,
       'BLOCKED' => currentL10n.logFiltered,
       'ERROR' => currentL10n.commonFailed,
@@ -128,14 +129,16 @@ LogRecentRequest logRecentRequestOfDns(DnsLogRecord row) {
 
 LogRecentRequest logRecentRequestOfHttp(HttpRequestRecord row) {
   final status = httpRowStatusOf(row.outcome);
+  final authority = row.authority ?? '';
+  final matchedRule = row.matchedRule ?? '';
   final meta = <String>[
     if (row.protocol.isNotEmpty) row.protocol,
     if (row.packageName.isNotEmpty) row.packageName,
-    if ((row.matchedRule ?? '').isNotEmpty) row.matchedRule!,
+    if (matchedRule.isNotEmpty) matchedRule,
   ].join(' · ');
   return LogRecentRequest(
     time: dashboardClockOf(row.timestamp),
-    name: (row.authority ?? '').isEmpty ? currentL10n.logRowNoAuthority : row.authority!,
+    name: authority.isEmpty ? currentL10n.logRowNoAuthority : authority,
     source: 'HTTPS',
     meta: meta,
     resultLabel: switch (status) {

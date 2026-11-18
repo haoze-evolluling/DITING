@@ -6,7 +6,10 @@ class _GroupManageSheet extends ConsumerWidget {
   const _GroupManageSheet();
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final name = await _askName(context, title: context.l10n.subsNewGroupTitle);
+    final name = await _askGroupName(
+      context,
+      title: context.l10n.subsNewGroupTitle,
+    );
     if (name == null) {
       return;
     }
@@ -18,7 +21,7 @@ class _GroupManageSheet extends ConsumerWidget {
     WidgetRef ref,
     SubscriptionGroupRecord group,
   ) async {
-    final name = await _askName(
+    final name = await _askGroupName(
       context,
       title: context.l10n.subsGroupRenameTitle,
       value: group.name,
@@ -31,12 +34,7 @@ class _GroupManageSheet extends ConsumerWidget {
         .renameGroup(group.id, name);
     if (!ok && context.mounted) {
       // The unique index on the name rejects the update; say so instead of doing nothing.
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.subsGroupDuplicate),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showSnack(context, context.l10n.subsGroupDuplicate);
     }
   }
 
@@ -45,26 +43,13 @@ class _GroupManageSheet extends ConsumerWidget {
     WidgetRef ref,
     SubscriptionGroupRecord group,
   ) async {
-    final localizations = UiLocalizations.of(context);
-    final confirmed = await showFloatingDialog<bool>(
-      context: context,
-      child: CommonDialog(
-        title: context.l10n.subsGroupDeleteTitle,
-        destructive: true,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(localizations.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.l10n.commonDelete),
-          ),
-        ],
-        child: Text(context.l10n.subsGroupDeleteMessage(group.name)),
-      ),
+    final confirmed = await _confirm(
+      context,
+      title: context.l10n.subsGroupDeleteTitle,
+      message: context.l10n.subsGroupDeleteMessage(group.name),
+      confirmLabel: context.l10n.commonDelete,
     );
-    if (confirmed != true) {
+    if (!confirmed) {
       return;
     }
     await ref.read(subscriptionActionsProvider).deleteGroup(group.id);
@@ -72,23 +57,6 @@ class _GroupManageSheet extends ConsumerWidget {
     if (ref.read(subscriptionGroupFilterProvider) == group.id) {
       ref.read(subscriptionGroupFilterProvider.notifier).select(null);
     }
-  }
-
-  Future<String?> _askName(
-    BuildContext context, {
-    required String title,
-    String value = '',
-  }) {
-    return showFloatingDialog<String>(
-      context: context,
-      child: InputDialog(
-        title: title,
-        value: value,
-        validator: (value) => (value ?? '').trim().isEmpty
-            ? context.l10n.subsGroupNameRequired
-            : null,
-      ),
-    );
   }
 
   @override
@@ -108,7 +76,7 @@ class _GroupManageSheet extends ConsumerWidget {
         children: [
           if (groups == null)
             Padding(
-              padding: EdgeInsets.fromLTRB(16, 24, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
               child: LinearProgressIndicator(minHeight: 3),
             )
           else

@@ -100,7 +100,7 @@ class DashboardDetailCard extends StatelessWidget {
           child,
           if (footer case final footer?) ...[
             const SizedBox(height: 12),
-            Text(footer, style: _caption(context)),
+            Text(footer, style: _captionStyle(context)),
           ],
         ],
       ),
@@ -127,10 +127,6 @@ class DashboardDetailCard extends StatelessWidget {
       ),
     );
   }
-
-  static TextStyle _caption(BuildContext context) => AppTextStyle.caption1
-      .of(context)
-      .copyWith(color: context.colorScheme.onSurfaceVariant);
 }
 
 class _Header extends StatelessWidget {
@@ -262,9 +258,10 @@ class DashboardDetailHero extends StatelessWidget {
                 ),
               ),
               if (chipLabel case final chipLabel?)
-                _StatusPill(
+                StatusPill(
                   label: chipLabel,
                   color: chipColor ?? colorScheme.onSurfaceVariant,
+                  alpha: 0.12,
                 ),
             ],
           ),
@@ -276,20 +273,8 @@ class DashboardDetailHero extends StatelessWidget {
       ),
     );
   }
-
-  static TextStyle _captionStyle(BuildContext context) => AppTextStyle.caption1
-      .of(context)
-      .copyWith(color: context.colorScheme.onSurfaceVariant);
 }
 
-/// Rounded status pill used by the hero and the section headers.
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) =>
-      StatusPill(label: label, color: color, alpha: 0.12);
-}
+TextStyle _captionStyle(BuildContext context) => AppTextStyle.caption1
+    .of(context)
+    .copyWith(color: context.colorScheme.onSurfaceVariant);

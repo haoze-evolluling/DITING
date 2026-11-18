@@ -44,14 +44,7 @@ class _SubscriptionVersionPageState
               children: [
                 PageIntroCard(text: l10n.ruleVersionsIntro),
                 const ListSectionGap(),
-                generateSection(
-                  items: [
-                    ListItem(
-                      leading: const GlyphIcon(AppGlyphs.info),
-                      title: Text(l10n.ruleVersionsNone),
-                    ),
-                  ],
-                ),
+                _infoSection(l10n.ruleVersionsNone),
               ],
             );
           }
@@ -234,6 +227,13 @@ class _SubscriptionVersionPageState
   }
 }
 
+/// A single informational row, used for every "nothing to show / unavailable" state.
+Widget _infoSection(String message) => generateSection(
+  items: [
+    ListItem(leading: const GlyphIcon(AppGlyphs.info), title: Text(message)),
+  ],
+);
+
 class _SubscriptionPicker extends StatelessWidget {
   const _SubscriptionPicker({
     required this.entries,
@@ -283,24 +283,10 @@ class _VersionHistory extends ConsumerWidget {
     final repositoryAsync = ref.watch(ruleVersionRepositoryProvider);
     return repositoryAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => generateSection(
-        items: [
-          ListItem(
-            leading: const GlyphIcon(AppGlyphs.info),
-            title: Text(l10n.ruleVersionsUnavailable),
-          ),
-        ],
-      ),
+      error: (error, _) => _infoSection(l10n.ruleVersionsUnavailable),
       data: (repository) {
         if (repository == null) {
-          return generateSection(
-            items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.info),
-                title: Text(l10n.ruleVersionsUnavailable),
-              ),
-            ],
-          );
+          return _infoSection(l10n.ruleVersionsUnavailable);
         }
         return FutureBuilder<List<StoredRuleVersion>>(
           future: repository.history('sub_$subscriptionId', limit: 10),
@@ -310,14 +296,7 @@ class _VersionHistory extends ConsumerWidget {
               return const Center(child: CircularProgressIndicator());
             }
             if (history.isEmpty) {
-              return generateSection(
-                items: [
-                  ListItem(
-                    leading: const GlyphIcon(AppGlyphs.info),
-                    title: Text(l10n.ruleVersionsEmpty),
-                  ),
-                ],
-              );
+              return _infoSection(l10n.ruleVersionsEmpty);
             }
             final current = history.first;
             return generateSection(

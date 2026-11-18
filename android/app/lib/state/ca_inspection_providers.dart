@@ -60,7 +60,7 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
       return CaInstallResult.none(currentL10n.caChannelUnavailable);
     } on PlatformException catch (error) {
       return CaInstallResult.none(
-        (error.message ?? '').trim().isEmpty ? currentL10n.caInstallUnavailable : error.message!,
+        _platformMessageOr(error, currentL10n.caInstallUnavailable),
       );
     }
   }
@@ -70,13 +70,14 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
     try {
       return await ref.read(caCertificateServiceProvider).saveToDownloads();
     } on MissingPluginException {
-      return CaSaveResult(saved: false, error: currentL10n.caChannelUnavailable);
+      return CaSaveResult(
+        saved: false,
+        error: currentL10n.caChannelUnavailable,
+      );
     } on PlatformException catch (error) {
       return CaSaveResult(
         saved: false,
-        error: (error.message ?? '').trim().isEmpty
-            ? currentL10n.caDownloadDirUnavailable
-            : error.message,
+        error: _platformMessageOr(error, currentL10n.caDownloadDirUnavailable),
       );
     }
   }
@@ -128,6 +129,12 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
       );
     }
   }
+}
+
+/// The platform's message when it has one, else a localized fallback.
+String _platformMessageOr(PlatformException error, String fallback) {
+  final message = error.message ?? '';
+  return message.trim().isEmpty ? fallback : message;
 }
 
 final caCertificateStateProvider =

@@ -139,17 +139,23 @@ class IpQualityChecker {
     return null;
   }
 
+  /// One GET with the shared UA and timeouts; the caller decides what a status means.
+  Future<({int status, String body})> _fetch(
+    HttpClient client,
+    String url,
+  ) async {
+    final request = await client.getUrl(Uri.parse(url)).timeout(timeout);
+    request.headers.set(HttpHeaders.userAgentHeader, userAgent);
+    final response = await request.close().timeout(timeout);
+    final body = await response.transform(utf8.decoder).join().timeout(timeout);
+    return (status: response.statusCode, body: body);
+  }
+
   Future<String?> _fetchIp(HttpClient client, String url) async {
     try {
-      final request = await client.getUrl(Uri.parse(url)).timeout(timeout);
-      request.headers.set(HttpHeaders.userAgentHeader, userAgent);
-      final response = await request.close().timeout(timeout);
-      final body = await response
-          .transform(utf8.decoder)
-          .join()
-          .timeout(timeout);
-      if (response.statusCode != 200) return null;
-      return RustIpQualityCore.instance.parseProbe(body);
+      final response = await _fetch(client, url);
+      if (response.status != 200) return null;
+      return RustIpQualityCore.instance.parseProbe(response.body);
     } on StateError {
       // The native core missing or rejecting a payload is a build error, not a source failure.
       rethrow;
@@ -193,18 +199,12 @@ class IpQualityChecker {
   ) async {
     final watch = Stopwatch()..start();
     try {
-      final request = await client.getUrl(Uri.parse(url)).timeout(timeout);
-      request.headers.set(HttpHeaders.userAgentHeader, userAgent);
-      final response = await request.close().timeout(timeout);
-      final body = await response
-          .transform(utf8.decoder)
-          .join()
-          .timeout(timeout);
+      final response = await _fetch(client, url);
       watch.stop();
       final row = RustIpQualityCore.instance.sourceResult(
         source: source,
-        status: response.statusCode,
-        body: body,
+        status: response.status,
+        body: response.body,
       );
       return IpSourceResult(
         name: name,

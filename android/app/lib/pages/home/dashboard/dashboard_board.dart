@@ -174,8 +174,7 @@ class _EditingBoard extends ConsumerWidget {
                   key: ValueKey(widget),
                   padding: const EdgeInsets.only(bottom: 12),
                   // Injected inside the card so the badge does not compete with the title and
-                  // trailing action. The
-                  // card dims the body only, keeping the bar at full color.
+                  // trailing action. The card dims the body only, keeping the bar at full color.
                   child: DashboardEditBar(
                     bar: Row(
                       children: [
@@ -200,7 +199,7 @@ class _EditingBoard extends ConsumerWidget {
                 );
               },
             ),
-          _AddCardRow(side: 0),
+          const _AddCardRow(),
         ],
       ),
     );
@@ -261,24 +260,19 @@ class DashboardDragBadge extends StatelessWidget {
 }
 
 class _AddCardRow extends ConsumerWidget {
-  const _AddCardRow({required this.side});
-
-  final double side;
+  const _AddCardRow();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = context.colorScheme;
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: side),
-      child: OutlinedButton.icon(
-        onPressed: () => showSheet<void>(
-          context: context,
-          builder: (_) => const DashboardEditSheet(),
-        ),
-        icon: GlyphIcon(AppGlyphs.add, size: 18, color: colorScheme.primary),
-        label: Text(context.l10n.dashboardAddCard),
-        style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+    return OutlinedButton.icon(
+      onPressed: () => showSheet<void>(
+        context: context,
+        builder: (_) => const DashboardEditSheet(),
       ),
+      icon: GlyphIcon(AppGlyphs.add, size: 18, color: colorScheme.primary),
+      label: Text(context.l10n.dashboardAddCard),
+      style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
     );
   }
 }

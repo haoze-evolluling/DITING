@@ -124,15 +124,9 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
   }
 
   Future<void> _createGroup() async {
-    final name = await showFloatingDialog<String>(
-      context: context,
-      child: InputDialog(
-        title: context.l10n.subsNewGroupTitle,
-        value: '',
-        validator: (value) => (value ?? '').trim().isEmpty
-            ? context.l10n.subsGroupNameRequired
-            : null,
-      ),
+    final name = await _askGroupName(
+      context,
+      title: context.l10n.subsNewGroupTitle,
     );
     if (name == null || !mounted) {
       return;
@@ -182,12 +176,10 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       case AddSubscriptionFailure(:final message):
         setState(() => _submitting = false);
         // A duplicate address keeps the sheet open so the pasted text stays editable.
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(message),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 2600),
-          ),
+        _showSnack(
+          context,
+          message,
+          duration: const Duration(milliseconds: 2600),
         );
       case AddSubscriptionOk(:final id):
         // Start the download before closing so the list spins as the sheet disappears. The
@@ -221,12 +213,10 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
     switch (result) {
       case EditSubscriptionFailure(:final message):
         setState(() => _submitting = false);
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(message),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(milliseconds: 2600),
-          ),
+        _showSnack(
+          context,
+          message,
+          duration: const Duration(milliseconds: 2600),
         );
       case EditSubscriptionOk(:final needsReimport):
         final updater = ref.read(subscriptionUpdateProvider.notifier);
@@ -272,6 +262,14 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
     final isLocal = _sourceType == SubscriptionSourceType.local;
     final isEdit = widget.initial != null;
     final template = _selectedTemplate(templates);
+    final String infoHint;
+    if (isLocal) {
+      infoHint = context.l10n.subsEditLocalHint;
+    } else if (isEdit) {
+      infoHint = context.l10n.subsEditRemoteHint;
+    } else {
+      infoHint = context.l10n.subsAddRemoteHint;
+    }
 
     return CommonScaffold(
       title: isEdit ? context.l10n.subsEdit : context.l10n.subsAdd,
@@ -290,11 +288,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         children: [
           _SheetCard(
             title: context.l10n.subsInfoSection,
-            footer: isLocal
-                ? context.l10n.subsEditLocalHint
-                : isEdit
-                ? context.l10n.subsEditRemoteHint
-                : context.l10n.subsAddRemoteHint,
+            footer: infoHint,
             children: [
               // A new subscription picks how it gets its rules; an existing row keeps the
               // way it was created, so only its address or file can change.

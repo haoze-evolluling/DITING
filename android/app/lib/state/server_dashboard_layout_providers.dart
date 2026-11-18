@@ -45,7 +45,11 @@ class ServerDashboardWidgetsNotifier
   }
 
   void toggle(ServerDashboardWidget widget) {
-    state.contains(widget) ? remove(widget) : add(widget);
+    if (state.contains(widget)) {
+      remove(widget);
+    } else {
+      add(widget);
+    }
   }
 
   /// `ReorderableListView.onReorderItem`'s `newIndex` is already adjusted, so insert as-is.

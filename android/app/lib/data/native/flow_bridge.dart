@@ -40,13 +40,14 @@ class FlowRow {
   final int seq;
 
   /// 稳定键：同一元组 + UID + 协议视为同一条连接。
-  String get key =>
-      '$protocol|$srcIp:$srcPort|$dstIp:$dstPort|$uid';
+  String get key => '$protocol|$srcIp:$srcPort|$dstIp:$dstPort|$uid';
 
   /// 应用名（回退到包名 / uid）。
-  String get appLabel => package.isNotEmpty
-      ? package
-      : (uid >= 0 ? 'uid:$uid' : 'unknown');
+  String get appLabel {
+    if (package.isNotEmpty) return package;
+    if (uid >= 0) return 'uid:$uid';
+    return 'unknown';
+  }
 
   /// 域名优先，退回远端 IP。
   String get hostLabel => domain.isNotEmpty ? domain : dstIp;
@@ -107,9 +108,7 @@ class FlowSnapshot {
       nextSeq: (map['nextSeq'] as num?)?.toInt() ?? 0,
       total: (map['total'] as num?)?.toInt() ?? 0,
       truncated: (map['truncated'] as bool?) ?? false,
-      rows: [
-        for (final session in sessions) ?FlowRow.fromJson(session),
-      ],
+      rows: [for (final session in sessions) ?FlowRow.fromJson(session)],
     );
   }
 }

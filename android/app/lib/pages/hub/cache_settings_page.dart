@@ -19,19 +19,19 @@ class CacheSettingsPage extends ConsumerWidget {
     final preset = DnsCachePreset.current(settings);
     final l10n = context.l10n;
     return CommonScaffold(
-      title: context.l10n.cacheSettingsTitle,
+      title: l10n.cacheSettingsTitle,
       body: PageBody(
         children: [
           generateSection(
-            title: context.l10n.cacheSection,
+            title: l10n.cacheSection,
             items: [
               ListItem.toggle(
                 leading: const GlyphIcon(AppGlyphs.memory),
-                title: Text(context.l10n.cacheLocalDns),
+                title: Text(l10n.cacheLocalDns),
                 subtitle: Text(
                   enabled
                       ? '${preset.label(l10n)}：${preset.summary(l10n)}'
-                      : context.l10n.cacheOffNote,
+                      : l10n.cacheOffNote,
                 ),
                 value: enabled,
                 onChanged: (value) {
@@ -43,7 +43,7 @@ class CacheSettingsPage extends ConsumerWidget {
           ),
           if (enabled)
             generateSection(
-              title: context.l10n.cachePresetSection,
+              title: l10n.cachePresetSection,
               items: [
                 for (final option in DnsCachePreset.values)
                   ListItem(
@@ -53,7 +53,7 @@ class CacheSettingsPage extends ConsumerWidget {
                           : AppGlyphs.clock,
                       size: 20,
                     ),
-                    title: Text(option.label(context.l10n)),
+                    title: Text(option.label(l10n)),
                     subtitle: Text(
                       '${option.summary(l10n)}。${option.description(l10n)}',
                     ),
@@ -64,8 +64,7 @@ class CacheSettingsPage extends ConsumerWidget {
                     },
                   ),
               ],
-              footer:
-                  context.l10n.cachePresetNote,
+              footer: l10n.cachePresetNote,
             ),
           const SizedBox(height: 24),
         ],

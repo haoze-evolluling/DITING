@@ -57,6 +57,69 @@ Future<bool> _confirmLargeSubscription(
   return confirmed ?? false;
 }
 
+/// Destructive confirmation shared by the subscription cards and group management. Only `true`
+/// proceeds, since there is no undo.
+Future<bool> _confirm(
+  BuildContext context, {
+  required String title,
+  required String message,
+  required String confirmLabel,
+}) async {
+  final localizations = UiLocalizations.of(context);
+  final confirmed = await showFloatingDialog<bool>(
+    context: context,
+    child: CommonDialog(
+      title: title,
+      destructive: true,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(localizations.cancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(confirmLabel),
+        ),
+      ],
+      child: Text(message),
+    ),
+  );
+  return confirmed ?? false;
+}
+
+/// Transient floating SnackBar, used across the subscription pages.
+void _showSnack(
+  BuildContext context,
+  String message, {
+  Duration duration = const Duration(seconds: 4),
+}) {
+  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+    SnackBar(
+      content: Text(message),
+      behavior: SnackBarBehavior.floating,
+      duration: duration,
+    ),
+  );
+}
+
+/// Prompts for a group name, either when creating or renaming.
+Future<String?> _askGroupName(
+  BuildContext context, {
+  required String title,
+  String value = '',
+}) {
+  return showFloatingDialog<String>(
+    context: context,
+    child: InputDialog(
+      title: title,
+      value: value,
+      validator: (value) => (value ?? '').trim().isEmpty
+          ? context.l10n.subsGroupNameRequired
+          : null,
+    ),
+  );
+}
+
 /// Subscriptions page: group filter, summary and card list. Groups sit at the top because
 /// users usually watch one group; data comes from the legacy `subscription_group` table
 /// ordered by `addedAt`.
@@ -89,84 +152,61 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
     );
   }
 
-  Future<void> _updateAll(BuildContext context, WidgetRef ref) async {
+  Future<void> _updateAll() async {
     final entries = ref.read(subscriptionEntriesProvider).value ?? const [];
     final targets = [
       for (final entry in entries)
         if (entry.enabled && entry.isRemote) entry,
     ];
     if (targets.isEmpty) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.subsNothingToUpdate),
-          behavior: SnackBarBehavior.floating,
-          duration: Duration(milliseconds: 1600),
-        ),
+      _showSnack(
+        context,
+        context.l10n.subsNothingToUpdate,
+        duration: const Duration(milliseconds: 1600),
       );
       return;
     }
-    await ref.read(subscriptionUpdateProvider.notifier).updateAll(
-      targets,
-      confirmLarge: (_, byteLength) =>
-          _confirmLargeSubscription(context, byteLength),
-    );
-    if (!context.mounted) {
+    await ref
+        .read(subscriptionUpdateProvider.notifier)
+        .updateAll(
+          targets,
+          confirmLarge: (_, byteLength) =>
+              _confirmLargeSubscription(context, byteLength),
+        );
+    if (!mounted) {
       return;
     }
     final message = ref.read(subscriptionUpdateProvider).lastMessage;
     if (message != null) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(milliseconds: 2400),
-        ),
+      _showSnack(
+        context,
+        message,
+        duration: const Duration(milliseconds: 2400),
       );
     }
   }
 
-  Future<void> _delete(
-    BuildContext context,
-    WidgetRef ref,
-    SubscriptionEntry entry,
-  ) async {
-    final localizations = UiLocalizations.of(context);
-    final confirmed = await showFloatingDialog<bool>(
-      context: context,
-      child: CommonDialog(
-        title: context.l10n.subsDeleteTitle,
-        destructive: true,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(localizations.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.l10n.commonDelete),
-          ),
-        ],
-        child: Text(
-          context.l10n.subsDeleteMessage(entry.name),
-        ),
-      ),
+  Future<void> _delete(SubscriptionEntry entry) async {
+    final confirmed = await _confirm(
+      context,
+      title: context.l10n.subsDeleteTitle,
+      message: context.l10n.subsDeleteMessage(entry.name),
+      confirmLabel: context.l10n.commonDelete,
     );
-    if (confirmed ?? false) {
-      await ref.read(subscriptionActionsProvider).remove(entry.id);
+    if (!confirmed) {
+      return;
     }
+    await ref.read(subscriptionActionsProvider).remove(entry.id);
   }
 
-  Future<void> _rename(
-    BuildContext context,
-    WidgetRef ref,
-    SubscriptionEntry entry,
-  ) async {
+  Future<void> _rename(SubscriptionEntry entry) async {
     final name = await showFloatingDialog<String>(
       context: context,
       child: InputDialog(
         title: context.l10n.subsRenameTitle,
         value: entry.name,
-        validator: (value) => (value ?? '').trim().isEmpty ? context.l10n.subsNameRequired : null,
+        validator: (value) =>
+            (value ?? '').trim().isEmpty ? context.l10n.subsNameRequired : null,
       ),
     );
     if (name != null) {
@@ -206,7 +246,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
           glyph: AppGlyphs.refresh,
           tooltip: context.l10n.subsUpdateAll,
           isLoading: update.updatingAll,
-          onPressed: update.updatingAll ? null : () => _updateAll(context, ref),
+          onPressed: update.updatingAll ? null : _updateAll,
         ),
         IconButtonData(
           glyph: AppGlyphs.add,
@@ -232,7 +272,10 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                   child: CommonCard(
                     child: StatStrip(
                       stats: [
-                        StatItem(label: context.l10n.subsCount, value: '${entries.length}'),
+                        StatItem(
+                          label: context.l10n.subsCount,
+                          value: '${entries.length}',
+                        ),
                         StatItem(
                           label: context.l10n.commonEnabled,
                           value: '$enabledCount',
@@ -272,7 +315,10 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                       children: [
                         Row(
                           children: [
-                            Text(context.l10n.subsUpdating, style: context.listCaptionStyle),
+                            Text(
+                              context.l10n.subsUpdating,
+                              style: context.listCaptionStyle,
+                            ),
                             const Spacer(),
                             Text(
                               '${(update.progress * 100).round()}%',
@@ -297,7 +343,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                     onSelect: (id) => ref
                         .read(subscriptionGroupFilterProvider.notifier)
                         .select(id),
-                    onCreate: () => _createGroup(context, ref),
+                    onCreate: _createGroup,
                     onManage: () => showSheet<void>(
                       context: context,
                       builder: (_) => const _GroupManageSheet(),
@@ -327,8 +373,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                 minHeight: 300,
                 child: NullStatus(
                   label: context.l10n.subsEmptyLabel,
-                  description:
-                      context.l10n.subsEmptyDescription,
+                  description: context.l10n.subsEmptyDescription,
                   illustration: NullStatusIllustration.rules,
                   action: FilledButton(
                     onPressed: () => showSheet<void>(
@@ -370,8 +415,8 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                             confirmLarge: (_, byteLength) =>
                                 _confirmLargeSubscription(context, byteLength),
                           ),
-                      onDelete: () => _delete(context, ref, entry),
-                      onEdit: () => _rename(context, ref, entry),
+                      onDelete: () => _delete(entry),
+                      onEdit: () => _rename(entry),
                       onConfigure: () => showSheet<void>(
                         context: context,
                         builder: (_) => _AddSubscriptionSheet(initial: entry),
@@ -409,10 +454,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(0, 8, 0, 0),
-              child: ListFooter(
-                text:
-                    context.l10n.subsUpdateFooter,
-              ),
+              child: ListFooter(text: context.l10n.subsUpdateFooter),
             ),
           ),
         ],
@@ -420,14 +462,10 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
     );
   }
 
-  Future<void> _createGroup(BuildContext context, WidgetRef ref) async {
-    final name = await showFloatingDialog<String>(
-      context: context,
-      child: InputDialog(
-        title: context.l10n.subsNewGroupTitle,
-        value: '',
-        validator: (value) => (value ?? '').trim().isEmpty ? context.l10n.subsGroupNameRequired : null,
-      ),
+  Future<void> _createGroup() async {
+    final name = await _askGroupName(
+      context,
+      title: context.l10n.subsNewGroupTitle,
     );
     if (name == null) {
       return;

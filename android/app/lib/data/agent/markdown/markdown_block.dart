@@ -80,6 +80,21 @@ bool _isTableStart(List<String> lines, int index) {
   return cells.isNotEmpty && cells.every(_tableSeparatorCellRegex.hasMatch);
 }
 
+/// True when the line at [index] begins any block other than a paragraph.
+bool _startsBlock(List<String> lines, int index) {
+  final line = lines[index];
+  final trimmed = line.trim();
+  return trimmed.isEmpty ||
+      trimmed.startsWith('```') ||
+      trimmed.startsWith('~~~') ||
+      _hrRegex.hasMatch(trimmed) ||
+      _headingRegex.hasMatch(trimmed) ||
+      trimmed.startsWith('>') ||
+      _bulletRegex.hasMatch(line) ||
+      _numberedRegex.hasMatch(line) ||
+      _isTableStart(lines, index);
+}
+
 /// Splits raw model output into blocks. Never throws: anything unrecognised becomes a paragraph.
 List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
   final lines = rawText.split('\n');
@@ -179,22 +194,8 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
 
     // 9. Paragraph: swallow everything up to the next block boundary.
     final paragraphLines = <String>[];
-    while (i < n) {
-      final currentLine = lines[i];
-      final currentTrimmed = currentLine.trim();
-      if (currentTrimmed.isEmpty) break;
-      if (currentTrimmed.startsWith('```') ||
-          currentTrimmed.startsWith('~~~')) {
-        break;
-      }
-      if (_hrRegex.hasMatch(currentTrimmed)) break;
-      if (_headingRegex.hasMatch(currentTrimmed)) break;
-      if (currentTrimmed.startsWith('>')) break;
-      if (_bulletRegex.hasMatch(currentLine)) break;
-      if (_numberedRegex.hasMatch(currentLine)) break;
-      if (_isTableStart(lines, i)) break;
-
-      paragraphLines.add(currentTrimmed);
+    while (i < n && !_startsBlock(lines, i)) {
+      paragraphLines.add(lines[i].trim());
       i++;
     }
     if (paragraphLines.isNotEmpty) {

@@ -1,7 +1,6 @@
 /// Request list (upstream `views/connection/requests.dart`): `http_request_log` + `dns_log`.
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:diting_android/data/db/dns_query_repository.dart';
@@ -12,6 +11,7 @@ import 'package:diting_android/routes/observability_routes.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
+import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -65,6 +65,7 @@ class RequestFeedView extends ConsumerStatefulWidget {
 
   final String title;
   final NotifierProvider<RequestFeedNotifier, RequestFeedQuery> queryProvider;
+
   /// The global and per-app loaders are different provider types with no shared public supertype,
   /// so the view takes accessors instead of the providers themselves.
   final AsyncValue<RequestFeed> Function(WidgetRef ref) watchFeed;
@@ -200,7 +201,9 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
       isEmpty: items.isEmpty,
       isSearching: ref.read(widget.queryProvider).query.isNotEmpty,
       nullStatus: obsEmpty(
-        label: filterLabel.isEmpty ? context.l10n.obsNoRecords : context.l10n.obsNoMatchingRequests,
+        label: filterLabel.isEmpty
+            ? context.l10n.obsNoRecords
+            : context.l10n.obsNoMatchingRequests,
         description: filterLabel.isEmpty
             ? context.l10n.obsNoRecordsBody
             : context.l10n.obsCurrentFilter(filterLabel),
@@ -224,7 +227,9 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
           itemCount: items.length + 2,
           estimatedItemExtent: 92,
           itemBuilder: (context, index) {
-            if (index == 0) return ListHeader(title: context.l10n.obsRecordsHeader);
+            if (index == 0) {
+              return ListHeader(title: context.l10n.obsRecordsHeader);
+            }
             if (index == items.length + 1) {
               return _FeedFooter(
                 label: context.l10n.obsFooterCount(
@@ -237,7 +242,7 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
                       ? context.l10n.obsFooterMore
                       : context.l10n.obsFooterAll,
                 ),
-                loading: _isLoadingMore(feed),
+                loading: feed.loadingMore,
               );
             }
             final request = items[index - 1];
@@ -248,8 +253,10 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
                 child: MemoBuilder(
                   key: ObjectKey(request),
                   inputs: [request],
-                  builder: (_) =>
-                      RequestRow(request: request, onTap: () => _openDetail(request)),
+                  builder: (_) => RequestRow(
+                    request: request,
+                    onTap: () => _openDetail(request),
+                  ),
                 ),
               ),
             );
@@ -268,8 +275,6 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
     if (!feed.hasMore || feed.loadingMore) return;
     widget.loadMore(ref);
   }
-
-  bool _isLoadingMore(RequestFeed feed) => feed.loadingMore;
 }
 
 /// Footer that doubles as the pagination indicator: a spinner while the next page is being read,

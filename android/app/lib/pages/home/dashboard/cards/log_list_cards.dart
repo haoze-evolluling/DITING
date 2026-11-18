@@ -362,6 +362,17 @@ class ResolutionPerfCard extends ConsumerWidget {
     final bootstrap = ref.watch(logOverviewBootstrapProvider);
     final scale = DashboardDensityScope.scaleOf(context);
     final latency = quality?.averageLatencyMs;
+    final String latencyValue;
+    if (quality == null) {
+      latencyValue = '—';
+    } else if (latency == null) {
+      latencyValue = context.l10n.logNoTimingSamples;
+    } else {
+      latencyValue = context.l10n.logSampleValue(
+        dashboardLatency(latency),
+        dashboardCount(quality.latencySamples),
+      );
+    }
     return DashboardCard(
       semanticLabel: context.l10n.logPerfTitle,
       child: Column(
@@ -375,14 +386,7 @@ class ResolutionPerfCard extends ConsumerWidget {
           SizedBox(height: 14 * scale),
           DashboardRateRow(
             label: context.l10n.logAverageLatency,
-            value: quality == null
-                ? '—'
-                : latency == null
-                ? context.l10n.logNoTimingSamples
-                : context.l10n.logSampleValue(
-                    dashboardLatency(latency),
-                    dashboardCount(quality.latencySamples),
-                  ),
+            value: latencyValue,
             // Latency is not a ratio, so it renders the value alone with no bar.
             progress: null,
           ),

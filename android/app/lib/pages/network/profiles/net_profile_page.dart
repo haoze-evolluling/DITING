@@ -34,8 +34,9 @@ class NetProfilePage extends ConsumerWidget {
       body: PageBody(
         children: [
           PageIntroCard(text: context.l10n.netProfileIntro),
-          contextAsync.when(
-            data: (network) => generateSection(
+          _asyncSection(
+            contextAsync,
+            (network) => generateSection(
               title: context.l10n.netProfileCurrentNet,
               items: [
                 ListItem(
@@ -45,11 +46,10 @@ class NetProfilePage extends ConsumerWidget {
                 ),
               ],
             ),
-            loading: () => const SizedBox.shrink(),
-            error: (error, _) => PageIntroCard(text: '$error'),
           ),
-          resolved.when(
-            data: (answer) => generateSection(
+          _asyncSection(
+            resolved,
+            (answer) => generateSection(
               title: context.l10n.netProfileResolved,
               items: [
                 ListItem(
@@ -67,11 +67,10 @@ class NetProfilePage extends ConsumerWidget {
                 ),
               ],
             ),
-            loading: () => const SizedBox.shrink(),
-            error: (error, _) => PageIntroCard(text: '$error'),
           ),
-          profiles.when(
-            data: (list) => list.isEmpty
+          _asyncSection(
+            profiles,
+            (list) => list.isEmpty
                 ? PageIntroCard(text: context.l10n.netProfileEmpty)
                 : generateSection(
                     title: context.l10n.netProfileList,
@@ -96,8 +95,6 @@ class NetProfilePage extends ConsumerWidget {
                         ),
                     ],
                   ),
-            loading: () => const SizedBox.shrink(),
-            error: (error, _) => PageIntroCard(text: '$error'),
           ),
         ],
       ),
@@ -105,10 +102,11 @@ class NetProfilePage extends ConsumerWidget {
   }
 
   static String _contextDetail(Map<String, Object?> network) {
+    final ssid = network['ssid'];
     final parts = <String>[
       if (network['metered'] == true) 'metered',
       if (network['roaming'] == true) 'roaming',
-      if ((network['ssid'] as String?)?.isNotEmpty ?? false) '${network['ssid']}',
+      if (ssid is String && ssid.isNotEmpty) ssid,
     ];
     return parts.isEmpty ? '—' : parts.join(' · ');
   }
@@ -139,6 +137,23 @@ class NetProfilePage extends ConsumerWidget {
             updatedAt: now,
           ),
         );
+  }
+}
+
+/// A section that stays silent while loading and states the error in its place.
+Widget _asyncSection<T>(AsyncValue<T> value, Widget Function(T data) build) {
+  return value.when(
+    data: build,
+    loading: () => const SizedBox.shrink(),
+    error: (error, _) => PageIntroCard(text: '$error'),
+  );
+}
+
+void _toggleValue(Set<String> values, String value) {
+  if (values.contains(value)) {
+    values.remove(value);
+  } else {
+    values.add(value);
   }
 }
 
@@ -207,13 +222,7 @@ class _NetProfileDialogState extends State<_NetProfileDialog> {
                 FilterPill(
                   label: type,
                   selected: _types.contains(type),
-                  onPressed: () => setState(() {
-                    if (_types.contains(type)) {
-                      _types.remove(type);
-                    } else {
-                      _types.add(type);
-                    }
-                  }),
+                  onPressed: () => setState(() => _toggleValue(_types, type)),
                 ),
             ],
           ),

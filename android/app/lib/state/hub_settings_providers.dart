@@ -2,8 +2,9 @@
 /// `dns_vpn_prefs`.
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:convert';
+
+import 'package:diting_shared/app/l10n/l10n.dart';
 
 import 'package:diting_android/data/agent/key_obfuscator.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
@@ -239,13 +240,14 @@ class AgentApiState {
 
 /// Reads the legacy keys plus provider JSON; missing JSON seeds a keyless example entry.
 AgentApiState loadAgentApiState(LegacySettings settings) {
-  final rawProviders = settings.agentAiProvidersJson;
-  final providers = decodeAiProviders(rawProviders);
+  final providers = decodeAiProviders(settings.agentAiProvidersJson);
+  var activeProviderId = settings.agentAiActiveProviderId;
+  if (activeProviderId.isEmpty && providers.isNotEmpty) {
+    activeProviderId = providers.first.id;
+  }
   return AgentApiState(
     enabled: settings.agentApiEnabled,
-    activeProviderId: settings.agentAiActiveProviderId.isEmpty
-        ? (providers.isEmpty ? '' : providers.first.id)
-        : settings.agentAiActiveProviderId,
+    activeProviderId: activeProviderId,
     providers: providers.isEmpty ? seedProviders() : providers,
     systemPrompt: settings.agentApiSystemPrompt,
     temperature: settings.agentApiTemperature,

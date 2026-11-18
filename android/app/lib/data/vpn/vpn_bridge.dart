@@ -8,16 +8,19 @@ const vpnChannelName = 'com.haoze.diting/vpn';
 const expressVpnChannelName = 'com.haoze.diting/express_vpn';
 const dnsServerChannelName = 'com.haoze.diting/dns_server';
 
+/// The tunnel-like services that share the same lifecycle methods.
+const dataPlaneChannelNames = [
+  vpnChannelName,
+  expressVpnChannelName,
+  dnsServerChannelName,
+];
+
 /// Best-effort in-place rule reload for whichever data plane is running, after a subscription or
 /// rule change. Covers the normal and express tunnels plus the LAN DNS server; the non-running
 /// mode's channel simply no-ops. A missing platform (desktop/tests) throws `MissingPluginException`
 /// and is swallowed — reloading rules must never fail a rule edit.
 Future<void> requestVpnRuleReload() async {
-  for (final name in const [
-    vpnChannelName,
-    expressVpnChannelName,
-    dnsServerChannelName,
-  ]) {
+  for (final name in dataPlaneChannelNames) {
     try {
       await MethodChannel(name).invokeMethod<bool>('reloadRules');
     } catch (_) {

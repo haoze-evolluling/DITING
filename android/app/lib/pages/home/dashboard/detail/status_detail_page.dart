@@ -33,7 +33,7 @@ class StatusDetailPage extends ConsumerWidget {
     final port = ref.watch(serverPortProvider);
     final colorScheme = context.colorScheme;
     final colors = DashboardColors.of(context);
-    final health = _healthOf(mode, core, serverStatus, colorScheme);
+    final health = _healthOf(mode, core, colorScheme);
     return DashboardDetailScaffold(
       title: context.l10n.statusDetailTitle,
       children: [
@@ -42,13 +42,18 @@ class StatusDetailPage extends ConsumerWidget {
           label: context.l10n.statusUptime,
           // Not running has no figure: "未计时" says it in words where a lone em dash looked
           // like a stray line under the label.
-          value: core.isRunning ? stats.uptimeLabel : context.l10n.statusNotTiming,
+          value: core.isRunning
+              ? stats.uptimeLabel
+              : context.l10n.statusNotTiming,
           color: core.isRunning ? colorScheme.onSurface : null,
           chipLabel: core.label(context.l10n),
           chipColor: health.color,
           hint: core.isRunning
               ? health.summary
-              : context.l10n.statusPausedSummary(mode.title(context.l10n), core.label(context.l10n)),
+              : context.l10n.statusPausedSummary(
+                  mode.title(context.l10n),
+                  core.label(context.l10n),
+                ),
         ),
         DashboardDetailCard(
           glyph: AppGlyphs.checkCircle,
@@ -89,8 +94,14 @@ class StatusDetailPage extends ConsumerWidget {
               const SizedBox(height: 6),
               DashboardDetailRows(
                 rows: [
-                  DashboardDetailRow(label: context.l10n.statusWorkMode, value: mode.title(context.l10n)),
-                  DashboardDetailRow(label: context.l10n.statusCoreState, value: core.label(context.l10n)),
+                  DashboardDetailRow(
+                    label: context.l10n.statusWorkMode,
+                    value: mode.title(context.l10n),
+                  ),
+                  DashboardDetailRow(
+                    label: context.l10n.statusCoreState,
+                    value: core.label(context.l10n),
+                  ),
                   if (mode == AppWorkMode.server)
                     DashboardDetailRow(
                       label: context.l10n.statusListenPort,
@@ -156,8 +167,7 @@ class StatusDetailPage extends ConsumerWidget {
         DashboardDetailCard(
           glyph: AppGlyphs.requests,
           title: context.l10n.statusTodayCounts,
-          footer:
-              context.l10n.statusCountsFooter,
+          footer: context.l10n.statusCountsFooter,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 14,
@@ -166,7 +176,10 @@ class StatusDetailPage extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: DashboardStatGrid(
                   stats: [
-                    StatItem(label: context.l10n.statusQueries, value: dashboardCount(stats.queries)),
+                    StatItem(
+                      label: context.l10n.statusQueries,
+                      value: dashboardCount(stats.queries),
+                    ),
                     StatItem(
                       label: context.l10n.logCacheHits,
                       value: dashboardCount(stats.cacheHits),
@@ -245,31 +258,30 @@ class StatusDetailPage extends ConsumerWidget {
   static ({Glyph glyph, Color color, String summary}) _healthOf(
     AppWorkMode mode,
     CoreState core,
-    ServerStatus serverStatus,
     ColorScheme colorScheme,
   ) {
-    final glyph = core.isRunning
-        ? AppGlyphs.checkCircle
-        : core == CoreState.failed
-        ? AppGlyphs.error
-        : AppGlyphs.info;
+    final glyph = switch (core) {
+      CoreState.running => AppGlyphs.checkCircle,
+      CoreState.failed => AppGlyphs.error,
+      CoreState.starting || CoreState.stopped => AppGlyphs.info,
+    };
+    final color = switch (core) {
+      CoreState.running => colorScheme.success,
+      CoreState.failed => colorScheme.error,
+      CoreState.starting || CoreState.stopped => colorScheme.onSurfaceVariant,
+    };
     final l10n = currentL10n;
-    final summary = core.isRunning
-        ? mode == AppWorkMode.server
-              ? l10n.statusServerPortReady
-              : l10n.statusTunnelActive
-        : mode == AppWorkMode.server
-        ? l10n.statusServerPortClosed
-        : l10n.statusCoreStopped;
-    return (
-      glyph: glyph,
-      color: core.isRunning
-          ? colorScheme.success
-          : core == CoreState.failed
-          ? colorScheme.error
-          : colorScheme.onSurfaceVariant,
-      summary: summary,
-    );
+    final String summary;
+    if (core.isRunning) {
+      summary = mode == AppWorkMode.server
+          ? l10n.statusServerPortReady
+          : l10n.statusTunnelActive;
+    } else {
+      summary = mode == AppWorkMode.server
+          ? l10n.statusServerPortClosed
+          : l10n.statusCoreStopped;
+    }
+    return (glyph: glyph, color: color, summary: summary);
   }
 }
 

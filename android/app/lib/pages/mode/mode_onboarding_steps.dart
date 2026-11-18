@@ -39,6 +39,46 @@ class _ChooseModeStep extends StatelessWidget {
   };
 }
 
+typedef _PermissionSpec = ({
+  AppPermission permission,
+  Glyph glyph,
+  String name,
+  String level,
+  String detail,
+});
+
+_PermissionSpec _vpnPermission(AppL10n l10n, String detail) => (
+  permission: AppPermission.vpn,
+  glyph: AppGlyphs.vpn,
+  name: l10n.permVpn,
+  level: l10n.permRequired,
+  detail: detail,
+);
+
+_PermissionSpec _notificationPermission(AppL10n l10n) => (
+  permission: AppPermission.notification,
+  glyph: AppGlyphs.info,
+  name: l10n.permNotification,
+  level: l10n.permRequired,
+  detail: l10n.permNotificationBody,
+);
+
+_PermissionSpec _appListPermission(AppL10n l10n) => (
+  permission: AppPermission.appList,
+  glyph: AppGlyphs.appsList,
+  name: l10n.permAppList,
+  level: l10n.permOptional,
+  detail: l10n.permAppListBody,
+);
+
+_PermissionSpec _batteryPermission(AppL10n l10n, String detail) => (
+  permission: AppPermission.batteryOptimization,
+  glyph: AppGlyphs.bolt,
+  name: l10n.permBattery,
+  level: l10n.permOptional,
+  detail: detail,
+);
+
 /// Step 2: request the permissions this mode needs. Every row is a real request: `VPN 连接` opens
 /// the system consent dialog, `通知` the runtime permission (or the notification settings screen
 /// below Android 13), `忽略电池优化` the allowlist dialog, and `应用列表` the vendor permission with a
@@ -48,93 +88,43 @@ class _PermissionStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final mode = ref.watch(workModeProvider);
     final permissions = switch (mode) {
       AppWorkMode.normal => [
-        (
-          AppPermission.vpn,
-          AppGlyphs.vpn,
-          context.l10n.permVpn,
-          context.l10n.permRequired,
-          context.l10n.permVpnNormalBody,
-        ),
-        (
-          AppPermission.notification,
-          AppGlyphs.info,
-          context.l10n.permNotification,
-          context.l10n.permRequired,
-          context.l10n.permNotificationBody,
-        ),
-        (
-          AppPermission.appList,
-          AppGlyphs.appsList,
-          context.l10n.permAppList,
-          context.l10n.permOptional,
-          context.l10n.permAppListBody,
-        ),
-        (
-          AppPermission.batteryOptimization,
-          AppGlyphs.bolt,
-          context.l10n.permBattery,
-          context.l10n.permOptional,
-          context.l10n.permBatteryBody,
-        ),
+        _vpnPermission(l10n, l10n.permVpnNormalBody),
+        _notificationPermission(l10n),
+        _appListPermission(l10n),
+        _batteryPermission(l10n, l10n.permBatteryBody),
       ],
       AppWorkMode.server => [
-        (
-          AppPermission.notification,
-          AppGlyphs.info,
-          context.l10n.permNotification,
-          context.l10n.permRequired,
-          context.l10n.permNotificationBody,
-        ),
-        (
-          AppPermission.batteryOptimization,
-          AppGlyphs.bolt,
-          context.l10n.permBattery,
-          context.l10n.permOptional,
-          context.l10n.permBatteryServerBody,
-        ),
+        _notificationPermission(l10n),
+        _batteryPermission(l10n, l10n.permBatteryServerBody),
       ],
       AppWorkMode.express => [
-        (AppPermission.vpn, AppGlyphs.vpn, context.l10n.permVpn, context.l10n.permRequired, context.l10n.permVpnExpressBody),
-        (
-          AppPermission.notification,
-          AppGlyphs.info,
-          context.l10n.permNotification,
-          context.l10n.permRequired,
-          context.l10n.permNotificationBody,
-        ),
-        (
-          AppPermission.batteryOptimization,
-          AppGlyphs.bolt,
-          context.l10n.permBattery,
-          context.l10n.permOptional,
-          context.l10n.permBatteryBody,
-        ),
+        _vpnPermission(l10n, l10n.permVpnExpressBody),
+        _notificationPermission(l10n),
+        _batteryPermission(l10n, l10n.permBatteryBody),
       ],
     };
     final snapshot = ref.watch(permissionStatesProvider).value;
     final grantedCount = permissions
-        .where((item) => snapshot?.of(item.$1) == true)
+        .where((spec) => snapshot?.of(spec.permission) == true)
         .length;
     return _StepScaffold(
       glyph: AppGlyphs.lock,
-      title: context.l10n.permNeeded,
+      title: l10n.permNeeded,
       description: snapshot == null
-          ? context.l10n.permAllLocal
-          : context.l10n.permGrantedCount(
-              '$grantedCount',
-              '${permissions.length}',
-            ),
+          ? l10n.permAllLocal
+          : l10n.permGrantedCount('$grantedCount', '${permissions.length}'),
       children: [
-        for (final (permission, glyph, name, level, detail) in permissions)
+        for (final spec in permissions)
           _PermissionRow(
-            permission: permission,
-            glyph: glyph,
-            name: name,
-            level: level,
-            detail: detail,
+            permission: spec.permission,
+            glyph: spec.glyph,
+            name: spec.name,
+            level: spec.level,
+            detail: spec.detail,
           ),
       ],
     );

@@ -66,6 +66,10 @@ class _StorageV2GateAppState extends State<StorageV2GateApp> {
         setState(() => _progress = progress);
       },
     );
+    await _finish(result, deferred: result.deferred);
+  }
+
+  Future<void> _finish(StorageV2Result result, {required bool deferred}) async {
     if (!mounted) return;
     if (result.ready) {
       await widget.onReady();
@@ -74,7 +78,7 @@ class _StorageV2GateAppState extends State<StorageV2GateApp> {
     setState(() {
       _running = false;
       _error = result.error;
-      _needsStop = result.deferred;
+      _needsStop = deferred;
     });
   }
 
@@ -116,19 +120,8 @@ class _StorageV2GateAppState extends State<StorageV2GateApp> {
       _running = true;
       _error = null;
     });
-    final result = await discardStorageV2(
-      widget.store,
-      native: widget.native,
-    );
-    if (!mounted) return;
-    if (result.ready) {
-      await widget.onReady();
-      return;
-    }
-    setState(() {
-      _running = false;
-      _error = result.error;
-    });
+    final result = await discardStorageV2(widget.store, native: widget.native);
+    await _finish(result, deferred: false);
   }
 
   @override

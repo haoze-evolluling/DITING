@@ -37,7 +37,7 @@ class LogsRacePage extends ConsumerWidget {
               items: [
                 LogStatsRangeSelector<LogStatsRange>(
                   values: LogStatsRange.values,
-                  labelOf: (range) => range.label(context.l10n),
+                  labelOf: (option) => option.label(context.l10n),
                   value: range,
                   onChanged: (value) =>
                       ref.read(raceStatsRangeProvider.notifier).select(value),
@@ -77,7 +77,7 @@ class LogsRacePage extends ConsumerWidget {
       return [
         SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 32),
+            padding: const EdgeInsets.symmetric(vertical: 32),
             child: LogsPageLoading(label: context.l10n.logsLoadingRace),
           ),
         ),

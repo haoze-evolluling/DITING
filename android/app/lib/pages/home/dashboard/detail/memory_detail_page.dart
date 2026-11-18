@@ -75,6 +75,8 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
       0,
       memory.systemTotal,
     );
+    String bytesOrDash(int value) =>
+        available ? dashboardBinaryBytes(value) : '—';
     return DashboardDetailScaffold(
       title: context.l10n.memoryDetailTitle,
       actions: [
@@ -88,7 +90,9 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
         DashboardDetailHero(
           glyph: AppGlyphs.memory,
           label: context.l10n.memoryProcessPss,
-          value: available ? dashboardBinaryBytes(memory.totalPss) : context.l10n.memoryUnavailable,
+          value: available
+              ? dashboardBinaryBytes(memory.totalPss)
+              : context.l10n.memoryUnavailable,
           chipLabel: available
               ? context.l10n.memorySystemShare(
                   dashboardPercent(memory.systemShare),
@@ -108,30 +112,28 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
           stats: [
             StatItem(
               label: context.l10n.memoryJavaHeap,
-              value: available ? dashboardBinaryBytes(memory.javaHeap) : '—',
+              value: bytesOrDash(memory.javaHeap),
               color: colorScheme.primary,
             ),
             StatItem(
               label: context.l10n.memoryNativeHeap,
-              value: available ? dashboardBinaryBytes(memory.nativeHeap) : '—',
+              value: bytesOrDash(memory.nativeHeap),
               color: colors.series2,
             ),
             StatItem(
               label: context.l10n.memoryOther,
-              value: available ? dashboardBinaryBytes(other) : '—',
+              value: bytesOrDash(other),
             ),
             StatItem(
               label: context.l10n.memorySystemAvailable,
-              value: available ? dashboardBinaryBytes(memory.systemAvail) : '—',
+              value: bytesOrDash(memory.systemAvail),
             ),
           ],
         ),
         DashboardDetailCard(
           glyph: AppGlyphs.layers,
           title: context.l10n.memoryComposition,
-          footer: available
-              ? context.l10n.memoryCompositionFooter
-              : null,
+          footer: available ? context.l10n.memoryCompositionFooter : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 8,
@@ -148,21 +150,19 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
               ),
               DashboardShareLegend(
                 label: context.l10n.memoryJavaHeap,
-                value: available ? dashboardBinaryBytes(memory.javaHeap) : '—',
+                value: bytesOrDash(memory.javaHeap),
                 color: colorScheme.primary,
                 share: _share(memory.javaHeap, memory.totalPss),
               ),
               DashboardShareLegend(
                 label: context.l10n.memoryNativeHeap,
-                value: available
-                    ? dashboardBinaryBytes(memory.nativeHeap)
-                    : '—',
+                value: bytesOrDash(memory.nativeHeap),
                 color: colors.series2,
                 share: _share(memory.nativeHeap, memory.totalPss),
               ),
               DashboardShareLegend(
                 label: context.l10n.memoryOtherCode,
-                value: available ? dashboardBinaryBytes(other) : '—',
+                value: bytesOrDash(other),
                 color: colors.track,
                 share: _share(other, memory.totalPss),
               ),
@@ -187,15 +187,13 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
               ),
               DashboardShareLegend(
                 label: context.l10n.memorySystemUsed,
-                value: available ? dashboardBinaryBytes(deviceUsed) : '—',
+                value: bytesOrDash(deviceUsed),
                 color: colorScheme.primary,
                 share: _share(deviceUsed, memory.systemTotal),
               ),
               DashboardShareLegend(
                 label: context.l10n.memorySystemAvailable,
-                value: available
-                    ? dashboardBinaryBytes(memory.systemAvail)
-                    : '—',
+                value: bytesOrDash(memory.systemAvail),
                 color: colors.track,
                 share: _share(memory.systemAvail, memory.systemTotal),
               ),
@@ -214,9 +212,7 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
           emptyLabel: context.l10n.memorySampling,
           caption: context.l10n.memoryRecentPssCaption,
         ),
-        DashboardDetailNote(
-          text: context.l10n.memorySourceFooter,
-        ),
+        DashboardDetailNote(text: context.l10n.memorySourceFooter),
       ],
     );
   }

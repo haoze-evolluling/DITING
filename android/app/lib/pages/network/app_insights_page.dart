@@ -29,7 +29,8 @@ class _AppInsightsPageState extends ConsumerState<AppInsightsPage> {
     final actions = [
       IconButton(
         tooltip: l10n.flowRefresh,
-        onPressed: () => ref.read(flowViewProvider.notifier).refresh(full: true),
+        onPressed: () =>
+            ref.read(flowViewProvider.notifier).refresh(full: true),
         icon: const GlyphIcon(AppGlyphs.refresh),
       ),
     ];
@@ -50,8 +51,9 @@ class _AppInsightsPageState extends ConsumerState<AppInsightsPage> {
     // the right, instead of one long scroll where the map is far from the card that explains it.
     final wide = MediaQuery.sizeOf(context).width >= 720;
     final labels = [for (final report in reports) report.appLabel];
-    final selectedIndex = (_selected != null && _selected! < labels.length)
-        ? _selected!
+    final selected = _selected;
+    final selectedIndex = (selected != null && selected < labels.length)
+        ? selected
         : 0;
     if (!wide) {
       return CommonScaffold(
@@ -180,7 +182,11 @@ class _ReportTile extends StatelessWidget {
         : context.colorScheme.success;
     return ListItem(
       leading: GlyphIcon(AppGlyphs.appsList, color: color),
-      title: Text(report.appLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(
+        report.appLabel,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: Text(
         l10n.appInsightsStat(
           report.connectionCount,
@@ -190,7 +196,9 @@ class _ReportTile extends StatelessWidget {
       ),
       trailing: selected
           ? const GlyphIcon(AppGlyphs.checkCircle)
-          : (report.hasBlocked ? GlyphIcon(AppGlyphs.block, color: color) : null),
+          : (report.hasBlocked
+                ? GlyphIcon(AppGlyphs.block, color: color)
+                : null),
       onTap: onTap,
     );
   }

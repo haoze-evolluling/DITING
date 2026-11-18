@@ -48,7 +48,9 @@ class AgentApiPage extends ConsumerWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          state.enabled ? context.l10n.agentApiEnabled : context.l10n.agentApiDisabled,
+                          state.enabled
+                              ? context.l10n.agentApiEnabled
+                              : context.l10n.agentApiDisabled,
                           style: context.listTitleStyle,
                         ),
                       ),
@@ -59,14 +61,7 @@ class AgentApiPage extends ConsumerWidget {
                     ],
                   ),
                   Text(
-                    provider == null
-                        ? context.l10n.agentApiNoProvider
-                        : context.l10n.agentApiCurrentProvider(
-                            provider.name,
-                            provider.model.isEmpty
-                                ? context.l10n.agentApiNoModel
-                                : provider.model,
-                          ),
+                    _providerSummary(context, provider),
                     style: context.listSubtitleStyle,
                   ),
                   Wrap(
@@ -106,7 +101,9 @@ class AgentApiPage extends ConsumerWidget {
                 leading: const GlyphIcon(AppGlyphs.devices),
                 title: Text(context.l10n.agentProvidersTitle),
                 subtitle: Text(
-                  context.l10n.agentApiProvidersSubtitle(state.providers.length),
+                  context.l10n.agentApiProvidersSubtitle(
+                    state.providers.length,
+                  ),
                 ),
                 onTap: () => context.push(HubPaths.agentProviders),
               ),
@@ -189,6 +186,17 @@ class AgentApiPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  static String _providerSummary(
+    BuildContext context,
+    AiProviderConfig? provider,
+  ) {
+    if (provider == null) return context.l10n.agentApiNoProvider;
+    final model = provider.model.isEmpty
+        ? context.l10n.agentApiNoModel
+        : provider.model;
+    return context.l10n.agentApiCurrentProvider(provider.name, model);
   }
 
   Future<void> _reset(BuildContext context, AgentApiNotifier notifier) async {

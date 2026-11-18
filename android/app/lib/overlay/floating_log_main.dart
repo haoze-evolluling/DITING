@@ -19,7 +19,8 @@ import 'package:diting_shared/data/prefs/legacy_settings.dart';
 import 'package:diting_android/overlay/floating_log_data.dart';
 import 'package:diting_android/overlay/floating_log_panel.dart';
 import 'package:diting_android/overlay/floating_log_rows.dart';
-import 'package:diting_shared/state/settings_providers.dart' show AppLanguageMode;
+import 'package:diting_shared/state/settings_providers.dart'
+    show AppLanguageMode;
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -214,7 +215,12 @@ class _FloatingLogHostState extends State<FloatingLogHost> {
     final active = state == AppLifecycleState.resumed;
     if (active == _active) return;
     _active = active;
-    if (!_expanded) active ? _startBadge() : _badgeTimer?.cancel();
+    if (_expanded) return;
+    if (active) {
+      _startBadge();
+    } else {
+      _badgeTimer?.cancel();
+    }
   }
 
   void _startBadge() {

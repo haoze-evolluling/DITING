@@ -173,12 +173,16 @@ class _Legend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final percentOf = this.percentOf;
-    final text = !available
-        ? '—'
-        : percentOf == null || percentOf <= 0
-        ? dashboardBinaryBytes(value)
-        : '${dashboardBinaryBytes(value)}'
-              '（${(value * 100 / percentOf).toStringAsFixed(0)}%）';
+    final String text;
+    if (!available) {
+      text = '—';
+    } else if (percentOf == null || percentOf <= 0) {
+      text = dashboardBinaryBytes(value);
+    } else {
+      text =
+          '${dashboardBinaryBytes(value)}'
+          '（${(value * 100 / percentOf).toStringAsFixed(0)}%）';
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       spacing: 5,

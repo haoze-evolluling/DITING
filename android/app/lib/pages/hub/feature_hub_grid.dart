@@ -71,27 +71,27 @@ class _CardGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     // Two equal columns via Row/Column rather than GridView: a handful of cards, and
     // GridView inside a Column needs shrinkWrap.
-    final rows = <Widget>[];
-    for (var i = 0; i < cards.length; i += 2) {
-      final left = cards[i];
-      final right = i + 1 < cards.length ? cards[i + 1] : null;
-      rows.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: _gap),
-          child: Row(
-            spacing: _gap,
-            children: [
-              Expanded(child: _FeatureCard(card: left)),
-              if (right != null)
-                Expanded(child: _FeatureCard(card: right))
-              else
-                const Spacer(),
-            ],
-          ),
-        ),
-      );
-    }
-    return Column(children: rows);
+    return Column(
+      children: [for (var i = 0; i < cards.length; i += 2) _row(i)],
+    );
+  }
+
+  Widget _row(int index) {
+    final left = cards[index];
+    final right = index + 1 < cards.length ? cards[index + 1] : null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: _gap),
+      child: Row(
+        spacing: _gap,
+        children: [
+          Expanded(child: _FeatureCard(card: left)),
+          if (right != null)
+            Expanded(child: _FeatureCard(card: right))
+          else
+            const Spacer(),
+        ],
+      ),
+    );
   }
 }
 

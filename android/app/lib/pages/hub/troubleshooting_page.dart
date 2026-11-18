@@ -3,9 +3,9 @@
 /// they share a surface instead of two nearly identical cards in 数据与维护.
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
+import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/db_health_bridge.dart';
 import 'package:diting_android/data/native/runtime_event.dart';
 import 'package:diting_android/data/native/runtime_log_bridge.dart';
@@ -42,10 +42,9 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     WidgetsBinding.instance.addObserver(this);
     // The provider outlives the page, so a reopen would otherwise show the size from last time.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refreshRuntimeStatus();
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refreshDbHealth();
+      if (!mounted) return;
+      _refreshRuntimeStatus();
+      _refreshDbHealth();
     });
   }
 
@@ -97,7 +96,8 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     final status = ref.watch(runtimeLogStatusProvider).value;
     final capturing = status?.capturing ?? false;
     final dbHealth = ref.watch(dbWriteHealthProvider).value;
-    final events = ref.watch(runtimeEventsProvider).value ?? const <RuntimeEvent>[];
+    final events =
+        ref.watch(runtimeEventsProvider).value ?? const <RuntimeEvent>[];
     final eventSummary = RuntimeEventSummary(events);
     final detailed = status?.detailed ?? false;
     final error = context.colorScheme.error;
@@ -138,8 +138,7 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
                 onChanged: _busy ? null : _onModeToggle,
               ),
             ],
-            footer:
-                context.l10n.troubleshootRecordNote,
+            footer: context.l10n.troubleshootRecordNote,
           ),
           generateSection(
             title: context.l10n.troubleshootEventsTitle,
@@ -174,13 +173,9 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
                 onTap: _refreshDbHealth,
               ),
             ],
-            footer:
-                context.l10n.troubleshootWriteStatusNote,
+            footer: context.l10n.troubleshootWriteStatusNote,
           ),
-          ListFooter(
-            text:
-                context.l10n.troubleshootCaptureWarning,
-          ),
+          ListFooter(text: context.l10n.troubleshootCaptureWarning),
           const SizedBox(height: 24),
         ],
       ),
@@ -215,12 +210,7 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
         : health.lastCause;
     final reason = cause.isEmpty ? '' : '（$cause）';
     final split = _dropBreakdown(health.droppedByReason, context.l10n);
-    return context.l10n.troubleshootDropped(
-      dropped,
-      split,
-      failed,
-      reason,
-    );
+    return context.l10n.troubleshootDropped(dropped, split, failed, reason);
   }
 
   /// "（队列溢出 120 · 表缺失 3）": tells a busy database from a missing table at a glance.
@@ -264,9 +254,7 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
             child: Text(context.l10n.troubleshootConfirmStart),
           ),
         ],
-        child: Text(
-          context.l10n.troubleshootStartBody,
-        ),
+        child: Text(context.l10n.troubleshootStartBody),
       ),
     );
     if (confirmed != true || !mounted) return;
@@ -275,7 +263,11 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     if (!mounted) return;
     setState(() => _busy = false);
     _syncPolling(started);
-    _toast(started ? context.l10n.troubleshootStartedToast : context.l10n.troubleshootStartFailedToast);
+    _toast(
+      started
+          ? context.l10n.troubleshootStartedToast
+          : context.l10n.troubleshootStartFailedToast,
+    );
   }
 
   /// The recent-events row: empty, an anomaly count, or the plain total.

@@ -85,12 +85,24 @@ extension _BackupImportApply on BackupImporter {
           '$value',
         );
       case 'outbound.host':
-        store.putString(LegacySettings.uiContainer, 'outbound_proxy_host', '$value');
+        store.putString(
+          LegacySettings.uiContainer,
+          'outbound_proxy_host',
+          '$value',
+        );
       // An early 2.0 build wrote `outbound_proxy_app_package`, which always read empty.
       case 'outbound.app':
-        store.putString(LegacySettings.uiContainer, 'outbound_proxy_app', '$value');
+        store.putString(
+          LegacySettings.uiContainer,
+          'outbound_proxy_app',
+          '$value',
+        );
       case 'outbound.port':
-        store.putInt(LegacySettings.uiContainer, 'outbound_proxy_port', value as int);
+        store.putInt(
+          LegacySettings.uiContainer,
+          'outbound_proxy_port',
+          value as int,
+        );
       case 'excluded.packages':
         settings.setExcludedPackages(_strings(value).toSet());
       case 'blocked.packages':
@@ -273,19 +285,26 @@ extension _BackupImportApply on BackupImporter {
           op['row'] as Map<String, Object?>,
         );
       case 'rewriteInsert':
-        await _insertRewrite(db, op['row'] as Map<String, Object?>);
+        await _insertRule(
+          db,
+          table: 'rewrite_rule',
+          sourceTable: 'rewrite_rule_source',
+          row: op['row'] as Map<String, Object?>,
+        );
       case 'rewriteUpdate':
         await db.update(
           'rewrite_rule',
-          {
-            'targetValue': op['targetValue'],
-            'rawLine': op['rawLine'],
-          },
+          {'targetValue': op['targetValue'], 'rawLine': op['rawLine']},
           where: 'id = ?',
           whereArgs: [op['id']],
         );
       case 'addressInsert':
-        await _insertAddressRule(db, op['row'] as Map<String, Object?>);
+        await _insertRule(
+          db,
+          table: 'go_url_rule',
+          sourceTable: 'go_url_rule_source',
+          row: op['row'] as Map<String, Object?>,
+        );
       default:
         debugPrint('backup import: unknown op ${op['op']}');
     }
@@ -314,24 +333,21 @@ extension _BackupImportApply on BackupImporter {
     await _insertRuleSource(db, '${table}_source', rows.first['id']);
   }
 
-  Future<void> _insertRewrite(Database db, Map<String, Object?> row) async {
+  /// Inserts [row] and marks it as user-added when it was new; an ignored duplicate keeps the
+  /// source rows it already had.
+  Future<void> _insertRule(
+    Database db, {
+    required String table,
+    required String sourceTable,
+    required Map<String, Object?> row,
+  }) async {
     final id = await db.insert(
-      'rewrite_rule',
+      table,
       row,
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
     if (id == 0) return;
-    await _insertRuleSource(db, 'rewrite_rule_source', id);
-  }
-
-  Future<void> _insertAddressRule(Database db, Map<String, Object?> row) async {
-    final id = await db.insert(
-      'go_url_rule',
-      row,
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
-    if (id == 0) return;
-    await _insertRuleSource(db, 'go_url_rule_source', id);
+    await _insertRuleSource(db, sourceTable, id);
   }
 
   /// A user-added row has to be marked as such, or the exporter would never see it again.

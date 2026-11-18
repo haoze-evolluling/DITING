@@ -39,13 +39,7 @@ class HttpInspectionPage extends ConsumerWidget {
     final http3 = enabled && settings.http3InspectionEnabled;
     final encryptedDns = enabled && settings.encryptedDnsBlockingEnabled;
     final bypass = settings.httpsBypassRules;
-    final caHint = !caReady
-        ? (ca == null
-              ? context.l10n.httpInspCheckingCa
-              : _caProblem(context.l10n, ca.available, ca.installed))
-        : apps.isEmpty
-        ? context.l10n.httpInspNoAppsHint
-        : context.l10n.httpInspSelectedHint(apps.length);
+    final caHint = _caHint(context, ca, caReady, apps.length);
     return CommonScaffold(
       title: context.l10n.hubHttpsInspection,
       body: SliverPageBody(
@@ -70,11 +64,7 @@ class HttpInspectionPage extends ConsumerWidget {
                       leading: const GlyphIcon(AppGlyphs.appsList),
                       title: Text(context.l10n.httpInspTargetApps),
                       subtitle: Text(
-                        !caReady
-                            ? caHint
-                            : apps.isEmpty
-                            ? context.l10n.httpInspNoApps
-                            : context.l10n.httpInspSelectedApps(apps.length),
+                        _appsHint(context, caReady, caHint, apps.length),
                       ),
                       // A dead row reads as "the app is broken"; explain the missing certificate
                       // instead and offer the one screen that fixes it.
@@ -85,17 +75,7 @@ class HttpInspectionPage extends ConsumerWidget {
                     ListItem(
                       leading: const GlyphIcon(AppGlyphs.verified),
                       title: Text(context.l10n.httpInspCaCert),
-                      subtitle: Text(
-                        ca == null
-                            ? context.l10n.httpInspCheckingCa
-                            : caReady
-                            ? context.l10n.httpInspCaReady
-                            : _caProblem(
-                                context.l10n,
-                                ca.available,
-                                ca.installed,
-                              ),
-                      ),
+                      subtitle: Text(_caCertHint(context, ca, caReady)),
                       onTap: () => context.push('/hub/https-inspection/ca'),
                     ),
                   ],
@@ -107,27 +87,18 @@ class HttpInspectionPage extends ConsumerWidget {
                       leading: const GlyphIcon(AppGlyphs.target),
                       title: Text(context.l10n.httpInspUrlRules),
                       subtitle: Text(
-                        !caReady
-                            ? caHint
-                            : !enabled
-                            ? context.l10n.httpInspNeedEnable
-                            : !urlRules
-                            ? context.l10n.httpInspUrlPaused
-                            : context.l10n.httpInspUrlOn,
+                        _urlRulesHint(
+                          context,
+                          caReady: caReady,
+                          caHint: caHint,
+                          enabled: enabled,
+                          urlRules: urlRules,
+                        ),
                       ),
                       value: urlRules,
                       onChanged: enabled
-                          ? (value) {
-                              settings.setHttpInspectionToggles(
-                                http3: settings.http3InspectionEnabled,
-                                encryptedDns:
-                                    settings.encryptedDnsBlockingEnabled,
-                                addressRules: value,
-                              );
-                              ref
-                                  .read(legacySettingsRevisionProvider.notifier)
-                                  .bump();
-                            }
+                          ? (value) =>
+                                _setToggles(ref, settings, addressRules: value)
                           : null,
                     ),
                   ],
@@ -145,37 +116,21 @@ class HttpInspectionPage extends ConsumerWidget {
                       ),
                       value: http3,
                       onChanged: enabled
-                          ? (value) {
-                              settings.setHttpInspectionToggles(
-                                http3: value,
-                                encryptedDns:
-                                    settings.encryptedDnsBlockingEnabled,
-                                addressRules: settings.addressRulesEnabled,
-                              );
-                              ref
-                                  .read(legacySettingsRevisionProvider.notifier)
-                                  .bump();
-                            }
+                          ? (value) => _setToggles(ref, settings, http3: value)
                           : null,
                     ),
                     ListItem.toggle(
                       leading: const GlyphIcon(AppGlyphs.lock),
                       title: Text(context.l10n.httpInspBlockDot),
                       subtitle: Text(
-                        !enabled ? context.l10n.httpInspNeedEnable : context.l10n.httpInspBlockDotSubtitle,
+                        !enabled
+                            ? context.l10n.httpInspNeedEnable
+                            : context.l10n.httpInspBlockDotSubtitle,
                       ),
                       value: encryptedDns,
                       onChanged: enabled
-                          ? (value) {
-                              settings.setHttpInspectionToggles(
-                                http3: settings.http3InspectionEnabled,
-                                encryptedDns: value,
-                                addressRules: settings.addressRulesEnabled,
-                              );
-                              ref
-                                  .read(legacySettingsRevisionProvider.notifier)
-                                  .bump();
-                            }
+                          ? (value) =>
+                                _setToggles(ref, settings, encryptedDns: value)
                           : null,
                     ),
                     ListItem(
@@ -249,7 +204,7 @@ class HttpInspectionPage extends ConsumerWidget {
             tooltip: context.l10n.commonDelete,
             onPressed: () {
               settings.setHttpsBypassRules({...bypass}..remove(rule));
-              ref.read(legacySettingsRevisionProvider.notifier).bump();
+              _bump(ref);
             },
             icon: const GlyphIcon(AppGlyphs.delete, size: 20),
           ),
@@ -292,6 +247,69 @@ class HttpInspectionPage extends ConsumerWidget {
     }
   }
 
+  /// One-line CA status shown under the master switch and the app row.
+  static String _caHint(
+    BuildContext context,
+    CaCertificateState? ca,
+    bool caReady,
+    int appCount,
+  ) {
+    if (!caReady) {
+      return ca == null
+          ? context.l10n.httpInspCheckingCa
+          : _caProblem(context.l10n, ca.available, ca.installed);
+    }
+    return appCount == 0
+        ? context.l10n.httpInspNoAppsHint
+        : context.l10n.httpInspSelectedHint(appCount);
+  }
+
+  static String _appsHint(
+    BuildContext context,
+    bool caReady,
+    String caHint,
+    int appCount,
+  ) {
+    if (!caReady) {
+      return caHint;
+    }
+    return appCount == 0
+        ? context.l10n.httpInspNoApps
+        : context.l10n.httpInspSelectedApps(appCount);
+  }
+
+  static String _caCertHint(
+    BuildContext context,
+    CaCertificateState? ca,
+    bool caReady,
+  ) {
+    if (ca == null) {
+      return context.l10n.httpInspCheckingCa;
+    }
+    if (caReady) {
+      return context.l10n.httpInspCaReady;
+    }
+    return _caProblem(context.l10n, ca.available, ca.installed);
+  }
+
+  static String _urlRulesHint(
+    BuildContext context, {
+    required bool caReady,
+    required String caHint,
+    required bool enabled,
+    required bool urlRules,
+  }) {
+    if (!caReady) {
+      return caHint;
+    }
+    if (!enabled) {
+      return context.l10n.httpInspNeedEnable;
+    }
+    return urlRules
+        ? context.l10n.httpInspUrlOn
+        : context.l10n.httpInspUrlPaused;
+  }
+
   /// "Certificate exists but is not installed" and "not generated yet" need different copy:
   /// install it from system settings, or regenerate first.
   static String _caProblem(AppL10n l10n, bool available, bool installed) {
@@ -302,6 +320,25 @@ class HttpInspectionPage extends ConsumerWidget {
       return l10n.httpInspCaNotInstalled;
     }
     return l10n.httpInspCaReadyShort;
+  }
+
+  static void _bump(WidgetRef ref) =>
+      ref.read(legacySettingsRevisionProvider.notifier).bump();
+
+  /// Writes one of the three content toggles, leaving the other two untouched.
+  static void _setToggles(
+    WidgetRef ref,
+    LegacySettings settings, {
+    bool? http3,
+    bool? encryptedDns,
+    bool? addressRules,
+  }) {
+    settings.setHttpInspectionToggles(
+      http3: http3 ?? settings.http3InspectionEnabled,
+      encryptedDns: encryptedDns ?? settings.encryptedDnsBlockingEnabled,
+      addressRules: addressRules ?? settings.addressRulesEnabled,
+    );
+    _bump(ref);
   }
 
   /// Toggles inspection, asking first when domain rules are off: decrypting traffic with
@@ -317,7 +354,7 @@ class HttpInspectionPage extends ConsumerWidget {
         packages: settings.httpInspectionPackages,
         enabled: false,
       );
-      ref.read(legacySettingsRevisionProvider.notifier).bump();
+      _bump(ref);
       return;
     }
     if (!settings.domainRulesEnabled) {
@@ -347,7 +384,7 @@ class HttpInspectionPage extends ConsumerWidget {
       packages: settings.httpInspectionPackages,
       enabled: true,
     );
-    ref.read(legacySettingsRevisionProvider.notifier).bump();
+    _bump(ref);
   }
 
   Future<void> _addBypass(
@@ -364,6 +401,6 @@ class HttpInspectionPage extends ConsumerWidget {
       return;
     }
     settings.setHttpsBypassRules({...current, value});
-    ref.read(legacySettingsRevisionProvider.notifier).bump();
+    _bump(ref);
   }
 }

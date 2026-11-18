@@ -30,6 +30,8 @@ class _HttpInspectionAppsPageState
     });
   }
 
+  void _bump() => ref.read(legacySettingsRevisionProvider.notifier).bump();
+
   /// Every change is persisted immediately, since the parent page reads the same keys; the
   /// master switch is left alone, matching `saveHttpInspectionApps`.
   void _write(Set<String> packages) {
@@ -54,7 +56,7 @@ class _HttpInspectionAppsPageState
         });
       }
     }
-    ref.read(legacySettingsRevisionProvider.notifier).bump();
+    _bump();
   }
 
   @override
@@ -101,11 +103,11 @@ class _HttpInspectionAppsPageState
         sort: sort,
         onFilterChanged: (value) {
           settings.setHttpInspectionAppsFilterRaw(value.storageValue);
-          ref.read(legacySettingsRevisionProvider.notifier).bump();
+          _bump();
         },
         onSortChanged: (value) {
           settings.setHttpInspectionAppsSortRaw(value.storageValue);
-          ref.read(legacySettingsRevisionProvider.notifier).bump();
+          _bump();
         },
         onSelectAll: () => _write({...selected, ...visiblePackages}),
         onClear: () => _write(const {}),

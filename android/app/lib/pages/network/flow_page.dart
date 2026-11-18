@@ -72,8 +72,9 @@ class _FlowPageState extends ConsumerState<FlowPage> {
     // so a busy device does not force one long mixed scroll.
     final wide = MediaQuery.sizeOf(context).width >= 720;
     final apps = groups.keys.toList();
-    final selected = (_selectedApp != null && groups.containsKey(_selectedApp))
-        ? _selectedApp!
+    final selectedApp = _selectedApp;
+    final selected = (selectedApp != null && groups.containsKey(selectedApp))
+        ? selectedApp
         : apps.first;
     if (!wide) {
       return CommonScaffold(
@@ -140,7 +141,9 @@ class _FlowTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final blocked = row.status == 'failed';
-    final color = blocked ? context.colorScheme.error : context.colorScheme.success;
+    final color = blocked
+        ? context.colorScheme.error
+        : context.colorScheme.success;
     return ListItem(
       leading: GlyphIcon(
         blocked ? AppGlyphs.block : AppGlyphs.checkCircle,

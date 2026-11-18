@@ -54,18 +54,19 @@ class FilterPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final foreground = disabled
-        ? colorScheme.onSurfaceVariant.withValues(alpha: 0.45)
-        : selected
-        ? colorScheme.onPrimary
-        : colorScheme.onSurfaceVariant;
     return TonalChip(
       label: label,
       color: selected
           ? colorScheme.primary
           : context.raisedSurfaceLevel.colorOf(colorScheme),
-      foregroundColor: foreground,
+      foregroundColor: _foreground(colorScheme),
       onPressed: onPressed,
     );
+  }
+
+  Color _foreground(ColorScheme colorScheme) {
+    if (disabled) return colorScheme.onSurfaceVariant.withValues(alpha: 0.45);
+    if (selected) return colorScheme.onPrimary;
+    return colorScheme.onSurfaceVariant;
   }
 }

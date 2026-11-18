@@ -17,22 +17,16 @@ String remainingLabel(int seconds, AppL10n l10n) {
   return l10n.durationSeconds(seconds);
 }
 
+String _twoDigits(int value) => value.toString().padLeft(2, '0');
+
 /// Millisecond timestamp to `MM-dd HH:mm:ss`. Hand-formatted rather than pulling in intl
 /// for the single place that needs it.
 String shortDateTimeOf(int milliseconds) {
   if (milliseconds <= 0) return currentL10n.obsNone;
   final time = DateTime.fromMillisecondsSinceEpoch(milliseconds);
-  String two(int value) => value.toString().padLeft(2, '0');
-  return '${two(time.month)}-${two(time.day)} '
-      '${two(time.hour)}:${two(time.minute)}:${two(time.second)}';
-}
-
-/// Millisecond timestamp to `HH:mm:ss`.
-String clockOf(int milliseconds) {
-  if (milliseconds <= 0) return currentL10n.obsNone;
-  final time = DateTime.fromMillisecondsSinceEpoch(milliseconds);
-  String two(int value) => value.toString().padLeft(2, '0');
-  return '${two(time.hour)}:${two(time.minute)}:${two(time.second)}';
+  return '${_twoDigits(time.month)}-${_twoDigits(time.day)} '
+      '${_twoDigits(time.hour)}:${_twoDigits(time.minute)}:'
+      '${_twoDigits(time.second)}';
 }
 
 String countOf(int value) {

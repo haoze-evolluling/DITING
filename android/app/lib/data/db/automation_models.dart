@@ -40,30 +40,16 @@ class AutomationRule {
   String get triggerType =>
       (spec['trigger'] as Map?)?['type'] as String? ?? 'manual';
 
-  List<Map<String, Object?>> get conditions {
-    final raw = spec['conditions'];
-    if (raw is! List) return const [];
-    return [
-      for (final item in raw)
-        if (item is Map) Map<String, Object?>.from(item),
-    ];
-  }
+  List<Map<String, Object?>> get conditions => _mapList(spec['conditions']);
 
-  List<Map<String, Object?>> get actions {
-    final raw = spec['actions'];
-    if (raw is! List) return const [];
-    return [
-      for (final item in raw)
-        if (item is Map) Map<String, Object?>.from(item),
-    ];
-  }
+  List<Map<String, Object?>> get actions => _mapList(spec['actions']);
 
   static AutomationRule fromRow(Map<String, Object?> row) => AutomationRule(
-    id: (row['id'] as String?) ?? '',
-    name: (row['name'] as String?) ?? '',
+    id: row['id'] as String? ?? '',
+    name: row['name'] as String? ?? '',
     enabled: ((row['enabled'] as num?)?.toInt() ?? 1) != 0,
     priority: (row['priority'] as num?)?.toInt() ?? 100,
-    match: (row['match'] as String?) ?? 'all',
+    match: row['match'] as String? ?? 'all',
     spec: _decodeMap(row['spec_json']),
     lastRunAt: (row['last_run_at'] as num?)?.toInt() ?? 0,
     createdAt: (row['created_at'] as num?)?.toInt() ?? 0,
@@ -128,16 +114,20 @@ class AutomationProfile {
   List<String> get ruleGroupStates {
     final raw = payload['ruleGroupStates'];
     if (raw is! List) return const [];
-    return [for (final item in raw) if (item is String) item];
+    return [
+      for (final item in raw)
+        if (item is String) item,
+    ];
   }
 
-  static AutomationProfile fromRow(Map<String, Object?> row) => AutomationProfile(
-    id: (row['id'] as String?) ?? '',
-    name: (row['name'] as String?) ?? '',
-    payload: _decodeMap(row['payload_json']),
-    createdAt: (row['created_at'] as num?)?.toInt() ?? 0,
-    updatedAt: (row['updated_at'] as num?)?.toInt() ?? 0,
-  );
+  static AutomationProfile fromRow(Map<String, Object?> row) =>
+      AutomationProfile(
+        id: row['id'] as String? ?? '',
+        name: row['name'] as String? ?? '',
+        payload: _decodeMap(row['payload_json']),
+        createdAt: (row['created_at'] as num?)?.toInt() ?? 0,
+        updatedAt: (row['updated_at'] as num?)?.toInt() ?? 0,
+      );
 
   Map<String, Object?> toRow() => {
     'id': id,
@@ -169,9 +159,9 @@ class AutomationEvent {
   static AutomationEvent fromRow(Map<String, Object?> row) => AutomationEvent(
     id: (row['id'] as num?)?.toInt() ?? 0,
     ts: (row['ts'] as num?)?.toInt() ?? 0,
-    ruleId: (row['rule_id'] as String?) ?? '',
-    event: (row['event'] as String?) ?? '',
-    outcome: (row['outcome'] as String?) ?? '',
+    ruleId: row['rule_id'] as String? ?? '',
+    event: row['event'] as String? ?? '',
+    outcome: row['outcome'] as String? ?? '',
     detail: _decodeMap(row['detail_json']),
   );
 
@@ -205,6 +195,15 @@ abstract final class AutomationSpec {
       {'type': actionPause, 'minutes': 60},
     ],
   };
+}
+
+/// Keeps only the map items of a JSON array; a non-list yields an empty list.
+List<Map<String, Object?>> _mapList(Object? raw) {
+  if (raw is! List) return const [];
+  return [
+    for (final item in raw)
+      if (item is Map) Map<String, Object?>.from(item),
+  ];
 }
 
 Map<String, Object?> _decodeMap(Object? raw) {

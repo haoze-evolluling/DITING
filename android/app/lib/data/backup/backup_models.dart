@@ -90,13 +90,3 @@ abstract final class BackupFormat {
         '${two(time.hour)}${two(time.minute)}${two(time.second)}';
   }
 }
-
-/// Backup parse/validation failure; the message is user-visible.
-class BackupFormatException implements Exception {
-  const BackupFormatException(this.message);
-
-  final String message;
-
-  @override
-  String toString() => message;
-}

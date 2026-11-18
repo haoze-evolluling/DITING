@@ -177,14 +177,12 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _ensureFresh());
     }
     final members = state.members;
-    final visible = members == null
+    final listed = members == null
         ? const <RecognitionMember>[]
-        : () {
-            final list = widget.select(members);
-            return widget.sortable && _newestFirst
-                ? list.reversed.toList(growable: false)
-                : list;
-          }();
+        : widget.select(members);
+    final visible = widget.sortable && _newestFirst
+        ? listed.reversed.toList(growable: false)
+        : listed;
 
     return CommonScaffold(
       title: widget.title,
@@ -198,7 +196,9 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
         if (widget.sortable)
           IconButtonData(
             glyph: AppGlyphs.sort,
-            tooltip: _newestFirst ? context.l10n.recognitionSortAsc : context.l10n.recognitionSortDesc,
+            tooltip: _newestFirst
+                ? context.l10n.recognitionSortAsc
+                : context.l10n.recognitionSortDesc,
             isSelected: _newestFirst,
             onPressed: () => setState(() => _newestFirst = !_newestFirst),
           ),
@@ -215,14 +215,20 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
             EmptyStateBox(
               minHeight: 320,
               child: NullStatus(
-                label: state.error == null ? context.l10n.recognitionEmpty : context.l10n.recognitionLoadFailed,
+                label: state.error == null
+                    ? context.l10n.recognitionEmpty
+                    : context.l10n.recognitionLoadFailed,
                 description: state.error ?? context.l10n.recognitionEmptyBody,
                 illustration: state.error == null
                     ? NullStatusIllustration.data
                     : NullStatusIllustration.error,
                 action: TextButton(
                   onPressed: _refresh,
-                  child: Text(state.error == null ? context.l10n.recognitionLoad : context.l10n.recognitionRetry),
+                  child: Text(
+                    state.error == null
+                        ? context.l10n.recognitionLoad
+                        : context.l10n.recognitionRetry,
+                  ),
                 ),
               ),
             )

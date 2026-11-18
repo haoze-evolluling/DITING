@@ -11,7 +11,7 @@ class PingTestPage extends ConsumerStatefulWidget {
 }
 
 class _PingTestPageState extends ConsumerState<PingTestPage> {
-  final _target = TextEditingController(text: '');
+  final _target = TextEditingController();
   var _count = 4;
   var _running = false;
   PingSummary? _result;

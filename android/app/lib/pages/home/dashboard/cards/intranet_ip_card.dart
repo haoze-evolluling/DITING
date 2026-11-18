@@ -29,11 +29,14 @@ class IntranetIpCard extends ConsumerWidget {
     // The port only matters in server mode: peers must enter it as their DNS.
     final listening =
         mode == AppWorkMode.server && serverStatus == ServerStatus.running;
-    final address = localIp.isEmpty
-        ? null
-        : listening
-        ? '$localIp:$port'
-        : localIp;
+    final address = switch ((localIp.isEmpty, listening)) {
+      (true, _) => null,
+      (_, true) => '$localIp:$port',
+      (_, false) => localIp,
+    };
+    final placeholder = loading
+        ? context.l10n.intranetReading
+        : context.l10n.intranetNoActiveNetwork;
     return DashboardCard(
       semanticLabel: context.l10n.intranetIpTitle,
       child: Column(
@@ -60,7 +63,7 @@ class IntranetIpCard extends ConsumerWidget {
           ),
           SizedBox(height: 12 * scale),
           Text(
-            address ?? (loading ? context.l10n.intranetReading : context.l10n.intranetNoActiveNetwork),
+            address ?? placeholder,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: DashboardText.figure(

@@ -40,15 +40,12 @@ class AgentMarkdownView extends StatelessWidget {
     MarkdownColors colors,
   ) {
     final colorScheme = context.colorScheme;
+    final bodyStyle = AppTextStyle.body.of(context).copyWith(height: 1.45);
     switch (block) {
       case MarkdownHeading(:final level, :final text):
         return _Heading(level: level, text: text, colors: colors);
       case MarkdownParagraph(:final text):
-        return _Rich(
-          text: text,
-          colors: colors,
-          style: AppTextStyle.body.of(context).copyWith(height: 1.45),
-        );
+        return _Rich(text: text, colors: colors, style: bodyStyle);
       case MarkdownBulletItem(:final indent, :final text):
         return Padding(
           padding: EdgeInsets.only(left: indent * 14.0 + 4),
@@ -69,11 +66,7 @@ class AgentMarkdownView extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: _Rich(
-                  text: text,
-                  colors: colors,
-                  style: AppTextStyle.body.of(context).copyWith(height: 1.45),
-                ),
+                child: _Rich(text: text, colors: colors, style: bodyStyle),
               ),
             ],
           ),
@@ -90,11 +83,7 @@ class AgentMarkdownView extends StatelessWidget {
                   .copyWith(color: colors.primary, fontWeight: FontWeight.bold),
             ),
             Expanded(
-              child: _Rich(
-                text: text,
-                colors: colors,
-                style: AppTextStyle.body.of(context).copyWith(height: 1.45),
-              ),
+              child: _Rich(text: text, colors: colors, style: bodyStyle),
             ),
           ],
         );
@@ -109,13 +98,10 @@ class AgentMarkdownView extends StatelessWidget {
           child: _Rich(
             text: text,
             colors: colors,
-            style: AppTextStyle.body
-                .of(context)
-                .copyWith(
-                  height: 1.45,
-                  fontStyle: FontStyle.italic,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+            style: bodyStyle.copyWith(
+              fontStyle: FontStyle.italic,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         );
       case MarkdownDivider():
@@ -127,11 +113,11 @@ class AgentMarkdownView extends StatelessWidget {
 }
 
 class _Rich extends StatelessWidget {
-  const _Rich({required this.text, required this.colors, this.style});
+  const _Rich({required this.text, required this.colors, required this.style});
 
   final String text;
   final MarkdownColors colors;
-  final TextStyle? style;
+  final TextStyle style;
 
   @override
   Widget build(BuildContext context) {
@@ -235,9 +221,9 @@ class _CodeBlock extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: code));
-                    ScaffoldMessenger.maybeOf(
-                      context,
-                    )?.showSnackBar(SnackBar(content: Text(context.l10n.markdownCodeCopied)));
+                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                      SnackBar(content: Text(context.l10n.markdownCodeCopied)),
+                    );
                   },
                   icon: const GlyphIcon(AppGlyphs.copy, size: 16),
                 ),
@@ -288,25 +274,23 @@ class _Table extends StatelessWidget {
     );
 
     TableRow rowOf(List<String> cells, {required bool header, int index = 0}) {
+      BoxDecoration? decoration;
+      if (header) {
+        decoration = BoxDecoration(
+          color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+        );
+      } else if (index.isOdd) {
+        decoration = BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        );
+      }
       return TableRow(
-        decoration: header
-            ? BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.5),
-              )
-            : index.isOdd
-            ? BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.35,
-                ),
-              )
-            : null,
+        decoration: decoration,
         children: [
           for (final cell in cells)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              child: header
-                  ? Text(cell, style: headerStyle)
-                  : Text(cell, style: cellStyle),
+              child: Text(cell, style: header ? headerStyle : cellStyle),
             ),
         ],
       );

@@ -64,16 +64,18 @@ class _ServerLanAccessCard extends ConsumerWidget {
     final port = ref.watch(serverPortProvider);
     final scale = DashboardDensityScope.scaleOf(context);
     final colorScheme = context.colorScheme;
-    final address = localIp.isEmpty
-        ? null
-        : listening
-        ? '$localIp:$port'
-        : localIp;
-    final hint = localIp.isEmpty
-        ? context.l10n.serverLanConnectHint
-        : listening
-        ? context.l10n.serverLanPointHint
-        : context.l10n.intranetServiceStopped(port);
+    final String? address;
+    final String hint;
+    if (localIp.isEmpty) {
+      address = null;
+      hint = context.l10n.serverLanConnectHint;
+    } else if (listening) {
+      address = '$localIp:$port';
+      hint = context.l10n.serverLanPointHint;
+    } else {
+      address = localIp;
+      hint = context.l10n.intranetServiceStopped(port);
+    }
     return DashboardCard(
       semanticLabel: context.l10n.serverLanAccess,
       child: Column(
@@ -88,7 +90,7 @@ class _ServerLanAccessCard extends ConsumerWidget {
                 tooltip: context.l10n.intranetCopyAddress,
                 onPressed: address == null
                     ? null
-                    : () => _copy(context, address),
+                    : () => _copy(context, address!),
               ),
             ],
           ),
@@ -325,44 +327,15 @@ class _ServerCacheCard extends ConsumerWidget {
       settings.serverCachePresetRaw,
       context.l10n,
     );
-    final scale = DashboardDensityScope.scaleOf(context);
-    final colorScheme = context.colorScheme;
-    return DashboardCard(
+    return _ServerToggleCard(
       semanticLabel: context.l10n.serverCacheSettings,
-      onTap: onOpen,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DashboardCardHeader(
-            glyph: AppGlyphs.memory,
-            title: context.l10n.serverCacheSettings,
-            leading: [
-              DashboardChip(
-                label: enabled
-                    ? context.l10n.commonEnabled
-                    : context.l10n.commonDisabled,
-                tone: enabled ? DashboardChipTone.ok : DashboardChipTone.idle,
-              ),
-            ],
-            trailing: [
-              GlyphIcon(
-                AppGlyphs.chevronForward,
-                size: 16,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-          SizedBox(height: 8 * scale),
-          Text(
-            enabled
-                ? context.l10n.serverCacheOn(preset)
-                : context.l10n.serverCacheOff,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: DashboardText.label(context),
-          ),
-        ],
-      ),
+      glyph: AppGlyphs.memory,
+      title: context.l10n.serverCacheSettings,
+      enabled: enabled,
+      body: enabled
+          ? context.l10n.serverCacheOn(preset)
+          : context.l10n.serverCacheOff,
+      onOpen: onOpen,
     );
   }
 }
@@ -377,17 +350,50 @@ class _ServerRuleControlCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(legacySettingsProvider);
     final enabled = settings.serverAdBlockEnabled;
+    return _ServerToggleCard(
+      semanticLabel: context.l10n.serverRuleControl,
+      glyph: AppGlyphs.rules,
+      title: context.l10n.serverRuleControl,
+      enabled: enabled,
+      body: enabled
+          ? context.l10n.serverRuleControlOn
+          : context.l10n.serverRuleControlOff,
+      onOpen: onOpen,
+    );
+  }
+}
+
+/// Shared header for the on/off module cards: glyph, title, state chip and a one-line summary.
+class _ServerToggleCard extends StatelessWidget {
+  const _ServerToggleCard({
+    required this.semanticLabel,
+    required this.glyph,
+    required this.title,
+    required this.enabled,
+    required this.body,
+    required this.onOpen,
+  });
+
+  final String semanticLabel;
+  final Glyph glyph;
+  final String title;
+  final bool enabled;
+  final String body;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
     final scale = DashboardDensityScope.scaleOf(context);
     final colorScheme = context.colorScheme;
     return DashboardCard(
-      semanticLabel: context.l10n.serverRuleControl,
+      semanticLabel: semanticLabel,
       onTap: onOpen,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.rules,
-            title: context.l10n.serverRuleControl,
+            glyph: glyph,
+            title: title,
             leading: [
               DashboardChip(
                 label: enabled
@@ -406,9 +412,7 @@ class _ServerRuleControlCard extends ConsumerWidget {
           ),
           SizedBox(height: 8 * scale),
           Text(
-            enabled
-                ? context.l10n.serverRuleControlOn
-                : context.l10n.serverRuleControlOff,
+            body,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: DashboardText.label(context),

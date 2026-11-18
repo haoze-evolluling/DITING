@@ -45,38 +45,14 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
       title: context.l10n.transferTitle,
       body: PageBody(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _metric(context, context.l10n.transferMetricProviders, _figure(stats?.providers)),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _metric(
-                    context,
-                    context.l10n.transferMetricSubs,
-                    _figure(stats?.subscriptions),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _metric(context, context.l10n.transferMetricCustomRules, _figure(stats?.customRules)),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _metric(context, context.l10n.transferMetricListedApps, _figure(stats?.listedApps)),
-                ),
-              ],
-            ),
-          ),
+          _metricRow(context, 12, [
+            (context.l10n.transferMetricProviders, stats?.providers),
+            (context.l10n.transferMetricSubs, stats?.subscriptions),
+          ]),
+          _metricRow(context, 10, [
+            (context.l10n.transferMetricCustomRules, stats?.customRules),
+            (context.l10n.transferMetricListedApps, stats?.listedApps),
+          ]),
           for (final group in _sections(context.l10n))
             generateSection(
               title: group.title,
@@ -86,7 +62,9 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
                         glyph: _allSelected
                             ? AppGlyphs.deselect
                             : AppGlyphs.selectAll,
-                        tooltip: _allSelected ? context.l10n.transferDeselectAll : context.l10n.commonSelectAll,
+                        tooltip: _allSelected
+                            ? context.l10n.transferDeselectAll
+                            : context.l10n.commonSelectAll,
                         onPressed: _toggleAll,
                       ),
                     ]
@@ -204,6 +182,24 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
     ),
   ];
 
+  Widget _metricRow(
+    BuildContext context,
+    double topPadding,
+    List<(String label, int? value)> metrics,
+  ) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, topPadding, 16, 0),
+      child: Row(
+        children: [
+          for (final (index, (label, value)) in metrics.indexed) ...[
+            if (index > 0) const SizedBox(width: 10),
+            Expanded(child: _metric(context, label, _figure(value))),
+          ],
+        ],
+      ),
+    );
+  }
+
   /// A dash while the counts load; showing 0 would read as "no rules on this device".
   String _figure(int? value) => value == null ? '—' : '$value';
 
@@ -223,7 +219,9 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
   Future<void> _export() async {
     setState(() => _busy = context.l10n.transferBusyExporting);
     try {
-      final outcome = await ref.read(backupActionsProvider).exportToDocument(_selected);
+      final outcome = await ref
+          .read(backupActionsProvider)
+          .exportToDocument(_selected);
       if (!mounted) return;
       if (outcome.cancelled) {
         _toast(context.l10n.transferExportCancelled);
@@ -286,7 +284,11 @@ class _ImportResultDialog extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return CommonDialog(
       title: context.l10n.transferImportTitle,
-      trailing: MetaChip(label: result.failed ? context.l10n.transferImportFailedChip : context.l10n.transferImportDoneChip),
+      trailing: MetaChip(
+        label: result.failed
+            ? context.l10n.transferImportFailedChip
+            : context.l10n.transferImportDoneChip,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,14 +334,16 @@ class _ImportResultDialog extends StatelessWidget {
                   outcome.error ?? '',
                 ),
                 style: context.listCaptionStyle.copyWith(
-                color: colorScheme.error,
-              ),
+                  color: colorScheme.error,
+                ),
               ),
             if (result.changed.isEmpty && result.failedGroups.isEmpty)
               Text(context.l10n.transferNothingChanged),
             if (result.subscriptionCount > 0)
               Text(
-                context.l10n.transferSubscriptionsNote(result.subscriptionCount),
+                context.l10n.transferSubscriptionsNote(
+                  result.subscriptionCount,
+                ),
               ),
           ],
         ],

@@ -1,11 +1,11 @@
 /// Minimal WebDAV client: PROPFIND, MKCOL, PUT, GET. Credentials stay in memory.
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:diting_android/data/http/request_user_agent.dart';
+import 'package:diting_shared/app/l10n/l10n.dart';
 
 class DavCredentials {
   const DavCredentials({
@@ -79,30 +79,31 @@ class DavClient {
 
   Future<DavProbeResult> probe(DavCredentials rawCredentials) async {
     final credentials = rawCredentials.normalized();
-    final client = HttpClient()..connectionTimeout = timeout;
     try {
-      final status = await _propfind(client, credentials);
-      if (status == 207 || status == 200) {
-        return const DavProbeResult.ok(created: false);
-      }
-      if (status == 404) {
-        // A missing directory is normal on first use; failing to create it is not.
-        final created = await _mkcol(client, credentials);
-        if (created) return const DavProbeResult.ok(created: true);
-        return DavProbeResult.failed(currentL10n.davProbeNoWrite);
-      }
-      return DavProbeResult.failed(_statusMessage(status), statusCode: status);
+      return await _withClient((client) async {
+        final status = await _propfind(client, credentials);
+        if (status == 207 || status == 200) {
+          return const DavProbeResult.ok(created: false);
+        }
+        if (status == 404) {
+          // A missing directory is normal on first use; failing to create it is not.
+          final created = await _mkcol(client, credentials);
+          return created
+              ? const DavProbeResult.ok(created: true)
+              : DavProbeResult.failed(currentL10n.davProbeNoWrite);
+        }
+        return DavProbeResult.failed(
+          _statusMessage(status),
+          statusCode: status,
+        );
+      });
     } on SocketException catch (error) {
       // Unreachable address, DNS failure and closed port look alike to users.
-      return DavProbeResult.failed(
-        currentL10n.davProbeConnect(error.message),
-      );
+      return DavProbeResult.failed(currentL10n.davProbeConnect(error.message));
     } on HandshakeException {
       return DavProbeResult.failed(currentL10n.davProbeTls);
     } on HttpException {
       return DavProbeResult.failed(currentL10n.davProbeHttp);
-    } finally {
-      client.close(force: true);
     }
   }
 
@@ -112,41 +113,36 @@ class DavClient {
     required String content,
   }) async {
     final credentials = rawCredentials.normalized();
-    final client = HttpClient()..connectionTimeout = timeout;
     try {
-      final request = await client
-          .putUrl(Uri.parse(credentials.fileUrl(name)))
-          .timeout(timeout);
-      request.headers.set(
-        HttpHeaders.authorizationHeader,
-        credentials.basicAuthHeader,
-      );
-      request.headers.set(HttpHeaders.userAgentHeader, userAgent);
-      request.headers.contentType = ContentType(
-        'application',
-        'json',
-        charset: 'utf-8',
-      );
-      final bytes = utf8.encode(content);
-      request.headers.contentLength = bytes.length;
-      request.add(bytes);
-      final response = await request.close().timeout(timeout);
-      await response.drain<void>();
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return const DavProbeResult.ok(created: false);
-      }
-      return DavProbeResult.failed(
-        _statusMessage(response.statusCode),
-        statusCode: response.statusCode,
-      );
+      return await _withClient((client) async {
+        final request = await _openRequest(
+          client,
+          'PUT',
+          credentials.fileUrl(name),
+          credentials,
+        );
+        request.headers.contentType = ContentType(
+          'application',
+          'json',
+          charset: 'utf-8',
+        );
+        final bytes = utf8.encode(content);
+        request.headers.contentLength = bytes.length;
+        request.add(bytes);
+        final response = await request.close().timeout(timeout);
+        await response.drain<void>();
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          return const DavProbeResult.ok(created: false);
+        }
+        return DavProbeResult.failed(
+          _statusMessage(response.statusCode),
+          statusCode: response.statusCode,
+        );
+      });
     } on SocketException catch (error) {
-      return DavProbeResult.failed(
-        currentL10n.davUploadConnect(error.message),
-      );
+      return DavProbeResult.failed(currentL10n.davUploadConnect(error.message));
     } on HandshakeException {
       return DavProbeResult.failed(currentL10n.davUploadTls);
-    } finally {
-      client.close(force: true);
     }
   }
 
@@ -155,16 +151,13 @@ class DavClient {
     required String name,
   }) async {
     final credentials = rawCredentials.normalized();
-    final client = HttpClient()..connectionTimeout = timeout;
-    try {
-      final request = await client
-          .getUrl(Uri.parse(credentials.fileUrl(name)))
-          .timeout(timeout);
-      request.headers.set(
-        HttpHeaders.authorizationHeader,
-        credentials.basicAuthHeader,
+    return _withClient((client) async {
+      final request = await _openRequest(
+        client,
+        'GET',
+        credentials.fileUrl(name),
+        credentials,
       );
-      request.headers.set(HttpHeaders.userAgentHeader, userAgent);
       final response = await request.close().timeout(timeout);
       if (response.statusCode == 404) {
         await response.drain<void>();
@@ -172,25 +165,47 @@ class DavClient {
       }
       if (response.statusCode < 200 || response.statusCode >= 300) {
         await response.drain<void>();
-        throw HttpException(
-          currentL10n.davDownloadHttp(response.statusCode),
-        );
+        throw HttpException(currentL10n.davDownloadHttp(response.statusCode));
       }
       return await response.transform(utf8.decoder).join().timeout(timeout);
+    });
+  }
+
+  /// One client per operation; it is force-closed so an abandoned socket cannot outlive the call.
+  Future<T> _withClient<T>(Future<T> Function(HttpClient client) action) async {
+    final client = HttpClient()..connectionTimeout = timeout;
+    try {
+      return await action(client);
     } finally {
       client.close(force: true);
     }
   }
 
-  Future<int> _propfind(HttpClient client, DavCredentials credentials) async {
+  /// Opens [url] with the headers every WebDAV request shares.
+  Future<HttpClientRequest> _openRequest(
+    HttpClient client,
+    String method,
+    String url,
+    DavCredentials credentials,
+  ) async {
     final request = await client
-        .openUrl('PROPFIND', Uri.parse(credentials.directoryUrl))
+        .openUrl(method, Uri.parse(url))
         .timeout(timeout);
     request.headers.set(
       HttpHeaders.authorizationHeader,
       credentials.basicAuthHeader,
     );
     request.headers.set(HttpHeaders.userAgentHeader, userAgent);
+    return request;
+  }
+
+  Future<int> _propfind(HttpClient client, DavCredentials credentials) async {
+    final request = await _openRequest(
+      client,
+      'PROPFIND',
+      credentials.directoryUrl,
+      credentials,
+    );
     // Depth 0 asks for this resource only; no child listing is needed.
     request.headers.set('Depth', '0');
     request.headers.contentType = ContentType('application', 'xml');
@@ -208,14 +223,12 @@ class DavClient {
   }
 
   Future<bool> _mkcol(HttpClient client, DavCredentials credentials) async {
-    final request = await client
-        .openUrl('MKCOL', Uri.parse(credentials.directoryUrl))
-        .timeout(timeout);
-    request.headers.set(
-      HttpHeaders.authorizationHeader,
-      credentials.basicAuthHeader,
+    final request = await _openRequest(
+      client,
+      'MKCOL',
+      credentials.directoryUrl,
+      credentials,
     );
-    request.headers.set(HttpHeaders.userAgentHeader, userAgent);
     request.headers.contentLength = 0;
     final response = await request.close().timeout(timeout);
     await response.drain<void>();

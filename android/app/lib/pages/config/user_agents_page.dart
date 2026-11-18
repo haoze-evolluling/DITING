@@ -15,6 +15,12 @@ import 'package:material_ui/material_ui.dart';
 
 part 'user_agents_dialog.dart';
 
+/// How the summary names the selected entry: builtin, custom, or no override at all.
+String _agentKindLabel(MockUserAgent? agent, AppL10n l10n) {
+  if (agent == null) return l10n.uaNoOverrideBody;
+  return agent.isDefault ? l10n.uaBuiltin : l10n.uaCustom;
+}
+
 class UserAgentsConfigPage extends ConsumerWidget {
   const UserAgentsConfigPage({super.key});
 
@@ -76,13 +82,7 @@ class UserAgentsConfigPage extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                subtitle: Text(
-                  selectedAgent == null
-                      ? context.l10n.uaNoOverrideBody
-                      : selectedAgent.isDefault
-                      ? context.l10n.uaBuiltin
-                      : context.l10n.uaCustom,
-                ),
+                subtitle: Text(_agentKindLabel(selectedAgent, context.l10n)),
               ),
             ],
           ),
@@ -114,7 +114,7 @@ class UserAgentsConfigPage extends ConsumerWidget {
                     spacing: 4,
                     children: [
                       if (agent.value == selected) const SelectionCheck(),
-                      if (!agent.isDefault)
+                      if (!agent.isDefault) ...[
                         ConfigRemoveButton(
                           tooltip: context.l10n.uaEdit,
                           glyph: AppGlyphs.edit,
@@ -124,11 +124,11 @@ class UserAgentsConfigPage extends ConsumerWidget {
                             existing: agent,
                           ),
                         ),
-                      if (!agent.isDefault)
                         ConfigRemoveButton(
                           tooltip: context.l10n.configDelete,
                           onPressed: () => _delete(context, ref, agent),
                         ),
+                      ],
                     ],
                   ),
                   onTap: () => notifier.selectUserAgent(agent.value),

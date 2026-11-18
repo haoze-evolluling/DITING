@@ -1,7 +1,5 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -11,6 +9,7 @@ import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/http/request_user_agent.dart';
 import 'package:diting_android/data/subscriptions/rust_subscription_core.dart';
 import 'package:diting_android/data/subscriptions/subscription_url.dart';
+import 'package:diting_shared/app/l10n/l10n.dart';
 
 /// Threshold above which a subscription body is considered large, in bytes. A larger body is still
 /// imported — the rule importer streams it a chunk at a time so the resident plan stays flat — but
@@ -376,9 +375,12 @@ int _countEffectiveLinesBytes(Uint8List bytes) {
     }
     if (last > first) {
       final lead = bytes[first];
-      final comment = lead == 0x21 /* ! */ ||
+      final comment =
+          lead == 0x21 /* ! */ ||
           lead == 0x23 /* # */ ||
-          (lead == 0x2f /* / */ && first + 1 < last && bytes[first + 1] == 0x2f);
+          (lead == 0x2f /* / */ &&
+              first + 1 < last &&
+              bytes[first + 1] == 0x2f);
       if (!comment) count++;
     }
     start = i + 1;
@@ -387,7 +389,12 @@ int _countEffectiveLinesBytes(Uint8List bytes) {
 }
 
 bool _isAsciiSpace(int byte) =>
-    byte == 0x20 || byte == 0x09 || byte == 0x0a || byte == 0x0d || byte == 0x0b || byte == 0x0c;
+    byte == 0x20 ||
+    byte == 0x09 ||
+    byte == 0x0a ||
+    byte == 0x0d ||
+    byte == 0x0b ||
+    byte == 0x0c;
 
 /// Fallback when no implementation is injected: reports "unavailable" instead of throwing.
 class UnavailableSubscriptionFetcher implements SubscriptionFetcher {

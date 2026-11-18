@@ -60,7 +60,7 @@ class _ModeSelectPageState extends ConsumerState<ModeSelectPage> {
       title: context.l10n.modeSelectTitle,
       body: PageBody(
         children: [
-          const _ModeSelectIntro(),
+          PageIntroText(text: context.l10n.modeSharedNote),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Column(
@@ -87,24 +87,9 @@ class _ModeSelectPageState extends ConsumerState<ModeSelectPage> {
               onPressed: () => _confirm(expanded),
             ),
           ),
-          ListFooter(
-            text:
-                context.l10n.modeSwitchNote,
-          ),
+          ListFooter(text: context.l10n.modeSwitchNote),
         ],
       ),
-    );
-  }
-}
-
-class _ModeSelectIntro extends StatelessWidget {
-  const _ModeSelectIntro();
-
-  @override
-  Widget build(BuildContext context) {
-    return PageIntroText(
-      text:
-          context.l10n.modeSharedNote,
     );
   }
 }
@@ -213,8 +198,16 @@ class _ModeFeatureList extends StatelessWidget {
     AppWorkMode.normal: [
       (AppGlyphs.vpn, l10n.modeNormalFeature1, l10n.modeNormalFeature1Body),
       (AppGlyphs.rules, l10n.modeNormalFeature2, l10n.modeNormalFeature2Body),
-      (AppGlyphs.verified, l10n.modeNormalFeature3, l10n.modeNormalFeature3Body),
-      (AppGlyphs.dataUsage, l10n.modeNormalFeature4, l10n.modeNormalFeature4Body),
+      (
+        AppGlyphs.verified,
+        l10n.modeNormalFeature3,
+        l10n.modeNormalFeature3Body,
+      ),
+      (
+        AppGlyphs.dataUsage,
+        l10n.modeNormalFeature4,
+        l10n.modeNormalFeature4Body,
+      ),
     ],
     AppWorkMode.server: [
       (AppGlyphs.dns, l10n.modeServerFeature1, l10n.modeServerFeature1Body),
@@ -225,8 +218,16 @@ class _ModeFeatureList extends StatelessWidget {
     AppWorkMode.express: [
       (AppGlyphs.bolt, l10n.modeExpressFeature1, l10n.modeExpressFeature1Body),
       (AppGlyphs.split, l10n.modeExpressFeature2, l10n.modeExpressFeature2Body),
-      (AppGlyphs.memory, l10n.modeExpressFeature3, l10n.modeExpressFeature3Body),
-      (AppGlyphs.devices, l10n.modeExpressFeature4, l10n.modeExpressFeature4Body),
+      (
+        AppGlyphs.memory,
+        l10n.modeExpressFeature3,
+        l10n.modeExpressFeature3Body,
+      ),
+      (
+        AppGlyphs.devices,
+        l10n.modeExpressFeature4,
+        l10n.modeExpressFeature4Body,
+      ),
     ],
   };
 

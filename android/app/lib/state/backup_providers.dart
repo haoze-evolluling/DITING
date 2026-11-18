@@ -1,7 +1,6 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'dart:async';
 
 import 'package:diting_android/data/backup/backup_exporter.dart';
 import 'package:diting_android/data/backup/backup_importer.dart';
@@ -72,14 +71,12 @@ final backupStatsProvider = FutureProvider<BackupStats>((ref) async {
   }.length;
 
   return BackupStats(
-    providers: _providerCount(settings.userProvidersJson),
+    providers: parseUserProviders(settings.userProvidersJson).length,
     subscriptions: subscriptions,
     customRules: customRules,
     listedApps: listedApps,
   );
 });
-
-int _providerCount(String? raw) => parseUserProviders(raw).length;
 
 final backupExporterProvider = Provider<BackupExporter>(
   (ref) => const BackupExporter(),
@@ -122,7 +119,7 @@ class BackupActions {
 
   Future<BackupExportResult> export(Set<BackupGroup> groups) async {
     final db = await _ref.read(subscriptionDatabaseProvider.future);
-    final result = await _ref
+    return _ref
         .read(backupExporterProvider)
         .export(
           BackupExportSource(
@@ -131,7 +128,6 @@ class BackupActions {
           ),
           groups: groups,
         );
-    return result;
   }
 
   /// Exports straight into the document the user picks, one chunk per group.
@@ -192,7 +188,9 @@ class BackupActions {
     if (picked.cancelled) return const BackupImportResult.cancelled();
     if (picked.error != null) return BackupImportResult.failed(picked.error!);
     final text = picked.text;
-    if (text == null) return BackupImportResult.failed(currentL10n.backupReadFileFailed);
+    if (text == null) {
+      return BackupImportResult.failed(currentL10n.backupReadFileFailed);
+    }
     return importText(text, sourceName: picked.name);
   }
 

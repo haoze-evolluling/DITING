@@ -144,10 +144,12 @@ InlineSpan _spanForToken(
     );
   }
 
-  // Link: show the label only; the URL is noise in a report.
-  if (token.startsWith('[') && token.contains('](') && token.endsWith(')')) {
+  // Link: show the label only; the URL is noise in a report. Only the link alternative
+  // captures group 2, so a non-null label identifies the token.
+  final linkLabel = match.group(2);
+  if (linkLabel != null) {
     return TextSpan(
-      text: match.group(2) ?? token,
+      text: linkLabel,
       style: TextStyle(
         color: colors.primary,
         decoration: TextDecoration.underline,

@@ -183,7 +183,10 @@ class IpQualitySheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         spacing: 4,
                         children: [
-                          Text(context.l10n.ipQualityEgress, style: context.listCaptionStyle),
+                          Text(
+                            context.l10n.ipQualityEgress,
+                            style: context.listCaptionStyle,
+                          ),
                           Text(
                             current.ip,
                             style: AppTextStyle.title2
@@ -242,18 +245,22 @@ class IpQualitySheet extends StatelessWidget {
           items: [
             for (final source in current.sources) _SourceRow(source: source),
           ],
-          footer:
-              context.l10n.ipQualitySourcesFooter,
+          footer: context.l10n.ipQualitySourcesFooter,
         ),
         if (stage == IpQualityStage.loading)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Text(context.l10n.ipQualityQuerying, style: context.listCaptionStyle),
+            child: Text(
+              context.l10n.ipQualityQuerying,
+              style: context.listCaptionStyle,
+            ),
           ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: TonalButton(
-            label: stage == IpQualityStage.loading ? context.l10n.ipQualityChecking : context.l10n.ipQualityRedetect,
+            label: stage == IpQualityStage.loading
+                ? context.l10n.ipQualityChecking
+                : context.l10n.ipQualityRedetect,
             glyph: AppGlyphs.refresh,
             size: TonalButtonSize.section,
             onPressed: stage == IpQualityStage.loading ? null : onRetry,
@@ -277,6 +284,11 @@ class _EmptyReport extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final loading = stage == IpQualityStage.loading;
     final failed = stage == IpQualityStage.failed;
+    final title = switch (stage) {
+      IpQualityStage.loading => context.l10n.ipQualityDetecting,
+      IpQualityStage.failed => context.l10n.ipQualityFailed,
+      _ => context.l10n.ipQualityNotYet,
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 8,
@@ -304,10 +316,7 @@ class _EmptyReport extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 4,
                     children: [
-                      Text(
-                        loading ? context.l10n.ipQualityDetecting : (failed ? context.l10n.ipQualityFailed : context.l10n.ipQualityNotYet),
-                        style: context.listTitleStyle,
-                      ),
+                      Text(title, style: context.listTitleStyle),
                       Text(
                         error ??
                             (loading
@@ -327,7 +336,9 @@ class _EmptyReport extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: TonalButton(
-            label: loading ? context.l10n.ipQualityChecking : context.l10n.ipQualityStart,
+            label: loading
+                ? context.l10n.ipQualityChecking
+                : context.l10n.ipQualityStart,
             glyph: AppGlyphs.refresh,
             size: TonalButtonSize.section,
             onPressed: loading ? null : onRetry,
@@ -366,13 +377,14 @@ class _SourceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final status = _statusOf(source.status);
-    final color = status.isError ? colorScheme.error : colorScheme.success;
+    final used = !status.isError;
+    final color = used ? colorScheme.success : colorScheme.error;
     final ipType = source.ipType;
     final latency = source.latencyMs;
     final detail = source.detail;
     return ListItem(
       leading: GlyphIcon(
-        status.isError ? AppGlyphs.warning : AppGlyphs.checkCircle,
+        used ? AppGlyphs.checkCircle : AppGlyphs.warning,
         color: color,
       ),
       title: Text(source.name),
@@ -405,17 +417,15 @@ class _SourceRow extends StatelessWidget {
             Text(detail, style: context.listCaptionStyle),
         ],
       ),
-      trailing: status.isError
-          ? TonalChip(
-              label: context.l10n.ipQualityNotUsed,
-              color: colorScheme.errorContainer,
-              foregroundColor: colorScheme.onErrorContainer,
-            )
-          : TonalChip(
-              label: context.l10n.ipQualityUsed,
-              color: colorScheme.successContainer,
-              foregroundColor: colorScheme.onSuccessContainer,
-            ),
+      trailing: TonalChip(
+        label: used
+            ? context.l10n.ipQualityUsed
+            : context.l10n.ipQualityNotUsed,
+        color: used ? colorScheme.successContainer : colorScheme.errorContainer,
+        foregroundColor: used
+            ? colorScheme.onSuccessContainer
+            : colorScheme.onErrorContainer,
+      ),
     );
   }
 }

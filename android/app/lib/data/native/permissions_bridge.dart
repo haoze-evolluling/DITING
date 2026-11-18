@@ -87,51 +87,40 @@ class PermissionsBridge {
 
   final MethodChannel _channel;
 
-  Future<PermissionSnapshot> states() async {
+  Future<PermissionSnapshot> _snapshot(
+    String method, [
+    Object? arguments,
+  ]) async {
     try {
-      final raw = await _channel.invokeMethod<Object?>('states');
-      return PermissionSnapshot.fromMap(raw);
+      return PermissionSnapshot.fromMap(
+        await _channel.invokeMethod<Object?>(method, arguments),
+      );
     } on MissingPluginException {
       return const PermissionSnapshot.unavailable();
     } on PlatformException {
       return const PermissionSnapshot.unavailable();
     }
   }
+
+  Future<bool> _flag(String method) async {
+    try {
+      return await _channel.invokeMethod<bool>(method) ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<PermissionSnapshot> states() => _snapshot('states');
 
   /// Resolves with the state after the round trip; an unavailable channel answers with
   /// [PermissionSnapshot.unavailable].
-  Future<PermissionSnapshot> request(AppPermission permission) async {
-    try {
-      final raw = await _channel.invokeMethod<Object?>('request', {
-        'permission': permission.name,
-      });
-      return PermissionSnapshot.fromMap(raw);
-    } on MissingPluginException {
-      return const PermissionSnapshot.unavailable();
-    } on PlatformException {
-      return const PermissionSnapshot.unavailable();
-    }
-  }
+  Future<PermissionSnapshot> request(AppPermission permission) =>
+      _snapshot('request', {'permission': permission.name});
 
   /// Fallback when a request fails or the user has permanently denied the permission.
-  Future<bool> openNotificationSettings() async {
-    try {
-      return await _channel.invokeMethod<bool>('openNotificationSettings') ??
-          false;
-    } on MissingPluginException {
-      return false;
-    } on PlatformException {
-      return false;
-    }
-  }
+  Future<bool> openNotificationSettings() => _flag('openNotificationSettings');
 
-  Future<bool> openAppSettings() async {
-    try {
-      return await _channel.invokeMethod<bool>('openAppSettings') ?? false;
-    } on MissingPluginException {
-      return false;
-    } on PlatformException {
-      return false;
-    }
-  }
+  Future<bool> openAppSettings() => _flag('openAppSettings');
 }

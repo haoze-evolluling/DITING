@@ -28,15 +28,11 @@ class GlobalSearchEntry {
 
   final List<String> keywords;
 
-  bool matches(String lowercaseQuery) {
-    if (title.toLowerCase().contains(lowercaseQuery)) return true;
-    if (subtitle.toLowerCase().contains(lowercaseQuery)) return true;
-    if (group.toLowerCase().contains(lowercaseQuery)) return true;
-    for (final keyword in keywords) {
-      if (keyword.toLowerCase().contains(lowercaseQuery)) return true;
-    }
-    return false;
-  }
+  bool matches(String lowercaseQuery) =>
+      title.toLowerCase().contains(lowercaseQuery) ||
+      subtitle.toLowerCase().contains(lowercaseQuery) ||
+      group.toLowerCase().contains(lowercaseQuery) ||
+      keywords.any((keyword) => keyword.toLowerCase().contains(lowercaseQuery));
 }
 
 /// 不属于功能中心卡片、但用户想直达的常用命令。

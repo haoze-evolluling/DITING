@@ -140,11 +140,7 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
     }
     if (!ref.mounted) return;
     final next = SpeedSample(up: rates.txBps, down: rates.rxBps);
-    final source = rates.unsupported
-        ? ref.read(workModeProvider) == AppWorkMode.express
-              ? SpeedSource.expressMode
-              : SpeedSource.noNativeChannel
-        : SpeedSource.available;
+    final source = _speedSourceOf(rates);
     // Nothing changed, so nothing needs redrawing. Both dashboard charts re-append the window and
     // re-blur it on every revision bump, and each repaint of the home board costs a full-width
     // raster; on an idle network this used to happen once a second for a curve that did not move.
@@ -170,6 +166,15 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
     return express
         ? ref.read(expressVpnControllerProvider)
         : ref.read(vpnControllerProvider);
+  }
+
+  /// Express mode never attaches `EngineDataPlane`, so unsupported rates there are a product fact,
+  /// not a missing channel.
+  SpeedSource _speedSourceOf(VpnTrafficRates rates) {
+    if (!rates.unsupported) return SpeedSource.available;
+    return ref.read(workModeProvider) == AppWorkMode.express
+        ? SpeedSource.expressMode
+        : SpeedSource.noNativeChannel;
   }
 }
 

@@ -84,8 +84,12 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
   /// A pragmatic client-side check; the engine still normalises and decides. Rejects empty input and
   /// obvious typos before a snapshot is built.
   static bool _looksLikeDomain(String value) {
-    if (value.isEmpty || value.length > 253 || value.contains(' ')) return false;
-    return value.contains('.') && !value.startsWith('.') && !value.endsWith('.');
+    if (value.isEmpty || value.length > 253 || value.contains(' ')) {
+      return false;
+    }
+    return value.contains('.') &&
+        !value.startsWith('.') &&
+        !value.endsWith('.');
   }
 
   @override
@@ -134,9 +138,8 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _error!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.error,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: context.colorScheme.error),
               ),
             ),
           if (_result != null)
@@ -146,9 +149,8 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
               context,
               Text(
                 context.l10n.ruleTestEmptyHint,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
             ),
         ],
@@ -174,6 +176,7 @@ class _ResultCard extends StatelessWidget {
       RuleTestAction.pass => (context.l10n.ruleTestActionPass, scheme.success),
     };
     final matched = result.matchedRule;
+    final rewrite = result.rewrite;
     return _paddedCard(
       context,
       Column(
@@ -194,21 +197,22 @@ class _ResultCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color),
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(color: color),
               ),
             ],
           ),
           if (matched != null)
-            _ResultRow(
-              label: context.l10n.ruleTestMatchedRule,
-              value: matched,
-            ),
+            _ResultRow(label: context.l10n.ruleTestMatchedRule, value: matched),
           if (result.reason.isNotEmpty)
-            _ResultRow(label: context.l10n.ruleTestReason, value: result.reason),
-          if (result.rewrite != null && !result.rewrite!.isEmpty)
+            _ResultRow(
+              label: context.l10n.ruleTestReason,
+              value: result.reason,
+            ),
+          if (rewrite != null && !rewrite.isEmpty)
             _ResultRow(
               label: context.l10n.ruleTestRewriteTitle,
-              value: result.rewrite!.entries.join('\n'),
+              value: rewrite.entries.join('\n'),
             )
           else
             _ResultRow(
@@ -237,7 +241,9 @@ class _ResultRow extends StatelessWidget {
           width: 96,
           child: Text(label, style: context.listCaptionStyle),
         ),
-        Expanded(child: Text(value, style: Theme.of(context).textTheme.bodyMedium)),
+        Expanded(
+          child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
+        ),
       ],
     );
   }

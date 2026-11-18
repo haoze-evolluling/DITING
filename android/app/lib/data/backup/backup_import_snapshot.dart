@@ -90,7 +90,9 @@ extension _BackupImportSnapshot on BackupImporter {
         'homeProviderSelectorOpacity': settings.homeOpacity(
           'home_provider_selector_opacity',
         ),
-        'homeModeButtonOpacity': settings.homeOpacity('home_mode_button_opacity'),
+        'homeModeButtonOpacity': settings.homeOpacity(
+          'home_mode_button_opacity',
+        ),
         'homePoemOpacity': settings.homeOpacity('home_poem_opacity'),
         'homeDnsDetailOpacity': settings.homeOpacity('home_dns_detail_opacity'),
         'homeSentenceRunning': settings.homeSentences.running,
@@ -176,10 +178,7 @@ extension _BackupImportSnapshot on BackupImporter {
     String table,
   ) async {
     if (db == null) return const [];
-    return db.query(
-      table,
-      columns: ['pattern', 'important', 'appScope'],
-    );
+    return db.query(table, columns: ['pattern', 'important', 'appScope']);
   }
 
   Future<List<Map<String, Object?>>> _rewriteRows(Database? db) async {
@@ -190,9 +189,10 @@ extension _BackupImportSnapshot on BackupImporter {
     );
   }
 
-  Future<Map<String, Object?>> _addressRules(Database? db) async => {
-    'rows': db == null
-        ? const <Map<String, Object?>>[]
-        : await db.query('go_url_rule', columns: ['pattern', 'kind']),
-  };
+  Future<Map<String, Object?>> _addressRules(Database? db) async {
+    if (db == null) return const {'rows': <Map<String, Object?>>[]};
+    return {
+      'rows': await db.query('go_url_rule', columns: ['pattern', 'kind']),
+    };
+  }
 }

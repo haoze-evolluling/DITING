@@ -44,6 +44,16 @@ Future<T> _viaDatabase<T>(
   return db == null ? empty : build(db);
 }
 
+/// Provider id to display name from the shared catalog, so one provider cannot appear under two
+/// names across the log pages.
+Map<String, String> providerDisplayNames(LegacySettings settings) => {
+  for (final provider in [
+    ...defaultDnsProviders(currentL10n),
+    ...parseUserProviders(settings.userProvidersJson),
+  ])
+    provider.id: provider.name,
+};
+
 /// Latest rows from the active mode's database.
 final dnsLogsProvider = FutureProvider<List<DnsLogRecord>>((ref) async {
   ref.watch(dnsLogRevisionProvider);
@@ -66,14 +76,7 @@ final dnsCacheProvider = FutureProvider<List<DnsCacheRecord>>((ref) async {
 /// Ranking rows with provider ids already resolved to display names.
 final raceRankingProvider = FutureProvider<RaceRankingBoard>((ref) async {
   ref.watch(dnsLogRevisionProvider);
-  final settings = ref.watch(legacySettingsProvider);
-  final names = {
-    for (final provider in [
-      ...defaultDnsProviders(currentL10n),
-      ...parseUserProviders(settings.userProvidersJson),
-    ])
-      provider.id: provider.name,
-  };
+  final names = providerDisplayNames(ref.watch(legacySettingsProvider));
   final db = await ref.watch(activeLogDatabaseProvider.future);
   if (db == null) return const RaceRankingBoard.empty();
   final repository = RaceLogRepository(db);
@@ -97,8 +100,7 @@ final raceRankingProvider = FutureProvider<RaceRankingBoard>((ref) async {
         RaceRanking(
           provider: (entry as Map)['provider'] as String? ?? '',
           wins: (entry['wins'] as num?)?.toInt() ?? 0,
-          averageLatencyMs:
-              (entry['averageLatencyMs'] as num?)?.toInt() ?? 0,
+          averageLatencyMs: (entry['averageLatencyMs'] as num?)?.toInt() ?? 0,
         ),
     ],
   );

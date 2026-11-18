@@ -78,37 +78,31 @@ class AutomationPage extends ConsumerWidget {
           generateSection(
             title: l10n.automationSettingsSection,
             items: [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.wifi),
-                title: Text(l10n.odTitle),
-                subtitle: Text(
-                  resources.onDemand
-                      ? '${l10n.odAllowlist} · '
-                            '${l10n.configItemCount(resources.ssidRules.length)}'
-                      : l10n.odDisableBody,
-                ),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+              _NavRow(
+                glyph: AppGlyphs.wifi,
+                title: l10n.odTitle,
+                subtitle: resources.onDemand
+                    ? '${l10n.odAllowlist} · '
+                          '${l10n.configItemCount(resources.ssidRules.length)}'
+                    : l10n.odDisableBody,
                 onTap: () => context.push(AutomationPaths.onDemand),
               ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.profiles),
-                title: Text(l10n.profilesTitle),
-                subtitle: Text(l10n.profilesSubtitle),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+              _NavRow(
+                glyph: AppGlyphs.profiles,
+                title: l10n.profilesTitle,
+                subtitle: l10n.profilesSubtitle,
                 onTap: () => context.push(AutomationPaths.profiles),
               ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.clock),
-                title: Text(l10n.timetableTitle),
-                subtitle: Text(l10n.timetableSubtitle),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+              _NavRow(
+                glyph: AppGlyphs.clock,
+                title: l10n.timetableTitle,
+                subtitle: l10n.timetableSubtitle,
                 onTap: () => context.push(AutomationPaths.timetable),
               ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.wifi),
-                title: Text(l10n.netProfileTitle),
-                subtitle: Text(l10n.netProfileSubtitle),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+              _NavRow(
+                glyph: AppGlyphs.wifi,
+                title: l10n.netProfileTitle,
+                subtitle: l10n.netProfileSubtitle,
                 onTap: () => context.push(NetworkProfilePaths.root),
               ),
             ],
@@ -155,11 +149,14 @@ class _AutomationOverview extends StatelessWidget {
     final scheme = context.colorScheme;
     final empty = total == 0;
     // Invite when empty, confirm while any rule is active, stay neutral when all are paused.
-    final accent = empty
-        ? scheme.primary
-        : enabled > 0
-        ? scheme.success
-        : scheme.onSurfaceVariant;
+    final Color accent;
+    if (empty) {
+      accent = scheme.primary;
+    } else if (enabled > 0) {
+      accent = scheme.success;
+    } else {
+      accent = scheme.onSurfaceVariant;
+    }
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: CommonCard(
@@ -195,13 +192,36 @@ class _AutomationOverview extends StatelessWidget {
               ),
             ),
             if (empty)
-              TextButton(
-                onPressed: onCreate,
-                child: Text(l10n.automationAdd),
-              ),
+              TextButton(onPressed: onCreate, child: Text(l10n.automationAdd)),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A settings row that pushes another page.
+class _NavRow extends StatelessWidget {
+  const _NavRow({
+    required this.glyph,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final Glyph glyph;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem(
+      leading: GlyphIcon(glyph),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+      onTap: onTap,
     );
   }
 }

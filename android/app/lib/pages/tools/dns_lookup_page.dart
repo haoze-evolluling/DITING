@@ -20,13 +20,18 @@ enum _DnsServerMode {
 }
 
 class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
-  final _domain = TextEditingController(text: '');
-  final _server = TextEditingController(text: '');
+  static const _ipv4Label = 'A (IPv4)';
+  static const _ipv6Label = 'AAAA (IPv6)';
+
+  final _domain = TextEditingController();
+  final _server = TextEditingController();
   var _running = false;
   var _ipv4 = true;
   var _serverMode = _DnsServerMode.system;
   DnsLookupResult? _result;
   String? _hostError;
+
+  String get _recordTypeLabel => _ipv4 ? _ipv4Label : _ipv6Label;
 
   @override
   void dispose() {
@@ -104,7 +109,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: SegmentedControl<bool>(
-              segments: const [(true, 'A (IPv4)'), (false, 'AAAA (IPv6)')],
+              segments: const [(true, _ipv4Label), (false, _ipv6Label)],
               value: _ipv4,
               onChanged: (value) {
                 if (!_running) {
@@ -168,12 +173,8 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
               body: l10n.toolDnsEmpty,
             ),
           if (result != null) ...[
-            if (result.error != null)
-              _ToolNotice(
-                text: result.error!,
-                isError: true,
-                glyph: AppGlyphs.error,
-              ),
+            if (result.error case final error?)
+              _ToolNotice(text: error, isError: true, glyph: AppGlyphs.error),
             _ToolSection(
               title: l10n.toolDnsResults,
               rows: [
@@ -184,7 +185,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
                 ),
                 KeyValueRow(
                   label: l10n.toolRecordType,
-                  value: _ipv4 ? 'A (IPv4)' : 'AAAA (IPv6)',
+                  value: _recordTypeLabel,
                 ),
                 KeyValueRow(
                   label: l10n.toolDnsServers,

@@ -33,60 +33,68 @@ class _ProviderVisibilityPageState
     ),
   );
 
+  /// Storage keys are the upper-cased [ProviderProtocol] names.
+  static String _protocolKey(ProviderProtocol protocol) =>
+      protocol.name.toUpperCase();
+
   /// Reads the sets back from the store on every build instead of mirroring them locally, so a
   /// backup import or another page's write shows up without leaving the page.
   bool _visible(
     LegacySettings settings,
     ProviderProtocol protocol,
     MockProvider provider,
-  ) => settings.homeVisibleProtocols.contains(protocol.name.toUpperCase())
+  ) => settings.homeVisibleProtocols.contains(_protocolKey(protocol))
       ? !settings.homeHiddenProviderIds.contains(provider.id)
       : settings.homeVisibleProviderIds.contains(provider.id);
+
+  ({Set<String> protocols, Set<String> hidden, Set<String> explicit})
+  _visibilitySets() {
+    final settings = ref.read(legacySettingsProvider);
+    return (
+      protocols: {...settings.homeVisibleProtocols},
+      hidden: {...settings.homeHiddenProviderIds},
+      explicit: {...settings.homeVisibleProviderIds},
+    );
+  }
 
   /// Toggles one provider. Under a visible protocol it is a "hide" flag; under a hidden
   /// protocol it is the explicit allow-list upstream keeps.
   void _toggleProvider(ProviderProtocol protocol, MockProvider provider) {
-    final settings = ref.read(legacySettingsProvider);
-    final protocols = {...settings.homeVisibleProtocols};
-    final hidden = {...settings.homeHiddenProviderIds};
-    final explicit = {...settings.homeVisibleProviderIds};
-    if (protocols.contains(protocol.name.toUpperCase())) {
-      if (!hidden.remove(provider.id)) {
-        hidden.add(provider.id);
+    final sets = _visibilitySets();
+    if (sets.protocols.contains(_protocolKey(protocol))) {
+      if (!sets.hidden.remove(provider.id)) {
+        sets.hidden.add(provider.id);
       }
     } else {
-      if (!explicit.remove(provider.id)) {
-        explicit.add(provider.id);
+      if (!sets.explicit.remove(provider.id)) {
+        sets.explicit.add(provider.id);
       }
     }
     _write(
-      visibleProtocols: protocols,
-      hiddenProviderIds: hidden,
-      visibleProviderIds: explicit,
+      visibleProtocols: sets.protocols,
+      hiddenProviderIds: sets.hidden,
+      visibleProviderIds: sets.explicit,
     );
   }
 
   void _setProtocol(ProviderProtocol protocol, bool visible) {
-    final settings = ref.read(legacySettingsProvider);
-    final protocols = {...settings.homeVisibleProtocols};
-    final hidden = {...settings.homeHiddenProviderIds};
-    final explicit = {...settings.homeVisibleProviderIds};
+    final sets = _visibilitySets();
     final ids = [
       for (final provider in ref.read(dnsProviderCatalogProvider))
         if (provider.protocol == protocol) provider.id,
     ];
     if (visible) {
-      protocols.add(protocol.name.toUpperCase());
+      sets.protocols.add(_protocolKey(protocol));
       // Re-enabling a group clears the per-provider overrides inside it.
-      hidden.removeAll(ids);
+      sets.hidden.removeAll(ids);
     } else {
-      protocols.remove(protocol.name.toUpperCase());
-      explicit.removeAll(ids);
+      sets.protocols.remove(_protocolKey(protocol));
+      sets.explicit.removeAll(ids);
     }
     _write(
-      visibleProtocols: protocols,
-      hiddenProviderIds: hidden,
-      visibleProviderIds: explicit,
+      visibleProtocols: sets.protocols,
+      hiddenProviderIds: sets.hidden,
+      visibleProviderIds: sets.explicit,
     );
   }
 
@@ -134,7 +142,7 @@ class _ProviderVisibilityPageState
         .where((provider) => _visible(settings, protocol, provider))
         .length;
     final protocolVisible = settings.homeVisibleProtocols.contains(
-      protocol.name.toUpperCase(),
+      _protocolKey(protocol),
     );
     final allRow = ListItem(
       leading: GlyphIcon(

@@ -25,12 +25,8 @@ enum NotificationStatItem {
   final String id;
   final Glyph glyph;
 
-  static NotificationStatItem? fromId(String id) {
-    for (final item in values) {
-      if (item.id == id) return item;
-    }
-    return null;
-  }
+  static NotificationStatItem? fromId(String id) =>
+      values.where((item) => item.id == id).firstOrNull;
 
   String label(AppL10n l10n) => switch (this) {
     NotificationStatItem.total => l10n.notificationStatTotal,

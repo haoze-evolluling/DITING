@@ -22,7 +22,8 @@ class HealthPage extends ConsumerWidget {
         children: [
           PageIntroCard(text: context.l10n.healthIntro),
           asyncReport.when(
-            loading: () => _paddedCard(context, Text(context.l10n.healthLoading)),
+            loading: () =>
+                _paddedCard(context, Text(context.l10n.healthLoading)),
             error: (error, _) =>
                 _paddedCard(context, Text(context.l10n.healthLoadFailed)),
             data: (report) => Column(
@@ -62,18 +63,26 @@ Color _severityColor(BuildContext context, HealthSeverity severity) {
   };
 }
 
+/// The score bands shared by the overall level and every dimension.
+HealthSeverity _severityForScore(int score) {
+  if (score >= 80) return HealthSeverity.ok;
+  if (score >= 55) return HealthSeverity.warning;
+  return HealthSeverity.critical;
+}
+
 String _levelLabel(AppL10n l10n, HealthSeverity level) => switch (level) {
   HealthSeverity.ok => l10n.healthLevelOk,
   HealthSeverity.warning => l10n.healthLevelWarning,
   HealthSeverity.critical => l10n.healthLevelCritical,
 };
 
-String _dimensionLabel(AppL10n l10n, HealthDimensionKind kind) => switch (kind) {
-  HealthDimensionKind.permissions => l10n.healthDimPermissions,
-  HealthDimensionKind.dns => l10n.healthDimDns,
-  HealthDimensionKind.filter => l10n.healthDimFilter,
-  HealthDimensionKind.cache => l10n.healthDimCache,
-};
+String _dimensionLabel(AppL10n l10n, HealthDimensionKind kind) =>
+    switch (kind) {
+      HealthDimensionKind.permissions => l10n.healthDimPermissions,
+      HealthDimensionKind.dns => l10n.healthDimDns,
+      HealthDimensionKind.filter => l10n.healthDimFilter,
+      HealthDimensionKind.cache => l10n.healthDimCache,
+    };
 
 String _adviceText(AppL10n l10n, String id) => switch (id) {
   'grantPermissions' => l10n.healthAdviceGrantPermissions,
@@ -103,10 +112,8 @@ class _ScoreCard extends StatelessWidget {
             children: [
               Text(
                 '${report.score}',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(context).textTheme.displaySmall
+                    ?.copyWith(color: color, fontWeight: FontWeight.w600),
               ),
               Text(
                 context.l10n.healthScoreLabel,
@@ -121,15 +128,13 @@ class _ScoreCard extends StatelessWidget {
               children: [
                 Text(
                   _levelLabel(context.l10n, report.level),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: color,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(color: color),
                 ),
                 Text(
                   context.l10n.healthIntroShort,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: context.colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -147,11 +152,7 @@ class _DimensionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final severity = dimension.score >= 80
-        ? HealthSeverity.ok
-        : (dimension.score >= 55
-              ? HealthSeverity.warning
-              : HealthSeverity.critical);
+    final severity = _severityForScore(dimension.score);
     final color = _severityColor(context, severity);
     return ListItem(
       leading: GlyphIcon(AppGlyphs.checkCircle, color: color),

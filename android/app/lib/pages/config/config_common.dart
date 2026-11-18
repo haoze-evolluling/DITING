@@ -120,15 +120,3 @@ class ConfigRemoveButton extends StatelessWidget {
     );
   }
 }
-
-/// Subtitle for list entries: report the count, and explain an empty list.
-String configListSummary(
-  List<String> items, {
-  String? empty,
-  AppL10n? l10n,
-}) {
-  final text = l10n ?? currentL10n;
-  return items.isEmpty
-      ? (empty ?? text.configNotSet)
-      : text.configItemCount(items.length);
-}

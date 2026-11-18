@@ -29,8 +29,8 @@ class SettingsPage extends StatelessWidget {
       ],
       body: PageBody(
         children: [
-          // Each `_SettingsGroup` maps to a legacy `SettingsSection`; empty groups are skipped.
-          _SettingsGroup(
+          // Each section maps to a legacy `SettingsSection`; empty groups are skipped.
+          generateSection(
             title: context.l10n.serverRunMode,
             items: [
               NavEntryRow(
@@ -41,7 +41,7 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
-          _SettingsGroup(
+          generateSection(
             title: context.l10n.settingsPerformanceSection,
             items: [
               NavEntryRow(
@@ -58,7 +58,7 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
-          _SettingsGroup(
+          generateSection(
             title: context.l10n.settingsRuntimeSection,
             items: [
               NavEntryRow(
@@ -70,7 +70,7 @@ class SettingsPage extends StatelessWidget {
             ],
           ),
           // Appearance (order 3) is an empty group upstream: its entries moved to the feature hub.
-          _SettingsGroup(
+          generateSection(
             title: context.l10n.settingsDataSection,
             items: [
               NavEntryRow(
@@ -81,7 +81,7 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
-          _SettingsGroup(
+          generateSection(
             title: context.l10n.integrationSection,
             items: [
               NavEntryRow(
@@ -92,7 +92,7 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
-          _SettingsGroup(
+          generateSection(
             title: context.l10n.settingsGuideSection,
             items: [
               NavEntryRow(
@@ -107,15 +107,4 @@ class SettingsPage extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SettingsGroup extends StatelessWidget {
-  const _SettingsGroup({required this.title, required this.items});
-
-  final String title;
-  final List<Widget> items;
-
-  @override
-  Widget build(BuildContext context) =>
-      generateSection(title: title, items: items);
 }

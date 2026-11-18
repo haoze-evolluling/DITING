@@ -83,12 +83,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
       draft.commit();
       _lastKey = draft.baselineKey;
     });
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(context.l10n.appRulesSaved),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    _tip(context.l10n.appRulesSaved);
   }
 
   @override
@@ -365,25 +360,12 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
   }
 
   Future<void> _clearAll(AppRulesDraft draft) async {
-    final confirmed = await showFloatingDialog<bool>(
-      context: context,
-      child: CommonDialog(
-        title: context.l10n.appRulesClearAllTitle,
-        destructive: true,
-        child: Text(context.l10n.appRulesClearAllBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.l10n.uiCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.l10n.commonClearAll),
-          ),
-        ],
-      ),
+    final confirmed = await _confirmDestructive(
+      context.l10n.appRulesClearAllTitle,
+      Text(context.l10n.appRulesClearAllBody),
+      context.l10n.commonClearAll,
     );
-    if (confirmed != true || !mounted) {
+    if (!confirmed) {
       return;
     }
     setState(draft.clearAll);
@@ -433,12 +415,31 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
   }
 
   Future<void> _deleteScopedRule(InstalledApp app, MockRule rule) async {
+    final confirmed = await _confirmDestructive(
+      context.l10n.appRulesDeleteRuleTitle,
+      Text(rule.pattern),
+      context.l10n.commonDelete,
+    );
+    if (!confirmed) {
+      return;
+    }
+    await ref
+        .read(appScopedRulesControllerProvider)
+        .delete(app.packageName, rule);
+  }
+
+  /// Standard destructive confirm; false when dismissed or after the page is gone.
+  Future<bool> _confirmDestructive(
+    String title,
+    Widget content,
+    String confirmLabel,
+  ) async {
     final confirmed = await showFloatingDialog<bool>(
       context: context,
       child: CommonDialog(
-        title: context.l10n.appRulesDeleteRuleTitle,
+        title: title,
         destructive: true,
-        child: Text(rule.pattern),
+        child: content,
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -446,17 +447,12 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.l10n.commonDelete),
+            child: Text(confirmLabel),
           ),
         ],
       ),
     );
-    if (confirmed != true || !mounted) {
-      return;
-    }
-    await ref
-        .read(appScopedRulesControllerProvider)
-        .delete(app.packageName, rule);
+    return confirmed == true && mounted;
   }
 
   Future<void> _toggleFullBlock(InstalledApp app, bool enabled) async {
@@ -466,7 +462,11 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
     if (!mounted) {
       return;
     }
-    _tip(next ? context.l10n.appRulesFullBlockOn : context.l10n.appRulesFullBlockOff);
+    _tip(
+      next
+          ? context.l10n.appRulesFullBlockOn
+          : context.l10n.appRulesFullBlockOff,
+    );
   }
 
   void _tip(String message) {

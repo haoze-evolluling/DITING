@@ -106,12 +106,7 @@ class MirrorTemplatesPage extends ConsumerWidget {
     if (id == null && context.mounted) {
       // The unique index on the name rejects the insert; report it instead of silently
       // doing nothing.
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.mirrorTplDuplicate),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showDuplicate(context, context.l10n.mirrorTplDuplicate);
     }
   }
 
@@ -128,19 +123,21 @@ class MirrorTemplatesPage extends ConsumerWidget {
     final ok = await ref
         .read(mirrorTemplateActionsProvider)
         .update(id: row.id, name: result.name, template: result.template);
-    if (ok) {
-      ref
-          .read(globalMirrorProvider.notifier)
-          .templateChanged(row.template, result.template);
+    if (!ok) {
+      if (context.mounted) {
+        _showDuplicate(context, context.l10n.mirrorTplDuplicateSave);
+      }
+      return;
     }
-    if (!ok && context.mounted) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.mirrorTplDuplicateSave),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    ref
+        .read(globalMirrorProvider.notifier)
+        .templateChanged(row.template, result.template);
+  }
+
+  static void _showDuplicate(BuildContext context, String message) {
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
   }
 
   Future<({String name, String template})?> _editTemplate(
@@ -227,7 +224,9 @@ class _TemplateDialogState extends State<_TemplateDialog> {
   @override
   Widget build(BuildContext context) {
     return CommonDialog(
-      title: widget.initial == null ? context.l10n.mirrorTplAddTitle : context.l10n.mirrorTplEditTitle,
+      title: widget.initial == null
+          ? context.l10n.mirrorTplAddTitle
+          : context.l10n.mirrorTplEditTitle,
       hasFields: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,

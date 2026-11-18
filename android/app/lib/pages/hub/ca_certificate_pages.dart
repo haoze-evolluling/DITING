@@ -49,7 +49,9 @@ class CaCertificatePage extends ConsumerWidget {
                 title: Text(context.l10n.caCertRootStatus),
                 subtitle: Text(statusTitle),
                 trailing: Text(
-                  state.ready ? context.l10n.caCertVerified : context.l10n.caCertUnverified,
+                  state.ready
+                      ? context.l10n.caCertVerified
+                      : context.l10n.caCertUnverified,
                   style: AppTextStyle.footnote
                       .of(context)
                       .copyWith(color: context.colorScheme.onSurfaceVariant),
@@ -82,7 +84,9 @@ class CaCertificatePage extends ConsumerWidget {
                 title: Text(context.l10n.caCertInstall),
                 subtitle: Text(context.l10n.caCertInstallSubtitle),
                 trailing: Text(
-                  state.installed ? context.l10n.caCertInstalled : context.l10n.caCertNotInstalled,
+                  state.installed
+                      ? context.l10n.caCertInstalled
+                      : context.l10n.caCertNotInstalled,
                   style: AppTextStyle.footnote
                       .of(context)
                       .copyWith(color: context.colorScheme.onSurfaceVariant),
@@ -99,7 +103,9 @@ class CaCertificatePage extends ConsumerWidget {
                 leading: const GlyphIcon(AppGlyphs.key),
                 title: Text(context.l10n.caCertFingerprint),
                 subtitle: Text(
-                  fingerprint == null ? context.l10n.caCertNoFingerprint : context.l10n.caCertFingerprintSubtitle,
+                  fingerprint == null
+                      ? context.l10n.caCertNoFingerprint
+                      : context.l10n.caCertFingerprintSubtitle,
                 ),
                 onTap: fingerprint == null
                     ? null
@@ -252,59 +258,57 @@ class CaCertificatePage extends ConsumerWidget {
   }
 
   Future<void> _showFingerprint(BuildContext context, String fingerprint) {
-    return showFloatingDialog<void>(
-      context: context,
-      child: CommonDialog(
-        title: context.l10n.caCertFingerprintTitle,
-        child: SelectableText(
-          fingerprint,
-          style: AppTextStyle.footnote
-              .of(context)
-              .copyWith(fontFeatures: appTabularFigures, height: 1.6),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: fingerprint));
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                _toast(context, context.l10n.caCertFingerprintCopied);
-              }
-            },
-            child: Text(context.l10n.commonCopy),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.l10n.uiClose),
-          ),
-        ],
-      ),
+    return _showCopyable(
+      context,
+      title: context.l10n.caCertFingerprintTitle,
+      text: fingerprint,
+      copiedMessage: context.l10n.caCertFingerprintCopied,
+      lineHeight: 1.6,
     );
   }
 
   Future<void> _showPem(BuildContext context, String pem) {
+    return _showCopyable(
+      context,
+      title: context.l10n.caCertPemTitle,
+      text: pem,
+      copiedMessage: context.l10n.caCertPemCopied,
+      scrollable: true,
+    );
+  }
+
+  /// Selectable text dialog with copy-and-dismiss; [scrollable] caps long PEM bodies.
+  Future<void> _showCopyable(
+    BuildContext context, {
+    required String title,
+    required String text,
+    required String copiedMessage,
+    double lineHeight = 1.5,
+    bool scrollable = false,
+  }) {
+    final content = SelectableText(
+      text,
+      style: AppTextStyle.footnote
+          .of(context)
+          .copyWith(fontFeatures: appTabularFigures, height: lineHeight),
+    );
     return showFloatingDialog<void>(
       context: context,
       child: CommonDialog(
-        title: context.l10n.caCertPemTitle,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 320),
-          child: SingleChildScrollView(
-            child: SelectableText(
-              pem,
-              style: AppTextStyle.footnote
-                  .of(context)
-                  .copyWith(fontFeatures: appTabularFigures, height: 1.5),
-            ),
-          ),
-        ),
+        title: title,
+        child: scrollable
+            ? ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 320),
+                child: SingleChildScrollView(child: content),
+              )
+            : content,
         actions: [
           TextButton(
             onPressed: () async {
-              await Clipboard.setData(ClipboardData(text: pem));
+              await Clipboard.setData(ClipboardData(text: text));
               if (context.mounted) {
                 Navigator.of(context).pop();
-                _toast(context, context.l10n.caCertPemCopied);
+                _toast(context, copiedMessage);
               }
             },
             child: Text(context.l10n.commonCopy),
@@ -336,9 +340,7 @@ class CaCertificateGuidePage extends StatelessWidget {
         children: [
           generateSection(
             title: context.l10n.caCertWhyTitle,
-            items: [
-              _GuideItem(context.l10n.caCertWhyBody),
-            ],
+            items: [_GuideItem(context.l10n.caCertWhyBody)],
           ),
           generateSection(
             title: context.l10n.caCertStepsTitle,

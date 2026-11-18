@@ -67,19 +67,21 @@ class CleanupPlan {
     return [for (final item in value) item as String];
   }
 
-  List<CleanupRulePair> _pairs(String section, String key) {
+  List<Map<String, Object?>> _mapList(String section, String key) {
     final value = _section(section)[key];
     if (value is! List) {
       throw StateError('cleanup core: missing "$section.$key"');
     }
-    return [
-      for (final item in value)
-        (
-          table: (item as Map)['table'] as String,
-          sourceTable: item['sourceTable'] as String,
-        ),
-    ];
+    return [for (final item in value) (item as Map).cast<String, Object?>()];
   }
+
+  List<CleanupRulePair> _pairs(String section, String key) => [
+    for (final item in _mapList(section, key))
+      (
+        table: item['table'] as String,
+        sourceTable: item['sourceTable'] as String,
+      ),
+  ];
 
   Map<String, Object?> _action(String name) {
     final action = _section('actions')[name];
@@ -152,17 +154,8 @@ class CleanupPlan {
 
   List<String> get allDataOrder => _strings('allData', 'order');
   List<String> get allDataTables => _strings('allData', 'tables');
-  List<CleanupPrefEntry> get allDataPrefs {
-    final value = _section('allData')['prefs'];
-    if (value is! List) {
-      throw StateError('cleanup core: missing "allData.prefs"');
-    }
-    return [
-      for (final item in value)
-        (
-          container: (item as Map)['container'] as String,
-          key: item['key'] as String,
-        ),
-    ];
-  }
+  List<CleanupPrefEntry> get allDataPrefs => [
+    for (final item in _mapList('allData', 'prefs'))
+      (container: item['container'] as String, key: item['key'] as String),
+  ];
 }

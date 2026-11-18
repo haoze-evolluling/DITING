@@ -84,19 +84,11 @@ extension RuleRepositoryAppScope on RuleRepository {
           where: 'id = ?',
           whereArgs: [id],
         );
-        await txn.insert(tables.sourceTable, {
-          'ruleId': id,
-          'source': 'useradd',
-          'enabled': 1,
-        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        await RuleRepository._ensureUserAdd(txn, tables.sourceTable, id);
         return null;
       }
       final id = await txn.insert(tables.table, row);
-      await txn.insert(tables.sourceTable, {
-        'ruleId': id,
-        'source': 'useradd',
-        'enabled': 1,
-      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      await RuleRepository._ensureUserAdd(txn, tables.sourceTable, id);
       return id;
     });
     if (outcome == null) return null;
@@ -154,11 +146,7 @@ extension RuleRepositoryAppScope on RuleRepository {
           where: 'id = ?',
           whereArgs: [id],
         );
-        await txn.insert(tables.sourceTable, {
-          'ruleId': id,
-          'source': 'useradd',
-          'enabled': 1,
-        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+        await RuleRepository._ensureUserAdd(txn, tables.sourceTable, id);
       } else if (existing.isNotEmpty) {
         final id = existing.first['id'] as int;
         await txn.delete(tables.table, where: 'id = ?', whereArgs: [id]);

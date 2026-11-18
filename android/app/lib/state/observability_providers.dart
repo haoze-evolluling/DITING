@@ -81,20 +81,23 @@ class ObservedRequest {
   }
 
   /// One merged item from the native feed aggregate.
-  static ObservedRequest fromParsed(Map<String, Object?> row) => ObservedRequest(
-    key: row['key'] as String? ?? '',
-    timestamp: (row['timestamp'] as num?)?.toInt() ?? 0,
-    source: row['source'] == 'https' ? RequestSource.https : RequestSource.dns,
-    status: _statusOfToken(row['status'] as String?),
-    title: row['title'] as String? ?? '',
-    protocol: row['protocol'] as String?,
-    packageName: row['packageName'] as String?,
-    matchedRule: row['matchedRule'] as String?,
-    message: row['message'] as String?,
-    cached: row['cached'] as bool? ?? false,
-    elapsedMs: (row['elapsedMs'] as num?)?.toInt(),
-    blockSubscriptionId: (row['blockSubscriptionId'] as num?)?.toInt(),
-  );
+  static ObservedRequest fromParsed(Map<String, Object?> row) =>
+      ObservedRequest(
+        key: row['key'] as String? ?? '',
+        timestamp: (row['timestamp'] as num?)?.toInt() ?? 0,
+        source: row['source'] == 'https'
+            ? RequestSource.https
+            : RequestSource.dns,
+        status: _statusOfToken(row['status'] as String?),
+        title: row['title'] as String? ?? '',
+        protocol: row['protocol'] as String?,
+        packageName: row['packageName'] as String?,
+        matchedRule: row['matchedRule'] as String?,
+        message: row['message'] as String?,
+        cached: row['cached'] as bool? ?? false,
+        elapsedMs: (row['elapsedMs'] as num?)?.toInt(),
+        blockSubscriptionId: (row['blockSubscriptionId'] as num?)?.toInt(),
+      );
 }
 
 RequestStatus _statusOfToken(String? token) => switch (token) {
@@ -214,7 +217,11 @@ class RequestFeed {
 /// The cursor is what keeps this O(1) per page. The old shape asked for `limit: 50 * page`, so
 /// reaching page 20 re-read 1 000 rows from each table, re-encoded every one to a Dart map, pushed
 /// them through the kernel and parsed them back — and the 10 s log refresh then paid that again.
-typedef RequestFeedPage = ({List<ObservedRequest> items, bool hasMore, int? cursor});
+typedef RequestFeedPage = ({
+  List<ObservedRequest> items,
+  bool hasMore,
+  int? cursor,
+});
 
 /// Express and server modes keep their own database without `http_request_log`, so querying it
 /// throws `no such table`.
@@ -229,6 +236,8 @@ Future<RequestFeedPage> _loadFeedPage(
   // [watch] is only set from `build()`: a page read started by `loadMore()` runs outside the build
   // phase, where `ref.watch` is illegal, but the first page still has to re-run when the work mode
   // or the log database changes.
+  Future<Database?> logDb(FutureProvider<Database?> provider) =>
+      watch ? ref.watch(provider.future) : ref.read(provider.future);
   final noHttp =
       (watch ? ref.watch(workModeProvider) : ref.read(workModeProvider)) !=
       AppWorkMode.normal;
@@ -238,9 +247,7 @@ Future<RequestFeedPage> _loadFeedPage(
   final dnsFuture = query.source == RequestSource.https
       ? Future.value(const <DnsLogRow>[])
       : () async {
-          final db = await (watch
-              ? ref.watch(activeLogDatabaseProvider.future)
-              : ref.read(activeLogDatabaseProvider.future));
+          final db = await logDb(activeLogDatabaseProvider);
           if (db == null) return const <DnsLogRow>[];
           return DnsQueryRepository(db).recent(
             limit: window,
@@ -254,9 +261,7 @@ Future<RequestFeedPage> _loadFeedPage(
   final httpFuture = query.source == RequestSource.dns || noHttp
       ? Future.value(const <HttpRequestRecord>[])
       : () async {
-          final db = await (watch
-              ? ref.watch(normalLogDatabaseProvider.future)
-              : ref.read(normalLogDatabaseProvider.future));
+          final db = await logDb(normalLogDatabaseProvider);
           if (db == null) return const <HttpRequestRecord>[];
           return HttpRequestRepository(db).recent(
             limit: window,
@@ -301,14 +306,13 @@ int? _cursorOf(List<ObservedRequest> items, int? before) {
 
 /// Signature of one page read; [requestFeedPageLoaderProvider] is the seam widget tests replace so
 /// they can exercise paging without a database.
-typedef RequestFeedPageLoader =
-    Future<RequestFeedPage> Function(
-      Ref ref,
-      RequestFeedQuery query, {
-      String? packageName,
-      int? before,
-      bool watch,
-    });
+typedef RequestFeedPageLoader = Future<RequestFeedPage> Function(
+  Ref ref,
+  RequestFeedQuery query, {
+  String? packageName,
+  int? before,
+  bool watch,
+});
 
 /// Overridden in tests to a fake that pages an in-memory list.
 final requestFeedPageLoaderProvider = Provider<RequestFeedPageLoader>(
@@ -431,7 +435,8 @@ final appRequestFeedProvider = AsyncNotifierProvider.autoDispose
     .family<RequestFeedLoader, RequestFeed, String>(
       (packageName) => RequestFeedLoader(
         packageName: packageName,
-        watchQuery: (ref) => ref.watch(appRequestFeedQueryProvider(packageName)),
+        watchQuery: (ref) =>
+            ref.watch(appRequestFeedQueryProvider(packageName)),
         readQuery: (ref) => ref.read(appRequestFeedQueryProvider(packageName)),
       ),
     );

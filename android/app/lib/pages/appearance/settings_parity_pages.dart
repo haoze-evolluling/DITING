@@ -177,7 +177,9 @@ class ThemeBackgroundPage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.backgroundEnable),
                 subtitle: Text(
-                  background.uris.isEmpty ? context.l10n.backgroundPickFirst : context.l10n.backgroundBehindPages,
+                  background.uris.isEmpty
+                      ? context.l10n.backgroundPickFirst
+                      : context.l10n.backgroundBehindPages,
                 ),
                 leading: const GlyphIcon(AppGlyphs.photos),
                 value: background.enabled,
@@ -209,7 +211,7 @@ class ThemeBackgroundPage extends ConsumerWidget {
             )
           else
             Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: NullStatus(
                 illustration: NullStatusIllustration.data,
                 label: context.l10n.backgroundEmpty,

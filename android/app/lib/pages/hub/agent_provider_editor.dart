@@ -105,17 +105,13 @@ class _AgentProviderEditorState extends ConsumerState<AgentProviderEditor> {
         _busy = false;
         _notice = context.l10n.agentEditorFetched(models.length);
       });
-    } on AgentApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _error = error.message;
-      });
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = context.l10n.agentEditorFetchFailed('$error');
+        _error = error is AgentApiException
+            ? error.message
+            : context.l10n.agentEditorFetchFailed('$error');
       });
     }
   }
@@ -147,17 +143,13 @@ class _AgentProviderEditorState extends ConsumerState<AgentProviderEditor> {
         _busy = false;
         _notice = context.l10n.agentEditorConnected('${result.model}$usage');
       });
-    } on AgentApiException catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _busy = false;
-        _error = error.message;
-      });
     } on Object catch (error) {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = context.l10n.agentEditorConnectFailed('$error');
+        _error = error is AgentApiException
+            ? error.message
+            : context.l10n.agentEditorConnectFailed('$error');
       });
     }
   }
@@ -192,7 +184,9 @@ class _AgentProviderEditorState extends ConsumerState<AgentProviderEditor> {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return CommonDialog(
-      title: widget.existing == null ? context.l10n.agentEditorAddTitle : context.l10n.agentEditorEditTitle,
+      title: widget.existing == null
+          ? context.l10n.agentEditorAddTitle
+          : context.l10n.agentEditorEditTitle,
       hasFields: true,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -209,7 +203,9 @@ class _AgentProviderEditorState extends ConsumerState<AgentProviderEditor> {
           ),
           TextField(
             controller: _name,
-            decoration: InputDecoration(labelText: context.l10n.agentEditorName),
+            decoration: InputDecoration(
+              labelText: context.l10n.agentEditorName,
+            ),
           ),
           TextField(
             controller: _baseUrl,
@@ -259,7 +255,9 @@ class _AgentProviderEditorState extends ConsumerState<AgentProviderEditor> {
             spacing: 8,
             children: [
               TonalButton(
-                label: _busy ? context.l10n.agentEditorFetching : context.l10n.agentEditorFetch,
+                label: _busy
+                    ? context.l10n.agentEditorFetching
+                    : context.l10n.agentEditorFetch,
                 glyph: AppGlyphs.cloudDownload,
                 size: TonalButtonSize.section,
                 onPressed: _busy ? null : _fetchModels,

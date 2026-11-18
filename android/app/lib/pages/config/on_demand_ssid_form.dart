@@ -1,5 +1,7 @@
 part of 'on_demand_page.dart';
 
+const _ssidDelayOptions = [0, 500, 800, 1500, 3000];
+
 /// Add or edit an SSID rule; an empty [existing] means a new rule.
 Future<void> showSsidForm(
   BuildContext context,
@@ -66,7 +68,9 @@ class _SsidFormSheetState extends ConsumerState<_SsidFormSheet> {
   @override
   Widget build(BuildContext context) {
     return CommonScaffold(
-      title: widget.existing == null ? context.l10n.ssidAdd : context.l10n.ssidEdit,
+      title: widget.existing == null
+          ? context.l10n.ssidAdd
+          : context.l10n.ssidEdit,
       confirmationAction: IconButtonData(
         glyph: AppGlyphs.check,
         tooltip: context.l10n.ssidSave,
@@ -86,9 +90,12 @@ class _SsidFormSheetState extends ConsumerState<_SsidFormSheet> {
                   child: TextFormField(
                     controller: _ssid,
                     autofocus: widget.existing == null,
-                    decoration: InputDecoration(hintText: context.l10n.ssidExample),
-                    validator: (value) =>
-                        (value ?? '').trim().isEmpty ? context.l10n.ssidEmptyError : null,
+                    decoration: InputDecoration(
+                      hintText: context.l10n.ssidExample,
+                    ),
+                    validator: (value) => (value ?? '').trim().isEmpty
+                        ? context.l10n.ssidEmptyError
+                        : null,
                   ),
                 ),
               ],
@@ -117,11 +124,10 @@ class _SsidFormSheetState extends ConsumerState<_SsidFormSheet> {
                 ListItem<int>.options(
                   title: Text(context.l10n.ssidStartDelay),
                   subtitle: Text(context.l10n.ssidStartDelayBody),
-                  options: const [0, 500, 800, 1500, 3000],
-                  value: [0, 500, 800, 1500, 3000].contains(_delay)
-                      ? _delay
-                      : 0,
-                  textBuilder: (delay) => delay == 0 ? context.l10n.ssidImmediate : '$delay ms',
+                  options: _ssidDelayOptions,
+                  value: _ssidDelayOptions.contains(_delay) ? _delay : 0,
+                  textBuilder: (delay) =>
+                      delay == 0 ? context.l10n.ssidImmediate : '$delay ms',
                   onChanged: (delay) => setState(() => _delay = delay),
                 ),
               ],

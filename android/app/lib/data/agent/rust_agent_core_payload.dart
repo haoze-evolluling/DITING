@@ -60,18 +60,14 @@ class _PayloadReader {
     return value;
   }
 
-  String string() {
-    final length = u32();
-    final start = _offset;
-    _offset += length;
-    return const Utf8Codec().decode(
-      Uint8List.sublistView(_bytes, start, start + length),
-    );
-  }
+  String string() => _readString(u32());
 
   String? optionalString() {
     final length = u32();
-    if (length == 0xFFFFFFFF) return null;
+    return length == 0xFFFFFFFF ? null : _readString(length);
+  }
+
+  String _readString(int length) {
     final start = _offset;
     _offset += length;
     return const Utf8Codec().decode(

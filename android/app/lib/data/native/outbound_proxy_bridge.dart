@@ -200,17 +200,7 @@ class MethodChannelOutboundProxyStore implements OutboundProxyStore {
 
   @override
   Future<void> write(OutboundProxyConfig config) =>
-      _channel.invokeMethod<void>('write', {
-        'enabled': config.enabled,
-        'protocol': config.protocol.storageValue,
-        'host': config.host,
-        'port': config.port,
-        'username': config.username,
-        'password': config.password,
-        'proxyAppPackage': config.proxyAppPackage,
-        'scope': config.scope.storageValue,
-        'targetPackages': config.targetPackages.toList(),
-      });
+      _channel.invokeMethod<void>('write', config._coreConfig());
 
   @override
   Future<void> reset() => _channel.invokeMethod<void>('reset');
