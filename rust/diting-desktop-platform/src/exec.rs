@@ -46,15 +46,28 @@ pub trait CommandExecutor: Send + Sync {
     }
 }
 
+/// Deadline for one system command. Takeover steps are short-lived, but a `systemctl stop` may
+/// legitimately wait out systemd's 90 s stop timeout, so the bound is above that; a wedged
+/// `netsh`/`resolvectl` still cannot pin the caller forever.
+const DEFAULT_TIMEOUT: Duration = Duration::from_secs(120);
+
 /// Production executor: inherits the service environment, captures combined output.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct SystemExecutor {
     timeout: Option<Duration>,
 }
 
+impl Default for SystemExecutor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SystemExecutor {
     pub fn new() -> Self {
-        Self { timeout: None }
+        Self {
+            timeout: Some(DEFAULT_TIMEOUT),
+        }
     }
 
     /// Commands that are known to hang (service control) get an explicit deadline.
@@ -71,6 +84,8 @@ impl CommandExecutor for SystemExecutor {
         let mut command = Command::new(program);
         command
             .args(args)
+            // A timed-out command must not survive as an orphan still holding the pipes.
+            .kill_on_drop(true)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());

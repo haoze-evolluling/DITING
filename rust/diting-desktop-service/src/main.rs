@@ -131,7 +131,8 @@ pub(crate) async fn run(
         Err(error) => eprintln!("[自愈检查] 异常: {error}"),
     }
 
-    let handles = platform_backend::platform_handles(store.clone());
+    // Share the same manager instance between the service lifecycle and the management runtime.
+    let handles = platform_backend::platform_handles(store.clone(), Arc::clone(&manager));
     let runtime = Arc::new(AppRuntime::with_platform(
         config.clone(),
         config_path,
@@ -299,6 +300,7 @@ async fn run_service_action(action: ServiceAction, cli: &Cli) -> Result<(), Stri
         ServiceAction::Install => {
             let exe = manager
                 .locate_executable()
+                .await
                 .map_err(|error| format!("定位可执行文件失败: {error}"))?;
             manager
                 .install_and_start_with_args(&exe, &service_install_args(cli))

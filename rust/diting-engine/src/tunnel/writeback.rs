@@ -97,6 +97,19 @@ impl WriteBacklog {
     }
 }
 
+impl Drop for WriteBacklog {
+    fn drop(&mut self) {
+        // The stack thread owns this map and exits before the session joins, without calling
+        // `forget` for the flows it is discarding. Closing every reservation here is what wakes a
+        // relay parked in `acquire_many`, so it can end instead of keeping the engine alive.
+        for (_, entry) in self.entries.drain() {
+            if let Some(credit) = entry.credit {
+                credit.close();
+            }
+        }
+    }
+}
+
 fn flush(key: &TcpKey, entry: &mut Entry, net: &mut Netstack) {
     let mut now = crate::netstack::now();
     let before = entry.at;

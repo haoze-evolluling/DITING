@@ -26,7 +26,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use socket2::{Domain, Protocol, Socket, Type};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream, UdpSocket};
-use tokio::sync::Semaphore;
+use tokio::sync::{mpsc, Semaphore};
 use tokio::task::JoinHandle;
 
 use crate::engine::Engine;
@@ -53,19 +53,29 @@ impl Standalone {
 
     /// Stops every loop and waits for the tasks to unwind, which closes the sockets.
     pub fn stop(mut self) {
+        self.shutdown();
+    }
+
+    fn shutdown(&mut self) {
         self.stopped.store(true, Ordering::Release);
-        for task in self.tasks.drain(..) {
+        let tasks: Vec<JoinHandle<()>> = self.tasks.drain(..).collect();
+        for task in &tasks {
             task.abort();
+        }
+        // The listener task owns the bound socket after an abort; wait (bounded) for the runtime
+        // to actually drop it so a caller that restarts on the same port can rebind.
+        let deadline = std::time::Instant::now() + Duration::from_millis(250);
+        while tasks.iter().any(|task| !task.is_finished())
+            && std::time::Instant::now() < deadline
+        {
+            std::thread::sleep(Duration::from_millis(1));
         }
     }
 }
 
 impl Drop for Standalone {
     fn drop(&mut self) {
-        self.stopped.store(true, Ordering::Release);
-        for task in self.tasks.drain(..) {
-            task.abort();
-        }
+        self.shutdown();
     }
 }
 
@@ -244,32 +254,46 @@ fn spawn_udp(
         // A per-request buffer would allocate on every datagram; one buffer per read loop is enough
         // because the read is awaited before the query is handed off.
         let mut buffer = vec![0u8; UDP_BUFFER];
+        // Replies travel back through this queue instead of the request task holding a socket
+        // clone: an aborted listener then releases the bound port deterministically, so a stopped
+        // engine can be restarted on the same port.
+        let (replies, mut answered) = mpsc::channel::<(Vec<u8>, SocketAddr)>(MAX_INFLIGHT);
         loop {
             if stopped.load(Ordering::Acquire) {
                 return;
             }
-            let (read, peer) = match socket.recv_from(&mut buffer).await {
-                Ok(received) => received,
-                Err(_) => continue,
-            };
-            // N9: a rate-limited client's datagram is dropped before it costs a task slot.
-            if !engine.allow_client(rate_addr(peer).as_ref(), now_ns()) {
-                continue;
-            }
-            let query = buffer[..read].to_vec();
-            let engine = Arc::clone(&engine);
-            let socket = Arc::clone(&socket);
-            let permit = match permits.clone().try_acquire_owned() {
-                Ok(permit) => permit,
-                // Over the in-flight cap: drop the datagram, the client retries.
-                Err(_) => continue,
-            };
-            tokio::spawn(async move {
-                let _permit = permit;
-                if let Some(response) = crate::dns::serve(&engine, &query).await {
+            tokio::select! {
+                received = socket.recv_from(&mut buffer) => {
+                    let (read, peer) = match received {
+                        Ok(received) => received,
+                        Err(_) => continue,
+                    };
+                    // N9: a rate-limited client's datagram is dropped before it costs a task slot.
+                    if !engine.allow_client(rate_addr(peer).as_ref(), now_ns()) {
+                        continue;
+                    }
+                    let query = buffer[..read].to_vec();
+                    let engine = Arc::clone(&engine);
+                    let replies = replies.clone();
+                    let permit = match permits.clone().try_acquire_owned() {
+                        Ok(permit) => permit,
+                        // Over the in-flight cap: drop the datagram, the client retries.
+                        Err(_) => continue,
+                    };
+                    tokio::spawn(async move {
+                        let _permit = permit;
+                        if let Some(response) = crate::dns::serve(&engine, &query).await {
+                            // A closed receiver means the server stopped: the answer is dropped,
+                            // exactly like a send on a closed socket.
+                            let _ = replies.send((response, peer)).await;
+                        }
+                    });
+                }
+                reply = answered.recv() => {
+                    let Some((response, peer)) = reply else { return };
                     let _ = socket.send_to(&response, peer).await;
                 }
-            });
+            }
         }
     })
 }

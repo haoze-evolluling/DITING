@@ -197,7 +197,14 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFree(
     _class: JObject<'_>,
     handle: jlong,
 ) {
-    let _ = catch_unwind(AssertUnwindSafe(|| remove(handle)));
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        if let Some(instance) = remove(handle) {
+            // Kotlin is expected to call `stop()` first, but freeing without it must not strand the
+            // TUN threads: they hold an `Arc<Engine>`, so the engine would never be released and the
+            // tunnel would keep running after the handle is gone.
+            instance.engine.stop();
+        }
+    }));
 }
 
 /// `stop()`

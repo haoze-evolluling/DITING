@@ -95,7 +95,9 @@ pub trait ServiceManager: Send + Sync {
     async fn install(&self, exe_path: &str) -> PlatformResult<()>;
     async fn install_and_start(&self, exe_path: &str) -> PlatformResult<()>;
     async fn uninstall(&self) -> PlatformResult<()>;
-    fn locate_executable(&self) -> PlatformResult<String>;
+    /// Resolving the executable may shell out (Linux probes the unit through `systemctl`), so it is
+    /// asynchronous and never blocks a runtime worker.
+    async fn locate_executable(&self) -> PlatformResult<String>;
 
     /// Installs the service with extra command-line flags forwarded by the hosted process (for
     /// example `-config`/`-port`). Platforms whose unit file is fixed ignore them.

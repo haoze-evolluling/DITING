@@ -1,5 +1,7 @@
 //! `/api/v1/querylog/*`.
 
+use std::sync::Arc;
+
 use hyper::http::Method;
 
 use diting_desktop_api::config::QueryLogConfig;
@@ -37,11 +39,17 @@ fn search_query(ctx: &Ctx<'_>) -> SearchQuery {
     }
 }
 
-pub fn handle_search(server: &Server, ctx: &Ctx<'_>) -> Resp {
+pub async fn handle_search(server: &Server, ctx: &Ctx<'_>) -> Resp {
     if let Err(response) = ctx.require_method(&[Method::GET], "只支持 GET 请求") {
         return response;
     }
-    ok(server.runtime().query_log(search_query(ctx)))
+    let query = search_query(ctx);
+    let runtime = Arc::clone(server.runtime());
+    // History search scans the persisted files; keep that I/O off the runtime workers.
+    match tokio::task::spawn_blocking(move || runtime.query_log(query)).await {
+        Ok(result) => ok(result),
+        Err(error) => internal_error(format!("查询日志检索失败: {error}")),
+    }
 }
 
 pub fn handle_stats(server: &Server, ctx: &Ctx<'_>) -> Resp {
@@ -51,17 +59,20 @@ pub fn handle_stats(server: &Server, ctx: &Ctx<'_>) -> Resp {
     ok(server.runtime().query_stats())
 }
 
-pub fn handle_clear(server: &Server, ctx: &Ctx<'_>) -> Resp {
+pub async fn handle_clear(server: &Server, ctx: &Ctx<'_>) -> Resp {
     if let Err(response) = ctx.require_method(&[Method::POST], "只支持 POST 请求") {
         return response;
     }
-    match server.runtime().clear_query_log() {
-        Ok(()) => ok_message("查询历史与统计已成功清空"),
-        Err(error) => internal_error(error.message),
+    let runtime = Arc::clone(server.runtime());
+    // Deleting persisted files waits on the writer thread; run it on the blocking pool.
+    match tokio::task::spawn_blocking(move || runtime.clear_query_log()).await {
+        Ok(Ok(())) => ok_message("查询历史与统计已成功清空"),
+        Ok(Err(error)) => internal_error(error.message),
+        Err(error) => internal_error(format!("清空查询日志失败: {error}")),
     }
 }
 
-pub fn handle_config(server: &Server, ctx: &Ctx<'_>) -> Resp {
+pub async fn handle_config(server: &Server, ctx: &Ctx<'_>) -> Resp {
     match *ctx.method {
         Method::GET => ok(server.runtime().query_log_config()),
         Method::POST => {
@@ -72,9 +83,13 @@ pub fn handle_config(server: &Server, ctx: &Ctx<'_>) -> Resp {
                         return bad_request(format!("解析查询日志配置请求体失败: {error}"))
                     }
                 };
-            match server.runtime().update_query_log_config(config) {
-                Ok(()) => ok_message("查询日志配置已更新并生效"),
-                Err(error) => internal_error(error.message),
+            let runtime = Arc::clone(server.runtime());
+            // Reconfiguration may stop and join the writer thread (up to 10 s).
+            match tokio::task::spawn_blocking(move || runtime.update_query_log_config(config)).await
+            {
+                Ok(Ok(())) => ok_message("查询日志配置已更新并生效"),
+                Ok(Err(error)) => internal_error(error.message),
+                Err(error) => internal_error(format!("更新查询日志配置失败: {error}")),
             }
         }
         _ => crate::handlers::method_not_allowed("只支持 GET / POST 请求"),

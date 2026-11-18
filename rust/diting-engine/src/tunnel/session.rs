@@ -33,6 +33,7 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use tokio::sync::{mpsc, Semaphore};
+use tokio::task::JoinSet;
 
 use crate::attribution::{PROTOCOL_TCP, PROTOCOL_UDP};
 use crate::engine::Engine;
@@ -62,6 +63,11 @@ const READER_BACKOFF_BASE: Duration = Duration::from_millis(1);
 const READER_BACKOFF_MAX: Duration = Duration::from_millis(200);
 /// The longest the stack thread sleeps without polling (also bounds stop latency).
 const MAX_POLL_INTERVAL: Duration = Duration::from_millis(50);
+/// Concurrent DNS-over-UDP tasks: one per datagram would let a flood spawn unbounded tasks.
+const MAX_DNS_INFLIGHT: usize = 256;
+
+/// Live UDP relays by 4-tuple, tagged with the relay task's generation.
+type UdpRelays = HashMap<TcpKey, (u64, mpsc::Sender<Vec<u8>>)>;
 
 /// A running TUN session.
 pub struct Session {
@@ -71,6 +77,10 @@ pub struct Session {
     link: Arc<dyn PacketLink>,
     counters: Arc<TunnelCounters>,
     stack_stats: Arc<Mutex<Stats>>,
+    /// Every flow handler this session spawned. Aborted on stop: a relay parked on its upstream
+    /// read (or on the write-credit semaphore) would otherwise outlive the tunnel and keep the
+    /// engine's `Arc` alive forever.
+    flow_tasks: Arc<Mutex<JoinSet<()>>>,
     threads: Vec<JoinHandle<()>>,
 }
 
@@ -87,6 +97,8 @@ impl Session {
         let egress = Arc::new(Egress::new(EGRESS_QUEUE));
         let counters = Arc::new(TunnelCounters::default());
         let stack_stats = Arc::new(Mutex::new(Stats::default()));
+        let flow_tasks: Arc<Mutex<JoinSet<()>>> = Arc::new(Mutex::new(JoinSet::new()));
+        let dns_permits = Arc::new(Semaphore::new(MAX_DNS_INFLIGHT));
 
         let reader = spawn_reader(
             Arc::clone(&link),
@@ -107,6 +119,8 @@ impl Session {
             Arc::clone(&egress),
             Arc::clone(&counters),
             Arc::clone(&stack_stats),
+            Arc::clone(&flow_tasks),
+            dns_permits,
             limits,
         )?;
 
@@ -117,6 +131,7 @@ impl Session {
             link,
             counters,
             stack_stats,
+            flow_tasks,
             threads: vec![reader, stack, writer],
         })
     }
@@ -147,9 +162,22 @@ impl Session {
         self.link.close();
         self.events.close();
         self.egress.close();
+        // Cancel the flow handlers before joining the stack thread: a relay parked on its
+        // upstream socket or on the write-credit semaphore would never observe the closed queues.
+        self.abort_flows();
         for thread in self.threads.drain(..) {
             let _ = thread.join();
         }
+        // The stack thread may have spawned a handler between the two calls; nothing can spawn
+        // after its join, so this is the final sweep.
+        self.abort_flows();
+    }
+
+    fn abort_flows(&self) {
+        self.flow_tasks
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .abort_all();
     }
 }
 
@@ -283,6 +311,8 @@ fn spawn_stack(
     egress: Arc<Egress>,
     counters: Arc<TunnelCounters>,
     stack_stats: Arc<Mutex<Stats>>,
+    flow_tasks: Arc<Mutex<JoinSet<()>>>,
+    dns_permits: Arc<Semaphore>,
     limits: Limits,
 ) -> Result<JoinHandle<()>, String> {
     thread::Builder::new()
@@ -290,12 +320,17 @@ fn spawn_stack(
         .spawn(move || {
             let mut net = Netstack::new(limits);
             let mut flows: HashMap<TcpKey, Flow> = HashMap::new();
-            // One relay task per UDP 4-tuple, created on the first datagram.
-            let mut udp_relays: HashMap<TcpKey, mpsc::Sender<Vec<u8>>> = HashMap::new();
+            // One relay task per UDP 4-tuple, created on the first datagram. The generation makes
+            // an expire event from an old task distinguishable from the entry it must not remove.
+            let mut udp_relays: UdpRelays = HashMap::new();
+            let mut udp_generation = 0u64;
             // Bytes the clients have not accepted yet, per TCP flow.
             let mut writes = WriteBacklog::default();
 
             while !stop.load(Ordering::Acquire) {
+                // Reap handlers that finished on their own so the tracking set stays bounded by
+                // the number of live flows, not by the session's lifetime.
+                reap_flows(&flow_tasks);
                 let timeout = poll_timeout(&mut net);
                 if let Some(event) = events.pop(timeout) {
                     handle_event(
@@ -327,12 +362,29 @@ fn spawn_stack(
                 writes.flush_all(&mut net);
                 for key in net.take_opened() {
                     counters.tcp_flows.fetch_add(1, Ordering::Relaxed);
-                    open_tcp_flow(&engine, &events, &counters, &mut flows, &mut net, key);
+                    open_tcp_flow(
+                        &engine,
+                        &events,
+                        &counters,
+                        &flow_tasks,
+                        &mut flows,
+                        &mut net,
+                        key,
+                    );
                 }
                 dispatch_tcp_output(&engine, &counters, &mut flows, &mut writes, &mut net);
                 while let Some(datagram) = net.udp_take() {
                     counters.udp_datagrams.fetch_add(1, Ordering::Relaxed);
-                    dispatch_udp(&engine, &events, &counters, &mut udp_relays, datagram);
+                    dispatch_udp(
+                        &engine,
+                        &events,
+                        &counters,
+                        &flow_tasks,
+                        &dns_permits,
+                        &mut udp_relays,
+                        &mut udp_generation,
+                        datagram,
+                    );
                 }
                 for packet in net.egress() {
                     egress.push(packet);
@@ -369,11 +421,31 @@ fn poll_timeout(net: &mut Netstack) -> Duration {
     }
 }
 
+/// Spawns one flow handler on the engine runtime while keeping its handle for session stop.
+fn spawn_flow(
+    engine: &Arc<Engine>,
+    flow_tasks: &Arc<Mutex<JoinSet<()>>>,
+    future: impl std::future::Future<Output = ()> + Send + 'static,
+) {
+    flow_tasks
+        .lock()
+        .unwrap_or_else(|error| error.into_inner())
+        .spawn_on(future, engine.runtime().handle());
+}
+
+/// Removes finished handler entries so the set tracks live flows rather than session history.
+fn reap_flows(flow_tasks: &Arc<Mutex<JoinSet<()>>>) {
+    let mut tasks = flow_tasks
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    while tasks.try_join_next().is_some() {}
+}
+
 fn handle_event(
     engine: &Arc<Engine>,
     counters: &Arc<TunnelCounters>,
     flows: &mut HashMap<TcpKey, Flow>,
-    udp_relays: &mut HashMap<TcpKey, mpsc::Sender<Vec<u8>>>,
+    udp_relays: &mut UdpRelays,
     writes: &mut WriteBacklog,
     net: &mut Netstack,
     event: Event,
@@ -383,9 +455,14 @@ fn handle_event(
         Event::Packet(packet) => net.ingress(&packet, now),
         Event::Write(key, data, credit) => {
             // A write that races with the flow's teardown must not resurrect a backlog no one will
-            // ever drain; drop it. Otherwise queue it and refund the reserved budget as it is
-            // written into the socket.
-            if flows.contains_key(&key) && writes.enqueue(key, &data, credit, net) {
+            // ever drain; drop it. Close the per-flow budget first so a relay still reading the
+            // upstream stops at its next `acquire_many` instead of waiting for permits that will
+            // never be refunded.
+            if !flows.contains_key(&key) {
+                if let Some(credit) = credit {
+                    credit.close();
+                }
+            } else if writes.enqueue(key, &data, credit, net) {
                 // The safety cap was hit despite backpressure (a producer that never reserved):
                 // reset the flow instead of silently truncating a TLS/HTTP stream.
                 counters.short_writes.fetch_add(1, Ordering::Relaxed);
@@ -413,8 +490,15 @@ fn handle_event(
                 counters.udp_replies_dropped.fetch_add(1, Ordering::Relaxed);
             }
         }
-        Event::UdpExpire(key) => {
-            udp_relays.remove(&key);
+        Event::UdpExpire { key, generation } => {
+            // Only the task that owns the current entry may retire it: an earlier relay's expire
+            // can arrive after a new relay for the same 4-tuple has already been spawned.
+            if udp_relays
+                .get(&key)
+                .is_some_and(|(current, _)| *current == generation)
+            {
+                udp_relays.remove(&key);
+            }
         }
     }
     let _ = engine;
@@ -425,6 +509,7 @@ fn open_tcp_flow(
     engine: &Arc<Engine>,
     events: &Arc<Events>,
     counters: &Arc<TunnelCounters>,
+    flow_tasks: &Arc<Mutex<JoinSet<()>>>,
     flows: &mut HashMap<TcpKey, Flow>,
     net: &mut Netstack,
     key: TcpKey,
@@ -440,53 +525,56 @@ fn open_tcp_flow(
     match action {
         FlowAction::HandleDns => {
             let (tx, rx) = mpsc::channel(FLOW_CHANNEL);
-            let task_engine = Arc::clone(engine);
             let task_events = Arc::clone(events);
             let task_context = context.clone();
-            task_engine.spawn(dnsflow::serve_tcp(
-                Arc::clone(engine),
-                task_events,
-                key,
-                rx,
-                task_context,
-            ));
+            spawn_flow(
+                engine,
+                flow_tasks,
+                dnsflow::serve_tcp(Arc::clone(engine), task_events, key, rx, task_context),
+            );
             flows.insert(key, Flow { tx, context });
         }
         FlowAction::Intercept => {
             let (tx, rx) = mpsc::channel(FLOW_CHANNEL);
-            let task_engine = Arc::clone(engine);
             let task_events = Arc::clone(events);
             let task_counters = Arc::clone(counters);
             let task_context = context.clone();
-            task_engine.spawn(crate::mitm::handler::handle_tcp(
-                Arc::clone(engine),
-                task_events,
-                task_counters,
-                key,
-                task_context,
-                rx,
-            ));
+            spawn_flow(
+                engine,
+                flow_tasks,
+                crate::mitm::handler::handle_tcp(
+                    Arc::clone(engine),
+                    task_events,
+                    task_counters,
+                    key,
+                    task_context,
+                    rx,
+                ),
+            );
             flows.insert(key, Flow { tx, context });
             let _ = net;
         }
         FlowAction::Relay => {
             let (tx, rx) = mpsc::channel(FLOW_CHANNEL);
-            let task_engine = Arc::clone(engine);
             let task_events = Arc::clone(events);
             let task_counters = Arc::clone(counters);
             // The relay reserves from this budget before reading each upstream chunk; the stack
             // refunds it as it writes into the socket, giving the downstream copy the same
             // blocking backpressure the Go engine had instead of an unbounded, abort-prone backlog.
             let credit = Arc::new(Semaphore::new(MAX_PENDING_WRITE));
-            task_engine.spawn(relay::relay_tcp(
-                Arc::clone(engine),
-                task_events,
-                task_counters,
-                key,
-                context.uid,
-                rx,
-                Arc::clone(&credit),
-            ));
+            spawn_flow(
+                engine,
+                flow_tasks,
+                relay::relay_tcp(
+                    Arc::clone(engine),
+                    task_events,
+                    task_counters,
+                    key,
+                    context.uid,
+                    rx,
+                    Arc::clone(&credit),
+                ),
+            );
             flows.insert(key, Flow { tx, context });
             let _ = net;
         }
@@ -544,7 +632,10 @@ fn dispatch_udp(
     engine: &Arc<Engine>,
     events: &Arc<Events>,
     counters: &Arc<TunnelCounters>,
-    udp_relays: &mut HashMap<TcpKey, mpsc::Sender<Vec<u8>>>,
+    flow_tasks: &Arc<Mutex<JoinSet<()>>>,
+    dns_permits: &Arc<Semaphore>,
+    udp_relays: &mut UdpRelays,
+    udp_generation: &mut u64,
     datagram: crate::netstack::UdpDatagram,
 ) {
     let key = TcpKey::new(datagram.local, datagram.peer);
@@ -554,14 +645,16 @@ fn dispatch_udp(
             engine
                 .traffic()
                 .record(context.uid, datagram.payload.len() as i64, 0);
-            let task_engine = Arc::clone(engine);
+            // Over the in-flight cap: drop the datagram instead of spawning an unbounded task.
+            let Ok(permit) = dns_permits.clone().try_acquire_owned() else {
+                return;
+            };
             let task_events = Arc::clone(events);
-            task_engine.spawn(dnsflow::serve_udp(
-                Arc::clone(engine),
-                task_events,
-                datagram,
-                context,
-            ));
+            let task_engine = Arc::clone(engine);
+            spawn_flow(engine, flow_tasks, async move {
+                let _permit = permit;
+                dnsflow::serve_udp(task_engine, task_events, datagram, context).await;
+            });
         }
         FlowAction::Relay => {
             engine
@@ -570,20 +663,26 @@ fn dispatch_udp(
             // The relay task owns the upstream socket; this table only routes datagrams to it. A
             // send failure means the task already ended (idle timeout, upstream error), so the
             // entry is dropped and the datagram is lost the way a full socket's would be.
-            let sender = udp_relays.entry(key).or_insert_with(|| {
+            let (_, sender) = udp_relays.entry(key).or_insert_with(|| {
+                *udp_generation += 1;
+                let generation = *udp_generation;
                 let (tx, rx) = mpsc::channel::<Vec<u8>>(FLOW_CHANNEL);
-                let task_engine = Arc::clone(engine);
                 let task_events = Arc::clone(events);
                 let task_counters = Arc::clone(counters);
-                task_engine.spawn(relay::relay_udp(
-                    Arc::clone(engine),
-                    task_events,
-                    task_counters,
-                    key,
-                    context.uid,
-                    rx,
-                ));
-                tx
+                spawn_flow(
+                    engine,
+                    flow_tasks,
+                    relay::relay_udp(
+                        Arc::clone(engine),
+                        task_events,
+                        task_counters,
+                        key,
+                        context.uid,
+                        generation,
+                        rx,
+                    ),
+                );
+                (generation, tx)
             });
             if sender.try_send(datagram.payload).is_err() {
                 udp_relays.remove(&key);

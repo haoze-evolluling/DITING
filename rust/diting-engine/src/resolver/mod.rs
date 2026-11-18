@@ -310,13 +310,18 @@ impl Resolver {
                 .unwrap_or(false)
     }
 
-    /// `Shutdown`: closes the pooled DoT connections and the DoQ sessions.
+    /// `Shutdown`: releases the pooled DoT connections and the DoQ sessions.
+    ///
+    /// Only **idle** resources are closed: a query that already cloned this resolver may still be
+    /// reading a session, so closing it here would turn a configuration change into a random
+    /// SERVFAIL. The DoQ sessions are detached and end on their idle timeout (or when the old
+    /// client is finally dropped).
     pub fn shutdown(&self) {
         if let Some(dot) = &self.inner.dot {
             dot.close_all();
         }
         if let Some(doq) = &self.inner.doq {
-            doq.close();
+            doq.detach();
         }
     }
 }

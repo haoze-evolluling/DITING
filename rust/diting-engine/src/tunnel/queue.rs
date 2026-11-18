@@ -6,8 +6,10 @@
 //! its own thread, so ingress needs the same bound and the same policy: drop the packet, count it.
 //!
 //! Commands from flow handlers (socket writes, close, DNS answers) share the ingress queue so the
-//! stack thread has one place to wait on and one waker. They are not dropped: a lost command would
-//! leave a flow parked forever.
+//! stack thread has one place to wait on and one waker. Control commands are never dropped: a lost
+//! `Abort`/`CloseWrite`/expire would leave a flow parked forever. Datagrams are the one lossy kind —
+//! UDP has no delivery guarantee anyway — so they are shed once the queue is far above capacity,
+//! which keeps a burst of upstream replies from growing the queue without bound.
 
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -18,6 +20,11 @@ use smoltcp::wire::IpEndpoint;
 use tokio::sync::Semaphore;
 
 use crate::netstack::TcpKey;
+
+/// Queue length at which further lossy commands (datagrams only) are dropped. Commands have no
+/// fixed channel bound of their own, so this is what keeps a stalled stack thread from growing the
+/// queue without limit.
+const COMMAND_HIGH_WATER: usize = 16 * 1024;
 
 /// One unit of work for the stack thread.
 #[derive(Debug)]
@@ -38,8 +45,10 @@ pub enum Event {
         peer: IpEndpoint,
         payload: Vec<u8>,
     },
-    /// A UDP relay task ended: forget its 4-tuple so the next datagram dials again.
-    UdpExpire(TcpKey),
+    /// A UDP relay task ended: forget its 4-tuple so the next datagram dials again. The generation
+    /// identifies the task that ended, so a late expire from an old relay cannot remove the new
+    /// relay that has already been created for the same 4-tuple.
+    UdpExpire { key: TcpKey, generation: u64 },
 }
 
 /// The bounded ingress queue.
@@ -83,10 +92,17 @@ impl Events {
         self.changed.notify_one();
     }
 
-    /// Queues one command (never dropped).
+    /// Queues one command. Control commands are never dropped; a datagram is shed once the backlog
+    /// hits [`COMMAND_HIGH_WATER`].
     pub fn push_command(&self, event: Event) {
         let mut state = self.lock();
         if state.closed {
+            return;
+        }
+        if state.events.len() >= COMMAND_HIGH_WATER
+            && matches!(event, Event::Datagram { .. })
+        {
+            self.dropped.fetch_add(1, Ordering::Relaxed);
             return;
         }
         state.events.push_back(event);

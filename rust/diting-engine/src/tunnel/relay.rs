@@ -218,6 +218,7 @@ pub async fn relay_udp(
     counters: Arc<TunnelCounters>,
     key: TcpKey,
     uid: i32,
+    generation: u64,
     mut inbound: mpsc::Receiver<Vec<u8>>,
 ) {
     let target = netstack::socket_addr(key.local);
@@ -233,7 +234,7 @@ pub async fn relay_udp(
         engine.log_error(&format!(
             "[FullTunnel] UDP {target}: outbound proxy does not support UDP"
         ));
-        events.push_command(Event::UdpExpire(key));
+        events.push_command(Event::UdpExpire { key, generation });
         return;
     }
     let transport = match outbound.dial_udp(route, target).await {
@@ -243,7 +244,7 @@ pub async fn relay_udp(
                 .relay_unavailable
                 .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             engine.log_error(&format!("[FullTunnel] UDP dial {target}: {error}"));
-            events.push_command(Event::UdpExpire(key));
+            events.push_command(Event::UdpExpire { key, generation });
             return;
         }
     };
@@ -284,7 +285,7 @@ pub async fn relay_udp(
             _ = tokio::time::sleep(UDP_IDLE) => break,
         }
     }
-    events.push_command(Event::UdpExpire(key));
+    events.push_command(Event::UdpExpire { key, generation });
 }
 
 #[cfg(test)]

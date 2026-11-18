@@ -76,15 +76,18 @@ impl LinuxServiceManager {
         }
     }
 
-    fn executable_from_unit(&self) -> Option<String> {
-        let output = std::process::Command::new("systemctl")
-            .args(["show", UNIT_NAME, "-p", "ExecStart", "--value"])
-            .output()
+    async fn executable_from_unit(&self) -> Option<String> {
+        // Through the executor: `systemctl` may block (D-Bus, slow host), so it must not run on a
+        // runtime worker thread.
+        let output = self
+            .executor
+            .run("systemctl", &["show", UNIT_NAME, "-p", "ExecStart", "--value"])
+            .await
             .ok()?;
-        if !output.status.success() {
+        if !output.success {
             return None;
         }
-        let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let text = output.text();
         let path = parse_exec_start_path(&text);
         if path.is_empty() {
             None
@@ -115,7 +118,7 @@ impl ServiceManager for LinuxServiceManager {
             ..CoreServiceStatus::default()
         };
 
-        match self.locate_executable() {
+        match self.locate_executable().await {
             Ok(path) => {
                 status.executable_path = path;
                 status.can_install = true;
@@ -164,7 +167,7 @@ impl ServiceManager for LinuxServiceManager {
     async fn install(&self, exe_path: &str) -> PlatformResult<()> {
         require_root("安装服务")?;
         let exe_path = if exe_path.is_empty() {
-            self.locate_executable()?
+            self.locate_executable().await?
         } else {
             exe_path.to_string()
         };
@@ -206,8 +209,8 @@ impl ServiceManager for LinuxServiceManager {
         Ok(())
     }
 
-    fn locate_executable(&self) -> PlatformResult<String> {
-        if let Some(path) = self.executable_from_unit() {
+    async fn locate_executable(&self) -> PlatformResult<String> {
+        if let Some(path) = self.executable_from_unit().await {
             if files::file_exists(Path::new(&path)) {
                 return Ok(path);
             }

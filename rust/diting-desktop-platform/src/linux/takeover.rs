@@ -221,12 +221,17 @@ impl DnsManager for LinuxDnsManager {
             None => Ok(()),
         };
 
-        {
-            let mut state = self.lock_state();
-            state.active = false;
-            state.adapters.clear();
+        if result.is_ok() {
+            // Only forget the snapshot once the adapters were actually restored. Clearing it after
+            // a failed restore (as the old code did) removes the only way to recover the original
+            // DNS, potentially leaving the host on 127.0.0.1 with no state file.
+            {
+                let mut state = self.lock_state();
+                state.active = false;
+                state.adapters.clear();
+            }
+            let _ = self.state_store.clear();
         }
-        let _ = self.state_store.clear();
 
         // Always scan for residual loopback DNS, regardless of the previous state.
         let _ = self.reset_residual_loopback_dns().await;

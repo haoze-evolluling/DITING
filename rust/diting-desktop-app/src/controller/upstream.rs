@@ -135,58 +135,56 @@ impl AppRuntime {
             return Err(ControllerError::new("未包含任何有效的上游配置项"));
         }
 
-        let mut config = self.config();
-        let mut upstream = config.upstream.clone();
+        // Read, mutate, apply and persist under the runtime's config lock: otherwise two admin
+        // requests can each build from the same snapshot and silently revert one another.
+        self.with_config_update(|config| {
+            let mut upstream = config.upstream.clone();
 
-        if !request.mode.is_empty() {
-            if !valid_mode(&request.mode) {
-                return Err(ControllerError::new(format!(
-                    "不支持的上游调度模式: {}",
-                    request.mode
-                )));
+            if !request.mode.is_empty() {
+                if !valid_mode(&request.mode) {
+                    return Err(format!("不支持的上游调度模式: {}", request.mode));
+                }
+                upstream.mode = request.mode;
             }
-            upstream.mode = request.mode;
-        }
 
-        let mut seen = std::collections::HashSet::new();
-        if let Some(providers) = request.providers {
-            upstream.providers = validate_providers(&providers, &mut seen, "", false)
-                .map_err(ControllerError::new)?;
-        } else {
-            for provider in &upstream.providers {
-                seen.insert(provider.id.trim().to_string());
+            let mut seen = std::collections::HashSet::new();
+            if let Some(providers) = request.providers {
+                upstream.providers = validate_providers(&providers, &mut seen, "", false)?;
+            } else {
+                for provider in &upstream.providers {
+                    seen.insert(provider.id.trim().to_string());
+                }
             }
-        }
 
-        if let Some(providers) = request.fallback_providers {
-            let validated = validate_providers(&providers, &mut seen, "回退", true)
-                .map_err(ControllerError::new)?;
-            upstream.fallback_providers = validated;
-        }
-        if let Some(timeout) = request.fallback_timeout_ms {
-            upstream.fallback_timeout_ms = timeout;
-        }
-        if let Some(rcodes) = request.fallback_on_rcode {
-            upstream.fallback_on_rcode = Some(rcodes);
-        }
-        if let Some(on_error) = request.fallback_on_error {
-            upstream.fallback_on_error = Some(on_error);
-        }
-        if let Some(bootstrap) = request.bootstrap {
-            if bootstrap.enabled && bootstrap.servers.is_empty() {
-                return Err(ControllerError::new("Bootstrap DNS 服务器列表不能为空"));
+            if let Some(providers) = request.fallback_providers {
+                let validated = validate_providers(&providers, &mut seen, "回退", true)?;
+                upstream.fallback_providers = validated;
             }
-            upstream.bootstrap = bootstrap;
-        }
-        if let Some(routes) = request.conditional_routes {
-            upstream.conditional_routes = routes;
-        }
+            if let Some(timeout) = request.fallback_timeout_ms {
+                upstream.fallback_timeout_ms = timeout;
+            }
+            if let Some(rcodes) = request.fallback_on_rcode {
+                upstream.fallback_on_rcode = Some(rcodes);
+            }
+            if let Some(on_error) = request.fallback_on_error {
+                upstream.fallback_on_error = Some(on_error);
+            }
+            if let Some(bootstrap) = request.bootstrap {
+                if bootstrap.enabled && bootstrap.servers.is_empty() {
+                    return Err("Bootstrap DNS 服务器列表不能为空".to_string());
+                }
+                upstream.bootstrap = bootstrap;
+            }
+            if let Some(routes) = request.conditional_routes {
+                upstream.conditional_routes = routes;
+            }
 
-        upstream.normalize();
-        config.upstream = upstream;
-        config.normalize();
-        self.apply_config(config.clone());
-        self.persist_config().map_err(ControllerError::new)
+            upstream.normalize();
+            config.upstream = upstream;
+            config.normalize();
+            Ok(())
+        })
+        .map_err(ControllerError::new)
     }
 
     /// `ConfigureBootstrap`.

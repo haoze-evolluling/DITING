@@ -87,6 +87,10 @@ impl PlatformHandles {
 pub struct AppRuntime {
     config: Arc<RwLock<Config>>,
     config_path: PathBuf,
+    /// Serializes config read-modify-apply-persist transactions. Without it two concurrent
+    /// management requests each build a snapshot from the same state and the later one silently
+    /// reverts the earlier change (and both write `config.json`).
+    config_op: std::sync::Mutex<()>,
     platform: RwLock<Option<Arc<PlatformHandles>>>,
     pub resolver: Arc<DesktopResolver>,
     pub cache: Arc<DesktopCache>,
@@ -105,6 +109,10 @@ pub struct AppRuntime {
     observer: RwLock<Option<Arc<dyn QueryObserver>>>,
     dns: Mutex<Option<Arc<DnsServer>>>,
     encrypted: Arc<RwLock<Option<Arc<EncryptedListeners>>>>,
+    /// Serializes DNS/encrypted listener lifecycle changes. Lock order is always
+    /// `dns_lifecycle` → `dns`; concurrent reloads otherwise interleave their stop/bind phases and
+    /// one can silently disable the listeners the other just bound.
+    dns_lifecycle: Mutex<()>,
 }
 
 impl AppRuntime {
@@ -144,7 +152,9 @@ impl AppRuntime {
             observer: RwLock::new(None),
             dns: Mutex::new(None),
             encrypted: Arc::new(RwLock::new(None)),
+            dns_lifecycle: Mutex::new(()),
             config_path,
+            config_op: std::sync::Mutex::new(()),
             platform: RwLock::new(None),
             resolver,
             config: Arc::new(RwLock::new(config)),
@@ -191,19 +201,53 @@ impl AppRuntime {
 
     /// Applies a mutation to the configuration, reconfigures every engine and persists it.
     pub fn update_config(&self, mutate: impl FnOnce(&mut Config)) -> Result<Config, String> {
-        let mut next = self.config();
-        mutate(&mut next);
-        self.apply_config(next.clone());
-        store::save_config(&self.config_path, &next).map_err(|error| error.to_string())?;
-        Ok(next)
+        self.with_config_update(|next| {
+            mutate(next);
+            Ok(next.clone())
+        })
     }
 
     /// Applies a mutation without persisting (runtime-only switches).
     pub fn update_config_in_memory(&self, mutate: impl FnOnce(&mut Config)) -> Config {
+        let _op = self.lock_config_op();
         let mut next = self.config();
         mutate(&mut next);
         self.apply_config(next.clone());
         next
+    }
+
+    /// Runs one read-modify-apply-persist transaction under [`AppRuntime::config_op`].
+    ///
+    /// Callers that need to mutate a snapshot (instead of a blind `update_config`) use this so
+    /// their read cannot race another management request's write.
+    pub fn with_config_update<T>(
+        &self,
+        update: impl FnOnce(&mut Config) -> Result<T, String>,
+    ) -> Result<T, String> {
+        let _op = self.lock_config_op();
+        let mut next = self.config();
+        let outcome = update(&mut next)?;
+        self.apply_config(next.clone());
+        store::save_config(&self.config_path, &next).map_err(|error| error.to_string())?;
+        Ok(outcome)
+    }
+
+    /// Runs the same transaction without persisting to disk.
+    pub fn with_config_update_in_memory<T>(
+        &self,
+        update: impl FnOnce(&mut Config) -> Result<T, String>,
+    ) -> Result<T, String> {
+        let _op = self.lock_config_op();
+        let mut next = self.config();
+        let outcome = update(&mut next)?;
+        self.apply_config(next.clone());
+        Ok(outcome)
+    }
+
+    fn lock_config_op(&self) -> std::sync::MutexGuard<'_, ()> {
+        self.config_op
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
     }
 
     /// Installs the query-log/WebSocket observer before DNS starts.
@@ -276,6 +320,7 @@ impl AppRuntime {
     /// Builds a fresh pipeline and starts the UDP/TCP and encrypted listeners. Replacing a running
     /// server is a restart: shut down first so the sockets are free, then bind.
     pub async fn start_dns(&self) -> Result<(), String> {
+        let _lifecycle = self.dns_lifecycle.lock().await;
         let config = self.config();
         let pipeline = self.pipeline();
         let server_config = dns_server_config(&config);
@@ -293,6 +338,7 @@ impl AppRuntime {
     }
 
     pub async fn stop_dns(&self) {
+        let _lifecycle = self.dns_lifecycle.lock().await;
         self.stop_encrypted().await;
         let server = self.dns.lock().await.take();
         if let Some(server) = server {

@@ -175,7 +175,17 @@ impl Filter {
             }
         };
         if expired {
-            self.state.write().unwrap().blacklist.remove(&host);
+            // Re-check under the write lock: between the read above and this removal another
+            // connection can re-blacklist the host, and removing the fresh entry would make it
+            // interceptable again (and diverge from the persisted blacklist file).
+            let mut state = self.state.write().unwrap();
+            if state
+                .blacklist
+                .get(&host)
+                .is_some_and(|entry| now_ms >= entry.expires_at_ms)
+            {
+                state.blacklist.remove(&host);
+            }
         }
 
         let bypassed = {

@@ -144,6 +144,18 @@ impl DoqClient {
         }
     }
 
+    /// Drops the cached sessions **without** closing them.
+    ///
+    /// Used when a resolver is replaced while queries may still be in flight: closing the cached
+    /// connections would fail those queries with a random transport error. They end on their own
+    /// (idle timeout) or when this client itself is dropped.
+    pub fn detach(&self) {
+        self.sessions
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .clear();
+    }
+
     /// Closes every session and the endpoint (`Shutdown`).
     pub fn close(&self) {
         for (_, connection) in self

@@ -1,6 +1,7 @@
 //! `/api/v1/filter/*`: stats, configuration, lists, rules, schedules and services.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use chrono::{Datelike, Local, Timelike};
 use hyper::http::Method;
@@ -28,7 +29,7 @@ pub fn handle_stats(server: &Server, ctx: &Ctx<'_>) -> Resp {
     ok(server.runtime().filter_stats())
 }
 
-pub fn handle_config(server: &Server, ctx: &Ctx<'_>) -> Resp {
+pub async fn handle_config(server: &Server, ctx: &Ctx<'_>) -> Resp {
     match *ctx.method {
         Method::GET => ok(server.runtime().filter_config()),
         Method::POST => {
@@ -37,9 +38,12 @@ pub fn handle_config(server: &Server, ctx: &Ctx<'_>) -> Resp {
                     Ok(config) => config,
                     Err(error) => return bad_request(format!("解析配置失败: {error}")),
                 };
-            match server.runtime().update_filter_config(config) {
-                Ok(()) => ok_message("过滤配置已更新生效"),
-                Err(error) => internal_error(error.message),
+            let runtime = Arc::clone(server.runtime());
+            // Applying the config reparses every enabled rule list; keep that off the workers.
+            match tokio::task::spawn_blocking(move || runtime.update_filter_config(config)).await {
+                Ok(Ok(())) => ok_message("过滤配置已更新生效"),
+                Ok(Err(error)) => internal_error(error.message),
+                Err(error) => internal_error(format!("更新过滤配置失败: {error}")),
             }
         }
         _ => crate::handlers::method_not_allowed("不支持的 HTTP 方法"),
@@ -115,7 +119,7 @@ pub async fn handle_list_refresh(server: &Server, ctx: &Ctx<'_>) -> Resp {
     }
 }
 
-pub fn handle_rules(server: &Server, ctx: &Ctx<'_>) -> Resp {
+pub async fn handle_rules(server: &Server, ctx: &Ctx<'_>) -> Resp {
     match *ctx.method {
         Method::GET => ok(server.runtime().custom_rules()),
         Method::POST => {
@@ -123,9 +127,12 @@ pub fn handle_rules(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Ok(request) => request,
                 Err(response) => return response,
             };
-            match server.runtime().set_custom_rules(request.rules) {
-                Ok(()) => ok_message("自定义规则已保存生效"),
-                Err(error) => internal_error(error.message),
+            let runtime = Arc::clone(server.runtime());
+            match tokio::task::spawn_blocking(move || runtime.set_custom_rules(request.rules)).await
+            {
+                Ok(Ok(())) => ok_message("自定义规则已保存生效"),
+                Ok(Err(error)) => internal_error(error.message),
+                Err(error) => internal_error(format!("保存自定义规则失败: {error}")),
             }
         }
         _ => crate::handlers::method_not_allowed("不支持的 HTTP 方法"),
@@ -144,7 +151,7 @@ pub fn handle_check(server: &Server, ctx: &Ctx<'_>) -> Resp {
     ok(server.runtime().check_host_rule(&request.domain, qtype))
 }
 
-pub fn handle_schedule(server: &Server, ctx: &Ctx<'_>) -> Resp {
+pub async fn handle_schedule(server: &Server, ctx: &Ctx<'_>) -> Resp {
     match *ctx.method {
         Method::GET => ok(server.runtime().blocking_schedule()),
         Method::POST => {
@@ -152,9 +159,15 @@ pub fn handle_schedule(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Ok(request) => request,
                 Err(response) => return response,
             };
-            match server.runtime().configure_blocking_schedule(request) {
-                Ok(()) => ok_message("时间计划已更新并生效"),
-                Err(error) => internal_error(error.message),
+            let runtime = Arc::clone(server.runtime());
+            let result = tokio::task::spawn_blocking(move || {
+                runtime.configure_blocking_schedule(request)
+            })
+            .await;
+            match result {
+                Ok(Ok(())) => ok_message("时间计划已更新并生效"),
+                Ok(Err(error)) => internal_error(error.message),
+                Err(error) => internal_error(format!("更新时间计划失败: {error}")),
             }
         }
         _ => crate::handlers::method_not_allowed("只支持 GET / POST 请求"),
@@ -358,7 +371,7 @@ fn schedule_state(service_id: &str, schedules: &[BlockingSchedule]) -> ServiceSc
     }
 }
 
-pub fn handle_services(server: &Server, ctx: &Ctx<'_>) -> Resp {
+pub async fn handle_services(server: &Server, ctx: &Ctx<'_>) -> Resp {
     match *ctx.method {
         Method::GET => ok(blocked_services_response(server)),
         Method::POST => {
@@ -366,9 +379,15 @@ pub fn handle_services(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Ok(request) => request,
                 Err(response) => return response,
             };
-            match server.runtime().configure_blocked_services(request) {
-                Ok(()) => ok(blocked_services_response(server)),
-                Err(error) => internal_error(error.message),
+            let runtime = Arc::clone(server.runtime());
+            let result = tokio::task::spawn_blocking(move || {
+                runtime.configure_blocked_services(request)
+            })
+            .await;
+            match result {
+                Ok(Ok(())) => ok(blocked_services_response(server)),
+                Ok(Err(error)) => internal_error(error.message),
+                Err(error) => internal_error(format!("更新服务拦截配置失败: {error}")),
             }
         }
         _ => crate::handlers::method_not_allowed("只支持 GET, POST 请求"),

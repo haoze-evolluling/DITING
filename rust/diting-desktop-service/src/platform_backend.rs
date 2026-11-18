@@ -153,8 +153,14 @@ pub fn firewall_backend_name() -> String {
 }
 
 /// Composes every capability the management controllers may need.
-pub fn platform_handles(store: Arc<dyn StateStore>) -> PlatformHandles {
-    let dns_manager = dns_manager(Arc::clone(&store), diting_desktop_api::version::VERSION);
+///
+/// `dns_manager` is passed in so the service and the management runtime share **one** manager:
+/// takeover state lives in its memory, so a second instance would make shutdown take its restore
+/// decision from the wrong one and leave the host pointing at a dead loopback resolver.
+pub fn platform_handles(
+    store: Arc<dyn StateStore>,
+    dns_manager: Arc<dyn DnsManager>,
+) -> PlatformHandles {
     let lan: Arc<dyn Fn() -> Vec<String> + Send + Sync> =
         Arc::new(|| lan_addresses().unwrap_or_default());
     PlatformHandles {

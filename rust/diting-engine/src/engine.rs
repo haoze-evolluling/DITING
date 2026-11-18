@@ -1040,6 +1040,9 @@ impl Default for Engine {
 
 impl Drop for Engine {
     fn drop(&mut self) {
+        // Stop the data plane as well: a `Session` whose threads already exited must not keep its
+        // sockets (or the per-flow tasks) around just because the caller never called `stop()`.
+        self.stop_full();
         self.stop_standalone();
     }
 }

@@ -322,14 +322,14 @@ fn start_session(session: &Arc<Session>, target: &str) -> Result<(), String> {
     let address: SocketAddr = target
         .parse()
         .map_err(|err| format!("invalid dial target '{target}': {err}"))?;
-    {
-        let running = session
-            .running
-            .lock()
-            .unwrap_or_else(|err| err.into_inner());
-        if running.is_some() {
-            return Err("the session is already running".to_string());
-        }
+    // Hold the slot for the whole start: checking and then releasing lets two concurrent starts
+    // both see "not running" and leave one pipeline orphaned when the second overwrites the first.
+    let mut slot = session
+        .running
+        .lock()
+        .unwrap_or_else(|err| err.into_inner());
+    if slot.is_some() {
+        return Err("the session is already running".to_string());
     }
 
     let jvm_and_callback = session.vm.clone().zip(
@@ -358,10 +358,7 @@ fn start_session(session: &Arc<Session>, target: &str) -> Result<(), String> {
         .clone();
     let source: Arc<dyn PacketSource> = Arc::new(session.source.source());
     let running = pipeline::start(source, protector, Config::new(address, MTU), dispatcher)?;
-    *session
-        .running
-        .lock()
-        .unwrap_or_else(|err| err.into_inner()) = Some(running);
+    *slot = Some(running);
     Ok(())
 }
 

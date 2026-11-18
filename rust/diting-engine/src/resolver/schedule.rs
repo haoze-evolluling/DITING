@@ -28,12 +28,25 @@ use tokio::time::Instant as TokioInstant;
 
 use super::{elapsed_ns, now_ns, plain, Inner, RaceEvent, NO_PROVIDER};
 
-/// How long one HTTP/3 exchange may take before the query falls back to DoH/HTTP-2.
+/// The ceiling for one HTTP/3 exchange before the query falls back to DoH/HTTP-2.
 ///
-/// It must stay well below the per-attempt budget the scheduler hands to [`attempt`]: the outer
+/// It must stay below the per-attempt budget the scheduler hands to [`attempt`]: the outer
 /// `timeout` cancels the whole attempt, so a stalled H3 exchange would otherwise never reach the
 /// `Err` arm — no fallback, no `note_h3_failure`, and the dead path would stay enabled forever.
+/// [`h3_attempt_timeout`] halves the attempt budget so the fallback still gets a chance; the
+/// sequential scheduler's adaptive budget is only 0.3–2 s, well under this ceiling.
 const DOH3_ATTEMPT_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// The H3 slice of one attempt: at most [`DOH3_ATTEMPT_TIMEOUT`], and never more than half of the
+/// attempt budget so the HTTP/2 fallback still fits before the outer deadline.
+fn h3_attempt_timeout(budget: Option<Duration>) -> Duration {
+    match budget {
+        Some(budget) => (budget / 2)
+            .min(DOH3_ATTEMPT_TIMEOUT)
+            .max(Duration::from_millis(1)),
+        None => DOH3_ATTEMPT_TIMEOUT,
+    }
+}
 
 /// One finished attempt.
 struct Attempt {
@@ -128,6 +141,10 @@ async fn attempt(
     let retry_delay_ns = provider.stats.udp_retry_delay();
     let started = Instant::now();
 
+    // Derived from the attempt budget: the sequential scheduler passes an adaptive 0.3–2 s budget,
+    // so a fixed 2 s inner timeout would be cancelled by the outer one and never trigger the
+    // DoH fallback at all.
+    let h3_timeout = h3_attempt_timeout(budget);
     let transport = async {
         match provider.protocol {
             Protocol::Plain => {
@@ -177,7 +194,7 @@ async fn attempt(
                             // before this match runs, so neither the HTTP/2 retry nor the
                             // failure streak would happen.
                             match tokio::time::timeout(
-                                DOH3_ATTEMPT_TIMEOUT,
+                                h3_timeout,
                                 h3.query(&inner.dial, &provider.host, port, path, query),
                             )
                             .await

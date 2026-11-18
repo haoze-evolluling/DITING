@@ -114,7 +114,7 @@ impl Relay {
             .await
             .map_err(|error| -> BoxError { Box::new(error) })?;
         let upstream = Arc::new(Mutex::new(send));
-        tokio::spawn(async move {
+        let driver = tokio::spawn(async move {
             // The driver ends when the upstream closes; a failure is that same event.
             let _ = connection.await;
         });
@@ -128,11 +128,15 @@ impl Relay {
                 Ok::<Response<ResponseBody>, Infallible>(response)
             }
         });
-        hyper::server::conn::http1::Builder::new()
+        let outcome = hyper::server::conn::http1::Builder::new()
             .keep_alive(true)
             .serve_connection(TokioIo::new(client), service)
             .await
-            .map_err(|error| -> BoxError { Box::new(error) })
+            .map_err(|error| -> BoxError { Box::new(error) });
+        // The client side is gone: stop the upstream connection driver too. Left detached it can
+        // keep the upstream socket (and a task) alive until the origin decides to close.
+        driver.abort();
+        outcome
     }
 
     /// One request: the local asset check, the two rule families, then the upstream exchange.

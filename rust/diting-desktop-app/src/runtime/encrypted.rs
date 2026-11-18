@@ -117,6 +117,9 @@ impl AppRuntime {
     /// Go's `reloadDNSWithCurrentConfig`: a certificate or port change must not blip plaintext
     /// resolution (clients would fall back to another resolver mid-flight).
     pub async fn reload_encrypted(&self) {
+        // One reload at a time. Two concurrent reloads each stop the listeners, then the loser's
+        // bind fails and its `None` result replaces the winner's working listener set.
+        let _lifecycle = self.dns_lifecycle.lock().await;
         self.stop_encrypted().await;
         let server = self.dns.lock().await.clone();
         let Some(server) = server else {

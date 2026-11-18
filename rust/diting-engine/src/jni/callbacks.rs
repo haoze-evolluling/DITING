@@ -200,8 +200,26 @@ impl EventSink for CallbackSink {
         // Blocking send: the flusher drains in order, so the marker is reached after every event
         // already queued. The ack lets teardown wait for the delivery instead of racing it.
         let (ack, wait) = mpsc::channel();
-        if sender.send(Pending::Flush(ack)).is_ok() {
-            let _ = wait.recv_timeout(EVENT_FLUSH_INTERVAL * 25);
+        // Bounded enqueue: the flusher is the only consumer and it may be parked inside a Kotlin
+        // callback, so an unconditional `send` could hang teardown on the JNI thread forever.
+        let deadline = Instant::now() + EVENT_FLUSH_INTERVAL * 25;
+        let mut marker = Pending::Flush(ack);
+        loop {
+            match sender.try_send(marker) {
+                Ok(()) => {
+                    let _ = wait.recv_timeout(EVENT_FLUSH_INTERVAL * 25);
+                    return;
+                }
+                Err(mpsc::TrySendError::Full(returned)) => {
+                    if Instant::now() >= deadline {
+                        // Give up: the queued events are still delivered by the flusher's timer.
+                        return;
+                    }
+                    marker = returned;
+                    thread::sleep(Duration::from_millis(1));
+                }
+                Err(mpsc::TrySendError::Disconnected(_)) => return,
+            }
         }
     }
 }

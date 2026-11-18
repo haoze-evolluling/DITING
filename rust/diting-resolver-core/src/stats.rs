@@ -65,6 +65,13 @@ pub const CIRCUIT_BASE_COOLDOWN_NS: i64 = 5_000_000_000;
 pub const CIRCUIT_MAX_COOLDOWN_NS: i64 = 60_000_000_000;
 /// The cooldown doubles at most this many times (`shift > 6` is clamped to 6).
 pub const CIRCUIT_MAX_SHIFT: u32 = 6;
+/// A half-open probe claim older than this is treated as abandoned.
+///
+/// `AllowAttempt` is called while the *plan* is built, but the sequential scheduler may stop at
+/// the first successful provider and never run the later ones, so their claim would otherwise stay
+/// set forever. The longest a real attempt can live is the query budget plus the race backstop
+/// (7 s), so 10 s is safely past every legitimate attempt.
+pub const PROBE_CLAIM_STALE_NS: i64 = 10_000_000_000;
 
 /// The mutable part of one provider's statistics.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -78,6 +85,8 @@ struct State {
     sample_count: i64,
     circuit_open_until_ns: i64,
     probe_in_flight: bool,
+    /// When the current half-open probe claim was taken (`0` when none).
+    probe_claimed_ns: i64,
 }
 
 impl State {
@@ -92,6 +101,7 @@ impl State {
             sample_count: 0,
             circuit_open_until_ns: 0,
             probe_in_flight: false,
+            probe_claimed_ns: 0,
         }
     }
 
@@ -227,10 +237,13 @@ impl ProviderStats {
         if now_ns < state.circuit_open_until_ns {
             return false;
         }
-        if state.probe_in_flight {
+        if state.probe_in_flight
+            && now_ns.saturating_sub(state.probe_claimed_ns) < PROBE_CLAIM_STALE_NS
+        {
             return false;
         }
         state.probe_in_flight = true;
+        state.probe_claimed_ns = now_ns;
         true
     }
 

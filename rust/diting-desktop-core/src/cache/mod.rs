@@ -297,6 +297,12 @@ impl DesktopCache {
             if !self.cache.refresh_begin_keyed(&entry.key) {
                 continue;
             }
+            // Cancellation (maintenance shutdown aborts the prefetch task) must not leave the
+            // claim set forever, or this key is never prefetched again.
+            let _claim = RefreshClaim {
+                cache: Arc::clone(&self.cache),
+                key: entry.key.clone(),
+            };
             let group = group_of_key(&entry.key, &domain, entry.qtype, entry.qclass);
             let result = resolver.resolve(&query, &group).await;
             if let Ok(response) = result {
@@ -310,8 +316,19 @@ impl DesktopCache {
                 self.prefetch_count.fetch_add(1, Ordering::Relaxed);
                 refreshed += 1;
             }
-            self.cache.refresh_done_keyed(&entry.key);
         }
+    }
+}
+
+/// Releases one prefetch claim when it goes out of scope.
+struct RefreshClaim {
+    cache: Arc<Cache>,
+    key: Vec<u8>,
+}
+
+impl Drop for RefreshClaim {
+    fn drop(&mut self) {
+        self.cache.refresh_done_keyed(&self.key);
     }
 }
 

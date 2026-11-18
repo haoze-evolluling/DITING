@@ -109,7 +109,15 @@ impl Server {
             return Err("IPC 服务已启动".to_string());
         }
         let _ = self.self_ref.set(Arc::downgrade(self));
-        let (listener, local) = self.bind_configured().await?;
+        // A failed bind must not leave the service marked as started: the management API would be
+        // unreachable and every retry would answer "already started".
+        let (listener, local) = match self.bind_configured().await {
+            Ok(bound) => bound,
+            Err(error) => {
+                self.started.store(false, Ordering::SeqCst);
+                return Err(error);
+            }
+        };
         *self.listener_addr.lock().await = Some(local);
         let (sender, receiver) = oneshot::channel::<()>();
         *self.shutdown.lock().await = Some(sender);
@@ -132,11 +140,21 @@ impl Server {
         }
         // Give the OS a moment to release the port; the Go server slept 100 ms before rebinding.
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        let (listener, local) = self.bind_configured().await?;
+        // The old accept loop is gone at this point. If the new bind fails, drop to the stopped
+        // state so a later `start()` can recover instead of answering "already started" forever.
+        let (listener, local) = match self.bind_configured().await {
+            Ok(bound) => bound,
+            Err(error) => {
+                *self.listener_addr.lock().await = None;
+                self.started.store(false, Ordering::SeqCst);
+                return Err(error);
+            }
+        };
         let (sender, receiver) = oneshot::channel::<()>();
         *self.shutdown.lock().await = Some(sender);
         *self.join.lock().await = Some(spawn_accept_loop(Arc::clone(self), listener, receiver));
         *self.listener_addr.lock().await = Some(local);
+        self.started.store(true, Ordering::SeqCst);
         Ok(local)
     }
 
@@ -171,16 +189,18 @@ impl Server {
         if let Some(sender) = self.shutdown.lock().await.take() {
             let _ = sender.send(());
         }
-        let Some(handle) = self.join.lock().await.take() else {
-            return;
-        };
-        if tokio::time::timeout(std::time::Duration::from_secs(3), handle)
-            .await
-            .is_err()
-        {
-            // The accept loop is already asked to stop; leaning on the timeout keeps shutdown
-            // bounded even if a connection task is stuck in a handshake.
+        if let Some(handle) = self.join.lock().await.take() {
+            if tokio::time::timeout(std::time::Duration::from_secs(3), handle)
+                .await
+                .is_err()
+            {
+                // The accept loop is already asked to stop; leaning on the timeout keeps shutdown
+                // bounded even if a connection task is stuck in a handshake.
+            }
         }
+        // Always clear the flag, even when there was no loop to join (a start that failed after
+        // setting it, or a restart that already took the handle). Otherwise the service can never
+        // be started again.
         self.started.store(false, Ordering::SeqCst);
     }
 

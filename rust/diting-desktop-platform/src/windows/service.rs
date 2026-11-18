@@ -108,7 +108,7 @@ impl ServiceManager for WindowsServiceManager {
             ..CoreServiceStatus::default()
         };
 
-        match self.locate_executable() {
+        match self.locate_executable().await {
             Ok(path) => {
                 status.executable_path = path;
                 status.can_install = true;
@@ -135,7 +135,7 @@ impl ServiceManager for WindowsServiceManager {
         if self.privileged.is_elevated() {
             return start_service_native(&self.service_name);
         }
-        let exe = self.locate_executable()?;
+        let exe = self.locate_executable().await?;
         self.privileged
             .run_elevated(&exe, &["-service".to_string(), "start".to_string()])
             .await
@@ -145,7 +145,7 @@ impl ServiceManager for WindowsServiceManager {
         if self.privileged.is_elevated() {
             return stop_service_native(&self.service_name);
         }
-        let exe = self.locate_executable()?;
+        let exe = self.locate_executable().await?;
         self.privileged
             .run_elevated(&exe, &["-service".to_string(), "stop".to_string()])
             .await
@@ -165,7 +165,7 @@ impl ServiceManager for WindowsServiceManager {
             }
             return start_service_native(&self.service_name);
         }
-        let exe = self.locate_executable()?;
+        let exe = self.locate_executable().await?;
         self.privileged
             .run_elevated(&exe, &["-service".to_string(), "restart".to_string()])
             .await
@@ -180,7 +180,7 @@ impl ServiceManager for WindowsServiceManager {
     }
 
     async fn install_with_args(&self, exe_path: &str, args: &[String]) -> PlatformResult<()> {
-        let exe = self.resolve_exe(exe_path)?;
+        let exe = self.resolve_exe(exe_path).await?;
         if self.privileged.is_elevated() {
             return install_service_native(&self.service_name, &exe, args);
         }
@@ -206,13 +206,13 @@ impl ServiceManager for WindowsServiceManager {
             let _ = stop_service_native(&self.service_name);
             return delete_service_native(&self.service_name);
         }
-        let exe = self.locate_executable()?;
+        let exe = self.locate_executable().await?;
         self.privileged
             .run_elevated(&exe, &["-service".to_string(), "uninstall".to_string()])
             .await
     }
 
-    fn locate_executable(&self) -> PlatformResult<String> {
+    async fn locate_executable(&self) -> PlatformResult<String> {
         // 1. An already-registered service knows its exact ImagePath.
         let registry_path = format!(r"SYSTEM\CurrentControlSet\Services\{}", self.service_name);
         if let Some(image_path) = read_machine_string(&registry_path, "ImagePath") {
@@ -269,9 +269,9 @@ impl ServiceManager for WindowsServiceManager {
 }
 
 impl WindowsServiceManager {
-    fn resolve_exe(&self, exe_path: &str) -> PlatformResult<String> {
+    async fn resolve_exe(&self, exe_path: &str) -> PlatformResult<String> {
         if exe_path.is_empty() {
-            self.locate_executable()
+            self.locate_executable().await
         } else {
             Ok(exe_path.to_string())
         }

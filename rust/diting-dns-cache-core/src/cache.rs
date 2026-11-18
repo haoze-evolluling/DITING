@@ -232,6 +232,13 @@ impl Cache {
         self.cleaner.wake.notify_all();
         let handle = mutex_guard(&self.cleaner.thread).take();
         if let Some(handle) = handle {
+            // The sweeper holds a strong `Arc` while it sweeps; if that was the last reference,
+            // `Drop` (and therefore this join) runs on the sweeper thread itself. Joining self
+            // would panic (`EDEADLK`) or hang, and the stop flag is already set, so detaching is
+            // both safe and sufficient.
+            if handle.thread().id() == std::thread::current().id() {
+                return;
+            }
             let _ = handle.join();
         }
     }

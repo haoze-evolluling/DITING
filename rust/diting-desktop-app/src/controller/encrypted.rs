@@ -297,59 +297,63 @@ impl AppRuntime {
         &self,
         request: ConfigureEncryptedDNSRequest,
     ) -> Result<(), ControllerError> {
-        let mut config = self.config();
-        let mut encrypted = config.encrypted.clone();
-        if let Some(value) = request.enabled {
-            encrypted.enabled = value;
-        }
-        if let Some(value) = request.dot_enabled {
-            encrypted.dot_enabled = value;
-        }
-        if let Some(value) = request.doh_enabled {
-            encrypted.doh_enabled = value;
-        }
-        if let Some(value) = request.doq_enabled {
-            encrypted.doq_enabled = value;
-        }
-        if let Some(value) = request.ddr_enabled {
-            encrypted.ddr_enabled = value;
-        }
-        if let Some(value) = request.listen_address {
-            encrypted.listen_address = value;
-        }
-        if let Some(value) = request.dot_port {
-            encrypted.dot_port = value;
-        }
-        if let Some(value) = request.doh_port {
-            encrypted.doh_port = value;
-        }
-        if let Some(value) = request.doq_port {
-            encrypted.doq_port = value;
-        }
-        if let Some(value) = request.doh_path {
-            encrypted.doh_path = value;
-        }
-        if let Some(value) = request.server_name {
-            encrypted.server_name = value;
-        }
-        if let Some(value) = request.cert {
-            encrypted.cert = value;
-        }
-        encrypted.normalize();
-
-        if (encrypted.cert.source == CERT_SOURCE_SELF_SIGNED || encrypted.cert.source.is_empty())
-            && !self.cert.info().loaded
-        {
-            let mut cert = encrypted.cert.clone();
-            derive_cert_names(&mut cert, &encrypted.server_name, &encrypted.listen_address);
-            if self.cert.ensure_self_signed(cert).is_ok() {
-                encrypted.cert = self.cert.config();
+        // The snapshot read and the persistence share the runtime's config lock so a concurrent
+        // management request cannot be reverted by this one.
+        self.with_config_update(|config| {
+            let mut encrypted = config.encrypted.clone();
+            if let Some(value) = request.enabled {
+                encrypted.enabled = value;
             }
-        }
+            if let Some(value) = request.dot_enabled {
+                encrypted.dot_enabled = value;
+            }
+            if let Some(value) = request.doh_enabled {
+                encrypted.doh_enabled = value;
+            }
+            if let Some(value) = request.doq_enabled {
+                encrypted.doq_enabled = value;
+            }
+            if let Some(value) = request.ddr_enabled {
+                encrypted.ddr_enabled = value;
+            }
+            if let Some(value) = request.listen_address {
+                encrypted.listen_address = value;
+            }
+            if let Some(value) = request.dot_port {
+                encrypted.dot_port = value;
+            }
+            if let Some(value) = request.doh_port {
+                encrypted.doh_port = value;
+            }
+            if let Some(value) = request.doq_port {
+                encrypted.doq_port = value;
+            }
+            if let Some(value) = request.doh_path {
+                encrypted.doh_path = value;
+            }
+            if let Some(value) = request.server_name {
+                encrypted.server_name = value;
+            }
+            if let Some(value) = request.cert {
+                encrypted.cert = value;
+            }
+            encrypted.normalize();
 
-        config.encrypted = encrypted;
-        self.apply_config(config.clone());
-        self.persist_config().map_err(ControllerError::new)
+            if (encrypted.cert.source == CERT_SOURCE_SELF_SIGNED
+                || encrypted.cert.source.is_empty())
+                && !self.cert.info().loaded
+            {
+                let mut cert = encrypted.cert.clone();
+                derive_cert_names(&mut cert, &encrypted.server_name, &encrypted.listen_address);
+                if self.cert.ensure_self_signed(cert).is_ok() {
+                    encrypted.cert = self.cert.config();
+                }
+            }
+
+            config.encrypted = encrypted;
+            Ok(())
+        })
+        .map_err(ControllerError::new)
     }
 
     /// `GenerateEncryptedCert`.
@@ -423,31 +427,30 @@ impl AppRuntime {
         &self,
         request: ConfigureACLRequest,
     ) -> Result<(), ControllerError> {
-        let mut config = self.config();
-        let mut proxy: ReverseProxyConfig = config.encrypted.reverse_proxy.clone();
-        if let Some(enabled) = request.enabled {
-            proxy.enabled = enabled;
-        }
-        if let Some(header) = request.client_ip_header {
-            proxy.client_ip_header = header;
-        }
-        if let Some(sources) = request.trusted_sources {
-            let sources = normalize_trusted_sources(&sources).map_err(ControllerError::new)?;
-            if !request.confirm_unrestricted && has_unrestricted_trust(&sources) {
-                return Err(ControllerError::new(
-                    "可信来源包含 0.0.0.0/0 或 ::/0：任何直连方都可伪造客户端来源，访问控制与限速会同时失效。请缩小范围，或显式确认接受该风险",
-                ));
+        self.with_config_update(|config| {
+            let mut proxy: ReverseProxyConfig = config.encrypted.reverse_proxy.clone();
+            if let Some(enabled) = request.enabled {
+                proxy.enabled = enabled;
             }
-            proxy.trusted_sources = sources;
-        } else if !request.confirm_unrestricted && has_unrestricted_trust(&proxy.trusted_sources) {
-            return Err(ControllerError::new(
-                "可信来源包含 0.0.0.0/0 或 ::/0：任何直连方都可伪造客户端来源，访问控制与限速会同时失效。请缩小范围，或显式确认接受该风险",
-            ));
-        }
-        config.encrypted.reverse_proxy = proxy;
-        config.encrypted.normalize();
-        self.apply_config(config.clone());
-        self.persist_config().map_err(ControllerError::new)
+            if let Some(header) = request.client_ip_header {
+                proxy.client_ip_header = header;
+            }
+            if let Some(sources) = request.trusted_sources {
+                let sources = normalize_trusted_sources(&sources)?;
+                if !request.confirm_unrestricted && has_unrestricted_trust(&sources) {
+                    return Err("可信来源包含 0.0.0.0/0 或 ::/0：任何直连方都可伪造客户端来源，访问控制与限速会同时失效。请缩小范围，或显式确认接受该风险".to_string());
+                }
+                proxy.trusted_sources = sources;
+            } else if !request.confirm_unrestricted
+                && has_unrestricted_trust(&proxy.trusted_sources)
+            {
+                return Err("可信来源包含 0.0.0.0/0 或 ::/0：任何直连方都可伪造客户端来源，访问控制与限速会同时失效。请缩小范围，或显式确认接受该风险".to_string());
+            }
+            config.encrypted.reverse_proxy = proxy;
+            config.encrypted.normalize();
+            Ok(())
+        })
+        .map_err(ControllerError::new)
     }
 
     /// `BuildEncryptedMobileConfig`.

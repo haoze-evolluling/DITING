@@ -12,8 +12,8 @@ use std::time::Duration;
 
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream, UdpSocket};
-use tokio::sync::watch;
-use tokio::task::JoinHandle;
+use tokio::sync::{watch, Mutex as AsyncMutex, Semaphore};
+use tokio::task::{JoinHandle, JoinSet};
 
 use crate::context::{DnsContext, Transport};
 use crate::pipeline::Pipeline;
@@ -23,6 +23,9 @@ pub use config::ServerConfig;
 /// Maximum DNS message accepted over TCP (RFC 1035 length prefix is 16 bits).
 const MAX_TCP_MESSAGE: usize = 65535;
 const UDP_BUFFER: usize = 65535;
+/// Cap on concurrent queries/connections. Above it a datagram or connection is dropped, mirroring
+/// the standalone engine's admission control, so a flood cannot spawn unbounded tasks.
+const MAX_INFLIGHT: usize = 256;
 
 pub struct DnsServer {
     config: ServerConfig,
@@ -31,6 +34,10 @@ pub struct DnsServer {
     tasks: Mutex<Vec<JoinHandle<()>>>,
     started: AtomicBool,
     closed: AtomicBool,
+    /// Serializes `start` / `shutdown`: without it a shutdown that runs while the binds are in
+    /// flight can be observed as "not started yet" and silently lost, leaving a server that is
+    /// marked stopped but still listening.
+    lifecycle: AsyncMutex<()>,
 }
 
 impl DnsServer {
@@ -42,6 +49,7 @@ impl DnsServer {
             tasks: Mutex::new(Vec::new()),
             started: AtomicBool::new(false),
             closed: AtomicBool::new(false),
+            lifecycle: AsyncMutex::new(()),
         }
     }
 
@@ -56,11 +64,13 @@ impl DnsServer {
     /// Binds every configured socket. IPv6 bind failures are tolerated (some hosts disable IPv6);
     /// a failure on any IPv4 address aborts, matching the Go service.
     pub async fn start(&self) -> Result<(), String> {
+        let _lifecycle = self.lifecycle.lock().await;
         if self.started.swap(true, Ordering::SeqCst) {
             return Err("server already started".to_string());
         }
         self.closed.store(false, Ordering::SeqCst);
         let (tx, rx) = watch::channel(false);
+        let permits = Arc::new(Semaphore::new(MAX_INFLIGHT));
         let mut tasks = Vec::new();
         let mut bound = 0usize;
 
@@ -71,9 +81,10 @@ impl DnsServer {
                     let socket = Arc::new(socket);
                     let pipeline = self.pipeline.clone();
                     let timeout = self.config.query_timeout();
+                    let permits = permits.clone();
                     let mut rx = rx.clone();
                     tasks.push(tokio::spawn(async move {
-                        udp_loop(socket, pipeline, timeout, &mut rx).await;
+                        udp_loop(socket, pipeline, permits, timeout, &mut rx).await;
                     }));
                 }
                 Err(error) => {
@@ -95,9 +106,10 @@ impl DnsServer {
                     let pipeline = self.pipeline.clone();
                     let timeout = self.config.query_timeout();
                     let read_timeout = self.config.read_timeout;
+                    let permits = permits.clone();
                     let mut rx = rx.clone();
                     tasks.push(tokio::spawn(async move {
-                        tcp_loop(listener, pipeline, timeout, read_timeout, &mut rx).await;
+                        tcp_loop(listener, pipeline, permits, timeout, read_timeout, &mut rx).await;
                     }));
                 }
                 Err(error) => {
@@ -127,6 +139,7 @@ impl DnsServer {
     /// Stops accepting queries and closes all sockets. In-flight handlers finish on their own
     /// deadline; tasks are aborted so shutdown never waits on a stuck upstream.
     pub async fn shutdown(&self) {
+        let _lifecycle = self.lifecycle.lock().await;
         if !self.started.swap(false, Ordering::SeqCst) {
             return;
         }
@@ -135,16 +148,34 @@ impl DnsServer {
             let _ = sender.send(true);
         }
         let mut tasks = std::mem::take(&mut *self.tasks.lock().unwrap());
-        self.abort_all(&mut tasks).await;
+        self.stop_tasks(&mut tasks).await;
     }
 
     async fn abort_all(&self, tasks: &mut Vec<JoinHandle<()>>) {
-        for task in tasks.drain(..) {
+        let drained: Vec<JoinHandle<()>> = tasks.drain(..).collect();
+        for task in &drained {
             task.abort();
         }
-        // Aborted tasks release their sockets promptly; yield once so bind failures during a
-        // restart do not race the old socket teardown.
-        tokio::task::yield_now().await;
+        // Await the cancelled tasks instead of yielding once: the loop owns the listener socket
+        // and its per-request children, so only a completed join guarantees a restart can rebind.
+        for task in drained {
+            let _ = task.await;
+        }
+    }
+
+    /// Lets the accept loops observe the shutdown watch and drain their children, then hard-aborts
+    /// any that did not finish within the grace period.
+    async fn stop_tasks(&self, tasks: &mut Vec<JoinHandle<()>>) {
+        let drained: Vec<JoinHandle<()>> = tasks.drain(..).collect();
+        for mut task in drained {
+            if tokio::time::timeout(Duration::from_secs(1), &mut task)
+                .await
+                .is_err()
+            {
+                task.abort();
+                let _ = task.await;
+            }
+        }
     }
 
     /// Runs one request through the pipeline with the configured deadline.
@@ -223,11 +254,16 @@ fn fallback_servfail(request: &[u8]) -> Vec<u8> {
 async fn udp_loop(
     socket: Arc<UdpSocket>,
     pipeline: Arc<Pipeline>,
+    permits: Arc<Semaphore>,
     timeout: Duration,
     shutdown: &mut watch::Receiver<bool>,
 ) {
     let mut buffer = vec![0u8; UDP_BUFFER];
+    // One set owns every in-flight query. Leaving this loop (shutdown or cancellation) aborts them,
+    // so no child keeps the bound `Arc<UdpSocket>` alive past the listener's lifetime.
+    let mut inflight: JoinSet<()> = JoinSet::new();
     loop {
+        while inflight.try_join_next().is_some() {}
         tokio::select! {
             changed = shutdown.changed() => {
                 if changed.is_err() || *shutdown.borrow() {
@@ -236,10 +272,13 @@ async fn udp_loop(
             }
             received = socket.recv_from(&mut buffer) => {
                 let Ok((length, peer)) = received else { continue };
+                // Over the in-flight cap: drop the datagram; the client retries.
+                let Ok(permit) = permits.clone().try_acquire_owned() else { continue };
                 let request = buffer[..length].to_vec();
                 let socket = socket.clone();
                 let pipeline = pipeline.clone();
-                tokio::spawn(async move {
+                inflight.spawn(async move {
+                    let _permit = permit;
                     let response = run_query(pipeline, request, Some(peer), Transport::Udp, timeout).await;
                     if !response.is_empty() {
                         let _ = socket.send_to(&response, peer).await;
@@ -248,16 +287,25 @@ async fn udp_loop(
             }
         }
     }
+    // Await the cancelled children: dropping them releases their socket clones before the caller
+    // can rebind the same address.
+    inflight.abort_all();
+    while inflight.join_next().await.is_some() {}
 }
 
 async fn tcp_loop(
     listener: TcpListener,
     pipeline: Arc<Pipeline>,
+    permits: Arc<Semaphore>,
     timeout: Duration,
     read_timeout: Duration,
     shutdown: &mut watch::Receiver<bool>,
 ) {
+    // Same ownership rule as `udp_loop`: accepted connections are children of the listener task,
+    // so a stop cannot leave an accepted stream serving after the server reports itself closed.
+    let mut inflight: JoinSet<()> = JoinSet::new();
     loop {
+        while inflight.try_join_next().is_some() {}
         tokio::select! {
             changed = shutdown.changed() => {
                 if changed.is_err() || *shutdown.borrow() {
@@ -266,13 +314,18 @@ async fn tcp_loop(
             }
             accepted = listener.accept() => {
                 let Ok((stream, peer)) = accepted else { continue };
+                // Over the in-flight cap: drop the connection instead of spawning an unbounded task.
+                let Ok(permit) = permits.clone().try_acquire_owned() else { continue };
                 let pipeline = pipeline.clone();
-                tokio::spawn(async move {
+                inflight.spawn(async move {
+                    let _permit = permit;
                     let _ = serve_tcp_connection(stream, peer, pipeline, timeout, read_timeout).await;
                 });
             }
         }
     }
+    inflight.abort_all();
+    while inflight.join_next().await.is_some() {}
 }
 
 async fn serve_tcp_connection(

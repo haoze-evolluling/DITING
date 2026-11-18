@@ -79,13 +79,42 @@ pub async fn resolve(engine: &Arc<Engine>, query: &[u8]) -> Result<(Vec<u8>, boo
         return result.map(|response| (response, true));
     }
 
+    // If this future is dropped before publishing (task abort, runtime shutdown), wake the
+    // waiters with an error and remove the entry. Otherwise the key would stay "in flight" with no
+    // result and every later query for it would wait forever.
+    let mut leader = LeaderGuard {
+        flight: flight.clone(),
+        engine: Arc::clone(engine),
+        key: key.clone(),
+        finished: false,
+    };
     let result = run_resolver(engine, query).await;
     if let Ok(response) = &result {
         engine.cache().put(query, response);
     }
     flight.finish(result.clone());
     engine.finish_flight(&key);
+    leader.finished = true;
     result.map(|response| (response, false))
+}
+
+/// Resolves the shared flight on drop when the leader never reached `finish`.
+struct LeaderGuard {
+    flight: Flight,
+    engine: Arc<Engine>,
+    key: Vec<u8>,
+    finished: bool,
+}
+
+impl Drop for LeaderGuard {
+    fn drop(&mut self) {
+        if self.finished {
+            return;
+        }
+        self.flight
+            .finish(Err("resolution cancelled".to_string()));
+        self.engine.finish_flight(&self.key);
+    }
 }
 
 /// One upstream round trip. A response that the cache refuses to store (a malformed answer) is still

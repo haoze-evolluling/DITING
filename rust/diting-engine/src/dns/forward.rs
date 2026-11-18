@@ -208,10 +208,27 @@ fn with_client_id(mut response: Vec<u8>, query: &[u8]) -> Vec<u8> {
 /// The claim is released in every outcome (a failed refresh must not block the next one), which is
 /// `defer dnsCache.endStaleRefresh(raw)` in the old code.
 pub async fn refresh(engine: Arc<Engine>, query: Vec<u8>) {
+    // Release the claim even if this task is cancelled (engine stop, runtime shutdown): a leaked
+    // claim would suppress revalidation of the entry for the rest of its life.
+    let _claim = RefreshClaim {
+        engine: Arc::clone(&engine),
+        query: query.clone(),
+    };
     let cache = engine.cache();
     let resolver = engine.resolver();
     if let Ok(response) = resolver.resolve(&query).await.0 {
         cache.put(&query, &response);
     }
-    cache.end_stale_refresh(&query);
+}
+
+/// Releases the stale-refresh claim on drop, including cancellation.
+struct RefreshClaim {
+    engine: Arc<Engine>,
+    query: Vec<u8>,
+}
+
+impl Drop for RefreshClaim {
+    fn drop(&mut self) {
+        self.engine.cache().end_stale_refresh(&self.query);
+    }
 }

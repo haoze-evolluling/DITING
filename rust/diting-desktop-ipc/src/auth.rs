@@ -15,6 +15,9 @@ pub const MAX_FAILED_ATTEMPTS: u32 = 5;
 pub const LOCKOUT: Duration = Duration::from_secs(5 * 60);
 pub const DEFAULT_SESSION_TTL: Duration = Duration::from_secs(7 * 24 * 3600);
 const MAX_TRACKED_CLIENTS: usize = 4096;
+/// Sessions kept at once. Expired ones are pruned on every login; this only bounds the case where
+/// many logins happen inside one TTL window.
+const MAX_SESSIONS: usize = 1024;
 
 /// One issued session.
 #[derive(Debug, Clone)]
@@ -190,6 +193,22 @@ impl AuthManager {
             oldest.sort_by_key(|(_, at)| *at);
             for (ip, _) in oldest.into_iter().take(excess) {
                 state.attempts.remove(&ip);
+            }
+        }
+
+        // Sessions were only ever dropped when presented again, so expired tokens accumulated for
+        // as long as nobody used them.
+        state.sessions.retain(|_, session| now < session.expires);
+        if state.sessions.len() > MAX_SESSIONS {
+            let excess = state.sessions.len() - MAX_SESSIONS;
+            let mut oldest: Vec<(String, i64)> = state
+                .sessions
+                .iter()
+                .map(|(token, session)| (token.clone(), session.created_at_unix))
+                .collect();
+            oldest.sort_by_key(|(_, created)| *created);
+            for (token, _) in oldest.into_iter().take(excess) {
+                state.sessions.remove(&token);
             }
         }
     }

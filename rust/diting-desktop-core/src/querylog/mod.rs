@@ -16,7 +16,7 @@ mod writer;
 
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 use chrono::Local;
 
@@ -43,6 +43,9 @@ struct Inner {
 /// Query-history and statistics facade. All methods are thread-safe.
 pub struct QueryLog {
     inner: RwLock<Inner>,
+    /// Serializes writer lifecycle changes (`configure` / `close`) so a reconfiguration cannot
+    /// resurrect a writer that a concurrent close already stopped. Never held on the query path.
+    lifecycle: Mutex<()>,
 }
 
 impl QueryLog {
@@ -61,6 +64,7 @@ impl QueryLog {
                 writer,
                 file_ok,
             }),
+            lifecycle: Mutex::new(()),
         }
     }
 
@@ -190,27 +194,40 @@ impl QueryLog {
     }
 
     /// Apply a configuration update: resize the ring and restart the writer when needed.
+    ///
+    /// The old writer is taken and **released before** closing it: `Writer::close` drains and joins
+    /// the writer thread (up to 10 s), and doing that while holding `inner` would stall every
+    /// `record` on the DNS hot path for the same duration.
     pub fn configure(&self, config: Config) {
+        let _lifecycle = self.lifecycle.lock().unwrap_or_else(|e| e.into_inner());
         let mut cfg = config;
         cfg.normalize(default_querylog_dir());
 
-        let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
-        inner.cfg = cfg.clone();
-        inner.ring.resize(cfg.max_entries);
+        let stale = {
+            let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
+            inner.cfg = cfg.clone();
+            inner.ring.resize(cfg.max_entries);
 
-        let need_reinit = inner.writer.is_none() != !cfg.file_enabled
-            || inner.writer.as_ref().is_some_and(|writer| {
-                writer.dir() != Path::new(&cfg.data_dir)
-                    || writer.retention_days() != cfg.retention_days
-            });
-        if !need_reinit {
-            return;
-        }
+            let need_reinit = inner.writer.is_none() != !cfg.file_enabled
+                || inner.writer.as_ref().is_some_and(|writer| {
+                    writer.dir() != Path::new(&cfg.data_dir)
+                        || writer.retention_days() != cfg.retention_days
+                });
+            if !need_reinit {
+                return;
+            }
 
-        if let Some(writer) = inner.writer.take() {
+            // While the old writer closes, records take the memory-only path instead of queueing
+            // into a handle that is about to be joined.
+            inner.file_ok = false;
+            inner.writer.take()
+        };
+
+        if let Some(writer) = stale {
             let _ = writer.close();
         }
         let (writer, file_ok) = build_writer(&cfg);
+        let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
         inner.writer = writer;
         inner.file_ok = file_ok;
     }
@@ -238,6 +255,7 @@ impl QueryLog {
 
     /// Stop the writer after draining and flushing the queue.
     pub fn close(&self) -> io::Result<()> {
+        let _lifecycle = self.lifecycle.lock().unwrap_or_else(|e| e.into_inner());
         let writer = {
             let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
             inner.file_ok = false;
