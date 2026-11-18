@@ -6787,7 +6787,119 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get cachePresetNote =>
-      'Standard is recommended. Presets set the maximum TTL, minimum TTL and failure fallback automatically, so no manual seconds are needed.';
+      'Standard is recommended. Presets set the maximum TTL, minimum TTL and failure fallback automatically; choose Custom for finer control.';
+
+  @override
+  String get cachePresetCustomName => 'Custom';
+
+  @override
+  String get cachePresetCustomSummary => 'Set the cache parameters yourself';
+
+  @override
+  String get cachePresetCustomDescription =>
+      'Set the TTL mode, maximum/minimum TTL and failure fallback yourself.';
+
+  @override
+  String get cacheCustomSection => 'Custom parameters';
+
+  @override
+  String get cacheCustomMode => 'TTL mode';
+
+  @override
+  String get cacheCustomModeFollow => 'Follow upstream TTL';
+
+  @override
+  String get cacheCustomModeLimit => 'Cap at the maximum TTL';
+
+  @override
+  String get cacheCustomModeFixed => 'Fixed TTL';
+
+  @override
+  String get cacheCustomModeFollowDesc =>
+      'Uses the TTL returned by the DNS server as-is.';
+
+  @override
+  String get cacheCustomModeLimitDesc =>
+      'Uses the upstream TTL but never exceeds the maximum TTL.';
+
+  @override
+  String get cacheCustomModeFixedDesc =>
+      'Ignores the upstream TTL and always uses the fixed TTL.';
+
+  @override
+  String get cacheCustomMaxTtl => 'Maximum TTL';
+
+  @override
+  String get cacheCustomFixedTtl => 'Fixed TTL';
+
+  @override
+  String get cacheCustomMinTtlEnabled => 'Apply a minimum TTL';
+
+  @override
+  String get cacheCustomMinTtlEnabledDesc =>
+      'Keep short records for at least the configured time.';
+
+  @override
+  String get cacheCustomMinTtl => 'Minimum TTL';
+
+  @override
+  String get cacheCustomStaleEnabled => 'Failure fallback';
+
+  @override
+  String get cacheCustomStaleEnabledDesc =>
+      'Briefly reuse expired records when resolution fails.';
+
+  @override
+  String get cacheCustomStaleSeconds => 'Fallback duration';
+
+  @override
+  String get cacheCustomFooter =>
+      'The values are written straight into the cache policy and must be between 30 and 86400 seconds; choosing a preset overwrites them.';
+
+  @override
+  String get cacheCustomSecondsLabel => 'Seconds';
+
+  @override
+  String get cacheCustomSecondsHelper => '30–86400 seconds';
+
+  @override
+  String get cacheCustomSecondsInvalid =>
+      'Enter a whole number of seconds between 30 and 86400';
+
+  @override
+  String cacheDurationSeconds(int value) {
+    return '$value s';
+  }
+
+  @override
+  String cacheDurationMinutes(int value) {
+    return '$value min';
+  }
+
+  @override
+  String cacheDurationHours(int value) {
+    return '$value h';
+  }
+
+  @override
+  String cacheCustomSummaryMax(String value) {
+    return 'Max $value';
+  }
+
+  @override
+  String cacheCustomSummaryFixed(String value) {
+    return 'Fixed $value';
+  }
+
+  @override
+  String cacheCustomSummaryMin(String value) {
+    return 'Min $value';
+  }
+
+  @override
+  String cacheCustomSummaryStale(String value) {
+    return 'Fallback $value';
+  }
 
   @override
   String get recognitionSponsorTitle => 'Sponsors';

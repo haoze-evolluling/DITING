@@ -6416,7 +6416,111 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get cachePresetNote =>
-      '建议使用「标准」。档位会自动设置最长 TTL、最短 TTL 和解析失败兜底时间，不再需要手动填写秒数。';
+      '建议使用「标准」。档位会自动设置最长 TTL、最短 TTL 和解析失败兜底时间；需要更细的控制时选择「自定义」。';
+
+  @override
+  String get cachePresetCustomName => '自定义';
+
+  @override
+  String get cachePresetCustomSummary => '手动设置各项缓存参数';
+
+  @override
+  String get cachePresetCustomDescription => '自行设置缓存模式、最长/最短 TTL 和解析失败兜底时间。';
+
+  @override
+  String get cacheCustomSection => '自定义参数';
+
+  @override
+  String get cacheCustomMode => '缓存模式';
+
+  @override
+  String get cacheCustomModeFollow => '跟随上游 TTL';
+
+  @override
+  String get cacheCustomModeLimit => '限制最长 TTL';
+
+  @override
+  String get cacheCustomModeFixed => '固定 TTL';
+
+  @override
+  String get cacheCustomModeFollowDesc => '直接使用 DNS 服务器返回的有效期。';
+
+  @override
+  String get cacheCustomModeLimitDesc => '使用上游有效期，但不超过设定的最长 TTL。';
+
+  @override
+  String get cacheCustomModeFixedDesc => '忽略上游有效期，统一使用固定的 TTL。';
+
+  @override
+  String get cacheCustomMaxTtl => '最长 TTL';
+
+  @override
+  String get cacheCustomFixedTtl => '固定 TTL';
+
+  @override
+  String get cacheCustomMinTtlEnabled => '应用最短 TTL';
+
+  @override
+  String get cacheCustomMinTtlEnabledDesc => '短记录至少保留设定的时间。';
+
+  @override
+  String get cacheCustomMinTtl => '最短 TTL';
+
+  @override
+  String get cacheCustomStaleEnabled => '解析失败兜底';
+
+  @override
+  String get cacheCustomStaleEnabledDesc => '解析失败时可短暂使用过期记录应急。';
+
+  @override
+  String get cacheCustomStaleSeconds => '兜底时长';
+
+  @override
+  String get cacheCustomFooter => '参数直接写入缓存策略，取值范围 30–86400 秒；重新选择档位会覆盖自定义值。';
+
+  @override
+  String get cacheCustomSecondsLabel => '秒数';
+
+  @override
+  String get cacheCustomSecondsHelper => '30–86400 秒';
+
+  @override
+  String get cacheCustomSecondsInvalid => '请输入 30–86400 之间的整数秒数';
+
+  @override
+  String cacheDurationSeconds(int value) {
+    return '$value 秒';
+  }
+
+  @override
+  String cacheDurationMinutes(int value) {
+    return '$value 分钟';
+  }
+
+  @override
+  String cacheDurationHours(int value) {
+    return '$value 小时';
+  }
+
+  @override
+  String cacheCustomSummaryMax(String value) {
+    return '最长 $value';
+  }
+
+  @override
+  String cacheCustomSummaryFixed(String value) {
+    return '固定 $value';
+  }
+
+  @override
+  String cacheCustomSummaryMin(String value) {
+    return '最短 $value';
+  }
+
+  @override
+  String cacheCustomSummaryStale(String value) {
+    return '兜底 $value';
+  }
 
   @override
   String get recognitionSponsorTitle => '赞助者名单';

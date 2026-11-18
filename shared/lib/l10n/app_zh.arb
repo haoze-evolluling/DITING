@@ -3699,7 +3699,86 @@
   "cacheLocalDns": "本地 DNS 缓存",
   "cacheOffNote": "关闭后每次解析都会请求上游 DNS",
   "cachePresetSection": "缓存档位",
-  "cachePresetNote": "建议使用「标准」。档位会自动设置最长 TTL、最短 TTL 和解析失败兜底时间，不再需要手动填写秒数。",
+  "cachePresetNote": "建议使用「标准」。档位会自动设置最长 TTL、最短 TTL 和解析失败兜底时间；需要更细的控制时选择「自定义」。",
+  "cachePresetCustomName": "自定义",
+  "cachePresetCustomSummary": "手动设置各项缓存参数",
+  "cachePresetCustomDescription": "自行设置缓存模式、最长/最短 TTL 和解析失败兜底时间。",
+  "cacheCustomSection": "自定义参数",
+  "cacheCustomMode": "缓存模式",
+  "cacheCustomModeFollow": "跟随上游 TTL",
+  "cacheCustomModeLimit": "限制最长 TTL",
+  "cacheCustomModeFixed": "固定 TTL",
+  "cacheCustomModeFollowDesc": "直接使用 DNS 服务器返回的有效期。",
+  "cacheCustomModeLimitDesc": "使用上游有效期，但不超过设定的最长 TTL。",
+  "cacheCustomModeFixedDesc": "忽略上游有效期，统一使用固定的 TTL。",
+  "cacheCustomMaxTtl": "最长 TTL",
+  "cacheCustomFixedTtl": "固定 TTL",
+  "cacheCustomMinTtlEnabled": "应用最短 TTL",
+  "cacheCustomMinTtlEnabledDesc": "短记录至少保留设定的时间。",
+  "cacheCustomMinTtl": "最短 TTL",
+  "cacheCustomStaleEnabled": "解析失败兜底",
+  "cacheCustomStaleEnabledDesc": "解析失败时可短暂使用过期记录应急。",
+  "cacheCustomStaleSeconds": "兜底时长",
+  "cacheCustomFooter": "参数直接写入缓存策略，取值范围 30–86400 秒；重新选择档位会覆盖自定义值。",
+  "cacheCustomSecondsLabel": "秒数",
+  "cacheCustomSecondsHelper": "30–86400 秒",
+  "cacheCustomSecondsInvalid": "请输入 30–86400 之间的整数秒数",
+  "cacheDurationSeconds": "{value} 秒",
+  "@cacheDurationSeconds": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "cacheDurationMinutes": "{value} 分钟",
+  "@cacheDurationMinutes": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "cacheDurationHours": "{value} 小时",
+  "@cacheDurationHours": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "cacheCustomSummaryMax": "最长 {value}",
+  "@cacheCustomSummaryMax": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "cacheCustomSummaryFixed": "固定 {value}",
+  "@cacheCustomSummaryFixed": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "cacheCustomSummaryMin": "最短 {value}",
+  "@cacheCustomSummaryMin": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "cacheCustomSummaryStale": "兜底 {value}",
+  "@cacheCustomSummaryStale": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "recognitionSponsorTitle": "赞助者名单",
   "recognitionSponsorIntro": "感谢每一位支持谛听项目的朋友！名单默认按赞助时间由早到晚排列，可通过右上角按钮切换为由晚到早；与赞助金额无关，每一份支持都同样珍贵。",
   "recognitionSponsorSection": "赞助者",

@@ -211,6 +211,49 @@ void _providerCatalog() {
       );
       expect(DnsCachePreset.current(legacyBalanced), DnsCachePreset.balanced);
     });
+
+    test('自定义参数写满原始键，档位标记保持 custom', () {
+      final settings = LegacySettings(MemoryLegacyPrefsStore());
+      DnsCachePreset.custom.applyTo(settings, enabled: true);
+
+      expect(settings.cachePresetRaw, 'custom');
+      expect(settings.cacheModeRaw, 'limit_max_ttl');
+      expect(DnsCachePreset.current(settings), DnsCachePreset.custom);
+
+      DnsCacheCustomPolicy.read(settings)
+          .copyWith(
+            mode: DnsCacheCustomPolicy.modeFixed,
+            fixedTtlSeconds: 120,
+            minTtlEnabled: true,
+            minTtlSeconds: 45,
+            staleFallbackEnabled: true,
+            staleFallbackSeconds: 600,
+          )
+          .write(settings, enabled: true);
+
+      expect(settings.cachePresetRaw, 'custom');
+      expect(settings.cacheModeRaw, DnsCacheCustomPolicy.modeFixed);
+      expect(settings.cacheFixedTtlSeconds, 120);
+      expect(settings.cacheMinTtlSeconds, 45);
+      expect(settings.cacheStaleFallbackSeconds, 600);
+
+      final cache = buildDnsConfig(settings).toJson(settings)['cache'] as Map;
+      expect(cache['mode'], DnsCacheCustomPolicy.modeFixed);
+      expect(cache['fixedTtlSeconds'], 120);
+      expect(cache['minTtlSeconds'], 45);
+      expect(cache['staleFallbackSeconds'], 600);
+
+      // Out-of-range input is clamped on the way to the engine.
+      DnsCacheCustomPolicy.read(settings)
+          .copyWith(maxTtlSeconds: 5)
+          .write(settings, enabled: true);
+      expect(settings.cacheMaxTtlSeconds, DnsCacheCustomPolicy.minSeconds);
+
+      // Choosing a preset again replaces the custom marker and values.
+      DnsCachePreset.balanced.applyTo(settings, enabled: true);
+      expect(settings.cachePresetRaw, 'balanced');
+      expect(DnsCachePreset.current(settings), DnsCachePreset.balanced);
+    });
   });
 
   group('拦截响应', () {

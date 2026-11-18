@@ -11851,8 +11851,188 @@ abstract class AppL10n {
   /// No description provided for @cachePresetNote.
   ///
   /// In zh, this message translates to:
-  /// **'建议使用「标准」。档位会自动设置最长 TTL、最短 TTL 和解析失败兜底时间，不再需要手动填写秒数。'**
+  /// **'建议使用「标准」。档位会自动设置最长 TTL、最短 TTL 和解析失败兜底时间；需要更细的控制时选择「自定义」。'**
   String get cachePresetNote;
+
+  /// No description provided for @cachePresetCustomName.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义'**
+  String get cachePresetCustomName;
+
+  /// No description provided for @cachePresetCustomSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'手动设置各项缓存参数'**
+  String get cachePresetCustomSummary;
+
+  /// No description provided for @cachePresetCustomDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'自行设置缓存模式、最长/最短 TTL 和解析失败兜底时间。'**
+  String get cachePresetCustomDescription;
+
+  /// No description provided for @cacheCustomSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义参数'**
+  String get cacheCustomSection;
+
+  /// No description provided for @cacheCustomMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存模式'**
+  String get cacheCustomMode;
+
+  /// No description provided for @cacheCustomModeFollow.
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随上游 TTL'**
+  String get cacheCustomModeFollow;
+
+  /// No description provided for @cacheCustomModeLimit.
+  ///
+  /// In zh, this message translates to:
+  /// **'限制最长 TTL'**
+  String get cacheCustomModeLimit;
+
+  /// No description provided for @cacheCustomModeFixed.
+  ///
+  /// In zh, this message translates to:
+  /// **'固定 TTL'**
+  String get cacheCustomModeFixed;
+
+  /// No description provided for @cacheCustomModeFollowDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'直接使用 DNS 服务器返回的有效期。'**
+  String get cacheCustomModeFollowDesc;
+
+  /// No description provided for @cacheCustomModeLimitDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用上游有效期，但不超过设定的最长 TTL。'**
+  String get cacheCustomModeLimitDesc;
+
+  /// No description provided for @cacheCustomModeFixedDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'忽略上游有效期，统一使用固定的 TTL。'**
+  String get cacheCustomModeFixedDesc;
+
+  /// No description provided for @cacheCustomMaxTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'最长 TTL'**
+  String get cacheCustomMaxTtl;
+
+  /// No description provided for @cacheCustomFixedTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'固定 TTL'**
+  String get cacheCustomFixedTtl;
+
+  /// No description provided for @cacheCustomMinTtlEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用最短 TTL'**
+  String get cacheCustomMinTtlEnabled;
+
+  /// No description provided for @cacheCustomMinTtlEnabledDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'短记录至少保留设定的时间。'**
+  String get cacheCustomMinTtlEnabledDesc;
+
+  /// No description provided for @cacheCustomMinTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'最短 TTL'**
+  String get cacheCustomMinTtl;
+
+  /// No description provided for @cacheCustomStaleEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析失败兜底'**
+  String get cacheCustomStaleEnabled;
+
+  /// No description provided for @cacheCustomStaleEnabledDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析失败时可短暂使用过期记录应急。'**
+  String get cacheCustomStaleEnabledDesc;
+
+  /// No description provided for @cacheCustomStaleSeconds.
+  ///
+  /// In zh, this message translates to:
+  /// **'兜底时长'**
+  String get cacheCustomStaleSeconds;
+
+  /// No description provided for @cacheCustomFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'参数直接写入缓存策略，取值范围 30–86400 秒；重新选择档位会覆盖自定义值。'**
+  String get cacheCustomFooter;
+
+  /// No description provided for @cacheCustomSecondsLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'秒数'**
+  String get cacheCustomSecondsLabel;
+
+  /// No description provided for @cacheCustomSecondsHelper.
+  ///
+  /// In zh, this message translates to:
+  /// **'30–86400 秒'**
+  String get cacheCustomSecondsHelper;
+
+  /// No description provided for @cacheCustomSecondsInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入 30–86400 之间的整数秒数'**
+  String get cacheCustomSecondsInvalid;
+
+  /// No description provided for @cacheDurationSeconds.
+  ///
+  /// In zh, this message translates to:
+  /// **'{value} 秒'**
+  String cacheDurationSeconds(int value);
+
+  /// No description provided for @cacheDurationMinutes.
+  ///
+  /// In zh, this message translates to:
+  /// **'{value} 分钟'**
+  String cacheDurationMinutes(int value);
+
+  /// No description provided for @cacheDurationHours.
+  ///
+  /// In zh, this message translates to:
+  /// **'{value} 小时'**
+  String cacheDurationHours(int value);
+
+  /// No description provided for @cacheCustomSummaryMax.
+  ///
+  /// In zh, this message translates to:
+  /// **'最长 {value}'**
+  String cacheCustomSummaryMax(String value);
+
+  /// No description provided for @cacheCustomSummaryFixed.
+  ///
+  /// In zh, this message translates to:
+  /// **'固定 {value}'**
+  String cacheCustomSummaryFixed(String value);
+
+  /// No description provided for @cacheCustomSummaryMin.
+  ///
+  /// In zh, this message translates to:
+  /// **'最短 {value}'**
+  String cacheCustomSummaryMin(String value);
+
+  /// No description provided for @cacheCustomSummaryStale.
+  ///
+  /// In zh, this message translates to:
+  /// **'兜底 {value}'**
+  String cacheCustomSummaryStale(String value);
 
   /// No description provided for @recognitionSponsorTitle.
   ///
