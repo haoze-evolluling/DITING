@@ -4649,6 +4649,9 @@ class AppL10nEn extends AppL10n {
   String get aboutSponsor => 'Sponsor';
 
   @override
+  String get aboutSupport => 'Support Diting';
+
+  @override
   String get aboutCredits => 'Open-source credits';
 
   @override
@@ -4685,7 +4688,7 @@ class AppL10nEn extends AppL10n {
       'The full software description, how it works and the disclaimer';
 
   @override
-  String get aboutOtherContributors => 'Other contributors';
+  String get aboutLegal => 'Legal';
 
   @override
   String get aboutSponsorList => 'Sponsors';
@@ -4967,12 +4970,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get sponsorReadmeCopied =>
       'The browser could not be opened; the README link was copied';
-
-  @override
-  String get sponsorThanks => 'Acknowledgements';
-
-  @override
-  String get sponsorThanksBody => 'Thanks to everyone who supports the project';
 
   @override
   String get sponsorUsage => 'Every contribution goes towards';

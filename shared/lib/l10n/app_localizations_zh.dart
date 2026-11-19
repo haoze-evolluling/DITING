@@ -4418,6 +4418,9 @@ class AppL10nZh extends AppL10n {
   String get aboutSponsor => '赞助';
 
   @override
+  String get aboutSupport => '支持谛听';
+
+  @override
   String get aboutCredits => '开源致谢';
 
   @override
@@ -4449,7 +4452,7 @@ class AppL10nZh extends AppL10n {
   String get aboutDisclaimerEntryBody => '软件说明、运行机制与免责条款全文';
 
   @override
-  String get aboutOtherContributors => '其他贡献者';
+  String get aboutLegal => '法律与声明';
 
   @override
   String get aboutSponsorList => '赞助者名单';
@@ -4715,12 +4718,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get sponsorReadmeCopied => '未能打开浏览器，README 地址已复制';
-
-  @override
-  String get sponsorThanks => '致谢名单';
-
-  @override
-  String get sponsorThanksBody => '感谢每一位支持项目的朋友';
 
   @override
   String get sponsorUsage => '你的每一笔支持都会用于';

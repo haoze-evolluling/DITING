@@ -1,23 +1,28 @@
 /// About page, merged with the former update & support page. The layout follows FlClash's
 /// `lib/views/about.dart`: centred hero, version/licence pills, one check-update bar, then grouped
 /// rows. Update state renders inline under the bar instead of a separate card.
+///
+/// The groups read contact → support → settings → credits → legal, so the outward-facing links and
+/// the sponsor entry come before the licence and disclaimer text a reader only needs once.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_android/pages/hub/recognition_pages.dart';
 import 'package:diting_android/pages/system/app_info.dart';
 import 'package:diting_android/pages/system/disclaimer_page.dart';
-import 'package:diting_android/pages/system/sponsor_page.dart';
+import 'package:diting_android/routes/hub_routes.dart';
+import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/state/app_version_provider.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
+import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_android/widgets/note_card.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:diting_android/widgets/status_pill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class AboutPage extends ConsumerWidget {
@@ -55,11 +60,42 @@ class AboutPage extends ConsumerWidget {
                 label: context.l10n.aboutQqGroup(qqGroupNumber),
                 url: qqGroupUri,
               ),
-              _LinkRow(
+            ],
+          ),
+          // Support lives on its own page, which already carries the README sponsorship link, so
+          // the sponsor target appears exactly once here. The sponsor list is a sibling row rather
+          // than a second copy inside the sponsor page.
+          generateSection(
+            title: context.l10n.aboutSupport,
+            items: [
+              NavEntryRow(
                 glyph: AppGlyphs.heart,
-                title: context.l10n.aboutSponsor,
-                label: sponsorReadmeUrl.replaceFirst('https://', ''),
-                url: sponsorReadmeUrl,
+                title: context.l10n.hubSponsor,
+                subtitle: context.l10n.hubSponsorDescription,
+                onPressed: () => context.push(SystemPaths.sponsor),
+              ),
+              NavEntryRow(
+                glyph: AppGlyphs.star,
+                title: context.l10n.aboutSponsorList,
+                subtitle: context.l10n.aboutSponsorListBody,
+                onPressed: () => context.push(HubPaths.sponsorList),
+              ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.aboutSettings,
+            items: [
+              ListItem.toggle(
+                leading: const GlyphIcon(AppGlyphs.clock),
+                title: Text(context.l10n.aboutStartupCheck),
+                subtitle: Text(
+                  disableStartupCheck
+                      ? context.l10n.aboutStartupCheckOn
+                      : context.l10n.aboutStartupCheckOff,
+                ),
+                value: disableStartupCheck,
+                onChanged: (value) =>
+                    ref.read(startupUpdateCheckProvider.notifier).toggle(value),
               ),
             ],
           ),
@@ -84,43 +120,14 @@ class AboutPage extends ConsumerWidget {
             footer: context.l10n.aboutCreditsBody,
           ),
           generateSection(
-            title: context.l10n.aboutSettings,
+            title: context.l10n.aboutLegal,
             items: [
-              ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.clock),
-                title: Text(context.l10n.aboutStartupCheck),
-                subtitle: Text(
-                  disableStartupCheck
-                      ? context.l10n.aboutStartupCheckOn
-                      : context.l10n.aboutStartupCheckOff,
-                ),
-                value: disableStartupCheck,
-                onChanged: (value) =>
-                    ref.read(startupUpdateCheckProvider.notifier).toggle(value),
-              ),
               ListItem.next(
                 leading: const GlyphIcon(AppGlyphs.gavel),
                 title: Text(context.l10n.aboutDisclaimerEntry),
                 subtitle: Text(context.l10n.aboutDisclaimerEntryBody),
                 // Acceptance happens in the first-run dialog; this only re-reads it.
                 widget: const DisclaimerPage(),
-              ),
-              ListItem.next(
-                leading: const GlyphIcon(AppGlyphs.heart),
-                title: Text(context.l10n.hubSponsor),
-                subtitle: Text(context.l10n.hubSponsorDescription),
-                widget: const SponsorPage(),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.aboutOtherContributors,
-            items: [
-              ListItem.next(
-                leading: const GlyphIcon(AppGlyphs.heart),
-                title: Text(context.l10n.aboutSponsorList),
-                subtitle: Text(context.l10n.aboutSponsorListBody),
-                widget: const SponsorListPage(),
               ),
             ],
           ),

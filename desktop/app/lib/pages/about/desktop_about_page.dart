@@ -104,9 +104,18 @@ class DesktopAboutPage extends ConsumerWidget {
                     label: l10n.aboutQqGroup(qqGroupNumber),
                     onTap: () => openDesktopQqGroup(context),
                   ),
+                ],
+              ),
+              // Same order as the Android about page: support sits between the contact links and
+              // the licence text. The desktop build has no sponsor page, so the README section
+              // itself is the one sponsor target.
+              _group(
+                context,
+                title: l10n.aboutSupport,
+                rows: [
                   _linkRow(
                     context,
-                    glyph: AppGlyphs.star,
+                    glyph: AppGlyphs.heart,
                     title: l10n.aboutSponsor,
                     label: sponsorReadmeUrl.replaceFirst('https://', ''),
                     onTap: () => openDesktopLink(context, sponsorReadmeUrl),

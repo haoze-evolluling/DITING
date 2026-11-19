@@ -1,14 +1,14 @@
 /// Sponsor page, aligned with `ui/SponsorScreen.kt`; QR codes come from the README.
+///
+/// The sponsor list is not repeated here: the about page's support group links it directly, so the
+/// list has exactly one entry point.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/pages/system/app_info.dart';
-import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
-import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
-import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class SponsorPage extends StatelessWidget {
@@ -39,17 +39,6 @@ class SponsorPage extends StatelessWidget {
                   sponsorReadmeUrl,
                   context.l10n.sponsorReadmeCopied,
                 ),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.sponsorThanks,
-            items: [
-              NavEntryRow(
-                glyph: AppGlyphs.heart,
-                title: context.l10n.aboutSponsorList,
-                subtitle: context.l10n.sponsorThanksBody,
-                onPressed: () => context.push(HubPaths.sponsorList),
               ),
             ],
           ),

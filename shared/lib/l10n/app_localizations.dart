@@ -8165,6 +8165,12 @@ abstract class AppL10n {
   /// **'赞助'**
   String get aboutSponsor;
 
+  /// No description provided for @aboutSupport.
+  ///
+  /// In zh, this message translates to:
+  /// **'支持谛听'**
+  String get aboutSupport;
+
   /// No description provided for @aboutCredits.
   ///
   /// In zh, this message translates to:
@@ -8225,11 +8231,11 @@ abstract class AppL10n {
   /// **'软件说明、运行机制与免责条款全文'**
   String get aboutDisclaimerEntryBody;
 
-  /// No description provided for @aboutOtherContributors.
+  /// No description provided for @aboutLegal.
   ///
   /// In zh, this message translates to:
-  /// **'其他贡献者'**
-  String get aboutOtherContributors;
+  /// **'法律与声明'**
+  String get aboutLegal;
 
   /// No description provided for @aboutSponsorList.
   ///
@@ -8692,18 +8698,6 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'未能打开浏览器，README 地址已复制'**
   String get sponsorReadmeCopied;
-
-  /// No description provided for @sponsorThanks.
-  ///
-  /// In zh, this message translates to:
-  /// **'致谢名单'**
-  String get sponsorThanks;
-
-  /// No description provided for @sponsorThanksBody.
-  ///
-  /// In zh, this message translates to:
-  /// **'感谢每一位支持项目的朋友'**
-  String get sponsorThanksBody;
 
   /// No description provided for @sponsorUsage.
   ///

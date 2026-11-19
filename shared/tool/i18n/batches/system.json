@@ -23,6 +23,10 @@
     "赞助",
     "Sponsor"
   ],
+  "aboutSupport": [
+    "支持谛听",
+    "Support Diting"
+  ],
   "aboutCredits": [
     "开源致谢",
     "Open-source credits"
@@ -63,9 +67,9 @@
     "软件说明、运行机制与免责条款全文",
     "The full software description, how it works and the disclaimer"
   ],
-  "aboutOtherContributors": [
-    "其他贡献者",
-    "Other contributors"
+  "aboutLegal": [
+    "法律与声明",
+    "Legal"
   ],
   "aboutSponsorList": [
     "赞助者名单",
@@ -302,14 +306,6 @@
   "sponsorReadmeCopied": [
     "未能打开浏览器，README 地址已复制",
     "The browser could not be opened; the README link was copied"
-  ],
-  "sponsorThanks": [
-    "致谢名单",
-    "Acknowledgements"
-  ],
-  "sponsorThanksBody": [
-    "感谢每一位支持项目的朋友",
-    "Thanks to everyone who supports the project"
   ],
   "sponsorUsage": [
     "你的每一笔支持都会用于",
