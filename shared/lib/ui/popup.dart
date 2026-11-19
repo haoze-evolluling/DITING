@@ -6,6 +6,7 @@ import 'dart:ui' show ImageFilter, lerpDouble;
 
 import 'package:diting_shared/ui/color.dart';
 import 'package:diting_shared/ui/context.dart';
+import 'package:diting_shared/ui/haptic_feedback.dart';
 import 'package:diting_shared/ui/icons/icons.dart';
 import 'package:diting_shared/ui/metrics.dart';
 import 'package:diting_shared/ui/motion.dart';
@@ -16,7 +17,6 @@ import 'package:flutter/foundation.dart' show ValueListenable, listEquals;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart' show SpringSimulation;
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:material_ui/material_ui.dart';
 
 import 'goo.dart';

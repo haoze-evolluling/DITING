@@ -2,6 +2,7 @@
 import 'dart:math' as math;
 
 import 'package:diting_shared/ui/context.dart';
+import 'package:diting_shared/ui/haptic_feedback.dart';
 import 'package:diting_shared/ui/icons/icons.dart';
 import 'package:diting_shared/ui/surface.dart';
 import 'package:diting_shared/ui/typography.dart';
@@ -10,7 +11,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/services.dart';
 import 'package:material_color_utilities/material_color_utilities.dart'
     show Hct;
 import 'package:material_ui/material_ui.dart';

@@ -4,7 +4,6 @@ import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -22,7 +21,6 @@ class DockShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final destinations = ref.watch(bottomBarProvider);
-    final haptic = ref.watch(hapticProvider);
     final style = ref.watch(bottomBarStyleProvider);
     final selected = _selectedIndex(destinations, navigationShell.currentIndex);
 
@@ -34,9 +32,6 @@ class DockShell extends ConsumerWidget {
         // Re-tapping the current tab returns to the branch root (upstream).
         navigationShell.goBranch(branch, initialLocation: true);
         return;
-      }
-      if (haptic) {
-        HapticFeedback.selectionClick();
       }
       navigationShell.goBranch(branch);
     }

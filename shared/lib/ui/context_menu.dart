@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'focus.dart';
+import 'haptic_feedback.dart';
 import 'popup.dart';
 import 'sortable.dart';
 import 'surface.dart';
@@ -200,7 +201,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion> {
           supportedDevices: _touchDevices,
           onLongPressStart: enabled
               ? (details) {
-                  Feedback.forLongPress(context);
+                  AppHaptics.longPress(context);
                   _open(details.globalPosition, avoid: true);
                 }
               : null,

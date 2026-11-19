@@ -80,6 +80,7 @@ class _SnapSheetState extends State<_SnapSheet>
     final sheet = Listener(
       onPointerSignal: _handlePointerSignal,
       child: GestureDetector(
+        onVerticalDragStart: (_) => AppHaptics.dragStart(context),
         onVerticalDragUpdate: (details) =>
             _model.dragBy(-details.primaryDelta!, stretches: true),
         onVerticalDragEnd: (details) =>

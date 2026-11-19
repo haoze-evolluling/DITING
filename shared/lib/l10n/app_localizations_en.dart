@@ -2659,7 +2659,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get appearanceHapticSubtitle =>
-      'A short vibration when switching tabs';
+      'Brief vibration for taps, switches and control drags';
 
   @override
   String get appearanceBottomBarStyleFloating => 'Floating above the page';
@@ -3067,7 +3067,7 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get appearanceHaptic => 'Bottom bar haptics';
+  String get appearanceHaptic => 'Interface haptics';
 
   @override
   String get appearancePureBlack => 'Pure black';

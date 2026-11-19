@@ -155,7 +155,7 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
     _scrubRate = 1.0;
     _syncEmphasis();
     if (isTouchPlatform(_platform)) {
-      HapticFeedback.selectionClick();
+      AppHaptics.dragStart(context);
     }
     widget.onScrub?.call(_scrubRate);
   }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:diting_shared/ui/context.dart';
+import 'package:diting_shared/ui/haptic_feedback.dart';
 import 'package:diting_shared/ui/scroll_behavior.dart';
 import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';

@@ -1381,7 +1381,7 @@
   "appearanceNotification": "通知栏设置",
   "appearanceNotificationSubtitle": "常驻通知、实时速率与自定义文案",
   "appearanceBackgroundSection": "背景与动效",
-  "appearanceHapticSubtitle": "切换 tab 时给一次轻震",
+  "appearanceHapticSubtitle": "点击控件、切换开关或拖动时提供轻震反馈",
   "appearanceBottomBarStyleFloating": "浮在页面之上",
   "appearanceBottomBarStyleDocked": "贴底排列",
   "appearanceTabTransitionSubtitle": "切换底部标签时的动画方式",
@@ -1580,7 +1580,7 @@
       }
     }
   },
-  "appearanceHaptic": "底栏触感反馈",
+  "appearanceHaptic": "界面触感反馈",
   "appearancePureBlack": "纯黑",
   "appearanceBottomBarStyle": "底栏样式",
   "appearanceTabTransition": "tab 切换动画",

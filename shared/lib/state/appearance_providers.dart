@@ -6,6 +6,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/layout.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_shared/ui/haptic_feedback.dart';
 import 'package:diting_shared/ui/icons/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -256,8 +257,12 @@ class HapticNotifier extends Notifier<bool> {
   bool build() => _settings(ref).hapticEnabled;
 
   void toggle(bool value) {
+    final enabling = !state && value;
     state = value;
     _settings(ref).setHapticEnabled(value);
+    if (enabling) {
+      AppHaptics.enabled();
+    }
   }
 }
 

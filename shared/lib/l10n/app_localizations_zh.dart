@@ -2516,7 +2516,7 @@ class AppL10nZh extends AppL10n {
   String get appearanceBackgroundSection => '背景与动效';
 
   @override
-  String get appearanceHapticSubtitle => '切换 tab 时给一次轻震';
+  String get appearanceHapticSubtitle => '点击控件、切换开关或拖动时提供轻震反馈';
 
   @override
   String get appearanceBottomBarStyleFloating => '浮在页面之上';
@@ -2890,7 +2890,7 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get appearanceHaptic => '底栏触感反馈';
+  String get appearanceHaptic => '界面触感反馈';
 
   @override
   String get appearancePureBlack => '纯黑';

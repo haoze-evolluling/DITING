@@ -270,6 +270,7 @@ class _DitingAppState extends ConsumerState<DitingApp> {
     final palette = ref.watch(paletteProvider);
     final pureBlack = ref.watch(pureBlackProvider);
     final textScale = ref.watch(textScaleProvider);
+    final haptic = ref.watch(hapticProvider);
     // Keeps the rule list in step with the work mode's data set (see ruleSnapshotSyncProvider).
     ref.watch(ruleSnapshotSyncProvider);
     // Font family: `null` follows the platform, otherwise `ThemeData.fontFamily` overrides the whole
@@ -329,15 +330,23 @@ class _DitingAppState extends ConsumerState<DitingApp> {
           child: AppSystemUi(
             child: AppScopes(
               textScale: textScale,
-              child: LiquidGlassScope(
-                enabled: glass.enabled,
-                quality: glass.quality,
-                child: LiquidGlassHost(
-                  enabled: glass.enabled,
-                  child: InitialAgreementGate(
-                    child: showBackground
-                        ? AppBackgroundLayer(uri: backgroundUri, child: content)
-                        : content,
+              child: HapticFeedbackScope(
+                enabled: haptic,
+                child: AppHapticTapFeedback(
+                  child: LiquidGlassScope(
+                    enabled: glass.enabled,
+                    quality: glass.quality,
+                    child: LiquidGlassHost(
+                      enabled: glass.enabled,
+                      child: InitialAgreementGate(
+                        child: showBackground
+                            ? AppBackgroundLayer(
+                                uri: backgroundUri,
+                                child: content,
+                              )
+                            : content,
+                      ),
+                    ),
                   ),
                 ),
               ),

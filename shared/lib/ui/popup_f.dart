@@ -332,7 +332,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
       return;
     }
     if (index != null) {
-      HapticFeedback.selectionClick();
+      AppHaptics.selection(context);
     }
     _hold(row);
   }
@@ -351,7 +351,7 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
         return;
       }
       onTap();
-      HapticFeedback.selectionClick();
+      AppHaptics.selection(context);
       setState(() {
         _pressed = _headerIndex;
         _landed = true;

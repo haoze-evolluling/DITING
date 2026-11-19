@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:diting_shared/ui/context.dart';
+import 'package:diting_shared/ui/haptic_feedback.dart';
 import 'package:diting_shared/ui/liquid_glass.dart';
 import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
@@ -103,7 +104,12 @@ class _CommonSwitchState extends State<CommonSwitch>
 
   void _settle() => widget.value ? _toggle.forward() : _toggle.reverse();
 
-  void _flip() => widget.onChanged?.call(!widget.value);
+  void _flip({bool feedback = true}) {
+    if (feedback) {
+      AppHaptics.valueChanged(context);
+    }
+    widget.onChanged?.call(!widget.value);
+  }
 
   void _handlePress() {
     _tapLiftTimer?.cancel();
@@ -119,6 +125,7 @@ class _CommonSwitchState extends State<CommonSwitch>
   }
 
   void _handleDragStart() {
+    AppHaptics.dragStart(context);
     _handlePress();
     _dragging = true;
     _position
@@ -134,7 +141,7 @@ class _CommonSwitchState extends State<CommonSwitch>
 
   void _handleRelease() {
     if (!_dragging) {
-      _flip();
+      _flip(feedback: false);
       _liftAcross();
       return;
     }

@@ -23,6 +23,7 @@ export 'font.dart';
 export 'foot_bar.dart';
 export 'form_sheet.dart';
 export 'goo.dart';
+export 'haptic_feedback.dart';
 export 'icons/icons.dart';
 export 'inherited.dart';
 export 'input.dart';

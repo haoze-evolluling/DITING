@@ -91,6 +91,7 @@ extension _FloatingNavigationBarPointer on _FloatingNavigationBarState {
         return;
       }
       _dragging = true;
+      AppHaptics.dragStart(context);
     }
     final size = context.size!;
     final overshoot =
@@ -103,7 +104,7 @@ extension _FloatingNavigationBarPointer on _FloatingNavigationBarState {
     _lens.springTo(position, _followSpring);
     final index = _indexAt(position);
     if (index != _pressedIndex) {
-      HapticFeedback.selectionClick();
+      AppHaptics.selection(context);
       _pressedIndex = index;
     }
   }
@@ -127,7 +128,7 @@ extension _FloatingNavigationBarPointer on _FloatingNavigationBarState {
         .clamp(pressed - 1, pressed + 1)
         .clamp(0, _lastIndex);
     if (index != pressed) {
-      HapticFeedback.selectionClick();
+      AppHaptics.selection(context);
       _pressedIndex = index;
     }
   }

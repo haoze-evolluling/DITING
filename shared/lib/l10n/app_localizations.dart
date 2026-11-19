@@ -4761,7 +4761,7 @@ abstract class AppL10n {
   /// No description provided for @appearanceHapticSubtitle.
   ///
   /// In zh, this message translates to:
-  /// **'切换 tab 时给一次轻震'**
+  /// **'点击控件、切换开关或拖动时提供轻震反馈'**
   String get appearanceHapticSubtitle;
 
   /// No description provided for @appearanceBottomBarStyleFloating.
@@ -5457,7 +5457,7 @@ abstract class AppL10n {
   /// No description provided for @appearanceHaptic.
   ///
   /// In zh, this message translates to:
-  /// **'底栏触感反馈'**
+  /// **'界面触感反馈'**
   String get appearanceHaptic;
 
   /// No description provided for @appearancePureBlack.
