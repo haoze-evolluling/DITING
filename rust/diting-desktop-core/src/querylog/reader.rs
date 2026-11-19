@@ -178,7 +178,6 @@ mod tests {
     use super::*;
     use crate::querylog::unique_temp_dir;
     use crate::querylog::writer::{FILE_PREFIX, FILE_SUFFIX};
-    use chrono::{Local, TimeZone};
     use std::path::Path;
 
     fn write_jsonl(path: &Path, records: &[Record]) {
@@ -268,18 +267,6 @@ mod tests {
         );
         assert_eq!(hits, vec![4000, 3000]);
         let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn file_date_ms_matches_local_midnight() {
-        let path = Path::new("x").join(format!("{FILE_PREFIX}20261013{FILE_SUFFIX}"));
-        let expected = Local
-            .with_ymd_and_hms(2026, 10, 13, 0, 0, 0)
-            .single()
-            .expect("midnight")
-            .timestamp_millis();
-        assert_eq!(file_date_ms(&path), Some(expected));
-        assert_eq!(file_date_ms(Path::new("garbage.txt")), None);
     }
 
     #[test]

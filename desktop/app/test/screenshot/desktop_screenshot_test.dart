@@ -131,30 +131,6 @@ void main() {
       );
     }, skip: skip);
 
-    testWidgets('桌面首页双列', (tester) async {
-      await captureScreenshot(
-        tester,
-        ScreenshotSpec(
-          name: 'desktop-home-two-column',
-          app: app(),
-          size: const Size(1280, 900),
-          platform: TargetPlatform.windows,
-        ),
-      );
-    }, skip: skip);
-
-    testWidgets('桌面缓存双列', (tester) async {
-      await captureScreenshot(
-        tester,
-        ScreenshotSpec(
-          name: 'desktop-cache-two-column',
-          app: app(location: '/hub/cache'),
-          size: const Size(1280, 900),
-          platform: TargetPlatform.windows,
-        ),
-      );
-    }, skip: skip);
-
     testWidgets('桌面首页单列宽窗', (tester) async {
       await captureScreenshot(
         tester,

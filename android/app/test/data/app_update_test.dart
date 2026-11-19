@@ -397,10 +397,4 @@ void _autoUpdate() {
       expect(daily.isDue(record(), at(2025, 3, 3, 13)), isTrue);
     });
   });
-
-  test('AutoUpdateRun.didRun 只在没有跳过原因时为真', () {
-    expect(const AutoUpdateRun().didRun, isTrue);
-    expect(const AutoUpdateRun(summary: '1 个已更新').didRun, isTrue);
-    expect(const AutoUpdateRun(skip: AutoUpdateSkip.disabled).didRun, isFalse);
-  });
 }

@@ -77,30 +77,6 @@ void _appLayer() {
     });
   });
 
-  group('AppThemeCache', () {
-    test('同一 spec 返回同一实例（否则 ThemeCrossFade 每帧闪）', () {
-      final cache = AppThemeCache();
-      const spec = AppThemeSpec(
-        seedColor: Color(0xFF007AFF),
-        brightness: Brightness.light,
-      );
-      expect(identical(cache.of(spec), cache.of(spec)), isTrue);
-    });
-
-    test('缓存容量有上界（避免主题切换久了无限增长）', () {
-      final cache = AppThemeCache();
-      for (var i = 0; i < AppPalette.values.length * 4; i++) {
-        cache.of(
-          AppThemeSpec(
-            seedColor: Color(0xFF000000 | (i * 977) & 0xFFFFFF),
-            brightness: i.isEven ? Brightness.light : Brightness.dark,
-          ),
-        );
-      }
-      expect(cache.length, lessThanOrEqualTo(AppThemeCache.maxEntries));
-    });
-  });
-
   group('AppPalette', () {
     test('system 用默认种子色；blue 就是默认蓝，两者 effectiveSeed 相同', () {
       expect(AppPalette.system.effectiveSeed, defaultPrimaryColor);

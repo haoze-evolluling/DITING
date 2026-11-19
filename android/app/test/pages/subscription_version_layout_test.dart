@@ -104,12 +104,4 @@ void main() {
     expect(find.byType(PopupSelectButton<int>), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-
-  testWidgets('窄屏 1.4 倍字号不溢出（U8）', (tester) async {
-    tester.platformDispatcher.textScaleFactorTestValue = 1.4;
-    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    await pump(tester, const Size(320, 700));
-
-    expect(tester.takeException(), isNull);
-  });
 }

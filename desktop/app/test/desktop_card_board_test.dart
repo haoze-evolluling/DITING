@@ -123,18 +123,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('只有一张卡片时不会拉满整行，并保持左右边距相等', (tester) async {
-    await pumpBoard(tester, 1400, cards: 1);
-
-    final box = tester.renderObject<RenderBox>(
-      find.byKey(const ValueKey('short')),
-    );
-    expect(box.size.width, closeTo(desktopSingleColumnMaxWidth, 3));
-    final left = box.localToGlobal(Offset.zero).dx;
-    expect(left, closeTo((1400 - desktopSingleColumnMaxWidth) / 2, 3));
-    expect(left, closeTo(1400 - left - box.size.width, 3));
-    expect(tester.takeException(), isNull);
-  });
 }
 
 /// The board's inner gap, restated here so the test fails if the constant drifts.

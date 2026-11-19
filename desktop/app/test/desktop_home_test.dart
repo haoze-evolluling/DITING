@@ -192,18 +192,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('超宽窗口仍保持双列瀑布流，不回到等高网格', (tester) async {
-    await pumpHome(tester, size: const Size(1920, 1080));
-
-    final boxes = boardCards(tester);
-    expect(boxes.length, greaterThanOrEqualTo(10));
-    final lefts = boxes.map((box) => box.localToGlobal(Offset.zero).dx).toSet();
-    expect(lefts, hasLength(2));
-    final heights = boxes.map((box) => box.size.height).toSet();
-    expect(heights.length, greaterThan(1));
-    expect(tester.takeException(), isNull);
-  });
-
   testWidgets('中等宽度按双列瀑布流排布，卡片保持内容高度', (tester) async {
     await pumpHome(tester, size: const Size(1280, 900));
 

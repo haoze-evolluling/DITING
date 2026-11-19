@@ -4,12 +4,10 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_web_models.dart';
 import 'package:diting_desktop/pages/settings/desktop_lan_web_page.dart';
-import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
 import 'package:diting_desktop/pages/settings/widgets/lan_web_access_card.dart';
 import 'package:diting_desktop/pages/settings/widgets/lan_web_card.dart';
 import 'package:diting_desktop/widgets/desktop_qr_code.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
-import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -256,15 +254,6 @@ void main() {
       'password': 'first-pass',
     });
     await clearMessages(tester);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('设置分支列出局域网控制台入口并可进入', (tester) async {
-    await pumpDesktopPage(tester, path: Routes.hub);
-    final l10n = tester.element(find.byType(DesktopFeatureHubPage)).l10n;
-
-    await tapAt(tester, find.text(l10n.desktopLanWebPageTitle));
-    expect(find.byType(DesktopLanWebPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

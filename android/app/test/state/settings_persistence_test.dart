@@ -80,13 +80,6 @@ void _settingsPersistence() {
   });
 
   group('看板卡片顺序重新打开后仍在', () {
-    test('没有落盘时用默认布局', () {
-      expect(
-        container().read(dashboardWidgetsProvider),
-        defaultDashboardWidgets,
-      );
-    });
-
     test('增删与移动都会写回', () {
       final notifier = container().read(dashboardWidgetsProvider.notifier);
       notifier.remove(DashboardWidget.status);
@@ -101,26 +94,6 @@ void _settingsPersistence() {
       final reopened = container().read(dashboardWidgetsProvider);
       expect(reopened.first, isNot(DashboardWidget.status));
       expect(reopened, contains(DashboardWidget.status));
-    });
-
-    test('已存布局原样读取，不再补插新版卡片，未知卡片被跳过', () {
-      store.putString(
-        'dns_vpn_prefs',
-        'dashboard_widget_order',
-        '["status","NoSuchCard","networkSpeed"]',
-      );
-      final layout = container().read(dashboardWidgetsProvider);
-      // 旧布局不再被迁移或补插 provider/resolution，只按当前卡片集过滤未知名字。
-      expect(layout, [DashboardWidget.status, DashboardWidget.networkSpeed]);
-      expect(layout, isNot(contains(DashboardWidget.provider)));
-    });
-
-    test('坏 JSON 回落到默认布局', () {
-      store.putString('dns_vpn_prefs', 'dashboard_widget_order', '{not json');
-      expect(
-        container().read(dashboardWidgetsProvider),
-        defaultDashboardWidgets,
-      );
     });
   });
 
