@@ -5,11 +5,24 @@ library;
 
 import 'package:diting_android/data/db/rust_recognition_core.dart';
 
+/// Decoration the cloud list may pin on an avatar; `rainbow` is the flowing halo the UI draws
+/// around a member's photo. The kernel validates the value, so an unknown name never reaches here.
+enum RecognitionAvatarFrame {
+  rainbow;
+
+  static RecognitionAvatarFrame? fromName(String? raw) => switch (raw) {
+    'rainbow' => rainbow,
+    // Absent in older caches and in documents written by an older kernel.
+    _ => null,
+  };
+}
+
 class RecognitionMember {
   const RecognitionMember({
     required this.name,
     this.avatarFileName,
     this.count = 1,
+    this.frame,
   });
 
   final String name;
@@ -20,6 +33,9 @@ class RecognitionMember {
   /// How many times this sponsor supported the project; 1 unless the cloud list says otherwise.
   /// Only sponsors carry it, and the row draws a `×N` badge when it is above one.
   final int count;
+
+  /// Optional decoration around the avatar; null draws the plain circle.
+  final RecognitionAvatarFrame? frame;
 }
 
 class RecognitionMembers {
@@ -50,6 +66,7 @@ List<RecognitionMember> _membersFromParsed(Object? raw) {
         name: (item as Map)['name'] as String,
         avatarFileName: item['avatarFileName'] as String?,
         count: (item['count'] as num?)?.toInt() ?? 1,
+        frame: RecognitionAvatarFrame.fromName(item['frame'] as String?),
       ),
   ]);
 }

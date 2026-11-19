@@ -8,12 +8,14 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/empty_state.dart';
 import 'package:diting_android/widgets/page_intro.dart';
+import 'package:diting_android/widgets/rainbow_avatar_frame.dart';
 import 'package:diting_android/widgets/status_pill.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Circular avatar from the cloud, cached on disk, with a person glyph when unavailable.
+/// Circular avatar from the cloud, cached on disk, with a person glyph when unavailable. A member
+/// the cloud document decorates gets the flowing halo from [RainbowAvatarFrame].
 class RecognitionAvatar extends ConsumerWidget {
   const RecognitionAvatar({super.key, required this.member, this.size = 48});
 
@@ -22,13 +24,22 @@ class RecognitionAvatar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (member.frame == null) return _circle(context, ref, size);
+    // The halo lives inside the same square, so a decorated row keeps the plain row's height.
+    return RainbowAvatarFrame(
+      size: size,
+      child: _circle(context, ref, size - rainbowAvatarPadding * 2),
+    );
+  }
+
+  Widget _circle(BuildContext context, WidgetRef ref, double diameter) {
     final fileName = member.avatarFileName;
     if (fileName == null) {
-      return _frame(context, _placeholder(context));
+      return _frame(context, _placeholder(context), diameter);
     }
     final bytes = ref.watch(recognitionAvatarProvider(fileName)).value;
     if (bytes == null) {
-      return _frame(context, _placeholder(context));
+      return _frame(context, _placeholder(context), diameter);
     }
     return _frame(
       context,
@@ -38,6 +49,7 @@ class RecognitionAvatar extends ConsumerWidget {
         gaplessPlayback: true,
         errorBuilder: (_, _, _) => _placeholder(context),
       ),
+      diameter,
     );
   }
 
@@ -54,10 +66,10 @@ class RecognitionAvatar extends ConsumerWidget {
     },
   );
 
-  Widget _frame(BuildContext context, Widget child) {
+  Widget _frame(BuildContext context, Widget child, double diameter) {
     return Container(
-      width: size,
-      height: size,
+      width: diameter,
+      height: diameter,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         shape: BoxShape.circle,

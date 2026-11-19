@@ -97,6 +97,22 @@ void _recognitionMembers() {
       expect(members.coBuilders[0].count, 1);
     });
 
+    test('头像框只有内核认可的取值，缺省为无', () {
+      final members = parseRecognitionMembers(
+        '{"version":1,"sponsors":[{"name":"a"},'
+        '{"name":"healer","frame":"rainbow"}],"coBuilders":[]}',
+      );
+      expect(members.sponsors[0].frame, isNull);
+      expect(members.sponsors[1].frame, RecognitionAvatarFrame.rainbow);
+      expect(
+        () => parseRecognitionMembers(
+          '{"version":1,"sponsors":[{"name":"a","frame":"gold"}],'
+          '"coBuilders":[]}',
+        ),
+        throwsFormatException,
+      );
+    });
+
     test('仓库根目录的那份名单可以被解析', () {
       // This file is pushed to GitHub: a parse failure downgrades every client
       final raw = File('../../recognition_members.json').readAsStringSync();
@@ -104,7 +120,11 @@ void _recognitionMembers() {
       expect(members.sponsors.length, greaterThan(5));
       expect(members.coBuilders.length, greaterThan(5));
       expect(members.sponsors.every((m) => m.name.isNotEmpty), isTrue);
-      expect(members.sponsors.firstWhere((m) => m.name == 'healer').count, 2);
+      expect(members.sponsors.firstWhere((m) => m.name == 'healer').count, 4);
+      expect(
+        members.sponsors.firstWhere((m) => m.name == 'healer').frame,
+        RecognitionAvatarFrame.rainbow,
+      );
     });
   });
 }

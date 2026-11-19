@@ -9,6 +9,10 @@ use serde_json::{json, Value};
 /// four-digit badge.
 const MAX_SPONSOR_COUNT: i64 = 9999;
 
+/// Avatar decorations the UI knows how to draw; a closed list, so a typo shows up as a rejected
+/// document instead of a silently decorated row.
+const AVATAR_FRAMES: [&str; 1] = ["rainbow"];
+
 fn is_avatar_file_name(name: &str) -> bool {
     let Some(stem) = name.strip_suffix("_avatar.jpg") else {
         return false;
@@ -64,9 +68,25 @@ fn parse_field(
                 return Err(format!("{field} 中 {name} 的头像文件名类型错误"));
             }
         };
+        let frame = match object.get("frame") {
+            None | Some(Value::Null) => None,
+            Some(Value::String(raw_frame)) => {
+                let value = raw_frame.trim();
+                if value.is_empty() {
+                    None
+                } else {
+                    if !AVATAR_FRAMES.contains(&value) {
+                        return Err(format!("{field} 中 {name} 的头像框无效：{value}"));
+                    }
+                    Some(value.to_owned())
+                }
+            }
+            Some(_) => return Err(format!("{field} 中 {name} 的头像框类型错误")),
+        };
         let mut member = json!({
             "name": name,
             "avatarFileName": avatar,
+            "frame": frame,
         });
         if with_sponsor_count {
             // Absent means "sponsored once"; the UI only draws a badge when the value is above one.
@@ -130,6 +150,27 @@ mod tests {
         assert_eq!(answer["sponsors"][0]["count"], 1);
         assert!(answer["sponsors"][1]["avatarFileName"].is_null());
         assert_eq!(answer["sponsors"][1]["count"], 1);
+        assert!(answer["sponsors"][1]["frame"].is_null());
+    }
+
+    #[test]
+    fn avatar_frame_passes_through_and_is_checked() {
+        let answer = parse_members(
+            r#"{"version":7,"sponsors":[{"name":"healer","frame":" rainbow "}],"coBuilders":[]}"#,
+        );
+        assert_eq!(answer["ok"], true);
+        assert_eq!(answer["sponsors"][0]["frame"], "rainbow");
+        // The two lists share the field; only the value matters.
+        let answer = parse_members(
+            r#"{"version":2,"sponsors":[],"coBuilders":[{"name":"b","frame":"rainbow"}]}"#,
+        );
+        assert_eq!(answer["coBuilders"][0]["frame"], "rainbow");
+        for raw in [
+            r#"{"version":1,"sponsors":[{"name":"a","frame":"Rouge"}],"coBuilders":[]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","frame":1}],"coBuilders":[]}"#,
+        ] {
+            assert_eq!(parse_members(raw)["ok"], false, "{raw}");
+        }
     }
 
     #[test]
