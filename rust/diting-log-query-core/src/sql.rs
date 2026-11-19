@@ -174,13 +174,17 @@ OR message LIKE ?)",
             "SELECT COUNT(*) AS total, \
 COALESCE(SUM(result = 'BLOCKED'), 0) AS blocked, \
 COALESCE(SUM(result = 'ERROR'), 0) AS error, \
-COALESCE(SUM(result NOT IN ('BLOCKED', 'ERROR') AND cached = 1), 0) AS cached, \
+COALESCE(SUM(result NOT IN ('BLOCKED', 'ERROR') AND isConn = 1), 0) AS bypassed, \
+COALESCE(SUM(result NOT IN ('BLOCKED', 'ERROR') AND cached = 1 AND isConn = 0), 0) AS cached, \
 COALESCE(SUM(e IS NOT NULL), 0) AS samples, \
 COALESCE(SUM(e), 0) AS elapsedTotal \
 FROM (SELECT result, cached, \
+CASE WHEN queryType = 0 OR substr(queryName, 1, 4) IN ('TCP ', 'UDP ') OR \
+instr(COALESCE(message, ''), 'blocked_by=connection') > 0 THEN 1 ELSE 0 END AS isConn, \
 CASE WHEN p > 0 AND substr(message, p + 8, 1) BETWEEN '0' AND '9' \
 THEN CAST(substr(message, p + 8) AS INTEGER) END AS e \
-FROM (SELECT result, cached, message, instr(message, 'elapsed=') AS p \
+FROM (SELECT result, cached, queryType, queryName, message, \
+instr(message, 'elapsed=') AS p \
 FROM dns_log WHERE timestamp >= ?))",
         )
         .arg(Value::from(since_arg(request).unwrap_or(0)))

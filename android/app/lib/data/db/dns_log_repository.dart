@@ -87,6 +87,7 @@ class DnsLogDailyStats {
     required this.passed,
     required this.blocked,
     required this.error,
+    required this.bypassed,
     required this.cached,
     this.averageLatencyMs = 0,
     this.latencySamples = 0,
@@ -99,6 +100,7 @@ class DnsLogDailyStats {
         passed: (row['passed'] as num?)?.toInt() ?? 0,
         blocked: (row['blocked'] as num?)?.toInt() ?? 0,
         error: (row['error'] as num?)?.toInt() ?? 0,
+        bypassed: (row['bypassed'] as num?)?.toInt() ?? 0,
         cached: (row['cached'] as num?)?.toInt() ?? 0,
         averageLatencyMs: (row['averageLatencyMs'] as num?)?.toInt() ?? 0,
         latencySamples: (row['latencySamples'] as num?)?.toInt() ?? 0,
@@ -110,6 +112,7 @@ class DnsLogDailyStats {
       passed = 0,
       blocked = 0,
       error = 0,
+      bypassed = 0,
       cached = 0,
       averageLatencyMs = 0,
       latencySamples = 0,
@@ -119,6 +122,7 @@ class DnsLogDailyStats {
   final int passed;
   final int blocked;
   final int error;
+  final int bypassed;
   final int cached;
 
   /// Mean `elapsed=` over timed rows only; rule-blocked rows carry no timing.
@@ -136,6 +140,7 @@ class DnsLogDailyStats {
     'passed': passed,
     'blocked': blocked,
     'error': error,
+    'bypassed': bypassed,
     'cached': cached,
     'averageLatencyMs': averageLatencyMs,
     'latencySamples': latencySamples,

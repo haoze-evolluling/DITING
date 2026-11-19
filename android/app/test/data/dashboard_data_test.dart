@@ -229,12 +229,14 @@ void _dnsLogStats() {
   Future<void> insert({
     required String result,
     required bool cached,
+    String queryName = 'example.com',
+    int queryType = 1,
     String? message,
     int? timestamp,
   }) => db.insert('dns_log', {
     'timestamp': timestamp ?? DateTime.now().millisecondsSinceEpoch,
-    'queryName': 'example.com',
-    'queryType': 1,
+    'queryName': queryName,
+    'queryType': queryType,
     'result': result,
     'message': message,
     'cached': cached ? 1 : 0,
@@ -261,6 +263,28 @@ void _dnsLogStats() {
       expect(stats.blocked, 1);
       expect(stats.error, 1);
       expect(stats.cached, 1);
+    });
+
+    test('连接行单独归入旁路，不再算作放行', () async {
+      await insert(
+        result: 'PASSED',
+        cached: false,
+        queryName: 'UDP 1.1.1.1:443',
+        queryType: 0,
+      );
+      await insert(result: 'PASSED', cached: false);
+      await insert(
+        result: 'BLOCKED',
+        cached: false,
+        queryName: 'TCP 2.2.2.2:80',
+        queryType: 0,
+      );
+
+      final stats = await DnsLogRepository(db).dailyStats();
+      expect(stats.total, 3);
+      expect(stats.passed, 1);
+      expect(stats.blocked, 1);
+      expect(stats.bypassed, 1);
     });
 
     test('命中率分母含上游失败，不含被规则拦截', () async {

@@ -189,16 +189,18 @@ fn dns_daily(row: Option<&Map<String, Value>>) -> Value {
     let total = row.map_or(0, |map| int(map, "total"));
     let blocked = row.map_or(0, |map| int(map, "blocked"));
     let error = row.map_or(0, |map| int(map, "error"));
+    let bypassed = row.map_or(0, |map| int(map, "bypassed"));
     let cached = row.map_or(0, |map| int(map, "cached"));
     let samples = row.map_or(0, |map| int(map, "samples"));
     let elapsed_total = row.map_or(0, |map| int(map, "elapsedTotal"));
-    let passed = total - blocked - error;
+    let passed = (total - blocked - error - bypassed).max(0);
     let lookups = passed + error;
     json!({
         "total": total,
         "passed": passed,
         "blocked": blocked,
         "error": error,
+        "bypassed": bypassed,
         "cached": cached,
         "averageLatencyMs": if samples == 0 { 0 } else { elapsed_total / samples },
         "latencySamples": samples,
@@ -301,6 +303,25 @@ mod tests {
         assert_eq!(rewritten["isRewritten"], json!(true));
         assert_eq!(rewritten["status"], json!("rewritten"));
         assert_eq!(rewritten["messageFields"]["elapsedMs"], Value::Null);
+    }
+
+    #[test]
+    fn dns_daily_separates_bypassed_connections_from_passed() {
+        let daily = parse_one(
+            "dns.daily",
+            json!({
+                "total": 10,
+                "blocked": 2,
+                "error": 1,
+                "bypassed": 3,
+                "cached": 2,
+                "samples": 4,
+                "elapsedTotal": 40,
+            }),
+        );
+        assert_eq!(daily["passed"], json!(4));
+        assert_eq!(daily["bypassed"], json!(3));
+        assert_eq!(daily["cached"], json!(2));
     }
 
     #[test]

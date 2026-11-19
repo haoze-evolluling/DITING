@@ -30,10 +30,12 @@ pub(crate) fn overview(request: &Value) -> Option<Value> {
         }
     }
     let dns_passed = if filtered { 0 } else { i(dns, "passed") };
+    let dns_bypassed = i(dns, "bypassed");
     let dns_cached = if filtered { 0 } else { i(dns, "cached") };
     let passed = dns_passed + http_passed;
     let blocked = i(dns, "blocked") + http_blocked;
     let error = i(dns, "error") + http_error;
+    let bypassed = dns_bypassed + http_bypassed;
 
     let bootstrap_rows = items(request, "bootstrapRows");
     let bootstrap = bootstrap_summary(&bootstrap_rows);
@@ -143,11 +145,11 @@ pub(crate) fn overview(request: &Value) -> Option<Value> {
 
     Some(json!({
         "breakdown": {
-            "total": passed + blocked + error + http_bypassed,
+            "total": passed + blocked + error + bypassed,
             "passed": passed,
             "blocked": blocked,
             "error": error,
-            "bypassed": http_bypassed,
+            "bypassed": bypassed,
             "cached": dns_cached,
         },
         "quality": {

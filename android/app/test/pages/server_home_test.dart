@@ -100,6 +100,7 @@ void _home() {
             passed: 16,
             blocked: 4,
             error: 0,
+            bypassed: 0,
             cached: 3,
           ),
         ),
