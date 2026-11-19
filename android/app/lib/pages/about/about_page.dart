@@ -16,7 +16,6 @@ import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_android/widgets/note_card.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -342,7 +341,11 @@ class _Pill extends StatelessWidget {
   }
 }
 
-/// External link row: square glyph badge, title, one-line target, open-external arrow.
+/// External link row: bare glyph, title, one-line target, open-external arrow.
+///
+/// The leading mark is a plain `GlyphIcon`, not an `IconBadge`: `ListTile` starts the title at
+/// `max(minLeadingWidth, leading.width) + horizontalTitleGap`, so a 40-wide badge would push this
+/// row's text 16dp right of the neighbouring `NavEntryRow`s and make the row taller.
 class _LinkRow extends StatelessWidget {
   const _LinkRow({
     required this.glyph,
@@ -358,18 +361,11 @@ class _LinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
     return ListItem(
-      leading: IconBadge(
-        glyph: glyph,
-        size: 40,
-        glyphSize: 20,
-        color: context.raisedSurfaceLevel.colorOf(colorScheme),
-        foregroundColor: colorScheme.onSurfaceVariant,
-      ),
+      leading: GlyphIcon(glyph),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: const GlyphIcon(AppGlyphs.openExternal),
+      trailing: const GlyphIcon(AppGlyphs.openExternal, size: 20),
       onTap: () =>
           openLinkOrCopy(context, url, context.l10n.aboutLinkCopyFallback(url)),
     );
