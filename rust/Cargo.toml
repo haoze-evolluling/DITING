@@ -66,6 +66,7 @@ members = [
     "diting-desktop-ipc",
     "diting-desktop-platform",
     "diting-desktop-service",
+    "diting-server",
 ]
 resolver = "2"
 

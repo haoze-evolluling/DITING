@@ -4,7 +4,6 @@ import 'package:diting_android/pages/hub/feature_hub_page.dart';
 import 'package:diting_android/pages/logs/logs_page.dart';
 import 'package:diting_android/pages/mode/mode_onboarding_page.dart';
 import 'package:diting_android/pages/mode/mode_select_page.dart';
-import 'package:diting_android/pages/mode/server_under_construction_page.dart';
 import 'package:diting_android/pages/rules/batch_editor_page.dart';
 import 'package:diting_android/pages/rules/rules_page.dart';
 import 'package:diting_android/pages/settings/settings_page.dart';
@@ -17,6 +16,7 @@ import 'package:diting_shared/shell/branch_transition_shell.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
 import 'package:diting_android/routes/tools_routes.dart';
+import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_shared/shell/dock_shell.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
@@ -47,8 +47,21 @@ String? startupOnboardingRedirect(BuildContext context, GoRouterState state) {
   if (!container.read(onboardingProvider)) {
     return location == Routes.modeOnboarding ? null : Routes.modeOnboarding;
   }
+  if (container.read(workModeProvider) == AppWorkMode.server &&
+      _mainShellRoots.contains(location)) {
+    return Routes.server;
+  }
   return null;
 }
+
+const _mainShellRoots = {
+  Routes.home,
+  Routes.hub,
+  Routes.logs,
+  Routes.traffic,
+  Routes.tools,
+  Routes.settings,
+};
 
 GoRouter createRouter({String initialLocation = Routes.home}) {
   return GoRouter(
@@ -156,12 +169,6 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
         pageBuilder: (context, state) =>
             androidDefaultPage(state, const ModeOnboardingPage()),
       ),
-      GoRoute(
-        path: Routes.modeServerPlaceholder,
-        parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (context, state) =>
-            androidDefaultPage(state, const ServerUnderConstructionPage()),
-      ),
       // Domain routes live in `lib/routes/<domain>_routes.dart`; a new domain
       // means one more `...<domain>Routes()` entry here.
       ...dashboardRoutes(),
@@ -184,6 +191,7 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       ...configRoutes(),
       ...systemRoutes(),
       ...standaloneRoutes(),
+      ...serverRoutes(),
     ],
     // Without this, unmatched routes render a blank page instead of failing, so a missing
     // registration goes unnoticed. `UnknownRoutePage` shows "page not found".

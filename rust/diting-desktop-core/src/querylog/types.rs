@@ -64,6 +64,9 @@ pub struct Record {
     /// Whether the answer came from cache.
     #[serde(default, skip_serializing_if = "is_false")]
     pub cached: bool,
+    /// Minimum TTL in the answer, when the response carried one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ttl: Option<u32>,
     /// `"fresh"` or `"stale"`.
     #[serde(rename = "cacheHit", default, skip_serializing_if = "String::is_empty")]
     pub cache_hit: String,
@@ -87,6 +90,13 @@ pub struct Record {
     /// `udp` or `tcp`.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub protocol: String,
+    /// Provider id that actually answered the query, or the attempted provider on failure.
+    #[serde(
+        rename = "upstreamProvider",
+        default,
+        skip_serializing_if = "String::is_empty"
+    )]
+    pub upstream_provider: String,
     /// Error message.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub error: String,
@@ -324,11 +334,13 @@ mod tests {
             "clientName",
             "rcode",
             "cached",
+            "ttl",
             "cacheHit",
             "blocked",
             "filterRule",
             "filterReason",
             "protocol",
+            "upstreamProvider",
             "error",
         ] {
             assert!(!object.contains_key(omitted), "{omitted} should be omitted");
@@ -357,20 +369,24 @@ mod tests {
             rcode: "NOERROR".into(),
             status: STATUS_BLOCKED.into(),
             cached: true,
+            ttl: Some(300),
             cache_hit: "fresh".into(),
             blocked: true,
             filter_rule: "||a.com^".into(),
             filter_reason: "rule".into(),
             protocol: "udp".into(),
+            upstream_provider: "阿里云 (DoT)".into(),
             error: "boom".into(),
         };
         let encoded = serde_json::to_string(&record).expect("serialize");
         for key in [
             "clientIP",
             "clientName",
+            "ttl",
             "cacheHit",
             "filterRule",
             "filterReason",
+            "upstreamProvider",
         ] {
             assert!(encoded.contains(key), "missing {key}: {encoded}");
         }

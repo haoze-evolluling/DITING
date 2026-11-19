@@ -1,0 +1,23 @@
+[package]
+name = "diting-server"
+version = "0.1.0"
+edition = "2021"
+description = "Standalone DITING LAN DNS server process for Android"
+publish = false
+
+[dependencies]
+diting-desktop-api = { path = "../diting-desktop-api" }
+diting-desktop-app = { path = "../diting-desktop-app" }
+diting-desktop-core = { path = "../diting-desktop-core" }
+diting-desktop-dns = { path = "../diting-desktop-dns" }
+diting-dns-wire = { path = "../diting-dns-wire" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "net", "io-util", "macros", "signal", "fs"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "net", "io-util", "macros"] }

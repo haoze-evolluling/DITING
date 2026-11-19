@@ -157,6 +157,7 @@ class _ProfileDialogState extends State<_ProfileDialog> {
   static String _modeLabel(BuildContext context, String mode) => switch (mode) {
     'normal' => context.l10n.workModeNormalTitle,
     'express' => context.l10n.workModeExpressTitle,
+    'server' => context.l10n.workModeServerTitle,
     _ => mode,
   };
 

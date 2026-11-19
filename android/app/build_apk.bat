@@ -14,11 +14,12 @@ title DITING Flutter APK Build Tool
 ::   [4] Release + x86_64      - Android emulator only
 ::   [5] Clean                  - remove build cache and outputs
 ::
-:: Tunnel engine ABI per mode: all modes ship the Rust engine
-:: (libditing_engine.so) built by python rust\build_android.py, which this script
-:: runs before every build: [1]/[2] build both ABIs (ARM devices AND the x86_64
-:: emulator), [3] arm64 only, [4] x86_64 only. Installing [3]/[4] on the wrong
-:: device fails with "app not installed / package incompatible".
+:: Rust artifact ABI per mode: all modes ship libditing_engine.so,
+:: libditing_kernels.so and the standalone libditing_server.so built by
+:: python rust\build_android.py, which this script runs before every build:
+:: [1]/[2] build both ABIs (ARM devices AND the x86_64 emulator), [3] arm64 only,
+:: [4] x86_64 only. Installing [3]/[4] on the wrong device fails with
+:: "app not installed / package incompatible".
 :: All debug builds share one output name (app-debug.apk), so the artifact on
 :: disk always comes from the LAST build - check the "ABIs in package" lines.
 ::
@@ -154,8 +155,8 @@ if defined IS_EMULATOR_BUILD (
     echo.
 )
 
-rem The Rust libraries (libditing_engine.so + the Kotlin/Dart kernels) are what the app loads:
-rem without them the APK builds but every mode fails at runtime, so build them first. The Gradle
+rem The Rust artifacts (engine, merged UI kernels and the standalone server executable) are what
+rem the app loads; without them the APK builds but the matching mode fails at runtime. The Gradle
 rem build also checks jniLibs per variant; this is the convenience path.
 echo [INFO] Building Rust libraries: python rust\build_android.py --abi %RUST_ABI%
 echo.
@@ -176,7 +177,7 @@ echo [INFO] APK: %FOUND_APK%
 for %%F in ("%FOUND_APK%") do echo [INFO] Size: %%~zF bytes
 echo [INFO] Target scope: %DEVICE_SCOPE%
 echo [INFO] ABIs in package:
-python -c "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);L=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/')});E=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('libditing_engine.so')});print('       Native lib ABIs: '+', '.join(L));print('       Rust engine ABI: '+(', '.join(E) if E else 'MISSING'));print('       .so count: '+str(len([n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')])))" "%FOUND_APK%" 2>nul
+python -c "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);L=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/')});E=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('libditing_engine.so')});S=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('libditing_server.so')});print('       Native lib ABIs: '+', '.join(L));print('       Rust engine ABI: '+(', '.join(E) if E else 'MISSING'));print('       Server executable ABI: '+(', '.join(S) if S else 'MISSING'));print('       .so count: '+str(len([n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')])))" "%FOUND_APK%" 2>nul
 rem Versioned archive from copy*ApkWithVersion in android/app/build.gradle.kts.
 set "VERSIONED_APK=%CD%\build\app\outputs\apk\versioned\%BUILD_TYPE%\DITING-%BUILD_TYPE%-v%APP_VERSION_NAME%.apk"
 if exist "!VERSIONED_APK!" echo [INFO] Versioned APK: !VERSIONED_APK!

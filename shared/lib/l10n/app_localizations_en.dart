@@ -1538,18 +1538,11 @@ class AppL10nEn extends AppL10n {
   String get workModeServerTitle => 'Server mode';
 
   @override
-  String get workModeServerBadge => 'Under construction';
+  String get workModeServerBadge => 'Server';
 
   @override
   String get workModeServerSummary =>
-      'Being redesigned and temporarily unavailable';
-
-  @override
-  String get serverUnderConstructionTitle => 'Under construction';
-
-  @override
-  String get serverUnderConstructionBody =>
-      'Server mode is being redesigned. It will return with a brand-new data and storage foundation.';
+      'Standalone Rust DNS server with filtering, caching and query logs for the LAN';
 
   @override
   String get workModeExpressTitle => 'Express mode';
@@ -14883,4 +14876,611 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get troubleshootLogsDownloadFailed => 'Download failed';
+
+  @override
+  String get commonSaved => 'Saved';
+
+  @override
+  String get modeServerFeature1 => 'LAN DNS service';
+
+  @override
+  String get modeServerFeature1Body =>
+      'A standalone Rust process listens on port 53 or 1053 for LAN clients';
+
+  @override
+  String get modeServerFeature2 => 'Shared across devices';
+
+  @override
+  String get modeServerFeature2Body =>
+      'Phones, computers and smart devices share one filter and cache';
+
+  @override
+  String get modeServerFeature3 => 'Rules and cache';
+
+  @override
+  String get modeServerFeature3Body =>
+      'AdGuard subscriptions, custom rules and DNS caching';
+
+  @override
+  String get modeServerFeature4 => 'Query logs';
+
+  @override
+  String get modeServerFeature4Body =>
+      'Track clients, matched rules, upstreams and latency';
+
+  @override
+  String get onboardingTipServer1 =>
+      'Root is optional on first start; without it the server listens on port 1053.';
+
+  @override
+  String get onboardingTipServer2 =>
+      'Point client DNS at the phone\'s LAN address and listening port.';
+
+  @override
+  String get onboardingTipServer3 =>
+      'Server configuration, rule caches and query logs are stored separately from other modes.';
+
+  @override
+  String get serverRetry => 'Retry';
+
+  @override
+  String get serverRetryPort1053 => 'Retry on 1053';
+
+  @override
+  String get serverStart => 'Start server';
+
+  @override
+  String get serverStarting => 'Starting';
+
+  @override
+  String get serverStop => 'Stop server';
+
+  @override
+  String get serverListening => 'Listening';
+
+  @override
+  String get serverStopped => 'Not running';
+
+  @override
+  String get serverRootMode => 'Root · 53';
+
+  @override
+  String get serverNonRootMode => 'Non-root · 1053';
+
+  @override
+  String serverClientHint(int port) {
+    return 'Set client DNS to this device\'s IP on port $port';
+  }
+
+  @override
+  String get serverQueries => 'Queries';
+
+  @override
+  String get serverBlocked => 'Blocked';
+
+  @override
+  String get serverBlockRate => 'Block rate';
+
+  @override
+  String get serverCacheHit => 'Cache hits';
+
+  @override
+  String get serverAverageLatency => 'Avg latency';
+
+  @override
+  String get serverFilter => 'Filtering';
+
+  @override
+  String get serverFilterOn => 'Enabled';
+
+  @override
+  String get serverFilterOff => 'Disabled';
+
+  @override
+  String get serverRecentQueries => 'Recent queries';
+
+  @override
+  String get serverNoQueries => 'No queries yet';
+
+  @override
+  String get serverTabHome => 'Home';
+
+  @override
+  String get serverTabHub => 'Features';
+
+  @override
+  String get serverTabLogs => 'Logs';
+
+  @override
+  String get serverHubTitle => 'Feature center';
+
+  @override
+  String get serverHubDataPlane => 'Data plane';
+
+  @override
+  String get serverHubSystem => 'System';
+
+  @override
+  String get serverUpstream => 'Upstreams';
+
+  @override
+  String get serverUpstreamTitle => 'Upstreams and routing';
+
+  @override
+  String get serverUpstreamHubHint =>
+      'Configure providers, scheduling and bootstrap';
+
+  @override
+  String get serverFilterTitle => 'Filtering rules';
+
+  @override
+  String get serverFilterHubHint =>
+      'Manage subscriptions and custom rules, or test a domain';
+
+  @override
+  String get serverCacheTitle => 'Cache';
+
+  @override
+  String get serverCacheHubHint => 'Tune capacity, TTL and stale fallback';
+
+  @override
+  String get serverQueryLogTitle => 'Query log';
+
+  @override
+  String get serverQueryLogHubHint =>
+      'Choose what to record, file output and retention';
+
+  @override
+  String get serverSettingsTitle => 'Server settings';
+
+  @override
+  String get serverSettingsHubHint =>
+      'Inspect listening state, root access and storage';
+
+  @override
+  String get serverAppearance => 'Appearance';
+
+  @override
+  String get serverAppearanceHint => 'Theme, accent color and interface style';
+
+  @override
+  String get serverAbout => 'About';
+
+  @override
+  String get serverAboutHint => 'Version information and open-source licenses';
+
+  @override
+  String get serverLogsTitle => 'Query log';
+
+  @override
+  String get serverLogClear => 'Clear';
+
+  @override
+  String get serverLogClearTitle => 'Clear query log';
+
+  @override
+  String get serverLogClearBody =>
+      'This deletes every recorded query and cannot be undone.';
+
+  @override
+  String get serverLogCleared => 'Query log cleared';
+
+  @override
+  String serverLogPage(int page, int pages) {
+    return 'Page $page of $pages';
+  }
+
+  @override
+  String get serverLogAll => 'All';
+
+  @override
+  String get serverLogBlocked => 'Blocked';
+
+  @override
+  String get serverLogCached => 'Cached';
+
+  @override
+  String get serverLogError => 'Errors';
+
+  @override
+  String get serverLogSearchDomain => 'Search domain';
+
+  @override
+  String get serverLogSearchClient => 'Search client';
+
+  @override
+  String get serverLogSearch => 'Search';
+
+  @override
+  String get serverLogEmpty => 'No queries yet';
+
+  @override
+  String get serverLogTime => 'Time';
+
+  @override
+  String get serverLogStatus => 'Status';
+
+  @override
+  String get serverLogType => 'Type';
+
+  @override
+  String get serverLogClient => 'Client';
+
+  @override
+  String get serverLogProtocol => 'Protocol';
+
+  @override
+  String get serverLogDuration => 'Duration';
+
+  @override
+  String get serverLogCache => 'Cache';
+
+  @override
+  String get serverLogRcode => 'RCODE';
+
+  @override
+  String get serverLogTtl => 'TTL';
+
+  @override
+  String get serverLogUpstream => 'Upstream';
+
+  @override
+  String get serverLogRule => 'Matched rule';
+
+  @override
+  String get serverLogRuleReason => 'Block reason';
+
+  @override
+  String get serverLogErrorField => 'Error';
+
+  @override
+  String serverLogDays(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get serverUpstreamAdd => 'Add provider';
+
+  @override
+  String get serverUpstreamMode => 'Scheduling';
+
+  @override
+  String get serverUpstreamProviders => 'Providers';
+
+  @override
+  String get serverUpstreamRequired => 'No upstream provider configured';
+
+  @override
+  String get serverUpstreamDelete => 'Delete provider';
+
+  @override
+  String serverUpstreamDeleteBody(String id) {
+    return 'Delete \"$id\"? The server will use the remaining providers.';
+  }
+
+  @override
+  String get serverUpstreamDuplicate => 'Provider names must be unique';
+
+  @override
+  String get serverUpstreamSaved => 'Upstream settings saved';
+
+  @override
+  String get serverUpstreamProviderNote =>
+      'The first release supports plain DNS, DoT and DoH. Changes use server-specific configuration.';
+
+  @override
+  String get serverUpstreamModeNote =>
+      'Primary + backup prefers the first healthy provider; parallel race takes the fastest; smart selection uses recent performance.';
+
+  @override
+  String get serverUpstreamBootstrap => 'Bootstrap';
+
+  @override
+  String get serverBootstrapDefault => 'Using the system default bootstrap';
+
+  @override
+  String get serverBootstrapNote =>
+      'Custom bootstrap entries are display-only for now; the built-in Rust resolver resolves upstream hostnames.';
+
+  @override
+  String get serverModeSingle => 'Single provider';
+
+  @override
+  String get serverModeSingleDesc =>
+      'Use only the first provider without automatic failover.';
+
+  @override
+  String get serverModeParallel => 'Parallel race';
+
+  @override
+  String get serverModeParallelDesc =>
+      'Query multiple providers and use the fastest response.';
+
+  @override
+  String get serverModeSmart => 'Smart selection';
+
+  @override
+  String get serverModeSmartDesc =>
+      'Choose a provider from recent latency and success history.';
+
+  @override
+  String get serverModePrimaryBackup => 'Primary + backup';
+
+  @override
+  String get serverModePrimaryBackupDesc =>
+      'Prefer the primary provider and fail over when needed.';
+
+  @override
+  String get serverFilterEnabled => 'Enable filtering';
+
+  @override
+  String get serverFilterEnabledBody =>
+      'Apply subscriptions and custom rules to LAN DNS queries';
+
+  @override
+  String get serverFilterResponse => 'Filter responses';
+
+  @override
+  String get serverFilterResponseBody =>
+      'Also inspect domains in upstream answers';
+
+  @override
+  String get serverFilterBlockMode => 'Block response';
+
+  @override
+  String get serverBlockNullIp => 'Null address';
+
+  @override
+  String get serverBlockNxdomain => 'NXDOMAIN';
+
+  @override
+  String get serverBlockRefused => 'Refused';
+
+  @override
+  String get serverBlockAddresses => 'Block addresses';
+
+  @override
+  String get serverBlockingIPv4 => 'IPv4 address';
+
+  @override
+  String get serverBlockingIPv6 => 'IPv6 address';
+
+  @override
+  String get serverCustomRules => 'Custom rules';
+
+  @override
+  String get serverCustomRulesHint => 'One AdGuard or hosts rule per line';
+
+  @override
+  String get serverCustomRulesNote =>
+      'Rules live in server-specific configuration and do not read the normal-mode rule database.';
+
+  @override
+  String get serverSubscriptions => 'Subscriptions';
+
+  @override
+  String get serverSubscriptionEmpty => 'No subscriptions';
+
+  @override
+  String get serverSubscriptionAdd => 'Add subscription';
+
+  @override
+  String get serverSubscriptionAddTitle => 'Add rule subscription';
+
+  @override
+  String get serverSubscriptionDelete => 'Delete subscription';
+
+  @override
+  String serverSubscriptionDeleteBody(String name) {
+    return 'Delete \"$name\"? Cached rules will also be removed.';
+  }
+
+  @override
+  String get serverSubscriptionRefresh => 'Refresh subscriptions';
+
+  @override
+  String get serverSubscriptionRefreshed => 'Subscriptions refreshed';
+
+  @override
+  String serverSubscriptionRules(int count) {
+    return '$count rules';
+  }
+
+  @override
+  String get serverSubscriptionNote =>
+      'The first release refreshes manually only; the interval setting is stored but not scheduled.';
+
+  @override
+  String get serverSubscriptionName => 'Name';
+
+  @override
+  String get serverSubscriptionUrl => 'Subscription URL';
+
+  @override
+  String get serverSubscriptionRequired => 'Name and URL are required';
+
+  @override
+  String get serverCheckTitle => 'Rule test';
+
+  @override
+  String get serverCheckDomain => 'Domain';
+
+  @override
+  String get serverCheckDomainRequired => 'Enter a domain';
+
+  @override
+  String get serverCheckAction => 'Test';
+
+  @override
+  String get serverCheckBlocked => 'Will be blocked';
+
+  @override
+  String get serverCheckAllowed => 'Will be allowed';
+
+  @override
+  String get serverFilterSaved => 'Filter settings saved';
+
+  @override
+  String get serverCacheEnabled => 'Enable cache';
+
+  @override
+  String get serverCacheEnabledBody =>
+      'Cache upstream responses and reuse their TTL';
+
+  @override
+  String get serverCacheEntries => 'Maximum entries';
+
+  @override
+  String get serverCacheMode => 'Cache mode';
+
+  @override
+  String get serverCacheLimit => 'Limit max TTL';
+
+  @override
+  String get serverCacheFixed => 'Fixed TTL';
+
+  @override
+  String get serverCacheTtl => 'TTL policy';
+
+  @override
+  String get serverCacheMaxTtl => 'Maximum TTL';
+
+  @override
+  String get serverCacheFixedTtl => 'Fixed TTL';
+
+  @override
+  String get serverCacheMinTtl => 'Minimum TTL';
+
+  @override
+  String get serverCacheMinTtlBody => 'Raise very short TTLs to a lower bound';
+
+  @override
+  String get serverCacheMinTtlValue => 'Minimum TTL value';
+
+  @override
+  String get serverCacheStale => 'Stale fallback';
+
+  @override
+  String get serverCacheStaleBody =>
+      'Briefly serve expired entries when upstreams fail';
+
+  @override
+  String get serverCacheNegative => 'Cache negative answers';
+
+  @override
+  String get serverCacheOptimistic => 'Optimistic cache';
+
+  @override
+  String get serverCachePrefetch => 'Prefetch';
+
+  @override
+  String get serverCacheFooter =>
+      'Changes apply immediately; cached entries are cleared when the process restarts.';
+
+  @override
+  String get serverCacheSaved => 'Cache settings saved';
+
+  @override
+  String get serverQueryLogEnabled => 'Record queries';
+
+  @override
+  String get serverQueryLogEnabledBody =>
+      'Keep recent queries for the management UI';
+
+  @override
+  String get serverQueryLogFile => 'Write to file';
+
+  @override
+  String get serverQueryLogFileBody => 'Write daily JSONL files';
+
+  @override
+  String get serverQueryLogClients => 'Log clients';
+
+  @override
+  String get serverQueryLogClientsBody => 'Store client IPs and names';
+
+  @override
+  String get serverQueryLogRetention => 'Retention';
+
+  @override
+  String get serverQueryLogRetentionNote =>
+      'Expired logs are removed while the server is running.';
+
+  @override
+  String get serverQueryLogMemory => 'Memory buffer';
+
+  @override
+  String get serverQueryLogMemoryEntries => 'Memory entry limit';
+
+  @override
+  String get serverQueryLogMemoryNote =>
+      'A ring buffer overwrites the oldest entries when full.';
+
+  @override
+  String get serverQueryLogSaved => 'Query log settings saved';
+
+  @override
+  String get serverNumberInvalid =>
+      'Enter a whole number within the allowed range';
+
+  @override
+  String get serverSettingsRuntime => 'Runtime';
+
+  @override
+  String get serverRunning => 'Server running';
+
+  @override
+  String get serverSettingsSwitchModeBody =>
+      'The server stops before switching modes';
+
+  @override
+  String get serverSettingsListen => 'Listening';
+
+  @override
+  String get serverSettingsRoot => 'Root mode';
+
+  @override
+  String get serverSettingsRootRunning => 'Stop the server to change root mode';
+
+  @override
+  String get serverSettingsRootBody =>
+      'Bind port 53 through su, then drop to the app UID';
+
+  @override
+  String get serverSettingsRootNote =>
+      'Port 1053 is used when root is unavailable; a port 53 bind failure never downgrades silently.';
+
+  @override
+  String get serverPort => 'Listening port';
+
+  @override
+  String get serverPortFixed =>
+      'Determined by root access and not configurable';
+
+  @override
+  String get serverSettingsProbeRoot => 'Probe root';
+
+  @override
+  String get serverSettingsProbeRootBody => 'Check authorization through su';
+
+  @override
+  String get serverSettingsStorage => 'Data and storage';
+
+  @override
+  String get serverSettingsDataDir => 'Data directory';
+
+  @override
+  String get serverSettingsDataDirBody =>
+      'filesDir/server/ with configuration, rule caches, query logs and runtime logs';
+
+  @override
+  String get serverRootAvailable => 'Root available';
+
+  @override
+  String serverRootUnavailable(String message) {
+    return 'Root unavailable: $message';
+  }
+
+  @override
+  String get serverRootDenied => 'not authorized';
 }

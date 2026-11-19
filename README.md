@@ -5,8 +5,9 @@
 并提供开发者维护工具箱。
 
 - 📱 **Android**：Flutter 客户端 + Rust 隧道引擎（`rust/diting-engine`），随包交付两个原生库
-  `libditing_engine.so`（隧道数据面与 DNS 管线）与 `libditing_kernels.so`（合并后的 UI 内核）；提供极速、
-  普通（用户态 TCP/IP 全隧道）与服务器（局域网 DNS）三种模式，要求 Android 9.0+（API 28+）。
+  `libditing_engine.so`（隧道数据面与 DNS 管线）与 `libditing_kernels.so`（合并后的 UI 内核），
+  以及独立 DNS 可执行文件 `libditing_server.so`；提供极速、普通（用户态 TCP/IP 全隧道）与服务器
+  （局域网 DNS）三种模式，要求 Android 9.0+（API 28+）。
 - 💻 **Windows**：纯 Rust 特权服务 `diting-service.exe` + Flutter 桌面端 + 内嵌于服务的 Web 控制台，支持
   物理网卡双栈 DNS 接管与离线恢复脚本。
 - 🐧 **Linux**：纯 Rust 可执行文件 `diting-service`（静态链接全部内核，内嵌 Web 控制台），由 systemd 托管，
@@ -40,15 +41,16 @@
 |---|---|---|---|
 | Android | ⚡ 极速模式 | 9.0+ / `arm64-v8a`（模拟器 `x86_64`） | DNS 窄路由：仅 DNS 子网与公共解析器进入 TUN，其余流量走系统路由 |
 | Android | 🛡️ 普通模式 | 9.0+ / `arm64-v8a` | 用户态 TCP/IP 全隧道，支持应用分流、HTTPS 检查、出站代理 |
-| Android | 🏠 服务器模式 | 9.0+ / `arm64-v8a` | 独立 DNS 服务，监听 `0.0.0.0:1053` 共享给局域网，支持四种调度策略 |
+| Android | 🏠 服务器模式 | 9.0+ / `arm64-v8a` | 独立 Rust DNS 服务，非 Root 监听 `0.0.0.0:1053`，Root 可监听 `53` 并降权 |
 | Windows | ⚙️ 核心服务 | 10+ 64-bit | 双栈接管、本地 53 监听、缓存与规则、局域网 DNS、离线恢复 |
 | Windows | 🖥️ 桌面 GUI | 10+ 64-bit | 免管理员权限管理服务，关闭窗口隐藏到托盘 |
 | Windows | 🌐 Web 控制台 | 任意主流浏览器 | 15353 端口远程管理核心服务 |
 | Linux | ⚙️ 核心服务 | systemd / `amd64`·`arm64` | 多后端接管、53 监听、缓存与规则、局域网 DNS、离线还原 |
 | Linux | 🌐 Web 控制台 | 任意主流浏览器 | 15353 端口完成全部配置，无需桌面环境 |
 
-Android 三种模式共用同一个 Rust 引擎，差异只在 TUN 路由范围：极速模式仅接管 DNS，普通模式接管全网络，
-服务器模式不建隧道、只对外提供 DNS 服务。
+普通与极速模式共用同一个 Rust 隧道引擎，差异只在 TUN 路由范围：极速模式仅接管 DNS，普通模式接管
+全网络。服务器模式不建隧道，由独立的 `rust/diting-server` 进程复用桌面 DNS 栈，对外提供局域网 DNS、
+过滤、缓存与查询日志。
 
 ## 工程结构
 
@@ -92,8 +94,9 @@ cd desktop/app && flutter test     # 桌面端套件
 `ANDROID_NDK_HOME` / `ANDROID_NDK_ROOT` 或 `android/local.properties` 的 `sdk.dir` 定位。
 Gradle/AGP/Kotlin 版本与国内 Maven 镜像配置见 [Android 构建环境](docs/development/android-build-environment.md)。
 
-首次构建前先用 `python rust/build_android.py` 生成两个 `.so`：隧道引擎 `libditing_engine.so`
-与合并后的 UI 内核 `libditing_kernels.so`（构建产物、不入库）。
+首次构建前先用 `python rust/build_android.py` 生成三个 `.so`：隧道引擎 `libditing_engine.so`、
+合并后的 UI 内核 `libditing_kernels.so` 与服务器模式可执行文件 `libditing_server.so`
+（构建产物、不入库）。
 
 ```bash
 python rust/build_android.py              # arm64-v8a + x86_64，release
@@ -154,6 +157,7 @@ Android 客户端（`android/app/pubspec.yaml`）是独立产品线，加 `-g an
 
 - [桌面端 Rust 迁移](docs/development/desktop-rust-migration.md) — 新代码布局、构建方式、兼容性与有意变化。
 - [Android 构建环境](docs/development/android-build-environment.md) — 工具链版本上限、Maven 镜像与测试注意事项。
+- [Android 服务器模式](docs/development/server-mode.md) — 独立 Rust 进程、Root 降权、控制协议与数据目录。
 - [云控贡献者名单维护](docs/development/recognition-members.md) — 名单机制、JSON 规范与头像规范。
 
 `rust/build_android.py` 与 `rust/verify.py` 的用法见各自脚本头部的说明（`--android`、`--desktop`、`--engine`、

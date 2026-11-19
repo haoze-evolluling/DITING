@@ -11,6 +11,7 @@ diting-desktop-app = { path = "../diting-desktop-app" }
 diting-desktop-core = { path = "../diting-desktop-core" }
 diting-desktop-dns = { path = "../diting-desktop-dns" }
 diting-desktop-platform = { path = "../diting-desktop-platform" }
+diting-dns-wire = { path = "../diting-dns-wire" }
 diting-services-core = { path = "../diting-services-core" }
 diting-stamp-core = { path = "../diting-stamp-core" }
 

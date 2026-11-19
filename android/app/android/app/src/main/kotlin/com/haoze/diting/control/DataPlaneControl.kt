@@ -7,6 +7,8 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.normal.DitingVpnService
+import com.haoze.diting.server.ServerDnsService
+import com.haoze.diting.server.ServerPreference
 
 /// Starts, stops and toggles whichever data plane the current work mode uses, without the Flutter
 /// layer. Shared by the quick settings tile, the home screen widget and the automation activity so
@@ -23,8 +25,10 @@ object DataPlaneControl {
 
     const val WORK_MODE_NORMAL = "normal"
     const val WORK_MODE_EXPRESS = "express"
+    const val WORK_MODE_SERVER = "server"
 
-    /// Retired server-mode value. The mode is now a placeholder page, so it owns no data plane.
+    /// Retired value owned by the removed Kotlin server. It is cleaned up by
+    /// `ServerModeRetirement` and must never start another mode by accident.
     private const val RETIRED_WORK_MODE_SERVER = "dns"
 
     /// What a [toggle]/[start]/[stop] call achieved. [NeedsApp] is not a failure: the app owns the
@@ -35,8 +39,7 @@ object DataPlaneControl {
         data object NeedsApp : Result
     }
 
-    /// Stored value: `normal` / `express`; a missing value means the default (normal) mode and the
-    /// retired `dns` value owns no data plane.
+    /// Stored value: `normal` / `express` / `server`; a missing value means normal.
     fun workMode(context: Context): String =
         context.getSharedPreferences(WORK_MODE_PREFS, Context.MODE_PRIVATE)
             .getString(KEY_WORK_MODE, null)
@@ -48,6 +51,7 @@ object DataPlaneControl {
             .getBoolean(KEY_INITIAL_AGREEMENT_ACCEPTED, false)
 
     fun isRunning(context: Context): Boolean = when (workMode(context)) {
+        WORK_MODE_SERVER -> ServerDnsService.isRunning()
         RETIRED_WORK_MODE_SERVER -> false
         WORK_MODE_EXPRESS -> ExpressVpnService.isRunning
         else -> DitingVpnService.isRunning
@@ -59,8 +63,14 @@ object DataPlaneControl {
     fun start(context: Context): Result {
         if (isRunning(context)) return Result.Started
         val mode = workMode(context)
-        // The retained server-mode entry is only a placeholder; the app handles the tap.
         if (mode == RETIRED_WORK_MODE_SERVER) return Result.NeedsApp
+        if (mode == WORK_MODE_SERVER) {
+            return if (ServerDnsService.start(context, ServerPreference.preferRoot(context))) {
+                Result.Started
+            } else {
+                Result.NeedsApp
+            }
+        }
         if (VpnService.prepare(context) != null) {
             return Result.NeedsApp
         }
@@ -73,6 +83,9 @@ object DataPlaneControl {
 
     fun stop(context: Context): Result {
         if (!isRunning(context)) return Result.Stopped
+        if (workMode(context) == WORK_MODE_SERVER) {
+            return if (ServerDnsService.stop(context)) Result.Stopped else Result.NeedsApp
+        }
         val intent: Intent = when (workMode(context)) {
             WORK_MODE_EXPRESS -> ExpressVpnService.stopIntent(context)
             else -> DitingVpnService.stopIntent(context)

@@ -1472,16 +1472,10 @@ class AppL10nZh extends AppL10n {
   String get workModeServerTitle => '服务器模式';
 
   @override
-  String get workModeServerBadge => '施工中';
+  String get workModeServerBadge => '服务器';
 
   @override
-  String get workModeServerSummary => '正在重新设计，暂时不可用';
-
-  @override
-  String get serverUnderConstructionTitle => '正在施工中';
-
-  @override
-  String get serverUnderConstructionBody => '服务器模式正在重新设计，完成后会以全新的数据与存储重新上线。';
+  String get workModeServerSummary => '独立 Rust DNS 服务，为局域网提供过滤、缓存与查询日志';
 
   @override
   String get workModeExpressTitle => '极速模式';
@@ -14024,4 +14018,578 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get troubleshootLogsDownloadFailed => '下载失败';
+
+  @override
+  String get commonSaved => '已保存';
+
+  @override
+  String get modeServerFeature1 => '局域网 DNS 服务';
+
+  @override
+  String get modeServerFeature1Body => '独立 Rust 进程监听 53 或 1053，为局域网设备提供解析';
+
+  @override
+  String get modeServerFeature2 => '多设备共享';
+
+  @override
+  String get modeServerFeature2Body => '手机、电脑和智能设备共用同一套过滤与缓存';
+
+  @override
+  String get modeServerFeature3 => '规则与缓存';
+
+  @override
+  String get modeServerFeature3Body => '支持 AdGuard 规则订阅、自定义规则和 DNS 缓存';
+
+  @override
+  String get modeServerFeature4 => '查询日志';
+
+  @override
+  String get modeServerFeature4Body => '记录客户端、命中规则、上游与耗时，便于排查问题';
+
+  @override
+  String get onboardingTipServer1 => '首次启动可选择授予 Root；未授权时服务器监听 1053 端口。';
+
+  @override
+  String get onboardingTipServer2 => '将客户端 DNS 设置为手机局域网地址与监听端口即可使用。';
+
+  @override
+  String get onboardingTipServer3 => '服务器配置、规则缓存与查询日志独立保存，不影响其他模式。';
+
+  @override
+  String get serverRetry => '重试';
+
+  @override
+  String get serverRetryPort1053 => '改用 1053 重试';
+
+  @override
+  String get serverStart => '启动服务器';
+
+  @override
+  String get serverStarting => '正在启动';
+
+  @override
+  String get serverStop => '停止服务器';
+
+  @override
+  String get serverListening => '正在监听';
+
+  @override
+  String get serverStopped => '未运行';
+
+  @override
+  String get serverRootMode => 'Root · 53';
+
+  @override
+  String get serverNonRootMode => '非 Root · 1053';
+
+  @override
+  String serverClientHint(int port) {
+    return '将客户端 DNS 设置为本机 IP 的 $port 端口';
+  }
+
+  @override
+  String get serverQueries => '查询';
+
+  @override
+  String get serverBlocked => '已拦截';
+
+  @override
+  String get serverBlockRate => '拦截率';
+
+  @override
+  String get serverCacheHit => '缓存命中';
+
+  @override
+  String get serverAverageLatency => '平均耗时';
+
+  @override
+  String get serverFilter => '过滤';
+
+  @override
+  String get serverFilterOn => '已启用';
+
+  @override
+  String get serverFilterOff => '未启用';
+
+  @override
+  String get serverRecentQueries => '最近查询';
+
+  @override
+  String get serverNoQueries => '暂无查询记录';
+
+  @override
+  String get serverTabHome => '首页';
+
+  @override
+  String get serverTabHub => '功能';
+
+  @override
+  String get serverTabLogs => '日志';
+
+  @override
+  String get serverHubTitle => '功能中心';
+
+  @override
+  String get serverHubDataPlane => '数据面';
+
+  @override
+  String get serverHubSystem => '系统';
+
+  @override
+  String get serverUpstream => '上游与调度';
+
+  @override
+  String get serverUpstreamTitle => '上游与调度';
+
+  @override
+  String get serverUpstreamHubHint => '配置服务商、调度方式与 Bootstrap';
+
+  @override
+  String get serverFilterTitle => '过滤规则';
+
+  @override
+  String get serverFilterHubHint => '管理订阅、自定义规则并测试域名';
+
+  @override
+  String get serverCacheTitle => '缓存';
+
+  @override
+  String get serverCacheHubHint => '调整容量、TTL 与过期回退策略';
+
+  @override
+  String get serverQueryLogTitle => '查询日志';
+
+  @override
+  String get serverQueryLogHubHint => '设置记录内容、落盘与保留天数';
+
+  @override
+  String get serverSettingsTitle => '服务器设置';
+
+  @override
+  String get serverSettingsHubHint => '查看监听状态、Root 与数据目录';
+
+  @override
+  String get serverAppearance => '外观';
+
+  @override
+  String get serverAppearanceHint => '主题、强调色与界面样式';
+
+  @override
+  String get serverAbout => '关于';
+
+  @override
+  String get serverAboutHint => '版本信息与开源许可';
+
+  @override
+  String get serverLogsTitle => '查询日志';
+
+  @override
+  String get serverLogClear => '清空';
+
+  @override
+  String get serverLogClearTitle => '清空查询日志';
+
+  @override
+  String get serverLogClearBody => '此操作会删除全部已记录查询，且无法恢复。';
+
+  @override
+  String get serverLogCleared => '查询日志已清空';
+
+  @override
+  String serverLogPage(int page, int pages) {
+    return '第 $page / $pages 页';
+  }
+
+  @override
+  String get serverLogAll => '全部';
+
+  @override
+  String get serverLogBlocked => '已拦截';
+
+  @override
+  String get serverLogCached => '缓存';
+
+  @override
+  String get serverLogError => '错误';
+
+  @override
+  String get serverLogSearchDomain => '搜索域名';
+
+  @override
+  String get serverLogSearchClient => '搜索客户端';
+
+  @override
+  String get serverLogSearch => '搜索';
+
+  @override
+  String get serverLogEmpty => '暂无查询记录';
+
+  @override
+  String get serverLogTime => '时间';
+
+  @override
+  String get serverLogStatus => '状态';
+
+  @override
+  String get serverLogType => '类型';
+
+  @override
+  String get serverLogClient => '客户端';
+
+  @override
+  String get serverLogProtocol => '协议';
+
+  @override
+  String get serverLogDuration => '耗时';
+
+  @override
+  String get serverLogCache => '缓存';
+
+  @override
+  String get serverLogRcode => '响应码';
+
+  @override
+  String get serverLogTtl => 'TTL';
+
+  @override
+  String get serverLogUpstream => '上游';
+
+  @override
+  String get serverLogRule => '命中规则';
+
+  @override
+  String get serverLogRuleReason => '拦截原因';
+
+  @override
+  String get serverLogErrorField => '错误';
+
+  @override
+  String serverLogDays(int days) {
+    return '$days 天';
+  }
+
+  @override
+  String get serverUpstreamAdd => '添加服务商';
+
+  @override
+  String get serverUpstreamMode => '调度方式';
+
+  @override
+  String get serverUpstreamProviders => '服务商';
+
+  @override
+  String get serverUpstreamRequired => '尚未配置上游服务商';
+
+  @override
+  String get serverUpstreamDelete => '删除服务商';
+
+  @override
+  String serverUpstreamDeleteBody(String id) {
+    return '确定删除“$id”？服务器将使用其余服务商。';
+  }
+
+  @override
+  String get serverUpstreamDuplicate => '服务商名称不能重复';
+
+  @override
+  String get serverUpstreamSaved => '上游设置已保存';
+
+  @override
+  String get serverUpstreamProviderNote => '首版支持明文 DNS、DoT 与 DoH；修改会写入服务器独立配置。';
+
+  @override
+  String get serverUpstreamModeNote => '主备切换优先使用首个可用服务商；并行竞速取最快响应；智能选择按历史表现调度。';
+
+  @override
+  String get serverUpstreamBootstrap => 'Bootstrap';
+
+  @override
+  String get serverBootstrapDefault => '使用系统默认 Bootstrap';
+
+  @override
+  String get serverBootstrapNote =>
+      '当前自定义 Bootstrap 仅展示；首版由 Rust 内置解析器解析上游主机名。';
+
+  @override
+  String get serverModeSingle => '单服务商';
+
+  @override
+  String get serverModeSingleDesc => '仅使用首个服务商，失败时不自动切换。';
+
+  @override
+  String get serverModeParallel => '并行竞速';
+
+  @override
+  String get serverModeParallelDesc => '同时请求多个服务商并采用最快响应。';
+
+  @override
+  String get serverModeSmart => '智能选择';
+
+  @override
+  String get serverModeSmartDesc => '根据历史延迟与成功率选择服务商。';
+
+  @override
+  String get serverModePrimaryBackup => '主备切换';
+
+  @override
+  String get serverModePrimaryBackupDesc => '优先使用主服务商，失败后切换备选。';
+
+  @override
+  String get serverFilterEnabled => '启用过滤';
+
+  @override
+  String get serverFilterEnabledBody => '对内网 DNS 查询应用订阅与自定义规则';
+
+  @override
+  String get serverFilterResponse => '过滤响应';
+
+  @override
+  String get serverFilterResponseBody => '同时检查上游应答中的域名';
+
+  @override
+  String get serverFilterBlockMode => '拦截响应';
+
+  @override
+  String get serverBlockNullIp => '返回空地址';
+
+  @override
+  String get serverBlockNxdomain => '返回 NXDOMAIN';
+
+  @override
+  String get serverBlockRefused => '拒绝查询';
+
+  @override
+  String get serverBlockAddresses => '拦截地址';
+
+  @override
+  String get serverBlockingIPv4 => 'IPv4 地址';
+
+  @override
+  String get serverBlockingIPv6 => 'IPv6 地址';
+
+  @override
+  String get serverCustomRules => '自定义规则';
+
+  @override
+  String get serverCustomRulesHint => '每行一条 AdGuard 或 hosts 规则';
+
+  @override
+  String get serverCustomRulesNote => '规则保存在服务器独立配置中，不读取普通模式规则库。';
+
+  @override
+  String get serverSubscriptions => '订阅列表';
+
+  @override
+  String get serverSubscriptionEmpty => '暂无订阅';
+
+  @override
+  String get serverSubscriptionAdd => '添加订阅';
+
+  @override
+  String get serverSubscriptionAddTitle => '添加规则订阅';
+
+  @override
+  String get serverSubscriptionDelete => '删除订阅';
+
+  @override
+  String serverSubscriptionDeleteBody(String name) {
+    return '确定删除“$name”？已缓存的规则会同时移除。';
+  }
+
+  @override
+  String get serverSubscriptionRefresh => '刷新订阅';
+
+  @override
+  String get serverSubscriptionRefreshed => '订阅已刷新';
+
+  @override
+  String serverSubscriptionRules(int count) {
+    return '$count 条规则';
+  }
+
+  @override
+  String get serverSubscriptionNote => '首版仅支持手动刷新；刷新间隔配置会保留但不自动执行。';
+
+  @override
+  String get serverSubscriptionName => '名称';
+
+  @override
+  String get serverSubscriptionUrl => '订阅地址';
+
+  @override
+  String get serverSubscriptionRequired => '名称和地址不能为空';
+
+  @override
+  String get serverCheckTitle => '规则测试';
+
+  @override
+  String get serverCheckDomain => '域名';
+
+  @override
+  String get serverCheckDomainRequired => '请输入域名';
+
+  @override
+  String get serverCheckAction => '测试';
+
+  @override
+  String get serverCheckBlocked => '将被拦截';
+
+  @override
+  String get serverCheckAllowed => '将被放行';
+
+  @override
+  String get serverFilterSaved => '过滤设置已保存';
+
+  @override
+  String get serverCacheEnabled => '启用缓存';
+
+  @override
+  String get serverCacheEnabledBody => '缓存上游响应并复用 TTL';
+
+  @override
+  String get serverCacheEntries => '最大条目';
+
+  @override
+  String get serverCacheMode => '缓存模式';
+
+  @override
+  String get serverCacheLimit => '限制最大 TTL';
+
+  @override
+  String get serverCacheFixed => '固定 TTL';
+
+  @override
+  String get serverCacheTtl => 'TTL 策略';
+
+  @override
+  String get serverCacheMaxTtl => '最大 TTL';
+
+  @override
+  String get serverCacheFixedTtl => '固定 TTL';
+
+  @override
+  String get serverCacheMinTtl => '最小 TTL';
+
+  @override
+  String get serverCacheMinTtlBody => '将过短的 TTL 提升到下限';
+
+  @override
+  String get serverCacheMinTtlValue => '最小 TTL 值';
+
+  @override
+  String get serverCacheStale => '过期回退';
+
+  @override
+  String get serverCacheStaleBody => '上游失败时短暂返回过期缓存';
+
+  @override
+  String get serverCacheNegative => '缓存否定响应';
+
+  @override
+  String get serverCacheOptimistic => '乐观缓存';
+
+  @override
+  String get serverCachePrefetch => '预取';
+
+  @override
+  String get serverCacheFooter => '修改会立即应用；缓存内容在进程重启后清空。';
+
+  @override
+  String get serverCacheSaved => '缓存设置已保存';
+
+  @override
+  String get serverQueryLogEnabled => '记录查询';
+
+  @override
+  String get serverQueryLogEnabledBody => '保存最近查询供管理端查看';
+
+  @override
+  String get serverQueryLogFile => '写入文件';
+
+  @override
+  String get serverQueryLogFileBody => '按日写入 JSONL 文件';
+
+  @override
+  String get serverQueryLogClients => '记录客户端';
+
+  @override
+  String get serverQueryLogClientsBody => '保存客户端 IP 与名称';
+
+  @override
+  String get serverQueryLogRetention => '保留天数';
+
+  @override
+  String get serverQueryLogRetentionNote => '过期日志会在服务运行时清理。';
+
+  @override
+  String get serverQueryLogMemory => '内存记录';
+
+  @override
+  String get serverQueryLogMemoryEntries => '内存条目上限';
+
+  @override
+  String get serverQueryLogMemoryNote => '采用环形缓冲，超出后覆盖最早记录。';
+
+  @override
+  String get serverQueryLogSaved => '查询日志设置已保存';
+
+  @override
+  String get serverNumberInvalid => '请输入有效范围内的整数';
+
+  @override
+  String get serverSettingsRuntime => '运行状态';
+
+  @override
+  String get serverRunning => '服务器运行中';
+
+  @override
+  String get serverSettingsSwitchModeBody => '切换模式前会停止服务器';
+
+  @override
+  String get serverSettingsListen => '监听';
+
+  @override
+  String get serverSettingsRoot => 'Root 模式';
+
+  @override
+  String get serverSettingsRootRunning => '运行中不能切换 Root 模式';
+
+  @override
+  String get serverSettingsRootBody => '使用 su 绑定 53 端口后降权到应用 UID';
+
+  @override
+  String get serverSettingsRootNote => 'Root 不可用时自动使用 1053；53 绑定失败时不会静默降级。';
+
+  @override
+  String get serverPort => '监听端口';
+
+  @override
+  String get serverPortFixed => '由 Root 状态决定，不能手动修改';
+
+  @override
+  String get serverSettingsProbeRoot => '检测 Root';
+
+  @override
+  String get serverSettingsProbeRootBody => '通过 su 检测授权状态';
+
+  @override
+  String get serverSettingsStorage => '数据与存储';
+
+  @override
+  String get serverSettingsDataDir => '数据目录';
+
+  @override
+  String get serverSettingsDataDirBody =>
+      'filesDir/server/，包含配置、规则缓存、查询日志与运行日志';
+
+  @override
+  String get serverRootAvailable => 'Root 可用';
+
+  @override
+  String serverRootUnavailable(String message) {
+    return '无法获取 Root：$message';
+  }
+
+  @override
+  String get serverRootDenied => '未授权';
 }

@@ -29,12 +29,22 @@ impl Stage for ForwardStage {
     }
 
     async fn before(&self, ctx: &mut DnsContext) -> StageResult {
-        match self.resolver.resolve(&ctx.request, &ctx.group).await {
-            Ok(response) => {
+        match self
+            .resolver
+            .resolve_attributed(&ctx.request, &ctx.group)
+            .await
+        {
+            (Ok(response), provider) => {
+                if let Some(provider) = provider {
+                    ctx.set("upstream_provider", provider);
+                }
                 ctx.error = None;
                 ctx.response = Some(response);
             }
-            Err(error) => {
+            (Err(error), provider) => {
+                if let Some(provider) = provider {
+                    ctx.set("upstream_provider", provider);
+                }
                 ctx.error = Some(error);
                 ctx.fail_servfail();
             }

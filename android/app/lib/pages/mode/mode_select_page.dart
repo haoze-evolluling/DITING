@@ -1,5 +1,6 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/router.dart';
+import 'package:diting_shared/routes/branches.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
@@ -74,10 +75,6 @@ class _ModeSelectPageState extends ConsumerState<ModeSelectPage> {
                     expanded: expanded == mode,
                     onPressed: () => _select(mode),
                   ),
-                _ServerModeEntryCard(
-                  onPressed: () =>
-                      context.push(Routes.modeServerPlaceholder),
-                ),
               ],
             ),
           ),
@@ -186,6 +183,7 @@ class _WorkModeCard extends StatelessWidget {
   static Glyph _glyphOf(AppWorkMode mode) => switch (mode) {
     AppWorkMode.normal => AppGlyphs.layers,
     AppWorkMode.express => AppGlyphs.bolt,
+    AppWorkMode.server => AppGlyphs.dns,
   };
 }
 
@@ -224,6 +222,28 @@ class _ModeFeatureList extends StatelessWidget {
         AppGlyphs.devices,
         l10n.modeExpressFeature4,
         l10n.modeExpressFeature4Body,
+      ),
+    ],
+    AppWorkMode.server: [
+      (
+        AppGlyphs.dns,
+        l10n.modeServerFeature1,
+        l10n.modeServerFeature1Body,
+      ),
+      (
+        AppGlyphs.wifi,
+        l10n.modeServerFeature2,
+        l10n.modeServerFeature2Body,
+      ),
+      (
+        AppGlyphs.rules,
+        l10n.modeServerFeature3,
+        l10n.modeServerFeature3Body,
+      ),
+      (
+        AppGlyphs.logs,
+        l10n.modeServerFeature4,
+        l10n.modeServerFeature4Body,
       ),
     ],
   };
@@ -275,69 +295,6 @@ class _ModeFeatureList extends StatelessWidget {
                 ),
               ],
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The retained server-mode entry. It is deliberately not a selectable [AppWorkMode]: tapping it
-/// opens the placeholder page and leaves the current work mode untouched.
-class _ServerModeEntryCard extends StatelessWidget {
-  const _ServerModeEntryCard({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return CommonCard(
-      onPressed: onPressed,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Row(
-        spacing: 12,
-        children: [
-          IconBadge(
-            glyph: AppGlyphs.dns,
-            size: 44,
-            glyphSize: 24,
-            color: colorScheme.surfaceContainerHigh,
-            foregroundColor: colorScheme.onSurfaceVariant,
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 3,
-              children: [
-                Row(
-                  spacing: 6,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        context.l10n.workModeServerTitle,
-                        style: AppTextStyle.headline.of(
-                          context,
-                          emphasized: true,
-                        ),
-                      ),
-                    ),
-                    MetaChip(label: context.l10n.workModeServerBadge),
-                  ],
-                ),
-                Text(
-                  context.l10n.workModeServerSummary,
-                  style: AppTextStyle.footnote
-                      .of(context)
-                      .copyWith(color: colorScheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-          ),
-          GlyphIcon(
-            AppGlyphs.chevronForward,
-            size: 18,
-            color: colorScheme.onSurfaceVariant,
-          ),
         ],
       ),
     );

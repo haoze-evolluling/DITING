@@ -144,6 +144,7 @@ class DitingWidgetProvider : AppWidgetProvider() {
 
     private fun modeLabel(context: Context, workMode: String): String = context.getString(
         when (workMode) {
+            DataPlaneControl.WORK_MODE_SERVER -> R.string.widget_mode_server
             DataPlaneControl.WORK_MODE_EXPRESS -> R.string.widget_mode_express
             else -> R.string.widget_mode_normal
         },

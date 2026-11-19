@@ -40,6 +40,80 @@ pub struct DnsServer {
     lifecycle: AsyncMutex<()>,
 }
 
+/// A set of already-bound standard sockets.
+///
+/// Android's root startup binds port 53 first, drops to the application UID and only then creates
+/// the async runtime. Adopting these sockets keeps that privilege boundary exact: no worker or
+/// writer thread is ever started while the process still runs as root.
+pub struct BoundDnsSockets {
+    udp: Vec<std::net::UdpSocket>,
+    tcp: Vec<std::net::TcpListener>,
+}
+
+impl BoundDnsSockets {
+    /// Binds every configured socket synchronously. IPv6 failures are tolerated; an IPv4 failure
+    /// aborts, matching the async listener.
+    pub fn bind(config: &ServerConfig) -> Result<Self, String> {
+        let config = config.clone().normalized();
+        let mut udp = Vec::new();
+        let mut tcp = Vec::new();
+        for address in &config.udp_addresses {
+            match std::net::UdpSocket::bind(address.as_str()) {
+                Ok(socket) => {
+                    socket
+                        .set_nonblocking(true)
+                        .map_err(|error| format!("configure udp {address} failed: {error}"))?;
+                    udp.push(socket);
+                }
+                Err(_error) if config::is_ipv6(address) => continue,
+                Err(error) => return Err(format!("bind udp {address} failed: {error}")),
+            }
+        }
+        for address in &config.tcp_addresses {
+            match std::net::TcpListener::bind(address.as_str()) {
+                Ok(listener) => {
+                    listener
+                        .set_nonblocking(true)
+                        .map_err(|error| format!("configure tcp {address} failed: {error}"))?;
+                    tcp.push(listener);
+                }
+                Err(_error) if config::is_ipv6(address) => continue,
+                Err(error) => return Err(format!("bind tcp {address} failed: {error}")),
+            }
+        }
+        if udp.is_empty() && tcp.is_empty() {
+            return Err(
+                "failed to bind any DNS listener (all UDP/TCP listeners failed)".to_string(),
+            );
+        }
+        Ok(Self { udp, tcp })
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.udp.is_empty() && self.tcp.is_empty()
+    }
+
+    /// The addresses that actually bound. IPv6 failures are omitted instead of being reported as
+    /// active, so management UIs can show the real listener set.
+    pub fn addresses(&self) -> Vec<String> {
+        let mut addresses: Vec<String> = self
+            .udp
+            .iter()
+            .filter_map(|socket| socket.local_addr().ok())
+            .map(|address| address.to_string())
+            .collect();
+        addresses.extend(
+            self.tcp
+                .iter()
+                .filter_map(|listener| listener.local_addr().ok())
+                .map(|address| address.to_string()),
+        );
+        addresses.sort();
+        addresses.dedup();
+        addresses
+    }
+}
+
 impl DnsServer {
     pub fn new(config: ServerConfig, pipeline: Arc<Pipeline>) -> Self {
         Self {
@@ -64,20 +138,38 @@ impl DnsServer {
     /// Binds every configured socket. IPv6 bind failures are tolerated (some hosts disable IPv6);
     /// a failure on any IPv4 address aborts, matching the Go service.
     pub async fn start(&self) -> Result<(), String> {
+        self.start_inner(None).await
+    }
+
+    /// Starts on sockets that were bound before the runtime existed.
+    pub async fn start_with_bound(&self, bound: BoundDnsSockets) -> Result<(), String> {
+        self.start_inner(Some(bound)).await
+    }
+
+    async fn start_inner(&self, bound: Option<BoundDnsSockets>) -> Result<(), String> {
         let _lifecycle = self.lifecycle.lock().await;
-        if self.started.swap(true, Ordering::SeqCst) {
+        if self.started.load(Ordering::SeqCst) {
             return Err("server already started".to_string());
         }
+        let bound = match bound {
+            Some(bound) => bound,
+            None => BoundDnsSockets::bind(&self.config)?,
+        };
+        self.started.store(true, Ordering::SeqCst);
         self.closed.store(false, Ordering::SeqCst);
         let (tx, rx) = watch::channel(false);
         let permits = Arc::new(Semaphore::new(MAX_INFLIGHT));
         let mut tasks = Vec::new();
-        let mut bound = 0usize;
+        let mut bound_count = 0usize;
 
-        for address in &self.config.udp_addresses {
-            match UdpSocket::bind(address.as_str()).await {
+        for socket in bound.udp {
+            let address = socket
+                .local_addr()
+                .map(|address| address.to_string())
+                .unwrap_or_else(|_| "udp socket".to_string());
+            match UdpSocket::from_std(socket) {
                 Ok(socket) => {
-                    bound += 1;
+                    bound_count += 1;
                     let socket = Arc::new(socket);
                     let pipeline = self.pipeline.clone();
                     let timeout = self.config.query_timeout();
@@ -88,21 +180,22 @@ impl DnsServer {
                     }));
                 }
                 Err(error) => {
-                    if config::is_ipv6(address) {
-                        continue;
-                    }
                     self.abort_all(&mut tasks).await;
                     *self.shutdown.lock().unwrap() = None;
                     self.started.store(false, Ordering::SeqCst);
-                    return Err(format!("bind udp {address} failed: {error}"));
+                    return Err(format!("adopt udp {address} failed: {error}"));
                 }
             }
         }
 
-        for address in &self.config.tcp_addresses {
-            match TcpListener::bind(address.as_str()).await {
+        for listener in bound.tcp {
+            let address = listener
+                .local_addr()
+                .map(|address| address.to_string())
+                .unwrap_or_else(|_| "tcp listener".to_string());
+            match TcpListener::from_std(listener) {
                 Ok(listener) => {
-                    bound += 1;
+                    bound_count += 1;
                     let pipeline = self.pipeline.clone();
                     let timeout = self.config.query_timeout();
                     let read_timeout = self.config.read_timeout;
@@ -113,18 +206,15 @@ impl DnsServer {
                     }));
                 }
                 Err(error) => {
-                    if config::is_ipv6(address) {
-                        continue;
-                    }
                     self.abort_all(&mut tasks).await;
                     *self.shutdown.lock().unwrap() = None;
                     self.started.store(false, Ordering::SeqCst);
-                    return Err(format!("bind tcp {address} failed: {error}"));
+                    return Err(format!("adopt tcp {address} failed: {error}"));
                 }
             }
         }
 
-        if bound == 0 {
+        if bound_count == 0 {
             self.abort_all(&mut tasks).await;
             self.started.store(false, Ordering::SeqCst);
             return Err(

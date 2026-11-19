@@ -94,8 +94,10 @@ void _layoutRegression() {
     Routes.subscriptions,
     Routes.about,
     Routes.modeSelect,
-    Routes.modeServerPlaceholder,
     Routes.modeOnboarding,
+    Routes.server,
+    Routes.serverHub,
+    Routes.serverLogs,
     ...topLevelRoutes.values,
     ...idRoutes.values,
   ];

@@ -71,6 +71,21 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 - `test_api` 是 `flutter_test` 的紧邻内部依赖：升级 Flutter 后先用 `flutter test` 复验；一旦 SDK
   放宽了对这两个包的约束，再按需提升 `shared/pubspec.yaml` 中的 `material_color_utilities` 约束。
 
+## Android 原生产物
+
+`rust/build_android.py` 为每个 ABI 输出三个文件，全部由 Gradle 的 `checkNativeLibs<Variant>`
+检查：
+
+| 文件 | 用途 |
+| --- | --- |
+| `libditing_engine.so` | 普通/极速模式的隧道引擎 |
+| `libditing_kernels.so` | Dart/Kotlin 调用的合并 UI 内核 |
+| `libditing_server.so` | 服务器模式的独立 DNS 可执行文件 |
+
+`libditing_server.so` 实际是可执行文件，只是借用 `.so` 后缀让 Android 原生库打包流程解压到
+`nativeLibraryDir`。Manifest 因此显式保留 `android:extractNativeLibs="true"`；缺少该文件时
+Gradle 构建会直接失败，服务器设置会报告“可执行文件缺失”而不是静默降级。
+
 ## 跑测试（native assets 与资源包）
 
 `flutter test` 要在各个 app 目录里跑：

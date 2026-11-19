@@ -14,6 +14,7 @@ import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/outbound_proxy_providers.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
+import 'package:diting_android/state/server_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,26 +23,30 @@ export 'package:diting_android/state/provider_catalog_providers.dart';
 
 part 'work_mode_power.dart';
 
-/// The two work modes: `normal` (full-tunnel Rust engine) and `express` (narrow Rust route).
+/// Work modes: `normal` (full tunnel), `express` (narrow DNS route) and `server` (LAN DNS).
 enum AppWorkMode {
   normal('normal'),
-  express('express');
+  express('express'),
+  server('server');
 
   const AppWorkMode(this.storageValue);
 
   String title(AppL10n l10n) => switch (this) {
     AppWorkMode.normal => l10n.workModeNormalTitle,
     AppWorkMode.express => l10n.workModeExpressTitle,
+    AppWorkMode.server => l10n.workModeServerTitle,
   };
 
   String badge(AppL10n l10n) => switch (this) {
     AppWorkMode.normal => l10n.workModeNormalBadge,
     AppWorkMode.express => l10n.workModeExpressBadge,
+    AppWorkMode.server => l10n.workModeServerBadge,
   };
 
   String summary(AppL10n l10n) => switch (this) {
     AppWorkMode.normal => l10n.workModeNormalSummary,
     AppWorkMode.express => l10n.workModeExpressSummary,
+    AppWorkMode.server => l10n.workModeServerSummary,
   };
 
   /// Persisted legacy `app_work_mode` value.
@@ -70,6 +75,9 @@ class WorkModeNotifier extends Notifier<AppWorkMode> {
       final power = ref.read(powerProvider);
       if (power.isRunning || power == PowerState.starting) {
         unawaited(ref.read(powerProvider.notifier).stop());
+      }
+      if (previous == AppWorkMode.server) {
+        unawaited(ref.read(serverClientProvider).stop());
       }
     }
     // Persist, then bump, then publish: the dataset-aware settings view has to point at the new

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Cross-compile the Rust libraries for Android and drop them into the Flutter app's jniLibs.
+"""Cross-compile the Rust artifacts for Android and drop them into the Flutter app's jniLibs.
 
-Two libraries are built: `libditing_engine.so` (the tunnel data plane, unchanged) plus
+Three artifacts are built: `libditing_engine.so` (the tunnel data plane),
+`libditing_server.so` (the standalone LAN DNS service, packaged as a `.so` so Android extracts
+it and the app can execute it from `nativeLibraryDir`), and
 `libditing_kernels.so` — the UI-side kernels Dart and Kotlin call directly, linked into one cdylib
 by the `diting-kernels` umbrella crate. The engine stays its own `.so` on purpose: it has no
 duplicated std/dependency bytes to share and is kept isolated from the UI-side kernels.
@@ -106,15 +108,18 @@ from pathlib import Path
 RUST_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = RUST_DIR.parent
 JNI_LIBS_DIR = PROJECT_ROOT / "android" / "app" / "android" / "app" / "src" / "main" / "jniLibs"
-# Two artifacts ship per ABI: the engine (data plane) and the merged UI-kernel library. Each is
-# copied into `lib/<abi>/` (on the loader search path for the app). The engine-side kernels are
+# Three artifacts ship per ABI: the engine (data plane), the merged UI-kernel library and the
+# standalone LAN DNS executable. Each is copied into `lib/<abi>/`. The engine-side kernels are
 # statically linked into `libditing_engine.so`; the sixteen UI kernels are statically linked into
-# `libditing_kernels.so`. The desktop-only kernels are not part of the APK and are built by their
-# own `cargo test`/desktop steps.
+# `libditing_kernels.so`; `libditing_server.so` is an executable, not a shared library. The
+# desktop-only kernels are not part of the APK and are built by their own `cargo test`/desktop
+# steps.
 LIB_NAMES = (
     "libditing_engine.so",
     "libditing_kernels.so",
 )
+SERVER_BINARY = "diting-server"
+SERVER_LIBRARY = "libditing_server.so"
 ANDROID_API = 28
 
 # Gradle ABI name -> Rust target triple.
@@ -213,6 +218,8 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "diting-engine",
         "-p",
         "diting-kernels",
+        "-p",
+        "diting-server",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",
@@ -235,6 +242,12 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
             return None
         shutil.copy2(artifact, destination / library)
         log(f"{artifact.name} -> {destination / library}")
+    server_artifact = RUST_DIR / "target" / triple / profile / SERVER_BINARY
+    if not server_artifact.is_file():
+        log(f"构建产物缺失: {server_artifact}")
+        return None
+    shutil.copy2(server_artifact, destination / SERVER_LIBRARY)
+    log(f"{server_artifact.name} -> {destination / SERVER_LIBRARY}")
     # Libraries from an earlier (34-library) layout would otherwise linger in `jniLibs` and be
     # packaged again, so the engine-side kernels are removed on the way out.
     for stale in destination.glob("libditing_*_core.so"):
@@ -245,7 +258,9 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="为 Android 构建 Rust 隧道引擎与合并后的 UI 内核库（2 个 .so）")
+    parser = argparse.ArgumentParser(
+        description="为 Android 构建隧道引擎、UI 内核库与独立 DNS 服务（3 个 .so）"
+    )
     parser.add_argument(
         "--abi",
         choices=["all", "arm64", "x86_64"],

@@ -1,6 +1,8 @@
 import 'package:diting_android/state/dashboard_providers.dart';
+import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
+import 'fake_server_client.dart';
 // `Override` is only exported from `misc.dart`, not `flutter_riverpod.dart`.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -35,6 +37,7 @@ List<Override> appTestOverrides({
     workModeSelectedProvider.overrideWith(WorkModeSelected.new),
     onboardingProvider.overrideWith(OnboardingCompleted.new),
   ],
+  serverClientProvider.overrideWithValue(FakeServerClient()),
 ];
 
 /// Always reports the agreement as accepted, injected by [appTestOverrides].

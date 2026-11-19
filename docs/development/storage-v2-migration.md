@@ -5,6 +5,10 @@
 > 目标版本：2.4.10 之后的下一个正式版本
 > 关联模块：`shared/lib/data/db`、`android/app/lib/data/db`、`android/app/android/app/src/main/kotlin/com/haoze/diting`
 
+> 服务器模式已重建为独立 Rust 进程 + JSONL 查询日志，不再使用下文中的 `dns` 模式 SQLite
+> 库与偏好容器。本文保留当时的三模式迁移记录，相关服务器库仅作为 `ServerModeRetirement`
+> 的清理对象，见 [Android 服务器模式](server-mode.md)。
+
 ## 1. 背景与目标
 
 当前应用存在三种工作模式：

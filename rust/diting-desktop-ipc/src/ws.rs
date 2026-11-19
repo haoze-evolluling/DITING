@@ -313,11 +313,17 @@ impl QueryObserver for DesktopQueryObserver {
             rcode: event.rcode.clone(),
             status: event.status.to_string(),
             cached: !event.cache_hit.is_empty(),
+            ttl: ctx
+                .response
+                .as_ref()
+                .and_then(|wire| diting_dns_wire::parse_response(wire))
+                .and_then(|meta| meta.min_ttl),
             cache_hit: event.cache_hit.clone(),
             blocked: event.blocked,
             filter_rule: event.filter_rule.clone(),
             filter_reason: event.filter_reason.clone(),
             protocol: event.protocol.clone(),
+            upstream_provider: attribute(ctx, "upstream_provider"),
             error: event.error.clone(),
         });
 

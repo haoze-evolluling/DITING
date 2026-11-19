@@ -35,6 +35,7 @@ class _ChooseModeStep extends StatelessWidget {
   static Glyph _glyphOf(AppWorkMode mode) => switch (mode) {
     AppWorkMode.normal => AppGlyphs.layers,
     AppWorkMode.express => AppGlyphs.bolt,
+    AppWorkMode.server => AppGlyphs.dns,
   };
 }
 
@@ -101,6 +102,10 @@ class _PermissionStep extends ConsumerWidget {
         _notificationPermission(l10n),
         _batteryPermission(l10n, l10n.permBatteryBody),
       ],
+      AppWorkMode.server => [
+        _notificationPermission(l10n),
+        _batteryPermission(l10n, l10n.permBatteryBody),
+      ],
     };
     final snapshot = ref.watch(permissionStatesProvider).value;
     final grantedCount = permissions
@@ -143,6 +148,11 @@ class _FinishStep extends StatelessWidget {
         context.l10n.onboardingTipExpress1,
         context.l10n.onboardingTipExpress2,
         context.l10n.onboardingTipExpress3,
+      ],
+      AppWorkMode.server => [
+        context.l10n.onboardingTipServer1,
+        context.l10n.onboardingTipServer2,
+        context.l10n.onboardingTipServer3,
       ],
     };
     return _StepScaffold(

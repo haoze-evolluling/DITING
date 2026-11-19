@@ -70,13 +70,29 @@ impl ResolverSet {
     /// Resolves one wire query. `group` is the client group id; empty or `default` means the main
     /// chain. Conditional routes are consulted only when no group owns the query.
     pub async fn resolve(&self, query: &[u8], group: &str) -> Result<Vec<u8>, String> {
+        self.resolve_attributed(query, group).await.0
+    }
+
+    /// Same as [`resolve`](Self::resolve), plus the provider id that answered or was last tried.
+    /// A fallback replaces the primary's attribution because its answer is what reaches the client.
+    pub async fn resolve_attributed(
+        &self,
+        query: &[u8],
+        group: &str,
+    ) -> (Result<Vec<u8>, String>, Option<String>) {
         let resolver = self.select(query, group);
-        let outcome = match self.fallback_timeout {
+        let (outcome, provider) = match self.fallback_timeout {
             Some(timeout) => match tokio::time::timeout(timeout, resolver.resolve(query)).await {
-                Ok((result, _)) => result,
-                Err(_) => Err("primary resolver timed out".to_string()),
+                Ok((result, event)) => (result, event_provider(event)),
+                Err(_) => (
+                    Err("primary resolver timed out".to_string()),
+                    Some("primary timeout".to_string()),
+                ),
             },
-            None => resolver.resolve(query).await.0,
+            None => {
+                let (result, event) = resolver.resolve(query).await;
+                (result, event_provider(event))
+            }
         };
 
         let should_fallback = match &outcome {
@@ -88,10 +104,11 @@ impl ResolverSet {
         };
         if should_fallback {
             if let Some(fallback) = &self.fallback {
-                return fallback.resolve(query).await.0;
+                let (result, event) = fallback.resolve(query).await;
+                return (result, event_provider(event).or(provider));
             }
         }
-        outcome
+        (outcome, provider)
     }
 
     fn select(&self, query: &[u8], group: &str) -> &Resolver {
@@ -282,6 +299,15 @@ impl DesktopResolver {
         self.current().resolve(query, group).await
     }
 
+    /// Attribution-aware variant used by the DNS forward stage.
+    pub async fn resolve_attributed(
+        &self,
+        query: &[u8],
+        group: &str,
+    ) -> (Result<Vec<u8>, String>, Option<String>) {
+        self.current().resolve_attributed(query, group).await
+    }
+
     /// Per-provider statistics keyed by configured id; empty before the first configure.
     pub fn provider_stats(&self) -> Vec<(String, diting_resolver_core::stats::Snapshot)> {
         self.current().provider_stats()
@@ -452,4 +478,15 @@ fn query_domain(query: &[u8]) -> Option<String> {
 
 fn response_rcode(response: &[u8]) -> Option<i32> {
     diting_dns_wire::parse_response(response).map(|meta| i32::from(meta.rcode))
+}
+
+fn event_provider(event: Option<diting_engine::logs::RaceEvent>) -> Option<String> {
+    event.and_then(|event| {
+        let id = if !event.winner_provider_id.is_empty() {
+            event.winner_provider_id
+        } else {
+            event.selected_provider_id
+        };
+        (!id.is_empty()).then_some(id)
+    })
 }
