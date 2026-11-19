@@ -1,7 +1,7 @@
 {
-  "version": 7,
+  "version": 8,
   "sponsors": [
-    { "name": "alone", "avatarFileName": "alone_avatar.jpg", "count": 9999 },
+    { "name": "alone", "avatarFileName": "alone_avatar.jpg", "count": 9999, "frame": "rainbow" },
     { "name": "睿上源", "avatarFileName": "ruishangyuan_avatar.jpg" },
     { "name": "理塘丁真", "avatarFileName": "litangdingzhen_avatar.jpg" },
     { "name": "天涯浮客", "avatarFileName": "tianyafuke_avatar.jpg" },
@@ -22,7 +22,7 @@
   ],
   "coBuilders": [
     { "name": "AceTaffy1883", "avatarFileName": "acetaffy1883_avatar.jpg" },
-    { "name": "alone", "avatarFileName": "alone_avatar.jpg" },
+    { "name": "alone", "avatarFileName": "alone_avatar.jpg", "frame": "rainbow" },
     { "name": "恐龙复生", "avatarFileName": "konglongfusheng_avatar.jpg" },
     { "name": "乐野", "avatarFileName": "leye_avatar.jpg" },
     { "name": "理塘丁真", "avatarFileName": "litangdingzhen_avatar.jpg" },
