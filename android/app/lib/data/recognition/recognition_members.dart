@@ -1,4 +1,4 @@
-/// Data model for the sponsor / co-builder list; validation runs in
+/// Data model for the sponsor list; validation runs in
 /// `rust/diting-recognition-core`, and any failure throws [FormatException] so callers keep the last
 /// good cache.
 library;
@@ -39,23 +39,13 @@ class RecognitionMember {
 }
 
 class RecognitionMembers {
-  const RecognitionMembers({
-    required this.version,
-    required this.sponsors,
-    required this.coBuilders,
-  });
+  const RecognitionMembers({required this.version, required this.sponsors});
 
   final int version;
 
   final List<RecognitionMember> sponsors;
 
-  final List<RecognitionMember> coBuilders;
-
-  static const empty = RecognitionMembers(
-    version: 0,
-    sponsors: [],
-    coBuilders: [],
-  );
+  static const empty = RecognitionMembers(version: 0, sponsors: []);
 }
 
 List<RecognitionMember> _membersFromParsed(Object? raw) {
@@ -81,6 +71,5 @@ RecognitionMembers parseRecognitionMembers(String raw) {
   return RecognitionMembers(
     version: (answer['version'] as num).toInt(),
     sponsors: _membersFromParsed(answer['sponsors']),
-    coBuilders: _membersFromParsed(answer['coBuilders']),
   );
 }

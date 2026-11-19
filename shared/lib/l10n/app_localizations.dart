@@ -4638,18 +4638,6 @@ abstract class AppL10n {
   /// **'鸣谢支持谛听项目的赞助者'**
   String get hubSponsorsDescription;
 
-  /// No description provided for @hubContributors.
-  ///
-  /// In zh, this message translates to:
-  /// **'共建者名单'**
-  String get hubContributors;
-
-  /// No description provided for @hubContributorsDescription.
-  ///
-  /// In zh, this message translates to:
-  /// **'感谢为谛听贡献代码与建议的共建者'**
-  String get hubContributorsDescription;
-
   /// No description provided for @fontSizeSmall.
   ///
   /// In zh, this message translates to:
@@ -8255,18 +8243,6 @@ abstract class AppL10n {
   /// **'鸣谢支持谛听项目的赞助者'**
   String get aboutSponsorListBody;
 
-  /// No description provided for @aboutBuilderList.
-  ///
-  /// In zh, this message translates to:
-  /// **'共建者名单'**
-  String get aboutBuilderList;
-
-  /// No description provided for @aboutBuilderListBody.
-  ///
-  /// In zh, this message translates to:
-  /// **'感谢为谛听贡献代码与建议的共建者'**
-  String get aboutBuilderListBody;
-
   /// No description provided for @aboutInstallerFailed.
   ///
   /// In zh, this message translates to:
@@ -8728,12 +8704,6 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'感谢每一位支持项目的朋友'**
   String get sponsorThanksBody;
-
-  /// No description provided for @sponsorBuildersBody.
-  ///
-  /// In zh, this message translates to:
-  /// **'感谢提出建议与帮助测试的伙伴'**
-  String get sponsorBuildersBody;
 
   /// No description provided for @sponsorUsage.
   ///
@@ -12051,24 +12021,6 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'赞助者'**
   String get recognitionSponsorSection;
-
-  /// No description provided for @recognitionBuilderTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'共建者名单'**
-  String get recognitionBuilderTitle;
-
-  /// No description provided for @recognitionBuilderIntro.
-  ///
-  /// In zh, this message translates to:
-  /// **'感谢每一位为谛听提出建议、帮助测试的共建者！名单按用户名称的字母顺序排列，中文名称按拼音排序。'**
-  String get recognitionBuilderIntro;
-
-  /// No description provided for @recognitionBuilderSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'共建者'**
-  String get recognitionBuilderSection;
 
   /// No description provided for @providerVisibilityTitle.
   ///

@@ -51,12 +51,6 @@ class SponsorPage extends StatelessWidget {
                 subtitle: context.l10n.sponsorThanksBody,
                 onPressed: () => context.push(HubPaths.sponsorList),
               ),
-              NavEntryRow(
-                glyph: AppGlyphs.account,
-                title: context.l10n.aboutBuilderList,
-                subtitle: context.l10n.sponsorBuildersBody,
-                onPressed: () => context.push(HubPaths.coBuilders),
-              ),
             ],
           ),
           generateSection(

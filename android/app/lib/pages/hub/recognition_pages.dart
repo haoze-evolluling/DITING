@@ -1,4 +1,4 @@
-/// Sponsor and co-builder lists (upstream `SponsorListScreen`), from remote JSON.
+/// Sponsor list (upstream `SponsorListScreen`), from remote JSON.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -12,26 +12,10 @@ class SponsorListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return RecognitionListPage(
       title: context.l10n.recognitionSponsorTitle,
-      intro:
-          context.l10n.recognitionSponsorIntro,
+      intro: context.l10n.recognitionSponsorIntro,
       sectionTitle: context.l10n.recognitionSponsorSection,
       select: (members) => members.sponsors,
       sortable: true,
-    );
-  }
-}
-
-class CoBuildersPage extends StatelessWidget {
-  const CoBuildersPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return RecognitionListPage(
-      title: context.l10n.recognitionBuilderTitle,
-      intro:
-          context.l10n.recognitionBuilderIntro,
-      sectionTitle: context.l10n.recognitionBuilderSection,
-      select: (members) => members.coBuilders,
     );
   }
 }

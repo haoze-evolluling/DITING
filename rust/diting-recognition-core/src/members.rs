@@ -23,11 +23,7 @@ fn is_avatar_file_name(name: &str) -> bool {
             .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '_')
 }
 
-fn parse_field(
-    raw: Option<&Value>,
-    field: &str,
-    with_sponsor_count: bool,
-) -> Result<Vec<Value>, String> {
+fn parse_field(raw: Option<&Value>, field: &str) -> Result<Vec<Value>, String> {
     let Some(items) = raw.and_then(Value::as_array) else {
         return Err(format!("名单配置缺少 {field} 数组"));
     };
@@ -83,28 +79,25 @@ fn parse_field(
             }
             Some(_) => return Err(format!("{field} 中 {name} 的头像框类型错误")),
         };
-        let mut member = json!({
+        // Absent means "sponsored once"; the UI only draws a badge when the value is above one.
+        let count = match object.get("count") {
+            None | Some(Value::Null) => 1,
+            Some(value) => match value.as_i64() {
+                Some(count) if (1..=MAX_SPONSOR_COUNT).contains(&count) => count,
+                _ => return Err(format!("{field} 中 {name} 的赞助次数无效")),
+            },
+        };
+        members.push(json!({
             "name": name,
             "avatarFileName": avatar,
+            "count": count,
             "frame": frame,
-        });
-        if with_sponsor_count {
-            // Absent means "sponsored once"; the UI only draws a badge when the value is above one.
-            let count = match object.get("count") {
-                None | Some(Value::Null) => 1,
-                Some(value) => match value.as_i64() {
-                    Some(count) if (1..=MAX_SPONSOR_COUNT).contains(&count) => count,
-                    _ => return Err(format!("{field} 中 {name} 的赞助次数无效")),
-                },
-            };
-            member["count"] = json!(count);
-        }
-        members.push(member);
+        }));
     }
     Ok(members)
 }
 
-/// Returns `{ok:true, version, sponsors, coBuilders}` or `{ok:false, error}`.
+/// Returns `{ok:true, version, sponsors}` or `{ok:false, error}`.
 pub fn parse_members(raw: &str) -> Value {
     let decoded: Value = match serde_json::from_str(raw) {
         Ok(value) => value,
@@ -118,11 +111,7 @@ pub fn parse_members(raw: &str) -> Value {
     let Some(version) = object.get("version").and_then(Value::as_i64) else {
         return json!({ "ok": false, "error": "名单配置缺少版本号" });
     };
-    let sponsors = match parse_field(object.get("sponsors"), "sponsors", true) {
-        Ok(members) => members,
-        Err(error) => return json!({ "ok": false, "error": error }),
-    };
-    let co_builders = match parse_field(object.get("coBuilders"), "coBuilders", false) {
+    let sponsors = match parse_field(object.get("sponsors"), "sponsors") {
         Ok(members) => members,
         Err(error) => return json!({ "ok": false, "error": error }),
     };
@@ -130,7 +119,6 @@ pub fn parse_members(raw: &str) -> Value {
         "ok": true,
         "version": version,
         "sponsors": sponsors,
-        "coBuilders": co_builders,
     })
 }
 
@@ -141,7 +129,7 @@ mod tests {
     #[test]
     fn valid_document_trims_and_preserves_order() {
         let answer = parse_members(
-            r#"{"version":2,"sponsors":[{"name":" a ","avatarFileName":" a_avatar.jpg "},{"name":"b"}],"coBuilders":[]}"#,
+            r#"{"version":2,"sponsors":[{"name":" a ","avatarFileName":" a_avatar.jpg "},{"name":"b"}]}"#,
         );
         assert_eq!(answer["ok"], true);
         assert_eq!(answer["version"], 2);
@@ -155,44 +143,34 @@ mod tests {
 
     #[test]
     fn avatar_frame_passes_through_and_is_checked() {
-        let answer = parse_members(
-            r#"{"version":7,"sponsors":[{"name":"healer","frame":" rainbow "}],"coBuilders":[]}"#,
-        );
+        let answer =
+            parse_members(r#"{"version":7,"sponsors":[{"name":"healer","frame":" rainbow "}]}"#);
         assert_eq!(answer["ok"], true);
         assert_eq!(answer["sponsors"][0]["frame"], "rainbow");
-        // The two lists share the field; only the value matters.
-        let answer = parse_members(
-            r#"{"version":2,"sponsors":[],"coBuilders":[{"name":"b","frame":"rainbow"}]}"#,
-        );
-        assert_eq!(answer["coBuilders"][0]["frame"], "rainbow");
         for raw in [
-            r#"{"version":1,"sponsors":[{"name":"a","frame":"Rouge"}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","frame":1}],"coBuilders":[]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","frame":"Rouge"}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","frame":1}]}"#,
         ] {
             assert_eq!(parse_members(raw)["ok"], false, "{raw}");
         }
     }
 
     #[test]
-    fn sponsor_count_passes_through_but_co_builders_have_none() {
-        let answer = parse_members(
-            r#"{"version":3,"sponsors":[{"name":"healer","count":2}],"coBuilders":[{"name":"b","count":2}]}"#,
-        );
+    fn sponsor_count_passes_through() {
+        let answer = parse_members(r#"{"version":3,"sponsors":[{"name":"healer","count":4}]}"#);
         assert_eq!(answer["ok"], true);
-        assert_eq!(answer["sponsors"][0]["count"], 2);
-        // A repeat count only means something for sponsors.
-        assert!(answer["coBuilders"][0].get("count").is_none());
+        assert_eq!(answer["sponsors"][0]["count"], 4);
     }
 
     #[test]
     fn invalid_sponsor_count_rejects_the_document() {
         for raw in [
-            r#"{"version":1,"sponsors":[{"name":"a","count":0}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","count":-1}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","count":1.5}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","count":"2"}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","count":10000}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","count":true}],"coBuilders":[]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","count":0}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","count":-1}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","count":1.5}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","count":"2"}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","count":10000}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","count":true}]}"#,
         ] {
             assert_eq!(parse_members(raw)["ok"], false, "{raw}");
         }
@@ -203,9 +181,9 @@ mod tests {
         for raw in [
             "not json",
             "[]",
-            r#"{"sponsors":[],"coBuilders":[]}"#,
-            r#"{"version":"1","sponsors":[],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[],"coBuilders":{}}"#,
+            r#"{"sponsors":[]}"#,
+            r#"{"version":"1","sponsors":[]}"#,
+            r#"{"version":1,"sponsors":{}}"#,
         ] {
             assert_eq!(parse_members(raw)["ok"], false, "{raw}");
         }
@@ -214,13 +192,13 @@ mod tests {
     #[test]
     fn bad_entries_reject_the_whole_document() {
         for raw in [
-            r#"{"version":1,"sponsors":[{}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"  "}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a"},{"name":" a "}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","avatarFileName":1}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","avatarFileName":"A.png"}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a","avatarFileName":"x_avatar.jpg"},{"name":"b","avatarFileName":" x_avatar.jpg "}],"coBuilders":[]}"#,
-            r#"{"version":1,"sponsors":[{"name":"a"},1],"coBuilders":[]}"#,
+            r#"{"version":1,"sponsors":[{}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"  "}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a"},{"name":" a "}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","avatarFileName":1}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","avatarFileName":"A.png"}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a","avatarFileName":"x_avatar.jpg"},{"name":"b","avatarFileName":" x_avatar.jpg "}]}"#,
+            r#"{"version":1,"sponsors":[{"name":"a"},1]}"#,
         ] {
             assert_eq!(parse_members(raw)["ok"], false, "{raw}");
         }

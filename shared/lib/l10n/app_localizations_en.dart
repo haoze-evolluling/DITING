@@ -2591,13 +2591,6 @@ class AppL10nEn extends AppL10n {
       'Thanks to everyone who supports the project';
 
   @override
-  String get hubContributors => 'Contributors';
-
-  @override
-  String get hubContributorsDescription =>
-      'Thanks to everyone who contributed code and ideas';
-
-  @override
   String get fontSizeSmall => 'Small';
 
   @override
@@ -4701,13 +4694,6 @@ class AppL10nEn extends AppL10n {
   String get aboutSponsorListBody => 'Thanks to everyone who supported Diting';
 
   @override
-  String get aboutBuilderList => 'Contributors';
-
-  @override
-  String get aboutBuilderListBody =>
-      'Thanks to everyone who contributed code and ideas';
-
-  @override
   String get aboutInstallerFailed => 'The system installer cannot be launched';
 
   @override
@@ -4987,10 +4973,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get sponsorThanksBody => 'Thanks to everyone who supports the project';
-
-  @override
-  String get sponsorBuildersBody =>
-      'Thanks to everyone who shared ideas and helped test';
 
   @override
   String get sponsorUsage => 'Every contribution goes towards';
@@ -6910,16 +6892,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get recognitionSponsorSection => 'Sponsors';
-
-  @override
-  String get recognitionBuilderTitle => 'Contributors';
-
-  @override
-  String get recognitionBuilderIntro =>
-      'Thanks to everyone who suggested ideas and helped test Diting! Names are sorted alphabetically, with Chinese names sorted by pinyin.';
-
-  @override
-  String get recognitionBuilderSection => 'Contributors';
 
   @override
   String get providerVisibilityTitle => 'Provider visibility';

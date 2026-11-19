@@ -129,7 +129,7 @@ mod tests {
         assert!(handle_operation(&json!({ "op": "plan" })).is_some());
         let parsed = handle_operation(&json!({
             "op": "parse",
-            "raw": r#"{"version":1,"sponsors":[],"coBuilders":[]}"#,
+            "raw": r#"{"version":1,"sponsors":[]}"#,
         }))
         .unwrap();
         assert_eq!(parsed["ok"], true);

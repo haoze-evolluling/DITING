@@ -63,7 +63,7 @@ DITING/
 ├── shared/                  # 两端共用：设计系统、主题、l10n、配置与 SQLite 读取
 ├── rust/                    # Rust 内核 crate 与 Android 隧道引擎（diting-engine；构建/校验脚本同目录）
 ├── docs/                    # 开发文档与静态资源
-├── avatars/                 # 赞助者与共建者头像
+├── avatars/                 # 赞助者头像
 ├── recognition_members.json # 云端贡献者名单（见 docs/development/recognition-members.md）
 ├── pubspec.yaml             # Flutter pub workspace 根（一份 lockfile）
 └── AGENTS.md                # 开发与代码规范

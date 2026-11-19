@@ -2456,12 +2456,6 @@ class AppL10nZh extends AppL10n {
   String get hubSponsorsDescription => '鸣谢支持谛听项目的赞助者';
 
   @override
-  String get hubContributors => '共建者名单';
-
-  @override
-  String get hubContributorsDescription => '感谢为谛听贡献代码与建议的共建者';
-
-  @override
   String get fontSizeSmall => '小';
 
   @override
@@ -4464,12 +4458,6 @@ class AppL10nZh extends AppL10n {
   String get aboutSponsorListBody => '鸣谢支持谛听项目的赞助者';
 
   @override
-  String get aboutBuilderList => '共建者名单';
-
-  @override
-  String get aboutBuilderListBody => '感谢为谛听贡献代码与建议的共建者';
-
-  @override
   String get aboutInstallerFailed => '无法调起系统安装器';
 
   @override
@@ -4733,9 +4721,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get sponsorThanksBody => '感谢每一位支持项目的朋友';
-
-  @override
-  String get sponsorBuildersBody => '感谢提出建议与帮助测试的伙伴';
 
   @override
   String get sponsorUsage => '你的每一笔支持都会用于';
@@ -6531,16 +6516,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get recognitionSponsorSection => '赞助者';
-
-  @override
-  String get recognitionBuilderTitle => '共建者名单';
-
-  @override
-  String get recognitionBuilderIntro =>
-      '感谢每一位为谛听提出建议、帮助测试的共建者！名单按用户名称的字母顺序排列，中文名称按拼音排序。';
-
-  @override
-  String get recognitionBuilderSection => '共建者';
 
   @override
   String get providerVisibilityTitle => '服务显示';

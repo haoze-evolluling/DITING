@@ -75,14 +75,6 @@
     "鸣谢支持谛听项目的赞助者",
     "Thanks to everyone who supported Diting"
   ],
-  "aboutBuilderList": [
-    "共建者名单",
-    "Contributors"
-  ],
-  "aboutBuilderListBody": [
-    "感谢为谛听贡献代码与建议的共建者",
-    "Thanks to everyone who contributed code and ideas"
-  ],
   "aboutInstallerFailed": [
     "无法调起系统安装器",
     "The system installer cannot be launched"
@@ -318,10 +310,6 @@
   "sponsorThanksBody": [
     "感谢每一位支持项目的朋友",
     "Thanks to everyone who supports the project"
-  ],
-  "sponsorBuildersBody": [
-    "感谢提出建议与帮助测试的伙伴",
-    "Thanks to everyone who shared ideas and helped test"
   ],
   "sponsorUsage": [
     "你的每一笔支持都会用于",

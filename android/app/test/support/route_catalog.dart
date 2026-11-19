@@ -83,7 +83,6 @@ final Map<String, String> topLevelRoutes = {
   '备份与迁移': HubPaths.configTransfer,
   'WebDAV 云同步': HubPaths.configTransferWebdav,
   '赞助者名单': HubPaths.sponsorList,
-  '共建者名单': HubPaths.coBuilders,
   '订阅': Routes.subscriptions,
   '关于': Routes.about,
   '批量编辑': Routes.batchEditor,

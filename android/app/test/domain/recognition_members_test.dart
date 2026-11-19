@@ -31,7 +31,7 @@ void _recognitionMembers() {
     });
 
     test('本地缓存走同一份校验，坏缓存不覆盖页面', () {
-      const raw = '{"version":3,"sponsors":[{"name":"a"}],"coBuilders":[]}';
+      const raw = '{"version":3,"sponsors":[{"name":"a"}]}';
       final store = MemoryLegacyPrefsStore({
         'recognition_members': {'config_json': raw},
       });
@@ -45,11 +45,11 @@ void _recognitionMembers() {
   group('parseRecognitionMembers', () {
     test('缺版本号 / 缺数组都视为配置无效', () {
       expect(
-        () => parseRecognitionMembers('{"sponsors":[],"coBuilders":[]}'),
+        () => parseRecognitionMembers('{"sponsors":[]}'),
         throwsFormatException,
       );
       expect(
-        () => parseRecognitionMembers('{"version":1,"sponsors":[]}'),
+        () => parseRecognitionMembers('{"version":1}'),
         throwsFormatException,
       );
     });
@@ -57,13 +57,13 @@ void _recognitionMembers() {
     test('空名称与重复名称被拒绝', () {
       expect(
         () => parseRecognitionMembers(
-          '{"version":1,"sponsors":[{"name":"   "}],"coBuilders":[]}',
+          '{"version":1,"sponsors":[{"name":"   "}]}',
         ),
         throwsFormatException,
       );
       expect(
         () => parseRecognitionMembers(
-          '{"version":1,"sponsors":[{"name":"a"},{"name":"a"}],"coBuilders":[]}',
+          '{"version":1,"sponsors":[{"name":"a"},{"name":"a"}]}',
         ),
         throwsFormatException,
       );
@@ -72,15 +72,14 @@ void _recognitionMembers() {
     test('非法或重复的头像文件名被拒绝', () {
       expect(
         () => parseRecognitionMembers(
-          '{"version":1,"sponsors":[{"name":"a","avatarFileName":"A.png"}],'
-          '"coBuilders":[]}',
+          '{"version":1,"sponsors":[{"name":"a","avatarFileName":"A.png"}]}',
         ),
         throwsFormatException,
       );
       expect(
         () => parseRecognitionMembers(
           '{"version":1,"sponsors":[{"name":"a","avatarFileName":"x_avatar.jpg"},'
-          '{"name":"b","avatarFileName":"x_avatar.jpg"}],"coBuilders":[]}',
+          '{"name":"b","avatarFileName":"x_avatar.jpg"}]}',
         ),
         throwsFormatException,
       );
@@ -88,26 +87,22 @@ void _recognitionMembers() {
 
     test('赞助次数缺省为 1，大于 1 的值透传到模型', () {
       final members = parseRecognitionMembers(
-        '{"version":3,"sponsors":[{"name":"a"},{"name":"healer","count":2}],'
-        '"coBuilders":[{"name":"b","count":2}]}',
+        '{"version":3,"sponsors":[{"name":"a"},{"name":"healer","count":2}]}',
       );
       expect(members.sponsors[0].count, 1);
       expect(members.sponsors[1].count, 2);
-      // A repeat count only means something for sponsors.
-      expect(members.coBuilders[0].count, 1);
     });
 
     test('头像框只有内核认可的取值，缺省为无', () {
       final members = parseRecognitionMembers(
         '{"version":1,"sponsors":[{"name":"a"},'
-        '{"name":"healer","frame":"rainbow"}],"coBuilders":[]}',
+        '{"name":"healer","frame":"rainbow"}]}',
       );
       expect(members.sponsors[0].frame, isNull);
       expect(members.sponsors[1].frame, RecognitionAvatarFrame.rainbow);
       expect(
         () => parseRecognitionMembers(
-          '{"version":1,"sponsors":[{"name":"a","frame":"gold"}],'
-          '"coBuilders":[]}',
+          '{"version":1,"sponsors":[{"name":"a","frame":"gold"}]}',
         ),
         throwsFormatException,
       );
@@ -118,7 +113,6 @@ void _recognitionMembers() {
       final raw = File('../../recognition_members.json').readAsStringSync();
       final members = parseRecognitionMembers(raw);
       expect(members.sponsors.length, greaterThan(5));
-      expect(members.coBuilders.length, greaterThan(5));
       expect(members.sponsors.every((m) => m.name.isNotEmpty), isTrue);
       expect(members.sponsors.firstWhere((m) => m.name == 'healer').count, 4);
       expect(

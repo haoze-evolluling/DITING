@@ -59,7 +59,5 @@
   "hubSponsor": ["赞助", "Sponsor"],
   "hubSponsorDescription": ["支持谛听项目持续维护与开发", "Support the ongoing maintenance and development of DITING"],
   "hubSponsors": ["赞助者名单", "Sponsors"],
-  "hubSponsorsDescription": ["鸣谢支持谛听项目的赞助者", "Thanks to everyone who supports the project"],
-  "hubContributors": ["共建者名单", "Contributors"],
-  "hubContributorsDescription": ["感谢为谛听贡献代码与建议的共建者", "Thanks to everyone who contributed code and ideas"]
+  "hubSponsorsDescription": ["鸣谢支持谛听项目的赞助者", "Thanks to everyone who supports the project"]
 }

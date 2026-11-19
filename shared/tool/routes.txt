@@ -23,7 +23,6 @@
 /hub/blocked-apps
 /hub/bootstrap
 /hub/cache
-/hub/co-builders
 /hub/config-transfer
 /hub/config-transfer/webdav
 /hub/data-cleanup

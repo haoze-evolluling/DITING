@@ -67,7 +67,6 @@ abstract final class HubPaths {
   static const configTransfer = '/hub/config-transfer';
   static const configTransferWebdav = '/hub/config-transfer/webdav';
   static const sponsorList = '/hub/sponsor-list';
-  static const coBuilders = '/hub/co-builders';
 
   static String resolutionMode(String id) => '$resolution/$id';
 
@@ -147,5 +146,4 @@ List<RouteBase> hubRoutes() => [
   _route(HubPaths.configTransfer, const ConfigTransferPage()),
   _route(HubPaths.configTransferWebdav, const ConfigTransferWebdavPage()),
   _route(HubPaths.sponsorList, const SponsorListPage()),
-  _route(HubPaths.coBuilders, const CoBuildersPage()),
 ];

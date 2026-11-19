@@ -122,12 +122,6 @@ class AboutPage extends ConsumerWidget {
                 subtitle: Text(context.l10n.aboutSponsorListBody),
                 widget: const SponsorListPage(),
               ),
-              ListItem.next(
-                leading: const GlyphIcon(AppGlyphs.account),
-                title: Text(context.l10n.aboutBuilderList),
-                subtitle: Text(context.l10n.aboutBuilderListBody),
-                widget: const CoBuildersPage(),
-              ),
             ],
           ),
           const SizedBox(height: 24),
