@@ -345,6 +345,7 @@ fn dns_config(settings: &ResolverSettings, providers: &[ProviderSettings]) -> Dn
         privacy: PrivacyPolicy::default(),
         dns64: false,
         rate_limit: diting_ratelimit_core::Config::default(),
+        connection_rate_limit: diting_engine::connection_limit::Config::default(),
         race_max_parallel: settings.race_max_parallel,
     }
 }
