@@ -53,6 +53,48 @@ void main() {
     expect(haptics, ['HapticFeedbackType.lightImpact']);
   });
 
+  testWidgets('按住超过长按阈值但目标没有长按手势时仍产生反馈', (tester) async {
+    var taps = 0;
+    await pump(
+      tester,
+      ListTile(onTap: () => taps++, title: const Text('slow tap')),
+    );
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('slow tap')),
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+    await gesture.up(timeStamp: const Duration(milliseconds: 700));
+    await tester.pump();
+
+    expect(taps, 1);
+    expect(haptics, ['HapticFeedbackType.lightImpact']);
+  });
+
+  testWidgets('长按控件时松手不再补一次点击反馈', (tester) async {
+    var taps = 0;
+    var longPresses = 0;
+    await pump(
+      tester,
+      ListTile(
+        onTap: () => taps++,
+        onLongPress: () => longPresses++,
+        title: const Text('long press target'),
+      ),
+    );
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('long press target')),
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+    await gesture.up(timeStamp: const Duration(milliseconds: 700));
+    await tester.pump();
+
+    expect(taps, 0);
+    expect(longPresses, 1);
+    expect(haptics.where((event) => event.contains('lightImpact')), isEmpty);
+  });
+
   testWidgets('点击卡片产生一次 lightImpact', (tester) async {
     var presses = 0;
     await pump(
@@ -126,6 +168,10 @@ void main() {
     expect(value, isTrue);
     expect(haptics, ['HapticFeedbackType.lightImpact']);
 
+    // The repeat guard runs on a real-time stopwatch, so fake-time pumping does not expire it.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 40)),
+    );
     haptics.clear();
     await tester.drag(find.byType(CommonSwitch), const Offset(-40, 0));
     await tester.pump();

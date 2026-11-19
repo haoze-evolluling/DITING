@@ -108,13 +108,17 @@ class _AppHapticTapFeedbackState extends State<AppHapticTapFeedback> {
   void _handleDown(PointerDownEvent event) {
     if (!HapticFeedbackScope.isEnabledOf(context) ||
         event.kind != PointerDeviceKind.touch ||
-        event.buttons & kPrimaryButton == 0 ||
-        !_hasTapAction(event)) {
+        event.buttons & kPrimaryButton == 0) {
+      return;
+    }
+    final actions = _actionsAt(event);
+    if (!actions.tap) {
       return;
     }
     _candidates[event.pointer] = _TapCandidate(
       origin: event.position,
       downAt: event.timeStamp,
+      hasLongPress: actions.longPress,
     );
   }
 
@@ -131,7 +135,11 @@ class _AppHapticTapFeedbackState extends State<AppHapticTapFeedback> {
     if (candidate == null || candidate.moved) {
       return;
     }
-    if (event.timeStamp - candidate.downAt > kLongPressTimeout) {
+    // A control without a long-press recognizer still reports its tap on release, however long
+    // the press was. Only skip when the target really handles a long press, so a slow tap is not
+    // mistaken for one.
+    if (candidate.hasLongPress &&
+        event.timeStamp - candidate.downAt > kLongPressTimeout) {
       return;
     }
     AppHaptics.tap(context);
@@ -141,27 +149,34 @@ class _AppHapticTapFeedbackState extends State<AppHapticTapFeedback> {
     _candidates.remove(event.pointer);
   }
 
-  bool _hasTapAction(PointerDownEvent event) {
+  ({bool tap, bool longPress}) _actionsAt(PointerDownEvent event) {
     final result = HitTestResult();
     GestureBinding.instance.hitTestInView(result, event.position, event.viewId);
+    var tap = false;
+    var longPress = false;
     for (final entry in result.path) {
       final target = entry.target;
-      if (target is RenderSemanticsGestureHandler && target.onTap != null) {
-        return true;
-      }
-      if (target is RenderSemanticsAnnotations &&
-          target.properties.onTap != null) {
-        return true;
+      if (target is RenderSemanticsGestureHandler) {
+        tap |= target.onTap != null;
+        longPress |= target.onLongPress != null;
+      } else if (target is RenderSemanticsAnnotations) {
+        tap |= target.properties.onTap != null;
+        longPress |= target.properties.onLongPress != null;
       }
     }
-    return false;
+    return (tap: tap, longPress: longPress);
   }
 }
 
 class _TapCandidate {
-  _TapCandidate({required this.origin, required this.downAt});
+  _TapCandidate({
+    required this.origin,
+    required this.downAt,
+    required this.hasLongPress,
+  });
 
   final Offset origin;
   final Duration downAt;
+  final bool hasLongPress;
   bool moved = false;
 }
