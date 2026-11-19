@@ -228,7 +228,7 @@ class ThemeBottomBarPage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.appearanceHaptic),
                 subtitle: Text(context.l10n.appearanceHapticSubtitle),
-                leading: const GlyphIcon(AppGlyphs.motion),
+                leading: const GlyphIcon(AppGlyphs.vibrate),
                 value: haptic,
                 onChanged: (value) =>
                     ref.read(hapticProvider.notifier).toggle(value),

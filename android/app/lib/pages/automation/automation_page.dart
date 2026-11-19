@@ -100,7 +100,7 @@ class AutomationPage extends ConsumerWidget {
                 onTap: () => context.push(AutomationPaths.timetable),
               ),
               _NavRow(
-                glyph: AppGlyphs.wifi,
+                glyph: AppGlyphs.signal,
                 title: l10n.netProfileTitle,
                 subtitle: l10n.netProfileSubtitle,
                 onTap: () => context.push(NetworkProfilePaths.root),
@@ -165,7 +165,7 @@ class _AutomationOverview extends StatelessWidget {
           spacing: 12,
           children: [
             IconBadge(
-              glyph: empty ? AppGlyphs.sparkle : AppGlyphs.rules,
+              glyph: empty ? AppGlyphs.automation : AppGlyphs.rules,
               color: accent.withValues(alpha: 0.14),
               foregroundColor: accent,
             ),
@@ -243,7 +243,7 @@ class _RuleTile extends StatelessWidget {
       leading: GlyphIcon(
         rule.triggerType == AutomationSpec.triggerSchedule
             ? AppGlyphs.clock
-            : AppGlyphs.connections,
+            : AppGlyphs.automation,
       ),
       title: Text(
         rule.name.isEmpty ? context.l10n.automationRuleFallbackName : rule.name,

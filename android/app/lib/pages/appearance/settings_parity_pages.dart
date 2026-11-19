@@ -83,7 +83,7 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
               ListItem.toggle(
                 title: Text(context.l10n.notificationPersistent),
                 subtitle: Text(context.l10n.notificationPersistentSubtitle),
-                leading: const GlyphIcon(AppGlyphs.status),
+                leading: const GlyphIcon(AppGlyphs.notification),
                 value: settings.persistent,
                 onChanged: (value) {
                   notifier.setPersistent(value);
@@ -443,7 +443,7 @@ class SettingsBackgroundPage extends ConsumerWidget {
                 onChanged: ref.read(vpnWatchdogProvider.notifier).toggle,
               ),
               NavEntryRow(
-                glyph: AppGlyphs.bolt,
+                glyph: AppGlyphs.battery,
                 title: context.l10n.foregroundIgnoreBattery,
                 subtitle: context.l10n.foregroundIgnoreBatterySubtitle,
                 // Asks the system instead of describing the screen path; the request shows the

@@ -11,12 +11,12 @@ const dashboardSiteCount = 4;
 
 enum SiteCategory {
   search(AppGlyphs.search),
-  shopping(AppGlyphs.star),
-  video(AppGlyphs.photos),
-  music(AppGlyphs.motion),
+  shopping(AppGlyphs.shoppingBag),
+  video(AppGlyphs.video),
+  music(AppGlyphs.music),
   social(AppGlyphs.account),
   developer(AppGlyphs.code),
-  game(AppGlyphs.puzzle);
+  game(AppGlyphs.gamepad);
 
   const SiteCategory(this.glyph);
 

@@ -296,7 +296,7 @@ class _BatterySection extends ConsumerWidget {
       title: context.l10n.odPrerequisites,
       items: [
         ListItem(
-          leading: const GlyphIcon(AppGlyphs.bolt, size: 20),
+          leading: const GlyphIcon(AppGlyphs.battery, size: 20),
           title: Text(context.l10n.odIgnoreBattery),
           subtitle: Text(subtitle),
           trailing: Text(

@@ -115,7 +115,7 @@ class RuleControlPage extends ConsumerWidget {
                 onTap: () => context.push('/hub/rules/test'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.rules),
+                leading: const GlyphIcon(AppGlyphs.trophy),
                 title: Text(context.l10n.hitRankingTitle),
                 subtitle: Text(context.l10n.hitRankingEntrySubtitle),
                 onTap: () => context.push('/logs/hit-ranking'),
@@ -172,7 +172,7 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.hubModuleMore,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.motion),
+                leading: const GlyphIcon(AppGlyphs.automation),
                 title: Text(context.l10n.automationTitle),
                 subtitle: Text(context.l10n.automationSubtitle),
                 onTap: () => context.push('/automation'),
@@ -225,7 +225,7 @@ class BlockResponsePage extends ConsumerWidget {
             title: context.l10n.blockResponseDynamicSection,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.motion),
+                leading: const GlyphIcon(AppGlyphs.shieldBolt),
                 title: Text(context.l10n.blockResponseEnableDynamic),
                 subtitle: Text(context.l10n.blockResponseEnableDynamicSubtitle),
                 value: policy.enabled,

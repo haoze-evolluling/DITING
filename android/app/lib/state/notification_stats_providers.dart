@@ -15,7 +15,7 @@ enum NotificationStatItem {
   passed('passed', AppGlyphs.checkCircle),
   filtered('filtered', AppGlyphs.filter),
   failed('failed', AppGlyphs.error),
-  cached('cached', AppGlyphs.layers),
+  cached('cached', AppGlyphs.database),
   rewritten('rewritten', AppGlyphs.sliders),
   speed('speed', AppGlyphs.speed);
 

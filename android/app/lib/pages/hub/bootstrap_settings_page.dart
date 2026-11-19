@@ -206,7 +206,7 @@ class _BootstrapRow extends StatelessWidget {
     final failing = (stat?.failures ?? 0) > 0;
     return ListItem(
       leading: GlyphIcon(
-        failing ? AppGlyphs.warning : AppGlyphs.status,
+        failing ? AppGlyphs.warning : AppGlyphs.dns,
         size: 20,
       ),
       title: Text(entry.name),

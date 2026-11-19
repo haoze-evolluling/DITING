@@ -132,7 +132,7 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
             final entry = entries[index];
             final lastHit = lastHits['${entry.domain}|${entry.queryType}'];
             return ListItem(
-              leading: const GlyphIcon(AppGlyphs.layers),
+              leading: const GlyphIcon(AppGlyphs.database),
               onTap: () => showSheet<void>(
                 context: context,
                 builder: (_) =>

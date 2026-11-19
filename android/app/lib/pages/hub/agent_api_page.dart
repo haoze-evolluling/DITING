@@ -143,7 +143,7 @@ class AgentApiPage extends ConsumerWidget {
             title: context.l10n.agentApiSectionEntries,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.layers),
+                leading: const GlyphIcon(AppGlyphs.database),
                 title: Text(context.l10n.agentApiCacheTable),
                 subtitle: Text(context.l10n.agentApiCacheTableSubtitle),
                 onTap: () => context.push('/logs/cache'),

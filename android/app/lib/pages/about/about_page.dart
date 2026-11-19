@@ -56,7 +56,7 @@ class AboutPage extends ConsumerWidget {
                 url: qqGroupUri,
               ),
               _LinkRow(
-                glyph: AppGlyphs.star,
+                glyph: AppGlyphs.heart,
                 title: context.l10n.aboutSponsor,
                 label: sponsorReadmeUrl.replaceFirst('https://', ''),
                 url: sponsorReadmeUrl,
@@ -106,7 +106,7 @@ class AboutPage extends ConsumerWidget {
                 widget: const DisclaimerPage(),
               ),
               ListItem.next(
-                leading: const GlyphIcon(AppGlyphs.star),
+                leading: const GlyphIcon(AppGlyphs.heart),
                 title: Text(context.l10n.hubSponsor),
                 subtitle: Text(context.l10n.hubSponsorDescription),
                 widget: const SponsorPage(),
@@ -117,7 +117,7 @@ class AboutPage extends ConsumerWidget {
             title: context.l10n.aboutOtherContributors,
             items: [
               ListItem.next(
-                leading: const GlyphIcon(AppGlyphs.verified),
+                leading: const GlyphIcon(AppGlyphs.heart),
                 title: Text(context.l10n.aboutSponsorList),
                 subtitle: Text(context.l10n.aboutSponsorListBody),
                 widget: const SponsorListPage(),

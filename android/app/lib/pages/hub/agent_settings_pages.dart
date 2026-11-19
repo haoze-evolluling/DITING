@@ -80,7 +80,7 @@ class AgentParamsPage extends ConsumerWidget {
             title: context.l10n.agentParamsTemperatureSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.motion),
+                leading: const GlyphIcon(AppGlyphs.temperature),
                 title: Text(context.l10n.agentParamsTemperatureItem),
                 subtitle: Text(temperatureLabel),
                 trailing: Text(

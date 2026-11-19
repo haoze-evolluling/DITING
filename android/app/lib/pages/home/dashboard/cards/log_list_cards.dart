@@ -210,7 +210,7 @@ class CacheHotspotsCard extends ConsumerWidget {
     final rows = ref.watch(logOverviewCacheHotspotsProvider);
     final colorScheme = context.colorScheme;
     return DashboardLogListCard(
-      glyph: AppGlyphs.layers,
+      glyph: AppGlyphs.database,
       title: context.l10n.logCacheHotspots,
       emptyText: context.l10n.logCacheHotspotsEmpty,
       onDetail: onDetail,

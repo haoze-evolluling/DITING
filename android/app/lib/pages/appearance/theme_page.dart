@@ -110,7 +110,7 @@ class ThemePage extends ConsumerWidget {
                 onPressed: () => context.push(SystemPaths.homeSentence),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.status,
+                glyph: AppGlyphs.notification,
                 title: context.l10n.appearanceNotification,
                 subtitle: context.l10n.appearanceNotificationSubtitle,
                 onPressed: () => context.push(SystemPaths.notification),
@@ -131,7 +131,7 @@ class ThemePage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.appearanceHaptic),
                 subtitle: Text(context.l10n.appearanceHapticSubtitle),
-                leading: const GlyphIcon(AppGlyphs.motion),
+                leading: const GlyphIcon(AppGlyphs.vibrate),
                 value: ref.watch(hapticProvider),
                 onChanged: (value) =>
                     ref.read(hapticProvider.notifier).toggle(value),

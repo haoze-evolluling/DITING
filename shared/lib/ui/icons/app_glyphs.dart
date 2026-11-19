@@ -16,6 +16,7 @@ part 'app_glyphs_h.dart';
 part 'app_glyphs_i.dart';
 part 'app_glyphs_j.dart';
 part 'app_glyphs_k.dart';
+part 'app_glyphs_l.dart';
 
 abstract final class AppGlyphs {
   static const dashboard = _g_dashboard_;
@@ -141,6 +142,23 @@ abstract final class AppGlyphs {
   static const gavel = _g_gavel_;
   static const appsList = _g_appsList_;
   static const iconTile = _g_iconTile_;
+
+  // Second hand-drawn batch: replaces borrowed glyphs whose meaning did not fit the row.
+  static const automation = _g_automation_;
+  static const notification = _g_notification_;
+  static const vibrate = _g_vibrate_;
+  static const temperature = _g_temperature_;
+  static const shieldBolt = _g_shieldBolt_;
+  static const battery = _g_battery_;
+  static const music = _g_music_;
+  static const video = _g_video_;
+  static const shoppingBag = _g_shoppingBag_;
+  static const gamepad = _g_gamepad_;
+  static const bug = _g_bug_;
+  static const database = _g_database_;
+  static const heart = _g_heart_;
+  static const trophy = _g_trophy_;
+  static const signal = _g_signal_;
 
   // Brand marks for the speed card, same shapes as FlClash's and the same GlyphPath render.
   static const baidu = _g_baidu_;

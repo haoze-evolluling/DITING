@@ -46,7 +46,7 @@ class SponsorPage extends StatelessWidget {
             title: context.l10n.sponsorThanks,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.verified,
+                glyph: AppGlyphs.heart,
                 title: context.l10n.aboutSponsorList,
                 subtitle: context.l10n.sponsorThanksBody,
                 onPressed: () => context.push(HubPaths.sponsorList),
@@ -104,7 +104,7 @@ class _SponsorHero extends StatelessWidget {
               spacing: 12,
               children: [
                 IconBadge(
-                  glyph: AppGlyphs.star,
+                  glyph: AppGlyphs.heart,
                   size: 52,
                   glyphSize: 28,
                   color: colorScheme.primaryContainer,

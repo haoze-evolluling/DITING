@@ -160,7 +160,7 @@ class _TroubleshootingLogsPageState
     final colorScheme = context.colorScheme;
     return ListItem(
       leading: GlyphIcon(
-        entry.isRuntime ? AppGlyphs.logs : AppGlyphs.wrench,
+        entry.isRuntime ? AppGlyphs.logs : AppGlyphs.bug,
         size: 20,
         color: entry.isRuntime ? null : colorScheme.warning,
       ),

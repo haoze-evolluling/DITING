@@ -34,7 +34,7 @@ class DnsCacheDetailSheet extends StatelessWidget {
       body: PageBody(
         children: [
           DetailHeroCard(
-            glyph: AppGlyphs.layers,
+            glyph: AppGlyphs.database,
             color: color,
             title: domain.isEmpty ? '—' : domain,
             subtitle: expiring

@@ -204,7 +204,7 @@ class _ServerSettingsPageState extends ConsumerState<ServerSettingsPage> {
       title: Text(context.l10n.serverIgnoreBattery),
       subtitle: Text(subtitle),
       leading: GlyphIcon(
-        AppGlyphs.bolt,
+        AppGlyphs.battery,
         color: enabled ? null : colorScheme.onSurface.withValues(alpha: 0.4),
       ),
       trailing: trailing,
