@@ -7,6 +7,7 @@ fn tunnel_payload() -> Vec<u8> {
     let mut writer = Writer::new();
     // bootstrapEnabled | cacheEnabled | cacheMinTtlEnabled | cacheStaleEnabled | dynamicEnabled
     writer.u8(0b1_1111);
+    writer.u8(0b1);
     writer.string("parallel_race");
     writer.string("preset_alidns_dns");
     writer.strings(&["preset_google_dns".to_string()]);
@@ -27,6 +28,8 @@ fn tunnel_payload() -> Vec<u8> {
     writer.i32(7);
     writer.i32(120);
     writer.i32(600);
+    writer.i32(80);
+    writer.i32(160);
     writer.finish()
 }
 
@@ -61,11 +64,15 @@ fn tunnel_settings_decode_every_field() {
     assert_eq!(settings.dynamic.request_threshold, 7);
     assert_eq!(settings.dynamic.window_seconds, 120);
     assert_eq!(settings.dynamic.nxdomain_seconds, 600);
+    assert!(settings.connection_rate_limit.enabled);
+    assert_eq!(settings.connection_rate_limit.rate, 80);
+    assert_eq!(settings.connection_rate_limit.burst, 160);
 }
 
 #[test]
 fn flags_carry_the_booleans() {
     let mut writer = Writer::new();
+    writer.u8(0);
     writer.u8(0);
     writer.string("single");
     writer.string("preset_alidns_dns");
@@ -81,6 +88,8 @@ fn flags_carry_the_booleans() {
     writer.i32(3600);
     writer.i32(60);
     writer.i32(300);
+    writer.i32(50);
+    writer.i32(100);
     writer.i32(5);
     writer.i32(60);
     writer.i32(300);
@@ -92,6 +101,7 @@ fn flags_carry_the_booleans() {
     assert!(!settings.cache.min_ttl_enabled);
     assert!(!settings.cache.stale_fallback_enabled);
     assert!(!settings.dynamic.enabled);
+    assert!(!settings.connection_rate_limit.enabled);
 }
 
 #[test]

@@ -33,6 +33,9 @@ extension DocumentBuilders on RustDnsConfigCore {
     bool blockHttpsSvcb = false,
     bool rebindingProtection = false,
     bool dns64Enabled = false,
+    required bool connectionRateLimitEnabled,
+    required int connectionRateLimitRate,
+    required int connectionRateLimitBurst,
   }) {
     final writer = _PayloadWriter()
       ..u8(
@@ -45,6 +48,7 @@ extension DocumentBuilders on RustDnsConfigCore {
             (rebindingProtection ? 0x40 : 0) |
             (dns64Enabled ? 0x80 : 0),
       )
+      ..u8(connectionRateLimitEnabled ? 0x1 : 0)
       ..utf8(modeRaw)
       ..utf8(selectedProviderId)
       ..strings(smartPredictionProviderIds)
@@ -62,6 +66,8 @@ extension DocumentBuilders on RustDnsConfigCore {
       ..i32(dynamicBlockRequestThreshold)
       ..i32(dynamicBlockWindowSeconds)
       ..i32(dynamicBlockNxDomainDurationSeconds)
+      ..i32(connectionRateLimitRate)
+      ..i32(connectionRateLimitBurst)
       ..providerRows(presetProviders)
       ..bootstrapEntryRows(presetBootstrap);
     final reader = _call('tunnel', writer);

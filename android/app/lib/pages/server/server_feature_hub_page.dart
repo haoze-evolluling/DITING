@@ -1,6 +1,7 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/pages/hub/feature_hub_grid.dart';
 import 'package:diting_android/routes/hub_routes.dart';
+import 'package:diting_android/routes/lan_rate_limit_routes.dart';
 import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_shared/routes/branches.dart';
@@ -59,7 +60,7 @@ List<ServerFeatureCategory> serverFeatureCategories(AppL10n l10n) => [
         title: l10n.lanRateLimitTitle,
         description: l10n.lanRateLimitIntro,
         glyph: AppGlyphs.speed,
-        route: '/network/lan-rate-limit',
+        route: LanRateLimitPaths.root,
       ),
     ],
   ),

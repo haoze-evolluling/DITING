@@ -27,7 +27,7 @@ const hiddenFeatureKeysInFile = <String>[
   'flow_view',
   'app_insights',
   'network_tools',
-  'lan_rate_limit',
+  'connection_rate_limit',
   'network_diagnostics',
   'https_inspection',
   'outbound_proxy',

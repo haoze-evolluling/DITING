@@ -43,7 +43,7 @@ class MockFeatureCategory {
 ///
 ///   1. DNS 解析       服务商 / 策略 / 缓存 / 服务显示
 ///   2. 规则与控制     拦截策略 / 规则订阅 / 应用规则 / 隐私套件
-///   3. 应用与网络     实时连接 / 应用洞察 / 网络工具 / LAN 限速
+///   3. 应用与网络     实时连接 / 应用洞察 / 网络工具 / 连接限速
 ///   4. 高级与诊断     网络诊断 / HTTPS 检查 / 出站代理 / AI 分析
 ///   5. 数据与维护     备份迁移 / 数据清理 / 故障排查 / 日志模式
 ///   6. 界面与数据     外观 / 隐藏功能 / 其他设置 / 关于
@@ -155,11 +155,11 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         expressVisible: false,
       ),
       MockFeatureCard(
-        title: l10n.lanRateLimitTitle,
-        description: l10n.lanRateLimitIntro,
+        title: l10n.connectionRateLimitTitle,
+        description: l10n.connectionRateLimitCardDescription,
         glyphName: 'speed',
-        route: '/network/lan-rate-limit',
-        featureKey: 'lan_rate_limit',
+        route: '/network/connection-rate-limit',
+        featureKey: 'connection_rate_limit',
         expressVisible: false,
       ),
     ],

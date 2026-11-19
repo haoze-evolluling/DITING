@@ -15313,6 +15313,72 @@ class AppL10nEn extends AppL10n {
       'Comma separated, e.g. 192.168.0.1, 10.0.0.0/8';
 
   @override
+  String get lanRateLimitSectionSwitch => 'Rate limit switch';
+
+  @override
+  String get lanRateLimitSectionRate => 'Rate and burst';
+
+  @override
+  String get lanRateLimitSectionAggregation => 'Client aggregation';
+
+  @override
+  String get lanRateLimitSectionExempt => 'Exempt list';
+
+  @override
+  String get lanRateLimitExemptManage => 'Manage list';
+
+  @override
+  String get lanRateLimitRestartNotice =>
+      'Changes made while the server is running take effect the next time it starts.';
+
+  @override
+  String get lanRateLimitExemptNone => 'Not set';
+
+  @override
+  String lanRateLimitExemptCount(int count) {
+    return '$count entries';
+  }
+
+  @override
+  String get connectionRateLimitTitle => 'Connection rate limiting';
+
+  @override
+  String get connectionRateLimitCardDescription =>
+      'Limit DNS queries and new connections';
+
+  @override
+  String get connectionRateLimitIntro =>
+      'Limit DNS queries and new connections per app so one app cannot exhaust resolution or connection capacity. Both counters share the rate and burst below.';
+
+  @override
+  String get connectionRateLimitSectionSwitch => 'Rate limit switch';
+
+  @override
+  String get connectionRateLimitSectionParameters => 'Rate and burst';
+
+  @override
+  String get connectionRateLimitEnable => 'Enable connection rate limiting';
+
+  @override
+  String get connectionRateLimitEnableDesc =>
+      'Counts are kept per app UID; nothing is limited when off.';
+
+  @override
+  String get connectionRateLimitRate => 'Requests per second';
+
+  @override
+  String get connectionRateLimitBurst => 'Burst limit';
+
+  @override
+  String get connectionRateLimitFooter =>
+      'Each app has separate DNS-query and new-connection buckets, and both share these parameters. Queries over the limit are dropped and new connections are rejected.';
+
+  @override
+  String connectionRateLimitApplyFailed(String message) {
+    return 'The setting was saved, but applying it to the running tunnel failed: $message';
+  }
+
+  @override
   String get ruleVersionsTitle => 'Subscription version rollback';
 
   @override

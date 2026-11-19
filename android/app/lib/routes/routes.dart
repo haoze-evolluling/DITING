@@ -4,6 +4,7 @@
 library;
 
 export 'config_routes.dart';
+export 'connection_rate_limit_routes.dart';
 export 'dashboard_routes.dart';
 export 'automation_routes.dart';
 export 'app_insights_routes.dart';

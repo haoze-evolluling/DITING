@@ -14,7 +14,7 @@ use crate::upstreams::{self, ServerUpstream};
 use crate::wire::{Reader, Writer};
 
 /// Bumped whenever a payload layout or a document field changes.
-pub const ABI_VERSION: u32 = 2;
+pub const ABI_VERSION: u32 = 3;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DDC1");
 const OP_SPLIT_ADDRESS: u8 = 0;
@@ -179,7 +179,8 @@ pub unsafe extern "C" fn diting_dns_config_core_free(pointer: *mut u8, len: usiz
 
 /// The tunnel's `ApplyDNSConfig` document plus the rows the UI shows.
 ///
-/// Input: `flags | settings fields | preset providers | preset bootstrap`. Output:
+/// Input: `flags | connection flags | settings fields | connection rate/burst | preset providers
+/// | preset bootstrap`. Output:
 /// `mode | document | picked providers | bootstrap entries`.
 ///
 /// # Safety

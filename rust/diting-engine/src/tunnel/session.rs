@@ -36,6 +36,7 @@ use tokio::sync::{mpsc, Semaphore};
 use tokio::task::JoinSet;
 
 use crate::attribution::{PROTOCOL_TCP, PROTOCOL_UDP};
+use crate::connection_limit::BucketKind;
 use crate::engine::Engine;
 use crate::netstack::{self, Limits, Netstack, Stats, TcpKey};
 use crate::tunnel::dnsflow::{self, Inbound};
@@ -522,6 +523,18 @@ fn open_tcp_flow(
     } else {
         gate::admit_flow(engine, true, &key, &context)
     };
+    if matches!(action, FlowAction::Relay | FlowAction::Intercept)
+        && !engine.allow_connection_rate(
+            BucketKind::Connection,
+            context.uid,
+            crate::resolver::now_ns(),
+        )
+    {
+        counters.blocked_flows.fetch_add(1, Ordering::Relaxed);
+        net.tcp_abort(&key, netstack::now());
+        net.tcp_remove(&key);
+        return;
+    }
     match action {
         FlowAction::HandleDns => {
             let (tx, rx) = mpsc::channel(FLOW_CHANNEL);
@@ -642,6 +655,13 @@ fn dispatch_udp(
     let context = gate::context_for(engine, PROTOCOL_UDP, datagram.peer, datagram.local);
     match gate::admit_flow(engine, false, &key, &context) {
         FlowAction::HandleDns => {
+            if !engine.allow_connection_rate(
+                BucketKind::Query,
+                context.uid,
+                crate::resolver::now_ns(),
+            ) {
+                return;
+            }
             engine
                 .traffic()
                 .record(context.uid, datagram.payload.len() as i64, 0);
@@ -657,6 +677,16 @@ fn dispatch_udp(
             });
         }
         FlowAction::Relay => {
+            if !udp_relays.contains_key(&key)
+                && !engine.allow_connection_rate(
+                    BucketKind::Connection,
+                    context.uid,
+                    crate::resolver::now_ns(),
+                )
+            {
+                counters.blocked_flows.fetch_add(1, Ordering::Relaxed);
+                return;
+            }
             engine
                 .traffic()
                 .record(context.uid, datagram.payload.len() as i64, 0);

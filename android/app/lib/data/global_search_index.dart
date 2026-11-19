@@ -67,18 +67,22 @@ List<GlobalSearchEntry> _extraCommands(AppL10n l10n) => [
   ),
 ];
 
-/// 全量索引：功能中心全部卡片（按分类分组）+ 常用命令。
-List<GlobalSearchEntry> buildGlobalSearchIndex(AppL10n l10n) => [
+/// 全量索引：功能中心当前模式可见的卡片（按分类分组）+ 常用命令。
+List<GlobalSearchEntry> buildGlobalSearchIndex(
+  AppL10n l10n, {
+  bool express = false,
+}) => [
   for (final category in mockFeatureCategories(l10n))
     for (final card in category.cards)
-      GlobalSearchEntry(
-        title: card.title,
-        subtitle: card.description,
-        route: card.route,
-        group: category.title,
-        glyphName: card.glyphName,
-        keywords: [card.description],
-      ),
+      if (!express || card.expressVisible)
+        GlobalSearchEntry(
+          title: card.title,
+          subtitle: card.description,
+          route: card.route,
+          group: category.title,
+          glyphName: card.glyphName,
+          keywords: [card.description],
+        ),
   ..._extraCommands(l10n),
 ];
 

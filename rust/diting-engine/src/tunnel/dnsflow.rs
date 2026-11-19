@@ -14,6 +14,7 @@ use std::time::Duration;
 
 use tokio::sync::mpsc;
 
+use crate::connection_limit::BucketKind;
 use crate::engine::Engine;
 use crate::netstack::{TcpKey, UdpDatagram};
 use crate::tunnel::gate::FlowContext;
@@ -76,6 +77,14 @@ pub async fn serve_tcp(
         buffer.extend_from_slice(&next);
 
         while let Some(query) = take_frame(&mut buffer) {
+            if !engine.allow_connection_rate(
+                BucketKind::Query,
+                context.uid,
+                crate::resolver::now_ns(),
+            ) {
+                events.push_command(Event::CloseWrite(key));
+                return;
+            }
             let Some(response) = crate::dns::serve_for_app(&engine, &query, &context.app).await
             else {
                 continue;

@@ -1,6 +1,5 @@
-// Guards the feature-hub taxonomy: six purpose-based sections, four cards each (even, so the
-// two-column grid never leaves a blank cell), a balanced total and no card reachable from two
-// places. Express mode keeps only the sections that still apply and every one stays even.
+// Guards the feature-hub taxonomy: six purpose-based sections, four cards each, a balanced total
+// and no card reachable from two places. Express mode keeps only the sections that still apply.
 
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -31,9 +30,14 @@ void main() {
       (sum, category) => sum + category.cards.length,
     );
     expect(total, 24);
+    final network = categories.firstWhere(
+      (category) => category.title == '应用与网络',
+    );
+    expect(network.cards.map((card) => card.title), contains('连接限速'));
+    expect(network.cards.map((card) => card.title), isNot(contains('局域网限速')));
   });
 
-  test('极速模式每个非空分类仍为偶数', () {
+  test('极速模式不提供连接限速', () {
     final visible = visibleFeatureCategories(
       express: true,
       hiddenKeys: const {},
@@ -42,20 +46,20 @@ void main() {
     expect(visible, isNotEmpty);
     for (final category in visible) {
       expect(
-        category.cards.length.isEven,
-        isTrue,
-        reason: '${category.title} 极速模式卡片数应为偶数',
-      );
-      expect(
         category.cards.every((card) => card.expressVisible),
         isTrue,
         reason: '${category.title} 不应出现极速隐藏卡片',
       );
     }
-    // 应用与网络、高级与诊断两类在极速模式全部隐藏，整体不出现。
+    // 应用与网络、高级与诊断两类在极速模式全部隐藏。
     final titles = visible.map((category) => category.title);
     expect(titles, isNot(contains('应用与网络')));
     expect(titles, isNot(contains('高级与诊断')));
+    final cards = [for (final category in visible) ...category.cards];
+    expect(
+      cards.map((card) => card.featureKey),
+      isNot(contains('connection_rate_limit')),
+    );
   });
 
   test('卡片路由与隐藏键都不重复', () {

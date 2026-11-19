@@ -23,6 +23,7 @@ use diting_config_core::protocol::Protocol;
 use diting_dns_cache_core::policy::{Config as CacheConfig, TtlMode};
 use diting_dns_core::block::BlockConfig;
 
+use crate::connection_limit::Config as ConnectionRateLimitConfig;
 use crate::error::{EngineError, EngineResult};
 
 /// One provider entry of the payload.
@@ -137,6 +138,18 @@ pub struct RateLimitJson {
     pub exempt: Vec<String>,
 }
 
+/// `connectionRateLimit` block: the normal tunnel's per-app limiter.
+#[derive(Debug, Clone, Copy, Default, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ConnectionRateLimitJson {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub rate: i64,
+    #[serde(default)]
+    pub burst: i64,
+}
+
 /// `bootstrapConfig`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -169,6 +182,8 @@ pub struct DnsConfigJson {
     pub dns64: Dns64Json,
     #[serde(default)]
     pub rate_limit: RateLimitJson,
+    #[serde(default)]
+    pub connection_rate_limit: Option<ConnectionRateLimitJson>,
     #[serde(default)]
     pub race_max_parallel: Option<i64>,
 }
@@ -217,6 +232,8 @@ pub struct DnsConfig {
     pub dns64: bool,
     /// N9: the LAN client rate limiter configuration.
     pub rate_limit: diting_ratelimit_core::Config,
+    /// Connection rate limiting for the normal tunnel data plane.
+    pub connection_rate_limit: ConnectionRateLimitConfig,
     /// `raceMaxParallel`, zero when the payload did not set it.
     pub race_max_parallel: i64,
 }
@@ -313,9 +330,26 @@ impl DnsConfig {
             privacy: privacy_policy(&document.privacy),
             dns64: document.dns64.enabled,
             rate_limit: rate_limit_config(&document.rate_limit),
+            connection_rate_limit: connection_rate_limit_config(
+                document.connection_rate_limit.as_ref(),
+            ),
             race_max_parallel: document.race_max_parallel.unwrap_or(0),
         })
     }
+}
+
+fn connection_rate_limit_config(
+    document: Option<&ConnectionRateLimitJson>,
+) -> ConnectionRateLimitConfig {
+    let Some(document) = document else {
+        return ConnectionRateLimitConfig::default();
+    };
+    ConnectionRateLimitConfig {
+        enabled: document.enabled,
+        rate: document.rate,
+        burst: document.burst,
+    }
+    .normalized()
 }
 
 /// Maps the document's record-type names onto qtypes, dropping anything else. Names are the ones
@@ -446,6 +480,21 @@ mod tests {
         assert_eq!(config.rate_limit.burst, 40);
         assert_eq!(config.rate_limit.ipv4_prefix, 24);
         assert_eq!(config.rate_limit.exempt, vec!["192.168.0.1".to_string()]);
+    }
+
+    #[test]
+    fn connection_rate_limit_is_optional_and_normalized() {
+        let missing =
+            DnsConfig::from_json(&payload("single", "PLAIN", "8.8.8.8:53")).expect("old payload");
+        assert!(!missing.connection_rate_limit.enabled);
+        assert_eq!(missing.connection_rate_limit.rate, 50);
+        assert_eq!(missing.connection_rate_limit.burst, 100);
+
+        let json = r#"{"mode":"single","providers":[{"id":"p1","protocol":"PLAIN","server":"8.8.8.8:53","url":"","weight":1}],"blockResponse":"NXDOMAIN","connectionRateLimit":{"enabled":true,"rate":2000,"burst":1}}"#;
+        let config = DnsConfig::from_json(json).expect("ok");
+        assert!(config.connection_rate_limit.enabled);
+        assert_eq!(config.connection_rate_limit.rate, 1000);
+        assert_eq!(config.connection_rate_limit.burst, 10);
     }
 
     #[test]

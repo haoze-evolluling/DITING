@@ -20,7 +20,7 @@ part 'rust_dns_config_core_payload.dart';
 part 'rust_dns_config_core_records.dart';
 
 /// Must match `ABI_VERSION` in `rust/diting-dns-config-core/src/ffi.rs`.
-const _abiVersion = 2;
+const _abiVersion = 3;
 
 /// `"DDC1"` read as a little-endian u32; the first field of every payload.
 const _payloadMagic = 0x31434444;

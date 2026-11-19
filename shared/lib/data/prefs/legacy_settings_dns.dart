@@ -414,6 +414,35 @@ extension LegacyDnsSettings on LegacySettings {
   void setLanRateLimitExemptCsv(String value) =>
       _store.putString(LegacySettings.uiContainer, 'lan_rate_limit_exempt', value);
 
+  /// Normal-mode connection rate limiting. The keys live in the global UI container on purpose,
+  /// matching the other DNS feature switches.
+  bool get connectionRateLimitEnabled =>
+      _bool(LegacySettings.uiContainer, 'connection_rate_limit_enabled', false);
+
+  void setConnectionRateLimitEnabled(bool value) => _store.putBool(
+    LegacySettings.uiContainer,
+    'connection_rate_limit_enabled',
+    value,
+  );
+
+  int get connectionRateLimitRate =>
+      _int(LegacySettings.uiContainer, 'connection_rate_limit_rate', 50);
+
+  void setConnectionRateLimitRate(int value) => _store.putInt(
+    LegacySettings.uiContainer,
+    'connection_rate_limit_rate',
+    value,
+  );
+
+  int get connectionRateLimitBurst =>
+      _int(LegacySettings.uiContainer, 'connection_rate_limit_burst', 100);
+
+  void setConnectionRateLimitBurst(int value) => _store.putInt(
+    LegacySettings.uiContainer,
+    'connection_rate_limit_burst',
+    value,
+  );
+
   /// View over the express data set's container. Production code selects the active data set via
   /// `activeDataSetProvider`; this stays for data-set-scoped reads and tests.
   LegacySettings forExpress() =>

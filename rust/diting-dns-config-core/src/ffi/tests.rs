@@ -27,6 +27,7 @@ fn body_of(bytes: &Option<Vec<u8>>) -> Reader<'_> {
 fn tunnel_payload() -> Vec<u8> {
     let mut writer = Writer::new();
     writer.u8(0b1_0001);
+    writer.u8(0b1);
     writer.string("single");
     writer.string("preset_alidns_dns");
     writer.strings(&[]);
@@ -41,6 +42,8 @@ fn tunnel_payload() -> Vec<u8> {
     writer.i32(3600);
     writer.i32(60);
     writer.i32(300);
+    writer.i32(80);
+    writer.i32(160);
     writer.i32(5);
     writer.i32(60);
     writer.i32(300);
@@ -66,6 +69,7 @@ fn tunnel_entry_returns_mode_document_and_rows() {
     let document = reader.string().expect("document");
     assert!(document.contains(r#""mode":"single""#));
     assert!(document.contains(r#""server":"223.5.5.5:53""#));
+    assert!(document.contains(r#""connectionRateLimit":{"enabled":true"#));
     assert_eq!(reader.u32(), Some(1));
     assert_eq!(reader.string().as_deref(), Some("preset_alidns_dns"));
     assert_eq!(reader.string().as_deref(), Some("阿里云"));

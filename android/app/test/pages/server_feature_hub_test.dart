@@ -10,6 +10,7 @@ import 'package:diting_android/pages/server/server_mode_shell.dart';
 import 'package:diting_android/pages/server/server_settings_page.dart';
 import 'package:diting_android/pages/server/server_upstream_page.dart';
 import 'package:diting_android/routes/hub_routes.dart';
+import 'package:diting_android/routes/lan_rate_limit_routes.dart';
 import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
@@ -52,6 +53,8 @@ void _featureCenter() {
         HubPaths.configTransfer,
       ]),
     );
+    expect(routes, contains(LanRateLimitPaths.root));
+    expect(cards.map((card) => card.title), contains('局域网限速'));
   });
 
   /// Pumps a few frames without waiting for every animation to stop.

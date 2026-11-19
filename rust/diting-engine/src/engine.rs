@@ -39,6 +39,7 @@ use tokio::runtime::Runtime;
 use crate::attribution::Attribution;
 use crate::cache::DnsCache;
 use crate::config::DnsConfig;
+use crate::connection_limit::{BucketKind, Config as ConnectionLimitConfig, ConnectionLimiter};
 use crate::dns::LogRow;
 use crate::error::{EngineError, EngineResult};
 use crate::logs::{BootstrapSink, EventSink, Logs};
@@ -111,6 +112,8 @@ pub struct Engine {
     dns64: RwLock<Option<Arc<diting_dns64_core::Engine>>>,
     /// N9: the LAN client rate limiter, `None` when limiting is off.
     rate_limit: RwLock<Option<diting_ratelimit_core::RateLimiter>>,
+    /// Per-UID DNS/new-connection limiting for the normal tunnel.
+    connection_limit: RwLock<Option<Arc<ConnectionLimiter>>>,
     block_response: AtomicU32,
     /// R4: temporary pause. While `now_ms() < pause_until_ms` every policy block is skipped, so DNS
     /// still resolves but nothing is filtered. `0` means not paused.
@@ -198,6 +201,7 @@ impl Engine {
             rebinding_protection: AtomicBool::new(false),
             dns64: RwLock::new(None),
             rate_limit: RwLock::new(None),
+            connection_limit: RwLock::new(None),
             block_response: AtomicU32::new(0),
             pause_until_ms: AtomicI64::new(0),
             allowlist_only: AtomicBool::new(false),
@@ -376,6 +380,7 @@ impl Engine {
             self.log_error(&error);
         }
         self.set_rate_limit(&config.rate_limit);
+        self.set_connection_rate_limit(config.connection_rate_limit);
         *self
             .dynamic_config
             .write()
@@ -517,6 +522,30 @@ impl Engine {
             Some(limiter) => {
                 limiter.allow(address, now_ns, diting_ratelimit_core::DEFAULT_MAX_BUCKETS)
             }
+        }
+    }
+
+    /// Installs the per-UID limiter. Disabling clears it, leaving the data plane on a cheap branch.
+    pub fn set_connection_rate_limit(&self, config: ConnectionLimitConfig) {
+        let limiter = config
+            .enabled
+            .then(|| Arc::new(ConnectionLimiter::new(config)));
+        *self
+            .connection_limit
+            .write()
+            .unwrap_or_else(|error| error.into_inner()) = limiter;
+    }
+
+    /// Whether `uid` may spend a token from the DNS or new-connection bucket.
+    pub fn allow_connection_rate(&self, kind: BucketKind, uid: i32, now_ns: i64) -> bool {
+        match self
+            .connection_limit
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .as_ref()
+        {
+            None => true,
+            Some(limiter) => limiter.allow(kind, uid, now_ns),
         }
     }
 

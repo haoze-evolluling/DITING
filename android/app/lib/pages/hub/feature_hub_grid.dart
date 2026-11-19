@@ -85,10 +85,7 @@ class _CardGrid extends StatelessWidget {
         spacing: _gap,
         children: [
           Expanded(child: _FeatureCard(card: left)),
-          if (right != null)
-            Expanded(child: _FeatureCard(card: right))
-          else
-            const Spacer(),
+          if (right != null) Expanded(child: _FeatureCard(card: right)),
         ],
       ),
     );

@@ -5,8 +5,8 @@
 
 use crate::bootstrap::BootstrapRow;
 use crate::document::{
-    BootstrapEntry, CacheInput, Dns64Input, DynamicInput, PrivacyInput, RateLimitInput,
-    ServerSettings, TunnelSettings,
+    BootstrapEntry, CacheInput, ConnectionRateLimitInput, Dns64Input, DynamicInput, PrivacyInput,
+    RateLimitInput, ServerSettings, TunnelSettings,
 };
 use crate::protocol::{self, Protocol};
 use crate::providers::Provider;
@@ -105,6 +105,7 @@ pub fn read_bootstrap_rows(reader: &mut Reader<'_>) -> Option<Vec<BootstrapRow>>
 
 pub fn tunnel_settings(reader: &mut Reader<'_>) -> Option<TunnelSettings> {
     let flags = reader.u8()?;
+    let connection_flags = reader.u8()?;
     let mode_raw = reader.string()?;
     let selected_provider_id = reader.string()?;
     let smart_prediction_provider_ids = reader.strings()?;
@@ -131,6 +132,11 @@ pub fn tunnel_settings(reader: &mut Reader<'_>) -> Option<TunnelSettings> {
         window_seconds: reader.i32()?,
         nxdomain_seconds: reader.i32()?,
     };
+    let connection_rate_limit = ConnectionRateLimitInput {
+        enabled: connection_flags & 0b1 != 0,
+        rate: reader.i32()?,
+        burst: reader.i32()?,
+    };
     let privacy = privacy_from_flags(flags, 0b100000, 0b1000000);
     let dns64 = Dns64Input {
         enabled: flags & 0b10000000 != 0,
@@ -150,6 +156,7 @@ pub fn tunnel_settings(reader: &mut Reader<'_>) -> Option<TunnelSettings> {
         dynamic,
         privacy,
         dns64,
+        connection_rate_limit,
     })
 }
 

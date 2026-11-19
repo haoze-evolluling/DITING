@@ -73,6 +73,7 @@ fn settings() -> TunnelSettings {
         },
         privacy: PrivacyInput::default(),
         dns64: Dns64Input::default(),
+        connection_rate_limit: ConnectionRateLimitInput::default(),
     }
 }
 
@@ -472,4 +473,46 @@ fn rate_limit_reaches_the_server_document() {
     assert_eq!(json["rateLimit"]["rate"], 20);
     assert_eq!(json["rateLimit"]["burst"], 40);
     assert_eq!(json["rateLimit"]["exempt"][0], "192.168.0.1");
+}
+
+#[test]
+fn connection_rate_limit_reaches_only_the_tunnel_document() {
+    let mut input = settings();
+    input.connection_rate_limit = ConnectionRateLimitInput {
+        enabled: true,
+        rate: 80,
+        burst: 160,
+    };
+    let tunnel = document_of(&build_tunnel(
+        &input,
+        &preset_providers(),
+        &preset_bootstrap(),
+    ));
+    assert_eq!(
+        tunnel["connectionRateLimit"],
+        serde_json::json!({"enabled": true, "rate": 80, "burst": 160})
+    );
+    assert!(tunnel.get("rateLimit").is_none());
+
+    let server = build_server(&server_settings(), &preset_upstreams()).expect("config");
+    let server: serde_json::Value = serde_json::from_str(&server.document).unwrap();
+    assert!(server.get("connectionRateLimit").is_none());
+    assert!(server.get("rateLimit").is_some());
+}
+
+#[test]
+fn connection_rate_limit_clamps_its_bounds() {
+    let mut input = settings();
+    input.connection_rate_limit = ConnectionRateLimitInput {
+        enabled: true,
+        rate: 1,
+        burst: 99_999,
+    };
+    let json = document_of(&build_tunnel(
+        &input,
+        &preset_providers(),
+        &preset_bootstrap(),
+    ));
+    assert_eq!(json["connectionRateLimit"]["rate"], 5);
+    assert_eq!(json["connectionRateLimit"]["burst"], 2000);
 }

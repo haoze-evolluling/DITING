@@ -5430,6 +5430,39 @@
   "lanRateLimitIpv6Prefix": "IPv6 aggregate prefix (bits)",
   "lanRateLimitExempt": "Exempt list",
   "lanRateLimitExemptHint": "Comma separated, e.g. 192.168.0.1, 10.0.0.0/8",
+  "lanRateLimitSectionSwitch": "Rate limit switch",
+  "lanRateLimitSectionRate": "Rate and burst",
+  "lanRateLimitSectionAggregation": "Client aggregation",
+  "lanRateLimitSectionExempt": "Exempt list",
+  "lanRateLimitExemptManage": "Manage list",
+  "lanRateLimitRestartNotice": "Changes made while the server is running take effect the next time it starts.",
+  "lanRateLimitExemptNone": "Not set",
+  "lanRateLimitExemptCount": "{count} entries",
+  "@lanRateLimitExemptCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "connectionRateLimitTitle": "Connection rate limiting",
+  "connectionRateLimitCardDescription": "Limit DNS queries and new connections",
+  "connectionRateLimitIntro": "Limit DNS queries and new connections per app so one app cannot exhaust resolution or connection capacity. Both counters share the rate and burst below.",
+  "connectionRateLimitSectionSwitch": "Rate limit switch",
+  "connectionRateLimitSectionParameters": "Rate and burst",
+  "connectionRateLimitEnable": "Enable connection rate limiting",
+  "connectionRateLimitEnableDesc": "Counts are kept per app UID; nothing is limited when off.",
+  "connectionRateLimitRate": "Requests per second",
+  "connectionRateLimitBurst": "Burst limit",
+  "connectionRateLimitFooter": "Each app has separate DNS-query and new-connection buckets, and both share these parameters. Queries over the limit are dropped and new connections are rejected.",
+  "connectionRateLimitApplyFailed": "The setting was saved, but applying it to the running tunnel failed: {message}",
+  "@connectionRateLimitApplyFailed": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "ruleVersionsTitle": "Subscription version rollback",
   "ruleVersionsIntro": "Every subscription update records a rule-set snapshot. Compare against older versions or roll back in one tap, so a bad or poisoned update cannot stick.",
   "ruleVersionsPick": "Choose a subscription",

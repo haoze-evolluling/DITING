@@ -54,6 +54,7 @@
 pub mod attribution;
 pub mod cache;
 pub mod config;
+pub mod connection_limit;
 pub mod dns;
 pub mod engine;
 pub mod error;

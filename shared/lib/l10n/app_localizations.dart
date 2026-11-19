@@ -26435,6 +26435,120 @@ abstract class AppL10n {
   /// **'逗号分隔，如 192.168.0.1, 10.0.0.0/8'**
   String get lanRateLimitExemptHint;
 
+  /// No description provided for @lanRateLimitSectionSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'限速开关'**
+  String get lanRateLimitSectionSwitch;
+
+  /// No description provided for @lanRateLimitSectionRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'速率与突发'**
+  String get lanRateLimitSectionRate;
+
+  /// No description provided for @lanRateLimitSectionAggregation.
+  ///
+  /// In zh, this message translates to:
+  /// **'客户端聚合'**
+  String get lanRateLimitSectionAggregation;
+
+  /// No description provided for @lanRateLimitSectionExempt.
+  ///
+  /// In zh, this message translates to:
+  /// **'不限速名单'**
+  String get lanRateLimitSectionExempt;
+
+  /// No description provided for @lanRateLimitExemptManage.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理名单'**
+  String get lanRateLimitExemptManage;
+
+  /// No description provided for @lanRateLimitRestartNotice.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器运行中修改后，将在下次启动服务时生效。'**
+  String get lanRateLimitRestartNotice;
+
+  /// No description provided for @lanRateLimitExemptNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'未设置'**
+  String get lanRateLimitExemptNone;
+
+  /// No description provided for @lanRateLimitExemptCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 项'**
+  String lanRateLimitExemptCount(int count);
+
+  /// No description provided for @connectionRateLimitTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接限速'**
+  String get connectionRateLimitTitle;
+
+  /// No description provided for @connectionRateLimitCardDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'限制 DNS 查询与新建连接'**
+  String get connectionRateLimitCardDescription;
+
+  /// No description provided for @connectionRateLimitIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'按应用分别限制 DNS 查询和新建连接，避免单个应用耗尽解析或建连能力。两个计数桶共用下面这组速率与突发参数。'**
+  String get connectionRateLimitIntro;
+
+  /// No description provided for @connectionRateLimitSectionSwitch.
+  ///
+  /// In zh, this message translates to:
+  /// **'限速开关'**
+  String get connectionRateLimitSectionSwitch;
+
+  /// No description provided for @connectionRateLimitSectionParameters.
+  ///
+  /// In zh, this message translates to:
+  /// **'速率与突发'**
+  String get connectionRateLimitSectionParameters;
+
+  /// No description provided for @connectionRateLimitEnable.
+  ///
+  /// In zh, this message translates to:
+  /// **'启用连接限速'**
+  String get connectionRateLimitEnable;
+
+  /// No description provided for @connectionRateLimitEnableDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'按应用 UID 分别计数；关闭时不做任何限制。'**
+  String get connectionRateLimitEnableDesc;
+
+  /// No description provided for @connectionRateLimitRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'每秒请求数'**
+  String get connectionRateLimitRate;
+
+  /// No description provided for @connectionRateLimitBurst.
+  ///
+  /// In zh, this message translates to:
+  /// **'突发上限'**
+  String get connectionRateLimitBurst;
+
+  /// No description provided for @connectionRateLimitFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'每个应用拥有独立的 DNS 查询桶和新建连接桶，两个桶共用这组参数。超限的查询会被丢弃，新建连接会被拒绝。'**
+  String get connectionRateLimitFooter;
+
+  /// No description provided for @connectionRateLimitApplyFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置已保存，但应用到运行中的隧道失败：{message}'**
+  String connectionRateLimitApplyFailed(String message);
+
   /// No description provided for @ruleVersionsTitle.
   ///
   /// In zh, this message translates to:

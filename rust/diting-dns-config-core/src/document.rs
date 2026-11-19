@@ -71,6 +71,24 @@ pub struct RateLimitInput {
     pub exempt: Vec<String>,
 }
 
+/// Per-app connection rate limiting for the normal tunnel data plane.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ConnectionRateLimitInput {
+    pub enabled: bool,
+    pub rate: i32,
+    pub burst: i32,
+}
+
+impl Default for ConnectionRateLimitInput {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            rate: 50,
+            burst: 100,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CacheInput {
     pub enabled: bool,
@@ -99,6 +117,7 @@ pub struct TunnelSettings {
     pub dynamic: DynamicInput,
     pub privacy: PrivacyInput,
     pub dns64: Dns64Input,
+    pub connection_rate_limit: ConnectionRateLimitInput,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -190,6 +209,13 @@ struct RateLimitDocument {
 }
 
 #[derive(Serialize)]
+struct ConnectionRateLimitDocument {
+    enabled: bool,
+    rate: i32,
+    burst: i32,
+}
+
+#[derive(Serialize)]
 struct ProviderDocument<'a> {
     id: &'a str,
     protocol: &'a str,
@@ -223,6 +249,8 @@ struct TunnelDocument<'a> {
     dns64: Dns64Document,
     #[serde(skip_serializing_if = "Option::is_none")]
     rate_limit: Option<RateLimitDocument>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    connection_rate_limit: Option<ConnectionRateLimitDocument>,
 }
 
 fn clamp(value: i32, low: i32, high: i32) -> i32 {
@@ -313,6 +341,14 @@ fn rate_limit_document(input: &RateLimitInput) -> RateLimitDocument {
         ipv4_prefix: input.ipv4_prefix,
         ipv6_prefix: input.ipv6_prefix,
         exempt: input.exempt.clone(),
+    }
+}
+
+fn connection_rate_limit_document(input: &ConnectionRateLimitInput) -> ConnectionRateLimitDocument {
+    ConnectionRateLimitDocument {
+        enabled: input.enabled,
+        rate: clamp(input.rate, 5, 1000),
+        burst: clamp(input.burst, 10, 2000),
     }
 }
 
@@ -425,6 +461,9 @@ pub fn build_tunnel(
             enabled: settings.dns64.enabled,
         },
         rate_limit: None,
+        connection_rate_limit: Some(connection_rate_limit_document(
+            &settings.connection_rate_limit,
+        )),
     };
     let document = serde_json::to_string(&document).unwrap_or_else(|_| String::from("{}"));
     TunnelConfig {
@@ -517,6 +556,7 @@ pub fn build_server(
             enabled: settings.dns64.enabled,
         },
         rate_limit: Some(rate_limit_document(&settings.rate_limit)),
+        connection_rate_limit: None,
     };
     let document = serde_json::to_string(&document).unwrap_or_else(|_| String::from("{}"));
     Some(ServerConfig {

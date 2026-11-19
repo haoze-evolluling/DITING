@@ -14416,6 +14416,69 @@ class AppL10nZh extends AppL10n {
   String get lanRateLimitExemptHint => '逗号分隔，如 192.168.0.1, 10.0.0.0/8';
 
   @override
+  String get lanRateLimitSectionSwitch => '限速开关';
+
+  @override
+  String get lanRateLimitSectionRate => '速率与突发';
+
+  @override
+  String get lanRateLimitSectionAggregation => '客户端聚合';
+
+  @override
+  String get lanRateLimitSectionExempt => '不限速名单';
+
+  @override
+  String get lanRateLimitExemptManage => '管理名单';
+
+  @override
+  String get lanRateLimitRestartNotice => '服务器运行中修改后，将在下次启动服务时生效。';
+
+  @override
+  String get lanRateLimitExemptNone => '未设置';
+
+  @override
+  String lanRateLimitExemptCount(int count) {
+    return '$count 项';
+  }
+
+  @override
+  String get connectionRateLimitTitle => '连接限速';
+
+  @override
+  String get connectionRateLimitCardDescription => '限制 DNS 查询与新建连接';
+
+  @override
+  String get connectionRateLimitIntro =>
+      '按应用分别限制 DNS 查询和新建连接，避免单个应用耗尽解析或建连能力。两个计数桶共用下面这组速率与突发参数。';
+
+  @override
+  String get connectionRateLimitSectionSwitch => '限速开关';
+
+  @override
+  String get connectionRateLimitSectionParameters => '速率与突发';
+
+  @override
+  String get connectionRateLimitEnable => '启用连接限速';
+
+  @override
+  String get connectionRateLimitEnableDesc => '按应用 UID 分别计数；关闭时不做任何限制。';
+
+  @override
+  String get connectionRateLimitRate => '每秒请求数';
+
+  @override
+  String get connectionRateLimitBurst => '突发上限';
+
+  @override
+  String get connectionRateLimitFooter =>
+      '每个应用拥有独立的 DNS 查询桶和新建连接桶，两个桶共用这组参数。超限的查询会被丢弃，新建连接会被拒绝。';
+
+  @override
+  String connectionRateLimitApplyFailed(String message) {
+    return '设置已保存，但应用到运行中的隧道失败：$message';
+  }
+
+  @override
   String get ruleVersionsTitle => '订阅版本回滚';
 
   @override
