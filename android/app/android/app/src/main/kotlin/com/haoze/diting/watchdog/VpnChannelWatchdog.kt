@@ -140,7 +140,7 @@ class VpnChannelWatchdog(context: Context, private val listener: Listener) {
             context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
                 .getBoolean(KEY_ENABLED, true)
 
-        /// Legacy `app_work_mode`: `normal` / `express` / `dns`; missing means normal.
+        /// Legacy `app_work_mode`: `normal` / `express`; missing means normal.
         fun workMode(context: Context): String =
             context.getSharedPreferences(WORK_MODE_PREFS, Context.MODE_PRIVATE)
                 .getString(KEY_WORK_MODE, null) ?: "normal"

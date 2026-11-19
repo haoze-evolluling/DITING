@@ -510,7 +510,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agreementMessage =>
-      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: Normal (full-tunnel control), Turbo (a DNS-only narrow route on the same Rust engine) and Standalone server (a LAN service that needs no VPN). Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and Turbo modes take over DNS resolution through the Android local VPN interface and never connect to a remote VPN server; Standalone server mode needs no VPN permission and listens on local port 1053 for LAN devices. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
+      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers two work modes: Normal (full-tunnel control) and Turbo (a DNS-only narrow route on the same Rust engine). Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and Turbo modes take over DNS resolution through the Android local VPN interface and never connect to a remote VPN server. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
 
   @override
   String get homeProviderSingleLabel => 'Resolver';
@@ -615,9 +615,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get homeTitleNormal => 'DITING · Normal';
-
-  @override
-  String get homeTitleServer => 'DITING · Server';
 
   @override
   String get homeTitleExpress => 'DITING · Express';
@@ -948,7 +945,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get statusCountsFooter =>
-      'Counts accumulate from this core start and reset when it restarts or the work mode changes; the reset in server mode clears only the counts, never rules or cache.';
+      'Counts accumulate from this core start and reset when it restarts or the work mode changes; a reset clears only the counts, never rules or cache.';
 
   @override
   String get statusQueries => 'Queries';
@@ -963,16 +960,8 @@ class AppL10nEn extends AppL10n {
   String get statusCacheHitRate => 'Cache hit rate';
 
   @override
-  String get statusServerPortReady =>
-      'The local DNS port is available; LAN devices can use it as their DNS';
-
-  @override
   String get statusTunnelActive =>
       'This device\'s traffic goes through DITING, so resolution and rules are in effect';
-
-  @override
-  String get statusServerPortClosed =>
-      'The DNS port is not listening, so server mode is not serving resolution';
 
   @override
   String get statusCoreStopped =>
@@ -1549,11 +1538,18 @@ class AppL10nEn extends AppL10n {
   String get workModeServerTitle => 'Server mode';
 
   @override
-  String get workModeServerBadge => 'Lightweight';
+  String get workModeServerBadge => 'Under construction';
 
   @override
   String get workModeServerSummary =>
-      'Pure DNS proxy with resolution acceleration, low power';
+      'Being redesigned and temporarily unavailable';
+
+  @override
+  String get serverUnderConstructionTitle => 'Under construction';
+
+  @override
+  String get serverUnderConstructionBody =>
+      'Server mode is being redesigned. It will return with a brand-new data and storage foundation.';
 
   @override
   String get workModeExpressTitle => 'Express mode';
@@ -1564,6 +1560,18 @@ class AppL10nEn extends AppL10n {
   @override
   String get workModeExpressSummary =>
       'DNS narrow route, acceleration and rule filtering, Android 9+ (64-bit)';
+
+  @override
+  String get workModeSettingTitle => 'Work mode';
+
+  @override
+  String get workModeGuideTitle => 'Setup guide';
+
+  @override
+  String get commonName => 'Name';
+
+  @override
+  String get commonPort => 'Port';
 
   @override
   String get stateStopped => 'Stopped';
@@ -1579,9 +1587,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get powerStateError => 'Failed to start';
-
-  @override
-  String get serverStatusError => 'Error';
 
   @override
   String get logModeAllLabel => 'Log everything';
@@ -1873,10 +1878,6 @@ class AppL10nEn extends AppL10n {
   String get onDemandDisabled => 'On-demand connection is off; nothing changed';
 
   @override
-  String get onDemandServerMode =>
-      'Server mode uses no tunnel; nothing changed';
-
-  @override
   String get onDemandUnknownSsid =>
       'The current Wi-Fi cannot be read; nothing changed';
 
@@ -1918,15 +1919,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get imagePickerUnavailable =>
       'No image picker is available on this device';
-
-  @override
-  String get serverModeRequired => 'Switch to server mode first';
-
-  @override
-  String get serverStartFailed => 'The DNS service failed to start';
-
-  @override
-  String get serverStartTimeout => 'The DNS service timed out starting';
 
   @override
   String get recognitionInvalidConfig =>
@@ -2359,12 +2351,6 @@ class AppL10nEn extends AppL10n {
   String get hubModuleMore => 'More features';
 
   @override
-  String get serverHubCategoryRules => 'Domain rules';
-
-  @override
-  String get serverHubCategoryData => 'Data and maintenance';
-
-  @override
   String get hubProviderManagement => 'DNS resolvers';
 
   @override
@@ -2785,7 +2771,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get notificationStatsFooter =>
-      'Counts start when the service starts and do not depend on the log mode. Press and drag an enabled item to reorder it. Speed and server modes have no live rate, so that item is left out there.';
+      'Counts start when the service starts and do not depend on the log mode. Press and drag an enabled item to reorder it. Express mode has no live rate, so that item is left out there.';
 
   @override
   String get notificationStatsHidden => 'Hidden items';
@@ -5251,7 +5237,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      'Each mode keeps its own rules, cache and logs; they differ in how they take over traffic: normal mode uses a full tunnel, server mode only serves LAN DNS, and express mode narrows the route to DNS only.';
+      'Both modes keep their own rules, cache and logs; they differ in how they take over traffic: normal mode uses a full tunnel, while express mode narrows the route to DNS only.';
 
   @override
   String get modeNormalFeature1 => 'Full tunnel';
@@ -5280,34 +5266,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get modeNormalFeature4Body =>
       'Records upload, download and query counts per app';
-
-  @override
-  String get modeServerFeature1 => 'LAN DNS service';
-
-  @override
-  String get modeServerFeature1Body =>
-      'Listens on 0.0.0.0 for devices on the same subnet';
-
-  @override
-  String get modeServerFeature2 => 'No VPN slot needed';
-
-  @override
-  String get modeServerFeature2Body =>
-      'No tunnel is created locally, so other VPNs can run at the same time';
-
-  @override
-  String get modeServerFeature3 => 'Independent rules and cache';
-
-  @override
-  String get modeServerFeature3Body =>
-      'Server mode keeps its own rule library and DNS cache';
-
-  @override
-  String get modeServerFeature4 => 'Low power';
-
-  @override
-  String get modeServerFeature4Body =>
-      'Handles DNS queries only, without forwarding traffic';
 
   @override
   String get modeExpressFeature1 => 'Rust engine, narrow route';
@@ -5413,10 +5371,6 @@ class AppL10nEn extends AppL10n {
       'Prevents the app from being killed; denying it may drop the tunnel after long standby';
 
   @override
-  String get permBatteryServerBody =>
-      'Prevents the app from being killed; denying it makes the LAN service intermittent';
-
-  @override
   String get permVpnExpressBody =>
       'Creates the narrow-route tunnel; denying it prevents startup';
 
@@ -5443,18 +5397,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get onboardingTipNormal3 =>
       'The home page sentence and opacity can both be changed in settings.';
-
-  @override
-  String get onboardingTipServer1 =>
-      'After starting, point devices on the same subnet to the address shown under LAN access.';
-
-  @override
-  String get onboardingTipServer2 =>
-      'The port can be changed on the Server mode page; the default is 5353.';
-
-  @override
-  String get onboardingTipServer3 =>
-      'This mode creates no VPN, so it can run alongside other VPNs.';
 
   @override
   String get onboardingTipExpress1 =>
@@ -6123,390 +6065,6 @@ class AppL10nEn extends AppL10n {
   String odDeleteSsidTooltip(String ssid) {
     return 'Delete $ssid';
   }
-
-  @override
-  String serverSwitched(String name) {
-    return 'Switched to $name; restart the service to apply';
-  }
-
-  @override
-  String serverSelected(String name) {
-    return 'Selected $name';
-  }
-
-  @override
-  String serverAdded(String name) {
-    return 'Added $name';
-  }
-
-  @override
-  String serverSaved(String name) {
-    return 'Saved $name';
-  }
-
-  @override
-  String serverDeleteConfirm(String name) {
-    return 'Delete $name?';
-  }
-
-  @override
-  String get serverDeleteBody =>
-      'If it is in use, the first built-in provider is used after deletion.';
-
-  @override
-  String serverDeleted(String name) {
-    return 'Deleted $name';
-  }
-
-  @override
-  String get serverUpstreamTitle => 'Upstream servers';
-
-  @override
-  String get serverAddCustom => 'Add a custom provider';
-
-  @override
-  String serverCurrentUpstream(String name, String protocol) {
-    return 'Currently resolving DNS: ($protocol) $name';
-  }
-
-  @override
-  String get serverBuiltinProviders => 'Built-in DNS providers';
-
-  @override
-  String get serverNoBuiltin => 'No built-in providers';
-
-  @override
-  String get serverCustomProviders => 'Custom DNS providers';
-
-  @override
-  String get serverNoCustom => 'No custom providers';
-
-  @override
-  String get serverNoCustomBody =>
-      'Tap the plus button to add a DoH / DoT / plaintext DNS upstream';
-
-  @override
-  String get serverUpstreamFooter =>
-      'Server mode supports a single upstream and smart / parallel-race / primary-backup scheduling; switch the mode and candidates above and restart the service to apply. Built-in providers are maintained by the app and can only be selected; edit or delete a custom one from its menu.';
-
-  @override
-  String serverEditName(String name) {
-    return 'Edit $name';
-  }
-
-  @override
-  String serverDeleteName(String name) {
-    return 'Delete $name';
-  }
-
-  @override
-  String get serverEditCustom => 'Edit custom provider';
-
-  @override
-  String get serverSave => 'Save';
-
-  @override
-  String get serverName => 'Name';
-
-  @override
-  String get serverDohAddress => 'DoH address';
-
-  @override
-  String get serverAddress => 'Server address';
-
-  @override
-  String get serverDohPrefix => 'Must start with https://';
-
-  @override
-  String get serverAddressHint => 'IPv4 or IPv6; IPv6 can be entered as [::1]';
-
-  @override
-  String get serverPort => 'Port';
-
-  @override
-  String get serverPortHint => 'DNS usually uses 53, DoT usually 853';
-
-  @override
-  String get serverUnavailable => 'Unavailable on this device';
-
-  @override
-  String get serverBatteryJoined =>
-      'Added to the battery optimisation allowlist';
-
-  @override
-  String get serverBatteryNotJoined =>
-      'Not in the battery optimisation allowlist yet';
-
-  @override
-  String get serverClearCache => 'Clear cache';
-
-  @override
-  String get serverClear => 'Clear';
-
-  @override
-  String get serverClearCacheBody =>
-      'Cached answers will be cleared, so the next lookup goes upstream again.';
-
-  @override
-  String get serverCacheCleared => 'Cache cleared';
-
-  @override
-  String get serverCacheClearFailed =>
-      'Clearing failed: start the DNS service first';
-
-  @override
-  String serverCacheOn(String preset) {
-    return '$preset · cache hits no longer go upstream';
-  }
-
-  @override
-  String get serverCacheOff => 'Off · every lookup goes to the upstream DNS';
-
-  @override
-  String get serverModeSettings => 'Mode settings';
-
-  @override
-  String get serverProxySettings => 'Proxy and resolution';
-
-  @override
-  String get serverCacheSettings => 'Cache settings';
-
-  @override
-  String get serverRuleControl => 'Rule control';
-
-  @override
-  String get serverRuleControlOn =>
-      'On · matched rules return the blocking policy';
-
-  @override
-  String get serverRuleControlOff => 'Off · domain rule filtering is disabled';
-
-  @override
-  String get serverRuleMasterSaved =>
-      'Rule switch saved; restart the DNS service to apply';
-
-  @override
-  String get serverListenPort => 'Local listen port';
-
-  @override
-  String get serverListenPortBody =>
-      'The port the DNS service listens on; the default is 1053';
-
-  @override
-  String get serverRuleManagement => 'Rule management';
-
-  @override
-  String get serverBlocklist => 'Blocklist';
-
-  @override
-  String get serverBlocklistBody =>
-      'Manage domain blocking rules in a separate library';
-
-  @override
-  String get serverAllowlist => 'Allowlist';
-
-  @override
-  String get serverAllowlistBody =>
-      'Manage domain allow rules in a separate library';
-
-  @override
-  String get serverHosts => 'Hosts overrides';
-
-  @override
-  String get serverHostsBody =>
-      'Resolve chosen domains to a configured IP or CNAME';
-
-  @override
-  String get serverRulesFooter =>
-      'These three tables only affect the server mode rule library and never override normal mode rules.';
-
-  @override
-  String get serverDataReset => 'Data and reset';
-
-  @override
-  String get serverResetStats => 'Reset runtime statistics';
-
-  @override
-  String get serverResetStatsBody => 'Clear the statistics for this run';
-
-  @override
-  String get serverBackground => 'Background stability';
-
-  @override
-  String get serverBackgroundBody =>
-      'The system freezes apps outside the power-saving allowlist; add this app to it so the DNS service keeps answering LAN queries with the screen off.';
-
-  @override
-  String get serverRunMode => 'Run mode';
-
-  @override
-  String get serverWizard => 'Setup guide';
-
-  @override
-  String get serverWizardBody =>
-      'See how server mode works, how to configure the LAN and how to get ready';
-
-  @override
-  String get serverReselectMode => 'Choose the work mode again';
-
-  @override
-  String get serverReselectModeBody =>
-      'Review every work mode and choose again';
-
-  @override
-  String get serverBatteryIgnored => 'Battery optimisation ignored';
-
-  @override
-  String get serverBatteryIgnoredShort => 'Ignored';
-
-  @override
-  String get serverBatteryKeepAlive =>
-      'Keeps the DNS service running in the background';
-
-  @override
-  String get serverIgnoreBattery => 'Ignore battery optimisation';
-
-  @override
-  String get serverCachePresetConservative => 'Conservative';
-
-  @override
-  String get serverCachePresetHighHit => 'High hit rate';
-
-  @override
-  String get serverCachePresetStandard => 'Standard';
-
-  @override
-  String get serverNavOverview => 'Overview';
-
-  @override
-  String get serverPortInvalid => 'Enter a number';
-
-  @override
-  String serverPortRange(String max, String min) {
-    return 'Range $min–$max';
-  }
-
-  @override
-  String serverPortChanged(String port) {
-    return 'The port is now $port; restart the service to apply';
-  }
-
-  @override
-  String get serverResetConfirm => 'Reset';
-
-  @override
-  String get serverResetStatsConfirmBody =>
-      'All statistics for this run will be cleared. Continue?';
-
-  @override
-  String get serverStatsReset => 'Runtime statistics reset';
-
-  @override
-  String get serverOverviewTitle => 'Diting · Server mode';
-
-  @override
-  String get serverSwitchMode => 'Switch work mode';
-
-  @override
-  String get serverChangePort => 'Change the listen port';
-
-  @override
-  String get serverCurrentUpstreamCard => 'Current upstream';
-
-  @override
-  String get serverLanAccess => 'LAN access';
-
-  @override
-  String get serverLanBody =>
-      'Point devices on the same subnet at the address above; the port is bound only at startup, so restart the service after changing it.';
-
-  @override
-  String get serverNoNetwork => 'No network';
-
-  @override
-  String get serverLanConnectHint =>
-      'An available address appears here once you are on Wi-Fi or Ethernet';
-
-  @override
-  String get serverLanPointHint =>
-      'Point other LAN devices\' DNS at this address';
-
-  @override
-  String serverCopied(String text) {
-    return 'Copied $text';
-  }
-
-  @override
-  String get serverServiceStatus => 'Service status';
-
-  @override
-  String get serverTotalQueries => 'Total queries';
-
-  @override
-  String get serverCacheHits => 'Cache hits';
-
-  @override
-  String get serverBlocked => 'Blocked';
-
-  @override
-  String get serverAverageLatency => 'Average latency';
-
-  @override
-  String get serverUptime => 'Uptime';
-
-  @override
-  String get serverStatsLastSevenDays => 'Last 7 days';
-
-  @override
-  String get serverLogsTitle => 'Server log dashboard';
-
-  @override
-  String get serverLogsBody =>
-      'DNS requests, blocks, cache hits and upstream races from LAN devices using server mode. Server mode builds no VPN tunnel, so there is no traffic-byte or HTTPS-inspection data here.';
-
-  @override
-  String get serverResetStatsBodyShort =>
-      'Clear every counter for this run without touching rules or cache';
-
-  @override
-  String get serverModeSettingsBody =>
-      'Listen port, background stability, data reset and run mode';
-
-  @override
-  String get serverModeNote =>
-      'Server mode creates no VPN tunnel: it only listens on a DNS port locally, so it coexists with other VPNs and takes no VPN slot; this device\'s own app queries do not go through it automatically.';
-
-  @override
-  String get serverBusyStarting => 'Starting';
-
-  @override
-  String get serverBusyStopping => 'Stopping';
-
-  @override
-  String get serverRunning => 'Stop';
-
-  @override
-  String get serverStopped => 'Start';
-
-  @override
-  String serverListening(String port) {
-    return 'Listening on 0.0.0.0:$port';
-  }
-
-  @override
-  String get serverStatusStopped => 'Server mode is stopped';
-
-  @override
-  String get serverStatusStarting => 'Starting the service...';
-
-  @override
-  String get serverStatusRunning => 'Server mode is running';
-
-  @override
-  String get serverStatusStopping => 'Stopping the service...';
-
-  @override
-  String get serverStatusErrorText => 'Service failed to start';
 
   @override
   String get troubleshootTitle => 'Troubleshooting';
@@ -9334,16 +8892,6 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String notifRunningServer(String name, int port) {
-    return 'Running · $name · port $port';
-  }
-
-  @override
-  String notifRunningServerMode(String mode, int count, int port) {
-    return 'Running · [$mode] $count providers · port $port';
-  }
-
-  @override
   String platformNoSaveDialog(String error) {
     return 'Could not open the save dialog: $error';
   }
@@ -9653,7 +9201,7 @@ class AppL10nEn extends AppL10n {
       'Before continuing, confirm that you have read, understood and agreed to all of the terms above. If you do not agree, stop using the software and uninstall it.';
 
   @override
-  String get settingsModeSubtitle => 'Switch between normal and server mode';
+  String get settingsModeSubtitle => 'Switch between normal and express mode';
 
   @override
   String get settingsLogModeSubtitle =>
@@ -14623,39 +14171,6 @@ class AppL10nEn extends AppL10n {
       'DITING keeps running in the notification area.\nClick the tray icon to reopen the main window.';
 
   @override
-  String get serverHubUpstreamDescription =>
-      'Manage upstreams and the resolution policy';
-
-  @override
-  String get serverHubCacheDescription =>
-      'Tune the DNS cache switch, size and hit policy';
-
-  @override
-  String get serverHubRuleControlDescription =>
-      'Configure the rule master switch and blocking policy';
-
-  @override
-  String get serverNavHome => 'Home';
-
-  @override
-  String get serverServiceSection => 'Service settings';
-
-  @override
-  String get serverDomainRules => 'Domain rules';
-
-  @override
-  String get serverDomainRulesDescription =>
-      'Shortcuts to the blocklist, allowlist and host overrides';
-
-  @override
-  String get serverDashboardStatusDescription =>
-      'Service state, uptime and this run\'s counters';
-
-  @override
-  String get serverDashboardLanDescription =>
-      'LAN address, port and copy shortcut';
-
-  @override
   String get integrationTitle => 'Widget & automation';
 
   @override
@@ -15247,66 +14762,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get dns64EnableDesc =>
       'When the upstream has no usable AAAA, synthesize one from the A record behind the well-known prefix 64:ff9b::/96. Enable only on IPv6-only links; on dual-stack it can break access.';
-
-  @override
-  String get lanRateLimitTitle => 'LAN rate limiting';
-
-  @override
-  String get lanRateLimitIntro =>
-      'Server mode answers DNS for the LAN. Set a per-client token bucket here so one device cannot drain resolution capacity.';
-
-  @override
-  String get lanRateLimitEnable => 'Enable client rate limiting';
-
-  @override
-  String get lanRateLimitEnableDesc =>
-      'Throttle queries per second after aggregating by client address; nothing is limited when off.';
-
-  @override
-  String get lanRateLimitRate => 'Requests per second';
-
-  @override
-  String get lanRateLimitBurst => 'Burst limit';
-
-  @override
-  String get lanRateLimitIpv4Prefix => 'IPv4 aggregate prefix (bits)';
-
-  @override
-  String get lanRateLimitIpv6Prefix => 'IPv6 aggregate prefix (bits)';
-
-  @override
-  String get lanRateLimitExempt => 'Exempt list';
-
-  @override
-  String get lanRateLimitExemptHint =>
-      'Comma separated, e.g. 192.168.0.1, 10.0.0.0/8';
-
-  @override
-  String get lanRateLimitSectionSwitch => 'Rate limit switch';
-
-  @override
-  String get lanRateLimitSectionRate => 'Rate and burst';
-
-  @override
-  String get lanRateLimitSectionAggregation => 'Client aggregation';
-
-  @override
-  String get lanRateLimitSectionExempt => 'Exempt list';
-
-  @override
-  String get lanRateLimitExemptManage => 'Manage list';
-
-  @override
-  String get lanRateLimitRestartNotice =>
-      'Changes made while the server is running take effect the next time it starts.';
-
-  @override
-  String get lanRateLimitExemptNone => 'Not set';
-
-  @override
-  String lanRateLimitExemptCount(int count) {
-    return '$count entries';
-  }
 
   @override
   String get connectionRateLimitTitle => 'Connection rate limiting';

@@ -23,8 +23,8 @@ class StorageCopyPlan {
   final List<String> tables;
 }
 
-/// The seven copy plans. Normal mode has two sources (rules and logs) plus the global automation
-/// tables; express and server each have their own legacy file.
+/// The five copy plans. Normal mode has two sources (rules and logs) plus the global automation
+/// tables; express has its own legacy file.
 List<StorageCopyPlan> storageV2CopyPlans() => [
   StorageCopyPlan(
     target: DatabaseKind.normalRules,
@@ -55,20 +55,6 @@ List<StorageCopyPlan> storageV2CopyPlans() => [
   StorageCopyPlan(
     target: DatabaseKind.expressLogs,
     source: LegacyStorageSource.expressDatabase,
-    tables: LegacyStorageSource.logTables,
-  ),
-  StorageCopyPlan(
-    target: DatabaseKind.serverRules,
-    source: LegacyStorageSource.serverRulesDatabase,
-    tables: [
-      ...LegacyStorageSource.ruleTables,
-      ...LegacyStorageSource.subscriptionTables,
-      LegacyStorageSource.ruleVersionTable,
-    ],
-  ),
-  StorageCopyPlan(
-    target: DatabaseKind.serverLogs,
-    source: LegacyStorageSource.serverLogsDatabase,
     tables: LegacyStorageSource.logTables,
   ),
   StorageCopyPlan(

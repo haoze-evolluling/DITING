@@ -7,7 +7,6 @@ import android.content.Context
 enum class NotificationMode(internal val defaultKey: String) {
     NORMAL("default_running_text"),
     EXPRESS("default_express_text"),
-    SERVER("default_server_text"),
 }
 
 /// Reads the notification keys Flutter writes through the legacy prefs bridge. Both sides use

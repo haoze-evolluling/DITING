@@ -20,7 +20,7 @@
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
         android:usesPermissionFlags="neverForLocation"
         tools:targetApi="tiramisu" />
-    <!-- Server mode restarts its LAN DNS service after a reboot (see the receiver below). -->
+    <!-- Scheduled automation re-arms its alarms after a reboot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Without this declaration the battery-optimization dialog is filtered out and the
          request silently lands on the app info screen instead. -->
@@ -167,15 +167,6 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="vpn" />
         </service>
-        <!-- Standalone LAN DNS server (server mode). -->
-        <service
-            android:name=".server.DitingDnsServerService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="dns_server" />
-        </service>
         <!-- Manual runtime-log capture (功能中心 → 故障排查 → 运行日志). Foreground so a
              backgrounded app keeps collecting; the notification is also the stop affordance.
              Its own process on purpose: a capture inside the app process dies with it, so the
@@ -189,16 +180,6 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="diagnostics" />
         </service>
-        <!-- Restores the LAN DNS server after a reboot or an in-app update. -->
-        <receiver
-            android:name=".server.DnsModeBootReceiver"
-            android:exported="false"
-            android:enabled="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
         <!-- Home screen widget: protection state, today's blocked count and a one-tap toggle.
              The provider must be exported for the system's update broadcasts; the toggle receiver
              is a separate, unexported component so no other app can flip the tunnel. -->

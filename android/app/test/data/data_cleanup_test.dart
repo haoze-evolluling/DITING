@@ -170,22 +170,20 @@ void _dataCleanup() {
   });
 
   group('权重数据', () {
-    test('两个权重键在三个数据集容器里都被删', () async {
+    test('两个权重键在两个数据集容器里都被删', () async {
       for (final container in [
         LegacySettings.uiContainer,
         LegacySettings.expressContainer,
-        LegacySettings.serverContainer,
       ]) {
         prefs.putString(container, 'provider_health_json', '{}');
         prefs.putString(container, 'bootstrap_health_json', '{}');
       }
       final service = buildService();
-      expect((await service.run(CleanupAction.providerWeights)).removed, 3);
-      expect((await service.run(CleanupAction.bootstrapWeights)).removed, 3);
+      expect((await service.run(CleanupAction.providerWeights)).removed, 2);
+      expect((await service.run(CleanupAction.bootstrapWeights)).removed, 2);
       for (final container in [
         LegacySettings.uiContainer,
         LegacySettings.expressContainer,
-        LegacySettings.serverContainer,
       ]) {
         expect(prefs.read(container, 'provider_health_json'), isNull);
         expect(prefs.read(container, 'bootstrap_health_json'), isNull);

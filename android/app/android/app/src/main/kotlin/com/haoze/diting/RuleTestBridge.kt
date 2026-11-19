@@ -49,7 +49,6 @@ class RuleTestBridge(
         val qtype = (call.argument<Any>("qtype") as? Number)?.toInt() ?: 1
         val dataset = when (call.argument<String>("dataset")) {
             "express" -> RuleDataset.EXPRESS
-            "server" -> RuleDataset.DNS_MODE
             else -> RuleDataset.NORMAL
         }
         executor.execute {

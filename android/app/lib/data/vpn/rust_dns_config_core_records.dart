@@ -19,15 +19,6 @@ typedef BootstrapEntryRow = ({String id, String name, String ip});
 /// A `bootstrap_custom_json` row, which keeps the toggle the settings page edits.
 typedef BootstrapRow = ({String id, String name, String ip, bool enabled});
 
-/// A server-mode upstream: a preset row, a stored custom record, or the picked one.
-typedef ServerUpstreamRow = ({
-  String id,
-  String name,
-  String protocolStorage,
-  String address,
-  int port,
-});
-
 /// The nine values a cache preset writes into the prefs.
 typedef CacheValues = ({
   String mode,
@@ -46,22 +37,3 @@ typedef TunnelDocument = ({
   List<ProviderRow> providers,
   List<BootstrapEntryRow> bootstrap,
 });
-
-/// The server-mode document plus the upstreams it picked (engine attempt order: one row in
-/// `single`, the whole race list otherwise).
-typedef ServerDocument = ({
-  int port,
-  String mode,
-  String document,
-  List<ServerUpstreamRow> providers,
-});
-
-/// Why a custom upstream was rejected. Declaration order matches `upstreams::UpstreamInvalid`.
-enum UpstreamRejection {
-  nameRequired,
-  addressRequired,
-  dohNeedsHttps,
-  dohInvalidUrl,
-  portRange,
-  ipv6Invalid,
-}

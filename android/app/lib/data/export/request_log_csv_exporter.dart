@@ -10,7 +10,7 @@ import 'package:diting_android/state/observability_providers.dart'
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// The databases an export reads from. A null side is skipped: express and server modes have no
+/// The databases an export reads from. A null side is skipped: express mode has no
 /// `http_request_log`, and a fresh install may have no file yet.
 class RequestLogExportSource {
   const RequestLogExportSource({this.dnsDb, this.httpDb});

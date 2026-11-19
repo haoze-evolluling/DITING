@@ -1,6 +1,6 @@
 /// Dart side of `com.haoze.diting/tile`: the quick settings tile opens the app with a
 /// start request when it cannot start the data plane itself (no VPN consent yet, no persisted
-/// start config, or server mode without a saved config).
+/// start config).
 ///
 /// The native side clears the extra when it is read, so a request is delivered exactly once.
 library;

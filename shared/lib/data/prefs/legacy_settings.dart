@@ -14,7 +14,6 @@ part 'legacy_settings_dns.dart';
 part 'legacy_settings_hub.dart';
 part 'legacy_settings_parity.dart';
 part 'legacy_settings_sites.dart';
-part 'legacy_settings_server.dart';
 part 'legacy_settings_appearance.dart';
 
 class LegacySettings {
@@ -33,8 +32,6 @@ class LegacySettings {
   static const expressContainer = 'diting_express_prefs';
 
   static const expressRunningContainer = 'express_vpn_prefs';
-
-  static const serverContainer = 'diting_dns_mode_prefs';
 
   /// The foreground service reads this container, not `dns_vpn_prefs`.
   static const notificationContainer = 'notification_settings_prefs';
@@ -56,8 +53,6 @@ class LegacySettings {
 
   static const bottomBarMinCount = 2;
   static const bottomBarMaxCount = 4;
-
-  static const defaultServerPort = 1053;
 
   static const subscriptionAutoUpdateEnabledKey =
       'subscription_auto_update_enabled';
@@ -376,18 +371,6 @@ class LegacySettings {
     return value is String ? value : null;
   }
 
-  String? _stringIn(String container, String key) => _string(container, key);
-
-  bool _boolIn(String container, String key, bool fallback) {
-    final value = _store.read(container, key);
-    return value is bool ? value : fallback;
-  }
-
-  int _intIn(String container, String key, int fallback) {
-    final value = _store.read(container, key);
-    return value is int ? value : fallback;
-  }
-
   bool _bool(String container, String key, bool fallback) {
     final value = _store.read(container, key);
     return value is bool ? value : fallback;
@@ -452,5 +435,4 @@ class LegacySettings {
 
   static double _clampedOpacity(double value) => value.clamp(0.1, 1.0);
 
-  static int _clampedPort(int port) => port.clamp(1024, 65535);
 }

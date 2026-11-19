@@ -40,7 +40,6 @@ class MainActivity : FlutterActivity() {
         LegacyPrefsBridge(applicationContext).register(messenger)
         vpnBridge = VpnBridge(this, messenger)
         expressVpnBridge = ExpressVpnBridge(this, messenger)
-        DnsServerBridge(applicationContext, messenger)
         RuleIndexBridge(applicationContext, messenger)
         RuleTestBridge(applicationContext, messenger)
         BlockPauseBridge(applicationContext, messenger)

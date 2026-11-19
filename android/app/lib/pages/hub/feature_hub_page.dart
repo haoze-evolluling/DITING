@@ -14,7 +14,7 @@ import 'package:material_ui/material_ui.dart';
 /// Feature hub migrated from upstream `FeatureHubScreen.kt`: the card grid groups the same
 /// modules into focused categories, so no single page (notably 规则控制) hosts every entry point.
 /// Express mode filters the same data through the upstream 18-item gate. The grid widgets live in
-/// `feature_hub_grid.dart` so the server-mode feature center can share the same layout.
+/// `feature_hub_grid.dart` so every category shares the same layout.
 class FeatureHubPage extends ConsumerWidget {
   const FeatureHubPage({super.key});
 

@@ -174,7 +174,7 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
         : DnsLogDailyStats.fromParsed(parsed.first);
   }
 
-  // Express/server, off mode, a missing database and an older schema all mean no HTTPS rows.
+  // Express mode, off mode, a missing database and an older schema all mean no HTTPS rows.
   var httpStats = const HttpRequestDailyStats.empty();
   Database? mainDb;
   if (!off && normal) {

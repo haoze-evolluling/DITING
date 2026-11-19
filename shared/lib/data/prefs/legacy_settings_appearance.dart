@@ -135,20 +135,6 @@ extension LegacyAppearanceSettings on LegacySettings {
     jsonEncode(names),
   );
 
-  /// Server-mode dashboard card order by `ServerDashboardWidget.name`; null when never edited, so
-  /// the built-in defaults apply while an emptied board still restores as empty. The key lives in
-  /// the global UI container: the board only ever shows in server mode, so it needs no per-dataset
-  /// duplicate.
-  List<String>? get serverDashboardWidgetOrder => _decodeWidgetNames(
-    _string(LegacySettings.uiContainer, 'server_dashboard_widget_order'),
-  );
-
-  void setServerDashboardWidgetOrder(List<String> names) => _store.putString(
-    LegacySettings.uiContainer,
-    'server_dashboard_widget_order',
-    jsonEncode(names),
-  );
-
   double get componentOpacity => LegacySettings._clampedOpacity(
     _double(LegacySettings.uiContainer, 'home_component_opacity', 1),
   );

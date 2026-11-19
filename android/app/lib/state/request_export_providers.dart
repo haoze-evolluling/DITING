@@ -81,7 +81,7 @@ class RequestLogExportActions {
     try {
       final mode = _ref.read(workModeProvider);
       final dnsDb = await _ref.read(activeLogDatabaseProvider.future);
-      // Express and server modes keep their own database without `http_request_log`.
+      // Express mode keeps its own database without `http_request_log`.
       final httpDb = mode == AppWorkMode.normal
           ? await _ref.read(normalLogDatabaseProvider.future)
           : null;

@@ -11,7 +11,7 @@ import 'package:material_ui/material_ui.dart';
 /// The tabbed shell shared by both app roots: six `StatefulShellRoute` branches, a floating
 /// [NavigationDock] on narrow layouts and a plain [NavigationBar] when the dock would not fit.
 ///
-/// Android and desktop differ only in what surrounds it (server mode, startup gates, data sources),
+/// Android and desktop differ only in what surrounds it (startup gates, data sources),
 /// never in how the tabs are drawn, ordered or animated. Keep this the single implementation.
 class DockShell extends ConsumerWidget {
   const DockShell({super.key, required this.navigationShell});

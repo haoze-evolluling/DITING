@@ -293,7 +293,7 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
           ),
           TextField(
             controller: _name,
-            decoration: InputDecoration(labelText: context.l10n.serverName),
+            decoration: InputDecoration(labelText: context.l10n.commonName),
           ),
           if (isDoh) ...[
             TextField(

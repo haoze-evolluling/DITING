@@ -3,9 +3,9 @@ package com.haoze.diting.engine
 /// Loads `libditing_engine.so` exactly once, and remembers a failure.
 ///
 /// The Rust engine is one shared library (`libditing_engine.so`). Loading it is explicit rather
-/// than a static initialiser so the failure surfaces where the caller can show it:
-/// the DNS server service reports `DNS 服务启动失败：…` instead of the process dying with an
-/// `UnsatisfiedLinkError` inside a class initialiser.
+/// than a static initialiser so the failure surfaces where the caller can show it: the tunnel
+/// service reports the load error instead of the process dying with an `UnsatisfiedLinkError`
+/// inside a class initialiser.
 ///
 /// A failure is remembered on purpose: a missing `.so` (a stale `jniLibs` directory, an ABI the
 /// build did not include) cannot be fixed by retrying, and the second attempt would only hide the

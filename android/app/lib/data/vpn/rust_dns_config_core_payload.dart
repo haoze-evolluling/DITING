@@ -71,17 +71,6 @@ class _PayloadWriter {
     }
   }
 
-  void upstreamRows(List<ServerUpstreamRow> rows) {
-    u32(rows.length);
-    for (final row in rows) {
-      utf8(row.id);
-      utf8(row.name);
-      utf8(row.protocolStorage);
-      utf8(row.address);
-      i32(row.port);
-    }
-  }
-
   Uint8List finish() => _bytes.takeBytes();
 }
 
@@ -158,14 +147,4 @@ class _PayloadReader {
     (_) => (id: string(), name: string(), ip: string(), enabled: flag()),
   );
 
-  List<ServerUpstreamRow> upstreamRows() => List<ServerUpstreamRow>.generate(
-    u32(),
-    (_) => (
-      id: string(),
-      name: string(),
-      protocolStorage: string(),
-      address: string(),
-      port: i32(),
-    ),
-  );
 }

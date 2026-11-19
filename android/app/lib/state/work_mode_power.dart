@@ -96,8 +96,6 @@ class PowerNotifier extends Notifier<PowerState> {
           .applyNative(
             status.stats,
             running: status.running,
-            // Server mode owns the counters there; this plane's "not running" is expected.
-            ownsStats: mode != AppWorkMode.server,
             startedAt: status.startedAt,
           );
       // Keeps polling while reclaiming so the reconnect shows up without a resume.
@@ -123,19 +121,8 @@ class PowerNotifier extends Notifier<PowerState> {
     await _start();
   }
 
-  /// Stops the tunnel; server mode calls it first so the two data planes never coexist.
-  Future<void> stopIfActive() async {
-    if (state.isRunning || state == PowerState.starting) {
-      await stop();
-    }
-  }
-
   Future<void> _start() async {
     final mode = ref.read(workModeProvider);
-    if (mode != AppWorkMode.normal && mode != AppWorkMode.express) {
-      _fail(currentL10n.workModeNoDataPlane);
-      return;
-    }
     state = PowerState.starting;
     lastError = null;
     _armGuard(_launchTimeout);

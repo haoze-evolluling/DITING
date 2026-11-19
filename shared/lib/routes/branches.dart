@@ -23,6 +23,7 @@ abstract final class Routes {
   static const about = '/about';
   static const modeSelect = '/mode/select';
   static const modeOnboarding = '/mode/onboarding';
+  static const modeServerPlaceholder = '/mode/server';
 
   /// Rule pages share one widget and differ only by kind.
   static String rulesOf(String kind) => '$rules/$kind';

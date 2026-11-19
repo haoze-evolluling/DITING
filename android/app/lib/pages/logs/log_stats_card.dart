@@ -15,7 +15,7 @@ class LogStatsCard extends StatelessWidget {
   /// Opens the request log; null (edit mode) leaves the row inert.
   final VoidCallback? onRecentActivity;
 
-  /// Server mode only proxies DNS, so uploaded/downloaded bytes are meaningless there. The card
+  /// Express mode only proxies DNS, so uploaded/downloaded bytes are meaningless there. The card
   /// keeps the request figures and drops the traffic section instead of showing three zeroes.
   final bool showData;
 

@@ -12,7 +12,6 @@
     <string name="widget_work_mode">Mode</string>
     <string name="widget_mode_normal">Normal</string>
     <string name="widget_mode_express">Express</string>
-    <string name="widget_mode_server">Server</string>
     <string name="widget_value_unknown">—</string>
     <string name="widget_toggle_desc">Turn protection on or off</string>
     <string name="widget_description">Protection status and today\'s blocked count in small, medium and large sizes, with a one-tap toggle</string>

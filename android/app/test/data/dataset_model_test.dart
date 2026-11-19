@@ -21,7 +21,6 @@ void main() {
             'diting_settings': {'app_work_mode': workMode},
             'dns_vpn_prefs': const {},
             'diting_express_prefs': const {},
-            'diting_dns_mode_prefs': const {},
           }),
         ),
       ],
@@ -47,22 +46,14 @@ void main() {
       expect(dataSet.logsDatabase, StorageContract.expressLogsDatabase);
     });
 
-    test('服务器模式沿用 dns 存储值并使用独立库', () {
-      final dataSet = DataSet.fromWorkModeValue('dns');
-      expect(dataSet, DataSet.server);
-      expect(dataSet.prefsContainer, LegacySettings.serverContainer);
-      expect(dataSet.ruleDatabase, StorageContract.serverRulesDatabase);
-      expect(dataSet.logsDatabase, StorageContract.serverLogsDatabase);
-    });
-
-    test('三种模式的库名互不相同', () {
+    test('两种模式的库名互不相同', () {
       final files = {
         for (final dataSet in DataSet.values) ...[
           dataSet.ruleDatabase,
           dataSet.logsDatabase,
         ],
       };
-      expect(files, hasLength(6));
+      expect(files, hasLength(4));
     });
 
     test('provider 跟随工作模式切换数据库', () {
@@ -85,16 +76,6 @@ void main() {
       expect(
         c.read(subscriptionDatabaseFileProvider),
         StorageContract.expressRulesDatabase,
-      );
-
-      c.read(workModeProvider.notifier).select(AppWorkMode.server);
-      expect(
-        c.read(activeRuleDatabaseProvider),
-        StorageContract.serverRulesDatabase,
-      );
-      expect(
-        c.read(activeLogDatabaseFileProvider),
-        StorageContract.serverLogsDatabase,
       );
     });
   });
@@ -160,24 +141,6 @@ void main() {
         LegacySettings.uiContainer,
       );
       expect(c.read(activeRuleDatabaseProvider), StorageContract.normalRulesDatabase);
-    });
-
-    test('服务器模式读写自己的数据集', () {
-      final c = container(workMode: 'dns');
-      expect(c.read(activeDataSetProvider), DataSet.server);
-      expect(
-        c.read(legacySettingsProvider).dnsContainer,
-        LegacySettings.serverContainer,
-      );
-      expect(c.read(activeRuleDatabaseProvider), StorageContract.serverRulesDatabase);
-
-      c.read(resolutionModeProvider.notifier).select(ResolutionMode.parallel);
-      expect(
-        c
-            .read(legacyPrefsStoreProvider)
-            .read(LegacySettings.serverContainer, 'dns_resolution_mode'),
-        'parallel_race',
-      );
     });
   });
 }

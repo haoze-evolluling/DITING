@@ -17,7 +17,7 @@ import 'package:material_ui/material_ui.dart';
 class ProfilesPage extends ConsumerWidget {
   const ProfilesPage({super.key});
 
-  static const _modes = ['normal', 'express', 'server'];
+  static const _modes = ['normal', 'express'];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -157,7 +157,6 @@ class _ProfileDialogState extends State<_ProfileDialog> {
   static String _modeLabel(BuildContext context, String mode) => switch (mode) {
     'normal' => context.l10n.workModeNormalTitle,
     'express' => context.l10n.workModeExpressTitle,
-    'server' || 'dns' => context.l10n.workModeServerTitle,
     _ => mode,
   };
 

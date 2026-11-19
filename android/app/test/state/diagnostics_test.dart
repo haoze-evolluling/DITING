@@ -207,7 +207,7 @@ void _diagnostics() {
     });
   });
 
-  group('DNS 解析的服务器模式', () {
+  group('DNS 解析的上游选择', () {
     Future<void> openDns(
       WidgetTester tester,
       _FakeRunner runner, {

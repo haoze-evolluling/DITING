@@ -486,7 +486,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get agreementMessage =>
-      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式（全隧道深度管控）、极速模式（Rust 引擎 + DNS 窄路由）与独立服务器模式（局域网免 VPN 服务）。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通模式与极速模式依赖 Android 本地 VPN 接口接管 DNS 解析，不连接任何远程 VPN 服务器；独立服务器模式无需 VPN 权限，直接监听本地 1053 端口供局域网设备接入。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
+      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供两种工作模式：普通模式（全隧道深度管控）与极速模式（Rust 引擎 + DNS 窄路由）。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通模式与极速模式依赖 Android 本地 VPN 接口接管 DNS 解析，不连接任何远程 VPN 服务器。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
 
   @override
   String get homeProviderSingleLabel => '解析服务商';
@@ -586,9 +586,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get homeTitleNormal => '谛听 · 普通';
-
-  @override
-  String get homeTitleServer => '谛听 · 服务器';
 
   @override
   String get homeTitleExpress => '谛听 · 极速';
@@ -902,8 +899,7 @@ class AppL10nZh extends AppL10n {
   String get statusTodayCounts => '今日计数';
 
   @override
-  String get statusCountsFooter =>
-      '计数从本次内核启动开始累计，重启或切换工作模式后归零；已在服务器模式里做的重置也只清计数，不动规则与缓存。';
+  String get statusCountsFooter => '计数从本次内核启动开始累计，重启或切换工作模式后归零；重置只清计数，不动规则与缓存。';
 
   @override
   String get statusQueries => '查询';
@@ -918,13 +914,7 @@ class AppL10nZh extends AppL10n {
   String get statusCacheHitRate => '缓存命中率';
 
   @override
-  String get statusServerPortReady => '本机 DNS 端口可用，局域网设备可把它当作 DNS';
-
-  @override
   String get statusTunnelActive => '本机流量已经过谛听，解析与规则都在生效';
-
-  @override
-  String get statusServerPortClosed => 'DNS 端口未监听，服务器模式当前不提供解析';
 
   @override
   String get statusCoreStopped => '内核未运行，本机流量按系统默认网络走';
@@ -1482,10 +1472,16 @@ class AppL10nZh extends AppL10n {
   String get workModeServerTitle => '服务器模式';
 
   @override
-  String get workModeServerBadge => '轻量';
+  String get workModeServerBadge => '施工中';
 
   @override
-  String get workModeServerSummary => '纯 DNS 代理与解析加速、低功耗';
+  String get workModeServerSummary => '正在重新设计，暂时不可用';
+
+  @override
+  String get serverUnderConstructionTitle => '正在施工中';
+
+  @override
+  String get serverUnderConstructionBody => '服务器模式正在重新设计，完成后会以全新的数据与存储重新上线。';
 
   @override
   String get workModeExpressTitle => '极速模式';
@@ -1495,6 +1491,18 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get workModeExpressSummary => 'DNS 窄路由、加速与规则过滤、Android 9+（64 位）';
+
+  @override
+  String get workModeSettingTitle => '运行模式';
+
+  @override
+  String get workModeGuideTitle => '使用向导';
+
+  @override
+  String get commonName => '名称';
+
+  @override
+  String get commonPort => '端口';
 
   @override
   String get stateStopped => '已停止';
@@ -1510,9 +1518,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get powerStateError => '启动失败';
-
-  @override
-  String get serverStatusError => '异常';
 
   @override
   String get logModeAllLabel => '记录全部';
@@ -1792,9 +1797,6 @@ class AppL10nZh extends AppL10n {
   String get onDemandDisabled => '按需连接已关闭，未做改动';
 
   @override
-  String get onDemandServerMode => '服务器模式不使用隧道，未做改动';
-
-  @override
   String get onDemandUnknownSsid => '无法读取当前 Wi-Fi，未做改动';
 
   @override
@@ -1829,15 +1831,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get imagePickerUnavailable => '当前设备没有可用的图片选择器';
-
-  @override
-  String get serverModeRequired => '请先切换到服务器模式';
-
-  @override
-  String get serverStartFailed => 'DNS 服务启动失败';
-
-  @override
-  String get serverStartTimeout => 'DNS 服务启动超时';
 
   @override
   String get recognitionInvalidConfig => '云端名单配置无效';
@@ -2251,12 +2244,6 @@ class AppL10nZh extends AppL10n {
   String get hubModuleMore => '更多功能';
 
   @override
-  String get serverHubCategoryRules => '域名规则';
-
-  @override
-  String get serverHubCategoryData => '数据与维护';
-
-  @override
   String get hubProviderManagement => '解析服务商';
 
   @override
@@ -2628,7 +2615,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get notificationStatsFooter =>
-      '统计从本次服务启动开始累计，与日志记录模式无关；已开启的项目按住拖动可调整顺序。极速与服务器模式没有实时网速，该项会自动省略。';
+      '统计从本次服务启动开始累计，与日志记录模式无关；已开启的项目按住拖动可调整顺序。极速模式没有实时网速，该项会自动省略。';
 
   @override
   String get notificationStatsHidden => '未显示的项目';
@@ -4987,7 +4974,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      '每种模式使用独立的规则、缓存与日志，区别在接管方式：普通模式走全隧道，服务器模式只做局域网 DNS，极速模式把路由收窄到只接管 DNS。';
+      '两种模式使用独立的规则、缓存与日志，区别在接管方式：普通模式走全隧道，极速模式把路由收窄到只接管 DNS。';
 
   @override
   String get modeNormalFeature1 => '全隧道接管';
@@ -5012,30 +4999,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get modeNormalFeature4Body => '按应用记录上下行与查询数';
-
-  @override
-  String get modeServerFeature1 => '局域网 DNS 服务';
-
-  @override
-  String get modeServerFeature1Body => '监听 0.0.0.0，供同一网段设备使用';
-
-  @override
-  String get modeServerFeature2 => '不占 VPN 槽位';
-
-  @override
-  String get modeServerFeature2Body => '本机不建立隧道，可与其它 VPN 共存';
-
-  @override
-  String get modeServerFeature3 => '独立规则与缓存';
-
-  @override
-  String get modeServerFeature3Body => '服务器模式维护独立的规则库与 DNS 缓存';
-
-  @override
-  String get modeServerFeature4 => '低功耗';
-
-  @override
-  String get modeServerFeature4Body => '只处理 DNS 查询，无流量转发';
 
   @override
   String get modeExpressFeature1 => 'Rust 引擎 + 窄路由';
@@ -5130,9 +5093,6 @@ class AppL10nZh extends AppL10n {
   String get permBatteryBody => '避免后台被杀；拒绝则长时间待机可能断开';
 
   @override
-  String get permBatteryServerBody => '避免后台被杀；拒绝则局域网内会间歇不可用';
-
-  @override
   String get permVpnExpressBody => '建立窄路由隧道；拒绝则无法启动';
 
   @override
@@ -5154,15 +5114,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get onboardingTipNormal3 => '首页句子和透明度都能在设置里改。';
-
-  @override
-  String get onboardingTipServer1 => '启动后把同网段设备的 DNS 指向「局域网接入」里显示的地址。';
-
-  @override
-  String get onboardingTipServer2 => '端口可在「服务器模式」页改，默认 5353。';
-
-  @override
-  String get onboardingTipServer3 => '本模式不建立 VPN，可与其它 VPN 同时运行。';
 
   @override
   String get onboardingTipExpress1 => '极速模式启动更快，但功能是普通模式的子集。';
@@ -5790,368 +5741,6 @@ class AppL10nZh extends AppL10n {
   String odDeleteSsidTooltip(String ssid) {
     return '删除 $ssid';
   }
-
-  @override
-  String serverSwitched(String name) {
-    return '已切换到 $name，重启服务后生效';
-  }
-
-  @override
-  String serverSelected(String name) {
-    return '已选择 $name';
-  }
-
-  @override
-  String serverAdded(String name) {
-    return '已添加 $name';
-  }
-
-  @override
-  String serverSaved(String name) {
-    return '已保存 $name';
-  }
-
-  @override
-  String serverDeleteConfirm(String name) {
-    return '删除 $name？';
-  }
-
-  @override
-  String get serverDeleteBody => '如果它正被使用，删除后会回落到第一个内置服务商。';
-
-  @override
-  String serverDeleted(String name) {
-    return '已删除 $name';
-  }
-
-  @override
-  String get serverUpstreamTitle => '上游服务器';
-
-  @override
-  String get serverAddCustom => '添加自定义服务商';
-
-  @override
-  String serverCurrentUpstream(String name, String protocol) {
-    return '当前用于解析 DNS：($protocol) $name';
-  }
-
-  @override
-  String get serverBuiltinProviders => '内置 DNS 服务商';
-
-  @override
-  String get serverNoBuiltin => '暂无内置服务商';
-
-  @override
-  String get serverCustomProviders => '自定义 DNS 服务商';
-
-  @override
-  String get serverNoCustom => '暂无自定义服务商';
-
-  @override
-  String get serverNoCustomBody => '点右上角加号添加 DoH / DoT / 明文 DNS 上游';
-
-  @override
-  String get serverUpstreamFooter =>
-      '服务器模式支持单服务商与智能选择 / 并行竞速 / 主备切换，解析模式与候选上游在上方切换；需重启服务生效。内置服务商由应用维护，只能切换；自定义项可通过右侧菜单编辑或删除。';
-
-  @override
-  String serverEditName(String name) {
-    return '编辑 $name';
-  }
-
-  @override
-  String serverDeleteName(String name) {
-    return '删除 $name';
-  }
-
-  @override
-  String get serverEditCustom => '编辑自定义服务商';
-
-  @override
-  String get serverSave => '保存';
-
-  @override
-  String get serverName => '名称';
-
-  @override
-  String get serverDohAddress => 'DoH 地址';
-
-  @override
-  String get serverAddress => '服务器地址';
-
-  @override
-  String get serverDohPrefix => '必须以 https:// 开头';
-
-  @override
-  String get serverAddressHint => 'IPv4 / IPv6 均可；IPv6 可直接填 [::1]';
-
-  @override
-  String get serverPort => '端口';
-
-  @override
-  String get serverPortHint => 'DNS 通常 53，DoT 通常 853';
-
-  @override
-  String get serverUnavailable => '当前设备不可用';
-
-  @override
-  String get serverBatteryJoined => '已加入电池优化白名单';
-
-  @override
-  String get serverBatteryNotJoined => '尚未加入电池优化白名单';
-
-  @override
-  String get serverClearCache => '清空缓存';
-
-  @override
-  String get serverClear => '清空';
-
-  @override
-  String get serverClearCacheBody => '将清空本机已缓存的解析结果，下一次查询会重新向上游请求。';
-
-  @override
-  String get serverCacheCleared => '缓存已清空';
-
-  @override
-  String get serverCacheClearFailed => '清空失败：请先启动解析服务再试';
-
-  @override
-  String serverCacheOn(String preset) {
-    return '$preset · 命中缓存的查询不再请求上游';
-  }
-
-  @override
-  String get serverCacheOff => '已关闭 · 每次解析都请求上游 DNS';
-
-  @override
-  String get serverModeSettings => '模式设置';
-
-  @override
-  String get serverProxySettings => '代理与解析设置';
-
-  @override
-  String get serverCacheSettings => '缓存设置';
-
-  @override
-  String get serverRuleControl => '规则控制';
-
-  @override
-  String get serverRuleControlOn => '已开启 · 命中规则按拦截策略返回';
-
-  @override
-  String get serverRuleControlOff => '已关闭 · 不执行域名规则过滤';
-
-  @override
-  String get serverRuleMasterSaved => '规则开关已保存，重启 DNS 服务后生效';
-
-  @override
-  String get serverListenPort => '本地监听端口';
-
-  @override
-  String get serverListenPortBody => 'DNS 服务在本机监听的端口，默认 1053';
-
-  @override
-  String get serverRuleManagement => '规则管理';
-
-  @override
-  String get serverBlocklist => '黑名单';
-
-  @override
-  String get serverBlocklistBody => '管理域名屏蔽规则，独立规则库';
-
-  @override
-  String get serverAllowlist => '白名单';
-
-  @override
-  String get serverAllowlistBody => '管理域名放行规则，独立规则库';
-
-  @override
-  String get serverHosts => 'Hosts 覆写';
-
-  @override
-  String get serverHostsBody => '将指定域名解析到配置的 IP 或 CNAME';
-
-  @override
-  String get serverRulesFooter => '这三张表只影响服务器模式的独立规则库，与普通模式的规则互不覆盖。';
-
-  @override
-  String get serverDataReset => '数据与重置';
-
-  @override
-  String get serverResetStats => '重置运行统计';
-
-  @override
-  String get serverResetStatsBody => '清空本次运行的统计数据';
-
-  @override
-  String get serverBackground => '后台稳定性';
-
-  @override
-  String get serverBackgroundBody =>
-      '系统会在后台冻结省电名单之外的应用；把它加入白名单，DNS 服务才能在息屏后继续应答局域网查询。';
-
-  @override
-  String get serverRunMode => '运行模式';
-
-  @override
-  String get serverWizard => '使用向导';
-
-  @override
-  String get serverWizardBody => '查看服务器模式架构原理、局域网配置与就绪指引';
-
-  @override
-  String get serverReselectMode => '重新选择工作模式';
-
-  @override
-  String get serverReselectModeBody => '浏览所有工作模式详情并重新选择';
-
-  @override
-  String get serverBatteryIgnored => '已忽略电池优化';
-
-  @override
-  String get serverBatteryIgnoredShort => '已忽略';
-
-  @override
-  String get serverBatteryKeepAlive => '保持 DNS 服务在后台稳定运行';
-
-  @override
-  String get serverIgnoreBattery => '忽略电池优化';
-
-  @override
-  String get serverCachePresetConservative => '保守';
-
-  @override
-  String get serverCachePresetHighHit => '高命中';
-
-  @override
-  String get serverCachePresetStandard => '标准';
-
-  @override
-  String get serverNavOverview => '概览';
-
-  @override
-  String get serverPortInvalid => '请输入数字';
-
-  @override
-  String serverPortRange(String max, String min) {
-    return '范围 $min–$max';
-  }
-
-  @override
-  String serverPortChanged(String port) {
-    return '端口已改为 $port，重启服务后生效';
-  }
-
-  @override
-  String get serverResetConfirm => '确认重置';
-
-  @override
-  String get serverResetStatsConfirmBody => '将清空本次运行的全部统计数据，确认继续吗？';
-
-  @override
-  String get serverStatsReset => '运行统计已重置';
-
-  @override
-  String get serverOverviewTitle => '谛听 · 服务器模式';
-
-  @override
-  String get serverSwitchMode => '切换工作模式';
-
-  @override
-  String get serverChangePort => '修改监听端口';
-
-  @override
-  String get serverCurrentUpstreamCard => '当前上游';
-
-  @override
-  String get serverLanAccess => '局域网接入';
-
-  @override
-  String get serverLanBody => '把同网段设备的 DNS 指向上面这个地址即可；端口只在启动时绑定，改动后需要重启服务。';
-
-  @override
-  String get serverNoNetwork => '未连接网络';
-
-  @override
-  String get serverLanConnectHint => '连上 Wi-Fi 或以太网后这里会显示可用地址';
-
-  @override
-  String get serverLanPointHint => '将局域网其他设备的 DNS 指向此地址';
-
-  @override
-  String serverCopied(String text) {
-    return '已复制 $text';
-  }
-
-  @override
-  String get serverServiceStatus => '服务状态';
-
-  @override
-  String get serverTotalQueries => '总查询量';
-
-  @override
-  String get serverCacheHits => '缓存命中';
-
-  @override
-  String get serverBlocked => '已拦截';
-
-  @override
-  String get serverAverageLatency => '平均时延';
-
-  @override
-  String get serverUptime => '运行时长';
-
-  @override
-  String get serverStatsLastSevenDays => '近 7 天累计';
-
-  @override
-  String get serverLogsTitle => '服务器日志仪表盘';
-
-  @override
-  String get serverLogsBody =>
-      '查看局域网设备经服务器模式发起的 DNS 请求、拦截、缓存与上游竞速记录。服务器模式不建立 VPN 隧道，因此这里不含上下行流量与 HTTPS 检查数据。';
-
-  @override
-  String get serverResetStatsBodyShort => '清空本次运行的全部计数，不清规则与缓存';
-
-  @override
-  String get serverModeSettingsBody => '监听端口、后台稳定性、数据重置与运行模式';
-
-  @override
-  String get serverModeNote =>
-      '服务器模式不建立 VPN 隧道：它只在本机监听 DNS 端口，因此可以与其它 VPN 共存，也不占用系统的 VPN 槽位；本机应用的查询不会自动经过该服务。';
-
-  @override
-  String get serverBusyStarting => '启动中';
-
-  @override
-  String get serverBusyStopping => '停止中';
-
-  @override
-  String get serverRunning => '停止';
-
-  @override
-  String get serverStopped => '开启';
-
-  @override
-  String serverListening(String port) {
-    return '监听 0.0.0.0:$port';
-  }
-
-  @override
-  String get serverStatusStopped => '服务器模式已停止';
-
-  @override
-  String get serverStatusStarting => '正在启动服务...';
-
-  @override
-  String get serverStatusRunning => '服务器模式运行中';
-
-  @override
-  String get serverStatusStopping => '正在停止服务...';
-
-  @override
-  String get serverStatusErrorText => '服务启动异常';
 
   @override
   String get troubleshootTitle => '故障排查';
@@ -8785,16 +8374,6 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String notifRunningServer(String name, int port) {
-    return '运行中 · $name · 端口 $port';
-  }
-
-  @override
-  String notifRunningServerMode(String mode, int count, int port) {
-    return '运行中 · [$mode] $count 个服务商 · 端口 $port';
-  }
-
-  @override
   String platformNoSaveDialog(String error) {
     return '无法打开保存对话框：$error';
   }
@@ -9074,7 +8653,7 @@ class AppL10nZh extends AppL10n {
       '在继续使用本软件前，请确认你已阅读、理解并同意上述全部条款。若不同意，请立即停止使用并卸载本软件。';
 
   @override
-  String get settingsModeSubtitle => '切换普通模式或服务器模式';
+  String get settingsModeSubtitle => '切换普通模式或极速模式';
 
   @override
   String get settingsLogModeSubtitle => '选择 DNS 请求日志的记录范围';
@@ -13765,33 +13344,6 @@ class AppL10nZh extends AppL10n {
       '谛听已最小化到系统托盘，并在后台继续运行。\n点击托盘图标可重新打开主界面。';
 
   @override
-  String get serverHubUpstreamDescription => '管理解析上游与解析策略';
-
-  @override
-  String get serverHubCacheDescription => '调整 DNS 缓存开关、容量与命中策略';
-
-  @override
-  String get serverHubRuleControlDescription => '配置规则总开关与拦截响应策略';
-
-  @override
-  String get serverNavHome => '首页';
-
-  @override
-  String get serverServiceSection => '服务设置';
-
-  @override
-  String get serverDomainRules => '域名规则';
-
-  @override
-  String get serverDomainRulesDescription => '黑名单、白名单与 Hosts 覆写的快捷入口';
-
-  @override
-  String get serverDashboardStatusDescription => '服务运行状态、运行时长与本次运行统计';
-
-  @override
-  String get serverDashboardLanDescription => '局域网接入地址、端口与复制入口';
-
-  @override
   String get integrationTitle => '小组件与自动化';
 
   @override
@@ -14355,63 +13907,6 @@ class AppL10nZh extends AppL10n {
   @override
   String get dns64EnableDesc =>
       '当上游没有可用 AAAA 时，用固定前缀 64:ff9b::/96 从 A 记录合成 AAAA。仅在 IPv6-only 网络开启，双栈网络开启可能导致访问异常。';
-
-  @override
-  String get lanRateLimitTitle => '局域网限速';
-
-  @override
-  String get lanRateLimitIntro =>
-      '服务器模式面向局域网提供 DNS。这里为每个客户端设置令牌桶限速，防止单个设备耗尽解析能力。';
-
-  @override
-  String get lanRateLimitEnable => '启用客户端限速';
-
-  @override
-  String get lanRateLimitEnableDesc => '按客户端地址聚合后限制每秒查询数；关闭时不做任何限速。';
-
-  @override
-  String get lanRateLimitRate => '每秒请求数';
-
-  @override
-  String get lanRateLimitBurst => '突发上限';
-
-  @override
-  String get lanRateLimitIpv4Prefix => 'IPv4 聚合前缀（位）';
-
-  @override
-  String get lanRateLimitIpv6Prefix => 'IPv6 聚合前缀（位）';
-
-  @override
-  String get lanRateLimitExempt => '不限速名单';
-
-  @override
-  String get lanRateLimitExemptHint => '逗号分隔，如 192.168.0.1, 10.0.0.0/8';
-
-  @override
-  String get lanRateLimitSectionSwitch => '限速开关';
-
-  @override
-  String get lanRateLimitSectionRate => '速率与突发';
-
-  @override
-  String get lanRateLimitSectionAggregation => '客户端聚合';
-
-  @override
-  String get lanRateLimitSectionExempt => '不限速名单';
-
-  @override
-  String get lanRateLimitExemptManage => '管理名单';
-
-  @override
-  String get lanRateLimitRestartNotice => '服务器运行中修改后，将在下次启动服务时生效。';
-
-  @override
-  String get lanRateLimitExemptNone => '未设置';
-
-  @override
-  String lanRateLimitExemptCount(int count) {
-    return '$count 项';
-  }
 
   @override
   String get connectionRateLimitTitle => '连接限速';

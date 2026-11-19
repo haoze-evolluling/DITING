@@ -8,7 +8,6 @@ import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -262,17 +261,6 @@ void _appLayer() {
       expect(fake.lastAppliedDnsConfig, contains('preset_alidns_doh'));
     });
 
-    test('端口夹在 1024–65535', () {
-      final c = container();
-      final notifier = c.read(serverPortProvider.notifier);
-      notifier.set(80);
-      expect(c.read(serverPortProvider), 1024);
-      notifier.set(70000);
-      expect(c.read(serverPortProvider), 65535);
-      notifier.set(8080);
-      expect(c.read(serverPortProvider), 8080);
-    });
-
   });
 }
 
@@ -371,12 +359,6 @@ void _enumDisplay(AppL10n l10n) {
         expectNoRawEnumLiteral(
           source.label(l10n),
           'RuleSource.${source.name}',
-        );
-      }
-      for (final serverStatus in ServerStatus.values) {
-        expectNoRawEnumLiteral(
-          serverStatus.label(l10n),
-          'ServerStatus.${serverStatus.name}',
         );
       }
     });

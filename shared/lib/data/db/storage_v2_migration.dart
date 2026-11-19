@@ -275,7 +275,6 @@ Future<StorageV2Result> ensureStorageV2(
         for (final kind in const [
           DatabaseKind.normalLogs,
           DatabaseKind.expressLogs,
-          DatabaseKind.serverLogs,
         ])
           kind.fileName,
       ],
@@ -283,7 +282,6 @@ Future<StorageV2Result> ensureStorageV2(
         for (final kind in const [
           DatabaseKind.normalRules,
           DatabaseKind.expressRules,
-          DatabaseKind.serverRules,
         ])
           kind.fileName,
       ],
@@ -346,7 +344,6 @@ Future<StorageV2Result> discardStorageV2(
         for (final kind in const [
           DatabaseKind.normalLogs,
           DatabaseKind.expressLogs,
-          DatabaseKind.serverLogs,
         ])
           kind.fileName,
       ],
@@ -354,7 +351,6 @@ Future<StorageV2Result> discardStorageV2(
         for (final kind in const [
           DatabaseKind.normalRules,
           DatabaseKind.expressRules,
-          DatabaseKind.serverRules,
         ])
           kind.fileName,
       ],

@@ -49,7 +49,7 @@ Future<RuleBootstrap> bootstrapRules(
   final repository = RuleRepository(db, sourceFile: databaseFile);
   // A recovered connection is read-only in spirit: re-running the preset seed on it could block on
   // the very transaction that wedged the original open, so only seed a normal open.
-  if (dataSet.seedsPresetWhitelist && !opened.recovered) {
+  if (!opened.recovered) {
     await seedPresetWhitelistIfNeeded(
       repository,
       settings,

@@ -8,7 +8,6 @@ import 'package:diting_shared/data/native/background_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,10 +34,9 @@ void _legacySettings() {
       'dns_resolution_mode': 'parallel_race',
     },
     'diting_settings': {
-      'app_work_mode': 'dns',
+      'app_work_mode': 'normal',
       'work_mode_initial_selected': true,
     },
-    'diting_dns_mode_prefs': {'local_listen_port': 2053},
   });
 
   group('LegacySettings 读取', () {
@@ -56,12 +54,11 @@ void _legacySettings() {
       expect(settings.hapticEnabled, isFalse);
     });
 
-    test('工作模式 / 解析模式 / 端口读取旧容器', () {
+    test('工作模式 / 解析模式读取旧容器', () {
       final settings = LegacySettings(legacyStore());
-      expect(settings.workModeRaw, 'dns');
+      expect(settings.workModeRaw, 'normal');
       expect(settings.workModeSelected, isTrue);
       expect(settings.resolutionModeRaw, 'parallel_race');
-      expect(settings.serverPort, 2053);
     });
 
     test('空存储返回 1.4.3 的默认值', () {
@@ -82,19 +79,15 @@ void _legacySettings() {
       expect(settings.workModeRaw, 'normal');
       expect(settings.workModeSelected, isFalse);
       expect(settings.resolutionModeRaw, 'single');
-      // 1.4.3 already moved the default port from 5353/5354 to 1053.
-      expect(settings.serverPort, 1053);
     });
 
     test('显式值越界时按旧版钳位', () {
       final settings = LegacySettings(
         MemoryLegacyPrefsStore({
           'dns_vpn_prefs': {'home_poem_opacity': 0.01},
-          'diting_dns_mode_prefs': {'local_listen_port': 80},
         }),
       );
       expect(settings.homeOpacity('home_poem_opacity'), 0.1);
-      expect(settings.serverPort, 1024);
     });
   });
 
@@ -119,7 +112,6 @@ void _legacySettings() {
       settings.setWorkModeRaw('express');
       settings.setWorkModeSelected(true);
       settings.setResolutionModeRaw('smart_prediction');
-      settings.setServerPort(1053);
 
       expect(store.read('dns_vpn_prefs', 'app_theme_mode'), 'light');
       expect(store.read('dns_vpn_prefs', 'theme_color_style'), 'indigo');
@@ -136,13 +128,12 @@ void _legacySettings() {
         store.read('dns_vpn_prefs', 'dns_resolution_mode'),
         'smart_prediction',
       );
-      expect(store.read('diting_dns_mode_prefs', 'local_listen_port'), 1053);
     });
 
     test('清空工作模式会移除两个键而不是写 false', () {
       final store = MemoryLegacyPrefsStore({
         'diting_settings': {
-          'app_work_mode': 'dns',
+          'app_work_mode': 'express',
           'work_mode_initial_selected': true,
         },
       });
@@ -162,9 +153,8 @@ void _legacySettings() {
       expect(AppPalette.fromStorageValue('nope'), AppPalette.system);
     });
 
-    test('服务器模式仍存 dns', () {
-      expect(AppWorkMode.server.storageValue, 'dns');
-      expect(AppWorkMode.fromStorageValue('dns'), AppWorkMode.server);
+    test('未知的旧工作模式安全回退普通模式', () {
+      expect(AppWorkMode.fromStorageValue('dns'), AppWorkMode.normal);
       expect(AppWorkMode.fromStorageValue(null), AppWorkMode.normal);
     });
 
@@ -198,12 +188,6 @@ void _legacySettings() {
 
     test('启动即读到旧设置', () {
       final store = legacyStore();
-      // Server mode reads its own data set, so its resolution mode lives there.
-      store.putString(
-        'diting_dns_mode_prefs',
-        'dns_resolution_mode',
-        'parallel_race',
-      );
       final container = containerWith(store);
 
       expect(container.read(themeModeProvider), AppThemeMode.dark);
@@ -216,9 +200,8 @@ void _legacySettings() {
         BottomBarDestination.networkTools,
         BottomBarDestination.settings,
       ]);
-      expect(container.read(workModeProvider), AppWorkMode.server);
+      expect(container.read(workModeProvider), AppWorkMode.normal);
       expect(container.read(resolutionModeProvider), ResolutionMode.parallel);
-      expect(container.read(serverPortProvider), 2053);
       expect(container.read(workModeSelectedProvider), isTrue);
     });
 
@@ -239,7 +222,6 @@ void _legacySettings() {
       container
           .read(resolutionModeProvider.notifier)
           .select(ResolutionMode.primaryBackup);
-      container.read(serverPortProvider.notifier).set(1053);
 
       expect(store.read('dns_vpn_prefs', 'app_theme_mode'), 'light');
       expect(store.read('dns_vpn_prefs', 'theme_color_style'), 'indigo');
@@ -253,7 +235,6 @@ void _legacySettings() {
         'primary_backup',
       );
       expect(store.read('dns_vpn_prefs', 'dns_resolution_mode'), isNull);
-      expect(store.read('diting_dns_mode_prefs', 'local_listen_port'), 1053);
     });
 
     test('底栏改动按旧版 JSON 数组格式保存', () {

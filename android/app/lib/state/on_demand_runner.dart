@@ -21,9 +21,6 @@ enum OnDemandOutcome {
   /// The on-demand switch is off; the tunnel is left to the power button.
   disabled,
 
-  /// Server mode owns its own service; the tunnel whitelist does not apply.
-  serverMode,
-
   /// The platform could not report the network, so the whitelist cannot be trusted.
   unknownSsid,
 
@@ -53,7 +50,6 @@ enum OnDemandOutcome {
 
   String label(AppL10n l10n) => switch (this) {
     OnDemandOutcome.disabled => l10n.onDemandDisabled,
-    OnDemandOutcome.serverMode => l10n.onDemandServerMode,
     OnDemandOutcome.unknownSsid => l10n.onDemandUnknownSsid,
     OnDemandOutcome.sameNetwork => l10n.onDemandSameNetwork,
     OnDemandOutcome.noWifi => l10n.onDemandNoWifi,
@@ -79,10 +75,6 @@ class OnDemandRunner {
     final resources = _ref.read(configResourcesProvider);
     if (!resources.onDemand) {
       return OnDemandOutcome.disabled;
-    }
-    // Server mode runs the LAN DNS service instead of the tunnel, so there is nothing to switch.
-    if (_ref.read(workModeProvider) == AppWorkMode.server) {
-      return OnDemandOutcome.serverMode;
     }
     // Read the SSID fresh: the cached provider may describe the network from before a switch.
     final ssid = await _ref.read(currentSsidReaderProvider)();

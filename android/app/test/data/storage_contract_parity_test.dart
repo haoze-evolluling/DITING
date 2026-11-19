@@ -18,8 +18,6 @@ void main() {
       'NORMAL_LOGS': StorageContract.normalLogsDatabase,
       'EXPRESS_RULES': StorageContract.expressRulesDatabase,
       'EXPRESS_LOGS': StorageContract.expressLogsDatabase,
-      'DNS_RULES': StorageContract.serverRulesDatabase,
-      'DNS_LOGS': StorageContract.serverLogsDatabase,
       'GLOBAL': StorageContract.globalDatabase,
     };
     for (final entry in expected.entries) {
@@ -32,13 +30,12 @@ void main() {
     const expected = {
       'NORMAL': 'dns_vpn_prefs',
       'EXPRESS': 'diting_express_prefs',
-      'DNS_MODE': 'diting_dns_mode_prefs',
     };
     expect(kotlin, expected);
   });
 
   test('模式与规则/日志库的映射在两侧同名', () {
-    for (final name in const ['NORMAL', 'EXPRESS', 'DNS_MODE']) {
+    for (final name in const ['NORMAL', 'EXPRESS']) {
       expect(
         RegExp('$name -> StorageContract\\.').hasMatch(datasetKt),
         isTrue,
@@ -71,7 +68,7 @@ Map<String, String> _constants(String source) {
 }
 
 Map<String, String> _prefsNames(String source) {
-  final pattern = RegExp(r'(NORMAL|EXPRESS|DNS_MODE) -> "([^"]+)"');
+  final pattern = RegExp(r'(NORMAL|EXPRESS) -> "([^"]+)"');
   return {
     for (final match in pattern.allMatches(source))
       match.group(1)!: match.group(2)!,

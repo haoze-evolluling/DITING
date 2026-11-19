@@ -6,7 +6,6 @@ import 'package:diting_android/router.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/state/log_refresh_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -14,8 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Home page / dashboard: power, tagline, then the editable card board. Server mode
-/// does not branch here: app_shell swaps the whole tree and would double the bottom bar.
+/// Home page / dashboard: power, tagline, then the editable card board.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -64,8 +62,6 @@ class _HomePageState extends ConsumerState<HomePage>
       // The notification action can stop the tunnel while the app is in the
       // background; re-read the native status instead of trusting local state.
       ref.read(powerProvider.notifier).syncStatus();
-      // Server mode can likewise be stopped in the background.
-      ref.read(serverStatusProvider.notifier).syncStatus();
     }
   }
 
@@ -134,7 +130,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
   String _titleOf(AppWorkMode mode, AppL10n l10n) => switch (mode) {
     AppWorkMode.normal => l10n.homeTitleNormal,
-    AppWorkMode.server => l10n.homeTitleServer,
     AppWorkMode.express => l10n.homeTitleExpress,
   };
 }

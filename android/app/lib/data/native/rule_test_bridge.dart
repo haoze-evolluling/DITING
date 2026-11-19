@@ -98,7 +98,7 @@ class RuleTestBridge {
   final MethodChannel _channel;
 
   /// Runs one simulation for [domain]. [qtype] is a DNS type number (1 = A, 28 = AAAA, 0 = any);
-  /// [dataset] selects the rule set (`normal` / `express` / `server`).
+  /// [dataset] selects the rule set (`normal` / `express`).
   Future<RuleTestResult> check({
     required String domain,
     int qtype = 1,

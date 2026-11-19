@@ -5,7 +5,6 @@
 import 'dart:convert';
 
 import 'package:diting_android/pages/hub/resolution_mode_page.dart';
-import 'package:diting_android/state/primary_provider_providers.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
@@ -128,7 +127,7 @@ void _ordering() {
 /// Cards and the status card must read the same order the engine follows instead of the catalog's
 /// preset order.
 void _displayOrder() {
-  ProviderContainer container({String workMode = 'normal'}) {
+  ProviderContainer container() {
     final dns = {
       'dns_resolution_mode': 'primary_backup',
       'preset_dns_service': 'DOH',
@@ -136,11 +135,9 @@ void _displayOrder() {
           '["preset_dnspod_doh","preset_alidns_doh"]',
     };
     final store = MemoryLegacyPrefsStore({
-      // Server mode keeps its DNS keys in its own container.
-      'dns_vpn_prefs': workMode == 'dns' ? const {} : dns,
-      'diting_dns_mode_prefs': workMode == 'dns' ? dns : const {},
+      'dns_vpn_prefs': dns,
       'diting_express_prefs': const {},
-      'diting_settings': {'app_work_mode': workMode},
+      'diting_settings': {'app_work_mode': 'normal'},
     });
     final c = ProviderContainer(
       overrides: [legacyPrefsStoreProvider.overrideWithValue(store)],
@@ -148,11 +145,6 @@ void _displayOrder() {
     addTearDown(c.dispose);
     return c;
   }
-
-  test('多服务模式的主用服务商是排序首项', () {
-    final c = container(workMode: 'dns');
-    expect(c.read(primaryProviderProvider)?.id, 'preset_dnspod_doh');
-  });
 
   test('竞速摘要按尝试顺序拼名字', () {
     final c = container();

@@ -40,7 +40,7 @@ final Map<String, String> topLevelRoutes = {
   '应用洞察': AppInsightsPaths.root,
   '隐私套件': PrivacySuitePaths.root,
   'DNS64': Dns64Paths.root,
-  'LAN 客户端限速': LanRateLimitPaths.root,
+  '服务器模式施工中': Routes.modeServerPlaceholder,
   '连接限速': ConnectionRateLimitPaths.root,
   '订阅版本回滚': SubscriptionVersionPaths.root,
   '网络诊断': NetworkDiagnosticsPaths.root,

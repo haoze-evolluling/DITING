@@ -6,9 +6,7 @@ import 'package:diting_shared/data/db/storage_contract.dart';
 
 abstract final class DatabaseSchema {
   static List<String> statementsFor(DatabaseKind kind) => switch (kind) {
-    DatabaseKind.normalRules ||
-    DatabaseKind.expressRules ||
-    DatabaseKind.serverRules => [
+    DatabaseKind.normalRules || DatabaseKind.expressRules => [
       ..._ruleTables,
       ..._subscriptionTables,
       _ruleVersion,
@@ -24,16 +22,13 @@ abstract final class DatabaseSchema {
       ..._appTrafficDailyIndexes,
       ..._logIndexes,
     ],
-    DatabaseKind.expressLogs ||
-    DatabaseKind.serverLogs => [..._logTables, ..._logIndexes],
+    DatabaseKind.expressLogs => [..._logTables, ..._logIndexes],
     DatabaseKind.global => [..._automationTables, ..._automationIndexes],
   };
 
   /// Every table a store must contain. Used by the migrator's schema verification.
   static Set<String> tableNamesFor(DatabaseKind kind) => switch (kind) {
-    DatabaseKind.normalRules ||
-    DatabaseKind.expressRules ||
-    DatabaseKind.serverRules => {
+    DatabaseKind.normalRules || DatabaseKind.expressRules => {
       ...ruleTableNames,
       ...subscriptionTableNames,
       ruleVersionTableName,
@@ -42,8 +37,7 @@ abstract final class DatabaseSchema {
       ...logTableNames,
       ...httpTrafficTableNames,
     },
-    DatabaseKind.expressLogs ||
-    DatabaseKind.serverLogs => {...logTableNames},
+    DatabaseKind.expressLogs => {...logTableNames},
     DatabaseKind.global => {...automationTableNames},
   };
 

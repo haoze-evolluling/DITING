@@ -32,7 +32,6 @@ class RuleIndexBridge(
             "refresh" -> {
                 val dataset = when (call.arguments as? String) {
                     "express" -> RuleDataset.EXPRESS
-                    "server" -> RuleDataset.DNS_MODE
                     else -> RuleDataset.NORMAL
                 }
                 executor.execute {

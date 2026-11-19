@@ -11,8 +11,7 @@ const ruleIndexChannelName = 'com.haoze.diting/rule_index';
 
 enum RuleIndexDataset {
   normal('normal'),
-  express('express'),
-  server('server');
+  express('express');
 
   const RuleIndexDataset(this.wireName);
 

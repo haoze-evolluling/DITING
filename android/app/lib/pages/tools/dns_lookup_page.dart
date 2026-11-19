@@ -1,6 +1,6 @@
 part of 'tools_page.dart';
 
-/// DNS lookup page backed by `DiagnosticsRunner.lookupDns`. Server mode is `SYSTEM` or `CUSTOM`
+/// DNS lookup page backed by `DiagnosticsRunner.lookupDns`. Resolver choice is `SYSTEM` or `CUSTOM`
 /// (real UDP query); `viaTunnel` asks the tunnel engine. Every result carries its `source`.
 class DnsLookupPage extends ConsumerStatefulWidget {
   const DnsLookupPage({super.key});

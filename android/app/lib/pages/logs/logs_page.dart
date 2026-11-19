@@ -5,9 +5,8 @@ import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/state/log_dashboard_layout_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/log_refresh_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
-import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
+import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,11 +32,7 @@ class _LogsPageState extends ConsumerState<LogsPage>
     // Counters come from the native engine; pull them once when the page opens.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (ref.read(workModeProvider) == AppWorkMode.server) {
-        ref.read(serverStatusProvider.notifier).syncStatus();
-      } else {
-        ref.read(powerProvider.notifier).syncStatus();
-      }
+      ref.read(powerProvider.notifier).syncStatus();
     });
     // These cards read tables the native writers keep filling; share home's timer so the
     // lists update without tapping refresh. Tests disable it.

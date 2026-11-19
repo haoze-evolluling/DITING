@@ -223,8 +223,8 @@ typedef RequestFeedPage = ({
   int? cursor,
 });
 
-/// Express and server modes keep their own database without `http_request_log`, so querying it
-/// throws `no such table`.
+/// Express mode keeps its own database without `http_request_log`, so querying it throws
+/// `no such table`.
 /// [packageName] narrows both tables to one app; null reads every app.
 Future<RequestFeedPage> _loadFeedPage(
   Ref ref,
@@ -450,8 +450,7 @@ class AppRequestCount {
 }
 
 /// Apps that appear in the request log, most requests first. Rows without a package are left out:
-/// they cannot be opened as an app page. Express and server modes have no `http_request_log`, as
-/// in the feed.
+/// they cannot be opened as an app page. Express mode has no `http_request_log`, as in the feed.
 final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
   ref,
 ) async {

@@ -1,11 +1,9 @@
-/// Probes server mode needs but `PlatformBridge` does not expose.
+/// Battery-optimization state shared by the on-demand capability rows.
 library;
 
 import 'package:flutter/services.dart';
 
 const platformChannelName = 'com.haoze.diting/platform';
-
-const serverChannelName = 'com.haoze.diting/dns_server';
 
 enum BatteryOptimizationState { ignored, notIgnored, unavailable }
 
@@ -41,18 +39,4 @@ Future<BatteryOptimizationState> requestBatteryOptimization() async {
     return BatteryOptimizationState.unavailable;
   }
   return readBatteryOptimization();
-}
-
-/// Clears the server-mode DNS cache. A false result means nothing was cleared (service not
-/// running or the engine threw), so the page must not report success.
-Future<bool> clearServerDnsCache() async {
-  try {
-    return await const MethodChannel(serverChannelName)
-            .invokeMethod<bool>('clearCache') ??
-        false;
-  } on MissingPluginException {
-    return false;
-  } on PlatformException {
-    return false;
-  }
 }

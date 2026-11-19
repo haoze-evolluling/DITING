@@ -1,8 +1,8 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// One card in the feature-hub grid. Both the normal-mode hub and the server-mode feature center
-/// build these so the two screens keep the same two-column layout and press feedback.
+/// One card in the feature-hub grid, keeping the two-column layout and press feedback consistent
+/// across categories.
 class FeatureHubCardData {
   const FeatureHubCardData({
     required this.title,
@@ -31,8 +31,7 @@ class FeatureHubCategoryData {
   final List<FeatureHubCardData> cards;
 }
 
-/// One titled category: heading plus a two-column grid of cards. Shared by the normal-mode feature
-/// hub and the server-mode feature center.
+/// One titled category: heading plus a two-column grid of cards.
 class FeatureHubCategorySection extends StatelessWidget {
   const FeatureHubCategorySection({super.key, required this.category});
 

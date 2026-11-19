@@ -3,9 +3,9 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_config_resources.dart';
+import 'package:diting_android/data/native/battery_optimization.dart';
 import 'package:diting_android/pages/config/config_common.dart';
 import 'package:diting_android/pages/config/on_demand_capabilities.dart';
-import 'package:diting_android/pages/server/server_platform_probe.dart';
 import 'package:diting_android/state/config_providers_resources.dart';
 import 'package:diting_android/state/on_demand_runner.dart';
 import 'package:diting_shared/ui/ui.dart';

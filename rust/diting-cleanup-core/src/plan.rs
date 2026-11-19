@@ -47,7 +47,6 @@ pub fn plan() -> Value {
             "containers": [
                 "dns_vpn_prefs",
                 "diting_express_prefs",
-                "diting_dns_mode_prefs",
             ],
             "providerKey": "provider_health_json",
             "bootstrapKey": "bootstrap_health_json",

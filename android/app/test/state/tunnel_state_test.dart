@@ -7,7 +7,6 @@ import 'package:diting_android/data/db/rule_providers.dart';
 import 'package:diting_android/data/mock_config_resources.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_android/data/server/dns_server_bridge.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_android/pages/config/on_demand_capabilities.dart';
 import 'package:diting_shared/state/appearance_providers.dart';

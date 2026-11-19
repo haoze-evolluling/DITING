@@ -3,7 +3,6 @@ import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/pages/home/dashboard/detail/dashboard_detail_parts.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
@@ -14,7 +13,7 @@ import 'package:material_ui/material_ui.dart';
 
 /// Intranet IP detail: the card fits one address and a one-line hint. This page lists the whole
 /// network snapshot — interface, IPv4/IPv6, gateway, DNS servers, VPN and private-DNS state — plus
-/// the exact DNS address other devices should point at, so the user never has to guess the port.
+/// the local address for diagnostics.
 class IntranetIpDetailPage extends ConsumerWidget {
   const IntranetIpDetailPage({super.key});
 
@@ -23,31 +22,17 @@ class IntranetIpDetailPage extends ConsumerWidget {
     final network = ref.watch(networkInfoProvider);
     final info = network.asData?.value;
     final mode = ref.watch(workModeProvider);
-    final serverStatus = ref.watch(serverStatusProvider);
-    final port = ref.watch(serverPortProvider);
     final colorScheme = context.colorScheme;
     final localIp = info?.localIpv4 ?? '';
-    final listening =
-        mode == AppWorkMode.server && serverStatus == ServerStatus.running;
-    final String? dnsAddress;
-    if (localIp.isEmpty) {
-      dnsAddress = null;
-    } else {
-      dnsAddress = listening ? '$localIp:$port' : localIp;
-    }
+    final dnsAddress = localIp.isEmpty ? null : localIp;
     final placeholder = network.isLoading
         ? context.l10n.intranetReading
         : context.l10n.intranetNoActiveNetwork;
-    final String hint;
-    if (listening) {
-      hint = context.l10n.intranetSameSubnetHint;
-    } else if (localIp.isEmpty) {
-      hint = context.l10n.intranetConnectHintSentence;
-    } else {
-      hint = context.l10n.intranetModeNotListeningSentence(
-        mode.title(context.l10n),
-      );
-    }
+    final hint = localIp.isEmpty
+        ? context.l10n.intranetConnectHintSentence
+        : context.l10n.intranetModeNotListeningSentence(
+            mode.title(context.l10n),
+          );
     final dnsServers = info?.dnsServers ?? const <String>[];
     final vpnActive = info?.vpnActive == true;
     return DashboardDetailScaffold(
@@ -65,16 +50,12 @@ class IntranetIpDetailPage extends ConsumerWidget {
           label: context.l10n.intranetLocalAddress,
           value: dnsAddress ?? placeholder,
           tabular: dnsAddress != null,
-          chipLabel: listening
-              ? context.l10n.intranetUsableAsDns
-              : context.l10n.intranetLocalOnly,
-          chipColor: listening
-              ? colorScheme.success
-              : colorScheme.onSurfaceVariant,
+          chipLabel: context.l10n.intranetLocalOnly,
+          chipColor: colorScheme.onSurfaceVariant,
           hint: hint,
         ),
         if (dnsAddress != null)
-          _CopyCard(address: dnsAddress, withPort: listening),
+          _CopyCard(address: dnsAddress),
         DashboardDetailCard(
           glyph: AppGlyphs.connections,
           title: context.l10n.intranetNetworkOverview,
@@ -91,11 +72,6 @@ class IntranetIpDetailPage extends ConsumerWidget {
               StatItem(
                 label: context.l10n.intranetDnsServers,
                 value: '${dnsServers.length}',
-              ),
-              StatItem(
-                label: context.l10n.statusListenPort,
-                value: listening ? '$port' : context.l10n.statusNotListening,
-                color: listening ? colorScheme.primary : null,
               ),
             ],
           ),
@@ -177,7 +153,6 @@ class IntranetIpDetailPage extends ConsumerWidget {
                   ],
                 ),
         ),
-        DashboardDetailNote(text: context.l10n.intranetPortFooter),
       ],
     );
   }
@@ -193,10 +168,9 @@ class IntranetIpDetailPage extends ConsumerWidget {
 /// Tap-to-copy row for the address other devices should use. Kept as its own card so the action
 /// reads as a button rather than as one more plain list row.
 class _CopyCard extends StatelessWidget {
-  const _CopyCard({required this.address, required this.withPort});
+  const _CopyCard({required this.address});
 
   final String address;
-  final bool withPort;
 
   @override
   Widget build(BuildContext context) {
@@ -231,9 +205,7 @@ class _CopyCard extends StatelessWidget {
               spacing: 2,
               children: [
                 Text(
-                  withPort
-                      ? context.l10n.intranetCopyAddressWithPort
-                      : context.l10n.intranetCopyAddress,
+                  context.l10n.intranetCopyAddress,
                   style: AppTextStyle.subheadline.of(context, emphasized: true),
                 ),
                 Text(

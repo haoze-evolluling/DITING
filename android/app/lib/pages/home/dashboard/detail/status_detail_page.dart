@@ -7,7 +7,6 @@ import 'package:diting_android/pages/home/dashboard/detail/dashboard_detail_part
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/state/primary_provider_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -18,8 +17,7 @@ import 'package:material_ui/material_ui.dart';
 
 /// Status detail: the card only fits run time, the provider name and today's query count. This
 /// page adds what the card had to drop — core state wording per work mode, the full service
-/// counters (hit / block / latency / hit rate), the provider's protocol and address, and the
-/// listening port when server mode owns one.
+/// counters (hit / block / latency / hit rate), and the provider's protocol and address.
 class StatusDetailPage extends ConsumerWidget {
   const StatusDetailPage({super.key});
 
@@ -29,11 +27,9 @@ class StatusDetailPage extends ConsumerWidget {
     final mode = ref.watch(workModeProvider);
     final stats = ref.watch(serviceStatsProvider);
     final primary = ref.watch(primaryProviderProvider);
-    final serverStatus = ref.watch(serverStatusProvider);
-    final port = ref.watch(serverPortProvider);
     final colorScheme = context.colorScheme;
     final colors = DashboardColors.of(context);
-    final health = _healthOf(mode, core, colorScheme);
+    final health = _healthOf(core, colorScheme);
     return DashboardDetailScaffold(
       title: context.l10n.statusDetailTitle,
       children: [
@@ -102,17 +98,6 @@ class StatusDetailPage extends ConsumerWidget {
                     label: context.l10n.statusCoreState,
                     value: core.label(context.l10n),
                   ),
-                  if (mode == AppWorkMode.server)
-                    DashboardDetailRow(
-                      label: context.l10n.statusListenPort,
-                      value: serverStatus == ServerStatus.running
-                          ? '$port'
-                          : context.l10n.statusNotListening,
-                      tabular: true,
-                      color: serverStatus == ServerStatus.running
-                          ? colorScheme.primary
-                          : null,
-                    ),
                 ],
               ),
             ],
@@ -253,10 +238,8 @@ class StatusDetailPage extends ConsumerWidget {
     );
   }
 
-  /// Wording and colour for the core, per work mode: "running" means the tunnel in normal and
-  /// express mode but a listening DNS port in server mode.
+  /// Wording and colour for the tunnel core.
   static ({Glyph glyph, Color color, String summary}) _healthOf(
-    AppWorkMode mode,
     CoreState core,
     ColorScheme colorScheme,
   ) {
@@ -270,17 +253,9 @@ class StatusDetailPage extends ConsumerWidget {
       CoreState.failed => colorScheme.error,
       CoreState.starting || CoreState.stopped => colorScheme.onSurfaceVariant,
     };
-    final l10n = currentL10n;
-    final String summary;
-    if (core.isRunning) {
-      summary = mode == AppWorkMode.server
-          ? l10n.statusServerPortReady
-          : l10n.statusTunnelActive;
-    } else {
-      summary = mode == AppWorkMode.server
-          ? l10n.statusServerPortClosed
-          : l10n.statusCoreStopped;
-    }
+    final summary = core.isRunning
+        ? currentL10n.statusTunnelActive
+        : currentL10n.statusCoreStopped;
     return (glyph: glyph, color: color, summary: summary);
   }
 }

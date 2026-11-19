@@ -285,7 +285,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
                 ),
                 Expanded(
                   child: LabeledInputField(
-                    label: context.l10n.serverPort,
+                    label: context.l10n.commonPort,
                     controller: _port,
                     keyboardType: TextInputType.number,
                   ),

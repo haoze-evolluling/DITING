@@ -7,7 +7,6 @@ import 'dart:async';
 import 'package:diting_android/data/dashboard_models.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_android/state/dashboard_layout_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/scroll_activity.dart';
@@ -187,18 +186,8 @@ final trafficTotalsProvider = FutureProvider<TrafficTotals?>((ref) async {
   );
 });
 
-/// Maps [ServerStatus] and [PowerState] onto the four card levels; server mode adds `stopping`.
+/// Maps [PowerState] onto the four card levels.
 final coreStateProvider = Provider<CoreState>((ref) {
-  final mode = ref.watch(workModeProvider);
-  if (mode == AppWorkMode.server) {
-    return switch (ref.watch(serverStatusProvider)) {
-      ServerStatus.running => CoreState.running,
-      ServerStatus.starting => CoreState.starting,
-      ServerStatus.stopping => CoreState.starting,
-      ServerStatus.error => CoreState.failed,
-      ServerStatus.stopped => CoreState.stopped,
-    };
-  }
   return switch (ref.watch(powerProvider)) {
     PowerState.running => CoreState.running,
     PowerState.starting || PowerState.stopping => CoreState.starting,

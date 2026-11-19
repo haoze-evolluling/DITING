@@ -34,7 +34,6 @@ class _ChooseModeStep extends StatelessWidget {
 
   static Glyph _glyphOf(AppWorkMode mode) => switch (mode) {
     AppWorkMode.normal => AppGlyphs.layers,
-    AppWorkMode.server => AppGlyphs.dns,
     AppWorkMode.express => AppGlyphs.bolt,
   };
 }
@@ -97,10 +96,6 @@ class _PermissionStep extends ConsumerWidget {
         _appListPermission(l10n),
         _batteryPermission(l10n, l10n.permBatteryBody),
       ],
-      AppWorkMode.server => [
-        _notificationPermission(l10n),
-        _batteryPermission(l10n, l10n.permBatteryServerBody),
-      ],
       AppWorkMode.express => [
         _vpnPermission(l10n, l10n.permVpnExpressBody),
         _notificationPermission(l10n),
@@ -143,11 +138,6 @@ class _FinishStep extends StatelessWidget {
         context.l10n.onboardingTipNormal1,
         context.l10n.onboardingTipNormal2,
         context.l10n.onboardingTipNormal3,
-      ],
-      AppWorkMode.server => [
-        context.l10n.onboardingTipServer1,
-        context.l10n.onboardingTipServer2,
-        context.l10n.onboardingTipServer3,
       ],
       AppWorkMode.express => [
         context.l10n.onboardingTipExpress1,

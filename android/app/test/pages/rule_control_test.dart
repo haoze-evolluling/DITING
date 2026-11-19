@@ -1,5 +1,5 @@
 // Rule control is shared across work modes, but the URL-rules / HTTPS entry only exists on the
-// normal full tunnel; express and server must not offer it.
+// normal full tunnel; express must not offer it.
 
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';

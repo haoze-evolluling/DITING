@@ -4,7 +4,7 @@ import java.lang.ref.PhantomReference
 import java.lang.ref.ReferenceQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
-/// The Rust engine behind every mode: standalone DNS server, express tunnel and normal tunnel.
+/// The Rust engine behind both modes: express tunnel and normal tunnel.
 ///
 /// This class is a thin JNI wrapper: the state, the DNS pipeline, the TUN data plane and the MITM
 /// relay live in `rust/diting-engine`, and this file only carries the handle. The method names and
@@ -12,13 +12,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 /// read the same as before the Go engine was removed. Three details differ from the old
 /// `tunnel.Engine`, and they are the ones the migration plan called out:
 ///
-/// * `applyDNSConfig` and `startStandalone` throw `IllegalStateException` with the engine's error
-///   text instead of a checked `Exception`, because the call sites already treated the error as a
-///   message;
+/// * `applyDNSConfig` throws `IllegalStateException` with the engine's error text instead of a
+///   checked `Exception`, because the call sites already treated the error as a message;
 /// * `close()` replaces the old finalizer: the handle is released deterministically, and a
 ///   phantom-reference safety net catches the case where a caller dropped the object on an
 ///   exception path;
-/// * `standalonePort()` exists because the Rust server can pick its own port (`startStandalone(0)`).
 class Engine : TunnelEngine, AutoCloseable {
     private val handle: Long
 
@@ -39,13 +37,9 @@ class Engine : TunnelEngine, AutoCloseable {
 
     // ---- lifecycle -------------------------------------------------------------------------
 
-    /// Stops the DNS server, the TUN session and the resolver.
+    /// Stops the TUN session and the resolver.
     fun stop() {
         nativeStop(handle)
-    }
-
-    fun stopStandalone() {
-        nativeStopStandalone(handle)
     }
 
     /// Delivers the log batches the engine still holds (DNS, race, bootstrap) on this thread.
@@ -53,15 +47,6 @@ class Engine : TunnelEngine, AutoCloseable {
     fun flushLogs() {
         nativeFlushLogs(handle)
     }
-
-    /// Binds UDP and TCP on IPv4 (and IPv6 when the device has it); throws with the bind error.
-    fun startStandalone(port: Long) {
-        val error = nativeStartStandalone(handle, port)
-        if (error != null) throw IllegalStateException(error)
-    }
-
-    /// The port the server is listening on, 0 when it is not running.
-    fun standalonePort(): Long = nativeStandalonePort(handle)
 
     override fun isRunning(): Boolean = nativeIsRunning(handle)
 
@@ -275,13 +260,7 @@ class Engine : TunnelEngine, AutoCloseable {
 
     private external fun nativeStop(handle: Long)
 
-    private external fun nativeStopStandalone(handle: Long)
-
     private external fun nativeFlushLogs(handle: Long)
-
-    private external fun nativeStartStandalone(handle: Long, port: Long): String?
-
-    private external fun nativeStandalonePort(handle: Long): Long
 
     private external fun nativeIsRunning(handle: Long): Boolean
 

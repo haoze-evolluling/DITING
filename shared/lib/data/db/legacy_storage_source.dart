@@ -7,8 +7,6 @@ library;
 abstract final class LegacyStorageSource {
   static const normalDatabase = 'diting_database';
   static const expressDatabase = 'diting_express';
-  static const serverRulesDatabase = 'diting_dns_rules';
-  static const serverLogsDatabase = 'diting_server_logs';
 
   /// Unreleased split layout. It was never shipped, so its data is discarded, not migrated.
   static const unreleasedSplitDatabases = <String>[
@@ -16,15 +14,12 @@ abstract final class LegacyStorageSource {
     'diting_normal_logs',
     'diting_express_rules',
     'diting_express_logs',
-    'diting_dns_logs',
     'diting_app',
   ];
 
   static const allOldDatabases = <String>[
     normalDatabase,
     expressDatabase,
-    serverRulesDatabase,
-    serverLogsDatabase,
     ...unreleasedSplitDatabases,
   ];
 

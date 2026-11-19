@@ -7,7 +7,6 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.normal.DitingVpnService
-import com.haoze.diting.server.DitingDnsServerService
 
 /// Starts, stops and toggles whichever data plane the current work mode uses, without the Flutter
 /// layer. Shared by the quick settings tile, the home screen widget and the automation activity so
@@ -23,8 +22,10 @@ object DataPlaneControl {
     private const val KEY_INITIAL_AGREEMENT_ACCEPTED = "initial_agreement_accepted"
 
     const val WORK_MODE_NORMAL = "normal"
-    const val WORK_MODE_DNS = "dns"
     const val WORK_MODE_EXPRESS = "express"
+
+    /// Retired server-mode value. The mode is now a placeholder page, so it owns no data plane.
+    private const val RETIRED_WORK_MODE_SERVER = "dns"
 
     /// What a [toggle]/[start]/[stop] call achieved. [NeedsApp] is not a failure: the app owns the
     /// VPN consent dialog and the first Dart-computed start config, so the caller must open it.
@@ -34,7 +35,8 @@ object DataPlaneControl {
         data object NeedsApp : Result
     }
 
-    /// `normal` / `dns` / `express`; a missing value means the default (normal) mode.
+    /// Stored value: `normal` / `express`; a missing value means the default (normal) mode and the
+    /// retired `dns` value owns no data plane.
     fun workMode(context: Context): String =
         context.getSharedPreferences(WORK_MODE_PREFS, Context.MODE_PRIVATE)
             .getString(KEY_WORK_MODE, null)
@@ -46,7 +48,7 @@ object DataPlaneControl {
             .getBoolean(KEY_INITIAL_AGREEMENT_ACCEPTED, false)
 
     fun isRunning(context: Context): Boolean = when (workMode(context)) {
-        WORK_MODE_DNS -> DitingDnsServerService.isRunning
+        RETIRED_WORK_MODE_SERVER -> false
         WORK_MODE_EXPRESS -> ExpressVpnService.isRunning
         else -> DitingVpnService.isRunning
     }
@@ -57,12 +59,12 @@ object DataPlaneControl {
     fun start(context: Context): Result {
         if (isRunning(context)) return Result.Started
         val mode = workMode(context)
-        // Only the VPN modes need the system consent dialog; the LAN server has none.
-        if (mode != WORK_MODE_DNS && VpnService.prepare(context) != null) {
+        // The retained server-mode entry is only a placeholder; the app handles the tap.
+        if (mode == RETIRED_WORK_MODE_SERVER) return Result.NeedsApp
+        if (VpnService.prepare(context) != null) {
             return Result.NeedsApp
         }
         val intent: Intent = when (mode) {
-            WORK_MODE_DNS -> DitingDnsServerService.restoreIntent(context)
             WORK_MODE_EXPRESS -> ExpressVpnService.restoreIntent(context)
             else -> DitingVpnService.restoreIntent(context)
         } ?: return Result.NeedsApp
@@ -72,7 +74,6 @@ object DataPlaneControl {
     fun stop(context: Context): Result {
         if (!isRunning(context)) return Result.Stopped
         val intent: Intent = when (workMode(context)) {
-            WORK_MODE_DNS -> DitingDnsServerService.stopIntent(context)
             WORK_MODE_EXPRESS -> ExpressVpnService.stopIntent(context)
             else -> DitingVpnService.stopIntent(context)
         }

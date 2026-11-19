@@ -3,7 +3,6 @@ package com.haoze.diting.platform
 import android.content.Context
 import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.normal.DitingVpnService
-import com.haoze.diting.server.DitingDnsServerService
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -36,9 +35,6 @@ class NotificationBridge(private val context: Context) : MethodChannel.MethodCal
         }
         if (ExpressVpnService.isRunning) {
             refreshed = ExpressVpnService.refreshNotification(context) || refreshed
-        }
-        if (DitingDnsServerService.isRunning) {
-            refreshed = DitingDnsServerService.refreshNotification(context) || refreshed
         }
         return refreshed
     }

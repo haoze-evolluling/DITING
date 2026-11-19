@@ -133,7 +133,6 @@ void main() {
       expect(settings.bottomBarIds, LegacySettings.defaultBottomBarIds);
       expect(settings.resolutionModeRaw, 'single');
       expect(settings.workModeRaw, 'normal');
-      expect(settings.serverPort, LegacySettings.defaultServerPort);
       expect(settings.appAllowlistRules, isEmpty);
     });
 

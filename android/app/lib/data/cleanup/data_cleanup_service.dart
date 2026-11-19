@@ -114,7 +114,7 @@ class DataCleanupService {
     return _result(CleanupAction.logs, removed);
   }
 
-  /// Main database only: the express and server databases lack `app_traffic_daily`.
+  /// Main database only: the express database lacks `app_traffic_daily`.
   Future<CleanupResult> _clearTraffic() async {
     final db = await _databases.main;
     final removed = db == null

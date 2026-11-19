@@ -18,7 +18,6 @@ class LegacyPrefsBridge(private val context: Context) :
         val CONTAINERS = setOf(
             "dns_vpn_prefs",
             "diting_express_prefs",
-            "diting_dns_mode_prefs",
             "express_vpn_prefs",
             "diting_settings",
             // Automation rules live in the global database, their cooldowns and last-run stamps here.

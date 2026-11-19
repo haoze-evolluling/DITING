@@ -10,7 +10,7 @@ import com.haoze.diting.log.TrafficRateMonitor
 /// `rust/diting-notification-core`, which only sees the ordered ids and the counters.
 object NotificationStatsLine {
     /// Null when nothing is enabled, so the caller keeps the body to the status text alone.
-    /// [withSpeed] is false where no traffic monitor runs (express and server modes).
+    /// [withSpeed] is false where no traffic monitor runs (express mode).
     fun compose(context: Context, withSpeed: Boolean): String? {
         val items = NotificationSettings.statsItems(context)
         if (items.isEmpty()) return null

@@ -1,4 +1,4 @@
-// The notification body must stay one grammar across all three modes (`运行中 · <上游>`); the mode
+// The notification body must stay one grammar across both modes (`运行中 · <上游>`); the mode
 // name lives in the title. The services cannot see the provider catalog, so these strings are the
 // only source of the default text.
 
@@ -10,11 +10,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   LegacySettings settings({
     Map<String, Object?> dns = const {},
-    Map<String, Object?> server = const {},
   }) => LegacySettings(
     MemoryLegacyPrefsStore({
       'dns_vpn_prefs': dns,
-      'diting_dns_mode_prefs': server,
     }),
   );
 
@@ -48,38 +46,6 @@ void main() {
         ),
       );
       expect(text, '运行中 · 自建 DoH');
-    });
-  });
-
-  group('服务器模式通知正文', () {
-    test('显示上游名与监听端口', () {
-      expect(defaultServerNotificationText(settings()), '运行中 · 阿里云 · 端口 1053');
-    });
-
-    test('跟随所选上游与端口', () {
-      final text = defaultServerNotificationText(
-        settings(
-          server: const {
-            'selected_upstream_id': 'preset_cloudflare_doh',
-            'local_listen_port': 5353,
-          },
-        ),
-      );
-      expect(text, '运行中 · Cloudflare · 端口 5353');
-    });
-
-    test('竞速模式显示解析模式、服务商数量与端口', () {
-      final text = defaultServerNotificationText(
-        settings(
-          server: const {
-            'dns_resolution_mode': 'parallel_race',
-            'parallel_race_provider_ids':
-                '["preset_alidns_dns","preset_dnspod_dns"]',
-            'local_listen_port': 5353,
-          },
-        ),
-      );
-      expect(text, '运行中 · [最快响应] 2 个服务商 · 端口 5353');
     });
   });
 }

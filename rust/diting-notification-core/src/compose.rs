@@ -25,7 +25,7 @@ const FALLBACK_LABELS: [(&str, &str); 6] = [
 ];
 
 /// Null when nothing is enabled, so the caller keeps the body to the status text alone.
-/// `with_speed` is false where no traffic monitor runs (express and server modes).
+/// `with_speed` is false where no traffic monitor runs (express mode).
 pub fn compose(
     items: &str,
     labels_json: &str,

@@ -7,7 +7,6 @@ import android.util.Log
 import com.haoze.diting.control.DataPlaneControl
 import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.normal.DitingVpnService
-import com.haoze.diting.server.DitingDnsServerService
 
 /// 状态广播器（A5）：把当前数据面状态整理后交给 EventNative 生成冻结 JSON，再以签名权限广播。
 ///
@@ -25,14 +24,12 @@ object StateBroadcaster {
 
     private fun broadcastInternal(context: Context) {
         val workMode: String = DataPlaneControl.workMode(context)
-        // 三种数据面各自持有 status()，字段名一致（running/reclaiming/persisted/error/startedAt）。
+        // 两种数据面各自持有 status()，字段名一致（running/reclaiming/persisted/error/startedAt）。
         val status: Map<String, Any?> = when (workMode) {
-            DataPlaneControl.WORK_MODE_DNS -> DitingDnsServerService.status(context)
             DataPlaneControl.WORK_MODE_EXPRESS -> ExpressVpnService.status(context)
             else -> DitingVpnService.status(context)
         }
         val running: Boolean = status["running"] as? Boolean ?: false
-        // 服务器模式没有 reclaiming 字段，缺省按未回收处理。
         val reclaiming: Boolean = status["reclaiming"] as? Boolean ?: false
         val persisted: Boolean = status["persisted"] as? Boolean ?: false
         val startedAt: Long = (status["startedAt"] as? Number)?.toLong() ?: 0L

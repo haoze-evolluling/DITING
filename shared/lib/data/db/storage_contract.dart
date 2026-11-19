@@ -5,14 +5,12 @@
 /// layout; the only code that may know the pre-V2 file names is `legacy_storage_source.dart`.
 library;
 
-/// The seven database files of the current layout.
+/// The five database files of the current layout.
 enum DatabaseKind {
   normalRules(StorageContract.normalRulesDatabase, 0x44495431),
   normalLogs(StorageContract.normalLogsDatabase, 0x44495432),
   expressRules(StorageContract.expressRulesDatabase, 0x44495433),
   expressLogs(StorageContract.expressLogsDatabase, 0x44495434),
-  serverRules(StorageContract.serverRulesDatabase, 0x44495435),
-  serverLogs(StorageContract.serverLogsDatabase, 0x44495436),
   global(StorageContract.globalDatabase, 0x44495437);
 
   const DatabaseKind(this.fileName, this.applicationId);
@@ -35,8 +33,6 @@ abstract final class StorageContract {
   static const normalLogsDatabase = 'diting_normal_logs_v2';
   static const expressRulesDatabase = 'diting_express_rules_v2';
   static const expressLogsDatabase = 'diting_express_logs_v2';
-  static const serverRulesDatabase = 'diting_dns_rules_v2';
-  static const serverLogsDatabase = 'diting_dns_logs_v2';
   static const globalDatabase = 'diting_global_v2';
 
   /// Version stored in every V2 file's `user_version`.
@@ -70,8 +66,6 @@ abstract final class StorageContract {
     normalLogsDatabase,
     expressRulesDatabase,
     expressLogsDatabase,
-    serverRulesDatabase,
-    serverLogsDatabase,
     globalDatabase,
   ];
 

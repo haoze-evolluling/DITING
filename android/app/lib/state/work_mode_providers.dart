@@ -1,4 +1,4 @@
-/// Work mode, power state, provider selection and server mode.
+/// Work mode, power state and provider selection.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -22,34 +22,29 @@ export 'package:diting_android/state/provider_catalog_providers.dart';
 
 part 'work_mode_power.dart';
 
-/// The three work modes: `normal` (full-tunnel Rust engine), `server` (DNS-only LAN), `express`
-/// (narrow Rust route).
+/// The two work modes: `normal` (full-tunnel Rust engine) and `express` (narrow Rust route).
 enum AppWorkMode {
   normal('normal'),
-  server('dns'),
   express('express');
 
   const AppWorkMode(this.storageValue);
 
   String title(AppL10n l10n) => switch (this) {
     AppWorkMode.normal => l10n.workModeNormalTitle,
-    AppWorkMode.server => l10n.workModeServerTitle,
     AppWorkMode.express => l10n.workModeExpressTitle,
   };
 
   String badge(AppL10n l10n) => switch (this) {
     AppWorkMode.normal => l10n.workModeNormalBadge,
-    AppWorkMode.server => l10n.workModeServerBadge,
     AppWorkMode.express => l10n.workModeExpressBadge,
   };
 
   String summary(AppL10n l10n) => switch (this) {
     AppWorkMode.normal => l10n.workModeNormalSummary,
-    AppWorkMode.server => l10n.workModeServerSummary,
     AppWorkMode.express => l10n.workModeExpressSummary,
   };
 
-  /// Persisted legacy `app_work_mode` value; server mode is still stored as `dns`.
+  /// Persisted legacy `app_work_mode` value.
   final String storageValue;
 
   static AppWorkMode fromStorageValue(String? value) => values.firstWhere(
@@ -58,7 +53,7 @@ enum AppWorkMode {
   );
 }
 
-/// Power state machine; the error state is server-mode only.
+/// Power state machine.
 /// The enum lives in `data/vpn/power_state.dart` so UI-only consumers (desktop) can import it
 /// without the VPN channel; this library re-exports it.
 /// Work mode and power state share a notifier: switching mode stops the other service.
@@ -100,7 +95,7 @@ final expressVpnControllerProvider = Provider<VpnController>(
       MethodChannelVpnController(channel: MethodChannel(expressVpnChannelName)),
 );
 
-/// Service statistics shared by server mode and the log page.
+/// Service statistics shared by the tunnel and the log page.
 class ServiceStatsNotifier extends Notifier<ServiceStats> {
   static const zero = ServiceStats(
     queries: 0,
@@ -133,17 +128,11 @@ class ServiceStatsNotifier extends Notifier<ServiceStats> {
   /// [startedAt] is the service's own start time. It wins over the locally observed one so a
   /// recreated UI process shows the real uptime instead of starting again from zero.
   ///
-  /// [ownsStats] is false when the caller's plane is not the one the current work mode drives.
-  /// Only one data plane can run at a time, so a non-owner always reports `running: false`; acting
-  /// on that would zero the live uptime the owner just published (the status card flashed `0秒`
-  /// for a second whenever both notifiers re-synced on resume).
   void applyNative(
     Map<String, Object?> stats, {
     required bool running,
-    bool ownsStats = true,
     DateTime? startedAt,
   }) {
-    if (!ownsStats) return;
     if (!running) {
       reset();
       return;

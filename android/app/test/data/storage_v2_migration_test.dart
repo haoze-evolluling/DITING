@@ -1,4 +1,4 @@
-// The V2 migration: legacy rows are copied into seven new stores, verified, and only then are the
+// The V2 migration: legacy rows are copied into five new stores, verified, and only then are the
 // old files removed. Interrupted or failed runs keep the old files and leave the marker unset.
 
 import 'dart:io';
@@ -164,26 +164,6 @@ void main() {
     });
   }
 
-  Future<void> seedServer(Database rules, Database logs) async {
-    await rules.insert('block_rule', {
-      'pattern': 'lan.example',
-      'rawLine': 'lan.example',
-      'addedAt': 1,
-      'enabled': 1,
-      'important': 0,
-      'appInverted': 0,
-      'isWildcard': 0,
-      'isRegex': 0,
-    });
-    await logs.insert('dns_log', {
-      'timestamp': 13,
-      'queryName': 'lan.example',
-      'queryType': 1,
-      'result': 'PASSED',
-      'cached': 0,
-    });
-  }
-
   Future<void> seedAllLegacy() async {
     final normal = await createLegacy(LegacyStorageSource.normalDatabase, [
       DatabaseKind.normalRules,
@@ -200,17 +180,6 @@ void main() {
     await seedExpress(express);
     await express.close();
 
-    final serverRules = await createLegacy(
-      LegacyStorageSource.serverRulesDatabase,
-      [DatabaseKind.serverRules],
-    );
-    final serverLogs = await createLegacy(
-      LegacyStorageSource.serverLogsDatabase,
-      [DatabaseKind.serverLogs],
-    );
-    await seedServer(serverRules, serverLogs);
-    await serverRules.close();
-    await serverLogs.close();
   }
 
   Future<int> count(DatabaseKind kind, String table) async {
@@ -224,7 +193,7 @@ void main() {
     }
   }
 
-  test('旧合并库复制到七个新库并保留旧文件', () async {
+  test('旧合并库复制到五个新库并保留旧文件', () async {
     await seedAllLegacy();
 
     final result = await ensureStorageV2(
@@ -246,10 +215,8 @@ void main() {
     expect(await count(DatabaseKind.normalLogs, 'dns_cache'), 0);
     expect(await count(DatabaseKind.expressRules, 'block_rule'), 1);
     expect(await count(DatabaseKind.expressLogs, 'dns_log'), 1);
-    expect(await count(DatabaseKind.serverRules, 'block_rule'), 1);
-    expect(await count(DatabaseKind.serverLogs, 'dns_log'), 1);
     expect(await count(DatabaseKind.global, 'automation_rule'), 1);
-    for (final name in LegacyStorageSource.allOldDatabases.take(4)) {
+    for (final name in LegacyStorageSource.allOldDatabases.take(2)) {
       expect(File(p.join(directory.path, name)).existsSync(), isTrue);
     }
   });
@@ -330,7 +297,7 @@ void main() {
     expect(await count(DatabaseKind.normalRules, 'block_rule'), 1);
   });
 
-  test('全新安装创建七个空库', () async {
+  test('全新安装创建五个空库', () async {
     final result = await ensureStorageV2(
       store,
       native: const NoopStorageV2Native(),

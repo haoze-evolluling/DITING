@@ -1,6 +1,6 @@
 part of 'mock_data.dart';
 
-/// Service stats shared by server mode and the log overview, filled only from the real engine
+/// Service stats shared by the home and log overview, filled only from the real engine
 /// counters by `ServiceStatsNotifier.applyNative`.
 class ServiceStats {
   const ServiceStats({

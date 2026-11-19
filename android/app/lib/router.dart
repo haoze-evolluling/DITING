@@ -4,6 +4,7 @@ import 'package:diting_android/pages/hub/feature_hub_page.dart';
 import 'package:diting_android/pages/logs/logs_page.dart';
 import 'package:diting_android/pages/mode/mode_onboarding_page.dart';
 import 'package:diting_android/pages/mode/mode_select_page.dart';
+import 'package:diting_android/pages/mode/server_under_construction_page.dart';
 import 'package:diting_android/pages/rules/batch_editor_page.dart';
 import 'package:diting_android/pages/rules/rules_page.dart';
 import 'package:diting_android/pages/settings/settings_page.dart';
@@ -16,7 +17,7 @@ import 'package:diting_shared/shell/branch_transition_shell.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
 import 'package:diting_android/routes/tools_routes.dart';
-import 'package:diting_android/shell/app_shell.dart';
+import 'package:diting_shared/shell/dock_shell.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -59,7 +60,7 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
         pageBuilder: (context, state, navigationShell) => RootShellPage<void>(
           key: state.pageKey,
           name: state.name,
-          child: AppShell(navigationShell: navigationShell),
+          child: DockShell(navigationShell: navigationShell),
         ),
         navigatorContainerBuilder: (context, navigationShell, children) =>
             BranchTransitionShell(
@@ -155,6 +156,12 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
         pageBuilder: (context, state) =>
             androidDefaultPage(state, const ModeOnboardingPage()),
       ),
+      GoRoute(
+        path: Routes.modeServerPlaceholder,
+        parentNavigatorKey: rootNavigatorKey,
+        pageBuilder: (context, state) =>
+            androidDefaultPage(state, const ServerUnderConstructionPage()),
+      ),
       // Domain routes live in `lib/routes/<domain>_routes.dart`; a new domain
       // means one more `...<domain>Routes()` entry here.
       ...dashboardRoutes(),
@@ -166,7 +173,6 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       ...privacySuiteRoutes(),
       ...dns64Routes(),
       ...connectionRateLimitRoutes(),
-      ...lanRateLimitRoutes(),
       ...subscriptionVersionRoutes(),
       ...networkDiagnosticsRoutes(),
       ...toolsRoutes(),
@@ -177,7 +183,6 @@ GoRouter createRouter({String initialLocation = Routes.home}) {
       ...searchRoutes(),
       ...configRoutes(),
       ...systemRoutes(),
-      ...serverRoutes(),
       ...standaloneRoutes(),
     ],
     // Without this, unmatched routes render a blank page instead of failing, so a missing

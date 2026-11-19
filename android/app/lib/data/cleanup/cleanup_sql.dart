@@ -29,7 +29,7 @@ class CleanupDatabases {
   /// Global automation store, shared by every mode.
   Future<Database?> get app => of(StorageContract.globalDatabase);
 
-  /// Existing rule databases in a fixed order (normal, express, server), so map iteration order
+  /// Existing rule databases in a fixed order (normal, express), so map iteration order
   /// cannot make tests flaky.
   Future<List<Database>> ruleDatabases() async {
     final databases = <Database>[];

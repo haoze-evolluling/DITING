@@ -108,7 +108,7 @@ class TrafficIngest(
         val db = when (val opened = AppDatabase.open(context, databaseName)) {
             is AppDatabase.Open.Ready -> opened.db
             AppDatabase.Open.Absent -> {
-                // Fresh install or server mode: retrying would buffer every tick forever.
+                // Fresh install: retrying would buffer every tick forever.
                 DbWriteHealth.onDropped(rowCount(snapshot), DropReason.NO_DATABASE, TABLE)
                 return
             }

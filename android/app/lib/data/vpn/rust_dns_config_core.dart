@@ -36,16 +36,7 @@ const _opEncodeBootstrap = 6;
 const _opPresetFromPolicy = 0;
 const _opPresetCurrent = 1;
 const _opPresetValues = 2;
-const _opServerCache = 3;
 const _opPresetStorage = 4;
-const _opParseUpstreams = 0;
-const _opEncodeUpstreams = 1;
-const _opValidateUpstream = 2;
-const _opNormalizeAddress = 3;
-const _opServerHostPort = 4;
-
-/// `6` is "valid" on the wire; the rejection kinds are `0..5`.
-const _upstreamOk = 6;
 
 class RustDnsConfigCore {
   RustDnsConfigCore._(this._core);
@@ -66,7 +57,7 @@ class RustDnsConfigCore {
       payloadMagic: _payloadMagic,
       abiVersion: _abiVersion,
       errorPrefix: 'dns config core',
-      entries: const ['tunnel', 'server', 'providers', 'presets', 'upstreams'],
+      entries: const ['tunnel', 'providers', 'presets'],
     ),
   );
 
@@ -230,17 +221,6 @@ class RustDnsConfigCore {
     ),
   );
 
-  /// Server mode's cache document: the preset's values plus its negative TTL.
-  ({CacheValues values, int negativeTtlSeconds}) serverCache(String presetRaw) {
-    final reader = _call(
-      'presets',
-      _PayloadWriter()
-        ..u8(_opServerCache)
-        ..utf8(presetRaw),
-    );
-    return (values: _readCacheValues(reader), negativeTtlSeconds: reader.i32());
-  }
-
   /// The prefs spelling of a preset index.
   String presetStorage(int index) => _call(
     'presets',
@@ -265,73 +245,6 @@ class RustDnsConfigCore {
       staleFallbackEnabled: staleFallbackEnabled,
       staleFallbackSeconds: reader.i32(),
     );
-  }
-
-  List<ServerUpstreamRow> parseCustomUpstreams(String? raw) {
-    final reader = _call(
-      'upstreams',
-      _PayloadWriter()
-        ..u8(_opParseUpstreams)
-        ..optionalUtf8(raw),
-    );
-    return reader.upstreamRows();
-  }
-
-  String encodeCustomUpstreams(List<ServerUpstreamRow> rows) {
-    final reader = _call(
-      'upstreams',
-      _PayloadWriter()
-        ..u8(_opEncodeUpstreams)
-        ..upstreamRows(rows),
-    );
-    return reader.string();
-  }
-
-  /// Null when the input is usable; otherwise the reason, which the caller localises.
-  UpstreamRejection? validateUpstream({
-    required String name,
-    required String protocolStorage,
-    required String address,
-    required int port,
-  }) {
-    final reader = _call(
-      'upstreams',
-      _PayloadWriter()
-        ..u8(_opValidateUpstream)
-        ..utf8(name)
-        ..utf8(protocolStorage)
-        ..utf8(address)
-        ..i32(port),
-    );
-    final kind = reader.u8();
-    if (kind == _upstreamOk) return null;
-    return kind < UpstreamRejection.values.length
-        ? UpstreamRejection.values[kind]
-        : UpstreamRejection.addressRequired;
-  }
-
-  /// Non-DoH addresses are stored bare, so an IPv6 paste keeps its brackets only in the UI.
-  String normalizeUpstreamAddress(String protocolStorage, String address) {
-    final reader = _call(
-      'upstreams',
-      _PayloadWriter()
-        ..u8(_opNormalizeAddress)
-        ..utf8(protocolStorage)
-        ..utf8(address),
-    );
-    return reader.string();
-  }
-
-  /// The document's `server` field for a server-mode upstream.
-  String serverHostPort(String address, int port) {
-    final reader = _call(
-      'upstreams',
-      _PayloadWriter()
-        ..u8(_opServerHostPort)
-        ..utf8(address)
-        ..i32(port),
-    );
-    return reader.string();
   }
 
   /// Sends one payload to [entry] and checks the reply header.

@@ -1,5 +1,4 @@
 import 'package:diting_android/app/app.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
@@ -7,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../support/fake_dns_server_controller.dart';
 import '../support/test_hooks.dart';
 
 void main() {
@@ -46,11 +44,7 @@ void main() {
           legacyPrefsStoreProvider.overrideWithValue(
             MemoryLegacyPrefsStore({
               'diting_settings': {'app_work_mode': workMode},
-              'diting_dns_mode_prefs': <String, Object?>{},
             }),
-          ),
-          dnsServerControllerProvider.overrideWithValue(
-            FakeDnsServerController(),
           ),
           hapticProvider.overrideWith(() => _HapticSetting(hapticEnabled)),
         ],
@@ -63,15 +57,6 @@ void main() {
     }
   }
 
-  testWidgets('服务器模式底栏切页有触感反馈', (tester) async {
-    await pumpApp(tester, workMode: 'dns');
-
-    await tester.tap(find.text('功能中心').last);
-    await tester.pump();
-
-    expect(haptics, ['HapticFeedbackType.lightImpact']);
-  });
-
   testWidgets('普通模式底栏切页仍只反馈一次', (tester) async {
     await pumpApp(tester, workMode: 'normal');
 
@@ -82,7 +67,7 @@ void main() {
   });
 
   testWidgets('关闭界面触感后底栏切页静音', (tester) async {
-    await pumpApp(tester, workMode: 'dns', hapticEnabled: false);
+    await pumpApp(tester, workMode: 'express', hapticEnabled: false);
 
     await tester.tap(find.text('功能中心').last);
     await tester.pump();

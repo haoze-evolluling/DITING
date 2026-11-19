@@ -18,7 +18,6 @@ import 'package:diting_android/state/db_health_providers.dart';
 import 'package:diting_android/state/deep_link_providers.dart';
 import 'package:diting_android/state/on_demand_runner.dart';
 import 'package:diting_android/state/rules_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -122,12 +121,6 @@ class _DitingAppState extends ConsumerState<DitingApp> {
     if (!mounted || !_agreementAccepted) return;
     if (!await ref.read(tileBridgeProvider).consumeStartRequest()) return;
     if (!mounted) return;
-    if (ref.read(workModeProvider) == AppWorkMode.server) {
-      if (ref.read(serverStatusProvider) == ServerStatus.stopped) {
-        await ref.read(serverStatusProvider.notifier).toggle();
-      }
-      return;
-    }
     if (ref.read(powerProvider) == PowerState.stopped) {
       await ref.read(powerProvider.notifier).toggle();
     }

@@ -3,7 +3,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
@@ -22,19 +21,10 @@ class IntranetIpCard extends ConsumerWidget {
     final snapshot = network.asData?.value;
     final loading = network.isLoading;
     final mode = ref.watch(workModeProvider);
-    final serverStatus = ref.watch(serverStatusProvider);
-    final port = ref.watch(serverPortProvider);
     final scale = DashboardDensityScope.scaleOf(context);
     final colorScheme = context.colorScheme;
     final localIp = snapshot?.localIpv4 ?? '';
-    // The port only matters in server mode: peers must enter it as their DNS.
-    final listening =
-        mode == AppWorkMode.server && serverStatus == ServerStatus.running;
-    final address = switch ((localIp.isEmpty, listening)) {
-      (true, _) => null,
-      (_, true) => '$localIp:$port',
-      (_, false) => localIp,
-    };
+    final address = localIp.isEmpty ? null : localIp;
     final placeholder = loading
         ? context.l10n.intranetReading
         : context.l10n.intranetNoActiveNetwork;
@@ -87,9 +77,7 @@ class IntranetIpCard extends ConsumerWidget {
                 GlyphIcon(
                   localIp.isEmpty ? AppGlyphs.wifiOff : AppGlyphs.wifi,
                   size: 18,
-                  color: listening
-                      ? colorScheme.primary
-                      : colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 Expanded(
                   child: Column(
@@ -104,13 +92,7 @@ class IntranetIpCard extends ConsumerWidget {
                         style: DashboardText.rowTitle(context),
                       ),
                       Text(
-                        _lanHint(
-                          mode,
-                          listening,
-                          port,
-                          localIp.isEmpty,
-                          context.l10n,
-                        ),
+                        _lanHint(mode, localIp.isEmpty, context.l10n),
                         maxLines: 2,
                         style: DashboardText.label(context),
                       ),
@@ -136,21 +118,14 @@ class IntranetIpCard extends ConsumerWidget {
     );
   }
 
-  /// LAN is reachable only in server mode; other modes bind 127.0.0.1 only.
+  /// The tunnel modes bind DNS to loopback, so the address is informational only.
   static String _lanHint(
     AppWorkMode mode,
-    bool listening,
-    int port,
     bool noNetwork,
     AppL10n l10n,
   ) {
     if (noNetwork) return l10n.intranetConnectHint;
-    if (mode != AppWorkMode.server) {
-      return l10n.intranetModeNotListening(mode.title(l10n));
-    }
-    return listening
-        ? l10n.intranetListeningOn(port)
-        : l10n.intranetServiceStopped(port);
+    return l10n.intranetModeNotListening(mode.title(l10n));
   }
 
   static Future<void> _copy(BuildContext context, String text) async {

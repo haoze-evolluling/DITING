@@ -1,4 +1,4 @@
-/// Whether a tunnel or the LAN DNS service is alive in this process.
+/// Whether a tunnel is alive in this process.
 ///
 /// The persisted "running" flags survive a force-stop, so storage work asks the native status
 /// calls instead. Shared by startup (the migration must not fork the log files) and by the

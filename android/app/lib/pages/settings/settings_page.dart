@@ -34,7 +34,7 @@ class SettingsPage extends StatelessWidget {
             items: [
               NavEntryRow(
                 glyph: AppGlyphs.layers,
-                title: context.l10n.serverRunMode,
+                title: context.l10n.workModeSettingTitle,
                 subtitle: context.l10n.settingsModeSubtitle,
                 onPressed: () => context.push(Routes.modeSelect),
               ),
@@ -69,7 +69,7 @@ class SettingsPage extends StatelessWidget {
             items: [
               NavEntryRow(
                 glyph: AppGlyphs.info,
-                title: context.l10n.serverWizard,
+                title: context.l10n.workModeGuideTitle,
                 subtitle: context.l10n.settingsWizardSubtitle,
                 onPressed: () => context.push(Routes.modeOnboarding),
               ),

@@ -184,10 +184,7 @@ extension LegacySettingsParity on LegacySettings {
   void setNotificationDefaultExpressText(String value) =>
       _store.putString(_notification, 'default_express_text', value);
 
-  void setNotificationDefaultServerText(String value) =>
-      _store.putString(_notification, 'default_server_text', value);
-
-  /// Dataset container: one shared switch would make express and server modes change together.
+  /// Dataset container: one shared switch would make the modes change together.
   bool get subscriptionAutoUpdateEnabled => _bool(
     dnsContainer,
     LegacySettings.subscriptionAutoUpdateEnabledKey,

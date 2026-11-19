@@ -6,10 +6,10 @@ Two libraries are built: `libditing_engine.so` (the tunnel data plane, unchanged
 by the `diting-kernels` umbrella crate. The engine stays its own `.so` on purpose: it has no
 duplicated std/dependency bytes to share and is kept isolated from the UI-side kernels.
 
-* `libditing_engine.so` - the tunnel engine behind all three modes: standalone DNS server, express
-  tunnel and normal tunnel. Lifecycle and JNI facade, the DNS pipeline with its four upstream
-  transports, the standalone server, TUN + transparent netstack, the direct / SOCKS5 / HTTP CONNECT
-  egress and the MITM relay. It **links** the engine-side kernels statically (policy, DNS cache and
+* `libditing_engine.so` - the tunnel engine behind express and normal modes. Lifecycle and JNI
+  facade, the DNS pipeline with its four upstream transports, TUN + transparent netstack, the
+  direct / SOCKS5 / HTTP CONNECT egress and the MITM relay. It **links** the engine-side kernels
+  statically (policy, DNS cache and
   messages, resolver scheduling, upstream transport, bootstrap, gate, connlog, proxy, cert, MITM
   filter, cosmetic injection, sniffer, request rules, config, telemetry), so none of them ships as
   its own `.so` any more - they are regular Rust dependencies instead of `dlopen`'d libraries.

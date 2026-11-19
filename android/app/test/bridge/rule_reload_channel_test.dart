@@ -1,7 +1,6 @@
-// A rule edit must reach whichever data plane is running: normal tunnel, express tunnel or the
-// standalone DNS server. `requestVpnRuleReload` fans out to all three channels and each native side
-// no-ops when its mode is stopped, so this pins the wiring (a missing channel would silently drop
-// server-mode hot reload).
+// A rule edit must reach whichever data plane is running: normal or express tunnel.
+// `requestVpnRuleReload` fans out to both channels and each native side no-ops when its mode is
+// stopped, so this pins the wiring (a missing channel would silently drop hot reload).
 
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:flutter/services.dart';
@@ -10,13 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('规则变更会同时通知普通/极速/服务器三个通道重载', () async {
+  test('规则变更会同时通知普通/极速两个通道重载', () async {
     final calls = <String, List<String>>{};
-    const channels = [
-      vpnChannelName,
-      expressVpnChannelName,
-      dnsServerChannelName,
-    ];
+    const channels = [vpnChannelName, expressVpnChannelName];
 
     for (final name in channels) {
       final channel = MethodChannel(name);

@@ -1,9 +1,7 @@
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/pages/network/connection_rate_limit_page.dart';
-import 'package:diting_android/pages/network/lan_rate_limit_page.dart';
 import 'package:diting_android/routes/connection_rate_limit_routes.dart';
-import 'package:diting_android/routes/lan_rate_limit_routes.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_android/widgets/rate_limit_stepper_row.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
@@ -141,68 +139,4 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('局域网限速页四个分区可操作且名单用浮层编辑', (tester) async {
-    tester.view.physicalSize = const Size(320, 640);
-    tester.view.devicePixelRatio = 1;
-    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
-    addTearDown(tester.view.reset);
-    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-
-    final store = MemoryLegacyPrefsStore();
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          ...appTestOverrides(),
-          appLocaleProvider.overrideWithValue(const Locale('en')),
-          legacyPrefsStoreProvider.overrideWithValue(store),
-          vpnControllerProvider.overrideWithValue(FakeVpnController()),
-        ],
-        child: DitingApp(initialLocation: LanRateLimitPaths.root),
-      ),
-    );
-    await tester.pump();
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-    expect(find.text('Rate limit switch'), findsOneWidget);
-    final scrollable = find
-        .descendant(
-          of: find.byType(LanRateLimitPage),
-          matching: find.byType(Scrollable),
-        )
-        .first;
-    await tester.scrollUntilVisible(
-      find.text('Rate and burst'),
-      160,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Rate and burst'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Client aggregation'),
-      160,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Client aggregation'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.widgetWithText(ListItem, 'Manage list'),
-      160,
-      scrollable: scrollable,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Exempt list'), findsOneWidget);
-
-    await tester.tap(find.widgetWithText(ListItem, 'Manage list'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField), '10.0.0.1, 10.0.0.0/8');
-    await tester.tap(find.text('Submit'));
-    await tester.pumpAndSettle();
-
-    expect(
-      store.read('dns_vpn_prefs', 'lan_rate_limit_exempt'),
-      '10.0.0.1, 10.0.0.0/8',
-    );
-    expect(tester.takeException(), isNull);
-  });
 }

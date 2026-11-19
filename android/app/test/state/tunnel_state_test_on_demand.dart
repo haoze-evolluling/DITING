@@ -23,18 +23,11 @@ void _engineStats() {
       });
       expect(vpn.startedAt, started);
 
-      final server = DnsServerStatus.fromMap({
-        'running': true,
-        'startedAt': started.millisecondsSinceEpoch,
-      });
-      expect(server.startedAt, started);
-
       expect(VpnStatus.fromMap({'running': true}).startedAt, isNull);
       expect(
         VpnStatus.fromMap({'running': true, 'startedAt': 0}).startedAt,
         isNull,
       );
-      expect(DnsServerStatus.fromMap({'running': false}).startedAt, isNull);
     });
   });
 
@@ -76,24 +69,6 @@ void _engineStats() {
       final uptime = c.read(serviceStatsProvider).uptime;
       expect(uptime.inMinutes, 7);
       expect(uptime.inSeconds % 60, closeTo(3, 2));
-    });
-
-    test('非当前数据面的同步不清空计时', () {
-      final c = ProviderContainer();
-      addTearDown(c.dispose);
-      final stats = c.read(serviceStatsProvider.notifier);
-
-      stats.applyNative(
-        {'queries': 5},
-        running: true,
-        startedAt: DateTime.now().subtract(const Duration(minutes: 2)),
-      );
-      // The other plane always answers "not running"; acting on it flashed `0秒` for a second.
-      stats.applyNative(const {}, running: false, ownsStats: false);
-
-      final kept = c.read(serviceStatsProvider);
-      expect(kept.queries, 5);
-      expect(kept.uptime.inMinutes, 2);
     });
 
     test('syncStatus 将原生 stats 写进服务统计', () async {
@@ -193,16 +168,6 @@ void _onDemand() {
       );
       expect(vpn.startCalls, 0);
       expect(vpn.stopCalls, 0);
-    });
-
-    test('服务器模式不动隧道', () async {
-      final vpn = FakeVpnController();
-      final c = container(vpn: vpn, ssid: 'Home-5G', workMode: 'dns');
-      expect(
-        await c.read(onDemandRunnerProvider).apply(),
-        OnDemandOutcome.serverMode,
-      );
-      expect(vpn.startCalls, 0);
     });
 
     test('匹配白名单时启动 VPN', () async {

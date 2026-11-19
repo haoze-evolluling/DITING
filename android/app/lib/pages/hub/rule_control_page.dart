@@ -3,10 +3,8 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/block_response_settings.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
-import 'package:diting_android/state/server_status_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,19 +73,11 @@ class RuleControlPage extends ConsumerWidget {
                 onChanged: (value) {
                   settings.setDomainRulesEnabled(value);
                   ref.read(legacySettingsRevisionProvider.notifier).bump();
-                  if (ref.read(workModeProvider) == AppWorkMode.server &&
-                      ref.read(serverStatusProvider) == ServerStatus.running) {
-                    showAppSnack(
-                      context,
-                      context.l10n.serverRuleMasterSaved,
-                      duration: const Duration(milliseconds: 2200),
-                    );
-                  }
                 },
               ),
               // HTTPS traffic inspection only exists on the normal full tunnel; express is a
-              // DNS-only route and server mode has no tunnel at all, so the URL-rules entry would
-              // open a page whose switches can never take effect.
+              // DNS-only route, so the URL-rules entry would open a page whose switches can never
+              // take effect.
               if (isNormal)
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.target),
