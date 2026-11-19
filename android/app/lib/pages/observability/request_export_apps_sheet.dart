@@ -89,7 +89,10 @@ class _RequestLogExportAppPickerState
             generateSection(
               items: [
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.clearAll, size: 20),
+                  // Same column as the app rows below it, which are led by a 40dp icon.
+                  leading: const LeadingSlot(
+                    child: GlyphIcon(AppGlyphs.clearAll, size: 20),
+                  ),
                   title: Text(l10n.obsExportAllApps),
                   trailing: _selected.isEmpty ? const SelectionCheck() : null,
                   onTap: () => setState(_selected.clear),

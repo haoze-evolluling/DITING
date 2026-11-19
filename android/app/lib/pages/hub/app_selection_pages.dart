@@ -9,6 +9,7 @@ import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:diting_android/widgets/app_list_error_state.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
 import 'package:diting_android/widgets/app_snack.dart';
+import 'package:diting_android/widgets/leading_slot.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_android/widgets/unsaved_changes.dart';
@@ -300,7 +301,10 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
                       title: context.l10n.appSelectionSwitch,
                       items: [
                         ListItem.toggle(
-                          leading: const GlyphIcon(AppGlyphs.wifiOff),
+                          // The app list below is led by 40dp icons; match its column.
+                          leading: const LeadingSlot(
+                            child: GlyphIcon(AppGlyphs.wifiOff),
+                          ),
                           title: Text(widget.enableToggleTitle!),
                           subtitle: Text(
                             _selected.isEmpty

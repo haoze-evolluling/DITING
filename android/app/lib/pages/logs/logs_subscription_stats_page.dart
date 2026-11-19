@@ -4,6 +4,7 @@ import 'package:diting_android/pages/logs/logs_shared.dart';
 import 'package:diting_android/state/log_dashboard_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
+import 'package:diting_android/widgets/leading_slot.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -167,16 +168,19 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
             final item = snapshot.items[index];
             final dimmed = item.deleted || !item.enabled;
             return ListItem(
-              leading: IconBadge(
-                glyph: item.deleted ? AppGlyphs.warning : AppGlyphs.rules,
-                // The row card owns the card level; the badge needs the next one up.
-                color: SurfaceLevel.block.colorOf(colorScheme),
-                foregroundColor: item.deleted
-                    ? colorScheme.onSurfaceVariant
-                    : (item.enabled ? colorScheme.primary : null),
-                shape: AppShape.standard,
-                size: 34,
-                glyphSize: 17,
+              // Same column as the race page's badge rows, which this list mirrors.
+              leading: LeadingSlot(
+                child: IconBadge(
+                  glyph: item.deleted ? AppGlyphs.warning : AppGlyphs.rules,
+                  // The row card owns the card level; the badge needs the next one up.
+                  color: SurfaceLevel.block.colorOf(colorScheme),
+                  foregroundColor: item.deleted
+                      ? colorScheme.onSurfaceVariant
+                      : (item.enabled ? colorScheme.primary : null),
+                  shape: AppShape.standard,
+                  size: 34,
+                  glyphSize: 17,
+                ),
               ),
               title: Text(item.name),
               subtitle: Text(

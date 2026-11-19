@@ -12,6 +12,7 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_list_error_state.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
+import 'package:diting_android/widgets/leading_slot.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:diting_android/widgets/unsaved_changes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -222,7 +223,10 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                   title: context.l10n.appRulesMasterSection,
                   items: [
                     ListItem.toggle(
-                      leading: const GlyphIcon(AppGlyphs.verified),
+                      // The app list below is led by 40dp icons; match its column.
+                      leading: const LeadingSlot(
+                        child: GlyphIcon(AppGlyphs.verified),
+                      ),
                       title: Text(context.l10n.appRulesMasterToggle),
                       subtitle: Text(
                         draft.configuredApps == 0
@@ -243,13 +247,17 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                   title: context.l10n.hubModuleMore,
                   items: [
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.wifiOff),
+                      leading: const LeadingSlot(
+                        child: GlyphIcon(AppGlyphs.wifiOff),
+                      ),
                       title: Text(context.l10n.hubBlockedApps),
                       subtitle: Text(context.l10n.hubBlockedAppsDescription),
                       onTap: () => context.push('/hub/blocked-apps'),
                     ),
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.appsList),
+                      leading: const LeadingSlot(
+                        child: GlyphIcon(AppGlyphs.appsList),
+                      ),
                       title: Text(context.l10n.hubExcludedApps),
                       subtitle: Text(context.l10n.hubExcludedAppsDescription),
                       onTap: () => context.push('/hub/excluded-apps'),
@@ -342,7 +350,9 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                   title: context.l10n.appRulesAppSection,
                   items: [
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.arrowBack, size: 20),
+                      leading: const LeadingSlot(
+                        child: GlyphIcon(AppGlyphs.arrowBack, size: 20),
+                      ),
                       title: Text(context.l10n.appRulesBackToList),
                       subtitle: Text(app.packageName),
                       onTap: () => setState(() => _selected = null),

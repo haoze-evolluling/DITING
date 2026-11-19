@@ -5,6 +5,7 @@ import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
+import 'package:diting_android/widgets/leading_slot.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -117,7 +118,9 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
           generateSection(
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.settings, size: 20),
+                leading: const LeadingSlot(
+                  child: GlyphIcon(AppGlyphs.settings, size: 20),
+                ),
                 title: Text(context.l10n.providerSheetManage),
                 trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
                 onTap: () {
@@ -126,7 +129,9 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
                 },
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.eye, size: 20),
+                leading: const LeadingSlot(
+                  child: GlyphIcon(AppGlyphs.eye, size: 20),
+                ),
                 title: Text(context.l10n.providerSheetVisibility),
                 trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
                 onTap: () {
@@ -164,7 +169,8 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
         ? selectedId == provider.id
         : raceIds.contains(provider.id);
     return ListItem(
-      leading: const _ProviderMark(),
+      // The provider mark is 36dp; pin the column so the action rows match it.
+      leading: const LeadingSlot(child: _ProviderMark()),
       title: Text(provider.name),
       subtitle: Text(
         provider.address,

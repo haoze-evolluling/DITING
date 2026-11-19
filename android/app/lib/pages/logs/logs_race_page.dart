@@ -7,6 +7,7 @@ import 'package:diting_android/state/log_race_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
+import 'package:diting_android/widgets/leading_slot.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -154,13 +155,17 @@ class LogsRacePage extends ConsumerWidget {
           itemBuilder: (context, index) {
             final item = snapshot.strategyStats[index];
             return ListItem(
-              leading: IconBadge(
-                glyph: _strategyGlyph(item.strategy),
-                color: SurfaceLevel.block.colorOf(colorScheme),
-                foregroundColor: colorScheme.primary,
-                shape: AppShape.standard,
-                size: 34,
-                glyphSize: 17,
+              // The winner card below is led by a 26dp rank badge; pinning one column for
+              // both keeps the two cards' text edges on the same line.
+              leading: LeadingSlot(
+                child: IconBadge(
+                  glyph: _strategyGlyph(item.strategy),
+                  color: SurfaceLevel.block.colorOf(colorScheme),
+                  foregroundColor: colorScheme.primary,
+                  shape: AppShape.standard,
+                  size: 34,
+                  glyphSize: 17,
+                ),
               ),
               title: Text(item.label),
               subtitle: Text(_strategySubtitle(item, l10n), maxLines: 2),
@@ -196,7 +201,9 @@ class LogsRacePage extends ConsumerWidget {
             // The list is sorted by wins, so the first row is the yardstick for every bar.
             final topWins = snapshot.entries.first.wins;
             return ListItem(
-              leading: LogsRankBadge(rank: index + 1),
+              leading: LeadingSlot(
+                child: LogsRankBadge(rank: index + 1),
+              ),
               title: Text(entry.name),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 6),
@@ -233,13 +240,15 @@ class LogsRacePage extends ConsumerWidget {
           itemBuilder: (context, index) {
             final item = snapshot.smartSelections[index];
             return ListItem(
-              leading: IconBadge(
-                glyph: AppGlyphs.sparkle,
-                color: SurfaceLevel.block.colorOf(colorScheme),
-                foregroundColor: colorScheme.primary,
-                shape: AppShape.standard,
-                size: 34,
-                glyphSize: 17,
+              leading: LeadingSlot(
+                child: IconBadge(
+                  glyph: AppGlyphs.sparkle,
+                  color: SurfaceLevel.block.colorOf(colorScheme),
+                  foregroundColor: colorScheme.primary,
+                  shape: AppShape.standard,
+                  size: 34,
+                  glyphSize: 17,
+                ),
               ),
               title: Text(item.name),
               subtitle: Text(
