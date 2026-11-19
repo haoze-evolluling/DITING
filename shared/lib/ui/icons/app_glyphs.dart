@@ -17,6 +17,7 @@ part 'app_glyphs_i.dart';
 part 'app_glyphs_j.dart';
 part 'app_glyphs_k.dart';
 part 'app_glyphs_l.dart';
+part 'app_glyphs_m.dart';
 
 abstract final class AppGlyphs {
   static const dashboard = _g_dashboard_;
@@ -158,7 +159,18 @@ abstract final class AppGlyphs {
   static const database = _g_database_;
   static const heart = _g_heart_;
   static const trophy = _g_trophy_;
-  static const signal = _g_signal_;
+
+  // Third batch: the rows below still shared a glyph with an unrelated idea.
+  static const network = _g_network_;
+  static const pause = _g_pause_;
+  static const shield = _g_shield_;
+  static const mirror = _g_mirror_;
+  static const folder = _g_folder_;
+  static const resize = _g_resize_;
+  static const calendar = _g_calendar_;
+  static const stethoscope = _g_stethoscope_;
+  static const upstream = _g_upstream_;
+  static const record = _g_record_;
 
   // Brand marks for the speed card, same shapes as FlClash's and the same GlyphPath render.
   static const baidu = _g_baidu_;

@@ -84,14 +84,14 @@ class _GroupManageSheet extends ConsumerWidget {
               items: [
                 if (groups.isEmpty)
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.layers, size: 20),
+                    leading: const GlyphIcon(AppGlyphs.folder, size: 20),
                     title: Text(context.l10n.subsGroupsEmpty),
                     subtitle: Text(context.l10n.subsGroupsEmptyHint),
                   )
                 else
                   for (final group in groups)
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.layers, size: 20),
+                      leading: const GlyphIcon(AppGlyphs.folder, size: 20),
                       title: Text(group.name),
                       subtitle: Text(
                         context.l10n.subsGroupSubCount(

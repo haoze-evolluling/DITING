@@ -225,11 +225,3 @@ const _g_trophy_ = Glyph([
   ], role: GlyphRole.line),
   GlyphBox(7.6, 16.6, 16.4, 20.2, 1.6),
 ]);
-
-/// Rising signal bars, for the current-network profile row that repeated `wifi`.
-const _g_signal_ = Glyph([
-  GlyphBox(3.3, 15.4, 6.3, 20.7, 1.3),
-  GlyphBox(8.1, 11.6, 11.1, 20.7, 1.3),
-  GlyphBox(12.9, 7.8, 15.9, 20.7, 1.3),
-  GlyphBox(17.7, 3.9, 20.7, 20.7, 1.3),
-]);

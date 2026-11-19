@@ -488,7 +488,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         children: [
           ListItem(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: const GlyphIcon(AppGlyphs.layers, size: 20),
+            leading: const GlyphIcon(AppGlyphs.mirror, size: 20),
             title: Text(context.l10n.subsAddMirrorTemplate),
             subtitle: Text(context.l10n.subsAddMirrorTemplateSubtitle),
             trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
@@ -503,7 +503,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       children: [
         ListItem.toggle(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: const GlyphIcon(AppGlyphs.bolt, size: 20),
+          leading: const GlyphIcon(AppGlyphs.mirror, size: 20),
           title: Text(context.l10n.subsUseMirrorTemplate),
           subtitle: Text(context.l10n.subsUseMirrorTemplateSubtitle),
           value: _useMirror,

@@ -394,7 +394,7 @@ class _ServerUpstreamPageState extends ConsumerState<ServerUpstreamPage> {
   };
 
   static Glyph _modeGlyph(ResolutionMode mode) => switch (mode) {
-    ResolutionMode.single => AppGlyphs.dns,
+    ResolutionMode.single => AppGlyphs.upstream,
     ResolutionMode.smart => AppGlyphs.sparkle,
     ResolutionMode.parallel => AppGlyphs.speed,
     ResolutionMode.primaryBackup => AppGlyphs.swap,
@@ -440,7 +440,7 @@ class _UpstreamRow extends StatelessWidget {
             ? AppGlyphs.checkCircle
             : (upstream.protocol == DnsProtocol.doh
                   ? AppGlyphs.lock
-                  : AppGlyphs.dns),
+                  : AppGlyphs.upstream),
         size: 20,
       ),
       title: Text(upstream.name, maxLines: 1, overflow: TextOverflow.ellipsis),

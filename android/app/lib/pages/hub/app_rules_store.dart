@@ -284,7 +284,7 @@ class AppScopedRuleRow extends StatelessWidget {
     final isAllow = rule.kind == RuleKind.allow;
     return ListItem(
       leading: GlyphIcon(
-        isAllow ? AppGlyphs.verified : AppGlyphs.block,
+        isAllow ? AppGlyphs.verified : AppGlyphs.shield,
         size: 20,
         color: isAllow
             ? context.colorScheme.primary

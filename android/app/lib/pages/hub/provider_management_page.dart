@@ -124,7 +124,7 @@ class _ProviderManagementPageState
                 spacing: 12,
                 children: [
                   GlyphIcon(
-                    AppGlyphs.dns,
+                    AppGlyphs.upstream,
                     size: 22,
                     color: colorScheme.primary,
                   ),
@@ -240,7 +240,7 @@ class _ProviderRow extends StatelessWidget {
       leading: GlyphIcon(
         provider.protocol == ProviderProtocol.doh
             ? AppGlyphs.lock
-            : AppGlyphs.dns,
+            : AppGlyphs.upstream,
         size: 20,
       ),
       title: Text(provider.name, maxLines: 1, overflow: TextOverflow.ellipsis),

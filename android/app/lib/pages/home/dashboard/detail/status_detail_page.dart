@@ -119,7 +119,7 @@ class StatusDetailPage extends ConsumerWidget {
           ),
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.dns,
+          glyph: AppGlyphs.upstream,
           title: context.l10n.statusActiveProvider,
           footer: primary == null ? null : context.l10n.statusProviderFooter,
           child: primary == null

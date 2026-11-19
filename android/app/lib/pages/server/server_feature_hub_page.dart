@@ -41,7 +41,7 @@ List<ServerFeatureCategory> serverFeatureCategories(AppL10n l10n) => [
       ServerFeatureCard(
         title: l10n.serverUpstreamTitle,
         description: l10n.serverHubUpstreamDescription,
-        glyph: AppGlyphs.dns,
+        glyph: AppGlyphs.upstream,
         route: ServerPaths.upstream,
       ),
       ServerFeatureCard(
@@ -76,7 +76,7 @@ List<ServerFeatureCategory> serverFeatureCategories(AppL10n l10n) => [
       ServerFeatureCard(
         title: l10n.hubBlocklist,
         description: l10n.hubBlocklistDescription,
-        glyph: AppGlyphs.block,
+        glyph: AppGlyphs.shield,
         route: Routes.rulesOf('block'),
       ),
       ServerFeatureCard(
@@ -111,7 +111,7 @@ List<ServerFeatureCategory> serverFeatureCategories(AppL10n l10n) => [
       ServerFeatureCard(
         title: l10n.hubTroubleshooting,
         description: l10n.hubTroubleshootingDescription,
-        glyph: AppGlyphs.wrench,
+        glyph: AppGlyphs.stethoscope,
         route: HubPaths.troubleshooting,
       ),
       ServerFeatureCard(

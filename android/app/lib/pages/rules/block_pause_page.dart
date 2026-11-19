@@ -212,7 +212,7 @@ class _StatusHero extends StatelessWidget {
           spacing: 12,
           children: [
             IconBadge(
-              glyph: paused ? AppGlyphs.block : AppGlyphs.checkCircle,
+              glyph: paused ? AppGlyphs.pause : AppGlyphs.checkCircle,
               color: color.withValues(alpha: 0.14),
               foregroundColor: color,
             ),

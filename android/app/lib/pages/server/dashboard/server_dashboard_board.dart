@@ -229,9 +229,9 @@ class ServerDashboardAddSheet extends ConsumerWidget {
 
   static Glyph _glyphOf(ServerDashboardWidget widget) => switch (widget) {
     ServerDashboardWidget.status => AppGlyphs.status,
-    ServerDashboardWidget.upstream => AppGlyphs.dns,
+    ServerDashboardWidget.upstream => AppGlyphs.upstream,
     ServerDashboardWidget.lanAccess => AppGlyphs.devices,
-    ServerDashboardWidget.cache => AppGlyphs.memory,
+    ServerDashboardWidget.cache => AppGlyphs.database,
     ServerDashboardWidget.ruleControl => AppGlyphs.rules,
     ServerDashboardWidget.domainRules => AppGlyphs.verified,
   };

@@ -123,7 +123,7 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
             items: [
               ListItem.toggle(
                 leading: GlyphIcon(
-                  capturing ? AppGlyphs.checkCircle : AppGlyphs.logs,
+                  capturing ? AppGlyphs.checkCircle : AppGlyphs.record,
                   size: 20,
                 ),
                 title: Text(context.l10n.troubleshootRecordLogs),
@@ -132,7 +132,7 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
                 onChanged: _busy ? null : (value) => _onToggle(value),
               ),
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.logs, size: 20),
+                leading: const GlyphIcon(AppGlyphs.sliders, size: 20),
                 title: Text(context.l10n.troubleshootDetailMode),
                 subtitle: Text(context.l10n.troubleshootDetailModeNote),
                 value: detailed,
@@ -146,7 +146,7 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
             items: [
               ListItem(
                 leading: GlyphIcon(
-                  eventSummary.hasAnomaly ? AppGlyphs.warning : AppGlyphs.logs,
+                  eventSummary.hasAnomaly ? AppGlyphs.warning : AppGlyphs.clock,
                   size: 20,
                   color: eventSummary.hasAnomaly ? error : null,
                 ),

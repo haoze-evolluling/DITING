@@ -158,19 +158,19 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
             items: [
               if (groups == null)
                 ListItem(
-                  leading: GlyphIcon(AppGlyphs.layers),
+                  leading: GlyphIcon(AppGlyphs.folder),
                   title: Text(context.l10n.autoUpdateReadingGroups),
                 )
               else if (groups.isEmpty)
                 ListItem(
-                  leading: GlyphIcon(AppGlyphs.layers),
+                  leading: GlyphIcon(AppGlyphs.folder),
                   title: Text(context.l10n.autoUpdateNoGroups),
                   subtitle: Text(context.l10n.autoUpdateNoGroupsSubtitle),
                 )
               else
                 for (final group in groups)
                   ListItem.toggle(
-                    leading: const GlyphIcon(AppGlyphs.layers),
+                    leading: const GlyphIcon(AppGlyphs.folder),
                     title: Text(group.name),
                     value: group.autoUpdateEnabled,
                     onChanged: enabled

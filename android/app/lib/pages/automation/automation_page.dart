@@ -94,13 +94,13 @@ class AutomationPage extends ConsumerWidget {
                 onTap: () => context.push(AutomationPaths.profiles),
               ),
               _NavRow(
-                glyph: AppGlyphs.clock,
+                glyph: AppGlyphs.calendar,
                 title: l10n.timetableTitle,
                 subtitle: l10n.timetableSubtitle,
                 onTap: () => context.push(AutomationPaths.timetable),
               ),
               _NavRow(
-                glyph: AppGlyphs.signal,
+                glyph: AppGlyphs.network,
                 title: l10n.netProfileTitle,
                 subtitle: l10n.netProfileSubtitle,
                 onTap: () => context.push(NetworkProfilePaths.root),

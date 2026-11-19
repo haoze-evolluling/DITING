@@ -63,7 +63,7 @@ class MirrorTemplatesPage extends ConsumerWidget {
                 else
                   for (final row in rows)
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.layers, size: 20),
+                      leading: const GlyphIcon(AppGlyphs.mirror, size: 20),
                       title: Text(row.name),
                       subtitle: Text(row.template),
                       trailing: Row(

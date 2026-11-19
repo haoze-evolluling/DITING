@@ -92,7 +92,7 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
                 for (final spec in providers)
                   ListItem.checkbox(
                     value: selected.contains(spec.id),
-                    leading: const GlyphIcon(AppGlyphs.dns, size: 20),
+                    leading: const GlyphIcon(AppGlyphs.upstream, size: 20),
                     title: Text(spec.name),
                     subtitle: Text(latencyEndpointLabel(spec)),
                     onChanged: state.running

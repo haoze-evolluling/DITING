@@ -66,7 +66,7 @@ class DashboardEditSheet extends ConsumerWidget {
   }
 
   static Glyph _glyphOf(DashboardWidget widget) => switch (widget) {
-    DashboardWidget.provider => AppGlyphs.dns,
+    DashboardWidget.provider => AppGlyphs.upstream,
     DashboardWidget.resolution => AppGlyphs.shuffle,
     DashboardWidget.status => AppGlyphs.status,
     DashboardWidget.networkSpeed => AppGlyphs.speed,

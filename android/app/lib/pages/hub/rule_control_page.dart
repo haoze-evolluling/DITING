@@ -126,7 +126,7 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.ruleControlControlSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.block),
+                leading: const GlyphIcon(AppGlyphs.pause),
                 title: Text(context.l10n.blockPauseTitle),
                 subtitle: Text(context.l10n.blockPauseEntrySubtitle),
                 onTap: () => context.push('/hub/rules/pause'),
@@ -149,7 +149,7 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.ruleControlDomainSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.block),
+                leading: const GlyphIcon(AppGlyphs.shield),
                 title: Text(context.l10n.hubBlocklist),
                 subtitle: Text(context.l10n.hubBlocklistDescription),
                 onTap: () => context.push('/rules/block'),

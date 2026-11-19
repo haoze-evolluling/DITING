@@ -276,7 +276,7 @@ class _ServerUpstreamCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.dns,
+            glyph: AppGlyphs.upstream,
             title: context.l10n.serverCurrentUpstreamCard,
             leading: [DashboardChip(label: resolution.label(context.l10n))],
             trailing: [
@@ -449,7 +449,7 @@ class _ServerDomainRulesCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           _RuleEntry(
-            glyph: AppGlyphs.block,
+            glyph: AppGlyphs.shield,
             title: context.l10n.serverBlocklist,
             onTap: onBlock,
             first: true,

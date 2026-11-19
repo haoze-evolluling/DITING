@@ -223,14 +223,14 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     }
   }
 
-  /// Bolt button in the address field's trailing slot.
+  /// Probe button in the address field's trailing slot.
   Widget _probeButton() {
     return IconButton(
       tooltip: context.l10n.providerMgmtProbeTooltip,
       onPressed: _testing ? null : _test,
       icon: _testing
           ? const CommonCircleLoading(size: 18)
-          : const GlyphIcon(AppGlyphs.bolt, size: 20),
+          : const GlyphIcon(AppGlyphs.target, size: 20),
     );
   }
 

@@ -62,7 +62,7 @@ void main() {
         tester,
         ScreenshotSpec(
           name: 'android-glyphs',
-          size: const Size(750, 420),
+          size: const Size(750, 780),
           platform: TargetPlatform.android,
           app: MaterialApp(
             debugShowCheckedModeBanner: false,
@@ -108,7 +108,8 @@ void main() {
   });
 }
 
-/// The batch under review, in `AppGlyphs` name form so the sheet and the app resolve the same glyph.
+/// The hand-drawn additions under review, in `AppGlyphs` name form so the sheet and the app resolve
+/// the same glyph.
 const _reviewGlyphs = <String>[
   'automation',
   'notification',
@@ -123,8 +124,17 @@ const _reviewGlyphs = <String>[
   'bug',
   'database',
   'heart',
-  'signal',
   'trophy',
+  'network',
+  'pause',
+  'shield',
+  'mirror',
+  'folder',
+  'resize',
+  'calendar',
+  'stethoscope',
+  'upstream',
+  'record',
 ];
 
 /// `/` → `home`, `/logs` → `logs`: one stable file name per branch.

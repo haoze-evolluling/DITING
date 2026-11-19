@@ -142,7 +142,7 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
   }
 
   static Glyph _glyphOf(ResolutionMode mode) => switch (mode) {
-    ResolutionMode.single => AppGlyphs.dns,
+    ResolutionMode.single => AppGlyphs.upstream,
     ResolutionMode.smart => AppGlyphs.sparkle,
     ResolutionMode.parallel => AppGlyphs.speed,
     ResolutionMode.primaryBackup => AppGlyphs.swap,
@@ -292,7 +292,7 @@ class _ResolutionModeConfigPageState
                 spacing: 12,
                 children: [
                   GlyphIcon(
-                    _single ? AppGlyphs.dns : AppGlyphs.speed,
+                    _single ? AppGlyphs.upstream : AppGlyphs.speed,
                     size: 22,
                     color: context.colorScheme.primary,
                   ),
@@ -354,7 +354,7 @@ class _ResolutionModeConfigPageState
                             ? provider.id == selectedId
                             : raceIds.contains(provider.id))
                         ? AppGlyphs.checkCircle
-                        : AppGlyphs.dns,
+                        : AppGlyphs.upstream,
                     size: 20,
                   ),
                   title: Text(provider.name),

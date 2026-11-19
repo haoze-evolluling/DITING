@@ -107,7 +107,7 @@ class HttpInspectionPage extends ConsumerWidget {
                   title: context.l10n.httpInspProtocolSection,
                   items: [
                     ListItem.toggle(
-                      leading: const GlyphIcon(AppGlyphs.bolt),
+                      leading: const GlyphIcon(AppGlyphs.block),
                       title: Text(context.l10n.httpInspBlockHttp3),
                       subtitle: Text(
                         !enabled

@@ -38,7 +38,7 @@ class ProviderCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.dns,
+            glyph: AppGlyphs.upstream,
             title: single
                 ? context.l10n.homeProviderSingleLabel
                 : context.l10n.homeProviderRaceLabel,

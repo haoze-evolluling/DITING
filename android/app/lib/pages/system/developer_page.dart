@@ -339,7 +339,7 @@ class _StorageCard extends ConsumerWidget {
               spacing: 10,
               children: [
                 GlyphIcon(
-                  AppGlyphs.layers,
+                  AppGlyphs.database,
                   size: 22,
                   color: colorScheme.primary,
                 ),

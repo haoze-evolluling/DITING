@@ -67,7 +67,7 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
       MockFeatureCard(
         title: l10n.hubProviderManagement,
         description: l10n.hubProviderManagementDescription,
-        glyphName: 'dns',
+        glyphName: 'upstream',
         route: '/hub/providers',
         featureKey: 'provider_management',
       ),
@@ -221,14 +221,14 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
       MockFeatureCard(
         title: l10n.hubTroubleshooting,
         description: l10n.hubTroubleshootingDescription,
-        glyphName: 'wrench',
+        glyphName: 'stethoscope',
         route: '/hub/troubleshooting',
         featureKey: 'troubleshooting',
       ),
       MockFeatureCard(
         title: l10n.logRetentionTitle,
         description: l10n.settingsLogModeSubtitle,
-        glyphName: 'clock',
+        glyphName: 'calendar',
         route: '/hub/log-retention',
         featureKey: 'log_retention',
       ),

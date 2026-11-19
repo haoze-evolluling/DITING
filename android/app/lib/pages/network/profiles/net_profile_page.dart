@@ -40,7 +40,7 @@ class NetProfilePage extends ConsumerWidget {
               title: context.l10n.netProfileCurrentNet,
               items: [
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.connections),
+                  leading: const GlyphIcon(AppGlyphs.network),
                   title: Text('${network['type'] ?? 'unknown'}'),
                   subtitle: Text(_contextDetail(network)),
                 ),

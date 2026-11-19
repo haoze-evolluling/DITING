@@ -256,7 +256,7 @@ class _ProviderMark extends StatelessWidget {
       ),
       child: Center(
         child: GlyphIcon(
-          AppGlyphs.dns,
+          AppGlyphs.upstream,
           size: 18,
           color: colorScheme.onSurfaceVariant,
         ),

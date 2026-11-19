@@ -23,7 +23,7 @@ class GlobalMirrorSection extends ConsumerWidget {
       title: context.l10n.mirrorGlobal,
       items: [
         ListItem.toggle(
-          leading: const GlyphIcon(AppGlyphs.bolt),
+          leading: const GlyphIcon(AppGlyphs.mirror),
           title: Text(context.l10n.mirrorDefault),
           subtitle: Text(
             templates.isEmpty ? context.l10n.mirrorNeedTemplate : context.l10n.mirrorTemplateNote,
@@ -41,7 +41,7 @@ class GlobalMirrorSection extends ConsumerWidget {
         ),
         if (mirror.enabled && templates.isNotEmpty)
           ListItem<MirrorTemplateRecord>.options(
-            leading: const GlyphIcon(AppGlyphs.layers),
+            leading: const GlyphIcon(AppGlyphs.mirror),
             title: Text(context.l10n.mirrorTemplate),
             // The saved string is what downloads use, even if this mode's list lacks it.
             subtitle: Text(

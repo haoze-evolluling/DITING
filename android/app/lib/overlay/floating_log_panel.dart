@@ -347,7 +347,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
       ),
       CommonPopupMenuItem(
         label: l10n.floatingLogPanelSize,
-        glyph: AppGlyphs.layers,
+        glyph: AppGlyphs.resize,
         subItems: [
           for (var i = 0; i < sizeLabels.length; i++)
             CommonPopupMenuItem(

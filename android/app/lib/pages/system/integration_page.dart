@@ -32,7 +32,7 @@ class IntegrationPage extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           _IntegrationCard(
-            glyph: AppGlyphs.bolt,
+            glyph: AppGlyphs.automation,
             title: context.l10n.integrationAutomationTitle,
             body: _automationBody(context),
           ),

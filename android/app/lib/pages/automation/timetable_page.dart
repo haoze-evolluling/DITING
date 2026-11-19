@@ -79,7 +79,7 @@ class _DaySection extends StatelessWidget {
       items: [
         if (rules.isEmpty)
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.clock),
+            leading: const GlyphIcon(AppGlyphs.calendar),
             title: Text('—'),
           )
         else

@@ -277,7 +277,7 @@ class LogsRacePage extends ConsumerWidget {
   static Glyph _strategyGlyph(String strategy) => switch (strategy) {
     'smart_prediction' || 'prediction' => AppGlyphs.sparkle,
     'primary_backup' => AppGlyphs.split,
-    'single' => AppGlyphs.dns,
+    'single' => AppGlyphs.upstream,
     _ => AppGlyphs.shuffle,
   };
 }

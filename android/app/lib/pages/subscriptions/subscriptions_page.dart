@@ -423,7 +423,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                   onTap: () => context.push('/hub/rules/auto-update'),
                 ),
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.layers),
+                  leading: const GlyphIcon(AppGlyphs.mirror),
                   title: Text(context.l10n.mirrorTplTitle),
                   subtitle: Text(context.l10n.ruleControlMirrorSubtitle),
                   onTap: () => context.push('/hub/rules/mirrors'),
