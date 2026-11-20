@@ -2,6 +2,7 @@ import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/data/vpn/power_state.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -78,7 +79,7 @@ class ServerSectionCard extends StatelessWidget {
     super.key,
     required this.child,
     this.onPressed,
-    this.padding = const EdgeInsets.all(14),
+    this.padding = const EdgeInsets.all(16),
   });
 
   final Widget child;
@@ -88,8 +89,14 @@ class ServerSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: CommonCard(onPressed: onPressed, padding: padding, child: child),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: AppShape.standard,
+          shadows: DashboardShadows.e1(context),
+        ),
+        child: CommonCard(onPressed: onPressed, padding: padding, child: child),
+      ),
     );
   }
 }

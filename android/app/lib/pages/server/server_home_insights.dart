@@ -4,6 +4,7 @@ import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/server/server_common.dart';
 import 'package:diting_android/pages/server/server_home_charts.dart';
 import 'package:diting_android/pages/server/server_home_parts.dart';
+import 'package:diting_android/pages/server/server_home_style.dart';
 import 'package:diting_android/widgets/note_card.dart';
 import 'package:diting_android/widgets/status_pill.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -26,24 +27,25 @@ class ServerRequestOverview extends StatelessWidget {
         label: l10n.serverQueries,
         value: serverCount(stats.queries),
         color: scheme.primary,
+        emphasized: true,
       ),
       ServerMetricTile(
         glyph: AppGlyphs.block,
         label: l10n.serverBlocked,
         value: serverCount(stats.blocked),
-        color: scheme.error,
+        color: ServerHomeColors.mutedInk(context),
       ),
       ServerMetricTile(
         glyph: AppGlyphs.shield,
         label: l10n.serverBlockRate,
         value: serverPercent(stats.blockedRate),
-        color: scheme.warning,
+        color: scheme.primary,
       ),
       ServerMetricTile(
         glyph: AppGlyphs.clock,
         label: l10n.serverAverageLatency,
         value: serverMs(stats.averageResponseMs),
-        color: scheme.onSurface,
+        color: ServerHomeColors.mutedInk(context),
       ),
     ];
     final singleColumn = MediaQuery.textScalerOf(context).scale(1) >= 1.3;
@@ -57,17 +59,31 @@ class ServerRequestOverview extends StatelessWidget {
             title: l10n.serverOverviewTitle,
             trailing: [_WindowChip(label: l10n.serverLast24Hours)],
           ),
-          if (singleColumn)
-            Column(spacing: 8, children: [for (final tile in tiles) tile])
-          else
-            for (var row = 0; row < 2; row++)
+          if (singleColumn) ...[
+            for (final (index, tile) in tiles.indexed) ...[
+              if (index > 0)
+                Divider(height: 17, color: ServerHomeColors.divider(context)),
+              tile,
+            ],
+          ] else ...[
+            for (var row = 0; row < 2; row++) ...[
+              if (row > 0)
+                Divider(height: 17, color: ServerHomeColors.divider(context)),
               Row(
-                spacing: 8,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (var column = 0; column < 2; column++)
-                    Expanded(child: tiles[row * 2 + column]),
+                  Expanded(child: tiles[row * 2]),
+                  Container(
+                    width: 1,
+                    height: 56,
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    color: ServerHomeColors.divider(context),
+                  ),
+                  Expanded(child: tiles[row * 2 + 1]),
                 ],
               ),
+            ],
+          ],
         ],
       ),
     );
@@ -159,20 +175,20 @@ class ServerTrafficOverview extends StatelessWidget {
                 Expanded(
                   child: ServerLegend(
                     label: l10n.serverQueries,
-                    color: scheme.primary,
+                    color: ServerHomeColors.chartBase(context),
                     trailing: serverCount(stats.queries),
                   ),
                 ),
                 Expanded(
                   child: ServerLegend(
                     label: l10n.serverBlocked,
-                    color: scheme.error,
+                    color: ServerHomeColors.chartBlocked(context),
                     trailing: serverCount(stats.blocked),
                   ),
                 ),
               ],
             ),
-            Divider(height: 1, color: scheme.onSurface.withValues(alpha: 0.08)),
+            Divider(height: 1, color: ServerHomeColors.divider(context)),
             Row(
               spacing: 12,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,7 +213,7 @@ class ServerTrafficOverview extends StatelessWidget {
                   child: ServerMiniMetric(
                     label: l10n.serverCacheHit,
                     value: serverPercent(stats.cacheHitRate),
-                    color: scheme.success,
+                    color: scheme.primary,
                   ),
                 ),
               ],
@@ -234,9 +250,9 @@ class ServerBlockingOverview extends StatelessWidget {
             trailing: [
               StatusPill(
                 label: serverPercent(stats.blockedRate),
-                color: scheme.error,
-                alpha: 0.10,
-                foregroundColor: scheme.error,
+                color: scheme.primary,
+                alpha: 0.08,
+                foregroundColor: scheme.primary,
                 tabular: true,
               ),
             ],
@@ -254,7 +270,9 @@ class ServerBlockingOverview extends StatelessWidget {
                 ServerPercentRing(
                   progress: stats.blockedRate,
                   centerLabel: serverPercent(stats.blockedRate),
-                  color: scheme.error,
+                  color: scheme.primary,
+                  size: 92,
+                  strokeWidth: 8,
                   semanticLabel:
                       '${l10n.serverBlockRate} '
                       '${serverPercent(stats.blockedRate)}',
@@ -265,12 +283,12 @@ class ServerBlockingOverview extends StatelessWidget {
                     children: [
                       ServerLegend(
                         label: l10n.serverBlocked,
-                        color: scheme.error,
+                        color: ServerHomeColors.accentStrong(context),
                         trailing: serverCount(stats.blocked),
                       ),
                       ServerLegend(
                         label: l10n.serverAllowed,
-                        color: scheme.primary,
+                        color: ServerHomeColors.accentMuted(context),
                         trailing: serverCount(allowed),
                       ),
                     ],
@@ -279,10 +297,7 @@ class ServerBlockingOverview extends StatelessWidget {
               ],
             ),
             if (topBlocked != null) ...[
-              Divider(
-                height: 1,
-                color: scheme.onSurface.withValues(alpha: 0.08),
-              ),
+              Divider(height: 1, color: ServerHomeColors.divider(context)),
               Row(
                 spacing: 9,
                 children: [
@@ -315,7 +330,7 @@ class ServerBlockingOverview extends StatelessWidget {
                     style: AppTextStyle.footnote
                         .of(context, emphasized: true)
                         .toTabular
-                        .copyWith(color: scheme.error),
+                        .copyWith(color: scheme.primary),
                   ),
                 ],
               ),
@@ -348,9 +363,9 @@ class ServerCacheOverview extends StatelessWidget {
             trailing: [
               StatusPill(
                 label: serverPercent(stats.cacheHitRate),
-                color: scheme.success,
-                alpha: 0.10,
-                foregroundColor: scheme.success,
+                color: scheme.primary,
+                alpha: 0.08,
+                foregroundColor: scheme.primary,
                 tabular: true,
               ),
             ],
@@ -375,7 +390,7 @@ class ServerCacheOverview extends StatelessWidget {
                         style: AppTextStyle.title2
                             .of(context, emphasized: true)
                             .toTabular
-                            .copyWith(color: scheme.success),
+                            .copyWith(color: scheme.primary),
                       ),
                       Text(
                         l10n.serverCacheHit,
@@ -398,7 +413,7 @@ class ServerCacheOverview extends StatelessWidget {
             ProgressLine(
               value: stats.cacheHitRate,
               minHeight: 9,
-              color: scheme.success,
+              color: scheme.primary,
             ),
             Row(
               spacing: 12,
@@ -408,7 +423,7 @@ class ServerCacheOverview extends StatelessWidget {
                   child: ServerMiniMetric(
                     label: l10n.serverLogCached,
                     value: serverCount(stats.cached),
-                    color: scheme.success,
+                    color: scheme.primary,
                   ),
                 ),
                 Expanded(
@@ -444,7 +459,7 @@ class _WindowChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: ShapeDecoration(
-        color: scheme.primary.withValues(alpha: 0.09),
+        color: ServerHomeColors.accentWash(context),
         shape: AppShape.standard,
       ),
       child: Text(

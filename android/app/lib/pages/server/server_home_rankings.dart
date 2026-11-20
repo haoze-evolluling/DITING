@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/server/server_common.dart';
 import 'package:diting_android/pages/server/server_home_parts.dart';
+import 'package:diting_android/pages/server/server_home_style.dart';
 import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -24,7 +25,6 @@ class ServerTopDomainsOverview extends StatelessWidget {
       title: l10n.serverTopDomainsTitle,
       items: stats.topDomains.take(5).toList(),
       emptyText: l10n.serverNoRanking,
-      color: context.colorScheme.primary,
     );
   }
 }
@@ -42,7 +42,6 @@ class ServerTopClientsOverview extends StatelessWidget {
       title: l10n.serverTopClientsTitle,
       items: stats.topClients.take(5).toList(),
       emptyText: l10n.serverNoRanking,
-      color: context.colorScheme.tertiary,
     );
   }
 }
@@ -53,14 +52,12 @@ class _RankingCard extends StatelessWidget {
     required this.title,
     required this.items,
     required this.emptyText,
-    required this.color,
   });
 
   final Glyph glyph;
   final String title;
   final List<ServerNameCount> items;
   final String emptyText;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -81,12 +78,7 @@ class _RankingCard extends StatelessWidget {
             )
           else
             for (final (index, item) in items.indexed)
-              _RankingRow(
-                rank: index + 1,
-                item: item,
-                maxCount: maxCount,
-                color: color,
-              ),
+              _RankingRow(rank: index + 1, item: item, maxCount: maxCount),
         ],
       ),
     );
@@ -98,13 +90,11 @@ class _RankingRow extends StatelessWidget {
     required this.rank,
     required this.item,
     required this.maxCount,
-    required this.color,
   });
 
   final int rank;
   final ServerNameCount item;
   final int maxCount;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +102,8 @@ class _RankingRow extends StatelessWidget {
     final progress = maxCount == 0
         ? 0.0
         : (item.count / maxCount).clamp(0.0, 1.0);
+    final accent = ServerHomeColors.accent(context);
+    final highlighted = rank == 1;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 10,
@@ -121,9 +113,9 @@ class _RankingRow extends StatelessWidget {
           height: 22,
           alignment: Alignment.center,
           decoration: ShapeDecoration(
-            color: rank <= 3
-                ? color.withValues(alpha: 0.13)
-                : scheme.onSurfaceVariant.withValues(alpha: 0.07),
+            color: highlighted
+                ? ServerHomeColors.accentWash(context)
+                : ServerHomeColors.track(context),
             shape: AppShape.standard,
           ),
           child: Text(
@@ -131,7 +123,9 @@ class _RankingRow extends StatelessWidget {
             style: AppTextStyle.caption2
                 .of(context, emphasized: true)
                 .toTabular
-                .copyWith(color: rank <= 3 ? color : scheme.onSurfaceVariant),
+                .copyWith(
+                  color: highlighted ? accent : scheme.onSurfaceVariant,
+                ),
           ),
         ),
         Expanded(
@@ -165,13 +159,17 @@ class _RankingRow extends StatelessWidget {
               ClipRRect(
                 borderRadius: AppRadius.standard,
                 child: Container(
-                  height: 5,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.09),
+                  height: 4,
+                  color: ServerHomeColors.track(context),
                   alignment: AlignmentDirectional.centerStart,
                   child: FractionallySizedBox(
                     widthFactor: progress,
                     heightFactor: 1,
-                    child: ColoredBox(color: color),
+                    child: ColoredBox(
+                      color: highlighted
+                          ? ServerHomeColors.accentStrong(context)
+                          : ServerHomeColors.accentMuted(context),
+                    ),
                   ),
                 ),
               ),
@@ -245,7 +243,9 @@ class _RecentQueryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
     final l10n = context.l10n;
-    final color = record.blocked ? scheme.error : scheme.onSurfaceVariant;
+    final color = record.blocked
+        ? scheme.error
+        : ServerHomeColors.accentStrong(context);
     final meta = [
       if (record.client.isNotEmpty) record.client,
       if (record.qtype.isNotEmpty) record.qtype,
@@ -264,7 +264,9 @@ class _RecentQueryRow extends StatelessWidget {
               width: 7,
               height: 7,
               decoration: ShapeDecoration(
-                color: record.blocked ? scheme.error : scheme.success,
+                color: record.blocked
+                    ? scheme.error
+                    : ServerHomeColors.accent(context),
                 shape: AppShape.standard,
               ),
             ),

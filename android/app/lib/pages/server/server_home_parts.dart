@@ -1,6 +1,8 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'server_home_style.dart';
+
 /// Standard header for a server-home dashboard card.
 class ServerCardHeader extends StatelessWidget {
   const ServerCardHeader({
@@ -97,6 +99,7 @@ class ServerMetricTile extends StatelessWidget {
     required this.value,
     required this.color,
     this.hint,
+    this.emphasized = false,
   });
 
   final Glyph glyph;
@@ -104,25 +107,31 @@ class ServerMetricTile extends StatelessWidget {
   final String value;
   final Color color;
   final String? hint;
+  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 11, 12, 12),
-      decoration: ShapeDecoration(
-        color: context.raisedSurfaceLevel.colorOf(scheme),
-        shape: AppShape.standard,
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         spacing: 7,
         children: [
           Row(
-            spacing: 6,
+            spacing: 8,
             children: [
-              GlyphIcon(glyph, size: 14, color: color),
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: ShapeDecoration(
+                  color: ServerHomeColors.accentWash(context),
+                  shape: AppShape.standard,
+                ),
+                child: GlyphIcon(glyph, size: 15, color: color),
+              ),
               Expanded(
                 child: Text(
                   label,
@@ -135,14 +144,17 @@ class ServerMetricTile extends StatelessWidget {
               ),
             ],
           ),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.title2
-                .of(context, emphasized: true)
-                .toTabular
-                .copyWith(color: color),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: (emphasized ? AppTextStyle.title1 : AppTextStyle.title3)
+                  .of(context, emphasized: true)
+                  .toTabular
+                  .copyWith(color: scheme.onSurface),
+            ),
           ),
           if (hint case final hint?)
             Text(

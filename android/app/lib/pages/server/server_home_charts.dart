@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:diting_android/data/server/server_runtime_models.dart';
+import 'package:diting_android/pages/server/server_home_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -28,7 +29,6 @@ class ServerTrafficChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
-    final track = scheme.onSurfaceVariant.withValues(alpha: 0.10);
     return Semantics(
       container: true,
       label: semanticLabel,
@@ -39,10 +39,10 @@ class ServerTrafficChart extends StatelessWidget {
           child: CustomPaint(
             painter: _TrafficPainter(
               points: points,
-              color: scheme.primary,
-              blockedColor: scheme.error,
-              trackColor: track,
-              gridColor: scheme.onSurfaceVariant.withValues(alpha: 0.16),
+              color: ServerHomeColors.chartBase(context),
+              blockedColor: ServerHomeColors.chartBlocked(context),
+              trackColor: ServerHomeColors.accentSubtle(context),
+              gridColor: scheme.onSurfaceVariant.withValues(alpha: 0.10),
             ),
           ),
         ),
@@ -190,7 +190,7 @@ class ServerPercentRing extends StatelessWidget {
                   painter: _RingPainter(
                     progress: progress,
                     color: color,
-                    trackColor: scheme.onSurfaceVariant.withValues(alpha: 0.13),
+                    trackColor: scheme.onSurfaceVariant.withValues(alpha: 0.11),
                     strokeWidth: strokeWidth,
                   ),
                 ),

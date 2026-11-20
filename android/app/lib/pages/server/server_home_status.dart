@@ -1,6 +1,7 @@
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/server/server_common.dart';
+import 'package:diting_android/pages/server/server_home_style.dart';
 import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/widgets/status_pill.dart';
@@ -162,11 +163,11 @@ class ServerStatusOverview extends StatelessWidget {
                     ? l10n.serverFilterOn
                     : l10n.serverFilterOff,
                 color: config.filter.enabled
-                    ? scheme.success
+                    ? scheme.primary
                     : scheme.onSurfaceVariant,
-                alpha: 0.12,
+                alpha: 0.08,
                 foregroundColor: config.filter.enabled
-                    ? scheme.success
+                    ? scheme.primary
                     : scheme.onSurfaceVariant,
                 leading: AppGlyphs.shield,
                 leadingSize: 13,
@@ -283,26 +284,27 @@ class ServerQuickActions extends StatelessWidget {
                     title: action.title,
                     subtitle: action.subtitle,
                     onTap: () => context.push(action.path),
+                    stacked: false,
                   ),
               ],
             )
           else
-            for (var row = 0; row < 2; row++)
-              Row(
-                spacing: 8,
-                children: [
-                  for (var column = 0; column < 2; column++)
-                    Expanded(
-                      child: _QuickActionTile(
-                        glyph: actions[row * 2 + column].glyph,
-                        title: actions[row * 2 + column].title,
-                        subtitle: actions[row * 2 + column].subtitle,
-                        onTap: () =>
-                            context.push(actions[row * 2 + column].path),
-                      ),
+            Row(
+              spacing: 4,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final action in actions)
+                  Expanded(
+                    child: _QuickActionTile(
+                      glyph: action.glyph,
+                      title: action.title,
+                      subtitle: action.subtitle,
+                      onTap: () => context.push(action.path),
+                      stacked: true,
                     ),
-                ],
-              ),
+                  ),
+              ],
+            ),
         ],
       ),
     );
@@ -315,65 +317,104 @@ class _QuickActionTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    required this.stacked,
   });
 
   final Glyph glyph;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool stacked;
 
   @override
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
     return Material(
-      color: context.raisedSurfaceLevel.colorOf(scheme),
+      color: Colors.transparent,
       shape: AppShape.standard,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         customBorder: AppShape.standard,
-        child: Padding(
-          padding: const EdgeInsets.all(11),
-          child: Row(
-            spacing: 9,
-            children: [
-              IconBadge(
-                glyph: glyph,
-                size: 34,
-                glyphSize: 18,
-                color: scheme.primary.withValues(alpha: 0.12),
-                foregroundColor: scheme.primary,
-              ),
-              Expanded(
+        child: stacked
+            ? Padding(
+                padding: const EdgeInsets.fromLTRB(2, 6, 2, 8),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
-                  spacing: 2,
                   children: [
+                    IconBadge(
+                      glyph: glyph,
+                      size: 38,
+                      glyphSize: 19,
+                      color: ServerHomeColors.accentWash(context),
+                      foregroundColor: scheme.primary,
+                    ),
+                    const SizedBox(height: 7),
                     Text(
                       title,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                       style: AppTextStyle.footnote.of(
                         context,
                         emphasized: true,
                       ),
                     ),
+                    const SizedBox(height: 1),
                     Text(
                       subtitle,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                       style: AppTextStyle.caption2
                           .of(context)
                           .copyWith(color: scheme.onSurfaceVariant),
                     ),
                   ],
                 ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(10),
+                child: Row(
+                  spacing: 10,
+                  children: [
+                    IconBadge(
+                      glyph: glyph,
+                      size: 36,
+                      glyphSize: 18,
+                      color: ServerHomeColors.accentWash(context),
+                      foregroundColor: scheme.primary,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 2,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyle.footnote.of(
+                              context,
+                              emphasized: true,
+                            ),
+                          ),
+                          Text(
+                            subtitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyle.caption2
+                                .of(context)
+                                .copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const GlyphIcon(AppGlyphs.chevronForward, size: 16),
+                  ],
+                ),
               ),
-              const GlyphIcon(AppGlyphs.chevronForward, size: 16),
-            ],
-          ),
-        ),
       ),
     );
   }
