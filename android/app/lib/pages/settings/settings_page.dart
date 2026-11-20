@@ -1,4 +1,4 @@
-/// Settings page: the legacy "other settings" list condensed into three groups and five rows.
+/// Settings page: the legacy "other settings" list condensed into three groups and three rows.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -37,12 +37,6 @@ class SettingsPage extends StatelessWidget {
                 title: context.l10n.workModeSettingTitle,
                 subtitle: context.l10n.settingsModeSubtitle,
                 onPressed: () => context.push(Routes.modeSelect),
-              ),
-              NavEntryRow(
-                glyph: AppGlyphs.eyeOff,
-                title: context.l10n.foregroundTitle,
-                subtitle: context.l10n.settingsForegroundSubtitle,
-                onPressed: () => context.push(SystemPaths.foregroundBackground),
               ),
             ],
           ),

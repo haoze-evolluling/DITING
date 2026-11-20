@@ -38,6 +38,7 @@ const hiddenFeatureKeysInFile = <String>[
   'troubleshooting',
   'log_retention',
   'logs',
+  'foreground_behavior',
   'appearance',
   'other_settings',
   'app_info',

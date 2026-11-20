@@ -11,7 +11,7 @@ void main() {
   final l10n = lookupAppL10n(const Locale('zh'));
   final categories = mockFeatureCategories(l10n);
 
-  test('6 个分类共 26 张，应用与网络、数据与维护各补一张入口', () {
+  test('6 个分类共 27 张，应用与网络补一张、数据与维护补两张入口', () {
     expect(categories.map((category) => category.title).toList(), [
       'DNS 解析',
       '规则与控制',
@@ -21,12 +21,12 @@ void main() {
       '界面与数据',
     ]);
     expect(categories.length, 6);
-    const fiveCardCategories = {'应用与网络', '数据与维护'};
+    const cardCounts = {'应用与网络': 5, '数据与维护': 6};
     for (final category in categories) {
       expect(category.cards, isNotEmpty, reason: '${category.title} 不应为空分类');
       expect(
         category.cards.length,
-        fiveCardCategories.contains(category.title) ? 5 : 4,
+        cardCounts[category.title] ?? 4,
         reason: '${category.title} 卡片数量应符合布局约定',
       );
     }
@@ -34,7 +34,7 @@ void main() {
       0,
       (sum, category) => sum + category.cards.length,
     );
-    expect(total, 26);
+    expect(total, 27);
     final network = categories.firstWhere(
       (category) => category.title == '应用与网络',
     );
@@ -50,6 +50,11 @@ void main() {
       data.cards.map((card) => card.route),
       contains('/logs'),
       reason: '日志仪表盘应可从功能中心进入',
+    );
+    expect(
+      data.cards.map((card) => card.route),
+      contains('/settings/background'),
+      reason: '前后台行为应可从功能中心进入',
     );
   });
 

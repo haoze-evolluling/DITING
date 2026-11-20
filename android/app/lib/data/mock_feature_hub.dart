@@ -39,15 +39,15 @@ class MockFeatureCategory {
 ///
 /// Information architecture — the hub is grouped by **what the feature does and when a user
 /// reaches for it**, not by where the code lives. Six purpose-based sections with four cards each,
-/// plus 应用流量统计 and 日志仪表盘, which also live in the bottom dock but now have a hub entry.
-/// Those two sections hold five cards; the last card keeps the half-width column so rows stay
-/// aligned. The three work modes share one layout:
+/// plus 应用流量统计 and 日志仪表盘, which also live in the bottom dock but now have a hub entry,
+/// and 前后台行为, moved here from 其他设置. 应用与网络 holds five cards, 数据与维护 six. The last
+/// card keeps the half-width column so rows stay aligned. The three work modes share one layout:
 ///
 ///   1. DNS 解析       服务商 / 策略 / 缓存 / 服务显示
 ///   2. 规则与控制     拦截策略 / 规则订阅 / 应用规则 / 隐私套件
 ///   3. 应用与网络     实时连接 / 应用洞察 / 网络工具 / 连接限速 / 应用流量统计
 ///   4. 高级与诊断     网络诊断 / HTTPS 检查 / 出站代理 / AI 分析
-///   5. 数据与维护     备份迁移 / 数据清理 / 故障排查 / 日志模式 / 日志仪表盘
+///   5. 数据与维护     备份迁移 / 数据清理 / 故障排查 / 日志模式 / 日志仪表盘 / 前后台行为
 ///   6. 界面与数据     外观 / 隐藏功能 / 其他设置 / 关于
 ///
 /// Low-frequency functions stay folded into a parent page's secondary "更多功能" section instead
@@ -249,6 +249,13 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         glyphName: 'logs',
         route: '/logs',
         featureKey: 'logs',
+      ),
+      MockFeatureCard(
+        title: l10n.foregroundTitle,
+        description: l10n.settingsForegroundSubtitle,
+        glyphName: 'eyeOff',
+        route: '/settings/background',
+        featureKey: 'foreground_behavior',
       ),
     ],
   ),
