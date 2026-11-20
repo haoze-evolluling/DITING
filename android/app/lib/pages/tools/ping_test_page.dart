@@ -71,17 +71,23 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
             ),
           ),
           // Same count options as the legacy `PingSection`: 4 and 10 only.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: SegmentedControl<int>(
-              segments: [(4, l10n.toolPingCount4), (10, l10n.toolPingCount10)],
-              value: _count,
-              onChanged: (count) {
-                if (!_running) {
-                  setState(() => _count = count.clamp(1, 20));
-                }
-              },
-            ),
+          const SizedBox(height: 12),
+          generateSection(
+            items: [
+              ListItem<int>.options(
+                leading: const GlyphIcon(AppGlyphs.send),
+                title: Text(l10n.toolPing),
+                value: _count,
+                options: const [4, 10],
+                textBuilder: (count) =>
+                    count == 10 ? l10n.toolPingCount10 : l10n.toolPingCount4,
+                onChanged: (count) {
+                  if (!_running) {
+                    setState(() => _count = count.clamp(1, 20));
+                  }
+                },
+              ),
+            ],
           ),
           generateSection(
             title: l10n.toolPingOptions,

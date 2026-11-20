@@ -95,19 +95,18 @@ class FontSizePage extends ConsumerWidget {
               ),
             ),
           ),
-          SizedBox(height: 12),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: SegmentedControl<double>(
-              segments: [
-                (0.85, context.l10n.fontSizeSmall),
-                (1.0, context.l10n.fontSizeStandard),
-                (1.2, context.l10n.fontSizeLarge),
-                (1.4, context.l10n.fontSizeExtraLarge),
-              ],
-              value: _nearestPreset(scale),
-              onChanged: set,
-            ),
+          const SizedBox(height: 12),
+          generateSection(
+            items: [
+              ListItem<double>.options(
+                leading: const GlyphIcon(AppGlyphs.textSize),
+                title: Text(context.l10n.appearanceFontSizeLabel),
+                value: _nearestPreset(scale),
+                options: _presets,
+                textBuilder: (value) => _presetLabel(context, value, scale),
+                onChanged: set,
+              ),
+            ],
           ),
           ListFooter(text: context.l10n.fontSizeFooter),
         ],
@@ -115,17 +114,29 @@ class FontSizePage extends ConsumerWidget {
     );
   }
 
-  /// The segmented control highlights one option at a time; a dragged value between presets
-  /// highlights none, which reads as "custom" without needing a fifth segment.
+  static const _presets = [0.85, 1.0, 1.2, 1.4];
+
+  /// A dragged value between presets highlights none and shows the exact percentage instead.
   static double _nearestPreset(double scale) {
-    const presets = [0.85, 1.0, 1.2, 1.4];
-    for (final preset in presets) {
+    for (final preset in _presets) {
       if ((scale - preset).abs() < 0.001) {
         return preset;
       }
     }
     return -1;
   }
+
+  static String _presetLabel(
+    BuildContext context,
+    double value,
+    double scale,
+  ) => switch (value) {
+    0.85 => context.l10n.fontSizeSmall,
+    1.0 => context.l10n.fontSizeStandard,
+    1.2 => context.l10n.fontSizeLarge,
+    1.4 => context.l10n.fontSizeExtraLarge,
+    _ => '${(scale * 100).round()}%',
+  };
 }
 
 /// The sample itself: three text levels in one card, so the relative rhythm between title, body and
@@ -145,7 +156,12 @@ class _SizePreview extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(context.l10n.fontSizePreview, style: context.listCaptionStyle)),
+              Expanded(
+                child: Text(
+                  context.l10n.fontSizePreview,
+                  style: context.listCaptionStyle,
+                ),
+              ),
               TonalChip(
                 label: '${(scale * 100).round()}%',
                 color: colorScheme.primaryContainer,

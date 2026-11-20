@@ -193,12 +193,12 @@ class _ProfileDialogState extends State<_ProfileDialog> {
             controller: _name,
             decoration: InputDecoration(labelText: context.l10n.profilesName),
           ),
-          SegmentedControl<String>(
-            segments: [
-              for (final mode in ProfilesPage._modes)
-                (mode, _modeLabel(context, mode)),
-            ],
+          ListItem<String>.options(
+            leading: const GlyphIcon(AppGlyphs.bolt),
+            title: Text(context.l10n.workModeSettingTitle),
             value: _mode,
+            options: ProfilesPage._modes,
+            textBuilder: (mode) => _modeLabel(context, mode),
             onChanged: (value) => setState(() => _mode = value),
           ),
           TextField(

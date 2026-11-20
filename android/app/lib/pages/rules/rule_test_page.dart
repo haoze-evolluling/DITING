@@ -116,14 +116,18 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
                 ),
                 Row(
                   children: [
-                    Expanded(
-                      child: SegmentedControl<int>(
-                        segments: const [(1, 'A'), (28, 'AAAA')],
-                        value: _qtype,
-                        onChanged: (value) => setState(() => _qtype = value),
-                      ),
+                    Text(
+                      context.l10n.toolRecordType,
+                      style: context.listTitleStyle,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
+                    PopupSelectButton<int>(
+                      value: _qtype,
+                      semanticLabel: context.l10n.toolRecordType,
+                      items: const [(1, 'A'), (28, 'AAAA')],
+                      onChanged: (value) => setState(() => _qtype = value),
+                    ),
+                    const Spacer(),
                     FilledButton(
                       onPressed: _loading ? null : _run,
                       child: Text(context.l10n.ruleTestRun),

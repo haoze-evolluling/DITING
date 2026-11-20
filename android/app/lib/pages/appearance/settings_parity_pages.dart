@@ -476,14 +476,15 @@ class SettingsLanguagePage extends ConsumerWidget {
             title: context.l10n.languageInterfaceSection,
             footer: context.l10n.languageInterfaceFooter,
             items: [
-              for (final option in AppLanguageMode.values)
-                ListItem(
-                  title: Text(option.label(context.l10n)),
-                  leading: const GlyphIcon(AppGlyphs.language),
-                  trailing: option == mode ? const SelectionCheck() : null,
-                  onTap: () =>
-                      ref.read(languageModeProvider.notifier).select(option),
-                ),
+              ListItem<AppLanguageMode>.options(
+                title: Text(context.l10n.languageTitle),
+                leading: const GlyphIcon(AppGlyphs.language),
+                value: mode,
+                options: AppLanguageMode.values,
+                textBuilder: (option) => option.label(context.l10n),
+                onChanged: (option) =>
+                    ref.read(languageModeProvider.notifier).select(option),
+              ),
             ],
           ),
         ],

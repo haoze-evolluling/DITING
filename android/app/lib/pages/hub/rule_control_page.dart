@@ -194,20 +194,18 @@ class BlockResponsePage extends ConsumerWidget {
           generateSection(
             title: context.l10n.blockResponseFixedSection,
             items: [
-              for (final option in BlockResponseMode.values)
-                ListItem(
-                  leading: GlyphIcon(
-                    option == mode ? AppGlyphs.checkCircle : AppGlyphs.block,
-                    size: 20,
-                  ),
-                  title: Text(option.label(context.l10n)),
-                  subtitle: Text(option.description(context.l10n)),
-                  trailing: option == mode ? const SelectionCheck() : null,
-                  onTap: () {
-                    settings.setBlockResponseModeRaw(option.storageValue);
-                    ref.read(legacySettingsRevisionProvider.notifier).bump();
-                  },
-                ),
+              ListItem<BlockResponseMode>.options(
+                leading: const GlyphIcon(AppGlyphs.block),
+                title: Text(context.l10n.blockResponseFixedSection),
+                subtitle: Text(mode.description(context.l10n)),
+                value: mode,
+                options: BlockResponseMode.values,
+                textBuilder: (option) => option.label(context.l10n),
+                onChanged: (option) {
+                  settings.setBlockResponseModeRaw(option.storageValue);
+                  ref.read(legacySettingsRevisionProvider.notifier).bump();
+                },
+              ),
             ],
             footer: context.l10n.blockResponseFixedFooter,
           ),

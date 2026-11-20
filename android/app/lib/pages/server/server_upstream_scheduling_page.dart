@@ -1,5 +1,4 @@
 import 'package:diting_android/data/server/server_models.dart';
-import 'package:diting_android/pages/server/server_common.dart';
 import 'package:diting_android/pages/server/server_upstream_shared.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
@@ -30,19 +29,13 @@ class ServerUpstreamSchedulingPage extends ConsumerWidget {
           generateSection(
             title: context.l10n.serverUpstreamMode,
             items: [
-              ServerOptionRow<String>(
-                glyph: serverModeGlyph(upstream.mode),
-                title: context.l10n.serverUpstreamScheduling,
+              ListItem<String>.options(
+                leading: GlyphIcon(serverModeGlyph(upstream.mode), size: 20),
+                title: Text(context.l10n.serverUpstreamScheduling),
+                subtitle: Text(serverModeDescription(context, upstream.mode)),
                 value: upstream.mode,
-                options: [
-                  for (final mode in serverUpstreamModes)
-                    ServerOption(
-                      value: mode,
-                      label: serverModeLabel(context, mode),
-                      subtitle: serverModeDescription(context, mode),
-                      glyph: serverModeGlyph(mode),
-                    ),
-                ],
+                options: serverUpstreamModes,
+                textBuilder: (mode) => serverModeLabel(context, mode),
                 onChanged: (mode) => _save(
                   context,
                   ref,

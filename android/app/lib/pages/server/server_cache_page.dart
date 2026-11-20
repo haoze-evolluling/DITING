@@ -81,20 +81,14 @@ class ServerCachePage extends ConsumerWidget {
             generateSection(
               title: context.l10n.serverCacheTtl,
               items: [
-                ServerOptionRow<String>(
-                  glyph: AppGlyphs.sliders,
-                  title: context.l10n.serverCacheMode,
+                ListItem<String>.options(
+                  leading: const GlyphIcon(AppGlyphs.sliders, size: 20),
+                  title: Text(context.l10n.serverCacheMode),
                   value: cache.mode,
-                  options: [
-                    ServerOption(
-                      value: 'limit_max_ttl',
-                      label: context.l10n.serverCacheLimit,
-                    ),
-                    ServerOption(
-                      value: 'fixed',
-                      label: context.l10n.serverCacheFixed,
-                    ),
-                  ],
+                  options: const ['limit_max_ttl', 'fixed'],
+                  textBuilder: (value) => value == 'fixed'
+                      ? context.l10n.serverCacheFixed
+                      : context.l10n.serverCacheLimit,
                   onChanged: (value) => save(cache.copyWith(mode: value)),
                 ),
                 ListItem(

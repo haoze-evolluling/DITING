@@ -288,12 +288,15 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     );
   }
 
-  Widget _matchSection(BuildContext context) => SegmentedControl<String>(
-    segments: [
-      ('all', context.l10n.automationMatchAll),
-      ('any', context.l10n.automationMatchAny),
-    ],
+  Widget _matchSection(BuildContext context) => ListItem<String>.options(
+    padding: EdgeInsets.zero,
+    leading: const GlyphIcon(AppGlyphs.rules),
+    title: Text(context.l10n.automationMatch),
     value: _match,
+    options: const ['all', 'any'],
+    textBuilder: (value) => value == 'any'
+        ? context.l10n.automationMatchAny
+        : context.l10n.automationMatchAll,
     onChanged: (value) => setState(() => _match = value),
   );
 

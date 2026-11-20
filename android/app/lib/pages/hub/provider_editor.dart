@@ -272,12 +272,12 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 10,
         children: [
-          SegmentedControl<ProviderProtocol>(
-            segments: [
-              for (final protocol in ProviderProtocol.values)
-                (protocol, protocol.label),
-            ],
+          ListItem<ProviderProtocol>.options(
+            leading: const GlyphIcon(AppGlyphs.dns),
+            title: Text(context.l10n.obsProtocol),
             value: _protocol,
+            options: ProviderProtocol.values,
+            textBuilder: (protocol) => protocol.label,
             onChanged: (value) => setState(() {
               // Switching protocol also swaps in that protocol's default port, unless the user
               // typed a custom one.

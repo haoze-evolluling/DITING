@@ -255,18 +255,20 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
             footer: _statusFooter(context.l10n, config),
           ),
           _scopeSection(context, config),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: SegmentedControl<OutboundProxyProtocol>(
-              segments: [
-                for (final protocol in OutboundProxyProtocol.values)
-                  (protocol, protocol.label),
-              ],
-              value: config.protocol,
-              onChanged: _saving
-                  ? (_) {}
-                  : (value) => _persist(config.copyWith(protocol: value)),
-            ),
+          const SizedBox(height: 12),
+          generateSection(
+            items: [
+              ListItem<OutboundProxyProtocol>.options(
+                leading: const GlyphIcon(AppGlyphs.link),
+                title: Text(context.l10n.obsProtocol),
+                value: config.protocol,
+                options: OutboundProxyProtocol.values,
+                textBuilder: (protocol) => protocol.label,
+                onChanged: _saving
+                    ? (_) {}
+                    : (value) => _persist(config.copyWith(protocol: value)),
+              ),
+            ],
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -348,46 +350,36 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
     final l10n = context.l10n;
     final perApp = config.scope == OutboundProxyScope.apps;
     final count = config.effectiveTargets.length;
-    // The segmented control sits outside the card group, so the target row is a lone card
-    // with all four corners rounded.
-    return Column(
-      children: [
-        ListHeader(title: l10n.outboundScopeTitle),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SegmentedControl<OutboundProxyScope>(
-            segments: [
-              (OutboundProxyScope.all, l10n.outboundScopeAll),
-              (OutboundProxyScope.apps, l10n.outboundScopeApps),
-            ],
-            value: config.scope,
-            onChanged: _saving
-                ? (_) {}
-                : (value) => _persist(config.copyWith(scope: value)),
-          ),
+    return generateSection(
+      title: l10n.outboundScopeTitle,
+      items: [
+        ListItem<OutboundProxyScope>.options(
+          leading: const GlyphIcon(AppGlyphs.appsList),
+          title: Text(l10n.outboundScopeTitle),
+          value: config.scope,
+          options: OutboundProxyScope.values,
+          textBuilder: (scope) => scope == OutboundProxyScope.apps
+              ? l10n.outboundScopeApps
+              : l10n.outboundScopeAll,
+          onChanged: _saving
+              ? (_) {}
+              : (value) => _persist(config.copyWith(scope: value)),
         ),
         if (perApp)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: generateGroup([
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.appsList),
-                title: Text(l10n.outboundTargets),
-                subtitle: Text(
-                  count == 0
-                      ? l10n.appSelectionNoAppsYet
-                      : l10n.appSelectionCount('$count'),
-                ),
-                onTap: () => context.push(HubPaths.outboundProxyTargets),
-              ),
-            ]),
+          ListItem(
+            leading: const GlyphIcon(AppGlyphs.appsList),
+            title: Text(l10n.outboundTargets),
+            subtitle: Text(
+              count == 0
+                  ? l10n.appSelectionNoAppsYet
+                  : l10n.appSelectionCount('$count'),
+            ),
+            onTap: () => context.push(HubPaths.outboundProxyTargets),
           ),
-        ListFooter(
-          text: perApp
-              ? l10n.outboundScopeAppsFooter
-              : l10n.outboundScopeAllFooter,
-        ),
       ],
+      footer: perApp
+          ? l10n.outboundScopeAppsFooter
+          : l10n.outboundScopeAllFooter,
     );
   }
 

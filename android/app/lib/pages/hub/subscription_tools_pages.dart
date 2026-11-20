@@ -50,21 +50,18 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
           generateSection(
             title: context.l10n.autoUpdateIntervalSection,
             items: [
-              for (final hours
-                  in LegacySettings.subscriptionAutoUpdatePresetHours)
-                ListItem(
-                  leading: GlyphIcon(
-                    interval && settings.intervalHours == hours
-                        ? AppGlyphs.checkCircle
-                        : AppGlyphs.clock,
-                    size: 20,
-                  ),
-                  title: Text(context.l10n.autoUpdateEveryHours(hours)),
-                  trailing: interval && settings.intervalHours == hours
-                      ? const SelectionCheck()
-                      : null,
-                  onTap: enabled ? () => actions.setIntervalHours(hours) : null,
-                ),
+              ListItem<int>.options(
+                leading: const GlyphIcon(AppGlyphs.clock),
+                title: Text(context.l10n.autoUpdateIntervalSection),
+                value: interval && !settings.isCustom
+                    ? settings.intervalHours
+                    : -1,
+                options: LegacySettings.subscriptionAutoUpdatePresetHours,
+                textBuilder: (hours) => hours < 0
+                    ? context.l10n.autoUpdateCustomInterval
+                    : context.l10n.autoUpdateEveryHours(hours),
+                onChanged: enabled ? actions.setIntervalHours : (_) {},
+              ),
               ListItem(
                 leading: GlyphIcon(
                   interval && settings.isCustom

@@ -28,18 +28,16 @@ class LogRetentionPage extends ConsumerWidget {
           generateSection(
             title: context.l10n.logRetentionDnsLogs,
             items: [
-              for (final option in LegacyLogMode.values)
-                ListItem(
-                  leading: GlyphIcon(
-                    mode == option ? AppGlyphs.checkCircle : AppGlyphs.logs,
-                    size: 20,
-                  ),
-                  title: Text(option.label(context.l10n)),
-                  subtitle: Text(option.description(context.l10n)),
-                  trailing: mode == option ? const SelectionCheck() : null,
-                  onTap: () =>
-                      ref.read(logModeProvider.notifier).select(option),
-                ),
+              ListItem<LegacyLogMode>.options(
+                leading: const GlyphIcon(AppGlyphs.logs),
+                title: Text(context.l10n.logRetentionDnsLogs),
+                subtitle: Text(mode.description(context.l10n)),
+                value: mode,
+                options: LegacyLogMode.values,
+                textBuilder: (option) => option.label(context.l10n),
+                onChanged: (option) =>
+                    ref.read(logModeProvider.notifier).select(option),
+              ),
             ],
             footer: context.l10n.logRetentionOffNote,
           ),
@@ -48,21 +46,16 @@ class LogRetentionPage extends ConsumerWidget {
             generateSection(
               title: context.l10n.logRetentionCleanup,
               items: [
-                for (final days in _retentionOptions)
-                  ListItem(
-                    leading: GlyphIcon(
-                      retentionDays == days
-                          ? AppGlyphs.checkCircle
-                          : AppGlyphs.clock,
-                      size: 20,
-                    ),
-                    title: Text(context.l10n.logRetentionKeepDays('$days')),
-                    trailing: retentionDays == days
-                        ? const SelectionCheck()
-                        : null,
-                    onTap: () =>
-                        ref.read(logRetentionProvider.notifier).set(days),
-                  ),
+                ListItem<int>.options(
+                  leading: const GlyphIcon(AppGlyphs.clock),
+                  title: Text(context.l10n.logRetentionCleanup),
+                  value: retentionDays,
+                  options: _retentionOptions,
+                  textBuilder: (days) =>
+                      context.l10n.logRetentionKeepDays('$days'),
+                  onChanged: (days) =>
+                      ref.read(logRetentionProvider.notifier).set(days),
+                ),
               ],
               footer: context.l10n.logRetentionCleanupNote,
             ),
@@ -159,18 +152,22 @@ class _FloatingLogSectionState extends ConsumerState<_FloatingLogSection> {
           footer: l10n.logRetentionOverlayNote,
         ),
         if (enabled) ...[
-          ListHeader(title: l10n.floatingLogSizeTitle),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SegmentedControl<int>(
-              segments: [
-                (0, l10n.floatingLogSizeSmall),
-                (1, l10n.floatingLogSizeMedium),
-                (2, l10n.floatingLogSizeLarge),
-              ],
-              value: ref.watch(floatingLogPanelSizeProvider),
-              onChanged: ref.read(floatingLogPanelSizeProvider.notifier).set,
-            ),
+          const SizedBox(height: 12),
+          generateSection(
+            items: [
+              ListItem<int>.options(
+                leading: const GlyphIcon(AppGlyphs.eye),
+                title: Text(l10n.floatingLogSizeTitle),
+                value: ref.watch(floatingLogPanelSizeProvider),
+                options: const [0, 1, 2],
+                textBuilder: (size) => switch (size) {
+                  0 => l10n.floatingLogSizeSmall,
+                  1 => l10n.floatingLogSizeMedium,
+                  _ => l10n.floatingLogSizeLarge,
+                },
+                onChanged: ref.read(floatingLogPanelSizeProvider.notifier).set,
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           generateSection(

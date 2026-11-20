@@ -52,64 +52,34 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
       title: context.l10n.resolutionModeTitle,
       body: PageBody(
         children: [
-          Padding(
+          generateSection(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: CommonCard(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                spacing: 12,
-                children: [
-                  GlyphIcon(
-                    AppGlyphs.shuffle,
-                    size: 24,
-                    color: colorScheme.primary,
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 2,
-                      children: [
-                        Text(
-                          mode.label(context.l10n),
-                          style: context.listTitleStyle,
-                        ),
-                        Text(
-                          _descriptionOf(mode, context.l10n),
-                          style: context.listSubtitleStyle,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const GlyphIcon(AppGlyphs.chevronForward, size: 18),
-                ],
+            items: [
+              ListItem<ResolutionMode>.options(
+                leading: const GlyphIcon(AppGlyphs.shuffle),
+                title: Text(context.l10n.resolutionModeTitle),
+                subtitle: Text(_descriptionOf(mode, context.l10n)),
+                value: mode,
+                options: ResolutionMode.values,
+                textBuilder: (option) => option.label(context.l10n),
+                onChanged: (option) =>
+                    ref.read(resolutionModeProvider.notifier).select(option),
               ),
-              onPressed: () => _showModePicker(context, mode),
-            ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 6,
-              children: [
-                Text(
-                  context.l10n.resolutionBuiltinProtocol,
-                  style: context.listTitleStyle,
-                ),
-                SegmentedControl<ProviderProtocol>(
-                  segments: [
-                    for (final protocol in ProviderProtocol.values)
-                      (protocol, protocol.label),
-                  ],
-                  value: presetProtocol,
-                  onChanged: _selectPresetProtocol,
-                ),
-                Text(
-                  context.l10n.resolutionBuiltinNote,
-                  style: context.listSubtitleStyle,
-                ),
-              ],
-            ),
+          const SizedBox(height: 12),
+          generateSection(
+            items: [
+              ListItem<ProviderProtocol>.options(
+                leading: const GlyphIcon(AppGlyphs.dns),
+                title: Text(context.l10n.resolutionBuiltinProtocol),
+                subtitle: Text(context.l10n.resolutionBuiltinNote),
+                value: presetProtocol,
+                options: ProviderProtocol.values,
+                textBuilder: (protocol) => protocol.label,
+                onChanged: _selectPresetProtocol,
+              ),
+            ],
           ),
           generateSection(
             title: context.l10n.resolutionConfigSection,
@@ -165,31 +135,6 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
     ResolutionMode.parallel => 'parallel',
     ResolutionMode.primaryBackup => 'backup',
   };
-
-  void _showModePicker(BuildContext context, ResolutionMode current) {
-    showFloatingDialog<void>(
-      context: context,
-      child: CommonDialog(
-        title: context.l10n.resolutionPickerTitle,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final mode in ResolutionMode.values)
-              ListItem(
-                leading: GlyphIcon(_glyphOf(mode), size: 20),
-                title: Text(mode.label(context.l10n)),
-                subtitle: Text(_descriptionOf(mode, context.l10n)),
-                trailing: mode == current ? const SelectionCheck() : null,
-                onTap: () {
-                  ref.read(resolutionModeProvider.notifier).select(mode);
-                  Navigator.of(context).pop();
-                },
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class ResolutionModeConfigPage extends ConsumerStatefulWidget {
@@ -322,16 +267,17 @@ class _ResolutionModeConfigPageState
             ),
           ),
           const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SegmentedControl<ProviderProtocol>(
-              segments: [
-                for (final option in ProviderProtocol.values)
-                  (option, option.label),
-              ],
-              value: protocol,
-              onChanged: (value) => setState(() => _protocol = value),
-            ),
+          generateSection(
+            items: [
+              ListItem<ProviderProtocol>.options(
+                leading: const GlyphIcon(AppGlyphs.dns),
+                title: Text(context.l10n.resolutionBuiltinProtocol),
+                value: protocol,
+                options: ProviderProtocol.values,
+                textBuilder: (option) => option.label,
+                onChanged: (value) => setState(() => _protocol = value),
+              ),
+            ],
           ),
           generateSection(
             title: switch (_mode) {

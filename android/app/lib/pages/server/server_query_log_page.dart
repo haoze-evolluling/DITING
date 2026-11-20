@@ -70,17 +70,12 @@ class ServerQueryLogPage extends ConsumerWidget {
           const ListSectionGap(),
           generateSection(
             items: [
-              ServerOptionRow<int>(
-                glyph: AppGlyphs.clock,
-                title: context.l10n.serverQueryLogRetention,
+              ListItem<int>.options(
+                leading: const GlyphIcon(AppGlyphs.clock, size: 20),
+                title: Text(context.l10n.serverQueryLogRetention),
                 value: queryLog.retentionDays,
-                options: [
-                  for (final days in const [1, 7, 30, 90])
-                    ServerOption(
-                      value: days,
-                      label: context.l10n.serverLogDays(days),
-                    ),
-                ],
+                options: const [1, 7, 30, 90],
+                textBuilder: (days) => context.l10n.serverLogDays(days),
                 onChanged: (days) =>
                     save(queryLog.copyWith(retentionDays: days)),
               ),

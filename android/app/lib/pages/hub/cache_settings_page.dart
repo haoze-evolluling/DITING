@@ -48,26 +48,20 @@ class CacheSettingsPage extends ConsumerWidget {
             generateSection(
               title: l10n.cachePresetSection,
               items: [
-                for (final option in DnsCachePreset.values)
-                  ListItem(
-                    leading: GlyphIcon(
-                      preset == option
-                          ? AppGlyphs.checkCircle
-                          : option == DnsCachePreset.custom
-                          ? AppGlyphs.customize
-                          : AppGlyphs.clock,
-                      size: 20,
-                    ),
-                    title: Text(option.label(l10n)),
-                    subtitle: Text(
-                      '${option.summary(l10n)}。${option.description(l10n)}',
-                    ),
-                    trailing: preset == option ? const SelectionCheck() : null,
-                    onTap: () {
-                      option.applyTo(settings, enabled: enabled);
-                      ref.read(legacySettingsRevisionProvider.notifier).bump();
-                    },
+                ListItem<DnsCachePreset>.options(
+                  leading: const GlyphIcon(AppGlyphs.database),
+                  title: Text(l10n.cachePresetSection),
+                  subtitle: Text(
+                    '${preset.summary(l10n)}。${preset.description(l10n)}',
                   ),
+                  value: preset,
+                  options: DnsCachePreset.values,
+                  textBuilder: (option) => option.label(l10n),
+                  onChanged: (option) {
+                    option.applyTo(settings, enabled: enabled);
+                    ref.read(legacySettingsRevisionProvider.notifier).bump();
+                  },
+                ),
               ],
               footer: l10n.cachePresetNote,
             ),

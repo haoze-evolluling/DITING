@@ -6,10 +6,6 @@ import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/layout.dart';
 import 'package:diting_android/pages/appearance/appearance_inputs.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_shared/widgets/appearance/mini_screen.dart';
-import 'package:diting_android/pages/appearance/preview_choice.dart';
-import 'package:diting_shared/widgets/appearance/theme_preview.dart';
-import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -22,58 +18,23 @@ class ThemeDayNightPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
-    final pureBlack = ref.watch(pureBlackProvider);
-    final seed = ref.watch(paletteProvider).effectiveSeed;
-    final floating = ref.watch(bottomBarStyleProvider).isFloating;
-    final glass = ref.watch(liquidGlassModeProvider).enabled;
-    final schemes = previewSchemes(seed: seed, pureBlack: pureBlack);
-    Widget thumb(Brightness brightness) => miniScreenThumb(
-      colorScheme: brightness == Brightness.light
-          ? schemes.light
-          : schemes.dark,
-      floatingBar: floating,
-      liquidGlass: glass,
-    );
     return CommonScaffold(
       title: context.l10n.dayNightTitle,
       body: PageBody(
         children: [
-          PreviewChoiceGroup<AppThemeMode>(
-            info: Info(label: context.l10n.dayNightInfoLabel),
-            value: mode,
-            choices: [
-              PreviewChoice(
-                value: AppThemeMode.system,
-                label: context.l10n.commonFollowSystem,
-                description: context.l10n.dayNightFollowSystemDescription,
-                pictogram: MiniScreenThumb(
-                  screen: MiniSplitScreen(
-                    light: MiniScreen(
-                      colorScheme: schemes.light,
-                      floatingBar: floating,
-                      liquidGlass: glass,
-                    ),
-                    dark: MiniScreen(
-                      colorScheme: schemes.dark,
-                      floatingBar: floating,
-                      liquidGlass: glass,
-                    ),
-                  ),
-                ),
-              ),
-              PreviewChoice(
-                value: AppThemeMode.light,
-                label: context.l10n.themeModeLight,
-                pictogram: thumb(Brightness.light),
-              ),
-              PreviewChoice(
-                value: AppThemeMode.dark,
-                label: context.l10n.themeModeDark,
-                pictogram: thumb(Brightness.dark),
+          generateSection(
+            title: context.l10n.dayNightInfoLabel,
+            items: [
+              ListItem<AppThemeMode>.options(
+                leading: const GlyphIcon(AppGlyphs.sun),
+                title: Text(context.l10n.dayNightTitle),
+                value: mode,
+                options: AppThemeMode.values,
+                textBuilder: (value) => value.label(context.l10n),
+                onChanged: (value) =>
+                    ref.read(themeModeProvider.notifier).select(value),
               ),
             ],
-            onChanged: (value) =>
-                ref.read(themeModeProvider.notifier).select(value),
             footer: context.l10n.dayNightFooter,
           ),
         ],

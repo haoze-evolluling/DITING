@@ -29,6 +29,21 @@ class ResolutionCard extends ConsumerWidget {
           DashboardCardHeader(
             glyph: AppGlyphs.shuffle,
             title: context.l10n.resolutionModeTitle,
+            trailing: [
+              IgnorePointer(
+                ignoring: editing,
+                child: PopupSelectButton<ResolutionMode>(
+                  value: resolution,
+                  semanticLabel: context.l10n.resolutionModeTitle,
+                  items: [
+                    for (final option in ResolutionMode.values)
+                      (option, option.label(context.l10n)),
+                  ],
+                  onChanged: (value) =>
+                      ref.read(resolutionModeProvider.notifier).select(value),
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 10 * scale),
           IgnorePointer(
@@ -36,16 +51,6 @@ class ResolutionCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SegmentedControl<ResolutionMode>(
-                  segments: [
-                    for (final option in ResolutionMode.values)
-                      (option, option.label(context.l10n)),
-                  ],
-                  value: resolution,
-                  onChanged: (value) =>
-                      ref.read(resolutionModeProvider.notifier).select(value),
-                ),
-                SizedBox(height: 8 * scale),
                 Text(
                   describeResolutionMode(resolution, context.l10n),
                   style: AppTextStyle.footnote

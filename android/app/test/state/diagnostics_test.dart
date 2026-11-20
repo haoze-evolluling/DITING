@@ -247,6 +247,8 @@ void _diagnostics() {
       await openDns(tester, runner);
 
       expect(find.text('跟随系统'), findsOneWidget);
+      await tester.tap(find.text('跟随系统'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('自定义'));
       await tester.pumpAndSettle();
 

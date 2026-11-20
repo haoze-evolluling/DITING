@@ -70,20 +70,23 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
             ),
           ),
           // Same hop options as the legacy `TracerouteSection`: 15 and 30, defaulting to 15.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: SegmentedControl<int>(
-              segments: [
-                (15, l10n.toolTraceHops15),
-                (30, l10n.toolTraceHops30),
-              ],
-              value: _maxHops,
-              onChanged: (hops) {
-                if (!_running) {
-                  setState(() => _maxHops = hops.clamp(1, 30));
-                }
-              },
-            ),
+          const SizedBox(height: 12),
+          generateSection(
+            items: [
+              ListItem<int>.options(
+                leading: const GlyphIcon(AppGlyphs.connections),
+                title: Text(l10n.toolTraceHops),
+                value: _maxHops,
+                options: const [15, 30],
+                textBuilder: (hops) =>
+                    hops == 30 ? l10n.toolTraceHops30 : l10n.toolTraceHops15,
+                onChanged: (hops) {
+                  if (!_running) {
+                    setState(() => _maxHops = hops.clamp(1, 30));
+                  }
+                },
+              ),
+            ],
           ),
           generateSection(
             title: l10n.toolTraceOptions,

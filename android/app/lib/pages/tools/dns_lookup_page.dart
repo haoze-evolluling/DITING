@@ -106,33 +106,40 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
               onSubmitted: (_) => _run(),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: SegmentedControl<bool>(
-              segments: const [(true, _ipv4Label), (false, _ipv6Label)],
-              value: _ipv4,
-              onChanged: (value) {
-                if (!_running) {
-                  setState(() => _ipv4 = value);
-                }
-              },
-            ),
-          ),
-          if (showServerMode) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: SegmentedControl<_DnsServerMode>(
-                segments: [
-                  for (final mode in _DnsServerMode.values)
-                    (mode, mode.label(l10n)),
-                ],
-                value: _serverMode,
-                onChanged: (mode) {
+          const SizedBox(height: 12),
+          generateSection(
+            items: [
+              ListItem<bool>.options(
+                leading: const GlyphIcon(AppGlyphs.dns),
+                title: Text(l10n.toolRecordType),
+                value: _ipv4,
+                options: const [true, false],
+                textBuilder: (ipv4) => ipv4 ? _ipv4Label : _ipv6Label,
+                onChanged: (value) {
                   if (!_running) {
-                    setState(() => _serverMode = mode);
+                    setState(() => _ipv4 = value);
                   }
                 },
               ),
+            ],
+          ),
+          if (showServerMode) ...[
+            const SizedBox(height: 12),
+            generateSection(
+              items: [
+                ListItem<_DnsServerMode>.options(
+                  leading: const GlyphIcon(AppGlyphs.dns),
+                  title: Text(l10n.toolDnsServers),
+                  value: _serverMode,
+                  options: _DnsServerMode.values,
+                  textBuilder: (mode) => mode.label(l10n),
+                  onChanged: (mode) {
+                    if (!_running) {
+                      setState(() => _serverMode = mode);
+                    }
+                  },
+                ),
+              ],
             ),
             if (_serverMode == _DnsServerMode.custom)
               _ToolInputCard(

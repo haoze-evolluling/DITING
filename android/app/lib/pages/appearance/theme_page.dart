@@ -42,17 +42,27 @@ class ThemePage extends ConsumerWidget {
           generateSection(
             title: context.l10n.appearanceInterfaceSection,
             items: [
-              NavEntryRow(
-                glyph: AppGlyphs.sun,
-                title: context.l10n.dayNightTitle,
-                subtitle: ref.watch(themeModeProvider).label(context.l10n),
-                onPressed: () => context.push(SystemPaths.dayNight),
+              ListItem<AppThemeMode>.options(
+                leading: const GlyphIcon(AppGlyphs.sun),
+                title: Text(context.l10n.dayNightTitle),
+                subtitle: Text(
+                  ref.watch(themeModeProvider).label(context.l10n),
+                ),
+                options: AppThemeMode.values,
+                value: ref.watch(themeModeProvider),
+                textBuilder: (value) => value.label(context.l10n),
+                onChanged: (value) =>
+                    ref.read(themeModeProvider.notifier).select(value),
               ),
-              NavEntryRow(
-                glyph: AppGlyphs.palette,
-                title: context.l10n.appearancePaletteTitle,
-                subtitle: ref.watch(paletteProvider).label(context.l10n),
-                onPressed: () => context.push(SystemPaths.colorStyle),
+              ListItem<AppPalette>.options(
+                leading: const GlyphIcon(AppGlyphs.palette),
+                title: Text(context.l10n.appearancePaletteTitle),
+                subtitle: Text(ref.watch(paletteProvider).label(context.l10n)),
+                options: AppPalette.values,
+                value: ref.watch(paletteProvider),
+                textBuilder: (value) => value.label(context.l10n),
+                onChanged: (value) =>
+                    ref.read(paletteProvider.notifier).select(value),
               ),
               NavEntryRow(
                 glyph: AppGlyphs.blur,

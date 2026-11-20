@@ -67,17 +67,22 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
               onSubmitted: (_) => _run(),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: SegmentedControl<DnsLatencyProtocol>(
-              segments: [for (final item in protocols) (item, item.label)],
-              value: protocol,
-              onChanged: (value) {
-                if (!state.running) {
-                  ref.read(latencyProtocolProvider.notifier).select(value);
-                }
-              },
-            ),
+          const SizedBox(height: 12),
+          generateSection(
+            items: [
+              ListItem<DnsLatencyProtocol>.options(
+                leading: const GlyphIcon(AppGlyphs.speed),
+                title: Text(l10n.obsProtocol),
+                value: protocol,
+                options: protocols,
+                textBuilder: (item) => item.label,
+                onChanged: (value) {
+                  if (!state.running) {
+                    ref.read(latencyProtocolProvider.notifier).select(value);
+                  }
+                },
+              ),
+            ],
           ),
           generateSection(
             title: l10n.toolSpeedProviders,

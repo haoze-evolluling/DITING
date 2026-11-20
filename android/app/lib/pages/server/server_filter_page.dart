@@ -55,24 +55,16 @@ class ServerFilterPage extends ConsumerWidget {
                   filter.copyWith(filterResponse: value),
                 ),
               ),
-              ServerOptionRow<String>(
-                glyph: AppGlyphs.shield,
-                title: context.l10n.serverFilterBlockMode,
+              ListItem<String>.options(
+                leading: const GlyphIcon(AppGlyphs.shield, size: 20),
+                title: Text(context.l10n.serverFilterBlockMode),
                 value: filter.blockMode,
-                options: [
-                  ServerOption(
-                    value: 'null_ip',
-                    label: context.l10n.serverBlockNullIp,
-                  ),
-                  ServerOption(
-                    value: 'nxdomain',
-                    label: context.l10n.serverBlockNxdomain,
-                  ),
-                  ServerOption(
-                    value: 'refused',
-                    label: context.l10n.serverBlockRefused,
-                  ),
-                ],
+                options: const ['null_ip', 'nxdomain', 'refused'],
+                textBuilder: (value) => switch (value) {
+                  'nxdomain' => context.l10n.serverBlockNxdomain,
+                  'refused' => context.l10n.serverBlockRefused,
+                  _ => context.l10n.serverBlockNullIp,
+                },
                 onChanged: (value) => _save(
                   context,
                   ref,
